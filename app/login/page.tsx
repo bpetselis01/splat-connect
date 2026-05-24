@@ -17,15 +17,17 @@ export default function LoginPage() {
     setLoading(true)
     setError(null)
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) {
-      setError(error.message)
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) {
+        setError(error.message)
+        return
+      }
+      router.push('/')
+      router.refresh()
+    } finally {
       setLoading(false)
-      return
     }
-
-    router.push('/')
-    router.refresh()
   }
 
   return (
@@ -33,8 +35,9 @@ export default function LoginPage() {
       <h1 className="text-2xl font-bold mb-6">Sign in</h1>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div>
-          <label className="block text-sm font-medium mb-1">Email</label>
+          <label htmlFor="email" className="block text-sm font-medium mb-1">Email</label>
           <input
+            id="email"
             type="email"
             required
             value={email}
@@ -43,8 +46,9 @@ export default function LoginPage() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">Password</label>
+          <label htmlFor="password" className="block text-sm font-medium mb-1">Password</label>
           <input
+            id="password"
             type="password"
             required
             value={password}

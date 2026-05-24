@@ -41,8 +41,8 @@ export default function SignupPage() {
           Your account has been created and is pending admin approval. You'll be
           able to log in and upload tutorials once approved.
         </p>
-        <Link href="/" className="mt-6 inline-block text-blue-600 text-sm hover:underline">
-          Back to home
+        <Link href="/login" className="mt-6 inline-block text-blue-600 text-sm hover:underline">
+          Back to sign in
         </Link>
       </div>
     )
@@ -57,8 +57,9 @@ export default function SignupPage() {
       </p>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div>
-          <label className="block text-sm font-medium mb-1">Full name</label>
+          <label htmlFor="name" className="block text-sm font-medium mb-1">Full name</label>
           <input
+            id="name"
             type="text"
             required
             value={name}
@@ -67,8 +68,9 @@ export default function SignupPage() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">Email</label>
+          <label htmlFor="email" className="block text-sm font-medium mb-1">Email</label>
           <input
+            id="email"
             type="email"
             required
             value={email}
@@ -77,8 +79,9 @@ export default function SignupPage() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">Password</label>
+          <label htmlFor="password" className="block text-sm font-medium mb-1">Password</label>
           <input
+            id="password"
             type="password"
             required
             minLength={6}
