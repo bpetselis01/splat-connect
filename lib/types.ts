@@ -69,7 +69,7 @@ export interface UploadDraft {
   difficulty: Difficulty | ''
   tutorial_pdf_url: string | null
   toy_photo_url: string | null
-  parts: { name: string; quantity: number; buy_link: string }[]
-  tools: { name: string; buy_link: string }[]
+  parts: { name: string; quantity: number; buy_link: string | null }[]
+  tools: { name: string; buy_link: string | null }[]
   stl_files: { filename: string; file_url: string }[]
 }

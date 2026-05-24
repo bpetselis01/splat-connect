@@ -8,12 +8,15 @@ export function canAdvanceFromStep(step: number, draft: UploadDraft): boolean {
         ['easy', 'medium', 'hard'].includes(draft.difficulty)
       )
     case 2:
-      return draft.tutorial_pdf_url !== null && draft.toy_photo_url !== null
+      return (
+        !!draft.tutorial_pdf_url?.trim() &&
+        !!draft.toy_photo_url?.trim()
+      )
     case 3:
       return (
         draft.parts.length >= 1 &&
         draft.parts.every(
-          (p) => p.name.trim().length > 0 && p.quantity >= 1
+          (p) => p.name.trim().length > 0 && Number.isInteger(p.quantity) && p.quantity >= 1
         )
       )
     case 4:
@@ -23,6 +26,8 @@ export function canAdvanceFromStep(step: number, draft: UploadDraft): boolean {
       )
     case 5:
       return true // STL files are optional
+    case 6:
+      return canSubmit(draft)
     default:
       return false
   }
