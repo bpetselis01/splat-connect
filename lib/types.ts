@@ -1,4 +1,5 @@
 export type Role = 'admin' | 'contributor'
+
 export type Difficulty = 'easy' | 'medium' | 'hard'
 export type TutorialStatus = 'draft' | 'pending' | 'approved' | 'rejected'
 export type ContributorRole = 'primary' | 'collaborator'
