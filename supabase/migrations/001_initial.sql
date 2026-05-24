@@ -73,7 +73,7 @@ begin
   );
   return new;
 end;
-$$ language plpgsql security definer;
+$$ language plpgsql security definer set search_path = public;
 
 create trigger on_auth_user_created
   after insert on auth.users
@@ -175,11 +175,30 @@ create policy "Anyone can read parts of approved tutorials"
     exists (select 1 from public.tutorials t where t.id = tutorial_id and t.status = 'approved')
   );
 
-create policy "Contributors can manage own tutorial parts"
-  on public.parts for all using (
+create policy "Contributors can read own tutorial parts"
+  on public.parts for select using (
     exists (
       select 1 from public.tutorial_contributors tc
       where tc.tutorial_id = tutorial_id and tc.profile_id = auth.uid()
+    )
+  );
+
+create policy "Contributors can write own tutorial parts"
+  on public.parts for all using (
+    exists (
+      select 1 from public.tutorial_contributors tc
+      join public.tutorials t on t.id = tc.tutorial_id
+      where tc.tutorial_id = tutorial_id
+        and tc.profile_id = auth.uid()
+        and t.status in ('draft', 'rejected')
+    )
+  ) with check (
+    exists (
+      select 1 from public.tutorial_contributors tc
+      join public.tutorials t on t.id = tc.tutorial_id
+      where tc.tutorial_id = tutorial_id
+        and tc.profile_id = auth.uid()
+        and t.status in ('draft', 'rejected')
     )
   );
 
@@ -192,11 +211,30 @@ create policy "Anyone can read tools of approved tutorials"
     exists (select 1 from public.tutorials t where t.id = tutorial_id and t.status = 'approved')
   );
 
-create policy "Contributors can manage own tutorial tools"
-  on public.tools for all using (
+create policy "Contributors can read own tutorial tools"
+  on public.tools for select using (
     exists (
       select 1 from public.tutorial_contributors tc
       where tc.tutorial_id = tutorial_id and tc.profile_id = auth.uid()
+    )
+  );
+
+create policy "Contributors can write own tutorial tools"
+  on public.tools for all using (
+    exists (
+      select 1 from public.tutorial_contributors tc
+      join public.tutorials t on t.id = tc.tutorial_id
+      where tc.tutorial_id = tutorial_id
+        and tc.profile_id = auth.uid()
+        and t.status in ('draft', 'rejected')
+    )
+  ) with check (
+    exists (
+      select 1 from public.tutorial_contributors tc
+      join public.tutorials t on t.id = tc.tutorial_id
+      where tc.tutorial_id = tutorial_id
+        and tc.profile_id = auth.uid()
+        and t.status in ('draft', 'rejected')
     )
   );
 
@@ -209,11 +247,30 @@ create policy "Anyone can read stl_files of approved tutorials"
     exists (select 1 from public.tutorials t where t.id = tutorial_id and t.status = 'approved')
   );
 
-create policy "Contributors can manage own tutorial stl_files"
-  on public.stl_files for all using (
+create policy "Contributors can read own tutorial stl_files"
+  on public.stl_files for select using (
     exists (
       select 1 from public.tutorial_contributors tc
       where tc.tutorial_id = tutorial_id and tc.profile_id = auth.uid()
+    )
+  );
+
+create policy "Contributors can write own tutorial stl_files"
+  on public.stl_files for all using (
+    exists (
+      select 1 from public.tutorial_contributors tc
+      join public.tutorials t on t.id = tc.tutorial_id
+      where tc.tutorial_id = tutorial_id
+        and tc.profile_id = auth.uid()
+        and t.status in ('draft', 'rejected')
+    )
+  ) with check (
+    exists (
+      select 1 from public.tutorial_contributors tc
+      join public.tutorials t on t.id = tc.tutorial_id
+      where tc.tutorial_id = tutorial_id
+        and tc.profile_id = auth.uid()
+        and t.status in ('draft', 'rejected')
     )
   );
 
@@ -234,18 +291,18 @@ create policy "Public read tutorial-pdfs"
 
 create policy "Authenticated upload tutorial-pdfs"
   on storage.objects for insert
-  with check (bucket_id = 'tutorial-pdfs' and auth.role() = 'authenticated');
+  with check (bucket_id = 'tutorial-pdfs' and public.is_approved_contributor());
 
 create policy "Public read toy-photos"
   on storage.objects for select using (bucket_id = 'toy-photos');
 
 create policy "Authenticated upload toy-photos"
   on storage.objects for insert
-  with check (bucket_id = 'toy-photos' and auth.role() = 'authenticated');
+  with check (bucket_id = 'toy-photos' and public.is_approved_contributor());
 
 create policy "Public read stl-files"
   on storage.objects for select using (bucket_id = 'stl-files');
 
 create policy "Authenticated upload stl-files"
   on storage.objects for insert
-  with check (bucket_id = 'stl-files' and auth.role() = 'authenticated');
+  with check (bucket_id = 'stl-files' and public.is_approved_contributor());
