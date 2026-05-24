@@ -1,5 +1,4 @@
 export type Role = 'admin' | 'contributor'
-
 export type Difficulty = 'easy' | 'medium' | 'hard'
 export type TutorialStatus = 'draft' | 'pending' | 'approved' | 'rejected'
 export type ContributorRole = 'primary' | 'collaborator'
@@ -63,7 +62,6 @@ export interface TutorialWithDetails extends Tutorial {
   tutorial_contributors: (TutorialContributor & { profiles: Profile })[]
 }
 
-// Upload form state (client-side only, not persisted until submit)
 export interface UploadDraft {
   title: string
   description: string
