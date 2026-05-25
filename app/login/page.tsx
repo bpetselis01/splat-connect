@@ -23,7 +23,20 @@ export default function LoginPage() {
         setError(error.message)
         return
       }
-      router.push('/')
+      const { data: { user } } = await supabase.auth.getUser()
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role, approved')
+        .eq('id', user!.id)
+        .single()
+
+      if (profile?.role === 'contributor') {
+        router.push(profile.approved ? '/dashboard' : '/pending')
+      } else if (profile?.role === 'admin') {
+        router.push('/admin')
+      } else {
+        router.push('/')
+      }
       router.refresh()
     } finally {
       setLoading(false)

@@ -68,11 +68,19 @@ export default async function MyTutorialsPage() {
                 )}
               </div>
             </div>
-            <span
-              className={`text-xs font-bold px-2 py-1 rounded-full shrink-0 ${statusStyles[t.status]}`}
-            >
-              {t.status.toUpperCase()}
-            </span>
+            <div className="flex items-center gap-2 shrink-0">
+              <Link
+                href={`/tutorials/${t.id}/edit`}
+                className="text-xs font-semibold text-blue-600 hover:underline"
+              >
+                Edit
+              </Link>
+              <span
+                className={`text-xs font-bold px-2 py-1 rounded-full ${statusStyles[t.status]}`}
+              >
+                {t.status.toUpperCase()}
+              </span>
+            </div>
           </div>
         ))}
       </div>

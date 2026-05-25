@@ -31,7 +31,7 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  const contributorRoutes = ['/upload', '/my-tutorials']
+  const contributorRoutes = ['/upload', '/my-tutorials', '/dashboard']
   const adminRoutes = ['/admin']
 
   const needsContributorAuth = contributorRoutes.some((r) =>
@@ -55,9 +55,21 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  if (needsContributorAuth && user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('approved')
+      .eq('id', user.id)
+      .single()
+
+    if (!profile?.approved) {
+      return NextResponse.redirect(new URL('/pending', request.url))
+    }
+  }
+
   return supabaseResponse
 }
 
 export const config = {
-  matcher: ['/upload/:path*', '/my-tutorials/:path*', '/admin/:path*'],
+  matcher: ['/upload/:path*', '/my-tutorials/:path*', '/admin/:path*', '/dashboard/:path*'],
 }

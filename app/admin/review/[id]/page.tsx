@@ -98,10 +98,14 @@ export default async function ReviewTutorialPage({
             {tutorial.parts.map((p) => (
               <div key={p.id} className="text-sm bg-white border rounded px-3 py-1.5 flex justify-between">
                 <span>{p.name} × {p.quantity}</span>
-                {p.buy_link && (
-                  <a href={p.buy_link} target="_blank" rel="noopener noreferrer" className="text-blue-600 text-xs">
-                    Link →
-                  </a>
+                {p.buy_links.length > 0 && (
+                  <div className="flex gap-2">
+                    {p.buy_links.map((bl, i) => (
+                      <a key={i} href={bl.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 text-xs">
+                        {bl.label || 'Link →'}
+                      </a>
+                    ))}
+                  </div>
                 )}
               </div>
             ))}
@@ -116,10 +120,14 @@ export default async function ReviewTutorialPage({
             {tutorial.tools.map((t) => (
               <div key={t.id} className="text-sm bg-white border rounded px-3 py-1.5 flex justify-between">
                 <span>{t.name}</span>
-                {t.buy_link && (
-                  <a href={t.buy_link} target="_blank" rel="noopener noreferrer" className="text-blue-600 text-xs">
-                    Link →
-                  </a>
+                {t.buy_links.length > 0 && (
+                  <div className="flex gap-2">
+                    {t.buy_links.map((bl, i) => (
+                      <a key={i} href={bl.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 text-xs">
+                        {bl.label || 'Link →'}
+                      </a>
+                    ))}
+                  </div>
                 )}
               </div>
             ))}
