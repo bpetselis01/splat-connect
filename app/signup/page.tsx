@@ -38,7 +38,7 @@ export default function SignupPage() {
         <div className="text-4xl mb-4">✅</div>
         <h1 className="text-2xl font-bold mb-2">Request received</h1>
         <p className="text-gray-600 text-sm">
-          Your account has been created and is pending admin approval. You'll be
+          Your account has been created and is pending admin approval. You&apos;ll be
           able to log in and upload tutorials once approved.
         </p>
         <Link href="/login" className="mt-6 inline-block text-blue-600 text-sm hover:underline">

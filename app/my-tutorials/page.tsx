@@ -29,7 +29,7 @@ export default async function MyTutorialsPage() {
   if (tutorials.length === 0) {
     return (
       <div className="text-center py-16">
-        <p className="text-gray-400 mb-4">You haven't submitted any tutorials yet.</p>
+        <p className="text-gray-400 mb-4">You haven&apos;t submitted any tutorials yet.</p>
         <Link
           href="/upload"
           className="inline-block bg-orange-500 text-white px-6 py-2 rounded-lg text-sm font-semibold hover:bg-orange-600"
