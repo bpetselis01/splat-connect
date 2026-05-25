@@ -68,6 +68,7 @@ export default async function TutorialPage({
                 {[primaryContributor, ...collaborators]
                   .filter(Boolean)
                   .map((c) => c!.profiles?.name)
+                  .filter((name): name is string => Boolean(name))
                   .join(', ')}
               </p>
             )}
@@ -125,6 +126,7 @@ export default async function TutorialPage({
                         href={p.buy_link}
                         target="_blank"
                         rel="noopener noreferrer"
+                        aria-label={`Buy ${p.name}`}
                         className="text-blue-600 text-xs hover:underline ml-4 shrink-0"
                       >
                         Buy →
@@ -152,6 +154,7 @@ export default async function TutorialPage({
                         href={t.buy_link}
                         target="_blank"
                         rel="noopener noreferrer"
+                        aria-label={`Buy ${t.name}`}
                         className="text-blue-600 text-xs hover:underline ml-4 shrink-0"
                       >
                         Buy →
