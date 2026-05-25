@@ -37,6 +37,7 @@ export default function UploadPage() {
   const [error, setError] = useState<string | null>(null)
 
   const [tutorialId] = useState(() => crypto.randomUUID())
+  const [tutorialInserted, setTutorialInserted] = useState(false)
 
   async function uploadFile(
     bucket: string,
@@ -108,24 +109,41 @@ export default function UploadPage() {
       } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
 
-      // Insert as draft so RLS allows writing parts/tools/stl_files
-      const { error: tutorialError } = await supabase.from('tutorials').insert({
-        id: tutorialId,
-        title: draft.title,
-        description: draft.description || null,
-        difficulty: draft.difficulty,
-        status: 'draft',
-        tutorial_pdf_url: draft.tutorial_pdf_url,
-        toy_photo_url: draft.toy_photo_url,
-      })
-      if (tutorialError) throw new Error(tutorialError.message)
+      if (tutorialInserted) {
+        const { error } = await supabase.from('tutorials').update({
+          title: draft.title,
+          description: draft.description || null,
+          difficulty: draft.difficulty,
+          tutorial_pdf_url: draft.tutorial_pdf_url,
+          toy_photo_url: draft.toy_photo_url,
+        }).eq('id', tutorialId)
+        if (error) throw new Error(`Draft update: ${error.message}`)
+      } else {
+        const { error } = await supabase.from('tutorials').insert({
+          id: tutorialId,
+          title: draft.title,
+          description: draft.description || null,
+          difficulty: draft.difficulty,
+          status: 'draft',
+          tutorial_pdf_url: draft.tutorial_pdf_url,
+          toy_photo_url: draft.toy_photo_url,
+        })
+        if (error) throw new Error(`Insert: ${error.message}`)
+        setTutorialInserted(true)
+      }
 
-      const { error: tcError } = await supabase.from('tutorial_contributors').insert({
+      // ignoreDuplicates handles retries — contributors have no DELETE policy so
+      // delete+re-insert would hit a duplicate key on the second attempt
+      const { error: tcError } = await supabase.from('tutorial_contributors').upsert({
         tutorial_id: tutorialId,
         profile_id: user.id,
         role: 'primary',
-      })
-      if (tcError) throw new Error(tcError.message)
+      }, { ignoreDuplicates: true })
+      if (tcError) throw new Error(`Contributor: ${tcError.message}`)
+
+      // Clean up parts/tools from a previous failed attempt before re-inserting
+      await supabase.from('parts').delete().eq('tutorial_id', tutorialId)
+      await supabase.from('tools').delete().eq('tutorial_id', tutorialId)
 
       if (draft.parts.length > 0) {
         const { error: partsError } = await supabase.from('parts').insert(
