@@ -3,7 +3,9 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { canAdvanceFromStep, canSubmit } from '@/lib/validation'
-import type { UploadDraft, Difficulty } from '@/lib/types'
+import { FileDropZone } from '@/components/file-drop-zone'
+import { BuyLinksInput } from '@/components/buy-links-input'
+import type { UploadDraft, Difficulty, BuyLink } from '@/lib/types'
 
 const STEPS = [
   'Details',
@@ -101,57 +103,74 @@ export default function UploadPage() {
     setSubmitting(true)
     setError(null)
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
 
+      // Insert as draft so RLS allows writing parts/tools/stl_files
       const { error: tutorialError } = await supabase.from('tutorials').insert({
         id: tutorialId,
         title: draft.title,
         description: draft.description || null,
         difficulty: draft.difficulty,
-        status: 'pending',
+        status: 'draft',
         tutorial_pdf_url: draft.tutorial_pdf_url,
         toy_photo_url: draft.toy_photo_url,
       })
       if (tutorialError) throw new Error(tutorialError.message)
 
-      await supabase.from('tutorial_contributors').insert({
+      const { error: tcError } = await supabase.from('tutorial_contributors').insert({
         tutorial_id: tutorialId,
         profile_id: user.id,
         role: 'primary',
       })
+      if (tcError) throw new Error(tcError.message)
 
       if (draft.parts.length > 0) {
-        await supabase.from('parts').insert(
+        const { error: partsError } = await supabase.from('parts').insert(
           draft.parts.map((p) => ({
             tutorial_id: tutorialId,
             name: p.name,
             quantity: p.quantity,
-            buy_link: p.buy_link || null,
+            is_optional: p.is_optional,
+            buy_links: p.buy_links,
           }))
         )
+        if (partsError) throw new Error(`Parts: ${partsError.message}`)
       }
 
       if (draft.tools.length > 0) {
-        await supabase.from('tools').insert(
+        const { error: toolsError } = await supabase.from('tools').insert(
           draft.tools.map((t) => ({
             tutorial_id: tutorialId,
             name: t.name,
-            buy_link: t.buy_link || null,
+            is_optional: t.is_optional,
+            buy_links: t.buy_links,
           }))
         )
+        if (toolsError) throw new Error(`Tools: ${toolsError.message}`)
       }
 
       if (draft.stl_files.length > 0) {
-        await supabase.from('stl_files').insert(
+        const { error: stlError } = await supabase.from('stl_files').insert(
           draft.stl_files.map((f) => ({
             tutorial_id: tutorialId,
             filename: f.filename,
             file_url: f.file_url,
           }))
         )
+        if (stlError) throw new Error(`STL files: ${stlError.message}`)
       }
 
+      // Promote to pending now that all related data is inserted
+      const { error: updateError } = await supabase
+        .from('tutorials')
+        .update({ status: 'pending' })
+        .eq('id', tutorialId)
+      if (updateError) throw new Error(updateError.message)
+
+      router.refresh()
       router.push('/my-tutorials')
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Submission failed')
@@ -239,18 +258,24 @@ export default function UploadPage() {
       {step === 2 && (
         <div className="flex flex-col gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Tutorial PDF *</label>
-            <input type="file" accept=".pdf" onChange={handlePdfUpload} className="text-sm" />
-            {draft.tutorial_pdf_url && (
-              <p className="text-green-600 text-xs mt-1">✓ PDF uploaded</p>
-            )}
+            <label className="block text-sm font-medium mb-2">Tutorial PDF *</label>
+            <FileDropZone
+              name="tutorial_pdf"
+              accept=".pdf"
+              label="Tutorial PDF"
+              onChange={handlePdfUpload}
+              currentFileLabel={draft.tutorial_pdf_url ? 'PDF uploaded ✓' : undefined}
+            />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Photo of finished toy *</label>
-            <input type="file" accept="image/*" onChange={handlePhotoUpload} className="text-sm" />
-            {draft.toy_photo_url && (
-              <p className="text-green-600 text-xs mt-1">✓ Photo uploaded</p>
-            )}
+            <label className="block text-sm font-medium mb-2">Photo of finished toy *</label>
+            <FileDropZone
+              name="toy_photo"
+              accept="image/*"
+              label="Photo of Finished Toy"
+              onChange={handlePhotoUpload}
+              currentFileLabel={draft.toy_photo_url ? 'Photo uploaded ✓' : undefined}
+            />
           </div>
           {uploading && <p className="text-blue-600 text-sm">Uploading…</p>}
         </div>
@@ -301,19 +326,34 @@ export default function UploadPage() {
                   ✕
                 </button>
               </div>
-              <input
-                type="url"
-                placeholder="Buy link (optional)"
-                className="w-full border rounded px-2 py-1 text-sm"
-                value={part.buy_link ?? ''}
-                onChange={(e) =>
-                  setDraft((d) => {
-                    const parts = [...d.parts]
-                    parts[i] = { ...parts[i], buy_link: e.target.value }
-                    return { ...d, parts }
-                  })
-                }
-              />
+              <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={part.is_optional}
+                  onChange={(e) =>
+                    setDraft((d) => {
+                      const parts = [...d.parts]
+                      parts[i] = { ...parts[i], is_optional: e.target.checked }
+                      return { ...d, parts }
+                    })
+                  }
+                  className="rounded"
+                />
+                Optional (not required)
+              </label>
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Buy links</p>
+                <BuyLinksInput
+                  initialLinks={part.buy_links}
+                  onChange={(links: BuyLink[]) =>
+                    setDraft((d) => {
+                      const parts = [...d.parts]
+                      parts[i] = { ...parts[i], buy_links: links }
+                      return { ...d, parts }
+                    })
+                  }
+                />
+              </div>
             </div>
           ))}
           <button
@@ -321,7 +361,10 @@ export default function UploadPage() {
             onClick={() =>
               setDraft((d) => ({
                 ...d,
-                parts: [...d.parts, { name: '', quantity: 1, buy_link: '' }],
+                parts: [
+                  ...d.parts,
+                  { name: '', quantity: 1, is_optional: false, buy_links: [] },
+                ],
               }))
             }
             className="border-2 border-dashed rounded-lg py-2 text-sm text-gray-500 hover:bg-gray-50"
@@ -362,19 +405,34 @@ export default function UploadPage() {
                   ✕
                 </button>
               </div>
-              <input
-                type="url"
-                placeholder="Buy link (optional)"
-                className="w-full border rounded px-2 py-1 text-sm"
-                value={tool.buy_link ?? ''}
-                onChange={(e) =>
-                  setDraft((d) => {
-                    const tools = [...d.tools]
-                    tools[i] = { ...tools[i], buy_link: e.target.value }
-                    return { ...d, tools }
-                  })
-                }
-              />
+              <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={tool.is_optional}
+                  onChange={(e) =>
+                    setDraft((d) => {
+                      const tools = [...d.tools]
+                      tools[i] = { ...tools[i], is_optional: e.target.checked }
+                      return { ...d, tools }
+                    })
+                  }
+                  className="rounded"
+                />
+                Optional (not required)
+              </label>
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Buy links</p>
+                <BuyLinksInput
+                  initialLinks={tool.buy_links}
+                  onChange={(links: BuyLink[]) =>
+                    setDraft((d) => {
+                      const tools = [...d.tools]
+                      tools[i] = { ...tools[i], buy_links: links }
+                      return { ...d, tools }
+                    })
+                  }
+                />
+              </div>
             </div>
           ))}
           <button
@@ -382,7 +440,7 @@ export default function UploadPage() {
             onClick={() =>
               setDraft((d) => ({
                 ...d,
-                tools: [...d.tools, { name: '', buy_link: '' }],
+                tools: [...d.tools, { name: '', is_optional: false, buy_links: [] }],
               }))
             }
             className="border-2 border-dashed rounded-lg py-2 text-sm text-gray-500 hover:bg-gray-50"
@@ -398,23 +456,29 @@ export default function UploadPage() {
           <p className="text-sm text-gray-500">
             Upload STL files if this adaptation requires 3D-printed parts. Optional.
           </p>
-          <input
-            type="file"
+          <FileDropZone
+            name="stl_files"
             accept=".stl"
             multiple
+            label="STL Files"
             onChange={handleStlUpload}
-            className="text-sm"
           />
           {uploading && <p className="text-blue-600 text-sm">Uploading…</p>}
           {draft.stl_files.length > 0 && (
             <div className="flex flex-col gap-1">
               {draft.stl_files.map((f, i) => (
-                <div key={i} className="flex items-center justify-between text-sm bg-white border rounded px-3 py-1.5">
+                <div
+                  key={i}
+                  className="flex items-center justify-between text-sm bg-white border rounded px-3 py-1.5"
+                >
                   <span>{f.filename}</span>
                   <button
                     type="button"
                     onClick={() =>
-                      setDraft((d) => ({ ...d, stl_files: d.stl_files.filter((_, j) => j !== i) }))
+                      setDraft((d) => ({
+                        ...d,
+                        stl_files: d.stl_files.filter((_, j) => j !== i),
+                      }))
                     }
                     className="text-red-500 text-xs"
                   >
@@ -431,14 +495,32 @@ export default function UploadPage() {
       {step === 6 && (
         <div className="flex flex-col gap-4 text-sm">
           <div className="bg-white border rounded-lg p-4 flex flex-col gap-2">
-            <p><strong>Title:</strong> {draft.title}</p>
-            <p><strong>Difficulty:</strong> {draft.difficulty}</p>
-            {draft.description && <p><strong>Description:</strong> {draft.description}</p>}
-            <p><strong>PDF:</strong> {draft.tutorial_pdf_url ? '✓ Uploaded' : '✗ Missing'}</p>
-            <p><strong>Photo:</strong> {draft.toy_photo_url ? '✓ Uploaded' : '✗ Missing'}</p>
-            <p><strong>Parts:</strong> {draft.parts.length}</p>
-            <p><strong>Tools:</strong> {draft.tools.length}</p>
-            <p><strong>STL files:</strong> {draft.stl_files.length}</p>
+            <p>
+              <strong>Title:</strong> {draft.title}
+            </p>
+            <p>
+              <strong>Difficulty:</strong> {draft.difficulty}
+            </p>
+            {draft.description && (
+              <p>
+                <strong>Description:</strong> {draft.description}
+              </p>
+            )}
+            <p>
+              <strong>PDF:</strong> {draft.tutorial_pdf_url ? '✓ Uploaded' : '✗ Missing'}
+            </p>
+            <p>
+              <strong>Photo:</strong> {draft.toy_photo_url ? '✓ Uploaded' : '✗ Missing'}
+            </p>
+            <p>
+              <strong>Parts:</strong> {draft.parts.length}
+            </p>
+            <p>
+              <strong>Tools:</strong> {draft.tools.length}
+            </p>
+            <p>
+              <strong>STL files:</strong> {draft.stl_files.length}
+            </p>
           </div>
           <p className="text-gray-500 text-xs">
             Your tutorial will be reviewed by the SPLAT admin before it appears publicly.
