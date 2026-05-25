@@ -33,19 +33,26 @@ export interface TutorialContributor {
   profiles?: Profile
 }
 
+export interface BuyLink {
+  label: string
+  url: string
+}
+
 export interface Part {
   id: string
   tutorial_id: string
   name: string
   quantity: number
-  buy_link: string | null
+  is_optional: boolean
+  buy_links: BuyLink[]
 }
 
 export interface Tool {
   id: string
   tutorial_id: string
   name: string
-  buy_link: string | null
+  is_optional: boolean
+  buy_links: BuyLink[]
 }
 
 export interface StlFile {
@@ -68,7 +75,7 @@ export interface UploadDraft {
   difficulty: Difficulty | ''
   tutorial_pdf_url: string | null
   toy_photo_url: string | null
-  parts: { name: string; quantity: number; buy_link: string | null }[]
-  tools: { name: string; buy_link: string | null }[]
+  parts: { name: string; quantity: number; is_optional: boolean; buy_links: BuyLink[] }[]
+  tools: { name: string; is_optional: boolean; buy_links: BuyLink[] }[]
   stl_files: { filename: string; file_url: string }[]
 }
