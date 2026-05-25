@@ -34,6 +34,9 @@ export function Nav({ role }: NavProps) {
         )}
         {role === 'contributor' && (
           <>
+            <Link href="/dashboard" className="hover:opacity-80">
+              Dashboard
+            </Link>
             <Link href="/upload" className="hover:opacity-80">
               Upload
             </Link>
