@@ -205,7 +205,7 @@ export default async function EditTutorialPage({
       {/* Files */}
       <details className={panelCls}>
         <summary className={summaryCls}>Files</summary>
-        <form action={saveFiles} encType="multipart/form-data" className="px-5 pb-5 flex flex-col gap-4">
+        <form action={saveFiles} className="px-5 pb-5 flex flex-col gap-4">
           <div>
             <label className="block text-sm font-medium mb-2">Replace toy photo</label>
             <FileDropZone
