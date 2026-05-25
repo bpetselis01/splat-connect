@@ -1,30 +1,13 @@
 {
-  "name": "splat-connect",
-  "version": "0.1.0",
+  "name": "splat-connect-workspace",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint",
-    "typecheck": "tsc --noEmit",
-    "test": "echo \"No tests yet — add Vitest or Jest\" && exit 1"
-  },
-  "dependencies": {
-    "@supabase/ssr": "^0.10.3",
-    "@supabase/supabase-js": "^2.106.1",
-    "next": "16.2.6",
-    "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "dev:api": "pnpm --filter @splat-connect/api dev",
+    "dev:web": "pnpm --filter @splat-connect/web dev",
+    "build": "pnpm --filter @splat-connect/api build && pnpm --filter @splat-connect/web build",
+    "typecheck": "pnpm -r typecheck"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.2.6",
-    "tailwindcss": "^4",
     "typescript": "^5"
   }
 }
