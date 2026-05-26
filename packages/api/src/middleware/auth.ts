@@ -5,6 +5,7 @@ import type { Role } from '@splat-connect/types'
 export type AuthVariables = {
   userId: string
   role: Role
+  approved: boolean
   token: string
 }
 
@@ -31,7 +32,7 @@ export const authMiddleware: MiddlewareHandler<{ Variables: AuthVariables }> = a
 
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('role')
+    .select('role, approved')
     .eq('id', user.id)
     .single()
 
@@ -41,6 +42,7 @@ export const authMiddleware: MiddlewareHandler<{ Variables: AuthVariables }> = a
 
   c.set('userId', user.id)
   c.set('role', profile.role as Role)
+  c.set('approved', profile.approved as boolean)
   c.set('token', token)
 
   await next()
