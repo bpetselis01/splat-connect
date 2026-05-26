@@ -2,8 +2,9 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { Nav } from '@/components/nav'
-import { apiClient } from '@/lib/api-client'
-import type { Role, Profile } from '@splat-connect/types'
+import { cookies } from 'next/headers'
+import { createServerClient } from '@supabase/ssr'
+import type { Role } from '@splat-connect/types'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -20,10 +21,28 @@ export default async function RootLayout({
 }) {
   let role: Role | null = null
   try {
-    const profile = await apiClient.get<Profile>('/api/contributors/me')
-    role = profile.role
+    const cookieStore = await cookies()
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll: () => cookieStore.getAll(),
+          setAll: () => {},
+        },
+      }
+    )
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+      role = (profile?.role as Role) ?? null
+    }
   } catch {
-    // unauthenticated or API unavailable — role stays null
+    // unauthenticated or Supabase unavailable — role stays null
   }
 
   return (
