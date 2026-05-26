@@ -21,9 +21,12 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
     ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
   })
   if (!res.ok) {
-    throw new Error(`API ${method} ${path} failed with status ${res.status}`)
+    let detail = ''
+    try { const j = await res.clone().json() as { error?: string }; if (j.error) detail = `: ${j.error}` } catch {}
+    throw new Error(`API ${method} ${path} failed with status ${res.status}${detail}`)
   }
-  return res.json() as Promise<T>
+  const text = await res.text()
+  return (text ? JSON.parse(text) : null) as T
 }
 
 async function requestFormData<T>(method: string, path: string, formData: FormData): Promise<T> {
@@ -36,9 +39,12 @@ async function requestFormData<T>(method: string, path: string, formData: FormDa
     body: formData,
   })
   if (!res.ok) {
-    throw new Error(`API ${method} ${path} failed with status ${res.status}`)
+    let detail = ''
+    try { const j = await res.clone().json() as { error?: string }; if (j.error) detail = `: ${j.error}` } catch {}
+    throw new Error(`API ${method} ${path} failed with status ${res.status}${detail}`)
   }
-  return res.json() as Promise<T>
+  const text = await res.text()
+  return (text ? JSON.parse(text) : null) as T
 }
 
 export const browserApiClient = {
