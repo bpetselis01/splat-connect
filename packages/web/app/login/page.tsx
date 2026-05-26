@@ -30,6 +30,7 @@ export default function LoginPage() {
         .eq('id', user!.id)
         .single()
 
+      router.refresh()
       if (profile?.role === 'contributor') {
         router.push(profile.approved ? '/dashboard' : '/pending')
       } else if (profile?.role === 'admin') {
@@ -37,7 +38,6 @@ export default function LoginPage() {
       } else {
         router.push('/')
       }
-      router.refresh()
     } finally {
       setLoading(false)
     }

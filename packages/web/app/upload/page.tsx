@@ -36,6 +36,7 @@ export default function UploadPage() {
   const [error, setError] = useState<string | null>(null)
 
   const [tutorialId] = useState(() => crypto.randomUUID())
+  const [tutorialCreated, setTutorialCreated] = useState(false)
   const [tutorialInserted, setTutorialInserted] = useState(false)
 
   async function uploadFile(endpoint: string, file: File): Promise<{ url: string; filename?: string }> {
@@ -97,22 +98,20 @@ export default function UploadPage() {
     setSubmitting(true)
     setError(null)
     try {
-      await browserApiClient.post(`/api/tutorials`, {
-        id: tutorialId,
-        title: draft.title,
-        description: draft.description || null,
-        difficulty: draft.difficulty,
-        tutorial_pdf_url: draft.tutorial_pdf_url,
-        toy_photo_url: draft.toy_photo_url,
-      })
+      if (!tutorialCreated) {
+        await browserApiClient.post(`/api/tutorials`, {
+          id: tutorialId,
+          title: draft.title,
+          description: draft.description || null,
+          difficulty: draft.difficulty,
+          tutorial_pdf_url: draft.tutorial_pdf_url,
+          toy_photo_url: draft.toy_photo_url,
+        })
+        setTutorialCreated(true)
+      }
 
       if (!tutorialInserted) {
-        // Link contributor on first attempt only; ignore duplicate on retries
-        try {
-          await browserApiClient.post(`/api/contributors/me/tutorials/${tutorialId}`, {})
-        } catch {
-          // duplicate on retry — already linked
-        }
+        await browserApiClient.post(`/api/contributors/me/tutorials/${tutorialId}`, {})
         setTutorialInserted(true)
       }
 

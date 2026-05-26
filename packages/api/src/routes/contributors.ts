@@ -21,7 +21,11 @@ contributors.post('/me/tutorials/:tutorialId', async (c) => {
   const { error } = await supabase
     .from('tutorial_contributors')
     .insert({ tutorial_id: c.req.param('tutorialId'), profile_id: c.get('userId') })
-  if (error) return c.json({ error: error.message }, 500)
+  if (error) {
+    // 23505 = unique_violation: already linked (retry-safe)
+    if (error.code === '23505') return c.body(null, 200)
+    return c.json({ error: error.message }, 500)
+  }
   return c.body(null, 201)
 })
 

@@ -178,9 +178,9 @@ export default async function EditTutorialPage({
           <div>
             <label className="block text-sm font-medium mb-1">Difficulty</label>
             <select name="difficulty" defaultValue={tutorial!.difficulty} className={inputCls}>
-              <option value="beginner">Beginner</option>
-              <option value="intermediate">Intermediate</option>
-              <option value="advanced">Advanced</option>
+              <option value="easy">Easy</option>
+              <option value="medium">Medium</option>
+              <option value="hard">Hard</option>
             </select>
           </div>
           <button type="submit" className={saveBtnCls}>
@@ -361,7 +361,7 @@ export default async function EditTutorialPage({
               ))}
             </ul>
           )}
-          <form action={addStlFile} encType="multipart/form-data" className="flex flex-col gap-2">
+          <form action={addStlFile} className="flex flex-col gap-2">
             <p className="text-sm font-medium">Add STL file</p>
             <FileDropZone name="stl_file" accept=".stl" label="STL File" />
             <button type="submit" className={saveBtnCls}>

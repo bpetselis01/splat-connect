@@ -14,18 +14,19 @@
     "test:cleanup": "tsx scripts/cleanup-test-users.ts"
   },
   "dependencies": {
-    "hono": "^4",
     "@hono/node-server": "^1",
+    "@splat-connect/types": "workspace:*",
     "@supabase/supabase-js": "^2",
-    "@splat-connect/types": "workspace:*"
+    "dotenv": "^17.4.2",
+    "hono": "^4"
   },
   "devDependencies": {
-    "tsx": "^4",
-    "typescript": "^5",
     "@types/node": "^20",
-    "vitest": "^2",
+    "@types/pg": "^8",
     "@vitest/coverage-v8": "^2",
     "pg": "^8",
-    "@types/pg": "^8"
+    "tsx": "^4",
+    "typescript": "^5",
+    "vitest": "^2"
   }
 }
