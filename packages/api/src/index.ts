@@ -1,5 +1,7 @@
+import 'dotenv/config'
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
+import { cors } from 'hono/cors'
 import { authMiddleware } from './middleware/auth.js'
 import publicRoutes from './routes/public.js'
 import tutorials from './routes/tutorials.js'
@@ -11,6 +13,8 @@ import admin from './routes/admin.js'
 import contributors from './routes/contributors.js'
 
 const app = new Hono()
+
+app.use('*', cors({ origin: process.env.CORS_ORIGIN ?? 'http://localhost:3000' }))
 
 app.get('/health', (c) => c.json({ status: 'ok' }))
 
