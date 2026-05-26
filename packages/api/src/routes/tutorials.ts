@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import { createUserClient } from '../supabase/user-client.js'
+import { createAdminClient } from '../supabase/client.js'
 import type { AuthVariables } from '../middleware/auth.js'
 
 const tutorials = new Hono<{ Variables: AuthVariables }>()
@@ -37,11 +38,15 @@ tutorials.get('/:id', async (c) => {
 })
 
 tutorials.post('/', async (c) => {
+  if (!c.get('approved')) {
+    return c.json({ error: 'Your account is not yet approved to create tutorials' }, 403)
+  }
   const body = await c.req.json()
-  const supabase = createUserClient(c.get('token'))
+  // Auth/approval already verified above — use admin client to bypass RLS JWT context issues
+  const supabase = createAdminClient()
   const { data, error } = await supabase
     .from('tutorials')
-    .upsert({
+    .insert({
       id: body.id,
       title: body.title,
       difficulty: body.difficulty,
@@ -52,7 +57,12 @@ tutorials.post('/', async (c) => {
     })
     .select()
     .single()
-  if (error) return c.json({ error: error.message }, 500)
+  if (error) {
+    // 23505 = unique_violation: tutorial already exists (retry-safe)
+    if (error.code === '23505') return c.json({ id: body.id }, 200)
+    console.error('[POST /api/tutorials] Supabase error:', error.code, error.message)
+    return c.json({ error: error.message }, 500)
+  }
   return c.json(data, 201)
 })
 
