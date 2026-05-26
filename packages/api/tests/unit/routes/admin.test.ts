@@ -35,7 +35,7 @@ describe('GET /tutorials', () => {
     })
     const res = await makeApp('admin').request('/tutorials')
     expect(res.status).toBe(200)
-    const body = await res.json()
+    const body = await res.json() as any
     expect(body).toHaveLength(1)
   })
 })
@@ -57,7 +57,7 @@ describe('PATCH /tutorials/:id/status', () => {
       body: JSON.stringify({ status: 'approved' }),
     })
     expect(res.status).toBe(200)
-    const body = await res.json()
+    const body = await res.json() as any
     expect(body.status).toBe('approved')
   })
 })

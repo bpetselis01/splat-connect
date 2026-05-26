@@ -48,7 +48,7 @@ describe('POST /pdf', () => {
     form.append('tutorialId', 'tid-1')
     const res = await makeApp().request('/pdf', { method: 'POST', body: form })
     expect(res.status).toBe(200)
-    const body = await res.json()
+    const body = await res.json() as any
     expect(body.url).toBe('https://example.com/test/tutorial.pdf')
   })
 })

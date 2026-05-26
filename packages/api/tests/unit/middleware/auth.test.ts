@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { Hono } from 'hono'
-import { authMiddleware } from '../../../src/middleware/auth.js'
+import { authMiddleware, type AuthVariables } from '../../../src/middleware/auth.js'
 
 const mockGetUser = vi.fn()
 const mockFrom = vi.fn()
@@ -13,7 +13,7 @@ vi.mock('../../../src/supabase/client.js', () => ({
 }))
 
 function makeApp() {
-  const app = new Hono()
+  const app = new Hono<{ Variables: AuthVariables }>()
   app.use('*', authMiddleware)
   app.get('/test', (c) => c.json({ userId: c.get('userId'), role: c.get('role') }))
   return app
@@ -28,7 +28,7 @@ describe('authMiddleware', () => {
     const app = makeApp()
     const res = await app.request('/test')
     expect(res.status).toBe(401)
-    const body = await res.json()
+    const body = await res.json() as any
     expect(body.error).toMatch(/missing/i)
   })
 
@@ -63,7 +63,7 @@ describe('authMiddleware', () => {
     const app = makeApp()
     const res = await app.request('/test', { headers: { Authorization: 'Bearer valid-token' } })
     expect(res.status).toBe(200)
-    const body = await res.json()
+    const body = await res.json() as any
     expect(body.userId).toBe('uid-1')
     expect(body.role).toBe('contributor')
   })

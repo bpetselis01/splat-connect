@@ -31,7 +31,7 @@ describe('GET /', () => {
     })
     const res = await makeApp().request('/')
     expect(res.status).toBe(200)
-    const body = await res.json()
+    const body = await res.json() as any
     expect(body).toHaveLength(1)
     expect(body[0].title).toBe('T1')
   })
@@ -79,7 +79,7 @@ describe('POST /', () => {
       body: JSON.stringify({ id: 'new-id', title: 'New Tutorial', difficulty: 'easy' }),
     })
     expect(res.status).toBe(201)
-    const body = await res.json()
+    const body = await res.json() as any
     expect(body.status).toBe('draft')
   })
 })

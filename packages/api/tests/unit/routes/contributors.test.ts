@@ -33,7 +33,7 @@ describe('GET /me', () => {
     })
     const res = await makeApp().request('/me')
     expect(res.status).toBe(200)
-    const body = await res.json()
+    const body = await res.json() as any
     expect(body.id).toBe('user-1')
   })
 
