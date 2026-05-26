@@ -1,6 +1,5 @@
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
-import { createClient } from '@/lib/supabase/server'
 import { DifficultyBadge } from '@/components/difficulty-badge'
 import type { TutorialWithDetails } from '@splat-connect/types'
 
@@ -10,24 +9,10 @@ export default async function TutorialPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const supabase = await createClient()
+  const res = await fetch(`${process.env.API_URL}/api/public/tutorials/${id}`, { cache: 'no-store' })
+  if (!res.ok) notFound()
 
-  const { data } = await supabase
-    .from('tutorials')
-    .select(`
-      *,
-      parts (*),
-      tools (*),
-      stl_files (*),
-      tutorial_contributors (*, profiles (*))
-    `)
-    .eq('id', id)
-    .eq('status', 'approved')
-    .single()
-
-  if (!data) notFound()
-
-  const tutorial = data as TutorialWithDetails
+  const tutorial = (await res.json()) as TutorialWithDetails
 
   const contributors = tutorial.tutorial_contributors ?? []
   const primaryContributor = contributors.find((c) => c.role === 'primary')

@@ -1,18 +1,11 @@
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
 import { TutorialCard } from '@/components/tutorial-card'
 import type { Tutorial } from '@splat-connect/types'
 
 export default async function HomePage() {
-  const supabase = await createClient()
-  const { data } = await supabase
-    .from('tutorials')
-    .select('*')
-    .eq('status', 'approved')
-    .order('created_at', { ascending: false })
-    .limit(3)
-
-  const featured = (data as Tutorial[]) ?? []
+  const res = await fetch(`${process.env.API_URL}/api/public/tutorials`, { cache: 'no-store' })
+  const all: Tutorial[] = res.ok ? await res.json() : []
+  const featured = all.slice(0, 3)
 
   return (
     <div>

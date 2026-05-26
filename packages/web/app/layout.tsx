@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { Nav } from '@/components/nav'
-import { createClient } from '@/lib/supabase/server'
-import type { Role } from '@splat-connect/types'
+import { apiClient } from '@/lib/api-client'
+import type { Role, Profile } from '@splat-connect/types'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -18,19 +18,12 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
   let role: Role | null = null
-  if (user) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-    role = (profile?.role as Role) ?? null
+  try {
+    const profile = await apiClient.get<Profile>('/api/contributors/me')
+    role = profile.role
+  } catch {
+    // unauthenticated or API unavailable — role stays null
   }
 
   return (

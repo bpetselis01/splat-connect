@@ -1,10 +1,10 @@
-import { createClient } from '@/lib/supabase/server'
+import { apiClient } from '@/lib/api-client'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import Link from 'next/link'
 import { FileDropZone } from '@/components/file-drop-zone'
 import { BuyLinksInput } from '@/components/buy-links-input'
-import type { Tutorial, Part, Tool, StlFile, Difficulty, BuyLink } from '@splat-connect/types'
+import type { Tutorial, Part, Tool, StlFile, TutorialWithDetails, Difficulty, BuyLink, Profile } from '@splat-connect/types'
 
 export default async function EditTutorialPage({
   params,
@@ -12,96 +12,73 @@ export default async function EditTutorialPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
 
-  if (!user) redirect('/login')
+  let profile: Profile
+  try {
+    profile = await apiClient.get<Profile>('/api/contributors/me')
+  } catch {
+    redirect('/login')
+  }
 
-  const { data: ownership } = await supabase
-    .from('tutorial_contributors')
-    .select('tutorial_id')
-    .eq('tutorial_id', id)
-    .eq('profile_id', user.id)
-    .single()
+  let tutorial: TutorialWithDetails
+  try {
+    tutorial = await apiClient.get<TutorialWithDetails>(`/api/tutorials/${id}`)
+  } catch {
+    redirect('/dashboard')
+  }
 
-  if (!ownership) redirect('/dashboard')
+  const isContributor = tutorial!.tutorial_contributors.some(
+    (tc) => tc.profile_id === profile!.id
+  )
+  if (!isContributor) redirect('/dashboard')
 
-  const { data: tutorialData } = await supabase
-    .from('tutorials')
-    .select('*')
-    .eq('id', id)
-    .single()
-
-  if (!tutorialData) redirect('/dashboard')
-  const tutorial = tutorialData as Tutorial
-
-  const [{ data: partsData }, { data: toolsData }, { data: stlData }] =
-    await Promise.all([
-      supabase.from('parts').select('*').eq('tutorial_id', id),
-      supabase.from('tools').select('*').eq('tutorial_id', id),
-      supabase.from('stl_files').select('*').eq('tutorial_id', id),
-    ])
-
-  const parts = (partsData ?? []) as Part[]
-  const tools = (toolsData ?? []) as Tool[]
-  const stlFiles = (stlData ?? []) as StlFile[]
+  const parts = tutorial!.parts as Part[]
+  const tools = tutorial!.tools as Tool[]
+  const stlFiles = tutorial!.stl_files as StlFile[]
 
   async function saveDetails(formData: FormData) {
     'use server'
-    const supabase = await createClient()
-    const { data: current } = await supabase
-      .from('tutorials')
-      .select('status')
-      .eq('id', id)
-      .single()
-
-    const payload: Record<string, string> = {
+    const current = await apiClient.get<Tutorial>(`/api/tutorials/${id}`)
+    const patch: Record<string, string | null> = {
       title: formData.get('title') as string,
-      description: formData.get('description') as string,
+      description: (formData.get('description') as string) || null,
       difficulty: formData.get('difficulty') as Difficulty,
     }
-    if (current?.status === 'approved' || current?.status === 'rejected') {
-      payload.status = 'pending'
+    if (current.status === 'approved' || current.status === 'rejected') {
+      patch.status = 'pending'
     }
-
-    await supabase.from('tutorials').update(payload).eq('id', id)
+    await apiClient.patch(`/api/tutorials/${id}`, patch)
     revalidatePath(`/tutorials/${id}/edit`)
   }
 
   async function saveFiles(formData: FormData) {
     'use server'
-    const supabase = await createClient()
     const updates: Record<string, string> = {}
 
     const photo = formData.get('toy_photo') as File | null
     if (photo && photo.size > 0) {
-      const ext = photo.name.split('.').pop()
-      const path = `${id}/photo.${ext}`
-      await supabase.storage.from('toy-photos').upload(path, photo, { upsert: true })
-      const { data } = supabase.storage.from('toy-photos').getPublicUrl(path)
-      updates.toy_photo_url = data.publicUrl
+      const fd = new FormData()
+      fd.append('file', photo)
+      fd.append('tutorialId', id)
+      const { url } = await apiClient.postFormData<{ url: string }>('/api/upload/photo', fd)
+      updates.toy_photo_url = url
     }
 
     const pdf = formData.get('tutorial_pdf') as File | null
     if (pdf && pdf.size > 0) {
-      const path = `${id}/tutorial.pdf`
-      await supabase.storage.from('tutorial-pdfs').upload(path, pdf, { upsert: true })
-      const { data } = supabase.storage.from('tutorial-pdfs').getPublicUrl(path)
-      updates.tutorial_pdf_url = data.publicUrl
+      const fd = new FormData()
+      fd.append('file', pdf)
+      fd.append('tutorialId', id)
+      const { url } = await apiClient.postFormData<{ url: string }>('/api/upload/pdf', fd)
+      updates.tutorial_pdf_url = url
     }
 
     if (Object.keys(updates).length > 0) {
-      const { data: current } = await supabase
-        .from('tutorials')
-        .select('status')
-        .eq('id', id)
-        .single()
-      if (current?.status === 'approved' || current?.status === 'rejected') {
+      const current = await apiClient.get<Tutorial>(`/api/tutorials/${id}`)
+      if (current.status === 'approved' || current.status === 'rejected') {
         updates.status = 'pending'
       }
-      await supabase.from('tutorials').update(updates).eq('id', id)
+      await apiClient.patch(`/api/tutorials/${id}`, updates)
     }
 
     revalidatePath(`/tutorials/${id}/edit`)
@@ -111,15 +88,19 @@ export default async function EditTutorialPage({
     'use server'
     const name = formData.get('name') as string
     if (!name.trim()) return
-    const supabase = await createClient()
     const rawLinks = formData.get('buy_links') as string
     const buy_links: BuyLink[] = rawLinks ? JSON.parse(rawLinks) : []
-    await supabase.from('parts').insert({
-      tutorial_id: id,
-      name: name.trim(),
-      quantity: Number(formData.get('quantity') ?? 1),
-      is_optional: formData.get('is_optional') === 'on',
-      buy_links,
+    const current = await apiClient.get<TutorialWithDetails>(`/api/tutorials/${id}`)
+    await apiClient.post(`/api/tutorials/${id}/parts`, {
+      parts: [
+        ...current.parts,
+        {
+          name: name.trim(),
+          quantity: Number(formData.get('quantity') ?? 1),
+          is_optional: formData.get('is_optional') === 'on',
+          buy_links,
+        },
+      ],
     })
     revalidatePath(`/tutorials/${id}/edit`)
   }
@@ -128,14 +109,18 @@ export default async function EditTutorialPage({
     'use server'
     const name = formData.get('name') as string
     if (!name.trim()) return
-    const supabase = await createClient()
     const rawLinks = formData.get('buy_links') as string
     const buy_links: BuyLink[] = rawLinks ? JSON.parse(rawLinks) : []
-    await supabase.from('tools').insert({
-      tutorial_id: id,
-      name: name.trim(),
-      is_optional: formData.get('is_optional') === 'on',
-      buy_links,
+    const current = await apiClient.get<TutorialWithDetails>(`/api/tutorials/${id}`)
+    await apiClient.post(`/api/tutorials/${id}/tools`, {
+      tools: [
+        ...current.tools,
+        {
+          name: name.trim(),
+          is_optional: formData.get('is_optional') === 'on',
+          buy_links,
+        },
+      ],
     })
     revalidatePath(`/tutorials/${id}/edit`)
   }
@@ -144,14 +129,16 @@ export default async function EditTutorialPage({
     'use server'
     const file = formData.get('stl_file') as File | null
     if (!file || file.size === 0) return
-    const supabase = await createClient()
-    const path = `${id}/stl/${file.name}`
-    await supabase.storage.from('stl-files').upload(path, file, { upsert: true })
-    const { data } = supabase.storage.from('stl-files').getPublicUrl(path)
-    await supabase.from('stl_files').insert({
-      tutorial_id: id,
-      filename: file.name,
-      file_url: data.publicUrl,
+    const fd = new FormData()
+    fd.append('file', file)
+    fd.append('tutorialId', id)
+    const { url, filename } = await apiClient.postFormData<{ url: string; filename: string }>(
+      '/api/upload/stl',
+      fd
+    )
+    const current = await apiClient.get<TutorialWithDetails>(`/api/tutorials/${id}`)
+    await apiClient.post(`/api/tutorials/${id}/stl-files`, {
+      stl_files: [...current.stl_files, { filename, file_url: url }],
     })
     revalidatePath(`/tutorials/${id}/edit`)
   }
@@ -168,7 +155,7 @@ export default async function EditTutorialPage({
         <Link href="/dashboard" className="text-sm text-blue-600 hover:underline">
           ← Dashboard
         </Link>
-        <h1 className="text-xl font-bold truncate">{tutorial.title}</h1>
+        <h1 className="text-xl font-bold truncate">{tutorial!.title}</h1>
       </div>
 
       {/* Details */}
@@ -177,20 +164,20 @@ export default async function EditTutorialPage({
         <form action={saveDetails} className="px-5 pb-5 flex flex-col gap-3">
           <div>
             <label className="block text-sm font-medium mb-1">Title</label>
-            <input name="title" defaultValue={tutorial.title} required className={inputCls} />
+            <input name="title" defaultValue={tutorial!.title} required className={inputCls} />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Description</label>
             <textarea
               name="description"
-              defaultValue={tutorial.description ?? ''}
+              defaultValue={tutorial!.description ?? ''}
               rows={4}
               className={inputCls}
             />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Difficulty</label>
-            <select name="difficulty" defaultValue={tutorial.difficulty} className={inputCls}>
+            <select name="difficulty" defaultValue={tutorial!.difficulty} className={inputCls}>
               <option value="beginner">Beginner</option>
               <option value="intermediate">Intermediate</option>
               <option value="advanced">Advanced</option>
@@ -212,7 +199,7 @@ export default async function EditTutorialPage({
               name="toy_photo"
               accept="image/*"
               label="Toy Photo"
-              currentFileLabel={tutorial.toy_photo_url ? 'Current photo on file — upload to replace' : undefined}
+              currentFileLabel={tutorial!.toy_photo_url ? 'Current photo on file — upload to replace' : undefined}
             />
           </div>
           <div>
@@ -221,7 +208,7 @@ export default async function EditTutorialPage({
               name="tutorial_pdf"
               accept=".pdf"
               label="Tutorial PDF"
-              currentFileLabel={tutorial.tutorial_pdf_url ? 'Current PDF on file — upload to replace' : undefined}
+              currentFileLabel={tutorial!.tutorial_pdf_url ? 'Current PDF on file — upload to replace' : undefined}
             />
           </div>
           <button type="submit" className={saveBtnCls}>

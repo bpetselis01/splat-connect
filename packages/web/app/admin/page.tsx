@@ -1,32 +1,26 @@
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { apiClient } from '@/lib/api-client'
+import type { Tutorial, Profile } from '@splat-connect/types'
 
 export default async function AdminPage() {
-  const supabase = await createClient()
+  const [tutorials, contributors] = await Promise.all([
+    apiClient.get<Tutorial[]>('/api/admin/tutorials?status=pending'),
+    apiClient.get<Profile[]>('/api/admin/contributors'),
+  ])
 
-  const [{ count: pendingContributors }, { count: pendingTutorials }] =
-    await Promise.all([
-      supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('approved', false)
-        .eq('role', 'contributor'),
-      supabase
-        .from('tutorials')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'pending'),
-    ])
+  const pendingTutorials = tutorials.length
+  const pendingContributors = contributors.filter((c) => !c.approved).length
 
   const cards = [
     {
       label: 'Pending contributor requests',
-      count: pendingContributors ?? 0,
+      count: pendingContributors,
       href: '/admin/contributors',
       color: 'border-orange-400',
     },
     {
       label: 'Tutorials awaiting review',
-      count: pendingTutorials ?? 0,
+      count: pendingTutorials,
       href: '/admin/review',
       color: 'border-blue-400',
     },

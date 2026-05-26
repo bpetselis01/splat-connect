@@ -1,34 +1,24 @@
-import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { apiClient } from '@/lib/api-client'
 import { revalidatePath } from 'next/cache'
 import type { Profile } from '@splat-connect/types'
 
 async function approveContributor(id: string) {
   'use server'
-  const supabase = await createClient()
-  await supabase.from('profiles').update({ approved: true }).eq('id', id)
+  await apiClient.patch(`/api/admin/contributors/${id}/approve`, {})
   revalidatePath('/admin/contributors')
   revalidatePath('/admin')
 }
 
 async function rejectContributor(id: string) {
   'use server'
-  const supabase = createAdminClient()
-  await supabase.auth.admin.deleteUser(id)
+  await apiClient.delete(`/api/admin/contributors/${id}`)
   revalidatePath('/admin/contributors')
   revalidatePath('/admin')
 }
 
 export default async function ContributorsPage() {
-  const supabase = await createClient()
-  const { data } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('approved', false)
-    .eq('role', 'contributor')
-    .order('created_at', { ascending: true })
-
-  const pending = (data as Profile[]) ?? []
+  const all = await apiClient.get<Profile[]>('/api/admin/contributors')
+  const pending = all.filter((p) => !p.approved)
 
   if (pending.length === 0) {
     return (

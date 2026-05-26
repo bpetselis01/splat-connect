@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { browserApiClient } from '@/lib/browser-api-client'
 import { canAdvanceFromStep, canSubmit } from '@/lib/validation'
 import { FileDropZone } from '@/components/file-drop-zone'
 import { BuyLinksInput } from '@/components/buy-links-input'
@@ -29,7 +29,6 @@ const EMPTY_DRAFT: UploadDraft = {
 
 export default function UploadPage() {
   const router = useRouter()
-  const supabase = createClient()
   const [step, setStep] = useState(1)
   const [draft, setDraft] = useState<UploadDraft>(EMPTY_DRAFT)
   const [uploading, setUploading] = useState(false)
@@ -39,16 +38,11 @@ export default function UploadPage() {
   const [tutorialId] = useState(() => crypto.randomUUID())
   const [tutorialInserted, setTutorialInserted] = useState(false)
 
-  async function uploadFile(
-    bucket: string,
-    file: File,
-    pathSuffix: string
-  ): Promise<string> {
-    const path = `${tutorialId}/${pathSuffix}`
-    const { error } = await supabase.storage.from(bucket).upload(path, file)
-    if (error) throw new Error(error.message)
-    const { data } = supabase.storage.from(bucket).getPublicUrl(path)
-    return data.publicUrl
+  async function uploadFile(endpoint: string, file: File): Promise<{ url: string; filename?: string }> {
+    const fd = new FormData()
+    fd.append('file', file)
+    fd.append('tutorialId', tutorialId)
+    return browserApiClient.postFormData(endpoint, fd)
   }
 
   async function handlePdfUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -56,7 +50,7 @@ export default function UploadPage() {
     if (!file) return
     setUploading(true)
     try {
-      const url = await uploadFile('tutorial-pdfs', file, 'tutorial.pdf')
+      const { url } = await uploadFile('/api/upload/pdf', file)
       setDraft((d) => ({ ...d, tutorial_pdf_url: url }))
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Upload failed')
@@ -70,8 +64,7 @@ export default function UploadPage() {
     if (!file) return
     setUploading(true)
     try {
-      const ext = file.name.split('.').pop()
-      const url = await uploadFile('toy-photos', file, `photo.${ext}`)
+      const { url } = await uploadFile('/api/upload/photo', file)
       setDraft((d) => ({ ...d, toy_photo_url: url }))
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Upload failed')
@@ -87,8 +80,8 @@ export default function UploadPage() {
     try {
       const uploaded = await Promise.all(
         files.map(async (file) => {
-          const url = await uploadFile('stl-files', file, `stl/${file.name}`)
-          return { filename: file.name, file_url: url }
+          const { url, filename } = await uploadFile('/api/upload/stl', file)
+          return { filename: filename ?? file.name, file_url: url }
         })
       )
       setDraft((d) => ({ ...d, stl_files: [...d.stl_files, ...uploaded] }))
@@ -104,89 +97,39 @@ export default function UploadPage() {
     setSubmitting(true)
     setError(null)
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user) throw new Error('Not authenticated')
+      await browserApiClient.post(`/api/tutorials`, {
+        id: tutorialId,
+        title: draft.title,
+        description: draft.description || null,
+        difficulty: draft.difficulty,
+        tutorial_pdf_url: draft.tutorial_pdf_url,
+        toy_photo_url: draft.toy_photo_url,
+      })
 
-      if (tutorialInserted) {
-        const { error } = await supabase.from('tutorials').update({
-          title: draft.title,
-          description: draft.description || null,
-          difficulty: draft.difficulty,
-          tutorial_pdf_url: draft.tutorial_pdf_url,
-          toy_photo_url: draft.toy_photo_url,
-        }).eq('id', tutorialId)
-        if (error) throw new Error(`Draft update: ${error.message}`)
-      } else {
-        const { error } = await supabase.from('tutorials').insert({
-          id: tutorialId,
-          title: draft.title,
-          description: draft.description || null,
-          difficulty: draft.difficulty,
-          status: 'draft',
-          tutorial_pdf_url: draft.tutorial_pdf_url,
-          toy_photo_url: draft.toy_photo_url,
-        })
-        if (error) throw new Error(`Insert: ${error.message}`)
+      if (!tutorialInserted) {
+        // Link contributor on first attempt only; ignore duplicate on retries
+        try {
+          await browserApiClient.post(`/api/contributors/me/tutorials/${tutorialId}`, {})
+        } catch {
+          // duplicate on retry — already linked
+        }
         setTutorialInserted(true)
       }
 
-      // ignoreDuplicates handles retries — contributors have no DELETE policy so
-      // delete+re-insert would hit a duplicate key on the second attempt
-      const { error: tcError } = await supabase.from('tutorial_contributors').upsert({
-        tutorial_id: tutorialId,
-        profile_id: user.id,
-        role: 'primary',
-      }, { ignoreDuplicates: true })
-      if (tcError) throw new Error(`Contributor: ${tcError.message}`)
-
-      // Clean up parts/tools from a previous failed attempt before re-inserting
-      await supabase.from('parts').delete().eq('tutorial_id', tutorialId)
-      await supabase.from('tools').delete().eq('tutorial_id', tutorialId)
-
-      if (draft.parts.length > 0) {
-        const { error: partsError } = await supabase.from('parts').insert(
-          draft.parts.map((p) => ({
-            tutorial_id: tutorialId,
-            name: p.name,
-            quantity: p.quantity,
-            is_optional: p.is_optional,
-            buy_links: p.buy_links,
-          }))
-        )
-        if (partsError) throw new Error(`Parts: ${partsError.message}`)
-      }
-
-      if (draft.tools.length > 0) {
-        const { error: toolsError } = await supabase.from('tools').insert(
-          draft.tools.map((t) => ({
-            tutorial_id: tutorialId,
-            name: t.name,
-            is_optional: t.is_optional,
-            buy_links: t.buy_links,
-          }))
-        )
-        if (toolsError) throw new Error(`Tools: ${toolsError.message}`)
-      }
+      await browserApiClient.post(`/api/tutorials/${tutorialId}/parts`, {
+        parts: draft.parts,
+      })
+      await browserApiClient.post(`/api/tutorials/${tutorialId}/tools`, {
+        tools: draft.tools,
+      })
 
       if (draft.stl_files.length > 0) {
-        const { error: stlError } = await supabase.from('stl_files').insert(
-          draft.stl_files.map((f) => ({
-            tutorial_id: tutorialId,
-            filename: f.filename,
-            file_url: f.file_url,
-          }))
-        )
-        if (stlError) throw new Error(`STL files: ${stlError.message}`)
+        await browserApiClient.post(`/api/tutorials/${tutorialId}/stl-files`, {
+          stl_files: draft.stl_files,
+        })
       }
 
-      // Promote to pending now that all related data is inserted
-      const { error: updateError } = await supabase
-        .from('tutorials')
-        .update({ status: 'pending' })
-        .eq('id', tutorialId)
-      if (updateError) throw new Error(updateError.message)
+      await browserApiClient.patch(`/api/tutorials/${tutorialId}`, { status: 'pending' })
 
       router.refresh()
       router.push('/my-tutorials')

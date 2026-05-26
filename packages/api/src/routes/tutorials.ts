@@ -29,7 +29,7 @@ tutorials.get('/:id', async (c) => {
   const supabase = createUserClient(c.get('token'))
   const { data, error } = await supabase
     .from('tutorials')
-    .select('*, parts(*), tools(*), stl_files(*), tutorial_contributors(profile_id)')
+    .select('*, parts(*), tools(*), stl_files(*), tutorial_contributors(*, profiles(*))')
     .eq('id', c.req.param('id'))
     .single()
   if (error) return c.json({ error: error.message }, 404)

@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { apiClient } from '@/lib/api-client'
 import Link from 'next/link'
 import { DifficultyBadge } from '@/components/difficulty-badge'
 import type { Tutorial, TutorialStatus, Difficulty } from '@splat-connect/types'
@@ -11,20 +11,7 @@ const statusStyles: Record<TutorialStatus, string> = {
 }
 
 export default async function MyTutorialsPage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  const { data } = await supabase
-    .from('tutorial_contributors')
-    .select('tutorials (*)')
-    .eq('profile_id', user!.id)
-    .order('added_at', { ascending: false })
-
-  const tutorials = (
-    data?.map((row: { tutorials: unknown }) => row.tutorials).filter(Boolean) ?? []
-  ) as Tutorial[]
+  const tutorials = await apiClient.get<Tutorial[]>('/api/tutorials/mine')
 
   if (tutorials.length === 0) {
     return (

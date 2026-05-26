@@ -1,17 +1,10 @@
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { apiClient } from '@/lib/api-client'
 import { DifficultyBadge } from '@/components/difficulty-badge'
 import type { Tutorial, Difficulty } from '@splat-connect/types'
 
 export default async function ReviewListPage() {
-  const supabase = await createClient()
-  const { data } = await supabase
-    .from('tutorials')
-    .select('*')
-    .eq('status', 'pending')
-    .order('created_at', { ascending: true })
-
-  const tutorials = (data as Tutorial[]) ?? []
+  const tutorials = await apiClient.get<Tutorial[]>('/api/admin/tutorials?status=pending')
 
   if (tutorials.length === 0) {
     return (

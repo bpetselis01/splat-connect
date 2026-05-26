@@ -1,8 +1,8 @@
-import { createClient } from '@/lib/supabase/server'
+import { apiClient } from '@/lib/api-client'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { DifficultyBadge } from '@/components/difficulty-badge'
-import type { Tutorial, TutorialStatus, Difficulty } from '@splat-connect/types'
+import type { Tutorial, TutorialStatus, Difficulty, Profile } from '@splat-connect/types'
 
 const statusStyles: Record<TutorialStatus, string> = {
   draft: 'bg-gray-100 text-gray-600',
@@ -12,30 +12,16 @@ const statusStyles: Record<TutorialStatus, string> = {
 }
 
 export default async function DashboardPage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  let profile: Profile
+  try {
+    profile = await apiClient.get<Profile>('/api/contributors/me')
+  } catch {
+    redirect('/login')
+  }
 
-  if (!user) redirect('/login')
+  if (profile!.role !== 'contributor') redirect('/')
 
-  const { data: profileRow } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  if (profileRow?.role !== 'contributor') redirect('/')
-
-  const { data } = await supabase
-    .from('tutorial_contributors')
-    .select('tutorials(id, title, status, difficulty, rejection_note)')
-    .eq('profile_id', user.id)
-    .order('added_at', { ascending: false })
-
-  const tutorials = (
-    data?.map((row: { tutorials: unknown }) => row.tutorials).filter(Boolean) ?? []
-  ) as Tutorial[]
+  const tutorials = await apiClient.get<Tutorial[]>('/api/tutorials/mine')
 
   const pendingCount = tutorials.filter((t) => t.status === 'pending').length
   const approvedCount = tutorials.filter((t) => t.status === 'approved').length

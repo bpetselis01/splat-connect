@@ -1,17 +1,13 @@
 import { notFound } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import Image from 'next/image'
-import { createClient } from '@/lib/supabase/server'
+import { apiClient } from '@/lib/api-client'
 import { DifficultyBadge } from '@/components/difficulty-badge'
 import type { TutorialWithDetails, Difficulty } from '@splat-connect/types'
 
 async function approveTutorial(id: string) {
   'use server'
-  const supabase = await createClient()
-  await supabase
-    .from('tutorials')
-    .update({ status: 'approved', reviewed_at: new Date().toISOString() })
-    .eq('id', id)
+  await apiClient.patch(`/api/admin/tutorials/${id}/status`, { status: 'approved' })
   revalidatePath('/admin')
   revalidatePath('/admin/review')
   revalidatePath(`/admin/review/${id}`)
@@ -22,15 +18,10 @@ async function rejectTutorial(formData: FormData) {
   'use server'
   const id = formData.get('id') as string
   const note = formData.get('note') as string
-  const supabase = await createClient()
-  await supabase
-    .from('tutorials')
-    .update({
-      status: 'rejected',
-      rejection_note: note || null,
-      reviewed_at: new Date().toISOString(),
-    })
-    .eq('id', id)
+  await apiClient.patch(`/api/admin/tutorials/${id}/status`, {
+    status: 'rejected',
+    rejection_note: note || null,
+  })
   revalidatePath('/admin')
   revalidatePath('/admin/review')
   revalidatePath(`/admin/review/${id}`)
@@ -42,31 +33,22 @@ export default async function ReviewTutorialPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const supabase = await createClient()
+  let tutorial: TutorialWithDetails
+  try {
+    tutorial = await apiClient.get<TutorialWithDetails>(`/api/tutorials/${id}`)
+  } catch {
+    notFound()
+  }
 
-  const { data } = await supabase
-    .from('tutorials')
-    .select(`
-      *,
-      parts (*),
-      tools (*),
-      stl_files (*),
-      tutorial_contributors (*, profiles (*))
-    `)
-    .eq('id', id)
-    .eq('status', 'pending')
-    .single()
+  if (tutorial!.status !== 'pending') notFound()
 
-  if (!data) notFound()
-
-  const tutorial = data as TutorialWithDetails
-  const contributor = tutorial.tutorial_contributors?.[0]?.profiles
+  const contributor = tutorial!.tutorial_contributors?.[0]?.profiles
 
   return (
     <div className="max-w-3xl">
       <div className="flex items-center gap-3 mb-6">
-        <h1 className="text-2xl font-bold">{tutorial.title}</h1>
-        <DifficultyBadge difficulty={tutorial.difficulty as Difficulty} />
+        <h1 className="text-2xl font-bold">{tutorial!.title}</h1>
+        <DifficultyBadge difficulty={tutorial!.difficulty as Difficulty} />
       </div>
       {contributor && (
         <p className="text-sm text-gray-500 mb-6">
@@ -74,15 +56,15 @@ export default async function ReviewTutorialPage({
         </p>
       )}
 
-      {tutorial.toy_photo_url && (
+      {tutorial!.toy_photo_url && (
         <div className="relative h-48 w-full rounded-xl overflow-hidden mb-6">
-          <Image src={tutorial.toy_photo_url} alt={tutorial.title} fill className="object-cover" />
+          <Image src={tutorial!.toy_photo_url} alt={tutorial!.title} fill className="object-cover" />
         </div>
       )}
 
-      {tutorial.tutorial_pdf_url && (
+      {tutorial!.tutorial_pdf_url && (
         <a
-          href={tutorial.tutorial_pdf_url}
+          href={tutorial!.tutorial_pdf_url}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-block bg-[#1e3a5f] text-white px-4 py-2 rounded-lg text-sm font-semibold mb-6 hover:bg-[#16304f]"
@@ -91,11 +73,11 @@ export default async function ReviewTutorialPage({
         </a>
       )}
 
-      {tutorial.parts.length > 0 && (
+      {tutorial!.parts.length > 0 && (
         <div className="mb-6">
-          <h2 className="font-bold text-sm mb-2">Parts ({tutorial.parts.length})</h2>
+          <h2 className="font-bold text-sm mb-2">Parts ({tutorial!.parts.length})</h2>
           <div className="flex flex-col gap-1">
-            {tutorial.parts.map((p) => (
+            {tutorial!.parts.map((p) => (
               <div key={p.id} className="text-sm bg-white border rounded px-3 py-1.5 flex justify-between">
                 <span>{p.name} × {p.quantity}</span>
                 {p.buy_links.length > 0 && (
@@ -113,11 +95,11 @@ export default async function ReviewTutorialPage({
         </div>
       )}
 
-      {tutorial.tools.length > 0 && (
+      {tutorial!.tools.length > 0 && (
         <div className="mb-6">
-          <h2 className="font-bold text-sm mb-2">Tools ({tutorial.tools.length})</h2>
+          <h2 className="font-bold text-sm mb-2">Tools ({tutorial!.tools.length})</h2>
           <div className="flex flex-col gap-1">
-            {tutorial.tools.map((t) => (
+            {tutorial!.tools.map((t) => (
               <div key={t.id} className="text-sm bg-white border rounded px-3 py-1.5 flex justify-between">
                 <span>{t.name}</span>
                 {t.buy_links.length > 0 && (
@@ -135,11 +117,11 @@ export default async function ReviewTutorialPage({
         </div>
       )}
 
-      {tutorial.stl_files.length > 0 && (
+      {tutorial!.stl_files.length > 0 && (
         <div className="mb-6">
-          <h2 className="font-bold text-sm mb-2">STL Files ({tutorial.stl_files.length})</h2>
+          <h2 className="font-bold text-sm mb-2">STL Files ({tutorial!.stl_files.length})</h2>
           <div className="flex flex-col gap-1">
-            {tutorial.stl_files.map((f) => (
+            {tutorial!.stl_files.map((f) => (
               <a key={f.id} href={f.file_url} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline">
                 ↓ {f.filename}
               </a>
@@ -149,7 +131,7 @@ export default async function ReviewTutorialPage({
       )}
 
       <div className="border-t pt-6 flex flex-col gap-4">
-        <form action={approveTutorial.bind(null, tutorial.id)}>
+        <form action={approveTutorial.bind(null, tutorial!.id)}>
           <button
             type="submit"
             className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700"
@@ -158,7 +140,7 @@ export default async function ReviewTutorialPage({
           </button>
         </form>
         <form action={rejectTutorial} className="flex flex-col gap-2">
-          <input type="hidden" name="id" value={tutorial.id} />
+          <input type="hidden" name="id" value={tutorial!.id} />
           <textarea
             name="note"
             rows={2}
