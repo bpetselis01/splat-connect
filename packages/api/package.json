@@ -1,0 +1,31 @@
+{
+  "name": "@splat-connect/api",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/src/index.js",
+    "typecheck": "tsc --noEmit",
+    "test:unit": "vitest run tests/unit --coverage",
+    "test:integration": "vitest run tests/integration",
+    "test": "vitest run --coverage",
+    "test:cleanup": "tsx scripts/cleanup-test-users.ts"
+  },
+  "dependencies": {
+    "hono": "^4",
+    "@hono/node-server": "^1",
+    "@supabase/supabase-js": "^2",
+    "@splat-connect/types": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "^4",
+    "typescript": "^5",
+    "@types/node": "^20",
+    "vitest": "^2",
+    "@vitest/coverage-v8": "^2",
+    "pg": "^8",
+    "@types/pg": "^8"
+  }
+}
