@@ -34,6 +34,7 @@ yarn-error.log*
 # env files — commit .env.example, never .env*.local or .env.local
 .env*.local
 .env.local
+packages/api/.env
 
 # vercel
 .vercel
