@@ -42,7 +42,7 @@ tutorials.post('/', async (c) => {
     return c.json({ error: 'Your account is not yet approved to create tutorials' }, 403)
   }
   const body = await c.req.json()
-  // Auth/approval already verified above — use admin client to bypass RLS JWT context issues
+  // Auth/approval already verified above -- use admin client to bypass RLS JWT context issues
   const supabase = createAdminClient()
   const { data, error } = await supabase
     .from('tutorials')

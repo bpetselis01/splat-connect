@@ -25,11 +25,14 @@ export interface Tutorial {
   reviewed_at: string | null
 }
 
+// Links a tutorial to a person. The profiles field is optional here
+// but will be required when used inside TutorialWithDetails
 export interface TutorialContributor {
   tutorial_id: string
   profile_id: string
   role: ContributorRole
   added_at: string
+  // Optional: the actual person's profile info (name, email, etc.)
   profiles?: Profile
 }
 
@@ -62,6 +65,10 @@ export interface StlFile {
   file_url: string
 }
 
+// A tutorial with all its related information: the parts needed, tools needed,
+// 3D files, and the people who created it.
+// Note: tutorial_contributors REQUIRES the profiles field (makes it non-optional)
+// so you always have the contributor's full info when viewing a complete tutorial
 export interface TutorialWithDetails extends Tutorial {
   parts: Part[]
   tools: Tool[]
@@ -69,6 +76,10 @@ export interface TutorialWithDetails extends Tutorial {
   tutorial_contributors: (TutorialContributor & { profiles: Profile })[]
 }
 
+// A draft tutorial being filled out by a contributor on the upload form.
+// This is temporary state before submission — it allows empty values and null files.
+// When submitted, the API converts this into actual Tutorial, Part, Tool, and StlFile
+// records in the database.
 export interface UploadDraft {
   title: string
   description: string
