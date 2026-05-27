@@ -1,36 +1,26 @@
 /**
  * Next.js Middleware for Route Protection
- * 
+ *
  * This middleware runs on EVERY request to the web app (before page rendering).
  * It validates that users have the right authentication status for their route.
- * 
+ *
  * Why it's needed:
  * - Some routes are only for contributors (e.g., /upload, /dashboard)
  * - Some routes are only for admins (e.g., /admin)
  * - This middleware redirects unauthenticated users to /login
  * - This middleware redirects non-admins away from /admin
- * 
- * Process:
- * 1. Creates Supabase client with user's session cookies
- * 2. Checks if user is authenticated
- * 3. Determines route requirements (contributor-only? admin-only?)
- * 4. If user doesn't meet requirements:
- *    - Redirect to /login if not authenticated
- *    - Redirect to /pending if user is not approved yet
- *    - Redirect to home if trying to access /admin but not admin
- * 5. If all checks pass, allow request to proceed
- * 
+ *
  * Protected routes:
  * - /upload: Contributors only (approved=true)
  * - /my-tutorials: Contributors only
  * - /dashboard: Contributors only
  * - /admin: Admins only (role='admin')
- * 
+ *
  * Note: This is CLIENT-SIDE route protection (UX).
  * Server-side protection is done in:
  * - API middleware (packages/api/src/middleware/auth.ts)
  * - Supabase RLS policies (supabase/migrations/001_initial.sql)
- * 
+ *
  * Related files:
  * - lib/api-client.ts: Fetches data from API (also validates auth server-side)
  * - app/login: Authentication page
@@ -108,5 +98,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/upload/:path*', '/my-tutorials/:path*', '/admin/:path*', '/dashboard/:path*'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
 }
