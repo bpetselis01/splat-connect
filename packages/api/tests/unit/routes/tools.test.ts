@@ -39,6 +39,17 @@ describe('POST /:id/tools', () => {
     expect(mockDeleteTools).toHaveBeenCalled()
     expect(mockInsertTools).toHaveBeenCalled()
   })
+
+  it('returns 500 when insert fails', async () => {
+    mockInsertTools.mockReturnValue({ select: vi.fn(() => ({ data: null, error: { message: 'insert error' } })) })
+    const newTools = [{ name: 'Screwdriver', is_optional: false, buy_links: [] }]
+    const res = await makeApp().request('/tutorial-1/tools', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tools: newTools }),
+    })
+    expect(res.status).toBe(500)
+  })
 })
 
 describe('DELETE /:id/tools', () => {
@@ -47,5 +58,11 @@ describe('DELETE /:id/tools', () => {
   it('deletes tools and returns 204', async () => {
     const res = await makeApp().request('/tutorial-1/tools', { method: 'DELETE' })
     expect(res.status).toBe(204)
+  })
+
+  it('returns 500 when delete fails', async () => {
+    mockDeleteTools.mockReturnValue({ eq: vi.fn(() => ({ error: { message: 'delete error' } })) })
+    const res = await makeApp().request('/tutorial-1/tools', { method: 'DELETE' })
+    expect(res.status).toBe(500)
   })
 })

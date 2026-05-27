@@ -39,6 +39,17 @@ describe('POST /:id/stl-files', () => {
     expect(mockDeleteStl).toHaveBeenCalled()
     expect(mockInsertStl).toHaveBeenCalled()
   })
+
+  it('returns 500 when insert fails', async () => {
+    mockInsertStl.mockReturnValue({ select: vi.fn(() => ({ data: null, error: { message: 'insert error' } })) })
+    const files = [{ filename: 'bracket.stl', file_url: 'https://example.com/bracket.stl' }]
+    const res = await makeApp().request('/tutorial-1/stl-files', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ stl_files: files }),
+    })
+    expect(res.status).toBe(500)
+  })
 })
 
 describe('DELETE /:id/stl-files', () => {
@@ -47,5 +58,11 @@ describe('DELETE /:id/stl-files', () => {
   it('deletes STL files and returns 204', async () => {
     const res = await makeApp().request('/tutorial-1/stl-files', { method: 'DELETE' })
     expect(res.status).toBe(204)
+  })
+
+  it('returns 500 when delete fails', async () => {
+    mockDeleteStl.mockReturnValue({ eq: vi.fn(() => ({ error: { message: 'delete error' } })) })
+    const res = await makeApp().request('/tutorial-1/stl-files', { method: 'DELETE' })
+    expect(res.status).toBe(500)
   })
 })

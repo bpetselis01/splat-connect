@@ -39,6 +39,17 @@ describe('POST /:id/parts', () => {
     expect(mockDeleteParts).toHaveBeenCalled()
     expect(mockInsertParts).toHaveBeenCalled()
   })
+
+  it('returns 500 when insert fails', async () => {
+    mockInsertParts.mockReturnValue({ select: vi.fn(() => ({ data: null, error: { message: 'insert error' } })) })
+    const newParts = [{ name: 'Screw', quantity: 4, is_optional: false, buy_links: [] }]
+    const res = await makeApp().request('/tutorial-1/parts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ parts: newParts }),
+    })
+    expect(res.status).toBe(500)
+  })
 })
 
 describe('DELETE /:id/parts', () => {
@@ -47,5 +58,11 @@ describe('DELETE /:id/parts', () => {
   it('deletes parts and returns 204', async () => {
     const res = await makeApp().request('/tutorial-1/parts', { method: 'DELETE' })
     expect(res.status).toBe(204)
+  })
+
+  it('returns 500 when delete fails', async () => {
+    mockDeleteParts.mockReturnValue({ eq: vi.fn(() => ({ error: { message: 'delete error' } })) })
+    const res = await makeApp().request('/tutorial-1/parts', { method: 'DELETE' })
+    expect(res.status).toBe(500)
   })
 })
