@@ -96,7 +96,9 @@ describe('POST /photo', () => {
     const form = new FormData()
     form.append('file', new Blob(['img'], { type: 'image/png' }), 'photo.png')
     form.append('tutorialId', 'tid-1')
-    await makeApp().request('/photo', { method: 'POST', body: form })
+    const res = await makeApp().request('/photo', { method: 'POST', body: form })
+    expect(res.status).toBe(200)
+    expect(mockAdminList).toHaveBeenCalledWith('tid-1')
     expect(mockAdminRemove).toHaveBeenCalledWith(['tid-1/photo.jpg'])
   })
 
@@ -105,7 +107,8 @@ describe('POST /photo', () => {
     const form = new FormData()
     form.append('file', new Blob(['img'], { type: 'image/png' }), 'photo.png')
     form.append('tutorialId', 'tid-1')
-    await makeApp().request('/photo', { method: 'POST', body: form })
+    const res = await makeApp().request('/photo', { method: 'POST', body: form })
+    expect(res.status).toBe(200)
     expect(mockAdminRemove).not.toHaveBeenCalled()
   })
 
