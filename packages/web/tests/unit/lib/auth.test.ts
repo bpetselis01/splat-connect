@@ -40,7 +40,7 @@ describe('getUserRole', () => {
 
   it('returns null when profile row is missing', async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: 'user-1' } } })
-    mockSingle.mockResolvedValue({ data: null })
+    mockSingle.mockResolvedValue({ data: null, error: { code: 'PGRST116', message: 'no rows' } })
     expect(await getUserRole()).toBeNull()
   })
 
