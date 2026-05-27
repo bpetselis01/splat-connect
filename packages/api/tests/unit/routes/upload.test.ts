@@ -131,3 +131,45 @@ describe('POST /photo', () => {
     expect(body.url).toBe('https://example.com/tid-1/photo.png')
   })
 })
+
+describe('POST /stl', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockUpload.mockResolvedValue({ data: { path: 'tid-1/bracket.stl' }, error: null })
+    mockGetPublicUrl.mockReturnValue({ data: { publicUrl: 'https://example.com/tid-1/bracket.stl' } })
+  })
+
+  it('returns 400 when file is missing', async () => {
+    const form = new FormData()
+    form.append('tutorialId', 'tid-1')
+    const res = await makeApp().request('/stl', { method: 'POST', body: form })
+    expect(res.status).toBe(400)
+  })
+
+  it('returns 400 when tutorialId is missing', async () => {
+    const form = new FormData()
+    form.append('file', new Blob(['stl'], { type: 'model/stl' }), 'bracket.stl')
+    const res = await makeApp().request('/stl', { method: 'POST', body: form })
+    expect(res.status).toBe(400)
+  })
+
+  it('returns 500 when upload fails', async () => {
+    mockUpload.mockResolvedValue({ data: null, error: { message: 'Storage error' } })
+    const form = new FormData()
+    form.append('file', new Blob(['stl'], { type: 'model/stl' }), 'bracket.stl')
+    form.append('tutorialId', 'tid-1')
+    const res = await makeApp().request('/stl', { method: 'POST', body: form })
+    expect(res.status).toBe(500)
+  })
+
+  it('returns 200 with url and filename on success', async () => {
+    const form = new FormData()
+    form.append('file', new Blob(['stl'], { type: 'model/stl' }), 'bracket.stl')
+    form.append('tutorialId', 'tid-1')
+    const res = await makeApp().request('/stl', { method: 'POST', body: form })
+    expect(res.status).toBe(200)
+    const body = await res.json() as any
+    expect(body.url).toBe('https://example.com/tid-1/bracket.stl')
+    expect(body.filename).toBe('bracket.stl')
+  })
+})
