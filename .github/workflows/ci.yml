@@ -2,9 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, staging]
   pull_request:
-    branches: [main, staging]
 
 jobs:
   check:
@@ -29,3 +27,29 @@ jobs:
 
       - name: Type check all packages
         run: pnpm -r typecheck
+
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Test API
+        run: pnpm --filter @splat-connect/api test:unit
+
+      - name: Test Web
+        run: pnpm --filter @splat-connect/web test:unit
