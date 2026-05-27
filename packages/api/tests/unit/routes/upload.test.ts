@@ -129,6 +129,11 @@ describe('POST /photo', () => {
     expect(res.status).toBe(200)
     const body = await res.json() as any
     expect(body.url).toBe('https://example.com/tid-1/photo.png')
+    expect(mockUpload).toHaveBeenCalledWith(
+      'tid-1/photo.png',
+      expect.any(Blob),
+      { upsert: false }
+    )
   })
 })
 
