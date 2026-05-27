@@ -41,14 +41,16 @@ create table public.parts (
   tutorial_id uuid references public.tutorials on delete cascade not null,
   name text not null,
   quantity integer not null default 1,
-  buy_link text
+  is_optional boolean not null default false,
+  buy_links jsonb not null default '[]'
 );
 
 create table public.tools (
   id uuid primary key default gen_random_uuid(),
   tutorial_id uuid references public.tutorials on delete cascade not null,
   name text not null,
-  buy_link text
+  is_optional boolean not null default false,
+  buy_links jsonb not null default '[]'
 );
 
 create table public.stl_files (
@@ -80,6 +82,34 @@ create trigger on_auth_user_created
   for each row execute procedure public.handle_new_user();
 
 -- ============================================================
+-- Helper functions
+-- ============================================================
+
+create or replace function public.is_admin()
+returns boolean as $$
+  select exists (
+    select 1 from public.profiles
+    where id = auth.uid() and role = 'admin'
+  );
+$$ language sql security definer stable;
+
+create or replace function public.is_approved_contributor()
+returns boolean as $$
+  select exists (
+    select 1 from public.profiles
+    where id = auth.uid() and role = 'contributor' and approved = true
+  );
+$$ language sql security definer stable;
+
+-- Breaks the RLS recursion cycle between tutorials and tutorial_contributors:
+-- tutorial_contributors policy can't query tutorials directly (infinite loop),
+-- so this security definer function bypasses RLS to do it safely.
+create or replace function public.tutorial_is_approved(t_id uuid)
+returns boolean as $$
+  select exists (select 1 from public.tutorials where id = t_id and status = 'approved')
+$$ language sql security definer stable;
+
+-- ============================================================
 -- Row Level Security
 -- ============================================================
 
@@ -89,24 +119,6 @@ alter table public.tutorial_contributors enable row level security;
 alter table public.parts enable row level security;
 alter table public.tools enable row level security;
 alter table public.stl_files enable row level security;
-
--- Helper: is current user an admin?
-create or replace function public.is_admin()
-returns boolean as $$
-  select exists (
-    select 1 from public.profiles
-    where id = auth.uid() and role = 'admin'
-  );
-$$ language sql security definer stable;
-
--- Helper: is current user an approved contributor?
-create or replace function public.is_approved_contributor()
-returns boolean as $$
-  select exists (
-    select 1 from public.profiles
-    where id = auth.uid() and role = 'contributor' and approved = true
-  );
-$$ language sql security definer stable;
 
 -- profiles
 create policy "Anyone can view their own profile"
@@ -139,24 +151,42 @@ create policy "Admin can read all tutorials"
 create policy "Approved contributors can insert tutorials"
   on public.tutorials for insert with check (public.is_approved_contributor());
 
-create policy "Contributors can update own draft or rejected tutorials"
-  on public.tutorials for update using (
+-- USING has no status gate so contributors can edit at any status.
+-- WITH CHECK prevents leaving a row in 'approved' — only admins can approve.
+create policy "Contributors can update own tutorials"
+  on public.tutorials for update
+  using (
     exists (
       select 1 from public.tutorial_contributors tc
       where tc.tutorial_id = id and tc.profile_id = auth.uid()
-    ) and status in ('draft', 'rejected')
+    )
+  )
+  with check (
+    exists (
+      select 1 from public.tutorial_contributors tc
+      where tc.tutorial_id = id and tc.profile_id = auth.uid()
+    ) and status in ('draft', 'pending', 'rejected')
   );
 
 create policy "Admin can update all tutorials"
   on public.tutorials for update using (public.is_admin());
 
+create policy "Contributors can delete own draft tutorials"
+  on public.tutorials for delete
+  using (
+    exists (
+      select 1 from public.tutorial_contributors tc
+      where tc.tutorial_id = id and tc.profile_id = auth.uid()
+    ) and status = 'draft'
+  );
+
+create policy "Admin can delete tutorials"
+  on public.tutorials for delete using (public.is_admin());
+
 -- tutorial_contributors
 create policy "Anyone can view contributors of approved tutorials"
   on public.tutorial_contributors for select using (
-    exists (
-      select 1 from public.tutorials t
-      where t.id = tutorial_id and t.status = 'approved'
-    )
+    public.tutorial_is_approved(tutorial_id)
   );
 
 create policy "Contributors can view own entries"
@@ -169,7 +199,7 @@ create policy "Approved contributors can insert"
 create policy "Admin full access to tutorial_contributors"
   on public.tutorial_contributors for all using (public.is_admin());
 
--- parts (follows tutorial access)
+-- parts
 create policy "Anyone can read parts of approved tutorials"
   on public.parts for select using (
     exists (select 1 from public.tutorials t where t.id = tutorial_id and t.status = 'approved')
@@ -184,28 +214,24 @@ create policy "Contributors can read own tutorial parts"
   );
 
 create policy "Contributors can write own tutorial parts"
-  on public.parts for all using (
+  on public.parts for all
+  using (
     exists (
       select 1 from public.tutorial_contributors tc
-      join public.tutorials t on t.id = tc.tutorial_id
-      where tc.tutorial_id = tutorial_id
-        and tc.profile_id = auth.uid()
-        and t.status in ('draft', 'rejected')
+      where tc.tutorial_id = tutorial_id and tc.profile_id = auth.uid()
     )
-  ) with check (
+  )
+  with check (
     exists (
       select 1 from public.tutorial_contributors tc
-      join public.tutorials t on t.id = tc.tutorial_id
-      where tc.tutorial_id = tutorial_id
-        and tc.profile_id = auth.uid()
-        and t.status in ('draft', 'rejected')
+      where tc.tutorial_id = tutorial_id and tc.profile_id = auth.uid()
     )
   );
 
 create policy "Admin full access to parts"
   on public.parts for all using (public.is_admin());
 
--- tools (same pattern as parts)
+-- tools
 create policy "Anyone can read tools of approved tutorials"
   on public.tools for select using (
     exists (select 1 from public.tutorials t where t.id = tutorial_id and t.status = 'approved')
@@ -220,28 +246,24 @@ create policy "Contributors can read own tutorial tools"
   );
 
 create policy "Contributors can write own tutorial tools"
-  on public.tools for all using (
+  on public.tools for all
+  using (
     exists (
       select 1 from public.tutorial_contributors tc
-      join public.tutorials t on t.id = tc.tutorial_id
-      where tc.tutorial_id = tutorial_id
-        and tc.profile_id = auth.uid()
-        and t.status in ('draft', 'rejected')
+      where tc.tutorial_id = tutorial_id and tc.profile_id = auth.uid()
     )
-  ) with check (
+  )
+  with check (
     exists (
       select 1 from public.tutorial_contributors tc
-      join public.tutorials t on t.id = tc.tutorial_id
-      where tc.tutorial_id = tutorial_id
-        and tc.profile_id = auth.uid()
-        and t.status in ('draft', 'rejected')
+      where tc.tutorial_id = tutorial_id and tc.profile_id = auth.uid()
     )
   );
 
 create policy "Admin full access to tools"
   on public.tools for all using (public.is_admin());
 
--- stl_files (same pattern)
+-- stl_files
 create policy "Anyone can read stl_files of approved tutorials"
   on public.stl_files for select using (
     exists (select 1 from public.tutorials t where t.id = tutorial_id and t.status = 'approved')
@@ -256,21 +278,17 @@ create policy "Contributors can read own tutorial stl_files"
   );
 
 create policy "Contributors can write own tutorial stl_files"
-  on public.stl_files for all using (
+  on public.stl_files for all
+  using (
     exists (
       select 1 from public.tutorial_contributors tc
-      join public.tutorials t on t.id = tc.tutorial_id
-      where tc.tutorial_id = tutorial_id
-        and tc.profile_id = auth.uid()
-        and t.status in ('draft', 'rejected')
+      where tc.tutorial_id = tutorial_id and tc.profile_id = auth.uid()
     )
-  ) with check (
+  )
+  with check (
     exists (
       select 1 from public.tutorial_contributors tc
-      join public.tutorials t on t.id = tc.tutorial_id
-      where tc.tutorial_id = tutorial_id
-        and tc.profile_id = auth.uid()
-        and t.status in ('draft', 'rejected')
+      where tc.tutorial_id = tutorial_id and tc.profile_id = auth.uid()
     )
   );
 
@@ -278,7 +296,7 @@ create policy "Admin full access to stl_files"
   on public.stl_files for all using (public.is_admin());
 
 -- ============================================================
--- Storage buckets (all public for open-source access)
+-- Storage buckets (public for open-source access)
 -- ============================================================
 
 insert into storage.buckets (id, name, public) values

@@ -1,3 +1,47 @@
+/**
+ * Admin Dashboard
+ * 
+ * Hub for admins to manage the platform.
+ * Shows stats on pending approvals and reviews needed.
+ * Only accessible to users with role='admin'.
+ * 
+ * Middleware (middleware.ts) ensures:
+ * - Requires authentication
+ * - Requires role='admin'
+ * - Redirects non-admins to home
+ * 
+ * Stats displayed:
+ * 1. Pending contributor requests
+ *    - New users awaiting account approval
+ *    - Click to go to contributor approval page
+ * 2. Tutorials awaiting review
+ *    - Submitted tutorials with status='pending'
+ *    - Click to go to tutorial review page
+ * 
+ * Admin workflows:
+ * 1. Approve contributor:
+ *    - Click "Pending contributor requests"
+ *    - See list of unapproved users
+ *    - Click user to view profile
+ *    - Click "Approve" button
+ *    - User's approved status changed to true
+ *    - User can now create tutorials
+ * 
+ * 2. Review tutorial:
+ *    - Click "Tutorials awaiting review"
+ *    - See list of pending tutorials (status='pending')
+ *    - Click tutorial to view full details
+ *    - Click "Approve" or "Reject"
+ *    - If approved: Tutorial visible in public library
+ *    - If rejected: Add note explaining why (displayed to contributor)
+ * 
+ * Related files:
+ * - routes/admin.ts: API endpoints for admin operations
+ * - routes/contributors.ts: Get contributor profiles
+ * - app/admin/contributors: Contributor approval page
+ * - app/admin/review: Tutorial review page
+ * - middleware.ts: Enforces admin-only access
+ */
 import Link from 'next/link'
 import { apiClient } from '@/lib/api-client'
 import type { Tutorial, Profile } from '@splat-connect/types'
@@ -15,13 +59,13 @@ export default async function AdminPage() {
     {
       label: 'Pending contributor requests',
       count: pendingContributors,
-      href: '/admin/contributors',
+      href: '/admin/contributors' as const,
       color: 'border-orange-400',
     },
     {
       label: 'Tutorials awaiting review',
       count: pendingTutorials,
-      href: '/admin/review',
+      href: '/admin/review' as const,
       color: 'border-blue-400',
     },
   ]

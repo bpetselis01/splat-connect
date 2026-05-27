@@ -1,3 +1,42 @@
+/**
+ * Admin Review Routes (Admin-Only Protected)
+ * 
+ * These endpoints are ONLY for administrators to review and approve tutorials.
+ * They require role='admin' (checked by authMiddleware).
+ * 
+ * Endpoints:
+ * - GET /api/admin/tutorials
+ *   - Get all pending tutorials waiting for review
+ *   - Query: ?status=pending|approved|rejected (filter by status)
+ *   - Auth: Admin only
+ *   - Returns: array of Tutorial objects
+ * 
+ * - PATCH /api/admin/tutorials/:id
+ *   - Approve or reject a tutorial
+ *   - Body: { status: 'approved'|'rejected', rejection_note?: string }
+ *   - Auth: Admin only
+ *   - Returns: updated Tutorial object with reviewed_at timestamp
+ * 
+ * Workflow:
+ * 1. Contributor submits tutorial (status→'pending')
+ * 2. Admin views /admin page (calls GET /api/admin/tutorials)
+ * 3. Admin reviews tutorial content
+ * 4. Admin clicks Approve or Reject
+ * 5. Web calls PATCH /api/admin/tutorials/:id
+ * 6. API updates tutorial status + reviewed_at timestamp
+ * 7. If rejected, includes rejection_note explaining why
+ * 8. Contributor notified (future feature)
+ * 
+ * Approval flow:
+ * pending → approved: Tutorial appears in public library
+ * pending → rejected: Tutorial hidden from view, contributor sees rejection note
+ * 
+ * Related files:
+ * - middleware/auth.ts: Validates role='admin'
+ * - routes/tutorials.ts: Tutorial CRUD (this is review layer on top)
+ * - app/admin: Admin dashboard page
+ * - types/index.ts: Tutorial type (status field)
+ */
 import { Hono } from 'hono'
 import { createAdminClient } from '../supabase/client.js'
 import type { AuthVariables } from '../middleware/auth.js'

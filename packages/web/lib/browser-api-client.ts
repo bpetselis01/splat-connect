@@ -1,3 +1,34 @@
+/**
+ * Browser-Safe API Client
+ * 
+ * This is a CLIENT-SIDE API client (marked 'use client').
+ * It should only be used in components, NOT in server components or server actions.
+ * 
+ * Why separate from api-client.ts?
+ * - api-client.ts (server-only): Can access secure cookies server-side
+ * - browser-api-client.ts (client): Runs in browser, different security model
+ * 
+ * Process:
+ * 1. Component calls getToken() to get JWT from Supabase session
+ * 2. Makes fetch to API_URL with JWT in Authorization header
+ * 3. Returns typed response
+ * 
+ * Differences from server api-client:
+ * - Runs in browser (token is client-accessible)
+ * - Uses Supabase browser client (different config)
+ * - No 'server-only' restriction
+ * 
+ * Security considerations:
+ * - Browser client assumes user is authenticated (they opened the page)
+ * - JWT is still validated server-side by API
+ * - Supabase RLS adds another layer of access control
+ * - Should primarily be used in components that are already behind authentication
+ * 
+ * Related files:
+ * - lib/api-client.ts: Server-side version (preferred for data fetching)
+ * - middleware.ts: Validates session before rendering pages
+ * - lib/supabase/client.ts: Supabase browser client setup
+ */
 'use client'
 
 import { createClient } from '@/lib/supabase/client'

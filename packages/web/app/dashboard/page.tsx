@@ -1,3 +1,41 @@
+/**
+ * Contributor Dashboard Page
+ * 
+ * Hub for contributors to manage their tutorials.
+ * Only accessible to approved contributors (approved=true, role='contributor').
+ * 
+ * Features:
+ * - Stats: Count of draft, pending, approved, rejected tutorials
+ * - Recent tutorials list: Show status and links
+ * - Quick links: Create new tutorial, view full list, etc.
+ * 
+ * Data fetched:
+ * 1. User profile (via apiClient.get('/api/contributors/me'))
+ *    - Validates user is contributor role
+ *    - Redirects to home if not contributor
+ * 2. User's tutorials (via apiClient.get('/api/tutorials/mine'))
+ *    - Only tutorials user owns
+ *    - All statuses (draft, pending, approved, rejected)
+ * 
+ * Middleware protection (middleware.ts):
+ * - Requires authenticated user (role='contributor')
+ * - If not authenticated → redirect to /login
+ * - If not approved → redirect to /pending
+ * - If admin → allowed but different UX
+ * 
+ * Tutorial status meanings:
+ * - draft: Incomplete, can still edit
+ * - pending: Submitted for review, awaiting admin decision
+ * - approved: Admin approved, visible in public library
+ * - rejected: Admin rejected, user can edit and resubmit
+ * 
+ * Related files:
+ * - routes/tutorials.ts: Fetch /api/tutorials/mine
+ * - routes/contributors.ts: Fetch /api/contributors/me
+ * - app/my-tutorials: Full list of tutorials
+ * - app/upload: Create new tutorial
+ * - app/admin: Admin dashboard (for admins)
+ */
 import { apiClient } from '@/lib/api-client'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'

@@ -1,3 +1,43 @@
+/**
+ * File Drop Zone Component
+ * 
+ * Provides drag-and-drop + click file input for uploading files.
+ * Used in the upload form for tutorial PDFs, photos, and STL files.
+ * 
+ * Props:
+ * - name: HTML input name (for form submission)
+ * - accept: File type filter (e.g., '.pdf', 'image/*')
+ * - multiple?: Allow selecting multiple files (default false)
+ * - label: Text shown in the dropzone
+ * - currentFileLabel?: Show name of already-uploaded file
+ * - onChange?: Callback when files selected
+ * 
+ * Features:
+ * - Accepts files via click
+ * - Accepts files via drag-and-drop
+ * - Shows visual feedback when dragging over
+ * - Displays selected file name(s)
+ * - Can show already-uploaded file
+ * 
+ * Usage in upload form:
+ * 1. Step 2: Upload tutorial PDF file
+ * 2. Step 2: Upload toy photo
+ * 3. Step 5: Upload STL files (supports multiple)
+ * 
+ * Data flow:
+ * 1. User selects file via click or drag
+ * 2. onChange fires with file input
+ * 3. Parent component handles file
+ * 4. Parent calls POST /api/upload (server-side with api-client.ts)
+ * 5. File uploaded to Supabase Storage
+ * 6. File URL returned to parent
+ * 7. Parent updates UploadDraft with file URL
+ * 
+ * Related files:
+ * - app/upload/page.tsx: Uses FileDropZone in form
+ * - routes/upload.ts: API endpoint that handles file upload
+ * - lib/api-client.ts: Server-side upload handler
+ */
 'use client'
 import { useRef, useState, type DragEvent, type ChangeEvent } from 'react'
 

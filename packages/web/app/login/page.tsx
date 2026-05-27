@@ -1,3 +1,30 @@
+/**
+ * Login Page
+ * 
+ * Allows existing users to log in with email/password.
+ * Authentication is handled by Supabase.
+ * 
+ * Process:
+ * 1. User enters email and password
+ * 2. Supabase verifies credentials
+ * 3. If valid: Sets session JWT in secure cookie
+ * 4. Checks user profile (role, approved status)
+ * 5. Redirects based on account status:
+ *    - If approved: → /dashboard (contributor hub)
+ *    - If not approved: → /pending ("awaiting approval")
+ * 6. If error: Shows error message
+ * 
+ * Related flows:
+ * - Sign up: /signup (creates new account)
+ * - After approval: Admin approves account → user redirected to /dashboard
+ * - Sign out: Nav component handles logout
+ * 
+ * Related files:
+ * - app/signup: Create new account
+ * - app/pending: "Awaiting approval" page
+ * - app/dashboard: Contributor hub (after approved)
+ * - lib/supabase/client.ts: Supabase auth client
+ */
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
