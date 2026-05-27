@@ -66,6 +66,25 @@ describe('GET /:id', () => {
   })
 })
 
+describe('GET /mine', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('returns tutorials for current user', async () => {
+    mockUserClient.from.mockReturnValue({
+      select: () => ({
+        eq: () => ({
+          order: () => ({ data: [{ id: '1', title: 'Mine' }], error: null }),
+        }),
+      }),
+    })
+    const res = await makeApp().request('/mine')
+    expect(res.status).toBe(200)
+    const body = await res.json() as any
+    expect(body).toHaveLength(1)
+    expect(body[0].title).toBe('Mine')
+  })
+})
+
 describe('POST /', () => {
   beforeEach(() => vi.clearAllMocks())
 
@@ -82,6 +101,33 @@ describe('POST /', () => {
     expect(res.status).toBe(201)
     const body = await res.json() as any
     expect(body.status).toBe('draft')
+  })
+
+  it('returns 403 when user is not approved', async () => {
+    const res = await makeApp('contributor', false).request('/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 'new-id', title: 'New Tutorial', difficulty: 'easy' }),
+    })
+    expect(res.status).toBe(403)
+  })
+
+  it('returns 200 with id on duplicate key (idempotent retry)', async () => {
+    mockAdminClient.from.mockReturnValue({
+      insert: () => ({
+        select: () => ({
+          single: () => ({ data: null, error: { code: '23505', message: 'duplicate' } }),
+        }),
+      }),
+    })
+    const res = await makeApp().request('/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 'existing-id', title: 'Existing', difficulty: 'hard' }),
+    })
+    expect(res.status).toBe(200)
+    const body = await res.json() as any
+    expect(body.id).toBe('existing-id')
   })
 })
 

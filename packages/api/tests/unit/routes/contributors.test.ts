@@ -47,3 +47,31 @@ describe('GET /me', () => {
     expect(res.status).toBe(404)
   })
 })
+
+describe('POST /me/tutorials/:tutorialId', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('links tutorial to current user and returns 201', async () => {
+    mockUserFrom.mockReturnValue({
+      insert: () => ({ error: null }),
+    })
+    const res = await makeApp().request('/me/tutorials/tut-1', { method: 'POST' })
+    expect(res.status).toBe(201)
+  })
+
+  it('returns 200 on duplicate key (idempotent retry)', async () => {
+    mockUserFrom.mockReturnValue({
+      insert: () => ({ error: { code: '23505', message: 'duplicate' } }),
+    })
+    const res = await makeApp().request('/me/tutorials/tut-1', { method: 'POST' })
+    expect(res.status).toBe(200)
+  })
+
+  it('returns 500 on unexpected DB error', async () => {
+    mockUserFrom.mockReturnValue({
+      insert: () => ({ error: { code: '42501', message: 'permission denied' } }),
+    })
+    const res = await makeApp().request('/me/tutorials/tut-1', { method: 'POST' })
+    expect(res.status).toBe(500)
+  })
+})
