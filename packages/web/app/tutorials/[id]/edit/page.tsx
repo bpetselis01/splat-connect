@@ -2,8 +2,10 @@ import { apiClient } from '@/lib/api-client'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import Link from 'next/link'
-import { FileDropZone } from '@/components/file-drop-zone'
 import { BuyLinksInput } from '@/components/buy-links-input'
+import { EditFilesSection } from '@/components/edit-files-section'
+import { AddStlForm } from '@/components/add-stl-form'
+import { SubmitForReviewButton } from '@/components/submit-for-review-button'
 import type { Tutorial, Part, Tool, StlFile, TutorialWithDetails, Difficulty, BuyLink, Profile } from '@splat-connect/types'
 
 export default async function EditTutorialPage({
@@ -51,36 +53,19 @@ export default async function EditTutorialPage({
     revalidatePath(`/tutorials/${id}/edit`)
   }
 
-  async function saveFiles(formData: FormData) {
+  // Receives only string URLs (no file bytes) — no Server Action body size limit risk.
+  // File bytes are uploaded directly browser -> Hono API by EditFilesSection.
+  async function patchFileUrls(photoUrl: string | null, pdfUrl: string | null) {
     'use server'
-    const updates: Record<string, string> = {}
-
-    const photo = formData.get('toy_photo') as File | null
-    if (photo && photo.size > 0) {
-      const fd = new FormData()
-      fd.append('file', photo)
-      fd.append('tutorialId', id)
-      const { url } = await apiClient.postFormData<{ url: string }>('/api/upload/photo', fd)
-      updates.toy_photo_url = url
+    const updates: Record<string, string | null> = {
+      toy_photo_url: photoUrl,
+      tutorial_pdf_url: pdfUrl,
     }
-
-    const pdf = formData.get('tutorial_pdf') as File | null
-    if (pdf && pdf.size > 0) {
-      const fd = new FormData()
-      fd.append('file', pdf)
-      fd.append('tutorialId', id)
-      const { url } = await apiClient.postFormData<{ url: string }>('/api/upload/pdf', fd)
-      updates.tutorial_pdf_url = url
+    const current = await apiClient.get<Tutorial>(`/api/tutorials/${id}`)
+    if (current.status === 'approved' || current.status === 'rejected') {
+      updates.status = 'pending'
     }
-
-    if (Object.keys(updates).length > 0) {
-      const current = await apiClient.get<Tutorial>(`/api/tutorials/${id}`)
-      if (current.status === 'approved' || current.status === 'rejected') {
-        updates.status = 'pending'
-      }
-      await apiClient.patch(`/api/tutorials/${id}`, updates)
-    }
-
+    await apiClient.patch(`/api/tutorials/${id}`, updates)
     revalidatePath(`/tutorials/${id}/edit`)
   }
 
@@ -125,21 +110,19 @@ export default async function EditTutorialPage({
     revalidatePath(`/tutorials/${id}/edit`)
   }
 
-  async function addStlFile(formData: FormData) {
+  // Receives only filename + URL strings — no file bytes, no size limit risk.
+  async function addStlFileRecord(filename: string, fileUrl: string) {
     'use server'
-    const file = formData.get('stl_file') as File | null
-    if (!file || file.size === 0) return
-    const fd = new FormData()
-    fd.append('file', file)
-    fd.append('tutorialId', id)
-    const { url, filename } = await apiClient.postFormData<{ url: string; filename: string }>(
-      '/api/upload/stl',
-      fd
-    )
     const current = await apiClient.get<TutorialWithDetails>(`/api/tutorials/${id}`)
     await apiClient.post(`/api/tutorials/${id}/stl-files`, {
-      stl_files: [...current.stl_files, { filename, file_url: url }],
+      stl_files: [...current.stl_files, { filename, file_url: fileUrl }],
     })
+    revalidatePath(`/tutorials/${id}/edit`)
+  }
+
+  async function submitForReview() {
+    'use server'
+    await apiClient.patch(`/api/tutorials/${id}`, { status: 'pending' })
     revalidatePath(`/tutorials/${id}/edit`)
   }
 
@@ -153,10 +136,20 @@ export default async function EditTutorialPage({
     <div>
       <div className="flex items-center gap-4 mb-6">
         <Link href="/dashboard" className="text-sm text-blue-600 hover:underline">
-          ← Dashboard
+          &larr; Dashboard
         </Link>
         <h1 className="text-xl font-bold truncate">{tutorial!.title}</h1>
       </div>
+
+      {/* Submit for review -- draft only */}
+      {tutorial!.status === 'draft' && (
+        <div className={`${panelCls} px-5 py-4`}>
+          <p className="text-sm text-gray-600 mb-3">
+            Once all required fields are filled, submit this tutorial for admin review.
+          </p>
+          <SubmitForReviewButton tutorial={tutorial!} action={submitForReview} />
+        </div>
+      )}
 
       {/* Details */}
       <details className={panelCls} open>
@@ -189,32 +182,17 @@ export default async function EditTutorialPage({
         </form>
       </details>
 
-      {/* Files */}
+      {/* Files — handled by a client component that uploads directly to the API,
+          then passes only the resulting URL string to patchFileUrls.
+          This avoids the 1 MB Server Action body size limit for file bytes. */}
       <details className={panelCls}>
         <summary className={summaryCls}>Files</summary>
-        <form action={saveFiles} className="px-5 pb-5 flex flex-col gap-4">
-          <div>
-            <label className="block text-sm font-medium mb-2">Replace toy photo</label>
-            <FileDropZone
-              name="toy_photo"
-              accept="image/*"
-              label="Toy Photo"
-              currentFileLabel={tutorial!.toy_photo_url ? 'Current photo on file — upload to replace' : undefined}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-2">Replace tutorial PDF</label>
-            <FileDropZone
-              name="tutorial_pdf"
-              accept=".pdf"
-              label="Tutorial PDF"
-              currentFileLabel={tutorial!.tutorial_pdf_url ? 'Current PDF on file — upload to replace' : undefined}
-            />
-          </div>
-          <button type="submit" className={saveBtnCls}>
-            Save files
-          </button>
-        </form>
+        <EditFilesSection
+          tutorialId={id}
+          currentPhotoUrl={tutorial!.toy_photo_url}
+          currentPdfUrl={tutorial!.tutorial_pdf_url}
+          onSave={patchFileUrls}
+        />
       </details>
 
       {/* Parts */}
@@ -224,13 +202,10 @@ export default async function EditTutorialPage({
           {parts.length > 0 && (
             <ul className="mb-4 flex flex-col gap-2">
               {parts.map((p) => (
-                <li
-                  key={p.id}
-                  className="text-sm border rounded-lg px-3 py-2"
-                >
+                <li key={p.id} className="text-sm border rounded-lg px-3 py-2">
                   <div className="flex items-center justify-between">
                     <span className="font-medium">
-                      {p.name} × {p.quantity}
+                      {p.name} &times; {p.quantity}
                     </span>
                     {p.is_optional && (
                       <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
@@ -291,10 +266,7 @@ export default async function EditTutorialPage({
           {tools.length > 0 && (
             <ul className="mb-4 flex flex-col gap-2">
               {tools.map((t) => (
-                <li
-                  key={t.id}
-                  className="text-sm border rounded-lg px-3 py-2"
-                >
+                <li key={t.id} className="text-sm border rounded-lg px-3 py-2">
                   <div className="flex items-center justify-between">
                     <span className="font-medium">{t.name}</span>
                     {t.is_optional && (
@@ -341,7 +313,7 @@ export default async function EditTutorialPage({
         </div>
       </details>
 
-      {/* STL Files */}
+      {/* STL Files -- AddStlForm uploads directly to the API (no Server Action body limit risk) */}
       <details className={panelCls}>
         <summary className={summaryCls}>STL Files ({stlFiles.length})</summary>
         <div className="px-5 pb-5">
@@ -361,13 +333,7 @@ export default async function EditTutorialPage({
               ))}
             </ul>
           )}
-          <form action={addStlFile} className="flex flex-col gap-2">
-            <p className="text-sm font-medium">Add STL file</p>
-            <FileDropZone name="stl_file" accept=".stl" label="STL File" />
-            <button type="submit" className={saveBtnCls}>
-              Upload STL
-            </button>
-          </form>
+          <AddStlForm tutorialId={id} onAdd={addStlFileRecord} />
         </div>
       </details>
     </div>
