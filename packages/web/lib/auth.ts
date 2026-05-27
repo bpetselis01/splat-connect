@@ -25,12 +25,15 @@ export async function getUserRole(): Promise<Role | null> {
     )
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return null
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
       .single()
-    return (profile?.role as Role) ?? null
+    if (profileError) return null
+    const role = profile?.role
+    if (role === 'admin' || role === 'contributor') return role
+    return null
   } catch {
     return null
   }
