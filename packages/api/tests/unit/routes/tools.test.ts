@@ -2,8 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { Hono } from 'hono'
 import type { AuthVariables } from '../../../src/middleware/auth.js'
 
-const mockDeleteTools = vi.fn(() => ({ eq: vi.fn(() => ({ error: null })) }))
-const mockInsertTools = vi.fn(() => ({ select: vi.fn(() => ({ data: [], error: null })) }))
+const mockDeleteTools = vi.fn()
+const mockInsertTools = vi.fn()
 const mockFrom = vi.fn((table: string) => {
   if (table === 'tools') return { delete: mockDeleteTools, insert: mockInsertTools }
   return {}
@@ -26,7 +26,11 @@ function makeApp() {
 }
 
 describe('POST /:id/tools', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockDeleteTools.mockReturnValue({ eq: vi.fn(() => ({ error: null })) })
+    mockInsertTools.mockReturnValue({ select: vi.fn(() => ({ data: [], error: null })) })
+  })
 
   it('replaces tools and returns 201', async () => {
     const newTools = [{ name: 'Screwdriver', is_optional: false, buy_links: [] }]
@@ -53,7 +57,11 @@ describe('POST /:id/tools', () => {
 })
 
 describe('DELETE /:id/tools', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockDeleteTools.mockReturnValue({ eq: vi.fn(() => ({ error: null })) })
+    mockInsertTools.mockReturnValue({ select: vi.fn(() => ({ data: [], error: null })) })
+  })
 
   it('deletes tools and returns 204', async () => {
     const res = await makeApp().request('/tutorial-1/tools', { method: 'DELETE' })

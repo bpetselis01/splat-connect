@@ -2,8 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { Hono } from 'hono'
 import type { AuthVariables } from '../../../src/middleware/auth.js'
 
-const mockDeleteStl = vi.fn(() => ({ eq: vi.fn(() => ({ error: null })) }))
-const mockInsertStl = vi.fn(() => ({ select: vi.fn(() => ({ data: [], error: null })) }))
+const mockDeleteStl = vi.fn()
+const mockInsertStl = vi.fn()
 const mockFrom = vi.fn((table: string) => {
   if (table === 'stl_files') return { delete: mockDeleteStl, insert: mockInsertStl }
   return {}
@@ -26,7 +26,11 @@ function makeApp() {
 }
 
 describe('POST /:id/stl-files', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockDeleteStl.mockReturnValue({ eq: vi.fn(() => ({ error: null })) })
+    mockInsertStl.mockReturnValue({ select: vi.fn(() => ({ data: [], error: null })) })
+  })
 
   it('replaces STL files and returns 201', async () => {
     const files = [{ filename: 'bracket.stl', file_url: 'https://example.com/bracket.stl' }]
@@ -53,7 +57,11 @@ describe('POST /:id/stl-files', () => {
 })
 
 describe('DELETE /:id/stl-files', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockDeleteStl.mockReturnValue({ eq: vi.fn(() => ({ error: null })) })
+    mockInsertStl.mockReturnValue({ select: vi.fn(() => ({ data: [], error: null })) })
+  })
 
   it('deletes STL files and returns 204', async () => {
     const res = await makeApp().request('/tutorial-1/stl-files', { method: 'DELETE' })
