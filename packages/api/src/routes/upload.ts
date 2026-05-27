@@ -40,6 +40,7 @@
  */
 import { Hono } from 'hono'
 import { createUserClient } from '../supabase/user-client.js'
+import { createAdminClient } from '../supabase/client.js'
 import type { AuthVariables } from '../middleware/auth.js'
 
 const upload = new Hono<{ Variables: AuthVariables }>()
@@ -77,14 +78,26 @@ upload.post('/photo', async (c) => {
   }
 
   const ext = file.name.split('.').pop() ?? 'jpg'
-  const supabase = createUserClient(c.get('token'))
-  const { data, error } = await supabase.storage
+  const admin = createAdminClient()
+  const userClient = createUserClient(c.get('token'))
+
+  // Delete every existing file under this tutorial's photo folder before
+  // uploading so that extension changes (jpg → png etc.) don't accumulate
+  // multiple files. Admin client used because no DELETE storage policy exists.
+  const { data: existing } = await admin.storage.from('toy-photos').list(tutorialId)
+  if (existing?.length) {
+    await admin.storage
+      .from('toy-photos')
+      .remove(existing.map((f) => `${tutorialId}/${f.name}`))
+  }
+
+  const { data, error } = await userClient.storage
     .from('toy-photos')
-    .upload(`${tutorialId}/photo.${ext}`, file, { upsert: true })
+    .upload(`${tutorialId}/photo.${ext}`, file, { upsert: false })
 
   if (error) return c.json({ error: error.message }, 500)
 
-  const { data: urlData } = supabase.storage
+  const { data: urlData } = userClient.storage
     .from('toy-photos')
     .getPublicUrl(data.path)
 

@@ -2,8 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { Hono } from 'hono'
 import type { AuthVariables } from '../../../src/middleware/auth.js'
 
-const mockDeleteParts = vi.fn(() => ({ eq: vi.fn(() => ({ error: null })) }))
-const mockInsertParts = vi.fn(() => ({ select: vi.fn(() => ({ data: [], error: null })) }))
+const mockDeleteParts = vi.fn()
+const mockInsertParts = vi.fn()
 const mockFrom = vi.fn((table: string) => {
   if (table === 'parts') return { delete: mockDeleteParts, insert: mockInsertParts }
   return {}
@@ -26,7 +26,11 @@ function makeApp() {
 }
 
 describe('POST /:id/parts', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockDeleteParts.mockReturnValue({ eq: vi.fn(() => ({ error: null })) })
+    mockInsertParts.mockReturnValue({ select: vi.fn(() => ({ data: [], error: null })) })
+  })
 
   it('replaces parts and returns 201', async () => {
     const newParts = [{ name: 'Screw', quantity: 4, is_optional: false, buy_links: [] }]
@@ -39,13 +43,34 @@ describe('POST /:id/parts', () => {
     expect(mockDeleteParts).toHaveBeenCalled()
     expect(mockInsertParts).toHaveBeenCalled()
   })
+
+  it('returns 500 when insert fails', async () => {
+    mockInsertParts.mockReturnValue({ select: vi.fn(() => ({ data: null, error: { message: 'insert error' } })) })
+    const newParts = [{ name: 'Screw', quantity: 4, is_optional: false, buy_links: [] }]
+    const res = await makeApp().request('/tutorial-1/parts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ parts: newParts }),
+    })
+    expect(res.status).toBe(500)
+  })
 })
 
 describe('DELETE /:id/parts', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockDeleteParts.mockReturnValue({ eq: vi.fn(() => ({ error: null })) })
+    mockInsertParts.mockReturnValue({ select: vi.fn(() => ({ data: [], error: null })) })
+  })
 
   it('deletes parts and returns 204', async () => {
     const res = await makeApp().request('/tutorial-1/parts', { method: 'DELETE' })
     expect(res.status).toBe(204)
+  })
+
+  it('returns 500 when delete fails', async () => {
+    mockDeleteParts.mockReturnValue({ eq: vi.fn(() => ({ error: { message: 'delete error' } })) })
+    const res = await makeApp().request('/tutorial-1/parts', { method: 'DELETE' })
+    expect(res.status).toBe(500)
   })
 })
