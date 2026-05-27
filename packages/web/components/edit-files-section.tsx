@@ -1,38 +1,5 @@
-/**
- * Edit Files Section Component
- * 
- * Allows editing tutorial files (photo and PDF) after creation.
- * Used in the tutorial editor page to replace existing files.
- * 
- * Props:
- * - tutorialId: ID of tutorial being edited
- * - currentPhotoUrl: Current toy photo URL (if any)
- * - currentPdfUrl: Current tutorial PDF URL (if any)
- * - onSave: Callback when files are saved
- * 
- * Features:
- * - Upload new photo or PDF via drag-and-drop
- * - Shows existing files
- * - "Save" button only enabled if changes made
- * - Handles upload progress and errors
- * 
- * Process:
- * 1. User selects new file via FileDropZone
- * 2. File preview/name shown immediately
- * 3. User clicks "Save Changes"
- * 4. Form uploads file to /api/upload
- * 5. Server uploads to Supabase Storage, returns file_url
- * 6. Form calls PATCH /api/tutorials/:id with new file URLs
- * 7. onSave callback fires
- * 8. Parent page refreshes to show updated files
- * 
- * Related files:
- * - components/file-drop-zone.tsx: UI for file selection
- * - routes/upload.ts: File upload to Supabase Storage
- * - routes/tutorials.ts: PATCH endpoint to update tutorial
- */
 'use client'
-import { useState, useTransition } from 'react'
+import { useState } from 'react'
 import { browserApiClient } from '@/lib/browser-api-client'
 import { FileDropZone } from '@/components/file-drop-zone'
 
@@ -47,13 +14,22 @@ export function EditFilesSection({
   currentPdfUrl: string | null
   onSave: (photoUrl: string | null, pdfUrl: string | null) => Promise<void>
 }) {
-  const [photoUrl, setPhotoUrl] = useState(currentPhotoUrl)
-  const [pdfUrl, setPdfUrl] = useState(currentPdfUrl)
-  const [uploading, setUploading] = useState(false)
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
+  const [pdfFile, setPdfFile] = useState<File | null>(null)
+  const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [saving, startTransition] = useTransition()
 
-  const hasChanges = photoUrl !== currentPhotoUrl || pdfUrl !== currentPdfUrl
+  const hasChanges = photoFile !== null || pdfFile !== null
+
+  function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setPhotoFile(e.target.files?.[0] ?? null)
+    setError(null)
+  }
+
+  function handlePdfChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setPdfFile(e.target.files?.[0] ?? null)
+    setError(null)
+  }
 
   async function uploadFile(endpoint: string, file: File): Promise<string> {
     const fd = new FormData()
@@ -63,39 +39,25 @@ export function EditFilesSection({
     return url
   }
 
-  async function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setUploading(true)
+  async function handleSave() {
+    if (!hasChanges || saving) return
+    setSaving(true)
     setError(null)
     try {
-      setPhotoUrl(await uploadFile('/api/upload/photo', file))
+      const newPhotoUrl = photoFile
+        ? await uploadFile('/api/upload/photo', photoFile)
+        : currentPhotoUrl
+      const newPdfUrl = pdfFile
+        ? await uploadFile('/api/upload/pdf', pdfFile)
+        : currentPdfUrl
+      await onSave(newPhotoUrl, newPdfUrl)
+      setPhotoFile(null)
+      setPdfFile(null)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Photo upload failed')
+      setError(err instanceof Error ? err.message : 'Upload failed')
     } finally {
-      setUploading(false)
+      setSaving(false)
     }
-  }
-
-  async function handlePdfChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setUploading(true)
-    setError(null)
-    try {
-      setPdfUrl(await uploadFile('/api/upload/pdf', file))
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'PDF upload failed')
-    } finally {
-      setUploading(false)
-    }
-  }
-
-  function handleSave() {
-    if (!hasChanges) return
-    startTransition(async () => {
-      await onSave(photoUrl, pdfUrl)
-    })
   }
 
   const btnCls =
@@ -111,7 +73,7 @@ export function EditFilesSection({
           accept="image/*"
           label="Toy Photo"
           onChange={handlePhotoChange}
-          currentFileLabel={photoUrl ? 'Current photo on file — upload to replace' : undefined}
+          currentFileLabel={currentPhotoUrl ? 'Current photo on file — upload to replace' : undefined}
         />
       </div>
       <div>
@@ -121,17 +83,17 @@ export function EditFilesSection({
           accept=".pdf"
           label="Tutorial PDF"
           onChange={handlePdfChange}
-          currentFileLabel={pdfUrl ? 'Current PDF on file — upload to replace' : undefined}
+          currentFileLabel={currentPdfUrl ? 'Current PDF on file — upload to replace' : undefined}
         />
       </div>
-      {uploading && <p className="text-blue-600 text-sm">Uploading…</p>}
+      {saving && <p className="text-blue-600 text-sm">Saving…</p>}
       <button
         type="button"
-        disabled={!hasChanges || uploading || saving}
+        disabled={!hasChanges || saving}
         onClick={handleSave}
         className={btnCls}
       >
-        {saving ? 'Saving…' : 'Save files'}
+        Save files
       </button>
     </div>
   )
