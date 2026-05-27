@@ -229,190 +229,68 @@ splat-connect/                          ← Workspace root
 
 ---
 
-## 📄 File Guide
+## � Understanding the Codebase
 
-### Root Files
+**All source files now include detailed comments** explaining:
+- What the file does
+- How it interacts with other files  
+- Key data flows and workflows
 
-| File | Purpose |
-|------|---------|
-| [pnpm-workspace.yaml](pnpm-workspace.yaml) | Declares `packages/*` as managed workspaces |
-| [package.json](package.json) | Root workspace scripts: `dev:api`, `dev:web`, `build`, `typecheck` |
-| [next-env.d.ts](next-env.d.ts) | TypeScript definitions for Next.js globals |
-| [pnpm-lock.yaml](pnpm-lock.yaml) | Locked dependency versions for reproducible installs |
+**To understand any file**, open it and read the file-level comment at the top. Key files to start with:
 
-### packages/types
+### Core Files to Understand
 
-**Purpose**: Shared TypeScript interfaces used by both API and web packages.
+**Data Model:**
+- [packages/types/src/index.ts](packages/types/src/index.ts) — Comprehensive overview of all types and how they interact
 
-| File | Purpose |
-|------|---------|
-| [src/index.ts](packages/types/src/index.ts) | Main export file, re-exports all types |
-| [src/models.ts](packages/types/src/models.ts) | Domain interfaces: `Profile`, `Tutorial`, `Part`, `Tool`, `STLFile`, etc. |
-| [src/enums.ts](packages/types/src/enums.ts) | Type enums: `Role`, `TutorialStatus`, `Difficulty` |
+**API (Backend):**
+- [packages/api/src/index.ts](packages/api/src/index.ts) — HTTP server setup and routing
+- [packages/api/src/middleware/auth.ts](packages/api/src/middleware/auth.ts) — JWT validation and context setup
+- [packages/api/src/supabase/user-client.ts](packages/api/src/supabase/user-client.ts) — RLS-respecting database access
+- [packages/api/src/routes/tutorials.ts](packages/api/src/routes/tutorials.ts) — Tutorial CRUD operations
 
-**Key Exports**:
-```typescript
-// Domain models
-Profile              // User profile with role, approval status
-Tutorial             // Tutorial metadata (title, description, status, files)
-TutorialContributor  // Many-to-many relationship between tutorials and contributors
-Part                 // Material needed (name, quantity, links)
-Tool                 // Tool needed (name, links)
-STLFile              // 3D model file reference
+**Web (Frontend):**
+- [packages/web/app/layout.tsx](packages/web/app/layout.tsx) — Root layout and navigation setup
+- [packages/web/middleware.ts](packages/web/middleware.ts) — Route protection and auth validation
+- [packages/web/lib/api-client.ts](packages/web/lib/api-client.ts) — Server-side API communication
 
-// Enums
-type Role = 'admin' | 'contributor'
-type TutorialStatus = 'draft' | 'pending' | 'approved' | 'rejected'
-type Difficulty = 'easy' | 'medium' | 'hard'
-```
+**Key Workflows:**
+- [packages/web/app/upload/page.tsx](packages/web/app/upload/page.tsx) — Multi-step tutorial creation
+- [packages/web/app/admin/page.tsx](packages/web/app/admin/page.tsx) — Admin dashboard
+- [packages/web/app/login/page.tsx](packages/web/app/login/page.tsx) — Authentication flow
 
-### packages/api
+### File Listing
 
-**Purpose**: HTTP server handling all database operations. Entry point for all data mutations and queries.
+All source files include detailed comments. Here's the full structure:
 
-#### Main Entry Point
+**packages/api/**
+- `src/index.ts` — Server entry point
+- `src/middleware/auth.ts` — JWT validation
+- `src/routes/public.ts` — Public tutorial browsing
+- `src/routes/tutorials.ts` — Tutorial CRUD
+- `src/routes/upload.ts` — File uploads
+- `src/routes/parts.ts`, `tools.ts`, `stl-files.ts` — Sub-resources
+- `src/routes/admin.ts` — Admin operations
+- `src/routes/contributors.ts` — User profiles
+- `src/supabase/client.ts` — Admin client (bypasses RLS)
+- `src/supabase/user-client.ts` — User client (enforces RLS)
 
-| File | Purpose |
-|------|---------|
-| [src/index.ts](packages/api/src/index.ts) | Server setup, route mounting, CORS config, port binding |
-| [src/config.ts](packages/api/src/config.ts) | Environment variables (PORT, CORS_ORIGIN, Supabase keys) |
+**packages/web/**
+- `app/layout.tsx` — Root layout
+- `app/page.tsx` — Home/landing
+- `app/login/page.tsx` — Login
+- `app/library/page.tsx` — Public tutorial browse
+- `app/dashboard/page.tsx` — Contributor hub
+- `app/upload/page.tsx` — Create tutorial (6-step wizard)
+- `app/admin/page.tsx` — Admin dashboard
+- `middleware.ts` — Route protection
+- `lib/api-client.ts` — Server-side API calls
+- `lib/browser-api-client.ts` — Client-side API calls
+- `lib/validation.ts` — Form validation
+- `components/*.tsx` — UI components
 
-#### Middleware
-
-| File | Purpose |
-|------|---------|
-| [src/middleware/auth.ts](packages/api/src/middleware/auth.ts) | Validates JWT in Authorization header, extracts `userId` and `role`, attaches to Hono context |
-
-**How it works**:
-1. Reads `Authorization: Bearer <jwt>` header
-2. Verifies JWT signature with Supabase public key
-3. Extracts `sub` (user ID) and custom claims (role)
-4. Creates RLS-respecting Supabase client with JWT
-5. Attaches to `context.var.auth` for route handlers
-
-#### Routes
-
-| File | Purpose |
-|------|---------|
-| [src/routes/public.ts](packages/api/src/routes/public.ts) | `GET /public/tutorials`, `GET /public/tutorials/:id` — Unauthenticated access to approved tutorials |
-| [src/routes/tutorials.ts](packages/api/src/routes/tutorials.ts) | `GET /tutorials/mine`, `POST /tutorials`, `PATCH /tutorials/:id`, `DELETE /tutorials/:id` — Tutorial CRUD |
-| [src/routes/upload.ts](packages/api/src/routes/upload.ts) | `POST /upload` — File upload to Supabase Storage (PDFs, photos, STL files) |
-| [src/routes/parts.ts](packages/api/src/routes/parts.ts) | `POST /tutorials/:id/parts`, `DELETE /parts/:id` — Add/remove tutorial materials |
-| [src/routes/tools.ts](packages/api/src/routes/tools.ts) | `POST /tutorials/:id/tools`, `DELETE /tools/:id` — Add/remove required tools |
-| [src/routes/stl-files.ts](packages/api/src/routes/stl-files.ts) | `POST /tutorials/:id/stl-files`, `DELETE /stl-files/:id` — Add/remove 3D model files |
-| [src/routes/admin.ts](packages/api/src/routes/admin.ts) | `GET /admin/tutorials`, `PATCH /admin/tutorials/:id` — Admin review and approval |
-| [src/routes/contributors.ts](packages/api/src/routes/contributors.ts) | `GET /contributors/me`, `PATCH /contributors/me` — Contributor profile management |
-
-**Endpoint Pattern**:
-```typescript
-// Each route validates:
-// 1. JWT is present and valid (via auth middleware)
-// 2. User has required role (admin, contributor, or public)
-// 3. Constructs RLS-respecting Supabase client from JWT
-// 4. Executes query with RLS enforcement
-// 5. Returns typed JSON response
-
-// Example: GET /tutorials/mine
-// ← Authorization: Bearer <jwt>
-// → Middleware validates JWT, extracts userId
-// → Handler queries: supabase.from('tutorials')
-//   .select('*').eq('user_id', userId)
-// → RLS policy ensures user only sees their own tutorials
-// → Return JSON
-```
-
-#### Supabase Configuration
-
-| File | Purpose |
-|------|---------|
-| [src/supabase/client.ts](packages/api/src/supabase/client.ts) | Admin Supabase client (service role) — used for internal admin operations |
-| [src/supabase/user-client.ts](packages/api/src/supabase/user-client.ts) | Creates RLS-respecting Supabase client from user JWT — used in all user-facing routes |
-
-**Key Design**: 
-- `user-client.ts` builds a Supabase client with the user's JWT
-- This client respects Row Level Security (RLS) policies at the database level
-- Prevents users from accessing data they shouldn't see (even if they try to craft malicious queries)
-
-#### Testing
-
-| File | Purpose |
-|------|---------|
-| [tests/unit/routes.test.ts](packages/api/tests/unit/routes.test.ts) | Unit tests for route handlers (mocked Supabase) |
-| [tests/unit/middleware.test.ts](packages/api/tests/unit/middleware.test.ts) | Auth middleware tests |
-| [tests/integration/tutorials.test.ts](packages/api/tests/integration/tutorials.test.ts) | Integration tests against real local Supabase with RLS |
-
-#### Configuration
-
-| File | Purpose |
-|------|---------|
-| [package.json](packages/api/package.json) | Scripts: `dev`, `build`, `start`, `test:unit`, `test:integration`, `test` |
-| [tsconfig.json](packages/api/tsconfig.json) | TypeScript compiler options |
-| [vitest.config.ts](packages/api/vitest.config.ts) | Test runner config (environment, coverage) |
-| [.env.example](packages/api/.env.example) | Template for environment variables |
-
-### packages/web
-
-**Purpose**: Next.js application — UI layer, pages, components, forms. All data fetching goes through the API.
-
-#### Root Configuration
-
-| File | Purpose |
-|------|---------|
-| [package.json](packages/web/package.json) | Scripts: `dev`, `build`, `start`, `test:unit`, `test:e2e` |
-| [tsconfig.json](packages/web/tsconfig.json) | TypeScript compiler options with path aliases |
-| [next.config.ts](packages/web/next.config.ts) | Image optimization (Supabase Storage domains), redirects |
-| [postcss.config.mjs](packages/web/postcss.config.mjs) | PostCSS + Tailwind CSS setup |
-| [eslint.config.mjs](packages/web/eslint.config.mjs) | ESLint rules |
-| [middleware.ts](packages/web/middleware.ts) | Auth session validation before route rendering |
-| [vitest.config.ts](packages/web/vitest.config.ts) | Unit test runner config (jsdom, RTL) |
-| [playwright.config.ts](packages/web/playwright.config.ts) | E2E test config (baseURL, browsers, timeout) |
-
-#### App Router (Pages)
-
-| File | Purpose |
-|------|---------|
-| [app/layout.tsx](packages/web/app/layout.tsx) | Root layout, HTML structure, navigation bar |
-| [app/page.tsx](packages/web/app/page.tsx) | Home/landing page |
-| [app/login/page.tsx](packages/web/app/login/page.tsx) | Login form with email/password |
-| [app/signup/page.tsx](packages/web/app/signup/page.tsx) | Signup form for new contributors |
-| [app/pending/page.tsx](packages/web/app/pending/page.tsx) | "Awaiting approval" page (shown to unapproved contributors) |
-| [app/library/page.tsx](packages/web/app/library/page.tsx) | Browse all approved tutorials (public) |
-| [app/tutorials/\[id\]/page.tsx](packages/web/app/tutorials/[id]/page.tsx) | Tutorial detail page with full content |
-| [app/dashboard/page.tsx](packages/web/app/dashboard/page.tsx) | Contributor dashboard (my tutorials, submissions) |
-| [app/my-tutorials/page.tsx](packages/web/app/my-tutorials/page.tsx) | List of user's tutorials with edit options |
-| [app/upload/page.tsx](packages/web/app/upload/page.tsx) | 6-step tutorial creation wizard |
-| [app/admin/page.tsx](packages/web/app/admin/page.tsx) | Admin dashboard (stats, review queue) — admin only |
-
-#### Components
-
-| File | Purpose |
-|------|---------|
-| [components/nav.tsx](packages/web/components/nav.tsx) | Navigation bar with logo, search, user menu |
-| [components/tutorial-card.tsx](packages/web/components/tutorial-card.tsx) | Card displaying tutorial preview (title, image, difficulty) |
-| [components/difficulty-badge.tsx](packages/web/components/difficulty-badge.tsx) | Visual badge for difficulty level (easy/medium/hard) |
-| [components/file-drop-zone.tsx](packages/web/components/file-drop-zone.tsx) | Drag-and-drop file uploader with progress |
-| [components/buy-links-input.tsx](packages/web/components/buy-links-input.tsx) | Form for adding material purchase links |
-
-#### Library
-
-| File | Purpose |
-|------|---------|
-| [lib/api-client.ts](packages/web/lib/api-client.ts) | HTTP client for calling API endpoints with typed responses |
-| [lib/supabase.ts](packages/web/lib/supabase.ts) | Supabase client setup with `@supabase/ssr` for auth sessions |
-| [lib/utils.ts](packages/web/lib/utils.ts) | Helper functions (formatters, validators, etc.) |
-
-**Key Design**: 
-- `api-client.ts` is the **only place** where fetch calls are made
-- All routes use this client to call `/api/*` endpoints
-- Web never calls Supabase directly for data (only auth sessions via `@supabase/ssr`)
-
-#### Testing
-
-| File | Purpose |
-|------|---------|
-| [tests/unit/components.test.tsx](packages/web/tests/unit/components.test.tsx) | Component unit tests (React Testing Library) |
-| [tests/e2e/workflow.spec.ts](packages/web/tests/e2e/workflow.spec.ts) | End-to-end tests (Playwright) — full user flows |
-| [coverage/](packages/web/coverage/) | Test coverage reports (HTML) |
+**packages/types/**
+- `src/index.ts` — All type definitions and data model documentation
 
 ---
 

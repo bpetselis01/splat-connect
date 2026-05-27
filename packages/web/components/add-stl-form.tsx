@@ -1,3 +1,33 @@
+/**
+ * Add STL File Form Component
+ * 
+ * Form for uploading and attaching 3D model files (.stl format) to a tutorial.
+ * Users can drag-and-drop or click to select STL files for 3D printing.
+ * 
+ * Props:
+ * - tutorialId: ID of the tutorial being edited
+ * - onAdd: Callback when file is successfully added
+ * 
+ * Process:
+ * 1. User selects STL file via FileDropZone
+ * 2. User clicks "Upload"
+ * 3. Form uploads file to /api/upload
+ * 4. Server uploads to Supabase Storage, returns file_url
+ * 5. Form calls /api/tutorials/:id/stl-files with file_url
+ * 6. onAdd callback fires with filename and URL
+ * 7. Parent component updates UI to show new file
+ * 
+ * Error handling:
+ * - Shows error messages if upload fails
+ * - Clears errors on successful upload
+ * - Validates file exists before uploading
+ * 
+ * Related files:
+ * - components/file-drop-zone.tsx: UI for file selection
+ * - routes/upload.ts: API endpoint for file upload
+ * - routes/stl-files.ts: API endpoint for creating STLFile record
+ * - types/index.ts: StlFile type definition
+ */
 'use client'
 import { useState, useTransition } from 'react'
 import { browserApiClient } from '@/lib/browser-api-client'

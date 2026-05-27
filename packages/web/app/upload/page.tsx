@@ -1,3 +1,42 @@
+/**
+ * Tutorial Upload (Create) Page
+ * 
+ * Multi-step wizard for creating a new tutorial (6 steps).
+ * Only accessible to approved contributors.
+ * 
+ * Step breakdown:
+ * 1. Details: Title, description, difficulty level
+ * 2. Files: Upload tutorial PDF and toy photo
+ * 3. Parts: Add materials needed (name, qty, buy links)
+ * 4. Tools: Add tools needed (name, buy links)
+ * 5. STL Files: Add 3D model files (optional)
+ * 6. Review: Preview all data and submit for review
+ * 
+ * Data flow:
+ * 1. User fills step 1 and clicks "Next"
+ * 2. Validation checks (lib/validation.ts) verify requirements
+ * 3. If valid, advance to step 2
+ * 4. Step 2: User uploads files via FileDropZone
+ *    - Files uploaded to /api/upload
+ *    - Server uploads to Supabase Storage
+ *    - File URLs returned
+ * 5. User continues through all steps
+ * 6. Step 6: User reviews all data
+ * 7. User clicks "Submit for Review"
+ * 8. Data saved to database:
+ *    - POST /api/tutorials (creates Tutorial with status='draft')
+ *    - POST /api/tutorials/:id/parts (adds all parts)
+ *    - POST /api/tutorials/:id/tools (adds all tools)
+ *    - POST /api/tutorials/:id/stl-files (adds all 3D files)
+ * 9. User redirected to /my-tutorials
+ * 
+ * Related files:
+ * - lib/validation.ts: Step validation logic
+ * - components/file-drop-zone.tsx: File upload UI
+ * - components/buy-links-input.tsx: Material links form
+ * - routes/tutorials.ts: API endpoints
+ * - types/index.ts: UploadDraft type
+ */
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'

@@ -1,3 +1,36 @@
+/**
+ * Edit Files Section Component
+ * 
+ * Allows editing tutorial files (photo and PDF) after creation.
+ * Used in the tutorial editor page to replace existing files.
+ * 
+ * Props:
+ * - tutorialId: ID of tutorial being edited
+ * - currentPhotoUrl: Current toy photo URL (if any)
+ * - currentPdfUrl: Current tutorial PDF URL (if any)
+ * - onSave: Callback when files are saved
+ * 
+ * Features:
+ * - Upload new photo or PDF via drag-and-drop
+ * - Shows existing files
+ * - "Save" button only enabled if changes made
+ * - Handles upload progress and errors
+ * 
+ * Process:
+ * 1. User selects new file via FileDropZone
+ * 2. File preview/name shown immediately
+ * 3. User clicks "Save Changes"
+ * 4. Form uploads file to /api/upload
+ * 5. Server uploads to Supabase Storage, returns file_url
+ * 6. Form calls PATCH /api/tutorials/:id with new file URLs
+ * 7. onSave callback fires
+ * 8. Parent page refreshes to show updated files
+ * 
+ * Related files:
+ * - components/file-drop-zone.tsx: UI for file selection
+ * - routes/upload.ts: File upload to Supabase Storage
+ * - routes/tutorials.ts: PATCH endpoint to update tutorial
+ */
 'use client'
 import { useState, useTransition } from 'react'
 import { browserApiClient } from '@/lib/browser-api-client'

@@ -1,3 +1,28 @@
+/**
+ * Public (Unauthenticated) Routes
+ * 
+ * These endpoints allow anyone to browse approved tutorials WITHOUT authentication.
+ * They do NOT go through authMiddleware (see: src/index.ts line 20).
+ * 
+ * Endpoints:
+ * - GET /api/public/tutorials
+ *   - Query approved tutorials, optionally filter by difficulty
+ *   - Returns: array of Tutorial objects
+ * 
+ * - GET /api/public/tutorials/:id
+ *   - Get full tutorial details with parts, tools, and 3D files
+ *   - Only returns tutorials with status='approved'
+ *   - Returns: TutorialWithDetails object
+ * 
+ * Security:
+ * - Uses admin client (no RLS) because no user context
+ * - Only returns tutorials with status='approved'
+ * - Cannot create/modify/delete from this endpoint
+ * 
+ * Related files:
+ * - routes/tutorials.ts: Protected endpoints for CRUD operations
+ * - middleware/auth.ts: Not used here (public routes)
+ */
 import { Hono } from 'hono'
 import { createAdminClient } from '../supabase/client.js'
 

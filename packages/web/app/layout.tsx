@@ -1,3 +1,28 @@
+/**
+ * Root Layout
+ * 
+ * The top-level layout that wraps all pages in the application.
+ * Sets up:
+ * - HTML metadata and fonts
+ * - Navigation bar (with user role)
+ * - User session fetching
+ * - Global styling
+ * 
+ * Process:
+ * 1. Creates Supabase server client
+ * 2. Fetches user session (if logged in)
+ * 3. Extracts user role (admin/contributor/null)
+ * 4. Passes role to Nav component
+ * 5. Nav shows different links based on role
+ * 
+ * Every page in /app renders inside this layout.
+ * So Nav appears on every page.
+ * 
+ * Related files:
+ * - components/nav.tsx: Navigation bar that uses role prop
+ * - middleware.ts: Validates access to protected routes
+ * - app/page.tsx: Home page (rendered inside layout)
+ */
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
