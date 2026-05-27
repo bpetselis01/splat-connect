@@ -10,11 +10,12 @@ vi.mock('../../../src/supabase/client.js', () => ({ createAdminClient: () => moc
 
 const { default: tutorials } = await import('../../../src/routes/tutorials.js')
 
-function makeApp(role: 'contributor' | 'admin' = 'contributor') {
+function makeApp(role: 'contributor' | 'admin' = 'contributor', approved = true) {
   const app = new Hono<{ Variables: AuthVariables }>()
   app.use('*', async (c, next) => {
     c.set('userId', 'user-1')
     c.set('role', role)
+    c.set('approved', approved)
     c.set('token', 'test-token')
     await next()
   })
@@ -68,10 +69,10 @@ describe('GET /:id', () => {
 describe('POST /', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('upserts tutorial and returns 201', async () => {
+  it('inserts tutorial and returns 201', async () => {
     const created = { id: 'new-id', title: 'New Tutorial', status: 'draft' }
-    mockUserClient.from.mockReturnValue({
-      upsert: () => ({ select: () => ({ single: () => ({ data: created, error: null }) }) }),
+    mockAdminClient.from.mockReturnValue({
+      insert: () => ({ select: () => ({ single: () => ({ data: created, error: null }) }) }),
     })
     const res = await makeApp().request('/', {
       method: 'POST',
@@ -90,9 +91,7 @@ describe('PATCH /:id', () => {
   it('updates tutorial', async () => {
     const updated = { id: '1', status: 'pending' }
     mockUserClient.from.mockReturnValue({
-      update: () => ({
-        eq: () => ({ select: () => ({ single: () => ({ data: updated, error: null }) }) }),
-      }),
+      update: () => ({ eq: () => ({ select: () => ({ single: () => ({ data: updated, error: null }) }) }) }),
     })
     const res = await makeApp().request('/1', {
       method: 'PATCH',
