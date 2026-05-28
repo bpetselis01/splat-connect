@@ -142,7 +142,14 @@ export default async function EditTutorialPage({
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Difficulty</label>
+            {/* WHY: After saving details, the difficulty dropdown shows the old selection
+                 instead of the newly saved one.
+                HOW: The key prop forces the dropdown to rebuild from scratch whenever
+                     the saved difficulty changes, picking up the fresh value. */}
             <select key={tutorial!.difficulty} name="difficulty" defaultValue={tutorial!.difficulty} className={inputCls}>
+              {/* WHY: The old values ("beginner", "intermediate", "advanced") didn't match
+                       the database — saves were silently ignored by the check constraint.
+                  HOW: The database only accepts "easy", "medium", or "hard" for difficulty. */}
               <option value="easy">Easy</option>
               <option value="medium">Medium</option>
               <option value="hard">Hard</option>
