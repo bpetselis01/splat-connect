@@ -57,6 +57,11 @@ export default function LoginPage() {
         .eq('id', user!.id)
         .single()
 
+      // WHY: Without this, the page's cached server data (including the login session)
+      //      was stale, so the redirect sometimes landed on a page that still showed
+      //      the logged-out state.
+      // HOW: Forces the page data to reload before navigating, so the destination
+      //      page sees the fresh login session immediately.
       router.refresh()
       if (profile?.role === 'contributor') {
         router.push(profile.approved ? '/dashboard' : '/pending')

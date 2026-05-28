@@ -14,6 +14,10 @@ export function EditFilesSection({
   currentPdfUrl: string | null
   onSave: (photoUrl: string | null, pdfUrl: string | null) => Promise<void>
 }) {
+  // WHY: Previously, picking a file immediately uploaded it to cloud storage —
+  //      files were being saved even if the user cancelled or changed their mind.
+  // HOW: Files are held in memory as File objects and only uploaded when the
+  //      Save button is clicked.
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [pdfFile, setPdfFile] = useState<File | null>(null)
   const [saving, setSaving] = useState(false)

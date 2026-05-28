@@ -10,6 +10,8 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
+    // WHY: Without this, TypeScript didn't know about Node.js built-ins like
+    //      process.env, causing type errors in test files and server scripts.
     "types": ["node"]
   },
   "include": ["**/*.ts"],

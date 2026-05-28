@@ -81,6 +81,11 @@ upload.post('/photo', async (c) => {
   const admin = createAdminClient()
   const userClient = createUserClient(c.get('token'))
 
+  // WHY: Uploading a new photo in a different format (e.g. switching from .jpg
+  //      to .png) left the old file sitting in storage because the filename
+  //      changed with the extension, creating two photos for the same tutorial.
+  // HOW: All files in the tutorial's photo folder are deleted before uploading
+  //      the new one, so there is always exactly one photo per tutorial.
   // Delete every existing file under this tutorial's photo folder before
   // uploading so that extension changes (jpg → png etc.) don't accumulate
   // multiple files. Admin client used because no DELETE storage policy exists.

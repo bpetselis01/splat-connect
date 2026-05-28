@@ -21,6 +21,8 @@
     "paths": {
       "@/*": ["./*"]
     },
+    // WHY: Without this, TypeScript didn't know about Node.js built-ins like
+    //      process.env, causing type errors in web test files.
     "types": ["node"]
   },
   "include": [

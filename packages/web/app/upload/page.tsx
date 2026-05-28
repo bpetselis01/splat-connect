@@ -75,6 +75,10 @@ export default function UploadPage() {
   const [error, setError] = useState<string | null>(null)
 
   const [tutorialId] = useState(() => crypto.randomUUID())
+  // WHY: If the submit fails halfway through, hitting Submit again would try to
+  //      create the tutorial a second time, causing a duplicate error.
+  // HOW: Flags track which steps have already completed so a retry picks up
+  //      where it left off instead of starting from the beginning.
   const [tutorialCreated, setTutorialCreated] = useState(false)
   const [tutorialInserted, setTutorialInserted] = useState(false)
 

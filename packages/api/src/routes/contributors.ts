@@ -58,6 +58,10 @@ contributors.post('/me/tutorials/:tutorialId', async (c) => {
   const { error } = await supabase
     .from('tutorial_contributors')
     .insert({ tutorial_id: c.req.param('tutorialId'), profile_id: c.get('userId') })
+  // WHY: If the tutorial submit fails midway, the user retries and this endpoint
+  //      is called again with the same tutorial, causing a duplicate link error.
+  // HOW: A duplicate key error means the link already exists — return success so
+  //      the rest of the submit can continue.
   if (error) {
     // 23505 = unique_violation: already linked (retry-safe)
     if (error.code === '23505') return c.body(null, 200)

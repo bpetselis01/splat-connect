@@ -52,10 +52,16 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
     ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
   })
   if (!res.ok) {
+    // WHY: Error messages from the API were being lost — you'd see "failed with
+    //      status 400" but not the reason why.
+    // HOW: Reads the response body for an error field and appends it to the
+    //      thrown error so the cause is visible in logs and error messages.
     let detail = ''
     try { const j = await res.clone().json() as { error?: string }; if (j.error) detail = `: ${j.error}` } catch {}
     throw new Error(`API ${method} ${path} failed with status ${res.status}${detail}`)
   }
+  // WHY: Some API responses have no body (e.g. 204 No Content), which caused
+  //      JSON.parse to fail on an empty string and throw an unrelated error.
   const text = await res.text()
   return (text ? JSON.parse(text) : null) as T
 }
@@ -70,10 +76,16 @@ async function requestFormData<T>(method: string, path: string, formData: FormDa
     body: formData,
   })
   if (!res.ok) {
+    // WHY: Error messages from the API were being lost — you'd see "failed with
+    //      status 400" but not the reason why.
+    // HOW: Reads the response body for an error field and appends it to the
+    //      thrown error so the cause is visible in logs and error messages.
     let detail = ''
     try { const j = await res.clone().json() as { error?: string }; if (j.error) detail = `: ${j.error}` } catch {}
     throw new Error(`API ${method} ${path} failed with status ${res.status}${detail}`)
   }
+  // WHY: Some API responses have no body (e.g. 204 No Content), which caused
+  //      JSON.parse to fail on an empty string and throw an unrelated error.
   const text = await res.text()
   return (text ? JSON.parse(text) : null) as T
 }

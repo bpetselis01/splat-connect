@@ -2,6 +2,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { Hono } from 'hono'
 import type { AuthVariables } from '../../../src/middleware/auth.js'
 
+// WHY: Declaring mocks with a fixed return shape at the top prevented individual
+//      tests from overriding what the mock returns for error-path scenarios —
+//      the fixed shape always won.
+// HOW: Mocks are declared without a return shape here. Each test group sets
+//      its own default in beforeEach so individual tests can override freely.
 const mockDeleteParts = vi.fn()
 const mockInsertParts = vi.fn()
 const mockFrom = vi.fn((table: string) => {
