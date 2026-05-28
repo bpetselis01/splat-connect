@@ -98,5 +98,9 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
+  // WHY: With only 4 routes listed, the auth session cookie wasn't refreshed on
+  //      other pages (e.g. the home page), so users could be silently logged out.
+  // HOW: This pattern runs the middleware on every page except static assets,
+  //      keeping the session cookie fresh across the whole app.
   matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
 }

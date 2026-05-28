@@ -151,6 +151,12 @@ create policy "Admin can read all tutorials"
 create policy "Approved contributors can insert tutorials"
   on public.tutorials for insert with check (public.is_approved_contributor());
 
+-- WHY: Contributors were blocked from editing their own tutorials once the
+--      status changed away from "draft" or "rejected" — even to fix mistakes
+--      in a pending or approved tutorial.
+-- HOW: The permission check no longer restricts which status a tutorial can be
+--      in for an edit to be allowed. It only prevents contributors from
+--      setting the status to "approved" — that is reserved for admins.
 -- USING has no status gate so contributors can edit at any status.
 -- WITH CHECK prevents leaving a row in 'approved' — only admins can approve.
 create policy "Contributors can update own tutorials"
@@ -171,6 +177,9 @@ create policy "Contributors can update own tutorials"
 create policy "Admin can update all tutorials"
   on public.tutorials for update using (public.is_admin());
 
+-- WHY: There was no permission to delete tutorials, so the delete API endpoint
+--      always failed silently.
+-- HOW: Contributors can delete their own draft tutorials; admins can delete any.
 create policy "Contributors can delete own draft tutorials"
   on public.tutorials for delete
   using (
@@ -213,6 +222,12 @@ create policy "Contributors can read own tutorial parts"
     )
   );
 
+-- WHY: Contributors could edit tutorial details at any status, but were still
+--      blocked from changing parts, tools, or STL files on pending or approved
+--      tutorials — the sub-resource permissions hadn't been updated to match.
+-- HOW: The write permission for parts, tools, and STL files now follows the same
+--      rule as the tutorial permission: any contributor who owns the tutorial
+--      can modify its contents regardless of status.
 create policy "Contributors can write own tutorial parts"
   on public.parts for all
   using (
@@ -245,6 +260,12 @@ create policy "Contributors can read own tutorial tools"
     )
   );
 
+-- WHY: Contributors could edit tutorial details at any status, but were still
+--      blocked from changing parts, tools, or STL files on pending or approved
+--      tutorials — the sub-resource permissions hadn't been updated to match.
+-- HOW: The write permission for parts, tools, and STL files now follows the same
+--      rule as the tutorial permission: any contributor who owns the tutorial
+--      can modify its contents regardless of status.
 create policy "Contributors can write own tutorial tools"
   on public.tools for all
   using (
@@ -277,6 +298,12 @@ create policy "Contributors can read own tutorial stl_files"
     )
   );
 
+-- WHY: Contributors could edit tutorial details at any status, but were still
+--      blocked from changing parts, tools, or STL files on pending or approved
+--      tutorials — the sub-resource permissions hadn't been updated to match.
+-- HOW: The write permission for parts, tools, and STL files now follows the same
+--      rule as the tutorial permission: any contributor who owns the tutorial
+--      can modify its contents regardless of status.
 create policy "Contributors can write own tutorial stl_files"
   on public.stl_files for all
   using (
@@ -325,6 +352,11 @@ create policy "Authenticated upload stl-files"
   on storage.objects for insert
   with check (bucket_id = 'stl-files' and public.is_approved_contributor());
 
+-- WHY: Re-uploading a file failed with a permission error because the database
+--      had permission to create new files but not to replace existing ones.
+--      When a file already exists at a path, the upload is treated as an update.
+-- HOW: These three policies give approved contributors permission to replace
+--      existing files in each storage bucket.
 create policy "Authenticated update tutorial-pdfs"
   on storage.objects for update
   using  (bucket_id = 'tutorial-pdfs' and public.is_approved_contributor())

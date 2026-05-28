@@ -89,6 +89,8 @@ tutorials.get('/:id', async (c) => {
 })
 
 tutorials.post('/', async (c) => {
+  // WHY: Any logged-in user could create tutorials before an admin had approved
+  //      their account.
   if (!c.get('approved')) {
     return c.json({ error: 'Your account is not yet approved to create tutorials' }, 403)
   }
@@ -108,6 +110,10 @@ tutorials.post('/', async (c) => {
     })
     .select()
     .single()
+  // WHY: If the submit fails and the user retries, the same tutorial ID is sent
+  //      again, hitting a duplicate key error on the second insert.
+  // HOW: A duplicate key error means the tutorial was already created — return
+  //      success so the caller can continue with the remaining submit steps.
   if (error) {
     // 23505 = unique_violation: tutorial already exists (retry-safe)
     if (error.code === '23505') return c.json({ id: body.id }, 200)
@@ -119,6 +125,11 @@ tutorials.post('/', async (c) => {
 
 tutorials.patch('/:id', async (c) => {
   const body = await c.req.json()
+  // WHY: A database permission bug previously blocked contributors from updating
+  //      tutorials, so a temporary admin connection was used as a workaround.
+  // HOW: The permission is now fixed in the database (migration 005 in
+  //      001_schema.sql), so the regular user connection works and correctly
+  //      enforces who can edit which tutorial.
   const supabase = createUserClient(c.get('token'))
   const { data, error } = await supabase
     .from('tutorials')
