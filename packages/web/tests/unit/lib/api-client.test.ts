@@ -61,4 +61,40 @@ describe('apiClient', () => {
       })
     )
   })
+
+  it('PATCH sends correct method and JSON body', async () => {
+    fetchMock.mockResolvedValue({ ok: true, json: () => Promise.resolve({ status: 'pending' }) })
+    await apiClient.patch('/api/tutorials/1', { status: 'pending' })
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://localhost:3001/api/tutorials/1',
+      expect.objectContaining({
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'pending' }),
+      })
+    )
+  })
+
+  it('DELETE sends correct method with no body', async () => {
+    fetchMock.mockResolvedValue({ ok: true, json: () => Promise.resolve(null) })
+    await apiClient.delete('/api/tutorials/1')
+    const [, opts] = fetchMock.mock.calls[0]
+    expect(opts.method).toBe('DELETE')
+    expect(opts.body).toBeUndefined()
+  })
+
+  it('postFormData omits Content-Type and sends FormData body', async () => {
+    fetchMock.mockResolvedValue({ ok: true, json: () => Promise.resolve({ url: 'https://example.com/file.pdf' }) })
+    const form = new FormData()
+    form.append('file', new Blob(['pdf']), 'file.pdf')
+    await apiClient.postFormData('/api/upload/pdf', form)
+    const [url, opts] = fetchMock.mock.calls[0]
+    expect(url).toBe('http://localhost:3001/api/upload/pdf')
+    expect(opts.body).toBe(form)
+    expect((opts.headers as Record<string, string>)?.['Content-Type']).toBeUndefined()
+  })
+
+  it('thrown error message includes status code', async () => {
+    fetchMock.mockResolvedValue({ ok: false, status: 422, json: () => Promise.resolve({}) })
+    await expect(apiClient.patch('/api/tutorials/1', {})).rejects.toThrow('422')
+  })
 })

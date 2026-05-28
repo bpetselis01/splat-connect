@@ -13,22 +13,12 @@
  * 6. Review: Preview all data and submit for review
  * 
  * Data flow:
- * 1. User fills step 1 and clicks "Next"
- * 2. Validation checks (lib/validation.ts) verify requirements
- * 3. If valid, advance to step 2
- * 4. Step 2: User uploads files via FileDropZone
- *    - Files uploaded to /api/upload
- *    - Server uploads to Supabase Storage
- *    - File URLs returned
- * 5. User continues through all steps
- * 6. Step 6: User reviews all data
- * 7. User clicks "Submit for Review"
- * 8. Data saved to database:
- *    - POST /api/tutorials (creates Tutorial with status='draft')
- *    - POST /api/tutorials/:id/parts (adds all parts)
- *    - POST /api/tutorials/:id/tools (adds all tools)
- *    - POST /api/tutorials/:id/stl-files (adds all 3D files)
- * 9. User redirected to /my-tutorials
+ * - Step 1 Next: POST /api/tutorials (draft) + POST contributor link
+ * - Step 2 Next: PATCH tutorial with PDF + photo URLs
+ * - Step 3 Next: POST /api/tutorials/:id/parts (replace-all)
+ * - Step 4 Next: POST /api/tutorials/:id/tools (replace-all)
+ * - Step 5 Next: POST /api/tutorials/:id/stl-files (replace-all, if any)
+ * - Step 6 Submit: PATCH status draft→pending, redirect to /my-tutorials
  * 
  * Related files:
  * - lib/validation.ts: Step validation logic
@@ -39,7 +29,6 @@
  */
 'use client'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { browserApiClient } from '@/lib/browser-api-client'
 import { canAdvanceFromStep, canSubmit } from '@/lib/validation'
 import { FileDropZone } from '@/components/file-drop-zone'
@@ -67,7 +56,6 @@ const EMPTY_DRAFT: UploadDraft = {
 }
 
 export default function UploadPage() {
-  const router = useRouter()
   const [step, setStep] = useState(1)
   const [draft, setDraft] = useState<UploadDraft>(EMPTY_DRAFT)
   const [uploading, setUploading] = useState(false)
@@ -75,12 +63,10 @@ export default function UploadPage() {
   const [error, setError] = useState<string | null>(null)
 
   const [tutorialId] = useState(() => crypto.randomUUID())
-  // WHY: If the submit fails halfway through, hitting Submit again would try to
-  //      create the tutorial a second time, causing a duplicate error.
-  // HOW: Flags track which steps have already completed so a retry picks up
-  //      where it left off instead of starting from the beginning.
-  const [tutorialCreated, setTutorialCreated] = useState(false)
-  const [tutorialInserted, setTutorialInserted] = useState(false)
+  // draftSaved: true once the tutorial row exists in Supabase (created at Step 1 Next).
+  // Used to switch from POST (first save) to PATCH (subsequent saves from Step 1).
+  const [draftSaved, setDraftSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
 
   async function uploadFile(endpoint: string, file: File): Promise<{ url: string; filename?: string }> {
     const fd = new FormData()
@@ -136,45 +122,65 @@ export default function UploadPage() {
     }
   }
 
+  // Saves the current step's data to Supabase, then advances to the next step.
+  // Each step persists only its own fields so the draft is built up incrementally.
+  async function handleNext() {
+    setSaving(true)
+    setError(null)
+    try {
+      if (step === 1) {
+        if (!draftSaved) {
+          // First time through Step 1: create the draft row and link the contributor.
+          await browserApiClient.post('/api/tutorials', {
+            id: tutorialId,
+            title: draft.title,
+            description: draft.description || null,
+            difficulty: draft.difficulty,
+          })
+          await browserApiClient.post(`/api/contributors/me/tutorials/${tutorialId}`, {})
+          setDraftSaved(true)
+        } else {
+          // User went back to Step 1 and re-advanced: update the existing draft.
+          await browserApiClient.patch(`/api/tutorials/${tutorialId}`, {
+            title: draft.title,
+            description: draft.description || null,
+            difficulty: draft.difficulty,
+          })
+        }
+      } else if (step === 2) {
+        await browserApiClient.patch(`/api/tutorials/${tutorialId}`, {
+          tutorial_pdf_url: draft.tutorial_pdf_url,
+          toy_photo_url: draft.toy_photo_url,
+        })
+      } else if (step === 3) {
+        await browserApiClient.post(`/api/tutorials/${tutorialId}/parts`, {
+          parts: draft.parts,
+        })
+      } else if (step === 4) {
+        await browserApiClient.post(`/api/tutorials/${tutorialId}/tools`, {
+          tools: draft.tools,
+        })
+      } else if (step === 5 && draft.stl_files.length > 0) {
+        await browserApiClient.post(`/api/tutorials/${tutorialId}/stl-files`, {
+          stl_files: draft.stl_files,
+        })
+      }
+      setStep((s) => s + 1)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Save failed')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   async function handleSubmit() {
     if (!canSubmit(draft)) return
     setSubmitting(true)
     setError(null)
     try {
-      if (!tutorialCreated) {
-        await browserApiClient.post(`/api/tutorials`, {
-          id: tutorialId,
-          title: draft.title,
-          description: draft.description || null,
-          difficulty: draft.difficulty,
-          tutorial_pdf_url: draft.tutorial_pdf_url,
-          toy_photo_url: draft.toy_photo_url,
-        })
-        setTutorialCreated(true)
-      }
-
-      if (!tutorialInserted) {
-        await browserApiClient.post(`/api/contributors/me/tutorials/${tutorialId}`, {})
-        setTutorialInserted(true)
-      }
-
-      await browserApiClient.post(`/api/tutorials/${tutorialId}/parts`, {
-        parts: draft.parts,
-      })
-      await browserApiClient.post(`/api/tutorials/${tutorialId}/tools`, {
-        tools: draft.tools,
-      })
-
-      if (draft.stl_files.length > 0) {
-        await browserApiClient.post(`/api/tutorials/${tutorialId}/stl-files`, {
-          stl_files: draft.stl_files,
-        })
-      }
-
+      // All data already saved per-step — just transition the draft to pending for review.
       await browserApiClient.patch(`/api/tutorials/${tutorialId}`, { status: 'pending' })
-
-      router.refresh()
-      router.push('/my-tutorials')
+      window.location.href = '/my-tutorials'
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Submission failed')
       setSubmitting(false)
@@ -552,11 +558,11 @@ export default function UploadPage() {
         {step < STEPS.length && (
           <button
             type="button"
-            onClick={() => setStep((s) => s + 1)}
-            disabled={!canAdvance || uploading}
+            onClick={handleNext}
+            disabled={!canAdvance || uploading || saving}
             className="px-4 py-2 text-sm bg-[#1e3a5f] text-white rounded-lg hover:bg-[#16304f] disabled:opacity-50"
           >
-            Next →
+            {saving ? 'Saving…' : 'Next →'}
           </button>
         )}
       </div>
