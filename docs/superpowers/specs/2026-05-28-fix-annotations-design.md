@@ -97,6 +97,18 @@ Add plain-English inline comments to every successful bug fix in the repository.
 
 ---
 
+## Commit Strategy
+
+Each file gets its own commit. Commit message format:
+
+```
+docs(annotations): add fix comments to <short file name>
+```
+
+Example: `docs(annotations): add fix comments to middleware.ts`
+
+---
+
 ## Out of Scope
 
 - No logic, formatting, or structure changes to any file
