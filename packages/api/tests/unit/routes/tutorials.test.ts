@@ -83,6 +83,18 @@ describe('GET /mine', () => {
     expect(body).toHaveLength(1)
     expect(body[0].title).toBe('Mine')
   })
+
+  it('returns 500 on DB error', async () => {
+    mockUserClient.from.mockReturnValue({
+      select: () => ({
+        eq: () => ({
+          order: () => ({ data: null, error: { message: 'DB error' } }),
+        }),
+      }),
+    })
+    const res = await makeApp().request('/mine')
+    expect(res.status).toBe(500)
+  })
 })
 
 describe('POST /', () => {
@@ -145,6 +157,22 @@ describe('PATCH /:id', () => {
       body: JSON.stringify({ status: 'pending' }),
     })
     expect(res.status).toBe(200)
+  })
+
+  it('returns 500 on DB error', async () => {
+    mockUserClient.from.mockReturnValue({
+      update: () => ({
+        eq: () => ({
+          select: () => ({ single: () => ({ data: null, error: { message: 'DB error' } }) }),
+        }),
+      }),
+    })
+    const res = await makeApp().request('/1', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'pending' }),
+    })
+    expect(res.status).toBe(500)
   })
 })
 
