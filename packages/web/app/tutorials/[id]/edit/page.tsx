@@ -2,9 +2,10 @@ import { apiClient } from '@/lib/api-client'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import Link from 'next/link'
-import { BuyLinksInput } from '@/components/buy-links-input'
 import { EditFilesSection } from '@/components/edit-files-section'
 import { AddStlForm } from '@/components/add-stl-form'
+import { EditPartsSection } from '@/components/edit-parts-section'
+import { EditToolsSection } from '@/components/edit-tools-section'
 import { SubmitForReviewButton } from '@/components/submit-for-review-button'
 import type { Tutorial, Part, Tool, StlFile, TutorialWithDetails, Difficulty, BuyLink, Profile } from '@splat-connect/types'
 
@@ -69,44 +70,15 @@ export default async function EditTutorialPage({
     revalidatePath(`/tutorials/${id}/edit`)
   }
 
-  async function addPart(formData: FormData) {
+  async function saveParts(newParts: { name: string; quantity: number; is_optional: boolean; buy_links: BuyLink[] }[]) {
     'use server'
-    const name = formData.get('name') as string
-    if (!name.trim()) return
-    const rawLinks = formData.get('buy_links') as string
-    const buy_links: BuyLink[] = rawLinks ? JSON.parse(rawLinks) : []
-    const current = await apiClient.get<TutorialWithDetails>(`/api/tutorials/${id}`)
-    await apiClient.post(`/api/tutorials/${id}/parts`, {
-      parts: [
-        ...current.parts,
-        {
-          name: name.trim(),
-          quantity: Number(formData.get('quantity') ?? 1),
-          is_optional: formData.get('is_optional') === 'on',
-          buy_links,
-        },
-      ],
-    })
+    await apiClient.post(`/api/tutorials/${id}/parts`, { parts: newParts })
     revalidatePath(`/tutorials/${id}/edit`)
   }
 
-  async function addTool(formData: FormData) {
+  async function saveTools(newTools: { name: string; is_optional: boolean; buy_links: BuyLink[] }[]) {
     'use server'
-    const name = formData.get('name') as string
-    if (!name.trim()) return
-    const rawLinks = formData.get('buy_links') as string
-    const buy_links: BuyLink[] = rawLinks ? JSON.parse(rawLinks) : []
-    const current = await apiClient.get<TutorialWithDetails>(`/api/tutorials/${id}`)
-    await apiClient.post(`/api/tutorials/${id}/tools`, {
-      tools: [
-        ...current.tools,
-        {
-          name: name.trim(),
-          is_optional: formData.get('is_optional') === 'on',
-          buy_links,
-        },
-      ],
-    })
+    await apiClient.post(`/api/tutorials/${id}/tools`, { tools: newTools })
     revalidatePath(`/tutorials/${id}/edit`)
   }
 
@@ -199,63 +171,7 @@ export default async function EditTutorialPage({
       <details className={panelCls}>
         <summary className={summaryCls}>Parts ({parts.length})</summary>
         <div className="px-5 pb-5">
-          {parts.length > 0 && (
-            <ul className="mb-4 flex flex-col gap-2">
-              {parts.map((p) => (
-                <li key={p.id} className="text-sm border rounded-lg px-3 py-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">
-                      {p.name} &times; {p.quantity}
-                    </span>
-                    {p.is_optional && (
-                      <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
-                        Optional
-                      </span>
-                    )}
-                  </div>
-                  {p.buy_links.length > 0 && (
-                    <div className="flex gap-3 mt-1 flex-wrap">
-                      {p.buy_links.map((bl, i) => (
-                        <a
-                          key={i}
-                          href={bl.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          aria-label={`Buy ${p.name} from ${bl.label}`}
-                          className="text-blue-600 text-xs hover:underline"
-                        >
-                          {bl.label || 'Buy'}
-                        </a>
-                      ))}
-                    </div>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-          <form action={addPart} className="flex flex-col gap-2">
-            <p className="text-sm font-medium">Add part</p>
-            <input name="name" placeholder="Name" required className={inputCls} />
-            <input
-              name="quantity"
-              type="number"
-              min="1"
-              defaultValue="1"
-              placeholder="Quantity"
-              className={inputCls}
-            />
-            <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
-              <input type="checkbox" name="is_optional" className="rounded" />
-              Optional (not required)
-            </label>
-            <div>
-              <p className="text-xs text-gray-500 mb-1">Buy links</p>
-              <BuyLinksInput />
-            </div>
-            <button type="submit" className={saveBtnCls}>
-              Add part
-            </button>
-          </form>
+          <EditPartsSection initialParts={parts} onSave={saveParts} />
         </div>
       </details>
 
@@ -263,53 +179,7 @@ export default async function EditTutorialPage({
       <details className={panelCls}>
         <summary className={summaryCls}>Tools ({tools.length})</summary>
         <div className="px-5 pb-5">
-          {tools.length > 0 && (
-            <ul className="mb-4 flex flex-col gap-2">
-              {tools.map((t) => (
-                <li key={t.id} className="text-sm border rounded-lg px-3 py-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">{t.name}</span>
-                    {t.is_optional && (
-                      <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
-                        Optional
-                      </span>
-                    )}
-                  </div>
-                  {t.buy_links.length > 0 && (
-                    <div className="flex gap-3 mt-1 flex-wrap">
-                      {t.buy_links.map((bl, i) => (
-                        <a
-                          key={i}
-                          href={bl.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          aria-label={`Buy ${t.name} from ${bl.label}`}
-                          className="text-blue-600 text-xs hover:underline"
-                        >
-                          {bl.label || 'Buy'}
-                        </a>
-                      ))}
-                    </div>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-          <form action={addTool} className="flex flex-col gap-2">
-            <p className="text-sm font-medium">Add tool</p>
-            <input name="name" placeholder="Name" required className={inputCls} />
-            <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
-              <input type="checkbox" name="is_optional" className="rounded" />
-              Optional (not required)
-            </label>
-            <div>
-              <p className="text-xs text-gray-500 mb-1">Buy links</p>
-              <BuyLinksInput />
-            </div>
-            <button type="submit" className={saveBtnCls}>
-              Add tool
-            </button>
-          </form>
+          <EditToolsSection initialTools={tools} onSave={saveTools} />
         </div>
       </details>
 
