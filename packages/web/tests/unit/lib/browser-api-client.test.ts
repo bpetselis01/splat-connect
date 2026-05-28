@@ -78,6 +78,7 @@ describe('browserApiClient', () => {
     const [, opts] = fetchMock.mock.calls[0]
     expect(opts.body).toBe(form)
     expect((opts.headers as Record<string, string>)?.['Content-Type']).toBeUndefined()
+    expect((opts.headers as Record<string, string>)?.Authorization).toBe('Bearer test-token')
   })
 
   it('throws with API error detail on non-ok response', async () => {
