@@ -33,7 +33,6 @@
  */
 'use client'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Role } from '@splat-connect/types'
 
@@ -42,13 +41,14 @@ interface NavProps {
 }
 
 export function Nav({ role }: NavProps) {
-  const router = useRouter()
   const supabase = createClient()
 
   async function signOut() {
     await supabase.auth.signOut()
-    router.push('/')
-    router.refresh()
+    // WHY: Same issue as login — router.push() + router.refresh() races mean the nav
+    //      can still show the signed-in state after logout until a hard refresh.
+    // HOW: Hard reload ensures the server renders the layout without the auth cookie.
+    window.location.href = '/'
   }
 
   return (
