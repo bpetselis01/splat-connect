@@ -170,7 +170,7 @@ export default async function EditTutorialPage({
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Difficulty</label>
-            <select name="difficulty" defaultValue={tutorial!.difficulty} className={inputCls}>
+            <select key={tutorial!.difficulty} name="difficulty" defaultValue={tutorial!.difficulty} className={inputCls}>
               <option value="easy">Easy</option>
               <option value="medium">Medium</option>
               <option value="hard">Hard</option>
