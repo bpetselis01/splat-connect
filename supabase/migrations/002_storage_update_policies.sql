@@ -1,3 +1,8 @@
+-- WHY: The fix in 001_schema.sql only affects new databases. This migration
+--      applies the same "replace file" permissions to an already-running database.
+-- HOW: Run this once against the live Supabase instance. Do not run it twice —
+--      it will fail with "policy already exists" if run again.
+--
 -- Storage UPDATE policies for file replacement
 --
 -- upsert:true in the upload routes runs as INSERT ON CONFLICT DO UPDATE.
