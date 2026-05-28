@@ -27,12 +27,10 @@
  */
 'use client'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
-  const router = useRouter()
   const supabase = createClient()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -57,18 +55,17 @@ export default function LoginPage() {
         .eq('id', user!.id)
         .single()
 
-      // WHY: Without this, the page's cached server data (including the login session)
-      //      was stale, so the redirect sometimes landed on a page that still showed
-      //      the logged-out state.
-      // HOW: Forces the page data to reload before navigating, so the destination
-      //      page sees the fresh login session immediately.
-      router.refresh()
+      // WHY: router.refresh() + router.push() left the nav showing the logged-out state
+      //      because router.refresh() is not awaitable — the push fires before the
+      //      server re-renders the layout with the new auth session.
+      // HOW: window.location.href forces a full page reload, so the server always
+      //      runs the root layout fresh and the nav reflects the correct role immediately.
       if (profile?.role === 'contributor') {
-        router.push(profile.approved ? '/dashboard' : '/pending')
+        window.location.href = profile.approved ? '/dashboard' : '/pending'
       } else if (profile?.role === 'admin') {
-        router.push('/admin')
+        window.location.href = '/admin'
       } else {
-        router.push('/')
+        window.location.href = '/'
       }
     } finally {
       setLoading(false)
