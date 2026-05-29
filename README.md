@@ -94,6 +94,251 @@ graph LR
     style H fill:#ffe0b2
 ```
 
+### Complete Component Interaction Diagram
+
+This detailed diagram shows how every component and file in the codebase interacts with each other:
+
+```mermaid
+graph TB
+    subgraph Browser["🌐 Browser / Client"]
+        User["👤 User<br/>(Parent/Contributor/Admin)"]
+    end
+    
+    subgraph Frontend["📦 packages/web (Next.js Frontend)"]
+        Layout["layout.tsx<br/>(Root Layout)<br/>🔹 Navigation<br/>🔹 Auth Provider"]
+        
+        Pages["📄 Pages"]
+        Home["page.tsx<br/>(Landing)"]
+        Login["login/page.tsx<br/>(Auth)"]
+        Library["library/page.tsx<br/>(Browse Tutorials)"]
+        Upload["upload/page.tsx<br/>(Create Tutorial)<br/>6-Step Wizard"]
+        Dashboard["dashboard/page.tsx<br/>(Contributor Hub)"]
+        Admin["admin/page.tsx<br/>(Admin Review)"]
+        TutorialDetail["tutorials/[id]/page.tsx<br/>(View Detail)"]
+        
+        Components["⚛️ React Components"]
+        Nav["nav.tsx<br/>(Navigation Bar)"]
+        TutCard["tutorial-card.tsx<br/>(Card Component)"]
+        FileZone["file-drop-zone.tsx<br/>(Upload Zone)"]
+        DiffBadge["difficulty-badge.tsx<br/>(Badge)"]
+        PartEditor["edit-parts-section.tsx"]
+        ToolEditor["edit-tools-section.tsx"]
+        BuyInput["buy-links-input.tsx"]
+        
+        Lib["🔧 Utilities"]
+        ApiClient["lib/api-client.ts<br/>(Server-Side API Calls)<br/>🔹 fetch() wrapper<br/>🔹 JWT headers"]
+        BrowserApi["lib/browser-api-client.ts<br/>(Client-Side API Calls)<br/>🔹 fetch() wrapper<br/>🔹 From component"]
+        SupabaseWeb["lib/supabase.ts<br/>(@supabase/ssr)<br/>🔹 Auth session<br/>🔹 RLS client"]
+        Validation["lib/validation.ts<br/>(Form Validation)"]
+        Utils["lib/utils.ts<br/>(Helpers)"]
+        
+        Middleware["middleware.ts<br/>(Route Protection)<br/>🔹 Check auth session<br/>🔹 Redirect if needed"]
+    end
+    
+    subgraph API["⚙️ packages/api (Hono Backend)"]
+        Server["index.ts<br/>(Server Entry)<br/>🔹 Port 3001<br/>🔹 CORS setup<br/>🔹 Route mounting"]
+        
+        Auth["middleware/auth.ts<br/>(JWT Validation)<br/>🔹 Extract Bearer token<br/>🔹 Validate with Supabase<br/>🔹 Attach userId/role/approved"]
+        
+        Routes["🛣️ API Routes"]
+        PublicRoute["routes/public.ts<br/>GET /public/tutorials*<br/>(No auth required)"]
+        TutRoute["routes/tutorials.ts<br/>GET/POST/PATCH /tutorials<br/>CRUD operations"]
+        UploadRoute["routes/upload.ts<br/>POST /upload<br/>File handler"]
+        PartsRoute["routes/parts.ts<br/>POST/DELETE /parts<br/>Manage parts"]
+        ToolsRoute["routes/tools.ts<br/>POST/DELETE /tools<br/>Manage tools"]
+        StlRoute["routes/stl-files.ts<br/>POST/DELETE /stl-files<br/>3D models"]
+        AdminRoute["routes/admin.ts<br/>GET/PATCH /admin<br/>Review submissions"]
+        ContribRoute["routes/contributors.ts<br/>GET/PATCH /contributors<br/>User profiles"]
+        
+        Supabase["🔗 Supabase Clients"]
+        AdminClient["supabase/client.ts<br/>(Admin Client)<br/>🔹 service_role_key<br/>🔹 RLS BYPASSED<br/>🔹 Internal use only"]
+        UserClient["supabase/user-client.ts<br/>(RLS-Respecting)<br/>🔹 Uses JWT<br/>🔹 RLS ENFORCED<br/>🔹 User-safe queries"]
+    end
+    
+    subgraph Types["📦 packages/types (Shared)"]
+        TypeDef["src/index.ts<br/>(All Type Definitions)<br/>🔹 Profile<br/>🔹 Tutorial<br/>🔹 Role enum<br/>🔹 Status enum"]
+    end
+    
+    subgraph Database["🗄️ Supabase PostgreSQL"]
+        Tables["📋 Database Tables"]
+        ProfileTbl["profiles<br/>🔸 id (user_id)<br/>🔸 role<br/>🔸 approved<br/>🔸 bio"]
+        TutorialTbl["tutorials<br/>🔸 id<br/>🔸 user_id<br/>🔸 title<br/>🔸 status<br/>🔸 difficulty"]
+        PartsTbl["parts<br/>🔸 id<br/>🔸 tutorial_id<br/>🔸 materials<br/>🔸 tools_needed"]
+        ToolsTbl["tools<br/>🔸 id<br/>🔸 tutorial_id<br/>🔸 name<br/>🔸 category"]
+        StlTbl["stl_files<br/>🔸 id<br/>🔸 tutorial_id<br/>🔸 file_url"]
+        
+        RLS["🔒 RLS Policies<br/>(Row-Level Security)<br/>🔹 tutorials: user_id = auth.uid<br/>🔹 profiles: id = auth.uid<br/>🔹 parts: tutorial access<br/>🔹 admin: role = 'admin'"]
+    end
+    
+    subgraph Storage["💾 Supabase Storage"]
+        Buckets["📦 Storage Buckets"]
+        PdfBucket["PDFs Bucket<br/>(Tutorial PDFs)"]
+        PhotoBucket["Photos Bucket<br/>(Tutorial Images)"]
+        StlBucket["STL Models Bucket<br/>(3D Files)"]
+    end
+    
+    User -->|Interact| Browser
+    Browser -->|User Events| Home
+    Browser -->|User Events| Login
+    Browser -->|User Events| Library
+    Browser -->|User Events| Upload
+    Browser -->|User Events| Dashboard
+    Browser -->|User Events| Admin
+    
+    Home -->|render| Layout
+    Login -->|render| Layout
+    Library -->|render| Layout
+    Upload -->|render| Layout
+    Dashboard -->|render| Layout
+    Admin -->|render| Layout
+    TutorialDetail -->|render| Layout
+    
+    Layout -->|mount| Nav
+    Library -->|use| TutCard
+    Library -->|use| DiffBadge
+    Upload -->|use| FileZone
+    Upload -->|use| PartEditor
+    Upload -->|use| ToolEditor
+    Upload -->|use| BuyInput
+    
+    Upload -->|validate| Validation
+    Upload -->|render| Utils
+    
+    Middleware -->|protect| Home
+    Middleware -->|protect| Login
+    Middleware -->|protect| Dashboard
+    Middleware -->|protect| Admin
+    Middleware -->|protect| Upload
+    
+    Middleware -->|read auth| SupabaseWeb
+    SupabaseWeb -->|get session| Database
+    
+    Library -->|GET /api/public/tutorials| PublicRoute
+    PublicRoute -->|select| Database
+    
+    Home -->|call API| BrowserApi
+    Login -->|submit form| BrowserApi
+    Library -->|fetch tutorials| ApiClient
+    Upload -->|submit form| ApiClient
+    Dashboard -->|fetch my tutorials| ApiClient
+    Admin -->|fetch pending| ApiClient
+    TutorialDetail -->|fetch by id| ApiClient
+    
+    BrowserApi -->|POST /login| Login
+    ApiClient -->|requests with JWT| Server
+    
+    Server -->|apply middleware| Auth
+    Auth -->|validate JWT| Database
+    Auth -->|extract user info| Auth
+    
+    Auth -->|context attached| PublicRoute
+    Auth -->|context attached| TutRoute
+    Auth -->|context attached| UploadRoute
+    Auth -->|context attached| PartsRoute
+    Auth -->|context attached| ToolsRoute
+    Auth -->|context attached| StlRoute
+    Auth -->|context attached| AdminRoute
+    Auth -->|context attached| ContribRoute
+    
+    TutRoute -->|query| UserClient
+    PartsRoute -->|query| UserClient
+    ToolsRoute -->|query| UserClient
+    StlRoute -->|query| UserClient
+    AdminRoute -->|query| AdminClient
+    ContribRoute -->|query| UserClient
+    UploadRoute -->|store files| Storage
+    
+    UserClient -->|SELECT/INSERT/UPDATE| ProfileTbl
+    UserClient -->|SELECT/INSERT/UPDATE| TutorialTbl
+    UserClient -->|SELECT/INSERT/UPDATE| PartsTbl
+    UserClient -->|SELECT/INSERT/UPDATE| ToolsTbl
+    UserClient -->|SELECT/INSERT/UPDATE| StlTbl
+    
+    AdminClient -->|SELECT/UPDATE| ProfileTbl
+    AdminClient -->|SELECT/UPDATE| TutorialTbl
+    
+    ProfileTbl -->|enforce| RLS
+    TutorialTbl -->|enforce| RLS
+    PartsTbl -->|enforce| RLS
+    ToolsTbl -->|enforce| RLS
+    StlTbl -->|enforce| RLS
+    
+    UploadRoute -->|store PDF| PdfBucket
+    UploadRoute -->|store Photos| PhotoBucket
+    UploadRoute -->|store STL| StlBucket
+    
+    TutRoute -->|return JSON| ApiClient
+    AdminRoute -->|return JSON| ApiClient
+    ContribRoute -->|return JSON| ApiClient
+    PublicRoute -->|return JSON| BrowserApi
+    
+    ApiClient -->|update UI| Home
+    ApiClient -->|update UI| Library
+    ApiClient -->|update UI| Upload
+    ApiClient -->|update UI| Dashboard
+    ApiClient -->|update UI| Admin
+    
+    TypeDef -.->|imported by| Pages
+    TypeDef -.->|imported by| Components
+    TypeDef -.->|imported by| Routes
+    TypeDef -.->|imported by| Lib
+    
+    style User fill:#fff9c4
+    style Layout fill:#e1f5ff
+    style Pages fill:#e1f5ff
+    style Components fill:#e1f5ff
+    style Lib fill:#e1f5ff
+    style Middleware fill:#e1f5ff
+    style Server fill:#f3e5f5
+    style Auth fill:#f3e5f5
+    style Routes fill:#f3e5f5
+    style Supabase fill:#f3e5f5
+    style Tables fill:#e8f5e9
+    style RLS fill:#e8f5e9
+    style ProfileTbl fill:#e8f5e9
+    style TutorialTbl fill:#e8f5e9
+    style PartsTbl fill:#e8f5e9
+    style ToolsTbl fill:#e8f5e9
+    style StlTbl fill:#e8f5e9
+    style Buckets fill:#fff3e0
+    style PdfBucket fill:#fff3e0
+    style PhotoBucket fill:#fff3e0
+    style StlBucket fill:#fff3e0
+    style TypeDef fill:#fce4ec
+```
+
+### Key Interaction Patterns
+
+**Authentication Flow:**
+1. User logs in via `login/page.tsx` → calls `POST /api/login` (in browser)
+2. Supabase returns JWT in secure cookie (via `@supabase/ssr`)
+3. Middleware on every request validates session is still active
+4. API middleware extracts JWT from Authorization header
+5. `authMiddleware` validates JWT with Supabase, attaches userId/role to Hono context
+
+**Data Retrieval Flow:**
+1. Page component (e.g., `library/page.tsx`) calls server function or API client
+2. Server function uses `lib/api-client.ts` (fetch with JWT header)
+3. Request reaches `index.ts` → `authMiddleware` validates
+4. Route handler uses `UserClient` to query database
+5. RLS policies automatically filter based on user's role/id
+6. Data returned as JSON, component renders
+
+**File Upload Flow:**
+1. User selects file in `upload/page.tsx` → `file-drop-zone.tsx`
+2. Component calls `POST /api/upload` with file + JWT
+3. `routes/upload.ts` receives request, stores in Supabase Storage
+4. URL returned, stored in database with tutorial metadata
+5. UI updates with success message
+
+**Admin Operations Flow:**
+1. Admin user accesses `admin/page.tsx` (protected by middleware)
+2. Component fetches pending tutorials via `lib/api-client.ts`
+3. Request goes to `routes/admin.ts` with admin JWT
+4. `AdminClient` (service_role) queries tutorials table (RLS bypassed intentionally)
+5. Admin updates status, triggers RLS-respecting row updates
+6. Component updates UI with new status
+
 ---
 
 ## 📁 Project Structure
