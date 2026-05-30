@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import DashboardPage from '@/app/dashboard/page'
 import type { Tutorial, Profile } from '@splat-connect/types'
@@ -85,12 +85,12 @@ describe('DashboardPage', () => {
         { ...baseTutorial, id: '6', status: 'rejected' },
       ])
     render(await DashboardPage())
-    expect(screen.getByText('2')).toBeInTheDocument()
-    expect(screen.getByText('1')).toBeInTheDocument()
-    expect(screen.getByText('3')).toBeInTheDocument()
-    expect(screen.getByText('Pending')).toBeInTheDocument()
-    expect(screen.getByText('Approved')).toBeInTheDocument()
-    expect(screen.getByText('Rejected')).toBeInTheDocument()
+    const pendingCard = screen.getByText('Pending').closest('div')!
+    const approvedCard = screen.getByText('Approved').closest('div')!
+    const rejectedCard = screen.getByText('Rejected').closest('div')!
+    expect(within(pendingCard).getByText('2')).toBeInTheDocument()
+    expect(within(approvedCard).getByText('1')).toBeInTheDocument()
+    expect(within(rejectedCard).getByText('3')).toBeInTheDocument()
   })
 
   // Tests: tutorial title and Edit link render for each row
@@ -131,7 +131,7 @@ describe('DashboardPage', () => {
       .mockResolvedValueOnce(mockProfile)
       .mockResolvedValueOnce(Array.from({ length: 6 }, (_, i) => ({ ...baseTutorial, id: String(i) })))
     render(await DashboardPage())
-    expect(screen.getByText(/view all 6 tutorials/i)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /view all 6 tutorials/i })).toHaveAttribute('href', '/my-tutorials')
   })
 
   // Tests: "View all" link is absent with 5 or fewer tutorials
