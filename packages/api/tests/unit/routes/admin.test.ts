@@ -5,6 +5,11 @@ import type { AuthVariables } from '../../../src/middleware/auth.js'
 const mockAdminFrom = vi.fn()
 const mockDeleteUser = vi.fn()
 
+// --- Mock strategy ---
+// Replaces the Supabase admin client with two controlled fakes: mockAdminFrom for all
+// database table operations (tutorials, profiles), and mockDeleteUser for Supabase Auth's
+// admin.deleteUser call. makeApp() injects role directly so tests can switch between
+// 'contributor' and 'admin' without running real authentication.
 vi.mock('../../../src/supabase/client.js', () => ({
   createAdminClient: () => ({
     from: mockAdminFrom,
@@ -27,6 +32,10 @@ function makeApp(role: 'contributor' | 'admin') {
 }
 
 describe('admin role guard', () => {
+  // Tests: all admin routes return 403 when the requester has the 'contributor' role
+  // How:   makeApp('contributor') sets role='contributor' in context; requests /tutorials; checks status 403
+  // Chain: non-admins are blocked at the route level before any DB calls are made → the admin
+  //        UI never receives data it shouldn't show to a contributor
   it('returns 403 for contributors', async () => {
     const res = await makeApp('contributor').request('/tutorials')
     expect(res.status).toBe(403)
@@ -36,6 +45,10 @@ describe('admin role guard', () => {
 describe('GET /tutorials', () => {
   beforeEach(() => vi.clearAllMocks())
 
+  // Tests: GET /tutorials returns the list of tutorials awaiting admin review
+  // How:   mockAdminFrom returns a select/eq/order chain with one tutorial; checks status 200 and body length
+  // Chain: the admin dashboard calls this to populate the review queue → admins see which
+  //        tutorials need approval or rejection before they appear in the public library
   it('returns pending tutorials for admin', async () => {
     mockAdminFrom.mockReturnValue({
       select: () => ({ eq: () => ({ order: () => ({ data: [{ id: '1' }], error: null }) }) }),
@@ -50,6 +63,10 @@ describe('GET /tutorials', () => {
 describe('PATCH /tutorials/:id/status', () => {
   beforeEach(() => vi.clearAllMocks())
 
+  // Tests: PATCH /tutorials/:id/status updates the tutorial's status field and returns 200
+  // How:   mockAdminFrom returns an update/eq/select/single chain; checks status 200 and body.status
+  // Chain: the admin review action calls this to approve or reject a tutorial → the status
+  //        change controls whether the tutorial appears in the public library
   it('updates status', async () => {
     mockAdminFrom.mockReturnValue({
       update: () => ({
@@ -68,6 +85,10 @@ describe('PATCH /tutorials/:id/status', () => {
     expect(body.status).toBe('approved')
   })
 
+  // Tests: a rejection_note in the request body is included in the DB update payload
+  // How:   captures the payload passed to mockAdminFrom.update(); checks it contains rejection_note
+  // Chain: the rejection note is stored on the tutorial record → the contributor can read it
+  //        on their dashboard to understand why their submission was rejected
   it('includes rejection_note in update payload when provided', async () => {
     let capturedPayload: any = null
     mockAdminFrom.mockReturnValue({
@@ -97,6 +118,10 @@ describe('PATCH /tutorials/:id/status', () => {
 describe('GET /contributors', () => {
   beforeEach(() => vi.clearAllMocks())
 
+  // Tests: GET /contributors returns the list of contributors for admin review
+  // How:   mockAdminFrom returns a select/eq/order chain with one contributor; checks status 200 and body
+  // Chain: the admin contributors page calls this to show who is registered → admins can
+  //        approve or remove contributors through the adjacent endpoints
   it('returns contributor list for admin', async () => {
     mockAdminFrom.mockReturnValue({
       select: () => ({ eq: () => ({ order: () => ({ data: [{ id: 'c-1', role: 'contributor' }], error: null }) }) }),
@@ -108,6 +133,10 @@ describe('GET /contributors', () => {
     expect(body[0].role).toBe('contributor')
   })
 
+  // Tests: GET /contributors returns 500 when the database query fails
+  // How:   mockAdminFrom returns { data: null, error } through the select chain; checks status 500
+  // Chain: the admin page receives an error response → the UI can display an error state
+  //        rather than silently showing an empty contributors list
   it('returns 500 on DB error', async () => {
     mockAdminFrom.mockReturnValue({
       select: () => ({ eq: () => ({ order: () => ({ data: null, error: { message: 'DB error' } }) }) }),
@@ -120,6 +149,10 @@ describe('GET /contributors', () => {
 describe('PATCH /contributors/:id/approve', () => {
   beforeEach(() => vi.clearAllMocks())
 
+  // Tests: PATCH /contributors/:id/approve sets approved=true and returns the updated profile
+  // How:   mockAdminFrom returns an update/eq/select/single chain; checks status 200 and body.approved
+  // Chain: the approval status is checked by authMiddleware on every request → once approved,
+  //        the contributor's POST /tutorials requests are no longer blocked with a 403
   it('sets approved=true and returns updated profile', async () => {
     mockAdminFrom.mockReturnValue({
       update: () => ({
@@ -140,6 +173,10 @@ describe('PATCH /contributors/:id/approve', () => {
 describe('DELETE /contributors/:id', () => {
   beforeEach(() => vi.clearAllMocks())
 
+  // Tests: DELETE /contributors/:id calls Supabase Auth's deleteUser and returns 204
+  // How:   mockDeleteUser resolves with { error: null }; verifies it was called with the correct user ID
+  // Chain: the user is removed from Supabase Auth entirely → they can no longer log in or make
+  //        authenticated API requests, effectively revoking all access to the platform
   it('deletes user and returns 204', async () => {
     mockDeleteUser.mockResolvedValue({ error: null })
     const res = await makeApp('admin').request('/contributors/c-1', { method: 'DELETE' })

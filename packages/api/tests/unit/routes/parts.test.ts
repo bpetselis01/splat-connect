@@ -2,11 +2,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { Hono } from 'hono'
 import type { AuthVariables } from '../../../src/middleware/auth.js'
 
-// WHY: Declaring mocks with a fixed return shape at the top prevented individual
-//      tests from overriding what the mock returns for error-path scenarios —
-//      the fixed shape always won.
-// HOW: Mocks are declared without a return shape here. Each test group sets
-//      its own default in beforeEach so individual tests can override freely.
+// --- Mock strategy ---
+// Replaces the Supabase user client with controlled delete and insert fakes. Mocks are
+// declared without a fixed return shape so individual tests can override them in beforeEach —
+// a fixed shape defined at module level would prevent error-path tests from overriding it
+// (the fixed shape always wins over a per-test override in Vitest).
 const mockDeleteParts = vi.fn()
 const mockInsertParts = vi.fn()
 const mockFrom = vi.fn((table: string) => {
@@ -37,6 +37,10 @@ describe('POST /:id/parts', () => {
     mockInsertParts.mockReturnValue({ select: vi.fn(() => ({ data: [], error: null })) })
   })
 
+  // Tests: POST /:id/parts deletes the existing parts list then inserts the new one, returning 201
+  // How:   mockDeleteParts and mockInsertParts are verified to have been called; checks status 201
+  // Chain: the upload wizard calls this on Step 3 Next → the parts list in the DB is fully
+  //        replaced each time, so back-and-forward navigation always results in the latest list
   it('replaces parts and returns 201', async () => {
     const newParts = [{ name: 'Screw', quantity: 4, is_optional: false, buy_links: [] }]
     const res = await makeApp().request('/tutorial-1/parts', {
@@ -49,6 +53,10 @@ describe('POST /:id/parts', () => {
     expect(mockInsertParts).toHaveBeenCalled()
   })
 
+  // Tests: POST /:id/parts returns 500 when the insert step fails
+  // How:   mockInsertParts is overridden to return { data: null, error }; checks status 500
+  // Chain: the upload wizard receives 500 → the UI can display an error and keep the user
+  //        on Step 3 rather than advancing with unsaved parts data
   it('returns 500 when insert fails', async () => {
     mockInsertParts.mockReturnValue({ select: vi.fn(() => ({ data: null, error: { message: 'insert error' } })) })
     const newParts = [{ name: 'Screw', quantity: 4, is_optional: false, buy_links: [] }]
@@ -68,11 +76,19 @@ describe('DELETE /:id/parts', () => {
     mockInsertParts.mockReturnValue({ select: vi.fn(() => ({ data: [], error: null })) })
   })
 
+  // Tests: DELETE /:id/parts removes all parts for a tutorial and returns 204 No Content
+  // How:   mockDeleteParts is pre-configured to succeed; checks status 204
+  // Chain: the edit page calls this when a user clears all parts → the DB is cleared and
+  //        the tutorial detail page no longer lists any parts
   it('deletes parts and returns 204', async () => {
     const res = await makeApp().request('/tutorial-1/parts', { method: 'DELETE' })
     expect(res.status).toBe(204)
   })
 
+  // Tests: DELETE /:id/parts returns 500 when the database delete fails
+  // How:   mockDeleteParts is overridden to return { error: { message: 'delete error' } }; checks status 500
+  // Chain: the edit page receives 500 → the UI can display a failure message and the existing
+  //        parts remain in the DB unchanged
   it('returns 500 when delete fails', async () => {
     mockDeleteParts.mockReturnValue({ eq: vi.fn(() => ({ error: { message: 'delete error' } })) })
     const res = await makeApp().request('/tutorial-1/parts', { method: 'DELETE' })

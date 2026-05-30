@@ -113,6 +113,15 @@ export default async function EditTutorialPage({
         <h1 className="text-xl font-bold truncate">{tutorial!.title}</h1>
       </div>
 
+      {tutorial!.status === 'rejected' && (
+        <div className="bg-red-50 border border-red-200 rounded-xl px-5 py-4 mb-3">
+          <p className="text-sm font-semibold text-red-700 mb-1">This tutorial was rejected</p>
+          <p className="text-sm text-red-600">
+            {tutorial!.rejection_note ?? 'No feedback was provided.'}
+          </p>
+        </div>
+      )}
+
       {/* Submit for review -- draft only */}
       {tutorial!.status === 'draft' && (
         <div className={`${panelCls} px-5 py-4`}>

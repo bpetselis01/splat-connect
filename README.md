@@ -94,6 +94,100 @@ graph LR
     style H fill:#ffe0b2
 ```
 
+### index.ts Data Flow Diagram
+
+This diagram shows what `index.ts` does and all its interactions within the codebase:
+
+```mermaid
+graph TB
+    Client["🌐 Frontend Client<br/>(packages/web)<br/>Sends HTTP Requests<br/>with JWT in Authorization header"]
+    
+    subgraph Server["⚙️ index.ts (Server Entry Point)<br/>Port 3001 | Hono HTTP Framework"]
+        CORS["1️⃣ CORS Middleware<br/>Allows requests from<br/>CORS_ORIGIN"]
+        
+        Health["2️⃣ Health Check<br/>GET /health<br/>→ { status: ok }"]
+        
+        Router["3️⃣ Router<br/>Mounts route groups<br/>& middleware"]
+        
+        PublicMiddleware["Mount Public Routes<br/>(No Auth)"]
+        AuthMiddleware["Mount Protected Routes<br/>(+ Auth Middleware)"]
+    end
+    
+    subgraph Routes["Route Groups"]
+        PublicRt["routes/public.ts<br/>GET /api/public/tutorials"]
+        TutRt["routes/tutorials.ts<br/>GET/POST/PATCH /api/tutorials"]
+        UploadRt["routes/upload.ts<br/>POST /api/upload"]
+        PartsRt["routes/parts.ts<br/>POST/DELETE /api/tutorials/parts"]
+        ToolsRt["routes/tools.ts<br/>POST/DELETE /api/tutorials/tools"]
+        StlRt["routes/stl-files.ts<br/>POST/DELETE /api/tutorials/stl-files"]
+        AdminRt["routes/admin.ts<br/>GET/PATCH /api/admin"]
+        ContribRt["routes/contributors.ts<br/>GET/PATCH /api/contributors"]
+    end
+    
+    subgraph Middleware["Middleware"]
+        Auth["middleware/auth.ts<br/>1. Extract JWT from header<br/>2. Validate with Supabase<br/>3. Attach userId/role/approved<br/>to Hono context"]
+    end
+    
+    subgraph Clients["Supabase Clients"]
+        AdminClient["supabase/client.ts<br/>(service_role_key)<br/>RLS bypassed<br/>(admin operations)"]
+        UserClient["supabase/user-client.ts<br/>(JWT token)<br/>RLS enforced<br/>(user operations)"]
+    end
+    
+    DB["🗄️ Database"]
+    Storage["💾 Storage"]
+    
+    Client -->|HTTP Request| CORS
+    CORS -->|Pass through| Router
+    Router -->|Health check| Health
+    Router -->|Public routes| PublicMiddleware
+    Router -->|Protected routes| AuthMiddleware
+    AuthMiddleware -->|Run on all| Auth
+    
+    PublicMiddleware -->|Route to| PublicRt
+    Auth -->|Attach context| TutRt
+    Auth -->|Attach context| UploadRt
+    Auth -->|Attach context| PartsRt
+    Auth -->|Attach context| ToolsRt
+    Auth -->|Attach context| StlRt
+    Auth -->|Attach context| AdminRt
+    Auth -->|Attach context| ContribRt
+    
+    PublicRt -->|Use| UserClient
+    TutRt -->|Use| UserClient
+    UploadRt -->|Use| AdminClient
+    PartsRt -->|Use| UserClient
+    ToolsRt -->|Use| UserClient
+    StlRt -->|Use| UserClient
+    AdminRt -->|Use| AdminClient
+    ContribRt -->|Use| UserClient
+    
+    UserClient -->|Query| DB
+    AdminClient -->|Query| DB
+    UploadRt -->|Store files| Storage
+    
+    DB -->|Return data| TutRt
+    DB -->|Return data| PublicRt
+    DB -->|Return data| AdminRt
+    DB -->|Return data| ContribRt
+    
+    TutRt -->|JSON Response| Client
+    PublicRt -->|JSON Response| Client
+    UploadRt -->|JSON Response| Client
+    AdminRt -->|JSON Response| Client
+    PartsRt -->|JSON Response| Client
+    ToolsRt -->|JSON Response| Client
+    StlRt -->|JSON Response| Client
+    ContribRt -->|JSON Response| Client
+    
+    style Server fill:#f3e5f5
+    style Routes fill:#ede7f6
+    style Middleware fill:#e1bee7
+    style Clients fill:#ce93d8
+    style Client fill:#e1f5ff
+    style DB fill:#e8f5e9
+    style Storage fill:#fff3e0
+```
+
 ---
 
 ## 📁 Project Structure

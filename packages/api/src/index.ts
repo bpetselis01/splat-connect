@@ -7,7 +7,7 @@
  * Architecture:
  * - Public routes: GET /api/public/tutorials* (no auth required)
  * - Protected routes: All others require JWT validation via authMiddleware
- * - Route groups are mounted on specific paths and share auth middleware
+ * - Different groups of API endpoints are attached to specific URLs, and they all use the same login verification system
  * 
  * Data Flow:
  * 1. Client sends request with JWT in Authorization header
