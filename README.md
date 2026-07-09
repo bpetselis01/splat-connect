@@ -94,98 +94,392 @@ graph LR
     style H fill:#ffe0b2
 ```
 
-### index.ts Data Flow Diagram
+### User Flow Sequences
 
-This diagram shows what `index.ts` does and all its interactions within the codebase:
+#### Browse public library and view a tutorial
 
 ```mermaid
-graph TB
-    Client["🌐 Frontend Client<br/>(packages/web)<br/>Sends HTTP Requests<br/>with JWT in Authorization header"]
-    
-    subgraph Server["⚙️ index.ts (Server Entry Point)<br/>Port 3001 | Hono HTTP Framework"]
-        CORS["1️⃣ CORS Middleware<br/>Allows requests from<br/>CORS_ORIGIN"]
-        
-        Health["2️⃣ Health Check<br/>GET /health<br/>→ { status: ok }"]
-        
-        Router["3️⃣ Router<br/>Mounts route groups<br/>& middleware"]
-        
-        PublicMiddleware["Mount Public Routes<br/>(No Auth)"]
-        AuthMiddleware["Mount Protected Routes<br/>(+ Auth Middleware)"]
+sequenceDiagram
+    participant User
+    participant Browser
+    participant WebApp as "Next.js Web App"
+    participant API as "Hono API"
+    participant DB as "Supabase PostgreSQL"
+    participant Storage as "Supabase Storage"
+
+    User->>Browser: Navigate to / or /library
+    Browser->>WebApp: Request server-rendered page
+    WebApp->>API: GET /api/public/tutorials
+    API->>DB: SELECT * FROM tutorials WHERE status='approved'
+    DB-->>API: Approved tutorial list
+    API-->>WebApp: JSON response
+    WebApp-->>Browser: Render page with tutorial cards
+    Browser->>WebApp: Navigate to /tutorials/:id
+    WebApp->>API: GET /api/public/tutorials/:id
+    API->>DB: SELECT tutorial, parts, tools, stl_files WHERE id=:id AND status='approved'
+    DB-->>API: Tutorial detail
+    API-->>WebApp: JSON response
+    WebApp-->>Browser: Render tutorial detail page
+```
+
+#### Contributor signup, login, and approval
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Browser
+    participant SupabaseAuth as "Supabase Auth"
+    participant WebApp as "Next.js Web App"
+    participant API as "Hono API"
+    participant DB as "Supabase PostgreSQL"
+
+    User->>Browser: Submit /signup form
+    Browser->>SupabaseAuth: signUp(email,password,name)
+    SupabaseAuth-->>Browser: Create user session (pending approval)
+    User->>Browser: Later signs in at /login
+    Browser->>SupabaseAuth: signInWithPassword(email,password)
+    SupabaseAuth-->>Browser: Return JWT session
+    Browser->>WebApp: Request /dashboard
+    WebApp->>API: GET /api/contributors/me
+    API->>DB: SELECT profile WHERE id=current_user
+    DB-->>API: Profile with approved flag
+    API-->>WebApp: Profile response
+    WebApp->>API: GET /api/tutorials/mine
+    API->>DB: SELECT tutorials WHERE tutorial_contributors.profile_id=current_user
+    DB-->>API: User tutorials
+    API-->>WebApp: Tutorials response
+    WebApp-->>Browser: Render dashboard
+```
+
+#### Contributor upload and draft save flow
+
+```mermaid
+sequenceDiagram
+    participant Contributor
+    participant Browser
+    participant WebApp as "Next.js Web App"
+    participant API as "Hono API"
+    participant Auth as "authMiddleware"
+    participant DB as "Supabase PostgreSQL"
+    participant Storage as "Supabase Storage"
+
+    Contributor->>Browser: Fill upload form step 1
+    Browser->>API: POST /api/tutorials {title,difficulty,description}
+    API->>Auth: Validate JWT, fetch profile
+    Auth->>DB: Verify user session and approval
+    Auth-->>API: userId, role, approved, token
+    API->>DB: INSERT tutorial draft row
+    DB-->>API: Draft tutorial created
+    API-->>Browser: Draft saved
+    Browser->>API: POST /api/contributors/me/tutorials/:tutorialId
+    API->>DB: INSERT tutorial_contributors link
+    DB-->>API: Link created
+    API-->>Browser: Success
+    Browser->>API: POST /api/upload/pdf (FormData)
+    API->>Auth: Validate JWT
+    API->>Storage: upload tutorial PDF
+    Storage-->>API: Public URL
+    API-->>Browser: PDF URL
+    Browser->>API: PATCH /api/tutorials/:tutorialId {tutorial_pdf_url,toy_photo_url}
+    API->>Auth: Validate JWT
+    API->>DB: UPDATE tutorial row
+    DB-->>API: Updated row
+    API-->>Browser: Success
+    Browser->>API: POST /api/tutorials/:tutorialId/parts {parts}
+    API->>Auth: Validate JWT
+    API->>DB: INSERT/replace parts
+    DB-->>API: Parts persisted
+    API-->>Browser: Success
+    Browser->>API: PATCH /api/tutorials/:tutorialId {status:'pending'}
+    API->>DB: UPDATE tutorial status
+    DB-->>API: Status changed to pending
+    API-->>Browser: Submission complete
+```
+
+#### Admin review and publish flow
+
+```mermaid
+sequenceDiagram
+    participant Admin
+    participant Browser
+    participant WebApp as "Next.js Web App"
+    participant API as "Hono API"
+    participant DB as "Supabase PostgreSQL"
+
+    Admin->>Browser: Open /admin
+    Browser->>WebApp: Request admin dashboard
+    WebApp->>API: GET /api/admin/tutorials?status=pending
+    API->>DB: SELECT pending tutorials
+    DB-->>API: Pending list
+    API-->>WebApp: Tutorial queue
+    Browser->>WebApp: Open /admin/review/:id
+    WebApp->>API: GET /api/tutorials/:id
+    API->>DB: SELECT tutorial details
+    DB-->>API: Tutorial details
+    API-->>WebApp: Render review page
+    Browser->>API: PATCH /api/admin/tutorials/:id/status {status:'approved'}
+    API->>DB: UPDATE tutorial status reviewed_at
+    DB-->>API: Updated tutorial
+    API-->>Browser: Approved
+    Browser->>WebApp: User visits /library
+    WebApp->>API: GET /api/public/tutorials
+    API->>DB: SELECT status='approved'
+    DB-->>API: Includes newly approved tutorial
+```
+```
+
+### System Architecture (Detailed)
+
+```mermaid
+graph LR
+    subgraph Users[Users]
+      Parents["Parents / Guardians"]
+      Contributors["Contributors"]
+      Admins["Admins"]
     end
-    
-    subgraph Routes["Route Groups"]
-        PublicRt["routes/public.ts<br/>GET /api/public/tutorials"]
-        TutRt["routes/tutorials.ts<br/>GET/POST/PATCH /api/tutorials"]
-        UploadRt["routes/upload.ts<br/>POST /api/upload"]
-        PartsRt["routes/parts.ts<br/>POST/DELETE /api/tutorials/parts"]
-        ToolsRt["routes/tools.ts<br/>POST/DELETE /api/tutorials/tools"]
-        StlRt["routes/stl-files.ts<br/>POST/DELETE /api/tutorials/stl-files"]
-        AdminRt["routes/admin.ts<br/>GET/PATCH /api/admin"]
-        ContribRt["routes/contributors.ts<br/>GET/PATCH /api/contributors"]
+
+    subgraph WebApp[Next.js Web App]
+      SSR["Server-side pages
+      (app/page.tsx, /library, /dashboard, /admin)"]
+      Client["Client components
+      (upload, edit files, add STL)"]
+      Middleware["middleware.ts
+      (session validation)"]
+      Types["@splat-connect/types
+      (shared interfaces)"]
     end
-    
-    subgraph Middleware["Middleware"]
-        Auth["middleware/auth.ts<br/>1. Extract JWT from header<br/>2. Validate with Supabase<br/>3. Attach userId/role/approved<br/>to Hono context"]
+
+    subgraph API[Hono API Server]
+      PublicRoutes["routes/public.ts
+      (GET /api/public/tutorials*)"]
+      TutorialRoutes["routes/tutorials.ts
+      (CRUD /api/tutorials*)"]
+      UploadRoutes["routes/upload.ts
+      (POST /api/upload/*)"]
+      AdminRoutes["routes/admin.ts
+      (admin review + approvals)"]
+      ContributorRoutes["routes/contributors.ts
+      (profile + links)"]
+      AuthMiddleware["middleware/auth.ts
+      (JWT validation + profile lookup)"]
+      Index["index.ts
+      (route mounting + CORS + server start)"]
     end
-    
-    subgraph Clients["Supabase Clients"]
-        AdminClient["supabase/client.ts<br/>(service_role_key)<br/>RLS bypassed<br/>(admin operations)"]
-        UserClient["supabase/user-client.ts<br/>(JWT token)<br/>RLS enforced<br/>(user operations)"]
+
+    subgraph Supabase[Supabase Backend]
+      AuthService["Auth service
+      (session JWTs)"]
+      Postgres["PostgreSQL + row-level security"]
+      Storage["Storage buckets
+      (tutorial-pdfs, toy-photos, stl-files)"]
     end
-    
-    DB["🗄️ Database"]
-    Storage["💾 Storage"]
-    
-    Client -->|HTTP Request| CORS
-    CORS -->|Pass through| Router
-    Router -->|Health check| Health
-    Router -->|Public routes| PublicMiddleware
-    Router -->|Protected routes| AuthMiddleware
-    AuthMiddleware -->|Run on all| Auth
-    
-    PublicMiddleware -->|Route to| PublicRt
-    Auth -->|Attach context| TutRt
-    Auth -->|Attach context| UploadRt
-    Auth -->|Attach context| PartsRt
-    Auth -->|Attach context| ToolsRt
-    Auth -->|Attach context| StlRt
-    Auth -->|Attach context| AdminRt
-    Auth -->|Attach context| ContribRt
-    
-    PublicRt -->|Use| UserClient
-    TutRt -->|Use| UserClient
-    UploadRt -->|Use| AdminClient
-    PartsRt -->|Use| UserClient
-    ToolsRt -->|Use| UserClient
-    StlRt -->|Use| UserClient
-    AdminRt -->|Use| AdminClient
-    ContribRt -->|Use| UserClient
-    
-    UserClient -->|Query| DB
-    AdminClient -->|Query| DB
-    UploadRt -->|Store files| Storage
-    
-    DB -->|Return data| TutRt
-    DB -->|Return data| PublicRt
-    DB -->|Return data| AdminRt
-    DB -->|Return data| ContribRt
-    
-    TutRt -->|JSON Response| Client
-    PublicRt -->|JSON Response| Client
-    UploadRt -->|JSON Response| Client
-    AdminRt -->|JSON Response| Client
-    PartsRt -->|JSON Response| Client
-    ToolsRt -->|JSON Response| Client
-    StlRt -->|JSON Response| Client
-    ContribRt -->|JSON Response| Client
-    
-    style Server fill:#f3e5f5
-    style Routes fill:#ede7f6
-    style Middleware fill:#e1bee7
-    style Clients fill:#ce93d8
-    style Client fill:#e1f5ff
-    style DB fill:#e8f5e9
-    style Storage fill:#fff3e0
+
+    Parents -->|browse/library| Browser
+    Contributors -->|browse, upload, edit| Browser
+    Admins -->|review, approve| Browser
+    Browser -->|page request| SSR
+    Browser -->|client request| Client
+    SSR -->|server fetch| API
+    Client -->|browser fetch| API
+    API -->|uses shared types| Types
+    SSR -.->|imports shared types| Types
+    API -->|authorize request| AuthService
+    API -->|query data| Postgres
+    API -->|upload/read files| Storage
+    AuthService -->|auth metadata| Postgres
+```
+
+### API Server `index.ts` Data Flow
+
+```mermaid
+flowchart TB
+    subgraph Index[packages/api/src/index.ts]
+      Env["Load .env.local
+      + api/.env.local"]
+      App["Create Hono app"]
+      CORS["Enable CORS for web origin"]
+      Health["GET /health"]
+      Public["Mount /api/public"]
+      Auth["Apply authMiddleware to protected routes"]
+      Tutorials["Mount /api/tutorials
+      (tutorials, parts, tools, stl-files)"]
+      Upload["Mount /api/upload"]
+      Admin["Mount /api/admin"]
+      Contributors["Mount /api/contributors"]
+      Serve["Start server on API_PORT"]
+    end
+
+    Index --> Env
+    Index --> App
+    App --> CORS
+    App --> Health
+    App --> Public
+    App --> Auth
+    App --> Tutorials
+    App --> Upload
+    App --> Admin
+    App --> Contributors
+    App --> Serve
+    Auth --> Tutorials
+    Auth --> Upload
+    Auth --> Admin
+    Auth --> Contributors
+```
+
+### Detailed File Map
+
+The diagrams above show the container-level view. These go one level deeper: **one box per source file**, listing every function or route handler it defines, wired up by the actual `import` relationships in the code (grepped from source, not inferred).
+
+#### API (`packages/api/src`)
+
+```mermaid
+flowchart TB
+  subgraph ENTRY["packages/api/src"]
+    idx["<b>index.ts</b><br/>GET /health"]
+  end
+
+  subgraph MW["middleware/"]
+    auth["<b>auth.ts</b><br/>authMiddleware(c, next)"]
+  end
+
+  subgraph ROUTES["routes/"]
+    rpublic["<b>public.ts</b><br/>GET /tutorials<br/>GET /tutorials/:id"]
+    rtutorials["<b>tutorials.ts</b><br/>GET /<br/>GET /mine<br/>GET /:id<br/>POST /<br/>PATCH /:id<br/>DELETE /:id"]
+    rupload["<b>upload.ts</b><br/>POST /pdf<br/>POST /photo<br/>POST /stl"]
+    rparts["<b>parts.ts</b><br/>POST /:id/parts<br/>DELETE /:id/parts"]
+    rtools["<b>tools.ts</b><br/>POST /:id/tools<br/>DELETE /:id/tools"]
+    rstl["<b>stl-files.ts</b><br/>POST /:id/stl-files<br/>DELETE /:id/stl-files"]
+    radmin["<b>admin.ts</b><br/>GET /tutorials<br/>PATCH /tutorials/:id/status<br/>GET /contributors<br/>PATCH /contributors/:id/approve<br/>DELETE /contributors/:id"]
+    rcontrib["<b>contributors.ts</b><br/>GET /me<br/>POST /me/tutorials/:tutorialId"]
+  end
+
+  subgraph SB["supabase/"]
+    sadmin["<b>client.ts</b><br/>createAdminClient()"]
+    suser["<b>user-client.ts</b><br/>createUserClient(token)"]
+  end
+
+  idx -->|mounts /api/public| rpublic
+  idx -->|mounts /api/tutorials| rtutorials
+  idx -->|mounts /api/upload| rupload
+  idx -->|mounts /api/tutorials| rparts
+  idx -->|mounts /api/tutorials| rtools
+  idx -->|mounts /api/tutorials| rstl
+  idx -->|mounts /api/admin| radmin
+  idx -->|mounts /api/contributors| rcontrib
+  idx -.->|"protects tutorials, upload, admin, contributors"| auth
+
+  rpublic --> sadmin
+  rtutorials --> suser
+  rtutorials --> sadmin
+  rupload --> suser
+  rupload --> sadmin
+  rparts --> suser
+  rtools --> suser
+  rstl --> suser
+  radmin --> sadmin
+  rcontrib --> suser
+  rcontrib --> sadmin
+```
+
+#### Web (`packages/web`)
+
+```mermaid
+flowchart TB
+  PUB["packages/api/src/routes/public.ts<br/>(cross-package)"]
+
+  subgraph APP["app/ (Next.js pages)"]
+    layout["<b>layout.tsx</b><br/>RootLayout()"]
+    home["<b>page.tsx</b><br/>HomePage()"]
+    login["<b>login/page.tsx</b><br/>LoginPage()<br/>handleSubmit()"]
+    signup["<b>signup/page.tsx</b><br/>SignupPage()<br/>handleSubmit()"]
+    pending["<b>pending/page.tsx</b><br/>PendingPage()"]
+    library["<b>library/page.tsx</b><br/>LibraryPage()"]
+    libclient["<b>library/library-client.tsx</b><br/>LibraryClient()"]
+    dashboard["<b>dashboard/page.tsx</b><br/>DashboardPage()"]
+    mytutorials["<b>my-tutorials/page.tsx</b><br/>MyTutorialsPage()"]
+    upload["<b>upload/page.tsx</b><br/>UploadPage()<br/>uploadFile()<br/>handlePdfUpload()<br/>handlePhotoUpload()<br/>handleStlUpload()<br/>handleNext()<br/>handleSubmit()"]
+    tutorial["<b>tutorials/[id]/page.tsx</b><br/>TutorialPage()"]
+    edittutorial["<b>tutorials/[id]/edit/page.tsx</b><br/>EditTutorialPage()<br/>saveDetails()<br/>patchFileUrls()<br/>saveParts()<br/>saveTools()<br/>addStlFileRecord()<br/>submitForReview()"]
+    admin["<b>admin/page.tsx</b><br/>AdminPage()"]
+    review["<b>admin/review/page.tsx</b><br/>ReviewListPage()"]
+    reviewid["<b>admin/review/[id]/page.tsx</b><br/>approveTutorial()<br/>rejectTutorial()<br/>ReviewTutorialPage()"]
+    contributors["<b>admin/contributors/page.tsx</b><br/>approveContributor()<br/>rejectContributor()<br/>ContributorsPage()"]
+  end
+
+  subgraph COMP["components/"]
+    navc["<b>nav.tsx</b><br/>Nav()<br/>signOut()"]
+    tutcard["<b>tutorial-card.tsx</b><br/>TutorialCard()"]
+    diffbadge["<b>difficulty-badge.tsx</b><br/>DifficultyBadge()"]
+    filedrop["<b>file-drop-zone.tsx</b><br/>FileDropZone()<br/>handleChange()<br/>handleDragOver()<br/>handleDragLeave()<br/>handleDrop()"]
+    buylinks["<b>buy-links-input.tsx</b><br/>BuyLinksInput()<br/>update()<br/>add()<br/>remove()<br/>updateField()"]
+    editfiles["<b>edit-files-section.tsx</b><br/>EditFilesSection()<br/>handlePhotoChange()<br/>handlePdfChange()<br/>uploadFile()<br/>handleSave()"]
+    editparts["<b>edit-parts-section.tsx</b><br/>EditPartsSection()<br/>openEdit()<br/>closeEdit()<br/>handleSave()<br/>handleDelete()<br/>handleAdd()<br/>toInput()"]
+    edittools["<b>edit-tools-section.tsx</b><br/>EditToolsSection()<br/>openEdit()<br/>closeEdit()<br/>handleSave()<br/>handleDelete()<br/>handleAdd()<br/>toInput()"]
+    addstl["<b>add-stl-form.tsx</b><br/>AddStlForm()<br/>handleChange()<br/>handleUpload()"]
+    submitbtn["<b>submit-for-review-button.tsx</b><br/>SubmitForReviewButton()<br/>handleClick()"]
+  end
+
+  subgraph LIB["lib/"]
+    apiclient["<b>api-client.ts</b><br/>getToken()<br/>request()<br/>requestFormData()<br/>apiClient.get/post/patch/delete/postFormData()"]
+    browserclient["<b>browser-api-client.ts</b><br/>getToken()<br/>request()<br/>requestFormData()<br/>browserApiClient.get/post/patch/delete/postFormData()"]
+    libauth["<b>auth.ts</b><br/>getUserRole()"]
+    libsupabase["<b>supabase/client.ts</b><br/>createClient()"]
+    validation["<b>validation.ts</b><br/>canAdvanceFromStep()<br/>canSubmit()<br/>getMissingFields()"]
+  end
+
+  mw["<b>middleware.ts</b><br/>middleware()"]
+
+  layout --> navc
+  layout --> libauth
+  navc --> libsupabase
+  login --> libsupabase
+  signup --> libsupabase
+
+  home -.->|"fetch API_URL/api/public/tutorials"| PUB
+  home --> tutcard
+  library -.->|"fetch API_URL/api/public/tutorials"| PUB
+  library --> libclient
+  libclient --> tutcard
+  tutorial -.->|"fetch API_URL/api/public/tutorials/:id"| PUB
+  tutorial --> diffbadge
+
+  dashboard --> apiclient
+  dashboard --> diffbadge
+  mytutorials --> apiclient
+  mytutorials --> diffbadge
+  admin --> apiclient
+  review --> apiclient
+  review --> diffbadge
+  reviewid --> apiclient
+  reviewid --> diffbadge
+  contributors --> apiclient
+
+  edittutorial --> apiclient
+  edittutorial --> editfiles
+  edittutorial --> addstl
+  edittutorial --> editparts
+  edittutorial --> edittools
+  edittutorial --> submitbtn
+
+  upload --> browserclient
+  upload --> filedrop
+  upload --> buylinks
+  upload --> validation
+
+  editfiles --> browserclient
+  addstl --> browserclient
+  submitbtn --> validation
+```
+
+`middleware.ts` is not wired into the diagram above — it runs at the Next.js request layer (session validation before a page renders) rather than being imported by another source file, so it has no incoming edges. It uses `@supabase/ssr`'s `createServerClient` directly.
+
+#### Shared types (`packages/types/src`)
+
+`index.ts` defines no functions — only type aliases and interfaces, imported by nearly every file in both packages above:
+
+```mermaid
+flowchart TB
+  types["<b>packages/types/src/index.ts</b><br/>─── type aliases ───<br/>Role<br/>Difficulty<br/>TutorialStatus<br/>ContributorRole<br/>─── interfaces ───<br/>Profile<br/>Tutorial<br/>TutorialContributor<br/>BuyLink<br/>Part<br/>Tool<br/>StlFile<br/>TutorialWithDetails<br/>UploadDraft"]
 ```
 
 ---
@@ -411,6 +705,9 @@ pnpm install
 ### 2. Configure Environment Variables
 
 ```bash
+# Copy the shared ports config (repo root — single source of truth for both packages)
+cp .env.local.example .env.local
+
 # Copy API environment template
 cp packages/api/.env.example packages/api/.env.local
 
@@ -418,11 +715,15 @@ cp packages/api/.env.example packages/api/.env.local
 nano packages/api/.env.local
 ```
 
+**Shared ports** (in root `.env.local`, defaults shown):
+```env
+PORT=3100      # web dev server
+API_PORT=3101  # api dev server
+```
+Change these here if 3100/3101 are already taken — every other reference (CORS origin, `API_URL`, `NEXT_PUBLIC_API_URL`) derives from these two values, so nothing else needs editing.
+
 **Required Variables** (in `packages/api/.env.local`):
 ```env
-PORT=3001
-CORS_ORIGIN=http://localhost:3000
-
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=your-anon-public-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
@@ -435,11 +736,11 @@ Get these from [Supabase Dashboard](https://app.supabase.com) → Settings → A
 **Option A: Run both in separate terminals**
 
 ```bash
-# Terminal 1: Start API server (port 3001)
+# Terminal 1: Start API server (port 3101)
 cd packages/api
 pnpm dev
 
-# Terminal 2: Start Next.js (port 3000)
+# Terminal 2: Start Next.js (port 3100)
 cd packages/web
 pnpm dev
 ```
@@ -452,7 +753,7 @@ pnpm dev:api  # Terminal 1
 pnpm dev:web  # Terminal 2
 ```
 
-Open http://localhost:3000 in your browser.
+Open http://localhost:3100 in your browser.
 
 ### 4. (Optional) Set Up Local Supabase
 
@@ -477,8 +778,8 @@ supabase start
 
 ```bash
 pnpm install              # Install dependencies for all packages
-pnpm dev:api              # Start API server on port 3001
-pnpm dev:web              # Start Next.js on port 3000
+pnpm dev:api              # Start API server on port 3101
+pnpm dev:web              # Start Next.js on port 3100
 pnpm build                # Build all packages for production
 pnpm typecheck            # Run TypeScript type checking
 pnpm -r test              # Run all tests in all packages
@@ -694,7 +995,7 @@ Set these in your deployment platform:
 
 | Variable | Value |
 |----------|-------|
-| `PORT` | `3001` (or platform-assigned) |
+| `PORT` | `3101` (or platform-assigned) |
 | `CORS_ORIGIN` | Your Vercel frontend URL |
 | `SUPABASE_URL` | Your Supabase project URL |
 | `SUPABASE_ANON_KEY` | Supabase public anon key |
