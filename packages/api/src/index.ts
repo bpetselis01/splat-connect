@@ -19,7 +19,9 @@
  * All data operations go through Supabase which enforces RLS policies defined in:
  * supabase/migrations/001_initial.sql
  */
-import 'dotenv/config'
+import { config } from 'dotenv'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
@@ -33,9 +35,13 @@ import stlFiles from './routes/stl-files.js'
 import admin from './routes/admin.js'
 import contributors from './routes/contributors.js'
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+config({ path: path.resolve(__dirname, '../../../.env.local') }) // shared PORT / API_PORT
+config({ path: path.resolve(__dirname, '../.env.local') }) // Supabase secrets
+
 const app = new Hono()
 
-app.use('*', cors({ origin: process.env.CORS_ORIGIN ?? 'http://localhost:3000' }))
+app.use('*', cors({ origin: process.env.CORS_ORIGIN ?? `http://localhost:${process.env.PORT ?? '3100'}` }))
 
 app.get('/health', (c) => c.json({ status: 'ok' }))
 
@@ -57,7 +63,7 @@ app.route('/api/tutorials', stlFiles)
 app.route('/api/admin', admin)
 app.route('/api/contributors', contributors)
 
-const port = parseInt(process.env.PORT ?? '3001')
+const port = parseInt(process.env.API_PORT ?? '3101')
 serve({ fetch: app.fetch, port }, () => {
   console.log(`API running on http://localhost:${port}`)
 })
