@@ -28,7 +28,7 @@ function errorResponse(status: number, errorBody: Record<string, string> = {}) {
 describe('browserApiClient', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3001'
+    process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3101'
     mockGetSession.mockResolvedValue({ data: { session: { access_token: 'test-token' } } })
   })
 
@@ -40,7 +40,7 @@ describe('browserApiClient', () => {
     fetchMock.mockResolvedValue(okResponse([{ id: '1' }]))
     const result = await browserApiClient.get('/api/tutorials')
     expect(fetchMock).toHaveBeenCalledWith(
-      'http://localhost:3001/api/tutorials',
+      'http://localhost:3101/api/tutorials',
       expect.objectContaining({
         method: 'GET',
         headers: expect.objectContaining({ Authorization: 'Bearer test-token' }),
@@ -74,7 +74,7 @@ describe('browserApiClient', () => {
     fetchMock.mockResolvedValue(okResponse({ status: 'pending' }))
     await browserApiClient.patch('/api/tutorials/1', { status: 'pending' })
     const [url, opts] = fetchMock.mock.calls[0]
-    expect(url).toBe('http://localhost:3001/api/tutorials/1')
+    expect(url).toBe('http://localhost:3101/api/tutorials/1')
     expect(opts.method).toBe('PATCH')
     expect(opts.body).toBe(JSON.stringify({ status: 'pending' }))
   })
