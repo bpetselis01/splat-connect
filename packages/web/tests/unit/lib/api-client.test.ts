@@ -29,7 +29,7 @@ const { apiClient } = await import('@/lib/api-client')
 describe('apiClient', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    process.env.API_URL = 'http://localhost:3001'
+    process.env.API_URL = 'http://localhost:3101'
   })
 
   // Tests: server-side GET requests include the Bearer token from the SSR Supabase session
@@ -45,7 +45,7 @@ describe('apiClient', () => {
     const result = await apiClient.get('/api/tutorials')
 
     expect(fetchMock).toHaveBeenCalledWith(
-      'http://localhost:3001/api/tutorials',
+      'http://localhost:3101/api/tutorials',
       expect.objectContaining({
         method: 'GET',
         headers: expect.objectContaining({ Authorization: 'Bearer mock-token' }),
@@ -87,7 +87,7 @@ describe('apiClient', () => {
     fetchMock.mockResolvedValue({ ok: true, json: () => Promise.resolve({ status: 'pending' }) })
     await apiClient.patch('/api/tutorials/1', { status: 'pending' })
     expect(fetchMock).toHaveBeenCalledWith(
-      'http://localhost:3001/api/tutorials/1',
+      'http://localhost:3101/api/tutorials/1',
       expect.objectContaining({
         method: 'PATCH',
         body: JSON.stringify({ status: 'pending' }),
@@ -117,7 +117,7 @@ describe('apiClient', () => {
     form.append('file', new Blob(['pdf']), 'file.pdf')
     await apiClient.postFormData('/api/upload/pdf', form)
     const [url, opts] = fetchMock.mock.calls[0]
-    expect(url).toBe('http://localhost:3001/api/upload/pdf')
+    expect(url).toBe('http://localhost:3101/api/upload/pdf')
     expect(opts.body).toBe(form)
     expect((opts.headers as Record<string, string>)?.['Content-Type']).toBeUndefined()
   })
