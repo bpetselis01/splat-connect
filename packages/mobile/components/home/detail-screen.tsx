@@ -1,0 +1,93 @@
+// packages/mobile/components/home/detail-screen.tsx
+import { useEffect, useState } from 'react'
+import { View, Text, FlatList, Pressable, StyleSheet, ActivityIndicator } from 'react-native'
+import { useRouter } from 'expo-router'
+import type { Tutorial, Part, Tool, StlFile } from '@splat-connect/types'
+import { apiClient } from '../../lib/api-client'
+import { theme } from '../../lib/theme'
+import { DifficultyBadge } from '../difficulty-badge'
+
+type TutorialDetail = Tutorial & { parts: Part[]; tools: Tool[]; stl_files: StlFile[] }
+
+export function DetailScreen({ id }: { id: string }) {
+  const router = useRouter()
+  const [tutorial, setTutorial] = useState<TutorialDetail | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
+
+  useEffect(() => {
+    apiClient
+      .get<TutorialDetail>(`/api/public/tutorials/${id}`)
+      .then(setTutorial)
+      .catch(() => setError(true))
+      .finally(() => setLoading(false))
+  }, [id])
+
+  if (loading) return <ActivityIndicator color={theme.colors.primary} style={styles.loader} />
+  if (error) return <Text style={styles.error}>Couldn't load tutorial. Please try again.</Text>
+  if (!tutorial) return <Text style={styles.error}>Tutorial not found.</Text>
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>{tutorial.title}</Text>
+      <DifficultyBadge difficulty={tutorial.difficulty} />
+      {tutorial.description ? <Text style={styles.description}>{tutorial.description}</Text> : null}
+
+      <Text style={styles.sectionHeading}>Parts</Text>
+      <FlatList
+        data={tutorial.parts}
+        keyExtractor={(p) => p.id}
+        renderItem={({ item }) => (
+          <Text style={styles.listItem}>
+            {item.name} × {item.quantity}
+            {item.is_optional ? ' (optional)' : ''}
+          </Text>
+        )}
+        ListEmptyComponent={<Text style={styles.listItem}>No parts listed.</Text>}
+      />
+
+      <Text style={styles.sectionHeading}>Tools</Text>
+      <FlatList
+        data={tutorial.tools}
+        keyExtractor={(t) => t.id}
+        renderItem={({ item }) => (
+          <Text style={styles.listItem}>
+            {item.name}
+            {item.is_optional ? ' (optional)' : ''}
+          </Text>
+        )}
+        ListEmptyComponent={<Text style={styles.listItem}>No tools listed.</Text>}
+      />
+
+      <Pressable
+        style={styles.previewButton}
+        onPress={() =>
+          router.push({
+            pathname: '/home/[id]/preview',
+            params: { id: tutorial.id, pdfUrl: tutorial.tutorial_pdf_url ?? '' },
+          })
+        }
+      >
+        <Text style={styles.previewButtonText}>Preview Tutorial</Text>
+      </Pressable>
+    </View>
+  )
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: theme.colors.background, padding: theme.spacing(4) },
+  loader: { flex: 1, justifyContent: 'center' },
+  error: { padding: theme.spacing(4), color: theme.colors.text },
+  title: { fontFamily: theme.fonts.bold, fontSize: 22, color: theme.colors.text, marginBottom: theme.spacing(2) },
+  description: { fontFamily: theme.fonts.regular, color: theme.colors.text, marginVertical: theme.spacing(2) },
+  sectionHeading: { fontFamily: theme.fonts.semiBold, fontSize: 16, color: theme.colors.text, marginTop: theme.spacing(3) },
+  listItem: { fontFamily: theme.fonts.regular, color: theme.colors.text, paddingVertical: theme.spacing(1) },
+  previewButton: {
+    backgroundColor: theme.colors.primary,
+    borderRadius: 8,
+    padding: theme.spacing(3),
+    alignItems: 'center',
+    marginTop: theme.spacing(4),
+  },
+  previewButtonText: { color: '#ffffff', fontFamily: theme.fonts.semiBold },
+})
