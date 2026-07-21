@@ -77,7 +77,10 @@ jobs:
 
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          # Pinned: 'latest' resolves via an unauthenticated GitHub API call
+          # that gets rate-limited on shared runners, and CLI behavior drift
+          # has bitten before (see migration 004). Bump deliberately.
+          version: 2.109.1
 
       - name: Start local Supabase
         run: supabase start
