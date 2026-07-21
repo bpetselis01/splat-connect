@@ -32,7 +32,13 @@ export async function createTestUser(
 
   // WHY: the column is `approved` — a previous version wrote `is_approved`,
   // which doesn't exist, silently leaving every test user unapproved.
-  await admin.from('profiles').upsert({ id: signUpData.user.id, role, approved })
+  const { error: profileError } = await admin
+    .from('profiles')
+    .upsert({ id: signUpData.user.id, role, approved })
+  // A swallowed error here is how the is_approved column bug stayed hidden —
+  // fail loudly so schema drift shows up at the source, not as downstream 403s.
+  if (profileError)
+    throw new Error(`Failed to set test user profile: ${profileError.message}`)
 
   const anonClient = createClient(supabaseUrl, process.env.SUPABASE_ANON_KEY ?? '')
   const { data: sessionData, error: sessionError } = await anonClient.auth.signInWithPassword({
