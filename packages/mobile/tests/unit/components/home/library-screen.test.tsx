@@ -1,0 +1,43 @@
+// packages/mobile/tests/unit/components/home/library-screen.test.tsx
+import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
+import { LibraryScreen } from '../../../../components/home/library-screen'
+import { apiClient } from '../../../../lib/api-client'
+
+jest.mock('../../../../lib/api-client', () => ({ apiClient: { get: jest.fn() } }))
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }) }))
+
+const TUTORIALS = [
+  { id: '1', title: 'Build a Robot Arm', description: null, difficulty: 'easy', status: 'approved', tutorial_pdf_url: null, toy_photo_url: null, rejection_note: null, created_at: '', reviewed_at: null },
+  { id: '2', title: 'Advanced Gearbox', description: null, difficulty: 'hard', status: 'approved', tutorial_pdf_url: null, toy_photo_url: null, rejection_note: null, created_at: '', reviewed_at: null },
+]
+
+describe('LibraryScreen', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    ;(apiClient.get as jest.Mock).mockResolvedValue(TUTORIALS)
+  })
+
+  it('renders tutorial titles from the public tutorials endpoint', async () => {
+    render(<LibraryScreen />)
+    expect(await screen.findByText('Build a Robot Arm')).toBeTruthy()
+    expect(screen.getByText('Advanced Gearbox')).toBeTruthy()
+    expect(apiClient.get).toHaveBeenCalledWith('/api/public/tutorials')
+  })
+
+  it('filters the list by search text', async () => {
+    render(<LibraryScreen />)
+    await screen.findByText('Build a Robot Arm')
+    fireEvent.changeText(screen.getByPlaceholderText('Search tutorials'), 'gearbox')
+    expect(screen.queryByText('Build a Robot Arm')).toBeNull()
+    expect(screen.getByText('Advanced Gearbox')).toBeTruthy()
+  })
+
+  it('refetches with a difficulty filter when a chip is pressed', async () => {
+    render(<LibraryScreen />)
+    await screen.findByText('Build a Robot Arm')
+    fireEvent.press(screen.getByText('Hard'))
+    await waitFor(() =>
+      expect(apiClient.get).toHaveBeenCalledWith('/api/public/tutorials?difficulty=hard')
+    )
+  })
+})
