@@ -34,4 +34,10 @@ describe('DetailScreen', () => {
     expect(screen.getByText('Servo Motor × 2')).toBeTruthy()
     expect(screen.getByText('Screwdriver')).toBeTruthy()
   })
+
+  it('shows an error message when apiClient.get rejects', async () => {
+    ;(apiClient.get as jest.Mock).mockRejectedValue(new Error('API GET failed with status 500'))
+    render(<DetailScreen id="1" />)
+    expect(await screen.findByText("Couldn't load tutorial. Please try again.")).toBeTruthy()
+  })
 })

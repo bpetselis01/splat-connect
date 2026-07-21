@@ -13,15 +13,18 @@ export function DetailScreen({ id }: { id: string }) {
   const router = useRouter()
   const [tutorial, setTutorial] = useState<TutorialDetail | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
 
   useEffect(() => {
     apiClient
       .get<TutorialDetail>(`/api/public/tutorials/${id}`)
       .then(setTutorial)
+      .catch(() => setError(true))
       .finally(() => setLoading(false))
   }, [id])
 
   if (loading) return <ActivityIndicator color={theme.colors.primary} style={styles.loader} />
+  if (error) return <Text style={styles.error}>Couldn't load tutorial. Please try again.</Text>
   if (!tutorial) return <Text style={styles.error}>Tutorial not found.</Text>
 
   return (

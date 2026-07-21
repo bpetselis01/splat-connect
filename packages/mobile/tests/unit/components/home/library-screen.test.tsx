@@ -40,4 +40,10 @@ describe('LibraryScreen', () => {
       expect(apiClient.get).toHaveBeenCalledWith('/api/public/tutorials?difficulty=hard')
     )
   })
+
+  it('shows an error message when apiClient.get rejects', async () => {
+    ;(apiClient.get as jest.Mock).mockRejectedValue(new Error('API GET failed with status 500'))
+    render(<LibraryScreen />)
+    expect(await screen.findByText("Couldn't load tutorials. Pull to retry.")).toBeTruthy()
+  })
 })

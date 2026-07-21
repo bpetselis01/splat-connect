@@ -18,16 +18,29 @@ export function LibraryScreen() {
   const router = useRouter()
   const [tutorials, setTutorials] = useState<Tutorial[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null)
 
   useEffect(() => {
+    let ignore = false
     setLoading(true)
+    setError(null)
     const path = difficulty ? `/api/public/tutorials?difficulty=${difficulty}` : '/api/public/tutorials'
     apiClient
       .get<Tutorial[]>(path)
-      .then(setTutorials)
-      .finally(() => setLoading(false))
+      .then((data) => {
+        if (!ignore) setTutorials(data)
+      })
+      .catch(() => {
+        if (!ignore) setError("Couldn't load tutorials. Pull to retry.")
+      })
+      .finally(() => {
+        if (!ignore) setLoading(false)
+      })
+    return () => {
+      ignore = true
+    }
   }, [difficulty])
 
   const visible = tutorials.filter((t) => t.title.toLowerCase().includes(search.toLowerCase()))
@@ -55,6 +68,8 @@ export function LibraryScreen() {
       </View>
       {loading ? (
         <ActivityIndicator color={theme.colors.primary} />
+      ) : error ? (
+        <Text style={styles.error}>{error}</Text>
       ) : (
         <FlatList
           data={visible}
@@ -104,4 +119,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cardTitle: { fontFamily: theme.fonts.bold, color: theme.colors.text, fontSize: 16 },
+  error: { color: theme.colors.text, padding: theme.spacing(4) },
 })
