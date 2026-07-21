@@ -53,3 +53,38 @@ jobs:
 
       - name: Test Web
         run: pnpm --filter @splat-connect/web test:unit
+
+  integration:
+    name: Integration Tests
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start local Supabase
+        run: supabase start
+
+      - name: Run integration tests
+        run: pnpm --filter @splat-connect/api test:integration
+
+      - name: Stop local Supabase
+        if: always()
+        run: supabase stop --no-backup

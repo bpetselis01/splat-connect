@@ -9,7 +9,7 @@
     "start": "node dist/src/index.js",
     "typecheck": "tsc --noEmit",
     "test:unit": "vitest run tests/unit --coverage",
-    "test:integration": "vitest run tests/integration",
+    "test:integration": "vitest run -c vitest.integration.config.ts",
     "test": "vitest run --coverage",
     "test:cleanup": "tsx scripts/cleanup-test-users.ts"
   },
