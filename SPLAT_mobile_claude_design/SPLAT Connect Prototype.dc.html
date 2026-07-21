@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<template id="__bundler_thumbnail" data-bg-color="#1998d5">
+<svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+<rect width="1200" height="800" fill="#1998d5"></rect>
+<circle cx="600" cy="400" r="180" fill="#eaf6fb"></circle>
+<text x="600" y="430" font-family="Arial, sans-serif" font-size="140" font-weight="800" fill="#1998d5" text-anchor="middle">S</text>
+</svg>
+</template>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800;900&amp;display=swap" rel="stylesheet">
+<style>
+  body{margin:0;background:#eef4f7;font-family:'Nunito',system-ui,sans-serif}
+  a{color:#1998d5}
+  a:hover{color:#0f6f9c}
+  ::-webkit-scrollbar{width:0;height:0}
+  @keyframes splat-spin{to{transform:rotate(360deg)}}
+</style>
+</helmet>
+
+<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;gap:22px;padding:56px 20px 80px;box-sizing:border-box">
+  <div style="text-align:center;max-width:420px">
+    <div style="font-size:13px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:#1998d5">SPLAT Connect — Prototype</div>
+    <div style="font-size:14px;color:rgba(28,36,43,0.6);margin-top:6px;line-height:1.5">Parent-facing app. Use the bottom tab bar inside the phone to move between the toy library, profile, associations, the toy scanner, and 3D print requests.</div>
+  </div>
+
+  <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" hint-size="402px,874px">
+    <div style="height:100%;display:flex;flex-direction:column;background:#f7fafc">
+
+      <div style="flex:1;overflow:auto;padding-top:56px">
+
+        <sc-if value="{{ isHomeLibrary }}" hint-placeholder-val="{{ true }}">
+          <div style="padding:18px 18px 8px">
+            <div style="font-size:26px;font-weight:800;color:#1c242b">Tutorial Library</div>
+            <div style="margin-top:10px;display:flex;align-items:center;gap:8px;background:#eaf6fb;border-radius:14px;padding:10px 12px">
+              <svg width="16" height="16" viewBox="0 0 16 16" style="flex-shrink:0"><circle cx="7" cy="7" r="5.5" fill="none" stroke="rgba(28,36,43,0.4)" stroke-width="1.6"></circle><line x1="11" y1="11" x2="15" y2="15" stroke="rgba(28,36,43,0.4)" stroke-width="1.6" stroke-linecap="round"></line></svg>
+              <input value="{{ search }}" onChange="{{ onSearchChange }}" placeholder="Search tutorials…" style="border:none;background:none;outline:none;font-size:14px;color:#1c242b;flex:1;font-family:inherit"></input>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:12px;overflow:auto">
+              <button onClick="{{ setFilterAll }}" style="{{ chipAllStyle }}">All</button>
+              <button onClick="{{ setFilterEasy }}" style="{{ chipEasyStyle }}">Easy</button>
+              <button onClick="{{ setFilterMedium }}" style="{{ chipMediumStyle }}">Medium</button>
+              <button onClick="{{ setFilterHard }}" style="{{ chipHardStyle }}">Hard</button>
+            </div>
+          </div>
+          <div style="padding:6px 18px 24px;display:flex;flex-direction:column;gap:14px">
+            <sc-for list="{{ filteredTutorials }}" as="t" hint-placeholder-count="4">
+              <div onClick="{{ t.open }}" style="background:#fff;border:1px solid rgba(28,36,43,0.08);border-radius:18px;overflow:hidden;box-shadow:0 1px 2px rgba(28,36,43,0.05);cursor:pointer">
+                <div style="height:120px;background:repeating-linear-gradient(135deg, #eaf6fb 0px, #eaf6fb 10px, #dcedf5 10px, #dcedf5 20px);display:flex;align-items:center;justify-content:center">
+                  <span style="font-family:ui-monospace,monospace;font-size:11px;color:rgba(28,36,43,0.4)">toy photo</span>
+                </div>
+                <div style="padding:14px">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+                    <div style="font-size:16px;font-weight:800;color:#1c242b">{{ t.title }}</div>
+                    <span style="{{ t.badgeStyle }}">{{ t.difficulty }}</span>
+                  </div>
+                  <div style="font-size:13px;color:rgba(28,36,43,0.6);margin-top:6px;line-height:1.4">{{ t.description }}</div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isHomeDetail }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:14px 18px 0">
+            <button onClick="{{ backHomeToLibrary }}" style="border:none;background:rgba(25,152,213,0.08);display:inline-flex;align-items:center;gap:6px;color:#1998d5;font-weight:700;font-size:14px;padding:8px 14px 8px 10px;border-radius:999px;cursor:pointer"><svg width="16" height="16" viewBox="0 0 16 16" style="flex-shrink:0"><path d="M10 3l-5 5 5 5" fill="none" stroke="#1998d5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>Library</button>
+          </div>
+          <div style="padding:14px 18px 28px">
+            <div style="height:180px;border-radius:18px;background:repeating-linear-gradient(135deg, #eaf6fb 0px, #eaf6fb 10px, #dcedf5 10px, #dcedf5 20px);display:flex;align-items:center;justify-content:center">
+              <span style="font-family:ui-monospace,monospace;font-size:11px;color:rgba(28,36,43,0.4)">toy photo</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:16px">
+              <div style="font-size:22px;font-weight:800;color:#1c242b">{{ selectedTutorial.title }}</div>
+              <span style="{{ selectedTutorial.badgeStyle }}">{{ selectedTutorial.difficulty }}</span>
+            </div>
+            <div style="font-size:14px;color:rgba(28,36,43,0.65);line-height:1.5;margin-top:8px">{{ selectedTutorial.description }}</div>
+            <div style="margin-top:22px">
+              <div style="font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:rgba(28,36,43,0.45)">Materials needed</div>
+              <div style="margin-top:8px;display:flex;flex-direction:column;gap:8px">
+                <sc-for list="{{ selectedTutorial.parts }}" as="p" hint-placeholder-count="3">
+                  <div style="display:flex;align-items:center;gap:10px;font-size:14px;color:#1c242b">
+                    <span style="width:7px;height:7px;border-radius:50%;background:#1998d5;flex-shrink:0"></span>
+                    {{ p }}
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="margin-top:18px">
+              <div style="font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:rgba(28,36,43,0.45)">Tools needed</div>
+              <div style="margin-top:8px;display:flex;flex-direction:column;gap:8px">
+                <sc-for list="{{ selectedTutorial.tools }}" as="tl" hint-placeholder-count="2">
+                  <div style="display:flex;align-items:center;gap:10px;font-size:14px;color:#1c242b">
+                    <span style="width:7px;height:7px;border-radius:50%;background:#0f6f9c;flex-shrink:0"></span>
+                    {{ tl }}
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <button onClick="{{ openPdfPreview }}" style="margin-top:24px;width:100%;padding:14px;border:none;border-radius:14px;background:#1998d5;color:#fff;font-weight:800;font-size:15px;cursor:pointer">Preview Tutorial</button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isHomePreview }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:14px 18px 0">
+            <button onClick="{{ closePdfPreview }}" style="border:none;background:rgba(25,152,213,0.08);display:inline-flex;align-items:center;gap:6px;color:#1998d5;font-weight:700;font-size:14px;padding:8px 14px 8px 10px;border-radius:999px;cursor:pointer"><svg width="16" height="16" viewBox="0 0 16 16" style="flex-shrink:0"><path d="M10 3l-5 5 5 5" fill="none" stroke="#1998d5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>{{ selectedTutorial.title }}</button>
+          </div>
+          <div style="padding:14px 18px 28px">
+            <div style="background:#fff;border:1px solid rgba(28,36,43,0.1);border-radius:14px;padding:22px;box-shadow:0 2px 10px rgba(28,36,43,0.08)">
+              <div style="font-size:12px;font-weight:800;color:rgba(28,36,43,0.4);text-transform:uppercase;letter-spacing:0.04em">Step {{ stepNumber }} of {{ stepCount }}</div>
+              <div style="height:160px;border-radius:14px;background:repeating-linear-gradient(135deg, #eaf6fb 0px, #eaf6fb 10px, #dcedf5 10px, #dcedf5 20px);display:flex;align-items:center;justify-content:center;margin-top:12px">
+                <span style="font-family:ui-monospace,monospace;font-size:11px;color:rgba(28,36,43,0.4)">step photo</span>
+              </div>
+              <div style="font-size:16px;color:#1c242b;line-height:1.5;margin-top:16px">{{ currentStep.instruction }}</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">
+                <span style="font-size:12px;font-weight:700;color:#0f6f9c;background:#eaf6fb;padding:5px 10px;border-radius:999px">Material: {{ currentStep.material }}</span>
+                <span style="font-size:12px;font-weight:700;color:#0f6f9c;background:#eaf6fb;padding:5px 10px;border-radius:999px">Tool: {{ currentStep.tool }}</span>
+              </div>
+            </div>
+            <div style="display:flex;gap:12px;margin-top:16px">
+              <button onClick="{{ prevStep }}" disabled="{{ prevStepDisabled }}" style="{{ prevStepStyle }}"><svg width="16" height="16" viewBox="0 0 16 16" style="flex-shrink:0"><path d="M10 3l-5 5 5 5" fill="none" stroke="#1998d5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>Back</button>
+              <button onClick="{{ nextStep }}" disabled="{{ nextStepDisabled }}" style="{{ nextStepStyle }}">Next ›</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isProfileMain }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:18px 18px 6px">
+            <div style="font-size:26px;font-weight:800;color:#1c242b">Profile</div>
+          </div>
+          <div style="padding:8px 18px 4px;display:flex;align-items:center;gap:14px">
+            <div style="width:56px;height:56px;border-radius:50%;background:#1998d5;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px;flex-shrink:0">{{ profileInitials }}</div>
+            <div>
+              <div style="font-size:17px;font-weight:800;color:#1c242b">{{ profile.name }}</div>
+              <div style="font-size:13px;color:rgba(28,36,43,0.5)">{{ profile.email }}</div>
+            </div>
+          </div>
+
+          <div style="padding:20px 18px 4px;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:rgba(28,36,43,0.45)">Account</div>
+          <div style="margin:8px 18px 0;background:#fff;border-radius:16px;border:1px solid rgba(28,36,43,0.08);overflow:hidden">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 14px;border-bottom:1px solid rgba(28,36,43,0.08)"><span style="font-size:15px;color:#1c242b;flex-shrink:0">Name</span><input value="{{ profile.name }}" onChange="{{ setProfileName }}" style="border:none;background:none;outline:none;text-align:right;font-size:14px;color:rgba(28,36,43,0.7);flex:1;font-family:inherit"></input></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 14px;border-bottom:1px solid rgba(28,36,43,0.08)"><span style="font-size:15px;color:#1c242b;flex-shrink:0">Email</span><input value="{{ profile.email }}" onChange="{{ setProfileEmail }}" style="border:none;background:none;outline:none;text-align:right;font-size:14px;color:rgba(28,36,43,0.7);flex:1;font-family:inherit"></input></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 14px"><span style="font-size:15px;color:#1c242b;flex-shrink:0">Phone</span><input value="{{ profile.phone }}" onChange="{{ setProfilePhone }}" style="border:none;background:none;outline:none;text-align:right;font-size:14px;color:rgba(28,36,43,0.7);flex:1;font-family:inherit"></input></div>
+          </div>
+
+          <div style="padding:20px 18px 4px;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:rgba(28,36,43,0.45)">Child profile</div>
+          <div style="margin:8px 18px 0;background:#fff;border-radius:16px;border:1px solid rgba(28,36,43,0.08);overflow:hidden">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 14px"><span style="font-size:15px;color:#1c242b;flex-shrink:0">Age</span><input type="number" min="0" max="18" value="{{ profile.childAge }}" onChange="{{ setChildAge }}" style="border:none;background:none;outline:none;text-align:right;font-size:14px;color:rgba(28,36,43,0.7);width:60px;font-family:inherit"></input></div>
+          </div>
+
+          <div onClick="{{ openAbilityProfile }}" style="margin:16px 18px 0;background:#f5fbfd;border-radius:20px;border:1px solid rgba(25,152,213,0.18);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer">
+            <div>
+              <div style="font-size:15px;font-weight:800;color:#1c242b">Ability Profile</div>
+              <div style="font-size:12px;color:rgba(28,36,43,0.45);margin-top:2px">{{ sectionASummary }}</div>
+            </div>
+            <span style="font-size:18px;color:rgba(28,36,43,0.3);flex-shrink:0;margin-left:10px">›</span>
+          </div>
+
+          <div onClick="{{ openEverydayNeeds }}" style="margin:12px 18px 0;background:#f5fbfd;border-radius:20px;border:1px solid rgba(25,152,213,0.18);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer">
+            <div>
+              <div style="font-size:15px;font-weight:800;color:#1c242b">Everyday Needs</div>
+              <div style="font-size:12px;color:rgba(28,36,43,0.5);margin-top:2px">{{ sectionBSummary }}</div>
+            </div>
+            <span style="font-size:18px;color:rgba(28,36,43,0.3);flex-shrink:0;margin-left:10px">›</span>
+          </div>
+
+          <div onClick="{{ openCustomizationMetrics }}" style="margin:12px 18px 0;background:#f5fbfd;border-radius:20px;border:1px solid rgba(25,152,213,0.18);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer">
+            <div>
+              <div style="font-size:15px;font-weight:800;color:#1c242b">Customization Metrics</div>
+              <div style="font-size:12px;color:rgba(28,36,43,0.45);margin-top:2px">{{ sectionCSummary }}</div>
+            </div>
+            <span style="font-size:18px;color:rgba(28,36,43,0.3);flex-shrink:0;margin-left:10px">›</span>
+          </div>
+
+          <div onClick="{{ openToyCollection }}" style="margin:12px 18px 0;background:#f5fbfd;border-radius:20px;border:1px solid rgba(25,152,213,0.18);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer">
+            <div>
+              <div style="font-size:15px;font-weight:800;color:#1c242b">Toy Collection</div>
+              <div style="font-size:12px;color:rgba(28,36,43,0.45);margin-top:2px">{{ toyCollectionSummary }}</div>
+            </div>
+            <span style="font-size:18px;color:rgba(28,36,43,0.3);flex-shrink:0;margin-left:10px">›</span>
+          </div>
+          <div style="padding:20px 18px 4px;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:rgba(28,36,43,0.45)">Preferences</div>
+          <div style="margin:8px 18px 0;background:#fff;border-radius:16px;border:1px solid rgba(28,36,43,0.08);overflow:hidden">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 14px;border-bottom:1px solid rgba(28,36,43,0.08)">
+              <span style="font-size:15px;color:#1c242b">Push notifications</span>
+              <button onClick="{{ toggleNotif }}" style="{{ notifTrackStyle }}"><span style="{{ notifKnobStyle }}"></span></button>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 14px">
+              <span style="font-size:15px;color:#1c242b">Email updates</span>
+              <button onClick="{{ toggleEmail }}" style="{{ emailTrackStyle }}"><span style="{{ emailKnobStyle }}"></span></button>
+            </div>
+          </div>
+
+          <div style="padding:24px 18px 28px">
+            <button style="width:100%;padding:14px;border:1.5px solid rgba(28,36,43,0.15);border-radius:14px;background:none;color:#1c242b;font-weight:800;font-size:15px;cursor:pointer">Sign Out</button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isAbilityProfile }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:14px 18px 0">
+            <button onClick="{{ backToProfile }}" style="border:none;background:rgba(25,152,213,0.08);display:inline-flex;align-items:center;gap:6px;color:#1998d5;font-weight:700;font-size:14px;padding:8px 14px 8px 10px;border-radius:999px;cursor:pointer"><svg width="16" height="16" viewBox="0 0 16 16" style="flex-shrink:0"><path d="M10 3l-5 5 5 5" fill="none" stroke="#1998d5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>Child Profile</button>
+          </div>
+          <div style="padding:14px 18px 6px">
+            <div style="font-size:22px;font-weight:800;color:#1c242b">Ability Profile</div>
+            <div style="font-size:13px;color:rgba(28,36,43,0.5);margin-top:4px">Used to match tutorials and 3D print models to your child's needs</div>
+          </div>
+
+          <div style="margin:8px 18px 0;background:rgba(25,152,213,0.06);border:1.5px dashed rgba(25,152,213,0.35);border-radius:20px;overflow:hidden">
+            <div onClick="{{ toggleQuestionnaire }}" style="display:flex;align-items:center;justify-content:space-between;padding:15px 16px;cursor:pointer">
+              <div>
+                <div style="font-size:15px;font-weight:800;color:#0f6f9c">Not sure of the clinical terms?</div>
+                <div style="font-size:12.5px;color:rgba(15,111,156,0.75);margin-top:2px">Answer a few simple questions instead — we'll estimate MACS &amp; BFMF for you</div>
+              </div>
+              <span style="font-size:20px;color:#0f6f9c;flex-shrink:0;margin-left:10px">{{ questionnaireChevron }}</span>
+            </div>
+            <sc-if value="{{ isQuestionnaireOpen }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:0 16px 18px;display:flex;flex-direction:column;gap:16px">
+                <sc-for list="{{ questions }}" as="q" hint-placeholder-count="4">
+                  <div>
+                    <div style="font-size:14.5px;font-weight:700;color:#1c242b;line-height:1.4">{{ q.text }}</div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+                      <sc-for list="{{ q.options }}" as="opt" hint-placeholder-count="4">
+                        <button onClick="{{ opt.select }}" style="{{ opt.style }}">{{ opt.label }}</button>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-for>
+                <div style="background:#fff;border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:6px">
+                  <div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:rgba(28,36,43,0.4)">Estimated from your answers</div>
+                  <div style="font-size:13.5px;color:#1c242b"><b>MACS:</b> {{ macsEstimateText }}</div>
+                  <div style="font-size:13.5px;color:#1c242b"><b>BFMF:</b> {{ bfmfEstimateText }}</div>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+
+          <div style="margin:16px 18px 28px;background:#fff;border-radius:16px;border:1px solid rgba(28,36,43,0.08);overflow:hidden">
+            <div style="padding:13px 16px;border-bottom:1px solid rgba(28,36,43,0.08)">
+              <span style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:rgba(28,36,43,0.4);display:block;margin-bottom:8px">Primary diagnosis</span>
+              <select value="{{ profile.primaryDiagnosis }}" onChange="{{ setPrimaryDiagnosis }}" style="width:fit-content;max-width:100%;min-width:160px;font-size:14px;color:#1c242b;border:1px solid rgba(28,36,43,0.15);border-radius:10px;padding:9px 34px 9px 10px;background-color:#fff;background-image:url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20d%3D%22M5%208l5%205%205-5%22%20fill%3D%22none%22%20stroke%3D%22%231c242b%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E');background-repeat:no-repeat;background-position:right 10px center;background-size:14px;appearance:none;font-family:inherit">
+                <sc-for list="{{ primaryDiagnosisOptions }}" as="d" hint-placeholder-count="6">
+                  <option value="{{ d }}">{{ d }}</option>
+                </sc-for>
+              </select>
+            </div>
+            <div style="padding:13px 16px;border-bottom:1px solid rgba(28,36,43,0.08)">
+              <span style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:rgba(28,36,43,0.4);display:block;margin-bottom:8px">MACS level {{ macsAutoTag }}</span>
+              <select value="{{ profile.macs }}" onChange="{{ setMacsManual }}" style="width:fit-content;max-width:100%;min-width:160px;font-size:14px;color:#1c242b;border:1px solid rgba(28,36,43,0.15);border-radius:10px;padding:9px 34px 9px 10px;background-color:#fff;background-image:url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20d%3D%22M5%208l5%205%205-5%22%20fill%3D%22none%22%20stroke%3D%22%231c242b%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E');background-repeat:no-repeat;background-position:right 10px center;background-size:14px;appearance:none;font-family:inherit">
+                <sc-for list="{{ macsOptions }}" as="m" hint-placeholder-count="5">
+                  <option value="{{ m }}">{{ m }}</option>
+                </sc-for>
+              </select>
+              <span style="font-size:12px;color:rgba(28,36,43,0.5);display:block;margin-top:6px;line-height:1.4">{{ macsDescForCurrent }}</span>
+            </div>
+            <div style="padding:13px 16px;border-bottom:1px solid rgba(28,36,43,0.08)">
+              <span style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:rgba(28,36,43,0.4);display:block;margin-bottom:8px">Hand involvement</span>
+              <div style="display:flex;gap:8px">
+                <button onClick="{{ setBilateral }}" style="{{ bilateralStyle }}">Bilateral</button>
+                <button onClick="{{ setUnilateral }}" style="{{ unilateralStyle }}">Unilateral</button>
+              </div>
+              <sc-if value="{{ isUnilateral }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top:10px">
+                  <span style="font-size:12.5px;color:rgba(28,36,43,0.5);display:block;margin-bottom:6px">Which hand assists?</span>
+                  <div style="display:flex;gap:8px">
+                    <button onClick="{{ setAssistLeft }}" style="{{ assistLeftStyle }}">Left</button>
+                    <button onClick="{{ setAssistRight }}" style="{{ assistRightStyle }}">Right</button>
+                  </div>
+                </div>
+              </sc-if>
+            </div>
+            <div style="padding:13px 16px">
+              <span style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:rgba(28,36,43,0.4);display:block;margin-bottom:8px">BFMF score {{ bfmfAutoTag }}</span>
+              <select value="{{ profile.bfmf }}" onChange="{{ setBfmfManual }}" style="width:fit-content;max-width:100%;min-width:160px;font-size:14px;color:#1c242b;border:1px solid rgba(28,36,43,0.15);border-radius:10px;padding:9px 34px 9px 10px;background-color:#fff;background-image:url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20d%3D%22M5%208l5%205%205-5%22%20fill%3D%22none%22%20stroke%3D%22%231c242b%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E');background-repeat:no-repeat;background-position:right 10px center;background-size:14px;appearance:none;font-family:inherit">
+                <sc-for list="{{ bfmfOptions }}" as="b" hint-placeholder-count="5">
+                  <option value="{{ b }}">{{ b }}</option>
+                </sc-for>
+              </select>
+              <span style="font-size:12px;color:rgba(28,36,43,0.5);display:block;margin-top:6px;line-height:1.4">{{ bfmfDescForCurrent }}</span>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isEverydayNeeds }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:14px 18px 0">
+            <button onClick="{{ backToProfile }}" style="border:none;background:rgba(25,152,213,0.08);display:inline-flex;align-items:center;gap:6px;color:#1998d5;font-weight:700;font-size:14px;padding:8px 14px 8px 10px;border-radius:999px;cursor:pointer"><svg width="16" height="16" viewBox="0 0 16 16" style="flex-shrink:0"><path d="M10 3l-5 5 5 5" fill="none" stroke="#1998d5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>Child Profile</button>
+          </div>
+          <div style="padding:14px 18px 6px">
+            <div style="font-size:22px;font-weight:800;color:#1c242b">Everyday Needs</div>
+            <div style="font-size:13px;color:rgba(28,36,43,0.5);margin-top:4px">{{ sectionBSummary }}</div>
+          </div>
+          <div style="margin:8px 18px 28px;padding:2px 0 0;display:flex;flex-direction:column;gap:18px">
+            <div>
+              <div style="font-size:14.5px;font-weight:700;color:#1c242b">What's hardest day-to-day? <span style="font-weight:500;color:rgba(28,36,43,0.5)">(pick up to 3)</span></div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+                <sc-for list="{{ challengeChips }}" as="c" hint-placeholder-count="6">
+                  <button onClick="{{ c.toggle }}" style="{{ c.style }}">{{ c.label }}</button>
+                </sc-for>
+              </div>
+              <sc-if value="{{ showChallengeOther }}" hint-placeholder-val="{{ false }}">
+                <input value="{{ profile.challengeOther }}" onChange="{{ setChallengeOther }}" placeholder="Describe the other challenge…" style="margin-top:10px;width:100%;box-sizing:border-box;padding:11px 13px;border-radius:999px;border:1.5px solid rgba(25,152,213,0.3);font-size:14px;font-family:inherit;background:#fff"></input>
+              </sc-if>
+            </div>
+            <div>
+              <div style="font-size:14.5px;font-weight:700;color:#1c242b">Preferred grip type</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+                <sc-for list="{{ gripChips }}" as="g" hint-placeholder-count="3">
+                  <button onClick="{{ g.select }}" style="{{ g.style }}">{{ g.label }}</button>
+                </sc-for>
+              </div>
+            </div>
+            <div>
+              <div style="font-size:14.5px;font-weight:700;color:#1c242b">Where will they use it most?</div>
+              <select value="{{ profile.envContext }}" onChange="{{ setEnvContext }}" style="margin-top:10px;width:fit-content;max-width:100%;min-width:160px;font-size:14px;color:#1c242b;border:1.5px solid rgba(25,152,213,0.3);border-radius:999px;padding:10px 36px 10px 14px;background-color:#fff;background-image:url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20d%3D%22M5%208l5%205%205-5%22%20fill%3D%22none%22%20stroke%3D%22%231c242b%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E');background-repeat:no-repeat;background-position:right 14px center;background-size:14px;appearance:none;font-family:inherit">
+                <sc-for list="{{ envContextOptions }}" as="e" hint-placeholder-count="4">
+                  <option value="{{ e }}">{{ e }}</option>
+                </sc-for>
+              </select>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isCustomizationMetrics }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:14px 18px 0">
+            <button onClick="{{ backToProfile }}" style="border:none;background:rgba(25,152,213,0.08);display:inline-flex;align-items:center;gap:6px;color:#1998d5;font-weight:700;font-size:14px;padding:8px 14px 8px 10px;border-radius:999px;cursor:pointer"><svg width="16" height="16" viewBox="0 0 16 16" style="flex-shrink:0"><path d="M10 3l-5 5 5 5" fill="none" stroke="#1998d5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>Child Profile</button>
+          </div>
+          <div style="padding:14px 18px 6px">
+            <div style="font-size:22px;font-weight:800;color:#1c242b">Customization Metrics</div>
+            <div style="font-size:13px;color:rgba(28,36,43,0.5);margin-top:4px">{{ sectionCSummary }}</div>
+          </div>
+          <div style="margin:8px 18px 28px;padding:2px 0 0;display:flex;flex-direction:column;gap:16px">
+            <div>
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <span style="font-size:13px;font-weight:800;color:#1c242b">Palm width</span>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <input type="number" min="0" value="{{ profile.palmWidth }}" onChange="{{ setPalmWidth }}" style="width:64px;text-align:right;border:1px solid rgba(28,36,43,0.15);border-radius:8px;padding:7px 8px;font-size:14px;font-family:inherit"></input>
+                  <span style="font-size:13px;color:rgba(28,36,43,0.5)">mm</span>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:8px;background:#f7fafc;border-radius:12px;padding:8px 10px">
+                <svg width="46" height="30" viewBox="0 0 46 30" style="flex-shrink:0"><rect x="10" y="4" width="26" height="22" rx="9" fill="none" stroke="#1998d5" stroke-width="1.6"></rect><line x1="10" y1="15" x2="36" y2="15" stroke="#0f6f9c" stroke-width="1.4" stroke-dasharray="2 2"></line><path d="M10 11l-3 4 3 4M36 11l3 4-3 4" stroke="#0f6f9c" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                <span style="font-size:11.5px;color:rgba(28,36,43,0.5);line-height:1.4">Measure straight across the knuckles, palm flat</span>
+              </div>
+            </div>
+            <div>
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <span style="font-size:13px;font-weight:800;color:#1c242b">Wrist circumference</span>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <input type="number" min="0" value="{{ profile.wristCirc }}" onChange="{{ setWristCirc }}" style="width:64px;text-align:right;border:1px solid rgba(28,36,43,0.15);border-radius:8px;padding:7px 8px;font-size:14px;font-family:inherit"></input>
+                  <span style="font-size:13px;color:rgba(28,36,43,0.5)">mm</span>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:8px;background:#f7fafc;border-radius:12px;padding:8px 10px">
+                <svg width="46" height="30" viewBox="0 0 46 30" style="flex-shrink:0"><ellipse cx="23" cy="15" rx="15" ry="10" fill="none" stroke="#1998d5" stroke-width="1.6"></ellipse><path d="M23 5a15 10 0 0 1 15 10" stroke="#0f6f9c" stroke-width="1.4" fill="none" stroke-dasharray="2 2"></path></svg>
+                <span style="font-size:11.5px;color:rgba(28,36,43,0.5);line-height:1.4">Wrap a tape measure around the wrist crease</span>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#f7fafc;border-radius:12px">
+              <span style="font-size:13.5px;color:#1c242b">Device attaches to the arm/forearm</span>
+              <button onClick="{{ toggleArmAttachment }}" style="{{ armTrackStyle }}"><span style="{{ armKnobStyle }}"></span></button>
+            </div>
+            <sc-if value="{{ profile.needsArmAttachment }}" hint-placeholder-val="{{ false }}">
+              <div>
+                <div style="display:flex;align-items:center;justify-content:space-between">
+                  <span style="font-size:13px;font-weight:800;color:#1c242b">Forearm length</span>
+                  <div style="display:flex;align-items:center;gap:6px">
+                    <input type="number" min="0" value="{{ profile.forearmLength }}" onChange="{{ setForearmLength }}" style="width:64px;text-align:right;border:1px solid rgba(28,36,43,0.15);border-radius:8px;padding:7px 8px;font-size:14px;font-family:inherit"></input>
+                    <span style="font-size:13px;color:rgba(28,36,43,0.5)">mm</span>
+                  </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;margin-top:8px;background:#f7fafc;border-radius:12px;padding:8px 10px">
+                  <svg width="46" height="30" viewBox="0 0 46 30" style="flex-shrink:0"><line x1="6" y1="15" x2="40" y2="15" stroke="#1998d5" stroke-width="1.6"></line><line x1="6" y1="8" x2="6" y2="22" stroke="#0f6f9c" stroke-width="1.4"></line><line x1="40" y1="8" x2="40" y2="22" stroke="#0f6f9c" stroke-width="1.4"></line></svg>
+                  <span style="font-size:11.5px;color:rgba(28,36,43,0.5);line-height:1.4">Measure from wrist crease to elbow crease</span>
+                </div>
+              </div>
+            </sc-if>
+            <div>
+              <span style="font-size:13px;font-weight:800;color:#1c242b;display:block;margin-bottom:8px">Hand dominance</span>
+              <select value="{{ profile.handDominance }}" onChange="{{ setHandDominance }}" style="width:fit-content;max-width:100%;min-width:160px;font-size:14px;color:#1c242b;border:1px solid rgba(28,36,43,0.15);border-radius:10px;padding:9px 34px 9px 10px;background-color:#fff;background-image:url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20d%3D%22M5%208l5%205%205-5%22%20fill%3D%22none%22%20stroke%3D%22%231c242b%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E');background-repeat:no-repeat;background-position:right 10px center;background-size:14px;appearance:none;font-family:inherit">
+                <sc-for list="{{ handDominanceOptions }}" as="hd" hint-placeholder-count="3">
+                  <option value="{{ hd }}">{{ hd }}</option>
+                </sc-for>
+              </select>
+            </div>
+            <div>
+              <span style="font-size:13px;font-weight:800;color:#1c242b;display:block;margin-bottom:8px">Sensory preferences</span>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <sc-for list="{{ sensoryChips }}" as="sp" hint-placeholder-count="5">
+                  <button onClick="{{ sp.toggle }}" style="{{ sp.style }}">{{ sp.label }}</button>
+                </sc-for>
+              </div>
+              <div style="margin-top:10px;font-size:12.5px;font-weight:700;color:#0f6f9c;background:#eaf6fb;border-radius:10px;padding:9px 11px;line-height:1.4">{{ materialRecommendation }}</div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isToyCollection }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:14px 18px 0">
+            <button onClick="{{ backToProfile }}" style="border:none;background:rgba(25,152,213,0.08);display:inline-flex;align-items:center;gap:6px;color:#1998d5;font-weight:700;font-size:14px;padding:8px 14px 8px 10px;border-radius:999px;cursor:pointer"><svg width="16" height="16" viewBox="0 0 16 16" style="flex-shrink:0"><path d="M10 3l-5 5 5 5" fill="none" stroke="#1998d5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>Child Profile</button>
+          </div>
+          <div style="padding:14px 18px 6px">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+              <div style="font-size:22px;font-weight:800;color:#1c242b">Toy Collection</div>
+              <button onClick="{{ openAddToyForm }}" style="flex-shrink:0;border:none;background:#1998d5;color:#fff;font-weight:800;font-size:13px;padding:10px 14px;border-radius:999px;cursor:pointer">+ Add Toy</button>
+            </div>
+            <div style="font-size:13px;color:rgba(28,36,43,0.5);margin-top:4px">{{ toyCollectionSummary }}</div>
+          </div>
+          <div style="margin:8px 18px 28px;display:flex;flex-direction:column;gap:12px">
+            <sc-for list="{{ toyCollectionCards }}" as="t" hint-placeholder-count="3">
+              <div style="background:#fff;border:1px solid rgba(28,36,43,0.08);border-radius:16px;padding:14px;display:flex;gap:12px">
+                <div style="width:64px;height:64px;flex-shrink:0;border-radius:12px;overflow:hidden">
+                  <x-import component-from-global-scope="image-slot" from="./image-slot.js" id="{{ t.photoId }}" shape="rounded" radius="12" placeholder="Photo" style="width:64px;height:64px" hint-size="64px,64px"></x-import>
+                </div>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+                    <div style="font-size:15px;font-weight:800;color:#1c242b">{{ t.name }}</div>
+                    <div style="{{ t.statusStyle }}">{{ t.statusLabel }}</div>
+                  </div>
+                  <div style="font-size:12.5px;color:rgba(28,36,43,0.5);margin-top:2px">{{ t.qualityLabel }}</div>
+                  <sc-if value="{{ t.finalNote }}" hint-placeholder-val="{{ false }}">
+                    <div style="margin-top:4px;font-size:12px;color:rgba(28,36,43,0.45)">{{ t.finalNote }}</div>
+                  </sc-if>
+                  <div style="display:flex;gap:8px;margin-top:10px">
+                    <button onClick="{{ t.edit }}" style="flex-shrink:0;padding:7px 12px;border-radius:999px;border:1.5px solid rgba(28,36,43,0.15);background:none;color:#1c242b;font-weight:700;font-size:12.5px;cursor:pointer">Edit</button>
+                    <button onClick="{{ t.remove }}" style="flex-shrink:0;padding:7px 12px;border-radius:999px;border:1.5px solid rgba(214,69,69,0.3);background:none;color:#c23b3b;font-weight:700;font-size:12.5px;cursor:pointer">Remove</button>
+                  </div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isToyCollectionForm }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:14px 18px 0">
+            <button onClick="{{ backToToyCollection }}" style="border:none;background:rgba(25,152,213,0.08);display:inline-flex;align-items:center;gap:6px;color:#1998d5;font-weight:700;font-size:14px;padding:8px 14px 8px 10px;border-radius:999px;cursor:pointer"><svg width="16" height="16" viewBox="0 0 16 16" style="flex-shrink:0"><path d="M10 3l-5 5 5 5" fill="none" stroke="#1998d5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>Toy Collection</button>
+          </div>
+          <div style="padding:14px 18px 6px">
+            <div style="font-size:22px;font-weight:800;color:#1c242b">{{ toyFormTitle }}</div>
+          </div>
+          <div style="margin:8px 18px 28px;display:flex;flex-direction:column;gap:16px">
+            <div style="width:120px;height:120px">
+              <x-import component-from-global-scope="image-slot" from="./image-slot.js" id="{{ toyFormPhotoId }}" shape="rounded" radius="16" placeholder="Add a photo" style="width:120px;height:120px" hint-size="120px,120px"></x-import>
+            </div>
+            <div>
+              <span style="font-size:13px;font-weight:800;color:#1c242b;display:block;margin-bottom:8px">Toy name</span>
+              <input value="{{ toyFormName }}" onChange="{{ setToyFormName }}" placeholder="e.g. Switch-adapted ride-on car" style="width:100%;box-sizing:border-box;border:1px solid rgba(28,36,43,0.15);border-radius:10px;padding:11px 13px;font-size:14px;color:#1c242b;font-family:inherit"></input>
+            </div>
+            <div>
+              <span style="font-size:13px;font-weight:800;color:#1c242b;display:block;margin-bottom:8px">Condition</span>
+              <select value="{{ toyFormCondition }}" onChange="{{ setToyFormCondition }}" style="width:fit-content;max-width:100%;min-width:160px;font-size:14px;color:#1c242b;border:1px solid rgba(28,36,43,0.15);border-radius:10px;padding:9px 34px 9px 10px;background-color:#fff;background-image:url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20d%3D%22M5%208l5%205%205-5%22%20fill%3D%22none%22%20stroke%3D%22%231c242b%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E');background-repeat:no-repeat;background-position:right 10px center;background-size:14px;appearance:none;font-family:inherit">
+                <sc-for list="{{ conditionOptions }}" as="c" hint-placeholder-count="4">
+                  <option value="{{ c }}">{{ c }}</option>
+                </sc-for>
+              </select>
+            </div>
+            <div>
+              <span style="font-size:13px;font-weight:800;color:#1c242b;display:block;margin-bottom:8px">Completeness</span>
+              <select value="{{ toyFormCompleteness }}" onChange="{{ setToyFormCompleteness }}" style="width:fit-content;max-width:100%;min-width:160px;font-size:14px;color:#1c242b;border:1px solid rgba(28,36,43,0.15);border-radius:10px;padding:9px 34px 9px 10px;background-color:#fff;background-image:url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20d%3D%22M5%208l5%205%205-5%22%20fill%3D%22none%22%20stroke%3D%22%231c242b%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E');background-repeat:no-repeat;background-position:right 10px center;background-size:14px;appearance:none;font-family:inherit">
+                <sc-for list="{{ completenessOptions }}" as="cp" hint-placeholder-count="3">
+                  <option value="{{ cp }}">{{ cp }}</option>
+                </sc-for>
+              </select>
+            </div>
+            <div>
+              <span style="font-size:13px;font-weight:800;color:#1c242b;display:block;margin-bottom:8px">Notes <span style="font-weight:500;color:rgba(28,36,43,0.45)">(optional)</span></span>
+              <textarea value="{{ toyFormNotes }}" onChange="{{ setToyFormNotes }}" placeholder="Any other detail about condition or parts…" style="width:100%;box-sizing:border-box;min-height:70px;border:1px solid rgba(28,36,43,0.15);border-radius:10px;padding:11px 13px;font-size:14px;color:#1c242b;font-family:inherit;resize:vertical"></textarea>
+            </div>
+            <div onClick="{{ toggleToyFormSwitchAdapted }}" style="display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;padding:12px 14px;border:1px solid rgba(28,36,43,0.15);border-radius:12px">
+              <span style="font-size:13px;font-weight:800;color:#1c242b">Switch adapted</span>
+              <div style="width:44px;height:26px;border-radius:999px;flex-shrink:0;position:relative;transition:background 0.15s;background:{{ switchAdaptedTrackBg }}">
+                <div style="position:absolute;top:3px;width:20px;height:20px;border-radius:999px;background:#fff;transition:left 0.15s;left:{{ switchAdaptedThumbLeft }}"></div>
+              </div>
+            </div>
+            <button onClick="{{ saveToyForm }}" style="width:100%;padding:14px;border:none;border-radius:14px;background:#1998d5;color:#fff;font-weight:800;font-size:15px;cursor:pointer">Save Toy</button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isToyLibList }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:18px 18px 6px">
+            <div style="font-size:26px;font-weight:800;color:#1c242b">Toy Library</div>
+            <div style="font-size:14px;color:rgba(28,36,43,0.55);margin-top:4px">Associations with adapted &amp; accessible toys</div>
+          </div>
+          <div style="margin:10px 18px 0;background:#fff;border:1px solid rgba(28,36,43,0.08);border-radius:16px;padding:14px">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div style="font-size:14px;font-weight:700;color:#1c242b">Use my location</div>
+              <button onClick="{{ toggleLocationServices }}" style="{{ locServicesTrackStyle }}"><span style="{{ locServicesKnobStyle }}"></span></button>
+            </div>
+            <sc-if value="{{ toylibUseMyLocationOff }}" hint-placeholder-val="{{ false }}">
+              <input type="text" inputmode="numeric" placeholder="Enter postcode e.g. 2150" value="{{ toylibZip }}" onChange="{{ setToyZip }}" style="margin-top:10px;width:100%;box-sizing:border-box;border:1px solid rgba(28,36,43,0.15);border-radius:10px;padding:10px 12px;font-size:14px;color:#1c242b;background:#f7fafc"></input>
+            </sc-if>
+            <div style="margin-top:8px;font-size:12px;color:rgba(28,36,43,0.5)">{{ toyLocationSubtitle }}</div>
+          </div>
+          <div style="padding:12px 18px 24px;display:flex;flex-direction:column;gap:12px">
+            <sc-for list="{{ toyLocations }}" as="loc" hint-placeholder-count="4">
+              <div onClick="{{ loc.openToy }}" style="background:#fff;border:1px solid rgba(28,36,43,0.08);border-radius:16px;padding:14px;cursor:pointer">
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+                  <div style="font-size:16px;font-weight:800;color:#1c242b">{{ loc.name }}</div>
+                  <sc-if value="{{ loc.distanceKm }}" hint-placeholder-val="{{ false }}">
+                    <div style="flex-shrink:0;font-size:12px;font-weight:700;color:rgba(28,36,43,0.45)">{{ loc.distanceKm }} km</div>
+                  </sc-if>
+                </div>
+                <div style="font-size:13px;color:rgba(28,36,43,0.5);margin-top:2px">{{ loc.suburb }}</div>
+                <div style="display:inline-flex;margin-top:10px;font-size:12px;font-weight:800;color:#0f6f9c;background:#eaf6fb;padding:5px 10px;border-radius:999px">{{ loc.toysLabel }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isToyLibDetail }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:14px 18px 0">
+            <button onClick="{{ backToToyList }}" style="border:none;background:rgba(25,152,213,0.08);display:inline-flex;align-items:center;gap:6px;color:#1998d5;font-weight:700;font-size:14px;padding:8px 14px 8px 10px;border-radius:999px;cursor:pointer"><svg width="16" height="16" viewBox="0 0 16 16" style="flex-shrink:0"><path d="M10 3l-5 5 5 5" fill="none" stroke="#1998d5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>Toy Library</button>
+          </div>
+          <div style="padding:14px 18px 28px">
+            <div style="font-size:22px;font-weight:800;color:#1c242b">{{ selectedLoc.name }}</div>
+            <div style="font-size:14px;color:rgba(28,36,43,0.55);margin-top:2px">{{ selectedLoc.suburb }}</div>
+            <div style="margin-top:16px;background:#eaf6fb;border-radius:16px;padding:16px;text-align:center">
+              <div style="font-size:28px;font-weight:800;color:#0f6f9c">{{ selectedLoc.toys }}</div>
+              <div style="font-size:13px;color:rgba(28,36,43,0.55);margin-top:2px">adapted toys available</div>
+            </div>
+            <div style="margin-top:20px;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:rgba(28,36,43,0.45)">Toys at this location</div>
+            <div style="margin-top:8px;display:flex;flex-direction:column;gap:8px">
+              <sc-for list="{{ selectedLoc.examples }}" as="ex" hint-placeholder-count="3">
+                <div style="display:flex;align-items:center;gap:10px;font-size:14px;color:#1c242b;background:#fff;border:1px solid rgba(28,36,43,0.08);border-radius:12px;padding:10px 12px">
+                  <span style="width:7px;height:7px;border-radius:50%;background:#1998d5;flex-shrink:0"></span>
+                  {{ ex }}
+                </div>
+              </sc-for>
+            </div>
+            <div style="margin-top:24px">
+              <sc-if value="{{ isLibraryActionsIdle }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;gap:10px">
+                  <button onClick="{{ openLibraryDonate }}" style="flex:1;padding:14px;border:none;border-radius:14px;background:#1998d5;color:#fff;font-weight:800;font-size:15px;cursor:pointer">Donate</button>
+                  <button onClick="{{ openLibraryExchange }}" style="flex:1;padding:14px;border-radius:14px;border:1.5px solid rgba(25,152,213,0.35);background:#fff;color:#1998d5;font-weight:800;font-size:15px;cursor:pointer">Exchange 1-for-1</button>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ isLibraryDonateMode }}" hint-placeholder-val="{{ false }}">
+                <div style="background:#f5fbfd;border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px">
+                  <div style="font-size:14px;font-weight:800;color:#1c242b">Donate a toy from your collection</div>
+                  <select value="{{ libraryToyId }}" onChange="{{ setLibraryToyId }}" style="width:100%;box-sizing:border-box;font-size:14px;color:#1c242b;border:1px solid rgba(28,36,43,0.15);border-radius:10px;padding:9px 34px 9px 10px;background-color:#fff;background-image:url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20d%3D%22M5%208l5%205%205-5%22%20fill%3D%22none%22%20stroke%3D%22%231c242b%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E');background-repeat:no-repeat;background-position:right 10px center;background-size:14px;appearance:none;font-family:inherit">
+                    <option value="">Choose a toy from your collection…</option>
+                    <sc-for list="{{ availableCollectionToys }}" as="ct" hint-placeholder-count="3">
+                      <option value="{{ ct.id }}">{{ ct.name }}</option>
+                    </sc-for>
+                  </select>
+                  <div style="display:flex;gap:8px">
+                    <button onClick="{{ confirmLibraryDonate }}" style="flex:1;padding:10px 0;border-radius:10px;border:none;background:#1998d5;color:#fff;font-weight:800;font-size:13px;cursor:pointer">Request Donation</button>
+                    <button onClick="{{ closeLibraryAction }}" style="flex-shrink:0;padding:10px 14px;border-radius:10px;border:1.5px solid rgba(28,36,43,0.15);background:none;color:#1c242b;font-weight:700;font-size:13px;cursor:pointer">Cancel</button>
+                  </div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ isLibraryExchangeMode }}" hint-placeholder-val="{{ false }}">
+                <div style="background:#f5fbfd;border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px">
+                  <div style="font-size:14px;font-weight:800;color:#1c242b">Exchange a toy 1-for-1</div>
+                  <div>
+                    <span style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:rgba(28,36,43,0.45);display:block;margin-bottom:6px">Your toy</span>
+                    <select value="{{ libraryToyId }}" onChange="{{ setLibraryToyId }}" style="width:100%;box-sizing:border-box;font-size:14px;color:#1c242b;border:1px solid rgba(28,36,43,0.15);border-radius:10px;padding:9px 34px 9px 10px;background-color:#fff;background-image:url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20d%3D%22M5%208l5%205%205-5%22%20fill%3D%22none%22%20stroke%3D%22%231c242b%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E');background-repeat:no-repeat;background-position:right 10px center;background-size:14px;appearance:none;font-family:inherit">
+                      <option value="">Choose a toy from your collection…</option>
+                      <sc-for list="{{ availableCollectionToys }}" as="ct" hint-placeholder-count="3">
+                        <option value="{{ ct.id }}">{{ ct.name }}</option>
+                      </sc-for>
+                    </select>
+                  </div>
+                  <div>
+                    <span style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:rgba(28,36,43,0.45);display:block;margin-bottom:6px">Toy you want in return</span>
+                    <select value="{{ libraryExchangeToy }}" onChange="{{ setLibraryExchangeToy }}" style="width:100%;box-sizing:border-box;font-size:14px;color:#1c242b;border:1px solid rgba(28,36,43,0.15);border-radius:10px;padding:9px 34px 9px 10px;background-color:#fff;background-image:url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20d%3D%22M5%208l5%205%205-5%22%20fill%3D%22none%22%20stroke%3D%22%231c242b%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E');background-repeat:no-repeat;background-position:right 10px center;background-size:14px;appearance:none;font-family:inherit">
+                      <option value="">Choose a toy…</option>
+                      <sc-for list="{{ selectedLoc.examples }}" as="ex" hint-placeholder-count="3">
+                        <option value="{{ ex }}">{{ ex }}</option>
+                      </sc-for>
+                    </select>
+                  </div>
+                  <div style="display:flex;gap:8px">
+                    <button onClick="{{ confirmLibraryExchange }}" style="flex:1;padding:10px 0;border-radius:10px;border:none;background:#1998d5;color:#fff;font-weight:800;font-size:13px;cursor:pointer">Request Exchange</button>
+                    <button onClick="{{ closeLibraryAction }}" style="flex-shrink:0;padding:10px 14px;border-radius:10px;border:1.5px solid rgba(28,36,43,0.15);background:none;color:#1c242b;font-weight:700;font-size:13px;cursor:pointer">Cancel</button>
+                  </div>
+                </div>
+              </sc-if>
+            </div>
+
+            <sc-if value="{{ pendingAtSelectedLocation.length }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:20px;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:rgba(28,36,43,0.45)">Your donations &amp; exchanges here</div>
+              <div style="margin-top:8px;display:flex;flex-direction:column;gap:8px">
+                <sc-for list="{{ pendingAtSelectedLocation }}" as="p" hint-placeholder-count="2">
+                  <div style="background:#fff;border:1px solid rgba(28,36,43,0.08);border-radius:12px;padding:10px 12px">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+                      <div style="font-size:14px;font-weight:700;color:#1c242b">{{ p.name }}</div>
+                      <div style="{{ p.statusStyle }}">{{ p.statusLabel }}</div>
+                    </div>
+                    <div style="margin-top:4px;font-size:12px;color:rgba(28,36,43,0.5)">{{ p.finalNote }}</div>
+                    <sc-if value="{{ p.showApprove }}" hint-placeholder-val="{{ false }}">
+                      <button onClick="{{ p.simulateApprove }}" style="margin-top:8px;border:none;background:rgba(25,152,213,0.1);color:#1998d5;font-weight:700;font-size:12px;padding:6px 10px;border-radius:999px;cursor:pointer">Simulate approval (demo)</button>
+                    </sc-if>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+
+
+        <sc-if value="{{ isCvIdle }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:18px 18px 6px">
+            <div style="font-size:26px;font-weight:800;color:#1c242b">Toy Scanner</div>
+            <div style="font-size:14px;color:rgba(28,36,43,0.55);margin-top:4px">Point your camera at a toy to get adaptation ideas</div>
+          </div>
+          <div style="padding:12px 18px 28px">
+            <div style="height:280px;border-radius:20px;background:#1c242b;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center">
+              <div style="position:absolute;inset:18px;border:2px dashed rgba(255,255,255,0.35);border-radius:16px"></div>
+              <span style="font-family:ui-monospace,monospace;font-size:12px;color:rgba(255,255,255,0.5)">camera viewfinder</span>
+            </div>
+            <button onClick="{{ startScan }}" style="margin-top:18px;width:100%;padding:14px;border:none;border-radius:14px;background:#1998d5;color:#fff;font-weight:800;font-size:15px;cursor:pointer">Scan Toy</button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isCvScanning }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:60px 24px;text-align:center;display:flex;flex-direction:column;align-items:center">
+            <div style="width:56px;height:56px;border-radius:50%;border:5px solid #eaf6fb;border-top-color:#1998d5;animation:splat-spin 0.9s linear infinite"></div>
+            <div style="font-size:16px;font-weight:800;color:#1c242b;margin-top:22px">Analyzing toy…</div>
+            <div style="font-size:13px;color:rgba(28,36,43,0.5);margin-top:6px">Identifying shape, buttons and switches</div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isCvResult }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:18px">
+            <div style="font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:rgba(28,36,43,0.45)">Toy detected</div>
+            <div style="background:#fff;border:1px solid rgba(28,36,43,0.08);border-radius:16px;padding:16px;margin-top:10px">
+              <div style="font-size:18px;font-weight:800;color:#1c242b">{{ detectedToy.name }}</div>
+              <div style="display:inline-flex;margin-top:8px;font-size:12px;font-weight:800;color:#0f6f9c;background:#eaf6fb;padding:5px 10px;border-radius:999px">Suggested difficulty: {{ detectedToy.difficulty }}</div>
+            </div>
+            <div style="font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:rgba(28,36,43,0.45);margin-top:22px">Matching adaptation guides</div>
+            <div style="margin-top:10px;display:flex;flex-direction:column;gap:12px">
+              <sc-for list="{{ detectedToy.matches }}" as="t" hint-placeholder-count="2">
+                <div onClick="{{ t.open }}" style="background:#fff;border:1px solid rgba(28,36,43,0.08);border-radius:14px;padding:12px 14px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px">
+                  <div style="font-size:15px;font-weight:700;color:#1c242b">{{ t.title }}</div>
+                  <span style="{{ t.badgeStyle }}">{{ t.difficulty }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <button onClick="{{ resetScan }}" style="margin-top:22px;width:100%;padding:14px;border:1.5px solid rgba(28,36,43,0.15);border-radius:14px;background:none;color:#1c242b;font-weight:800;font-size:15px;cursor:pointer">Scan Another Toy</button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isPrintList }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:18px 18px 6px">
+            <div style="font-size:26px;font-weight:800;color:#1c242b">3D Print Request</div>
+            <div style="font-size:14px;color:rgba(28,36,43,0.55);margin-top:4px">Request a printed part at a public association</div>
+          </div>
+          <div style="padding:12px 18px 24px;display:flex;flex-direction:column;gap:12px">
+            <sc-for list="{{ printLocations }}" as="loc" hint-placeholder-count="4">
+              <div onClick="{{ loc.openPrint }}" style="background:#fff;border:1px solid rgba(28,36,43,0.08);border-radius:16px;padding:14px;cursor:pointer">
+                <div style="font-size:16px;font-weight:800;color:#1c242b">{{ loc.name }}</div>
+                <div style="font-size:13px;color:rgba(28,36,43,0.5);margin-top:2px">{{ loc.suburb }}</div>
+                <div style="display:inline-flex;margin-top:10px;font-size:12px;font-weight:800;color:#0f6f9c;background:#eaf6fb;padding:5px 10px;border-radius:999px">{{ loc.printers }} printers available</div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isPrintForm }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:14px 18px 0">
+            <button onClick="{{ backToPrintList }}" style="border:none;background:rgba(25,152,213,0.08);display:inline-flex;align-items:center;gap:6px;color:#1998d5;font-weight:700;font-size:14px;padding:8px 14px 8px 10px;border-radius:999px;cursor:pointer"><svg width="16" height="16" viewBox="0 0 16 16" style="flex-shrink:0"><path d="M10 3l-5 5 5 5" fill="none" stroke="#1998d5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>3D Print Request</button>
+          </div>
+          <div style="padding:14px 18px 28px">
+            <div style="font-size:20px;font-weight:800;color:#1c242b">{{ selectedPrintLoc.name }}</div>
+            <div style="font-size:13px;color:rgba(28,36,43,0.5);margin-top:2px">{{ selectedPrintLoc.suburb }} · {{ selectedPrintLoc.printers }} printers available</div>
+
+            <label style="font-size:13px;font-weight:800;color:rgba(28,36,43,0.55);display:block;margin-top:20px">Item description</label>
+            <textarea value="{{ printForm.description }}" onChange="{{ onPrintDescChange }}" placeholder="e.g. Large button caps for a remote control" rows="4" style="width:100%;box-sizing:border-box;margin-top:6px;padding:12px 14px;border:1px solid rgba(28,36,43,0.15);border-radius:12px;font-size:15px;font-family:inherit;background:#fff;resize:none"></textarea>
+
+            <label style="font-size:13px;font-weight:800;color:rgba(28,36,43,0.55);display:block;margin-top:16px">Quantity</label>
+            <div style="display:flex;align-items:center;gap:14px;margin-top:8px">
+              <button onClick="{{ decQty }}" style="width:38px;height:38px;border-radius:10px;border:1.5px solid rgba(28,36,43,0.15);background:#fff;font-size:18px;font-weight:800;color:#1c242b;cursor:pointer">−</button>
+              <span style="font-size:17px;font-weight:800;color:#1c242b;min-width:20px;text-align:center">{{ printForm.qty }}</span>
+              <button onClick="{{ incQty }}" style="width:38px;height:38px;border-radius:10px;border:1.5px solid rgba(28,36,43,0.15);background:#fff;font-size:18px;font-weight:800;color:#1c242b;cursor:pointer">+</button>
+            </div>
+
+            <button onClick="{{ submitPrintRequest }}" disabled="{{ printSubmitDisabled }}" style="{{ printSubmitStyle }}">Submit Request</button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isPrintConfirm }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:60px 24px;text-align:center;display:flex;flex-direction:column;align-items:center">
+            <div style="width:64px;height:64px;border-radius:50%;background:#1998d5;display:flex;align-items:center;justify-content:center">
+              <svg width="28" height="22" viewBox="0 0 28 22" fill="none"><path d="M2 11l8 8L26 2" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            </div>
+            <div style="font-size:20px;font-weight:800;color:#1c242b;margin-top:20px">Request sent!</div>
+            <div style="font-size:14px;color:rgba(28,36,43,0.6);margin-top:8px;line-height:1.5">{{ selectedPrintLoc.name }} will be in touch about pickup.</div>
+            <button onClick="{{ backToPrintList }}" style="margin-top:26px;padding:14px 26px;border:none;border-radius:14px;background:#1c242b;color:#fff;font-weight:800;font-size:15px;cursor:pointer">Done</button>
+          </div>
+        </sc-if>
+
+      </div>
+
+      <div style="flex-shrink:0;display:flex;align-items:stretch;justify-content:space-around;padding:8px 4px 26px;border-top:1px solid rgba(28,36,43,0.08);background:#fff">
+        <button onClick="{{ goProfile }}" style="border:none;background:none;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;flex:1;padding:4px 0">
+          <svg width="22" height="22" viewBox="0 0 22 22"><circle cx="11" cy="7" r="4" fill="none" stroke="{{ profileColor }}" stroke-width="1.8"></circle><path d="M3 19c1.2-4 5-6 8-6s6.8 2 8 6" fill="none" stroke="{{ profileColor }}" stroke-width="1.8" stroke-linecap="round"></path></svg>
+          <span style="{{ profileLabelStyle }}">Profile</span>
+        </button>
+        <button onClick="{{ goCv }}" style="border:none;background:none;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;flex:1;padding:4px 0">
+          <svg width="22" height="22" viewBox="0 0 22 22"><rect x="2" y="6" width="18" height="12" rx="3" fill="none" stroke="{{ cvColor }}" stroke-width="1.8"></rect><circle cx="11" cy="12" r="3.4" fill="none" stroke="{{ cvColor }}" stroke-width="1.8"></circle></svg>
+          <span style="{{ cvLabelStyle }}">Scanner</span>
+        </button>
+        <button onClick="{{ goHome }}" style="border:none;background:none;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;flex:1;padding:4px 0">
+          <img src="./splat-logo.png" style="{{ homeIconWrapStyle }}" alt="SPLAT">
+        </button>
+        <button onClick="{{ goToyLib }}" style="border:none;background:none;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;flex:1;padding:4px 0">
+          <svg width="22" height="22" viewBox="0 0 22 22"><rect x="3" y="3" width="16" height="4.5" rx="1.5" fill="none" stroke="{{ toyLibColor }}" stroke-width="1.8"></rect><rect x="3" y="9" width="16" height="4.5" rx="1.5" fill="none" stroke="{{ toyLibColor }}" stroke-width="1.8"></rect><rect x="3" y="15" width="16" height="4.5" rx="1.5" fill="none" stroke="{{ toyLibColor }}" stroke-width="1.8"></rect></svg>
+          <span style="{{ toyLibLabelStyle }}">Toy Library</span>
+        </button>
+        <button onClick="{{ goPrint }}" style="border:none;background:none;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;flex:1;padding:4px 0">
+          <svg width="22" height="22" viewBox="0 0 22 22"><rect x="4" y="3" width="14" height="16" rx="2" fill="none" stroke="{{ printColor }}" stroke-width="1.8"></rect><rect x="8" y="8" width="6" height="6" fill="none" stroke="{{ printColor }}" stroke-width="1.8"></rect></svg>
+          <span style="{{ printLabelStyle }}">3D Print</span>
+        </button>
+      </div>
+    </div>
+  </x-import>
+
+  <div style="max-width:420px;text-align:center;font-size:12px;color:rgba(28,36,43,0.4);line-height:1.5">Placeholder content — swap in real associations, accounts and detection results when connecting the real API.</div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const LIB_TUTORIALS = [
+  { id: 1, title: 'Sample Tutorial A', difficulty: 'Easy', description: 'Placeholder description explaining the adaptation and who it helps.', parts: ['Placeholder material 1', 'Placeholder material 2'], tools: ['Screwdriver'],
+    steps: [
+      { instruction: 'Unscrew the battery cover on the back of the toy.', material: 'Placeholder material 1', tool: 'Screwdriver' },
+      { instruction: 'Solder the extension leads to the button contacts.', material: 'Placeholder material 2', tool: 'Screwdriver' },
+      { instruction: 'Reassemble the casing and test the new switch input.', material: 'Placeholder material 1', tool: 'Screwdriver' },
+    ] },
+  { id: 2, title: 'Sample Tutorial B', difficulty: 'Medium', description: 'Placeholder description explaining the adaptation and who it helps.', parts: ['Placeholder material 1', 'Placeholder material 2', 'Placeholder material 3'], tools: ['Soldering iron', 'Wire strippers'],
+    steps: [
+      { instruction: 'Strip the wire ends to expose bare copper.', material: 'Placeholder material 1', tool: 'Wire strippers' },
+      { instruction: 'Solder the leads onto the switch terminals.', material: 'Placeholder material 2', tool: 'Soldering iron' },
+      { instruction: 'Insulate each joint with heat shrink tubing.', material: 'Placeholder material 3', tool: 'Soldering iron' },
+    ] },
+  { id: 3, title: 'Sample Tutorial C', difficulty: 'Hard', description: 'Placeholder description explaining the adaptation and who it helps.', parts: ['Placeholder material 1'], tools: ['3D printer', 'Hot glue gun'],
+    steps: [
+      { instruction: 'Print the adapted button housing.', material: 'Placeholder material 1', tool: '3D printer' },
+      { instruction: 'Glue the housing over the original button.', material: 'Placeholder material 1', tool: 'Hot glue gun' },
+    ] },
+  { id: 4, title: 'Sample Tutorial D', difficulty: 'Easy', description: 'Placeholder description explaining the adaptation and who it helps.', parts: ['Placeholder material 1', 'Placeholder material 2'], tools: ['Scissors'],
+    steps: [
+      { instruction: 'Cut the foam grip to size.', material: 'Placeholder material 1', tool: 'Scissors' },
+      { instruction: 'Wrap and secure the grip around the handle.', material: 'Placeholder material 2', tool: 'Scissors' },
+    ] },
+  { id: 5, title: 'Sample Tutorial E', difficulty: 'Medium', description: 'Placeholder description explaining the adaptation and who it helps.', parts: ['Placeholder material 1', 'Placeholder material 2'], tools: ['Drill'],
+    steps: [
+      { instruction: 'Drill a pilot hole for the mounting bracket.', material: 'Placeholder material 1', tool: 'Drill' },
+      { instruction: 'Attach the bracket and check it sits flush.', material: 'Placeholder material 2', tool: 'Drill' },
+    ] },
+];
+
+const QUALITY_CONDITIONS = ['Like New', 'Good', 'Fair', 'Worn'];
+const QUALITY_COMPLETENESS = ['All pieces', 'Missing minor parts', 'Missing major parts'];
+const LOCATIONS = [
+  { id: 1, name: 'Cerebral Palsy Alliance', suburb: 'Parramatta, NSW', toys: 24, printers: 2, lat: -33.815, lon: 151.003, examples: ['Switch-adapted toy cars', 'Big-button remotes', 'Weighted blocks', 'Adaptive art easels', 'Textured sensory balls', 'Voice-output communication toys'] },
+  { id: 2, name: 'Yooralla', suburb: 'Richmond, VIC', toys: 15, printers: 1, lat: -37.818, lon: 144.998, examples: ['Adapted puzzle pieces', 'Grip-friendly rattles', 'Single-switch music boxes', 'Vibrating sensory cushions', 'Large-print picture books'] },
+  { id: 3, name: 'Toy Library Australia', suburb: 'Fremantle, WA', toys: 9, printers: 3, lat: -32.055, lon: 115.747, examples: ['Sensory light toys', 'Switch-activated bubble machines', 'Adapted building blocks', 'Weighted plush animals'] },
+  { id: 4, name: 'Northcott', suburb: 'Brisbane, QLD', toys: 18, printers: 1, lat: -27.470, lon: 153.021, examples: ['Adapted board game pieces', 'Oversized joystick controllers', 'Switch-adapted ride-on toys', 'Tactile shape sorters', 'Big-button remote cars'] },
+];
+
+// Rough state/territory centroids for postcode-based distance estimates (prototype only)
+const POSTCODE_ZONES = [
+  { min: 800, max: 999, lat: -12.46, lon: 130.84 },   // NT
+  { min: 2600, max: 2618, lat: -35.28, lon: 149.13 }, // ACT
+  { min: 2900, max: 2920, lat: -35.28, lon: 149.13 }, // ACT
+  { min: 1000, max: 2599, lat: -33.87, lon: 151.21 }, // NSW
+  { min: 2619, max: 2899, lat: -33.87, lon: 151.21 }, // NSW
+  { min: 2921, max: 2999, lat: -33.87, lon: 151.21 }, // NSW
+  { min: 3000, max: 3999, lat: -37.81, lon: 144.96 }, // VIC
+  { min: 4000, max: 4999, lat: -27.47, lon: 153.02 }, // QLD
+  { min: 5000, max: 5999, lat: -34.93, lon: 138.60 }, // SA
+  { min: 6000, max: 6999, lat: -31.95, lon: 115.86 }, // WA
+  { min: 7000, max: 7999, lat: -42.88, lon: 147.33 }, // TAS
+];
+const DEFAULT_COORD = { lat: -33.87, lon: 151.21 }; // Sydney — used as "current location" in prototype
+function postcodeToCoord(zip) {
+  const n = parseInt(String(zip).trim(), 10);
+  if (!n || String(zip).trim().length !== 4) return null;
+  const zone = POSTCODE_ZONES.find(z => n >= z.min && n <= z.max);
+  return zone ? { lat: zone.lat, lon: zone.lon } : DEFAULT_COORD;
+}
+function haversineKm(a, b) {
+  const R = 6371, toRad = d => d * Math.PI / 180;
+  const dLat = toRad(b.lat - a.lat), dLon = toRad(b.lon - a.lon);
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+}
+
+function navBtnStyle(disabled, primary) {
+  return {
+    flex: 1, padding: 14, borderRadius: 14, fontWeight: 800, fontSize: 15, cursor: disabled ? 'not-allowed' : 'pointer',
+    border: primary ? 'none' : '1.5px solid rgba(28,36,43,0.15)',
+    background: disabled ? 'rgba(28,36,43,0.1)' : (primary ? '#1998d5' : '#fff'),
+    color: disabled ? 'rgba(28,36,43,0.35)' : (primary ? '#fff' : '#1c242b'),
+  };
+}
+const DIFF_LEVEL = { Easy: 0.14, Medium: 0.24, Hard: 0.36 };
+const PRIMARY_DIAGNOSIS_OPTIONS = ['Cerebral Palsy', 'Developmental Coordination Disorder', 'Brachial Plexus Injury', 'Limb Difference', 'Muscular Dystrophy / SMA', 'Other'];
+const MACS_LEVELS = [
+  { level: 'I', desc: 'Handles objects easily and successfully.' },
+  { level: 'II', desc: 'Handles most objects but with somewhat reduced quality and/or speed.' },
+  { level: 'III', desc: 'Handles objects with difficulty; needs help to prepare and/or modify activities.' },
+  { level: 'IV', desc: 'Handles a limited selection of easily managed objects in adapted situations.' },
+  { level: 'V', desc: 'Does not handle objects and has severely limited ability to perform even simple actions.' },
+];
+const BFMF_LEVELS = [
+  { level: 'I', desc: 'Full manipulation without limitations.' },
+  { level: 'II', desc: 'Can manipulate most objects, with slightly reduced quality.' },
+  { level: 'III', desc: 'Can grasp objects but manipulation is limited or awkward.' },
+  { level: 'IV', desc: 'Can grasp an object placed in the hand but cannot manipulate it.' },
+  { level: 'V', desc: 'Cannot grasp objects with the hand.' },
+];
+const MACS_OPTIONS = MACS_LEVELS.map(m => `${m.level} \u2014 ${m.desc}`);
+const BFMF_OPTIONS = BFMF_LEVELS.map(m => `${m.level} \u2014 ${m.desc}`);
+const DAILY_CHALLENGES = ['Holding a pencil', 'Self-feeding / utensils', 'Opening doors', 'Turning pages', 'Gaming controller interaction', 'Other'];
+const GRIP_TYPES = ['Power grasp', 'Pinch / precision grasp', 'No functional grasp'];
+const ENV_CONTEXTS = ['Home', 'Classroom', 'Playground', 'Other'];
+const HAND_DOMINANCE_OPTIONS = ['Left', 'Right', 'Not yet determined'];
+const SENSORY_TAGS = ['Sensitive to rough textures', 'Prefers soft / flexible materials', 'Sensitive to firm pressure', 'Prefers rigid / firm materials', 'No particular sensitivity'];
+const SOFT_MATERIAL_TAGS = ['Sensitive to rough textures', 'Prefers soft / flexible materials', 'Sensitive to firm pressure'];
+const QUESTIONS_DEF = [
+  { id: 'qSpoon', text: 'Does your child have difficulty holding a spoon or fork while eating?', options: [
+    { label: 'No difficulty at all', pts: 1 }, { label: 'A little difficulty, manages independently', pts: 2 },
+    { label: 'Noticeable difficulty, needs bigger/adapted utensils', pts: 3 }, { label: 'Needs help most of the time', pts: 4 },
+    { label: 'Cannot hold utensils', pts: 5 } ] },
+  { id: 'qBlocks', text: 'Can your child easily pick up small objects like blocks or buttons?', options: [
+    { label: 'Yes, easily', pts: 1 }, { label: 'With a little extra effort', pts: 2 },
+    { label: 'Struggles, drops objects often', pts: 3 }, { label: 'Only manages large, easy objects', pts: 4 },
+    { label: 'Cannot pick up small objects', pts: 5 } ] },
+  { id: 'qPages', text: 'Can your child turn book pages or use a game controller?', options: [
+    { label: 'No trouble at all', pts: 1 }, { label: 'Manages, but a little slow or clumsy', pts: 2 },
+    { label: 'Needs bigger buttons or thicker pages', pts: 3 }, { label: 'Needs help getting set up first', pts: 4 },
+    { label: 'Cannot do this', pts: 5 } ] },
+  { id: 'qGrasp', text: "Which best describes your child's grip?", options: [
+    { label: 'Grips and moves objects with full control', bfmf: 0 },
+    { label: 'Grips fine, but turning/manipulating objects is hard', bfmf: 2 },
+    { label: "Can hold an object placed in the hand, but can't reach and grasp well", bfmf: 3 },
+    { label: 'Cannot grasp objects at all', bfmf: 4 } ] },
+];
+function estimateFromAnswers(cp) {
+  const pts = [cp.qSpoon, cp.qBlocks, cp.qPages].filter(v => v != null && v !== '');
+  const macsEst = pts.length ? MACS_LEVELS[Math.min(5, Math.max(1, Math.round(pts.reduce((a, b) => a + b, 0) / pts.length))) - 1] : null;
+  const bfmfEst = (cp.qGrasp != null && cp.qGrasp !== '') ? BFMF_LEVELS[cp.qGrasp] : null;
+  return { macsEst, bfmfEst };
+}
+function badgeStyle(diff) {
+  const a = DIFF_LEVEL[diff] || 0.14;
+  return { fontSize: 11, fontWeight: 800, color: '#0f6f9c', background: `rgba(25,152,213,${a})`, padding: '4px 9px', borderRadius: 999, flexShrink: 0 };
+}
+
+class Component extends DCLogic {
+  timer = null;
+  state = {
+    tab: 'home',
+    filter: 'All',
+    search: '',
+    profile: {
+      name: 'Alex Morgan', email: 'alex.morgan@email.com', phone: '0400 000 000',
+      childName: 'Jamie', childAge: 6,
+      toyCollection: [
+        { id: 1, name: 'Switch-adapted ride-on car', condition: 'Good', completeness: 'All pieces', notes: '', switchAdapted: true, status: 'available', donatedTo: '', exchangeToy: '' },
+        { id: 2, name: 'Adaptive art easel', condition: 'Like New', completeness: 'All pieces', notes: '', switchAdapted: false, status: 'available', donatedTo: '', exchangeToy: '' },
+        { id: 3, name: 'Big-button remote', condition: 'Fair', completeness: 'Missing minor parts', notes: '', switchAdapted: true, status: 'available', donatedTo: '', exchangeToy: '' },
+      ],
+      primaryDiagnosis: 'Cerebral Palsy', macs: MACS_OPTIONS[1], macsAuto: false,
+      bfmf: BFMF_OPTIONS[0], bfmfAuto: false,
+      handInvolvement: 'Bilateral', assistHand: 'Right',
+      challenges: [], challengeOther: '', gripType: 'Power grasp', envContext: 'Home',
+      palmWidth: '', wristCirc: '', forearmLength: '', needsArmAttachment: false,
+      handDominance: 'Not yet determined', sensoryPrefs: [],
+      qSpoon: null, qBlocks: null, qPages: null, qGrasp: null,
+      showQuestionnaire: false, openSection: null,
+    },
+    profileSubpage: null,
+    toyForm: null,
+    nextToyId: 4,
+    libraryActionUI: { mode: null, toyId: '', exchangeToy: '' },
+    home: { screen: 'library', selectedId: null, stepIndex: 0 },
+    toylib: { screen: 'list', selectedId: null, useMyLocation: true, zip: '' },
+    print: { screen: 'list', selectedId: null, description: '', qty: 1 },
+    cv: 'idle',
+    notif: true,
+    email: false,
+  };
+
+  goHome = () => this.setState(s => s.tab === 'home' ? { home: { ...s.home, screen: 'library', selectedId: null } } : { tab: 'home' });
+  onSearchChange = (e) => this.setState({ search: e.target.value });
+  goProfile = () => this.setState({ tab: 'profile', profileSubpage: null });
+  openAbilityProfile = () => this.setState({ profileSubpage: 'ability' });
+  openEverydayNeeds = () => this.setState({ profileSubpage: 'everyday' });
+  openCustomizationMetrics = () => this.setState({ profileSubpage: 'customization' });
+  openToyCollection = () => this.setState({ profileSubpage: 'toycollection' });
+  backToProfile = () => this.setState({ profileSubpage: null });
+  openAddToyForm = () => this.setState(s => ({ profileSubpage: 'toycollection-form', toyForm: { id: s.nextToyId, isNew: true, name: '', condition: QUALITY_CONDITIONS[0], completeness: QUALITY_COMPLETENESS[0], notes: '', switchAdapted: false }, nextToyId: s.nextToyId + 1 }));
+  openEditToyForm = (id) => this.setState(s => {
+    const t = s.profile.toyCollection.find(x => x.id === id);
+    return t ? { profileSubpage: 'toycollection-form', toyForm: { ...t, isNew: false } } : null;
+  });
+  backToToyCollection = () => this.setState({ profileSubpage: 'toycollection', toyForm: null });
+  setToyFormName = (e) => this.setState(s => ({ toyForm: { ...s.toyForm, name: e.target.value } }));
+  setToyFormCondition = (e) => this.setState(s => ({ toyForm: { ...s.toyForm, condition: e.target.value } }));
+  setToyFormCompleteness = (e) => this.setState(s => ({ toyForm: { ...s.toyForm, completeness: e.target.value } }));
+  setToyFormNotes = (e) => this.setState(s => ({ toyForm: { ...s.toyForm, notes: e.target.value } }));
+  toggleToyFormSwitchAdapted = () => this.setState(s => ({ toyForm: { ...s.toyForm, switchAdapted: !s.toyForm.switchAdapted } }));
+  saveToyForm = () => this.setState(s => {
+    const f = s.toyForm;
+    if (!f || !f.name.trim()) return null;
+    const list = f.isNew
+      ? [...s.profile.toyCollection, { id: f.id, name: f.name, condition: f.condition, completeness: f.completeness, notes: f.notes, switchAdapted: !!f.switchAdapted, status: 'available', donatedTo: '', exchangeToy: '' }]
+      : s.profile.toyCollection.map(t => t.id === f.id ? { ...t, name: f.name, condition: f.condition, completeness: f.completeness, notes: f.notes, switchAdapted: !!f.switchAdapted } : t);
+    return { profile: { ...s.profile, toyCollection: list }, profileSubpage: 'toycollection', toyForm: null };
+  });
+  removeToy = (id) => this.setState(s => ({ profile: { ...s.profile, toyCollection: s.profile.toyCollection.filter(t => t.id !== id) } }));
+  openLibraryDonate = () => this.setState({ libraryActionUI: { mode: 'donate', toyId: '', exchangeToy: '' } });
+  openLibraryExchange = () => this.setState({ libraryActionUI: { mode: 'exchange', toyId: '', exchangeToy: '' } });
+  closeLibraryAction = () => this.setState({ libraryActionUI: { mode: null, toyId: '', exchangeToy: '' } });
+  setLibraryToyId = (e) => this.setState(s => ({ libraryActionUI: { ...s.libraryActionUI, toyId: e.target.value } }));
+  setLibraryExchangeToy = (e) => this.setState(s => ({ libraryActionUI: { ...s.libraryActionUI, exchangeToy: e.target.value } }));
+  confirmLibraryDonate = () => this.setState(s => {
+    if (!s.libraryActionUI.toyId) return null;
+    const loc = LOCATIONS.find(l => l.id === s.toylib.selectedId);
+    if (!loc) return null;
+    const list = s.profile.toyCollection.map(t => String(t.id) === s.libraryActionUI.toyId ? { ...t, status: 'pending_donation', donatedTo: loc.name, exchangeToy: '' } : t);
+    return { profile: { ...s.profile, toyCollection: list }, libraryActionUI: { mode: null, toyId: '', exchangeToy: '' } };
+  });
+  confirmLibraryExchange = () => this.setState(s => {
+    if (!s.libraryActionUI.toyId || !s.libraryActionUI.exchangeToy) return null;
+    const loc = LOCATIONS.find(l => l.id === s.toylib.selectedId);
+    if (!loc) return null;
+    const list = s.profile.toyCollection.map(t => String(t.id) === s.libraryActionUI.toyId ? { ...t, status: 'pending_exchange', donatedTo: loc.name, exchangeToy: s.libraryActionUI.exchangeToy } : t);
+    return { profile: { ...s.profile, toyCollection: list }, libraryActionUI: { mode: null, toyId: '', exchangeToy: '' } };
+  });
+  simulateApproval = (id) => this.setState(s => {
+    const list = s.profile.toyCollection.map(t => {
+      if (t.id !== id) return t;
+      if (t.status === 'pending_donation') return { ...t, status: 'donated' };
+      if (t.status === 'pending_exchange') return { ...t, status: 'exchanged' };
+      return t;
+    });
+    return { profile: { ...s.profile, toyCollection: list } };
+  });
+  goToyLib = () => this.setState({ tab: 'toylibrary' });
+  goCv = () => this.setState({ tab: 'cv' });
+  goPrint = () => this.setState({ tab: 'print' });
+
+  setFilterAll = () => this.setState({ filter: 'All' });
+  setFilterEasy = () => this.setState({ filter: 'Easy' });
+  setFilterMedium = () => this.setState({ filter: 'Medium' });
+  setFilterHard = () => this.setState({ filter: 'Hard' });
+
+  openHomeDetail(id) { this.setState(s => ({ tab: 'home', home: { ...s.home, screen: 'detail', selectedId: id } })); }
+  backHomeToLibrary = () => this.setState(s => ({ home: { ...s.home, screen: 'library' } }));
+  openPdfPreview = () => this.setState(s => ({ home: { ...s.home, screen: 'preview', stepIndex: 0 } }));
+  closePdfPreview = () => this.setState(s => ({ home: { ...s.home, screen: 'detail' } }));
+  prevStep = () => this.setState(s => ({ home: { ...s.home, stepIndex: Math.max(0, (s.home.stepIndex || 0) - 1) } }));
+  nextStep = () => this.setState(s => {
+    const t = LIB_TUTORIALS.find(x => x.id === s.home.selectedId) || LIB_TUTORIALS[0];
+    return { home: { ...s.home, stepIndex: Math.min(t.steps.length - 1, (s.home.stepIndex || 0) + 1) } };
+  });
+
+  openToyDetail(id) { this.setState(s => ({ toylib: { ...s.toylib, screen: 'detail', selectedId: id }, libraryActionUI: { mode: null, toyId: '', exchangeToy: '' } })); }
+  backToToyList = () => this.setState(s => ({ toylib: { ...s.toylib, screen: 'list' } }));
+  toggleLocationServices = () => this.setState(s => ({ toylib: { ...s.toylib, useMyLocation: !s.toylib.useMyLocation } }));
+  setToyZip = (e) => { const v = e.target.value.replace(/\D/g, '').slice(0, 4); this.setState(s => ({ toylib: { ...s.toylib, zip: v } })); };
+
+  openPrintDetail(id) { this.setState(s => ({ print: { ...s.print, screen: 'form', selectedId: id, description: '', qty: 1 } })); }
+  backToPrintList = () => this.setState(s => ({ print: { ...s.print, screen: 'list' } }));
+  onPrintDescChange = (e) => this.setState(s => ({ print: { ...s.print, description: e.target.value } }));
+  incQty = () => this.setState(s => ({ print: { ...s.print, qty: s.print.qty + 1 } }));
+  decQty = () => this.setState(s => ({ print: { ...s.print, qty: Math.max(1, s.print.qty - 1) } }));
+  submitPrintRequest = () => this.setState(s => ({ print: { ...s.print, screen: 'confirm' } }));
+
+  startScan = () => {
+    this.setState({ cv: 'scanning' });
+    this.timer = setTimeout(() => this.setState({ cv: 'result' }), 1200);
+  };
+  resetScan = () => this.setState({ cv: 'idle' });
+  componentWillUnmount() { if (this.timer) clearTimeout(this.timer); }
+
+  setProfileName = (e) => this.setState(s => ({ profile: { ...s.profile, name: e.target.value } }));
+  setProfileEmail = (e) => this.setState(s => ({ profile: { ...s.profile, email: e.target.value } }));
+  setProfilePhone = (e) => this.setState(s => ({ profile: { ...s.profile, phone: e.target.value } }));
+  setChildName = (e) => this.setState(s => ({ profile: { ...s.profile, childName: e.target.value } }));
+  setChildAge = (e) => this.setState(s => ({ profile: { ...s.profile, childAge: e.target.value } }));
+  setPrimaryDiagnosis = (e) => this.setState(s => ({ profile: { ...s.profile, primaryDiagnosis: e.target.value } }));
+  setMacsManual = (e) => this.setState(s => ({ profile: { ...s.profile, macs: e.target.value, macsAuto: false } }));
+  setBfmfManual = (e) => this.setState(s => ({ profile: { ...s.profile, bfmf: e.target.value, bfmfAuto: false } }));
+  setBilateral = () => this.setState(s => ({ profile: { ...s.profile, handInvolvement: 'Bilateral' } }));
+  setUnilateral = () => this.setState(s => ({ profile: { ...s.profile, handInvolvement: 'Unilateral' } }));
+  setAssistLeft = () => this.setState(s => ({ profile: { ...s.profile, assistHand: 'Left' } }));
+  setAssistRight = () => this.setState(s => ({ profile: { ...s.profile, assistHand: 'Right' } }));
+  toggleQuestionnaire = () => this.setState(s => ({ profile: { ...s.profile, showQuestionnaire: !s.profile.showQuestionnaire } }));
+  answerQuestion = (qid, val) => this.setState(s => {
+    const cp = { ...s.profile, [qid]: val };
+    const { macsEst, bfmfEst } = estimateFromAnswers(cp);
+    if (macsEst) { cp.macs = `${macsEst.level} \u2014 ${macsEst.desc}`; cp.macsAuto = true; }
+    if (bfmfEst) { cp.bfmf = `${bfmfEst.level} \u2014 ${bfmfEst.desc}`; cp.bfmfAuto = true; }
+    return { profile: cp };
+  });
+  toggleSectionA = () => this.setState(s => ({ profile: { ...s.profile, openSection: s.profile.openSection === 'clinical' ? null : 'clinical' } }));
+  toggleSectionB = () => this.setState(s => ({ profile: { ...s.profile, openSection: s.profile.openSection === 'functional' ? null : 'functional' } }));
+  toggleSectionC = () => this.setState(s => ({ profile: { ...s.profile, openSection: s.profile.openSection === 'customization' ? null : 'customization' } }));
+  toggleChallenge = (item) => this.setState(s => {
+    let arr = s.profile.challenges.slice();
+    if (arr.includes(item)) arr = arr.filter(x => x !== item);
+    else if (arr.length < 3) arr.push(item);
+    return { profile: { ...s.profile, challenges: arr } };
+  });
+  setChallengeOther = (e) => this.setState(s => ({ profile: { ...s.profile, challengeOther: e.target.value } }));
+  setGripType = (g) => this.setState(s => ({ profile: { ...s.profile, gripType: g } }));
+  setEnvContext = (e) => this.setState(s => ({ profile: { ...s.profile, envContext: e.target.value } }));
+  setPalmWidth = (e) => this.setState(s => ({ profile: { ...s.profile, palmWidth: e.target.value } }));
+  setWristCirc = (e) => this.setState(s => ({ profile: { ...s.profile, wristCirc: e.target.value } }));
+  setForearmLength = (e) => this.setState(s => ({ profile: { ...s.profile, forearmLength: e.target.value } }));
+  toggleArmAttachment = () => this.setState(s => ({ profile: { ...s.profile, needsArmAttachment: !s.profile.needsArmAttachment } }));
+  setHandDominance = (e) => this.setState(s => ({ profile: { ...s.profile, handDominance: e.target.value } }));
+  toggleSensoryTag = (tag) => this.setState(s => {
+    let arr = s.profile.sensoryPrefs.slice();
+    arr = arr.includes(tag) ? arr.filter(x => x !== tag) : [...arr, tag];
+    return { profile: { ...s.profile, sensoryPrefs: arr } };
+  });
+  toggleNotif = () => this.setState(s => ({ notif: !s.notif }));
+  toggleEmail = () => this.setState(s => ({ email: !s.email }));
+
+  renderVals() {
+    const s = this.state;
+    const pillStyle = (active, color, pill) => ({
+      flexShrink: 0, padding: '9px 14px', borderRadius: pill ? 999 : 12, border: active ? 'none' : '1.5px solid rgba(28,36,43,0.15)',
+      cursor: 'pointer', fontWeight: 700, fontSize: 13, background: active ? color : '#fff',
+      color: active ? '#fff' : '#1c242b',
+    });
+    const profileEstimate = estimateFromAnswers(s.profile);
+    const macsLevelShort = (s.profile.macs.match(/^([IVX]+)/) || [, '?'])[1];
+    const bfmfLevelShort = (s.profile.bfmf.match(/^([IVX]+)/) || [, '?'])[1];
+    const macsCurrentDesc = (MACS_LEVELS.find(m => s.profile.macs.startsWith(m.level + ' \u2014')) || {}).desc || '';
+    const bfmfCurrentDesc = (BFMF_LEVELS.find(m => s.profile.bfmf.startsWith(m.level + ' \u2014')) || {}).desc || '';
+    const hasSoftPref = s.profile.sensoryPrefs.some(t => SOFT_MATERIAL_TAGS.includes(t));
+    const materialRecText = s.profile.sensoryPrefs.length === 0
+      ? 'Select a sensory preference to see a material recommendation'
+      : hasSoftPref ? 'Recommended print material: TPU / flexible filament' : 'Recommended print material: PLA (rigid)';
+    const track = (on) => ({
+      width: 46, height: 27, borderRadius: 999, border: 'none', cursor: 'pointer', position: 'relative',
+      background: on ? '#1998d5' : 'rgba(28,36,43,0.15)', padding: 0, flexShrink: 0,
+    });
+    const knob = (on) => ({
+      position: 'absolute', top: 2.5, left: on ? 21.5 : 2.5, width: 22, height: 22, borderRadius: '50%',
+      background: '#fff', boxShadow: '0 1px 2px rgba(0,0,0,0.25)', transition: 'left .15s',
+    });
+    const chip = (active, on) => ({
+      flexShrink: 0, padding: '7px 14px', borderRadius: 999, border: 'none', cursor: 'pointer',
+      fontWeight: 700, fontSize: 13,
+      background: active ? on : '#eaf6fb',
+      color: active ? '#fff' : 'rgba(28,36,43,0.55)',
+    });
+
+    const q = s.search.trim().toLowerCase();
+    const filtered = (s.filter === 'All' ? LIB_TUTORIALS : LIB_TUTORIALS.filter(t => t.difficulty === s.filter))
+      .filter(t => !q || t.title.toLowerCase().includes(q) || t.description.toLowerCase().includes(q))
+      .map(t => ({ ...t, badgeStyle: badgeStyle(t.difficulty), open: () => this.openHomeDetail(t.id) }));
+
+    const selected = LIB_TUTORIALS.find(t => t.id === s.home.selectedId) || LIB_TUTORIALS[0];
+    const selectedPrintLoc = LOCATIONS.find(l => l.id === s.print.selectedId) || LOCATIONS[0];
+
+    const zipCoord = s.toylib.zip.length === 4 ? postcodeToCoord(s.toylib.zip) : null;
+    const userCoord = s.toylib.useMyLocation ? DEFAULT_COORD : (zipCoord || null);
+    const bonusToysByLocation = {};
+    s.profile.toyCollection.forEach(t => {
+      if ((t.status === 'donated' || t.status === 'exchanged') && t.donatedTo) {
+        bonusToysByLocation[t.donatedTo] = (bonusToysByLocation[t.donatedTo] || 0) + 1;
+      }
+    });
+    const toyLocationsRaw = LOCATIONS.map(l => {
+      const totalToys = l.toys + (bonusToysByLocation[l.name] || 0);
+      return {
+        ...l,
+        openToy: () => this.openToyDetail(l.id),
+        toys: totalToys,
+        toysLabel: totalToys + ' adapted toys available',
+        distanceKm: userCoord ? Math.round(haversineKm(userCoord, l)) : null,
+      };
+    });
+    const toyLocations = userCoord
+      ? [...toyLocationsRaw].sort((a, b) => a.distanceKm - b.distanceKm)
+      : toyLocationsRaw;
+    const selectedLoc = toyLocationsRaw.find(l => l.id === s.toylib.selectedId) || toyLocationsRaw[0];
+    const printLocations = LOCATIONS.map(l => ({ ...l, openPrint: () => this.openPrintDetail(l.id) }));
+    const toyLocationSubtitle = s.toylib.useMyLocation
+      ? 'Sorted by distance from your current location'
+      : (zipCoord ? 'Sorted by distance from postcode ' + s.toylib.zip : 'Enter a 4-digit postcode to sort by distance');
+
+    const statusMeta = {
+      available: { label: 'In collection', bg: 'rgba(28,36,43,0.06)', color: 'rgba(28,36,43,0.5)' },
+      pending_donation: { label: 'Pending donation approval', bg: '#fff4e0', color: '#a86b00' },
+      pending_exchange: { label: 'Pending exchange approval', bg: '#fff4e0', color: '#a86b00' },
+      donated: { label: 'Donated', bg: '#eaf6fb', color: '#0f6f9c' },
+      exchanged: { label: 'Exchanged', bg: '#eaf6fb', color: '#0f6f9c' },
+    };
+    const toyCollectionCards = s.profile.toyCollection.map(t => {
+      const meta = statusMeta[t.status];
+      const finalNote = t.status === 'pending_donation' ? ('Waiting on ' + t.donatedTo + ' to confirm receipt')
+        : t.status === 'pending_exchange' ? ('Waiting on ' + t.donatedTo + ' to confirm exchange')
+        : t.status === 'donated' ? ('Donated to ' + t.donatedTo)
+        : t.status === 'exchanged' ? ('Exchanged with ' + t.donatedTo + ' for ' + t.exchangeToy) : '';
+      return {
+        ...t,
+        photoId: 'toy-photo-' + t.id,
+        qualityLabel: t.condition + ' • ' + t.completeness + (t.switchAdapted ? ' • Switch adapted' : ''),
+        statusLabel: meta.label,
+        statusStyle: { flexShrink: 0, fontSize: 11, fontWeight: 800, background: meta.bg, color: meta.color, padding: '5px 9px', borderRadius: 999 },
+        finalNote,
+        showApprove: t.status === 'pending_donation' || t.status === 'pending_exchange',
+        edit: () => this.openEditToyForm(t.id),
+        remove: () => this.removeToy(t.id),
+        simulateApprove: () => this.simulateApproval(t.id),
+      };
+    });
+    const toyCollectionSummary = s.profile.toyCollection.length + (s.profile.toyCollection.length === 1 ? ' toy in your collection' : ' toys in your collection');
+    const availableCollectionToys = s.profile.toyCollection.filter(t => t.status === 'available');
+    const tf = s.toyForm || { id: '', name: '', condition: '', completeness: '', notes: '', switchAdapted: false };
+    const toyFormTitle = s.toyForm && s.toyForm.isNew ? 'Add Toy' : 'Edit Toy';
+    const switchAdaptedTrackBg = tf.switchAdapted ? '#1998d5' : 'rgba(28,36,43,0.15)';
+    const switchAdaptedThumbLeft = tf.switchAdapted ? '21px' : '3px';
+    const isLibraryActionsIdle = s.libraryActionUI.mode === null;
+    const isLibraryDonateMode = s.libraryActionUI.mode === 'donate';
+    const isLibraryExchangeMode = s.libraryActionUI.mode === 'exchange';
+    const pendingAtSelectedLocation = toyCollectionCards.filter(t => t.donatedTo === selectedLoc.name && t.status !== 'available');
+
+
+    const detectedToy = {
+      name: 'Push-button toy car',
+      difficulty: 'Medium',
+      matches: [LIB_TUTORIALS[0], LIB_TUTORIALS[2]].map(t => ({ ...t, badgeStyle: badgeStyle(t.difficulty), open: () => this.openHomeDetail(t.id) })),
+    };
+
+    const tabIconColor = (key) => s.tab === key ? '#1998d5' : 'rgba(28,36,43,0.4)';
+    const tabLabelStyle = (key) => ({ fontSize: 10.5, fontWeight: 700, color: s.tab === key ? '#1998d5' : 'rgba(28,36,43,0.45)' });
+
+    const printSubmitDisabled = s.print.description.trim().length === 0;
+
+    return {
+      isHomeLibrary: s.tab === 'home' && s.home.screen === 'library',
+      isHomeDetail: s.tab === 'home' && s.home.screen === 'detail',
+      isHomePreview: s.tab === 'home' && s.home.screen === 'preview',
+      search: s.search, onSearchChange: this.onSearchChange,
+      openPdfPreview: this.openPdfPreview, closePdfPreview: this.closePdfPreview,
+      stepNumber: (s.home.stepIndex || 0) + 1, stepCount: selected.steps.length,
+      currentStep: selected.steps[s.home.stepIndex || 0] || selected.steps[0],
+      prevStep: this.prevStep, nextStep: this.nextStep,
+      prevStepDisabled: (s.home.stepIndex || 0) === 0,
+      nextStepDisabled: (s.home.stepIndex || 0) >= selected.steps.length - 1,
+      prevStepStyle: navBtnStyle((s.home.stepIndex || 0) === 0),
+      nextStepStyle: navBtnStyle((s.home.stepIndex || 0) >= selected.steps.length - 1, true),
+      isProfileMain: s.tab === 'profile' && !s.profileSubpage,
+      isAbilityProfile: s.tab === 'profile' && s.profileSubpage === 'ability',
+      isEverydayNeeds: s.tab === 'profile' && s.profileSubpage === 'everyday',
+      isCustomizationMetrics: s.tab === 'profile' && s.profileSubpage === 'customization',
+      isToyCollection: s.tab === 'profile' && s.profileSubpage === 'toycollection',
+      isToyCollectionForm: s.tab === 'profile' && s.profileSubpage === 'toycollection-form',
+      openAbilityProfile: this.openAbilityProfile, backToProfile: this.backToProfile,
+      openEverydayNeeds: this.openEverydayNeeds, openCustomizationMetrics: this.openCustomizationMetrics,
+      openToyCollection: this.openToyCollection, toyCollectionSummary, toyCollectionCards,
+      openAddToyForm: this.openAddToyForm, backToToyCollection: this.backToToyCollection,
+      toyFormTitle, toyFormPhotoId: 'toy-photo-' + tf.id,
+      toyFormName: tf.name, toyFormCondition: tf.condition, toyFormCompleteness: tf.completeness, toyFormNotes: tf.notes,
+      switchAdaptedTrackBg, switchAdaptedThumbLeft, toggleToyFormSwitchAdapted: this.toggleToyFormSwitchAdapted,
+      setToyFormName: this.setToyFormName, setToyFormCondition: this.setToyFormCondition,
+      setToyFormCompleteness: this.setToyFormCompleteness, setToyFormNotes: this.setToyFormNotes,
+      saveToyForm: this.saveToyForm, conditionOptions: QUALITY_CONDITIONS, completenessOptions: QUALITY_COMPLETENESS,
+      profile: s.profile,
+      profileInitials: (s.profile.name.trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2) || '').toUpperCase(),
+      setProfileName: this.setProfileName, setProfileEmail: this.setProfileEmail, setProfilePhone: this.setProfilePhone,
+      setChildName: this.setChildName, setChildAge: this.setChildAge,
+
+      isQuestionnaireOpen: s.profile.showQuestionnaire, toggleQuestionnaire: this.toggleQuestionnaire,
+      questionnaireChevron: s.profile.showQuestionnaire ? '\u2303' : '\u2304',
+      questions: QUESTIONS_DEF.map(q => ({
+        text: q.text,
+        options: q.options.map(opt => {
+          const key = opt.pts != null ? 'pts' : 'bfmf';
+          const active = s.profile[q.id] === opt[key];
+          return {
+            label: opt.label,
+            select: () => this.answerQuestion(q.id, opt[key]),
+            style: pillStyle(active, 'rgba(25,152,213,0.7)', true),
+          };
+        }),
+      })),
+      macsEstimateText: profileEstimate.macsEst ? `${profileEstimate.macsEst.level} \u2014 ${profileEstimate.macsEst.desc}` : 'Answer the questions above to see an estimate',
+      bfmfEstimateText: profileEstimate.bfmfEst ? `${profileEstimate.bfmfEst.level} \u2014 ${profileEstimate.bfmfEst.desc}` : 'Answer the last question above to see an estimate',
+
+      toggleSectionA: this.toggleSectionA, toggleSectionB: this.toggleSectionB, toggleSectionC: this.toggleSectionC,
+      isSectionAOpen: s.profile.openSection === 'clinical', isSectionBOpen: s.profile.openSection === 'functional', isSectionCOpen: s.profile.openSection === 'customization',
+      sectionAChevron: s.profile.openSection === 'clinical' ? '\u2303' : '\u2304',
+      sectionBChevron: s.profile.openSection === 'functional' ? '\u2303' : '\u2304',
+      sectionCChevron: s.profile.openSection === 'customization' ? '\u2303' : '\u2304',
+      sectionASummary: `${s.profile.primaryDiagnosis} \u00b7 MACS ${macsLevelShort} \u00b7 BFMF ${bfmfLevelShort}`,
+      sectionBSummary: s.profile.challenges.length ? `${s.profile.challenges.length} challenge${s.profile.challenges.length > 1 ? 's' : ''} noted` : 'Not yet set',
+      sectionCSummary: (s.profile.palmWidth || s.profile.wristCirc) ? 'Measurements added' : 'Add hand measurements for printing',
+
+      primaryDiagnosisOptions: PRIMARY_DIAGNOSIS_OPTIONS, macsOptions: MACS_OPTIONS, bfmfOptions: BFMF_OPTIONS,
+      setPrimaryDiagnosis: this.setPrimaryDiagnosis, setMacsManual: this.setMacsManual, setBfmfManual: this.setBfmfManual,
+      macsAutoTag: s.profile.macsAuto ? '(estimated)' : '', bfmfAutoTag: s.profile.bfmfAuto ? '(estimated)' : '',
+      macsDescForCurrent: macsCurrentDesc, bfmfDescForCurrent: bfmfCurrentDesc,
+
+      setBilateral: this.setBilateral, setUnilateral: this.setUnilateral, isUnilateral: s.profile.handInvolvement === 'Unilateral',
+      bilateralStyle: pillStyle(s.profile.handInvolvement === 'Bilateral', '#1c242b', false),
+      unilateralStyle: pillStyle(s.profile.handInvolvement === 'Unilateral', '#1c242b', false),
+      setAssistLeft: this.setAssistLeft, setAssistRight: this.setAssistRight,
+      assistLeftStyle: pillStyle(s.profile.assistHand === 'Left', '#1c242b', false),
+      assistRightStyle: pillStyle(s.profile.assistHand === 'Right', '#1c242b', false),
+
+      challengeChips: DAILY_CHALLENGES.map(c => ({ label: c, toggle: () => this.toggleChallenge(c), style: pillStyle(s.profile.challenges.includes(c), '#1998d5', true) })),
+      showChallengeOther: s.profile.challenges.includes('Other'), setChallengeOther: this.setChallengeOther,
+      gripChips: GRIP_TYPES.map(g => ({ label: g, select: () => this.setGripType(g), style: pillStyle(s.profile.gripType === g, '#1998d5', true) })),
+      envContextOptions: ENV_CONTEXTS, setEnvContext: this.setEnvContext,
+
+      setPalmWidth: this.setPalmWidth, setWristCirc: this.setWristCirc, setForearmLength: this.setForearmLength,
+      toggleArmAttachment: this.toggleArmAttachment,
+      armTrackStyle: track(s.profile.needsArmAttachment), armKnobStyle: knob(s.profile.needsArmAttachment),
+      handDominanceOptions: HAND_DOMINANCE_OPTIONS, setHandDominance: this.setHandDominance,
+      sensoryChips: SENSORY_TAGS.map(t => ({ label: t, toggle: () => this.toggleSensoryTag(t), style: pillStyle(s.profile.sensoryPrefs.includes(t), '#0f6f9c', true) })),
+      materialRecommendation: materialRecText,
+      isToyLibList: s.tab === 'toylibrary' && s.toylib.screen === 'list',
+      isToyLibDetail: s.tab === 'toylibrary' && s.toylib.screen === 'detail',
+      isCvIdle: s.tab === 'cv' && s.cv === 'idle',
+      isCvScanning: s.tab === 'cv' && s.cv === 'scanning',
+      isCvResult: s.tab === 'cv' && s.cv === 'result',
+      isPrintList: s.tab === 'print' && s.print.screen === 'list',
+      isPrintForm: s.tab === 'print' && s.print.screen === 'form',
+      isPrintConfirm: s.tab === 'print' && s.print.screen === 'confirm',
+
+      chipAllStyle: chip(s.filter === 'All', '#1c242b'),
+      chipEasyStyle: chip(s.filter === 'Easy', '#1998d5'),
+      chipMediumStyle: chip(s.filter === 'Medium', '#0f6f9c'),
+      chipHardStyle: chip(s.filter === 'Hard', '#0b4f6e'),
+      filteredTutorials: filtered,
+      selectedTutorial: { ...selected, badgeStyle: badgeStyle(selected.difficulty) },
+      backHomeToLibrary: this.backHomeToLibrary,
+
+      selectedLoc, selectedPrintLoc, toyLocations, printLocations, toyLocationSubtitle,
+      toggleLocationServices: this.toggleLocationServices, setToyZip: this.setToyZip,
+      toylibUseMyLocationOff: !s.toylib.useMyLocation, toylibZip: s.toylib.zip,
+      isLibraryActionsIdle, isLibraryDonateMode, isLibraryExchangeMode, pendingAtSelectedLocation,
+      availableCollectionToys, libraryToyId: s.libraryActionUI.toyId, libraryExchangeToy: s.libraryActionUI.exchangeToy,
+      openLibraryDonate: this.openLibraryDonate, openLibraryExchange: this.openLibraryExchange,
+      closeLibraryAction: this.closeLibraryAction, setLibraryToyId: this.setLibraryToyId, setLibraryExchangeToy: this.setLibraryExchangeToy,
+      confirmLibraryDonate: this.confirmLibraryDonate, confirmLibraryExchange: this.confirmLibraryExchange,
+      simulateApproval: this.simulateApproval,
+      locServicesTrackStyle: track(s.toylib.useMyLocation), locServicesKnobStyle: knob(s.toylib.useMyLocation),
+      backToToyList: this.backToToyList, backToPrintList: this.backToPrintList,
+
+      notifTrackStyle: track(s.notif), notifKnobStyle: knob(s.notif), toggleNotif: this.toggleNotif,
+      emailTrackStyle: track(s.email), emailKnobStyle: knob(s.email), toggleEmail: this.toggleEmail,
+
+      detectedToy,
+      startScan: this.startScan, resetScan: this.resetScan,
+
+      printForm: s.print, onPrintDescChange: this.onPrintDescChange,
+      incQty: this.incQty, decQty: this.decQty, submitPrintRequest: this.submitPrintRequest,
+      printSubmitDisabled,
+      printSubmitStyle: {
+        marginTop: 22, width: '100%', padding: 14, borderRadius: 14, border: 'none', fontWeight: 800, fontSize: 15,
+        cursor: printSubmitDisabled ? 'not-allowed' : 'pointer',
+        background: printSubmitDisabled ? 'rgba(28,36,43,0.15)' : '#1998d5', color: '#fff',
+      },
+
+      goHome: this.goHome, goProfile: this.goProfile, goToyLib: this.goToyLib, goCv: this.goCv, goPrint: this.goPrint,
+      setFilterAll: this.setFilterAll, setFilterEasy: this.setFilterEasy, setFilterMedium: this.setFilterMedium, setFilterHard: this.setFilterHard,
+
+      homeIconWrapStyle: { width: 44, height: 44, objectFit: 'contain', opacity: s.tab === 'home' ? 1 : 0.35 },
+      homeLabelStyle: tabLabelStyle('home'),
+      profileColor: tabIconColor('profile'), profileLabelStyle: tabLabelStyle('profile'),
+      toyLibColor: tabIconColor('toylibrary'), toyLibLabelStyle: tabLabelStyle('toylibrary'),
+      cvColor: tabIconColor('cv'), cvLabelStyle: tabLabelStyle('cv'),
+      printColor: tabIconColor('print'), printLabelStyle: tabLabelStyle('print'),
+    };
+  }
+}
+
+</script>
+</body>
+</html>

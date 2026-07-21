@@ -48,3 +48,6 @@ packages/api/.env
 
 # git worktrees
 .worktrees/
+
+# graphify (regenerated via `graphify update .`)
+graphify-out/
