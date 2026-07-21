@@ -4,6 +4,7 @@
   "scripts": {
     "dev:api": "pnpm --filter @splat-connect/api dev",
     "dev:web": "pnpm --filter @splat-connect/web dev",
+    "dev:mobile": "pnpm --filter @splat-connect/mobile dev",
     "build": "pnpm --filter @splat-connect/api build && pnpm --filter @splat-connect/web build",
     "typecheck": "pnpm -r typecheck"
   },
