@@ -100,4 +100,25 @@ describe('PUT /', () => {
     })
     expect(res.status).toBe(403)
   })
+
+  it('returns 400 for a non-object body', async () => {
+    const res = await makeApp().request('/', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(5),
+    })
+    expect(res.status).toBe(400)
+  })
+
+  it('returns 500 on DB error', async () => {
+    mockUserFrom.mockReturnValue({
+      upsert: () => ({ select: () => ({ single: () => ({ data: null, error: { message: 'boom' } }) }) }),
+    })
+    const res = await makeApp().request('/', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ age: 5 }),
+    })
+    expect(res.status).toBe(500)
+  })
 })

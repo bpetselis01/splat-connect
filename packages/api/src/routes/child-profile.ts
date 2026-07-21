@@ -45,6 +45,9 @@ childProfile.get('/', async (c) => {
 
 childProfile.put('/', async (c) => {
   const body = await c.req.json()
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    return c.json({ error: 'Invalid body' }, 400)
+  }
   const row: Record<string, unknown> = {
     parent_id: c.get('userId'),
     updated_at: new Date().toISOString(),

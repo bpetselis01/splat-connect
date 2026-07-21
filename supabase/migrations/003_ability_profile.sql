@@ -25,16 +25,7 @@ begin
 end;
 $$ language plpgsql security definer set search_path = public;
 
--- 3. Helper mirroring is_admin()/is_approved_contributor()
-create or replace function public.is_parent()
-returns boolean as $$
-  select exists (
-    select 1 from public.profiles
-    where id = auth.uid() and role = 'parent'
-  );
-$$ language sql security definer stable;
-
--- 4. One child profile per parent (unique parent_id, not PK — leaves the
+-- 3. One child profile per parent (unique parent_id, not PK — leaves the
 --    door open for multi-child later via a single drop constraint).
 create table public.child_profiles (
   id uuid primary key default gen_random_uuid(),
