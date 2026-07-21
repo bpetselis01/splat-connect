@@ -34,6 +34,7 @@ import tools from './routes/tools.js'
 import stlFiles from './routes/stl-files.js'
 import admin from './routes/admin.js'
 import contributors from './routes/contributors.js'
+import childProfile from './routes/child-profile.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 config({ path: path.resolve(__dirname, '../../../.env.local') }) // shared PORT / API_PORT
@@ -54,6 +55,8 @@ app.use('/api/tutorials', authMiddleware)
 app.use('/api/upload/*', authMiddleware)
 app.use('/api/admin/*', authMiddleware)
 app.use('/api/contributors/*', authMiddleware)
+app.use('/api/child-profile', authMiddleware)
+app.use('/api/child-profile/*', authMiddleware)
 
 app.route('/api/tutorials', tutorials)
 app.route('/api/upload', upload)
@@ -62,6 +65,7 @@ app.route('/api/tutorials', tools)
 app.route('/api/tutorials', stlFiles)
 app.route('/api/admin', admin)
 app.route('/api/contributors', contributors)
+app.route('/api/child-profile', childProfile)
 
 const port = parseInt(process.env.API_PORT ?? '3101')
 serve({ fetch: app.fetch, port }, () => {

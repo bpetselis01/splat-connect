@@ -1,4 +1,31 @@
-export type Role = 'admin' | 'contributor'
+export type Role = 'admin' | 'contributor' | 'parent'
+
+export interface ChildProfile {
+  id: string
+  parent_id: string
+  age: number | null
+  // Ability Profile
+  primary_diagnosis: string | null
+  macs_level: string | null
+  macs_source: 'manual' | 'estimated'
+  hand_involvement: 'bilateral' | 'unilateral' | null
+  assist_hand: 'left' | 'right' | null
+  bfmf_score: string | null
+  bfmf_source: 'manual' | 'estimated'
+  // Everyday Needs
+  challenges: string[]
+  challenge_other: string | null
+  grip_type: string | null
+  env_context: string | null
+  // Customization Metrics
+  palm_width_mm: number | null
+  wrist_circ_mm: number | null
+  needs_arm_attachment: boolean
+  forearm_length_mm: number | null
+  hand_dominance: string | null
+  sensory_preferences: string[]
+  updated_at: string
+}
 export type Difficulty = 'easy' | 'medium' | 'hard'
 export type TutorialStatus = 'draft' | 'pending' | 'approved' | 'rejected'
 export type ContributorRole = 'primary' | 'collaborator'
