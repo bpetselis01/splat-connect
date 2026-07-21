@@ -9,10 +9,16 @@ export interface TestUser {
   token: string
 }
 
+/** Service-role client for test setup, assertions, and cleanup. */
+export function adminClient() {
+  return createClient(supabaseUrl, serviceKey)
+}
+
 export async function createTestUser(
-  role: 'contributor' | 'admin' = 'contributor'
+  role: 'contributor' | 'admin' = 'contributor',
+  approved = true
 ): Promise<TestUser> {
-  const admin = createClient(supabaseUrl, serviceKey)
+  const admin = adminClient()
   const email = `test-${crypto.randomUUID()}@splat-test.local`
   const password = 'Test1234!'
 
@@ -24,7 +30,9 @@ export async function createTestUser(
   if (signUpError || !signUpData.user)
     throw new Error(`Failed to create test user: ${signUpError?.message}`)
 
-  await admin.from('profiles').upsert({ id: signUpData.user.id, role, is_approved: true })
+  // WHY: the column is `approved` — a previous version wrote `is_approved`,
+  // which doesn't exist, silently leaving every test user unapproved.
+  await admin.from('profiles').upsert({ id: signUpData.user.id, role, approved })
 
   const anonClient = createClient(supabaseUrl, process.env.SUPABASE_ANON_KEY ?? '')
   const { data: sessionData, error: sessionError } = await anonClient.auth.signInWithPassword({
@@ -38,6 +46,6 @@ export async function createTestUser(
 }
 
 export async function deleteTestUser(userId: string): Promise<void> {
-  const admin = createClient(supabaseUrl, serviceKey)
+  const admin = adminClient()
   await admin.auth.admin.deleteUser(userId)
 }
