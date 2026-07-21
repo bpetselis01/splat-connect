@@ -48,9 +48,9 @@ export default async function MyTutorialsPage() {
               <DifficultyBadge difficulty={t.difficulty as Difficulty} />
               <div>
                 <p className="font-semibold text-sm">{t.title}</p>
-                {t.rejection_note && (
+                {t.status === 'rejected' && (
                   <p className="text-xs text-red-600 mt-0.5">
-                    Feedback: {t.rejection_note}
+                    {t.rejection_note ?? 'No feedback was provided.'}
                   </p>
                 )}
               </div>

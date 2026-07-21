@@ -116,9 +116,9 @@ export default async function DashboardPage() {
                 <DifficultyBadge difficulty={t.difficulty as Difficulty} />
                 <div>
                   <p className="font-semibold text-sm">{t.title}</p>
-                  {t.rejection_note && (
+                  {t.status === 'rejected' && (
                     <p className="text-xs text-red-600 mt-0.5">
-                      Feedback: {t.rejection_note}
+                      {t.rejection_note ?? 'No feedback was provided.'}
                     </p>
                   )}
                 </div>
@@ -130,12 +130,7 @@ export default async function DashboardPage() {
                 >
                   Edit
                 </Link>
-                <Link
-                  href={`/tutorials/${t.id}`}
-                  className="text-xs font-semibold text-gray-500 hover:underline"
-                >
-                  View
-                </Link>
+
                 <span
                   className={`text-xs font-bold px-2 py-1 rounded-full ${statusStyles[t.status]}`}
                 >
