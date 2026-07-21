@@ -36,11 +36,16 @@ describe('browserApiClient', () => {
   // How:   fetchMock resolves with okResponse; checks fetch was called with Authorization header and correct URL
   // Chain: the API server's authMiddleware reads this header to authenticate the request →
   //        without it, all API calls from the browser would return 401
+    process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3001'
+    mockGetSession.mockResolvedValue({ data: { session: { access_token: 'test-token' } } })
+  })
+
   it('get — attaches Authorization header and returns parsed JSON', async () => {
     fetchMock.mockResolvedValue(okResponse([{ id: '1' }]))
     const result = await browserApiClient.get('/api/tutorials')
     expect(fetchMock).toHaveBeenCalledWith(
       'http://localhost:3101/api/tutorials',
+      'http://localhost:3001/api/tutorials',
       expect.objectContaining({
         method: 'GET',
         headers: expect.objectContaining({ Authorization: 'Bearer test-token' }),
@@ -75,6 +80,7 @@ describe('browserApiClient', () => {
     await browserApiClient.patch('/api/tutorials/1', { status: 'pending' })
     const [url, opts] = fetchMock.mock.calls[0]
     expect(url).toBe('http://localhost:3101/api/tutorials/1')
+    expect(url).toBe('http://localhost:3001/api/tutorials/1')
     expect(opts.method).toBe('PATCH')
     expect(opts.body).toBe(JSON.stringify({ status: 'pending' }))
   })
