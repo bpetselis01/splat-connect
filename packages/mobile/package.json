@@ -35,6 +35,7 @@
   },
   "scripts": {
     "dev": "dotenv -e ../../.env.local -e .env.local -- expo start",
+    "ios": "dotenv -e ../../.env.local -e .env.local -- expo run:ios --device",
     "typecheck": "tsc --noEmit",
     "test:unit": "jest"
   },
