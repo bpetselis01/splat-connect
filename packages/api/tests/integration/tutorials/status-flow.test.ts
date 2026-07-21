@@ -45,7 +45,11 @@ describe('tutorial status flow', () => {
       authed(owner.token, { method: 'PATCH', body: JSON.stringify({ status: 'pending' }) })
     )
     expect(res.status).toBe(200)
-    const body = await res.json()
+    const body = (await res.json()) as {
+      status: string
+      reviewed_at: string | null
+      rejection_note: string | null
+    }
     expect(body.status).toBe('pending')
   })
 
@@ -71,7 +75,11 @@ describe('tutorial status flow', () => {
       authed(adminUser.token, { method: 'PATCH', body: JSON.stringify({ status: 'approved' }) })
     )
     expect(res.status).toBe(200)
-    const body = await res.json()
+    const body = (await res.json()) as {
+      status: string
+      reviewed_at: string | null
+      rejection_note: string | null
+    }
     expect(body.status).toBe('approved')
     expect(body.reviewed_at).toBeTruthy()
   })
@@ -85,7 +93,11 @@ describe('tutorial status flow', () => {
       })
     )
     expect(res.status).toBe(200)
-    const body = await res.json()
+    const body = (await res.json()) as {
+      status: string
+      reviewed_at: string | null
+      rejection_note: string | null
+    }
     expect(body.status).toBe('rejected')
     expect(body.rejection_note).toBe('Too short')
   })

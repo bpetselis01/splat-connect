@@ -57,7 +57,7 @@ describe('parts and tools RLS', () => {
       })
     )
     expect(res.status).toBe(201)
-    expect((await res.json()).length).toBe(1)
+    expect(((await res.json()) as unknown[]).length).toBe(1)
   })
 
   it('owner can write tools on their own tutorial', async () => {

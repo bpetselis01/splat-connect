@@ -32,7 +32,7 @@ describe('submit retry idempotency', () => {
 
     const second = await app.request('/api/tutorials', authed(owner.token, { method: 'POST', body }))
     expect(second.status).toBe(200)
-    expect((await second.json()).id).toBe(tutorialId)
+    expect(((await second.json()) as { id: string }).id).toBe(tutorialId)
 
     const { count } = await adminClient()
       .from('tutorials')

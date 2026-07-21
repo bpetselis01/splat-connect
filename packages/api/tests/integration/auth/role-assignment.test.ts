@@ -25,7 +25,7 @@ describe('role assignment and approval gating', () => {
       headers: { Authorization: `Bearer ${contributor.token}` },
     })
     expect(res.status).toBe(200)
-    const profile = await res.json()
+    const profile = (await res.json()) as { role: string; approved: boolean }
     expect(profile.role).toBe('contributor')
     expect(profile.approved).toBe(true)
   })
@@ -35,7 +35,7 @@ describe('role assignment and approval gating', () => {
       headers: { Authorization: `Bearer ${adminUser.token}` },
     })
     expect(res.status).toBe(200)
-    const profile = await res.json()
+    const profile = (await res.json()) as { role: string; approved: boolean }
     expect(profile.role).toBe('admin')
   })
 

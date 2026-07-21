@@ -38,7 +38,7 @@ describe('storage uploads', () => {
       new File(['%PDF-1.4 test'], 'tutorial.pdf', { type: 'application/pdf' })
     )
     expect(res.status).toBe(200)
-    const { url } = await res.json()
+    const { url } = (await res.json()) as { url: string }
     expect(url).toContain('/tutorial-pdfs/')
     expect(url).toContain(`${tutorialId}/tutorial.pdf`)
   })
@@ -70,7 +70,7 @@ describe('storage uploads', () => {
       new File(['solid bracket'], 'bracket.stl', { type: 'application/octet-stream' })
     )
     expect(res.status).toBe(200)
-    const body = await res.json()
+    const body = (await res.json()) as { url: string; filename: string }
     expect(body.url).toContain('/stl-files/')
     expect(body.filename).toBe('bracket.stl')
   })
