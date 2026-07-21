@@ -23,6 +23,7 @@
     "react-native-webview": "13.16.1"
   },
   "devDependencies": {
+    "@expo/metro-runtime": "~57.0.6",
     "@testing-library/react-native": "^13.3.3",
     "@types/jest": "^29.5.14",
     "@types/react": "~19.2.2",
