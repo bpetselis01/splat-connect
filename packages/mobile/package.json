@@ -1,0 +1,21 @@
+{
+  "name": "@splat-connect/mobile",
+  "version": "1.0.0",
+  "private": true,
+  "main": "expo-router/entry",
+  "dependencies": {
+    "expo": "~57.0.7",
+    "expo-status-bar": "~57.0.1",
+    "react": "19.2.3",
+    "react-native": "0.86.0"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.2",
+    "typescript": "~6.0.3"
+  },
+  "scripts": {
+    "dev": "dotenv -e ../../.env.local -e .env.local -- expo start",
+    "typecheck": "tsc --noEmit",
+    "test:unit": "jest"
+  }
+}
