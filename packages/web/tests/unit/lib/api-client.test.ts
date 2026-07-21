@@ -88,7 +88,6 @@ describe('apiClient', () => {
     await apiClient.patch('/api/tutorials/1', { status: 'pending' })
     expect(fetchMock).toHaveBeenCalledWith(
       'http://localhost:3101/api/tutorials/1',
-      'http://localhost:3001/api/tutorials/1',
       expect.objectContaining({
         method: 'PATCH',
         body: JSON.stringify({ status: 'pending' }),
@@ -119,7 +118,6 @@ describe('apiClient', () => {
     await apiClient.postFormData('/api/upload/pdf', form)
     const [url, opts] = fetchMock.mock.calls[0]
     expect(url).toBe('http://localhost:3101/api/upload/pdf')
-    expect(url).toBe('http://localhost:3001/api/upload/pdf')
     expect(opts.body).toBe(form)
     expect((opts.headers as Record<string, string>)?.['Content-Type']).toBeUndefined()
   })
