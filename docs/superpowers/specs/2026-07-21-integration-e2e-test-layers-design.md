@@ -58,7 +58,7 @@ Through-the-API tests cannot use pg transaction rollback: PostgREST opens its ow
 
 - Each suite creates unique `test-{uuid}@splat-test.local` users via `createTestUser`.
 - All data is scoped to those users.
-- `afterAll` calls `deleteTestUser`, whose auth-user deletion FK-cascades the user's tutorials → parts / tools / stl_files.
+- `afterAll` deletes the suite's tutorials explicitly via the admin client (tutorials have **no FK to profiles** — deleting the user only cascades the `tutorial_contributors` link, orphaning the tutorial row), then calls `deleteTestUser`. Deleting a tutorial FK-cascades its parts / tools / stl_files.
 - `withRollback` (from `helpers/db.ts`) remains available for any pure-pg-client test that does not go through the API.
 - `pnpm --filter @splat-connect/api test:cleanup` is the crash safety net for orphaned `@splat-test.local` accounts.
 
