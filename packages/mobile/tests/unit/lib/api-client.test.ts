@@ -1,5 +1,3 @@
-import { describe, it, expect, jest, beforeEach } from '@jest/globals'
-
 const mockGetSession = jest.fn()
 
 jest.mock('../../../lib/supabase', () => ({
@@ -7,7 +5,7 @@ jest.mock('../../../lib/supabase', () => ({
 }))
 
 const fetchMock = jest.fn()
-global.fetch = fetchMock as unknown as typeof fetch
+globalThis.fetch = fetchMock as unknown as typeof fetch
 
 const { apiClient } = require('../../../lib/api-client')
 
