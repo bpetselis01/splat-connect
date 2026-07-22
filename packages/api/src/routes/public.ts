@@ -46,7 +46,7 @@ publicRoutes.get('/tutorials/:id', async (c) => {
   const supabase = createAdminClient()
   const { data, error } = await supabase
     .from('tutorials')
-    .select('*, parts(*), tools(*), stl_files(*), tutorial_contributors(*, profiles(*))')
+    .select('*, parts(*), tools(*), stl_files(*), tutorial_contributors(role, profiles(name))')
     .eq('id', c.req.param('id'))
     .eq('status', 'approved')
     .single()
