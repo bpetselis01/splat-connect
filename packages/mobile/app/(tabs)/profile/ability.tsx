@@ -1,2 +1,5 @@
-import { Text } from 'react-native'
-export default function AbilityRoute() { return <Text>Ability Profile</Text> }
+import { AbilityScreen } from '../../../components/profile/ability-screen'
+
+export default function AbilityRoute() {
+  return <AbilityScreen />
+}
