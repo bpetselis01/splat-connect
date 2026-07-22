@@ -19,3 +19,28 @@ test('manual ability selections persist across a reload', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Left', exact: true })).toHaveAttribute('aria-selected', 'true')
   await expect(page.getByRole('button', { name: '3', exact: true })).toHaveAttribute('aria-selected', 'true')
 })
+
+test('the questionnaire estimates MACS/BFMF and persists them', async ({ page }) => {
+  await signUpParent(page, uniqueParentEmail())
+  await openSubScreen(page, 'Ability Profile')
+
+  await page.getByText('Not sure of the clinical terms?').click()
+  // First option of every question → all zeros → MACS I / BFMF 1.
+  for (const option of [
+    'Easily, with either hand',
+    'Independently with both hands',
+    'Uses it well as a helper',
+    'None',
+  ]) {
+    await page.getByText(option, { exact: true }).click()
+  }
+  await page.getByText('Estimate').click()
+
+  await expect(page.getByRole('button', { name: 'I', exact: true })).toHaveAttribute('aria-selected', 'true')
+  await expect(page.getByRole('button', { name: '1', exact: true })).toHaveAttribute('aria-selected', 'true')
+
+  await page.waitForTimeout(1000)
+  await page.reload()
+  await expect(page.getByRole('button', { name: 'I', exact: true })).toHaveAttribute('aria-selected', 'true')
+  await expect(page.getByRole('button', { name: '1', exact: true })).toHaveAttribute('aria-selected', 'true')
+})
