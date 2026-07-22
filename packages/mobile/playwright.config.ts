@@ -41,9 +41,13 @@ export default defineConfig({
       },
     },
     {
-      command: `npx expo start --web --port ${WEB_PORT}`,
+      // Serve a static production web build rather than the Metro dev server:
+      // no HMR/dev overlays means fast, stable renders (the dev server's
+      // transient overlays intercept clicks and cause flaky E2E). EXPO_PUBLIC_*
+      // vars are baked in at export time from the env below.
+      command: `pnpm exec expo export -p web && pnpm exec serve -s dist -l ${WEB_PORT}`,
       url: WEB_URL,
-      timeout: 180_000,
+      timeout: 300_000,
       reuseExistingServer: !process.env.CI,
       env: {
         EXPO_PUBLIC_SUPABASE_URL: SUPABASE_URL,
