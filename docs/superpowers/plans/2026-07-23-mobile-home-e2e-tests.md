@@ -112,9 +112,11 @@ test('tapping a tutorial navigates to its detail screen', async ({ page }) => {
   await page.goto('/home')
   await page.getByText(TITLE).click()
 
-  await expect(page.getByText(TITLE)).toBeVisible()
+  // expo-router's native-stack keeps the previous screen mounted underneath during
+  // the push, so TITLE/EASY match twice — .last() targets the newly-pushed detail screen.
+  await expect(page.getByText(TITLE).last()).toBeVisible()
   await expect(page.getByText('A seeded, approved tutorial used by E2E tests.')).toBeVisible()
-  await expect(page.getByText('EASY', { exact: true })).toBeVisible()
+  await expect(page.getByText('EASY', { exact: true }).last()).toBeVisible()
   await expect(page.getByText('Micro switch × 2')).toBeVisible()
   await expect(page.getByText('Soldering iron')).toBeVisible()
 })
