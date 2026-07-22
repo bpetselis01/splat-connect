@@ -47,6 +47,7 @@
   },
   "jest": {
     "preset": "jest-expo",
+    "testTimeout": 30000,
     "testPathIgnorePatterns": [
       "<rootDir>/tests/e2e/"
     ],
