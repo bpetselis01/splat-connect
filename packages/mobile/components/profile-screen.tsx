@@ -5,15 +5,17 @@ import { useAuth } from '../lib/auth-context'
 import { theme } from '../lib/theme'
 
 export function ProfileScreen() {
-  const { session, signIn, signOut } = useAuth()
+  const { session, signIn, signUp, signOut } = useAuth()
+  const [mode, setMode] = useState<'signin' | 'signup'>('signin')
+  const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
 
-  async function handleSignIn() {
+  async function handleSubmit() {
     setError(null)
-    const { error: signInError } = await signIn(email, password)
-    if (signInError) setError(signInError)
+    const res = mode === 'signin' ? await signIn(email, password) : await signUp(email, password, name)
+    if (res.error) setError(res.error)
   }
 
   if (session) {
@@ -29,7 +31,10 @@ export function ProfileScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.heading}>Welcome Back</Text>
+      <Text style={styles.heading}>{mode === 'signin' ? 'Welcome Back' : 'Create Account'}</Text>
+      {mode === 'signup' ? (
+        <TextInput style={styles.input} placeholder="Name" value={name} onChangeText={setName} />
+      ) : null}
       <TextInput
         style={styles.input}
         placeholder="Email"
@@ -46,8 +51,11 @@ export function ProfileScreen() {
         onChangeText={setPassword}
       />
       {error ? <Text style={styles.error}>{error}</Text> : null}
-      <Pressable style={styles.button} onPress={handleSignIn}>
-        <Text style={styles.buttonText}>Sign In</Text>
+      <Pressable style={styles.button} onPress={handleSubmit}>
+        <Text style={styles.buttonText}>{mode === 'signin' ? 'Sign In' : 'Sign Up'}</Text>
+      </Pressable>
+      <Pressable onPress={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(null) }}>
+        <Text style={styles.link}>{mode === 'signin' ? 'Create an account' : 'Have an account? Sign in'}</Text>
       </Pressable>
     </View>
   )
@@ -68,4 +76,5 @@ const styles = StyleSheet.create({
   button: { backgroundColor: theme.colors.primary, borderRadius: 8, padding: theme.spacing(3), alignItems: 'center' },
   buttonText: { color: '#ffffff', fontFamily: theme.fonts.semiBold },
   signedInText: { fontFamily: theme.fonts.semiBold, fontSize: 16, color: theme.colors.text, marginBottom: theme.spacing(3), textAlign: 'center' },
+  link: { color: theme.colors.primary, fontFamily: theme.fonts.semiBold, textAlign: 'center', marginTop: theme.spacing(3) },
 })
