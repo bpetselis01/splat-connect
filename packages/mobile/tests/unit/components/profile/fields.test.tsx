@@ -7,6 +7,20 @@ const OPTS = [
   { label: 'C', value: 'c' },
 ]
 
+describe('selection accessibility state', () => {
+  it('marks the active dropdown option as selected', () => {
+    render(<Dropdown label="Pick" value="b" options={OPTS} onChange={jest.fn()} />)
+    expect(screen.getByRole('button', { name: 'B', selected: true })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'A', selected: false })).toBeTruthy()
+  })
+
+  it('marks selected chips as selected', () => {
+    render(<ChipGroup label="Tags" values={['a']} options={OPTS} onChange={jest.fn()} />)
+    expect(screen.getByRole('button', { name: 'A', selected: true })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'B', selected: false })).toBeTruthy()
+  })
+})
+
 describe('Dropdown', () => {
   it('renders the label and emits the chosen value', () => {
     const onChange = jest.fn()

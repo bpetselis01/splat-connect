@@ -20,7 +20,14 @@ export function Dropdown({ label, value, options, onChange }: {
         {options.map((o) => {
           const active = o.value === value
           return (
-            <Pressable key={o.value} onPress={() => onChange(o.value)} style={[styles.pill, active && styles.pillActive]}>
+            <Pressable
+              key={o.value}
+              onPress={() => onChange(o.value)}
+              accessibilityRole="button"
+              accessibilityLabel={o.label}
+              aria-selected={active}
+              style={[styles.pill, active && styles.pillActive]}
+            >
               <Text style={[styles.pillText, active && styles.pillTextActive]}>{o.label}</Text>
             </Pressable>
           )
@@ -52,7 +59,14 @@ export function ChipGroup({ label, values, options, max, onChange }: {
         {options.map((o) => {
           const active = values.includes(o.value)
           return (
-            <Pressable key={o.value} onPress={() => toggle(o.value)} style={[styles.pill, active && styles.pillActive]}>
+            <Pressable
+              key={o.value}
+              onPress={() => toggle(o.value)}
+              accessibilityRole="button"
+              accessibilityLabel={o.label}
+              aria-selected={active}
+              style={[styles.pill, active && styles.pillActive]}
+            >
               <Text style={[styles.pillText, active && styles.pillTextActive]}>{o.label}</Text>
             </Pressable>
           )
