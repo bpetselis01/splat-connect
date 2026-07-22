@@ -1,2 +1,5 @@
-import { Text } from 'react-native'
-export default function EverydayNeedsRoute() { return <Text>Everyday Needs</Text> }
+import { EverydayNeedsScreen } from '../../../components/profile/everyday-needs-screen'
+
+export default function EverydayNeedsRoute() {
+  return <EverydayNeedsScreen />
+}
