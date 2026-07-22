@@ -1,2 +1,5 @@
-import { Text } from 'react-native'
-export default function CustomizationRoute() { return <Text>Customization Metrics</Text> }
+import { CustomizationScreen } from '../../../components/profile/customization-screen'
+
+export default function CustomizationRoute() {
+  return <CustomizationScreen />
+}
