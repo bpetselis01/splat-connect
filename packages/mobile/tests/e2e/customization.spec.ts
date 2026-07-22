@@ -14,3 +14,17 @@ test('palm and wrist metrics autosave and survive a reload', async ({ page }) =>
   await expect(page.getByPlaceholder('Palm width')).toHaveValue('62')
   await expect(page.getByPlaceholder('Wrist circumference')).toHaveValue('48')
 })
+
+test('the arm-attachment toggle gates the forearm-length field', async ({ page }) => {
+  await signUpParent(page, uniqueParentEmail())
+  await openSubScreen(page, 'Customization Metrics')
+
+  await expect(page.getByPlaceholder('Forearm length')).toHaveCount(0)
+  await page.getByRole('switch').click()
+  await page.getByPlaceholder('Forearm length').fill('130')
+
+  await page.waitForTimeout(1000)
+  await page.reload()
+
+  await expect(page.getByPlaceholder('Forearm length')).toHaveValue('130')
+})
