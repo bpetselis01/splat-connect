@@ -45,6 +45,46 @@ export async function createContributor(approved = true) {
   return { id: data.user.id, email, password: PASSWORD }
 }
 
+/**
+ * Provision a throwaway tutorial (with one part and one tool, so it's a
+ * complete record) linked to the given contributor as the primary owner.
+ * Returns the new tutorial's id.
+ */
+export async function createTutorial(
+  contributorId: string,
+  overrides: Partial<{
+    title: string
+    status: 'draft' | 'pending' | 'approved' | 'rejected'
+    difficulty: 'easy' | 'medium' | 'hard'
+    rejection_note: string | null
+  }> = {}
+) {
+  const admin = adminClient()
+  const id = crypto.randomUUID()
+
+  const { error } = await admin.from('tutorials').insert({
+    id,
+    title: overrides.title ?? `E2E Tutorial ${id.slice(0, 8)}`,
+    description: 'Created by a Playwright E2E test.',
+    difficulty: overrides.difficulty ?? 'easy',
+    status: overrides.status ?? 'pending',
+    tutorial_pdf_url: 'https://placeholder.invalid/tutorial.pdf',
+    toy_photo_url: 'https://placeholder.invalid/photo.jpg',
+    rejection_note: overrides.rejection_note ?? null,
+  })
+  if (error) throw new Error(`Failed to create tutorial: ${error.message}`)
+
+  const { error: linkError } = await admin
+    .from('tutorial_contributors')
+    .insert({ tutorial_id: id, profile_id: contributorId, role: 'primary' })
+  if (linkError) throw new Error(`Failed to link tutorial contributor: ${linkError.message}`)
+
+  await admin.from('parts').insert({ tutorial_id: id, name: 'E2E part', quantity: 1, is_optional: false, buy_links: [] })
+  await admin.from('tools').insert({ tutorial_id: id, name: 'E2E tool', is_optional: false, buy_links: [] })
+
+  return id
+}
+
 /** Sign in through the /login form. Caller awaits the resulting redirect. */
 export async function signIn(page: Page, email: string, password: string) {
   await page.goto('/login')
