@@ -10,7 +10,7 @@
  *   - Returns: array of Tutorial objects
  * 
  * - GET /api/public/tutorials/:id
- *   - Get full tutorial details with parts, tools, and 3D files
+ *   - Get full tutorial details with parts, tools, 3D files, and contributors
  *   - Only returns tutorials with status='approved'
  *   - Returns: TutorialWithDetails object
  * 
@@ -46,7 +46,7 @@ publicRoutes.get('/tutorials/:id', async (c) => {
   const supabase = createAdminClient()
   const { data, error } = await supabase
     .from('tutorials')
-    .select('*, parts(*), tools(*), stl_files(*)')
+    .select('*, parts(*), tools(*), stl_files(*), tutorial_contributors(*, profiles(*))')
     .eq('id', c.req.param('id'))
     .eq('status', 'approved')
     .single()
