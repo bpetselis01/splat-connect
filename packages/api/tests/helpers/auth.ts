@@ -15,7 +15,7 @@ export function adminClient() {
 }
 
 export async function createTestUser(
-  role: 'contributor' | 'admin' = 'contributor',
+  role: 'contributor' | 'admin' | 'parent' = 'contributor',
   approved = true
 ): Promise<TestUser> {
   const admin = adminClient()
