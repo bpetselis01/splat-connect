@@ -41,7 +41,7 @@ test('the library lists the seeded tutorial with its difficulty badge', async ({
   await page.goto('/home')
 
   await expect(page.getByText(TITLE)).toBeVisible()
-  await expect(page.getByText('EASY')).toBeVisible()
+  await expect(page.getByText('EASY', { exact: true })).toBeVisible()
 })
 
 test('search narrows the list and clearing it restores the tutorial', async ({ page }) => {
@@ -114,7 +114,7 @@ test('tapping a tutorial navigates to its detail screen', async ({ page }) => {
 
   await expect(page.getByText(TITLE)).toBeVisible()
   await expect(page.getByText('A seeded, approved tutorial used by E2E tests.')).toBeVisible()
-  await expect(page.getByText('EASY')).toBeVisible()
+  await expect(page.getByText('EASY', { exact: true })).toBeVisible()
   await expect(page.getByText('Micro switch × 2')).toBeVisible()
   await expect(page.getByText('Soldering iron')).toBeVisible()
 })
