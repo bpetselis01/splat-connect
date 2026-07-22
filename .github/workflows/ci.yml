@@ -54,6 +54,9 @@ jobs:
       - name: Test Web
         run: pnpm --filter @splat-connect/web test:unit
 
+      - name: Test Mobile
+        run: pnpm --filter @splat-connect/mobile test:unit
+
   integration:
     name: Integration Tests
     needs: test
@@ -87,6 +90,46 @@ jobs:
 
       - name: Run integration tests
         run: pnpm --filter @splat-connect/api test:integration
+
+      - name: Stop local Supabase
+        if: always()
+        run: supabase stop --no-backup
+
+  mobile-e2e:
+    name: Mobile E2E Tests
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.109.1
+
+      - name: Start local Supabase
+        run: supabase start
+
+      # The Expo web app + API servers are started by Playwright's webServer
+      # (see packages/mobile/playwright.config.ts) and pointed at local Supabase.
+      - name: Install Playwright browser
+        run: pnpm --filter @splat-connect/mobile exec playwright install --with-deps chromium
+
+      - name: Run mobile E2E tests
+        run: pnpm --filter @splat-connect/mobile test:e2e
 
       - name: Stop local Supabase
         if: always()

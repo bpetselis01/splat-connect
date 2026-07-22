@@ -59,6 +59,16 @@ describe('apiClient', () => {
     expect(opts.body).toBe(JSON.stringify({ status: 'pending' }))
   })
 
+  it('put — sends PUT method with JSON body', async () => {
+    fetchMock.mockResolvedValue(okResponse({ id: 'cp-1' }))
+    await apiClient.put('/api/child-profile', { age: 5 })
+    const [url, opts] = fetchMock.mock.calls[0]
+    expect(url).toBe('http://localhost:3101/api/child-profile')
+    expect(opts.method).toBe('PUT')
+    expect(opts.body).toBe(JSON.stringify({ age: 5 }))
+    expect((opts.headers as Record<string, string>)['Content-Type']).toBe('application/json')
+  })
+
   it('delete — sends DELETE method with no body', async () => {
     fetchMock.mockResolvedValue(okResponse(null))
     await apiClient.delete('/api/tutorials/1')
