@@ -13,3 +13,17 @@ test('challenge chips enforce the max-3 cap', async ({ page }) => {
   await page.getByRole('button', { name: 'Fatigue', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Fatigue', exact: true })).toHaveAttribute('aria-selected', 'false')
 })
+
+test('selecting Other reveals a free-text field that persists', async ({ page }) => {
+  await signUpParent(page, uniqueParentEmail())
+  await openSubScreen(page, 'Everyday Needs')
+
+  await selectPill(page, 'Other')
+  await page.getByPlaceholder('Describe the other challenge').fill('Buttoning shirts')
+
+  await page.waitForTimeout(1000)
+  await page.reload()
+
+  await expect(page.getByRole('button', { name: 'Other', exact: true })).toHaveAttribute('aria-selected', 'true')
+  await expect(page.getByPlaceholder('Describe the other challenge')).toHaveValue('Buttoning shirts')
+})
