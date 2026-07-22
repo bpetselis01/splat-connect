@@ -28,3 +28,17 @@ test('the arm-attachment toggle gates the forearm-length field', async ({ page }
 
   await expect(page.getByPlaceholder('Forearm length')).toHaveValue('130')
 })
+
+test('hand dominance and sensory preferences persist across a reload', async ({ page }) => {
+  await signUpParent(page, uniqueParentEmail())
+  await openSubScreen(page, 'Customization Metrics')
+
+  await page.getByRole('button', { name: 'Right', exact: true }).click() // hand dominance
+  await page.getByRole('button', { name: 'Soft', exact: true }).click() // sensory preference
+
+  await page.waitForTimeout(1000)
+  await page.reload()
+
+  await expect(page.getByRole('button', { name: 'Right', exact: true })).toHaveAttribute('aria-selected', 'true')
+  await expect(page.getByRole('button', { name: 'Soft', exact: true })).toHaveAttribute('aria-selected', 'true')
+})
