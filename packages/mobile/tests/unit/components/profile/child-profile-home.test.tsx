@@ -27,4 +27,16 @@ describe('ChildProfileHome', () => {
     fireEvent.changeText(screen.getByPlaceholderText('Age'), '8')
     expect(mockSave).toHaveBeenCalledWith({ age: 8 })
   })
+
+  it('does not save a non-numeric age', () => {
+    render(<ChildProfileHome />)
+    fireEvent.changeText(screen.getByPlaceholderText('Age'), 'abc')
+    expect(mockSave).not.toHaveBeenCalled()
+  })
+
+  it('does not save when the age is cleared', () => {
+    render(<ChildProfileHome />)
+    fireEvent.changeText(screen.getByPlaceholderText('Age'), '')
+    expect(mockSave).not.toHaveBeenCalled()
+  })
 })

@@ -98,4 +98,14 @@ describe('useAuth', () => {
     expect(result.current.profile).toBeNull()
     expect(mockApiGet).not.toHaveBeenCalled()
   })
+
+  // Tests: a failed profile fetch leaves the profile null rather than throwing
+  it('leaves the profile null when the profile fetch fails', async () => {
+    mockGetSession.mockResolvedValue({ data: { session: { access_token: 't', user: { id: 'u1' } } } })
+    mockApiGet.mockRejectedValue(new Error('500'))
+    const { result } = renderHook(() => useAuth(), { wrapper })
+    await waitFor(() => expect(mockApiGet).toHaveBeenCalled())
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    expect(result.current.profile).toBeNull()
+  })
 })

@@ -27,4 +27,22 @@ describe('useChildProfile', () => {
     expect(mockPut).toHaveBeenCalledTimes(1) // debounced
     expect(mockPut).toHaveBeenCalledWith('/api/child-profile', expect.objectContaining({ age: 7, macs_level: 'II' }))
   })
+
+  it('falls back to a null profile when the initial load fails', async () => {
+    mockGet.mockRejectedValue(new Error('network'))
+    const { result } = renderHook(() => useChildProfile())
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    expect(result.current.profile).toBeNull()
+  })
+
+  it('keeps the optimistic value when the PUT fails', async () => {
+    mockGet.mockResolvedValue(null)
+    mockPut.mockRejectedValue(new Error('network'))
+    const { result } = renderHook(() => useChildProfile())
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    act(() => { result.current.save({ age: 9 }) })
+    await act(async () => { jest.advanceTimersByTime(300) })
+    expect(mockPut).toHaveBeenCalledTimes(1)
+    expect(result.current.profile).toMatchObject({ age: 9 }) // optimistic value survives a failed save
+  })
 })
