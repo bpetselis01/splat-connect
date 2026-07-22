@@ -45,4 +45,17 @@ describe('useChildProfile', () => {
     expect(mockPut).toHaveBeenCalledTimes(1)
     expect(result.current.profile).toMatchObject({ age: 9 }) // optimistic value survives a failed save
   })
+
+  it('does not let a slow initial load clobber an edit made before it resolves', async () => {
+    let resolveGet: (v: unknown) => void = () => {}
+    mockGet.mockReturnValue(new Promise((r) => { resolveGet = r }))
+    const { result } = renderHook(() => useChildProfile())
+    // User edits before the mount GET has resolved.
+    act(() => { result.current.save({ age: 5 }) })
+    expect(result.current.profile).toMatchObject({ age: 5 })
+    // The (now stale) initial load resolves with server data.
+    await act(async () => { resolveGet({ id: 'cp1', age: 99 }) })
+    // The in-progress edit must win — the load must not overwrite it.
+    expect(result.current.profile).toMatchObject({ age: 5 })
+  })
 })
