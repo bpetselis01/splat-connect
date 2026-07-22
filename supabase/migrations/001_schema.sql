@@ -1,4 +1,14 @@
 -- ============================================================
+-- splat-connect — consolidated schema
+-- Single-shot deploy for a fresh Supabase project. Represents the
+-- final state of migrations 001-004; run once against a new database.
+--
+-- Local dev / CI keep using supabase/migrations/*.sql via the
+-- Supabase CLI (supabase start / db reset) — this file does not
+-- replace or duplicate that migration history.
+-- ============================================================
+
+-- ============================================================
 -- Tables
 -- ============================================================
 
@@ -7,7 +17,7 @@ create table public.profiles (
   name text not null default '',
   email text not null default '',
   role text not null default 'contributor'
-    check (role in ('admin', 'contributor')),
+    check (role in ('admin', 'contributor', 'parent')),
   approved boolean not null default false,
   created_at timestamptz not null default now()
 );
@@ -60,18 +70,51 @@ create table public.stl_files (
   file_url text not null
 );
 
+-- One child profile per parent (unique parent_id, not PK — leaves the
+-- door open for multi-child later via a single drop constraint).
+create table public.child_profiles (
+  id uuid primary key default gen_random_uuid(),
+  parent_id uuid references public.profiles on delete cascade not null unique,
+  age integer,
+  -- Ability Profile
+  primary_diagnosis text,
+  macs_level text,
+  macs_source text not null default 'manual' check (macs_source in ('manual','estimated')),
+  hand_involvement text check (hand_involvement in ('bilateral','unilateral')),
+  assist_hand text check (assist_hand in ('left','right')),
+  bfmf_score text,
+  bfmf_source text not null default 'manual' check (bfmf_source in ('manual','estimated')),
+  -- Everyday Needs
+  challenges text[] not null default '{}',
+  challenge_other text,
+  grip_type text,
+  env_context text,
+  -- Customization Metrics
+  palm_width_mm numeric,
+  wrist_circ_mm numeric,
+  needs_arm_attachment boolean not null default false,
+  forearm_length_mm numeric,
+  hand_dominance text,
+  sensory_preferences text[] not null default '{}',
+  updated_at timestamptz not null default now()
+);
+
 -- ============================================================
 -- Auto-create profile on signup
 -- ============================================================
 
+-- Signup trigger honors role='parent' from metadata; anything else
+-- (including omitted) defaults to 'contributor'. WHY: without this
+-- whitelist a client could pass role='admin' at signup and self-grant admin.
 create or replace function public.handle_new_user()
 returns trigger as $$
 begin
-  insert into public.profiles (id, name, email)
+  insert into public.profiles (id, name, email, role)
   values (
     new.id,
     coalesce(new.raw_user_meta_data->>'name', ''),
-    coalesce(new.email, '')
+    coalesce(new.email, ''),
+    case when new.raw_user_meta_data->>'role' = 'parent' then 'parent' else 'contributor' end
   );
   return new;
 end;
@@ -119,6 +162,7 @@ alter table public.tutorial_contributors enable row level security;
 alter table public.parts enable row level security;
 alter table public.tools enable row level security;
 alter table public.stl_files enable row level security;
+alter table public.child_profiles enable row level security;
 
 -- profiles
 create policy "Anyone can view their own profile"
@@ -151,12 +195,6 @@ create policy "Admin can read all tutorials"
 create policy "Approved contributors can insert tutorials"
   on public.tutorials for insert with check (public.is_approved_contributor());
 
--- WHY: Contributors were blocked from editing their own tutorials once the
---      status changed away from "draft" or "rejected" — even to fix mistakes
---      in a pending or approved tutorial.
--- HOW: The permission check no longer restricts which status a tutorial can be
---      in for an edit to be allowed. It only prevents contributors from
---      setting the status to "approved" — that is reserved for admins.
 -- USING has no status gate so contributors can edit at any status.
 -- WITH CHECK prevents leaving a row in 'approved' — only admins can approve.
 create policy "Contributors can update own tutorials"
@@ -177,9 +215,6 @@ create policy "Contributors can update own tutorials"
 create policy "Admin can update all tutorials"
   on public.tutorials for update using (public.is_admin());
 
--- WHY: There was no permission to delete tutorials, so the delete API endpoint
---      always failed silently.
--- HOW: Contributors can delete their own draft tutorials; admins can delete any.
 create policy "Contributors can delete own draft tutorials"
   on public.tutorials for delete
   using (
@@ -222,12 +257,6 @@ create policy "Contributors can read own tutorial parts"
     )
   );
 
--- WHY: Contributors could edit tutorial details at any status, but were still
---      blocked from changing parts, tools, or STL files on pending or approved
---      tutorials — the sub-resource permissions hadn't been updated to match.
--- HOW: The write permission for parts, tools, and STL files now follows the same
---      rule as the tutorial permission: any contributor who owns the tutorial
---      can modify its contents regardless of status.
 create policy "Contributors can write own tutorial parts"
   on public.parts for all
   using (
@@ -260,12 +289,6 @@ create policy "Contributors can read own tutorial tools"
     )
   );
 
--- WHY: Contributors could edit tutorial details at any status, but were still
---      blocked from changing parts, tools, or STL files on pending or approved
---      tutorials — the sub-resource permissions hadn't been updated to match.
--- HOW: The write permission for parts, tools, and STL files now follows the same
---      rule as the tutorial permission: any contributor who owns the tutorial
---      can modify its contents regardless of status.
 create policy "Contributors can write own tutorial tools"
   on public.tools for all
   using (
@@ -298,12 +321,6 @@ create policy "Contributors can read own tutorial stl_files"
     )
   );
 
--- WHY: Contributors could edit tutorial details at any status, but were still
---      blocked from changing parts, tools, or STL files on pending or approved
---      tutorials — the sub-resource permissions hadn't been updated to match.
--- HOW: The write permission for parts, tools, and STL files now follows the same
---      rule as the tutorial permission: any contributor who owns the tutorial
---      can modify its contents regardless of status.
 create policy "Contributors can write own tutorial stl_files"
   on public.stl_files for all
   using (
@@ -321,6 +338,21 @@ create policy "Contributors can write own tutorial stl_files"
 
 create policy "Admin full access to stl_files"
   on public.stl_files for all using (public.is_admin());
+
+-- child_profiles
+create policy "Parent can view own child profile"
+  on public.child_profiles for select using (parent_id = auth.uid());
+
+create policy "Parent can insert own child profile"
+  on public.child_profiles for insert with check (parent_id = auth.uid());
+
+create policy "Parent can update own child profile"
+  on public.child_profiles for update
+  using (parent_id = auth.uid())
+  with check (parent_id = auth.uid());
+
+create policy "Admin full access to child_profiles"
+  on public.child_profiles for all using (public.is_admin());
 
 -- ============================================================
 -- Storage buckets (public for open-source access)
@@ -352,11 +384,9 @@ create policy "Authenticated upload stl-files"
   on storage.objects for insert
   with check (bucket_id = 'stl-files' and public.is_approved_contributor());
 
--- WHY: Re-uploading a file failed with a permission error because the database
---      had permission to create new files but not to replace existing ones.
---      When a file already exists at a path, the upload is treated as an update.
--- HOW: These three policies give approved contributors permission to replace
---      existing files in each storage bucket.
+-- upsert:true in the upload routes runs as INSERT ON CONFLICT DO UPDATE.
+-- PostgreSQL evaluates both INSERT and UPDATE RLS policies during this
+-- operation, so replacing an existing file needs its own UPDATE policy.
 create policy "Authenticated update tutorial-pdfs"
   on storage.objects for update
   using  (bucket_id = 'tutorial-pdfs' and public.is_approved_contributor())
@@ -371,3 +401,27 @@ create policy "Authenticated update stl-files"
   on storage.objects for update
   using  (bucket_id = 'stl-files' and public.is_approved_contributor())
   with check (bucket_id = 'stl-files' and public.is_approved_contributor());
+
+-- ============================================================
+-- Data API grants
+-- ============================================================
+
+-- WHY: Newer Supabase defaults stop auto-exposing tables to the Data API roles
+--      (anon / authenticated / service_role). Without these grants every
+--      PostgREST call fails with "permission denied" (42501).
+-- HOW: Grants let requests reach the tables; row-level security policies
+--      above remain the actual access-control layer. Default privileges cover
+--      tables added by future migrations so they are exposed automatically.
+
+grant usage on schema public to anon, authenticated, service_role;
+
+grant all on all tables    in schema public to anon, authenticated, service_role;
+grant all on all routines  in schema public to anon, authenticated, service_role;
+grant all on all sequences in schema public to anon, authenticated, service_role;
+
+alter default privileges for role postgres in schema public
+  grant all on tables    to anon, authenticated, service_role;
+alter default privileges for role postgres in schema public
+  grant all on routines  to anon, authenticated, service_role;
+alter default privileges for role postgres in schema public
+  grant all on sequences to anon, authenticated, service_role;
