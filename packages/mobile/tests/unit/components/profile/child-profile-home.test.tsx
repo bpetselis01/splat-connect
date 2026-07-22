@@ -3,6 +3,9 @@ import { ChildProfileHome } from '../../../../components/profile/child-profile-h
 
 const mockPush = jest.fn()
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }))
+// Ionicons loads its font asynchronously and setStates after the test ends;
+// stub it to a host string so there's no act() warning noise.
+jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
 jest.mock('../../../../lib/auth-context', () => ({ useAuth: () => ({ profile: { name: 'Pat', email: 'p@b.com', role: 'parent' }, signOut: jest.fn() }) }))
 const mockSave = jest.fn()
 jest.mock('../../../../lib/use-child-profile', () => ({ useChildProfile: () => ({ profile: { age: 6 }, loading: false, save: mockSave }) }))
