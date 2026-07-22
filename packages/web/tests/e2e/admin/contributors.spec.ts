@@ -9,11 +9,10 @@ test('an admin approves the seeded pending contributor request', async ({ page }
   await page.waitForURL('**/admin')
 
   await page.goto('/admin/contributors')
-  const emailLocator = page.getByText('pending@splat-test.local')
-  await expect(emailLocator).toBeVisible()
+  await expect(page.getByText('pending@splat-test.local')).toBeVisible()
 
-  const pendingRow = emailLocator.locator('xpath=ancestor::div[@class and contains(@class, "bg-white")]')
-  await pendingRow.getByRole('button', { name: 'Approve' }).first().click()
+  const pendingRow = page.locator('div.bg-white', { hasText: 'pending@splat-test.local' })
+  await pendingRow.getByRole('button', { name: 'Approve' }).click()
   await page.waitForLoadState('networkidle')
   await expect(page.getByText('No pending requests.')).toBeVisible()
 })
