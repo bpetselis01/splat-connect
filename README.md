@@ -46,29 +46,43 @@ SPLAT Connect is a three-tiered platform serving:
 
 ```mermaid
 graph TB
-    Users["👥 Users<br/>(Parents/Contributors/Admin)"]
-    Web["🌐 Next.js Web App<br/>(Vercel)<br/>- Pages<br/>- Components<br/>- Auth Sessions"]
-    API["⚙️ Hono API Server<br/>(Vercel/Node)<br/>- Routes<br/>- JWT Validation<br/>- DB Operations"]
-    DB["🗄️ Supabase PostgreSQL<br/>- RLS Policies<br/>- Data Storage"]
-    Storage["💾 Supabase Storage<br/>- PDFs<br/>- Photos<br/>- STL Files"]
-    Types["📦 @splat-connect/types<br/>(Shared Interfaces)"]
-    
-    Users -->|1. Login<br/>2. Browse/Upload| Web
-    Web -->|Auth via<br/>@supabase/ssr| DB
-    Web -->|3. HTTP Requests<br/>with JWT| API
-    API -->|Validate JWT<br/>Extract userId| Web
-    API -->|4. Query with RLS| DB
-    API -->|5. File Operations| Storage
-    DB -->|Data Responses| API
-    API -->|6. JSON Response| Web
-    
-    Web -.->|Imports| Types
-    API -.->|Imports| Types
-    
+    subgraph Clients
+        Web["🌐 packages/web<br/>Next.js 16 + React 19<br/>(contributor/admin/public pages)"]
+        Mobile["📱 packages/mobile<br/>Expo/React Native<br/>(parent app: home, profile,<br/>toy-library, scanner, print)"]
+    end
+
+    subgraph Shared
+        Types["📦 @splat-connect/types<br/>Tutorial, Profile, Part,<br/>Difficulty, BuyLink, ChildProfile"]
+    end
+
+    subgraph Server
+        API["⚙️ packages/api<br/>Hono API (Node)<br/>routes: public, tutorials, upload,<br/>admin, contributors, parts, tools,<br/>stl-files, child-profile<br/>middleware/auth.ts (JWT validation)"]
+    end
+
+    subgraph Supabase
+        Auth["Auth<br/>(session JWTs)"]
+        DB[("PostgreSQL<br/>+ Row-Level Security")]
+        Storage["Storage<br/>tutorial-pdfs / toy-photos / stl-files"]
+    end
+
+    Web -->|browser fetch, JWT| API
+    Mobile -->|api-client.ts, JWT| API
+    Web -->|@supabase/ssr session| Auth
+    Mobile -->|supabase.ts session| Auth
+    API -->|validate JWT| Auth
+    API -->|query w/ RLS| DB
+    API -->|upload/read files| Storage
+
+    Web -.->|imports| Types
+    Mobile -.->|imports| Types
+    API -.->|imports| Types
+
     style Web fill:#e1f5ff
+    style Mobile fill:#e1f5ff
     style API fill:#f3e5f5
     style DB fill:#e8f5e9
     style Storage fill:#fff3e0
+    style Auth fill:#e8f5e9
     style Types fill:#fce4ec
 ```
 
