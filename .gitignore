@@ -11,6 +11,12 @@ node_modules
 # testing
 coverage
 
+# Playwright
+packages/web/test-results/
+packages/web/playwright-report/
+packages/web/blob-report/
+packages/web/.last-run.json
+
 # next.js
 **/.next/
 **/out/
