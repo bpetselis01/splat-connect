@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 import { signIn } from '../helpers'
 
-test('an admin approves the seeded pending contributor request', async ({ page }) => {
+test('an admin deletes a contributor account', async ({ page }) => {
   // WHY reusing the seeded pending@splat-test.local row instead of a
   // throwaway: this is the only spec that mutates it, and it runs first
   // (admin/ sorts before auth/, contributor/, public/ alphabetically).
@@ -11,8 +11,8 @@ test('an admin approves the seeded pending contributor request', async ({ page }
   await page.goto('/admin/contributors')
   await expect(page.getByText('pending@splat-test.local')).toBeVisible()
 
-  const pendingRow = page.locator('div.bg-white', { hasText: 'pending@splat-test.local' })
-  await pendingRow.getByRole('button', { name: 'Approve' }).click()
+  const row = page.locator('div.bg-white', { hasText: 'pending@splat-test.local' })
+  await row.getByRole('button', { name: 'Delete' }).click()
   await page.waitForLoadState('networkidle')
-  await expect(page.getByText('No pending requests.')).toBeVisible()
+  await expect(page.getByText('pending@splat-test.local')).not.toBeVisible()
 })
