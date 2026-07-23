@@ -6,6 +6,8 @@ import { useChildProfile } from '../../lib/use-child-profile'
 import { estimateAbility, QUESTIONS } from '../../lib/estimate-ability'
 import { theme } from '../../lib/theme'
 import { Dropdown } from './fields'
+import { Chip } from '../ui/Chip'
+import { Button } from '../ui/Button'
 
 const DIAGNOSES = ['Cerebral palsy', 'Limb difference', 'Brachial plexus injury', 'Other'].map((d) => ({ label: d, value: d }))
 const MACS_LEVELS = ['I', 'II', 'III', 'IV', 'V'].map((l) => ({ label: l, value: l }))
@@ -84,19 +86,14 @@ export function AbilityScreen() {
           {QUESTIONS.map((q, qi) => (
             <View key={qi} style={styles.question}>
               <Text style={styles.prompt}>{q.prompt}</Text>
-              {q.options.map((opt, oi) => {
-                const active = answers[qi] === oi
-                return (
-                  <Pressable key={oi} onPress={() => setAnswer(qi, oi)} style={[styles.option, active && styles.optionActive]}>
-                    <Text style={[styles.optionText, active && styles.optionTextActive]}>{opt}</Text>
-                  </Pressable>
-                )
-              })}
+              <View style={styles.optionRow}>
+                {q.options.map((opt, oi) => (
+                  <Chip key={oi} label={opt} active={answers[qi] === oi} onPress={() => setAnswer(qi, oi)} />
+                ))}
+              </View>
             </View>
           ))}
-          <Pressable onPress={runEstimate} style={styles.estimate}>
-            <Text style={styles.estimateText}>Estimate</Text>
-          </Pressable>
+          <Button label="Estimate" onPress={runEstimate} />
         </View>
       ) : null}
     </ScrollView>
@@ -108,23 +105,12 @@ const styles = StyleSheet.create({
   content: { padding: theme.spacing(4) },
   quizToggle: {
     backgroundColor: theme.colors.accentLight,
-    borderRadius: 8,
+    borderRadius: theme.radii.sm,
     padding: theme.spacing(3),
     marginBottom: theme.spacing(3),
   },
   quizToggleText: { fontFamily: theme.fonts.semiBold, color: theme.colors.primary },
   question: { marginBottom: theme.spacing(4) },
   prompt: { fontFamily: theme.fonts.semiBold, color: theme.colors.text, marginBottom: theme.spacing(2) },
-  option: {
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: 8,
-    padding: theme.spacing(3),
-    marginBottom: theme.spacing(2),
-  },
-  optionActive: { borderColor: theme.colors.primary, backgroundColor: theme.colors.accentLight },
-  optionText: { fontFamily: theme.fonts.regular, color: theme.colors.text },
-  optionTextActive: { fontFamily: theme.fonts.semiBold, color: theme.colors.primary },
-  estimate: { backgroundColor: theme.colors.primary, borderRadius: 8, padding: theme.spacing(3), alignItems: 'center' },
-  estimateText: { color: '#ffffff', fontFamily: theme.fonts.semiBold },
+  optionRow: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2) },
 })

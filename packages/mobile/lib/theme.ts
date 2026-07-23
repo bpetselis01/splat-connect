@@ -21,4 +21,7 @@ export const theme = {
     bold: 'Nunito_700Bold',
   },
   spacing: (n: number) => n * 4,
+  radii: { sm: 8, md: 12, lg: 16, pill: 999 },
+  shadow: { shadowColor: '#1c242b', shadowOpacity: 0.08, shadowRadius: 10, shadowOffset: { width: 0, height: 2 } },
+  motion: { pressScale: 0.96, duration: 180 },
 } as const

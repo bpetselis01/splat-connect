@@ -33,6 +33,8 @@ export function CustomizationScreen() {
           testID="arm-attachment-switch"
           value={profile?.needs_arm_attachment ?? false}
           onValueChange={(b) => save({ needs_arm_attachment: b })}
+          trackColor={{ false: theme.colors.border, true: theme.colors.primary }}
+          thumbColor="#ffffff"
         />
       </View>
       {profile?.needs_arm_attachment ? (

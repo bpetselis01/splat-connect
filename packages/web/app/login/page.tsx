@@ -8,21 +8,17 @@
  * 1. User enters email and password
  * 2. Supabase verifies credentials
  * 3. If valid: Sets session JWT in secure cookie
- * 4. Checks user profile (role, approved status)
- * 5. Redirects based on account status:
- *    - If approved: → /dashboard (contributor hub)
- *    - If not approved: → /pending ("awaiting approval")
+ * 4. Checks user profile role
+ * 5. Redirects based on role: contributor → /dashboard, admin → /admin, else → /
  * 6. If error: Shows error message
- * 
+ *
  * Related flows:
  * - Sign up: /signup (creates new account)
- * - After approval: Admin approves account → user redirected to /dashboard
  * - Sign out: Nav component handles logout
  * 
  * Related files:
  * - app/signup: Create new account
- * - app/pending: "Awaiting approval" page
- * - app/dashboard: Contributor hub (after approved)
+ * - app/dashboard: Contributor hub
  * - lib/supabase/client.ts: Supabase auth client
  */
 'use client'
@@ -51,7 +47,7 @@ export default function LoginPage() {
       const { data: { user } } = await supabase.auth.getUser()
       const { data: profile } = await supabase
         .from('profiles')
-        .select('role, approved')
+        .select('role')
         .eq('id', user!.id)
         .single()
 
@@ -61,7 +57,7 @@ export default function LoginPage() {
       // HOW: window.location.href forces a full page reload, so the server always
       //      runs the root layout fresh and the nav reflects the correct role immediately.
       if (profile?.role === 'contributor') {
-        window.location.href = profile.approved ? '/dashboard' : '/pending'
+        window.location.href = '/dashboard'
       } else if (profile?.role === 'admin') {
         window.location.href = '/admin'
       } else {

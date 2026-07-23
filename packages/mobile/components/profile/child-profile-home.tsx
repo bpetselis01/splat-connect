@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../../lib/auth-context'
 import { useChildProfile } from '../../lib/use-child-profile'
 import { theme } from '../../lib/theme'
+import { Card } from '../ui/Card'
 
 const SUB_SCREENS: { label: string; path: string }[] = [
   { label: 'Ability Profile', path: '/profile/ability' },
@@ -40,9 +41,11 @@ export function ChildProfileHome() {
       {loading ? <ActivityIndicator color={theme.colors.primary} /> : null}
 
       {SUB_SCREENS.map((s) => (
-        <Pressable key={s.path} style={styles.row} onPress={() => router.push(s.path)}>
-          <Text style={styles.rowLabel}>{s.label}</Text>
-          <Ionicons name="chevron-forward" size={20} color={theme.colors.muted} />
+        <Pressable key={s.path} onPress={() => router.push(s.path)}>
+          <Card style={styles.row}>
+            <Text style={styles.rowLabel}>{s.label}</Text>
+            <Ionicons name="chevron-forward" size={20} color={theme.colors.muted} />
+          </Card>
         </Pressable>
       ))}
 
@@ -62,19 +65,16 @@ const styles = StyleSheet.create({
   input: {
     borderWidth: 1,
     borderColor: theme.colors.border,
-    borderRadius: 8,
+    borderRadius: theme.radii.sm,
     padding: theme.spacing(3),
     marginBottom: theme.spacing(4),
     fontFamily: theme.fonts.regular,
   },
   row: {
-    backgroundColor: theme.colors.accentLighter,
-    borderRadius: 12,
-    padding: theme.spacing(3),
-    marginBottom: theme.spacing(2),
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: theme.spacing(2),
   },
   rowLabel: { fontFamily: theme.fonts.semiBold, color: theme.colors.text, fontSize: 16 },
   signOut: { marginTop: theme.spacing(4), padding: theme.spacing(3), alignItems: 'center' },

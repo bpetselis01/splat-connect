@@ -7,7 +7,7 @@
  * Endpoint:
  * - POST /api/upload
  *   - Body: FormData with 'file' field
- *   - Auth: Requires JWT with approved=true
+ *   - Auth: Requires a valid JWT
  *   - Returns: { url: string } (public URL of uploaded file)
  * 
  * Supported files:
@@ -21,13 +21,13 @@
  * - stl_files: 3D model files
  * 
  * Security:
- * - Validates JWT + user approval before accepting file
+ * - Validates JWT before accepting file
  * - Supabase Storage enforces RLS: users can only upload to their own folders
  * - File size limits enforced by Supabase
  * 
  * Process:
  * 1. Web calls /api/upload with JWT
- * 2. This middleware validates JWT + approved status
+ * 2. This middleware validates the JWT
  * 3. Route handler uploads file to appropriate Supabase Storage bucket
  * 4. Returns public URL for file
  * 5. Web stores URL in UploadDraft (tutorial_pdf_url, toy_photo_url, etc.)

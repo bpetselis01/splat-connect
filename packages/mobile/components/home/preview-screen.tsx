@@ -1,7 +1,7 @@
-// packages/mobile/components/home/preview-screen.tsx
-import { View, Text, Pressable, StyleSheet, Linking } from 'react-native'
+import { View, Text, StyleSheet, Linking } from 'react-native'
 import { WebView } from 'react-native-webview'
 import { theme } from '../../lib/theme'
+import { Button } from '../ui/Button'
 
 export function PreviewScreen({ pdfUrl }: { pdfUrl: string | null }) {
   if (!pdfUrl) {
@@ -15,9 +15,7 @@ export function PreviewScreen({ pdfUrl }: { pdfUrl: string | null }) {
   return (
     <View style={styles.container}>
       <WebView source={{ uri: pdfUrl }} style={styles.webview} />
-      <Pressable style={styles.fallbackButton} onPress={() => Linking.openURL(pdfUrl)}>
-        <Text style={styles.fallbackButtonText}>Open in Browser</Text>
-      </Pressable>
+      <Button label="Open in Browser" onPress={() => Linking.openURL(pdfUrl)} variant="secondary" style={styles.fallbackButton} />
     </View>
   )
 }
@@ -27,6 +25,5 @@ const styles = StyleSheet.create({
   webview: { flex: 1 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: theme.spacing(4) },
   message: { fontFamily: theme.fonts.regular, color: theme.colors.text, textAlign: 'center' },
-  fallbackButton: { padding: theme.spacing(3), alignItems: 'center', backgroundColor: theme.colors.accentLight },
-  fallbackButtonText: { color: theme.colors.primaryDark, fontFamily: theme.fonts.semiBold },
+  fallbackButton: { margin: theme.spacing(3) },
 })

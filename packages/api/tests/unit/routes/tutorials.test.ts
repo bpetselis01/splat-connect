@@ -8,18 +8,17 @@ const mockAdminClient = { from: vi.fn() }
 // --- Mock strategy ---
 // Replaces both Supabase clients (user and admin) with minimal fake objects so tests run
 // without a real database. makeApp() bypasses real auth by injecting fake userId, role,
-// approved, and token directly into the Hono context, isolating the route logic under test.
+// and token directly into the Hono context, isolating the route logic under test.
 vi.mock('../../../src/supabase/user-client.js', () => ({ createUserClient: () => mockUserClient }))
 vi.mock('../../../src/supabase/client.js', () => ({ createAdminClient: () => mockAdminClient }))
 
 const { default: tutorials } = await import('../../../src/routes/tutorials.js')
 
-function makeApp(role: 'contributor' | 'admin' = 'contributor', approved = true) {
+function makeApp(role: 'contributor' | 'admin' = 'contributor') {
   const app = new Hono<{ Variables: AuthVariables }>()
   app.use('*', async (c, next) => {
     c.set('userId', 'user-1')
     c.set('role', role)
-    c.set('approved', approved)
     c.set('token', 'test-token')
     await next()
   })
@@ -145,19 +144,6 @@ describe('POST /', () => {
     expect(res.status).toBe(201)
     const body = await res.json() as any
     expect(body.status).toBe('draft')
-  })
-
-  // Tests: POST / returns 403 when the contributor is not yet approved by an admin
-  // How:   makeApp('contributor', false) sets approved=false in context; checks status 403 with no DB call
-  // Chain: unapproved contributors cannot create tutorials → admins control who can submit
-  //        content, preventing untrusted users from cluttering the pending review queue
-  it('returns 403 when user is not approved', async () => {
-    const res = await makeApp('contributor', false).request('/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: 'new-id', title: 'New Tutorial', difficulty: 'easy' }),
-    })
-    expect(res.status).toBe(403)
   })
 
   // Tests: POST / returns 200 with the existing ID when the same tutorial ID is submitted twice

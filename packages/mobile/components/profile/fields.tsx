@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
   pill: {
     paddingVertical: theme.spacing(2),
     paddingHorizontal: theme.spacing(3),
-    borderRadius: 16,
+    borderRadius: theme.radii.pill,
     backgroundColor: theme.colors.accentLight,
   },
   pillActive: { backgroundColor: theme.colors.primary },
@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
   input: {
     borderWidth: 1,
     borderColor: theme.colors.border,
-    borderRadius: 8,
+    borderRadius: theme.radii.sm,
     padding: theme.spacing(3),
     fontFamily: theme.fonts.regular,
   },

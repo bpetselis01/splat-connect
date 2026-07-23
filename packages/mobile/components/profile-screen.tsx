@@ -3,6 +3,8 @@ import { useState } from 'react'
 import { View, Text, TextInput, Pressable, StyleSheet } from 'react-native'
 import { useAuth } from '../lib/auth-context'
 import { theme } from '../lib/theme'
+import { ScreenHeader } from './ui/ScreenHeader'
+import { Button } from './ui/Button'
 
 export function ProfileScreen() {
   const { session, signIn, signUp, signOut } = useAuth()
@@ -10,10 +12,15 @@ export function ProfileScreen() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
 
   async function handleSubmit() {
     setError(null)
+    if (mode === 'signup' && password !== confirmPassword) {
+      setError('Passwords do not match.')
+      return
+    }
     const res = mode === 'signin' ? await signIn(email, password) : await signUp(email, password, name)
     if (res.error) setError(res.error)
   }
@@ -21,16 +28,16 @@ export function ProfileScreen() {
   if (session) {
     return (
       <View style={styles.container}>
+        <ScreenHeader title="Profile" showLogo />
         <Text style={styles.signedInText}>Signed in as {session.user.email}</Text>
-        <Pressable style={styles.button} onPress={() => signOut()}>
-          <Text style={styles.buttonText}>Sign Out</Text>
-        </Pressable>
+        <Button label="Sign Out" onPress={() => signOut()} variant="secondary" />
       </View>
     )
   }
 
   return (
     <View style={styles.container}>
+      <ScreenHeader title="Profile" showLogo />
       <Text style={styles.heading}>{mode === 'signin' ? 'Welcome Back' : 'Create Account'}</Text>
       {mode === 'signup' ? (
         <TextInput style={styles.input} placeholder="Name" value={name} onChangeText={setName} />
@@ -50,11 +57,18 @@ export function ProfileScreen() {
         value={password}
         onChangeText={setPassword}
       />
+      {mode === 'signup' ? (
+        <TextInput
+          style={styles.input}
+          placeholder="Confirm Password"
+          secureTextEntry
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+        />
+      ) : null}
       {error ? <Text style={styles.error}>{error}</Text> : null}
-      <Pressable style={styles.button} onPress={handleSubmit}>
-        <Text style={styles.buttonText}>{mode === 'signin' ? 'Sign In' : 'Sign Up'}</Text>
-      </Pressable>
-      <Pressable onPress={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(null) }}>
+      <Button label={mode === 'signin' ? 'Sign In' : 'Sign Up'} onPress={handleSubmit} />
+      <Pressable onPress={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(null); setConfirmPassword('') }}>
         <Text style={styles.link}>{mode === 'signin' ? 'Create an account' : 'Have an account? Sign in'}</Text>
       </Pressable>
     </View>
@@ -67,14 +81,12 @@ const styles = StyleSheet.create({
   input: {
     borderWidth: 1,
     borderColor: theme.colors.border,
-    borderRadius: 8,
+    borderRadius: theme.radii.sm,
     padding: theme.spacing(3),
     marginBottom: theme.spacing(2),
     fontFamily: theme.fonts.regular,
   },
   error: { color: '#991b1b', fontFamily: theme.fonts.regular, marginBottom: theme.spacing(2) },
-  button: { backgroundColor: theme.colors.primary, borderRadius: 8, padding: theme.spacing(3), alignItems: 'center' },
-  buttonText: { color: '#ffffff', fontFamily: theme.fonts.semiBold },
   signedInText: { fontFamily: theme.fonts.semiBold, fontSize: 16, color: theme.colors.text, marginBottom: theme.spacing(3), textAlign: 'center' },
   link: { color: theme.colors.primary, fontFamily: theme.fonts.semiBold, textAlign: 'center', marginTop: theme.spacing(3) },
 })

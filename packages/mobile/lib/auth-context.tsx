@@ -52,12 +52,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signUp(email: string, password: string, name: string) {
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: { data: { name, role: 'parent' } },
     })
-    return { error: error?.message ?? null }
+    if (error) return { error: error.message }
+    // Supabase returns a 200 with no error but an empty identities array when the
+    // email is already registered (anti-enumeration behavior) — no account is
+    // created or changed, so surface this as an error ourselves.
+    if (data.user?.identities?.length === 0) {
+      return { error: 'This email is already registered. Try signing in instead.' }
+    }
+    return { error: null }
   }
 
   async function signOut() {

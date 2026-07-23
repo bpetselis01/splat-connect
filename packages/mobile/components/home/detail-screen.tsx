@@ -1,11 +1,12 @@
-// packages/mobile/components/home/detail-screen.tsx
 import { useEffect, useState } from 'react'
-import { View, Text, FlatList, Pressable, StyleSheet, ActivityIndicator } from 'react-native'
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, Image } from 'react-native'
 import { useRouter } from 'expo-router'
 import type { Tutorial, Part, Tool, StlFile } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { DifficultyBadge } from '../difficulty-badge'
+import { Card } from '../ui/Card'
+import { Button } from '../ui/Button'
 
 type TutorialDetail = Tutorial & { parts: Part[]; tools: Tool[]; stl_files: StlFile[] }
 
@@ -29,47 +30,57 @@ export function DetailScreen({ id }: { id: string }) {
 
   return (
     <View style={styles.container}>
+      {tutorial.toy_photo_url ? (
+        <Image source={{ uri: tutorial.toy_photo_url }} style={styles.photo} />
+      ) : (
+        <View style={styles.photoPlaceholder}>
+          <Text style={styles.photoPlaceholderEmoji}>🧸</Text>
+        </View>
+      )}
       <Text style={styles.title}>{tutorial.title}</Text>
       <DifficultyBadge difficulty={tutorial.difficulty} />
       {tutorial.description ? <Text style={styles.description}>{tutorial.description}</Text> : null}
 
       <Text style={styles.sectionHeading}>Parts</Text>
-      <FlatList
-        data={tutorial.parts}
-        keyExtractor={(p) => p.id}
-        renderItem={({ item }) => (
-          <Text style={styles.listItem}>
-            {item.name} × {item.quantity}
-            {item.is_optional ? ' (optional)' : ''}
-          </Text>
-        )}
-        ListEmptyComponent={<Text style={styles.listItem}>No parts listed.</Text>}
-      />
+      <Card style={styles.section}>
+        <FlatList
+          data={tutorial.parts}
+          keyExtractor={(p) => p.id}
+          renderItem={({ item }) => (
+            <Text style={styles.listItem}>
+              {item.name} × {item.quantity}
+              {item.is_optional ? ' (optional)' : ''}
+            </Text>
+          )}
+          ListEmptyComponent={<Text style={styles.listItem}>No parts listed.</Text>}
+        />
+      </Card>
 
       <Text style={styles.sectionHeading}>Tools</Text>
-      <FlatList
-        data={tutorial.tools}
-        keyExtractor={(t) => t.id}
-        renderItem={({ item }) => (
-          <Text style={styles.listItem}>
-            {item.name}
-            {item.is_optional ? ' (optional)' : ''}
-          </Text>
-        )}
-        ListEmptyComponent={<Text style={styles.listItem}>No tools listed.</Text>}
-      />
+      <Card style={styles.section}>
+        <FlatList
+          data={tutorial.tools}
+          keyExtractor={(t) => t.id}
+          renderItem={({ item }) => (
+            <Text style={styles.listItem}>
+              {item.name}
+              {item.is_optional ? ' (optional)' : ''}
+            </Text>
+          )}
+          ListEmptyComponent={<Text style={styles.listItem}>No tools listed.</Text>}
+        />
+      </Card>
 
-      <Pressable
-        style={styles.previewButton}
+      <Button
+        label="Preview Tutorial"
         onPress={() =>
           router.push({
             pathname: '/home/[id]/preview',
             params: { id: tutorial.id, pdfUrl: tutorial.tutorial_pdf_url ?? '' },
           })
         }
-      >
-        <Text style={styles.previewButtonText}>Preview Tutorial</Text>
-      </Pressable>
+        style={styles.previewButton}
+      />
     </View>
   )
 }
@@ -78,16 +89,21 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background, padding: theme.spacing(4) },
   loader: { flex: 1, justifyContent: 'center' },
   error: { padding: theme.spacing(4), color: theme.colors.text },
+  photo: { width: '100%', height: 200, borderRadius: theme.radii.md, marginBottom: theme.spacing(3) },
+  photoPlaceholder: {
+    width: '100%',
+    height: 200,
+    borderRadius: theme.radii.md,
+    backgroundColor: theme.colors.accentLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: theme.spacing(3),
+  },
+  photoPlaceholderEmoji: { fontSize: 48 },
   title: { fontFamily: theme.fonts.bold, fontSize: 22, color: theme.colors.text, marginBottom: theme.spacing(2) },
   description: { fontFamily: theme.fonts.regular, color: theme.colors.text, marginVertical: theme.spacing(2) },
   sectionHeading: { fontFamily: theme.fonts.semiBold, fontSize: 16, color: theme.colors.text, marginTop: theme.spacing(3) },
+  section: { marginTop: theme.spacing(2) },
   listItem: { fontFamily: theme.fonts.regular, color: theme.colors.text, paddingVertical: theme.spacing(1) },
-  previewButton: {
-    backgroundColor: theme.colors.primary,
-    borderRadius: 8,
-    padding: theme.spacing(3),
-    alignItems: 'center',
-    marginTop: theme.spacing(4),
-  },
-  previewButtonText: { color: '#ffffff', fontFamily: theme.fonts.semiBold },
+  previewButton: { marginTop: theme.spacing(4) },
 })
