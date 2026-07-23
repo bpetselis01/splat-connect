@@ -40,7 +40,8 @@ export async function signUpParent(page: Page, email: string) {
   await page.getByText('Create an account').click()
   await page.getByPlaceholder('Name').fill('E2E Parent')
   await page.getByPlaceholder('Email').fill(email)
-  await page.getByPlaceholder('Password').fill(PASSWORD)
+  await page.getByPlaceholder('Password', { exact: true }).fill(PASSWORD)
+  await page.getByPlaceholder('Confirm Password').fill(PASSWORD)
   await page.getByText('Sign Up').click()
   // Role resolves via GET /api/contributors/me → parent → child-profile home.
   await expect(page.getByText('Customization Metrics')).toBeVisible()
