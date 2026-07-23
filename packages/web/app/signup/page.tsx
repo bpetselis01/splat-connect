@@ -38,8 +38,8 @@ export default function SignupPage() {
         <div className="text-4xl mb-4">✅</div>
         <h1 className="text-2xl font-bold mb-2">Request received</h1>
         <p className="text-gray-600 text-sm">
-          Your account has been created and is pending admin approval. You&apos;ll be
-          able to log in and upload tutorials once approved.
+          Your account has been created. You can log in and start uploading tutorials
+          right away.
         </p>
         <Link href="/login" className="mt-6 inline-block text-blue-600 text-sm hover:underline">
           Back to sign in
@@ -52,8 +52,7 @@ export default function SignupPage() {
     <div className="max-w-sm mx-auto mt-16">
       <h1 className="text-2xl font-bold mb-2">Request contributor access</h1>
       <p className="text-gray-500 text-sm mb-6">
-        Submit your details — the SPLAT admin will approve your account so you
-        can upload tutorials.
+        Create your contributor account to start uploading tutorials.
       </p>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div>
