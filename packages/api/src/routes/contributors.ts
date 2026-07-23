@@ -21,18 +21,14 @@
  * - approved: Boolean flag set by admin
  * - created_at: When account was created
  * 
- * Approval workflow:
+ * Onboarding:
  * 1. New user signs up
- * 2. Their profile is created with approved=false
- * 3. They see /pending page ("Awaiting approval")
- * 4. Admin approves them (updates approved=true)
- * 5. User redirected to /dashboard
- * 6. User can now create tutorials
- * 
+ * 2. Their profile is created with role='contributor'
+ * 3. They can log in and create tutorials immediately
+ *
  * Related files:
  * - middleware/auth.ts: Validates JWT + extracts userId
- * - app/pending: Page shown while awaiting approval
- * - app/dashboard: Contributor hub (after approval)
+ * - app/dashboard: Contributor hub
  * - types/index.ts: Profile type definition
  */
 import { Hono } from 'hono'

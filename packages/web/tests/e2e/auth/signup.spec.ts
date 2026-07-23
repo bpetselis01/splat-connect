@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 import { uniqueContributorEmail } from '../helpers'
 
-test('a new contributor signs up and sees the pending-approval confirmation', async ({ page }) => {
+test('a new contributor signs up and sees the confirmation screen', async ({ page }) => {
   const email = uniqueContributorEmail()
   await page.goto('/signup')
   await page.locator('#name').fill('E2E Contributor')
@@ -12,7 +12,7 @@ test('a new contributor signs up and sees the pending-approval confirmation', as
   await expect(page.getByRole('heading', { name: 'Request received' })).toBeVisible()
 })
 
-test('a newly signed-up (unapproved) contributor hitting a protected route is redirected to /pending', async ({ page }) => {
+test('a newly signed-up contributor can access a protected route immediately', async ({ page }) => {
   const email = uniqueContributorEmail()
   await page.goto('/signup')
   await page.locator('#name').fill('E2E Contributor')
@@ -25,6 +25,5 @@ test('a newly signed-up (unapproved) contributor hitting a protected route is re
   // auth.email.enable_confirmations = false), so signUp() already left a
   // session cookie in this browser context — no separate sign-in needed.
   await page.goto('/upload')
-  await page.waitForURL('**/pending')
-  await expect(page.getByRole('heading', { name: 'Application pending' })).toBeVisible()
+  await expect(page).toHaveURL(/\/upload$/)
 })

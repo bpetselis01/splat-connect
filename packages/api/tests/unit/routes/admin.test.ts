@@ -121,7 +121,7 @@ describe('GET /contributors', () => {
   // Tests: GET /contributors returns the list of contributors for admin review
   // How:   mockAdminFrom returns a select/eq/order chain with one contributor; checks status 200 and body
   // Chain: the admin contributors page calls this to show who is registered → admins can
-  //        approve or remove contributors through the adjacent endpoints
+  //        remove contributors through the adjacent delete endpoint
   it('returns contributor list for admin', async () => {
     mockAdminFrom.mockReturnValue({
       select: () => ({ eq: () => ({ order: () => ({ data: [{ id: 'c-1', role: 'contributor' }], error: null }) }) }),
@@ -146,34 +146,11 @@ describe('GET /contributors', () => {
   })
 })
 
-describe('PATCH /contributors/:id/approve', () => {
-  beforeEach(() => vi.clearAllMocks())
-
-  // Tests: PATCH /contributors/:id/approve sets approved=true and returns the updated profile
-  // How:   mockAdminFrom returns an update/eq/select/single chain; checks status 200 and body.approved
-  // Chain: the approval status is checked by authMiddleware on every request → once approved,
-  //        the contributor's POST /tutorials requests are no longer blocked with a 403
-  it('sets approved=true and returns updated profile', async () => {
-    mockAdminFrom.mockReturnValue({
-      update: () => ({
-        eq: () => ({
-          select: () => ({
-            single: () => ({ data: { id: 'c-1', approved: true }, error: null }),
-          }),
-        }),
-      }),
-    })
-    const res = await makeApp('admin').request('/contributors/c-1/approve', { method: 'PATCH' })
-    expect(res.status).toBe(200)
-    const body = await res.json() as any
-    expect(body.approved).toBe(true)
-  })
-})
-
 describe('DELETE /contributors/:id', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  // Tests: DELETE /contributors/:id calls Supabase Auth's deleteUser and returns 204
+  // Tests: DELETE /contributors/:id is a general admin moderation tool that removes any
+  //        contributor account, calling Supabase Auth's deleteUser and returning 204
   // How:   mockDeleteUser resolves with { error: null }; verifies it was called with the correct user ID
   // Chain: the user is removed from Supabase Auth entirely → they can no longer log in or make
   //        authenticated API requests, effectively revoking all access to the platform

@@ -11,7 +11,7 @@
  * - This middleware redirects non-admins away from /admin
  *
  * Protected routes:
- * - /upload: Contributors only (approved=true)
+ * - /upload: Contributors only (signed in)
  * - /my-tutorials: Contributors only
  * - /dashboard: Contributors only
  * - /admin: Admins only (role='admin')
@@ -79,18 +79,6 @@ export async function middleware(request: NextRequest) {
 
     if (profile?.role !== 'admin') {
       return NextResponse.redirect(new URL('/', request.url))
-    }
-  }
-
-  if (needsContributorAuth && user) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('approved')
-      .eq('id', user.id)
-      .single()
-
-    if (!profile?.approved) {
-      return NextResponse.redirect(new URL('/pending', request.url))
     }
   }
 

@@ -91,18 +91,6 @@ admin.get('/contributors', async (c) => {
   return c.json(data)
 })
 
-admin.patch('/contributors/:id/approve', async (c) => {
-  const supabase = createAdminClient()
-  const { data, error } = await supabase
-    .from('profiles')
-    .update({ approved: true })
-    .eq('id', c.req.param('id'))
-    .select()
-    .single()
-  if (error) return c.json({ error: error.message }, 500)
-  return c.json(data)
-})
-
 admin.delete('/contributors/:id', async (c) => {
   const supabase = createAdminClient()
   const { error } = await supabase.auth.admin.deleteUser(c.req.param('id'))

@@ -5,29 +5,25 @@ import { createTestUser, deleteTestUser, type TestUser } from '../../helpers/aut
 
 let contributor: TestUser
 let adminUser: TestUser
-let unapproved: TestUser
 
 beforeAll(async () => {
   contributor = await createTestUser('contributor')
   adminUser = await createTestUser('admin')
-  unapproved = await createTestUser('contributor', false)
 })
 
 afterAll(async () => {
   await deleteTestUser(contributor.id)
   await deleteTestUser(adminUser.id)
-  await deleteTestUser(unapproved.id)
 })
 
-describe('role assignment and approval gating', () => {
-  it('approved contributor profile has role=contributor and approved=true', async () => {
+describe('role assignment', () => {
+  it('contributor profile has role=contributor', async () => {
     const res = await app.request('/api/contributors/me', {
       headers: { Authorization: `Bearer ${contributor.token}` },
     })
     expect(res.status).toBe(200)
-    const profile = (await res.json()) as { role: string; approved: boolean }
+    const profile = (await res.json()) as { role: string }
     expect(profile.role).toBe('contributor')
-    expect(profile.approved).toBe(true)
   })
 
   it('admin profile has role=admin', async () => {
@@ -35,27 +31,27 @@ describe('role assignment and approval gating', () => {
       headers: { Authorization: `Bearer ${adminUser.token}` },
     })
     expect(res.status).toBe(200)
-    const profile = (await res.json()) as { role: string; approved: boolean }
+    const profile = (await res.json()) as { role: string }
     expect(profile.role).toBe('admin')
   })
 
-  it('unapproved contributor gets 403 creating a tutorial through the API', async () => {
+  it('a newly signed-up contributor can create a tutorial through the API immediately', async () => {
     const res = await app.request('/api/tutorials', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${unapproved.token}`,
+        Authorization: `Bearer ${contributor.token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ id: crypto.randomUUID(), title: 'Blocked', difficulty: 'easy' }),
+      body: JSON.stringify({ id: crypto.randomUUID(), title: 'Allowed', difficulty: 'easy' }),
     })
-    expect(res.status).toBe(403)
+    expect(res.status).toBe(201)
   })
 
-  it('unapproved contributor is blocked by RLS inserting a tutorial directly', async () => {
-    const supabase = createUserClient(unapproved.token)
+  it('a newly signed-up contributor is not blocked by RLS inserting a tutorial directly', async () => {
+    const supabase = createUserClient(contributor.token)
     const { error } = await supabase
       .from('tutorials')
-      .insert({ title: 'RLS blocked', difficulty: 'easy' })
-    expect(error).not.toBeNull()
+      .insert({ id: crypto.randomUUID(), title: 'RLS allowed', difficulty: 'easy' })
+    expect(error).toBeNull()
   })
 })
