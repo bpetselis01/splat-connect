@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { View, Text, FlatList, StyleSheet, ActivityIndicator } from 'react-native'
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, Image } from 'react-native'
 import { useRouter } from 'expo-router'
 import type { Tutorial, Part, Tool, StlFile } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
@@ -30,6 +30,13 @@ export function DetailScreen({ id }: { id: string }) {
 
   return (
     <View style={styles.container}>
+      {tutorial.toy_photo_url ? (
+        <Image source={{ uri: tutorial.toy_photo_url }} style={styles.photo} />
+      ) : (
+        <View style={styles.photoPlaceholder}>
+          <Text style={styles.photoPlaceholderEmoji}>🧸</Text>
+        </View>
+      )}
       <Text style={styles.title}>{tutorial.title}</Text>
       <DifficultyBadge difficulty={tutorial.difficulty} />
       {tutorial.description ? <Text style={styles.description}>{tutorial.description}</Text> : null}
@@ -82,6 +89,17 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background, padding: theme.spacing(4) },
   loader: { flex: 1, justifyContent: 'center' },
   error: { padding: theme.spacing(4), color: theme.colors.text },
+  photo: { width: '100%', height: 200, borderRadius: theme.radii.md, marginBottom: theme.spacing(3) },
+  photoPlaceholder: {
+    width: '100%',
+    height: 200,
+    borderRadius: theme.radii.md,
+    backgroundColor: theme.colors.accentLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: theme.spacing(3),
+  },
+  photoPlaceholderEmoji: { fontSize: 48 },
   title: { fontFamily: theme.fonts.bold, fontSize: 22, color: theme.colors.text, marginBottom: theme.spacing(2) },
   description: { fontFamily: theme.fonts.regular, color: theme.colors.text, marginVertical: theme.spacing(2) },
   sectionHeading: { fontFamily: theme.fonts.semiBold, fontSize: 16, color: theme.colors.text, marginTop: theme.spacing(3) },

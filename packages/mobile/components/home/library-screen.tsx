@@ -1,6 +1,6 @@
 // packages/mobile/components/home/library-screen.tsx
 import { useEffect, useState } from 'react'
-import { View, Text, TextInput, Pressable, StyleSheet, ActivityIndicator } from 'react-native'
+import { View, Text, TextInput, Pressable, StyleSheet, ActivityIndicator, Image } from 'react-native'
 import { useRouter } from 'expo-router'
 import type { Tutorial, Difficulty } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
@@ -74,8 +74,17 @@ export function LibraryScreen() {
           renderItem={({ item }) => (
             <Pressable onPress={() => router.push({ pathname: '/home/[id]', params: { id: item.id } })}>
               <Card style={styles.card}>
-                <Text style={styles.cardTitle}>{item.title}</Text>
-                <DifficultyBadge difficulty={item.difficulty} />
+                {item.toy_photo_url ? (
+                  <Image source={{ uri: item.toy_photo_url }} style={styles.thumbnail} />
+                ) : (
+                  <View style={styles.thumbnailPlaceholder}>
+                    <Text style={styles.thumbnailPlaceholderEmoji}>🧸</Text>
+                  </View>
+                )}
+                <View style={styles.cardBody}>
+                  <Text style={styles.cardTitle}>{item.title}</Text>
+                  <DifficultyBadge difficulty={item.difficulty} />
+                </View>
               </Card>
             </Pressable>
           )}
@@ -98,10 +107,21 @@ const styles = StyleSheet.create({
   filterRow: { flexDirection: 'row', gap: theme.spacing(2), marginBottom: theme.spacing(3) },
   card: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    gap: theme.spacing(3),
     marginBottom: theme.spacing(2),
   },
+  thumbnail: { width: 56, height: 56, borderRadius: theme.radii.sm },
+  thumbnailPlaceholder: {
+    width: 56,
+    height: 56,
+    borderRadius: theme.radii.sm,
+    backgroundColor: theme.colors.accentLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  thumbnailPlaceholderEmoji: { fontSize: 24 },
+  cardBody: { flex: 1, gap: theme.spacing(1) },
   cardTitle: { fontFamily: theme.fonts.bold, color: theme.colors.text, fontSize: 16 },
   error: { color: theme.colors.text, padding: theme.spacing(4) },
 })
