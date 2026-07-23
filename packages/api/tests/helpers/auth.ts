@@ -15,8 +15,7 @@ export function adminClient() {
 }
 
 export async function createTestUser(
-  role: 'contributor' | 'admin' | 'parent' = 'contributor',
-  approved = true
+  role: 'contributor' | 'admin' | 'parent' = 'contributor'
 ): Promise<TestUser> {
   const admin = adminClient()
   const email = `test-${crypto.randomUUID()}@splat-test.local`
@@ -30,13 +29,9 @@ export async function createTestUser(
   if (signUpError || !signUpData.user)
     throw new Error(`Failed to create test user: ${signUpError?.message}`)
 
-  // WHY: the column is `approved` — a previous version wrote `is_approved`,
-  // which doesn't exist, silently leaving every test user unapproved.
   const { error: profileError } = await admin
     .from('profiles')
-    .upsert({ id: signUpData.user.id, role, approved })
-  // A swallowed error here is how the is_approved column bug stayed hidden —
-  // fail loudly so schema drift shows up at the source, not as downstream 403s.
+    .upsert({ id: signUpData.user.id, role })
   if (profileError)
     throw new Error(`Failed to set test user profile: ${profileError.message}`)
 
