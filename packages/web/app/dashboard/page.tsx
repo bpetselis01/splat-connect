@@ -2,7 +2,7 @@
  * Contributor Dashboard Page
  * 
  * Hub for contributors to manage their tutorials.
- * Only accessible to approved contributors (approved=true, role='contributor').
+ * Only accessible to signed-in contributors (role='contributor').
  * 
  * Features:
  * - Stats: Count of draft, pending, approved, rejected tutorials
@@ -20,8 +20,6 @@
  * Middleware protection (middleware.ts):
  * - Requires authenticated user (role='contributor')
  * - If not authenticated → redirect to /login
- * - If not approved → redirect to /pending
- * - If admin → allowed but different UX
  * 
  * Tutorial status meanings:
  * - draft: Incomplete, can still edit
