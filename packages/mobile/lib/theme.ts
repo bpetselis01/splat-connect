@@ -21,4 +21,5 @@ export const theme = {
     bold: 'Nunito_700Bold',
   },
   spacing: (n: number) => n * 4,
+  motion: { pressScale: 0.96, duration: 180 },
 } as const
