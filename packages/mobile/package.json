@@ -18,11 +18,13 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.86.0",
+    "react-native-reanimated": "4.5.0",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "4.25.2",
     "react-native-url-polyfill": "^4.0.0",
     "react-native-web": "^0.21.2",
-    "react-native-webview": "13.16.1"
+    "react-native-webview": "13.16.1",
+    "react-native-worklets": "0.10.0"
   },
   "devDependencies": {
     "@expo/log-box": "~57.0.1",
@@ -51,8 +53,11 @@
     "testPathIgnorePatterns": [
       "<rootDir>/tests/e2e/"
     ],
+    "setupFiles": [
+      "<rootDir>/jest-setup.js"
+    ],
     "transformIgnorePatterns": [
-      "node_modules/(?!(\\.pnpm|(jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|expo-router|expo-linking|expo-constants|expo-status-bar|expo-secure-store|expo-font|react-native-webview|react-native-url-polyfill|react-native-css-interop|@testing-library/react-native))"
+      "node_modules/(?!(\\.pnpm|(jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|expo-router|expo-linking|expo-constants|expo-status-bar|expo-secure-store|expo-font|react-native-webview|react-native-url-polyfill|react-native-css-interop|react-native-reanimated|react-native-worklets|@testing-library/react-native))"
     ]
   }
 }
