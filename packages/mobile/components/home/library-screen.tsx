@@ -1,11 +1,15 @@
 // packages/mobile/components/home/library-screen.tsx
 import { useEffect, useState } from 'react'
-import { View, Text, TextInput, FlatList, Pressable, StyleSheet, ActivityIndicator } from 'react-native'
+import { View, Text, TextInput, Pressable, StyleSheet, ActivityIndicator } from 'react-native'
 import { useRouter } from 'expo-router'
 import type { Tutorial, Difficulty } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { DifficultyBadge } from '../difficulty-badge'
+import { ScreenHeader } from '../ui/ScreenHeader'
+import { Chip } from '../ui/Chip'
+import { Card } from '../ui/Card'
+import { StaggeredList } from '../ui/StaggeredList'
 
 const FILTERS: { label: string; value: Difficulty | null }[] = [
   { label: 'All', value: null },
@@ -47,6 +51,7 @@ export function LibraryScreen() {
 
   return (
     <View style={styles.container}>
+      <ScreenHeader title="Tutorial Library" showLogo />
       <TextInput
         style={styles.search}
         placeholder="Search tutorials"
@@ -55,15 +60,7 @@ export function LibraryScreen() {
       />
       <View style={styles.filterRow}>
         {FILTERS.map((f) => (
-          <Pressable
-            key={f.label}
-            onPress={() => setDifficulty(f.value)}
-            style={[styles.chip, difficulty === f.value && styles.chipActive]}
-          >
-            <Text style={[styles.chipText, difficulty === f.value && styles.chipTextActive]}>
-              {f.label}
-            </Text>
-          </Pressable>
+          <Chip key={f.label} label={f.label} active={difficulty === f.value} onPress={() => setDifficulty(f.value)} />
         ))}
       </View>
       {loading ? (
@@ -71,16 +68,15 @@ export function LibraryScreen() {
       ) : error ? (
         <Text style={styles.error}>{error}</Text>
       ) : (
-        <FlatList
+        <StaggeredList
           data={visible}
           keyExtractor={(t) => t.id}
           renderItem={({ item }) => (
-            <Pressable
-              style={styles.card}
-              onPress={() => router.push({ pathname: '/home/[id]', params: { id: item.id } })}
-            >
-              <Text style={styles.cardTitle}>{item.title}</Text>
-              <DifficultyBadge difficulty={item.difficulty} />
+            <Pressable onPress={() => router.push({ pathname: '/home/[id]', params: { id: item.id } })}>
+              <Card style={styles.card}>
+                <Text style={styles.cardTitle}>{item.title}</Text>
+                <DifficultyBadge difficulty={item.difficulty} />
+              </Card>
             </Pressable>
           )}
         />
@@ -94,29 +90,17 @@ const styles = StyleSheet.create({
   search: {
     borderWidth: 1,
     borderColor: theme.colors.border,
-    borderRadius: 8,
+    borderRadius: theme.radii.sm,
     padding: theme.spacing(2),
     marginBottom: theme.spacing(2),
     fontFamily: theme.fonts.regular,
   },
   filterRow: { flexDirection: 'row', gap: theme.spacing(2), marginBottom: theme.spacing(3) },
-  chip: {
-    paddingVertical: theme.spacing(1),
-    paddingHorizontal: theme.spacing(3),
-    borderRadius: 16,
-    backgroundColor: theme.colors.accentLight,
-  },
-  chipActive: { backgroundColor: theme.colors.primary },
-  chipText: { color: theme.colors.text, fontFamily: theme.fonts.semiBold },
-  chipTextActive: { color: '#ffffff' },
   card: {
-    backgroundColor: theme.colors.accentLighter,
-    borderRadius: 12,
-    padding: theme.spacing(3),
-    marginBottom: theme.spacing(2),
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: theme.spacing(2),
   },
   cardTitle: { fontFamily: theme.fonts.bold, color: theme.colors.text, fontSize: 16 },
   error: { color: theme.colors.text, padding: theme.spacing(4) },
