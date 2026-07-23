@@ -12,10 +12,15 @@ export function ProfileScreen() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
 
   async function handleSubmit() {
     setError(null)
+    if (mode === 'signup' && password !== confirmPassword) {
+      setError('Passwords do not match.')
+      return
+    }
     const res = mode === 'signin' ? await signIn(email, password) : await signUp(email, password, name)
     if (res.error) setError(res.error)
   }
@@ -52,9 +57,18 @@ export function ProfileScreen() {
         value={password}
         onChangeText={setPassword}
       />
+      {mode === 'signup' ? (
+        <TextInput
+          style={styles.input}
+          placeholder="Confirm Password"
+          secureTextEntry
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+        />
+      ) : null}
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <Button label={mode === 'signin' ? 'Sign In' : 'Sign Up'} onPress={handleSubmit} />
-      <Pressable onPress={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(null) }}>
+      <Pressable onPress={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(null); setConfirmPassword('') }}>
         <Text style={styles.link}>{mode === 'signin' ? 'Create an account' : 'Have an account? Sign in'}</Text>
       </Pressable>
     </View>

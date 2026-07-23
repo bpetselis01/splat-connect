@@ -41,8 +41,23 @@ describe('ProfileScreen', () => {
     fireEvent.changeText(screen.getByPlaceholderText('Name'), 'Pat')
     fireEvent.changeText(screen.getByPlaceholderText('Email'), 'p@b.com')
     fireEvent.changeText(screen.getByPlaceholderText('Password'), 'pw123456')
+    fireEvent.changeText(screen.getByPlaceholderText('Confirm Password'), 'pw123456')
     fireEvent.press(screen.getByText('Sign Up'))
     await waitFor(() => expect(signUp).toHaveBeenCalledWith('p@b.com', 'pw123456', 'Pat'))
+  })
+
+  it('shows an error and does not submit when passwords do not match', async () => {
+    const signUp = jest.fn().mockResolvedValue({ error: null })
+    ;(useAuth as jest.Mock).mockReturnValue({ session: null, signIn: jest.fn(), signUp, signOut: jest.fn() })
+    render(<ProfileScreen />)
+    fireEvent.press(screen.getByText('Create an account'))
+    fireEvent.changeText(screen.getByPlaceholderText('Name'), 'Pat')
+    fireEvent.changeText(screen.getByPlaceholderText('Email'), 'p@b.com')
+    fireEvent.changeText(screen.getByPlaceholderText('Password'), 'pw123456')
+    fireEvent.changeText(screen.getByPlaceholderText('Confirm Password'), 'different')
+    fireEvent.press(screen.getByText('Sign Up'))
+    await waitFor(() => expect(screen.getByText('Passwords do not match.')).toBeTruthy())
+    expect(signUp).not.toHaveBeenCalled()
   })
 
   it('shows a sign-up error message on failure', async () => {
@@ -53,6 +68,7 @@ describe('ProfileScreen', () => {
     fireEvent.changeText(screen.getByPlaceholderText('Name'), 'Pat')
     fireEvent.changeText(screen.getByPlaceholderText('Email'), 'p@b.com')
     fireEvent.changeText(screen.getByPlaceholderText('Password'), 'pw123456')
+    fireEvent.changeText(screen.getByPlaceholderText('Confirm Password'), 'pw123456')
     fireEvent.press(screen.getByText('Sign Up'))
     await waitFor(() => expect(screen.getByText('Email already registered')).toBeTruthy())
   })
