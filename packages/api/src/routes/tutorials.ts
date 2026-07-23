@@ -21,7 +21,6 @@
  * 
  * - POST /api/tutorials
  *   - Create new draft tutorial
- *   - Validates: user must have approved=true
  *   - Auto-generates status='draft'
  *   - Also creates tutorial_contributors record linking user to tutorial
  *   - Returns: Tutorial object
@@ -89,13 +88,9 @@ tutorials.get('/:id', async (c) => {
 })
 
 tutorials.post('/', async (c) => {
-  // WHY: Any logged-in user could create tutorials before an admin had approved
-  //      their account.
-  if (!c.get('approved')) {
-    return c.json({ error: 'Your account is not yet approved to create tutorials' }, 403)
-  }
   const body = await c.req.json()
-  // Auth/approval already verified above -- use admin client to bypass RLS JWT context issues
+  // WHY: Uses the admin client (bypasses RLS) because RLS policies rely on
+  //      auth.uid() from a JWT context that inserts through this route don't have.
   const supabase = createAdminClient()
   const { data, error } = await supabase
     .from('tutorials')
