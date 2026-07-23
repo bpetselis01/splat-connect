@@ -22,12 +22,8 @@ export function adminClient() {
   return createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
 }
 
-/**
- * Provision a confirmed contributor directly via the service role. Returns
- * credentials for signing in through the UI. `approved` controls whether the
- * profile can pass the middleware's contributor gate.
- */
-export async function createContributor(approved = true) {
+/** Provision a confirmed contributor directly via the service role. Returns credentials for signing in through the UI. */
+export async function createContributor() {
   const admin = adminClient()
   const email = uniqueEmail('contrib')
   const { data, error } = await admin.auth.admin.createUser({
@@ -39,7 +35,7 @@ export async function createContributor(approved = true) {
 
   const { error: profileError } = await admin
     .from('profiles')
-    .upsert({ id: data.user.id, role: 'contributor', approved })
+    .upsert({ id: data.user.id, role: 'contributor' })
   if (profileError) throw new Error(`Failed to set contributor profile: ${profileError.message}`)
 
   return { id: data.user.id, email, password: PASSWORD }
