@@ -11,21 +11,17 @@
  * - Redirects non-admins to home
  * 
  * Stats displayed:
- * 1. Pending contributor requests
- *    - New users awaiting account approval
- *    - Click to go to contributor approval page
+ * 1. Contributors
+ *    - Total contributor accounts
+ *    - Click to go to the contributors list (delete accounts if needed)
  * 2. Tutorials awaiting review
  *    - Submitted tutorials with status='pending'
  *    - Click to go to tutorial review page
  * 
  * Admin workflows:
- * 1. Approve contributor:
- *    - Click "Pending contributor requests"
- *    - See list of unapproved users
- *    - Click user to view profile
- *    - Click "Approve" button
- *    - User's approved status changed to true
- *    - User can now create tutorials
+ * 1. Remove a contributor:
+ *    - Click "Contributors"
+ *    - Click "Delete" on the account to remove
  * 
  * 2. Review tutorial:
  *    - Click "Tutorials awaiting review"
@@ -53,12 +49,12 @@ export default async function AdminPage() {
   ])
 
   const pendingTutorials = tutorials.length
-  const pendingContributors = contributors.filter((c) => !c.approved).length
+  const totalContributors = contributors.length
 
   const cards = [
     {
-      label: 'Pending contributor requests',
-      count: pendingContributors,
+      label: 'Contributors',
+      count: totalContributors,
       href: '/admin/contributors' as const,
       color: 'border-orange-400',
     },
