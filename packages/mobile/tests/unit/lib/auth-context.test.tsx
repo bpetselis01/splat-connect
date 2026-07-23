@@ -71,7 +71,7 @@ describe('useAuth', () => {
 
   // Tests: signUp forwards name + parent role in the user metadata
   it('signUp passes name and parent role in metadata', async () => {
-    mockSignUp.mockResolvedValue({ error: null })
+    mockSignUp.mockResolvedValue({ data: { user: { identities: [{ id: 'i1' }] } }, error: null })
     const { result } = renderHook(() => useAuth(), { wrapper })
     await waitFor(() => expect(result.current.loading).toBe(false))
     const { error } = await act(() => result.current.signUp('p@b.com', 'pw', 'Pat'))
@@ -81,6 +81,15 @@ describe('useAuth', () => {
       password: 'pw',
       options: { data: { name: 'Pat', role: 'parent' } },
     })
+  })
+
+  // Tests: Supabase returns 200 + empty identities for an already-registered email
+  it('signUp reports an error when the email is already registered', async () => {
+    mockSignUp.mockResolvedValue({ data: { user: { identities: [] } }, error: null })
+    const { result } = renderHook(() => useAuth(), { wrapper })
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    const { error } = await act(() => result.current.signUp('p@b.com', 'pw', 'Pat'))
+    expect(error).toBe('This email is already registered. Try signing in instead.')
   })
 
   // Tests: an active session triggers a profile fetch that carries the role
