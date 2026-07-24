@@ -22,6 +22,18 @@ describe('ProfileScreen', () => {
     expect(screen.getByText('Signed in as parent@example.com')).toBeTruthy()
   })
 
+  it('shows role and a dashboard link for a contributor', () => {
+    ;(useAuth as jest.Mock).mockReturnValue({
+      session: { user: { email: 'contributor@example.com' } },
+      profile: { id: '2', name: 'Cory', email: 'contributor@example.com', role: 'contributor', created_at: '' },
+      signIn: jest.fn(),
+      signOut: jest.fn(),
+    })
+    render(<ProfileScreen />)
+    expect(screen.getByText('Contributor')).toBeTruthy()
+    expect(screen.getByText('Open Web Dashboard')).toBeTruthy()
+  })
+
   it('shows an error message when sign-in fails', async () => {
     const signIn = jest.fn().mockResolvedValue({ error: 'Invalid login credentials' })
     ;(useAuth as jest.Mock).mockReturnValue({ session: null, signIn, signUp: jest.fn(), signOut: jest.fn() })

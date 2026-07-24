@@ -1,13 +1,17 @@
 // packages/mobile/components/profile-screen.tsx
 import { useState } from 'react'
-import { View, Text, TextInput, Pressable, StyleSheet } from 'react-native'
+import { View, Text, TextInput, Pressable, StyleSheet, Linking } from 'react-native'
 import { useAuth } from '../lib/auth-context'
 import { theme } from '../lib/theme'
 import { ScreenHeader } from './ui/ScreenHeader'
 import { Button } from './ui/Button'
 
+function roleLabel(role: string) {
+  return role.charAt(0).toUpperCase() + role.slice(1)
+}
+
 export function ProfileScreen() {
-  const { session, signIn, signUp, signOut } = useAuth()
+  const { session, profile, signIn, signUp, signOut } = useAuth()
   const [mode, setMode] = useState<'signin' | 'signup'>('signin')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -30,6 +34,16 @@ export function ProfileScreen() {
       <View style={styles.container}>
         <ScreenHeader title="Profile" showLogo />
         <Text style={styles.signedInText}>Signed in as {session.user.email}</Text>
+        {profile ? (
+          <>
+            <Text style={styles.roleText}>{roleLabel(profile.role)}</Text>
+            <Button
+              label="Open Web Dashboard"
+              onPress={() => Linking.openURL(`${process.env.EXPO_PUBLIC_WEB_URL}/dashboard`)}
+              variant="secondary"
+            />
+          </>
+        ) : null}
         <Button label="Sign Out" onPress={() => signOut()} variant="secondary" />
       </View>
     )
@@ -87,6 +101,7 @@ const styles = StyleSheet.create({
     fontFamily: theme.fonts.regular,
   },
   error: { color: '#991b1b', fontFamily: theme.fonts.regular, marginBottom: theme.spacing(2) },
-  signedInText: { fontFamily: theme.fonts.semiBold, fontSize: 16, color: theme.colors.text, marginBottom: theme.spacing(3), textAlign: 'center' },
+  signedInText: { fontFamily: theme.fonts.semiBold, fontSize: 16, color: theme.colors.text, marginBottom: theme.spacing(1), textAlign: 'center' },
+  roleText: { fontFamily: theme.fonts.regular, fontSize: 14, color: theme.colors.muted, marginBottom: theme.spacing(3), textAlign: 'center' },
   link: { color: theme.colors.primary, fontFamily: theme.fonts.semiBold, textAlign: 'center', marginTop: theme.spacing(3) },
 })
