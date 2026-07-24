@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
     fontFamily: theme.fonts.regular,
   },
   label: { fontFamily: theme.fonts.semiBold, color: theme.colors.text, marginBottom: theme.spacing(1) },
-  error: { color: '#991b1b', fontFamily: theme.fonts.regular, marginBottom: theme.spacing(2) },
+  error: { color: theme.colors.danger, fontFamily: theme.fonts.regular, marginBottom: theme.spacing(2) },
   checkEmailText: { fontFamily: theme.fonts.regular, fontSize: 14, color: theme.colors.muted, textAlign: 'center' },
   signedInText: { fontFamily: theme.fonts.semiBold, fontSize: 16, color: theme.colors.text, marginBottom: theme.spacing(1), textAlign: 'center' },
   roleText: { fontFamily: theme.fonts.regular, fontSize: 14, color: theme.colors.muted, marginBottom: theme.spacing(3), textAlign: 'center' },
