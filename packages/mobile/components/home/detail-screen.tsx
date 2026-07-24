@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, Image } from 'react-native'
+import { View, Text, ScrollView, StyleSheet, ActivityIndicator, Image } from 'react-native'
 import { useRouter } from 'expo-router'
 import type { Tutorial, Part, Tool, StlFile } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
@@ -29,7 +29,7 @@ export function DetailScreen({ id }: { id: string }) {
   if (!tutorial) return <Text style={styles.error}>Tutorial not found.</Text>
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {tutorial.toy_photo_url ? (
         <Image source={{ uri: tutorial.toy_photo_url }} style={styles.photo} />
       ) : (
@@ -43,32 +43,30 @@ export function DetailScreen({ id }: { id: string }) {
 
       <Text style={styles.sectionHeading}>Parts</Text>
       <Card style={styles.section}>
-        <FlatList
-          data={tutorial.parts}
-          keyExtractor={(p) => p.id}
-          renderItem={({ item }) => (
-            <Text style={styles.listItem}>
+        {tutorial.parts.length ? (
+          tutorial.parts.map((item) => (
+            <Text key={item.id} style={styles.listItem}>
               {item.name} × {item.quantity}
               {item.is_optional ? ' (optional)' : ''}
             </Text>
-          )}
-          ListEmptyComponent={<Text style={styles.listItem}>No parts listed.</Text>}
-        />
+          ))
+        ) : (
+          <Text style={styles.listItem}>No parts listed.</Text>
+        )}
       </Card>
 
       <Text style={styles.sectionHeading}>Tools</Text>
       <Card style={styles.section}>
-        <FlatList
-          data={tutorial.tools}
-          keyExtractor={(t) => t.id}
-          renderItem={({ item }) => (
-            <Text style={styles.listItem}>
+        {tutorial.tools.length ? (
+          tutorial.tools.map((item) => (
+            <Text key={item.id} style={styles.listItem}>
               {item.name}
               {item.is_optional ? ' (optional)' : ''}
             </Text>
-          )}
-          ListEmptyComponent={<Text style={styles.listItem}>No tools listed.</Text>}
-        />
+          ))
+        ) : (
+          <Text style={styles.listItem}>No tools listed.</Text>
+        )}
       </Card>
 
       <Button
@@ -81,12 +79,13 @@ export function DetailScreen({ id }: { id: string }) {
         }
         style={styles.previewButton}
       />
-    </View>
+    </ScrollView>
   )
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.background, padding: theme.spacing(4) },
+  container: { flex: 1, backgroundColor: theme.colors.background },
+  content: { padding: theme.spacing(4) },
   loader: { flex: 1, justifyContent: 'center' },
   error: { padding: theme.spacing(4), color: theme.colors.text },
   photo: { width: '100%', height: 200, borderRadius: theme.radii.md, marginBottom: theme.spacing(3) },
