@@ -18,6 +18,7 @@ export function ProfileScreen() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
 
   async function handleSubmit() {
     setError(null)
@@ -25,24 +26,29 @@ export function ProfileScreen() {
       setError('Passwords do not match.')
       return
     }
-    if (mode === 'signin') {
-      const res = await signIn(email, password)
-      if (res.error === 'Email not confirmed') {
-        setError('Please confirm your email before signing in — check your inbox for the confirmation link.')
-      } else if (res.error) {
-        setError(res.error)
+    setSubmitting(true)
+    try {
+      if (mode === 'signin') {
+        const res = await signIn(email, password)
+        if (res.error === 'Email not confirmed') {
+          setError('Please confirm your email before signing in — check your inbox for the confirmation link.')
+        } else if (res.error) {
+          setError(res.error)
+        }
+        return
       }
-      return
+      const res = await signUp(email, password, name)
+      if (res.error) {
+        setError(res.error)
+        return
+      }
+      setMode('check-email')
+      setName('')
+      setPassword('')
+      setConfirmPassword('')
+    } finally {
+      setSubmitting(false)
     }
-    const res = await signUp(email, password, name)
-    if (res.error) {
-      setError(res.error)
-      return
-    }
-    setMode('check-email')
-    setName('')
-    setPassword('')
-    setConfirmPassword('')
   }
 
   if (mode === 'check-email') {
@@ -112,7 +118,7 @@ export function ProfileScreen() {
         />
       ) : null}
       {error ? <Text style={styles.error}>{error}</Text> : null}
-      <Button label={mode === 'signin' ? 'Sign In' : 'Sign Up'} onPress={handleSubmit} />
+      <Button label={mode === 'signin' ? 'Sign In' : 'Sign Up'} onPress={handleSubmit} loading={submitting} />
       <Pressable onPress={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(null); setConfirmPassword('') }}>
         <Text style={styles.link}>{mode === 'signin' ? 'Create an account' : 'Have an account? Sign in'}</Text>
       </Pressable>
