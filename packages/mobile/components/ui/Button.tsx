@@ -36,6 +36,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing(5),
     alignItems: 'center',
     justifyContent: 'center',
+    minHeight: 44,
   },
   text: { fontFamily: theme.fonts.semiBold, fontSize: 16 },
 })
