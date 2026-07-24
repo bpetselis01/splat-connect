@@ -36,7 +36,8 @@ export function LibraryScreen() {
       .then((data) => {
         if (!ignore) setTutorials(data)
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error('[LibraryScreen] tutorial fetch failed:', err)
         if (!ignore) setError("Couldn't load tutorials. Pull to retry.")
       })
       .finally(() => {
