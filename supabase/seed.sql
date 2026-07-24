@@ -29,6 +29,11 @@ values
    'authenticated', 'authenticated', 'pending@splat-test.local',
    crypt('Test1234!', gen_salt('bf')), now(),
    '{"provider":"email","providers":["email"]}', '{"name":"Seed Pending"}', now(), now(),
+   '', '', '', ''),
+  ('00000000-0000-0000-0000-000000000000', '44444444-4444-4444-4444-444444444444',
+   'authenticated', 'authenticated', 'parent@splat-test.local',
+   crypt('Test1234!', gen_salt('bf')), now(),
+   '{"provider":"email","providers":["email"]}', '{"name":"Seed Parent","role":"parent"}', now(), now(),
    '', '', '', '');
 
 insert into auth.identities
@@ -42,6 +47,9 @@ values
    'email', now(), now(), now()),
   (gen_random_uuid(), '33333333-3333-3333-3333-333333333333', '33333333-3333-3333-3333-333333333333',
    '{"sub":"33333333-3333-3333-3333-333333333333","email":"pending@splat-test.local"}',
+   'email', now(), now(), now()),
+  (gen_random_uuid(), '44444444-4444-4444-4444-444444444444', '44444444-4444-4444-4444-444444444444',
+   '{"sub":"44444444-4444-4444-4444-444444444444","email":"parent@splat-test.local"}',
    'email', now(), now(), now());
 
 -- ============================================================
