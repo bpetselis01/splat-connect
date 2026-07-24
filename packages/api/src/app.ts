@@ -11,7 +11,7 @@
  *
  * Data Flow:
  * 1. Client sends request with JWT in Authorization header
- * 2. authMiddleware validates JWT and extracts userId, role, approved status
+ * 2. authMiddleware validates JWT and extracts userId, role
  * 3. Route handler creates Supabase client (RLS-respecting) from JWT
  * 4. Supabase RLS policies enforce row-level access control
  * 5. Response returned to client
