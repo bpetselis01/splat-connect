@@ -35,7 +35,6 @@ export interface Profile {
   name: string
   email: string
   role: Role
-  approved: boolean
   created_at: string
 }
 
