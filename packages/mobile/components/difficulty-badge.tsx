@@ -5,14 +5,15 @@ import { theme } from '../lib/theme'
 
 export function DifficultyBadge({ difficulty }: { difficulty: Difficulty }) {
   const colors = theme.colors.difficulty[difficulty]
+  const label = difficulty.charAt(0).toUpperCase() + difficulty.slice(1)
   return (
     <View style={[styles.badge, { backgroundColor: colors.bg }]}>
-      <Text style={[styles.text, { color: colors.text }]}>{difficulty.toUpperCase()}</Text>
+      <Text style={[styles.text, { color: colors.text }]}>{label}</Text>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  badge: { paddingVertical: 2, paddingHorizontal: 8, borderRadius: theme.radii.sm },
-  text: { fontSize: 11, fontFamily: theme.fonts.bold },
+  badge: { paddingVertical: 4, paddingHorizontal: 10, borderRadius: theme.radii.sm },
+  text: { fontSize: 13, fontFamily: theme.fonts.bold },
 })
