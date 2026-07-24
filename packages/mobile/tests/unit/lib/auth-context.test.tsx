@@ -79,7 +79,10 @@ describe('useAuth', () => {
     expect(mockSignUp).toHaveBeenCalledWith({
       email: 'p@b.com',
       password: 'pw',
-      options: { data: { name: 'Pat', role: 'parent' } },
+      options: {
+        data: { name: 'Pat', role: 'parent' },
+        emailRedirectTo: `${process.env.EXPO_PUBLIC_WEB_URL}/auth/confirmed`,
+      },
     })
   })
 
