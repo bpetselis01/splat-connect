@@ -9,6 +9,7 @@ export const theme = {
     accentLighter: '#f5fbfd',
     border: '#d9e8ee',
     muted: '#6b7a82',
+    danger: '#991b1b',
     difficulty: {
       easy: { bg: '#dcfce7', text: '#166534' },
       medium: { bg: '#fef9c3', text: '#854d0e' },
