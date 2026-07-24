@@ -7,14 +7,13 @@
  * Process:
  * 1. Extracts JWT from Authorization header (Bearer <token>)
  * 2. Validates JWT using Supabase auth service (verifies signature, expiry)
- * 3. Retrieves user profile from database (checks role, approval status)
- * 4. Attaches userId, role, approved, and token to Hono context
+ * 3. Retrieves user profile from database (checks role)
+ * 4. Attaches userId, role, and token to Hono context
  * 5. If any step fails, returns 401 (unauthorized) or 403 (forbidden)
- * 
+ *
  * Context variables added to request:
  * - userId: unique identifier of authenticated user
  * - role: 'admin' | 'contributor'
- * - approved: boolean indicating if user has been approved
  * - token: the JWT itself (used to create RLS-respecting Supabase client)
  * 
  * Related files:
@@ -28,7 +27,6 @@ import type { Role } from '@splat-connect/types'
 export type AuthVariables = {
   userId: string
   role: Role
-  approved: boolean
   token: string
 }
 
@@ -55,7 +53,7 @@ export const authMiddleware: MiddlewareHandler<{ Variables: AuthVariables }> = a
 
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('role, approved')
+    .select('role')
     .eq('id', user.id)
     .single()
 
@@ -65,7 +63,6 @@ export const authMiddleware: MiddlewareHandler<{ Variables: AuthVariables }> = a
 
   c.set('userId', user.id)
   c.set('role', profile.role as Role)
-  c.set('approved', profile.approved as boolean)
   c.set('token', token)
 
   await next()
