@@ -67,7 +67,7 @@ graph TB
 
     Web -->|browser fetch, JWT| API
     Mobile -->|api-client.ts, JWT| API
-    Web -->|@supabase/ssr session| Auth
+    Web -->|"@supabase/ssr session"| Auth
     Mobile -->|supabase.ts session| Auth
     API -->|validate JWT| Auth
     API -->|query w/ RLS| DB
