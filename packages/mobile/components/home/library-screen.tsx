@@ -87,8 +87,15 @@ export function LibraryScreen() {
                   </View>
                 )}
                 <View style={styles.cardBody}>
-                  <Text style={styles.cardTitle}>{item.title}</Text>
-                  <DifficultyBadge difficulty={item.difficulty} />
+                  <View style={styles.cardTitleRow}>
+                    <Text style={styles.cardTitle}>{item.title}</Text>
+                    <DifficultyBadge difficulty={item.difficulty} />
+                  </View>
+                  {item.description ? (
+                    <Text style={styles.cardDescription} numberOfLines={2}>
+                      {item.description}
+                    </Text>
+                  ) : null}
                 </View>
               </Card>
             </Pressable>
@@ -114,21 +121,23 @@ const styles = StyleSheet.create({
   filterRow: { flexDirection: 'row', gap: theme.spacing(2), marginBottom: theme.spacing(3) },
   card: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing(3),
+    alignItems: 'stretch',
+    padding: 0,
+    overflow: 'hidden',
     marginBottom: theme.spacing(2),
   },
-  thumbnail: { width: 56, height: 56, borderRadius: theme.radii.sm },
+  thumbnail: { width: 130, height: '100%' },
   thumbnailPlaceholder: {
-    width: 56,
-    height: 56,
-    borderRadius: theme.radii.sm,
+    width: 130,
+    height: '100%',
     backgroundColor: theme.colors.accentLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  thumbnailPlaceholderEmoji: { fontSize: 24 },
-  cardBody: { flex: 1, gap: theme.spacing(1) },
-  cardTitle: { fontFamily: theme.fonts.bold, color: theme.colors.text, fontSize: 16 },
+  thumbnailPlaceholderEmoji: { fontSize: 36 },
+  cardBody: { flex: 1, padding: theme.spacing(4), gap: theme.spacing(1) },
+  cardTitleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: theme.spacing(2) },
+  cardTitle: { flex: 1, fontFamily: theme.fonts.bold, color: theme.colors.text, fontSize: 18 },
+  cardDescription: { fontFamily: theme.fonts.regular, color: theme.colors.muted, fontSize: 13 },
   error: { color: theme.colors.text, padding: theme.spacing(4) },
 })
