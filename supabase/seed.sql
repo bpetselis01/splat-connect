@@ -45,13 +45,13 @@ values
    'email', now(), now(), now());
 
 -- ============================================================
--- Roles and approval on the auto-created profiles
+-- Roles on the auto-created profiles
 -- ============================================================
-update public.profiles set role = 'contributor', approved = true,  name = 'Seed Contributor'
+update public.profiles set role = 'contributor', name = 'Seed Contributor'
   where id = '11111111-1111-1111-1111-111111111111';
-update public.profiles set role = 'admin',       approved = true,  name = 'Seed Admin'
+update public.profiles set role = 'admin',       name = 'Seed Admin'
   where id = '22222222-2222-2222-2222-222222222222';
-update public.profiles set role = 'contributor', approved = false, name = 'Seed Pending'
+update public.profiles set role = 'contributor', name = 'Seed Pending'
   where id = '33333333-3333-3333-3333-333333333333';
 
 -- ============================================================
