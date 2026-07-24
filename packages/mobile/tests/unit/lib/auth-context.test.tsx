@@ -95,7 +95,7 @@ describe('useAuth', () => {
   // Tests: an active session triggers a profile fetch that carries the role
   it('loads the profile (with role) when a session exists', async () => {
     mockGetSession.mockResolvedValue({ data: { session: { access_token: 't', user: { id: 'u1' } } } })
-    mockApiGet.mockResolvedValue({ id: 'u1', name: 'Pat', email: 'p@b.com', role: 'parent', approved: false })
+    mockApiGet.mockResolvedValue({ id: 'u1', name: 'Pat', email: 'p@b.com', role: 'parent' })
     const { result } = renderHook(() => useAuth(), { wrapper })
     await waitFor(() => expect(result.current.profile?.role).toBe('parent'))
   })
