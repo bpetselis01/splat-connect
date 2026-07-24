@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { View, Text, TextInput, Pressable, StyleSheet, ActivityIndicator, Image } from 'react-native'
 import { useRouter } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
 import type { Tutorial, Difficulty } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
@@ -53,12 +54,15 @@ export function LibraryScreen() {
   return (
     <View style={styles.container}>
       <ScreenHeader title="Tutorial Library" showLogo />
-      <TextInput
-        style={styles.search}
-        placeholder="Search tutorials"
-        value={search}
-        onChangeText={setSearch}
-      />
+      <View style={styles.searchBar}>
+        <Ionicons name="search" size={18} color={theme.colors.muted} style={styles.searchIcon} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search tutorials"
+          value={search}
+          onChangeText={setSearch}
+        />
+      </View>
       <View style={styles.filterRow}>
         {FILTERS.map((f) => (
           <Chip key={f.label} label={f.label} active={difficulty === f.value} onPress={() => setDifficulty(f.value)} />
@@ -97,14 +101,16 @@ export function LibraryScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background, padding: theme.spacing(4) },
-  search: {
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.radii.sm,
-    padding: theme.spacing(2),
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: theme.radii.pill,
+    backgroundColor: theme.colors.accentLight,
+    paddingHorizontal: theme.spacing(3),
     marginBottom: theme.spacing(2),
-    fontFamily: theme.fonts.regular,
   },
+  searchIcon: { marginRight: theme.spacing(2) },
+  searchInput: { flex: 1, paddingVertical: theme.spacing(2), fontFamily: theme.fonts.regular },
   filterRow: { flexDirection: 'row', gap: theme.spacing(2), marginBottom: theme.spacing(3) },
   card: {
     flexDirection: 'row',
