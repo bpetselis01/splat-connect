@@ -55,7 +55,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { name, role: 'parent' } },
+      options: {
+        data: { name, role: 'parent' },
+        emailRedirectTo: `${process.env.EXPO_PUBLIC_WEB_URL}/auth/confirmed`,
+      },
     })
     if (error) return { error: error.message }
     // Supabase returns a 200 with no error but an empty identities array when the
