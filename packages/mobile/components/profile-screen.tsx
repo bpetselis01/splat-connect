@@ -12,7 +12,7 @@ function roleLabel(role: string) {
 
 export function ProfileScreen() {
   const { session, profile, signIn, signUp, signOut } = useAuth()
-  const [mode, setMode] = useState<'signin' | 'signup'>('signin')
+  const [mode, setMode] = useState<'signin' | 'signup' | 'check-email'>('signin')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -25,8 +25,39 @@ export function ProfileScreen() {
       setError('Passwords do not match.')
       return
     }
-    const res = mode === 'signin' ? await signIn(email, password) : await signUp(email, password, name)
-    if (res.error) setError(res.error)
+    if (mode === 'signin') {
+      const res = await signIn(email, password)
+      if (res.error === 'Email not confirmed') {
+        setError('Please confirm your email before signing in — check your inbox for the confirmation link.')
+      } else if (res.error) {
+        setError(res.error)
+      }
+      return
+    }
+    const res = await signUp(email, password, name)
+    if (res.error) {
+      setError(res.error)
+      return
+    }
+    setMode('check-email')
+    setName('')
+    setPassword('')
+    setConfirmPassword('')
+  }
+
+  if (mode === 'check-email') {
+    return (
+      <View style={styles.container}>
+        <ScreenHeader title="Profile" showLogo />
+        <Text style={styles.heading}>Check Your Email</Text>
+        <Text style={styles.checkEmailText}>
+          We&apos;ve sent a confirmation link to {email}. Confirm your email, then sign in below.
+        </Text>
+        <Pressable onPress={() => { setMode('signin'); setError(null) }}>
+          <Text style={styles.link}>Back to sign in</Text>
+        </Pressable>
+      </View>
+    )
   }
 
   if (session) {
@@ -101,6 +132,7 @@ const styles = StyleSheet.create({
     fontFamily: theme.fonts.regular,
   },
   error: { color: '#991b1b', fontFamily: theme.fonts.regular, marginBottom: theme.spacing(2) },
+  checkEmailText: { fontFamily: theme.fonts.regular, fontSize: 14, color: theme.colors.muted, textAlign: 'center' },
   signedInText: { fontFamily: theme.fonts.semiBold, fontSize: 16, color: theme.colors.text, marginBottom: theme.spacing(1), textAlign: 'center' },
   roleText: { fontFamily: theme.fonts.regular, fontSize: 14, color: theme.colors.muted, marginBottom: theme.spacing(3), textAlign: 'center' },
   link: { color: theme.colors.primary, fontFamily: theme.fonts.semiBold, textAlign: 'center', marginTop: theme.spacing(3) },
