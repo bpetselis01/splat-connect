@@ -20,11 +20,13 @@ export function Chip({ label, active, onPress }: { label: string; active: boolea
 const styles = StyleSheet.create({
   chip: {
     borderRadius: theme.radii.pill,
-    paddingVertical: theme.spacing(2),
+    paddingVertical: theme.spacing(3),
     paddingHorizontal: theme.spacing(4),
     backgroundColor: theme.colors.accentLight,
+    minHeight: 44,
+    justifyContent: 'center',
   },
-  chipActive: { backgroundColor: theme.colors.primary },
+  chipActive: { backgroundColor: theme.colors.text },
   text: { fontFamily: theme.fonts.semiBold, color: theme.colors.text },
   textActive: { color: '#ffffff' },
 })
