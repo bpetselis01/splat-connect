@@ -113,10 +113,12 @@ const styles = StyleSheet.create({
   guidance: { fontFamily: theme.fonts.regular, color: theme.colors.muted, fontSize: 13, marginBottom: theme.spacing(2) },
   pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2) },
   pill: {
-    paddingVertical: theme.spacing(2),
+    paddingVertical: theme.spacing(3),
     paddingHorizontal: theme.spacing(3),
     borderRadius: theme.radii.pill,
     backgroundColor: theme.colors.accentLight,
+    minHeight: 44,
+    justifyContent: 'center',
   },
   pillActive: { backgroundColor: theme.colors.primary },
   pillText: { color: theme.colors.text, fontFamily: theme.fonts.semiBold },
