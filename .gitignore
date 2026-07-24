@@ -51,6 +51,8 @@ packages/api/.env
 .superpowers/
 .claude/worktrees/
 .claude/settings.local.json
+.claude/skills/
+.claude/.headroom_wrap_marker.json
 
 # git worktrees
 .worktrees/
