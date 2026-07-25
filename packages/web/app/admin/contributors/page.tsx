@@ -15,34 +15,39 @@ export default async function ContributorsPage() {
   if (all.length === 0) {
     return (
       <div>
-        <h1 className="text-2xl font-bold mb-4">Contributors</h1>
-        <p className="text-gray-400">No contributors yet.</p>
+        <h1 className="mb-4 text-2xl font-bold text-ink">Contributors</h1>
+        <div className="flex flex-col items-center px-6 py-16 text-center">
+          <span aria-hidden="true" className="empty-badge">
+            👥
+          </span>
+          <p className="mt-4 font-bold text-ink">No contributors yet.</p>
+          <p className="mt-1 max-w-xs text-sm leading-relaxed text-muted">
+            Accounts appear here once someone requests contributor access.
+          </p>
+        </div>
       </div>
     )
   }
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Contributors</h1>
+      <h1 className="mb-6 text-2xl font-bold text-ink">Contributors</h1>
       <div className="flex flex-col gap-3">
         {all.map((p) => (
           <div
             key={p.id}
-            className="bg-white border rounded-xl p-4 flex items-center justify-between gap-4"
+            className="card flex flex-wrap items-center justify-between gap-4 p-4"
           >
-            <div>
-              <p className="font-semibold text-sm">{p.name}</p>
-              <p className="text-xs text-gray-500">{p.email}</p>
-              <p className="text-xs text-gray-400">
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-ink">{p.name}</p>
+              <p className="text-xs text-muted">{p.email}</p>
+              <p className="mt-0.5 text-xs text-muted">
                 Joined {new Date(p.created_at).toLocaleDateString()}
               </p>
             </div>
-            <div className="flex gap-2 shrink-0">
+            <div className="flex shrink-0 gap-2">
               <form action={deleteContributor.bind(null, p.id)}>
-                <button
-                  type="submit"
-                  className="bg-red-100 text-red-700 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-red-200"
-                >
+                <button type="submit" className="btn btn-danger btn-sm">
                   Delete
                 </button>
               </form>
