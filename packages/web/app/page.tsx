@@ -32,36 +32,33 @@ export default async function HomePage() {
 
   return (
     <div>
-      {/* Hero */}
-      <div className="text-center py-16 px-4">
-        <h1 className="text-4xl sm:text-5xl font-bold text-[#1e3a5f] mb-4">
+      {/* Hero — the one surface on the site that carries brand colour as fill */}
+      <div className="card-tint px-6 py-14 text-center sm:px-12 sm:py-20">
+        <h1 className="mx-auto max-w-2xl text-3xl font-bold text-ink sm:text-4xl">
           Every child deserves to play.
         </h1>
-        <p className="text-gray-600 max-w-xl mx-auto text-lg mb-8">
+        <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-brand-deep sm:text-lg">
           Free, step-by-step guides for switch-adapting commercial toys so
           children with disabilities can join in.
         </p>
-        <Link
-          href="/library"
-          className="inline-block bg-[#1e3a5f] text-white px-8 py-3 rounded-lg font-semibold text-sm hover:bg-[#16304f]"
-        >
+        <Link href="/library" className="btn btn-primary mt-8 px-8">
           Browse the library →
         </Link>
       </div>
 
       {/* Featured tutorials */}
       {featured.length > 0 && (
-        <div className="mt-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold">Recent tutorials</h2>
+        <div className="mt-12">
+          <div className="mb-4 flex items-center justify-between gap-4">
+            <h2 className="text-xl font-bold text-ink">Recent tutorials</h2>
             <Link
               href="/library"
-              className="text-sm text-blue-600 hover:underline"
+              className="shrink-0 text-sm font-semibold text-brand-dark hover:underline"
             >
               View all →
             </Link>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
             {featured.map((t) => (
               <TutorialCard key={t.id} tutorial={t} />
             ))}
@@ -69,19 +66,38 @@ export default async function HomePage() {
         </div>
       )}
 
-      {/* How it works */}
-      <div className="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
-        {[
-          { icon: '🔍', title: 'Browse', desc: 'Find a tutorial for the toy your child loves.' },
-          { icon: '🛒', title: 'Buy the parts', desc: 'Each tutorial lists exactly what you need with links to buy.' },
-          { icon: '🎉', title: 'Adapt & play', desc: 'Follow the step-by-step PDF guide to make it work with a switch.' },
-        ].map((step) => (
-          <div key={step.title} className="bg-white rounded-xl border p-6">
-            <div className="text-4xl mb-3">{step.icon}</div>
-            <h3 className="font-bold mb-1">{step.title}</h3>
-            <p className="text-sm text-gray-500">{step.desc}</p>
-          </div>
-        ))}
+      {/* How it works — an ordered flow, so the steps are numbered and connected
+          rather than dropped into three interchangeable cards. */}
+      <div className="mt-16">
+        <h2 className="mb-6 text-xl font-bold text-ink">How it works</h2>
+        <ol className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {[
+            { icon: '🔍', title: 'Browse', desc: 'Find a tutorial for the toy your child loves.' },
+            { icon: '🛒', title: 'Buy the parts', desc: 'Each tutorial lists exactly what you need with links to buy.' },
+            { icon: '🎉', title: 'Adapt & play', desc: 'Follow the step-by-step PDF guide to make it work with a switch.' },
+          ].map((step, i) => (
+            <li key={step.title} className="relative flex gap-4 sm:block">
+              {/* Connector between steps — decorative, hidden from the reading order */}
+              {i < 2 && (
+                <span
+                  aria-hidden="true"
+                  className="absolute left-6 top-14 hidden h-[calc(100%-2rem)] w-px bg-line sm:left-14 sm:top-6 sm:block sm:h-px sm:w-[calc(100%-2.5rem)]"
+                />
+              )}
+              <span className="relative z-10 grid h-12 w-12 shrink-0 place-items-center rounded-full bg-brand-tint text-2xl sm:mb-4">
+                <span aria-hidden="true">{step.icon}</span>
+              </span>
+              <div>
+                <h3 className="font-bold text-ink">
+                  <span className="text-muted">{i + 1}.</span> {step.title}
+                </h3>
+                <p className="mt-1 max-w-prose text-sm leading-relaxed text-muted">
+                  {step.desc}
+                </p>
+              </div>
+            </li>
+          ))}
+        </ol>
       </div>
     </div>
   )
