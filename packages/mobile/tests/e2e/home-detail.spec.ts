@@ -6,9 +6,11 @@ test('tapping a tutorial navigates to its detail screen', async ({ page }) => {
   await page.goto('/home')
   await page.getByText(TITLE).click()
 
+  // .last() throughout: the library screen stays mounted behind the detail
+  // screen, so the title, description and badge each match twice.
   await expect(page.getByText(TITLE).last()).toBeVisible()
-  await expect(page.getByText('A seeded, approved tutorial used by E2E tests.')).toBeVisible()
-  await expect(page.getByText('EASY', { exact: true }).last()).toBeVisible()
+  await expect(page.getByText('A seeded, approved tutorial used by E2E tests.').last()).toBeVisible()
+  await expect(page.getByText('Easy', { exact: true }).last()).toBeVisible()
   await expect(page.getByText('Micro switch × 2')).toBeVisible()
   await expect(page.getByText('Soldering iron')).toBeVisible()
 })

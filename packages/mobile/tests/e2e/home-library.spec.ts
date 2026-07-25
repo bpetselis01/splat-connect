@@ -6,7 +6,10 @@ test('the library lists the seeded tutorial with its difficulty badge', async ({
   await page.goto('/home')
 
   await expect(page.getByText(TITLE)).toBeVisible()
-  await expect(page.getByText('EASY', { exact: true })).toBeVisible()
+  // The badge is uppercased in CSS, not in the string, so the text node stays
+  // "Easy" — getByText matches textContent, not the rendered transform.
+  // .last() because the "Easy" difficulty filter chip renders above the list.
+  await expect(page.getByText('Easy', { exact: true }).last()).toBeVisible()
 })
 
 test('search narrows the list and clearing it restores the tutorial', async ({ page }) => {
