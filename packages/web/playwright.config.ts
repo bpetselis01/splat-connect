@@ -37,7 +37,18 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: 'line',
   use: { baseURL: WEB_URL, trace: 'on-first-retry' },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] }, grepInvert: /@responsive/ },
+    {
+      // The app reflows below `sm`: the nav drops its links to a second row, the
+      // library grid steps down to two columns, dashboard rows wrap. Every other
+      // test runs at desktop width, so none of them would notice a nav that
+      // clips its own links.
+      name: 'mobile-chrome',
+      use: { ...devices['Pixel 7'] },
+      grep: /@responsive/,
+    },
+  ],
   webServer: [
     {
       command: 'pnpm --filter @splat-connect/api dev',
