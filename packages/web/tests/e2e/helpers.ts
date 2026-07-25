@@ -17,6 +17,17 @@ export function uniqueContributorEmail() {
   return uniqueEmail('contrib')
 }
 
+/**
+ * Unique per invocation even within the same millisecond. Four parallel workers
+ * collide on `Date.now()` alone, and a duplicated title makes one spec's
+ * assertions match another's fixture.
+ */
+export function uniqueTitle(prefix: string) {
+  return `${prefix} ${Date.now()}-${Math.floor(Math.random() * 1e6)}`
+}
+
+const CONTRIBUTOR_NAME = 'E2E Contributor'
+
 /** Service-role client for E2E fixture setup. */
 export function adminClient() {
   return createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
@@ -30,15 +41,48 @@ export async function createContributor() {
     email,
     password: PASSWORD,
     email_confirm: true,
+    user_metadata: { name: CONTRIBUTOR_NAME },
   })
   if (error || !data.user) throw new Error(`Failed to create contributor: ${error?.message}`)
 
   const { error: profileError } = await admin
     .from('profiles')
-    .upsert({ id: data.user.id, role: 'contributor' })
+    .upsert({ id: data.user.id, role: 'contributor', name: CONTRIBUTOR_NAME })
   if (profileError) throw new Error(`Failed to set contributor profile: ${profileError.message}`)
 
+  return { id: data.user.id, email, password: PASSWORD, name: CONTRIBUTOR_NAME }
+}
+
+/**
+ * Provision a confirmed admin via the service role. The signup trigger defaults
+ * new accounts to the contributor role, so the role is set explicitly here.
+ */
+export async function createAdmin() {
+  const admin = adminClient()
+  const email = uniqueEmail('admin')
+  const { data, error } = await admin.auth.admin.createUser({
+    email,
+    password: PASSWORD,
+    email_confirm: true,
+    user_metadata: { name: 'E2E Admin' },
+  })
+  if (error || !data.user) throw new Error(`Failed to create admin: ${error?.message}`)
+
+  const { error: profileError } = await admin
+    .from('profiles')
+    .upsert({ id: data.user.id, role: 'admin', name: 'E2E Admin' })
+  if (profileError) throw new Error(`Failed to set admin profile: ${profileError.message}`)
+
   return { id: data.user.id, email, password: PASSWORD }
+}
+
+/**
+ * Best-effort teardown. CI boots a fresh Supabase per job, so leaked fixtures
+ * cost nothing there; this keeps repeated local runs from accumulating accounts.
+ * No assertion may depend on this having run.
+ */
+export async function deleteUser(id: string) {
+  await adminClient().auth.admin.deleteUser(id)
 }
 
 /**
@@ -75,8 +119,21 @@ export async function createTutorial(
     .insert({ tutorial_id: id, profile_id: contributorId, role: 'primary' })
   if (linkError) throw new Error(`Failed to link tutorial contributor: ${linkError.message}`)
 
-  await admin.from('parts').insert({ tutorial_id: id, name: 'E2E part', quantity: 1, is_optional: false, buy_links: [] })
+  // A buy link and an STL row so the public detail spec has something to assert
+  // on. Additive: no existing spec asserts on part, tool or STL counts.
+  await admin.from('parts').insert({
+    tutorial_id: id,
+    name: 'E2E part',
+    quantity: 2,
+    is_optional: false,
+    buy_links: [{ label: 'Jaycar', url: 'https://example.com/part' }],
+  })
   await admin.from('tools').insert({ tutorial_id: id, name: 'E2E tool', is_optional: false, buy_links: [] })
+  await admin.from('stl_files').insert({
+    tutorial_id: id,
+    filename: 'e2e-mount.stl',
+    file_url: 'https://placeholder.invalid/e2e-mount.stl',
+  })
 
   return id
 }
