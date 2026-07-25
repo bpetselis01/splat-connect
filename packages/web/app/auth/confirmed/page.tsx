@@ -9,12 +9,16 @@
  */
 export default function EmailConfirmedPage() {
   return (
-    <div className="max-w-sm mx-auto mt-16 text-center">
-      <div className="text-4xl mb-4">✅</div>
-      <h1 className="text-2xl font-bold mb-2">Email confirmed</h1>
-      <p className="text-gray-600 text-sm">
-        Your email has been confirmed. You can close this page and sign in from the app.
-      </p>
+    <div className="mx-auto mt-8 max-w-sm sm:mt-16">
+      <div className="card flex flex-col items-center p-6 text-center sm:p-8">
+        <span aria-hidden="true" className="empty-badge">
+          ✅
+        </span>
+        <h1 className="mt-4 text-2xl font-bold text-ink">Email confirmed</h1>
+        <p className="mt-2 text-sm leading-relaxed text-muted">
+          Your email has been confirmed. You can close this page and sign in from the app.
+        </p>
+      </div>
     </div>
   )
 }
