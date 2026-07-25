@@ -72,19 +72,19 @@ export function BuyLinksInput({ initialLinks = [], onChange }: BuyLinksInputProp
             placeholder="Label (e.g. Jaycar)"
             value={link.label}
             onChange={(e) => updateField(i, 'label', e.target.value)}
-            className="w-28 border rounded-lg px-2 py-1.5 text-sm shrink-0"
+            className="field field-sm w-28 shrink-0"
           />
           <input
             type="url"
             placeholder="URL"
             value={link.url}
             onChange={(e) => updateField(i, 'url', e.target.value)}
-            className="flex-1 border rounded-lg px-2 py-1.5 text-sm"
+            className="field field-sm flex-1"
           />
           <button
             type="button"
             onClick={() => remove(i)}
-            className="text-red-500 hover:text-red-700 text-xs font-semibold shrink-0"
+            className="shrink-0 text-xs font-bold text-danger hover:underline"
           >
             Remove
           </button>
@@ -93,7 +93,7 @@ export function BuyLinksInput({ initialLinks = [], onChange }: BuyLinksInputProp
       <button
         type="button"
         onClick={add}
-        className="self-start text-sm text-blue-600 hover:underline"
+        className="self-start text-sm font-semibold text-brand-dark hover:underline"
       >
         + Add buy link
       </button>
