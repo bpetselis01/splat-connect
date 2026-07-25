@@ -9,32 +9,40 @@ export default async function ReviewListPage() {
   if (tutorials.length === 0) {
     return (
       <div>
-        <h1 className="text-2xl font-bold mb-4">Tutorial review queue</h1>
-        <p className="text-gray-400">No tutorials pending review.</p>
+        <h1 className="mb-4 text-2xl font-bold text-ink">Tutorial review queue</h1>
+        <div className="flex flex-col items-center px-6 py-16 text-center">
+          <span aria-hidden="true" className="empty-badge">
+            ☕
+          </span>
+          <p className="mt-4 font-bold text-ink">No tutorials pending review.</p>
+          <p className="mt-1 max-w-xs text-sm leading-relaxed text-muted">
+            Submissions land here the moment a contributor sends one for review.
+          </p>
+        </div>
       </div>
     )
   }
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Tutorial review queue</h1>
+      <h1 className="mb-6 text-2xl font-bold text-ink">Tutorial review queue</h1>
       <div className="flex flex-col gap-3">
         {tutorials.map((t) => (
           <Link
             key={t.id}
             href={`/admin/review/${t.id}`}
-            className="bg-white border rounded-xl p-4 flex items-center justify-between hover:shadow-md transition-shadow"
+            className="card card-link flex items-center justify-between gap-4 p-4"
           >
             <div className="flex items-center gap-3">
               <DifficultyBadge difficulty={t.difficulty as Difficulty} />
               <div>
-                <p className="font-semibold text-sm">{t.title}</p>
-                <p className="text-xs text-gray-400">
+                <p className="text-sm font-bold text-ink">{t.title}</p>
+                <p className="text-xs text-muted">
                   Submitted {new Date(t.created_at).toLocaleDateString()}
                 </p>
               </div>
             </div>
-            <span className="text-xs text-gray-400">Review →</span>
+            <span className="shrink-0 text-sm font-semibold text-brand-dark">Review →</span>
           </Link>
         ))}
       </div>
