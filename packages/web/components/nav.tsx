@@ -77,7 +77,9 @@ export function Nav({ role }: NavProps) {
           SPLAT Connect
         </Link>
 
-        <div className="ml-auto flex flex-wrap items-center gap-1">
+        {/* On narrow screens the links drop to their own row so the logo and the
+            account control stay together on the first one. */}
+        <div className="order-3 flex w-full flex-wrap items-center gap-1 sm:order-2 sm:ml-auto sm:w-auto">
           {links.map((l) => {
             const active = pathname === l.href || pathname.startsWith(`${l.href}/`)
             return (
@@ -98,11 +100,17 @@ export function Nav({ role }: NavProps) {
         </div>
 
         {role ? (
-          <button onClick={signOut} className="btn btn-quiet btn-sm shrink-0">
+          <button
+            onClick={signOut}
+            className="btn btn-quiet btn-sm order-2 ml-auto shrink-0 sm:order-3 sm:ml-0"
+          >
             Sign out
           </button>
         ) : (
-          <Link href="/signup" className="btn btn-accent btn-sm shrink-0">
+          <Link
+            href="/signup"
+            className="btn btn-accent btn-sm order-2 ml-auto shrink-0 sm:order-3 sm:ml-0"
+          >
             Contribute
           </Link>
         )}
