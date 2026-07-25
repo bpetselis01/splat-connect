@@ -13,8 +13,13 @@ const ANON_KEY =
 const SERVICE_ROLE_KEY =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU'
 
-const API_PORT = '3101'
-const WEB_PORT = '3100'
+// Dedicated E2E ports, deliberately off the dev ports (3100 web / 3101 api in
+// the repo-root .env.local). `reuseExistingServer` below means a shared port
+// would silently hand the suite your running dev servers — which load their
+// own .env.local files and talk to the CLOUD project, defeating the safety
+// boundary above. Mobile E2E owns 3102/3103.
+const API_PORT = '3104'
+const WEB_PORT = '3105'
 const WEB_URL = `http://localhost:${WEB_PORT}`
 
 export default defineConfig({
