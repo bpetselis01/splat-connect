@@ -31,7 +31,7 @@ export function LibraryClient({ tutorials }: { tutorials: Tutorial[] }) {
           id="library-search"
           type="search"
           placeholder="Search by toy name…"
-          className="field field-sm min-w-48 flex-1"
+          className="field field-sm min-w-48 max-w-sm flex-1"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
