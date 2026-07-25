@@ -1,5 +1,19 @@
 # E2E Phase A — Fixture Normalisation Implementation Plan
 
+> **Status: complete (2026-07-26).** Gate met — from a fresh `supabase db reset`,
+> both suites passed twice consecutively at `workers: 4` with no reset in between:
+> web 18/18 then 18/18, mobile 17/17 then 17/17.
+>
+> Wall-clock for the Phase B plan to size against: web 33.7s serial → 19.2s
+> parallel; mobile 2.9m serial → 53.9s parallel. The web gain is small because
+> 18 tests over 9 files leave workers idle — it should scale with Phase B's 54
+> additional tests.
+>
+> One deviation from the plan as written: Task 12 Step 1's audit found all six
+> remaining mobile specs already self-provisioning via `uniqueParentEmail` or
+> `createContributor`, so no extra conversions were needed. Task 6's library
+> filter locators kept the existing `exact: true`, which the plan had dropped.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: superpowers:subagent-driven-development (recommended) or
 > superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
