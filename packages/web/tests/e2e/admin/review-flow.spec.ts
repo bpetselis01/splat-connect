@@ -1,12 +1,13 @@
 import { test, expect } from '@playwright/test'
-import { signIn, createContributor, createTutorial } from '../helpers'
+import { signIn, createContributor, createAdmin, createTutorial, uniqueTitle } from '../helpers'
 
 test('an admin approves a pending tutorial and it appears in the public library', async ({ page }) => {
   const contributor = await createContributor()
-  const title = `E2E Review Target Approve ${Date.now()}`
+  const admin = await createAdmin()
+  const title = uniqueTitle('E2E Review Target Approve')
   const tutorialId = await createTutorial(contributor.id, { title, status: 'pending' })
 
-  await signIn(page, 'admin@splat-test.local', 'Test1234!')
+  await signIn(page, admin.email, admin.password)
   await page.waitForURL('**/admin')
 
   await page.goto('/admin/review')
@@ -22,10 +23,11 @@ test('an admin approves a pending tutorial and it appears in the public library'
 
 test('an admin rejects a pending tutorial with a note visible to the contributor', async ({ page }) => {
   const contributor = await createContributor()
-  const title = `E2E Review Target Reject ${Date.now()}`
+  const admin = await createAdmin()
+  const title = uniqueTitle('E2E Review Target Reject')
   const tutorialId = await createTutorial(contributor.id, { title, status: 'pending' })
 
-  await signIn(page, 'admin@splat-test.local', 'Test1234!')
+  await signIn(page, admin.email, admin.password)
   await page.waitForURL('**/admin')
   await page.goto(`/admin/review/${tutorialId}`)
   await page.waitForLoadState('networkidle')
