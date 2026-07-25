@@ -1,11 +1,14 @@
 // packages/mobile/components/profile-screen.tsx
 import { useState } from 'react'
-import { Text, TextInput, Pressable, StyleSheet, Linking } from 'react-native'
+import { ScrollView, View, Text, Pressable, StyleSheet, Linking } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../lib/auth-context'
 import { theme } from '../lib/theme'
 import { ScreenHeader } from './ui/ScreenHeader'
 import { Button } from './ui/Button'
 import { Screen } from './ui/Screen'
+import { Card } from './ui/Card'
+import { TextField } from './ui/TextField'
 
 function roleLabel(role: string) {
   return role.charAt(0).toUpperCase() + role.slice(1)
@@ -54,111 +57,188 @@ export function ProfileScreen() {
 
   if (mode === 'check-email') {
     return (
-      <Screen style={styles.container}>
+      <Screen>
         <ScreenHeader title="Profile" showLogo />
-        <Text style={styles.heading}>Check Your Email</Text>
-        <Text style={styles.checkEmailText}>
-          We&apos;ve sent a confirmation link to {email}. Confirm your email, then sign in below.
-        </Text>
-        <Pressable onPress={() => { setMode('signin'); setError(null) }}>
-          <Text style={styles.link}>Back to sign in</Text>
-        </Pressable>
+        <Card style={styles.panel}>
+          <View style={styles.confirmBadge}>
+            <Ionicons name="mail-unread-outline" size={26} color={theme.colors.primary} />
+          </View>
+          <Text style={styles.heading}>Check Your Email</Text>
+          <Text style={styles.checkEmailText}>
+            We&apos;ve sent a confirmation link to {email}. Confirm your email, then sign in below.
+          </Text>
+          <Pressable onPress={() => { setMode('signin'); setError(null) }}>
+            <Text style={styles.link}>Back to sign in</Text>
+          </Pressable>
+        </Card>
       </Screen>
     )
   }
 
   if (session) {
     return (
-      <Screen style={styles.container}>
+      <Screen>
         <ScreenHeader title="Profile" showLogo />
-        <Text style={styles.signedInText}>Signed in as {session.user.email}</Text>
-        {profile ? (
-          <>
-            <Text style={styles.roleText}>{roleLabel(profile.role)}</Text>
-            <Button
-              label="Open Web Dashboard"
-              onPress={() => Linking.openURL(`${process.env.EXPO_PUBLIC_WEB_URL}/dashboard`)}
-              variant="secondary"
-            />
-          </>
-        ) : null}
-        <Button label="Sign Out" onPress={() => signOut()} variant="secondary" />
+        <Card style={styles.panel}>
+          <Text style={styles.signedInText}>Signed in as {session.user.email}</Text>
+          {profile ? (
+            <>
+              <Text style={styles.roleText}>{roleLabel(profile.role)}</Text>
+              <Button
+                label="Open Web Dashboard"
+                onPress={() => Linking.openURL(`${process.env.EXPO_PUBLIC_WEB_URL}/dashboard`)}
+                variant="secondary"
+                style={styles.stackedButton}
+              />
+            </>
+          ) : null}
+          <Button label="Sign Out" onPress={() => signOut()} variant="ghost" />
+        </Card>
       </Screen>
     )
   }
 
   return (
-    <Screen style={styles.container}>
-      <ScreenHeader title="Profile" showLogo />
-      <Text style={styles.heading}>{mode === 'signin' ? 'Welcome Back' : 'Create Account'}</Text>
-      {mode === 'signup' ? (
-        <>
-          <Text style={styles.label}>Name</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Name"
-            accessibilityLabel="Name"
-            value={name}
-            onChangeText={setName}
+    <Screen>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        <ScreenHeader
+          title="Profile"
+          subtitle="Sign in to save your child's profile and get tutorials matched to them."
+          showLogo
+        />
+
+        <Card>
+          <Text style={styles.heading}>{mode === 'signin' ? 'Welcome Back' : 'Create Account'}</Text>
+
+          {mode === 'signup' ? (
+            <TextField
+              label="Name"
+              placeholder="Name"
+              accessibilityLabel="Name"
+              value={name}
+              onChangeText={setName}
+            />
+          ) : null}
+
+          <TextField
+            label="Email"
+            placeholder="Email"
+            accessibilityLabel="Email"
+            autoCapitalize="none"
+            keyboardType="email-address"
+            value={email}
+            onChangeText={setEmail}
           />
-        </>
-      ) : null}
-      <Text style={styles.label}>Email</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        accessibilityLabel="Email"
-        autoCapitalize="none"
-        keyboardType="email-address"
-        value={email}
-        onChangeText={setEmail}
-      />
-      <Text style={styles.label}>Password</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        accessibilityLabel="Password"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
-      {mode === 'signup' ? (
-        <>
-          <Text style={styles.label}>Confirm Password</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Confirm Password"
-            accessibilityLabel="Confirm Password"
+
+          <TextField
+            label="Password"
+            placeholder="Password"
+            accessibilityLabel="Password"
             secureTextEntry
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
+            value={password}
+            onChangeText={setPassword}
           />
-        </>
-      ) : null}
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-      <Button label={mode === 'signin' ? 'Sign In' : 'Sign Up'} onPress={handleSubmit} loading={submitting} />
-      <Pressable onPress={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(null); setConfirmPassword('') }}>
-        <Text style={styles.link}>{mode === 'signin' ? 'Create an account' : 'Have an account? Sign in'}</Text>
-      </Pressable>
+
+          {mode === 'signup' ? (
+            <TextField
+              label="Confirm Password"
+              placeholder="Confirm Password"
+              accessibilityLabel="Confirm Password"
+              secureTextEntry
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+            />
+          ) : null}
+
+          {error ? (
+            <View style={styles.errorRow}>
+              <Ionicons name="alert-circle" size={18} color={theme.colors.danger} />
+              <Text style={styles.error}>{error}</Text>
+            </View>
+          ) : null}
+
+          <Button
+            label={mode === 'signin' ? 'Sign In' : 'Sign Up'}
+            onPress={handleSubmit}
+            loading={submitting}
+          />
+        </Card>
+
+        <Pressable
+          onPress={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(null); setConfirmPassword('') }}
+        >
+          <Text style={styles.link}>
+            {mode === 'signin' ? 'Create an account' : 'Have an account? Sign in'}
+          </Text>
+        </Pressable>
+      </ScrollView>
     </Screen>
   )
 }
 
 const styles = StyleSheet.create({
-  container: { justifyContent: 'center' },
-  heading: { fontFamily: theme.fonts.bold, fontSize: 22, color: theme.colors.text, marginBottom: theme.spacing(4) },
-  input: {
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.radii.sm,
-    padding: theme.spacing(3),
-    marginBottom: theme.spacing(2),
-    fontFamily: theme.fonts.regular,
+  content: { paddingBottom: theme.spacing(8) },
+  panel: { alignItems: 'center' },
+  confirmBadge: {
+    width: 60,
+    height: 60,
+    borderRadius: theme.radii.pill,
+    backgroundColor: theme.colors.accentLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: theme.spacing(4),
   },
-  label: { fontFamily: theme.fonts.semiBold, color: theme.colors.text, marginBottom: theme.spacing(1) },
-  error: { color: theme.colors.danger, fontFamily: theme.fonts.regular, marginBottom: theme.spacing(2) },
-  checkEmailText: { fontFamily: theme.fonts.regular, fontSize: 14, color: theme.colors.muted, textAlign: 'center' },
-  signedInText: { fontFamily: theme.fonts.semiBold, fontSize: 16, color: theme.colors.text, marginBottom: theme.spacing(1), textAlign: 'center' },
-  roleText: { fontFamily: theme.fonts.regular, fontSize: 14, color: theme.colors.muted, marginBottom: theme.spacing(3), textAlign: 'center' },
-  link: { color: theme.colors.primary, fontFamily: theme.fonts.semiBold, textAlign: 'center', marginTop: theme.spacing(3) },
+  heading: {
+    fontFamily: theme.fonts.bold,
+    fontSize: theme.type.title,
+    color: theme.colors.text,
+    marginBottom: theme.spacing(4),
+  },
+  stackedButton: { marginBottom: theme.spacing(2), alignSelf: 'stretch' },
+  // Paired with a warning glyph rather than relying on red alone, which is
+  // invisible to the most common forms of colour blindness.
+  errorRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: theme.spacing(2),
+    backgroundColor: theme.colors.apricotSoft,
+    borderRadius: theme.radii.md,
+    padding: theme.spacing(3),
+    marginBottom: theme.spacing(3),
+  },
+  error: {
+    flex: 1,
+    color: theme.colors.danger,
+    fontFamily: theme.fonts.semiBold,
+    fontSize: theme.type.caption,
+    lineHeight: 18,
+  },
+  checkEmailText: {
+    fontFamily: theme.fonts.regular,
+    fontSize: theme.type.label,
+    color: theme.colors.muted,
+    textAlign: 'center',
+    lineHeight: 21,
+  },
+  signedInText: {
+    fontFamily: theme.fonts.bold,
+    fontSize: theme.type.body,
+    color: theme.colors.text,
+    marginBottom: theme.spacing(1),
+    textAlign: 'center',
+  },
+  roleText: {
+    fontFamily: theme.fonts.regular,
+    fontSize: theme.type.label,
+    color: theme.colors.muted,
+    marginBottom: theme.spacing(4),
+    textAlign: 'center',
+  },
+  link: {
+    color: theme.colors.primaryDark,
+    fontFamily: theme.fonts.bold,
+    fontSize: theme.type.label,
+    textAlign: 'center',
+    marginTop: theme.spacing(4),
+  },
 })
