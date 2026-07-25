@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Slot } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
+import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { useFonts, Nunito_400Regular, Nunito_600SemiBold, Nunito_700Bold } from '@expo-google-fonts/nunito'
 import { AuthProvider } from '../lib/auth-context'
 import { IntroVideo } from '../components/ui/IntroVideo'
@@ -18,9 +19,11 @@ export default function RootLayout() {
   if (!fontsLoaded) return null
 
   return (
-    <AuthProvider>
-      <Slot />
-      {showIntro ? <IntroVideo onFinish={() => setShowIntro(false)} /> : null}
-    </AuthProvider>
+    <SafeAreaProvider>
+      <AuthProvider>
+        <Slot />
+        {showIntro ? <IntroVideo onFinish={() => setShowIntro(false)} /> : null}
+      </AuthProvider>
+    </SafeAreaProvider>
   )
 }

@@ -1,10 +1,11 @@
 // packages/mobile/components/profile-screen.tsx
 import { useState } from 'react'
-import { View, Text, TextInput, Pressable, StyleSheet, Linking } from 'react-native'
+import { Text, TextInput, Pressable, StyleSheet, Linking } from 'react-native'
 import { useAuth } from '../lib/auth-context'
 import { theme } from '../lib/theme'
 import { ScreenHeader } from './ui/ScreenHeader'
 import { Button } from './ui/Button'
+import { Screen } from './ui/Screen'
 
 function roleLabel(role: string) {
   return role.charAt(0).toUpperCase() + role.slice(1)
@@ -53,7 +54,7 @@ export function ProfileScreen() {
 
   if (mode === 'check-email') {
     return (
-      <View style={styles.container}>
+      <Screen style={styles.container}>
         <ScreenHeader title="Profile" showLogo />
         <Text style={styles.heading}>Check Your Email</Text>
         <Text style={styles.checkEmailText}>
@@ -62,13 +63,13 @@ export function ProfileScreen() {
         <Pressable onPress={() => { setMode('signin'); setError(null) }}>
           <Text style={styles.link}>Back to sign in</Text>
         </Pressable>
-      </View>
+      </Screen>
     )
   }
 
   if (session) {
     return (
-      <View style={styles.container}>
+      <Screen style={styles.container}>
         <ScreenHeader title="Profile" showLogo />
         <Text style={styles.signedInText}>Signed in as {session.user.email}</Text>
         {profile ? (
@@ -82,12 +83,12 @@ export function ProfileScreen() {
           </>
         ) : null}
         <Button label="Sign Out" onPress={() => signOut()} variant="secondary" />
-      </View>
+      </Screen>
     )
   }
 
   return (
-    <View style={styles.container}>
+    <Screen style={styles.container}>
       <ScreenHeader title="Profile" showLogo />
       <Text style={styles.heading}>{mode === 'signin' ? 'Welcome Back' : 'Create Account'}</Text>
       {mode === 'signup' ? (
@@ -139,12 +140,12 @@ export function ProfileScreen() {
       <Pressable onPress={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(null); setConfirmPassword('') }}>
         <Text style={styles.link}>{mode === 'signin' ? 'Create an account' : 'Have an account? Sign in'}</Text>
       </Pressable>
-    </View>
+    </Screen>
   )
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.background, padding: theme.spacing(4), justifyContent: 'center' },
+  container: { justifyContent: 'center' },
   heading: { fontFamily: theme.fonts.bold, fontSize: 22, color: theme.colors.text, marginBottom: theme.spacing(4) },
   input: {
     borderWidth: 1,

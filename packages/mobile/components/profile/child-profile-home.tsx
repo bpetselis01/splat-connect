@@ -6,6 +6,7 @@ import { useAuth } from '../../lib/auth-context'
 import { useChildProfile } from '../../lib/use-child-profile'
 import { theme } from '../../lib/theme'
 import { Card } from '../ui/Card'
+import { Screen } from '../ui/Screen'
 
 const SUB_SCREENS: { label: string; path: string }[] = [
   { label: 'Ability Profile', path: '/profile/ability' },
@@ -23,7 +24,7 @@ export function ChildProfileHome() {
   }
 
   return (
-    <View style={styles.container}>
+    <Screen>
       <View style={styles.account}>
         <Text style={styles.name}>{account?.name}</Text>
         <Text style={styles.email}>{account?.email}</Text>
@@ -52,12 +53,11 @@ export function ChildProfileHome() {
       <Pressable style={styles.signOut} onPress={() => signOut()}>
         <Text style={styles.signOutText}>Sign Out</Text>
       </Pressable>
-    </View>
+    </Screen>
   )
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.background, padding: theme.spacing(4) },
   account: { marginBottom: theme.spacing(4) },
   name: { fontFamily: theme.fonts.bold, fontSize: 20, color: theme.colors.text },
   email: { fontFamily: theme.fonts.regular, color: theme.colors.muted, marginTop: theme.spacing(1) },
