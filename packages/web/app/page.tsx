@@ -26,8 +26,18 @@ import { TutorialCard } from '@/components/tutorial-card'
 import type { Tutorial } from '@splat-connect/types'
 
 export default async function HomePage() {
-  const res = await fetch(`${process.env.API_URL}/api/public/tutorials`, { cache: 'no-store' })
-  const all: Tutorial[] = res.ok ? await res.json() : []
+  // WHY: `res.ok ? … : []` handles an HTTP error but not a connection failure —
+  //      fetch rejects, nothing catches it, and the page returns a 500. Observed
+  //      with the API stopped: "⨯ [TypeError: fetch failed] … GET / 500".
+  // HOW: The catch falls back to the same empty list the `: []` branch already
+  //      intended, so an unreachable API degrades to an empty featured row.
+  let all: Tutorial[] = []
+  try {
+    const res = await fetch(`${process.env.API_URL}/api/public/tutorials`, { cache: 'no-store' })
+    if (res.ok) all = await res.json()
+  } catch {
+    all = []
+  }
   const featured = all.slice(0, 3)
 
   return (
