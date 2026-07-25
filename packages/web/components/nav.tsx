@@ -1,31 +1,32 @@
 /**
  * Navigation Bar Component
- * 
+ *
  * Top navigation showing SPLAT Connect branding and user menu.
  * Displayed on every page (from root layout.tsx).
- * 
+ *
  * Props:
  * - role: User role ('admin' | 'contributor' | null for logged-out)
- * 
+ *
  * Navigation items (dynamic based on role):
  * - Library: Browse approved tutorials (everyone)
  * - Dashboard: Contributor hub (contributors only)
  * - Admin: Admin dashboard (admins only)
  * - Sign Out: Logout button (if authenticated)
- * 
+ *
  * Data flow:
  * 1. layout.tsx fetches user session
  * 2. Passes user.role to Nav component
  * 3. Nav renders different links based on role
  * 4. User clicks link → navigates to page
  * 5. Page middleware validates access (middleware.ts)
- * 
+ *
  * Features:
- * - Responsive design (stacks on mobile)
+ * - Responsive design (wraps on mobile)
+ * - Current-page indicator driven by the pathname
  * - Sign out button with Supabase auth integration
  * - Links change based on user role
  * - Branding with emoji logo
- * 
+ *
  * Related files:
  * - app/layout.tsx: Root layout, calls Nav
  * - middleware.ts: Validates route access
@@ -33,6 +34,7 @@
  */
 'use client'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Role } from '@splat-connect/types'
 
@@ -42,6 +44,8 @@ interface NavProps {
 
 export function Nav({ role }: NavProps) {
   const supabase = createClient()
+  // Null outside an App Router context (e.g. the unit tests render Nav directly).
+  const pathname = usePathname() ?? ''
 
   async function signOut() {
     await supabase.auth.signOut()
@@ -51,49 +55,58 @@ export function Nav({ role }: NavProps) {
     window.location.href = '/'
   }
 
+  // `as const` keeps the hrefs as literals so they satisfy Next's typed routes.
+  const links = ([
+    { href: '/library', label: 'Library', show: true },
+    { href: '/admin', label: 'Admin', show: role === 'admin' },
+    { href: '/dashboard', label: 'Dashboard', show: role === 'contributor' },
+    { href: '/upload', label: 'Upload', show: role === 'contributor' },
+    { href: '/my-tutorials', label: 'My Tutorials', show: role === 'contributor' },
+  ] as const).filter((l) => l.show)
+
   return (
-    <nav className="bg-[#1e3a5f] text-white px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
-      <Link href="/" className="font-bold text-base sm:text-lg tracking-wide shrink-0">
-        🧩 SPLAT Connect
-      </Link>
-      <div className="flex items-center gap-3 sm:gap-5 text-sm flex-wrap">
-        <Link href="/library" className="hover:opacity-80">
-          Library
+    <header className="sticky top-0 z-30 border-b border-line bg-surface">
+      <nav className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 sm:px-6">
+        <Link
+          href="/"
+          className="flex shrink-0 items-center gap-2 text-base font-bold text-ink sm:text-lg"
+        >
+          <span aria-hidden="true" className="grid h-9 w-9 place-items-center rounded-full bg-brand-tint text-lg">
+            🧩
+          </span>
+          SPLAT Connect
         </Link>
-        {role === 'admin' && (
-          <Link href="/admin" className="hover:opacity-80">
-            Admin
-          </Link>
-        )}
-        {role === 'contributor' && (
-          <>
-            <Link href="/dashboard" className="hover:opacity-80">
-              Dashboard
-            </Link>
-            <Link href="/upload" className="hover:opacity-80">
-              Upload
-            </Link>
-            <Link href="/my-tutorials" className="hover:opacity-80">
-              My Tutorials
-            </Link>
-          </>
-        )}
+
+        <div className="ml-auto flex flex-wrap items-center gap-1">
+          {links.map((l) => {
+            const active = pathname === l.href || pathname.startsWith(`${l.href}/`)
+            return (
+              <Link
+                key={l.href}
+                href={l.href}
+                aria-current={active ? 'page' : undefined}
+                className={`whitespace-nowrap rounded-full px-3 py-2 text-sm font-semibold transition-colors ${
+                  active
+                    ? 'bg-brand-tint text-brand-deep'
+                    : 'text-muted hover:bg-sunken hover:text-ink'
+                }`}
+              >
+                {l.label}
+              </Link>
+            )
+          })}
+        </div>
+
         {role ? (
-          <button
-            onClick={signOut}
-            className="bg-white/20 hover:bg-white/30 px-3 py-1 rounded-md text-xs"
-          >
+          <button onClick={signOut} className="btn btn-quiet btn-sm shrink-0">
             Sign out
           </button>
         ) : (
-          <Link
-            href="/signup"
-            className="bg-orange-500 hover:bg-orange-600 px-3 py-1 rounded-md font-semibold text-xs"
-          >
+          <Link href="/signup" className="btn btn-accent btn-sm shrink-0">
             Contribute
           </Link>
         )}
-      </div>
-    </nav>
+      </nav>
+    </header>
   )
 }
