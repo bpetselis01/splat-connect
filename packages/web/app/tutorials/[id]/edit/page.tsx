@@ -98,25 +98,27 @@ export default async function EditTutorialPage({
     revalidatePath(`/tutorials/${id}/edit`)
   }
 
-  const inputCls = 'w-full border rounded-lg px-3 py-2 text-sm'
-  const saveBtnCls =
-    'self-end bg-[#1e3a5f] text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-[#16304f]'
-  const panelCls = 'bg-white border rounded-xl mb-3'
-  const summaryCls = 'px-5 py-4 font-semibold cursor-pointer select-none list-none'
+  const inputCls = 'field'
+  const saveBtnCls = 'btn btn-primary btn-sm self-end'
+  const panelCls = 'panel mb-3'
+  const summaryCls = 'panel-summary'
 
   return (
     <div>
-      <div className="flex items-center gap-4 mb-6">
-        <Link href="/dashboard" className="text-sm text-blue-600 hover:underline">
+      <div className="mb-6 flex flex-wrap items-center gap-4">
+        <Link
+          href="/dashboard"
+          className="text-sm font-semibold text-brand-dark hover:underline"
+        >
           &larr; Dashboard
         </Link>
-        <h1 className="text-xl font-bold truncate">{tutorial!.title}</h1>
+        <h1 className="truncate text-xl font-bold text-ink">{tutorial!.title}</h1>
       </div>
 
       {tutorial!.status === 'rejected' && (
-        <div className="bg-red-50 border border-red-200 rounded-xl px-5 py-4 mb-3">
-          <p className="text-sm font-semibold text-red-700 mb-1">This tutorial was rejected</p>
-          <p className="text-sm text-red-600">
+        <div className="alert alert-danger mb-3">
+          <p className="mb-1 font-bold">This tutorial was rejected</p>
+          <p className="leading-relaxed">
             {tutorial!.rejection_note ?? 'No feedback was provided.'}
           </p>
         </div>
@@ -125,7 +127,7 @@ export default async function EditTutorialPage({
       {/* Submit for review -- draft only */}
       {tutorial!.status === 'draft' && (
         <div className={`${panelCls} px-5 py-4`}>
-          <p className="text-sm text-gray-600 mb-3">
+          <p className="mb-3 text-sm leading-relaxed text-muted">
             Once all required fields are filled, submit this tutorial for admin review.
           </p>
           <SubmitForReviewButton tutorial={tutorial!} action={submitForReview} />
@@ -135,14 +137,15 @@ export default async function EditTutorialPage({
       {/* Details */}
       <details className={panelCls} open>
         <summary className={summaryCls}>Details</summary>
-        <form action={saveDetails} className="px-5 pb-5 flex flex-col gap-3">
+        <form action={saveDetails} className="flex flex-col gap-3 px-5 pb-5">
           <div>
-            <label className="block text-sm font-medium mb-1">Title</label>
-            <input name="title" defaultValue={tutorial!.title} required className={inputCls} />
+            <label htmlFor="edit-title" className="field-label">Title</label>
+            <input id="edit-title" name="title" defaultValue={tutorial!.title} required className={inputCls} />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Description</label>
+            <label htmlFor="edit-description" className="field-label">Description</label>
             <textarea
+              id="edit-description"
               name="description"
               defaultValue={tutorial!.description ?? ''}
               rows={4}
@@ -150,12 +153,12 @@ export default async function EditTutorialPage({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Difficulty</label>
+            <label htmlFor="edit-difficulty" className="field-label">Difficulty</label>
             {/* WHY: After saving details, the difficulty dropdown shows the old selection
                  instead of the newly saved one.
                 HOW: The key prop forces the dropdown to rebuild from scratch whenever
                      the saved difficulty changes, picking up the fresh value. */}
-            <select key={tutorial!.difficulty} name="difficulty" defaultValue={tutorial!.difficulty} className={inputCls}>
+            <select id="edit-difficulty" key={tutorial!.difficulty} name="difficulty" defaultValue={tutorial!.difficulty} className={inputCls}>
               {/* WHY: The old values ("beginner", "intermediate", "advanced") didn't match
                        the database — saves were silently ignored by the check constraint.
                   HOW: The database only accepts "easy", "medium", or "hard" for difficulty. */}
@@ -206,12 +209,12 @@ export default async function EditTutorialPage({
           {stlFiles.length > 0 && (
             <ul className="mb-4 flex flex-col gap-2">
               {stlFiles.map((f) => (
-                <li key={f.id} className="text-sm border rounded-lg px-3 py-2">
+                <li key={f.id} className="card-flat px-4 py-3 text-sm">
                   <a
                     href={f.file_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline"
+                    className="font-semibold text-brand-dark hover:underline"
                   >
                     {f.filename}
                   </a>
