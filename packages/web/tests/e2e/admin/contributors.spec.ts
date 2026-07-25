@@ -11,7 +11,7 @@ test('an admin deletes a contributor account', async ({ page }) => {
   await page.goto('/admin/contributors')
   await expect(page.getByText('pending@splat-test.local')).toBeVisible()
 
-  const row = page.locator('div.bg-white', { hasText: 'pending@splat-test.local' })
+  const row = page.locator('div.card', { hasText: 'pending@splat-test.local' })
   await row.getByRole('button', { name: 'Delete' }).click()
   await page.waitForLoadState('networkidle')
   await expect(page.getByText('pending@splat-test.local')).not.toBeVisible()
