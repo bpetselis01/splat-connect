@@ -736,6 +736,8 @@ API_PORT=3101  # api dev server
 ```
 Change these here if 3100/3101 are already taken — every other reference (CORS origin, `API_URL`, `NEXT_PUBLIC_API_URL`) derives from these two values, so nothing else needs editing.
 
+The E2E suites deliberately do **not** use these ports — they run their own servers on 3102/3103 (mobile) and 3104/3105 (web), set in each package's `playwright.config.ts`. Keeping them apart means a test run can't be silently handed your dev API, which points at the cloud project rather than local Supabase.
+
 **Required Variables** (in `packages/api/.env.local`):
 ```env
 SUPABASE_URL=https://your-project.supabase.co
