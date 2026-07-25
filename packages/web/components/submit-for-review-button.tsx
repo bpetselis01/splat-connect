@@ -64,7 +64,7 @@ export function SubmitForReviewButton({
       type="button"
       onClick={handleClick}
       disabled={pending}
-      className="w-full bg-orange-500 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-orange-600 disabled:opacity-50"
+      className="btn btn-accent btn-block"
     >
       {pending ? 'Submitting…' : 'Submit for review'}
     </button>
