@@ -1,15 +1,16 @@
 import path from 'node:path'
 import { test, expect } from '@playwright/test'
-import { signIn } from '../helpers'
+import { signIn, createContributor, uniqueTitle } from '../helpers'
 
 const PDF_FIXTURE = path.join(__dirname, '..', 'fixtures', 'test.pdf')
 const PHOTO_FIXTURE = path.join(__dirname, '..', 'fixtures', 'test.jpg')
 
 test('a contributor completes the 6-step upload wizard and the tutorial appears as pending', async ({ page }) => {
-  await signIn(page, 'contributor@splat-test.local', 'Test1234!')
+  const contributor = await createContributor()
+  await signIn(page, contributor.email, contributor.password)
   await page.waitForURL('**/dashboard')
 
-  const title = `E2E Upload Flow ${Date.now()}`
+  const title = uniqueTitle('E2E Upload Flow')
   await page.goto('/upload')
 
   // Step 1: Details
