@@ -31,7 +31,9 @@ export default defineConfig({
   // A single spec reading a shared seeded account would corrupt other workers
   // mid-run, which is why this was `false` until that dependency was removed.
   fullyParallel: true,
-  workers: 4,
+  // 4 locally; 2 on CI, where the free ubuntu-latest runner has 2 cores and
+  // oversubscribing turns timeouts into flake.
+  workers: process.env.CI ? 2 : 4,
   retries: process.env.CI ? 1 : 0,
   reporter: 'line',
   use: { baseURL: WEB_URL, trace: 'on-first-retry' },
