@@ -85,6 +85,13 @@ jobs:
           # has bitten before (see migration 004). Bump deliberately.
           version: 2.109.1
 
+      # 54320-54329 sit inside the runner's ephemeral port range
+      # (net.ipv4.ip_local_port_range = 32768 60999), so the kernel can hand
+      # 54322 to an outbound socket — the image pulls above open dozens — and
+      # Docker then fails to publish it: "address already in use".
+      - name: Reserve Supabase ports from the ephemeral range
+        run: sudo sysctl -w net.ipv4.ip_local_reserved_ports=54320-54329
+
       - name: Start local Supabase
         run: supabase start
 
@@ -119,6 +126,13 @@ jobs:
       - uses: supabase/setup-cli@v1
         with:
           version: 2.109.1
+
+      # 54320-54329 sit inside the runner's ephemeral port range
+      # (net.ipv4.ip_local_port_range = 32768 60999), so the kernel can hand
+      # 54322 to an outbound socket — the image pulls above open dozens — and
+      # Docker then fails to publish it: "address already in use".
+      - name: Reserve Supabase ports from the ephemeral range
+        run: sudo sysctl -w net.ipv4.ip_local_reserved_ports=54320-54329
 
       - name: Start local Supabase
         run: supabase start
@@ -159,6 +173,13 @@ jobs:
       - uses: supabase/setup-cli@v1
         with:
           version: 2.109.1
+
+      # 54320-54329 sit inside the runner's ephemeral port range
+      # (net.ipv4.ip_local_port_range = 32768 60999), so the kernel can hand
+      # 54322 to an outbound socket — the image pulls above open dozens — and
+      # Docker then fails to publish it: "address already in use".
+      - name: Reserve Supabase ports from the ephemeral range
+        run: sudo sysctl -w net.ipv4.ip_local_reserved_ports=54320-54329
 
       - name: Start local Supabase
         run: supabase start
