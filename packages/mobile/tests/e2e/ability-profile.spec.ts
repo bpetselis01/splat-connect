@@ -34,7 +34,9 @@ test('the questionnaire estimates MACS/BFMF and persists them', async ({ page })
   ]) {
     await page.getByText(option, { exact: true }).click()
   }
-  await page.getByText('Estimate').click()
+  // exact: the questionnaire's own blurb ("we'll estimate MACS BFMF for you")
+  // is a substring match for a loose "Estimate".
+  await page.getByText('Estimate', { exact: true }).click()
 
   await expect(page.getByRole('button', { name: 'I', exact: true })).toHaveAttribute('aria-selected', 'true')
   await expect(page.getByRole('button', { name: '1', exact: true })).toHaveAttribute('aria-selected', 'true')
