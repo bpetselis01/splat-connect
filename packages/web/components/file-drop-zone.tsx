@@ -107,11 +107,7 @@ export function FileDropZone({
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      className={`border-2 border-dashed rounded-xl p-5 text-center transition-colors ${
-        dragging
-          ? 'border-blue-500 bg-blue-50'
-          : 'border-gray-300 bg-gray-50 hover:border-gray-400'
-      }`}
+      className={`dropzone ${dragging ? 'dropzone-active' : ''}`}
     >
       <input
         ref={inputRef}
@@ -122,18 +118,18 @@ export function FileDropZone({
         onChange={handleChange}
         className="sr-only"
       />
-      <p className="text-xs text-gray-500 mb-3">
+      <p className="mb-3 text-xs text-muted">
         {dragging ? 'Drop file here' : `Drag & drop or choose ${label.toLowerCase()}`}
       </p>
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
-        className="bg-[#1e3a5f] text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-[#16304f]"
+        className="btn btn-primary btn-sm"
       >
         Choose file
       </button>
       {displayLabel && (
-        <p className="text-xs text-green-700 font-medium mt-3 truncate">{displayLabel}</p>
+        <p className="mt-3 truncate text-xs font-bold text-mint-deep">{displayLabel}</p>
       )}
     </div>
   )
