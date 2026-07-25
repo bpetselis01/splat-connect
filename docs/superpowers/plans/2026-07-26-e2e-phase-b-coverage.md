@@ -1,5 +1,35 @@
 # E2E Phase B — Coverage Implementation Plan
 
+> **Status: partially complete (2026-07-26). 44 of 74 new tests landed.**
+>
+> | Suite | Before | Now | Target |
+> | --- | ---: | ---: | ---: |
+> | web | 18 | **54** | 72 |
+> | mobile | 17 | **25** | 38 |
+>
+> Both suites green at `workers: 4`. Done: Tasks 1-8, 11, 12, 13, and the error/empty
+> half of 14.
+>
+> **Still outstanding:**
+> - Task 9 — upload wizard, 9 tests
+> - Task 10 — edit page, 8 tests (includes the submit-for-review blocking alert,
+>   flagged in the spec as one of the three highest-value additions)
+> - Task 14 remainder — mobile library skeleton, detail parts/tools rendering, preview content
+> - Task 15 — mobile auth errors (6), profile reverse transitions (3), intro video (1)
+> - Task 16 — the phase gate, which cannot be declared met until the above land
+>
+> **Three cases proved untestable as specified; all three belong in the spec's
+> negative space:**
+> 1. The public pages' `fetch`-failure path is server-side, so `page.route` cannot
+>    intercept it. The fix in Task 2 was verified manually against a dead API
+>    (both pages returned 200 with the library falling through to its empty state)
+>    but has no E2E test.
+> 2. The admin review queue's empty state is unreachable under parallel workers,
+>    since neighbouring specs are creating pending tutorials throughout the run.
+> 3. `detail-screen.tsx`'s `"Tutorial not found."` branch is unreachable via an
+>    unknown id — the API answers 404, `apiClient` raises, and the `error` branch
+>    wins. The branch may be dead code.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: superpowers:subagent-driven-development (recommended) or
 > superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 

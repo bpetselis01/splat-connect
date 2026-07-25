@@ -367,6 +367,22 @@ grepping test names.
 - **Visual regression, accessibility audits, performance and load, offline mode,
   multi-user concurrency.** None in scope.
 
+Three further cases were found untestable during Phase B and are recorded here
+rather than left as apparent gaps:
+
+- **Connection failure on the public pages.** `app/page.tsx` and
+  `app/library/page.tsx` fetch server-side, so Playwright's `page.route` cannot
+  intercept them — it only sees browser requests. The `try`/`catch` fix was
+  verified manually against a dead API (both routes returned 200, the library
+  fell through to its empty state) but carries no E2E test.
+- **The admin review queue's empty state.** Unreachable under parallel workers:
+  neighbouring specs create pending tutorials throughout the run, so the queue is
+  never empty. The contributors-list empty state is covered instead.
+- **`detail-screen.tsx`'s `"Tutorial not found."` branch.** An unknown id makes
+  the API answer 404, which `apiClient` raises, so the screen takes its `error`
+  branch. The `!tutorial` branch appears to be dead code and is worth deleting or
+  reaching for deliberately.
+
 ## Verification
 
 | Phase | Gate |
