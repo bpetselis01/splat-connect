@@ -11,8 +11,14 @@ const ANON_KEY =
 const SERVICE_ROLE_KEY =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU'
 
-const API_PORT = '3101'
-const WEB_PORT = '8081'
+// Dedicated E2E ports, deliberately off the dev ports (3100 web / 3101 api in
+// the repo-root .env.local, 8081 Expo dev). `reuseExistingServer` below means
+// a shared port would silently hand the suite your running dev API — which
+// loads packages/api/.env.local and talks to the CLOUD project, defeating the
+// safety boundary above. Sharing also left a local-Supabase API on :3101 after
+// a run, so the phone showed seed data. Web E2E owns 3104/3105.
+const API_PORT = '3102'
+const WEB_PORT = '3103'
 const WEB_URL = `http://localhost:${WEB_PORT}`
 
 export default defineConfig({
@@ -45,7 +51,13 @@ export default defineConfig({
       // no HMR/dev overlays means fast, stable renders (the dev server's
       // transient overlays intercept clicks and cause flaky E2E). EXPO_PUBLIC_*
       // vars are baked in at export time from the env below.
-      command: `pnpm exec expo export -p web && pnpm exec serve -s dist -l ${WEB_PORT}`,
+      // --clear is load-bearing: EXPO_PUBLIC_* are inlined at transform time,
+      // but Metro's per-module cache key does not include their values. A
+      // module that has not changed since an earlier export is served from
+      // cache with the OLD value frozen in, so the app silently calls a stale
+      // API URL while the rest of the bundle looks correct. Costs a cold
+      // transform each run; a wrong-backend E2E run costs far more.
+      command: `pnpm exec expo export -p web --clear && pnpm exec serve -s dist -l ${WEB_PORT}`,
       url: WEB_URL,
       timeout: 300_000,
       reuseExistingServer: !process.env.CI,

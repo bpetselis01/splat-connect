@@ -8,7 +8,13 @@
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.splatconnect.mobile"
+      "bundleIdentifier": "com.splatconnect.mobile",
+      "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true
+        },
+        "NSLocalNetworkUsageDescription": "This app connects to a local development server to load tutorials."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -21,6 +27,10 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-video",
+      "expo-splash-screen"
+    ]
   }
 }

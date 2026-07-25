@@ -6,7 +6,7 @@
  * Endpoints:
  * - GET /api/contributors/me
  *   - Get current user's profile
- *   - Returns: Profile object { id, name, email, role, approved, created_at }
+ *   - Returns: Profile object { id, name, email, role, created_at }
  * 
  * - PATCH /api/contributors/me
  *   - Update current user's profile
@@ -18,7 +18,6 @@
  * - name: Display name
  * - email: Contact email
  * - role: 'admin' | 'contributor'
- * - approved: Boolean flag set by admin
  * - created_at: When account was created
  * 
  * Onboarding:

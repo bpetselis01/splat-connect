@@ -35,7 +35,7 @@ describe('LibraryScreen', () => {
   it('refetches with a difficulty filter when a chip is pressed', async () => {
     render(<LibraryScreen />)
     await screen.findByText('Build a Robot Arm')
-    fireEvent.press(screen.getByText('Hard'))
+    fireEvent.press(screen.getByRole('button', { name: 'Hard' }))
     await waitFor(() =>
       expect(apiClient.get).toHaveBeenCalledWith('/api/public/tutorials?difficulty=hard')
     )

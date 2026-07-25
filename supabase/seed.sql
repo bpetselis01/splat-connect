@@ -29,6 +29,11 @@ values
    'authenticated', 'authenticated', 'pending@splat-test.local',
    crypt('Test1234!', gen_salt('bf')), now(),
    '{"provider":"email","providers":["email"]}', '{"name":"Seed Pending"}', now(), now(),
+   '', '', '', ''),
+  ('00000000-0000-0000-0000-000000000000', '44444444-4444-4444-4444-444444444444',
+   'authenticated', 'authenticated', 'parent@splat-test.local',
+   crypt('Test1234!', gen_salt('bf')), now(),
+   '{"provider":"email","providers":["email"]}', '{"name":"Seed Parent","role":"parent"}', now(), now(),
    '', '', '', '');
 
 insert into auth.identities
@@ -42,16 +47,19 @@ values
    'email', now(), now(), now()),
   (gen_random_uuid(), '33333333-3333-3333-3333-333333333333', '33333333-3333-3333-3333-333333333333',
    '{"sub":"33333333-3333-3333-3333-333333333333","email":"pending@splat-test.local"}',
+   'email', now(), now(), now()),
+  (gen_random_uuid(), '44444444-4444-4444-4444-444444444444', '44444444-4444-4444-4444-444444444444',
+   '{"sub":"44444444-4444-4444-4444-444444444444","email":"parent@splat-test.local"}',
    'email', now(), now(), now());
 
 -- ============================================================
--- Roles and approval on the auto-created profiles
+-- Roles on the auto-created profiles
 -- ============================================================
-update public.profiles set role = 'contributor', approved = true,  name = 'Seed Contributor'
+update public.profiles set role = 'contributor', name = 'Seed Contributor'
   where id = '11111111-1111-1111-1111-111111111111';
-update public.profiles set role = 'admin',       approved = true,  name = 'Seed Admin'
+update public.profiles set role = 'admin',       name = 'Seed Admin'
   where id = '22222222-2222-2222-2222-222222222222';
-update public.profiles set role = 'contributor', approved = false, name = 'Seed Pending'
+update public.profiles set role = 'contributor', name = 'Seed Pending'
   where id = '33333333-3333-3333-3333-333333333333';
 
 -- ============================================================

@@ -79,7 +79,10 @@ describe('useAuth', () => {
     expect(mockSignUp).toHaveBeenCalledWith({
       email: 'p@b.com',
       password: 'pw',
-      options: { data: { name: 'Pat', role: 'parent' } },
+      options: {
+        data: { name: 'Pat', role: 'parent' },
+        emailRedirectTo: `${process.env.EXPO_PUBLIC_WEB_URL}/auth/confirmed`,
+      },
     })
   })
 
@@ -95,7 +98,7 @@ describe('useAuth', () => {
   // Tests: an active session triggers a profile fetch that carries the role
   it('loads the profile (with role) when a session exists', async () => {
     mockGetSession.mockResolvedValue({ data: { session: { access_token: 't', user: { id: 'u1' } } } })
-    mockApiGet.mockResolvedValue({ id: 'u1', name: 'Pat', email: 'p@b.com', role: 'parent', approved: false })
+    mockApiGet.mockResolvedValue({ id: 'u1', name: 'Pat', email: 'p@b.com', role: 'parent' })
     const { result } = renderHook(() => useAuth(), { wrapper })
     await waitFor(() => expect(result.current.profile?.role).toBe('parent'))
   })
