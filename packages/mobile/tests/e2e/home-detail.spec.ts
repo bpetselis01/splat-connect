@@ -29,3 +29,26 @@ test('tapping Preview Tutorial navigates to the preview screen', async ({ page }
 
   await expect(page.getByText('Open in Browser')).toBeVisible()
 })
+
+test('an aborted detail request shows the retry message', async ({ page }) => {
+  const contributor = await createContributor()
+  const id = await createTutorial(contributor.id, {
+    title: uniqueTitle('E2E Mobile Detail Error'),
+    status: 'approved',
+  })
+
+  await page.route(`**/api/public/tutorials/${id}`, (route) => route.abort())
+  await page.goto(`/home/${id}`)
+
+  await expect(page.getByText("Couldn't load tutorial. Please try again.")).toBeVisible()
+})
+
+test('an unknown tutorial id shows the load-failure state', async ({ page }) => {
+  await page.goto('/home/00000000-0000-0000-0000-000000000000')
+
+  // The API answers an unknown id with a 404, which apiClient raises, so the
+  // screen takes its `error` branch. The `!tutorial` branch ("Tutorial not
+  // found.") is therefore unreachable through this path — see the spec's
+  // negative space.
+  await expect(page.getByText("Couldn't load tutorial. Please try again.")).toBeVisible()
+})

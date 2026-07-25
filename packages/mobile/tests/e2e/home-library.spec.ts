@@ -42,3 +42,22 @@ test('the difficulty filter narrows results', async ({ page }) => {
   await page.getByText('Easy', { exact: true }).click()
   await expect(page.getByText(title)).toBeVisible()
 })
+
+test('an aborted tutorials request shows the retry message', async ({ page }) => {
+  await page.route('**/api/public/tutorials*', (route) => route.abort())
+
+  await page.goto('/home')
+
+  await expect(page.getByText("Couldn't load tutorials. Pull to retry.")).toBeVisible()
+})
+
+test('a search with no matches shows the empty state', async ({ page }) => {
+  const contributor = await createContributor()
+  await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile Empty'), status: 'approved' })
+
+  await page.goto('/home')
+  await page.getByPlaceholder('Search tutorials').fill('zzz-no-such-toy-zzz')
+
+  await expect(page.getByText('zzz-no-such-toy-zzz')).toBeVisible()
+  await expect(page.locator('text=/No tutorials/i').first()).toBeVisible()
+})
