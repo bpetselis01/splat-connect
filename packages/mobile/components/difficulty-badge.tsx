@@ -14,6 +14,6 @@ export function DifficultyBadge({ difficulty }: { difficulty: Difficulty }) {
 }
 
 const styles = StyleSheet.create({
-  badge: { paddingVertical: 4, paddingHorizontal: 10, borderRadius: theme.radii.sm },
-  text: { fontSize: 13, fontFamily: theme.fonts.bold },
+  badge: { paddingVertical: 5, paddingHorizontal: 12, borderRadius: theme.radii.pill },
+  text: { fontSize: theme.type.caption, fontFamily: theme.fonts.bold },
 })
