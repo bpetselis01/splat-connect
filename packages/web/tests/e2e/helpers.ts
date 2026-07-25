@@ -76,6 +76,26 @@ export async function createAdmin() {
   return { id: data.user.id, email, password: PASSWORD }
 }
 
+/** Provision a confirmed parent via the service role. */
+export async function createParent() {
+  const admin = adminClient()
+  const email = uniqueEmail('parent')
+  const { data, error } = await admin.auth.admin.createUser({
+    email,
+    password: PASSWORD,
+    email_confirm: true,
+    user_metadata: { name: 'E2E Parent', role: 'parent' },
+  })
+  if (error || !data.user) throw new Error(`Failed to create parent: ${error?.message}`)
+
+  const { error: profileError } = await admin
+    .from('profiles')
+    .upsert({ id: data.user.id, role: 'parent', name: 'E2E Parent' })
+  if (profileError) throw new Error(`Failed to set parent profile: ${profileError.message}`)
+
+  return { id: data.user.id, email, password: PASSWORD }
+}
+
 /**
  * Best-effort teardown. CI boots a fresh Supabase per job, so leaked fixtures
  * cost nothing there; this keeps repeated local runs from accumulating accounts.
@@ -97,6 +117,14 @@ export async function createTutorial(
     status: 'draft' | 'pending' | 'approved' | 'rejected'
     difficulty: 'easy' | 'medium' | 'hard'
     rejection_note: string | null
+    /** null renders the 🧸 placeholder instead of a photo. */
+    toyPhotoUrl: string | null
+    /** false leaves tutorial_pdf_url null, which makes the tutorial incomplete. */
+    withPdf: boolean
+    /** false omits the STL row, so the detail page drops its 3D-print section. */
+    withStl: boolean
+    /** true adds one optional part and one optional tool alongside the required pair. */
+    withOptionalExtras: boolean
   }> = {}
 ) {
   const admin = adminClient()
@@ -108,8 +136,12 @@ export async function createTutorial(
     description: 'Created by a Playwright E2E test.',
     difficulty: overrides.difficulty ?? 'easy',
     status: overrides.status ?? 'pending',
-    tutorial_pdf_url: 'https://placeholder.invalid/tutorial.pdf',
-    toy_photo_url: 'https://placeholder.invalid/photo.jpg',
+    tutorial_pdf_url:
+      overrides.withPdf === false ? null : 'https://placeholder.invalid/tutorial.pdf',
+    toy_photo_url:
+      overrides.toyPhotoUrl === undefined
+        ? 'https://placeholder.invalid/photo.jpg'
+        : overrides.toyPhotoUrl,
     rejection_note: overrides.rejection_note ?? null,
   })
   if (error) throw new Error(`Failed to create tutorial: ${error.message}`)
@@ -129,11 +161,23 @@ export async function createTutorial(
     buy_links: [{ label: 'Jaycar', url: 'https://example.com/part' }],
   })
   await admin.from('tools').insert({ tutorial_id: id, name: 'E2E tool', is_optional: false, buy_links: [] })
-  await admin.from('stl_files').insert({
-    tutorial_id: id,
-    filename: 'e2e-mount.stl',
-    file_url: 'https://placeholder.invalid/e2e-mount.stl',
-  })
+
+  if (overrides.withStl !== false) {
+    await admin.from('stl_files').insert({
+      tutorial_id: id,
+      filename: 'e2e-mount.stl',
+      file_url: 'https://placeholder.invalid/e2e-mount.stl',
+    })
+  }
+
+  if (overrides.withOptionalExtras) {
+    await admin
+      .from('parts')
+      .insert({ tutorial_id: id, name: 'E2E optional part', quantity: 1, is_optional: true, buy_links: [] })
+    await admin
+      .from('tools')
+      .insert({ tutorial_id: id, name: 'E2E optional tool', is_optional: true, buy_links: [] })
+  }
 
   return id
 }
