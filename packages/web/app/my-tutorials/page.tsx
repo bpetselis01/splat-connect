@@ -1,26 +1,26 @@
 import { apiClient } from '@/lib/api-client'
 import Link from 'next/link'
 import { DifficultyBadge } from '@/components/difficulty-badge'
-import type { Tutorial, TutorialStatus, Difficulty } from '@splat-connect/types'
-
-const statusStyles: Record<TutorialStatus, string> = {
-  draft: 'bg-gray-100 text-gray-600',
-  pending: 'bg-yellow-100 text-yellow-700',
-  approved: 'bg-green-100 text-green-700',
-  rejected: 'bg-red-100 text-red-700',
-}
+import { StatusBadge } from '@/components/status-badge'
+import type { Tutorial, Difficulty } from '@splat-connect/types'
 
 export default async function MyTutorialsPage() {
   const tutorials = await apiClient.get<Tutorial[]>('/api/tutorials/mine')
 
   if (tutorials.length === 0) {
     return (
-      <div className="text-center py-16">
-        <p className="text-gray-400 mb-4">You haven&apos;t submitted any tutorials yet.</p>
-        <Link
-          href="/upload"
-          className="inline-block bg-orange-500 text-white px-6 py-2 rounded-lg text-sm font-semibold hover:bg-orange-600"
-        >
+      <div className="flex flex-col items-center px-6 py-16 text-center">
+        <span aria-hidden="true" className="empty-badge">
+          📘
+        </span>
+        <p className="mt-4 font-bold text-ink">
+          You haven&apos;t submitted any tutorials yet.
+        </p>
+        <p className="mt-1 max-w-xs text-sm leading-relaxed text-muted">
+          A tutorial is a PDF guide plus the parts and tools a parent needs to
+          adapt one toy.
+        </p>
+        <Link href="/upload" className="btn btn-accent mt-6">
           Upload your first tutorial
         </Link>
       </div>
@@ -29,12 +29,9 @@ export default async function MyTutorialsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">My tutorials</h1>
-        <Link
-          href="/upload"
-          className="bg-orange-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-orange-600"
-        >
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <h1 className="text-2xl font-bold text-ink">My tutorials</h1>
+        <Link href="/upload" className="btn btn-accent">
           + New tutorial
         </Link>
       </div>
@@ -42,31 +39,24 @@ export default async function MyTutorialsPage() {
         {tutorials.map((t) => (
           <div
             key={t.id}
-            className="bg-white border rounded-xl p-4 flex items-center justify-between gap-4"
+            className="card flex flex-wrap items-center justify-between gap-4 p-4"
           >
-            <div className="flex items-center gap-3">
+            <div className="flex min-w-0 items-center gap-3">
               <DifficultyBadge difficulty={t.difficulty as Difficulty} />
-              <div>
-                <p className="font-semibold text-sm">{t.title}</p>
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-ink">{t.title}</p>
                 {t.status === 'rejected' && (
-                  <p className="text-xs text-red-600 mt-0.5">
+                  <p className="mt-0.5 text-xs leading-relaxed text-danger">
                     {t.rejection_note ?? 'No feedback was provided.'}
                   </p>
                 )}
               </div>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <Link
-                href={`/tutorials/${t.id}/edit`}
-                className="text-xs font-semibold text-blue-600 hover:underline"
-              >
+            <div className="flex shrink-0 items-center gap-3">
+              <Link href={`/tutorials/${t.id}/edit`} className="btn btn-soft btn-sm">
                 Edit
               </Link>
-              <span
-                className={`text-xs font-bold px-2 py-1 rounded-full ${statusStyles[t.status]}`}
-              >
-                {t.status.toUpperCase()}
-              </span>
+              <StatusBadge status={t.status} />
             </div>
           </div>
         ))}
