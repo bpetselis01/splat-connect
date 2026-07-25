@@ -107,7 +107,8 @@ jobs:
 
   integration:
     name: Integration Tests
-    needs: test
+    needs: [changes, check, test]
+    if: needs.changes.outputs.api == 'true'
     runs-on: ubuntu-latest
 
     steps:
@@ -152,7 +153,8 @@ jobs:
 
   mobile-e2e:
     name: Mobile E2E Tests
-    needs: test
+    needs: [changes, check, test]
+    if: needs.changes.outputs.mobile == 'true'
     runs-on: ubuntu-latest
 
     steps:
@@ -199,7 +201,8 @@ jobs:
 
   web-e2e:
     name: Web E2E Tests
-    needs: test
+    needs: [changes, check, test]
+    if: needs.changes.outputs.web == 'true'
     runs-on: ubuntu-latest
 
     steps:
