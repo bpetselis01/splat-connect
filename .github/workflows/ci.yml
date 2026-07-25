@@ -17,6 +17,42 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
+  # Which packages did this push/PR actually touch? Each of the three heavy
+  # jobs below boots its own local Supabase — roughly two minutes of Docker
+  # before a single test runs — so skipping the ones that cannot be affected
+  # is the largest saving available in a monorepo. Shared paths (api, types,
+  # supabase, the lockfile, this file) deliberately trigger everything.
+  changes:
+    name: Detect Changed Packages
+    runs-on: ubuntu-latest
+    outputs:
+      api: ${{ steps.filter.outputs.api }}
+      web: ${{ steps.filter.outputs.web }}
+      mobile: ${{ steps.filter.outputs.mobile }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            shared: &shared
+              - 'packages/api/**'
+              - 'packages/types/**'
+              - 'supabase/**'
+              - '.github/workflows/ci.yml'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'package.json'
+            api: *shared
+            web:
+              - *shared
+              - 'packages/web/**'
+            mobile:
+              - *shared
+              - 'packages/mobile/**'
+
   check:
     name: Type Check
     runs-on: ubuntu-latest
