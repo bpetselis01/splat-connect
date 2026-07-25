@@ -9,6 +9,13 @@ on:
     branches: [main]
   pull_request:
 
+# Superseded runs are cancelled rather than left to finish. Pushing three
+# commits in a row now costs one full suite instead of three. Merges to main
+# are exempt: every commit that lands should get a complete, recorded run.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 jobs:
   check:
     name: Type Check
