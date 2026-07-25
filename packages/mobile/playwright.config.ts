@@ -25,8 +25,12 @@ export default defineConfig({
   testDir: './tests/e2e',
   timeout: 90_000,
   expect: { timeout: 20_000 },
-  fullyParallel: false,
-  workers: 1,
+  // Safe because every spec provisions its own fixtures and asserts only on rows
+  // it created — see docs/superpowers/specs/2026-07-26-e2e-coverage-audit-design.md.
+  // A single spec reading a shared seeded account would corrupt other workers
+  // mid-run, which is why this was `false` until that dependency was removed.
+  fullyParallel: true,
+  workers: 4,
   retries: process.env.CI ? 1 : 0,
   reporter: 'line',
   use: { baseURL: WEB_URL, trace: 'on-first-retry' },
