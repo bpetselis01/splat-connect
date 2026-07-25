@@ -1,7 +1,12 @@
 name: CI
 
+# `push` without a branch filter meant every push to a branch with an open PR
+# ran this workflow twice — once for `push`, once for `pull_request` — for
+# identical coverage at double the runner minutes. PR branches are covered by
+# the `pull_request` trigger; `push` now only fires for merges to main.
 on:
   push:
+    branches: [main]
   pull_request:
 
 jobs:
