@@ -43,3 +43,33 @@ test('the difficulty filter narrows the grid to the selected difficulty', async 
   await page.getByRole('button', { name: 'easy', exact: true }).click()
   await expect(page.getByText(title)).toBeVisible()
 })
+
+test('search combined with a difficulty filter narrows to the intersection', async ({ page }) => {
+  const contributor = await createContributor()
+  const marker = `E2E Combo ${Date.now()}-${Math.floor(Math.random() * 1e6)}`
+  const easy = `${marker} Easy`
+  const hard = `${marker} Hard`
+  await createTutorial(contributor.id, { title: easy, status: 'approved', difficulty: 'easy' })
+  await createTutorial(contributor.id, { title: hard, status: 'approved', difficulty: 'hard' })
+
+  await page.goto('/library')
+
+  await page.getByPlaceholder('Search by toy name…').fill(marker)
+  await expect(page.getByText(easy)).toBeVisible()
+  await expect(page.getByText(hard)).toBeVisible()
+
+  await page.getByRole('button', { name: 'easy', exact: true }).click()
+  await expect(page.getByText(easy)).toBeVisible()
+  await expect(page.getByText(hard)).toHaveCount(0)
+})
+
+test('a search with no matches shows the empty state', async ({ page }) => {
+  await page.goto('/library')
+
+  await page.getByPlaceholder('Search by toy name…').fill('zzz-no-such-toy-zzz')
+
+  await expect(page.getByText('No tutorials found.')).toBeVisible()
+  await expect(
+    page.getByText('Try a shorter search, or set the difficulty filter back to All.')
+  ).toBeVisible()
+})
