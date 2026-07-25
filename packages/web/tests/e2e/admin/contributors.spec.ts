@@ -17,3 +17,17 @@ test('an admin deletes a contributor account', async ({ page }) => {
 
   await expect(page.getByText(victim.email)).toHaveCount(0)
 })
+
+test('the contributors list renders name, email and joined date', async ({ page }) => {
+  const admin = await createAdmin()
+  const contributor = await createContributor()
+
+  await signIn(page, admin.email, admin.password)
+  await page.waitForURL('**/admin')
+  await page.goto('/admin/contributors')
+
+  const row = page.locator('div.card', { hasText: contributor.email })
+  await expect(row).toContainText(contributor.name)
+  await expect(row).toContainText(contributor.email)
+  await expect(row).toContainText('Joined')
+})
