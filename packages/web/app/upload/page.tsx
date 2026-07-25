@@ -190,76 +190,76 @@ export default function UploadPage() {
   const canAdvance = canAdvanceFromStep(step, draft)
 
   return (
-    <div className="max-w-xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Upload a tutorial</h1>
+    <div className="mx-auto max-w-xl">
+      <h1 className="mb-6 text-2xl font-bold text-ink">Upload a tutorial</h1>
 
-      {/* Step indicator */}
-      <div className="flex gap-1 mb-8">
+      {/* Step indicator — decorative; the line below it is the accessible status */}
+      <div aria-hidden="true" className="mb-3 flex gap-1">
         {STEPS.map((label, i) => (
           <div
             key={label}
-            className={`h-1.5 flex-1 rounded-full transition-colors ${
+            className={`h-1.5 flex-1 rounded-full transition-colors duration-200 ${
               i + 1 < step
-                ? 'bg-green-500'
+                ? 'bg-mint'
                 : i + 1 === step
-                ? 'bg-[#1e3a5f]'
-                : 'bg-gray-200'
+                ? 'bg-brand-dark'
+                : 'bg-line'
             }`}
           />
         ))}
       </div>
-      <p className="text-xs text-gray-500 mb-4">
-        Step {step} of {STEPS.length}: <strong>{STEPS[step - 1]}</strong>
+      <p aria-live="polite" className="mb-5 text-sm text-muted">
+        Step {step} of {STEPS.length}:{' '}
+        <strong className="text-ink">{STEPS[step - 1]}</strong>
       </p>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-2 text-sm mb-4">
+        <p role="alert" className="alert alert-danger mb-4">
           {error}
-        </div>
+        </p>
       )}
 
       {/* Step 1: Details */}
       {step === 1 && (
         <div className="flex flex-col gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Toy name *</label>
+            <label htmlFor="upload-title" className="field-label">Toy name *</label>
             <input
+              id="upload-title"
               type="text"
-              className="w-full border rounded-lg px-3 py-2 text-sm bg-white"
+              className="field"
               value={draft.title}
               onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
               placeholder="e.g. Fisher-Price Piano"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Description</label>
+            <label htmlFor="upload-description" className="field-label">Description</label>
             <textarea
-              className="w-full border rounded-lg px-3 py-2 text-sm bg-white"
+              id="upload-description"
+              className="field"
               rows={3}
               value={draft.description}
               onChange={(e) => setDraft((d) => ({ ...d, description: e.target.value }))}
               placeholder="Brief description of the adaptation"
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Difficulty *</label>
-            <div className="flex gap-2">
+          <fieldset>
+            <legend className="field-label">Difficulty *</legend>
+            <div className="flex flex-wrap gap-2">
               {(['easy', 'medium', 'hard'] as Difficulty[]).map((d) => (
                 <button
                   key={d}
                   type="button"
+                  aria-pressed={draft.difficulty === d}
                   onClick={() => setDraft((s) => ({ ...s, difficulty: d }))}
-                  className={`px-4 py-2 rounded-lg text-sm font-semibold capitalize border transition-colors ${
-                    draft.difficulty === d
-                      ? 'bg-[#1e3a5f] text-white border-[#1e3a5f]'
-                      : 'bg-white text-gray-600 hover:bg-gray-50'
-                  }`}
+                  className="chip capitalize"
                 >
                   {d}
                 </button>
               ))}
             </div>
-          </div>
+          </fieldset>
         </div>
       )}
 
@@ -267,7 +267,7 @@ export default function UploadPage() {
       {step === 2 && (
         <div className="flex flex-col gap-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Tutorial PDF *</label>
+            <label className="field-label">Tutorial PDF *</label>
             <FileDropZone
               name="tutorial_pdf"
               accept=".pdf"
@@ -277,7 +277,7 @@ export default function UploadPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">Photo of finished toy *</label>
+            <label className="field-label">Photo of finished toy *</label>
             <FileDropZone
               name="toy_photo"
               accept="image/*"
@@ -286,21 +286,21 @@ export default function UploadPage() {
               currentFileLabel={draft.toy_photo_url ? 'Photo uploaded ✓' : undefined}
             />
           </div>
-          {uploading && <p className="text-blue-600 text-sm">Uploading…</p>}
+          {uploading && <p className="text-sm font-semibold text-brand-dark">Uploading…</p>}
         </div>
       )}
 
       {/* Step 3: Parts */}
       {step === 3 && (
         <div className="flex flex-col gap-4">
-          <p className="text-sm text-gray-500">Add at least one part (materials needed).</p>
+          <p className="text-sm text-muted">Add at least one part (materials needed).</p>
           {draft.parts.map((part, i) => (
-            <div key={i} className="bg-white border rounded-lg p-3 flex flex-col gap-2">
+            <div key={i} className="card flex flex-col gap-2 p-4">
               <div className="flex gap-2">
                 <input
                   type="text"
                   placeholder="Part name *"
-                  className="flex-1 border rounded px-2 py-1 text-sm"
+                  className="field field-sm flex-1"
                   value={part.name}
                   onChange={(e) =>
                     setDraft((d) => {
@@ -314,7 +314,8 @@ export default function UploadPage() {
                   type="number"
                   min={1}
                   placeholder="Qty"
-                  className="w-16 border rounded px-2 py-1 text-sm"
+                  aria-label="Quantity"
+                  className="field field-sm w-20 shrink-0"
                   value={part.quantity}
                   onChange={(e) =>
                     setDraft((d) => {
@@ -330,12 +331,12 @@ export default function UploadPage() {
                   onClick={() =>
                     setDraft((d) => ({ ...d, parts: d.parts.filter((_, j) => j !== i) }))
                   }
-                  className="text-red-500 text-sm px-2"
+                  className="shrink-0 rounded-full px-2 text-sm text-danger transition-colors hover:bg-apricot-soft"
                 >
                   ✕
                 </button>
               </div>
-              <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+              <label className="flex cursor-pointer select-none items-center gap-2 text-sm">
                 <input
                   type="checkbox"
                   checked={part.is_optional}
@@ -346,12 +347,12 @@ export default function UploadPage() {
                       return { ...d, parts }
                     })
                   }
-                  className="rounded"
+                  className="field-check"
                 />
                 Optional (not required)
               </label>
               <div>
-                <p className="text-xs text-gray-500 mb-1">Buy links</p>
+                <p className="mb-1 text-xs font-bold text-muted">Buy links</p>
                 <BuyLinksInput
                   initialLinks={part.buy_links}
                   onChange={(links: BuyLink[]) =>
@@ -376,7 +377,7 @@ export default function UploadPage() {
                 ],
               }))
             }
-            className="border-2 border-dashed rounded-lg py-2 text-sm text-gray-500 hover:bg-gray-50"
+            className="rounded-2xl border-2 border-dashed border-line py-3 text-sm font-bold text-brand-deep transition-colors hover:border-brand-soft hover:bg-sunken"
           >
             + Add part
           </button>
@@ -386,14 +387,14 @@ export default function UploadPage() {
       {/* Step 4: Tools */}
       {step === 4 && (
         <div className="flex flex-col gap-4">
-          <p className="text-sm text-gray-500">Add at least one tool required for the adaptation.</p>
+          <p className="text-sm text-muted">Add at least one tool required for the adaptation.</p>
           {draft.tools.map((tool, i) => (
-            <div key={i} className="bg-white border rounded-lg p-3 flex flex-col gap-2">
+            <div key={i} className="card flex flex-col gap-2 p-4">
               <div className="flex gap-2">
                 <input
                   type="text"
                   placeholder="Tool name *"
-                  className="flex-1 border rounded px-2 py-1 text-sm"
+                  className="field field-sm flex-1"
                   value={tool.name}
                   onChange={(e) =>
                     setDraft((d) => {
@@ -409,7 +410,7 @@ export default function UploadPage() {
                   onClick={() =>
                     setDraft((d) => ({ ...d, tools: d.tools.filter((_, j) => j !== i) }))
                   }
-                  className="text-red-500 text-sm px-2"
+                  className="shrink-0 rounded-full px-2 text-sm text-danger transition-colors hover:bg-apricot-soft"
                 >
                   ✕
                 </button>
@@ -425,12 +426,12 @@ export default function UploadPage() {
                       return { ...d, tools }
                     })
                   }
-                  className="rounded"
+                  className="field-check"
                 />
                 Optional (not required)
               </label>
               <div>
-                <p className="text-xs text-gray-500 mb-1">Buy links</p>
+                <p className="mb-1 text-xs font-bold text-muted">Buy links</p>
                 <BuyLinksInput
                   initialLinks={tool.buy_links}
                   onChange={(links: BuyLink[]) =>
@@ -452,7 +453,7 @@ export default function UploadPage() {
                 tools: [...d.tools, { name: '', is_optional: false, buy_links: [] }],
               }))
             }
-            className="border-2 border-dashed rounded-lg py-2 text-sm text-gray-500 hover:bg-gray-50"
+            className="rounded-2xl border-2 border-dashed border-line py-3 text-sm font-bold text-brand-deep transition-colors hover:border-brand-soft hover:bg-sunken"
           >
             + Add tool
           </button>
@@ -462,7 +463,7 @@ export default function UploadPage() {
       {/* Step 5: STL files */}
       {step === 5 && (
         <div className="flex flex-col gap-4">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm leading-relaxed text-muted">
             Upload STL files if this adaptation requires 3D-printed parts. Optional.
           </p>
           <FileDropZone
@@ -472,15 +473,15 @@ export default function UploadPage() {
             label="STL Files"
             onChange={handleStlUpload}
           />
-          {uploading && <p className="text-blue-600 text-sm">Uploading…</p>}
+          {uploading && <p className="text-sm font-semibold text-brand-dark">Uploading…</p>}
           {draft.stl_files.length > 0 && (
             <div className="flex flex-col gap-1">
               {draft.stl_files.map((f, i) => (
                 <div
                   key={i}
-                  className="flex items-center justify-between text-sm bg-white border rounded px-3 py-1.5"
+                  className="card-flat flex items-center justify-between gap-3 px-4 py-2.5 text-sm"
                 >
-                  <span>{f.filename}</span>
+                  <span className="truncate">{f.filename}</span>
                   <button
                     type="button"
                     onClick={() =>
@@ -489,7 +490,7 @@ export default function UploadPage() {
                         stl_files: d.stl_files.filter((_, j) => j !== i),
                       }))
                     }
-                    className="text-red-500 text-xs"
+                    className="shrink-0 text-xs font-bold text-danger hover:underline"
                   >
                     Remove
                   </button>
@@ -503,7 +504,7 @@ export default function UploadPage() {
       {/* Step 6: Review */}
       {step === 6 && (
         <div className="flex flex-col gap-4 text-sm">
-          <div className="bg-white border rounded-lg p-4 flex flex-col gap-2">
+          <div className="card flex flex-col gap-2 p-5">
             <p>
               <strong>Title:</strong> {draft.title}
             </p>
@@ -531,14 +532,14 @@ export default function UploadPage() {
               <strong>STL files:</strong> {draft.stl_files.length}
             </p>
           </div>
-          <p className="text-gray-500 text-xs">
+          <p className="text-xs leading-relaxed text-muted">
             Your tutorial will be reviewed by the SPLAT admin before it appears publicly.
           </p>
           <button
             type="button"
             disabled={!canSubmit(draft) || submitting}
             onClick={handleSubmit}
-            className="bg-orange-500 text-white rounded-lg py-2.5 font-semibold hover:bg-orange-600 disabled:opacity-50"
+            className="btn btn-accent btn-block"
           >
             {submitting ? 'Submitting…' : 'Submit for review'}
           </button>
@@ -546,12 +547,12 @@ export default function UploadPage() {
       )}
 
       {/* Navigation */}
-      <div className="flex justify-between mt-8">
+      <div className="mt-8 flex justify-between gap-3">
         <button
           type="button"
           onClick={() => setStep((s) => Math.max(1, s - 1))}
           disabled={step === 1}
-          className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50 disabled:opacity-30"
+          className="btn btn-quiet"
         >
           ← Back
         </button>
@@ -560,7 +561,7 @@ export default function UploadPage() {
             type="button"
             onClick={handleNext}
             disabled={!canAdvance || uploading || saving}
-            className="px-4 py-2 text-sm bg-[#1e3a5f] text-white rounded-lg hover:bg-[#16304f] disabled:opacity-50"
+            className="btn btn-primary"
           >
             {saving ? 'Saving…' : 'Next →'}
           </button>
