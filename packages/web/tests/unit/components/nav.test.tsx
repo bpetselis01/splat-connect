@@ -5,14 +5,19 @@ import { Nav } from '@/components/nav'
 const mockSignOut = vi.fn()
 
 // --- Mock strategy ---
-// Three things are mocked: next/link is replaced with a plain <a> tag so links render in
-// jsdom without Next.js routing infrastructure; the Supabase client is replaced so mockSignOut
-// can be inspected; and window.location is stubbed with a writable href so the post-sign-out
-// redirect can be asserted without triggering real navigation.
+// Four things are mocked: next/link is replaced with a plain <a> tag so links render in
+// jsdom without Next.js routing infrastructure; usePathname is stubbed because Nav reads it
+// to mark the current page and there is no router mounted here; the Supabase client is
+// replaced so mockSignOut can be inspected; and window.location is stubbed with a writable
+// href so the post-sign-out redirect can be asserted without triggering real navigation.
 vi.mock('next/link', () => ({
   default: ({ href, children, ...props }: { href: string; children: React.ReactNode; [key: string]: unknown }) => (
     <a href={href} {...props}>{children}</a>
   ),
+}))
+
+vi.mock('next/navigation', () => ({
+  usePathname: () => '/',
 }))
 
 vi.mock('@/lib/supabase/client', () => ({
