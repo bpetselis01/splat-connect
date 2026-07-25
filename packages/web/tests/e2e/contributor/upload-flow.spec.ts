@@ -41,7 +41,7 @@ test('a contributor completes the 6-step upload wizard and the tutorial appears 
   await page.getByRole('button', { name: 'Submit for review' }).click()
 
   await page.waitForURL('**/my-tutorials')
-  const row = page.locator('div.bg-white', { hasText: title })
+  const row = page.locator('div.card', { hasText: title })
   await expect(row).toBeVisible()
   await expect(row.getByText('PENDING', { exact: true })).toBeVisible()
 })
