@@ -562,9 +562,13 @@ would silently call nothing.
 In `packages/mobile/package.json`:
 
 ```json
-    "device:build": "rm -rf $TMPDIR/metro-cache /tmp/metro-cache && expo prebuild -p android --clean && cd android && ./gradlew assembleRelease",
+    "device:build": "rm -rf \"${TMPDIR:-/tmp}/metro-cache\" && expo prebuild -p android --clean && cd android && ./gradlew assembleRelease",
     "device:test": "maestro test .maestro/flows/",
 ```
+
+`${TMPDIR:-/tmp}` is not stylistic. `TMPDIR` is set on macOS but routinely unset on the Linux
+runner, and a bare `$TMPDIR/metro-cache` would expand to `rm -rf /metro-cache` — harmless only by
+luck. Never let an unset variable sit directly after `rm -rf`.
 
 Run it with the emulator-host URLs:
 
@@ -737,7 +741,13 @@ on:
           API_PORT: 3106
         run: |
           pnpm --filter @splat-connect/api dev &
-          npx wait-on http://localhost:3106/api/public/tutorials --timeout 120000
+          # A curl retry loop rather than `npx wait-on`: wait-on is not a dependency of this
+          # repo, and npx would silently fetch it at CI time. Four lines beats a new dependency.
+          for i in $(seq 1 60); do
+            curl -sf -o /dev/null http://localhost:3106/api/public/tutorials && break
+            [ "$i" = 60 ] && echo "API never came up on 3106" && exit 1
+            sleep 2
+          done
 
       - name: Provision the parent fixture
         run: pnpm --filter @splat-connect/mobile device:fixture >> "$GITHUB_ENV"
