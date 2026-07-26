@@ -1,0 +1,44 @@
+appId: com.splatconnect.mobile
+env:
+  DEVICE_EMAIL: set-by-maestro-test---env
+  DEVICE_PASSWORD: set-by-maestro-test---env
+---
+- runFlow: ../subflows/launch.yaml
+
+# Sign in on the Profile tab. Every field is addressable by its
+# accessibilityLabel: TextField spreads TextInputProps straight to the TextInput,
+# and Button sets accessibilityLabel={label}.
+- tapOn:
+    text: "Profile"
+- assertVisible:
+    text: "Welcome Back"
+- tapOn:
+    text: "Email"
+- inputText: ${DEVICE_EMAIL}
+- tapOn:
+    text: "Password"
+- inputText: ${DEVICE_PASSWORD}
+- hideKeyboard
+- tapOn:
+    text: "Sign In"
+
+# A parent with role resolved from GET /api/contributors/me lands on
+# ChildProfileHome (app/(tabs)/profile/index.tsx), not the "Signed in as" card.
+- assertVisible:
+    text: "Child profile"
+- assertVisible:
+    text: "Customization Metrics"
+
+# The actual test: kill the process, then cold-start again. Anything held only in
+# React state or memory is gone; only what secureStoreAdapter wrote survives.
+- stopApp
+- runFlow: ../subflows/launch.yaml
+- tapOn:
+    text: "Profile"
+
+# Still signed in — no sign-in form. Asserting the form is absent matters as much
+# as asserting the home is present: a half-restored session could render both.
+- assertVisible:
+    text: "Child profile"
+- assertNotVisible:
+    text: "Welcome Back"
