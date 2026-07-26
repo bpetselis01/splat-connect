@@ -77,7 +77,11 @@ export default async function DashboardPage() {
           summary of the list below, not the point of the page. */}
       <div className="card mb-8 grid grid-cols-3 divide-x divide-line">
         {stats.map((s) => (
-          <div key={s.label} className="px-4 py-5 text-center">
+          <div
+            key={s.label}
+            data-testid={`stat-${s.label.toLowerCase()}`}
+            className="px-4 py-5 text-center"
+          >
             <p className={`text-2xl font-bold ${s.tone}`}>{s.count}</p>
             <p className="mt-1 text-sm font-semibold text-muted">{s.label}</p>
           </div>

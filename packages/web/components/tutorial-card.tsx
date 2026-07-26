@@ -36,6 +36,7 @@ export function TutorialCard({ tutorial }: { tutorial: Tutorial }) {
   return (
     <Link
       href={`/tutorials/${tutorial.id}`}
+      data-testid="tutorial-card"
       className="card card-link overflow-hidden"
     >
       {tutorial.toy_photo_url ? (

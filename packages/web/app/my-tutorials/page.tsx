@@ -39,6 +39,7 @@ export default async function MyTutorialsPage() {
         {tutorials.map((t) => (
           <div
             key={t.id}
+            data-testid="tutorial-row"
             className="card flex flex-wrap items-center justify-between gap-4 p-4"
           >
             <div className="flex min-w-0 items-center gap-3">

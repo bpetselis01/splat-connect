@@ -36,6 +36,7 @@ export default async function ContributorsPage() {
         {all.map((p) => (
           <div
             key={p.id}
+            data-testid="contributor-row"
             className="card flex flex-wrap items-center justify-between gap-4 p-4"
           >
             <div className="min-w-0">
