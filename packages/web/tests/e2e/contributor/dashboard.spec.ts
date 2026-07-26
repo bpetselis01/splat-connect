@@ -43,11 +43,9 @@ test('the status counts match the fixture set', async ({ page }) => {
   await signIn(page, contributor.email, contributor.password)
   await page.waitForURL('**/dashboard')
 
-  // Each count sits in the same column div as its label.
-  const column = (label: string) => page.getByText(label, { exact: true }).locator('..')
-  await expect(column('Pending').getByText('2')).toBeVisible()
-  await expect(column('Approved').getByText('1')).toBeVisible()
-  await expect(column('Rejected').getByText('1')).toBeVisible()
+  await expect(page.getByTestId('stat-pending')).toContainText('2')
+  await expect(page.getByTestId('stat-approved')).toContainText('1')
+  await expect(page.getByTestId('stat-rejected')).toContainText('1')
 })
 
 test('the View all link appears past five tutorials', async ({ page }) => {

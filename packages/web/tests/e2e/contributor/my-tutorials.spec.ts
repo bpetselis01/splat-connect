@@ -19,7 +19,7 @@ test('every status renders with its badge and an edit link', async ({ page }) =>
   await expect(page.getByText('DRAFT', { exact: true })).toBeVisible()
   await expect(page.getByText('APPROVED', { exact: true })).toBeVisible()
 
-  const row = page.locator('div.card', { hasText: draft })
+  const row = page.getByTestId('tutorial-row').filter({ hasText: draft })
   await expect(row.getByRole('link', { name: 'Edit' })).toHaveAttribute(
     'href',
     `/tutorials/${draftId}/edit`

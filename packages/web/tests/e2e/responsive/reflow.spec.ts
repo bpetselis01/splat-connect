@@ -43,7 +43,7 @@ test('@responsive the library grid renders two columns at phone width', async ({
   await page.goto('/library')
   await page.getByPlaceholder('Search by toy name…').fill(marker)
 
-  const cards = page.locator('a.card')
+  const cards = page.getByTestId('tutorial-card')
   await expect(cards).toHaveCount(2)
 
   // Two columns: the pair shares a row, so their vertical offsets match.
