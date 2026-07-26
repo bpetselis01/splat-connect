@@ -50,7 +50,9 @@
     "test:unit": "jest",
     "test:e2e": "playwright test",
     "test:e2e:install": "playwright install chromium",
-    "device:fixture": "node scripts/provision-device-parent.mjs"
+    "device:fixture": "node scripts/provision-device-parent.mjs",
+    "device:build": "rm -rf \"${TMPDIR:-/tmp}/metro-cache\" && expo prebuild -p android --clean && cd android && ./gradlew assembleRelease",
+    "device:test": "maestro test .maestro/flows/"
   },
   "jest": {
     "preset": "jest-expo",
