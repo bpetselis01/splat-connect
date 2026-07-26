@@ -79,6 +79,10 @@ export async function createTutorial(
     title: string
     status: 'draft' | 'pending' | 'approved' | 'rejected'
     difficulty: 'easy' | 'medium' | 'hard'
+    /** false leaves tutorial_pdf_url null, so the preview screen has nothing to open. */
+    withPdf: boolean
+    /** true adds one optional part and one optional tool alongside the required pair. */
+    withOptionalExtras: boolean
   }> = {}
 ) {
   const admin = adminClient()
@@ -90,7 +94,8 @@ export async function createTutorial(
     description: 'Created by a Playwright E2E test.',
     difficulty: overrides.difficulty ?? 'easy',
     status: overrides.status ?? 'approved',
-    tutorial_pdf_url: 'https://placeholder.invalid/tutorial.pdf',
+    tutorial_pdf_url:
+      overrides.withPdf === false ? null : 'https://placeholder.invalid/tutorial.pdf',
     toy_photo_url: 'https://placeholder.invalid/photo.jpg',
   })
   if (error) throw new Error(`Failed to create tutorial: ${error.message}`)
@@ -102,6 +107,15 @@ export async function createTutorial(
 
   await admin.from('parts').insert({ tutorial_id: id, name: 'E2E part', quantity: 2, is_optional: false, buy_links: [] })
   await admin.from('tools').insert({ tutorial_id: id, name: 'E2E tool', is_optional: false, buy_links: [] })
+
+  if (overrides.withOptionalExtras) {
+    await admin
+      .from('parts')
+      .insert({ tutorial_id: id, name: 'E2E optional part', quantity: 1, is_optional: true, buy_links: [] })
+    await admin
+      .from('tools')
+      .insert({ tutorial_id: id, name: 'E2E optional tool', is_optional: true, buy_links: [] })
+  }
 
   return id
 }
