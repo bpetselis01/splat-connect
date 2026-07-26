@@ -600,14 +600,24 @@ differs, find it with
 The emulator reaches the host API over `10.0.2.2`, which only works if the server is not bound to
 loopback. Start it on the device port and check from the host's LAN address:
 
+Both Supabase keys are required, not optional: `packages/api/src/supabase/client.ts` and
+`user-client.ts` read them with non-null assertions and no fallback, so omitting them makes the route
+throw `supabaseKey is required` and the check fails for a reason that has nothing to do with binding.
+
 ```bash
-SUPABASE_URL=http://localhost:54321 PORT=3106 API_PORT=3106 \
+ANON=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
+SERVICE=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU
+SUPABASE_URL=http://localhost:54321 SUPABASE_ANON_KEY=$ANON SUPABASE_SERVICE_ROLE_KEY=$SERVICE \
+  PORT=3106 API_PORT=3106 \
   pnpm --filter @splat-connect/api dev &
 curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:3106/api/public/tutorials
 curl -s -o /dev/null -w "%{http_code}\n" "http://$(ipconfig getifaddr en0):3106/api/public/tutorials"
 ```
 
-Expected: `200` from both. If the second fails, the server is loopback-bound and needs
+Expected: `200` from both. The LAN-IP request is the one that matters — a loopback-bound server
+cannot answer it, so a 200 there is what proves the emulator can reach the API via `10.0.2.2`.
+**Verified 2026-07-26: both returned 200, so no `packages/api` change is needed.** If it ever fails,
+the server is loopback-bound and needs
 `hostname: '0.0.0.0'` in `packages/api/src/index.ts`'s `serve()` call — note it and fix it in that
 package.
 
