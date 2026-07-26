@@ -1,0 +1,37 @@
+appId: com.splatconnect.mobile
+env:
+  DEVICE_EMAIL: set-by-maestro-test---env
+  DEVICE_PASSWORD: set-by-maestro-test---env
+---
+- runFlow: ../subflows/launch.yaml
+- tapOn:
+    text: "Profile"
+- tapOn:
+    text: "Email"
+- inputText: ${DEVICE_EMAIL}
+- tapOn:
+    text: "Password"
+- inputText: ${DEVICE_PASSWORD}
+- hideKeyboard
+- tapOn:
+    text: "Sign In"
+- assertVisible:
+    text: "Child profile"
+
+# ChildProfileHome carries its own Sign Out (child-profile-home.tsx:109), so the
+# parent view does not need to be left first.
+- tapOn:
+    text: "Sign Out"
+- assertVisible:
+    text: "Welcome Back"
+
+# The point of the flow: the cleared state must be what persisted, not just what
+# is on screen. secureStoreAdapter.removeItem has to have actually deleted the key.
+- stopApp
+- runFlow: ../subflows/launch.yaml
+- tapOn:
+    text: "Profile"
+- assertVisible:
+    text: "Welcome Back"
+- assertNotVisible:
+    text: "Child profile"
