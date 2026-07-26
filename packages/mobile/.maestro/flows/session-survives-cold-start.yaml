@@ -1,12 +1,14 @@
+# DEVICE_EMAIL / DEVICE_PASSWORD come from `maestro test --env`, fed by
+# scripts/provision-device-parent.mjs. Deliberately NOT declared in an `env:`
+# block here: a flow-level `env:` default WINS over --env (measured 2026-07-26 —
+# both flows typed the literal placeholder and failed with "Invalid login
+# credentials"). With no default, an unset variable fails loudly instead.
 appId: com.splatconnect.mobile
-env:
-  DEVICE_EMAIL: set-by-maestro-test---env
-  DEVICE_PASSWORD: set-by-maestro-test---env
 ---
-# Establishes a signed-out precondition at flow start: flows run alphabetically
-# in one `maestro test` session, so without this a prior flow's signed-in state
-# leaks in. Never add this to the relaunch path below — that would wipe the
-# SecureStore entry this suite exists to test.
+# Establishes a signed-out precondition at flow start: both flows run in one
+# `maestro test` session against one device, so without this a prior flow's
+# signed-in state leaks in. Never add this to the relaunch path below — that
+# would wipe the SecureStore entry this suite exists to test.
 - clearState
 - runFlow: ../subflows/launch.yaml
 
