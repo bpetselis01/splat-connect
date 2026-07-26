@@ -361,11 +361,29 @@ grepping test names.
   transitions, not that they are correct. Deliberately not duplicated.
 - **Scanner, toy-library and 3D-print features.** `ComingSoon` placeholders;
   only the placeholder is tested.
-- **Real email delivery.** The confirmation link is covered by the deep-link
-  cold start. Nothing parses an inbox.
+- **Real email delivery.** Nothing parses an inbox, and — now that the
+  deep-link cold start flow below is dropped — the confirmation link itself is
+  untested too.
 - **Browser matrix.** Chromium only, both suites. No Firefox or WebKit.
 - **Visual regression, accessibility audits, performance and load, offline mode,
   multi-user concurrency.** None in scope.
+- **Deep-link cold start (spec Phase C flow 3).** Dropped: the app has no
+  deep-link handling to test. `auth-context.tsx` points `emailRedirectTo` at
+  the **web** app's `/auth/confirmed` route, not an app URL; `app.json` has no
+  `scheme`; and nothing in the mobile app reads an incoming URL — no
+  `Linking.getInitialURL`, `Linking.createURL`, or `url` event subscription
+  anywhere. The only `Linking` calls are two outbound `openURL`s, in
+  `components/profile-screen.tsx` and `components/home/preview-screen.tsx`.
+  Covering it would mean building app-side email confirmation first — a
+  product change, not test coverage.
+- **Intro video as a standalone flow (spec Phase C flow 4).** Folded in
+  rather than dropped: `app/_layout.tsx` renders `IntroVideo` over the whole
+  app on every cold start, and `components/ui/IntroVideo.tsx` is a
+  full-screen `Pressable` that swallows touches until `playToEnd`, a decode
+  error, or the 8s `MAX_INTRO_MS` ceiling. Both device flows must dismiss it
+  to reach anything, so its render on real `expo-video` is asserted
+  implicitly by their passing. Already excluded from Phase B at the user's
+  request.
 
 Three further cases were found untestable during Phase B and are recorded here
 rather than left as apparent gaps:
