@@ -1,22 +1,28 @@
 # E2E Phase B — Coverage Implementation Plan
 
-> **Status: partially complete (2026-07-26). 44 of 74 new tests landed.**
+> **Status: substantially complete (2026-07-26). 67 of 74 new tests landed.**
 >
 > | Suite | Before | Now | Target |
 > | --- | ---: | ---: | ---: |
-> | web | 18 | **54** | 72 |
-> | mobile | 17 | **25** | 38 |
+> | web | 18 | **71** | 72 |
+> | mobile | 17 | **31** | 38 |
 >
-> Both suites green at `workers: 4`. Done: Tasks 1-8, 11, 12, 13, and the error/empty
-> half of 14.
+> Both suites green at `workers: 4`. Done: Tasks 1-13, the error/empty half of 14,
+> and the auth half of 15.
 >
-> **Still outstanding:**
-> - Task 9 — upload wizard, 9 tests
-> - Task 10 — edit page, 8 tests (includes the submit-for-review blocking alert,
->   flagged in the spec as one of the three highest-value additions)
-> - Task 14 remainder — mobile library skeleton, detail parts/tools rendering, preview content
-> - Task 15 — mobile auth errors (6), profile reverse transitions (3), intro video (1)
+> **Still outstanding (7 tests):**
+> - Task 14 remainder — mobile library loading skeleton, detail optional-badge
+>   rendering, preview screen content
+> - Task 15 remainder — profile sub-screen reverse transitions (3), intro video (1)
 > - Task 16 — the phase gate, which cannot be declared met until the above land
+>
+> **Also added beyond the plan:** `data-testid` on list rows and stat columns,
+> replacing the last six locators that depended on a styling class. The suite now
+> has no CSS-class or DOM-traversal coupling, so a restyle cannot break a test.
+>
+> **One unexplained flake.** A single full-suite run reported 70 passed with a
+> non-zero exit and took 1.9m against a 35s norm; four subsequent runs were clean
+> at 71. Not identified. CI carries `retries: 1`, which absorbs a one-off.
 >
 > **Three cases proved untestable as specified; all three belong in the spec's
 > negative space:**
