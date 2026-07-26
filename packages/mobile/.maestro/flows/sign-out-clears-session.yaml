@@ -11,11 +11,14 @@ env:
 - runFlow: ../subflows/launch.yaml
 - tapOn:
     text: "Profile"
+# TextField renders its label as a sibling <Text> with the same string as the
+# input's own accessibilityLabel, so "Email"/"Password" match two nodes —
+# target the inputs by testID instead.
 - tapOn:
-    text: "Email"
+    id: "email-input"
 - inputText: ${DEVICE_EMAIL}
 - tapOn:
-    text: "Password"
+    id: "password-input"
 - inputText: ${DEVICE_PASSWORD}
 - hideKeyboard
 - tapOn:

@@ -10,18 +10,19 @@ env:
 - clearState
 - runFlow: ../subflows/launch.yaml
 
-# Sign in on the Profile tab. Every field is addressable by its
-# accessibilityLabel: TextField spreads TextInputProps straight to the TextInput,
-# and Button sets accessibilityLabel={label}.
+# Sign in on the Profile tab. Button sets accessibilityLabel={label}, so
+# "Sign In" etc. are addressable by text. TextField renders its label as a
+# sibling <Text> with the same string as the input's own accessibilityLabel,
+# so "Email"/"Password" match two nodes — target the inputs by testID instead.
 - tapOn:
     text: "Profile"
 - assertVisible:
     text: "Welcome Back"
 - tapOn:
-    text: "Email"
+    id: "email-input"
 - inputText: ${DEVICE_EMAIL}
 - tapOn:
-    text: "Password"
+    id: "password-input"
 - inputText: ${DEVICE_PASSWORD}
 - hideKeyboard
 - tapOn:

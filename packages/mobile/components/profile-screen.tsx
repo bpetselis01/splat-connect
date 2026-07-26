@@ -121,6 +121,9 @@ export function ProfileScreen() {
           ) : null}
 
           <TextField
+            // testID so E2E can target the input directly; "Email" also
+            // matches the sibling label Text, which isn't focusable.
+            testID="email-input"
             label="Email"
             placeholder="Email"
             accessibilityLabel="Email"
@@ -131,6 +134,7 @@ export function ProfileScreen() {
           />
 
           <TextField
+            testID="password-input"
             label="Password"
             placeholder="Password"
             accessibilityLabel="Password"
