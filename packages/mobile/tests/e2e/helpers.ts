@@ -17,17 +17,112 @@ export function uniqueParentEmail() {
   return uniqueEmail('parent')
 }
 
+/** Service-role client for E2E fixture setup. */
+function adminClient() {
+  return createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
+}
+
+/**
+ * Unique per invocation even within the same millisecond. Parallel workers
+ * collide on `Date.now()` alone, and a duplicated title makes one spec's
+ * assertions match another's fixture.
+ */
+export function uniqueTitle(prefix: string) {
+  return `${prefix} ${Date.now()}-${Math.floor(Math.random() * 1e6)}`
+}
+
 /**
  * Provision a confirmed contributor directly via the service role (the signup
  * trigger defaults new accounts to the contributor role). Returns credentials
  * for signing in through the UI. Used to exercise the non-parent branch.
  */
 export async function createContributor() {
-  const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
+  const admin = adminClient()
   const email = uniqueEmail('contrib')
-  const { error } = await admin.auth.admin.createUser({ email, password: PASSWORD, email_confirm: true })
-  if (error) throw new Error(`Failed to create contributor: ${error.message}`)
-  return { email, password: PASSWORD }
+  const { data, error } = await admin.auth.admin.createUser({
+    email,
+    password: PASSWORD,
+    email_confirm: true,
+    user_metadata: { name: 'E2E Contributor' },
+  })
+  if (error || !data.user) throw new Error(`Failed to create contributor: ${error?.message}`)
+  return { id: data.user.id, email, password: PASSWORD }
+}
+
+/** Provision a confirmed parent via the service role, for specs that don't need the signup UI. */
+export async function createParent() {
+  const admin = adminClient()
+  const email = uniqueEmail('parent')
+  const { data, error } = await admin.auth.admin.createUser({
+    email,
+    password: PASSWORD,
+    email_confirm: true,
+    user_metadata: { name: 'E2E Parent', role: 'parent' },
+  })
+  if (error || !data.user) throw new Error(`Failed to create parent: ${error?.message}`)
+
+  const { error: profileError } = await admin
+    .from('profiles')
+    .upsert({ id: data.user.id, role: 'parent', name: 'E2E Parent' })
+  if (profileError) throw new Error(`Failed to set parent profile: ${profileError.message}`)
+
+  return { id: data.user.id, email, password: PASSWORD }
+}
+
+/**
+ * Provision an approved tutorial with one part and one tool, linked to the given
+ * contributor as primary. Mirrors packages/web/tests/e2e/helpers.ts.
+ */
+export async function createTutorial(
+  contributorId: string,
+  overrides: Partial<{
+    title: string
+    status: 'draft' | 'pending' | 'approved' | 'rejected'
+    difficulty: 'easy' | 'medium' | 'hard'
+    /** false leaves tutorial_pdf_url null, so the preview screen has nothing to open. */
+    withPdf: boolean
+    /** true adds one optional part and one optional tool alongside the required pair. */
+    withOptionalExtras: boolean
+  }> = {}
+) {
+  const admin = adminClient()
+  const id = crypto.randomUUID()
+
+  const { error } = await admin.from('tutorials').insert({
+    id,
+    title: overrides.title ?? uniqueTitle('E2E Tutorial'),
+    description: 'Created by a Playwright E2E test.',
+    difficulty: overrides.difficulty ?? 'easy',
+    status: overrides.status ?? 'approved',
+    tutorial_pdf_url:
+      overrides.withPdf === false ? null : 'https://placeholder.invalid/tutorial.pdf',
+    toy_photo_url: 'https://placeholder.invalid/photo.jpg',
+  })
+  if (error) throw new Error(`Failed to create tutorial: ${error.message}`)
+
+  const { error: linkError } = await admin
+    .from('tutorial_contributors')
+    .insert({ tutorial_id: id, profile_id: contributorId, role: 'primary' })
+  if (linkError) throw new Error(`Failed to link tutorial contributor: ${linkError.message}`)
+
+  await admin.from('parts').insert({ tutorial_id: id, name: 'E2E part', quantity: 2, is_optional: false, buy_links: [] })
+  await admin.from('tools').insert({ tutorial_id: id, name: 'E2E tool', is_optional: false, buy_links: [] })
+
+  if (overrides.withOptionalExtras) {
+    await admin
+      .from('parts')
+      .insert({ tutorial_id: id, name: 'E2E optional part', quantity: 1, is_optional: true, buy_links: [] })
+    await admin
+      .from('tools')
+      .insert({ tutorial_id: id, name: 'E2E optional tool', is_optional: true, buy_links: [] })
+  }
+
+  return id
+}
+
+/** Best-effort teardown. No assertion may depend on this having run. */
+export async function deleteUser(id: string) {
+  await adminClient().auth.admin.deleteUser(id)
 }
 
 /**

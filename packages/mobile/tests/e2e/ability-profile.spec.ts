@@ -46,3 +46,32 @@ test('the questionnaire estimates MACS/BFMF and persists them', async ({ page })
   await expect(page.getByRole('button', { name: 'I', exact: true })).toHaveAttribute('aria-selected', 'true')
   await expect(page.getByRole('button', { name: '1', exact: true })).toHaveAttribute('aria-selected', 'true')
 })
+
+test('changing a manual selection to a different value persists', async ({ page }) => {
+  await signUpParent(page, uniqueParentEmail())
+  await openSubScreen(page, 'Ability Profile')
+
+  await selectPill(page, 'Cerebral palsy')
+  await selectPill(page, 'II')
+
+  // Single-select fields cannot be cleared — fields.tsx calls onChange(value)
+  // with no toggle-off, unlike the multi-select chips. Changing to another
+  // value is the reverse transition that actually exists.
+  await selectPill(page, 'III')
+  await expect(page.getByRole('button', { name: 'II', exact: true })).toHaveAttribute(
+    'aria-selected',
+    'false'
+  )
+
+  await page.waitForTimeout(1000)
+  await page.reload()
+
+  await expect(page.getByRole('button', { name: 'III', exact: true })).toHaveAttribute(
+    'aria-selected',
+    'true'
+  )
+  await expect(page.getByRole('button', { name: 'II', exact: true })).toHaveAttribute(
+    'aria-selected',
+    'false'
+  )
+})

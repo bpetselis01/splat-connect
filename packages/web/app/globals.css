@@ -1,26 +1,435 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+ * The web palette is a direct port of packages/mobile/lib/theme.ts, so a parent
+ * who uses the app and then opens the site lands in the same product. Every hue
+ * still derives from the SPLAT light blue (#1998d5): neutrals are tinted toward
+ * its hue rather than left pure gray, and the warm accents sit on its complement.
+ *
+ * Surface model, also from mobile: the canvas is blue-tinted and cards are white.
+ * The inverse (white canvas, near-white cards) is what left the old web cards at
+ * ~1.02:1 against their background.
+ *
+ * One deliberate deviation from mobile: `brand` (#1998d5) reaches only 3.2:1
+ * against white, so anything that carries a white label uses `brand-dark`
+ * (#0f6f9c, 5.6:1). `brand` itself is kept for borders, focus rings and tints,
+ * where the 3:1 non-text floor applies.
+ */
+@theme {
+  /* Surfaces */
+  --color-canvas: #eaf4fa;
+  --color-surface: #ffffff;
+  --color-sunken: #dcedf6;
+
+  /* Brand ramp */
+  --color-brand: #1998d5;
+  --color-brand-dark: #0f6f9c;
+  --color-brand-deep: #0a4f70;
+  --color-brand-soft: #bfe4f5;
+  --color-brand-tint: #d8ecf7;
+
+  /* Ink. `muted` clears 4.5:1 on both the canvas and white. */
+  --color-ink: #12283a;
+  --color-muted: #4d6a7d;
+  --color-line: #c6e0ed;
+
+  /* Warm complement of the brand blue. Emphasis and delight, never decoration. */
+  --color-apricot: #ff8f5e;
+  --color-apricot-hover: #ff7c43;
+  --color-apricot-soft: #ffe3d5;
+  --color-apricot-deep: #8c3312;
+
+  /* Semantic pairs, rebuilt from the palette rather than borrowed from Tailwind. */
+  --color-mint: #2fbf9f;
+  --color-mint-soft: #d4f2ea;
+  --color-mint-deep: #0f5c4d;
+  --color-honey-soft: #fdeecb;
+  --color-honey-deep: #7a4e05;
+  --color-danger: #a3301a;
+
+  --radius-field: 14px;
+
+  /* Tinted rather than near-black: a neutral shadow over a blue canvas reads as dirt. */
+  --shadow-rest: 0 3px 10px rgb(10 53 80 / 0.07);
+  --shadow-lift: 0 10px 24px rgb(10 53 80 / 0.14);
+
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+
+  --font-sans: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+@layer base {
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+  }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+    letter-spacing: -0.015em;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+  }
+
+  ::placeholder {
+    color: var(--color-muted);
+    opacity: 1;
+  }
+
+  ::selection {
+    background-color: var(--color-brand-soft);
+    color: var(--color-ink);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/*
+ * Shared primitives. Before this, the same button lived as a hand-copied class
+ * string in eleven files and had already drifted in three of them; these classes
+ * are the single definition of each affordance's full state set.
+ */
+@layer components {
+  /* --- Surfaces --------------------------------------------------------- */
+  .card {
+    background-color: var(--color-surface);
+    border-radius: 1rem;
+    box-shadow: var(--shadow-rest);
+  }
+
+  .card-flat {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: 1rem;
+  }
+
+  .card-tint {
+    background-color: var(--color-brand-tint);
+    border-radius: 1rem;
+  }
+
+  /* Applied alongside .card on anything clickable. */
+  .card-link {
+    display: block;
+    transition:
+      transform 180ms var(--ease-out-quart),
+      box-shadow 180ms var(--ease-out-quart);
+  }
+
+  .card-link:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lift);
+  }
+
+  .card-link:active {
+    transform: translateY(0);
+  }
+
+  /* --- Buttons ---------------------------------------------------------- */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    padding: 0.625rem 1.25rem;
+    border: 1px solid transparent;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    line-height: 1.2;
+    text-align: center;
+    cursor: pointer;
+    transition:
+      background-color 180ms var(--ease-out-quart),
+      border-color 180ms var(--ease-out-quart),
+      color 180ms var(--ease-out-quart),
+      box-shadow 180ms var(--ease-out-quart),
+      transform 140ms var(--ease-out-quart);
+  }
+
+  /* Mirrors the mobile press scale (0.96) — a control that dips and settles
+     feels tactile, one that bounces feels like a toy. */
+  .btn:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+
+  .btn:disabled,
+  .btn[aria-disabled='true'] {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .btn-primary {
+    background-color: var(--color-brand-dark);
+    color: #ffffff;
+    box-shadow: var(--shadow-rest);
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background-color: var(--color-brand-deep);
+  }
+
+  /* The one warm control on the page: contribute, upload, submit. Ink on apricot
+     rather than white on apricot, which would sit at 2.4:1. */
+  .btn-accent {
+    background-color: var(--color-apricot);
+    color: var(--color-ink);
+    box-shadow: var(--shadow-rest);
+  }
+
+  .btn-accent:hover:not(:disabled) {
+    background-color: var(--color-apricot-hover);
+  }
+
+  .btn-soft {
+    background-color: var(--color-brand-tint);
+    color: var(--color-brand-deep);
+  }
+
+  .btn-soft:hover:not(:disabled) {
+    background-color: var(--color-brand-soft);
+  }
+
+  .btn-quiet {
+    background-color: var(--color-surface);
+    border-color: var(--color-line);
+    color: var(--color-brand-deep);
+  }
+
+  .btn-quiet:hover:not(:disabled) {
+    background-color: var(--color-sunken);
+  }
+
+  .btn-danger {
+    background-color: var(--color-apricot-soft);
+    color: var(--color-danger);
+  }
+
+  .btn-danger:hover:not(:disabled) {
+    background-color: #ffcdbb;
+  }
+
+  .btn-sm {
+    min-height: 36px;
+    padding: 0.375rem 0.875rem;
+    font-size: 0.8125rem;
+  }
+
+  .btn-block {
+    width: 100%;
+  }
+
+  /* --- Form controls ---------------------------------------------------- */
+  .field {
+    display: block;
+    width: 100%;
+    min-height: 44px;
+    padding: 0.625rem 0.875rem;
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+    border: 1.5px solid var(--color-line);
+    border-radius: var(--radius-field);
+    font-size: 0.875rem;
+    transition:
+      border-color 140ms var(--ease-out-quart),
+      box-shadow 140ms var(--ease-out-quart);
+  }
+
+  .field:hover:not(:disabled):not(:focus) {
+    border-color: var(--color-brand-soft);
+  }
+
+  /* The ring is the focus indicator, so suppressing the default outline here
+     removes a duplicate rather than the only one. */
+  .field:focus {
+    outline: none;
+    border-color: var(--color-brand);
+    box-shadow: 0 0 0 3px rgb(25 152 213 / 0.18);
+  }
+
+  textarea.field {
+    min-height: 0;
+    line-height: 1.5;
+  }
+
+  .field-sm {
+    min-height: 38px;
+    padding: 0.375rem 0.625rem;
+  }
+
+  .field-label {
+    display: block;
+    margin-bottom: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--color-ink);
+  }
+
+  .field-check {
+    width: 1.05rem;
+    height: 1.05rem;
+    accent-color: var(--color-brand-dark);
+  }
+
+  /* --- Chips (filter toggles) ------------------------------------------- */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 36px;
+    padding: 0.375rem 0.875rem;
+    background-color: var(--color-surface);
+    color: var(--color-brand-deep);
+    border: 1px solid var(--color-line);
+    border-radius: 9999px;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+      background-color 140ms var(--ease-out-quart),
+      border-color 140ms var(--ease-out-quart),
+      color 140ms var(--ease-out-quart),
+      transform 140ms var(--ease-out-quart);
+  }
+
+  .chip:hover {
+    background-color: var(--color-sunken);
+  }
+
+  .chip:active {
+    transform: scale(0.97);
+  }
+
+  .chip[aria-pressed='true'] {
+    background-color: var(--color-brand-dark);
+    border-color: var(--color-brand-dark);
+    color: #ffffff;
+  }
+
+  .chip[aria-pressed='true']:hover {
+    background-color: var(--color-brand-deep);
+    border-color: var(--color-brand-deep);
+  }
+
+  /* --- Badges ----------------------------------------------------------- */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+
+  /* --- Alerts ----------------------------------------------------------- */
+  .alert {
+    border-radius: 1rem;
+    padding: 0.875rem 1.25rem;
+    font-size: 0.875rem;
+  }
+
+  .alert-danger {
+    background-color: var(--color-apricot-soft);
+    color: var(--color-danger);
+  }
+
+  /* --- Accordion panels (edit page) ------------------------------------- */
+  .panel {
+    background-color: var(--color-surface);
+    border-radius: 1rem;
+    box-shadow: var(--shadow-rest);
+    overflow: hidden;
+  }
+
+  .panel-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    font-weight: 700;
+    cursor: pointer;
+    list-style: none;
+    transition: background-color 140ms var(--ease-out-quart);
+  }
+
+  .panel-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .panel-summary::after {
+    content: '▾';
+    color: var(--color-muted);
+    transition: transform 180ms var(--ease-out-quart);
+  }
+
+  details[open] > .panel-summary::after {
+    transform: rotate(180deg);
+  }
+
+  .panel-summary:hover {
+    background-color: var(--color-sunken);
+  }
+
+  /* --- File drop zone --------------------------------------------------- */
+  .dropzone {
+    padding: 1.25rem;
+    background-color: var(--color-sunken);
+    border: 2px dashed var(--color-line);
+    border-radius: 1rem;
+    text-align: center;
+    transition:
+      background-color 180ms var(--ease-out-quart),
+      border-color 180ms var(--ease-out-quart);
+  }
+
+  .dropzone:hover {
+    border-color: var(--color-brand-soft);
+  }
+
+  .dropzone-active {
+    background-color: var(--color-brand-tint);
+    border-color: var(--color-brand);
+  }
+
+  /* --- Empty states ----------------------------------------------------- */
+  .empty-badge {
+    display: grid;
+    place-items: center;
+    width: 72px;
+    height: 72px;
+    border-radius: 9999px;
+    background-color: var(--color-brand-tint);
+    font-size: 30px;
+    line-height: 1;
+  }
+}
+
+/*
+ * Colour transitions survive; movement does not. A crossfade still conveys the
+ * state change these transitions exist for.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .card-link,
+  .card-link:hover,
+  .card-link:active,
+  .btn:active:not(:disabled),
+  .chip:active {
+    transform: none;
+  }
+
+  .panel-summary::after,
+  details[open] > .panel-summary::after {
+    transition: none;
+  }
 }

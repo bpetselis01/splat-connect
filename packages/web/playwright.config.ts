@@ -26,12 +26,29 @@ export default defineConfig({
   testDir: './tests/e2e',
   timeout: 90_000,
   expect: { timeout: 20_000 },
-  fullyParallel: false,
-  workers: 1,
+  // Safe because every spec provisions its own fixtures and asserts only on rows
+  // it created — see docs/superpowers/specs/2026-07-26-e2e-coverage-audit-design.md.
+  // A single spec reading a shared seeded account would corrupt other workers
+  // mid-run, which is why this was `false` until that dependency was removed.
+  fullyParallel: true,
+  // 4 locally; 2 on CI, where the free ubuntu-latest runner has 2 cores and
+  // oversubscribing turns timeouts into flake.
+  workers: process.env.CI ? 2 : 4,
   retries: process.env.CI ? 1 : 0,
   reporter: 'line',
   use: { baseURL: WEB_URL, trace: 'on-first-retry' },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] }, grepInvert: /@responsive/ },
+    {
+      // The app reflows below `sm`: the nav drops its links to a second row, the
+      // library grid steps down to two columns, dashboard rows wrap. Every other
+      // test runs at desktop width, so none of them would notice a nav that
+      // clips its own links.
+      name: 'mobile-chrome',
+      use: { ...devices['Pixel 7'] },
+      grep: /@responsive/,
+    },
+  ],
   webServer: [
     {
       command: 'pnpm --filter @splat-connect/api dev',

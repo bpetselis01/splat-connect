@@ -88,75 +88,72 @@ export function EditToolsSection({ initialTools, onSave }: EditToolsSectionProps
     }
   }
 
-  const inputCls = 'w-full border rounded-lg px-3 py-2 text-sm'
-  const btnCls =
-    'bg-[#1e3a5f] text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-[#16304f] disabled:opacity-50'
+  const inputCls = 'field'
+  const btnCls = 'btn btn-primary btn-sm'
 
   return (
     <div className="px-5 pb-5">
       {tools.length > 0 && (
         <ul className="mb-4 flex flex-col gap-2">
           {tools.map((t) => (
-            <li key={t.id} className="border rounded-lg text-sm">
+            <li key={t.id} className="card-flat text-sm">
               <button
                 type="button"
                 onClick={() => (editingId === t.id ? closeEdit() : openEdit(t))}
-                className="w-full px-3 py-2 flex items-center justify-between text-left"
+                className="flex w-full items-center justify-between gap-2 rounded-2xl px-4 py-3 text-left transition-colors hover:bg-sunken"
               >
-                <span className="font-medium">{t.name}</span>
-                <div className="flex items-center gap-2">
+                <span className="font-bold text-ink">{t.name}</span>
+                <div className="flex shrink-0 items-center gap-2">
                   {t.is_optional && (
-                    <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
-                      Optional
-                    </span>
+                    <span className="badge bg-sunken text-brand-deep">Optional</span>
                   )}
-                  <span className="text-gray-400 text-xs">{editingId === t.id ? '▲' : '▼'}</span>
+                  <span className="text-xs text-muted">{editingId === t.id ? '▲' : '▼'}</span>
                 </div>
               </button>
               {editingId === t.id && draft && (
-                <div className="px-3 pb-3 pt-2 flex flex-col gap-2 border-t">
+                <div className="flex flex-col gap-2 border-t border-line px-4 pt-3 pb-4">
                   <input
                     value={draft.name}
                     onChange={(e) => setDraft((d) => (d ? { ...d, name: e.target.value } : d))}
                     className={inputCls}
                     placeholder="Name"
                   />
-                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <label className="flex cursor-pointer select-none items-center gap-2 text-sm">
                     <input
                       type="checkbox"
                       checked={draft.is_optional}
                       onChange={(e) =>
                         setDraft((d) => (d ? { ...d, is_optional: e.target.checked } : d))
                       }
-                      className="rounded"
+                      className="field-check"
                     />
                     Optional (not required)
                   </label>
                   <div>
-                    <p className="text-xs text-gray-500 mb-1">Buy links</p>
+                    <p className="mb-1 text-xs font-bold text-muted">Buy links</p>
                     <BuyLinksInput
                       key={editingId}
                       initialLinks={draft.buy_links}
                       onChange={(links) => setDraft((d) => (d ? { ...d, buy_links: links } : d))}
                     />
                   </div>
-                  {editError && <p className="text-sm text-red-500">{editError}</p>}
-                  <div className="flex gap-2 flex-wrap">
+                  {editError && (
+                    <p role="alert" className="text-sm font-semibold text-danger">
+                      {editError}
+                    </p>
+                  )}
+                  <div className="flex flex-wrap gap-2">
                     <button type="button" onClick={handleSave} disabled={saving} className={btnCls}>
                       {saving ? 'Saving…' : 'Save'}
                     </button>
-                    <button
-                      type="button"
-                      onClick={closeEdit}
-                      className="px-4 py-2 rounded-lg text-sm border"
-                    >
+                    <button type="button" onClick={closeEdit} className="btn btn-quiet btn-sm">
                       Cancel
                     </button>
                     <button
                       type="button"
                       onClick={() => handleDelete(t.id)}
                       disabled={saving}
-                      className="px-4 py-2 rounded-lg text-sm text-red-600 border border-red-200 hover:bg-red-50 disabled:opacity-50"
+                      className="btn btn-danger btn-sm"
                     >
                       Delete
                     </button>
@@ -168,17 +165,21 @@ export function EditToolsSection({ initialTools, onSave }: EditToolsSectionProps
         </ul>
       )}
       <form onSubmit={handleAdd} className="flex flex-col gap-2">
-        <p className="text-sm font-medium">Add tool</p>
+        <p className="text-sm font-bold text-ink">Add tool</p>
         <input name="name" placeholder="Name" required className={inputCls} />
-        <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
-          <input type="checkbox" name="is_optional" className="rounded" />
+        <label className="flex cursor-pointer select-none items-center gap-2 text-sm">
+          <input type="checkbox" name="is_optional" className="field-check" />
           Optional (not required)
         </label>
         <div>
-          <p className="text-xs text-gray-500 mb-1">Buy links</p>
+          <p className="mb-1 text-xs font-bold text-muted">Buy links</p>
           <BuyLinksInput key={addKey} />
         </div>
-        {addError && <p className="text-sm text-red-500">{addError}</p>}
+        {addError && (
+          <p role="alert" className="text-sm font-semibold text-danger">
+            {addError}
+          </p>
+        )}
         <button type="submit" disabled={saving} className={btnCls}>
           Add tool
         </button>

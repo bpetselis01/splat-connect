@@ -1,0 +1,28 @@
+appId: com.splatconnect.mobile
+---
+# clearState must not appear on this relaunch path: this subflow is also run
+# after `stopApp` to simulate a cold start, and clearing state there would wipe
+# the SecureStore entry that is the entire subject of the suite.
+- launchApp
+
+# app/_layout.tsx renders IntroVideo over the whole app on every cold start, and
+# IntroVideo.tsx is a full-screen Pressable that swallows touches until playToEnd,
+# a decode error, or the 8s MAX_INTRO_MS ceiling. Tapping "Skip intro" — its
+# accessibilityLabel, which Android exposes as content-desc — is deterministic.
+# optional: true because a fast decode may have dismissed it already.
+- tapOn:
+    text: "Skip intro"
+    optional: true
+
+# IntroVideo is a sibling overlay, not a parent of the tab bar, so "Home" can be
+# assertVisible-able while the overlay is still covering the screen and
+# swallowing touches. Wait for the overlay to actually be gone first.
+- extendedWaitUntil:
+    notVisible:
+      text: "Skip intro"
+    timeout: 10000
+
+# Still useful as a check that the router mounted, but does not by itself prove
+# the intro is gone — the extendedWaitUntil above is what gates that.
+- assertVisible:
+    text: "Home"

@@ -20,38 +20,50 @@ export function LibraryClient({ tutorials }: { tutorials: Tutorial[] }) {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-6">Toy Adaptation Library</h1>
-      <div className="flex gap-3 items-center flex-wrap mb-6">
+      <h1 className="mb-6 text-2xl font-bold text-ink sm:text-3xl">
+        Toy Adaptation Library
+      </h1>
+      <div className="mb-6 flex flex-wrap items-center gap-3">
+        <label htmlFor="library-search" className="sr-only">
+          Search by toy name
+        </label>
         <input
-          type="text"
+          id="library-search"
+          type="search"
           placeholder="Search by toy name…"
-          className="flex-1 min-w-48 border rounded-lg px-3 py-2 text-sm bg-white"
+          className="field field-sm min-w-48 max-w-sm flex-1"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {DIFFICULTIES.map((d) => (
             <button
               key={d}
+              type="button"
+              aria-pressed={difficulty === d}
               onClick={() => setDifficulty(d)}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold capitalize transition-colors ${
-                difficulty === d
-                  ? 'bg-[#1e3a5f] text-white'
-                  : 'bg-white border text-gray-600 hover:bg-gray-50'
-              }`}
+              className="chip capitalize"
             >
               {d}
             </button>
           ))}
         </div>
-        <span className="text-xs text-gray-400">
+        <span aria-live="polite" className="text-xs font-semibold text-muted">
           {filtered.length} tutorial{filtered.length !== 1 ? 's' : ''}
         </span>
       </div>
       {filtered.length === 0 ? (
-        <p className="text-center text-gray-400 py-16">No tutorials found.</p>
+        <div className="flex flex-col items-center px-6 py-16 text-center">
+          <span aria-hidden="true" className="empty-badge">
+            🔍
+          </span>
+          <p className="mt-4 font-bold text-ink">No tutorials found.</p>
+          <p className="mt-1 max-w-xs text-sm leading-relaxed text-muted">
+            Try a shorter search, or set the difficulty filter back to All.
+          </p>
+        </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           {filtered.map((t) => (
             <TutorialCard key={t.id} tutorial={t} />
           ))}

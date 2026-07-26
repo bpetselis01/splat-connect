@@ -7,10 +7,11 @@
  * Prop:
  * - difficulty: 'easy' | 'medium' | 'hard'
  * 
- * Styling:
- * - easy: Green background (low effort)
- * - medium: Yellow background (moderate effort)
- * - hard: Red background (high effort)
+ * Styling (palette shared with packages/mobile/lib/theme.ts — the previous
+ * values were Tailwind's green/yellow/red, from a different colour system):
+ * - easy: Mint (low effort)
+ * - medium: Honey (moderate effort)
+ * - hard: Apricot (high effort)
  * 
  * Used in:
  * - TutorialCard: Shows difficulty in tutorial preview
@@ -24,17 +25,11 @@
 import type { Difficulty } from '@splat-connect/types'
 
 const styles: Record<Difficulty, string> = {
-  easy: 'bg-green-100 text-green-800',
-  medium: 'bg-yellow-100 text-yellow-800',
-  hard: 'bg-red-100 text-red-800',
+  easy: 'bg-mint-soft text-mint-deep',
+  medium: 'bg-honey-soft text-honey-deep',
+  hard: 'bg-apricot-soft text-apricot-deep',
 }
 
 export function DifficultyBadge({ difficulty }: { difficulty: Difficulty }) {
-  return (
-    <span
-      className={`inline-block text-xs font-bold px-2 py-0.5 rounded ${styles[difficulty]}`}
-    >
-      {difficulty.toUpperCase()}
-    </span>
-  )
+  return <span className={`badge ${styles[difficulty]}`}>{difficulty.toUpperCase()}</span>
 }

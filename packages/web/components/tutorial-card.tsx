@@ -36,10 +36,11 @@ export function TutorialCard({ tutorial }: { tutorial: Tutorial }) {
   return (
     <Link
       href={`/tutorials/${tutorial.id}`}
-      className="block border rounded-xl overflow-hidden hover:shadow-md transition-shadow bg-white"
+      data-testid="tutorial-card"
+      className="card card-link overflow-hidden"
     >
       {tutorial.toy_photo_url ? (
-        <div className="relative h-36 w-full">
+        <div className="relative h-36 w-full bg-sunken">
           <Image
             src={tutorial.toy_photo_url}
             alt={tutorial.title}
@@ -48,18 +49,18 @@ export function TutorialCard({ tutorial }: { tutorial: Tutorial }) {
           />
         </div>
       ) : (
-        <div className="h-36 bg-blue-100 flex items-center justify-center text-4xl">
+        <div className="flex h-36 items-center justify-center bg-brand-tint text-4xl">
           🧸
         </div>
       )}
-      <div className="p-3">
-        <p className="font-bold text-sm truncate">{tutorial.title}</p>
+      <div className="p-4">
+        <p className="truncate text-sm font-bold text-ink">{tutorial.title}</p>
         {tutorial.description && (
-          <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
+          <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted">
             {tutorial.description}
           </p>
         )}
-        <div className="mt-2">
+        <div className="mt-3">
           <DifficultyBadge difficulty={tutorial.difficulty} />
         </div>
       </div>

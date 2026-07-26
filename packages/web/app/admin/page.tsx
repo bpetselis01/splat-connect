@@ -56,28 +56,34 @@ export default async function AdminPage() {
       label: 'Contributors',
       count: totalContributors,
       href: '/admin/contributors' as const,
-      color: 'border-orange-400',
+      icon: '👥',
+      hint: 'Review and remove contributor accounts',
     },
     {
       label: 'Tutorials awaiting review',
       count: pendingTutorials,
       href: '/admin/review' as const,
-      color: 'border-blue-400',
+      icon: '📋',
+      hint: 'Approve or reject submitted tutorials',
     },
   ]
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-8">Admin dashboard</h1>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <h1 className="mb-8 text-2xl font-bold text-ink">Admin dashboard</h1>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {cards.map((c) => (
-          <Link
-            key={c.label}
-            href={c.href}
-            className={`bg-white border-l-4 ${c.color} rounded-xl p-6 hover:shadow-md transition-shadow`}
-          >
-            <p className="text-4xl font-bold mb-1">{c.count}</p>
-            <p className="text-sm text-gray-600">{c.label}</p>
+          <Link key={c.label} href={c.href} className="card card-link p-6">
+            <div className="flex items-start gap-4">
+              <span aria-hidden="true" className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-brand-tint text-2xl">
+                {c.icon}
+              </span>
+              <div>
+                <p className="text-3xl font-bold text-ink">{c.count}</p>
+                <p className="text-sm font-bold text-ink">{c.label}</p>
+                <p className="mt-1 text-sm text-muted">{c.hint}</p>
+              </div>
+            </div>
           </Link>
         ))}
       </div>

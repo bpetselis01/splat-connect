@@ -73,14 +73,17 @@ export function AddStlForm({
     }
   }
 
-  const btnCls =
-    'self-end bg-[#1e3a5f] text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-[#16304f] disabled:opacity-50'
+  const btnCls = 'btn btn-primary btn-sm self-end'
 
   return (
     <div className="flex flex-col gap-2">
-      <p className="text-sm font-medium">Add STL file</p>
+      <p className="text-sm font-bold text-ink">Add STL file</p>
       <FileDropZone name="stl_file" accept=".stl" label="STL File" onChange={handleChange} />
-      {error && <p className="text-red-600 text-sm">{error}</p>}
+      {error && (
+        <p role="alert" className="alert alert-danger">
+          {error}
+        </p>
+      )}
       <button
         type="button"
         disabled={!selectedFile || uploading || pending}

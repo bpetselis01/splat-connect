@@ -64,14 +64,17 @@ export function EditFilesSection({
     }
   }
 
-  const btnCls =
-    'self-end bg-[#1e3a5f] text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-[#16304f] disabled:opacity-50'
+  const btnCls = 'btn btn-primary btn-sm self-end'
 
   return (
-    <div className="px-5 pb-5 flex flex-col gap-4">
-      {error && <p className="text-red-600 text-sm">{error}</p>}
+    <div className="flex flex-col gap-4 px-5 pb-5">
+      {error && (
+        <p role="alert" className="alert alert-danger">
+          {error}
+        </p>
+      )}
       <div>
-        <label className="block text-sm font-medium mb-2">Replace toy photo</label>
+        <label className="field-label">Replace toy photo</label>
         <FileDropZone
           name="toy_photo"
           accept="image/*"
@@ -81,7 +84,7 @@ export function EditFilesSection({
         />
       </div>
       <div>
-        <label className="block text-sm font-medium mb-2">Replace tutorial PDF</label>
+        <label className="field-label">Replace tutorial PDF</label>
         <FileDropZone
           name="tutorial_pdf"
           accept=".pdf"
@@ -90,7 +93,7 @@ export function EditFilesSection({
           currentFileLabel={currentPdfUrl ? 'Current PDF on file — upload to replace' : undefined}
         />
       </div>
-      {saving && <p className="text-blue-600 text-sm">Saving…</p>}
+      {saving && <p className="text-sm font-semibold text-brand-dark">Saving…</p>}
       <button
         type="button"
         disabled={!hasChanges || saving}
