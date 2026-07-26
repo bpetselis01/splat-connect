@@ -61,3 +61,18 @@ test('a search with no matches shows the empty state', async ({ page }) => {
   await expect(page.getByText('zzz-no-such-toy-zzz')).toBeVisible()
   await expect(page.locator('text=/No tutorials/i').first()).toBeVisible()
 })
+
+test('the skeleton renders while the tutorial request is in flight', async ({ page }) => {
+  // Delayed rather than raced: the loading state is otherwise gone before an
+  // assertion can reach it. If this ever proves flaky, delete it rather than
+  // retry it — a skeleton regression is cosmetic and a flaky test gating main
+  // costs more than the bug it catches.
+  await page.route('**/api/public/tutorials*', async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 2000))
+    await route.continue()
+  })
+
+  await page.goto('/home')
+
+  await expect(page.getByTestId('skeleton-row').first()).toBeVisible()
+})

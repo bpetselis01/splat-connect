@@ -52,3 +52,31 @@ test('an unknown tutorial id shows the load-failure state', async ({ page }) => 
   // negative space.
   await expect(page.getByText("Couldn't load tutorial. Please try again.")).toBeVisible()
 })
+
+test('optional parts and tools are badged on the detail screen', async ({ page }) => {
+  const contributor = await createContributor()
+  const title = uniqueTitle('E2E Mobile Optional')
+  await createTutorial(contributor.id, { title, status: 'approved', withOptionalExtras: true })
+
+  await page.goto('/home')
+  await page.getByText(title).click()
+
+  // Mobile marks optional items inline in the row label — there is no separate
+  // badge here, unlike the web detail page.
+  await expect(page.getByText('E2E optional part × 1 (optional)')).toBeVisible()
+  await expect(page.getByText('E2E optional tool (optional)')).toBeVisible()
+  await expect(page.getByText('E2E part × 2', { exact: true })).toBeVisible()
+})
+
+test('the preview screen explains when a tutorial has no PDF', async ({ page }) => {
+  const contributor = await createContributor()
+  const title = uniqueTitle('E2E Mobile No PDF')
+  await createTutorial(contributor.id, { title, status: 'approved', withPdf: false })
+
+  await page.goto('/home')
+  await page.getByText(title).click()
+  await page.getByText('Preview Tutorial').click()
+
+  await expect(page.getByText('No PDF is available for this tutorial yet.')).toBeVisible()
+  await expect(page.getByText('Open in Browser')).toHaveCount(0)
+})
