@@ -750,7 +750,12 @@ on:
           done
 
       - name: Provision the parent fixture
-        run: pnpm --filter @splat-connect/mobile device:fixture >> "$GITHUB_ENV"
+        # --silent is required, not cosmetic: this redirects stdout straight into
+        # $GITHUB_ENV, so a single extra stdout line (a pnpm banner) would corrupt
+        # the environment file. The script itself prints exactly two KEY=value
+        # lines; --silent guarantees pnpm adds nothing to them rather than relying
+        # on pnpm's banner happening to go to stderr.
+        run: pnpm --silent --filter @splat-connect/mobile device:fixture >> "$GITHUB_ENV"
 
       - name: Install Maestro
         run: |
