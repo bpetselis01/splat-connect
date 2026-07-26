@@ -49,7 +49,9 @@ export function Skeleton({
 /** The library row's loading shape — thumbnail block plus two text lines. */
 export function SkeletonRow() {
   return (
-    <Card style={styles.row}>
+    // testID so E2E can assert the loading state; react-native-web renders it
+    // as data-testid.
+    <Card testID="skeleton-row" style={styles.row}>
       <Skeleton width={104} height={104} style={styles.thumb} />
       <View style={styles.body}>
         <Skeleton width="72%" height={16} />
