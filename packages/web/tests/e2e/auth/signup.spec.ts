@@ -37,7 +37,8 @@ test('an already-registered email shows the error', async ({ page }) => {
   await page.locator('#password').fill('Test1234!')
   await page.getByRole('button', { name: 'Request access' }).click()
 
-  await expect(page.getByRole('alert')).toBeVisible()
+  // Filtered to alerts with content — Next's empty route announcer is also role=alert.
+  await expect(page.getByRole('alert').filter({ hasText: /\S/ })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Request received' })).toHaveCount(0)
 })
 
