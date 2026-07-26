@@ -382,6 +382,13 @@ rather than left as apparent gaps:
   the API answer 404, which `apiClient` raises, so the screen takes its `error`
   branch. The `!tutorial` branch appears to be dead code and is worth deleting or
   reaching for deliberately.
+- **Clearing a single-select answer on the child-profile screens.** Not a bug in
+  the tests — the interaction does not exist. `components/profile/fields.tsx`
+  calls `onChange(o.value)` for single-select fields with no toggle-off, while
+  the multi-select chips have a `toggle()`. A parent who mis-taps an ability,
+  grip type or dominance answer can change it to another value but cannot clear
+  it. Covered instead by asserting that *changing* the value persists. Worth a
+  product decision rather than a test.
 
 ## Verification
 
