@@ -75,6 +75,8 @@ existing — `resolveAuthStorage()` returning `secureStoreAdapter` for non-web �
 | `packages/mobile/.maestro/subflows/launch.yaml` | Create | Reusable subflow: cold launch + dismiss the intro |
 | `packages/mobile/.maestro/flows/session-survives-cold-start.yaml` | Create | Flow 1 |
 | `packages/mobile/.maestro/flows/sign-out-clears-session.yaml` | Create | Flow 2 |
+| `.github/workflows/ci.yml` | Modify | `device-e2e` job, APK cache, `main` + `workflow_dispatch` |
+| `docs/superpowers/specs/2026-07-26-e2e-coverage-audit-design.md` | Modify | Record the two dropped flows in the negative space |
 
 Flows and subflows are kept in **separate directories on purpose**. `maestro test <dir>` runs every
 flow it finds, and `launch.yaml` is not a test — it has no meaningful standalone assertion. Splitting
@@ -84,8 +86,6 @@ number instead of drifting as subflows are added.
 **Deviation from the spec:** it specifies the fixture step "writes credentials to a file the flow
 reads". Maestro takes `--env` natively, so there is no file — one less artifact and one less path to
 get wrong. Same effect, and `$GITHUB_ENV` already carries the values in CI.
-| `.github/workflows/ci.yml` | Modify | `device-e2e` job, APK cache, `main` + `workflow_dispatch` |
-| `docs/superpowers/specs/2026-07-26-e2e-coverage-audit-design.md` | Modify | Record the two dropped flows in the negative space |
 
 ---
 

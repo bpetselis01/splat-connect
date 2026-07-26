@@ -352,12 +352,24 @@ jobs:
       # A stale Metro cache can freeze a `localhost` value into the bundle, which
       # would point the device app at nothing and fail as an inscrutable timeout.
       # Assert against the APK so this holds on a cache hit too.
+      #
+      # `index.android.bundle` is Hermes BYTECODE (magic c61fbc03), not text, so:
+      #   - grep needs -a, or it reports "binary file matches" instead of matching;
+      #   - the bundle must be piped straight in, never held in a shell variable —
+      #     shell vars cannot carry NUL bytes, which truncates the data. That form
+      #     was measured failing against a known-good APK on 2026-07-26, i.e. it
+      #     would have failed every healthy build.
+      # The trailing `echo` is load-bearing: it makes the step exit 0 in the success
+      # case, where the second grep deliberately finds nothing and returns 1.
       - name: Verify the bundle baked the emulator host
         working-directory: packages/mobile
+        env:
+          APK: android/app/build/outputs/apk/release/app-release.apk
         run: |
-          BUNDLE=$(unzip -p android/app/build/outputs/apk/release/app-release.apk assets/index.android.bundle)
-          echo "$BUNDLE" | grep -q "10.0.2.2" || { echo "bundle does not contain 10.0.2.2"; exit 1; }
-          echo "$BUNDLE" | grep -q "localhost:54321" && { echo "bundle baked a localhost Supabase URL"; exit 1; }
+          unzip -p "$APK" assets/index.android.bundle | grep -aq "10.0.2.2" \
+            || { echo "bundle does not contain 10.0.2.2"; exit 1; }
+          unzip -p "$APK" assets/index.android.bundle | grep -aq "localhost:54321" \
+            && { echo "bundle baked a localhost Supabase URL"; exit 1; }
           echo "bundle baked the emulator host correctly"
 
       - name: Install Maestro
