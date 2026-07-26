@@ -283,15 +283,17 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      # expo prebuild + assembleRelease dominates this job. The key covers every
-      # file that can change the APK: the Expo config, the dependency set, and
-      # this workflow. A JS-only merge hits the cache and skips the build.
+      # expo prebuild + assembleRelease dominates this job. assembleRelease runs
+      # Metro and bundles the app's JS into the APK, so the key must cover
+      # everything that can change the built artifact: config, dependencies, and
+      # the JS/assets that get bundled. That way the cache can never serve an APK
+      # that does not match the tree under test.
       - name: Cache the release APK
         id: apk-cache
         uses: actions/cache@v4
         with:
           path: packages/mobile/android/app/build/outputs/apk/release/app-release.apk
-          key: apk-${{ hashFiles('packages/mobile/app.json', 'packages/mobile/package.json', 'pnpm-lock.yaml', '.github/workflows/ci.yml') }}
+          key: apk-${{ hashFiles('packages/mobile/app.json', 'packages/mobile/package.json', 'pnpm-lock.yaml', '.github/workflows/ci.yml', 'packages/mobile/app/**', 'packages/mobile/components/**', 'packages/mobile/lib/**', 'packages/mobile/assets/**', 'packages/types/**') }}
 
       - name: Build the release APK
         if: steps.apk-cache.outputs.cache-hit != 'true'
@@ -300,7 +302,10 @@ jobs:
           EXPO_PUBLIC_SUPABASE_URL: http://10.0.2.2:54321
           EXPO_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
           EXPO_PUBLIC_API_URL: http://10.0.2.2:3106
-          EXPO_PUBLIC_WEB_URL: http://10.0.2.2:3104
+          # 3105, not the E2E API port 3104: nothing serves either port in this
+          # job and no flow exercises this variable, so it's inert — set only so
+          # the value is not undefined.
+          EXPO_PUBLIC_WEB_URL: http://10.0.2.2:3105
         run: pnpm device:build
 
       - uses: supabase/setup-cli@v1
@@ -344,6 +349,17 @@ jobs:
         # on pnpm's banner happening to go to stderr.
         run: pnpm --silent --filter @splat-connect/mobile device:fixture >> "$GITHUB_ENV"
 
+      # A stale Metro cache can freeze a `localhost` value into the bundle, which
+      # would point the device app at nothing and fail as an inscrutable timeout.
+      # Assert against the APK so this holds on a cache hit too.
+      - name: Verify the bundle baked the emulator host
+        working-directory: packages/mobile
+        run: |
+          BUNDLE=$(unzip -p android/app/build/outputs/apk/release/app-release.apk assets/index.android.bundle)
+          echo "$BUNDLE" | grep -q "10.0.2.2" || { echo "bundle does not contain 10.0.2.2"; exit 1; }
+          echo "$BUNDLE" | grep -q "localhost:54321" && { echo "bundle baked a localhost Supabase URL"; exit 1; }
+          echo "bundle baked the emulator host correctly"
+
       - name: Install Maestro
         run: |
           curl -fsSL "https://get.maestro.mobile.dev" | bash
@@ -355,7 +371,7 @@ jobs:
           api-level: 34
           arch: x86_64
           profile: pixel_6
-          # AVD boot is minutes of the job; the snapshot makes reruns cheaper.
+          # AVD boot is minutes of the job.
           emulator-boot-timeout: 900
           working-directory: packages/mobile
           script: |
@@ -369,7 +385,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: maestro-debug
-          path: ~/.maestro/tests/**
+          path: /home/runner/.maestro/tests/**
 
       - name: Stop local Supabase
         if: always()

@@ -3,6 +3,11 @@ env:
   DEVICE_EMAIL: set-by-maestro-test---env
   DEVICE_PASSWORD: set-by-maestro-test---env
 ---
+# Establishes a signed-out precondition at flow start: flows run alphabetically
+# in one `maestro test` session, so without this a prior flow's signed-in state
+# leaks in. Never add this to the relaunch path below — that would wipe the
+# SecureStore entry this suite exists to test.
+- clearState
 - runFlow: ../subflows/launch.yaml
 - tapOn:
     text: "Profile"
