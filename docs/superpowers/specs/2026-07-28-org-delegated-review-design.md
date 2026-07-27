@@ -203,6 +203,55 @@ text, and it is a reason the join handshake must be a genuine two-sided opt-in.
 INSERT and SELECT own rows only. No UPDATE, no DELETE — an acceptance record
 that can be edited is not a record.
 
+### Provenance triggers — policies alone are not sufficient
+
+**Added 2026-07-28 during implementation, after the policies above were found
+exploitable as originally specified.**
+
+An RLS `WITH CHECK` clause sees only the *new* row, and a PostgreSQL policy
+cannot reference `OLD`. Every policy above that gates on `initiated_by`
+therefore validates a value the same `UPDATE` statement is free to write. The
+`initiated_by` split described above is a lock whose key is stored on the door.
+
+Three exploits were reproduced end-to-end against the database, each through
+PostgREST with an ordinary contributor's JWT — not via any API route:
+
+1. **Self-promotion.** File a legitimate join request
+   (`initiated_by='contributor'`), then `UPDATE ... SET initiated_by='org',
+   status='approved', org_role='leader'`. The contributor-side policy's `USING`
+   is only `user_id = auth.uid()`, and its `WITH CHECK` reads the freshly
+   forged `initiated_by`. The attacker becomes an approved leader of an
+   arbitrary org and can publish other members' tutorials.
+2. **Conscription.** A leader sets `initiated_by='contributor'` on an
+   org-initiated row and approves it, claiming a contributor who never accepted.
+3. **Reviewer shopping.** `tutorials.org_id` was constrained by nothing, so a
+   contributor belonging to no org could route their own draft into any trusted
+   org's queue — or two leaders could cross-approve and skip platform review.
+
+The fix is two `BEFORE` triggers, because `OLD` is visible only in a trigger:
+
+- **`org_members_freeze_provenance`** (`BEFORE UPDATE`) makes `org_id`,
+  `user_id`, and `initiated_by` immutable, restricts `org_role` changes to
+  admins, and prevents a `removed` membership being restored by anyone but that
+  org's leader or an admin. `BEFORE UPDATE` only — the founder-bootstrap INSERT
+  legitimately writes `org_role='leader'`.
+- **`tutorials_org_must_be_own`** (`BEFORE INSERT OR UPDATE`) permits a write
+  that *sets or changes* `org_id` only from a caller who is an approved member
+  of the target org. It is gated on change, so a later membership change cannot
+  retroactively revoke an author's ability to edit their own pinned work.
+
+**Consequence that changes §3:** the service role has no `auth.uid()`, so it
+cannot pin a tutorial to an org either. `POST /api/tutorials` uses the admin
+client and therefore **cannot accept `org_id`**; assignment moves to
+`POST /api/tutorials/:id/org`, which runs under the author's own JWT. This is
+deliberate — it means no server-side code path can route a tutorial to an org
+on a user's behalf, which is decision 9 applied more strictly than originally
+written, not a retreat from it.
+
+Decision 9 stands, with its mechanism corrected: enforcement lives in the
+database, but for any rule that depends on what a row *was*, the database
+mechanism is a trigger, not a policy.
+
 ## §3 API
 
 ### New: `routes/organizations.ts`
