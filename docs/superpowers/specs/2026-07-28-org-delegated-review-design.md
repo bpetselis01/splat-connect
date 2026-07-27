@@ -287,12 +287,15 @@ thing catching a mistake.
 
 ### Changed: `routes/tutorials.ts`
 
-- `POST /` — accepts optional `org_id`; validates the caller is an `approved`
-  member of it (403 otherwise) and stores it as the snapshot. **This validation
-  must be a TypeScript check**, because this route deliberately uses the admin
-  client (`tutorials.ts:107`, commented: RLS policies rely on an `auth.uid()`
-  context inserts through this route lack), so RLS is not running on this path.
-  To be commented as such so it does not read as an oversight.
+- `POST /` — **cannot accept `org_id`**, per the §2 amendment above. This route
+  deliberately uses the admin client (`tutorials.ts:107`, commented: RLS policies
+  rely on an `auth.uid()` context inserts through this route lack), and
+  `tutorials_org_must_be_own` refuses a write that sets `org_id` from a caller with
+  no `auth.uid()` — so there is no server-side path that can route a tutorial into
+  an org on a user's behalf. Assignment is a separate call,
+  `POST /api/tutorials/:id/org`, which runs under the author's own JWT and is
+  therefore checked by the trigger against a real membership rather than by a
+  TypeScript check that RLS is not backing.
 - `PATCH /:id` — **field allowlist**: `title`, `description`, `difficulty`,
   `tutorial_pdf_url`, `toy_photo_url`, `status`. Unknown keys dropped silently;
   403 for the protected ones (`org_id`, `review_level`, `reviewed_by`). Closes
