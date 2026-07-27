@@ -308,23 +308,42 @@ create policy "Trusted org leaders can review their org's tutorials"
 --      to approved leader in one UPDATE, and publish another member's tutorial.
 -- HOW: OLD is visible in a trigger, so provenance is frozen here instead. The
 --      policies stay as written; this makes the columns they trust immutable.
+-- Both triggers below are SECURITY INVOKER, the opposite of the helper functions
+-- above, and deliberately so: here a row that is merely *invisible* fails CLOSED
+-- (the `not exists` stays true and the guard raises), whereas in
+-- is_tutorial_contributor() an invisible row fails OPEN and would grant
+-- self-review. `set search_path = ''` is what makes invoker safe — every name in
+-- these bodies is schema-qualified, so no caller-controlled search_path can
+-- shadow them.
 create or replace function public.org_members_freeze_provenance()
 returns trigger as $$
 begin
   if new.org_id is distinct from old.org_id
   or new.user_id is distinct from old.user_id
   or new.initiated_by is distinct from old.initiated_by then
-    raise exception 'org_id, user_id and initiated_by are immutable';
+    raise exception 'org_id, user_id and initiated_by are immutable'
+      using errcode = '42501';
   end if;
   -- Without this a leader could mint co-leaders by setting org_role while
   -- approving a join request. Multiple leaders are supported by the schema, but
   -- promotion is an admin decision.
   if new.org_role is distinct from old.org_role and not public.is_admin() then
-    raise exception 'org_role may only be changed by an admin';
+    raise exception 'org_role may only be changed by an admin'
+      using errcode = '42501';
+  end if;
+  -- Removal is the only membership control a leader has, and the contributor
+  -- UPDATE policy accepts any transition to 'approved' on an 'org'-initiated
+  -- row — so without this the removed party could simply undo their own
+  -- removal. The leader's revive path (removed -> pending, contributor then
+  -- accepts) is unaffected.
+  if old.status = 'removed' and new.status is distinct from 'removed'
+     and not public.is_org_leader(old.org_id) and not public.is_admin() then
+    raise exception 'a removed membership can only be restored by an org leader'
+      using errcode = '42501';
   end if;
   return new;
 end;
-$$ language plpgsql security definer;
+$$ language plpgsql security invoker set search_path = '';
 
 -- BEFORE UPDATE only. The founder-bootstrap INSERT policy legitimately writes
 -- org_role='leader', so an INSERT trigger here would deadlock org creation.
@@ -336,26 +355,35 @@ create trigger org_members_freeze_provenance
 --      row, but no policy constrains it — a contributor could route their own
 --      draft into any trusted org's queue, or two cooperating leaders could
 --      cross-approve each other's work and skip platform review entirely.
--- HOW: An org may only be set if the caller is an approved member of it. This
---      does not obstruct review: a leader is by definition an approved member.
+-- HOW: An org may only be set if the caller is an approved member of it, and
+--      only at the moment it is set. The membership is re-checked on INSERT and
+--      on an UPDATE that actually changes org_id, never on unrelated writes:
+--      org_id is a snapshot taken when the tutorial is routed (see line 61), so
+--      re-validating it on every later write would make a membership change
+--      retroactively revoke the author's ability to edit their own work — a
+--      leader could set a member to 'removed' and thereby freeze that member's
+--      existing tutorials. Change-gating is also why no service-role escape is
+--      needed: what tripped the admin client was
+--      PATCH /api/admin/tutorials/:id/status updating an already-pinned row,
+--      which no longer re-runs the membership test. Enforcement therefore stays
+--      in the database, per the header comment at the top of this file.
+--      This does not obstruct review: a leader is by definition an approved member.
 create or replace function public.tutorials_org_must_be_own()
 returns trigger as $$
 begin
-  -- DELIBERATE HOLE: auth.uid() is null for the service role, and
-  -- POST /api/tutorials inserts through createAdminClient() (see
-  -- packages/api/src/routes/tutorials.ts) — without this escape every
-  -- admin-client write carrying an org_id raises. Verified: the insert fails
-  -- with P0001 when the escape is absent. The API layer therefore owns the
-  -- membership check for any route that lets a caller supply org_id.
-  if auth.uid() is not null and new.org_id is not null and not public.is_admin() and not exists (
-    select 1 from public.org_members m
-    where m.org_id = new.org_id and m.user_id = auth.uid() and m.status = 'approved'
-  ) then
-    raise exception 'cannot route a tutorial to an organisation you are not an approved member of';
+  if new.org_id is not null
+     and (tg_op = 'INSERT' or new.org_id is distinct from old.org_id)
+     and not public.is_admin()
+     and not exists (
+       select 1 from public.org_members m
+       where m.org_id = new.org_id and m.user_id = auth.uid() and m.status = 'approved'
+     ) then
+    raise exception 'cannot route a tutorial to an organisation you are not an approved member of'
+      using errcode = '42501';
   end if;
   return new;
 end;
-$$ language plpgsql security definer;
+$$ language plpgsql security invoker set search_path = '';
 
 create trigger tutorials_org_must_be_own
   before insert or update on public.tutorials
