@@ -37,8 +37,10 @@ on route logic; no API routes exist yet at the end of this plan.
   `pnpm --filter @splat-connect/api test:integration`.
 - Test DB is local only; `tests/integration/setup.ts` throws if `SUPABASE_URL` is not
   localhost. Never point these at cloud.
-- Commit after every task. Conventional commits, matching recent history
-  (`feat(db):`, `test(api):`, `docs(schema):`).
+- **One file per commit.** Every commit step below stages exactly one path. Where a task
+  produces two files, it produces two commits, ordered so each stands alone. Conventional
+  commits, matching recent history (`feat(db):`, `test(api):`, `docs(schema):`), and the
+  message says what that specific file does — not what the task was.
 
 ## Spec deviations (deliberate, both resolve gaps in the spec)
 
@@ -666,10 +668,17 @@ This step exists because a test that asserts "zero rows changed" passes triviall
 the update was never going to work. Proving it fails when authority *should* persist
 is the only way to know it is measuring the suspension.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 5: Commit the fixture helper**
 
 ```bash
-git add packages/api/tests/helpers/orgs.ts packages/api/tests/integration/orgs/suspension.test.ts
+git add packages/api/tests/helpers/orgs.ts
+git commit -m "test(api): add org fixture builders for membership and review tests"
+```
+
+- [ ] **Step 6: Commit the suspension test**
+
+```bash
+git add packages/api/tests/integration/orgs/suspension.test.ts
 git commit -m "test(api): assert org suspension instantly revokes leader review grant"
 ```
 
