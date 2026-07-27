@@ -28,8 +28,9 @@ does not.
 - Do not touch email confirmation. It is a genuine hard stop between signup and
   contributing, and spam control on a platform serving disabled children is worth
   one click. Called out explicitly in the spec as not cut.
-- Commit each of the three cuts separately — they are independent and one may need
-  reverting without the others.
+- **One file per commit**, and the three cuts stay separate — they are independent, and
+  one may need reverting without the others. Each message says what that file's change
+  does, not "friction cuts".
 
 ---
 
@@ -199,8 +200,18 @@ quantity (none required)" and the equivalent for tools.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add packages/web/lib/validation.ts packages/web/tests/unit/lib/validation.test.ts
-git commit -m "fix(web): drop the one-part and one-tool minimums from the upload wizard"
+git add packages/web/tests/unit/lib/validation.test.ts
+git commit -m "test(web): expect empty parts and tools lists to pass validation
+
+Also pins the per-item rules that stay: a blank name or a zero quantity is
+still invalid. Without those cases a later refactor could delete both the
+minimum and the per-item check unnoticed."
+
+git add packages/web/lib/validation.ts
+git commit -m "fix(web): drop the one-part and one-tool minimums from the upload wizard
+
+Both were hard walls. A fully-printed toy has STL files and no purchased
+parts; a simple modification needs no tools."
 ```
 
 ---
@@ -266,8 +277,18 @@ difficulty is chosen, update it — that is the behaviour being removed.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add packages/web/lib/validation.ts packages/web/app/upload/page.tsx packages/web/tests/unit/lib/validation.test.ts
-git commit -m "fix(web): default tutorial difficulty instead of requiring it at step 1"
+git add packages/web/tests/unit/lib/validation.test.ts
+git commit -m "test(web): expect step 1 to advance on a title alone"
+
+git add packages/web/lib/validation.ts
+git commit -m "fix(web): stop requiring difficulty to advance from step 1
+
+Difficulty is a reviewer's judgment, not the maker's, yet it blocked the very
+first Next. getMissingFields is left alone — it validates a saved tutorial,
+where difficulty is NOT NULL in the database."
+
+git add packages/web/app/upload/page.tsx
+git commit -m "fix(web): default a new tutorial draft's difficulty to medium"
 ```
 
 ---
