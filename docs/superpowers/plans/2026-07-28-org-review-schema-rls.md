@@ -660,6 +660,11 @@ describe('suspending an org revokes leader review authority', () => {
       .update({ status: 'approved' })
       .eq('id', tutorialId)
       .select('id')
+    // Both assertions are needed: PostgREST nulls `data` whenever `error` is set,
+    // so checking the row count alone would also pass if the write had errored for
+    // an unrelated reason. An RLS USING clause that excludes the row is not an
+    // error — it silently matches nothing, and that is what must be proven here.
+    expect(after.error).toBeNull()
     expect(after.data ?? []).toHaveLength(0)
 
     const { data: check } = await adminClient()
