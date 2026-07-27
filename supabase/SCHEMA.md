@@ -17,6 +17,7 @@ current definition is shown and the change is noted.
 | 003 | `003_ability_profile.sql` | Adds the `parent` role, makes the signup trigger role-aware, and creates the `child_profiles` table with its RLS. |
 | 004 | `004_data_api_grants.sql` | Grants the Data API roles (`anon`, `authenticated`, `service_role`) access to the `public` schema so PostgREST works; RLS remains the access-control layer. |
 | 007 | `007_organizations.sql` | Adds `organizations`, `org_members`, and `user_agreements` so an approved org leader can review their own members' submissions instead of every tutorial going through the single platform admin queue. Adds `org_id`, `review_level`, `reviewed_by`, and `flagged_for_follow_up` to `tutorials`. Adds the org-scoped RLS policies and two provenance triggers that freeze what those policies trust. |
+| 008 | `008_tutorial_contributor_scope.sql` | Narrows the `tutorial_contributors` INSERT policy so a contributor can only claim a tutorial that has no contributors yet (adds `tutorial_has_contributor()`), closing a path that let a stranger's private draft be repinned into an org and published. Adds `tutorials_freeze_review_provenance`, a third trigger that reserves `review_level`, `reviewed_by`, and `flagged_for_follow_up` to admins and org leaders. |
 
 ---
 
@@ -438,13 +439,27 @@ returns boolean as $$
 $$ language sql security definer stable;
 ```
 
-### Provenance triggers (007)
-Two `before update` triggers that exist because RLS itself cannot protect the columns its policies rely on.
+### Helper functions (008)
+
+- **`tutorial_has_contributor(p_tutorial_id)`** — true if the tutorial already has *any* contributor row. `security definer` for the same recursion reason as `tutorial_is_approved()`: it is called from inside a `tutorial_contributors` policy, on `tutorial_contributors`. It also carries `set search_path = ''`, so its body must stay fully schema-qualified.
+
+```sql
+create or replace function public.tutorial_has_contributor(p_tutorial_id uuid)
+returns boolean as $$
+  select exists (
+    select 1 from public.tutorial_contributors where tutorial_id = p_tutorial_id
+  );
+$$ language sql security definer stable set search_path = '';
+```
+
+### Provenance triggers (007, 008)
+Three triggers that exist because RLS itself cannot protect the columns its policies rely on.
 
 **Why they're needed:** an RLS `with check` clause only ever sees the *new* row — it cannot reference `OLD`. That means any policy that grants an update based on a mutable column can be defeated by rewriting that same column in the same statement. This was verified exploitable, not theoretical: three separate ways to defeat the org policies above were reproduced before these triggers existed, including a plain contributor filing a join request and self-promoting to approved leader in one `UPDATE`.
 
-- **`org_members_freeze_provenance`** (on `org_members`, `before update`) — makes `org_id`, `user_id`, and `initiated_by` immutable on every update. Restricts changes to `org_role` to admins only, so a leader can't mint a co-leader by editing `org_role` while approving a join request. And it allows a `removed` membership to be restored only by that org's own leader (or an admin) — otherwise the removed party could simply set their own row back to `approved`, since the contributor-side update policy already accepts that transition on an org-initiated row.
+- **`org_members_freeze_provenance`** (on `org_members`, `before update`) — makes `org_id`, `user_id`, and `initiated_by` immutable on every update. Restricts changes to `org_role` to admins only, so a leader can't **promote** an existing member by editing `org_role` while approving their join request. Note the invariant is exactly that and no wider: a leader *can* mint a co-leader on the INSERT path, by inviting someone straight in as `('leader', 'pending')` — the invite policy doesn't constrain `org_role`, and acceptance leaves it untouched. That is deliberate and stays inside the org; what needs an admin is changing `org_role` on a row that already exists. And it allows a `removed` membership to be restored only by that org's own leader (or an admin) — otherwise the removed party could simply set their own row back to `approved`, since the contributor-side update policy already accepts that transition on an org-initiated row.
 - **`tutorials_org_must_be_own`** (on `tutorials`, `before insert or update`) — permits setting or changing `tutorials.org_id` only when the caller is an approved member of the *target* org (or is the admin). It is gated on **change**, not on every write: it only re-checks membership on `INSERT` or when `org_id` is actually being modified, never on an unrelated field update. This is deliberate — `org_id` is a snapshot taken when a tutorial is routed, so re-validating membership on every later write would let a later roster change retroactively block an author from editing their own already-routed work (e.g. a leader removing a member would freeze that member's existing tutorials).
+- **`tutorials_freeze_review_provenance`** *(008)* (on `tutorials`, `before insert or update`) — reserves `review_level`, `reviewed_by`, and `flagged_for_follow_up` to admins and org leaders. Without it an author could rewrite their own review provenance and clear their own follow-up flag straight through PostgREST: those three columns are named by no policy and were constrained by nothing. Not an escalation — `status = 'approved'` stays admin/leader-reserved either way — but it corrupts the audit trail the admin spot-check of delegated reviews depends on. Gated on **change**, like the trigger above, so ordinary edits are unaffected.
 
 **Consequence for callers:** the service-role (admin) client has no `auth.uid()`, so `is_org_leader()`, `is_tutorial_contributor()`, and the membership check inside `tutorials_org_must_be_own` all evaluate as if no user were signed in. The admin client therefore **cannot** set or change `tutorials.org_id` — not because of a bug, but because there is no acting user for the trigger to check membership against. Any code path that needs to route a tutorial into an org must run under that acting user's own JWT, not the admin/service-role client.
 
@@ -495,9 +510,40 @@ $$ language plpgsql security invoker set search_path = '';
 create trigger tutorials_org_must_be_own
   before insert or update on public.tutorials
   for each row execute function public.tutorials_org_must_be_own();
+
+-- 008
+create or replace function public.tutorials_freeze_review_provenance()
+returns trigger as $$
+begin
+  if (
+       case tg_op
+         when 'INSERT' then new.review_level is not null
+                          or new.reviewed_by is not null
+                          or new.flagged_for_follow_up
+         else new.review_level is distinct from old.review_level
+           or new.reviewed_by is distinct from old.reviewed_by
+           or new.flagged_for_follow_up is distinct from old.flagged_for_follow_up
+       end
+     )
+     and auth.uid() is not null
+     and not public.is_admin()
+     and not (new.org_id is not null and public.is_org_leader(new.org_id))
+  then
+    raise exception 'review_level, reviewed_by and flagged_for_follow_up may only be written by an admin or an org leader'
+      using errcode = '42501';
+  end if;
+  return new;
+end;
+$$ language plpgsql security invoker set search_path = '';
+
+create trigger tutorials_freeze_review_provenance
+  before insert or update on public.tutorials
+  for each row execute function public.tutorials_freeze_review_provenance();
 ```
 
-> Both triggers are `security invoker` (the **opposite** of the helper functions above), and deliberately so. Here, a row that is merely invisible to the caller must fail **closed** — the guard should still raise. In `is_tutorial_contributor()` the same "invisible" situation must fail **open**, or self-review would be silently granted. `set search_path = ''` is what makes running as invoker safe: every name in these trigger bodies is schema-qualified, so no caller-controlled `search_path` can shadow `public.is_admin()` or `public.is_org_leader()` with something else.
+> `tutorials_freeze_review_provenance` is the one place a null `auth.uid()` fails **open** rather than closed, via the `auth.uid() is not null` conjunct. That is the service-role escape, and it is not a hole: no RLS policy on `tutorials` admits a writer who has no `auth.uid()` (they'd fail `is_approved_contributor()`), so a caller that reaches this trigger with a null uid is necessarily a `BYPASSRLS` server context — the admin client `POST /api/tutorials` creates rows with, or a migration.
+
+> All three triggers are `security invoker` (the **opposite** of the helper functions above), and deliberately so. Here, a row that is merely invisible to the caller must fail **closed** — the guard should still raise. In `is_tutorial_contributor()` the same "invisible" situation must fail **open**, or self-review would be silently granted. `set search_path = ''` is what makes running as invoker safe: every name in these trigger bodies is schema-qualified, so no caller-controlled `search_path` can shadow `public.is_admin()` or `public.is_org_leader()` with something else.
 
 ---
 
@@ -619,6 +665,8 @@ create policy "Trusted org leaders can review their org's tutorials"
 ```
 
 ### `tutorial_contributors`
+An approved contributor may link **themselves** (`profile_id = auth.uid()`) and only to a tutorial that **has no contributors yet** — the claim, not the join. Adding a second person to an existing tutorial is admin-only *(008; before that, any contributor could attach themselves to any tutorial)*.
+
 ```sql
 create policy "Anyone can view contributors of approved tutorials"
   on public.tutorial_contributors for select using (public.tutorial_is_approved(tutorial_id));
@@ -626,9 +674,27 @@ create policy "Anyone can view contributors of approved tutorials"
 create policy "Contributors can view own entries"
   on public.tutorial_contributors for select using (profile_id = auth.uid());
 
-create policy "Approved contributors can insert"
+-- Replaced in 008. The original ("Approved contributors can insert") constrained
+-- only profile_id, so any contributor could attach themselves to ANY tutorial —
+-- including a stranger's private draft, which combined with the 007 leader UPDATE
+-- grant became a way to get someone else's unsubmitted work published. A
+-- contributor may now claim only a tutorial that has no contributors yet, which is
+-- exactly the authoring path: POST /api/tutorials inserts the row with no link and
+-- the next call adds the author. Once a tutorial has an owner, only an admin can
+-- add further contributors. The second arm of the OR is retry safety and grants
+-- nothing — it only ever admits a row duplicating one the caller already owns, so
+-- a re-link still fails as 23505 (which routes/contributors.ts swallows) rather
+-- than as 42501, since a WITH CHECK is evaluated before the index insert.
+create policy "Approved contributors can claim an unclaimed tutorial"
   on public.tutorial_contributors for insert
-  with check (profile_id = auth.uid() and public.is_approved_contributor());
+  with check (
+    profile_id = auth.uid()
+    and public.is_approved_contributor()
+    and (
+      not public.tutorial_has_contributor(tutorial_id)
+      or public.is_tutorial_contributor(tutorial_id)
+    )
+  );
 
 create policy "Admin full access to tutorial_contributors"
   on public.tutorial_contributors for all using (public.is_admin());
