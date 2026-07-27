@@ -45,14 +45,32 @@ afterAll(async () => {
 })
 
 /** An RLS-blocked UPDATE matches zero rows rather than erroring, so every
- *  assertion here is on the affected row count. */
+ *  assertion here is on the affected row count. The error assertion keeps a
+ *  future trigger-raised failure (42501) from masquerading as an RLS block —
+ *  PostgREST nulls `data` whenever `error` is set. */
 async function tryApprove(token: string, tutorialId: string): Promise<number> {
-  const { data } = await createUserClient(token)
+  const { data, error } = await createUserClient(token)
     .from('tutorials')
     .update({ status: 'approved' })
     .eq('id', tutorialId)
     .select('id')
+  expect(error).toBeNull()
   return (data ?? []).length
+}
+
+/** `leaderOwnTutorial` and `memberTutorial` each list their caller as a
+ *  `tutorial_contributors` row, so the separate "Contributors can update own
+ *  tutorials" policy also applies here — and its WITH CHECK (status must stay
+ *  draft/pending/rejected) rejects a move to 'approved' outright. That's a real
+ *  RLS violation (42501), not a silent zero-row match, so tryApprove's
+ *  "no error" contract doesn't fit these two calls — assert on the error itself. */
+async function tryApproveAsContributor(token: string, tutorialId: string): Promise<void> {
+  const { error } = await createUserClient(token)
+    .from('tutorials')
+    .update({ status: 'approved' })
+    .eq('id', tutorialId)
+    .select('id')
+  expect(error?.code).toBe('42501')
 }
 
 describe('leader review grant', () => {
@@ -65,7 +83,7 @@ describe('leader review grant', () => {
   })
 
   it('cannot approve its own tutorial, even as a linked collaborator', async () => {
-    expect(await tryApprove(leader.token, leaderOwnTutorial)).toBe(0)
+    await tryApproveAsContributor(leader.token, leaderOwnTutorial)
   })
 
   it('cannot approve anything while the org is on probation', async () => {
@@ -73,6 +91,19 @@ describe('leader review grant', () => {
   })
 
   it('a plain member has no review grant over their own org', async () => {
-    expect(await tryApprove(member.token, memberTutorial)).toBe(0)
+    await tryApproveAsContributor(member.token, memberTutorial)
+  })
+
+  it('a leader of a different org cannot approve this org\'s tutorial', async () => {
+    // Closes the per-org scoping gap: without this, is_org_leader() could drop its
+    // org_id filter and every other test here would still pass.
+    const otherLeader = await createTestUser('contributor')
+    const otherOrg = await createOrg({ createdBy: otherLeader.id, status: 'approved', trustLevel: 'trusted' })
+    await addMember({ orgId: otherOrg, userId: otherLeader.id, orgRole: 'leader', status: 'approved' })
+
+    expect(await tryApprove(otherLeader.token, memberTutorial)).toBe(0)
+
+    await cleanupOrg(otherOrg)
+    await deleteTestUser(otherLeader.id)
   })
 })
