@@ -815,10 +815,11 @@ git commit -m "test(web): cover the delegated review journey end to end"
 - [ ] **Step 1: Typecheck, build, and test**
 
 ```bash
-pnpm typecheck && pnpm --filter @splat-connect/web build && pnpm --filter @splat-connect/web test
+pnpm typecheck && pnpm --filter @splat-connect/web build && pnpm --filter @splat-connect/web test:unit
 ```
 
-Expected: PASS.
+Expected: PASS. Use `test:unit` — `packages/web` has no bare `test` script, so
+`pnpm --filter @splat-connect/web test` exits 0 without running anything.
 
 - [ ] **Step 2: Refresh the graph and commit**
 
