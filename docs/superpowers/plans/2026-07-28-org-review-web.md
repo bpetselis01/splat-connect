@@ -31,7 +31,11 @@ Tailwind, Playwright.
   `text-ink`, `text-muted`. Do not introduce new utility classes.
 - Legal content files ship **empty with a TODO comment**. Generate no placeholder legal
   language — see Task 7 and spec §6.
-- Commit after every task (`feat(web):`, `fix(web):`, `test(web):`).
+- **One file per commit.** Every commit step below stages exactly one path — never a
+  directory. Where a task produces several files, it produces several commits, ordered so
+  each stands alone (a component before the page that imports it). Conventional commits
+  (`feat(web):`, `fix(web):`, `test(web):`), and the message says what that specific file
+  does, not what the task was.
 
 ---
 
@@ -133,8 +137,15 @@ Expected: build succeeds.
 - [ ] **Step 4: Commit**
 
 ```bash
-git add packages/web/lib/org-access.ts packages/web/middleware.ts
-git commit -m "feat(web): add server-side org leadership check"
+git add packages/web/lib/org-access.ts
+git commit -m "feat(web): add server-side org leadership check
+
+Leadership is per-org data, not a role, so it cannot go through getUserRole()
+— that returns null for anything other than admin or contributor. This gives
+leader-ness exactly one source of truth."
+
+git add packages/web/middleware.ts
+git commit -m "feat(web): require a signed-in user for /org and /organizations"
 ```
 
 ---
@@ -309,9 +320,14 @@ render; visiting an org you do not lead redirects to `/dashboard`.
 
 - [ ] **Step 5: Commit**
 
+Component before the page that imports it, so neither commit references a missing file.
+
 ```bash
-git add packages/web/app/org packages/web/components/org-roster.tsx
-git commit -m "feat(web): add org leader dashboard with review queue and roster"
+git add packages/web/components/org-roster.tsx
+git commit -m "feat(web): add org roster component with invite and remove actions"
+
+git add "packages/web/app/org/[orgId]/page.tsx"
+git commit -m "feat(web): add org leader dashboard with review queue and join requests"
 ```
 
 ---
@@ -371,8 +387,12 @@ rejection with an empty note is refused.
 - [ ] **Step 4: Commit**
 
 ```bash
-git add packages/web/app/org
-git commit -m "feat(web): add org leader tutorial review screen"
+git add "packages/web/app/org/[orgId]/review/[tutorialId]/page.tsx"
+git commit -m "feat(web): add org leader tutorial review screen
+
+Mirrors the admin review page, with one difference that matters: the rejection
+note is required, because a rejection with no explanation is the most common
+cause of a contributor re-submitting the same problem."
 ```
 
 ---
@@ -438,8 +458,18 @@ approve button now fails.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/web/app/admin
-git commit -m "feat(web): add admin organisation management and spot-check pages"
+git add packages/web/app/admin/organizations/page.tsx
+git commit -m "feat(web): add admin organisation approval and suspension page
+
+Approving is one click that sets both status and trust_level, so the button is
+labelled to say what it actually grants: review authority over the org's own
+members' tutorials."
+
+git add packages/web/app/admin/spot-check/page.tsx
+git commit -m "feat(web): add admin spot-check page for org-reviewed tutorials"
+
+git add packages/web/app/admin/page.tsx
+git commit -m "feat(web): link organisations and spot-check from the admin hub"
 ```
 
 ---
@@ -538,8 +568,18 @@ API call returns 403.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/web/components/terms-gate.tsx packages/web/app/organizations
-git commit -m "feat(web): add terms gate and organisation creation flow"
+git add packages/web/components/terms-gate.tsx
+git commit -m "feat(web): add reusable terms acceptance gate
+
+Shared by the submit flow and org creation so the two cannot drift apart. The
+gate is a UX affordance only — the API refuses ungated actions server-side
+regardless of what this renders."
+
+git add packages/web/app/organizations/new/page.tsx
+git commit -m "feat(web): add organisation creation behind the leader terms gate"
+
+git add packages/web/app/organizations/page.tsx
+git commit -m "feat(web): add organisation browse and join-request page"
 ```
 
 ---
@@ -647,8 +687,15 @@ appears in `/library` and **not** in `/admin/review`.
 - [ ] **Step 7: Commit**
 
 ```bash
-git add packages/web/app/upload/page.tsx packages/web/app/dashboard/page.tsx
-git commit -m "feat(web): add org picker and terms gate to the submit flow"
+git add packages/web/app/upload/page.tsx
+git commit -m "feat(web): add org picker and terms gate to the submit flow
+
+One select handles the zero-, one-, and multi-org cases with no hidden
+tiebreaker. Its helper text is the contributor-facing disclosure that an org's
+leaders can read their drafts — not optional polish."
+
+git add packages/web/app/dashboard/page.tsx
+git commit -m "feat(web): show org memberships and pending invites on the dashboard"
 ```
 
 ---
@@ -702,8 +749,15 @@ Mirror it for `org-leader-terms` with its own heading.
 - [ ] **Step 2: Commit**
 
 ```bash
-git add packages/web/app/legal
-git commit -m "feat(web): add empty legal terms pages pending legal review"
+git add packages/web/app/legal/contributor-terms/page.tsx
+git commit -m "feat(web): add empty contributor terms page pending legal review
+
+Ships deliberately blank. The copy needs a lawyer — jurisdiction-specific
+liability and TGA/medical-device considerations for assistive equipment used
+by disabled children. Acceptances against v0-todo are void."
+
+git add packages/web/app/legal/org-leader-terms/page.tsx
+git commit -m "feat(web): add empty org leader terms page pending legal review"
 ```
 
 ---
@@ -747,7 +801,10 @@ qemu can grab the Supabase ports on `::1`.
 - [ ] **Step 4: Commit**
 
 ```bash
-git add packages/web/tests/e2e
+git add packages/web/tests/e2e/helpers.ts
+git commit -m "test(web): add createOrgWithLeader e2e fixture"
+
+git add packages/web/tests/e2e/org/delegated-review.spec.ts
 git commit -m "test(web): cover the delegated review journey end to end"
 ```
 
