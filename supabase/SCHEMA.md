@@ -16,6 +16,7 @@ current definition is shown and the change is noted.
 | 002 | `002_storage_update_policies.sql` | Re-applies the three storage **UPDATE** (file-replacement) policies to already-running databases (idempotent, drop-if-exists). |
 | 003 | `003_ability_profile.sql` | Adds the `parent` role, makes the signup trigger role-aware, and creates the `child_profiles` table with its RLS. |
 | 004 | `004_data_api_grants.sql` | Grants the Data API roles (`anon`, `authenticated`, `service_role`) access to the `public` schema so PostgREST works; RLS remains the access-control layer. |
+| 007 | `007_organizations.sql` | Adds `organizations`, `org_members`, and `user_agreements` so an approved org leader can review their own members' submissions instead of every tutorial going through the single platform admin queue. Adds `org_id`, `review_level`, `reviewed_by`, and `flagged_for_follow_up` to `tutorials`. Adds the org-scoped RLS policies and two provenance triggers that freeze what those policies trust. |
 
 ---
 
@@ -62,6 +63,12 @@ A published (or in-progress) build tutorial. Status drives visibility and the re
 | `rejection_note` | text | nullable |
 | `created_at` | timestamptz | not null, default `now()` |
 | `reviewed_at` | timestamptz | nullable |
+| `org_id` | uuid | nullable, FK → `organizations` on delete set null *(007)* |
+| `review_level` | text | nullable, check in (`org`, `platform`) *(007)* |
+| `reviewed_by` | uuid | nullable, FK → `profiles` on delete set null *(007)* |
+| `flagged_for_follow_up` | boolean | not null, default `false` *(007)* |
+
+> **Evolution (007):** `org_id`, `review_level`, `reviewed_by`, and `flagged_for_follow_up` were added to route a tutorial into an org's own review queue instead of the platform queue. `org_id` is a **snapshot taken at submit time**, not a live lookup — it does not track later membership changes, so a leader's review authority over a given tutorial can't be revoked retroactively by editing the roster. `org_id = null` means "platform queue" (the original, pre-007 behavior).
 
 ```sql
 create table public.tutorials (
@@ -76,7 +83,12 @@ create table public.tutorials (
   toy_photo_url text,
   rejection_note text,
   created_at timestamptz not null default now(),
-  reviewed_at timestamptz
+  reviewed_at timestamptz,
+  -- Added in 007:
+  org_id uuid references public.organizations on delete set null,
+  review_level text check (review_level in ('org', 'platform')),
+  reviewed_by uuid references public.profiles on delete set null,
+  flagged_for_follow_up boolean not null default false
 );
 ```
 
@@ -226,6 +238,97 @@ create table public.child_profiles (
 );
 ```
 
+### `organizations`  *(added in 007)*
+A group whose approved leader can review its own members' tutorials. Starts `pending`/`probation` and must be promoted by an admin before it gains any authority.
+
+| Column | Type | Constraints / default |
+|--------|------|-----------------------|
+| `id` | uuid | PK, default `gen_random_uuid()` |
+| `name` | text | not null |
+| `description` | text | nullable |
+| `status` | text | not null, default `'pending'`, check in (`pending`, `approved`, `suspended`) |
+| `trust_level` | text | not null, default `'probation'`, check in (`probation`, `trusted`) |
+| `created_by` | uuid | FK → `profiles` on delete set null, nullable |
+| `created_at` | timestamptz | not null, default `now()` |
+| `updated_at` | timestamptz | not null, default `now()` |
+
+> `trust_level` defaults to `'probation'` independently of `status`, so a *pending* org can never read as trusted. Admin approval is what sets `status = 'approved'` **and** `trust_level = 'trusted'` together.
+
+```sql
+create table public.organizations (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  description text,
+  status text not null default 'pending'
+    check (status in ('pending', 'approved', 'suspended')),
+  trust_level text not null default 'probation'
+    check (trust_level in ('probation', 'trusted')),
+  created_by uuid references public.profiles on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+```
+
+### `org_members`  *(added in 007)*
+Membership of a profile in an organization, with the provenance of how that membership started.
+
+| Column | Type | Constraints / default |
+|--------|------|-----------------------|
+| `id` | uuid | PK, default `gen_random_uuid()` |
+| `org_id` | uuid | FK → `organizations` on delete cascade, not null |
+| `user_id` | uuid | FK → `profiles` on delete cascade, not null |
+| `org_role` | text | not null, default `'member'`, check in (`leader`, `member`) |
+| `status` | text | not null, default `'pending'`, check in (`pending`, `approved`, `removed`, `declined`) |
+| `initiated_by` | text | not null, check in (`contributor`, `org`) |
+| `invited_by` | uuid | FK → `profiles` on delete set null, nullable |
+| `created_at` | timestamptz | not null, default `now()` |
+| `joined_at` | timestamptz | nullable |
+| | | unique (`org_id`, `user_id`) |
+
+> `org_role` and `status` are independent — `('leader', 'pending')` is a real, representable state: an invited leader who hasn't accepted yet. Every policy must therefore check `status = 'approved'`, never `org_role = 'leader'` alone.
+>
+> `initiated_by` records who created a pending row, so the handshake requires the *other* party to act on it: neither party can complete a membership alone (a contributor's join request needs a leader to approve it; a leader's invite needs the contributor to accept it).
+
+```sql
+create table public.org_members (
+  id uuid primary key default gen_random_uuid(),
+  org_id uuid references public.organizations on delete cascade not null,
+  user_id uuid references public.profiles on delete cascade not null,
+  org_role text not null default 'member'
+    check (org_role in ('leader', 'member')),
+  status text not null default 'pending'
+    check (status in ('pending', 'approved', 'removed', 'declined')),
+  initiated_by text not null
+    check (initiated_by in ('contributor', 'org')),
+  invited_by uuid references public.profiles on delete set null,
+  created_at timestamptz not null default now(),
+  joined_at timestamptz,
+  unique (org_id, user_id)
+);
+```
+
+### `user_agreements`  *(added in 007)*
+Logs that a user accepted a versioned agreement. Contains no legal text — the terms themselves are versioned static content referenced by the `version` string.
+
+| Column | Type | Constraints / default |
+|--------|------|-----------------------|
+| `id` | uuid | PK, default `gen_random_uuid()` |
+| `user_id` | uuid | FK → `profiles` on delete cascade, not null |
+| `agreement_type` | text | not null, check in (`contributor_terms`, `org_leader_terms`) |
+| `version` | text | not null |
+| `accepted_at` | timestamptz | not null, default `now()` |
+
+```sql
+create table public.user_agreements (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references public.profiles on delete cascade not null,
+  agreement_type text not null
+    check (agreement_type in ('contributor_terms', 'org_leader_terms')),
+  version text not null,
+  accepted_at timestamptz not null default now()
+);
+```
+
 ---
 
 ## 2. Functions & triggers
@@ -290,6 +393,112 @@ returns boolean as $$
 $$ language sql security definer stable;
 ```
 
+### Helper functions (007)
+`security definer stable` functions used inside the org RLS policies, for the same reason as above: a policy can't query the table it guards without recursing, and querying another table from inside a policy would make the answer depend on that table's own visibility rather than on fact.
+
+- **`is_org_leader(p_org_id)`** — true if the caller is an **approved** `leader` of that org. Deliberately bakes in `status = 'approved'` so no policy can check leadership half-right (an invited-but-not-yet-accepted leader is not a leader for RLS purposes).
+- **`has_accepted(p_agreement_type)`** — true if the caller accepted **any** version of that agreement type. Version-agnostic on purpose; forcing re-acceptance on a new version is out of scope, and the `version` column keeps that option open without a migration.
+- **`org_has_approved_leader(p_org_id)`** — true if the org already has an approved leader. Used only by the founder-bootstrap `org_members` insert policy, which has to ask that question about the very table it's a policy on.
+- **`is_tutorial_contributor(p_tutorial_id)`** — true if the caller is a contributor on that tutorial. Used to block self-review. Must be `security definer`: as a plain check running under the caller's own RLS, a tutorial row the caller merely can't *see* would make the check false and grant self-review by accident.
+
+```sql
+create or replace function public.is_org_leader(p_org_id uuid)
+returns boolean as $$
+  select exists (
+    select 1 from public.org_members
+    where org_id = p_org_id
+      and user_id = auth.uid()
+      and org_role = 'leader'
+      and status = 'approved'
+  );
+$$ language sql security definer stable;
+
+create or replace function public.has_accepted(p_agreement_type text)
+returns boolean as $$
+  select exists (
+    select 1 from public.user_agreements
+    where user_id = auth.uid() and agreement_type = p_agreement_type
+  );
+$$ language sql security definer stable;
+
+create or replace function public.org_has_approved_leader(p_org_id uuid)
+returns boolean as $$
+  select exists (
+    select 1 from public.org_members
+    where org_id = p_org_id and org_role = 'leader' and status = 'approved'
+  );
+$$ language sql security definer stable;
+
+create or replace function public.is_tutorial_contributor(p_tutorial_id uuid)
+returns boolean as $$
+  select exists (
+    select 1 from public.tutorial_contributors
+    where tutorial_id = p_tutorial_id and profile_id = auth.uid()
+  );
+$$ language sql security definer stable;
+```
+
+### Provenance triggers (007)
+Two `before update` triggers that exist because RLS itself cannot protect the columns its policies rely on.
+
+**Why they're needed:** an RLS `with check` clause only ever sees the *new* row — it cannot reference `OLD`. That means any policy that grants an update based on a mutable column can be defeated by rewriting that same column in the same statement. This was verified exploitable, not theoretical: three separate ways to defeat the org policies above were reproduced before these triggers existed, including a plain contributor filing a join request and self-promoting to approved leader in one `UPDATE`.
+
+- **`org_members_freeze_provenance`** (on `org_members`, `before update`) — makes `org_id`, `user_id`, and `initiated_by` immutable on every update. Restricts changes to `org_role` to admins only, so a leader can't mint a co-leader by editing `org_role` while approving a join request. And it allows a `removed` membership to be restored only by that org's own leader (or an admin) — otherwise the removed party could simply set their own row back to `approved`, since the contributor-side update policy already accepts that transition on an org-initiated row.
+- **`tutorials_org_must_be_own`** (on `tutorials`, `before insert or update`) — permits setting or changing `tutorials.org_id` only when the caller is an approved member of the *target* org (or is the admin). It is gated on **change**, not on every write: it only re-checks membership on `INSERT` or when `org_id` is actually being modified, never on an unrelated field update. This is deliberate — `org_id` is a snapshot taken when a tutorial is routed, so re-validating membership on every later write would let a later roster change retroactively block an author from editing their own already-routed work (e.g. a leader removing a member would freeze that member's existing tutorials).
+
+**Consequence for callers:** the service-role (admin) client has no `auth.uid()`, so `is_org_leader()`, `is_tutorial_contributor()`, and the membership check inside `tutorials_org_must_be_own` all evaluate as if no user were signed in. The admin client therefore **cannot** set or change `tutorials.org_id` — not because of a bug, but because there is no acting user for the trigger to check membership against. Any code path that needs to route a tutorial into an org must run under that acting user's own JWT, not the admin/service-role client.
+
+```sql
+create or replace function public.org_members_freeze_provenance()
+returns trigger as $$
+begin
+  if new.org_id is distinct from old.org_id
+  or new.user_id is distinct from old.user_id
+  or new.initiated_by is distinct from old.initiated_by then
+    raise exception 'org_id, user_id and initiated_by are immutable'
+      using errcode = '42501';
+  end if;
+  if new.org_role is distinct from old.org_role and not public.is_admin() then
+    raise exception 'org_role may only be changed by an admin'
+      using errcode = '42501';
+  end if;
+  if old.status = 'removed' and new.status is distinct from 'removed'
+     and not public.is_org_leader(old.org_id) and not public.is_admin() then
+    raise exception 'a removed membership can only be restored by an org leader'
+      using errcode = '42501';
+  end if;
+  return new;
+end;
+$$ language plpgsql security invoker set search_path = '';
+
+create trigger org_members_freeze_provenance
+  before update on public.org_members
+  for each row execute function public.org_members_freeze_provenance();
+
+create or replace function public.tutorials_org_must_be_own()
+returns trigger as $$
+begin
+  if new.org_id is not null
+     and (tg_op = 'INSERT' or new.org_id is distinct from old.org_id)
+     and not public.is_admin()
+     and not exists (
+       select 1 from public.org_members m
+       where m.org_id = new.org_id and m.user_id = auth.uid() and m.status = 'approved'
+     ) then
+    raise exception 'cannot route a tutorial to an organisation you are not an approved member of'
+      using errcode = '42501';
+  end if;
+  return new;
+end;
+$$ language plpgsql security invoker set search_path = '';
+
+create trigger tutorials_org_must_be_own
+  before insert or update on public.tutorials
+  for each row execute function public.tutorials_org_must_be_own();
+```
+
+> Both triggers are `security invoker` (the **opposite** of the helper functions above), and deliberately so. Here, a row that is merely invisible to the caller must fail **closed** — the guard should still raise. In `is_tutorial_contributor()` the same "invisible" situation must fail **open**, or self-review would be silently granted. `set search_path = ''` is what makes running as invoker safe: every name in these trigger bodies is schema-qualified, so no caller-controlled `search_path` can shadow `public.is_admin()` or `public.is_org_leader()` with something else.
+
 ---
 
 ## 3. Row Level Security
@@ -304,6 +513,9 @@ alter table public.parts                 enable row level security;
 alter table public.tools                 enable row level security;
 alter table public.stl_files             enable row level security;
 alter table public.child_profiles        enable row level security;   -- 003
+alter table public.organizations         enable row level security;   -- 007
+alter table public.org_members           enable row level security;   -- 007
+alter table public.user_agreements       enable row level security;   -- 007
 ```
 
 ### Access model at a glance
@@ -370,6 +582,42 @@ create policy "Admin can delete tutorials"
   on public.tutorials for delete using (public.is_admin());
 ```
 
+**Org-leader review (007):** a leader's read reach and write reach over their org's tutorials are **deliberately different sizes**. The SELECT policy below is broader than the UPDATE policy: it ignores `trust_level` and the self-review block, because a probation org's leader still needs to see their own queue, and a suspended org's leader still needs visibility into their roster's history. Write authority (the ability to actually approve/reject) is gated separately, in the UPDATE policy, by trust and by not being a contributor on the row.
+
+**Consequence, stated plainly:** because the SELECT policy is that broad, a leader can read their org members' unpublished drafts — not just pending submissions. This belongs in the `contributor_terms` agreement text, and is exactly why the join handshake requires a genuine two-sided opt-in (see `org_members` below) rather than a leader being able to add members unilaterally.
+
+```sql
+create policy "Leaders can read their org's tutorials"
+  on public.tutorials for select using (
+    org_id is not null and public.is_org_leader(org_id)
+  );
+
+create policy "Trusted org leaders can review their org's tutorials"
+  on public.tutorials for update
+  using (
+    org_id is not null
+    and public.is_org_leader(org_id)
+    and exists (
+      select 1 from public.organizations o
+      where o.id = org_id
+        and o.status = 'approved'
+        and o.trust_level = 'trusted'
+    )
+    and not public.is_tutorial_contributor(id)
+  )
+  with check (
+    org_id is not null
+    and public.is_org_leader(org_id)
+    and exists (
+      select 1 from public.organizations o
+      where o.id = org_id
+        and o.status = 'approved'
+        and o.trust_level = 'trusted'
+    )
+    and not public.is_tutorial_contributor(id)
+  );
+```
+
 ### `tutorial_contributors`
 ```sql
 create policy "Anyone can view contributors of approved tutorials"
@@ -433,6 +681,126 @@ create policy "Parent can update own child profile"
 
 create policy "Admin full access to child_profiles"
   on public.child_profiles for all using (public.is_admin());
+```
+
+### `organizations`  *(007)*
+Anyone can read an `approved` org (so a contributor can discover it before joining); a creator can always read their own org regardless of status, so they can see their own pending/suspended state; admins read all. Only admins may UPDATE — that's what keeps `status` and `trust_level` out of a leader's own reach, so a leader can never promote their own org out of probation or lift its own suspension.
+
+```sql
+create policy "Anyone can read approved organizations"
+  on public.organizations for select using (status = 'approved');
+
+create policy "Creator can read own organization at any status"
+  on public.organizations for select using (created_by = auth.uid());
+
+create policy "Admin can read all organizations"
+  on public.organizations for select using (public.is_admin());
+
+create policy "Contributors who accepted leader terms can create organizations"
+  on public.organizations for insert
+  with check (
+    created_by = auth.uid()
+    and public.is_approved_contributor()
+    and public.has_accepted('org_leader_terms')
+    and status = 'pending'
+    and trust_level = 'probation'
+  );
+
+create policy "Admin can update organizations"
+  on public.organizations for update using (public.is_admin());
+```
+
+### `user_agreements`  *(007)*
+Users can read and record their own agreement acceptances; admins can read all. There is deliberately **no UPDATE and no DELETE policy** — an acceptance record that can be edited after the fact is not a record.
+
+```sql
+create policy "Users can read own agreements"
+  on public.user_agreements for select using (user_id = auth.uid());
+
+create policy "Users can record own agreements"
+  on public.user_agreements for insert with check (user_id = auth.uid());
+
+create policy "Admin can read all agreements"
+  on public.user_agreements for select using (public.is_admin());
+```
+
+### `org_members`  *(007)*
+A member reads their own memberships; a leader reads their whole org roster (`is_org_leader()` — which, as above, bakes in `status = 'approved'`, so an invited-but-unaccepted leader cannot read a roster); admins read all.
+
+Insert has two independent policies. **Founder bootstrap** exists because the design would otherwise deadlock: the leader-invite policy requires `is_org_leader(org_id)`, which is false for every brand-new org, so no org could ever get its first leader. This policy is scoped tightly — only the org's own `created_by`, only while the org has no approved leader yet, only as `org_role = 'leader'`/`status = 'approved'`/`initiated_by = 'org'` — so it grants exactly one membership per org and nothing beyond that. **Contributor-initiated join requests** always land as `member`/`pending` — you cannot request to join *as* a leader. **Leader-initiated invites** always land `pending` too, never straight to `approved`, because a leader unilaterally granting someone `approved` status would let an org claim a member who never agreed to join.
+
+Update is split by who initiated the row, which is the two-sided handshake: a **leader** may resolve a request the *contributor* initiated (approve/decline), revive a `removed` row back to `pending`, or remove an approved member — but may not touch a row the org itself initiated (an invitation). A **contributor** may resolve an invitation the *org* initiated (accept/decline) on their own row only — they cannot self-approve a request they filed themselves. (The `org_members_freeze_provenance` trigger above is what keeps this handshake honest against a single-statement rewrite of `initiated_by` or `status`.)
+
+```sql
+create policy "Members can read own memberships"
+  on public.org_members for select using (user_id = auth.uid());
+
+create policy "Leaders can read their org roster"
+  on public.org_members for select using (public.is_org_leader(org_id));
+
+create policy "Admin can read all memberships"
+  on public.org_members for select using (public.is_admin());
+
+create policy "Org creator can claim first leadership"
+  on public.org_members for insert
+  with check (
+    user_id = auth.uid()
+    and org_role = 'leader'
+    and status = 'approved'
+    and initiated_by = 'org'
+    and not public.org_has_approved_leader(org_id)
+    and exists (
+      select 1 from public.organizations o
+      where o.id = org_id and o.created_by = auth.uid()
+    )
+  );
+
+create policy "Contributors can request to join an org"
+  on public.org_members for insert
+  with check (
+    user_id = auth.uid()
+    and initiated_by = 'contributor'
+    and status = 'pending'
+    and org_role = 'member'
+    and public.is_approved_contributor()
+  );
+
+create policy "Leaders can invite contributors"
+  on public.org_members for insert
+  with check (
+    public.is_org_leader(org_id)
+    and initiated_by = 'org'
+    and status = 'pending'
+    and invited_by = auth.uid()
+    and exists (
+      select 1 from public.organizations o
+      where o.id = org_id and o.status = 'approved'
+    )
+  );
+
+create policy "Leaders can resolve contributor-initiated memberships"
+  on public.org_members for update
+  using (public.is_org_leader(org_id))
+  with check (
+    public.is_org_leader(org_id)
+    and (
+      (initiated_by = 'contributor' and status in ('approved', 'declined'))
+      or status = 'removed'
+      or status = 'pending'
+    )
+  );
+
+create policy "Contributors can resolve org-initiated invitations"
+  on public.org_members for update
+  using (user_id = auth.uid())
+  with check (
+    user_id = auth.uid()
+    and initiated_by = 'org'
+    and status in ('approved', 'declined')
+  );
+
+create policy "Admin full access to org_members"
+  on public.org_members for all using (public.is_admin());
 ```
 
 ---
