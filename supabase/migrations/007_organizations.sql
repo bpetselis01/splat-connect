@@ -296,3 +296,67 @@ create policy "Trusted org leaders can review their org's tutorials"
     )
     and not public.is_tutorial_contributor(id)
   );
+
+-- ============================================================
+-- Provenance triggers
+-- ============================================================
+-- WHY: An RLS `with check` clause sees only the NEW row, and a Postgres policy
+--      cannot reference OLD. Every policy above that gates on `initiated_by` is
+--      therefore forgeable: a caller permitted to update the row at all can
+--      rewrite the very column the check tests, in the same statement. Verified
+--      exploitable — a plain contributor could file a join request, self-promote
+--      to approved leader in one UPDATE, and publish another member's tutorial.
+-- HOW: OLD is visible in a trigger, so provenance is frozen here instead. The
+--      policies stay as written; this makes the columns they trust immutable.
+create or replace function public.org_members_freeze_provenance()
+returns trigger as $$
+begin
+  if new.org_id is distinct from old.org_id
+  or new.user_id is distinct from old.user_id
+  or new.initiated_by is distinct from old.initiated_by then
+    raise exception 'org_id, user_id and initiated_by are immutable';
+  end if;
+  -- Without this a leader could mint co-leaders by setting org_role while
+  -- approving a join request. Multiple leaders are supported by the schema, but
+  -- promotion is an admin decision.
+  if new.org_role is distinct from old.org_role and not public.is_admin() then
+    raise exception 'org_role may only be changed by an admin';
+  end if;
+  return new;
+end;
+$$ language plpgsql security definer;
+
+-- BEFORE UPDATE only. The founder-bootstrap INSERT policy legitimately writes
+-- org_role='leader', so an INSERT trigger here would deadlock org creation.
+create trigger org_members_freeze_provenance
+  before update on public.org_members
+  for each row execute function public.org_members_freeze_provenance();
+
+-- WHY: tutorials.org_id decides which org's leaders hold review authority over a
+--      row, but no policy constrains it — a contributor could route their own
+--      draft into any trusted org's queue, or two cooperating leaders could
+--      cross-approve each other's work and skip platform review entirely.
+-- HOW: An org may only be set if the caller is an approved member of it. This
+--      does not obstruct review: a leader is by definition an approved member.
+create or replace function public.tutorials_org_must_be_own()
+returns trigger as $$
+begin
+  -- DELIBERATE HOLE: auth.uid() is null for the service role, and
+  -- POST /api/tutorials inserts through createAdminClient() (see
+  -- packages/api/src/routes/tutorials.ts) — without this escape every
+  -- admin-client write carrying an org_id raises. Verified: the insert fails
+  -- with P0001 when the escape is absent. The API layer therefore owns the
+  -- membership check for any route that lets a caller supply org_id.
+  if auth.uid() is not null and new.org_id is not null and not public.is_admin() and not exists (
+    select 1 from public.org_members m
+    where m.org_id = new.org_id and m.user_id = auth.uid() and m.status = 'approved'
+  ) then
+    raise exception 'cannot route a tutorial to an organisation you are not an approved member of';
+  end if;
+  return new;
+end;
+$$ language plpgsql security definer;
+
+create trigger tutorials_org_must_be_own
+  before insert or update on public.tutorials
+  for each row execute function public.tutorials_org_must_be_own();
