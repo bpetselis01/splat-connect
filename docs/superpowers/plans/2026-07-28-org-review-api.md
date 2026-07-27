@@ -35,7 +35,10 @@ as an oversight.
 - New types come from `@splat-connect/types` (added in the schema plan). Do not
   redeclare them locally.
 - Agreement versions come from `AGREEMENT_VERSIONS`, never a string literal at a call site.
-- Commit after every task, conventional commits (`feat(api):`, `fix(api):`, `test(api):`).
+- **One file per commit.** Every commit step below stages exactly one path, ordered so
+  each commit stands alone — the route file lands before the `app.ts` mount that imports
+  it. Conventional commits (`feat(api):`, `fix(api):`, `test(api):`), and the message
+  says what that specific file does, not what the task was.
 
 ---
 
@@ -224,11 +227,17 @@ pnpm --filter @splat-connect/api test:integration -- tests/integration/orgs/agre
 
 Expected: 3 passed.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 5: Commit, one file at a time**
 
 ```bash
-git add packages/api/src/routes/agreements.ts packages/api/src/app.ts packages/api/tests/integration/orgs/agreements.test.ts
-git commit -m "feat(api): add terms acceptance endpoints"
+git add packages/api/src/routes/agreements.ts
+git commit -m "feat(api): add terms acceptance route with server-chosen versions"
+
+git add packages/api/src/app.ts
+git commit -m "feat(api): mount the agreements routes behind auth"
+
+git add packages/api/tests/integration/orgs/agreements.test.ts
+git commit -m "test(api): assert acceptance version cannot be forged by the client"
 ```
 
 ---
@@ -462,11 +471,17 @@ pnpm --filter @splat-connect/api test:integration -- tests/integration/orgs/orga
 
 Expected: 4 passed.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 5: Commit, one file at a time**
 
 ```bash
-git add packages/api/src/routes/organizations.ts packages/api/src/app.ts packages/api/tests/integration/orgs/organizations.test.ts
-git commit -m "feat(api): add organization create and browse endpoints"
+git add packages/api/src/routes/organizations.ts
+git commit -m "feat(api): add organization create, browse, and membership listing routes"
+
+git add packages/api/src/app.ts
+git commit -m "feat(api): mount the organizations routes behind auth"
+
+git add packages/api/tests/integration/orgs/organizations.test.ts
+git commit -m "test(api): assert a new org cannot be created already approved or trusted"
 ```
 
 ---
@@ -783,11 +798,17 @@ pnpm --filter @splat-connect/api test:integration -- tests/integration/orgs/memb
 
 Expected: 4 passed.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 5: Commit, one file at a time**
 
 ```bash
-git add packages/api/src/routes/org-members.ts packages/api/src/app.ts packages/api/tests/integration/orgs/membership-routes.test.ts
-git commit -m "feat(api): add org membership handshake endpoints"
+git add packages/api/src/routes/org-members.ts
+git commit -m "feat(api): add org membership handshake routes with per-party actions"
+
+git add packages/api/src/app.ts
+git commit -m "feat(api): mount the org-members routes behind auth"
+
+git add packages/api/tests/integration/orgs/membership-routes.test.ts
+git commit -m "test(api): assert an RLS-refused membership change returns 403, not 200"
 ```
 
 ---
@@ -952,11 +973,28 @@ transition, because its test users have no `contributor_terms` row. This is the 
 working. Fix by calling `acceptTerms(user.id, 'contributor_terms')` in that file's
 `beforeAll` — do not weaken the gate.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 7: Commit, one file at a time**
+
+Test first, then the implementation that makes it pass. That leaves one red commit in
+history, which is the accepted trade for the granularity.
 
 ```bash
-git add packages/api/src/routes/tutorials.ts packages/api/tests/unit/routes/tutorials.test.ts packages/api/tests/integration/tutorials/status-flow.test.ts
-git commit -m "fix(api): restrict PATCH /tutorials/:id to an explicit field allowlist"
+git add packages/api/tests/unit/routes/tutorials.test.ts
+git commit -m "test(api): cover the PATCH /tutorials/:id field allowlist"
+
+git add packages/api/src/routes/tutorials.ts
+git commit -m "fix(api): restrict PATCH /tutorials/:id to an explicit field allowlist
+
+The handler wrote the entire request body to the row, with RLS as the only
+guard. Once org leaders hold an UPDATE grant that is not enough: a leader
+could publish through this endpoint leaving reviewed_by, reviewed_at, and
+review_level null — a published tutorial with no audit trail."
+
+git add packages/api/tests/integration/tutorials/status-flow.test.ts
+git commit -m "test(api): accept contributor terms in the status-flow fixture
+
+The draft to pending transition is now gated on contributor_terms, so the
+existing fixture users need an acceptance row."
 ```
 
 ---
@@ -1264,11 +1302,18 @@ pnpm --filter @splat-connect/api test:integration -- tests/integration/orgs/revi
 
 Expected: 9 passed.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 6: Commit, one file at a time**
 
 ```bash
-git add packages/api/src/routes/tutorials.ts packages/api/tests/integration/orgs/review-endpoint.test.ts
-git commit -m "feat(api): add org snapshot on create and leader review endpoint"
+git add packages/api/src/routes/tutorials.ts
+git commit -m "feat(api): add org snapshot on create and the leader review endpoint
+
+org_id is snapshotted at submit rather than derived live, so review authority
+cannot become retroactive or be revoked by a later membership change. The
+review endpoint uses the user client so RLS remains the enforcement layer."
+
+git add packages/api/tests/integration/orgs/review-endpoint.test.ts
+git commit -m "test(api): assert the review endpoint writes a complete audit trail"
 ```
 
 ---
@@ -1488,11 +1533,18 @@ The block comment at `admin.ts:1-39` documents only two endpoints. Add the four 
 ones and note the default queue scoping — a stale header on a security-relevant file
 is worse than none.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 7: Commit, one file at a time**
 
 ```bash
-git add packages/api/src/routes/admin.ts packages/api/tests/integration/orgs/admin-queue.test.ts
-git commit -m "feat(api): scope admin queue to platform review and add org spot-check"
+git add packages/api/src/routes/admin.ts
+git commit -m "feat(api): scope the admin queue to platform review and add org spot-check
+
+The default queue was every pending tutorial, which would keep showing work a
+leader is about to handle. It now defaults to the platform's own — no org, or
+explicitly escalated — with ?scope=all restoring the firehose."
+
+git add packages/api/tests/integration/orgs/admin-queue.test.ts
+git commit -m "test(api): assert org-bound work is excluded from the admin queue"
 ```
 
 ---
