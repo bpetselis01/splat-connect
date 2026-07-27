@@ -324,9 +324,14 @@ begin
     raise exception 'org_id, user_id and initiated_by are immutable'
       using errcode = '42501';
   end if;
-  -- Without this a leader could mint co-leaders by setting org_role while
-  -- approving a join request. Multiple leaders are supported by the schema, but
-  -- promotion is an admin decision.
+  -- Without this a leader could promote an existing member by setting org_role
+  -- while approving a join request. State the invariant precisely, because it is
+  -- narrower than it looks: a leader CAN mint a co-leader, by inviting someone
+  -- straight in as ('leader', 'pending') — the invite policy above does not
+  -- constrain org_role, and the invitee's acceptance leaves it untouched. That is
+  -- deliberate (see the table comment: ('leader', 'pending') is a valid state) and
+  -- stays inside the org. What is blocked is PROMOTION: changing org_role on a row
+  -- that already exists. That requires an admin.
   if new.org_role is distinct from old.org_role and not public.is_admin() then
     raise exception 'org_role may only be changed by an admin'
       using errcode = '42501';
