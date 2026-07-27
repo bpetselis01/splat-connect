@@ -15,10 +15,11 @@ admin queue that would otherwise show work leaders are about to handle.
 **Architecture:** Three new Hono route files mounted in `app.ts`, plus surgical changes
 to `tutorials.ts` and `admin.ts`. Membership and review writes go through
 `createUserClient` so PostgreSQL remains the enforcement layer — routes are thin
-wrappers whose job is to name the action, not to decide who may take it. The one
-exception is `POST /api/tutorials`, which already uses the admin client by design; its
-org check is therefore a TypeScript check and is commented as such so it does not read
-as an oversight.
+wrappers whose job is to name the action, not to decide who may take it. `POST
+/api/tutorials` keeps its admin client and therefore cannot set `org_id` at all — the
+migration's `tutorials_org_must_be_own` trigger refuses a service-role write carrying
+one. Org assignment is its own user-client endpoint, so every path that decides review
+authority runs under the author's own JWT.
 
 **Tech Stack:** Hono 4, `@supabase/supabase-js` v2, Vitest 2, TypeScript 5.
 
@@ -49,7 +50,7 @@ as an oversight.
 | `packages/api/src/routes/organizations.ts` | **Create.** Org lifecycle: create, browse, list mine. |
 | `packages/api/src/routes/org-members.ts` | **Create.** Membership handshake, one route per action so the URL names the acting party. |
 | `packages/api/src/routes/agreements.ts` | **Create.** Record and list terms acceptances. ~30 lines, but separate because it is a different resource with a different lifetime — folding it into `contributors.ts` would make that file two things. |
-| `packages/api/src/routes/tutorials.ts` | **Modify.** Field allowlist on PATCH, `org_id` on POST, new `POST /:id/review`. |
+| `packages/api/src/routes/tutorials.ts` | **Modify.** Field allowlist on PATCH, new `POST /:id/org` (draft-only) and `POST /:id/review`. |
 | `packages/api/src/routes/admin.ts` | **Modify.** Audit fields on status change, platform-only queue, spot-check endpoints. |
 | `packages/api/src/app.ts` | **Modify.** Mount three route groups behind `authMiddleware`. |
 | `packages/api/tests/unit/routes/organizations.test.ts` | **Create.** Route-shape tests. |
@@ -1010,30 +1011,23 @@ existing fixture users need an acceptance row."
   (draft-only, consumed by the web plan's submit flow);
   `POST /api/tutorials/:id/review` body `{ status: 'approved' | 'rejected', rejection_note? }`.
 
-- [ ] **Step 1: Add the org validation to `POST /`**
+- [ ] **Step 1: Add the terms gate to `POST /` — but NOT `org_id`**
+
+`POST /api/tutorials` uses `createAdminClient()` (`tutorials.ts:94`), and the
+`tutorials_org_must_be_own` trigger in migration 007 permits a write that sets
+`org_id` only from a caller who is an approved member of that org. The service role
+has no `auth.uid()`, so **a service-role insert carrying `org_id` is refused with
+42501.** That is deliberate: it means no server-side code path can pin a tutorial to
+an org on a user's behalf, so the rule cannot be bypassed by a carelessly written
+route. Verified against the live database.
+
+Therefore this route does **not** accept `org_id`. All org assignment goes through
+`POST /:id/org` (Step 3), which uses `createUserClient` and so runs under the
+author's own JWT.
 
 Insert before the insert call:
 
 ```typescript
-  // WHY: This route deliberately uses the admin client (see the comment below),
-  //      so RLS is NOT running on this path and cannot validate org membership
-  //      the way it does everywhere else in this feature. This TypeScript check
-  //      is therefore the only guard on org_id, and is load-bearing rather than
-  //      belt-and-braces — without it any contributor could stamp a tutorial with
-  //      any org's id and route it into that org's review queue.
-  if (body.org_id) {
-    const membership = await createUserClient(c.get('token'))
-      .from('org_members')
-      .select('id')
-      .eq('org_id', body.org_id)
-      .eq('user_id', c.get('userId'))
-      .eq('status', 'approved')
-      .limit(1)
-    if (!membership.data || membership.data.length === 0) {
-      return c.json({ error: 'You are not an approved member of that organisation' }, 403)
-    }
-  }
-
   const termsError = await requireContributorTerms(c.get('token'))
   if (termsError) return c.json({ error: termsError }, 403)
 ```
@@ -1041,11 +1035,15 @@ Insert before the insert call:
 And add to the `.insert({...})` object:
 
 ```typescript
-      // Snapshot, not a live lookup: review authority must not become retroactive
-      // or be revocable by a later membership change.
-      org_id: body.org_id ?? null,
-      review_level: body.org_id ? 'org' : 'platform',
+      // A tutorial starts unpinned, on the platform queue. POST /:id/org moves it
+      // to an org's queue under the author's own JWT — the only path the database
+      // permits, by design.
+      review_level: 'platform',
 ```
+
+If a request body carries `org_id`, ignore it silently: the field allowlist in
+Task 4 already refuses it on `PATCH`, and accepting it here only to drop it would
+invite the belief that it works.
 
 - [ ] **Step 2: Append the review endpoint**
 
@@ -1180,8 +1178,8 @@ beforeAll(async () => {
   orgId = await createOrg({ createdBy: leader.id, status: 'approved', trustLevel: 'trusted' })
   await addMember({ orgId, userId: leader.id, orgRole: 'leader', status: 'approved' })
   await addMember({ orgId, userId: member.id, orgRole: 'member', status: 'approved' })
-  tutorialId = await createOrgTutorial({ orgId, authorId: member.id, status: 'pending' })
-  ownTutorialId = await createOrgTutorial({ orgId, authorId: leader.id, status: 'pending' })
+  tutorialId = await createOrgTutorial({ orgId, authorId: member.id, authorToken: member.token, status: 'pending' })
+  ownTutorialId = await createOrgTutorial({ orgId, authorId: leader.id, authorToken: leader.token, status: 'pending' })
 })
 
 afterAll(async () => {
@@ -1226,7 +1224,7 @@ describe('POST /api/tutorials/:id/review', () => {
   })
 
   it('a leader cannot publish through the generic PATCH endpoint', async () => {
-    const t = await createOrgTutorial({ orgId, authorId: member.id, status: 'pending' })
+    const t = await createOrgTutorial({ orgId, authorId: member.id, authorToken: member.token, status: 'pending' })
     const res = await app.request(`/api/tutorials/${t}`, authed(leader.token, {
       method: 'PATCH',
       body: JSON.stringify({ status: 'approved' }),
@@ -1238,15 +1236,17 @@ describe('POST /api/tutorials/:id/review', () => {
     await adminClient().from('tutorials').delete().eq('id', t)
   })
 
-  it('refuses to stamp a tutorial with an org the author does not belong to', async () => {
-    const outsider = await createTestUser('contributor')
-    await acceptTerms(outsider.id, 'contributor_terms')
-    const res = await app.request('/api/tutorials', authed(outsider.token, {
+  it('ignores org_id on create — it is not settable through this route', async () => {
+    const id = crypto.randomUUID()
+    const res = await app.request('/api/tutorials', authed(member.token, {
       method: 'POST',
-      body: JSON.stringify({ id: crypto.randomUUID(), title: 'Sneaky', difficulty: 'easy', org_id: orgId }),
+      body: JSON.stringify({ id, title: 'Sneaky', difficulty: 'easy', org_id: orgId }),
     }))
-    expect(res.status).toBe(403)
-    await deleteTestUser(outsider.id)
+    expect(res.status).toBe(201)
+    // Silently dropped, not honoured: the admin client cannot legally pin an org.
+    const { data } = await adminClient().from('tutorials').select('org_id').eq('id', id).single()
+    expect(data?.org_id).toBeNull()
+    await adminClient().from('tutorials').delete().eq('id', id)
   })
 
   it('refuses submission from a contributor who has not accepted the terms', async () => {
@@ -1262,7 +1262,7 @@ describe('POST /api/tutorials/:id/review', () => {
 
 describe('POST /api/tutorials/:id/org', () => {
   it('sets the reviewing org on a draft', async () => {
-    const draft = await createOrgTutorial({ orgId: null, authorId: member.id, status: 'draft' })
+    const draft = await createOrgTutorial({ orgId: null, authorId: member.id, authorToken: member.token, status: 'draft' })
     const res = await app.request(`/api/tutorials/${draft}/org`, authed(member.token, {
       method: 'POST', body: JSON.stringify({ org_id: orgId }),
     }))
@@ -1273,7 +1273,7 @@ describe('POST /api/tutorials/:id/org', () => {
   })
 
   it('refuses once the tutorial has left draft', async () => {
-    const pending = await createOrgTutorial({ orgId: null, authorId: member.id, status: 'pending' })
+    const pending = await createOrgTutorial({ orgId: null, authorId: member.id, authorToken: member.token, status: 'pending' })
     const res = await app.request(`/api/tutorials/${pending}/org`, authed(member.token, {
       method: 'POST', body: JSON.stringify({ org_id: orgId }),
     }))
@@ -1283,7 +1283,7 @@ describe('POST /api/tutorials/:id/org', () => {
 
   it('refuses an org the author does not belong to', async () => {
     const outsider = await createTestUser('contributor')
-    const draft = await createOrgTutorial({ orgId: null, authorId: outsider.id, status: 'draft' })
+    const draft = await createOrgTutorial({ orgId: null, authorId: outsider.id, authorToken: outsider.token, status: 'draft' })
     const res = await app.request(`/api/tutorials/${draft}/org`, authed(outsider.token, {
       method: 'POST', body: JSON.stringify({ org_id: orgId }),
     }))
@@ -1474,8 +1474,8 @@ beforeAll(async () => {
   member = await createTestUser('contributor')
   orgId = await createOrg({ createdBy: leader.id, status: 'approved', trustLevel: 'trusted' })
   await addMember({ orgId, userId: leader.id, orgRole: 'leader', status: 'approved' })
-  orgTutorial = await createOrgTutorial({ orgId, authorId: member.id, status: 'pending' })
-  platformTutorial = await createOrgTutorial({ orgId: null, authorId: member.id, status: 'pending' })
+  orgTutorial = await createOrgTutorial({ orgId, authorId: member.id, authorToken: member.token, status: 'pending' })
+  platformTutorial = await createOrgTutorial({ orgId: null, authorId: member.id, authorToken: member.token, status: 'pending' })
 })
 
 afterAll(async () => {
