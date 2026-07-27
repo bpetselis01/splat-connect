@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
-import { createTestUser, deleteTestUser, type TestUser } from '../../helpers/auth.js'
+import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
 import { createUserClient } from '../../../src/supabase/user-client.js'
 import { createOrg, addMember, createOrgTutorial, cleanupOrg } from '../../helpers/orgs.js'
 
@@ -76,6 +76,9 @@ async function tryApproveAsContributor(token: string, tutorialId: string): Promi
 describe('leader review grant', () => {
   it("approves a member's tutorial in a trusted, approved org", async () => {
     expect(await tryApprove(leader.token, memberTutorial)).toBe(1)
+    // Put it back: later tests reuse memberTutorial, and they should be blocked by
+    // the policy under test, not by whatever status this one happened to leave.
+    await adminClient().from('tutorials').update({ status: 'pending' }).eq('id', memberTutorial)
   })
 
   it('cannot approve a tutorial from outside the org', async () => {
