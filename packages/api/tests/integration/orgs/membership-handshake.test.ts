@@ -13,6 +13,7 @@ let otherOrgId: string
 // corrupt later tests.
 let freshOrg: string | undefined
 let foreignOrg: string | undefined
+let termsOrg: string | undefined
 
 beforeAll(async () => {
   leader = await createTestUser('contributor')
@@ -29,11 +30,40 @@ afterAll(async () => {
   await cleanupOrg(otherOrgId)
   if (freshOrg) await cleanupOrg(freshOrg)
   if (foreignOrg) await cleanupOrg(foreignOrg)
+  if (termsOrg) await cleanupOrg(termsOrg)
   await deleteTestUser(leader.id)
   await deleteTestUser(joiner.id)
 })
 
 describe('membership handshake', () => {
+  // Every other org in this suite is created with the service role, so the
+  // terms-gated INSERT policy never runs there and beforeAll's acceptTerms(leader)
+  // would otherwise be dead setup. This is the one test that goes through a user
+  // client, which is what makes that call load-bearing.
+  it('creating an org requires an accepted org_leader_terms row', async () => {
+    const attempt = (u: TestUser) =>
+      createUserClient(u.token)
+        .from('organizations')
+        .insert({
+          name: `Terms Gate ${crypto.randomUUID().slice(0, 8)}`,
+          created_by: u.id,
+          status: 'pending',
+          trust_level: 'probation',
+        })
+        .select('id')
+        .single()
+
+    // joiner never accepted the leader terms.
+    const { error: refused } = await attempt(joiner)
+    expect(refused?.code).toBe('42501')
+
+    // leader did, in beforeAll — same statement, opposite outcome, so the block
+    // above is attributable to has_accepted() and not to some other conjunct.
+    const { data, error: allowed } = await attempt(leader)
+    expect(allowed).toBeNull()
+    termsOrg = data!.id as string
+  })
+
   it('a contributor cannot approve their own join request', async () => {
     const joinerDb = createUserClient(joiner.token)
     const { data: inserted, error } = await joinerDb
