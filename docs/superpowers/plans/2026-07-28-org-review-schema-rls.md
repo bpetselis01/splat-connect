@@ -775,14 +775,32 @@ afterAll(async () => {
 })
 
 /** An RLS-blocked UPDATE matches zero rows rather than erroring, so every
- *  assertion here is on the affected row count. */
+ *  assertion here is on the affected row count. The error assertion keeps a
+ *  future trigger-raised failure (42501) from masquerading as an RLS block —
+ *  PostgREST nulls `data` whenever `error` is set. */
 async function tryApprove(token: string, tutorialId: string): Promise<number> {
-  const { data } = await createUserClient(token)
+  const { data, error } = await createUserClient(token)
     .from('tutorials')
     .update({ status: 'approved' })
     .eq('id', tutorialId)
     .select('id')
+  expect(error).toBeNull()
   return (data ?? []).length
+}
+
+/** `leaderOwnTutorial` and `memberTutorial` each list their caller as a
+ *  `tutorial_contributors` row, so the separate "Contributors can update own
+ *  tutorials" policy also applies here — and its WITH CHECK (status must stay
+ *  draft/pending/rejected) rejects a move to 'approved' outright. That's a real
+ *  RLS violation (42501), not a silent zero-row match, so tryApprove's
+ *  "no error" contract doesn't fit these two calls — assert on the error itself. */
+async function tryApproveAsContributor(token: string, tutorialId: string): Promise<void> {
+  const { error } = await createUserClient(token)
+    .from('tutorials')
+    .update({ status: 'approved' })
+    .eq('id', tutorialId)
+    .select('id')
+  expect(error?.code).toBe('42501')
 }
 
 describe('leader review grant', () => {
@@ -795,7 +813,7 @@ describe('leader review grant', () => {
   })
 
   it('cannot approve its own tutorial, even as a linked collaborator', async () => {
-    expect(await tryApprove(leader.token, leaderOwnTutorial)).toBe(0)
+    await tryApproveAsContributor(leader.token, leaderOwnTutorial)
   })
 
   it('cannot approve anything while the org is on probation', async () => {
@@ -803,23 +821,48 @@ describe('leader review grant', () => {
   })
 
   it('a plain member has no review grant over their own org', async () => {
-    expect(await tryApprove(member.token, memberTutorial)).toBe(0)
+    await tryApproveAsContributor(member.token, memberTutorial)
+  })
+
+  it('a leader of a different org cannot approve this org\'s tutorial', async () => {
+    // Closes the per-org scoping gap: without this, is_org_leader() could drop its
+    // org_id filter and every other test here would still pass.
+    const otherLeader = await createTestUser('contributor')
+    const otherOrg = await createOrg({ createdBy: otherLeader.id, status: 'approved', trustLevel: 'trusted' })
+    await addMember({ orgId: otherOrg, userId: otherLeader.id, orgRole: 'leader', status: 'approved' })
+
+    expect(await tryApprove(otherLeader.token, memberTutorial)).toBe(0)
+
+    await cleanupOrg(otherOrg)
+    await deleteTestUser(otherLeader.id)
   })
 })
 ```
 
-- [ ] **Step 2: Run and verify all five pass**
+- [ ] **Step 2: Run and verify all six pass**
 
 ```bash
 pnpm --filter @splat-connect/api test:integration -- tests/integration/orgs/tutorial-review-grant.test.ts
 ```
 
-Expected: 5 passed.
+Expected: 6 passed.
 
-Note the fifth test is subtle: `member` is a `tutorial_contributor` on
-`memberTutorial`, so the *existing* `"Contributors can update own tutorials"` policy
-matches — but its `WITH CHECK` forbids leaving the row in `'approved'`, so the update
-is rejected. If this returns 1, that existing guard has regressed.
+The sixth test closes a scoping gap the other five leave open: in these fixtures
+`leader` leads both orgs and `member` leads none, so a regression in which
+`is_org_leader()` dropped its `org_id` filter (checking "is this user a leader of
+anything" instead of "of this org") would pass all five undetected. That test adds
+a genuinely separate org led by a different user and asserts they cannot approve
+`trustedOrg`'s tutorial.
+
+Note the third and fifth tests are subtle: `leader` is a `tutorial_contributor` on
+`leaderOwnTutorial`, and `member` is one on `memberTutorial`, so the *existing*
+`"Contributors can update own tutorials"` policy matches both — but its
+`WITH CHECK` forbids leaving the row in `'approved'`. That is a genuine RLS
+violation raised as a Postgres error (42501), not a silent zero-row match, which
+is why these two calls go through `tryApproveAsContributor` (asserting on the
+error code) instead of `tryApprove` (asserting the error is null). Using
+`tryApprove` for these two would fail for the right reason: it would prove the
+"no error" contract doesn't hold here, not that the guard regressed.
 
 - [ ] **Step 3: Commit**
 
