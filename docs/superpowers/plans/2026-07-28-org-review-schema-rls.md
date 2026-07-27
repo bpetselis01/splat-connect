@@ -450,8 +450,8 @@ supabase db reset && psql postgresql://postgres:postgres@127.0.0.1:54322/postgre
   "select tablename, policyname from pg_policies where tablename in ('organizations','org_members','user_agreements') order by tablename, policyname;"
 ```
 
-Expected: 6 policies on `org_members` … plus the admin catch-all (7 total),
-5 on `organizations`, 3 on `user_agreements`. No errors.
+Expected: **9** policies on `org_members` (3 SELECT, 3 INSERT, 2 UPDATE, 1 admin
+`FOR ALL`), 5 on `organizations`, 3 on `user_agreements`. No errors.
 
 - [ ] **Step 5: Verify the existing suite still passes**
 
