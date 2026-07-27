@@ -495,6 +495,7 @@ nothing. It is a direct check that authority lives in the database.
 ```typescript
 // packages/api/tests/helpers/orgs.ts
 import { adminClient } from './auth.js'
+import { createUserClient } from '../../src/supabase/user-client.js'
 
 /** Service-role fixture builders. Tests exercise policies through a user client;
  *  setup deliberately bypasses RLS so a broken policy fails the assertion, not
@@ -548,10 +549,22 @@ export async function acceptTerms(userId: string, type: 'contributor_terms' | 'o
   if (error) throw new Error(`acceptTerms failed: ${error.message}`)
 }
 
-/** Creates a tutorial owned by `authorId` and stamped with `orgId`. */
+/**
+ * Creates a tutorial owned by `authorId` and, when `orgId` is given, pins it to
+ * that org.
+ *
+ * WHY the two-step shape: the `tutorials_org_must_be_own` trigger permits a write
+ * that sets org_id ONLY from a caller who is an approved member of that org. The
+ * service role has no `auth.uid()`, so a service-role insert carrying org_id is
+ * refused with 42501 — deliberately, so the rule cannot be bypassed by any
+ * server-side code path. The fixture therefore does what production must do:
+ * create the row, then pin it under the author's own JWT. This means `authorToken`
+ * is required whenever `orgId` is non-null.
+ */
 export async function createOrgTutorial(opts: {
   orgId: string | null
   authorId: string
+  authorToken?: string
   status?: 'draft' | 'pending' | 'approved' | 'rejected'
 }): Promise<string> {
   const admin = adminClient()
@@ -561,14 +574,25 @@ export async function createOrgTutorial(opts: {
     title: 'Org Review Fixture',
     difficulty: 'easy',
     status: opts.status ?? 'pending',
-    org_id: opts.orgId,
     review_level: opts.orgId ? 'org' : 'platform',
   })
   if (error) throw new Error(`createOrgTutorial failed: ${error.message}`)
+
   const { error: linkError } = await admin
     .from('tutorial_contributors')
     .insert({ tutorial_id: id, profile_id: opts.authorId })
   if (linkError) throw new Error(`createOrgTutorial link failed: ${linkError.message}`)
+
+  if (opts.orgId) {
+    if (!opts.authorToken) {
+      throw new Error('createOrgTutorial: authorToken is required when orgId is set')
+    }
+    const { error: pinError } = await createUserClient(opts.authorToken)
+      .from('tutorials')
+      .update({ org_id: opts.orgId })
+      .eq('id', id)
+    if (pinError) throw new Error(`createOrgTutorial pin failed: ${pinError.message}`)
+  }
   return id
 }
 
@@ -600,7 +624,7 @@ beforeAll(async () => {
   orgId = await createOrg({ createdBy: leader.id, status: 'approved', trustLevel: 'trusted' })
   await addMember({ orgId, userId: leader.id, orgRole: 'leader', status: 'approved' })
   await addMember({ orgId, userId: member.id, orgRole: 'member', status: 'approved' })
-  tutorialId = await createOrgTutorial({ orgId, authorId: member.id, status: 'pending' })
+  tutorialId = await createOrgTutorial({ orgId, authorId: member.id, authorToken: member.token, status: 'pending' })
 })
 
 afterAll(async () => {
@@ -725,12 +749,12 @@ beforeAll(async () => {
   probationOrg = await createOrg({ createdBy: leader.id, status: 'approved', trustLevel: 'probation' })
   await addMember({ orgId: probationOrg, userId: leader.id, orgRole: 'leader', status: 'approved' })
 
-  memberTutorial = await createOrgTutorial({ orgId: trustedOrg, authorId: member.id })
+  memberTutorial = await createOrgTutorial({ orgId: trustedOrg, authorId: member.id, authorToken: member.token })
   // The leader is a tutorial_contributor on this one — the self-review case.
-  leaderOwnTutorial = await createOrgTutorial({ orgId: trustedOrg, authorId: leader.id })
+  leaderOwnTutorial = await createOrgTutorial({ orgId: trustedOrg, authorId: leader.id, authorToken: leader.token })
   // Carries no org_id: the platform queue, nobody's org to review.
-  outsiderTutorial = await createOrgTutorial({ orgId: null, authorId: outsider.id })
-  probationTutorial = await createOrgTutorial({ orgId: probationOrg, authorId: member.id })
+  outsiderTutorial = await createOrgTutorial({ orgId: null, authorId: outsider.id, authorToken: outsider.token })
+  probationTutorial = await createOrgTutorial({ orgId: probationOrg, authorId: member.id, authorToken: member.token })
 })
 
 afterAll(async () => {
@@ -833,7 +857,7 @@ beforeAll(async () => {
   await addMember({ orgId: otherOrgId, userId: otherLeader.id, orgRole: 'leader', status: 'approved' })
 
   // A DRAFT, not pending: proves the read grant is not scoped to submitted work.
-  draftId = await createOrgTutorial({ orgId, authorId: member.id, status: 'draft' })
+  draftId = await createOrgTutorial({ orgId, authorId: member.id, authorToken: member.token, status: 'draft' })
 })
 
 afterAll(async () => {
@@ -865,7 +889,7 @@ describe('leader read grant', () => {
   it('the read grant survives probation, unlike the write grant', async () => {
     const probation = await createOrg({ createdBy: leader.id, trustLevel: 'probation' })
     await addMember({ orgId: probation, userId: leader.id, orgRole: 'leader', status: 'approved' })
-    const t = await createOrgTutorial({ orgId: probation, authorId: member.id })
+    const t = await createOrgTutorial({ orgId: probation, authorId: member.id, authorToken: member.token })
 
     const { data } = await createUserClient(leader.token).from('tutorials').select('id').eq('id', t)
     expect(data).toHaveLength(1)
