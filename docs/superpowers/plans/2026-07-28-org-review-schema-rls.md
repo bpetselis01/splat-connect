@@ -753,6 +753,10 @@ beforeAll(async () => {
 
   probationOrg = await createOrg({ createdBy: leader.id, status: 'approved', trustLevel: 'probation' })
   await addMember({ orgId: probationOrg, userId: leader.id, orgRole: 'leader', status: 'approved' })
+  // Required: createOrgTutorial pins org_id under the AUTHOR's JWT, and the
+  // tutorials_org_must_be_own trigger refuses that write (42501) unless the author
+  // is an approved member of the target org.
+  await addMember({ orgId: probationOrg, userId: member.id, orgRole: 'member', status: 'approved' })
 
   memberTutorial = await createOrgTutorial({ orgId: trustedOrg, authorId: member.id, authorToken: member.token })
   // The leader is a tutorial_contributor on this one — the self-review case.
