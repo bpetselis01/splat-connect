@@ -30,6 +30,57 @@ export type Difficulty = 'easy' | 'medium' | 'hard'
 export type TutorialStatus = 'draft' | 'pending' | 'approved' | 'rejected'
 export type ContributorRole = 'primary' | 'collaborator'
 
+export type OrgStatus = 'pending' | 'approved' | 'suspended'
+export type OrgTrustLevel = 'probation' | 'trusted'
+export type OrgRole = 'leader' | 'member'
+export type OrgMemberStatus = 'pending' | 'approved' | 'removed' | 'declined'
+export type InitiatedBy = 'contributor' | 'org'
+export type ReviewLevel = 'org' | 'platform'
+export type AgreementType = 'contributor_terms' | 'org_leader_terms'
+
+// The version string recorded against an acceptance. 'v0-todo' is deliberately
+// non-binding: the real terms have not been written (they need a lawyer — see
+// the spec's §6). Any acceptance recorded at this version is void and its rows
+// should be discarded when real terms land.
+export const AGREEMENT_VERSIONS: Record<AgreementType, string> = {
+  contributor_terms: 'v0-todo',
+  org_leader_terms: 'v0-todo',
+}
+
+export interface Organization {
+  id: string
+  name: string
+  description: string | null
+  status: OrgStatus
+  trust_level: OrgTrustLevel
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface OrgMember {
+  id: string
+  org_id: string
+  user_id: string
+  org_role: OrgRole
+  status: OrgMemberStatus
+  initiated_by: InitiatedBy
+  invited_by: string | null
+  created_at: string
+  joined_at: string | null
+  // Populated when the query joins profiles (roster and queue views).
+  profiles?: Profile
+  organizations?: Organization
+}
+
+export interface UserAgreement {
+  id: string
+  user_id: string
+  agreement_type: AgreementType
+  version: string
+  accepted_at: string
+}
+
 export interface Profile {
   id: string
   name: string
@@ -49,6 +100,11 @@ export interface Tutorial {
   rejection_note: string | null
   created_at: string
   reviewed_at: string | null
+  // Snapshot of the org at submit time; null routes to the platform queue.
+  org_id: string | null
+  review_level: ReviewLevel | null
+  reviewed_by: string | null
+  flagged_for_follow_up: boolean
 }
 
 // Links a tutorial to a person. The profiles field is optional here
