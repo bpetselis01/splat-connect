@@ -56,6 +56,17 @@ describe('LibraryScreen', () => {
   it('shows an error message when apiClient.get rejects', async () => {
     ;(apiClient.get as jest.Mock).mockRejectedValue(new Error('API GET failed with status 500'))
     render(<LibraryScreen />)
-    expect(await screen.findByText("Couldn't load tutorials. Pull to retry.")).toBeTruthy()
+    expect(await screen.findByText("Couldn't load tutorials.")).toBeTruthy()
+  })
+
+  it('retries the fetch when the error state button is pressed', async () => {
+    ;(apiClient.get as jest.Mock).mockRejectedValueOnce(new Error('API GET failed with status 500'))
+    render(<LibraryScreen />)
+    await screen.findByText("Couldn't load tutorials.")
+    // Second attempt succeeds — pressing "Try again" must re-run the fetch and
+    // clear the error, which pull-to-retry copy alone could never do here.
+    ;(apiClient.get as jest.Mock).mockResolvedValue(TUTORIALS)
+    fireEvent.press(screen.getByRole('button', { name: 'Try again' }))
+    expect(await screen.findByText('Build a Robot Arm')).toBeTruthy()
   })
 })

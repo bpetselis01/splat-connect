@@ -19,6 +19,7 @@ import { Card } from '../ui/Card'
 import { StaggeredList } from '../ui/StaggeredList'
 import { Screen } from '../ui/Screen'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
+import { Button } from '../ui/Button'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 
@@ -126,6 +127,9 @@ export function LibraryScreen() {
   const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null)
+  // Bumping this re-runs the fetch — the retry button's handle, since the error
+  // state is a static view with no pull-to-refresh to lean on.
+  const [reloadKey, setReloadKey] = useState(0)
 
   useEffect(() => {
     let ignore = false
@@ -139,7 +143,7 @@ export function LibraryScreen() {
       })
       .catch((err) => {
         console.error('[LibraryScreen] tutorial fetch failed:', err)
-        if (!ignore) setError("Couldn't load tutorials. Pull to retry.")
+        if (!ignore) setError("Couldn't load tutorials.")
       })
       .finally(() => {
         if (!ignore) setLoading(false)
@@ -147,7 +151,7 @@ export function LibraryScreen() {
     return () => {
       ignore = true
     }
-  }, [difficulty])
+  }, [difficulty, reloadKey])
 
   // The whole approved set is already loaded (the endpoint isn't paged), so this
   // client-side match is complete — it just has to look past the title. Matching
@@ -190,7 +194,18 @@ export function LibraryScreen() {
           <SkeletonRow />
         </View>
       ) : error ? (
-        <EmptyState icon="cloud-offline-outline" title="Couldn't load tutorials. Pull to retry." />
+        <EmptyState
+          icon="cloud-offline-outline"
+          title="Couldn't load tutorials."
+          hint="Check your connection and try again."
+        >
+          <Button
+            label="Try again"
+            variant="secondary"
+            onPress={() => setReloadKey((k) => k + 1)}
+            style={styles.retry}
+          />
+        </EmptyState>
       ) : visible.length === 0 ? (
         <EmptyState
           icon="search-outline"
@@ -242,6 +257,7 @@ const styles = StyleSheet.create({
     ...noWebOutline,
   },
   filterRow: { flexDirection: 'row', gap: theme.spacing(2), marginBottom: theme.spacing(4) },
+  retry: { marginTop: theme.spacing(5), alignSelf: 'center', paddingHorizontal: theme.spacing(8) },
   listContent: { paddingBottom: theme.spacing(6) },
   rowPress: { marginBottom: theme.spacing(3) },
   card: { flexDirection: 'row', gap: theme.spacing(4), padding: theme.spacing(3) },
