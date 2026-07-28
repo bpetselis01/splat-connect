@@ -59,7 +59,11 @@ tutorials.get('/', async (c) => {
   const supabase = createUserClient(c.get('token'))
   const { data, error } = await supabase
     .from('tutorials')
-    .select('*, tutorial_contributors!inner(profile_id)')
+    // tutorial_orgs is embedded for the leader dashboard, which splits its two
+    // lists by each row's backing status. The embed is itself RLS-filtered, so a
+    // caller only ever sees backing rows for a project they authored or an
+    // organisation they lead — the same list serves both without a second call.
+    .select('*, tutorial_contributors!inner(profile_id), tutorial_orgs(status, org_id, organizations(id, name))')
     .order('created_at', { ascending: false })
   if (error) return c.json({ error: error.message }, 500)
   return c.json(data)
@@ -69,7 +73,11 @@ tutorials.get('/mine', async (c) => {
   const supabase = createUserClient(c.get('token'))
   const { data, error } = await supabase
     .from('tutorials')
-    .select('*, tutorial_contributors!inner(profile_id)')
+    // tutorial_orgs is embedded for the leader dashboard, which splits its two
+    // lists by each row's backing status. The embed is itself RLS-filtered, so a
+    // caller only ever sees backing rows for a project they authored or an
+    // organisation they lead — the same list serves both without a second call.
+    .select('*, tutorial_contributors!inner(profile_id), tutorial_orgs(status, org_id, organizations(id, name))')
     .eq('tutorial_contributors.profile_id', c.get('userId'))
     .order('created_at', { ascending: false })
   if (error) return c.json({ error: error.message }, 500)
