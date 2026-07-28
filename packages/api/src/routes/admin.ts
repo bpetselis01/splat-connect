@@ -57,7 +57,11 @@ admin.get('/tutorials', async (c) => {
   const status = (c.req.query('status') ?? 'pending') as TutorialStatus
   const { data, error } = await supabase
     .from('tutorials')
-    .select('*, tutorial_contributors(profile_id)')
+    // Decision 23: the admin sees every pending tutorial, including ones an
+    // organisation has accepted. Delegation removes the obligation to act, not the
+    // visibility — so the row carries its backing state and the UI can say
+    // "Riverside Therapy accepted, awaiting their review".
+    .select('*, tutorial_contributors(profile_id), tutorial_orgs(status, organizations(id, name))')
     .eq('status', status)
     .order('created_at', { ascending: true })
   if (error) return c.json({ error: error.message }, 500)
@@ -71,6 +75,10 @@ admin.patch('/tutorials/:id/status', async (c) => {
     .from('tutorials')
     .update({
       status: body.status,
+      // reviewed_for_org_id is deliberately left alone: the admin acts for the
+      // platform, not for an organisation, and a null there is what distinguishes
+      // the two in the spot-check query below.
+      reviewed_by: c.get('userId'),
       reviewed_at: new Date().toISOString(),
       ...(body.rejection_note !== undefined ? { rejection_note: body.rejection_note || null } : {}),
     })
@@ -218,6 +226,33 @@ admin.delete('/organizations/:orgId/leaders/:userId', async (c) => {
   if (error) return c.json({ error: error.message }, 500)
   if (!data.length) return c.json({ error: 'not a leader of that organisation' }, 404)
   return c.body(null, 204)
+})
+
+/**
+ * GET /api/admin/spot-check
+ *
+ * A random sample of tutorials someone other than the admin approved. With no
+ * self-review block (decision 14) a leader may publish their own work, so
+ * sampling is how a bad approval gets noticed at all — this endpoint is the
+ * detection half of a control whose other half is reactive.
+ */
+admin.get('/spot-check', async (c) => {
+  const limit = Number(c.req.query('limit') ?? 10)
+  const supabase = createAdminClient()
+  const { data, error } = await supabase
+    .from('tutorials')
+    .select('*, tutorial_contributors(profile_id), tutorial_orgs(status, organizations(id, name))')
+    .eq('status', 'approved')
+    .not('reviewed_by', 'is', null)
+    .neq('reviewed_by', c.get('userId'))
+    .limit(limit)
+  if (error) return c.json({ error: error.message }, 500)
+  // PostgREST has no random ordering, and the sample is small enough that
+  // shuffling here costs nothing. Without it an admin only ever re-checks the
+  // same newest rows.
+  // ponytail: in-memory shuffle of at most `limit` rows; move to a tablesample
+  // query if the approved set ever gets large.
+  return c.json((data ?? []).sort(() => Math.random() - 0.5))
 })
 
 export default admin
