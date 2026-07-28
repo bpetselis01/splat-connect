@@ -2,10 +2,14 @@ import { apiClient } from '@/lib/api-client'
 import Link from 'next/link'
 import { DifficultyBadge } from '@/components/difficulty-badge'
 import { StatusBadge } from '@/components/status-badge'
-import type { Tutorial, Difficulty } from '@splat-connect/types'
+import { BackingSummary } from '@/components/backing-state'
+import type { Tutorial, TutorialOrg, Difficulty } from '@splat-connect/types'
+
+/** GET /api/tutorials/mine embeds the backing rows. */
+type Backed = Tutorial & { tutorial_orgs?: TutorialOrg[] }
 
 export default async function MyTutorialsPage() {
-  const tutorials = await apiClient.get<Tutorial[]>('/api/tutorials/mine')
+  const tutorials = await apiClient.get<Backed[]>('/api/tutorials/mine')
 
   if (tutorials.length === 0) {
     return (
@@ -51,6 +55,7 @@ export default async function MyTutorialsPage() {
                     {t.rejection_note ?? 'No feedback was provided.'}
                   </p>
                 )}
+                <BackingSummary backing={t.tutorial_orgs ?? []} />
               </div>
             </div>
             <div className="flex shrink-0 items-center gap-3">

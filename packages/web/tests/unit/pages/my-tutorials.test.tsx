@@ -96,4 +96,37 @@ describe('MyTutorialsPage', () => {
     render(await MyTutorialsPage())
     expect(screen.queryByText('No feedback was provided.')).toBeNull()
   })
+
+  // Tests: a row states its backing without the reader opening the tutorial
+  // How:   one accepted row in the fixture; checks the summary text
+  // Chain: the row's job is to say whether it is worth clicking — before this a
+  //        contributor had to open a tutorial to learn anything about backing, and
+  //        there was nothing there to find
+  it('shows backing state on the row', async () => {
+    vi.mocked(apiClient.get).mockResolvedValue([
+      {
+        ...baseTutorial,
+        id: 't1',
+        title: 'Spoon holder',
+        tutorial_orgs: [
+          {
+            id: 'b1', tutorial_id: 't1', org_id: 'o1', status: 'accepted',
+            requested_at: '', responded_at: null, responded_by: null,
+            organizations: {
+              id: 'o1', name: 'Riverside Therapy', description: null,
+              status: 'active', created_by: null, created_at: '', updated_at: '',
+            },
+          },
+        ],
+      },
+    ])
+    render(await MyTutorialsPage())
+    expect(screen.getByText('Backed by Riverside Therapy')).toBeInTheDocument()
+  })
+
+  it('says a tutorial with no backing is reviewed by SPLAT', async () => {
+    vi.mocked(apiClient.get).mockResolvedValue([{ ...baseTutorial, tutorial_orgs: [] }])
+    render(await MyTutorialsPage())
+    expect(screen.getByText('Reviewed by SPLAT')).toBeInTheDocument()
+  })
 })
