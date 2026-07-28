@@ -90,6 +90,30 @@ describe('two organisations backing one project', () => {
     await adminClient().from('tutorials').delete().eq('id', draft)
   })
 
+  it('a leader cannot credit the approval to an org they do not lead', async () => {
+    // Both orgs back this project, and leaderA leads only orgA. can_review_tutorial
+    // is true for them either way, so nothing in the policy layer distinguishes
+    // these two writes — without the trigger check, leaderA can put Northside's
+    // name on their own approval.
+    await adminClient().from('tutorials').update({
+      status: 'pending', reviewed_by: null, reviewed_for_org_id: null,
+    }).eq('id', project)
+
+    const { error } = await createUserClient(leaderA.token)
+      .from('tutorials')
+      .update({ status: 'approved', reviewed_by: leaderA.id, reviewed_for_org_id: orgB })
+      .eq('id', project)
+      .select('id')
+    expect(error?.code).toBe('42501')
+
+    const { data: honest } = await createUserClient(leaderA.token)
+      .from('tutorials')
+      .update({ status: 'approved', reviewed_by: leaderA.id, reviewed_for_org_id: orgA })
+      .eq('id', project)
+      .select('id')
+    expect(honest).toHaveLength(1)
+  })
+
   it('a leader whose org withdrew loses the review grant, the other keeps it', async () => {
     await adminClient().from('tutorials').update({
       status: 'pending', reviewed_by: null, reviewed_for_org_id: null,

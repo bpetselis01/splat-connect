@@ -65,10 +65,31 @@ begin
      )
      and auth.uid() is not null
      and not public.is_admin()
-     and not public.can_review_tutorial(new.id)
   then
-    raise exception 'reviewed_by and reviewed_for_org_id may only be written by an admin or a backing org leader'
-      using errcode = '42501';
+    if not public.can_review_tutorial(new.id) then
+      raise exception 'reviewed_by and reviewed_for_org_id may only be written by an admin or a backing org leader'
+        using errcode = '42501';
+    end if;
+
+    -- A leader may only credit an organisation they themselves lead and that
+    -- actually backs this project. can_review_tutorial() above is true if they
+    -- lead ANY backing organisation, so on a collaboration it would let a leader
+    -- of one attribute their approval to another — a false name on the
+    -- "approved by X of Y" line the public badge renders.
+    if new.reviewed_for_org_id is not null
+       and not exists (
+         select 1
+         from public.tutorial_orgs t_o
+         join public.org_leaders l on l.org_id = t_o.org_id
+         where t_o.tutorial_id = new.id
+           and t_o.org_id = new.reviewed_for_org_id
+           and t_o.status = 'accepted'
+           and l.user_id = auth.uid()
+       )
+    then
+      raise exception 'reviewed_for_org_id must be an organisation you lead that backs this project'
+        using errcode = '42501';
+    end if;
   end if;
   return new;
 end;
