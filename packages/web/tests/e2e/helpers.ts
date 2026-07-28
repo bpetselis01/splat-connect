@@ -184,6 +184,24 @@ export async function createTutorial(
 
 /** Sign in through the /login form. Caller awaits the resulting redirect. */
 /**
+ * Record a terms acceptance for a user, through the service role.
+ *
+ * POST /api/tutorials and the draft -> pending transition both refuse a
+ * contributor who has accepted nothing, so any spec that creates or submits a
+ * tutorial needs this. Deliberately NOT folded into createContributor: the gate
+ * is real behaviour, and hiding it in the fixture would make it untestable.
+ */
+export async function acceptTerms(
+  userId: string,
+  type: 'contributor_terms' | 'org_leader_terms' = 'contributor_terms'
+) {
+  const { error } = await adminClient()
+    .from('user_agreements')
+    .insert({ user_id: userId, agreement_type: type, version: 'v0-todo' })
+  if (error) throw new Error(`acceptTerms failed: ${error.message}`)
+}
+
+/**
  * Provision an active organisation with one leader, through the service role.
  *
  * Both writes are admin-only by policy, and creating them here rather than
