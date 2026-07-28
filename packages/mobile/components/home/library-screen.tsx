@@ -149,7 +149,18 @@ export function LibraryScreen() {
     }
   }, [difficulty])
 
-  const visible = tutorials.filter((t) => t.title.toLowerCase().includes(search.toLowerCase()))
+  // The whole approved set is already loaded (the endpoint isn't paged), so this
+  // client-side match is complete — it just has to look past the title. Matching
+  // the description too stops "search" from silently missing tutorials whose
+  // relevant words live in the blurb rather than the name.
+  const q = search.trim().toLowerCase()
+  const visible = q
+    ? tutorials.filter(
+        (t) =>
+          t.title.toLowerCase().includes(q) ||
+          (t.description?.toLowerCase().includes(q) ?? false)
+      )
+    : tutorials
 
   return (
     <Screen>

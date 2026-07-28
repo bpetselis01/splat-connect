@@ -32,6 +32,18 @@ describe('LibraryScreen', () => {
     expect(screen.getByText('Advanced Gearbox')).toBeTruthy()
   })
 
+  it('matches search against the description, not only the title', async () => {
+    ;(apiClient.get as jest.Mock).mockResolvedValue([
+      { ...TUTORIALS[0], description: 'A switch-adapted spinning top' },
+      TUTORIALS[1],
+    ])
+    render(<LibraryScreen />)
+    await screen.findByText('Build a Robot Arm')
+    fireEvent.changeText(screen.getByPlaceholderText('Search tutorials'), 'spinning')
+    expect(screen.getByText('Build a Robot Arm')).toBeTruthy()
+    expect(screen.queryByText('Advanced Gearbox')).toBeNull()
+  })
+
   it('refetches with a difficulty filter when a chip is pressed', async () => {
     render(<LibraryScreen />)
     await screen.findByText('Build a Robot Arm')
