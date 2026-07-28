@@ -39,7 +39,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { DifficultyBadge } from '@/components/difficulty-badge'
 import { StatusBadge } from '@/components/status-badge'
-import type { Tutorial, Difficulty, Profile } from '@splat-connect/types'
+import type { Tutorial, Difficulty, Profile, Organization } from '@splat-connect/types'
 
 export default async function DashboardPage() {
   let profile: Profile
@@ -52,6 +52,13 @@ export default async function DashboardPage() {
   if (profile!.role !== 'contributor') redirect('/')
 
   const tutorials = await apiClient.get<Tutorial[]>('/api/tutorials/mine')
+
+  // Organisations the caller LEADS, not ones they belong to — there is no
+  // membership in this model. Most contributors lead none, so the section below
+  // renders nothing at all rather than an empty box.
+  const ledOrgs = await apiClient
+    .get<Organization[]>('/api/organizations/mine')
+    .catch(() => [] as Organization[])
 
   const pendingCount = tutorials.filter((t) => t.status === 'pending').length
   const approvedCount = tutorials.filter((t) => t.status === 'approved').length
@@ -143,6 +150,24 @@ export default async function DashboardPage() {
               View all {tutorials.length} tutorials →
             </Link>
           )}
+        </div>
+      )}
+
+      {ledOrgs.length > 0 && (
+        <div className="mt-8">
+          <h2 className="mb-3 text-lg font-semibold text-ink">Organisations you lead</h2>
+          <div className="flex flex-col gap-2">
+            {ledOrgs.map((org) => (
+              <Link key={org.id} href={`/org/${org.id}`} className="card card-link p-4">
+                <p className="text-sm font-bold text-ink">{org.name}</p>
+                <p className="text-xs text-muted">
+                  {org.status === 'active'
+                    ? 'Review projects offered to this organisation'
+                    : 'Suspended — you can look, but not approve'}
+                </p>
+              </Link>
+            ))}
+          </div>
         </div>
       )}
     </div>

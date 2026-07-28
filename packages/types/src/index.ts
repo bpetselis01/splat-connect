@@ -30,6 +30,60 @@ export type Difficulty = 'easy' | 'medium' | 'hard'
 export type TutorialStatus = 'draft' | 'pending' | 'approved' | 'rejected'
 export type ContributorRole = 'primary' | 'collaborator'
 
+export type OrgStatus = 'active' | 'suspended'
+export type TutorialOrgStatus = 'pending' | 'accepted' | 'declined'
+export type AgreementType = 'contributor_terms' | 'org_leader_terms'
+
+// The version string recorded against an acceptance. 'v0-todo' is deliberately
+// non-binding: the real terms have not been written (they need a lawyer — see
+// the spec's §6). Any acceptance recorded at this version is void and its rows
+// should be discarded when real terms land.
+export const AGREEMENT_VERSIONS: Record<AgreementType, string> = {
+  contributor_terms: 'v0-todo',
+  org_leader_terms: 'v0-todo',
+}
+
+export interface Organization {
+  id: string
+  name: string
+  description: string | null
+  status: OrgStatus
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface OrgLeader {
+  id: string
+  org_id: string
+  user_id: string
+  created_at: string
+  // Populated when the query joins either side.
+  profiles?: Profile
+  organizations?: Organization
+}
+
+/** One organisation's answer to one project. The author creates it as
+ *  'pending'; only a leader of that organisation may answer. */
+export interface TutorialOrg {
+  id: string
+  tutorial_id: string
+  org_id: string
+  status: TutorialOrgStatus
+  requested_at: string
+  responded_at: string | null
+  responded_by: string | null
+  organizations?: Organization
+}
+
+export interface UserAgreement {
+  id: string
+  user_id: string
+  agreement_type: AgreementType
+  version: string
+  accepted_at: string
+}
+
 export interface Profile {
   id: string
   name: string
@@ -49,6 +103,11 @@ export interface Tutorial {
   rejection_note: string | null
   created_at: string
   reviewed_at: string | null
+  // Snapshot of the org at submit time; null routes to the platform queue.
+  reviewed_by: string | null
+  reviewed_for_org_id: string | null
+  // Populated when the query joins the backing rows (badges, leader queues).
+  tutorial_orgs?: TutorialOrg[]
 }
 
 // Links a tutorial to a person. The profiles field is optional here

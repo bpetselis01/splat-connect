@@ -1,12 +1,13 @@
 import path from 'node:path'
 import { test, expect } from '@playwright/test'
-import { signIn, createContributor, uniqueTitle, adminClient } from '../helpers'
+import { signIn, createContributor, uniqueTitle, adminClient, acceptTerms } from '../helpers'
 
 const PDF_FIXTURE = path.join(__dirname, '..', 'fixtures', 'test.pdf')
 const PHOTO_FIXTURE = path.join(__dirname, '..', 'fixtures', 'test.jpg')
 
 test('a contributor completes the 6-step upload wizard and the tutorial appears as pending', async ({ page }) => {
   const contributor = await createContributor()
+  await acceptTerms(contributor.id)
   await signIn(page, contributor.email, contributor.password)
   await page.waitForURL('**/dashboard')
 
@@ -89,6 +90,7 @@ async function walkTo(page: import('@playwright/test').Page, step: number, prefi
 
 test('Next stays disabled until the required step-1 fields are filled', async ({ page }) => {
   const contributor = await createContributor()
+  await acceptTerms(contributor.id)
   await signIn(page, contributor.email, contributor.password)
   await page.waitForURL('**/dashboard')
   await page.goto('/upload')
@@ -104,6 +106,7 @@ test('Next stays disabled until the required step-1 fields are filled', async ({
 
 test('Next stays disabled on step 2 until both files are uploaded', async ({ page }) => {
   const contributor = await createContributor()
+  await acceptTerms(contributor.id)
   await signIn(page, contributor.email, contributor.password)
   await page.waitForURL('**/dashboard')
   await walkTo(page, 2, 'E2E File Gate')
@@ -122,6 +125,7 @@ test('Next stays disabled on step 2 until both files are uploaded', async ({ pag
 
 test('Back preserves data already entered', async ({ page }) => {
   const contributor = await createContributor()
+  await acceptTerms(contributor.id)
   await signIn(page, contributor.email, contributor.password)
   await page.waitForURL('**/dashboard')
   const title = await walkTo(page, 2, 'E2E Back')
@@ -138,6 +142,7 @@ test('Back preserves data already entered', async ({ page }) => {
 
 test('re-advancing from step 1 updates the draft instead of creating a second', async ({ page }) => {
   const contributor = await createContributor()
+  await acceptTerms(contributor.id)
   await signIn(page, contributor.email, contributor.password)
   await page.waitForURL('**/dashboard')
   const original = await walkTo(page, 2, 'E2E Readvance')
@@ -166,6 +171,7 @@ test('re-advancing from step 1 updates the draft instead of creating a second', 
 
 test('a part can be added and removed', async ({ page }) => {
   const contributor = await createContributor()
+  await acceptTerms(contributor.id)
   await signIn(page, contributor.email, contributor.password)
   await page.waitForURL('**/dashboard')
   await walkTo(page, 3, 'E2E Part CRUD')
@@ -181,6 +187,7 @@ test('a part can be added and removed', async ({ page }) => {
 
 test('buy links can be added and removed on a part', async ({ page }) => {
   const contributor = await createContributor()
+  await acceptTerms(contributor.id)
   await signIn(page, contributor.email, contributor.password)
   await page.waitForURL('**/dashboard')
   await walkTo(page, 3, 'E2E Buy Links')
@@ -199,6 +206,7 @@ test('buy links can be added and removed on a part', async ({ page }) => {
 
 test('a tool can be added and removed', async ({ page }) => {
   const contributor = await createContributor()
+  await acceptTerms(contributor.id)
   await signIn(page, contributor.email, contributor.password)
   await page.waitForURL('**/dashboard')
   await walkTo(page, 4, 'E2E Tool CRUD')
@@ -214,6 +222,7 @@ test('a tool can be added and removed', async ({ page }) => {
 
 test("a part's quantity and optional flag persist to the saved tutorial", async ({ page }) => {
   const contributor = await createContributor()
+  await acceptTerms(contributor.id)
   await signIn(page, contributor.email, contributor.password)
   await page.waitForURL('**/dashboard')
   const title = await walkTo(page, 3, 'E2E Part Persist')
@@ -237,6 +246,7 @@ test("a part's quantity and optional flag persist to the saved tutorial", async 
 
 test('skipping step 5 saves no STL files', async ({ page }) => {
   const contributor = await createContributor()
+  await acceptTerms(contributor.id)
   await signIn(page, contributor.email, contributor.password)
   await page.waitForURL('**/dashboard')
   const title = await walkTo(page, 6, 'E2E Skip STL')

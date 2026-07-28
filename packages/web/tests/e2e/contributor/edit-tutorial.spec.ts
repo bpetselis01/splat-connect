@@ -1,6 +1,6 @@
 import path from 'node:path'
 import { test, expect } from '@playwright/test'
-import { signIn, createContributor, createTutorial, uniqueTitle, adminClient } from '../helpers'
+import { signIn, createContributor, createTutorial, uniqueTitle, adminClient, acceptTerms } from '../helpers'
 
 const PDF_FIXTURE = path.join(__dirname, '..', 'fixtures', 'test.pdf')
 const PHOTO_FIXTURE = path.join(__dirname, '..', 'fixtures', 'test.jpg')
@@ -25,6 +25,7 @@ async function openPanel(page: import('@playwright/test').Page, label: string | 
 
 test('editing an approved tutorial resets its status to pending', async ({ page }) => {
   const contributor = await createContributor()
+  await acceptTerms(contributor.id)
   const tutorialId = await createTutorial(contributor.id, {
     title: 'E2E Approved Edit Target',
     status: 'approved',
@@ -49,7 +50,9 @@ test('editing an approved tutorial resets its status to pending', async ({ page 
 
 test('a contributor cannot edit another contributor\'s tutorial', async ({ page }) => {
   const owner = await createContributor()
+  await acceptTerms(owner.id)
   const outsider = await createContributor()
+  await acceptTerms(outsider.id)
   const tutorialId = await createTutorial(owner.id, { title: 'E2E Not Yours', status: 'draft' })
 
   await signIn(page, outsider.email, outsider.password)
@@ -61,6 +64,7 @@ test('a contributor cannot edit another contributor\'s tutorial', async ({ page 
 
 test('saving details updates the title, description and difficulty', async ({ page }) => {
   const contributor = await createContributor()
+  await acceptTerms(contributor.id)
   const title = uniqueTitle('E2E Edit Details')
   const id = await createTutorial(contributor.id, { title, status: 'draft' })
 
@@ -88,6 +92,7 @@ test('saving details updates the title, description and difficulty', async ({ pa
 
 test('the difficulty select shows the newly saved value after a save', async ({ page }) => {
   const contributor = await createContributor()
+  await acceptTerms(contributor.id)
   const id = await createTutorial(contributor.id, {
     title: uniqueTitle('E2E Edit Difficulty'),
     status: 'draft',
@@ -108,6 +113,7 @@ test('the difficulty select shows the newly saved value after a save', async ({ 
 
 test('the toy photo and tutorial PDF can be replaced', async ({ page }) => {
   const contributor = await createContributor()
+  await acceptTerms(contributor.id)
   const id = await createTutorial(contributor.id, {
     title: uniqueTitle('E2E Edit Files'),
     status: 'draft',
@@ -136,6 +142,7 @@ test('the toy photo and tutorial PDF can be replaced', async ({ page }) => {
 
 test('a part can be added, edited and deleted', async ({ page }) => {
   const contributor = await createContributor()
+  await acceptTerms(contributor.id)
   const id = await createTutorial(contributor.id, {
     title: uniqueTitle('E2E Edit Parts'),
     status: 'draft',
@@ -163,6 +170,7 @@ test('a part can be added, edited and deleted', async ({ page }) => {
 
 test('a tool can be added, edited and deleted', async ({ page }) => {
   const contributor = await createContributor()
+  await acceptTerms(contributor.id)
   const id = await createTutorial(contributor.id, {
     title: uniqueTitle('E2E Edit Tools'),
     status: 'draft',
@@ -190,6 +198,7 @@ test('a tool can be added, edited and deleted', async ({ page }) => {
 
 test('an STL file record can be added', async ({ page }) => {
   const contributor = await createContributor()
+  await acceptTerms(contributor.id)
   const id = await createTutorial(contributor.id, {
     title: uniqueTitle('E2E Edit STL'),
     status: 'draft',
@@ -214,6 +223,7 @@ test('an STL file record can be added', async ({ page }) => {
 
 test('submit-for-review is blocked when required fields are missing', async ({ page }) => {
   const contributor = await createContributor()
+  await acceptTerms(contributor.id)
   const id = await createTutorial(contributor.id, {
     title: uniqueTitle('E2E Submit Blocked'),
     status: 'draft',
@@ -241,6 +251,7 @@ test('submit-for-review is blocked when required fields are missing', async ({ p
 
 test('a rejected tutorial shows the rejection callout', async ({ page }) => {
   const contributor = await createContributor()
+  await acceptTerms(contributor.id)
   const id = await createTutorial(contributor.id, {
     title: uniqueTitle('E2E Edit Rejected'),
     status: 'rejected',

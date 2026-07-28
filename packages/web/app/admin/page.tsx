@@ -40,12 +40,14 @@
  */
 import Link from 'next/link'
 import { apiClient } from '@/lib/api-client'
-import type { Tutorial, Profile } from '@splat-connect/types'
+import type { Tutorial, Profile, Organization } from '@splat-connect/types'
 
 export default async function AdminPage() {
-  const [tutorials, contributors] = await Promise.all([
+  const [tutorials, contributors, organizations, spotCheck] = await Promise.all([
     apiClient.get<Tutorial[]>('/api/admin/tutorials?status=pending'),
     apiClient.get<Profile[]>('/api/admin/contributors'),
+    apiClient.get<Organization[]>('/api/organizations'),
+    apiClient.get<Tutorial[]>('/api/admin/spot-check'),
   ])
 
   const pendingTutorials = tutorials.length
@@ -65,6 +67,20 @@ export default async function AdminPage() {
       href: '/admin/review' as const,
       icon: '📋',
       hint: 'Approve or reject submitted tutorials',
+    },
+    {
+      label: 'Organisations',
+      count: organizations.length,
+      href: '/admin/organizations' as const,
+      icon: '🏢',
+      hint: 'Create organisations, appoint leaders, suspend',
+    },
+    {
+      label: 'Spot-check',
+      count: spotCheck.length,
+      href: '/admin/spot-check' as const,
+      icon: '🔍',
+      hint: 'Audit tutorials that org leaders approved',
     },
   ]
 

@@ -15,6 +15,9 @@
  * - /my-tutorials: Contributors only
  * - /dashboard: Contributors only
  * - /admin: Admins only (role='admin')
+ * - /org: Signed in only — leadership is per-organisation data, not a role, so
+ *   there is nothing here for middleware to read. Each org page checks it via
+ *   lib/org-access.ts instead.
  *
  * Note: This is CLIENT-SIDE route protection (UX).
  * Server-side protection is done in:
@@ -58,7 +61,7 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  const contributorRoutes = ['/upload', '/my-tutorials', '/dashboard']
+  const contributorRoutes = ['/upload', '/my-tutorials', '/dashboard', '/org', '/organizations']
   const adminRoutes = ['/admin']
 
   const needsContributorAuth = contributorRoutes.some((r) =>

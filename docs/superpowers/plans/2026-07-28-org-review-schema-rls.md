@@ -6,6 +6,13 @@
 
 **Spec:** `docs/superpowers/specs/2026-07-28-org-delegated-review-design.md` (§1, §2, §5)
 
+> **Superseded 2026-07-28** by
+> `docs/superpowers/plans/2026-07-28-project-org-schema-rls.md`. The membership
+> model this plan built — `org_members`, the two-sided handshake, `trust_level`,
+> `review_level` — was replaced by per-project organisation backing. Kept as the
+> record of what was tried; do not execute it.
+
+
 **Goal:** Add the `organizations`, `org_members`, and `user_agreements` tables plus
 every RLS policy that governs them, so that an approved org leader's authority to
 review their own org's tutorials is enforced by PostgreSQL — not by route code.
@@ -61,7 +68,7 @@ on route logic; no API routes exist yet at the end of this plan.
 | `packages/types/src/index.ts` | **Modify.** Add org/agreement types and the new `Tutorial` fields. Consumed by both API and web plans. |
 | `packages/api/tests/integration/orgs/suspension.test.ts` | **Create.** Task 3 — the canary for decision 9. |
 | `packages/api/tests/integration/orgs/membership-handshake.test.ts` | **Create.** Two-sided join/invite policies. |
-| `packages/api/tests/integration/orgs/tutorial-review-grant.test.ts` | **Create.** Leader UPDATE grant: trust level, self-review, cross-org. |
+| `packages/api/tests/integration/orgs/tutorial-review-grant.test.ts` | **Create.** Leader UPDATE grant: trust level, terms gate, cross-org, self-approval. |
 | `packages/api/tests/integration/orgs/tutorial-read-grant.test.ts` | **Create.** Leader SELECT grant (spec §2, "load-bearing"). |
 | `packages/api/tests/helpers/orgs.ts` | **Create.** Fixture builders (`createOrg`, `addMember`) shared by all four test files. Split out because four files need the same 30 lines. |
 | `supabase/SCHEMA.md` | **Modify.** Living schema reference; stale docs here mislead every future task. |
@@ -82,8 +89,7 @@ tells you which spec guarantee broke.
   `tutorials.reviewed_by`, `tutorials.flagged_for_follow_up`; functions
   `is_org_leader(p_org_id uuid) → boolean`,
   `has_accepted(p_agreement_type text) → boolean`,
-  `org_has_approved_leader(p_org_id uuid) → boolean`,
-  `is_tutorial_contributor(p_tutorial_id uuid) → boolean`.
+    `is_tutorial_contributor(p_tutorial_id uuid) → boolean`.
 
 - [ ] **Step 1: Create the migration file with tables**
 
@@ -199,17 +205,10 @@ $$ language sql security definer stable;
 
 -- Used only by the founder-bootstrap policy, which must ask "does this org
 -- already have a leader?" from inside an org_members policy.
-create or replace function public.org_has_approved_leader(p_org_id uuid)
-returns boolean as $$
-  select exists (
-    select 1 from public.org_members
-    where org_id = p_org_id and org_role = 'leader' and status = 'approved'
-  );
-$$ language sql security definer stable;
 
--- The self-review block. MUST be security definer: as a plain EXISTS inside the
--- tutorials policy this would run under tutorial_contributors' own RLS, so a row
--- that was merely *invisible* would make NOT EXISTS true and GRANT self-review.
+-- Used by the 008 tutorial_contributors INSERT policy as its retry-safety arm.
+-- Stays security definer so it answers "is there such a row" as fact rather than
+-- as a question about the caller's visibility.
 create or replace function public.is_tutorial_contributor(p_tutorial_id uuid)
 returns boolean as $$
   select exists (
@@ -232,12 +231,11 @@ Expected: output ends with `Finished supabase db reset.` and no error mentioning
 
 ```bash
 psql postgresql://postgres:postgres@127.0.0.1:54322/postgres -c "\d public.org_members" \
-  -c "select proname from pg_proc where proname in ('is_org_leader','has_accepted','org_has_approved_leader','is_tutorial_contributor') order by proname;"
+  -c "select proname from pg_proc where proname in ('is_org_leader','has_accepted','is_tutorial_contributor') order by proname;"
 ```
 
-Expected: the `org_members` column list including `initiated_by`, and exactly four
-rows: `has_accepted`, `is_org_leader`, `is_tutorial_contributor`,
-`org_has_approved_leader`.
+Expected: the `org_members` column list including `initiated_by`, and exactly three
+rows: `has_accepted`, `is_org_leader`, `is_tutorial_contributor`.
 
 - [ ] **Step 5: Commit**
 
@@ -273,21 +271,13 @@ alter table public.user_agreements enable row level security;
 create policy "Anyone can read approved organizations"
   on public.organizations for select using (status = 'approved');
 
-create policy "Creator can read own organization at any status"
-  on public.organizations for select using (created_by = auth.uid());
 
 create policy "Admin can read all organizations"
   on public.organizations for select using (public.is_admin());
 
-create policy "Contributors who accepted leader terms can create organizations"
+create policy "Admin can create organizations"
   on public.organizations for insert
-  with check (
-    created_by = auth.uid()
-    and public.is_approved_contributor()
-    and public.has_accepted('org_leader_terms')
-    and status = 'pending'
-    and trust_level = 'probation'
-  );
+  with check (public.is_admin());
 
 -- UPDATE is admin-only, and that is the whole point: it keeps status and
 -- trust_level out of a leader's reach. A leader can never promote their own org
@@ -325,19 +315,8 @@ create policy "Admin can read all memberships"
 -- is_org_leader(org_id), which is false for a brand-new org, so no first leader
 -- could ever exist. Scoped to the creator of an org that has no approved leader
 -- yet, so it grants exactly one membership per org and nothing else.
-create policy "Org creator can claim first leadership"
-  on public.org_members for insert
-  with check (
-    user_id = auth.uid()
-    and org_role = 'leader'
-    and status = 'approved'
-    and initiated_by = 'org'
-    and not public.org_has_approved_leader(org_id)
-    and exists (
-      select 1 from public.organizations o
-      where o.id = org_id and o.created_by = auth.uid()
-    )
-  );
+-- No first-leader insert policy: the admin writes the first leader under
+-- "Admin full access to org_members".
 
 -- A contributor asks to join. They may only ever create their own row, as a
 -- member, pending. You cannot request to join *as a leader*.
@@ -360,6 +339,7 @@ create policy "Leaders can invite contributors"
     public.is_org_leader(org_id)
     and initiated_by = 'org'
     and status = 'pending'
+    and org_role = 'member'
     and invited_by = auth.uid()
     and exists (
       select 1 from public.organizations o
@@ -402,7 +382,7 @@ create policy "Admin full access to org_members"
 ```sql
 -- tutorials — leader SELECT
 -- Load-bearing and deliberately BROADER than the write policy below: it ignores
--- trust_level and the self-review block. If read tracked write, a probation org's
+-- trust_level and the terms gate. If read tracked write, a probation org's
 -- leader would see an empty queue and a suspended org's leader would lose all
 -- visibility into their own roster's history. Authority is gated separately.
 -- CONSEQUENCE, stated plainly: a leader can read their org members' unpublished
@@ -415,7 +395,7 @@ create policy "Leaders can read their org's tutorials"
 
 -- tutorials — leader UPDATE
 -- All three conditions live in one policy so that suspension, demotion to
--- probation, and self-review each independently revoke the capability instantly:
+-- probation, and withdrawn consent each independently revoke the capability instantly:
 -- no cache to invalidate, no cleanup job to run.
 create policy "Trusted org leaders can review their org's tutorials"
   on public.tutorials for update
@@ -428,7 +408,7 @@ create policy "Trusted org leaders can review their org's tutorials"
         and o.status = 'approved'
         and o.trust_level = 'trusted'
     )
-    and not public.is_tutorial_contributor(id)
+    and public.has_accepted('org_leader_terms')
   )
   with check (
     org_id is not null
@@ -439,7 +419,7 @@ create policy "Trusted org leaders can review their org's tutorials"
         and o.status = 'approved'
         and o.trust_level = 'trusted'
     )
-    and not public.is_tutorial_contributor(id)
+    and public.has_accepted('org_leader_terms')
   );
 ```
 
@@ -450,8 +430,8 @@ supabase db reset && psql postgresql://postgres:postgres@127.0.0.1:54322/postgre
   "select tablename, policyname from pg_policies where tablename in ('organizations','org_members','user_agreements') order by tablename, policyname;"
 ```
 
-Expected: 6 policies on `org_members` … plus the admin catch-all (7 total),
-5 on `organizations`, 3 on `user_agreements`. No errors.
+Expected: **9** policies on `org_members` (3 SELECT, 3 INSERT, 2 UPDATE, 1 admin
+`FOR ALL`), 5 on `organizations`, 3 on `user_agreements`. No errors.
 
 - [ ] **Step 5: Verify the existing suite still passes**
 
@@ -495,6 +475,7 @@ nothing. It is a direct check that authority lives in the database.
 ```typescript
 // packages/api/tests/helpers/orgs.ts
 import { adminClient } from './auth.js'
+import { createUserClient } from '../../src/supabase/user-client.js'
 
 /** Service-role fixture builders. Tests exercise policies through a user client;
  *  setup deliberately bypasses RLS so a broken policy fails the assertion, not
@@ -548,10 +529,22 @@ export async function acceptTerms(userId: string, type: 'contributor_terms' | 'o
   if (error) throw new Error(`acceptTerms failed: ${error.message}`)
 }
 
-/** Creates a tutorial owned by `authorId` and stamped with `orgId`. */
+/**
+ * Creates a tutorial owned by `authorId` and, when `orgId` is given, pins it to
+ * that org.
+ *
+ * WHY the two-step shape: the `tutorials_org_must_be_own` trigger permits a write
+ * that sets org_id ONLY from a caller who is an approved member of that org. The
+ * service role has no `auth.uid()`, so a service-role insert carrying org_id is
+ * refused with 42501 — deliberately, so the rule cannot be bypassed by any
+ * server-side code path. The fixture therefore does what production must do:
+ * create the row, then pin it under the author's own JWT. This means `authorToken`
+ * is required whenever `orgId` is non-null.
+ */
 export async function createOrgTutorial(opts: {
   orgId: string | null
   authorId: string
+  authorToken?: string
   status?: 'draft' | 'pending' | 'approved' | 'rejected'
 }): Promise<string> {
   const admin = adminClient()
@@ -561,14 +554,25 @@ export async function createOrgTutorial(opts: {
     title: 'Org Review Fixture',
     difficulty: 'easy',
     status: opts.status ?? 'pending',
-    org_id: opts.orgId,
     review_level: opts.orgId ? 'org' : 'platform',
   })
   if (error) throw new Error(`createOrgTutorial failed: ${error.message}`)
+
   const { error: linkError } = await admin
     .from('tutorial_contributors')
     .insert({ tutorial_id: id, profile_id: opts.authorId })
   if (linkError) throw new Error(`createOrgTutorial link failed: ${linkError.message}`)
+
+  if (opts.orgId) {
+    if (!opts.authorToken) {
+      throw new Error('createOrgTutorial: authorToken is required when orgId is set')
+    }
+    const { error: pinError } = await createUserClient(opts.authorToken)
+      .from('tutorials')
+      .update({ org_id: opts.orgId })
+      .eq('id', id)
+    if (pinError) throw new Error(`createOrgTutorial pin failed: ${pinError.message}`)
+  }
   return id
 }
 
@@ -600,7 +604,7 @@ beforeAll(async () => {
   orgId = await createOrg({ createdBy: leader.id, status: 'approved', trustLevel: 'trusted' })
   await addMember({ orgId, userId: leader.id, orgRole: 'leader', status: 'approved' })
   await addMember({ orgId, userId: member.id, orgRole: 'member', status: 'approved' })
-  tutorialId = await createOrgTutorial({ orgId, authorId: member.id, status: 'pending' })
+  tutorialId = await createOrgTutorial({ orgId, authorId: member.id, authorToken: member.token, status: 'pending' })
 })
 
 afterAll(async () => {
@@ -636,6 +640,11 @@ describe('suspending an org revokes leader review authority', () => {
       .update({ status: 'approved' })
       .eq('id', tutorialId)
       .select('id')
+    // Both assertions are needed: PostgREST nulls `data` whenever `error` is set,
+    // so checking the row count alone would also pass if the write had errored for
+    // an unrelated reason. An RLS USING clause that excludes the row is not an
+    // error — it silently matches nothing, and that is what must be proven here.
+    expect(after.error).toBeNull()
     expect(after.data ?? []).toHaveLength(0)
 
     const { data: check } = await adminClient()
@@ -684,7 +693,7 @@ git commit -m "test(api): assert org suspension instantly revokes leader review 
 
 ---
 
-## Task 4: Leader review grant — trust level, self-review, cross-org
+## Task 4: Leader review grant — trust level, terms gate, cross-org
 
 **Files:**
 - Create: `packages/api/tests/integration/orgs/tutorial-review-grant.test.ts`
@@ -724,13 +733,18 @@ beforeAll(async () => {
 
   probationOrg = await createOrg({ createdBy: leader.id, status: 'approved', trustLevel: 'probation' })
   await addMember({ orgId: probationOrg, userId: leader.id, orgRole: 'leader', status: 'approved' })
+  // Required: createOrgTutorial pins org_id under the AUTHOR's JWT, and the
+  // tutorials_org_must_be_own trigger refuses that write (42501) unless the author
+  // is an approved member of the target org.
+  await addMember({ orgId: probationOrg, userId: member.id, orgRole: 'member', status: 'approved' })
 
-  memberTutorial = await createOrgTutorial({ orgId: trustedOrg, authorId: member.id })
-  // The leader is a tutorial_contributor on this one — the self-review case.
-  leaderOwnTutorial = await createOrgTutorial({ orgId: trustedOrg, authorId: leader.id })
+  memberTutorial = await createOrgTutorial({ orgId: trustedOrg, authorId: member.id, authorToken: member.token })
+  // The leader is a tutorial_contributor on this one — the self-approval case,
+  // which decision 14 permits.
+  leaderOwnTutorial = await createOrgTutorial({ orgId: trustedOrg, authorId: leader.id, authorToken: leader.token })
   // Carries no org_id: the platform queue, nobody's org to review.
-  outsiderTutorial = await createOrgTutorial({ orgId: null, authorId: outsider.id })
-  probationTutorial = await createOrgTutorial({ orgId: probationOrg, authorId: member.id })
+  outsiderTutorial = await createOrgTutorial({ orgId: null, authorId: outsider.id, authorToken: outsider.token })
+  probationTutorial = await createOrgTutorial({ orgId: probationOrg, authorId: member.id, authorToken: member.token })
 })
 
 afterAll(async () => {
@@ -742,14 +756,32 @@ afterAll(async () => {
 })
 
 /** An RLS-blocked UPDATE matches zero rows rather than erroring, so every
- *  assertion here is on the affected row count. */
+ *  assertion here is on the affected row count. The error assertion keeps a
+ *  future trigger-raised failure (42501) from masquerading as an RLS block —
+ *  PostgREST nulls `data` whenever `error` is set. */
 async function tryApprove(token: string, tutorialId: string): Promise<number> {
-  const { data } = await createUserClient(token)
+  const { data, error } = await createUserClient(token)
     .from('tutorials')
     .update({ status: 'approved' })
     .eq('id', tutorialId)
     .select('id')
+  expect(error).toBeNull()
   return (data ?? []).length
+}
+
+/** `leaderOwnTutorial` and `memberTutorial` each list their caller as a
+ *  `tutorial_contributors` row, so the separate "Contributors can update own
+ *  tutorials" policy also applies here — and its WITH CHECK (status must stay
+ *  draft/pending/rejected) rejects a move to 'approved' outright. That's a real
+ *  RLS violation (42501), not a silent zero-row match, so tryApprove's
+ *  "no error" contract doesn't fit these two calls — assert on the error itself. */
+async function tryApproveAsContributor(token: string, tutorialId: string): Promise<void> {
+  const { error } = await createUserClient(token)
+    .from('tutorials')
+    .update({ status: 'approved' })
+    .eq('id', tutorialId)
+    .select('id')
+  expect(error?.code).toBe('42501')
 }
 
 describe('leader review grant', () => {
@@ -762,7 +794,7 @@ describe('leader review grant', () => {
   })
 
   it('cannot approve its own tutorial, even as a linked collaborator', async () => {
-    expect(await tryApprove(leader.token, leaderOwnTutorial)).toBe(0)
+    await tryApproveAsContributor(leader.token, leaderOwnTutorial)
   })
 
   it('cannot approve anything while the org is on probation', async () => {
@@ -770,29 +802,54 @@ describe('leader review grant', () => {
   })
 
   it('a plain member has no review grant over their own org', async () => {
-    expect(await tryApprove(member.token, memberTutorial)).toBe(0)
+    await tryApproveAsContributor(member.token, memberTutorial)
+  })
+
+  it('a leader of a different org cannot approve this org\'s tutorial', async () => {
+    // Closes the per-org scoping gap: without this, is_org_leader() could drop its
+    // org_id filter and every other test here would still pass.
+    const otherLeader = await createTestUser('contributor')
+    const otherOrg = await createOrg({ createdBy: otherLeader.id, status: 'approved', trustLevel: 'trusted' })
+    await addMember({ orgId: otherOrg, userId: otherLeader.id, orgRole: 'leader', status: 'approved' })
+
+    expect(await tryApprove(otherLeader.token, memberTutorial)).toBe(0)
+
+    await cleanupOrg(otherOrg)
+    await deleteTestUser(otherLeader.id)
   })
 })
 ```
 
-- [ ] **Step 2: Run and verify all five pass**
+- [ ] **Step 2: Run and verify all six pass**
 
 ```bash
 pnpm --filter @splat-connect/api test:integration -- tests/integration/orgs/tutorial-review-grant.test.ts
 ```
 
-Expected: 5 passed.
+Expected: 6 passed.
 
-Note the fifth test is subtle: `member` is a `tutorial_contributor` on
-`memberTutorial`, so the *existing* `"Contributors can update own tutorials"` policy
-matches — but its `WITH CHECK` forbids leaving the row in `'approved'`, so the update
-is rejected. If this returns 1, that existing guard has regressed.
+The sixth test closes a scoping gap the other five leave open: in these fixtures
+`leader` leads both orgs and `member` leads none, so a regression in which
+`is_org_leader()` dropped its `org_id` filter (checking "is this user a leader of
+anything" instead of "of this org") would pass all five undetected. That test adds
+a genuinely separate org led by a different user and asserts they cannot approve
+`trustedOrg`'s tutorial.
+
+Note the third and fifth tests are subtle: `leader` is a `tutorial_contributor` on
+`leaderOwnTutorial`, and `member` is one on `memberTutorial`, so the *existing*
+`"Contributors can update own tutorials"` policy matches both — but its
+`WITH CHECK` forbids leaving the row in `'approved'`. That is a genuine RLS
+violation raised as a Postgres error (42501), not a silent zero-row match, which
+is why these two calls go through `tryApproveAsContributor` (asserting on the
+error code) instead of `tryApprove` (asserting the error is null). Using
+`tryApprove` for these two would fail for the right reason: it would prove the
+"no error" contract doesn't hold here, not that the guard regressed.
 
 - [ ] **Step 3: Commit**
 
 ```bash
 git add packages/api/tests/integration/orgs/tutorial-review-grant.test.ts
-git commit -m "test(api): cover leader review grant boundaries (trust, self-review, cross-org)"
+git commit -m "test(api): cover leader review grant boundaries (trust, terms, cross-org)"
 ```
 
 ---
@@ -833,7 +890,7 @@ beforeAll(async () => {
   await addMember({ orgId: otherOrgId, userId: otherLeader.id, orgRole: 'leader', status: 'approved' })
 
   // A DRAFT, not pending: proves the read grant is not scoped to submitted work.
-  draftId = await createOrgTutorial({ orgId, authorId: member.id, status: 'draft' })
+  draftId = await createOrgTutorial({ orgId, authorId: member.id, authorToken: member.token, status: 'draft' })
 })
 
 afterAll(async () => {
@@ -865,7 +922,7 @@ describe('leader read grant', () => {
   it('the read grant survives probation, unlike the write grant', async () => {
     const probation = await createOrg({ createdBy: leader.id, trustLevel: 'probation' })
     await addMember({ orgId: probation, userId: leader.id, orgRole: 'leader', status: 'approved' })
-    const t = await createOrgTutorial({ orgId: probation, authorId: member.id })
+    const t = await createOrgTutorial({ orgId: probation, authorId: member.id, authorToken: member.token })
 
     const { data } = await createUserClient(leader.token).from('tutorials').select('id').eq('id', t)
     expect(data).toHaveLength(1)
@@ -910,12 +967,17 @@ import { createOrg, addMember, acceptTerms, cleanupOrg } from '../../helpers/org
 
 let leader: TestUser
 let joiner: TestUser
+let admin: TestUser
 let orgId: string
 let otherOrgId: string
+let adminOrg: string | undefined
 
 beforeAll(async () => {
   leader = await createTestUser('contributor')
   joiner = await createTestUser('contributor')
+  admin = await createTestUser('admin')
+  // Kept deliberately: it is what makes the refusal in the first test
+  // attributable to is_admin() rather than to a missing agreement.
   await acceptTerms(leader.id, 'org_leader_terms')
 
   orgId = await createOrg({ createdBy: leader.id, status: 'approved' })
@@ -926,11 +988,39 @@ beforeAll(async () => {
 afterAll(async () => {
   await cleanupOrg(orgId)
   await cleanupOrg(otherOrgId)
+  if (adminOrg) await cleanupOrg(adminOrg)
   await deleteTestUser(leader.id)
   await deleteTestUser(joiner.id)
+  await deleteTestUser(admin.id)
 })
 
 describe('membership handshake', () => {
+  // Every other org in this suite is built with the service role, which bypasses
+  // RLS outright — so this is the only place the organizations INSERT policy runs
+  // at all.
+  it('only an admin can create an organization', async () => {
+    const attempt = (u: TestUser) =>
+      createUserClient(u.token)
+        .from('organizations')
+        .insert({
+          name: `Admin Gate ${crypto.randomUUID().slice(0, 8)}`,
+          created_by: u.id,
+          status: 'approved',
+          trust_level: 'trusted',
+        })
+        .select('id')
+        .single()
+
+    // A contributor who HAS accepted org_leader_terms — precisely the account the
+    // superseded policy would have admitted. The agreement is no longer a key.
+    const { error: refused } = await attempt(leader)
+    expect(refused?.code).toBe('42501')
+
+    const { data, error: allowed } = await attempt(admin)
+    expect(allowed).toBeNull()
+    adminOrg = data!.id as string
+  })
+
   it('a contributor cannot approve their own join request', async () => {
     const joinerDb = createUserClient(joiner.token)
     const { data: inserted, error } = await joinerDb
@@ -1005,22 +1095,30 @@ describe('membership handshake', () => {
     await adminClient().from('org_members').delete().eq('id', rowId)
   })
 
-  it('the org creator can claim first leadership, but only of their own org', async () => {
-    const freshOrg = await createOrg({ createdBy: leader.id, status: 'pending' })
-    const leaderDb = createUserClient(leader.token)
+  it('a leader cannot invite someone straight in as a leader', async () => {
+    // The org_role trigger is BEFORE UPDATE, so it cannot see this INSERT. The only
+    // thing standing here is the invite policy's org_role = 'member' conjunct.
+    const { error } = await createUserClient(leader.token)
+      .from('org_members')
+      .insert({
+        org_id: orgId, user_id: joiner.id, initiated_by: 'org',
+        status: 'pending', org_role: 'leader', invited_by: leader.id,
+      })
+    expect(error?.code).toBe('42501')
 
-    const { error: ok } = await leaderDb.from('org_members').insert({
-      org_id: freshOrg, user_id: leader.id, org_role: 'leader', status: 'approved', initiated_by: 'org',
-    })
+    // The identical statement as a member succeeds, so the refusal above is
+    // attributable to org_role and not to some other conjunct.
+    const { data, error: ok } = await createUserClient(leader.token)
+      .from('org_members')
+      .insert({
+        org_id: orgId, user_id: joiner.id, initiated_by: 'org',
+        status: 'pending', org_role: 'member', invited_by: leader.id,
+      })
+      .select('id')
+      .single()
     expect(ok).toBeNull()
 
-    // A second claim on the same org is refused: it already has a leader.
-    const { error: second } = await createUserClient(joiner.token).from('org_members').insert({
-      org_id: freshOrg, user_id: joiner.id, org_role: 'leader', status: 'approved', initiated_by: 'org',
-    })
-    expect(second).not.toBeNull()
-
-    await cleanupOrg(freshOrg)
+    await adminClient().from('org_members').delete().eq('id', data!.id)
   })
 })
 ```
@@ -1031,7 +1129,7 @@ describe('membership handshake', () => {
 pnpm --filter @splat-connect/api test:integration -- tests/integration/orgs/membership-handshake.test.ts
 ```
 
-Expected: 5 passed. A blocked INSERT raises PostgREST error `42501`
+Expected: 7 passed. A blocked INSERT raises PostgREST error `42501`
 (`new row violates row-level security policy`); a blocked UPDATE silently matches
 zero rows. The assertions differ accordingly — do not "fix" one to look like the other.
 

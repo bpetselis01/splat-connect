@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
+import { acceptTerms } from '../../helpers/orgs.js'
 
 let owner: TestUser
 let other: TestUser
@@ -18,6 +19,8 @@ const authed = (token: string, init: RequestInit = {}) => ({
 beforeAll(async () => {
   owner = await createTestUser('contributor')
   other = await createTestUser('contributor')
+  // POST /api/tutorials is gated on contributor_terms.
+  await acceptTerms(owner.id, 'contributor_terms')
 
   await app.request(
     '/api/tutorials',

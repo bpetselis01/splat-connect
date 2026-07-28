@@ -14,6 +14,24 @@ vi.mock('../../../src/supabase/client.js', () => ({ createAdminClient: () => moc
 
 const { default: tutorials } = await import('../../../src/routes/tutorials.js')
 
+/** The tutorial routes now read user_agreements to check the contributor_terms
+ *  gate before touching tutorials, so a mock answering every table the same way
+ *  no longer works. This dispatches on the table name: the terms chain for
+ *  user_agreements, whatever the test needs for everything else. */
+function withTerms(accepted: boolean, otherTables: unknown = {}) {
+  mockUserClient.from.mockImplementation((table: string) =>
+    table === 'user_agreements'
+      ? {
+          select: () => ({
+            eq: () => ({
+              eq: () => ({ limit: () => ({ data: accepted ? [{ id: 'a' }] : [], error: null }) }),
+            }),
+          }),
+        }
+      : otherTables,
+  )
+}
+
 function makeApp(role: 'contributor' | 'admin' = 'contributor') {
   const app = new Hono<{ Variables: AuthVariables }>()
   app.use('*', async (c, next) => {
@@ -133,6 +151,7 @@ describe('POST /', () => {
   //        state so all subsequent steps PATCH the same record
   it('inserts tutorial and returns 201', async () => {
     const created = { id: 'new-id', title: 'New Tutorial', status: 'draft' }
+    withTerms(true)
     mockAdminClient.from.mockReturnValue({
       insert: () => ({ select: () => ({ single: () => ({ data: created, error: null }) }) }),
     })
@@ -151,6 +170,7 @@ describe('POST /', () => {
   // Chain: the upload wizard can safely retry Step 1 Next after a network failure without
   //        creating duplicate draft records — idempotent behaviour keeps data clean
   it('returns 200 with id on duplicate key (idempotent retry)', async () => {
+    withTerms(true)
     mockAdminClient.from.mockReturnValue({
       insert: () => ({
         select: () => ({
@@ -178,7 +198,7 @@ describe('PATCH /:id', () => {
   //        the tutorial record in the DB is kept in sync with the wizard state step by step
   it('updates tutorial', async () => {
     const updated = { id: '1', status: 'pending' }
-    mockUserClient.from.mockReturnValue({
+    withTerms(true, {
       update: () => ({ eq: () => ({ select: () => ({ single: () => ({ data: updated, error: null }) }) }) }),
     })
     const res = await makeApp().request('/1', {
@@ -194,7 +214,7 @@ describe('PATCH /:id', () => {
   // Chain: the upload wizard receives 500 → the UI can show an error and keep the user on
   //        the current step rather than advancing with unsaved data
   it('returns 500 on DB error', async () => {
-    mockUserClient.from.mockReturnValue({
+    withTerms(true, {
       update: () => ({
         eq: () => ({
           select: () => ({ single: () => ({ data: null, error: { message: 'DB error' } }) }),
@@ -223,5 +243,51 @@ describe('DELETE /:id', () => {
     })
     const res = await makeApp().request('/1', { method: 'DELETE' })
     expect(res.status).toBe(204)
+  })
+})
+
+describe('PATCH /:id guards', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  // Tests: PATCH /:id refuses draft -> pending when contributor_terms is unaccepted
+  // How:   withTerms(false) makes the user_agreements read return no rows; checks 403
+  // Chain: the submit step surfaces the 403 as "accept the terms first" rather than
+  //        letting work reach the review queue from someone who agreed to nothing
+  it('returns 403 on submit without accepted contributor terms', async () => {
+    withTerms(false, {})
+    const res = await makeApp().request('/1', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'pending' }),
+    })
+    expect(res.status).toBe(403)
+  })
+
+  // Tests: PATCH /:id refuses to publish, whatever the caller's RLS grant allows
+  // How:   sends status 'approved'; checks 403 before any database call is made
+  // Chain: a leader must go through POST /:id/review instead, so reviewed_by and
+  //        reviewed_for_org_id are always written and no publish escapes the audit trail
+  it('returns 403 when asked to approve', async () => {
+    withTerms(true, {})
+    const res = await makeApp().request('/1', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'approved' }),
+    })
+    expect(res.status).toBe(403)
+  })
+
+  // Tests: PATCH /:id refuses the protected audit columns
+  // How:   sends reviewed_by; checks 403 before any database call is made
+  // Chain: the audit trail can only be written by the review endpoints, so a
+  //        contributor cannot forge who approved their own work
+  it('returns 403 on a protected audit field', async () => {
+    withTerms(true, {})
+    const res = await makeApp().request('/1', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reviewed_by: 'user-1' }),
+    })
+    expect(res.status).toBe(403)
   })
 })
