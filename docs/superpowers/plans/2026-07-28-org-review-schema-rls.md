@@ -6,12 +6,12 @@
 
 **Spec:** `docs/superpowers/specs/2026-07-28-org-delegated-review-design.md` (§1, §2, §5)
 
-> **Amended 2026-07-28** by
-> `docs/superpowers/plans/2026-07-28-admin-only-org-authority.md`, which made
-> organisation creation and leader promotion admin-only and moved the
-> `org_leader_terms` gate onto the review grant (spec decisions 11–13). Tasks 1,
-> 2 and 6 below show the amended policies, not the ones originally executed. The
-> founder-bootstrap policy and `org_has_approved_leader()` no longer exist.
+> **Superseded 2026-07-28** by
+> `docs/superpowers/plans/2026-07-28-project-org-schema-rls.md`. The membership
+> model this plan built — `org_members`, the two-sided handshake, `trust_level`,
+> `review_level` — was replaced by per-project organisation backing. Kept as the
+> record of what was tried; do not execute it.
+
 
 **Goal:** Add the `organizations`, `org_members`, and `user_agreements` tables plus
 every RLS policy that governs them, so that an approved org leader's authority to

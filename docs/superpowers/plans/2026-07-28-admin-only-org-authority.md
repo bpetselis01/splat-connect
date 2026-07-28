@@ -4,11 +4,12 @@
 > implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for
 > tracking.
 
-> **Amended 2026-07-28**, after execution: spec decision 14 removed the
-> self-review block from the leader review grant, so the policy shown in Task 3
-> below now carries three conditions, not four. Demotion also turned out to
-> require the admin's own JWT rather than the service role. See
-> `supabase/migrations/007_organizations.sql` for the current text.
+> **Superseded 2026-07-28** by
+> `docs/superpowers/plans/2026-07-28-project-org-schema-rls.md`. The membership
+> model this plan built — `org_members`, the two-sided handshake, `trust_level`,
+> `review_level` — was replaced by per-project organisation backing. Kept as the
+> record of what was tried; do not execute it.
+
 
 **Goal:** Make the platform admin the only account that can create an
 organisation or grant `org_role = 'leader'`, and move the `org_leader_terms`

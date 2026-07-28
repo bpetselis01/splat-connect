@@ -3,6 +3,12 @@
 **Date:** 2026-07-28
 **Status:** Approved design, ready for implementation planning
 
+> **Superseded 2026-07-28** by
+> `docs/superpowers/specs/2026-07-28-project-org-collaboration-design.md`, which
+> replaced the membership model with per-project organisation backing. Decisions
+> 1, 5, 6 and 8–14 below carry forward; 2, 3, 4 and 7 do not. Kept as the record
+> of what was tried and why it was dropped.
+
 ## Goal
 
 An approved org leader can review and publish tutorials submitted by their own
