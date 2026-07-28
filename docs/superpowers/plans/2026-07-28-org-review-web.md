@@ -52,9 +52,8 @@ Tailwind, Playwright.
 | `packages/web/app/admin/spot-check/page.tsx` | **Create.** Random sample of org-reviewed tutorials + flag toggle. |
 | `packages/web/app/admin/page.tsx` | **Modify.** Two more cards in the existing hub. |
 | `packages/web/app/dashboard/page.tsx` | **Modify.** Org memberships and pending invites section. |
-| `packages/web/components/terms-gate.tsx` | **Create.** Reusable accept-terms control, used by both the submit flow and org creation. |
+| `packages/web/components/terms-gate.tsx` | **Create.** Reusable accept-terms control, used by the submit flow (`contributor_terms`) and the leader dashboard (`org_leader_terms`). |
 | `packages/web/app/upload/page.tsx` | **Modify.** Org picker on the review step + terms gate before submit. |
-| `packages/web/app/organizations/new/page.tsx` | **Create.** Create an org, behind the leader-terms gate. |
 | `packages/web/app/organizations/page.tsx` | **Create.** Browse approved orgs and request to join. |
 | `packages/web/app/legal/contributor-terms/page.tsx` | **Create, empty.** |
 | `packages/web/app/legal/org-leader-terms/page.tsx` | **Create, empty.** |
@@ -165,7 +164,31 @@ cat packages/web/app/admin/page.tsx packages/web/app/admin/review/page.tsx
 Match the card/list structure and the empty-state treatment (`empty-badge` + a heading +
 a one-line explanation) rather than inventing a new layout.
 
-- [ ] **Step 2: Write the dashboard page**
+- [ ] **Step 2: Add the leader terms banner**
+
+A leader is promoted by the admin rather than opting in (spec decision 12), so the
+first time they arrive here they may not have accepted `org_leader_terms`. The
+review grant in `007_organizations.sql` requires it, and it sits in the policy's
+`using` clause — meaning an approve from an unaccepted leader matches **zero rows
+and returns no error**. Without this banner the button appears to work and
+silently does nothing.
+
+Fetch `GET /api/agreements/me` in the server component. When there is no
+`org_leader_terms` row:
+
+- Render the queue as normal — the SELECT policy deliberately does not require the
+  agreement, so a leader can see what they are being asked to take responsibility
+  for before accepting.
+- Disable every approve and reject control.
+- Render `<TermsGate type="org_leader_terms" />` above the queue, with copy naming
+  the two things the agreement covers: publishing on the platform's behalf, and
+  the fact that leaders can read their members' unpublished drafts.
+
+This mirrors the RLS grant rather than enforcing anything. The database refuses
+the write either way; the banner exists so the UI does not offer a control that
+quietly fails.
+
+- [ ] **Step 3: Write the dashboard page**
 
 ```typescript
 import Link from 'next/link'
@@ -299,7 +322,7 @@ export default async function OrgDashboardPage({
 }
 ```
 
-- [ ] **Step 3: Write the roster component**
+- [ ] **Step 4: Write the roster component**
 
 Create `packages/web/components/org-roster.tsx` as a `'use client'` component taking
 `{ orgId, roster }`. It renders approved members with a Remove button, pending
@@ -309,7 +332,7 @@ taking a contributor's user id. All calls go through `browserApiClient`; on succ
 returns 409 for an existing membership and 403 for a suspended org, and both are worth
 showing verbatim rather than as "something went wrong".
 
-- [ ] **Step 4: Verify manually**
+- [ ] **Step 5: Verify manually**
 
 ```bash
 pnpm dev:web
@@ -318,7 +341,7 @@ pnpm dev:web
 Sign in as a leader, visit `/org/<orgId>`. Expected: the queue, requests, and roster
 render; visiting an org you do not lead redirects to `/dashboard`.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 Component before the page that imports it, so neither commit references a missing file.
 
@@ -406,14 +429,36 @@ cause of a contributor re-submitting the same problem."
 
 - [ ] **Step 1: Write the organisations page**
 
-Server component listing `GET /api/admin/organizations`, grouped pending first. Each row
-shows name, status, trust level, member count, and server-action buttons:
+This page is the only surface in the product that creates an organisation or
+grants leadership (spec decisions 11 and 12). Everything else about orgs is
+read-only or member-level.
 
-- **Approve** → `PATCH /api/admin/organizations/:id { status: 'approved' }`.
-  Label it "Approve — grants review authority", because that one click is what makes the
-  org's leaders able to publish.
-- **Suspend** → `{ status: 'suspended' }`
+Server component listing `GET /api/admin/organizations`. Above the list, a create
+form posting `POST /api/admin/organizations`:
+
+- **Name** and **description** text inputs.
+- **First leader** — a picker over contributor-role profiles, posting
+  `leader_user_id`. Required: an org with no leader cannot approve its own join
+  requests, and the API returns 400 without it. Say so in the field's help text
+  rather than letting the 400 be the explanation.
+- Note in the submit copy that creating the org **grants review authority
+  immediately** — status `approved` and trust level `trusted` are both set on
+  create, so there is no second approve step and no pending queue.
+
+Each org row shows name, status, trust level, member count, and server-action
+buttons:
+
+- **Suspend** → `PATCH /api/admin/organizations/:id { status: 'suspended' }`
 - **Demote to probation** → `{ trust_level: 'probation' }`
+
+Each row expands to a roster, with a per-member control posting
+`PATCH /api/admin/organizations/:orgId/members/:userId { org_role }`:
+
+- **Promote to leader** / **Demote to member**, disabled for any membership whose
+  status is not `approved` — the endpoint returns 400 for those, and disabling
+  matches the rule rather than discovering it.
+- Nothing here is reachable by a leader: the whole page sits behind the `/admin`
+  role gate in `middleware.ts`.
 
 `revalidatePath('/admin/organizations')` and `revalidatePath('/admin')` after each.
 
@@ -451,9 +496,10 @@ The grid is already `sm:grid-cols-2`, so four cards need no layout change.
 
 - [ ] **Step 4: Verify manually**
 
-Approve a pending org and confirm its leader can then review (the write grant requires
-`approved` + `trusted`, both set by that one click). Suspend it and confirm the leader's
-approve button now fails.
+Create an org with a leader and confirm that leader can review immediately once they
+have accepted the leader terms — creation sets `approved` + `trusted` in one action, so
+there is no separate approval step. Promote a second member and confirm they gain the
+same queue. Suspend the org and confirm both leaders' approve buttons now fail.
 
 - [ ] **Step 5: Commit**
 
@@ -474,12 +520,16 @@ git commit -m "feat(web): link organisations and spot-check from the admin hub"
 
 ---
 
-## Task 5: Terms gate and org creation
+## Task 5: Terms gate and organisation browsing
 
 **Files:**
 - Create: `packages/web/components/terms-gate.tsx`
-- Create: `packages/web/app/organizations/new/page.tsx`
 - Create: `packages/web/app/organizations/page.tsx`
+
+No org creation page. Only the admin creates organisations (spec decision 11),
+and that lives on `/admin/organizations` in Task 4. The `TermsGate` component
+stays: the submit flow needs it for `contributor_terms`, and the leader dashboard
+in Task 2 needs it for `org_leader_terms`.
 
 - [ ] **Step 1: Write the terms gate component**
 
@@ -488,7 +538,7 @@ git commit -m "feat(web): link organisations and spot-check from the admin hub"
 /**
  * Renders an explicit acceptance control for one agreement type, and calls
  * onAccepted once the acceptance is recorded. Used by both the submit flow and
- * org creation so the two cannot drift apart.
+ * the leader dashboard so the two cannot drift apart.
  *
  * The gate is a UX affordance only — the API refuses ungated actions server-side
  * regardless of what this component shows.
@@ -544,39 +594,27 @@ export function TermsGate({
 }
 ```
 
-- [ ] **Step 2: Write the org creation page**
-
-Client component: fetch `GET /api/agreements/me` on mount; if no `org_leader_terms` row,
-render `<TermsGate type="org_leader_terms" />` and nothing else. Once accepted, show the
-name + description form posting to `POST /api/organizations`, then redirect to
-`/org/<newId>`. Show the outcome plainly — the org is created **pending**, so say so:
-
-> Created. An administrator needs to approve your organisation before you can review
-> your members' tutorials.
-
-- [ ] **Step 3: Write the browse/join page**
+- [ ] **Step 2: Write the browse/join page**
 
 Server component listing `GET /api/organizations` (approved only) with a client Join
 button posting to `POST /api/org-members/request`. Handle 409 as "You already have a
 membership record with this organisation" rather than an error toast.
 
-- [ ] **Step 4: Verify manually**
+- [ ] **Step 3: Verify manually**
 
-Create an org without accepting terms — the form should not be reachable, and a direct
-API call returns 403.
+Join an approved org from the browse page and confirm the request lands `pending`
+with the leader, not approved. Confirm no page in the contributor-facing app
+offers to create an organisation.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
 git add packages/web/components/terms-gate.tsx
 git commit -m "feat(web): add reusable terms acceptance gate
 
-Shared by the submit flow and org creation so the two cannot drift apart. The
-gate is a UX affordance only — the API refuses ungated actions server-side
-regardless of what this renders."
-
-git add packages/web/app/organizations/new/page.tsx
-git commit -m "feat(web): add organisation creation behind the leader terms gate"
+Shared by the submit flow and the leader dashboard so the two cannot drift
+apart. The gate is a UX affordance only — the database refuses ungated
+actions regardless of what this renders."
 
 git add packages/web/app/organizations/page.tsx
 git commit -m "feat(web): add organisation browse and join-request page"
@@ -677,7 +715,8 @@ In `packages/web/app/dashboard/page.tsx`, fetch `GET /api/organizations/mine` an
 - approved memberships, with a link to `/org/<id>` for leaders
 - pending invitations (`initiated_by === 'org'`) with Accept / Decline server actions
 - pending requests (`initiated_by === 'contributor'`) shown as "awaiting the organisation"
-- a link to `/organizations` to browse, and to `/organizations/new` to create one
+- a link to `/organizations` to browse and request to join. There is no create
+  link: organisations are created by the admin (spec decision 11).
 
 - [ ] **Step 6: Verify the whole loop manually**
 
