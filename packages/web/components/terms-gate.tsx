@@ -20,10 +20,12 @@ import Link from 'next/link'
 import { browserApiClient } from '@/lib/browser-api-client'
 import type { AgreementType } from '@splat-connect/types'
 
-const LABELS: Record<AgreementType, { title: string; href: string }> = {
+// `as const` rather than a Record annotation: Next's typed routes need href to be
+// a literal, and a Record<..., { href: string }> widens it away.
+const LABELS = {
   contributor_terms: { title: 'contributor terms', href: '/legal/contributor-terms' },
   org_leader_terms: { title: 'organisation leader terms', href: '/legal/org-leader-terms' },
-}
+} as const satisfies Record<AgreementType, { title: string; href: string }>
 
 export function TermsGate({
   type,
