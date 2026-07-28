@@ -77,7 +77,13 @@ test('the review detail page renders parts, tools, STL files and the PDF link', 
   await expect(page.getByText('e2e-mount.stl')).toBeVisible()
 })
 
-test('a non-pending tutorial id 404s on the review detail page', async ({ page }) => {
+/**
+ * This test used to assert the opposite — that an approved tutorial 404s here. That
+ * was the second of the two functional holes: an admin who found bad published work
+ * had no route in the UI to take it down, though the API allowed it and an
+ * integration test covered it. The page now follows the tutorial's state.
+ */
+test('an approved tutorial opens read-only with an unpublish control', async ({ page }) => {
   const contributor = await createContributor()
   const admin = await createAdmin()
   const id = await createTutorial(contributor.id, {
@@ -89,7 +95,13 @@ test('a non-pending tutorial id 404s on the review detail page', async ({ page }
   await page.waitForURL('**/admin')
 
   const response = await page.goto(`/admin/review/${id}`)
-  expect(response?.status()).toBe(404)
+  expect(response?.status()).toBe(200)
+  // Unpublish, not Reject: the tutorial was live and a parent may have used it.
+  await expect(page.getByRole('button', { name: /^Unpublish$/ })).toBeVisible()
+  // And the submission controls are gone — approving what is already approved is
+  // not an action, and Reject would be the wrong word for taking down live work.
+  await expect(page.getByRole('button', { name: /Approve/ })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: /✕ Reject/ })).toHaveCount(0)
 })
 
 test('rejecting without a note shows the contributor the fallback text', async ({ page }) => {
