@@ -202,6 +202,24 @@ create policy "Anyone can read accepted backing on a published project"
     )
   );
 
+-- Either side may back out, until the organisation in this row is the one that
+-- approved the tutorial (decision 22). After that the row IS the audit trail:
+-- reviewed_for_org_id would otherwise point at an organisation listed nowhere.
+-- An organisation that lent its name but did not review may still withdraw; the
+-- one that approved must reject the tutorial instead. You cannot disown work
+-- while leaving it published under your name.
+create policy "Either side can withdraw backing before it was acted on"
+  on public.tutorial_orgs for delete
+  using (
+    (public.is_tutorial_contributor(tutorial_id) or public.is_org_leader(org_id))
+    and not exists (
+      select 1 from public.tutorials t
+      where t.id = tutorial_id
+        and t.status = 'approved'
+        and t.reviewed_for_org_id = org_id
+    )
+  );
+
 create policy "Admin full access to tutorial_orgs"
   on public.tutorial_orgs for all using (public.is_admin());
 
