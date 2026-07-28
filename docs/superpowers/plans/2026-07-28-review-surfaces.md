@@ -66,7 +66,7 @@ for which organisation; the endpoint returns bare ids.
   `reviewer: { name: string } | null` and `reviewed_for: { name: string } | null`.
   Tasks 3 and 5 consume both.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
   Append to `review-endpoint.test.ts`:
 
@@ -97,7 +97,7 @@ for which organisation; the endpoint returns bare ids.
   })
   ```
 
-- [ ] **Step 2: Run and verify it fails**
+- [x] **Step 2: Run and verify it fails**
 
   ```bash
   cd packages/api && npx vitest run -c vitest.integration.config.ts \
@@ -106,7 +106,7 @@ for which organisation; the endpoint returns bare ids.
 
   Expected: FAIL — `body.reviewer` is `undefined`.
 
-- [ ] **Step 3: Add the embed**
+- [x] **Step 3: Add the embed**
 
   In `tutorials.get('/:id')`, extend the select. Same shape the public detail route
   already uses, so there is one way to ask this question:
@@ -118,7 +118,7 @@ for which organisation; the endpoint returns bare ids.
     )
   ```
 
-- [ ] **Step 4: Run and verify**
+- [x] **Step 4: Run and verify**
 
   ```bash
   cd packages/api && npx vitest run -c vitest.integration.config.ts tests/integration/orgs/
@@ -126,7 +126,7 @@ for which organisation; the endpoint returns bare ids.
 
   Expected: all pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
   ```bash
   git add packages/api/src/routes/tutorials.ts
@@ -154,7 +154,7 @@ produced these holes in the first place.
   `LeaderAction = 'back' | 'decline' | 'approve' | 'reject'` and
   `AdminAction = 'approve' | 'reject' | 'unpublish'`. Tasks 3 and 5 consume them.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
   ```tsx
   import { describe, it, expect } from 'vitest'
@@ -208,13 +208,13 @@ produced these holes in the first place.
   })
   ```
 
-- [ ] **Step 2: Run and verify it fails**
+- [x] **Step 2: Run and verify it fails**
 
   ```bash
   cd packages/web && npm run test:unit -- project-actions
   ```
 
-- [ ] **Step 3: Write it**
+- [x] **Step 3: Write it**
 
   ```tsx
   /**
@@ -257,7 +257,7 @@ produced these holes in the first place.
   }
   ```
 
-- [ ] **Step 4: Run and commit**
+- [x] **Step 4: Run and commit**
 
   ```bash
   cd packages/web && npm run test:unit -- project-actions
@@ -282,7 +282,7 @@ produced these holes in the first place.
 - Consumes: `leaderActions` (Task 2), `isOrgLeader`, the reviewer embed (Task 1),
   `POST /api/tutorials/:id/orgs/:orgId/accept|decline`, `POST /:id/review`.
 
-- [ ] **Step 1: Move the route**
+- [x] **Step 1: Move the route**
 
   ```bash
   cd /Users/byronpetselis/Documents/splat-connect/packages/web
@@ -292,7 +292,7 @@ produced these holes in the first place.
   rmdir "app/organizations/[id]/review" 2>/dev/null || true
   ```
 
-- [ ] **Step 2: Write the failing test**
+- [x] **Step 2: Write the failing test**
 
   ```tsx
   import { describe, it, expect, vi, beforeEach } from 'vitest'
@@ -375,7 +375,7 @@ produced these holes in the first place.
   })
   ```
 
-- [ ] **Step 3: Rewrite the page**
+- [x] **Step 3: Rewrite the page**
 
   Keep the existing `approve` and `reject` server actions; their `redirect` and
   `revalidatePath` targets become `/organizations/${orgId}`. Add two more:
@@ -433,7 +433,7 @@ produced these holes in the first place.
   )}
   ```
 
-- [ ] **Step 4: Rebuild, verify, commit**
+- [x] **Step 4: Rebuild, verify, commit**
 
   ```bash
   cd packages/web && npm run build && npx tsc --noEmit && npm run test:unit -- leader-project
@@ -453,7 +453,7 @@ produced these holes in the first place.
 - Modify: `packages/web/app/organizations/[id]/page.tsx`
 - Test: `packages/web/tests/unit/pages/organization-detail.test.tsx`
 
-- [ ] **Step 1: Collapse the two sections into one queue**
+- [x] **Step 1: Collapse the two sections into one queue**
 
   Replace the `requests` and `queue` arrays and their two `<section>`s with:
 
@@ -483,7 +483,7 @@ produced these holes in the first place.
   > Nothing waiting. Contributors ask by choosing your organisation when they
   > submit.
 
-- [ ] **Step 2: Add the tests**
+- [x] **Step 2: Add the tests**
 
   Append to `organization-detail.test.tsx`:
 
@@ -518,7 +518,7 @@ produced these holes in the first place.
   and accepted — so `t2` stays out of the queue and remains in the public "backed"
   list, which the existing tests already assert.
 
-- [ ] **Step 3: Verify and commit**
+- [x] **Step 3: Verify and commit**
 
   ```bash
   cd packages/web && npm run test:unit && npx tsc --noEmit
@@ -542,7 +542,7 @@ produced these holes in the first place.
 - Consumes: `adminActions` (Task 2), the reviewer embed (Task 1),
   `PATCH /api/admin/tutorials/:id/status`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
   ```tsx
   // Tests: an approved tutorial can be taken down from this page
@@ -606,7 +606,7 @@ produced these holes in the first place.
   })
   ```
 
-- [ ] **Step 2: Rewrite the page**
+- [x] **Step 2: Rewrite the page**
 
   Delete `if (tutorial!.status !== 'pending') notFound()`. Derive actions with
   `adminActions(tutorial!.status)` and add the unpublish action:
@@ -667,7 +667,7 @@ produced these holes in the first place.
   When the tutorial was reviewed by a leader, name them above the actions:
   *"Approved by Sam, Riverside Therapy."*
 
-- [ ] **Step 3: Verify and commit**
+- [x] **Step 3: Verify and commit**
 
   ```bash
   cd packages/web && npm run test:unit -- admin-project && npx tsc --noEmit
@@ -687,7 +687,7 @@ produced these holes in the first place.
 - Modify: `packages/web/app/admin/spot-check/page.tsx`
 - Test: `packages/web/tests/unit/pages/spot-check.test.tsx`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
   ```tsx
   // Tests: a sampled tutorial links where the admin can act on it
@@ -703,13 +703,13 @@ produced these holes in the first place.
   })
   ```
 
-- [ ] **Step 2: Change the link and add a line of copy**
+- [x] **Step 2: Change the link and add a line of copy**
 
   `href={`/admin/review/${t.id}`}`, and extend the page's explanation so the route
   out is stated: *"Open one to read it, and unpublish it if it should not be
   there."*
 
-- [ ] **Step 3: Verify and commit**
+- [x] **Step 3: Verify and commit**
 
   ```bash
   cd packages/web && npm run test:unit -- spot-check
@@ -729,7 +729,7 @@ produced these holes in the first place.
 - Modify: `packages/web/app/admin/organizations/page.tsx`
 - Test: `packages/web/tests/unit/pages/admin-organizations.test.tsx`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
   ```tsx
   // Tests: the page does not issue a request per organisation
@@ -752,7 +752,7 @@ produced these holes in the first place.
   })
   ```
 
-- [ ] **Step 2: Remove the N+1 and move the form**
+- [x] **Step 2: Remove the N+1 and move the form**
 
   Delete the `detailed` fetch entirely. The collapsed row shows name, description
   and status — all of which `GET /api/organizations` already returns. Leaders load
@@ -788,7 +788,7 @@ produced these holes in the first place.
   the admin reads. One `<datalist>` serves both pickers — it is referenced by id,
   not nested.
 
-- [ ] **Step 3: Verify and commit**
+- [x] **Step 3: Verify and commit**
 
   ```bash
   cd packages/web && npm run test:unit -- admin-organizations && npx tsc --noEmit
@@ -807,7 +807,7 @@ produced these holes in the first place.
 **Files:**
 - Modify: `packages/web/tests/e2e/contributor/org-backing.spec.ts`
 
-- [ ] **Step 1: Make the first journey click through the queue**
+- [x] **Step 1: Make the first journey click through the queue**
 
   It currently navigates directly to the review URL — a workaround added when the
   click 404'd. Restore the real interaction, which is the whole point of Task 3:
@@ -821,7 +821,7 @@ produced these holes in the first place.
     await page.getByRole('button', { name: /Approve and publish/i }).click()
   ```
 
-- [ ] **Step 2: Add the unpublish journey**
+- [x] **Step 2: Add the unpublish journey**
 
   ```typescript
   test('an admin unpublishes a tutorial a leader approved', async ({ page }) => {
@@ -866,7 +866,7 @@ produced these holes in the first place.
   })
   ```
 
-- [ ] **Step 3: Run**
+- [x] **Step 3: Run**
 
   ```bash
   cd packages/web
@@ -874,7 +874,7 @@ produced these holes in the first place.
   npx playwright test contributor/org-backing --reporter=line
   ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
   ```bash
   git add packages/web/tests/e2e
@@ -885,7 +885,7 @@ produced these holes in the first place.
 
 ## Task 9: Full verification
 
-- [ ] **Step 1: Everything**
+- [x] **Step 1: Everything**
 
   ```bash
   cd /Users/byronpetselis/Documents/splat-connect
@@ -896,14 +896,14 @@ produced these holes in the first place.
   npx playwright test --reporter=line
   ```
 
-- [ ] **Step 2: Confirm no route into a dead end remains**
+- [x] **Step 2: Confirm no route into a dead end remains**
 
   ```bash
   cd /Users/byronpetselis/Documents/splat-connect/packages/web
   grep -rn 'href={`/tutorials/${' app/organizations app/admin || echo "no leader or admin surface links to the public tutorial page"
   ```
 
-- [ ] **Step 3: Refresh the graph**
+- [x] **Step 3: Refresh the graph**
 
   ```bash
   cd /Users/byronpetselis/Documents/splat-connect && graphify update .
