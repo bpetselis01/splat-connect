@@ -229,3 +229,37 @@ create policy "Backing org leaders can review the project"
     public.can_review_tutorial(id)
     and public.has_accepted('org_leader_terms')
   );
+
+-- ============================================================
+-- Provenance trigger
+-- ============================================================
+-- WHY: An RLS `with check` clause sees only the NEW row, and a Postgres policy
+--      cannot reference OLD. The UPDATE policy above therefore validates
+--      is_org_leader(org_id) against a value the same statement is free to
+--      rewrite — and says nothing at all about tutorial_id. A leader could take
+--      a legitimate acceptance and repoint it at a different project, stamping
+--      their organisation on work that never asked for it. Reproduced end to end
+--      before this trigger existed.
+-- HOW: OLD is visible in a trigger, so identity is frozen here instead. The
+--      policy stays as written; this makes the columns it trusts immutable.
+-- SECURITY INVOKER, the opposite of the helper functions above, and deliberately
+-- so: here a row that is merely invisible must fail CLOSED. `set search_path = ''`
+-- is what makes invoker safe — every name in the body is schema-qualified, so no
+-- caller-controlled search_path can shadow it.
+create or replace function public.tutorial_orgs_freeze_identity()
+returns trigger as $$
+begin
+  if new.tutorial_id is distinct from old.tutorial_id
+  or new.org_id is distinct from old.org_id then
+    raise exception 'tutorial_id and org_id are immutable'
+      using errcode = '42501';
+  end if;
+  return new;
+end;
+$$ language plpgsql security invoker set search_path = '';
+
+-- BEFORE UPDATE only. The INSERT path is fully governed by the author policy,
+-- which pins status = 'pending' and checks authorship of the named tutorial.
+create trigger tutorial_orgs_freeze_identity
+  before update on public.tutorial_orgs
+  for each row execute function public.tutorial_orgs_freeze_identity();

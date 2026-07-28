@@ -115,6 +115,41 @@ describe('answering a request', () => {
     await adminClient().from('tutorial_orgs').delete().eq('id', rowId)
   })
 
+  it('a leader cannot repoint an acceptance at a different project', async () => {
+    // The UPDATE policy passes on both rows — the leader leads this org either way
+    // — so only a trigger can refuse this. Without it a leader stamps their
+    // organisation on work that never asked for it, which is an attack on the
+    // author rather than on the org.
+    const secondProject = await createProject({ authorId: author.id, status: 'draft' })
+    const rowId = await requestBacking({ tutorialId: draftId, orgId, status: 'accepted' })
+
+    const { error } = await createUserClient(leader.token)
+      .from('tutorial_orgs')
+      .update({ tutorial_id: secondProject })
+      .eq('id', rowId)
+      .select('id')
+    expect(error?.code).toBe('42501')
+
+    // Ground truth: a 42501 alone does not prove the row survived intact.
+    const { data } = await adminClient()
+      .from('tutorial_orgs').select('tutorial_id').eq('id', rowId).single()
+    expect(data?.tutorial_id).toBe(draftId)
+
+    await adminClient().from('tutorial_orgs').delete().eq('id', rowId)
+    await adminClient().from('tutorials').delete().eq('id', secondProject)
+  })
+
+  it('a leader cannot move an acceptance to another org', async () => {
+    const rowId = await requestBacking({ tutorialId: draftId, orgId, status: 'accepted' })
+    const { error } = await createUserClient(leader.token)
+      .from('tutorial_orgs')
+      .update({ org_id: otherOrgId })
+      .eq('id', rowId)
+      .select('id')
+    expect(error?.code).toBe('42501')
+    await adminClient().from('tutorial_orgs').delete().eq('id', rowId)
+  })
+
   it('a leader cannot set a status outside accepted or declined', async () => {
     const rowId = await requestBacking({ tutorialId: draftId, orgId, status: 'accepted' })
     const { error } = await createUserClient(leader.token)
