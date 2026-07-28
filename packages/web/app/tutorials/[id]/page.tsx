@@ -1,7 +1,8 @@
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import { DifficultyBadge } from '@/components/difficulty-badge'
-import type { TutorialWithDetails } from '@splat-connect/types'
+import { OrgBadges } from '@/components/org-badges'
+import type { TutorialWithDetails, TutorialOrg } from '@splat-connect/types'
 
 export default async function TutorialPage({
   params,
@@ -12,7 +13,13 @@ export default async function TutorialPage({
   const res = await fetch(`${process.env.API_URL}/api/public/tutorials/${id}`, { cache: 'no-store' })
   if (!res.ok) notFound()
 
-  const tutorial = (await res.json()) as TutorialWithDetails
+  // The public endpoint embeds accepted backing and the approver, so a logged-out
+  // parent gets them without a second, authenticated call.
+  const tutorial = (await res.json()) as TutorialWithDetails & {
+    tutorial_orgs?: TutorialOrg[]
+    reviewer?: { name: string } | null
+    reviewed_for?: { name: string } | null
+  }
 
   const contributors = tutorial.tutorial_contributors ?? []
   const primaryContributor = contributors.find((c) => c.role === 'primary')
@@ -37,6 +44,11 @@ export default async function TutorialPage({
               🧸
             </div>
           )}
+          <OrgBadges
+            backing={tutorial.tutorial_orgs ?? []}
+            approvedByName={tutorial.reviewer?.name}
+            approvedForOrgName={tutorial.reviewed_for?.name}
+          />
           <div className="mt-4">
             <div className="mb-2 flex flex-wrap items-center gap-3">
               <h1 className="text-2xl font-bold text-ink">{tutorial.title}</h1>
