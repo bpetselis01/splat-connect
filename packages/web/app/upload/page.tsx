@@ -28,12 +28,13 @@
  * - types/index.ts: UploadDraft type
  */
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { browserApiClient } from '@/lib/browser-api-client'
 import { canAdvanceFromStep, canSubmit } from '@/lib/validation'
 import { FileDropZone } from '@/components/file-drop-zone'
 import { BuyLinksInput } from '@/components/buy-links-input'
-import type { UploadDraft, Difficulty, BuyLink } from '@splat-connect/types'
+import { TermsGate } from '@/components/terms-gate'
+import type { UploadDraft, Difficulty, BuyLink, UserAgreement, Organization } from '@splat-connect/types'
 
 const STEPS = [
   'Details',
@@ -67,6 +68,29 @@ export default function UploadPage() {
   // Used to switch from POST (first save) to PATCH (subsequent saves from Step 1).
   const [draftSaved, setDraftSaved] = useState(false)
   const [saving, setSaving] = useState(false)
+
+  // The API refuses draft -> pending without an accepted contributor_terms row, so
+  // the wizard has to ask before the submit button rather than let six steps of
+  // work end in a bare 403.
+  const [hasContributorTerms, setHasContributorTerms] = useState(false)
+  useEffect(() => {
+    browserApiClient
+      .get<UserAgreement[]>('/api/agreements/me')
+      .then((rows) => setHasContributorTerms(rows.some((r) => r.agreement_type === 'contributor_terms')))
+      .catch(() => setHasContributorTerms(false))
+  }, [])
+
+  // Organisations the author can ask to back this project. Asking is optional —
+  // choosing none is the platform queue, which is what every contributor got
+  // before organisations existed.
+  const [organizations, setOrganizations] = useState<Organization[]>([])
+  const [selectedOrgIds, setSelectedOrgIds] = useState<string[]>([])
+  useEffect(() => {
+    browserApiClient
+      .get<Organization[]>('/api/organizations')
+      .then(setOrganizations)
+      .catch(() => setOrganizations([]))
+  }, [])
 
   async function uploadFile(endpoint: string, file: File): Promise<{ url: string; filename?: string }> {
     const fd = new FormData()
@@ -178,6 +202,13 @@ export default function UploadPage() {
     setSubmitting(true)
     setError(null)
     try {
+      // Ask each chosen organisation before submitting. Sequential rather than
+      // Promise.all: the endpoint is idempotent on a repeat, so a partial failure
+      // is safe to retry, and a serial loop keeps the failing organisation
+      // identifiable in the error.
+      for (const orgId of selectedOrgIds) {
+        await browserApiClient.post(`/api/tutorials/${tutorialId}/orgs`, { org_id: orgId })
+      }
       // All data already saved per-step — just transition the draft to pending for review.
       await browserApiClient.patch(`/api/tutorials/${tutorialId}`, { status: 'pending' })
       window.location.href = '/my-tutorials'
@@ -532,12 +563,51 @@ export default function UploadPage() {
               <strong>STL files:</strong> {draft.stl_files.length}
             </p>
           </div>
-          <p className="text-xs leading-relaxed text-muted">
-            Your tutorial will be reviewed by the SPLAT admin before it appears publicly.
-          </p>
+          <div className="card">
+            <p className="font-medium text-ink">Ask an organisation to back this project</p>
+            <p className="mt-1 text-xs leading-relaxed text-muted">
+              Their leaders will be able to read it while they decide, including if
+              they say no. Choose the one or two who know your work — you can ask
+              others later. Choose none and the SPLAT admin reviews it.
+            </p>
+            {organizations.length === 0 ? (
+              <p className="mt-3 text-xs text-muted">
+                There are no organisations on the platform yet.
+              </p>
+            ) : (
+              <ul className="mt-3 space-y-2">
+                {organizations.map((org) => (
+                  <li key={org.id}>
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={selectedOrgIds.includes(org.id)}
+                        disabled={org.status !== 'active'}
+                        onChange={(e) =>
+                          setSelectedOrgIds((prev) =>
+                            e.target.checked
+                              ? [...prev, org.id]
+                              : prev.filter((id) => id !== org.id)
+                          )
+                        }
+                      />
+                      <span className={org.status === 'active' ? '' : 'text-muted'}>
+                        {org.name}
+                        {org.status !== 'active' && ' — currently suspended'}
+                      </span>
+                    </label>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          {!hasContributorTerms && (
+            <TermsGate type="contributor_terms" onAccepted={() => setHasContributorTerms(true)} />
+          )}
           <button
             type="button"
-            disabled={!canSubmit(draft) || submitting}
+            disabled={!canSubmit(draft) || submitting || !hasContributorTerms}
             onClick={handleSubmit}
             className="btn btn-accent btn-block"
           >

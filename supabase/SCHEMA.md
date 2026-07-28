@@ -16,6 +16,8 @@ current definition is shown and the change is noted.
 | 002 | `002_storage_update_policies.sql` | Re-applies the three storage **UPDATE** (file-replacement) policies to already-running databases (idempotent, drop-if-exists). |
 | 003 | `003_ability_profile.sql` | Adds the `parent` role, makes the signup trigger role-aware, and creates the `child_profiles` table with its RLS. |
 | 004 | `004_data_api_grants.sql` | Grants the Data API roles (`anon`, `authenticated`, `service_role`) access to the `public` schema so PostgREST works; RLS remains the access-control layer. |
+| 007 | `007_organizations.sql` | Adds `organizations`, `org_leaders`, `user_agreements` and `tutorial_orgs`, so an author can ask organisations to back a project and a leader of any that accepted can approve or reject it — instead of every tutorial going through the single platform admin queue. Adds `reviewed_by` and `reviewed_for_org_id` to `tutorials`. Adds the org RLS and `tutorial_orgs_freeze_identity`. |
+| 008 | `008_tutorial_contributor_scope.sql` | Narrows the `tutorial_contributors` INSERT policy so a contributor can only claim a tutorial that has no contributors yet (adds `tutorial_has_contributor()`), closing a path that let a stranger's private draft be published under an organisation. Adds `tutorials_freeze_review_provenance`, which reserves `reviewed_by` and `reviewed_for_org_id` to admins and backing org leaders. |
 
 ---
 
@@ -62,6 +64,10 @@ A published (or in-progress) build tutorial. Status drives visibility and the re
 | `rejection_note` | text | nullable |
 | `created_at` | timestamptz | not null, default `now()` |
 | `reviewed_at` | timestamptz | nullable |
+| `reviewed_by` | uuid | nullable, FK → `profiles` on delete set null *(007)* |
+| `reviewed_for_org_id` | uuid | nullable, FK → `organizations` on delete set null *(007)* |
+
+> **Evolution (007):** `reviewed_by` and `reviewed_for_org_id` were added so a published tutorial records who approved it and which organisation's authority they used. Which organisations back a project lives in `tutorial_orgs`, not on the tutorial: many may back one project, and each answers for itself. `reviewed_for_org_id` also anchors the withdrawal freeze — the organisation that approved a published tutorial cannot take its badge back off it.
 
 ```sql
 create table public.tutorials (
@@ -76,7 +82,10 @@ create table public.tutorials (
   toy_photo_url text,
   rejection_note text,
   created_at timestamptz not null default now(),
-  reviewed_at timestamptz
+  reviewed_at timestamptz,
+  -- Added in 007:
+  reviewed_by uuid references public.profiles on delete set null,
+  reviewed_for_org_id uuid references public.organizations on delete set null
 );
 ```
 
@@ -226,7 +235,107 @@ create table public.child_profiles (
 );
 ```
 
----
+### `organizations`  *(added in 007)*
+An organisation is a **badge of trust, never an owner**. Only the admin creates one, so creation *is* approval and there is no pending state.
+
+| Column | Type | Constraints / default |
+|--------|------|-----------------------|
+| `id` | uuid | PK, default `gen_random_uuid()` |
+| `name` | text | not null |
+| `description` | text | nullable |
+| `status` | text | not null, default `'active'`, check in (`active`, `suspended`) |
+| `created_by` | uuid | nullable, FK → `profiles` on delete set null |
+| `created_at` | timestamptz | not null, default `now()` |
+| `updated_at` | timestamptz | not null, default `now()` |
+
+`created_by` is always the admin, so it is an audit column rather than an authority one — no policy or function keys off it.
+
+```sql
+create table public.organizations (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  description text,
+  status text not null default 'active'
+    check (status in ('active', 'suspended')),
+  created_by uuid references public.profiles on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+```
+
+### `org_leaders`  *(added in 007)*
+Who leads which organisation. That is the whole table: no status, no role, no `initiated_by`, because **only the admin writes it**, so there is no handshake to represent.
+
+| Column | Type | Constraints / default |
+|--------|------|-----------------------|
+| `id` | uuid | PK, default `gen_random_uuid()` |
+| `org_id` | uuid | FK → `organizations` on delete cascade, not null |
+| `user_id` | uuid | FK → `profiles` on delete cascade, not null |
+| `created_at` | timestamptz | not null, default `now()` |
+| | | unique (`org_id`, `user_id`) |
+
+```sql
+create table public.org_leaders (
+  id uuid primary key default gen_random_uuid(),
+  org_id uuid references public.organizations on delete cascade not null,
+  user_id uuid references public.profiles on delete cascade not null,
+  created_at timestamptz not null default now(),
+  unique (org_id, user_id)
+);
+```
+
+### `tutorial_orgs`  *(added in 007)*
+One row per (project, organisation) request. The author creates it as `pending`; a leader of that organisation answers. **Many organisations may back one project**, and each answers only for itself — which is what stops a contributor attaching an organisation's name without its consent.
+
+| Column | Type | Constraints / default |
+|--------|------|-----------------------|
+| `id` | uuid | PK, default `gen_random_uuid()` |
+| `tutorial_id` | uuid | FK → `tutorials` on delete cascade, not null |
+| `org_id` | uuid | FK → `organizations` on delete cascade, not null |
+| `status` | text | not null, default `'pending'`, check in (`pending`, `accepted`, `declined`) |
+| `requested_at` | timestamptz | not null, default `now()` |
+| `responded_at` | timestamptz | nullable |
+| `responded_by` | uuid | nullable, FK → `profiles` on delete set null |
+| | | unique (`tutorial_id`, `org_id`) |
+
+`responded_by` records which leader answered, so an organisation can see who committed it to what.
+
+```sql
+create table public.tutorial_orgs (
+  id uuid primary key default gen_random_uuid(),
+  tutorial_id uuid references public.tutorials on delete cascade not null,
+  org_id uuid references public.organizations on delete cascade not null,
+  status text not null default 'pending'
+    check (status in ('pending', 'accepted', 'declined')),
+  requested_at timestamptz not null default now(),
+  responded_at timestamptz,
+  responded_by uuid references public.profiles on delete set null,
+  unique (tutorial_id, org_id)
+);
+```
+
+### `user_agreements`  *(added in 007)*
+Logs acceptance only — **contains no legal text**. The terms themselves are versioned static content referenced by the version string. `contributor_terms` gates tutorial submission; `org_leader_terms` is a conjunct of the leader review grant rather than gating any entry point.
+
+| Column | Type | Constraints / default |
+|--------|------|-----------------------|
+| `id` | uuid | PK, default `gen_random_uuid()` |
+| `user_id` | uuid | FK → `profiles` on delete cascade, not null |
+| `agreement_type` | text | not null, check in (`contributor_terms`, `org_leader_terms`) |
+| `version` | text | not null |
+| `accepted_at` | timestamptz | not null, default `now()` |
+
+```sql
+create table public.user_agreements (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references public.profiles on delete cascade not null,
+  agreement_type text not null
+    check (agreement_type in ('contributor_terms', 'org_leader_terms')),
+  version text not null,
+  accepted_at timestamptz not null default now()
+);
+```
+
 
 ## 2. Functions & triggers
 
@@ -290,7 +399,135 @@ returns boolean as $$
 $$ language sql security definer stable;
 ```
 
----
+### Helper functions (007)
+`security definer stable` functions used inside the org RLS policies, for the same reason as above: a policy can't query the table it guards without recursing, and querying another table from inside a policy would make the answer depend on that table's own visibility rather than on fact.
+
+- **`is_org_leader(p_org_id)`** — true if the caller leads that organisation. One table lookup; there is no membership status to bake in, because `org_leaders` has no states.
+- **`has_accepted(p_agreement_type)`** — true if the caller accepted **any** version of that agreement type. Version-agnostic on purpose; forcing re-acceptance on a new version is out of scope, and the `version` column keeps that option open without a migration.
+- **`is_tutorial_contributor(p_tutorial_id)`** — true if the caller is a contributor on that tutorial. Used by the 008 claim policy as its retry-safety arm, and by the `tutorial_orgs` policies to identify the author.
+- **`tutorial_offered_to_my_org(p_tutorial_id)`** — the leader **read** grant. Includes `pending`, because reading the project is how a leader decides whether to back it.
+- **`can_review_tutorial(p_tutorial_id)`** — the leader **write** grant, minus the terms conjunct which lives in the policy. Narrower than the read grant on purpose: `accepted` only, and the organisation must be `active`. Suspending an organisation therefore revokes every one of its leaders' review powers instantly, with no cleanup job.
+
+```sql
+create or replace function public.is_org_leader(p_org_id uuid)
+returns boolean as $$
+  select exists (
+    select 1 from public.org_leaders
+    where org_id = p_org_id and user_id = auth.uid()
+  );
+$$ language sql security definer stable;
+
+create or replace function public.has_accepted(p_agreement_type text)
+returns boolean as $$
+  select exists (
+    select 1 from public.user_agreements
+    where user_id = auth.uid() and agreement_type = p_agreement_type
+  );
+$$ language sql security definer stable;
+
+create or replace function public.is_tutorial_contributor(p_tutorial_id uuid)
+returns boolean as $$
+  select exists (
+    select 1 from public.tutorial_contributors
+    where tutorial_id = p_tutorial_id and profile_id = auth.uid()
+  );
+$$ language sql security definer stable;
+
+create or replace function public.tutorial_offered_to_my_org(p_tutorial_id uuid)
+returns boolean as $$
+  select exists (
+    select 1
+    from public.tutorial_orgs t_o
+    join public.org_leaders l on l.org_id = t_o.org_id
+    where t_o.tutorial_id = p_tutorial_id
+      and t_o.status in ('pending', 'accepted')
+      and l.user_id = auth.uid()
+  );
+$$ language sql security definer stable;
+
+create or replace function public.can_review_tutorial(p_tutorial_id uuid)
+returns boolean as $$
+  select exists (
+    select 1
+    from public.tutorial_orgs t_o
+    join public.org_leaders l on l.org_id = t_o.org_id
+    join public.organizations o on o.id = t_o.org_id
+    where t_o.tutorial_id = p_tutorial_id
+      and t_o.status = 'accepted'
+      and l.user_id = auth.uid()
+      and o.status = 'active'
+  );
+$$ language sql security definer stable;
+```
+
+### Helper functions (008)
+
+- **`tutorial_has_contributor(p_tutorial_id)`** — true if the tutorial already has *any* contributor row. `security definer` for the same recursion reason as `tutorial_is_approved()`: it is called from inside a `tutorial_contributors` policy, on `tutorial_contributors`. It also carries `set search_path = ''`, so its body must stay fully schema-qualified.
+
+```sql
+create or replace function public.tutorial_has_contributor(p_tutorial_id uuid)
+returns boolean as $$
+  select exists (
+    select 1 from public.tutorial_contributors where tutorial_id = p_tutorial_id
+  );
+$$ language sql security definer stable set search_path = '';
+```
+
+### Provenance triggers (007, 008)
+
+An RLS `with check` clause sees only the **new** row, and a Postgres policy cannot reference `OLD`. Any rule that depends on what a row *was* is therefore unexpressible as a policy, and any policy gating on a column the same statement can rewrite is a lock whose key is stored on the door. Both triggers below exist for that reason.
+
+- **`tutorial_orgs_freeze_identity`** (`before update`) — makes `tutorial_id` and `org_id` immutable. `org_id` is already covered by the UPDATE policy checking `is_org_leader` on both the old and new row; `tutorial_id` is not covered by anything else. Without this a leader could take a legitimate acceptance of one project and repoint it at another, stamping their organisation on work that never asked for it — an attack on the author rather than on the org. Reproduced end to end before the trigger existed.
+- **`tutorials_freeze_review_provenance`** (`before insert or update`) — reserves `reviewed_by` and `reviewed_for_org_id` to admins and to leaders of a backing organisation, so an author cannot forge their own review provenance. Gated on *change* (`is distinct from`), so ordinary edits to title or parts are unaffected.
+
+> Both are `security invoker` (the **opposite** of the helper functions above), and deliberately so. Here, a row that is merely invisible to the caller must fail **closed** — the guard should still raise. The definer helpers are the opposite case: they are asked for facts that must not depend on the caller's visibility at all. `set search_path = ''` is what makes running as invoker safe: every name in these bodies is schema-qualified, so no caller-controlled `search_path` can shadow `public.is_admin()` or `public.can_review_tutorial()` with something else.
+
+> The `auth.uid() is null` arm in `tutorials_freeze_review_provenance` is the service-role escape, and it is not a hole: no RLS policy on `tutorials` admits a writer without an `auth.uid()`, so a caller reaching this trigger with a null uid is necessarily a BYPASSRLS server context — the admin client, which is how `POST /api/tutorials` creates a row, or a migration.
+
+```sql
+create or replace function public.tutorial_orgs_freeze_identity()
+returns trigger as $$
+begin
+  if new.tutorial_id is distinct from old.tutorial_id
+  or new.org_id is distinct from old.org_id then
+    raise exception 'tutorial_id and org_id are immutable'
+      using errcode = '42501';
+  end if;
+  return new;
+end;
+$$ language plpgsql security invoker set search_path = '';
+
+create trigger tutorial_orgs_freeze_identity
+  before update on public.tutorial_orgs
+  for each row execute function public.tutorial_orgs_freeze_identity();
+
+create or replace function public.tutorials_freeze_review_provenance()
+returns trigger as $$
+begin
+  if (
+       case tg_op
+         when 'INSERT' then new.reviewed_by is not null
+                          or new.reviewed_for_org_id is not null
+         else new.reviewed_by is distinct from old.reviewed_by
+           or new.reviewed_for_org_id is distinct from old.reviewed_for_org_id
+       end
+     )
+     and auth.uid() is not null
+     and not public.is_admin()
+     and not public.can_review_tutorial(new.id)
+  then
+    raise exception 'reviewed_by and reviewed_for_org_id may only be written by an admin or a backing org leader'
+      using errcode = '42501';
+  end if;
+  return new;
+end;
+$$ language plpgsql security invoker set search_path = '';
+
+create trigger tutorials_freeze_review_provenance
+  before insert or update on public.tutorials
+  for each row execute function public.tutorials_freeze_review_provenance();
+```
+
 
 ## 3. Row Level Security
 
@@ -304,6 +541,10 @@ alter table public.parts                 enable row level security;
 alter table public.tools                 enable row level security;
 alter table public.stl_files             enable row level security;
 alter table public.child_profiles        enable row level security;   -- 003
+alter table public.organizations         enable row level security;   -- 007
+alter table public.org_leaders             enable row level security;   -- 007
+alter table public.user_agreements       enable row level security;   -- 007
+alter table public.tutorial_orgs   enable row level security;
 ```
 
 ### Access model at a glance
@@ -370,7 +611,32 @@ create policy "Admin can delete tutorials"
   on public.tutorials for delete using (public.is_admin());
 ```
 
+**Org-leader review (007):** a leader's read reach and write reach over the projects offered to their organisation are **deliberately different sizes**. The SELECT policy includes `pending` requests and ignores both the organisation's status and the terms gate, because reading a project is how a leader decides whether to back it, and a suspended organisation's leader keeps visibility into what they already took on. The UPDATE policy carries two conditions — `can_review_tutorial()`, which itself requires an *accepted* backing row for an organisation you lead **and** that organisation being `active`, plus an accepted `org_leader_terms` agreement. Losing leadership, suspension, the organisation withdrawing its backing, and withdrawn consent therefore each independently revoke the capability instantly, with no cache to invalidate and no cleanup job to run.
+
+**There is no self-review block**: a leader may approve a project they authored, if an organisation they lead is backing it. Leadership is granted by the admin to someone already trusted, and a single-leader organisation could otherwise never publish its leader's own work. The control is reactive — remove the leader, suspend the organisation, or reject the tutorial — which is what makes the admin spot-check surface load-bearing rather than nice-to-have.
+
+**Consequence, stated plainly:** because the SELECT policy includes `pending`, offering a project to an organisation exposes the draft to that organisation's leaders, *including if they then decline*. That belongs in the `contributor_terms` text, and it is why the submit flow should encourage asking one or two organisations rather than every one on the list. It is far narrower than the superseded membership model, where joining an organisation exposed every draft the contributor had.
+
+```sql
+create policy "Leaders can read projects offered to their org"
+  on public.tutorials for select
+  using (public.tutorial_offered_to_my_org(id));
+
+create policy "Backing org leaders can review the project"
+  on public.tutorials for update
+  using (
+    public.can_review_tutorial(id)
+    and public.has_accepted('org_leader_terms')
+  )
+  with check (
+    public.can_review_tutorial(id)
+    and public.has_accepted('org_leader_terms')
+  );
+```
+
 ### `tutorial_contributors`
+An approved contributor may link **themselves** (`profile_id = auth.uid()`) and only to a tutorial that **has no contributors yet** — the claim, not the join. Adding a second person to an existing tutorial is admin-only *(008; before that, any contributor could attach themselves to any tutorial)*.
+
 ```sql
 create policy "Anyone can view contributors of approved tutorials"
   on public.tutorial_contributors for select using (public.tutorial_is_approved(tutorial_id));
@@ -378,9 +644,27 @@ create policy "Anyone can view contributors of approved tutorials"
 create policy "Contributors can view own entries"
   on public.tutorial_contributors for select using (profile_id = auth.uid());
 
-create policy "Approved contributors can insert"
+-- Replaced in 008. The original ("Approved contributors can insert") constrained
+-- only profile_id, so any contributor could attach themselves to ANY tutorial —
+-- including a stranger's private draft, which combined with the 007 leader UPDATE
+-- grant became a way to get someone else's unsubmitted work published. A
+-- contributor may now claim only a tutorial that has no contributors yet, which is
+-- exactly the authoring path: POST /api/tutorials inserts the row with no link and
+-- the next call adds the author. Once a tutorial has an owner, only an admin can
+-- add further contributors. The second arm of the OR is retry safety and grants
+-- nothing — it only ever admits a row duplicating one the caller already owns, so
+-- a re-link still fails as 23505 (which routes/contributors.ts swallows) rather
+-- than as 42501, since a WITH CHECK is evaluated before the index insert.
+create policy "Approved contributors can claim an unclaimed tutorial"
   on public.tutorial_contributors for insert
-  with check (profile_id = auth.uid() and public.is_approved_contributor());
+  with check (
+    profile_id = auth.uid()
+    and public.is_approved_contributor()
+    and (
+      not public.tutorial_has_contributor(tutorial_id)
+      or public.is_tutorial_contributor(tutorial_id)
+    )
+  );
 
 create policy "Admin full access to tutorial_contributors"
   on public.tutorial_contributors for all using (public.is_admin());
@@ -435,7 +719,110 @@ create policy "Admin full access to child_profiles"
   on public.child_profiles for all using (public.is_admin());
 ```
 
----
+### `organizations`  *(007)*
+Readable by anyone at any status, deliberately: a suspended organisation's badge must keep rendering on tutorials it already backed, or history rewrites itself. Names and descriptions are public anyway. Every write is admin-only — that is what keeps `status` out of a leader's reach, so a leader can never un-suspend their own organisation. `created_by` is always the admin: an audit column, not an authority one.
+
+```sql
+create policy "Anyone can read organizations"
+  on public.organizations for select using (true);
+
+create policy "Admin can write organizations"
+  on public.organizations for all
+  using (public.is_admin())
+  with check (public.is_admin());
+```
+
+### `org_leaders`  *(007)*
+Public to read — a leader is a public-facing trust figure, and the badge on a published tutorial should be traceable to a person. Every write is admin-only: **only the admin grants or removes leadership.** There is no provenance trigger on this table and none is needed; a trigger would exist to constrain non-admin writes, and there are none.
+
+```sql
+create policy "Anyone can read org leaders"
+  on public.org_leaders for select using (true);
+
+create policy "Admin can write org leaders"
+  on public.org_leaders for all
+  using (public.is_admin())
+  with check (public.is_admin());
+```
+
+### `user_agreements`  *(007)*
+Users read and record their own acceptances; admins read all. There is deliberately **no UPDATE and no DELETE policy** — an acceptance record that can be edited after the fact is not a record.
+
+```sql
+create policy "Users can read own agreements"
+  on public.user_agreements for select using (user_id = auth.uid());
+
+create policy "Users can record own agreements"
+  on public.user_agreements for insert with check (user_id = auth.uid());
+
+create policy "Admin can read all agreements"
+  on public.user_agreements for select using (public.is_admin());
+```
+
+### `tutorial_orgs`  *(007)*
+The backing handshake, and the security centre of the org feature. The author asks; a leader of the asked organisation answers. Neither can complete it alone, which is what stops a contributor attaching an organisation's name to work its leaders never agreed to back.
+
+**INSERT** is the author's, and pins `status = 'pending'`. An author who could write `'accepted'` would hand that organisation's leaders authority over their work unilaterally — the one thing this table exists to prevent. Draft or pending tutorials only: you cannot bolt an organisation onto published work.
+
+**UPDATE** is the leader's, and checks `is_org_leader` in *both* clauses — `using` sees the old row, `with check` the new one — so a leader cannot move a row to an organisation they do not lead. There is deliberately **no UPDATE policy for contributors at all**, so the forge has no path rather than a check to get past.
+
+**DELETE** lets either side back out, until the organisation in the row is the one that approved the tutorial. After that the row *is* the audit trail: `reviewed_for_org_id` would otherwise point at an organisation listed nowhere. An organisation that lent its name but did not review may still withdraw; the one that approved must reject the tutorial instead.
+
+**SELECT** has two policies: the participants (author, that org's leaders, admin), and a public one scoped to accepted rows on published tutorials, so a pending or declined request never renders anywhere.
+
+```sql
+create policy "Authors can ask an org to back their project"
+  on public.tutorial_orgs for insert
+  with check (
+    public.is_tutorial_contributor(tutorial_id)
+    and status = 'pending'
+    and exists (
+      select 1 from public.tutorials t
+      where t.id = tutorial_id and t.status in ('draft', 'pending')
+    )
+  );
+
+create policy "Leaders can answer requests to their org"
+  on public.tutorial_orgs for update
+  using (public.is_org_leader(org_id))
+  with check (
+    public.is_org_leader(org_id)
+    and status in ('accepted', 'declined')
+  );
+
+create policy "The author and the asked org can read a request"
+  on public.tutorial_orgs for select
+  using (
+    public.is_tutorial_contributor(tutorial_id)
+    or public.is_org_leader(org_id)
+  );
+
+create policy "Anyone can read accepted backing on a published project"
+  on public.tutorial_orgs for select
+  using (
+    status = 'accepted'
+    and exists (
+      select 1 from public.tutorials t
+      where t.id = tutorial_id and t.status = 'approved'
+    )
+  );
+
+create policy "Either side can withdraw backing before it was acted on"
+  on public.tutorial_orgs for delete
+  using (
+    (public.is_tutorial_contributor(tutorial_id) or public.is_org_leader(org_id))
+    and not exists (
+      select 1 from public.tutorials t
+      where t.id = tutorial_id
+        and t.status = 'approved'
+        and t.reviewed_for_org_id = org_id
+    )
+  );
+
+create policy "Admin full access to tutorial_orgs"
+  on public.tutorial_orgs for all using (public.is_admin());
+```
+
 
 ## 4. Storage
 

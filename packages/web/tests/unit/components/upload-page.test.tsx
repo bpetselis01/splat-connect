@@ -92,6 +92,21 @@ async function advanceToStep(to: number) {
 describe('UploadPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // The review step reads GET /api/agreements/me on mount to decide whether to
+    // show the contributor terms gate. Default to "already accepted" so the
+    // existing tests keep exercising the wizard rather than the gate; the gate has
+    // its own coverage in terms-gate.test.tsx and the case below.
+    // The review step makes two reads on mount — the terms and the organisation
+    // list — so the mock has to dispatch on path rather than answer both the same
+    // way. Defaults: terms already accepted, no organisations, which keeps the
+    // existing tests exercising the wizard rather than the new controls.
+    vi.mocked(browserApiClient.get).mockImplementation((path: string) =>
+      Promise.resolve(
+        path === '/api/agreements/me'
+          ? [{ id: 'a', user_id: 'u', agreement_type: 'contributor_terms', version: 'v0-todo', accepted_at: '' }]
+          : []
+      ) as never
+    )
     vi.spyOn(crypto, 'randomUUID').mockReturnValue('test-id' as ReturnType<typeof crypto.randomUUID>)
     vi.stubGlobal('location', { href: '' })
     vi.mocked(browserApiClient.post).mockResolvedValue({} as any)
@@ -350,5 +365,67 @@ describe('UploadPage', () => {
     render(<UploadPage />)
     fireEvent.click(screen.getByRole('button', { name: /^easy$/i }))
     expect(screen.getByRole('button', { name: /next →/i })).toBeDisabled()
+  })
+
+  // Tests: Submit is blocked and the terms gate is shown when contributor_terms is unaccepted
+  // How:   GET /api/agreements/me returns []; advances to step 6; checks the gate renders and
+  //        the submit button is disabled
+  // Chain: the API 403s draft -> pending without an acceptance, so without this the user
+  //        finishes six steps of work and gets a bare failure with nothing to act on
+  it('Submit is blocked until the contributor terms are accepted', async () => {
+    vi.mocked(browserApiClient.get).mockResolvedValue([] as never)
+    render(<UploadPage />)
+    await advanceToStep(6)
+    expect(screen.getByRole('button', { name: /I accept the contributor terms/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /submit for review/i })).toBeDisabled()
+  })
+
+  // Tests: a chosen organisation is asked to back the project before it is submitted
+  // How:   lists one active org, ticks it, submits; checks the POST precedes the PATCH
+  // Chain: order matters — the backing INSERT policy only admits draft or pending
+  //        tutorials, so asking after the status change would be refused
+  it('Submit: asks the chosen organisations before moving to pending', async () => {
+    vi.mocked(browserApiClient.get).mockImplementation((path: string) =>
+      Promise.resolve(
+        path === '/api/agreements/me'
+          ? [{ id: 'a', user_id: 'u', agreement_type: 'contributor_terms', version: 'v0-todo', accepted_at: '' }]
+          : [{ id: 'org-1', name: 'Riverside Therapy', description: null, status: 'active', created_by: null, created_at: '', updated_at: '' }]
+      ) as never
+    )
+    render(<UploadPage />)
+    await advanceToStep(6)
+    fireEvent.click(await screen.findByRole('checkbox', { name: /Riverside Therapy/i }))
+    vi.clearAllMocks()
+    vi.mocked(browserApiClient.post).mockResolvedValue({} as never)
+    vi.mocked(browserApiClient.patch).mockResolvedValue({} as never)
+
+    fireEvent.click(screen.getByRole('button', { name: /submit for review/i }))
+
+    await waitFor(() => {
+      expect(browserApiClient.post).toHaveBeenCalledWith('/api/tutorials/test-id/orgs', {
+        org_id: 'org-1',
+      })
+      expect(browserApiClient.patch).toHaveBeenCalledWith('/api/tutorials/test-id', {
+        status: 'pending',
+      })
+    })
+  })
+
+  // Tests: a suspended organisation is listed but cannot be chosen
+  // How:   lists one suspended org; checks the checkbox is disabled and says why
+  // Chain: hiding it would leave a contributor wondering where an organisation they
+  //        expected went; the API would refuse a request to it anyway
+  it('lists a suspended organisation without letting it be chosen', async () => {
+    vi.mocked(browserApiClient.get).mockImplementation((path: string) =>
+      Promise.resolve(
+        path === '/api/agreements/me'
+          ? [{ id: 'a', user_id: 'u', agreement_type: 'contributor_terms', version: 'v0-todo', accepted_at: '' }]
+          : [{ id: 'org-2', name: 'Dormant Clinic', description: null, status: 'suspended', created_by: null, created_at: '', updated_at: '' }]
+      ) as never
+    )
+    render(<UploadPage />)
+    await advanceToStep(6)
+    expect(await screen.findByText(/Dormant Clinic — currently suspended/i)).toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: /Dormant Clinic/i })).toBeDisabled()
   })
 })

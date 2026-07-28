@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
+import { acceptTerms } from '../../helpers/orgs.js'
 
 let owner: TestUser
 const tutorialId = crypto.randomUUID()
@@ -16,6 +17,9 @@ const authed = (token: string, init: RequestInit = {}) => ({
 
 beforeAll(async () => {
   owner = await createTestUser('contributor')
+  // Submission is gated on contributor_terms, so a fixture that creates or
+  // submits a tutorial has to accept them first.
+  await acceptTerms(owner.id, 'contributor_terms')
 })
 
 afterAll(async () => {

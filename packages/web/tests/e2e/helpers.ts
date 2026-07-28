@@ -183,6 +183,69 @@ export async function createTutorial(
 }
 
 /** Sign in through the /login form. Caller awaits the resulting redirect. */
+/**
+ * Record a terms acceptance for a user, through the service role.
+ *
+ * POST /api/tutorials and the draft -> pending transition both refuse a
+ * contributor who has accepted nothing, so any spec that creates or submits a
+ * tutorial needs this. Deliberately NOT folded into createContributor: the gate
+ * is real behaviour, and hiding it in the fixture would make it untestable.
+ */
+export async function acceptTerms(
+  userId: string,
+  type: 'contributor_terms' | 'org_leader_terms' = 'contributor_terms'
+) {
+  const { error } = await adminClient()
+    .from('user_agreements')
+    .insert({ user_id: userId, agreement_type: type, version: 'v0-todo' })
+  if (error) throw new Error(`acceptTerms failed: ${error.message}`)
+}
+
+/**
+ * Provision an active organisation with one leader, through the service role.
+ *
+ * Both writes are admin-only by policy, and creating them here rather than
+ * clicking through /admin/organizations keeps a test that is about the backing
+ * journey from also being a test of the admin form.
+ *
+ * Returns the new organisation's id.
+ */
+export async function createOrgWithLeader(leaderId: string, name: string) {
+  const admin = adminClient()
+  const { data, error } = await admin
+    .from('organizations')
+    .insert({ name, status: 'active' })
+    .select('id')
+    .single()
+  if (error) throw new Error(`createOrgWithLeader failed: ${error.message}`)
+
+  const { error: leaderError } = await admin
+    .from('org_leaders')
+    .insert({ org_id: data.id, user_id: leaderId })
+  if (leaderError) throw new Error(`createOrgWithLeader leader failed: ${leaderError.message}`)
+  return data.id as string
+}
+
+/**
+ * Seed a pending backing request from an author to an organisation.
+ *
+ * Through the service role rather than the API, for the same reason
+ * createTutorial seeds a tutorial: the author's request path has its own
+ * integration coverage, and a browser-context request would carry whichever
+ * user is currently signed in.
+ */
+export async function seedBackingRequest(tutorialId: string, orgId: string) {
+  const { error } = await adminClient()
+    .from('tutorial_orgs')
+    .insert({ tutorial_id: tutorialId, org_id: orgId, status: 'pending' })
+  if (error) throw new Error(`seedBackingRequest failed: ${error.message}`)
+}
+
+/** Organisations cascade to org_leaders and tutorial_orgs, so this is enough. */
+export async function deleteOrg(orgId: string) {
+  await adminClient().from('organizations').delete().eq('id', orgId)
+}
+
 export async function signIn(page: Page, email: string, password: string) {
   await page.goto('/login')
   await page.locator('#email').fill(email)

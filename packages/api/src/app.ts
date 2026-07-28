@@ -31,6 +31,9 @@ import stlFiles from './routes/stl-files.js'
 import admin from './routes/admin.js'
 import contributors from './routes/contributors.js'
 import childProfile from './routes/child-profile.js'
+import agreements from './routes/agreements.js'
+import organizations from './routes/organizations.js'
+import tutorialOrgs from './routes/tutorial-orgs.js'
 
 const app = new Hono()
 
@@ -49,14 +52,21 @@ app.use('/api/admin/*', authMiddleware)
 app.use('/api/contributors/*', authMiddleware)
 app.use('/api/child-profile', authMiddleware)
 app.use('/api/child-profile/*', authMiddleware)
+app.use('/api/agreements', authMiddleware)
+app.use('/api/agreements/*', authMiddleware)
+app.use('/api/organizations', authMiddleware)
+app.use('/api/organizations/*', authMiddleware)
 
 app.route('/api/tutorials', tutorials)
 app.route('/api/upload', upload)
 app.route('/api/tutorials', parts)
 app.route('/api/tutorials', tools)
 app.route('/api/tutorials', stlFiles)
+app.route('/api/tutorials', tutorialOrgs)
 app.route('/api/admin', admin)
 app.route('/api/contributors', contributors)
 app.route('/api/child-profile', childProfile)
+app.route('/api/agreements', agreements)
+app.route('/api/organizations', organizations)
 
 export default app

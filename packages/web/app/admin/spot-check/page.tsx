@@ -1,0 +1,78 @@
+/**
+ * Admin Spot-Check
+ *
+ * A random sample of tutorials approved by an organisation leader rather than by
+ * the admin.
+ *
+ * WHY this page exists, because it is not obvious from the rows: there is no
+ * self-review block. A leader may approve their own work, which is deliberate —
+ * leadership is granted to someone already trusted, and a single-leader
+ * organisation could otherwise never publish its leader's own tutorials. The
+ * trade is that nothing warns the admin when an approval was a bad one. Every
+ * control they have — remove the leader, suspend the organisation, reject the
+ * tutorial — requires already knowing. Sampling is how they find out without
+ * waiting for a complaint.
+ *
+ * Related files:
+ * - packages/api/src/routes/admin.ts: GET /api/admin/spot-check
+ * - supabase/migrations/007_organizations.sql: the review policy with no self-review conjunct
+ */
+import Link from 'next/link'
+import { apiClient } from '@/lib/api-client'
+import { DifficultyBadge } from '@/components/difficulty-badge'
+import type { Tutorial, TutorialOrg } from '@splat-connect/types'
+
+type Sampled = Tutorial & { tutorial_orgs?: TutorialOrg[] }
+
+export default async function SpotCheckPage() {
+  const sample = await apiClient.get<Sampled[]>('/api/admin/spot-check')
+
+  return (
+    <div className="mx-auto max-w-3xl">
+      <h1 className="mb-2 text-2xl font-bold text-ink">Spot-check</h1>
+      <p className="mb-6 text-sm leading-relaxed text-muted">
+        A random sample of tutorials approved by organisation leaders rather than by
+        you. Refresh for a different sample. Leaders can approve their own work, so
+        this is how a bad approval surfaces before someone reports it.
+      </p>
+
+      {sample.length === 0 ? (
+        <div className="flex flex-col items-center px-6 py-16 text-center">
+          <span aria-hidden="true" className="empty-badge">
+            🔍
+          </span>
+          <p className="mt-4 font-bold text-ink">Nothing to check yet.</p>
+          <p className="mt-1 max-w-xs text-sm leading-relaxed text-muted">
+            Tutorials appear here once an organisation leader has approved one.
+          </p>
+        </div>
+      ) : (
+        <ul className="space-y-3">
+          {sample.map((t) => {
+            const backing = (t.tutorial_orgs ?? []).filter((b) => b.status === 'accepted')
+            return (
+              <li key={t.id} className="card">
+                <div className="flex items-start justify-between gap-3">
+                  <Link href={`/tutorials/${t.id}`} className="font-medium">
+                    {t.title}
+                  </Link>
+                  <DifficultyBadge difficulty={t.difficulty} />
+                </div>
+                {backing.length > 0 && (
+                  <p className="mt-2 text-sm text-muted">
+                    Backed by {backing.map((b) => b.organizations?.name).filter(Boolean).join(', ')}
+                  </p>
+                )}
+                {t.reviewed_at && (
+                  <p className="mt-1 text-xs text-muted">
+                    Approved {new Date(t.reviewed_at).toLocaleDateString('en-AU')}
+                  </p>
+                )}
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </div>
+  )
+}
