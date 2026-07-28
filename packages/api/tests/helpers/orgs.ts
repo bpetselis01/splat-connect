@@ -1,13 +1,11 @@
 import { adminClient } from './auth.js'
-import { createUserClient } from '../../src/supabase/user-client.js'
 
 /** Service-role fixture builders. Tests exercise policies through a user client;
  *  setup deliberately bypasses RLS so a broken policy fails the assertion, not
  *  the arrangement. */
 export async function createOrg(opts: {
   createdBy: string
-  status?: 'pending' | 'approved' | 'suspended'
-  trustLevel?: 'probation' | 'trusted'
+  status?: 'active' | 'suspended'
   name?: string
 }): Promise<string> {
   const { data, error } = await adminClient()
@@ -15,8 +13,7 @@ export async function createOrg(opts: {
     .insert({
       name: opts.name ?? `Test Org ${crypto.randomUUID().slice(0, 8)}`,
       created_by: opts.createdBy,
-      status: opts.status ?? 'approved',
-      trust_level: opts.trustLevel ?? 'trusted',
+      status: opts.status ?? 'active',
     })
     .select('id')
     .single()
@@ -24,25 +21,13 @@ export async function createOrg(opts: {
   return data.id as string
 }
 
-export async function addMember(opts: {
-  orgId: string
-  userId: string
-  orgRole?: 'leader' | 'member'
-  status?: 'pending' | 'approved' | 'removed' | 'declined'
-  initiatedBy?: 'contributor' | 'org'
-}): Promise<string> {
+export async function addLeader(orgId: string, userId: string): Promise<string> {
   const { data, error } = await adminClient()
-    .from('org_members')
-    .insert({
-      org_id: opts.orgId,
-      user_id: opts.userId,
-      org_role: opts.orgRole ?? 'member',
-      status: opts.status ?? 'approved',
-      initiated_by: opts.initiatedBy ?? 'org',
-    })
+    .from('org_leaders')
+    .insert({ org_id: orgId, user_id: userId })
     .select('id')
     .single()
-  if (error) throw new Error(`addMember failed: ${error.message}`)
+  if (error) throw new Error(`addLeader failed: ${error.message}`)
   return data.id as string
 }
 
@@ -54,55 +39,62 @@ export async function acceptTerms(userId: string, type: 'contributor_terms' | 'o
 }
 
 /**
- * Creates a tutorial owned by `authorId` and, when `orgId` is given, pins it to
- * that org.
+ * A tutorial with its author linked.
  *
- * WHY the two-step shape: the `tutorials_org_must_be_own` trigger permits a write
- * that sets org_id ONLY from a caller who is an approved member of that org. The
- * service role has no `auth.uid()`, so a service-role insert carrying org_id is
- * refused with 42501 — deliberately, so the rule cannot be bypassed by any
- * server-side code path. The fixture therefore does what production must do:
- * create the row, then pin it under the author's own JWT. This means `authorToken`
- * is required whenever `orgId` is non-null.
+ * Unlike the superseded helper this needs no author token: there is no
+ * `tutorials.org_id` to pin under the author's own JWT, because backing lives in
+ * its own table now. That indirection existed only to satisfy a trigger that no
+ * longer exists.
  */
-export async function createOrgTutorial(opts: {
-  orgId: string | null
+export async function createProject(opts: {
   authorId: string
-  authorToken?: string
   status?: 'draft' | 'pending' | 'approved' | 'rejected'
+  title?: string
 }): Promise<string> {
   const admin = adminClient()
   const id = crypto.randomUUID()
   const { error } = await admin.from('tutorials').insert({
     id,
-    title: 'Org Review Fixture',
+    title: opts.title ?? 'Backing Fixture',
     difficulty: 'easy',
     status: opts.status ?? 'pending',
-    review_level: opts.orgId ? 'org' : 'platform',
   })
-  if (error) throw new Error(`createOrgTutorial failed: ${error.message}`)
+  if (error) throw new Error(`createProject failed: ${error.message}`)
 
   const { error: linkError } = await admin
     .from('tutorial_contributors')
     .insert({ tutorial_id: id, profile_id: opts.authorId })
-  if (linkError) throw new Error(`createOrgTutorial link failed: ${linkError.message}`)
-
-  if (opts.orgId) {
-    if (!opts.authorToken) {
-      throw new Error('createOrgTutorial: authorToken is required when orgId is set')
-    }
-    const { error: pinError } = await createUserClient(opts.authorToken)
-      .from('tutorials')
-      .update({ org_id: opts.orgId })
-      .eq('id', id)
-    if (pinError) throw new Error(`createOrgTutorial pin failed: ${pinError.message}`)
-  }
+  if (linkError) throw new Error(`createProject link failed: ${linkError.message}`)
   return id
 }
 
+/** A backing request in whatever state the test needs, bypassing the handshake. */
+export async function requestBacking(opts: {
+  tutorialId: string
+  orgId: string
+  status?: 'pending' | 'accepted' | 'declined'
+  respondedBy?: string
+}): Promise<string> {
+  const { data, error } = await adminClient()
+    .from('tutorial_orgs')
+    .insert({
+      tutorial_id: opts.tutorialId,
+      org_id: opts.orgId,
+      status: opts.status ?? 'pending',
+      responded_by: opts.respondedBy ?? null,
+      responded_at: opts.status && opts.status !== 'pending' ? new Date().toISOString() : null,
+    })
+    .select('id')
+    .single()
+  if (error) throw new Error(`requestBacking failed: ${error.message}`)
+  return data.id as string
+}
+
+/** `tutorial_orgs` rows go with either parent via cascade, so they need no
+ *  explicit delete here. */
 export async function cleanupOrg(orgId: string, tutorialIds: string[] = []) {
   const admin = adminClient()
   if (tutorialIds.length) await admin.from('tutorials').delete().in('id', tutorialIds)
-  await admin.from('org_members').delete().eq('org_id', orgId)
+  await admin.from('org_leaders').delete().eq('org_id', orgId)
   await admin.from('organizations').delete().eq('id', orgId)
 }
