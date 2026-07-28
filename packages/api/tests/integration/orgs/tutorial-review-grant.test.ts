@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
 import { createUserClient } from '../../../src/supabase/user-client.js'
-import { createOrg, addMember, createOrgTutorial, cleanupOrg } from '../../helpers/orgs.js'
+import { createOrg, addMember, acceptTerms, createOrgTutorial, cleanupOrg } from '../../helpers/orgs.js'
 
 let leader: TestUser
 let member: TestUser
@@ -17,6 +17,7 @@ beforeAll(async () => {
   leader = await createTestUser('contributor')
   member = await createTestUser('contributor')
   outsider = await createTestUser('contributor')
+  await acceptTerms(leader.id, 'org_leader_terms')
 
   trustedOrg = await createOrg({ createdBy: leader.id, status: 'approved', trustLevel: 'trusted' })
   await addMember({ orgId: trustedOrg, userId: leader.id, orgRole: 'leader', status: 'approved' })
@@ -101,6 +102,9 @@ describe('leader review grant', () => {
     // Closes the per-org scoping gap: without this, is_org_leader() could drop its
     // org_id filter and every other test here would still pass.
     const otherLeader = await createTestUser('contributor')
+    // Needed, or this test would keep expecting zero rows for a reason other than
+    // the org scoping it exists to isolate.
+    await acceptTerms(otherLeader.id, 'org_leader_terms')
     const otherOrg = await createOrg({ createdBy: otherLeader.id, status: 'approved', trustLevel: 'trusted' })
     await addMember({ orgId: otherOrg, userId: otherLeader.id, orgRole: 'leader', status: 'approved' })
 

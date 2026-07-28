@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
 import { createUserClient } from '../../../src/supabase/user-client.js'
-import { createOrg, addMember, createOrgTutorial, cleanupOrg } from '../../helpers/orgs.js'
+import { createOrg, addMember, acceptTerms, createOrgTutorial, cleanupOrg } from '../../helpers/orgs.js'
 
 let leader: TestUser
 let member: TestUser
@@ -11,6 +11,10 @@ let tutorialId: string
 beforeAll(async () => {
   leader = await createTestUser('contributor')
   member = await createTestUser('contributor')
+  // The review grant requires an accepted agreement. Without this the baseline
+  // approve below fails and the test would "pass" without ever proving suspension
+  // revoked anything.
+  await acceptTerms(leader.id, 'org_leader_terms')
   orgId = await createOrg({ createdBy: leader.id, status: 'approved', trustLevel: 'trusted' })
   await addMember({ orgId, userId: leader.id, orgRole: 'leader', status: 'approved' })
   await addMember({ orgId, userId: member.id, orgRole: 'member', status: 'approved' })
