@@ -6,12 +6,15 @@ import { createOrg, addMember, acceptTerms, createOrgTutorial, cleanupOrg } from
 let leader: TestUser
 let member: TestUser
 let outsider: TestUser
+let untermedLeader: TestUser
 let trustedOrg: string
 let probationOrg: string
+let untermedOrg: string
 let memberTutorial: string
 let leaderOwnTutorial: string
 let outsiderTutorial: string
 let probationTutorial: string
+let untermedTutorial: string
 
 beforeAll(async () => {
   leader = await createTestUser('contributor')
@@ -35,14 +38,27 @@ beforeAll(async () => {
   // Carries no org_id: the platform queue, nobody's org to review.
   outsiderTutorial = await createOrgTutorial({ orgId: null, authorId: outsider.id, authorToken: outsider.token })
   probationTutorial = await createOrgTutorial({ orgId: probationOrg, authorId: member.id, authorToken: member.token })
+
+  // A leader of a fully trusted, approved org who has accepted nothing. Every
+  // other conjunct of the review grant is satisfied for them, so this fixture
+  // isolates has_accepted().
+  untermedLeader = await createTestUser('contributor')
+  untermedOrg = await createOrg({ createdBy: untermedLeader.id, status: 'approved', trustLevel: 'trusted' })
+  await addMember({ orgId: untermedOrg, userId: untermedLeader.id, orgRole: 'leader', status: 'approved' })
+  await addMember({ orgId: untermedOrg, userId: member.id, orgRole: 'member', status: 'approved' })
+  untermedTutorial = await createOrgTutorial({
+    orgId: untermedOrg, authorId: member.id, authorToken: member.token,
+  })
 })
 
 afterAll(async () => {
   await cleanupOrg(trustedOrg, [memberTutorial, leaderOwnTutorial, outsiderTutorial])
   await cleanupOrg(probationOrg, [probationTutorial])
+  await cleanupOrg(untermedOrg, [untermedTutorial])
   await deleteTestUser(leader.id)
   await deleteTestUser(member.id)
   await deleteTestUser(outsider.id)
+  await deleteTestUser(untermedLeader.id)
 })
 
 /** An RLS-blocked UPDATE matches zero rows rather than erroring, so every
@@ -112,5 +128,25 @@ describe('leader review grant', () => {
 
     await cleanupOrg(otherOrg)
     await deleteTestUser(otherLeader.id)
+  })
+
+  it('cannot approve without an accepted org_leader_terms row', async () => {
+    // has_accepted() sits in the policy's USING clause, so a leader who has not
+    // accepted is excluded from the row silently — zero rows, no error. Same shape
+    // as suspension and demotion, and the reason tryApprove asserts error is null.
+    expect(await tryApprove(untermedLeader.token, untermedTutorial)).toBe(0)
+
+    // Accepting is the only thing that changes between the two attempts, so the
+    // block above is attributable to has_accepted() and nothing else. This is also
+    // the assertion that only means something because the gate is in RLS: with the
+    // check in route code, or under a service-role client, the first attempt would
+    // have succeeded.
+    await acceptTerms(untermedLeader.id, 'org_leader_terms')
+    expect(await tryApprove(untermedLeader.token, untermedTutorial)).toBe(1)
+
+    await adminClient()
+      .from('tutorials')
+      .update({ status: 'pending' })
+      .eq('id', untermedTutorial)
   })
 })

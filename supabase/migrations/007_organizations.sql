@@ -255,9 +255,15 @@ create policy "Leaders can read their org's tutorials"
   );
 
 -- tutorials — leader UPDATE
--- All three conditions live in one policy so that suspension, demotion to
--- probation, and self-review each independently revoke the capability instantly:
--- no cache to invalidate, no cleanup job to run.
+-- All four conditions live in one policy so that suspension, demotion to
+-- probation, self-review, and withdrawn consent each independently revoke the
+-- capability instantly: no cache to invalidate, no cleanup job to run.
+-- The fourth is the only consent a promoted leader is ever asked for — under
+-- decision 12 leadership is granted to them, not requested by them — so it has to
+-- bite where the authority is spent rather than at some entry point. Note it is
+-- deliberately absent from the leader SELECT policy above: a leader who has
+-- accepted nothing must still see their queue, or the accept prompt would have
+-- nothing to appear alongside.
 create policy "Trusted org leaders can review their org's tutorials"
   on public.tutorials for update
   using (
@@ -270,6 +276,7 @@ create policy "Trusted org leaders can review their org's tutorials"
         and o.trust_level = 'trusted'
     )
     and not public.is_tutorial_contributor(id)
+    and public.has_accepted('org_leader_terms')
   )
   with check (
     org_id is not null
@@ -281,6 +288,7 @@ create policy "Trusted org leaders can review their org's tutorials"
         and o.trust_level = 'trusted'
     )
     and not public.is_tutorial_contributor(id)
+    and public.has_accepted('org_leader_terms')
   );
 
 -- ============================================================
