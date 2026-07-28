@@ -195,13 +195,16 @@ create policy "Contributors can request to join an org"
 
 -- A leader invites someone. Always lands pending — a leader can never move an
 -- 'org'-initiated row straight to approved, because that would let an org claim
--- someone who never agreed.
+-- someone who never agreed. Always as a MEMBER (decision 12): org_role = 'leader'
+-- is admin-only, and this is the INSERT half of that rule — the org_role trigger
+-- below is BEFORE UPDATE and cannot see this statement.
 create policy "Leaders can invite contributors"
   on public.org_members for insert
   with check (
     public.is_org_leader(org_id)
     and initiated_by = 'org'
     and status = 'pending'
+    and org_role = 'member'
     and invited_by = auth.uid()
     and exists (
       select 1 from public.organizations o
@@ -307,14 +310,12 @@ begin
     raise exception 'org_id, user_id and initiated_by are immutable'
       using errcode = '42501';
   end if;
-  -- Without this a leader could promote an existing member by setting org_role
-  -- while approving a join request. State the invariant precisely, because it is
-  -- narrower than it looks: a leader CAN mint a co-leader, by inviting someone
-  -- straight in as ('leader', 'pending') — the invite policy above does not
-  -- constrain org_role, and the invitee's acceptance leaves it untouched. That is
-  -- deliberate (see the table comment: ('leader', 'pending') is a valid state) and
-  -- stays inside the org. What is blocked is PROMOTION: changing org_role on a row
-  -- that already exists. That requires an admin.
+  -- org_role = 'leader' is admin-only on both write paths, and they are guarded in
+  -- two different places because no single mechanism can cover both: an RLS policy
+  -- cannot see OLD, and a BEFORE UPDATE trigger cannot see an INSERT. INSERT is
+  -- held by the invite policy's org_role = 'member' conjunct above; UPDATE —
+  -- promotion of a row that already exists — is held right here. Changing either
+  -- one alone reopens decision 12.
   if new.org_role is distinct from old.org_role and not public.is_admin() then
     raise exception 'org_role may only be changed by an admin'
       using errcode = '42501';

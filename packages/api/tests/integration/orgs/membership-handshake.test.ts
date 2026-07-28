@@ -133,6 +133,42 @@ describe('membership handshake', () => {
     expect(error?.code).toBe('42501')
   })
 
+  it('a leader cannot invite someone straight in as a leader', async () => {
+    // The org_role trigger is BEFORE UPDATE, so it cannot see this INSERT. The only
+    // thing standing here is the invite policy's org_role = 'member' conjunct —
+    // drop it and a leader grows their org's review authority without the admin
+    // ever seeing it.
+    const { error } = await createUserClient(leader.token)
+      .from('org_members')
+      .insert({
+        org_id: orgId,
+        user_id: joiner.id,
+        initiated_by: 'org',
+        status: 'pending',
+        org_role: 'leader',
+        invited_by: leader.id,
+      })
+    expect(error?.code).toBe('42501')
+
+    // The identical statement as a member succeeds, so the refusal above is
+    // attributable to org_role and not to some other conjunct of the invite policy.
+    const { data, error: ok } = await createUserClient(leader.token)
+      .from('org_members')
+      .insert({
+        org_id: orgId,
+        user_id: joiner.id,
+        initiated_by: 'org',
+        status: 'pending',
+        org_role: 'member',
+        invited_by: leader.id,
+      })
+      .select('id')
+      .single()
+    expect(ok).toBeNull()
+
+    await adminClient().from('org_members').delete().eq('id', data!.id)
+  })
+
   it("a leader cannot accept an invitation on the invitee's behalf", async () => {
     const memberRowId = await addMember({
       orgId, userId: joiner.id, orgRole: 'member', status: 'pending', initiatedBy: 'org',
