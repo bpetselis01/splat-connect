@@ -33,7 +33,8 @@ export default async function SpotCheckPage() {
       <p className="mb-6 text-sm leading-relaxed text-muted">
         A random sample of tutorials approved by organisation leaders rather than by
         you. Refresh for a different sample. Leaders can approve their own work, so
-        this is how a bad approval surfaces before someone reports it.
+        this is how a bad approval surfaces before someone reports it. Open one to read
+        it, and unpublish it if it should not be there.
       </p>
 
       {sample.length === 0 ? (
@@ -53,7 +54,7 @@ export default async function SpotCheckPage() {
             return (
               <li key={t.id} className="card">
                 <div className="flex items-start justify-between gap-3">
-                  <Link href={`/tutorials/${t.id}`} className="font-medium">
+                  <Link href={`/admin/review/${t.id}`} className="font-medium">
                     {t.title}
                   </Link>
                   <DifficultyBadge difficulty={t.difficulty} />

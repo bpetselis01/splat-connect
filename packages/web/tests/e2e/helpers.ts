@@ -241,6 +241,32 @@ export async function seedBackingRequest(tutorialId: string, orgId: string) {
   if (error) throw new Error(`seedBackingRequest failed: ${error.message}`)
 }
 
+/**
+ * A project already published by an organisation's leader — the state the admin's
+ * unpublish journey starts from, without replaying the leader's five clicks.
+ *
+ * Writes through the service role, which the provenance trigger lets past on its
+ * `auth.uid() is null` arm. A user JWT here would be refused unless it belonged to
+ * a leader of that very organisation, which is the point of the trigger.
+ */
+export async function seedLeaderApproval(
+  tutorialId: string,
+  orgId: string,
+  leaderId: string
+) {
+  const db = adminClient()
+  const { error: backing } = await db
+    .from('tutorial_orgs')
+    .insert({ tutorial_id: tutorialId, org_id: orgId, status: 'accepted' })
+  if (backing) throw new Error(`seedLeaderApproval backing failed: ${backing.message}`)
+
+  const { error } = await db
+    .from('tutorials')
+    .update({ status: 'approved', reviewed_by: leaderId, reviewed_for_org_id: orgId })
+    .eq('id', tutorialId)
+  if (error) throw new Error(`seedLeaderApproval failed: ${error.message}`)
+}
+
 /** Organisations cascade to org_leaders and tutorial_orgs, so this is enough. */
 export async function deleteOrg(orgId: string) {
   await adminClient().from('organizations').delete().eq('id', orgId)

@@ -33,13 +33,28 @@ publicRoutes.get('/tutorials', async (c) => {
   const difficulty = c.req.query('difficulty')
   let query = supabase
     .from('tutorials')
-    .select('*')
+    // Backing rides along with the list so a library card can name its backers.
+    // The alternative is a request per card on the busiest page on the site.
+    .select('*, tutorial_orgs(status, organizations(id, name))')
     .eq('status', 'approved')
     .order('created_at', { ascending: false })
   if (difficulty) query = query.eq('difficulty', difficulty)
   const { data, error } = await query
   if (error) return c.json({ error: error.message }, 500)
-  return c.json(data)
+  // Filtered here rather than in the select, for the same reason the detail route
+  // does it: PostgREST cannot constrain an embedded relation from the parent query,
+  // and this route uses the admin client, so the public RLS badge policy is not
+  // doing it for us. A declined organisation must never look like it endorsed
+  // anything.
+  const rows = (data ?? []) as unknown as Array<
+    Record<string, unknown> & { tutorial_orgs?: Array<{ status: string }> }
+  >
+  return c.json(
+    rows.map((t) => ({
+      ...t,
+      tutorial_orgs: (t.tutorial_orgs ?? []).filter((b) => b.status === 'accepted'),
+    }))
+  )
 })
 
 publicRoutes.get('/tutorials/:id', async (c) => {

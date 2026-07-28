@@ -7,7 +7,8 @@ import { AddStlForm } from '@/components/add-stl-form'
 import { EditPartsSection } from '@/components/edit-parts-section'
 import { EditToolsSection } from '@/components/edit-tools-section'
 import { SubmitForReviewButton } from '@/components/submit-for-review-button'
-import type { Tutorial, Part, Tool, StlFile, TutorialWithDetails, Difficulty, BuyLink, Profile } from '@splat-connect/types'
+import { EditBackingSection } from '@/components/edit-backing-section'
+import type { Tutorial, Part, Tool, StlFile, TutorialWithDetails, Difficulty, BuyLink, Profile, TutorialOrg, Organization } from '@splat-connect/types'
 
 export default async function EditTutorialPage({
   params,
@@ -38,6 +39,30 @@ export default async function EditTutorialPage({
   const parts = tutorial!.parts as Part[]
   const tools = tutorial!.tools as Tool[]
   const stlFiles = tutorial!.stl_files as StlFile[]
+
+  // Backing rows and the organisation list for the picker. Both tolerate failure:
+  // a backing panel that cannot load is a worse reason to 500 the whole edit page
+  // than it is to render empty.
+  const [backing, organizations] = await Promise.all([
+    apiClient.get<TutorialOrg[]>(`/api/tutorials/${id}/orgs`).catch(() => [] as TutorialOrg[]),
+    apiClient.get<Organization[]>('/api/organizations').catch(() => [] as Organization[]),
+  ])
+
+  async function askOrg(orgId: string) {
+    'use server'
+    await apiClient.post(`/api/tutorials/${id}/orgs`, { org_id: orgId })
+    revalidatePath(`/tutorials/${id}/edit`)
+    revalidatePath('/my-tutorials')
+    revalidatePath('/dashboard')
+  }
+
+  async function withdrawOrg(orgId: string) {
+    'use server'
+    await apiClient.delete(`/api/tutorials/${id}/orgs/${orgId}`)
+    revalidatePath(`/tutorials/${id}/edit`)
+    revalidatePath('/my-tutorials')
+    revalidatePath('/dashboard')
+  }
 
   async function saveDetails(formData: FormData) {
     'use server'
@@ -224,6 +249,37 @@ export default async function EditTutorialPage({
           )}
           <AddStlForm tutorialId={id} onAdd={addStlFileRecord} />
         </div>
+      </details>
+
+      {/* Backing — last, deliberately. The panels above are what the project IS;
+          this is who stands behind it, and it is the least frequently touched.
+          Leading with a panel carrying pending state would pull attention to the
+          thing a contributor can do least about.
+
+          The summary carries the STATE, not a count, unlike every panel above it.
+          "Backing (2)" answers a question nobody asked; what a contributor wants
+          from a shut accordion is whether anyone said yes. */}
+      <details className={panelCls}>
+        <summary className={summaryCls}>
+          Backing
+          {backing.length > 0 && (
+            <span className="ml-2 text-xs font-normal text-muted">
+              {backing.some((b) => b.status === 'accepted')
+                ? 'backed'
+                : backing.some((b) => b.status === 'pending')
+                  ? 'waiting'
+                  : 'declined'}
+            </span>
+          )}
+        </summary>
+        <EditBackingSection
+          backing={backing}
+          organizations={organizations}
+          tutorialStatus={tutorial!.status}
+          reviewedForOrgId={tutorial!.reviewed_for_org_id}
+          onAsk={askOrg}
+          onWithdraw={withdrawOrg}
+        />
       </details>
     </div>
   )

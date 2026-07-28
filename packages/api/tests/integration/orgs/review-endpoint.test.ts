@@ -158,3 +158,28 @@ describe('POST /api/tutorials/:id/review', () => {
     expect(res.status).toBe(400)
   })
 })
+
+describe('GET /api/tutorials/:id after review', () => {
+  // Tests: the detail endpoint names the reviewer and their organisation
+  // How:   leader approves via the endpoint, then fetches the tutorial
+  // Chain: both project pages show "approved by X of Y" — with ids alone an admin
+  //        would be overriding a decision without seeing whose it was
+  it('names the reviewer and the organisation they acted for', async () => {
+    const project = await createProject({ authorId: author.id })
+    await requestBacking({ tutorialId: project, orgId: orgA, status: 'accepted' })
+    await app.request(`/api/tutorials/${project}/review`, authed(leader.token, {
+      method: 'POST',
+      body: JSON.stringify({ status: 'approved' }),
+    }))
+
+    const res = await app.request(`/api/tutorials/${project}`, authed(leader.token))
+    const body = (await res.json()) as {
+      reviewer: { name: string } | null
+      reviewed_for: { name: string } | null
+    }
+    expect(body.reviewer).not.toBeNull()
+    expect(body.reviewed_for?.name).toBe('Riverside Therapy')
+
+    await adminClient().from('tutorials').delete().eq('id', project)
+  })
+})

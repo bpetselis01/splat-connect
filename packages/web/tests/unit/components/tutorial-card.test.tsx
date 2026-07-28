@@ -82,4 +82,39 @@ describe('TutorialCard', () => {
     render(<TutorialCard tutorial={{ ...mockTutorial, toy_photo_url: null }} />)
     expect(screen.getByText('🧸')).toBeInTheDocument()
   })
+
+  // Tests: the card names its backers to someone browsing
+  // How:   a card with one accepted row; checks the name renders
+  // Chain: this is the only place a parent sees an endorsement before committing
+  //        to a click, and for them it is the whole point of the feature
+  it('names the organisations backing a tutorial', () => {
+    render(
+      <TutorialCard
+        tutorial={{
+          ...mockTutorial,
+          tutorial_orgs: [
+            {
+              id: 'b1', tutorial_id: mockTutorial.id, org_id: 'o1', status: 'accepted',
+              requested_at: '', responded_at: null, responded_by: null,
+              organizations: {
+                id: 'o1', name: 'Riverside Therapy', description: null,
+                status: 'active', created_by: null, created_at: '', updated_at: '',
+              },
+            },
+          ],
+        }}
+      />
+    )
+    expect(screen.getByText('Backed by Riverside Therapy')).toBeInTheDocument()
+  })
+
+  // Tests: an unbacked card says nothing about review at all
+  // How:   empty backing; checks the SPLAT fallback does NOT appear
+  // Chain: "Reviewed by SPLAT" is meaningful to a contributor and meaningless to a
+  //        parent, who has no idea what the internal review queue is — the absence
+  //        of a badge is the right signal on a public card
+  it('says nothing about backing when there is none', () => {
+    render(<TutorialCard tutorial={{ ...mockTutorial, tutorial_orgs: [] }} />)
+    expect(screen.queryByText(/Reviewed by SPLAT/)).not.toBeInTheDocument()
+  })
 })

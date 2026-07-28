@@ -38,7 +38,10 @@ organizations.get('/', async (c) => {
   const supabase = createUserClient(c.get('token'))
   const { data, error } = await supabase
     .from('organizations')
-    .select('*')
+    // Leaders ride along. The admin page shows them per row, and fetching them
+    // separately meant one request per organisation. A <details> cannot defer it
+    // either — a server component renders whether or not the panel is open.
+    .select('*, org_leaders(user_id, created_at)')
     .order('name', { ascending: true })
   if (error) return c.json({ error: error.message }, 500)
   return c.json(data)

@@ -8,6 +8,9 @@ vi.mock('@/lib/api-client', () => ({
 }))
 vi.mock('next/navigation', () => ({
   redirect: vi.fn(),
+  // The Backing panel is a client component that refreshes the route after a
+  // write, so rendering this page now touches useRouter.
+  useRouter: () => ({ refresh: vi.fn() }),
 }))
 vi.mock('next/cache', () => ({
   revalidatePath: vi.fn(),
@@ -74,6 +77,11 @@ const pageParams = { params: Promise.resolve({ id: 'tutorial-1' }) }
 describe('EditTutorialPage', () => {
   beforeEach(() => {
     vi.resetAllMocks()
+    // The page makes two further reads after the ones each test sets up with
+    // mockResolvedValueOnce — the backing rows and the organisation list for the
+    // Backing panel. Without a fallback those return undefined and every test dies
+    // on it. Empty is the ordinary case: most projects have asked nobody.
+    vi.mocked(apiClient.get).mockResolvedValue([])
   })
 
   // Tests: redirects to /login when the profile API call fails

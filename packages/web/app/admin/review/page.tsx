@@ -11,7 +11,7 @@
  *
  * Related files:
  * - packages/api/src/routes/admin.ts: GET /api/admin/tutorials, which embeds tutorial_orgs
- * - app/org/[orgId]: where a leader handles the ones marked accepted here
+ * - app/organizations/[id]: where a leader handles the ones marked accepted here
  */
 import Link from 'next/link'
 import { apiClient } from '@/lib/api-client'

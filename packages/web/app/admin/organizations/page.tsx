@@ -59,13 +59,15 @@ type OrgWithLeaders = Organization & { org_leaders?: OrgLeader[] }
 
 export default async function AdminOrganizationsPage() {
   const [orgs, contributors] = await Promise.all([
-    apiClient.get<Organization[]>('/api/organizations'),
+    apiClient.get<OrgWithLeaders[]>('/api/organizations'),
     apiClient.get<Profile[]>('/api/admin/contributors'),
   ])
 
-  const detailed = await Promise.all(
-    orgs.map((o) => apiClient.get<OrgWithLeaders>(`/api/organizations/${o.id}`))
-  )
+  // No per-organisation fetch. The list endpoint embeds org_leaders, so this is
+  // one request at fifty organisations instead of fifty-one. Deferring the leaders
+  // to the row an admin opens is not an option: a server component renders whether
+  // or not its <details> is open, so the fetch would fire for every row anyway.
+  const detailed = orgs as OrgWithLeaders[]
   const nameFor = (id: string) =>
     contributors.find((c) => c.id === id)?.name ||
     contributors.find((c) => c.id === id)?.email ||
@@ -75,8 +77,22 @@ export default async function AdminOrganizationsPage() {
     <div className="mx-auto max-w-3xl">
       <h1 className="mb-6 text-2xl font-bold text-ink">Organisations</h1>
 
-      <section className="card">
-        <h2 className="mb-3 text-lg font-semibold text-ink">Create an organisation</h2>
+      {/* One list serves both pickers — a datalist is referenced by id, not nested.
+          The value is the id because that is what the API takes; the label is what
+          the admin reads. */}
+      <datalist id="contributor-options">
+        {contributors.map((c) => (
+          <option key={c.id} value={c.id}>
+            {c.name || c.email}
+          </option>
+        ))}
+      </datalist>
+
+      {/* Behind a disclosure so the list is what you land on. Creating is rare;
+          looking is not. */}
+      <details className="panel mb-6">
+        <summary className="panel-summary">Create an organisation</summary>
+        <div className="px-5 pb-5">
         <form action={createOrg} className="space-y-3">
           <div>
             <label htmlFor="name" className="block font-medium text-ink">
@@ -94,14 +110,14 @@ export default async function AdminOrganizationsPage() {
             <label htmlFor="leader_user_id" className="block font-medium text-ink">
               First leader
             </label>
-            <select id="leader_user_id" name="leader_user_id" required className="mt-1 w-full">
-              <option value="">Choose a contributor…</option>
-              {contributors.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name || c.email}
-                </option>
-              ))}
-            </select>
+            <input
+              id="leader_user_id"
+              name="leader_user_id"
+              list="contributor-options"
+              required
+              placeholder="Type a name or email…"
+              className="mt-1 w-full"
+            />
             <p className="mt-1 text-xs text-muted">
               Required. An organisation with no leader cannot answer any request, so
               it would sit in the picker doing nothing. Only contributors can lead.
@@ -116,7 +132,8 @@ export default async function AdminOrganizationsPage() {
             Create organisation
           </button>
         </form>
-      </section>
+        </div>
+      </details>
 
       <section className="mt-8">
         <h2 className="mb-3 text-lg font-semibold text-ink">
@@ -188,16 +205,13 @@ export default async function AdminOrganizationsPage() {
 
                     <form action={addLeader} className="mt-3 flex gap-2">
                       <input type="hidden" name="orgId" value={org.id} />
-                      <select name="user_id" required className="flex-1">
-                        <option value="">Add a leader…</option>
-                        {contributors
-                          .filter((c) => !leaders.some((l) => l.user_id === c.id))
-                          .map((c) => (
-                            <option key={c.id} value={c.id}>
-                              {c.name || c.email}
-                            </option>
-                          ))}
-                      </select>
+                      <input
+                        name="user_id"
+                        list="contributor-options"
+                        required
+                        placeholder="Type a name or email…"
+                        className="flex-1"
+                      />
                       <button type="submit" className="btn">
                         Add
                       </button>
