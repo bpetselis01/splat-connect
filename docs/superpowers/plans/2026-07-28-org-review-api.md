@@ -462,6 +462,16 @@ the admin. Both live in `routes/admin.ts`, behind the existing role check at
  * by some future path that forgets is inert rather than live. Creation by the
  * admin *is* the approval (decision 5), so this route opts in deliberately.
  *
+ * WHY createUserClient and not createAdminClient, unlike every other handler in
+ * this file: org_members_freeze_provenance permits an org_role change only when
+ * is_admin(), and is_admin() reads auth.uid() — which the service role does not
+ * have. A service-role promote or demote raises 42501 and silently changes
+ * nothing. Triggers run for service_role even though RLS does not; this is the
+ * same trap §2 of the spec documents for tutorials.org_id. Using the admin's own
+ * JWT throughout also keeps "Admin can create organizations" and "Admin full
+ * access to org_members" live in production rather than exercised only by tests,
+ * and "Admin can view all profiles" (001_schema.sql:127) covers the role lookup.
+ *
  * WHY the profiles.role check is TypeScript and not RLS: spec decision 9 puts
  * enforcement in the database because a *leader* is a semi-trusted account held
  * by someone outside the platform. This route is behind admin middleware and the
@@ -475,7 +485,7 @@ admin.post('/organizations', async (c) => {
   if (!body.name?.trim()) return c.json({ error: 'name is required' }, 400)
   if (!body.leader_user_id) return c.json({ error: 'leader_user_id is required' }, 400)
 
-  const supabase = createAdminClient()
+  const supabase = createUserClient(c.get('token'))
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -542,7 +552,7 @@ admin.patch('/organizations/:orgId/members/:userId', async (c) => {
     return c.json({ error: "org_role must be 'leader' or 'member'" }, 400)
   }
 
-  const supabase = createAdminClient()
+  const supabase = createUserClient(c.get('token'))
   const { data: membership } = await supabase
     .from('org_members')
     .select('id, status')
@@ -680,6 +690,21 @@ describe('PATCH /api/admin/organizations/:orgId/members/:userId', () => {
     await deleteTestUser(pending.id)
   })
 
+  it('actually persists the demotion rather than failing silently', async () => {
+    // Regression guard for a real bug found while writing these controls: with
+    // createAdminClient() this endpoint returns 200 and changes nothing, because
+    // org_members_freeze_provenance raises under service_role. Asserting the
+    // status code alone would not have caught it.
+    const orgId = createdOrgIds[0]
+    await app.request(
+      `/api/admin/organizations/${orgId}/members/${joiner.id}`,
+      authed(admin.token, { method: 'PATCH', body: JSON.stringify({ org_role: 'member' }) }),
+    )
+    const { data } = await adminClient()
+      .from('org_members').select('org_role').eq('org_id', orgId).eq('user_id', joiner.id).single()
+    expect(data?.org_role).toBe('member')
+  })
+
   it('refuses a leader acting on their own org', async () => {
     const orgId = createdOrgIds[0]
     const res = await app.request(
@@ -697,7 +722,7 @@ describe('PATCH /api/admin/organizations/:orgId/members/:userId', () => {
 pnpm --filter @splat-connect/api test:integration -- tests/integration/orgs/admin-organizations.test.ts
 ```
 
-Expected: 7 passed. The two 403s come from the admin middleware, not from RLS —
+Expected: 8 passed. The two 403s come from the admin middleware, not from RLS —
 these routes use the admin client, so RLS is not the layer refusing them. That is
 the one place in this feature where a route-level check is the whole guard, and
 it is why both are asserted.
