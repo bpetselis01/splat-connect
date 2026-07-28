@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
 import { createUserClient } from '../../../src/supabase/user-client.js'
-import { createOrg, addMember, cleanupOrg } from '../../helpers/orgs.js'
+import { createOrg, addLeader, cleanupOrg } from '../../helpers/orgs.js'
 
 let victim: TestUser
 let attacker: TestUser
@@ -18,11 +18,11 @@ beforeAll(async () => {
   attacker = await createTestUser('contributor')
   leader = await createTestUser('contributor')
 
-  // A real, approved, trusted org whose leader is NOT the attacker — so the
-  // leader would pass the self-review guard on anything the attacker pulled in.
-  orgId = await createOrg({ createdBy: leader.id, status: 'approved', trustLevel: 'trusted' })
-  await addMember({ orgId, userId: leader.id, orgRole: 'leader', status: 'approved' })
-  await addMember({ orgId, userId: attacker.id, orgRole: 'member', status: 'approved' })
+  // A real, active org the attacker can ask to back things. The leader is NOT the
+  // attacker, so if the attacker ever got a claim through, a second party would
+  // publish it for them.
+  orgId = await createOrg({ createdBy: leader.id })
+  await addLeader(orgId, leader.id)
 
   const admin = adminClient()
   await admin.from('tutorials').insert({
@@ -51,16 +51,14 @@ describe('contributor claim scope', () => {
     expect(claim?.code).toBe('42501')
 
     // Steps 2 and 3 are walked anyway: a block at step 1 is only worth having if
-    // the rest of the chain really is dead. Both are now silent zero-row matches
-    // (no contributor link => no update grant, and the leader has no org tie to
-    // a tutorial that was never repinned), not errors.
-    const repin = await attackerDb
-      .from('tutorials')
-      .update({ org_id: orgId, status: 'pending' })
-      .eq('id', victimDraft)
-      .select('id')
-    expect(repin.error).toBeNull()
-    expect(repin.data ?? []).toHaveLength(0)
+    // the rest of the chain really is dead. Step 2 is a WITH CHECK violation —
+    // is_tutorial_contributor is false, so no INSERT policy on tutorial_orgs
+    // admits the attacker. Step 3 is a silent zero-row match: the leader's org was
+    // never asked, so can_review_tutorial is false.
+    const { error: repin } = await attackerDb
+      .from('tutorial_orgs')
+      .insert({ tutorial_id: victimDraft, org_id: orgId })
+    expect(repin?.code).toBe('42501')
 
     const publish = await createUserClient(leader.token)
       .from('tutorials')
@@ -72,8 +70,12 @@ describe('contributor claim scope', () => {
 
     // Ground truth: the draft is untouched and still nobody's org's business.
     const { data: final } = await adminClient()
-      .from('tutorials').select('status, org_id').eq('id', victimDraft).single()
-    expect(final).toMatchObject({ status: 'draft', org_id: null })
+      .from('tutorials').select('status').eq('id', victimDraft).single()
+    expect(final?.status).toBe('draft')
+
+    const { data: backing } = await adminClient()
+      .from('tutorial_orgs').select('id').eq('tutorial_id', victimDraft)
+    expect(backing ?? []).toHaveLength(0)
   })
 
   it('the legitimate author path still works, and re-linking is still retry-safe', async () => {
@@ -111,7 +113,7 @@ describe('contributor claim scope', () => {
 
     const forged = await authorDb
       .from('tutorials')
-      .update({ review_level: 'org', reviewed_by: victim.id, flagged_for_follow_up: true })
+      .update({ reviewed_by: victim.id, reviewed_for_org_id: orgId })
       .eq('id', unclaimed)
       .select('id')
     expect(forged.error?.code).toBe('42501')
