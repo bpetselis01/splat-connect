@@ -244,10 +244,8 @@ const baseTutorial: TutorialWithDetails = {
   tools: [{ id: 't-1', tutorial_id: 'tut-1', name: 'Screwdriver', is_optional: false, buy_links: [] }],
   stl_files: [],
   tutorial_contributors: [],
-  org_id: null,
-  review_level: null,
   reviewed_by: null,
-  flagged_for_follow_up: false,
+  reviewed_for_org_id: null,
 }
 
 describe('getMissingFields', () => {
