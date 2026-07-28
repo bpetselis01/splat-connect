@@ -399,7 +399,7 @@ $$ language sql security definer stable;
 
 - **`is_org_leader(p_org_id)`** — true if the caller is an **approved** `leader` of that org. Deliberately bakes in `status = 'approved'` so no policy can check leadership half-right (an invited-but-not-yet-accepted leader is not a leader for RLS purposes).
 - **`has_accepted(p_agreement_type)`** — true if the caller accepted **any** version of that agreement type. Version-agnostic on purpose; forcing re-acceptance on a new version is out of scope, and the `version` column keeps that option open without a migration.
-- **`is_tutorial_contributor(p_tutorial_id)`** — true if the caller is a contributor on that tutorial. Used to block self-review. Must be `security definer`: as a plain check running under the caller's own RLS, a tutorial row the caller merely can't *see* would make the check false and grant self-review by accident.
+- **`is_tutorial_contributor(p_tutorial_id)`** — true if the caller is a contributor on that tutorial. Used by the 008 `tutorial_contributors` INSERT policy as its retry-safety arm. It was originally the self-review block on the leader review policy; that use is gone (a leader may now approve their own tutorial), the function is not. Stays `security definer` so it answers "is there such a row" as fact rather than as a question about the caller's visibility — under invoker rights an invisible row would read as absent and the retry arm would refuse a re-link that should succeed.
 
 ```sql
 create or replace function public.is_org_leader(p_org_id uuid)
@@ -534,7 +534,7 @@ create trigger tutorials_freeze_review_provenance
 
 > `tutorials_freeze_review_provenance` is the one place a null `auth.uid()` fails **open** rather than closed, via the `auth.uid() is not null` conjunct. That is the service-role escape, and it is not a hole: no RLS policy on `tutorials` admits a writer who has no `auth.uid()` (they'd fail `is_approved_contributor()`), so a caller that reaches this trigger with a null uid is necessarily a `BYPASSRLS` server context — the admin client `POST /api/tutorials` creates rows with, or a migration.
 
-> All three triggers are `security invoker` (the **opposite** of the helper functions above), and deliberately so. Here, a row that is merely invisible to the caller must fail **closed** — the guard should still raise. In `is_tutorial_contributor()` the same "invisible" situation must fail **open**, or self-review would be silently granted. `set search_path = ''` is what makes running as invoker safe: every name in these trigger bodies is schema-qualified, so no caller-controlled `search_path` can shadow `public.is_admin()` or `public.is_org_leader()` with something else.
+> All three triggers are `security invoker` (the **opposite** of the helper functions above), and deliberately so. Here, a row that is merely invisible to the caller must fail **closed** — the guard should still raise. The definer helpers above are the opposite case: they are asked for facts that must not depend on the caller's visibility at all. `set search_path = ''` is what makes running as invoker safe: every name in these trigger bodies is schema-qualified, so no caller-controlled `search_path` can shadow `public.is_admin()` or `public.is_org_leader()` with something else.
 
 ---
 
@@ -619,7 +619,7 @@ create policy "Admin can delete tutorials"
   on public.tutorials for delete using (public.is_admin());
 ```
 
-**Org-leader review (007):** a leader's read reach and write reach over their org's tutorials are **deliberately different sizes**. The SELECT policy below is broader than the UPDATE policy: it ignores `trust_level` and the self-review block, because a probation org's leader still needs to see their own queue, and a suspended org's leader still needs visibility into their roster's history. Write authority (the ability to actually approve/reject) is gated separately, in the UPDATE policy, by trust and by not being a contributor on the row. The UPDATE policy carries **four** conditions in one place — leadership of the org, the org being `approved` + `trusted`, not being a contributor on the row, and an accepted `org_leader_terms` agreement — so suspension, demotion to probation, self-review, and withdrawn consent each independently revoke the capability instantly, with no cache to invalidate and no cleanup job to run. The agreement is deliberately absent from the SELECT policy: leadership is granted by an admin rather than requested, so a leader who has accepted nothing must still be able to see their queue with the accept prompt beside it.
+**Org-leader review (007):** a leader's read reach and write reach over their org's tutorials are **deliberately different sizes**. The SELECT policy below is broader than the UPDATE policy: it ignores `trust_level` and the terms gate, because a probation org's leader still needs to see their own queue, and a suspended org's leader still needs visibility into their roster's history. The UPDATE policy carries **three** conditions in one place — leadership of the org, the org being `approved` + `trusted`, and an accepted `org_leader_terms` agreement — so suspension, demotion to probation, and withdrawn consent each independently revoke the capability instantly, with no cache to invalidate and no cleanup job to run. The agreement is deliberately absent from the SELECT policy: leadership is granted by an admin rather than requested, so a leader who has accepted nothing must still be able to see their queue with the accept prompt beside it. **There is no self-review block**: a leader may approve a tutorial they authored, because leadership is granted by the admin to someone already trusted and a single-leader org could otherwise never publish its leader's own work. The control is reactive — demote the leader, demote or suspend the org, or reject the tutorial. Note that **demoting a leader must run under the admin's own JWT, not the service role**: `org_members_freeze_provenance` permits an `org_role` change only when `is_admin()`, which reads `auth.uid()`, so a service-role demote raises `42501` and silently changes nothing.
 
 **Consequence, stated plainly:** because the SELECT policy is that broad, a leader can read their org members' unpublished drafts — not just pending submissions. This belongs in the `contributor_terms` agreement text, and is exactly why the join handshake requires a genuine two-sided opt-in (see `org_members` below) rather than a leader being able to add members unilaterally.
 
@@ -640,7 +640,6 @@ create policy "Trusted org leaders can review their org's tutorials"
         and o.status = 'approved'
         and o.trust_level = 'trusted'
     )
-    and not public.is_tutorial_contributor(id)
     and public.has_accepted('org_leader_terms')
   )
   with check (
@@ -652,7 +651,6 @@ create policy "Trusted org leaders can review their org's tutorials"
         and o.status = 'approved'
         and o.trust_level = 'trusted'
     )
-    and not public.is_tutorial_contributor(id)
     and public.has_accepted('org_leader_terms')
   );
 ```

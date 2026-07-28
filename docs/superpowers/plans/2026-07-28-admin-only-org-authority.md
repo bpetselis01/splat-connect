@@ -4,6 +4,12 @@
 > implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for
 > tracking.
 
+> **Amended 2026-07-28**, after execution: spec decision 14 removed the
+> self-review block from the leader review grant, so the policy shown in Task 3
+> below now carries three conditions, not four. Demotion also turned out to
+> require the admin's own JWT rather than the service role. See
+> `supabase/migrations/007_organizations.sql` for the current text.
+
 **Goal:** Make the platform admin the only account that can create an
 organisation or grant `org_role = 'leader'`, and move the `org_leader_terms`
 gate from org creation to the leader review grant.

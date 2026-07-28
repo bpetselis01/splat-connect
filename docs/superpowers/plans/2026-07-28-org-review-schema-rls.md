@@ -68,7 +68,7 @@ on route logic; no API routes exist yet at the end of this plan.
 | `packages/types/src/index.ts` | **Modify.** Add org/agreement types and the new `Tutorial` fields. Consumed by both API and web plans. |
 | `packages/api/tests/integration/orgs/suspension.test.ts` | **Create.** Task 3 — the canary for decision 9. |
 | `packages/api/tests/integration/orgs/membership-handshake.test.ts` | **Create.** Two-sided join/invite policies. |
-| `packages/api/tests/integration/orgs/tutorial-review-grant.test.ts` | **Create.** Leader UPDATE grant: trust level, self-review, cross-org. |
+| `packages/api/tests/integration/orgs/tutorial-review-grant.test.ts` | **Create.** Leader UPDATE grant: trust level, terms gate, cross-org, self-approval. |
 | `packages/api/tests/integration/orgs/tutorial-read-grant.test.ts` | **Create.** Leader SELECT grant (spec §2, "load-bearing"). |
 | `packages/api/tests/helpers/orgs.ts` | **Create.** Fixture builders (`createOrg`, `addMember`) shared by all four test files. Split out because four files need the same 30 lines. |
 | `supabase/SCHEMA.md` | **Modify.** Living schema reference; stale docs here mislead every future task. |
@@ -206,9 +206,9 @@ $$ language sql security definer stable;
 -- Used only by the founder-bootstrap policy, which must ask "does this org
 -- already have a leader?" from inside an org_members policy.
 
--- The self-review block. MUST be security definer: as a plain EXISTS inside the
--- tutorials policy this would run under tutorial_contributors' own RLS, so a row
--- that was merely *invisible* would make NOT EXISTS true and GRANT self-review.
+-- Used by the 008 tutorial_contributors INSERT policy as its retry-safety arm.
+-- Stays security definer so it answers "is there such a row" as fact rather than
+-- as a question about the caller's visibility.
 create or replace function public.is_tutorial_contributor(p_tutorial_id uuid)
 returns boolean as $$
   select exists (
@@ -382,7 +382,7 @@ create policy "Admin full access to org_members"
 ```sql
 -- tutorials — leader SELECT
 -- Load-bearing and deliberately BROADER than the write policy below: it ignores
--- trust_level and the self-review block. If read tracked write, a probation org's
+-- trust_level and the terms gate. If read tracked write, a probation org's
 -- leader would see an empty queue and a suspended org's leader would lose all
 -- visibility into their own roster's history. Authority is gated separately.
 -- CONSEQUENCE, stated plainly: a leader can read their org members' unpublished
@@ -395,7 +395,7 @@ create policy "Leaders can read their org's tutorials"
 
 -- tutorials — leader UPDATE
 -- All three conditions live in one policy so that suspension, demotion to
--- probation, and self-review each independently revoke the capability instantly:
+-- probation, and withdrawn consent each independently revoke the capability instantly:
 -- no cache to invalidate, no cleanup job to run.
 create policy "Trusted org leaders can review their org's tutorials"
   on public.tutorials for update
@@ -408,7 +408,6 @@ create policy "Trusted org leaders can review their org's tutorials"
         and o.status = 'approved'
         and o.trust_level = 'trusted'
     )
-    and not public.is_tutorial_contributor(id)
     and public.has_accepted('org_leader_terms')
   )
   with check (
@@ -420,7 +419,6 @@ create policy "Trusted org leaders can review their org's tutorials"
         and o.status = 'approved'
         and o.trust_level = 'trusted'
     )
-    and not public.is_tutorial_contributor(id)
     and public.has_accepted('org_leader_terms')
   );
 ```
@@ -695,7 +693,7 @@ git commit -m "test(api): assert org suspension instantly revokes leader review 
 
 ---
 
-## Task 4: Leader review grant — trust level, self-review, cross-org
+## Task 4: Leader review grant — trust level, terms gate, cross-org
 
 **Files:**
 - Create: `packages/api/tests/integration/orgs/tutorial-review-grant.test.ts`
@@ -741,7 +739,8 @@ beforeAll(async () => {
   await addMember({ orgId: probationOrg, userId: member.id, orgRole: 'member', status: 'approved' })
 
   memberTutorial = await createOrgTutorial({ orgId: trustedOrg, authorId: member.id, authorToken: member.token })
-  // The leader is a tutorial_contributor on this one — the self-review case.
+  // The leader is a tutorial_contributor on this one — the self-approval case,
+  // which decision 14 permits.
   leaderOwnTutorial = await createOrgTutorial({ orgId: trustedOrg, authorId: leader.id, authorToken: leader.token })
   // Carries no org_id: the platform queue, nobody's org to review.
   outsiderTutorial = await createOrgTutorial({ orgId: null, authorId: outsider.id, authorToken: outsider.token })
@@ -850,7 +849,7 @@ error code) instead of `tryApprove` (asserting the error is null). Using
 
 ```bash
 git add packages/api/tests/integration/orgs/tutorial-review-grant.test.ts
-git commit -m "test(api): cover leader review grant boundaries (trust, self-review, cross-org)"
+git commit -m "test(api): cover leader review grant boundaries (trust, terms, cross-org)"
 ```
 
 ---

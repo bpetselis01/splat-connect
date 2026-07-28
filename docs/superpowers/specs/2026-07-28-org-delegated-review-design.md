@@ -57,7 +57,7 @@ Findings from tracing the current codebase, because several shape the design:
 | 1 | Agreements/consent (`user_agreements`) stays **in scope** | User's call after being shown the option to defer. See §6 for the legal caveat. |
 | 2 | `tutorials.org_id` is **nullable, snapshot at submit** | Org participation stays entirely optional; null routes to the platform queue. Snapshot rather than live-derived so review authority isn't retroactive or revocable by a membership change. |
 | 3 | Org chosen **explicitly at submit time** | Preselected when the contributor has exactly one approved org; "No org — platform review" always available. Handles 0-, 1-, and multi-org cases with one control and no hidden tiebreaker. |
-| 4 | Self-review blocked by **any** `tutorial_contributors` link | Not just `'primary'`. Same SQL cost, can't be gamed by self-adding as a collaborator. |
+| 4 | ~~Self-review blocked by any `tutorial_contributors` link~~ — **superseded by decision 14** | Kept as a struck row rather than deleted, so the reversal is visible instead of looking like an omission. |
 | 5 | **Trust on creation** — the admin creating an org sets `status='approved'` *and* `trust_level='trusted'` | Vetting happens when the admin decides the org should exist at all; a separate probation gate would duplicate that judgment while guaranteeing the feature delivers nothing to new orgs. `probation` becomes a state you *demote* into. Column defaults stay `'pending'`/`'probation'` so a row written by any path that forgets to set them is inert rather than live. |
 | 6 | **Reuse `rejection_note`; no `review_notes` column** | The column exists, is already surfaced to contributors, and "required on rejection" is its exact semantics. Loses notes-on-approve only. |
 | 7 | Re-invites **revive the existing row** (`declined`/`removed` → `pending`) | `unique (org_id, user_id)` makes re-insert impossible; without revival one accidental decline locks a contributor out of an org permanently. |
@@ -66,7 +66,8 @@ Findings from tracing the current codebase, because several shape the design:
 | 10 | Friction cuts included in this spec | ~10 lines, same goal, avoids touching `validation.ts` twice. |
 | 11 | **Only the admin creates organisations** | An organisation is the unit that carries review authority. Letting contributors self-create one — even into a `pending` state — draws the platform's trust boundary with a form anyone can submit, and reduces the admin to reviewing *proposals* rather than deciding who exists. With a single admin there is no second party to wait for, so creation and approval collapse into one action and `pending` becomes a staging state rather than a queue. Supersedes the original contributor-INSERT policy and the founder bootstrap. |
 | 12 | **Only the admin grants `org_role = 'leader'`** | Leadership is the entire capability this feature delegates. A leader who can mint another leader grows their org's review authority without the admin ever seeing it. Promotion is unilateral and immediate — the promoted contributor is not asked to accept — because consent is collected at the point authority is *used* instead (decision 13). |
-| 13 | **`org_leader_terms` gates the review grant, not any entry point** | Under decision 11 nobody opts into leadership before holding it, so the old creation-time gate has nothing to attach to. Moving `has_accepted('org_leader_terms')` into the tutorials leader UPDATE policy means a promoted leader sees their queue but cannot publish until they accept, and deleting the acceptance row revokes authority instantly — a fourth independent revocation alongside suspension, demotion and self-review. |
+| 13 | **`org_leader_terms` gates the review grant, not any entry point** | Under decision 11 nobody opts into leadership before holding it, so the old creation-time gate has nothing to attach to. Moving `has_accepted('org_leader_terms')` into the tutorials leader UPDATE policy means a promoted leader sees their queue but cannot publish until they accept, and deleting the acceptance row revokes authority instantly — a third independent revocation alongside suspension and demotion. |
+| 14 | **No self-review block — a leader may approve their own tutorial** | Leadership is granted by the admin to someone already trusted, so a preventive block buys little. It also costs a lot: a single-leader org — the common case — could never publish its leader's own work at all, which for a small org is most of what it has. The control becomes reactive and threefold: demote the leader, demote or suspend the org, or reject the tutorial. Reverses decision 4, and makes the spot-check surface load-bearing rather than nice-to-have. |
 
 ## §1 Schema
 
@@ -182,14 +183,27 @@ Alongside the existing admin path:
 ```
 is_org_leader(tutorials.org_id)
 AND EXISTS (org is status='approved' AND trust_level='trusted')
-AND NOT is_tutorial_contributor(tutorials.id)
 AND has_accepted('org_leader_terms')
 ```
 
-All four conditions in one policy, so suspension, demotion, self-review and
-withdrawn consent each independently revoke the capability instantly — no cache,
-no cleanup job. The fourth is decision 13: it is the only consent a promoted
-leader is ever asked for, so it has to bite where the authority is spent.
+All three conditions in one policy, so suspension, demotion and withdrawn consent
+each independently revoke the capability instantly — no cache, no cleanup job.
+The third is decision 13: it is the only consent a promoted leader is ever asked
+for, so it has to bite where the authority is spent.
+
+There is **no self-review conjunct** (decision 14). A leader may approve a
+tutorial they authored. `is_tutorial_contributor()` survives because 008 uses it
+as the retry-safety arm of the `tutorial_contributors` INSERT policy; it is no
+longer part of any authority decision.
+
+**Revocation is therefore the whole control, and one part of it has a trap.**
+Demoting a leader (`org_role → 'member'`) must run under the **admin's own JWT**,
+not the service role: `org_members_freeze_provenance` permits an `org_role`
+change only when `is_admin()`, which reads `auth.uid()`, and the service role has
+none. A service-role demote raises `42501` and silently changes nothing — the
+same trap recorded above for `tutorials.org_id`. Rejecting an already-approved
+tutorial has no such problem: the admin status endpoint places no constraint on
+the transition.
 
 ### `tutorials` — new leader SELECT path
 
@@ -200,7 +214,7 @@ only matches published ones. The dashboard would show an empty queue and the
 review screen would 404.
 
 Leaders get SELECT on any tutorial carrying their `org_id`, **independent of
-trust level and self-review**. Deliberately broader than the write policy: if
+trust level and the terms gate**. Deliberately broader than the write policy: if
 read tracked write, a probation org's leader would see nothing, and a suspended
 org's leader would lose visibility into their own roster's history. Authority
 stays gated separately.
@@ -426,8 +440,10 @@ test the policies rather than route logic.
 From the brief:
 
 1. A leader cannot approve a tutorial from a non-member.
-2. A leader cannot approve their own tutorial (self-review block, any
-   `tutorial_contributors` link).
+2. A leader **can** approve their own tutorial (decision 14), and once demoted
+   cannot — two halves of one fixture, with different failure shapes: zero rows
+   for a member's tutorial, `42501` for their own, because the contributor policy
+   still matches the latter.
 3. A leader cannot approve anything while their org is in `probation`.
 4. Suspending an org immediately revokes the leader's approve capability
    (suspend mid-test, re-attempt the RLS-gated update).
@@ -456,6 +472,11 @@ Surfaced by this design:
     they fail through different mechanisms, so both need asserting.
 14. A promoted leader who has not accepted `org_leader_terms` can read their
     org's queue but cannot approve; the same update succeeds once accepted.
+15. Demoting a leader to `member` revokes the review grant instantly, and the
+    demotion **persists** — asserted against the database, because a service-role
+    demote returns success and changes nothing.
+16. An admin can reject a tutorial its own author approved as leader, through
+    `PATCH /api/admin/tutorials/:id/status`.
 
 **Write test 14 alongside test 4.** It has the same property test 4 has: it
 asserts nothing unless the gate really lives in the policy. Under a

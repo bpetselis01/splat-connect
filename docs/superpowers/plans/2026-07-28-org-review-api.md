@@ -1467,12 +1467,19 @@ describe('POST /api/tutorials/:id/review', () => {
     expect(res.status).toBe(400)
   })
 
-  it('refuses self-review with 403', async () => {
+  it('permits self-review — decision 14 removed the block', async () => {
+    // A leader may approve their own tutorial. The endpoint must not reintroduce
+    // in route code the guard the policy deliberately dropped, or the two layers
+    // disagree and the database stops being the source of truth (decision 9).
     const res = await app.request(`/api/tutorials/${ownTutorialId}/review`, authed(leader.token, {
       method: 'POST',
       body: JSON.stringify({ status: 'approved' }),
     }))
-    expect(res.status).toBe(403)
+    expect(res.status).toBe(200)
+
+    const { data } = await adminClient()
+      .from('tutorials').select('status, reviewed_by, review_level').eq('id', ownTutorialId).single()
+    expect(data).toMatchObject({ status: 'approved', reviewed_by: leader.id, review_level: 'org' })
   })
 
   it('a leader cannot publish through the generic PATCH endpoint', async () => {

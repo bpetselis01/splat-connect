@@ -5,8 +5,10 @@
 --      007 it became a path to PUBLISHING someone else's unsubmitted work:
 --      self-attach, repin the draft into an org you belong to (which satisfies
 --      tutorials_org_must_be_own, because you really are an approved member), then
---      have that org's leader approve it — the leader passes the self-review guard
---      precisely because they are not linked to the tutorial. Reproduced end to end.
+--      have that org's leader approve it. Reproduced end to end.
+--      NOTE: decision 14 later removed the self-review block, which widens this —
+--      a leader can now self-attach to a stranger's draft and approve it without a
+--      second party involved at all. This policy is the only thing standing there.
 -- HOW: A contributor may only claim a tutorial that has no contributors yet — which
 --      is exactly the authoring path, since POST /api/tutorials inserts the row with
 --      no link and the very next call (routes/contributors.ts) adds the author. Once
