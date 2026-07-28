@@ -1,24 +1,8 @@
 /**
- * JWT Authentication Middleware
- * 
- * This middleware is applied to ALL protected routes (/api/tutorials, /api/admin, etc.).
- * It handles the critical security step of validating JWT tokens.
- * 
- * Process:
- * 1. Extracts JWT from Authorization header (Bearer <token>)
- * 2. Validates JWT using Supabase auth service (verifies signature, expiry)
- * 3. Retrieves user profile from database (checks role)
- * 4. Attaches userId, role, and token to Hono context
- * 5. If any step fails, returns 401 (unauthorized) or 403 (forbidden)
- *
- * Context variables added to request:
- * - userId: unique identifier of authenticated user
- * - role: 'admin' | 'contributor'
- * - token: the JWT itself (used to create RLS-respecting Supabase client)
- * 
- * Related files:
- * - supabase/user-client.ts: Uses the token to create RLS-respecting clients
- * - routes/*.ts: Each route handler has access to these context variables
+ * JWT middleware for every protected route: validates the bearer token with
+ * Supabase auth, loads the profile role, and attaches userId / role / token
+ * to context. The token is kept so handlers can build RLS-respecting clients
+ * (supabase/user-client.ts).
  */
 import type { MiddlewareHandler } from 'hono'
 import { createAdminClient } from '../supabase/client.js'

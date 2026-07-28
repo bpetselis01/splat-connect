@@ -1,34 +1,6 @@
 /**
- * Contributor Profile Routes (Protected)
- * 
- * Handles viewing and updating contributor profile information.
- * 
- * Endpoints:
- * - GET /api/contributors/me
- *   - Get current user's profile
- *   - Returns: Profile object { id, name, email, role, created_at }
- * 
- * - PATCH /api/contributors/me
- *   - Update current user's profile
- *   - Body: { name?, email? } (currently only name/email are mutable)
- *   - Returns: updated Profile object
- * 
- * Profile data:
- * - id: User ID from Supabase auth
- * - name: Display name
- * - email: Contact email
- * - role: 'admin' | 'contributor'
- * - created_at: When account was created
- * 
- * Onboarding:
- * 1. New user signs up
- * 2. Their profile is created with role='contributor'
- * 3. They can log in and create tutorials immediately
- *
- * Related files:
- * - middleware/auth.ts: Validates JWT + extracts userId
- * - app/dashboard: Contributor hub
- * - types/index.ts: Profile type definition
+ * Contributor profile routes: GET/PATCH /api/contributors/me. Only name and
+ * email are mutable.
  */
 import { Hono } from 'hono'
 import { createUserClient } from '../supabase/user-client.js'
