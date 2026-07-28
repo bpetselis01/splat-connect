@@ -58,12 +58,15 @@ Findings from tracing the current codebase, because several shape the design:
 | 2 | `tutorials.org_id` is **nullable, snapshot at submit** | Org participation stays entirely optional; null routes to the platform queue. Snapshot rather than live-derived so review authority isn't retroactive or revocable by a membership change. |
 | 3 | Org chosen **explicitly at submit time** | Preselected when the contributor has exactly one approved org; "No org — platform review" always available. Handles 0-, 1-, and multi-org cases with one control and no hidden tiebreaker. |
 | 4 | Self-review blocked by **any** `tutorial_contributors` link | Not just `'primary'`. Same SQL cost, can't be gamed by self-adding as a collaborator. |
-| 5 | **Trust on approval** — approving an org sets `status='approved'` *and* `trust_level='trusted'` | Vetting already happens at approval time; a separate probation gate would duplicate that judgment while guaranteeing the feature delivers nothing to new orgs. `probation` becomes a state you *demote* into. Column default stays `'probation'` so a *pending* org never reads as trusted. |
+| 5 | **Trust on creation** — the admin creating an org sets `status='approved'` *and* `trust_level='trusted'` | Vetting happens when the admin decides the org should exist at all; a separate probation gate would duplicate that judgment while guaranteeing the feature delivers nothing to new orgs. `probation` becomes a state you *demote* into. Column defaults stay `'pending'`/`'probation'` so a row written by any path that forgets to set them is inert rather than live. |
 | 6 | **Reuse `rejection_note`; no `review_notes` column** | The column exists, is already surfaced to contributors, and "required on rejection" is its exact semantics. Loses notes-on-approve only. |
 | 7 | Re-invites **revive the existing row** (`declined`/`removed` → `pending`) | `unique (org_id, user_id)` makes re-insert impossible; without revival one accidental decline locks a contributor out of an org permanently. |
 | 8 | Leaders must be `role = 'contributor'` | A `parent`-role leader would be treated as logged-out by every org page via `getUserRole()`, with no error to debug. Enforced server-side. |
 | 9 | **Enforcement lives in RLS**, not route code (Approach 1) | A leader is a semi-trusted account held by someone outside the organisation. RLS holds even if a future route is written carelessly; API-side checks are only as good as every route that remembers them. Also the only approach under which the suspension-revocation test asserts anything real. |
 | 10 | Friction cuts included in this spec | ~10 lines, same goal, avoids touching `validation.ts` twice. |
+| 11 | **Only the admin creates organisations** | An organisation is the unit that carries review authority. Letting contributors self-create one — even into a `pending` state — draws the platform's trust boundary with a form anyone can submit, and reduces the admin to reviewing *proposals* rather than deciding who exists. With a single admin there is no second party to wait for, so creation and approval collapse into one action and `pending` becomes a staging state rather than a queue. Supersedes the original contributor-INSERT policy and the founder bootstrap. |
+| 12 | **Only the admin grants `org_role = 'leader'`** | Leadership is the entire capability this feature delegates. A leader who can mint another leader grows their org's review authority without the admin ever seeing it. Promotion is unilateral and immediate — the promoted contributor is not asked to accept — because consent is collected at the point authority is *used* instead (decision 13). |
+| 13 | **`org_leader_terms` gates the review grant, not any entry point** | Under decision 11 nobody opts into leadership before holding it, so the old creation-time gate has nothing to attach to. Moving `has_accepted('org_leader_terms')` into the tutorials leader UPDATE policy means a promoted leader sees their queue but cannot publish until they accept, and deleting the acceptance row revokes authority instantly — a fourth independent revocation alongside suspension, demotion and self-review. |
 
 ## §1 Schema
 
@@ -74,6 +77,9 @@ One new migration: `supabase/migrations/007_organizations.sql`.
 `id`, `name`, `description`, `status` enum (`pending`/`approved`/`suspended`,
 default `pending`), `trust_level` enum (`probation`/`trusted`, default
 `probation`), `created_by` → `profiles`, `created_at`, `updated_at`.
+
+Under decision 11 `created_by` is always the admin, so it is an audit column
+rather than an authority one. Nothing keys off it.
 
 ### `org_members`
 
@@ -132,27 +138,31 @@ content referenced by version string. See §6.
 
 ### `organizations`
 
-- **SELECT** — anyone reads `status = 'approved'`; `created_by` reads their own
-  at any status; admin reads all.
-- **INSERT** — any contributor with an accepted `org_leader_terms` row (via
-  `has_accepted()`), `status` forced to `pending`.
+- **SELECT** — anyone reads `status = 'approved'`; admin reads all. There is no
+  `created_by`-scoped read policy, because `created_by` is now always the admin
+  and the admin already reads everything.
+- **INSERT** — `is_admin()` only (decision 11). The policy puts no constraint on
+  `status` or `trust_level`, since the admin is the party being trusted; the
+  create endpoint sets both explicitly rather than leaning on the defaults.
 - **UPDATE** — admin only. This is what keeps `status` and `trust_level` out of
   a leader's reach: a leader can never promote their own org or un-suspend it.
 
 ### `org_members`
 
-- **INSERT (bootstrap)** — own row, `org_role = 'leader'`,
-  `status = 'approved'`, permitted only when the target org's `created_by` is
-  `auth.uid()` and the org has no approved leader yet. Without this the design
-  deadlocks: the invite policy requires `is_org_leader(org_id)`, which is false
-  for a brand-new org, so no first leader could ever exist. Keeping the
-  bootstrap in RLS rather than doing it with the admin client means the founder
-  path is enforced by the same layer as every other path.
+- **INSERT (first leader)** — no policy. The org's first leader is written by the
+  admin create endpoint under `"Admin full access to org_members"`. An earlier
+  draft used an RLS bootstrap policy scoped to `created_by`, which existed only
+  so a self-creating founder could claim leadership without deadlocking against
+  the invite policy's `is_org_leader(org_id)`. Decision 11 removes the founder,
+  and with them that policy and its `org_has_approved_leader()` helper.
 - **INSERT (request)** — own row only, `initiated_by = 'contributor'`,
   `status = 'pending'`, `org_role = 'member'`. You cannot request to join *as a
   leader*.
 - **INSERT (invite)** — `is_org_leader(org_id)` and the org is `approved`,
-  `initiated_by = 'org'`, `status = 'pending'`.
+  `initiated_by = 'org'`, `status = 'pending'`, **`org_role = 'member'`**. That
+  last condition is decision 12 on the INSERT side. Without it a leader mints a
+  co-leader by inviting someone straight in as `('leader', 'pending')` — a path
+  the `org_role` trigger below cannot see, because it fires only on UPDATE.
 - **UPDATE (leader side)** — `is_org_leader(org_id)`; may move
   `pending → approved/declined` **only where `initiated_by = 'contributor'`**;
   may set `approved → removed` at any time; may revive
@@ -172,11 +182,14 @@ Alongside the existing admin path:
 ```
 is_org_leader(tutorials.org_id)
 AND EXISTS (org is status='approved' AND trust_level='trusted')
-AND NOT EXISTS (tutorial_contributors row linking this tutorial to auth.uid())
+AND NOT is_tutorial_contributor(tutorials.id)
+AND has_accepted('org_leader_terms')
 ```
 
-All three conditions in one policy, so suspension, demotion, and self-review
-each independently revoke the capability instantly — no cache, no cleanup job.
+All four conditions in one policy, so suspension, demotion, self-review and
+withdrawn consent each independently revoke the capability instantly — no cache,
+no cleanup job. The fourth is decision 13: it is the only consent a promoted
+leader is ever asked for, so it has to bite where the authority is spent.
 
 ### `tutorials` — new leader SELECT path
 
@@ -233,8 +246,10 @@ The fix is two `BEFORE` triggers, because `OLD` is visible only in a trigger:
 - **`org_members_freeze_provenance`** (`BEFORE UPDATE`) makes `org_id`,
   `user_id`, and `initiated_by` immutable, restricts `org_role` changes to
   admins, and prevents a `removed` membership being restored by anyone but that
-  org's leader or an admin. `BEFORE UPDATE` only — the founder-bootstrap INSERT
-  legitimately writes `org_role='leader'`.
+  org's leader or an admin. `BEFORE UPDATE` only, which is exactly why decision
+  12 also needs `org_role = 'member'` on the invite policy: this trigger governs
+  *promotion* of an existing row and says nothing about a row inserted as a
+  leader outright.
 - **`tutorials_org_must_be_own`** (`BEFORE INSERT OR UPDATE`) permits a write
   that *sets or changes* `org_id` only from a caller who is an approved member
   of the target org. It is gated on change, so a later membership change cannot
@@ -256,16 +271,34 @@ mechanism is a trigger, not a policy.
 
 ### New: `routes/organizations.ts`
 
-- `POST /api/organizations` — create, `status` forced `pending`. 403 unless the
-  caller has an accepted `org_leader_terms` row. Creator gets an `org_members`
-  row as `('leader', 'approved', initiated_by='org')` via the §2 bootstrap
-  policy — the one legitimate self-approval, since you cannot invite yourself to
-  an org you just created.
 - `GET /api/organizations` — approved orgs, for the join picker.
 - `GET /api/organizations/mine` — orgs the caller belongs to, with role and
   status. Drives the submit-flow org picker and dashboard links.
-- `PATCH /api/admin/organizations/:id` — admin only; sets `status` and/or
-  `trust_level`. Approving sets both (decision 5).
+
+There is no contributor-facing create endpoint (decision 11).
+
+### Changed: `routes/admin.ts` — organisation authority
+
+- `POST /api/admin/organizations` — `{ name, description, leader_user_id }`.
+  Creates the org with `status = 'approved'`, `trust_level = 'trusted'`,
+  `created_by` = the admin, then writes the first leader's `org_members` row as
+  `('leader', 'approved', initiated_by = 'org', invited_by = admin)` under
+  `"Admin full access to org_members"`. `leader_user_id` is **required**: an org
+  with no leader cannot approve its own join requests, so making it optional
+  would re-create the very deadlock the deleted bootstrap policy existed to
+  solve.
+- `PATCH /api/admin/organizations/:id` — sets `status` and/or `trust_level`.
+  Suspension and demotion; creation already grants both (decision 5).
+- `PATCH /api/admin/organizations/:orgId/members/:userId` — sets `org_role` to
+  `leader` or `member`. Requires the target membership to already be
+  `status = 'approved'`, so a promotion cannot leave the confusing
+  `('leader', 'pending')` state behind.
+
+Both write endpoints check that a prospective leader's `profiles.role` is
+`'contributor'` (decision 8) in TypeScript. Decision 9 puts enforcement in RLS
+because a *leader* is a semi-trusted account; these routes sit behind the
+existing admin middleware and the admin holds `service_role` regardless, so a
+database guard here would constrain nobody.
 
 ### New: `routes/org-members.ts`
 
@@ -314,7 +347,7 @@ thing catching a mistake.
   `rejection_note` (required when rejecting). Uses `createUserClient`, so the
   database is the enforcement layer.
 
-### Changed: `routes/admin.ts`
+### Changed: `routes/admin.ts` — review queue and audit
 
 - Status endpoint additionally sets `review_level = 'platform'` and
   `reviewed_by`, so the audit trail is uniform regardless of reviewer.
@@ -337,7 +370,9 @@ actually offered to the platform, it catches pre-existing drafts, and it lets
 someone explore the wizard before being asked to accept anything. Both is cheap
 and means neither path is the one someone forgets.
 
-`org_leader_terms` gates org creation and leader-role acceptance, server-side.
+`org_leader_terms` gates no entry point at all — it gates the leader review
+grant itself, inside RLS (decision 13). `POST /api/agreements` still records the
+acceptance; what changed is what that record unlocks and when it is checked.
 
 ### Types
 
@@ -351,20 +386,26 @@ All new types added to `packages/types/src/index.ts`: `Organization`,
 New pages follow the existing admin pattern (`/admin` card hub →
 `/admin/review` list → `/admin/review/[id]` detail):
 
-- **`/admin/organizations`** — approve pending orgs (sets approved + trusted),
-  suspend, demote `trust_level`.
+- **`/admin/organizations`** — create an org (name, description, and a
+  contributor picker for its first leader), suspend, demote `trust_level`, and a
+  per-org roster with promote/demote. This is the only surface in the product
+  that grants leadership (decisions 11 and 12).
 - **`/admin/spot-check`** — random sample of `review_level = 'org'` tutorials
   with a flag-for-follow-up boolean.
 - **`/org/[orgId]`** — leader dashboard: pending join requests
   (approve/decline), pending tutorial reviews from members, roster management
-  (invite, remove, pending invites awaiting the contributor).
+  (invite, remove, pending invites awaiting the contributor). A leader who has
+  not accepted `org_leader_terms` sees the queue with approve and reject
+  disabled and an inline acceptance action, mirroring the §2 grant so the UI
+  never offers a button the database will refuse.
 - **`/org/[orgId]/review/[tutorialId]`** — approve/reject, `rejection_note`
   required on reject.
 - **`/dashboard`** — gains an org section: memberships, pending invites to
   accept/decline, link to browse orgs to join.
 - **Submit flow** — org picker (decision 3) and the `contributor_terms` gate:
   terms shown, explicit acceptance click required before submit is enabled.
-- **Leader-role acceptance** — gated behind `org_leader_terms` acceptance.
+
+No page anywhere lets a contributor create an org or grant leadership.
 
 ### Routing protection
 
@@ -407,9 +448,20 @@ Surfaced by this design:
 11. A leader cannot approve a tutorial via `PATCH /api/tutorials/:id` — the
     generic endpoint refuses `status: 'approved'` even for someone whose RLS
     grant would allow the write, so no publish can skip the audit trail.
-12. Creating an org makes the creator an approved leader of it, and does not
-    make them a leader of any other org (the bootstrap policy is correctly
-    scoped to `created_by`).
+12. Admin org creation makes `leader_user_id` an approved leader of that org and
+    of no other; a non-admin cannot create an organisation at all.
+13. A leader cannot invite someone as `org_role = 'leader'` (blocked by the
+    invite policy's `org_role = 'member'`), and cannot promote an existing
+    member (blocked by the `org_role` trigger). Both halves of decision 12, and
+    they fail through different mechanisms, so both need asserting.
+14. A promoted leader who has not accepted `org_leader_terms` can read their
+    org's queue but cannot approve; the same update succeeds once accepted.
+
+**Write test 14 alongside test 4.** It has the same property test 4 has: it
+asserts nothing unless the gate really lives in the policy. Under a
+service_role client, or with the check written in route code, the
+pre-acceptance attempt would succeed and the test would prove only that the UI
+disabled a button.
 
 **Write test 4 first.** It is the one that only asserts anything under decision
 9: it suspends the org mid-test and re-attempts an update that just succeeded.
@@ -470,8 +522,9 @@ step 2 from step 6 costs four Back clicks.
   no change.
 - Notifications of any kind (invite received, tutorial reviewed). The existing
   platform has none; adding them here would be scope creep.
-- Multiple leaders per org is *supported* by the schema but needs no dedicated
-  UI beyond the roster's existing role display.
+- Multiple leaders per org is *supported* by the schema, and under decision 12
+  the only way to get one is the admin roster's promote action — which §4
+  already specifies. No further UI.
 - Endorsement / probation-graduation signalling. Superseded by decision 5, which
   removes probation from the default path. If probation is ever used as a real
   waiting period, endorsement is the intended way to generate promotion
