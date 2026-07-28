@@ -8,6 +8,9 @@ vi.mock('@/lib/api-client', () => ({
 }))
 vi.mock('next/navigation', () => ({
   redirect: vi.fn(),
+  // The Backing panel is a client component that refreshes the route after a
+  // write, so rendering this page now touches useRouter.
+  useRouter: () => ({ refresh: vi.fn() }),
 }))
 vi.mock('next/cache', () => ({
   revalidatePath: vi.fn(),

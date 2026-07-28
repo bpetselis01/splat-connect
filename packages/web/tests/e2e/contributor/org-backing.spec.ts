@@ -5,6 +5,7 @@ import {
   createTutorial,
   createOrgWithLeader,
   seedBackingRequest,
+  acceptTerms,
   deleteOrg,
   deleteUser,
   signIn,
@@ -74,5 +75,54 @@ test('a project is backed by an organisation and published by its leader', async
     await deleteUser(author.id)
     await deleteUser(leader.id)
     await deleteUser(admin.id)
+  }
+})
+
+/**
+ * The loop this whole feature exists to close, and the one that was untestable
+ * before these screens existed: a contributor learns their project was turned down
+ * and asks someone else, without anyone telling them where to look.
+ */
+test('a contributor sees a decline and asks someone else', async ({ page }) => {
+  const author = await createContributor()
+  await acceptTerms(author.id)
+  const leader = await createContributor()
+  await acceptTerms(leader.id, 'org_leader_terms')
+  const orgA = await createOrgWithLeader(leader.id, `Declining ${Date.now()}`)
+  const orgB = await createOrgWithLeader(leader.id, `Second ${Date.now()}`)
+  const title = uniqueTitle('Turned down')
+  const tutorialId = await createTutorial(author.id, { title, status: 'pending' })
+  await seedBackingRequest(tutorialId, orgA)
+
+  try {
+    // The leader turns it down.
+    await signIn(page, leader.email, leader.password)
+    await page.waitForURL('**/dashboard')
+    await page.goto(`/organizations/${orgA}`)
+    await page.getByRole('button', { name: /^Decline$/ }).click()
+
+    // The author finds out on a page they already visit — nobody told them.
+    await signIn(page, author.email, author.password)
+    await page.waitForURL('**/dashboard')
+    await page.goto('/my-tutorials')
+    // Assert on the sentence that does the work, not the bare word: a contributor
+    // whose organisations all said no must be told the tutorial is still queued.
+    await expect(page.getByText(/declined · now reviewed by SPLAT/i)).toBeVisible()
+
+    // And asks someone else, from the project itself.
+    await page.goto(`/tutorials/${tutorialId}/edit`)
+    await page.getByText('Backing', { exact: false }).last().click()
+    await page.getByLabel(/Ask another organisation/i).selectOption(orgB)
+    await page.getByRole('button', { name: /^Ask$/ }).click()
+    // The panel shows the state badge beside the organisation's name; the
+    // "X is deciding" sentence is the row-summary form used on /my-tutorials.
+    await expect(page.getByText('DECIDING')).toBeVisible()
+    // And the accordion summary answers the question while shut.
+    await expect(page.getByText(/Backing\s*waiting/i)).toBeVisible()
+  } finally {
+    await deleteOrg(orgA)
+    await deleteOrg(orgB)
+    await deleteUser(author.id)
+    await deleteUser(leader.id)
   }
 })

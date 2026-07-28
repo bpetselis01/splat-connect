@@ -3,6 +3,12 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { EditBackingSection } from '@/components/edit-backing-section'
 import type { TutorialOrg, Organization } from '@splat-connect/types'
 
+// The component calls router.refresh() after a successful write, because
+// revalidatePath alone does not re-render a client component that invoked a
+// server action.
+const refresh = vi.fn()
+vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh }) }))
+
 const org = (id: string, name: string): Organization => ({
   id,
   name,
@@ -136,5 +142,24 @@ describe('EditBackingSection', () => {
     render(<EditBackingSection {...base} backing={[row('o1', 'Riverside', 'pending')]} />)
     fireEvent.click(screen.getByRole('button', { name: /withdraw/i }))
     await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument())
+  })
+
+  // Tests: a successful write refreshes the route
+  // How:   withdraw resolves; checks router.refresh was called
+  // Chain: revalidatePath marks the route stale but does not re-render the client
+  //        component that called the action — without the refresh a contributor
+  //        clicks, the write lands, and nothing visibly changes
+  it('refreshes the page after a successful write', async () => {
+    render(<EditBackingSection {...base} backing={[row('o1', 'Riverside', 'pending')]} />)
+    fireEvent.click(screen.getByRole('button', { name: /withdraw/i }))
+    await waitFor(() => expect(refresh).toHaveBeenCalled())
+  })
+
+  it('does not refresh when the write fails', async () => {
+    onWithdraw.mockRejectedValue(new Error('nope'))
+    render(<EditBackingSection {...base} backing={[row('o1', 'Riverside', 'pending')]} />)
+    fireEvent.click(screen.getByRole('button', { name: /withdraw/i }))
+    await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument())
+    expect(refresh).not.toHaveBeenCalled()
   })
 })

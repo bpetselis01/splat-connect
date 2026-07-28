@@ -21,6 +21,7 @@
  * - components/backing-state.tsx: the wording and the badge
  */
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { BackingBadge } from '@/components/backing-state'
 import type { TutorialOrg, Organization, TutorialStatus } from '@splat-connect/types'
 
@@ -39,6 +40,7 @@ export function EditBackingSection({
   onAsk: (orgId: string) => Promise<void>
   onWithdraw: (orgId: string) => Promise<void>
 }) {
+  const router = useRouter()
   const [choice, setChoice] = useState('')
   const [pendingAction, setPendingAction] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -52,6 +54,11 @@ export function EditBackingSection({
     setError(null)
     try {
       await fn()
+      // revalidatePath in the server action marks the route stale, but a client
+      // component that called it does not re-render on its own — without this the
+      // contributor clicks Ask or Withdraw, the write lands, and nothing visibly
+      // changes. Found by E2E, which is the only place the difference shows.
+      router.refresh()
     } catch {
       setError('That did not work. Please try again.')
     } finally {
