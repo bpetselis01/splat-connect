@@ -88,7 +88,12 @@ tutorials.get('/:id', async (c) => {
   const supabase = createUserClient(c.get('token'))
   const { data, error } = await supabase
     .from('tutorials')
-    .select('*, parts(*), tools(*), stl_files(*), tutorial_contributors(*, profiles(*))')
+    // reviewer/reviewed_for name who approved it and whose authority they used.
+    // Same shape the public detail route uses, so there is one way to ask this.
+    .select(
+      '*, parts(*), tools(*), stl_files(*), tutorial_contributors(*, profiles(*)), ' +
+        'reviewer:reviewed_by(name), reviewed_for:reviewed_for_org_id(name)'
+    )
     .eq('id', c.req.param('id'))
     .single()
   if (error) return c.json({ error: error.message }, 404)
