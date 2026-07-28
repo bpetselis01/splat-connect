@@ -282,6 +282,18 @@ create policy "Leaders can read projects offered to their org"
   on public.tutorials for select
   using (public.tutorial_offered_to_my_org(id));
 
+-- tutorial_contributors — leader SELECT
+-- A leader reviewing a project has to know who wrote it, and the review screen
+-- names the contributor. Without this the existing policies only admit a
+-- tutorial's own contributors and anyone at all once it is approved, so a leader
+-- sees nothing for a pending project.
+-- It is also load-bearing beyond the display: GET /api/tutorials embeds
+-- tutorial_contributors!inner, and an inner join over rows RLS hides drops the
+-- whole tutorial. The leader's queue was silently empty until this existed.
+create policy "Leaders can read contributors of projects offered to their org"
+  on public.tutorial_contributors for select
+  using (public.tutorial_offered_to_my_org(tutorial_id));
+
 -- tutorials — leader UPDATE, the review grant.
 -- Both conditions live in one policy so that losing leadership, the organisation
 -- being suspended, an organisation withdrawing its backing, and withdrawn consent

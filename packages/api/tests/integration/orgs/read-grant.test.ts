@@ -47,6 +47,26 @@ describe('the leader read grant', () => {
     expect(data ?? []).toHaveLength(0)
   })
 
+  it('reads the contributor rows too, so the inner join in GET /api/tutorials holds', async () => {
+    // GET /api/tutorials embeds tutorial_contributors!inner. An inner join over
+    // rows RLS hides drops the parent, so without a contributor read grant the
+    // leader's queue is silently empty even though the tutorial itself is visible.
+    const db = createUserClient(leader.token)
+    const { data: plain } = await db.from('tutorials').select('id').eq('id', offered)
+    const { data: joined } = await db
+      .from('tutorials')
+      .select('id, tutorial_contributors!inner(profile_id)')
+      .eq('id', offered)
+    expect(plain).toHaveLength(1)
+    expect(joined).toHaveLength(1)
+  })
+
+  it('a leader of another org cannot read the contributors either', async () => {
+    const { data } = await createUserClient(otherLeader.token)
+      .from('tutorial_contributors').select('profile_id').eq('tutorial_id', offered)
+    expect(data ?? []).toHaveLength(0)
+  })
+
   it('a leader of another org cannot read it either', async () => {
     const { data } = await createUserClient(otherLeader.token)
       .from('tutorials').select('id').eq('id', offered)
