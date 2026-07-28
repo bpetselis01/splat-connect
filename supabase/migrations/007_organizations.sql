@@ -149,3 +149,45 @@ alter table public.organizations   enable row level security;
 alter table public.org_leaders     enable row level security;
 alter table public.user_agreements enable row level security;
 alter table public.tutorial_orgs   enable row level security;
+
+-- ============================================================
+-- tutorial_orgs — the backing handshake
+-- ============================================================
+
+-- The author asks. Always 'pending' — an author who could write 'accepted' would
+-- hand an organisation's leaders authority it never agreed to, which is the
+-- single thing this table exists to prevent. Draft or pending tutorials only: you
+-- cannot bolt an organisation onto published work.
+create policy "Authors can ask an org to back their project"
+  on public.tutorial_orgs for insert
+  with check (
+    public.is_tutorial_contributor(tutorial_id)
+    and status = 'pending'
+    and exists (
+      select 1 from public.tutorials t
+      where t.id = tutorial_id and t.status in ('draft', 'pending')
+    )
+  );
+
+-- A leader answers for their own organisation and no other. is_org_leader is
+-- checked in BOTH clauses: USING sees the old row, WITH CHECK the new one, so
+-- together they stop a leader moving a row to an organisation they do not lead.
+-- There is deliberately no UPDATE policy for contributors — the author's only
+-- powers over this row are creating it and deleting it.
+create policy "Leaders can answer requests to their org"
+  on public.tutorial_orgs for update
+  using (public.is_org_leader(org_id))
+  with check (
+    public.is_org_leader(org_id)
+    and status in ('accepted', 'declined')
+  );
+
+create policy "The author and the asked org can read a request"
+  on public.tutorial_orgs for select
+  using (
+    public.is_tutorial_contributor(tutorial_id)
+    or public.is_org_leader(org_id)
+  );
+
+create policy "Admin full access to tutorial_orgs"
+  on public.tutorial_orgs for all using (public.is_admin());
