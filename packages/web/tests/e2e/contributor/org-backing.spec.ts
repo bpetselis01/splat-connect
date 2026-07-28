@@ -4,6 +4,7 @@ import {
   createAdmin,
   createTutorial,
   createOrgWithLeader,
+  seedBackingRequest,
   deleteOrg,
   deleteUser,
   signIn,
@@ -26,20 +27,18 @@ test('a project is backed by an organisation and published by its leader', async
   const tutorialId = await createTutorial(author.id, { title, status: 'pending' })
 
   try {
-    // 1. The leader sees the request only once the author has made it, so start
-    //    with an empty queue to prove the row that appears is the one we created.
+    // 1. The author asks the organisation to back it. Seeded rather than driven
+    //    through the six-step wizard: the wizard and the request endpoint both have
+    //    their own coverage, and what this journey is for is the leader's screens.
+    await seedBackingRequest(tutorialId, orgId)
+
+    // 2. The leader arrives and is asked for the terms before anything else.
     await signIn(page, leader.email, leader.password)
+    // Wait for the post-login redirect: signIn only clicks the button, so
+    // navigating straight away races the auth cookie being set.
+    await page.waitForURL('**/dashboard')
     await page.goto(`/org/${orgId}`)
     await expect(page.getByRole('heading', { name: orgName })).toBeVisible()
-    await expect(page.getByText(title)).toHaveCount(0)
-
-    // 2. The author asks the organisation to back it. Done through the API rather
-    //    than the six-step wizard: the wizard has its own coverage, and what
-    //    matters here is that the leader's screen reacts.
-    await page.request.post(`/api/tutorials/${tutorialId}/orgs`, { data: { org_id: orgId } })
-
-    // 3. The leader accepts the terms, then backs it.
-    await page.goto(`/org/${orgId}`)
     await expect(page.getByRole('heading', { name: /Accept the leader terms/i })).toBeVisible()
     await page.getByRole('button', { name: /I accept the organisation leader terms/i }).click()
     await expect(page.getByRole('heading', { name: /Accept the leader terms/i })).toHaveCount(0)
@@ -47,8 +46,16 @@ test('a project is backed by an organisation and published by its leader', async
     await expect(page.getByText(title)).toBeVisible()
     await page.getByRole('button', { name: /Back this project/i }).click()
 
+    // 3. Backing moves it from "asking" to "waiting for review". Assert on the
+    //    review link's presence rather than clicking by title: the title appears in
+    //    both lists, and in the asking list it links to the public page, which 404s
+    //    for a tutorial that is not published yet.
+    await expect(
+      page.getByRole('link', { name: title }).and(page.locator(`a[href*="/review/"]`))
+    ).toBeVisible()
+
     // 4. And approves it.
-    await page.getByRole('link', { name: title }).click()
+    await page.goto(`/org/${orgId}/review/${tutorialId}`)
     await page.getByRole('button', { name: /Approve and publish/i }).click()
     await expect(page).toHaveURL(new RegExp(`/org/${orgId}$`))
 
@@ -59,6 +66,7 @@ test('a project is backed by an organisation and published by its leader', async
 
     // 6. And it reaches the admin's spot-check, because the admin did not approve it.
     await signIn(page, admin.email, admin.password)
+    await page.waitForURL('**/admin')
     await page.goto('/admin/spot-check')
     await expect(page.getByText(title)).toBeVisible()
   } finally {

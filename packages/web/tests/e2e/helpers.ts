@@ -208,6 +208,21 @@ export async function createOrgWithLeader(leaderId: string, name: string) {
   return data.id as string
 }
 
+/**
+ * Seed a pending backing request from an author to an organisation.
+ *
+ * Through the service role rather than the API, for the same reason
+ * createTutorial seeds a tutorial: the author's request path has its own
+ * integration coverage, and a browser-context request would carry whichever
+ * user is currently signed in.
+ */
+export async function seedBackingRequest(tutorialId: string, orgId: string) {
+  const { error } = await adminClient()
+    .from('tutorial_orgs')
+    .insert({ tutorial_id: tutorialId, org_id: orgId, status: 'pending' })
+  if (error) throw new Error(`seedBackingRequest failed: ${error.message}`)
+}
+
 /** Organisations cascade to org_leaders and tutorial_orgs, so this is enough. */
 export async function deleteOrg(orgId: string) {
   await adminClient().from('organizations').delete().eq('id', orgId)
