@@ -142,3 +142,63 @@ describe('PATCH /api/admin/organizations/:id', () => {
     expect(res.status).toBe(400)
   })
 })
+
+describe('the admin queue and spot-check', () => {
+  it('shows every pending tutorial, with backing state on the row', async () => {
+    const res = await app.request('/api/admin/tutorials?status=pending', authed(admin.token))
+    expect(res.status).toBe(200)
+    const rows = (await res.json()) as Array<{
+      id: string
+      tutorial_orgs: Array<{ status: string; organizations: { name: string } }>
+    }>
+    const row = rows.find((r) => r.id === project)
+    // Decision 23: an accepted backing does not remove it from the admin's view.
+    expect(row).toBeTruthy()
+    expect(row!.tutorial_orgs.some((b) => b.status === 'accepted')).toBe(true)
+    expect(row!.tutorial_orgs[0].organizations.name).toBeTruthy()
+  })
+
+  it('samples tutorials the admin did not approve, and excludes their own', async () => {
+    const mine = await createProject({ authorId: author.id, status: 'approved' })
+    const theirs = await createProject({ authorId: author.id, status: 'approved' })
+    await adminClient().from('tutorials').update({ reviewed_by: admin.id }).eq('id', mine)
+    await adminClient().from('tutorials').update({ reviewed_by: leader.id }).eq('id', theirs)
+
+    const res = await app.request('/api/admin/spot-check', authed(admin.token))
+    const ids = ((await res.json()) as Array<{ id: string }>).map((t) => t.id)
+    expect(ids).toContain(theirs)
+    expect(ids).not.toContain(mine)
+
+    await adminClient().from('tutorials').delete().in('id', [mine, theirs])
+  })
+
+  it('403s for a contributor', async () => {
+    const res = await app.request('/api/admin/spot-check', authed(leader.token))
+    expect(res.status).toBe(403)
+  })
+
+  it('an admin can reject a tutorial a leader already published', async () => {
+    // Spec §5 test 16, and the last of the three reactive controls that replace
+    // the self-review block. The status endpoint places no constraint on the
+    // transition, so approved -> rejected pulls a bad approval back down.
+    const published = await createProject({ authorId: author.id, status: 'approved' })
+    await adminClient().from('tutorials').update({
+      reviewed_by: leader.id, reviewed_for_org_id: createdOrgIds[0],
+    }).eq('id', published)
+
+    const res = await app.request(`/api/admin/tutorials/${published}/status`, authed(admin.token, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: 'rejected', rejection_note: 'Step 4 is unsafe as written' }),
+    }))
+    expect(res.status).toBe(200)
+
+    const { data } = await adminClient()
+      .from('tutorials').select('status, rejection_note, reviewed_by').eq('id', published).single()
+    expect(data).toMatchObject({ status: 'rejected', rejection_note: 'Step 4 is unsafe as written' })
+    // The admin's own id replaces the leader's: whoever last decided is who the
+    // audit trail names.
+    expect(data?.reviewed_by).toBe(admin.id)
+
+    await adminClient().from('tutorials').delete().eq('id', published)
+  })
+})
