@@ -1,6 +1,7 @@
 import { ComingSoon } from '../../components/coming-soon'
 
-// Copy mirrors the 3D Print Request flow in SPLAT_mobile_claude_design/.
+// Copy mirrors the 3D Print Request flow in the design prototype (removed from
+// the repo; see the 2026-07-23 mobile-frontend-redesign docs).
 export default function PrintRoute() {
   return (
     <ComingSoon
