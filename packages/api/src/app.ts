@@ -33,6 +33,7 @@ import contributors from './routes/contributors.js'
 import childProfile from './routes/child-profile.js'
 import agreements from './routes/agreements.js'
 import organizations from './routes/organizations.js'
+import tutorialOrgs from './routes/tutorial-orgs.js'
 
 const app = new Hono()
 
@@ -61,6 +62,7 @@ app.route('/api/upload', upload)
 app.route('/api/tutorials', parts)
 app.route('/api/tutorials', tools)
 app.route('/api/tutorials', stlFiles)
+app.route('/api/tutorials', tutorialOrgs)
 app.route('/api/admin', admin)
 app.route('/api/contributors', contributors)
 app.route('/api/child-profile', childProfile)
