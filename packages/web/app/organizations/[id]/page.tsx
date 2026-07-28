@@ -4,9 +4,10 @@
  * Two lists, and the split between them is the point: backing a project is a
  * commitment to look at it, not a verdict on it.
  *
- * 1. Projects asking for your backing — a contributor named this organisation
- *    when they submitted. Accepting is what confers review authority.
- * 2. Waiting for your review — projects this organisation already backs.
+ * The leader half is ONE queue of everything waiting on this organisation, oldest
+ * first — requests to back and projects to review together, distinguished by a
+ * badge. The two acts stay separate where it matters: on the project page, which
+ * offers only the action the state allows.
  *
  * Both come from GET /api/tutorials with no filter for safety: the leader read
  * grant in 007 already limits that list to projects offered to an organisation the
@@ -27,6 +28,7 @@ import { apiClient } from '@/lib/api-client'
 import { isOrgLeader } from '@/lib/org-access'
 import { OrgReviewBanner } from '@/components/org-review-banner'
 import { DifficultyBadge } from '@/components/difficulty-badge'
+import { BackingBadge } from '@/components/backing-state'
 import type { Tutorial, TutorialOrg, UserAgreement, Organization, OrgLeader } from '@splat-connect/types'
 
 async function acceptBacking(formData: FormData) {
@@ -75,12 +77,21 @@ export default async function OrganizationPage({
       : Promise.resolve([] as UserAgreement[]),
   ])
   const hasTerms = agreements.some((a) => a.agreement_type === 'org_leader_terms')
-  const canReview = leads && hasTerms && org!.status === 'active'
-
   const rowFor = (t: Backed) => t.tutorial_orgs?.find((b) => b.org_id === orgId)
-  const requests = leads ? tutorials.filter((t) => rowFor(t)?.status === 'pending') : []
-  const queue = leads
-    ? tutorials.filter((t) => rowFor(t)?.status === 'accepted' && t.status === 'pending')
+
+  // ONE queue, oldest first. Two sections put the leader in the position of
+  // merging the answer themselves — they arrive asking "what is oldest", not
+  // "what kind of thing is oldest". The two acts stay distinguished where it
+  // matters: on the project page, which offers only the applicable action.
+  const waiting = leads
+    ? tutorials
+        .filter((t) => {
+          const row = rowFor(t)
+          if (!row) return false
+          if (row.status === 'pending') return true
+          return row.status === 'accepted' && t.status === 'pending'
+        })
+        .sort((a, b) => a.created_at.localeCompare(b.created_at))
     : []
 
   // The public half: what this organisation has actually put its name to. Derived
@@ -139,65 +150,31 @@ export default async function OrganizationPage({
 
         <section className="mt-8">
           <h2 className="mb-3 text-lg font-semibold text-ink">
-            Projects asking for your backing ({requests.length})
+            Waiting on you ({waiting.length})
           </h2>
-          {requests.length === 0 ? (
+          {waiting.length === 0 ? (
             <p className="empty-badge">
-              Nothing waiting. Contributors ask by choosing your organisation when they
-              submit a tutorial.
+              Nothing waiting. Contributors ask by choosing your organisation when
+              they submit a tutorial.
             </p>
           ) : (
-            <ul className="space-y-3">
-              {requests.map((t) => (
-                <li key={t.id} className="card">
-                  <div className="flex items-start justify-between gap-3">
-                    <Link href={`/tutorials/${t.id}`} className="font-medium">
+            <ul className="flex flex-col gap-3">
+              {waiting.map((t) => (
+                <li key={t.id} className="card p-4">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <BackingBadge status={rowFor(t)!.status} />
+                    {/* Always the project page, never /tutorials/[id]. That link is
+                        the hole: the public page serves only approved work, so every
+                        item in this queue 404'd. */}
+                    <Link
+                      href={`/organizations/${orgId}/projects/${t.id}`}
+                      className="font-medium text-ink"
+                    >
                       {t.title}
                     </Link>
-                    <DifficultyBadge difficulty={t.difficulty} />
-                  </div>
-                  {t.description && <p className="mt-2 text-sm text-muted">{t.description}</p>}
-                  <div className="mt-3 flex gap-2">
-                    <form action={acceptBacking}>
-                      <input type="hidden" name="tutorialId" value={t.id} />
-                      <input type="hidden" name="orgId" value={orgId} />
-                      <button type="submit" className="btn btn-accent">
-                        Back this project
-                      </button>
-                    </form>
-                    <form action={declineBacking}>
-                      <input type="hidden" name="tutorialId" value={t.id} />
-                      <input type="hidden" name="orgId" value={orgId} />
-                      <button type="submit" className="btn">
-                        Decline
-                      </button>
-                    </form>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-
-        <section className="mt-10">
-          <h2 className="mb-3 text-lg font-semibold text-ink">
-            Waiting for your review ({queue.length})
-          </h2>
-          {queue.length === 0 ? (
-            <p className="empty-badge">Nothing to review right now.</p>
-          ) : (
-            <ul className="space-y-3">
-              {queue.map((t) => (
-                <li key={t.id} className="card">
-                  <div className="flex items-start justify-between gap-3">
-                    {canReview ? (
-                      <Link href={`/organizations/${orgId}/review/${t.id}`} className="font-medium">
-                        {t.title}
-                      </Link>
-                    ) : (
-                      <span className="font-medium text-muted">{t.title}</span>
-                    )}
-                    <DifficultyBadge difficulty={t.difficulty} />
+                    <span className="ml-auto">
+                      <DifficultyBadge difficulty={t.difficulty} />
+                    </span>
                   </div>
                 </li>
               ))}
