@@ -101,8 +101,10 @@ unreachable until a user can record an acceptance.
  * can be edited is not a record.
  *
  * Related files:
- * - supabase/migrations/007_organizations.sql: user_agreements table + has_accepted()
- * - routes/organizations.ts: gated on org_leader_terms
+ * - supabase/migrations/007_organizations.sql: user_agreements table, has_accepted(),
+ *   and the tutorials leader UPDATE policy that has_accepted() now gates. No route
+ *   enforces the agreement — this endpoint exists so a promoted leader can satisfy
+ *   that policy.
  * - routes/tutorials.ts: gated on contributor_terms
  */
 import { Hono } from 'hono'
@@ -243,16 +245,21 @@ git commit -m "test(api): assert acceptance version cannot be forged by the clie
 
 ---
 
-## Task 2: Organizations route
+## Task 2: Organizations route (read-only)
+
+There is no contributor-facing create endpoint. Under spec decision 11 only the
+admin creates organisations, and the `organizations` INSERT policy is
+`is_admin()` — a `POST /api/organizations` written here would be refused by the
+database on every call. Creation lives in Task 2b.
 
 **Files:**
 - Create: `packages/api/src/routes/organizations.ts`
 - Modify: `packages/api/src/app.ts`
 
 **Interfaces:**
-- Consumes: `has_accepted('org_leader_terms')` enforced by the INSERT policy.
+- Consumes: the `organizations` and `org_members` SELECT policies from
+  `007_organizations.sql`.
 - Produces:
-  - `POST /api/organizations` body `{ name, description? }` → 201 `Organization`
   - `GET /api/organizations` → `Organization[]` (approved only)
   - `GET /api/organizations/mine` → `(OrgMember & { organizations: Organization })[]`
 
@@ -260,32 +267,28 @@ git commit -m "test(api): assert acceptance version cannot be forged by the clie
 
 ```typescript
 /**
- * Organization Routes (Protected)
+ * Organization Routes (Protected, read-only)
  *
  * Endpoints:
- * - POST /api/organizations
- *   - Body: { name: string, description?: string }
- *   - Creates a PENDING org and makes the creator its first approved leader.
- *   - 403 unless the caller has accepted org_leader_terms (enforced by RLS).
- *   - Returns: Organization
+ *  - GET /api/organizations
+ *      - Approved orgs only — the browse/join picker.
  *
- * - GET /api/organizations
- *   - Approved orgs only — the browse/join picker.
- *
- * - GET /api/organizations/mine
- *   - The caller's memberships with the org embedded. Drives the submit-flow org
- *     picker and the dashboard's org section.
+ *  - GET /api/organizations/mine
+ *      - The caller's memberships with the org embedded. Drives the submit-flow
+ *        org picker and the dashboard's org section.
  *
  * Security notes:
- * - Every write here goes through createUserClient, so the policies in
- *   007_organizations.sql are the enforcement layer. status and trust_level are
- *   absent from every payload: only an admin may set them, and the org INSERT
- *   policy independently pins them to 'pending'/'probation'.
+ *  - Reads go through createUserClient, so the SELECT policies in
+ *    007_organizations.sql decide what comes back. `/mine` filters on user_id as
+ *    well, but only as an index hint — the policy is what makes it safe.
+ *  - There is deliberately no POST here. Only an admin may create an
+ *    organisation (see routes/admin.ts), and the RLS INSERT policy is is_admin(),
+ *    so a create handler on this router could never succeed.
  *
  * Related files:
- * - supabase/migrations/007_organizations.sql: policies enforcing all of the above
- * - routes/org-members.ts: joining, inviting, roster management
- * - routes/admin.ts: approving and suspending orgs
+ *  - supabase/migrations/007_organizations.sql: the policies enforcing all of the above
+ *  - routes/org-members.ts: joining, inviting, roster
+ *  - routes/admin.ts: creation, suspension, trust level, leader promotion
  */
 import { Hono } from 'hono'
 import { createUserClient } from '../supabase/user-client.js'
@@ -316,50 +319,6 @@ organizations.get('/mine', async (c) => {
   return c.json(data)
 })
 
-organizations.post('/', async (c) => {
-  const body = await c.req.json<{ name?: string; description?: string }>()
-  if (!body.name?.trim()) return c.json({ error: 'name is required' }, 400)
-
-  const supabase = createUserClient(c.get('token'))
-  const { data: org, error } = await supabase
-    .from('organizations')
-    .insert({
-      name: body.name.trim(),
-      description: body.description?.trim() || null,
-      created_by: c.get('userId'),
-      status: 'pending',
-      trust_level: 'probation',
-    })
-    .select()
-    .single()
-
-  if (error) {
-    // 42501 = insufficient_privilege: the RLS INSERT policy refused, which for
-    // this route means org_leader_terms has not been accepted.
-    if (error.code === '42501') {
-      return c.json({ error: 'You must accept the organisation leader terms first' }, 403)
-    }
-    return c.json({ error: error.message }, 500)
-  }
-
-  // The founder bootstrap. This is the one legitimate self-approval in the whole
-  // design: you cannot invite yourself to an org you just created, and without a
-  // first leader the invite policy (which requires is_org_leader) can never be
-  // satisfied. The RLS policy restricts it to the creator of a leaderless org.
-  const { error: memberError } = await supabase.from('org_members').insert({
-    org_id: org.id,
-    user_id: c.get('userId'),
-    org_role: 'leader',
-    status: 'approved',
-    initiated_by: 'org',
-    invited_by: c.get('userId'),
-    joined_at: new Date().toISOString(),
-  })
-  if (memberError) return c.json({ error: memberError.message }, 500)
-
-  return c.json(org, 201)
-})
-
 export default organizations
 ```
 
@@ -386,11 +345,12 @@ Create `packages/api/tests/integration/orgs/organizations.test.ts`:
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
-import { acceptTerms } from '../../helpers/orgs.js'
+import { createOrg, addMember, cleanupOrg } from '../../helpers/orgs.js'
 
-let accepted: TestUser
-let notAccepted: TestUser
-const createdOrgIds: string[] = []
+let member: TestUser
+let outsider: TestUser
+let approvedOrg: string
+let pendingOrg: string
 
 const authed = (token: string, init: RequestInit = {}) => ({
   ...init,
@@ -398,68 +358,47 @@ const authed = (token: string, init: RequestInit = {}) => ({
 })
 
 beforeAll(async () => {
-  accepted = await createTestUser('contributor')
-  notAccepted = await createTestUser('contributor')
-  await acceptTerms(accepted.id, 'org_leader_terms')
+  member = await createTestUser('contributor')
+  outsider = await createTestUser('contributor')
+  const admin = await createTestUser('admin')
+  approvedOrg = await createOrg({ createdBy: admin.id, status: 'approved' })
+  pendingOrg = await createOrg({ createdBy: admin.id, status: 'pending' })
+  await addMember({ orgId: approvedOrg, userId: member.id, orgRole: 'member', status: 'approved' })
+  await deleteTestUser(admin.id)
 })
 
 afterAll(async () => {
-  const admin = adminClient()
-  if (createdOrgIds.length) {
-    await admin.from('org_members').delete().in('org_id', createdOrgIds)
-    await admin.from('organizations').delete().in('id', createdOrgIds)
-  }
-  await admin.from('user_agreements').delete().eq('user_id', accepted.id)
-  await deleteTestUser(accepted.id)
-  await deleteTestUser(notAccepted.id)
+  await cleanupOrg(approvedOrg)
+  await cleanupOrg(pendingOrg)
+  await deleteTestUser(member.id)
+  await deleteTestUser(outsider.id)
 })
 
-describe('POST /api/organizations', () => {
-  it('creates a pending org and makes the creator an approved leader', async () => {
-    const res = await app.request('/api/organizations', authed(accepted.token, {
-      method: 'POST',
-      body: JSON.stringify({ name: 'Riverside Therapy', description: 'Test org' }),
-    }))
-    expect(res.status).toBe(201)
-    const org = (await res.json()) as { id: string; status: string; trust_level: string }
-    createdOrgIds.push(org.id)
-
-    expect(org.status).toBe('pending')
-    expect(org.trust_level).toBe('probation')
-
-    const { data: member } = await adminClient()
-      .from('org_members')
-      .select('org_role, status')
-      .eq('org_id', org.id)
-      .eq('user_id', accepted.id)
-      .single()
-    expect(member).toEqual({ org_role: 'leader', status: 'approved' })
-  })
-
-  it('cannot forge an approved, trusted org through the request body', async () => {
-    const res = await app.request('/api/organizations', authed(accepted.token, {
-      method: 'POST',
-      body: JSON.stringify({ name: 'Forged', status: 'approved', trust_level: 'trusted' }),
-    }))
-    expect(res.status).toBe(201)
-    const org = (await res.json()) as { id: string; status: string; trust_level: string }
-    createdOrgIds.push(org.id)
-    expect(org.status).toBe('pending')
-    expect(org.trust_level).toBe('probation')
-  })
-
-  it('refuses a creator who has not accepted the leader terms', async () => {
-    const res = await app.request('/api/organizations', authed(notAccepted.token, {
-      method: 'POST',
-      body: JSON.stringify({ name: 'No Terms Org' }),
-    }))
-    expect(res.status).toBe(403)
-  })
-
-  it('does not list a pending org in the public browse list', async () => {
-    const res = await app.request('/api/organizations', authed(notAccepted.token))
+describe('GET /api/organizations', () => {
+  it('lists approved orgs and hides pending ones', async () => {
+    const res = await app.request('/api/organizations', authed(outsider.token))
+    expect(res.status).toBe(200)
     const list = (await res.json()) as Array<{ id: string }>
-    expect(list.map((o) => o.id)).not.toContain(createdOrgIds[0])
+    const ids = list.map((o) => o.id)
+    expect(ids).toContain(approvedOrg)
+    expect(ids).not.toContain(pendingOrg)
+  })
+})
+
+describe('GET /api/organizations/mine', () => {
+  it("returns the caller's memberships with the org embedded", async () => {
+    const res = await app.request('/api/organizations/mine', authed(member.token))
+    expect(res.status).toBe(200)
+    const list = (await res.json()) as Array<{ org_id: string; organizations: { id: string } }>
+    expect(list).toHaveLength(1)
+    expect(list[0].org_id).toBe(approvedOrg)
+    expect(list[0].organizations.id).toBe(approvedOrg)
+  })
+
+  it('returns nothing for someone with no memberships', async () => {
+    const res = await app.request('/api/organizations/mine', authed(outsider.token))
+    const list = (await res.json()) as unknown[]
+    expect(list).toHaveLength(0)
   })
 })
 ```
@@ -470,19 +409,307 @@ describe('POST /api/organizations', () => {
 pnpm --filter @splat-connect/api test:integration -- tests/integration/orgs/organizations.test.ts
 ```
 
-Expected: 4 passed.
+Expected: 3 passed.
 
 - [ ] **Step 5: Commit, one file at a time**
 
 ```bash
 git add packages/api/src/routes/organizations.ts
-git commit -m "feat(api): add organization create, browse, and membership listing routes"
+git commit -m "feat(api): add organization browse and membership listing routes"
 
 git add packages/api/src/app.ts
 git commit -m "feat(api): mount the organizations routes behind auth"
 
 git add packages/api/tests/integration/orgs/organizations.test.ts
-git commit -m "test(api): assert a new org cannot be created already approved or trusted"
+git commit -m "test(api): assert the browse list hides orgs that are not approved"
+```
+
+---
+
+## Task 2b: Admin organisation and leadership endpoints
+
+Creation and leader promotion, the two things spec decisions 11 and 12 reserve to
+the admin. Both live in `routes/admin.ts`, behind the existing role check at
+`admin.ts:56`, and both use the admin client.
+
+**Files:**
+- Modify: `packages/api/src/routes/admin.ts`
+- Test: `packages/api/tests/integration/orgs/admin-organizations.test.ts`
+
+**Interfaces:**
+- Consumes: `"Admin can create organizations"` and
+  `"Admin full access to org_members"` from `007_organizations.sql`.
+- Produces:
+  - `POST /api/admin/organizations` body `{ name, description?, leader_user_id }` → 201 `Organization`
+  - `PATCH /api/admin/organizations/:orgId/members/:userId` body `{ org_role }` → 200 `OrgMember`
+
+- [ ] **Step 1: Write the create handler**
+
+```typescript
+/**
+ * POST /api/admin/organizations
+ *
+ * Creates an organisation and its first leader in one call.
+ *
+ * WHY leader_user_id is required rather than optional: an org with no leader
+ * cannot approve its own join requests, so a leaderless org is inert and the
+ * admin would have to come back to fix it. An earlier design had the founder
+ * self-claim leadership through an RLS bootstrap policy; that policy is gone with
+ * the founder (spec decision 11), and this is what replaces it.
+ *
+ * WHY status/trust_level are set explicitly rather than left to the column
+ * defaults: the defaults are pending/probation on purpose, so that a row written
+ * by some future path that forgets is inert rather than live. Creation by the
+ * admin *is* the approval (decision 5), so this route opts in deliberately.
+ *
+ * WHY the profiles.role check is TypeScript and not RLS: spec decision 9 puts
+ * enforcement in the database because a *leader* is a semi-trusted account held
+ * by someone outside the platform. This route is behind admin middleware and the
+ * admin client holds service_role regardless, so a database guard here would
+ * constrain nobody. Decision 8's real failure mode is a parent-role leader being
+ * treated as logged-out by getUserRole() with no error to debug — a 400 at the
+ * point of the mistake is the fix that helps.
+ */
+admin.post('/organizations', async (c) => {
+  const body = await c.req.json<{ name?: string; description?: string; leader_user_id?: string }>()
+  if (!body.name?.trim()) return c.json({ error: 'name is required' }, 400)
+  if (!body.leader_user_id) return c.json({ error: 'leader_user_id is required' }, 400)
+
+  const supabase = createAdminClient()
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', body.leader_user_id)
+    .single()
+  if (!profile) return c.json({ error: 'leader_user_id does not exist' }, 400)
+  if (profile.role !== 'contributor') {
+    return c.json({ error: 'an org leader must have the contributor role' }, 400)
+  }
+
+  const { data: org, error } = await supabase
+    .from('organizations')
+    .insert({
+      name: body.name.trim(),
+      description: body.description?.trim() || null,
+      created_by: c.get('userId'),
+      status: 'approved',
+      trust_level: 'trusted',
+    })
+    .select()
+    .single()
+  if (error) return c.json({ error: error.message }, 500)
+
+  const { error: memberError } = await supabase.from('org_members').insert({
+    org_id: org.id,
+    user_id: body.leader_user_id,
+    org_role: 'leader',
+    status: 'approved',
+    initiated_by: 'org',
+    invited_by: c.get('userId'),
+    joined_at: new Date().toISOString(),
+  })
+  if (memberError) {
+    // Roll the org back rather than leaving a leaderless one behind: it would be
+    // browsable and joinable, and nobody could act on the join requests.
+    await supabase.from('organizations').delete().eq('id', org.id)
+    return c.json({ error: memberError.message }, 500)
+  }
+
+  return c.json(org, 201)
+})
+```
+
+- [ ] **Step 2: Write the promote/demote handler**
+
+```typescript
+/**
+ * PATCH /api/admin/organizations/:orgId/members/:userId
+ *
+ * The only path in the product that grants org leadership (spec decision 12).
+ * Every other write path is closed against it: the invite policy pins
+ * org_role = 'member', and org_members_freeze_provenance refuses an org_role
+ * change from anyone but an admin.
+ *
+ * Requires the membership to already be approved. Promoting a pending row would
+ * produce ('leader', 'pending') — a state the schema allows, but one that reads
+ * as an invited leader who has not accepted, which is not what happened.
+ */
+admin.patch('/organizations/:orgId/members/:userId', async (c) => {
+  const { orgId, userId } = c.req.param()
+  const body = await c.req.json<{ org_role?: string }>()
+  if (body.org_role !== 'leader' && body.org_role !== 'member') {
+    return c.json({ error: "org_role must be 'leader' or 'member'" }, 400)
+  }
+
+  const supabase = createAdminClient()
+  const { data: membership } = await supabase
+    .from('org_members')
+    .select('id, status')
+    .eq('org_id', orgId)
+    .eq('user_id', userId)
+    .single()
+  if (!membership) return c.json({ error: 'membership not found' }, 404)
+  if (membership.status !== 'approved') {
+    return c.json({ error: 'only an approved member can be promoted or demoted' }, 400)
+  }
+
+  if (body.org_role === 'leader') {
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', userId).single()
+    if (profile?.role !== 'contributor') {
+      return c.json({ error: 'an org leader must have the contributor role' }, 400)
+    }
+  }
+
+  const { data, error } = await supabase
+    .from('org_members')
+    .update({ org_role: body.org_role })
+    .eq('id', membership.id)
+    .select()
+    .single()
+  if (error) return c.json({ error: error.message }, 500)
+  return c.json(data)
+})
+```
+
+- [ ] **Step 3: Write the failing integration test**
+
+Create `packages/api/tests/integration/orgs/admin-organizations.test.ts`:
+
+```typescript
+import { describe, it, expect, beforeAll, afterAll } from 'vitest'
+import app from '../../../src/app.js'
+import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
+import { addMember, cleanupOrg } from '../../helpers/orgs.js'
+
+let admin: TestUser
+let leader: TestUser
+let parent: TestUser
+let joiner: TestUser
+const createdOrgIds: string[] = []
+
+const authed = (token: string, init: RequestInit = {}) => ({
+  ...init,
+  headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', ...(init.headers ?? {}) },
+})
+
+beforeAll(async () => {
+  admin = await createTestUser('admin')
+  leader = await createTestUser('contributor')
+  parent = await createTestUser('parent')
+  joiner = await createTestUser('contributor')
+})
+
+afterAll(async () => {
+  for (const id of createdOrgIds) await cleanupOrg(id)
+  await deleteTestUser(admin.id)
+  await deleteTestUser(leader.id)
+  await deleteTestUser(parent.id)
+  await deleteTestUser(joiner.id)
+})
+
+describe('POST /api/admin/organizations', () => {
+  it('creates an approved, trusted org and its first leader', async () => {
+    const res = await app.request('/api/admin/organizations', authed(admin.token, {
+      method: 'POST',
+      body: JSON.stringify({ name: 'Riverside Therapy', leader_user_id: leader.id }),
+    }))
+    expect(res.status).toBe(201)
+    const org = (await res.json()) as { id: string; status: string; trust_level: string }
+    createdOrgIds.push(org.id)
+    expect(org.status).toBe('approved')
+    expect(org.trust_level).toBe('trusted')
+
+    const { data: member } = await adminClient()
+      .from('org_members')
+      .select('org_role, status')
+      .eq('org_id', org.id)
+      .eq('user_id', leader.id)
+      .single()
+    expect(member).toEqual({ org_role: 'leader', status: 'approved' })
+  })
+
+  it('refuses a contributor', async () => {
+    const res = await app.request('/api/admin/organizations', authed(leader.token, {
+      method: 'POST',
+      body: JSON.stringify({ name: 'Self Serve', leader_user_id: leader.id }),
+    }))
+    expect(res.status).toBe(403)
+  })
+
+  it('refuses a leader who is not a contributor', async () => {
+    const res = await app.request('/api/admin/organizations', authed(admin.token, {
+      method: 'POST',
+      body: JSON.stringify({ name: 'Parent Led', leader_user_id: parent.id }),
+    }))
+    expect(res.status).toBe(400)
+  })
+
+  it('refuses a request with no leader_user_id', async () => {
+    const res = await app.request('/api/admin/organizations', authed(admin.token, {
+      method: 'POST',
+      body: JSON.stringify({ name: 'Leaderless' }),
+    }))
+    expect(res.status).toBe(400)
+  })
+})
+
+describe('PATCH /api/admin/organizations/:orgId/members/:userId', () => {
+  it('promotes an approved member to leader', async () => {
+    const orgId = createdOrgIds[0]
+    await addMember({ orgId, userId: joiner.id, orgRole: 'member', status: 'approved' })
+    const res = await app.request(
+      `/api/admin/organizations/${orgId}/members/${joiner.id}`,
+      authed(admin.token, { method: 'PATCH', body: JSON.stringify({ org_role: 'leader' }) }),
+    )
+    expect(res.status).toBe(200)
+    const { data } = await adminClient()
+      .from('org_members').select('org_role').eq('org_id', orgId).eq('user_id', joiner.id).single()
+    expect(data?.org_role).toBe('leader')
+  })
+
+  it('refuses to promote a membership that is not approved', async () => {
+    const orgId = createdOrgIds[0]
+    const pending = await createTestUser('contributor')
+    await addMember({ orgId, userId: pending.id, orgRole: 'member', status: 'pending' })
+    const res = await app.request(
+      `/api/admin/organizations/${orgId}/members/${pending.id}`,
+      authed(admin.token, { method: 'PATCH', body: JSON.stringify({ org_role: 'leader' }) }),
+    )
+    expect(res.status).toBe(400)
+    await deleteTestUser(pending.id)
+  })
+
+  it('refuses a leader acting on their own org', async () => {
+    const orgId = createdOrgIds[0]
+    const res = await app.request(
+      `/api/admin/organizations/${orgId}/members/${joiner.id}`,
+      authed(leader.token, { method: 'PATCH', body: JSON.stringify({ org_role: 'member' }) }),
+    )
+    expect(res.status).toBe(403)
+  })
+})
+```
+
+- [ ] **Step 4: Run and verify**
+
+```bash
+pnpm --filter @splat-connect/api test:integration -- tests/integration/orgs/admin-organizations.test.ts
+```
+
+Expected: 7 passed. The two 403s come from the admin middleware, not from RLS —
+these routes use the admin client, so RLS is not the layer refusing them. That is
+the one place in this feature where a route-level check is the whole guard, and
+it is why both are asserted.
+
+- [ ] **Step 5: Commit, one file at a time**
+
+```bash
+git add packages/api/src/routes/admin.ts
+git commit -m "feat(api): add admin organisation creation and leader promotion"
+
+git add packages/api/tests/integration/orgs/admin-organizations.test.ts
+git commit -m "test(api): assert only an admin can create an org or grant leadership"
 ```
 
 ---
