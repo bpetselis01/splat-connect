@@ -2,9 +2,14 @@ import { useEffect, useRef, useState } from 'react'
 import type { ChildProfile } from '@splat-connect/types'
 import { apiClient } from './api-client'
 
+export type SaveState = 'idle' | 'saving' | 'saved'
+
 export function useChildProfile() {
   const [profile, setProfile] = useState<ChildProfile | null>(null)
   const [loading, setLoading] = useState(true)
+  // Surfaced so the screen can confirm the silent autosave actually persisted —
+  // on a field holding a child's data, "did that save?" should not be a guess.
+  const [saveState, setSaveState] = useState<SaveState>('idle')
   const pending = useRef<Partial<ChildProfile>>({})
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
   // Once the user edits, the in-flight mount load must not clobber their work
@@ -29,9 +34,15 @@ export function useChildProfile() {
     timer.current = setTimeout(() => {
       const body = pending.current
       pending.current = {}
-      apiClient.put<ChildProfile>('/api/child-profile', body).catch(() => {})
+      setSaveState('saving')
+      apiClient
+        .put<ChildProfile>('/api/child-profile', body)
+        .then(() => setSaveState('saved'))
+        // Back to idle rather than a false "saved" — never claim a write landed
+        // when it didn't. The value stays on screen (optimistic) to retype/retry.
+        .catch(() => setSaveState('idle'))
     }, 250)
   }
 
-  return { profile, loading, save }
+  return { profile, loading, save, saveState }
 }

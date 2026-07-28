@@ -34,6 +34,9 @@ export const theme = {
     apricot: '#ff8f5e',
     apricotSoft: '#ffe3d5',
     mint: '#2fbf9f',
+    // Readable success text: mint itself is ~1.9:1 on the canvas. Matches the
+    // web --color-mint-deep so "Saved" reads the same green on both surfaces.
+    mintDeep: '#0f5c4d',
 
     danger: '#a3301a',
 
