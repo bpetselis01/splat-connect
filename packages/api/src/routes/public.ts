@@ -46,12 +46,29 @@ publicRoutes.get('/tutorials/:id', async (c) => {
   const supabase = createAdminClient()
   const { data, error } = await supabase
     .from('tutorials')
-    .select('*, parts(*), tools(*), stl_files(*), tutorial_contributors(role, profiles(name))')
+    // Backing and the approver are part of what a parent is deciding on, so they
+    // come down with the tutorial rather than needing a second, authenticated call
+    // — this endpoint serves logged-out visitors.
+    .select(
+      '*, parts(*), tools(*), stl_files(*), tutorial_contributors(role, profiles(name)), ' +
+        'tutorial_orgs(status, organizations(id, name)), ' +
+        'reviewer:reviewed_by(name), reviewed_for:reviewed_for_org_id(name)'
+    )
     .eq('id', c.req.param('id'))
     .eq('status', 'approved')
     .single()
   if (error) return c.json({ error: error.message }, 404)
-  return c.json(data)
+  // Filter the embed here rather than in the select: PostgREST cannot constrain an
+  // embedded relation's rows from the parent query, and an organisation's mark must
+  // never appear on a request it did not accept. This route uses the admin client,
+  // so the public RLS badge policy is not doing it for us.
+  const tutorial = data as unknown as Record<string, unknown> & {
+    tutorial_orgs?: Array<{ status: string }>
+  }
+  return c.json({
+    ...tutorial,
+    tutorial_orgs: (tutorial.tutorial_orgs ?? []).filter((b) => b.status === 'accepted'),
+  })
 })
 
 export default publicRoutes
