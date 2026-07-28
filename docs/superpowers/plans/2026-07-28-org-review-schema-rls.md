@@ -6,6 +6,13 @@
 
 **Spec:** `docs/superpowers/specs/2026-07-28-org-delegated-review-design.md` (§1, §2, §5)
 
+> **Amended 2026-07-28** by
+> `docs/superpowers/plans/2026-07-28-admin-only-org-authority.md`, which made
+> organisation creation and leader promotion admin-only and moved the
+> `org_leader_terms` gate onto the review grant (spec decisions 11–13). Tasks 1,
+> 2 and 6 below show the amended policies, not the ones originally executed. The
+> founder-bootstrap policy and `org_has_approved_leader()` no longer exist.
+
 **Goal:** Add the `organizations`, `org_members`, and `user_agreements` tables plus
 every RLS policy that governs them, so that an approved org leader's authority to
 review their own org's tutorials is enforced by PostgreSQL — not by route code.
@@ -82,8 +89,7 @@ tells you which spec guarantee broke.
   `tutorials.reviewed_by`, `tutorials.flagged_for_follow_up`; functions
   `is_org_leader(p_org_id uuid) → boolean`,
   `has_accepted(p_agreement_type text) → boolean`,
-  `org_has_approved_leader(p_org_id uuid) → boolean`,
-  `is_tutorial_contributor(p_tutorial_id uuid) → boolean`.
+    `is_tutorial_contributor(p_tutorial_id uuid) → boolean`.
 
 - [ ] **Step 1: Create the migration file with tables**
 
@@ -199,13 +205,6 @@ $$ language sql security definer stable;
 
 -- Used only by the founder-bootstrap policy, which must ask "does this org
 -- already have a leader?" from inside an org_members policy.
-create or replace function public.org_has_approved_leader(p_org_id uuid)
-returns boolean as $$
-  select exists (
-    select 1 from public.org_members
-    where org_id = p_org_id and org_role = 'leader' and status = 'approved'
-  );
-$$ language sql security definer stable;
 
 -- The self-review block. MUST be security definer: as a plain EXISTS inside the
 -- tutorials policy this would run under tutorial_contributors' own RLS, so a row
@@ -232,12 +231,11 @@ Expected: output ends with `Finished supabase db reset.` and no error mentioning
 
 ```bash
 psql postgresql://postgres:postgres@127.0.0.1:54322/postgres -c "\d public.org_members" \
-  -c "select proname from pg_proc where proname in ('is_org_leader','has_accepted','org_has_approved_leader','is_tutorial_contributor') order by proname;"
+  -c "select proname from pg_proc where proname in ('is_org_leader','has_accepted','is_tutorial_contributor') order by proname;"
 ```
 
-Expected: the `org_members` column list including `initiated_by`, and exactly four
-rows: `has_accepted`, `is_org_leader`, `is_tutorial_contributor`,
-`org_has_approved_leader`.
+Expected: the `org_members` column list including `initiated_by`, and exactly three
+rows: `has_accepted`, `is_org_leader`, `is_tutorial_contributor`.
 
 - [ ] **Step 5: Commit**
 
@@ -273,21 +271,13 @@ alter table public.user_agreements enable row level security;
 create policy "Anyone can read approved organizations"
   on public.organizations for select using (status = 'approved');
 
-create policy "Creator can read own organization at any status"
-  on public.organizations for select using (created_by = auth.uid());
 
 create policy "Admin can read all organizations"
   on public.organizations for select using (public.is_admin());
 
-create policy "Contributors who accepted leader terms can create organizations"
+create policy "Admin can create organizations"
   on public.organizations for insert
-  with check (
-    created_by = auth.uid()
-    and public.is_approved_contributor()
-    and public.has_accepted('org_leader_terms')
-    and status = 'pending'
-    and trust_level = 'probation'
-  );
+  with check (public.is_admin());
 
 -- UPDATE is admin-only, and that is the whole point: it keeps status and
 -- trust_level out of a leader's reach. A leader can never promote their own org
@@ -325,19 +315,8 @@ create policy "Admin can read all memberships"
 -- is_org_leader(org_id), which is false for a brand-new org, so no first leader
 -- could ever exist. Scoped to the creator of an org that has no approved leader
 -- yet, so it grants exactly one membership per org and nothing else.
-create policy "Org creator can claim first leadership"
-  on public.org_members for insert
-  with check (
-    user_id = auth.uid()
-    and org_role = 'leader'
-    and status = 'approved'
-    and initiated_by = 'org'
-    and not public.org_has_approved_leader(org_id)
-    and exists (
-      select 1 from public.organizations o
-      where o.id = org_id and o.created_by = auth.uid()
-    )
-  );
+-- No first-leader insert policy: the admin writes the first leader under
+-- "Admin full access to org_members".
 
 -- A contributor asks to join. They may only ever create their own row, as a
 -- member, pending. You cannot request to join *as a leader*.
@@ -360,6 +339,7 @@ create policy "Leaders can invite contributors"
     public.is_org_leader(org_id)
     and initiated_by = 'org'
     and status = 'pending'
+    and org_role = 'member'
     and invited_by = auth.uid()
     and exists (
       select 1 from public.organizations o
@@ -429,6 +409,7 @@ create policy "Trusted org leaders can review their org's tutorials"
         and o.trust_level = 'trusted'
     )
     and not public.is_tutorial_contributor(id)
+    and public.has_accepted('org_leader_terms')
   )
   with check (
     org_id is not null
@@ -440,6 +421,7 @@ create policy "Trusted org leaders can review their org's tutorials"
         and o.trust_level = 'trusted'
     )
     and not public.is_tutorial_contributor(id)
+    and public.has_accepted('org_leader_terms')
   );
 ```
 
@@ -986,12 +968,17 @@ import { createOrg, addMember, acceptTerms, cleanupOrg } from '../../helpers/org
 
 let leader: TestUser
 let joiner: TestUser
+let admin: TestUser
 let orgId: string
 let otherOrgId: string
+let adminOrg: string | undefined
 
 beforeAll(async () => {
   leader = await createTestUser('contributor')
   joiner = await createTestUser('contributor')
+  admin = await createTestUser('admin')
+  // Kept deliberately: it is what makes the refusal in the first test
+  // attributable to is_admin() rather than to a missing agreement.
   await acceptTerms(leader.id, 'org_leader_terms')
 
   orgId = await createOrg({ createdBy: leader.id, status: 'approved' })
@@ -1002,11 +989,39 @@ beforeAll(async () => {
 afterAll(async () => {
   await cleanupOrg(orgId)
   await cleanupOrg(otherOrgId)
+  if (adminOrg) await cleanupOrg(adminOrg)
   await deleteTestUser(leader.id)
   await deleteTestUser(joiner.id)
+  await deleteTestUser(admin.id)
 })
 
 describe('membership handshake', () => {
+  // Every other org in this suite is built with the service role, which bypasses
+  // RLS outright — so this is the only place the organizations INSERT policy runs
+  // at all.
+  it('only an admin can create an organization', async () => {
+    const attempt = (u: TestUser) =>
+      createUserClient(u.token)
+        .from('organizations')
+        .insert({
+          name: `Admin Gate ${crypto.randomUUID().slice(0, 8)}`,
+          created_by: u.id,
+          status: 'approved',
+          trust_level: 'trusted',
+        })
+        .select('id')
+        .single()
+
+    // A contributor who HAS accepted org_leader_terms — precisely the account the
+    // superseded policy would have admitted. The agreement is no longer a key.
+    const { error: refused } = await attempt(leader)
+    expect(refused?.code).toBe('42501')
+
+    const { data, error: allowed } = await attempt(admin)
+    expect(allowed).toBeNull()
+    adminOrg = data!.id as string
+  })
+
   it('a contributor cannot approve their own join request', async () => {
     const joinerDb = createUserClient(joiner.token)
     const { data: inserted, error } = await joinerDb
@@ -1081,22 +1096,30 @@ describe('membership handshake', () => {
     await adminClient().from('org_members').delete().eq('id', rowId)
   })
 
-  it('the org creator can claim first leadership, but only of their own org', async () => {
-    const freshOrg = await createOrg({ createdBy: leader.id, status: 'pending' })
-    const leaderDb = createUserClient(leader.token)
+  it('a leader cannot invite someone straight in as a leader', async () => {
+    // The org_role trigger is BEFORE UPDATE, so it cannot see this INSERT. The only
+    // thing standing here is the invite policy's org_role = 'member' conjunct.
+    const { error } = await createUserClient(leader.token)
+      .from('org_members')
+      .insert({
+        org_id: orgId, user_id: joiner.id, initiated_by: 'org',
+        status: 'pending', org_role: 'leader', invited_by: leader.id,
+      })
+    expect(error?.code).toBe('42501')
 
-    const { error: ok } = await leaderDb.from('org_members').insert({
-      org_id: freshOrg, user_id: leader.id, org_role: 'leader', status: 'approved', initiated_by: 'org',
-    })
+    // The identical statement as a member succeeds, so the refusal above is
+    // attributable to org_role and not to some other conjunct.
+    const { data, error: ok } = await createUserClient(leader.token)
+      .from('org_members')
+      .insert({
+        org_id: orgId, user_id: joiner.id, initiated_by: 'org',
+        status: 'pending', org_role: 'member', invited_by: leader.id,
+      })
+      .select('id')
+      .single()
     expect(ok).toBeNull()
 
-    // A second claim on the same org is refused: it already has a leader.
-    const { error: second } = await createUserClient(joiner.token).from('org_members').insert({
-      org_id: freshOrg, user_id: joiner.id, org_role: 'leader', status: 'approved', initiated_by: 'org',
-    })
-    expect(second).not.toBeNull()
-
-    await cleanupOrg(freshOrg)
+    await adminClient().from('org_members').delete().eq('id', data!.id)
   })
 })
 ```
@@ -1107,7 +1130,7 @@ describe('membership handshake', () => {
 pnpm --filter @splat-connect/api test:integration -- tests/integration/orgs/membership-handshake.test.ts
 ```
 
-Expected: 5 passed. A blocked INSERT raises PostgREST error `42501`
+Expected: 7 passed. A blocked INSERT raises PostgREST error `42501`
 (`new row violates row-level security policy`); a blocked UPDATE silently matches
 zero rows. The assertions differ accordingly — do not "fix" one to look like the other.
 
