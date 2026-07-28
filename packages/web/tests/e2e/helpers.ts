@@ -183,6 +183,36 @@ export async function createTutorial(
 }
 
 /** Sign in through the /login form. Caller awaits the resulting redirect. */
+/**
+ * Provision an active organisation with one leader, through the service role.
+ *
+ * Both writes are admin-only by policy, and creating them here rather than
+ * clicking through /admin/organizations keeps a test that is about the backing
+ * journey from also being a test of the admin form.
+ *
+ * Returns the new organisation's id.
+ */
+export async function createOrgWithLeader(leaderId: string, name: string) {
+  const admin = adminClient()
+  const { data, error } = await admin
+    .from('organizations')
+    .insert({ name, status: 'active' })
+    .select('id')
+    .single()
+  if (error) throw new Error(`createOrgWithLeader failed: ${error.message}`)
+
+  const { error: leaderError } = await admin
+    .from('org_leaders')
+    .insert({ org_id: data.id, user_id: leaderId })
+  if (leaderError) throw new Error(`createOrgWithLeader leader failed: ${leaderError.message}`)
+  return data.id as string
+}
+
+/** Organisations cascade to org_leaders and tutorial_orgs, so this is enough. */
+export async function deleteOrg(orgId: string) {
+  await adminClient().from('organizations').delete().eq('id', orgId)
+}
+
 export async function signIn(page: Page, email: string, password: string) {
   await page.goto('/login')
   await page.locator('#email').fill(email)
