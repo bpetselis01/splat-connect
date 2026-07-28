@@ -343,6 +343,14 @@
     color: var(--color-danger);
   }
 
+  /* Used by the leader terms banner and both legal pages, which shipped before
+     this existed and were falling back to bare .alert. Honey, so "waiting on
+     something" reads the same here as it does on a pending StatusBadge. */
+  .alert-warning {
+    background-color: var(--color-honey-soft);
+    color: var(--color-honey-deep);
+  }
+
   /* --- Accordion panels (edit page) ------------------------------------- */
   .panel {
     background-color: var(--color-surface);
