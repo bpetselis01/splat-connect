@@ -189,6 +189,19 @@ create policy "The author and the asked org can read a request"
     or public.is_org_leader(org_id)
   );
 
+-- The public badge query. Scoped to accepted rows on published tutorials, so a
+-- pending or declined request never renders anywhere: an organisation's mark
+-- appears only where one of its leaders put it.
+create policy "Anyone can read accepted backing on a published project"
+  on public.tutorial_orgs for select
+  using (
+    status = 'accepted'
+    and exists (
+      select 1 from public.tutorials t
+      where t.id = tutorial_id and t.status = 'approved'
+    )
+  );
+
 create policy "Admin full access to tutorial_orgs"
   on public.tutorial_orgs for all using (public.is_admin());
 
