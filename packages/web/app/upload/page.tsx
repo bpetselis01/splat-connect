@@ -28,12 +28,13 @@
  * - types/index.ts: UploadDraft type
  */
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { browserApiClient } from '@/lib/browser-api-client'
 import { canAdvanceFromStep, canSubmit } from '@/lib/validation'
 import { FileDropZone } from '@/components/file-drop-zone'
 import { BuyLinksInput } from '@/components/buy-links-input'
-import type { UploadDraft, Difficulty, BuyLink } from '@splat-connect/types'
+import { TermsGate } from '@/components/terms-gate'
+import type { UploadDraft, Difficulty, BuyLink, UserAgreement } from '@splat-connect/types'
 
 const STEPS = [
   'Details',
@@ -67,6 +68,17 @@ export default function UploadPage() {
   // Used to switch from POST (first save) to PATCH (subsequent saves from Step 1).
   const [draftSaved, setDraftSaved] = useState(false)
   const [saving, setSaving] = useState(false)
+
+  // The API refuses draft -> pending without an accepted contributor_terms row, so
+  // the wizard has to ask before the submit button rather than let six steps of
+  // work end in a bare 403.
+  const [hasContributorTerms, setHasContributorTerms] = useState(false)
+  useEffect(() => {
+    browserApiClient
+      .get<UserAgreement[]>('/api/agreements/me')
+      .then((rows) => setHasContributorTerms(rows.some((r) => r.agreement_type === 'contributor_terms')))
+      .catch(() => setHasContributorTerms(false))
+  }, [])
 
   async function uploadFile(endpoint: string, file: File): Promise<{ url: string; filename?: string }> {
     const fd = new FormData()
@@ -532,12 +544,12 @@ export default function UploadPage() {
               <strong>STL files:</strong> {draft.stl_files.length}
             </p>
           </div>
-          <p className="text-xs leading-relaxed text-muted">
-            Your tutorial will be reviewed by the SPLAT admin before it appears publicly.
-          </p>
+          {!hasContributorTerms && (
+            <TermsGate type="contributor_terms" onAccepted={() => setHasContributorTerms(true)} />
+          )}
           <button
             type="button"
-            disabled={!canSubmit(draft) || submitting}
+            disabled={!canSubmit(draft) || submitting || !hasContributorTerms}
             onClick={handleSubmit}
             className="btn btn-accent btn-block"
           >

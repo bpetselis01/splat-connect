@@ -92,6 +92,13 @@ async function advanceToStep(to: number) {
 describe('UploadPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // The review step reads GET /api/agreements/me on mount to decide whether to
+    // show the contributor terms gate. Default to "already accepted" so the
+    // existing tests keep exercising the wizard rather than the gate; the gate has
+    // its own coverage in terms-gate.test.tsx and the case below.
+    vi.mocked(browserApiClient.get).mockResolvedValue([
+      { id: 'a', user_id: 'u', agreement_type: 'contributor_terms', version: 'v0-todo', accepted_at: '' },
+    ])
     vi.spyOn(crypto, 'randomUUID').mockReturnValue('test-id' as ReturnType<typeof crypto.randomUUID>)
     vi.stubGlobal('location', { href: '' })
     vi.mocked(browserApiClient.post).mockResolvedValue({} as any)
@@ -350,5 +357,18 @@ describe('UploadPage', () => {
     render(<UploadPage />)
     fireEvent.click(screen.getByRole('button', { name: /^easy$/i }))
     expect(screen.getByRole('button', { name: /next →/i })).toBeDisabled()
+  })
+
+  // Tests: Submit is blocked and the terms gate is shown when contributor_terms is unaccepted
+  // How:   GET /api/agreements/me returns []; advances to step 6; checks the gate renders and
+  //        the submit button is disabled
+  // Chain: the API 403s draft -> pending without an acceptance, so without this the user
+  //        finishes six steps of work and gets a bare failure with nothing to act on
+  it('Submit is blocked until the contributor terms are accepted', async () => {
+    vi.mocked(browserApiClient.get).mockResolvedValue([])
+    render(<UploadPage />)
+    await advanceToStep(6)
+    expect(screen.getByRole('button', { name: /I accept the contributor terms/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /submit for review/i })).toBeDisabled()
   })
 })
