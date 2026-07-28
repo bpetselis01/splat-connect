@@ -89,6 +89,9 @@ tutorials.get('/:id', async (c) => {
 
 tutorials.post('/', async (c) => {
   const body = await c.req.json()
+  if (!(await hasAcceptedContributorTerms(c.get('token'), c.get('userId')))) {
+    return c.json({ error: 'You must accept the contributor terms before contributing' }, 403)
+  }
   // WHY: Uses the admin client (bypasses RLS) because RLS policies rely on
   //      auth.uid() from a JWT context that inserts through this route don't have.
   const supabase = createAdminClient()
@@ -118,17 +121,56 @@ tutorials.post('/', async (c) => {
   return c.json(data, 201)
 })
 
+/** Only these may be set through the generic edit endpoint. Unknown keys are
+ *  dropped silently; the protected ones return 403 so a caller learns rather than
+ *  wonders. */
+const EDITABLE = ['title', 'description', 'difficulty', 'tutorial_pdf_url', 'toy_photo_url', 'status'] as const
+const PROTECTED = ['reviewed_by', 'reviewed_for_org_id', 'reviewed_at', 'rejection_note']
+
+async function hasAcceptedContributorTerms(token: string, userId: string) {
+  const { data } = await createUserClient(token)
+    .from('user_agreements')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('agreement_type', 'contributor_terms')
+    .limit(1)
+  return (data ?? []).length > 0
+}
+
 tutorials.patch('/:id', async (c) => {
-  const body = await c.req.json()
-  // WHY: A database permission bug previously blocked contributors from updating
-  //      tutorials, so a temporary admin connection was used as a workaround.
-  // HOW: The permission is now fixed in the database (migration 005 in
-  //      001_schema.sql), so the regular user connection works and correctly
-  //      enforces who can edit which tutorial.
+  const body = await c.req.json<Record<string, unknown>>()
+
+  const attempted = PROTECTED.filter((k) => k in body)
+  if (attempted.length) {
+    return c.json({ error: `${attempted.join(', ')} cannot be set here` }, 403)
+  }
+
+  // WHY status is restricted to draft and pending: a leader holds an UPDATE grant
+  // on tutorials, so without this they could publish through this generic
+  // endpoint. RLS would permit it, but reviewed_by and reviewed_for_org_id would
+  // stay null — a published tutorial with no audit trail, invisible to the admin
+  // spot-check. Approving and rejecting must go through POST /:id/review or the
+  // admin status endpoint.
+  if ('status' in body && body.status !== 'draft' && body.status !== 'pending') {
+    return c.json({ error: 'use POST /:id/review to approve or reject' }, 403)
+  }
+
+  // The contributor_terms gate. Checked here as well as on create, because gating
+  // creation alone would let drafts that predate the terms sail through while
+  // blocking their authors from touching them. draft -> pending is the moment work
+  // is actually offered to the platform.
+  if (body.status === 'pending' && !(await hasAcceptedContributorTerms(c.get('token'), c.get('userId')))) {
+    return c.json({ error: 'You must accept the contributor terms before submitting' }, 403)
+  }
+
+  const update: Record<string, unknown> = {}
+  for (const key of EDITABLE) if (key in body) update[key] = body[key]
+  if (!Object.keys(update).length) return c.json({ error: 'nothing to update' }, 400)
+
   const supabase = createUserClient(c.get('token'))
   const { data, error } = await supabase
     .from('tutorials')
-    .update(body)
+    .update(update)
     .eq('id', c.req.param('id'))
     .select()
     .single()
