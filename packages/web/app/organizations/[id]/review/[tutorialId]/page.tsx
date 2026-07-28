@@ -14,9 +14,9 @@ import { notFound, redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import Image from 'next/image'
 import { apiClient } from '@/lib/api-client'
-import { requireOrgLeader } from '@/lib/org-access'
+import { isOrgLeader } from '@/lib/org-access'
 import { DifficultyBadge } from '@/components/difficulty-badge'
-import type { TutorialWithDetails } from '@splat-connect/types'
+import type { TutorialWithDetails, Organization } from '@splat-connect/types'
 
 async function approve(formData: FormData) {
   'use server'
@@ -29,10 +29,10 @@ async function approve(formData: FormData) {
     status: 'approved',
     org_id: orgId,
   })
-  revalidatePath(`/org/${orgId}`)
+  revalidatePath(`/organizations/${orgId}`)
   revalidatePath('/library')
   revalidatePath(`/tutorials/${tutorialId}`)
-  redirect(`/org/${orgId}`)
+  redirect(`/organizations/${orgId}`)
 }
 
 async function reject(formData: FormData) {
@@ -48,17 +48,20 @@ async function reject(formData: FormData) {
     org_id: orgId,
     rejection_note: note,
   })
-  revalidatePath(`/org/${orgId}`)
-  redirect(`/org/${orgId}`)
+  revalidatePath(`/organizations/${orgId}`)
+  redirect(`/organizations/${orgId}`)
 }
 
 export default async function OrgReviewPage({
   params,
 }: {
-  params: Promise<{ orgId: string; tutorialId: string }>
+  params: Promise<{ id: string; tutorialId: string }>
 }) {
-  const { orgId, tutorialId } = await params
-  const org = await requireOrgLeader(orgId)
+  const { id: orgId, tutorialId } = await params
+  // A non-leader gets a 404 rather than a redirect: this URL is a workspace, not a
+  // public face, and there is nothing here to show them.
+  if (!(await isOrgLeader(orgId))) notFound()
+  const org = await apiClient.get<Organization>(`/api/organizations/${orgId}`)
 
   let tutorial: TutorialWithDetails
   try {

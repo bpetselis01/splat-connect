@@ -37,7 +37,7 @@ test('a project is backed by an organisation and published by its leader', async
     // Wait for the post-login redirect: signIn only clicks the button, so
     // navigating straight away races the auth cookie being set.
     await page.waitForURL('**/dashboard')
-    await page.goto(`/org/${orgId}`)
+    await page.goto(`/organizations/${orgId}`)
     await expect(page.getByRole('heading', { name: orgName })).toBeVisible()
     await expect(page.getByRole('heading', { name: /Accept the leader terms/i })).toBeVisible()
     await page.getByRole('button', { name: /I accept the organisation leader terms/i }).click()
@@ -55,9 +55,9 @@ test('a project is backed by an organisation and published by its leader', async
     ).toBeVisible()
 
     // 4. And approves it.
-    await page.goto(`/org/${orgId}/review/${tutorialId}`)
+    await page.goto(`/organizations/${orgId}/review/${tutorialId}`)
     await page.getByRole('button', { name: /Approve and publish/i }).click()
-    await expect(page).toHaveURL(new RegExp(`/org/${orgId}$`))
+    await expect(page).toHaveURL(new RegExp(`/organizations/${orgId}$`))
 
     // 5. It is public, with the badge and the approver — what a parent sees.
     await page.goto(`/tutorials/${tutorialId}`)

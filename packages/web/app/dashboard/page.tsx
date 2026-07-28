@@ -162,7 +162,7 @@ export default async function DashboardPage() {
           <h2 className="mb-3 text-lg font-semibold text-ink">Organisations you lead</h2>
           <div className="flex flex-col gap-2">
             {ledOrgs.map((org) => (
-              <Link key={org.id} href={`/org/${org.id}`} className="card card-link p-4">
+              <Link key={org.id} href={`/organizations/${org.id}`} className="card card-link p-4">
                 <p className="text-sm font-bold text-ink">{org.name}</p>
                 <p className="text-xs text-muted">
                   {org.status === 'active'
