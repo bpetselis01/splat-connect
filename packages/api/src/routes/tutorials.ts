@@ -1,52 +1,9 @@
 /**
- * Tutorial CRUD Routes (Protected)
- * 
- * These endpoints handle creating, reading, updating, and deleting tutorials.
- * All routes require JWT authentication via authMiddleware.
- * 
- * Endpoints:
- * - GET /api/tutorials
- *   - Get all tutorials (user can see their own + approved ones)
- *   - RLS policy: tutorial_contributors.profile_id = current_user_id
- *   - Returns: array of Tutorial objects
- * 
- * - GET /api/tutorials/mine
- *   - Get only tutorials created by current user
- *   - Returns: array of Tutorial objects (all statuses)
- * 
- * - GET /api/tutorials/:id
- *   - Get full tutorial with parts, tools, 3D files, and all contributors
- *   - RLS ensures user can only see tutorials they own or that are approved
- *   - Returns: TutorialWithDetails object
- * 
- * - POST /api/tutorials
- *   - Create new draft tutorial
- *   - Auto-generates status='draft'
- *   - Also creates tutorial_contributors record linking user to tutorial
- *   - Returns: Tutorial object
- * 
- * - PATCH /api/tutorials/:id
- *   - Update tutorial (usually to change status: draft→pending)
- *   - RLS ensures user can only update their own tutorials
- *   - Returns: updated Tutorial object
- * 
- * - DELETE /api/tutorials/:id
- *   - Delete tutorial and all related parts/tools/files
- *   - RLS ensures user can only delete their own tutorials
- *   - Returns: 204 No Content
- * 
- * Security Notes:
- * - createUserClient() creates RLS-respecting Supabase client from JWT
- * - Supabase RLS policies enforce row-level access control
- * - Admin client used only in POST (to bypass JWT context issues with inserts)
- * 
- * Related files:
- * - middleware/auth.ts: Provides userId, role, approved, token
- * - supabase/user-client.ts: Creates RLS-respecting clients
- * - routes/public.ts: Unauthenticated access to approved tutorials only
- * - routes/parts.ts: Add/remove materials from tutorials
- * - routes/tools.ts: Add/remove tools from tutorials
- * - routes/stl-files.ts: Add/remove 3D files from tutorials
+ * Tutorial CRUD. Every handler builds an RLS-respecting client from the
+ * caller's JWT; row access is enforced by Supabase policies, not handler
+ * checks. Exception: POST uses the admin client to create the tutorial and
+ * its tutorial_contributors row (JWT-context issues with the insert), so it
+ * must set ownership itself.
  */
 import { Hono } from 'hono'
 import { createUserClient } from '../supabase/user-client.js'

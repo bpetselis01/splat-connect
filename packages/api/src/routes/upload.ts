@@ -1,42 +1,7 @@
 /**
- * File Upload Route (Protected)
- * 
- * Handles file uploads (PDFs, photos, STL models) to Supabase Storage.
- * All file operations go through this endpoint (not directly to Supabase from web).
- * 
- * Endpoint:
- * - POST /api/upload
- *   - Body: FormData with 'file' field
- *   - Auth: Requires a valid JWT
- *   - Returns: { url: string } (public URL of uploaded file)
- * 
- * Supported files:
- * - PDFs: Tutorial instruction files
- * - Images: JPG, PNG (toy photos)
- * - 3D Models: STL files for 3D printing
- * 
- * Storage buckets (in Supabase):
- * - tutorials_pdfs: Tutorial PDF files
- * - toy_photos: Photos of toys
- * - stl_files: 3D model files
- * 
- * Security:
- * - Validates JWT before accepting file
- * - Supabase Storage enforces RLS: users can only upload to their own folders
- * - File size limits enforced by Supabase
- * 
- * Process:
- * 1. Web calls /api/upload with JWT
- * 2. This middleware validates the JWT
- * 3. Route handler uploads file to appropriate Supabase Storage bucket
- * 4. Returns public URL for file
- * 5. Web stores URL in UploadDraft (tutorial_pdf_url, toy_photo_url, etc.)
- * 6. When user submits tutorial, URLs are saved to database
- * 
- * Related files:
- * - middleware/auth.ts: JWT validation
- * - routes/tutorials.ts: Tutorial creation (which includes file URLs)
- * - web components: Call this endpoint when uploading files
+ * File uploads (PDFs, toy photos, STL models) into Supabase Storage. Web
+ * never talks to Storage directly — it posts here and stores the returned
+ * public URL in the draft until tutorial submission.
  */
 import { Hono } from 'hono'
 import { createUserClient } from '../supabase/user-client.js'

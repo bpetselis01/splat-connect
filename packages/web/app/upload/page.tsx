@@ -34,6 +34,7 @@ import { canAdvanceFromStep, canSubmit } from '@/lib/validation'
 import { FileDropZone } from '@/components/file-drop-zone'
 import { BuyLinksInput } from '@/components/buy-links-input'
 import { TermsGate } from '@/components/terms-gate'
+import { Check, X } from '@/components/icons'
 import type { UploadDraft, Difficulty, BuyLink, UserAgreement, Organization } from '@splat-connect/types'
 
 const STEPS = [
@@ -56,6 +57,11 @@ const EMPTY_DRAFT: UploadDraft = {
   stl_files: [],
 }
 
+// Where the in-progress wizard is mirrored so a reload doesn't lose six steps of
+// work. sessionStorage, not local: it clears when the tab closes, which is a
+// reasonable "I'm done" signal, and the draft row also lives server-side.
+const DRAFT_KEY = 'splat:upload-draft'
+
 export default function UploadPage() {
   const [step, setStep] = useState(1)
   const [draft, setDraft] = useState<UploadDraft>(EMPTY_DRAFT)
@@ -63,7 +69,7 @@ export default function UploadPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const [tutorialId] = useState(() => crypto.randomUUID())
+  const [tutorialId, setTutorialId] = useState(() => crypto.randomUUID())
   // draftSaved: true once the tutorial row exists in Supabase (created at Step 1 Next).
   // Used to switch from POST (first save) to PATCH (subsequent saves from Step 1).
   const [draftSaved, setDraftSaved] = useState(false)
@@ -91,6 +97,42 @@ export default function UploadPage() {
       .then(setOrganizations)
       .catch(() => setOrganizations([]))
   }, [])
+
+  // Restore a persisted draft on mount, then mirror every change back. `ready`
+  // gates both the persist effect (so the first render can't overwrite the store
+  // with defaults before the restore lands) and the render below (so the server
+  // and first client render agree — no hydration mismatch on a restored step).
+  const [ready, setReady] = useState(false)
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(DRAFT_KEY)
+      if (raw) {
+        const s = JSON.parse(raw) as {
+          step: number
+          tutorialId: string
+          draftSaved: boolean
+          draft: UploadDraft
+          selectedOrgIds: string[]
+        }
+        setStep(s.step)
+        setTutorialId(s.tutorialId)
+        setDraftSaved(s.draftSaved)
+        setDraft(s.draft)
+        setSelectedOrgIds(s.selectedOrgIds)
+      }
+    } catch {
+      // A corrupt entry just means starting fresh, not crashing the wizard.
+    }
+    setReady(true)
+  }, [])
+
+  useEffect(() => {
+    if (!ready) return
+    sessionStorage.setItem(
+      DRAFT_KEY,
+      JSON.stringify({ step, tutorialId, draftSaved, draft, selectedOrgIds })
+    )
+  }, [ready, step, tutorialId, draftSaved, draft, selectedOrgIds])
 
   async function uploadFile(endpoint: string, file: File): Promise<{ url: string; filename?: string }> {
     const fd = new FormData()
@@ -211,6 +253,7 @@ export default function UploadPage() {
       }
       // All data already saved per-step — just transition the draft to pending for review.
       await browserApiClient.patch(`/api/tutorials/${tutorialId}`, { status: 'pending' })
+      sessionStorage.removeItem(DRAFT_KEY)
       window.location.href = '/my-tutorials'
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Submission failed')
@@ -219,6 +262,12 @@ export default function UploadPage() {
   }
 
   const canAdvance = canAdvanceFromStep(step, draft)
+
+  // Hold the first paint until the restore effect has run, so a resumed draft
+  // never flashes step 1 first. Matches the server render (ready = false).
+  if (!ready) {
+    return <div className="mx-auto max-w-xl" aria-hidden="true" />
+  }
 
   return (
     <div className="mx-auto max-w-xl">
@@ -304,7 +353,7 @@ export default function UploadPage() {
               accept=".pdf"
               label="Tutorial PDF"
               onChange={handlePdfUpload}
-              currentFileLabel={draft.tutorial_pdf_url ? 'PDF uploaded ✓' : undefined}
+              currentFileLabel={draft.tutorial_pdf_url ? 'PDF uploaded' : undefined}
             />
           </div>
           <div>
@@ -314,7 +363,7 @@ export default function UploadPage() {
               accept="image/*"
               label="Photo of Finished Toy"
               onChange={handlePhotoUpload}
-              currentFileLabel={draft.toy_photo_url ? 'Photo uploaded ✓' : undefined}
+              currentFileLabel={draft.toy_photo_url ? 'Photo uploaded' : undefined}
             />
           </div>
           {uploading && <p className="text-sm font-semibold text-brand-dark">Uploading…</p>}
@@ -362,9 +411,9 @@ export default function UploadPage() {
                   onClick={() =>
                     setDraft((d) => ({ ...d, parts: d.parts.filter((_, j) => j !== i) }))
                   }
-                  className="shrink-0 rounded-full px-2 text-sm text-danger transition-colors hover:bg-apricot-soft"
+                  className="grid shrink-0 place-items-center rounded-full px-2 text-danger transition-colors hover:bg-apricot-soft"
                 >
-                  ✕
+                  <X className="h-4 w-4" />
                 </button>
               </div>
               <label className="flex cursor-pointer select-none items-center gap-2 text-sm">
@@ -441,9 +490,9 @@ export default function UploadPage() {
                   onClick={() =>
                     setDraft((d) => ({ ...d, tools: d.tools.filter((_, j) => j !== i) }))
                   }
-                  className="shrink-0 rounded-full px-2 text-sm text-danger transition-colors hover:bg-apricot-soft"
+                  className="grid shrink-0 place-items-center rounded-full px-2 text-danger transition-colors hover:bg-apricot-soft"
                 >
-                  ✕
+                  <X className="h-4 w-4" />
                 </button>
               </div>
               <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
@@ -547,11 +596,13 @@ export default function UploadPage() {
                 <strong>Description:</strong> {draft.description}
               </p>
             )}
-            <p>
-              <strong>PDF:</strong> {draft.tutorial_pdf_url ? '✓ Uploaded' : '✗ Missing'}
+            {/* Both files are required to leave step 2, so at review they are
+                always present — no "missing" branch to render. */}
+            <p className="flex items-center gap-1.5">
+              <strong>PDF:</strong> <Check className="text-mint-deep" /> Uploaded
             </p>
-            <p>
-              <strong>Photo:</strong> {draft.toy_photo_url ? '✓ Uploaded' : '✗ Missing'}
+            <p className="flex items-center gap-1.5">
+              <strong>Photo:</strong> <Check className="text-mint-deep" /> Uploaded
             </p>
             <p>
               <strong>Parts:</strong> {draft.parts.length}

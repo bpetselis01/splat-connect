@@ -92,6 +92,10 @@ async function advanceToStep(to: number) {
 describe('UploadPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // The wizard now mirrors its progress into sessionStorage so a reload resumes
+    // it. jsdom's storage persists across tests, so a completed run would restore
+    // into the next one — start every test from an empty draft.
+    sessionStorage.clear()
     // The review step reads GET /api/agreements/me on mount to decide whether to
     // show the contributor terms gate. Default to "already accepted" so the
     // existing tests keep exercising the wizard rather than the gate; the gate has
@@ -137,6 +141,36 @@ describe('UploadPage', () => {
       )
     })
     expect(screen.getByText(/step 2 of 6/i)).toBeInTheDocument()
+  })
+
+  // Tests: a reload mid-wizard resumes the saved step instead of restarting at 1
+  // How:   advance to step 2, unmount (the reload), render fresh; the second mount
+  //        restores step/title/id from sessionStorage rather than showing step 1
+  // Chain: the draft row created at step 1 is not orphaned, and six steps of work
+  //        survive an accidental refresh
+  it('resumes the persisted step after a reload', async () => {
+    const first = render(<UploadPage />)
+    await advanceToStep(2)
+    expect(screen.getByText(/step 2 of 6/i)).toBeInTheDocument()
+
+    first.unmount()
+    render(<UploadPage />)
+
+    await waitFor(() => expect(screen.getByText(/step 2 of 6/i)).toBeInTheDocument())
+    expect(screen.queryByText(/step 1 of 6/i)).not.toBeInTheDocument()
+    // Same id reused, so re-advancing PATCHes the existing draft rather than POSTing a new one.
+    vi.clearAllMocks()
+    vi.mocked(browserApiClient.patch).mockResolvedValue({} as never)
+    fireEvent.click(screen.getByRole('button', { name: /← back/i }))
+    await waitFor(() => screen.getByText(/step 1 of 6/i))
+    fireEvent.click(screen.getByRole('button', { name: /next →/i }))
+    await waitFor(() =>
+      expect(browserApiClient.patch).toHaveBeenCalledWith(
+        '/api/tutorials/test-id',
+        expect.objectContaining({ title: 'My Tutorial' })
+      )
+    )
+    expect(browserApiClient.post).not.toHaveBeenCalledWith('/api/tutorials', expect.anything())
   })
 
   // Tests: navigating back to Step 1 and clicking Next again PATCHes the draft instead of POSTing a second time

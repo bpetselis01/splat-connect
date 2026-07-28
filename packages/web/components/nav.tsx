@@ -36,6 +36,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { Logo } from '@/components/icons'
 import type { Role } from '@splat-connect/types'
 
 interface NavProps {
@@ -75,8 +76,8 @@ export function Nav({ role }: NavProps) {
           href="/"
           className="flex shrink-0 items-center gap-2 text-base font-bold text-ink sm:text-lg"
         >
-          <span aria-hidden="true" className="grid h-9 w-9 place-items-center rounded-full bg-brand-tint text-lg">
-            🧩
+          <span aria-hidden="true" className="grid h-9 w-9 place-items-center rounded-full bg-brand-tint text-brand-dark">
+            <Logo className="h-5 w-5" />
           </span>
           SPLAT Connect
         </Link>

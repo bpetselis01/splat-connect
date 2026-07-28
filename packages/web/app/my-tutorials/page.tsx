@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { DifficultyBadge } from '@/components/difficulty-badge'
 import { StatusBadge } from '@/components/status-badge'
 import { BackingSummary } from '@/components/backing-state'
+import { BookOpen } from '@/components/icons'
 import type { Tutorial, TutorialOrg, Difficulty } from '@splat-connect/types'
 
 /** GET /api/tutorials/mine embeds the backing rows. */
@@ -14,8 +15,8 @@ export default async function MyTutorialsPage() {
   if (tutorials.length === 0) {
     return (
       <div className="flex flex-col items-center px-6 py-16 text-center">
-        <span aria-hidden="true" className="empty-badge">
-          📘
+        <span aria-hidden="true" className="empty-badge text-brand-dark">
+          <BookOpen className="h-8 w-8" />
         </span>
         <p className="mt-4 font-bold text-ink">
           You haven&apos;t submitted any tutorials yet.

@@ -26,6 +26,7 @@ describe('useChildProfile', () => {
     await act(async () => { jest.advanceTimersByTime(300) })
     expect(mockPut).toHaveBeenCalledTimes(1) // debounced
     expect(mockPut).toHaveBeenCalledWith('/api/child-profile', expect.objectContaining({ age: 7, macs_level: 'II' }))
+    expect(result.current.saveState).toBe('saved') // confirmed to the user
   })
 
   it('falls back to a null profile when the initial load fails', async () => {
@@ -44,6 +45,7 @@ describe('useChildProfile', () => {
     await act(async () => { jest.advanceTimersByTime(300) })
     expect(mockPut).toHaveBeenCalledTimes(1)
     expect(result.current.profile).toMatchObject({ age: 9 }) // optimistic value survives a failed save
+    expect(result.current.saveState).toBe('idle') // never a false "saved" on failure
   })
 
   it('does not let a slow initial load clobber an edit made before it resolves', async () => {

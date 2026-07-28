@@ -1,30 +1,9 @@
 /**
- * Terms Acceptance Routes (Protected)
- *
- * Records that a user accepted a version of an agreement. Contains no legal
- * text: the terms themselves are versioned static content under app/legal/,
- * referenced by the version string.
- *
- * Endpoints:
- * - POST /api/agreements
- *   - Body: { agreement_type: 'contributor_terms' | 'org_leader_terms' }
- *   - The version is server-chosen from AGREEMENT_VERSIONS, so a client cannot
- *     claim acceptance of a version that was never published.
- *   - Returns: UserAgreement
- *
- * - GET /api/agreements/me
- *   - The caller's acceptances, so the UI can skip a gate already passed.
- *
- * Security notes:
- * - Writes go through createUserClient. The insert policy pins user_id to
- *   auth.uid(), so one user cannot record an acceptance for another.
- * - There is no update or delete path, by design — an acceptance record that
- *   can be edited is not a record.
- *
- * Related files:
- * - supabase/migrations/007_organizations.sql: user_agreements + has_accepted()
- * - routes/tutorial-orgs.ts: the review grant is gated on org_leader_terms
- * - routes/tutorials.ts: submission is gated on contributor_terms
+ * Terms acceptance records. No legal text here — the terms are versioned
+ * static content under app/legal/, referenced by version string; the server
+ * chooses the version from AGREEMENT_VERSIONS. No update or delete path, by
+ * design: an acceptance record must not be editable. contributor_terms gates
+ * tutorial submission; org_leader_terms gates review grants.
  */
 import { Hono } from 'hono'
 import { createUserClient } from '../supabase/user-client.js'

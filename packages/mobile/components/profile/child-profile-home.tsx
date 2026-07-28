@@ -51,7 +51,7 @@ function initials(name?: string | null) {
 export function ChildProfileHome() {
   const router = useRouter()
   const { profile: account, signOut } = useAuth()
-  const { profile, loading, save } = useChildProfile()
+  const { profile, loading, save, saveState } = useChildProfile()
 
   function onChangeAge(v: string) {
     if (v.trim() !== '' && !Number.isNaN(Number(v))) save({ age: Number(v) })
@@ -79,6 +79,15 @@ export function ChildProfileHome() {
           defaultValue={profile?.age != null ? String(profile.age) : ''}
           onChangeText={onChangeAge}
         />
+
+        {/* Confirms the debounced autosave. Polite live region so a screen reader
+            announces "Saved" without stealing focus from the field. */}
+        <Text
+          accessibilityLiveRegion="polite"
+          style={[styles.saveStatus, saveState === 'saved' && styles.saveStatusDone]}
+        >
+          {saveState === 'saving' ? 'Saving…' : saveState === 'saved' ? 'Saved' : ' '}
+        </Text>
 
         {loading ? <ActivityIndicator color={theme.colors.primary} /> : null}
 
@@ -141,6 +150,17 @@ const styles = StyleSheet.create({
     color: theme.colors.muted,
     marginTop: theme.spacing(1),
   },
+  saveStatus: {
+    fontFamily: theme.fonts.regular,
+    fontSize: theme.type.caption,
+    color: theme.colors.muted,
+    textAlign: 'right',
+    // Pull up under the field and reserve a line so toggling doesn't shift layout.
+    marginTop: -theme.spacing(2),
+    marginBottom: theme.spacing(3),
+    minHeight: 16,
+  },
+  saveStatusDone: { color: theme.colors.mintDeep },
   sectionTitle: {
     fontFamily: theme.fonts.bold,
     fontSize: theme.type.heading,

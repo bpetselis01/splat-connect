@@ -1,44 +1,8 @@
 /**
- * Upload Form Validation Utilities
- * 
- * These functions validate the multi-step tutorial upload form in /app/upload.
- * The upload wizard is 6 steps, each with different requirements.
- * 
- * Main functions:
- * 
- * canAdvanceFromStep(step, draft)
- * - Checks if user has completed all requirements for current step
- * - Returns true if they can proceed to next step
- * - Used to enable/disable 'Next' button
- * 
- * Step requirements:
- * 1. Basic Info: title + difficulty selected
- * 2. Files: PDF + photo uploaded
- * 3. Parts: at least 1 part with name & quantity
- * 4. Tools: at least 1 tool with name
- * 5. STL Files: (optional, always passes)
- * 6. Review: all previous steps must be complete
- * 
- * canSubmit(draft)
- * - Checks if form is FULLY complete and ready to submit
- * - Used to enable/disable 'Submit for Review' button
- * 
- * getMissingFields(tutorial)
- * - Returns array of field names that are missing/empty
- * - Used to show error messages to user
- * - Helps user understand what's required before submission
- * 
- * Data flow:
- * 1. User fills upload form (UploadDraft)
- * 2. Component calls canAdvanceFromStep() before allowing 'Next'
- * 3. Component calls canSubmit() before showing 'Submit' button
- * 4. On submit, API creates Tutorial + Parts + Tools + STLFiles
- * 5. Tutorial is created with status='draft'
- * 6. User can continue editing until they submit for review (status→'pending')
- * 
- * Related files:
- * - app/upload/page.tsx: Multi-step form using these validators
- * - types/index.ts: UploadDraft and TutorialWithDetails types
+ * Upload wizard validation. canAdvanceFromStep gates the Next button per
+ * step, canSubmit gates submission (steps 1–4; the STL step is optional),
+ * and getMissingFields turns the same requirements into user-facing labels
+ * for the submit-for-review error state.
  */
 import type { UploadDraft, TutorialWithDetails } from '@splat-connect/types'
 

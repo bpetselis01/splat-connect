@@ -24,6 +24,16 @@ vi.mock('@supabase/ssr', () => ({
 const fetchMock = vi.fn()
 global.fetch = fetchMock
 
+// Response stub matching what the shared api-core reads: text() for the body
+// (tolerates empty 204 bodies), clone().json() for error detail.
+function okResponse(data: unknown) {
+  return {
+    ok: true,
+    text: () => Promise.resolve(data === null ? '' : JSON.stringify(data)),
+    clone: () => ({ json: () => Promise.resolve({}) }),
+  }
+}
+
 const { apiClient } = await import('@/lib/api-client')
 
 describe('apiClient', () => {
@@ -37,10 +47,7 @@ describe('apiClient', () => {
   // Chain: the API server's authMiddleware reads the header → Next.js server components can
   //        fetch authenticated data during server-side rendering without exposing tokens to the browser
   it('GET attaches Authorization header and returns parsed JSON', async () => {
-    fetchMock.mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve([{ id: '1' }]),
-    })
+    fetchMock.mockResolvedValue(okResponse([{ id: '1' }]))
 
     const result = await apiClient.get('/api/tutorials')
 
@@ -68,7 +75,7 @@ describe('apiClient', () => {
   // Chain: the API route handler parses the JSON body to create new records → server components
   //        can create tutorials on behalf of the user during server-side form submissions
   it('POST sends JSON body', async () => {
-    fetchMock.mockResolvedValue({ ok: true, json: () => Promise.resolve({ id: 'new' }) })
+    fetchMock.mockResolvedValue(okResponse({ id: 'new' }))
     await apiClient.post('/api/tutorials', { title: 'Test' })
     expect(fetchMock).toHaveBeenCalledWith(
       expect.any(String),
@@ -84,7 +91,7 @@ describe('apiClient', () => {
   // Chain: the API handler's PATCH route receives the partial update → server actions can
   //        update tutorial data without the client re-fetching the full record
   it('PATCH sends correct method and JSON body', async () => {
-    fetchMock.mockResolvedValue({ ok: true, json: () => Promise.resolve({ status: 'pending' }) })
+    fetchMock.mockResolvedValue(okResponse({ status: 'pending' }))
     await apiClient.patch('/api/tutorials/1', { status: 'pending' })
     expect(fetchMock).toHaveBeenCalledWith(
       'http://localhost:3101/api/tutorials/1',
@@ -100,7 +107,7 @@ describe('apiClient', () => {
   // Chain: the API route handler matches DELETE /:id and removes the record → server
   //        components can trigger deletions during server actions
   it('DELETE sends correct method with no body', async () => {
-    fetchMock.mockResolvedValue({ ok: true, json: () => Promise.resolve(null) })
+    fetchMock.mockResolvedValue(okResponse(null))
     await apiClient.delete('/api/tutorials/1')
     const [, opts] = fetchMock.mock.calls[0]
     expect(opts.method).toBe('DELETE')
@@ -112,7 +119,7 @@ describe('apiClient', () => {
   // Chain: the upload route can parse the file and metadata from the multipart body → server
   //        components can upload files to Supabase storage during server-side form handling
   it('postFormData omits Content-Type and sends FormData body', async () => {
-    fetchMock.mockResolvedValue({ ok: true, json: () => Promise.resolve({ url: 'https://example.com/file.pdf' }) })
+    fetchMock.mockResolvedValue(okResponse({ url: 'https://example.com/file.pdf' }))
     const form = new FormData()
     form.append('file', new Blob(['pdf']), 'file.pdf')
     await apiClient.postFormData('/api/upload/pdf', form)

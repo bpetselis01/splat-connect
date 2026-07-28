@@ -1,6 +1,7 @@
 import { ComingSoon } from '../../components/coming-soon'
 
-// Copy mirrors the Toy Library flow in SPLAT_mobile_claude_design/.
+// Copy mirrors the Toy Library flow in the design prototype (removed from the
+// repo; see the 2026-07-23 mobile-frontend-redesign docs).
 export default function ToyLibraryRoute() {
   return (
     <ComingSoon

@@ -1,23 +1,6 @@
 /**
- * API Server Entry Point
- *
- * This is the main HTTP server that handles all data operations for SPLAT Connect.
- * It uses Hono (lightweight HTTP framework) to define routes and middleware.
- *
- * Architecture:
- * - Public routes: GET /api/public/tutorials* (no auth required)
- * - Protected routes: All others require JWT validation via authMiddleware
- * - Different groups of API endpoints are attached to specific URLs, and they all use the same login verification system
- *
- * Data Flow:
- * 1. Client sends request with JWT in Authorization header
- * 2. authMiddleware validates JWT and extracts userId, role
- * 3. Route handler creates Supabase client (RLS-respecting) from JWT
- * 4. Supabase RLS policies enforce row-level access control
- * 5. Response returned to client
- *
- * All data operations go through Supabase which enforces RLS policies defined in:
- * supabase/migrations/001_initial.sql
+ * Hono app: public routes mounted before authMiddleware, everything else
+ * behind it. Handlers delegate row access to Supabase RLS.
  */
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
