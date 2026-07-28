@@ -103,16 +103,6 @@ returns boolean as $$
   );
 $$ language sql security definer stable;
 
--- Used only by the founder-bootstrap policy, which must ask "does this org
--- already have a leader?" from inside an org_members policy.
-create or replace function public.org_has_approved_leader(p_org_id uuid)
-returns boolean as $$
-  select exists (
-    select 1 from public.org_members
-    where org_id = p_org_id and org_role = 'leader' and status = 'approved'
-  );
-$$ language sql security definer stable;
-
 -- The self-review block. MUST be security definer: as a plain EXISTS inside the
 -- tutorials policy this would run under tutorial_contributors' own RLS, so a row
 -- that was merely *invisible* would make NOT EXISTS true and GRANT self-review.
@@ -136,21 +126,22 @@ alter table public.user_agreements enable row level security;
 create policy "Anyone can read approved organizations"
   on public.organizations for select using (status = 'approved');
 
-create policy "Creator can read own organization at any status"
-  on public.organizations for select using (created_by = auth.uid());
-
+-- No created_by-scoped read policy: created_by is always the admin (see below),
+-- and the admin already reads everything. It is an audit column, not an
+-- authority one — nothing keys off it.
 create policy "Admin can read all organizations"
   on public.organizations for select using (public.is_admin());
 
-create policy "Contributors who accepted leader terms can create organizations"
+-- Decision 11: an organisation is the unit that carries review authority, so the
+-- admin decides which ones exist. There is no contributor create path and no
+-- pending-proposal queue — with a single admin there is no second party to wait
+-- for, so creation and approval are one action. No status/trust_level conjunct
+-- here: the admin is the party being trusted. The create endpoint sets both
+-- explicitly rather than leaning on the column defaults, which stay
+-- pending/probation so a row written by a path that forgets is inert.
+create policy "Admin can create organizations"
   on public.organizations for insert
-  with check (
-    created_by = auth.uid()
-    and public.is_approved_contributor()
-    and public.has_accepted('org_leader_terms')
-    and status = 'pending'
-    and trust_level = 'probation'
-  );
+  with check (public.is_admin());
 
 -- UPDATE is admin-only, and that is the whole point: it keeps status and
 -- trust_level out of a leader's reach. A leader can never promote their own org
@@ -180,23 +171,15 @@ create policy "Leaders can read their org roster"
 create policy "Admin can read all memberships"
   on public.org_members for select using (public.is_admin());
 
--- Founder bootstrap. Without this the design deadlocks: the invite policy needs
--- is_org_leader(org_id), which is false for a brand-new org, so no first leader
--- could ever exist. Scoped to the creator of an org that has no approved leader
--- yet, so it grants exactly one membership per org and nothing else.
-create policy "Org creator can claim first leadership"
-  on public.org_members for insert
-  with check (
-    user_id = auth.uid()
-    and org_role = 'leader'
-    and status = 'approved'
-    and initiated_by = 'org'
-    and not public.org_has_approved_leader(org_id)
-    and exists (
-      select 1 from public.organizations o
-      where o.id = org_id and o.created_by = auth.uid()
-    )
-  );
+-- No first-leader INSERT policy. The org's first leader is written by
+-- POST /api/admin/organizations under "Admin full access to org_members" below
+-- (a FOR ALL policy with only a USING clause, which Postgres also applies as the
+-- WITH CHECK on INSERT). A founder-bootstrap policy stood here, scoped to
+-- created_by, purely so a self-creating contributor could claim leadership
+-- without deadlocking against the invite policy's is_org_leader(org_id).
+-- Decision 11 removes the self-creating contributor, so it removes the deadlock
+-- and the policy with it. Do not reinstate it on the strength of the deadlock
+-- argument alone — the deadlock is gone.
 
 -- A contributor asks to join. They may only ever create their own row, as a
 -- member, pending. You cannot request to join *as a leader*.

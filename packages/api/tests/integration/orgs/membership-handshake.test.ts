@@ -5,19 +5,21 @@ import { createOrg, addMember, acceptTerms, cleanupOrg } from '../../helpers/org
 
 let leader: TestUser
 let joiner: TestUser
+let admin: TestUser
 let orgId: string
 let otherOrgId: string
 // Created inline inside individual tests. Hoisted so afterAll can clean them up
 // even if an assertion throws before the test body reaches its own cleanup —
 // the suite runs serially against one shared database, so a leaked org can
 // corrupt later tests.
-let freshOrg: string | undefined
-let foreignOrg: string | undefined
-let termsOrg: string | undefined
+let adminOrg: string | undefined
 
 beforeAll(async () => {
   leader = await createTestUser('contributor')
   joiner = await createTestUser('contributor')
+  admin = await createTestUser('admin')
+  // Kept deliberately: it is what makes the refusal in the first test
+  // attributable to is_admin() rather than to a missing agreement.
   await acceptTerms(leader.id, 'org_leader_terms')
 
   orgId = await createOrg({ createdBy: leader.id, status: 'approved' })
@@ -28,40 +30,40 @@ beforeAll(async () => {
 afterAll(async () => {
   await cleanupOrg(orgId)
   await cleanupOrg(otherOrgId)
-  if (freshOrg) await cleanupOrg(freshOrg)
-  if (foreignOrg) await cleanupOrg(foreignOrg)
-  if (termsOrg) await cleanupOrg(termsOrg)
+  if (adminOrg) await cleanupOrg(adminOrg)
   await deleteTestUser(leader.id)
   await deleteTestUser(joiner.id)
+  await deleteTestUser(admin.id)
 })
 
 describe('membership handshake', () => {
-  // Every other org in this suite is created with the service role, so the
-  // terms-gated INSERT policy never runs there and beforeAll's acceptTerms(leader)
-  // would otherwise be dead setup. This is the one test that goes through a user
-  // client, which is what makes that call load-bearing.
-  it('creating an org requires an accepted org_leader_terms row', async () => {
+  // Every other org in this suite is built with the service role, which bypasses
+  // RLS outright — so this is the only place the organizations INSERT policy runs
+  // at all. Without this test, decision 11 would be enforced by nothing any test
+  // can see.
+  it('only an admin can create an organization', async () => {
     const attempt = (u: TestUser) =>
       createUserClient(u.token)
         .from('organizations')
         .insert({
-          name: `Terms Gate ${crypto.randomUUID().slice(0, 8)}`,
+          name: `Admin Gate ${crypto.randomUUID().slice(0, 8)}`,
           created_by: u.id,
-          status: 'pending',
-          trust_level: 'probation',
+          status: 'approved',
+          trust_level: 'trusted',
         })
         .select('id')
         .single()
 
-    // joiner never accepted the leader terms.
-    const { error: refused } = await attempt(joiner)
+    // A contributor who HAS accepted org_leader_terms — precisely the account the
+    // superseded policy would have admitted. The agreement is no longer a key.
+    const { error: refused } = await attempt(leader)
     expect(refused?.code).toBe('42501')
 
-    // leader did, in beforeAll — same statement, opposite outcome, so the block
-    // above is attributable to has_accepted() and not to some other conjunct.
-    const { data, error: allowed } = await attempt(leader)
+    // Same statement, admin JWT, opposite outcome — so the block above is
+    // attributable to is_admin() and not to some other conjunct.
+    const { data, error: allowed } = await attempt(admin)
     expect(allowed).toBeNull()
-    termsOrg = data!.id as string
+    adminOrg = data!.id as string
   })
 
   it('a contributor cannot approve their own join request', async () => {
@@ -172,38 +174,5 @@ describe('membership handshake', () => {
     expect(error).toBeNull()
     expect(data).toHaveLength(1)
     await adminClient().from('org_members').delete().eq('id', rowId)
-  })
-
-  it('the org creator can claim first leadership, but only of their own org', async () => {
-    freshOrg = await createOrg({ createdBy: leader.id, status: 'pending' })
-    const leaderDb = createUserClient(leader.token)
-
-    const { error: ok } = await leaderDb.from('org_members').insert({
-      org_id: freshOrg, user_id: leader.id, org_role: 'leader', status: 'approved', initiated_by: 'org',
-    })
-    expect(ok).toBeNull()
-
-    // A second claim on the same org is refused: it already has a leader.
-    // Note: this alone doesn't isolate created_by — org_has_approved_leader(org_id)
-    // is also false-turned-true here, so this assertion passes even if created_by
-    // were dropped from the policy entirely. See the next test, which isolates it.
-    const { error: second } = await createUserClient(joiner.token).from('org_members').insert({
-      org_id: freshOrg, user_id: joiner.id, org_role: 'leader', status: 'approved', initiated_by: 'org',
-    })
-    expect(second).not.toBeNull()
-    expect(second?.code).toBe('42501')
-
-    await cleanupOrg(freshOrg)
-  })
-
-  it('the founder-bootstrap policy also refuses a non-creator, independent of leader state', async () => {
-    // Isolates the created_by scope: this org has no approved leader, so
-    // `not org_has_approved_leader` is satisfied and only created_by can refuse.
-    foreignOrg = await createOrg({ createdBy: joiner.id, status: 'pending' })
-    const { error: notMine } = await createUserClient(leader.token).from('org_members').insert({
-      org_id: foreignOrg, user_id: leader.id, org_role: 'leader', status: 'approved', initiated_by: 'org',
-    })
-    expect(notMine?.code).toBe('42501')
-    await cleanupOrg(foreignOrg)
   })
 })
