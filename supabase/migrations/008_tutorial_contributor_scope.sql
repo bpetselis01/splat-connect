@@ -4,11 +4,11 @@
 --      delegated review existed; combined with the org leader UPDATE grant added in
 --      007 it became a path to PUBLISHING someone else's unsubmitted work:
 --      self-attach, repin the draft into an org you belong to (which satisfies
---      tutorials_org_must_be_own, because you really are an approved member), then
---      have that org's leader approve it. Reproduced end to end.
---      NOTE: decision 14 later removed the self-review block, which widens this —
---      a leader can now self-attach to a stranger's draft and approve it without a
---      second party involved at all. This policy is the only thing standing there.
+--      the backing handshake, because you really do lead that organisation), then
+--      ask an organisation you lead to back it, accept your own request, approve.
+--      Reproduced end to end. With no self-review block (decision 14) a single
+--      leader can do the whole chain alone, so this policy is the only thing
+--      standing there.
 -- HOW: A contributor may only claim a tutorial that has no contributors yet — which
 --      is exactly the authoring path, since POST /api/tutorials inserts the row with
 --      no link and the very next call (routes/contributors.ts) adds the author. Once
@@ -38,13 +38,12 @@ create policy "Approved contributors can claim an unclaimed tutorial"
     )
   );
 
--- WHY: tutorials.review_level, reviewed_by and flagged_for_follow_up were
---      constrained by no policy and no trigger, so an author could rewrite their own
---      review provenance and clear their own follow-up flag on any non-approved row
---      of theirs, straight through PostgREST. Not an escalation — status='approved'
---      stays admin/leader-reserved — but it corrupts the audit trail the admin
---      spot-check of delegated reviews depends on.
--- HOW: Same shape as tutorials_org_must_be_own: a BEFORE trigger, gated on *change*
+-- WHY: tutorials.reviewed_by and reviewed_for_org_id are constrained by no policy,
+--      so an author could rewrite their own review provenance on any non-approved
+--      row of theirs, straight through PostgREST. Not an escalation —
+--      status='approved' stays admin/leader-reserved — but it corrupts the audit
+--      trail the admin spot-check of delegated reviews depends on.
+-- HOW: A BEFORE trigger, gated on *change*
 --      (`is distinct from`) so ordinary edits to title or parts are unaffected, and
 --      SECURITY INVOKER with an empty search_path so every name is resolved here.
 --      The `auth.uid() is null` arm is the service-role escape, and it is not a hole:
@@ -58,19 +57,17 @@ returns trigger as $$
 begin
   if (
        case tg_op
-         when 'INSERT' then new.review_level is not null
-                          or new.reviewed_by is not null
-                          or new.flagged_for_follow_up
-         else new.review_level is distinct from old.review_level
-           or new.reviewed_by is distinct from old.reviewed_by
-           or new.flagged_for_follow_up is distinct from old.flagged_for_follow_up
+         when 'INSERT' then new.reviewed_by is not null
+                          or new.reviewed_for_org_id is not null
+         else new.reviewed_by is distinct from old.reviewed_by
+           or new.reviewed_for_org_id is distinct from old.reviewed_for_org_id
        end
      )
      and auth.uid() is not null
      and not public.is_admin()
-     and not (new.org_id is not null and public.is_org_leader(new.org_id))
+     and not public.can_review_tutorial(new.id)
   then
-    raise exception 'review_level, reviewed_by and flagged_for_follow_up may only be written by an admin or an org leader'
+    raise exception 'reviewed_by and reviewed_for_org_id may only be written by an admin or a backing org leader'
       using errcode = '42501';
   end if;
   return new;
