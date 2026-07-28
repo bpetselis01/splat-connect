@@ -33,7 +33,7 @@ describe('admin organisations', () => {
     const { default: Page } = await import('@/app/admin/organizations/page')
     render(await Page())
 
-    const perOrg = get.mock.calls.filter(([p]: [string]) => /^\/api\/organizations\/o\d$/.test(p))
+    const perOrg = get.mock.calls.filter((c) => /^\/api\/organizations\/o\d$/.test(c[0] as string))
     expect(perOrg).toHaveLength(0)
   })
 
