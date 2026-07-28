@@ -30,9 +30,14 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { DifficultyBadge } from './difficulty-badge'
-import type { Tutorial } from '@splat-connect/types'
+import { BackingSummary } from './backing-state'
+import type { Tutorial, TutorialOrg } from '@splat-connect/types'
 
-export function TutorialCard({ tutorial }: { tutorial: Tutorial }) {
+/** GET /api/public/tutorials embeds accepted backing on every row. */
+type Listed = Tutorial & { tutorial_orgs?: TutorialOrg[] }
+
+export function TutorialCard({ tutorial }: { tutorial: Listed }) {
+  const backed = (tutorial.tutorial_orgs ?? []).some((b) => b.status === 'accepted')
   return (
     <Link
       href={`/tutorials/${tutorial.id}`}
@@ -60,6 +65,11 @@ export function TutorialCard({ tutorial }: { tutorial: Tutorial }) {
             {tutorial.description}
           </p>
         )}
+        {/* Only when an organisation actually backed it. BackingSummary's
+            "Reviewed by SPLAT" fallback is for the contributor's own pages, where
+            the review path means something; on a public card it is internal jargon
+            to a parent, and the absence of a badge is the correct signal. */}
+        {backed && <BackingSummary backing={tutorial.tutorial_orgs ?? []} />}
         <div className="mt-3">
           <DifficultyBadge difficulty={tutorial.difficulty} />
         </div>
