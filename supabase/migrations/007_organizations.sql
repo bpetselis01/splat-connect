@@ -151,6 +151,48 @@ alter table public.user_agreements enable row level security;
 alter table public.tutorial_orgs   enable row level security;
 
 -- ============================================================
+-- organizations, org_leaders, user_agreements
+-- ============================================================
+
+-- Readable by anyone at any status, deliberately: a suspended organisation's
+-- badge must keep rendering on tutorials it already backed, or history rewrites
+-- itself. Names and descriptions are public anyway.
+create policy "Anyone can read organizations"
+  on public.organizations for select using (true);
+
+-- Only the admin creates, suspends, renames or deletes an organisation
+-- (decision 11). This is what keeps `status` out of a leader's reach: a leader
+-- can never un-suspend their own organisation.
+create policy "Admin can write organizations"
+  on public.organizations for all
+  using (public.is_admin())
+  with check (public.is_admin());
+
+-- Public, because a leader is a public-facing trust figure — the badge on a
+-- published tutorial should be traceable to a person.
+create policy "Anyone can read org leaders"
+  on public.org_leaders for select using (true);
+
+-- Only the admin grants or removes leadership (decision 12). There is no
+-- provenance trigger on this table and none is needed: the superseded design
+-- needed one because non-admins could write org_members, and here nobody can.
+create policy "Admin can write org leaders"
+  on public.org_leaders for all
+  using (public.is_admin())
+  with check (public.is_admin());
+
+-- No UPDATE and no DELETE policy: an acceptance record that can be edited is not
+-- a record.
+create policy "Users can read own agreements"
+  on public.user_agreements for select using (user_id = auth.uid());
+
+create policy "Users can record own agreements"
+  on public.user_agreements for insert with check (user_id = auth.uid());
+
+create policy "Admin can read all agreements"
+  on public.user_agreements for select using (public.is_admin());
+
+-- ============================================================
 -- tutorial_orgs — the backing handshake
 -- ============================================================
 
