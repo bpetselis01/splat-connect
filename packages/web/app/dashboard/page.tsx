@@ -40,6 +40,7 @@ import { redirect } from 'next/navigation'
 import { DifficultyBadge } from '@/components/difficulty-badge'
 import { StatusBadge } from '@/components/status-badge'
 import { BackingSummary } from '@/components/backing-state'
+import { BookOpen } from '@/components/icons'
 import type { Tutorial, Difficulty, Profile, Organization, TutorialOrg } from '@splat-connect/types'
 
 export default async function DashboardPage() {
@@ -102,8 +103,8 @@ export default async function DashboardPage() {
 
       {recentTutorials.length === 0 ? (
         <div className="flex flex-col items-center px-6 py-12 text-center">
-          <span aria-hidden="true" className="empty-badge">
-            📘
+          <span aria-hidden="true" className="empty-badge text-brand-dark">
+            <BookOpen className="h-8 w-8" />
           </span>
           <p className="mt-4 font-bold text-ink">
             You haven&apos;t submitted any tutorials yet.

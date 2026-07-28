@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { apiClient } from '@/lib/api-client'
 import { DifficultyBadge } from '@/components/difficulty-badge'
 import { adminActions } from '@/components/project-actions'
+import { FileText, Download, Check, X } from '@/components/icons'
 import type { TutorialWithDetails, Difficulty } from '@splat-connect/types'
 
 type Reviewed = TutorialWithDetails & {
@@ -107,7 +108,7 @@ export default async function ReviewTutorialPage({
           rel="noopener noreferrer"
           className="btn btn-primary mb-6"
         >
-          📄 Open Tutorial PDF
+          <FileText /> Open Tutorial PDF
         </a>
       )}
 
@@ -160,8 +161,8 @@ export default async function ReviewTutorialPage({
           <h2 className="mb-2 text-sm font-bold text-ink">STL Files ({tutorial!.stl_files.length})</h2>
           <div className="flex flex-col items-start gap-1">
             {tutorial!.stl_files.map((f) => (
-              <a key={f.id} href={f.file_url} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-brand-dark hover:underline">
-                ↓ {f.filename}
+              <a key={f.id} href={f.file_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm font-semibold text-brand-dark hover:underline">
+                <Download /> {f.filename}
               </a>
             ))}
           </div>
@@ -182,7 +183,7 @@ export default async function ReviewTutorialPage({
               type="submit"
               className="btn btn-block bg-mint-deep text-white shadow-rest hover:brightness-90"
             >
-              ✓ Approve — publish to library
+              <Check /> Approve — publish to library
             </button>
           </form>
         )}
@@ -201,7 +202,7 @@ export default async function ReviewTutorialPage({
               className="field"
             />
             <button type="submit" className="btn btn-danger btn-block">
-              ✕ Reject
+              <X /> Reject
             </button>
           </form>
         )}

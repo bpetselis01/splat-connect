@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import { DifficultyBadge } from '@/components/difficulty-badge'
 import { OrgBadges } from '@/components/org-badges'
+import { FileText, Download } from '@/components/icons'
 import type { TutorialWithDetails, TutorialOrg } from '@splat-connect/types'
 
 export default async function TutorialPage({
@@ -78,13 +79,13 @@ export default async function TutorialPage({
                 rel="noopener noreferrer"
                 className="btn btn-primary btn-block"
               >
-                📄 Download Tutorial PDF
+                <FileText /> Download Tutorial PDF
               </a>
             )}
             {tutorial.stl_files.length > 0 && (
               <div>
                 <h2 className="mb-2 text-sm font-bold text-ink">
-                  🖨️ Files for 3D printing
+                  Files for 3D printing
                 </h2>
                 <div className="flex flex-col gap-2">
                   {tutorial.stl_files.map((f) => (
@@ -95,7 +96,7 @@ export default async function TutorialPage({
                       rel="noopener noreferrer"
                       className="btn btn-soft btn-block btn-sm"
                     >
-                      ↓ {f.filename}
+                      <Download /> {f.filename}
                     </a>
                   ))}
                 </div>

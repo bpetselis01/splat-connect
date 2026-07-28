@@ -34,6 +34,7 @@ import { canAdvanceFromStep, canSubmit } from '@/lib/validation'
 import { FileDropZone } from '@/components/file-drop-zone'
 import { BuyLinksInput } from '@/components/buy-links-input'
 import { TermsGate } from '@/components/terms-gate'
+import { Check, X } from '@/components/icons'
 import type { UploadDraft, Difficulty, BuyLink, UserAgreement, Organization } from '@splat-connect/types'
 
 const STEPS = [
@@ -352,7 +353,7 @@ export default function UploadPage() {
               accept=".pdf"
               label="Tutorial PDF"
               onChange={handlePdfUpload}
-              currentFileLabel={draft.tutorial_pdf_url ? 'PDF uploaded ✓' : undefined}
+              currentFileLabel={draft.tutorial_pdf_url ? 'PDF uploaded' : undefined}
             />
           </div>
           <div>
@@ -362,7 +363,7 @@ export default function UploadPage() {
               accept="image/*"
               label="Photo of Finished Toy"
               onChange={handlePhotoUpload}
-              currentFileLabel={draft.toy_photo_url ? 'Photo uploaded ✓' : undefined}
+              currentFileLabel={draft.toy_photo_url ? 'Photo uploaded' : undefined}
             />
           </div>
           {uploading && <p className="text-sm font-semibold text-brand-dark">Uploading…</p>}
@@ -410,9 +411,9 @@ export default function UploadPage() {
                   onClick={() =>
                     setDraft((d) => ({ ...d, parts: d.parts.filter((_, j) => j !== i) }))
                   }
-                  className="shrink-0 rounded-full px-2 text-sm text-danger transition-colors hover:bg-apricot-soft"
+                  className="grid shrink-0 place-items-center rounded-full px-2 text-danger transition-colors hover:bg-apricot-soft"
                 >
-                  ✕
+                  <X className="h-4 w-4" />
                 </button>
               </div>
               <label className="flex cursor-pointer select-none items-center gap-2 text-sm">
@@ -489,9 +490,9 @@ export default function UploadPage() {
                   onClick={() =>
                     setDraft((d) => ({ ...d, tools: d.tools.filter((_, j) => j !== i) }))
                   }
-                  className="shrink-0 rounded-full px-2 text-sm text-danger transition-colors hover:bg-apricot-soft"
+                  className="grid shrink-0 place-items-center rounded-full px-2 text-danger transition-colors hover:bg-apricot-soft"
                 >
-                  ✕
+                  <X className="h-4 w-4" />
                 </button>
               </div>
               <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
@@ -595,11 +596,13 @@ export default function UploadPage() {
                 <strong>Description:</strong> {draft.description}
               </p>
             )}
-            <p>
-              <strong>PDF:</strong> {draft.tutorial_pdf_url ? '✓ Uploaded' : '✗ Missing'}
+            {/* Both files are required to leave step 2, so at review they are
+                always present — no "missing" branch to render. */}
+            <p className="flex items-center gap-1.5">
+              <strong>PDF:</strong> <Check className="text-mint-deep" /> Uploaded
             </p>
-            <p>
-              <strong>Photo:</strong> {draft.toy_photo_url ? '✓ Uploaded' : '✗ Missing'}
+            <p className="flex items-center gap-1.5">
+              <strong>Photo:</strong> <Check className="text-mint-deep" /> Uploaded
             </p>
             <p>
               <strong>Parts:</strong> {draft.parts.length}
