@@ -191,3 +191,41 @@ create policy "The author and the asked org can read a request"
 
 create policy "Admin full access to tutorial_orgs"
   on public.tutorial_orgs for all using (public.is_admin());
+
+-- ============================================================
+-- tutorials — the leader grants
+-- ============================================================
+
+-- tutorials — leader SELECT
+-- Deliberately BROADER than the write policy: it includes 'pending' requests and
+-- ignores both the organisation's status and the terms gate. A leader must be
+-- able to read a project to decide whether to back it, and a suspended org's
+-- leader keeps visibility into what they already took on.
+-- CONSEQUENCE, stated plainly: offering a project to an organisation exposes the
+-- draft to that organisation's leaders, including if they then decline. This
+-- belongs in the contributor_terms text, and it is why the submit flow should
+-- encourage asking one or two organisations rather than every one on the list.
+create policy "Leaders can read projects offered to their org"
+  on public.tutorials for select
+  using (public.tutorial_offered_to_my_org(id));
+
+-- tutorials — leader UPDATE, the review grant.
+-- Both conditions live in one policy so that losing leadership, the organisation
+-- being suspended, an organisation withdrawing its backing, and withdrawn consent
+-- each independently revoke the capability instantly: no cache to invalidate, no
+-- cleanup job to run.
+-- There is NO self-review block (decision 14): a leader may approve a project they
+-- authored, if an organisation they lead is backing it. The control is reactive —
+-- remove the leader, suspend the organisation, or reject the tutorial, all of
+-- which the admin can do at any time. That is what makes the spot-check surface
+-- load-bearing rather than nice-to-have.
+create policy "Backing org leaders can review the project"
+  on public.tutorials for update
+  using (
+    public.can_review_tutorial(id)
+    and public.has_accepted('org_leader_terms')
+  )
+  with check (
+    public.can_review_tutorial(id)
+    and public.has_accepted('org_leader_terms')
+  );
