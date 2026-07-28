@@ -226,4 +226,33 @@ describe('DashboardPage', () => {
     render(await DashboardPage())
     expect(screen.queryByText(/Organisations you lead/)).not.toBeInTheDocument()
   })
+
+  // Tests: the dashboard row states its backing, same wording as my-tutorials
+  // How:   the second mockResolvedValueOnce is the tutorials list; one accepted row
+  // Chain: both pages render through one component, so a contributor never sees the
+  //        same state described two ways depending which page they landed on
+  it('shows backing state on the recent tutorials rows', async () => {
+    vi.mocked(apiClient.get)
+      .mockResolvedValueOnce(mockProfile)
+      .mockResolvedValueOnce([
+        {
+          ...baseTutorial,
+          id: 't1',
+          title: 'Spoon holder',
+          tutorial_orgs: [
+            {
+              id: 'b1', tutorial_id: 't1', org_id: 'o1', status: 'pending',
+              requested_at: '', responded_at: null, responded_by: null,
+              organizations: {
+                id: 'o1', name: 'Riverside Therapy', description: null,
+                status: 'active', created_by: null, created_at: '', updated_at: '',
+              },
+            },
+          ],
+        },
+      ])
+      .mockResolvedValueOnce([])
+    render(await DashboardPage())
+    expect(screen.getByText('Riverside Therapy is deciding')).toBeInTheDocument()
+  })
 })

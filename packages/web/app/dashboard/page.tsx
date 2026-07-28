@@ -39,7 +39,8 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { DifficultyBadge } from '@/components/difficulty-badge'
 import { StatusBadge } from '@/components/status-badge'
-import type { Tutorial, Difficulty, Profile, Organization } from '@splat-connect/types'
+import { BackingSummary } from '@/components/backing-state'
+import type { Tutorial, Difficulty, Profile, Organization, TutorialOrg } from '@splat-connect/types'
 
 export default async function DashboardPage() {
   let profile: Profile
@@ -51,7 +52,9 @@ export default async function DashboardPage() {
 
   if (profile!.role !== 'contributor') redirect('/')
 
-  const tutorials = await apiClient.get<Tutorial[]>('/api/tutorials/mine')
+  const tutorials = await apiClient.get<(Tutorial & { tutorial_orgs?: TutorialOrg[] })[]>(
+    '/api/tutorials/mine'
+  )
 
   // Organisations the caller LEADS, not ones they belong to — there is no
   // membership in this model. Most contributors lead none, so the section below
@@ -129,6 +132,7 @@ export default async function DashboardPage() {
                       {t.rejection_note ?? 'No feedback was provided.'}
                     </p>
                   )}
+                  <BackingSummary backing={t.tutorial_orgs ?? []} />
                 </div>
               </div>
               <div className="flex shrink-0 items-center gap-3">
