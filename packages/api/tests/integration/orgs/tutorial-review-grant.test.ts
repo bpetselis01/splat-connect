@@ -102,8 +102,20 @@ describe('leader review grant', () => {
     expect(await tryApprove(leader.token, outsiderTutorial)).toBe(0)
   })
 
-  it('cannot approve its own tutorial, even as a linked collaborator', async () => {
-    await tryApproveAsContributor(leader.token, leaderOwnTutorial)
+  it('CAN approve its own tutorial — there is no self-review block', async () => {
+    // Decision 14. Two permissive UPDATE policies match this row: "Contributors can
+    // update own tutorials", whose WITH CHECK forbids 'approved', and the leader
+    // review policy, which now permits it. Postgres ORs permissive policies, so the
+    // leader policy is what decides — which is exactly why removing one conjunct
+    // from it is the whole change, and why this test would pass for the wrong
+    // reason if it only asserted "no error".
+    expect(await tryApprove(leader.token, leaderOwnTutorial)).toBe(1)
+
+    const { data } = await adminClient()
+      .from('tutorials').select('status').eq('id', leaderOwnTutorial).single()
+    expect(data?.status).toBe('approved')
+
+    await adminClient().from('tutorials').update({ status: 'pending' }).eq('id', leaderOwnTutorial)
   })
 
   it('cannot approve anything while the org is on probation', async () => {

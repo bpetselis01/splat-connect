@@ -103,9 +103,12 @@ returns boolean as $$
   );
 $$ language sql security definer stable;
 
--- The self-review block. MUST be security definer: as a plain EXISTS inside the
--- tutorials policy this would run under tutorial_contributors' own RLS, so a row
--- that was merely *invisible* would make NOT EXISTS true and GRANT self-review.
+-- Used by the tutorial_contributors INSERT policy in 008 as its retry-safety arm.
+-- (It was originally the self-review block on the leader review policy; decision
+-- 14 removed that use, not the function.) Stays security definer so it answers
+-- "is there such a row" as a fact rather than as a question about the caller's
+-- visibility — under invoker rights an invisible row would read as absent, and
+-- the retry arm would refuse a re-link that should succeed.
 create or replace function public.is_tutorial_contributor(p_tutorial_id uuid)
 returns boolean as $$
   select exists (
@@ -243,7 +246,7 @@ create policy "Admin full access to org_members"
 
 -- tutorials — leader SELECT
 -- Load-bearing and deliberately BROADER than the write policy below: it ignores
--- trust_level and the self-review block. If read tracked write, a probation org's
+-- trust_level and the terms gate. If read tracked write, a probation org's
 -- leader would see an empty queue and a suspended org's leader would lose all
 -- visibility into their own roster's history. Authority is gated separately.
 -- CONSEQUENCE, stated plainly: a leader can read their org members' unpublished
@@ -255,15 +258,27 @@ create policy "Leaders can read their org's tutorials"
   );
 
 -- tutorials — leader UPDATE
--- All four conditions live in one policy so that suspension, demotion to
--- probation, self-review, and withdrawn consent each independently revoke the
--- capability instantly: no cache to invalidate, no cleanup job to run.
--- The fourth is the only consent a promoted leader is ever asked for — under
+-- All three conditions live in one policy so that suspension, demotion to
+-- probation, and withdrawn consent each independently revoke the capability
+-- instantly: no cache to invalidate, no cleanup job to run.
+-- The third is the only consent a promoted leader is ever asked for — under
 -- decision 12 leadership is granted to them, not requested by them — so it has to
 -- bite where the authority is spent rather than at some entry point. Note it is
 -- deliberately absent from the leader SELECT policy above: a leader who has
 -- accepted nothing must still see their queue, or the accept prompt would have
 -- nothing to appear alongside.
+--
+-- THERE IS NO SELF-REVIEW BLOCK, and that is deliberate (decision 14). A leader
+-- may approve a tutorial they authored. Leadership is granted by the admin to
+-- someone already trusted, and requiring a second leader would mean a
+-- single-leader org — the common case — could never publish its leader's own
+-- work at all. The control is reactive rather than preventive, and it is threefold:
+-- demote the leader (org_role → 'member', revokes instantly via is_org_leader),
+-- demote or suspend the org, or reject the tutorial outright — the admin status
+-- endpoint runs under service_role and is not constrained by any transition rule,
+-- so an already-approved tutorial can be pulled back down. This is why the
+-- spot-check surface in spec §3 is load-bearing rather than nice-to-have: with no
+-- preventive block, sampling is how a bad self-approval gets noticed at all.
 create policy "Trusted org leaders can review their org's tutorials"
   on public.tutorials for update
   using (
@@ -275,7 +290,6 @@ create policy "Trusted org leaders can review their org's tutorials"
         and o.status = 'approved'
         and o.trust_level = 'trusted'
     )
-    and not public.is_tutorial_contributor(id)
     and public.has_accepted('org_leader_terms')
   )
   with check (
@@ -287,7 +301,6 @@ create policy "Trusted org leaders can review their org's tutorials"
         and o.status = 'approved'
         and o.trust_level = 'trusted'
     )
-    and not public.is_tutorial_contributor(id)
     and public.has_accepted('org_leader_terms')
   );
 
@@ -304,9 +317,9 @@ create policy "Trusted org leaders can review their org's tutorials"
 --      policies stay as written; this makes the columns they trust immutable.
 -- Both triggers below are SECURITY INVOKER, the opposite of the helper functions
 -- above, and deliberately so: here a row that is merely *invisible* fails CLOSED
--- (the `not exists` stays true and the guard raises), whereas in
--- is_tutorial_contributor() an invisible row fails OPEN and would grant
--- self-review. `set search_path = ''` is what makes invoker safe — every name in
+-- (the `not exists` stays true and the guard raises), whereas the definer helpers
+-- above are asked for facts that must not depend on the caller's visibility at
+-- all. `set search_path = ''` is what makes invoker safe — every name in
 -- these bodies is schema-qualified, so no caller-controlled search_path can
 -- shadow them.
 create or replace function public.org_members_freeze_provenance()
