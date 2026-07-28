@@ -60,7 +60,7 @@ describe('organisation detail', () => {
 
     expect(screen.getByText('Riverside Therapy')).toBeInTheDocument()
     expect(screen.getByText('Published project')).toBeInTheDocument()
-    expect(screen.queryByText(/asking for your backing/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Waiting on you/i)).not.toBeInTheDocument()
   })
 
   it('adds the workspace for a leader of it', async () => {
@@ -69,7 +69,7 @@ describe('organisation detail', () => {
     render(await Page({ params: Promise.resolve({ id: 'o1' }) }))
 
     expect(screen.getByText('Riverside Therapy')).toBeInTheDocument()
-    expect(screen.getByText(/asking for your backing/i)).toBeInTheDocument()
+    expect(screen.getByText(/Waiting on you/i)).toBeInTheDocument()
     expect(screen.getByText('Asking project')).toBeInTheDocument()
   })
 
@@ -84,5 +84,31 @@ describe('organisation detail', () => {
 
     expect(screen.getByText(/Tutorials backed \(1\)/)).toBeInTheDocument()
     expect(screen.queryByText('Asking project')).not.toBeInTheDocument()
+  })
+
+  // Tests: both kinds of waiting work appear in one list
+  // Chain: a leader arrives asking "what is oldest", not "what kind of thing is
+  //        oldest" — two sections made them merge the answer themselves
+  it('shows one queue rather than two sections', async () => {
+    get.mockImplementation(route([theOrg]))
+    const { default: Page } = await import('@/app/organizations/[id]/page')
+    render(await Page({ params: Promise.resolve({ id: 'o1' }) }))
+
+    expect(screen.getByText(/Waiting on you/i)).toBeInTheDocument()
+    expect(screen.queryByText(/Projects asking for your backing/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Waiting for your review/i)).not.toBeInTheDocument()
+  })
+
+  // Tests: no queue row links to the public tutorial page
+  // Chain: that link IS the hole — the public page serves only approved work, so
+  //        every item in this queue 404'd on click
+  it('links rows to the project page, never the public one', async () => {
+    get.mockImplementation(route([theOrg]))
+    const { default: Page } = await import('@/app/organizations/[id]/page')
+    render(await Page({ params: Promise.resolve({ id: 'o1' }) }))
+
+    const hrefs = screen.getAllByRole('link').map((a) => a.getAttribute('href'))
+    expect(hrefs).toContain('/organizations/o1/projects/t1')
+    expect(hrefs.filter((h) => h === '/tutorials/t1')).toHaveLength(0)
   })
 })
