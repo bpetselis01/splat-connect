@@ -377,6 +377,26 @@ jobs:
           curl -fsSL "https://get.maestro.mobile.dev" | bash
           echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
 
+      # ubuntu-24.04 ships /dev/kvm but leaves the `kvm` group empty, so the
+      # runner user cannot open it. android-emulator-runner's
+      # `disable-linux-hw-accel: auto` then falls back to `-accel off` and boots
+      # an x86_64 guest under QEMU binary translation — measured on 2026-07-26 at
+      # ~7 min to boot and ~6 min to `adb install` the APK. Maestro's driver
+      # startup budget is ~2 min, so it timed out mid-install and reported the
+      # useless "driver did not start up in time".
+      #
+      # A udev rule rather than `gpasswd -a $USER kvm`: group membership only
+      # applies to a new login session, which a CI step never gets, so gpasswd
+      # would leave this silently broken. `test -w` is the guard — without it the
+      # next regression is another 16-minute job failing at the wrong layer.
+      - name: Enable KVM for the emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          test -w /dev/kvm || { echo "/dev/kvm is not writable; the emulator would fall back to -accel off"; exit 1; }
+
       - name: Run the Maestro flows
         uses: reactivecircus/android-emulator-runner@v2
         with:
