@@ -111,9 +111,11 @@ admin.post('/organizations', async (c) => {
 
   const supabase = createUserClient(c.get('token'))
   if (!(await isContributor(supabase, body.leader_user_id))) {
-    // A parent-role leader is treated as logged out by every org page via
-    // getUserRole(), with no error to debug — a 400 at the point of the mistake is
-    // the fix that helps.
+    // Legacy role gate. Since 009, role records where an account signed up rather
+    // than what it may do, so this refuses a mobile-registered account that would
+    // otherwise be a valid leader. Kept for now: lifting it changes organisation
+    // semantics and the test that pins them, both outside this sub-project.
+    // Revisit alongside lib/org-access.ts.
     return c.json({ error: 'an org leader must have the contributor role' }, 400)
   }
 

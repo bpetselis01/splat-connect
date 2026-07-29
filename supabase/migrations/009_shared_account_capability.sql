@@ -29,7 +29,7 @@ begin
   -- service_role and other non-JWT contexts: RLS does not apply to them either,
   -- and is_admin() reads auth.uid(), which they lack. Without this early return
   -- such a write raises 42501 while the caller reports success having changed
-  -- nothing — the trap recorded in the 007 header.
+  -- nothing — the trap recorded at packages/api/src/routes/admin.ts:92-97.
   if auth.uid() is null then
     return new;
   end if;

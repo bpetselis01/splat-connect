@@ -34,7 +34,7 @@
  * Related files:
  * - routes/admin.ts: API endpoints for admin operations
  * - routes/contributors.ts: Get contributor profiles
- * - app/admin/contributors: Contributor approval page
+ * - app/admin/contributors: Accounts list page (approval was removed 2026-07-23)
  * - app/admin/review: Tutorial review page
  * - middleware.ts: Enforces admin-only access
  */

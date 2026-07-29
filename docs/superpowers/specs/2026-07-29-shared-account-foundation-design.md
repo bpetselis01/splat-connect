@@ -99,8 +99,8 @@ solves "freeze a column" twice with BEFORE triggers, because `OLD` is visible
 there: `tutorial_orgs_freeze_identity` (`007:335`) and
 `tutorials_freeze_review_provenance` (`008:56`). This follows that convention.
 
-The trigger returns early when `auth.uid()` is null. That is the trap 007's header
-records: *"triggers run for service_role even though RLS does not, and any guard
+The trigger returns early when `auth.uid()` is null. That is the trap
+`packages/api/src/routes/admin.ts:92-97` records: *"triggers run for service_role even though RLS does not, and any guard
 calling `is_admin()` reads `auth.uid()`, which service_role lacks. Such a write
 raises 42501 while the route reports success having changed nothing."* Service-role
 writes are server-side only and already bypass RLS; the threat being closed is the

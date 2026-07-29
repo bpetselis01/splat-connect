@@ -74,6 +74,28 @@ describe('authoring is not tied to the contributor role', () => {
   })
 })
 
+describe('storage upload is gated by the same function as tutorial authoring', () => {
+  // Tests: is_approved_contributor() also gates the storage upload/update
+  // policies (001_schema.sql, 002_storage_update_policies.sql), not just the
+  // tutorial ones exercised above — 009 widened both from the same function.
+  it('lets a parent-role account upload to storage', async () => {
+    const tutorialId = crypto.randomUUID()
+    const fd = new FormData()
+    fd.append('file', new File(['%PDF-1.4 test'], 'tutorial.pdf', { type: 'application/pdf' }))
+    fd.append('tutorialId', tutorialId)
+
+    const res = await app.request('/api/upload/pdf', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${parent.token}` },
+      body: fd,
+    })
+
+    expect(res.status).toBe(200)
+
+    await adminClient().storage.from('tutorial-pdfs').remove([`${tutorialId}/tutorial.pdf`])
+  })
+})
+
 describe('profile identity is frozen against its owner', () => {
   // Tests: a user cannot promote themselves to admin.
   // Chain: "User can update own profile" has no WITH CHECK, so USING doubles as

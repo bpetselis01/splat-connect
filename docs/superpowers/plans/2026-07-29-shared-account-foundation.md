@@ -15,7 +15,7 @@
 - Migration filename is exactly `supabase/migrations/009_shared_account_capability.sql`. Do not renumber existing migrations.
 - `is_approved_contributor()` MUST keep its name and signature. ~13 RLS policies reference it by name and are not to be edited.
 - `profiles.role` keeps the values `'admin' | 'contributor' | 'parent'`. Do NOT alter `profiles_role_check`, do NOT add columns, do NOT add a `user_roles` table, do NOT backfill.
-- The freeze trigger MUST return early when `auth.uid() is null`. Service-role writes bypass RLS but still fire triggers, and `is_admin()` reads `auth.uid()`, which service_role lacks — see the header of `supabase/migrations/007_organizations.sql`.
+- The freeze trigger MUST return early when `auth.uid() is null`. Service-role writes bypass RLS but still fire triggers, and `is_admin()` reads `auth.uid()`, which service_role lacks — see `packages/api/src/routes/admin.ts:92-97`.
 - Use `127.0.0.1`, not `localhost`, for Supabase URLs when running tests locally. An Android emulator can bind 54321/54322 on `::1` and shadow them.
 - Do not run Playwright while an Android emulator is running.
 - This sub-project ships NO visible UI change. Any task that alters a rendered surface is out of scope.
@@ -321,7 +321,7 @@ begin
   -- service_role and other non-JWT contexts: RLS does not apply to them either,
   -- and is_admin() reads auth.uid(), which they lack. Without this early return
   -- such a write raises 42501 while the caller reports success having changed
-  -- nothing — the trap recorded in the 007 header.
+  -- nothing — the trap recorded at packages/api/src/routes/admin.ts:92-97.
   if auth.uid() is null then
     return new;
   end if;
