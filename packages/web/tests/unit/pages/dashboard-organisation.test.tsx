@@ -23,6 +23,7 @@ vi.mock('@/lib/api-client', () => ({
             id: 't1',
             title: 'Older request',
             status: 'draft',
+            difficulty: 'easy',
             created_at: '2026-01-01T00:00:00Z',
             tutorial_orgs: [{ id: 'r1', tutorial_id: 't1', org_id: 'oA', status: 'pending' }],
           },
@@ -30,6 +31,7 @@ vi.mock('@/lib/api-client', () => ({
             id: 't2',
             title: 'Newer review',
             status: 'pending',
+            difficulty: 'medium',
             created_at: '2026-02-01T00:00:00Z',
             tutorial_orgs: [{ id: 'r2', tutorial_id: 't2', org_id: 'oB', status: 'accepted' }],
           },
@@ -37,6 +39,7 @@ vi.mock('@/lib/api-client', () => ({
             id: 't3',
             title: 'Not mine',
             status: 'pending',
+            difficulty: 'hard',
             created_at: '2026-01-15T00:00:00Z',
             tutorial_orgs: [{ id: 'r3', tutorial_id: 't3', org_id: 'oZ', status: 'pending' }],
           },
@@ -80,5 +83,13 @@ describe('Organisation tab', () => {
       'href',
       '/organizations/oA/projects/t1'
     )
+  })
+
+  // Guards against re-dropping DifficultyBadge: the row is strictly less
+  // informative than app/organizations/[id]/page.tsx without it.
+  it('shows each row its difficulty', async () => {
+    render(await Page())
+    expect(screen.getByText('EASY')).toBeInTheDocument()
+    expect(screen.getByText('MEDIUM')).toBeInTheDocument()
   })
 })

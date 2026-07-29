@@ -21,6 +21,7 @@ import { notFound } from 'next/navigation'
 import { apiClient } from '@/lib/api-client'
 import { getCapabilities } from '@/lib/capabilities'
 import { OrgReviewBanner } from '@/components/org-review-banner'
+import { DifficultyBadge } from '@/components/difficulty-badge'
 import { BackingBadge } from '@/components/backing-state'
 import type { Tutorial, TutorialOrg, UserAgreement } from '@splat-connect/types'
 
@@ -80,8 +81,11 @@ export default async function OrganisationTabPage() {
                 >
                   {tutorial.title}
                 </Link>
-                <span className="ml-auto rounded-full bg-brand-tint px-2 py-0.5 text-xs font-semibold text-brand-deep">
+                <span className="rounded-full bg-brand-tint px-2 py-0.5 text-xs font-semibold text-brand-deep">
                   {org.name}
+                </span>
+                <span className="ml-auto">
+                  <DifficultyBadge difficulty={tutorial.difficulty} />
                 </span>
               </div>
               {org.status === 'suspended' && (
