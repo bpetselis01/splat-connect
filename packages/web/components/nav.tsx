@@ -9,23 +9,11 @@
  *
  * Navigation items (dynamic based on role):
  * - Library: Browse approved tutorials (everyone)
- * - Dashboard: hub for any signed-in account
+ * - Organisations: public org directory (any signed-in account)
  * - Admin: Admin dashboard (admins only)
+ * - Dashboard: hub for any signed-in account — upload and my-tutorials are
+ *   reached from its Tutorials tab, not from separate nav links
  * - Sign Out: Logout button (if authenticated)
- *
- * Data flow:
- * 1. layout.tsx fetches user session
- * 2. Passes user.role to Nav component
- * 3. Nav renders different links based on role
- * 4. User clicks link → navigates to page
- * 5. Page middleware validates access (middleware.ts)
- *
- * Features:
- * - Responsive design (wraps on mobile)
- * - Current-page indicator driven by the pathname
- * - Sign out button with Supabase auth integration
- * - Links change based on user role
- * - Branding with emoji logo
  *
  * Related files:
  * - app/layout.tsx: Root layout, calls Nav
@@ -65,10 +53,8 @@ export function Nav({ role }: NavProps) {
     { href: '/organizations', label: 'Organisations', show: role !== null },
     { href: '/admin', label: 'Admin', show: role === 'admin' },
     // Any signed-in account, not only role='contributor': since 009 every
-    // account may author. Sub-project 3 moves these into dashboard tabs.
+    // account may author.
     { href: '/dashboard', label: 'Dashboard', show: role !== null },
-    { href: '/upload', label: 'Upload', show: role !== null },
-    { href: '/my-tutorials', label: 'My Tutorials', show: role !== null },
   ] as const).filter((l) => l.show)
 
   return (
