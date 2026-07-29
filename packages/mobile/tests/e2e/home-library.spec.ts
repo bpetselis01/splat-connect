@@ -43,12 +43,20 @@ test('the difficulty filter narrows results', async ({ page }) => {
   await expect(page.getByText(title)).toBeVisible()
 })
 
-test('an aborted tutorials request shows the retry message', async ({ page }) => {
+test('an aborted tutorials request shows the error state and a retry button', async ({ page }) => {
   await page.route('**/api/public/tutorials*', (route) => route.abort())
 
   await page.goto('/home')
 
-  await expect(page.getByText("Couldn't load tutorials. Pull to retry.")).toBeVisible()
+  await expect(page.getByText("Couldn't load tutorials.")).toBeVisible()
+  // WHY: 6bb6a7b dropped the "Pull to retry." copy this spec used to assert —
+  //      the error state is a static view with no pull-to-refresh, so the words
+  //      promised an interaction that did not exist. That commit updated the
+  //      component and its unit test but not this spec, and CI has failed since.
+  // HOW:  assert the retry BUTTON, not just the message. Asserting the title
+  //       alone would still pass if the button disappeared, which is the whole
+  //       affordance the copy was replaced with.
+  await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible()
 })
 
 test('a search with no matches shows the empty state', async ({ page }) => {
