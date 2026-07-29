@@ -18,7 +18,7 @@
  * 
  * Related files:
  * - app/signup: Create new account
- * - app/dashboard: Contributor hub
+ * - app/dashboard: hub for any signed-in account
  * - lib/supabase/client.ts: Supabase auth client
  */
 'use client'

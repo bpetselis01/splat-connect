@@ -1,5 +1,5 @@
 // The redirects asserted here come from packages/web/middleware.ts:
-//   contributorRoutes = ['/upload', '/my-tutorials', '/dashboard']  → /login when signed out
+//   signedInRoutes = ['/upload', '/my-tutorials', '/dashboard']  → /login when signed out
 //   adminRoutes       = ['/admin']                                  → / when not an admin
 // app/dashboard/page.tsx no longer has a page-level role guard: every signed-in
 // account (parent, contributor, admin) shares one dashboard. A permission hole in
@@ -44,4 +44,5 @@ test('an admin can also reach the dashboard', async ({ page }) => {
 
   await page.goto('/dashboard')
   await expect(page).toHaveURL(/\/dashboard$/)
+  await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible()
 })

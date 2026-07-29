@@ -41,7 +41,7 @@ describe('getUserRole', () => {
   // Tests: getUserRole returns null when Supabase reports no authenticated user
   // How:   mockGetUser returns { data: { user: null } }; checks result is null
   // Chain: server components call getUserRole to determine the nav bar state and page access →
-  //        a null role causes the layout to render as unauthenticated (Library + Contribute links)
+  //        a null role causes the layout to render as unauthenticated (Library link only)
   it('returns null when user is not authenticated', async () => {
     mockGetUser.mockResolvedValue({ data: { user: null } })
     expect(await getUserRole()).toBeNull()

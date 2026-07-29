@@ -5,15 +5,15 @@
  * It validates that users have the right authentication status for their route.
  *
  * Why it's needed:
- * - Some routes are only for contributors (e.g., /upload, /dashboard)
+ * - Some routes require only a signed-in account (e.g., /upload, /dashboard)
  * - Some routes are only for admins (e.g., /admin)
  * - This middleware redirects unauthenticated users to /login
  * - This middleware redirects non-admins away from /admin
  *
  * Protected routes:
- * - /upload: Contributors only (signed in)
- * - /my-tutorials: Contributors only
- * - /dashboard: Contributors only
+ * - /upload: signed in
+ * - /my-tutorials: signed in
+ * - /dashboard: signed in
  * - /admin: Admins only (role='admin')
  * - /organizations: Signed in only — leadership is per-organisation data, not a
  *   role, so there is nothing here for middleware to read. The organisation page
@@ -61,15 +61,15 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  const contributorRoutes = ['/upload', '/my-tutorials', '/dashboard', '/organizations']
+  const signedInRoutes = ['/upload', '/my-tutorials', '/dashboard', '/organizations']
   const adminRoutes = ['/admin']
 
-  const needsContributorAuth = contributorRoutes.some((r) =>
+  const needsSignedInAuth = signedInRoutes.some((r) =>
     pathname.startsWith(r)
   )
   const needsAdminAuth = adminRoutes.some((r) => pathname.startsWith(r))
 
-  if ((needsContributorAuth || needsAdminAuth) && !user) {
+  if ((needsSignedInAuth || needsAdminAuth) && !user) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 

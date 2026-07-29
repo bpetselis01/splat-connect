@@ -41,10 +41,18 @@ export default function SignupPage() {
           </span>
           <h1 className="mt-4 text-2xl font-bold text-ink">You&apos;re all set</h1>
           <p className="mt-2 text-sm leading-relaxed text-muted">
-            Your account has been created. Sign in to get started.
+            Your account is ready to go.
           </p>
-          <Link href="/login" className="btn btn-soft mt-6">
-            Back to sign in
+          {/* WHY: supabase/config.toml sets enable_confirmations = false, so
+              signUp() above already returned a live session — the user is
+              signed in the moment this screen renders, not merely registered.
+              HOW: link straight to the dashboard instead of /login. If
+              confirmations are ever enabled (packages/mobile/lib/auth-context.tsx
+              already sets an emailRedirectTo, so some environment may expect
+              this), this screen needs to go back to telling the user to check
+              their email and sign in. */}
+          <Link href="/dashboard" className="btn btn-soft mt-6">
+            Go to your dashboard
           </Link>
         </div>
       </div>

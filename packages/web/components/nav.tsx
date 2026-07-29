@@ -9,7 +9,7 @@
  *
  * Navigation items (dynamic based on role):
  * - Library: Browse approved tutorials (everyone)
- * - Dashboard: Contributor hub (contributors only)
+ * - Dashboard: hub for any signed-in account
  * - Admin: Admin dashboard (admins only)
  * - Sign Out: Logout button (if authenticated)
  *

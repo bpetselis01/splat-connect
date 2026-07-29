@@ -93,7 +93,7 @@ export async function createParent() {
     .upsert({ id: data.user.id, role: 'parent', name: 'E2E Parent' })
   if (profileError) throw new Error(`Failed to set parent profile: ${profileError.message}`)
 
-  return { id: data.user.id, email, password: PASSWORD, name: 'E2E Parent' }
+  return { id: data.user.id, email, password: PASSWORD }
 }
 
 /**

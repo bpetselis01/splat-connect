@@ -1,7 +1,7 @@
 /**
- * Contributor Dashboard Page
- * 
- * Hub for contributors to manage their tutorials.
+ * Dashboard Page
+ *
+ * Hub for every signed-in account to manage their tutorials.
  * Accessible to any signed-in account. Capability is derived rather than read
  * from the role column — see lib/capabilities.ts.
  * 
@@ -18,8 +18,7 @@
  *    - All statuses (draft, pending, approved, rejected)
  *
  * Middleware protection (middleware.ts):
- * - Accessible to any signed-in account. Capability is derived rather than read
- *   from the role column — see lib/capabilities.ts.
+ * - Requires only a signed-in account, no particular role.
  * - If not authenticated → redirect to /login
  * 
  * Tutorial status meanings:
@@ -45,9 +44,8 @@ import { BookOpen } from '@/components/icons'
 import type { Tutorial, Difficulty, Profile, Organization, TutorialOrg } from '@splat-connect/types'
 
 export default async function DashboardPage() {
-  let profile: Profile
   try {
-    profile = await apiClient.get<Profile>('/api/contributors/me')
+    await apiClient.get<Profile>('/api/contributors/me')
   } catch {
     redirect('/login')
   }
