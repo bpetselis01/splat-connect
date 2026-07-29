@@ -373,6 +373,9 @@ Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>"
 **Files:**
 - Modify: `packages/api/src/routes/child-profile.ts:20-24`
 - Modify: `packages/api/tests/integration/child-profile/rls.test.ts`
+- Modify: `packages/api/tests/unit/routes/child-profile.test.ts` — two tests assert `403` for a non-parent role and will fail once the guard is gone
+
+**`test:unit` and `test:integration` are separate scripts in `packages/api/package.json`.** Running only one and calling it "the full suite" is how the unit break above gets missed. Every verification step in this task runs BOTH.
 
 **Interfaces:**
 - Produces: `GET /api/child-profile` returns `200` with a `null` body for a caller with no child profile, instead of `403` for non-parents. `getCapabilities()` in Task 5 reads exactly this.
