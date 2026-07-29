@@ -58,13 +58,26 @@ describe('Nav', () => {
     expect(screen.getByRole('link', { name: /admin/i })).toBeInTheDocument()
   })
 
-  // Tests: admin users do not see the Dashboard link (they have the Admin link instead)
-  // How:   renders <Nav role="admin" />; checks no link with text "dashboard" is present
-  // Chain: the nav is role-exclusive — admins only get admin navigation → keeps the UI
-  //        uncluttered and prevents admins from accessing contributor-only pages
-  it('does not render dashboard link for admin users', () => {
+  // Tests: admins, being signed in, also see the Dashboard link alongside Admin
+  // How:   renders <Nav role="admin" />; checks a link with text "dashboard" is present
+  // Chain: the Dashboard/Upload/My Tutorials gating is on "signed in", not on a specific
+  //        role, so it does not exclude admins — this is an interim widening ahead of
+  //        sub-project 3 moving these into dashboard tabs
+  it('renders dashboard link for admin users too', () => {
     render(<Nav role="admin" />)
-    expect(screen.queryByRole('link', { name: /dashboard/i })).toBeNull()
+    expect(screen.getByRole('link', { name: /dashboard/i })).toBeInTheDocument()
+  })
+
+  // Tests: a parent (not a 'contributor') still sees the authoring links, since every
+  //        signed-in account may author now
+  // How:   renders <Nav role="parent" />; checks Dashboard and Upload links are present
+  // Chain: sub-project 1 widened lib/auth.ts to return 'parent' for the shared account
+  //        type → the nav gating on role === 'contributor' would have hidden these links
+  //        from a parent despite them being able to author
+  it('renders dashboard and upload links for parent users', () => {
+    render(<Nav role="parent" />)
+    expect(screen.getByRole('link', { name: /dashboard/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /upload/i })).toBeInTheDocument()
   })
 
   // Tests: contributors do not see the Admin link
@@ -76,24 +89,28 @@ describe('Nav', () => {
     expect(screen.queryByRole('link', { name: /admin/i })).toBeNull()
   })
 
-  // Tests: unauthenticated users see a Contribute link and no Sign out button
-  // How:   renders <Nav role={null} />; checks Contribute link exists and Sign out button is absent
-  // Chain: visitors can navigate to the contributor sign-up/login flow → signed-in users
-  //        see Sign out instead, keeping the nav contextually relevant
-  it('shows Contribute link and no Sign out for unauthenticated users', () => {
+  // Tests: unauthenticated users see a Sign in link (to /login) and no Sign out button
+  // How:   renders <Nav role={null} />; checks the Sign in link exists and points at /login,
+  //        and that Sign out is absent
+  // Chain: one account type now serves parents and contributors alike, so the entry point
+  //        can no longer name a single audience ("Contribute") or send a returning user to
+  //        signup — it offers Sign in and lands on /login
+  it('shows a Sign in link (to /login) and no Sign out for unauthenticated users', () => {
     render(<Nav role={null} />)
-    expect(screen.getByRole('link', { name: /contribute/i })).toBeInTheDocument()
+    const link = screen.getByRole('link', { name: /sign in/i })
+    expect(link).toBeInTheDocument()
+    expect(link).toHaveAttribute('href', '/login')
     expect(screen.queryByRole('button', { name: /sign out/i })).toBeNull()
   })
 
-  // Tests: authenticated users (any role) see a Sign out button and no Contribute link
-  // How:   renders <Nav role="contributor" />; checks Sign out button exists and Contribute link is absent
-  // Chain: the nav hides the join-up link once signed in → the UI reflects the user's current
-  //        authentication state without redundant calls-to-action
-  it('shows Sign out button and no Contribute link for authenticated users', () => {
+  // Tests: authenticated users (any role) see a Sign out button and no Sign in link
+  // How:   renders <Nav role="contributor" />; checks Sign out button exists and Sign in link is absent
+  // Chain: the nav hides the entry-point link once signed in → the UI reflects the user's
+  //        current authentication state without redundant calls-to-action
+  it('shows Sign out button and no Sign in link for authenticated users', () => {
     render(<Nav role="contributor" />)
     expect(screen.getByRole('button', { name: /sign out/i })).toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: /contribute/i })).toBeNull()
+    expect(screen.queryByRole('link', { name: /sign in/i })).toBeNull()
   })
 
   // Tests: clicking Sign out calls Supabase signOut and redirects to / via window.location.href
