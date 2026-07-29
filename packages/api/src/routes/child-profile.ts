@@ -1,27 +1,21 @@
 /**
- * Child Profile Routes (Protected, parent-only)
+ * Child Profile Routes (Protected)
  *
  * One child profile per parent account (enforced by a unique parent_id in the DB).
  *
  * Endpoints:
- * - GET /api/child-profile   → the caller's child_profiles row, or null if not created yet
+ * - GET /api/child-profile   → the caller's `child_profiles` row, or null if they have not created one
  * - PUT /api/child-profile   → upsert the caller's editable fields (autosave target)
  *
- * Both reject non-parent roles with 403. Writes go through the user client so
- * Postgres RLS (parent_id = auth.uid()) is the real authorization boundary.
+ * Any signed-in account may hold a child profile — parent and contributor are
+ * not exclusive. Writes go through the user client so Postgres RLS
+ * (parent_id = auth.uid()) is the authorization boundary, as it always was.
  */
 import { Hono } from 'hono'
 import { createUserClient } from '../supabase/user-client.js'
 import type { AuthVariables } from '../middleware/auth.js'
 
 const childProfile = new Hono<{ Variables: AuthVariables }>()
-
-// Only parents own a child profile. Admin/contributor get a fast 403 (RLS would
-// deny them anyway, but this avoids a pointless round-trip and a confusing empty result).
-childProfile.use('*', async (c, next) => {
-  if (c.get('role') !== 'parent') return c.json({ error: 'Parent role required' }, 403)
-  await next()
-})
 
 // Whitelist of client-editable columns. parent_id and updated_at are set by the
 // server; id/role/etc. from the body are ignored — trust-boundary input filtering.
