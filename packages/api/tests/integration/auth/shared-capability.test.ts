@@ -182,8 +182,8 @@ describe('the admin account list', () => {
     const res = await app.request('/api/admin/contributors', authed(admin.token))
 
     expect(res.status).toBe(200)
-    const rows = (await res.json()) as Array<{ id: string }>
-    expect(rows.some((r) => r.id === parent.id)).toBe(true)
+    const { accounts } = (await res.json()) as { accounts: Array<{ id: string }>; total: number }
+    expect(accounts.some((r) => r.id === parent.id)).toBe(true)
 
     await deleteTestUser(admin.id)
   })
@@ -191,9 +191,9 @@ describe('the admin account list', () => {
   it('excludes admins', async () => {
     const admin = await createTestUser('admin')
     const res = await app.request('/api/admin/contributors', authed(admin.token))
-    const rows = (await res.json()) as Array<{ id: string }>
+    const { accounts } = (await res.json()) as { accounts: Array<{ id: string }>; total: number }
 
-    expect(rows.some((r) => r.id === admin.id)).toBe(false)
+    expect(accounts.some((r) => r.id === admin.id)).toBe(false)
 
     await deleteTestUser(admin.id)
   })
