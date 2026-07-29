@@ -94,14 +94,25 @@ describe('authoring is not tied to the contributor role', () => {
   // Chain: is_approved_contributor() gated ~13 policies on role='contributor',
   //        so every authoring path failed in Postgres for a parent no matter
   //        what the interface offered them.
+  //
+  // No .select() on the insert: INSERT ... RETURNING also requires a SELECT
+  // policy to match the new row, and a fresh draft has no tutorial_contributors
+  // link yet, so "Contributors can read own tutorials" (001_schema.sql) does not
+  // match it. That gap is pre-existing and unrelated to this change — it is why
+  // POST /api/tutorials uses the admin client (tutorials.ts:65). Existence is
+  // asserted with the service-role client instead.
   it('lets a parent-role account insert a tutorial', async () => {
-    const { data, error } = await userClient(parent.token)
+    const { error } = await userClient(parent.token)
       .from('tutorials')
       .insert({ title: 'Parent authored tutorial', difficulty: 'easy' })
-      .select()
-      .single()
 
     expect(error).toBeNull()
+
+    const { data } = await adminClient()
+      .from('tutorials')
+      .select('title')
+      .eq('title', 'Parent authored tutorial')
+      .single()
     expect(data?.title).toBe('Parent authored tutorial')
   })
 
@@ -109,14 +120,15 @@ describe('authoring is not tied to the contributor role', () => {
   // Chain: tutorial_contributors insert is a second policy behind the same
   //        function — widening only the tutorials policy would leave submit broken.
   it('lets a parent-role account link itself as a contributor', async () => {
-    const client = userClient(parent.token)
-    const { data: tutorial } = await client
+    // Looked up with the service-role client for the same reason as above: the
+    // author cannot SELECT their own draft until this link exists.
+    const { data: tutorial } = await adminClient()
       .from('tutorials')
       .select('id')
       .eq('title', 'Parent authored tutorial')
       .single()
 
-    const { error } = await client
+    const { error } = await userClient(parent.token)
       .from('tutorial_contributors')
       .insert({ tutorial_id: tutorial!.id, profile_id: parent.id, role: 'primary' })
 
