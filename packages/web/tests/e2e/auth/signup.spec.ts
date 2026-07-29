@@ -7,9 +7,9 @@ test('a new contributor signs up and sees the confirmation screen', async ({ pag
   await page.locator('#name').fill('E2E Contributor')
   await page.locator('#email').fill(email)
   await page.locator('#password').fill('Test1234!')
-  await page.getByRole('button', { name: 'Request access' }).click()
+  await page.getByRole('button', { name: 'Create account' }).click()
 
-  await expect(page.getByRole('heading', { name: 'Request received' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: "You're all set" })).toBeVisible()
 })
 
 test('a newly signed-up contributor can access a protected route immediately', async ({ page }) => {
@@ -18,8 +18,8 @@ test('a newly signed-up contributor can access a protected route immediately', a
   await page.locator('#name').fill('E2E Contributor')
   await page.locator('#email').fill(email)
   await page.locator('#password').fill('Test1234!')
-  await page.getByRole('button', { name: 'Request access' }).click()
-  await expect(page.getByRole('heading', { name: 'Request received' })).toBeVisible()
+  await page.getByRole('button', { name: 'Create account' }).click()
+  await expect(page.getByRole('heading', { name: "You're all set" })).toBeVisible()
 
   // Local Supabase has email confirmations disabled (supabase/config.toml
   // auth.email.enable_confirmations = false), so signUp() already left a
@@ -35,11 +35,11 @@ test('an already-registered email shows the error', async ({ page }) => {
   await page.locator('#name').fill('Duplicate Person')
   await page.locator('#email').fill(existing.email)
   await page.locator('#password').fill('Test1234!')
-  await page.getByRole('button', { name: 'Request access' }).click()
+  await page.getByRole('button', { name: 'Create account' }).click()
 
   // Filtered to alerts with content — Next's empty route announcer is also role=alert.
   await expect(page.getByRole('alert').filter({ hasText: /\S/ })).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Request received' })).toHaveCount(0)
+  await expect(page.getByRole('heading', { name: "You're all set" })).toHaveCount(0)
 })
 
 test('a password under six characters is not accepted', async ({ page }) => {
@@ -47,8 +47,8 @@ test('a password under six characters is not accepted', async ({ page }) => {
   await page.locator('#name').fill('Short Password')
   await page.locator('#email').fill(uniqueContributorEmail())
   await page.locator('#password').fill('12345')
-  await page.getByRole('button', { name: 'Request access' }).click()
+  await page.getByRole('button', { name: 'Create account' }).click()
 
   // minLength blocks submission client-side, so the confirmation never renders.
-  await expect(page.getByRole('heading', { name: 'Request received' })).toHaveCount(0)
+  await expect(page.getByRole('heading', { name: "You're all set" })).toHaveCount(0)
 })
