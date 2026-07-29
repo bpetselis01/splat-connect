@@ -42,8 +42,8 @@ describe('Nav', () => {
 
   // Tests: the Dashboard link is visible to contributors
   // How:   renders <Nav role="contributor" />; checks a link with text "dashboard"
-  // Chain: contributors can navigate to their "My Tutorials" dashboard → they can track their
-  //        submissions and access the upload wizard from the nav bar
+  // Chain: contributors reach their submissions and the upload wizard via the dashboard's
+  //        own tabs, not separate nav links
   it('renders dashboard link for contributors', () => {
     render(<Nav role="contributor" />)
     expect(screen.getByRole('link', { name: /dashboard/i })).toBeInTheDocument()
@@ -60,24 +60,34 @@ describe('Nav', () => {
 
   // Tests: admins, being signed in, also see the Dashboard link alongside Admin
   // How:   renders <Nav role="admin" />; checks a link with text "dashboard" is present
-  // Chain: the Dashboard/Upload/My Tutorials gating is on "signed in", not on a specific
-  //        role, so it does not exclude admins — this is an interim widening ahead of
-  //        sub-project 3 moving these into dashboard tabs
+  // Chain: the Dashboard gating is on "signed in", not on a specific role, so it does not
+  //        exclude admins
   it('renders dashboard link for admin users too', () => {
     render(<Nav role="admin" />)
     expect(screen.getByRole('link', { name: /dashboard/i })).toBeInTheDocument()
   })
 
-  // Tests: a parent (not a 'contributor') still sees the authoring links, since every
-  //        signed-in account may author now
-  // How:   renders <Nav role="parent" />; checks Dashboard and Upload links are present
-  // Chain: sub-project 1 widened lib/auth.ts to return 'parent' for the shared account
-  //        type → the nav gating on role === 'contributor' would have hidden these links
-  //        from a parent despite them being able to author
-  it('renders dashboard and upload links for parent users', () => {
+  // Tests: the dashboard's own Tutorials tab covers upload and my-tutorials now, so the
+  //        nav no longer duplicates those destinations as separate links
+  // How:   renders <Nav role="contributor" />; checks Dashboard is present and Upload /
+  //        My Tutorials are absent
+  // Chain: sub-project 3 moved authoring links into dashboard tabs → this supersedes the
+  //        interim widening that added Upload/My Tutorials for every signed-in account
+  it('does not duplicate the dashboard tabs in the nav', () => {
+    render(<Nav role="contributor" />)
+    expect(screen.getByRole('link', { name: 'Dashboard' })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Upload' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'My Tutorials' })).not.toBeInTheDocument()
+  })
+
+  // Tests: the public organisations directory is still reachable for any signed-in
+  //        account (parent or contributor), not gated on a specific role
+  // How:   renders <Nav role="parent" />; checks the Organisations link is present
+  // Chain: every signed-in account may browse the org directory → gating it further
+  //        would need a per-request lookup in the nav for no benefit
+  it('keeps the public organisations directory for any signed-in account', () => {
     render(<Nav role="parent" />)
-    expect(screen.getByRole('link', { name: /dashboard/i })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /upload/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Organisations' })).toBeInTheDocument()
   })
 
   // Tests: contributors do not see the Admin link

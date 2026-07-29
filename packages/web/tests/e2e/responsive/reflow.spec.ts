@@ -18,7 +18,7 @@ test('@responsive every nav link stays inside the viewport for a contributor', a
   await page.waitForURL('**/dashboard')
 
   const width = page.viewportSize()!.width
-  for (const name of ['Library', 'Dashboard', 'Upload', 'My Tutorials']) {
+  for (const name of ['Library', 'Organisations', 'Dashboard']) {
     const link = page.getByRole('link', { name, exact: true })
     await expect(link).toBeVisible()
     await expectWithinViewport(link, width)
