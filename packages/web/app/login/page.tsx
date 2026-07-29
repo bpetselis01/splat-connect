@@ -9,7 +9,7 @@
  * 2. Supabase verifies credentials
  * 3. If valid: Sets session JWT in secure cookie
  * 4. Checks user profile role
- * 5. Redirects based on role: contributor → /dashboard, admin → /admin, else → /
+ * 5. Redirects based on role: admin → /admin, everyone else → /dashboard
  * 6. If error: Shows error message
  *
  * Related flows:
@@ -56,13 +56,10 @@ export default function LoginPage() {
       //      server re-renders the layout with the new auth session.
       // HOW: window.location.href forces a full page reload, so the server always
       //      runs the root layout fresh and the nav reflects the correct role immediately.
-      if (profile?.role === 'contributor') {
-        window.location.href = '/dashboard'
-      } else if (profile?.role === 'admin') {
-        window.location.href = '/admin'
-      } else {
-        window.location.href = '/'
-      }
+      // Everyone shares one dashboard; only the admin area is separate. The
+      // role column no longer decides what a user may do, so it no longer
+      // decides where they land.
+      window.location.href = profile?.role === 'admin' ? '/admin' : '/dashboard'
     } finally {
       setLoading(false)
     }

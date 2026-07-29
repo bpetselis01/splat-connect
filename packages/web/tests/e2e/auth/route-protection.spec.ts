@@ -1,9 +1,10 @@
 // The redirects asserted here come from packages/web/middleware.ts:
 //   contributorRoutes = ['/upload', '/my-tutorials', '/dashboard']  → /login when signed out
 //   adminRoutes       = ['/admin']                                  → / when not an admin
-// and from the page-level role guard in app/dashboard/page.tsx, which sends
-// non-contributors to /. A permission hole here does not throw — it just serves
-// the page — so nothing else in the suite would notice one.
+// app/dashboard/page.tsx no longer has a page-level role guard: every signed-in
+// account (parent, contributor, admin) shares one dashboard. A permission hole in
+// the signed-out cases above would not throw — it would just serve the page — so
+// nothing else in the suite would notice one.
 import { test, expect } from '@playwright/test'
 import { signIn, createContributor, createAdmin } from '../helpers'
 
@@ -36,11 +37,11 @@ test('a contributor is redirected away from /admin', async ({ page }) => {
   await expect(page).toHaveURL(/localhost:\d+\/$/)
 })
 
-test('an admin is redirected away from the contributor dashboard', async ({ page }) => {
+test('an admin can also reach the dashboard', async ({ page }) => {
   const admin = await createAdmin()
   await signIn(page, admin.email, admin.password)
   await page.waitForURL('**/admin')
 
   await page.goto('/dashboard')
-  await expect(page).toHaveURL(/localhost:\d+\/$/)
+  await expect(page).toHaveURL(/\/dashboard$/)
 })

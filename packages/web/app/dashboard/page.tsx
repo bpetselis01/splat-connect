@@ -2,7 +2,8 @@
  * Contributor Dashboard Page
  * 
  * Hub for contributors to manage their tutorials.
- * Only accessible to signed-in contributors (role='contributor').
+ * Accessible to any signed-in account. Capability is derived rather than read
+ * from the role column — see lib/capabilities.ts.
  * 
  * Features:
  * - Stats: Count of draft, pending, approved, rejected tutorials
@@ -11,14 +12,14 @@
  * 
  * Data fetched:
  * 1. User profile (via apiClient.get('/api/contributors/me'))
- *    - Validates user is contributor role
- *    - Redirects to home if not contributor
+ *    - Redirects to /login if the fetch fails (no valid session)
  * 2. User's tutorials (via apiClient.get('/api/tutorials/mine'))
  *    - Only tutorials user owns
  *    - All statuses (draft, pending, approved, rejected)
- * 
+ *
  * Middleware protection (middleware.ts):
- * - Requires authenticated user (role='contributor')
+ * - Accessible to any signed-in account. Capability is derived rather than read
+ *   from the role column — see lib/capabilities.ts.
  * - If not authenticated → redirect to /login
  * 
  * Tutorial status meanings:
@@ -50,8 +51,6 @@ export default async function DashboardPage() {
   } catch {
     redirect('/login')
   }
-
-  if (profile!.role !== 'contributor') redirect('/')
 
   const tutorials = await apiClient.get<(Tutorial & { tutorial_orgs?: TutorialOrg[] })[]>(
     '/api/tutorials/mine'
