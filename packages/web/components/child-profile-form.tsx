@@ -48,11 +48,18 @@ export function ChildProfileForm({ profile }: { profile: ChildProfile | null }) 
     assist_hand: profile?.assist_hand ?? null,
     bfmf_score: profile?.bfmf_score ?? null,
     bfmf_source: profile?.bfmf_source ?? 'manual',
-    // Everyday Needs / Customization Metrics: no controls yet (task 7), but these
-    // columns are NOT NULL so the save below must never send null for them.
+    // Every field rendered below must be seeded here, or it silently ignores
+    // whatever the database holds and renders blank instead.
     challenges: profile?.challenges ?? [],
+    challenge_other: profile?.challenge_other ?? null,
+    grip_type: profile?.grip_type ?? null,
+    env_context: profile?.env_context ?? null,
     sensory_preferences: profile?.sensory_preferences ?? [],
     needs_arm_attachment: profile?.needs_arm_attachment ?? false,
+    palm_width_mm: profile?.palm_width_mm ?? null,
+    wrist_circ_mm: profile?.wrist_circ_mm ?? null,
+    forearm_length_mm: profile?.forearm_length_mm ?? null,
+    hand_dominance: profile?.hand_dominance ?? null,
   }))
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -242,6 +249,8 @@ export function ChildProfileForm({ profile }: { profile: ChildProfile | null }) 
           type="number"
           value={form.palm_width_mm ?? ''}
           onChange={(e) => setNumber('palm_width_mm', e.target.value)}
+          step="any"
+          min="0"
           className="field"
         />
       </div>
@@ -253,6 +262,8 @@ export function ChildProfileForm({ profile }: { profile: ChildProfile | null }) 
           type="number"
           value={form.wrist_circ_mm ?? ''}
           onChange={(e) => setNumber('wrist_circ_mm', e.target.value)}
+          step="any"
+          min="0"
           className="field"
         />
       </div>
@@ -276,6 +287,8 @@ export function ChildProfileForm({ profile }: { profile: ChildProfile | null }) 
           type="number"
           value={form.forearm_length_mm ?? ''}
           onChange={(e) => setNumber('forearm_length_mm', e.target.value)}
+          step="any"
+          min="0"
           className="field"
         />
       </div>

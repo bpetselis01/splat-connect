@@ -27,11 +27,22 @@ describe('ChildProfileForm', () => {
   it('pre-fills an existing profile', () => {
     render(
       <ChildProfileForm
-        profile={{ age: 9, primary_diagnosis: 'Cerebral palsy', macs_level: 'II' } as ChildProfile}
+        profile={{
+          age: 9,
+          primary_diagnosis: 'Cerebral palsy',
+          macs_level: 'II',
+          grip_type: 'Palmar',
+          palm_width_mm: 52.5,
+        } as ChildProfile}
       />
     )
+    // One field from each of the three sections — Ability profile, Everyday
+    // needs, Customization metrics — plus a numeric one, so a field seeded
+    // for only the first section (the bug this guards against) fails here.
     expect(screen.getByLabelText('Age')).toHaveValue(9)
     expect(screen.getByLabelText('Primary diagnosis')).toHaveValue('Cerebral palsy')
+    expect(screen.getByLabelText('Grip type')).toHaveValue('Palmar')
+    expect(screen.getByLabelText('Palm width (mm)')).toHaveValue(52.5)
   })
 
   it('saves the ability fields', async () => {

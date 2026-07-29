@@ -10,9 +10,12 @@ export default async function ChildTabPage() {
 
   // Null for an account that has not created one. Shown to non-parents on
   // purpose: this form is how someone becomes a parent.
-  const profile = await apiClient
-    .get<ChildProfile | null>('/api/child-profile')
-    .catch(() => null)
+  //
+  // No .catch() here: null is already the legitimate "no profile yet" value,
+  // so swallowing a fetch failure into the same null would seed the form's
+  // ability fields to null/[]/false and Save would upsert those empties over
+  // the parent's real data. Let a failed fetch throw into error.tsx instead.
+  const profile = await apiClient.get<ChildProfile | null>('/api/child-profile')
 
   return (
     <div>
