@@ -59,3 +59,50 @@ describe('ChildProfileForm', () => {
     expect(screen.queryByText('Saved')).not.toBeInTheDocument()
   })
 })
+
+describe('ChildProfileForm — remaining sections', () => {
+  it('saves everyday needs', async () => {
+    put.mockResolvedValue({})
+    render(<ChildProfileForm profile={null} />)
+
+    fireEvent.change(screen.getByLabelText('Other challenges'), { target: { value: 'Tires quickly' } })
+    fireEvent.change(screen.getByLabelText('Grip type'), { target: { value: 'Palmar' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+    await screen.findByText('Saved')
+    expect(put).toHaveBeenCalledWith(
+      '/api/child-profile',
+      expect.objectContaining({ challenge_other: 'Tires quickly', grip_type: 'Palmar' })
+    )
+  })
+
+  it('saves customization metrics', async () => {
+    put.mockResolvedValue({})
+    render(<ChildProfileForm profile={null} />)
+
+    fireEvent.change(screen.getByLabelText('Palm width (mm)'), { target: { value: '52' } })
+    fireEvent.click(screen.getByLabelText('Needs an arm attachment'))
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+    await screen.findByText('Saved')
+    expect(put).toHaveBeenCalledWith(
+      '/api/child-profile',
+      expect.objectContaining({ palm_width_mm: 52, needs_arm_attachment: true })
+    )
+  })
+
+  // Chain: challenges and sensory_preferences are text[] NOT NULL DEFAULT '{}'.
+  //        Sending null violates the column.
+  it('always sends the array columns as arrays', async () => {
+    put.mockResolvedValue({})
+    render(<ChildProfileForm profile={null} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+    await screen.findByText('Saved')
+    const body = put.mock.calls[0][1] as Record<string, unknown>
+    expect(Array.isArray(body.challenges)).toBe(true)
+    expect(Array.isArray(body.sensory_preferences)).toBe(true)
+    expect(body.needs_arm_attachment).toBe(false)
+  })
+})

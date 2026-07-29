@@ -6,11 +6,9 @@
  * re-implementation against the same PUT /api/child-profile contract and the same
  * ChildProfile type from @splat-connect/types.
  *
- * This component builds the shell, the save path, and the Ability Profile section
- * only — Everyday Needs and Customization Metrics are added in a later task, but the
- * state they'll fill in (challenges, sensory_preferences, needs_arm_attachment) is
- * already initialised here so a save from this task never violates their NOT NULL
- * column defaults.
+ * This component covers all three sections mirrored from mobile's screens: Ability
+ * Profile, Everyday Needs, and Customization Metrics — grouped in the markup the same
+ * way supabase/migrations/003_ability_profile.sql groups the columns.
  *
  * Deliberately does NOT port:
  * - Mobile's autosave: a phone can be backgrounded mid-edit, a browser tab cannot, so
@@ -34,6 +32,11 @@ import type { ChildProfile } from '@splat-connect/types'
 
 const MACS_LEVELS = ['I', 'II', 'III', 'IV', 'V']
 const BFMF_SCORES = ['1', '2', '3', '4', '5']
+// Same vocabulary as mobile's everyday-needs-screen.tsx / customization-screen.tsx —
+// this is the same DB column, so the value sets should match even though the control
+// code isn't shared.
+const CHALLENGES = ['Grasping', 'Holding', 'Fine motor', 'Strength', 'Coordination', 'Fatigue', 'Other']
+const SENSORY_PREFERENCES = ['Soft', 'Firm', 'Smooth', 'Textured', 'Lightweight', 'No preference']
 
 export function ChildProfileForm({ profile }: { profile: ChildProfile | null }) {
   const [form, setForm] = useState<Partial<ChildProfile>>(() => ({
@@ -57,6 +60,24 @@ export function ChildProfileForm({ profile }: { profile: ChildProfile | null }) 
 
   function set<K extends keyof ChildProfile>(key: K, value: ChildProfile[K]) {
     setForm((prev) => ({ ...prev, [key]: value }))
+  }
+
+  // challenges / sensory_preferences are text[] not null default '{}' — toggling here
+  // always produces an array (possibly empty), never null.
+  function toggle(key: 'challenges' | 'sensory_preferences', value: string) {
+    setForm((prev) => {
+      const current = prev[key] ?? []
+      const next = current.includes(value)
+        ? current.filter((v) => v !== value)
+        : [...current, value]
+      return { ...prev, [key]: next }
+    })
+  }
+
+  // An untouched number field means "not measured", not "measured as zero" — sending 0
+  // for e.g. an unmeasured palm width would be a lie in the data, so it stays null.
+  function setNumber(key: 'palm_width_mm' | 'wrist_circ_mm' | 'forearm_length_mm', raw: string) {
+    set(key, raw === '' ? null : Number(raw))
   }
 
   async function save(e: React.FormEvent) {
@@ -158,6 +179,133 @@ export function ChildProfileForm({ profile }: { profile: ChildProfile | null }) 
           <option value="left">Left</option>
           <option value="right">Right</option>
         </select>
+      </div>
+
+      <h2 className="text-lg font-bold text-ink">Everyday needs</h2>
+
+      <div>
+        <span className="field-label">Challenges</span>
+        <div className="flex flex-col gap-1">
+          {CHALLENGES.map((c) => (
+            <label key={c} htmlFor={`challenge-${c}`} className="flex items-center gap-2">
+              <input
+                id={`challenge-${c}`}
+                type="checkbox"
+                checked={(form.challenges ?? []).includes(c)}
+                onChange={() => toggle('challenges', c)}
+              />
+              {c}
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <label htmlFor="challenge_other" className="field-label">Other challenges</label>
+        <input
+          id="challenge_other"
+          type="text"
+          value={form.challenge_other ?? ''}
+          onChange={(e) => set('challenge_other', e.target.value || null)}
+          className="field"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="grip_type" className="field-label">Grip type</label>
+        <input
+          id="grip_type"
+          type="text"
+          value={form.grip_type ?? ''}
+          onChange={(e) => set('grip_type', e.target.value || null)}
+          className="field"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="env_context" className="field-label">Where it is used</label>
+        <input
+          id="env_context"
+          type="text"
+          value={form.env_context ?? ''}
+          onChange={(e) => set('env_context', e.target.value || null)}
+          className="field"
+        />
+      </div>
+
+      <h2 className="text-lg font-bold text-ink">Customization metrics</h2>
+
+      <div>
+        <label htmlFor="palm_width_mm" className="field-label">Palm width (mm)</label>
+        <input
+          id="palm_width_mm"
+          type="number"
+          value={form.palm_width_mm ?? ''}
+          onChange={(e) => setNumber('palm_width_mm', e.target.value)}
+          className="field"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="wrist_circ_mm" className="field-label">Wrist circumference (mm)</label>
+        <input
+          id="wrist_circ_mm"
+          type="number"
+          value={form.wrist_circ_mm ?? ''}
+          onChange={(e) => setNumber('wrist_circ_mm', e.target.value)}
+          className="field"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="needs_arm_attachment" className="flex items-center gap-2">
+          <input
+            id="needs_arm_attachment"
+            type="checkbox"
+            checked={form.needs_arm_attachment ?? false}
+            onChange={(e) => set('needs_arm_attachment', e.target.checked)}
+          />
+          Needs an arm attachment
+        </label>
+      </div>
+
+      <div>
+        <label htmlFor="forearm_length_mm" className="field-label">Forearm length (mm)</label>
+        <input
+          id="forearm_length_mm"
+          type="number"
+          value={form.forearm_length_mm ?? ''}
+          onChange={(e) => setNumber('forearm_length_mm', e.target.value)}
+          className="field"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="hand_dominance" className="field-label">Hand dominance</label>
+        <input
+          id="hand_dominance"
+          type="text"
+          value={form.hand_dominance ?? ''}
+          onChange={(e) => set('hand_dominance', e.target.value || null)}
+          className="field"
+        />
+      </div>
+
+      <div>
+        <span className="field-label">Sensory preferences</span>
+        <div className="flex flex-col gap-1">
+          {SENSORY_PREFERENCES.map((s) => (
+            <label key={s} htmlFor={`sensory-${s}`} className="flex items-center gap-2">
+              <input
+                id={`sensory-${s}`}
+                type="checkbox"
+                checked={(form.sensory_preferences ?? []).includes(s)}
+                onChange={() => toggle('sensory_preferences', s)}
+              />
+              {s}
+            </label>
+          ))}
+        </div>
       </div>
 
       {error && <p role="alert" className="alert alert-danger">{error}</p>}
