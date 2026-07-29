@@ -92,6 +92,14 @@ export interface Profile {
   created_at: string
 }
 
+// GET /api/admin/contributors. `total` is the exact count of matching rows,
+// independent of how many `accounts` actually carries — see admin.ts for why
+// the two can differ.
+export interface AdminAccountsResponse {
+  accounts: Profile[]
+  total: number
+}
+
 export interface Tutorial {
   id: string
   title: string
