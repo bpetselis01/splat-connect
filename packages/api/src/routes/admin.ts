@@ -55,12 +55,17 @@ admin.patch('/tutorials/:id/status', async (c) => {
   return c.json(data)
 })
 
+// Every non-admin account, not only role='contributor'. Since 009 the role
+// column records where an account signed up rather than what it may do, so
+// filtering on 'contributor' would hide mobile-registered accounts from the
+// screen an admin uses to manage them. The path keeps its name: three call
+// sites and an E2E spec reference it.
 admin.get('/contributors', async (c) => {
   const supabase = createAdminClient()
   const { data, error } = await supabase
     .from('profiles')
     .select('*')
-    .eq('role', 'contributor')
+    .neq('role', 'admin')
     .order('created_at', { ascending: true })
   if (error) return c.json({ error: error.message }, 500)
   return c.json(data)
@@ -106,9 +111,11 @@ admin.post('/organizations', async (c) => {
 
   const supabase = createUserClient(c.get('token'))
   if (!(await isContributor(supabase, body.leader_user_id))) {
-    // A parent-role leader is treated as logged out by every org page via
-    // getUserRole(), with no error to debug — a 400 at the point of the mistake is
-    // the fix that helps.
+    // Legacy role gate. Since 009, role records where an account signed up rather
+    // than what it may do, so this refuses a mobile-registered account that would
+    // otherwise be a valid leader. Kept for now: lifting it changes organisation
+    // semantics and the test that pins them, both outside this sub-project.
+    // Revisit alongside lib/org-access.ts.
     return c.json({ error: 'an org leader must have the contributor role' }, 400)
   }
 

@@ -118,28 +118,28 @@ describe('PATCH /tutorials/:id/status', () => {
 describe('GET /contributors', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  // Tests: GET /contributors returns the list of contributors for admin review
-  // How:   mockAdminFrom returns a select/eq/order chain with one contributor; checks status 200 and body
-  // Chain: the admin contributors page calls this to show who is registered → admins can
-  //        remove contributors through the adjacent delete endpoint
-  it('returns contributor list for admin', async () => {
+  // Tests: GET /contributors returns every non-admin account, not only role='contributor'
+  // How:   mockAdminFrom returns a select/neq/order chain with a parent-role row; checks status 200 and body
+  // Chain: since 009 role records where an account signed up rather than what it may do, so a
+  //        mobile-registered parent who authors must still show up on the admin's account list
+  it('returns non-admin accounts for admin', async () => {
     mockAdminFrom.mockReturnValue({
-      select: () => ({ eq: () => ({ order: () => ({ data: [{ id: 'c-1', role: 'contributor' }], error: null }) }) }),
+      select: () => ({ neq: () => ({ order: () => ({ data: [{ id: 'p-1', role: 'parent' }], error: null }) }) }),
     })
     const res = await makeApp('admin').request('/contributors')
     expect(res.status).toBe(200)
     const body = await res.json() as any
     expect(body).toHaveLength(1)
-    expect(body[0].role).toBe('contributor')
+    expect(body[0].role).toBe('parent')
   })
 
   // Tests: GET /contributors returns 500 when the database query fails
   // How:   mockAdminFrom returns { data: null, error } through the select chain; checks status 500
   // Chain: the admin page receives an error response → the UI can display an error state
-  //        rather than silently showing an empty contributors list
+  //        rather than silently showing an empty account list
   it('returns 500 on DB error', async () => {
     mockAdminFrom.mockReturnValue({
-      select: () => ({ eq: () => ({ order: () => ({ data: null, error: { message: 'DB error' } }) }) }),
+      select: () => ({ neq: () => ({ order: () => ({ data: null, error: { message: 'DB error' } }) }) }),
     })
     const res = await makeApp('admin').request('/contributors')
     expect(res.status).toBe(500)

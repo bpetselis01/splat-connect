@@ -34,7 +34,7 @@
  * Related files:
  * - routes/admin.ts: API endpoints for admin operations
  * - routes/contributors.ts: Get contributor profiles
- * - app/admin/contributors: Contributor approval page
+ * - app/admin/contributors: Accounts list page (approval was removed 2026-07-23)
  * - app/admin/review: Tutorial review page
  * - middleware.ts: Enforces admin-only access
  */
@@ -55,11 +55,11 @@ export default async function AdminPage() {
 
   const cards = [
     {
-      label: 'Contributors',
+      label: 'Accounts',
       count: totalContributors,
       href: '/admin/contributors' as const,
       icon: '👥',
-      hint: 'Review and remove contributor accounts',
+      hint: 'Review and remove accounts',
     },
     {
       label: 'Tutorials awaiting review',

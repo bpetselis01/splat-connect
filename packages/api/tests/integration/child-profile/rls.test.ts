@@ -34,24 +34,32 @@ beforeAll(async () => {
 
 afterAll(async () => {
   const admin = adminClient()
-  await admin.from('child_profiles').delete().in('parent_id', [parentA.id, parentB.id])
+  await admin.from('child_profiles').delete().in('parent_id', [parentA.id, parentB.id, contributor.id])
   await deleteTestUser(parentA.id)
   await deleteTestUser(parentB.id)
   await deleteTestUser(contributor.id)
 })
 
-describe('child-profile parent gating', () => {
-  it('blocks a non-parent from reading the child profile', async () => {
+describe('child-profile is open to any account', () => {
+  // Tests: a contributor-role account reads its own (absent) child profile.
+  // Chain: the role guard was the only thing stopping a web-registered account
+  //        from becoming a parent, which is the point of the shared account.
+  it('returns null rather than 403 for an account with no child profile', async () => {
     const res = await app.request('/api/child-profile', authed(contributor.token))
-    expect(res.status).toBe(403)
+    expect(res.status).toBe(200)
+    expect(await res.json()).toBeNull()
   })
 
-  it('blocks a non-parent from writing the child profile', async () => {
+  // Tests: a contributor-role account can create one.
+  it('lets a contributor-role account create a child profile', async () => {
     const res = await app.request(
       '/api/child-profile',
       authed(contributor.token, { method: 'PUT', body: JSON.stringify({ age: 5 }) })
     )
-    expect(res.status).toBe(403)
+    expect(res.status).toBe(200)
+    const saved = (await res.json()) as Record<string, unknown>
+    expect(saved.parent_id).toBe(contributor.id)
+    expect(saved.age).toBe(5)
   })
 })
 
