@@ -21,10 +21,10 @@ test('an invalid password shows an error and stays on /login', async ({ page }) 
   await expect(page).toHaveURL(/\/login$/)
 })
 
-test('a parent-role account lands on the home page', async ({ page }) => {
+test('a parent-role account lands on the dashboard', async ({ page }) => {
   const parent = await createParent()
   await signIn(page, parent.email, parent.password)
 
-  await page.waitForURL(/localhost:\d+\/$/)
-  await expect(page.getByRole('heading', { name: 'Every child deserves to play.' })).toBeVisible()
+  await page.waitForURL('**/dashboard')
+  await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible()
 })

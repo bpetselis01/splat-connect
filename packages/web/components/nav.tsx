@@ -5,11 +5,11 @@
  * Displayed on every page (from root layout.tsx).
  *
  * Props:
- * - role: User role ('admin' | 'contributor' | null for logged-out)
+ * - role: User role ('admin' | 'contributor' | 'parent' | null for logged-out)
  *
  * Navigation items (dynamic based on role):
  * - Library: Browse approved tutorials (everyone)
- * - Dashboard: Contributor hub (contributors only)
+ * - Dashboard: hub for any signed-in account
  * - Admin: Admin dashboard (admins only)
  * - Sign Out: Logout button (if authenticated)
  *
@@ -64,9 +64,11 @@ export function Nav({ role }: NavProps) {
     // leader is an ordinary contributor.
     { href: '/organizations', label: 'Organisations', show: role !== null },
     { href: '/admin', label: 'Admin', show: role === 'admin' },
-    { href: '/dashboard', label: 'Dashboard', show: role === 'contributor' },
-    { href: '/upload', label: 'Upload', show: role === 'contributor' },
-    { href: '/my-tutorials', label: 'My Tutorials', show: role === 'contributor' },
+    // Any signed-in account, not only role='contributor': since 009 every
+    // account may author. Sub-project 3 moves these into dashboard tabs.
+    { href: '/dashboard', label: 'Dashboard', show: role !== null },
+    { href: '/upload', label: 'Upload', show: role !== null },
+    { href: '/my-tutorials', label: 'My Tutorials', show: role !== null },
   ] as const).filter((l) => l.show)
 
   return (
@@ -113,10 +115,10 @@ export function Nav({ role }: NavProps) {
           </button>
         ) : (
           <Link
-            href="/signup"
+            href="/login"
             className="btn btn-accent btn-sm order-2 ml-auto shrink-0 sm:order-3 sm:ml-0"
           >
-            Contribute
+            Sign in
           </Link>
         )}
       </nav>

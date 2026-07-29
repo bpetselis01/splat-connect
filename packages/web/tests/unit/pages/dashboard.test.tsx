@@ -65,15 +65,18 @@ describe('DashboardPage', () => {
     expect(redirect).toHaveBeenCalledWith('/login')
   })
 
-  // Tests: redirects to / when the logged-in user's role is not contributor
-  // How:   mocks apiClient.get to return a profile with role: 'admin';
-  //        asserts redirect('/') was called
-  // Chain: non-contributors (e.g. admins) should not land on the contributor dashboard
-  it('redirects to / when profile role is not contributor', async () => {
-    vi.mocked(redirect).mockImplementation(() => { throw new Error('NEXT_REDIRECT') })
-    vi.mocked(apiClient.get).mockResolvedValueOnce({ ...mockProfile, role: 'admin' })
-    await expect(DashboardPage()).rejects.toThrow('NEXT_REDIRECT')
-    expect(redirect).toHaveBeenCalledWith('/')
+  // Tests: a non-contributor profile (parent) renders the dashboard instead of redirecting
+  // How:   mocks apiClient.get to return a profile with role: 'parent'; asserts the
+  //        page renders normally and redirect is never called
+  // Chain: parent and contributor are the same kind of account now, so the dashboard
+  //        is not contributor-only — there is nowhere left for a parent to bounce to
+  it('renders the dashboard for a non-contributor profile', async () => {
+    vi.mocked(apiClient.get)
+      .mockResolvedValueOnce({ ...mockProfile, role: 'parent' })
+      .mockResolvedValueOnce([])
+    render(await DashboardPage())
+    expect(redirect).not.toHaveBeenCalled()
+    expect(screen.getByRole('heading', { name: 'Dashboard' })).toBeInTheDocument()
   })
 
   // Tests: stats section renders Pending, Approved, Rejected labels with correct counts
