@@ -16,7 +16,7 @@
  */
 import { revalidatePath } from 'next/cache'
 import { apiClient } from '@/lib/api-client'
-import type { Organization, OrgLeader, Profile } from '@splat-connect/types'
+import type { Organization, OrgLeader, AdminAccountsResponse } from '@splat-connect/types'
 
 async function createOrg(formData: FormData) {
   'use server'
@@ -58,10 +58,11 @@ async function removeLeader(formData: FormData) {
 type OrgWithLeaders = Organization & { org_leaders?: OrgLeader[] }
 
 export default async function AdminOrganizationsPage() {
-  const [orgs, contributors] = await Promise.all([
+  const [orgs, accounts] = await Promise.all([
     apiClient.get<OrgWithLeaders[]>('/api/organizations'),
-    apiClient.get<Profile[]>('/api/admin/contributors'),
+    apiClient.get<AdminAccountsResponse>('/api/admin/contributors'),
   ])
+  const contributors = accounts.accounts
 
   // No per-organisation fetch. The list endpoint embeds org_leaders, so this is
   // one request at fifty organisations instead of fifty-one. Deferring the leaders

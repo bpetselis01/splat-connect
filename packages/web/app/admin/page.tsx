@@ -40,18 +40,18 @@
  */
 import Link from 'next/link'
 import { apiClient } from '@/lib/api-client'
-import type { Tutorial, Profile, Organization } from '@splat-connect/types'
+import type { Tutorial, AdminAccountsResponse, Organization } from '@splat-connect/types'
 
 export default async function AdminPage() {
-  const [tutorials, contributors, organizations, spotCheck] = await Promise.all([
+  const [tutorials, accounts, organizations, spotCheck] = await Promise.all([
     apiClient.get<Tutorial[]>('/api/admin/tutorials?status=pending'),
-    apiClient.get<Profile[]>('/api/admin/contributors'),
+    apiClient.get<AdminAccountsResponse>('/api/admin/contributors'),
     apiClient.get<Organization[]>('/api/organizations'),
     apiClient.get<Tutorial[]>('/api/admin/spot-check'),
   ])
 
   const pendingTutorials = tutorials.length
-  const totalContributors = contributors.length
+  const totalContributors = accounts.total
 
   const cards = [
     {

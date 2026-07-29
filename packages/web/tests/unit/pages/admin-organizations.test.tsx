@@ -26,7 +26,10 @@ describe('admin organisations', () => {
       Promise.resolve(
         path === '/api/organizations' ? [org('o1'), org('o2'), org('o3')]
           : path === '/api/admin/contributors'
-            ? [{ id: 'u1', name: 'Sam', email: 'sam@example.com', role: 'contributor', created_at: '' }]
+            ? {
+                accounts: [{ id: 'u1', name: 'Sam', email: 'sam@example.com', role: 'contributor', created_at: '' }],
+                total: 1,
+              }
             : []
       )
     )
@@ -45,7 +48,10 @@ describe('admin organisations', () => {
       Promise.resolve(
         path === '/api/organizations' ? [org('o1')]
           : path === '/api/admin/contributors'
-            ? [{ id: 'u1', name: 'Sam', email: 'sam@example.com', role: 'contributor', created_at: '' }]
+            ? {
+                accounts: [{ id: 'u1', name: 'Sam', email: 'sam@example.com', role: 'contributor', created_at: '' }],
+                total: 1,
+              }
             : []
       )
     )
