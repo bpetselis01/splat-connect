@@ -63,3 +63,80 @@ describe('authoring is not tied to the contributor role', () => {
     expect(error).toBeNull()
   })
 })
+
+describe('profile identity is frozen against its owner', () => {
+  // Tests: a user cannot promote themselves to admin.
+  // Chain: "User can update own profile" has no WITH CHECK, so USING doubles as
+  //        the check and role='admin' satisfied it. is_admin() then opens every
+  //        admin policy in the schema.
+  it('rejects a user setting their own role to admin', async () => {
+    const { error } = await userClient(parent.token)
+      .from('profiles')
+      .update({ role: 'admin' })
+      .eq('id', parent.id)
+
+    expect(error).not.toBeNull()
+
+    const { data } = await adminClient()
+      .from('profiles')
+      .select('role')
+      .eq('id', parent.id)
+      .single()
+    expect(data?.role).toBe('parent')
+  })
+
+  // Tests: email is not settable directly.
+  // Chain: profiles.email mirrors auth.users; a divergent value would make the
+  //        admin account list lie about who an account belongs to.
+  it('rejects a user setting their own email', async () => {
+    const { error } = await userClient(parent.token)
+      .from('profiles')
+      .update({ email: 'attacker@example.com' })
+      .eq('id', parent.id)
+
+    expect(error).not.toBeNull()
+  })
+
+  // Tests: the freeze does not block the fields the profile tab will edit.
+  it('still allows a user to change their own name', async () => {
+    const { error } = await userClient(parent.token)
+      .from('profiles')
+      .update({ name: 'Renamed Parent' })
+      .eq('id', parent.id)
+
+    expect(error).toBeNull()
+  })
+
+  // Tests: an admin retains authority over another account's role.
+  it('allows an admin to change another profile role', async () => {
+    const admin = await createTestUser('admin')
+    const target = await createTestUser('contributor')
+
+    const { error } = await userClient(admin.token)
+      .from('profiles')
+      .update({ role: 'admin' })
+      .eq('id', target.id)
+
+    expect(error).toBeNull()
+
+    await deleteTestUser(admin.id)
+    await deleteTestUser(target.id)
+  })
+
+  // Tests: a service-role write is not caught by the guard.
+  // Chain: triggers fire for service_role even though RLS does not, and
+  //        is_admin() reads auth.uid(), which service_role lacks. Without the
+  //        early return this raises 42501 while the route reports success
+  //        having changed nothing (see the 007 header).
+  it('does not block a service-role write', async () => {
+    const { error } = await adminClient()
+      .from('profiles')
+      .update({ role: 'contributor' })
+      .eq('id', parent.id)
+
+    expect(error).toBeNull()
+
+    // Restore for the remaining tests in this file.
+    await adminClient().from('profiles').update({ role: 'parent' }).eq('id', parent.id)
+  })
+})
