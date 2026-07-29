@@ -133,14 +133,22 @@ describe('PATCH /api/contributors/me', () => {
     expect(data?.email).not.toBe('attacker@example.com')
   })
 
-  it('cannot rename another account', async () => {
-    await app.request(
+  // Supplies `id` in the body — the only field that could plausibly redirect the
+  // write — and asserts BOTH that the caller's row changed and that the target's
+  // did not. Without the `id` and without the positive assertion this exercises
+  // no vector at all and passes for any implementation that scopes by id.
+  it('cannot rename another account by supplying its id', async () => {
+    const res = await app.request(
       '/api/contributors/me',
-      authed(user.token, { method: 'PATCH', body: JSON.stringify({ name: 'Hijacked' }) })
+      authed(user.token, { method: 'PATCH', body: JSON.stringify({ id: other.id, name: 'Hijacked' }) })
     )
+    expect(res.status).toBe(200)
 
-    const { data } = await adminClient().from('profiles').select('name').eq('id', other.id).single()
-    expect(data?.name).not.toBe('Hijacked')
+    const { data: mine } = await adminClient().from('profiles').select('name').eq('id', user.id).single()
+    expect(mine?.name).toBe('Hijacked') // server-derived identity wins
+
+    const { data: theirs } = await adminClient().from('profiles').select('name').eq('id', other.id).single()
+    expect(theirs?.name).not.toBe('Hijacked')
   })
 
   it('rejects a non-object body', async () => {

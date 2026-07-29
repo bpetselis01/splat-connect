@@ -1,15 +1,15 @@
 /**
- * Dashboard Page
+ * Dashboard Page — Tutorials tab
  *
- * Hub for every signed-in account to manage their tutorials.
- * Accessible to any signed-in account. Capability is derived rather than read
- * from the role column — see lib/capabilities.ts.
- * 
+ * This is the Tutorials tab body of the shared dashboard (app/dashboard/layout.tsx
+ * renders the tab strip around it). Accessible to any signed-in account.
+ * Capability is derived rather than read from the role column — see lib/capabilities.ts.
+ *
  * Features:
  * - Stats: Count of draft, pending, approved, rejected tutorials
  * - Recent tutorials list: Show status and links
  * - Quick links: Create new tutorial, view full list, etc.
- * 
+ *
  * Data fetched:
  * 1. User profile (via apiClient.get('/api/contributors/me'))
  *    - Redirects to /login if the fetch fails (no valid session)
@@ -20,13 +20,17 @@
  * Middleware protection (middleware.ts):
  * - Requires only a signed-in account, no particular role.
  * - If not authenticated → redirect to /login
- * 
+ *
  * Tutorial status meanings:
  * - draft: Incomplete, can still edit
  * - pending: Submitted for review, awaiting admin decision
  * - approved: Admin approved, visible in public library
  * - rejected: Admin rejected, user can edit and resubmit
- * 
+ *
+ * The organisations a contributor leads used to be linked from a block at the
+ * bottom of this page. That is now the Organisation tab (app/dashboard/organisation),
+ * which shows the review queue itself rather than a link out to it.
+ *
  * Related files:
  * - routes/tutorials.ts: Fetch /api/tutorials/mine
  * - routes/contributors.ts: Fetch /api/contributors/me
@@ -41,7 +45,7 @@ import { DifficultyBadge } from '@/components/difficulty-badge'
 import { StatusBadge } from '@/components/status-badge'
 import { BackingSummary } from '@/components/backing-state'
 import { BookOpen } from '@/components/icons'
-import type { Tutorial, Difficulty, Profile, Organization, TutorialOrg } from '@splat-connect/types'
+import type { Tutorial, Difficulty, Profile, TutorialOrg } from '@splat-connect/types'
 
 export default async function DashboardPage() {
   try {
@@ -53,13 +57,6 @@ export default async function DashboardPage() {
   const tutorials = await apiClient.get<(Tutorial & { tutorial_orgs?: TutorialOrg[] })[]>(
     '/api/tutorials/mine'
   )
-
-  // Organisations the caller LEADS, not ones they belong to — there is no
-  // membership in this model. Most contributors lead none, so the section below
-  // renders nothing at all rather than an empty box.
-  const ledOrgs = await apiClient
-    .get<Organization[]>('/api/organizations/mine')
-    .catch(() => [] as Organization[])
 
   const pendingCount = tutorials.filter((t) => t.status === 'pending').length
   const approvedCount = tutorials.filter((t) => t.status === 'approved').length
@@ -144,7 +141,10 @@ export default async function DashboardPage() {
               </div>
             </div>
           ))}
-          {tutorials.length > 5 && (
+          {/* WHY: since the nav dropped its /my-tutorials link, this is the only click
+              path left to that page — gate on >0, not >5, or a small account has no
+              way to get there at all. */}
+          {tutorials.length > 0 && (
             <Link
               href="/my-tutorials"
               className="pt-1 text-center text-sm font-semibold text-brand-dark hover:underline"
@@ -152,24 +152,6 @@ export default async function DashboardPage() {
               View all {tutorials.length} tutorials →
             </Link>
           )}
-        </div>
-      )}
-
-      {ledOrgs.length > 0 && (
-        <div className="mt-8">
-          <h2 className="mb-3 text-lg font-semibold text-ink">Organisations you lead</h2>
-          <div className="flex flex-col gap-2">
-            {ledOrgs.map((org) => (
-              <Link key={org.id} href={`/organizations/${org.id}`} className="card card-link p-4">
-                <p className="text-sm font-bold text-ink">{org.name}</p>
-                <p className="text-xs text-muted">
-                  {org.status === 'active'
-                    ? 'Review projects offered to this organisation'
-                    : 'Suspended — you can look, but not approve'}
-                </p>
-              </Link>
-            ))}
-          </div>
         </div>
       )}
     </div>

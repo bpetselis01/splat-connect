@@ -47,11 +47,6 @@ const baseTutorial: Tutorial = {
 describe('DashboardPage', () => {
   beforeEach(() => {
     vi.resetAllMocks()
-    // The page makes a third read — GET /api/organizations/mine — after the two
-    // each test sets up with mockResolvedValueOnce. Without a fallback that call
-    // returns undefined and every test dies on it. Empty is the ordinary case:
-    // most contributors lead no organisation.
-    vi.mocked(apiClient.get).mockResolvedValue([])
   })
 
   // Tests: redirects to /login when the profile API call fails
@@ -143,15 +138,17 @@ describe('DashboardPage', () => {
     expect(screen.getByRole('link', { name: /view all 6 tutorials/i })).toHaveAttribute('href', '/my-tutorials')
   })
 
-  // Tests: "View all" link is absent with 5 or fewer tutorials
-  // How:   passes exactly 5 tutorials; checks "View all" text is not present
-  // Chain: when all tutorials fit on the dashboard, no overflow link is needed
-  it('does not show "View all" link with 5 or fewer tutorials', async () => {
+  // Tests: "View all" link appears even for a small number of tutorials
+  // How:   passes 2 tutorials; checks the View all link is present
+  // Chain: the nav no longer links to /my-tutorials, so this link is the only click path
+  //        there — it must not be gated behind a tutorial count or new accounts (0-5
+  //        tutorials) would have no way to reach the full list
+  it('shows "View all" link even with only 2 tutorials', async () => {
     vi.mocked(apiClient.get)
       .mockResolvedValueOnce(mockProfile)
-      .mockResolvedValueOnce(Array.from({ length: 5 }, (_, i) => ({ ...baseTutorial, id: String(i) })))
+      .mockResolvedValueOnce(Array.from({ length: 2 }, (_, i) => ({ ...baseTutorial, id: String(i) })))
     render(await DashboardPage())
-    expect(screen.queryByText(/view all/i)).toBeNull()
+    expect(screen.getByRole('link', { name: /view all 2 tutorials/i })).toHaveAttribute('href', '/my-tutorials')
   })
 
   // Tests: empty state message appears when the contributor has no tutorials
@@ -205,31 +202,6 @@ describe('DashboardPage', () => {
     expect(screen.queryByText('No feedback was provided.')).toBeNull()
   })
 
-  // Tests: the led-organisations section appears only for a leader
-  // How:   the third read returns one org for the leader case and [] for the other
-  // Chain: leadership is per-organisation data with nothing on the profile to read
-  //        it from, so this section is the only route a leader has into /org/[orgId]
-  it('links to organisations the contributor leads', async () => {
-    vi.mocked(apiClient.get)
-      .mockResolvedValueOnce(mockProfile)
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([
-        { id: 'org-1', name: 'Riverside Therapy', description: null, status: 'active', created_by: null, created_at: '', updated_at: '' },
-      ])
-    render(await DashboardPage())
-    expect(screen.getByText('Riverside Therapy')).toBeInTheDocument()
-    expect(screen.getByText(/Review projects offered/)).toBeInTheDocument()
-  })
-
-  it('shows no organisations section for a contributor who leads none', async () => {
-    vi.mocked(apiClient.get)
-      .mockResolvedValueOnce(mockProfile)
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([])
-    render(await DashboardPage())
-    expect(screen.queryByText(/Organisations you lead/)).not.toBeInTheDocument()
-  })
-
   // Tests: the dashboard row states its backing, same wording as my-tutorials
   // How:   the second mockResolvedValueOnce is the tutorials list; one accepted row
   // Chain: both pages render through one component, so a contributor never sees the
@@ -254,7 +226,6 @@ describe('DashboardPage', () => {
           ],
         },
       ])
-      .mockResolvedValueOnce([])
     render(await DashboardPage())
     expect(screen.getByText('Riverside Therapy is deciding')).toBeInTheDocument()
   })

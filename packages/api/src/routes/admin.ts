@@ -60,15 +60,27 @@ admin.patch('/tutorials/:id/status', async (c) => {
 // filtering on 'contributor' would hide mobile-registered accounts from the
 // screen an admin uses to manage them. The path keeps its name: three call
 // sites and an E2E spec reference it.
+//
+// WHY: with no limit, PostgREST's max_rows (1000, supabase/config.toml) silently
+//      truncated this list, and ascending order meant the NEWEST accounts were the
+//      ones dropped — so a new signup was invisible to the admin managing accounts,
+//      the Accounts count on /admin capped at 1000, and a recent account could not
+//      be appointed an org leader.
+// HOW:  newest first, an explicit cap so truncation is a decision rather than a
+//       platform default, and an exact total so callers stop inferring it from
+//       array length.
+const ACCOUNT_LIMIT = 1000
+
 admin.get('/contributors', async (c) => {
   const supabase = createAdminClient()
-  const { data, error } = await supabase
+  const { data, error, count } = await supabase
     .from('profiles')
-    .select('*')
+    .select('*', { count: 'exact' })
     .neq('role', 'admin')
-    .order('created_at', { ascending: true })
+    .order('created_at', { ascending: false })
+    .limit(ACCOUNT_LIMIT)
   if (error) return c.json({ error: error.message }, 500)
-  return c.json(data)
+  return c.json({ accounts: data ?? [], total: count ?? 0 })
 })
 
 admin.delete('/contributors/:id', async (c) => {

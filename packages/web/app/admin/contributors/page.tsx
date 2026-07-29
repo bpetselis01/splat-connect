@@ -1,6 +1,6 @@
 import { apiClient } from '@/lib/api-client'
 import { revalidatePath } from 'next/cache'
-import type { Profile } from '@splat-connect/types'
+import type { AdminAccountsResponse } from '@splat-connect/types'
 
 async function deleteContributor(id: string) {
   'use server'
@@ -10,7 +10,7 @@ async function deleteContributor(id: string) {
 }
 
 export default async function ContributorsPage() {
-  const all = await apiClient.get<Profile[]>('/api/admin/contributors')
+  const { accounts: all, total } = await apiClient.get<AdminAccountsResponse>('/api/admin/contributors')
 
   if (all.length === 0) {
     return (
@@ -32,6 +32,11 @@ export default async function ContributorsPage() {
   return (
     <div>
       <h1 className="mb-6 text-2xl font-bold text-ink">Accounts</h1>
+      {total > all.length && (
+        <p className="mb-4 text-sm text-muted">
+          Showing the {all.length.toLocaleString()} most recent of {total.toLocaleString()} accounts.
+        </p>
+      )}
       <div className="flex flex-col gap-3">
         {all.map((p) => (
           <div
