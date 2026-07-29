@@ -15,14 +15,14 @@ export default async function ContributorsPage() {
   if (all.length === 0) {
     return (
       <div>
-        <h1 className="mb-4 text-2xl font-bold text-ink">Contributors</h1>
+        <h1 className="mb-4 text-2xl font-bold text-ink">Accounts</h1>
         <div className="flex flex-col items-center px-6 py-16 text-center">
           <span aria-hidden="true" className="empty-badge">
             👥
           </span>
-          <p className="mt-4 font-bold text-ink">No contributors yet.</p>
+          <p className="mt-4 font-bold text-ink">No accounts yet.</p>
           <p className="mt-1 max-w-xs text-sm leading-relaxed text-muted">
-            Accounts appear here once someone requests contributor access.
+            Accounts appear here once someone signs up.
           </p>
         </div>
       </div>
@@ -31,7 +31,7 @@ export default async function ContributorsPage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold text-ink">Contributors</h1>
+      <h1 className="mb-6 text-2xl font-bold text-ink">Accounts</h1>
       <div className="flex flex-col gap-3">
         {all.map((p) => (
           <div

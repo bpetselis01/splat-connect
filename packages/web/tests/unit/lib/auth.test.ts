@@ -77,6 +77,27 @@ describe('getUserRole', () => {
     expect(await getUserRole()).toBe('admin')
   })
 
+  // Tests: getUserRole returns 'parent' when the user's profile has role='parent'
+  // How:   mockSingle returns { data: { role: 'parent' } }; checks result is 'parent'
+  // Chain: parents and contributors are now the same kind of account → a signed-in parent
+  //        must be recognised by the nav and page guards the same way a contributor is,
+  //        instead of being narrowed away and rendered as signed-out
+  it('returns parent for a parent user', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'user-1' } } })
+    mockSingle.mockResolvedValue({ data: { role: 'parent' } })
+    expect(await getUserRole()).toBe('parent')
+  })
+
+  // Tests: getUserRole returns null when the profile role column holds an unrecognised value
+  // How:   mockSingle returns { data: { role: 'wizard' } }; checks result is null
+  // Chain: preserves the defensive intent behind the original narrowing — an unexpected
+  //        value in the role column must not slip through and look like a valid login
+  it('returns null for an unrecognised role', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'user-1' } } })
+    mockSingle.mockResolvedValue({ data: { role: 'wizard' } })
+    expect(await getUserRole()).toBeNull()
+  })
+
   // Tests: getUserRole returns null (instead of throwing) if the Supabase call itself throws
   // How:   mockGetUser rejects with new Error('Supabase unavailable'); checks result is null
   // Chain: a Supabase outage causes all server components to treat the user as unauthenticated

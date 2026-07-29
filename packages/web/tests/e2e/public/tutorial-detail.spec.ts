@@ -12,11 +12,11 @@ test('the detail page renders a tutorial in full', async ({ page }) => {
   await expect(page.getByText('Created by a Playwright E2E test.')).toBeVisible()
   await expect(page.getByText(new RegExp(`By\\s+${contributor.name}`))).toBeVisible()
 
-  await expect(page.getByRole('link', { name: '📄 Download Tutorial PDF' })).toHaveAttribute(
+  await expect(page.getByRole('link', { name: 'Download Tutorial PDF' })).toHaveAttribute(
     'href',
     'https://placeholder.invalid/tutorial.pdf'
   )
-  await expect(page.getByRole('link', { name: '↓ e2e-mount.stl' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'e2e-mount.stl' })).toBeVisible()
 
   await expect(page.getByRole('heading', { name: '🔩 Parts needed' })).toBeVisible()
   await expect(page.getByText(/E2E part\s*×\s*2/)).toBeVisible()
@@ -74,5 +74,5 @@ test('a tutorial with no STL files omits the 3D-print section', async ({ page })
   await page.goto(`/tutorials/${id}`)
 
   await expect(page.getByRole('heading', { name: /Files for 3D printing/ })).toHaveCount(0)
-  await expect(page.getByRole('link', { name: '📄 Download Tutorial PDF' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Download Tutorial PDF' })).toBeVisible()
 })

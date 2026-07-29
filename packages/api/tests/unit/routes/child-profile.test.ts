@@ -52,9 +52,15 @@ describe('GET /', () => {
     expect(res.status).toBe(500)
   })
 
-  it('returns 403 for a non-parent role', async () => {
+  // The role guard was removed — parent and contributor are not exclusive,
+  // and RLS (parent_id = auth.uid()) is the real authorization boundary.
+  it('serves a non-parent role instead of rejecting it', async () => {
+    mockUserFrom.mockReturnValue({
+      select: () => ({ eq: () => ({ maybeSingle: () => ({ data: null, error: null }) }) }),
+    })
     const res = await makeApp('contributor').request('/')
-    expect(res.status).toBe(403)
+    expect(res.status).toBe(200)
+    expect(await res.json()).toBeNull()
   })
 })
 
@@ -92,13 +98,20 @@ describe('PUT /', () => {
     expect(captured.role).toBeUndefined()
   })
 
-  it('returns 403 for a non-parent role', async () => {
+  // Same removal as GET / — a non-parent role is now served, not refused.
+  it('serves a non-parent role instead of rejecting it', async () => {
+    let captured: any
+    mockUserFrom.mockReturnValue({
+      upsert: (row: any) => { captured = row; return { select: () => ({ single: () => ({ data: { id: 'cp-1', ...row }, error: null }) }) } },
+    })
     const res = await makeApp('admin').request('/', {
       method: 'PUT',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ age: 5 }),
     })
-    expect(res.status).toBe(403)
+    expect(res.status).toBe(200)
+    expect(captured.parent_id).toBe('user-1')
+    expect(captured.age).toBe(5)
   })
 
   it('returns 400 for a non-object body', async () => {

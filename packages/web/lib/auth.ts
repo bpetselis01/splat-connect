@@ -32,11 +32,11 @@ export async function getUserRole(): Promise<Role | null> {
       .single()
     // WHY: A failed database lookup or an unexpected value in the role column
     //      would slip through and look like a valid login.
-    // HOW: Returns null for any error or unrecognised role so callers treat the
-    //      user as "not logged in" rather than granting access.
+    // HOW: Returns null for any error or unrecognised role. Every legal role is
+    //      a valid login — a parent is a signed-in user like any other.
     if (profileError) return null
     const role = profile?.role
-    if (role === 'admin' || role === 'contributor') return role
+    if (role === 'admin' || role === 'contributor' || role === 'parent') return role
     return null
   } catch {
     return null
