@@ -39,13 +39,20 @@ export default function SignupPage() {
           <span aria-hidden="true" className="empty-badge">
             ✅
           </span>
-          <h1 className="mt-4 text-2xl font-bold text-ink">Request received</h1>
+          <h1 className="mt-4 text-2xl font-bold text-ink">You&apos;re all set</h1>
           <p className="mt-2 text-sm leading-relaxed text-muted">
-            Your account has been created. You can log in and start uploading tutorials
-            right away.
+            Your account is ready to go.
           </p>
-          <Link href="/login" className="btn btn-soft mt-6">
-            Back to sign in
+          {/* WHY: supabase/config.toml sets enable_confirmations = false, so
+              signUp() above already returned a live session — the user is
+              signed in the moment this screen renders, not merely registered.
+              HOW: link straight to the dashboard instead of /login. If
+              confirmations are ever enabled (packages/mobile/lib/auth-context.tsx
+              already sets an emailRedirectTo, so some environment may expect
+              this), this screen needs to go back to telling the user to check
+              their email and sign in. */}
+          <Link href="/dashboard" className="btn btn-soft mt-6">
+            Go to your dashboard
           </Link>
         </div>
       </div>
@@ -55,9 +62,9 @@ export default function SignupPage() {
   return (
     <div className="mx-auto mt-8 max-w-sm sm:mt-16">
       <div className="card p-6 sm:p-8">
-        <h1 className="text-2xl font-bold text-ink">Request contributor access</h1>
+        <h1 className="text-2xl font-bold text-ink">Create your account</h1>
         <p className="mt-2 mb-6 text-sm leading-relaxed text-muted">
-          Create your contributor account to start uploading tutorials.
+          One account for everything — browse, contribute, and manage your child&apos;s profile.
         </p>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
@@ -107,12 +114,12 @@ export default function SignupPage() {
             </p>
           )}
           <button type="submit" disabled={loading} className="btn btn-accent btn-block mt-2">
-            {loading ? 'Submitting…' : 'Request access'}
+            {loading ? 'Creating…' : 'Create account'}
           </button>
         </form>
       </div>
       <p className="mt-4 text-center text-sm text-muted">
-        Already have access?{' '}
+        Already have an account?{' '}
         <Link href="/login" className="font-semibold text-brand-dark hover:underline">
           Sign in
         </Link>

@@ -4,16 +4,16 @@
  * Entry point for the web app. Shows:
  * - Hero section with call-to-action
  * - Featured tutorials
- * - Links to library and signup
- * 
+ * - Link to the library
+ *
  * Process:
  * 1. Server-side: Fetches approved tutorials from /api/public/tutorials
  * 2. Displays featured tutorials (first 3)
  * 3. No authentication required
- * 
+ *
  * User flows from home:
  * - Logged-out users: Click "Browse Library" → /library
- * - Logged-out users: Click "Sign Up" → /signup
+ * - Logged-out users: The account entry point lives in the nav → /login
  * - Logged-in users: Click featured tutorial → /tutorials/:id
  * 
  * Related files:
