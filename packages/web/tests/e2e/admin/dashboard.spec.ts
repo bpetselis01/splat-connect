@@ -7,7 +7,7 @@ test('the admin dashboard links to both management pages', async ({ page }) => {
   await page.waitForURL('**/admin')
 
   await expect(page.getByRole('heading', { name: 'Admin dashboard' })).toBeVisible()
-  await expect(page.getByRole('link', { name: /Contributors/ })).toHaveAttribute(
+  await expect(page.getByRole('link', { name: /Accounts/ })).toHaveAttribute(
     'href',
     '/admin/contributors'
   )
