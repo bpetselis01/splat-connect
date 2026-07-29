@@ -14,7 +14,7 @@ test('an admin approves a pending tutorial and it appears in the public library'
   await page.getByRole('link', { name: new RegExp(title) }).click()
   await page.waitForURL(`**/admin/review/${tutorialId}`)
 
-  await page.getByRole('button', { name: '✓ Approve — publish to library' }).click()
+  await page.getByRole('button', { name: 'Approve — publish to library' }).click()
   await page.waitForLoadState('networkidle')
 
   await page.goto('/library')
@@ -33,7 +33,7 @@ test('an admin rejects a pending tutorial with a note visible to the contributor
   await page.waitForLoadState('networkidle')
 
   await page.locator('textarea[name="note"]').fill('Needs clearer photos.')
-  await page.getByRole('button', { name: '✕ Reject' }).click()
+  await page.getByRole('button', { name: 'Reject' }).click()
   await page.waitForLoadState('networkidle')
 
   await signIn(page, contributor.email, contributor.password)
@@ -69,7 +69,7 @@ test('the review detail page renders parts, tools, STL files and the PDF link', 
   await page.waitForURL('**/admin')
   await page.goto(`/admin/review/${id}`)
 
-  await expect(page.getByRole('link', { name: '📄 Open Tutorial PDF' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Open Tutorial PDF' })).toBeVisible()
   await expect(page.getByRole('heading', { name: /Parts \(/ })).toBeVisible()
   await expect(page.getByRole('heading', { name: /Tools \(/ })).toBeVisible()
   await expect(page.getByRole('heading', { name: /STL Files \(/ })).toBeVisible()
@@ -101,7 +101,7 @@ test('an approved tutorial opens read-only with an unpublish control', async ({ 
   // And the submission controls are gone — approving what is already approved is
   // not an action, and Reject would be the wrong word for taking down live work.
   await expect(page.getByRole('button', { name: /Approve/ })).toHaveCount(0)
-  await expect(page.getByRole('button', { name: /✕ Reject/ })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: /Reject/ })).toHaveCount(0)
 })
 
 test('rejecting without a note shows the contributor the fallback text', async ({ page }) => {
@@ -117,7 +117,7 @@ test('rejecting without a note shows the contributor the fallback text', async (
   await page.goto(`/admin/review/${id}`)
   await page.waitForLoadState('networkidle')
 
-  await page.getByRole('button', { name: '✕ Reject' }).click()
+  await page.getByRole('button', { name: 'Reject' }).click()
   await page.waitForLoadState('networkidle')
 
   await signIn(page, contributor.email, contributor.password)
