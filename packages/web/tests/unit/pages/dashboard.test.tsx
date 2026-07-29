@@ -138,15 +138,17 @@ describe('DashboardPage', () => {
     expect(screen.getByRole('link', { name: /view all 6 tutorials/i })).toHaveAttribute('href', '/my-tutorials')
   })
 
-  // Tests: "View all" link is absent with 5 or fewer tutorials
-  // How:   passes exactly 5 tutorials; checks "View all" text is not present
-  // Chain: when all tutorials fit on the dashboard, no overflow link is needed
-  it('does not show "View all" link with 5 or fewer tutorials', async () => {
+  // Tests: "View all" link appears even for a small number of tutorials
+  // How:   passes 2 tutorials; checks the View all link is present
+  // Chain: the nav no longer links to /my-tutorials, so this link is the only click path
+  //        there — it must not be gated behind a tutorial count or new accounts (0-5
+  //        tutorials) would have no way to reach the full list
+  it('shows "View all" link even with only 2 tutorials', async () => {
     vi.mocked(apiClient.get)
       .mockResolvedValueOnce(mockProfile)
-      .mockResolvedValueOnce(Array.from({ length: 5 }, (_, i) => ({ ...baseTutorial, id: String(i) })))
+      .mockResolvedValueOnce(Array.from({ length: 2 }, (_, i) => ({ ...baseTutorial, id: String(i) })))
     render(await DashboardPage())
-    expect(screen.queryByText(/view all/i)).toBeNull()
+    expect(screen.getByRole('link', { name: /view all 2 tutorials/i })).toHaveAttribute('href', '/my-tutorials')
   })
 
   // Tests: empty state message appears when the contributor has no tutorials

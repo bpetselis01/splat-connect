@@ -141,7 +141,10 @@ export default async function DashboardPage() {
               </div>
             </div>
           ))}
-          {tutorials.length > 5 && (
+          {/* WHY: since the nav dropped its /my-tutorials link, this is the only click
+              path left to that page — gate on >0, not >5, or a small account has no
+              way to get there at all. */}
+          {tutorials.length > 0 && (
             <Link
               href="/my-tutorials"
               className="pt-1 text-center text-sm font-semibold text-brand-dark hover:underline"
