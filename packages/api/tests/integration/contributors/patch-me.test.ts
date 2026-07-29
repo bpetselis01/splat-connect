@@ -61,14 +61,18 @@ describe('PATCH /api/contributors/me', () => {
     expect(data?.email).not.toBe('attacker@example.com')
   })
 
-  it('cannot rename another account', async () => {
-    await app.request(
+  it('cannot rename another account by supplying its id', async () => {
+    const res = await app.request(
       '/api/contributors/me',
-      authed(user.token, { method: 'PATCH', body: JSON.stringify({ name: 'Hijacked' }) })
+      authed(user.token, { method: 'PATCH', body: JSON.stringify({ id: other.id, name: 'Hijacked' }) })
     )
+    expect(res.status).toBe(200)
 
-    const { data } = await adminClient().from('profiles').select('name').eq('id', other.id).single()
-    expect(data?.name).not.toBe('Hijacked')
+    const { data: mine } = await adminClient().from('profiles').select('name').eq('id', user.id).single()
+    expect(mine?.name).toBe('Hijacked') // server-derived identity wins, not the client-supplied id
+
+    const { data: theirs } = await adminClient().from('profiles').select('name').eq('id', other.id).single()
+    expect(theirs?.name).not.toBe('Hijacked')
   })
 
   it('rejects a non-object body', async () => {
