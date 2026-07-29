@@ -55,12 +55,17 @@ admin.patch('/tutorials/:id/status', async (c) => {
   return c.json(data)
 })
 
+// Every non-admin account, not only role='contributor'. Since 009 the role
+// column records where an account signed up rather than what it may do, so
+// filtering on 'contributor' would hide mobile-registered accounts from the
+// screen an admin uses to manage them. The path keeps its name: three call
+// sites and an E2E spec reference it.
 admin.get('/contributors', async (c) => {
   const supabase = createAdminClient()
   const { data, error } = await supabase
     .from('profiles')
     .select('*')
-    .eq('role', 'contributor')
+    .neq('role', 'admin')
     .order('created_at', { ascending: true })
   if (error) return c.json({ error: error.message }, 500)
   return c.json(data)

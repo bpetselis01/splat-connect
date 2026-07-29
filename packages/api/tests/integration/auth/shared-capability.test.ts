@@ -1,8 +1,18 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { createClient } from '@supabase/supabase-js'
+import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
 
 let parent: TestUser
+
+const authed = (token: string, init: RequestInit = {}) => ({
+  ...init,
+  headers: {
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
+    ...(init.headers ?? {}),
+  },
+})
 
 const userClient = (token: string) =>
   createClient(
@@ -138,5 +148,31 @@ describe('profile identity is frozen against its owner', () => {
 
     // Restore for the remaining tests in this file.
     await adminClient().from('profiles').update({ role: 'parent' }).eq('id', parent.id)
+  })
+})
+
+describe('the admin account list', () => {
+  // Chain: the filter used to mean "everyone who can author". After 009 it means
+  //        "signed up on web", so a mobile parent who authors would vanish from
+  //        the screen an admin uses to manage accounts.
+  it('includes a parent-role account', async () => {
+    const admin = await createTestUser('admin')
+    const res = await app.request('/api/admin/contributors', authed(admin.token))
+
+    expect(res.status).toBe(200)
+    const rows = (await res.json()) as Array<{ id: string }>
+    expect(rows.some((r) => r.id === parent.id)).toBe(true)
+
+    await deleteTestUser(admin.id)
+  })
+
+  it('excludes admins', async () => {
+    const admin = await createTestUser('admin')
+    const res = await app.request('/api/admin/contributors', authed(admin.token))
+    const rows = (await res.json()) as Array<{ id: string }>
+
+    expect(rows.some((r) => r.id === admin.id)).toBe(false)
+
+    await deleteTestUser(admin.id)
   })
 })

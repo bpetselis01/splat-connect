@@ -55,11 +55,11 @@ export default async function AdminPage() {
 
   const cards = [
     {
-      label: 'Contributors',
+      label: 'Accounts',
       count: totalContributors,
       href: '/admin/contributors' as const,
       icon: '👥',
-      hint: 'Review and remove contributor accounts',
+      hint: 'Review and remove accounts',
     },
     {
       label: 'Tutorials awaiting review',
