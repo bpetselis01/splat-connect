@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { browserApiClient } from '@/lib/browser-api-client'
 
 export default function SignupPage() {
   const supabase = createClient()
@@ -11,6 +12,7 @@ export default function SignupPage() {
   const [error, setError] = useState<string | null>(null)
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -27,6 +29,18 @@ export default function SignupPage() {
       setError(error.message)
       setLoading(false)
       return
+    }
+
+    // enable_confirmations = false (supabase/config.toml:232), so signUp() has
+    // already returned a live session and this call is authenticated.
+    try {
+      await browserApiClient.post('/api/agreements', {
+        agreement_type: 'contributor_terms',
+      })
+    } catch {
+      // Deliberately non-fatal. The account exists and the user is signed in;
+      // rolling that back would be worse than a missing acceptance row. The
+      // middleware gate sends them to /onboarding/contributor-terms next request.
     }
 
     setSubmitted(true)
@@ -108,12 +122,31 @@ export default function SignupPage() {
               At least 6 characters.
             </p>
           </div>
+          <label className="flex items-start gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={acceptedTerms}
+              onChange={(e) => setAcceptedTerms(e.target.checked)}
+              className="mt-1"
+            />
+            <span>
+              I have read and accept the{' '}
+              <Link href="/legal/contributor-terms" className="font-semibold text-brand-dark hover:underline">
+                contributor terms
+              </Link>
+              .
+            </span>
+          </label>
           {error && (
             <p role="alert" className="alert alert-danger">
               {error}
             </p>
           )}
-          <button type="submit" disabled={loading} className="btn btn-accent btn-block mt-2">
+          <button
+            type="submit"
+            disabled={loading || !acceptedTerms}
+            className="btn btn-accent btn-block mt-2"
+          >
             {loading ? 'Creating…' : 'Create account'}
           </button>
         </form>
