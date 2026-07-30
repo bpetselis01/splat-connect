@@ -160,11 +160,20 @@ describe('useAuth', () => {
     expect(result.current.hasContributorTerms).toBe(false)
   })
 
-  // Tests: signing out clears any previously-reported acceptance
-  it('clears contributor terms when there is no session', async () => {
+  // Tests: signing out (or never having signed in) leaves the flag "unknown", not
+  // "known unaccepted" — false here would flash the profile gate for an
+  // already-accepted user who signs out and back in within the same app session.
+  it('resets contributor terms to null when there is no session', async () => {
     const { result } = renderHook(() => useAuth(), { wrapper })
     await waitFor(() => expect(result.current.loading).toBe(false))
-    expect(result.current.hasContributorTerms).toBe(false)
+    expect(result.current.hasContributorTerms).toBeNull()
+  })
+
+  // Tests: the flag starts null, before the initial session check even resolves —
+  // the profile gate must not treat this as "known unaccepted".
+  it('starts with hasContributorTerms as null', () => {
+    const { result } = renderHook(() => useAuth(), { wrapper })
+    expect(result.current.hasContributorTerms).toBeNull()
   })
 
   // Tests: a successful POST records the acceptance and flips the flag

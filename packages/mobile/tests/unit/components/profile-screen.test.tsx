@@ -1,4 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
+import { Linking } from 'react-native'
 import { ProfileScreen } from '../../../components/profile-screen'
 import { useAuth } from '../../../lib/auth-context'
 
@@ -201,7 +202,59 @@ describe('ProfileScreen', () => {
     render(<ProfileScreen />)
 
     expect(screen.getByText('Before you continue')).toBeTruthy()
-    expect(screen.queryByText('Sign Out')).toBeNull()
+  })
+
+  it('does not show the catch-up gate while hasContributorTerms is still null (unknown)', () => {
+    // null means "the /api/agreements/me fetch hasn't resolved yet", not "the
+    // server confirmed no acceptance". Treating it as unaccepted flashed this gate
+    // for every already-accepted user on every launch.
+    ;(useAuth as jest.Mock).mockReturnValue({
+      session: { user: { email: 'parent@example.com' } },
+      profile: { id: '2', name: 'Cory', email: 'parent@example.com', role: 'contributor', created_at: '' },
+      signIn: jest.fn(),
+      signOut: jest.fn(),
+      hasContributorTerms: null,
+      acceptContributorTerms: jest.fn(),
+    })
+    render(<ProfileScreen />)
+
+    expect(screen.queryByText('Before you continue')).toBeNull()
+    expect(screen.getByText('Signed in as parent@example.com')).toBeTruthy()
+  })
+
+  it('lets the user sign out from the catch-up gate', () => {
+    // Otherwise a user whose acceptance POST keeps failing (offline, API down)
+    // has no reachable Sign Out button at all — the signed-in view sits behind
+    // this gate's early return.
+    const signOut = jest.fn()
+    ;(useAuth as jest.Mock).mockReturnValue({
+      session: { user: { email: 'parent@example.com' } },
+      profile: { id: '2', name: 'Cory', email: 'parent@example.com', role: 'contributor', created_at: '' },
+      signIn: jest.fn(),
+      signOut,
+      hasContributorTerms: false,
+      acceptContributorTerms: jest.fn().mockResolvedValue({ error: null }),
+    })
+    render(<ProfileScreen />)
+
+    fireEvent.press(screen.getByText('Sign Out'))
+    expect(signOut).toHaveBeenCalled()
+  })
+
+  it('links the gate checkbox label to the contributor terms page', () => {
+    ;(useAuth as jest.Mock).mockReturnValue({
+      session: { user: { email: 'parent@example.com' } },
+      profile: { id: '2', name: 'Cory', email: 'parent@example.com', role: 'contributor', created_at: '' },
+      signIn: jest.fn(),
+      signOut: jest.fn(),
+      hasContributorTerms: false,
+      acceptContributorTerms: jest.fn().mockResolvedValue({ error: null }),
+    })
+    const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(true)
+    render(<ProfileScreen />)
+
+    fireEvent.press(screen.getByText('contributor terms'))
+    expect(openURL).toHaveBeenCalledWith(expect.stringContaining('/legal/contributor-terms'))
   })
 
   it('shows the profile once terms are accepted', () => {

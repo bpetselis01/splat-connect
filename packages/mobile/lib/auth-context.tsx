@@ -8,7 +8,11 @@ type AuthContextValue = {
   session: Session | null
   profile: Profile | null
   loading: boolean
-  hasContributorTerms: boolean
+  // null = not yet determined (initial mount, or a session just changed and the
+  // agreements fetch hasn't landed). Only `false` means the server confirmed no
+  // acceptance — the profile-tab gate must key off that exact distinction, or it
+  // flashes for every already-accepted user on every launch.
+  hasContributorTerms: boolean | null
   signIn: (email: string, password: string) => Promise<{ error: string | null }>
   signUp: (email: string, password: string, name: string) => Promise<{ error: string | null }>
   signOut: () => Promise<void>
@@ -21,7 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
-  const [hasContributorTerms, setHasContributorTerms] = useState(false)
+  const [hasContributorTerms, setHasContributorTerms] = useState<boolean | null>(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -40,7 +44,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!session) {
       setProfile(null)
-      setHasContributorTerms(false)
+      // null, not false: signing out makes this "unknown again", not "known
+      // unaccepted". A later sign-in re-runs this effect and re-fetches; if this
+      // were `false` in the meantime, the profile gate would flash for a signed
+      // back in, already-accepted user for the same reason this whole flag was
+      // widened to three states.
+      setHasContributorTerms(null)
       return
     }
     let ignore = false

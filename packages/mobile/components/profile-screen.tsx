@@ -14,6 +14,12 @@ function roleLabel(role: string) {
   return role.charAt(0).toUpperCase() + role.slice(1)
 }
 
+// Same base URL + pattern as the "Open Web Dashboard" link below (Linking.openURL
+// against EXPO_PUBLIC_WEB_URL). The terms document itself lives on web only.
+function openContributorTerms() {
+  Linking.openURL(`${process.env.EXPO_PUBLIC_WEB_URL}/legal/contributor-terms`)
+}
+
 export function ProfileScreen() {
   const { session, profile, signIn, signUp, signOut, hasContributorTerms, acceptContributorTerms } = useAuth()
   const [mode, setMode] = useState<'signin' | 'signup' | 'check-email'>('signin')
@@ -88,7 +94,12 @@ export function ProfileScreen() {
   // Catch-up gate for accounts created before terms were part of signup. Only the
   // profile tab is blocked: the browsing tabs stay open, matching the web gate, which
   // leaves /library and public tutorial pages reachable.
-  if (session && !hasContributorTerms) {
+  //
+  // Strict `=== false`: hasContributorTerms is null until the /api/agreements/me
+  // fetch resolves. Treating null as "unaccepted" flashed this gate for every
+  // already-accepted user on every app launch, for as long as that fetch was in
+  // flight.
+  if (session && hasContributorTerms === false) {
     return (
       <Screen>
         <ScreenHeader title="Profile" showLogo />
@@ -112,7 +123,11 @@ export function ProfileScreen() {
               color={theme.colors.primary}
             />
             <Text style={styles.termsText}>
-              I have read and accept the contributor terms.
+              I have read and accept the{' '}
+              <Text onPress={openContributorTerms} style={styles.termsLink}>
+                contributor terms
+              </Text>
+              .
             </Text>
           </Pressable>
           {gateError ? (
@@ -129,6 +144,10 @@ export function ProfileScreen() {
               setGateError(res.error)
             }}
           />
+          {/* Escape hatch: if acceptance keeps failing (offline, API down), the user
+              is stuck on this screen with no other nav — they must still be able to
+              sign out or switch accounts. */}
+          <Button label="Sign Out" onPress={() => signOut()} variant="ghost" />
         </Card>
       </Screen>
     )
@@ -227,7 +246,11 @@ export function ProfileScreen() {
                 color={theme.colors.primary}
               />
               <Text style={styles.termsText}>
-                I have read and accept the contributor terms.
+                I have read and accept the{' '}
+                <Text onPress={openContributorTerms} style={styles.termsLink}>
+                  contributor terms
+                </Text>
+                .
               </Text>
             </Pressable>
           ) : null}
@@ -302,6 +325,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing(3),
   },
   termsText: { flex: 1, color: theme.colors.muted, fontFamily: theme.fonts.regular },
+  termsLink: { color: theme.colors.primaryDark, fontFamily: theme.fonts.semiBold, textDecorationLine: 'underline' },
   checkEmailText: {
     fontFamily: theme.fonts.regular,
     fontSize: theme.type.label,
