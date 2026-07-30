@@ -50,4 +50,24 @@ describe('contributor terms onboarding', () => {
 
     await waitFor(() => expect(replace).toHaveBeenCalledWith('/dashboard'))
   })
+
+  it('ignores a backslash-based open redirect', async () => {
+    search = 'next=%2F%5Cevil.example'
+    render(<ContributorTermsOnboarding />)
+
+    fireEvent.click(screen.getByRole('checkbox'))
+    fireEvent.click(screen.getByRole('button', { name: /I accept/i }))
+
+    await waitFor(() => expect(replace).toHaveBeenCalledWith('/dashboard'))
+  })
+
+  it('ignores an empty next parameter', async () => {
+    search = 'next='
+    render(<ContributorTermsOnboarding />)
+
+    fireEvent.click(screen.getByRole('checkbox'))
+    fireEvent.click(screen.getByRole('button', { name: /I accept/i }))
+
+    await waitFor(() => expect(replace).toHaveBeenCalledWith('/dashboard'))
+  })
 })

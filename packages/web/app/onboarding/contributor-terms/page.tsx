@@ -16,10 +16,17 @@ import { TermsGate } from '@/components/terms-gate'
  * `next` arrives from the query string, so it is attacker-controllable. Only a
  * same-origin path is honoured: it must start with exactly one '/', which rules
  * out both absolute URLs and protocol-relative '//host' redirects.
+ *
+ * Backslashes are normalized to forward slashes before the check: browsers treat
+ * /\ as an authority separator in special URL schemes, turning /\evil.example
+ * into a cross-origin redirect. Normalizing collapses all backslash variants
+ * into cases the protocol-relative check already rejects.
  */
 function safeNext(raw: string | null): string {
-  if (!raw || !raw.startsWith('/') || raw.startsWith('//')) return '/dashboard'
-  return raw
+  if (!raw) return '/dashboard'
+  const normalized = raw.replace(/\\/g, '/')
+  if (!normalized.startsWith('/') || normalized.startsWith('//')) return '/dashboard'
+  return normalized
 }
 
 export default function ContributorTermsOnboarding() {
