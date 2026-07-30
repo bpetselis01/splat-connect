@@ -9,6 +9,7 @@
  * - components/terms-gate.tsx: the acceptance control itself
  * - app/legal/contributor-terms: the (unwritten) terms this links to
  */
+import { Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Route } from 'next'
 import { TermsGate } from '@/components/terms-gate'
@@ -30,10 +31,23 @@ function safeNext(raw: string | null): Route<string> {
   return normalized as Route<string>
 }
 
-export default function ContributorTermsOnboarding() {
+function ContributorTermsForm() {
   const router = useRouter()
   const next = safeNext(useSearchParams().get('next'))
 
+  return (
+    <TermsGate
+      type="contributor_terms"
+      requireCheckbox
+      onAccepted={() => router.replace(next)}
+    />
+  )
+}
+
+// useSearchParams() requires a Suspense boundary, or `next build` fails to
+// prerender this page (it can't statically render something that reads the
+// query string).
+export default function ContributorTermsOnboarding() {
   return (
     <div className="mx-auto mt-8 max-w-lg sm:mt-16">
       <h1 className="text-2xl font-bold text-ink">One thing before you continue</h1>
@@ -41,11 +55,9 @@ export default function ContributorTermsOnboarding() {
         Your account was created before we asked contributors to accept terms.
         Please review and accept them to carry on.
       </p>
-      <TermsGate
-        type="contributor_terms"
-        requireCheckbox
-        onAccepted={() => router.replace(next)}
-      />
+      <Suspense>
+        <ContributorTermsForm />
+      </Suspense>
     </div>
   )
 }
