@@ -251,6 +251,18 @@ test('the collapsed rail survives a reload without flashing open', async ({ page
     // Chain: the cookie is read on the server, so the very first paint after a
     //        reload is already collapsed. A localStorage read in an effect
     //        would render expanded and snap.
+    //
+    // The DOM assertion below only proves the settled state — Playwright's
+    // auto-retrying expect would still pass if the first frame rendered
+    // expanded and a client effect corrected it moments later, which is
+    // exactly the flash this test is named for. Fetching the raw HTML
+    // response (sharing the page's cookies, including rail-collapsed) proves
+    // the collapsed attribute was baked in before any client JS ran, which a
+    // client-side determination cannot fake: there is no frame at which the
+    // server-rendered bytes said 'false'.
+    const html = await (await page.request.get(page.url())).text()
+    expect(html).toContain('data-collapsed="true"')
+
     await page.reload()
     await expect(shell).toHaveAttribute('data-collapsed', 'true')
 
