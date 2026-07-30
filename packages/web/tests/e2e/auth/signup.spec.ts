@@ -7,6 +7,7 @@ test('a new contributor signs up and sees the confirmation screen', async ({ pag
   await page.locator('#name').fill('E2E Contributor')
   await page.locator('#email').fill(email)
   await page.locator('#password').fill('Test1234!')
+  await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
 
   await expect(page.getByRole('heading', { name: "You're all set" })).toBeVisible()
@@ -18,6 +19,7 @@ test('a newly signed-up contributor can access a protected route immediately', a
   await page.locator('#name').fill('E2E Contributor')
   await page.locator('#email').fill(email)
   await page.locator('#password').fill('Test1234!')
+  await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
   await expect(page.getByRole('heading', { name: "You're all set" })).toBeVisible()
 
@@ -35,6 +37,7 @@ test('an already-registered email shows the error', async ({ page }) => {
   await page.locator('#name').fill('Duplicate Person')
   await page.locator('#email').fill(existing.email)
   await page.locator('#password').fill('Test1234!')
+  await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
 
   // Filtered to alerts with content — Next's empty route announcer is also role=alert.
@@ -47,6 +50,7 @@ test('a password under six characters is not accepted', async ({ page }) => {
   await page.locator('#name').fill('Short Password')
   await page.locator('#email').fill(uniqueContributorEmail())
   await page.locator('#password').fill('12345')
+  await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create account' }).click()
 
   // minLength blocks submission client-side, so the confirmation never renders.

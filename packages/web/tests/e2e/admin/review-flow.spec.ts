@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { signIn, createContributor, createAdmin, createTutorial, uniqueTitle } from '../helpers'
+import { signIn, createContributor, createAdmin, createTutorial, uniqueTitle, acceptTerms } from '../helpers'
 
 test('an admin approves a pending tutorial and it appears in the public library', async ({ page }) => {
   const contributor = await createContributor()
@@ -26,6 +26,7 @@ test('an admin rejects a pending tutorial with a note visible to the contributor
   const admin = await createAdmin()
   const title = uniqueTitle('E2E Review Target Reject')
   const tutorialId = await createTutorial(contributor.id, { title, status: 'pending' })
+  await acceptTerms(contributor.id)
 
   await signIn(page, admin.email, admin.password)
   await page.waitForURL('**/admin')
@@ -111,6 +112,7 @@ test('rejecting without a note shows the contributor the fallback text', async (
     title: uniqueTitle('E2E Reject No Note'),
     status: 'pending',
   })
+  await acceptTerms(contributor.id)
 
   await signIn(page, admin.email, admin.password)
   await page.waitForURL('**/admin')
