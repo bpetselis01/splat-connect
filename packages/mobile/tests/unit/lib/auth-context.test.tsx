@@ -8,6 +8,7 @@ const mockSignInWithPassword = jest.fn()
 const mockSignUp = jest.fn()
 const mockSignOut = jest.fn()
 const mockApiGet = jest.fn()
+const mockApiPost = jest.fn()
 
 jest.mock('../../../lib/supabase', () => ({
   supabase: {
@@ -21,7 +22,12 @@ jest.mock('../../../lib/supabase', () => ({
   },
 }))
 
-jest.mock('../../../lib/api-client', () => ({ apiClient: { get: (...a: unknown[]) => mockApiGet(...a) } }))
+jest.mock('../../../lib/api-client', () => ({
+  apiClient: {
+    get: (...a: unknown[]) => mockApiGet(...a),
+    post: (...a: unknown[]) => mockApiPost(...a),
+  },
+}))
 
 function wrapper({ children }: { children: ReactNode }) {
   return <AuthProvider>{children}</AuthProvider>
@@ -98,7 +104,11 @@ describe('useAuth', () => {
   // Tests: an active session triggers a profile fetch that carries the role
   it('loads the profile (with role) when a session exists', async () => {
     mockGetSession.mockResolvedValue({ data: { session: { access_token: 't', user: { id: 'u1' } } } })
-    mockApiGet.mockResolvedValue({ id: 'u1', name: 'Pat', email: 'p@b.com', role: 'parent' })
+    mockApiGet.mockImplementation((path: string) =>
+      path === '/api/agreements/me'
+        ? Promise.resolve([])
+        : Promise.resolve({ id: 'u1', name: 'Pat', email: 'p@b.com', role: 'parent' })
+    )
     const { result } = renderHook(() => useAuth(), { wrapper })
     await waitFor(() => expect(result.current.profile?.role).toBe('parent'))
   })
@@ -119,5 +129,84 @@ describe('useAuth', () => {
     await waitFor(() => expect(mockApiGet).toHaveBeenCalled())
     await waitFor(() => expect(result.current.loading).toBe(false))
     expect(result.current.profile).toBeNull()
+  })
+
+  // Tests: the agreements endpoint reporting a contributor_terms row flips the flag
+  it('reports contributor terms from the agreements endpoint', async () => {
+    mockGetSession.mockResolvedValue({ data: { session: { access_token: 't', user: { id: 'u1' } } } })
+    mockApiGet.mockImplementation((path: string) =>
+      path === '/api/agreements/me'
+        ? Promise.resolve([{ agreement_type: 'contributor_terms' }])
+        : Promise.resolve({ id: 'u1', name: 'Ada', role: 'contributor' })
+    )
+
+    const { result } = renderHook(() => useAuth(), { wrapper })
+
+    await waitFor(() => expect(result.current.hasContributorTerms).toBe(true))
+  })
+
+  // Tests: no contributor_terms row means the flag stays false
+  it('reports no contributor terms when the row is absent', async () => {
+    mockGetSession.mockResolvedValue({ data: { session: { access_token: 't', user: { id: 'u1' } } } })
+    mockApiGet.mockImplementation((path: string) =>
+      path === '/api/agreements/me'
+        ? Promise.resolve([])
+        : Promise.resolve({ id: 'u1', name: 'Ada', role: 'contributor' })
+    )
+
+    const { result } = renderHook(() => useAuth(), { wrapper })
+
+    await waitFor(() => expect(result.current.profile).not.toBeNull())
+    expect(result.current.hasContributorTerms).toBe(false)
+  })
+
+  // Tests: signing out (or never having signed in) leaves the flag "unknown", not
+  // "known unaccepted" — false here would flash the profile gate for an
+  // already-accepted user who signs out and back in within the same app session.
+  it('resets contributor terms to null when there is no session', async () => {
+    const { result } = renderHook(() => useAuth(), { wrapper })
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    expect(result.current.hasContributorTerms).toBeNull()
+  })
+
+  // Tests: the flag starts null, before the initial session check even resolves —
+  // the profile gate must not treat this as "known unaccepted".
+  it('starts with hasContributorTerms as null', () => {
+    const { result } = renderHook(() => useAuth(), { wrapper })
+    expect(result.current.hasContributorTerms).toBeNull()
+  })
+
+  // Tests: a successful POST records the acceptance and flips the flag
+  it('acceptContributorTerms sets the flag after the server confirms', async () => {
+    mockGetSession.mockResolvedValue({ data: { session: { access_token: 't', user: { id: 'u1' } } } })
+    mockApiGet.mockImplementation((path: string) =>
+      path === '/api/agreements/me' ? Promise.resolve([]) : Promise.resolve({ id: 'u1', name: 'Ada', role: 'contributor' })
+    )
+    mockApiPost.mockResolvedValue(undefined)
+    const { result } = renderHook(() => useAuth(), { wrapper })
+    await waitFor(() => expect(result.current.profile).not.toBeNull())
+    expect(result.current.hasContributorTerms).toBe(false)
+
+    const { error } = await act(() => result.current.acceptContributorTerms())
+
+    expect(error).toBeNull()
+    expect(mockApiPost).toHaveBeenCalledWith('/api/agreements', { agreement_type: 'contributor_terms' })
+    expect(result.current.hasContributorTerms).toBe(true)
+  })
+
+  // Tests: a failed POST returns an error and never reports an unrecorded acceptance
+  it('acceptContributorTerms leaves the flag false when the server rejects', async () => {
+    mockGetSession.mockResolvedValue({ data: { session: { access_token: 't', user: { id: 'u1' } } } })
+    mockApiGet.mockImplementation((path: string) =>
+      path === '/api/agreements/me' ? Promise.resolve([]) : Promise.resolve({ id: 'u1', name: 'Ada', role: 'contributor' })
+    )
+    mockApiPost.mockRejectedValue(new Error('500'))
+    const { result } = renderHook(() => useAuth(), { wrapper })
+    await waitFor(() => expect(result.current.profile).not.toBeNull())
+
+    const { error } = await act(() => result.current.acceptContributorTerms())
+
+    expect(error).toBe('Could not record your acceptance. Please try again.')
+    expect(result.current.hasContributorTerms).toBe(false)
   })
 })

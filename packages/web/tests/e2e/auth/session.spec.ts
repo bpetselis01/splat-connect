@@ -1,8 +1,9 @@
 import { test, expect } from '@playwright/test'
-import { signIn, createContributor } from '../helpers'
+import { signIn, createContributor, acceptTerms } from '../helpers'
 
 test('signing out returns to the home page and restores the Sign in link', async ({ page }) => {
   const contributor = await createContributor()
+  await acceptTerms(contributor.id)
   await signIn(page, contributor.email, contributor.password)
   await page.waitForURL('**/dashboard')
 

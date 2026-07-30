@@ -24,6 +24,7 @@ const PHOTO_FIXTURE = path.join(__dirname, '..', 'fixtures', 'test.jpg')
 
 test('a contributor sees three tabs, not four', async ({ page }) => {
   const contributor = await createContributor()
+  await acceptTerms(contributor.id)
 
   try {
     await signIn(page, contributor.email, contributor.password)
@@ -43,6 +44,7 @@ test('a leader sees all four tabs, and the queue merges across two organisations
   page,
 }) => {
   const leader = await createContributor()
+  await acceptTerms(leader.id)
   const authorA = await createContributor()
   const authorB = await createContributor()
   const orgA = await createOrgWithLeader(leader.id, `Alpha ${Date.now()}`)
@@ -85,6 +87,7 @@ test('a leader reaches the existing review screen from the tab and approves a tu
   page,
 }) => {
   const leader = await createContributor()
+  await acceptTerms(leader.id)
   await acceptTerms(leader.id, 'org_leader_terms')
   const author = await createContributor()
   const orgName = `Reviewed Via Tab ${Date.now()}`
@@ -124,6 +127,7 @@ test('a contributor with no child profile creates one from the Child profile tab
   page,
 }) => {
   const contributor = await createContributor()
+  await acceptTerms(contributor.id)
 
   try {
     await signIn(page, contributor.email, contributor.password)
@@ -157,6 +161,7 @@ test('a contributor with no child profile creates one from the Child profile tab
  */
 test('a user renames themselves on the Profile tab and the change persists', async ({ page }) => {
   const contributor = await createContributor()
+  await acceptTerms(contributor.id)
   const newName = uniqueTitle('Renamed Contributor')
 
   try {

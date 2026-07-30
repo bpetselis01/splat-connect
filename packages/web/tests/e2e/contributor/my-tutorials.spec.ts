@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { signIn, createContributor, createTutorial, uniqueTitle } from '../helpers'
+import { signIn, createContributor, createTutorial, uniqueTitle, acceptTerms } from '../helpers'
 
 test('every status renders with its badge and an edit link', async ({ page }) => {
   const contributor = await createContributor()
@@ -7,6 +7,7 @@ test('every status renders with its badge and an edit link', async ({ page }) =>
   const approved = uniqueTitle('E2E Mine Approved')
   const draftId = await createTutorial(contributor.id, { title: draft, status: 'draft' })
   await createTutorial(contributor.id, { title: approved, status: 'approved' })
+  await acceptTerms(contributor.id)
 
   await signIn(page, contributor.email, contributor.password)
   // Wait for the post-login redirect: signIn only clicks the button, so
@@ -28,6 +29,7 @@ test('every status renders with its badge and an edit link', async ({ page }) =>
 
 test('a contributor with no tutorials sees the upload prompt', async ({ page }) => {
   const contributor = await createContributor()
+  await acceptTerms(contributor.id)
 
   await signIn(page, contributor.email, contributor.password)
   // Wait for the post-login redirect: signIn only clicks the button, so
@@ -50,6 +52,7 @@ test('a rejected tutorial shows its rejection note', async ({ page }) => {
     status: 'rejected',
     rejection_note: 'The wiring diagram is missing.',
   })
+  await acceptTerms(contributor.id)
 
   await signIn(page, contributor.email, contributor.password)
   // Wait for the post-login redirect: signIn only clicks the button, so

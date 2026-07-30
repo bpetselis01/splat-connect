@@ -2,7 +2,7 @@
 // playwright.config.ts). Every other spec runs at desktop width and would not
 // notice a nav that clips its own links or a heading that overflows.
 import { test, expect, type Locator } from '@playwright/test'
-import { signIn, createContributor, createTutorial, uniqueTitle } from '../helpers'
+import { signIn, createContributor, createTutorial, uniqueTitle, acceptTerms } from '../helpers'
 
 /** Fails if the element spills outside the viewport on either side. */
 async function expectWithinViewport(locator: Locator, viewportWidth: number) {
@@ -14,6 +14,7 @@ async function expectWithinViewport(locator: Locator, viewportWidth: number) {
 
 test('@responsive every nav link stays inside the viewport for a contributor', async ({ page }) => {
   const contributor = await createContributor()
+  await acceptTerms(contributor.id)
   await signIn(page, contributor.email, contributor.password)
   await page.waitForURL('**/dashboard')
 
@@ -60,6 +61,7 @@ test('@responsive a dashboard row keeps its controls inside the viewport', async
     status: 'rejected',
     rejection_note: 'A rejection note long enough to force the row to wrap on a phone.',
   })
+  await acceptTerms(contributor.id)
 
   await signIn(page, contributor.email, contributor.password)
   await page.waitForURL('**/dashboard')
@@ -71,6 +73,7 @@ test('@responsive a dashboard row keeps its controls inside the viewport', async
 
 test('@responsive the upload wizard fits the viewport', async ({ page }) => {
   const contributor = await createContributor()
+  await acceptTerms(contributor.id)
   await signIn(page, contributor.email, contributor.password)
   await page.waitForURL('**/dashboard')
   await page.goto('/upload')

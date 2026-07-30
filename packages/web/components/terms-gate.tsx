@@ -30,12 +30,15 @@ const LABELS = {
 export function TermsGate({
   type,
   onAccepted,
+  requireCheckbox = false,
 }: {
   type: AgreementType
   onAccepted: () => void
+  requireCheckbox?: boolean
 }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [ticked, setTicked] = useState(false)
   const { title, href } = LABELS[type]
 
   async function accept() {
@@ -57,7 +60,17 @@ export function TermsGate({
         Please read the <Link href={href}>{title}</Link> before continuing.
       </p>
       {error && <p role="alert" className="alert alert-danger mt-3">{error}</p>}
-      <button type="button" onClick={accept} disabled={busy} className="btn btn-accent mt-3">
+      {requireCheckbox && (
+        <label className="mt-3 flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={ticked}
+            onChange={(e) => setTicked(e.target.checked)}
+          />
+          I have read and accept the {title}
+        </label>
+      )}
+      <button type="button" onClick={accept} disabled={busy || (requireCheckbox && !ticked)} className="btn btn-accent mt-3">
         {busy ? 'Recording…' : `I accept the ${title}`}
       </button>
     </div>

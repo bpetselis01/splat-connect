@@ -14,20 +14,33 @@ function roleLabel(role: string) {
   return role.charAt(0).toUpperCase() + role.slice(1)
 }
 
+// Same base URL + pattern as the "Open Web Dashboard" link below (Linking.openURL
+// against EXPO_PUBLIC_WEB_URL). The terms document itself lives on web only.
+function openContributorTerms() {
+  Linking.openURL(`${process.env.EXPO_PUBLIC_WEB_URL}/legal/contributor-terms`)
+}
+
 export function ProfileScreen() {
-  const { session, profile, signIn, signUp, signOut } = useAuth()
+  const { session, profile, signIn, signUp, signOut, hasContributorTerms, acceptContributorTerms } = useAuth()
   const [mode, setMode] = useState<'signin' | 'signup' | 'check-email'>('signin')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [gateTicked, setGateTicked] = useState(false)
+  const [gateError, setGateError] = useState<string | null>(null)
 
   async function handleSubmit() {
     setError(null)
     if (mode === 'signup' && password !== confirmPassword) {
       setError('Passwords do not match.')
+      return
+    }
+    if (mode === 'signup' && !acceptedTerms) {
+      setError('Please accept the contributor terms to create an account.')
       return
     }
     setSubmitting(true)
@@ -46,6 +59,9 @@ export function ProfileScreen() {
         setError(res.error)
         return
       }
+      // Only records when signUp left a live session. Where email confirmation is
+      // enabled there is none, and the profile-tab guard asks again after sign-in.
+      await acceptContributorTerms()
       setMode('check-email')
       setName('')
       setPassword('')
@@ -70,6 +86,68 @@ export function ProfileScreen() {
           <Pressable onPress={() => { setMode('signin'); setError(null) }}>
             <Text style={styles.link}>Back to sign in</Text>
           </Pressable>
+        </Card>
+      </Screen>
+    )
+  }
+
+  // Catch-up gate for accounts created before terms were part of signup. Only the
+  // profile tab is blocked: the browsing tabs stay open, matching the web gate, which
+  // leaves /library and public tutorial pages reachable.
+  //
+  // Strict `=== false`: hasContributorTerms is null until the /api/agreements/me
+  // fetch resolves. Treating null as "unaccepted" flashed this gate for every
+  // already-accepted user on every app launch, for as long as that fetch was in
+  // flight.
+  if (session && hasContributorTerms === false) {
+    return (
+      <Screen>
+        <ScreenHeader title="Profile" showLogo />
+        <Card>
+          <Text style={styles.heading}>Before you continue</Text>
+          <Text style={styles.checkEmailText}>
+            Your account was created before we asked contributors to accept terms.
+            These terms have not been written yet, and anything you accept now is not
+            binding.
+          </Text>
+          <Pressable
+            testID="gate-accept-checkbox"
+            onPress={() => setGateTicked((v) => !v)}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: gateTicked }}
+            style={styles.termsRow}
+          >
+            <Ionicons
+              name={gateTicked ? 'checkbox' : 'square-outline'}
+              size={22}
+              color={theme.colors.primary}
+            />
+            <Text style={styles.termsText}>
+              I have read and accept the{' '}
+              <Text onPress={openContributorTerms} style={styles.termsLink}>
+                contributor terms
+              </Text>
+              .
+            </Text>
+          </Pressable>
+          {gateError ? (
+            <View style={styles.errorRow}>
+              <Ionicons name="alert-circle" size={18} color={theme.colors.danger} />
+              <Text style={styles.error}>{gateError}</Text>
+            </View>
+          ) : null}
+          <Button
+            label="Accept and continue"
+            disabled={!gateTicked}
+            onPress={async () => {
+              const res = await acceptContributorTerms()
+              setGateError(res.error)
+            }}
+          />
+          {/* Escape hatch: if acceptance keeps failing (offline, API down), the user
+              is stuck on this screen with no other nav — they must still be able to
+              sign out or switch accounts. */}
+          <Button label="Sign Out" onPress={() => signOut()} variant="ghost" />
         </Card>
       </Screen>
     )
@@ -154,6 +232,29 @@ export function ProfileScreen() {
             />
           ) : null}
 
+          {mode === 'signup' ? (
+            <Pressable
+              testID="accept-contributor-terms"
+              onPress={() => setAcceptedTerms((v) => !v)}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: acceptedTerms }}
+              style={styles.termsRow}
+            >
+              <Ionicons
+                name={acceptedTerms ? 'checkbox' : 'square-outline'}
+                size={22}
+                color={theme.colors.primary}
+              />
+              <Text style={styles.termsText}>
+                I have read and accept the{' '}
+                <Text onPress={openContributorTerms} style={styles.termsLink}>
+                  contributor terms
+                </Text>
+                .
+              </Text>
+            </Pressable>
+          ) : null}
+
           {error ? (
             <View style={styles.errorRow}>
               <Ionicons name="alert-circle" size={18} color={theme.colors.danger} />
@@ -217,6 +318,14 @@ const styles = StyleSheet.create({
     fontSize: theme.type.caption,
     lineHeight: 18,
   },
+  termsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing(2),
+    marginBottom: theme.spacing(3),
+  },
+  termsText: { flex: 1, color: theme.colors.muted, fontFamily: theme.fonts.regular },
+  termsLink: { color: theme.colors.primaryDark, fontFamily: theme.fonts.semiBold, textDecorationLine: 'underline' },
   checkEmailText: {
     fontFamily: theme.fonts.regular,
     fontSize: theme.type.label,

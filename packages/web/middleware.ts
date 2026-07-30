@@ -18,6 +18,9 @@
  * - /organizations: Signed in only — leadership is per-organisation data, not a
  *   role, so there is nothing here for middleware to read. The organisation page
  *   checks it via lib/org-access.ts and shows or hides the workspace accordingly.
+ * - Contributor terms: /dashboard, /upload, /my-tutorials, /organizations and
+ *   /tutorials/<id>/edit redirect to /onboarding/contributor-terms until the account
+ *   has accepted. /admin is excluded — the terms govern submitting, not reviewing.
  *
  * Note: This is CLIENT-SIDE route protection (UX).
  * Server-side protection is done in:
@@ -82,6 +85,35 @@ export async function middleware(request: NextRequest) {
 
     if (profile?.role !== 'admin') {
       return NextResponse.redirect(new URL('/', request.url))
+    }
+  }
+
+  // Contributor terms gate. Only the account area — public browsing, /legal and the
+  // auth pages stay reachable, and /admin is excluded because these terms govern
+  // submitting work, not reviewing it.
+  const termsGatedPrefixes = ['/dashboard', '/upload', '/my-tutorials', '/organizations']
+  const needsTerms =
+    user &&
+    (termsGatedPrefixes.some((r) => pathname.startsWith(r)) ||
+      // Pattern, not prefix: /tutorials/[id] is the public detail page.
+      /^\/tutorials\/[^/]+\/edit(\/|$)/.test(pathname))
+
+  if (needsTerms) {
+    const { data: agreements, error } = await supabase
+      .from('user_agreements')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('agreement_type', 'contributor_terms')
+      .limit(1)
+
+    // Err open on failure. This gate is UX; packages/api/src/routes/tutorials.ts:132
+    // is the real enforcement, so a transient read error must not strand anyone.
+    if (error) {
+      console.error('[middleware] contributor_terms lookup failed:', error.message)
+    } else if (!agreements?.length) {
+      const url = new URL('/onboarding/contributor-terms', request.url)
+      url.searchParams.set('next', pathname)
+      return NextResponse.redirect(url)
     }
   }
 
