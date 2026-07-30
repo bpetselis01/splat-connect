@@ -97,14 +97,24 @@ it; blocking review would stall the queue over an unrelated agreement. Admins ar
 gated on the contributor surfaces above like anyone else, since `role` defaults to
 `contributor` for every account (`001_schema.sql:9`) and an admin may also author.
 
-**6. Mobile blocks in the nav guard, off the existing fetch.**
+**6. Mobile blocks the profile tab only, off the existing fetch.**
 `lib/auth-context.tsx:36-47` already refetches the profile when session identity
 changes. Agreements are fetched in that same effect and exposed as
-`hasContributorTerms`. `app/_layout.tsx` renders the blocking screen in place of the
-tab navigator when a session exists and the flag is false.
+`hasContributorTerms`. `app/(tabs)/profile` renders the blocking screen when a
+session exists and the flag is false.
 
 One effect, not two: independent fetches would produce two loading states that can
 disagree, and the guard would flicker.
+
+**Not the whole tab navigator.** Mobile is read-only — there is no caller of
+`apiClient.post` or `apiClient.patch` in `app/`, `components/`, or `lib/`, so the app
+has no submission path to gate. Blocking the navigator would take `home` and
+`toy-library` with it, contradicting decision 5's principle that browsing stays open,
+in exchange for protecting nothing. The account area is gated on both platforms;
+browsing is gated on neither.
+
+Mobile's real contribution here is decision 3 — capturing acceptance at signup, so
+someone who signs up on mobile and later contributes on web is not stranded.
 
 **7. The API gate is untouched.** `tutorials.ts:132` and the RLS policies stay exactly
 as they are. This work adds affordances to satisfy the gate, never to bypass it —
