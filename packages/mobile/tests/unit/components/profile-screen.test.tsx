@@ -17,6 +17,7 @@ describe('ProfileScreen', () => {
       session: { user: { email: 'parent@example.com' } },
       signIn: jest.fn(),
       signOut: jest.fn(),
+      hasContributorTerms: true,
     })
     render(<ProfileScreen />)
     expect(screen.getByText('Signed in as parent@example.com')).toBeTruthy()
@@ -28,6 +29,7 @@ describe('ProfileScreen', () => {
       profile: { id: '2', name: 'Cory', email: 'contributor@example.com', role: 'contributor', created_at: '' },
       signIn: jest.fn(),
       signOut: jest.fn(),
+      hasContributorTerms: true,
     })
     render(<ProfileScreen />)
     expect(screen.getByText('Contributor')).toBeTruthy()
@@ -185,5 +187,35 @@ describe('ProfileScreen', () => {
 
     await waitFor(() => expect(signUp).toHaveBeenCalledWith('a@b.com', 'secret1', 'Ada'))
     await waitFor(() => expect(acceptContributorTerms).toHaveBeenCalled())
+  })
+
+  it('blocks the profile view when contributor terms are unaccepted', () => {
+    ;(useAuth as jest.Mock).mockReturnValue({
+      session: { user: { email: 'parent@example.com' } },
+      profile: { id: '2', name: 'Cory', email: 'parent@example.com', role: 'contributor', created_at: '' },
+      signIn: jest.fn(),
+      signOut: jest.fn(),
+      hasContributorTerms: false,
+      acceptContributorTerms: jest.fn().mockResolvedValue({ error: null }),
+    })
+    render(<ProfileScreen />)
+
+    expect(screen.getByText('Before you continue')).toBeTruthy()
+    expect(screen.queryByText('Sign Out')).toBeNull()
+  })
+
+  it('shows the profile once terms are accepted', () => {
+    ;(useAuth as jest.Mock).mockReturnValue({
+      session: { user: { email: 'parent@example.com' } },
+      profile: { id: '2', name: 'Cory', email: 'parent@example.com', role: 'contributor', created_at: '' },
+      signIn: jest.fn(),
+      signOut: jest.fn(),
+      hasContributorTerms: true,
+      acceptContributorTerms: jest.fn(),
+    })
+    render(<ProfileScreen />)
+
+    expect(screen.queryByText('Before you continue')).toBeNull()
+    expect(screen.getByText('Signed in as parent@example.com')).toBeTruthy()
   })
 })

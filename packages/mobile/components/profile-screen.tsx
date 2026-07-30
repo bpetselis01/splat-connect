@@ -15,7 +15,7 @@ function roleLabel(role: string) {
 }
 
 export function ProfileScreen() {
-  const { session, profile, signIn, signUp, signOut, acceptContributorTerms } = useAuth()
+  const { session, profile, signIn, signUp, signOut, hasContributorTerms, acceptContributorTerms } = useAuth()
   const [mode, setMode] = useState<'signin' | 'signup' | 'check-email'>('signin')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -24,6 +24,8 @@ export function ProfileScreen() {
   const [acceptedTerms, setAcceptedTerms] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [gateTicked, setGateTicked] = useState(false)
+  const [gateError, setGateError] = useState<string | null>(null)
 
   async function handleSubmit() {
     setError(null)
@@ -78,6 +80,55 @@ export function ProfileScreen() {
           <Pressable onPress={() => { setMode('signin'); setError(null) }}>
             <Text style={styles.link}>Back to sign in</Text>
           </Pressable>
+        </Card>
+      </Screen>
+    )
+  }
+
+  // Catch-up gate for accounts created before terms were part of signup. Only the
+  // profile tab is blocked: the browsing tabs stay open, matching the web gate, which
+  // leaves /library and public tutorial pages reachable.
+  if (session && !hasContributorTerms) {
+    return (
+      <Screen>
+        <ScreenHeader title="Profile" showLogo />
+        <Card>
+          <Text style={styles.heading}>Before you continue</Text>
+          <Text style={styles.checkEmailText}>
+            Your account was created before we asked contributors to accept terms.
+            These terms have not been written yet, and anything you accept now is not
+            binding.
+          </Text>
+          <Pressable
+            testID="gate-accept-checkbox"
+            onPress={() => setGateTicked((v) => !v)}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: gateTicked }}
+            style={styles.termsRow}
+          >
+            <Ionicons
+              name={gateTicked ? 'checkbox' : 'square-outline'}
+              size={22}
+              color={theme.colors.primary}
+            />
+            <Text style={styles.termsText}>
+              I have read and accept the contributor terms.
+            </Text>
+          </Pressable>
+          {gateError ? (
+            <View style={styles.errorRow}>
+              <Ionicons name="alert-circle" size={18} color={theme.colors.danger} />
+              <Text style={styles.error}>{gateError}</Text>
+            </View>
+          ) : null}
+          <Button
+            label="Accept and continue"
+            disabled={!gateTicked}
+            onPress={async () => {
+              const res = await acceptContributorTerms()
+              setGateError(res.error)
+            }}
+          />
         </Card>
       </Screen>
     )
