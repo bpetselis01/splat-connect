@@ -47,13 +47,21 @@ describe('ProfileScreen', () => {
 
   it('switches to the sign-up form and submits name/email/password as a parent', async () => {
     const signUp = jest.fn().mockResolvedValue({ error: null })
-    ;(useAuth as jest.Mock).mockReturnValue({ session: null, signIn: jest.fn(), signUp, signOut: jest.fn() })
+    const acceptContributorTerms = jest.fn().mockResolvedValue({ error: null })
+    ;(useAuth as jest.Mock).mockReturnValue({
+      session: null,
+      signIn: jest.fn(),
+      signUp,
+      signOut: jest.fn(),
+      acceptContributorTerms,
+    })
     render(<ProfileScreen />)
     fireEvent.press(screen.getByText('Create an account'))
     fireEvent.changeText(screen.getByPlaceholderText('Name'), 'Pat')
     fireEvent.changeText(screen.getByPlaceholderText('Email'), 'p@b.com')
     fireEvent.changeText(screen.getByPlaceholderText('Password'), 'pw123456')
     fireEvent.changeText(screen.getByPlaceholderText('Confirm Password'), 'pw123456')
+    fireEvent.press(screen.getByTestId('accept-contributor-terms'))
     fireEvent.press(screen.getByText('Sign Up'))
     await waitFor(() => expect(signUp).toHaveBeenCalledWith('p@b.com', 'pw123456', 'Pat'))
   })
@@ -81,19 +89,28 @@ describe('ProfileScreen', () => {
     fireEvent.changeText(screen.getByPlaceholderText('Email'), 'p@b.com')
     fireEvent.changeText(screen.getByPlaceholderText('Password'), 'pw123456')
     fireEvent.changeText(screen.getByPlaceholderText('Confirm Password'), 'pw123456')
+    fireEvent.press(screen.getByTestId('accept-contributor-terms'))
     fireEvent.press(screen.getByText('Sign Up'))
     await waitFor(() => expect(screen.getByText('Email already registered')).toBeTruthy())
   })
 
   it('shows a check-your-email screen after a successful sign-up, with no way to resubmit', async () => {
     const signUp = jest.fn().mockResolvedValue({ error: null })
-    ;(useAuth as jest.Mock).mockReturnValue({ session: null, signIn: jest.fn(), signUp, signOut: jest.fn() })
+    const acceptContributorTerms = jest.fn().mockResolvedValue({ error: null })
+    ;(useAuth as jest.Mock).mockReturnValue({
+      session: null,
+      signIn: jest.fn(),
+      signUp,
+      signOut: jest.fn(),
+      acceptContributorTerms,
+    })
     render(<ProfileScreen />)
     fireEvent.press(screen.getByText('Create an account'))
     fireEvent.changeText(screen.getByPlaceholderText('Name'), 'Pat')
     fireEvent.changeText(screen.getByPlaceholderText('Email'), 'p@b.com')
     fireEvent.changeText(screen.getByPlaceholderText('Password'), 'pw123456')
     fireEvent.changeText(screen.getByPlaceholderText('Confirm Password'), 'pw123456')
+    fireEvent.press(screen.getByTestId('accept-contributor-terms'))
     fireEvent.press(screen.getByText('Sign Up'))
     await waitFor(() => expect(screen.getByText('Check Your Email')).toBeTruthy())
     expect(screen.getByText(/p@b.com/)).toBeTruthy()
@@ -103,13 +120,21 @@ describe('ProfileScreen', () => {
 
   it('returns to the sign-in form from the check-your-email screen', async () => {
     const signUp = jest.fn().mockResolvedValue({ error: null })
-    ;(useAuth as jest.Mock).mockReturnValue({ session: null, signIn: jest.fn(), signUp, signOut: jest.fn() })
+    const acceptContributorTerms = jest.fn().mockResolvedValue({ error: null })
+    ;(useAuth as jest.Mock).mockReturnValue({
+      session: null,
+      signIn: jest.fn(),
+      signUp,
+      signOut: jest.fn(),
+      acceptContributorTerms,
+    })
     render(<ProfileScreen />)
     fireEvent.press(screen.getByText('Create an account'))
     fireEvent.changeText(screen.getByPlaceholderText('Name'), 'Pat')
     fireEvent.changeText(screen.getByPlaceholderText('Email'), 'p@b.com')
     fireEvent.changeText(screen.getByPlaceholderText('Password'), 'pw123456')
     fireEvent.changeText(screen.getByPlaceholderText('Confirm Password'), 'pw123456')
+    fireEvent.press(screen.getByTestId('accept-contributor-terms'))
     fireEvent.press(screen.getByText('Sign Up'))
     await waitFor(() => expect(screen.getByText('Check Your Email')).toBeTruthy())
     fireEvent.press(screen.getByText('Back to sign in'))
@@ -128,5 +153,37 @@ describe('ProfileScreen', () => {
         screen.getByText('Please confirm your email before signing in — check your inbox for the confirmation link.')
       ).toBeTruthy()
     )
+  })
+
+  it('blocks signup until the terms box is ticked', async () => {
+    const signUp = jest.fn().mockResolvedValue({ error: null })
+    const acceptContributorTerms = jest.fn().mockResolvedValue({ error: null })
+    ;(useAuth as jest.Mock).mockReturnValue({
+      session: null,
+      signIn: jest.fn(),
+      signUp,
+      signOut: jest.fn(),
+      hasContributorTerms: false,
+      acceptContributorTerms,
+    })
+    render(<ProfileScreen />)
+
+    fireEvent.press(screen.getByText('Create an account'))
+    fireEvent.changeText(screen.getByPlaceholderText('Name'), 'Ada')
+    fireEvent.changeText(screen.getByPlaceholderText('Email'), 'a@b.com')
+    fireEvent.changeText(screen.getByPlaceholderText('Password'), 'secret1')
+    fireEvent.changeText(screen.getByPlaceholderText('Confirm Password'), 'secret1')
+
+    fireEvent.press(screen.getByText('Sign Up'))
+    await waitFor(() =>
+      expect(screen.getByText('Please accept the contributor terms to create an account.')).toBeTruthy()
+    )
+    expect(signUp).not.toHaveBeenCalled()
+
+    fireEvent.press(screen.getByTestId('accept-contributor-terms'))
+    fireEvent.press(screen.getByText('Sign Up'))
+
+    await waitFor(() => expect(signUp).toHaveBeenCalledWith('a@b.com', 'secret1', 'Ada'))
+    await waitFor(() => expect(acceptContributorTerms).toHaveBeenCalled())
   })
 })

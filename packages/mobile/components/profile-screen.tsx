@@ -15,12 +15,13 @@ function roleLabel(role: string) {
 }
 
 export function ProfileScreen() {
-  const { session, profile, signIn, signUp, signOut } = useAuth()
+  const { session, profile, signIn, signUp, signOut, acceptContributorTerms } = useAuth()
   const [mode, setMode] = useState<'signin' | 'signup' | 'check-email'>('signin')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -28,6 +29,10 @@ export function ProfileScreen() {
     setError(null)
     if (mode === 'signup' && password !== confirmPassword) {
       setError('Passwords do not match.')
+      return
+    }
+    if (mode === 'signup' && !acceptedTerms) {
+      setError('Please accept the contributor terms to create an account.')
       return
     }
     setSubmitting(true)
@@ -46,6 +51,9 @@ export function ProfileScreen() {
         setError(res.error)
         return
       }
+      // Only records when signUp left a live session. Where email confirmation is
+      // enabled there is none, and the profile-tab guard asks again after sign-in.
+      await acceptContributorTerms()
       setMode('check-email')
       setName('')
       setPassword('')
@@ -154,6 +162,25 @@ export function ProfileScreen() {
             />
           ) : null}
 
+          {mode === 'signup' ? (
+            <Pressable
+              testID="accept-contributor-terms"
+              onPress={() => setAcceptedTerms((v) => !v)}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: acceptedTerms }}
+              style={styles.termsRow}
+            >
+              <Ionicons
+                name={acceptedTerms ? 'checkbox' : 'square-outline'}
+                size={22}
+                color={theme.colors.primary}
+              />
+              <Text style={styles.termsText}>
+                I have read and accept the contributor terms.
+              </Text>
+            </Pressable>
+          ) : null}
+
           {error ? (
             <View style={styles.errorRow}>
               <Ionicons name="alert-circle" size={18} color={theme.colors.danger} />
@@ -217,6 +244,13 @@ const styles = StyleSheet.create({
     fontSize: theme.type.caption,
     lineHeight: 18,
   },
+  termsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing(2),
+    marginBottom: theme.spacing(3),
+  },
+  termsText: { flex: 1, color: theme.colors.muted, fontFamily: theme.fonts.regular },
   checkEmailText: {
     fontFamily: theme.fonts.regular,
     fontSize: theme.type.label,
