@@ -33,8 +33,32 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
+/**
+ * The root layout decides whether to render the app shell, and a server layout
+ * cannot read the pathname. Publishing it as a *request* header is the smallest
+ * way to give it one — no route-group reshuffle of every page.
+ *
+ * Set on the request rather than on the response. Next's documented channel for
+ * middleware -> server-component headers is the x-middleware-override-headers
+ * protocol, which NextResponse.next({ request: { headers } }) populates at
+ * construction time; setting it on the response instead happens to also reach
+ * headers() on Next 16.2.6, but that is incidental and it additionally emits the
+ * app's internal routing state to the browser on every response. Hence: request
+ * headers, at every construction site.
+ *
+ * The Headers copy is rebuilt per call rather than snapshotted once: setAll()
+ * refreshes the session via request.cookies.set(), which mutates the request's
+ * cookie header, and a stale snapshot would drop the refreshed session cookie
+ * on its way back into the request — silently logging users out.
+ */
+function nextWithPathname(request: NextRequest) {
+  const headers = new Headers(request.headers)
+  headers.set('x-pathname', request.nextUrl.pathname)
+  return NextResponse.next({ request: { headers } })
+}
+
 export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request })
+  let supabaseResponse = nextWithPathname(request)
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -48,7 +72,7 @@ export async function middleware(request: NextRequest) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           )
-          supabaseResponse = NextResponse.next({ request })
+          supabaseResponse = nextWithPathname(request)
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
           )
@@ -116,10 +140,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // The root layout decides whether to render the app shell, and a server
-  // layout cannot read the pathname. Publishing it as a request header is the
-  // smallest way to give it one — no route-group reshuffle of every page.
-  supabaseResponse.headers.set('x-pathname', pathname)
+  // x-pathname rides on the request headers instead — see nextWithPathname().
   return supabaseResponse
 }
 
