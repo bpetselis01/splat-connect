@@ -23,6 +23,12 @@ test('browsing stays open without accepted terms', async ({ page }) => {
     status: 'approved',
   })
   await signIn(page, contributor.email, contributor.password)
+  // signIn() only clicks the button; the login page's own redirect (which sets
+  // the session cookie) is async. Racing it with an immediate goto() can land
+  // signed out — and since /library and /tutorials/[id] are public anyway, the
+  // test would then assert nothing about the gate. Wait for the redirect first,
+  // same as the other tests in this file.
+  await page.waitForURL(/\/onboarding\/contributor-terms/)
 
   await page.goto('/library')
   await expect(page).toHaveURL(/\/library/)
