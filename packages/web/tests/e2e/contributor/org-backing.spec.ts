@@ -35,6 +35,7 @@ test('a project is backed by an organisation and published by its leader', async
     await seedBackingRequest(tutorialId, orgId)
 
     // 2. The leader arrives and is asked for the terms before anything else.
+    await acceptTerms(leader.id)
     await signIn(page, leader.email, leader.password)
     // Wait for the post-login redirect: signIn only clicks the button, so
     // navigating straight away races the auth cookie being set.
@@ -91,6 +92,7 @@ test('a contributor sees a decline and asks someone else', async ({ page }) => {
   const author = await createContributor()
   await acceptTerms(author.id)
   const leader = await createContributor()
+  await acceptTerms(leader.id)
   await acceptTerms(leader.id, 'org_leader_terms')
   const orgA = await createOrgWithLeader(leader.id, `Declining ${Date.now()}`)
   const orgB = await createOrgWithLeader(leader.id, `Second ${Date.now()}`)
@@ -143,6 +145,7 @@ test('a contributor sees a decline and asks someone else', async ({ page }) => {
  */
 test('an admin unpublishes a tutorial a leader approved', async ({ page }) => {
   const author = await createContributor()
+  await acceptTerms(author.id)
   const leader = await createContributor()
   const admin = await createAdmin()
   const orgId = await createOrgWithLeader(leader.id, `Overruled ${Date.now()}`)

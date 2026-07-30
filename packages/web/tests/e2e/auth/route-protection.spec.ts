@@ -6,7 +6,7 @@
 // the signed-out cases above would not throw — it would just serve the page — so
 // nothing else in the suite would notice one.
 import { test, expect } from '@playwright/test'
-import { signIn, createContributor, createAdmin } from '../helpers'
+import { signIn, createContributor, createAdmin, acceptTerms } from '../helpers'
 
 test('an unauthenticated visitor is redirected from /dashboard to /login', async ({ page }) => {
   await page.goto('/dashboard')
@@ -30,6 +30,7 @@ test('an unauthenticated visitor is redirected from /admin to /login', async ({ 
 
 test('a contributor is redirected away from /admin', async ({ page }) => {
   const contributor = await createContributor()
+  await acceptTerms(contributor.id)
   await signIn(page, contributor.email, contributor.password)
   await page.waitForURL('**/dashboard')
 
@@ -39,6 +40,7 @@ test('a contributor is redirected away from /admin', async ({ page }) => {
 
 test('an admin can also reach the dashboard', async ({ page }) => {
   const admin = await createAdmin()
+  await acceptTerms(admin.id)
   await signIn(page, admin.email, admin.password)
   await page.waitForURL('**/admin')
 

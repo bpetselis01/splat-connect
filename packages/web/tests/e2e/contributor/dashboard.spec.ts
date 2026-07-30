@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { signIn, createContributor, createTutorial, uniqueTitle } from '../helpers'
+import { signIn, createContributor, createTutorial, uniqueTitle, acceptTerms } from '../helpers'
 
 test('a contributor sees their own tutorials and status badges on the dashboard', async ({ page }) => {
   const contributor = await createContributor()
@@ -11,6 +11,7 @@ test('a contributor sees their own tutorials and status badges on the dashboard'
     rejection_note: 'Please add more detail.',
   })
 
+  await acceptTerms(contributor.id)
   await signIn(page, contributor.email, contributor.password)
   await page.waitForURL('**/dashboard')
 
@@ -26,6 +27,7 @@ test('a contributor sees their own tutorials and status badges on the dashboard'
 
 test('a contributor with no tutorials sees the empty-state prompt', async ({ page }) => {
   const contributor = await createContributor()
+  await acceptTerms(contributor.id)
   await signIn(page, contributor.email, contributor.password)
   await page.waitForURL('**/dashboard')
 
@@ -40,6 +42,7 @@ test('the status counts match the fixture set', async ({ page }) => {
   await createTutorial(contributor.id, { title: uniqueTitle('E2E Count A1'), status: 'approved' })
   await createTutorial(contributor.id, { title: uniqueTitle('E2E Count R1'), status: 'rejected' })
 
+  await acceptTerms(contributor.id)
   await signIn(page, contributor.email, contributor.password)
   await page.waitForURL('**/dashboard')
 
@@ -54,6 +57,7 @@ test('the View all link appears past five tutorials', async ({ page }) => {
     await createTutorial(contributor.id, { title: uniqueTitle(`E2E Overflow ${i}`), status: 'approved' })
   }
 
+  await acceptTerms(contributor.id)
   await signIn(page, contributor.email, contributor.password)
   await page.waitForURL('**/dashboard')
 

@@ -1,8 +1,9 @@
 import { test, expect } from '@playwright/test'
-import { signIn, createContributor, createAdmin, createParent } from '../helpers'
+import { signIn, createContributor, createAdmin, createParent, acceptTerms } from '../helpers'
 
 test('a contributor signs in and lands on the dashboard', async ({ page }) => {
   const contributor = await createContributor()
+  await acceptTerms(contributor.id)
   await signIn(page, contributor.email, contributor.password)
   await page.waitForURL('**/dashboard')
   await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible()
@@ -23,6 +24,7 @@ test('an invalid password shows an error and stays on /login', async ({ page }) 
 
 test('a parent-role account lands on the dashboard', async ({ page }) => {
   const parent = await createParent()
+  await acceptTerms(parent.id)
   await signIn(page, parent.email, parent.password)
 
   await page.waitForURL('**/dashboard')

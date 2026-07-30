@@ -39,4 +39,21 @@ describe('TermsGate', () => {
     render(<TermsGate type="org_leader_terms" onAccepted={vi.fn()} />)
     expect(screen.getByRole('link')).toHaveAttribute('href', '/legal/org-leader-terms')
   })
+
+  it('disables accept until the box is ticked when requireCheckbox is set', () => {
+    render(<TermsGate type="contributor_terms" onAccepted={vi.fn()} requireCheckbox />)
+
+    const button = screen.getByRole('button', { name: /I accept/i })
+    expect(button).toBeDisabled()
+
+    fireEvent.click(screen.getByRole('checkbox'))
+    expect(button).toBeEnabled()
+  })
+
+  it('has no checkbox and an enabled button by default', () => {
+    render(<TermsGate type="contributor_terms" onAccepted={vi.fn()} />)
+
+    expect(screen.queryByRole('checkbox')).toBeNull()
+    expect(screen.getByRole('button', { name: /I accept/i })).toBeEnabled()
+  })
 })
