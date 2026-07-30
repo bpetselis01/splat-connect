@@ -10,6 +10,7 @@
  * - app/legal/contributor-terms: the (unwritten) terms this links to
  */
 import { useRouter, useSearchParams } from 'next/navigation'
+import { Route } from 'next'
 import { TermsGate } from '@/components/terms-gate'
 
 /**
@@ -22,11 +23,11 @@ import { TermsGate } from '@/components/terms-gate'
  * into a cross-origin redirect. Normalizing collapses all backslash variants
  * into cases the protocol-relative check already rejects.
  */
-function safeNext(raw: string | null): string {
-  if (!raw) return '/dashboard'
+function safeNext(raw: string | null): Route<string> {
+  if (!raw) return '/dashboard' as Route<string>
   const normalized = raw.replace(/\\/g, '/')
-  if (!normalized.startsWith('/') || normalized.startsWith('//')) return '/dashboard'
-  return normalized
+  if (!normalized.startsWith('/') || normalized.startsWith('//')) return '/dashboard' as Route<string>
+  return normalized as Route<string>
 }
 
 export default function ContributorTermsOnboarding() {
