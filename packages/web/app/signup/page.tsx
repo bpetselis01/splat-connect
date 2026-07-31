@@ -3,21 +3,31 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { browserApiClient } from '@/lib/browser-api-client'
+import { ContributorTermsDialog } from '@/components/contributor-terms-dialog'
+import { Check } from '@/components/icons'
 
 export default function SignupPage() {
   const supabase = createClient()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
   const [acceptedTerms, setAcceptedTerms] = useState(false)
+  const [termsDialogOpen, setTermsDialogOpen] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setLoading(true)
     setError(null)
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.')
+      return
+    }
+
+    setLoading(true)
 
     const { error } = await supabase.auth.signUp({
       email,
@@ -31,16 +41,17 @@ export default function SignupPage() {
       return
     }
 
-    // enable_confirmations = false (supabase/config.toml:232), so signUp() has
-    // already returned a live session and this call is authenticated.
+    // enable_confirmations = true (supabase/config.toml:232), so signUp() left
+    // no session — this call only records anything if that ever changes for
+    // some environment. Deliberately non-fatal either way: the account exists
+    // regardless of what happens here, and /onboarding/contributor-terms
+    // catches an unrecorded acceptance at first sign-in.
     try {
       await browserApiClient.post('/api/agreements', {
         agreement_type: 'contributor_terms',
       })
     } catch {
-      // Deliberately non-fatal. The account exists and the user is signed in;
-      // rolling that back would be worse than a missing acceptance row. The
-      // middleware gate sends them to /onboarding/contributor-terms next request.
+      // See comment above — expected to fail every time under this config.
     }
 
     setSubmitted(true)
@@ -53,20 +64,13 @@ export default function SignupPage() {
           <span aria-hidden="true" className="empty-badge">
             ✅
           </span>
-          <h1 className="mt-4 text-2xl font-bold text-ink">You&apos;re all set</h1>
+          <h1 className="mt-4 text-2xl font-bold text-ink">Check your email</h1>
           <p className="mt-2 text-sm leading-relaxed text-muted">
-            Your account is ready to go.
+            We&apos;ve sent a confirmation link to <strong>{email}</strong>. Confirm
+            your email, then sign in.
           </p>
-          {/* WHY: supabase/config.toml sets enable_confirmations = false, so
-              signUp() above already returned a live session — the user is
-              signed in the moment this screen renders, not merely registered.
-              HOW: link straight to the dashboard instead of /login. If
-              confirmations are ever enabled (packages/mobile/lib/auth-context.tsx
-              already sets an emailRedirectTo, so some environment may expect
-              this), this screen needs to go back to telling the user to check
-              their email and sign in. */}
-          <Link href="/dashboard" className="btn btn-soft mt-6">
-            Go to your dashboard
+          <Link href="/login" className="btn btn-soft mt-6">
+            Back to sign in
           </Link>
         </div>
       </div>
@@ -122,21 +126,45 @@ export default function SignupPage() {
               At least 6 characters.
             </p>
           </div>
-          <label className="flex items-start gap-2 text-sm">
+          <div>
+            <label htmlFor="confirm-password" className="field-label">Confirm password</label>
             <input
-              type="checkbox"
-              checked={acceptedTerms}
-              onChange={(e) => setAcceptedTerms(e.target.checked)}
-              className="mt-1"
+              id="confirm-password"
+              type="password"
+              autoComplete="new-password"
+              required
+              minLength={6}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="field"
             />
-            <span>
-              I have read and accept the{' '}
-              <Link href="/legal/contributor-terms" className="font-semibold text-brand-dark hover:underline">
-                contributor terms
-              </Link>
-              .
+          </div>
+          <button
+            type="button"
+            onClick={() => setTermsDialogOpen(true)}
+            className="flex items-start gap-2 text-left text-sm"
+          >
+            <span
+              aria-hidden="true"
+              className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full ${
+                acceptedTerms
+                  ? 'bg-brand-dark text-white'
+                  : 'border border-brand-soft text-transparent'
+              }`}
+            >
+              <Check className="h-3 w-3" />
             </span>
-          </label>
+            <span>
+              {acceptedTerms ? (
+                'Contributor terms accepted'
+              ) : (
+                <>
+                  Read and accept the{' '}
+                  <span className="font-semibold text-brand-dark">contributor terms</span>
+                </>
+              )}
+            </span>
+          </button>
           {error && (
             <p role="alert" className="alert alert-danger">
               {error}
@@ -157,6 +185,14 @@ export default function SignupPage() {
           Sign in
         </Link>
       </p>
+      <ContributorTermsDialog
+        open={termsDialogOpen}
+        onClose={() => setTermsDialogOpen(false)}
+        onAccepted={() => {
+          setAcceptedTerms(true)
+          setTermsDialogOpen(false)
+        }}
+      />
     </div>
   )
 }
