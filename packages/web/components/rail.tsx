@@ -108,7 +108,12 @@ export function Rail({ groups, pathname, collapsed, onToggle, onNavigate }: Rail
         {groups.map((group) => (
           <div key={group.heading} className="mb-1">
             {collapsed ? (
-              <div aria-hidden="true" className="mx-3 my-2 border-t border-white/15" />
+              // Text stays in the DOM (not aria-hidden) so the group is still
+              // announced to assistive tech — only the divider is decorative.
+              <>
+                <span className="sr-only">{group.heading}</span>
+                <div aria-hidden="true" className="mx-3 my-2 border-t border-white/15" />
+              </>
             ) : (
               <p className="px-3 pb-1 pt-4 text-xs font-bold uppercase tracking-wider text-brand-soft/60">
                 {group.heading}
@@ -127,6 +132,14 @@ export function Rail({ groups, pathname, collapsed, onToggle, onNavigate }: Rail
                       onClick={onNavigate}
                       aria-current={active ? 'page' : undefined}
                       title={collapsed ? row.label : undefined}
+                      // Collapsed, the visible "Soon" chip disappears, so the
+                      // accessible name has to carry both the destination and
+                      // its unbuilt status in one string — an aria-label wins
+                      // over text content, so this is the only accessible
+                      // name once collapsed.
+                      aria-label={
+                        collapsed ? (row.soon ? `${row.label} (Soon)` : row.label) : undefined
+                      }
                       className={`flex items-center gap-3 rounded-field px-3 py-2 text-sm font-semibold transition-colors ${
                         active
                           ? 'bg-white/15 text-white'
@@ -140,9 +153,6 @@ export function Rail({ groups, pathname, collapsed, onToggle, onNavigate }: Rail
                           Soon
                         </span>
                       )}
-                      {/* Collapsed, the chip is gone but the row is still
-                          unbuilt — keep that in the accessible name. */}
-                      {collapsed && row.soon && <span className="sr-only">Soon</span>}
                     </Link>
                   </li>
                 )
