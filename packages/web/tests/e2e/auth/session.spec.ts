@@ -19,6 +19,6 @@ test('the email-confirmed page renders its confirmation', async ({ page }) => {
 
   await expect(page.getByRole('heading', { name: 'Email confirmed' })).toBeVisible()
   await expect(
-    page.getByText('Your email has been confirmed. You can close this page and sign in from the app.')
+    page.getByText('Your email has been confirmed. Sign in to your account to continue.')
   ).toBeVisible()
 })

@@ -46,7 +46,16 @@ export async function createContributor() {
     user_metadata: { name: 'E2E Contributor' },
   })
   if (error || !data.user) throw new Error(`Failed to create contributor: ${error?.message}`)
+  await acceptTerms(data.user.id)
   return { id: data.user.id, email, password: PASSWORD }
+}
+
+/** Record contributor-terms acceptance for a service-role-provisioned user. */
+export async function acceptTerms(userId: string) {
+  const { error } = await adminClient()
+    .from('user_agreements')
+    .insert({ user_id: userId, agreement_type: 'contributor_terms', version: 'v0-todo' })
+  if (error) throw new Error(`acceptTerms failed: ${error.message}`)
 }
 
 /** Provision a confirmed parent via the service role, for specs that don't need the signup UI. */
@@ -126,9 +135,10 @@ export async function deleteUser(id: string) {
 }
 
 /**
- * Sign up a fresh parent through the Profile-tab UI. Local Supabase has
- * email confirmations disabled, so signUp returns a session immediately and
- * the app lands on the child-profile home.
+ * Sign up a fresh parent through the Profile-tab UI. Local Supabase requires
+ * email confirmation (supabase/config.toml enable_confirmations=true), so
+ * signUp leaves no session — confirm out of band via the admin API, the same
+ * as a real confirmation-link click would, then sign in through the UI.
  */
 export async function signUpParent(page: Page, email: string) {
   await page.goto('/profile')
@@ -137,7 +147,22 @@ export async function signUpParent(page: Page, email: string) {
   await page.getByPlaceholder('Email').fill(email)
   await page.getByPlaceholder('Password', { exact: true }).fill(PASSWORD)
   await page.getByPlaceholder('Confirm Password').fill(PASSWORD)
-  await page.getByText('Sign Up').click()
+  await page.getByTestId('accept-contributor-terms').click()
+
+  const [signupResponse] = await Promise.all([
+    page.waitForResponse(
+      (res) => res.url().includes('/auth/v1/signup') && res.request().method() === 'POST'
+    ),
+    page.getByText('Sign Up').click(),
+  ])
+  const body = await signupResponse.json()
+  const userId = body.user?.id ?? body.id
+  await adminClient().auth.admin.updateUserById(userId, { email_confirm: true })
+
+  await page.getByText('Back to sign in').click()
+  await page.getByPlaceholder('Email').fill(email)
+  await page.getByPlaceholder('Password').fill(PASSWORD)
+  await page.getByText('Sign In', { exact: true }).click()
   // Role resolves via GET /api/contributors/me → parent → child-profile home.
   await expect(page.getByText('Customization Metrics')).toBeVisible()
 }

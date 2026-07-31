@@ -56,4 +56,32 @@ describe('TermsGate', () => {
     expect(screen.queryByRole('checkbox')).toBeNull()
     expect(screen.getByRole('button', { name: /I accept/i })).toBeEnabled()
   })
+
+  it('mode="local" reports acceptance without calling the API', async () => {
+    const onAccepted = vi.fn()
+    render(<TermsGate type="contributor_terms" onAccepted={onAccepted} mode="local" />)
+
+    fireEvent.click(screen.getByRole('button', { name: /I accept/i }))
+
+    expect(post).not.toHaveBeenCalled()
+    expect(onAccepted).toHaveBeenCalled()
+  })
+
+  it('renders a supplied content node instead of the default link line', () => {
+    render(
+      <TermsGate
+        type="contributor_terms"
+        onAccepted={vi.fn()}
+        content={<p>Custom terms body</p>}
+      />
+    )
+
+    expect(screen.getByText('Custom terms body')).toBeInTheDocument()
+    expect(screen.queryByText(/please read the/i)).not.toBeInTheDocument()
+  })
+
+  it('keeps the default link line when no content is supplied', () => {
+    render(<TermsGate type="contributor_terms" onAccepted={vi.fn()} />)
+    expect(screen.getByText(/please read the/i)).toBeInTheDocument()
+  })
 })

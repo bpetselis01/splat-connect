@@ -4,6 +4,7 @@ import ContributorTermsOnboarding from '@/app/onboarding/contributor-terms/page'
 
 const post = vi.fn()
 const replace = vi.fn()
+const signOut = vi.fn()
 let search = ''
 
 vi.mock('@/lib/browser-api-client', () => ({
@@ -13,12 +14,16 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace }),
   useSearchParams: () => new URLSearchParams(search),
 }))
+vi.mock('@/lib/supabase/client', () => ({
+  createClient: () => ({ auth: { signOut: (...a: unknown[]) => signOut(...a) } }),
+}))
 
 describe('contributor terms onboarding', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     search = ''
     post.mockResolvedValue({})
+    signOut.mockResolvedValue({})
   })
 
   it('returns the user to the path they were blocked from', async () => {
@@ -69,5 +74,21 @@ describe('contributor terms onboarding', () => {
     fireEvent.click(screen.getByRole('button', { name: /I accept/i }))
 
     await waitFor(() => expect(replace).toHaveBeenCalledWith('/dashboard'))
+  })
+
+  it('renders the terms content inline, not just a link', () => {
+    render(<ContributorTermsOnboarding />)
+    expect(screen.getByText(/have not been written yet/i)).toBeInTheDocument()
+  })
+
+  it('does not claim the account predates the terms', () => {
+    render(<ContributorTermsOnboarding />)
+    expect(screen.queryByText(/created before/i)).not.toBeInTheDocument()
+  })
+
+  it('offers a sign-out escape hatch', () => {
+    render(<ContributorTermsOnboarding />)
+    fireEvent.click(screen.getByRole('button', { name: /sign out/i }))
+    expect(signOut).toHaveBeenCalled()
   })
 })

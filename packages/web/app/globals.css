@@ -493,4 +493,23 @@
   .shell-drawer::backdrop {
     background: rgb(10 53 80 / 0.5);
   }
+
+  /* Centered, unlike .shell-drawer's edge anchor — a confirmation dialog, not
+     a nav panel. Same backdrop tone for visual consistency between the two
+     native <dialog> usages in this app. */
+  .terms-dialog {
+    margin: auto;
+    max-width: 32rem;
+    width: calc(100vw - 2rem);
+    max-height: calc(100dvh - 4rem);
+    overflow-y: auto;
+    border: 0;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    background: var(--color-surface);
+  }
+
+  .terms-dialog::backdrop {
+    background: rgb(10 53 80 / 0.5);
+  }
 }

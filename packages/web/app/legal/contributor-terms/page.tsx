@@ -13,14 +13,13 @@
  * Acceptances recorded against version 'v0-todo' are void and should be discarded
  * when real terms land. No placeholder legal language is to be generated here.
  */
+import { ContributorTermsContent } from '@/components/contributor-terms-content'
+
 export default function ContributorTermsPage() {
   return (
     <main className="container">
       <h1>Contributor terms</h1>
-      <p className="alert alert-warning">
-        These terms have not been written yet. Anything you accept here is not
-        binding, and will be replaced.
-      </p>
+      <ContributorTermsContent />
     </main>
   )
 }
