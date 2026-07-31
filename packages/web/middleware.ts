@@ -12,13 +12,12 @@
  *
  * Protected routes:
  * - /upload: signed in
- * - /my-tutorials: signed in
  * - /dashboard: signed in
  * - /admin: Admins only (role='admin')
  * - /organizations: Signed in only — leadership is per-organisation data, not a
  *   role, so there is nothing here for middleware to read. The organisation page
  *   checks it via lib/org-access.ts and shows or hides the workspace accordingly.
- * - Contributor terms: /dashboard, /upload, /my-tutorials, /organizations and
+ * - Contributor terms: /dashboard, /upload, /organizations and
  *   /tutorials/<id>/edit redirect to /onboarding/contributor-terms until the account
  *   has accepted. /admin is excluded — the terms govern submitting, not reviewing.
  *
@@ -64,7 +63,7 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  const signedInRoutes = ['/upload', '/my-tutorials', '/dashboard', '/organizations']
+  const signedInRoutes = ['/upload', '/dashboard', '/organizations']
   const adminRoutes = ['/admin']
 
   const needsSignedInAuth = signedInRoutes.some((r) =>
@@ -91,7 +90,7 @@ export async function middleware(request: NextRequest) {
   // Contributor terms gate. Only the account area — public browsing, /legal and the
   // auth pages stay reachable, and /admin is excluded because these terms govern
   // submitting work, not reviewing it.
-  const termsGatedPrefixes = ['/dashboard', '/upload', '/my-tutorials', '/organizations']
+  const termsGatedPrefixes = ['/dashboard', '/upload', '/organizations']
   const needsTerms =
     user &&
     (termsGatedPrefixes.some((r) => pathname.startsWith(r)) ||
@@ -117,6 +116,10 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // The root layout decides whether to render the app shell, and a server
+  // layout cannot read the pathname. Publishing it as a request header is the
+  // smallest way to give it one — no route-group reshuffle of every page.
+  supabaseResponse.headers.set('x-pathname', pathname)
   return supabaseResponse
 }
 
