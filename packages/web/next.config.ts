@@ -17,6 +17,11 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL ?? `http://localhost:${apiPort}`,
   },
   typedRoutes: true,
+  // Runs before middleware, so /my-tutorials never reaches the route table.
+  // Permanent: the page merged into /dashboard, it did not move temporarily.
+  async redirects() {
+    return [{ source: '/my-tutorials', destination: '/dashboard', permanent: true }]
+  },
   images: {
     remotePatterns: [
       {
