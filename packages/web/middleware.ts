@@ -12,13 +12,12 @@
  *
  * Protected routes:
  * - /upload: signed in
- * - /my-tutorials: signed in
  * - /dashboard: signed in
  * - /admin: Admins only (role='admin')
  * - /organizations: Signed in only — leadership is per-organisation data, not a
  *   role, so there is nothing here for middleware to read. The organisation page
  *   checks it via lib/org-access.ts and shows or hides the workspace accordingly.
- * - Contributor terms: /dashboard, /upload, /my-tutorials, /organizations and
+ * - Contributor terms: /dashboard, /upload, /organizations and
  *   /tutorials/<id>/edit redirect to /onboarding/contributor-terms until the account
  *   has accepted. /admin is excluded — the terms govern submitting, not reviewing.
  *
@@ -34,8 +33,32 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
+/**
+ * The root layout decides whether to render the app shell, and a server layout
+ * cannot read the pathname. Publishing it as a *request* header is the smallest
+ * way to give it one — no route-group reshuffle of every page.
+ *
+ * Set on the request rather than on the response. Next's documented channel for
+ * middleware -> server-component headers is the x-middleware-override-headers
+ * protocol, which NextResponse.next({ request: { headers } }) populates at
+ * construction time; setting it on the response instead happens to also reach
+ * headers() on Next 16.2.6, but that is incidental and it additionally emits the
+ * app's internal routing state to the browser on every response. Hence: request
+ * headers, at every construction site.
+ *
+ * The Headers copy is rebuilt per call rather than snapshotted once: setAll()
+ * refreshes the session via request.cookies.set(), which mutates the request's
+ * cookie header, and a stale snapshot would drop the refreshed session cookie
+ * on its way back into the request — silently logging users out.
+ */
+function nextWithPathname(request: NextRequest) {
+  const headers = new Headers(request.headers)
+  headers.set('x-pathname', request.nextUrl.pathname)
+  return NextResponse.next({ request: { headers } })
+}
+
 export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request })
+  let supabaseResponse = nextWithPathname(request)
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -49,7 +72,7 @@ export async function middleware(request: NextRequest) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           )
-          supabaseResponse = NextResponse.next({ request })
+          supabaseResponse = nextWithPathname(request)
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
           )
@@ -64,7 +87,7 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  const signedInRoutes = ['/upload', '/my-tutorials', '/dashboard', '/organizations']
+  const signedInRoutes = ['/upload', '/dashboard', '/organizations']
   const adminRoutes = ['/admin']
 
   const needsSignedInAuth = signedInRoutes.some((r) =>
@@ -91,7 +114,7 @@ export async function middleware(request: NextRequest) {
   // Contributor terms gate. Only the account area — public browsing, /legal and the
   // auth pages stay reachable, and /admin is excluded because these terms govern
   // submitting work, not reviewing it.
-  const termsGatedPrefixes = ['/dashboard', '/upload', '/my-tutorials', '/organizations']
+  const termsGatedPrefixes = ['/dashboard', '/upload', '/organizations']
   const needsTerms =
     user &&
     (termsGatedPrefixes.some((r) => pathname.startsWith(r)) ||
@@ -117,6 +140,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // x-pathname rides on the request headers instead — see nextWithPathname().
   return supabaseResponse
 }
 

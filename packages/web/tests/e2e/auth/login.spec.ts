@@ -6,7 +6,7 @@ test('a contributor signs in and lands on the dashboard', async ({ page }) => {
   await acceptTerms(contributor.id)
   await signIn(page, contributor.email, contributor.password)
   await page.waitForURL('**/dashboard')
-  await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'My tutorials' })).toBeVisible()
 })
 
 test('an admin signs in and lands on the admin dashboard', async ({ page }) => {
@@ -28,5 +28,5 @@ test('a parent-role account lands on the dashboard', async ({ page }) => {
   await signIn(page, parent.email, parent.password)
 
   await page.waitForURL('**/dashboard')
-  await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'My tutorials' })).toBeVisible()
 })

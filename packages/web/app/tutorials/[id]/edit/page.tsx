@@ -52,7 +52,6 @@ export default async function EditTutorialPage({
     'use server'
     await apiClient.post(`/api/tutorials/${id}/orgs`, { org_id: orgId })
     revalidatePath(`/tutorials/${id}/edit`)
-    revalidatePath('/my-tutorials')
     revalidatePath('/dashboard')
   }
 
@@ -60,7 +59,6 @@ export default async function EditTutorialPage({
     'use server'
     await apiClient.delete(`/api/tutorials/${id}/orgs/${orgId}`)
     revalidatePath(`/tutorials/${id}/edit`)
-    revalidatePath('/my-tutorials')
     revalidatePath('/dashboard')
   }
 

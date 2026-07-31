@@ -330,7 +330,7 @@ describe('UploadPage', () => {
 
   // Tests: clicking Submit on Step 6 only PATCHes status to 'pending' (no re-saving other data) then redirects
   // How:   advances to Step 6, clicks Submit; checks PATCH called exactly once with { status: 'pending' }
-  //        and window.location.href is '/my-tutorials'
+  //        and window.location.href is '/dashboard'
   // Chain: the tutorial enters the admin review queue → the contributor is redirected to their
   //        dashboard where they can see the tutorial listed as 'pending'
   it('Submit: only PATCHes status to pending then redirects', async () => {
@@ -345,7 +345,7 @@ describe('UploadPage', () => {
         { status: 'pending' }
       )
       expect(browserApiClient.patch).toHaveBeenCalledTimes(1)
-      expect(window.location.href).toBe('/my-tutorials')
+      expect(window.location.href).toBe('/dashboard')
     })
     expect(browserApiClient.post).not.toHaveBeenCalled()
   })

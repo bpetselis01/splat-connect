@@ -441,3 +441,56 @@
     transition: none;
   }
 }
+
+/*
+  Rail width as a custom property rather than a swapped utility class: <main>
+  reacts through margin-inline-start: var(--rail-w) without either element
+  knowing the other's state, so collapsing animates one value.
+*/
+@layer components {
+  .shell {
+    --rail-w: 15rem;
+  }
+
+  .shell[data-collapsed='true'] {
+    --rail-w: 4.5rem;
+  }
+
+  .shell-rail {
+    position: fixed;
+    inset-block: 0;
+    inset-inline-start: 0;
+    z-index: 40;
+    width: var(--rail-w);
+    transition: width 200ms var(--ease-out-quart);
+  }
+
+  .shell-main {
+    min-height: 100vh;
+    transition: margin-inline-start 200ms var(--ease-out-quart);
+  }
+
+  @media (min-width: 1024px) {
+    .shell-main {
+      margin-inline-start: var(--rail-w);
+    }
+  }
+
+  /* The drawer is a native <dialog>: showModal() supplies the focus trap,
+     Escape-to-close and inert background rather than hand-building them. */
+  .shell-drawer {
+    margin: 0;
+    margin-inline-end: auto;
+    height: 100dvh;
+    max-height: 100dvh;
+    width: 15rem;
+    max-width: 85vw;
+    border: 0;
+    padding: 0;
+    background: transparent;
+  }
+
+  .shell-drawer::backdrop {
+    background: rgb(10 53 80 / 0.5);
+  }
+}

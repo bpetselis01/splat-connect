@@ -71,7 +71,7 @@ describe('DashboardPage', () => {
       .mockResolvedValueOnce([])
     render(await DashboardPage())
     expect(redirect).not.toHaveBeenCalled()
-    expect(screen.getByRole('heading', { name: 'Dashboard' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'My tutorials' })).toBeInTheDocument()
   })
 
   // Tests: stats section renders Pending, Approved, Rejected labels with correct counts
@@ -127,28 +127,18 @@ describe('DashboardPage', () => {
     expect(screen.queryByRole('link', { name: 'View' })).toBeNull()
   })
 
-  // Tests: "View all N tutorials" link appears when tutorial count exceeds 5
-  // How:   passes 6 tutorials; checks the View all link is present
-  // Chain: dashboard shows only the 5 most recent → the link lets contributors see the full list
-  it('shows "View all" link when tutorial count exceeds 5', async () => {
+  // Tests: the merged page lists every tutorial, not the five most recent
+  // Chain: /my-tutorials was the full list; merging it in means no truncation
+  //        and no link out to a page that no longer exists
+  it('lists every tutorial with no view-all link', async () => {
     vi.mocked(apiClient.get)
       .mockResolvedValueOnce(mockProfile)
-      .mockResolvedValueOnce(Array.from({ length: 6 }, (_, i) => ({ ...baseTutorial, id: String(i) })))
+      .mockResolvedValueOnce(
+        Array.from({ length: 6 }, (_, i) => ({ ...baseTutorial, id: String(i), title: `T${i}` }))
+      )
     render(await DashboardPage())
-    expect(screen.getByRole('link', { name: /view all 6 tutorials/i })).toHaveAttribute('href', '/my-tutorials')
-  })
-
-  // Tests: "View all" link appears even for a small number of tutorials
-  // How:   passes 2 tutorials; checks the View all link is present
-  // Chain: the nav no longer links to /my-tutorials, so this link is the only click path
-  //        there — it must not be gated behind a tutorial count or new accounts (0-5
-  //        tutorials) would have no way to reach the full list
-  it('shows "View all" link even with only 2 tutorials', async () => {
-    vi.mocked(apiClient.get)
-      .mockResolvedValueOnce(mockProfile)
-      .mockResolvedValueOnce(Array.from({ length: 2 }, (_, i) => ({ ...baseTutorial, id: String(i) })))
-    render(await DashboardPage())
-    expect(screen.getByRole('link', { name: /view all 2 tutorials/i })).toHaveAttribute('href', '/my-tutorials')
+    expect(screen.getAllByTestId('tutorial-row')).toHaveLength(6)
+    expect(screen.queryByRole('link', { name: /view all/i })).not.toBeInTheDocument()
   })
 
   // Tests: empty state message appears when the contributor has no tutorials

@@ -1,8 +1,10 @@
 import type { Metadata } from 'next'
 import { Nunito } from 'next/font/google'
+import { headers } from 'next/headers'
 import './globals.css'
 import { Nav } from '@/components/nav'
 import { getUserRole } from '@/lib/auth'
+import { AppShell } from '@/components/app-shell'
 
 // Nunito is the mobile app's family (packages/mobile/lib/theme.ts). One rounded
 // sans across headings, labels, buttons and data — product UI doesn't need a
@@ -21,20 +23,32 @@ export const metadata: Metadata = {
     'Open-source tutorials for switch-adapting toys for children with disabilities',
 }
 
+/** Routes that must never show the shell. A rail on the contributor-terms
+    gate is an escape hatch out of a gate — every link bounces straight back. */
+const BARE_PREFIXES = ['/login', '/signup', '/auth', '/onboarding']
+
 export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const role = await getUserRole()
+  const headerList = await headers()
+  const pathname = headerList.get('x-pathname') ?? ''
+  const bare = BARE_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))
+
+  const shell = bare ? null : await AppShell({ children })
 
   return (
     <html lang="en" className={nunito.variable}>
       <body className="min-h-screen font-sans antialiased">
-        <Nav role={role} />
-        <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-          {children}
-        </main>
+        {shell ?? (
+          <>
+            <Nav role={await getUserRole()} />
+            <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+              {children}
+            </main>
+          </>
+        )}
       </body>
     </html>
   )

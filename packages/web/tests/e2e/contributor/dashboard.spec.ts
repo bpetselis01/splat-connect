@@ -15,7 +15,7 @@ test('a contributor sees their own tutorials and status badges on the dashboard'
   await signIn(page, contributor.email, contributor.password)
   await page.waitForURL('**/dashboard')
 
-  await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'My tutorials' })).toBeVisible()
   await expect(page.getByText('E2E Pending One')).toBeVisible()
   await expect(page.getByText('E2E Approved One')).toBeVisible()
   await expect(page.getByText('E2E Rejected One')).toBeVisible()
@@ -32,7 +32,27 @@ test('a contributor with no tutorials sees the empty-state prompt', async ({ pag
   await page.waitForURL('**/dashboard')
 
   await expect(page.getByText("You haven't submitted any tutorials yet.")).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Upload your first tutorial' })).toBeVisible()
+  const prompt = page.getByRole('link', { name: 'Upload your first tutorial' })
+  await expect(prompt).toBeVisible()
+  // Carried over from the deleted my-tutorials spec: visibility alone would
+  // pass with the prompt wired to the wrong route.
+  await expect(prompt).toHaveAttribute('href', '/upload')
+})
+
+test('a draft tutorial shows its badge and an edit link', async ({ page }) => {
+  const contributor = await createContributor()
+  const title = uniqueTitle('E2E Draft')
+  const draftId = await createTutorial(contributor.id, { title, status: 'draft' })
+  await acceptTerms(contributor.id)
+  await signIn(page, contributor.email, contributor.password)
+  await page.waitForURL('**/dashboard')
+
+  await expect(page.getByText('DRAFT', { exact: true })).toBeVisible()
+  const row = page.getByTestId('tutorial-row').filter({ hasText: title })
+  await expect(row.getByRole('link', { name: 'Edit' })).toHaveAttribute(
+    'href',
+    `/tutorials/${draftId}/edit`
+  )
 })
 
 test('the status counts match the fixture set', async ({ page }) => {
@@ -49,20 +69,4 @@ test('the status counts match the fixture set', async ({ page }) => {
   await expect(page.getByTestId('stat-pending')).toContainText('2')
   await expect(page.getByTestId('stat-approved')).toContainText('1')
   await expect(page.getByTestId('stat-rejected')).toContainText('1')
-})
-
-test('the View all link appears past five tutorials', async ({ page }) => {
-  const contributor = await createContributor()
-  for (let i = 0; i < 6; i++) {
-    await createTutorial(contributor.id, { title: uniqueTitle(`E2E Overflow ${i}`), status: 'approved' })
-  }
-
-  await acceptTerms(contributor.id)
-  await signIn(page, contributor.email, contributor.password)
-  await page.waitForURL('**/dashboard')
-
-  await expect(page.getByRole('link', { name: /View all 6 tutorials/ })).toHaveAttribute(
-    'href',
-    '/my-tutorials'
-  )
 })

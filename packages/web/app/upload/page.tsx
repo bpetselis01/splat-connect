@@ -18,7 +18,7 @@
  * - Step 3 Next: POST /api/tutorials/:id/parts (replace-all)
  * - Step 4 Next: POST /api/tutorials/:id/tools (replace-all)
  * - Step 5 Next: POST /api/tutorials/:id/stl-files (replace-all, if any)
- * - Step 6 Submit: PATCH status draft→pending, redirect to /my-tutorials
+ * - Step 6 Submit: PATCH status draft→pending, redirect to /dashboard
  * 
  * Related files:
  * - lib/validation.ts: Step validation logic
@@ -254,7 +254,7 @@ export default function UploadPage() {
       // All data already saved per-step — just transition the draft to pending for review.
       await browserApiClient.patch(`/api/tutorials/${tutorialId}`, { status: 'pending' })
       sessionStorage.removeItem(DRAFT_KEY)
-      window.location.href = '/my-tutorials'
+      window.location.href = '/dashboard'
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Submission failed')
       setSubmitting(false)
