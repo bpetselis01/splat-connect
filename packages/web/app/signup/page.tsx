@@ -46,16 +46,14 @@ export default function SignupPage() {
 
     // enable_confirmations = true (supabase/config.toml:232), so signUp() left
     // no session — this call only records anything if that ever changes for
-    // some environment. Deliberately non-fatal either way: the account exists
-    // regardless of what happens here, and /onboarding/contributor-terms
-    // catches an unrecorded acceptance at first sign-in.
-    try {
-      await browserApiClient.post('/api/agreements', {
-        agreement_type: 'contributor_terms',
+    // some environment. Deliberately not awaited: this must never block
+    // reaching the check-your-email screen, including if the API is
+    // unreachable (fetch has no timeout).
+    void browserApiClient
+      .post('/api/agreements', { agreement_type: 'contributor_terms' })
+      .catch(() => {
+        // Expected to fail every time under this config — see comment above.
       })
-    } catch {
-      // See comment above — expected to fail every time under this config.
-    }
 
     setSubmitted(true)
   }
