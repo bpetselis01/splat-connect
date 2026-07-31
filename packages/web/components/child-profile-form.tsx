@@ -259,66 +259,73 @@ export function ChildProfileForm({ profile }: { profile: ChildProfile | null }) 
         <div className="card flex flex-col gap-4 p-5">
           <h2 className="text-lg font-bold text-ink">Customization metrics</h2>
 
-          <div>
-            <label htmlFor="palm_width_mm" className="field-label">Palm width (mm)</label>
-            <input
-              id="palm_width_mm"
-              type="number"
-              value={form.palm_width_mm ?? ''}
-              onChange={(e) => setNumber('palm_width_mm', e.target.value)}
-              step="any"
-              min="0"
-              className="field"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="wrist_circ_mm" className="field-label">Wrist circumference (mm)</label>
-            <input
-              id="wrist_circ_mm"
-              type="number"
-              value={form.wrist_circ_mm ?? ''}
-              onChange={(e) => setNumber('wrist_circ_mm', e.target.value)}
-              step="any"
-              min="0"
-              className="field"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="needs_arm_attachment" className="flex items-center gap-2">
+          {/* Palm width, wrist circumference, and forearm length are the same
+              measurement trio setNumber() treats as a unit — laying them out
+              as one row reads that relationship instead of hiding it. */}
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label htmlFor="palm_width_mm" className="field-label">Palm width (mm)</label>
               <input
-                id="needs_arm_attachment"
-                type="checkbox"
-                checked={form.needs_arm_attachment ?? false}
-                onChange={(e) => set('needs_arm_attachment', e.target.checked)}
+                id="palm_width_mm"
+                type="number"
+                value={form.palm_width_mm ?? ''}
+                onChange={(e) => setNumber('palm_width_mm', e.target.value)}
+                step="any"
+                min="0"
+                className="field"
               />
-              Needs an arm attachment
-            </label>
+            </div>
+
+            <div>
+              <label htmlFor="wrist_circ_mm" className="field-label">Wrist circ. (mm)</label>
+              <input
+                id="wrist_circ_mm"
+                type="number"
+                value={form.wrist_circ_mm ?? ''}
+                onChange={(e) => setNumber('wrist_circ_mm', e.target.value)}
+                step="any"
+                min="0"
+                className="field"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="forearm_length_mm" className="field-label">Forearm (mm)</label>
+              <input
+                id="forearm_length_mm"
+                type="number"
+                value={form.forearm_length_mm ?? ''}
+                onChange={(e) => setNumber('forearm_length_mm', e.target.value)}
+                step="any"
+                min="0"
+                className="field"
+              />
+            </div>
           </div>
 
-          <div>
-            <label htmlFor="forearm_length_mm" className="field-label">Forearm length (mm)</label>
-            <input
-              id="forearm_length_mm"
-              type="number"
-              value={form.forearm_length_mm ?? ''}
-              onChange={(e) => setNumber('forearm_length_mm', e.target.value)}
-              step="any"
-              min="0"
-              className="field"
-            />
-          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="hand_dominance" className="field-label">Hand dominance</label>
+              <input
+                id="hand_dominance"
+                type="text"
+                value={form.hand_dominance ?? ''}
+                onChange={(e) => set('hand_dominance', e.target.value || null)}
+                className="field"
+              />
+            </div>
 
-          <div>
-            <label htmlFor="hand_dominance" className="field-label">Hand dominance</label>
-            <input
-              id="hand_dominance"
-              type="text"
-              value={form.hand_dominance ?? ''}
-              onChange={(e) => set('hand_dominance', e.target.value || null)}
-              className="field"
-            />
+            <div className="flex items-end pb-2">
+              <label htmlFor="needs_arm_attachment" className="flex items-center gap-2">
+                <input
+                  id="needs_arm_attachment"
+                  type="checkbox"
+                  checked={form.needs_arm_attachment ?? false}
+                  onChange={(e) => set('needs_arm_attachment', e.target.checked)}
+                />
+                Needs an arm attachment
+              </label>
+            </div>
           </div>
 
           <div>
