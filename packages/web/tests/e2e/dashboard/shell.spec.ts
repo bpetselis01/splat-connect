@@ -384,6 +384,31 @@ test('a placeholder route explains the feature instead of 404ing', async ({ page
   }
 })
 
+// Chain: the shell's <main> replaced the root layout's `mx-auto w-full
+//        max-w-6xl` for every signed-in page, not just the dashboard. Dropping
+//        the cap outright stretched library grids, prose and admin tables to
+//        the full window on an ultrawide display while a signed-out visitor on
+//        the same URL kept a column. reflow.spec.ts only tests narrow
+//        viewports, so nothing else in the suite looks this way.
+test('the main content column stays capped on an ultrawide viewport', async ({ page }) => {
+  const contributor = await createContributor()
+  await acceptTerms(contributor.id)
+
+  try {
+    await signIn(page, contributor.email, contributor.password)
+    await page.waitForURL('**/dashboard')
+
+    await page.setViewportSize({ width: 2560, height: 1200 })
+    const box = await page.locator('main#main').boundingBox()
+    expect(box).not.toBeNull()
+    // max-w-[100rem] = 1600px, border-box. Uncapped it would be ~2320 here
+    // (2560 less the 15rem rail), so this fails loudly on a regression.
+    expect(box!.width).toBeLessThanOrEqual(1601)
+  } finally {
+    await deleteUser(contributor.id)
+  }
+})
+
 // Chain: a rail on the terms gate offers links middleware bounces straight
 //        back, which is an escape hatch out of a gate.
 test('the onboarding gate renders without the rail', async ({ page }) => {
