@@ -98,4 +98,19 @@ describe('signup page', () => {
       expect(screen.getByRole('heading', { name: /check your email/i })).toBeInTheDocument()
     )
   })
+
+  it('fires the acceptance POST with the right arguments, without blocking on it', async () => {
+    render(<SignupPage />)
+    fillForm()
+    acceptTermsViaDialog()
+    fireEvent.click(screen.getByRole('button', { name: /create account/i }))
+
+    // The screen must not wait on the POST settling.
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { name: /check your email/i })).toBeInTheDocument()
+    )
+    expect(post).toHaveBeenCalledWith('/api/agreements', {
+      agreement_type: 'contributor_terms',
+    })
+  })
 })
