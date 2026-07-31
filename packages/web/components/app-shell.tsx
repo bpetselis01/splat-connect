@@ -5,10 +5,10 @@
  * getCapabilities() is wrapped in React cache(), so calling it here and again
  * inside a page costs one round of fetches.
  *
- * ponytail: every signed-in page now pays for /api/child-profile and
- * /api/organizations/mine, and the rail reads neither isParent nor the org
- * bodies — only ledOrgs.length. If it measures, add a narrower
- * getNavCapabilities() that fetches just what the rail branches on.
+ * ponytail: every signed-in page pays for the one remaining sub-fetch,
+ * /api/organizations/mine, and the rail reads only ledOrgs.length from it.
+ * Narrowing that to a count endpoint would need an API change; the unread
+ * /api/child-profile fetch that used to sit beside it is gone.
  */
 import { cookies } from 'next/headers'
 import { getCapabilities } from '@/lib/capabilities'
