@@ -409,6 +409,33 @@ test('the main content column stays capped on an ultrawide viewport', async ({ p
   }
 })
 
+// Chain: WCAG 2.4.1 Bypass Blocks, Level A. The rail put up to fourteen tab
+//        stops ahead of the page content on every route. A link that only
+//        scrolls does not satisfy the criterion, so this asserts where focus
+//        actually lands — which is why <main> carries tabIndex={-1}.
+test('the skip link is the first tab stop and moves focus to the main content', async ({
+  page,
+}) => {
+  const contributor = await createContributor()
+  await acceptTerms(contributor.id)
+
+  try {
+    await signIn(page, contributor.email, contributor.password)
+    await page.waitForURL('**/dashboard')
+
+    await page.keyboard.press('Tab')
+    const skip = page.getByRole('link', { name: 'Skip to main content' })
+    await expect(skip).toBeFocused()
+    // sr-only at rest; it has to be readable once it has focus.
+    await expect(skip).toBeVisible()
+
+    await page.keyboard.press('Enter')
+    await expect(page.locator('main#main')).toBeFocused()
+  } finally {
+    await deleteUser(contributor.id)
+  }
+})
+
 // Chain: a rail on the terms gate offers links middleware bounces straight
 //        back, which is an escape hatch out of a gate.
 test('the onboarding gate renders without the rail', async ({ page }) => {
