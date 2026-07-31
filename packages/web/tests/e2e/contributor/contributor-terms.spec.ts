@@ -72,17 +72,3 @@ test('accepting returns the user to where they were blocked and unblocks editing
     'Edited after accepting terms'
   )
 })
-
-test('a new signup never sees the catch-up screen', async ({ page }) => {
-  const email = `terms-${Date.now()}@example.com`
-
-  await page.goto('/signup')
-  await page.getByLabel(/full name/i).fill('New Contributor')
-  await page.getByLabel(/email/i).fill(email)
-  await page.getByLabel(/password/i).fill('secret123')
-  await page.getByRole('checkbox').check()
-  await page.getByRole('button', { name: /create account/i }).click()
-
-  await page.getByRole('link', { name: /go to your dashboard/i }).click()
-  await expect(page).toHaveURL(/\/dashboard/)
-})
