@@ -344,13 +344,15 @@ export function ChildProfileForm({ profile }: { profile: ChildProfile | null }) 
               ))}
             </div>
           </div>
-
-          {error && <p role="alert" className="alert alert-danger">{error}</p>}
-          {saved && <p className="text-sm font-semibold text-mint-deep">Saved</p>}
-          <button type="submit" disabled={busy} className="btn btn-accent mt-2">
-            {busy ? 'Saving…' : 'Save'}
-          </button>
         </div>
+      </div>
+
+      <div className="flex items-center gap-4">
+        <button type="submit" disabled={busy} className="btn btn-accent">
+          {busy ? 'Saving…' : 'Save'}
+        </button>
+        {error && <p role="alert" className="alert alert-danger">{error}</p>}
+        {saved && <p className="text-sm font-semibold text-mint-deep">Saved</p>}
       </div>
     </form>
   )
