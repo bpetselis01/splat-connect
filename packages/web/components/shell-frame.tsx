@@ -17,8 +17,6 @@ import type { NavGroup } from '@/lib/nav-model'
 // 'use client' file is unreadable from server code — see lib/rail-cookie.ts.
 import { RAIL_COOKIE } from '@/lib/rail-cookie'
 
-export { RAIL_COOKIE }
-
 export function ShellFrame({
   groups,
   collapsed: initialCollapsed,
@@ -51,6 +49,18 @@ export function ShellFrame({
 
   return (
     <div className="shell" data-collapsed={collapsed ? 'true' : 'false'}>
+      {/* WCAG 2.4.1: the rail is up to fourteen tab stops ahead of the page on
+          every route, so it needs a bypass. A fragment link to a focusable
+          target is the platform's own mechanism — browsers move focus to the
+          target, not just the scroll position, as long as it can hold focus
+          (hence tabIndex={-1} on <main> below). No JS, no focus() call. */}
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-field focus:bg-surface focus:px-4 focus:py-2 focus:font-bold focus:text-ink focus:outline focus:outline-2 focus:outline-brand"
+      >
+        Skip to main content
+      </a>
+
       {/* Desktop rail. Hidden below lg, where the drawer takes over. */}
       <div className="shell-rail hidden lg:block">
         <Rail groups={groups} pathname={pathname} collapsed={collapsed} onToggle={toggle} />
@@ -96,8 +106,13 @@ export function ShellFrame({
             content visibly off-centre. Still capped, though — this is the root
             layout, so an uncapped <main> stretches every page in the app on an
             ultrawide display (library grids, prose, admin tables), while a
-            signed-out visitor on the same URL gets the layout's 72rem column. */}
-        <main className="w-full max-w-[100rem] px-4 py-8 sm:px-6 sm:py-10">
+            signed-out visitor on the same URL gets the layout's 72rem column.
+            tabIndex={-1} makes it a valid target for the skip link above. */}
+        <main
+          id="main"
+          tabIndex={-1}
+          className="w-full max-w-[100rem] px-4 py-8 sm:px-6 sm:py-10"
+        >
           {children}
         </main>
       </div>
