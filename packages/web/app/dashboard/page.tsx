@@ -34,7 +34,9 @@
  * Related files:
  * - routes/tutorials.ts: Fetch /api/tutorials/mine
  * - routes/contributors.ts: Fetch /api/contributors/me
- * - app/my-tutorials: Full list of tutorials
+ * This page absorbed /my-tutorials in the app-shell work: that route was a
+ * strict subset of this one, so it is now a permanent redirect here
+ * (next.config.ts) rather than sixty lines of duplicated markup.
  * - app/upload: Create new tutorial
  * - app/admin: Admin dashboard (for admins)
  */
@@ -61,7 +63,6 @@ export default async function DashboardPage() {
   const pendingCount = tutorials.filter((t) => t.status === 'pending').length
   const approvedCount = tutorials.filter((t) => t.status === 'approved').length
   const rejectedCount = tutorials.filter((t) => t.status === 'rejected').length
-  const recentTutorials = tutorials.slice(0, 5)
 
   const stats = [
     { label: 'Pending', count: pendingCount, tone: 'text-honey-deep' },
@@ -72,7 +73,7 @@ export default async function DashboardPage() {
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold text-ink">Dashboard</h1>
+        <h1 className="text-2xl font-bold text-ink">My tutorials</h1>
         <Link href="/upload" className="btn btn-accent">
           + New tutorial
         </Link>
@@ -93,9 +94,9 @@ export default async function DashboardPage() {
         ))}
       </div>
 
-      <h2 className="mb-3 text-lg font-bold text-ink">Recent tutorials</h2>
+      <h2 className="mb-3 text-lg font-bold text-ink">Your tutorials</h2>
 
-      {recentTutorials.length === 0 ? (
+      {tutorials.length === 0 ? (
         <div className="flex flex-col items-center px-6 py-12 text-center">
           <span aria-hidden="true" className="empty-badge text-brand-dark">
             <BookOpen className="h-8 w-8" />
@@ -113,9 +114,10 @@ export default async function DashboardPage() {
         </div>
       ) : (
         <div className="flex flex-col gap-3">
-          {recentTutorials.map((t) => (
+          {tutorials.map((t) => (
             <div
               key={t.id}
+              data-testid="tutorial-row"
               className="card flex flex-wrap items-center justify-between gap-4 p-4"
             >
               <div className="flex min-w-0 items-center gap-3">
@@ -141,17 +143,6 @@ export default async function DashboardPage() {
               </div>
             </div>
           ))}
-          {/* WHY: since the nav dropped its /my-tutorials link, this is the only click
-              path left to that page — gate on >0, not >5, or a small account has no
-              way to get there at all. */}
-          {tutorials.length > 0 && (
-            <Link
-              href="/my-tutorials"
-              className="pt-1 text-center text-sm font-semibold text-brand-dark hover:underline"
-            >
-              View all {tutorials.length} tutorials →
-            </Link>
-          )}
         </div>
       )}
     </div>
