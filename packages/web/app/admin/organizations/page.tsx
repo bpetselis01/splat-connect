@@ -88,24 +88,24 @@ export default async function AdminOrganizationsPage() {
       <details className="panel mb-6">
         <summary className="panel-summary">Create an organisation</summary>
         <div className="px-5 pb-5">
-        <form action={createOrg} className="space-y-3">
+        <form action={createOrg} className="flex flex-col gap-3">
           <div>
-            <label htmlFor="name" className="block font-medium text-ink">
+            <label htmlFor="name" className="field-label">
               Name
             </label>
-            <input id="name" name="name" required className="mt-1 w-full" />
+            <input id="name" name="name" required className="field" />
           </div>
           <div>
-            <label htmlFor="description" className="block font-medium text-ink">
+            <label htmlFor="description" className="field-label">
               Description
             </label>
-            <textarea id="description" name="description" rows={2} className="mt-1 w-full" />
+            <textarea id="description" name="description" rows={2} className="field" />
           </div>
           <div>
-            <label htmlFor="leader_user_id" className="block font-medium text-ink">
+            <label htmlFor="leader_user_id" className="field-label">
               First leader
             </label>
-            <select id="leader_user_id" name="leader_user_id" required defaultValue="" className="mt-1 w-full">
+            <select id="leader_user_id" name="leader_user_id" required defaultValue="" className="field">
               <option value="" disabled hidden>
                 Select a contributor…
               </option>
@@ -151,7 +151,7 @@ export default async function AdminOrganizationsPage() {
             {detailed.map((org) => {
               const leaders = org.org_leaders ?? []
               return (
-                <li key={org.id} className="card">
+                <li key={org.id} className="card p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="font-medium text-ink">{org.name}</p>
@@ -159,8 +159,10 @@ export default async function AdminOrganizationsPage() {
                         <p className="mt-1 text-sm text-muted">{org.description}</p>
                       )}
                     </div>
-                    <span className={org.status === 'active' ? 'badge' : 'badge badge-muted'}>
-                      {org.status}
+                    <span
+                      className={`badge ${org.status === 'active' ? 'bg-mint-soft text-mint-deep' : 'bg-sunken text-muted'}`}
+                    >
+                      {org.status.toUpperCase()}
                     </span>
                   </div>
 
@@ -202,7 +204,7 @@ export default async function AdminOrganizationsPage() {
 
                     <form action={addLeader} className="mt-3 flex gap-2">
                       <input type="hidden" name="orgId" value={org.id} />
-                      <select name="user_id" required defaultValue="" className="flex-1">
+                      <select name="user_id" required defaultValue="" className="field flex-1">
                         <option value="" disabled hidden>
                           Select a contributor…
                         </option>
