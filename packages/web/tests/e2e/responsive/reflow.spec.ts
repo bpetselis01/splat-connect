@@ -12,19 +12,31 @@ async function expectWithinViewport(locator: Locator, viewportWidth: number) {
   expect(box!.x + box!.width).toBeLessThanOrEqual(viewportWidth + 1)
 }
 
-test('@responsive every nav link stays inside the viewport for a contributor', async ({ page }) => {
+// The old always-visible top bar (components/nav.tsx) is gone for signed-in
+// users, replaced by a header button that opens the rail as a drawer — see
+// components/shell-frame.tsx. This asserts the drawer's own links, not the
+// removed top bar.
+test('@responsive every rail link stays inside the viewport for a contributor', async ({ page }) => {
   const contributor = await createContributor()
   await acceptTerms(contributor.id)
   await signIn(page, contributor.email, contributor.password)
   await page.waitForURL('**/dashboard')
 
   const width = page.viewportSize()!.width
-  for (const name of ['Library', 'Organisations', 'Dashboard']) {
-    const link = page.getByRole('link', { name, exact: true })
+  const openButton = page.getByRole('button', { name: 'Open navigation' })
+  await expect(openButton).toBeVisible()
+  await expectWithinViewport(openButton, width)
+
+  await openButton.click()
+  const drawer = page.locator('dialog.shell-drawer')
+  await expect(drawer).toBeVisible()
+
+  for (const name of ['Tutorial library', 'Organisations', 'My tutorials']) {
+    const link = drawer.getByRole('link', { name, exact: true })
     await expect(link).toBeVisible()
     await expectWithinViewport(link, width)
   }
-  await expect(page.getByRole('button', { name: 'Sign out' })).toBeVisible()
+  await expect(drawer.getByRole('button', { name: 'Sign out' })).toBeVisible()
 })
 
 test('@responsive the hero heading does not overflow', async ({ page }) => {
