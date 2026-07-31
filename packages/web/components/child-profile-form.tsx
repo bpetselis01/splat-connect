@@ -133,64 +133,70 @@ export function ChildProfileForm({ profile }: { profile: ChildProfile | null }) 
             />
           </div>
 
-          <div>
-            <label htmlFor="macs_level" className="field-label">MACS level</label>
-            <select
-              id="macs_level"
-              value={form.macs_level ?? ''}
-              onChange={(e) => set('macs_level', e.target.value || null)}
-              className="field"
-            >
-              <option value="">Not set</option>
-              {MACS_LEVELS.map((l) => (
-                <option key={l} value={l}>{l}</option>
-              ))}
-            </select>
+          {/* MACS and BFMF are both short single-value scores — a five-option
+              dropdown doesn't need a full row to itself. */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="macs_level" className="field-label">MACS level</label>
+              <select
+                id="macs_level"
+                value={form.macs_level ?? ''}
+                onChange={(e) => set('macs_level', e.target.value || null)}
+                className="field"
+              >
+                <option value="">Not set</option>
+                {MACS_LEVELS.map((l) => (
+                  <option key={l} value={l}>{l}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="bfmf_score" className="field-label">BFMF score</label>
+              <select
+                id="bfmf_score"
+                value={form.bfmf_score ?? ''}
+                onChange={(e) => set('bfmf_score', e.target.value || null)}
+                className="field"
+              >
+                <option value="">Not set</option>
+                {BFMF_SCORES.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          <div>
-            <label htmlFor="bfmf_score" className="field-label">BFMF score</label>
-            <select
-              id="bfmf_score"
-              value={form.bfmf_score ?? ''}
-              onChange={(e) => set('bfmf_score', e.target.value || null)}
-              className="field"
-            >
-              <option value="">Not set</option>
-              {BFMF_SCORES.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="hand_involvement" className="field-label">Hand involvement</label>
+              <select
+                id="hand_involvement"
+                value={form.hand_involvement ?? ''}
+                onChange={(e) =>
+                  set('hand_involvement', (e.target.value || null) as ChildProfile['hand_involvement'])
+                }
+                className="field"
+              >
+                <option value="">Not set</option>
+                <option value="bilateral">Bilateral</option>
+                <option value="unilateral">Unilateral</option>
+              </select>
+            </div>
 
-          <div>
-            <label htmlFor="hand_involvement" className="field-label">Hand involvement</label>
-            <select
-              id="hand_involvement"
-              value={form.hand_involvement ?? ''}
-              onChange={(e) =>
-                set('hand_involvement', (e.target.value || null) as ChildProfile['hand_involvement'])
-              }
-              className="field"
-            >
-              <option value="">Not set</option>
-              <option value="bilateral">Bilateral</option>
-              <option value="unilateral">Unilateral</option>
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="assist_hand" className="field-label">Assist hand</label>
-            <select
-              id="assist_hand"
-              value={form.assist_hand ?? ''}
-              onChange={(e) => set('assist_hand', (e.target.value || null) as ChildProfile['assist_hand'])}
-              className="field"
-            >
-              <option value="">Not set</option>
-              <option value="left">Left</option>
-              <option value="right">Right</option>
-            </select>
+            <div>
+              <label htmlFor="assist_hand" className="field-label">Assist hand</label>
+              <select
+                id="assist_hand"
+                value={form.assist_hand ?? ''}
+                onChange={(e) => set('assist_hand', (e.target.value || null) as ChildProfile['assist_hand'])}
+                className="field"
+              >
+                <option value="">Not set</option>
+                <option value="left">Left</option>
+                <option value="right">Right</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -214,26 +220,28 @@ export function ChildProfileForm({ profile }: { profile: ChildProfile | null }) 
             </div>
           </div>
 
-          <div>
-            <label htmlFor="challenge_other" className="field-label">Other challenges</label>
-            <input
-              id="challenge_other"
-              type="text"
-              value={form.challenge_other ?? ''}
-              onChange={(e) => set('challenge_other', e.target.value || null)}
-              className="field"
-            />
-          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="challenge_other" className="field-label">Other challenges</label>
+              <input
+                id="challenge_other"
+                type="text"
+                value={form.challenge_other ?? ''}
+                onChange={(e) => set('challenge_other', e.target.value || null)}
+                className="field"
+              />
+            </div>
 
-          <div>
-            <label htmlFor="grip_type" className="field-label">Grip type</label>
-            <input
-              id="grip_type"
-              type="text"
-              value={form.grip_type ?? ''}
-              onChange={(e) => set('grip_type', e.target.value || null)}
-              className="field"
-            />
+            <div>
+              <label htmlFor="grip_type" className="field-label">Grip type</label>
+              <input
+                id="grip_type"
+                type="text"
+                value={form.grip_type ?? ''}
+                onChange={(e) => set('grip_type', e.target.value || null)}
+                className="field"
+              />
+            </div>
           </div>
 
           <div>
