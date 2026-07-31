@@ -5,8 +5,17 @@
  * profiles.role, which is why one account can be both a parent and a contributor:
  * - admin      role = 'admin' (the only capability the column still carries)
  * - author     any signed-in account (009 widened is_approved_contributor)
- * - parent     has a child_profiles row
  * - leader     has an org_leaders row, via GET /api/organizations/mine
+ *
+ * There is deliberately no `isParent`. It used to be derived from a
+ * /api/child-profile fetch here, but nothing ever branched on it: "Child
+ * profile" is an unconditional nav row (gating it would mean the only way to
+ * create a child profile is to already have one — lib/nav-model.ts), and
+ * app/dashboard/child fetches the row itself because it needs the body, not a
+ * boolean. Since this call now runs in the root layout on every cold page
+ * load, that unread fetch cost every signed-in page one HTTP round trip and
+ * one GoTrue getUser() inside the API. Re-derive it here only when something
+ * actually branches on it.
  *
  * Wrapped in React cache() so a layout and its page share one round of fetches.
  *
@@ -16,12 +25,11 @@
  */
 import { cache } from 'react'
 import { apiClient } from '@/lib/api-client'
-import type { Profile, Organization, ChildProfile } from '@splat-connect/types'
+import type { Profile, Organization } from '@splat-connect/types'
 
 export type Capabilities = {
   profile: Profile
   isAdmin: boolean
-  isParent: boolean
   ledOrgs: Organization[]
   canAuthor: boolean
 }
@@ -35,17 +43,15 @@ export const getCapabilities = cache(async (): Promise<Capabilities | null> => {
     return null
   }
 
-  // Each of these degrades to "capability absent" on failure so one flaky fetch
-  // hides one tab rather than blanking the dashboard.
-  const [childProfile, ledOrgs] = await Promise.all([
-    apiClient.get<ChildProfile | null>('/api/child-profile').catch(() => null),
-    apiClient.get<Organization[]>('/api/organizations/mine').catch(() => [] as Organization[]),
-  ])
+  // Degrades to "capability absent" on failure so one flaky fetch hides one
+  // nav group rather than blanking the dashboard.
+  const ledOrgs = await apiClient
+    .get<Organization[]>('/api/organizations/mine')
+    .catch(() => [] as Organization[])
 
   return {
     profile,
     isAdmin: profile.role === 'admin',
-    isParent: childProfile !== null,
     ledOrgs,
     canAuthor: true,
   }

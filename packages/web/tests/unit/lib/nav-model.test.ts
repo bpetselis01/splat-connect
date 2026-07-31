@@ -25,7 +25,6 @@ function caps(over: Partial<Capabilities> = {}): Capabilities {
   return {
     profile,
     isAdmin: false,
-    isParent: false,
     ledOrgs: [],
     canAuthor: true,
     ...over,
@@ -58,10 +57,11 @@ describe('buildNav', () => {
     expect(hrefs(buildNav(caps({ isAdmin: true })))).toContain('/admin')
   })
 
-  // Chain: gating Child profile on isParent would mean the only way to create
-  //        a child profile is to already have one.
+  // Chain: gating Child profile on parenthood would mean the only way to create
+  //        a child profile is to already have one. Capabilities no longer even
+  //        carries an isParent flag, precisely because nothing may branch on it.
   it('shows Child profile to accounts that are not yet parents', () => {
-    expect(hrefs(buildNav(caps({ isParent: false })))).toContain('/dashboard/child')
+    expect(hrefs(buildNav(caps()))).toContain('/dashboard/child')
   })
 
   it('marks the six unbuilt rows as soon, and no others', () => {
