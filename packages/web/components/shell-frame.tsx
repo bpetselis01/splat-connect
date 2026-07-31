@@ -91,10 +91,15 @@ export function ShellFrame({
           <span className="font-bold text-ink">SPLAT Connect</span>
         </header>
 
-        {/* Fluid, not max-w-6xl mx-auto: centring a fixed width inside the
-            space left after the rail pushes content visibly off-centre.
-            Width caps belong on the surfaces that benefit (forms, prose). */}
-        <main className="w-full px-4 py-8 sm:px-6 sm:py-10">{children}</main>
+        {/* Left-aligned against the rail rather than mx-auto max-w-6xl:
+            centring a fixed width inside the space left after the rail pushes
+            content visibly off-centre. Still capped, though — this is the root
+            layout, so an uncapped <main> stretches every page in the app on an
+            ultrawide display (library grids, prose, admin tables), while a
+            signed-out visitor on the same URL gets the layout's 72rem column. */}
+        <main className="w-full max-w-[100rem] px-4 py-8 sm:px-6 sm:py-10">
+          {children}
+        </main>
       </div>
     </div>
   )
