@@ -59,6 +59,23 @@ describe('Rail', () => {
     expect(screen.getByRole('link', { name: 'My tutorials' })).toBeInTheDocument()
   })
 
+  // Chain: collapsed, the visible "Soon" chip vanishes. If the accessible
+  // name were built from the chip alone every placeholder row would announce
+  // as just "Soon", indistinguishable from every other placeholder row.
+  it('names a collapsed soon row with its destination, not just "Soon"', () => {
+    render(<Rail groups={GROUPS} pathname="/dashboard" collapsed onToggle={noop} />)
+    expect(screen.getByRole('link', { name: /Toy library/ })).toBeInTheDocument()
+  })
+
+  // Chain: collapsed, headings are replaced by a decorative divider. Without
+  // this, a screen reader gets one undifferentiated list of links with no
+  // indication of which of the four groups a row belongs to.
+  it('keeps group headings for assistive tech when collapsed', () => {
+    render(<Rail groups={GROUPS} pathname="/dashboard" collapsed onToggle={noop} />)
+    expect(screen.getByText('Browse')).toBeInTheDocument()
+    expect(screen.getByText('Yours')).toBeInTheDocument()
+  })
+
   it('marks unbuilt rows so they are not mistaken for working ones', () => {
     render(<Rail groups={GROUPS} pathname="/dashboard" collapsed={false} onToggle={noop} />)
     const soon = screen.getByRole('link', { name: /Toy library/ })
