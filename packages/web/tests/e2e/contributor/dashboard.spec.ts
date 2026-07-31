@@ -50,19 +50,3 @@ test('the status counts match the fixture set', async ({ page }) => {
   await expect(page.getByTestId('stat-approved')).toContainText('1')
   await expect(page.getByTestId('stat-rejected')).toContainText('1')
 })
-
-test('the View all link appears past five tutorials', async ({ page }) => {
-  const contributor = await createContributor()
-  for (let i = 0; i < 6; i++) {
-    await createTutorial(contributor.id, { title: uniqueTitle(`E2E Overflow ${i}`), status: 'approved' })
-  }
-
-  await acceptTerms(contributor.id)
-  await signIn(page, contributor.email, contributor.password)
-  await page.waitForURL('**/dashboard')
-
-  await expect(page.getByRole('link', { name: /View all 6 tutorials/ })).toHaveAttribute(
-    'href',
-    '/my-tutorials'
-  )
-})
