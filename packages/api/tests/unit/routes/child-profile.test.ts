@@ -10,7 +10,7 @@ vi.mock('../../../src/supabase/user-client.js', () => ({ createUserClient: () =>
 
 const { default: childProfile } = await import('../../../src/routes/child-profile.js')
 
-function makeApp(role: Role = 'parent') {
+function makeApp(role: Role = 'contributor') {
   const app = new Hono<{ Variables: AuthVariables }>()
   app.use('*', async (c, next) => {
     c.set('userId', 'user-1')
