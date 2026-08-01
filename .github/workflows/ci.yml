@@ -395,6 +395,11 @@ jobs:
             | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
+          # `trigger` only enqueues the uevent; udev applies the rule (the actual
+          # chmod) asynchronously. Without waiting for the queue to drain, `test -w`
+          # races that application and intermittently fails on an identical script —
+          # measured passing and failing in the same ~50-90ms window on 2026-07-31.
+          sudo udevadm settle --timeout=30
           test -w /dev/kvm || { echo "/dev/kvm is not writable; the emulator would fall back to -accel off"; exit 1; }
 
       - name: Run the Maestro flows

@@ -63,6 +63,11 @@ export default async function AdminOrganizationsPage() {
     apiClient.get<AdminAccountsResponse>('/api/admin/contributors'),
   ])
   const contributors = accounts.accounts
+  // POST /api/admin/organizations and the add-leader endpoint both refuse
+  // anyone but role='contributor' (packages/api/src/routes/admin.ts). This
+  // endpoint returns every non-admin account, so offering the full list here
+  // would let an admin pick a candidate the server always rejects.
+  const eligibleLeaders = contributors.filter((c) => c.role === 'contributor')
 
   // No per-organisation fetch. The list endpoint embeds org_leaders, so this is
   // one request at fifty organisations instead of fifty-one. Deferring the leaders
@@ -78,47 +83,38 @@ export default async function AdminOrganizationsPage() {
     <div className="mx-auto max-w-3xl">
       <h1 className="mb-6 text-2xl font-bold text-ink">Organisations</h1>
 
-      {/* One list serves both pickers — a datalist is referenced by id, not nested.
-          The value is the id because that is what the API takes; the label is what
-          the admin reads. */}
-      <datalist id="contributor-options">
-        {contributors.map((c) => (
-          <option key={c.id} value={c.id}>
-            {c.name || c.email}
-          </option>
-        ))}
-      </datalist>
-
       {/* Behind a disclosure so the list is what you land on. Creating is rare;
           looking is not. */}
       <details className="panel mb-6">
         <summary className="panel-summary">Create an organisation</summary>
         <div className="px-5 pb-5">
-        <form action={createOrg} className="space-y-3">
+        <form action={createOrg} className="flex flex-col gap-3">
           <div>
-            <label htmlFor="name" className="block font-medium text-ink">
+            <label htmlFor="name" className="field-label">
               Name
             </label>
-            <input id="name" name="name" required className="mt-1 w-full" />
+            <input id="name" name="name" required className="field" />
           </div>
           <div>
-            <label htmlFor="description" className="block font-medium text-ink">
+            <label htmlFor="description" className="field-label">
               Description
             </label>
-            <textarea id="description" name="description" rows={2} className="mt-1 w-full" />
+            <textarea id="description" name="description" rows={2} className="field" />
           </div>
           <div>
-            <label htmlFor="leader_user_id" className="block font-medium text-ink">
+            <label htmlFor="leader_user_id" className="field-label">
               First leader
             </label>
-            <input
-              id="leader_user_id"
-              name="leader_user_id"
-              list="contributor-options"
-              required
-              placeholder="Type a name or email…"
-              className="mt-1 w-full"
-            />
+            <select id="leader_user_id" name="leader_user_id" required defaultValue="" className="field">
+              <option value="" disabled hidden>
+                Select a contributor…
+              </option>
+              {eligibleLeaders.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name || c.email}
+                </option>
+              ))}
+            </select>
             <p className="mt-1 text-xs text-muted">
               Required. An organisation with no leader cannot answer any request, so
               it would sit in the picker doing nothing. Only contributors can lead.
@@ -155,7 +151,7 @@ export default async function AdminOrganizationsPage() {
             {detailed.map((org) => {
               const leaders = org.org_leaders ?? []
               return (
-                <li key={org.id} className="card">
+                <li key={org.id} className="card p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="font-medium text-ink">{org.name}</p>
@@ -163,8 +159,10 @@ export default async function AdminOrganizationsPage() {
                         <p className="mt-1 text-sm text-muted">{org.description}</p>
                       )}
                     </div>
-                    <span className={org.status === 'active' ? 'badge' : 'badge badge-muted'}>
-                      {org.status}
+                    <span
+                      className={`badge ${org.status === 'active' ? 'bg-mint-soft text-mint-deep' : 'bg-sunken text-muted'}`}
+                    >
+                      {org.status.toUpperCase()}
                     </span>
                   </div>
 
@@ -206,13 +204,16 @@ export default async function AdminOrganizationsPage() {
 
                     <form action={addLeader} className="mt-3 flex gap-2">
                       <input type="hidden" name="orgId" value={org.id} />
-                      <input
-                        name="user_id"
-                        list="contributor-options"
-                        required
-                        placeholder="Type a name or email…"
-                        className="flex-1"
-                      />
+                      <select name="user_id" required defaultValue="" className="field flex-1">
+                        <option value="" disabled hidden>
+                          Select a contributor…
+                        </option>
+                        {eligibleLeaders.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.name || c.email}
+                          </option>
+                        ))}
+                      </select>
                       <button type="submit" className="btn">
                         Add
                       </button>
