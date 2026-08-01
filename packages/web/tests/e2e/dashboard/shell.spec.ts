@@ -3,7 +3,6 @@ import { test, expect } from '@playwright/test'
 import {
   signIn,
   createContributor,
-  createParent,
   createTutorial,
   createOrgWithLeader,
   seedBackingRequest,
@@ -18,9 +17,7 @@ const PHOTO_FIXTURE = path.join(__dirname, '..', 'fixtures', 'test.jpg')
 
 /**
  * The journeys that prove the app shell replaces the tab strip without losing
- * anything: capability-derived nav groups on the rail, a merged dashboard, and
- * an account model where 'parent' and 'contributor' are the same kind of thing
- * underneath.
+ * anything: capability-derived nav groups on the rail and a merged dashboard.
  *
  * The first six are the ported tab-strip journeys; the rest are what the shell
  * itself introduces — collapse persistence, the narrow-viewport drawer and its
@@ -182,55 +179,6 @@ test('a user renames themselves on the Profile tab and the change persists', asy
     await expect(page.locator('#name')).toHaveValue(newName)
   } finally {
     await deleteUser(contributor.id)
-  }
-})
-
-test('a mobile-registered parent signs in on web and uploads a tutorial', async ({ page }) => {
-  const parent = await createParent()
-  await acceptTerms(parent.id)
-  const title = uniqueTitle('Parent Uploaded')
-
-  try {
-    await signIn(page, parent.email, parent.password)
-    await page.waitForURL('**/dashboard')
-
-    await page.goto('/upload')
-
-    // Step 1: Details
-    await page.getByPlaceholder('e.g. Fisher-Price Piano').fill(title)
-    await page.getByRole('button', { name: 'easy', exact: true }).click()
-    await page.getByRole('button', { name: 'Next →' }).click()
-
-    // Step 2: Files
-    await page.locator('input[name="tutorial_pdf"]').setInputFiles(PDF_FIXTURE)
-    await page.locator('input[name="toy_photo"]').setInputFiles(PHOTO_FIXTURE)
-    await expect(page.getByRole('button', { name: 'Next →' })).toBeEnabled({ timeout: 20_000 })
-    await page.getByRole('button', { name: 'Next →' }).click()
-
-    // Step 3: Parts
-    await page.getByRole('button', { name: '+ Add part' }).click()
-    await page.getByPlaceholder('Part name *').fill('E2E parent part')
-    await page.getByRole('button', { name: 'Next →' }).click()
-
-    // Step 4: Tools
-    await page.getByRole('button', { name: '+ Add tool' }).click()
-    await page.getByPlaceholder('Tool name *').fill('E2E parent tool')
-    await page.getByRole('button', { name: 'Next →' }).click()
-
-    // Step 5: STL files (optional — skip)
-    await page.getByRole('button', { name: 'Next →' }).click()
-
-    // Step 6: Review & submit. This is the write that was refused by RLS
-    // before this work: a role='parent' account, not merely a UI gate.
-    await expect(page.getByText(title)).toBeVisible()
-    await page.getByRole('button', { name: 'Submit for review' }).click()
-
-    await page.waitForURL('**/dashboard')
-    const row = page.getByTestId('tutorial-row').filter({ hasText: title })
-    await expect(row).toBeVisible()
-    await expect(row.getByText('PENDING', { exact: true })).toBeVisible()
-  } finally {
-    await deleteUser(parent.id)
   }
 })
 

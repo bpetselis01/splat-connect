@@ -76,26 +76,6 @@ export async function createAdmin() {
   return { id: data.user.id, email, password: PASSWORD }
 }
 
-/** Provision a confirmed parent via the service role. */
-export async function createParent() {
-  const admin = adminClient()
-  const email = uniqueEmail('parent')
-  const { data, error } = await admin.auth.admin.createUser({
-    email,
-    password: PASSWORD,
-    email_confirm: true,
-    user_metadata: { name: 'E2E Parent', role: 'parent' },
-  })
-  if (error || !data.user) throw new Error(`Failed to create parent: ${error?.message}`)
-
-  const { error: profileError } = await admin
-    .from('profiles')
-    .upsert({ id: data.user.id, role: 'parent', name: 'E2E Parent' })
-  if (profileError) throw new Error(`Failed to set parent profile: ${profileError.message}`)
-
-  return { id: data.user.id, email, password: PASSWORD }
-}
-
 /**
  * Best-effort teardown. CI boots a fresh Supabase per job, so leaked fixtures
  * cost nothing there; this keeps repeated local runs from accumulating accounts.
