@@ -6,7 +6,6 @@ import { acceptTerms, createProject, requestBacking, cleanupOrg } from '../../he
 let admin: TestUser
 let leader: TestUser
 let second: TestUser
-let parent: TestUser
 let author: TestUser
 const createdOrgIds: string[] = []
 let project: string
@@ -20,7 +19,6 @@ beforeAll(async () => {
   admin = await createTestUser('admin')
   leader = await createTestUser('contributor')
   second = await createTestUser('contributor')
-  parent = await createTestUser('parent')
   author = await createTestUser('contributor')
   await acceptTerms(leader.id, 'org_leader_terms')
   project = await createProject({ authorId: author.id })
@@ -32,7 +30,6 @@ afterAll(async () => {
   await deleteTestUser(admin.id)
   await deleteTestUser(leader.id)
   await deleteTestUser(second.id)
-  await deleteTestUser(parent.id)
   await deleteTestUser(author.id)
 })
 
@@ -63,7 +60,7 @@ describe('POST /api/admin/organizations', () => {
   it('refuses a leader who is not a contributor', async () => {
     const res = await app.request('/api/admin/organizations', authed(admin.token, {
       method: 'POST',
-      body: JSON.stringify({ name: 'Parent Led', leader_user_id: parent.id }),
+      body: JSON.stringify({ name: 'Admin Led', leader_user_id: admin.id }),
     }))
     expect(res.status).toBe(400)
   })
