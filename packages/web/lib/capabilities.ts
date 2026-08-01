@@ -2,7 +2,7 @@
  * The single answer to "what may this user do".
  *
  * Capability is derived from data the schema already holds rather than read from
- * profiles.role, which is why one account can be both a parent and a contributor:
+ * profiles.role — every signed-in account is a contributor account:
  * - admin      role = 'admin' (the only capability the column still carries)
  * - author     any signed-in account (009 widened is_approved_contributor)
  * - leader     has an org_leaders row, via GET /api/organizations/mine
