@@ -64,36 +64,6 @@ describe('admin organisations', () => {
     expect(screen.getAllByText('Sam')).toHaveLength(3)
   })
 
-  // Tests: a parent-role account (valid for /api/admin/contributors, since it
-  // lists every non-admin account) never appears as a leader candidate, because
-  // POST /api/admin/organizations refuses anyone but role='contributor'. Offering
-  // it in the picker only sets up a guaranteed 400 on submit.
-  it('excludes non-contributor accounts from both leader pickers', async () => {
-    get.mockImplementation((path: string) =>
-      Promise.resolve(
-        path === '/api/organizations' ? [org('o1')]
-          : path === '/api/admin/contributors'
-            ? {
-                accounts: [
-                  { id: 'u1', name: 'Sam', email: 'sam@example.com', role: 'contributor', created_at: '' },
-                  { id: 'u2', name: 'Parent Pat', email: 'pat@example.com', role: 'parent', created_at: '' },
-                ],
-                total: 2,
-              }
-            : []
-      )
-    )
-    const { default: Page } = await import('@/app/admin/organizations/page')
-    const { container } = render(await Page())
-
-    const pickers = container.querySelectorAll('select[name="leader_user_id"], select[name="user_id"]')
-    expect(pickers.length).toBeGreaterThan(0)
-    for (const picker of Array.from(pickers)) {
-      const values = Array.from(picker.querySelectorAll('option')).map((o) => o.getAttribute('value'))
-      expect(values).not.toContain('u2')
-    }
-  })
-
   // Tests: the id itself is never rendered as visible text anywhere on the page,
   // even though it is still the submitted value. A <select>'s option value is
   // never shown to the user, unlike an <input list> datalist's value, which

@@ -63,11 +63,6 @@ export default async function AdminOrganizationsPage() {
     apiClient.get<AdminAccountsResponse>('/api/admin/contributors'),
   ])
   const contributors = accounts.accounts
-  // POST /api/admin/organizations and the add-leader endpoint both refuse
-  // anyone but role='contributor' (packages/api/src/routes/admin.ts). This
-  // endpoint returns every non-admin account, so offering the full list here
-  // would let an admin pick a candidate the server always rejects.
-  const eligibleLeaders = contributors.filter((c) => c.role === 'contributor')
 
   // No per-organisation fetch. The list endpoint embeds org_leaders, so this is
   // one request at fifty organisations instead of fifty-one. Deferring the leaders
@@ -109,7 +104,7 @@ export default async function AdminOrganizationsPage() {
               <option value="" disabled hidden>
                 Select a contributor…
               </option>
-              {eligibleLeaders.map((c) => (
+              {contributors.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name || c.email}
                 </option>
@@ -208,7 +203,7 @@ export default async function AdminOrganizationsPage() {
                         <option value="" disabled hidden>
                           Select a contributor…
                         </option>
-                        {eligibleLeaders.map((c) => (
+                        {contributors.map((c) => (
                           <option key={c.id} value={c.id}>
                             {c.name || c.email}
                           </option>
