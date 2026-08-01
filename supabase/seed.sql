@@ -35,7 +35,7 @@ values
   ('00000000-0000-0000-0000-000000000000', '44444444-4444-4444-4444-444444444444',
    'authenticated', 'authenticated', 'parent@splat-test.local',
    crypt('Test1234!', gen_salt('bf')), now(),
-   '{"provider":"email","providers":["email"]}', '{"name":"Seed Parent","role":"parent"}', now(), now(),
+   '{"provider":"email","providers":["email"]}', '{"name":"Seed Contributor","role":"contributor"}', now(), now(),
    '', '', '', '');
 
 insert into auth.identities
