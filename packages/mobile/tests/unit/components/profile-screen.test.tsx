@@ -48,15 +48,13 @@ describe('ProfileScreen', () => {
     expect(signIn).toHaveBeenCalledWith('a@b.com', 'wrong')
   })
 
-  it('switches to the sign-up form and submits name/email/password as a parent', async () => {
+  it('switches to the sign-up form and submits name/email/password', async () => {
     const signUp = jest.fn().mockResolvedValue({ error: null })
-    const acceptContributorTerms = jest.fn().mockResolvedValue({ error: null })
     ;(useAuth as jest.Mock).mockReturnValue({
       session: null,
       signIn: jest.fn(),
       signUp,
       signOut: jest.fn(),
-      acceptContributorTerms,
     })
     render(<ProfileScreen />)
     fireEvent.press(screen.getByText('Create an account'))
@@ -99,13 +97,11 @@ describe('ProfileScreen', () => {
 
   it('shows a check-your-email screen after a successful sign-up, with no way to resubmit', async () => {
     const signUp = jest.fn().mockResolvedValue({ error: null })
-    const acceptContributorTerms = jest.fn().mockResolvedValue({ error: null })
     ;(useAuth as jest.Mock).mockReturnValue({
       session: null,
       signIn: jest.fn(),
       signUp,
       signOut: jest.fn(),
-      acceptContributorTerms,
     })
     render(<ProfileScreen />)
     fireEvent.press(screen.getByText('Create an account'))
@@ -123,13 +119,11 @@ describe('ProfileScreen', () => {
 
   it('returns to the sign-in form from the check-your-email screen', async () => {
     const signUp = jest.fn().mockResolvedValue({ error: null })
-    const acceptContributorTerms = jest.fn().mockResolvedValue({ error: null })
     ;(useAuth as jest.Mock).mockReturnValue({
       session: null,
       signIn: jest.fn(),
       signUp,
       signOut: jest.fn(),
-      acceptContributorTerms,
     })
     render(<ProfileScreen />)
     fireEvent.press(screen.getByText('Create an account'))
@@ -160,14 +154,12 @@ describe('ProfileScreen', () => {
 
   it('blocks signup until the terms box is ticked', async () => {
     const signUp = jest.fn().mockResolvedValue({ error: null })
-    const acceptContributorTerms = jest.fn().mockResolvedValue({ error: null })
     ;(useAuth as jest.Mock).mockReturnValue({
       session: null,
       signIn: jest.fn(),
       signUp,
       signOut: jest.fn(),
       hasContributorTerms: false,
-      acceptContributorTerms,
     })
     render(<ProfileScreen />)
 
@@ -187,7 +179,6 @@ describe('ProfileScreen', () => {
     fireEvent.press(screen.getByText('Sign Up'))
 
     await waitFor(() => expect(signUp).toHaveBeenCalledWith('a@b.com', 'secret1', 'Ada'))
-    await waitFor(() => expect(acceptContributorTerms).toHaveBeenCalled())
   })
 
   it('blocks the profile view when contributor terms are unaccepted', () => {

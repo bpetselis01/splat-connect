@@ -59,9 +59,6 @@ export function ProfileScreen() {
         setError(res.error)
         return
       }
-      // Only records when signUp left a live session. Where email confirmation is
-      // enabled there is none, and the profile-tab guard asks again after sign-in.
-      await acceptContributorTerms()
       setMode('check-email')
       setName('')
       setPassword('')

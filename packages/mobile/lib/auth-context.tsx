@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
-import type { Profile, UserAgreement } from '@splat-connect/types'
+import { AGREEMENT_VERSIONS, type Profile, type UserAgreement } from '@splat-connect/types'
 import { supabase } from './supabase'
 import { apiClient } from './api-client'
 
@@ -74,7 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email,
       password,
       options: {
-        data: { name, role: 'parent' },
+        data: { name, contributor_terms_version: AGREEMENT_VERSIONS.contributor_terms },
         emailRedirectTo: `${process.env.EXPO_PUBLIC_WEB_URL}/auth/confirmed`,
       },
     })
