@@ -1,15 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import SignupPage from '@/app/signup/page'
+import { AGREEMENT_VERSIONS } from '@splat-connect/types'
 
 const signUp = vi.fn()
-const post = vi.fn()
 
 vi.mock('@/lib/supabase/client', () => ({
   createClient: () => ({ auth: { signUp: (...a: unknown[]) => signUp(...a) } }),
-}))
-vi.mock('@/lib/browser-api-client', () => ({
-  browserApiClient: { post: (...a: unknown[]) => post(...a) },
 }))
 
 function fillForm({ confirm = 'secret1' }: { confirm?: string } = {}) {
@@ -29,9 +26,6 @@ describe('signup page', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     signUp.mockResolvedValue({ error: null })
-    // Expected under enable_confirmations = true: no session exists yet, so
-    // this call fails every time. Signup must not be blocked by that.
-    post.mockRejectedValue(new Error('no session'))
   })
 
   it('keeps submit disabled until the terms dialog is accepted', () => {
@@ -88,7 +82,7 @@ describe('signup page', () => {
     expect(screen.queryByRole('link', { name: /dashboard/i })).not.toBeInTheDocument()
   })
 
-  it('still shows check-your-email when recording the acceptance fails', async () => {
+  it('carries the accepted terms version through signUp() metadata', async () => {
     render(<SignupPage />)
     fillForm()
     acceptTermsViaDialog()
@@ -97,20 +91,14 @@ describe('signup page', () => {
     await waitFor(() =>
       expect(screen.getByRole('heading', { name: /check your email/i })).toBeInTheDocument()
     )
-  })
-
-  it('fires the acceptance POST with the right arguments, without blocking on it', async () => {
-    render(<SignupPage />)
-    fillForm()
-    acceptTermsViaDialog()
-    fireEvent.click(screen.getByRole('button', { name: /create account/i }))
-
-    // The screen must not wait on the POST settling.
-    await waitFor(() =>
-      expect(screen.getByRole('heading', { name: /check your email/i })).toBeInTheDocument()
+    expect(signUp).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: expect.objectContaining({
+          data: expect.objectContaining({
+            contributor_terms_version: AGREEMENT_VERSIONS.contributor_terms,
+          }),
+        }),
+      })
     )
-    expect(post).toHaveBeenCalledWith('/api/agreements', {
-      agreement_type: 'contributor_terms',
-    })
   })
 })
