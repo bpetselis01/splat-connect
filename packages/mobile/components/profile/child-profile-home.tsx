@@ -1,16 +1,17 @@
 // packages/mobile/components/profile/child-profile-home.tsx
-import { ScrollView, View, Text, StyleSheet, ActivityIndicator } from 'react-native'
+//
+// Embedded as the "Child Profile" segment of the merged Profile tab
+// (components/profile-screen.tsx) — it owns none of the screen chrome
+// (header, account identity, sign out) since that segment shares a screen
+// with the "Account" segment, which already provides all of it.
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import { useAuth } from '../../lib/auth-context'
 import { useChildProfile } from '../../lib/use-child-profile'
 import { theme } from '../../lib/theme'
 import { Card } from '../ui/Card'
-import { Screen } from '../ui/Screen'
-import { Button } from '../ui/Button'
 import { TextField } from '../ui/TextField'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
-import { ScreenHeader } from '../ui/ScreenHeader'
 
 const SUB_SCREENS: {
   label: string
@@ -38,19 +39,8 @@ const SUB_SCREENS: {
   },
 ]
 
-function initials(name?: string | null) {
-  if (!name) return '?'
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase() ?? '')
-    .join('')
-}
-
 export function ChildProfileHome() {
   const router = useRouter()
-  const { profile: account, signOut } = useAuth()
   const { profile, loading, save, saveState } = useChildProfile()
 
   function onChangeAge(v: string) {
@@ -58,20 +48,7 @@ export function ChildProfileHome() {
   }
 
   return (
-    <Screen>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-        <ScreenHeader title="Profile" showLogo />
-
-        <Card style={styles.account}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{initials(account?.name)}</Text>
-          </View>
-          <View style={styles.accountBody}>
-            <Text style={styles.name} numberOfLines={1}>{account?.name}</Text>
-            <Text style={styles.email} numberOfLines={1}>{account?.email}</Text>
-          </View>
-        </Card>
-
+    <View>
         <TextField
           label="Child's age"
           placeholder="Age"
@@ -115,41 +92,11 @@ export function ChildProfileHome() {
           </AnimatedPressable>
         ))}
 
-        <Button label="Sign Out" onPress={() => signOut()} variant="ghost" style={styles.signOut} />
-      </ScrollView>
-    </Screen>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
-  content: { paddingBottom: theme.spacing(8) },
-  account: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing(4),
-    marginBottom: theme.spacing(5),
-  },
-  avatar: {
-    width: 52,
-    height: 52,
-    borderRadius: theme.radii.pill,
-    backgroundColor: theme.colors.accentLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: {
-    fontFamily: theme.fonts.bold,
-    fontSize: theme.type.heading,
-    color: theme.colors.primaryDeep,
-  },
-  accountBody: { flex: 1 },
-  name: { fontFamily: theme.fonts.bold, fontSize: theme.type.heading, color: theme.colors.text },
-  email: {
-    fontFamily: theme.fonts.regular,
-    fontSize: theme.type.caption,
-    color: theme.colors.muted,
-    marginTop: theme.spacing(1),
-  },
   saveStatus: {
     fontFamily: theme.fonts.regular,
     fontSize: theme.type.caption,
@@ -186,5 +133,4 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     marginTop: theme.spacing(1),
   },
-  signOut: { marginTop: theme.spacing(4) },
 })

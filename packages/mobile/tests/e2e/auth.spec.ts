@@ -1,12 +1,12 @@
 import { test, expect } from '@playwright/test'
-import { createContributor, signIn, signUpParent, uniqueParentEmail } from './helpers'
+import { createContributor, signIn, signUpNewAccount, uniqueSignupEmail, adminClient } from './helpers'
 
-test('a contributor signs in to the account view, not the child profile', async ({ page }) => {
+test('a contributor signs in to the account segment by default', async ({ page }) => {
   const { email, password } = await createContributor()
   await signIn(page, email, password)
 
   await expect(page.getByText(`Signed in as ${email}`)).toBeVisible()
-  // The role-branch must NOT show the parent child-profile home.
+  // Account is the default segment; Child Profile only renders once selected.
   await expect(page.getByText('Customization Metrics')).toHaveCount(0)
 })
 
@@ -14,7 +14,7 @@ test('mismatched passwords are rejected before any request is sent', async ({ pa
   await page.goto('/profile')
   await page.getByText('Create an account').click()
   await page.getByPlaceholder('Name').fill('E2E Mismatch')
-  await page.getByPlaceholder('Email').fill(uniqueParentEmail())
+  await page.getByPlaceholder('Email').fill(uniqueSignupEmail())
   await page.getByPlaceholder('Password', { exact: true }).fill('Test1234!')
   await page.getByPlaceholder('Confirm Password').fill('Different1234!')
   await page.getByText('Sign Up').click()
@@ -66,9 +66,37 @@ test('the contributor account view offers the web dashboard and sign out', async
   await expect(page.getByText('Sign Out')).toBeVisible()
 })
 
-test('a parent sees the child-profile entry points rather than the account view', async ({ page }) => {
-  const email = uniqueParentEmail()
-  await signUpParent(page, email)
+test('a new signup lands on Account by default and can switch to Child Profile', async ({ page }) => {
+  const email = uniqueSignupEmail()
+  await page.goto('/profile')
+  await page.getByText('Create an account').click()
+  await page.getByPlaceholder('Name').fill('E2E Contributor')
+  await page.getByPlaceholder('Email').fill(email)
+  await page.getByPlaceholder('Password', { exact: true }).fill('Test1234!')
+  await page.getByPlaceholder('Confirm Password').fill('Test1234!')
+  await page.getByTestId('accept-contributor-terms').click()
+
+  const [signupResponse] = await Promise.all([
+    page.waitForResponse(
+      (res) => res.url().includes('/auth/v1/signup') && res.request().method() === 'POST'
+    ),
+    page.getByText('Sign Up').click(),
+  ])
+  const body = await signupResponse.json()
+  await adminClient().auth.admin.updateUserById(body.user?.id ?? body.id, { email_confirm: true })
+
+  await page.getByText('Back to sign in').click()
+  await page.getByPlaceholder('Email').fill(email)
+  await page.getByPlaceholder('Password').fill('Test1234!')
+  await page.getByText('Sign In', { exact: true }).click()
+
+  // Account is the true first-visit default — this is the one caller in the
+  // suite that signs up without using signUpNewAccount's own final Child
+  // Profile selection, specifically to observe it.
+  await expect(page.getByText('Open Web Dashboard')).toBeVisible()
+  await expect(page.getByText('Customization Metrics')).toHaveCount(0)
+
+  await page.getByText('Child Profile').click()
 
   await expect(page.getByText('Ability Profile')).toBeVisible()
   await expect(page.getByText('Everyday Needs')).toBeVisible()

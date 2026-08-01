@@ -38,6 +38,19 @@ test('browsing stays open without accepted terms', async ({ page }) => {
   await expect(page).toHaveURL(new RegExp(`/tutorials/${tutorialId}$`))
 })
 
+test('accepting on first login lands on the dashboard with the sidebar shell, not the bare layout', async ({ page }) => {
+  const contributor = await createContributor()
+  await signIn(page, contributor.email, contributor.password)
+  await page.waitForURL(/\/onboarding\/contributor-terms/)
+
+  await page.getByRole('checkbox').check()
+  await page.getByRole('button', { name: /I accept/i }).click()
+
+  await page.waitForURL('**/dashboard')
+  await expect(page.locator('.shell-rail')).toBeVisible()
+  await expect(page.getByRole('link', { name: 'My tutorials', exact: true })).toBeVisible()
+})
+
 test('accepting returns the user to where they were blocked and unblocks editing', async ({ page }) => {
   const contributor = await createContributor()
   const tutorialId = await createTutorial(contributor.id, {

@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test'
-import { signUpParent, uniqueParentEmail, openSubScreen } from './helpers'
+import { signUpNewAccount, uniqueSignupEmail, openSubScreen } from './helpers'
 
 test('palm and wrist metrics autosave and survive a reload', async ({ page }) => {
-  await signUpParent(page, uniqueParentEmail())
+  await signUpNewAccount(page, uniqueSignupEmail())
   await openSubScreen(page, 'Customization Metrics')
 
   await page.getByPlaceholder('Palm width').fill('62')
@@ -16,7 +16,7 @@ test('palm and wrist metrics autosave and survive a reload', async ({ page }) =>
 })
 
 test('the arm-attachment toggle gates the forearm-length field', async ({ page }) => {
-  await signUpParent(page, uniqueParentEmail())
+  await signUpNewAccount(page, uniqueSignupEmail())
   await openSubScreen(page, 'Customization Metrics')
 
   await expect(page.getByPlaceholder('Forearm length')).toHaveCount(0)
@@ -30,7 +30,7 @@ test('the arm-attachment toggle gates the forearm-length field', async ({ page }
 })
 
 test('hand dominance and sensory preferences persist across a reload', async ({ page }) => {
-  await signUpParent(page, uniqueParentEmail())
+  await signUpNewAccount(page, uniqueSignupEmail())
   await openSubScreen(page, 'Customization Metrics')
 
   await page.getByRole('button', { name: 'Right', exact: true }).click() // hand dominance
@@ -44,7 +44,7 @@ test('hand dominance and sensory preferences persist across a reload', async ({ 
 })
 
 test('turning the arm-attachment toggle off hides the forearm-length field', async ({ page }) => {
-  await signUpParent(page, uniqueParentEmail())
+  await signUpNewAccount(page, uniqueSignupEmail())
   await openSubScreen(page, 'Customization Metrics')
 
   await page.getByRole('switch').click()

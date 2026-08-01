@@ -2,9 +2,9 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { browserApiClient } from '@/lib/browser-api-client'
 import { ContributorTermsDialog } from '@/components/contributor-terms-dialog'
 import { Check } from '@/components/icons'
+import { AGREEMENT_VERSIONS } from '@splat-connect/types'
 
 export default function SignupPage() {
   const supabase = createClient()
@@ -29,11 +29,17 @@ export default function SignupPage() {
 
     setLoading(true)
 
+    // enable_confirmations = true (supabase/config.toml:232), so signUp() leaves
+    // no session — there is no bearer token yet to POST /api/agreements with.
+    // The accepted version rides in user_metadata instead: handle_new_user()
+    // (supabase/migrations/010_signup_terms_acceptance.sql) reads it in the same
+    // security-definer trigger that already creates the profile, so the
+    // acceptance is recorded before the user ever reaches the onboarding gate.
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { name },
+        data: { name, contributor_terms_version: AGREEMENT_VERSIONS.contributor_terms },
         emailRedirectTo: `${window.location.origin}/auth/confirmed`,
       },
     })
@@ -43,17 +49,6 @@ export default function SignupPage() {
       setLoading(false)
       return
     }
-
-    // enable_confirmations = true (supabase/config.toml:232), so signUp() left
-    // no session — this call only records anything if that ever changes for
-    // some environment. Deliberately not awaited: this must never block
-    // reaching the check-your-email screen, including if the API is
-    // unreachable (fetch has no timeout).
-    void browserApiClient
-      .post('/api/agreements', { agreement_type: 'contributor_terms' })
-      .catch(() => {
-        // Expected to fail every time under this config — see comment above.
-      })
 
     setSubmitted(true)
   }

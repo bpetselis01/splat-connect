@@ -1,5 +1,5 @@
 // packages/mobile/components/profile-screen.tsx
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ScrollView, View, Text, Pressable, StyleSheet, Linking } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../lib/auth-context'
@@ -9,10 +9,8 @@ import { Button } from './ui/Button'
 import { Screen } from './ui/Screen'
 import { Card } from './ui/Card'
 import { TextField } from './ui/TextField'
-
-function roleLabel(role: string) {
-  return role.charAt(0).toUpperCase() + role.slice(1)
-}
+import { ChildProfileHome } from './profile/child-profile-home'
+import { resolveAuthStorage } from '../lib/supabase-storage'
 
 // Same base URL + pattern as the "Open Web Dashboard" link below (Linking.openURL
 // against EXPO_PUBLIC_WEB_URL). The terms document itself lives on web only.
@@ -20,8 +18,30 @@ function openContributorTerms() {
   Linking.openURL(`${process.env.EXPO_PUBLIC_WEB_URL}/legal/contributor-terms`)
 }
 
+const PROFILE_SEGMENT_KEY = 'profile-tab-segment'
+type ProfileSegment = 'account' | 'child-profile'
+
+function useProfileSegment() {
+  const [segment, setSegment] = useState<ProfileSegment>('account')
+  const storage = resolveAuthStorage()
+
+  useEffect(() => {
+    storage.getItem(PROFILE_SEGMENT_KEY).then((saved) => {
+      if (saved === 'child-profile') setSegment('child-profile')
+    })
+  }, [])
+
+  function select(next: ProfileSegment) {
+    setSegment(next)
+    storage.setItem(PROFILE_SEGMENT_KEY, next)
+  }
+
+  return { segment, select }
+}
+
 export function ProfileScreen() {
   const { session, profile, signIn, signUp, signOut, hasContributorTerms, acceptContributorTerms } = useAuth()
+  const { segment, select: selectSegment } = useProfileSegment()
   const [mode, setMode] = useState<'signin' | 'signup' | 'check-email'>('signin')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -59,9 +79,6 @@ export function ProfileScreen() {
         setError(res.error)
         return
       }
-      // Only records when signUp left a live session. Where email confirmation is
-      // enabled there is none, and the profile-tab guard asks again after sign-in.
-      await acceptContributorTerms()
       setMode('check-email')
       setName('')
       setPassword('')
@@ -91,87 +108,100 @@ export function ProfileScreen() {
     )
   }
 
-  // Catch-up gate for accounts created before terms were part of signup. Only the
-  // profile tab is blocked: the browsing tabs stay open, matching the web gate, which
-  // leaves /library and public tutorial pages reachable.
-  //
-  // Strict `=== false`: hasContributorTerms is null until the /api/agreements/me
-  // fetch resolves. Treating null as "unaccepted" flashed this gate for every
-  // already-accepted user on every app launch, for as long as that fetch was in
-  // flight.
-  if (session && hasContributorTerms === false) {
-    return (
-      <Screen>
-        <ScreenHeader title="Profile" showLogo />
-        <Card>
-          <Text style={styles.heading}>Before you continue</Text>
-          <Text style={styles.checkEmailText}>
-            Your account was created before we asked contributors to accept terms.
-            These terms have not been written yet, and anything you accept now is not
-            binding.
-          </Text>
-          <Pressable
-            testID="gate-accept-checkbox"
-            onPress={() => setGateTicked((v) => !v)}
-            accessibilityRole="checkbox"
-            accessibilityState={{ checked: gateTicked }}
-            style={styles.termsRow}
-          >
-            <Ionicons
-              name={gateTicked ? 'checkbox' : 'square-outline'}
-              size={22}
-              color={theme.colors.primary}
-            />
-            <Text style={styles.termsText}>
-              I have read and accept the{' '}
-              <Text onPress={openContributorTerms} style={styles.termsLink}>
-                contributor terms
-              </Text>
-              .
-            </Text>
-          </Pressable>
-          {gateError ? (
-            <View style={styles.errorRow}>
-              <Ionicons name="alert-circle" size={18} color={theme.colors.danger} />
-              <Text style={styles.error}>{gateError}</Text>
-            </View>
-          ) : null}
-          <Button
-            label="Accept and continue"
-            disabled={!gateTicked}
-            onPress={async () => {
-              const res = await acceptContributorTerms()
-              setGateError(res.error)
-            }}
-          />
-          {/* Escape hatch: if acceptance keeps failing (offline, API down), the user
-              is stuck on this screen with no other nav — they must still be able to
-              sign out or switch accounts. */}
-          <Button label="Sign Out" onPress={() => signOut()} variant="ghost" />
-        </Card>
-      </Screen>
-    )
-  }
-
+  // The Child Profile segment is reachable regardless of the catch-up gate below —
+  // it never went through that gate before this screen merged with ChildProfileHome,
+  // matching web's own precedent (capabilities.ts keeps child-profile access
+  // unconditional). Only the Account segment is blocked by unaccepted terms.
   if (session) {
     return (
       <Screen>
         <ScreenHeader title="Profile" showLogo />
-        <Card style={styles.panel}>
-          <Text style={styles.signedInText}>Signed in as {session.user.email}</Text>
-          {profile ? (
-            <>
-              <Text style={styles.roleText}>{roleLabel(profile.role)}</Text>
+        <View style={styles.segmented}>
+          <Pressable
+            onPress={() => selectSegment('account')}
+            style={[styles.segment, segment === 'account' && styles.segmentActive]}
+          >
+            <Text style={[styles.segmentText, segment === 'account' && styles.segmentTextActive]}>
+              Account
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => selectSegment('child-profile')}
+            style={[styles.segment, segment === 'child-profile' && styles.segmentActive]}
+          >
+            <Text style={[styles.segmentText, segment === 'child-profile' && styles.segmentTextActive]}>
+              Child Profile
+            </Text>
+          </Pressable>
+        </View>
+        {segment === 'child-profile' ? (
+          <ChildProfileHome />
+        ) : // Catch-up gate for accounts created before terms were part of signup.
+        // Strict `=== false`: hasContributorTerms is null until the /api/agreements/me
+        // fetch resolves. Treating null as "unaccepted" flashed this gate for every
+        // already-accepted user on every app launch, for as long as that fetch was in
+        // flight.
+        hasContributorTerms === false ? (
+          <Card>
+            <Text style={styles.heading}>Before you continue</Text>
+            <Text style={styles.checkEmailText}>
+              Your account was created before we asked contributors to accept terms.
+              These terms have not been written yet, and anything you accept now is not
+              binding.
+            </Text>
+            <Pressable
+              testID="gate-accept-checkbox"
+              onPress={() => setGateTicked((v) => !v)}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: gateTicked }}
+              style={styles.termsRow}
+            >
+              <Ionicons
+                name={gateTicked ? 'checkbox' : 'square-outline'}
+                size={22}
+                color={theme.colors.primary}
+              />
+              <Text style={styles.termsText}>
+                I have read and accept the{' '}
+                <Text onPress={openContributorTerms} style={styles.termsLink}>
+                  contributor terms
+                </Text>
+                .
+              </Text>
+            </Pressable>
+            {gateError ? (
+              <View style={styles.errorRow}>
+                <Ionicons name="alert-circle" size={18} color={theme.colors.danger} />
+                <Text style={styles.error}>{gateError}</Text>
+              </View>
+            ) : null}
+            <Button
+              label="Accept and continue"
+              disabled={!gateTicked}
+              onPress={async () => {
+                const res = await acceptContributorTerms()
+                setGateError(res.error)
+              }}
+            />
+            {/* Escape hatch: if acceptance keeps failing (offline, API down), the user
+                is stuck on this screen with no other nav — they must still be able to
+                sign out or switch accounts. */}
+            <Button label="Sign Out" onPress={() => signOut()} variant="ghost" />
+          </Card>
+        ) : (
+          <Card style={styles.panel}>
+            <Text style={styles.signedInText}>Signed in as {session.user.email}</Text>
+            {profile ? (
               <Button
                 label="Open Web Dashboard"
                 onPress={() => Linking.openURL(`${process.env.EXPO_PUBLIC_WEB_URL}/dashboard`)}
                 variant="secondary"
                 style={styles.stackedButton}
               />
-            </>
-          ) : null}
-          <Button label="Sign Out" onPress={() => signOut()} variant="ghost" />
-        </Card>
+            ) : null}
+            <Button label="Sign Out" onPress={() => signOut()} variant="ghost" />
+          </Card>
+        )}
       </Screen>
     )
   }
@@ -340,12 +370,29 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing(1),
     textAlign: 'center',
   },
-  roleText: {
-    fontFamily: theme.fonts.regular,
-    fontSize: theme.type.label,
-    color: theme.colors.muted,
+  segmented: {
+    flexDirection: 'row',
+    backgroundColor: theme.colors.surfaceSunken,
+    borderRadius: theme.radii.md,
+    padding: 3,
     marginBottom: theme.spacing(4),
-    textAlign: 'center',
+  },
+  segment: {
+    flex: 1,
+    paddingVertical: theme.spacing(2),
+    alignItems: 'center',
+    borderRadius: theme.radii.sm,
+  },
+  segmentActive: {
+    backgroundColor: theme.colors.surface,
+  },
+  segmentText: {
+    fontFamily: theme.fonts.semiBold,
+    fontSize: theme.type.caption,
+    color: theme.colors.muted,
+  },
+  segmentTextActive: {
+    color: theme.colors.primary,
   },
   link: {
     color: theme.colors.primaryDark,

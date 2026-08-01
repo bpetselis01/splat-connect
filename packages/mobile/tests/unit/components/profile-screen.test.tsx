@@ -4,6 +4,10 @@ import { ProfileScreen } from '../../../components/profile-screen'
 import { useAuth } from '../../../lib/auth-context'
 
 jest.mock('../../../lib/auth-context', () => ({ useAuth: jest.fn() }))
+jest.mock('../../../lib/use-child-profile', () => ({
+  useChildProfile: () => ({ profile: null, loading: false, save: jest.fn(), saveState: 'idle' }),
+}))
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }) }))
 
 describe('ProfileScreen', () => {
   it('shows a sign-in form when signed out', () => {
@@ -24,7 +28,7 @@ describe('ProfileScreen', () => {
     expect(screen.getByText('Signed in as parent@example.com')).toBeTruthy()
   })
 
-  it('shows role and a dashboard link for a contributor', () => {
+  it('shows the account segment by default, with no role label', () => {
     ;(useAuth as jest.Mock).mockReturnValue({
       session: { user: { email: 'contributor@example.com' } },
       profile: { id: '2', name: 'Cory', email: 'contributor@example.com', role: 'contributor', created_at: '' },
@@ -33,8 +37,41 @@ describe('ProfileScreen', () => {
       hasContributorTerms: true,
     })
     render(<ProfileScreen />)
-    expect(screen.getByText('Contributor')).toBeTruthy()
     expect(screen.getByText('Open Web Dashboard')).toBeTruthy()
+    expect(screen.queryByText('Contributor')).toBeNull()
+  })
+
+  it('switches to the child profile segment on tap', () => {
+    ;(useAuth as jest.Mock).mockReturnValue({
+      session: { user: { email: 'contributor@example.com' } },
+      profile: { id: '2', name: 'Cory', email: 'contributor@example.com', role: 'contributor', created_at: '' },
+      signIn: jest.fn(),
+      signOut: jest.fn(),
+      hasContributorTerms: true,
+    })
+    render(<ProfileScreen />)
+
+    fireEvent.press(screen.getByText('Child Profile'))
+
+    expect(screen.getByText('Ability Profile')).toBeTruthy()
+    expect(screen.queryByText('Open Web Dashboard')).toBeNull()
+  })
+
+  it('reaches the child profile segment even when contributor terms are unaccepted', () => {
+    ;(useAuth as jest.Mock).mockReturnValue({
+      session: { user: { email: 'contributor@example.com' } },
+      profile: { id: '2', name: 'Cory', email: 'contributor@example.com', role: 'contributor', created_at: '' },
+      signIn: jest.fn(),
+      signOut: jest.fn(),
+      hasContributorTerms: false,
+      acceptContributorTerms: jest.fn(),
+    })
+    render(<ProfileScreen />)
+
+    fireEvent.press(screen.getByText('Child Profile'))
+
+    expect(screen.getByText('Ability Profile')).toBeTruthy()
+    expect(screen.queryByText('Before you continue')).toBeNull()
   })
 
   it('shows an error message when sign-in fails', async () => {
@@ -48,15 +85,13 @@ describe('ProfileScreen', () => {
     expect(signIn).toHaveBeenCalledWith('a@b.com', 'wrong')
   })
 
-  it('switches to the sign-up form and submits name/email/password as a parent', async () => {
+  it('switches to the sign-up form and submits name/email/password', async () => {
     const signUp = jest.fn().mockResolvedValue({ error: null })
-    const acceptContributorTerms = jest.fn().mockResolvedValue({ error: null })
     ;(useAuth as jest.Mock).mockReturnValue({
       session: null,
       signIn: jest.fn(),
       signUp,
       signOut: jest.fn(),
-      acceptContributorTerms,
     })
     render(<ProfileScreen />)
     fireEvent.press(screen.getByText('Create an account'))
@@ -99,13 +134,11 @@ describe('ProfileScreen', () => {
 
   it('shows a check-your-email screen after a successful sign-up, with no way to resubmit', async () => {
     const signUp = jest.fn().mockResolvedValue({ error: null })
-    const acceptContributorTerms = jest.fn().mockResolvedValue({ error: null })
     ;(useAuth as jest.Mock).mockReturnValue({
       session: null,
       signIn: jest.fn(),
       signUp,
       signOut: jest.fn(),
-      acceptContributorTerms,
     })
     render(<ProfileScreen />)
     fireEvent.press(screen.getByText('Create an account'))
@@ -123,13 +156,11 @@ describe('ProfileScreen', () => {
 
   it('returns to the sign-in form from the check-your-email screen', async () => {
     const signUp = jest.fn().mockResolvedValue({ error: null })
-    const acceptContributorTerms = jest.fn().mockResolvedValue({ error: null })
     ;(useAuth as jest.Mock).mockReturnValue({
       session: null,
       signIn: jest.fn(),
       signUp,
       signOut: jest.fn(),
-      acceptContributorTerms,
     })
     render(<ProfileScreen />)
     fireEvent.press(screen.getByText('Create an account'))
@@ -160,14 +191,12 @@ describe('ProfileScreen', () => {
 
   it('blocks signup until the terms box is ticked', async () => {
     const signUp = jest.fn().mockResolvedValue({ error: null })
-    const acceptContributorTerms = jest.fn().mockResolvedValue({ error: null })
     ;(useAuth as jest.Mock).mockReturnValue({
       session: null,
       signIn: jest.fn(),
       signUp,
       signOut: jest.fn(),
       hasContributorTerms: false,
-      acceptContributorTerms,
     })
     render(<ProfileScreen />)
 
@@ -187,7 +216,6 @@ describe('ProfileScreen', () => {
     fireEvent.press(screen.getByText('Sign Up'))
 
     await waitFor(() => expect(signUp).toHaveBeenCalledWith('a@b.com', 'secret1', 'Ada'))
-    await waitFor(() => expect(acceptContributorTerms).toHaveBeenCalled())
   })
 
   it('blocks the profile view when contributor terms are unaccepted', () => {

@@ -118,23 +118,22 @@ describe('PATCH /tutorials/:id/status', () => {
 describe('GET /contributors', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  // Tests: GET /contributors returns { accounts, total } with every non-admin account,
-  //        not only role='contributor'
-  // How:   mockAdminFrom returns a select/neq/order/limit chain with a parent-role row and an
-  //        exact count; checks status 200 and body shape
-  // Chain: since 009 role records where an account signed up rather than what it may do, so a
-  //        mobile-registered parent who authors must still show up on the admin's account list
+  // Tests: GET /contributors returns { accounts, total } with every non-admin account
+  // How:   mockAdminFrom returns a select/neq/order/limit chain with a contributor row and
+  //        an exact count; checks status 200 and body shape
+  // Chain: the endpoint excludes only admins, so every other account must show up on the
+  //        screen an admin uses to manage accounts
   it('returns non-admin accounts for admin', async () => {
     mockAdminFrom.mockReturnValue({
       select: () => ({
-        neq: () => ({ order: () => ({ limit: () => ({ data: [{ id: 'p-1', role: 'parent' }], count: 1, error: null }) }) }),
+        neq: () => ({ order: () => ({ limit: () => ({ data: [{ id: 'c-1', role: 'contributor' }], count: 1, error: null }) }) }),
       }),
     })
     const res = await makeApp('admin').request('/contributors')
     expect(res.status).toBe(200)
     const body = await res.json() as any
     expect(body.accounts).toHaveLength(1)
-    expect(body.accounts[0].role).toBe('parent')
+    expect(body.accounts[0].role).toBe('contributor')
     expect(body.total).toBe(1)
   })
 

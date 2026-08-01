@@ -80,13 +80,13 @@ describe('Nav', () => {
     expect(screen.queryByRole('link', { name: 'My Tutorials' })).not.toBeInTheDocument()
   })
 
-  // Tests: the public organisations directory is still reachable for any signed-in
-  //        account (parent or contributor), not gated on a specific role
-  // How:   renders <Nav role="parent" />; checks the Organisations link is present
+  // Tests: the public organisations directory is reachable for any signed-in
+  //        account, not gated on a specific role
+  // How:   renders <Nav role="contributor" />; checks the Organisations link is present
   // Chain: every signed-in account may browse the org directory → gating it further
   //        would need a per-request lookup in the nav for no benefit
   it('keeps the public organisations directory for any signed-in account', () => {
-    render(<Nav role="parent" />)
+    render(<Nav role="contributor" />)
     expect(screen.getByRole('link', { name: 'Organisations' })).toBeInTheDocument()
   })
 

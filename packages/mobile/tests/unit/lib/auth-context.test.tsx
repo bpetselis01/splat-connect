@@ -1,5 +1,6 @@
 import { renderHook, act, waitFor } from '@testing-library/react-native'
 import type { ReactNode } from 'react'
+import { AGREEMENT_VERSIONS } from '@splat-connect/types'
 import { AuthProvider, useAuth } from '../../../lib/auth-context'
 
 const mockGetSession = jest.fn()
@@ -75,8 +76,10 @@ describe('useAuth', () => {
     expect(mockSignOut).toHaveBeenCalled()
   })
 
-  // Tests: signUp forwards name + parent role in the user metadata
-  it('signUp passes name and parent role in metadata', async () => {
+  // Tests: signUp forwards name and the accepted contributor terms version in user
+  //        metadata, and no role — enable_confirmations leaves no session to
+  //        POST /api/agreements with, so handle_new_user() records it instead.
+  it('signUp passes name and contributor_terms_version in metadata', async () => {
     mockSignUp.mockResolvedValue({ data: { user: { identities: [{ id: 'i1' }] } }, error: null })
     const { result } = renderHook(() => useAuth(), { wrapper })
     await waitFor(() => expect(result.current.loading).toBe(false))
@@ -86,7 +89,7 @@ describe('useAuth', () => {
       email: 'p@b.com',
       password: 'pw',
       options: {
-        data: { name: 'Pat', role: 'parent' },
+        data: { name: 'Pat', contributor_terms_version: AGREEMENT_VERSIONS.contributor_terms },
         emailRedirectTo: `${process.env.EXPO_PUBLIC_WEB_URL}/auth/confirmed`,
       },
     })
@@ -107,10 +110,10 @@ describe('useAuth', () => {
     mockApiGet.mockImplementation((path: string) =>
       path === '/api/agreements/me'
         ? Promise.resolve([])
-        : Promise.resolve({ id: 'u1', name: 'Pat', email: 'p@b.com', role: 'parent' })
+        : Promise.resolve({ id: 'u1', name: 'Pat', email: 'p@b.com', role: 'contributor' })
     )
     const { result } = renderHook(() => useAuth(), { wrapper })
-    await waitFor(() => expect(result.current.profile?.role).toBe('parent'))
+    await waitFor(() => expect(result.current.profile?.role).toBe('contributor'))
   })
 
   // Tests: no session means no profile and no fetch

@@ -27,8 +27,8 @@ const userClient = (token: string) =>
   )
 
 beforeAll(async () => {
-  parentA = await createTestUser('parent')
-  parentB = await createTestUser('parent')
+  parentA = await createTestUser('contributor')
+  parentB = await createTestUser('contributor')
   contributor = await createTestUser('contributor')
 })
 

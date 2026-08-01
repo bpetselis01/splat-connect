@@ -12,13 +12,13 @@ function uniqueEmail(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1e6)}@mobile-e2e.local`
 }
 
-/** Unique parent email per invocation so runs don't collide (CI does `supabase db reset`). */
-export function uniqueParentEmail() {
-  return uniqueEmail('parent')
+/** Unique signup email per invocation so runs don't collide (CI does `supabase db reset`). */
+export function uniqueSignupEmail() {
+  return uniqueEmail('signup')
 }
 
 /** Service-role client for E2E fixture setup. */
-function adminClient() {
+export function adminClient() {
   return createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
 }
 
@@ -34,7 +34,7 @@ export function uniqueTitle(prefix: string) {
 /**
  * Provision a confirmed contributor directly via the service role (the signup
  * trigger defaults new accounts to the contributor role). Returns credentials
- * for signing in through the UI. Used to exercise the non-parent branch.
+ * for signing in through the UI.
  */
 export async function createContributor() {
   const admin = adminClient()
@@ -56,26 +56,6 @@ export async function acceptTerms(userId: string) {
     .from('user_agreements')
     .insert({ user_id: userId, agreement_type: 'contributor_terms', version: 'v0-todo' })
   if (error) throw new Error(`acceptTerms failed: ${error.message}`)
-}
-
-/** Provision a confirmed parent via the service role, for specs that don't need the signup UI. */
-export async function createParent() {
-  const admin = adminClient()
-  const email = uniqueEmail('parent')
-  const { data, error } = await admin.auth.admin.createUser({
-    email,
-    password: PASSWORD,
-    email_confirm: true,
-    user_metadata: { name: 'E2E Parent', role: 'parent' },
-  })
-  if (error || !data.user) throw new Error(`Failed to create parent: ${error?.message}`)
-
-  const { error: profileError } = await admin
-    .from('profiles')
-    .upsert({ id: data.user.id, role: 'parent', name: 'E2E Parent' })
-  if (profileError) throw new Error(`Failed to set parent profile: ${profileError.message}`)
-
-  return { id: data.user.id, email, password: PASSWORD }
 }
 
 /**
@@ -135,15 +115,19 @@ export async function deleteUser(id: string) {
 }
 
 /**
- * Sign up a fresh parent through the Profile-tab UI. Local Supabase requires
+ * Sign up a fresh account through the Profile-tab UI. Local Supabase requires
  * email confirmation (supabase/config.toml enable_confirmations=true), so
  * signUp leaves no session — confirm out of band via the admin API, the same
  * as a real confirmation-link click would, then sign in through the UI.
+ *
+ * Leaves the Child Profile segment selected before returning: every caller
+ * of this helper wants to land on child-profile content, so selecting it
+ * here once means none of them have to.
  */
-export async function signUpParent(page: Page, email: string) {
+export async function signUpNewAccount(page: Page, email: string) {
   await page.goto('/profile')
   await page.getByText('Create an account').click()
-  await page.getByPlaceholder('Name').fill('E2E Parent')
+  await page.getByPlaceholder('Name').fill('E2E Contributor')
   await page.getByPlaceholder('Email').fill(email)
   await page.getByPlaceholder('Password', { exact: true }).fill(PASSWORD)
   await page.getByPlaceholder('Confirm Password').fill(PASSWORD)
@@ -163,7 +147,8 @@ export async function signUpParent(page: Page, email: string) {
   await page.getByPlaceholder('Email').fill(email)
   await page.getByPlaceholder('Password').fill(PASSWORD)
   await page.getByText('Sign In', { exact: true }).click()
-  // Role resolves via GET /api/contributors/me → parent → child-profile home.
+  // Account is the default segment on first visit.
+  await page.getByText('Child Profile').click()
   await expect(page.getByText('Customization Metrics')).toBeVisible()
 }
 

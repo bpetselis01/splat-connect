@@ -5,7 +5,7 @@
  * Displayed on every page (from root layout.tsx).
  *
  * Props:
- * - role: User role ('admin' | 'contributor' | 'parent' | null for logged-out)
+ * - role: User role ('admin' | 'contributor' | null for logged-out)
  *
  * Navigation items (dynamic based on role):
  * - Library: Browse approved tutorials (everyone)

@@ -60,20 +60,6 @@ describe('DashboardPage', () => {
     expect(redirect).toHaveBeenCalledWith('/login')
   })
 
-  // Tests: a non-contributor profile (parent) renders the dashboard instead of redirecting
-  // How:   mocks apiClient.get to return a profile with role: 'parent'; asserts the
-  //        page renders normally and redirect is never called
-  // Chain: parent and contributor are the same kind of account now, so the dashboard
-  //        is not contributor-only — there is nowhere left for a parent to bounce to
-  it('renders the dashboard for a non-contributor profile', async () => {
-    vi.mocked(apiClient.get)
-      .mockResolvedValueOnce({ ...mockProfile, role: 'parent' })
-      .mockResolvedValueOnce([])
-    render(await DashboardPage())
-    expect(redirect).not.toHaveBeenCalled()
-    expect(screen.getByRole('heading', { name: 'My tutorials' })).toBeInTheDocument()
-  })
-
   // Tests: stats section renders Pending, Approved, Rejected labels with correct counts
   // How:   passes 2 pending + 1 approved + 3 rejected tutorials; checks counts 2, 1, 3
   // Chain: contributors scan the summary to track how many tutorials are in each state

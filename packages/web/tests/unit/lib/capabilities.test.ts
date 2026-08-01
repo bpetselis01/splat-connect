@@ -63,18 +63,6 @@ describe('getCapabilities', () => {
     expect((await subject())?.ledOrgs).toHaveLength(1)
   })
 
-  // Tests: canAuthor is true for every signed-in account regardless of role
-  // How:   profile has role 'parent'; checks canAuthor is true
-  // Chain: migration 009 widened is_approved_contributor to every account, so authoring is
-  //        no longer role-gated — canAuthor reflects that rather than checking role === 'contributor'
-  it('reports canAuthor for every signed-in account', async () => {
-    route({
-      '/api/contributors/me': { ...PROFILE, role: 'parent' },
-      '/api/organizations/mine': [],
-    })
-    expect((await subject())?.canAuthor).toBe(true)
-  })
-
   // Tests: isAdmin is read from profiles.role, the one capability still held there
   // How:   profile has role 'admin'; checks isAdmin is true
   // Chain: admin is the sole capability the role column still carries after 009 — the
