@@ -1,10 +1,11 @@
 'use client'
 /**
  * The catch-up gate for any account without a recorded contributor_terms
- * acceptance — both accounts that predate the terms, and every new signup on
- * its first sign-in after confirming email (enable_confirmations = true means
- * no session existed at signup to record one with; see
- * app/signup/page.tsx). Reached only by redirect from middleware.ts, which
+ * acceptance — accounts that predate the terms, or were created without
+ * going through app/signup/page.tsx (e.g. admin-created). A normal signup
+ * carries the accepted version through signUp()'s user_metadata, recorded by
+ * handle_new_user() before any session exists, so this gate has nothing left
+ * to ask that account for. Reached only by redirect from middleware.ts, which
  * passes the path the user was blocked from as ?next=.
  *
  * Related files:
@@ -12,9 +13,10 @@
  * - components/terms-gate.tsx: the acceptance control itself
  * - components/contributor-terms-content.tsx: the terms text shown inline
  * - app/legal/contributor-terms: the same text, as a standalone page
+ * - supabase/migrations/010_signup_terms_acceptance.sql: where signup records it
  */
 import { Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { Route } from 'next'
 import { TermsGate } from '@/components/terms-gate'
 import { ContributorTermsContent } from '@/components/contributor-terms-content'
@@ -39,7 +41,6 @@ function safeNext(raw: string | null): Route<string> {
 }
 
 function ContributorTermsForm() {
-  const router = useRouter()
   const supabase = createClient()
   const next = safeNext(useSearchParams().get('next'))
 
@@ -58,7 +59,16 @@ function ContributorTermsForm() {
           type="contributor_terms"
           requireCheckbox
           content={<ContributorTermsContent />}
-          onAccepted={() => router.replace(next)}
+          // Hard reload, not router.replace: the bare gate's Nav prefetches
+          // /dashboard as soon as it's in viewport, well before terms are
+          // accepted. That prefetch resolves as the middleware's redirect
+          // back to this gate, and Next's client Router Cache serves that
+          // stale redirect straight back on replace(next) — a soft nav never
+          // reaches the server to see the acceptance that was just recorded.
+          // Same reasoning as signOut() above.
+          onAccepted={() => {
+            window.location.href = next
+          }}
         />
       </div>
       <button type="button" onClick={signOut} className="mt-4 text-sm text-muted underline">
