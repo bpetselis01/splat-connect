@@ -15,7 +15,7 @@ export function adminClient() {
 }
 
 export async function createTestUser(
-  role: 'contributor' | 'admin' | 'parent' = 'contributor'
+  role: 'contributor' | 'admin' = 'contributor'
 ): Promise<TestUser> {
   const admin = adminClient()
   const email = `test-${crypto.randomUUID()}@splat-test.local`
