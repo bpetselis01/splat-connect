@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { signUpParent, uniqueParentEmail } from './helpers'
+import { signUpNewAccount, uniqueSignupEmail } from './helpers'
 
 test('a signed-out visitor lands on the profile auth screen', async ({ page }) => {
   await page.goto('/profile')
@@ -10,8 +10,10 @@ test('a signed-out visitor lands on the profile auth screen', async ({ page }) =
   ).toBeVisible()
 })
 
-test('a signed-in parent reaches the child-profile home', async ({ page }) => {
-  await signUpParent(page, uniqueParentEmail())
+test('the selected profile segment persists across a re-visit', async ({ page }) => {
+  await signUpNewAccount(page, uniqueSignupEmail())
+  // signUpNewAccount leaves Child Profile selected — re-navigating to the
+  // tab should not silently reset it back to Account.
 
   await page.goto('/profile')
 

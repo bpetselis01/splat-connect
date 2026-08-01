@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test'
-import { signUpParent, uniqueParentEmail, openSubScreen, selectPill } from './helpers'
+import { signUpNewAccount, uniqueSignupEmail, openSubScreen, selectPill } from './helpers'
 
 test('challenge chips enforce the max-3 cap', async ({ page }) => {
-  await signUpParent(page, uniqueParentEmail())
+  await signUpNewAccount(page, uniqueSignupEmail())
   await openSubScreen(page, 'Everyday Needs')
 
   await selectPill(page, 'Grasping')
@@ -15,7 +15,7 @@ test('challenge chips enforce the max-3 cap', async ({ page }) => {
 })
 
 test('selecting Other reveals a free-text field that persists', async ({ page }) => {
-  await signUpParent(page, uniqueParentEmail())
+  await signUpNewAccount(page, uniqueSignupEmail())
   await openSubScreen(page, 'Everyday Needs')
 
   await selectPill(page, 'Other')
@@ -29,7 +29,7 @@ test('selecting Other reveals a free-text field that persists', async ({ page })
 })
 
 test('grip type and usage environment persist across a reload', async ({ page }) => {
-  await signUpParent(page, uniqueParentEmail())
+  await signUpNewAccount(page, uniqueSignupEmail())
   await openSubScreen(page, 'Everyday Needs')
 
   await page.getByRole('button', { name: 'Pincer', exact: true }).click() // grip type
@@ -43,7 +43,7 @@ test('grip type and usage environment persist across a reload', async ({ page })
 })
 
 test('dropping back under the cap re-enables the blocked chips', async ({ page }) => {
-  await signUpParent(page, uniqueParentEmail())
+  await signUpNewAccount(page, uniqueSignupEmail())
   await openSubScreen(page, 'Everyday Needs')
 
   await selectPill(page, 'Grasping')

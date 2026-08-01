@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test'
-import { signUpParent, uniqueParentEmail, openSubScreen, selectPill } from './helpers'
+import { signUpNewAccount, uniqueSignupEmail, openSubScreen, selectPill } from './helpers'
 
 test('manual ability selections persist across a reload', async ({ page }) => {
-  await signUpParent(page, uniqueParentEmail())
+  await signUpNewAccount(page, uniqueSignupEmail())
   await openSubScreen(page, 'Ability Profile')
 
   await selectPill(page, 'Cerebral palsy')
@@ -21,7 +21,7 @@ test('manual ability selections persist across a reload', async ({ page }) => {
 })
 
 test('the questionnaire estimates MACS/BFMF and persists them', async ({ page }) => {
-  await signUpParent(page, uniqueParentEmail())
+  await signUpNewAccount(page, uniqueSignupEmail())
   await openSubScreen(page, 'Ability Profile')
 
   await page.getByText('Not sure of the clinical terms?').click()
@@ -48,7 +48,7 @@ test('the questionnaire estimates MACS/BFMF and persists them', async ({ page })
 })
 
 test('changing a manual selection to a different value persists', async ({ page }) => {
-  await signUpParent(page, uniqueParentEmail())
+  await signUpNewAccount(page, uniqueSignupEmail())
   await openSubScreen(page, 'Ability Profile')
 
   await selectPill(page, 'Cerebral palsy')
