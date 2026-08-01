@@ -1,4 +1,4 @@
-export type Role = 'admin' | 'contributor' | 'parent'
+export type Role = 'admin' | 'contributor'
 
 export interface ChildProfile {
   id: string
