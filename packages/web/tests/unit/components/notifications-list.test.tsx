@@ -15,7 +15,7 @@ const baseNotif: Notification = {
   actor_name: 'SPLAT',
   read_at: null,
   created_at: new Date().toISOString(),
-  tutorials: { title: 'Spoon Holder' },
+  tutorial_title: 'Spoon Holder',
 }
 
 describe('NotificationsList', () => {
