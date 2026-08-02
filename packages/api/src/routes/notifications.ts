@@ -15,7 +15,7 @@ notifications.get('/me', async (c) => {
   const supabase = createUserClient(c.get('token'))
   const { data, error } = await supabase
     .from('notifications')
-    .select('*, tutorials(title)')
+    .select('*')
     .eq('recipient_id', c.get('userId'))
     .order('created_at', { ascending: false })
   if (error) return c.json({ error: error.message }, 500)
