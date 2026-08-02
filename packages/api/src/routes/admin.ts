@@ -52,6 +52,26 @@ admin.patch('/tutorials/:id/status', async (c) => {
     .select()
     .single()
   if (error) return c.json({ error: error.message }, 500)
+
+  // Every contributor on the tutorial, not just the primary — a collaborator
+  // did the same work and needs the same approve/reject signal.
+  const { data: contributorRows } = await supabase
+    .from('tutorial_contributors')
+    .select('profile_id')
+    .eq('tutorial_id', c.req.param('id'))
+  if (contributorRows?.length) {
+    await supabase
+      .from('notifications')
+      .insert(
+        contributorRows.map((row) => ({
+          recipient_id: row.profile_id,
+          type: body.status === 'approved' ? 'tutorial_approved' : 'tutorial_rejected',
+          tutorial_id: c.req.param('id'),
+          actor_name: 'SPLAT',
+        }))
+      )
+  }
+
   return c.json(data)
 })
 
