@@ -27,6 +27,7 @@ function caps(over: Partial<Capabilities> = {}): Capabilities {
     isAdmin: false,
     ledOrgs: [],
     canAuthor: true,
+    unreadNotifications: 0,
     ...over,
   }
 }
