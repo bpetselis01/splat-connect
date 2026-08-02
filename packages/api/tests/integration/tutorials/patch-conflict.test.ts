@@ -31,7 +31,7 @@ describe('PATCH /api/tutorials/:id — optimistic concurrency', () => {
       body: JSON.stringify({ title: 'Updated', updated_at: current!.updated_at }),
     })
     expect(res.status).toBe(200)
-    const body = await res.json()
+    const body = (await res.json()) as { title: string; updated_at: string }
     expect(body.title).toBe('Updated')
     expect(new Date(body.updated_at).getTime()).toBeGreaterThan(new Date(current!.updated_at as string).getTime())
   })
