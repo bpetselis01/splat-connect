@@ -105,10 +105,10 @@ export interface Notification {
   recipient_id: string
   type: NotificationType
   tutorial_id: string
+  tutorial_title: string
   actor_name: string
   read_at: string | null
   created_at: string
-  tutorials?: { title: string }
 }
 
 export interface UserAgreement {
