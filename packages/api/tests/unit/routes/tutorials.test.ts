@@ -199,12 +199,12 @@ describe('PATCH /:id', () => {
   it('updates tutorial', async () => {
     const updated = { id: '1', status: 'pending' }
     withTerms(true, {
-      update: () => ({ eq: () => ({ select: () => ({ single: () => ({ data: updated, error: null }) }) }) }),
+      update: () => ({ eq: () => ({ eq: () => ({ select: () => ({ data: [updated], error: null }) }) }) }),
     })
     const res = await makeApp().request('/1', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'pending' }),
+      body: JSON.stringify({ status: 'pending', updated_at: '2026-01-01T00:00:00Z' }),
     })
     expect(res.status).toBe(200)
   })
@@ -217,14 +217,14 @@ describe('PATCH /:id', () => {
     withTerms(true, {
       update: () => ({
         eq: () => ({
-          select: () => ({ single: () => ({ data: null, error: { message: 'DB error' } }) }),
+          eq: () => ({ select: () => ({ data: null, error: { message: 'DB error' } }) }),
         }),
       }),
     })
     const res = await makeApp().request('/1', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'pending' }),
+      body: JSON.stringify({ status: 'pending', updated_at: '2026-01-01T00:00:00Z' }),
     })
     expect(res.status).toBe(500)
   })
