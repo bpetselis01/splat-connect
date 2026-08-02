@@ -24,7 +24,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
   const collapsed = store.get(RAIL_COOKIE)?.value === '1'
 
   return (
-    <ShellFrame groups={buildNav(caps)} collapsed={collapsed}>
+    <ShellFrame groups={buildNav(caps, caps.unreadNotifications)} collapsed={collapsed}>
       {children}
     </ShellFrame>
   )
