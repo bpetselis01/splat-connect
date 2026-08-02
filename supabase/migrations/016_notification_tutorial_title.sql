@@ -1,0 +1,12 @@
+-- supabase/migrations/016_notification_tutorial_title.sql
+-- WHY: notifications joined tutorials(title) live at read time, but two of
+--      the seven event types notify someone who, at read time, has no RLS
+--      read access to the tutorial row: an invitee hasn't accepted yet (not
+--      a contributor), and a just-removed/left collaborator no longer is
+--      one. Both silently rendered "a tutorial" instead of the real title —
+--      caught by the Task 19 E2E journey, not any unit/integration test,
+--      since those never render the live UI copy against RLS-filtered data.
+-- HOW: denormalize the title at insert time, the same reasoning actor_name
+--      already uses — a notification should render sensibly regardless of
+--      the recipient's current read access to the live row.
+alter table public.notifications add column tutorial_title text not null default '';
