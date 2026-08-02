@@ -45,6 +45,7 @@ async function answer(c: Context<{ Variables: AuthVariables }>, status: 'accepte
 
   const admin = createAdminClient()
   const { data: invitee } = await admin.from('profiles').select('name').eq('id', data.invited_profile_id).single()
+  const { data: tutorial } = await admin.from('tutorials').select('title').eq('id', data.tutorial_id).single()
 
   let primaryRow: { profile_id: string } | null = null
   if (status === 'accepted') {
@@ -86,6 +87,7 @@ async function answer(c: Context<{ Variables: AuthVariables }>, status: 'accepte
       recipient_id: primaryRow.profile_id,
       type: status === 'accepted' ? 'collaborator_accepted' : 'collaborator_declined',
       tutorial_id: data.tutorial_id,
+      tutorial_title: tutorial?.title ?? 'a tutorial',
       actor_name: invitee?.name ?? 'A contributor',
     })
   }
