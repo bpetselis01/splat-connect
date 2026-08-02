@@ -31,8 +31,8 @@ function authed(token: string) {
 describe('GET /api/collaborators/me/invites', () => {
   it('lists my pending invites', async () => {
     const res = await app.request('/api/collaborators/me/invites', authed(invitee.token))
-    const body = await res.json()
-    expect(body.some((i: { id: string }) => i.id === inviteId)).toBe(true)
+    const body = (await res.json()) as { id: string }[]
+    expect(body.some((i) => i.id === inviteId)).toBe(true)
   })
 })
 
