@@ -55,10 +55,14 @@ collaborators.post('/:id/collaborators/invite', async (c) => {
   }
 
   const { data: inviter } = await admin.from('profiles').select('name').eq('id', c.get('userId')).single()
+  // Denormalized like actor_name: the invitee isn't a contributor yet, so
+  // they have no RLS read access to join the tutorial's title live.
+  const { data: tutorial } = await admin.from('tutorials').select('title').eq('id', c.req.param('id')).single()
   await admin.from('notifications').insert({
     recipient_id: invitee.id,
     type: 'collaborator_invited',
     tutorial_id: c.req.param('id'),
+    tutorial_title: tutorial?.title ?? 'a tutorial',
     actor_name: inviter?.name ?? 'A contributor',
   })
 
@@ -98,6 +102,10 @@ collaborators.delete('/:id/collaborators/:profileId', async (c) => {
 
   const admin = createAdminClient()
   const { data: actor } = await admin.from('profiles').select('name').eq('id', actingId).single()
+  // A just-removed (or just-left) collaborator loses their tutorial_contributors
+  // row in the same request, so they'd have no RLS read access to the
+  // tutorial by the time this notification is read — denormalize the title.
+  const { data: tutorial } = await admin.from('tutorials').select('title').eq('id', tutorialId).single()
 
   if (selfLeave) {
     // Notify the primary contributor that someone left.
@@ -106,6 +114,7 @@ collaborators.delete('/:id/collaborators/:profileId', async (c) => {
         recipient_id: primaryId,
         type: 'collaborator_left',
         tutorial_id: tutorialId,
+        tutorial_title: tutorial?.title ?? 'a tutorial',
         actor_name: actor?.name ?? 'A collaborator',
       })
     }
@@ -115,6 +124,7 @@ collaborators.delete('/:id/collaborators/:profileId', async (c) => {
       recipient_id: targetId,
       type: 'collaborator_removed',
       tutorial_id: tutorialId,
+      tutorial_title: tutorial?.title ?? 'a tutorial',
       actor_name: actor?.name ?? 'The primary contributor',
     })
   }
