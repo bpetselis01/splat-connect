@@ -19,6 +19,7 @@ import organizations from './routes/organizations.js'
 import tutorialOrgs from './routes/tutorial-orgs.js'
 import collaborators from './routes/collaborators.js'
 import collaboratorInvites from './routes/collaborator-invites.js'
+import notifications from './routes/notifications.js'
 
 const app = new Hono()
 
@@ -43,6 +44,8 @@ app.use('/api/organizations', authMiddleware)
 app.use('/api/organizations/*', authMiddleware)
 app.use('/api/collaborators', authMiddleware)
 app.use('/api/collaborators/*', authMiddleware)
+app.use('/api/notifications', authMiddleware)
+app.use('/api/notifications/*', authMiddleware)
 
 app.route('/api/tutorials', tutorials)
 app.route('/api/upload', upload)
@@ -57,5 +60,6 @@ app.route('/api/child-profile', childProfile)
 app.route('/api/agreements', agreements)
 app.route('/api/organizations', organizations)
 app.route('/api/collaborators', collaboratorInvites)
+app.route('/api/notifications', notifications)
 
 export default app
