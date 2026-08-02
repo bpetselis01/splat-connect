@@ -51,7 +51,7 @@ export function NotificationsList({
   return (
     <ul className="flex flex-col gap-2">
       {notifications.map((n) => {
-        const title = n.tutorials?.title ?? 'a tutorial'
+        const title = n.tutorial_title
         const inviteId = n.type === 'collaborator_invited' ? pendingInvitesByTutorial[n.tutorial_id] : undefined
         return (
           <li key={n.id} className={`card-flat px-4 py-3 text-sm ${n.read_at ? 'opacity-60' : ''}`}>
