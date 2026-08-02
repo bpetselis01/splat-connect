@@ -98,7 +98,7 @@ export default async function EditTutorialPage({
     if (current.status === 'approved' || current.status === 'rejected') {
       updates.status = 'pending'
     }
-    await apiClient.patch(`/api/tutorials/${id}`, updates)
+    await apiClient.patch(`/api/tutorials/${id}`, { ...updates, updated_at: current.updated_at })
     revalidatePath(`/tutorials/${id}/edit`)
   }
 
@@ -126,7 +126,8 @@ export default async function EditTutorialPage({
 
   async function submitForReview() {
     'use server'
-    await apiClient.patch(`/api/tutorials/${id}`, { status: 'pending' })
+    const current = await apiClient.get<Tutorial>(`/api/tutorials/${id}`)
+    await apiClient.patch(`/api/tutorials/${id}`, { status: 'pending', updated_at: current.updated_at })
     revalidatePath(`/tutorials/${id}/edit`)
   }
 
