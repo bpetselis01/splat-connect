@@ -67,6 +67,7 @@ admin.patch('/tutorials/:id/status', async (c) => {
           recipient_id: row.profile_id,
           type: body.status === 'approved' ? 'tutorial_approved' : 'tutorial_rejected',
           tutorial_id: c.req.param('id'),
+          tutorial_title: data.title,
           actor_name: 'SPLAT',
         }))
       )
