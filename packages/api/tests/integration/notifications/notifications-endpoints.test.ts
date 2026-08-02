@@ -36,15 +36,15 @@ function authed(token: string) {
 describe('GET /api/notifications/me', () => {
   it('lists my notifications, newest first', async () => {
     const res = await app.request('/api/notifications/me', authed(user.token))
-    const body = await res.json()
-    expect(body.some((n: { id: string }) => n.id === notificationId)).toBe(true)
+    const body = (await res.json()) as { id: string }[]
+    expect(body.some((n) => n.id === notificationId)).toBe(true)
   })
 })
 
 describe('GET /api/notifications/me/unread-count', () => {
   it('counts unread notifications', async () => {
     const res = await app.request('/api/notifications/me/unread-count', authed(user.token))
-    const body = await res.json()
+    const body = (await res.json()) as { count: number }
     expect(body.count).toBeGreaterThanOrEqual(1)
   })
 })
