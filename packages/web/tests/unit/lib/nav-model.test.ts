@@ -37,35 +37,35 @@ const hrefs = (groups: ReturnType<typeof buildNav>) =>
 
 describe('buildNav', () => {
   it('gives a plain contributor three groups, without Organisation', () => {
-    expect(headings(buildNav(caps()))).toEqual(['Browse', 'Yours', 'Account'])
+    expect(headings(buildNav(caps(), 0))).toEqual(['Browse', 'Yours', 'Account'])
   })
 
   // Chain: leadership is granted by an admin, so an empty Organisation group
   //        would offer a capability the visitor cannot obtain.
   it('adds the Organisation group only when the account leads an org', () => {
-    expect(headings(buildNav(caps({ ledOrgs: [org] })))).toEqual([
+    expect(headings(buildNav(caps({ ledOrgs: [org] }), 0))).toEqual([
       'Browse',
       'Yours',
       'Organisation',
       'Account',
     ])
-    expect(hrefs(buildNav(caps({ ledOrgs: [org] })))).toContain('/dashboard/organisation')
+    expect(hrefs(buildNav(caps({ ledOrgs: [org] }), 0))).toContain('/dashboard/organisation')
   })
 
   it('adds Admin to the Account group only for admins', () => {
-    expect(hrefs(buildNav(caps()))).not.toContain('/admin')
-    expect(hrefs(buildNav(caps({ isAdmin: true })))).toContain('/admin')
+    expect(hrefs(buildNav(caps(), 0))).not.toContain('/admin')
+    expect(hrefs(buildNav(caps({ isAdmin: true }), 0))).toContain('/admin')
   })
 
   // Chain: gating Child profile on parenthood would mean the only way to create
   //        a child profile is to already have one. Capabilities no longer even
   //        carries an isParent flag, precisely because nothing may branch on it.
   it('shows Child profile to accounts that are not yet parents', () => {
-    expect(hrefs(buildNav(caps()))).toContain('/dashboard/child')
+    expect(hrefs(buildNav(caps(), 0))).toContain('/dashboard/child')
   })
 
   it('marks the six unbuilt rows as soon, and no others', () => {
-    const soon = buildNav(caps({ ledOrgs: [org], isAdmin: true }))
+    const soon = buildNav(caps({ ledOrgs: [org], isAdmin: true }), 0)
       .flatMap((g) => g.rows)
       .filter((r) => r.soon)
       .map((r) => r.href)
@@ -79,15 +79,31 @@ describe('buildNav', () => {
     ])
   })
 
-  // The spec's fourteenth row is Sign out, which is an action the rail footer
-  // renders rather than a nav row — hence thirteen here.
-  it('builds thirteen linked rows for a leader-admin', () => {
-    const rows = buildNav(caps({ ledOrgs: [org], isAdmin: true })).flatMap((g) => g.rows)
-    expect(rows).toHaveLength(13)
+  // The spec's fifteenth row is Sign out, which is an action the rail footer
+  // renders rather than a nav row — hence fourteen here (thirteen plus
+  // Notifications).
+  it('builds fourteen linked rows for a leader-admin', () => {
+    const rows = buildNav(caps({ ledOrgs: [org], isAdmin: true }), 0).flatMap((g) => g.rows)
+    expect(rows).toHaveLength(14)
   })
 
   it('gives every row a unique href', () => {
-    const all = hrefs(buildNav(caps({ ledOrgs: [org], isAdmin: true })))
+    const all = hrefs(buildNav(caps({ ledOrgs: [org], isAdmin: true }), 0))
     expect(new Set(all).size).toBe(all.length)
+  })
+
+  it('includes a Notifications row with no count when there are no unread notifications', () => {
+    const row = buildNav(caps(), 0)
+      .flatMap((g) => g.rows)
+      .find((r) => r.href === '/notifications')
+    expect(row).toBeDefined()
+    expect(row?.count).toBeUndefined()
+  })
+
+  it('carries the unread count when there are unread notifications', () => {
+    const row = buildNav(caps(), 3)
+      .flatMap((g) => g.rows)
+      .find((r) => r.href === '/notifications')
+    expect(row?.count).toBe(3)
   })
 })

@@ -33,13 +33,20 @@ export type IconName =
   | 'orders'
   | 'user'
   | 'shield'
+  | 'bell'
 
 /** `soon` marks a route that exists but has no feature behind it yet. */
-export type NavRow = { href: string; label: string; icon: IconName; soon?: boolean }
+export type NavRow = {
+  href: string
+  label: string
+  icon: IconName
+  soon?: boolean
+  count?: number
+}
 
 export type NavGroup = { heading: string; rows: NavRow[] }
 
-export function buildNav(caps: Capabilities): NavGroup[] {
+export function buildNav(caps: Capabilities, unreadNotifications: number): NavGroup[] {
   const groups: NavGroup[] = [
     {
       heading: 'Browse',
@@ -98,6 +105,12 @@ export function buildNav(caps: Capabilities): NavGroup[] {
   groups.push({
     heading: 'Account',
     rows: [
+      {
+        href: '/notifications',
+        label: 'Notifications',
+        icon: 'bell',
+        count: unreadNotifications || undefined,
+      },
       { href: '/dashboard/profile', label: 'Profile', icon: 'user' },
       ...(caps.isAdmin
         ? [{ href: '/admin', label: 'Admin', icon: 'shield' as const }]
