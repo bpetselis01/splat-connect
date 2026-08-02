@@ -80,18 +80,15 @@ describe('accepting an invite', () => {
 
   it('the invitee cannot write a status other than accepted or declined', async () => {
     const inviteId = await createInvite({ tutorialId, invitedProfileId: invitee.id, invitedBy: primary.id })
+    // The row is visible for update (015_invitee_answer_visibility.sql), so
+    // an invalid status is a WITH CHECK violation — a 42501, not a silent
+    // zero-row match.
     const { error } = await createUserClient(invitee.token)
       .from('tutorial_collaborator_invites')
       .update({ status: 'pending' })
       .eq('id', inviteId)
       .select('id')
-    expect(error).toBeNull() // WITH CHECK refusal on an UPDATE is a silent zero-row match
-    const { data } = await createUserClient(invitee.token)
-      .from('tutorial_collaborator_invites')
-      .update({ status: 'pending' })
-      .eq('id', inviteId)
-      .select('id')
-    expect(data ?? []).toHaveLength(0)
+    expect(error?.code).toBe('42501')
     await adminClient().from('tutorial_collaborator_invites').delete().eq('id', inviteId)
   })
 })
