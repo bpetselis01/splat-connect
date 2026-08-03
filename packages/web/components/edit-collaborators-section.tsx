@@ -8,6 +8,7 @@
  */
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useToast } from '@/components/toast'
 import type { TutorialContributor, Profile } from '@splat-connect/types'
 
 export function EditCollaboratorsSection({
@@ -24,15 +25,17 @@ export function EditCollaboratorsSection({
   onRemove: (profileId: string) => Promise<void>
 }) {
   const router = useRouter()
+  const showToast = useToast()
   const [email, setEmail] = useState('')
   const [pending, setPending] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  async function run(key: string, fn: () => Promise<void>) {
+  async function run(key: string, fn: () => Promise<void>, toastMessage?: string) {
     setPending(key)
     setError(null)
     try {
       await fn()
+      if (toastMessage) showToast(toastMessage)
       router.refresh()
     } catch {
       setError('That did not work. Please try again.')
@@ -55,7 +58,7 @@ export function EditCollaboratorsSection({
                 <button
                   type="button"
                   disabled={pending !== null}
-                  onClick={() => run(c.profile_id, () => onRemove(c.profile_id))}
+                  onClick={() => run(c.profile_id, () => onRemove(c.profile_id), isSelf ? 'Left tutorial' : 'Removed collaborator')}
                   className="btn btn-quiet btn-sm ml-auto"
                 >
                   {pending === c.profile_id ? 'Working…' : isSelf ? 'Leave' : 'Remove'}
@@ -90,7 +93,10 @@ export function EditCollaboratorsSection({
             <button
               type="button"
               disabled={!email.trim() || pending !== null}
-              onClick={() => run('invite', async () => { await onInvite(email.trim()); setEmail('') })}
+              onClick={() => {
+                const invitee = email.trim()
+                run('invite', async () => { await onInvite(invitee); setEmail('') }, `Invited ${invitee}`)
+              }}
               className="btn btn-accent"
             >
               {pending === 'invite' ? 'Inviting…' : 'Invite'}
