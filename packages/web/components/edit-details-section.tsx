@@ -9,6 +9,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Tutorial, Difficulty } from '@splat-connect/types'
+import { useToast } from '@/components/toast'
+import { SaveStatusLine } from '@/components/save-status-line'
 
 export function EditDetailsSection({
   tutorial,
@@ -18,8 +20,10 @@ export function EditDetailsSection({
   onSave: (patch: { title: string; description: string | null; difficulty: Difficulty; updated_at: string }) => Promise<void>
 }) {
   const router = useRouter()
+  const showToast = useToast()
   const [pending, setPending] = useState(false)
   const [conflict, setConflict] = useState(false)
+  const [savedAt, setSavedAt] = useState<string | null>(null)
 
   async function handleSubmit(formData: FormData) {
     setPending(true)
@@ -31,6 +35,8 @@ export function EditDetailsSection({
         difficulty: formData.get('difficulty') as Difficulty,
         updated_at: tutorial.updated_at,
       })
+      setSavedAt(new Date().toISOString())
+      showToast('Details saved')
       router.refresh()
     } catch {
       setConflict(true)
@@ -63,9 +69,12 @@ export function EditDetailsSection({
           <option value="hard">Hard</option>
         </select>
       </div>
-      <button type="submit" disabled={pending} className="btn btn-primary btn-sm self-end">
-        {pending ? 'Saving…' : 'Save details'}
-      </button>
+      <div className="flex items-center justify-between gap-3">
+        <SaveStatusLine savedAt={savedAt} />
+        <button type="submit" disabled={pending} className="btn btn-primary btn-sm self-end">
+          {pending ? 'Saving…' : 'Save details'}
+        </button>
+      </div>
     </form>
   )
 }
