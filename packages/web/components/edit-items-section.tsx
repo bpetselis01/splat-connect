@@ -5,6 +5,8 @@
 import { useState, useEffect } from 'react'
 import type { BuyLink } from '@splat-connect/types'
 import { BuyLinksInput } from '@/components/buy-links-input'
+import { useToast } from '@/components/toast'
+import { SaveStatusLine } from '@/components/save-status-line'
 
 export type EditableItem = {
   id: string
@@ -29,6 +31,7 @@ interface EditItemsSectionProps {
 }
 
 export function EditItemsSection({ noun, withQuantity, initialItems, onSave }: EditItemsSectionProps) {
+  const showToast = useToast()
   const [items, setItems] = useState<EditableItem[]>(initialItems)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [draft, setDraft] = useState<ItemInput | null>(null)
@@ -36,6 +39,14 @@ export function EditItemsSection({ noun, withQuantity, initialItems, onSave }: E
   const [editError, setEditError] = useState<string | null>(null)
   const [addError, setAddError] = useState<string | null>(null)
   const [addKey, setAddKey] = useState(0)
+  const [savedAt, setSavedAt] = useState<string | null>(null)
+
+  const capitalizedNoun = noun.charAt(0).toUpperCase() + noun.slice(1)
+
+  function markSaved(action: 'added' | 'updated' | 'removed') {
+    setSavedAt(new Date().toISOString())
+    showToast(`${capitalizedNoun} ${action}`)
+  }
 
   useEffect(() => {
     setItems(initialItems)
@@ -69,6 +80,7 @@ export function EditItemsSection({ noun, withQuantity, initialItems, onSave }: E
     try {
       await onSave(updated.map(toInput))
       setItems(updated)
+      markSaved('updated')
       closeEdit()
     } catch {
       setEditError('Failed to save, please try again')
@@ -83,6 +95,7 @@ export function EditItemsSection({ noun, withQuantity, initialItems, onSave }: E
     try {
       await onSave(filtered.map(toInput))
       setItems(filtered)
+      markSaved('removed')
       closeEdit()
     } catch {
       setEditError('Failed to delete, please try again')
@@ -107,6 +120,7 @@ export function EditItemsSection({ noun, withQuantity, initialItems, onSave }: E
     try {
       await onSave([...items.map(toInput), newItem])
       setItems((prev) => [...prev, { ...newItem, id: `temp-${Date.now()}` }])
+      markSaved('added')
       form.reset()
       setAddKey((k) => k + 1)
     } catch {
@@ -212,7 +226,8 @@ export function EditItemsSection({ noun, withQuantity, initialItems, onSave }: E
           ))}
         </ul>
       )}
-      <form onSubmit={handleAdd} className="flex flex-col gap-2">
+      <SaveStatusLine savedAt={savedAt} />
+      <form onSubmit={handleAdd} className="mt-2 flex flex-col gap-2">
         <p className="text-sm font-bold text-ink">Add {noun}</p>
         <input name="name" placeholder="Name" required className={inputCls} />
         {withQuantity && (

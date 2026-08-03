@@ -11,18 +11,15 @@ import {
 } from './helpers'
 
 /**
- * Same accordion shape as the edit page in contributor/edit-tutorial.spec.ts:
- * only Details opens by default, and a closed panel's inputs stay in the DOM,
- * so every query has to be scoped to its own panel.
+ * Same pill-row stepper as the edit page in contributor/edit-tutorial.spec.ts:
+ * clicking a tab swaps in that step's content, and only the active step's DOM
+ * exists at all (unmounted, not just hidden), so most queries need no
+ * scoping. Scoping via the returned tabpanel locator is still safe and keeps
+ * the pattern uniform.
  */
-function panel(page: Page, label: string | RegExp) {
-  return page.locator('details').filter({ has: page.locator('summary').filter({ hasText: label }) })
-}
-
-async function openPanel(page: Page, label: string | RegExp) {
-  const p = panel(page, label)
-  await p.locator('summary').click()
-  return p
+async function openStep(page: Page, label: string | RegExp) {
+  await page.getByRole('tab', { name: label }).click()
+  return page.getByRole('tabpanel')
 }
 
 async function unreadCount(userId: string) {
@@ -62,7 +59,7 @@ test('a collaborator is invited, accepts, edits, submits, and both are notified 
     await page.goto(`/tutorials/${tutorialId}/edit`)
 
     // 2. Invite the collaborator by email from the Collaborators panel.
-    const collabPanel = await openPanel(page, 'Collaborators')
+    const collabPanel = await openStep(page, 'Collaborators')
     await collabPanel.locator('#invite-email').fill(collaborator.email)
     await collabPanel.getByRole('button', { name: 'Invite' }).click()
     await expect

@@ -2,6 +2,8 @@
 import { useState } from 'react'
 import { browserApiClient } from '@/lib/browser-api-client'
 import { FileDropZone } from '@/components/file-drop-zone'
+import { useToast } from '@/components/toast'
+import { SaveStatusLine } from '@/components/save-status-line'
 
 export function EditFilesSection({
   tutorialId,
@@ -18,10 +20,12 @@ export function EditFilesSection({
   //      files were being saved even if the user cancelled or changed their mind.
   // HOW: Files are held in memory as File objects and only uploaded when the
   //      Save button is clicked.
+  const showToast = useToast()
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [pdfFile, setPdfFile] = useState<File | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [savedAt, setSavedAt] = useState<string | null>(null)
 
   const hasChanges = photoFile !== null || pdfFile !== null
 
@@ -55,6 +59,8 @@ export function EditFilesSection({
         ? await uploadFile('/api/upload/pdf', pdfFile)
         : currentPdfUrl
       await onSave(newPhotoUrl, newPdfUrl)
+      setSavedAt(new Date().toISOString())
+      showToast('Files saved')
       setPhotoFile(null)
       setPdfFile(null)
     } catch (err) {
@@ -74,8 +80,9 @@ export function EditFilesSection({
         </p>
       )}
       <div>
-        <label className="field-label">Replace toy photo</label>
+        <label className="field-label" htmlFor="toy_photo">Replace toy photo</label>
         <FileDropZone
+          id="toy_photo"
           name="toy_photo"
           accept="image/*"
           label="Toy Photo"
@@ -84,8 +91,9 @@ export function EditFilesSection({
         />
       </div>
       <div>
-        <label className="field-label">Replace tutorial PDF</label>
+        <label className="field-label" htmlFor="tutorial_pdf">Replace tutorial PDF</label>
         <FileDropZone
+          id="tutorial_pdf"
           name="tutorial_pdf"
           accept=".pdf"
           label="Tutorial PDF"
@@ -94,14 +102,17 @@ export function EditFilesSection({
         />
       </div>
       {saving && <p className="text-sm font-semibold text-brand-dark">Saving…</p>}
-      <button
-        type="button"
-        disabled={!hasChanges || saving}
-        onClick={handleSave}
-        className={btnCls}
-      >
-        Save files
-      </button>
+      <div className="flex items-center justify-between gap-3">
+        <SaveStatusLine savedAt={savedAt} />
+        <button
+          type="button"
+          disabled={!hasChanges || saving}
+          onClick={handleSave}
+          className={btnCls}
+        >
+          Save files
+        </button>
+      </div>
     </div>
   )
 }

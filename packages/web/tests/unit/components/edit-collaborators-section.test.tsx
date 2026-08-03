@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { EditCollaboratorsSection } from '@/components/edit-collaborators-section'
+import { ToastProvider } from '@/components/toast'
 import type { TutorialContributor, Profile } from '@splat-connect/types'
 
 // The component calls router.refresh() after a successful write, because
@@ -65,5 +66,40 @@ describe('EditCollaboratorsSection', () => {
     fireEvent.change(screen.getByLabelText(/invite/i), { target: { value: 'jane@example.test' } })
     fireEvent.click(screen.getByText('Invite'))
     await waitFor(() => expect(onInvite).toHaveBeenCalledWith('jane@example.test'))
+  })
+
+  it('fires the shared toast naming the invitee after Invite succeeds', async () => {
+    const onInvite = vi.fn().mockResolvedValue(undefined)
+    render(
+      <ToastProvider>
+        <EditCollaboratorsSection
+          contributors={[primary]}
+          currentProfileId="p1"
+          isPrimary
+          onInvite={onInvite}
+          onRemove={vi.fn()}
+        />
+      </ToastProvider>
+    )
+    fireEvent.change(screen.getByLabelText(/invite/i), { target: { value: 'jane@example.test' } })
+    fireEvent.click(screen.getByText('Invite'))
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Invited jane@example.test'))
+  })
+
+  it('fires the shared toast with "Left tutorial" when a collaborator leaves', async () => {
+    const onRemove = vi.fn().mockResolvedValue(undefined)
+    render(
+      <ToastProvider>
+        <EditCollaboratorsSection
+          contributors={[primary, collaborator]}
+          currentProfileId="p2"
+          isPrimary={false}
+          onInvite={vi.fn()}
+          onRemove={onRemove}
+        />
+      </ToastProvider>
+    )
+    fireEvent.click(screen.getByText('Leave'))
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Left tutorial'))
   })
 })

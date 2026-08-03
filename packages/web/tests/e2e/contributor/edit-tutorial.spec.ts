@@ -7,20 +7,14 @@ const PHOTO_FIXTURE = path.join(__dirname, '..', 'fixtures', 'test.jpg')
 const STL_FIXTURE = path.join(__dirname, '..', 'fixtures', 'test.stl')
 
 /**
- * The edit page is a stack of <details> panels. Only Details is open by default,
- * and a closed panel's inputs are still in the DOM — so every query has to be
- * scoped to its own panel or it matches the neighbouring one too.
+ * The edit page is a pill-row stepper: clicking a tab swaps in that step's
+ * content, and only the active step's DOM exists at all (the others are
+ * unmounted, not just hidden) — so most queries need no scoping. Scoping via
+ * the returned tabpanel locator is still safe and keeps the pattern uniform.
  */
-function panel(page: import('@playwright/test').Page, label: string | RegExp) {
-  // Matched on the summary, not the panel body: filtering the <details> by text
-  // makes "Files" also match "STL Files (0)".
-  return page.locator('details').filter({ has: page.locator('summary').filter({ hasText: label }) })
-}
-
-async function openPanel(page: import('@playwright/test').Page, label: string | RegExp) {
-  const p = panel(page, label)
-  await p.locator('summary').click()
-  return p
+async function openStep(page: import('@playwright/test').Page, label: string | RegExp) {
+  await page.getByRole('tab', { name: label }).click()
+  return page.getByRole('tabpanel')
 }
 
 test('editing an approved tutorial resets its status to pending', async ({ page }) => {
@@ -123,7 +117,7 @@ test('the toy photo and tutorial PDF can be replaced', async ({ page }) => {
   await page.waitForURL('**/dashboard')
   await page.goto(`/tutorials/${id}/edit`)
 
-  const files = await openPanel(page, /^Files$/)
+  const files = await openStep(page, /^Files$/)
   await files.locator('input[name="toy_photo"]').setInputFiles(PHOTO_FIXTURE)
   await files.locator('input[name="tutorial_pdf"]').setInputFiles(PDF_FIXTURE)
   await files.getByRole('button', { name: 'Save files' }).click()
@@ -152,7 +146,7 @@ test('a part can be added, edited and deleted', async ({ page }) => {
   await page.waitForURL('**/dashboard')
   await page.goto(`/tutorials/${id}/edit`)
 
-  const parts = await openPanel(page, 'Parts (')
+  const parts = await openStep(page, 'Parts')
 
   await parts.getByPlaceholder('Name').fill('Added part')
   await parts.getByRole('button', { name: 'Add part' }).click()
@@ -180,7 +174,7 @@ test('a tool can be added, edited and deleted', async ({ page }) => {
   await page.waitForURL('**/dashboard')
   await page.goto(`/tutorials/${id}/edit`)
 
-  const tools = await openPanel(page, 'Tools (')
+  const tools = await openStep(page, 'Tools')
 
   await tools.getByPlaceholder('Name').fill('Added tool')
   await tools.getByRole('button', { name: 'Add tool' }).click()
@@ -209,7 +203,7 @@ test('an STL file record can be added', async ({ page }) => {
   await page.waitForURL('**/dashboard')
   await page.goto(`/tutorials/${id}/edit`)
 
-  const stl = await openPanel(page, 'STL Files (')
+  const stl = await openStep(page, 'STL Files')
   await stl.locator('input[name="stl_file"]').setInputFiles(STL_FIXTURE)
   await stl.getByRole('button', { name: 'Upload STL' }).click()
 
@@ -234,17 +228,11 @@ test('submit-for-review is blocked when required fields are missing', async ({ p
   await page.waitForURL('**/dashboard')
   await page.goto(`/tutorials/${id}/edit`)
 
-  let alertText = ''
-  page.on('dialog', async (dialog) => {
-    alertText = dialog.message()
-    await dialog.dismiss()
-  })
-
-  await page.getByRole('button', { name: 'Submit for review' }).click()
-
-  await expect.poll(() => alertText).toContain('Cannot submit for review')
-  // getMissingFields is unit-tested, but nothing checked that the alert
-  // actually prevents the status transition.
+  const submitButton = page.getByRole('button', { name: 'Submit for review' })
+  await expect(submitButton).toBeDisabled()
+  await expect(page.locator('.sticky-submit-note')).toContainText('Tutorial PDF')
+  // getMissingFields is unit-tested, but nothing checked that the disabled
+  // button actually prevents the status transition.
   const { data } = await adminClient().from('tutorials').select('status').eq('id', id).single()
   expect(data?.status).toBe('draft')
 })

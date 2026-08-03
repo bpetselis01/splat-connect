@@ -121,14 +121,15 @@ test('a contributor sees a decline and asks someone else', async ({ page }) => {
 
     // And asks someone else, from the project itself.
     await page.goto(`/tutorials/${tutorialId}/edit`)
-    await page.getByText('Backing', { exact: false }).last().click()
+    await page.getByRole('tab', { name: 'Backing' }).click()
     await page.getByLabel(/Ask another organisation/i).selectOption(orgB)
     await page.getByRole('button', { name: /^Ask$/ }).click()
     // The panel shows the state badge beside the organisation's name; the
     // "X is deciding" sentence is the row-summary form used on /my-tutorials.
     await expect(page.getByText('DECIDING')).toBeVisible()
-    // And the accordion summary answers the question while shut.
-    await expect(page.getByText(/Backing\s*waiting/i)).toBeVisible()
+    // The stepper's collapsed pills show only a status glyph (done/attention/
+    // neutral), never descriptive text, so there is no closed-pill equivalent
+    // of the old accordion summary's "waiting" wording to assert on here.
   } finally {
     await deleteOrg(orgA)
     await deleteOrg(orgB)

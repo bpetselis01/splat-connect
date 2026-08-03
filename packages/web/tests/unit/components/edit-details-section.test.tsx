@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { EditDetailsSection } from '@/components/edit-details-section'
+import { ToastProvider } from '@/components/toast'
 import type { Tutorial } from '@splat-connect/types'
 
 // The component calls router.refresh() after a successful write, because
@@ -44,5 +45,39 @@ describe('EditDetailsSection', () => {
     await waitFor(() =>
       expect(screen.getByText(/updated while you were editing/i)).toBeInTheDocument()
     )
+  })
+
+  it('shows a "Last saved" line after a successful save', async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined)
+    render(<EditDetailsSection tutorial={tutorial} onSave={onSave} />)
+    expect(screen.queryByText(/last saved/i)).toBeNull()
+    fireEvent.click(screen.getByText('Save details'))
+    await waitFor(() => expect(screen.getByText(/last saved just now/i)).toBeInTheDocument())
+  })
+
+  it('fires the shared toast with "Details saved" after a successful save', async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined)
+    render(
+      <ToastProvider>
+        <EditDetailsSection tutorial={tutorial} onSave={onSave} />
+      </ToastProvider>
+    )
+    fireEvent.click(screen.getByText('Save details'))
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Details saved'))
+  })
+
+  it('does not show a toast or save-status line when the save fails', async () => {
+    const onSave = vi.fn().mockRejectedValue(new Error('conflict'))
+    render(
+      <ToastProvider>
+        <EditDetailsSection tutorial={tutorial} onSave={onSave} />
+      </ToastProvider>
+    )
+    fireEvent.click(screen.getByText('Save details'))
+    await waitFor(() =>
+      expect(screen.getByText(/updated while you were editing/i)).toBeInTheDocument()
+    )
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+    expect(screen.queryByText(/last saved/i)).not.toBeInTheDocument()
   })
 })
