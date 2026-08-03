@@ -2,14 +2,17 @@ import { apiClient } from '@/lib/api-client'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import Link from 'next/link'
+import { Suspense } from 'react'
 import { EditFilesSection } from '@/components/edit-files-section'
 import { AddStlForm } from '@/components/add-stl-form'
 import { EditPartsSection } from '@/components/edit-parts-section'
 import { EditToolsSection } from '@/components/edit-tools-section'
-import { SubmitForReviewButton } from '@/components/submit-for-review-button'
 import { EditBackingSection } from '@/components/edit-backing-section'
 import { EditDetailsSection } from '@/components/edit-details-section'
 import { EditCollaboratorsSection } from '@/components/edit-collaborators-section'
+import { EditStepper } from '@/components/edit-stepper'
+import { computeStepStatuses, type EditStep } from '@/lib/edit-steps'
+import { getMissingFields } from '@/lib/validation'
 import type { Tutorial, Part, Tool, StlFile, TutorialWithDetails, Difficulty, BuyLink, Profile, TutorialOrg, Organization } from '@splat-connect/types'
 
 export default async function EditTutorialPage({
@@ -131,8 +134,118 @@ export default async function EditTutorialPage({
     revalidatePath(`/tutorials/${id}/edit`)
   }
 
-  const panelCls = 'panel mb-3'
-  const summaryCls = 'panel-summary'
+
+  const missingFields = getMissingFields(tutorial!)
+  const stepStatuses = computeStepStatuses(tutorial!, backing)
+
+  const steps: EditStep[] = [
+    {
+      id: 'details',
+      label: 'Details',
+      ...stepStatuses.details,
+      content: (
+        <div className="panel">
+          <EditDetailsSection tutorial={tutorial!} onSave={saveDetails} />
+        </div>
+      ),
+    },
+    {
+      id: 'files',
+      label: 'Files',
+      ...stepStatuses.files,
+      content: (
+        <div className="panel">
+          <EditFilesSection
+            tutorialId={id}
+            currentPhotoUrl={tutorial!.toy_photo_url}
+            currentPdfUrl={tutorial!.tutorial_pdf_url}
+            onSave={patchFileUrls}
+          />
+        </div>
+      ),
+    },
+    {
+      id: 'parts',
+      label: 'Parts',
+      ...stepStatuses.parts,
+      content: (
+        <div className="panel">
+          <EditPartsSection initialParts={parts} onSave={saveParts} />
+        </div>
+      ),
+    },
+    {
+      id: 'tools',
+      label: 'Tools',
+      ...stepStatuses.tools,
+      content: (
+        <div className="panel">
+          <EditToolsSection initialTools={tools} onSave={saveTools} />
+        </div>
+      ),
+    },
+    {
+      id: 'stl',
+      label: 'STL Files',
+      ...stepStatuses.stl,
+      content: (
+        <div className="panel px-5 pt-5 pb-5">
+          {stlFiles.length > 0 && (
+            <ul className="mb-4 flex flex-col gap-2">
+              {stlFiles.map((f) => (
+                <li key={f.id} className="card-flat px-4 py-3 text-sm">
+                  <a
+                    href={f.file_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-semibold text-brand-dark hover:underline"
+                  >
+                    {f.filename}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
+          <AddStlForm tutorialId={id} onAdd={addStlFileRecord} />
+        </div>
+      ),
+    },
+    {
+      id: 'backing',
+      label: 'Backing',
+      ...stepStatuses.backing,
+      content: (
+        <div className="panel">
+          <EditBackingSection
+            backing={backing}
+            organizations={organizations}
+            tutorialStatus={tutorial!.status}
+            reviewedForOrgId={tutorial!.reviewed_for_org_id}
+            onAsk={askOrg}
+            onWithdraw={withdrawOrg}
+          />
+        </div>
+      ),
+    },
+    {
+      id: 'collaborators',
+      label: 'Collaborators',
+      ...stepStatuses.collaborators,
+      content: (
+        <div className="panel">
+          <EditCollaboratorsSection
+            contributors={tutorial!.tutorial_contributors}
+            currentProfileId={profile!.id}
+            isPrimary={tutorial!.tutorial_contributors.some(
+              (tc) => tc.profile_id === profile!.id && tc.role === 'primary'
+            )}
+            onInvite={inviteCollaborator}
+            onRemove={removeCollaborator}
+          />
+        </div>
+      ),
+    },
+  ]
 
   return (
     <div>
@@ -155,124 +268,18 @@ export default async function EditTutorialPage({
         </div>
       )}
 
-      {/* Submit for review -- draft only */}
-      {tutorial!.status === 'draft' && (
-        <div className={`${panelCls} px-5 py-4`}>
-          <p className="mb-3 text-sm leading-relaxed text-muted">
-            Once all required fields are filled, submit this tutorial for admin review.
-          </p>
-          <SubmitForReviewButton tutorial={tutorial!} action={submitForReview} />
-        </div>
-      )}
-
-      {/* Details */}
-      <details className={panelCls} open>
-        <summary className={summaryCls}>Details</summary>
-        <EditDetailsSection tutorial={tutorial!} onSave={saveDetails} />
-      </details>
-
-      {/* Files — handled by a client component that uploads directly to the API,
-          then passes only the resulting URL string to patchFileUrls.
-          This avoids the 1 MB Server Action body size limit for file bytes. */}
-      <details className={panelCls}>
-        <summary className={summaryCls}>Files</summary>
-        <EditFilesSection
-          tutorialId={id}
-          currentPhotoUrl={tutorial!.toy_photo_url}
-          currentPdfUrl={tutorial!.tutorial_pdf_url}
-          onSave={patchFileUrls}
-        />
-      </details>
-
-      {/* Parts */}
-      <details className={panelCls}>
-        <summary className={summaryCls}>Parts ({parts.length})</summary>
-        <div className="px-5 pb-5">
-          <EditPartsSection initialParts={parts} onSave={saveParts} />
-        </div>
-      </details>
-
-      {/* Tools */}
-      <details className={panelCls}>
-        <summary className={summaryCls}>Tools ({tools.length})</summary>
-        <div className="px-5 pb-5">
-          <EditToolsSection initialTools={tools} onSave={saveTools} />
-        </div>
-      </details>
-
-      {/* STL Files -- AddStlForm uploads directly to the API (no Server Action body limit risk) */}
-      <details className={panelCls}>
-        <summary className={summaryCls}>STL Files ({stlFiles.length})</summary>
-        <div className="px-5 pb-5">
-          {stlFiles.length > 0 && (
-            <ul className="mb-4 flex flex-col gap-2">
-              {stlFiles.map((f) => (
-                <li key={f.id} className="card-flat px-4 py-3 text-sm">
-                  <a
-                    href={f.file_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-semibold text-brand-dark hover:underline"
-                  >
-                    {f.filename}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          )}
-          <AddStlForm tutorialId={id} onAdd={addStlFileRecord} />
-        </div>
-      </details>
-
-      {/* Backing — last, deliberately. The panels above are what the project IS;
-          this is who stands behind it, and it is the least frequently touched.
-          Leading with a panel carrying pending state would pull attention to the
-          thing a contributor can do least about.
-
-          The summary carries the STATE, not a count, unlike every panel above it.
-          "Backing (2)" answers a question nobody asked; what a contributor wants
-          from a shut accordion is whether anyone said yes. */}
-      <details className={panelCls}>
-        <summary className={summaryCls}>
-          Backing
-          {backing.length > 0 && (
-            <span className="ml-2 text-xs font-normal text-muted">
-              {backing.some((b) => b.status === 'accepted')
-                ? 'backed'
-                : backing.some((b) => b.status === 'pending')
-                  ? 'waiting'
-                  : 'declined'}
-            </span>
-          )}
-        </summary>
-        <EditBackingSection
-          backing={backing}
-          organizations={organizations}
+      {/* useSearchParams() inside EditStepper requires a Suspense boundary, or
+          `next build` fails to prerender this page — same reasoning as
+          app/onboarding/contributor-terms/page.tsx. */}
+      <Suspense>
+        <EditStepper
+          steps={steps}
           tutorialStatus={tutorial!.status}
-          reviewedForOrgId={tutorial!.reviewed_for_org_id}
-          onAsk={askOrg}
-          onWithdraw={withdrawOrg}
+          tutorialUpdatedAt={tutorial!.updated_at}
+          missingFields={missingFields}
+          onSubmit={submitForReview}
         />
-      </details>
-
-      {/* Collaborators — after Backing, for the same reason: least frequently touched. */}
-      <details className={panelCls}>
-        <summary className={summaryCls}>
-          Collaborators
-          <span className="ml-2 text-xs font-normal text-muted">
-            {tutorial!.tutorial_contributors.length}
-          </span>
-        </summary>
-        <EditCollaboratorsSection
-          contributors={tutorial!.tutorial_contributors}
-          currentProfileId={profile!.id}
-          isPrimary={tutorial!.tutorial_contributors.some(
-            (tc) => tc.profile_id === profile!.id && tc.role === 'primary'
-          )}
-          onInvite={inviteCollaborator}
-          onRemove={removeCollaborator}
-        />
-      </details>
+      </Suspense>
     </div>
   )
 }
