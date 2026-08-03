@@ -29,6 +29,8 @@
  * - types/index.ts: StlFile type definition
  */
 'use client'
+import { useToast } from '@/components/toast'
+import { SaveStatusLine } from '@/components/save-status-line'
 import { useState, useTransition } from 'react'
 import { browserApiClient } from '@/lib/browser-api-client'
 import { FileDropZone } from '@/components/file-drop-zone'
@@ -40,10 +42,12 @@ export function AddStlForm({
   tutorialId: string
   onAdd: (filename: string, fileUrl: string) => Promise<void>
 }) {
+  const showToast = useToast()
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
+  const [savedAt, setSavedAt] = useState<string | null>(null)
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     setSelectedFile(e.target.files?.[0] ?? null)
@@ -63,7 +67,16 @@ export function AddStlForm({
         fd
       )
       startTransition(async () => {
-        await onAdd(filename ?? selectedFile.name, url)
+        try {
+          await onAdd(filename ?? selectedFile.name, url)
+          setSavedAt(new Date().toISOString())
+          showToast('STL file added')
+        } catch (err) {
+          // onAdd failed: no toast, no "Last saved" line, and surface the
+          // failure through the same error UI as the upload step above,
+          // instead of a silently swallowed rejection.
+          setError(err instanceof Error ? err.message : 'Failed to save STL file')
+        }
       })
       setSelectedFile(null)
     } catch (err) {
@@ -78,20 +91,24 @@ export function AddStlForm({
   return (
     <div className="flex flex-col gap-2">
       <p className="text-sm font-bold text-ink">Add STL file</p>
-      <FileDropZone name="stl_file" accept=".stl" label="STL File" onChange={handleChange} />
+      <label className="field-label" htmlFor="stl_file">STL File</label>
+      <FileDropZone id="stl_file" name="stl_file" accept=".stl" label="STL File" onChange={handleChange} />
       {error && (
         <p role="alert" className="alert alert-danger">
           {error}
         </p>
       )}
-      <button
-        type="button"
-        disabled={!selectedFile || uploading || pending}
-        onClick={handleUpload}
-        className={btnCls}
-      >
-        {uploading || pending ? 'Uploading…' : 'Upload STL'}
-      </button>
+      <div className="flex items-center justify-between gap-3">
+        <SaveStatusLine savedAt={savedAt} />
+        <button
+          type="button"
+          disabled={!selectedFile || uploading || pending}
+          onClick={handleUpload}
+          className={btnCls}
+        >
+          {uploading || pending ? 'Uploading…' : 'Upload STL'}
+        </button>
+      </div>
     </div>
   )
 }
