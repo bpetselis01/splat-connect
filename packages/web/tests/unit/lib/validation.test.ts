@@ -239,6 +239,7 @@ const baseTutorial: TutorialWithDetails = {
   toy_photo_url: 'https://example.com/photo.jpg',
   rejection_note: null,
   created_at: '2026-01-01T00:00:00Z',
+  updated_at: '2026-01-01T00:00:00Z',
   reviewed_at: null,
   parts: [{ id: 'p-1', tutorial_id: 'tut-1', name: 'Screw', quantity: 4, is_optional: false, buy_links: [] }],
   tools: [{ id: 't-1', tutorial_id: 'tut-1', name: 'Screwdriver', is_optional: false, buy_links: [] }],

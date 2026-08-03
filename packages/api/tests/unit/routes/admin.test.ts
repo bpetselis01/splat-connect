@@ -68,13 +68,21 @@ describe('PATCH /tutorials/:id/status', () => {
   // Chain: the admin review action calls this to approve or reject a tutorial → the status
   //        change controls whether the tutorial appears in the public library
   it('updates status', async () => {
-    mockAdminFrom.mockReturnValue({
-      update: () => ({
-        eq: () => ({
-          select: () => ({ single: () => ({ data: { id: '1', status: 'approved' }, error: null }) }),
-        }),
-      }),
-    })
+    // The handler now also queries tutorial_contributors to notify every
+    // contributor after a successful update — dispatch on table name so
+    // that second call gets a real (empty) shape instead of the tutorials
+    // update chain's, which has no .select().
+    mockAdminFrom.mockImplementation((table: string) =>
+      table === 'tutorials'
+        ? {
+            update: () => ({
+              eq: () => ({
+                select: () => ({ single: () => ({ data: { id: '1', status: 'approved' }, error: null }) }),
+              }),
+            }),
+          }
+        : { select: () => ({ eq: () => ({ data: [], error: null }) }) },
+    )
     const res = await makeApp('admin').request('/tutorials/1/status', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -91,21 +99,25 @@ describe('PATCH /tutorials/:id/status', () => {
   //        on their dashboard to understand why their submission was rejected
   it('includes rejection_note in update payload when provided', async () => {
     let capturedPayload: any = null
-    mockAdminFrom.mockReturnValue({
-      update: (payload: any) => {
-        capturedPayload = payload
-        return {
-          eq: () => ({
-            select: () => ({
-              single: () => ({
-                data: { id: '1', status: 'rejected', rejection_note: 'Needs more detail' },
-                error: null,
-              }),
-            }),
-          }),
-        }
-      },
-    })
+    mockAdminFrom.mockImplementation((table: string) =>
+      table === 'tutorials'
+        ? {
+            update: (payload: any) => {
+              capturedPayload = payload
+              return {
+                eq: () => ({
+                  select: () => ({
+                    single: () => ({
+                      data: { id: '1', status: 'rejected', rejection_note: 'Needs more detail' },
+                      error: null,
+                    }),
+                  }),
+                }),
+              }
+            },
+          }
+        : { select: () => ({ eq: () => ({ data: [], error: null }) }) },
+    )
     await makeApp('admin').request('/tutorials/1/status', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },

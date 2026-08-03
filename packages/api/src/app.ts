@@ -17,6 +17,9 @@ import childProfile from './routes/child-profile.js'
 import agreements from './routes/agreements.js'
 import organizations from './routes/organizations.js'
 import tutorialOrgs from './routes/tutorial-orgs.js'
+import collaborators from './routes/collaborators.js'
+import collaboratorInvites from './routes/collaborator-invites.js'
+import notifications from './routes/notifications.js'
 
 const app = new Hono()
 
@@ -39,6 +42,10 @@ app.use('/api/agreements', authMiddleware)
 app.use('/api/agreements/*', authMiddleware)
 app.use('/api/organizations', authMiddleware)
 app.use('/api/organizations/*', authMiddleware)
+app.use('/api/collaborators', authMiddleware)
+app.use('/api/collaborators/*', authMiddleware)
+app.use('/api/notifications', authMiddleware)
+app.use('/api/notifications/*', authMiddleware)
 
 app.route('/api/tutorials', tutorials)
 app.route('/api/upload', upload)
@@ -46,10 +53,13 @@ app.route('/api/tutorials', parts)
 app.route('/api/tutorials', tools)
 app.route('/api/tutorials', stlFiles)
 app.route('/api/tutorials', tutorialOrgs)
+app.route('/api/tutorials', collaborators)
 app.route('/api/admin', admin)
 app.route('/api/contributors', contributors)
 app.route('/api/child-profile', childProfile)
 app.route('/api/agreements', agreements)
 app.route('/api/organizations', organizations)
+app.route('/api/collaborators', collaboratorInvites)
+app.route('/api/notifications', notifications)
 
 export default app

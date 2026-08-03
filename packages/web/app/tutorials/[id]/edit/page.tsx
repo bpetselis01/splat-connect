@@ -8,6 +8,8 @@ import { EditPartsSection } from '@/components/edit-parts-section'
 import { EditToolsSection } from '@/components/edit-tools-section'
 import { SubmitForReviewButton } from '@/components/submit-for-review-button'
 import { EditBackingSection } from '@/components/edit-backing-section'
+import { EditDetailsSection } from '@/components/edit-details-section'
+import { EditCollaboratorsSection } from '@/components/edit-collaborators-section'
 import type { Tutorial, Part, Tool, StlFile, TutorialWithDetails, Difficulty, BuyLink, Profile, TutorialOrg, Organization } from '@splat-connect/types'
 
 export default async function EditTutorialPage({
@@ -62,18 +64,25 @@ export default async function EditTutorialPage({
     revalidatePath('/dashboard')
   }
 
-  async function saveDetails(formData: FormData) {
+  async function saveDetails(patch: { title: string; description: string | null; difficulty: Difficulty; updated_at: string }) {
     'use server'
-    const current = await apiClient.get<Tutorial>(`/api/tutorials/${id}`)
-    const patch: Record<string, string | null> = {
-      title: formData.get('title') as string,
-      description: (formData.get('description') as string) || null,
-      difficulty: formData.get('difficulty') as Difficulty,
+    const body: Record<string, unknown> = { ...patch }
+    if (tutorial.status === 'approved' || tutorial.status === 'rejected') {
+      body.status = 'pending'
     }
-    if (current.status === 'approved' || current.status === 'rejected') {
-      patch.status = 'pending'
-    }
-    await apiClient.patch(`/api/tutorials/${id}`, patch)
+    await apiClient.patch(`/api/tutorials/${id}`, body)
+    revalidatePath(`/tutorials/${id}/edit`)
+  }
+
+  async function inviteCollaborator(emailAddr: string) {
+    'use server'
+    await apiClient.post(`/api/tutorials/${id}/collaborators/invite`, { email: emailAddr })
+    revalidatePath(`/tutorials/${id}/edit`)
+  }
+
+  async function removeCollaborator(profileId: string) {
+    'use server'
+    await apiClient.delete(`/api/tutorials/${id}/collaborators/${profileId}`)
     revalidatePath(`/tutorials/${id}/edit`)
   }
 
@@ -89,7 +98,7 @@ export default async function EditTutorialPage({
     if (current.status === 'approved' || current.status === 'rejected') {
       updates.status = 'pending'
     }
-    await apiClient.patch(`/api/tutorials/${id}`, updates)
+    await apiClient.patch(`/api/tutorials/${id}`, { ...updates, updated_at: current.updated_at })
     revalidatePath(`/tutorials/${id}/edit`)
   }
 
@@ -117,12 +126,11 @@ export default async function EditTutorialPage({
 
   async function submitForReview() {
     'use server'
-    await apiClient.patch(`/api/tutorials/${id}`, { status: 'pending' })
+    const current = await apiClient.get<Tutorial>(`/api/tutorials/${id}`)
+    await apiClient.patch(`/api/tutorials/${id}`, { status: 'pending', updated_at: current.updated_at })
     revalidatePath(`/tutorials/${id}/edit`)
   }
 
-  const inputCls = 'field'
-  const saveBtnCls = 'btn btn-primary btn-sm self-end'
   const panelCls = 'panel mb-3'
   const summaryCls = 'panel-summary'
 
@@ -160,40 +168,7 @@ export default async function EditTutorialPage({
       {/* Details */}
       <details className={panelCls} open>
         <summary className={summaryCls}>Details</summary>
-        <form action={saveDetails} className="flex flex-col gap-3 px-5 pb-5">
-          <div>
-            <label htmlFor="edit-title" className="field-label">Title</label>
-            <input id="edit-title" name="title" defaultValue={tutorial!.title} required className={inputCls} />
-          </div>
-          <div>
-            <label htmlFor="edit-description" className="field-label">Description</label>
-            <textarea
-              id="edit-description"
-              name="description"
-              defaultValue={tutorial!.description ?? ''}
-              rows={4}
-              className={inputCls}
-            />
-          </div>
-          <div>
-            <label htmlFor="edit-difficulty" className="field-label">Difficulty</label>
-            {/* WHY: After saving details, the difficulty dropdown shows the old selection
-                 instead of the newly saved one.
-                HOW: The key prop forces the dropdown to rebuild from scratch whenever
-                     the saved difficulty changes, picking up the fresh value. */}
-            <select id="edit-difficulty" key={tutorial!.difficulty} name="difficulty" defaultValue={tutorial!.difficulty} className={inputCls}>
-              {/* WHY: The old values ("beginner", "intermediate", "advanced") didn't match
-                       the database — saves were silently ignored by the check constraint.
-                  HOW: The database only accepts "easy", "medium", or "hard" for difficulty. */}
-              <option value="easy">Easy</option>
-              <option value="medium">Medium</option>
-              <option value="hard">Hard</option>
-            </select>
-          </div>
-          <button type="submit" className={saveBtnCls}>
-            Save details
-          </button>
-        </form>
+        <EditDetailsSection tutorial={tutorial!} onSave={saveDetails} />
       </details>
 
       {/* Files — handled by a client component that uploads directly to the API,
@@ -277,6 +252,25 @@ export default async function EditTutorialPage({
           reviewedForOrgId={tutorial!.reviewed_for_org_id}
           onAsk={askOrg}
           onWithdraw={withdrawOrg}
+        />
+      </details>
+
+      {/* Collaborators — after Backing, for the same reason: least frequently touched. */}
+      <details className={panelCls}>
+        <summary className={summaryCls}>
+          Collaborators
+          <span className="ml-2 text-xs font-normal text-muted">
+            {tutorial!.tutorial_contributors.length}
+          </span>
+        </summary>
+        <EditCollaboratorsSection
+          contributors={tutorial!.tutorial_contributors}
+          currentProfileId={profile!.id}
+          isPrimary={tutorial!.tutorial_contributors.some(
+            (tc) => tc.profile_id === profile!.id && tc.role === 'primary'
+          )}
+          onInvite={inviteCollaborator}
+          onRemove={removeCollaborator}
         />
       </details>
     </div>

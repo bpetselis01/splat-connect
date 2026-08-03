@@ -39,18 +39,20 @@ afterAll(async () => {
 
 describe('PATCH /api/tutorials/:id', () => {
   it('applies the editable fields', async () => {
+    const { data: current } = await adminClient().from('tutorials').select('updated_at').eq('id', draft).single()
     const res = await app.request(`/api/tutorials/${draft}`, authed(author.token, {
       method: 'PATCH',
-      body: JSON.stringify({ title: 'Renamed', difficulty: 'hard' }),
+      body: JSON.stringify({ title: 'Renamed', difficulty: 'hard', updated_at: current!.updated_at }),
     }))
     expect(res.status).toBe(200)
     expect(((await res.json()) as { title: string }).title).toBe('Renamed')
   })
 
   it('drops unknown keys instead of writing them', async () => {
+    const { data: current } = await adminClient().from('tutorials').select('updated_at').eq('id', draft).single()
     const res = await app.request(`/api/tutorials/${draft}`, authed(author.token, {
       method: 'PATCH',
-      body: JSON.stringify({ title: 'Renamed again', nonsense: true }),
+      body: JSON.stringify({ title: 'Renamed again', nonsense: true, updated_at: current!.updated_at }),
     }))
     expect(res.status).toBe(200)
   })
@@ -87,9 +89,10 @@ describe('PATCH /api/tutorials/:id', () => {
     expect(res.status).toBe(403)
 
     await acceptTerms(untermedAuthor.id, 'contributor_terms')
+    const { data: current } = await adminClient().from('tutorials').select('updated_at').eq('id', backed).single()
     const after = await app.request(`/api/tutorials/${backed}`, authed(untermedAuthor.token, {
       method: 'PATCH',
-      body: JSON.stringify({ status: 'pending' }),
+      body: JSON.stringify({ status: 'pending', updated_at: current!.updated_at }),
     }))
     expect(after.status).toBe(200)
   })

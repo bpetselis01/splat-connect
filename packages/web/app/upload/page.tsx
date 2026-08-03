@@ -35,7 +35,7 @@ import { FileDropZone } from '@/components/file-drop-zone'
 import { BuyLinksInput } from '@/components/buy-links-input'
 import { TermsGate } from '@/components/terms-gate'
 import { Check, X } from '@/components/icons'
-import type { UploadDraft, Difficulty, BuyLink, UserAgreement, Organization } from '@splat-connect/types'
+import type { UploadDraft, Difficulty, BuyLink, UserAgreement, Organization, Tutorial } from '@splat-connect/types'
 
 const STEPS = [
   'Details',
@@ -207,16 +207,20 @@ export default function UploadPage() {
           setDraftSaved(true)
         } else {
           // User went back to Step 1 and re-advanced: update the existing draft.
+          const current = await browserApiClient.get<Tutorial>(`/api/tutorials/${tutorialId}`)
           await browserApiClient.patch(`/api/tutorials/${tutorialId}`, {
             title: draft.title,
             description: draft.description || null,
             difficulty: draft.difficulty,
+            updated_at: current.updated_at,
           })
         }
       } else if (step === 2) {
+        const current = await browserApiClient.get<Tutorial>(`/api/tutorials/${tutorialId}`)
         await browserApiClient.patch(`/api/tutorials/${tutorialId}`, {
           tutorial_pdf_url: draft.tutorial_pdf_url,
           toy_photo_url: draft.toy_photo_url,
+          updated_at: current.updated_at,
         })
       } else if (step === 3) {
         await browserApiClient.post(`/api/tutorials/${tutorialId}/parts`, {
@@ -252,7 +256,8 @@ export default function UploadPage() {
         await browserApiClient.post(`/api/tutorials/${tutorialId}/orgs`, { org_id: orgId })
       }
       // All data already saved per-step — just transition the draft to pending for review.
-      await browserApiClient.patch(`/api/tutorials/${tutorialId}`, { status: 'pending' })
+      const current = await browserApiClient.get<Tutorial>(`/api/tutorials/${tutorialId}`)
+      await browserApiClient.patch(`/api/tutorials/${tutorialId}`, { status: 'pending', updated_at: current.updated_at })
       sessionStorage.removeItem(DRAFT_KEY)
       window.location.href = '/dashboard'
     } catch (err: unknown) {

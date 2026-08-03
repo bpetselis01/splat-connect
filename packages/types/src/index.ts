@@ -76,6 +76,41 @@ export interface TutorialOrg {
   organizations?: Organization
 }
 
+export type CollaboratorInviteStatus = 'pending' | 'accepted' | 'declined'
+
+/** One invite to co-author a tutorial. The primary contributor creates it as
+ *  'pending'; only the invited profile may answer. */
+export interface TutorialCollaboratorInvite {
+  id: string
+  tutorial_id: string
+  invited_profile_id: string
+  invited_by: string | null
+  status: CollaboratorInviteStatus
+  requested_at: string
+  responded_at: string | null
+  profiles?: Profile
+}
+
+export type NotificationType =
+  | 'collaborator_invited'
+  | 'collaborator_accepted'
+  | 'collaborator_declined'
+  | 'collaborator_removed'
+  | 'collaborator_left'
+  | 'tutorial_approved'
+  | 'tutorial_rejected'
+
+export interface Notification {
+  id: string
+  recipient_id: string
+  type: NotificationType
+  tutorial_id: string
+  tutorial_title: string
+  actor_name: string
+  read_at: string | null
+  created_at: string
+}
+
 export interface UserAgreement {
   id: string
   user_id: string
@@ -110,6 +145,7 @@ export interface Tutorial {
   toy_photo_url: string | null
   rejection_note: string | null
   created_at: string
+  updated_at: string
   reviewed_at: string | null
   // Snapshot of the org at submit time; null routes to the platform queue.
   reviewed_by: string | null

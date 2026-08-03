@@ -93,4 +93,26 @@ describe('Rail', () => {
     render(<Rail groups={GROUPS} pathname="/dashboard" collapsed={false} onToggle={noop} />)
     expect(screen.getByRole('button', { name: 'Sign out' })).toBeInTheDocument()
   })
+
+  it('renders a badge when a row carries a count', () => {
+    const groups = [
+      {
+        heading: 'Account',
+        rows: [{ href: '/notifications', label: 'Notifications', icon: 'bell' as const, count: 5 }],
+      },
+    ]
+    render(<Rail groups={groups} pathname="/dashboard" collapsed={false} onToggle={noop} />)
+    expect(screen.getByText('5')).toBeInTheDocument()
+  })
+
+  it('renders no badge when count is absent', () => {
+    const groups = [
+      {
+        heading: 'Account',
+        rows: [{ href: '/notifications', label: 'Notifications', icon: 'bell' as const }],
+      },
+    ]
+    render(<Rail groups={groups} pathname="/dashboard" collapsed={false} onToggle={noop} />)
+    expect(screen.queryByText(/^\d+$/)).not.toBeInTheDocument()
+  })
 })

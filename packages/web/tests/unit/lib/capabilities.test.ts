@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // --- Mock strategy ---
 // api-client is mocked at the module level so getCapabilities never makes a real HTTP call.
-// `route()` below maps each of the two endpoints to a resolved value or a rejected Error,
+// `route()` below maps each endpoint to a resolved value or a rejected Error,
 // and throws on anything else — which is what keeps the removed /api/child-profile fetch
 // removed: re-adding it fails every test in this file rather than silently costing a round
 // trip on every signed-in page render (it runs in the root layout).
@@ -42,11 +42,16 @@ describe('getCapabilities', () => {
   //        getUser() inside the API on every cold load. /api/child-profile was fetched to
   //        derive an isParent nobody branched on; app/dashboard/child fetches the row
   //        itself because it needs the body. Nothing may be added back without a reader.
-  it('fetches only the profile and the led organisations', async () => {
-    route({ '/api/contributors/me': PROFILE, '/api/organizations/mine': [] })
+  it('fetches only the profile, the led organisations, and the unread count', async () => {
+    route({
+      '/api/contributors/me': PROFILE,
+      '/api/organizations/mine': [],
+      '/api/notifications/me/unread-count': { count: 0 },
+    })
     await subject()
     expect(get.mock.calls.map(([path]) => path).sort()).toEqual([
       '/api/contributors/me',
+      '/api/notifications/me/unread-count',
       '/api/organizations/mine',
     ])
   })
@@ -59,6 +64,7 @@ describe('getCapabilities', () => {
     route({
       '/api/contributors/me': PROFILE,
       '/api/organizations/mine': [{ id: 'o1', name: 'Splat', status: 'active' }],
+      '/api/notifications/me/unread-count': { count: 0 },
     })
     expect((await subject())?.ledOrgs).toHaveLength(1)
   })
@@ -71,6 +77,7 @@ describe('getCapabilities', () => {
     route({
       '/api/contributors/me': { ...PROFILE, role: 'admin' },
       '/api/organizations/mine': [],
+      '/api/notifications/me/unread-count': { count: 0 },
     })
     expect((await subject())?.isAdmin).toBe(true)
   })
@@ -83,6 +90,7 @@ describe('getCapabilities', () => {
     route({
       '/api/contributors/me': PROFILE,
       '/api/organizations/mine': new Error('boom'),
+      '/api/notifications/me/unread-count': { count: 0 },
     })
     const caps = await subject()
     expect(caps?.ledOrgs).toEqual([])

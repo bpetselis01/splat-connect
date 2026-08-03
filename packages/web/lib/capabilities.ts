@@ -32,6 +32,7 @@ export type Capabilities = {
   isAdmin: boolean
   ledOrgs: Organization[]
   canAuthor: boolean
+  unreadNotifications: number
 }
 
 export const getCapabilities = cache(async (): Promise<Capabilities | null> => {
@@ -49,10 +50,16 @@ export const getCapabilities = cache(async (): Promise<Capabilities | null> => {
     .get<Organization[]>('/api/organizations/mine')
     .catch(() => [] as Organization[])
 
+  const unreadNotifications = await apiClient
+    .get<{ count: number }>('/api/notifications/me/unread-count')
+    .then((r) => r.count)
+    .catch(() => 0)
+
   return {
     profile,
     isAdmin: profile.role === 'admin',
     ledOrgs,
     canAuthor: true,
+    unreadNotifications,
   }
 })

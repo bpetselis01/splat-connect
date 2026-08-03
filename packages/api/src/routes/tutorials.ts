@@ -133,6 +133,10 @@ tutorials.patch('/:id', async (c) => {
     return c.json({ error: 'You must accept the contributor terms before submitting' }, 403)
   }
 
+  if (typeof body.updated_at !== 'string') {
+    return c.json({ error: 'updated_at is required' }, 400)
+  }
+
   const update: Record<string, unknown> = {}
   for (const key of EDITABLE) if (key in body) update[key] = body[key]
   if (!Object.keys(update).length) return c.json({ error: 'nothing to update' }, 400)
@@ -142,10 +146,19 @@ tutorials.patch('/:id', async (c) => {
     .from('tutorials')
     .update(update)
     .eq('id', c.req.param('id'))
+    .eq('updated_at', body.updated_at)
     .select()
-    .single()
   if (error) return c.json({ error: error.message }, 500)
-  return c.json(data)
+  if (!data.length) {
+    // Zero rows: either RLS refused (not a contributor / trying to set a
+    // forbidden status), or someone else saved first. The generic message
+    // in EDITABLE-adjacent 403 handling above already covers the RLS case
+    // for status; here it is specifically the conflict, since an RLS
+    // refusal on a normal field patch is not otherwise expected for a
+    // tutorial's own contributor.
+    return c.json({ error: 'This was updated by someone else while you were editing.' }, 409)
+  }
+  return c.json(data[0])
 })
 
 tutorials.delete('/:id', async (c) => {

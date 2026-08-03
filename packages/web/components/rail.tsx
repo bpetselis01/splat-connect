@@ -29,6 +29,7 @@ import {
   Orders,
   User,
   Shield,
+  Bell,
   ChevronsLeft,
   ChevronsRight,
   LogOut,
@@ -51,6 +52,7 @@ const ICONS: Record<IconName, typeof BookOpen> = {
   orders: Orders,
   user: User,
   shield: Shield,
+  bell: Bell,
 }
 
 export type RailProps = {
@@ -151,6 +153,11 @@ export function Rail({ groups, pathname, collapsed, onToggle, onNavigate }: Rail
                       {!collapsed && row.soon && (
                         <span className="ml-auto shrink-0 rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-brand-soft/80">
                           Soon
+                        </span>
+                      )}
+                      {!collapsed && row.count !== undefined && (
+                        <span className="ml-auto shrink-0 rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-bold text-white">
+                          {row.count}
                         </span>
                       )}
                     </Link>
