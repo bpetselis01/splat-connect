@@ -35,8 +35,11 @@ describe('POST /api/tutorials/:id/collaborators/invite', () => {
       authed(primary.token, { method: 'POST', body: JSON.stringify({ email: invitee.email }) })
     )
     expect(res.status).toBe(201)
-    const notif = await adminClient().from('notifications').select('type').eq('recipient_id', invitee.id).eq('tutorial_id', tutorialId)
+    const notif = await adminClient().from('notifications').select('type, tutorial_title').eq('recipient_id', invitee.id).eq('tutorial_id', tutorialId)
     expect(notif.data?.[0]?.type).toBe('collaborator_invited')
+    // The invitee isn't a contributor yet, so RLS blocks a live tutorials
+    // join — the title has to be denormalized (016) to render at all.
+    expect(notif.data?.[0]?.tutorial_title).toBe('Backing Fixture')
   })
 
   it('a stranger cannot invite', async () => {
@@ -64,15 +67,19 @@ describe('DELETE /api/tutorials/:id/collaborators/:profileId', () => {
   it('the primary can remove a collaborator, who gets notified', async () => {
     const res = await app.request(`/api/tutorials/${tutorialId}/collaborators/${invitee.id}`, authed(primary.token, { method: 'DELETE' }))
     expect(res.status).toBe(204)
-    const notif = await adminClient().from('notifications').select('type').eq('recipient_id', invitee.id).eq('tutorial_id', tutorialId)
+    const notif = await adminClient().from('notifications').select('type, tutorial_title').eq('recipient_id', invitee.id).eq('tutorial_id', tutorialId)
     expect(notif.data?.[0]?.type).toBe('collaborator_removed')
+    // The removed collaborator loses tutorial_contributors visibility in the
+    // same request — a live join would have returned null here.
+    expect(notif.data?.[0]?.tutorial_title).toBe('Backing Fixture')
   })
 
   it('a collaborator can remove themself, and the primary gets notified', async () => {
     const res = await app.request(`/api/tutorials/${tutorialId}/collaborators/${invitee.id}`, authed(invitee.token, { method: 'DELETE' }))
     expect(res.status).toBe(204)
-    const notif = await adminClient().from('notifications').select('type').eq('recipient_id', primary.id).eq('tutorial_id', tutorialId)
+    const notif = await adminClient().from('notifications').select('type, tutorial_title').eq('recipient_id', primary.id).eq('tutorial_id', tutorialId)
     expect(notif.data?.[0]?.type).toBe('collaborator_left')
+    expect(notif.data?.[0]?.tutorial_title).toBe('Backing Fixture')
   })
 
   it('a collaborator cannot remove another collaborator', async () => {
