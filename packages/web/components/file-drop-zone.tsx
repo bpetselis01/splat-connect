@@ -42,6 +42,7 @@
 import { useRef, useState, type DragEvent, type ChangeEvent } from 'react'
 
 interface FileDropZoneProps {
+  id?: string
   name: string
   accept: string
   multiple?: boolean
@@ -51,6 +52,7 @@ interface FileDropZoneProps {
 }
 
 export function FileDropZone({
+  id,
   name,
   accept,
   multiple = false,
@@ -111,6 +113,7 @@ export function FileDropZone({
     >
       <input
         ref={inputRef}
+        id={id}
         type="file"
         name={name}
         accept={accept}
