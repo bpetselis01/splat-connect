@@ -23,6 +23,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { BackingBadge } from '@/components/backing-state'
+import { useToast } from '@/components/toast'
 import type { TutorialOrg, Organization, TutorialStatus } from '@splat-connect/types'
 
 export function EditBackingSection({
@@ -41,6 +42,7 @@ export function EditBackingSection({
   onWithdraw: (orgId: string) => Promise<void>
 }) {
   const router = useRouter()
+  const showToast = useToast()
   const [choice, setChoice] = useState('')
   const [pendingAction, setPendingAction] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -49,11 +51,12 @@ export function EditBackingSection({
   const asked = new Set(backing.map((b) => b.org_id))
   const available = organizations.filter((o) => !asked.has(o.id) && o.status === 'active')
 
-  async function run(key: string, fn: () => Promise<void>) {
+  async function run(key: string, fn: () => Promise<void>, toastMessage?: string) {
     setPendingAction(key)
     setError(null)
     try {
       await fn()
+      if (toastMessage) showToast(toastMessage)
       // revalidatePath in the server action marks the route stale, but a client
       // component that called it does not re-render on its own — without this the
       // contributor clicks Ask or Withdraw, the write lands, and nothing visibly
@@ -94,7 +97,7 @@ export function EditBackingSection({
                   <button
                     type="button"
                     disabled={pendingAction !== null}
-                    onClick={() => run(b.org_id, () => onWithdraw(b.org_id))}
+                    onClick={() => run(b.org_id, () => onWithdraw(b.org_id), `Withdrew from ${name}`)}
                     className="btn btn-quiet btn-sm ml-auto"
                   >
                     {pendingAction === b.org_id ? 'Withdrawing…' : 'Withdraw'}
@@ -146,12 +149,13 @@ export function EditBackingSection({
               <button
                 type="button"
                 disabled={!choice || pendingAction !== null}
-                onClick={() =>
+                onClick={() => {
+                  const orgName = available.find((o) => o.id === choice)?.name ?? 'the organisation'
                   run('ask', async () => {
                     await onAsk(choice)
                     setChoice('')
-                  })
-                }
+                  }, `Asked ${orgName}`)
+                }}
                 className="btn btn-accent"
               >
                 {pendingAction === 'ask' ? 'Asking…' : 'Ask'}
