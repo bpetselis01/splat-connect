@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { EditFilesSection } from '@/components/edit-files-section'
 import { browserApiClient } from '@/lib/browser-api-client'
+import { ToastProvider } from '@/components/toast'
 
 // --- Mock strategy ---
 // browserApiClient.postFormData is mocked via vi.mock so the component can be tested without
@@ -157,5 +158,35 @@ describe('EditFilesSection', () => {
     })
     fireEvent.click(saveButton)
     await waitFor(() => expect(saveButton).toBeDisabled())
+  })
+
+  it('shows a "Last saved" line after a successful save', async () => {
+    mockPostFormData.mockResolvedValue({ url: 'https://example.com/new-photo.png' })
+    const { photoInput } = setup()
+    fireEvent.change(photoInput, {
+      target: { files: [new File(['img'], 'photo.png', { type: 'image/png' })] },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Save files' }))
+    await waitFor(() => expect(screen.getByText(/last saved just now/i)).toBeInTheDocument())
+  })
+
+  it('fires the shared toast with "Files saved" after a successful save', async () => {
+    mockPostFormData.mockResolvedValue({ url: 'https://example.com/new-photo.png' })
+    render(
+      <ToastProvider>
+        <EditFilesSection
+          tutorialId="tid-1"
+          currentPhotoUrl={null}
+          currentPdfUrl={null}
+          onSave={vi.fn().mockResolvedValue(undefined)}
+        />
+      </ToastProvider>
+    )
+    const photoInput = screen.getByLabelText(/toy photo/i, { selector: 'input' })
+    fireEvent.change(photoInput, {
+      target: { files: [new File(['img'], 'photo.png', { type: 'image/png' })] },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Save files' }))
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Files saved'))
   })
 })
