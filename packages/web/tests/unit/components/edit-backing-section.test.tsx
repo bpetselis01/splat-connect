@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { EditBackingSection } from '@/components/edit-backing-section'
+import { ToastProvider } from '@/components/toast'
 import type { TutorialOrg, Organization } from '@splat-connect/types'
 
 // The component calls router.refresh() after a successful write, because
@@ -161,5 +162,26 @@ describe('EditBackingSection', () => {
     fireEvent.click(screen.getByRole('button', { name: /withdraw/i }))
     await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument())
     expect(refresh).not.toHaveBeenCalled()
+  })
+
+  it('fires the shared toast naming the organisation after Ask succeeds', async () => {
+    render(
+      <ToastProvider>
+        <EditBackingSection {...base} backing={[]} />
+      </ToastProvider>
+    )
+    fireEvent.change(screen.getByLabelText(/ask another organisation/i), { target: { value: 'o1' } })
+    fireEvent.click(screen.getByText('Ask'))
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Asked Riverside'))
+  })
+
+  it('fires the shared toast naming the organisation after Withdraw succeeds', async () => {
+    render(
+      <ToastProvider>
+        <EditBackingSection {...base} backing={[row('o1', 'Riverside', 'pending')]} />
+      </ToastProvider>
+    )
+    fireEvent.click(screen.getByText('Withdraw'))
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Withdrew from Riverside'))
   })
 })
