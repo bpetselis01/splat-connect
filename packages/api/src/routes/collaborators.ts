@@ -27,12 +27,25 @@ collaborators.post('/:id/collaborators/invite', async (c) => {
   const email = body.email?.trim()
   if (!email) return c.json({ error: 'email is required' }, 400)
 
+  // Authorize before the admin-client email lookup below, not after: that
+  // lookup bypasses RLS by design (it has to, to resolve an arbitrary
+  // email), so it's an email-enumeration side channel for anyone who can
+  // reach this route at all unless a non-primary is refused first.
+  const supabase = createUserClient(c.get('token'))
+  const { data: isPrimary } = await supabase
+    .from('tutorial_contributors')
+    .select('profile_id')
+    .eq('tutorial_id', c.req.param('id'))
+    .eq('profile_id', c.get('userId'))
+    .eq('role', 'primary')
+    .maybeSingle()
+  if (!isPrimary) return c.json({ error: 'only the primary contributor can invite collaborators' }, 403)
+
   const admin = createAdminClient()
   const { data: invitee } = await admin.from('profiles').select('id').eq('email', email).maybeSingle()
   if (!invitee) return c.json({ error: 'No account found with that email' }, 404)
   if (invitee.id === c.get('userId')) return c.json({ error: 'You cannot invite yourself' }, 400)
 
-  const supabase = createUserClient(c.get('token'))
   const { data, error } = await supabase
     .from('tutorial_collaborator_invites')
     .upsert(
@@ -58,13 +71,16 @@ collaborators.post('/:id/collaborators/invite', async (c) => {
   // Denormalized like actor_name: the invitee isn't a contributor yet, so
   // they have no RLS read access to join the tutorial's title live.
   const { data: tutorial } = await admin.from('tutorials').select('title').eq('id', c.req.param('id')).single()
-  await admin.from('notifications').insert({
+  const { error: notifyError } = await admin.from('notifications').insert({
     recipient_id: invitee.id,
     type: 'collaborator_invited',
     tutorial_id: c.req.param('id'),
     tutorial_title: tutorial?.title ?? 'a tutorial',
     actor_name: inviter?.name ?? 'A contributor',
   })
+  // A failed notification shouldn't fail the invite itself, but a silent
+  // failure here is invisible without a log line.
+  if (notifyError) console.error('[collaborators.invite] notification insert failed:', notifyError.message)
 
   return c.json(data, 201)
 })
@@ -110,23 +126,25 @@ collaborators.delete('/:id/collaborators/:profileId', async (c) => {
   if (selfLeave) {
     // Notify the primary contributor that someone left.
     if (primaryId) {
-      await admin.from('notifications').insert({
+      const { error: notifyError } = await admin.from('notifications').insert({
         recipient_id: primaryId,
         type: 'collaborator_left',
         tutorial_id: tutorialId,
         tutorial_title: tutorial?.title ?? 'a tutorial',
         actor_name: actor?.name ?? 'A collaborator',
       })
+      if (notifyError) console.error('[collaborators.leave] notification insert failed:', notifyError.message)
     }
   } else {
     // Notify the removed collaborator.
-    await admin.from('notifications').insert({
+    const { error: notifyError } = await admin.from('notifications').insert({
       recipient_id: targetId,
       type: 'collaborator_removed',
       tutorial_id: tutorialId,
       tutorial_title: tutorial?.title ?? 'a tutorial',
       actor_name: actor?.name ?? 'The primary contributor',
     })
+    if (notifyError) console.error('[collaborators.remove] notification insert failed:', notifyError.message)
   }
 
   return c.body(null, 204)
