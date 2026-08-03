@@ -144,4 +144,76 @@ describe('removing a collaborator', () => {
     expect(data ?? []).toHaveLength(0)
     await adminClient().from('tutorial_contributors').delete().eq('tutorial_id', tutorialId).eq('profile_id', invitee.id)
   })
+
+  it('a removed collaborator cannot re-claim the seat with their now-declined invite', async () => {
+    const inviteId = await createInvite({ tutorialId, invitedProfileId: invitee.id, invitedBy: primary.id, status: 'accepted' })
+    await addCollaborator(tutorialId, invitee.id)
+
+    const { error: removeError } = await createUserClient(primary.token)
+      .from('tutorial_contributors')
+      .delete()
+      .eq('tutorial_id', tutorialId)
+      .eq('profile_id', invitee.id)
+    expect(removeError).toBeNull()
+
+    const { data: inviteAfter } = await adminClient()
+      .from('tutorial_collaborator_invites')
+      .select('status')
+      .eq('id', inviteId)
+      .single()
+    expect(inviteAfter?.status).toBe('declined')
+
+    const { error: reclaimError } = await createUserClient(invitee.token)
+      .from('tutorial_contributors')
+      .insert({ tutorial_id: tutorialId, profile_id: invitee.id, role: 'collaborator' })
+    expect(reclaimError?.code).toBe('42501')
+
+    await adminClient().from('tutorial_collaborator_invites').delete().eq('id', inviteId)
+  })
+})
+
+describe('teammate profile visibility', () => {
+  it('a collaborator can read the primary contributor\'s profile', async () => {
+    await addCollaborator(tutorialId, invitee.id)
+    const { data, error } = await createUserClient(invitee.token)
+      .from('profiles')
+      .select('id')
+      .eq('id', primary.id)
+    expect(error).toBeNull()
+    expect(data).toHaveLength(1)
+    await adminClient().from('tutorial_contributors').delete().eq('tutorial_id', tutorialId).eq('profile_id', invitee.id)
+  })
+
+  it('a stranger on a different tutorial cannot read the primary\'s profile', async () => {
+    const { data, error } = await createUserClient(stranger.token)
+      .from('profiles')
+      .select('id')
+      .eq('id', primary.id)
+    expect(error).toBeNull()
+    expect(data ?? []).toHaveLength(0)
+  })
+})
+
+describe('invite identity is frozen after creation', () => {
+  it('the invitee cannot repoint their own invite at a different tutorial', async () => {
+    const otherTutorialId = await createProject({ authorId: primary.id, status: 'draft' })
+    const inviteId = await createInvite({ tutorialId, invitedProfileId: invitee.id, invitedBy: primary.id })
+
+    const { error } = await createUserClient(invitee.token)
+      .from('tutorial_collaborator_invites')
+      .update({ tutorial_id: otherTutorialId, status: 'accepted', responded_at: new Date().toISOString() })
+      .eq('id', inviteId)
+    expect(error?.code).toBe('42501')
+
+    const { data: unchanged } = await adminClient()
+      .from('tutorial_collaborator_invites')
+      .select('tutorial_id, status')
+      .eq('id', inviteId)
+      .single()
+    expect(unchanged?.tutorial_id).toBe(tutorialId)
+    expect(unchanged?.status).toBe('pending')
+
+    await adminClient().from('tutorials').delete().eq('id', otherTutorialId)
+    await adminClient().from('tutorial_collaborator_invites').delete().eq('id', inviteId)
+  })
 })
