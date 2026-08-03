@@ -83,13 +83,14 @@ async function answer(c: Context<{ Variables: AuthVariables }>, status: 'accepte
   }
 
   if (primaryRow) {
-    await admin.from('notifications').insert({
+    const { error: notifyError } = await admin.from('notifications').insert({
       recipient_id: primaryRow.profile_id,
       type: status === 'accepted' ? 'collaborator_accepted' : 'collaborator_declined',
       tutorial_id: data.tutorial_id,
       tutorial_title: tutorial?.title ?? 'a tutorial',
       actor_name: invitee?.name ?? 'A contributor',
     })
+    if (notifyError) console.error('[collaborator-invites.answer] notification insert failed:', notifyError.message)
   }
 
   return c.json({ status })

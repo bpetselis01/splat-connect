@@ -60,7 +60,7 @@ admin.patch('/tutorials/:id/status', async (c) => {
     .select('profile_id')
     .eq('tutorial_id', c.req.param('id'))
   if (contributorRows?.length) {
-    await supabase
+    const { error: notifyError } = await supabase
       .from('notifications')
       .insert(
         contributorRows.map((row) => ({
@@ -71,6 +71,7 @@ admin.patch('/tutorials/:id/status', async (c) => {
           actor_name: 'SPLAT',
         }))
       )
+    if (notifyError) console.error('[admin.status] notification insert failed:', notifyError.message)
   }
 
   return c.json(data)
