@@ -144,7 +144,7 @@ export default async function EditTutorialPage({
       label: 'Details',
       ...stepStatuses.details,
       content: (
-        <div className="panel">
+        <div className="panel pt-5">
           <EditDetailsSection tutorial={tutorial!} onSave={saveDetails} />
         </div>
       ),
@@ -154,7 +154,7 @@ export default async function EditTutorialPage({
       label: 'Files',
       ...stepStatuses.files,
       content: (
-        <div className="panel">
+        <div className="panel pt-5">
           <EditFilesSection
             tutorialId={id}
             currentPhotoUrl={tutorial!.toy_photo_url}
@@ -169,7 +169,7 @@ export default async function EditTutorialPage({
       label: 'Parts',
       ...stepStatuses.parts,
       content: (
-        <div className="panel">
+        <div className="panel pt-5">
           <EditPartsSection initialParts={parts} onSave={saveParts} />
         </div>
       ),
@@ -179,7 +179,7 @@ export default async function EditTutorialPage({
       label: 'Tools',
       ...stepStatuses.tools,
       content: (
-        <div className="panel">
+        <div className="panel pt-5">
           <EditToolsSection initialTools={tools} onSave={saveTools} />
         </div>
       ),
@@ -215,7 +215,7 @@ export default async function EditTutorialPage({
       label: 'Backing',
       ...stepStatuses.backing,
       content: (
-        <div className="panel">
+        <div className="panel pt-5">
           <EditBackingSection
             backing={backing}
             organizations={organizations}
@@ -232,7 +232,7 @@ export default async function EditTutorialPage({
       label: 'Collaborators',
       ...stepStatuses.collaborators,
       content: (
-        <div className="panel">
+        <div className="panel pt-5">
           <EditCollaboratorsSection
             contributors={tutorial!.tutorial_contributors}
             currentProfileId={profile!.id}
