@@ -39,6 +39,19 @@ describe('EditStepper', () => {
     expect(screen.queryByText('Files content')).toBeNull()
   })
 
+  it('names each tab after its label alone, not the decorative status glyph', () => {
+    render(
+      <EditStepper
+        steps={makeSteps({ details: <p>Details content</p>, files: <p>Files content</p> })}
+        tutorialStatus="draft"
+        tutorialUpdatedAt="2026-08-01T00:00:00.000Z"
+        missingFields={[]}
+        onSubmit={vi.fn()}
+      />
+    )
+    expect(screen.getByRole('tab', { name: 'Files' })).toBeInTheDocument()
+  })
+
   it('switches content and writes ?step= when a pill is clicked', () => {
     render(
       <EditStepper
