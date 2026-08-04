@@ -253,13 +253,13 @@ jobs:
   # Supabase auth storage adapter (lib/supabase-storage.ts). The Expo-web harness
   # runs webAdapter, so no Playwright test can reach that branch.
   #
-  # main and workflow_dispatch only — it does not gate PRs. An emulator plus an
-  # APK build is the most expensive job here and the most prone to environmental
-  # flake; blocking merges on it would trade more time than it saves.
+  # Disabled off the main push trigger for now — kept as workflow_dispatch only
+  # so it can still be run manually. Re-add `github.ref == 'refs/heads/main'` to
+  # the condition below to resume automatic runs on merges to main.
   device-e2e:
     name: Device E2E Tests (Android)
     needs: [check, test]
-    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
 
     steps:
