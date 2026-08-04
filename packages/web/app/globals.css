@@ -394,6 +394,7 @@
     display: flex;
     gap: 0.5rem;
     padding: 0.75rem;
+    margin-bottom: 1.5rem;
     overflow-x: auto;
     background-color: var(--color-surface);
     border-radius: 1rem;
@@ -468,7 +469,7 @@
     padding: 0.875rem 1.25rem;
     background-color: var(--color-surface);
     border-top: 1px solid var(--color-line);
-    border-radius: 1rem 1rem 0 0;
+    border-radius: 1rem;
     box-shadow: var(--shadow-lift);
   }
 
