@@ -67,7 +67,7 @@ export function EditStepper({
             onClick={() => selectStep(step.id)}
             className="step-pill"
           >
-            <span className="step-pill-dot" data-status={step.status}>
+            <span className="step-pill-dot" data-status={step.status} aria-hidden="true">
               {STATUS_GLYPH[step.status]}
             </span>{' '}
             {step.label}
