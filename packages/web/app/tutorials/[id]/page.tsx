@@ -90,8 +90,8 @@ export default async function TutorialPage({
           list doesn't compete visually with the rail's single action card. */}
       <div className="flex flex-col gap-6">
         {tutorial.parts.length > 0 && (
-          <div className="card-flat ref-section">
-            <h2 className="mb-1 text-sm font-bold text-ink">Parts needed</h2>
+          <div className="card-flat ref-section ref-section--parts">
+            <h2 className="mb-1 text-sm font-bold">Parts needed</h2>
             {tutorial.parts.map((p) => (
               <div key={p.id} className="ref-row text-sm">
                 <div className="flex flex-wrap items-center gap-2">
@@ -125,8 +125,8 @@ export default async function TutorialPage({
           </div>
         )}
         {tutorial.tools.length > 0 && (
-          <div className="card-flat ref-section">
-            <h2 className="mb-1 text-sm font-bold text-ink">Tools needed</h2>
+          <div className="card-flat ref-section ref-section--tools">
+            <h2 className="mb-1 text-sm font-bold">Tools needed</h2>
             {tutorial.tools.map((t) => (
               <div key={t.id} className="ref-row text-sm">
                 <div className="flex flex-wrap items-center gap-2">
@@ -160,8 +160,8 @@ export default async function TutorialPage({
           </div>
         )}
         {tutorial.stl_files.length > 0 && (
-          <div className="card-flat ref-section">
-            <h2 className="mb-1 text-sm font-bold text-ink">Files for 3D printing</h2>
+          <div className="card-flat ref-section ref-section--files">
+            <h2 className="mb-1 text-sm font-bold">Files for 3D printing</h2>
             {tutorial.stl_files.map((f) => (
               <a
                 key={f.id}
