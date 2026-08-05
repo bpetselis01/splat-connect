@@ -106,7 +106,7 @@ test('@responsive the tutorial detail page stacks to a single column', async ({ 
   await page.goto(`/tutorials/${id}`)
 
   const pdf = page.getByRole('link', { name: 'Download Tutorial PDF' })
-  const parts = page.getByRole('heading', { name: '🔩 Parts needed' })
+  const parts = page.getByRole('heading', { name: 'Parts needed' })
   const pdfBox = await pdf.boundingBox()
   const partsBox = await parts.boundingBox()
 

@@ -18,11 +18,11 @@ test('the detail page renders a tutorial in full', async ({ page }) => {
   )
   await expect(page.getByRole('link', { name: 'e2e-mount.stl' })).toBeVisible()
 
-  await expect(page.getByRole('heading', { name: '🔩 Parts needed' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Parts needed' })).toBeVisible()
   await expect(page.getByText(/E2E part\s*×\s*2/)).toBeVisible()
   await expect(page.getByRole('link', { name: 'Buy E2E part from Jaycar' })).toBeVisible()
 
-  await expect(page.getByRole('heading', { name: '🔧 Tools needed' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Tools needed' })).toBeVisible()
   await expect(page.getByText('E2E tool')).toBeVisible()
 })
 
