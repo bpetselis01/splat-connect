@@ -536,6 +536,30 @@
     padding: 1rem 1.25rem;
   }
 
+  .ref-section--parts {
+    background-color: var(--color-brand-tint);
+    border-color: var(--color-brand-soft);
+  }
+  .ref-section--parts h2 {
+    color: var(--color-brand-deep);
+  }
+
+  .ref-section--tools {
+    background-color: var(--color-honey-soft);
+    border-color: var(--color-honey-soft);
+  }
+  .ref-section--tools h2 {
+    color: var(--color-honey-deep);
+  }
+
+  .ref-section--files {
+    background-color: var(--color-mint-soft);
+    border-color: var(--color-mint-soft);
+  }
+  .ref-section--files h2 {
+    color: var(--color-mint-deep);
+  }
+
   .ref-row {
     display: block;
     padding: 0.75rem 0;
