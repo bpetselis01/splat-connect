@@ -13,7 +13,7 @@ import tools from './routes/tools.js'
 import stlFiles from './routes/stl-files.js'
 import admin from './routes/admin.js'
 import contributors from './routes/contributors.js'
-import childProfile from './routes/child-profile.js'
+import childProfiles from './routes/child-profiles.js'
 import agreements from './routes/agreements.js'
 import organizations from './routes/organizations.js'
 import tutorialOrgs from './routes/tutorial-orgs.js'
@@ -36,8 +36,8 @@ app.use('/api/tutorials', authMiddleware)
 app.use('/api/upload/*', authMiddleware)
 app.use('/api/admin/*', authMiddleware)
 app.use('/api/contributors/*', authMiddleware)
-app.use('/api/child-profile', authMiddleware)
-app.use('/api/child-profile/*', authMiddleware)
+app.use('/api/child-profiles', authMiddleware)
+app.use('/api/child-profiles/*', authMiddleware)
 app.use('/api/agreements', authMiddleware)
 app.use('/api/agreements/*', authMiddleware)
 app.use('/api/organizations', authMiddleware)
@@ -56,7 +56,7 @@ app.route('/api/tutorials', tutorialOrgs)
 app.route('/api/tutorials', collaborators)
 app.route('/api/admin', admin)
 app.route('/api/contributors', contributors)
-app.route('/api/child-profile', childProfile)
+app.route('/api/child-profiles', childProfiles)
 app.route('/api/agreements', agreements)
 app.route('/api/organizations', organizations)
 app.route('/api/collaborators', collaboratorInvites)
