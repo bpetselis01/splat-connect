@@ -46,6 +46,7 @@
   --color-honey-soft: #fdeecb;
   --color-honey-deep: #7a4e05;
   --color-danger: #a3301a;
+  --color-success: #0f5c4d;
 
   --radius-field: 14px;
 
@@ -490,7 +491,7 @@
     transform: translateX(-50%);
     z-index: 50;
     padding: 0.625rem 1.25rem;
-    background-color: var(--color-brand-deep);
+    background-color: var(--color-success);
     color: #ffffff;
     border-radius: 9999px;
     font-size: 0.8125rem;
