@@ -58,7 +58,7 @@ describe('PATCH /:id — 500 on DB error', () => {
 
   it('returns 500 when the update fails for a reason other than a malformed id', async () => {
     mockUserFrom.mockReturnValue({
-      update: () => ({ eq: () => ({ select: () => ({ maybeSingle: () => ({ data: null, error: { message: 'boom' } }) }) }) }),
+      update: () => ({ eq: () => ({ eq: () => ({ select: () => ({ maybeSingle: () => ({ data: null, error: { message: 'boom' } }) }) }) }) }),
     })
     const res = await makeApp().request('/cp-1', {
       method: 'PATCH',
@@ -75,7 +75,7 @@ describe('DELETE /:id — 500 on DB error', () => {
 
   it('returns 500 when the delete fails for a reason other than a malformed id', async () => {
     mockUserFrom.mockReturnValue({
-      delete: () => ({ eq: () => ({ select: () => ({ maybeSingle: () => ({ data: null, error: { message: 'boom' } }) }) }) }),
+      delete: () => ({ eq: () => ({ eq: () => ({ select: () => ({ maybeSingle: () => ({ data: null, error: { message: 'boom' } }) }) }) }) }),
     })
     const res = await makeApp().request('/cp-1', { method: 'DELETE' })
     expect(res.status).toBe(500)
