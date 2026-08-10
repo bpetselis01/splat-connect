@@ -72,7 +72,7 @@ export function buildNav(caps: Capabilities, unreadNotifications: number): NavGr
           soon: true,
         },
         // Shown to non-parents too: filling it in is what makes them a parent.
-        { href: '/dashboard/child', label: 'Child profile', icon: 'child' },
+        { href: '/dashboard/child', label: 'Child profiles', icon: 'child' },
       ],
     },
   ]
