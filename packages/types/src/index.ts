@@ -3,6 +3,9 @@ export type Role = 'admin' | 'contributor'
 export interface ChildProfile {
   id: string
   parent_id: string
+  // Optional: a parent may add a child without naming one. The UI falls back to
+  // "Child N" by position — see packages/web/lib/child-label.ts.
+  name: string | null
   age: number | null
   // Ability Profile
   primary_diagnosis: string | null
@@ -24,6 +27,7 @@ export interface ChildProfile {
   forearm_length_mm: number | null
   hand_dominance: string | null
   sensory_preferences: string[]
+  created_at: string
   updated_at: string
 }
 export type Difficulty = 'easy' | 'medium' | 'hard'
