@@ -18,6 +18,12 @@ export function useChildProfile() {
   // Which child this screen is editing. Mobile shows one child; the API orders
   // the collection oldest-first, so that is the first entry.
   const id = useRef<string | null>(null)
+  // Whether the mount GET ever resolved successfully. `id.current === null` is
+  // ambiguous on its own — it means either "no child exists yet" (safe to POST)
+  // or "we never found out" (a failed/aborted load — NOT safe to POST, since a
+  // child may already exist on the server and POST has no dedupe). This flag
+  // disambiguates: only `loaded.current && !id.current` means "no child yet".
+  const loaded = useRef(false)
   // Every write queues here. The old endpoint was an upsert, so repeats were
   // harmless; POST is not idempotent, so two saves racing before the first
   // response lands would create two children. Serialising them means the second
@@ -30,14 +36,22 @@ export function useChildProfile() {
     const load = apiClient
       .get<ChildProfile[]>('/api/child-profiles')
       .then((list) => {
-        if (ignore) return
         const first = list?.[0] ?? null
-        // Set even when the user has already started editing: without the id a
-        // queued save would POST a duplicate instead of patching this child.
+        // Assigned unconditionally, even after unmount (ignore) or once the
+        // user has started editing (dirty): refs are safe to write post-unmount
+        // and have no render effect, and a write already queued behind this
+        // promise needs the real id (or to know the account truly has none) to
+        // avoid POSTing a duplicate. Only the visible `profile` state is guarded.
         id.current = first?.id ?? null
-        if (!dirty.current) setProfile(first)
+        loaded.current = true
+        if (!ignore && !dirty.current) setProfile(first)
       })
-      .catch(() => { if (!ignore && !dirty.current) setProfile(null) })
+      .catch(() => {
+        // loaded.current stays false here on purpose: a failed load means we
+        // don't know whether this account already has a child, so the write
+        // chain below must refuse to POST rather than risk a duplicate.
+        if (!ignore && !dirty.current) setProfile(null)
+      })
       .finally(() => { if (!ignore) setLoading(false) })
     writes.current = load
     return () => { ignore = true }
@@ -56,9 +70,15 @@ export function useChildProfile() {
         .then(async () => {
           if (id.current) {
             await apiClient.patch<ChildProfile>(`/api/child-profiles/${id.current}`, body)
-          } else {
+          } else if (loaded.current) {
             const created = await apiClient.post<ChildProfile>('/api/child-profiles', body)
             id.current = created.id
+          } else {
+            // The mount load never succeeded, so we can't tell whether this
+            // account already has a child. POSTing here could silently create
+            // a duplicate, so refuse and let this fall into the catch below —
+            // same visible outcome as any other failed write.
+            throw new Error('cannot save: child profile was never loaded')
           }
           setSaveState('saved')
         })
