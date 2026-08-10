@@ -24,7 +24,7 @@ export default async function ChildTabPage() {
         This helps us suggest tutorials that suit your child. Everything is optional
         and only you can see it.
       </p>
-      <ChildProfileForm profile={profile} />
+      <ChildProfileForm profile={profile} onSave={async () => {}} />
     </div>
   )
 }
