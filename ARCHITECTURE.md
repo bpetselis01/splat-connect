@@ -256,7 +256,7 @@ erDiagram
     }
     CHILD_PROFILES {
         uuid id PK
-        uuid parent_id FK "UNIQUE, cascade"
+        uuid parent_id FK "cascade"
         integer age
         text primary_diagnosis
         text macs_level
@@ -285,9 +285,12 @@ Every relationship here is a real declared foreign key with `on delete cascade` 
 
 Two constraints carry design intent rather than just integrity:
 
-- `child_profiles.parent_id` is **unique but not the primary key**. Multi-child support is one
-  `drop constraint` away, and until then the unique index is what makes
-  `upsert(row, { onConflict: 'parent_id' })` in `routes/child-profile.ts` a safe idempotent write.
+- `child_profiles.parent_id` was unique from migration 003, which is what made
+  `upsert(row, { onConflict: 'parent_id' })` a safe idempotent write for a single child per parent.
+  Migration 020 dropped that constraint: a parent may now hold any number of children, `id` is the
+  primary key, and `routes/child-profiles.ts` (the single-profile `routes/child-profile.ts` no longer
+  exists) exposes a collection API — `POST` creates a row, `PATCH /:id` updates one — both scoped to
+  `parent_id = auth.uid()`.
 - `tutorials` RLS splits `USING` from `WITH CHECK`: contributors may *read and edit* their own
   tutorials at any status, but `WITH CHECK` restricts the resulting status to
   `draft | pending | rejected`. Self-approval is structurally impossible, not merely unimplemented.
