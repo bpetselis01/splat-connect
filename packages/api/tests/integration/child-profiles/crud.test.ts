@@ -1,6 +1,18 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
+import { createClient } from '@supabase/supabase-js'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, type TestUser } from '../../helpers/auth.js'
+
+// Direct user-scoped client for exercising the SELECT RLS policy itself,
+// below the API. The GET route already filters by parent_id, so a test that
+// only goes through app.request would still pass if the SELECT policy were
+// dropped entirely.
+const userClient = (token: string) =>
+  createClient(
+    process.env.SUPABASE_URL ?? 'http://localhost:54321',
+    process.env.SUPABASE_ANON_KEY ?? '',
+    { global: { headers: { Authorization: `Bearer ${token}` } }, auth: { persistSession: false } }
+  )
 
 let parent: TestUser
 let stranger: TestUser
@@ -119,6 +131,29 @@ describe('child profiles collection', () => {
     const ownerList = await app.request('/api/child-profiles', authed(parent.token))
     const rows = (await ownerList.json()) as { id: string; name: string }[]
     expect(rows.find((r) => r.id === id)?.name).toBe('Private')
+  })
+
+  it('exercises the SELECT RLS policy directly, below the API', async () => {
+    // Bypasses the API's own parent_id filter by querying the table through
+    // a user-scoped client. Two assertions, deliberately: a stranger reading
+    // the owner's rows must come back empty (an overly-permissive policy
+    // would fail this), AND the owner reading their own rows must come back
+    // non-empty (dropping the SELECT policy entirely denies everyone under
+    // RLS, which would fail this one instead). Either assertion alone lets a
+    // broken policy slip through; together they pin down the exact behaviour.
+    const { data: strangerView, error: strangerError } = await userClient(stranger.token)
+      .from('child_profiles')
+      .select('*')
+      .eq('parent_id', parent.id)
+    expect(strangerError).toBeNull()
+    expect(strangerView).toEqual([])
+
+    const { data: ownerView, error: ownerError } = await userClient(parent.token)
+      .from('child_profiles')
+      .select('*')
+      .eq('parent_id', parent.id)
+    expect(ownerError).toBeNull()
+    expect(ownerView?.length).toBeGreaterThan(0)
   })
 
   it('404s on a malformed id rather than leaking a database error', async () => {
