@@ -10,7 +10,6 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Tutorial, Difficulty } from '@splat-connect/types'
 import { useToast } from '@/components/toast'
-import { SaveStatusLine } from '@/components/save-status-line'
 
 export function EditDetailsSection({
   tutorial,
@@ -23,7 +22,7 @@ export function EditDetailsSection({
   const showToast = useToast()
   const [pending, setPending] = useState(false)
   const [conflict, setConflict] = useState(false)
-  const [savedAt, setSavedAt] = useState<string | null>(null)
+  const [dirty, setDirty] = useState(false)
 
   async function handleSubmit(formData: FormData) {
     setPending(true)
@@ -35,7 +34,7 @@ export function EditDetailsSection({
         difficulty: formData.get('difficulty') as Difficulty,
         updated_at: tutorial.updated_at,
       })
-      setSavedAt(new Date().toISOString())
+      setDirty(false)
       showToast('Details saved')
       router.refresh()
     } catch {
@@ -46,7 +45,7 @@ export function EditDetailsSection({
   }
 
   return (
-    <form action={handleSubmit} className="flex flex-col gap-3 px-5 pb-5">
+    <form action={handleSubmit} onChange={() => setDirty(true)} className="flex flex-col gap-3 px-5 pb-5">
       {conflict && (
         <p role="alert" className="alert alert-danger">
           This was updated while you were editing — reload to see the latest version before
@@ -69,9 +68,8 @@ export function EditDetailsSection({
           <option value="hard">Hard</option>
         </select>
       </div>
-      <div className="flex items-center justify-between gap-3">
-        <SaveStatusLine savedAt={savedAt} />
-        <button type="submit" disabled={pending} className="btn btn-primary btn-sm self-end">
+      <div className="flex justify-end">
+        <button type="submit" disabled={!dirty || pending} className="btn btn-primary btn-sm self-end">
           {pending ? 'Saving…' : 'Save details'}
         </button>
       </div>

@@ -41,18 +41,11 @@ describe('EditDetailsSection', () => {
   it('shows the conflict message when onSave signals a conflict', async () => {
     const onSave = vi.fn().mockRejectedValue(new Error('conflict'))
     render(<EditDetailsSection tutorial={tutorial} onSave={onSave} />)
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'New Title' } })
     fireEvent.click(screen.getByText('Save details'))
     await waitFor(() =>
       expect(screen.getByText(/updated while you were editing/i)).toBeInTheDocument()
     )
-  })
-
-  it('shows a "Last saved" line after a successful save', async () => {
-    const onSave = vi.fn().mockResolvedValue(undefined)
-    render(<EditDetailsSection tutorial={tutorial} onSave={onSave} />)
-    expect(screen.queryByText(/last saved/i)).toBeNull()
-    fireEvent.click(screen.getByText('Save details'))
-    await waitFor(() => expect(screen.getByText(/last saved just now/i)).toBeInTheDocument())
   })
 
   it('fires the shared toast with "Details saved" after a successful save', async () => {
@@ -62,22 +55,42 @@ describe('EditDetailsSection', () => {
         <EditDetailsSection tutorial={tutorial} onSave={onSave} />
       </ToastProvider>
     )
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'New Title' } })
     fireEvent.click(screen.getByText('Save details'))
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Details saved'))
   })
 
-  it('does not show a toast or save-status line when the save fails', async () => {
+  it('does not show a toast when the save fails', async () => {
     const onSave = vi.fn().mockRejectedValue(new Error('conflict'))
     render(
       <ToastProvider>
         <EditDetailsSection tutorial={tutorial} onSave={onSave} />
       </ToastProvider>
     )
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'New Title' } })
     fireEvent.click(screen.getByText('Save details'))
     await waitFor(() =>
       expect(screen.getByText(/updated while you were editing/i)).toBeInTheDocument()
     )
     expect(screen.queryByRole('status')).not.toBeInTheDocument()
-    expect(screen.queryByText(/last saved/i)).not.toBeInTheDocument()
+  })
+
+  it('Save button starts disabled', () => {
+    render(<EditDetailsSection tutorial={tutorial} onSave={vi.fn()} />)
+    expect(screen.getByText('Save details')).toBeDisabled()
+  })
+
+  it('Save button becomes enabled after a field change', () => {
+    render(<EditDetailsSection tutorial={tutorial} onSave={vi.fn()} />)
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'New Title' } })
+    expect(screen.getByText('Save details')).not.toBeDisabled()
+  })
+
+  it('Save button becomes disabled again after a successful save', async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined)
+    render(<EditDetailsSection tutorial={tutorial} onSave={onSave} />)
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'New Title' } })
+    fireEvent.click(screen.getByText('Save details'))
+    await waitFor(() => expect(screen.getByText('Save details')).toBeDisabled())
   })
 })

@@ -30,7 +30,6 @@
  */
 'use client'
 import { useToast } from '@/components/toast'
-import { SaveStatusLine } from '@/components/save-status-line'
 import { useState, useTransition } from 'react'
 import { browserApiClient } from '@/lib/browser-api-client'
 import { FileDropZone } from '@/components/file-drop-zone'
@@ -47,7 +46,6 @@ export function AddStlForm({
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
-  const [savedAt, setSavedAt] = useState<string | null>(null)
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     setSelectedFile(e.target.files?.[0] ?? null)
@@ -69,7 +67,6 @@ export function AddStlForm({
       startTransition(async () => {
         try {
           await onAdd(filename ?? selectedFile.name, url)
-          setSavedAt(new Date().toISOString())
           showToast('STL file added')
         } catch (err) {
           // onAdd failed: no toast, no "Last saved" line, and surface the
@@ -98,8 +95,7 @@ export function AddStlForm({
           {error}
         </p>
       )}
-      <div className="flex items-center justify-between gap-3">
-        <SaveStatusLine savedAt={savedAt} />
+      <div className="flex justify-end">
         <button
           type="button"
           disabled={!selectedFile || uploading || pending}
