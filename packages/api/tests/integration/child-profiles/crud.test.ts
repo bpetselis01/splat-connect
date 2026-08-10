@@ -125,4 +125,48 @@ describe('child profiles collection', () => {
     const res = await app.request('/api/child-profiles/not-a-uuid', authed(parent.token, { method: 'DELETE' }))
     expect(res.status).toBe(404)
   })
+
+  it('400s on a non-object body instead of reaching the database', async () => {
+    const post = await app.request('/api/child-profiles', authed(parent.token, {
+      method: 'POST',
+      body: JSON.stringify(['not', 'an', 'object']),
+    }))
+    expect(post.status).toBe(400)
+
+    const created = await app.request('/api/child-profiles', authed(parent.token, {
+      method: 'POST',
+      body: JSON.stringify({ name: 'Body check' }),
+    }))
+    const { id } = (await created.json()) as { id: string }
+
+    const patch = await app.request(`/api/child-profiles/${id}`, authed(parent.token, {
+      method: 'PATCH',
+      body: JSON.stringify(5),
+    }))
+    expect(patch.status).toBe(400)
+  })
+
+  it('round-trips array-typed columns through the EDITABLE whitelist', async () => {
+    const created = await app.request('/api/child-profiles', authed(parent.token, {
+      method: 'POST',
+      body: JSON.stringify({ name: 'Arrays', challenges: ['Grasping'], sensory_preferences: ['Loud noises'] }),
+    }))
+    expect(created.status).toBe(201)
+    const createdRow = (await created.json()) as { id: string; challenges: string[]; sensory_preferences: string[] }
+    expect(createdRow.challenges).toEqual(['Grasping'])
+    expect(createdRow.sensory_preferences).toEqual(['Loud noises'])
+
+    const patch = await app.request(`/api/child-profiles/${createdRow.id}`, authed(parent.token, {
+      method: 'PATCH',
+      body: JSON.stringify({ challenges: ['Grasping', 'Pinching'], sensory_preferences: [] }),
+    }))
+    expect(patch.status).toBe(200)
+    const patched = (await patch.json()) as { challenges: string[]; sensory_preferences: string[] }
+    expect(patched.challenges).toEqual(['Grasping', 'Pinching'])
+    expect(patched.sensory_preferences).toEqual([])
+
+    const list = await app.request('/api/child-profiles', authed(parent.token))
+    const rows = (await list.json()) as { id: string; challenges: string[] }[]
+    expect(rows.find((r) => r.id === createdRow.id)?.challenges).toEqual(['Grasping', 'Pinching'])
+  })
 })
