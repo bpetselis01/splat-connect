@@ -15,14 +15,31 @@ export function useChildProfile() {
   // Once the user edits, the in-flight mount load must not clobber their work
   // (a slow GET resolving after the first keystroke would otherwise win).
   const dirty = useRef(false)
+  // Which child this screen is editing. Mobile shows one child; the API orders
+  // the collection oldest-first, so that is the first entry.
+  const id = useRef<string | null>(null)
+  // Every write queues here. The old endpoint was an upsert, so repeats were
+  // harmless; POST is not idempotent, so two saves racing before the first
+  // response lands would create two children. Serialising them means the second
+  // always sees the id the first established. Initialised to the mount load for
+  // the same reason: a save fired mid-load must not POST alongside it.
+  const writes = useRef<Promise<unknown>>(Promise.resolve())
 
   useEffect(() => {
     let ignore = false
-    apiClient
-      .get<ChildProfile | null>('/api/child-profile')
-      .then((p) => { if (!ignore && !dirty.current) setProfile(p) })
+    const load = apiClient
+      .get<ChildProfile[]>('/api/child-profiles')
+      .then((list) => {
+        if (ignore) return
+        const first = list?.[0] ?? null
+        // Set even when the user has already started editing: without the id a
+        // queued save would POST a duplicate instead of patching this child.
+        id.current = first?.id ?? null
+        if (!dirty.current) setProfile(first)
+      })
       .catch(() => { if (!ignore && !dirty.current) setProfile(null) })
       .finally(() => { if (!ignore) setLoading(false) })
+    writes.current = load
     return () => { ignore = true }
   }, [])
 
@@ -35,11 +52,19 @@ export function useChildProfile() {
       const body = pending.current
       pending.current = {}
       setSaveState('saving')
-      apiClient
-        .put<ChildProfile>('/api/child-profile', body)
-        .then(() => setSaveState('saved'))
+      writes.current = writes.current
+        .then(async () => {
+          if (id.current) {
+            await apiClient.patch<ChildProfile>(`/api/child-profiles/${id.current}`, body)
+          } else {
+            const created = await apiClient.post<ChildProfile>('/api/child-profiles', body)
+            id.current = created.id
+          }
+          setSaveState('saved')
+        })
         // Back to idle rather than a false "saved" — never claim a write landed
         // when it didn't. The value stays on screen (optimistic) to retype/retry.
+        // Swallowing here also keeps the chain resolved so later writes still run.
         .catch(() => setSaveState('idle'))
     }, 250)
   }
