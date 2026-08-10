@@ -34,7 +34,7 @@ test('a contributor sees no Organisation group', async ({ page }) => {
     await page.waitForURL('**/dashboard')
 
     await expect(page.getByRole('link', { name: 'My tutorials', exact: true })).toBeVisible()
-    await expect(page.getByRole('link', { name: 'Child profile', exact: true })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Child profiles', exact: true })).toBeVisible()
     await expect(page.getByRole('link', { name: 'Profile', exact: true })).toBeVisible()
     await expect(page.getByText('Organisation', { exact: true })).toHaveCount(0)
     await expect(page.getByRole('link', { name: 'Review queue', exact: true })).toHaveCount(0)
@@ -123,9 +123,7 @@ test('a leader reaches the existing review screen from the tab and approves a tu
   }
 })
 
-test('a contributor with no child profile creates one from the Child profile tab, and it persists across a reload', async ({
-  page,
-}) => {
+test('a contributor adds two children, edits one, and deletes one', async ({ page }) => {
   const contributor = await createContributor()
   await acceptTerms(contributor.id)
 
@@ -133,19 +131,44 @@ test('a contributor with no child profile creates one from the Child profile tab
     await signIn(page, contributor.email, contributor.password)
     await page.waitForURL('**/dashboard')
 
-    await page.getByRole('link', { name: 'Child profile', exact: true }).click()
+    await page.getByRole('link', { name: 'Child profiles', exact: true }).click()
     await expect(page).toHaveURL('/dashboard/child')
 
+    // First child, named.
+    await page.getByRole('link', { name: 'Add child' }).click()
+    await expect(page).toHaveURL('/dashboard/child/new')
+    await page.locator('#name').fill('Emma')
     await page.locator('#age').fill('7')
     await page.locator('#primary_diagnosis').fill('Cerebral palsy')
     await page.locator('#macs_level').selectOption('II')
     await page.getByRole('button', { name: 'Save' }).click()
-    await expect(page.getByText('Saved')).toBeVisible()
+    await expect(page).toHaveURL('/dashboard/child')
+    await expect(page.getByRole('link', { name: /Emma/ })).toBeVisible()
 
-    await page.reload()
+    // Second child, left unnamed — the list must still tell them apart.
+    await page.getByRole('link', { name: 'Add child' }).click()
+    await page.locator('#age').fill('4')
+    await page.getByRole('button', { name: 'Save' }).click()
+    await expect(page).toHaveURL('/dashboard/child')
+    await expect(page.getByRole('link', { name: /Child 2/ })).toBeVisible()
+
+    // Edit the first child and confirm it persists across a reload.
+    await page.getByRole('link', { name: /Emma/ }).click()
     await expect(page.locator('#age')).toHaveValue('7')
-    await expect(page.locator('#primary_diagnosis')).toHaveValue('Cerebral palsy')
     await expect(page.locator('#macs_level')).toHaveValue('II')
+    await page.locator('#age').fill('8')
+    await page.getByRole('button', { name: 'Save' }).click()
+    await expect(page.getByText('Saved')).toBeVisible()
+    await page.reload()
+    await expect(page.locator('#age')).toHaveValue('8')
+
+    // Delete takes two clicks.
+    await page.getByRole('button', { name: 'Delete child profile' }).click()
+    await page.getByRole('button', { name: 'Confirm delete' }).click()
+    await expect(page).toHaveURL('/dashboard/child')
+    await expect(page.getByRole('link', { name: /Emma/ })).toHaveCount(0)
+    // The survivor renumbers, because position is computed and not stored.
+    await expect(page.getByRole('link', { name: /Child 1/ })).toBeVisible()
   } finally {
     await deleteUser(contributor.id)
   }
@@ -238,7 +261,7 @@ test('the rail opens as a drawer on a narrow viewport', async ({ page }) => {
     await page.getByRole('button', { name: 'Open navigation' }).click()
     await expect(drawer).toBeVisible()
 
-    await drawer.getByRole('link', { name: 'Child profile', exact: true }).click()
+    await drawer.getByRole('link', { name: 'Child profiles', exact: true }).click()
     await expect(page).toHaveURL('/dashboard/child')
     await expect(drawer).toBeHidden()
   } finally {
