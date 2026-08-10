@@ -3,7 +3,6 @@ import { useState } from 'react'
 import { browserApiClient } from '@/lib/browser-api-client'
 import { FileDropZone } from '@/components/file-drop-zone'
 import { useToast } from '@/components/toast'
-import { SaveStatusLine } from '@/components/save-status-line'
 
 export function EditFilesSection({
   tutorialId,
@@ -25,7 +24,6 @@ export function EditFilesSection({
   const [pdfFile, setPdfFile] = useState<File | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [savedAt, setSavedAt] = useState<string | null>(null)
 
   const hasChanges = photoFile !== null || pdfFile !== null
 
@@ -59,7 +57,6 @@ export function EditFilesSection({
         ? await uploadFile('/api/upload/pdf', pdfFile)
         : currentPdfUrl
       await onSave(newPhotoUrl, newPdfUrl)
-      setSavedAt(new Date().toISOString())
       showToast('Files saved')
       setPhotoFile(null)
       setPdfFile(null)
@@ -102,8 +99,7 @@ export function EditFilesSection({
         />
       </div>
       {saving && <p className="text-sm font-semibold text-brand-dark">Saving…</p>}
-      <div className="flex items-center justify-between gap-3">
-        <SaveStatusLine savedAt={savedAt} />
+      <div className="flex justify-end">
         <button
           type="button"
           disabled={!hasChanges || saving}
