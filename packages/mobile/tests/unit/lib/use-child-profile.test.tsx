@@ -144,6 +144,69 @@ describe('useChildProfile', () => {
     await waitFor(() => expect(mockPatch).toHaveBeenCalledWith('/api/child-profiles/cp1', expect.objectContaining({ age: 5 })))
   })
 
+  // Regression for a lockout bug: a `loaded` ref set only by the mount effect
+  // (never retried) meant one failed GET at mount permanently barred every
+  // future save from POSTing, even once the network recovered. The fix
+  // re-reads the collection instead of trusting a stale flag.
+  it('recovers after a failed mount load once the account is reachable again', async () => {
+    mockGet.mockRejectedValue(new Error('network'))
+    const { result } = renderHook(() => useChildProfile())
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    // First save: the re-read also fails, so this fails visibly like any
+    // other failed write — no POST, no PATCH.
+    act(() => { result.current.save({ age: 9 }) })
+    await act(async () => { jest.advanceTimersByTime(300) })
+    expect(mockPost).not.toHaveBeenCalled()
+    expect(mockPatch).not.toHaveBeenCalled()
+    expect(result.current.saveState).toBe('idle')
+
+    // Network recovers: the account already has a child.
+    mockGet.mockResolvedValue([{ id: 'cp1' }])
+    mockPatch.mockResolvedValue({})
+    act(() => { result.current.save({ age: 10 }) })
+    await act(async () => { jest.advanceTimersByTime(300) })
+    expect(mockPatch).toHaveBeenCalledWith('/api/child-profiles/cp1', expect.objectContaining({ age: 10 }))
+    expect(mockPost).not.toHaveBeenCalled()
+  })
+
+  // Regression for a duplicate-child bug: if a POST reaches the server but its
+  // response is lost (timeout, dropped connection), the row still landed.
+  // Re-reading before the next save's POST-vs-PATCH decision must find it
+  // rather than POSTing a second child.
+  it('does not duplicate when a POST lands but its response is lost', async () => {
+    mockGet.mockResolvedValue([])
+    mockPost.mockRejectedValueOnce(new Error('response lost'))
+    const { result } = renderHook(() => useChildProfile())
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    act(() => { result.current.save({ age: 7 }) })
+    await act(async () => { jest.advanceTimersByTime(300) })
+    expect(mockPost).toHaveBeenCalledTimes(1)
+    expect(result.current.saveState).toBe('idle')
+
+    // The row actually landed despite the lost response.
+    mockGet.mockResolvedValue([{ id: 'created1' }])
+    mockPatch.mockResolvedValue({})
+    act(() => { result.current.save({ age: 8 }) })
+    await act(async () => { jest.advanceTimersByTime(300) })
+    expect(mockPost).toHaveBeenCalledTimes(1) // not called again
+    expect(mockPatch).toHaveBeenCalledWith('/api/child-profiles/created1', expect.objectContaining({ age: 8 }))
+  })
+
+  it('does not re-read the collection when the mount load already found the id', async () => {
+    mockGet.mockResolvedValue([{ id: 'cp1' }])
+    mockPatch.mockResolvedValue({})
+    const { result } = renderHook(() => useChildProfile())
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    expect(mockGet).toHaveBeenCalledTimes(1)
+
+    act(() => { result.current.save({ age: 9 }) })
+    await act(async () => { jest.advanceTimersByTime(300) })
+    expect(mockGet).toHaveBeenCalledTimes(1) // no extra read when id is already known
+    expect(mockPatch).toHaveBeenCalledWith('/api/child-profiles/cp1', expect.objectContaining({ age: 9 }))
+  })
+
   it('does not POST twice when a second save arrives while the first POST is in flight', async () => {
     mockGet.mockResolvedValue([])
     let resolvePost: (v: unknown) => void = () => {}
