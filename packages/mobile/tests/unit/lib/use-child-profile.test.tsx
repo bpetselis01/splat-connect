@@ -113,4 +113,51 @@ describe('useChildProfile', () => {
     await waitFor(() => expect(mockPatch).toHaveBeenCalledWith('/api/child-profiles/cp1', expect.objectContaining({ age: 5 })))
     expect(mockPost).not.toHaveBeenCalled()
   })
+
+  // Regression for a duplicate-child bug: id.current === null used to mean both
+  // "no child yet" and "we never found out". A failed load must fall into the
+  // second bucket and refuse to POST — a child may already exist on the server.
+  it('does not POST after a failed load, and fails the save visibly instead', async () => {
+    mockGet.mockRejectedValue(new Error('network'))
+    const { result } = renderHook(() => useChildProfile())
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    act(() => { result.current.save({ age: 9 }) })
+    await act(async () => { jest.advanceTimersByTime(300) })
+    expect(mockPost).not.toHaveBeenCalled()
+    expect(result.current.profile).toMatchObject({ age: 9 }) // optimistic value stays on screen
+    expect(result.current.saveState).toBe('idle') // fails visibly, not a silent no-op
+  })
+
+  // Regression for a duplicate-child bug: the load's `.then` used to skip the
+  // `id.current` assignment on unmount (`if (ignore) return`), so a write queued
+  // before unmount and resolved after it had no id and POSTed a duplicate.
+  it('does not POST after unmount, when a write was queued before the load resolved', async () => {
+    let resolveGet: (v: unknown) => void = () => {}
+    mockGet.mockReturnValue(new Promise((r) => { resolveGet = r }))
+    mockPatch.mockResolvedValue({})
+    const { result, unmount } = renderHook(() => useChildProfile())
+    act(() => { result.current.save({ age: 5 }) })
+    await act(async () => { jest.advanceTimersByTime(300) })
+    unmount()
+    await act(async () => { resolveGet([{ id: 'cp1', age: 99 }]) })
+    expect(mockPost).not.toHaveBeenCalled()
+    await waitFor(() => expect(mockPatch).toHaveBeenCalledWith('/api/child-profiles/cp1', expect.objectContaining({ age: 5 })))
+  })
+
+  it('does not POST twice when a second save arrives while the first POST is in flight', async () => {
+    mockGet.mockResolvedValue([])
+    let resolvePost: (v: unknown) => void = () => {}
+    mockPost.mockReturnValue(new Promise((r) => { resolvePost = r }))
+    mockPatch.mockResolvedValue({})
+    const { result } = renderHook(() => useChildProfile())
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    act(() => { result.current.save({ age: 7 }) })
+    await act(async () => { jest.advanceTimersByTime(300) })
+    // POST is now in flight
+    act(() => { result.current.save({ age: 8 }) })
+    await act(async () => { jest.advanceTimersByTime(300) })
+    expect(mockPost).toHaveBeenCalledTimes(1) // fails without the chain
+    await act(async () => { resolvePost({ id: 'new1', age: 7 }) })
+    await waitFor(() => expect(mockPatch).toHaveBeenCalledWith('/api/child-profiles/new1', expect.objectContaining({ age: 8 })))
+  })
 })
