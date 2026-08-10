@@ -16,14 +16,11 @@ export function useChildProfile() {
   // (a slow GET resolving after the first keystroke would otherwise win).
   const dirty = useRef(false)
   // Which child this screen is editing. Mobile shows one child; the API orders
-  // the collection oldest-first, so that is the first entry.
+  // the collection oldest-first, so that is the first entry. `id.current === null`
+  // is ambiguous — "no child exists yet" and "we don't currently know" look the
+  // same — so the write chain below re-reads the collection before trusting a
+  // null id rather than caching a verdict that can go stale.
   const id = useRef<string | null>(null)
-  // Whether the mount GET ever resolved successfully. `id.current === null` is
-  // ambiguous on its own — it means either "no child exists yet" (safe to POST)
-  // or "we never found out" (a failed/aborted load — NOT safe to POST, since a
-  // child may already exist on the server and POST has no dedupe). This flag
-  // disambiguates: only `loaded.current && !id.current` means "no child yet".
-  const loaded = useRef(false)
   // Every write queues here. The old endpoint was an upsert, so repeats were
   // harmless; POST is not idempotent, so two saves racing before the first
   // response lands would create two children. Serialising them means the second
@@ -43,13 +40,13 @@ export function useChildProfile() {
         // promise needs the real id (or to know the account truly has none) to
         // avoid POSTing a duplicate. Only the visible `profile` state is guarded.
         id.current = first?.id ?? null
-        loaded.current = true
         if (!ignore && !dirty.current) setProfile(first)
       })
       .catch(() => {
-        // loaded.current stays false here on purpose: a failed load means we
-        // don't know whether this account already has a child, so the write
-        // chain below must refuse to POST rather than risk a duplicate.
+        // id.current stays null here — a failed load means we don't know
+        // whether this account already has a child. The write chain re-reads
+        // before POSTing, so this isn't a lockout: the next save just retries
+        // the read instead of trusting a stale "no child" verdict.
         if (!ignore && !dirty.current) setProfile(null)
       })
       .finally(() => { if (!ignore) setLoading(false) })
@@ -65,26 +62,32 @@ export function useChildProfile() {
     timer.current = setTimeout(() => {
       const body = pending.current
       pending.current = {}
-      setSaveState('saving')
       writes.current = writes.current
         .then(async () => {
+          setSaveState('saving')
+          // We only know it is safe to POST after seeing the collection. The
+          // endpoint this replaced was an idempotent upsert; POST is not, and
+          // the server does not dedupe, so guessing here creates a second child.
+          // Re-reading also self-heals the two ways id goes unknown: a mount
+          // load that failed, and a POST whose response was lost after the row
+          // landed.
+          if (!id.current) {
+            const list = await apiClient.get<ChildProfile[]>('/api/child-profiles')
+            id.current = list?.[0]?.id ?? null
+          }
           if (id.current) {
             await apiClient.patch<ChildProfile>(`/api/child-profiles/${id.current}`, body)
-          } else if (loaded.current) {
+          } else {
             const created = await apiClient.post<ChildProfile>('/api/child-profiles', body)
             id.current = created.id
-          } else {
-            // The mount load never succeeded, so we can't tell whether this
-            // account already has a child. POSTing here could silently create
-            // a duplicate, so refuse and let this fall into the catch below —
-            // same visible outcome as any other failed write.
-            throw new Error('cannot save: child profile was never loaded')
           }
           setSaveState('saved')
         })
         // Back to idle rather than a false "saved" — never claim a write landed
         // when it didn't. The value stays on screen (optimistic) to retype/retry.
-        // Swallowing here also keeps the chain resolved so later writes still run.
+        // Swallowing here also keeps the chain resolved so later writes still
+        // run, and — since nothing was cached as a verdict — the next write
+        // retries from scratch instead of repeating whatever just failed.
         .catch(() => setSaveState('idle'))
     }, 250)
   }
