@@ -18,7 +18,7 @@ export default async function ChildListPage() {
     <div>
       <h1 className="mb-2 text-2xl font-bold text-ink">Child profiles</h1>
       <p className="mb-6 max-w-prose text-sm leading-relaxed text-muted">
-        This helps us suggest tutorials that suit your child. Everything is optional
+        This helps us suggest tutorials that suit your children. Everything is optional
         and only you can see it.
       </p>
 
