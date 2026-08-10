@@ -17,10 +17,14 @@
  *
  * Any signed-in account may hold child profiles — parent and contributor are not
  * exclusive. Writes go through the user client so Postgres RLS
- * (parent_id = auth.uid()) is the authorization boundary, as it always was. No
- * handler checks ownership itself: another parent's row is invisible to the
- * query, which is why :id routes answer 404 and never 403 — a 403 would confirm
- * the row exists.
+ * (parent_id = auth.uid()) is the primary authorization boundary, as it always
+ * was. The :id handlers also scope their query by parent_id themselves, as
+ * defence in depth: RLS grants admins a bypass ("Admin full access to
+ * child_profiles" in 003_ability_profile.sql), so without the explicit
+ * parent_id check an admin token could PATCH or DELETE any child profile by
+ * id. With it, another parent's row is invisible to the query for every
+ * caller, which is why :id routes answer 404 and never 403 — a 403 would
+ * confirm the row exists.
  */
 import { Hono } from 'hono'
 import { createUserClient } from '../supabase/user-client.js'
@@ -86,6 +90,7 @@ childProfiles.patch('/:id', async (c) => {
     .from('child_profiles')
     .update(row)
     .eq('id', c.req.param('id'))
+    .eq('parent_id', c.get('userId'))
     .select()
     .maybeSingle()
   if (error) {
@@ -102,6 +107,7 @@ childProfiles.delete('/:id', async (c) => {
     .from('child_profiles')
     .delete()
     .eq('id', c.req.param('id'))
+    .eq('parent_id', c.get('userId'))
     .select()
     .maybeSingle()
   if (error) {
