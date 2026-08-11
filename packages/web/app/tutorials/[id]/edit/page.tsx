@@ -5,8 +5,7 @@ import Link from 'next/link'
 import { Suspense } from 'react'
 import { EditFilesSection } from '@/components/edit-files-section'
 import { AddStlForm } from '@/components/add-stl-form'
-import { EditPartsSection } from '@/components/edit-parts-section'
-import { EditToolsSection } from '@/components/edit-tools-section'
+import { EditItemsSection } from '@/components/edit-items-section'
 import { EditBackingSection } from '@/components/edit-backing-section'
 import { EditDetailsSection } from '@/components/edit-details-section'
 import { EditCollaboratorsSection } from '@/components/edit-collaborators-section'
@@ -170,7 +169,13 @@ export default async function EditTutorialPage({
       status: stepStatuses.parts,
       content: (
         <div className="panel pt-5">
-          <EditPartsSection initialParts={parts} onSave={saveParts} />
+          <EditItemsSection
+            noun="part"
+            withQuantity
+            initialItems={parts}
+            // withQuantity guarantees every ItemInput carries quantity, hence the cast.
+            onSave={(items) => saveParts(items as Parameters<typeof saveParts>[0])}
+          />
         </div>
       ),
     },
@@ -180,7 +185,7 @@ export default async function EditTutorialPage({
       status: stepStatuses.tools,
       content: (
         <div className="panel pt-5">
-          <EditToolsSection initialTools={tools} onSave={saveTools} />
+          <EditItemsSection noun="tool" initialItems={tools} onSave={saveTools} />
         </div>
       ),
     },
