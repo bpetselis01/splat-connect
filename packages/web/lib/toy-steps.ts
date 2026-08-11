@@ -11,10 +11,6 @@ export interface ToyStep {
   content: ReactNode
 }
 
-export interface ToyStepStatusResult {
-  status: ToyStepStatus
-}
-
 export function getMissingToyFields(toy: {
   cover_photo_url: string | null
   switch_adapted: boolean
@@ -26,11 +22,11 @@ export function getMissingToyFields(toy: {
   return missing
 }
 
-export function computeToyStepStatuses(toy: Toy): Record<ToyStepId, ToyStepStatusResult> {
+export function computeToyStepStatuses(toy: Toy): Record<ToyStepId, ToyStepStatus> {
   const missing = getMissingToyFields(toy)
   return {
-    details: { status: 'done' },
-    photos: missing.length > 0 ? { status: 'attention' } : { status: 'done' },
-    review: toy.status === 'published' ? { status: 'done' } : { status: 'neutral' },
+    details: 'done',
+    photos: missing.length > 0 ? 'attention' : 'done',
+    review: toy.status === 'published' ? 'done' : 'neutral',
   }
 }
