@@ -13,9 +13,10 @@
  * - Mobile's autosave: a phone can be backgrounded mid-edit, a browser tab cannot, so
  *   an explicit Save is less machinery for the same safety. The page supplies onSave,
  *   so this component is the same for create and edit.
- * - The MACS/BFMF estimator behind "Answer a few simple questions instead"
- *   (ability-screen.tsx:117). Values are entered directly here, so macs_source and
- *   bfmf_source stay 'manual'.
+ *
+ * Mobile's MACS/BFMF estimator IS shared: estimateAbility/QUESTIONS live in
+ * @splat-connect/types so both platforms run one copy (pure logic, no React Native
+ * import). Only the UI around it is re-implemented, per the note above.
  *
  * Error handling matches terms-gate.tsx and profile-form.tsx: a failed save shows a
  * role="alert" message and does NOT show a saved indicator, since telling the user a
@@ -26,7 +27,7 @@
  * - supabase/migrations/003_ability_profile.sql: the column groupings this form follows
  */
 import { useState } from 'react'
-import type { ChildProfile } from '@splat-connect/types'
+import { QUESTIONS, estimateAbility, type ChildProfile } from '@splat-connect/types'
 
 const MACS_LEVELS = ['I', 'II', 'III', 'IV', 'V']
 const BFMF_SCORES = ['1', '2', '3', '4', '5']
@@ -69,6 +70,11 @@ export function ChildProfileForm({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
+  // Quiz answers stay local, same as mobile's ability-screen.tsx: only the
+  // derived MACS/BFMF pair is worth persisting, and re-deriving it from stored
+  // answers would mean versioning the question set.
+  const [showQuiz, setShowQuiz] = useState(false)
+  const [answers, setAnswers] = useState<(number | null)[]>(() => QUESTIONS.map(() => null))
 
   function set<K extends keyof ChildProfile>(key: K, value: ChildProfile[K]) {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -90,6 +96,20 @@ export function ChildProfileForm({
   // for e.g. an unmeasured palm width would be a lie in the data, so it stays null.
   function setNumber(key: 'palm_width_mm' | 'wrist_circ_mm' | 'forearm_length_mm', raw: string) {
     set(key, raw === '' ? null : Number(raw))
+  }
+
+  // Both scores and both sources land in one update — a half-applied estimate
+  // (level set, source still 'manual') would misreport where the value came from.
+  function runEstimate() {
+    if (answers.some((a) => a == null)) return
+    const { macs, bfmf } = estimateAbility(answers as number[])
+    setForm((prev) => ({
+      ...prev,
+      macs_level: macs,
+      bfmf_score: bfmf,
+      macs_source: 'estimated',
+      bfmf_source: 'estimated',
+    }))
   }
 
   async function save(e: React.FormEvent) {
@@ -157,7 +177,11 @@ export function ChildProfileForm({
               <select
                 id="macs_level"
                 value={form.macs_level ?? ''}
-                onChange={(e) => set('macs_level', e.target.value || null)}
+                // Choosing a level by hand makes it a manual value, whatever the
+                // quiz below may have estimated earlier.
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, macs_level: e.target.value || null, macs_source: 'manual' }))
+                }
                 className="field"
               >
                 <option value="">Not set</option>
@@ -172,7 +196,9 @@ export function ChildProfileForm({
               <select
                 id="bfmf_score"
                 value={form.bfmf_score ?? ''}
-                onChange={(e) => set('bfmf_score', e.target.value || null)}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, bfmf_score: e.target.value || null, bfmf_source: 'manual' }))
+                }
                 className="field"
               >
                 <option value="">Not set</option>
@@ -181,6 +207,54 @@ export function ChildProfileForm({
                 ))}
               </select>
             </div>
+          </div>
+
+          {/* Mobile's ability-screen.tsx estimator, over the same QUESTIONS from
+              @splat-connect/types. Chips rather than a select per question: four
+              short options each, and .chip + aria-pressed is already how the
+              upload form does single-choice rows. */}
+          <div>
+            <button
+              type="button"
+              onClick={() => setShowQuiz((s) => !s)}
+              aria-expanded={showQuiz}
+              className="text-left text-sm font-bold text-ink underline"
+            >
+              Don&apos;t know MACS level? Fill out this quick survey.
+            </button>
+
+            {showQuiz && (
+              <div className="mt-3 flex flex-col gap-4">
+                {QUESTIONS.map((q, qi) => (
+                  <fieldset key={qi}>
+                    <legend className="field-label">{q.prompt}</legend>
+                    <div className="flex flex-wrap gap-2">
+                      {q.options.map((opt, oi) => (
+                        <button
+                          key={oi}
+                          type="button"
+                          aria-pressed={answers[qi] === oi}
+                          onClick={() =>
+                            setAnswers((prev) => prev.map((a, i) => (i === qi ? oi : a)))
+                          }
+                          className="chip"
+                        >
+                          {opt}
+                        </button>
+                      ))}
+                    </div>
+                  </fieldset>
+                ))}
+                <button
+                  type="button"
+                  onClick={runEstimate}
+                  disabled={answers.some((a) => a == null)}
+                  className="btn btn-soft self-start"
+                >
+                  Estimate
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
