@@ -9,7 +9,7 @@ export default function ChildTabError({ reset }: { error: Error; reset: () => vo
   return (
     <div className="card flex max-w-xl flex-col gap-3 p-6">
       <p role="alert" className="alert alert-danger">
-        Could not load your child profile. Please try again.
+        Could not load your child profiles. Please try again.
       </p>
       <button type="button" onClick={reset} className="btn btn-accent self-start">
         Try again

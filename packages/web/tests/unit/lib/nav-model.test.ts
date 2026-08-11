@@ -58,11 +58,16 @@ describe('buildNav', () => {
     expect(hrefs(buildNav(caps({ isAdmin: true }), 0))).toContain('/admin')
   })
 
-  // Chain: gating Child profile on parenthood would mean the only way to create
+  // Chain: gating Child profiles on parenthood would mean the only way to create
   //        a child profile is to already have one. Capabilities no longer even
   //        carries an isParent flag, precisely because nothing may branch on it.
-  it('shows Child profile to accounts that are not yet parents', () => {
+  it('shows Child profiles to accounts that are not yet parents', () => {
     expect(hrefs(buildNav(caps(), 0))).toContain('/dashboard/child')
+  })
+
+  it('labels the row for more than one child', () => {
+    const labels = buildNav(caps(), 0).flatMap((g) => g.rows).map((r) => r.label)
+    expect(labels).toContain('Child profiles')
   })
 
   it('marks the six unbuilt rows as soon, and no others', () => {
