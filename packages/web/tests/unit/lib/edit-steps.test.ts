@@ -36,56 +36,56 @@ function tutorial(overrides: Partial<TutorialWithDetails> = {}): TutorialWithDet
 describe('computeStepStatuses', () => {
   it('marks details, files, parts, tools done when all required fields are present', () => {
     const statuses = computeStepStatuses(tutorial(), [])
-    expect(statuses.details.status).toBe('done')
-    expect(statuses.files.status).toBe('done')
-    expect(statuses.parts.status).toBe('done')
-    expect(statuses.tools.status).toBe('done')
+    expect(statuses.details).toBe('done')
+    expect(statuses.files).toBe('done')
+    expect(statuses.parts).toBe('done')
+    expect(statuses.tools).toBe('done')
   })
 
   it('flags details as attention when title is missing', () => {
     const statuses = computeStepStatuses(tutorial({ title: '' }), [])
-    expect(statuses.details.status).toBe('attention')
+    expect(statuses.details).toBe('attention')
   })
 
   it('does not flag details for a missing description', () => {
     const statuses = computeStepStatuses(tutorial({ description: null }), [])
-    expect(statuses.details.status).toBe('done')
+    expect(statuses.details).toBe('done')
   })
 
   it('flags files as attention when either the photo or PDF is missing', () => {
     const statuses = computeStepStatuses(tutorial({ toy_photo_url: null }), [])
-    expect(statuses.files.status).toBe('attention')
+    expect(statuses.files).toBe('attention')
   })
 
   it('flags parts as attention when there are zero parts', () => {
     const statuses = computeStepStatuses(tutorial({ parts: [] }), [])
-    expect(statuses.parts.status).toBe('attention')
+    expect(statuses.parts).toBe('attention')
   })
 
   it('flags tools as attention when there are zero tools', () => {
     const statuses = computeStepStatuses(tutorial({ tools: [] }), [])
-    expect(statuses.tools.status).toBe('attention')
+    expect(statuses.tools).toBe('attention')
   })
 
   it('stl is neutral when empty and done once a file exists', () => {
-    expect(computeStepStatuses(tutorial({ stl_files: [] }), []).stl.status).toBe('neutral')
+    expect(computeStepStatuses(tutorial({ stl_files: [] }), []).stl).toBe('neutral')
     expect(
       computeStepStatuses(tutorial({ stl_files: [{ id: 's1', tutorial_id: 't1', filename: 'a.stl', file_url: 'https://x/a.stl' }] }), [])
-        .stl.status
+        .stl
     ).toBe('done')
   })
 
   it('backing is neutral when no organisation has been asked and done once one has', () => {
-    expect(computeStepStatuses(tutorial(), []).backing.status).toBe('neutral')
+    expect(computeStepStatuses(tutorial(), []).backing).toBe('neutral')
     expect(
       computeStepStatuses(tutorial(), [
         { id: 'b1', tutorial_id: 't1', org_id: 'o1', status: 'pending', requested_at: '', responded_at: null, responded_by: null },
-      ]).backing.status
+      ]).backing
     ).toBe('done')
   })
 
   it('collaborators is neutral with only the primary and done once a second contributor joins', () => {
-    expect(computeStepStatuses(tutorial(), []).collaborators.status).toBe('neutral')
+    expect(computeStepStatuses(tutorial(), []).collaborators).toBe('neutral')
     const withCollaborator = tutorial({
       tutorial_contributors: [
         ...tutorial().tutorial_contributors,
@@ -98,6 +98,6 @@ describe('computeStepStatuses', () => {
         },
       ],
     })
-    expect(computeStepStatuses(withCollaborator, []).collaborators.status).toBe('done')
+    expect(computeStepStatuses(withCollaborator, []).collaborators).toBe('done')
   })
 })
