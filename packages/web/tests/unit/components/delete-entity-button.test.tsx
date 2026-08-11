@@ -1,5 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import type { Route } from 'next'
 import { DeleteEntityButton } from '@/components/delete-entity-button'
 
 const push = vi.fn()
@@ -19,7 +20,7 @@ function openDialog(
   endpoint = '/api/child-profiles/c1',
   redirectTo = '/dashboard/child'
 ) {
-  render(<DeleteEntityButton endpoint={endpoint} redirectTo={redirectTo as any} label={label} />)
+  render(<DeleteEntityButton endpoint={endpoint} redirectTo={redirectTo as Route<string>} label={label} />)
   fireEvent.click(screen.getByRole('button', { name: `Delete ${label}` }))
   return screen.getByRole('dialog')
 }
