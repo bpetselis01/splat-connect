@@ -263,7 +263,7 @@ export function ChildProfileForm({
                     </div>
                   </fieldset>
                 ))}
-                <div className="flex gap-2">
+                <div className="flex justify-end gap-2">
                   <button type="button" onClick={() => setShowQuiz(false)} className="btn btn-soft">
                     Cancel
                   </button>
