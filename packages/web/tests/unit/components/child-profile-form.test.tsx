@@ -146,15 +146,18 @@ describe('ChildProfileForm — ability quiz', () => {
     'None',
   ]
 
-  it('keeps the quiz collapsed until the toggle is clicked', () => {
+  // jsdom applies no UA stylesheet, so a closed dialog's contents stay
+  // queryable — "is it open" is read off the `open` attribute, same as
+  // delete-child-button.test.tsx.
+  it('keeps the quiz dialog closed until the toggle is clicked', () => {
     render(<ChildProfileForm profile={null} onSave={vi.fn()} />)
-    expect(screen.queryByRole('button', { name: 'Estimate' })).not.toBeInTheDocument()
+    expect(screen.getByRole('dialog', { hidden: true })).not.toHaveAttribute('open')
 
     fireEvent.click(screen.getByRole('button', { name: TOGGLE }))
-    expect(screen.getByRole('button', { name: 'Estimate' })).toBeInTheDocument()
+    expect(screen.getByRole('dialog')).toHaveAttribute('open')
 
-    fireEvent.click(screen.getByRole('button', { name: TOGGLE }))
-    expect(screen.queryByRole('button', { name: 'Estimate' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(screen.getByRole('dialog', { hidden: true })).not.toHaveAttribute('open')
   })
 
   it('keeps Estimate disabled until every question is answered', () => {
