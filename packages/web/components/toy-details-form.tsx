@@ -1,0 +1,78 @@
+'use client'
+import { useState } from 'react'
+
+export function ToyDetailsForm({
+  toy,
+  onSave,
+}: {
+  toy: { name: string; description: string | null; condition: number }
+  onSave: (form: { name: string; description: string | null; condition: number }) => Promise<void>
+}) {
+  const [name, setName] = useState(toy.name)
+  const [description, setDescription] = useState(toy.description ?? '')
+  const [condition, setCondition] = useState(toy.condition)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [saved, setSaved] = useState(false)
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault()
+    setBusy(true)
+    setError(null)
+    setSaved(false)
+    try {
+      await onSave({ name, description: description === '' ? null : description, condition })
+      setSaved(true)
+    } catch {
+      setError('Could not save your changes. Please try again.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <form onSubmit={save} className="flex flex-col gap-4 px-5 pb-5">
+      <div>
+        <label htmlFor="toy-name" className="field-label">Name</label>
+        <input
+          id="toy-name"
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="field"
+          required
+        />
+      </div>
+      <div>
+        <label htmlFor="toy-condition" className="field-label">Condition (1–10)</label>
+        <input
+          id="toy-condition"
+          type="number"
+          min={1}
+          max={10}
+          value={condition}
+          onChange={(e) => setCondition(Number(e.target.value))}
+          className="field"
+          required
+        />
+      </div>
+      <div>
+        <label htmlFor="toy-description" className="field-label">Description</label>
+        <textarea
+          id="toy-description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          className="field"
+          rows={4}
+        />
+      </div>
+      <div className="flex items-center gap-3">
+        <button type="submit" disabled={busy} className="btn btn-accent">
+          {busy ? 'Saving…' : 'Save'}
+        </button>
+        {error && <p role="alert" className="alert alert-danger">{error}</p>}
+        {saved && <p className="text-sm font-semibold text-mint-deep">Saved</p>}
+      </div>
+    </form>
+  )
+}
