@@ -142,7 +142,7 @@ export default async function EditTutorialPage({
     {
       id: 'details',
       label: 'Details',
-      ...stepStatuses.details,
+      status: stepStatuses.details,
       content: (
         <div className="panel pt-5">
           <EditDetailsSection tutorial={tutorial!} onSave={saveDetails} />
@@ -152,7 +152,7 @@ export default async function EditTutorialPage({
     {
       id: 'files',
       label: 'Files',
-      ...stepStatuses.files,
+      status: stepStatuses.files,
       content: (
         <div className="panel pt-5">
           <EditFilesSection
@@ -167,7 +167,7 @@ export default async function EditTutorialPage({
     {
       id: 'parts',
       label: 'Parts',
-      ...stepStatuses.parts,
+      status: stepStatuses.parts,
       content: (
         <div className="panel pt-5">
           <EditPartsSection initialParts={parts} onSave={saveParts} />
@@ -177,7 +177,7 @@ export default async function EditTutorialPage({
     {
       id: 'tools',
       label: 'Tools',
-      ...stepStatuses.tools,
+      status: stepStatuses.tools,
       content: (
         <div className="panel pt-5">
           <EditToolsSection initialTools={tools} onSave={saveTools} />
@@ -187,7 +187,7 @@ export default async function EditTutorialPage({
     {
       id: 'stl',
       label: 'STL Files',
-      ...stepStatuses.stl,
+      status: stepStatuses.stl,
       content: (
         <div className="panel px-5 pt-5 pb-5">
           {stlFiles.length > 0 && (
@@ -213,7 +213,7 @@ export default async function EditTutorialPage({
     {
       id: 'backing',
       label: 'Backing',
-      ...stepStatuses.backing,
+      status: stepStatuses.backing,
       content: (
         <div className="panel pt-5">
           <EditBackingSection
@@ -230,7 +230,7 @@ export default async function EditTutorialPage({
     {
       id: 'collaborators',
       label: 'Collaborators',
-      ...stepStatuses.collaborators,
+      status: stepStatuses.collaborators,
       content: (
         <div className="panel pt-5">
           <EditCollaboratorsSection
