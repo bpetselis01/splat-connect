@@ -1,4 +1,7 @@
-import { estimateAbility, QUESTIONS } from '../../../lib/estimate-ability'
+// The module under test lives in @splat-connect/types (both platforms use it);
+// that package has no test runner of its own, so its one runnable check lives
+// here, in the suite that already existed when the file moved.
+import { estimateAbility, QUESTIONS } from '@splat-connect/types'
 
 describe('estimateAbility (placeholder mapping)', () => {
   it('has exactly 4 questions, each with 4 options', () => {
