@@ -36,8 +36,6 @@ export interface ChildProfile {
   updated_at: string
 }
 
-export type ToyStatus = 'draft' | 'published'
-
 export interface Toy {
   id: string
   owner_id: string
@@ -47,7 +45,7 @@ export interface Toy {
   switch_adapted: boolean
   cover_photo_url: string | null
   switch_photo_urls: string[]
-  status: ToyStatus
+  status: 'draft' | 'published'
   created_at: string
   updated_at: string
 }
