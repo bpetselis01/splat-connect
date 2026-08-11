@@ -643,22 +643,79 @@
     background: rgb(10 53 80 / 0.5);
   }
 
-  /* Centered, unlike .shell-drawer's edge anchor — a confirmation dialog, not
-     a nav panel. Same backdrop tone for visual consistency between the two
-     native <dialog> usages in this app. */
-  .terms-dialog {
-    margin: auto;
+  /* Centered, unlike .shell-drawer's edge anchor — a modal panel, not a nav
+     panel. Explicit fixed + translate centering rather than the UA's
+     `dialog:modal { inset: 0; margin: auto }` default, which some engines
+     fail to re-center once max-width/max-height clamp the box. Shared by
+     contributor-terms-dialog.tsx, delete-child-button.tsx and
+     child-profile-form.tsx's survey — fixing the centering here fixes it
+     everywhere a dialog opens. */
+  .dialog-panel {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    margin: 0;
+    transform: translate(-50%, -50%);
     max-width: 32rem;
     width: calc(100vw - 2rem);
     max-height: calc(100dvh - 4rem);
     overflow-y: auto;
     border: 0;
     border-radius: 0.75rem;
-    padding: 1.5rem;
+    padding: 1.75rem;
     background: var(--color-surface);
+    box-shadow: var(--shadow-lift);
   }
 
-  .terms-dialog::backdrop {
+  .dialog-panel::backdrop {
     background: rgb(10 53 80 / 0.5);
+  }
+
+  .dialog-panel code {
+    border-radius: 0.375rem;
+    background: var(--color-sunken);
+    padding: 0.125rem 0.375rem;
+    font-size: 0.8125em;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    @starting-style {
+      .dialog-panel[open] {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.96);
+      }
+    }
+
+    .dialog-panel[open] {
+      opacity: 1;
+      transition:
+        opacity 180ms var(--ease-out-quart),
+        transform 180ms var(--ease-out-quart),
+        overlay 180ms var(--ease-out-quart) allow-discrete,
+        display 180ms var(--ease-out-quart) allow-discrete;
+    }
+
+    .dialog-panel::backdrop {
+      opacity: 1;
+      transition: opacity 180ms var(--ease-out-quart) allow-discrete;
+    }
+
+    @starting-style {
+      .dialog-panel[open]::backdrop {
+        opacity: 0;
+      }
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    @starting-style {
+      .dialog-panel[open] {
+        opacity: 0;
+      }
+    }
+
+    .dialog-panel[open] {
+      transition: opacity 180ms var(--ease-out-quart) allow-discrete;
+    }
   }
 }

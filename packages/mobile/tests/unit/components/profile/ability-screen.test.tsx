@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { AbilityScreen } from '../../../../components/profile/ability-screen'
-import { QUESTIONS, estimateAbility } from '../../../../lib/estimate-ability'
+import { QUESTIONS, estimateAbility } from '@splat-connect/types'
 
 let mockProfile: Record<string, unknown> = {}
 const mockSave = jest.fn()

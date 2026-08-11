@@ -135,3 +135,102 @@ describe('ChildProfileForm — remaining sections', () => {
     expect(body.needs_arm_attachment).toBe(false)
   })
 })
+
+describe('ChildProfileForm — ability quiz', () => {
+  const TOGGLE = "Don't know MACS level? Fill out this quick survey."
+  // One option per question, all index 0 → total 0 → MACS I / BFMF 1.
+  const ALL_ZERO = [
+    'Easily, with either hand',
+    'Independently with both hands',
+    'Uses it well as a helper',
+    'None',
+  ]
+
+  // jsdom applies no UA stylesheet, so a closed dialog's contents stay
+  // queryable — "is it open" is read off the `open` attribute, same as
+  // delete-child-button.test.tsx.
+  it('keeps the quiz dialog closed until the toggle is clicked', () => {
+    render(<ChildProfileForm profile={null} onSave={vi.fn()} />)
+    expect(screen.getByRole('dialog', { hidden: true })).not.toHaveAttribute('open')
+
+    fireEvent.click(screen.getByRole('button', { name: TOGGLE }))
+    expect(screen.getByRole('dialog')).toHaveAttribute('open')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(screen.getByRole('dialog', { hidden: true })).not.toHaveAttribute('open')
+  })
+
+  it('keeps Estimate disabled until every question is answered', () => {
+    render(<ChildProfileForm profile={null} onSave={vi.fn()} />)
+    fireEvent.click(screen.getByRole('button', { name: TOGGLE }))
+
+    for (const option of ALL_ZERO.slice(0, 3)) {
+      expect(screen.getByRole('button', { name: 'Estimate' })).toBeDisabled()
+      fireEvent.click(screen.getByRole('button', { name: option }))
+    }
+    expect(screen.getByRole('button', { name: 'Estimate' })).toBeDisabled()
+
+    fireEvent.click(screen.getByRole('button', { name: ALL_ZERO[3] }))
+    expect(screen.getByRole('button', { name: 'Estimate' })).toBeEnabled()
+  })
+
+  // Chain: the whole point of the quiz is that a parent who does not know the
+  //        clinical terms still ends up with both scores recorded — and the
+  //        record has to say they were estimated, not measured.
+  it('fills both scores from the quiz and marks them estimated', async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined)
+    render(<ChildProfileForm profile={null} onSave={onSave} />)
+    fireEvent.click(screen.getByRole('button', { name: TOGGLE }))
+
+    for (const option of ALL_ZERO) fireEvent.click(screen.getByRole('button', { name: option }))
+    fireEvent.click(screen.getByRole('button', { name: 'Estimate' }))
+
+    expect(screen.getByLabelText('MACS level')).toHaveValue('I')
+    expect(screen.getByLabelText('BFMF score')).toHaveValue('1')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await screen.findByText('Saved')
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({
+        macs_level: 'I',
+        bfmf_score: '1',
+        macs_source: 'estimated',
+        bfmf_source: 'estimated',
+      })
+    )
+  })
+
+  // Chain: an estimate the parent then overrides by hand is no longer an
+  //        estimate, and storing it as one misreports how the value was got.
+  it('reverts a source to manual when that dropdown is edited afterwards', async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined)
+    render(<ChildProfileForm profile={null} onSave={onSave} />)
+    fireEvent.click(screen.getByRole('button', { name: TOGGLE }))
+
+    for (const option of ALL_ZERO) fireEvent.click(screen.getByRole('button', { name: option }))
+    fireEvent.click(screen.getByRole('button', { name: 'Estimate' }))
+    fireEvent.change(screen.getByLabelText('MACS level'), { target: { value: 'IV' } })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await screen.findByText('Saved')
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({
+        macs_level: 'IV',
+        macs_source: 'manual',
+        // Untouched, so still the estimate.
+        bfmf_score: '1',
+        bfmf_source: 'estimated',
+      })
+    )
+  })
+
+  it('marks a chosen option as pressed', () => {
+    render(<ChildProfileForm profile={null} onSave={vi.fn()} />)
+    fireEvent.click(screen.getByRole('button', { name: TOGGLE }))
+
+    const option = screen.getByRole('button', { name: ALL_ZERO[0] })
+    expect(option).toHaveAttribute('aria-pressed', 'false')
+    fireEvent.click(option)
+    expect(option).toHaveAttribute('aria-pressed', 'true')
+  })
+})

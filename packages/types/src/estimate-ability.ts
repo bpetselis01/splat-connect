@@ -2,6 +2,12 @@
 // question set and the answer→MACS/BFMF lookup are a naive linear bucketing
 // stand-in and MUST be revised by someone with real MACS/BFMF domain
 // expertise before this is trusted for assistive-device decisions.
+//
+// Lives here rather than in packages/mobile/lib because both mobile's
+// ability-screen.tsx and web's child-profile-form.tsx run it, and a second
+// copy would drift the moment the mapping above is revised. Pure logic, no
+// React Native import — see the docstring in child-profile-form.tsx for why
+// the UI around it is still re-implemented per platform.
 
 export type MacsLevel = 'I' | 'II' | 'III' | 'IV' | 'V'
 export type BfmfLevel = '1' | '2' | '3' | '4' | '5'

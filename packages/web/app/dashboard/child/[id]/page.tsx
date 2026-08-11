@@ -20,16 +20,19 @@ export default async function EditChildPage({ params }: { params: Promise<{ id: 
   const index = children.findIndex((c) => c.id === id)
   if (index === -1) notFound()
   const child = children[index]
+  const label = childLabel(child, index)
 
   return (
     <div>
       <Link href="/dashboard/child" className="mb-4 inline-block text-sm text-muted">
         ← Child profiles
       </Link>
-      <h1 className="mb-6 text-2xl font-bold text-ink">{childLabel(child, index)}</h1>
+      <h1 className="mb-6 text-2xl font-bold text-ink">{label}</h1>
       <EditChildForm child={child} />
       <div className="mt-8">
-        <DeleteChildButton id={child.id} />
+        {/* The heading's label doubles as the delete confirmation phrase, so the
+            user reads the same identifier twice before the profile is gone. */}
+        <DeleteChildButton id={child.id} label={label} />
       </div>
     </div>
   )

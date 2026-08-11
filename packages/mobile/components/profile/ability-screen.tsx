@@ -7,9 +7,8 @@ import Animated, {
   useDerivedValue,
   withTiming,
 } from 'react-native-reanimated'
-import type { ChildProfile } from '@splat-connect/types'
+import { estimateAbility, QUESTIONS, type ChildProfile } from '@splat-connect/types'
 import { useChildProfile } from '../../lib/use-child-profile'
-import { estimateAbility, QUESTIONS } from '../../lib/estimate-ability'
 import { theme } from '../../lib/theme'
 import { Dropdown } from './fields'
 import { Chip } from '../ui/Chip'
