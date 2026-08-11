@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { EditToolsSection } from '@/components/edit-tools-section'
+import { EditItemsSection } from '@/components/edit-items-section'
 import type { Tool } from '@splat-connect/types'
 
 const mockTools: Tool[] = [
@@ -21,13 +21,13 @@ const mockTools: Tool[] = [
 ]
 
 function setup(onSave = vi.fn().mockResolvedValue(undefined), tools = mockTools) {
-  return render(<EditToolsSection initialTools={tools} onSave={onSave} />)
+  return render(<EditItemsSection noun="tool" initialItems={tools} onSave={onSave} />)
 }
 
-describe('EditToolsSection', () => {
+describe('EditItemsSection (tools)', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  // Tests: EditToolsSection displays the names of all tools passed via initialTools
+  // Tests: EditItemsSection displays the names of all tools passed via initialTools
   // How:   setup() renders with mockTools (Soldering Iron, Heat Gun); checks both names visible
   // Chain: the edit form shows the tutorial's current tools → contributors can see what they
   //        saved and identify which tools to edit, delete, or leave as-is
