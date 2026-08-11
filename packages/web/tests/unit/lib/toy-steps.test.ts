@@ -41,19 +41,19 @@ describe('getMissingToyFields', () => {
 
 describe('computeToyStepStatuses', () => {
   it('marks details always done, since name/condition are required at creation', () => {
-    expect(computeToyStepStatuses(toy()).details.status).toBe('done')
+    expect(computeToyStepStatuses(toy()).details).toBe('done')
   })
 
   it('flags photos as attention when the cover photo is missing', () => {
-    expect(computeToyStepStatuses(toy({ cover_photo_url: null })).photos.status).toBe('attention')
+    expect(computeToyStepStatuses(toy({ cover_photo_url: null })).photos).toBe('attention')
   })
 
   it('marks photos done once every publish precondition is met', () => {
-    expect(computeToyStepStatuses(toy()).photos.status).toBe('done')
+    expect(computeToyStepStatuses(toy()).photos).toBe('done')
   })
 
   it('review is neutral while draft and done once published', () => {
-    expect(computeToyStepStatuses(toy({ status: 'draft' })).review.status).toBe('neutral')
-    expect(computeToyStepStatuses(toy({ status: 'published' })).review.status).toBe('done')
+    expect(computeToyStepStatuses(toy({ status: 'draft' })).review).toBe('neutral')
+    expect(computeToyStepStatuses(toy({ status: 'published' })).review).toBe('done')
   })
 })
