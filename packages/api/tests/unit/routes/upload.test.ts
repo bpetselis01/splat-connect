@@ -19,17 +19,27 @@ const mockUserStorageBucket = {
 }
 const mockUserStorage = { from: vi.fn(() => mockUserStorageBucket) }
 
+const mockToysMaybeSingle = vi.fn()
+const mockToysQuery = {
+  select: vi.fn(() => mockToysQuery),
+  eq: vi.fn(() => mockToysQuery),
+  maybeSingle: mockToysMaybeSingle,
+}
+const mockToysFrom = vi.fn(() => mockToysQuery)
+
 // --- Mock strategy ---
 // Two Supabase storage clients are mocked: the admin client (mockAdminList, mockAdminRemove)
 // is used by the photo route to list and delete existing photos before uploading a replacement;
 // the user client (mockUpload, mockGetPublicUrl) is used by all three upload routes to upload
 // files and retrieve their public CDN URLs. No real files are sent to Supabase in any test.
+// The user client also stubs `.from('toys')` (mockToysFrom/mockToysMaybeSingle) so the
+// toy-cover/toy-switch-photo ownership check can be driven per-test.
 vi.mock('../../../src/supabase/client.js', () => ({
   createAdminClient: () => ({ storage: mockAdminStorage }),
 }))
 
 vi.mock('../../../src/supabase/user-client.js', () => ({
-  createUserClient: () => ({ storage: mockUserStorage }),
+  createUserClient: () => ({ storage: mockUserStorage, from: mockToysFrom }),
 }))
 
 const { default: upload } = await import('../../../src/routes/upload.js')
@@ -242,6 +252,7 @@ describe('POST /stl', () => {
 describe('POST /toy-cover', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockToysMaybeSingle.mockResolvedValue({ data: { id: 'toy-1' }, error: null })
     mockUserList.mockResolvedValue({ data: [], error: null })
     mockUserRemove.mockResolvedValue({ error: null })
     mockUpload.mockResolvedValue({ data: { path: 'toy-1/cover.png' }, error: null })
@@ -295,11 +306,22 @@ describe('POST /toy-cover', () => {
     expect(body.url).toBe('https://example.com/toy-1/cover.png')
     expect(mockUpload).toHaveBeenCalledWith('toy-1/cover.png', expect.any(Blob), { upsert: false })
   })
+
+  it('returns 404 when the toy is not owned by the caller', async () => {
+    mockToysMaybeSingle.mockResolvedValue({ data: null, error: null })
+    const form = new FormData()
+    form.append('file', new Blob(['img'], { type: 'image/png' }), 'cover.png')
+    form.append('toyId', 'toy-1')
+    const res = await makeApp().request('/toy-cover', { method: 'POST', body: form })
+    expect(res.status).toBe(404)
+    expect(mockUpload).not.toHaveBeenCalled()
+  })
 })
 
 describe('POST /toy-switch-photo', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockToysMaybeSingle.mockResolvedValue({ data: { id: 'toy-1' }, error: null })
     mockUpload.mockResolvedValue({ data: { path: 'toy-1/switch-uuid.jpg' }, error: null })
     mockGetPublicUrl.mockReturnValue({ data: { publicUrl: 'https://example.com/toy-1/switch-uuid.jpg' } })
   })
@@ -345,5 +367,15 @@ describe('POST /toy-switch-photo', () => {
     expect(res.status).toBe(200)
     const body = (await res.json()) as { url: string }
     expect(body.url).toBe('https://example.com/toy-1/switch-uuid.jpg')
+  })
+
+  it('returns 404 when the toy is not owned by the caller', async () => {
+    mockToysMaybeSingle.mockResolvedValue({ data: null, error: null })
+    const form = new FormData()
+    form.append('file', new Blob(['img'], { type: 'image/jpeg' }), 'switch.jpg')
+    form.append('toyId', 'toy-1')
+    const res = await makeApp().request('/toy-switch-photo', { method: 'POST', body: form })
+    expect(res.status).toBe(404)
+    expect(mockUpload).not.toHaveBeenCalled()
   })
 })

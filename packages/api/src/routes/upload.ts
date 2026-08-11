@@ -10,6 +10,10 @@ import type { AuthVariables } from '../middleware/auth.js'
 
 const upload = new Hono<{ Variables: AuthVariables }>()
 
+// Postgres rejects a malformed uuid with 22P02 — mapped to 404 rather than
+// 500, same convention as toys.ts.
+const INVALID_TEXT_REPRESENTATION = '22P02'
+
 upload.post('/pdf', async (c) => {
   const formData = await c.req.formData()
   const file = formData.get('file') as File | null
@@ -106,8 +110,24 @@ upload.post('/toy-cover', async (c) => {
     return c.json({ error: 'file and toyId are required' }, 400)
   }
 
-  const ext = file.name.split('.').pop() ?? 'jpg'
   const supabase = createUserClient(c.get('token'))
+
+  // Bucket RLS (Task 1) already scopes writes to the owner, but every other
+  // owner-scoped route in this codebase also checks explicitly (defence in
+  // depth) — see toys.ts for the identical convention.
+  const { data: toy, error: toyError } = await supabase
+    .from('toys')
+    .select('id')
+    .eq('id', toyId)
+    .eq('owner_id', c.get('userId'))
+    .maybeSingle()
+  if (toyError) {
+    if (toyError.code === INVALID_TEXT_REPRESENTATION) return c.json({ error: 'Not found' }, 404)
+    return c.json({ error: toyError.message }, 500)
+  }
+  if (!toy) return c.json({ error: 'Not found' }, 404)
+
+  const ext = file.name.split('.').pop() ?? 'jpg'
 
   // A toy's folder holds both cover.* and switch-*.* files, so only the
   // existing cover files are removed before uploading the replacement.
@@ -139,8 +159,24 @@ upload.post('/toy-switch-photo', async (c) => {
     return c.json({ error: 'file and toyId are required' }, 400)
   }
 
-  const ext = file.name.split('.').pop() ?? 'jpg'
   const supabase = createUserClient(c.get('token'))
+
+  // Bucket RLS (Task 1) already scopes writes to the owner, but every other
+  // owner-scoped route in this codebase also checks explicitly (defence in
+  // depth) — see toys.ts for the identical convention.
+  const { data: toy, error: toyError } = await supabase
+    .from('toys')
+    .select('id')
+    .eq('id', toyId)
+    .eq('owner_id', c.get('userId'))
+    .maybeSingle()
+  if (toyError) {
+    if (toyError.code === INVALID_TEXT_REPRESENTATION) return c.json({ error: 'Not found' }, 404)
+    return c.json({ error: toyError.message }, 500)
+  }
+  if (!toy) return c.json({ error: 'Not found' }, 404)
+
+  const ext = file.name.split('.').pop() ?? 'jpg'
 
   // A gallery, not a replace — each switch photo gets its own filename.
   const { data, error } = await supabase.storage
