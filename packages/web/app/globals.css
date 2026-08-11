@@ -643,10 +643,11 @@
     background: rgb(10 53 80 / 0.5);
   }
 
-  /* Centered, unlike .shell-drawer's edge anchor — a confirmation dialog, not
-     a nav panel. Same backdrop tone for visual consistency between the two
-     native <dialog> usages in this app. */
-  .terms-dialog {
+  /* Centered, unlike .shell-drawer's edge anchor — a modal panel, not a nav
+     panel. Shared by contributor-terms-dialog.tsx and delete-child-button.tsx.
+     Same backdrop tone for visual consistency across the native <dialog>
+     usages in this app. */
+  .dialog-panel {
     margin: auto;
     max-width: 32rem;
     width: calc(100vw - 2rem);
@@ -658,7 +659,7 @@
     background: var(--color-surface);
   }
 
-  .terms-dialog::backdrop {
+  .dialog-panel::backdrop {
     background: rgb(10 53 80 / 0.5);
   }
 }
