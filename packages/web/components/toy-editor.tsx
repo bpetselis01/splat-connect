@@ -111,13 +111,13 @@ export function ToyEditor({ toy: initialToy }: { toy: Toy }) {
           {
             id: 'details',
             label: 'Details',
-            status: statuses.details.status,
+            status: statuses.details,
             content: <ToyDetailsForm toy={toy} onSave={saveDetails} />,
           },
           {
             id: 'photos',
             label: 'Photos',
-            status: statuses.photos.status,
+            status: statuses.photos,
             content: (
               <ToyPhotosSection
                 toyId={toy.id}
@@ -132,7 +132,7 @@ export function ToyEditor({ toy: initialToy }: { toy: Toy }) {
           {
             id: 'review',
             label: 'Review',
-            status: statuses.review.status,
+            status: statuses.review,
             content: <ToyReviewPanel toy={toy} onPublished={setToy} />,
           },
         ]}
