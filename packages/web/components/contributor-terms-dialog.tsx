@@ -35,7 +35,7 @@ export function ContributorTermsDialog({
   return (
     <dialog
       ref={ref}
-      className="terms-dialog"
+      className="dialog-panel"
       onCancel={() => onClose()}
       onClick={(e) => {
         // A click that never reaches the inner div (stopped below) landed on
