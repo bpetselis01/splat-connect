@@ -35,6 +35,23 @@ export interface ChildProfile {
   created_at: string
   updated_at: string
 }
+
+export type ToyStatus = 'draft' | 'published'
+
+export interface Toy {
+  id: string
+  owner_id: string
+  name: string
+  description: string | null
+  condition: number
+  switch_adapted: boolean
+  cover_photo_url: string | null
+  switch_photo_urls: string[]
+  status: ToyStatus
+  created_at: string
+  updated_at: string
+}
+
 export type Difficulty = 'easy' | 'medium' | 'hard'
 export type TutorialStatus = 'draft' | 'pending' | 'approved' | 'rejected'
 export type ContributorRole = 'primary' | 'collaborator'
