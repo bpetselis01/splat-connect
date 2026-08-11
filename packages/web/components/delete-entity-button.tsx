@@ -1,12 +1,14 @@
 'use client'
 /**
- * Delete for a child profile, behind a typed confirmation.
+ * Delete for any owned entity, behind a typed confirmation. Generalized from
+ * the original child-profile-only version: `endpoint`/`redirectTo`/`label`
+ * let toys reuse the same dialog instead of a second near-identical component.
  *
  * Deliberately unlike edit-items-section.tsx and admin/contributors, which both
- * delete on first click: a child profile is a page of hand-entered data with no
- * undo, and a parts row is not. The phrase echoes the label the page is already
- * showing, so the user has to read which child they are about to destroy — the
- * two-click arm/timeout this replaces could not tell them that.
+ * delete on first click: this is a page of hand-entered data with no undo. The
+ * phrase echoes the label the page is already showing, so the user has to read
+ * what they are about to destroy — the two-click arm/timeout this replaces
+ * could not tell them that.
  *
  * Dialog mechanics are contributor-terms-dialog.tsx's: a native <dialog> driven
  * by showModal()/close() from an effect, so the focus trap, Escape, and the
@@ -16,9 +18,18 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import type { Route } from 'next'
 import { browserApiClient } from '@/lib/browser-api-client'
 
-export function DeleteChildButton({ id, label }: { id: string; label: string }) {
+export function DeleteEntityButton({
+  endpoint,
+  redirectTo,
+  label,
+}: {
+  endpoint: string
+  redirectTo: Route<string>
+  label: string
+}) {
   const router = useRouter()
   const ref = useRef<HTMLDialogElement>(null)
   const [open, setOpen] = useState(false)
@@ -45,13 +56,13 @@ export function DeleteChildButton({ id, label }: { id: string; label: string }) 
     setBusy(true)
     setError(null)
     try {
-      await browserApiClient.delete(`/api/child-profiles/${id}`)
-      router.push('/dashboard/child')
+      await browserApiClient.delete(endpoint)
+      router.push(redirectTo)
       router.refresh()
     } catch {
       // The dialog stays open with the phrase intact: a dropped request is not
       // a reason to make the user type it out again.
-      setError('Could not delete this child profile. Please try again.')
+      setError(`Could not delete this ${label}. Please try again.`)
       setBusy(false)
     }
   }
@@ -63,7 +74,7 @@ export function DeleteChildButton({ id, label }: { id: string; label: string }) 
         onClick={() => setOpen(true)}
         className="btn btn-danger btn-sm self-start"
       >
-        Delete child profile
+        Delete {label}
       </button>
 
       <dialog
@@ -71,25 +82,22 @@ export function DeleteChildButton({ id, label }: { id: string; label: string }) 
         className="dialog-panel"
         onCancel={() => cancel()}
         onClick={(e) => {
-          // A click that never reaches the inner div (stopped below) landed on
-          // the dialog element itself, which for a modal <dialog> includes its
-          // ::backdrop.
           if (e.target === ref.current) cancel()
         }}
       >
         <div onClick={(e) => e.stopPropagation()} className="flex flex-col gap-4">
           <h2 className="text-lg font-bold text-ink">Delete {label}?</h2>
           <p className="text-sm text-muted">
-            This permanently deletes this child profile and everything recorded on it. It
-            cannot be undone.
+            This permanently deletes this {label} and everything recorded on it. It cannot be
+            undone.
           </p>
 
           <div>
-            <label htmlFor="confirm-delete-child" className="field-label">
+            <label htmlFor="confirm-delete-entity" className="field-label">
               Type <code>{phrase}</code> to confirm
             </label>
             <input
-              id="confirm-delete-child"
+              id="confirm-delete-entity"
               type="text"
               value={typed}
               onChange={(e) => setTyped(e.target.value)}
