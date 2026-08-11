@@ -316,6 +316,16 @@ describe('POST /toy-cover', () => {
     expect(res.status).toBe(404)
     expect(mockUpload).not.toHaveBeenCalled()
   })
+
+  it('returns 404 when toyId is malformed', async () => {
+    mockToysMaybeSingle.mockResolvedValue({ data: null, error: { code: '22P02' } })
+    const form = new FormData()
+    form.append('file', new Blob(['img'], { type: 'image/png' }), 'cover.png')
+    form.append('toyId', 'not-a-uuid')
+    const res = await makeApp().request('/toy-cover', { method: 'POST', body: form })
+    expect(res.status).toBe(404)
+    expect(mockUpload).not.toHaveBeenCalled()
+  })
 })
 
 describe('POST /toy-switch-photo', () => {
@@ -374,6 +384,16 @@ describe('POST /toy-switch-photo', () => {
     const form = new FormData()
     form.append('file', new Blob(['img'], { type: 'image/jpeg' }), 'switch.jpg')
     form.append('toyId', 'toy-1')
+    const res = await makeApp().request('/toy-switch-photo', { method: 'POST', body: form })
+    expect(res.status).toBe(404)
+    expect(mockUpload).not.toHaveBeenCalled()
+  })
+
+  it('returns 404 when toyId is malformed', async () => {
+    mockToysMaybeSingle.mockResolvedValue({ data: null, error: { code: '22P02' } })
+    const form = new FormData()
+    form.append('file', new Blob(['img'], { type: 'image/jpeg' }), 'switch.jpg')
+    form.append('toyId', 'not-a-uuid')
     const res = await makeApp().request('/toy-switch-photo', { method: 'POST', body: form })
     expect(res.status).toBe(404)
     expect(mockUpload).not.toHaveBeenCalled()
