@@ -4,7 +4,7 @@
  *
  * A client component because the "ask another organisation" picker needs a
  * controlled select and both actions need a busy state. The writes are server
- * actions passed in as props, matching EditPartsSection and EditToolsSection.
+ * actions passed in as props, matching EditItemsSection.
  *
  * READ-ONLY once the tutorial is approved, and that is not a UI nicety: every
  * action is already refused by policy — you cannot add backing to published work,
