@@ -97,4 +97,61 @@ upload.post('/stl', async (c) => {
   return c.json({ url: urlData.publicUrl, filename: file.name })
 })
 
+upload.post('/toy-cover', async (c) => {
+  const formData = await c.req.formData()
+  const file = formData.get('file') as File | null
+  const toyId = formData.get('toyId') as string | null
+
+  if (!file || !toyId) {
+    return c.json({ error: 'file and toyId are required' }, 400)
+  }
+
+  const ext = file.name.split('.').pop() ?? 'jpg'
+  const supabase = createUserClient(c.get('token'))
+
+  // A toy's folder holds both cover.* and switch-*.* files, so only the
+  // existing cover files are removed before uploading the replacement.
+  const { data: existing } = await supabase.storage.from('toy-photos-library').list(toyId)
+  const existingCovers = existing?.filter((f) => f.name.startsWith('cover.')) ?? []
+  if (existingCovers.length) {
+    await supabase.storage
+      .from('toy-photos-library')
+      .remove(existingCovers.map((f) => `${toyId}/${f.name}`))
+  }
+
+  const { data, error } = await supabase.storage
+    .from('toy-photos-library')
+    .upload(`${toyId}/cover.${ext}`, file, { upsert: false })
+
+  if (error) return c.json({ error: error.message }, 500)
+
+  const { data: urlData } = supabase.storage.from('toy-photos-library').getPublicUrl(data.path)
+
+  return c.json({ url: urlData.publicUrl })
+})
+
+upload.post('/toy-switch-photo', async (c) => {
+  const formData = await c.req.formData()
+  const file = formData.get('file') as File | null
+  const toyId = formData.get('toyId') as string | null
+
+  if (!file || !toyId) {
+    return c.json({ error: 'file and toyId are required' }, 400)
+  }
+
+  const ext = file.name.split('.').pop() ?? 'jpg'
+  const supabase = createUserClient(c.get('token'))
+
+  // A gallery, not a replace — each switch photo gets its own filename.
+  const { data, error } = await supabase.storage
+    .from('toy-photos-library')
+    .upload(`${toyId}/switch-${crypto.randomUUID()}.${ext}`, file, { upsert: false })
+
+  if (error) return c.json({ error: error.message }, 500)
+
+  const { data: urlData } = supabase.storage.from('toy-photos-library').getPublicUrl(data.path)
+
+  return c.json({ url: urlData.publicUrl })
+})
+
 export default upload

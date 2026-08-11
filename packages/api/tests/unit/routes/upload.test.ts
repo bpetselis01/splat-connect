@@ -9,7 +9,14 @@ const mockAdminStorage = { from: vi.fn(() => mockAdminStorageBucket) }
 
 const mockUpload = vi.fn()
 const mockGetPublicUrl = vi.fn()
-const mockUserStorageBucket = { upload: mockUpload, getPublicUrl: mockGetPublicUrl }
+const mockUserList = vi.fn()
+const mockUserRemove = vi.fn()
+const mockUserStorageBucket = {
+  upload: mockUpload,
+  getPublicUrl: mockGetPublicUrl,
+  list: mockUserList,
+  remove: mockUserRemove,
+}
 const mockUserStorage = { from: vi.fn(() => mockUserStorageBucket) }
 
 // --- Mock strategy ---
@@ -229,5 +236,114 @@ describe('POST /stl', () => {
     const body = await res.json() as any
     expect(body.url).toBe('https://example.com/tid-1/bracket.stl')
     expect(body.filename).toBe('bracket.stl')
+  })
+})
+
+describe('POST /toy-cover', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockUserList.mockResolvedValue({ data: [], error: null })
+    mockUserRemove.mockResolvedValue({ error: null })
+    mockUpload.mockResolvedValue({ data: { path: 'toy-1/cover.png' }, error: null })
+    mockGetPublicUrl.mockReturnValue({ data: { publicUrl: 'https://example.com/toy-1/cover.png' } })
+  })
+
+  it('returns 400 when file is missing', async () => {
+    const form = new FormData()
+    form.append('toyId', 'toy-1')
+    const res = await makeApp().request('/toy-cover', { method: 'POST', body: form })
+    expect(res.status).toBe(400)
+  })
+
+  it('returns 400 when toyId is missing', async () => {
+    const form = new FormData()
+    form.append('file', new Blob(['img'], { type: 'image/png' }), 'cover.png')
+    const res = await makeApp().request('/toy-cover', { method: 'POST', body: form })
+    expect(res.status).toBe(400)
+  })
+
+  it('removes only existing cover files, leaving switch photos alone', async () => {
+    mockUserList.mockResolvedValue({
+      data: [{ name: 'cover.jpg' }, { name: 'switch-abc.jpg' }],
+      error: null,
+    })
+    const form = new FormData()
+    form.append('file', new Blob(['img'], { type: 'image/png' }), 'cover.png')
+    form.append('toyId', 'toy-1')
+    const res = await makeApp().request('/toy-cover', { method: 'POST', body: form })
+    expect(res.status).toBe(200)
+    expect(mockUserList).toHaveBeenCalledWith('toy-1')
+    expect(mockUserRemove).toHaveBeenCalledWith(['toy-1/cover.jpg'])
+  })
+
+  it('returns 500 when upload fails', async () => {
+    mockUpload.mockResolvedValue({ data: null, error: { message: 'Storage error' } })
+    const form = new FormData()
+    form.append('file', new Blob(['img'], { type: 'image/png' }), 'cover.png')
+    form.append('toyId', 'toy-1')
+    const res = await makeApp().request('/toy-cover', { method: 'POST', body: form })
+    expect(res.status).toBe(500)
+  })
+
+  it('returns 200 with url on success', async () => {
+    const form = new FormData()
+    form.append('file', new Blob(['img'], { type: 'image/png' }), 'cover.png')
+    form.append('toyId', 'toy-1')
+    const res = await makeApp().request('/toy-cover', { method: 'POST', body: form })
+    expect(res.status).toBe(200)
+    const body = (await res.json()) as { url: string }
+    expect(body.url).toBe('https://example.com/toy-1/cover.png')
+    expect(mockUpload).toHaveBeenCalledWith('toy-1/cover.png', expect.any(Blob), { upsert: false })
+  })
+})
+
+describe('POST /toy-switch-photo', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockUpload.mockResolvedValue({ data: { path: 'toy-1/switch-uuid.jpg' }, error: null })
+    mockGetPublicUrl.mockReturnValue({ data: { publicUrl: 'https://example.com/toy-1/switch-uuid.jpg' } })
+  })
+
+  it('returns 400 when file is missing', async () => {
+    const form = new FormData()
+    form.append('toyId', 'toy-1')
+    const res = await makeApp().request('/toy-switch-photo', { method: 'POST', body: form })
+    expect(res.status).toBe(400)
+  })
+
+  it('returns 400 when toyId is missing', async () => {
+    const form = new FormData()
+    form.append('file', new Blob(['img'], { type: 'image/jpeg' }), 'switch.jpg')
+    const res = await makeApp().request('/toy-switch-photo', { method: 'POST', body: form })
+    expect(res.status).toBe(400)
+  })
+
+  it('never lists or removes existing files — always appends', async () => {
+    const form = new FormData()
+    form.append('file', new Blob(['img'], { type: 'image/jpeg' }), 'switch.jpg')
+    form.append('toyId', 'toy-1')
+    const res = await makeApp().request('/toy-switch-photo', { method: 'POST', body: form })
+    expect(res.status).toBe(200)
+    expect(mockUserList).not.toHaveBeenCalled()
+    expect(mockUserRemove).not.toHaveBeenCalled()
+  })
+
+  it('returns 500 when upload fails', async () => {
+    mockUpload.mockResolvedValue({ data: null, error: { message: 'Storage error' } })
+    const form = new FormData()
+    form.append('file', new Blob(['img'], { type: 'image/jpeg' }), 'switch.jpg')
+    form.append('toyId', 'toy-1')
+    const res = await makeApp().request('/toy-switch-photo', { method: 'POST', body: form })
+    expect(res.status).toBe(500)
+  })
+
+  it('returns 200 with url on success', async () => {
+    const form = new FormData()
+    form.append('file', new Blob(['img'], { type: 'image/jpeg' }), 'switch.jpg')
+    form.append('toyId', 'toy-1')
+    const res = await makeApp().request('/toy-switch-photo', { method: 'POST', body: form })
+    expect(res.status).toBe(200)
+    const body = (await res.json()) as { url: string }
+    expect(body.url).toBe('https://example.com/toy-1/switch-uuid.jpg')
   })
 })
