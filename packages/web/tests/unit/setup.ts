@@ -1,9 +1,10 @@
 import '@testing-library/jest-dom'
 
 // jsdom (24.x) reflects the <dialog> `open` attribute but implements neither
-// showModal() nor close() — needed by shell-frame.tsx's mobile drawer and
-// contributor-terms-dialog.tsx. Polyfilled here (not per-test) since both
-// components call these unconditionally in an effect on mount.
+// showModal() nor close() — needed by shell-frame.tsx's mobile drawer,
+// contributor-terms-dialog.tsx, and delete-child-button.tsx. Polyfilled here
+// (not per-test) since these components call them unconditionally in an
+// effect on mount.
 if (!HTMLDialogElement.prototype.showModal) {
   HTMLDialogElement.prototype.showModal = function (this: HTMLDialogElement) {
     this.setAttribute('open', '')
