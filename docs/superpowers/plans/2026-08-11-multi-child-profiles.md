@@ -112,12 +112,20 @@ create policy "Parent can delete own child profile"
 Run:
 
 ```bash
-cd /Users/byronpetselis/Documents/splat-connect && supabase db reset
+cd /Users/byronpetselis/Documents/splat-connect && supabase migration up --local
 ```
 
-Expected: the reset completes and applies migrations through `020_multi_child_profiles.sql` without error.
+Expected: `020_multi_child_profiles.sql` applies without error.
 
-**IMPORTANT:** `supabase db reset` is known to leave the Kong gateway returning 502s on this project even when the auth container is healthy. If subsequent API calls fail with 502, restart Kong (`docker restart supabase_kong_splat-connect`) before concluding anything is broken.
+**Do NOT run `supabase db reset` for this.** It wipes the shared local database that other work on this machine may be using, and it is known to leave the Kong gateway returning 502s on this project even when the auth container is healthy. Only a pending migration needs applying, and `migration up` does that without dropping data.
+
+If `migration up` is unavailable or refuses, apply the file directly instead:
+
+```bash
+psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -f supabase/migrations/020_multi_child_profiles.sql
+```
+
+If you later hit unexplained 502s from the API, restart Kong (`docker restart supabase_kong_splat-connect`) before concluding anything is broken.
 
 Then verify the schema changed:
 

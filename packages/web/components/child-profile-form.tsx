@@ -3,8 +3,7 @@
  * Web counterpart to mobile's three profile screens plus hub —
  * packages/mobile/components/profile/{ability,everyday-needs,customization}-screen.tsx
  * and child-profile-home.tsx. React Native components cannot be reused, so this is a
- * re-implementation against the same PUT /api/child-profile contract and the same
- * ChildProfile type from @splat-connect/types.
+ * re-implementation against the same ChildProfile type from @splat-connect/types.
  *
  * This component covers all three sections mirrored from mobile's screens: Ability
  * Profile, Everyday Needs, and Customization Metrics — grouped in the markup the same
@@ -12,8 +11,8 @@
  *
  * Deliberately does NOT port:
  * - Mobile's autosave: a phone can be backgrounded mid-edit, a browser tab cannot, so
- *   an explicit Save is less machinery for the same safety. PUT /api/child-profile is
- *   already an upsert, so create and update are the same call.
+ *   an explicit Save is less machinery for the same safety. The page supplies onSave,
+ *   so this component is the same for create and edit.
  * - The MACS/BFMF estimator behind "Answer a few simple questions instead"
  *   (ability-screen.tsx:117). Values are entered directly here, so macs_source and
  *   bfmf_source stay 'manual'.
@@ -23,11 +22,10 @@
  * change was recorded when the server never recorded it leaves them confused later.
  *
  * Related files:
- * - packages/api routes backing PUT /api/child-profile
+ * - packages/api/src/routes/child-profiles.ts: the endpoints the pages call
  * - supabase/migrations/003_ability_profile.sql: the column groupings this form follows
  */
 import { useState } from 'react'
-import { browserApiClient } from '@/lib/browser-api-client'
 import type { ChildProfile } from '@splat-connect/types'
 
 const MACS_LEVELS = ['I', 'II', 'III', 'IV', 'V']
@@ -38,8 +36,15 @@ const BFMF_SCORES = ['1', '2', '3', '4', '5']
 const CHALLENGES = ['Grasping', 'Holding', 'Fine motor', 'Strength', 'Coordination', 'Fatigue', 'Other']
 const SENSORY_PREFERENCES = ['Soft', 'Firm', 'Smooth', 'Textured', 'Lightweight', 'No preference']
 
-export function ChildProfileForm({ profile }: { profile: ChildProfile | null }) {
+export function ChildProfileForm({
+  profile,
+  onSave,
+}: {
+  profile: Partial<ChildProfile> | null
+  onSave: (form: Partial<ChildProfile>) => Promise<void>
+}) {
   const [form, setForm] = useState<Partial<ChildProfile>>(() => ({
+    name: profile?.name ?? null,
     age: profile?.age ?? null,
     primary_diagnosis: profile?.primary_diagnosis ?? null,
     macs_level: profile?.macs_level ?? null,
@@ -93,7 +98,7 @@ export function ChildProfileForm({ profile }: { profile: ChildProfile | null }) 
     setError(null)
     setSaved(false)
     try {
-      await browserApiClient.put('/api/child-profile', form)
+      await onSave(form)
       setSaved(true)
     } catch {
       setError('Could not save your changes. Please try again.')
@@ -110,6 +115,17 @@ export function ChildProfileForm({ profile }: { profile: ChildProfile | null }) 
       <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-6">
         <div className="card flex flex-col gap-4 p-5">
           <h2 className="text-lg font-bold text-ink">Ability profile</h2>
+
+          <div>
+            <label htmlFor="name" className="field-label">Name (optional)</label>
+            <input
+              id="name"
+              type="text"
+              value={form.name ?? ''}
+              onChange={(e) => set('name', e.target.value === '' ? null : e.target.value)}
+              className="field"
+            />
+          </div>
 
           <div>
             <label htmlFor="age" className="field-label">Age</label>
