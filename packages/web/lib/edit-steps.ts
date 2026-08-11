@@ -20,33 +20,27 @@ export interface EditStep {
   content: ReactNode
 }
 
-export interface EditStepStatusResult {
-  status: EditStepStatus
-}
-
 const DETAILS_FIELDS = ['Title', 'Difficulty']
 const FILES_FIELDS = ['Tutorial PDF', 'Toy photo']
 const PARTS_FIELDS = ['At least one part']
 const TOOLS_FIELDS = ['At least one tool']
 
-function fieldStatus(missing: string[], fields: string[]): EditStepStatusResult {
-  const relevant = missing.filter((f) => fields.includes(f))
-  return relevant.length > 0 ? { status: 'attention' } : { status: 'done' }
+function fieldStatus(missing: string[], fields: string[]): EditStepStatus {
+  return missing.some((f) => fields.includes(f)) ? 'attention' : 'done'
 }
 
 export function computeStepStatuses(
   tutorial: TutorialWithDetails,
   backing: TutorialOrg[]
-): Record<EditStepId, EditStepStatusResult> {
+): Record<EditStepId, EditStepStatus> {
   const missing = getMissingFields(tutorial)
   return {
     details: fieldStatus(missing, DETAILS_FIELDS),
     files: fieldStatus(missing, FILES_FIELDS),
     parts: fieldStatus(missing, PARTS_FIELDS),
     tools: fieldStatus(missing, TOOLS_FIELDS),
-    stl: tutorial.stl_files.length > 0 ? { status: 'done' } : { status: 'neutral' },
-    backing: backing.length > 0 ? { status: 'done' } : { status: 'neutral' },
-    collaborators:
-      tutorial.tutorial_contributors.length > 1 ? { status: 'done' } : { status: 'neutral' },
+    stl: tutorial.stl_files.length > 0 ? 'done' : 'neutral',
+    backing: backing.length > 0 ? 'done' : 'neutral',
+    collaborators: tutorial.tutorial_contributors.length > 1 ? 'done' : 'neutral',
   }
 }
