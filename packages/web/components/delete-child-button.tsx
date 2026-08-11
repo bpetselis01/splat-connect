@@ -1,34 +1,47 @@
 'use client'
 /**
- * Two-step delete for a child profile.
+ * Delete for a child profile, behind a typed confirmation.
  *
  * Deliberately unlike edit-items-section.tsx and admin/contributors, which both
  * delete on first click: a child profile is a page of hand-entered data with no
- * undo, and a parts row is not. Two clicks rather than a dialog component keeps
- * this to local state with nothing new to maintain.
+ * undo, and a parts row is not. The phrase echoes the label the page is already
+ * showing, so the user has to read which child they are about to destroy — the
+ * two-click arm/timeout this replaces could not tell them that.
+ *
+ * Dialog mechanics are contributor-terms-dialog.tsx's: a native <dialog> driven
+ * by showModal()/close() from an effect, so the focus trap, Escape, and the
+ * inert background come from the platform. As there, the native `close` event
+ * is deliberately not wired to the cancel path — this component also closes
+ * itself after a successful delete.
  */
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { browserApiClient } from '@/lib/browser-api-client'
 
-export function DeleteChildButton({ id }: { id: string }) {
+export function DeleteChildButton({ id, label }: { id: string; label: string }) {
   const router = useRouter()
-  const [armed, setArmed] = useState(false)
+  const ref = useRef<HTMLDialogElement>(null)
+  const [open, setOpen] = useState(false)
+  const [typed, setTyped] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // An armed button left armed is a trap for whatever the user clicks next.
-  useEffect(() => {
-    if (!armed) return
-    const t = setTimeout(() => setArmed(false), 3000)
-    return () => clearTimeout(t)
-  }, [armed])
+  const phrase = `confirm_delete_${label.replace(/ /g, '_')}`
 
-  async function handleClick() {
-    if (!armed) {
-      setArmed(true)
-      return
-    }
+  useEffect(() => {
+    const dialog = ref.current
+    if (!dialog) return
+    if (open && !dialog.open) dialog.showModal()
+    if (!open && dialog.open) dialog.close()
+  }, [open])
+
+  function cancel() {
+    setOpen(false)
+    setTyped('')
+    setError(null)
+  }
+
+  async function confirmDelete() {
     setBusy(true)
     setError(null)
     try {
@@ -36,22 +49,76 @@ export function DeleteChildButton({ id }: { id: string }) {
       router.push('/dashboard/child')
       router.refresh()
     } catch {
+      // The dialog stays open with the phrase intact: a dropped request is not
+      // a reason to make the user type it out again.
       setError('Could not delete this child profile. Please try again.')
       setBusy(false)
-      setArmed(false)
     }
   }
 
   return (
-    <div className="flex flex-col gap-2">
-      <button type="button" onClick={handleClick} disabled={busy} className="btn btn-danger btn-sm self-start">
-        {busy ? 'Deleting…' : armed ? 'Confirm delete' : 'Delete child profile'}
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="btn btn-danger btn-sm self-start"
+      >
+        Delete child profile
       </button>
-      {error && (
-        <p role="alert" className="alert alert-danger">
-          {error}
-        </p>
-      )}
-    </div>
+
+      <dialog
+        ref={ref}
+        className="dialog-panel"
+        onCancel={() => cancel()}
+        onClick={(e) => {
+          // A click that never reaches the inner div (stopped below) landed on
+          // the dialog element itself, which for a modal <dialog> includes its
+          // ::backdrop.
+          if (e.target === ref.current) cancel()
+        }}
+      >
+        <div onClick={(e) => e.stopPropagation()} className="flex flex-col gap-4">
+          <h2 className="text-lg font-bold text-ink">Delete {label}?</h2>
+          <p className="text-sm text-muted">
+            This permanently deletes this child profile and everything recorded on it. It
+            cannot be undone.
+          </p>
+
+          <div>
+            <label htmlFor="confirm-delete-child" className="field-label">
+              Type <code>{phrase}</code> to confirm
+            </label>
+            <input
+              id="confirm-delete-child"
+              type="text"
+              value={typed}
+              onChange={(e) => setTyped(e.target.value)}
+              autoComplete="off"
+              className="field"
+            />
+          </div>
+
+          {error && (
+            <p role="alert" className="alert alert-danger">
+              {error}
+            </p>
+          )}
+
+          <div className="flex gap-2">
+            <button type="button" onClick={cancel} className="btn btn-soft">
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={confirmDelete}
+              disabled={typed !== phrase || busy}
+              className="btn btn-danger"
+            >
+              {busy ? 'Deleting…' : 'Delete'}
+            </button>
+          </div>
+        </div>
+      </dialog>
+    </>
   )
 }
