@@ -5,8 +5,7 @@ import Link from 'next/link'
 import { Suspense } from 'react'
 import { EditFilesSection } from '@/components/edit-files-section'
 import { AddStlForm } from '@/components/add-stl-form'
-import { EditPartsSection } from '@/components/edit-parts-section'
-import { EditToolsSection } from '@/components/edit-tools-section'
+import { EditItemsSection } from '@/components/edit-items-section'
 import { EditBackingSection } from '@/components/edit-backing-section'
 import { EditDetailsSection } from '@/components/edit-details-section'
 import { EditCollaboratorsSection } from '@/components/edit-collaborators-section'
@@ -142,7 +141,7 @@ export default async function EditTutorialPage({
     {
       id: 'details',
       label: 'Details',
-      ...stepStatuses.details,
+      status: stepStatuses.details,
       content: (
         <div className="panel pt-5">
           <EditDetailsSection tutorial={tutorial!} onSave={saveDetails} />
@@ -152,7 +151,7 @@ export default async function EditTutorialPage({
     {
       id: 'files',
       label: 'Files',
-      ...stepStatuses.files,
+      status: stepStatuses.files,
       content: (
         <div className="panel pt-5">
           <EditFilesSection
@@ -167,27 +166,33 @@ export default async function EditTutorialPage({
     {
       id: 'parts',
       label: 'Parts',
-      ...stepStatuses.parts,
+      status: stepStatuses.parts,
       content: (
         <div className="panel pt-5">
-          <EditPartsSection initialParts={parts} onSave={saveParts} />
+          <EditItemsSection
+            noun="part"
+            withQuantity
+            initialItems={parts}
+            // withQuantity guarantees every ItemInput carries quantity, hence the cast.
+            onSave={(items) => saveParts(items as Parameters<typeof saveParts>[0])}
+          />
         </div>
       ),
     },
     {
       id: 'tools',
       label: 'Tools',
-      ...stepStatuses.tools,
+      status: stepStatuses.tools,
       content: (
         <div className="panel pt-5">
-          <EditToolsSection initialTools={tools} onSave={saveTools} />
+          <EditItemsSection noun="tool" initialItems={tools} onSave={saveTools} />
         </div>
       ),
     },
     {
       id: 'stl',
       label: 'STL Files',
-      ...stepStatuses.stl,
+      status: stepStatuses.stl,
       content: (
         <div className="panel px-5 pt-5 pb-5">
           {stlFiles.length > 0 && (
@@ -213,7 +218,7 @@ export default async function EditTutorialPage({
     {
       id: 'backing',
       label: 'Backing',
-      ...stepStatuses.backing,
+      status: stepStatuses.backing,
       content: (
         <div className="panel pt-5">
           <EditBackingSection
@@ -230,7 +235,7 @@ export default async function EditTutorialPage({
     {
       id: 'collaborators',
       label: 'Collaborators',
-      ...stepStatuses.collaborators,
+      status: stepStatuses.collaborators,
       content: (
         <div className="panel pt-5">
           <EditCollaboratorsSection

@@ -1,6 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { DeleteChildButton } from '@/components/delete-child-button'
+import type { Route } from 'next'
+import { DeleteEntityButton } from '@/components/delete-entity-button'
 
 const push = vi.fn()
 const refresh = vi.fn()
@@ -14,17 +15,19 @@ import { browserApiClient } from '@/lib/browser-api-client'
 // The dialog element stays in the DOM when closed, so "is it open" is read off
 // the `open` attribute rather than off query failures — jsdom applies no UA
 // stylesheet, so a closed dialog's contents are still queryable.
-function openDialog(label = 'Child 1') {
-  render(<DeleteChildButton id="c1" label={label} />)
-  fireEvent.click(screen.getByRole('button', { name: 'Delete child profile' }))
+function openDialog(
+  label = 'Child 1',
+  endpoint = '/api/child-profiles/c1',
+  redirectTo = '/dashboard/child'
+) {
+  render(<DeleteEntityButton endpoint={endpoint} redirectTo={redirectTo as Route<string>} label={label} />)
+  fireEvent.click(screen.getByRole('button', { name: `Delete ${label}` }))
   return screen.getByRole('dialog')
 }
 
-describe('DeleteChildButton', () => {
+describe('DeleteEntityButton', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  // Chain: a child profile is a page of hand-entered data with no undo, so
-  //        opening the dialog must never be the same gesture as deleting.
   it('opens the dialog without deleting', () => {
     const dialog = openDialog()
     expect(dialog).toHaveAttribute('open')
@@ -43,15 +46,13 @@ describe('DeleteChildButton', () => {
     expect(confirm).toBeEnabled()
   })
 
-  // Chain: an unnamed child is identified by position (child-label.ts), so the
-  //        phrase has to be built from whatever label the page is showing.
   it('builds the phrase from a name with spaces', () => {
     openDialog('Mary Jane')
     fireEvent.change(screen.getByLabelText(/to confirm/i), { target: { value: 'confirm_delete_Mary_Jane' } })
     expect(screen.getByRole('button', { name: 'Delete' })).toBeEnabled()
   })
 
-  it('deletes and returns to the list once confirmed', async () => {
+  it('deletes and returns to the redirect target once confirmed', async () => {
     vi.mocked(browserApiClient.delete).mockResolvedValue(null)
     openDialog()
     fireEvent.change(screen.getByLabelText(/to confirm/i), { target: { value: 'confirm_delete_Child_1' } })
@@ -70,13 +71,11 @@ describe('DeleteChildButton', () => {
     expect(dialog).not.toHaveAttribute('open')
     expect(browserApiClient.delete).not.toHaveBeenCalled()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Delete child profile' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Delete Child 1' }))
     expect(screen.getByLabelText(/to confirm/i)).toHaveValue('')
     expect(screen.getByRole('button', { name: 'Delete' })).toBeDisabled()
   })
 
-  // jsdom does not turn Escape into a `cancel` event, so dispatch it directly —
-  // same approach as contributor-terms-dialog.test.tsx.
   it('Escape closes without deleting', () => {
     const dialog = openDialog()
     fireEvent(dialog, new Event('cancel', { cancelable: true }))
@@ -97,8 +96,6 @@ describe('DeleteChildButton', () => {
     expect(dialog).toHaveAttribute('open')
   })
 
-  // Chain: a transient network failure must not make the user retype the
-  //        phrase, and must never look like the delete succeeded.
   it('reports a failed delete, stays open, and does not navigate', async () => {
     vi.mocked(browserApiClient.delete).mockRejectedValue(new Error('network'))
     const dialog = openDialog()
@@ -109,5 +106,17 @@ describe('DeleteChildButton', () => {
     expect(push).not.toHaveBeenCalled()
     expect(dialog).toHaveAttribute('open')
     expect(screen.getByLabelText(/to confirm/i)).toHaveValue('confirm_delete_Child_1')
+  })
+
+  it('deletes a toy via its own endpoint and label', async () => {
+    vi.mocked(browserApiClient.delete).mockResolvedValue(null)
+    openDialog('toy', '/api/toys/t1', '/dashboard/toys')
+    fireEvent.change(screen.getByLabelText(/to confirm/i), { target: { value: 'confirm_delete_toy' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
+
+    await waitFor(() => expect(browserApiClient.delete).toHaveBeenCalledWith('/api/toys/t1'))
+    expect(push).toHaveBeenCalledWith('/dashboard/toys')
+    expect(screen.getByText('Delete toy?')).toBeInTheDocument()
+    expect(screen.getByText(/permanently deletes this toy/)).toBeInTheDocument()
   })
 })

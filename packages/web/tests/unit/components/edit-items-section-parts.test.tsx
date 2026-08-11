@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { EditPartsSection } from '@/components/edit-parts-section'
+import { EditItemsSection } from '@/components/edit-items-section'
 import type { Part } from '@splat-connect/types'
 
 const mockParts: Part[] = [
@@ -23,13 +23,13 @@ const mockParts: Part[] = [
 ]
 
 function setup(onSave = vi.fn().mockResolvedValue(undefined), parts = mockParts) {
-  return render(<EditPartsSection initialParts={parts} onSave={onSave} />)
+  return render(<EditItemsSection noun="part" withQuantity initialItems={parts} onSave={onSave} />)
 }
 
-describe('EditPartsSection', () => {
+describe('EditItemsSection (parts)', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  // Tests: EditPartsSection displays the names of all parts passed via initialParts
+  // Tests: EditItemsSection displays the names of all parts passed via initialParts
   // How:   setup() renders with mockParts (Solder Wire, Heat Shrink); checks both names visible
   // Chain: the edit form pre-loads the tutorial's current parts → contributors see what
   //        they've already saved and can choose which ones to edit or delete

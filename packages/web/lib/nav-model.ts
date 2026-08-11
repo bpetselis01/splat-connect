@@ -64,7 +64,7 @@ export function buildNav(caps: Capabilities, unreadNotifications: number): NavGr
         // Route stays /dashboard: it is the post-login landing every redirect
         // and e2e waitForURL depends on. Only the label changed.
         { href: '/dashboard', label: 'My tutorials', icon: 'file' },
-        { href: '/dashboard/toys', label: 'My toys', icon: 'box', soon: true },
+        { href: '/dashboard/toys', label: 'My toys', icon: 'box' },
         {
           href: '/dashboard/print-requests',
           label: 'My print requests',

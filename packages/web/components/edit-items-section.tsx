@@ -1,7 +1,8 @@
 'use client'
-// Shared implementation behind EditPartsSection and EditToolsSection — the two
-// were line-for-line identical except for labels and the quantity field, and
-// had already drifted once. `withQuantity` is the only structural difference.
+// The parts and tools editors, which were line-for-line identical except for
+// labels and the quantity field and had already drifted once. Callers pass
+// noun="part" withQuantity or noun="tool"; `withQuantity` is the only
+// structural difference between them.
 import { useState, useEffect } from 'react'
 import type { BuyLink } from '@splat-connect/types'
 import { BuyLinksInput } from '@/components/buy-links-input'
