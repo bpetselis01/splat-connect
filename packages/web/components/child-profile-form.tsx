@@ -26,7 +26,7 @@
  * - packages/api/src/routes/child-profiles.ts: the endpoints the pages call
  * - supabase/migrations/003_ability_profile.sql: the column groupings this form follows
  */
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { QUESTIONS, estimateAbility, type ChildProfile } from '@splat-connect/types'
 
 const MACS_LEVELS = ['I', 'II', 'III', 'IV', 'V']
@@ -75,6 +75,17 @@ export function ChildProfileForm({
   // answers would mean versioning the question set.
   const [showQuiz, setShowQuiz] = useState(false)
   const [answers, setAnswers] = useState<(number | null)[]>(() => QUESTIONS.map(() => null))
+  const quizRef = useRef<HTMLDialogElement>(null)
+
+  // Same dialog mechanics as delete-child-button.tsx: showModal()/close() from
+  // an effect keyed on the boolean, so the platform supplies the focus trap,
+  // Escape, and inert background.
+  useEffect(() => {
+    const dialog = quizRef.current
+    if (!dialog) return
+    if (showQuiz && !dialog.open) dialog.showModal()
+    if (!showQuiz && dialog.open) dialog.close()
+  }, [showQuiz])
 
   function set<K extends keyof ChildProfile>(key: K, value: ChildProfile[K]) {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -216,15 +227,22 @@ export function ChildProfileForm({
           <div>
             <button
               type="button"
-              onClick={() => setShowQuiz((s) => !s)}
-              aria-expanded={showQuiz}
+              onClick={() => setShowQuiz(true)}
               className="text-left text-sm font-bold text-ink underline"
             >
               Don&apos;t know MACS level? Fill out this quick survey.
             </button>
 
-            {showQuiz && (
-              <div className="mt-3 flex flex-col gap-4">
+            <dialog
+              ref={quizRef}
+              className="dialog-panel"
+              onCancel={() => setShowQuiz(false)}
+              onClick={(e) => {
+                if (e.target === quizRef.current) setShowQuiz(false)
+              }}
+            >
+              <div onClick={(e) => e.stopPropagation()} className="flex flex-col gap-4">
+                <h2 className="text-lg font-bold text-ink">Ability survey</h2>
                 {QUESTIONS.map((q, qi) => (
                   <fieldset key={qi}>
                     <legend className="field-label">{q.prompt}</legend>
@@ -245,16 +263,24 @@ export function ChildProfileForm({
                     </div>
                   </fieldset>
                 ))}
-                <button
-                  type="button"
-                  onClick={runEstimate}
-                  disabled={answers.some((a) => a == null)}
-                  className="btn btn-soft self-start"
-                >
-                  Estimate
-                </button>
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => setShowQuiz(false)} className="btn btn-soft">
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      runEstimate()
+                      setShowQuiz(false)
+                    }}
+                    disabled={answers.some((a) => a == null)}
+                    className="btn btn-accent"
+                  >
+                    Estimate
+                  </button>
+                </div>
               </div>
-            )}
+            </dialog>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
