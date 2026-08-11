@@ -104,7 +104,7 @@ export function DeleteChildButton({ id, label }: { id: string; label: string }) 
             </p>
           )}
 
-          <div className="flex gap-2">
+          <div className="flex justify-end gap-2">
             <button type="button" onClick={cancel} className="btn btn-soft">
               Cancel
             </button>
