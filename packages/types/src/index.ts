@@ -1,3 +1,8 @@
+// The MACS/BFMF estimator behind both mobile's ability-screen.tsx quiz and the
+// web child-profile-form.tsx quiz. Runtime values, not just types — this
+// package is consumed as raw TypeScript, so that is safe.
+export * from './estimate-ability'
+
 export type Role = 'admin' | 'contributor'
 
 export interface ChildProfile {
