@@ -43,7 +43,9 @@ export function TutorialCard({ tutorial }: { tutorial: Listed }) {
     <Link
       href={`/tutorials/${tutorial.id}`}
       data-testid="tutorial-card"
-      className="card card-link overflow-hidden"
+      /* h-full so a card still fills its grid row when a wrapper (the library's
+         Reveal) sits between it and the grid and absorbs the stretch. */
+      className="card card-link flex h-full flex-col overflow-hidden"
     >
       {tutorial.toy_photo_url ? (
         <div className="relative h-36 w-full bg-sunken">
