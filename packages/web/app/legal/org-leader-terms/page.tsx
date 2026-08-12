@@ -17,13 +17,12 @@
  */
 export default function OrgLeaderTermsPage() {
   return (
-    // Not <main>: app/layout.tsx already renders one around this.
-    <article className="legal">
+    <main className="container">
       <h1>Organisation leader terms</h1>
       <p className="alert alert-warning">
         These terms have not been written yet. Anything you accept here is not
         binding, and will be replaced.
       </p>
-    </article>
+    </main>
   )
 }

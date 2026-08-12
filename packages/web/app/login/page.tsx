@@ -25,7 +25,6 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { AuthShell } from '@/components/auth-shell'
 
 export default function LoginPage() {
   const supabase = createClient()
@@ -67,52 +66,50 @@ export default function LoginPage() {
   }
 
   return (
-    <AuthShell
-      title="Sign in"
-      intro="Welcome back."
-      footer={
-        <>
-          New here?{' '}
-          <Link href="/signup" className="font-semibold text-brand-dark hover:underline">
-            Create an account
-          </Link>
-        </>
-      }
-    >
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <div>
-          <label htmlFor="email" className="field-label">Email</label>
-          <input
-            id="email"
-            type="email"
-            autoComplete="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="field"
-          />
-        </div>
-        <div>
-          <label htmlFor="password" className="field-label">Password</label>
-          <input
-            id="password"
-            type="password"
-            autoComplete="current-password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="field"
-          />
-        </div>
-        {error && (
-          <p role="alert" className="alert alert-danger">
-            {error}
-          </p>
-        )}
-        <button type="submit" disabled={loading} className="btn btn-primary btn-block mt-2">
-          {loading ? 'Signing in…' : 'Sign in'}
-        </button>
-      </form>
-    </AuthShell>
+    <div className="mx-auto mt-8 max-w-sm sm:mt-16">
+      <div className="card p-6 sm:p-8">
+        <h1 className="mb-6 text-2xl font-bold text-ink">Sign in</h1>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div>
+            <label htmlFor="email" className="field-label">Email</label>
+            <input
+              id="email"
+              type="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="field"
+            />
+          </div>
+          <div>
+            <label htmlFor="password" className="field-label">Password</label>
+            <input
+              id="password"
+              type="password"
+              autoComplete="current-password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="field"
+            />
+          </div>
+          {error && (
+            <p role="alert" className="alert alert-danger">
+              {error}
+            </p>
+          )}
+          <button type="submit" disabled={loading} className="btn btn-primary btn-block mt-2">
+            {loading ? 'Signing in…' : 'Sign in'}
+          </button>
+        </form>
+      </div>
+      <p className="mt-4 text-center text-sm text-muted">
+        New here?{' '}
+        <Link href="/signup" className="font-semibold text-brand-dark hover:underline">
+          Create an account
+        </Link>
+      </p>
+    </div>
   )
 }

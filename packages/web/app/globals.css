@@ -63,11 +63,6 @@
   body {
     background-color: var(--color-canvas);
     color: var(--color-ink);
-    /* clip, not hidden: hidden on body makes position:sticky stop working, and
-       .shell-rail plus the tutorial page's sticky column both depend on it.
-       This exists so .bleed's negative margins cannot open a horizontal
-       scrollbar on a narrow viewport. */
-    overflow-x: clip;
   }
 
   h1,
@@ -574,73 +569,6 @@
 
   .ref-row:last-child {
     border-bottom: none;
-  }
-
-  /* --- Legal prose ------------------------------------------------------ */
-  /*
-    The /legal pages carry long unstyled prose. Descendant selectors rather than
-    utilities because the body comes from a content component, so the page has
-    no access to its individual elements.
-
-    Measure is capped at 68ch: past roughly 75 the eye loses the line it is
-    returning to, and legal text is exactly where that costs a reader something.
-  */
-  .legal {
-    max-width: 68ch;
-  }
-
-  .legal h1 {
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: var(--color-ink);
-  }
-
-  .legal h2 {
-    margin-top: 2rem;
-    font-size: 1.125rem;
-    font-weight: 700;
-    color: var(--color-ink);
-  }
-
-  .legal p,
-  .legal li {
-    margin-top: 0.875rem;
-    line-height: 1.7;
-    color: var(--color-muted);
-  }
-
-  .legal ul,
-  .legal ol {
-    margin-top: 0.5rem;
-    padding-inline-start: 1.25rem;
-    list-style: revert;
-  }
-
-  /* .alert brings its own colour and spacing; the prose rules above would
-     override both. */
-  .legal .alert {
-    color: inherit;
-  }
-
-  /* --- Full-bleed ------------------------------------------------------- */
-  /*
-    Lets one section escape <main>'s max-w-6xl without restructuring the layout,
-    which would otherwise mean touching every authenticated page for the sake of
-    a marketing hero.
-
-    Signed in, the rail's <main> is not centred in the viewport, so the symmetric
-    negative margin would pull the section under the rail. .shell-main opts out
-    below, making this a no-op inside the app shell — which is the intent: the
-    presentation treatment is for signed-out visitors.
-  */
-  .bleed {
-    margin-inline: calc(50% - 50vw);
-    padding-inline: calc(50vw - 50%);
-  }
-
-  .shell-main .bleed {
-    margin-inline: 0;
-    padding-inline: 0;
   }
 }
 

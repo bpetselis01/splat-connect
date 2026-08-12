@@ -36,19 +36,7 @@ export default defineConfig({
   workers: process.env.CI ? 2 : 4,
   retries: process.env.CI ? 1 : 0,
   reporter: 'line',
-  // reducedMotion: Playwright's auto-waiting is asymmetric — actions (click,
-  // fill) wait for an element to stop moving, but queries do not. reflow.spec.ts
-  // reads two boundingBox() values and asserts their y offsets match within 4px,
-  // which a staggered grid mid-flight would exceed. Pinning the preference makes
-  // geometry deterministic and exercises the path a real visitor with the OS
-  // setting gets. components/reveal.tsx honours it, so reveals stay inert here.
-  // reducedMotion via contextOptions, not a top-level use key — it is a
-  // newContext option, and 1.61's UseOptions does not surface it directly.
-  use: {
-    baseURL: WEB_URL,
-    trace: 'on-first-retry',
-    contextOptions: { reducedMotion: 'reduce' },
-  },
+  use: { baseURL: WEB_URL, trace: 'on-first-retry' },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] }, grepInvert: /@responsive/ },
     {

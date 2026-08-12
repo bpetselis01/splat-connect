@@ -1,34 +1,28 @@
 /**
  * Home/Landing Page
- *
+ * 
  * Entry point for the web app. Shows:
  * - Hero section with call-to-action
  * - Featured tutorials
- * - How it works
+ * - Link to the library
  *
  * Process:
  * 1. Server-side: Fetches approved tutorials from /api/public/tutorials
  * 2. Displays featured tutorials (first 3)
  * 3. No authentication required
  *
- * The hero is the one surface on the site carrying brand colour as fill rather
- * than tint, and the only one that leaves <main>'s max-w-6xl (via .bleed, which
- * is a no-op inside the signed-in rail — see globals.css).
- *
- * The three step headings must keep accessible names ending "Browse", "Buy the
- * parts" and "Adapt & play": tests/e2e/public/home.spec.ts matches them with
- * $-anchored regexes.
- *
+ * User flows from home:
+ * - Logged-out users: Click "Browse Library" → /library
+ * - Logged-out users: The account entry point lives in the nav → /login
+ * - Logged-in users: Click featured tutorial → /tutorials/:id
+ * 
  * Related files:
- * - components/home-steps.tsx: the steps, plus the route's one GSAP moment
  * - components/tutorial-card.tsx: Tutorial preview cards
+ * - app/library/page.tsx: Full library browse
  * - routes/public.ts: API endpoint fetching approved tutorials
  */
 import Link from 'next/link'
 import { TutorialCard } from '@/components/tutorial-card'
-import { HomeSteps } from '@/components/home-steps'
-import { Reveal } from '@/components/reveal'
-import { fadeIn } from '@/lib/motion'
 import type { Tutorial } from '@splat-connect/types'
 
 export default async function HomePage() {
@@ -48,33 +42,23 @@ export default async function HomePage() {
 
   return (
     <div>
-      {/* Hero — brand as fill, not tint, and the site's one full-bleed surface */}
-      <div className="bleed bg-brand-deep">
-        <div className="mx-auto max-w-3xl px-6 py-16 text-center sm:py-24">
-          <h1 className="text-3xl font-bold tracking-tight text-white sm:text-5xl">
-            Every child deserves to play.
-          </h1>
-          <p className="mx-auto mt-5 max-w-xl leading-relaxed text-brand-soft sm:text-lg">
-            Free, step-by-step guides for switch-adapting commercial toys so
-            children with disabilities can join in.
-          </p>
-          <div className="mt-9 flex flex-wrap justify-center gap-3">
-            <Link href="/library" className="btn btn-accent px-8">
-              Browse the library →
-            </Link>
-            <Link
-              href="/challenges"
-              className="btn px-8 text-white ring-1 ring-inset ring-white/35 hover:bg-white/10"
-            >
-              See what families need
-            </Link>
-          </div>
-        </div>
+      {/* Hero — the one surface on the site that carries brand colour as fill */}
+      <div className="card-tint px-6 py-14 text-center sm:px-12 sm:py-20">
+        <h1 className="mx-auto max-w-2xl text-3xl font-bold text-ink sm:text-4xl">
+          Every child deserves to play.
+        </h1>
+        <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-brand-deep sm:text-lg">
+          Free, step-by-step guides for switch-adapting commercial toys so
+          children with disabilities can join in.
+        </p>
+        <Link href="/library" className="btn btn-primary mt-8 px-8">
+          Browse the library →
+        </Link>
       </div>
 
       {/* Featured tutorials */}
       {featured.length > 0 && (
-        <div className="mt-14">
+        <div className="mt-12">
           <div className="mb-4 flex items-center justify-between gap-4">
             <h2 className="text-xl font-bold text-ink">Recent tutorials</h2>
             <Link
@@ -94,10 +78,37 @@ export default async function HomePage() {
 
       {/* How it works — an ordered flow, so the steps are numbered and connected
           rather than dropped into three interchangeable cards. */}
-      <Reveal variants={fadeIn} className="mt-16">
+      <div className="mt-16">
         <h2 className="mb-6 text-xl font-bold text-ink">How it works</h2>
-        <HomeSteps />
-      </Reveal>
+        <ol className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {[
+            { icon: '🔍', title: 'Browse', desc: 'Find a tutorial for the toy your child loves.' },
+            { icon: '🛒', title: 'Buy the parts', desc: 'Each tutorial lists exactly what you need with links to buy.' },
+            { icon: '🎉', title: 'Adapt & play', desc: 'Follow the step-by-step PDF guide to make it work with a switch.' },
+          ].map((step, i) => (
+            <li key={step.title} className="relative flex gap-4 sm:block">
+              {/* Connector between steps — decorative, hidden from the reading order */}
+              {i < 2 && (
+                <span
+                  aria-hidden="true"
+                  className="absolute left-6 top-14 hidden h-[calc(100%-2rem)] w-px bg-line sm:left-14 sm:top-6 sm:block sm:h-px sm:w-[calc(100%-2.5rem)]"
+                />
+              )}
+              <span className="relative z-10 grid h-12 w-12 shrink-0 place-items-center rounded-full bg-brand-tint text-2xl sm:mb-4">
+                <span aria-hidden="true">{step.icon}</span>
+              </span>
+              <div>
+                <h3 className="font-bold text-ink">
+                  <span className="text-muted">{i + 1}.</span> {step.title}
+                </h3>
+                <p className="mt-1 max-w-prose text-sm leading-relaxed text-muted">
+                  {step.desc}
+                </p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </div>
     </div>
   )
 }

@@ -14,12 +14,9 @@
  * - /upload: signed in
  * - /dashboard: signed in
  * - /admin: Admins only (role='admin')
- * - /organizations: the index is public — it explains what an organisation is and
- *   fetches nothing when signed out. Everything below it (/organizations/:id and
- *   the leader workspace inside it) is signed in only: leadership is
- *   per-organisation data, not a role, so there is nothing there for middleware
- *   to read, and the organisation page checks it via lib/org-access.ts and shows
- *   or hides the workspace accordingly.
+ * - /organizations: Signed in only — leadership is per-organisation data, not a
+ *   role, so there is nothing here for middleware to read. The organisation page
+ *   checks it via lib/org-access.ts and shows or hides the workspace accordingly.
  * - Contributor terms: /dashboard, /upload, /organizations and
  *   /tutorials/<id>/edit redirect to /onboarding/contributor-terms until the account
  *   has accepted. /admin is excluded — the terms govern submitting, not reviewing.
@@ -93,17 +90,9 @@ export async function middleware(request: NextRequest) {
   const signedInRoutes = ['/upload', '/dashboard', '/organizations']
   const adminRoutes = ['/admin']
 
-  // Exact path only, never the prefix. /organizations is a public explainer
-  // that fetches nothing when signed out; everything beneath it —
-  // /organizations/:id and the leader workspace inside it — reads
-  // organisation data through an authenticated client and stays signed-in.
-  // Widening this to startsWith would make the detail pages anonymous, and
-  // they would fail rather than degrade.
-  const publicExactRoutes = ['/organizations']
-
-  const needsSignedInAuth =
-    !publicExactRoutes.includes(pathname) &&
-    signedInRoutes.some((r) => pathname.startsWith(r))
+  const needsSignedInAuth = signedInRoutes.some((r) =>
+    pathname.startsWith(r)
+  )
   const needsAdminAuth = adminRoutes.some((r) => pathname.startsWith(r))
 
   if ((needsSignedInAuth || needsAdminAuth) && !user) {

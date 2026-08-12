@@ -31,7 +31,6 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { DifficultyBadge } from './difficulty-badge'
 import { BackingSummary } from './backing-state'
-import { Toy } from './icons'
 import type { Tutorial, TutorialOrg } from '@splat-connect/types'
 
 /** GET /api/public/tutorials embeds accepted backing on every row. */
@@ -43,9 +42,7 @@ export function TutorialCard({ tutorial }: { tutorial: Listed }) {
     <Link
       href={`/tutorials/${tutorial.id}`}
       data-testid="tutorial-card"
-      /* h-full so a card still fills its grid row when a wrapper (the library's
-         Reveal) sits between it and the grid and absorbs the stretch. */
-      className="card card-link flex h-full flex-col overflow-hidden"
+      className="card card-link overflow-hidden"
     >
       {tutorial.toy_photo_url ? (
         <div className="relative h-36 w-full bg-sunken">
@@ -57,8 +54,8 @@ export function TutorialCard({ tutorial }: { tutorial: Listed }) {
           />
         </div>
       ) : (
-        <div className="flex h-36 items-center justify-center bg-brand-tint text-4xl text-brand-dark">
-          <Toy data-testid="toy-placeholder" />
+        <div className="flex h-36 items-center justify-center bg-brand-tint text-4xl">
+          🧸
         </div>
       )}
       <div className="p-4">

@@ -41,7 +41,7 @@ test('a tutorial with no photo shows the placeholder', async ({ page }) => {
 
   await page.goto(`/tutorials/${id}`)
 
-  await expect(page.getByTestId('toy-placeholder')).toBeVisible()
+  await expect(page.getByText('🧸')).toBeVisible()
 })
 
 test('optional parts and tools are badged and buy links open in a new tab', async ({ page }) => {
