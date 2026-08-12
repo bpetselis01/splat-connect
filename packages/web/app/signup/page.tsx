@@ -3,6 +3,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { ContributorTermsDialog } from '@/components/contributor-terms-dialog'
+import { AuthShell } from '@/components/auth-shell'
 import { Check } from '@/components/icons'
 import { AGREEMENT_VERSIONS } from '@splat-connect/types'
 
@@ -57,8 +58,8 @@ export default function SignupPage() {
     return (
       <div className="mx-auto mt-8 max-w-sm sm:mt-16">
         <div className="card flex flex-col items-center p-6 text-center sm:p-8">
-          <span aria-hidden="true" className="empty-badge">
-            ✅
+          <span aria-hidden="true" className="empty-badge text-success">
+            <Check className="h-8 w-8" />
           </span>
           <h1 className="mt-4 text-2xl font-bold text-ink">Check your email</h1>
           <p className="mt-2 text-sm leading-relaxed text-muted">
@@ -74,113 +75,112 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="mx-auto mt-8 max-w-sm sm:mt-16">
-      <div className="card p-6 sm:p-8">
-        <h1 className="text-2xl font-bold text-ink">Create your account</h1>
-        <p className="mt-2 mb-6 text-sm leading-relaxed text-muted">
-          One account for everything — browse, contribute, and manage your child&apos;s profile.
-        </p>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div>
-            <label htmlFor="name" className="field-label">Full name</label>
-            <input
-              id="name"
-              type="text"
-              autoComplete="name"
-              required
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="field"
-            />
-          </div>
-          <div>
-            <label htmlFor="email" className="field-label">Email</label>
-            <input
-              id="email"
-              type="email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="field"
-            />
-          </div>
-          <div>
-            <label htmlFor="password" className="field-label">Password</label>
-            <input
-              id="password"
-              type="password"
-              autoComplete="new-password"
-              required
-              minLength={6}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="field"
-              aria-describedby="password-hint"
-            />
-            <p id="password-hint" className="mt-1.5 text-xs text-muted">
-              At least 6 characters.
-            </p>
-          </div>
-          <div>
-            <label htmlFor="confirm-password" className="field-label">Confirm password</label>
-            <input
-              id="confirm-password"
-              type="password"
-              autoComplete="new-password"
-              required
-              minLength={6}
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="field"
-            />
-          </div>
-          <button
-            type="button"
-            onClick={() => setTermsDialogOpen(true)}
-            className="flex items-start gap-2 text-left text-sm"
+    <AuthShell
+      title="Create your account"
+      intro="One account for everything — browse, contribute, and manage your child's profile."
+      footer={
+        <>
+          Already have an account?{' '}
+          <Link href="/login" className="font-semibold text-brand-dark hover:underline">
+            Sign in
+          </Link>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <div>
+          <label htmlFor="name" className="field-label">Full name</label>
+          <input
+            id="name"
+            type="text"
+            autoComplete="name"
+            required
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="field"
+          />
+        </div>
+        <div>
+          <label htmlFor="email" className="field-label">Email</label>
+          <input
+            id="email"
+            type="email"
+            autoComplete="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="field"
+          />
+        </div>
+        <div>
+          <label htmlFor="password" className="field-label">Password</label>
+          <input
+            id="password"
+            type="password"
+            autoComplete="new-password"
+            required
+            minLength={6}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="field"
+            aria-describedby="password-hint"
+          />
+          <p id="password-hint" className="mt-1.5 text-xs text-muted">
+            At least 6 characters.
+          </p>
+        </div>
+        <div>
+          <label htmlFor="confirm-password" className="field-label">Confirm password</label>
+          <input
+            id="confirm-password"
+            type="password"
+            autoComplete="new-password"
+            required
+            minLength={6}
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            className="field"
+          />
+        </div>
+        <button
+          type="button"
+          onClick={() => setTermsDialogOpen(true)}
+          className="flex items-start gap-2 text-left text-sm"
+        >
+          <span
+            aria-hidden="true"
+            className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full ${
+              acceptedTerms
+                ? 'bg-brand-dark text-white'
+                : 'border border-brand-soft text-transparent'
+            }`}
           >
-            <span
-              aria-hidden="true"
-              className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full ${
-                acceptedTerms
-                  ? 'bg-brand-dark text-white'
-                  : 'border border-brand-soft text-transparent'
-              }`}
-            >
-              <Check className="h-3 w-3" />
-            </span>
-            <span>
-              {acceptedTerms ? (
-                'Contributor terms accepted'
-              ) : (
-                <>
-                  Read and accept the{' '}
-                  <span className="font-semibold text-brand-dark">contributor terms</span>
-                </>
-              )}
-            </span>
-          </button>
-          {error && (
-            <p role="alert" className="alert alert-danger">
-              {error}
-            </p>
-          )}
-          <button
-            type="submit"
-            disabled={loading || !acceptedTerms}
-            className="btn btn-accent btn-block mt-2"
-          >
-            {loading ? 'Creating…' : 'Create account'}
-          </button>
-        </form>
-      </div>
-      <p className="mt-4 text-center text-sm text-muted">
-        Already have an account?{' '}
-        <Link href="/login" className="font-semibold text-brand-dark hover:underline">
-          Sign in
-        </Link>
-      </p>
+            <Check className="h-3 w-3" />
+          </span>
+          <span>
+            {acceptedTerms ? (
+              'Contributor terms accepted'
+            ) : (
+              <>
+                Read and accept the{' '}
+                <span className="font-semibold text-brand-dark">contributor terms</span>
+              </>
+            )}
+          </span>
+        </button>
+        {error && (
+          <p role="alert" className="alert alert-danger">
+            {error}
+          </p>
+        )}
+        <button
+          type="submit"
+          disabled={loading || !acceptedTerms}
+          className="btn btn-accent btn-block mt-2"
+        >
+          {loading ? 'Creating…' : 'Create account'}
+        </button>
+      </form>
       <ContributorTermsDialog
         open={termsDialogOpen}
         onClose={() => setTermsDialogOpen(false)}
@@ -189,6 +189,6 @@ export default function SignupPage() {
           setTermsDialogOpen(false)
         }}
       />
-    </div>
+    </AuthShell>
   )
 }
