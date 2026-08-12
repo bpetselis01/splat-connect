@@ -3,7 +3,7 @@
 // labels and the quantity field and had already drifted once. Callers pass
 // noun="part" withQuantity or noun="tool"; `withQuantity` is the only
 // structural difference between them.
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import type { BuyLink } from '@splat-connect/types'
 import { BuyLinksInput } from '@/components/buy-links-input'
 import { useToast } from '@/components/toast'
@@ -49,9 +49,19 @@ export function EditItemsSection({ noun, withQuantity, initialItems, onSave }: E
     showToast(`${capitalizedNoun} ${action}`)
   }
 
-  useEffect(() => {
+  // Resync when the server sends a new list (revalidatePath after a save).
+  //
+  // Adjusted during render rather than in an effect: an effect runs after paint,
+  // so the stale list is visible for a frame and React has to render twice. This
+  // is the documented pattern for deriving state from a changed prop
+  // (react.dev/learn/you-might-not-need-an-effect). The comparison is by
+  // identity, which is safe because initialItems only gets a new reference when
+  // the server component re-renders, not on local state changes.
+  const [syncedFrom, setSyncedFrom] = useState(initialItems)
+  if (initialItems !== syncedFrom) {
+    setSyncedFrom(initialItems)
     setItems(initialItems)
-  }, [initialItems])
+  }
 
   function toInput(item: EditableItem | ItemInput): ItemInput {
     return {
