@@ -26,7 +26,7 @@ describe('getUserRole', () => {
     vi.mocked(cookies).mockResolvedValue({
       getAll: () => [],
       set: vi.fn(),
-    } as any)
+    } as never)
 
     vi.mocked(createServerClient).mockReturnValue({
       auth: { getUser: mockGetUser },
@@ -35,7 +35,7 @@ describe('getUserRole', () => {
           eq: () => ({ single: mockSingle }),
         }),
       }),
-    } as any)
+    } as never)
   })
 
   // Tests: getUserRole returns null when Supabase reports no authenticated user
