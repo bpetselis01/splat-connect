@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { TutorialCard } from '@/components/tutorial-card'
+import { Search } from '@/components/icons'
 import type { Tutorial, Difficulty } from '@splat-connect/types'
 
 const DIFFICULTIES: (Difficulty | 'all')[] = ['all', 'easy', 'medium', 'hard']
@@ -54,8 +55,8 @@ export function LibraryClient({ tutorials }: { tutorials: Tutorial[] }) {
       </div>
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center px-6 py-16 text-center">
-          <span aria-hidden="true" className="empty-badge">
-            🔍
+          <span aria-hidden="true" className="empty-badge text-brand-dark">
+            <Search className="h-8 w-8" />
           </span>
           <p className="mt-4 font-bold text-ink">No tutorials found.</p>
           <p className="mt-1 max-w-xs text-sm leading-relaxed text-muted">

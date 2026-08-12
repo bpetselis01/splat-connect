@@ -75,13 +75,13 @@ describe('TutorialCard', () => {
     expect(screen.getByText('A helpful tutorial')).toBeInTheDocument()
   })
 
-  // Tests: when toy_photo_url is null, a fallback emoji is shown instead of an image
-  // How:   renders with toy_photo_url: null; checks the fallback emoji character is present
+  // Tests: when toy_photo_url is null, a fallback icon is shown instead of an image
+  // How:   renders with toy_photo_url: null; checks the placeholder icon is present
   // Chain: cards without an uploaded photo still render correctly in the library →
   //        no broken-image icons appear for tutorials that skipped the photo step
-  it('renders fallback emoji when toy_photo_url is null', () => {
+  it('renders the fallback icon when toy_photo_url is null', () => {
     render(<TutorialCard tutorial={{ ...mockTutorial, toy_photo_url: null }} />)
-    expect(screen.getByText('🧸')).toBeInTheDocument()
+    expect(screen.getByTestId('toy-placeholder')).toBeInTheDocument()
   })
 
   // Tests: the card names its backers to someone browsing

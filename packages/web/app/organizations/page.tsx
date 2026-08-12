@@ -15,6 +15,7 @@
  */
 import Link from 'next/link'
 import { apiClient } from '@/lib/api-client'
+import { Building } from '@/components/icons'
 import type { Organization } from '@splat-connect/types'
 
 export default async function OrganizationsPage() {
@@ -25,8 +26,8 @@ export default async function OrganizationsPage() {
       <div>
         <h1 className="mb-4 text-2xl font-bold text-ink">Organisations</h1>
         <div className="flex flex-col items-center px-6 py-16 text-center">
-          <span aria-hidden="true" className="empty-badge">
-            🏢
+          <span aria-hidden="true" className="empty-badge text-brand-dark">
+            <Building className="h-8 w-8" />
           </span>
           <p className="mt-4 font-bold text-ink">No organisations yet.</p>
           <p className="mt-1 max-w-xs text-sm leading-relaxed text-muted">

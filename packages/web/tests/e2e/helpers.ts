@@ -97,7 +97,7 @@ export async function createTutorial(
     status: 'draft' | 'pending' | 'approved' | 'rejected'
     difficulty: 'easy' | 'medium' | 'hard'
     rejection_note: string | null
-    /** null renders the 🧸 placeholder instead of a photo. */
+    /** null renders the toy-placeholder icon instead of a photo. */
     toyPhotoUrl: string | null
     /** false leaves tutorial_pdf_url null, which makes the tutorial incomplete. */
     withPdf: boolean

@@ -23,6 +23,7 @@
  */
 import Link from 'next/link'
 import { TutorialCard } from '@/components/tutorial-card'
+import { Search, Cart, Spark } from '@/components/icons'
 import type { Tutorial } from '@splat-connect/types'
 
 export default async function HomePage() {
@@ -82,9 +83,9 @@ export default async function HomePage() {
         <h2 className="mb-6 text-xl font-bold text-ink">How it works</h2>
         <ol className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {[
-            { icon: '🔍', title: 'Browse', desc: 'Find a tutorial for the toy your child loves.' },
-            { icon: '🛒', title: 'Buy the parts', desc: 'Each tutorial lists exactly what you need with links to buy.' },
-            { icon: '🎉', title: 'Adapt & play', desc: 'Follow the step-by-step PDF guide to make it work with a switch.' },
+            { Icon: Search, title: 'Browse', desc: 'Find a tutorial for the toy your child loves.' },
+            { Icon: Cart, title: 'Buy the parts', desc: 'Each tutorial lists exactly what you need with links to buy.' },
+            { Icon: Spark, title: 'Adapt & play', desc: 'Follow the step-by-step PDF guide to make it work with a switch.' },
           ].map((step, i) => (
             <li key={step.title} className="relative flex gap-4 sm:block">
               {/* Connector between steps — decorative, hidden from the reading order */}
@@ -94,8 +95,8 @@ export default async function HomePage() {
                   className="absolute left-6 top-14 hidden h-[calc(100%-2rem)] w-px bg-line sm:left-14 sm:top-6 sm:block sm:h-px sm:w-[calc(100%-2.5rem)]"
                 />
               )}
-              <span className="relative z-10 grid h-12 w-12 shrink-0 place-items-center rounded-full bg-brand-tint text-2xl sm:mb-4">
-                <span aria-hidden="true">{step.icon}</span>
+              <span className="relative z-10 grid h-12 w-12 shrink-0 place-items-center rounded-full bg-brand-tint text-2xl text-brand-dark sm:mb-4">
+                <step.Icon />
               </span>
               <div>
                 <h3 className="font-bold text-ink">

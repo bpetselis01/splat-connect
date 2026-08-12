@@ -31,6 +31,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { DifficultyBadge } from './difficulty-badge'
 import { BackingSummary } from './backing-state'
+import { Toy } from './icons'
 import type { Tutorial, TutorialOrg } from '@splat-connect/types'
 
 /** GET /api/public/tutorials embeds accepted backing on every row. */
@@ -54,8 +55,8 @@ export function TutorialCard({ tutorial }: { tutorial: Listed }) {
           />
         </div>
       ) : (
-        <div className="flex h-36 items-center justify-center bg-brand-tint text-4xl">
-          🧸
+        <div className="flex h-36 items-center justify-center bg-brand-tint text-4xl text-brand-dark">
+          <Toy data-testid="toy-placeholder" />
         </div>
       )}
       <div className="p-4">

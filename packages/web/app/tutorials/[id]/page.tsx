@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import { DifficultyBadge } from '@/components/difficulty-badge'
 import { OrgBadges } from '@/components/org-badges'
-import { FileText, Download } from '@/components/icons'
+import { FileText, Download, Toy } from '@/components/icons'
 import type { TutorialWithDetails, TutorialOrg } from '@splat-connect/types'
 
 export default async function TutorialPage({
@@ -43,8 +43,8 @@ export default async function TutorialPage({
             />
           </div>
         ) : (
-          <div className="flex h-56 items-center justify-center rounded-2xl bg-brand-tint text-6xl">
-            🧸
+          <div className="flex h-56 items-center justify-center rounded-2xl bg-brand-tint text-6xl text-brand-dark">
+            <Toy data-testid="toy-placeholder" />
           </div>
         )}
         <OrgBadges
