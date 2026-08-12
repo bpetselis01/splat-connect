@@ -345,5 +345,43 @@ be swapped, but as their own change.
 
 Per touched package, because vitest's transpile-only mode lets typecheck-only
 bugs hide: `typecheck`, `lint`, `test:unit` and `test:e2e` on `packages/web`.
-No other package is expected to be touched; if one is, it gets the same
-treatment.
+Only `packages/web` was touched; the workspace-wide `typecheck` passes for
+`types`, `api`, `mobile` and `web`.
+
+### Result
+
+- `typecheck`: passes.
+- `test:unit`: 398 passed, 66 files.
+- `test:e2e`: 92 passed, 3 failed.
+- `lint`: 21 errors, all pre-existing `no-explicit-any` in test files, none in
+  any file touched here. Confirmed by stashing and re-running.
+
+Two of the three e2e failures were reproduced on the base commit `af9d046` in a
+throwaway worktree and are pre-existing, not regressions:
+
+- `contributor/edit-tutorial.spec.ts:137` — the Parts step's `Name` field is
+  never found, while the sibling Tools test at :165 passes through the same
+  component. Sits squarely in the `EditItemsSection` refactor that landed in the
+  five commits before this work.
+- `dashboard/shell.spec.ts:126` — child profile add/edit/delete, times out.
+
+The third, `contributor/upload-flow.spec.ts:8`, passed on re-run and is flake.
+
+None of the three is on a surface this redesign touched.
+
+### Environment notes
+
+A first full run failed 40 of 95 with `Failed to create contributor: Database
+error checking email`. That is GoTrue exhausting ephemeral sockets to Postgres
+(`dial tcp 172.19.0.2:5432: connect: cannot assign requested address`), not an
+application fault. Restarting `supabase_auth_splat-connect` and dropping to
+`--workers=2` cleared it.
+
+### One bug the type checker could not catch
+
+`app/page.tsx` is a Server Component and initially passed icon component
+functions as props to the client `HomeSteps`. `tsc` accepts that; the RSC
+boundary rejects it at render, so every request to `/` threw and the e2e
+webServer never started. The steps now live inside the client component. Worth
+remembering: prop *types* crossing the server/client boundary are checked,
+prop *serialisability* is not.
