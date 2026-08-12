@@ -323,11 +323,23 @@ Test-affecting changes, complete:
 
 | File | Change | Why |
 | --- | --- | --- |
-| `tests/e2e/public/tutorial-detail.spec.ts:44` | `getByText('🧸')` → SVG placeholder locator | Emoji-as-icon removal |
+| `tests/e2e/public/tutorial-detail.spec.ts:44` | `getByText('🧸')` → `getByTestId('toy-placeholder')` | Emoji-as-icon removal |
+| `tests/unit/components/tutorial-card.test.tsx:84` | Same locator swap | Emoji-as-icon removal |
 | `tests/unit/lib/nav-model.test.ts` | Add expected Challenges row | New nav destination |
-| `playwright.config.ts` | Add `reducedMotion: 'reduce'` to `use:` | Determinism for geometry assertions |
+| `playwright.config.ts` | `contextOptions: { reducedMotion: 'reduce' }` | Determinism for geometry assertions |
 
 Every other spec passes unchanged.
+
+Two corrections against the ledger as first drafted:
+
+- `tutorial-card.test.tsx` also asserted on the emoji; the ledger listed only the
+  e2e spec. Both are locator swaps, not behaviour changes.
+- `reducedMotion` is not a top-level `use` key in Playwright 1.61 — it is a
+  newContext option, so it sits under `contextOptions`.
+
+Emoji still standing in as icons under `app/admin/` and `app/dashboard/toys/` are
+left alone: those are product-register surfaces outside this scope. They should
+be swapped, but as their own change.
 
 ## Verification
 
