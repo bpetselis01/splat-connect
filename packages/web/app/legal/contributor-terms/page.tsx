@@ -17,9 +17,11 @@ import { ContributorTermsContent } from '@/components/contributor-terms-content'
 
 export default function ContributorTermsPage() {
   return (
-    <main className="container">
+    // Not <main>: app/layout.tsx already renders one around this, and nesting
+    // main landmarks leaves assistive tech with two "main content" regions.
+    <article className="legal">
       <h1>Contributor terms</h1>
       <ContributorTermsContent />
-    </main>
+    </article>
   )
 }
