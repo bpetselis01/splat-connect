@@ -20,15 +20,34 @@
 import { useEffect, useRef } from 'react'
 import { useReducedMotion } from 'motion/react'
 import { EASE_OUT_QUART } from '@/lib/motion'
-import type { SVGProps } from 'react'
+import { Search, Cart, Spark } from '@/components/icons'
 
-export type Step = {
-  Icon: (props: SVGProps<SVGSVGElement>) => React.ReactElement
-  title: string
-  desc: string
-}
+/*
+ * The steps live here rather than as a prop from app/page.tsx.
+ *
+ * WHY: that page is a Server Component, and a component function cannot cross
+ *      the RSC boundary — "Functions cannot be passed directly to Client
+ *      Components". tsc accepts it happily; it fails only at render, which is
+ *      why the e2e run caught this and typecheck did not.
+ * HOW: the icons are fixed content, so owning them here costs nothing and
+ *      removes the serialisable-props question entirely.
+ */
+const STEPS = [
+  { Icon: Search, title: 'Browse', desc: 'Find a tutorial for the toy your child loves.' },
+  {
+    Icon: Cart,
+    title: 'Buy the parts',
+    desc: 'Each tutorial lists exactly what you need with links to buy.',
+  },
+  {
+    Icon: Spark,
+    title: 'Adapt & play',
+    desc: 'Follow the step-by-step PDF guide to make it work with a switch.',
+  },
+]
 
-export function HomeSteps({ steps }: { steps: Step[] }) {
+export function HomeSteps() {
+  const steps = STEPS
   const root = useRef<HTMLOListElement>(null)
   const reduced = useReducedMotion()
 

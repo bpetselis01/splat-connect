@@ -29,22 +29,7 @@ import { TutorialCard } from '@/components/tutorial-card'
 import { HomeSteps } from '@/components/home-steps'
 import { Reveal } from '@/components/reveal'
 import { fadeIn } from '@/lib/motion'
-import { Search, Cart, Spark } from '@/components/icons'
 import type { Tutorial } from '@splat-connect/types'
-
-const STEPS = [
-  { Icon: Search, title: 'Browse', desc: 'Find a tutorial for the toy your child loves.' },
-  {
-    Icon: Cart,
-    title: 'Buy the parts',
-    desc: 'Each tutorial lists exactly what you need with links to buy.',
-  },
-  {
-    Icon: Spark,
-    title: 'Adapt & play',
-    desc: 'Follow the step-by-step PDF guide to make it work with a switch.',
-  },
-]
 
 export default async function HomePage() {
   // WHY: `res.ok ? … : []` handles an HTTP error but not a connection failure —
@@ -111,7 +96,7 @@ export default async function HomePage() {
           rather than dropped into three interchangeable cards. */}
       <Reveal variants={fadeIn} className="mt-16">
         <h2 className="mb-6 text-xl font-bold text-ink">How it works</h2>
-        <HomeSteps steps={STEPS} />
+        <HomeSteps />
       </Reveal>
     </div>
   )
