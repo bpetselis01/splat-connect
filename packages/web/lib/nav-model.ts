@@ -34,6 +34,7 @@ export type IconName =
   | 'user'
   | 'shield'
   | 'bell'
+  | 'lightbulb'
 
 /** `soon` marks a route that exists but has no feature behind it yet. */
 export type NavRow = {
@@ -55,6 +56,8 @@ export function buildNav(caps: Capabilities, unreadNotifications: number): NavGr
         { href: '/library', label: 'Tutorial library', icon: 'book' },
         { href: '/toy-library', label: 'Toy library', icon: 'toy', soon: true },
         { href: '/printing', label: '3D printing', icon: 'printer', soon: true },
+        // soon: the board is a visual stub — nothing posts or claims yet.
+        { href: '/challenges', label: 'Design challenges', icon: 'lightbulb', soon: true },
         { href: '/organizations', label: 'Organisations', icon: 'building' },
       ],
     },

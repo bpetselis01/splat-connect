@@ -47,6 +47,9 @@ export function Nav({ role }: NavProps) {
   // `as const` keeps the hrefs as literals so they satisfy Next's typed routes.
   const links = ([
     { href: '/library', label: 'Library', show: true },
+    // Public: a visitor deciding whether this project is for them benefits from
+    // seeing what families are asking for, signed in or not.
+    { href: '/challenges', label: 'Challenges', show: true },
     // Shown to anyone signed in, not just leaders: it is a directory, and gating it
     // on leadership would need a per-request lookup in the nav for no benefit — a
     // leader is an ordinary contributor.

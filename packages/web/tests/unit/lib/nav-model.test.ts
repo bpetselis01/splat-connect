@@ -70,7 +70,7 @@ describe('buildNav', () => {
     expect(labels).toContain('Child profiles')
   })
 
-  it('marks the five unbuilt rows as soon, and no others', () => {
+  it('marks the six unbuilt rows as soon, and no others', () => {
     const soon = buildNav(caps({ ledOrgs: [org], isAdmin: true }), 0)
       .flatMap((g) => g.rows)
       .filter((r) => r.soon)
@@ -78,18 +78,20 @@ describe('buildNav', () => {
     expect(soon).toEqual([
       '/toy-library',
       '/printing',
+      // The challenge board renders, but nothing posts or claims yet.
+      '/challenges',
       '/dashboard/print-requests',
       '/dashboard/organisation/toys',
       '/dashboard/organisation/orders',
     ])
   })
 
-  // The spec's fifteenth row is Sign out, which is an action the rail footer
-  // renders rather than a nav row — hence fourteen here (thirteen plus
+  // The spec's sixteenth row is Sign out, which is an action the rail footer
+  // renders rather than a nav row — hence fifteen here (fourteen plus
   // Notifications).
-  it('builds fourteen linked rows for a leader-admin', () => {
+  it('builds fifteen linked rows for a leader-admin', () => {
     const rows = buildNav(caps({ ledOrgs: [org], isAdmin: true }), 0).flatMap((g) => g.rows)
-    expect(rows).toHaveLength(14)
+    expect(rows).toHaveLength(15)
   })
 
   it('gives every row a unique href', () => {

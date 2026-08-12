@@ -30,6 +30,7 @@ import {
   User,
   Shield,
   Bell,
+  Lightbulb,
   ChevronsLeft,
   ChevronsRight,
   LogOut,
@@ -53,6 +54,7 @@ const ICONS: Record<IconName, typeof BookOpen> = {
   user: User,
   shield: Shield,
   bell: Bell,
+  lightbulb: Lightbulb,
 }
 
 export type RailProps = {
