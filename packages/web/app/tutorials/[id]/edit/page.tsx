@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { Suspense } from 'react'
 import { EditFilesSection } from '@/components/edit-files-section'
 import { AddStlForm } from '@/components/add-stl-form'
-import { EditItemsSection } from '@/components/edit-items-section'
+import { EditItemsSection, type ItemInput } from '@/components/edit-items-section'
 import { EditBackingSection } from '@/components/edit-backing-section'
 import { EditDetailsSection } from '@/components/edit-details-section'
 import { EditCollaboratorsSection } from '@/components/edit-collaborators-section'
@@ -104,9 +104,23 @@ export default async function EditTutorialPage({
     revalidatePath(`/tutorials/${id}/edit`)
   }
 
-  async function saveParts(newParts: { name: string; quantity: number; is_optional: boolean; buy_links: BuyLink[] }[]) {
+  // Takes ItemInput, the exact type EditItemsSection emits, so it can be handed
+  // over as-is.
+  //
+  // WHY: it previously required `quantity: number` while ItemInput declares it
+  //      optional, so the call site wrapped this in `(items) => saveParts(items
+  //      as ...)`. That arrow is an ordinary function, not a server action —
+  //      React rejects it with "Event handlers cannot be passed to Client
+  //      Component props" and the whole edit page 500s. Tools was unaffected
+  //      only because its types lined up and it needed no wrapper.
+  // HOW: widening the parameter removes the reason for the wrapper, and the
+  //      default below states the guarantee EditItemsSection already makes at
+  //      runtime (it always sets quantity when withQuantity is on) instead of
+  //      casting it away.
+  async function saveParts(newParts: ItemInput[]) {
     'use server'
-    await apiClient.post(`/api/tutorials/${id}/parts`, { parts: newParts })
+    const parts = newParts.map((p) => ({ ...p, quantity: p.quantity ?? 1 }))
+    await apiClient.post(`/api/tutorials/${id}/parts`, { parts })
     revalidatePath(`/tutorials/${id}/edit`)
   }
 
@@ -169,12 +183,13 @@ export default async function EditTutorialPage({
       status: stepStatuses.parts,
       content: (
         <div className="panel pt-5">
+          {/* Passed directly, never wrapped in an arrow: a server action loses
+              its marker the moment it is wrapped, and the page 500s. */}
           <EditItemsSection
             noun="part"
             withQuantity
             initialItems={parts}
-            // withQuantity guarantees every ItemInput carries quantity, hence the cast.
-            onSave={(items) => saveParts(items as Parameters<typeof saveParts>[0])}
+            onSave={saveParts}
           />
         </div>
       ),
