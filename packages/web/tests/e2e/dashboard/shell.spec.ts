@@ -162,9 +162,13 @@ test('a contributor adds two children, edits one, and deletes one', async ({ pag
     await page.reload()
     await expect(page.locator('#age')).toHaveValue('8')
 
-    // Delete takes two clicks.
-    await page.getByRole('button', { name: 'Delete child profile' }).click()
-    await page.getByRole('button', { name: 'Confirm delete' }).click()
+    // Delete is opened by a button named after the child, then gated on typing
+    // the phrase back — components/delete-entity-button.tsx builds both from the
+    // same label, so the user reads the identifier twice. Same shape as the toy
+    // deletion in dashboard/toys.spec.ts.
+    await page.getByRole('button', { name: 'Delete Emma' }).click()
+    await page.getByLabel(/to confirm/i).fill('confirm_delete_Emma')
+    await page.getByRole('button', { name: 'Delete', exact: true }).click()
     await expect(page).toHaveURL('/dashboard/child')
     await expect(page.getByRole('link', { name: /Emma/ })).toHaveCount(0)
     // The survivor renumbers, because position is computed and not stored.
