@@ -9,9 +9,11 @@ vi.mock('@/lib/api-client', () => ({
 vi.mock('next/navigation', () => ({
   redirect: vi.fn(),
 }))
+// Spreads the rest: the card carries data-testid on the Link itself, and a
+// mock that forwarded only href/className would silently swallow it.
 vi.mock('next/link', () => ({
-  default: ({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) => (
-    <a href={href} className={className}>{children}</a>
+  default: ({ href, children, ...rest }: { href: string; children: React.ReactNode }) => (
+    <a href={href} {...rest}>{children}</a>
   ),
 }))
 vi.mock('@/components/difficulty-badge', () => ({
@@ -84,16 +86,18 @@ describe('DashboardPage', () => {
     expect(within(rejectedCard).getByText('3')).toBeInTheDocument()
   })
 
-  // Tests: tutorial title and Edit link render for each row
-  // How:   passes one tutorial with id 'abc'; checks title text and Edit link href
-  // Chain: contributors identify tutorials by title and navigate to edit them
-  it('renders tutorial title and Edit link', async () => {
+  // Tests: the whole card is the link to the editor, with no separate Edit button
+  // How:   passes one tutorial with id 'abc'; checks title text and the card's href
+  // Chain: contributors identify tutorials by title and navigate to edit them by
+  //        clicking anywhere on the card, as they already do on My toys
+  it('renders the tutorial title and links the whole card to the editor', async () => {
     vi.mocked(apiClient.get)
       .mockResolvedValueOnce(mockProfile)
       .mockResolvedValueOnce([{ ...baseTutorial, id: 'abc', title: 'Switch Tutorial' }])
     render(await DashboardPage())
     expect(screen.getByText('Switch Tutorial')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Edit' })).toHaveAttribute('href', '/tutorials/abc/edit')
+    expect(screen.getByTestId('tutorial-row')).toHaveAttribute('href', '/tutorials/abc/edit')
+    expect(screen.queryByRole('link', { name: 'Edit' })).toBeNull()
   })
 
   // Tests: no View link is rendered for any tutorial status
