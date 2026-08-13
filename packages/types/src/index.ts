@@ -229,17 +229,7 @@ export interface TutorialWithDetails extends Tutorial {
   tutorial_contributors: (TutorialContributor & { profiles: Profile })[]
 }
 
-// A draft tutorial being filled out by a contributor on the upload form.
-// This is temporary state before submission — it allows empty values and null files.
-// When submitted, the API converts this into actual Tutorial, Part, Tool, and StlFile
-// records in the database.
-export interface UploadDraft {
-  title: string
-  description: string
-  difficulty: Difficulty | ''
-  tutorial_pdf_url: string | null
-  toy_photo_url: string | null
-  parts: { name: string; quantity: number; is_optional: boolean; buy_links: BuyLink[] }[]
-  tools: { name: string; is_optional: boolean; buy_links: BuyLink[] }[]
-  stl_files: { filename: string; file_url: string }[]
-}
+// UploadDraft lived here: the in-progress state of the six-step upload wizard,
+// mirrored into sessionStorage so a reload did not cost six steps of typing.
+// The wizard is gone — a tutorial is now created as a real row on its first
+// save and edited from then on, so there is no pre-submission shape to model.
