@@ -1,33 +1,22 @@
 'use client'
 /**
  * Free-jump step navigator for the edit-tutorial page: a pill row (one per
- * section, each carrying a status dot), the active section's content, and a
- * sticky bottom bar for Submit. The active step persists in ?step= so a
- * refresh or shared link lands back on the same section.
+ * section, each carrying a status dot) and the active section's content. The
+ * active step persists in ?step= so a refresh or shared link lands back on the
+ * same section.
+ *
+ * Submission is no longer here. It lives in the Review step's own panel, as it
+ * does on the toy editor, so the two features present the same shape.
  */
 import { useState } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import type { Route } from 'next'
-import type { TutorialStatus } from '@splat-connect/types'
 import type { EditStep, EditStepId, EditStepStatus } from '@/lib/edit-steps'
 import { ToastProvider } from '@/components/toast'
-import { SaveStatusLine } from '@/components/save-status-line'
 
 const STATUS_GLYPH: Record<EditStepStatus, string> = { done: '✓', attention: '!', neutral: '·' }
 
-export function EditStepper({
-  steps,
-  tutorialStatus,
-  tutorialUpdatedAt,
-  missingFields,
-  onSubmit,
-}: {
-  steps: EditStep[]
-  tutorialStatus: TutorialStatus
-  tutorialUpdatedAt: string
-  missingFields: string[]
-  onSubmit: () => Promise<void>
-}) {
+export function EditStepper({ steps }: { steps: EditStep[] }) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -36,20 +25,10 @@ export function EditStepper({
   const [activeId, setActiveId] = useState<EditStepId>(
     requested && stepIds.includes(requested) ? requested : steps[0].id
   )
-  const [submitting, setSubmitting] = useState(false)
 
   function selectStep(id: EditStepId) {
     setActiveId(id)
     router.replace(`${pathname}?step=${id}` as Route<string>, { scroll: false })
-  }
-
-  async function handleSubmit() {
-    setSubmitting(true)
-    try {
-      await onSubmit()
-    } finally {
-      setSubmitting(false)
-    }
   }
 
   const active = steps.find((s) => s.id === activeId) ?? steps[0]
@@ -76,28 +55,6 @@ export function EditStepper({
       </div>
 
       <div role="tabpanel">{active.content}</div>
-
-      {tutorialStatus === 'draft' ? (
-        <div className="sticky-submit-bar">
-          <span className="sticky-submit-note">
-            {missingFields.length > 0
-              ? `Add ${missingFields.join(', ')} to submit`
-              : 'Ready to submit'}
-          </span>
-          <button
-            type="button"
-            disabled={missingFields.length > 0 || submitting}
-            onClick={handleSubmit}
-            className="btn btn-accent"
-          >
-            {submitting ? 'Submitting…' : 'Submit for review'}
-          </button>
-        </div>
-      ) : (
-        <div className="sticky-submit-bar sticky-submit-bar-quiet">
-          <SaveStatusLine savedAt={tutorialUpdatedAt} />
-        </div>
-      )}
     </ToastProvider>
   )
 }
