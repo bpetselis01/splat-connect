@@ -79,7 +79,8 @@ test('@responsive a dashboard row keeps its controls inside the viewport', async
   await page.waitForURL('**/dashboard')
 
   const width = page.viewportSize()!.width
-  await expectWithinViewport(page.getByRole('link', { name: 'Edit' }).first(), width)
+  // The card is the link; the Edit button it replaced no longer exists.
+  await expectWithinViewport(page.getByTestId('tutorial-row').first(), width)
   await expectWithinViewport(page.getByText('REJECTED', { exact: true }), width)
 })
 
