@@ -441,6 +441,18 @@
     cursor: not-allowed;
   }
 
+  /* Delete toy, riding in the pill row as a trailing action. After
+     :disabled for the same source-order reason — (0,2,0) all round, and a
+     danger pill is never disabled or active. */
+  .step-pill-danger {
+    background-color: var(--color-apricot-soft);
+    color: var(--color-danger);
+  }
+
+  .step-pill-danger:hover {
+    background-color: #ffcdbb;
+  }
+
   .step-pill-dot {
     display: grid;
     place-items: center;
