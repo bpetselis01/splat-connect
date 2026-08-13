@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { browserApiClient } from '@/lib/browser-api-client'
 import { FileDropZone } from '@/components/file-drop-zone'
+import { ToyPhotoViewer } from '@/components/toy-photo-viewer'
 import { useToast } from '@/components/toast'
 
 export function ToyPhotosSection({
@@ -10,7 +11,6 @@ export function ToyPhotosSection({
   switchAdapted,
   switchPhotoUrls,
   onSave,
-  onRemoveSwitchPhoto,
 }: {
   toyId: string
   coverPhotoUrl: string | null
@@ -21,26 +21,24 @@ export function ToyPhotosSection({
     switch_adapted: boolean
     switch_photo_urls: string[]
   }) => Promise<void>
-  onRemoveSwitchPhoto: (url: string) => Promise<void>
 }) {
   const showToast = useToast()
   const [coverFile, setCoverFile] = useState<File | null>(null)
-  const [newSwitchFiles, setNewSwitchFiles] = useState<File[]>([])
+  const [switchFile, setSwitchFile] = useState<File | null>(null)
   const [switchAdaptedInput, setSwitchAdaptedInput] = useState(switchAdapted)
   const [saving, setSaving] = useState(false)
-  const [removingUrl, setRemovingUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const hasChanges =
-    coverFile !== null || newSwitchFiles.length > 0 || switchAdaptedInput !== switchAdapted
+    coverFile !== null || switchFile !== null || switchAdaptedInput !== switchAdapted
 
   function handleCoverChange(e: React.ChangeEvent<HTMLInputElement>) {
     setCoverFile(e.target.files?.[0] ?? null)
     setError(null)
   }
 
-  function handleSwitchFilesChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setNewSwitchFiles(e.target.files ? Array.from(e.target.files) : [])
+  function handleSwitchFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setSwitchFile(e.target.files?.[0] ?? null)
     setError(null)
   }
 
@@ -60,33 +58,23 @@ export function ToyPhotosSection({
       const newCoverUrl = coverFile
         ? await uploadFile('/api/upload/toy-cover', coverFile)
         : coverPhotoUrl
-      const uploadedSwitchUrls = await Promise.all(
-        newSwitchFiles.map((f) => uploadFile('/api/upload/toy-switch-photo', f))
-      )
+      // Replaces rather than appends: a toy carries one switch photo, so
+      // uploading is also how you remove the wrong one.
+      const switchUrls = switchFile
+        ? [await uploadFile('/api/upload/toy-switch-photo', switchFile)]
+        : switchPhotoUrls
       await onSave({
         cover_photo_url: newCoverUrl,
         switch_adapted: switchAdaptedInput,
-        switch_photo_urls: [...switchPhotoUrls, ...uploadedSwitchUrls],
+        switch_photo_urls: switchUrls,
       })
       showToast('Photos saved')
       setCoverFile(null)
-      setNewSwitchFiles([])
+      setSwitchFile(null)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload failed')
     } finally {
       setSaving(false)
-    }
-  }
-
-  async function handleRemove(url: string) {
-    setRemovingUrl(url)
-    setError(null)
-    try {
-      await onRemoveSwitchPhoto(url)
-    } catch {
-      setError('Could not remove that photo. Please try again.')
-    } finally {
-      setRemovingUrl(null)
     }
   }
 
@@ -124,45 +112,40 @@ export function ToyPhotosSection({
         </label>
         <p className="mt-1 text-xs leading-relaxed text-muted">
           Tick this if the toy has been rewired to work with an accessibility switch. You&rsquo;ll
-          need at least one switch photo before you can publish.
+          need a switch photo before you can publish.
         </p>
       </div>
       {switchAdaptedInput && (
-        <div className="flex flex-col gap-2">
-          <p className="field-label">Switch photos</p>
-          {switchPhotoUrls.map((url) => (
-            <div key={url} className="flex items-center justify-between gap-2">
-              <span className="truncate text-xs text-muted">{url}</span>
-              <button
-                type="button"
-                onClick={() => handleRemove(url)}
-                disabled={removingUrl === url}
-                className="shrink-0 text-xs font-bold text-danger hover:underline"
-              >
-                {removingUrl === url ? 'Removing…' : 'Remove'}
-              </button>
-            </div>
-          ))}
+        <div>
+          <label className="field-label" htmlFor="toy_switch_photo">Switch photo</label>
           <FileDropZone
-            id="toy_switch_photos"
-            name="toy_switch_photos"
+            id="toy_switch_photo"
+            name="toy_switch_photo"
             accept="image/*"
-            multiple
-            label="Switch Photos"
-            onChange={handleSwitchFilesChange}
+            label="Switch Photo"
+            onChange={handleSwitchFileChange}
+            currentFileLabel={
+              switchPhotoUrls.length > 0
+                ? 'Current switch photo on file — upload to replace'
+                : undefined
+            }
           />
         </div>
       )}
       {saving && <p className="text-sm font-semibold text-brand-dark">Saving…</p>}
-      <div className="flex justify-end">
+      {/* Save leads on the left in accent, as it does on Details and Review;
+          viewing what is already uploaded is the secondary action, so it sits
+          out of the way on the right. */}
+      <div className="flex items-center justify-between gap-3">
         <button
           type="button"
           disabled={!hasChanges || saving}
           onClick={handleSave}
-          className="btn btn-primary btn-sm self-end"
+          className="btn btn-accent"
         >
           Save photos
         </button>
+        <ToyPhotoViewer coverPhotoUrl={coverPhotoUrl} switchPhotoUrls={switchPhotoUrls} />
       </div>
     </div>
   )
