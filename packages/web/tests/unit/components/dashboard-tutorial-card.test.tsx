@@ -41,15 +41,26 @@ describe('DashboardTutorialCard', () => {
   })
 
   it('shows the toy photo when there is one', () => {
-    render(
+    const { container } = render(
       <DashboardTutorialCard tutorial={tutorial({ toy_photo_url: 'https://x/toy.jpg' })} />
     )
-    expect(screen.getByAltText('Sensory light box')).toHaveAttribute('src', 'https://x/toy.jpg')
+    expect(container.querySelector('img')).toHaveAttribute('src', 'https://x/toy.jpg')
+  })
+
+  it('leaves the photo unlabelled, so a broken one cannot repaint the title', () => {
+    // The title is rendered as text right below. Naming it again here is a
+    // duplicate announcement, and a non-empty alt is what a failed image falls
+    // back to painting inside the band, under the difficulty badge.
+    const { container } = render(
+      <DashboardTutorialCard tutorial={tutorial({ toy_photo_url: 'https://x/toy.jpg' })} />
+    )
+    expect(container.querySelector('img')).toHaveAttribute('alt', '')
+    expect(screen.getAllByText('Sensory light box')).toHaveLength(1)
   })
 
   it('falls back to the placeholder tile when there is no photo', () => {
-    render(<DashboardTutorialCard tutorial={tutorial()} />)
-    expect(screen.queryByAltText('Sensory light box')).not.toBeInTheDocument()
+    const { container } = render(<DashboardTutorialCard tutorial={tutorial()} />)
+    expect(container.querySelector('img')).toBeNull()
     expect(screen.getByText('🧸')).toBeInTheDocument()
   })
 
@@ -67,6 +78,11 @@ describe('DashboardTutorialCard', () => {
     // holds one place down a column of cards.
     expect(badge.parentElement).toHaveClass('absolute')
     expect(container.querySelector('.relative')).toContainElement(badge)
+  })
+
+  it('insets the overlaid badge off the photo corner', () => {
+    render(<DashboardTutorialCard tutorial={tutorial()} />)
+    expect(screen.getByText('EASY').parentElement).toHaveClass('left-3', 'top-3')
   })
 
   it('shows the rejection note only when the tutorial was rejected', () => {
