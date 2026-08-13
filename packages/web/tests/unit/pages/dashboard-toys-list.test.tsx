@@ -63,16 +63,28 @@ describe('ToyListPage', () => {
     expect(screen.getByRole('link', { name: /Blocks/ })).toHaveAttribute('href', '/dashboard/toys/t2')
   })
 
-  it('shows a Draft badge only on draft toys', async () => {
+  it('badges both statuses, not just draft', async () => {
     vi.mocked(apiClient.get).mockResolvedValue([
       toy({ id: 't1', name: 'Fire truck', status: 'draft' }),
       toy({ id: 't2', name: 'Blocks', status: 'published' }),
     ])
     render(await ToyListPage())
-    const fireTruckCard = screen.getByRole('link', { name: /Fire truck/ })
-    const blocksCard = screen.getByRole('link', { name: /Blocks/ })
-    expect(fireTruckCard).toHaveTextContent('Draft')
-    expect(blocksCard).not.toHaveTextContent('Draft')
+    expect(screen.getByRole('link', { name: /Fire truck/ })).toHaveTextContent('DRAFT')
+    // Published used to render no badge at all, so the card said nothing about
+    // where the toy had got to.
+    expect(screen.getByRole('link', { name: /Blocks/ })).toHaveTextContent('PUBLISHED')
+  })
+
+  it('colour-codes the status the way tutorials do', async () => {
+    vi.mocked(apiClient.get).mockResolvedValue([
+      toy({ id: 't1', name: 'Fire truck', status: 'draft' }),
+      toy({ id: 't2', name: 'Blocks', status: 'published' }),
+    ])
+    render(await ToyListPage())
+    // Draft is byte-identical to a tutorial draft; published takes the mint
+    // that approved uses.
+    expect(screen.getByText('DRAFT')).toHaveClass('badge', 'bg-sunken', 'text-brand-deep')
+    expect(screen.getByText('PUBLISHED')).toHaveClass('badge', 'bg-mint-soft', 'text-mint-deep')
   })
 
   it('throws rather than rendering an empty list when the fetch fails', async () => {
