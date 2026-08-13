@@ -24,19 +24,22 @@ vi.mock('@/components/edit-items-section', () => ({ EditItemsSection: () => null
 vi.mock('@/components/edit-details-section', () => ({ EditDetailsSection: () => null }))
 vi.mock('@/components/edit-backing-section', () => ({ EditBackingSection: () => null }))
 vi.mock('@/components/edit-collaborators-section', () => ({ EditCollaboratorsSection: () => null }))
+// Status and the missing-field list now reach the Review step's panel rather
+// than the stepper, so that is where these are asserted.
+vi.mock('@/components/tutorial-review-panel', () => ({
+  TutorialReviewPanel: ({ status, missingFields }: { status: string; missingFields: string[] }) => (
+    <div data-testid="review-panel" data-status={status} data-missing={missingFields.join('|')} />
+  ),
+}))
 vi.mock('@/components/edit-stepper', () => ({
-  EditStepper: ({
-    steps,
-    tutorialStatus,
-    missingFields,
-  }: {
-    steps: EditStep[]
-    tutorialStatus: string
-    missingFields: string[]
-  }) => (
-    <div data-testid="edit-stepper" data-status={tutorialStatus} data-missing={missingFields.join('|')}>
+  // Renders each step's content, which is how the review panel above is
+  // reached. Every section component is mocked to null, so this stays cheap.
+  EditStepper: ({ steps }: { steps: EditStep[] }) => (
+    <div data-testid="edit-stepper">
       {steps.map((s) => (
-        <span key={s.id} data-step={s.id} data-step-status={s.status} />
+        <span key={s.id} data-step={s.id} data-step-status={s.status}>
+          {s.content}
+        </span>
       ))}
     </div>
   ),
@@ -156,12 +159,12 @@ describe('EditTutorialPage', () => {
     expect(screen.queryByText('This tutorial was rejected')).toBeNull()
   })
 
-  it('passes the tutorial status through to EditStepper', async () => {
+  it('passes the tutorial status through to the Review panel', async () => {
     vi.mocked(apiClient.get)
       .mockResolvedValueOnce(mockProfile)
       .mockResolvedValueOnce({ ...baseTutorialWithDetails, status: 'pending' })
     render(await EditTutorialPage(pageParams))
-    expect(screen.getByTestId('edit-stepper')).toHaveAttribute('data-status', 'pending')
+    expect(screen.getByTestId('review-panel')).toHaveAttribute('data-status', 'pending')
   })
 
   it('wires computeStepStatuses and getMissingFields into the step manifest', async () => {
@@ -170,7 +173,7 @@ describe('EditTutorialPage', () => {
       .mockResolvedValueOnce(baseTutorialWithDetails)
     render(await EditTutorialPage(pageParams))
     const stepper = screen.getByTestId('edit-stepper')
-    expect(stepper).toHaveAttribute(
+    expect(screen.getByTestId('review-panel')).toHaveAttribute(
       'data-missing',
       'Tutorial PDF|Toy photo|At least one part|At least one tool'
     )
@@ -181,5 +184,25 @@ describe('EditTutorialPage', () => {
     expect(stepper.querySelector('[data-step="stl"]')).toHaveAttribute('data-step-status', 'neutral')
     expect(stepper.querySelector('[data-step="backing"]')).toHaveAttribute('data-step-status', 'neutral')
     expect(stepper.querySelector('[data-step="collaborators"]')).toHaveAttribute('data-step-status', 'neutral')
+  })
+
+  it('adds a Review step, neutral while the tutorial is still a draft', async () => {
+    vi.mocked(apiClient.get)
+      .mockResolvedValueOnce(mockProfile)
+      .mockResolvedValueOnce(baseTutorialWithDetails)
+    render(await EditTutorialPage(pageParams))
+    expect(
+      screen.getByTestId('edit-stepper').querySelector('[data-step="review"]')
+    ).toHaveAttribute('data-step-status', 'neutral')
+  })
+
+  it('marks the Review step done once the tutorial has been handed over', async () => {
+    vi.mocked(apiClient.get)
+      .mockResolvedValueOnce(mockProfile)
+      .mockResolvedValueOnce({ ...baseTutorialWithDetails, status: 'pending' })
+    render(await EditTutorialPage(pageParams))
+    expect(
+      screen.getByTestId('edit-stepper').querySelector('[data-step="review"]')
+    ).toHaveAttribute('data-step-status', 'done')
   })
 })
