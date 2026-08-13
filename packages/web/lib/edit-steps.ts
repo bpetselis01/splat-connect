@@ -26,6 +26,10 @@ export interface EditStep {
   label: string
   status: EditStepStatus
   content: ReactNode
+  /** Shown in the pill row but not reachable — the New-tutorial page uses this
+   *  so the whole journey is visible before the tutorial exists to hang files,
+   *  parts and tools off. Mirrors ToyStep.disabled. */
+  disabled?: boolean
 }
 
 const DETAILS_FIELDS = ['Title', 'Difficulty']
