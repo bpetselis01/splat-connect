@@ -23,7 +23,9 @@ export function EditStepper({ steps }: { steps: EditStep[] }) {
   const stepIds = steps.map((s) => s.id)
   const requested = searchParams.get('step') as EditStepId | null
   const [activeId, setActiveId] = useState<EditStepId>(
-    requested && stepIds.includes(requested) ? requested : steps[0].id
+    requested && stepIds.includes(requested) && !steps.find((s) => s.id === requested)?.disabled
+      ? requested
+      : steps[0].id
   )
 
   function selectStep(id: EditStepId) {
@@ -43,6 +45,7 @@ export function EditStepper({ steps }: { steps: EditStep[] }) {
             role="tab"
             aria-selected={step.id === activeId}
             data-active={step.id === activeId || undefined}
+            disabled={step.disabled}
             onClick={() => selectStep(step.id)}
             className="step-pill"
           >
