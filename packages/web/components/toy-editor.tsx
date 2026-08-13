@@ -28,35 +28,44 @@ function ToyReviewPanel({ toy, onPublished }: { toy: Toy; onPublished: (t: Toy) 
     }
   }
 
+  // The panel wraps only the summary: `.panel` sets overflow:hidden, which
+  // would kill the sticky bar's positioning if it lived inside. Same layering
+  // as the edit-tutorial page, where the submit bar is a sibling of the panel.
   return (
-    <div className="flex flex-col gap-4 px-5 pb-5">
-      <dl className="flex flex-col gap-2 text-sm">
-        <div>
-          <dt className="font-semibold text-ink">Name</dt>
-          <dd>{toy.name}</dd>
-        </div>
-        <div>
-          <dt className="font-semibold text-ink">Condition</dt>
-          <dd>{toy.condition} / 10</dd>
-        </div>
-        <div>
-          <dt className="font-semibold text-ink">Description</dt>
-          <dd>{toy.description || '—'}</dd>
-        </div>
-        <div>
-          <dt className="font-semibold text-ink">Switch-adapted</dt>
-          <dd>{toy.switch_adapted ? 'Yes' : 'No'}</dd>
-        </div>
-      </dl>
+    <>
+      <div className="panel pt-5">
+        <div className="flex flex-col gap-4 px-5 pb-5">
+          <dl className="flex flex-col gap-2 text-sm">
+            <div>
+              <dt className="font-semibold text-ink">Name</dt>
+              <dd>{toy.name}</dd>
+            </div>
+            <div>
+              <dt className="font-semibold text-ink">Condition</dt>
+              <dd>{toy.condition} / 10</dd>
+            </div>
+            <div>
+              <dt className="font-semibold text-ink">Description</dt>
+              <dd>{toy.description || '—'}</dd>
+            </div>
+            <div>
+              <dt className="font-semibold text-ink">Switch-adapted</dt>
+              <dd>{toy.switch_adapted ? 'Yes' : 'No'}</dd>
+            </div>
+          </dl>
 
-      {error && (
-        <p role="alert" className="alert alert-danger">
-          {error}
-        </p>
-      )}
+          {error && (
+            <p role="alert" className="alert alert-danger">
+              {error}
+            </p>
+          )}
+        </div>
+      </div>
 
       {toy.status === 'published' ? (
-        <p className="text-sm font-semibold text-mint-deep">Published</p>
+        <div className="sticky-submit-bar sticky-submit-bar-quiet">
+          <span className="text-sm font-semibold text-mint-deep">Published</span>
+        </div>
       ) : (
         <div className="sticky-submit-bar">
           <span className="sticky-submit-note">
@@ -74,7 +83,7 @@ function ToyReviewPanel({ toy, onPublished }: { toy: Toy; onPublished: (t: Toy) 
           </button>
         </div>
       )}
-    </div>
+    </>
   )
 }
 
@@ -112,21 +121,27 @@ export function ToyEditor({ toy: initialToy }: { toy: Toy }) {
             id: 'details',
             label: 'Details',
             status: statuses.details,
-            content: <ToyDetailsForm toy={toy} onSave={saveDetails} />,
+            content: (
+              <div className="panel pt-5">
+                <ToyDetailsForm toy={toy} onSave={saveDetails} />
+              </div>
+            ),
           },
           {
             id: 'photos',
             label: 'Photos',
             status: statuses.photos,
             content: (
-              <ToyPhotosSection
-                toyId={toy.id}
-                coverPhotoUrl={toy.cover_photo_url}
-                switchAdapted={toy.switch_adapted}
-                switchPhotoUrls={toy.switch_photo_urls}
-                onSave={savePhotos}
-                onRemoveSwitchPhoto={removeSwitchPhoto}
-              />
+              <div className="panel pt-5">
+                <ToyPhotosSection
+                  toyId={toy.id}
+                  coverPhotoUrl={toy.cover_photo_url}
+                  switchAdapted={toy.switch_adapted}
+                  switchPhotoUrls={toy.switch_photo_urls}
+                  onSave={savePhotos}
+                  onRemoveSwitchPhoto={removeSwitchPhoto}
+                />
+              </div>
             ),
           },
           {
