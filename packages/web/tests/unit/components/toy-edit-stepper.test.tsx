@@ -82,6 +82,56 @@ describe('ToyEditStepper', () => {
     expect(screen.getByText('Review content')).toBeInTheDocument()
   })
 
+  it('renders a trailing action inside the pill row, after the last tab', () => {
+    const { container } = render(
+      <ToyEditStepper
+        steps={makeSteps({
+          details: <p>Details content</p>,
+          photos: <p>Photos content</p>,
+          review: <p>Review content</p>,
+        })}
+        trailing={<button type="button">Delete toy</button>}
+      />
+    )
+    const row = container.querySelector('.step-pill-row') as HTMLElement
+    const deleteButton = screen.getByRole('button', { name: 'Delete toy' })
+    expect(row).toContainElement(deleteButton)
+
+    const buttons = Array.from(row.querySelectorAll('button'))
+    expect(buttons[buttons.length - 1]).toBe(deleteButton)
+  })
+
+  it('keeps the trailing action out of the tablist, since it is not a tab', () => {
+    render(
+      <ToyEditStepper
+        steps={makeSteps({
+          details: <p>Details content</p>,
+          photos: <p>Photos content</p>,
+          review: <p>Review content</p>,
+        })}
+        trailing={<button type="button">Delete toy</button>}
+      />
+    )
+    expect(screen.getAllByRole('tab')).toHaveLength(3)
+    expect(screen.getByRole('tablist')).not.toContainElement(
+      screen.getByRole('button', { name: 'Delete toy' })
+    )
+  })
+
+  it('renders no trailing slot when none is given', () => {
+    const { container } = render(
+      <ToyEditStepper
+        steps={makeSteps({
+          details: <p>Details content</p>,
+          photos: <p>Photos content</p>,
+          review: <p>Review content</p>,
+        })}
+      />
+    )
+    const row = container.querySelector('.step-pill-row') as HTMLElement
+    expect(row.querySelectorAll('button')).toHaveLength(3)
+  })
+
   it("renders each pill's status dot from the step status", () => {
     render(
       <ToyEditStepper
