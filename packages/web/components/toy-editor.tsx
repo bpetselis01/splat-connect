@@ -5,6 +5,7 @@ import type { Toy } from '@splat-connect/types'
 import { ToyEditStepper } from '@/components/toy-edit-stepper'
 import { ToyDetailsForm } from '@/components/toy-details-form'
 import { ToyPhotosSection } from '@/components/toy-photos-section'
+import { ToyPhotoGrid } from '@/components/toy-photo-viewer'
 import { DeleteEntityButton } from '@/components/delete-entity-button'
 import { ToastProvider } from '@/components/toast'
 import { browserApiClient } from '@/lib/browser-api-client'
@@ -35,6 +36,11 @@ function ToyReviewPanel({ toy, onPublished }: { toy: Toy; onPublished: (t: Toy) 
     <>
       <div className="panel pt-5">
         <div className="flex flex-col gap-4 px-5 pb-5">
+          <ToyPhotoGrid
+            coverPhotoUrl={toy.cover_photo_url}
+            switchPhotoUrls={toy.switch_adapted ? toy.switch_photo_urls : []}
+          />
+
           <dl className="flex flex-col gap-2 text-sm">
             <div>
               <dt className="font-semibold text-ink">Name</dt>
@@ -104,13 +110,6 @@ export function ToyEditor({ toy: initialToy }: { toy: Toy }) {
     setToy(updated)
   }
 
-  async function removeSwitchPhoto(url: string) {
-    const updated = await browserApiClient.patch<Toy>(`/api/toys/${toy.id}`, {
-      switch_photo_urls: toy.switch_photo_urls.filter((u) => u !== url),
-    })
-    setToy(updated)
-  }
-
   const statuses = computeToyStepStatuses(toy)
 
   return (
@@ -139,7 +138,6 @@ export function ToyEditor({ toy: initialToy }: { toy: Toy }) {
                   switchAdapted={toy.switch_adapted}
                   switchPhotoUrls={toy.switch_photo_urls}
                   onSave={savePhotos}
-                  onRemoveSwitchPhoto={removeSwitchPhoto}
                 />
               </div>
             ),
@@ -151,11 +149,14 @@ export function ToyEditor({ toy: initialToy }: { toy: Toy }) {
             content: <ToyReviewPanel toy={toy} onPublished={setToy} />,
           },
         ]}
-      />
-      <DeleteEntityButton
-        endpoint={`/api/toys/${toy.id}`}
-        redirectTo={'/dashboard/toys' as Route<string>}
-        label="toy"
+        trailing={
+          <DeleteEntityButton
+            endpoint={`/api/toys/${toy.id}`}
+            redirectTo={'/dashboard/toys' as Route<string>}
+            label="toy"
+            className="step-pill step-pill-danger"
+          />
+        }
       />
     </ToastProvider>
   )
