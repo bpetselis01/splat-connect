@@ -10,6 +10,7 @@ import { EditBackingSection } from '@/components/edit-backing-section'
 import { EditDetailsSection } from '@/components/edit-details-section'
 import { EditCollaboratorsSection } from '@/components/edit-collaborators-section'
 import { EditStepper } from '@/components/edit-stepper'
+import { TutorialReviewPanel } from '@/components/tutorial-review-panel'
 import { computeStepStatuses, type EditStep } from '@/lib/edit-steps'
 import { getMissingFields } from '@/lib/validation'
 import type { Tutorial, Part, Tool, StlFile, TutorialWithDetails, Difficulty, BuyLink, Profile, TutorialOrg, Organization } from '@splat-connect/types'
@@ -265,6 +266,28 @@ export default async function EditTutorialPage({
         </div>
       ),
     },
+    {
+      id: 'review',
+      label: 'Review',
+      status: stepStatuses.review,
+      content: (
+        <TutorialReviewPanel
+          title={tutorial!.title}
+          description={tutorial!.description}
+          difficulty={tutorial!.difficulty as Difficulty}
+          toyPhotoUrl={tutorial!.toy_photo_url}
+          hasPdf={tutorial!.tutorial_pdf_url !== null}
+          partCount={parts.length}
+          toolCount={tools.length}
+          stlCount={stlFiles.length}
+          backing={backing}
+          status={tutorial!.status}
+          updatedAt={tutorial!.updated_at}
+          missingFields={missingFields}
+          onSubmit={submitForReview}
+        />
+      ),
+    },
   ]
 
   return (
@@ -274,9 +297,9 @@ export default async function EditTutorialPage({
           href="/dashboard"
           className="text-sm font-semibold text-brand-dark hover:underline"
         >
-          &larr; Dashboard
+          &larr; My tutorials
         </Link>
-        <h1 className="truncate text-xl font-bold text-ink">{tutorial!.title}</h1>
+        <h1 className="truncate text-2xl font-bold text-ink">{tutorial!.title}</h1>
       </div>
 
       {tutorial!.status === 'rejected' && (
@@ -292,13 +315,7 @@ export default async function EditTutorialPage({
           `next build` fails to prerender this page — same reasoning as
           app/onboarding/contributor-terms/page.tsx. */}
       <Suspense>
-        <EditStepper
-          steps={steps}
-          tutorialStatus={tutorial!.status}
-          tutorialUpdatedAt={tutorial!.updated_at}
-          missingFields={missingFields}
-          onSubmit={submitForReview}
-        />
+        <EditStepper steps={steps} />
       </Suspense>
     </div>
   )
