@@ -100,6 +100,18 @@ describe('ToyPhotosSection', () => {
     expect(screen.getByText('Switch photos')).toBeInTheDocument()
   })
 
+  it('explains what switch-adapted means and what ticking it will require', () => {
+    setup({ switchAdapted: false })
+    expect(
+      screen.getByText(/at least one switch photo before you can publish/i)
+    ).toBeInTheDocument()
+  })
+
+  it('styles the switch-adapted tick with the shared checkbox class', () => {
+    setup({ switchAdapted: false })
+    expect(screen.getByLabelText('Switch-adapted')).toHaveClass('field-check')
+  })
+
   it('checking switch-adapted alone enables Save', () => {
     const { saveButton } = setup({ switchAdapted: false })
     fireEvent.click(screen.getByLabelText('Switch-adapted'))
