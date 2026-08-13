@@ -25,10 +25,13 @@ export function DeleteEntityButton({
   endpoint,
   redirectTo,
   label,
+  className = 'btn btn-danger btn-sm self-start',
 }: {
   endpoint: string
   redirectTo: Route<string>
   label: string
+  /** Overridden by the toy editor, which renders this as a pill in the step row. */
+  className?: string
 }) {
   const router = useRouter()
   const ref = useRef<HTMLDialogElement>(null)
@@ -69,11 +72,7 @@ export function DeleteEntityButton({
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="btn btn-danger btn-sm self-start"
-      >
+      <button type="button" onClick={() => setOpen(true)} className={className}>
         Delete {label}
       </button>
 

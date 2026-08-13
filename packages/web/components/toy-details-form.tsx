@@ -55,6 +55,9 @@ export function ToyDetailsForm({
           className="field"
           required
         />
+        <p className="mt-1 text-xs leading-relaxed text-muted">
+          10 means brand new, 1 means heavily worn — scuffed, faded or missing pieces.
+        </p>
       </div>
       <div>
         <label htmlFor="toy-description" className="field-label">Description</label>

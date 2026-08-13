@@ -16,6 +16,11 @@ vi.mock('@/lib/browser-api-client', () => ({
   browserApiClient: { patch: vi.fn(), delete: vi.fn() },
 }))
 
+vi.mock('next/image', () => ({
+  // eslint-disable-next-line @next/next/no-img-element
+  default: ({ src, alt }: { src: string; alt: string }) => <img src={src} alt={alt} />,
+}))
+
 import { browserApiClient } from '@/lib/browser-api-client'
 
 function toy(overrides: Partial<Toy> = {}): Toy {
@@ -104,5 +109,46 @@ describe('ToyEditor', () => {
   it('renders a delete button scoped to this toy', () => {
     render(<ToyEditor toy={toy()} />)
     expect(screen.getByRole('button', { name: 'Delete toy' })).toBeInTheDocument()
+  })
+
+  it('puts Delete toy last in the pill row, styled as a pill rather than a button', () => {
+    const { container } = render(<ToyEditor toy={toy()} />)
+    const row = container.querySelector('.step-pill-row') as HTMLElement
+    const deleteButton = screen.getByRole('button', { name: 'Delete toy' })
+
+    expect(row).toContainElement(deleteButton)
+    expect(deleteButton).toHaveClass('step-pill', 'step-pill-danger')
+    // Excluding the confirm dialog's own buttons: DeleteEntityButton renders
+    // trigger + <dialog> as one fragment, so both land in the trailing slot.
+    const rowButtons = Array.from(row.querySelectorAll('button')).filter((b) => !b.closest('dialog'))
+    expect(rowButtons[rowButtons.length - 1]).toBe(deleteButton)
+  })
+
+  it('shows the cover photo in Review, so the listing is checked by eye', () => {
+    render(<ToyEditor toy={toy()} />)
+    fireEvent.click(screen.getByRole('tab', { name: 'Review' }))
+    expect(screen.getByAltText('Cover photo')).toHaveAttribute(
+      'src',
+      'https://example.com/cover.jpg'
+    )
+  })
+
+  it('shows the switch photo in Review only when the toy is switch-adapted', () => {
+    const switchPhotos = { switch_photo_urls: ['https://example.com/switch.jpg'] }
+    const { unmount } = render(<ToyEditor toy={toy({ ...switchPhotos, switch_adapted: false })} />)
+    fireEvent.click(screen.getByRole('tab', { name: 'Review' }))
+    expect(screen.queryByAltText('Switch photo')).not.toBeInTheDocument()
+    unmount()
+
+    render(<ToyEditor toy={toy({ ...switchPhotos, switch_adapted: true })} />)
+    fireEvent.click(screen.getByRole('tab', { name: 'Review' }))
+    expect(screen.getByAltText('Switch photo')).toBeInTheDocument()
+  })
+
+  it('falls back to the placeholder tile in Review when there is no cover photo', () => {
+    render(<ToyEditor toy={toy({ cover_photo_url: null })} />)
+    fireEvent.click(screen.getByRole('tab', { name: 'Review' }))
+    expect(screen.queryByAltText('Cover photo')).not.toBeInTheDocument()
+    expect(screen.getByText('No cover photo yet')).toBeInTheDocument()
   })
 })

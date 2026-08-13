@@ -38,6 +38,11 @@ describe('ToyDetailsForm', () => {
     expect(onSave).toHaveBeenCalledWith({ name: 'Puzzle', condition: 9, description: 'Missing a few pieces' })
   })
 
+  it('says which end of the condition scale is which', () => {
+    render(<ToyDetailsForm toy={{ name: 'Robot', description: null, condition: 6 }} onSave={vi.fn()} />)
+    expect(screen.getByText(/10 means brand new, 1 means heavily worn/i)).toBeInTheDocument()
+  })
+
   it('shows an error and no saved indicator when onSave rejects', async () => {
     const onSave = vi.fn().mockRejectedValue(new Error('boom'))
     render(<ToyDetailsForm toy={{ name: 'Kazoo', description: null, condition: 3 }} onSave={onSave} />)
