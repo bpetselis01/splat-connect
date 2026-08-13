@@ -58,7 +58,11 @@ test('a contributor adds a toy, edits it, uploads a cover photo, publishes it, a
     await page.goto('/dashboard/toys')
     const card = page.getByRole('link', { name: /E2E Test Toy/ })
     await expect(card).toBeVisible()
-    await expect(card.getByText('Draft')).toHaveCount(0)
+    // Positive assertion now that published carries its own badge: the old
+    // "no Draft text" check would pass on a draft too, since the badge reads
+    // DRAFT and getByText is case-sensitive.
+    await expect(card.getByText('PUBLISHED')).toBeVisible()
+    await expect(card.getByText('DRAFT')).toHaveCount(0)
 
     await card.click()
     await page.getByRole('button', { name: 'Delete toy' }).click()
