@@ -17,18 +17,29 @@ test('a contributor adds a toy, edits it, uploads a cover photo, publishes it, a
     await page.goto('/dashboard/toys')
     await page.getByRole('link', { name: 'Add a toy' }).click()
     await page.waitForURL('**/dashboard/toys/new')
+    await expect(page.getByRole('tab', { name: 'Photos' })).toBeDisabled()
     await page.locator('#new-toy-name').fill('E2E Test Toy')
     await page.locator('#new-toy-condition').fill('6')
     await page.locator('#new-toy-description').fill('A toy created by Playwright.')
     await page.getByRole('button', { name: 'Create' }).click()
-    await page.waitForURL(/\/dashboard\/toys\/[0-9a-f-]{36}$/)
+    // Creation hands straight over to Photos, the step that was locked before
+    // the toy existed.
+    await page.waitForURL(/\/dashboard\/toys\/[0-9a-f-]{36}\?step=photos$/)
     await expect(page.getByRole('heading', { name: 'E2E Test Toy' })).toBeVisible()
 
+    await page.getByRole('tab', { name: 'Details' }).click()
     await page.locator('#toy-condition').fill('9')
     await page.getByRole('button', { name: 'Save' }).click()
     await expect(page.getByText('Saved')).toBeVisible()
 
     await page.getByRole('tab', { name: 'Review' }).click()
+    // The pointer is still resting on the pill just clicked. Its active colour
+    // (--color-brand-dark) has to survive :hover, or every selection looks
+    // like it did not take.
+    await expect(page.getByRole('tab', { name: 'Review' })).toHaveCSS(
+      'background-color',
+      'rgb(15, 111, 156)'
+    )
     await expect(page.getByText(/Add .*to publish/)).toBeVisible()
     await expect(page.getByRole('button', { name: 'Publish' })).toBeDisabled()
 
