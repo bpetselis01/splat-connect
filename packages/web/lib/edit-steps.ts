@@ -10,7 +10,15 @@ import type { ReactNode } from 'react'
 import type { TutorialWithDetails, TutorialOrg } from '@splat-connect/types'
 import { getMissingFields } from '@/lib/validation'
 
-export type EditStepId = 'details' | 'files' | 'parts' | 'tools' | 'stl' | 'backing' | 'collaborators'
+export type EditStepId =
+  | 'details'
+  | 'files'
+  | 'parts'
+  | 'tools'
+  | 'stl'
+  | 'backing'
+  | 'collaborators'
+  | 'review'
 export type EditStepStatus = 'done' | 'attention' | 'neutral'
 
 export interface EditStep {
@@ -18,6 +26,10 @@ export interface EditStep {
   label: string
   status: EditStepStatus
   content: ReactNode
+  /** Shown in the pill row but not reachable — the New-tutorial page uses this
+   *  so the whole journey is visible before the tutorial exists to hang files,
+   *  parts and tools off. Mirrors ToyStep.disabled. */
+  disabled?: boolean
 }
 
 const DETAILS_FIELDS = ['Title', 'Difficulty']
@@ -42,5 +54,8 @@ export function computeStepStatuses(
     stl: tutorial.stl_files.length > 0 ? 'done' : 'neutral',
     backing: backing.length > 0 ? 'done' : 'neutral',
     collaborators: tutorial.tutorial_contributors.length > 1 ? 'done' : 'neutral',
+    // Mirrors the toy Review pill: neutral while the tutorial is still the
+    // contributor's to finish, done once it has been handed over for review.
+    review: tutorial.status === 'draft' ? 'neutral' : 'done',
   }
 }

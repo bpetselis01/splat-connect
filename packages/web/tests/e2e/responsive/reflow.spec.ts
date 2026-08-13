@@ -79,11 +79,12 @@ test('@responsive a dashboard row keeps its controls inside the viewport', async
   await page.waitForURL('**/dashboard')
 
   const width = page.viewportSize()!.width
-  await expectWithinViewport(page.getByRole('link', { name: 'Edit' }).first(), width)
+  // The card is the link; the Edit button it replaced no longer exists.
+  await expectWithinViewport(page.getByTestId('tutorial-row').first(), width)
   await expectWithinViewport(page.getByText('REJECTED', { exact: true }), width)
 })
 
-test('@responsive the upload wizard fits the viewport', async ({ page }) => {
+test('@responsive the new-tutorial page fits the viewport', async ({ page }) => {
   const contributor = await createContributor()
   await acceptTerms(contributor.id)
   await signIn(page, contributor.email, contributor.password)
@@ -91,9 +92,9 @@ test('@responsive the upload wizard fits the viewport', async ({ page }) => {
   await page.goto('/upload')
 
   const width = page.viewportSize()!.width
-  await expectWithinViewport(page.getByPlaceholder('e.g. Fisher-Price Piano'), width)
-  await expectWithinViewport(page.getByRole('button', { name: 'hard', exact: true }), width)
-  await expectWithinViewport(page.getByRole('button', { name: 'Next →' }), width)
+  await expectWithinViewport(page.getByLabel('Title'), width)
+  await expectWithinViewport(page.getByLabel('Difficulty'), width)
+  await expectWithinViewport(page.getByRole('button', { name: 'Create' }), width)
 })
 
 test('@responsive the tutorial detail page stacks to a single column', async ({ page }) => {

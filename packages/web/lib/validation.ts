@@ -1,52 +1,13 @@
 /**
- * Upload wizard validation. canAdvanceFromStep gates the Next button per
- * step, canSubmit gates submission (steps 1–4; the STL step is optional),
- * and getMissingFields turns the same requirements into user-facing labels
- * for the submit-for-review error state.
+ * What a tutorial needs before it can be submitted for review, as user-facing
+ * labels. Consumed by the Review step's submit gate and, through
+ * lib/edit-steps.ts, by each pill's status dot.
+ *
+ * canAdvanceFromStep and canSubmit lived here too, gating the Next button of
+ * the six-step upload wizard. That wizard is gone — the edit page's steps
+ * replaced it — and with it the only notion of a step you had to earn.
  */
-import type { UploadDraft, TutorialWithDetails } from '@splat-connect/types'
-
-export function canAdvanceFromStep(step: number, draft: UploadDraft): boolean {
-  switch (step) {
-    case 1:
-      return (
-        draft.title.trim().length > 0 &&
-        ['easy', 'medium', 'hard'].includes(draft.difficulty)
-      )
-    case 2:
-      return (
-        !!draft.tutorial_pdf_url?.trim() &&
-        !!draft.toy_photo_url?.trim()
-      )
-    case 3:
-      return (
-        draft.parts.length >= 1 &&
-        draft.parts.every(
-          (p) => p.name.trim().length > 0 && Number.isInteger(p.quantity) && p.quantity >= 1
-        )
-      )
-    case 4:
-      return (
-        draft.tools.length >= 1 &&
-        draft.tools.every((t) => t.name.trim().length > 0)
-      )
-    case 5:
-      return true // STL files are optional
-    case 6:
-      return canSubmit(draft)
-    default:
-      return false
-  }
-}
-
-export function canSubmit(draft: UploadDraft): boolean {
-  return (
-    canAdvanceFromStep(1, draft) &&
-    canAdvanceFromStep(2, draft) &&
-    canAdvanceFromStep(3, draft) &&
-    canAdvanceFromStep(4, draft)
-  )
-}
+import type { TutorialWithDetails } from '@splat-connect/types'
 
 export function getMissingFields(tutorial: TutorialWithDetails): string[] {
   const missing: string[] = []

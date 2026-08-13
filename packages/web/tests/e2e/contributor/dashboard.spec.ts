@@ -39,7 +39,7 @@ test('a contributor with no tutorials sees the empty-state prompt', async ({ pag
   await expect(prompt).toHaveAttribute('href', '/upload')
 })
 
-test('a draft tutorial shows its badge and an edit link', async ({ page }) => {
+test('a draft tutorial shows its badge, and its whole card links to the editor', async ({ page }) => {
   const contributor = await createContributor()
   const title = uniqueTitle('E2E Draft')
   const draftId = await createTutorial(contributor.id, { title, status: 'draft' })
@@ -48,11 +48,9 @@ test('a draft tutorial shows its badge and an edit link', async ({ page }) => {
   await page.waitForURL('**/dashboard')
 
   await expect(page.getByText('DRAFT', { exact: true })).toBeVisible()
-  const row = page.getByTestId('tutorial-row').filter({ hasText: title })
-  await expect(row.getByRole('link', { name: 'Edit' })).toHaveAttribute(
-    'href',
-    `/tutorials/${draftId}/edit`
-  )
+  // The card itself is the link now — there is no separate Edit button.
+  const card = page.getByTestId('tutorial-row').filter({ hasText: title })
+  await expect(card).toHaveAttribute('href', `/tutorials/${draftId}/edit`)
 })
 
 test('the status counts match the fixture set', async ({ page }) => {

@@ -43,11 +43,9 @@
 import { apiClient } from '@/lib/api-client'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { DifficultyBadge } from '@/components/difficulty-badge'
-import { StatusBadge } from '@/components/status-badge'
-import { BackingSummary } from '@/components/backing-state'
+import { DashboardTutorialCard } from '@/components/dashboard-tutorial-card'
 import { BookOpen } from '@/components/icons'
-import type { Tutorial, Difficulty, Profile, TutorialOrg } from '@splat-connect/types'
+import type { Tutorial, Profile, TutorialOrg } from '@splat-connect/types'
 
 export default async function DashboardPage() {
   try {
@@ -73,7 +71,13 @@ export default async function DashboardPage() {
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold text-ink">My tutorials</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-ink">My tutorials</h1>
+          <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted">
+            Your adaptation guides. Each one is reviewed — by an organisation you ask, or by
+            SPLAT — before it reaches the library.
+          </p>
+        </div>
         <Link href="/upload" className="btn btn-accent">
           + New tutorial
         </Link>
@@ -94,8 +98,6 @@ export default async function DashboardPage() {
         ))}
       </div>
 
-      <h2 className="mb-3 text-lg font-bold text-ink">Your tutorials</h2>
-
       {tutorials.length === 0 ? (
         <div className="flex flex-col items-center px-6 py-12 text-center">
           <span aria-hidden="true" className="empty-badge text-brand-dark">
@@ -113,37 +115,13 @@ export default async function DashboardPage() {
           </Link>
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
+        <ul className="grid max-w-5xl grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
           {tutorials.map((t) => (
-            <div
-              key={t.id}
-              data-testid="tutorial-row"
-              className="card flex flex-wrap items-center justify-between gap-4 p-4"
-            >
-              <div className="flex min-w-0 items-center gap-3">
-                <DifficultyBadge difficulty={t.difficulty as Difficulty} />
-                <div className="min-w-0">
-                  <p className="text-sm font-bold text-ink">{t.title}</p>
-                  {t.status === 'rejected' && (
-                    <p className="mt-0.5 text-xs leading-relaxed text-danger">
-                      {t.rejection_note ?? 'No feedback was provided.'}
-                    </p>
-                  )}
-                  <BackingSummary backing={t.tutorial_orgs ?? []} />
-                </div>
-              </div>
-              <div className="flex shrink-0 items-center gap-3">
-                <Link
-                  href={`/tutorials/${t.id}/edit`}
-                  className="btn btn-soft btn-sm"
-                >
-                  Edit
-                </Link>
-                <StatusBadge status={t.status} />
-              </div>
-            </div>
+            <li key={t.id}>
+              <DashboardTutorialCard tutorial={t} />
+            </li>
           ))}
-        </div>
+        </ul>
       )}
     </div>
   )
