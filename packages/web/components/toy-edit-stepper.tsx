@@ -10,10 +10,9 @@ export function ToyEditStepper({ steps }: { steps: ToyStep[] }) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const stepIds = steps.map((s) => s.id)
   const requested = searchParams.get('step') as ToyStepId | null
   const [activeId, setActiveId] = useState<ToyStepId>(
-    requested && stepIds.includes(requested) ? requested : steps[0].id
+    steps.find((s) => s.id === requested && !s.disabled)?.id ?? steps[0].id
   )
 
   function selectStep(id: ToyStepId) {
@@ -24,7 +23,7 @@ export function ToyEditStepper({ steps }: { steps: ToyStep[] }) {
   const active = steps.find((s) => s.id === activeId) ?? steps[0]
 
   return (
-    <div className="flex flex-col gap-4">
+    <>
       <div className="step-pill-row" role="tablist" aria-label="Toy sections">
         {steps.map((step) => (
           <button
@@ -33,6 +32,7 @@ export function ToyEditStepper({ steps }: { steps: ToyStep[] }) {
             role="tab"
             aria-selected={step.id === activeId}
             data-active={step.id === activeId || undefined}
+            disabled={step.disabled}
             onClick={() => selectStep(step.id)}
             className="step-pill"
           >
@@ -45,6 +45,6 @@ export function ToyEditStepper({ steps }: { steps: ToyStep[] }) {
       </div>
 
       <div role="tabpanel">{active.content}</div>
-    </div>
+    </>
   )
 }
