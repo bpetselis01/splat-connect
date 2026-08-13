@@ -112,6 +112,8 @@ test('a collaborator is invited, accepts, edits, submits, and both are notified 
       })
       .toBe(renamedTitle)
 
+    // Submitting moved onto its own Review step, off the always-visible bar.
+    await page.getByRole('tab', { name: 'Review' }).click()
     await page.getByRole('button', { name: 'Submit for review' }).click()
     await expect
       .poll(async () => {
