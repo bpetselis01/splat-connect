@@ -31,7 +31,7 @@
  * 4. Parent calls POST /api/upload (server-side with api-client.ts)
  * 5. File uploaded to Supabase Storage
  * 6. File URL returned to parent
- * 7. Parent updates UploadDraft with file URL
+ * 7. Parent saves the returned file URL onto the record
  * 
  * Related files:
  * - app/upload/page.tsx: Uses FileDropZone in form
