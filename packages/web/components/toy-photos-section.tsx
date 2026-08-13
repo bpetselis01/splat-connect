@@ -108,14 +108,24 @@ export function ToyPhotosSection({
           currentFileLabel={coverPhotoUrl ? 'Current cover photo on file — upload to replace' : undefined}
         />
       </div>
-      <div className="flex items-center gap-2">
-        <input
-          id="toy_switch_adapted"
-          type="checkbox"
-          checked={switchAdaptedInput}
-          onChange={(e) => setSwitchAdaptedInput(e.target.checked)}
-        />
-        <label htmlFor="toy_switch_adapted" className="field-label">Switch-adapted</label>
+      <div>
+        <label
+          htmlFor="toy_switch_adapted"
+          className="field-label flex cursor-pointer select-none items-center gap-2"
+        >
+          <input
+            id="toy_switch_adapted"
+            type="checkbox"
+            className="field-check"
+            checked={switchAdaptedInput}
+            onChange={(e) => setSwitchAdaptedInput(e.target.checked)}
+          />
+          Switch-adapted
+        </label>
+        <p className="mt-1 text-xs leading-relaxed text-muted">
+          Tick this if the toy has been rewired to work with an accessibility switch. You&rsquo;ll
+          need at least one switch photo before you can publish.
+        </p>
       </div>
       {switchAdaptedInput && (
         <div className="flex flex-col gap-2">
