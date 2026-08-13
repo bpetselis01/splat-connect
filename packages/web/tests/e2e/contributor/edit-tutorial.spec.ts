@@ -228,6 +228,8 @@ test('submit-for-review is blocked when required fields are missing', async ({ p
   await page.waitForURL('**/dashboard')
   await page.goto(`/tutorials/${id}/edit`)
 
+  // Submitting lives on the Review step now, not on a bar shown from every step.
+  await page.getByRole('tab', { name: 'Review' }).click()
   const submitButton = page.getByRole('button', { name: 'Submit for review' })
   await expect(submitButton).toBeDisabled()
   await expect(page.locator('.sticky-submit-note')).toContainText('Tutorial PDF')
