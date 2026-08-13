@@ -28,7 +28,7 @@
  * - types/index.ts: Tutorial type definition
  */
 import Link from 'next/link'
-import Image from 'next/image'
+import { CardPhoto } from './card-photo'
 import { DifficultyBadge } from './difficulty-badge'
 import { BackingSummary } from './backing-state'
 import type { Tutorial, TutorialOrg } from '@splat-connect/types'
@@ -44,20 +44,7 @@ export function TutorialCard({ tutorial }: { tutorial: Listed }) {
       data-testid="tutorial-card"
       className="card card-link overflow-hidden"
     >
-      {tutorial.toy_photo_url ? (
-        <div className="relative h-36 w-full bg-sunken">
-          <Image
-            src={tutorial.toy_photo_url}
-            alt={tutorial.title}
-            fill
-            className="object-cover"
-          />
-        </div>
-      ) : (
-        <div className="flex h-36 items-center justify-center bg-brand-tint text-4xl">
-          🧸
-        </div>
-      )}
+      <CardPhoto src={tutorial.toy_photo_url} alt={tutorial.title} />
       <div className="p-4">
         <p className="truncate text-sm font-bold text-ink">{tutorial.title}</p>
         {tutorial.description && (
