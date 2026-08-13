@@ -22,7 +22,9 @@ export function NewToyForm() {
         condition,
         description: description || null,
       })
-      router.push(`/dashboard/toys/${toy.id}`)
+      // Straight on to Photos: the Add page shows the same three pills, so
+      // landing back on Details would look like the save had not taken.
+      router.push(`/dashboard/toys/${toy.id}?step=photos`)
     } catch {
       setError('Could not create this toy. Please try again.')
       setBusy(false)
