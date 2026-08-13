@@ -40,11 +40,11 @@ describe('canAdvanceFromStep', () => {
     })
 
     // Tests: a difficulty value outside the allowed set (easy/medium/hard) blocks Step 1
-    // How:   passes difficulty: 'extreme' as any; checks return is false
+    // How:   passes difficulty: 'extreme' as unknown as UploadDraft['difficulty']; checks return is false
     // Chain: the difficulty buttons in the UI only emit valid values, but this check guards
     //        against programmatic misuse → the API always receives a valid difficulty enum value
     it('returns false with invalid difficulty', () => {
-      expect(canAdvanceFromStep(1, { ...baseDraft, difficulty: 'extreme' as any })).toBe(false)
+      expect(canAdvanceFromStep(1, { ...baseDraft, difficulty: 'extreme' as unknown as UploadDraft['difficulty'] })).toBe(false)
     })
 
     // Tests: each of the three valid difficulty values allows advancement from Step 1

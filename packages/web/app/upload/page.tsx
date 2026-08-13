@@ -103,6 +103,13 @@ export default function UploadPage() {
   // with defaults before the restore lands) and the render below (so the server
   // and first client render agree — no hydration mismatch on a restored step).
   const [ready, setReady] = useState(false)
+  /* set-state-in-effect is disabled across this effect deliberately. Reading
+     sessionStorage is the "synchronise with an external system" case the rule
+     exempts, and it cannot move into render: the server has no sessionStorage,
+     so restoring a step during the first render would change the markup React
+     hydrates against — which is what the `ready` gate above exists to prevent.
+     It runs once on mount, so there is no cascading-render risk. */
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     try {
       const raw = sessionStorage.getItem(DRAFT_KEY)
@@ -125,6 +132,7 @@ export default function UploadPage() {
     }
     setReady(true)
   }, [])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     if (!ready) return

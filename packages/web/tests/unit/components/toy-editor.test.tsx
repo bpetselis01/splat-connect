@@ -93,6 +93,14 @@ describe('ToyEditor', () => {
     expect(screen.queryByText('Published')).not.toBeInTheDocument()
   })
 
+  it('wraps every step body in a panel, like the edit-tutorial page', () => {
+    const { container } = render(<ToyEditor toy={toy()} />)
+    for (const label of ['Details', 'Photos', 'Review']) {
+      fireEvent.click(screen.getByRole('tab', { name: label }))
+      expect(container.querySelector('[role="tabpanel"] > .panel')).toBeInTheDocument()
+    }
+  })
+
   it('renders a delete button scoped to this toy', () => {
     render(<ToyEditor toy={toy()} />)
     expect(screen.getByRole('button', { name: 'Delete toy' })).toBeInTheDocument()

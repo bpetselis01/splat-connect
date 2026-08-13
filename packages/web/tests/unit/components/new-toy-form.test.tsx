@@ -22,7 +22,7 @@ describe('NewToyForm', () => {
     fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'Loud siren' } })
     fireEvent.click(screen.getByRole('button', { name: 'Create' }))
 
-    await waitFor(() => expect(push).toHaveBeenCalledWith('/dashboard/toys/t1'))
+    await waitFor(() => expect(push).toHaveBeenCalledWith('/dashboard/toys/t1?step=photos'))
     expect(browserApiClient.post).toHaveBeenCalledWith('/api/toys', {
       name: 'Fire truck',
       condition: 7,

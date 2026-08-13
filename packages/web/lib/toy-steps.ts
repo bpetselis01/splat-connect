@@ -9,6 +9,9 @@ export interface ToyStep {
   label: string
   status: ToyStepStatus
   content: ReactNode
+  /** Shown in the pill row but not reachable — the Add-a-toy page uses this so
+   *  the whole journey is visible before the toy exists to hang photos off. */
+  disabled?: boolean
 }
 
 export function getMissingToyFields(toy: {

@@ -429,6 +429,18 @@
     color: #ffffff;
   }
 
+  /* Locked steps on the Add-a-toy page: still listed so the journey reads end
+     to end, but not reachable until the record exists.
+     Last of the three on purpose — all four .step-pill rules score (0,2,0), so
+     source order settles them. Qualifying any of these with :not() would raise
+     it to (0,3,0) and silently outrank the rest. A disabled pill is never the
+     active one, so nothing above it is lost. */
+  .step-pill:disabled {
+    background-color: var(--color-sunken);
+    color: var(--color-muted);
+    cursor: not-allowed;
+  }
+
   .step-pill-dot {
     display: grid;
     place-items: center;

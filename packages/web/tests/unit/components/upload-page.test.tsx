@@ -54,8 +54,8 @@ async function advanceToStep(to: number) {
   }
   if (to >= 3) {
     vi.mocked(browserApiClient.postFormData)
-      .mockResolvedValueOnce({ url: 'https://example.com/tutorial.pdf' } as any)
-      .mockResolvedValueOnce({ url: 'https://example.com/photo.jpg' } as any)
+      .mockResolvedValueOnce({ url: 'https://example.com/tutorial.pdf' } as never)
+      .mockResolvedValueOnce({ url: 'https://example.com/photo.jpg' } as never)
     fireEvent.change(screen.getByTestId('filedrop-tutorial_pdf'), {
       target: { files: [new File(['pdf'], 'tutorial.pdf', { type: 'application/pdf' })] },
     })
@@ -113,9 +113,9 @@ describe('UploadPage', () => {
     )
     vi.spyOn(crypto, 'randomUUID').mockReturnValue('test-id' as ReturnType<typeof crypto.randomUUID>)
     vi.stubGlobal('location', { href: '' })
-    vi.mocked(browserApiClient.post).mockResolvedValue({} as any)
-    vi.mocked(browserApiClient.patch).mockResolvedValue({} as any)
-    vi.mocked(browserApiClient.postFormData).mockResolvedValue({ url: 'https://example.com/file' } as any)
+    vi.mocked(browserApiClient.post).mockResolvedValue({} as never)
+    vi.mocked(browserApiClient.patch).mockResolvedValue({} as never)
+    vi.mocked(browserApiClient.postFormData).mockResolvedValue({ url: 'https://example.com/file' } as never)
   })
 
   // Tests: clicking Next on Step 1 for the first time POSTs a new tutorial draft and links the contributor
@@ -189,7 +189,7 @@ describe('UploadPage', () => {
     fireEvent.click(screen.getByRole('button', { name: /← back/i }))
     await waitFor(() => screen.getByText(/step 1 of 6/i))
     vi.clearAllMocks()
-    vi.mocked(browserApiClient.patch).mockResolvedValue({} as any)
+    vi.mocked(browserApiClient.patch).mockResolvedValue({} as never)
     fireEvent.click(screen.getByRole('button', { name: /next →/i }))
     await waitFor(() => {
       expect(browserApiClient.patch).toHaveBeenCalledWith(
@@ -208,10 +208,10 @@ describe('UploadPage', () => {
     render(<UploadPage />)
     await advanceToStep(2)
     vi.clearAllMocks()
-    vi.mocked(browserApiClient.patch).mockResolvedValue({} as any)
+    vi.mocked(browserApiClient.patch).mockResolvedValue({} as never)
     vi.mocked(browserApiClient.postFormData)
-      .mockResolvedValueOnce({ url: 'https://example.com/tutorial.pdf' } as any)
-      .mockResolvedValueOnce({ url: 'https://example.com/photo.jpg' } as any)
+      .mockResolvedValueOnce({ url: 'https://example.com/tutorial.pdf' } as never)
+      .mockResolvedValueOnce({ url: 'https://example.com/photo.jpg' } as never)
     fireEvent.change(screen.getByTestId('filedrop-tutorial_pdf'), {
       target: { files: [new File(['pdf'], 'tutorial.pdf', { type: 'application/pdf' })] },
     })
@@ -240,7 +240,7 @@ describe('UploadPage', () => {
     render(<UploadPage />)
     await advanceToStep(3)
     vi.clearAllMocks()
-    vi.mocked(browserApiClient.post).mockResolvedValue({} as any)
+    vi.mocked(browserApiClient.post).mockResolvedValue({} as never)
     fireEvent.click(screen.getByRole('button', { name: /\+ add part/i }))
     fireEvent.change(screen.getByPlaceholderText(/part name \*/i), {
       target: { value: 'Screw' },
@@ -264,7 +264,7 @@ describe('UploadPage', () => {
     render(<UploadPage />)
     await advanceToStep(4)
     vi.clearAllMocks()
-    vi.mocked(browserApiClient.post).mockResolvedValue({} as any)
+    vi.mocked(browserApiClient.post).mockResolvedValue({} as never)
     fireEvent.click(screen.getByRole('button', { name: /\+ add tool/i }))
     fireEvent.change(screen.getByPlaceholderText(/tool name \*/i), {
       target: { value: 'Screwdriver' },
@@ -288,11 +288,11 @@ describe('UploadPage', () => {
     render(<UploadPage />)
     await advanceToStep(5)
     vi.clearAllMocks()
-    vi.mocked(browserApiClient.post).mockResolvedValue({} as any)
+    vi.mocked(browserApiClient.post).mockResolvedValue({} as never)
     vi.mocked(browserApiClient.postFormData).mockResolvedValue({
       url: 'https://example.com/bracket.stl',
       filename: 'bracket.stl',
-    } as any)
+    } as never)
     fireEvent.change(screen.getByTestId('filedrop-stl_files'), {
       target: { files: [new File(['stl'], 'bracket.stl', { type: 'model/stl' })] },
     })
@@ -319,7 +319,7 @@ describe('UploadPage', () => {
     render(<UploadPage />)
     await advanceToStep(5)
     vi.clearAllMocks()
-    vi.mocked(browserApiClient.post).mockResolvedValue({} as any)
+    vi.mocked(browserApiClient.post).mockResolvedValue({} as never)
     fireEvent.click(screen.getByRole('button', { name: /next →/i }))
     await waitFor(() => screen.getByText(/step 6 of 6/i))
     expect(browserApiClient.post).not.toHaveBeenCalledWith(
@@ -337,7 +337,7 @@ describe('UploadPage', () => {
     render(<UploadPage />)
     await advanceToStep(6)
     vi.clearAllMocks()
-    vi.mocked(browserApiClient.patch).mockResolvedValue({} as any)
+    vi.mocked(browserApiClient.patch).mockResolvedValue({} as never)
     fireEvent.click(screen.getByRole('button', { name: /submit for review/i }))
     await waitFor(() => {
       expect(browserApiClient.patch).toHaveBeenCalledWith(
@@ -377,7 +377,7 @@ describe('UploadPage', () => {
     let resolvePost!: (v: unknown) => void
     vi.mocked(browserApiClient.post)
       .mockImplementationOnce(() => new Promise(r => { resolvePost = r }))
-      .mockResolvedValue({} as any)
+      .mockResolvedValue({} as never)
     render(<UploadPage />)
     fireEvent.change(screen.getByPlaceholderText(/e\.g\. fisher-price piano/i), {
       target: { value: 'My Tutorial' },
