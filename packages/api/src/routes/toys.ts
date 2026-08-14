@@ -35,6 +35,7 @@ const EDITABLE = [
   'switch_adapted',
   'cover_photo_url',
   'switch_photo_urls',
+  'offer_type',
 ] as const
 
 function editableFrom(body: Record<string, unknown>) {
