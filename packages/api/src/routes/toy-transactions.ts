@@ -313,4 +313,83 @@ toyTransactions.post('/:id/accept', async (c) => {
   return c.json(updated)
 })
 
+toyTransactions.post('/:id/reject', async (c) => {
+  const loaded = await loadForParty(c)
+  if ('status' in loaded) return c.json({ error: 'message' in loaded ? loaded.message : 'Not found' }, loaded.status)
+  const tx = loaded.data
+  const userId = c.get('userId')
+  if (userId !== tx.owner_id) return c.json({ error: 'Only the owner may reject' }, 403)
+  if (tx.status !== 'requested') return c.json({ error: 'This request is no longer open' }, 409)
+
+  const admin = createAdminClient()
+  const now = new Date().toISOString()
+  const { data: updated, error } = await admin
+    .from('toy_transactions')
+    .update({ status: 'rejected', updated_at: now })
+    .eq('id', tx.id)
+    .select()
+    .single()
+  if (error) return c.json({ error: error.message }, 500)
+
+  await admin.from('toy_transaction_messages').insert({
+    transaction_id: tx.id,
+    sender_id: userId,
+    kind: 'system',
+    body: 'Request declined.',
+  })
+
+  const { data: toy } = await admin.from('toys').select('name').eq('id', tx.toy_id).single()
+  const { data: ownerName } = await admin.from('profiles').select('name').eq('id', userId).single()
+  await admin.from('notifications').insert({
+    recipient_id: tx.requester_id,
+    type: 'toy_rejected',
+    toy_transaction_id: tx.id,
+    toy_name: toy?.name ?? 'a toy',
+    actor_name: ownerName?.name ?? 'The owner',
+  })
+
+  return c.json(updated)
+})
+
+toyTransactions.post('/:id/withdraw', async (c) => {
+  const loaded = await loadForParty(c)
+  if ('status' in loaded) return c.json({ error: 'message' in loaded ? loaded.message : 'Not found' }, loaded.status)
+  const tx = loaded.data
+  const userId = c.get('userId')
+  if (userId !== tx.owner_id && userId !== tx.requester_id) return c.json({ error: 'Not found' }, 404)
+  if (tx.status !== 'requested' && tx.status !== 'accepted') {
+    return c.json({ error: 'This request is no longer open' }, 409)
+  }
+
+  const admin = createAdminClient()
+  const now = new Date().toISOString()
+  const { data: updated, error } = await admin
+    .from('toy_transactions')
+    .update({ status: 'withdrawn', updated_at: now })
+    .eq('id', tx.id)
+    .select()
+    .single()
+  if (error) return c.json({ error: error.message }, 500)
+
+  await admin.from('toy_transaction_messages').insert({
+    transaction_id: tx.id,
+    sender_id: userId,
+    kind: 'system',
+    body: 'Request withdrawn.',
+  })
+
+  const { data: toy } = await admin.from('toys').select('name').eq('id', tx.toy_id).single()
+  const { data: actor } = await admin.from('profiles').select('name').eq('id', userId).single()
+  const recipientId = userId === tx.owner_id ? tx.requester_id : tx.owner_id
+  await admin.from('notifications').insert({
+    recipient_id: recipientId,
+    type: 'toy_withdrawn',
+    toy_transaction_id: tx.id,
+    toy_name: toy?.name ?? 'a toy',
+    actor_name: actor?.name ?? 'The other party',
+  })
+
+  return c.json(updated)
+})
+
 export default toyTransactions
