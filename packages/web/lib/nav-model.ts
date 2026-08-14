@@ -53,7 +53,7 @@ export function buildNav(caps: Capabilities, unreadNotifications: number): NavGr
       rows: [
         // "Library" alone stops being unambiguous once a toy library exists.
         { href: '/library', label: 'Tutorial library', icon: 'book' },
-        { href: '/toy-library', label: 'Toy library', icon: 'toy', soon: true },
+        { href: '/toy-library', label: 'Toy library', icon: 'toy' },
         { href: '/printing', label: '3D printing', icon: 'printer', soon: true },
         { href: '/organizations', label: 'Organisations', icon: 'building' },
       ],
