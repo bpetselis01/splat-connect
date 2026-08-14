@@ -38,7 +38,7 @@ export default async function ToyListPage() {
           <span aria-hidden="true" className="empty-badge text-brand-dark">
             <Box className="h-8 w-8" />
           </span>
-          <p className="mt-4 font-bold text-ink">You haven't added any toys yet.</p>
+          <p className="mt-4 font-bold text-ink">You haven&apos;t added any toys yet.</p>
           <p className="mt-1 max-w-xs text-sm leading-relaxed text-muted">
             A toy is one adapted item you hold — its condition, a photo, and whether it has been
             wired for a switch.
