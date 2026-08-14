@@ -4,7 +4,21 @@
  * backstop behind each query's own explicit filter.
  */
 import { Hono } from 'hono'
-import { createAnonClient } from '../supabase/client.js'
+import { createAnonClient, createAdminClient } from '../supabase/client.js'
+
+async function midHandoffToyIds(): Promise<string[]> {
+  const admin = createAdminClient()
+  const { data } = await admin
+    .from('toy_transactions')
+    .select('toy_id, offered_toy_id')
+    .eq('status', 'accepted')
+  const ids = new Set<string>()
+  for (const row of data ?? []) {
+    ids.add(row.toy_id)
+    if (row.offered_toy_id) ids.add(row.offered_toy_id)
+  }
+  return [...ids]
+}
 
 const publicRoutes = new Hono()
 
@@ -74,9 +88,11 @@ publicRoutes.get('/toys', async (c) => {
     // returns a single object per row, not an array.
     .select('*, profiles(name)')
     .eq('status', 'published')
+    .is('archived_at', null)
     .order('created_at', { ascending: false })
   if (error) return c.json({ error: error.message }, 500)
-  return c.json(data)
+  const hidden = new Set(await midHandoffToyIds())
+  return c.json((data ?? []).filter((t) => !hidden.has(t.id)))
 })
 
 publicRoutes.get('/toys/:id', async (c) => {
@@ -86,11 +102,14 @@ publicRoutes.get('/toys/:id', async (c) => {
     .select('*, profiles(name)')
     .eq('id', c.req.param('id'))
     .eq('status', 'published')
+    .is('archived_at', null)
     .single()
   // 404 for both "no such row" and "draft row" — an unpublished toy must not
   // be distinguishable from a nonexistent one to an unauthenticated caller,
   // same reasoning as the tutorial detail route above.
   if (error) return c.json({ error: error.message }, 404)
+  const hidden = new Set(await midHandoffToyIds())
+  if (hidden.has(data.id)) return c.json({ error: 'Not found' }, 404)
   return c.json(data)
 })
 
