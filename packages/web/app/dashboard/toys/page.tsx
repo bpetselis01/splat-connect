@@ -45,7 +45,7 @@ export default async function ToyListPage() {
           </Link>
         </div>
       ) : (
-        <ul className="grid max-w-5xl grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
           {toys.map((toy) => (
             <li key={toy.id}>
               <Link
