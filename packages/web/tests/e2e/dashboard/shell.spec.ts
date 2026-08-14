@@ -350,9 +350,9 @@ test('a placeholder route explains the feature instead of 404ing', async ({ page
     await signIn(page, contributor.email, contributor.password)
     await page.waitForURL('**/dashboard')
 
-    await page.getByRole('link', { name: /Toy library/ }).click()
-    await expect(page).toHaveURL('/toy-library')
-    await expect(page.getByText('Toy Library is coming soon.')).toBeVisible()
+    await page.getByRole('link', { name: /3D printing/ }).click()
+    await expect(page).toHaveURL('/printing')
+    await expect(page.getByText('3D Print Requests is coming soon.')).toBeVisible()
     await expect(page.getByRole('link', { name: 'Browse tutorials' })).toBeVisible()
   } finally {
     await deleteUser(contributor.id)
