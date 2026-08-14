@@ -185,4 +185,51 @@ toyTransactions.post('/', async (c) => {
   return c.json(tx, 201)
 })
 
+toyTransactions.post('/:id/messages', async (c) => {
+  const body = await c.req.json()
+  if (typeof body.body !== 'string' || !body.body.trim()) {
+    return c.json({ error: 'Message body is required' }, 400)
+  }
+
+  const supabase = createUserClient(c.get('token'))
+  const { data, error } = await supabase
+    .from('toy_transaction_messages')
+    .insert({
+      transaction_id: c.req.param('id'),
+      sender_id: c.get('userId'),
+      kind: 'user',
+      body: body.body,
+    })
+    .select()
+    .single()
+  if (error) {
+    if (error.code === INVALID_TEXT_REPRESENTATION || error.code === RLS_VIOLATION) {
+      return c.json({ error: 'Not found' }, 404)
+    }
+    return c.json({ error: error.message }, 500)
+  }
+
+  const admin = createAdminClient()
+  const { data: tx } = await admin
+    .from('toy_transactions')
+    .select('owner_id, requester_id, toy_id')
+    .eq('id', c.req.param('id'))
+    .single()
+  if (tx) {
+    const userId = c.get('userId')
+    const recipientId = tx.owner_id === userId ? tx.requester_id : tx.owner_id
+    const { data: sender } = await admin.from('profiles').select('name').eq('id', userId).single()
+    const { data: toy } = await admin.from('toys').select('name').eq('id', tx.toy_id).single()
+    await admin.from('notifications').insert({
+      recipient_id: recipientId,
+      type: 'toy_message',
+      toy_transaction_id: c.req.param('id'),
+      toy_name: toy?.name ?? 'a toy',
+      actor_name: sender?.name ?? 'A contributor',
+    })
+  }
+
+  return c.json(data, 201)
+})
+
 export default toyTransactions
