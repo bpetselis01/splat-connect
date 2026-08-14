@@ -108,7 +108,7 @@ describe('ToyListPage', () => {
   it('shows the empty state when there are no active toys, even if archived toys exist', async () => {
     vi.mocked(apiClient.get).mockResolvedValue([toy({ id: '1', archived_at: '2026-08-01T00:00:00Z' })])
     render(await ToyListPage())
-    expect(screen.getByText(/no toys yet/i)).toBeInTheDocument()
+    expect(screen.getByText(/haven't added any toys yet/i)).toBeInTheDocument()
   })
 
   it('omits the Archived heading when nothing is archived', async () => {
