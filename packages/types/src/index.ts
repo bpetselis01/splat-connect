@@ -50,6 +50,11 @@ export interface Toy {
   updated_at: string
 }
 
+// GET /api/public/toys and /api/public/toys/:id embed the owner's name.
+// Nullable to match profiles(name)'s embed semantics, though in practice
+// every toy has an owner.
+export type ToyWithOwner = Toy & { profiles: { name: string } | null }
+
 export type Difficulty = 'easy' | 'medium' | 'hard'
 export type TutorialStatus = 'draft' | 'pending' | 'approved' | 'rejected'
 export type ContributorRole = 'primary' | 'collaborator'
