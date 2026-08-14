@@ -60,6 +60,16 @@ describe('ChildListPage', () => {
     expect(screen.getByRole('link', { name: /add child/i })).toHaveAttribute('href', '/dashboard/child/new')
   })
 
+  it('shows the empty-state icon and message when there are no children', async () => {
+    vi.mocked(apiClient.get).mockResolvedValue([])
+    render(await ChildListPage())
+    expect(screen.getByText("You haven't added any child profiles yet.")).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /add your first child/i })).toHaveAttribute(
+      'href',
+      '/dashboard/child/new'
+    )
+  })
+
   it('renders one row per child, each linking to its edit page', async () => {
     vi.mocked(apiClient.get).mockResolvedValue([
       child({ id: 'c1', name: 'Emma' }),
