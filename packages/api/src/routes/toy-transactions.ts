@@ -1,0 +1,188 @@
+import { Hono, type Context } from 'hono'
+import { randomInt } from 'node:crypto'
+import { createUserClient } from '../supabase/user-client.js'
+import { createAdminClient } from '../supabase/client.js'
+import type { AuthVariables } from '../middleware/auth.js'
+
+const toyTransactions = new Hono<{ Variables: AuthVariables }>()
+
+export const INVALID_TEXT_REPRESENTATION = '22P02'
+export const RLS_VIOLATION = '42501'
+
+export function generateCode(): string {
+  return randomInt(0, 1_000_000).toString().padStart(6, '0')
+}
+
+type LoadResult =
+  | { data: Record<string, any> }
+  | { status: 404 }
+  | { status: 500; message: string }
+
+export async function loadForParty(c: Context<{ Variables: AuthVariables }>): Promise<LoadResult> {
+  const supabase = createUserClient(c.get('token'))
+  const { data, error } = await supabase
+    .from('toy_transactions')
+    .select('*')
+    .eq('id', c.req.param('id'))
+    .maybeSingle()
+  if (error) {
+    if (error.code === INVALID_TEXT_REPRESENTATION) return { status: 404 }
+    return { status: 500, message: error.message }
+  }
+  if (!data) return { status: 404 }
+  return { data }
+}
+
+toyTransactions.get('/', async (c) => {
+  const supabase = createUserClient(c.get('token'))
+  const { data, error } = await supabase
+    .from('toy_transactions')
+    .select(
+      '*, toy:toys!toy_transactions_toy_id_fkey(name), offered:toys!toy_transactions_offered_toy_id_fkey(name), owner:profiles!toy_transactions_owner_id_fkey(name), requester:profiles!toy_transactions_requester_id_fkey(name)'
+    )
+    .order('updated_at', { ascending: false })
+  if (error) return c.json({ error: error.message }, 500)
+
+  const userId = c.get('userId')
+  const rows = (data ?? []) as unknown as Array<
+    Record<string, unknown> & {
+      owner_id: string
+      toy: { name: string } | null
+      offered: { name: string } | null
+      owner: { name: string } | null
+      requester: { name: string } | null
+    }
+  >
+  return c.json(
+    rows.map((r) => ({
+      ...r,
+      toy_name: r.toy?.name ?? '',
+      offered_toy_name: r.offered?.name ?? null,
+      other_party_name: r.owner_id === userId ? r.requester?.name ?? '' : r.owner?.name ?? '',
+    }))
+  )
+})
+
+toyTransactions.get('/:id', async (c) => {
+  const supabase = createUserClient(c.get('token'))
+  const { data, error } = await supabase
+    .from('toy_transactions')
+    .select(
+      '*, toy:toys!toy_transactions_toy_id_fkey(name), offered:toys!toy_transactions_offered_toy_id_fkey(name), owner:profiles!toy_transactions_owner_id_fkey(name), requester:profiles!toy_transactions_requester_id_fkey(name)'
+    )
+    .eq('id', c.req.param('id'))
+    .maybeSingle()
+  if (error) {
+    if (error.code === INVALID_TEXT_REPRESENTATION) return c.json({ error: 'Not found' }, 404)
+    return c.json({ error: error.message }, 500)
+  }
+  if (!data) return c.json({ error: 'Not found' }, 404)
+
+  const { data: messages, error: msgError } = await supabase
+    .from('toy_transaction_messages')
+    .select('*')
+    .eq('transaction_id', c.req.param('id'))
+    .order('created_at', { ascending: true })
+  if (msgError) return c.json({ error: msgError.message }, 500)
+
+  const row = data as unknown as Record<string, unknown> & {
+    toy: { name: string } | null
+    offered: { name: string } | null
+    owner: { name: string } | null
+    requester: { name: string } | null
+  }
+  return c.json({
+    ...row,
+    toy_name: row.toy?.name ?? '',
+    offered_toy_name: row.offered?.name ?? null,
+    owner_name: row.owner?.name ?? '',
+    requester_name: row.requester?.name ?? '',
+    messages: messages ?? [],
+  })
+})
+
+toyTransactions.post('/', async (c) => {
+  const body = await c.req.json()
+  const userId = c.get('userId')
+  const admin = createAdminClient()
+
+  const { data: toy, error: toyError } = await admin
+    .from('toys')
+    .select('id, owner_id, offer_type, status, archived_at')
+    .eq('id', body.toy_id)
+    .maybeSingle()
+  if (toyError) {
+    if (toyError.code === INVALID_TEXT_REPRESENTATION) return c.json({ error: 'Not found' }, 404)
+    return c.json({ error: toyError.message }, 500)
+  }
+  if (!toy || toy.status !== 'published' || toy.archived_at) return c.json({ error: 'Not found' }, 404)
+  if (toy.owner_id === userId) return c.json({ error: 'You cannot request your own toy' }, 400)
+
+  const type = body.type as 'donation' | 'exchange'
+  if (type !== 'donation' && type !== 'exchange') return c.json({ error: 'Invalid type' }, 400)
+  const allowed = type === 'donation' ? ['donation', 'both'] : ['exchange', 'both']
+  if (!toy.offer_type || !allowed.includes(toy.offer_type)) {
+    return c.json({ error: 'This toy is not offered for that request type' }, 400)
+  }
+
+  let offeredToyId: string | null = null
+  if (type === 'exchange') {
+    if (!body.offered_toy_id) return c.json({ error: 'Choose one of your toys to offer' }, 400)
+    const { data: offered, error: offeredError } = await admin
+      .from('toys')
+      .select('id, owner_id, archived_at')
+      .eq('id', body.offered_toy_id)
+      .maybeSingle()
+    if (offeredError) return c.json({ error: offeredError.message }, 500)
+    if (!offered || offered.owner_id !== userId || offered.archived_at) {
+      return c.json({ error: 'Choose one of your own, active toys to offer' }, 400)
+    }
+    offeredToyId = offered.id
+  }
+
+  const { data: existing, error: existingError } = await admin
+    .from('toy_transactions')
+    .select('id')
+    .eq('toy_id', toy.id)
+    .eq('requester_id', userId)
+    .in('status', ['requested', 'accepted'])
+    .maybeSingle()
+  if (existingError) return c.json({ error: existingError.message }, 500)
+  if (existing) return c.json({ error: 'You already have an open request for this toy' }, 409)
+
+  const { data: tx, error: insertError } = await admin
+    .from('toy_transactions')
+    .insert({
+      toy_id: toy.id,
+      offered_toy_id: offeredToyId,
+      type,
+      status: 'requested',
+      requester_id: userId,
+      owner_id: toy.owner_id,
+    })
+    .select()
+    .single()
+  if (insertError) return c.json({ error: insertError.message }, 500)
+
+  const { data: requesterProfile } = await admin.from('profiles').select('name').eq('id', userId).single()
+  const { data: toyRow } = await admin.from('toys').select('name').eq('id', toy.id).single()
+
+  await admin.from('toy_transaction_messages').insert({
+    transaction_id: tx.id,
+    sender_id: userId,
+    kind: 'system',
+    body: type === 'donation' ? 'Requested this toy for donation.' : 'Requested an exchange for this toy.',
+  })
+
+  await admin.from('notifications').insert({
+    recipient_id: toy.owner_id,
+    type: 'toy_request',
+    toy_transaction_id: tx.id,
+    toy_name: toyRow?.name ?? 'a toy',
+    actor_name: requesterProfile?.name ?? 'A contributor',
+  })
+
+  return c.json(tx, 201)
+})
+
+export default toyTransactions

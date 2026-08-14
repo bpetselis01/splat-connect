@@ -21,6 +21,7 @@ import collaborators from './routes/collaborators.js'
 import collaboratorInvites from './routes/collaborator-invites.js'
 import notifications from './routes/notifications.js'
 import toys from './routes/toys.js'
+import toyTransactions from './routes/toy-transactions.js'
 
 const app = new Hono()
 
@@ -41,6 +42,8 @@ app.use('/api/child-profiles', authMiddleware)
 app.use('/api/child-profiles/*', authMiddleware)
 app.use('/api/toys', authMiddleware)
 app.use('/api/toys/*', authMiddleware)
+app.use('/api/toy-transactions', authMiddleware)
+app.use('/api/toy-transactions/*', authMiddleware)
 app.use('/api/agreements', authMiddleware)
 app.use('/api/agreements/*', authMiddleware)
 app.use('/api/organizations', authMiddleware)
@@ -61,6 +64,7 @@ app.route('/api/admin', admin)
 app.route('/api/contributors', contributors)
 app.route('/api/child-profiles', childProfiles)
 app.route('/api/toys', toys)
+app.route('/api/toy-transactions', toyTransactions)
 app.route('/api/agreements', agreements)
 app.route('/api/organizations', organizations)
 app.route('/api/collaborators', collaboratorInvites)
