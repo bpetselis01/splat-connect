@@ -232,4 +232,85 @@ toyTransactions.post('/:id/messages', async (c) => {
   return c.json(data, 201)
 })
 
+toyTransactions.post('/:id/accept', async (c) => {
+  const loaded = await loadForParty(c)
+  if ('status' in loaded) return c.json({ error: 'message' in loaded ? loaded.message : 'Not found' }, loaded.status)
+  const tx = loaded.data
+  const userId = c.get('userId')
+  if (userId !== tx.owner_id) return c.json({ error: 'Only the owner may accept' }, 403)
+  if (tx.status !== 'requested') return c.json({ error: 'This request is no longer open' }, 409)
+
+  const admin = createAdminClient()
+  const { data: ownerProfile } = await admin
+    .from('profiles')
+    .select('pickup_line1, pickup_suburb, pickup_state, pickup_postcode')
+    .eq('id', userId)
+    .single()
+
+  const ownerCode = generateCode()
+  const requesterCode = generateCode()
+  const now = new Date().toISOString()
+
+  const { data: updated, error } = await admin
+    .from('toy_transactions')
+    .update({
+      status: 'accepted',
+      owner_code: ownerCode,
+      requester_code: requesterCode,
+      pickup_line1: ownerProfile?.pickup_line1 ?? null,
+      pickup_suburb: ownerProfile?.pickup_suburb ?? null,
+      pickup_state: ownerProfile?.pickup_state ?? null,
+      pickup_postcode: ownerProfile?.pickup_postcode ?? null,
+      updated_at: now,
+    })
+    .eq('id', tx.id)
+    .select()
+    .single()
+  if (error) return c.json({ error: error.message }, 500)
+
+  await admin.from('toy_transaction_messages').insert({
+    transaction_id: tx.id,
+    sender_id: userId,
+    kind: 'system',
+    body: 'Request accepted. Pickup details are ready below.',
+  })
+
+  const { data: toy } = await admin.from('toys').select('name').eq('id', tx.toy_id).single()
+  const { data: ownerName } = await admin.from('profiles').select('name').eq('id', userId).single()
+  await admin.from('notifications').insert({
+    recipient_id: tx.requester_id,
+    type: 'toy_accepted',
+    toy_transaction_id: tx.id,
+    toy_name: toy?.name ?? 'a toy',
+    actor_name: ownerName?.name ?? 'The owner',
+  })
+
+  // Only one accepted handoff may be in flight per toy, so every other open
+  // request on the same toy is closed out automatically.
+  const { data: rivals } = await admin
+    .from('toy_transactions')
+    .select('id, requester_id')
+    .eq('toy_id', tx.toy_id)
+    .eq('status', 'requested')
+    .neq('id', tx.id)
+  for (const rival of rivals ?? []) {
+    await admin.from('toy_transactions').update({ status: 'rejected', updated_at: now }).eq('id', rival.id)
+    await admin.from('toy_transaction_messages').insert({
+      transaction_id: rival.id,
+      sender_id: userId,
+      kind: 'system',
+      body: 'This toy was accepted by another request, so this one was automatically declined.',
+    })
+    await admin.from('notifications').insert({
+      recipient_id: rival.requester_id,
+      type: 'toy_rejected',
+      toy_transaction_id: rival.id,
+      toy_name: toy?.name ?? 'a toy',
+      actor_name: ownerName?.name ?? 'The owner',
+    })
+  }
+
+  return c.json(updated)
+})
+
 export default toyTransactions

@@ -1,0 +1,85 @@
+import { describe, it, expect, beforeAll, afterAll } from 'vitest'
+import app from '../../../src/app.js'
+import { createTestUser, deleteTestUser, type TestUser } from '../../helpers/auth.js'
+
+const BASE = 'http://localhost'
+function toysReq(path: string, token: string, init: RequestInit = {}) {
+  const url = path === '/' ? `${BASE}/api/toys` : `${BASE}/api/toys${path}`
+  return app.request(url, {
+    ...init,
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', ...(init.headers ?? {}) },
+  })
+}
+function txReq(path: string, token: string, init: RequestInit = {}) {
+  const url = path === '/' ? `${BASE}/api/toy-transactions` : `${BASE}/api/toy-transactions${path}`
+  return app.request(url, {
+    ...init,
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', ...(init.headers ?? {}) },
+  })
+}
+
+describe('POST /api/toy-transactions/:id/accept', () => {
+  let owner: TestUser
+  let requester1: TestUser
+  let requester2: TestUser
+  let toyId: string
+  let tx1Id: string
+  let tx2Id: string
+
+  beforeAll(async () => {
+    owner = await createTestUser('contributor')
+    requester1 = await createTestUser('contributor')
+    requester2 = await createTestUser('contributor')
+
+    await toysReq('/', owner.token, { method: 'PATCH' }).catch(() => {})
+    const create = await toysReq('/', owner.token, { method: 'POST', body: JSON.stringify({ name: 'Robot', condition: 9 }) })
+    const toy = (await create.json()) as { id: string }
+    toyId = toy.id
+    await toysReq(`/${toyId}`, owner.token, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        cover_photo_url: 'https://example.com/c.jpg',
+        offer_type: 'donation',
+      }),
+    })
+    await toysReq(`/${toyId}/publish`, owner.token, { method: 'PATCH' })
+
+    const p = { pickup_line1: '1 Test St', pickup_suburb: 'Testville', pickup_state: 'VIC', pickup_postcode: '3000' }
+    // Owner sets their default pickup address via the contributors route (Task 12);
+    // until Task 12 lands this call is skipped and pickup fields stay null on accept.
+
+    const c1 = await txReq('/', requester1.token, { method: 'POST', body: JSON.stringify({ toy_id: toyId, type: 'donation' }) })
+    tx1Id = ((await c1.json()) as { id: string }).id
+    const c2 = await txReq('/', requester2.token, { method: 'POST', body: JSON.stringify({ toy_id: toyId, type: 'donation' }) })
+    tx2Id = ((await c2.json()) as { id: string }).id
+  })
+
+  afterAll(async () => {
+    await deleteTestUser(owner.id)
+    await deleteTestUser(requester1.id)
+    await deleteTestUser(requester2.id)
+  })
+
+  it('403s a non-owner trying to accept', async () => {
+    const res = await txReq(`/${tx1Id}/accept`, requester1.token, { method: 'POST' })
+    expect(res.status).toBe(403)
+  })
+
+  it('accepts, generates codes for both parties, and auto-rejects the rival request', async () => {
+    const res = await txReq(`/${tx1Id}/accept`, owner.token, { method: 'POST' })
+    expect(res.status).toBe(200)
+    const tx = (await res.json()) as { status: string; owner_code: string; requester_code: string }
+    expect(tx.status).toBe('accepted')
+    expect(tx.owner_code).toMatch(/^\d{6}$/)
+    expect(tx.requester_code).toMatch(/^\d{6}$/)
+
+    const rival = await txReq(`/${tx2Id}`, requester2.token)
+    const rivalBody = (await rival.json()) as { status: string }
+    expect(rivalBody.status).toBe('rejected')
+  })
+
+  it('409s accepting an already-accepted request', async () => {
+    const res = await txReq(`/${tx1Id}/accept`, owner.token, { method: 'POST' })
+    expect(res.status).toBe(409)
+  })
+})
