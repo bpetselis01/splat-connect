@@ -425,28 +425,48 @@ toyTransactions.post('/:id/confirm', async (c) => {
       ? updated.owner_confirmed_at !== null
       : updated.owner_confirmed_at !== null && updated.requester_confirmed_at !== null
 
-  if (bothConfirmed) {
-    await admin.from('toy_transactions').update({ status: 'completed', updated_at: now }).eq('id', tx.id)
-    await admin.from('toys').update({ archived_at: now, updated_at: now }).eq('id', tx.toy_id)
-    if (tx.offered_toy_id) {
-      await admin.from('toys').update({ archived_at: now, updated_at: now }).eq('id', tx.offered_toy_id)
-    }
-    await admin.from('toy_transaction_messages').insert({
-      transaction_id: tx.id,
-      sender_id: userId,
-      kind: 'system',
-      body: 'Handoff confirmed. This exchange is complete.',
-    })
-  } else {
+  if (!bothConfirmed) {
     await admin.from('toy_transaction_messages').insert({
       transaction_id: tx.id,
       sender_id: userId,
       kind: 'system',
       body: 'Handoff confirmed by one party. Waiting on the other.',
     })
+    return c.json(updated)
   }
 
-  return c.json(bothConfirmed ? { ...updated, status: 'completed' } : updated)
+  const { data: completedTx, error: completeError } = await admin
+    .from('toy_transactions')
+    .update({ status: 'completed', updated_at: now })
+    .eq('id', tx.id)
+    .eq('status', 'accepted')
+    .select()
+    .maybeSingle()
+  if (completeError) return c.json({ error: completeError.message }, 500)
+  if (!completedTx) return c.json({ ...updated, status: 'completed' })
+
+  const { error: archiveError } = await admin
+    .from('toys')
+    .update({ archived_at: now, updated_at: now })
+    .eq('id', tx.toy_id)
+  if (archiveError) return c.json({ error: archiveError.message }, 500)
+
+  if (tx.offered_toy_id) {
+    const { error: offeredError } = await admin
+      .from('toys')
+      .update({ archived_at: now, updated_at: now })
+      .eq('id', tx.offered_toy_id)
+    if (offeredError) return c.json({ error: offeredError.message }, 500)
+  }
+
+  await admin.from('toy_transaction_messages').insert({
+    transaction_id: tx.id,
+    sender_id: userId,
+    kind: 'system',
+    body: 'Handoff confirmed. This exchange is complete.',
+  })
+
+  return c.json(completedTx)
 })
 
 export default toyTransactions
