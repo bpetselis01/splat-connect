@@ -29,7 +29,7 @@ describe('ProfileForm', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))
 
     await waitFor(() =>
-      expect(patch).toHaveBeenCalledWith('/api/contributors/me', { name: 'Ada Lovelace' })
+      expect(patch).toHaveBeenCalledWith('/api/contributors/me', expect.objectContaining({ name: 'Ada Lovelace' }))
     )
   })
 
@@ -48,5 +48,33 @@ describe('ProfileForm', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent(/could not save/i)
     expect(screen.queryByText('Saved')).not.toBeInTheDocument()
+  })
+
+  it('saves the pickup address fields', async () => {
+    patch.mockResolvedValue({ ...PROFILE, pickup_line1: '1 Test St', pickup_suburb: 'Testville', pickup_state: 'VIC', pickup_postcode: '3000' })
+    render(<ProfileForm profile={PROFILE} />)
+
+    fireEvent.change(screen.getByLabelText(/address line/i), {
+      target: { value: '1 Test St' },
+    })
+    fireEvent.change(screen.getByLabelText(/suburb/i), {
+      target: { value: 'Testville' },
+    })
+    fireEvent.change(screen.getByLabelText(/state/i), {
+      target: { value: 'VIC' },
+    })
+    fireEvent.change(screen.getByLabelText(/postcode/i), {
+      target: { value: '3000' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+    await waitFor(() =>
+      expect(patch).toHaveBeenCalledWith('/api/contributors/me', expect.objectContaining({
+        pickup_line1: '1 Test St',
+        pickup_suburb: 'Testville',
+        pickup_state: 'VIC',
+        pickup_postcode: '3000'
+      }))
+    )
   })
 })

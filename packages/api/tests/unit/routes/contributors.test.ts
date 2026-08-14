@@ -100,3 +100,31 @@ describe('POST /me/tutorials/:tutorialId', () => {
     expect(res.status).toBe(500)
   })
 })
+
+describe('PATCH /me', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('allows patching pickup address fields', async () => {
+    mockUserFrom.mockReturnValue({
+      update: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: { id: 'user-1', name: 'Ash', pickup_line1: '1 Test St', pickup_suburb: 'Testville', pickup_state: 'VIC', pickup_postcode: '3000' },
+        error: null,
+      }),
+    })
+
+    const app = makeApp()
+    const res = await app.request('/me', {
+      method: 'PATCH',
+      body: JSON.stringify({ pickup_line1: '1 Test St', pickup_suburb: 'Testville', pickup_state: 'VIC', pickup_postcode: '3000' }),
+      headers: { 'Content-Type': 'application/json' },
+    })
+    expect(res.status).toBe(200)
+    const mockTable = mockUserFrom.mock.results[0].value
+    expect(mockTable.update).toHaveBeenCalledWith(
+      expect.objectContaining({ pickup_line1: '1 Test St', pickup_suburb: 'Testville', pickup_state: 'VIC', pickup_postcode: '3000' })
+    )
+  })
+})

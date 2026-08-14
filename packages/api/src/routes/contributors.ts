@@ -26,7 +26,7 @@ contributors.get('/me', async (c) => {
 // Whitelist of client-editable columns. role and email are frozen by the
 // profiles_freeze_identity trigger (009) and are ignored here rather than
 // rejected, matching PUT /api/child-profile's handling of parent_id.
-const EDITABLE = ['name'] as const
+const EDITABLE = ['name', 'pickup_line1', 'pickup_suburb', 'pickup_state', 'pickup_postcode'] as const
 
 contributors.patch('/me', async (c) => {
   const body = await c.req.json().catch(() => null)
