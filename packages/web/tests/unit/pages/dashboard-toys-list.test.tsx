@@ -93,4 +93,27 @@ describe('ToyListPage', () => {
     vi.mocked(apiClient.get).mockRejectedValue(new Error('network'))
     await expect(ToyListPage()).rejects.toThrow('network')
   })
+
+  it('splits toys into Active and Archived sections', async () => {
+    vi.mocked(apiClient.get).mockResolvedValue([
+      toy({ id: '1', name: 'Active toy', archived_at: null }),
+      toy({ id: '2', name: 'Archived toy', archived_at: '2026-08-01T00:00:00Z' }),
+    ])
+    render(await ToyListPage())
+    expect(screen.getByText('Active toy')).toBeInTheDocument()
+    expect(screen.getByText('Archived toy')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /archived/i })).toBeInTheDocument()
+  })
+
+  it('shows the empty state when there are no active toys, even if archived toys exist', async () => {
+    vi.mocked(apiClient.get).mockResolvedValue([toy({ id: '1', archived_at: '2026-08-01T00:00:00Z' })])
+    render(await ToyListPage())
+    expect(screen.getByText(/no toys yet/i)).toBeInTheDocument()
+  })
+
+  it('omits the Archived heading when nothing is archived', async () => {
+    vi.mocked(apiClient.get).mockResolvedValue([toy({ id: '1', archived_at: null })])
+    render(await ToyListPage())
+    expect(screen.queryByRole('heading', { name: /archived/i })).not.toBeInTheDocument()
+  })
 })
