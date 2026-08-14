@@ -392,4 +392,61 @@ toyTransactions.post('/:id/withdraw', async (c) => {
   return c.json(updated)
 })
 
+toyTransactions.post('/:id/confirm', async (c) => {
+  const body = await c.req.json()
+  const loaded = await loadForParty(c)
+  if ('status' in loaded) return c.json({ error: 'message' in loaded ? loaded.message : 'Not found' }, loaded.status)
+  const tx = loaded.data
+  const userId = c.get('userId')
+  const isOwner = userId === tx.owner_id
+  if (!isOwner && userId !== tx.requester_id) return c.json({ error: 'Not found' }, 404)
+  if (tx.status !== 'accepted') return c.json({ error: 'This request is not ready to confirm' }, 409)
+
+  const canConfirm = tx.type === 'exchange' || isOwner
+  if (!canConfirm) return c.json({ error: 'Only the owner confirms a donation' }, 403)
+
+  const expectedCode = isOwner ? tx.requester_code : tx.owner_code
+  if (body.code !== expectedCode) return c.json({ error: 'Incorrect code' }, 400)
+
+  const admin = createAdminClient()
+  const confirmField = isOwner ? 'owner_confirmed_at' : 'requester_confirmed_at'
+  const now = new Date().toISOString()
+
+  const { data: updated, error } = await admin
+    .from('toy_transactions')
+    .update({ [confirmField]: now, updated_at: now })
+    .eq('id', tx.id)
+    .select()
+    .single()
+  if (error) return c.json({ error: error.message }, 500)
+
+  const bothConfirmed =
+    tx.type === 'donation'
+      ? updated.owner_confirmed_at !== null
+      : updated.owner_confirmed_at !== null && updated.requester_confirmed_at !== null
+
+  if (bothConfirmed) {
+    await admin.from('toy_transactions').update({ status: 'completed', updated_at: now }).eq('id', tx.id)
+    await admin.from('toys').update({ archived_at: now, updated_at: now }).eq('id', tx.toy_id)
+    if (tx.offered_toy_id) {
+      await admin.from('toys').update({ archived_at: now, updated_at: now }).eq('id', tx.offered_toy_id)
+    }
+    await admin.from('toy_transaction_messages').insert({
+      transaction_id: tx.id,
+      sender_id: userId,
+      kind: 'system',
+      body: 'Handoff confirmed. This exchange is complete.',
+    })
+  } else {
+    await admin.from('toy_transaction_messages').insert({
+      transaction_id: tx.id,
+      sender_id: userId,
+      kind: 'system',
+      body: 'Handoff confirmed by one party. Waiting on the other.',
+    })
+  }
+
+  return c.json(bothConfirmed ? { ...updated, status: 'completed' } : updated)
+})
+
 export default toyTransactions
