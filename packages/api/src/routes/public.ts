@@ -6,12 +6,13 @@
 import { Hono } from 'hono'
 import { createAnonClient, createAdminClient } from '../supabase/client.js'
 
-async function midHandoffToyIds(): Promise<string[]> {
+async function midHandoffToyIds(): Promise<string[] | null> {
   const admin = createAdminClient()
-  const { data } = await admin
+  const { data, error } = await admin
     .from('toy_transactions')
     .select('toy_id, offered_toy_id')
     .eq('status', 'accepted')
+  if (error) return null
   const ids = new Set<string>()
   for (const row of data ?? []) {
     ids.add(row.toy_id)
@@ -91,7 +92,9 @@ publicRoutes.get('/toys', async (c) => {
     .is('archived_at', null)
     .order('created_at', { ascending: false })
   if (error) return c.json({ error: error.message }, 500)
-  const hidden = new Set(await midHandoffToyIds())
+  const midHandoff = await midHandoffToyIds()
+  if (midHandoff === null) return c.json({ error: 'Failed to load toys' }, 500)
+  const hidden = new Set(midHandoff)
   return c.json((data ?? []).filter((t) => !hidden.has(t.id)))
 })
 
@@ -108,7 +111,9 @@ publicRoutes.get('/toys/:id', async (c) => {
   // be distinguishable from a nonexistent one to an unauthenticated caller,
   // same reasoning as the tutorial detail route above.
   if (error) return c.json({ error: error.message }, 404)
-  const hidden = new Set(await midHandoffToyIds())
+  const midHandoff = await midHandoffToyIds()
+  if (midHandoff === null) return c.json({ error: 'Failed to load toys' }, 500)
+  const hidden = new Set(midHandoff)
   if (hidden.has(data.id)) return c.json({ error: 'Not found' }, 404)
   return c.json(data)
 })

@@ -12,6 +12,14 @@ function req(path: string, token: string, init: RequestInit = {}) {
   })
 }
 
+function txReq(path: string, token: string, init: RequestInit = {}) {
+  const url = path === '/' ? `${BASE}/api/toy-transactions` : `${BASE}/api/toy-transactions${path}`
+  return app.request(url, {
+    ...init,
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', ...(init.headers ?? {}) },
+  })
+}
+
 async function createPublishedToy(token: string, name: string) {
   const create = await req('/', token, {
     method: 'POST',
@@ -87,5 +95,38 @@ describe('GET /api/public/toys', () => {
 
     const detail = await app.request(`/api/public/toys/${archivedId}`)
     expect(detail.status).toBe(404)
+  })
+
+  it('excludes a mid-handoff toy (accepted toy_transaction) from the public list and its detail page', async () => {
+    const requester = await createTestUser('contributor')
+    try {
+      const createToy = await req('/', owner.token, {
+        method: 'POST',
+        body: JSON.stringify({ name: 'Handoff scooter', condition: 7 }),
+      })
+      const handoffId = ((await createToy.json()) as { id: string }).id
+      await req(`/${handoffId}`, owner.token, {
+        method: 'PATCH',
+        body: JSON.stringify({ cover_photo_url: 'https://example.com/cover.jpg', offer_type: 'donation' }),
+      })
+      await req(`/${handoffId}/publish`, owner.token, { method: 'PATCH' })
+
+      const create = await txReq('/', requester.token, {
+        method: 'POST',
+        body: JSON.stringify({ toy_id: handoffId, type: 'donation' }),
+      })
+      const tx = (await create.json()) as { id: string }
+      const accept = await txReq(`/${tx.id}/accept`, owner.token, { method: 'POST' })
+      expect(accept.status).toBe(200)
+
+      const list = await app.request('/api/public/toys')
+      const ids = ((await list.json()) as Array<{ id: string }>).map((r) => r.id)
+      expect(ids).not.toContain(handoffId)
+
+      const detail = await app.request(`/api/public/toys/${handoffId}`)
+      expect(detail.status).toBe(404)
+    } finally {
+      await deleteTestUser(requester.id)
+    }
   })
 })
