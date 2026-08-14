@@ -247,3 +247,12 @@ export function Bell(props: SVGProps<SVGSVGElement>) {
     </Icon>
   )
 }
+
+export function Handshake(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M3 11l4-3 3 2 4-2 4 3" />
+      <path d="M3 11v3l4 3 3-2 3 2 4-3v-3" />
+    </Icon>
+  )
+}

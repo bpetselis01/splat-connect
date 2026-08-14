@@ -58,6 +58,10 @@ describe('buildNav', () => {
     expect(hrefs(buildNav(caps({ isAdmin: true }), 0))).toContain('/admin')
   })
 
+  it('includes an Exchanges row for every account', () => {
+    expect(hrefs(buildNav(caps(), 0))).toContain('/dashboard/exchanges')
+  })
+
   // Chain: gating Child profiles on parenthood would mean the only way to create
   //        a child profile is to already have one. Capabilities no longer even
   //        carries an isParent flag, precisely because nothing may branch on it.
@@ -84,11 +88,11 @@ describe('buildNav', () => {
   })
 
   // The spec's fifteenth row is Sign out, which is an action the rail footer
-  // renders rather than a nav row — hence fourteen here (thirteen plus
-  // Notifications).
-  it('builds fourteen linked rows for a leader-admin', () => {
+  // renders rather than a nav row — hence fifteen here (thirteen plus
+  // Notifications plus Exchanges).
+  it('builds fifteen linked rows for a leader-admin', () => {
     const rows = buildNav(caps({ ledOrgs: [org], isAdmin: true }), 0).flatMap((g) => g.rows)
-    expect(rows).toHaveLength(14)
+    expect(rows).toHaveLength(15)
   })
 
   it('gives every row a unique href', () => {
