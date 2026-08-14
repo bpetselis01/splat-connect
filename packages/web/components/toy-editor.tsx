@@ -38,24 +38,22 @@ function ToyReviewPanel({ toy, onPublished, onSaveOfferType }: { toy: Toy; onPub
         <div className="flex flex-col gap-4 px-5 pb-5">
           <ToySummary toy={toy} />
 
-          {toy.status === 'published' && (
-            <div className="flex flex-col gap-2">
-              <p className="field-label">Offer this toy for</p>
-              <div className="flex gap-2">
-                {(['donation', 'exchange', 'both'] as const).map((option) => (
-                  <button
-                    key={option}
-                    type="button"
-                    aria-pressed={toy.offer_type === option}
-                    onClick={() => onSaveOfferType(option)}
-                    className={`btn ${toy.offer_type === option ? 'btn-accent' : 'btn-quiet'}`}
-                  >
-                    {option === 'donation' ? 'Donation' : option === 'exchange' ? 'Exchange' : 'Both'}
-                  </button>
-                ))}
-              </div>
+          <div className="flex flex-col gap-2">
+            <p className="field-label">Offer this toy for</p>
+            <div className="flex gap-2">
+              {(['donation', 'exchange', 'both'] as const).map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  aria-pressed={toy.offer_type === option}
+                  onClick={() => onSaveOfferType(option)}
+                  className={`btn ${toy.offer_type === option ? 'btn-accent' : 'btn-quiet'}`}
+                >
+                  {option === 'donation' ? 'Donation' : option === 'exchange' ? 'Exchange' : 'Both'}
+                </button>
+              ))}
             </div>
-          )}
+          </div>
 
           {error && (
             <p role="alert" className="alert alert-danger">
