@@ -36,6 +36,8 @@ export interface ChildProfile {
   updated_at: string
 }
 
+export type OfferType = 'donation' | 'exchange' | 'both'
+
 export interface Toy {
   id: string
   owner_id: string
@@ -46,6 +48,8 @@ export interface Toy {
   cover_photo_url: string | null
   switch_photo_urls: string[]
   status: 'draft' | 'published'
+  offer_type: OfferType | null
+  archived_at: string | null
   created_at: string
   updated_at: string
 }
@@ -54,6 +58,54 @@ export interface Toy {
 // Nullable to match profiles(name)'s embed semantics, though in practice
 // every toy has an owner.
 export type ToyWithOwner = Toy & { profiles: { name: string } | null }
+
+export type ToyTransactionType = 'donation' | 'exchange'
+export type ToyTransactionStatus = 'requested' | 'accepted' | 'rejected' | 'withdrawn' | 'completed'
+
+export interface ToyTransaction {
+  id: string
+  toy_id: string
+  offered_toy_id: string | null
+  type: ToyTransactionType
+  status: ToyTransactionStatus
+  requester_id: string
+  owner_id: string
+  owner_code: string | null
+  requester_code: string | null
+  owner_confirmed_at: string | null
+  requester_confirmed_at: string | null
+  pickup_line1: string | null
+  pickup_suburb: string | null
+  pickup_state: string | null
+  pickup_postcode: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ToyTransactionSummary extends ToyTransaction {
+  toy_name: string
+  offered_toy_name: string | null
+  other_party_name: string
+}
+
+export type ToyTransactionMessageKind = 'system' | 'user'
+
+export interface ToyTransactionMessage {
+  id: string
+  transaction_id: string
+  sender_id: string
+  kind: ToyTransactionMessageKind
+  body: string
+  created_at: string
+}
+
+export interface ToyTransactionDetail extends ToyTransaction {
+  toy_name: string
+  offered_toy_name: string | null
+  owner_name: string
+  requester_name: string
+  messages: ToyTransactionMessage[]
+}
 
 export type Difficulty = 'easy' | 'medium' | 'hard'
 export type TutorialStatus = 'draft' | 'pending' | 'approved' | 'rejected'
@@ -128,13 +180,20 @@ export type NotificationType =
   | 'collaborator_left'
   | 'tutorial_approved'
   | 'tutorial_rejected'
+  | 'toy_request'
+  | 'toy_accepted'
+  | 'toy_rejected'
+  | 'toy_withdrawn'
+  | 'toy_message'
 
 export interface Notification {
   id: string
   recipient_id: string
   type: NotificationType
-  tutorial_id: string
-  tutorial_title: string
+  tutorial_id?: string | null
+  tutorial_title?: string | null
+  toy_transaction_id?: string | null
+  toy_name?: string | null
   actor_name: string
   read_at: string | null
   created_at: string
@@ -153,6 +212,10 @@ export interface Profile {
   name: string
   email: string
   role: Role
+  pickup_line1?: string | null
+  pickup_suburb?: string | null
+  pickup_state?: string | null
+  pickup_postcode?: string | null
   created_at: string
 }
 
