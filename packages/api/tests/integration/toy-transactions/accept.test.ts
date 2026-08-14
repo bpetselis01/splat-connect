@@ -31,7 +31,6 @@ describe('POST /api/toy-transactions/:id/accept', () => {
     requester1 = await createTestUser('contributor')
     requester2 = await createTestUser('contributor')
 
-    await toysReq('/', owner.token, { method: 'PATCH' }).catch(() => {})
     const create = await toysReq('/', owner.token, { method: 'POST', body: JSON.stringify({ name: 'Robot', condition: 9 }) })
     const toy = (await create.json()) as { id: string }
     toyId = toy.id
