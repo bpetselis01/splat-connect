@@ -1,15 +1,15 @@
 /**
- * Unauthenticated routes — mounted before authMiddleware. They use the admin
- * client (no user context for RLS) and therefore filter to status='approved'
- * explicitly in every query.
+ * Unauthenticated routes — mounted before authMiddleware. They use the anon
+ * client, so RLS enforces status='approved'/'published' as a second, database-level
+ * backstop behind each query's own explicit filter.
  */
 import { Hono } from 'hono'
-import { createAdminClient } from '../supabase/client.js'
+import { createAnonClient } from '../supabase/client.js'
 
 const publicRoutes = new Hono()
 
 publicRoutes.get('/tutorials', async (c) => {
-  const supabase = createAdminClient()
+  const supabase = createAnonClient()
   const difficulty = c.req.query('difficulty')
   let query = supabase
     .from('tutorials')
@@ -38,7 +38,7 @@ publicRoutes.get('/tutorials', async (c) => {
 })
 
 publicRoutes.get('/tutorials/:id', async (c) => {
-  const supabase = createAdminClient()
+  const supabase = createAnonClient()
   const { data, error } = await supabase
     .from('tutorials')
     // Backing and the approver are part of what a parent is deciding on, so they
@@ -64,6 +64,34 @@ publicRoutes.get('/tutorials/:id', async (c) => {
     ...tutorial,
     tutorial_orgs: (tutorial.tutorial_orgs ?? []).filter((b) => b.status === 'accepted'),
   })
+})
+
+publicRoutes.get('/toys', async (c) => {
+  const supabase = createAnonClient()
+  const { data, error } = await supabase
+    .from('toys')
+    // profiles(name) is a many-to-one embed via owner_id, so PostgREST
+    // returns a single object per row, not an array.
+    .select('*, profiles(name)')
+    .eq('status', 'published')
+    .order('created_at', { ascending: false })
+  if (error) return c.json({ error: error.message }, 500)
+  return c.json(data)
+})
+
+publicRoutes.get('/toys/:id', async (c) => {
+  const supabase = createAnonClient()
+  const { data, error } = await supabase
+    .from('toys')
+    .select('*, profiles(name)')
+    .eq('id', c.req.param('id'))
+    .eq('status', 'published')
+    .single()
+  // 404 for both "no such row" and "draft row" — an unpublished toy must not
+  // be distinguishable from a nonexistent one to an unauthenticated caller,
+  // same reasoning as the tutorial detail route above.
+  if (error) return c.json({ error: error.message }, 404)
+  return c.json(data)
 })
 
 export default publicRoutes
