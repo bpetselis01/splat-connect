@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { apiClient } from '@/lib/api-client'
 import { getCapabilities } from '@/lib/capabilities'
 import { CardPhoto } from '@/components/card-photo'
+import { ToyStatusBadge } from '@/components/toy-status-badge'
 import { Box } from '@/components/icons'
 import type { Toy } from '@splat-connect/types'
 
@@ -44,18 +45,24 @@ export default async function ToyListPage() {
           </Link>
         </div>
       ) : (
-        <ul className="grid max-w-5xl grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
           {toys.map((toy) => (
             <li key={toy.id}>
               <Link
                 href={`/dashboard/toys/${toy.id}`}
                 className="card card-link flex h-full flex-col overflow-hidden"
               >
-                <CardPhoto src={toy.cover_photo_url} alt={toy.name} />
-                <div className="p-4">
+                <CardPhoto src={toy.cover_photo_url} />
+                {/* Same block as dashboard-tutorial-card.tsx: title, then a
+                    status pill beside one line of detail. */}
+                <div className="flex flex-1 flex-col gap-1 p-4">
                   <p className="truncate text-sm font-bold text-ink">{toy.name}</p>
-                  <p className="mt-1 text-xs text-muted">Condition {toy.condition} / 10</p>
-                  {toy.status === 'draft' && <span className="badge mt-2">Draft</span>}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <ToyStatusBadge status={toy.status} />
+                    <p className="text-xs leading-relaxed text-muted">
+                      Condition {toy.condition} / 10
+                    </p>
+                  </div>
                 </div>
               </Link>
             </li>

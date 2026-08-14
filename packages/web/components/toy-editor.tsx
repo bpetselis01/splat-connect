@@ -5,7 +5,7 @@ import type { Toy } from '@splat-connect/types'
 import { ToyEditStepper } from '@/components/toy-edit-stepper'
 import { ToyDetailsForm } from '@/components/toy-details-form'
 import { ToyPhotosSection } from '@/components/toy-photos-section'
-import { ToyPhotoGrid } from '@/components/toy-photo-viewer'
+import { ToySummary } from '@/components/toy-summary'
 import { DeleteEntityButton } from '@/components/delete-entity-button'
 import { ToastProvider } from '@/components/toast'
 import { browserApiClient } from '@/lib/browser-api-client'
@@ -36,29 +36,7 @@ function ToyReviewPanel({ toy, onPublished }: { toy: Toy; onPublished: (t: Toy) 
     <>
       <div className="panel pt-5">
         <div className="flex flex-col gap-4 px-5 pb-5">
-          <ToyPhotoGrid
-            coverPhotoUrl={toy.cover_photo_url}
-            switchPhotoUrls={toy.switch_adapted ? toy.switch_photo_urls : []}
-          />
-
-          <dl className="flex flex-col gap-2 text-sm">
-            <div>
-              <dt className="font-semibold text-ink">Name</dt>
-              <dd>{toy.name}</dd>
-            </div>
-            <div>
-              <dt className="font-semibold text-ink">Condition</dt>
-              <dd>{toy.condition} / 10</dd>
-            </div>
-            <div>
-              <dt className="font-semibold text-ink">Description</dt>
-              <dd>{toy.description || '—'}</dd>
-            </div>
-            <div>
-              <dt className="font-semibold text-ink">Switch-adapted</dt>
-              <dd>{toy.switch_adapted ? 'Yes' : 'No'}</dd>
-            </div>
-          </dl>
+          <ToySummary toy={toy} />
 
           {error && (
             <p role="alert" className="alert alert-danger">

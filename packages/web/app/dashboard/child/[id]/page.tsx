@@ -1,11 +1,9 @@
 import Link from 'next/link'
 import { redirect, notFound } from 'next/navigation'
-import type { Route } from 'next'
 import { apiClient } from '@/lib/api-client'
 import { getCapabilities } from '@/lib/capabilities'
 import { childLabel } from '@/lib/child-label'
-import { EditChildForm } from '@/components/edit-child-form'
-import { DeleteEntityButton } from '@/components/delete-entity-button'
+import { ChildEditor } from '@/components/child-editor'
 import type { ChildProfile } from '@splat-connect/types'
 
 export default async function EditChildPage({ params }: { params: Promise<{ id: string }> }) {
@@ -28,17 +26,7 @@ export default async function EditChildPage({ params }: { params: Promise<{ id: 
       <Link href="/dashboard/child" className="mb-4 inline-block text-sm text-muted">
         ← Child profiles
       </Link>
-      <h1 className="mb-6 text-2xl font-bold text-ink">{label}</h1>
-      <EditChildForm child={child} />
-      <div className="mt-8">
-        {/* The heading's label doubles as the delete confirmation phrase, so the
-            user reads the same identifier twice before the profile is gone. */}
-        <DeleteEntityButton
-          endpoint={`/api/child-profiles/${child.id}`}
-          redirectTo={'/dashboard/child' as Route<string>}
-          label={label}
-        />
-      </div>
+      <ChildEditor child={child} label={label} />
     </div>
   )
 }

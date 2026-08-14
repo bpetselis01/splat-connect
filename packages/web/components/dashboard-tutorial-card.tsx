@@ -30,9 +30,9 @@ export function DashboardTutorialCard({ tutorial }: { tutorial: Listed }) {
       className="card card-link flex h-full flex-col overflow-hidden"
     >
       <div className="relative">
-        <CardPhoto src={tutorial.toy_photo_url} alt={tutorial.title} />
+        <CardPhoto src={tutorial.toy_photo_url} />
         {/* Badges carry solid backgrounds, so this stays legible over any photo. */}
-        <span className="absolute left-2 top-2">
+        <span className="absolute left-3 top-3">
           <DifficultyBadge difficulty={tutorial.difficulty as Difficulty} />
         </span>
       </div>

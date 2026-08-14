@@ -12,3 +12,15 @@ export function createAdminClient() {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 }
+
+/**
+ * Anon-key client — RLS enforced, no user session. For public routes: with no
+ * JWT, auth.uid() is NULL, so a table's "published or owner_id = auth.uid()"
+ * policy collapses to "published" — the database backs up the route's own
+ * filter instead of only the admin client's manual one.
+ */
+export function createAnonClient() {
+  return createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_ANON_KEY!, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+  })
+}

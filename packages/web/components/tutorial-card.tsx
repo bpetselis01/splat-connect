@@ -44,7 +44,7 @@ export function TutorialCard({ tutorial }: { tutorial: Listed }) {
       data-testid="tutorial-card"
       className="card card-link overflow-hidden"
     >
-      <CardPhoto src={tutorial.toy_photo_url} alt={tutorial.title} />
+      <CardPhoto src={tutorial.toy_photo_url} />
       <div className="p-4">
         <p className="truncate text-sm font-bold text-ink">{tutorial.title}</p>
         {tutorial.description && (

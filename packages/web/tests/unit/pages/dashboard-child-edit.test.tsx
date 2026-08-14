@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import EditChildPage from '@/app/dashboard/child/[id]/page'
 import type { ChildProfile } from '@splat-connect/types'
@@ -16,7 +16,9 @@ vi.mock('@/lib/api-client', () => ({ apiClient: { get: vi.fn() } }))
 vi.mock('next/navigation', () => ({
   redirect: vi.fn(),
   notFound: vi.fn(() => { throw new Error('NEXT_NOT_FOUND') }),
-  useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn() }),
+  usePathname: () => '/dashboard/child/c1',
+  useSearchParams: () => new URLSearchParams(''),
 }))
 vi.mock('next/link', () => ({
   default: ({ href, children }: { href: string; children: React.ReactNode }) => <a href={href}>{children}</a>,
@@ -54,9 +56,10 @@ const child = (over: Partial<ChildProfile>): ChildProfile => ({
 describe('EditChildPage', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('seeds the form from the requested child', async () => {
+  it('seeds the Ability panel from the requested child', async () => {
     vi.mocked(apiClient.get).mockResolvedValue([child({ id: 'c1', name: 'Emma', age: 7 })])
     render(await EditChildPage({ params: Promise.resolve({ id: 'c1' }) }))
+    fireEvent.click(screen.getByRole('tab', { name: /ability/i }))
     expect(screen.getByLabelText('Name (optional)')).toHaveValue('Emma')
     expect(screen.getByLabelText('Age')).toHaveValue(7)
   })

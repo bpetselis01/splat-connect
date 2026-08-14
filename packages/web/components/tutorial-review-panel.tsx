@@ -67,7 +67,7 @@ export function TutorialReviewPanel({
       <div className="panel pt-5">
         <div className="flex flex-col gap-4 px-5 pb-5">
           <div className="max-w-xs overflow-hidden rounded-lg">
-            <CardPhoto src={toyPhotoUrl} alt={title} />
+            <CardPhoto src={toyPhotoUrl} />
           </div>
 
           <dl className="flex flex-col gap-2 text-sm">

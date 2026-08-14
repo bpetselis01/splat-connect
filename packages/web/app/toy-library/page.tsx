@@ -1,15 +1,14 @@
-import { ComingSoon } from '@/components/coming-soon'
+import { ToyLibraryClient } from './toy-library-client'
+import type { ToyWithOwner } from '@splat-connect/types'
 
-export default function ToyLibraryPage() {
-  return (
-    <ComingSoon
-      label="Toy Library"
-      description="Associations near you with adapted and accessible toys to borrow, donate or exchange."
-      steps={[
-        'Find associations near you',
-        'Browse the adapted toys they hold',
-        'Donate a toy, or exchange one for one',
-      ]}
-    />
-  )
+export default async function ToyLibraryPage() {
+  let toys: ToyWithOwner[] = []
+  try {
+    const res = await fetch(`${process.env.API_URL}/api/public/toys`, { cache: 'no-store' })
+    if (res.ok) toys = await res.json()
+  } catch {
+    toys = []
+  }
+
+  return <ToyLibraryClient toys={toys} />
 }

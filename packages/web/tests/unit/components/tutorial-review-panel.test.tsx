@@ -51,11 +51,8 @@ describe('TutorialReviewPanel', () => {
   })
 
   it('shows the toy photo', () => {
-    setup()
-    expect(screen.getByAltText('Sensory light box')).toHaveAttribute(
-      'src',
-      'https://example.com/toy.jpg'
-    )
+    const { container } = setup()
+    expect(container.querySelector('img')).toHaveAttribute('src', 'https://example.com/toy.jpg')
   })
 
   it('says the pdf is missing rather than staying silent', () => {

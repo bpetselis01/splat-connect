@@ -70,13 +70,12 @@ describe('buildNav', () => {
     expect(labels).toContain('Child profiles')
   })
 
-  it('marks the five unbuilt rows as soon, and no others', () => {
+  it('marks the four unbuilt rows as soon, and no others', () => {
     const soon = buildNav(caps({ ledOrgs: [org], isAdmin: true }), 0)
       .flatMap((g) => g.rows)
       .filter((r) => r.soon)
       .map((r) => r.href)
     expect(soon).toEqual([
-      '/toy-library',
       '/printing',
       '/dashboard/print-requests',
       '/dashboard/organisation/toys',
