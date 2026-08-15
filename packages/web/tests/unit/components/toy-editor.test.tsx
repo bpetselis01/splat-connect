@@ -36,6 +36,8 @@ function toy(overrides: Partial<Toy> = {}): Toy {
     status: 'draft',
     created_at: '',
     updated_at: '',
+    offer_type: null,
+    archived_at: null,
     ...overrides,
   }
 }
@@ -96,6 +98,23 @@ describe('ToyEditor', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Could not publish')
     expect(screen.queryByText('Published')).not.toBeInTheDocument()
+  })
+
+  it('saves the offer type when a pill is clicked', async () => {
+    const patchSpy = vi.spyOn(browserApiClient, 'patch').mockResolvedValue({})
+    render(<ToyEditor toy={toy({ status: 'published', offer_type: null })} />)
+    fireEvent.click(screen.getByRole('tab', { name: 'Review' }))
+
+    fireEvent.click(screen.getByRole('button', { name: 'Donation' }))
+
+    expect(patchSpy).toHaveBeenCalledWith(`/api/toys/${toy().id}`, { offer_type: 'donation' })
+  })
+
+  it('shows the current offer type as pressed', () => {
+    render(<ToyEditor toy={toy({ status: 'published', offer_type: 'both' })} />)
+    fireEvent.click(screen.getByRole('tab', { name: 'Review' }))
+    expect(screen.getByRole('button', { name: 'Both' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'Donation' })).toHaveAttribute('aria-pressed', 'false')
   })
 
   it('wraps every step body in a panel, like the edit-tutorial page', () => {

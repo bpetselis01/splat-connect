@@ -6,16 +6,28 @@
  */
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import type { Route } from 'next'
 import type { Notification, NotificationType } from '@splat-connect/types'
 
-const COPY: Record<NotificationType, (actor: string, title: string) => string> = {
-  collaborator_invited: (actor, title) => `${actor} invited you to collaborate on "${title}"`,
-  collaborator_accepted: (actor, title) => `${actor} accepted your invite to "${title}"`,
-  collaborator_declined: (actor, title) => `${actor} declined your invite to "${title}"`,
-  collaborator_removed: (actor, title) => `${actor} removed you from "${title}"`,
-  collaborator_left: (actor, title) => `${actor} left "${title}"`,
-  tutorial_approved: (_actor, title) => `"${title}" was approved and is now published`,
-  tutorial_rejected: (_actor, title) => `"${title}" was rejected`,
+const COPY: Record<NotificationType, (n: Notification) => string> = {
+  collaborator_invited: (n) => `${n.actor_name} invited you to collaborate on "${n.tutorial_title}"`,
+  collaborator_accepted: (n) => `${n.actor_name} accepted your invite to "${n.tutorial_title}"`,
+  collaborator_declined: (n) => `${n.actor_name} declined your invite to "${n.tutorial_title}"`,
+  collaborator_removed: (n) => `${n.actor_name} removed you from "${n.tutorial_title}"`,
+  collaborator_left: (n) => `${n.actor_name} left "${n.tutorial_title}"`,
+  tutorial_approved: (n) => `"${n.tutorial_title}" was approved and is now published`,
+  tutorial_rejected: (n) => `"${n.tutorial_title}" was rejected`,
+  toy_request: (n) => `${n.actor_name} requested ${n.toy_name}`,
+  toy_accepted: (n) => `${n.actor_name} accepted your request for ${n.toy_name}`,
+  toy_rejected: (n) => `${n.actor_name} declined your request for ${n.toy_name}`,
+  toy_withdrawn: (n) => `${n.actor_name} withdrew their request for ${n.toy_name}`,
+  toy_message: (n) => `${n.actor_name} sent a message about ${n.toy_name}`,
+}
+
+function linkFor(n: Notification): string {
+  if (n.toy_transaction_id) return `/dashboard/exchanges/${n.toy_transaction_id}`
+  if (n.tutorial_id) return `/tutorials/${n.tutorial_id}/edit`
+  return '/notifications'
 }
 
 export function NotificationsList({
@@ -51,16 +63,18 @@ export function NotificationsList({
   return (
     <ul className="flex flex-col gap-2">
       {notifications.map((n) => {
-        const title = n.tutorial_title
-        const inviteId = n.type === 'collaborator_invited' ? pendingInvitesByTutorial[n.tutorial_id] : undefined
+        const inviteId = n.type === 'collaborator_invited' ? pendingInvitesByTutorial[n.tutorial_id!] : undefined
         return (
           <li key={n.id} className={`card-flat px-4 py-3 text-sm ${n.read_at ? 'opacity-60' : ''}`}>
             <button
               type="button"
-              onClick={() => run(n.id, () => onMarkRead(n.id))}
+              onClick={() => run(n.id, async () => {
+                await onMarkRead(n.id)
+                router.push(linkFor(n) as Route<string>)
+              })}
               className="text-left font-medium text-ink hover:underline"
             >
-              {COPY[n.type](n.actor_name, title)}
+              {COPY[n.type](n)}
             </button>
             {inviteId && (
               <div className="mt-2 flex gap-2">

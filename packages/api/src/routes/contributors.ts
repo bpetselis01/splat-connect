@@ -1,9 +1,9 @@
 /**
  * Contributor profile routes: GET/PATCH /api/contributors/me.
  *
- * Only `name` is mutable. `role` and `email` are frozen by the
- * profiles_freeze_identity trigger (009) — role was an escalation path, and
- * email mirrors auth.users.
+ * `name` and the pickup_* address fields are mutable (see EDITABLE below).
+ * `role` and `email` are frozen by the profiles_freeze_identity trigger
+ * (009) — role was an escalation path, and email mirrors auth.users.
  */
 import { Hono } from 'hono'
 import { createUserClient } from '../supabase/user-client.js'
@@ -26,7 +26,7 @@ contributors.get('/me', async (c) => {
 // Whitelist of client-editable columns. role and email are frozen by the
 // profiles_freeze_identity trigger (009) and are ignored here rather than
 // rejected, matching PUT /api/child-profile's handling of parent_id.
-const EDITABLE = ['name'] as const
+const EDITABLE = ['name', 'pickup_line1', 'pickup_suburb', 'pickup_state', 'pickup_postcode'] as const
 
 contributors.patch('/me', async (c) => {
   const body = await c.req.json().catch(() => null)
@@ -39,7 +39,10 @@ contributors.patch('/me', async (c) => {
     if (key in body) patch[key] = (body as Record<string, unknown>)[key]
   }
 
-  const supabase = createUserClient(c.get('token'))
+  // Admin client: pickup_* columns are revoked from `authenticated` at the
+  // grant level (028), so RETURNING those columns via a user-scoped client
+  // would fail even though the UPDATE itself is RLS-permitted.
+  const supabase = createAdminClient()
   const { data, error } = await supabase
     .from('profiles')
     .update(patch)

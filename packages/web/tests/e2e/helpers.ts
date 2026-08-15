@@ -86,6 +86,33 @@ export async function deleteUser(id: string) {
 }
 
 /**
+ * A published toy ready to request, seeded through the service role like
+ * createTutorial — the owner's create/edit/publish flow has its own coverage
+ * in dashboard/toys.spec.ts, so exchange specs start from a toy that already
+ * exists.
+ */
+export async function createPublishedToy(
+  ownerId: string,
+  overrides: Partial<{ name: string; offer_type: 'donation' | 'exchange' | 'both' }> = {}
+): Promise<string> {
+  const supabase = adminClient()
+  const { data, error } = await supabase
+    .from('toys')
+    .insert({
+      owner_id: ownerId,
+      name: overrides.name ?? 'Test toy',
+      condition: 7,
+      cover_photo_url: 'https://example.com/cover.jpg',
+      status: 'published',
+      offer_type: overrides.offer_type ?? 'donation',
+    })
+    .select('id')
+    .single()
+  if (error) throw new Error(`createPublishedToy failed: ${error.message}`)
+  return data.id
+}
+
+/**
  * Provision a throwaway tutorial (with one part and one tool, so it's a
  * complete record) linked to the given contributor as the primary owner.
  * Returns the new tutorial's id.

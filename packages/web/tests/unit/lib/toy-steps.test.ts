@@ -15,6 +15,8 @@ function toy(overrides: Partial<Toy> = {}): Toy {
     status: 'draft',
     created_at: '',
     updated_at: '',
+    offer_type: null,
+    archived_at: null,
     ...overrides,
   }
 }

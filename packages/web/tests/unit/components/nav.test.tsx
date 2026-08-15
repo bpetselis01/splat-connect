@@ -37,7 +37,15 @@ describe('Nav', () => {
   //        works without requiring login for public content
   it('renders library link for unauthenticated users', () => {
     render(<Nav role={null} />)
-    expect(screen.getByRole('link', { name: /library/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Library' })).toBeInTheDocument()
+  })
+
+  // Tests: the Toy library link is visible to users who are not signed in
+  // How:   renders <Nav role={null} />; checks a link with text "Toy library" is present
+  // Chain: unauthenticated visitors can browse published toys, same as the tutorial library
+  it('renders toy library link for unauthenticated users', () => {
+    render(<Nav role={null} />)
+    expect(screen.getByRole('link', { name: 'Toy library' })).toBeInTheDocument()
   })
 
   // Tests: the Dashboard link is visible to contributors

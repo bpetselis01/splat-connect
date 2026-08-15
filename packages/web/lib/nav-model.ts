@@ -34,6 +34,7 @@ export type IconName =
   | 'user'
   | 'shield'
   | 'bell'
+  | 'handshake'
 
 /** `soon` marks a route that exists but has no feature behind it yet. */
 export type NavRow = {
@@ -65,6 +66,7 @@ export function buildNav(caps: Capabilities, unreadNotifications: number): NavGr
         // and e2e waitForURL depends on. Only the label changed.
         { href: '/dashboard', label: 'My tutorials', icon: 'file' },
         { href: '/dashboard/toys', label: 'My toys', icon: 'box' },
+        { href: '/dashboard/exchanges', label: 'Exchanges', icon: 'handshake' },
         {
           href: '/dashboard/print-requests',
           label: 'My print requests',

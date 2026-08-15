@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import type { Route } from 'next'
-import type { Toy } from '@splat-connect/types'
+import type { Toy, OfferType } from '@splat-connect/types'
 import { ToyEditStepper } from '@/components/toy-edit-stepper'
 import { ToyDetailsForm } from '@/components/toy-details-form'
 import { ToyPhotosSection } from '@/components/toy-photos-section'
@@ -11,7 +11,7 @@ import { ToastProvider } from '@/components/toast'
 import { browserApiClient } from '@/lib/browser-api-client'
 import { computeToyStepStatuses, getMissingToyFields } from '@/lib/toy-steps'
 
-function ToyReviewPanel({ toy, onPublished }: { toy: Toy; onPublished: (t: Toy) => void }) {
+function ToyReviewPanel({ toy, onPublished, onSaveOfferType }: { toy: Toy; onPublished: (t: Toy) => void; onSaveOfferType: (offerType: OfferType) => Promise<void> }) {
   const [publishing, setPublishing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const missingFields = getMissingToyFields(toy)
@@ -37,6 +37,23 @@ function ToyReviewPanel({ toy, onPublished }: { toy: Toy; onPublished: (t: Toy) 
       <div className="panel pt-5">
         <div className="flex flex-col gap-4 px-5 pb-5">
           <ToySummary toy={toy} />
+
+          <div className="flex flex-col gap-2">
+            <p className="field-label">Offer this toy for</p>
+            <div className="flex gap-2">
+              {(['donation', 'exchange', 'both'] as const).map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  aria-pressed={toy.offer_type === option}
+                  onClick={() => onSaveOfferType(option)}
+                  className={`btn ${toy.offer_type === option ? 'btn-accent' : 'btn-quiet'}`}
+                >
+                  {option === 'donation' ? 'Donation' : option === 'exchange' ? 'Exchange' : 'Both'}
+                </button>
+              ))}
+            </div>
+          </div>
 
           {error && (
             <p role="alert" className="alert alert-danger">
@@ -88,6 +105,11 @@ export function ToyEditor({ toy: initialToy }: { toy: Toy }) {
     setToy(updated)
   }
 
+  async function saveOfferType(offerType: OfferType) {
+    const updated = await browserApiClient.patch<Toy>(`/api/toys/${toy.id}`, { offer_type: offerType })
+    setToy(updated)
+  }
+
   const statuses = computeToyStepStatuses(toy)
 
   return (
@@ -124,7 +146,7 @@ export function ToyEditor({ toy: initialToy }: { toy: Toy }) {
             id: 'review',
             label: 'Review',
             status: statuses.review,
-            content: <ToyReviewPanel toy={toy} onPublished={setToy} />,
+            content: <ToyReviewPanel toy={toy} onPublished={setToy} onSaveOfferType={saveOfferType} />,
           },
         ]}
         trailing={

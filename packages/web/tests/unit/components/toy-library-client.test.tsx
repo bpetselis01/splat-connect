@@ -26,6 +26,8 @@ function toy(overrides: Partial<ToyWithOwner> = {}): ToyWithOwner {
     status: 'published',
     created_at: '',
     updated_at: '',
+    offer_type: null,
+    archived_at: null,
     profiles: { name: 'Lee' },
     ...overrides,
   }
