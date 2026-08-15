@@ -29,6 +29,7 @@
 import { Hono } from 'hono'
 import { createUserClient } from '../supabase/user-client.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
+import { pickEditable } from './pick-editable.js'
 import type { AuthVariables } from '../middleware/auth.js'
 
 const childProfiles = new Hono<{ Variables: AuthVariables }>()
@@ -46,12 +47,7 @@ const EDITABLE = [
 /** Returns the whitelisted subset of a request body, or null if it isn't an object. */
 function editableFrom(body: unknown): Record<string, unknown> | null {
   if (!body || typeof body !== 'object' || Array.isArray(body)) return null
-  const source = body as Record<string, unknown>
-  const row: Record<string, unknown> = { updated_at: new Date().toISOString() }
-  for (const key of EDITABLE) {
-    if (key in source) row[key] = source[key]
-  }
-  return row
+  return { ...pickEditable(body as Record<string, unknown>, EDITABLE), updated_at: new Date().toISOString() }
 }
 
 childProfiles.get('/', async (c) => {
