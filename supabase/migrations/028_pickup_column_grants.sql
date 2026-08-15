@@ -24,6 +24,9 @@
 --      is already copied onto toy_transactions.pickup_* (its own,
 --      correctly scoped RLS policy) rather than read off profiles
 --      directly.
+-- NOTE: this table now uses column-level grants, not the table-level default
+-- from 004. A future migration that adds a profiles column will NOT expose
+-- it to anon/authenticated automatically — extend the grant list below.
 revoke select on public.profiles from anon, authenticated;
 grant select (id, name, email, role, created_at)
   on public.profiles to anon, authenticated;
