@@ -13,8 +13,11 @@ export default async function ExchangeDetailPage({ params }: { params: Promise<{
   let tx: ToyTransactionDetail
   try {
     tx = await apiClient.get<ToyTransactionDetail>(`/api/toy-transactions/${id}`)
-  } catch {
-    notFound()
+  } catch (err) {
+    // Only a genuine 404 renders "not found" — any other failure (401, 500,
+    // network) should hit the error boundary instead of a misleading page.
+    if (err instanceof Error && /status 404/.test(err.message)) notFound()
+    throw err
   }
 
   async function sendMessage(body: string) {
