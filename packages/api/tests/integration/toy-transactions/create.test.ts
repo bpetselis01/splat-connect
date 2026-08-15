@@ -77,4 +77,62 @@ describe('POST /api/toy-transactions', () => {
     })
     expect(res.status).toBe(400)
   })
+
+  it('404s a second request once the toy is mid-handoff (accepted but not archived)', async () => {
+    const handoffToyId = await createPublishedToy(owner.token, 'Rocking horse', 'donation')
+    const rival = await createTestUser('contributor')
+    try {
+      const first = await txReq('/', requester.token, {
+        method: 'POST',
+        body: JSON.stringify({ toy_id: handoffToyId, type: 'donation' }),
+      })
+      const txId = ((await first.json()) as { id: string }).id
+      await txReq(`/${txId}/accept`, owner.token, { method: 'POST' })
+
+      const res = await txReq('/', rival.token, {
+        method: 'POST',
+        body: JSON.stringify({ toy_id: handoffToyId, type: 'donation' }),
+      })
+      expect(res.status).toBe(404)
+    } finally {
+      await deleteTestUser(rival.id)
+    }
+  })
+
+  it('409s offering a toy already offered in another open exchange', async () => {
+    const exchangeToyId = await createPublishedToy(owner.token, 'Kite', 'exchange')
+    const offeredToyId = await createPublishedToy(requester.token, 'Yo-yo', 'exchange')
+    const second = await createTestUser('contributor')
+    try {
+      const otherToyId = await createPublishedToy(second.token, 'Marbles', 'exchange')
+      const first = await txReq('/', requester.token, {
+        method: 'POST',
+        body: JSON.stringify({ toy_id: exchangeToyId, type: 'exchange', offered_toy_id: offeredToyId }),
+      })
+      expect(first.status).toBe(201)
+
+      const res = await txReq('/', requester.token, {
+        method: 'POST',
+        body: JSON.stringify({ toy_id: otherToyId, type: 'exchange', offered_toy_id: offeredToyId }),
+      })
+      expect(res.status).toBe(409)
+    } finally {
+      await deleteTestUser(second.id)
+    }
+  })
+
+  it('rejects offering a draft (unpublished) toy', async () => {
+    const exchangeToyId = await createPublishedToy(owner.token, 'Puzzle', 'exchange')
+    const draft = await toysReq('/', requester.token, {
+      method: 'POST',
+      body: JSON.stringify({ name: 'Unfinished lego set', condition: 5 }),
+    })
+    const draftToyId = ((await draft.json()) as { id: string }).id
+
+    const res = await txReq('/', requester.token, {
+      method: 'POST',
+      body: JSON.stringify({ toy_id: exchangeToyId, type: 'exchange', offered_toy_id: draftToyId }),
+    })
+    expect(res.status).toBe(400)
+  })
 })
