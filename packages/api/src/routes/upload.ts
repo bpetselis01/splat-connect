@@ -24,6 +24,22 @@ upload.post('/pdf', async (c) => {
   }
 
   const supabase = createUserClient(c.get('token'))
+
+  // A contributor may only write into their own tutorial's folder — storage RLS
+  // (030_scope_upload_buckets_to_owner.sql) enforces the same rule, this is the
+  // app-layer half of the same defence-in-depth convention as /toy-cover.
+  const { data: contributor, error: contributorError } = await supabase
+    .from('tutorial_contributors')
+    .select('tutorial_id')
+    .eq('tutorial_id', tutorialId)
+    .eq('profile_id', c.get('userId'))
+    .maybeSingle()
+  if (contributorError) {
+    if (contributorError.code === INVALID_TEXT_REPRESENTATION) return c.json({ error: 'Not found' }, 404)
+    return c.json({ error: contributorError.message }, 500)
+  }
+  if (!contributor) return c.json({ error: 'Not found' }, 404)
+
   const { data, error } = await supabase.storage
     .from('tutorial-pdfs')
     .upload(`${tutorialId}/tutorial.pdf`, file, { upsert: true })
@@ -46,9 +62,22 @@ upload.post('/photo', async (c) => {
     return c.json({ error: 'file and tutorialId are required' }, 400)
   }
 
+  const userClient = createUserClient(c.get('token'))
+
+  const { data: contributor, error: contributorError } = await userClient
+    .from('tutorial_contributors')
+    .select('tutorial_id')
+    .eq('tutorial_id', tutorialId)
+    .eq('profile_id', c.get('userId'))
+    .maybeSingle()
+  if (contributorError) {
+    if (contributorError.code === INVALID_TEXT_REPRESENTATION) return c.json({ error: 'Not found' }, 404)
+    return c.json({ error: contributorError.message }, 500)
+  }
+  if (!contributor) return c.json({ error: 'Not found' }, 404)
+
   const ext = file.name.split('.').pop() ?? 'jpg'
   const admin = createAdminClient()
-  const userClient = createUserClient(c.get('token'))
 
   // WHY: Uploading a new photo in a different format (e.g. switching from .jpg
   //      to .png) left the old file sitting in storage because the filename
@@ -88,6 +117,19 @@ upload.post('/stl', async (c) => {
   }
 
   const supabase = createUserClient(c.get('token'))
+
+  const { data: contributor, error: contributorError } = await supabase
+    .from('tutorial_contributors')
+    .select('tutorial_id')
+    .eq('tutorial_id', tutorialId)
+    .eq('profile_id', c.get('userId'))
+    .maybeSingle()
+  if (contributorError) {
+    if (contributorError.code === INVALID_TEXT_REPRESENTATION) return c.json({ error: 'Not found' }, 404)
+    return c.json({ error: contributorError.message }, 500)
+  }
+  if (!contributor) return c.json({ error: 'Not found' }, 404)
+
   const { data, error } = await supabase.storage
     .from('stl-files')
     .upload(`${tutorialId}/${file.name}`, file, { upsert: true })
