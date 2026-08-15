@@ -21,6 +21,7 @@
  */
 import { Hono } from 'hono'
 import { createUserClient } from '../supabase/user-client.js'
+import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import type { AuthVariables } from '../middleware/auth.js'
 
 const toys = new Hono<{ Variables: AuthVariables }>()
@@ -46,11 +47,6 @@ function editableFrom(body: Record<string, unknown>) {
   out.updated_at = new Date().toISOString()
   return out
 }
-
-// Postgres rejects a malformed uuid with 22P02. "Not found" is the truthful
-// answer for an id that could never name a row, and it keeps a garbage path
-// from surfacing as a 500.
-const INVALID_TEXT_REPRESENTATION = '22P02'
 
 /** Fields still missing before a toy may be published. */
 export function missingPublishFields(toy: {
