@@ -131,6 +131,20 @@ toyTransactions.post('/', async (c) => {
   if (!toy || toy.status !== 'published' || toy.archived_at) return c.json({ error: 'Not found' }, 404)
   if (toy.owner_id === userId) return c.json({ error: 'You cannot request your own toy' }, 400)
 
+  // A toy already mid-handoff (accepted but not yet completed) stays
+  // 'published' and unarchived, so the status check above doesn't catch it.
+  // Hide this the same way an inaccessible toy is hidden elsewhere: a bare
+  // 404, not a 409, so a prober can't distinguish "already spoken for" from
+  // "doesn't exist."
+  const { data: activeHandoff, error: activeHandoffError } = await admin
+    .from('toy_transactions')
+    .select('id')
+    .eq('toy_id', toy.id)
+    .eq('status', 'accepted')
+    .maybeSingle()
+  if (activeHandoffError) return c.json({ error: activeHandoffError.message }, 500)
+  if (activeHandoff) return c.json({ error: 'Not found' }, 404)
+
   const type = body.type as 'donation' | 'exchange'
   if (type !== 'donation' && type !== 'exchange') return c.json({ error: 'Invalid type' }, 400)
   const allowed = type === 'donation' ? ['donation', 'both'] : ['exchange', 'both']
@@ -143,13 +157,23 @@ toyTransactions.post('/', async (c) => {
     if (!body.offered_toy_id) return c.json({ error: 'Choose one of your toys to offer' }, 400)
     const { data: offered, error: offeredError } = await admin
       .from('toys')
-      .select('id, owner_id, archived_at')
+      .select('id, owner_id, status, archived_at')
       .eq('id', body.offered_toy_id)
       .maybeSingle()
     if (offeredError) return c.json({ error: offeredError.message }, 500)
-    if (!offered || offered.owner_id !== userId || offered.archived_at) {
+    if (!offered || offered.owner_id !== userId || offered.status !== 'published' || offered.archived_at) {
       return c.json({ error: 'Choose one of your own, active toys to offer' }, 400)
     }
+
+    const { data: offeredInUse, error: offeredInUseError } = await admin
+      .from('toy_transactions')
+      .select('id')
+      .eq('offered_toy_id', offered.id)
+      .in('status', ['requested', 'accepted'])
+      .maybeSingle()
+    if (offeredInUseError) return c.json({ error: offeredInUseError.message }, 500)
+    if (offeredInUse) return c.json({ error: 'That toy is already offered in another open exchange' }, 409)
+
     offeredToyId = offered.id
   }
 
