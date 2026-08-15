@@ -115,7 +115,10 @@ toyTransactions.get('/:id', async (c) => {
 })
 
 toyTransactions.post('/', async (c) => {
-  const body = await c.req.json()
+  const body = await c.req.json().catch(() => null)
+  if (body === null || typeof body !== 'object' || Array.isArray(body)) {
+    return c.json({ error: 'Body must be an object' }, 400)
+  }
   const userId = c.get('userId')
   const admin = createAdminClient()
 
@@ -223,7 +226,10 @@ toyTransactions.post('/', async (c) => {
 })
 
 toyTransactions.post('/:id/messages', async (c) => {
-  const body = await c.req.json()
+  const body = await c.req.json().catch(() => null)
+  if (body === null || typeof body !== 'object' || Array.isArray(body)) {
+    return c.json({ error: 'Body must be an object' }, 400)
+  }
   if (typeof body.body !== 'string' || !body.body.trim()) {
     return c.json({ error: 'Message body is required' }, 400)
   }
@@ -430,7 +436,10 @@ toyTransactions.post('/:id/withdraw', async (c) => {
 })
 
 toyTransactions.post('/:id/confirm', async (c) => {
-  const body = await c.req.json()
+  const body = await c.req.json().catch(() => null)
+  if (body === null || typeof body !== 'object' || Array.isArray(body)) {
+    return c.json({ error: 'Body must be an object' }, 400)
+  }
   const loaded = await loadForParty(c)
   if ('status' in loaded) return c.json({ error: 'message' in loaded ? loaded.message : 'Not found' }, loaded.status)
   const tx = loaded.data
