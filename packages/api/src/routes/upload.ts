@@ -14,6 +14,51 @@ const upload = new Hono<{ Variables: AuthVariables }>()
 // 500, same convention as toys.ts.
 const INVALID_TEXT_REPRESENTATION = '22P02'
 
+type AccessCheck = { ok: true } | { ok: false; status: 404 | 500; message?: string }
+
+// A contributor may only write into their own tutorial's folder — storage RLS
+// (030_scope_upload_buckets_to_owner.sql) enforces the same rule, this is the
+// app-layer half of the same defence-in-depth convention as the toy checks below.
+async function checkTutorialContributor(
+  supabase: ReturnType<typeof createUserClient>,
+  tutorialId: string,
+  userId: string
+): Promise<AccessCheck> {
+  const { data: contributor, error } = await supabase
+    .from('tutorial_contributors')
+    .select('tutorial_id')
+    .eq('tutorial_id', tutorialId)
+    .eq('profile_id', userId)
+    .maybeSingle()
+  if (error) {
+    if (error.code === INVALID_TEXT_REPRESENTATION) return { ok: false, status: 404 }
+    return { ok: false, status: 500, message: error.message }
+  }
+  if (!contributor) return { ok: false, status: 404 }
+  return { ok: true }
+}
+
+// Bucket RLS (Task 1) already scopes writes to the owner, but every other
+// owner-scoped route in this codebase also checks explicitly (defence in depth).
+async function checkToyOwner(
+  supabase: ReturnType<typeof createUserClient>,
+  toyId: string,
+  userId: string
+): Promise<AccessCheck> {
+  const { data: toy, error } = await supabase
+    .from('toys')
+    .select('id')
+    .eq('id', toyId)
+    .eq('owner_id', userId)
+    .maybeSingle()
+  if (error) {
+    if (error.code === INVALID_TEXT_REPRESENTATION) return { ok: false, status: 404 }
+    return { ok: false, status: 500, message: error.message }
+  }
+  if (!toy) return { ok: false, status: 404 }
+  return { ok: true }
+}
+
 upload.post('/pdf', async (c) => {
   const formData = await c.req.formData()
   const file = formData.get('file') as File | null
@@ -25,20 +70,8 @@ upload.post('/pdf', async (c) => {
 
   const supabase = createUserClient(c.get('token'))
 
-  // A contributor may only write into their own tutorial's folder — storage RLS
-  // (030_scope_upload_buckets_to_owner.sql) enforces the same rule, this is the
-  // app-layer half of the same defence-in-depth convention as /toy-cover.
-  const { data: contributor, error: contributorError } = await supabase
-    .from('tutorial_contributors')
-    .select('tutorial_id')
-    .eq('tutorial_id', tutorialId)
-    .eq('profile_id', c.get('userId'))
-    .maybeSingle()
-  if (contributorError) {
-    if (contributorError.code === INVALID_TEXT_REPRESENTATION) return c.json({ error: 'Not found' }, 404)
-    return c.json({ error: contributorError.message }, 500)
-  }
-  if (!contributor) return c.json({ error: 'Not found' }, 404)
+  const access = await checkTutorialContributor(supabase, tutorialId, c.get('userId'))
+  if (!access.ok) return c.json({ error: access.message ?? 'Not found' }, access.status)
 
   const { data, error } = await supabase.storage
     .from('tutorial-pdfs')
@@ -64,17 +97,8 @@ upload.post('/photo', async (c) => {
 
   const userClient = createUserClient(c.get('token'))
 
-  const { data: contributor, error: contributorError } = await userClient
-    .from('tutorial_contributors')
-    .select('tutorial_id')
-    .eq('tutorial_id', tutorialId)
-    .eq('profile_id', c.get('userId'))
-    .maybeSingle()
-  if (contributorError) {
-    if (contributorError.code === INVALID_TEXT_REPRESENTATION) return c.json({ error: 'Not found' }, 404)
-    return c.json({ error: contributorError.message }, 500)
-  }
-  if (!contributor) return c.json({ error: 'Not found' }, 404)
+  const access = await checkTutorialContributor(userClient, tutorialId, c.get('userId'))
+  if (!access.ok) return c.json({ error: access.message ?? 'Not found' }, access.status)
 
   const ext = file.name.split('.').pop() ?? 'jpg'
   const admin = createAdminClient()
@@ -115,17 +139,8 @@ upload.post('/stl', async (c) => {
 
   const supabase = createUserClient(c.get('token'))
 
-  const { data: contributor, error: contributorError } = await supabase
-    .from('tutorial_contributors')
-    .select('tutorial_id')
-    .eq('tutorial_id', tutorialId)
-    .eq('profile_id', c.get('userId'))
-    .maybeSingle()
-  if (contributorError) {
-    if (contributorError.code === INVALID_TEXT_REPRESENTATION) return c.json({ error: 'Not found' }, 404)
-    return c.json({ error: contributorError.message }, 500)
-  }
-  if (!contributor) return c.json({ error: 'Not found' }, 404)
+  const access = await checkTutorialContributor(supabase, tutorialId, c.get('userId'))
+  if (!access.ok) return c.json({ error: access.message ?? 'Not found' }, access.status)
 
   const { data, error } = await supabase.storage
     .from('stl-files')
@@ -151,20 +166,8 @@ upload.post('/toy-cover', async (c) => {
 
   const supabase = createUserClient(c.get('token'))
 
-  // Bucket RLS (Task 1) already scopes writes to the owner, but every other
-  // owner-scoped route in this codebase also checks explicitly (defence in
-  // depth) — see toys.ts for the identical convention.
-  const { data: toy, error: toyError } = await supabase
-    .from('toys')
-    .select('id')
-    .eq('id', toyId)
-    .eq('owner_id', c.get('userId'))
-    .maybeSingle()
-  if (toyError) {
-    if (toyError.code === INVALID_TEXT_REPRESENTATION) return c.json({ error: 'Not found' }, 404)
-    return c.json({ error: toyError.message }, 500)
-  }
-  if (!toy) return c.json({ error: 'Not found' }, 404)
+  const access = await checkToyOwner(supabase, toyId, c.get('userId'))
+  if (!access.ok) return c.json({ error: access.message ?? 'Not found' }, access.status)
 
   const ext = file.name.split('.').pop() ?? 'jpg'
 
@@ -200,20 +203,8 @@ upload.post('/toy-switch-photo', async (c) => {
 
   const supabase = createUserClient(c.get('token'))
 
-  // Bucket RLS (Task 1) already scopes writes to the owner, but every other
-  // owner-scoped route in this codebase also checks explicitly (defence in
-  // depth) — see toys.ts for the identical convention.
-  const { data: toy, error: toyError } = await supabase
-    .from('toys')
-    .select('id')
-    .eq('id', toyId)
-    .eq('owner_id', c.get('userId'))
-    .maybeSingle()
-  if (toyError) {
-    if (toyError.code === INVALID_TEXT_REPRESENTATION) return c.json({ error: 'Not found' }, 404)
-    return c.json({ error: toyError.message }, 500)
-  }
-  if (!toy) return c.json({ error: 'Not found' }, 404)
+  const access = await checkToyOwner(supabase, toyId, c.get('userId'))
+  if (!access.ok) return c.json({ error: access.message ?? 'Not found' }, access.status)
 
   const ext = file.name.split('.').pop() ?? 'jpg'
 
