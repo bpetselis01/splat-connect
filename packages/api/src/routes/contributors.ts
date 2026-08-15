@@ -8,6 +8,7 @@
 import { Hono } from 'hono'
 import { createUserClient } from '../supabase/user-client.js'
 import { createAdminClient } from '../supabase/client.js'
+import { pickEditable } from './pick-editable.js'
 import type { AuthVariables } from '../middleware/auth.js'
 
 const contributors = new Hono<{ Variables: AuthVariables }>()
@@ -34,10 +35,7 @@ contributors.patch('/me', async (c) => {
     return c.json({ error: 'Body must be an object' }, 400)
   }
 
-  const patch: Record<string, unknown> = {}
-  for (const key of EDITABLE) {
-    if (key in body) patch[key] = (body as Record<string, unknown>)[key]
-  }
+  const patch = pickEditable(body as Record<string, unknown>, EDITABLE)
 
   // Admin client: pickup_* columns are revoked from `authenticated` at the
   // grant level (028), so RETURNING those columns via a user-scoped client
