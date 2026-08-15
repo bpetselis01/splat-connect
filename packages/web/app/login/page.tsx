@@ -1,26 +1,3 @@
-/**
- * Login Page
- * 
- * Allows existing users to log in with email/password.
- * Authentication is handled by Supabase.
- * 
- * Process:
- * 1. User enters email and password
- * 2. Supabase verifies credentials
- * 3. If valid: Sets session JWT in secure cookie
- * 4. Checks user profile role
- * 5. Redirects based on role: admin → /admin, everyone else → /dashboard
- * 6. If error: Shows error message
- *
- * Related flows:
- * - Sign up: /signup (creates new account)
- * - Sign out: Nav component handles logout
- * 
- * Related files:
- * - app/signup: Create new account
- * - app/dashboard: hub for any signed-in account
- * - lib/supabase/client.ts: Supabase auth client
- */
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
