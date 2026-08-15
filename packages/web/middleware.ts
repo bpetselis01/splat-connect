@@ -1,35 +1,3 @@
-/**
- * Next.js Middleware for Route Protection
- *
- * This middleware runs on EVERY request to the web app (before page rendering).
- * It validates that users have the right authentication status for their route.
- *
- * Why it's needed:
- * - Some routes require only a signed-in account (e.g., /upload, /dashboard)
- * - Some routes are only for admins (e.g., /admin)
- * - This middleware redirects unauthenticated users to /login
- * - This middleware redirects non-admins away from /admin
- *
- * Protected routes:
- * - /upload: signed in
- * - /dashboard: signed in
- * - /admin: Admins only (role='admin')
- * - /organizations: Signed in only — leadership is per-organisation data, not a
- *   role, so there is nothing here for middleware to read. The organisation page
- *   checks it via lib/org-access.ts and shows or hides the workspace accordingly.
- * - Contributor terms: /dashboard, /upload, /organizations and
- *   /tutorials/<id>/edit redirect to /onboarding/contributor-terms until the account
- *   has accepted. /admin is excluded — the terms govern submitting, not reviewing.
- *
- * Note: This is CLIENT-SIDE route protection (UX).
- * Server-side protection is done in:
- * - API middleware (packages/api/src/middleware/auth.ts)
- * - Supabase RLS policies (supabase/migrations/001_initial.sql)
- *
- * Related files:
- * - lib/api-client.ts: Fetches data from API (also validates auth server-side)
- * - app/login: Authentication page
- */
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
