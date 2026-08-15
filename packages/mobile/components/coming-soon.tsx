@@ -8,13 +8,6 @@ import { Card } from './ui/Card'
 import { Button } from './ui/Button'
 import { ScreenHeader } from './ui/ScreenHeader'
 
-/**
- * Placeholder for a tab whose feature has not shipped.
- *
- * These are three of the app's five tabs, so a bare "coming soon" sentence was
- * most of what a new parent saw. It now explains what the feature will do and
- * routes to the part of the app that already works, rather than dead-ending.
- */
 export function ComingSoon({
   label,
   description,
