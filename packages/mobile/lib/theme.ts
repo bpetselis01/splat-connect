@@ -1,13 +1,5 @@
-// packages/mobile/lib/theme.ts
-//
-// The palette is anchored to the SPLAT light blue (#1998d5, ~OKLCH 0.63 0.13 231)
-// and every other hue is derived from it: neutrals are tinted toward its hue
-// rather than left pure gray, and the warm accents sit on its complement
-// (~hue 45) so nothing reads as borrowed from another design system.
-//
-// Surface model: the canvas is blue-tinted and cards are white. This is the
-// inverse of a white canvas with near-white cards, which left every card at
-// ~1.02:1 against its background and therefore invisible.
+// Canvas is blue-tinted, cards are white — a white canvas with near-white
+// cards left every card at ~1.02:1 against its background and invisible.
 export const theme = {
   colors: {
     // Brand
@@ -40,8 +32,6 @@ export const theme = {
 
     danger: '#a3301a',
 
-    // Rebuilt from the palette above. The previous values were Tailwind's
-    // green/yellow/red, which belong to a different color system entirely.
     difficulty: {
       easy: { bg: '#d4f2ea', text: '#0f5c4d' },
       medium: { bg: '#fdeecb', text: '#7a4e05' },
