@@ -38,6 +38,11 @@ describe('storage upload is gated by the same function as tutorial authoring', (
   // tutorial ones exercised above — 009 widened both from the same function.
   it('lets a contributor upload to storage', async () => {
     const tutorialId = crypto.randomUUID()
+    await adminClient()
+      .from('tutorials')
+      .insert({ id: tutorialId, title: 'Storage upload test', difficulty: 'easy', status: 'draft' })
+    await adminClient().from('tutorial_contributors').insert({ tutorial_id: tutorialId, profile_id: subject.id })
+
     const fd = new FormData()
     fd.append('file', new File(['%PDF-1.4 test'], 'tutorial.pdf', { type: 'application/pdf' }))
     fd.append('tutorialId', tutorialId)
@@ -51,6 +56,7 @@ describe('storage upload is gated by the same function as tutorial authoring', (
     expect(res.status).toBe(200)
 
     await adminClient().storage.from('tutorial-pdfs').remove([`${tutorialId}/tutorial.pdf`])
+    await adminClient().from('tutorials').delete().eq('id', tutorialId)
   })
 })
 
@@ -128,6 +134,33 @@ describe('profile identity is frozen against its owner', () => {
 
     // Restore for the remaining tests in this file.
     await adminClient().from('profiles').update({ role: 'contributor' }).eq('id', subject.id)
+  })
+})
+
+describe('the profiles column grant', () => {
+  // Tests: 029 revoked table-level select and re-granted only
+  //        id/name/role/created_at — email is visible to no one holding just
+  //        the anon/authenticated key, even on their own row, since RLS is
+  //        row-level and can't narrow columns on a row it does make visible.
+  it('denies selecting email directly via PostgREST', async () => {
+    const { error } = await userClient(subject.token)
+      .from('profiles')
+      .select('email')
+      .eq('id', subject.id)
+      .single()
+
+    expect(error).not.toBeNull()
+  })
+
+  it('still allows selecting name, the column app routes actually read', async () => {
+    const { data, error } = await userClient(subject.token)
+      .from('profiles')
+      .select('name')
+      .eq('id', subject.id)
+      .single()
+
+    expect(error).toBeNull()
+    expect(data?.name).toBeDefined()
   })
 })
 
