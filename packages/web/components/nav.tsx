@@ -1,26 +1,3 @@
-/**
- * Navigation Bar Component
- *
- * Top navigation showing SPLAT Connect branding and user menu.
- * Displayed on every page (from root layout.tsx).
- *
- * Props:
- * - role: User role ('admin' | 'contributor' | null for logged-out)
- *
- * Navigation items (dynamic based on role):
- * - Library: Browse approved tutorials (everyone)
- * - Toy library: Browse published toys (everyone)
- * - Organisations: public org directory (any signed-in account)
- * - Admin: Admin dashboard (admins only)
- * - Dashboard: hub for any signed-in account — upload and my-tutorials are
- *   reached from its Tutorials tab, not from separate nav links
- * - Sign Out: Logout button (if authenticated)
- *
- * Related files:
- * - app/layout.tsx: Root layout, calls Nav
- * - middleware.ts: Validates route access
- * - routes/contributors.ts: Fetches user profile (for role)
- */
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'

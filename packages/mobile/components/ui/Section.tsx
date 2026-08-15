@@ -4,8 +4,6 @@ import { theme } from '../../lib/theme'
 import { Card } from './Card'
 
 /**
- * A titled group of related fields on a white surface.
- *
  * Grouping is what keeps these forms from reading as one undifferentiated
  * column of inputs — and grouping at the section level, rather than putting
  * every field in its own card, is what keeps them from reading as a card grid.

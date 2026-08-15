@@ -1,15 +1,14 @@
 import { defineConfig, devices } from '@playwright/test'
+import {
+  LOCAL_SUPABASE_URL as SUPABASE_URL,
+  LOCAL_SUPABASE_ANON_KEY as ANON_KEY,
+  LOCAL_SUPABASE_SERVICE_ROLE_KEY as SERVICE_ROLE_KEY,
+} from '../../supabase/local-dev-keys'
 
-// Local Supabase — well-known, non-secret dev keys (same values as
-// packages/api/.env.test). The E2E servers MUST point here, never the cloud
-// project. Injected into each webServer's env below; because the API does
+// The E2E servers MUST point at local Supabase, never the cloud project.
+// Injected into each webServer's env below; because the API does
 // `import 'dotenv/config'` (which does not override existing process.env),
 // these win over whatever .env holds — that is the safety boundary.
-const SUPABASE_URL = 'http://localhost:54321'
-const ANON_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0'
-const SERVICE_ROLE_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU'
 
 // Dedicated E2E ports, deliberately off the dev ports (3100 web / 3101 api in
 // the repo-root .env.local, 8081 Expo dev). `reuseExistingServer` below means

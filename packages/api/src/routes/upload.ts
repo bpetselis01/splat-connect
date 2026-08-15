@@ -6,13 +6,55 @@
 import { Hono } from 'hono'
 import { createUserClient } from '../supabase/user-client.js'
 import { createAdminClient } from '../supabase/client.js'
+import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import type { AuthVariables } from '../middleware/auth.js'
 
 const upload = new Hono<{ Variables: AuthVariables }>()
 
-// Postgres rejects a malformed uuid with 22P02 — mapped to 404 rather than
-// 500, same convention as toys.ts.
-const INVALID_TEXT_REPRESENTATION = '22P02'
+type AccessCheck = { ok: true } | { ok: false; status: 404 | 500; message?: string }
+
+// A contributor may only write into their own tutorial's folder — storage RLS
+// (030_scope_upload_buckets_to_owner.sql) enforces the same rule, this is the
+// app-layer half of the same defence-in-depth convention as the toy checks below.
+async function checkTutorialContributor(
+  supabase: ReturnType<typeof createUserClient>,
+  tutorialId: string,
+  userId: string
+): Promise<AccessCheck> {
+  const { data: contributor, error } = await supabase
+    .from('tutorial_contributors')
+    .select('tutorial_id')
+    .eq('tutorial_id', tutorialId)
+    .eq('profile_id', userId)
+    .maybeSingle()
+  if (error) {
+    if (error.code === INVALID_TEXT_REPRESENTATION) return { ok: false, status: 404 }
+    return { ok: false, status: 500, message: error.message }
+  }
+  if (!contributor) return { ok: false, status: 404 }
+  return { ok: true }
+}
+
+// Bucket RLS (Task 1) already scopes writes to the owner, but every other
+// owner-scoped route in this codebase also checks explicitly (defence in depth).
+async function checkToyOwner(
+  supabase: ReturnType<typeof createUserClient>,
+  toyId: string,
+  userId: string
+): Promise<AccessCheck> {
+  const { data: toy, error } = await supabase
+    .from('toys')
+    .select('id')
+    .eq('id', toyId)
+    .eq('owner_id', userId)
+    .maybeSingle()
+  if (error) {
+    if (error.code === INVALID_TEXT_REPRESENTATION) return { ok: false, status: 404 }
+    return { ok: false, status: 500, message: error.message }
+  }
+  if (!toy) return { ok: false, status: 404 }
+  return { ok: true }
+}
 
 upload.post('/pdf', async (c) => {
   const formData = await c.req.formData()
@@ -24,6 +66,10 @@ upload.post('/pdf', async (c) => {
   }
 
   const supabase = createUserClient(c.get('token'))
+
+  const access = await checkTutorialContributor(supabase, tutorialId, c.get('userId'))
+  if (!access.ok) return c.json({ error: access.message ?? 'Not found' }, access.status)
+
   const { data, error } = await supabase.storage
     .from('tutorial-pdfs')
     .upload(`${tutorialId}/tutorial.pdf`, file, { upsert: true })
@@ -46,18 +92,19 @@ upload.post('/photo', async (c) => {
     return c.json({ error: 'file and tutorialId are required' }, 400)
   }
 
+  const userClient = createUserClient(c.get('token'))
+
+  const access = await checkTutorialContributor(userClient, tutorialId, c.get('userId'))
+  if (!access.ok) return c.json({ error: access.message ?? 'Not found' }, access.status)
+
   const ext = file.name.split('.').pop() ?? 'jpg'
   const admin = createAdminClient()
-  const userClient = createUserClient(c.get('token'))
 
   // WHY: Uploading a new photo in a different format (e.g. switching from .jpg
   //      to .png) left the old file sitting in storage because the filename
   //      changed with the extension, creating two photos for the same tutorial.
   // HOW: All files in the tutorial's photo folder are deleted before uploading
-  //      the new one, so there is always exactly one photo per tutorial.
-  // Delete every existing file under this tutorial's photo folder before
-  // uploading so that extension changes (jpg → png etc.) don't accumulate
-  // multiple files. Admin client used because no DELETE storage policy exists.
+  //      the new one. Admin client used because no DELETE storage policy exists.
   const { data: existing } = await admin.storage.from('toy-photos').list(tutorialId)
   if (existing?.length) {
     await admin.storage
@@ -88,6 +135,10 @@ upload.post('/stl', async (c) => {
   }
 
   const supabase = createUserClient(c.get('token'))
+
+  const access = await checkTutorialContributor(supabase, tutorialId, c.get('userId'))
+  if (!access.ok) return c.json({ error: access.message ?? 'Not found' }, access.status)
+
   const { data, error } = await supabase.storage
     .from('stl-files')
     .upload(`${tutorialId}/${file.name}`, file, { upsert: true })
@@ -112,20 +163,8 @@ upload.post('/toy-cover', async (c) => {
 
   const supabase = createUserClient(c.get('token'))
 
-  // Bucket RLS (Task 1) already scopes writes to the owner, but every other
-  // owner-scoped route in this codebase also checks explicitly (defence in
-  // depth) — see toys.ts for the identical convention.
-  const { data: toy, error: toyError } = await supabase
-    .from('toys')
-    .select('id')
-    .eq('id', toyId)
-    .eq('owner_id', c.get('userId'))
-    .maybeSingle()
-  if (toyError) {
-    if (toyError.code === INVALID_TEXT_REPRESENTATION) return c.json({ error: 'Not found' }, 404)
-    return c.json({ error: toyError.message }, 500)
-  }
-  if (!toy) return c.json({ error: 'Not found' }, 404)
+  const access = await checkToyOwner(supabase, toyId, c.get('userId'))
+  if (!access.ok) return c.json({ error: access.message ?? 'Not found' }, access.status)
 
   const ext = file.name.split('.').pop() ?? 'jpg'
 
@@ -161,20 +200,8 @@ upload.post('/toy-switch-photo', async (c) => {
 
   const supabase = createUserClient(c.get('token'))
 
-  // Bucket RLS (Task 1) already scopes writes to the owner, but every other
-  // owner-scoped route in this codebase also checks explicitly (defence in
-  // depth) — see toys.ts for the identical convention.
-  const { data: toy, error: toyError } = await supabase
-    .from('toys')
-    .select('id')
-    .eq('id', toyId)
-    .eq('owner_id', c.get('userId'))
-    .maybeSingle()
-  if (toyError) {
-    if (toyError.code === INVALID_TEXT_REPRESENTATION) return c.json({ error: 'Not found' }, 404)
-    return c.json({ error: toyError.message }, 500)
-  }
-  if (!toy) return c.json({ error: 'Not found' }, 404)
+  const access = await checkToyOwner(supabase, toyId, c.get('userId'))
+  if (!access.ok) return c.json({ error: access.message ?? 'Not found' }, access.status)
 
   const ext = file.name.split('.').pop() ?? 'jpg'
 

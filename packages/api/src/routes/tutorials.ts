@@ -47,13 +47,32 @@ tutorials.get('/:id', async (c) => {
     .from('tutorials')
     // reviewer/reviewed_for name who approved it and whose authority they used.
     // Same shape the public detail route uses, so there is one way to ask this.
+    // profiles.email is withheld here — this route is shared with the public
+    // contributor edit page, not just admin review — and merged back in below
+    // only for admins.
     .select(
-      '*, parts(*), tools(*), stl_files(*), tutorial_contributors(*, profiles(id, name, email, role, created_at)), ' +
+      '*, parts(*), tools(*), stl_files(*), tutorial_contributors(*, profiles(id, name, role, created_at)), ' +
         'reviewer:reviewed_by(name), reviewed_for:reviewed_for_org_id(name)'
     )
     .eq('id', c.req.param('id'))
     .single()
   if (error) return c.json({ error: error.message }, 404)
+
+  if (c.get('role') === 'admin' && data.tutorial_contributors?.length) {
+    const admin = createAdminClient()
+    const { data: emails } = await admin
+      .from('profiles')
+      .select('id, email')
+      .in(
+        'id',
+        data.tutorial_contributors.map((tc: { profile_id: string }) => tc.profile_id)
+      )
+    const emailById = new Map((emails ?? []).map((p) => [p.id, p.email]))
+    for (const tc of data.tutorial_contributors) {
+      if (tc.profiles) tc.profiles.email = emailById.get(tc.profile_id) ?? null
+    }
+  }
+
   return c.json(data)
 })
 

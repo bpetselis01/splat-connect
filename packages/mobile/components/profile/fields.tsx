@@ -1,11 +1,5 @@
-// packages/mobile/components/profile/fields.tsx
-// Shared presentational form primitives for the child-profile data screens.
-// Each is stateless: value in, onChange out — the owning screen wires them to
-// useChildProfile().save.
-//
-// The selectable pills are the shared ui/Chip rather than a local copy: this
-// file used to hand-roll the same pressable pill, which is how the profile
-// screens ended up with different selection styling from the library filter.
+// Selectable pills use the shared ui/Chip, not a local copy — a hand-rolled
+// pill here is how the profile screens drifted from the library filter's styling.
 import { View, Text, StyleSheet } from 'react-native'
 import { theme } from '../../lib/theme'
 import { Chip } from '../ui/Chip'

@@ -1,37 +1,3 @@
-/**
- * Buy Links Input Component
- * 
- * Allows users to add where materials/tools can be purchased.
- * Used in the tutorial upload form for parts and tools.
- * 
- * Features:
- * - Add/remove purchase links
- * - Each link has label (e.g., 'Jaycar') and URL
- * - Stored as hidden JSON input for form submission
- * - onChange callback notifies parent of changes
- * 
- * Props:
- * - initialLinks?: Array of existing BuyLink objects
- * - onChange?: Callback when links are modified
- * 
- * Data structure:
- * ```typescript
- * BuyLink = { label: string; url: string }
- * ```
- * 
- * Usage in upload form:
- * - Step 3 (Parts): Add purchase links for each material
- * - Step 4 (Tools): Add purchase links for each tool
- * 
- * Form integration:
- * - Maintains hidden input with JSON-stringified links
- * - Parent form can read input.value to get current links
- * - onChange callback used by parent to update local state
- * 
- * Related files:
- * - app/upload/page.tsx: Uses BuyLinksInput for parts & tools
- * - types/index.ts: BuyLink, Part, Tool types
- */
 'use client'
 import { useState, useEffect } from 'react'
 import type { BuyLink } from '@splat-connect/types'

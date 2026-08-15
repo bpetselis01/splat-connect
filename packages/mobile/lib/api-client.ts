@@ -7,16 +7,7 @@ async function getToken(): Promise<string | null> {
   return session?.access_token ?? null
 }
 
-async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
-  const token = await getToken()
-  const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL}${path}`, {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
-  })
+async function handleResponse<T>(res: Response, method: string, path: string): Promise<T> {
   if (!res.ok) {
     let detail = ''
     try {
@@ -29,6 +20,19 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   return (text ? JSON.parse(text) : null) as T
 }
 
+async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+  const token = await getToken()
+  const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL}${path}`, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+  })
+  return handleResponse<T>(res, method, path)
+}
+
 async function requestFormData<T>(method: string, path: string, formData: FormData): Promise<T> {
   const token = await getToken()
   const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL}${path}`, {
@@ -38,16 +42,7 @@ async function requestFormData<T>(method: string, path: string, formData: FormDa
     },
     body: formData,
   })
-  if (!res.ok) {
-    let detail = ''
-    try {
-      const j = (await res.clone().json()) as { error?: string }
-      if (j.error) detail = `: ${j.error}`
-    } catch {}
-    throw new Error(`API ${method} ${path} failed with status ${res.status}${detail}`)
-  }
-  const text = await res.text()
-  return (text ? JSON.parse(text) : null) as T
+  return handleResponse<T>(res, method, path)
 }
 
 export const apiClient = {

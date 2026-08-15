@@ -1,8 +1,5 @@
 import { ComingSoon } from '../../components/coming-soon'
 
-// Copy mirrors the Toy Scanner flow in the design prototype (removed from the
-// repo; see the 2026-07-23 mobile-frontend-redesign docs), so the placeholder
-// promises what the prototype actually specifies.
 export default function ScannerRoute() {
   return (
     <ComingSoon

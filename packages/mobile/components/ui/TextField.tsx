@@ -14,9 +14,6 @@ import { theme } from '../../lib/theme'
 const noWebOutline = { outlineStyle: 'none' } as unknown as TextStyle
 
 /**
- * Labelled text input with an animated focus ring. Every child-profile screen
- * had its own copy of the same bordered box, which is how they drifted apart.
- *
  * `placeholder`, `defaultValue` and `accessibilityLabel` pass straight through
  * — the test suite queries these inputs by placeholder text.
  */

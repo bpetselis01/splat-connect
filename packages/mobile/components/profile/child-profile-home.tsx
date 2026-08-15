@@ -1,5 +1,3 @@
-// packages/mobile/components/profile/child-profile-home.tsx
-//
 // Embedded as the "Child Profile" segment of the merged Profile tab
 // (components/profile-screen.tsx) — it owns none of the screen chrome
 // (header, account identity, sign out) since that segment shares a screen

@@ -2,11 +2,12 @@ import { Hono, type Context } from 'hono'
 import { randomInt } from 'node:crypto'
 import { createUserClient } from '../supabase/user-client.js'
 import { createAdminClient } from '../supabase/client.js'
+import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import type { AuthVariables } from '../middleware/auth.js'
 
 const toyTransactions = new Hono<{ Variables: AuthVariables }>()
 
-export const INVALID_TEXT_REPRESENTATION = '22P02'
+export { INVALID_TEXT_REPRESENTATION }
 export const RLS_VIOLATION = '42501'
 
 export function generateCode(): string {

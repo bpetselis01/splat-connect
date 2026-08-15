@@ -15,15 +15,9 @@ export function DifficultyBadge({ difficulty }: { difficulty: Difficulty }) {
 
 const styles = StyleSheet.create({
   badge: { paddingVertical: 5, paddingHorizontal: 12, borderRadius: theme.radii.pill },
-  // Uppercased in the style, not the string, so the badge reads as a small
-  // caps label while the text node stays title case — screen readers handle
-  // "Easy" better than "EASY", and the unit test asserts title case.
-  //
-  // Note for anyone writing Playwright assertions against this: getByText
-  // matches textContent, NOT the transformed text. It renders as "EASY" but
-  // only `getByText('Easy')` will match. Verified, not assumed.
-  //
-  // Tracking added because uppercase text at this size sets tight.
+  // Uppercased via style, not the string, so screen readers get "Easy" not
+  // "EASY" — and Playwright's getByText must match the title-case textContent
+  // ("Easy"), not the rendered "EASY".
   text: {
     fontSize: 12,
     fontFamily: theme.fonts.bold,

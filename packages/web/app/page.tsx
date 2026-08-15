@@ -1,26 +1,3 @@
-/**
- * Home/Landing Page
- * 
- * Entry point for the web app. Shows:
- * - Hero section with call-to-action
- * - Featured tutorials
- * - Link to the library
- *
- * Process:
- * 1. Server-side: Fetches approved tutorials from /api/public/tutorials
- * 2. Displays featured tutorials (first 3)
- * 3. No authentication required
- *
- * User flows from home:
- * - Logged-out users: Click "Browse Library" → /library
- * - Logged-out users: The account entry point lives in the nav → /login
- * - Logged-in users: Click featured tutorial → /tutorials/:id
- * 
- * Related files:
- * - components/tutorial-card.tsx: Tutorial preview cards
- * - app/library/page.tsx: Full library browse
- * - routes/public.ts: API endpoint fetching approved tutorials
- */
 import Link from 'next/link'
 import { TutorialCard } from '@/components/tutorial-card'
 import type { Tutorial } from '@splat-connect/types'
