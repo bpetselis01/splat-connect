@@ -17,7 +17,8 @@ export default async function ToyLibraryDetailPage({
   const toy = (await res.json()) as ToyWithOwner
 
   const caps = await getCapabilities()
-  const myToys = caps ? await apiClient.get<Toy[]>('/api/toys').catch(() => [] as Toy[]) : []
+  const rawMyToys = caps ? await apiClient.get<Toy[]>('/api/toys').catch(() => [] as Toy[]) : []
+  const myToys = rawMyToys.filter((t) => t.status === 'published' && !t.archived_at)
 
   return (
     <div className="panel pt-5">
