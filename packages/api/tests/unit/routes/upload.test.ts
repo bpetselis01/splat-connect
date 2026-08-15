@@ -59,6 +59,7 @@ function makeApp() {
 describe('POST /pdf', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockToysMaybeSingle.mockResolvedValue({ data: { tutorial_id: 'tid-1' }, error: null })
     mockUpload.mockResolvedValue({ data: { path: 'tid-1/tutorial.pdf' }, error: null })
     mockGetPublicUrl.mockReturnValue({ data: { publicUrl: 'https://example.com/tid-1/tutorial.pdf' } })
   })
@@ -98,11 +99,32 @@ describe('POST /pdf', () => {
     const body = await res.json() as any
     expect(body.url).toBe('https://example.com/tid-1/tutorial.pdf')
   })
+
+  it('returns 404 when the caller is not a contributor on the tutorial', async () => {
+    mockToysMaybeSingle.mockResolvedValue({ data: null, error: null })
+    const form = new FormData()
+    form.append('file', new Blob(['pdf'], { type: 'application/pdf' }), 'file.pdf')
+    form.append('tutorialId', 'tid-1')
+    const res = await makeApp().request('/pdf', { method: 'POST', body: form })
+    expect(res.status).toBe(404)
+    expect(mockUpload).not.toHaveBeenCalled()
+  })
+
+  it('returns 404 when tutorialId is malformed', async () => {
+    mockToysMaybeSingle.mockResolvedValue({ data: null, error: { code: '22P02' } })
+    const form = new FormData()
+    form.append('file', new Blob(['pdf'], { type: 'application/pdf' }), 'file.pdf')
+    form.append('tutorialId', 'not-a-uuid')
+    const res = await makeApp().request('/pdf', { method: 'POST', body: form })
+    expect(res.status).toBe(404)
+    expect(mockUpload).not.toHaveBeenCalled()
+  })
 })
 
 describe('POST /photo', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockToysMaybeSingle.mockResolvedValue({ data: { tutorial_id: 'tid-1' }, error: null })
     mockAdminList.mockResolvedValue({ data: [], error: null })
     mockAdminRemove.mockResolvedValue({ error: null })
     mockUpload.mockResolvedValue({ data: { path: 'tid-1/photo.png' }, error: null })
@@ -190,11 +212,32 @@ describe('POST /photo', () => {
       { upsert: false }
     )
   })
+
+  it('returns 404 when the caller is not a contributor on the tutorial', async () => {
+    mockToysMaybeSingle.mockResolvedValue({ data: null, error: null })
+    const form = new FormData()
+    form.append('file', new Blob(['img'], { type: 'image/png' }), 'photo.png')
+    form.append('tutorialId', 'tid-1')
+    const res = await makeApp().request('/photo', { method: 'POST', body: form })
+    expect(res.status).toBe(404)
+    expect(mockUpload).not.toHaveBeenCalled()
+  })
+
+  it('returns 404 when tutorialId is malformed', async () => {
+    mockToysMaybeSingle.mockResolvedValue({ data: null, error: { code: '22P02' } })
+    const form = new FormData()
+    form.append('file', new Blob(['img'], { type: 'image/png' }), 'photo.png')
+    form.append('tutorialId', 'not-a-uuid')
+    const res = await makeApp().request('/photo', { method: 'POST', body: form })
+    expect(res.status).toBe(404)
+    expect(mockUpload).not.toHaveBeenCalled()
+  })
 })
 
 describe('POST /stl', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockToysMaybeSingle.mockResolvedValue({ data: { tutorial_id: 'tid-1' }, error: null })
     mockUpload.mockResolvedValue({ data: { path: 'tid-1/bracket.stl' }, error: null })
     mockGetPublicUrl.mockReturnValue({ data: { publicUrl: 'https://example.com/tid-1/bracket.stl' } })
   })
@@ -246,6 +289,26 @@ describe('POST /stl', () => {
     const body = await res.json() as any
     expect(body.url).toBe('https://example.com/tid-1/bracket.stl')
     expect(body.filename).toBe('bracket.stl')
+  })
+
+  it('returns 404 when the caller is not a contributor on the tutorial', async () => {
+    mockToysMaybeSingle.mockResolvedValue({ data: null, error: null })
+    const form = new FormData()
+    form.append('file', new Blob(['stl'], { type: 'model/stl' }), 'bracket.stl')
+    form.append('tutorialId', 'tid-1')
+    const res = await makeApp().request('/stl', { method: 'POST', body: form })
+    expect(res.status).toBe(404)
+    expect(mockUpload).not.toHaveBeenCalled()
+  })
+
+  it('returns 404 when tutorialId is malformed', async () => {
+    mockToysMaybeSingle.mockResolvedValue({ data: null, error: { code: '22P02' } })
+    const form = new FormData()
+    form.append('file', new Blob(['stl'], { type: 'model/stl' }), 'bracket.stl')
+    form.append('tutorialId', 'not-a-uuid')
+    const res = await makeApp().request('/stl', { method: 'POST', body: form })
+    expect(res.status).toBe(404)
+    expect(mockUpload).not.toHaveBeenCalled()
   })
 })
 
