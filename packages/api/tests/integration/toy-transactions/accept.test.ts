@@ -64,13 +64,18 @@ describe('POST /api/toy-transactions/:id/accept', () => {
     expect(res.status).toBe(403)
   })
 
-  it('accepts, generates codes for both parties, and auto-rejects the rival request', async () => {
+  it('accepts, generates a code for the owner only, and auto-rejects the rival request', async () => {
     const res = await txReq(`/${tx1Id}/accept`, owner.token, { method: 'POST' })
     expect(res.status).toBe(200)
-    const tx = (await res.json()) as { status: string; owner_code: string; requester_code: string }
+    const tx = (await res.json()) as { status: string; owner_code: string; requester_code: string | null }
     expect(tx.status).toBe('accepted')
     expect(tx.owner_code).toMatch(/^\d{6}$/)
-    expect(tx.requester_code).toMatch(/^\d{6}$/)
+    expect(tx.requester_code).toBeNull()
+
+    const requesterView = await txReq(`/${tx1Id}`, requester1.token)
+    const requesterTx = (await requesterView.json()) as { owner_code: string | null; requester_code: string }
+    expect(requesterTx.requester_code).toMatch(/^\d{6}$/)
+    expect(requesterTx.owner_code).toBeNull()
 
     const rival = await txReq(`/${tx2Id}`, requester2.token)
     const rivalBody = (await rival.json()) as { status: string }

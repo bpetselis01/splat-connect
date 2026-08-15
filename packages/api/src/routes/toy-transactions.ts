@@ -13,6 +13,18 @@ export function generateCode(): string {
   return randomInt(0, 1_000_000).toString().padStart(6, '0')
 }
 
+// Each party proves the handoff happened by reciting the OTHER party's code
+// back to them in person, so a party's own response must never carry the
+// counterparty's code — otherwise the control is self-servable.
+function sanitizeCodes<T extends Record<string, any>>(row: T, userId: string): T {
+  const isOwner = row.owner_id === userId
+  return {
+    ...row,
+    owner_code: isOwner ? row.owner_code : null,
+    requester_code: isOwner ? null : row.requester_code,
+  }
+}
+
 type LoadResult =
   | { data: Record<string, any> }
   | { status: 404 }
@@ -55,7 +67,7 @@ toyTransactions.get('/', async (c) => {
   >
   return c.json(
     rows.map((r) => ({
-      ...r,
+      ...sanitizeCodes(r, userId),
       toy_name: r.toy?.name ?? '',
       offered_toy_name: r.offered?.name ?? null,
       other_party_name: r.owner_id === userId ? r.requester?.name ?? '' : r.owner?.name ?? '',
@@ -85,14 +97,15 @@ toyTransactions.get('/:id', async (c) => {
     .order('created_at', { ascending: true })
   if (msgError) return c.json({ error: msgError.message }, 500)
 
-  const row = data as unknown as Record<string, unknown> & {
+  const userId = c.get('userId')
+  const row = data as unknown as Record<string, any> & {
     toy: { name: string } | null
     offered: { name: string } | null
     owner: { name: string } | null
     requester: { name: string } | null
   }
   return c.json({
-    ...row,
+    ...sanitizeCodes(row, userId),
     toy_name: row.toy?.name ?? '',
     offered_toy_name: row.offered?.name ?? null,
     owner_name: row.owner?.name ?? '',
@@ -310,7 +323,7 @@ toyTransactions.post('/:id/accept', async (c) => {
     })
   }
 
-  return c.json(updated)
+  return c.json(sanitizeCodes(updated, userId))
 })
 
 toyTransactions.post('/:id/reject', async (c) => {
@@ -348,7 +361,7 @@ toyTransactions.post('/:id/reject', async (c) => {
     actor_name: ownerName?.name ?? 'The owner',
   })
 
-  return c.json(updated)
+  return c.json(sanitizeCodes(updated, userId))
 })
 
 toyTransactions.post('/:id/withdraw', async (c) => {
@@ -389,7 +402,7 @@ toyTransactions.post('/:id/withdraw', async (c) => {
     actor_name: actor?.name ?? 'The other party',
   })
 
-  return c.json(updated)
+  return c.json(sanitizeCodes(updated, userId))
 })
 
 toyTransactions.post('/:id/confirm', async (c) => {
@@ -432,7 +445,7 @@ toyTransactions.post('/:id/confirm', async (c) => {
       kind: 'system',
       body: 'Handoff confirmed by one party. Waiting on the other.',
     })
-    return c.json(updated)
+    return c.json(sanitizeCodes(updated, userId))
   }
 
   const { data: completedTx, error: completeError } = await admin
@@ -443,7 +456,7 @@ toyTransactions.post('/:id/confirm', async (c) => {
     .select()
     .maybeSingle()
   if (completeError) return c.json({ error: completeError.message }, 500)
-  if (!completedTx) return c.json({ ...updated, status: 'completed' })
+  if (!completedTx) return c.json(sanitizeCodes({ ...updated, status: 'completed' }, userId))
 
   const { error: archiveError } = await admin
     .from('toys')
@@ -466,7 +479,7 @@ toyTransactions.post('/:id/confirm', async (c) => {
     body: 'Handoff confirmed. This exchange is complete.',
   })
 
-  return c.json(completedTx)
+  return c.json(sanitizeCodes(completedTx, userId))
 })
 
 export default toyTransactions

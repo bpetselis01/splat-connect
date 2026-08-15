@@ -53,7 +53,7 @@ describe('POST /api/toy-transactions/:id/confirm', () => {
     const created = await txReq('/', requester.token, { method: 'POST', body: JSON.stringify({ toy_id: toyId, type: 'donation' }) })
     const txId = ((await created.json()) as { id: string }).id
     await txReq(`/${txId}/accept`, owner.token, { method: 'POST' })
-    const detail = await txReq(`/${txId}`, owner.token)
+    const detail = await txReq(`/${txId}`, requester.token)
     const tx = (await detail.json()) as { requester_code: string }
 
     const res = await txReq(`/${txId}/confirm`, owner.token, {
@@ -86,18 +86,20 @@ describe('POST /api/toy-transactions/:id/confirm', () => {
     })
     const txId = ((await created.json()) as { id: string }).id
     await txReq(`/${txId}/accept`, owner.token, { method: 'POST' })
-    const detail = await txReq(`/${txId}`, owner.token)
-    const tx = (await detail.json()) as { owner_code: string; requester_code: string }
+    const ownerDetail = await txReq(`/${txId}`, owner.token)
+    const ownerTx = (await ownerDetail.json()) as { owner_code: string }
+    const requesterDetail = await txReq(`/${txId}`, requester.token)
+    const requesterTx = (await requesterDetail.json()) as { requester_code: string }
 
     const ownerConfirm = await txReq(`/${txId}/confirm`, owner.token, {
       method: 'POST',
-      body: JSON.stringify({ code: tx.requester_code }),
+      body: JSON.stringify({ code: requesterTx.requester_code }),
     })
     expect(((await ownerConfirm.json()) as { status: string }).status).toBe('accepted')
 
     const requesterConfirm = await txReq(`/${txId}/confirm`, requester.token, {
       method: 'POST',
-      body: JSON.stringify({ code: tx.owner_code }),
+      body: JSON.stringify({ code: ownerTx.owner_code }),
     })
     expect(((await requesterConfirm.json()) as { status: string }).status).toBe('completed')
 
