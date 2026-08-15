@@ -48,7 +48,7 @@ tutorials.get('/:id', async (c) => {
     // reviewer/reviewed_for name who approved it and whose authority they used.
     // Same shape the public detail route uses, so there is one way to ask this.
     .select(
-      '*, parts(*), tools(*), stl_files(*), tutorial_contributors(*, profiles(*)), ' +
+      '*, parts(*), tools(*), stl_files(*), tutorial_contributors(*, profiles(id, name, email, role, created_at)), ' +
         'reviewer:reviewed_by(name), reviewed_for:reviewed_for_org_id(name)'
     )
     .eq('id', c.req.param('id'))
