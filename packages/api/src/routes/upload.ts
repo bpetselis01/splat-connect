@@ -6,13 +6,10 @@
 import { Hono } from 'hono'
 import { createUserClient } from '../supabase/user-client.js'
 import { createAdminClient } from '../supabase/client.js'
+import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import type { AuthVariables } from '../middleware/auth.js'
 
 const upload = new Hono<{ Variables: AuthVariables }>()
-
-// Postgres rejects a malformed uuid with 22P02 — mapped to 404 rather than
-// 500, same convention as toys.ts.
-const INVALID_TEXT_REPRESENTATION = '22P02'
 
 type AccessCheck = { ok: true } | { ok: false; status: 404 | 500; message?: string }
 
