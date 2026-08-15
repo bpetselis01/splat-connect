@@ -105,7 +105,10 @@ describe('PATCH /me', () => {
   beforeEach(() => vi.clearAllMocks())
 
   it('allows patching pickup address fields', async () => {
-    mockUserFrom.mockReturnValue({
+    // Admin client, not user client: pickup_* columns are revoked from
+    // `authenticated` at the grant level (028), so PATCH /me reads back its
+    // RETURNING data via the service-role client.
+    mockAdminFrom.mockReturnValue({
       update: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       select: vi.fn().mockReturnThis(),
@@ -122,7 +125,7 @@ describe('PATCH /me', () => {
       headers: { 'Content-Type': 'application/json' },
     })
     expect(res.status).toBe(200)
-    const mockTable = mockUserFrom.mock.results[0].value
+    const mockTable = mockAdminFrom.mock.results[0].value
     expect(mockTable.update).toHaveBeenCalledWith(
       expect.objectContaining({ pickup_line1: '1 Test St', pickup_suburb: 'Testville', pickup_state: 'VIC', pickup_postcode: '3000' })
     )
