@@ -51,8 +51,8 @@ tutorials.get('/:id', async (c) => {
     // contributor edit page, not just admin review — and merged back in below
     // only for admins.
     .select(
-      '*, parts(*), tools(*), stl_files(*), tutorial_contributors(*, profiles(id, name, role, created_at)), ' +
-        'reviewer:reviewed_by(name), reviewed_for:reviewed_for_org_id(name)'
+      '*, parts(*), tools(*), stl_files(*), tutorial_contributors(*, profiles(id, name, role, created_at)), \
+reviewer:reviewed_by(name), reviewed_for:reviewed_for_org_id(name)'
     )
     .eq('id', c.req.param('id'))
     .single()
