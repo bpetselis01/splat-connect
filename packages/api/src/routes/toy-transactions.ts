@@ -448,16 +448,10 @@ toyTransactions.post('/:id/confirm', async (c) => {
     return c.json(sanitizeCodes(updated, userId))
   }
 
-  const { data: completedTx, error: completeError } = await admin
-    .from('toy_transactions')
-    .update({ status: 'completed', updated_at: now })
-    .eq('id', tx.id)
-    .eq('status', 'accepted')
-    .select()
-    .maybeSingle()
-  if (completeError) return c.json({ error: completeError.message }, 500)
-  if (!completedTx) return c.json(sanitizeCodes({ ...updated, status: 'completed' }, userId))
-
+  // Archive before flipping status: if an archive update fails, the
+  // transaction is left retriable at 'accepted' instead of stuck
+  // 'completed' with an unarchived toy the top-of-handler guard can never
+  // let back in.
   const { error: archiveError } = await admin
     .from('toys')
     .update({ archived_at: now, updated_at: now })
@@ -471,6 +465,16 @@ toyTransactions.post('/:id/confirm', async (c) => {
       .eq('id', tx.offered_toy_id)
     if (offeredError) return c.json({ error: offeredError.message }, 500)
   }
+
+  const { data: completedTx, error: completeError } = await admin
+    .from('toy_transactions')
+    .update({ status: 'completed', updated_at: now })
+    .eq('id', tx.id)
+    .eq('status', 'accepted')
+    .select()
+    .maybeSingle()
+  if (completeError) return c.json({ error: completeError.message }, 500)
+  if (!completedTx) return c.json(sanitizeCodes({ ...updated, status: 'completed' }, userId))
 
   await admin.from('toy_transaction_messages').insert({
     transaction_id: tx.id,
