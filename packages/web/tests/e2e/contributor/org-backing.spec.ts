@@ -73,7 +73,9 @@ test('a project is backed by an organisation and published by its leader', async
     // 7. And it reaches the admin's spot-check, because the admin did not approve it.
     await signIn(page, admin.email, admin.password)
     await page.waitForURL('**/admin')
-    await page.goto('/admin/spot-check')
+    // Widened past the default ten: the sample is random and unordered, so with
+    // enough eligible tutorials around the seeded one is simply missed.
+    await page.goto('/admin/spot-check?limit=200')
     await expect(page.getByText(title)).toBeVisible()
   } finally {
     await deleteOrg(orgId)
@@ -164,7 +166,8 @@ test('an admin unpublishes a tutorial a leader approved', async ({ page }) => {
     //    someone else approved.
     await signIn(page, admin.email, admin.password)
     await page.waitForURL('**/admin')
-    await page.goto('/admin/spot-check')
+    // Widened for the same reason as above: the default ten are a random sample.
+    await page.goto('/admin/spot-check?limit=200')
 
     // 3. One click to the project, not to the public page. This link used to be a
     //    dead end: it went to /tutorials/[id], which offers an admin nothing.
