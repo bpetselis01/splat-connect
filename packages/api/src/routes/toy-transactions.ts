@@ -1,5 +1,6 @@
 import { Hono, type Context } from 'hono'
 import { randomInt } from 'node:crypto'
+import { needsAction } from '@splat-connect/types'
 import { createUserClient } from '../supabase/user-client.js'
 import { createAdminClient } from '../supabase/client.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
@@ -59,6 +60,29 @@ async function acceptedToyIds(
   return new Set((data ?? []).map((row: { toy_id: string }) => row.toy_id))
 }
 
+type MessagePreview = { body: string; sender_id: string; kind: string; created_at: string }
+
+// Newest message per transaction, for the list preview. PostgREST has no clean
+// "latest per group", so this reads the caller's messages in order and keeps the
+// last of each — RLS already limits the rows to threads they are part of.
+async function lastMessages(
+  supabase: ReturnType<typeof createUserClient>,
+  transactionIds: string[]
+): Promise<Map<string, MessagePreview>> {
+  const previews = new Map<string, MessagePreview>()
+  if (transactionIds.length === 0) return previews
+  const { data } = await supabase
+    .from('toy_transaction_messages')
+    .select('transaction_id, body, sender_id, kind, created_at')
+    .in('transaction_id', transactionIds)
+    .order('created_at', { ascending: true })
+  for (const row of data ?? []) {
+    const { transaction_id, ...preview } = row as MessagePreview & { transaction_id: string }
+    previews.set(transaction_id, preview)
+  }
+  return previews
+}
+
 type LoadResult =
   | { data: Record<string, any> }
   | { status: 404 }
@@ -92,6 +116,7 @@ toyTransactions.get('/', async (c) => {
   const userId = c.get('userId')
   const rows = (data ?? []) as unknown as Array<
     Record<string, unknown> & {
+      id: string
       toy_id: string
       status: string
       owner_id: string
@@ -105,6 +130,10 @@ toyTransactions.get('/', async (c) => {
     createAdminClient(),
     rows.filter((r) => r.status === 'requested').map((r) => r.toy_id)
   )
+  const previews = await lastMessages(
+    supabase,
+    rows.map((r) => r.id)
+  )
   return c.json(
     rows.map((r) => ({
       ...sanitizeCodes(r, userId),
@@ -112,8 +141,32 @@ toyTransactions.get('/', async (c) => {
       offered_toy_name: r.offered?.name ?? null,
       other_party_name: r.owner_id === userId ? r.requester?.name ?? '' : r.owner?.name ?? '',
       blocked_by_rival_accept: r.status === 'requested' && blockedToyIds.has(r.toy_id),
+      last_message: previews.get(r.id) ?? null,
     }))
   )
+})
+
+// Counts what the caller is blocking, for the Exchanges badge in the rail. The
+// same predicate marks the cards themselves, so the number always matches the
+// rows a user finds when they follow it.
+toyTransactions.get('/action-count', async (c) => {
+  const supabase = createUserClient(c.get('token'))
+  const { data, error } = await supabase
+    .from('toy_transactions')
+    .select('id, toy_id, status, type, owner_id, owner_confirmed_at, requester_confirmed_at')
+    .in('status', ['requested', 'accepted'])
+  if (error) return c.json({ error: error.message }, 500)
+
+  const rows = (data ?? []) as Array<Parameters<typeof needsAction>[0] & { toy_id: string; status: string }>
+  const blockedToyIds = await acceptedToyIds(
+    createAdminClient(),
+    rows.filter((r) => r.status === 'requested').map((r) => r.toy_id)
+  )
+  const userId = c.get('userId')
+  const count = rows.filter((r) =>
+    needsAction({ ...r, blocked_by_rival_accept: blockedToyIds.has(r.toy_id) }, userId)
+  ).length
+  return c.json({ count })
 })
 
 toyTransactions.get('/:id', async (c) => {
