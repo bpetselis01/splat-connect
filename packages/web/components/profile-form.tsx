@@ -69,7 +69,7 @@ export function ProfileForm({ profile }: { profile: Profile }) {
       </div>
       <div className="flex flex-col gap-3 border-t border-line pt-4">
         <h2 className="text-sm font-semibold text-ink">Default pickup address</h2>
-        <p className="text-xs text-muted">Sent automatically when you accept a donation or exchange request.</p>
+        <p className="text-xs text-muted">Offered as the default when you accept a donation or exchange request. You can send a different address instead.</p>
         <label htmlFor="pickup-line1" className="field-label">Address line</label>
         <input id="pickup-line1" className="field" value={pickupLine1} onChange={(e) => setPickupLine1(e.target.value)} />
         <label htmlFor="pickup-suburb" className="field-label">Suburb</label>
