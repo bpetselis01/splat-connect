@@ -66,7 +66,14 @@ export function buildNav(caps: Capabilities, unreadNotifications: number): NavGr
         // and e2e waitForURL depends on. Only the label changed.
         { href: '/dashboard', label: 'My tutorials', icon: 'file' },
         { href: '/dashboard/toys', label: 'My toys', icon: 'box' },
-        { href: '/dashboard/exchanges', label: 'Exchanges', icon: 'handshake' },
+        {
+          href: '/dashboard/exchanges',
+          label: 'Exchanges',
+          icon: 'handshake',
+          // Requests to answer and handoffs to confirm — the same rows the list
+          // marks "waiting on you". See needsAction in @splat-connect/types.
+          count: caps.exchangeActions || undefined,
+        },
         {
           href: '/dashboard/print-requests',
           label: 'My print requests',
