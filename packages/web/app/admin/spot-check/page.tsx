@@ -24,8 +24,17 @@ import type { Tutorial, TutorialOrg } from '@splat-connect/types'
 
 type Sampled = Tutorial & { tutorial_orgs?: TutorialOrg[] }
 
-export default async function SpotCheckPage() {
-  const sample = await apiClient.get<Sampled[]>('/api/admin/spot-check')
+export default async function SpotCheckPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ limit?: string }>
+}) {
+  // The endpoint has always taken a limit; passing it through lets an admin
+  // widen a sample that is too small to be worth refreshing, and lets a test ask
+  // for the whole pool instead of hoping a random ten include the row it seeded.
+  const { limit } = await searchParams
+  const query = Number(limit) > 0 ? `?limit=${Number(limit)}` : ''
+  const sample = await apiClient.get<Sampled[]>(`/api/admin/spot-check${query}`)
 
   return (
     <div className="mx-auto max-w-3xl">
