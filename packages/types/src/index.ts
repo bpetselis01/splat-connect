@@ -3,6 +3,10 @@
 // package is consumed as raw TypeScript, so that is safe.
 export * from './estimate-ability'
 
+// Shared by the API's badge count and the web exchanges list, for the same
+// reason as above: two copies would let the count disagree with the cards.
+export * from './toy-transaction-action'
+
 export type Role = 'admin' | 'contributor'
 
 export interface ChildProfile {
@@ -102,7 +106,14 @@ export interface ToyTransactionSummary extends ToyTransaction {
   offered_toy_name: string | null
   other_party_name: string
   blocked_by_rival_accept: boolean
+  /** Newest message in the thread, for the list preview. Null before any exists. */
+  last_message: ToyTransactionMessagePreview | null
 }
+
+export type ToyTransactionMessagePreview = Pick<
+  ToyTransactionMessage,
+  'body' | 'sender_id' | 'kind' | 'created_at'
+>
 
 export type ToyTransactionMessageKind = 'system' | 'user'
 
