@@ -15,7 +15,7 @@ function toy(overrides: Partial<Toy> = {}): Toy {
     status: 'draft',
     created_at: '',
     updated_at: '',
-    offer_type: null,
+    offer_type: 'donation',
     archived_at: null,
     ...overrides,
   }
@@ -39,6 +39,10 @@ describe('getMissingToyFields', () => {
       getMissingToyFields(toy({ switch_adapted: true, switch_photo_urls: ['https://x/switch-1.jpg'] }))
     ).toEqual([])
   })
+
+  it('flags a missing offer type', () => {
+    expect(getMissingToyFields(toy({ offer_type: null }))).toEqual(['Offer type'])
+  })
 })
 
 describe('computeToyStepStatuses', () => {
@@ -52,6 +56,10 @@ describe('computeToyStepStatuses', () => {
 
   it('marks photos done once every publish precondition is met', () => {
     expect(computeToyStepStatuses(toy()).photos).toBe('done')
+  })
+
+  it('does not flag photos for a missing offer type — that belongs to Review', () => {
+    expect(computeToyStepStatuses(toy({ offer_type: null })).photos).toBe('done')
   })
 
   it('review is neutral while draft and done once published', () => {
