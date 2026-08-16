@@ -33,14 +33,17 @@ export function formatAddress(address: PickupAddress): string {
     .join(', ')
 }
 
+/**
+ * Render this only while the dialog should be open. Mounting is what opens it,
+ * and unmounting is what resets it — so a half-typed address abandoned last
+ * time is never what the owner is about to send now.
+ */
 export function AcceptPickupDialog({
-  open,
   defaultAddress,
   busy,
   onCancel,
   onSubmit,
 }: {
-  open: boolean
   /** The owner's saved profile address, or null when they have not set one. */
   defaultAddress: PickupAddress | null
   busy: boolean
@@ -48,24 +51,12 @@ export function AcceptPickupDialog({
   onSubmit: (address: PickupAddress) => void
 }) {
   const ref = useRef<HTMLDialogElement>(null)
-  const [useDefault, setUseDefault] = useState(true)
+  const [useDefault, setUseDefault] = useState(defaultAddress !== null)
   const [draft, setDraft] = useState<PickupAddress>(EMPTY)
 
   useEffect(() => {
-    const dialog = ref.current
-    if (!dialog) return
-    if (open && !dialog.open) dialog.showModal()
-    if (!open && dialog.open) dialog.close()
-  }, [open])
-
-  // Reopening starts clean: a half-typed address abandoned last time is not
-  // what the owner means to send now.
-  useEffect(() => {
-    if (open) {
-      setUseDefault(defaultAddress !== null)
-      setDraft(EMPTY)
-    }
-  }, [open, defaultAddress])
+    ref.current?.showModal()
+  }, [])
 
   const chosen = useDefault && defaultAddress ? defaultAddress : draft
   const complete = FIELDS.every((f) => chosen[f.key].trim())
