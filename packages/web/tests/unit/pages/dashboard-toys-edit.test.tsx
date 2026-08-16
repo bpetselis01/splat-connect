@@ -59,4 +59,14 @@ describe('ToyEditPage', () => {
     vi.mocked(apiClient.get).mockResolvedValue([toy({ id: 't1' })])
     await expect(ToyEditPage({ params: Promise.resolve({ id: 'someone-elses' }) })).rejects.toThrow('NEXT_NOT_FOUND')
   })
+
+  it('renders a read-only summary for an archived toy, hiding edit and delete', async () => {
+    vi.mocked(apiClient.get).mockResolvedValue([
+      toy({ id: 't1', name: 'Fire truck', archived_at: '2026-01-01T00:00:00Z' }),
+    ])
+    render(await ToyEditPage({ params: Promise.resolve({ id: 't1' }) }))
+    expect(screen.getByRole('heading', { name: 'Fire truck' })).toBeInTheDocument()
+    expect(screen.queryByLabelText('Name')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Delete toy' })).not.toBeInTheDocument()
+  })
 })
