@@ -82,10 +82,26 @@ export interface ToyTransaction {
   updated_at: string
 }
 
+// The four pickup fields as a required unit. The owner supplies these when
+// accepting a request — either copied from their saved profile default or
+// typed fresh — so unlike the nullable columns on ToyTransaction and the
+// optional ones on Profile, every field here is present.
+export interface PickupAddress {
+  pickup_line1: string
+  pickup_suburb: string
+  pickup_state: string
+  pickup_postcode: string
+}
+
+// `blocked_by_rival_accept` is computed per read, not stored: true when this
+// request is still open but a sibling request on the same toy is already
+// accepted, so the owner cannot accept this one until that handoff completes
+// or is withdrawn.
 export interface ToyTransactionSummary extends ToyTransaction {
   toy_name: string
   offered_toy_name: string | null
   other_party_name: string
+  blocked_by_rival_accept: boolean
 }
 
 export type ToyTransactionMessageKind = 'system' | 'user'
@@ -104,6 +120,7 @@ export interface ToyTransactionDetail extends ToyTransaction {
   offered_toy_name: string | null
   owner_name: string
   requester_name: string
+  blocked_by_rival_accept: boolean
   messages: ToyTransactionMessage[]
 }
 
