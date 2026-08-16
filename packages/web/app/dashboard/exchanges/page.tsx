@@ -24,6 +24,9 @@ export default async function ExchangesPage() {
                 <p className="text-sm text-muted">
                   {tx.type === 'donation' ? 'Donation' : 'Exchange'} with {tx.other_party_name} — {tx.status}
                 </p>
+                {tx.blocked_by_rival_accept && (
+                  <p className="text-sm text-muted">Locked — another request accepted</p>
+                )}
               </Link>
             </li>
           ))}
