@@ -28,6 +28,7 @@ function caps(over: Partial<Capabilities> = {}): Capabilities {
     ledOrgs: [],
     canAuthor: true,
     unreadNotifications: 0,
+    exchangeActions: 0,
     ...over,
   }
 }
@@ -113,5 +114,18 @@ describe('buildNav', () => {
       .flatMap((g) => g.rows)
       .find((r) => r.href === '/notifications')
     expect(row?.count).toBe(3)
+  })
+
+  const exchangesRow = (over: Partial<Capabilities> = {}) =>
+    buildNav(caps(over), 0)
+      .flatMap((g) => g.rows)
+      .find((r) => r.href === '/dashboard/exchanges')
+
+  it('leaves the Exchanges row uncounted when nothing is waiting on the user', () => {
+    expect(exchangesRow()?.count).toBeUndefined()
+  })
+
+  it('badges the Exchanges row with the number of transactions awaiting action', () => {
+    expect(exchangesRow({ exchangeActions: 2 })?.count).toBe(2)
   })
 })
