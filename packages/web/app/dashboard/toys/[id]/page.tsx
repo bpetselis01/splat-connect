@@ -3,6 +3,7 @@ import { redirect, notFound } from 'next/navigation'
 import { apiClient } from '@/lib/api-client'
 import { getCapabilities } from '@/lib/capabilities'
 import { ToyEditor } from '@/components/toy-editor'
+import { ToySummary } from '@/components/toy-summary'
 import type { Toy } from '@splat-connect/types'
 
 export default async function ToyEditPage({ params }: { params: Promise<{ id: string }> }) {
@@ -23,7 +24,13 @@ export default async function ToyEditPage({ params }: { params: Promise<{ id: st
         ← My toys
       </Link>
       <h1 className="mb-6 text-2xl font-bold text-ink">{toy.name}</h1>
-      <ToyEditor toy={toy} />
+      {toy.archived_at ? (
+        <div className="panel p-5">
+          <ToySummary toy={toy} />
+        </div>
+      ) : (
+        <ToyEditor toy={toy} />
+      )}
     </div>
   )
 }
