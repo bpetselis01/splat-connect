@@ -38,7 +38,16 @@ test.describe('Toy donation and exchange', () => {
       await signIn(page, owner.email, owner.password)
       await page.waitForURL('**/dashboard')
       await page.goto(txUrl)
+      // Accept opens the pickup dialog rather than accepting outright. This
+      // owner has no saved address, so the fields show directly with no
+      // "use my saved address" choice to make first.
       await page.getByRole('button', { name: 'Accept' }).click()
+      await page.getByLabel('Street address').fill('1 Test St')
+      await page.getByLabel('Suburb').fill('Testville')
+      await page.getByLabel('State').fill('VIC')
+      await page.getByLabel('Postcode').fill('3000')
+      await page.getByRole('button', { name: 'Accept request' }).click()
+      await expect(page.getByText('1 Test St, Testville, VIC, 3000')).toBeVisible()
 
       // The requester's code only appears once they reload the accepted thread.
       await signIn(page, requester.email, requester.password)
