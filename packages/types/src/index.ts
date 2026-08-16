@@ -3,10 +3,6 @@
 // package is consumed as raw TypeScript, so that is safe.
 export * from './estimate-ability'
 
-// Shared by the API's badge count and the web exchanges list, for the same
-// reason as above: two copies would let the count disagree with the cards.
-export * from './toy-transaction-action'
-
 export type Role = 'admin' | 'contributor'
 
 export interface ChildProfile {
@@ -114,6 +110,53 @@ export type ToyTransactionMessagePreview = Pick<
   ToyTransactionMessage,
   'body' | 'sender_id' | 'kind' | 'created_at'
 >
+
+/**
+ * Whether a transaction is waiting on one particular person. Only two states
+ * qualify — an incoming request they have not answered, and an accepted handoff
+ * still missing their confirmation. Everything else is finished or waiting on
+ * the other party.
+ *
+ * Shared because the API counts these for the Exchanges badge while the web list
+ * marks the same cards "waiting on you": two copies would let the number disagree
+ * with the rows it claims to count.
+ *
+ * Declared here rather than in its own module for the same reason as
+ * AGREEMENT_VERSIONS: the API runs this package as raw TypeScript under Node's
+ * ESM loader, which does not surface `export * from './x'` re-exports to it. A
+ * value the API imports has to live in this file.
+ *
+ * `blocked_by_rival_accept` requests are excluded: the owner cannot accept one
+ * while another handoff on the same toy is in flight, and that handoff is itself
+ * counted. Including both would show one real obligation as two.
+ */
+export function needsAction(
+  tx: Pick<
+    ToyTransaction,
+    'status' | 'type' | 'owner_id' | 'owner_confirmed_at' | 'requester_confirmed_at'
+  > & { blocked_by_rival_accept?: boolean },
+  viewerId: string
+): boolean {
+  const isOwner = tx.owner_id === viewerId
+
+  if (tx.status === 'requested') return isOwner && !tx.blocked_by_rival_accept
+
+  if (tx.status === 'accepted') {
+    // Donations are confirmed by the owner alone; exchanges need both parties.
+    const confirms = tx.type === 'exchange' || isOwner
+    const alreadyConfirmed = isOwner ? tx.owner_confirmed_at : tx.requester_confirmed_at
+    return confirms && alreadyConfirmed === null
+  }
+
+  return false
+}
+
+/** The copy the Exchanges badge is counting, shown on the card itself. */
+export function actionLabel(tx: Pick<ToyTransaction, 'status'>): string {
+  return tx.status === 'requested'
+    ? 'Waiting on you — accept or decline'
+    : 'Waiting on you — confirm the handoff'
+}
 
 export type ToyTransactionMessageKind = 'system' | 'user'
 
