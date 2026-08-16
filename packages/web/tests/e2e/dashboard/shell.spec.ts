@@ -134,32 +134,48 @@ test('a contributor adds two children, edits one, and deletes one', async ({ pag
     await page.getByRole('link', { name: 'Child profiles', exact: true }).click()
     await expect(page).toHaveURL('/dashboard/child')
 
+    // Name, age, diagnosis and MACS live on the Ability pill, not the one the
+    // stepper opens on — ChildEditor splits the profile across four steps and
+    // starts at Survey. Saving stays on the editor and swaps /new for the new
+    // id, so the list is reached by the back link rather than a redirect.
+
     // First child, named.
     await page.getByRole('link', { name: 'Add child' }).click()
     await expect(page).toHaveURL('/dashboard/child/new')
+    await page.getByRole('tab', { name: 'Ability' }).click()
     await page.locator('#name').fill('Emma')
     await page.locator('#age').fill('7')
     await page.locator('#primary_diagnosis').fill('Cerebral palsy')
     await page.locator('#macs_level').selectOption('II')
     await page.getByRole('button', { name: 'Save' }).click()
+    await expect(page.getByText('Saved')).toBeVisible()
+    await expect(page).toHaveURL(/\/dashboard\/child\/[0-9a-f-]{36}/)
+    await page.getByRole('link', { name: '← Child profiles' }).click()
     await expect(page).toHaveURL('/dashboard/child')
     await expect(page.getByRole('link', { name: /Emma/ })).toBeVisible()
 
     // Second child, left unnamed — the list must still tell them apart.
     await page.getByRole('link', { name: 'Add child' }).click()
+    await page.getByRole('tab', { name: 'Ability' }).click()
     await page.locator('#age').fill('4')
     await page.getByRole('button', { name: 'Save' }).click()
+    await expect(page.getByText('Saved')).toBeVisible()
+    await page.getByRole('link', { name: '← Child profiles' }).click()
     await expect(page).toHaveURL('/dashboard/child')
     await expect(page.getByRole('link', { name: /Child 2/ })).toBeVisible()
 
-    // Edit the first child and confirm it persists across a reload.
+    // Edit the first child and confirm it persists across a reload. The pill is
+    // selected again after reloading rather than trusting ?step= to survive it —
+    // what matters here is the saved value, not where the stepper reopens.
     await page.getByRole('link', { name: /Emma/ }).click()
+    await page.getByRole('tab', { name: 'Ability' }).click()
     await expect(page.locator('#age')).toHaveValue('7')
     await expect(page.locator('#macs_level')).toHaveValue('II')
     await page.locator('#age').fill('8')
     await page.getByRole('button', { name: 'Save' }).click()
     await expect(page.getByText('Saved')).toBeVisible()
     await page.reload()
+    await page.getByRole('tab', { name: 'Ability' }).click()
     await expect(page.locator('#age')).toHaveValue('8')
 
     // Delete is opened by a button named after the child, then gated on typing
