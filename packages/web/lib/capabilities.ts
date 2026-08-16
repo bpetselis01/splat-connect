@@ -33,6 +33,8 @@ export type Capabilities = {
   ledOrgs: Organization[]
   canAuthor: boolean
   unreadNotifications: number
+  /** Transactions waiting on this user, for the Exchanges badge in the rail. */
+  exchangeActions: number
 }
 
 export const getCapabilities = cache(async (): Promise<Capabilities | null> => {
@@ -44,16 +46,23 @@ export const getCapabilities = cache(async (): Promise<Capabilities | null> => {
     return null
   }
 
-  // Degrades to "capability absent" on failure so one flaky fetch hides one
-  // nav group rather than blanking the dashboard.
-  const ledOrgs = await apiClient
-    .get<Organization[]>('/api/organizations/mine')
-    .catch(() => [] as Organization[])
-
-  const unreadNotifications = await apiClient
-    .get<{ count: number }>('/api/notifications/me/unread-count')
-    .then((r) => r.count)
-    .catch(() => 0)
+  // In parallel, since none of the three depends on the others and this runs in
+  // the root layout on every cold page load — sequential awaits made each new
+  // capability cost another round trip on every signed-in page.
+  //
+  // Each degrades to "capability absent" on failure so one flaky fetch hides one
+  // nav group or badge rather than blanking the dashboard.
+  const [ledOrgs, unreadNotifications, exchangeActions] = await Promise.all([
+    apiClient.get<Organization[]>('/api/organizations/mine').catch(() => [] as Organization[]),
+    apiClient
+      .get<{ count: number }>('/api/notifications/me/unread-count')
+      .then((r) => r.count)
+      .catch(() => 0),
+    apiClient
+      .get<{ count: number }>('/api/toy-transactions/action-count')
+      .then((r) => r.count)
+      .catch(() => 0),
+  ])
 
   return {
     profile,
@@ -61,5 +70,6 @@ export const getCapabilities = cache(async (): Promise<Capabilities | null> => {
     ledOrgs,
     canAuthor: true,
     unreadNotifications,
+    exchangeActions,
   }
 })
