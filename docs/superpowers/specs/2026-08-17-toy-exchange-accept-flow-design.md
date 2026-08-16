@@ -116,7 +116,18 @@ exists for the same `toy_id`.
 ### Types (`packages/types/src/index.ts`)
 
 Add `blocked_by_rival_accept: boolean` to `ToyTransactionSummary` and
-`ToyTransactionDetail`.
+`ToyTransactionDetail`, and a `PickupAddress` interface for the accept
+payload — the four fields as a required unit, unlike the nullable columns on
+`ToyTransaction` and the optional ones on `Profile`:
+
+```ts
+export interface PickupAddress {
+  pickup_line1: string
+  pickup_suburb: string
+  pickup_state: string
+  pickup_postcode: string
+}
+```
 
 ### Web — `ToyTransactionThread`
 
