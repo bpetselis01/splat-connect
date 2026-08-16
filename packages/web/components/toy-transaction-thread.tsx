@@ -112,16 +112,17 @@ export function ToyTransactionThread({
             </button>
           </div>
           {tx.blocked_by_rival_accept && <p className="text-sm text-muted">{BLOCKED_ACCEPT_HINT}</p>}
-          <AcceptPickupDialog
-            open={acceptOpen}
-            defaultAddress={viewerDefaultAddress}
-            busy={busy}
-            onCancel={() => setAcceptOpen(false)}
-            onSubmit={async (address) => {
-              setAcceptOpen(false)
-              await run(() => onAccept(address))
-            }}
-          />
+          {acceptOpen && (
+            <AcceptPickupDialog
+              defaultAddress={viewerDefaultAddress}
+              busy={busy}
+              onCancel={() => setAcceptOpen(false)}
+              onSubmit={async (address) => {
+                setAcceptOpen(false)
+                await run(() => onAccept(address))
+              }}
+            />
+          )}
         </div>
       )}
 
