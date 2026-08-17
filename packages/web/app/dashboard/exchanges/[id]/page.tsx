@@ -3,7 +3,15 @@ import { revalidatePath } from 'next/cache'
 import { getCapabilities } from '@/lib/capabilities'
 import { apiClient } from '@/lib/api-client'
 import { ToyTransactionThread } from '@/components/toy-transaction-thread'
-import type { ToyTransactionDetail } from '@splat-connect/types'
+import type { PickupAddress, Profile, ToyTransactionDetail } from '@splat-connect/types'
+
+// A partly-filled profile address is no use as a default — the accept dialog
+// would offer "use my saved address" and then refuse to submit it.
+function defaultAddress(profile: Profile): PickupAddress | null {
+  const { pickup_line1, pickup_suburb, pickup_state, pickup_postcode } = profile
+  if (!pickup_line1 || !pickup_suburb || !pickup_state || !pickup_postcode) return null
+  return { pickup_line1, pickup_suburb, pickup_state, pickup_postcode }
+}
 
 export default async function ExchangeDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -25,9 +33,9 @@ export default async function ExchangeDetailPage({ params }: { params: Promise<{
     await apiClient.post(`/api/toy-transactions/${id}/messages`, { body })
     revalidatePath(`/dashboard/exchanges/${id}`)
   }
-  async function accept() {
+  async function accept(address: PickupAddress) {
     'use server'
-    await apiClient.post(`/api/toy-transactions/${id}/accept`, {})
+    await apiClient.post(`/api/toy-transactions/${id}/accept`, address)
     revalidatePath(`/dashboard/exchanges/${id}`)
   }
   async function reject() {
@@ -52,6 +60,7 @@ export default async function ExchangeDetailPage({ params }: { params: Promise<{
       <ToyTransactionThread
         transaction={tx}
         viewerId={caps.profile.id}
+        viewerDefaultAddress={defaultAddress(caps.profile)}
         onSendMessage={sendMessage}
         onAccept={accept}
         onReject={reject}

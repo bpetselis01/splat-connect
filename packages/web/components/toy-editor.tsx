@@ -11,6 +11,12 @@ import { ToastProvider } from '@/components/toast'
 import { browserApiClient } from '@/lib/browser-api-client'
 import { computeToyStepStatuses, getMissingToyFields } from '@/lib/toy-steps'
 
+const OFFER_TYPE_COPY: Record<OfferType, string> = {
+  donation: 'The recipient keeps this toy for good — no return expected.',
+  exchange: "You'll swap this toy for another one with the recipient.",
+  both: "Open to either a donation or a swap — you'll agree with the recipient on which.",
+}
+
 function ToyReviewPanel({ toy, onPublished, onSaveOfferType }: { toy: Toy; onPublished: (t: Toy) => void; onSaveOfferType: (offerType: OfferType) => Promise<void> }) {
   const [publishing, setPublishing] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -53,6 +59,11 @@ function ToyReviewPanel({ toy, onPublished, onSaveOfferType }: { toy: Toy; onPub
                 </button>
               ))}
             </div>
+            <p className="text-xs leading-relaxed text-muted">
+              {toy.offer_type
+                ? OFFER_TYPE_COPY[toy.offer_type]
+                : 'Choose how this toy is offered — you can change it later.'}
+            </p>
           </div>
 
           {error && (

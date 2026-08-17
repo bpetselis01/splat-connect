@@ -57,8 +57,17 @@ export function EditItemsSection({ noun, withQuantity, initialItems, onSave }: E
   // (react.dev/learn/you-might-not-need-an-effect). The comparison is by
   // identity, which is safe because initialItems only gets a new reference when
   // the server component re-renders, not on local state changes.
+  //
+  // Held back while a row is open or a save is in flight, though. handleAdd
+  // seeds the new row with a `temp-` id and the revalidatePath that follows
+  // swaps the whole list for the server's, real ids and all. Landing that on
+  // top of an open edit leaves editingId naming a row that no longer exists:
+  // the edit form unmounts mid-keystroke, losing what was typed, and the Save
+  // and Delete buttons being reached for detach from the DOM. Deferring costs
+  // a moment of staleness in a list only this user can edit, and the sync runs
+  // on the next render after closeEdit() puts editingId back to null.
   const [syncedFrom, setSyncedFrom] = useState(initialItems)
-  if (initialItems !== syncedFrom) {
+  if (initialItems !== syncedFrom && editingId === null && !saving) {
     setSyncedFrom(initialItems)
     setItems(initialItems)
   }

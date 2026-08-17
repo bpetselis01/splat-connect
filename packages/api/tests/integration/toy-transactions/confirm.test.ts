@@ -34,25 +34,35 @@ async function getToy(token: string, toyId: string) {
   return toys.find((t) => t.id === toyId)
 }
 
+const ADDRESS = {
+  pickup_line1: '1 Test St',
+  pickup_suburb: 'Testville',
+  pickup_state: 'VIC',
+  pickup_postcode: '3000',
+}
+
 describe('POST /api/toy-transactions/:id/confirm', () => {
   let owner: TestUser
   let requester: TestUser
+  let rival: TestUser
 
   afterAll(async () => {
     await deleteTestUser(owner.id)
     await deleteTestUser(requester.id)
+    await deleteTestUser(rival.id)
   })
 
   beforeAll(async () => {
     owner = await createTestUser('contributor')
     requester = await createTestUser('contributor')
+    rival = await createTestUser('contributor')
   })
 
   it('completes a donation on the owner confirming the requester code alone', async () => {
     const toyId = await createPublishedToy(owner.token, 'Scooter', 'donation')
     const created = await txReq('/', requester.token, { method: 'POST', body: JSON.stringify({ toy_id: toyId, type: 'donation' }) })
     const txId = ((await created.json()) as { id: string }).id
-    await txReq(`/${txId}/accept`, owner.token, { method: 'POST' })
+    await txReq(`/${txId}/accept`, owner.token, { method: 'POST', body: JSON.stringify(ADDRESS) })
     const detail = await txReq(`/${txId}`, requester.token)
     const tx = (await detail.json()) as { requester_code: string }
 
@@ -71,7 +81,7 @@ describe('POST /api/toy-transactions/:id/confirm', () => {
     const toyId = await createPublishedToy(owner.token, 'Wagon', 'donation')
     const created = await txReq('/', requester.token, { method: 'POST', body: JSON.stringify({ toy_id: toyId, type: 'donation' }) })
     const txId = ((await created.json()) as { id: string }).id
-    await txReq(`/${txId}/accept`, owner.token, { method: 'POST' })
+    await txReq(`/${txId}/accept`, owner.token, { method: 'POST', body: JSON.stringify(ADDRESS) })
 
     const res = await txReq(`/${txId}/confirm`, owner.token, { method: 'POST', body: JSON.stringify({ code: '000000' }) })
     expect(res.status).toBe(400)
@@ -85,7 +95,7 @@ describe('POST /api/toy-transactions/:id/confirm', () => {
       body: JSON.stringify({ toy_id: ownerToyId, type: 'exchange', offered_toy_id: requesterToyId }),
     })
     const txId = ((await created.json()) as { id: string }).id
-    await txReq(`/${txId}/accept`, owner.token, { method: 'POST' })
+    await txReq(`/${txId}/accept`, owner.token, { method: 'POST', body: JSON.stringify(ADDRESS) })
     const ownerDetail = await txReq(`/${txId}`, owner.token)
     const ownerTx = (await ownerDetail.json()) as { owner_code: string }
     const requesterDetail = await txReq(`/${txId}`, requester.token)
@@ -109,11 +119,31 @@ describe('POST /api/toy-transactions/:id/confirm', () => {
     expect(requesterToyAfter?.archived_at ?? null).not.toBeNull()
   })
 
+  it('rejects the rival request only once the handoff completes', async () => {
+    const toyId = await createPublishedToy(owner.token, 'Rocking horse', 'donation')
+    const wanted = JSON.stringify({ toy_id: toyId, type: 'donation' })
+    const created = await txReq('/', requester.token, { method: 'POST', body: wanted })
+    const txId = ((await created.json()) as { id: string }).id
+    const rivalCreated = await txReq('/', rival.token, { method: 'POST', body: wanted })
+    const rivalTxId = ((await rivalCreated.json()) as { id: string }).id
+
+    await txReq(`/${txId}/accept`, owner.token, { method: 'POST', body: JSON.stringify(ADDRESS) })
+    const midHandoff = await txReq(`/${rivalTxId}`, rival.token)
+    expect(((await midHandoff.json()) as { status: string }).status).toBe('requested')
+
+    const detail = await txReq(`/${txId}`, requester.token)
+    const tx = (await detail.json()) as { requester_code: string }
+    await txReq(`/${txId}/confirm`, owner.token, { method: 'POST', body: JSON.stringify({ code: tx.requester_code }) })
+
+    const after = await txReq(`/${rivalTxId}`, rival.token)
+    expect(((await after.json()) as { status: string }).status).toBe('rejected')
+  })
+
   it('403s the requester trying to confirm a donation (owner-only)', async () => {
     const toyId = await createPublishedToy(owner.token, 'Tricycle', 'donation')
     const created = await txReq('/', requester.token, { method: 'POST', body: JSON.stringify({ toy_id: toyId, type: 'donation' }) })
     const txId = ((await created.json()) as { id: string }).id
-    await txReq(`/${txId}/accept`, owner.token, { method: 'POST' })
+    await txReq(`/${txId}/accept`, owner.token, { method: 'POST', body: JSON.stringify(ADDRESS) })
 
     const res = await txReq(`/${txId}/confirm`, requester.token, { method: 'POST', body: JSON.stringify({ code: '123456' }) })
     expect(res.status).toBe(403)

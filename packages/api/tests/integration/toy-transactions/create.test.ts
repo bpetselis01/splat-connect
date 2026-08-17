@@ -87,7 +87,15 @@ describe('POST /api/toy-transactions', () => {
         body: JSON.stringify({ toy_id: handoffToyId, type: 'donation' }),
       })
       const txId = ((await first.json()) as { id: string }).id
-      await txReq(`/${txId}/accept`, owner.token, { method: 'POST' })
+      await txReq(`/${txId}/accept`, owner.token, {
+        method: 'POST',
+        body: JSON.stringify({
+          pickup_line1: '1 Test St',
+          pickup_suburb: 'Testville',
+          pickup_state: 'VIC',
+          pickup_postcode: '3000',
+        }),
+      })
 
       const res = await txReq('/', rival.token, {
         method: 'POST',

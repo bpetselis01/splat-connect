@@ -82,10 +82,80 @@ export interface ToyTransaction {
   updated_at: string
 }
 
+// The four pickup fields as a required unit. The owner supplies these when
+// accepting a request — either copied from their saved profile default or
+// typed fresh — so unlike the nullable columns on ToyTransaction and the
+// optional ones on Profile, every field here is present.
+export interface PickupAddress {
+  pickup_line1: string
+  pickup_suburb: string
+  pickup_state: string
+  pickup_postcode: string
+}
+
+// `blocked_by_rival_accept` is computed per read, not stored: true when this
+// request is still open but a sibling request on the same toy is already
+// accepted, so the owner cannot accept this one until that handoff completes
+// or is withdrawn.
 export interface ToyTransactionSummary extends ToyTransaction {
   toy_name: string
   offered_toy_name: string | null
   other_party_name: string
+  blocked_by_rival_accept: boolean
+  /** Newest message in the thread, for the list preview. Null before any exists. */
+  last_message: ToyTransactionMessagePreview | null
+}
+
+export type ToyTransactionMessagePreview = Pick<
+  ToyTransactionMessage,
+  'body' | 'sender_id' | 'kind' | 'created_at'
+>
+
+/**
+ * Whether a transaction is waiting on one particular person. Only two states
+ * qualify — an incoming request they have not answered, and an accepted handoff
+ * still missing their confirmation. Everything else is finished or waiting on
+ * the other party.
+ *
+ * Shared because the API counts these for the Exchanges badge while the web list
+ * marks the same cards "waiting on you": two copies would let the number disagree
+ * with the rows it claims to count.
+ *
+ * Declared here rather than in its own module for the same reason as
+ * AGREEMENT_VERSIONS: the API runs this package as raw TypeScript under Node's
+ * ESM loader, which does not surface `export * from './x'` re-exports to it. A
+ * value the API imports has to live in this file.
+ *
+ * `blocked_by_rival_accept` requests are excluded: the owner cannot accept one
+ * while another handoff on the same toy is in flight, and that handoff is itself
+ * counted. Including both would show one real obligation as two.
+ */
+export function needsAction(
+  tx: Pick<
+    ToyTransaction,
+    'status' | 'type' | 'owner_id' | 'owner_confirmed_at' | 'requester_confirmed_at'
+  > & { blocked_by_rival_accept?: boolean },
+  viewerId: string
+): boolean {
+  const isOwner = tx.owner_id === viewerId
+
+  if (tx.status === 'requested') return isOwner && !tx.blocked_by_rival_accept
+
+  if (tx.status === 'accepted') {
+    // Donations are confirmed by the owner alone; exchanges need both parties.
+    const confirms = tx.type === 'exchange' || isOwner
+    const alreadyConfirmed = isOwner ? tx.owner_confirmed_at : tx.requester_confirmed_at
+    return confirms && alreadyConfirmed === null
+  }
+
+  return false
+}
+
+/** The copy the Exchanges badge is counting, shown on the card itself. */
+export function actionLabel(tx: Pick<ToyTransaction, 'status'>): string {
+  return tx.status === 'requested'
+    ? 'Waiting on you — accept or decline'
+    : 'Waiting on you — confirm the handoff'
 }
 
 export type ToyTransactionMessageKind = 'system' | 'user'
@@ -104,6 +174,7 @@ export interface ToyTransactionDetail extends ToyTransaction {
   offered_toy_name: string | null
   owner_name: string
   requester_name: string
+  blocked_by_rival_accept: boolean
   messages: ToyTransactionMessage[]
 }
 

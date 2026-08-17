@@ -28,7 +28,7 @@ async function createPublishedToy(token: string, name: string) {
   const toy = (await create.json()) as { id: string }
   await req(`/${toy.id}`, token, {
     method: 'PATCH',
-    body: JSON.stringify({ cover_photo_url: 'https://example.com/cover.jpg' }),
+    body: JSON.stringify({ cover_photo_url: 'https://example.com/cover.jpg', offer_type: 'donation' }),
   })
   await req(`/${toy.id}/publish`, token, { method: 'PATCH' })
   return toy.id
@@ -116,7 +116,15 @@ describe('GET /api/public/toys', () => {
         body: JSON.stringify({ toy_id: handoffId, type: 'donation' }),
       })
       const tx = (await create.json()) as { id: string }
-      const accept = await txReq(`/${tx.id}/accept`, owner.token, { method: 'POST' })
+      const accept = await txReq(`/${tx.id}/accept`, owner.token, {
+        method: 'POST',
+        body: JSON.stringify({
+          pickup_line1: '1 Test St',
+          pickup_suburb: 'Testville',
+          pickup_state: 'VIC',
+          pickup_postcode: '3000',
+        }),
+      })
       expect(accept.status).toBe(200)
 
       const list = await app.request('/api/public/toys')

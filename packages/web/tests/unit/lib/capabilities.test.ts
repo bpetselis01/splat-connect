@@ -42,18 +42,52 @@ describe('getCapabilities', () => {
   //        getUser() inside the API on every cold load. /api/child-profile was fetched to
   //        derive an isParent nobody branched on; app/dashboard/child fetches the row
   //        itself because it needs the body. Nothing may be added back without a reader.
-  it('fetches only the profile, the led organisations, and the unread count', async () => {
+  //        action-count has one: the Exchanges badge in lib/nav-model.ts. The three
+  //        secondary fetches run in parallel, so the cost is one round of latency, not four.
+  it('fetches only the profile, the led organisations, and the two counts', async () => {
     route({
       '/api/contributors/me': PROFILE,
       '/api/organizations/mine': [],
       '/api/notifications/me/unread-count': { count: 0 },
+      '/api/toy-transactions/action-count': { count: 0 },
     })
     await subject()
     expect(get.mock.calls.map(([path]) => path).sort()).toEqual([
       '/api/contributors/me',
       '/api/notifications/me/unread-count',
       '/api/organizations/mine',
+      '/api/toy-transactions/action-count',
     ])
+  })
+
+  // Tests: the exchange action count reaches the caller, for the rail badge
+  // How:   the endpoint resolves to 3; checks exchangeActions is 3
+  // Chain: lib/nav-model.ts puts this on the Exchanges row, and the same needsAction
+  //        predicate marks the matching cards — the number must agree with them
+  it('reports the exchange action count', async () => {
+    route({
+      '/api/contributors/me': PROFILE,
+      '/api/organizations/mine': [],
+      '/api/notifications/me/unread-count': { count: 0 },
+      '/api/toy-transactions/action-count': { count: 3 },
+    })
+    expect((await subject())?.exchangeActions).toBe(3)
+  })
+
+  // Tests: a failed action-count degrades to zero rather than failing the whole call
+  // How:   the endpoint rejects; checks exchangeActions is 0 and the rest survives
+  // Chain: same rule as led-orgs above — one flaky sub-fetch hides one badge, never
+  //        blanks the dashboard
+  it('degrades a failed action-count fetch to zero', async () => {
+    route({
+      '/api/contributors/me': PROFILE,
+      '/api/organizations/mine': [],
+      '/api/notifications/me/unread-count': { count: 0 },
+      '/api/toy-transactions/action-count': new Error('boom'),
+    })
+    const caps = await subject()
+    expect(caps?.exchangeActions).toBe(0)
+    expect(caps?.profile.id).toBe('u1')
   })
 
   // Tests: ledOrgs surfaces the organisations returned by /api/organizations/mine
@@ -65,6 +99,7 @@ describe('getCapabilities', () => {
       '/api/contributors/me': PROFILE,
       '/api/organizations/mine': [{ id: 'o1', name: 'Splat', status: 'active' }],
       '/api/notifications/me/unread-count': { count: 0 },
+      '/api/toy-transactions/action-count': { count: 0 },
     })
     expect((await subject())?.ledOrgs).toHaveLength(1)
   })
@@ -78,6 +113,7 @@ describe('getCapabilities', () => {
       '/api/contributors/me': { ...PROFILE, role: 'admin' },
       '/api/organizations/mine': [],
       '/api/notifications/me/unread-count': { count: 0 },
+      '/api/toy-transactions/action-count': { count: 0 },
     })
     expect((await subject())?.isAdmin).toBe(true)
   })
@@ -91,6 +127,7 @@ describe('getCapabilities', () => {
       '/api/contributors/me': PROFILE,
       '/api/organizations/mine': new Error('boom'),
       '/api/notifications/me/unread-count': { count: 0 },
+      '/api/toy-transactions/action-count': { count: 0 },
     })
     const caps = await subject()
     expect(caps?.ledOrgs).toEqual([])

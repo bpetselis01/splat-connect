@@ -78,4 +78,21 @@ describe('POST /api/toy-transactions/:id/messages', () => {
     })
     expect(res.status).toBe(400)
   })
+
+  it('previews the newest message on the list, whoever sent it', async () => {
+    await txReq(`/${txId}/messages`, owner.token, {
+      method: 'POST',
+      body: JSON.stringify({ body: 'Saturday suits me.' }),
+    })
+
+    const list = await txReq('/', requester.token)
+    const rows = (await list.json()) as Array<{
+      id: string
+      last_message: { body: string; sender_id: string; kind: string } | null
+    }>
+    const row = rows.find((r) => r.id === txId)
+    expect(row?.last_message?.body).toBe('Saturday suits me.')
+    expect(row?.last_message?.sender_id).toBe(owner.id)
+    expect(row?.last_message?.kind).toBe('user')
+  })
 })

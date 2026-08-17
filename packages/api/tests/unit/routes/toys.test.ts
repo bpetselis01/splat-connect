@@ -95,8 +95,10 @@ describe('PATCH /:id', () => {
       update: () => ({
         eq: () => ({
           eq: () => ({
-            select: () => ({
-              maybeSingle: () => Promise.resolve({ data: null, error: { message: 'boom' } }),
+            is: () => ({
+              select: () => ({
+                maybeSingle: () => Promise.resolve({ data: null, error: { message: 'boom' } }),
+              }),
             }),
           }),
         }),
@@ -115,8 +117,10 @@ describe('PATCH /:id', () => {
       update: () => ({
         eq: () => ({
           eq: () => ({
-            select: () => ({
-              maybeSingle: () => Promise.resolve({ data: null, error: { code: '22P02' } }),
+            is: () => ({
+              select: () => ({
+                maybeSingle: () => Promise.resolve({ data: null, error: { code: '22P02' } }),
+              }),
             }),
           }),
         }),
@@ -135,8 +139,10 @@ describe('PATCH /:id', () => {
       update: () => ({
         eq: () => ({
           eq: () => ({
-            select: () => ({
-              maybeSingle: () => Promise.resolve({ data: null, error: null }),
+            is: () => ({
+              select: () => ({
+                maybeSingle: () => Promise.resolve({ data: null, error: null }),
+              }),
             }),
           }),
         }),
@@ -148,6 +154,30 @@ describe('PATCH /:id', () => {
       body: JSON.stringify({ name: 'New name' }),
     })
     expect(res.status).toBe(404)
+  })
+
+  it('filters out an archived toy, yielding 404', async () => {
+    const isSpy = vi.fn(() => ({
+      select: () => ({
+        maybeSingle: () => Promise.resolve({ data: null, error: null }),
+      }),
+    }))
+    mockUserFrom.mockReturnValue({
+      update: () => ({
+        eq: () => ({
+          eq: () => ({
+            is: isSpy,
+          }),
+        }),
+      }),
+    })
+    const res = await makeApp().request('/t1', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'New name' }),
+    })
+    expect(res.status).toBe(404)
+    expect(isSpy).toHaveBeenCalledWith('archived_at', null)
   })
 })
 
@@ -220,6 +250,31 @@ describe('PATCH /:id/publish', () => {
     expect(body.missing).toContain('Switch photo')
   })
 
+  it('returns 400 with missing fields when offer type is not set', async () => {
+    mockUserFrom.mockReturnValue({
+      select: () => ({
+        eq: () => ({
+          eq: () => ({
+            maybeSingle: () =>
+              Promise.resolve({
+                data: {
+                  cover_photo_url: 'https://x/cover.jpg',
+                  switch_adapted: false,
+                  switch_photo_urls: [],
+                  offer_type: null,
+                },
+                error: null,
+              }),
+          }),
+        }),
+      }),
+    })
+    const res = await makeApp().request('/t1/publish', { method: 'PATCH' })
+    expect(res.status).toBe(400)
+    const body = await res.json() as any
+    expect(body.missing).toContain('Offer type')
+  })
+
   it('publishes when every precondition is met', async () => {
     mockUserFrom.mockReturnValueOnce({
       select: () => ({
@@ -227,7 +282,12 @@ describe('PATCH /:id/publish', () => {
           eq: () => ({
             maybeSingle: () =>
               Promise.resolve({
-                data: { cover_photo_url: 'https://x/cover.jpg', switch_adapted: false, switch_photo_urls: [] },
+                data: {
+                  cover_photo_url: 'https://x/cover.jpg',
+                  switch_adapted: false,
+                  switch_photo_urls: [],
+                  offer_type: 'donation',
+                },
                 error: null,
               }),
           }),
@@ -258,8 +318,10 @@ describe('DELETE /:id', () => {
       delete: () => ({
         eq: () => ({
           eq: () => ({
-            select: () => ({
-              maybeSingle: () => Promise.resolve({ data: null, error: { message: 'boom' } }),
+            is: () => ({
+              select: () => ({
+                maybeSingle: () => Promise.resolve({ data: null, error: { message: 'boom' } }),
+              }),
             }),
           }),
         }),
@@ -274,8 +336,10 @@ describe('DELETE /:id', () => {
       delete: () => ({
         eq: () => ({
           eq: () => ({
-            select: () => ({
-              maybeSingle: () => Promise.resolve({ data: { id: 't1' }, error: null }),
+            is: () => ({
+              select: () => ({
+                maybeSingle: () => Promise.resolve({ data: { id: 't1' }, error: null }),
+              }),
             }),
           }),
         }),
@@ -284,5 +348,25 @@ describe('DELETE /:id', () => {
     const res = await makeApp().request('/t1', { method: 'DELETE' })
     expect(res.status).toBe(200)
     expect(await res.json()).toEqual({ id: 't1' })
+  })
+
+  it('filters out an archived toy, yielding 404', async () => {
+    const isSpy = vi.fn(() => ({
+      select: () => ({
+        maybeSingle: () => Promise.resolve({ data: null, error: null }),
+      }),
+    }))
+    mockUserFrom.mockReturnValue({
+      delete: () => ({
+        eq: () => ({
+          eq: () => ({
+            is: isSpy,
+          }),
+        }),
+      }),
+    })
+    const res = await makeApp().request('/t1', { method: 'DELETE' })
+    expect(res.status).toBe(404)
+    expect(isSpy).toHaveBeenCalledWith('archived_at', null)
   })
 })

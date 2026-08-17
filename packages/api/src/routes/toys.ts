@@ -24,6 +24,7 @@ import { createUserClient } from '../supabase/user-client.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import { pickEditable } from './pick-editable.js'
 import type { AuthVariables } from '../middleware/auth.js'
+import type { OfferType } from '@splat-connect/types'
 
 const toys = new Hono<{ Variables: AuthVariables }>()
 
@@ -49,10 +50,12 @@ export function missingPublishFields(toy: {
   cover_photo_url: string | null
   switch_adapted: boolean
   switch_photo_urls: string[]
+  offer_type: OfferType | null
 }): string[] {
   const missing: string[] = []
   if (!toy.cover_photo_url) missing.push('Cover photo')
   if (toy.switch_adapted && toy.switch_photo_urls.length === 0) missing.push('Switch photo')
+  if (!toy.offer_type) missing.push('Offer type')
   return missing
 }
 
@@ -93,6 +96,7 @@ toys.patch('/:id', async (c) => {
     .update(editableFrom(body))
     .eq('id', c.req.param('id'))
     .eq('owner_id', c.get('userId'))
+    .is('archived_at', null)
     .select()
     .maybeSingle()
   if (error) {
@@ -107,7 +111,7 @@ toys.patch('/:id/publish', async (c) => {
   const supabase = createUserClient(c.get('token'))
   const { data: existing, error: fetchError } = await supabase
     .from('toys')
-    .select('cover_photo_url, switch_adapted, switch_photo_urls')
+    .select('cover_photo_url, switch_adapted, switch_photo_urls, offer_type')
     .eq('id', c.req.param('id'))
     .eq('owner_id', c.get('userId'))
     .maybeSingle()
@@ -139,6 +143,7 @@ toys.delete('/:id', async (c) => {
     .delete()
     .eq('id', c.req.param('id'))
     .eq('owner_id', c.get('userId'))
+    .is('archived_at', null)
     .select()
     .maybeSingle()
   if (error) {

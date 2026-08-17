@@ -26,6 +26,7 @@ function tx(overrides: Partial<ToyTransactionDetail> = {}): ToyTransactionDetail
     offered_toy_name: null,
     owner_name: 'Sam',
     requester_name: 'Ash',
+    blocked_by_rival_accept: false,
     messages: [{ id: 'm1', transaction_id: 'tx-1', sender_id: 'requester-1', kind: 'system', body: 'Requested this toy for donation.', created_at: '2026-08-01T00:00:00Z' }],
     ...overrides,
   }
@@ -107,5 +108,82 @@ describe('ToyTransactionThread', () => {
     )
     expect(screen.getByText(/handoff complete/i)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /withdraw/i })).not.toBeInTheDocument()
+  })
+
+  describe('accepting', () => {
+    const ADDRESS = {
+      pickup_line1: '1 Test St',
+      pickup_suburb: 'Testville',
+      pickup_state: 'VIC',
+      pickup_postcode: '3000',
+    }
+
+    function renderOwner(props: Partial<Parameters<typeof ToyTransactionThread>[0]> = {}) {
+      const onAccept = vi.fn().mockResolvedValue(undefined)
+      render(
+        <ToyTransactionThread
+          transaction={tx()}
+          viewerId="owner-1"
+          onSendMessage={noop}
+          onAccept={onAccept}
+          onReject={noop}
+          onWithdraw={noop}
+          onConfirm={noop}
+          {...props}
+        />
+      )
+      return onAccept
+    }
+
+    it('does not accept on the first click — it asks where to collect', () => {
+      const onAccept = renderOwner()
+      fireEvent.click(screen.getByRole('button', { name: 'Accept' }))
+      expect(onAccept).not.toHaveBeenCalled()
+      expect(screen.getByRole('heading', { name: /where should they collect it/i })).toBeInTheDocument()
+    })
+
+    it('sends the saved address when the owner keeps their default', async () => {
+      const onAccept = renderOwner({ viewerDefaultAddress: ADDRESS })
+      fireEvent.click(screen.getByRole('button', { name: 'Accept' }))
+      fireEvent.click(screen.getByRole('button', { name: /accept request/i }))
+      await vi.waitFor(() => expect(onAccept).toHaveBeenCalledWith(ADDRESS))
+    })
+
+    it('sends a freshly typed address instead of the default when asked', async () => {
+      const onAccept = renderOwner({ viewerDefaultAddress: ADDRESS })
+      fireEvent.click(screen.getByRole('button', { name: 'Accept' }))
+      fireEvent.click(screen.getByLabelText(/enter a different address/i))
+      fireEvent.change(screen.getByLabelText(/street address/i), { target: { value: '9 Other Rd' } })
+      fireEvent.change(screen.getByLabelText(/suburb/i), { target: { value: 'Elsewhere' } })
+      fireEvent.change(screen.getByLabelText(/state/i), { target: { value: 'NSW' } })
+      fireEvent.change(screen.getByLabelText(/postcode/i), { target: { value: '2000' } })
+      fireEvent.click(screen.getByRole('button', { name: /accept request/i }))
+      await vi.waitFor(() =>
+        expect(onAccept).toHaveBeenCalledWith({
+          pickup_line1: '9 Other Rd',
+          pickup_suburb: 'Elsewhere',
+          pickup_state: 'NSW',
+          pickup_postcode: '2000',
+        })
+      )
+    })
+
+    it('cannot submit until every field is filled when there is no default', () => {
+      renderOwner({ viewerDefaultAddress: null })
+      fireEvent.click(screen.getByRole('button', { name: 'Accept' }))
+      expect(screen.queryByLabelText(/enter a different address/i)).not.toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /accept request/i })).toBeDisabled()
+
+      fireEvent.change(screen.getByLabelText(/street address/i), { target: { value: '9 Other Rd' } })
+      expect(screen.getByRole('button', { name: /accept request/i })).toBeDisabled()
+    })
+
+    it('locks Accept but not Reject while a rival handoff is in flight', () => {
+      renderOwner({ transaction: tx({ blocked_by_rival_accept: true }) })
+      const accept = screen.getByRole('button', { name: 'Accept' })
+      expect(accept).toBeDisabled()
+      expect(accept).toHaveAttribute('title', expect.stringMatching(/complete the current transaction/i))
+      expect(screen.getByRole('button', { name: 'Reject' })).toBeEnabled()
+    })
   })
 })

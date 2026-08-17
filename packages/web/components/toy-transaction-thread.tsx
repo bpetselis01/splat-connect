@@ -1,11 +1,16 @@
 'use client'
 
 import { useState } from 'react'
-import type { ToyTransactionDetail } from '@splat-connect/types'
+import type { PickupAddress, ToyTransactionDetail } from '@splat-connect/types'
+import { AcceptPickupDialog } from '@/components/accept-pickup-dialog'
+
+export const BLOCKED_ACCEPT_HINT =
+  'You need to either complete the current transaction or withdraw from it.'
 
 export function ToyTransactionThread({
   transaction,
   viewerId,
+  viewerDefaultAddress = null,
   onSendMessage,
   onAccept,
   onReject,
@@ -14,8 +19,10 @@ export function ToyTransactionThread({
 }: {
   transaction: ToyTransactionDetail
   viewerId: string
+  /** The viewer's saved profile address, seeded into the accept dialog. */
+  viewerDefaultAddress?: PickupAddress | null
   onSendMessage: (body: string) => Promise<void>
-  onAccept: () => Promise<void>
+  onAccept: (address: PickupAddress) => Promise<void>
   onReject: () => Promise<void>
   onWithdraw: () => Promise<void>
   onConfirm: (code: string) => Promise<void>
@@ -24,6 +31,7 @@ export function ToyTransactionThread({
   const [code, setCode] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [acceptOpen, setAcceptOpen] = useState(false)
 
   const tx = transaction
   const isOwner = viewerId === tx.owner_id
@@ -86,13 +94,35 @@ export function ToyTransactionThread({
       )}
 
       {tx.status === 'requested' && isOwner && (
-        <div className="flex gap-2">
-          <button type="button" disabled={busy} onClick={() => run(onAccept)} className="btn btn-accent">
-            Accept
-          </button>
-          <button type="button" disabled={busy} onClick={() => run(onReject)} className="btn btn-quiet">
-            Reject
-          </button>
+        <div className="flex flex-col gap-2">
+          <div className="flex gap-2">
+            {/* Reject stays live while blocked: declining a request the owner
+                does not want is harmless mid-handoff on another one. */}
+            <button
+              type="button"
+              disabled={busy || tx.blocked_by_rival_accept}
+              title={tx.blocked_by_rival_accept ? BLOCKED_ACCEPT_HINT : undefined}
+              onClick={() => setAcceptOpen(true)}
+              className="btn btn-accent"
+            >
+              Accept
+            </button>
+            <button type="button" disabled={busy} onClick={() => run(onReject)} className="btn btn-quiet">
+              Reject
+            </button>
+          </div>
+          {tx.blocked_by_rival_accept && <p className="text-sm text-muted">{BLOCKED_ACCEPT_HINT}</p>}
+          {acceptOpen && (
+            <AcceptPickupDialog
+              defaultAddress={viewerDefaultAddress}
+              busy={busy}
+              onCancel={() => setAcceptOpen(false)}
+              onSubmit={async (address) => {
+                setAcceptOpen(false)
+                await run(() => onAccept(address))
+              }}
+            />
+          )}
         </div>
       )}
 

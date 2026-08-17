@@ -26,7 +26,7 @@ describe('admin spot-check', () => {
   it('links rows to the admin project page, not the public one', async () => {
     get.mockResolvedValue([baseTutorial])
     const { default: Page } = await import('@/app/admin/spot-check/page')
-    render(await Page())
+    render(await Page({ searchParams: Promise.resolve({}) }))
 
     expect(screen.getByRole('link', { name: /Spoon holder/i })).toHaveAttribute(
       'href', '/admin/review/t1'
@@ -38,14 +38,35 @@ describe('admin spot-check', () => {
   it('says what to do with what you find', async () => {
     get.mockResolvedValue([baseTutorial])
     const { default: Page } = await import('@/app/admin/spot-check/page')
-    render(await Page())
+    render(await Page({ searchParams: Promise.resolve({}) }))
     expect(screen.getByText(/unpublish it if it should not be there/i)).toBeInTheDocument()
   })
 
   it('teaches the interface when the sample is empty', async () => {
     get.mockResolvedValue([])
     const { default: Page } = await import('@/app/admin/spot-check/page')
-    render(await Page())
+    render(await Page({ searchParams: Promise.resolve({}) }))
     expect(screen.getByText(/Nothing to check yet/i)).toBeInTheDocument()
+  })
+
+  // Tests: ?limit widens the sample the endpoint returns
+  // Chain: the sample is random and unordered, so the default ten silently omit
+  //        rows — an admin cannot widen it and a test cannot pin it down
+  it('passes a requested limit through to the endpoint', async () => {
+    get.mockResolvedValue([])
+    const { default: Page } = await import('@/app/admin/spot-check/page')
+    await Page({ searchParams: Promise.resolve({ limit: '200' }) })
+    expect(get).toHaveBeenCalledWith('/api/admin/spot-check?limit=200')
+  })
+
+  it('asks for the default sample when no limit is given or it is nonsense', async () => {
+    get.mockResolvedValue([])
+    const { default: Page } = await import('@/app/admin/spot-check/page')
+    await Page({ searchParams: Promise.resolve({}) })
+    expect(get).toHaveBeenCalledWith('/api/admin/spot-check')
+
+    get.mockClear()
+    await Page({ searchParams: Promise.resolve({ limit: 'lots' }) })
+    expect(get).toHaveBeenCalledWith('/api/admin/spot-check')
   })
 })

@@ -2,12 +2,14 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { getCapabilities } from '@/lib/capabilities'
 import { apiClient } from '@/lib/api-client'
+import { needsAction, actionLabel } from '@splat-connect/types'
 import type { ToyTransactionSummary } from '@splat-connect/types'
 
 export default async function ExchangesPage() {
   const caps = await getCapabilities()
   if (!caps) redirect('/login')
 
+  const viewerId = caps.profile.id
   const transactions = await apiClient.get<ToyTransactionSummary[]>('/api/toy-transactions')
 
   return (
@@ -24,6 +26,18 @@ export default async function ExchangesPage() {
                 <p className="text-sm text-muted">
                   {tx.type === 'donation' ? 'Donation' : 'Exchange'} with {tx.other_party_name} — {tx.status}
                 </p>
+                {needsAction(tx, viewerId) && (
+                  <p className="text-sm font-semibold text-mint-deep">{actionLabel(tx)}</p>
+                )}
+                {tx.blocked_by_rival_accept && (
+                  <p className="text-sm text-muted">Locked — another request accepted</p>
+                )}
+                {tx.last_message && (
+                  <p className="truncate text-sm text-muted">
+                    {tx.last_message.sender_id === viewerId && tx.last_message.kind === 'user' && 'You: '}
+                    {tx.last_message.body}
+                  </p>
+                )}
               </Link>
             </li>
           ))}

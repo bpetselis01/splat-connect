@@ -51,6 +51,9 @@ test('a contributor adds a toy, edits it, uploads a cover photo, publishes it, a
     })
 
     await page.getByRole('tab', { name: 'Review' }).click()
+    // Publish also needs an offer type, so the photo alone does not unlock it.
+    await expect(page.getByRole('button', { name: 'Publish' })).toBeDisabled()
+    await page.getByRole('button', { name: 'Donation' }).click()
     await expect(page.getByRole('button', { name: 'Publish' })).toBeEnabled()
     await page.getByRole('button', { name: 'Publish' }).click()
     await expect(page.getByText('Published')).toBeVisible()

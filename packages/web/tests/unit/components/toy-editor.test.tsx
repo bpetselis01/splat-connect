@@ -36,7 +36,7 @@ function toy(overrides: Partial<Toy> = {}): Toy {
     status: 'draft',
     created_at: '',
     updated_at: '',
-    offer_type: null,
+    offer_type: 'donation',
     archived_at: null,
     ...overrides,
   }
@@ -115,6 +115,22 @@ describe('ToyEditor', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Review' }))
     expect(screen.getByRole('button', { name: 'Both' })).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByRole('button', { name: 'Donation' })).toHaveAttribute('aria-pressed', 'false')
+  })
+
+  it('explains the selected offer type', () => {
+    render(<ToyEditor toy={toy({ offer_type: 'exchange' })} />)
+    fireEvent.click(screen.getByRole('tab', { name: 'Review' }))
+    expect(
+      screen.getByText("You'll swap this toy for another one with the recipient.")
+    ).toBeInTheDocument()
+  })
+
+  it('prompts for an offer type when none is chosen yet', () => {
+    render(<ToyEditor toy={toy({ offer_type: null })} />)
+    fireEvent.click(screen.getByRole('tab', { name: 'Review' }))
+    expect(
+      screen.getByText('Choose how this toy is offered — you can change it later.')
+    ).toBeInTheDocument()
   })
 
   it('wraps every step body in a panel, like the edit-tutorial page', () => {
