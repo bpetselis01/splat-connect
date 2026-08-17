@@ -1,0 +1,14 @@
+-- Publish exchange messages to Realtime, so the other party's replies reach an
+-- open thread without a reload.
+--
+-- No new policy comes with this. Realtime's postgres_changes runs each
+-- subscriber's stream through the table's existing RLS, so 026's "Parties can
+-- view messages on their toy transactions" is what scopes it: you are told
+-- about a row only if you could have selected it. The browser subscribes as
+-- itself (@supabase/ssr keeps the socket's access token in step with the
+-- session), never through the service role.
+--
+-- INSERT payloads only need the default replica identity — the full-row
+-- identity matters for the old record on UPDATE/DELETE, which nothing here
+-- subscribes to.
+alter publication supabase_realtime add table public.toy_transaction_messages;
