@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, within } from '@testing-library/react'
 import { ToyTransactionThread } from '@/components/toy-transaction-thread'
 import type { ToyTransactionDetail } from '@splat-connect/types'
 
@@ -100,6 +100,116 @@ describe('ToyTransactionThread', () => {
       />
     )
     expect(screen.getByRole('button', { name: /confirm handoff/i })).toBeInTheDocument()
+  })
+
+  /**
+   * The donation/exchange asymmetry lives in two expressions in the component
+   * (showMyCode, canConfirm) and is invisible from the outside: a donation is a
+   * one-way handoff — only the requester holds a code, only the owner types one
+   * in — while an exchange is mutual. These pin the whole matrix so a restyle
+   * cannot quietly drop one arm of it.
+   */
+  describe('donation vs exchange', () => {
+    function renderThread(overrides: Partial<ToyTransactionDetail>, viewerId: string) {
+      render(
+        <ToyTransactionThread
+          transaction={tx(overrides)}
+          viewerId={viewerId}
+          onSendMessage={noop}
+          onAccept={noop}
+          onReject={noop}
+          onWithdraw={noop}
+          onConfirm={noop}
+        />
+      )
+    }
+
+    it('names the offered toy on an exchange', () => {
+      renderThread({ type: 'exchange', offered_toy_name: 'Wooden blocks' }, 'owner-1')
+      expect(screen.getByText(/wooden blocks/i)).toBeInTheDocument()
+    })
+
+    it('has no offered-toy row on a donation', () => {
+      renderThread({ type: 'donation', offered_toy_name: null }, 'owner-1')
+      expect(screen.queryByText(/offered/i)).not.toBeInTheDocument()
+    })
+
+    it('gives the requester a code on a donation but not the owner', () => {
+      const accepted = {
+        status: 'accepted' as const,
+        owner_code: '111111',
+        requester_code: '222222',
+      }
+      const { unmount } = render(
+        <ToyTransactionThread
+          transaction={tx(accepted)}
+          viewerId="requester-1"
+          onSendMessage={noop}
+          onAccept={noop}
+          onReject={noop}
+          onWithdraw={noop}
+          onConfirm={noop}
+        />
+      )
+      expect(screen.getByText(/your handoff code/i)).toHaveTextContent('222222')
+      unmount()
+
+      renderThread(accepted, 'owner-1')
+      expect(screen.queryByText(/your handoff code/i)).not.toBeInTheDocument()
+    })
+  })
+
+  /**
+   * Before this the confirming party saw the input vanish and nothing take its
+   * place, which reads as a failed click rather than a handoff waiting on the
+   * other person.
+   */
+  it('acknowledges your confirmation while the other party has not confirmed', () => {
+    render(
+      <ToyTransactionThread
+        transaction={tx({
+          type: 'exchange',
+          status: 'accepted',
+          owner_code: '111111',
+          requester_code: '222222',
+          owner_confirmed_at: '2026-08-02T00:00:00Z',
+        })}
+        viewerId="owner-1"
+        onSendMessage={noop}
+        onAccept={noop}
+        onReject={noop}
+        onWithdraw={noop}
+        onConfirm={noop}
+      />
+    )
+    expect(screen.getByText(/waiting on ash/i)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /confirm handoff/i })).not.toBeInTheDocument()
+  })
+
+  // Alignment and bubble colour carry the sender visually; a screen reader gets
+  // neither, so the log role and the per-message attribution are the real ones.
+  it('exposes the conversation as a live log with attributed messages', () => {
+    render(
+      <ToyTransactionThread
+        transaction={tx({
+          messages: [
+            { id: 'm1', transaction_id: 'tx-1', sender_id: 'requester-1', kind: 'system', body: 'Requested this toy for donation.', created_at: '2026-08-01T00:00:00Z' },
+            { id: 'm2', transaction_id: 'tx-1', sender_id: 'requester-1', kind: 'user', body: 'Is it still available?', created_at: '2026-08-01T01:00:00Z' },
+            { id: 'm3', transaction_id: 'tx-1', sender_id: 'owner-1', kind: 'user', body: 'It is.', created_at: '2026-08-01T02:00:00Z' },
+          ],
+        })}
+        viewerId="owner-1"
+        onSendMessage={noop}
+        onAccept={noop}
+        onReject={noop}
+        onWithdraw={noop}
+        onConfirm={noop}
+      />
+    )
+    const log = screen.getByRole('log')
+    expect(log).toHaveAttribute('aria-live', 'polite')
+    expect(within(log).getByText('Ash said')).toBeInTheDocument()
+    expect(within(log).getByText('You said')).toBeInTheDocument()
   })
 
   it('shows a completed message and no actions once completed', () => {
