@@ -174,7 +174,7 @@ toyTransactions.get('/:id', async (c) => {
   const { data, error } = await supabase
     .from('toy_transactions')
     .select(
-      '*, toy:toys!toy_transactions_toy_id_fkey(name), offered:toys!toy_transactions_offered_toy_id_fkey(name), owner:profiles!toy_transactions_owner_id_fkey(name), requester:profiles!toy_transactions_requester_id_fkey(name)'
+      '*, toy:toys!toy_transactions_toy_id_fkey(name, status), offered:toys!toy_transactions_offered_toy_id_fkey(name, status), owner:profiles!toy_transactions_owner_id_fkey(name), requester:profiles!toy_transactions_requester_id_fkey(name)'
     )
     .eq('id', c.req.param('id'))
     .maybeSingle()
@@ -193,8 +193,8 @@ toyTransactions.get('/:id', async (c) => {
 
   const userId = c.get('userId')
   const row = data as unknown as Record<string, any> & {
-    toy: { name: string } | null
-    offered: { name: string } | null
+    toy: { name: string; status: 'draft' | 'published' } | null
+    offered: { name: string; status: 'draft' | 'published' } | null
     owner: { name: string } | null
     requester: { name: string } | null
   }
@@ -202,6 +202,20 @@ toyTransactions.get('/:id', async (c) => {
     row.status === 'requested'
       ? await acceptedToyIds(createAdminClient(), [row.toy_id])
       : new Set<string>()
+  // Who received what is decided here rather than in the client, for the same
+  // reason the codes are: the answer depends on who is asking. The requester
+  // takes the requested toy; on an exchange the owner takes the offered one.
+  // Only once the handoff is complete — before that nobody has received
+  // anything, whatever the transaction is going to say later.
+  const received =
+    row.status !== 'completed'
+      ? null
+      : userId === row.requester_id && row.toy
+        ? { id: row.toy_id, name: row.toy.name, status: row.toy.status }
+        : userId === row.owner_id && row.offered_toy_id && row.offered
+          ? { id: row.offered_toy_id, name: row.offered.name, status: row.offered.status }
+          : null
+
   return c.json({
     ...sanitizeCodes(row, userId),
     toy_name: row.toy?.name ?? '',
@@ -209,6 +223,7 @@ toyTransactions.get('/:id', async (c) => {
     owner_name: row.owner?.name ?? '',
     requester_name: row.requester?.name ?? '',
     blocked_by_rival_accept: blockedToyIds.has(row.toy_id),
+    received_toy: received,
     messages: messages ?? [],
   })
 })
@@ -576,21 +591,39 @@ toyTransactions.post('/:id/confirm', async (c) => {
     return c.json(sanitizeCodes(updated, userId))
   }
 
-  // Archive before flipping status: if an archive update fails, the
-  // transaction is left retriable at 'accepted' instead of stuck
-  // 'completed' with an unarchived toy the top-of-handler guard can never
-  // let back in.
-  const { error: archiveError } = await admin
-    .from('toys')
-    .update({ archived_at: now, updated_at: now })
-    .eq('id', tx.toy_id)
-  if (archiveError) return c.json({ error: archiveError.message }, 500)
+  // The toy has changed hands, so the row says so. This replaced archiving
+  // both toys, which gave the toy to nobody: two people met, swapped, and the
+  // record of both objects went dark.
+  //
+  // 'draft' is the load-bearing half. It pulls the toy out of the public
+  // library the moment it moves, because the receiver has not agreed to list
+  // it — leaving it published would re-offer a toy its new owner just carried
+  // home. Clearing archived_at matters for the exchange case, where a toy that
+  // went out and came back would otherwise stay hidden from its new owner.
+  //
+  // The giver needs no update: My Toys filters on owner_id, so their list
+  // clears itself.
+  //
+  // Photos need no work either. 022's storage policies resolve the path's toy
+  // id against toys.owner_id rather than against the uploader, so the new
+  // owner gains upload/update/delete here and the old one loses it.
+  //
+  // Transfer before flipping status, for the reason archiving used to go here:
+  // a failed write leaves the transaction retriable at 'accepted' rather than
+  // stuck 'completed' with a toy that never moved and a guard that can never
+  // let it back in.
+  async function transferToy(toyId: string, toOwnerId: string) {
+    return admin
+      .from('toys')
+      .update({ owner_id: toOwnerId, status: 'draft', archived_at: null, updated_at: now })
+      .eq('id', toyId)
+  }
+
+  const { error: transferError } = await transferToy(tx.toy_id, tx.requester_id)
+  if (transferError) return c.json({ error: transferError.message }, 500)
 
   if (tx.offered_toy_id) {
-    const { error: offeredError } = await admin
-      .from('toys')
-      .update({ archived_at: now, updated_at: now })
-      .eq('id', tx.offered_toy_id)
+    const { error: offeredError } = await transferToy(tx.offered_toy_id, tx.owner_id)
     if (offeredError) return c.json({ error: offeredError.message }, 500)
   }
 
