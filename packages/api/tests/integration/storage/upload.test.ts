@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
+import { acceptTerms } from '../../helpers/orgs.js'
 
 let user: TestUser
 const tutorialId = crypto.randomUUID()
@@ -18,6 +19,23 @@ function uploadRequest(path: string, token: string, file: File) {
 
 beforeAll(async () => {
   user = await createTestUser('contributor')
+  // The upload handlers only write into a tutorial the caller contributes to,
+  // so the folder needs a real tutorial behind it — a bare UUID 404s.
+  await acceptTerms(user.id, 'contributor_terms')
+
+  const authed = { Authorization: `Bearer ${user.token}`, 'Content-Type': 'application/json' }
+  const create = await app.request('/api/tutorials', {
+    method: 'POST',
+    headers: authed,
+    body: JSON.stringify({ id: tutorialId, title: 'Upload Fixture', difficulty: 'easy' }),
+  })
+  expect(create.status).toBe(201)
+
+  const link = await app.request(`/api/contributors/me/tutorials/${tutorialId}`, {
+    method: 'POST',
+    headers: authed,
+  })
+  expect(link.status).toBe(201)
 })
 
 afterAll(async () => {
@@ -27,6 +45,8 @@ afterAll(async () => {
   if (photos?.length)
     await admin.storage.from('toy-photos').remove(photos.map((f) => `${tutorialId}/${f.name}`))
   await admin.storage.from('stl-files').remove([`${tutorialId}/bracket.stl`])
+  // tutorials have no FK to profiles — delete explicitly before the user
+  await admin.from('tutorials').delete().eq('id', tutorialId)
   await deleteTestUser(user.id)
 })
 
