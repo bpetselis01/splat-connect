@@ -12,6 +12,9 @@ export default async function ExchangesPage() {
   if (!caps) redirect('/login')
 
   const viewerId = caps.profile.id
+  // Without these, an org request waiting on a leader is never marked "waiting
+  // on you" — the row is visible but reads as somebody else's problem.
+  const ledOrgIds = caps.ledOrgs.map((org) => org.id)
   const transactions = await apiClient.get<ToyTransactionSummary[]>('/api/toy-transactions')
 
   return (
@@ -51,13 +54,22 @@ export default async function ExchangesPage() {
                     <p className="truncate text-sm text-muted">
                       {tx.type === 'donation' ? 'Donation' : 'Exchange'} with {tx.other_party_name}
                     </p>
+                    {/* A leader's personal handoffs and their organisation's
+                        arrive in one list, and nothing else tells them apart —
+                        which of the two they are answering as changes who the
+                        toy belongs to. */}
+                    {tx.acting_for_org_name && (
+                      <p className="mt-1 truncate text-xs text-muted">
+                        On behalf of {tx.acting_for_org_name}
+                      </p>
+                    )}
                   </div>
                   <ExchangeStatusBadge status={tx.status} />
                 </div>
 
                 {/* The one line on this card that is an instruction rather than
                     a fact, so it is the one line that is not muted grey. */}
-                {needsAction(tx, viewerId) && (
+                {needsAction(tx, viewerId, ledOrgIds) && (
                   <p className="self-start rounded-field bg-mint-soft px-2.5 py-1 text-sm font-bold text-mint-deep">
                     {actionLabel(tx)}
                   </p>
