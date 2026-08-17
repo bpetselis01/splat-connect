@@ -23,9 +23,21 @@ const mockToysMaybeSingle = vi.fn()
 const mockToysQuery = {
   select: vi.fn(() => mockToysQuery),
   eq: vi.fn(() => mockToysQuery),
+  // The ownership check widened to "mine, or my organisation's" in 033, so it
+  // filters with .or() rather than a second .eq().
+  or: vi.fn(() => mockToysQuery),
   maybeSingle: mockToysMaybeSingle,
 }
-const mockToysFrom = vi.fn(() => mockToysQuery)
+// The check first asks which orgs the caller leads. These cases are all about a
+// person's own toy, where the answer is none — the org path is covered by
+// tests/integration/storage/org-toy-photos.test.ts against real policies.
+const mockOrgLeadersQuery = {
+  select: vi.fn(() => mockOrgLeadersQuery),
+  eq: vi.fn(() => Promise.resolve({ data: [], error: null })),
+}
+const mockToysFrom = vi.fn((table: string) =>
+  table === 'org_leaders' ? mockOrgLeadersQuery : mockToysQuery
+)
 
 // --- Mock strategy ---
 // Two Supabase storage clients are mocked: the admin client (mockAdminList, mockAdminRemove)
