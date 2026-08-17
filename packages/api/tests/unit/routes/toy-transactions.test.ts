@@ -3,7 +3,7 @@ import { Hono } from 'hono'
 import type { AuthVariables } from '../../../src/middleware/auth.js'
 
 const userClient = { from: vi.fn() }
-const adminClient = { from: vi.fn() }
+const adminClient = { from: vi.fn(), rpc: vi.fn() }
 
 vi.mock('../../../src/supabase/user-client.js', () => ({
   createUserClient: () => userClient,
@@ -41,6 +41,7 @@ describe('POST /api/toy-transactions', () => {
     vi.resetModules()
     userClient.from.mockReset()
     adminClient.from.mockReset()
+    adminClient.rpc.mockReset()
     const mod = await import('../../../src/routes/toy-transactions.js')
     toyTransactions = mod.default
     app = new Hono<{ Variables: AuthVariables }>()
@@ -111,18 +112,25 @@ describe('POST /api/toy-transactions/:id/accept', () => {
     status: 'requested',
   }
 
-  // Both the rival-lock check and the accept write go through
-  // admin.from('toy_transactions'), so one table stands in for both: maybeSingle
-  // answers the lock check, single answers the update.
-  function setup({ rivalAccepted = null }: { rivalAccepted?: { id: string } | null } = {}) {
+  // The capacity check and the accept write both moved into
+  // accept_toy_transaction() in 033, so this stubs the RPC rather than a table:
+  // there is no read-then-write left here to stand in for. `outcome` is how the
+  // function reports refusing to take a unit.
+  function setup({ outcome = 'accepted' }: { outcome?: string } = {}) {
     const txTable = table({
-      maybeSingle: vi.fn().mockResolvedValue({ data: rivalAccepted, error: null }),
       single: vi.fn().mockResolvedValue({ data: { ...OPEN_TX, status: 'accepted' }, error: null }),
     })
     userClient.from.mockImplementation(() =>
       table({ maybeSingle: vi.fn().mockResolvedValue({ data: OPEN_TX, error: null }) })
     )
     adminClient.from.mockImplementation((name: string) => (name === 'toy_transactions' ? txTable : table({})))
+    adminClient.rpc.mockResolvedValue({
+      data:
+        outcome === 'accepted'
+          ? { outcome, transaction: { ...OPEN_TX, status: 'accepted' } }
+          : { outcome },
+      error: null,
+    })
     return txTable
   }
 
@@ -138,6 +146,7 @@ describe('POST /api/toy-transactions/:id/accept', () => {
     vi.resetModules()
     userClient.from.mockReset()
     adminClient.from.mockReset()
+    adminClient.rpc.mockReset()
     const mod = await import('../../../src/routes/toy-transactions.js')
     app = new Hono<{ Variables: AuthVariables }>()
     app.use('*', async (c, next) => {
@@ -161,18 +170,26 @@ describe('POST /api/toy-transactions/:id/accept', () => {
     expect(res.status).toBe(400)
   })
 
-  it('409s when another request for the same toy is already accepted', async () => {
-    setup({ rivalAccepted: { id: 'tx-2' } })
+  it('409s when every unit of the toy is already spoken for', async () => {
+    setup({ outcome: 'full' })
     const res = await accept(ADDRESS)
     expect(res.status).toBe(409)
     expect(((await res.json()) as { error: string }).error).toMatch(/already accepted/i)
   })
 
-  it('writes the supplied address rather than the owner profile default', async () => {
-    const txTable = setup()
+  it('passes the supplied address through rather than the owner profile default', async () => {
+    setup()
     const res = await accept(ADDRESS)
     expect(res.status).toBe(200)
-    expect(txTable.update).toHaveBeenCalledWith(expect.objectContaining(ADDRESS))
+    expect(adminClient.rpc).toHaveBeenCalledWith(
+      'accept_toy_transaction',
+      expect.objectContaining({
+        p_pickup_line1: ADDRESS.pickup_line1,
+        p_pickup_suburb: ADDRESS.pickup_suburb,
+        p_pickup_state: ADDRESS.pickup_state,
+        p_pickup_postcode: ADDRESS.pickup_postcode,
+      })
+    )
   })
 
   it('leaves rival requests open — they are only closed out on confirm', async () => {
