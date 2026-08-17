@@ -18,6 +18,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { isOwnerSide } from '@splat-connect/types'
 import type { PickupAddress, ToyTransactionDetail } from '@splat-connect/types'
 import { AcceptPickupDialog } from '@/components/accept-pickup-dialog'
 import { ExchangeChat } from '@/components/exchange-chat'
@@ -29,6 +30,7 @@ export const BLOCKED_ACCEPT_HINT =
 export function ToyTransactionThread({
   transaction,
   viewerId,
+  ledOrgIds = [],
   viewerDefaultAddress = null,
   onSendMessage,
   onAccept,
@@ -38,10 +40,16 @@ export function ToyTransactionThread({
 }: {
   transaction: ToyTransactionDetail
   viewerId: string
+  /** The orgs the viewer leads. An org handoff has no owner_id, so without
+   *  these a leader reads as the requester: wrong code, wrong buttons, wrong
+   *  side of every label on this screen. */
+  ledOrgIds?: readonly string[]
   /** The viewer's saved profile address, seeded into the accept dialog. */
   viewerDefaultAddress?: PickupAddress | null
   onSendMessage: (body: string) => Promise<void>
-  onAccept: (address: PickupAddress) => Promise<void>
+  /** Null when an organisation is accepting — its address is not the leader's
+   *  to choose, and the server reads it from the org record. */
+  onAccept: (address: PickupAddress | null) => Promise<void>
   onReject: () => Promise<void>
   onWithdraw: () => Promise<void>
   onConfirm: (code: string) => Promise<void>
@@ -52,8 +60,12 @@ export function ToyTransactionThread({
   const [acceptOpen, setAcceptOpen] = useState(false)
 
   const tx = transaction
-  const isOwner = viewerId === tx.owner_id
-  const nameFor = (senderId: string) => (senderId === tx.owner_id ? tx.owner_name : tx.requester_name)
+  const isOwner = isOwnerSide(tx, viewerId, ledOrgIds)
+  // Keyed off the requester rather than the owner: an org handoff has no
+  // owner_id, so every message a leader sent would otherwise be attributed to
+  // the family. owner_name is the organisation's name in that case.
+  const nameFor = (senderId: string) =>
+    senderId === tx.requester_id ? tx.requester_name : tx.owner_name
   const otherPartyName = isOwner ? tx.requester_name : tx.owner_name
 
   async function run(fn: () => Promise<void>) {
@@ -124,7 +136,9 @@ export function ToyTransactionThread({
               {otherPartyName} wants this toy
             </h2>
             <p className="text-sm leading-relaxed text-muted">
-              Accepting shares your pickup address and gives you both a handoff code.
+              {tx.owner_org_id
+                ? "Accepting shares your organisation's pickup address and gives you both a handoff code."
+                : 'Accepting shares your pickup address and gives you both a handoff code.'}
             </p>
             <div className="flex flex-wrap gap-2">
               {/* Reject stays live while blocked: declining a request the owner
@@ -133,7 +147,12 @@ export function ToyTransactionThread({
                 type="button"
                 disabled={busy || tx.blocked_by_rival_accept}
                 title={tx.blocked_by_rival_accept ? BLOCKED_ACCEPT_HINT : undefined}
-                onClick={() => setAcceptOpen(true)}
+                // No dialog for an organisation: its address is fixed and the
+                // server ignores anything sent here, so asking would be a form
+                // whose answer is discarded.
+                onClick={() =>
+                  tx.owner_org_id ? run(() => onAccept(null)) : setAcceptOpen(true)
+                }
                 className="btn btn-accent"
               >
                 Accept
