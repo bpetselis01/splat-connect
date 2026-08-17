@@ -27,6 +27,7 @@ function tx(overrides: Partial<ToyTransactionDetail> = {}): ToyTransactionDetail
     owner_name: 'Sam',
     requester_name: 'Ash',
     blocked_by_rival_accept: false,
+    received_toy: null,
     messages: [{ id: 'm1', transaction_id: 'tx-1', sender_id: 'requester-1', kind: 'system', body: 'Requested this toy for donation.', created_at: '2026-08-01T00:00:00Z' }],
     ...overrides,
   }
@@ -218,6 +219,68 @@ describe('ToyTransactionThread', () => {
     )
     expect(screen.getByText(/handoff complete/i)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /withdraw/i })).not.toBeInTheDocument()
+  })
+
+  // Tests: the receiver of a completed handoff is offered a way to list it
+  // How:   a completed transaction carrying an unlisted received_toy
+  // Chain: transferring the toy silently would leave it a draft the receiver
+  //        never learns they own — the offer is the only thing connecting the
+  //        handoff to the toy now sitting in their My Toys
+  it('offers the receiver a way to list the toy they were handed', () => {
+    render(
+      <ToyTransactionThread
+        transaction={tx({
+          status: 'completed',
+          received_toy: { id: 'toy-1', name: 'Fire truck', status: 'draft' },
+        })}
+        viewerId="requester-1"
+        onSendMessage={noop}
+        onAccept={noop}
+        onReject={noop}
+        onWithdraw={noop}
+        onConfirm={noop}
+      />
+    )
+    expect(screen.getByText(/fire truck is yours now/i)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /add to toy library/i })).toHaveAttribute(
+      'href',
+      '/dashboard/toys/toy-1'
+    )
+  })
+
+  // Tests: the offer is absent for someone who received nothing
+  // How:   the same completed transaction with received_toy null, the shape the
+  //        API returns to the giver on a donation
+  // Chain: an offer to list shown to the person who just gave the toy away
+  //        points at a toy they no longer own
+  it('does not offer to list anything to the party who received nothing', () => {
+    render(
+      <ToyTransactionThread transaction={tx({ status: 'completed' })} viewerId="owner-1" onSendMessage={noop} onAccept={noop} onReject={noop} onWithdraw={noop} onConfirm={noop} />
+    )
+    expect(screen.getByText(/handoff complete/i)).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /add to toy library/i })).not.toBeInTheDocument()
+  })
+
+  // Tests: the offer disappears once the toy is listed
+  // How:   received_toy already at 'published'
+  // Chain: without the status check the card would keep asking for something
+  //        already done, every time the thread is opened
+  it('stops offering once the received toy is published', () => {
+    render(
+      <ToyTransactionThread
+        transaction={tx({
+          status: 'completed',
+          received_toy: { id: 'toy-1', name: 'Fire truck', status: 'published' },
+        })}
+        viewerId="requester-1"
+        onSendMessage={noop}
+        onAccept={noop}
+        onReject={noop}
+        onWithdraw={noop}
+        onConfirm={noop}
+      />
+    )
+    expect(screen.queryByRole('link', { name: /add to toy library/i })).not.toBeInTheDocument()
   })
 
   describe('accepting', () => {
