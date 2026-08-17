@@ -76,8 +76,24 @@ test('accepting returns the user to where they were blocked and unblocks editing
   //
   // #edit-title / "Save details" are the ids the Details panel actually uses; the
   // panel is <details open> so no expansion is needed first.
-  await page.locator('#edit-title').fill('Edited after accepting terms')
-  await page.getByRole('button', { name: 'Save details' }).click()
+  // Typed in a retry loop because "Save details" is gated on a `dirty` flag the
+  // form sets from React's onChange. Arriving here straight off the acceptance
+  // redirect, the markup can still be the server-rendered HTML: a fill that
+  // lands before hydration changes the DOM but no handler observes it, so dirty
+  // stays false and the button stays disabled for the rest of the test. Filling
+  // again once React is attached is what makes this deterministic.
+  const editTitle = page.locator('#edit-title')
+  const saveDetails = page.getByRole('button', { name: 'Save details' })
+  // Cleared first on every attempt, which is load-bearing: React only raises
+  // onChange when the value actually differs from the one it last tracked, so
+  // re-filling the same string after a pre-hydration fill is a no-op and the
+  // retry would spin until it timed out.
+  await expect(async () => {
+    await editTitle.fill('')
+    await editTitle.fill('Edited after accepting terms')
+    await expect(saveDetails).toBeEnabled({ timeout: 1_000 })
+  }).toPass({ timeout: 30_000 })
+  await saveDetails.click()
 
   // The <h1> renders tutorial.title, so it changing proves the PATCH was accepted and
   // the page revalidated — a 403 would have produced an error page instead.
