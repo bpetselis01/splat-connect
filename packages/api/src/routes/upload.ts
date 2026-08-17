@@ -14,7 +14,7 @@ const upload = new Hono<{ Variables: AuthVariables }>()
 type AccessCheck = { ok: true } | { ok: false; status: 404 | 500; message?: string }
 
 // A contributor may only write into their own tutorial's folder — storage RLS
-// (030_scope_upload_buckets_to_owner.sql) enforces the same rule, this is the
+// (032_scope_upload_buckets_to_owner.sql) enforces the same rule, this is the
 // app-layer half of the same defence-in-depth convention as the toy checks below.
 async function checkTutorialContributor(
   supabase: ReturnType<typeof createUserClient>,
@@ -37,16 +37,25 @@ async function checkTutorialContributor(
 
 // Bucket RLS (Task 1) already scopes writes to the owner, but every other
 // owner-scoped route in this codebase also checks explicitly (defence in depth).
+//
+// "Owner" includes a leader of the owning organisation since 033. Without that
+// arm an org's stock could never be published at all: publishing requires a
+// cover photo, and this is the only way one gets uploaded.
 async function checkToyOwner(
   supabase: ReturnType<typeof createUserClient>,
   toyId: string,
   userId: string
 ): Promise<AccessCheck> {
+  const { data: led } = await supabase.from('org_leaders').select('org_id').eq('user_id', userId)
+  const orgIds = (led ?? []).map((row: { org_id: string }) => row.org_id)
+  const ownership = [`owner_id.eq.${userId}`]
+  if (orgIds.length) ownership.push(`owner_org_id.in.(${orgIds.join(',')})`)
+
   const { data: toy, error } = await supabase
     .from('toys')
     .select('id')
     .eq('id', toyId)
-    .eq('owner_id', userId)
+    .or(ownership.join(','))
     .maybeSingle()
   if (error) {
     if (error.code === INVALID_TEXT_REPRESENTATION) return { ok: false, status: 404 }
