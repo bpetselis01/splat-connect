@@ -9,16 +9,29 @@
  * shows up as unrelated specs flaking differently on every run.
  */
 import { createClient } from '@supabase/supabase-js'
+import { config } from 'dotenv'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+// `pnpm test:cleanup` runs plain tsx, so nothing loads .env.test the way the
+// vitest suites do through tests/integration/setup.ts — the empty-string key
+// default made every invocation throw "supabaseKey is required" before it
+// deleted anything. Same load as that setup file, for the same local stack.
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+config({ path: path.resolve(__dirname, '../.env.test'), override: true })
 
 const admin = createClient(
   process.env.SUPABASE_URL ?? 'http://localhost:54321',
   process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''
 )
 
-// Both synthetic domains: @splat-test.local is the API suite's, @web-e2e.local
-// the Playwright helpers'. The latter produces the bulk of the residue and was
-// missed entirely, which is why cleanup never kept up.
-const TEST_DOMAINS = ['@splat-test.local', '@web-e2e.local']
+// All three synthetic domains, one per suite: @splat-test.local is the API
+// integration suite's, @web-e2e.local the web Playwright helpers', and
+// @mobile-e2e.local the mobile Playwright helpers'. Every domain missing from
+// this list is residue nothing can reach — @web-e2e.local was the bulk of it
+// and @mobile-e2e.local was still unlisted after that, so check this list
+// whenever a suite starts minting its own accounts.
+const TEST_DOMAINS = ['@splat-test.local', '@web-e2e.local', '@mobile-e2e.local']
 const PER_PAGE = 1000
 
 // listUsers pages at 50 by default, so the old single call could not clear more
@@ -40,30 +53,8 @@ async function allTestUsers() {
   }
 }
 
-// The toy tables reference profiles with NO ACTION rather than a cascade, so a
-// test user who ever listed a toy cannot be deleted until their rows go first.
-// Every other table cascades, which is why this only bites here.
-async function purgeToyData(ids: string[]) {
-  for (let i = 0; i < ids.length; i += 200) {
-    const batch = ids.slice(i, i + 200)
-    const { data: txs } = await admin
-      .from('toy_transactions')
-      .select('id')
-      .or(`owner_id.in.(${batch.join(',')}),requester_id.in.(${batch.join(',')})`)
-    const txIds = (txs ?? []).map((t: { id: string }) => t.id)
-    if (txIds.length) {
-      await admin.from('toy_transaction_messages').delete().in('transaction_id', txIds)
-      await admin.from('toy_transactions').delete().in('id', txIds)
-    }
-    await admin.from('toy_transaction_messages').delete().in('sender_id', batch)
-    await admin.from('toys').delete().in('owner_id', batch)
-  }
-}
-
 const testUsers = await allTestUsers()
 console.log(`Found ${testUsers.length} test users to delete`)
-
-await purgeToyData(testUsers.map((u) => u.id))
 
 let deleted = 0
 for (const user of testUsers) {
@@ -72,4 +63,56 @@ for (const user of testUsers) {
   else deleted++
   if (deleted % 100 === 0) console.log(`Deleted ${deleted}/${testUsers.length}`)
 }
+
+// tutorials is the one table the profile cascade cannot reach — it carries no
+// FK to profiles, so deleting a suite's accounts strands their tutorials for
+// good. 1,879 had piled up by the time anyone looked, which is the same slow
+// rot the accounts caused. A tutorial with no contributor row left is orphaned
+// by definition: that seat table does cascade, so the last seat disappears
+// with the last owner. The hour of grace is for a tutorial someone just
+// created by hand — POST /api/tutorials inserts the row and the contributor
+// seat follows a moment later, and a run in that gap would eat it.
+async function purgeOrphanTutorials() {
+  const rows: Array<{ id: string; created_at: string }> = []
+  // PostgREST caps a response at max_rows (1000 in config.toml), so page it.
+  for (let from = 0; ; from += PER_PAGE) {
+    const { data, error } = await admin
+      .from('tutorials')
+      .select('id, created_at')
+      .range(from, from + PER_PAGE - 1)
+    if (error) {
+      console.error(error)
+      return
+    }
+    rows.push(...(data ?? []))
+    if (!data || data.length < PER_PAGE) break
+  }
+
+  const seated = new Set<string>()
+  for (let from = 0; ; from += PER_PAGE) {
+    const { data, error } = await admin
+      .from('tutorial_contributors')
+      .select('tutorial_id')
+      .range(from, from + PER_PAGE - 1)
+    if (error) {
+      console.error(error)
+      return
+    }
+    for (const seat of data ?? []) seated.add(seat.tutorial_id)
+    if (!data || data.length < PER_PAGE) break
+  }
+
+  const cutoff = Date.now() - 60 * 60 * 1000
+  const orphans = rows
+    .filter((t) => !seated.has(t.id) && new Date(t.created_at).getTime() < cutoff)
+    .map((t) => t.id)
+
+  for (let i = 0; i < orphans.length; i += 200) {
+    const { error } = await admin.from('tutorials').delete().in('id', orphans.slice(i, i + 200))
+    if (error) console.error(error)
+  }
+  console.log(`Deleted ${orphans.length} orphaned tutorials`)
+}
+
+await purgeOrphanTutorials()
 console.log(`Deleted ${deleted} of ${testUsers.length}`)
