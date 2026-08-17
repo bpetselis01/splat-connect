@@ -12,6 +12,7 @@ function tx(overrides: Partial<ToyTransactionDetail> = {}): ToyTransactionDetail
     status: 'requested',
     requester_id: 'requester-1',
     owner_id: 'owner-1',
+    owner_org_id: null,
     owner_code: null,
     requester_code: null,
     owner_confirmed_at: null,
@@ -20,6 +21,7 @@ function tx(overrides: Partial<ToyTransactionDetail> = {}): ToyTransactionDetail
     pickup_suburb: null,
     pickup_state: null,
     pickup_postcode: null,
+    pickup_instructions: null,
     created_at: '2026-08-01T00:00:00Z',
     updated_at: '2026-08-01T00:00:00Z',
     toy_name: 'Fire truck',
@@ -358,5 +360,87 @@ describe('ToyTransactionThread', () => {
       expect(accept).toHaveAttribute('title', expect.stringMatching(/complete the current transaction/i))
       expect(screen.getByRole('button', { name: 'Reject' })).toBeEnabled()
     })
+  })
+})
+
+describe('ToyTransactionThread for an organisation', () => {
+  // An org handoff has no owner_id at all. Every "am I the owner" question on
+  // this screen used to compare against it, so without ledOrgIds a leader is
+  // rendered the requester's view: the wrong buttons, and — the dangerous one —
+  // the wrong handoff code, which fails silently in a room with two people in it.
+  const orgTx = (overrides: Partial<ToyTransactionDetail> = {}) =>
+    tx({ owner_id: null, owner_org_id: 'org-1', owner_name: 'Cerebral Palsy Alliance', ...overrides })
+
+  const renderAs = (
+    transaction: ToyTransactionDetail,
+    viewerId: string,
+    ledOrgIds: string[],
+    onAccept = noop
+  ) =>
+    render(
+      <ToyTransactionThread
+        transaction={transaction}
+        viewerId={viewerId}
+        ledOrgIds={ledOrgIds}
+        onSendMessage={noop}
+        onAccept={onAccept}
+        onReject={noop}
+        onWithdraw={noop}
+        onConfirm={noop}
+      />
+    )
+
+  it('offers Accept and Reject to a leader of the org that was asked', () => {
+    renderAs(orgTx(), 'leader-1', ['org-1'])
+    expect(screen.getByRole('button', { name: /accept/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /reject/i })).toBeInTheDocument()
+  })
+
+  it('offers neither to a leader of a different org', () => {
+    renderAs(orgTx(), 'leader-2', ['org-9'])
+    expect(screen.queryByRole('button', { name: /accept/i })).not.toBeInTheDocument()
+  })
+
+  it('accepts without asking for an address, which is not the leader’s to choose', () => {
+    const onAccept = vi.fn().mockResolvedValue(undefined)
+    renderAs(orgTx(), 'leader-1', ['org-1'], onAccept)
+
+    fireEvent.click(screen.getByRole('button', { name: /accept/i }))
+
+    // No dialog: the server reads the org's fixed address and ignores anything
+    // sent here, so a form would be a question whose answer is discarded.
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(onAccept).toHaveBeenCalledWith(null)
+  })
+
+  it('puts the leader on the confirming side of a donation, and the family on the reciting side', () => {
+    // On a donation the giving side types the code the receiver is showing
+    // them, so the leader gets an input and the family gets a number to read
+    // out. Reversing these is the silent failure: two people in a room with
+    // codes that do not match and nothing on screen explaining why.
+    const leaderView = orgTx({
+      status: 'accepted',
+      type: 'donation',
+      owner_code: '111111',
+      requester_code: null,
+    })
+    const { unmount } = renderAs(leaderView, 'leader-1', ['org-1'])
+    expect(screen.getByRole('button', { name: /confirm/i })).toBeInTheDocument()
+    unmount()
+
+    const familyView = orgTx({
+      status: 'accepted',
+      type: 'donation',
+      owner_code: null,
+      requester_code: '222222',
+    })
+    renderAs(familyView, 'requester-1', [])
+    expect(screen.getByText('222222')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /confirm/i })).not.toBeInTheDocument()
+  })
+
+  it('names the organisation as the other party for the family', () => {
+    renderAs(orgTx(), 'requester-1', [])
+    expect(screen.getAllByText(/Cerebral Palsy Alliance/).length).toBeGreaterThan(0)
   })
 })
