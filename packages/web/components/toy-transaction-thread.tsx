@@ -17,6 +17,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import type { PickupAddress, ToyTransactionDetail } from '@splat-connect/types'
 import { AcceptPickupDialog } from '@/components/accept-pickup-dialog'
 import { ExchangeChat } from '@/components/exchange-chat'
@@ -222,8 +223,33 @@ export function ToyTransactionThread({
           </button>
         )}
 
+        {/* The offer to list lives here rather than in the thread, because the
+            sidebar is per-viewer and the thread is not: on a donation only one
+            party received anything, and a system message asking "want to list
+            this?" would be read by the person it does not apply to.
+
+            Through the toy's edit screen rather than a one-click publish —
+            listing needs an offer_type (donation/exchange/both), which a yes/no
+            button cannot answer and which nobody should have defaulted for
+            them. Declining is not clicking: the toy stays a draft they own. */}
         {tx.status === 'completed' && (
-          <p className="card p-4 font-bold text-mint-deep">Handoff complete.</p>
+          <div className="card flex flex-col gap-3 p-4">
+            <p className="font-bold text-mint-deep">Handoff complete.</p>
+            {tx.received_toy?.status === 'draft' && (
+              <>
+                <p className="text-sm leading-relaxed text-muted">
+                  {tx.received_toy.name} is yours now. Add it to the toy library if you would
+                  like others to be able to request it.
+                </p>
+                <Link
+                  href={`/dashboard/toys/${tx.received_toy.id}`}
+                  className="btn btn-accent self-start"
+                >
+                  Add to toy library
+                </Link>
+              </>
+            )}
+          </div>
         )}
         {tx.status === 'rejected' && (
           <p className="card p-4 text-sm text-muted">This request was declined.</p>
