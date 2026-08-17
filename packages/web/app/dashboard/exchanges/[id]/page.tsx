@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { getCapabilities } from '@/lib/capabilities'
 import { apiClient } from '@/lib/api-client'
+import { LiveTransaction } from '@/components/live-transaction'
 import { ToyTransactionThread } from '@/components/toy-transaction-thread'
 import type { PickupAddress, Profile, ToyTransactionDetail } from '@splat-connect/types'
 
@@ -59,6 +60,7 @@ export default async function ExchangeDetailPage({ params }: { params: Promise<{
 
   return (
     <div>
+      <LiveTransaction transactionId={id} />
       {/* The thread is reachable from a notification as well as the list, so it
           needs a way back that does not assume browser history. */}
       <div className="mb-6">
