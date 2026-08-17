@@ -27,6 +27,8 @@ function toy(overrides: Partial<Toy> = {}): Toy {
   return {
     id: 't1',
     owner_id: 'u1',
+    owner_org_id: null,
+    quantity: 1,
     name: 'Fire truck',
     description: null,
     condition: 8,
