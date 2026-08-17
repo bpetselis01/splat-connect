@@ -428,7 +428,10 @@ toyTransactions.post('/:id/accept', async (c) => {
     transaction_id: tx.id,
     sender_id: userId,
     kind: 'system',
-    body: 'Request accepted. Pickup details are ready below.',
+    // Not "below": the web thread moved pickup and handoff into a side panel,
+    // and mobile has its own layout again, so the copy no longer points at a
+    // direction any client can guarantee.
+    body: 'Request accepted. Pickup and handoff details are ready.',
   })
 
   const { data: toy } = await admin.from('toys').select('name').eq('id', tx.toy_id).single()
