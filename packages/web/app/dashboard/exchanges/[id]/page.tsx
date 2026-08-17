@@ -5,6 +5,7 @@ import { getCapabilities } from '@/lib/capabilities'
 import { apiClient } from '@/lib/api-client'
 import { LiveTransaction } from '@/components/live-transaction'
 import { ToyTransactionThread } from '@/components/toy-transaction-thread'
+import { isOwnerSide } from '@splat-connect/types'
 import type { PickupAddress, Profile, ToyTransactionDetail } from '@splat-connect/types'
 
 // A partly-filled profile address is no use as a default — the accept dialog
@@ -35,9 +36,11 @@ export default async function ExchangeDetailPage({ params }: { params: Promise<{
     await apiClient.post(`/api/toy-transactions/${id}/messages`, { body })
     revalidatePath(`/dashboard/exchanges/${id}`)
   }
-  async function accept(address: PickupAddress) {
+  async function accept(address: PickupAddress | null) {
     'use server'
-    await apiClient.post(`/api/toy-transactions/${id}/accept`, address)
+    // An empty body for an organisation: the handler reads the fixed address
+    // from the org record and ignores whatever arrives here.
+    await apiClient.post(`/api/toy-transactions/${id}/accept`, address ?? {})
     revalidatePath(`/dashboard/exchanges/${id}`)
   }
   async function reject() {
@@ -56,7 +59,10 @@ export default async function ExchangeDetailPage({ params }: { params: Promise<{
     revalidatePath(`/dashboard/exchanges/${id}`)
   }
 
-  const otherPartyName = caps.profile.id === tx.owner_id ? tx.requester_name : tx.owner_name
+  const ledOrgIds = caps.ledOrgs.map((org) => org.id)
+  const otherPartyName = isOwnerSide(tx, caps.profile.id, ledOrgIds)
+    ? tx.requester_name
+    : tx.owner_name
 
   return (
     <div>
@@ -75,6 +81,7 @@ export default async function ExchangeDetailPage({ params }: { params: Promise<{
       <ToyTransactionThread
         transaction={tx}
         viewerId={caps.profile.id}
+        ledOrgIds={ledOrgIds}
         viewerDefaultAddress={defaultAddress(caps.profile)}
         onSendMessage={sendMessage}
         onAccept={accept}
