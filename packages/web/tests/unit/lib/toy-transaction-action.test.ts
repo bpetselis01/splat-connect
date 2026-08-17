@@ -7,7 +7,7 @@ import type { ToyTransaction } from '@splat-connect/types'
 
 type Subject = Pick<
   ToyTransaction,
-  'status' | 'type' | 'owner_id' | 'owner_confirmed_at' | 'requester_confirmed_at'
+  'status' | 'type' | 'owner_id' | 'owner_org_id' | 'owner_confirmed_at' | 'requester_confirmed_at'
 > & { blocked_by_rival_accept?: boolean }
 
 function tx(overrides: Partial<Subject> = {}): Subject {
@@ -15,6 +15,7 @@ function tx(overrides: Partial<Subject> = {}): Subject {
     status: 'requested',
     type: 'donation',
     owner_id: 'owner-1',
+    owner_org_id: null,
     owner_confirmed_at: null,
     requester_confirmed_at: null,
     ...overrides,
@@ -61,6 +62,36 @@ describe('needsAction', () => {
   it.each(['completed', 'rejected', 'withdrawn'] as const)('never flags a %s transaction', (status) => {
     expect(needsAction(tx({ status }), 'owner-1')).toBe(false)
     expect(needsAction(tx({ status }), 'requester-1')).toBe(false)
+  })
+})
+
+describe('needsAction for an organisation', () => {
+  // An org handoff has no owner_id at all — any of its leaders is the owner
+  // side. Without the led-org list this returns false for every leader, and the
+  // badge tells them nothing is waiting while a family waits for an answer.
+  const orgTx = (overrides: Partial<Subject> = {}) =>
+    tx({ owner_id: null, owner_org_id: 'org-1', ...overrides })
+
+  it('flags an open request for a leader of the org it was made to', () => {
+    expect(needsAction(orgTx(), 'leader-1', ['org-1'])).toBe(true)
+  })
+
+  it('flags it for every leader, since any of them may answer', () => {
+    expect(needsAction(orgTx(), 'leader-2', ['org-1', 'org-9'])).toBe(true)
+  })
+
+  it('does not flag it for a leader of some other org', () => {
+    expect(needsAction(orgTx(), 'leader-3', ['org-2'])).toBe(false)
+  })
+
+  it('does not flag it for the family who asked', () => {
+    expect(needsAction(orgTx(), 'requester-1', [])).toBe(false)
+  })
+
+  it('waits on the leader to confirm a donation handoff', () => {
+    const accepted = orgTx({ status: 'accepted', type: 'donation' })
+    expect(needsAction(accepted, 'leader-1', ['org-1'])).toBe(true)
+    expect(needsAction(accepted, 'requester-1', [])).toBe(false)
   })
 })
 
