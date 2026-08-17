@@ -40,7 +40,14 @@ export type OfferType = 'donation' | 'exchange' | 'both'
 
 export interface Toy {
   id: string
-  owner_id: string
+  /** Null when an organisation holds it. Exactly one of this and
+   *  `owner_org_id` is set — 033's `toys_one_owner` constraint. */
+  owner_id: string | null
+  owner_org_id: string | null
+  /** Units in stock. Always 1 for a person's toy, which 033's
+   *  `toys_person_single_unit` constraint enforces rather than merely
+   *  assumes. An organisation's may reach 0 without the row going away. */
+  quantity: number
   name: string
   description: string | null
   condition: number
@@ -57,7 +64,17 @@ export interface Toy {
 // GET /api/public/toys and /api/public/toys/:id embed the owner's name.
 // Nullable to match profiles(name)'s embed semantics, though in practice
 // every toy has an owner.
-export type ToyWithOwner = Toy & { profiles: { name: string } | null }
+// Exactly one of the two embeds is present, mirroring the XOR on the row: a
+// toy is held by a person or by an organisation.
+export type ToyWithOwner = Toy & {
+  profiles: { name: string } | null
+  organizations: { name: string } | null
+}
+
+/** Who a browsing visitor is being offered this toy by. */
+export function toyHolderName(toy: Pick<ToyWithOwner, 'profiles' | 'organizations'>): string | null {
+  return toy.organizations?.name ?? toy.profiles?.name ?? null
+}
 
 export type ToyTransactionType = 'donation' | 'exchange'
 export type ToyTransactionStatus = 'requested' | 'accepted' | 'rejected' | 'withdrawn' | 'completed'
@@ -69,7 +86,11 @@ export interface ToyTransaction {
   type: ToyTransactionType
   status: ToyTransactionStatus
   requester_id: string
-  owner_id: string
+  /** The giving side. Null when an organisation is giving, in which case any of
+   *  its leaders acts here — see `isOwnerSide`. Exactly one of this and
+   *  `owner_org_id` is set. */
+  owner_id: string | null
+  owner_org_id: string | null
   owner_code: string | null
   requester_code: string | null
   owner_confirmed_at: string | null
@@ -78,8 +99,29 @@ export interface ToyTransaction {
   pickup_suburb: string | null
   pickup_state: string | null
   pickup_postcode: string | null
+  /** Copied from the organisation at accept time, so the requester reads it off
+   *  their own transaction row rather than off a table they cannot select. */
+  pickup_instructions: string | null
   created_at: string
   updated_at: string
+}
+
+/**
+ * Whether the viewer is the giving side of a transaction.
+ *
+ * The three places that used to ask `owner_id === viewerId` are each correct for
+ * a person and silently wrong for an organisation, where `owner_id` is null and
+ * the answer is "no" for a leader who is very much the owner side. The worst of
+ * the three is the handoff code: it fails with no error at all, as two people
+ * stand in a room reciting a number that does not match.
+ */
+export function isOwnerSide(
+  tx: Pick<ToyTransaction, 'owner_id' | 'owner_org_id'>,
+  viewerId: string,
+  ledOrgIds: readonly string[] = []
+): boolean {
+  if (tx.owner_org_id) return ledOrgIds.includes(tx.owner_org_id)
+  return tx.owner_id === viewerId
 }
 
 // The four pickup fields as a required unit. The owner supplies these when
@@ -101,6 +143,9 @@ export interface ToyTransactionSummary extends ToyTransaction {
   toy_name: string
   offered_toy_name: string | null
   other_party_name: string
+  /** The organisation the viewer is answering for, when they are its leader.
+   *  Null for a personal handoff and for the family on the other side. */
+  acting_for_org_name: string | null
   blocked_by_rival_accept: boolean
   /** Newest message in the thread, for the list preview. Null before any exists. */
   last_message: ToyTransactionMessagePreview | null
@@ -133,11 +178,21 @@ export type ToyTransactionMessagePreview = Pick<
 export function needsAction(
   tx: Pick<
     ToyTransaction,
-    'status' | 'type' | 'owner_id' | 'owner_confirmed_at' | 'requester_confirmed_at'
+    | 'status'
+    | 'type'
+    | 'owner_id'
+    | 'owner_org_id'
+    | 'owner_confirmed_at'
+    | 'requester_confirmed_at'
   > & { blocked_by_rival_accept?: boolean },
-  viewerId: string
+  viewerId: string,
+  // The orgs the viewer leads. Without it an org request waiting on a leader
+  // never reaches the badge, and they are told nothing is waiting on them while
+  // a family waits for an answer. Defaulted so every person-to-person caller is
+  // unchanged.
+  ledOrgIds: readonly string[] = []
 ): boolean {
-  const isOwner = tx.owner_id === viewerId
+  const isOwner = isOwnerSide(tx, viewerId, ledOrgIds)
 
   if (tx.status === 'requested') return isOwner && !tx.blocked_by_rival_accept
 
