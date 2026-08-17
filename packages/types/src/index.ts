@@ -169,12 +169,20 @@ export interface ToyTransactionMessage {
   created_at: string
 }
 
+// The toy THIS viewer walked away with, present only once the handoff is
+// complete. Computed per read like the codes are, because who received what
+// depends on who is asking: the requester takes toy_id, and on an exchange the
+// owner takes offered_toy_id. Null when the viewer received nothing — the giver
+// on a donation, or any open transaction.
+export type ReceivedToy = { id: string; name: string; status: Toy['status'] }
+
 export interface ToyTransactionDetail extends ToyTransaction {
   toy_name: string
   offered_toy_name: string | null
   owner_name: string
   requester_name: string
   blocked_by_rival_accept: boolean
+  received_toy: ReceivedToy | null
   messages: ToyTransactionMessage[]
 }
 
