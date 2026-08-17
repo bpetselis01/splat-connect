@@ -68,8 +68,18 @@ test.describe('Toy donation and exchange', () => {
       await page.getByRole('button', { name: 'Confirm handoff' }).click()
       await expect(page.getByText(/handoff complete/i)).toBeVisible()
 
+      // The toy left the donor's hands, so it leaves their list entirely —
+      // it is not archived, it belongs to someone else now.
       await page.goto('/dashboard/toys')
-      await expect(page.getByRole('heading', { name: 'Archived' })).toBeVisible()
+      await expect(page.getByText('Fire truck')).toHaveCount(0)
+
+      // And it is waiting for the requester, unlisted, with the thread offering
+      // them the way to list it.
+      await signIn(page, requester.email, requester.password)
+      await page.waitForURL('**/dashboard')
+      await page.goto(txUrl)
+      await page.getByRole('link', { name: /add to toy library/i }).click()
+      await expect(page).toHaveURL(/\/dashboard\/toys\//)
       await expect(page.getByText('Fire truck')).toBeVisible()
     } finally {
       await deleteUser(owner.id)
