@@ -392,7 +392,22 @@ deno_version = 2
 # secret_key = "env(SECRET_VALUE)"
 
 [analytics]
-enabled = true
+#
+# Off because the Logflare backend writes a row per request into the same
+# database volume, and nothing prunes it: three days of local development and
+# E2E runs left 910k rows across two _analytics.log_events_* tables, 1.1GB of a
+# 1.6GB volume, against 27MB of actual application data. A full E2E pass alone
+# makes ~17k auth requests, so the growth tracks test runs rather than use.
+#
+# The cost is Studio's Logs tab and queryable log history. Container output is
+# untouched and is what local debugging actually leans on — the auth 500s,
+# EADDRNOTAVAIL dial errors and FK violations behind the E2E flake were all read
+# straight from `docker logs supabase_auth_splat-connect` / `..._db_...`. Turn
+# this back on when a question genuinely needs retained, searchable logs; it
+# also stops the analytics and vector containers, which is two fewer to run.
+#
+# Local only. The hosted project's logging is configured in the dashboard.
+enabled = false
 port = 54327
 # Configure one of the supported backends: `postgres`, `bigquery`.
 backend = "postgres"
