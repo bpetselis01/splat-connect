@@ -75,15 +75,15 @@ describe('buildNav', () => {
     expect(labels).toContain('Child profiles')
   })
 
-  it('marks the four unbuilt rows as soon, and no others', () => {
+  it('marks the three unbuilt rows as soon, and no others', () => {
     const soon = buildNav(caps({ ledOrgs: [org], isAdmin: true }), 0)
       .flatMap((g) => g.rows)
       .filter((r) => r.soon)
       .map((r) => r.href)
+    // Toy inventory left this list when the organisation shelf was built.
     expect(soon).toEqual([
       '/printing',
       '/dashboard/print-requests',
-      '/dashboard/organisation/toys',
       '/dashboard/organisation/orders',
     ])
   })
