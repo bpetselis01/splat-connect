@@ -29,10 +29,36 @@ export default defineConfig({
   // A single spec reading a shared seeded account would corrupt other workers
   // mid-run, which is why this was `false` until that dependency was removed.
   fullyParallel: true,
-  // 4 locally; 2 on CI, where the free ubuntu-latest runner has 2 cores and
-  // oversubscribing turns timeouts into flake.
-  workers: process.env.CI ? 2 : 4,
-  retries: process.env.CI ? 1 : 0,
+  // One worker, and the reason is the auth container rather than the CPU.
+  //
+  // GoTrue opens a fresh Postgres connection per query and never reuses one:
+  // a single /auth/v1/user call costs ~9.4 connections, so the suite's ~25
+  // auth calls/sec became ~900 new TCP connections/sec. Each lands in
+  // TIME_WAIT for 60s, and the container's ephemeral range (32768-60999) is
+  // 28,232 ports — a ceiling of ~470 connections/sec. At 4 workers the range
+  // saturated ~40s in (measured peak: 28,238 sockets), after which every dial
+  // failed with EADDRNOTAVAIL and GoTrue returned 500s. That surfaced as
+  // whole specs failing on "Database error checking email" or timing out,
+  // scattered differently on every run — 2, 5, 13 and 37 failures across four
+  // runs of the same unchanged suite.
+  //
+  // The knob does not exist: the Supabase CLI only ever sets GOTRUE_DB_DRIVER
+  // and GOTRUE_DB_DATABASE_URL, there is no pool setting in config.toml, and
+  // /proc/sys is read-only inside the container so the port range and
+  // tcp_tw_reuse cannot be widened either. Staying under the ceiling is the
+  // only lever, so the fix is to cap the connection rate. 2 workers sits at
+  // ~95% of the budget and still failed; 1 worker runs at ~48% and costs only
+  // ~1.3 min, because this suite is dominated by fixed server-start time.
+  workers: 1,
+  // Capping workers above cuts the connection rate ~4x but cannot take it to
+  // zero: a navigation-dense spec still bursts past the ephemeral-port ceiling
+  // occasionally, and GoTrue answers 500 for as long as the range is spent.
+  // Roughly one spec per full run still loses that race, and it is a different
+  // spec every time — each one passes on its own (verified by re-running the
+  // loser 3-4x). One retry covers that, and only that: a genuinely broken
+  // assertion fails both attempts. Remove this once GoTrue can be given a
+  // connection pool; it is covering an infrastructure limit, not a flaky app.
+  retries: 1,
   reporter: 'line',
   use: { baseURL: WEB_URL, trace: 'on-first-retry' },
   projects: [
