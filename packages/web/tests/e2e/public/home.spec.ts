@@ -27,7 +27,7 @@ test('the launcher grid surfaces all six sections with their blurbs', async ({ p
   // unscoped text lookup would hit a Playwright strict-mode violation.
   const launcher = page.getByRole('heading', { name: 'Jump straight in' }).locator('..')
   const tiles = [
-    { href: '/library', label: 'Guides', blurb: 'Adaptation tutorials' },
+    { href: '/library', label: 'Guides', blurb: 'Adaptation guides' },
     { href: '/toy-library', label: 'Toy Library', blurb: 'Toys being given away' },
     { href: '/learn', label: 'Learn', blurb: 'Switches, tools, safety' },
     { href: '/get-involved', label: 'Get Involved', blurb: 'Make, give, or back' },
