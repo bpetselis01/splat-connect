@@ -25,7 +25,7 @@ export default async function ImpactPage() {
 
   const { totals, recent, contributors, organisations } = impact
   const stats = [
-    { label: 'Tutorials', count: totals.tutorials },
+    { label: 'Guides', count: totals.tutorials },
     { label: 'Toys shared', count: totals.toysShared },
     { label: 'Toys delivered', count: totals.toysDelivered },
     { label: 'Contributors', count: totals.contributors },
@@ -36,7 +36,7 @@ export default async function ImpactPage() {
     <div>
       <h1 className="text-2xl font-bold text-ink sm:text-3xl">Community impact</h1>
       <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted">
-        Tutorials written, toys shared, and deliveries made by the people and organisations
+        Guides written, toys shared, and deliveries made by the people and organisations
         behind SPLAT. Guides here are counted once they are approved and public.
       </p>
 
@@ -88,7 +88,7 @@ export default async function ImpactPage() {
             </span>
             <p className="mt-4 font-bold text-ink">No contributors yet.</p>
             <p className="mt-1 max-w-xs text-sm leading-relaxed text-muted">
-              Check back soon — this page tracks tutorials, toys, and deliveries across the
+              Check back soon — this page tracks guides, toys, and deliveries across the
               community.
             </p>
           </div>
