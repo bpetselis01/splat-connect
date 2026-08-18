@@ -39,6 +39,16 @@ describe('POST /api/public/notify', () => {
     expect(res.status).toBe(400)
   })
 
+  // 254 is the RFC 5321 maximum. Without a length guard, EMAIL_RE matches a
+  // string of any length and there is no select policy on this table for
+  // anyone to notice an unbounded row landing in it.
+  it('rejects an email over the RFC 5321 length maximum', async () => {
+    const email = `${'a'.repeat(250)}@example.com`
+    expect(email.length).toBeGreaterThan(254)
+    const res = await post({ email, featureKey: 'requests' })
+    expect(res.status).toBe(400)
+  })
+
   it('rejects a missing body field', async () => {
     const res = await post({ featureKey: 'requests' })
     expect(res.status).toBe(400)
