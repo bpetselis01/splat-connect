@@ -6,6 +6,7 @@
 import { Hono } from 'hono'
 import { createAdminClient } from '../supabase/client.js'
 import { createUserClient } from '../supabase/user-client.js'
+import { ORG_COLUMNS } from './organizations.js'
 import type { AuthVariables } from '../middleware/auth.js'
 import type { TutorialStatus } from '@splat-connect/types'
 
@@ -160,7 +161,9 @@ admin.post('/organizations', async (c) => {
       description: body.description?.trim() || null,
       created_by: c.get('userId'),
     })
-    .select()
+    // Named columns, not select(): 033 revoked the table-level SELECT grant, so
+    // the user client cannot read the pickup columns and `select()` fails whole.
+    .select(ORG_COLUMNS)
     .single()
   if (error) return c.json({ error: error.message }, 500)
 
@@ -193,7 +196,7 @@ admin.patch('/organizations/:id', async (c) => {
       updated_at: new Date().toISOString(),
     })
     .eq('id', c.req.param('id'))
-    .select()
+    .select(ORG_COLUMNS)
   if (error) return c.json({ error: error.message }, 500)
   if (!data.length) return c.json({ error: 'organisation not found' }, 404)
   return c.json(data[0])

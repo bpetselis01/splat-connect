@@ -95,12 +95,7 @@ export function buildNav(caps: Capabilities, unreadNotifications: number): NavGr
         // "Review queue", not "Manage team": no page anywhere lets a leader
         // add a member or create an org. The label names what exists.
         { href: '/dashboard/organisation', label: 'Review queue', icon: 'inbox' },
-        {
-          href: '/dashboard/organisation/toys',
-          label: 'Toy inventory',
-          icon: 'shelf',
-          soon: true,
-        },
+        { href: '/dashboard/organisation/toys', label: 'Toy inventory', icon: 'shelf' },
         {
           href: '/dashboard/organisation/orders',
           label: 'Print orders',

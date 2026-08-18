@@ -27,10 +27,16 @@ async function createPublishedToy(token: string, name: string, offerType: 'donat
   await toysReq(`/${toy.id}/publish`, token, { method: 'PATCH' })
   return toy.id
 }
-// There is no GET /api/toys/:id route, so archived state is read off the owner's list.
+// There is no GET /api/toys/:id route, so a toy's state is read off a list.
+// GET /api/toys returns only the caller's own toys, which makes this do double
+// duty after a transfer: undefined means the toy is no longer theirs.
 async function getToy(token: string, toyId: string) {
   const res = await toysReq('/', token)
-  const toys = (await res.json()) as Array<{ id: string; archived_at: string | null }>
+  const toys = (await res.json()) as Array<{
+    id: string
+    status: string
+    archived_at: string | null
+  }>
   return toys.find((t) => t.id === toyId)
 }
 
@@ -73,8 +79,13 @@ describe('POST /api/toy-transactions/:id/confirm', () => {
     expect(res.status).toBe(200)
     expect(((await res.json()) as { status: string }).status).toBe('completed')
 
-    const toyAfter = await getToy(owner.token, toyId)
-    expect(toyAfter?.archived_at ?? null).not.toBeNull()
+    // The toy went to the requester rather than being archived. It lands
+    // unlisted: they have not agreed to offer it to anyone else, and leaving it
+    // published would re-offer a toy they just took home.
+    expect(await getToy(owner.token, toyId)).toBeUndefined()
+    const received = await getToy(requester.token, toyId)
+    expect(received?.status).toBe('draft')
+    expect(received?.archived_at ?? null).toBeNull()
   })
 
   it('400s an incorrect code', async () => {
@@ -87,7 +98,7 @@ describe('POST /api/toy-transactions/:id/confirm', () => {
     expect(res.status).toBe(400)
   })
 
-  it('completes an exchange only once both parties confirm, archiving both toys', async () => {
+  it('completes an exchange only once both parties confirm, swapping both toys', async () => {
     const ownerToyId = await createPublishedToy(owner.token, 'Train set', 'exchange')
     const requesterToyId = await createPublishedToy(requester.token, 'Doll house', 'exchange')
     const created = await txReq('/', requester.token, {
@@ -113,10 +124,17 @@ describe('POST /api/toy-transactions/:id/confirm', () => {
     })
     expect(((await requesterConfirm.json()) as { status: string }).status).toBe('completed')
 
-    const ownerToyAfter = await getToy(owner.token, ownerToyId)
-    const requesterToyAfter = await getToy(requester.token, requesterToyId)
-    expect(ownerToyAfter?.archived_at ?? null).not.toBeNull()
-    expect(requesterToyAfter?.archived_at ?? null).not.toBeNull()
+    // Each toy is now on the other side, and neither party still holds what
+    // they gave away.
+    expect(await getToy(owner.token, ownerToyId)).toBeUndefined()
+    expect(await getToy(requester.token, requesterToyId)).toBeUndefined()
+
+    const requesterGot = await getToy(requester.token, ownerToyId)
+    const ownerGot = await getToy(owner.token, requesterToyId)
+    expect(requesterGot?.status).toBe('draft')
+    expect(requesterGot?.archived_at ?? null).toBeNull()
+    expect(ownerGot?.status).toBe('draft')
+    expect(ownerGot?.archived_at ?? null).toBeNull()
   })
 
   it('rejects the rival request only once the handoff completes', async () => {

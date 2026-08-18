@@ -3,8 +3,23 @@ import { Hono } from 'hono'
 import type { AuthVariables } from '../../../src/middleware/auth.js'
 
 const mockUserFrom = vi.fn()
+
+// Every handler now asks which organisations the caller leads before scoping a
+// query, so org_leaders is answered here rather than in each test's mock: these
+// cases are about a person's own toys, where the answer is always "none".
+// Tests that need a leader override it via mockLedOrgs.
+let ledOrgs: Array<{ org_id: string }> = []
+const mockLedOrgs = (orgIds: string[]) => {
+  ledOrgs = orgIds.map((org_id) => ({ org_id }))
+}
+
 vi.mock('../../../src/supabase/user-client.js', () => ({
-  createUserClient: () => ({ from: mockUserFrom }),
+  createUserClient: () => ({
+    from: (table: string) =>
+      table === 'org_leaders'
+        ? { select: () => ({ eq: () => Promise.resolve({ data: ledOrgs, error: null }) }) }
+        : mockUserFrom(table),
+  }),
 }))
 
 const { default: toys } = await import('../../../src/routes/toys.js')
@@ -20,7 +35,10 @@ function makeApp() {
   return app
 }
 
-beforeEach(() => vi.clearAllMocks())
+beforeEach(() => {
+  vi.clearAllMocks()
+  mockLedOrgs([])
+})
 
 describe('GET /', () => {
   it('returns 500 on a database error', async () => {
@@ -89,12 +107,22 @@ describe('POST /', () => {
   })
 })
 
+// PATCH reads the row before updating it, to learn whether quantity is an
+// editable field here — it is only ever an organisation's stock. This stubs
+// that read; `null` stands for a row the caller has no claim on.
+const patchRead = (data: unknown) => ({
+  select: () => ({
+    eq: () => ({ or: () => ({ maybeSingle: () => Promise.resolve({ data, error: null }) }) }),
+  }),
+})
+
 describe('PATCH /:id', () => {
   it('returns 500 on a database error', async () => {
     mockUserFrom.mockReturnValue({
+      ...patchRead({ owner_org_id: null }),
       update: () => ({
         eq: () => ({
-          eq: () => ({
+          or: () => ({
             is: () => ({
               select: () => ({
                 maybeSingle: () => Promise.resolve({ data: null, error: { message: 'boom' } }),
@@ -114,9 +142,10 @@ describe('PATCH /:id', () => {
 
   it('maps a malformed id to 404', async () => {
     mockUserFrom.mockReturnValue({
+      ...patchRead({ owner_org_id: null }),
       update: () => ({
         eq: () => ({
-          eq: () => ({
+          or: () => ({
             is: () => ({
               select: () => ({
                 maybeSingle: () => Promise.resolve({ data: null, error: { code: '22P02' } }),
@@ -135,10 +164,13 @@ describe('PATCH /:id', () => {
   })
 
   it('returns 404 for another owner\'s toy', async () => {
+    // The read finds nothing, so the update never runs — a leader of a
+    // different org gets exactly this, not a 403 that would confirm the row.
     mockUserFrom.mockReturnValue({
+      ...patchRead(null),
       update: () => ({
         eq: () => ({
-          eq: () => ({
+          or: () => ({
             is: () => ({
               select: () => ({
                 maybeSingle: () => Promise.resolve({ data: null, error: null }),
@@ -163,9 +195,10 @@ describe('PATCH /:id', () => {
       }),
     }))
     mockUserFrom.mockReturnValue({
+      ...patchRead({ owner_org_id: null }),
       update: () => ({
         eq: () => ({
-          eq: () => ({
+          or: () => ({
             is: isSpy,
           }),
         }),
@@ -186,7 +219,7 @@ describe('PATCH /:id/publish', () => {
     mockUserFrom.mockReturnValue({
       select: () => ({
         eq: () => ({
-          eq: () => ({
+          or: () => ({
             maybeSingle: () => Promise.resolve({ data: null, error: { message: 'boom' } }),
           }),
         }),
@@ -200,7 +233,7 @@ describe('PATCH /:id/publish', () => {
     mockUserFrom.mockReturnValue({
       select: () => ({
         eq: () => ({
-          eq: () => ({
+          or: () => ({
             maybeSingle: () => Promise.resolve({ data: null, error: null }),
           }),
         }),
@@ -214,7 +247,7 @@ describe('PATCH /:id/publish', () => {
     mockUserFrom.mockReturnValue({
       select: () => ({
         eq: () => ({
-          eq: () => ({
+          or: () => ({
             maybeSingle: () =>
               Promise.resolve({
                 data: { cover_photo_url: null, switch_adapted: false, switch_photo_urls: [] },
@@ -234,7 +267,7 @@ describe('PATCH /:id/publish', () => {
     mockUserFrom.mockReturnValue({
       select: () => ({
         eq: () => ({
-          eq: () => ({
+          or: () => ({
             maybeSingle: () =>
               Promise.resolve({
                 data: { cover_photo_url: 'https://x/cover.jpg', switch_adapted: true, switch_photo_urls: [] },
@@ -254,7 +287,7 @@ describe('PATCH /:id/publish', () => {
     mockUserFrom.mockReturnValue({
       select: () => ({
         eq: () => ({
-          eq: () => ({
+          or: () => ({
             maybeSingle: () =>
               Promise.resolve({
                 data: {
@@ -279,7 +312,7 @@ describe('PATCH /:id/publish', () => {
     mockUserFrom.mockReturnValueOnce({
       select: () => ({
         eq: () => ({
-          eq: () => ({
+          or: () => ({
             maybeSingle: () =>
               Promise.resolve({
                 data: {
@@ -297,7 +330,7 @@ describe('PATCH /:id/publish', () => {
     mockUserFrom.mockReturnValueOnce({
       update: () => ({
         eq: () => ({
-          eq: () => ({
+          or: () => ({
             select: () => ({
               maybeSingle: () =>
                 Promise.resolve({ data: { id: 't1', status: 'published' }, error: null }),
@@ -317,7 +350,7 @@ describe('DELETE /:id', () => {
     mockUserFrom.mockReturnValue({
       delete: () => ({
         eq: () => ({
-          eq: () => ({
+          or: () => ({
             is: () => ({
               select: () => ({
                 maybeSingle: () => Promise.resolve({ data: null, error: { message: 'boom' } }),
@@ -335,7 +368,7 @@ describe('DELETE /:id', () => {
     mockUserFrom.mockReturnValue({
       delete: () => ({
         eq: () => ({
-          eq: () => ({
+          or: () => ({
             is: () => ({
               select: () => ({
                 maybeSingle: () => Promise.resolve({ data: { id: 't1' }, error: null }),
@@ -359,7 +392,7 @@ describe('DELETE /:id', () => {
     mockUserFrom.mockReturnValue({
       delete: () => ({
         eq: () => ({
-          eq: () => ({
+          or: () => ({
             is: isSpy,
           }),
         }),

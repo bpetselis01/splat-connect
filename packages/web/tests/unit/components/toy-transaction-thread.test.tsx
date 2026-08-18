@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, within } from '@testing-library/react'
 import { ToyTransactionThread } from '@/components/toy-transaction-thread'
 import type { ToyTransactionDetail } from '@splat-connect/types'
 
@@ -12,6 +12,7 @@ function tx(overrides: Partial<ToyTransactionDetail> = {}): ToyTransactionDetail
     status: 'requested',
     requester_id: 'requester-1',
     owner_id: 'owner-1',
+    owner_org_id: null,
     owner_code: null,
     requester_code: null,
     owner_confirmed_at: null,
@@ -20,6 +21,7 @@ function tx(overrides: Partial<ToyTransactionDetail> = {}): ToyTransactionDetail
     pickup_suburb: null,
     pickup_state: null,
     pickup_postcode: null,
+    pickup_instructions: null,
     created_at: '2026-08-01T00:00:00Z',
     updated_at: '2026-08-01T00:00:00Z',
     toy_name: 'Fire truck',
@@ -27,6 +29,7 @@ function tx(overrides: Partial<ToyTransactionDetail> = {}): ToyTransactionDetail
     owner_name: 'Sam',
     requester_name: 'Ash',
     blocked_by_rival_accept: false,
+    received_toy: null,
     messages: [{ id: 'm1', transaction_id: 'tx-1', sender_id: 'requester-1', kind: 'system', body: 'Requested this toy for donation.', created_at: '2026-08-01T00:00:00Z' }],
     ...overrides,
   }
@@ -102,12 +105,184 @@ describe('ToyTransactionThread', () => {
     expect(screen.getByRole('button', { name: /confirm handoff/i })).toBeInTheDocument()
   })
 
+  /**
+   * The donation/exchange asymmetry lives in two expressions in the component
+   * (showMyCode, canConfirm) and is invisible from the outside: a donation is a
+   * one-way handoff — only the requester holds a code, only the owner types one
+   * in — while an exchange is mutual. These pin the whole matrix so a restyle
+   * cannot quietly drop one arm of it.
+   */
+  describe('donation vs exchange', () => {
+    function renderThread(overrides: Partial<ToyTransactionDetail>, viewerId: string) {
+      render(
+        <ToyTransactionThread
+          transaction={tx(overrides)}
+          viewerId={viewerId}
+          onSendMessage={noop}
+          onAccept={noop}
+          onReject={noop}
+          onWithdraw={noop}
+          onConfirm={noop}
+        />
+      )
+    }
+
+    it('names the offered toy on an exchange', () => {
+      renderThread({ type: 'exchange', offered_toy_name: 'Wooden blocks' }, 'owner-1')
+      expect(screen.getByText(/wooden blocks/i)).toBeInTheDocument()
+    })
+
+    it('has no offered-toy row on a donation', () => {
+      renderThread({ type: 'donation', offered_toy_name: null }, 'owner-1')
+      expect(screen.queryByText(/offered/i)).not.toBeInTheDocument()
+    })
+
+    it('gives the requester a code on a donation but not the owner', () => {
+      const accepted = {
+        status: 'accepted' as const,
+        owner_code: '111111',
+        requester_code: '222222',
+      }
+      const { unmount } = render(
+        <ToyTransactionThread
+          transaction={tx(accepted)}
+          viewerId="requester-1"
+          onSendMessage={noop}
+          onAccept={noop}
+          onReject={noop}
+          onWithdraw={noop}
+          onConfirm={noop}
+        />
+      )
+      expect(screen.getByText(/your handoff code/i)).toHaveTextContent('222222')
+      unmount()
+
+      renderThread(accepted, 'owner-1')
+      expect(screen.queryByText(/your handoff code/i)).not.toBeInTheDocument()
+    })
+  })
+
+  /**
+   * Before this the confirming party saw the input vanish and nothing take its
+   * place, which reads as a failed click rather than a handoff waiting on the
+   * other person.
+   */
+  it('acknowledges your confirmation while the other party has not confirmed', () => {
+    render(
+      <ToyTransactionThread
+        transaction={tx({
+          type: 'exchange',
+          status: 'accepted',
+          owner_code: '111111',
+          requester_code: '222222',
+          owner_confirmed_at: '2026-08-02T00:00:00Z',
+        })}
+        viewerId="owner-1"
+        onSendMessage={noop}
+        onAccept={noop}
+        onReject={noop}
+        onWithdraw={noop}
+        onConfirm={noop}
+      />
+    )
+    expect(screen.getByText(/waiting on ash/i)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /confirm handoff/i })).not.toBeInTheDocument()
+  })
+
+  // Alignment and bubble colour carry the sender visually; a screen reader gets
+  // neither, so the log role and the per-message attribution are the real ones.
+  it('exposes the conversation as a live log with attributed messages', () => {
+    render(
+      <ToyTransactionThread
+        transaction={tx({
+          messages: [
+            { id: 'm1', transaction_id: 'tx-1', sender_id: 'requester-1', kind: 'system', body: 'Requested this toy for donation.', created_at: '2026-08-01T00:00:00Z' },
+            { id: 'm2', transaction_id: 'tx-1', sender_id: 'requester-1', kind: 'user', body: 'Is it still available?', created_at: '2026-08-01T01:00:00Z' },
+            { id: 'm3', transaction_id: 'tx-1', sender_id: 'owner-1', kind: 'user', body: 'It is.', created_at: '2026-08-01T02:00:00Z' },
+          ],
+        })}
+        viewerId="owner-1"
+        onSendMessage={noop}
+        onAccept={noop}
+        onReject={noop}
+        onWithdraw={noop}
+        onConfirm={noop}
+      />
+    )
+    const log = screen.getByRole('log')
+    expect(log).toHaveAttribute('aria-live', 'polite')
+    expect(within(log).getByText('Ash said')).toBeInTheDocument()
+    expect(within(log).getByText('You said')).toBeInTheDocument()
+  })
+
   it('shows a completed message and no actions once completed', () => {
     render(
       <ToyTransactionThread transaction={tx({ status: 'completed' })} viewerId="owner-1" onSendMessage={noop} onAccept={noop} onReject={noop} onWithdraw={noop} onConfirm={noop} />
     )
     expect(screen.getByText(/handoff complete/i)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /withdraw/i })).not.toBeInTheDocument()
+  })
+
+  // Tests: the receiver of a completed handoff is offered a way to list it
+  // How:   a completed transaction carrying an unlisted received_toy
+  // Chain: transferring the toy silently would leave it a draft the receiver
+  //        never learns they own — the offer is the only thing connecting the
+  //        handoff to the toy now sitting in their My Toys
+  it('offers the receiver a way to list the toy they were handed', () => {
+    render(
+      <ToyTransactionThread
+        transaction={tx({
+          status: 'completed',
+          received_toy: { id: 'toy-1', name: 'Fire truck', status: 'draft' },
+        })}
+        viewerId="requester-1"
+        onSendMessage={noop}
+        onAccept={noop}
+        onReject={noop}
+        onWithdraw={noop}
+        onConfirm={noop}
+      />
+    )
+    expect(screen.getByText(/fire truck is yours now/i)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /add to toy library/i })).toHaveAttribute(
+      'href',
+      '/dashboard/toys/toy-1'
+    )
+  })
+
+  // Tests: the offer is absent for someone who received nothing
+  // How:   the same completed transaction with received_toy null, the shape the
+  //        API returns to the giver on a donation
+  // Chain: an offer to list shown to the person who just gave the toy away
+  //        points at a toy they no longer own
+  it('does not offer to list anything to the party who received nothing', () => {
+    render(
+      <ToyTransactionThread transaction={tx({ status: 'completed' })} viewerId="owner-1" onSendMessage={noop} onAccept={noop} onReject={noop} onWithdraw={noop} onConfirm={noop} />
+    )
+    expect(screen.getByText(/handoff complete/i)).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /add to toy library/i })).not.toBeInTheDocument()
+  })
+
+  // Tests: the offer disappears once the toy is listed
+  // How:   received_toy already at 'published'
+  // Chain: without the status check the card would keep asking for something
+  //        already done, every time the thread is opened
+  it('stops offering once the received toy is published', () => {
+    render(
+      <ToyTransactionThread
+        transaction={tx({
+          status: 'completed',
+          received_toy: { id: 'toy-1', name: 'Fire truck', status: 'published' },
+        })}
+        viewerId="requester-1"
+        onSendMessage={noop}
+        onAccept={noop}
+        onReject={noop}
+        onWithdraw={noop}
+        onConfirm={noop}
+      />
+    )
+    expect(screen.queryByRole('link', { name: /add to toy library/i })).not.toBeInTheDocument()
   })
 
   describe('accepting', () => {
@@ -185,5 +360,87 @@ describe('ToyTransactionThread', () => {
       expect(accept).toHaveAttribute('title', expect.stringMatching(/complete the current transaction/i))
       expect(screen.getByRole('button', { name: 'Reject' })).toBeEnabled()
     })
+  })
+})
+
+describe('ToyTransactionThread for an organisation', () => {
+  // An org handoff has no owner_id at all. Every "am I the owner" question on
+  // this screen used to compare against it, so without ledOrgIds a leader is
+  // rendered the requester's view: the wrong buttons, and — the dangerous one —
+  // the wrong handoff code, which fails silently in a room with two people in it.
+  const orgTx = (overrides: Partial<ToyTransactionDetail> = {}) =>
+    tx({ owner_id: null, owner_org_id: 'org-1', owner_name: 'Cerebral Palsy Alliance', ...overrides })
+
+  const renderAs = (
+    transaction: ToyTransactionDetail,
+    viewerId: string,
+    ledOrgIds: string[],
+    onAccept = noop
+  ) =>
+    render(
+      <ToyTransactionThread
+        transaction={transaction}
+        viewerId={viewerId}
+        ledOrgIds={ledOrgIds}
+        onSendMessage={noop}
+        onAccept={onAccept}
+        onReject={noop}
+        onWithdraw={noop}
+        onConfirm={noop}
+      />
+    )
+
+  it('offers Accept and Reject to a leader of the org that was asked', () => {
+    renderAs(orgTx(), 'leader-1', ['org-1'])
+    expect(screen.getByRole('button', { name: /accept/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /reject/i })).toBeInTheDocument()
+  })
+
+  it('offers neither to a leader of a different org', () => {
+    renderAs(orgTx(), 'leader-2', ['org-9'])
+    expect(screen.queryByRole('button', { name: /accept/i })).not.toBeInTheDocument()
+  })
+
+  it('accepts without asking for an address, which is not the leader’s to choose', () => {
+    const onAccept = vi.fn().mockResolvedValue(undefined)
+    renderAs(orgTx(), 'leader-1', ['org-1'], onAccept)
+
+    fireEvent.click(screen.getByRole('button', { name: /accept/i }))
+
+    // No dialog: the server reads the org's fixed address and ignores anything
+    // sent here, so a form would be a question whose answer is discarded.
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(onAccept).toHaveBeenCalledWith(null)
+  })
+
+  it('puts the leader on the confirming side of a donation, and the family on the reciting side', () => {
+    // On a donation the giving side types the code the receiver is showing
+    // them, so the leader gets an input and the family gets a number to read
+    // out. Reversing these is the silent failure: two people in a room with
+    // codes that do not match and nothing on screen explaining why.
+    const leaderView = orgTx({
+      status: 'accepted',
+      type: 'donation',
+      owner_code: '111111',
+      requester_code: null,
+    })
+    const { unmount } = renderAs(leaderView, 'leader-1', ['org-1'])
+    expect(screen.getByRole('button', { name: /confirm/i })).toBeInTheDocument()
+    unmount()
+
+    const familyView = orgTx({
+      status: 'accepted',
+      type: 'donation',
+      owner_code: null,
+      requester_code: '222222',
+    })
+    renderAs(familyView, 'requester-1', [])
+    expect(screen.getByText('222222')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /confirm/i })).not.toBeInTheDocument()
+  })
+
+  it('names the organisation as the other party for the family', () => {
+    renderAs(orgTx(), 'requester-1', [])
+    expect(screen.getAllByText(/Cerebral Palsy Alliance/).length).toBeGreaterThan(0)
   })
 })

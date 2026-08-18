@@ -2,13 +2,18 @@
 import { useState, type FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import { browserApiClient } from '@/lib/browser-api-client'
-import type { Toy } from '@splat-connect/types'
+import type { Organization, Toy } from '@splat-connect/types'
 
-export function NewToyForm() {
+export function NewToyForm({ ledOrgs = [] }: { ledOrgs?: Organization[] }) {
   const router = useRouter()
   const [name, setName] = useState('')
   const [condition, setCondition] = useState(5)
   const [description, setDescription] = useState('')
+  // Empty string means "mine". A leader adding a personal toy is the ordinary
+  // case and stays the default, so leadership never quietly redirects a toy
+  // away from the person who added it.
+  const [orgId, setOrgId] = useState('')
+  const [quantity, setQuantity] = useState(1)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -21,6 +26,7 @@ export function NewToyForm() {
         name,
         condition,
         description: description || null,
+        ...(orgId ? { owner_org_id: orgId, quantity } : {}),
       })
       // Straight on to Photos: the Add page shows the same three pills, so
       // landing back on Details would look like the save had not taken.
@@ -44,6 +50,47 @@ export function NewToyForm() {
           className="field"
         />
       </div>
+
+      {/* Only a leader ever sees this. For everyone else there is one possible
+          answer, and a select with one option is a question not worth asking. */}
+      {ledOrgs.length > 0 && (
+        <div>
+          <label htmlFor="new-toy-owner" className="field-label">Who holds this toy</label>
+          <select
+            id="new-toy-owner"
+            value={orgId}
+            onChange={(e) => setOrgId(e.target.value)}
+            className="field"
+          >
+            <option value="">Me</option>
+            {ledOrgs.map((org) => (
+              <option key={org.id} value={org.id}>
+                {org.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* Stock only means something for an organisation: a person holds one
+          object, which is a rule the database enforces rather than assumes. */}
+      {orgId && (
+        <div>
+          <label htmlFor="new-toy-quantity" className="field-label">How many do you hold</label>
+          <input
+            id="new-toy-quantity"
+            type="number"
+            min={1}
+            step={1}
+            value={quantity}
+            onChange={(e) => setQuantity(Number(e.target.value))}
+            className="field"
+          />
+          <p className="mt-1 text-xs text-muted">
+            Five of the same bear is one listing with a count of five, not five listings.
+          </p>
+        </div>
+      )}
 
       <div>
         <label htmlFor="new-toy-condition" className="field-label">Condition (1–10)</label>

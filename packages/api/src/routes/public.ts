@@ -6,19 +6,37 @@
 import { Hono } from 'hono'
 import { createAnonClient, createAdminClient } from '../supabase/client.js'
 
-async function midHandoffToyIds(): Promise<string[] | null> {
+/**
+ * Toys with nothing left to promise, and so nothing to show a browsing parent.
+ *
+ * This used to be "any toy with an accepted handoff", which was the same set
+ * only while one row meant one object. An organisation holding five bears with
+ * one handoff running still has four: hiding the card would empty the library
+ * on the first request. So a toy is hidden when its accepted handoffs reach its
+ * quantity — which also covers out of stock, since quantity 0 is at capacity by
+ * definition.
+ *
+ * An offered exchange toy is hidden outright, unconditionally. It is one
+ * person's single object, promised to someone, and quantity has no bearing.
+ */
+async function unavailableToyIds(): Promise<string[] | null> {
   const admin = createAdminClient()
-  const { data, error } = await admin
-    .from('toy_transactions')
-    .select('toy_id, offered_toy_id')
-    .eq('status', 'accepted')
-  if (error) return null
-  const ids = new Set<string>()
-  for (const row of data ?? []) {
-    ids.add(row.toy_id)
-    if (row.offered_toy_id) ids.add(row.offered_toy_id)
+  const [{ data: accepted, error }, { data: toys, error: toysError }] = await Promise.all([
+    admin.from('toy_transactions').select('toy_id, offered_toy_id').eq('status', 'accepted'),
+    admin.from('toys').select('id, quantity').eq('status', 'published').is('archived_at', null),
+  ])
+  if (error || toysError) return null
+
+  const takenPerToy = new Map<string, number>()
+  const hidden = new Set<string>()
+  for (const row of accepted ?? []) {
+    takenPerToy.set(row.toy_id, (takenPerToy.get(row.toy_id) ?? 0) + 1)
+    if (row.offered_toy_id) hidden.add(row.offered_toy_id)
   }
-  return [...ids]
+  for (const toy of (toys ?? []) as Array<{ id: string; quantity: number }>) {
+    if ((takenPerToy.get(toy.id) ?? 0) >= toy.quantity) hidden.add(toy.id)
+  }
+  return [...hidden]
 }
 
 const publicRoutes = new Hono()
@@ -86,15 +104,16 @@ publicRoutes.get('/toys', async (c) => {
   const { data, error } = await supabase
     .from('toys')
     // profiles(name) is a many-to-one embed via owner_id, so PostgREST
-    // returns a single object per row, not an array.
-    .select('*, profiles(name)')
+    // returns a single object per row, not an array. organizations(name) is the
+    // same shape via owner_org_id, and exactly one of the two is ever present.
+    .select('*, profiles(name), organizations(name)')
     .eq('status', 'published')
     .is('archived_at', null)
     .order('created_at', { ascending: false })
   if (error) return c.json({ error: error.message }, 500)
-  const midHandoff = await midHandoffToyIds()
-  if (midHandoff === null) return c.json({ error: 'Failed to load toys' }, 500)
-  const hidden = new Set(midHandoff)
+  const unavailable = await unavailableToyIds()
+  if (unavailable === null) return c.json({ error: 'Failed to load toys' }, 500)
+  const hidden = new Set(unavailable)
   return c.json((data ?? []).filter((t) => !hidden.has(t.id)))
 })
 
@@ -102,7 +121,7 @@ publicRoutes.get('/toys/:id', async (c) => {
   const supabase = createAnonClient()
   const { data, error } = await supabase
     .from('toys')
-    .select('*, profiles(name)')
+    .select('*, profiles(name), organizations(name)')
     .eq('id', c.req.param('id'))
     .eq('status', 'published')
     .is('archived_at', null)
@@ -111,9 +130,9 @@ publicRoutes.get('/toys/:id', async (c) => {
   // be distinguishable from a nonexistent one to an unauthenticated caller,
   // same reasoning as the tutorial detail route above.
   if (error) return c.json({ error: error.message }, 404)
-  const midHandoff = await midHandoffToyIds()
-  if (midHandoff === null) return c.json({ error: 'Failed to load toys' }, 500)
-  const hidden = new Set(midHandoff)
+  const unavailable = await unavailableToyIds()
+  if (unavailable === null) return c.json({ error: 'Failed to load toys' }, 500)
+  const hidden = new Set(unavailable)
   if (hidden.has(data.id)) return c.json({ error: 'Not found' }, 404)
   return c.json(data)
 })

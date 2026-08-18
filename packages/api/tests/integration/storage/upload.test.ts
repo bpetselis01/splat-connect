@@ -2,8 +2,10 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
 import { acceptTerms } from '../../helpers/orgs.js'
+import { createUserClient } from '../../../src/supabase/user-client.js'
 
 let user: TestUser
+let stranger: TestUser
 const tutorialId = crypto.randomUUID()
 
 function uploadRequest(path: string, token: string, file: File) {
@@ -19,6 +21,7 @@ function uploadRequest(path: string, token: string, file: File) {
 
 beforeAll(async () => {
   user = await createTestUser('contributor')
+  stranger = await createTestUser('contributor')
   // The upload handlers only write into a tutorial the caller contributes to,
   // so the folder needs a real tutorial behind it — a bare UUID 404s.
   await acceptTerms(user.id, 'contributor_terms')
@@ -48,6 +51,7 @@ afterAll(async () => {
   // tutorials have no FK to profiles — delete explicitly before the user
   await admin.from('tutorials').delete().eq('id', tutorialId)
   await deleteTestUser(user.id)
+  await deleteTestUser(stranger.id)
 })
 
 describe('storage uploads', () => {
@@ -93,5 +97,27 @@ describe('storage uploads', () => {
     const body = (await res.json()) as { url: string; filename: string }
     expect(body.url).toContain('/stl-files/')
     expect(body.filename).toBe('bracket.stl')
+  })
+})
+
+// Runs after the uploads above, so the victim's files are really there to steal.
+describe("writing into another tutorial's folder", () => {
+  it('404s an upload aimed at a tutorial the caller does not contribute to', async () => {
+    const res = await uploadRequest(
+      '/api/upload/stl',
+      stranger.token,
+      new File(['malicious'], 'bracket.stl', { type: 'application/octet-stream' })
+    )
+    expect(res.status).toBe(404)
+  })
+
+  it('storage RLS blocks a direct overwrite that skips the API', async () => {
+    const { error } = await createUserClient(stranger.token)
+      .storage.from('stl-files')
+      .upload(`${tutorialId}/bracket.stl`, new File(['malicious'], 'bracket.stl'), { upsert: true })
+    expect(error?.message).toContain('row-level security')
+
+    const { data } = await adminClient().storage.from('stl-files').download(`${tutorialId}/bracket.stl`)
+    expect(await data?.text()).toBe('solid bracket')
   })
 })

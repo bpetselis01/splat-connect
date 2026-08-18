@@ -1,8 +1,11 @@
+import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { getCapabilities } from '@/lib/capabilities'
 import { apiClient } from '@/lib/api-client'
+import { LiveTransaction } from '@/components/live-transaction'
 import { ToyTransactionThread } from '@/components/toy-transaction-thread'
+import { isOwnerSide } from '@splat-connect/types'
 import type { PickupAddress, Profile, ToyTransactionDetail } from '@splat-connect/types'
 
 // A partly-filled profile address is no use as a default — the accept dialog
@@ -33,9 +36,11 @@ export default async function ExchangeDetailPage({ params }: { params: Promise<{
     await apiClient.post(`/api/toy-transactions/${id}/messages`, { body })
     revalidatePath(`/dashboard/exchanges/${id}`)
   }
-  async function accept(address: PickupAddress) {
+  async function accept(address: PickupAddress | null) {
     'use server'
-    await apiClient.post(`/api/toy-transactions/${id}/accept`, address)
+    // An empty body for an organisation: the handler reads the fixed address
+    // from the org record and ignores whatever arrives here.
+    await apiClient.post(`/api/toy-transactions/${id}/accept`, address ?? {})
     revalidatePath(`/dashboard/exchanges/${id}`)
   }
   async function reject() {
@@ -54,12 +59,29 @@ export default async function ExchangeDetailPage({ params }: { params: Promise<{
     revalidatePath(`/dashboard/exchanges/${id}`)
   }
 
+  const ledOrgIds = caps.ledOrgs.map((org) => org.id)
+  const otherPartyName = isOwnerSide(tx, caps.profile.id, ledOrgIds)
+    ? tx.requester_name
+    : tx.owner_name
+
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold text-ink">{tx.toy_name}</h1>
+      <LiveTransaction transactionId={id} />
+      {/* The thread is reachable from a notification as well as the list, so it
+          needs a way back that does not assume browser history. */}
+      <div className="mb-6">
+        <Link href="/dashboard/exchanges" className="text-sm font-bold text-brand-dark hover:underline">
+          ← Exchanges
+        </Link>
+        <h1 className="mt-1 text-2xl font-bold text-ink">{tx.toy_name}</h1>
+        <p className="mt-1 text-sm text-muted">
+          {tx.type === 'donation' ? 'Donation' : 'Exchange'} with {otherPartyName}
+        </p>
+      </div>
       <ToyTransactionThread
         transaction={tx}
         viewerId={caps.profile.id}
+        ledOrgIds={ledOrgIds}
         viewerDefaultAddress={defaultAddress(caps.profile)}
         onSendMessage={sendMessage}
         onAccept={accept}

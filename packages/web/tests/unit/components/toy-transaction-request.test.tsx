@@ -32,6 +32,8 @@ function myToy(overrides: Partial<Toy> = {}): Toy {
   return {
     id: 'my-toy-1',
     owner_id: 'viewer-1',
+    owner_org_id: null,
+    quantity: 1,
     name: 'Blocks',
     description: null,
     condition: 8,

@@ -29,7 +29,7 @@ export default async function NewToyPage() {
             content: (
               <div className="panel pt-5">
                 <div className="px-5 pb-5">
-                  <NewToyForm />
+                  <NewToyForm ledOrgs={caps.ledOrgs} />
                 </div>
               </div>
             ),

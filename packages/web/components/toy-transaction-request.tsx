@@ -58,12 +58,22 @@ export function ToyTransactionRequest({
   const canExchange = toy.offer_type === 'exchange' || toy.offer_type === 'both'
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="card-flat flex flex-col gap-3 p-4">
       {error && (
         <p role="alert" className="alert alert-danger">
           {error}
         </p>
       )}
+      {/* Says what pressing either button actually does. Both of them open a
+          conversation with the owner rather than completing anything, which the
+          labels alone ("Arrange pickup") do not make obvious. */}
+      <p className="text-sm leading-relaxed text-muted">
+        {canDonate && canExchange
+          ? 'Ask to collect this toy, or offer one of yours in exchange. Either way it starts a conversation with the owner.'
+          : canDonate
+            ? 'Ask to collect this toy. This starts a conversation with the owner.'
+            : 'Offer one of your toys in exchange. This starts a conversation with the owner.'}
+      </p>
       {canDonate && (
         <button type="button" disabled={busy} onClick={() => start('donation')} className="btn btn-accent">
           Arrange pickup

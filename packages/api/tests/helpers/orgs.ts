@@ -90,11 +90,62 @@ export async function requestBacking(opts: {
   return data.id as string
 }
 
+/** The fixed pickup point. Written service-role because the only route that
+ *  writes it is itself under test elsewhere. */
+export async function setOrgPickup(
+  orgId: string,
+  overrides: Record<string, string | null> = {}
+) {
+  const { error } = await adminClient()
+    .from('organizations')
+    .update({
+      pickup_line1: '5 Association Way',
+      pickup_suburb: 'Northbridge',
+      pickup_state: 'NSW',
+      pickup_postcode: '2063',
+      pickup_instructions: 'Reception, ground floor. Ask for the toy library.',
+      ...overrides,
+    })
+    .eq('id', orgId)
+  if (error) throw new Error(`setOrgPickup failed: ${error.message}`)
+}
+
+/** Published org stock, ready to be requested. `quantity` is the whole point:
+ *  a person's toy cannot hold more than 1, so this is the only way to make a
+ *  toy several families can be mid-handoff on at once. */
+export async function createOrgToy(opts: {
+  orgId: string
+  quantity?: number
+  offerType?: 'donation' | 'exchange' | 'both'
+  name?: string
+  status?: 'draft' | 'published'
+}): Promise<string> {
+  const { data, error } = await adminClient()
+    .from('toys')
+    .insert({
+      name: opts.name ?? `Sensory Bear ${crypto.randomUUID().slice(0, 8)}`,
+      condition: 8,
+      owner_id: null,
+      owner_org_id: opts.orgId,
+      quantity: opts.quantity ?? 1,
+      offer_type: opts.offerType ?? 'donation',
+      cover_photo_url: 'https://example.com/bear.jpg',
+      status: opts.status ?? 'published',
+    })
+    .select('id')
+    .single()
+  if (error) throw new Error(`createOrgToy failed: ${error.message}`)
+  return data.id as string
+}
+
 /** `tutorial_orgs` rows go with either parent via cascade, so they need no
  *  explicit delete here. */
 export async function cleanupOrg(orgId: string, tutorialIds: string[] = []) {
   const admin = adminClient()
   if (tutorialIds.length) await admin.from('tutorials').delete().in('id', tutorialIds)
   await admin.from('org_leaders').delete().eq('org_id', orgId)
+  // Toys and their transactions cascade from the organisation (033), so only
+  // the org row needs deleting — but the toys a handoff MINTED belong to a
+  // person and do not, which is why toy suites also delete their test users.
   await admin.from('organizations').delete().eq('id', orgId)
 }

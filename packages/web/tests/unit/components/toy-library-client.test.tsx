@@ -17,6 +17,8 @@ function toy(overrides: Partial<ToyWithOwner> = {}): ToyWithOwner {
   return {
     id: 't1',
     owner_id: 'u1',
+    owner_org_id: null,
+    quantity: 1,
     name: 'Fire truck',
     description: null,
     condition: 8,
@@ -29,6 +31,7 @@ function toy(overrides: Partial<ToyWithOwner> = {}): ToyWithOwner {
     offer_type: null,
     archived_at: null,
     profiles: { name: 'Lee' },
+    organizations: null,
     ...overrides,
   }
 }
