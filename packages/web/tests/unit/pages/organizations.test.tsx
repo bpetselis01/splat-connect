@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 
-const get = vi.fn()
-vi.mock('@/lib/api-client', () => ({ apiClient: { get: (...a: unknown[]) => get(...a) } }))
+const fetchMock = vi.fn()
+vi.stubGlobal('fetch', fetchMock)
+const jsonResponse = (body: unknown) => ({ ok: true, json: () => Promise.resolve(body) })
 vi.mock('next/link', () => ({
   default: ({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) => (
     <a href={href} className={className}>{children}</a>
@@ -22,7 +23,7 @@ describe('organisations directory', () => {
   // Chain: an organisation vanishing from a directory is unexplainable to someone
   //        who expected to find it, and their name is still on work they backed
   it('lists suspended organisations, marked', async () => {
-    get.mockResolvedValue([org('o1', 'Riverside', 'active'), org('o2', 'Dormant', 'suspended')])
+    fetchMock.mockResolvedValue(jsonResponse([org('o1', 'Riverside', 'active'), org('o2', 'Dormant', 'suspended')]))
     const { default: Page } = await import('@/app/organizations/page')
     render(await Page())
 
@@ -36,7 +37,7 @@ describe('organisations directory', () => {
   // Chain: a contributor cannot create one and would otherwise be left looking for
   //        a button that does not exist
   it('teaches the interface when there are none', async () => {
-    get.mockResolvedValue([])
+    fetchMock.mockResolvedValue(jsonResponse([]))
     const { default: Page } = await import('@/app/organizations/page')
     render(await Page())
     expect(screen.getByText(/No organisations yet/i)).toBeInTheDocument()
@@ -44,7 +45,7 @@ describe('organisations directory', () => {
   })
 
   it('links each organisation to its page', async () => {
-    get.mockResolvedValue([org('o1', 'Riverside', 'active')])
+    fetchMock.mockResolvedValue(jsonResponse([org('o1', 'Riverside', 'active')]))
     const { default: Page } = await import('@/app/organizations/page')
     render(await Page())
     expect(screen.getByRole('link')).toHaveAttribute('href', '/organizations/o1')
