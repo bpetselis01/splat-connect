@@ -3,13 +3,15 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { Nav } from '@/components/nav'
 
 const mockSignOut = vi.fn()
+const pathname = vi.hoisted(() => ({ current: '/' }))
 
 // --- Mock strategy ---
 // Four things are mocked: next/link is replaced with a plain <a> tag so links render in
-// jsdom without Next.js routing infrastructure; usePathname is stubbed because Nav reads it
-// to mark the current page and there is no router mounted here; the Supabase client is
-// replaced so mockSignOut can be inspected; and window.location is stubbed with a writable
-// href so the post-sign-out redirect can be asserted without triggering real navigation.
+// jsdom without Next.js routing infrastructure; usePathname is stubbed via a hoisted ref (so
+// individual tests can vary the current path) because Nav reads it to mark the active section
+// and there is no router mounted here; the Supabase client is replaced so mockSignOut can be
+// inspected; and window.location is stubbed with a writable href so the post-sign-out redirect
+// can be asserted without triggering real navigation.
 vi.mock('next/link', () => ({
   default: ({ href, children, ...props }: { href: string; children: React.ReactNode; [key: string]: unknown }) => (
     <a href={href} {...props}>{children}</a>
@@ -17,7 +19,7 @@ vi.mock('next/link', () => ({
 }))
 
 vi.mock('next/navigation', () => ({
-  usePathname: () => '/',
+  usePathname: () => pathname.current,
 }))
 
 vi.mock('@/lib/supabase/client', () => ({
@@ -29,23 +31,30 @@ describe('Nav', () => {
     vi.clearAllMocks()
     mockSignOut.mockResolvedValue({})
     vi.stubGlobal('location', { href: '' })
+    pathname.current = '/'
   })
 
-  // Tests: the Library link is visible to users who are not signed in (role is null)
-  // How:   renders <Nav role={null} />; checks a link with text "library" is in the document
-  // Chain: unauthenticated visitors can browse the tutorial library → the landing experience
-  //        works without requiring login for public content
-  it('renders library link for unauthenticated users', () => {
+  // Tests: all six public sections from PUBLIC_NAV are visible to a signed-out visitor
+  // How:   renders <Nav role={null} />; checks a link for each section label is present
+  // Chain: the top bar now reads its sections from the nav model rather than a hand-maintained
+  //        array, so a signed-out visitor sees exactly the model's six sections
+  it('shows all six public sections to a signed-out visitor', () => {
     render(<Nav role={null} />)
-    expect(screen.getByRole('link', { name: 'Library' })).toBeInTheDocument()
+    for (const label of ['Guides', 'Toy Library', 'Learn', 'Get Involved', 'Impact', 'About']) {
+      expect(screen.getByRole('link', { name: label })).toBeInTheDocument()
+    }
   })
 
-  // Tests: the Toy library link is visible to users who are not signed in
-  // How:   renders <Nav role={null} />; checks a link with text "Toy library" is present
-  // Chain: unauthenticated visitors can browse published toys, same as the tutorial library
-  it('renders toy library link for unauthenticated users', () => {
+  // Tests: the tutorial catalogue is labelled Guides (not the old Library) and still links to
+  //        /library
+  // How:   renders <Nav role={null} />; checks the Guides link's href, and that no link named
+  //        "Library" remains
+  // Chain: the nav-model rename (Library -> Guides) must reach the top bar; the old label
+  //        should not linger anywhere a screen reader or test would find it
+  it('labels the tutorial catalogue Guides, not Library', () => {
     render(<Nav role={null} />)
-    expect(screen.getByRole('link', { name: 'Toy library' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Guides' })).toHaveAttribute('href', '/library')
+    expect(screen.queryByRole('link', { name: 'Library' })).toBeNull()
   })
 
   // Tests: the Dashboard link is visible to contributors
@@ -88,14 +97,53 @@ describe('Nav', () => {
     expect(screen.queryByRole('link', { name: 'My Tutorials' })).not.toBeInTheDocument()
   })
 
-  // Tests: the public organisations directory is reachable for any signed-in
-  //        account, not gated on a specific role
-  // How:   renders <Nav role="contributor" />; checks the Organisations link is present
-  // Chain: every signed-in account may browse the org directory → gating it further
-  //        would need a per-request lookup in the nav for no benefit
-  it('keeps the public organisations directory for any signed-in account', () => {
+  // Tests: the public organisations directory is still reachable for any signed-in account,
+  //        but no longer as its own top-bar link — /organizations is now an Impact child in
+  //        PUBLIC_NAV, reachable via the Impact subnav and the footer
+  // How:   renders <Nav role="contributor" />; checks the Impact link is present and that no
+  //        top-bar link named "Organisations" exists
+  // Chain: every signed-in account can still reach the org directory in one extra click via
+  //        Impact → the behaviour survives, only its top-bar location moved
+  it('keeps the organisations directory reachable via Impact, not as its own top-bar link', () => {
     render(<Nav role="contributor" />)
-    expect(screen.getByRole('link', { name: 'Organisations' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Impact' })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Organisations' })).toBeNull()
+  })
+
+  // Tests: the active section is detected from a nested path via sectionFor, not a hand-rolled
+  //        prefix test
+  // How:   sets pathname to /learn/switch-types; renders <Nav role={null} />; checks the Learn
+  //        link carries aria-current="page"
+  // Chain: sub-sections must light up their parent section in the top bar so a visitor always
+  //        knows where they are
+  it('marks the section active from a nested path', () => {
+    pathname.current = '/learn/switch-types'
+    render(<Nav role={null} />)
+    expect(screen.getByRole('link', { name: 'Learn' })).toHaveAttribute('aria-current', 'page')
+  })
+
+  // Tests: /organizations activates Impact even though it shares no prefix with /impact —
+  //        plain prefix matching would miss this, which is exactly why Nav delegates to
+  //        sectionFor instead of writing its own test
+  // How:   sets pathname to /organizations; renders <Nav role={null} />; checks the Impact
+  //        link carries aria-current="page"
+  // Chain: the organisations directory must read as "inside Impact" to stay legible even
+  //        though its URL was never renamed to match
+  it('marks Impact active on the organisations directory', () => {
+    pathname.current = '/organizations'
+    render(<Nav role={null} />)
+    expect(screen.getByRole('link', { name: 'Impact' })).toHaveAttribute('aria-current', 'page')
+  })
+
+  // Tests: the top bar never renders an expandable menu control — the whole point of the
+  //        redesign is a flat, dropdown-free nav
+  // How:   renders <Nav role={null} />; checks no element in the document carries
+  //        aria-expanded
+  // Chain: hover/disclosure widgets are the accessibility failure mode this design exists to
+  //        avoid on a platform serving people with disabilities
+  it('never renders an expandable menu control', () => {
+    render(<Nav role={null} />)
+    expect(document.querySelector('[aria-expanded]')).toBeNull()
   })
 
   // Tests: contributors do not see the Admin link
