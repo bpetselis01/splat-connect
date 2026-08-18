@@ -1,7 +1,8 @@
 /**
  * Contributor profile routes: GET/PATCH /api/contributors/me.
  *
- * `name` and the pickup_* address fields are mutable (see EDITABLE below).
+ * `name`, the pickup_* address fields, and `public_showcase` are mutable
+ * (see EDITABLE below).
  * `role` and `email` are frozen by the profiles_freeze_identity trigger
  * (009) — role was an escalation path, and email mirrors auth.users.
  */
@@ -27,12 +28,18 @@ contributors.get('/me', async (c) => {
 // Whitelist of client-editable columns. role and email are frozen by the
 // profiles_freeze_identity trigger (009) and are ignored here rather than
 // rejected, matching PUT /api/child-profile's handling of parent_id.
-const EDITABLE = ['name', 'pickup_line1', 'pickup_suburb', 'pickup_state', 'pickup_postcode'] as const
+const EDITABLE = ['name', 'pickup_line1', 'pickup_suburb', 'pickup_state', 'pickup_postcode', 'public_showcase'] as const
 
 contributors.patch('/me', async (c) => {
   const body = await c.req.json().catch(() => null)
   if (body === null || typeof body !== 'object' || Array.isArray(body)) {
     return c.json({ error: 'Body must be an object' }, 400)
+  }
+
+  // public_showcase is `boolean not null` — reject a bad type here rather
+  // than let the update 500 at the database.
+  if ('public_showcase' in body && typeof (body as Record<string, unknown>).public_showcase !== 'boolean') {
+    return c.json({ error: 'public_showcase must be a boolean' }, 400)
   }
 
   const patch = pickEditable(body as Record<string, unknown>, EDITABLE)

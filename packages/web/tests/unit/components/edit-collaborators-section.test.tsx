@@ -15,13 +15,13 @@ const primary: TutorialContributor & { profiles: Profile } = {
   profile_id: 'p1',
   role: 'primary',
   added_at: '',
-  profiles: { id: 'p1', name: 'Primary Author', email: 'primary@test.local', role: 'contributor', created_at: '' },
+  profiles: { id: 'p1', name: 'Primary Author', email: 'primary@test.local', role: 'contributor', created_at: '', public_showcase: true },
 }
 const collaborator = {
   ...primary,
   profile_id: 'p2',
   role: 'collaborator' as const,
-  profiles: { id: 'p2', name: 'Jane', email: 'jane@test.local', role: 'contributor' as const, created_at: '' },
+  profiles: { id: 'p2', name: 'Jane', email: 'jane@test.local', role: 'contributor' as const, created_at: '', public_showcase: true },
 }
 
 describe('EditCollaboratorsSection', () => {

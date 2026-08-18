@@ -26,7 +26,7 @@ function tutorial(overrides: Partial<TutorialWithDetails> = {}): TutorialWithDet
         profile_id: 'p1',
         role: 'primary',
         added_at: '',
-        profiles: { id: 'p1', name: 'Primary', email: 'p@test.local', role: 'contributor', created_at: '' },
+        profiles: { id: 'p1', name: 'Primary', email: 'p@test.local', role: 'contributor', created_at: '', public_showcase: true },
       },
     ],
     ...overrides,
@@ -94,7 +94,7 @@ describe('computeStepStatuses', () => {
           profile_id: 'p2',
           role: 'collaborator',
           added_at: '',
-          profiles: { id: 'p2', name: 'Jane', email: 'j@test.local', role: 'contributor', created_at: '' },
+          profiles: { id: 'p2', name: 'Jane', email: 'j@test.local', role: 'contributor', created_at: '', public_showcase: true },
         },
       ],
     })

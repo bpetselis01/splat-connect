@@ -54,6 +54,7 @@ const mockProfile: Profile = {
   email: 'test@example.com',
   role: 'contributor',
   created_at: '2026-01-01T00:00:00Z',
+  public_showcase: true,
 }
 
 const baseTutorialWithDetails: TutorialWithDetails = {

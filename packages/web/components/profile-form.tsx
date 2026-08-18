@@ -1,6 +1,6 @@
 'use client'
 /**
- * Account settings. Only `name` is editable: `role` and `email` are frozen by
+ * Account settings. `name`, pickup address fields, and `public_showcase` are editable: `role` and `email` are frozen by
  * the profiles_freeze_identity trigger (009), so offering fields for them would
  * promise something the database refuses.
  *
@@ -21,6 +21,7 @@ export function ProfileForm({ profile }: { profile: Profile }) {
   const [pickupSuburb, setPickupSuburb] = useState(profile.pickup_suburb || '')
   const [pickupState, setPickupState] = useState(profile.pickup_state || '')
   const [pickupPostcode, setPickupPostcode] = useState(profile.pickup_postcode || '')
+  const [publicShowcase, setPublicShowcase] = useState(profile.public_showcase)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
@@ -37,6 +38,7 @@ export function ProfileForm({ profile }: { profile: Profile }) {
         pickup_suburb: pickupSuburb,
         pickup_state: pickupState,
         pickup_postcode: pickupPostcode,
+        public_showcase: publicShowcase,
       })
       setSaved(true)
     } catch {
@@ -78,6 +80,18 @@ export function ProfileForm({ profile }: { profile: Profile }) {
         <input id="pickup-state" className="field" value={pickupState} onChange={(e) => setPickupState(e.target.value)} />
         <label htmlFor="pickup-postcode" className="field-label">Postcode</label>
         <input id="pickup-postcode" className="field" value={pickupPostcode} onChange={(e) => setPickupPostcode(e.target.value)} />
+      </div>
+      <div className="flex flex-col gap-1 border-t border-line pt-4">
+        <label htmlFor="public-showcase" className="flex items-center gap-2 text-sm">
+          <input
+            id="public-showcase"
+            type="checkbox"
+            checked={publicShowcase}
+            onChange={(e) => setPublicShowcase(e.target.checked)}
+          />
+          Show my contributions publicly
+        </label>
+        <p className="text-xs text-muted">Your name still appears on tutorials you're credited on.</p>
       </div>
       {error && <p role="alert" className="alert alert-danger">{error}</p>}
       {saved && <p className="text-sm font-semibold text-mint-deep">Saved</p>}

@@ -82,4 +82,35 @@ describe('PATCH /api/contributors/me', () => {
     )
     expect(res.status).toBe(400)
   })
+
+  // Tests: the public_showcase opt-out persists, mirrors other editable fields,
+  //        and does not loosen the frozen-field guard (009) alongside it.
+  it('updates public_showcase and leaves frozen fields untouched', async () => {
+    const res = await app.request(
+      '/api/contributors/me',
+      authed(user.token, {
+        method: 'PATCH',
+        body: JSON.stringify({ public_showcase: false, email: 'attacker@example.com' }),
+      })
+    )
+    expect(res.status).toBe(200)
+    const saved = (await res.json()) as { public_showcase: boolean }
+    expect(saved.public_showcase).toBe(false)
+
+    const { data } = await adminClient()
+      .from('profiles')
+      .select('public_showcase, email')
+      .eq('id', user.id)
+      .single()
+    expect(data?.public_showcase).toBe(false)
+    expect(data?.email).not.toBe('attacker@example.com')
+  })
+
+  it('rejects a non-boolean public_showcase', async () => {
+    const res = await app.request(
+      '/api/contributors/me',
+      authed(user.token, { method: 'PATCH', body: JSON.stringify({ public_showcase: 'nope' }) })
+    )
+    expect(res.status).toBe(400)
+  })
 })
