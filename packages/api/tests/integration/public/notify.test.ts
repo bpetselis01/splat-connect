@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, afterAll } from 'vitest'
 import app from '../../../src/app.js'
+import { adminClient } from '../../helpers/auth.js'
 
 const post = (body: unknown) =>
   app.request('/api/public/notify', {
@@ -9,8 +10,21 @@ const post = (body: unknown) =>
   })
 
 describe('POST /api/public/notify', () => {
+  // Rows this file actually inserts (the 400 cases never reach the insert).
+  // Deleted by exact address in afterAll — this table has no read path outside
+  // the service role, so an orphaned row here is invisible to everything else
+  // and would accumulate silently on every run.
+  const seededEmails: string[] = []
+
+  afterAll(async () => {
+    const admin = adminClient()
+    await admin.from('notify_signups').delete().in('email', seededEmails)
+  })
+
   it('accepts a registration with no Authorization header', async () => {
-    const res = await post({ email: `notify-${Date.now()}@example.com`, featureKey: 'requests' })
+    const email = `notify-${Date.now()}@example.com`
+    seededEmails.push(email)
+    const res = await post({ email, featureKey: 'requests' })
     expect(res.status).toBe(200)
     expect(await res.json()).toEqual({ ok: true })
   })
@@ -34,6 +48,7 @@ describe('POST /api/public/notify', () => {
   // duplicate is not something the visitor needs to hear about.
   it('treats a duplicate registration as success', async () => {
     const email = `dupe-${Date.now()}@example.com`
+    seededEmails.push(email)
     const first = await post({ email, featureKey: 'events' })
     const second = await post({ email, featureKey: 'events' })
     expect(first.status).toBe(200)
@@ -42,6 +57,7 @@ describe('POST /api/public/notify', () => {
 
   it('lets the same address register for two different features', async () => {
     const email = `multi-${Date.now()}@example.com`
+    seededEmails.push(email)
     expect((await post({ email, featureKey: 'news' })).status).toBe(200)
     expect((await post({ email, featureKey: 'map' })).status).toBe(200)
   })
