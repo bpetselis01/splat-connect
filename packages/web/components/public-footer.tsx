@@ -52,7 +52,7 @@ export function PublicFooter() {
                       >
                         {child.label}
                         {child.state === 'soon' && (
-                          <span className="badge bg-honey-soft text-honey-deep" aria-hidden="true">SOON</span>
+                          <span className="badge bg-honey-soft text-honey-deep">SOON</span>
                         )}
                       </Link>
                     </li>
