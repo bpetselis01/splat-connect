@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import type { Route } from 'next'
 import { ProsePage } from '@/components/prose-page'
 
 export const metadata = { title: 'Privacy policy — SPLAT Connect' }
@@ -96,8 +95,7 @@ export default function PrivacyPage() {
           You can delete a child profile, a toy, or a draft guide yourself at any time
           from your dashboard. To request a copy of everything associated with your
           account, or deletion of the account entirely,{' '}
-          {/* Cast: /contact doesn't exist until Task 17, so typedRoutes doesn't know it yet. */}
-          <Link href={'/contact' as Route<string>}>contact us</Link>. Deleting an
+          <Link href="/contact">contact us</Link>. Deleting an
           account removes your child profiles, your unpublished work and your pickup
           addresses. Published guides that other people have contributed to remain,
           with your name removed unless you ask otherwise.
