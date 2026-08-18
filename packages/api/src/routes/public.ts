@@ -594,7 +594,9 @@ publicRoutes.post('/notify', async (c) => {
 
   const { email, featureKey } = (body ?? {}) as { email?: unknown; featureKey?: unknown }
 
-  if (typeof email !== 'string' || !EMAIL_RE.test(email.trim())) {
+  // 254 is the RFC 5321 maximum. Without it EMAIL_RE matches a string of any
+  // length, and there is no select policy on notify_signups to notice.
+  if (typeof email !== 'string' || email.length > 254 || !EMAIL_RE.test(email.trim())) {
     return c.json({ error: 'A valid email address is required' }, 400)
   }
   if (typeof featureKey !== 'string' || !NOTIFY_FEATURE_KEYS.has(featureKey)) {
