@@ -22,8 +22,8 @@ test.describe('Impact wall and contributor profile', () => {
     try {
       await page.goto('/impact')
 
-      // Headline total: the tutorials stat reflects the one we just seeded.
-      const tutorialsStat = page.getByTestId('impact-stat-tutorials')
+      // Headline total: the guides stat reflects the one we just seeded.
+      const tutorialsStat = page.getByTestId('impact-stat-guides')
       await expect(tutorialsStat).toBeVisible()
       const statText = await tutorialsStat.textContent()
       expect(Number(statText?.match(/\d+/)?.[0])).toBeGreaterThanOrEqual(1)
