@@ -44,10 +44,10 @@ describe('organisations directory', () => {
     expect(screen.getByText(/set up by SPLAT/i)).toBeInTheDocument()
   })
 
-  it('links each organisation to its page', async () => {
+  it('links each organisation to its public profile', async () => {
     fetchMock.mockResolvedValue(jsonResponse([org('o1', 'Riverside', 'active')]))
     const { default: Page } = await import('@/app/organizations/page')
     render(await Page())
-    expect(screen.getByRole('link')).toHaveAttribute('href', '/organizations/o1')
+    expect(screen.getByRole('link')).toHaveAttribute('href', '/organizations/o1/public')
   })
 })
