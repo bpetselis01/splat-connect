@@ -13,7 +13,7 @@ const GROUPS: NavGroup[] = [
   {
     heading: 'Browse',
     rows: [
-      { href: '/library', label: 'Tutorial library', icon: 'book' },
+      { href: '/library', label: 'Guides', icon: 'book' },
       { href: '/toy-library', label: 'Toy library', icon: 'toy', soon: true },
     ],
   },
@@ -33,7 +33,7 @@ describe('Rail', () => {
     render(<Rail groups={GROUPS} pathname="/dashboard" collapsed={false} onToggle={noop} />)
     expect(screen.getByText('Browse')).toBeInTheDocument()
     expect(screen.getByText('Yours')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Tutorial library' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Guides' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Child profile' })).toBeInTheDocument()
   })
 
@@ -55,7 +55,7 @@ describe('Rail', () => {
   // Chain: collapsed to icons, the label is the only thing a screen reader has.
   it('keeps an accessible name for every row when collapsed', () => {
     render(<Rail groups={GROUPS} pathname="/dashboard" collapsed onToggle={noop} />)
-    expect(screen.getByRole('link', { name: 'Tutorial library' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Guides' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'My tutorials' })).toBeInTheDocument()
   })
 
