@@ -369,6 +369,31 @@ publicRoutes.get('/impact', async (c) => {
 })
 
 /**
+ * The organisations directory, for logged-out visitors.
+ *
+ * Separate from GET /api/organizations rather than an auth-state branch inside
+ * it: that handler returns org_leaders (user ids), and one handler emitting both
+ * public and privileged output is where object-level authorisation bugs hide.
+ * The select below is hand-written so it cannot inherit a column added later.
+ *
+ * Suspended organisations stay listed and marked, not hidden: see the doc
+ * comment on packages/web/app/organizations/page.tsx.
+ */
+publicRoutes.get('/organizations', async (c) => {
+  const supabase = createAnonClient()
+  const { data, error } = await supabase
+    .from('organizations')
+    .select('id, name, description, status')
+    .order('name')
+
+  if (error) {
+    console.error('[public/organizations] read failed:', error.message)
+    return c.json([], 200)
+  }
+  return c.json(data ?? [])
+})
+
+/**
  * A single contributor's public profile for the showcase.
  *
  * Ruling D: opt-out is application-layer. The profile is read via the admin
