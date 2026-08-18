@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { EditorialImage } from '@/components/editorial-image'
 import { ORG_FACTS } from '@/lib/org-facts'
+import { PUBLIC_NAV } from '@/lib/public-nav'
+import { HubGrid } from '@/components/hub-grid'
 
 export const metadata = {
   title: 'About SPLAT Connect',
@@ -81,6 +83,12 @@ export default function AboutPage() {
           — we build in the order people ask.
         </p>
       </section>
+
+      <h2 className="mt-10 text-lg font-bold text-ink">More about SPLAT</h2>
+      <p className="mb-4 mt-1 max-w-prose text-sm text-muted">
+        The team, how to reach us, and how to support what we do.
+      </p>
+      <HubGrid items={PUBLIC_NAV.find((s) => s.href === '/about')!.children} />
     </div>
   )
 }
