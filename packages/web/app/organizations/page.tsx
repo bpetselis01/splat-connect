@@ -56,7 +56,7 @@ export default async function OrganizationsPage() {
         {orgs.map((org) => (
           <Link
             key={org.id}
-            href={`/organizations/${org.id}`}
+            href={`/organizations/${org.id}/public`}
             className="card card-link p-4"
           >
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
