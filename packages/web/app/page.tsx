@@ -68,7 +68,7 @@ export default async function HomePage() {
   const liveArticles = learn.children.filter((c) => c.state === 'live')
 
   const tiles: LauncherTile[] = [
-    { href: '/library', label: 'Guides', blurb: 'Adaptation tutorials', count: totals.tutorials },
+    { href: '/library', label: 'Guides', blurb: 'Adaptation guides', count: totals.tutorials },
     { href: '/toy-library', label: 'Toy Library', blurb: 'Toys being given away', count: totals.toysShared },
     { href: '/learn', label: 'Learn', blurb: 'Switches, tools, safety', count: liveArticles.length },
     { href: '/get-involved', label: 'Get Involved', blurb: 'Make, give, or back' },
