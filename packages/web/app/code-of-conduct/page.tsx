@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import type { Route } from 'next'
 import { ProsePage } from '@/components/prose-page'
 
 export const metadata = { title: 'Code of conduct — SPLAT Connect' }
@@ -66,8 +65,7 @@ export default function CodeOfConductPage() {
       <section>
         <h2>Reporting</h2>
         <p>
-          {/* Cast: /contact doesn't exist until Task 17, so typedRoutes doesn't know it yet. */}
-          <Link href={'/contact' as Route<string>}>Contact us</Link> with what happened and where. Reports
+          <Link href="/contact">Contact us</Link> with what happened and where. Reports
           go to the SPLAT team, not to the person you are reporting. We will tell you
           what we decided.
         </p>
