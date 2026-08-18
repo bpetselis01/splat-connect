@@ -89,12 +89,12 @@ describe('buildNav', () => {
     ])
   })
 
-  // The spec's sixteenth row is Sign out, which is an action the rail footer
-  // renders rather than a nav row — hence sixteen here (fourteen plus
+  // The spec's fifteenth row is Sign out, which is an action the rail footer
+  // renders rather than a nav row — hence fifteen here (thirteen plus
   // Notifications plus Exchanges).
-  it('builds sixteen linked rows for a leader-admin', () => {
+  it('builds fifteen linked rows for a leader-admin', () => {
     const rows = buildNav(caps({ ledOrgs: [org], isAdmin: true }), 0).flatMap((g) => g.rows)
-    expect(rows).toHaveLength(16)
+    expect(rows).toHaveLength(15)
   })
 
   it('gives every row a unique href', () => {
