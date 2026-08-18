@@ -6,7 +6,10 @@ vi.mock('@/lib/api-client', () => ({
   apiClient: { get: (...a: unknown[]) => get(...a), post: vi.fn() },
 }))
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
-vi.mock('next/navigation', () => ({ notFound: vi.fn(() => { throw new Error('NOT_FOUND') }) }))
+vi.mock('next/navigation', () => ({
+  notFound: vi.fn(() => { throw new Error('NOT_FOUND') }),
+  redirect: vi.fn((url: string) => { throw new Error(`REDIRECT:${url}`) }),
+}))
 vi.mock('next/link', () => ({
   default: ({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) => (
     <a href={href} className={className}>{children}</a>
@@ -48,19 +51,19 @@ const route = (mine: unknown[]) => (path: string) =>
 describe('organisation detail', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  // Tests: the same URL serves a visitor and a leader differently
-  // How:   /api/organizations/mine returns [] then [this org]
-  // Chain: consolidating /org into /organizations means leadership is something the
-  //        page reveals rather than a separate address — a non-leader must land on
-  //        the page, not be bounced to '/'
-  it('shows only the public view to someone who does not lead it', async () => {
+  // Tests: a non-leader is sent to the public profile, not left on a dead end
+  // How:   /api/organizations/mine returns [] (empty — leads nothing)
+  // Chain: an anonymous visitor's fetch of GET /api/organizations/:id 401s behind
+  //        authMiddleware, so this page cannot render anything for them itself —
+  //        it must redirect, and a signed-in non-leader gets the same redirect
+  //        rather than a page missing its workspace
+  it('redirects a non-leader to the public profile', async () => {
     get.mockImplementation(route([]))
     const { default: Page } = await import('@/app/organizations/[id]/page')
-    render(await Page({ params: Promise.resolve({ id: 'o1' }) }))
 
-    expect(screen.getByText('Riverside Therapy')).toBeInTheDocument()
-    expect(screen.getByText('Published project')).toBeInTheDocument()
-    expect(screen.queryByText(/Waiting on you/i)).not.toBeInTheDocument()
+    await expect(
+      Page({ params: Promise.resolve({ id: 'o1' }) })
+    ).rejects.toThrow('REDIRECT:/organizations/o1/public')
   })
 
   it('adds the workspace for a leader of it', async () => {
@@ -78,12 +81,12 @@ describe('organisation detail', () => {
   // Chain: a pending request is not an endorsement, and listing it here would claim
   //        one the organisation never gave
   it('lists only published tutorials it actually backed', async () => {
-    get.mockImplementation(route([]))
+    get.mockImplementation(route([theOrg]))
     const { default: Page } = await import('@/app/organizations/[id]/page')
     render(await Page({ params: Promise.resolve({ id: 'o1' }) }))
 
     expect(screen.getByText(/Tutorials backed \(1\)/)).toBeInTheDocument()
-    expect(screen.queryByText('Asking project')).not.toBeInTheDocument()
+    expect(screen.getByText(/Tutorials backed \(1\)/).closest('section')).not.toHaveTextContent('Asking project')
   })
 
   // Tests: both kinds of waiting work appear in one list
