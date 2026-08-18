@@ -13,14 +13,14 @@ describe('trust pages', () => {
   })
 
   // The three things this platform holds that a generic policy would miss.
-  // Each phrase legitimately recurs across several sections of the policy, so
-  // getAllByText (rather than getByText) is used to avoid a false "multiple
-  // elements" failure on text that is correctly repeated.
+  // Exact counts, not just >0: this copy is fixed content pending legal
+  // review, so a test that fires when someone edits it is doing its job —
+  // it forces the change to be a conscious one, not a silent one.
   it('names the sensitive data the platform actually holds', () => {
     render(<PrivacyPage />)
-    expect(screen.getAllByText(/child profile/i).length).toBeGreaterThan(0)
-    expect(screen.getAllByText(/pickup address/i).length).toBeGreaterThan(0)
-    expect(screen.getAllByText(/email address/i).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/child profile/i)).toHaveLength(5)
+    expect(screen.getAllByText(/pickup address/i)).toHaveLength(2)
+    expect(screen.getAllByText(/email address/i)).toHaveLength(2)
   })
 
   it('tells people how to get their data deleted', () => {
@@ -37,9 +37,10 @@ describe('trust pages', () => {
     render(<SafetyPage />)
     expect(screen.getByRole('heading', { level: 1, name: /safety/i })).toBeInTheDocument()
     expect(screen.getByText(/small parts/i)).toBeInTheDocument()
-    // "button cell" is mentioned twice (the battery warning, then the AA/AAA
-    // fallback list), so getAllByText avoids a false "multiple elements" failure.
-    expect(screen.getAllByText(/button cell|coin cell/i).length).toBeGreaterThan(0)
+    // Exact count, not just >0: this copy is fixed content pending legal
+    // review, so a test that fires when someone edits it is doing its job —
+    // it forces the change to be a conscious one, not a silent one.
+    expect(screen.getAllByText(/button cell|coin cell/i)).toHaveLength(2)
   })
 
   it('renders the code of conduct with a reporting route', () => {
