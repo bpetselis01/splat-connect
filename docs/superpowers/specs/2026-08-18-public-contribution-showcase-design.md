@@ -65,10 +65,14 @@ because:
   output (as `/organizations/[id]` does via `isOrgLeader`) is where
   object-level-authorization bugs hide. Separate endpoints, separate code paths.
 
-**Defence in depth for the opt-out:** the `public_showcase` flag and the
-"≥1 public contribution" eligibility are enforced at **both** the query filter
-**and** an anon-role RLS policy. A coding slip alone must not expose an
-opted-out person.
+**Opt-out enforcement:** applied in the showcase endpoints — they read
+`public_showcase` (via the admin client, alongside the delivered-count read) and
+exclude opted-out people from the totals, the lists, and the detail (404). It is
+**not** a `profiles` RLS policy: `profiles.name` anon-read is shared with
+per-tutorial credit and reviewer display (023/026), which must stay ON for
+opted-out people, so a gate there would break credits the spec keeps. The
+endpoint filter is the single enforcement point; Tasks 3/4 assert an opted-out
+person is absent from `/impact` and 404s on their profile.
 
 ## Schema
 
@@ -80,12 +84,16 @@ alter table public.profiles
 ```
 
 - **Default `true`** — opt-out, matching the decision.
-- **RLS.** Migration `023` already exposes a profile's `name` publicly *when it
-  is a contributor on an approved tutorial*. This widens public read of
-  `name` (and `public_showcase`) to any profile that is publicly eligible —
-  i.e. a contributor on an approved tutorial **or** an owner of a published /
-  delivered toy — **and** has `public_showcase = true`. The policy is the
-  database half of eligibility; the endpoint query is the application half.
+- **Column grant, not an RLS policy.** 034 adds `grant select (public_showcase)
+  on public.profiles to anon, authenticated` (029 pattern) so the API can read
+  the flag. It does **not** add a `profiles` RLS policy gating on
+  `public_showcase`. Migration `023`/`026` already grant anon read of a profile's
+  `name` for per-tutorial credit and reviewer display, and the spec requires those
+  to keep showing for opted-out people — so an RLS gate on `public_showcase` would
+  be both ineffective (RLS policies OR together, and 023's are unconditional) and
+  wrong (it would hide credits the spec keeps). Opt-out is therefore enforced in
+  the showcase endpoints (see Security posture), which is the single place it
+  applies.
 - **No new columns for counts.** Every total is computed at read time.
 
 No backfill: existing profiles get `true`, which is the intended default.
@@ -152,9 +160,14 @@ Reuses the existing `tutorial-card` and toy card components.
 
 ### Consent toggle
 A "Show my contributions publicly" switch in the contributor's dashboard profile
-settings, bound to `public_showcase`. Off → removed from the wall, `/contributors/[id]`
-404s, impact totals stop counting them. Existing per-tutorial credit is
-unchanged. Orgs have no toggle.
+settings, bound to `public_showcase`. Off → the person's card is removed from the
+wall (from `totals.contributors`, the contributors grid, and the recent strip)
+and their `/contributors/[id]` profile 404s. The **headline artifact totals**
+(tutorials, toys shared, toys delivered) are unaffected — they count public
+artifacts, not people, and are anonymous (a count never names anyone), so an
+opted-out contributor's already-public tutorial or toy still contributes to the
+platform-wide number without identifying them (Ruling E). Existing per-tutorial
+credit is unchanged. Orgs have no toggle.
 
 ## Navigation
 
