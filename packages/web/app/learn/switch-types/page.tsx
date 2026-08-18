@@ -35,7 +35,7 @@ export default function SwitchTypes() {
           on a tray or angled on a stand.
         </p>
         <p>
-          Watch the activation force. A stiff one that needs a deliberate shove will
+          Watch the activation force. A stiff button that needs a deliberate shove will
           exhaust a child with low tone within minutes.
         </p>
       </section>
@@ -65,8 +65,8 @@ export default function SwitchTypes() {
         <h2>Grasp and squeeze switches</h2>
         <p>
           A soft bulb or pad activated by closing a hand around it. Suits a child with a
-          reliable hand-closing reflex but poor reach, and it can be held rather than
-          mounted, which sidesteps the mounting problem entirely.
+          reliable grasp reflex but poor reach, and it can be held rather than mounted,
+          which sidesteps the mounting problem entirely.
         </p>
       </section>
 
