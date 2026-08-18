@@ -49,8 +49,8 @@ export default async function OrganizationsPage() {
     <div>
       <h1 className="mb-2 text-2xl font-bold text-ink">Organisations</h1>
       <p className="mb-6 max-w-prose text-sm leading-relaxed text-muted">
-        Organisations review tutorials from contributors who ask them to. Their name
-        on a tutorial means one of their leaders read it and stood behind it.
+        Organisations review guides from contributors who ask them to. Their name
+        on a guide means one of their leaders read it and stood behind it.
       </p>
       <div className="flex flex-col gap-3">
         {orgs.map((org) => (
