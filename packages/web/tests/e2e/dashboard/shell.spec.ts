@@ -368,8 +368,12 @@ test('a placeholder route explains the feature instead of 404ing', async ({ page
 
     await page.getByRole('link', { name: /3D printing/ }).click()
     await expect(page).toHaveURL('/printing')
-    await expect(page.getByText('3D Print Requests is coming soon.')).toBeVisible()
-    await expect(page.getByRole('link', { name: 'Browse tutorials' })).toBeVisible()
+    // Ported to the current ComingSoon copy (Task 10): the page states its own
+    // label as an h1, explains itself with "Not built yet — here's the plan",
+    // and its way out is the Guides link, not "Browse tutorials".
+    await expect(page.getByRole('heading', { name: '3D print requests' })).toBeVisible()
+    await expect(page.getByText('Not built yet', { exact: true })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Guides' })).toBeVisible()
   } finally {
     await deleteUser(contributor.id)
   }
