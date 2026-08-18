@@ -11,23 +11,35 @@ import PartnersPage from '@/app/about/partners/page'
 import SupportPage from '@/app/about/support/page'
 import PrintingPage from '@/app/printing/page'
 
+// Paired with the featureKey each page actually passes to NotifyForm, not
+// just position — SCAFFOLD_KEYS order (derived from PUBLIC_NAV) does not
+// match this array's order, so a length check alone would not catch page N
+// carrying the wrong key.
 const pages = [
-  RequestsPage, DesignChallengesPage, AskAnExpertPage, NewsPage,
-  EventsPage, MapPage, PartnersPage, SupportPage, PrintingPage,
-]
+  ['requests', RequestsPage],
+  ['design-challenges', DesignChallengesPage],
+  ['ask-an-expert', AskAnExpertPage],
+  ['news', NewsPage],
+  ['events', EventsPage],
+  ['map', MapPage],
+  ['partners', PartnersPage],
+  ['support', SupportPage],
+  ['printing', PrintingPage],
+] as const
 
 describe('scaffold pages', () => {
   it('covers every scaffold key declared in the nav model', () => {
     expect(pages).toHaveLength(SCAFFOLD_KEYS.length)
+    expect(pages.map(([key]) => key).sort()).toEqual([...SCAFFOLD_KEYS].sort())
   })
 
-  it.each(pages.map((P, i) => [i, P] as const))(
-    'page %i explains the plan and offers to notify',
-    (_i, Page) => {
+  it.each(pages)(
+    '%s scaffold page explains the plan and offers to notify under its own key',
+    (expectedKey, Page) => {
       render(<Page />)
       expect(screen.getByText(/not built yet/i)).toBeInTheDocument()
-      expect(screen.getByLabelText(/email/i)).toBeInTheDocument()
       expect(screen.getByRole('heading', { level: 2, name: /how it will work/i })).toBeInTheDocument()
+      expect(screen.getByLabelText(/email/i).id).toBe(`notify-${expectedKey}`)
     }
   )
 })
