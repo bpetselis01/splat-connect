@@ -22,7 +22,7 @@
  * - components/org-review-banner.tsx: the terms gate for reviewing
  */
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { apiClient } from '@/lib/api-client'
 import { isOrgLeader } from '@/lib/org-access'
@@ -58,6 +58,15 @@ export default async function OrganizationPage({
 }) {
   const { id: orgId } = await params
 
+  // Leadership decides whether this dashboard renders at all. A non-leader —
+  // including an anonymous visitor, who is trivially not a leader — is sent to
+  // the public profile instead of a dead end: isOrgLeader itself never fails
+  // open for an unauthenticated caller (its GET /api/organizations/mine sits
+  // behind authMiddleware same as everything else here), so this is a redirect,
+  // not a weaker check.
+  const leads = await isOrgLeader(orgId)
+  if (!leads) redirect(`/organizations/${orgId}/public`)
+
   let org: OrgWithLeaders
   try {
     org = await apiClient.get<OrgWithLeaders>(`/api/organizations/${orgId}`)
@@ -65,16 +74,9 @@ export default async function OrganizationPage({
     notFound()
   }
 
-  // Leadership decides what the page SHOWS, not whether it renders. One URL serves
-  // a parent reading a badge and a leader working — a non-leader gets the public
-  // view, never a bounce to '/'.
-  const leads = await isOrgLeader(orgId)
-
   const [tutorials, agreements] = await Promise.all([
     apiClient.get<Backed[]>('/api/tutorials').catch(() => [] as Backed[]),
-    leads
-      ? apiClient.get<UserAgreement[]>('/api/agreements/me').catch(() => [] as UserAgreement[])
-      : Promise.resolve([] as UserAgreement[]),
+    apiClient.get<UserAgreement[]>('/api/agreements/me').catch(() => [] as UserAgreement[]),
   ])
   const hasTerms = agreements.some((a) => a.agreement_type === 'org_leader_terms')
   const rowFor = (t: Backed) => t.tutorial_orgs?.find((b) => b.org_id === orgId)
@@ -83,16 +85,14 @@ export default async function OrganizationPage({
   // merging the answer themselves — they arrive asking "what is oldest", not
   // "what kind of thing is oldest". The two acts stay distinguished where it
   // matters: on the project page, which offers only the applicable action.
-  const waiting = leads
-    ? tutorials
-        .filter((t) => {
-          const row = rowFor(t)
-          if (!row) return false
-          if (row.status === 'pending') return true
-          return row.status === 'accepted' && t.status === 'pending'
-        })
-        .sort((a, b) => a.created_at.localeCompare(b.created_at))
-    : []
+  const waiting = tutorials
+    .filter((t) => {
+      const row = rowFor(t)
+      if (!row) return false
+      if (row.status === 'pending') return true
+      return row.status === 'accepted' && t.status === 'pending'
+    })
+    .sort((a, b) => a.created_at.localeCompare(b.created_at))
 
   // The public half: what this organisation has actually put its name to. Derived
   // from the list rather than a dedicated endpoint — GET /api/tutorials already
@@ -144,45 +144,41 @@ export default async function OrganizationPage({
         )}
       </section>
 
-      {leads && (
-        <>
-        {!hasTerms && <OrgReviewBanner />}
+      {!hasTerms && <OrgReviewBanner />}
 
-        <section className="mt-8">
-          <h2 className="mb-3 text-lg font-semibold text-ink">
-            Waiting on you ({waiting.length})
-          </h2>
-          {waiting.length === 0 ? (
-            <p className="empty-badge">
-              Nothing waiting. Contributors ask by choosing your organisation when
-              they submit a tutorial.
-            </p>
-          ) : (
-            <ul className="flex flex-col gap-3">
-              {waiting.map((t) => (
-                <li key={t.id} className="card p-4">
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                    <BackingBadge status={rowFor(t)!.status} />
-                    {/* Always the project page, never /tutorials/[id]. That link is
-                        the hole: the public page serves only approved work, so every
-                        item in this queue 404'd. */}
-                    <Link
-                      href={`/organizations/${orgId}/projects/${t.id}`}
-                      className="font-medium text-ink"
-                    >
-                      {t.title}
-                    </Link>
-                    <span className="ml-auto">
-                      <DifficultyBadge difficulty={t.difficulty} />
-                    </span>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-        </>
-      )}
+      <section className="mt-8">
+        <h2 className="mb-3 text-lg font-semibold text-ink">
+          Waiting on you ({waiting.length})
+        </h2>
+        {waiting.length === 0 ? (
+          <p className="empty-badge">
+            Nothing waiting. Contributors ask by choosing your organisation when
+            they submit a tutorial.
+          </p>
+        ) : (
+          <ul className="flex flex-col gap-3">
+            {waiting.map((t) => (
+              <li key={t.id} className="card p-4">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <BackingBadge status={rowFor(t)!.status} />
+                  {/* Always the project page, never /tutorials/[id]. That link is
+                      the hole: the public page serves only approved work, so every
+                      item in this queue 404'd. */}
+                  <Link
+                    href={`/organizations/${orgId}/projects/${t.id}`}
+                    className="font-medium text-ink"
+                  >
+                    {t.title}
+                  </Link>
+                  <span className="ml-auto">
+                    <DifficultyBadge difficulty={t.difficulty} />
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </div>
   )
 }
