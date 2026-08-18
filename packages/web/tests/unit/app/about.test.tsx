@@ -14,9 +14,27 @@ describe('About', () => {
   })
 
   it('routes on to the team and to contact', () => {
+    // The CTA in "Who runs it" and the card in the About hub grid both point
+    // here now, so check every link with this name rather than assuming one.
     render(<AboutPage />)
-    expect(screen.getByRole('link', { name: /our team/i })).toHaveAttribute('href', '/about/team')
-    expect(screen.getByRole('link', { name: /contact/i })).toHaveAttribute('href', '/contact')
+    for (const link of screen.getAllByRole('link', { name: /our team/i })) {
+      expect(link).toHaveAttribute('href', '/about/team')
+    }
+    for (const link of screen.getAllByRole('link', { name: /contact/i })) {
+      expect(link).toHaveAttribute('href', '/contact')
+    }
+  })
+
+  it('grids the rest of the About hub', () => {
+    render(<AboutPage />)
+    expect(screen.getByRole('link', { name: /partners.*supporters/i })).toHaveAttribute(
+      'href',
+      '/about/partners'
+    )
+    expect(screen.getByRole('link', { name: /support splat/i })).toHaveAttribute(
+      'href',
+      '/about/support'
+    )
   })
 
   // Guard against shipping the scaffold copy. These must be replaced before launch.
