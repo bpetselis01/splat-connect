@@ -373,7 +373,7 @@ test('a placeholder route explains the feature instead of 404ing', async ({ page
     // and its way out is the Guides link, not "Browse tutorials".
     await expect(page.getByRole('heading', { name: '3D print requests' })).toBeVisible()
     await expect(page.getByText('Not built yet', { exact: true })).toBeVisible()
-    await expect(page.getByRole('link', { name: 'Guides' })).toBeVisible()
+    await expect(page.locator('#main').getByRole('link', { name: 'Guides' })).toBeVisible()
   } finally {
     await deleteUser(contributor.id)
   }
