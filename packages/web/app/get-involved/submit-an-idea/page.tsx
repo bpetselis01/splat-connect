@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import type { Route } from 'next'
 import { StepList } from '@/components/step-list'
 
 export const metadata = {
@@ -38,8 +37,7 @@ export default function SubmitAnIdea() {
       />
 
       <div className="mt-10">
-        {/* Cast: /contact doesn't exist until Task 17, so typedRoutes doesn't know it yet. */}
-        <Link href={'/contact' as Route<string>} className="btn btn-primary">
+        <Link href="/contact" className="btn btn-primary">
           Send us the idea
         </Link>
       </div>
