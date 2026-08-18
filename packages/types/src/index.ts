@@ -350,6 +350,7 @@ export interface Profile {
   pickup_suburb?: string | null
   pickup_state?: string | null
   pickup_postcode?: string | null
+  public_showcase: boolean
   created_at: string
 }
 
@@ -435,3 +436,53 @@ export interface TutorialWithDetails extends Tutorial {
 // mirrored into sessionStorage so a reload did not cost six steps of typing.
 // The wizard is gone — a tutorial is now created as a real row on its first
 // save and edited from then on, so there is no pre-submission shape to model.
+
+export interface ImpactEntity {
+  id: string
+  name: string
+  tutorials: number
+  toysShared: number
+  toysDelivered: number
+}
+
+export interface ImpactOrgEntity extends ImpactEntity {
+  projectsBacked: number
+}
+
+export interface ImpactRecent {
+  kind: 'person' | 'org'
+  id: string
+  name: string
+  at: string
+}
+
+export interface ImpactSummary {
+  totals: {
+    tutorials: number
+    toysShared: number
+    toysDelivered: number
+    contributors: number
+    organisations: number
+  }
+  recent: ImpactRecent[]
+  contributors: ImpactEntity[]
+  organisations: ImpactOrgEntity[]
+}
+
+export interface ContributorProfile {
+  id: string
+  name: string
+  tutorials: Tutorial[]
+  toysShared: Toy[]
+  toysDelivered: Toy[]
+}
+
+export interface OrgPublicProfile {
+  id: string
+  name: string
+  status: string
+  tutorialsBacked: Tutorial[]
+  tutorialsApproved: Tutorial[]
+  toysShared: Toy[]
+  toysDelivered: Toy[]
+}
