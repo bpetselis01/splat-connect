@@ -26,6 +26,9 @@ export function Nav({ role }: NavProps) {
   const links = ([
     { href: '/library', label: 'Library', show: true },
     { href: '/toy-library', label: 'Toy library', show: true },
+    // Public: the impact wall is external, visible to logged-out visitors, so it
+    // lives in the public top bar rather than the signed-in rail (nav-model.ts).
+    { href: '/impact', label: 'Impact', show: true },
     // Shown to anyone signed in, not just leaders: it is a directory, and gating it
     // on leadership would need a per-request lookup in the nav for no benefit — a
     // leader is an ordinary contributor.
