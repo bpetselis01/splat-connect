@@ -29,8 +29,12 @@ later. The point is that the shape of the site stops being an open question.
 
 - The full public IA: six top-level sections, their hub pages, and their
   children.
-- A rebuilt homepage that explains the model in one screenful.
-- A dropdown-free navigation model: flat top bar, hub pages, section subnav.
+- A rebuilt homepage: a launcher grid for people who know where they're going,
+  and the model explained for people who don't.
+- A dropdown-free navigation model: flat top bar, hub pages, section subnav, and
+  a fat footer carrying the whole sitemap on every page.
+- Seven SVG illustrations and one `EditorialImage` component, so the editorial
+  pages have something to look at before the team's photos exist.
 - Twenty new pages with real written content.
 - Nine scaffold pages using an extended `ComingSoon` with email capture.
 - One new table and one new public endpoint, both for the email capture.
@@ -54,6 +58,9 @@ app shell, the mobile app, the dashboard, or admin.
 | Learn content storage | **A TSX page per article.** No MDX, no CMS, no database. |
 | Institutional framing | SPLAT is a real organisation, so `/about`, `/about/team`, and `/contact` carry real content. |
 | Audiences served | All three — families, contributors, organisations — each with its own on-ramp. |
+| Homepage launcher | **Yes** — a six-tile section grid above the fold, merged into the "explain it first" order rather than replacing it. |
+| Deep links from anywhere | **Fat footer** listing every destination on every page. Not dropdowns. |
+| Editorial imagery | **Seven flat SVG illustrations**, held in place by one `EditorialImage` component, to be replaced by the team's own workshop photos. |
 
 ### Rejected, and why
 
@@ -70,6 +77,13 @@ app shell, the mobile app, the dashboard, or admin.
   it means building each page twice.
 - **MDX or a CMS for Learn.** Six developer-authored articles do not justify a
   content pipeline. Revisit when a non-developer needs to publish.
+- **Stock photography for editorial pages.** Cannot ship without cleared
+  rights, and a disability platform whose warmth comes from purchased images of
+  children who are not its users is trading on something it has not earned.
+  Illustrations hold the space until the team's own photos exist.
+- **Emoji-and-tint bands as editorial placeholders.** This is what the site does
+  now, and "no ability to tell a story" is the complaint that prompted the
+  imagery work. Nine emoji bands read as absence, not design.
 
 ## Terminology
 
@@ -175,9 +189,23 @@ the route a home in the nav for the first time.
 | Partners & supporters | `/about/partners` | **scaffold** |
 | Support SPLAT | `/about/support` | **scaffold** |
 
-### Footer — trust and legal
+### Footer — the fat footer
 
-Not in the top nav, present on every page.
+Present on every public page, and it is a full sitemap rather than a legal
+strip. Six columns, one per section, listing every child including the
+scaffolded ones with their "soon" pill.
+
+This exists to close the one real gap in the flat-nav model: the section subnav
+only helps once you are already inside a section, so crossing from deep in Learn
+to deep in Get Involved would otherwise take two clicks. The footer makes every
+destination one click from every page — the same thing a dropdown would do, with
+plain links instead of a hover-and-focus widget. On a platform serving people
+with disabilities, that difference is the whole argument: no `aria-expanded`, no
+focus trap, no arrow-key handling, no touch fallback, nothing to get wrong.
+
+It renders from `PUBLIC_NAV`, so a page cannot exist without appearing here.
+
+Below the columns, a legal row:
 
 | Page | Route | State |
 |------|-------|-------|
@@ -231,10 +259,14 @@ export interface NavSection {
 }
 
 export const PUBLIC_NAV: NavSection[] = [ /* the six sections above */ ]
+
+/** Footer-only links. Not sections, never in the top bar. */
+export const FOOTER_LEGAL: NavItem[] = [ /* the six trust/legal pages */ ]
 ```
 
-Everything reads from this: the top bar, the subnav, every hub page's card grid,
-and the scaffold registry. This is the load-bearing decision of the whole spec —
+Everything reads from this: the top bar, the section subnav, the fat footer's six
+columns, the homepage launcher grid, every hub page's card grid, and the scaffold
+registry. This is the load-bearing decision of the whole spec —
 this pass takes the public surface from 10 routes to 43, and if the sections,
 their children, and their live/soon state are defined in more than one place
 they will drift within a month.
@@ -269,6 +301,15 @@ component, no state, no JavaScript. Horizontal scroll with
 A child with `state: 'soon'` renders with a "soon" pill beside its label, so the
 expectation is set before the click rather than after.
 
+### Fat footer
+
+New `components/public-footer.tsx`. Six columns generated from `PUBLIC_NAV`, plus
+a legal row from `FOOTER_LEGAL`. Server component, plain `<Link>` elements, no
+JavaScript. Columns collapse to two-up then one-up on narrow screens.
+
+Rendered by the root layout on public routes only — the signed-in `AppShell` does
+not get it, for the same reason the public top bar does not appear there.
+
 ### The rule, and its test
 
 **No scaffold is ever reachable from the top bar.** All six top-level links land
@@ -286,20 +327,111 @@ links and asserts none of them renders the scaffold marker.
    subline that names the mechanism, not just the goal. Three inline stats
    (guides, toys delivered, contributors) sit inside the hero, so the proof
    arrives with the promise rather than in a band below it. One primary CTA:
-   *Browse the Guides*.
-2. **SPLAT in 30 seconds.** Three numbered steps covering the whole model, not
+   *Browse the Guides*. An `EditorialImage` (`adapted-toy`, `3/2`) sits beside
+   the headline on wide screens and above it on narrow ones.
+2. **Launcher grid.** Six tiles, one per section, each carrying a live count and
+   a one-line description: Guides, Toy Library, Learn, Get Involved, Impact,
+   About. Above the fold. This is the fast path — a returning visitor who knows
+   where they are going never reads past the hero, and a stranger sees the whole
+   site's shape and scale in one glance. Icons only, no images: the grid is for
+   scanning, not looking.
+3. **SPLAT in 30 seconds.** Three numbered steps covering the whole model, not
    just the parent's path: a guide gets written → an organisation stands behind
    it → a family builds it or receives one. This replaces the current
    Browse/Buy/Adapt strip, which is written for parents alone and sits below the
    featured tutorials.
-3. **Where you fit.** Three audience doors linking to the `/get-involved`
-   tracks.
-4. **Two catalogue previews**, side by side: recent guides and recent toys.
-5. **New from SPLAT.** A thin strip for news and events. Hidden entirely while
+4. **Where you fit.** Three audience doors linking to the `/get-involved`
+   tracks, each with an `EditorialImage` (`3/2`).
+5. **Two catalogue previews**, side by side: recent guides and recent toys.
+6. **New from SPLAT.** A thin strip for news and events. Hidden entirely while
    both are scaffolded — an empty section is worse than no section.
 
-Everything above the fold must let a stranger learn what SPLAT is, that it is
-real, and which door is theirs.
+Everything above the fold (hero plus launcher grid) must let a stranger learn
+what SPLAT is, that it is real, and where everything lives — while letting a
+returning visitor leave for their destination without scrolling at all.
+
+The launcher counts come from the same `GET /api/public/impact` call the hero
+stats use. Learn and About are static counts derived from `PUBLIC_NAV`, not
+fetched.
+
+## Visual assets
+
+The site has no editorial imagery. `public/` holds five unmodified Next.js
+starter SVGs, and `components/card-photo.tsx` is the only image component — a
+`bg-brand-tint` band with a 🧸 when a toy or guide has no photo. Text-and-emoji
+cards are why the public side cannot tell a story.
+
+### The constraint
+
+Guides and toys carry photos uploaded by the people who made them, with consent
+inside the upload flow. Editorial pages — homepage, Learn, Get Involved, About,
+Impact — have no such source. Two consequences:
+
+- **No stock photography.** Rights aside, a disability platform whose emotional
+  pull comes from purchased images of children who are not its users is trading
+  on something it has not earned.
+- **Placeholders must not read as photographs.** Nobody should mistake a
+  placeholder for a real family.
+
+### Illustrations
+
+Seven flat SVGs in `public/illustrations/`, drawn in the brand palette:
+`adapted-toy`, `switch`, `printer`, `family`, `maker`, `organisation`,
+`bear-on-shelf`.
+
+Register: flat, single-hue, no gradients, no photographic detail, and
+**deliberately faceless**. Faceless avoids depicting a particular child, and it
+means one illustration serves every family reading the page.
+
+**These are placeholders with a known replacement.** The team will supply its own
+workshop photographs. The component below is therefore built for the swap from
+day one, and the credit-line handling is implemented now rather than retrofitted.
+
+### The component
+
+`components/editorial-image.tsx`, following `CardPhoto`'s shape — a real `src`
+wins, the illustration holds the space until there is one:
+
+```ts
+export type IllustrationKey =
+  | 'adapted-toy' | 'switch' | 'printer'
+  | 'family' | 'maker' | 'organisation' | 'bear-on-shelf'
+
+export function EditorialImage({ src, illustration, ratio, caption }: {
+  /** A real, consented photograph once one exists. */
+  src?: string | null
+  illustration: IllustrationKey
+  ratio: '3/2' | '2/1' | '1/1'
+  /** Credit line. Rendered only when `src` is present. */
+  caption?: string
+}): React.ReactElement
+```
+
+Ratios are fixed per slot so a real photo landing later cannot reflow the page
+around it. Like `CardPhoto`, the image is decorative: `alt=""`, because every
+slot has a heading beside it and naming the subject twice is a duplicate
+announcement to a screen reader. The illustration's own `<svg>` carries
+`aria-hidden`.
+
+### Slot inventory
+
+| Page | Slot | Ratio | Illustration |
+|------|------|-------|--------------|
+| Homepage | Hero, beside the headline | `3/2` | `adapted-toy` |
+| Homepage | Audience doors (×3) | `3/2` | `family`, `maker`, `organisation` |
+| Homepage | Launcher tiles | — | none; icons only |
+| Learn hub | Article cards (×6) | `3/2` | one per article |
+| Learn article | Header banner | `2/1` | same as its card |
+| Get Involved | Track headers (×3) | `2/1` | `family`, `maker`, `organisation` |
+| About | Lead image | `3/2` | `organisation` |
+| About / team | Portraits | `1/1` | initials block until real headshots |
+| Impact | Story cards | `3/2` | `bear-on-shelf` (scaffolded) |
+| Scaffold pages | — | — | none; the existing badge circle stays |
+
+Scaffold pages deliberately get no artwork. Dressing up a page whose feature
+does not exist sends the wrong signal.
+
+`CardPhoto` is not touched. Guides and toys already have real photos.
 
 ## Scaffold pages
 
@@ -411,6 +543,10 @@ The trust pages need legal review before publication. The spec treats them as
 pages with real copy, not placeholders — a scaffolded privacy policy would be
 worse than none.
 
+Plus **seven SVG illustrations**, which are design work rather than writing. They
+are authored as hand-written SVG committed to the repo — no image pipeline, no
+external asset host, no runtime dependency.
+
 ## Testing
 
 Following the existing split: vitest unit tests in `packages/web/tests/unit`,
@@ -427,6 +563,11 @@ Playwright specs in `packages/web/tests/e2e`.
 - `coming-soon.tsx`: renders the notify form when `featureKey` is present and
   omits it when absent; the existing copy assertions, updated for the new
   heading.
+- `public-footer.tsx`: every `PUBLIC_NAV` child appears exactly once; every
+  `FOOTER_LEGAL` item appears; scaffolded children render the "soon" pill.
+- `editorial-image.tsx`: renders the illustration when `src` is absent; renders
+  the photo and its caption when `src` is present; the caption never renders
+  without a photo; `alt` is empty in both cases.
 
 **Integration** (`packages/api/tests/integration/public/`)
 
@@ -441,27 +582,36 @@ Playwright specs in `packages/web/tests/e2e`.
   scaffold marker.
 - Every subnav child href resolves to a page that renders, scaffold or not — no
   404s anywhere in the tree.
-- The footer's six links resolve on every page type.
+- **Every fat-footer link resolves**, walked from one page. This is the broadest
+  guard in the suite: because the footer is generated from `PUBLIC_NAV`, a route
+  added to the nav model but never built fails here.
+- The footer renders on public routes and does not render inside the signed-in
+  app shell.
+- The homepage launcher grid links to all six sections.
 
 `tests/e2e/impact.spec.ts` already covers the impact surface and will need
 updating for the hub restructure.
 
 ## Build order
 
-Five phases. Each ends with the site in a shippable state.
+Six phases. Each ends with the site in a shippable state.
 
 1. **Nav model and chrome.** `lib/public-nav.ts`, `components/section-nav.tsx`,
-   the `nav.tsx` rework, the footer. Ships with every section pointing at a stub
-   so the structure is reviewable before any prose exists.
+   `components/public-footer.tsx`, the `nav.tsx` rework. Ships with every section
+   pointing at a stub so the structure is reviewable before any prose exists.
 2. **Trust pages.** Privacy, terms, safety, code of conduct. First, because
    phase 4 collects email addresses and must not ship ahead of a privacy policy.
-3. **Real content.** Learn (hub + six articles), Get Involved (hub + three
-   tracks + two explainers), About (three pages), the homepage rebuild, the
-   public organisations directory, the Impact hub restructure.
-4. **Scaffolds.** Migration 035, the notify endpoint, the `ComingSoon`
+3. **Illustrations and the image component.** The seven SVGs and
+   `components/editorial-image.tsx`. Ahead of phase 4 because every page built
+   there consumes it.
+4. **Real content.** Learn (hub + six articles), Get Involved (hub + three
+   tracks + two explainers), About (three pages), the homepage rebuild including
+   the launcher grid, the public organisations directory, the Impact hub
+   restructure.
+5. **Scaffolds.** Migration 035, the notify endpoint, the `ComingSoon`
    extension, the nine scaffold pages.
-5. **Tests.** Written alongside each phase, not after; listed separately here
-   only because the scaffold-rule E2E spec cannot be written until phase 4
+6. **Tests.** Written alongside each phase, not after; listed separately here
+   only because the scaffold-rule E2E spec cannot be written until phase 5
    defines what the marker is.
 
 ## Open items
@@ -472,3 +622,9 @@ None blocking. Two to revisit after launch:
   When someone outside the repo needs to publish, add `@next/mdx` then.
 - **Notify volume.** If a single feature's list grows past a few hundred, the
   console-only read path stops being adequate and an admin view earns its place.
+- **The photo swap.** When the team's workshop photographs arrive, each slot's
+  `src` is filled in and its `caption` credits the photographer. No component
+  change, no layout change — the ratios are already fixed. Worth deciding at that
+  point whether the photos live in `public/` or in a Supabase bucket; `public/`
+  is right for a fixed editorial set, a bucket only if non-developers upload
+  them.
