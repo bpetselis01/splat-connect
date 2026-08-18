@@ -15,10 +15,15 @@ describe('PublicFooter', () => {
   })
 
   // The whole reason the footer exists: one click to anywhere, from anywhere.
-  it('links every child of every section exactly once', () => {
+  it('links every child of every section exactly once with correct href', () => {
     render(<PublicFooter />)
     for (const child of PUBLIC_NAV.flatMap((s) => s.children)) {
-      expect(screen.getAllByRole('link', { name: new RegExp(`^${child.label}$`) })).toHaveLength(1)
+      const escapeRegex = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      const links = screen.getAllByRole('link', {
+        name: new RegExp(`^${escapeRegex(child.label)}( SOON)?$`),
+      })
+      expect(links).toHaveLength(1)
+      expect(links[0]).toHaveAttribute('href', child.href)
     }
   })
 
