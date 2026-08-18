@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import type { Route } from 'next'
 import { ProsePage } from '@/components/prose-page'
 
 export const metadata = { title: 'Terms of use — SPLAT Connect' }
@@ -92,8 +91,7 @@ export default function TermsPage() {
       <section>
         <h2>Questions</h2>
         <p>
-          {/* Cast: /contact doesn't exist until Task 17, so typedRoutes doesn't know it yet. */}
-          <Link href={'/contact' as Route<string>}>Contact us</Link> if anything here is unclear.
+          <Link href="/contact">Contact us</Link> if anything here is unclear.
         </p>
       </section>
     </ProsePage>
