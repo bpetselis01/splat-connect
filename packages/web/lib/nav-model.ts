@@ -57,6 +57,7 @@ export function buildNav(caps: Capabilities, unreadNotifications: number): NavGr
         { href: '/toy-library', label: 'Toy library', icon: 'toy' },
         { href: '/printing', label: '3D printing', icon: 'printer', soon: true },
         { href: '/organizations', label: 'Organisations', icon: 'building' },
+        { href: '/impact', label: 'Impact', icon: 'handshake' },
       ],
     },
     {
