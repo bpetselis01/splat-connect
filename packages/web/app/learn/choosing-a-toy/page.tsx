@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import type { Route } from 'next'
 import { ProsePage } from '@/components/prose-page'
 
 export const metadata = {
@@ -80,8 +79,7 @@ export default function ChoosingAToy() {
           Before you open anything, search the <Link href="/library">Guides</Link>.
           Somebody may have adapted that exact toy and written down which wire goes
           where — including the traps. If they have not, and you work it out, please
-          {/* Cast: /get-involved/submit-a-tutorial doesn't exist until Task 16, so typedRoutes doesn't know it yet. */}
-          <Link href={'/get-involved/submit-a-tutorial' as Route<string>}> write it up</Link>: the next
+          <Link href="/get-involved/submit-a-tutorial"> write it up</Link>: the next
           parent gets to skip the hard part.
         </p>
       </section>
