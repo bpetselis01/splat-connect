@@ -16,7 +16,8 @@ describe('NotifyForm', () => {
     fireEvent.click(screen.getByRole('button', { name: /tell me/i }))
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce())
-    const [, init] = fetchMock.mock.calls[0]
+    const [url, init] = fetchMock.mock.calls[0]
+    expect(url).toMatch(/\/api\/public\/notify$/)
     expect(JSON.parse(init.body)).toEqual({ email: 'a@example.com', featureKey: 'requests' })
   })
 
