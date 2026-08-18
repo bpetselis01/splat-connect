@@ -9,16 +9,23 @@
  * name is still on work they already backed.
  *
  * Related files:
- * - packages/api/src/routes/organizations.ts: GET /api/organizations
+ * - packages/api/src/routes/public.ts: GET /api/public/organizations
  * - app/organizations/[id]/page.tsx: one organisation, plus its leader's workspace
  * - components/edit-backing-section.tsx: where a contributor acts on this
  */
 import Link from 'next/link'
-import { apiClient } from '@/lib/api-client'
 import type { Organization } from '@splat-connect/types'
 
 export default async function OrganizationsPage() {
-  const orgs = await apiClient.get<Organization[]>('/api/organizations')
+  let orgs: Organization[] = []
+  try {
+    const res = await fetch(`${process.env.API_URL}/api/public/organizations`, {
+      cache: 'no-store',
+    })
+    if (res.ok) orgs = await res.json()
+  } catch {
+    orgs = []
+  }
 
   if (orgs.length === 0) {
     return (
