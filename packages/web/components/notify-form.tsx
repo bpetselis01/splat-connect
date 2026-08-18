@@ -21,7 +21,15 @@ export function NotifyForm({ featureKey }: { featureKey: string }) {
 
   if (state === 'done') {
     return (
-      <p className="mt-6 text-sm font-semibold text-mint-deep">
+      // Unmounting the form on success moves focus to <body>, so a live region
+      // added in this same commit would announce unreliably — the focus move
+      // onto the region itself is what makes a screen reader read it.
+      <p
+        role="status"
+        tabIndex={-1}
+        ref={(el) => el?.focus()}
+        className="mt-6 text-sm font-semibold text-mint-deep"
+      >
         Thanks — we&apos;ll email you when it&apos;s ready.
       </p>
     )
