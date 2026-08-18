@@ -278,8 +278,17 @@ items, and merging them would mean one file branching on auth state.
 ### Top bar
 
 `components/nav.tsx` renders the six section links for everyone. Its existing
-role-conditional links (`Dashboard`, `Admin`) are unaffected — a signed-in user
-gets the app shell and rail, and only sees this bar on public routes.
+role-conditional links (`Dashboard`, `Admin`) are unaffected, but in practice a
+signed-in user never sees this bar at all: `app/layout.tsx` renders the
+signed-in `AppShell` (and with it the rail, not `Nav`) on every route that
+user can reach, so this component only ever renders for a signed-out visitor.
+
+> **Known follow-up.** Because of the above, a signed-in contributor has no
+> navigational path from the app shell to `/learn`, `/get-involved`, `/about`,
+> `/contact`, or the trust pages (`/privacy`, `/terms`, `/safety`,
+> `/code-of-conduct`) — those are reachable only by a signed-out visitor, or by
+> typing the URL directly. Giving the rail a way into this content is a rail
+> redesign and is out of scope for this pass.
 
 Active state is by section prefix, which the component already computes
 (`pathname === href || pathname.startsWith(href + '/')`). One correction is
