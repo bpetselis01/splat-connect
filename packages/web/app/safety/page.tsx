@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import type { Route } from 'next'
 import { ProsePage } from '@/components/prose-page'
 
 export const metadata = { title: 'Safety — SPLAT Connect' }
@@ -122,8 +121,7 @@ export default function SafetyPage() {
         <h2>If something goes wrong</h2>
         <p>
           Tell us. If a published guide has a safety problem,
-          {/* Cast: /contact doesn't exist until Task 17, so typedRoutes doesn't know it yet. */}
-          <Link href={'/contact' as Route<string>}> contact us</Link> and we will take it down while we
+          <Link href="/contact"> contact us</Link> and we will take it down while we
           check. We would much rather pull a guide than leave a hazard up.
         </p>
       </section>
