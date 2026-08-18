@@ -40,7 +40,7 @@ export default function Adaptation101() {
           switch is held.
         </p>
         <p>
-          A <strong>battery</strong> interrupter is a thin disc of insulating material
+          A <strong>battery interrupter</strong> is a thin disc of insulating material
           with a metal contact on one face and a wire from each side. It slips between a
           battery and the spring contact in the compartment. No soldering inside the
           toy, no opening the case, and completely reversible — pull it out and the toy
