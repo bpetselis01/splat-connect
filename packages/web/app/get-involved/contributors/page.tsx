@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import type { Route } from 'next'
 import { EditorialImage } from '@/components/editorial-image'
 import { StepList } from '@/components/step-list'
 
@@ -51,8 +50,7 @@ export default function ContributorsPage() {
         <Link href="/signup" className="btn btn-primary">
           Create an account
         </Link>
-        {/* Cast: /get-involved/submit-a-tutorial doesn't exist until Task 16, so typedRoutes doesn't know it yet. */}
-        <Link href={'/get-involved/submit-a-tutorial' as Route<string>} className="btn btn-soft">
+        <Link href="/get-involved/submit-a-tutorial" className="btn btn-soft">
           What writing a guide involves
         </Link>
       </div>
