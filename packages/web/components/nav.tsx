@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Logo } from '@/components/icons'
 import { PUBLIC_NAV, sectionFor } from '@/lib/public-nav'
+import { toneClass } from '@/lib/tone'
 import type { Role } from '@splat-connect/types'
 
 interface NavProps {
@@ -56,22 +57,33 @@ export function Nav({ role }: NavProps) {
         {/* On narrow screens the links drop to their own row so the logo and the
             account control stay together on the first one. */}
         <div className="order-3 flex w-full flex-wrap items-center gap-1 sm:order-2 sm:ml-auto sm:w-auto">
-          {sections.map((s) => (
-            <Link
-              key={s.href}
-              // Cast: NavSection.href is `string`, not typedRoutes' `Route`, because
-              // most of these routes are built in later tasks — see lib/public-nav.ts.
-              href={s.href as Route<string>}
-              aria-current={activeSection?.href === s.href ? 'page' : undefined}
-              className={`whitespace-nowrap rounded-full px-3 py-2 text-sm font-semibold transition-colors ${
-                activeSection?.href === s.href
-                  ? 'bg-brand-tint text-brand-deep'
-                  : 'text-muted hover:bg-sunken hover:text-ink'
-              }`}
-            >
-              {s.label}
-            </Link>
-          ))}
+          {sections.map((s) => {
+            const active = activeSection?.href === s.href
+            const tone = toneClass(s.tone)
+            return (
+              <Link
+                key={s.href}
+                // Cast: NavSection.href is `string`, not typedRoutes' `Route`, because
+                // some of these routes are built in later tasks — see lib/public-nav.ts.
+                href={s.href as Route<string>}
+                aria-current={active ? 'page' : undefined}
+                className={`flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-2 text-sm font-semibold transition-colors ${
+                  active ? `${tone.surface} ${tone.ink}` : 'text-muted hover:bg-sunken hover:text-ink'
+                }`}
+              >
+                {/* The dot is what makes rank legible: the three pillars carry the
+                    three distinct accents, the supporting sections stay blue. It is
+                    decorative — the label already says which section this is. */}
+                <span
+                  aria-hidden="true"
+                  className={`h-2 w-2 shrink-0 rounded-full ${tone.dot} ${
+                    active ? '' : 'opacity-60'
+                  }`}
+                />
+                {s.label}
+              </Link>
+            )
+          })}
           {roleLinks.map((l) => (
             <Link
               key={l.href}
