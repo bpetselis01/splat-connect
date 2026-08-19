@@ -5,7 +5,6 @@ import './globals.css'
 import { Nav } from '@/components/nav'
 import { getUserRole } from '@/lib/auth'
 import { AppShell } from '@/components/app-shell'
-import { SectionNav } from '@/components/section-nav'
 import { PublicFooter } from '@/components/public-footer'
 
 // Nunito is the mobile app's family (packages/mobile/lib/theme.ts). One rounded
@@ -51,13 +50,12 @@ export default async function RootLayout({
       <body className="min-h-screen font-sans antialiased">
         {shell ?? (
           <>
-            {/* WCAG 2.4.1: up to ~19 tab stops (logo, six section links, role
-                links, sign-in, plus a section subnav of up to nine) sit ahead of
-                content on every public route, so it needs a bypass. A fragment
-                link to a focusable target is the platform's own mechanism —
-                browsers move focus to the target, not just the scroll position,
-                as long as it can hold focus (hence tabIndex={-1} on <main>
-                below). No JS, no focus() call. */}
+            {/* WCAG 2.4.1: up to ~9 tab stops (logo, six section links, role
+                links, sign-in) sit ahead of content on every public route, so it
+                needs a bypass. A fragment link to a focusable target is the
+                platform's own mechanism — browsers move focus to the target, not
+                just the scroll position, as long as it can hold focus (hence
+                tabIndex={-1} on <main> below). No JS, no focus() call. */}
             <a
               href="#main"
               className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-field focus:bg-surface focus:px-4 focus:py-2 focus:font-bold focus:text-ink focus:outline focus:outline-2 focus:outline-brand"
@@ -65,7 +63,6 @@ export default async function RootLayout({
               Skip to main content
             </a>
             <Nav role={await getUserRole()} />
-            {!bare && <SectionNav pathname={pathname} />}
             <main
               id="main"
               tabIndex={-1}
