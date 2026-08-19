@@ -11,6 +11,8 @@
  * and merging them would mean one module branching on auth state.
  */
 
+import type { Tone } from './tone'
+
 export type NavState = 'live' | 'soon'
 
 export interface NavItem {
@@ -37,7 +39,16 @@ export interface NavSection {
   href: string
   label: string
   blurb: string
-  /** Empty for flat catalogues. SectionNav renders nothing for these. */
+  /** Drives the hub, its cards, the nav marker and the backdrop. See lib/tone.ts. */
+  tone: Tone
+  /**
+   * SPLAT provides three things — guides, the toy library, and 3D printed parts.
+   * Everything else explains, recruits for or accounts for those three. The top
+   * bar and the homepage launcher both read this to size and colour a section, so
+   * a visitor learns what the organisation actually does without being told.
+   */
+  rank: 'pillar' | 'supporting'
+  /** Empty for flat catalogues, whose pages ARE the listing. */
   children: NavItem[]
 }
 
@@ -45,18 +56,53 @@ export const PUBLIC_NAV: NavSection[] = [
   {
     href: '/library',
     label: 'Guides',
+    tone: 'brand',
+    rank: 'pillar',
     blurb: 'Step-by-step instructions for adapting a specific toy.',
     children: [],
   },
   {
     href: '/toy-library',
     label: 'Toy Library',
+    tone: 'mint',
+    rank: 'pillar',
     blurb: 'Adapted toys that families and organisations are giving away.',
     children: [],
   },
   {
+    href: '/printing',
+    label: '3D Printing',
+    tone: 'apricot',
+    rank: 'pillar',
+    blurb: 'Printed switch mounts, cases and interrupters — and somewhere to ask for one.',
+    children: [
+      {
+        href: '/printing/basics',
+        label: 'Printing basics',
+        state: 'live',
+        blurb: 'Filament, settings and finishing for printed switch parts.',
+      },
+      {
+        href: '/printing/requests',
+        label: 'Request a print',
+        state: 'soon',
+        featureKey: 'printing',
+        blurb: 'Ask an association with a free printer to make a part for you.',
+      },
+      {
+        href: '/printing/parts',
+        label: 'Printable parts',
+        state: 'soon',
+        featureKey: 'printing-parts',
+        blurb: 'A catalogue of STL files, sized and tested for adaptation work.',
+      },
+    ],
+  },
+  {
     href: '/learn',
     label: 'Learn',
+    tone: 'honey',
+    rank: 'supporting',
     blurb: 'How switch adaptation works, from first switch to safe finish.',
     children: [
       {
@@ -90,12 +136,6 @@ export const PUBLIC_NAV: NavSection[] = [
         blurb: 'Batteries, small parts, and getting a toy ready to hand over.',
       },
       {
-        href: '/learn/3d-printing-basics',
-        label: '3D printing basics',
-        state: 'live',
-        blurb: 'Filament, settings and finishing for printed switch parts.',
-      },
-      {
         href: '/learn/ask-an-expert',
         label: 'Ask an expert',
         state: 'soon',
@@ -107,6 +147,8 @@ export const PUBLIC_NAV: NavSection[] = [
   {
     href: '/get-involved',
     label: 'Get Involved',
+    tone: 'sky',
+    rank: 'supporting',
     blurb: 'Three ways in: make something, give something, or back someone.',
     children: [
       {
@@ -153,18 +195,13 @@ export const PUBLIC_NAV: NavSection[] = [
         featureKey: 'design-challenges',
         blurb: 'Problems nobody has solved yet, open to anyone.',
       },
-      {
-        href: '/printing',
-        label: '3D print requests',
-        state: 'soon',
-        featureKey: 'printing',
-        blurb: 'Volunteer your printer, or ask for a part to be printed.',
-      },
     ],
   },
   {
     href: '/impact',
     label: 'Impact',
+    tone: 'sunken',
+    rank: 'supporting',
     blurb: 'What this community has made, given and delivered.',
     children: [
       {
@@ -199,6 +236,8 @@ export const PUBLIC_NAV: NavSection[] = [
   {
     href: '/about',
     label: 'About',
+    tone: 'plain',
+    rank: 'supporting',
     blurb: 'Who runs SPLAT, and how to reach us.',
     children: [
       {
