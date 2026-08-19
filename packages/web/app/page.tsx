@@ -100,38 +100,64 @@ export default async function HomePage() {
 
   return (
     <div>
-      {/* Hero — the one surface on the site that carries brand colour as fill.
-          Stats sit inside it so the proof arrives with the promise rather than in
-          a band underneath. */}
-      <div className="card-tint px-6 py-12 sm:px-12 sm:py-14">
-        <div className="mx-auto grid max-w-4xl items-center gap-8 sm:grid-cols-2">
+      {/*
+        The hero, rebuilt for Playroom.
+        The subject of this whole charity is a big round switch a child can hit
+        with the side of a fist, so the hero is built from circles: a circular
+        photo slot, round stat chips, a pill CTA with a real bottom edge. The
+        headline breaks across a rotated highlight rather than sitting in a
+        rectangle, which is the one place the page raises its voice.
+      */}
+      <div className="relative isolate overflow-hidden rounded-[2rem] bg-surface px-6 py-12 sm:px-12 sm:py-16">
+        <div className="relative grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
           <div>
             <h1 className="title-hero">
-              Every child deserves to play.
+              Every toy should be a toy{' '}
+              <span className="tilt-2 inline-block rounded-2xl bg-honey-soft px-3 text-honey-deep">
+                every child
+              </span>{' '}
+              can play with.
             </h1>
-            <p className="mt-4 max-w-prose text-base leading-relaxed text-brand-deep sm:text-lg">
+            <p className="mt-5 max-w-prose text-base leading-relaxed text-muted sm:text-lg">
               A thirty-dollar switch turns a toy a child can&apos;t use into one they can.
-              We publish the guides, and connect the people who build them.
+              We publish the guides, lend the toys, and print the parts.
             </p>
-            <dl className="mt-6 flex flex-wrap gap-x-8 gap-y-3">
+
+            <div className="mt-7 flex flex-wrap items-center gap-3">
+              <Link href="/library" className="btn btn-accent px-8 text-base">
+                Browse the Guides
+              </Link>
+              <Link href="/toy-library" className="btn btn-quiet px-6">
+                Or borrow a toy
+              </Link>
+            </div>
+
+            {/* Stats as chips rather than a dl: round, tactile, and they wrap
+                without collapsing into a column on a phone. */}
+            <ul className="mt-8 flex flex-wrap gap-2.5">
               {[
-                { label: 'Guides', value: totals.tutorials },
-                { label: 'Toys delivered', value: totals.toysDelivered },
-                { label: 'Contributors', value: totals.contributors },
-              ].map((stat) => (
-                <div key={stat.label}>
-                  <dd className="text-2xl font-bold leading-none text-brand-deep">{stat.value}</dd>
-                  <dt className="mt-1 text-xs font-semibold uppercase tracking-wide text-muted">
+                { label: 'guides', value: totals.tutorials, cls: 'bg-brand-tint text-brand-deep' },
+                { label: 'toys delivered', value: totals.toysDelivered, cls: 'bg-mint-soft text-mint-deep' },
+                { label: 'contributors', value: totals.contributors, cls: 'bg-apricot-soft text-apricot-deep' },
+              ].map((stat, i) => (
+                <li
+                  key={stat.label}
+                  className={`${i % 2 ? 'tilt-2' : 'tilt-3'} flex items-baseline gap-1.5 rounded-full px-4 py-2 ${stat.cls}`}
+                >
+                  <span className="text-xl font-black leading-none">{stat.value}</span>
+                  <span className="text-xs font-bold uppercase tracking-wide opacity-80">
                     {stat.label}
-                  </dt>
-                </div>
+                  </span>
+                </li>
               ))}
-            </dl>
-            <Link href="/library" className="btn btn-primary mt-7 px-8">
-              Browse the Guides →
-            </Link>
+            </ul>
           </div>
-          <EditorialImage illustration="adapted-toy" ratio="3/2" />
+
+          {/* Circular crop: a photo of a child mid-press drops straight in here
+              and the ratio is already fixed, so nothing reflows around it. */}
+          <div className="tilt-1 mx-auto w-full max-w-sm [&_figure>div]:rounded-full">
+            <EditorialImage illustration="adapted-toy" ratio="1/1" />
+          </div>
         </div>
       </div>
 
