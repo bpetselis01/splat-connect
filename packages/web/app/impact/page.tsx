@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import type { Route } from 'next'
 import { ImpactCard } from '@/components/impact-card'
+import { HubGrid } from '@/components/hub-grid'
+import { PUBLIC_NAV } from '@/lib/public-nav'
 import type { ImpactSummary } from '@splat-connect/types'
 
 // Same shape the empty grid/strip below already render for zero rows, so a
@@ -23,7 +25,7 @@ export default async function ImpactPage() {
 
   const { totals, recent, contributors, organisations } = impact
   const stats = [
-    { label: 'Tutorials', count: totals.tutorials },
+    { label: 'Guides', count: totals.tutorials },
     { label: 'Toys shared', count: totals.toysShared },
     { label: 'Toys delivered', count: totals.toysDelivered },
     { label: 'Contributors', count: totals.contributors },
@@ -34,8 +36,8 @@ export default async function ImpactPage() {
     <div>
       <h1 className="text-2xl font-bold text-ink sm:text-3xl">Community impact</h1>
       <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted">
-        Tutorials written, toys shared, and deliveries made by the people and organisations
-        behind SPLAT.
+        Guides written, toys shared, and deliveries made by the people and organisations
+        behind SPLAT. Guides here are counted once they are approved and public.
       </p>
 
       <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-5">
@@ -86,7 +88,7 @@ export default async function ImpactPage() {
             </span>
             <p className="mt-4 font-bold text-ink">No contributors yet.</p>
             <p className="mt-1 max-w-xs text-sm leading-relaxed text-muted">
-              Check back soon — this page tracks tutorials, toys, and deliveries across the
+              Check back soon — this page tracks guides, toys, and deliveries across the
               community.
             </p>
           </div>
@@ -100,6 +102,18 @@ export default async function ImpactPage() {
             ))}
           </div>
         )}
+      </div>
+
+      {/* The rest of the section. Organisations moved into the nav here because a
+          directory of who stands behind the work is a proof surface, and it had
+          nowhere in the top bar once the two catalogues were split. */}
+      <div className="mt-12">
+        <h2 className="text-lg font-bold text-ink">More in Impact</h2>
+        <p className="mb-4 mt-1 max-w-prose text-sm text-muted">
+          Some of this is not built yet. Those pages say so, and will take your email if
+          you want to know when they are.
+        </p>
+        <HubGrid items={PUBLIC_NAV.find((s) => s.href === '/impact')!.children} />
       </div>
     </div>
   )

@@ -52,8 +52,10 @@ export function buildNav(caps: Capabilities, unreadNotifications: number): NavGr
     {
       heading: 'Browse',
       rows: [
-        // "Library" alone stops being unambiguous once a toy library exists.
-        { href: '/library', label: 'Tutorial library', icon: 'book' },
+        // Matches the public top bar's label for the same catalogue
+        // (lib/public-nav.ts) — it should not carry two names depending on
+        // whether the visitor is signed in.
+        { href: '/library', label: 'Guides', icon: 'book' },
         { href: '/toy-library', label: 'Toy library', icon: 'toy' },
         { href: '/printing', label: '3D printing', icon: 'printer', soon: true },
         { href: '/organizations', label: 'Organisations', icon: 'building' },

@@ -55,7 +55,7 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  const signedInRoutes = ['/upload', '/dashboard', '/organizations']
+  const signedInRoutes = ['/upload', '/dashboard']
   const adminRoutes = ['/admin']
 
   const needsSignedInAuth = signedInRoutes.some((r) =>

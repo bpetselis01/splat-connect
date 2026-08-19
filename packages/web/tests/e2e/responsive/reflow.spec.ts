@@ -31,7 +31,7 @@ test('@responsive every rail link stays inside the viewport for a contributor', 
   const drawer = page.locator('dialog.shell-drawer')
   await expect(drawer).toBeVisible()
 
-  for (const name of ['Tutorial library', 'Organisations', 'My tutorials']) {
+  for (const name of ['Guides', 'Organisations', 'My tutorials']) {
     const link = drawer.getByRole('link', { name, exact: true })
     await expect(link).toBeVisible()
     await expectWithinViewport(link, width)

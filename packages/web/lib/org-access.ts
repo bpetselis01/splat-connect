@@ -4,9 +4,9 @@
  * middleware enforces only "logged in" and the page calls this instead.
  *
  * Reads GET /api/organizations/mine (backed by org_leaders, the single
- * source of truth). It was requireOrgLeader and redirected; it became a
- * check when /org and /organizations merged — a non-leader gets the page
- * WITHOUT the workspace rather than a bounce.
+ * source of truth). Callers decide what a "no" means for their own page:
+ * /organizations/[id]/page.tsx redirects a non-leader to the public
+ * profile, /organizations/[id]/projects/[tutorialId]/page.tsx 404s.
  *
  * An affordance, not a control: the database refuses a non-leader's writes
  * whatever this returns (tutorials leader UPDATE policy in 007).

@@ -369,6 +369,31 @@ publicRoutes.get('/impact', async (c) => {
 })
 
 /**
+ * The organisations directory, for logged-out visitors.
+ *
+ * Separate from GET /api/organizations rather than an auth-state branch inside
+ * it: that handler returns org_leaders (user ids), and one handler emitting both
+ * public and privileged output is where object-level authorisation bugs hide.
+ * The select below is hand-written so it cannot inherit a column added later.
+ *
+ * Suspended organisations stay listed and marked, not hidden: see the doc
+ * comment on packages/web/app/organizations/page.tsx.
+ */
+publicRoutes.get('/organizations', async (c) => {
+  const supabase = createAnonClient()
+  const { data, error } = await supabase
+    .from('organizations')
+    .select('id, name, description, status')
+    .order('name')
+
+  if (error) {
+    console.error('[public/organizations] read failed:', error.message)
+    return c.json([], 200)
+  }
+  return c.json(data ?? [])
+})
+
+/**
  * A single contributor's public profile for the showcase.
  *
  * Ruling D: opt-out is application-layer. The profile is read via the admin
@@ -535,6 +560,62 @@ publicRoutes.get('/organizations/:id', async (c) => {
     toysDelivered: toysDelivered as OrgPublicProfile['toysDelivered'],
   }
   return c.json(result)
+})
+
+/**
+ * Interest registration from the nine scaffold pages.
+ *
+ * The allowlist is the security boundary: without it feature_key is an open write
+ * target for arbitrary strings. Keys mirror lib/public-nav.ts SCAFFOLD_KEYS — if
+ * one is added there, add it here.
+ */
+const NOTIFY_FEATURE_KEYS = new Set([
+  'ask-an-expert',
+  'requests',
+  'design-challenges',
+  'printing',
+  'news',
+  'events',
+  'map',
+  'partners',
+  'support',
+])
+
+/** Shape only. Deliverability is not our problem until we send something. */
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+publicRoutes.post('/notify', async (c) => {
+  let body: unknown
+  try {
+    body = await c.req.json()
+  } catch {
+    return c.json({ error: 'Expected a JSON body' }, 400)
+  }
+
+  const { email, featureKey } = (body ?? {}) as { email?: unknown; featureKey?: unknown }
+
+  // 254 is the RFC 5321 maximum. Without it EMAIL_RE matches a string of any
+  // length, and there is no select policy on notify_signups to notice.
+  if (typeof email !== 'string' || email.length > 254 || !EMAIL_RE.test(email.trim())) {
+    return c.json({ error: 'A valid email address is required' }, 400)
+  }
+  if (typeof featureKey !== 'string' || !NOTIFY_FEATURE_KEYS.has(featureKey)) {
+    return c.json({ error: 'Unknown feature' }, 400)
+  }
+
+  const supabase = createAnonClient()
+  const { error } = await supabase
+    .from('notify_signups')
+    .insert({ email: email.trim().toLowerCase(), feature_key: featureKey })
+
+  // 23505 is unique_violation: already registered, which is a success from the
+  // visitor's point of view. Distinguishing it would leak list membership.
+  if (error && error.code !== '23505') {
+    console.error('[public/notify] insert failed:', error.message)
+    return c.json({ error: 'Could not register interest' }, 500)
+  }
+
+  return c.json({ ok: true })
 })
 
 export default publicRoutes

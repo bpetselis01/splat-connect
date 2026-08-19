@@ -9,16 +9,23 @@
  * name is still on work they already backed.
  *
  * Related files:
- * - packages/api/src/routes/organizations.ts: GET /api/organizations
+ * - packages/api/src/routes/public.ts: GET /api/public/organizations
  * - app/organizations/[id]/page.tsx: one organisation, plus its leader's workspace
  * - components/edit-backing-section.tsx: where a contributor acts on this
  */
 import Link from 'next/link'
-import { apiClient } from '@/lib/api-client'
 import type { Organization } from '@splat-connect/types'
 
 export default async function OrganizationsPage() {
-  const orgs = await apiClient.get<Organization[]>('/api/organizations')
+  let orgs: Organization[] = []
+  try {
+    const res = await fetch(`${process.env.API_URL}/api/public/organizations`, {
+      cache: 'no-store',
+    })
+    if (res.ok) orgs = await res.json()
+  } catch {
+    orgs = []
+  }
 
   if (orgs.length === 0) {
     return (
@@ -42,14 +49,14 @@ export default async function OrganizationsPage() {
     <div>
       <h1 className="mb-2 text-2xl font-bold text-ink">Organisations</h1>
       <p className="mb-6 max-w-prose text-sm leading-relaxed text-muted">
-        Organisations review tutorials from contributors who ask them to. Their name
-        on a tutorial means one of their leaders read it and stood behind it.
+        Organisations review guides from contributors who ask them to. Their name
+        on a guide means one of their leaders read it and stood behind it.
       </p>
       <div className="flex flex-col gap-3">
         {orgs.map((org) => (
           <Link
             key={org.id}
-            href={`/organizations/${org.id}`}
+            href={`/organizations/${org.id}/public`}
             className="card card-link p-4"
           >
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
