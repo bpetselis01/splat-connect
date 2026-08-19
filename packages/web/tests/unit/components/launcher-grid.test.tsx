@@ -3,8 +3,8 @@ import { render, screen } from '@testing-library/react'
 import { LauncherGrid, type LauncherTile } from '@/components/launcher-grid'
 
 const tiles: LauncherTile[] = [
-  { href: '/library' as LauncherTile['href'], label: 'Guides', blurb: 'Adaptation tutorials', count: 42 },
-  { href: '/about' as LauncherTile['href'], label: 'About', blurb: 'Who we are' },
+  { href: '/library', label: 'Guides', blurb: 'Adaptation tutorials', tone: 'brand', rank: 'pillar', count: 42 },
+  { href: '/about', label: 'About', blurb: 'Who we are', tone: 'plain', rank: 'supporting' },
 ]
 
 describe('LauncherGrid', () => {
@@ -29,5 +29,21 @@ describe('LauncherGrid', () => {
   it('still links everything when every count is zero', () => {
     render(<LauncherGrid tiles={tiles.map((t) => ({ ...t, count: 0 }))} />)
     expect(screen.getAllByRole('link')).toHaveLength(2)
+  })
+
+  // The size difference is the message: a stranger should be able to tell what
+  // SPLAT provides from what SPLAT merely explains, without reading a word.
+  it('gives pillars more of the grid than supporting sections', () => {
+    const { container } = render(<LauncherGrid tiles={tiles} />)
+    const [pillar, supporting] = Array.from(container.firstElementChild!.children)
+    expect(pillar.className).toContain('lg:col-span-4')
+    expect(supporting.className).toContain('lg:col-span-3')
+  })
+
+  it('gives a pillar its section colour and leaves supporting tiles plain', () => {
+    const { container } = render(<LauncherGrid tiles={tiles} />)
+    const [pillar, supporting] = Array.from(container.firstElementChild!.children)
+    expect(pillar.innerHTML).toContain('bg-brand-tint')
+    expect(supporting.innerHTML).toContain('bg-surface')
   })
 })
