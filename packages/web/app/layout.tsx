@@ -6,6 +6,7 @@ import { Nav } from '@/components/nav'
 import { getUserRole } from '@/lib/auth'
 import { AppShell } from '@/components/app-shell'
 import { PublicFooter } from '@/components/public-footer'
+import { Breadcrumb } from '@/components/breadcrumb'
 
 // Nunito is the mobile app's family (packages/mobile/lib/theme.ts). One rounded
 // sans across headings, labels, buttons and data — product UI doesn't need a
@@ -49,7 +50,7 @@ export default async function RootLayout({
     <html lang="en" className={nunito.variable}>
       <body className="min-h-screen font-sans antialiased">
         {shell ?? (
-          <>
+          <div className="playroom">
             {/* WCAG 2.4.1: up to ~9 tab stops (logo, six section links, role
                 links, sign-in) sit ahead of content on every public route, so it
                 needs a bypass. A fragment link to a focusable target is the
@@ -68,10 +69,11 @@ export default async function RootLayout({
               tabIndex={-1}
               className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10"
             >
+              <Breadcrumb pathname={pathname} />
               {children}
             </main>
             {!bare && <PublicFooter />}
-          </>
+          </div>
         )}
       </body>
     </html>
