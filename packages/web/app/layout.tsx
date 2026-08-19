@@ -7,6 +7,8 @@ import { getUserRole } from '@/lib/auth'
 import { AppShell } from '@/components/app-shell'
 import { PublicFooter } from '@/components/public-footer'
 import { Breadcrumb } from '@/components/breadcrumb'
+import { PlayroomBackdrop } from '@/components/playroom-backdrop'
+import { sectionFor } from '@/lib/public-nav'
 
 // Nunito is the mobile app's family (packages/mobile/lib/theme.ts). One rounded
 // sans across headings, labels, buttons and data — product UI doesn't need a
@@ -43,6 +45,9 @@ export default async function RootLayout({
   const headerList = await headers()
   const pathname = headerList.get('x-pathname') ?? ''
   const bare = isBare(pathname)
+  // The whole public surface gets its section's shapes behind it. Doing this in
+  // the layout rather than per page is why it costs nothing to add a page.
+  const tone = sectionFor(pathname)?.tone ?? 'brand'
 
   const shell = bare ? null : await AppShell({ children })
 
@@ -64,14 +69,17 @@ export default async function RootLayout({
               Skip to main content
             </a>
             <Nav role={await getUserRole()} />
-            <main
-              id="main"
-              tabIndex={-1}
-              className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10"
-            >
-              <Breadcrumb pathname={pathname} />
-              {children}
-            </main>
+            <div className="relative overflow-hidden">
+              {!bare && <PlayroomBackdrop tone={tone} />}
+              <main
+                id="main"
+                tabIndex={-1}
+                className="relative mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10"
+              >
+                <Breadcrumb pathname={pathname} />
+                {children}
+              </main>
+            </div>
             {!bare && <PublicFooter />}
           </div>
         )}

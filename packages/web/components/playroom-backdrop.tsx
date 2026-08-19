@@ -19,9 +19,9 @@ export function PlayroomBackdrop({ tone }: { tone: Tone }) {
       aria-hidden="true"
       className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
     >
-      <span className={`absolute -right-16 -top-24 h-56 w-56 rounded-full opacity-25 ${dot}`} />
-      <span className={`absolute -left-20 bottom-0 h-40 w-40 rounded-full opacity-20 ${dot}`} />
-      <span className={`absolute right-8 top-1/2 h-20 w-20 rounded-full opacity-15 ${dot}`} />
+      <span className={`absolute -right-32 -top-40 h-80 w-80 rounded-full opacity-[0.18] ${dot}`} />
+      <span className={`absolute -left-40 top-1/2 h-64 w-64 rounded-full opacity-[0.14] ${dot}`} />
+      <span className="absolute -bottom-20 right-1/3 h-40 w-40 rounded-full bg-apricot opacity-[0.12]" />
     </div>
   )
 }
