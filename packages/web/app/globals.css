@@ -174,19 +174,32 @@
   .btn-primary {
     background-color: var(--color-brand-dark);
     color: #ffffff;
-    box-shadow: 0 4px 0 var(--color-brand-deep);
+    box-shadow: var(--shadow-rest);
+  }
+
+  /*
+   * Scoped to .playroom, which only the public shell sets. The dashboard shares
+   * .btn-accent and .btn-primary and is deliberately out of scope for this
+   * redesign — a signed-in user should not find their controls have grown a
+   * bounce because the marketing site did.
+   */
+  .playroom .btn-accent,
+  .playroom .btn-primary {
     transition: transform 0.16s var(--ease-spring), box-shadow 0.16s var(--ease-spring),
       background-color 0.16s linear;
   }
 
+  .playroom .btn-accent { box-shadow: 0 4px 0 var(--color-apricot-deep); }
+  .playroom .btn-primary { box-shadow: 0 4px 0 var(--color-brand-deep); }
+
   /* Pressed: the button travels the full height of its own edge, so the edge
      disappears exactly as it reaches the surface. */
-  .btn-accent:active:not(:disabled) {
+  .playroom .btn-accent:active:not(:disabled) {
     transform: translateY(4px) scaleY(0.96);
     box-shadow: 0 0 0 var(--color-apricot-deep);
   }
 
-  .btn-primary:active:not(:disabled) {
+  .playroom .btn-primary:active:not(:disabled) {
     transform: translateY(4px) scaleY(0.96);
     box-shadow: 0 0 0 var(--color-brand-deep);
   }
@@ -199,6 +212,42 @@
    * still reads in order. That property is what makes the tilt safe at browser
    * zoom, with long translated strings, and across 42 pages rather than 6.
    */
+  /*
+   * A card that is going to lie at an angle has to read as an object first.
+   * With the soft blurred rest-shadow the rotation just looked like a
+   * misalignment; a solid offset edge — the same language as the buttons —
+   * makes the same angle read as deliberate.
+   */
+  /*
+   * Entrance, in CSS rather than JavaScript, and the reason is robustness rather
+   * than bundle size.
+   *
+   * This was briefly a Motion `whileInView`, which server-rendered the sections
+   * as `opacity:0` and only revealed them once React hydrated. On a slow or old
+   * device — which describes a lot of the phones this site is read on — that is
+   * a blank page for as long as hydration takes, and with JS disabled it never
+   * recovers. A CSS animation cannot fail to hydrate.
+   *
+   * `both` so the stagger delay does not flash the finished state first. The
+   * global prefers-reduced-motion block collapses the duration, which lands the
+   * element on its final frame immediately rather than hiding it.
+   */
+  @keyframes playroom-rise {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  .rise {
+    animation: playroom-rise 0.5s var(--ease-out-quart) both;
+    animation-delay: var(--rise-delay, 0ms);
+  }
+
+  .card-playroom {
+    background-color: var(--color-surface);
+    border-radius: 1rem;
+    box-shadow: 0 5px 0 rgb(10 53 80 / 0.1);
+  }
+
   .tilt-1 { transform: rotate(-1.6deg); }
   .tilt-2 { transform: rotate(0.9deg); }
   .tilt-3 { transform: rotate(-0.7deg); }
@@ -227,9 +276,6 @@
   .btn-accent {
     background-color: var(--color-apricot);
     color: var(--color-ink);
-    box-shadow: 0 4px 0 var(--color-apricot-deep);
-    transition: transform 0.16s var(--ease-spring), box-shadow 0.16s var(--ease-spring),
-      background-color 0.16s linear;
     box-shadow: var(--shadow-rest);
   }
 
@@ -863,8 +909,8 @@
     transform: none;
   }
 
-  .btn-accent:active:not(:disabled),
-  .btn-primary:active:not(:disabled) {
+  .playroom .btn-accent:active:not(:disabled),
+  .playroom .btn-primary:active:not(:disabled) {
     transform: none;
   }
 }
