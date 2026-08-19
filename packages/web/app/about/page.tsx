@@ -11,6 +11,7 @@ export const metadata = {
 }
 
 export default function AboutPage() {
+  const about = PUBLIC_NAV.find((s) => s.href === '/about')!
   return (
     <div className="mx-auto max-w-3xl">
       <EditorialImage illustration="organisation" ratio="3/2" />
@@ -88,7 +89,7 @@ export default function AboutPage() {
       <p className="mb-4 mt-1 max-w-prose text-sm text-muted">
         The team, how to reach us, and how to support what we do.
       </p>
-      <HubGrid items={PUBLIC_NAV.find((s) => s.href === '/about')!.children} />
+      <HubGrid items={about.children} tone={about.tone} />
     </div>
   )
 }

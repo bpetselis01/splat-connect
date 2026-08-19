@@ -67,14 +67,34 @@ export default async function HomePage() {
   const getInvolved = PUBLIC_NAV.find((s) => s.href === '/get-involved')!
   const liveArticles = learn.children.filter((c) => c.state === 'live')
 
-  const tiles: LauncherTile[] = [
-    { href: '/library', label: 'Guides', blurb: 'Adaptation guides', count: totals.tutorials },
-    { href: '/toy-library', label: 'Toy Library', blurb: 'Toys being given away', count: totals.toysShared },
-    { href: '/learn', label: 'Learn', blurb: 'Switches, tools, safety', count: liveArticles.length },
-    { href: '/get-involved', label: 'Get Involved', blurb: 'Make, give, or back' },
-    { href: '/impact', label: 'Impact', blurb: 'Toys delivered', count: totals.toysDelivered },
-    { href: '/about', label: 'About', blurb: 'Who runs SPLAT' },
-  ]
+  // Derived from the nav model rather than hand-listed beside it: a section added
+  // there used to need remembering here too, and the launcher silently fell behind.
+  // Only the short blurbs and the counts are local, because neither belongs in a
+  // route registry.
+  const BLURB: Record<string, string> = {
+    '/library': 'Adaptation guides',
+    '/toy-library': 'Toys being given away',
+    '/printing': 'Printed parts and mounts',
+    '/learn': 'Switches, tools, safety',
+    '/get-involved': 'Make, give, or back',
+    '/impact': 'Toys delivered',
+    '/about': 'Who runs SPLAT',
+  }
+  const COUNT: Record<string, number | undefined> = {
+    '/library': totals.tutorials,
+    '/toy-library': totals.toysShared,
+    '/learn': liveArticles.length,
+    '/impact': totals.toysDelivered,
+  }
+
+  const tiles: LauncherTile[] = PUBLIC_NAV.map((s) => ({
+    href: s.href,
+    label: s.label,
+    blurb: BLURB[s.href] ?? s.blurb,
+    tone: s.tone,
+    rank: s.rank,
+    count: COUNT[s.href],
+  }))
 
   const tracks = getInvolved.children.filter((c) => TRACKS.includes(c.href))
 
@@ -125,7 +145,7 @@ export default async function HomePage() {
 
       {/* An ordered flow, so the steps are numbered and connected rather than
           dropped into three interchangeable cards. */}
-      <div className="mt-16">
+      <div className="rise mt-16" style={{ '--rise-delay': '0ms' } as React.CSSProperties}>
         <h2 className="text-xl font-bold text-ink">SPLAT in 30 seconds</h2>
         <ol className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-3">
           {HOW_IT_WORKS.map((step, i) => (
@@ -148,15 +168,15 @@ export default async function HomePage() {
         </ol>
       </div>
 
-      <div className="mt-16">
+      <div className="rise mt-16" style={{ '--rise-delay': '60ms' } as React.CSSProperties}>
         <h2 className="text-xl font-bold text-ink">Where you fit</h2>
         <p className="mb-4 mt-1 max-w-prose text-sm text-muted">
           Each of these walks the whole path, start to finish.
         </p>
-        <HubGrid items={tracks} />
+        <HubGrid items={tracks} leadFirst={false} />
       </div>
 
-      <div className="mt-16 grid grid-cols-1 gap-10 lg:grid-cols-2">
+      <div className="rise mt-16 grid grid-cols-1 gap-10 lg:grid-cols-2" style={{ '--rise-delay': '120ms' } as React.CSSProperties}>
         <div>
           <div className="mb-4 flex items-center justify-between gap-4">
             <h2 className="text-xl font-bold text-ink">Recent guides</h2>
@@ -188,7 +208,7 @@ export default async function HomePage() {
               View all →
             </Link>
           </div>
-          <HubGrid items={liveArticles.slice(0, 3)} />
+          <HubGrid items={liveArticles.slice(0, 3)} tone={learn.tone} leadFirst={false} />
         </div>
       </div>
     </div>

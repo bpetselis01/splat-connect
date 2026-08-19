@@ -15,6 +15,7 @@ const EMPTY_IMPACT: ImpactSummary = {
 }
 
 export default async function ImpactPage() {
+  const impactSection = PUBLIC_NAV.find((s) => s.href === '/impact')!
   let impact: ImpactSummary = EMPTY_IMPACT
   try {
     const res = await fetch(`${process.env.API_URL}/api/public/impact`, { cache: 'no-store' })
@@ -113,7 +114,7 @@ export default async function ImpactPage() {
           Some of this is not built yet. Those pages say so, and will take your email if
           you want to know when they are.
         </p>
-        <HubGrid items={PUBLIC_NAV.find((s) => s.href === '/impact')!.children} />
+        <HubGrid items={impactSection.children} tone={impactSection.tone} />
       </div>
     </div>
   )
