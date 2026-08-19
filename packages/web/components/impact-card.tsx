@@ -21,7 +21,7 @@ export function ImpactCard({ kind, entity }: ImpactCardProps) {
   ) as Route<string>
 
   return (
-    <Link href={href} data-testid="impact-card" className="card card-link block p-4">
+    <Link href={href} data-testid="impact-card" className="card-playroom card-link block p-4">
       <div className="flex items-start justify-between gap-2">
         <p className="truncate text-sm font-bold text-ink">{entity.name}</p>
         <span
