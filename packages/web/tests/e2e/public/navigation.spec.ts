@@ -11,6 +11,10 @@ import { test, expect } from '@playwright/test'
 const TOP_LEVEL = [
   { href: '/library', label: 'Guides' },
   { href: '/toy-library', label: 'Toy Library' },
+  // Promoted from a Get Involved scaffold on 2026-08-20: 3D printing is one of
+  // the three things SPLAT provides. The no-placeholder rule below is what
+  // forced its hub to become a real page rather than a ComingSoon.
+  { href: '/printing', label: '3D Printing' },
   { href: '/learn', label: 'Learn' },
   { href: '/get-involved', label: 'Get Involved' },
   { href: '/impact', label: 'Impact' },
@@ -35,7 +39,7 @@ test.describe('public navigation', () => {
     }
   })
 
-  test('the top bar carries all six sections and no expandable menu', async ({ page }) => {
+  test('the top bar carries all seven sections and no expandable menu', async ({ page }) => {
     await page.goto('/')
     const header = page.locator('header')
     for (const section of TOP_LEVEL) {
@@ -87,5 +91,36 @@ test.describe('public navigation', () => {
     for (const section of TOP_LEVEL) {
       await expect(page.locator(`a[href="${section.href}"]`).first()).toBeVisible()
     }
+  })
+
+  test('the moved printing article redirects permanently to its new home', async ({ page }) => {
+    // /learn/3d-printing-basics was the only real 3D printing content on the site,
+    // so it moved to anchor the new pillar. Inbound links must follow it.
+    const res = await page.goto('/learn/3d-printing-basics')
+    expect(res?.status()).toBeLessThan(400)
+    expect(page.url()).toContain('/printing/basics')
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+  })
+
+  test('reduced motion removes every tilt rather than animating to it', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.goto('/')
+    const transforms = await page
+      .locator('[class*="tilt-"]')
+      .evaluateAll((els) => els.map((e) => getComputedStyle(e).transform))
+    expect(transforms.length).toBeGreaterThan(0)
+    for (const t of transforms) {
+      expect(['none', 'matrix(1, 0, 0, 1, 0, 0)']).toContain(t)
+    }
+  })
+
+  test('no section is left invisible when the entrance animation cannot run', async ({ page }) => {
+    // The entrance was briefly a JS scroll reveal that server-rendered sections at
+    // opacity:0. This asserts content does not depend on an animation to be seen.
+    await page.goto('/')
+    const hidden = await page
+      .locator('.rise')
+      .evaluateAll((els) => els.filter((e) => getComputedStyle(e).opacity === '0').length)
+    expect(hidden).toBe(0)
   })
 })
