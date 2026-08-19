@@ -44,18 +44,29 @@ test.describe('public navigation', () => {
     await expect(page.locator('[aria-expanded]')).toHaveCount(0)
   })
 
-  test('the subnav appears inside a section and not on a flat catalogue', async ({ page }) => {
-    await page.goto('/learn')
-    await expect(page.getByRole('navigation', { name: /learn pages/i })).toBeVisible()
-
-    await page.goto('/toy-library')
-    await expect(page.getByRole('navigation', { name: /pages$/i })).toHaveCount(0)
+  test('a section page carries one navigation bar, not two', async ({ page }) => {
+    // A section subnav used to render a second full-width bar directly beneath
+    // the top bar, on every public route. It was duplicating navigation that
+    // already existed twice over: the top bar marks the active section and
+    // links to its hub, and the hub page lists every sibling as a card with a
+    // blurb. Two stacked bars cost ~100px of chrome to say nothing new.
+    for (const path of ['/learn', '/learn/switch-types', '/toy-library']) {
+      await page.goto(path)
+      await expect(page.locator('header'), `${path} should have one header`).toHaveCount(1)
+      await expect(
+        page.getByRole('navigation', { name: /pages$/i }),
+        `${path} should have no section subnav`
+      ).toHaveCount(0)
+    }
   })
 
-  test('the subnav marks where you are', async ({ page }) => {
+  test('the top bar marks which section you are in', async ({ page }) => {
+    // This is what makes the subnav unnecessary rather than merely absent: the
+    // sticky top bar is the wayfinding, and it is one click back to the hub.
     await page.goto('/learn/switch-types')
-    const subnav = page.getByRole('navigation', { name: /learn pages/i })
-    await expect(subnav.locator('[aria-current="page"]')).toHaveText(/switch types/i)
+    const current = page.locator('header').locator('[aria-current="page"]')
+    await expect(current).toHaveText('Learn')
+    await expect(current).toHaveAttribute('href', '/learn')
   })
 
   test('the organisations directory is reachable with no session', async ({ page }) => {
