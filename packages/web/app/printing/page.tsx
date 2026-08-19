@@ -27,7 +27,7 @@ export default function PrintingPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-ink sm:text-3xl">3D Printing</h1>
+      <h1 className="title-hub">3D Printing</h1>
       <p className="mt-3 max-w-prose text-base leading-relaxed text-muted">
         A lot of what makes a toy usable is not the toy. It is the bracket that holds a
         switch at the angle a child can actually reach, the case that stops a battery

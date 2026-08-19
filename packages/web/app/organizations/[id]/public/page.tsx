@@ -40,7 +40,7 @@ export default async function OrgPublicProfilePage({
           {initial}
         </span>
         <div>
-          <h1 className="text-2xl font-bold text-ink sm:text-3xl">{org.name}</h1>
+          <h1 className="title-detail">{org.name}</h1>
           {org.status === 'suspended' && (
             <span className="badge mt-1 bg-sunken text-muted">SUSPENDED</span>
           )}

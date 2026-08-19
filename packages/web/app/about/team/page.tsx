@@ -33,7 +33,7 @@ function initials(name: string) {
 export default function TeamPage() {
   return (
     <div>
-      <h1 className="text-2xl font-bold text-ink sm:text-3xl">Our team</h1>
+      <h1 className="title-article">Our team</h1>
       <p className="mt-3 max-w-prose text-base leading-relaxed text-muted">
         A small group of people, plus every contributor and organisation whose name
         appears on a guide.

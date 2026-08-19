@@ -33,7 +33,7 @@ export function ToyLibraryClient({ toys }: { toys: ToyWithOwner[] }) {
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold text-ink sm:text-3xl">Toy Library</h1>
+      <h1 className="mb-6 title-hub">Toy Library</h1>
       <div className="mb-6 flex flex-wrap items-center gap-3">
         <label htmlFor="toy-library-search" className="sr-only">
           Search by toy name

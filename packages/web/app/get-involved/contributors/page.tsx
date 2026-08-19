@@ -11,7 +11,7 @@ export default function ContributorsPage() {
   return (
     <div className="mx-auto max-w-3xl">
       <EditorialImage illustration="maker" ratio="2/1" />
-      <h1 className="mt-6 text-2xl font-bold text-ink sm:text-3xl">For contributors</h1>
+      <h1 className="mt-6 title-article">For contributors</h1>
       <p className="mt-3 max-w-prose text-base leading-relaxed text-muted">
         A guide you write once gets built many times, by families who would never have
         worked it out alone. That is the whole leverage of this platform.

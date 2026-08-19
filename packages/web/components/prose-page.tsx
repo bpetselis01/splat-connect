@@ -37,7 +37,7 @@ export function ProsePage({
   return (
     <article className="relative max-w-prose">
       {tone && <PlayroomBackdrop tone={tone} />}
-      <h1 className="text-2xl font-bold text-ink sm:text-3xl">{title}</h1>
+      <h1 className="title-article">{title}</h1>
       {lastUpdated && (
         // Tilted, because it is the one flash of personality a legal page gets.
         <p className="tilt-3 mt-3 inline-block rounded-full bg-honey-soft px-3 py-1 text-xs font-bold text-honey-deep">

@@ -106,7 +106,7 @@ export default async function HomePage() {
       <div className="card-tint px-6 py-12 sm:px-12 sm:py-14">
         <div className="mx-auto grid max-w-4xl items-center gap-8 sm:grid-cols-2">
           <div>
-            <h1 className="text-3xl font-bold text-ink sm:text-4xl">
+            <h1 className="title-hero">
               Every child deserves to play.
             </h1>
             <p className="mt-4 max-w-prose text-base leading-relaxed text-brand-deep sm:text-lg">

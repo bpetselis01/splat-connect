@@ -35,7 +35,7 @@ export default async function ImpactPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-ink sm:text-3xl">Community impact</h1>
+      <h1 className="title-hub">Community impact</h1>
       <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted">
         Guides written, toys shared, and deliveries made by the people and organisations
         behind SPLAT. Guides here are counted once they are approved and public.

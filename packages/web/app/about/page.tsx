@@ -15,7 +15,7 @@ export default function AboutPage() {
   return (
     <div className="mx-auto max-w-3xl">
       <EditorialImage illustration="organisation" ratio="3/2" />
-      <h1 className="mt-6 text-2xl font-bold text-ink sm:text-3xl">About SPLAT Connect</h1>
+      <h1 className="mt-6 title-hub">About SPLAT Connect</h1>
       <p className="mt-3 text-base leading-relaxed text-muted">
         SPLAT stands for <strong className="text-ink">Supporting Play by Adapting
         Toys</strong>. We publish free instructions for modifying ordinary toys so that

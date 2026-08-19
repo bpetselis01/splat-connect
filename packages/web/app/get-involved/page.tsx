@@ -20,7 +20,7 @@ export default function GetInvolvedPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-ink sm:text-3xl">Get involved</h1>
+      <h1 className="title-hub">Get involved</h1>
       <p className="mt-3 max-w-prose text-base leading-relaxed text-muted">
         SPLAT runs on unpaid work. Contributors adapt toys and write down how, people
         and organisations pass on toys they no longer need, and organisations put their

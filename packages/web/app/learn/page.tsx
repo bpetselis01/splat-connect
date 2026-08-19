@@ -24,7 +24,7 @@ export default function LearnPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-ink sm:text-3xl">Learn</h1>
+      <h1 className="title-hub">Learn</h1>
       <p className="mt-3 max-w-prose text-base leading-relaxed text-muted">
         Adapting a toy is a small piece of electronics and a lot of judgement. These
         articles cover the judgement — what a switch does, which toys take to it, and

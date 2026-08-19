@@ -11,7 +11,7 @@ export default function FamiliesPage() {
   return (
     <div className="mx-auto max-w-3xl">
       <EditorialImage illustration="family" ratio="2/1" />
-      <h1 className="mt-6 text-2xl font-bold text-ink sm:text-3xl">For families</h1>
+      <h1 className="mt-6 title-article">For families</h1>
       <p className="mt-3 max-w-prose text-base leading-relaxed text-muted">
         You do not need to be technical, and you do not need to buy much. Most first
         adaptations take an evening and about thirty dollars of parts.
