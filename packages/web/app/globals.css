@@ -232,6 +232,53 @@
    * global prefers-reduced-motion block collapses the duration, which lands the
    * element on its final frame immediately rather than hiding it.
    */
+  /*
+   * Typographic register.
+   *
+   * Seventeen files shared one byte-identical h1 class string, so a hub, an
+   * article and the homepage all shouted at exactly the same volume and the site
+   * had no sense of scale. These are the four volumes it actually needs.
+   *
+   * Letter-spacing bottoms out at -0.03em; tighter than that and Nunito's
+   * rounder letterforms start to touch.
+   *
+   * Named `title-*`, not `h-*`: `h-` is Tailwind v4's height namespace, so
+   * `.h-hub` was read as a height utility with an unresolvable value and
+   * silently dropped from the build. The class was on the element and the rule
+   * was in this file; it just never reached the stylesheet.
+   */
+  .title-hero {
+    font-size: clamp(2.1rem, 5.5vw, 3.4rem);
+    font-weight: 900;
+    line-height: 1.04;
+    letter-spacing: -0.03em;
+    color: var(--color-ink);
+  }
+
+  .title-hub {
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    font-weight: 900;
+    line-height: 1.08;
+    letter-spacing: -0.028em;
+    color: var(--color-ink);
+  }
+
+  .title-article {
+    font-size: clamp(1.5rem, 3vw, 1.9rem);
+    font-weight: 900;
+    line-height: 1.15;
+    letter-spacing: -0.022em;
+    color: var(--color-ink);
+  }
+
+  .title-detail {
+    font-size: clamp(1.35rem, 2.5vw, 1.6rem);
+    font-weight: 800;
+    line-height: 1.2;
+    letter-spacing: -0.018em;
+    color: var(--color-ink);
+  }
+
   @keyframes playroom-rise {
     from { opacity: 0; transform: translateY(14px); }
     to   { opacity: 1; transform: none; }
