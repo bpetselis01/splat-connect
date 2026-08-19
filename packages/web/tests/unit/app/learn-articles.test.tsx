@@ -6,7 +6,9 @@ import SwitchTypes from '@/app/learn/switch-types/page'
 import ChoosingAToy from '@/app/learn/choosing-a-toy/page'
 import ToolsAndMaterials from '@/app/learn/tools-and-materials/page'
 import SafetyAndCleaning from '@/app/learn/safety-and-cleaning/page'
-import PrintingBasics from '@/app/learn/3d-printing-basics/page'
+// Moved out of Learn on 2026-08-20 when 3D printing became a product pillar.
+// Still a long-form article, so it keeps the shared assertions below.
+import PrintingBasics from '@/app/printing/basics/page'
 
 const articles: Array<[string, () => ReactElement]> = [
   ['Toy adaptation 101', Adaptation101],
@@ -17,7 +19,7 @@ const articles: Array<[string, () => ReactElement]> = [
   ['3D printing basics', PrintingBasics],
 ]
 
-describe('Learn articles', () => {
+describe('long-form articles', () => {
   it.each(articles)('%s has a matching h1', (title, Page) => {
     render(<Page />)
     expect(screen.getByRole('heading', { level: 1, name: title })).toBeInTheDocument()
