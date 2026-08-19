@@ -67,8 +67,8 @@ export function Nav({ role }: NavProps) {
                 // some of these routes are built in later tasks — see lib/public-nav.ts.
                 href={s.href as Route<string>}
                 aria-current={active ? 'page' : undefined}
-                className={`flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-2 text-sm font-semibold transition-colors ${
-                  active ? `${tone.surface} ${tone.ink}` : 'text-muted hover:bg-sunken hover:text-ink'
+                className={`nav-pill flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-2 text-sm font-extrabold ${
+                  active ? `${tone.surface} ${tone.ink}` : 'text-muted hover:text-ink'
                 }`}
               >
                 {/* The dot is what makes rank legible: the three pillars carry the

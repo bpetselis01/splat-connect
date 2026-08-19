@@ -289,16 +289,32 @@
     animation-delay: var(--rise-delay, 0ms);
   }
 
+  /*
+   * The public top bar reads as a row of loose pills on a white shelf rather
+   * than a flat utility strip. Scoped to .playroom so the signed-in rail is
+   * untouched.
+   */
+  .playroom .nav-pill {
+    background-color: var(--color-surface);
+    box-shadow: 0 2px 0 rgb(10 53 80 / 0.14);
+    transition: transform 0.18s var(--ease-spring), box-shadow 0.18s var(--ease-spring);
+  }
+
+  .playroom .nav-pill:hover {
+    transform: translateY(-2px) rotate(-1.5deg);
+    box-shadow: 0 4px 0 rgb(10 53 80 / 0.18);
+  }
+
   .card-playroom {
     background-color: var(--color-surface);
     border-radius: 1rem;
     box-shadow: 0 5px 0 rgb(10 53 80 / 0.1);
   }
 
-  .tilt-1 { transform: rotate(-1.6deg); }
-  .tilt-2 { transform: rotate(0.9deg); }
-  .tilt-3 { transform: rotate(-0.7deg); }
-  .tilt-4 { transform: rotate(1.4deg); }
+  .tilt-1 { transform: rotate(-2.4deg); }
+  .tilt-2 { transform: rotate(1.6deg); }
+  .tilt-3 { transform: rotate(-1.3deg); }
+  .tilt-4 { transform: rotate(2.1deg); }
 
   .tilt-1, .tilt-2, .tilt-3, .tilt-4 {
     transition: transform 0.22s var(--ease-spring), box-shadow 0.22s var(--ease-out-quart);
