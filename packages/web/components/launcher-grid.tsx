@@ -14,17 +14,26 @@
  *
  * The twelve-column track is what makes both rows come out even: three pillars
  * at four columns, four supporting sections at three.
+ *
+ * A pillar is now a tall tile with the count set huge in the display face and
+ * the switch motif bleeding off its corner. The first pass gave pillars the
+ * extra width but nothing to fill it with, so three of the site's most important
+ * destinations came out as pale rectangles that were mostly empty space.
  */
 import Link from 'next/link'
 import type { Route } from 'next'
+import type { IllustrationKey } from '@/components/editorial-image'
 import { toneClass, type Tone } from '@/lib/tone'
 import { Tilt } from '@/components/tilt'
+import { Sticker } from '@/components/slot'
 
 export interface LauncherTile {
   href: string
   label: string
   blurb: string
   tone: Tone
+  /** The section's illustration, worn by pillar tiles. */
+  art: IllustrationKey
   rank: 'pillar' | 'supporting'
   /** Omitted where a number would be meaningless, e.g. About. */
   count?: number
@@ -32,7 +41,7 @@ export interface LauncherTile {
 
 export function LauncherGrid({ tiles }: { tiles: LauncherTile[] }) {
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-12">
+    <div className="grid grid-cols-2 gap-4 lg:grid-cols-12">
       {tiles.map((tile, i) => {
         const pillar = tile.rank === 'pillar'
         const tone = toneClass(tile.tone)
@@ -47,29 +56,54 @@ export function LauncherGrid({ tiles }: { tiles: LauncherTile[] }) {
               // Cast: NavSection.href is `string`, not typedRoutes' `Route` — see
               // lib/public-nav.ts for why.
               href={tile.href as Route<string>}
-              className={`card-playroom card-link flex h-full flex-col rounded-2xl ${
-                pillar ? `${tone.surface} ${tone.ink} p-5` : 'bg-surface p-4 text-ink'
+              className={`card-playroom card-link group relative flex h-full flex-col overflow-hidden ${
+                pillar
+                  ? `${tone.surface} ${tone.ink} min-h-[13rem] p-6`
+                  : 'bg-surface p-4 text-ink'
               }`}
             >
-              {tile.count !== undefined && (
-                <p
-                  className={`font-bold leading-none ${
-                    pillar ? 'text-3xl' : 'text-xl text-brand-deep'
-                  }`}
-                >
-                  {tile.count}
-                </p>
+              {/* The motif this tile was always described as having and never
+                  had. Hung off the bottom corner and clipped by the tile's own
+                  overflow, so it reads as a thing the tile is standing on rather
+                  than an icon placed in it — and it fills the dead space beside
+                  the count without competing with it for the first fixation. */}
+              {pillar && (
+                <Sticker
+                  art={tile.art}
+                  note={`${tile.label} — section illustration`}
+                  size="lg"
+                  className="!absolute -bottom-5 -right-4 !bg-transparent !shadow-none opacity-70"
+                />
               )}
-              <p className={`font-bold ${pillar ? 'mt-2 text-lg' : 'mt-1.5 text-sm'}`}>
-                {tile.label}
-              </p>
+
+              <p className={`relative font-black ${pillar ? 'text-lg' : 'text-sm'}`}>{tile.label}</p>
               <p
-                className={`mt-1 leading-snug ${
-                  pillar ? 'text-sm opacity-90' : 'text-xs text-muted'
+                className={`relative mt-1 leading-snug ${
+                  pillar ? 'text-sm opacity-80' : 'text-xs text-muted'
                 }`}
               >
                 {tile.blurb}
               </p>
+
+              {/* The number is the payoff, so it sits at the bottom where the
+                  eye finishes rather than at the top where it competes with the
+                  label for the first fixation. */}
+              {tile.count !== undefined ? (
+                <p
+                  className={`relative mt-auto pt-4 font-black leading-none tracking-tight ${
+                    pillar ? 'text-6xl' : 'text-2xl text-brand-deep'
+                  }`}
+                >
+                  {tile.count}
+                </p>
+              ) : (
+                <span
+                  aria-hidden="true"
+                  className="relative mt-auto pt-4 text-xl font-bold opacity-40 transition-transform duration-200 group-hover:translate-x-1"
+                >
+                  →
+                </span>
+              )}
             </Link>
           </Tilt>
         )
