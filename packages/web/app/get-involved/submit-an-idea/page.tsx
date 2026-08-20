@@ -8,7 +8,7 @@ export const metadata = {
 
 export default function SubmitAnIdea() {
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="max-w-3xl">
       <h1 className="title-article">Submit an idea</h1>
       <p className="mt-3 max-w-prose text-base leading-relaxed text-muted">
         You do not have to be able to build something to be the person who thought of it.
