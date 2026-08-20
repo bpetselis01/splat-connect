@@ -42,7 +42,7 @@ test('@responsive every rail link stays inside the viewport for a contributor', 
 test('@responsive the hero heading does not overflow', async ({ page }) => {
   await page.goto('/')
 
-  const heading = page.getByRole('heading', { name: 'Every child deserves to play.' })
+  const heading = page.getByRole('heading', { name: 'Press it. Watch it go.' })
   await expect(heading).toBeVisible()
   await expectWithinViewport(heading, page.viewportSize()!.width)
 })
