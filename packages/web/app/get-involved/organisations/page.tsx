@@ -9,7 +9,7 @@ export const metadata = {
 
 export default function OrganisationsPage() {
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="max-w-3xl">
       <EditorialImage illustration="organisation" ratio="2/1" />
       <h1 className="mt-6 title-article">For organisations</h1>
       <p className="mt-3 max-w-prose text-base leading-relaxed text-muted">
