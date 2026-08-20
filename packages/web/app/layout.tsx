@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Nunito } from 'next/font/google'
+import { Nunito, IBM_Plex_Mono } from 'next/font/google'
 import { headers } from 'next/headers'
 import './globals.css'
 import { Nav } from '@/components/nav'
@@ -14,10 +14,29 @@ import { sectionFor } from '@/lib/public-nav'
 // sans across headings, labels, buttons and data — product UI doesn't need a
 // display/body pairing, and the shared family is what makes the two surfaces
 // read as one product.
+// 900 and italic 700 are the Playroom additions. The heading register runs on
+// Nunito's heaviest weight rather than on a second display family: a black
+// rounded sans at 3.9rem is already a different voice from the same face at
+// 16px, and keeping one family is what holds the mobile-app parity argument.
 const nunito = Nunito({
   subsets: ['latin'],
-  weight: ['400', '600', '700'],
+  weight: ['400', '600', '700', '900'],
+  style: ['normal', 'italic'],
   variable: '--font-nunito',
+  display: 'swap',
+})
+
+// The second family, and it is deliberately not a display face. Mono is used
+// only for micro-labels — eyebrows, breadcrumbs, photo-slot captions, the
+// "142 guides" meta line on a tile. Those are the parts of the page that are
+// machinery rather than voice, and setting them in a monospace at 10-11px with
+// wide tracking is what stops them competing with the headline they sit under.
+const plexMono = IBM_Plex_Mono({
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+  // Not `--font-mono`: that is the Tailwind theme key below, and a token that
+  // resolves to itself resolves to nothing.
+  variable: '--font-plex-mono',
   display: 'swap',
 })
 
@@ -52,7 +71,7 @@ export default async function RootLayout({
   const shell = bare ? null : await AppShell({ children })
 
   return (
-    <html lang="en" className={nunito.variable}>
+    <html lang="en" className={`${nunito.variable} ${plexMono.variable}`}>
       <body className="min-h-screen font-sans antialiased">
         {shell ?? (
           <div className="playroom">
@@ -74,7 +93,7 @@ export default async function RootLayout({
               <main
                 id="main"
                 tabIndex={-1}
-                className="relative mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10"
+                className="public-shell relative py-8 sm:py-10"
               >
                 <Breadcrumb pathname={pathname} />
                 {children}
