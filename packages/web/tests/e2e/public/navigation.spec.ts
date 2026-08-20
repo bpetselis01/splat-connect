@@ -117,10 +117,24 @@ test.describe('public navigation', () => {
   test('no section is left invisible when the entrance animation cannot run', async ({ page }) => {
     // The entrance was briefly a JS scroll reveal that server-rendered sections at
     // opacity:0. This asserts content does not depend on an animation to be seen.
+    //
+    // Asserted under reduced motion rather than on a freshly loaded page. The
+    // entrance is a CSS animation with `both` fill and a stagger of up to 120ms,
+    // so a section legitimately reads opacity:0 while its delay is still
+    // running: sampling straight after load raced the stagger and the result
+    // depended on how fast the machine rendered. Reduced motion collapses the
+    // duration to 0.01ms, which lands every section on its final frame at once —
+    // and is the state this test actually cares about, since it is the path a
+    // visitor who cannot run the animation gets.
+    await page.emulateMedia({ reducedMotion: 'reduce' })
     await page.goto('/')
-    const hidden = await page
-      .locator('.rise')
-      .evaluateAll((els) => els.filter((e) => getComputedStyle(e).opacity === '0').length)
+
+    const sections = page.locator('.rise')
+    expect(await sections.count()).toBeGreaterThan(0)
+
+    const hidden = await sections.evaluateAll(
+      (els) => els.filter((e) => getComputedStyle(e).opacity === '0').length
+    )
     expect(hidden).toBe(0)
   })
 })
