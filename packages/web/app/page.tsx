@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { TutorialCard } from '@/components/tutorial-card'
 import { LauncherGrid, type LauncherTile } from '@/components/launcher-grid'
 import { EditorialImage } from '@/components/editorial-image'
+import { Slot, Sticker } from '@/components/slot'
 import { HubGrid } from '@/components/hub-grid'
 import { PUBLIC_NAV } from '@/lib/public-nav'
 import type { Tutorial, ImpactSummary } from '@splat-connect/types'
@@ -67,66 +68,149 @@ export default async function HomePage() {
   const getInvolved = PUBLIC_NAV.find((s) => s.href === '/get-involved')!
   const liveArticles = learn.children.filter((c) => c.state === 'live')
 
-  const tiles: LauncherTile[] = [
-    { href: '/library', label: 'Guides', blurb: 'Adaptation guides', count: totals.tutorials },
-    { href: '/toy-library', label: 'Toy Library', blurb: 'Toys being given away', count: totals.toysShared },
-    { href: '/learn', label: 'Learn', blurb: 'Switches, tools, safety', count: liveArticles.length },
-    { href: '/get-involved', label: 'Get Involved', blurb: 'Make, give, or back' },
-    { href: '/impact', label: 'Impact', blurb: 'Toys delivered', count: totals.toysDelivered },
-    { href: '/about', label: 'About', blurb: 'Who runs SPLAT' },
-  ]
+  // Derived from the nav model rather than hand-listed beside it: a section added
+  // there used to need remembering here too, and the launcher silently fell behind.
+  // Only the short blurbs and the counts are local, because neither belongs in a
+  // route registry.
+  const BLURB: Record<string, string> = {
+    '/library': 'Adaptation guides',
+    '/toy-library': 'Toys being given away',
+    '/printing': 'Printed parts and mounts',
+    '/learn': 'Switches, tools, safety',
+    '/get-involved': 'Make, give, or back',
+    '/impact': 'Toys delivered',
+    '/about': 'Who runs SPLAT',
+  }
+  const COUNT: Record<string, number | undefined> = {
+    '/library': totals.tutorials,
+    '/toy-library': totals.toysShared,
+    '/learn': liveArticles.length,
+    '/impact': totals.toysDelivered,
+  }
+
+  const tiles: LauncherTile[] = PUBLIC_NAV.map((s) => ({
+    href: s.href,
+    label: s.label,
+    blurb: BLURB[s.href] ?? s.blurb,
+    tone: s.tone,
+    art: s.art,
+    rank: s.rank,
+    count: COUNT[s.href],
+  }))
 
   const tracks = getInvolved.children.filter((c) => TRACKS.includes(c.href))
 
   return (
     <div>
-      {/* Hero — the one surface on the site that carries brand colour as fill.
-          Stats sit inside it so the proof arrives with the promise rather than in
-          a band underneath. */}
-      <div className="card-tint px-6 py-12 sm:px-12 sm:py-14">
-        <div className="mx-auto grid max-w-4xl items-center gap-8 sm:grid-cols-2">
-          <div>
-            <h1 className="text-3xl font-bold text-ink sm:text-4xl">
-              Every child deserves to play.
+      {/*
+        The hero, and the whole direction in one screen: no panel, no band, no
+        box. The content sits directly on the canvas with the section's soft
+        shapes behind it — the same ground the rest of the site stands on, which
+        is what stops the homepage reading as a separate landing page bolted onto
+        a product.
+
+        Two words of the headline lean. One circular photo slot, tilted. One
+        apricot control with a real bottom edge. That is the entire budget, and
+        holding to it is why the same language survives on a privacy policy.
+      */}
+      <section className="relative isolate py-6 sm:py-10">
+        <div className="grid items-center gap-10 lg:grid-cols-[1fr_0.85fr] lg:gap-14">
+          <div className="rise" style={{ '--rise-delay': '0ms' } as React.CSSProperties}>
+            <p className="eyebrow text-brand-dark">Supporting Play by Adapting Toys</p>
+
+            <h1 className="title-hero mt-3">
+              Press it.
+              <br />
+              <span className="lean">Watch it go.</span>
             </h1>
-            <p className="mt-4 max-w-prose text-base leading-relaxed text-brand-deep sm:text-lg">
-              A thirty-dollar switch turns a toy a child can&apos;t use into one they can.
-              We publish the guides, and connect the people who build them.
+
+            <p className="mt-5 max-w-[42ch] text-base leading-relaxed text-muted">
+              We turn ordinary toys into ones that answer to a single big switch — so every
+              child gets the bit that matters: making something happen.
             </p>
-            <dl className="mt-6 flex flex-wrap gap-x-8 gap-y-3">
+
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+              <Link href="/library" className="btn btn-accent px-8 text-base">
+                Browse the guides
+              </Link>
+              <Link href="/toy-library" className="btn btn-quiet px-6">
+                Or borrow a toy
+              </Link>
+            </div>
+
+            {/* Stats as tilted chips rather than a dl: round, tactile, and they
+                wrap without collapsing into a column on a phone. */}
+            <ul className="mt-9 flex flex-wrap gap-2.5">
               {[
-                { label: 'Guides', value: totals.tutorials },
-                { label: 'Toys delivered', value: totals.toysDelivered },
-                { label: 'Contributors', value: totals.contributors },
-              ].map((stat) => (
-                <div key={stat.label}>
-                  <dd className="text-2xl font-bold leading-none text-brand-deep">{stat.value}</dd>
-                  <dt className="mt-1 text-xs font-semibold uppercase tracking-wide text-muted">
-                    {stat.label}
-                  </dt>
-                </div>
+                { label: 'guides', value: totals.tutorials, cls: 'bg-brand-tint text-brand-deep' },
+                { label: 'toys delivered', value: totals.toysDelivered, cls: 'bg-mint-soft text-mint-deep' },
+                { label: 'contributors', value: totals.contributors, cls: 'bg-apricot-soft text-apricot-deep' },
+              ].map((stat, i) => (
+                <li
+                  key={stat.label}
+                  className={`${i % 2 ? 'tilt-2' : 'tilt-3'} flex items-baseline gap-1.5 rounded-full px-4 py-2 ${stat.cls}`}
+                >
+                  <span className="text-xl font-black leading-none">{stat.value}</span>
+                  <span className="meta opacity-80">{stat.label}</span>
+                </li>
               ))}
-            </dl>
-            <Link href="/library" className="btn btn-primary mt-7 px-8">
-              Browse the Guides →
-            </Link>
+            </ul>
           </div>
-          <EditorialImage illustration="adapted-toy" ratio="3/2" />
+
+          {/* Circular photo slot. A photo of a child mid-press drops straight
+              into EditorialImage and the ratio is already fixed, so nothing
+              reflows around it when the real image arrives. */}
+          <div
+            className="rise relative mx-auto w-full max-w-sm"
+            style={{ '--rise-delay': '120ms' } as React.CSSProperties}
+          >
+            <div className="tilt-4 [&_figure>div]:rounded-full">
+              <EditorialImage illustration="adapted-toy" ratio="1/1" />
+            </div>
+
+            {/* The headline promises a thing that moves and nothing on the page
+                moves. This is where that gets built — pinned to the photo rather
+                than floated loose, because the animation has to read as the toy
+                in the picture responding, not as an effect playing next to it. */}
+            <Slot
+              kind="animation"
+              note="Switch press → toy lights up. Loops once on view, replays on hover."
+              className="absolute -bottom-6 left-0 w-44 sm:-left-10"
+            />
+
+            {/* One sticker, top of the circle, breaking its edge so the photo
+                slot stops reading as a sealed disc. */}
+            <Sticker
+              note="Hand-drawn spark or star burst, apricot"
+              size="sm"
+              className="absolute -right-1 top-2 tilt-2 sm:-right-3"
+            />
+          </div>
         </div>
-      </div>
+      </section>
 
       {/* Launcher — the whole site, above the fold. */}
-      <div className="mt-10">
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">
-          Jump straight in
-        </h2>
+      <div className="mt-12">
+        <h2 className="eyebrow mb-4 text-muted">Jump straight in</h2>
         <LauncherGrid tiles={tiles} />
       </div>
 
       {/* An ordered flow, so the steps are numbered and connected rather than
           dropped into three interchangeable cards. */}
-      <div className="mt-16">
-        <h2 className="text-xl font-bold text-ink">SPLAT in 30 seconds</h2>
+      <div className="rise relative mt-16" style={{ '--rise-delay': '0ms' } as React.CSSProperties}>
+        <h2 className="title-article">SPLAT in 30 seconds</h2>
+
+        {/* The three steps are joined by a 1px hairline, which is the most
+            literal possible drawing of "and then". A hand-drawn path over the
+            top is the version of this that belongs on a site about play, and it
+            has to sit above the row rather than inside any one step — so it is
+            marked here, over the whole band. */}
+        <Slot
+          kind="overlay"
+          note="Hand-drawn dotted path arcing between the three steps, with a small arrow at each join"
+          className="mt-4 w-full sm:absolute sm:right-0 sm:top-0 sm:mt-0 sm:w-56"
+        />
+
         <ol className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-3">
           {HOW_IT_WORKS.map((step, i) => (
             <li key={step.title} className="relative flex gap-4 sm:block">
@@ -148,18 +232,18 @@ export default async function HomePage() {
         </ol>
       </div>
 
-      <div className="mt-16">
-        <h2 className="text-xl font-bold text-ink">Where you fit</h2>
+      <div className="rise mt-16" style={{ '--rise-delay': '60ms' } as React.CSSProperties}>
+        <h2 className="title-article">Where you fit</h2>
         <p className="mb-4 mt-1 max-w-prose text-sm text-muted">
           Each of these walks the whole path, start to finish.
         </p>
-        <HubGrid items={tracks} />
+        <HubGrid items={tracks} tone={getInvolved.tone} art={getInvolved.art} leadFirst={false} />
       </div>
 
-      <div className="mt-16 grid grid-cols-1 gap-10 lg:grid-cols-2">
+      <div className="rise mt-16 grid grid-cols-1 gap-10 lg:grid-cols-2" style={{ '--rise-delay': '120ms' } as React.CSSProperties}>
         <div>
           <div className="mb-4 flex items-center justify-between gap-4">
-            <h2 className="text-xl font-bold text-ink">Recent guides</h2>
+            <h2 className="title-article">Recent guides</h2>
             <Link
               href="/library"
               className="shrink-0 text-sm font-semibold text-brand-dark hover:underline"
@@ -180,7 +264,7 @@ export default async function HomePage() {
 
         <div>
           <div className="mb-4 flex items-center justify-between gap-4">
-            <h2 className="text-xl font-bold text-ink">Learn the basics</h2>
+            <h2 className="title-article">Learn the basics</h2>
             <Link
               href="/learn"
               className="shrink-0 text-sm font-semibold text-brand-dark hover:underline"
@@ -188,7 +272,7 @@ export default async function HomePage() {
               View all →
             </Link>
           </div>
-          <HubGrid items={liveArticles.slice(0, 3)} />
+          <HubGrid items={liveArticles.slice(0, 3)} tone={learn.tone} art={learn.art} leadFirst={false} />
         </div>
       </div>
     </div>

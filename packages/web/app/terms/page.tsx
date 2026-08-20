@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ProsePage } from '@/components/prose-page'
+import { ProsePage, PullQuote } from '@/components/prose-page'
 
 export const metadata = { title: 'Terms of use — SPLAT Connect' }
 
@@ -10,6 +10,9 @@ export default function TermsPage() {
       lastUpdated="19 August 2026"
       intro="These terms cover using this site. If you publish guides there are additional contributor terms, and if you lead an organisation there are organisation leader terms."
     >
+      <PullQuote>
+        A guide tells you how to adapt your own toy. It is not a product we sell you, and following one is your call to make.
+      </PullQuote>
       <section>
         <h2>What SPLAT Connect is</h2>
         <p>

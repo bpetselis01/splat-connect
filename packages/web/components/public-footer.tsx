@@ -8,6 +8,11 @@
  * using plain links instead of a hover-and-focus widget. On a platform serving
  * people with disabilities that difference is the whole argument.
  *
+ * White, on the canvas, with a hairline across the top and one soft shape behind
+ * it. Playroom never goes dark: the direction is a lit room, and a navy slab at
+ * the bottom of every page was reading as the end of one site and the start of
+ * another.
+ *
  * Generated from PUBLIC_NAV, so a route cannot exist without appearing here —
  * and tests/e2e/public/footer.spec.ts walks every link, which makes this the
  * broadest guard in the suite against a route declared but never built.
@@ -18,12 +23,17 @@ import { PUBLIC_NAV, FOOTER_LEGAL } from '@/lib/public-nav'
 
 export function PublicFooter() {
   return (
-    <footer className="mt-16 border-t border-line bg-surface">
-      <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-        <div className="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-3 lg:grid-cols-6">
+    <footer className="relative mt-20 overflow-hidden border-t border-line bg-surface">
+      {/* The last soft shape on the page, half off the bottom edge. */}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute -bottom-40 -right-24 h-[26rem] w-[26rem] rounded-full bg-brand-tint opacity-40"
+      />
+      <div className="public-shell relative py-14">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">
           {PUBLIC_NAV.map((section) => (
             <div key={section.href}>
-              <h2 className="mb-2 text-xs font-bold uppercase tracking-wide text-muted">
+              <h2 className="eyebrow mb-2.5 text-brand-dark">
                 <Link
                   // Cast: most of these routes are built in later tasks, so
                   // typedRoutes doesn't know them yet.

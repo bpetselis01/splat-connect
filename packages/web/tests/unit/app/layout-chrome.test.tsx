@@ -1,6 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import { SectionNav } from '@/components/section-nav'
 import { PublicFooter } from '@/components/public-footer'
 
 // @/app/layout pulls in AppShell -> lib/capabilities -> lib/api-client, which
@@ -18,13 +17,17 @@ vi.mock('@/lib/api-client', () => ({ apiClient: { get: vi.fn() } }))
 // change to the layout itself.
 vi.mock('next/font/google', () => ({
   Nunito: () => ({ variable: '--font-nunito', className: '' }),
+  IBM_Plex_Mono: () => ({ variable: '--font-plex-mono', className: '' }),
 }))
 
 /**
  * The layout itself is an async server component that reads headers() and awaits
- * AppShell, which jsdom cannot render. So the contract under test is the pairing
- * rule the layout implements: bare routes get neither chrome, public routes get
- * both. isBare() is exported from the layout for exactly this reason.
+ * AppShell, which jsdom cannot render. So the contract under test is the rule the
+ * layout implements: bare routes get no chrome, public routes get the top bar and
+ * the footer. isBare() is exported from the layout for exactly this reason.
+ *
+ * That the public chrome is ONE bar and not two is a rendered-page property, so
+ * it is asserted in tests/e2e/public/navigation.spec.ts instead.
  */
 import { isBare } from '@/app/layout'
 
@@ -44,13 +47,6 @@ describe('layout chrome rules', () => {
 
   it('does not treat a route merely containing "login" as bare', () => {
     expect(isBare('/learn/logins')).toBe(false)
-  })
-
-  it('renders a subnav for a section with children and none for a catalogue', () => {
-    const { container: withKids } = render(<SectionNav pathname="/about/team" />)
-    expect(withKids).not.toBeEmptyDOMElement()
-    const { container: flat } = render(<SectionNav pathname="/toy-library" />)
-    expect(flat).toBeEmptyDOMElement()
   })
 
   it('renders the sitemap footer', () => {

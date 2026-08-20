@@ -9,7 +9,7 @@ export function ToyLibraryCard({ toy }: { toy: ToyWithOwner }) {
     <Link
       href={`/toy-library/${toy.id}`}
       data-testid="toy-library-card"
-      className="card card-link overflow-hidden"
+      className="card-playroom card-link overflow-hidden"
     >
       <CardPhoto src={toy.cover_photo_url} />
       <div className="p-4">

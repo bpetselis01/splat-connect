@@ -24,7 +24,7 @@ export default function LearnPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-ink sm:text-3xl">Learn</h1>
+      <h1 className="title-hub">Learn</h1>
       <p className="mt-3 max-w-prose text-base leading-relaxed text-muted">
         Adapting a toy is a small piece of electronics and a lot of judgement. These
         articles cover the judgement — what a switch does, which toys take to it, and
@@ -32,17 +32,17 @@ export default function LearnPage() {
         head to the <Link href="/library" className="font-semibold text-brand-dark hover:underline">Guides</Link>.
       </p>
 
-      <h2 className="mt-10 text-lg font-bold text-ink">Start here</h2>
+      <h2 className="title-detail mt-12">Start here</h2>
       <p className="mb-4 mt-1 max-w-prose text-sm text-muted">
         Read these three in order and you will know enough to adapt your first toy.
       </p>
-      <HubGrid items={startHere} />
+      <HubGrid items={startHere} tone={learn.tone} art={learn.art} />
 
-      <h2 className="mt-10 text-lg font-bold text-ink">Going deeper</h2>
+      <h2 className="title-detail mt-12">Going deeper</h2>
       <p className="mb-4 mt-1 max-w-prose text-sm text-muted">
         Reference material for when you are past the first one.
       </p>
-      <HubGrid items={deeper} />
+      <HubGrid items={deeper} tone={learn.tone} art={learn.art} leadFirst={false} />
     </div>
   )
 }

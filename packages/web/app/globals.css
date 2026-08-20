@@ -43,6 +43,10 @@
   --color-mint: #2fbf9f;
   --color-mint-soft: #d4f2ea;
   --color-mint-deep: #0f5c4d;
+  /* `honey` proper was missing: the ramp had a tint and an ink but no
+     saturated middle, so anything that needed one reached for honey-deep — a
+     brown, which at 15% over the blue canvas comes out khaki. */
+  --color-honey: #f0b429;
   --color-honey-soft: #fdeecb;
   --color-honey-deep: #7a4e05;
   --color-danger: #a3301a;
@@ -55,8 +59,13 @@
   --shadow-lift: 0 10px 24px rgb(10 53 80 / 0.14);
 
   --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  /* Overshoots and settles. The site is about switches; its controls should
+     feel like one is being pressed rather than merely recoloured. */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
   --font-sans: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
+  /* Micro-labels only — see the note on IBM_Plex_Mono in app/layout.tsx. */
+  --font-mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 @layer base {
@@ -174,12 +183,368 @@
     box-shadow: var(--shadow-rest);
   }
 
+  /*
+   * Scoped to .playroom, which only the public shell sets. The dashboard shares
+   * .btn-accent and .btn-primary and is deliberately out of scope for this
+   * redesign — a signed-in user should not find their controls have grown a
+   * bounce because the marketing site did.
+   */
+  .playroom .btn-accent,
+  .playroom .btn-primary {
+    transition: transform 0.16s var(--ease-spring), box-shadow 0.16s var(--ease-spring),
+      background-color 0.16s linear;
+  }
+
+  .playroom .btn-accent { box-shadow: 0 6px 0 var(--color-apricot-deep); }
+  .playroom .btn-primary { box-shadow: 0 6px 0 var(--color-brand-deep); }
+
+  /* Hover raises the button off its own edge before the press drives it back
+     down, so the control has somewhere to travel from as well as to. */
+  .playroom .btn-accent:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 0 var(--color-apricot-deep);
+  }
+
+  .playroom .btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 0 var(--color-brand-deep);
+  }
+
+  /* The hover lift goes; the deepened edge stays, so the control still answers
+     the pointer. */
+  @media (prefers-reduced-motion: reduce) {
+    .playroom .btn-accent:hover:not(:disabled),
+    .playroom .btn-primary:hover:not(:disabled) {
+      transform: none;
+    }
+  }
+
+  /* Pressed: the button travels the full height of its own edge and squashes,
+     so the edge disappears exactly as it reaches the surface. */
+  .playroom .btn-accent:active:not(:disabled) {
+    transform: translateY(6px) scaleY(0.94);
+    box-shadow: 0 0 0 var(--color-apricot-deep);
+  }
+
+  .playroom .btn-primary:active:not(:disabled) {
+    transform: translateY(6px) scaleY(0.94);
+    box-shadow: 0 0 0 var(--color-brand-deep);
+  }
+
+  /*
+   * Decorative rotation, cycled by index from components/tilt.tsx.
+   *
+   * Applied to the card, never to the grid that positions it: strip every
+   * transform here and the layout underneath is an ordinary upright grid that
+   * still reads in order. That property is what makes the tilt safe at browser
+   * zoom, with long translated strings, and across 42 pages rather than 6.
+   */
+  /*
+   * A card that is going to lie at an angle has to read as an object first.
+   * With the soft blurred rest-shadow the rotation just looked like a
+   * misalignment; a solid offset edge — the same language as the buttons —
+   * makes the same angle read as deliberate.
+   */
+  /*
+   * Entrance, in CSS rather than JavaScript, and the reason is robustness rather
+   * than bundle size.
+   *
+   * This was briefly a Motion `whileInView`, which server-rendered the sections
+   * as `opacity:0` and only revealed them once React hydrated. On a slow or old
+   * device — which describes a lot of the phones this site is read on — that is
+   * a blank page for as long as hydration takes, and with JS disabled it never
+   * recovers. A CSS animation cannot fail to hydrate.
+   *
+   * `both` so the stagger delay does not flash the finished state first. The
+   * global prefers-reduced-motion block collapses the duration, which lands the
+   * element on its final frame immediately rather than hiding it.
+   */
+  /*
+   * Typographic register.
+   *
+   * Seventeen files shared one byte-identical h1 class string, so a hub, an
+   * article and the homepage all shouted at exactly the same volume and the site
+   * had no sense of scale. These are the four volumes it actually needs.
+   *
+   * Letter-spacing bottoms out at -0.03em; tighter than that and Nunito's
+   * rounder letterforms start to touch.
+   *
+   * Named `title-*`, not `h-*`: `h-` is Tailwind v4's height namespace, so
+   * `.h-hub` was read as a height utility with an unresolvable value and
+   * silently dropped from the build. The class was on the element and the rule
+   * was in this file; it just never reached the stylesheet.
+   */
+  .title-hero,
+  .title-hub,
+  .title-article,
+  .title-detail {
+    color: var(--color-ink);
+    text-wrap: balance;
+  }
+
+  .title-hero {
+    font-size: clamp(2.4rem, 6vw, 3.9rem);
+    font-weight: 900;
+    line-height: 1.03;
+    letter-spacing: -0.03em;
+  }
+
+  .title-hub {
+    font-size: clamp(1.9rem, 4vw, 2.8rem);
+    font-weight: 900;
+    line-height: 1.04;
+    letter-spacing: -0.03em;
+  }
+
+  .title-article {
+    font-size: 1.55rem;
+    font-weight: 900;
+    line-height: 1.12;
+    letter-spacing: -0.028em;
+  }
+
+  .title-detail {
+    font-size: 1.25rem;
+    font-weight: 800;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+  }
+
+  /*
+   * The one word in a headline that is allowed to lean. Mint against the blue
+   * canvas at -3deg, exactly as the mockup sets it — it is the only rotation on
+   * the page that lands on type rather than on a card, which is why it is
+   * limited to a single span.
+   */
+  .lean {
+    display: inline-block;
+    color: var(--color-mint-deep);
+    transform: rotate(-3deg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lean {
+      transform: none;
+    }
+  }
+
+  /*
+   * A highlighter drawn behind two or three words of a headline. Honey rather
+   * than apricot, and unrotated: apricot is the button colour and the page gets
+   * exactly one of those, while the tilt on this page belongs to the cards.
+   * `box-decoration-break` is what keeps the slab intact when the phrase wraps.
+   */
+  .mark {
+    padding: 0 0.25em;
+    border-radius: 0.5rem;
+    background-color: var(--color-honey-soft);
+    color: var(--color-honey-deep);
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+
+  /*
+   * Micro-labels: eyebrows, breadcrumbs, photo-slot captions, the count under a
+   * tile. Monospace at 11px with wide tracking, which reads as a caption rather
+   * than as small body copy and so never competes with the heading above it.
+   */
+  .eyebrow,
+  .meta {
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+  }
+
+  .eyebrow {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+  }
+
+  .meta {
+    font-size: 0.59375rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+  }
+
+  /*
+   * The date stamp on a prose page, and the whole of Quiet Playroom's decoration
+   * budget: one tilted honey pill, then the writing does the rest.
+   */
+  .stamp {
+    display: inline-block;
+    border-radius: 9999px;
+    padding: 0.25rem 0.7rem;
+    background-color: var(--color-honey-soft);
+    color: var(--color-honey-deep);
+    font-size: 0.6875rem;
+    font-weight: 800;
+    transform: rotate(-1.5deg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .stamp {
+      transform: none;
+    }
+  }
+
+  /*
+   * One idea per page, given a box to sit in. Mint, knocked slightly off-square,
+   * and deliberately not a bordered blockquote — a filled shape is what makes a
+   * page with no photographs on it still look designed.
+   */
+  .pullquote {
+    border-radius: 0.875rem;
+    padding: 0.85rem 1rem;
+    background-color: var(--color-mint-soft);
+    color: var(--color-mint-deep);
+    font-weight: 700;
+    line-height: 1.45;
+    transform: rotate(-0.7deg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pullquote {
+      transform: none;
+    }
+  }
+
+  @keyframes playroom-rise {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  .rise {
+    animation: playroom-rise 0.5s var(--ease-out-quart) both;
+    animation-delay: var(--rise-delay, 0ms);
+  }
+
+  /*
+   * Collapsed, not removed. `both` means the element holds the animation's first
+   * frame — opacity 0 — until it starts, so disabling the animation outright
+   * would leave the whole page invisible. Running it in 0.01ms lands the element
+   * on its final frame immediately: visible, unmoved, no stagger.
+   */
+  @media (prefers-reduced-motion: reduce) {
+    .rise {
+      animation-duration: 0.01ms;
+      animation-delay: 0ms;
+    }
+  }
+
+  /*
+   * The public top bar reads as a row of loose pills on a white shelf rather
+   * than a flat utility strip. Scoped to .playroom so the signed-in rail is
+   * untouched.
+   */
+  .playroom .nav-pill {
+    background-color: var(--color-surface);
+    color: var(--color-brand-deep);
+    box-shadow: 0 2px 0 rgb(10 79 112 / 0.16);
+    transition: transform 0.18s var(--ease-spring), box-shadow 0.18s var(--ease-spring);
+  }
+
+  /* A pill that swings rather than lifts. It is the smallest possible statement
+     of the same idea the cards make — nothing on this site is bolted down. */
+  .playroom .nav-pill:hover {
+    transform: rotate(-2deg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .playroom .nav-pill:hover {
+      transform: none;
+    }
+  }
+
+  /* The section you are in sits proud of the shelf rather than merely tinted. */
+  .playroom .nav-pill[aria-current='page'] {
+    box-shadow: 0 3px 0 color-mix(in srgb, currentColor 45%, transparent);
+  }
+
+  /*
+   * The public shell's measure, in one place.
+   *
+   * Three elements have to agree on it — the top bar, the content column and the
+   * footer — because a nav that ends 30px short of the content it sits above
+   * reads as a misalignment rather than as a design. It was three separate
+   * `max-w-6xl` literals, which is a drift bug waiting for someone to widen one.
+   *
+   * Proportional, not fixed. It was 72rem — a reading measure applied to a whole
+   * site: on a 1900px display the homepage used 60% of the width and put 377px of
+   * dead canvas down each side, which made the hero and the seven-tile launcher
+   * feel like a phone layout that had been stretched. Body text is still capped
+   * far narrower by `max-w-prose` where it matters, so widening the shell buys
+   * the grids room without lengthening a single line of prose.
+   */
+  .public-shell {
+    /*
+     * A proportional margin rather than a fixed measure: 80% wide, centred, so
+     * every display gets the same 10% of breathing room down each side instead
+     * of a 1440px column that looks generous on a laptop and marooned on a
+     * 27-inch monitor.
+     *
+     * The 110rem ceiling is the one place the proportion stops. Past roughly a
+     * 2200px viewport, 80% is 1760px of content, and a three-across card grid
+     * that wide stops being a grid and becomes three billboards.
+     */
+    width: min(80%, 110rem);
+    margin-inline: auto;
+  }
+
+  /*
+   * Phones opt out, because a percentage margin takes width from where there is
+   * least of it: 10% of a 360px screen is a 36px gutter down each side, which is
+   * more than twice the inset it needs and 80px of card taken away to get it. A
+   * flat 1rem is the right gutter at this size, and the proportional rule can
+   * start once there is width to be proportional with.
+   */
+  @media (max-width: 639px) {
+    .public-shell {
+      width: calc(100% - 2rem);
+    }
+  }
+
+
+  /*
+   * A card laid on a table, not a panel welded to a page. No border and no blur:
+   * a single solid 5px bottom edge in the same tinted navy the buttons use, so
+   * the card reads as an object with a thickness and the rotation below reads as
+   * "placed by hand" rather than as a misalignment.
+   */
+  .card-playroom {
+    background-color: var(--color-surface);
+    border-radius: 1rem;
+    box-shadow: 0 5px 0 rgb(10 53 80 / 0.11);
+  }
+
+  /*
+   * The fixed rotation set, cycled by index from components/tilt.tsx. Four
+   * values, none of them repeating adjacently in a three-column grid.
+   */
+  .tilt-1 { transform: rotate(-1.6deg); }
+  .tilt-2 { transform: rotate(0.9deg); }
+  .tilt-3 { transform: rotate(-0.7deg); }
+  .tilt-4 { transform: rotate(1.4deg); }
+
+  .tilt-1, .tilt-2, .tilt-3, .tilt-4 {
+    transition: transform 0.22s var(--ease-spring), box-shadow 0.22s var(--ease-out-quart);
+  }
+
+  /* Straightening on hover is the reward: the card snaps to true and lifts. */
+  .tilt-1:hover, .tilt-2:hover, .tilt-3:hover, .tilt-4:hover {
+    transform: rotate(0deg) translateY(-5px);
+  }
+
   .btn-primary:hover:not(:disabled) {
     background-color: var(--color-brand-deep);
   }
 
   /* The one warm control on the page: contribute, upload, submit. Ink on apricot
      rather than white on apricot, which would sit at 2.4:1. */
+  /*
+   * Playroom: a solid bottom edge rather than a soft drop shadow, so the button
+   * reads as a thing with a side to it. Zero blur is deliberate — a blurred
+   * shadow under a 1px border is the "ghost card" look this replaces.
+   */
   .btn-accent {
     background-color: var(--color-apricot);
     color: var(--color-ink);
@@ -805,7 +1170,36 @@
   details[open] > .panel-summary::after {
     transition: none;
   }
+
+  /*
+   * The tilt is personality, not information, so it is removed outright rather
+   * than animated to. What is left is the upright grid the cards were always
+   * laid out on — a designed state, not a degraded one.
+   */
+  .tilt-1, .tilt-2, .tilt-3, .tilt-4,
+  .tilt-1:hover, .tilt-2:hover, .tilt-3:hover, .tilt-4:hover {
+    transform: none;
+  }
+
+  .playroom .btn-accent:active:not(:disabled),
+  .playroom .btn-primary:active:not(:disabled) {
+    transform: none;
+  }
 }
+
+/*
+ * The remaining rotations are reset beside their own definitions, in
+ * @layer components above — `.lean`, `.stamp`, `.pullquote`, the nav pill's
+ * swing and the button hover lift.
+ *
+ * They were once listed here, in one tidy block alongside the tilt reset. That
+ * block sat directly after the tilt rule and carried the identical
+ * `transform: none`, so Lightning CSS merged the two — and dropped six of the
+ * selectors on the way through. The rules were in the source, absent from the
+ * stylesheet, and the only symptom was one headline still leaning under
+ * `prefers-reduced-motion`. Keeping each reset next to the rule it undoes means
+ * there is never an adjacent twin to merge with.
+ */
 
 /*
   Rail width as a custom property rather than a swapped utility class: <main>

@@ -20,7 +20,7 @@ export function LibraryClient({ tutorials }: { tutorials: Tutorial[] }) {
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold text-ink sm:text-3xl">
+      <h1 className="mb-6 title-hub">
         Toy Adaptation Library
       </h1>
       <div className="mb-6 flex flex-wrap items-center gap-3">

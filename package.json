@@ -6,7 +6,8 @@
     "dev:web": "pnpm --filter @splat-connect/web dev",
     "dev:mobile": "pnpm --filter @splat-connect/mobile ios",
     "build": "pnpm --filter @splat-connect/api build && pnpm --filter @splat-connect/web build",
-    "typecheck": "pnpm -r typecheck"
+    "typecheck": "pnpm -r typecheck",
+    "db:check": "bash scripts/check-migration-drift.sh"
   },
   "devDependencies": {
     "typescript": "^5"

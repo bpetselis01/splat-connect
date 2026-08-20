@@ -8,7 +8,7 @@ test('the home page renders the hero and the three SPLAT-in-30-seconds steps', a
 
   await page.goto('/')
 
-  await expect(page.getByRole('heading', { name: 'Every child deserves to play.' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Press it. Watch it go.' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'SPLAT in 30 seconds' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'A guide gets written' })).toBeVisible()
   await expect(
@@ -19,7 +19,7 @@ test('the home page renders the hero and the three SPLAT-in-30-seconds steps', a
   ).toBeVisible()
 })
 
-test('the launcher grid surfaces all six sections with their blurbs', async ({ page }) => {
+test('the launcher grid surfaces all seven sections with their blurbs', async ({ page }) => {
   await page.goto('/')
 
   // Scoped to the "Jump straight in" section: the header and footer repeat
@@ -29,6 +29,7 @@ test('the launcher grid surfaces all six sections with their blurbs', async ({ p
   const tiles = [
     { href: '/library', label: 'Guides', blurb: 'Adaptation guides' },
     { href: '/toy-library', label: 'Toy Library', blurb: 'Toys being given away' },
+    { href: '/printing', label: '3D Printing', blurb: 'Printed parts and mounts' },
     { href: '/learn', label: 'Learn', blurb: 'Switches, tools, safety' },
     { href: '/get-involved', label: 'Get Involved', blurb: 'Make, give, or back' },
     { href: '/impact', label: 'Impact', blurb: 'Toys delivered' },
@@ -39,12 +40,18 @@ test('the launcher grid surfaces all six sections with their blurbs', async ({ p
     await expect(link.getByText(tile.label, { exact: true })).toBeVisible()
     await expect(link.getByText(tile.blurb, { exact: true })).toBeVisible()
   }
+
+  // Count, not just presence. The previous version listed six sections and
+  // asserted each was reachable, so when 3D Printing was promoted to a pillar
+  // the launcher grew a tile and no test noticed. A section added to
+  // PUBLIC_NAV and forgotten here now fails.
+  await expect(launcher.locator('a[href]')).toHaveCount(tiles.length)
 })
 
 test('the hero call to action reaches the guides library', async ({ page }) => {
   await page.goto('/')
 
-  await page.getByRole('link', { name: /Browse the Guides/ }).click()
+  await page.getByRole('link', { name: 'Browse the guides' }).click()
 
   await expect(page).toHaveURL(/\/library$/)
   await expect(page.getByRole('heading', { name: 'Toy Adaptation Library' })).toBeVisible()

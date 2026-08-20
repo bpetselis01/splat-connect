@@ -563,7 +563,7 @@ publicRoutes.get('/organizations/:id', async (c) => {
 })
 
 /**
- * Interest registration from the nine scaffold pages.
+ * Interest registration from the ten scaffold pages.
  *
  * The allowlist is the security boundary: without it feature_key is an open write
  * target for arbitrary strings. Keys mirror lib/public-nav.ts SCAFFOLD_KEYS — if
@@ -574,6 +574,7 @@ const NOTIFY_FEATURE_KEYS = new Set([
   'requests',
   'design-challenges',
   'printing',
+  'printing-parts',
   'news',
   'events',
   'map',

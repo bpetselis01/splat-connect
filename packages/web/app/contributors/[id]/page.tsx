@@ -33,7 +33,7 @@ export default async function ContributorPage({
         <span aria-hidden="true" className="empty-badge text-2xl font-bold text-brand-deep">
           {initial}
         </span>
-        <h1 className="text-2xl font-bold text-ink sm:text-3xl">{contributor.name}</h1>
+        <h1 className="title-detail">{contributor.name}</h1>
       </div>
 
       <div className="mt-6 grid grid-cols-3 gap-4">

@@ -11,6 +11,10 @@ import { test, expect } from '@playwright/test'
 const TOP_LEVEL = [
   { href: '/library', label: 'Guides' },
   { href: '/toy-library', label: 'Toy Library' },
+  // Promoted from a Get Involved scaffold on 2026-08-20: 3D printing is one of
+  // the three things SPLAT provides. The no-placeholder rule below is what
+  // forced its hub to become a real page rather than a ComingSoon.
+  { href: '/printing', label: '3D Printing' },
   { href: '/learn', label: 'Learn' },
   { href: '/get-involved', label: 'Get Involved' },
   { href: '/impact', label: 'Impact' },
@@ -35,7 +39,7 @@ test.describe('public navigation', () => {
     }
   })
 
-  test('the top bar carries all six sections and no expandable menu', async ({ page }) => {
+  test('the top bar carries all seven sections and no expandable menu', async ({ page }) => {
     await page.goto('/')
     const header = page.locator('header')
     for (const section of TOP_LEVEL) {
@@ -44,18 +48,29 @@ test.describe('public navigation', () => {
     await expect(page.locator('[aria-expanded]')).toHaveCount(0)
   })
 
-  test('the subnav appears inside a section and not on a flat catalogue', async ({ page }) => {
-    await page.goto('/learn')
-    await expect(page.getByRole('navigation', { name: /learn pages/i })).toBeVisible()
-
-    await page.goto('/toy-library')
-    await expect(page.getByRole('navigation', { name: /pages$/i })).toHaveCount(0)
+  test('a section page carries one navigation bar, not two', async ({ page }) => {
+    // A section subnav used to render a second full-width bar directly beneath
+    // the top bar, on every public route. It was duplicating navigation that
+    // already existed twice over: the top bar marks the active section and
+    // links to its hub, and the hub page lists every sibling as a card with a
+    // blurb. Two stacked bars cost ~100px of chrome to say nothing new.
+    for (const path of ['/learn', '/learn/switch-types', '/toy-library']) {
+      await page.goto(path)
+      await expect(page.locator('header'), `${path} should have one header`).toHaveCount(1)
+      await expect(
+        page.getByRole('navigation', { name: /pages$/i }),
+        `${path} should have no section subnav`
+      ).toHaveCount(0)
+    }
   })
 
-  test('the subnav marks where you are', async ({ page }) => {
+  test('the top bar marks which section you are in', async ({ page }) => {
+    // This is what makes the subnav unnecessary rather than merely absent: the
+    // sticky top bar is the wayfinding, and it is one click back to the hub.
     await page.goto('/learn/switch-types')
-    const subnav = page.getByRole('navigation', { name: /learn pages/i })
-    await expect(subnav.locator('[aria-current="page"]')).toHaveText(/switch types/i)
+    const current = page.locator('header').locator('[aria-current="page"]')
+    await expect(current).toHaveText('Learn')
+    await expect(current).toHaveAttribute('href', '/learn')
   })
 
   test('the organisations directory is reachable with no session', async ({ page }) => {
@@ -76,5 +91,50 @@ test.describe('public navigation', () => {
     for (const section of TOP_LEVEL) {
       await expect(page.locator(`a[href="${section.href}"]`).first()).toBeVisible()
     }
+  })
+
+  test('the moved printing article redirects permanently to its new home', async ({ page }) => {
+    // /learn/3d-printing-basics was the only real 3D printing content on the site,
+    // so it moved to anchor the new pillar. Inbound links must follow it.
+    const res = await page.goto('/learn/3d-printing-basics')
+    expect(res?.status()).toBeLessThan(400)
+    expect(page.url()).toContain('/printing/basics')
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+  })
+
+  test('reduced motion removes every tilt rather than animating to it', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.goto('/')
+    const transforms = await page
+      .locator('[class*="tilt-"]')
+      .evaluateAll((els) => els.map((e) => getComputedStyle(e).transform))
+    expect(transforms.length).toBeGreaterThan(0)
+    for (const t of transforms) {
+      expect(['none', 'matrix(1, 0, 0, 1, 0, 0)']).toContain(t)
+    }
+  })
+
+  test('no section is left invisible when the entrance animation cannot run', async ({ page }) => {
+    // The entrance was briefly a JS scroll reveal that server-rendered sections at
+    // opacity:0. This asserts content does not depend on an animation to be seen.
+    //
+    // Asserted under reduced motion rather than on a freshly loaded page. The
+    // entrance is a CSS animation with `both` fill and a stagger of up to 120ms,
+    // so a section legitimately reads opacity:0 while its delay is still
+    // running: sampling straight after load raced the stagger and the result
+    // depended on how fast the machine rendered. Reduced motion collapses the
+    // duration to 0.01ms, which lands every section on its final frame at once —
+    // and is the state this test actually cares about, since it is the path a
+    // visitor who cannot run the animation gets.
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.goto('/')
+
+    const sections = page.locator('.rise')
+    expect(await sections.count()).toBeGreaterThan(0)
+
+    const hidden = await sections.evaluateAll(
+      (els) => els.filter((e) => getComputedStyle(e).opacity === '0').length
+    )
+    expect(hidden).toBe(0)
   })
 })

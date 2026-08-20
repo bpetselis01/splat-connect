@@ -9,9 +9,9 @@ export const metadata = {
 
 export default function OrganisationsPage() {
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="max-w-3xl">
       <EditorialImage illustration="organisation" ratio="2/1" />
-      <h1 className="mt-6 text-2xl font-bold text-ink sm:text-3xl">For organisations</h1>
+      <h1 className="mt-6 title-article">For organisations</h1>
       <p className="mt-3 max-w-prose text-base leading-relaxed text-muted">
         Therapy services, schools, disability organisations and community groups. What
         you bring is the thing a volunteer platform cannot generate on its own:

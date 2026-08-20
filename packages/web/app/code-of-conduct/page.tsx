@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ProsePage } from '@/components/prose-page'
+import { ProsePage, PullQuote } from '@/components/prose-page'
 
 export const metadata = { title: 'Code of conduct — SPLAT Connect' }
 
@@ -10,6 +10,9 @@ export default function CodeOfConductPage() {
       lastUpdated="19 August 2026"
       intro="This platform exists because people give their time to children they will mostly never meet. That deserves a space where everyone involved is treated well."
     >
+      <PullQuote>
+        Everyone here is giving their time to a child they will probably never meet. Treat them like it.
+      </PullQuote>
       <section>
         <h2>What we expect</h2>
         <ul>

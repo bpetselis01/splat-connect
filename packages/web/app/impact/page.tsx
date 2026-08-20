@@ -15,6 +15,7 @@ const EMPTY_IMPACT: ImpactSummary = {
 }
 
 export default async function ImpactPage() {
+  const impactSection = PUBLIC_NAV.find((s) => s.href === '/impact')!
   let impact: ImpactSummary = EMPTY_IMPACT
   try {
     const res = await fetch(`${process.env.API_URL}/api/public/impact`, { cache: 'no-store' })
@@ -34,7 +35,7 @@ export default async function ImpactPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-ink sm:text-3xl">Community impact</h1>
+      <h1 className="title-hub">Community impact</h1>
       <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted">
         Guides written, toys shared, and deliveries made by the people and organisations
         behind SPLAT. Guides here are counted once they are approved and public.
@@ -51,7 +52,7 @@ export default async function ImpactPage() {
 
       {recent.length > 0 && (
         <div className="mt-8">
-          <h2 className="text-lg font-bold text-ink">Recently active</h2>
+          <h2 className="title-detail">Recently active</h2>
           <div className="mt-3 flex gap-3 overflow-x-auto pb-2">
             {recent.map((r) => (
               <Link
@@ -80,7 +81,7 @@ export default async function ImpactPage() {
       )}
 
       <div className="mt-8">
-        <h2 className="text-lg font-bold text-ink">Contributors and organisations</h2>
+        <h2 className="title-detail">Contributors and organisations</h2>
         {contributors.length === 0 && organisations.length === 0 ? (
           <div className="flex flex-col items-center px-6 py-12 text-center">
             <span aria-hidden="true" className="empty-badge">
@@ -108,12 +109,12 @@ export default async function ImpactPage() {
           directory of who stands behind the work is a proof surface, and it had
           nowhere in the top bar once the two catalogues were split. */}
       <div className="mt-12">
-        <h2 className="text-lg font-bold text-ink">More in Impact</h2>
+        <h2 className="title-detail">More in Impact</h2>
         <p className="mb-4 mt-1 max-w-prose text-sm text-muted">
           Some of this is not built yet. Those pages say so, and will take your email if
           you want to know when they are.
         </p>
-        <HubGrid items={PUBLIC_NAV.find((s) => s.href === '/impact')!.children} />
+        <HubGrid items={impactSection.children} tone={impactSection.tone} art={impactSection.art} />
       </div>
     </div>
   )

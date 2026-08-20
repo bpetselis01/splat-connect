@@ -366,12 +366,18 @@ test('a placeholder route explains the feature instead of 404ing', async ({ page
     await signIn(page, contributor.email, contributor.password)
     await page.waitForURL('**/dashboard')
 
-    await page.getByRole('link', { name: /3D printing/ }).click()
-    await expect(page).toHaveURL('/printing')
-    // Ported to the current ComingSoon copy (Task 10): the page states its own
-    // label as an h1, explains itself with "Not built yet — here's the plan",
-    // and its way out is the Guides link, not "Browse tutorials".
-    await expect(page.getByRole('heading', { name: '3D print requests' })).toBeVisible()
+    // Repointed from /printing to /dashboard/print-requests. /printing was a
+    // ComingSoon child of Get Involved when this was written; it has since been
+    // promoted to a top-level pillar with a real page, precisely because the
+    // public suite forbids a top-level link that says "Not built yet". So it is
+    // no longer a placeholder and cannot demonstrate what this test is about.
+    // "My print requests" is still one, and it is in the signed-in rail, which
+    // is the surface this spec covers.
+    await page.getByRole('link', { name: /My print requests/ }).click()
+    await expect(page).toHaveURL('/dashboard/print-requests')
+    // ComingSoon states its own label as an h1, explains itself with
+    // "Not built yet — here's the plan", and its way out is the Guides link.
+    await expect(page.getByRole('heading', { name: 'My Print Requests' })).toBeVisible()
     await expect(page.getByText('Not built yet', { exact: true })).toBeVisible()
     await expect(page.locator('#main').getByRole('link', { name: 'Guides' })).toBeVisible()
   } finally {

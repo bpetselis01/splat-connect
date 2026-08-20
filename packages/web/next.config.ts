@@ -20,7 +20,18 @@ const nextConfig: NextConfig = {
   // Runs before middleware, so /my-tutorials never reaches the route table.
   // Permanent: the page merged into /dashboard, it did not move temporarily.
   async redirects() {
-    return [{ source: '/my-tutorials', destination: '/dashboard', permanent: true }]
+    return [
+      { source: '/my-tutorials', destination: '/dashboard', permanent: true },
+      // 3D printing became a product pillar on 2026-08-20. This article was the
+      // only real printing content on the site, so it moved out of Learn to
+      // anchor the new section. Permanent: inbound links and search results
+      // should follow it, not keep pointing at Learn.
+      {
+        source: '/learn/3d-printing-basics',
+        destination: '/printing/basics',
+        permanent: true,
+      },
+    ]
   },
   images: {
     remotePatterns: [

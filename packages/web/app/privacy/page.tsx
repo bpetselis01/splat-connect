@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ProsePage } from '@/components/prose-page'
+import { ProsePage, PullQuote } from '@/components/prose-page'
 
 export const metadata = { title: 'Privacy policy — SPLAT Connect' }
 
@@ -10,6 +10,9 @@ export default function PrivacyPage() {
       lastUpdated="19 August 2026"
       intro="SPLAT Connect is used by families describing their children's needs. We collect as little as the platform can function on, and we say plainly what happens to it."
     >
+      <PullQuote>
+        We never sell anything about you, and we never will. That is the short version.
+      </PullQuote>
       <section>
         <h2>What we collect</h2>
         <ul>
