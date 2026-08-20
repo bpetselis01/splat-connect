@@ -43,12 +43,18 @@ export function Nav({ role }: NavProps) {
 
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-surface">
-      <nav className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 sm:px-6">
+      <nav className="public-shell flex flex-wrap items-center gap-x-3 gap-y-2 py-3">
         <Link
           href="/"
-          className="flex shrink-0 items-center gap-2 text-base font-bold text-ink sm:text-lg"
+          className="flex shrink-0 items-center gap-2 text-lg font-black tracking-tight text-ink sm:text-xl"
         >
-          <span aria-hidden="true" className="grid h-9 w-9 place-items-center rounded-full bg-brand-tint text-brand-dark">
+          {/* The mark sits on a plain tinted disc — no ring. The wordmark is the
+              only thing in the bar that is not a pill, and it earns that by
+              being the heaviest weight on the page rather than by being drawn. */}
+          <span
+            aria-hidden="true"
+            className="grid h-9 w-9 place-items-center rounded-full bg-brand-tint text-brand-dark"
+          >
             <Logo className="h-5 w-5" />
           </span>
           SPLAT Connect
@@ -67,8 +73,11 @@ export function Nav({ role }: NavProps) {
                 // some of these routes are built in later tasks — see lib/public-nav.ts.
                 href={s.href as Route<string>}
                 aria-current={active ? 'page' : undefined}
+                // No colour on the inactive state: `.nav-pill` already sets
+                // brand-deep, and overriding it with `text-muted` was leaving six
+                // of the seven pills grey on a white shelf.
                 className={`nav-pill flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-2 text-sm font-extrabold ${
-                  active ? `${tone.surface} ${tone.ink}` : 'text-muted hover:text-ink'
+                  active ? `${tone.surface} ${tone.ink}` : ''
                 }`}
               >
                 {/* The dot is what makes rank legible: the three pillars carry the
