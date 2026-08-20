@@ -91,7 +91,7 @@ export function ProfileForm({ profile }: { profile: Profile }) {
           />
           Show my contributions publicly
         </label>
-        <p className="text-xs text-muted">Your name still appears on tutorials you're credited on.</p>
+        <p className="text-xs text-muted">Your name still appears on tutorials you&apos;re credited on.</p>
       </div>
       {error && <p role="alert" className="alert alert-danger">{error}</p>}
       {saved && <p className="text-sm font-semibold text-mint-deep">Saved</p>}
