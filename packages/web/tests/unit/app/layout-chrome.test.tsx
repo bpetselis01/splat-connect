@@ -17,6 +17,7 @@ vi.mock('@/lib/api-client', () => ({ apiClient: { get: vi.fn() } }))
 // change to the layout itself.
 vi.mock('next/font/google', () => ({
   Nunito: () => ({ variable: '--font-nunito', className: '' }),
+  IBM_Plex_Mono: () => ({ variable: '--font-plex-mono', className: '' }),
 }))
 
 /**
