@@ -52,7 +52,7 @@ export default async function ImpactPage() {
 
       {recent.length > 0 && (
         <div className="mt-8">
-          <h2 className="text-lg font-bold text-ink">Recently active</h2>
+          <h2 className="title-detail">Recently active</h2>
           <div className="mt-3 flex gap-3 overflow-x-auto pb-2">
             {recent.map((r) => (
               <Link
@@ -81,7 +81,7 @@ export default async function ImpactPage() {
       )}
 
       <div className="mt-8">
-        <h2 className="text-lg font-bold text-ink">Contributors and organisations</h2>
+        <h2 className="title-detail">Contributors and organisations</h2>
         {contributors.length === 0 && organisations.length === 0 ? (
           <div className="flex flex-col items-center px-6 py-12 text-center">
             <span aria-hidden="true" className="empty-badge">
@@ -109,12 +109,12 @@ export default async function ImpactPage() {
           directory of who stands behind the work is a proof surface, and it had
           nowhere in the top bar once the two catalogues were split. */}
       <div className="mt-12">
-        <h2 className="text-lg font-bold text-ink">More in Impact</h2>
+        <h2 className="title-detail">More in Impact</h2>
         <p className="mb-4 mt-1 max-w-prose text-sm text-muted">
           Some of this is not built yet. Those pages say so, and will take your email if
           you want to know when they are.
         </p>
-        <HubGrid items={impactSection.children} tone={impactSection.tone} />
+        <HubGrid items={impactSection.children} tone={impactSection.tone} art={impactSection.art} />
       </div>
     </div>
   )
