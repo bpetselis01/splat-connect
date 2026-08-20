@@ -107,7 +107,7 @@ export default async function LeaderProjectPage({
   const actions = leaderActions(mine?.status ?? null, tutorial!.status)
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="max-w-2xl">
       <div className="mb-2 flex flex-wrap items-center gap-2">
         <p className="text-sm text-muted">For {org.name}</p>
         {mine && <BackingBadge status={mine.status} />}
