@@ -5,7 +5,7 @@ export const metadata = { title: 'Contact — SPLAT Connect' }
 
 export default function ContactPage() {
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="max-w-2xl">
       <h1 className="title-article">Contact</h1>
       <p className="mt-3 text-base leading-relaxed text-muted">
         Email reaches a person. There is no ticketing system and no chatbot.
