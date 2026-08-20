@@ -27,7 +27,7 @@ export function Breadcrumb({ pathname }: { pathname: string }) {
     <nav aria-label="Breadcrumb" className="mb-5">
       <Link
         href={section.href as Route<string>}
-        className="inline-flex items-center gap-2 text-sm font-semibold text-muted transition-colors hover:text-ink"
+        className="eyebrow inline-flex items-center gap-2 text-brand-dark transition-colors hover:text-brand-deep"
       >
         <span aria-hidden="true" className={`h-2 w-2 rounded-full ${tone.dot}`} />
         <span aria-hidden="true">←</span>
