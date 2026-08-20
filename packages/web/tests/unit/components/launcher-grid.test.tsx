@@ -3,8 +3,8 @@ import { render, screen } from '@testing-library/react'
 import { LauncherGrid, type LauncherTile } from '@/components/launcher-grid'
 
 const tiles: LauncherTile[] = [
-  { href: '/library', label: 'Guides', blurb: 'Adaptation tutorials', tone: 'brand', rank: 'pillar', count: 42 },
-  { href: '/about', label: 'About', blurb: 'Who we are', tone: 'plain', rank: 'supporting' },
+  { href: '/library', label: 'Guides', blurb: 'Adaptation tutorials', tone: 'brand', art: 'adapted-toy', rank: 'pillar', count: 42 },
+  { href: '/about', label: 'About', blurb: 'Who we are', tone: 'plain', art: 'organisation', rank: 'supporting' },
 ]
 
 describe('LauncherGrid', () => {
