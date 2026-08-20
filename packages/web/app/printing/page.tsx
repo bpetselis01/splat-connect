@@ -40,7 +40,7 @@ export default function PrintingPage() {
         <EditorialImage illustration="printer" ratio="2/1" />
       </div>
 
-      <h2 className="mt-10 text-lg font-bold text-ink">You do not need a printer</h2>
+      <h2 className="title-detail mt-12">You do not need a printer</h2>
       <p className="mb-4 mt-1 max-w-prose text-sm leading-relaxed text-muted">
         This is the part that already works, today, with no software from us. Ask a
         library, a makerspace, a men&apos;s shed, a school or a university — many have
@@ -57,12 +57,12 @@ export default function PrintingPage() {
         ; that is everything a printer operator needs.
       </p>
 
-      <h2 className="mt-10 text-lg font-bold text-ink">In this section</h2>
+      <h2 className="title-detail mt-12">In this section</h2>
       <p className="mb-4 mt-1 max-w-prose text-sm text-muted">
         Some of this is not built yet. Where it isn&apos;t, you can ask to be told when
         it is.
       </p>
-      <HubGrid items={printing.children} tone={printing.tone} />
+      <HubGrid items={printing.children} tone={printing.tone} art={printing.art} />
     </div>
   )
 }
