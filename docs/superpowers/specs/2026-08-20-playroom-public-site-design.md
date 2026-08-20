@@ -29,6 +29,7 @@ spent.** This work spends it. It does not invent a new brand.
 | Coverage | **All 42 public pages** | Most of it lands through shared components |
 | Information architecture | **Three pillars, four supporting sections** | 3D printing is a core functionality alongside guides and the toy library, not a Get Involved sub-item |
 | Imagery | **Styled placeholders** | `EditorialImage` already does this; see Reuse below |
+| Playful layer | **Marked, not faked** | Stickers, overlays and animation are part of the direction and none of the art exists. Each is a labelled slot carrying its own brief — see *The placeholder family* |
 
 Playroom's known risk — that tilted pastel cards read as unserious to therapists,
 partner organisations and funders, who also use this site — was raised and
@@ -150,6 +151,43 @@ Every pair above already clears 4.5:1; this must be re-verified in test, not
 assumed. A `toneClass(tone)` helper in `lib/tone.ts` maps tone to Tailwind
 classes so the mapping exists once.
 
+### Shell width
+
+The public shell was `max-w-6xl` (72rem / 1152px), repeated as three separate
+literals in the top bar, the content column and the footer. On a 1900px display
+that used **60% of the width and left 377px of dead canvas down each side** — a
+reading measure applied to a whole site, which made the hero and the seven-tile
+launcher read as a phone layout that had been stretched.
+
+One class, `.public-shell`, now holds the measure for all three, because a top
+bar that ends 30px short of the content beneath it reads as a misalignment
+rather than as a design.
+
+The measure is **proportional, not fixed**: `width: min(80%, 110rem)` — a 10%
+margin down each side, so every display gets the same breathing room rather than
+a fixed column that looks generous on a laptop and marooned on a 27-inch
+monitor. Two deliberate departures from the proportion:
+
+| Viewport | Gutter | Why |
+|---|---|---|
+| < 640px | **flat 1rem** | A percentage margin takes width from where there is least of it: 10% of a 360px screen is a 36px gutter, twice the inset it needs and 80px of card to pay for it |
+| 640–2200px | **10%** | The proportional rule, across every real phone-landscape, tablet, laptop and 1080p display |
+| > 2200px | **110rem cap** | Past this, 80% is 1760px of content, and a three-across card grid that wide stops being a grid and becomes three billboards |
+
+Measured: 10.0% each side at 768, 1024, 1280, 1512 and 1920.
+
+
+One width, on every page. An earlier pass narrowed the shell on articles and it
+was wrong: the top bar and footer narrowed with it, so navigating from a hub to
+the privacy policy shifted the entire chrome inward — up to 192px at 1920. Page
+chrome must not move between pages. Reading measure is handled where it belongs,
+by `max-w-prose` on the text itself, and the space beside an article is where
+`PlayroomBackdrop`'s shapes already live.
+
+| Register | Shell | Why |
+|---|---|---|
+| Every page | **80% of viewport**, capped at 110rem | One measure, so the bar and footer never jump |
+
 ### Shape and tilt
 
 Playroom's signature is soft background shapes and cards laid slightly off-square.
@@ -166,6 +204,55 @@ randomness — it would flicker on rehydration.
 
 `PlayroomBackdrop` renders 2–3 absolutely-positioned soft circles tinted to the
 section tone, `aria-hidden`, `pointer-events: none`, behind content.
+
+### The placeholder family
+
+Playroom is a direction with a visual layer on top of it — stickers pinned to
+cards, a hand-drawn path over the how-it-works band, a switch that animates when
+pressed. None of that art exists, and the site has to be honest about which.
+
+`components/slot.tsx` holds two components, alongside the `EditorialImage` that
+already existed:
+
+| Component | Holds | Unfilled state |
+|---|---|---|
+| `EditorialImage` | Big rectangular photo slots | Dashed frame + brand illustration |
+| `Sticker` | Small decorative discs | Dashed disc marked `ART` |
+| `Slot` | Regions for an animation or overlay | Dashed box naming the kind |
+
+Three rules make the family work:
+
+- **Every slot carries its brief.** The `note` prop describes the art that
+  belongs there, and rides in the `title` attribute. Whoever draws the sticker is
+  briefed by the page rather than by a document that has drifted from it.
+- **A slot reserves its box.** A `Sticker` is the same size filled or empty, so
+  dropping in real art never reflows the page around it.
+- **Placeholders look like placeholders.** Empty slots are brand-blue and dashed
+  on every section, deliberately *not* tinted to the tone they sit in — a
+  placeholder that camouflages into each section is a placeholder that ships.
+
+They are decoration and are treated as such: `aria-hidden` and
+`pointer-events-none`, verified by test and by a sweep asserting no link's
+accessible name contains a slot's label.
+
+**`NEXT_PUBLIC_SLOTS=off`** hides every unfilled `Sticker` and `Slot` without
+touching a page. It does not reach a sticker that has real art in it — that is
+the finished state — nor `EditorialImage`, which owns its own fallback.
+
+Where they are placed today:
+
+| Slot | Page | Brief |
+|---|---|---|
+| Animation | `/` hero | Switch press → toy lights up, replays on hover |
+| Sticker | `/` hero | Spark or star burst, apricot |
+| Overlay | `/` how-it-works | Hand-drawn dotted path between the three steps |
+| Sticker | Launcher pillars | Section illustration, bleeding off the corner *(filled)* |
+| Sticker | Every hub card | Lead card wears the section illustration *(filled)*; siblings hold an empty slot |
+
+Prose pages get none, deliberately. The mockup's privacy-policy proof carries no
+illustration at all — its personality comes from the breadcrumb, the tilted date
+stamp and one pull-quote — and adding art there would break the Quiet Playroom
+budget the register system exists to enforce.
 
 ### Typography
 
@@ -233,11 +320,12 @@ Motion's variants. The reduced path is a designed state, never a dead stop.
 | `components/playroom-backdrop.tsx` | Decorative shapes, `aria-hidden`, tone-tinted |
 | `components/tilt.tsx` | Client wrapper: deterministic rotation + entrance stagger |
 | `components/pull-quote.tsx` | The single accent element for Quiet Playroom pages |
+| `components/slot.tsx` | `Sticker` and `Slot` — the placeholder family above |
 
 **Modified (12)**
 
 `app/globals.css` (button depth, tone utilities, tilt utilities, reduced-motion
-block) · `lib/public-nav.ts` (add `tone`) · `app/layout.tsx` (LazyMotion
+block, `.public-shell` width) · `lib/public-nav.ts` (add `tone`, add `art`) · `app/layout.tsx` (LazyMotion
 provider) · `components/nav.tsx` (tone dots) · `components/public-footer.tsx` ·
 `components/hub-grid.tsx` (varied sizes, tone, tilt) ·
 `components/launcher-grid.tsx` (pillar tiles large, supporting tiles small — the
