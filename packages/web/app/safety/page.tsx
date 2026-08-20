@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ProsePage } from '@/components/prose-page'
+import { ProsePage, PullQuote } from '@/components/prose-page'
 
 export const metadata = { title: 'Safety — SPLAT Connect' }
 
@@ -10,6 +10,9 @@ export default function SafetyPage() {
       lastUpdated="19 August 2026"
       intro="Adapting a toy means opening it, working near batteries, and handing the result to a child who may explore it with their mouth. None of that is dangerous if you know what to watch for."
     >
+      <PullQuote>
+        If a part fits inside a toilet roll tube, it fits inside a child. That single test catches most of what goes wrong.
+      </PullQuote>
       <section>
         <h2>Batteries</h2>
         <ul>
