@@ -1,5 +1,20 @@
 /**
- * The soft shapes behind a section's content.
+ * The shapes behind a section's content.
+ *
+ * Three soft circles in the pale end of the palette, sized roughly 1 : 0.68 :
+ * 0.44 and hung off the edges of the page so none of them reads as a complete
+ * object. That incompleteness is the point — a circle that fits entirely on
+ * screen is a diagram, one that runs off the edge is atmosphere.
+ *
+ * Only the largest takes the section's own colour. The other two are a fixed
+ * apricot and mint pair, so no page is ever entirely one hue and the warm half
+ * of the palette gets spent on every route rather than only on the three
+ * sections that happen to own a warm tone.
+ *
+ * Painted as pale tints at half opacity rather than as the section's ink at low
+ * alpha. Saturated ink over the blue canvas drags every hue toward the ground —
+ * honey came out olive, sunken came out grey — and four sections ended up the
+ * same shade of mud.
  *
  * Pure decoration, and treated as such: `aria-hidden` so it is never announced,
  * `pointer-events-none` so it can never intercept a click or a focus ring, and
@@ -12,16 +27,18 @@
 import { toneClass, type Tone } from '@/lib/tone'
 
 export function PlayroomBackdrop({ tone }: { tone: Tone }) {
-  const { dot } = toneClass(tone)
+  const { surface } = toneClass(tone)
 
   return (
     <div
       aria-hidden="true"
       className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
     >
-      <span className={`absolute -right-32 -top-40 h-80 w-80 rounded-full opacity-[0.18] ${dot}`} />
-      <span className={`absolute -left-40 top-1/2 h-64 w-64 rounded-full opacity-[0.14] ${dot}`} />
-      <span className="absolute -bottom-20 right-1/3 h-40 w-40 rounded-full bg-apricot opacity-[0.12]" />
+      <span
+        className={`absolute -top-24 right-[8%] h-[30rem] w-[30rem] rounded-full opacity-50 ${surface}`}
+      />
+      <span className="absolute -bottom-20 left-[4%] h-[20rem] w-[20rem] rounded-full bg-apricot-soft opacity-50" />
+      <span className="absolute right-[3%] top-[46%] h-[13rem] w-[13rem] rounded-full bg-mint-soft opacity-50" />
     </div>
   )
 }
