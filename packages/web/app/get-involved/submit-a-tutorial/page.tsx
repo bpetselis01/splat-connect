@@ -8,7 +8,7 @@ export const metadata = {
 
 export default function SubmitATutorial() {
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="max-w-3xl">
       <h1 className="title-article">Submit a guide</h1>
       <p className="mt-3 max-w-prose text-base leading-relaxed text-muted">
         Here is exactly what is involved, so you can decide before you start rather than
