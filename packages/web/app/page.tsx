@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { TutorialCard } from '@/components/tutorial-card'
 import { LauncherGrid, type LauncherTile } from '@/components/launcher-grid'
 import { EditorialImage } from '@/components/editorial-image'
+import { Slot, Sticker } from '@/components/slot'
 import { HubGrid } from '@/components/hub-grid'
 import { PUBLIC_NAV } from '@/lib/public-nav'
 import type { Tutorial, ImpactSummary } from '@splat-connect/types'
@@ -92,6 +93,7 @@ export default async function HomePage() {
     label: s.label,
     blurb: BLURB[s.href] ?? s.blurb,
     tone: s.tone,
+    art: s.art,
     rank: s.rank,
     count: COUNT[s.href],
   }))
@@ -101,40 +103,44 @@ export default async function HomePage() {
   return (
     <div>
       {/*
-        The hero, rebuilt for Playroom.
-        The subject of this whole charity is a big round switch a child can hit
-        with the side of a fist, so the hero is built from circles: a circular
-        photo slot, round stat chips, a pill CTA with a real bottom edge. The
-        headline breaks across a rotated highlight rather than sitting in a
-        rectangle, which is the one place the page raises its voice.
+        The hero, and the whole direction in one screen: no panel, no band, no
+        box. The content sits directly on the canvas with the section's soft
+        shapes behind it — the same ground the rest of the site stands on, which
+        is what stops the homepage reading as a separate landing page bolted onto
+        a product.
+
+        Two words of the headline lean. One circular photo slot, tilted. One
+        apricot control with a real bottom edge. That is the entire budget, and
+        holding to it is why the same language survives on a privacy policy.
       */}
-      <div className="relative isolate overflow-hidden rounded-[2rem] bg-surface px-6 py-12 sm:px-12 sm:py-16">
-        <div className="relative grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
-          <div>
-            <h1 className="title-hero">
-              Every toy should be a toy{' '}
-              <span className="tilt-2 inline-block rounded-2xl bg-honey-soft px-3 text-honey-deep">
-                every child
-              </span>{' '}
-              can play with.
+      <section className="relative isolate py-6 sm:py-10">
+        <div className="grid items-center gap-10 lg:grid-cols-[1fr_0.85fr] lg:gap-14">
+          <div className="rise" style={{ '--rise-delay': '0ms' } as React.CSSProperties}>
+            <p className="eyebrow text-brand-dark">Supporting Play by Adapting Toys</p>
+
+            <h1 className="title-hero mt-3">
+              Press it.
+              <br />
+              <span className="lean">Watch it go.</span>
             </h1>
-            <p className="mt-5 max-w-prose text-base leading-relaxed text-muted sm:text-lg">
-              A thirty-dollar switch turns a toy a child can&apos;t use into one they can.
-              We publish the guides, lend the toys, and print the parts.
+
+            <p className="mt-5 max-w-[42ch] text-base leading-relaxed text-muted">
+              We turn ordinary toys into ones that answer to a single big switch — so every
+              child gets the bit that matters: making something happen.
             </p>
 
-            <div className="mt-7 flex flex-wrap items-center gap-3">
+            <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link href="/library" className="btn btn-accent px-8 text-base">
-                Browse the Guides
+                Browse the guides
               </Link>
               <Link href="/toy-library" className="btn btn-quiet px-6">
                 Or borrow a toy
               </Link>
             </div>
 
-            {/* Stats as chips rather than a dl: round, tactile, and they wrap
-                without collapsing into a column on a phone. */}
-            <ul className="mt-8 flex flex-wrap gap-2.5">
+            {/* Stats as tilted chips rather than a dl: round, tactile, and they
+                wrap without collapsing into a column on a phone. */}
+            <ul className="mt-9 flex flex-wrap gap-2.5">
               {[
                 { label: 'guides', value: totals.tutorials, cls: 'bg-brand-tint text-brand-deep' },
                 { label: 'toys delivered', value: totals.toysDelivered, cls: 'bg-mint-soft text-mint-deep' },
@@ -145,34 +151,66 @@ export default async function HomePage() {
                   className={`${i % 2 ? 'tilt-2' : 'tilt-3'} flex items-baseline gap-1.5 rounded-full px-4 py-2 ${stat.cls}`}
                 >
                   <span className="text-xl font-black leading-none">{stat.value}</span>
-                  <span className="text-xs font-bold uppercase tracking-wide opacity-80">
-                    {stat.label}
-                  </span>
+                  <span className="meta opacity-80">{stat.label}</span>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Circular crop: a photo of a child mid-press drops straight in here
-              and the ratio is already fixed, so nothing reflows around it. */}
-          <div className="tilt-1 mx-auto w-full max-w-sm [&_figure>div]:rounded-full">
-            <EditorialImage illustration="adapted-toy" ratio="1/1" />
+          {/* Circular photo slot. A photo of a child mid-press drops straight
+              into EditorialImage and the ratio is already fixed, so nothing
+              reflows around it when the real image arrives. */}
+          <div
+            className="rise relative mx-auto w-full max-w-sm"
+            style={{ '--rise-delay': '120ms' } as React.CSSProperties}
+          >
+            <div className="tilt-4 [&_figure>div]:rounded-full">
+              <EditorialImage illustration="adapted-toy" ratio="1/1" />
+            </div>
+
+            {/* The headline promises a thing that moves and nothing on the page
+                moves. This is where that gets built — pinned to the photo rather
+                than floated loose, because the animation has to read as the toy
+                in the picture responding, not as an effect playing next to it. */}
+            <Slot
+              kind="animation"
+              note="Switch press → toy lights up. Loops once on view, replays on hover."
+              className="absolute -bottom-6 left-0 w-44 sm:-left-10"
+            />
+
+            {/* One sticker, top of the circle, breaking its edge so the photo
+                slot stops reading as a sealed disc. */}
+            <Sticker
+              note="Hand-drawn spark or star burst, apricot"
+              size="sm"
+              className="absolute -right-1 top-2 tilt-2 sm:-right-3"
+            />
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Launcher — the whole site, above the fold. */}
-      <div className="mt-10">
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">
-          Jump straight in
-        </h2>
+      <div className="mt-12">
+        <h2 className="eyebrow mb-4 text-muted">Jump straight in</h2>
         <LauncherGrid tiles={tiles} />
       </div>
 
       {/* An ordered flow, so the steps are numbered and connected rather than
           dropped into three interchangeable cards. */}
-      <div className="rise mt-16" style={{ '--rise-delay': '0ms' } as React.CSSProperties}>
-        <h2 className="text-xl font-bold text-ink">SPLAT in 30 seconds</h2>
+      <div className="rise relative mt-16" style={{ '--rise-delay': '0ms' } as React.CSSProperties}>
+        <h2 className="title-article">SPLAT in 30 seconds</h2>
+
+        {/* The three steps are joined by a 1px hairline, which is the most
+            literal possible drawing of "and then". A hand-drawn path over the
+            top is the version of this that belongs on a site about play, and it
+            has to sit above the row rather than inside any one step — so it is
+            marked here, over the whole band. */}
+        <Slot
+          kind="overlay"
+          note="Hand-drawn dotted path arcing between the three steps, with a small arrow at each join"
+          className="mt-4 w-full sm:absolute sm:right-0 sm:top-0 sm:mt-0 sm:w-56"
+        />
+
         <ol className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-3">
           {HOW_IT_WORKS.map((step, i) => (
             <li key={step.title} className="relative flex gap-4 sm:block">
@@ -195,17 +233,17 @@ export default async function HomePage() {
       </div>
 
       <div className="rise mt-16" style={{ '--rise-delay': '60ms' } as React.CSSProperties}>
-        <h2 className="text-xl font-bold text-ink">Where you fit</h2>
+        <h2 className="title-article">Where you fit</h2>
         <p className="mb-4 mt-1 max-w-prose text-sm text-muted">
           Each of these walks the whole path, start to finish.
         </p>
-        <HubGrid items={tracks} leadFirst={false} />
+        <HubGrid items={tracks} tone={getInvolved.tone} art={getInvolved.art} leadFirst={false} />
       </div>
 
       <div className="rise mt-16 grid grid-cols-1 gap-10 lg:grid-cols-2" style={{ '--rise-delay': '120ms' } as React.CSSProperties}>
         <div>
           <div className="mb-4 flex items-center justify-between gap-4">
-            <h2 className="text-xl font-bold text-ink">Recent guides</h2>
+            <h2 className="title-article">Recent guides</h2>
             <Link
               href="/library"
               className="shrink-0 text-sm font-semibold text-brand-dark hover:underline"
@@ -226,7 +264,7 @@ export default async function HomePage() {
 
         <div>
           <div className="mb-4 flex items-center justify-between gap-4">
-            <h2 className="text-xl font-bold text-ink">Learn the basics</h2>
+            <h2 className="title-article">Learn the basics</h2>
             <Link
               href="/learn"
               className="shrink-0 text-sm font-semibold text-brand-dark hover:underline"
@@ -234,7 +272,7 @@ export default async function HomePage() {
               View all →
             </Link>
           </div>
-          <HubGrid items={liveArticles.slice(0, 3)} tone={learn.tone} leadFirst={false} />
+          <HubGrid items={liveArticles.slice(0, 3)} tone={learn.tone} art={learn.art} leadFirst={false} />
         </div>
       </div>
     </div>
