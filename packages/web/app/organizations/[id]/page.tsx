@@ -102,7 +102,7 @@ export default async function OrganizationPage({
   )
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="max-w-3xl">
       <h1 className="mb-2 text-2xl font-bold text-ink">{org!.name}</h1>
       {org!.description && (
         <p className="mb-6 max-w-prose text-muted">{org!.description}</p>
