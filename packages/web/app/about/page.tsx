@@ -13,7 +13,7 @@ export const metadata = {
 export default function AboutPage() {
   const about = PUBLIC_NAV.find((s) => s.href === '/about')!
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="max-w-3xl">
       <EditorialImage illustration="organisation" ratio="3/2" />
       <h1 className="mt-6 title-hub">About SPLAT Connect</h1>
       <p className="mt-3 text-base leading-relaxed text-muted">
@@ -24,7 +24,7 @@ export default function AboutPage() {
       </p>
 
       <section className="mt-10">
-        <h2 className="text-lg font-bold text-ink">Why this exists</h2>
+        <h2 className="title-detail">Why this exists</h2>
         <p className="mt-2 leading-relaxed text-muted">
           Play is how children learn that their actions change the world. A child who
           cannot press a small stiff button is shut out of that, not because the toy is
@@ -43,7 +43,7 @@ export default function AboutPage() {
       </section>
 
       <section className="mt-10">
-        <h2 className="text-lg font-bold text-ink">How the platform works</h2>
+        <h2 className="title-detail">How the platform works</h2>
         <p className="mt-2 leading-relaxed text-muted">
           Contributors adapt a toy and write down how, in enough detail that a parent
           with no electronics experience can follow it. Organisations — therapy services,
@@ -55,7 +55,7 @@ export default function AboutPage() {
       </section>
 
       <section className="mt-10">
-        <h2 className="text-lg font-bold text-ink">Who runs it</h2>
+        <h2 className="title-detail">Who runs it</h2>
         <p className="mt-2 leading-relaxed text-muted">
           SPLAT Connect is run by {ORG_FACTS.legalName}, based in {ORG_FACTS.basedIn} and
           working since {ORG_FACTS.founded}. The platform is free to use and carries no
@@ -72,7 +72,7 @@ export default function AboutPage() {
       </section>
 
       <section className="mt-10">
-        <h2 className="text-lg font-bold text-ink">What we are working on next</h2>
+        <h2 className="title-detail">What we are working on next</h2>
         <p className="mt-2 leading-relaxed text-muted">
           Some of what you can see on this site is not built yet, and those pages say so
           plainly rather than pretending. The largest missing piece is a way for a family
@@ -85,11 +85,11 @@ export default function AboutPage() {
         </p>
       </section>
 
-      <h2 className="mt-10 text-lg font-bold text-ink">More about SPLAT</h2>
+      <h2 className="title-detail mt-12">More about SPLAT</h2>
       <p className="mb-4 mt-1 max-w-prose text-sm text-muted">
         The team, how to reach us, and how to support what we do.
       </p>
-      <HubGrid items={about.children} tone={about.tone} />
+      <HubGrid items={about.children} tone={about.tone} art={about.art} />
     </div>
   )
 }
