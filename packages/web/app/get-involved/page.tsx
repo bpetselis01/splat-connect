@@ -28,17 +28,17 @@ export default function GetInvolvedPage() {
         way in.
       </p>
 
-      <h2 className="mt-10 text-lg font-bold text-ink">Which one are you?</h2>
+      <h2 className="title-detail mt-12">Which one are you?</h2>
       <p className="mb-4 mt-1 max-w-prose text-sm text-muted">
         Each of these walks through the whole path, start to finish.
       </p>
-      <HubGrid items={tracks} tone={section.tone} />
+      <HubGrid items={tracks} tone={section.tone} art={section.art} />
 
-      <h2 className="mt-10 text-lg font-bold text-ink">Specific things you can do</h2>
+      <h2 className="title-detail mt-12">Specific things you can do</h2>
       <p className="mb-4 mt-1 max-w-prose text-sm text-muted">
         Smaller, more concrete. Some are not built yet — those say so.
       </p>
-      <HubGrid items={actions} tone={section.tone} leadFirst={false} />
+      <HubGrid items={actions} tone={section.tone} art={section.art} leadFirst={false} />
     </div>
   )
 }
