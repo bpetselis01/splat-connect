@@ -563,16 +563,89 @@ publicRoutes.get('/organizations/:id', async (c) => {
 })
 
 /**
- * Interest registration from the ten scaffold pages.
+ * Published design challenges for the anonymous listing page.
+ *
+ * Anon has no token to build a client from, so this reads via the admin
+ * client — authorisation is the explicit status filter below, not RLS. A
+ * pending or rejected idea must never appear: these rows can hold a parent's
+ * free-text description of a specific disabled child's needs, unreviewed.
+ */
+publicRoutes.get('/challenges', async (c) => {
+  const { data, error } = await createAdminClient()
+    .from('toy_ideas')
+    .select('id, title, summary, contact_prefs, status, created_at')
+    .in('status', ['challenge', 'graduated'])
+    .order('created_at', { ascending: false })
+
+  if (error) return c.json({ error: error.message }, 500)
+  return c.json(data ?? [])
+})
+
+/**
+ * A single challenge's public brief. Participants are joined with their
+ * name so the web UI can render senders without a wider profiles RLS grant.
+ *
+ * Never returns `messages` — the brief recruits; the conversation stays
+ * private even on a public challenge. A pending/rejected idea 404s rather
+ * than 403ing: indistinguishable from one that never existed.
+ */
+publicRoutes.get('/challenges/:id', async (c) => {
+  const admin = createAdminClient()
+  // Explicit columns, never select('*'). review_note holds an admin's private
+  // rejection reasoning — 037 says of it "Never shown publicly" — and a '*'
+  // select plus `...rest` spread puts it straight on the wire for anonymous
+  // callers. An explicit list is fail-closed: a future private column has to be
+  // deliberately added here to be exposed, rather than leaking the day it lands.
+  const { data: idea, error } = await admin
+    .from('toy_ideas')
+    .select(
+      'id, author_id, title, summary, description, intended_use, primary_user, contact_prefs, status, tutorial_id, created_at, updated_at, profiles!toy_ideas_author_id_fkey(name)'
+    )
+    .eq('id', c.req.param('id'))
+    .in('status', ['challenge', 'graduated'])
+    .maybeSingle()
+
+  if (error) return c.json({ error: error.message }, 500)
+  // A pending or rejected idea is indistinguishable from one that never existed.
+  if (!idea) return c.json({ error: 'Not found' }, 404)
+
+  const { data: participants, error: participantsError } = await admin
+    .from('toy_idea_participants')
+    .select('idea_id, profile_id, joined_at, profiles(name)')
+    .eq('idea_id', idea.id)
+    // Reads via the admin client, so RLS is not what keeps a removed person
+    // off this public list -- this filter is. Without it a removed person
+    // stays listed on the very challenge that excluded them.
+    .is('removed_at', null)
+  if (participantsError) return c.json({ error: participantsError.message }, 500)
+
+  const { profiles, ...rest } = idea as Record<string, any>
+  // Messages are deliberately absent: the brief recruits, the conversation is private.
+  return c.json({
+    ...rest,
+    author_name: profiles?.name ?? null,
+    participants: (participants ?? []).map((p: any) => ({
+      idea_id: p.idea_id, profile_id: p.profile_id, joined_at: p.joined_at,
+      name: p.profiles?.name ?? null,
+    })),
+  })
+})
+
+/**
+ * Interest registration from the nine remaining scaffold pages.
  *
  * The allowlist is the security boundary: without it feature_key is an open write
  * target for arbitrary strings. Keys mirror lib/public-nav.ts SCAFFOLD_KEYS — if
- * one is added there, add it here.
+ * one is added there, add it here. That list is *derived* from the nav data
+ * (every 'soon' child's featureKey); this Set is hand-written because this
+ * package cannot import from packages/web. Nothing enforces the two staying in
+ * step — a flip on one side and a forgotten edit here is silent, caught only by
+ * reading both files. (design-challenges was exactly this: it flipped 'live' in
+ * Task 13 and this Set still allowlisted the key until removed by hand.)
  */
 const NOTIFY_FEATURE_KEYS = new Set([
   'ask-an-expert',
   'requests',
-  'design-challenges',
   'printing',
   'printing-parts',
   'news',

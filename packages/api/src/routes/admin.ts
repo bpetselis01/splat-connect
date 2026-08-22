@@ -7,6 +7,7 @@ import { Hono } from 'hono'
 import { createAdminClient } from '../supabase/client.js'
 import { createUserClient } from '../supabase/user-client.js'
 import { ORG_COLUMNS } from './organizations.js'
+import { systemMessage } from './toy-ideas.js'
 import type { AuthVariables } from '../middleware/auth.js'
 import type { TutorialStatus } from '@splat-connect/types'
 
@@ -239,6 +240,195 @@ admin.delete('/organizations/:orgId/leaders/:userId', async (c) => {
 })
 
 /**
+ * Design challenge review queue. Every idea, any status, newest first — an
+ * admin needs to see what's pending as well as what they've already decided.
+ */
+admin.get('/ideas', async (c) => {
+  const { data, error } = await createAdminClient()
+    .from('toy_ideas')
+    // Explicit columns, never select('*'): review_note is an admin's private
+    // rejection reasoning, fine for this audience, but naming it keeps a
+    // future private column from leaking here by default the way it did on
+    // the public detail endpoint.
+    .select(
+      'id, author_id, title, summary, description, intended_use, primary_user, contact_prefs, status, review_note, tutorial_id, created_at, updated_at, profiles!toy_ideas_author_id_fkey(name)'
+    )
+    .order('created_at', { ascending: false })
+
+  if (error) return c.json({ error: error.message }, 500)
+  return c.json(data ?? [])
+})
+
+// Only the review transition lives here. Graduation is its own endpoint because
+// it writes a tutorial and contributor rows, not just a status.
+const REVIEW_OUTCOMES = ['challenge', 'rejected'] as const
+
+admin.patch('/ideas/:id/status', async (c) => {
+  const body = await c.req.json().catch(() => null)
+  const status = body?.status
+  if (!REVIEW_OUTCOMES.includes(status)) {
+    return c.json({ error: 'Status must be challenge or rejected' }, 400)
+  }
+  // Publishing forces review_note to null structurally: 040's reasoning for
+  // leaving `authenticated`'s wide toy_ideas grant unrestricted rests on a
+  // published row never carrying a note. A caller sending one alongside
+  // status: 'challenge' must not be able to make that false.
+  const reviewNote = status === 'challenge'
+    ? null
+    : typeof body?.review_note === 'string' ? body.review_note.trim() : null
+
+  const client = createAdminClient()
+  // Compare-and-swap, not read-then-act: the allowed source statuses depend
+  // on the target, conditioned on the same UPDATE statement. Publishing (->
+  // challenge) may claim only a 'pending' row — if it claimed 'challenge' too,
+  // two concurrent publishes would both match (the first commits pending ->
+  // challenge, and 'challenge' is still in the allowed set the second call's
+  // WHERE re-evaluates against once it gets the row lock), so the second
+  // fires a duplicate idea_approved notification instead of 404ing. Rejecting
+  // (-> rejected) still accepts either source: a straight pending -> rejected
+  // refusal, or the challenge -> rejected unpublish this route was widened
+  // for (no DELETE route or grant exists on purpose; this flip is the only
+  // way a published idea stops being public). A graduated idea matches
+  // neither set and 404s, same as a second identical review.
+  const fromStatuses = status === 'challenge' ? ['pending'] : ['pending', 'challenge']
+  const { data, error } = await client
+    .from('toy_ideas')
+    .update({ status, review_note: reviewNote, updated_at: new Date().toISOString() })
+    .eq('id', c.req.param('id'))
+    .in('status', fromStatuses)
+    .select('id, author_id')
+    .maybeSingle()
+
+  if (error) return c.json({ error: error.message }, 500)
+  if (!data) return c.json({ error: 'No pending or published idea with that id' }, 404)
+
+  const { error: notifyError } = await client.from('notifications').insert({
+    recipient_id: data.author_id,
+    type: status === 'challenge' ? 'idea_approved' : 'idea_rejected',
+    idea_id: data.id,
+    actor_name: 'SPLAT',
+  })
+  if (notifyError) console.error('[admin.ideas.status] notification insert failed:', notifyError.message)
+
+  return c.json({ id: data.id, status })
+})
+
+/**
+ * POST /api/admin/ideas/:id/graduate
+ *
+ * Turns a challenge into a draft tutorial: one atomic status claim, one
+ * tutorial insert, one tutorial_id link, one contributor copy, one
+ * notification insert, one system message. No transaction spans these —
+ * Supabase's JS client cannot open one across calls — so a failure partway
+ * leaves a partial result behind. Every write below that can fail is checked
+ * and reported as a 500 rather than swallowed, so a partial result is at
+ * least a visible one.
+ *
+ * The status claim runs first and is a compare-and-swap
+ * (`.eq('status', 'challenge')` on the update itself), not a read-then-act
+ * check. Two concurrent POSTs — an admin double-clicking Graduate is a
+ * mundane trigger — would otherwise both read 'challenge', both insert a
+ * tutorial, and both attach a full contributor set: an orphan that IS
+ * reachable through the normal pending → approved review path, which is
+ * exactly the silent-duplicate outcome this endpoint exists to prevent.
+ * With the claim as the first write, Postgres's own row-level locking makes
+ * it exclusive: exactly one caller moves the row out of 'challenge', the
+ * loser's update matches zero rows and gets 409 with no side effects at all.
+ *
+ * Everything after the claim is still sequential, unprotected writes — a
+ * failure there is now an *incomplete* graduation, never a *duplicate* one.
+ * The worst reachable state is idea 'graduated' with tutorial_id null (claim
+ * succeeded, tutorial insert or the link-back failed) or graduated with a
+ * tutorial that has no contributors (contributor insert failed). Both are
+ * inert — tutorial_contributors gates who can even see or submit the draft,
+ * so nothing here reaches the public library unattended — detectable by
+ * query, and repairable by inserting the missing rows. A retry always 409s
+ * rather than duplicating anything, because the claim already moved the row.
+ *
+ * ponytail: the claim is atomic (Postgres enforces it); the three writes
+ * after it are not, since the Supabase JS client cannot open a transaction
+ * across calls. That residual risk is bounded to "incomplete," not
+ * "duplicated." If graduation ever needs full atomicity, move the whole
+ * sequence into a plpgsql function and call it via .rpc().
+ */
+admin.post('/ideas/:id/graduate', async (c) => {
+  const client = createAdminClient()
+  const id = c.req.param('id')
+
+  const { data: exists, error: existsError } = await client
+    .from('toy_ideas').select('id').eq('id', id).maybeSingle()
+  if (existsError) return c.json({ error: existsError.message }, 500)
+  if (!exists) return c.json({ error: 'Not found' }, 404)
+
+  // Claim the graduation atomically. A read-then-act guard lets two concurrent
+  // calls both pass, both mint a tutorial, and both attach contributors — an
+  // orphan that IS reachable through pending->approved review. This conditional
+  // update is the compare-and-swap: exactly one caller can move the row out of
+  // 'challenge', and the loser claims no row.
+  const { data: claimed, error: claimError } = await client
+    .from('toy_ideas')
+    .update({ status: 'graduated', updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .eq('status', 'challenge')
+    .select('id, author_id, title, summary')
+    .maybeSingle()
+  if (claimError) return c.json({ error: claimError.message }, 500)
+  // A challenge graduates once. A second call is a mistake, not an update —
+  // and here it also lost the compare-and-swap, so it changed nothing.
+  if (!claimed) return c.json({ error: 'Already graduated' }, 409)
+
+  const { data: tutorial, error: tutorialError } = await client
+    .from('tutorials')
+    // difficulty is NOT NULL on tutorials with a check constraint; an idea carries
+    // no difficulty, so a draft starts at 'medium' and its contributor corrects it
+    // before submitting. Do not relax the column to serve this one caller.
+    .insert({ title: claimed.title, description: claimed.summary, status: 'draft', difficulty: 'medium' })
+    .select('id')
+    .single()
+  if (tutorialError) return c.json({ error: tutorialError.message }, 500)
+
+  const { error: linkError } = await client
+    .from('toy_ideas').update({ tutorial_id: tutorial.id }).eq('id', id)
+  if (linkError) return c.json({ error: linkError.message }, 500)
+
+  // removed_at is null: someone excluded after a report must not be credited
+  // on the resulting guide, and tutorial_contributors is also the access
+  // gate for the draft — crediting them would hand back exactly the access
+  // their removal took away.
+  const { data: participants, error: participantsError } = await client
+    .from('toy_idea_participants').select('profile_id').eq('idea_id', id).is('removed_at', null)
+  if (participantsError) return c.json({ error: participantsError.message }, 500)
+
+  // The shape tutorial_contributors already stores, so this copy is free.
+  const { error: contributorsError } = await client.from('tutorial_contributors').insert([
+    { tutorial_id: tutorial.id, profile_id: claimed.author_id, role: 'primary' },
+    ...(participants ?? []).map((p: { profile_id: string }) => ({
+      tutorial_id: tutorial.id, profile_id: p.profile_id, role: 'collaborator',
+    })),
+  ])
+  if (contributorsError) return c.json({ error: contributorsError.message }, 500)
+
+  // Tell the author and every current participant a draft now exists —
+  // graduation was otherwise silent to everyone it happened to. Checked like
+  // every other write above, not swallowed: a failed notification insert is
+  // reported as a 500 rather than logged and ignored.
+  const { error: notifyError } = await client.from('notifications').insert([
+    { recipient_id: claimed.author_id, type: 'idea_graduated', idea_id: id, actor_name: 'SPLAT' },
+    ...(participants ?? []).map((p: { profile_id: string }) => ({
+      recipient_id: p.profile_id, type: 'idea_graduated', idea_id: id, actor_name: 'SPLAT',
+    })),
+  ])
+  if (notifyError) return c.json({ error: notifyError.message }, 500)
+
+  // Fire-and-forget, same as every other system message in this feature: the
+  // graduation has already succeeded by this point, so a failed thread post
+  // logs rather than fails the request.
+  await systemMessage(id, claimed.author_id, 'This challenge became a draft guide.')
+
+  return c.json({ tutorial_id: tutorial.id }, 201)
+})
+
+/**
  * GET /api/admin/spot-check
  *
  * A random sample of tutorials someone other than the admin approved. With no
@@ -263,6 +453,89 @@ admin.get('/spot-check', async (c) => {
   // ponytail: in-memory shuffle of at most `limit` rows; move to a tablesample
   // query if the approved set ever gets large.
   return c.json((data ?? []).sort(() => Math.random() - 0.5))
+})
+
+/**
+ * GET /api/admin/reports
+ *
+ * The report queue (041/spec §API). Unresolved rows first so an admin lands
+ * on what still needs deciding; resolved ones stay listed underneath rather
+ * than vanishing, so a repeat pattern against the same person is still
+ * visible. `reason` is included on purpose — admins are the one audience
+ * this table's RLS ever lets read it (041's comment), so this is the only
+ * response in the codebase where that column may appear.
+ */
+admin.get('/reports', async (c) => {
+  const { data, error } = await createAdminClient()
+    .from('toy_idea_reports')
+    .select(
+      'id, idea_id, reported_profile_id, reported_by, reason, created_at, resolved_at, resolved_by, resolution_note, ' +
+        'toy_ideas(title), ' +
+        'reported_profile:profiles!toy_idea_reports_reported_profile_id_fkey(name), ' +
+        'reporter:profiles!toy_idea_reports_reported_by_fkey(name)'
+    )
+    .order('resolved_at', { ascending: true, nullsFirst: true })
+    .order('created_at', { ascending: true })
+  if (error) return c.json({ error: error.message }, 500)
+  return c.json(data ?? [])
+})
+
+/**
+ * PATCH /api/admin/reports/:id
+ *
+ * Resolves a report with a note. `.is('resolved_at', null)` on the update
+ * itself is the same compare-and-swap as graduate's status claim above: a
+ * double-click resolves once, and the loser's update matches no row rather
+ * than overwriting the first admin's resolved_by/resolution_note.
+ */
+admin.patch('/reports/:id', async (c) => {
+  const body = await c.req.json<{ resolution_note?: string }>().catch(() => null)
+  if (body?.resolution_note !== undefined && typeof body.resolution_note !== 'string') {
+    return c.json({ error: 'resolution_note must be a string' }, 400)
+  }
+  const resolutionNote = body?.resolution_note?.trim() || null
+
+  const { data, error } = await createAdminClient()
+    .from('toy_idea_reports')
+    .update({
+      resolved_at: new Date().toISOString(),
+      resolved_by: c.get('userId'),
+      resolution_note: resolutionNote,
+    })
+    .eq('id', c.req.param('id'))
+    .is('resolved_at', null)
+    .select('id, idea_id, resolved_at, resolved_by, resolution_note')
+    .maybeSingle()
+  if (error) return c.json({ error: error.message }, 500)
+  if (!data) return c.json({ error: 'No unresolved report with that id' }, 404)
+  return c.json(data)
+})
+
+/**
+ * DELETE /api/admin/ideas/:id/participants/:profileId/removal
+ *
+ * Reinstatement: the owner's stated escape hatch, "not allowed back in no
+ * matter what, unless an admin adds them back in." Clears removed_at/by
+ * rather than deleting the row, so joined_at (and the thread-history bound
+ * it drives, 042) stays intact for their return.
+ *
+ * `.not('removed_at', 'is', null)` scopes the update to an actual removal —
+ * it matches nothing for a participant row that was never removed, and
+ * nothing for a profileId that never joined at all, so both collapse to the
+ * same 404 the brief asks for.
+ */
+admin.delete('/ideas/:id/participants/:profileId/removal', async (c) => {
+  const { data, error } = await createAdminClient()
+    .from('toy_idea_participants')
+    .update({ removed_at: null, removed_by: null })
+    .eq('idea_id', c.req.param('id'))
+    .eq('profile_id', c.req.param('profileId'))
+    .not('removed_at', 'is', null)
+    .select('profile_id')
+    .maybeSingle()
+  if (error) return c.json({ error: error.message }, 500)
+  if (!data) return c.json({ error: 'That person carries no removal to reinstate' }, 404)
+  return c.body(null, 204)
 })
 
 export default admin

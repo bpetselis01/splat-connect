@@ -1,6 +1,6 @@
 import { render, screen, within } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import DashboardPage from '@/app/dashboard/page'
+import DashboardPage from '@/app/dashboard/tutorials/page'
 import type { Tutorial, Profile } from '@splat-connect/types'
 
 vi.mock('@/lib/api-client', () => ({
@@ -8,6 +8,10 @@ vi.mock('@/lib/api-client', () => ({
 }))
 vi.mock('next/navigation', () => ({
   redirect: vi.fn(),
+  // components/boundary-link.tsx (rendered here and by
+  // components/dashboard-tutorial-card.tsx) reads this; null is what the
+  // real hook returns outside an App Router context too.
+  usePathname: () => null,
 }))
 // Spreads the rest: the card carries data-testid on the Link itself, and a
 // mock that forwarded only href/className would silently swallow it.

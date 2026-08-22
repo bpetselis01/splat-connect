@@ -7,7 +7,10 @@ test('signing out returns to the home page and restores the Sign in link', async
   await signIn(page, contributor.email, contributor.password)
   await page.waitForURL('**/dashboard')
 
-  await page.getByRole('button', { name: 'Sign out' }).click()
+  // The account section now shows the header AND the rail together (that's
+  // the whole point of this plan), and both carry a Sign out control — scope
+  // to the header's, which exists on every signed-in page.
+  await page.getByRole('banner').getByRole('button', { name: 'Sign out' }).click()
   await page.waitForURL(/localhost:\d+\/$/)
 
   await expect(page.getByRole('link', { name: 'Sign in' })).toBeVisible()

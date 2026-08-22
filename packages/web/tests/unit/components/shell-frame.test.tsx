@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 // fireEvent, not user-event: @testing-library/user-event is not a dependency
 // of this package and the no-new-dependencies constraint applies to tests too.
-import { render, screen } from '@testing-library/react'
+import { render } from '@testing-library/react'
 import { ShellFrame } from '@/components/shell-frame'
 import type { NavGroup } from '@/lib/nav-model'
 
@@ -37,35 +37,16 @@ describe('ShellFrame', () => {
     expect(main.className).toMatch(/\bmax-w-/)
   })
 
-  // Tests: the skip link exists, is first in the tab order, and targets a focusable <main>
-  // How:   checks the anchor precedes the rail in document order and that its fragment
-  //        resolves to an element that can hold focus
-  // Chain: WCAG 2.4.1 (Level A). The rail put up to fourteen tab stops ahead of the page
-  //        content on every route. tabIndex -1 is the load-bearing half: without it the
-  //        browser scrolls to <main> but leaves focus on the link, which does not bypass
-  //        anything. jsdom does not implement fragment-navigation focus, so the focus move
-  //        itself is asserted in tests/e2e/dashboard/shell.spec.ts.
-  it('offers a skip link that targets a focusable main landmark', () => {
+  // Tests: <main> is still a focusable, identifiable skip-link target
+  // How:   checks id/tabindex directly, since the anchor itself now lives one
+  //        level up in app/layout.tsx (the persistent header sits above the
+  //        shell, so there is exactly one skip link for the whole app)
+  // Chain: WCAG 2.4.1 (Level A) — see app/layout.tsx's skip link and
+  //        tests/e2e/dashboard/shell.spec.ts for the rendered-page assertion.
+  it('keeps <main> a valid skip-link target', () => {
     const { container } = shell()
-    const link = screen.getByRole('link', { name: 'Skip to main content' })
-    expect(link).toHaveAttribute('href', '#main')
-
     const main = container.querySelector('main')!
     expect(main).toHaveAttribute('id', 'main')
     expect(main).toHaveAttribute('tabindex', '-1')
-
-    // Ahead of the rail it bypasses, or it bypasses nothing.
-    const rail = container.querySelector('.shell-rail')!
-    expect(link.compareDocumentPosition(rail) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-  })
-
-  // Chain: a skip link that is visible at rest is a stray link on every page; one that
-  //        stays hidden while focused is a keyboard trap you cannot see. It has to be
-  //        sr-only until focus lands on it.
-  it('hides the skip link until it is focused', () => {
-    shell()
-    const link = screen.getByRole('link', { name: 'Skip to main content' })
-    expect(link.className).toMatch(/\bsr-only\b/)
-    expect(link.className).toMatch(/\bfocus:not-sr-only\b/)
   })
 })

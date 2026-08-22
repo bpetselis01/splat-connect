@@ -14,6 +14,7 @@ test('a contributor sees their own tutorials and status badges on the dashboard'
   await acceptTerms(contributor.id)
   await signIn(page, contributor.email, contributor.password)
   await page.waitForURL('**/dashboard')
+  await page.goto('/dashboard/tutorials')
 
   await expect(page.getByRole('heading', { name: 'My tutorials' })).toBeVisible()
   await expect(page.getByText('E2E Pending One')).toBeVisible()
@@ -30,6 +31,7 @@ test('a contributor with no tutorials sees the empty-state prompt', async ({ pag
   await acceptTerms(contributor.id)
   await signIn(page, contributor.email, contributor.password)
   await page.waitForURL('**/dashboard')
+  await page.goto('/dashboard/tutorials')
 
   await expect(page.getByText("You haven't submitted any tutorials yet.")).toBeVisible()
   const prompt = page.getByRole('link', { name: 'Upload your first tutorial' })
@@ -46,6 +48,7 @@ test('a draft tutorial shows its badge, and its whole card links to the editor',
   await acceptTerms(contributor.id)
   await signIn(page, contributor.email, contributor.password)
   await page.waitForURL('**/dashboard')
+  await page.goto('/dashboard/tutorials')
 
   await expect(page.getByText('DRAFT', { exact: true })).toBeVisible()
   // The card itself is the link now — there is no separate Edit button.
@@ -63,6 +66,7 @@ test('the status counts match the fixture set', async ({ page }) => {
   await acceptTerms(contributor.id)
   await signIn(page, contributor.email, contributor.password)
   await page.waitForURL('**/dashboard')
+  await page.goto('/dashboard/tutorials')
 
   await expect(page.getByTestId('stat-pending')).toContainText('2')
   await expect(page.getByTestId('stat-approved')).toContainText('1')

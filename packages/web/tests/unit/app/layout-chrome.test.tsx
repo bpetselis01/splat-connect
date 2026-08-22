@@ -29,7 +29,7 @@ vi.mock('next/font/google', () => ({
  * That the public chrome is ONE bar and not two is a rendered-page property, so
  * it is asserted in tests/e2e/public/navigation.spec.ts instead.
  */
-import { isBare } from '@/app/layout'
+import { isBare, isAccountRoute } from '@/app/layout'
 
 describe('layout chrome rules', () => {
   it('treats auth and onboarding routes as bare', () => {
@@ -47,6 +47,31 @@ describe('layout chrome rules', () => {
 
   it('does not treat a route merely containing "login" as bare', () => {
     expect(isBare('/learn/logins')).toBe(false)
+  })
+
+  // Tests: account routes are chromed like any other page, not bare
+  // How:   calls isBare with dashboard and admin paths
+  // Chain: the whole defect was the layout treating signed-in routes as a
+  //        separate world; they are ordinary chromed routes that additionally
+  //        nest a rail
+  it('treats account routes as chromed', () => {
+    expect(isBare('/dashboard')).toBe(false)
+    expect(isBare('/dashboard/challenges')).toBe(false)
+    expect(isBare('/admin/review')).toBe(false)
+  })
+
+  // Tests: the layout can tell an account route from a public one
+  // How:   calls the exported rule directly
+  // Chain: this is what decides whether the rail nests and whether the header
+  //        takes its quiet variant, so it is asserted rather than inferred
+  it('identifies which routes nest the rail', () => {
+    expect(isAccountRoute('/dashboard')).toBe(true)
+    expect(isAccountRoute('/dashboard/toys')).toBe(true)
+    expect(isAccountRoute('/admin')).toBe(true)
+    expect(isAccountRoute('/notifications')).toBe(true)
+    expect(isAccountRoute('/library')).toBe(false)
+    expect(isAccountRoute('/get-involved/submit-an-idea')).toBe(false)
+    expect(isAccountRoute('/login')).toBe(false)
   })
 
   it('renders the sitemap footer', () => {

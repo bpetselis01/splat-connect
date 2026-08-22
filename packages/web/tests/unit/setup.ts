@@ -16,3 +16,17 @@ if (!HTMLDialogElement.prototype.close) {
     this.dispatchEvent(new Event('close'))
   }
 }
+
+// jsdom does not implement ResizeObserver at all. components/nav.tsx observes
+// its own <header> to keep --header-h (app/globals.css's .shell-rail offset)
+// correct; the callback firing is not what any unit test asserts, so a no-op
+// stub is enough — same "polyfill the missing API globally" approach as the
+// <dialog> methods above rather than a per-test mock.
+if (!('ResizeObserver' in globalThis)) {
+  class ResizeObserverStub {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+  globalThis.ResizeObserver = ResizeObserverStub
+}

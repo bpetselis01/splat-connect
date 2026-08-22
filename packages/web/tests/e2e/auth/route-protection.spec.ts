@@ -28,6 +28,18 @@ test('an unauthenticated visitor is redirected from /admin to /login', async ({ 
   await expect(page).toHaveURL(/\/login$/)
 })
 
+// /notifications is deliberately not in signedInRoutes above (the page
+// swallows a failed fetch instead of redirecting), so a signed-out visitor
+// can land on it directly. It still resolves to the account section
+// (lib/public-nav.ts's ACCOUNT_PREFIXES), so nothing account-only may leak
+// into its chrome for a visitor with no session.
+test('an unauthenticated visitor on /notifications gets no account chrome', async ({ page }) => {
+  await page.goto('/notifications')
+  await expect(page).toHaveURL(/\/notifications$/)
+  await expect(page.getByRole('button', { name: /navigation/i })).not.toBeVisible()
+  await expect(page.getByRole('link', { name: /my splat/i })).not.toBeVisible()
+})
+
 test('a contributor is redirected away from /admin', async ({ page }) => {
   const contributor = await createContributor()
   await acceptTerms(contributor.id)
@@ -46,5 +58,5 @@ test('an admin can also reach the dashboard', async ({ page }) => {
 
   await page.goto('/dashboard')
   await expect(page).toHaveURL(/\/dashboard$/)
-  await expect(page.getByRole('heading', { name: 'My tutorials' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'My SPLAT' })).toBeVisible()
 })

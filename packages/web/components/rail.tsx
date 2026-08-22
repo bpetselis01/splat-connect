@@ -79,18 +79,6 @@ export function Rail({ groups, pathname, collapsed, onToggle, onNavigate }: Rail
   return (
     <div className="flex h-full flex-col bg-brand-deep text-brand-soft">
       <div className="flex items-center gap-2 px-3 py-4">
-        <Link
-          href="/"
-          className="flex min-w-0 items-center gap-2 rounded-field px-1 py-1 font-bold text-white"
-        >
-          <span
-            aria-hidden="true"
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/10"
-          >
-            <BookOpen className="h-5 w-5" />
-          </span>
-          {!collapsed && <span className="truncate">SPLAT Connect</span>}
-        </Link>
         <button
           type="button"
           onClick={onToggle}

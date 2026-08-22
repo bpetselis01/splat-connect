@@ -14,7 +14,9 @@ vi.mock('@/lib/capabilities', () => ({
   }),
 }))
 vi.mock('@/lib/api-client', () => ({ apiClient: { get: vi.fn() } }))
-vi.mock('next/navigation', () => ({ redirect: vi.fn() }))
+// usePathname: components/boundary-link.tsx reads this; null is what the
+// real hook returns outside an App Router context too.
+vi.mock('next/navigation', () => ({ redirect: vi.fn(), usePathname: () => null }))
 vi.mock('next/link', () => ({
   default: ({ href, children }: { href: string; children: React.ReactNode }) => <a href={href}>{children}</a>,
 }))

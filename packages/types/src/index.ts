@@ -241,6 +241,89 @@ export interface ToyTransactionDetail extends ToyTransaction {
   messages: ToyTransactionMessage[]
 }
 
+export type ToyIdeaStatus = 'pending' | 'challenge' | 'rejected' | 'graduated'
+
+/** How involved the author wants to be if their idea becomes a challenge. */
+export const CONTACT_PREFS = ['clarification', 'co_design', 'user_testing'] as const
+export type ContactPref = (typeof CONTACT_PREFS)[number]
+
+export interface ToyIdea {
+  id: string
+  author_id: string
+  title: string
+  summary: string
+  description: string
+  intended_use: string
+  primary_user: string
+  contact_prefs: ContactPref[]
+  status: ToyIdeaStatus
+  review_note: string | null
+  tutorial_id: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ToyIdeaParticipant {
+  idea_id: string
+  profile_id: string
+  joined_at: string
+  /** Set when a report removes this person from the challenge — filed by the
+   *  idea's author or a current participant (041/042); a removed row is kept,
+   *  not deleted. Cleared only by an admin reinstating them. */
+  removed_at: string | null
+  /** The reporter who caused the removal; null again once an admin reinstates. */
+  removed_by: string | null
+  /** Joined from profiles at read time for display. */
+  name?: string | null
+}
+
+/**
+ * A flag against a participant or the idea's author, filed by the idea's
+ * author or a current participant (041). Never selectable by anon or
+ * authenticated — read through the service role (admin) only, so the
+ * reported person can never see reason/resolution_note.
+ */
+export interface ToyIdeaReport {
+  id: string
+  idea_id: string
+  reported_profile_id: string
+  reported_by: string
+  reason: string
+  created_at: string
+  resolved_at: string | null
+  resolved_by: string | null
+  resolution_note: string | null
+}
+
+export interface ToyIdeaMessage {
+  id: string
+  idea_id: string
+  sender_id: string
+  kind: 'system' | 'user'
+  body: string
+  created_at: string
+}
+
+export interface ToyIdeaDetail extends ToyIdea {
+  author_name: string | null
+  participants: ToyIdeaParticipant[]
+  /** Absent for viewers who may not read the thread. */
+  messages?: ToyIdeaMessage[]
+}
+
+/**
+ * The structural minimum ExchangeChat needs to render a thread. Both
+ * ToyTransactionMessage and ToyIdeaMessage satisfy it, which is why the
+ * component takes this instead of either concrete type.
+ */
+export interface ThreadMessage {
+  id: string
+  sender_id: string
+  kind: 'system' | 'user'
+  body: string
+  created_at: string
+}
+
 export type Difficulty = 'easy' | 'medium' | 'hard'
 export type TutorialStatus = 'draft' | 'pending' | 'approved' | 'rejected'
 export type ContributorRole = 'primary' | 'collaborator'
@@ -319,6 +402,12 @@ export type NotificationType =
   | 'toy_rejected'
   | 'toy_withdrawn'
   | 'toy_message'
+  | 'idea_approved'
+  | 'idea_rejected'
+  | 'challenge_joined'
+  | 'challenge_left'
+  | 'challenge_removed'
+  | 'idea_graduated'
 
 export interface Notification {
   id: string
@@ -328,6 +417,7 @@ export interface Notification {
   tutorial_title?: string | null
   toy_transaction_id?: string | null
   toy_name?: string | null
+  idea_id?: string | null
   actor_name: string
   read_at: string | null
   created_at: string

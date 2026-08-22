@@ -31,7 +31,10 @@ test('@responsive every rail link stays inside the viewport for a contributor', 
   const drawer = page.locator('dialog.shell-drawer')
   await expect(drawer).toBeVisible()
 
-  for (const name of ['Guides', 'Organisations', 'My tutorials']) {
+  // 'Guides' and 'Organisations' were rail rows before the Browse group moved
+  // to the public top bar (2026-08-21) — the rail now only carries rows a
+  // plain contributor actually has, per lib/nav-model.ts.
+  for (const name of ['My tutorials', 'My toys', 'Notifications']) {
     const link = drawer.getByRole('link', { name, exact: true })
     await expect(link).toBeVisible()
     await expectWithinViewport(link, width)
@@ -77,6 +80,7 @@ test('@responsive a dashboard row keeps its controls inside the viewport', async
 
   await signIn(page, contributor.email, contributor.password)
   await page.waitForURL('**/dashboard')
+  await page.goto('/dashboard/tutorials')
 
   const width = page.viewportSize()!.width
   // The card is the link; the Edit button it replaced no longer exists.

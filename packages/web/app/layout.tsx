@@ -3,12 +3,13 @@ import { Nunito, IBM_Plex_Mono } from 'next/font/google'
 import { headers } from 'next/headers'
 import './globals.css'
 import { Nav } from '@/components/nav'
-import { getUserRole } from '@/lib/auth'
+import { DrawerProvider } from '@/components/drawer-context'
+import { getCapabilities } from '@/lib/capabilities'
 import { AppShell } from '@/components/app-shell'
 import { PublicFooter } from '@/components/public-footer'
 import { Breadcrumb } from '@/components/breadcrumb'
 import { PlayroomBackdrop } from '@/components/playroom-backdrop'
-import { sectionFor } from '@/lib/public-nav'
+import { sectionFor, ACCOUNT_NAV } from '@/lib/public-nav'
 
 // Nunito is the mobile app's family (packages/mobile/lib/theme.ts). One rounded
 // sans across headings, labels, buttons and data — product UI doesn't need a
@@ -56,6 +57,12 @@ export function isBare(pathname: string): boolean {
   return BARE_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))
 }
 
+/** Exported for tests, exactly as isBare is: whether this route nests the rail
+    and takes the header's quiet variant. */
+export function isAccountRoute(pathname: string): boolean {
+  return !isBare(pathname) && sectionFor(pathname) === ACCOUNT_NAV
+}
+
 export default async function RootLayout({
   children,
 }: {
@@ -64,44 +71,98 @@ export default async function RootLayout({
   const headerList = await headers()
   const pathname = headerList.get('x-pathname') ?? ''
   const bare = isBare(pathname)
+  const account = isAccountRoute(pathname)
   // The whole public surface gets its section's shapes behind it. Doing this in
   // the layout rather than per page is why it costs nothing to add a page.
   const tone = sectionFor(pathname)?.tone ?? 'brand'
 
-  const shell = bare ? null : await AppShell({ children })
-
-  return (
-    <html lang="en" className={`${nunito.variable} ${plexMono.variable}`}>
-      <body className="min-h-screen font-sans antialiased">
-        {shell ?? (
+  if (bare) {
+    // Same scaffolding as the non-bare branch below, minus the three pieces
+    // that are always conditional on !bare there too: Nav, PlayroomBackdrop
+    // and PublicFooter. A gate page (/login, /signup, /auth/confirmed,
+    // /onboarding/contributor-terms) still needs the .playroom ancestor its
+    // buttons are styled under, the skip link (WCAG 2.4.1), and a <main>
+    // landmark — losing all three was a real regression from before this
+    // branch, caught in the final review round.
+    return (
+      <html lang="en" className={`${nunito.variable} ${plexMono.variable}`}>
+        <body className="min-h-screen font-sans antialiased">
           <div className="playroom">
-            {/* WCAG 2.4.1: up to ~9 tab stops (logo, six section links, role
-                links, sign-in) sit ahead of content on every public route, so it
-                needs a bypass. A fragment link to a focusable target is the
-                platform's own mechanism — browsers move focus to the target, not
-                just the scroll position, as long as it can hold focus (hence
-                tabIndex={-1} on <main> below). No JS, no focus() call. */}
             <a
               href="#main"
               className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-field focus:bg-surface focus:px-4 focus:py-2 focus:font-bold focus:text-ink focus:outline focus:outline-2 focus:outline-brand"
             >
               Skip to main content
             </a>
-            <Nav role={await getUserRole()} />
-            <div className="relative overflow-hidden">
-              {!bare && <PlayroomBackdrop tone={tone} />}
-              <main
-                id="main"
-                tabIndex={-1}
-                className="public-shell relative py-8 sm:py-10"
-              >
-                <Breadcrumb pathname={pathname} />
-                {children}
-              </main>
-            </div>
-            {!bare && <PublicFooter />}
+            <DrawerProvider>
+              <div className="relative overflow-hidden">
+                <main id="main" tabIndex={-1} className="public-shell relative py-8 sm:py-10">
+                  <Breadcrumb pathname={pathname} />
+                  {children}
+                </main>
+              </div>
+            </DrawerProvider>
           </div>
-        )}
+        </body>
+      </html>
+    )
+  }
+
+  // The page region: inside the account section the rail wraps it; everywhere
+  // else it is the backdrop plus main. AppShell returns null for a signed-out
+  // visitor, so an account URL reached without a session still renders
+  // (the page itself redirects to /login).
+  //
+  // The footer is threaded in here rather than rendered as a fixed sibling
+  // below, because .shell-rail (app/globals.css) is a fixed sidebar: a
+  // footer rendered outside .shell-main sits at the container's full width,
+  // and its leftmost column ends up under the rail. Passing it through
+  // AppShell -> ShellFrame renders it inside .shell-main, where it inherits
+  // the same margin-inline-start offset that already keeps <main> clear of
+  // the rail.
+  const shell = account ? await AppShell({ children, footer: <PublicFooter /> }) : null
+
+  return (
+    <html lang="en" className={`${nunito.variable} ${plexMono.variable}`}>
+      <body className="min-h-screen font-sans antialiased">
+        <div className="playroom">
+          {/* WCAG 2.4.1 — one skip link for the whole app, since there is now
+              exactly one path to <main>. */}
+          <a
+            href="#main"
+            className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-field focus:bg-surface focus:px-4 focus:py-2 focus:font-bold focus:text-ink focus:outline focus:outline-2 focus:outline-brand"
+          >
+            Skip to main content
+          </a>
+          <DrawerProvider>
+            {/* Not `account`: /notifications is an account route that also
+                renders for a signed-out visitor (it isn't in middleware.ts's
+                auth-gated list, and the page swallows a failed fetch rather
+                than redirecting), and AppShell returns null with no session —
+                so quiet/showMenu have to track whether a shell actually
+                rendered, not just whether the route is nominally an account
+                one. */}
+            <Nav caps={await getCapabilities()} quiet={shell !== null} showMenu={shell !== null} />
+            {shell ?? (
+              <div className="relative overflow-hidden">
+                <PlayroomBackdrop tone={tone} />
+                <main id="main" tabIndex={-1} className="public-shell relative py-8 sm:py-10">
+                  {/* Same shell !== null tracking as Nav above: /notifications
+                      resolves to the account section even signed out, and a
+                      "← My SPLAT" link back to a page you can't reach is worse
+                      than no breadcrumb. */}
+                  {!(account && shell === null) && <Breadcrumb pathname={pathname} />}
+                  {children}
+                </main>
+              </div>
+            )}
+          </DrawerProvider>
+          {/* Signed-out visitor on any non-bare route, account or public: no
+              shell rendered, so the footer has no rail to clear and belongs
+              at the outer level as before. When shell exists, it already
+              carries its own footer (see the comment above). */}
+          {!shell && <PublicFooter />}
+        </div>
       </body>
     </html>
   )

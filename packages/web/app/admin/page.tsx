@@ -1,17 +1,19 @@
 import Link from 'next/link'
 import { apiClient } from '@/lib/api-client'
-import type { Tutorial, AdminAccountsResponse, Organization } from '@splat-connect/types'
+import type { Tutorial, AdminAccountsResponse, Organization, ToyIdea } from '@splat-connect/types'
 
 export default async function AdminPage() {
-  const [tutorials, accounts, organizations, spotCheck] = await Promise.all([
+  const [tutorials, accounts, organizations, spotCheck, ideas] = await Promise.all([
     apiClient.get<Tutorial[]>('/api/admin/tutorials?status=pending'),
     apiClient.get<AdminAccountsResponse>('/api/admin/contributors'),
     apiClient.get<Organization[]>('/api/organizations'),
     apiClient.get<Tutorial[]>('/api/admin/spot-check'),
+    apiClient.get<ToyIdea[]>('/api/admin/ideas'),
   ])
 
   const pendingTutorials = tutorials.length
   const totalContributors = accounts.total
+  const pendingIdeas = ideas.filter((i) => i.status === 'pending').length
 
   const cards = [
     {
@@ -41,6 +43,13 @@ export default async function AdminPage() {
       href: '/admin/spot-check' as const,
       icon: '🔍',
       hint: 'Audit tutorials that org leaders approved',
+    },
+    {
+      label: 'Design challenges awaiting review',
+      count: pendingIdeas,
+      href: '/admin/ideas' as const,
+      icon: '💡',
+      hint: 'Publish or reject submitted ideas',
     },
   ]
 

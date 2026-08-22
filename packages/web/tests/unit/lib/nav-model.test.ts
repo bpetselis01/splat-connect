@@ -39,20 +39,22 @@ const hrefs = (groups: ReturnType<typeof buildNav>) =>
   groups.flatMap((g) => g.rows.map((r) => r.href))
 
 describe('buildNav', () => {
-  it('gives a plain contributor three groups, without Organisation', () => {
-    expect(headings(buildNav(caps(), 0))).toEqual(['Browse', 'Yours', 'Account'])
-  })
-
   // Chain: leadership is granted by an admin, so an empty Organisation group
   //        would offer a capability the visitor cannot obtain.
   it('adds the Organisation group only when the account leads an org', () => {
     expect(headings(buildNav(caps({ ledOrgs: [org] }), 0))).toEqual([
-      'Browse',
       'Yours',
       'Organisation',
       'Account',
     ])
     expect(hrefs(buildNav(caps({ ledOrgs: [org] }), 0))).toContain('/dashboard/organisation')
+  })
+
+  // Pins the href, not just the label: the hub's accessible-name test covers
+  // the heading, but nothing else asserts this row still points at the moved
+  // tutorial list rather than the old /dashboard.
+  it('points the Yours group\'s first row at /dashboard/tutorials', () => {
+    expect(buildNav(caps(), 0)[0].rows[0].href).toBe('/dashboard/tutorials')
   })
 
   it('adds Admin to the Account group only for admins', () => {
@@ -76,25 +78,29 @@ describe('buildNav', () => {
     expect(labels).toContain('Child profiles')
   })
 
-  it('marks the three unbuilt rows as soon, and no others', () => {
+  it('marks the two unbuilt rows as soon, and no others', () => {
     const soon = buildNav(caps({ ledOrgs: [org], isAdmin: true }), 0)
       .flatMap((g) => g.rows)
       .filter((r) => r.soon)
       .map((r) => r.href)
     // Toy inventory left this list when the organisation shelf was built.
+    // /printing left when the Browse group was deleted.
     expect(soon).toEqual([
-      '/printing',
       '/dashboard/print-requests',
       '/dashboard/organisation/orders',
     ])
   })
 
   // The spec's fifteenth row is Sign out, which is an action the rail footer
-  // renders rather than a nav row — hence fifteen here (thirteen plus
-  // Notifications plus Exchanges).
-  it('builds fifteen linked rows for a leader-admin', () => {
+  // renders rather than a nav row — hence twelve here (eight plus
+  // Notifications, Exchanges and Design challenges, minus Browse's four).
+  it('builds twelve linked rows for a leader-admin', () => {
     const rows = buildNav(caps({ ledOrgs: [org], isAdmin: true }), 0).flatMap((g) => g.rows)
-    expect(rows).toHaveLength(15)
+    expect(rows).toHaveLength(12)
+  })
+
+  it('includes a Design challenges row for every account', () => {
+    expect(hrefs(buildNav(caps(), 0))).toContain('/dashboard/challenges')
   })
 
   it('gives every row a unique href', () => {
@@ -128,5 +134,31 @@ describe('buildNav', () => {
 
   it('badges the Exchanges row with the number of transactions awaiting action', () => {
     expect(exchangesRow({ exchangeActions: 2 })?.count).toBe(2)
+  })
+
+  // Tests: the rail no longer carries public browse destinations
+  // How:   builds nav for a plain account and asserts no group is headed Browse
+  //        and no row points at a public catalogue
+  // Chain: the header renders those four sections on every page now, so keeping
+  //        them in the rail would be two controls competing at one level
+  it('drops the Browse group now the header carries it', () => {
+    const groups = buildNav(caps(), 0)
+    expect(groups.map((g) => g.heading)).toEqual(['Yours', 'Account'])
+    const hrefs = groups.flatMap((g) => g.rows.map((r) => r.href))
+    expect(hrefs).not.toContain('/library')
+    expect(hrefs).not.toContain('/toy-library')
+    expect(hrefs).not.toContain('/printing')
+    expect(hrefs).not.toContain('/organizations')
+  })
+
+  // Tests: every remaining row is an account-owned destination
+  // How:   asserts each row href sits under /dashboard, /admin or /notifications
+  // Chain: the rail is now the account section's secondary nav; a row outside it
+  //        would be navigating out of the section it belongs to
+  it('keeps only account destinations', () => {
+    const rows = buildNav(caps(), 0).flatMap((g) => g.rows)
+    for (const row of rows) {
+      expect(row.href).toMatch(/^\/(dashboard|admin|notifications)/)
+    }
   })
 })

@@ -351,7 +351,7 @@ test('/my-tutorials redirects to the merged list', async ({ page }) => {
     // contributor-terms.spec.ts).
     await page.waitForURL('**/dashboard')
     await page.goto('/my-tutorials')
-    await expect(page).toHaveURL('/dashboard')
+    await expect(page).toHaveURL('/dashboard/tutorials')
     await expect(page.getByTestId('tutorial-row').filter({ hasText: title })).toBeVisible()
   } finally {
     await deleteUser(contributor.id)
@@ -373,7 +373,10 @@ test('a placeholder route explains the feature instead of 404ing', async ({ page
     // no longer a placeholder and cannot demonstrate what this test is about.
     // "My print requests" is still one, and it is in the signed-in rail, which
     // is the surface this spec covers.
-    await page.getByRole('link', { name: /My print requests/ }).click()
+    // The account hub (app/dashboard/page.tsx) now renders its own card for
+    // the same destination alongside the rail, so an unscoped query matches
+    // two links — scope to the rail, the surface this spec covers.
+    await page.locator('.shell-rail').getByRole('link', { name: /My print requests/ }).click()
     await expect(page).toHaveURL('/dashboard/print-requests')
     // ComingSoon states its own label as an h1, explains itself with
     // "Not built yet — here's the plan", and its way out is the Guides link.

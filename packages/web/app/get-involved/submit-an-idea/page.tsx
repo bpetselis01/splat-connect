@@ -1,12 +1,30 @@
 import Link from 'next/link'
 import { StepList } from '@/components/step-list'
+import { IdeaForm } from '@/components/idea-form'
+import { getUserRole } from '@/lib/auth'
 
 export const metadata = {
   title: 'Submit an idea — SPLAT Connect',
   description: 'Suggest a toy worth adapting, even if you cannot build it yourself.',
 }
 
-export default function SubmitAnIdea() {
+/**
+ * REPLACE BEFORE LAUNCH. This is a draft of what SPLAT will and will not
+ * take on as a design challenge — a safety judgement the project owner has
+ * not signed off yet. Keep it in sync with whatever they actually decide;
+ * do not treat it as final, and do not add exclusions of your own invention.
+ */
+const SCOPE_EXCLUSIONS = [
+  "Nothing load-bearing — it must never need to hold a child's weight or safety.",
+  'Battery-powered only — nothing wired into the mains.',
+  'Nothing that could be swallowed.',
+  'Nothing medical.',
+  "Nothing beyond what a volunteer can build with their own tools.",
+]
+
+export default async function SubmitAnIdea() {
+  const role = await getUserRole()
+
   return (
     <div className="max-w-3xl">
       <h1 className="title-article">Submit an idea</h1>
@@ -36,21 +54,28 @@ export default function SubmitAnIdea() {
         ]}
       />
 
-      <div className="mt-10">
-        <Link href="/contact" className="btn btn-primary">
-          Send us the idea
-        </Link>
+      <div className="card mt-10 p-6">
+        <h2 className="text-lg font-bold text-ink">What we can&apos;t take on</h2>
+        <p className="mt-1 text-sm text-muted">
+          This list is still being confirmed, so treat it as a guide rather than the final
+          word. If you are unsure whether an idea fits, submit it anyway and we will tell you.
+        </p>
+        <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-muted">
+          {SCOPE_EXCLUSIONS.map((line) => (
+            <li key={line}>{line}</li>
+          ))}
+        </ul>
       </div>
 
-      <p className="mt-6 text-sm text-muted">
-        A form for this is coming. For now email reaches a person faster, which is why
-        this page sends you there rather than to something automated. Ideas that no one
-        has cracked yet will eventually be listed publicly on{' '}
-        <Link href="/get-involved/design-challenges" className="font-semibold text-brand-dark hover:underline">
-          design challenges
-        </Link>
-        .
-      </p>
+      {role ? (
+        <IdeaForm />
+      ) : (
+        <div className="mt-6">
+          <Link href="/login?next=/get-involved/submit-an-idea" className="btn btn-primary">
+            Sign in to submit an idea
+          </Link>
+        </div>
+      )}
     </div>
   )
 }

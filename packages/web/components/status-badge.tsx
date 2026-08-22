@@ -12,8 +12,7 @@
  * medium-difficulty badge rather than as Tailwind yellow.
  *
  * Used in:
- * - app/dashboard/page.tsx
- * - app/my-tutorials/page.tsx
+ * - app/dashboard/tutorials/page.tsx (via components/dashboard-tutorial-card.tsx)
  */
 import type { TutorialStatus } from '@splat-connect/types'
 

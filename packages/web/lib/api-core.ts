@@ -6,6 +6,20 @@
  * copies drifted — the server one lost the error-detail and empty-body fixes.
  */
 
+/**
+ * Thrown by every request below. `status` is additive — every existing
+ * `catch (err) { err instanceof Error ? err.message : ... }` call site still
+ * works unchanged — but callers that need to branch on the outcome (a 409
+ * meaning "already done" vs. a real failure) can check `err.status`
+ * numerically instead of pattern-matching the message, which breaks the
+ * moment describeFailure's wording changes.
+ */
+export type ApiError = Error & { status: number }
+
+export function isApiError(err: unknown): err is ApiError {
+  return err instanceof Error && typeof (err as { status?: unknown }).status === 'number'
+}
+
 export function makeApiClient(deps: {
   getToken: () => Promise<string | null>
   // Lazy so the server client re-reads process.env per request (tests set it
@@ -27,6 +41,12 @@ export function makeApiClient(deps: {
     return `API ${method} ${path} failed with status ${res.status}${detail}`
   }
 
+  async function throwFailure(method: string, path: string, res: Response): Promise<never> {
+    const err = new Error(await describeFailure(method, path, res)) as ApiError
+    err.status = res.status
+    throw err
+  }
+
   // WHY: Some API responses have no body (e.g. 204 No Content), which caused
   //      JSON.parse to fail on an empty string and throw an unrelated error.
   async function parseBody<T>(res: Response): Promise<T> {
@@ -45,7 +65,7 @@ export function makeApiClient(deps: {
       ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
       ...(deps.cache ? { cache: deps.cache } : {}),
     })
-    if (!res.ok) throw new Error(await describeFailure(method, path, res))
+    if (!res.ok) return throwFailure(method, path, res)
     return parseBody<T>(res)
   }
 
@@ -59,7 +79,7 @@ export function makeApiClient(deps: {
       body: formData,
       ...(deps.cache ? { cache: deps.cache } : {}),
     })
-    if (!res.ok) throw new Error(await describeFailure(method, path, res))
+    if (!res.ok) return throwFailure(method, path, res)
     return parseBody<T>(res)
   }
 

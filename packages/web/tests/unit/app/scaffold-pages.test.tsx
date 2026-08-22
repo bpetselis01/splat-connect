@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { SCAFFOLD_KEYS } from '@/lib/public-nav'
 import RequestsPage from '@/app/get-involved/requests/page'
-import DesignChallengesPage from '@/app/get-involved/design-challenges/page'
 import AskAnExpertPage from '@/app/learn/ask-an-expert/page'
 import NewsPage from '@/app/impact/news/page'
 import EventsPage from '@/app/impact/events/page'
@@ -18,7 +17,6 @@ import PrintingPartsPage from '@/app/printing/parts/page'
 // carrying the wrong key.
 const pages = [
   ['requests', RequestsPage],
-  ['design-challenges', DesignChallengesPage],
   ['ask-an-expert', AskAnExpertPage],
   ['news', NewsPage],
   ['events', EventsPage],

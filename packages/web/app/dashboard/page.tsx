@@ -1,86 +1,84 @@
-import { apiClient } from '@/lib/api-client'
-import Link from 'next/link'
+/**
+ * The account section's hub — the same shape as app/get-involved/page.tsx and
+ * app/learn/page.tsx, for the same reason: a section's landing page lists what
+ * is inside it, with a sentence per destination that a menu never had room for.
+ *
+ * It is not a duplicate of the rail. The rail says where you can go; this says
+ * what is waiting for you there, which is why every blurb is computed rather
+ * than written.
+ *
+ * Related files:
+ * - lib/nav-model.ts: the destination list, shared with the rail
+ * - components/hub-grid.tsx: the grid, shared with every public hub
+ */
 import { redirect } from 'next/navigation'
-import { DashboardTutorialCard } from '@/components/dashboard-tutorial-card'
-import { BookOpen } from '@/components/icons'
-import type { Tutorial, Profile, TutorialOrg } from '@splat-connect/types'
+import { getCapabilities } from '@/lib/capabilities'
+import { buildNav } from '@/lib/nav-model'
+import { HubGrid } from '@/components/hub-grid'
+import { ACCOUNT_NAV } from '@/lib/public-nav'
+import type { NavItem } from '@/lib/public-nav'
 
-export default async function DashboardPage() {
-  try {
-    await apiClient.get<Profile>('/api/contributors/me')
-  } catch {
-    redirect('/login')
+export const metadata = {
+  title: 'My SPLAT — SPLAT Connect',
+}
+
+export default async function DashboardHub() {
+  const caps = await getCapabilities()
+  if (!caps) redirect('/login')
+
+  const counts: Record<string, string> = {
+    '/dashboard/exchanges': caps.exchangeActions
+      ? `${caps.exchangeActions} waiting on you`
+      : 'Toys you have lent, borrowed and handed over.',
+    '/notifications': caps.unreadNotifications
+      ? `${caps.unreadNotifications} unread`
+      : 'Everything SPLAT has told you.',
   }
 
-  const tutorials = await apiClient.get<(Tutorial & { tutorial_orgs?: TutorialOrg[] })[]>(
-    '/api/tutorials/mine'
-  )
+  const blurbs: Record<string, string> = {
+    '/dashboard/tutorials': 'Your adaptation guides, and where each one is in review.',
+    '/dashboard/toys': 'Toys you have listed for other families.',
+    '/dashboard/challenges': 'Ideas you have submitted, and challenges you have joined.',
+    '/dashboard/child': 'What each child can reach, hold and hear.',
+    '/dashboard/print-requests': 'Parts you have asked someone to print.',
+    '/dashboard/organisation': 'Projects waiting for your organisation to review.',
+    '/dashboard/organisation/toys': 'What your organisation has on its shelves.',
+    '/dashboard/organisation/orders': 'Print jobs your organisation has taken on.',
+    '/dashboard/profile': 'Your name, email and the terms you have accepted.',
+    '/admin': 'The review queues and the report inbox.',
+  }
 
-  const pendingCount = tutorials.filter((t) => t.status === 'pending').length
-  const approvedCount = tutorials.filter((t) => t.status === 'approved').length
-  const rejectedCount = tutorials.filter((t) => t.status === 'rejected').length
+  // Built from the same model the rail reads, so a destination cannot exist in
+  // one and not the other.
+  const items: NavItem[] = buildNav(caps, caps.unreadNotifications)
+    .flatMap((g) => g.rows)
+    .map((row) => ({
+      href: row.href,
+      label: row.label,
+      state: row.soon ? 'soon' : 'live',
+      blurb: counts[row.href] ?? blurbs[row.href] ?? '',
+    }))
 
-  const stats = [
-    { label: 'Pending', count: pendingCount, tone: 'text-honey-deep' },
-    { label: 'Approved', count: approvedCount, tone: 'text-mint-deep' },
-    { label: 'Rejected', count: rejectedCount, tone: 'text-apricot-deep' },
-  ]
+  // Appended rather than modelled: submitting an idea is a public page, so it is
+  // not a rail row, but it is the action a signed-in author most often arrives
+  // here to take.
+  items.push({
+    href: '/get-involved/submit-an-idea',
+    label: 'Submit an idea',
+    state: 'live',
+    blurb: 'Suggest a toy worth adapting, even if you cannot build it yourself.',
+  })
 
   return (
     <div>
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-ink">My tutorials</h1>
-          <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted">
-            Your adaptation guides. Each one is reviewed — by an organisation you ask, or by
-            SPLAT — before it reaches the library.
-          </p>
-        </div>
-        <Link href="/upload" className="btn btn-accent">
-          + New tutorial
-        </Link>
+      <h1 className="title-hub">{ACCOUNT_NAV.label}</h1>
+      <p className="mt-3 max-w-prose text-base leading-relaxed text-muted">
+        Everything that belongs to you — what you have written, what you have lent, and what
+        you have asked for.
+      </p>
+      <div className="mt-10">
+        <HubGrid items={items} tone={ACCOUNT_NAV.tone} leadFirst={false} />
       </div>
-
-      {/* One strip rather than three big-number cards — these counts are a
-          summary of the list below, not the point of the page. */}
-      <div className="card mb-8 grid grid-cols-3 divide-x divide-line">
-        {stats.map((s) => (
-          <div
-            key={s.label}
-            data-testid={`stat-${s.label.toLowerCase()}`}
-            className="px-4 py-5 text-center"
-          >
-            <p className={`text-2xl font-bold ${s.tone}`}>{s.count}</p>
-            <p className="mt-1 text-sm font-semibold text-muted">{s.label}</p>
-          </div>
-        ))}
-      </div>
-
-      {tutorials.length === 0 ? (
-        <div className="flex flex-col items-center px-6 py-12 text-center">
-          <span aria-hidden="true" className="empty-badge text-brand-dark">
-            <BookOpen className="h-8 w-8" />
-          </span>
-          <p className="mt-4 font-bold text-ink">
-            You haven&apos;t submitted any tutorials yet.
-          </p>
-          <p className="mt-1 max-w-xs text-sm leading-relaxed text-muted">
-            A tutorial is a PDF guide plus the parts and tools a parent needs to
-            adapt one toy.
-          </p>
-          <Link href="/upload" className="btn btn-accent mt-6">
-            Upload your first tutorial
-          </Link>
-        </div>
-      ) : (
-        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
-          {tutorials.map((t) => (
-            <li key={t.id}>
-              <DashboardTutorialCard tutorial={t} />
-            </li>
-          ))}
-        </ul>
-      )}
     </div>
   )
 }

@@ -22,11 +22,45 @@ const COPY: Record<NotificationType, (n: Notification) => string> = {
   toy_rejected: (n) => `${n.actor_name} declined your request for ${n.toy_name}`,
   toy_withdrawn: (n) => `${n.actor_name} withdrew their request for ${n.toy_name}`,
   toy_message: (n) => `${n.actor_name} sent a message about ${n.toy_name}`,
+  idea_approved: () => 'Your idea was published as a design challenge',
+  idea_rejected: () => 'Your idea was reviewed and not taken forward',
+  challenge_joined: (n) => `${n.actor_name} joined your design challenge`,
+  challenge_left: (n) => `${n.actor_name} left your design challenge`,
+  challenge_removed: (n) => `${n.actor_name} removed you from a design challenge`,
+  // Two audiences read this since admin.ts's graduate handler notifies the
+  // author (tutorial_contributors role 'primary') and every current
+  // participant (role 'collaborator') alike — the wording must be true for
+  // both without naming a role either could contradict, and it isn't the
+  // author's idea from a participant's side either. Also honest about what
+  // graduation actually did: a tutorial row now exists with status 'draft'
+  // (admin.ts:375), not solved, not in review, not published. Matches
+  // challenge-card.tsx's "Being written up" and idea-status-badge.tsx
+  // exactly; must never claim more than those two do.
+  idea_graduated: () => 'A challenge you were part of is being written up as a guide, and you are credited on it',
 }
 
 function linkFor(n: Notification): string {
   if (n.toy_transaction_id) return `/dashboard/exchanges/${n.toy_transaction_id}`
   if (n.tutorial_id) return `/tutorials/${n.tutorial_id}/edit`
+  // A rejected idea has no public page. Not because of RLS — 037 also grants
+  // "Authors see their own ideas at any status", so an author's own rejected
+  // idea does pass RLS — but because GET /api/public/challenges/:id (Task 8)
+  // filters .in('status', ['challenge','graduated']) with the admin client and
+  // 404s otherwise, making the public page unreachable regardless of RLS. So
+  // send the author to their own list instead.
+  // idea_graduated needs no exception here, unlike idea_rejected above: a
+  // graduated idea stays selectable by GET /api/public/challenges/:id
+  // (status in ('challenge','graduated')), so the public brief the author
+  // lands on is the real page, not a 404. And if the notification carries a
+  // tutorial_id — the graduated idea's author is exactly who admin.ts:390
+  // adds as the new draft's primary contributor — the tutorial_id branch
+  // above already sends them to /tutorials/:id/edit instead, which is the
+  // more useful landing spot when it's available.
+  if (n.idea_id) {
+    return n.type === 'idea_rejected'
+      ? '/dashboard/challenges'
+      : `/get-involved/design-challenges/${n.idea_id}`
+  }
   return '/notifications'
 }
 

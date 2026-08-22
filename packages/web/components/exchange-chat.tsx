@@ -10,7 +10,7 @@
 'use client'
 
 import { Fragment, useEffect, useRef, useState } from 'react'
-import type { ToyTransactionMessage } from '@splat-connect/types'
+import type { ThreadMessage } from '@splat-connect/types'
 
 /*
  * ponytail: locale and timezone are pinned rather than read from the browser.
@@ -37,8 +37,8 @@ const dayKeyFormat = new Intl.DateTimeFormat('en-CA', { timeZone: TZ })
 
 type Group = {
   senderId: string
-  kind: ToyTransactionMessage['kind']
-  messages: ToyTransactionMessage[]
+  kind: ThreadMessage['kind']
+  messages: ThreadMessage[]
   /** First group of its calendar day, so it carries the date separator. */
   opensDay: boolean
 }
@@ -50,7 +50,7 @@ type Group = {
  * inside the map would mean carrying a running value across iterations, which is
  * a render-time mutation React's compiler rejects outright.
  */
-function groupMessages(messages: ToyTransactionMessage[]): Group[] {
+function groupMessages(messages: ThreadMessage[]): Group[] {
   const groups: Group[] = []
   let lastDayKey = ''
 
@@ -82,7 +82,7 @@ export function ExchangeChat({
   busy,
   onSend,
 }: {
-  messages: ToyTransactionMessage[]
+  messages: ThreadMessage[]
   viewerId: string
   /** Labels the composer, so it is clear who a message is going to. */
   otherPartyName: string

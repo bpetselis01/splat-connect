@@ -1,0 +1,47 @@
+-- supabase/migrations/040_toy_ideas_anon_columns.sql
+-- WHY: 037_toy_ideas.sql granted `select` on public.toy_ideas to anon at the
+--      TABLE level — every column, including review_note. RLS's "Published
+--      challenges are public" policy (status in ('challenge', 'graduated'))
+--      makes a published row visible to anon with no auth.uid() check, and
+--      RLS is row-level only: once a row is visible, every granted column on
+--      it is readable via a direct PostgREST call, regardless of what any
+--      single route's .select() narrows to. public.ts:597-604's explicit
+--      column list on GET /api/public/challenges/:id was never the real
+--      boundary — anon holding only the published anon key can request
+--      review_note directly and get it. Verified against the local DB before
+--      this migration: `set role anon; select review_note from toy_ideas
+--      where id = '<published row>';` returned the note in plain text.
+--      review_note is an admin's private rejection reasoning about a
+--      specific disabled child's needs — 037 says of it "Never shown
+--      publicly" — so this is the same hazard 028/029/033 fixed for
+--      profiles/organizations, on a table that carries the most sensitive
+--      column of all of them.
+-- HOW: same revoke-then-column-grant pattern as 028/029/033: column-level
+--      REVOKE cannot subtract from a table-level GRANT, so the whole table
+--      has to be revoked and re-granted with exactly the columns anon may
+--      read. The list matches public.ts's own explicit select — the two are
+--      now redundant on purpose rather than the column list being decorative.
+-- NOTE: `authenticated` is left on the wider table-level grant from 037,
+--      deliberately, not by oversight:
+--        - RLS still restricts an authenticated reader to rows they may see
+--          at all — published rows (same as anon) plus their own rows at any
+--          status ("Authors see their own ideas at any status").
+--        - A published (challenge/graduated) row never carries a
+--          review_note under this feature's own rules: the only path that
+--          sets 'rejected' also writes review_note in the same call
+--          (admin.ts's PATCH .../status), and 'rejected' is never a publicly
+--          visible status. So the same column being wide open to
+--          authenticated on a published row exposes nothing, because the
+--          value there is always null.
+--        - The author must be able to read their own review_note on their
+--          own rejected row — that is the whole point of the column, per
+--          037's comment ("Shown to the author on rejection") — and
+--          narrowing authenticated the way this migration narrows anon would
+--          take that away.
+-- Toy ideas now uses column-level grants for anon, not the table-level
+-- default from 037. A future migration that adds a toy_ideas column will NOT
+-- expose it to anon automatically — extend the grant list below.
+revoke select on public.toy_ideas from anon;
+grant select (id, author_id, title, summary, description, intended_use,
+              primary_user, contact_prefs, status, tutorial_id, created_at, updated_at)
+  on public.toy_ideas to anon;

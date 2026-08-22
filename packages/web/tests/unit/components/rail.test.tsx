@@ -115,4 +115,13 @@ describe('Rail', () => {
     render(<Rail groups={groups} pathname="/dashboard" collapsed={false} onToggle={noop} />)
     expect(screen.queryByText(/^\d+$/)).not.toBeInTheDocument()
   })
+
+  // Tests: the rail renders no wordmark of its own
+  // How:   renders the rail and asserts no element carries the product name
+  // Chain: the persistent header sits directly above the rail and already shows
+  //        the lockup; repeating it is what makes two tiers read as two headers
+  it('shows no brand lockup, the header above it owns that', () => {
+    render(<Rail groups={GROUPS} pathname="/dashboard" collapsed={false} onToggle={noop} />)
+    expect(screen.queryByText(/SPLAT/i)).not.toBeInTheDocument()
+  })
 })
