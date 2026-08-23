@@ -281,6 +281,37 @@ describe('Nav', () => {
     expect(mockLink.mock.calls.some((call) => call[0].href === '/')).toBe(false)
   })
 
+  // Tests: the My SPLAT pill also forces a full page load from a rail-only
+  //        account page, not just from a public one — nestsRail makes this a
+  //        crossing too, since /dashboard (unlike a rail page) has no shell.
+  //        The old hand-rolled check (activeSection !== ACCOUNT_NAV) missed
+  //        this: from a rail page the section is already ACCOUNT_NAV, so it
+  //        never flagged the crossing, and a soft transition left the rail on
+  //        screen with no header on /dashboard.
+  // How:   pathname is a rail-only account page; the My SPLAT pill still
+  //        resolves to /dashboard but must not have gone through next/link
+  // Chain: same nestsRail split lib/public-nav.ts's crossesAccountBoundary
+  //        already covers for BoundaryLink; Nav's own pill must agree with it
+  it('renders My SPLAT as a plain anchor from a rail-only account page', () => {
+    pathname.current = '/dashboard/toys'
+    render(<Nav caps={signedIn} />)
+    const account = screen.getByRole('link', { name: /My SPLAT/ })
+    expect(account).toHaveAttribute('href', '/dashboard')
+    expect(mockLink.mock.calls.some((call) => call[0].href === '/dashboard')).toBe(false)
+  })
+
+  // Tests: clicking My SPLAT while already on /dashboard is a same-page
+  //        no-op, not a crossing — it must still go through next/link
+  // How:   pathname is /dashboard itself; the My SPLAT pill's href is checked
+  //        against next/link's mock calls
+  it('renders My SPLAT through next/link when already on /dashboard', () => {
+    pathname.current = '/dashboard'
+    render(<Nav caps={signedIn} />)
+    const account = screen.getByRole('link', { name: /My SPLAT/ })
+    expect(account).toHaveAttribute('href', '/dashboard')
+    expect(mockLink.mock.calls.some((call) => call[0].href === '/dashboard')).toBe(true)
+  })
+
   // Tests: a same-side pill (already public, linking to another public section)
   //        still goes through next/link — nothing else would catch `crossing`
   //        becoming accidentally too broad and downgrading a non-crossing pill
