@@ -141,17 +141,15 @@ export default async function RootLayout({
             Skip to main content
           </a>
           <DrawerProvider>
-            {/* Not `account`: /notifications is an account route that also
+            {/* quiet tracks account-section membership (isAccountRoute), not
+                shell presence: the header renders quiet on /dashboard too,
+                even though /dashboard has no shell.
+                showMenu tracks shell presence, not just account-section
+                membership: /notifications is an account route that also
                 renders for a signed-out visitor (it isn't in middleware.ts's
                 auth-gated list, and the page swallows a failed fetch rather
                 than redirecting), and AppShell returns null with no session —
-                so quiet/showMenu have to track whether a shell actually
-                rendered, not just whether the route is nominally an account
-                one. */}
-            {/* quiet tracks account-section membership, not shell presence: the
-                header renders quiet on /dashboard too, even though /dashboard
-                has no shell. showMenu still tracks shell presence — there is
-                never a drawer to open on a page with no rail. */}
+                there is never a drawer to open on a page with no rail. */}
             <Nav caps={caps} quiet={account} showMenu={shell !== null} />
             {shell ?? (
               <div className="relative overflow-hidden">
