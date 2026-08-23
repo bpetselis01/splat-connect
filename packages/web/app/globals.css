@@ -1108,6 +1108,36 @@
     box-shadow: var(--shadow-lift);
   }
 
+  /* --- Back-to-My-SPLAT dock (components/back-to-my-splat-dock.tsx) ------ */
+  .dock-my-splat {
+    position: fixed;
+    bottom: 1.5rem;
+    inset-inline-end: 1.5rem;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.125rem;
+    border-radius: 9999px;
+    background-color: var(--color-brand-deep);
+    color: #ffffff;
+    font-size: 0.8125rem;
+    font-weight: 800;
+    box-shadow: var(--shadow-lift);
+    transition: transform 180ms var(--ease-out-quart);
+  }
+
+  .dock-my-splat:hover {
+    transform: translateY(-2px);
+  }
+
+  .dock-my-splat-dot {
+    width: 0.625rem;
+    height: 0.625rem;
+    border-radius: 9999px;
+    background-color: var(--color-mint);
+  }
+
   /* --- File drop zone --------------------------------------------------- */
   .dropzone {
     padding: 1.25rem;
