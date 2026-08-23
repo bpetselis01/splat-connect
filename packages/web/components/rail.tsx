@@ -14,6 +14,7 @@
  */
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { ACCOUNT_NAV } from '@/lib/public-nav'
 import type { IconName, NavGroup } from '@/lib/nav-model'
 import {
   BookOpen,
@@ -78,12 +79,30 @@ export function Rail({ groups, pathname, collapsed, onToggle, onNavigate }: Rail
 
   return (
     <div className="flex h-full flex-col bg-brand-deep text-brand-soft">
-      <div className="flex items-center gap-2 px-3 py-4">
+      <div className="flex items-center gap-1 border-b border-white/15 px-2 py-3">
+        {/* Always a plain anchor, not next/link: every page that renders this
+            rail has nestsRail(pathname) === true, and /dashboard always has
+            nestsRail === false, so this is always a boundary crossing — see
+            lib/public-nav.ts's crossesAccountBoundary. A soft transition here
+            would leave the rail on screen with no header, the exact bug this
+            link exists to fix. */}
+        <a
+          href={ACCOUNT_NAV.href}
+          title={collapsed ? `Back to ${ACCOUNT_NAV.label}` : undefined}
+          className="flex flex-1 items-center gap-2 rounded-field px-2 py-2 text-sm font-bold text-brand-soft transition-colors hover:bg-white/10 hover:text-white"
+        >
+          <span aria-hidden="true">←</span>
+          {collapsed ? (
+            <span className="sr-only">Back to {ACCOUNT_NAV.label}</span>
+          ) : (
+            <span className="truncate">Back to {ACCOUNT_NAV.label}</span>
+          )}
+        </a>
         <button
           type="button"
           onClick={onToggle}
           aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
-          className="ml-auto hidden shrink-0 rounded-field p-2 text-brand-soft transition-colors hover:bg-white/10 lg:block"
+          className="hidden shrink-0 rounded-field p-2 text-brand-soft transition-colors hover:bg-white/10 lg:block"
         >
           {collapsed ? (
             <ChevronsRight className="h-5 w-5" />
