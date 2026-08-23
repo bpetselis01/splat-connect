@@ -9,6 +9,7 @@ import { AppShell } from '@/components/app-shell'
 import { PublicFooter } from '@/components/public-footer'
 import { Breadcrumb } from '@/components/breadcrumb'
 import { PlayroomBackdrop } from '@/components/playroom-backdrop'
+import { BackToMySplatDock } from '@/components/back-to-my-splat-dock'
 import { sectionFor, ACCOUNT_NAV, nestsRail } from '@/lib/public-nav'
 
 // Nunito is the mobile app's family (packages/mobile/lib/theme.ts). One rounded
@@ -171,6 +172,7 @@ export default async function RootLayout({
               at the outer level as before. When shell exists, it already
               carries its own footer (see the comment above). */}
           {!shell && <PublicFooter />}
+          <BackToMySplatDock signedIn={!!caps} />
         </div>
       </body>
     </html>
