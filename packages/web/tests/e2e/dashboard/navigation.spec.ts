@@ -43,17 +43,34 @@ test.describe('signed-in navigation', () => {
   // /admin, as the brief's fallback allowed for a suite with no admin helper,
   // would have left the account area itself — the exact place the original
   // bug hid the nav — unchecked.
-  test('keeps every public section reachable on every signed-in page', async ({ page }) => {
+  test('keeps every public section reachable from every signed-in page', async ({ page }) => {
     const admin = await createAdmin()
     await acceptTerms(admin.id)
     await signIn(page, admin.email, admin.password)
     await page.waitForURL('**/admin')
 
-    for (const path of ['/dashboard', '/dashboard/challenges', '/library', '/admin']) {
+    // /dashboard keeps the header, so every public section is a direct pill
+    // click away.
+    await page.goto('/dashboard')
+    for (const label of PUBLIC_LABELS) {
+      await expect(page.getByRole('link', { name: new RegExp(label) }).first()).toBeVisible()
+    }
+
+    // Every other account page has no header — the dock is the way back to
+    // My SPLAT, and from there every public section is reachable again.
+    for (const path of ['/dashboard/challenges', '/admin']) {
       await page.goto(path)
+      await expect(page.getByRole('link', { name: /Back to My SPLAT/ })).toBeVisible()
+      await page.getByRole('link', { name: /Back to My SPLAT/ }).click()
+      await expect(page).toHaveURL(/\/dashboard$/)
       for (const label of PUBLIC_LABELS) {
         await expect(page.getByRole('link', { name: new RegExp(label) }).first()).toBeVisible()
       }
+    }
+
+    await page.goto('/library')
+    for (const label of PUBLIC_LABELS) {
+      await expect(page.getByRole('link', { name: new RegExp(label) }).first()).toBeVisible()
     }
   })
 
@@ -84,6 +101,9 @@ test.describe('signed-in navigation', () => {
     await acceptTerms(contributor.id)
     await signIn(page, contributor.email, contributor.password)
     await page.waitForURL('**/dashboard')
+    // /dashboard itself has no rail (it keeps the header instead) — the
+    // property under test needs a page that actually has one.
+    await page.goto('/dashboard/toys')
     await expect(page.locator('.shell-rail')).toHaveCount(1)
 
     // Scoped to <footer>: "Guides" also appears as a nav pill and (via
