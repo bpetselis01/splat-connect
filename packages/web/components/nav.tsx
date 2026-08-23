@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Logo, Menu } from '@/components/icons'
 import { useDrawer } from '@/components/drawer-context'
-import { PUBLIC_NAV, ACCOUNT_NAV, sectionFor } from '@/lib/public-nav'
+import { PUBLIC_NAV, ACCOUNT_NAV, sectionFor, crossesAccountBoundary } from '@/lib/public-nav'
 import { toneClass } from '@/lib/tone'
 import type { Capabilities } from '@/lib/capabilities'
 
@@ -172,7 +172,12 @@ export function Nav({ caps, quiet = false, showMenu = false }: NavProps) {
           <>
             <NavLink
               href={ACCOUNT_NAV.href}
-              crossing={activeSection !== ACCOUNT_NAV}
+              // Not `activeSection !== ACCOUNT_NAV`: that missed the split
+              // inside the account section itself — from a rail-only page
+              // (still ACCOUNT_NAV) to /dashboard (no rail), nestsRail
+              // differs, so it is a crossing too. crossesAccountBoundary is
+              // the one place that rule lives; see its docstring.
+              crossing={crossesAccountBoundary(pathname, ACCOUNT_NAV.href)}
               aria-current={activeSection?.href === ACCOUNT_NAV.href ? 'page' : undefined}
               className={`nav-pill flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-2 text-sm font-extrabold ${
                 activeSection?.href === ACCOUNT_NAV.href ? 'bg-brand-tint text-brand-deep' : ''
