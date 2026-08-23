@@ -115,4 +115,26 @@ describe('Rail', () => {
     render(<Rail groups={groups} pathname="/dashboard" collapsed={false} onToggle={noop} />)
     expect(screen.queryByText(/^\d+$/)).not.toBeInTheDocument()
   })
+
+  // Tests: the rail has its own way back to My SPLAT
+  // How:   renders the rail and checks a link named "Back to My SPLAT" points
+  //        at /dashboard
+  // Chain: the rail renders on every account page except /dashboard, which
+  //        keeps the header instead — a page with no header needs its own
+  //        way home rather than relying on one that isn't there
+  it('offers a Back to My SPLAT link at the top, pointing at /dashboard', () => {
+    render(<Rail groups={GROUPS} pathname="/dashboard/child" collapsed={false} onToggle={noop} />)
+    expect(screen.getByRole('link', { name: /Back to My SPLAT/ })).toHaveAttribute(
+      'href',
+      '/dashboard'
+    )
+  })
+
+  // Tests: the link keeps an accessible name once collapsed to icons, same as
+  //        every other row
+  // How:   renders collapsed and checks the link's accessible name
+  it('keeps an accessible name for the Back to My SPLAT link when collapsed', () => {
+    render(<Rail groups={GROUPS} pathname="/dashboard/child" collapsed onToggle={noop} />)
+    expect(screen.getByRole('link', { name: /Back to My SPLAT/ })).toBeInTheDocument()
+  })
 })

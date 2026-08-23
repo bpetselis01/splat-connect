@@ -88,4 +88,66 @@ describe('NotificationsList', () => {
 
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/dashboard/exchanges/tx-1'))
   })
+
+  // linkFor is not exported: TypeScript's exhaustiveness check protects the
+  // COPY map above, but not this ternary — an inverted condition or a
+  // typo'd route string would ship silently without a test that clicks
+  // through and checks where each row actually goes.
+  describe('linkFor', () => {
+    it('routes a toy_transaction_id row to its exchange thread', async () => {
+      render(
+        <NotificationsList
+          notifications={[baseNotif({ type: 'toy_request', tutorial_id: null, tutorial_title: null, toy_transaction_id: 'tx-9', toy_name: 'Fire truck' })]}
+          pendingInvitesByTutorial={{}}
+          onMarkRead={vi.fn().mockResolvedValue(undefined)}
+          onAcceptInvite={vi.fn()}
+          onDeclineInvite={vi.fn()}
+        />
+      )
+      fireEvent.click(screen.getByText(/fire truck/i))
+      await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/dashboard/exchanges/tx-9'))
+    })
+
+    it('routes a tutorial_id row to the tutorial edit page', async () => {
+      render(
+        <NotificationsList
+          notifications={[baseNotif({ type: 'tutorial_approved', tutorial_id: 't9', tutorial_title: 'Spoon Holder' })]}
+          pendingInvitesByTutorial={{}}
+          onMarkRead={vi.fn().mockResolvedValue(undefined)}
+          onAcceptInvite={vi.fn()}
+          onDeclineInvite={vi.fn()}
+        />
+      )
+      fireEvent.click(screen.getByText(/spoon holder/i))
+      await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/tutorials/t9/edit'))
+    })
+
+    it('routes an idea_id row of type challenge_joined to the public challenge page', async () => {
+      render(
+        <NotificationsList
+          notifications={[baseNotif({ type: 'challenge_joined', tutorial_id: null, tutorial_title: null, idea_id: 'idea-9' })]}
+          pendingInvitesByTutorial={{}}
+          onMarkRead={vi.fn().mockResolvedValue(undefined)}
+          onAcceptInvite={vi.fn()}
+          onDeclineInvite={vi.fn()}
+        />
+      )
+      fireEvent.click(screen.getByText(/joined your design challenge/i))
+      await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/get-involved/design-challenges/idea-9'))
+    })
+
+    it('routes an idea_id row of type idea_rejected to the author\'s own challenge list, not the public page', async () => {
+      render(
+        <NotificationsList
+          notifications={[baseNotif({ type: 'idea_rejected', tutorial_id: null, tutorial_title: null, idea_id: 'idea-9' })]}
+          pendingInvitesByTutorial={{}}
+          onMarkRead={vi.fn().mockResolvedValue(undefined)}
+          onAcceptInvite={vi.fn()}
+          onDeclineInvite={vi.fn()}
+        />
+      )
+      fireEvent.click(screen.getByText(/reviewed and not taken forward/i))
+      await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/dashboard/challenges'))
+    })
+  })
 })

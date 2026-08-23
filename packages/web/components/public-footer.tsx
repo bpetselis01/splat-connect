@@ -17,9 +17,8 @@
  * and tests/e2e/public/footer.spec.ts walks every link, which makes this the
  * broadest guard in the suite against a route declared but never built.
  */
-import Link from 'next/link'
-import type { Route } from 'next'
 import { PUBLIC_NAV, FOOTER_LEGAL } from '@/lib/public-nav'
+import { BoundaryLink } from '@/components/boundary-link'
 
 export function PublicFooter() {
   return (
@@ -34,37 +33,32 @@ export function PublicFooter() {
           {PUBLIC_NAV.map((section) => (
             <div key={section.href}>
               <h2 className="eyebrow mb-2.5 text-brand-dark">
-                <Link
-                  // Cast: most of these routes are built in later tasks, so
-                  // typedRoutes doesn't know them yet.
-                  href={section.href as Route<string>}
-                  className="hover:text-ink"
-                >
+                <BoundaryLink href={section.href} className="hover:text-ink">
                   {section.label}
-                </Link>
+                </BoundaryLink>
               </h2>
               <ul className="flex flex-col gap-1.5">
                 {section.children.length === 0 ? (
                   <li>
-                    <Link
-                      href={section.href as Route<string>}
+                    <BoundaryLink
+                      href={section.href}
                       className="text-sm text-muted hover:text-ink hover:underline"
                     >
                       Browse all
-                    </Link>
+                    </BoundaryLink>
                   </li>
                 ) : (
                   section.children.map((child) => (
                     <li key={child.href}>
-                      <Link
-                        href={child.href as Route<string>}
+                      <BoundaryLink
+                        href={child.href}
                         className="inline-flex items-baseline gap-1.5 text-sm text-muted hover:text-ink hover:underline"
                       >
                         {child.label}
                         {child.state === 'soon' && (
                           <span className="badge bg-honey-soft text-honey-deep">SOON</span>
                         )}
-                      </Link>
+                      </BoundaryLink>
                     </li>
                   ))
                 )}
@@ -78,13 +72,13 @@ export function PublicFooter() {
             SPLAT Connect — Supporting Play by Adapting Toys
           </span>
           {FOOTER_LEGAL.map((legal) => (
-            <Link
+            <BoundaryLink
               key={legal.href}
-              href={legal.href as Route<string>}
+              href={legal.href}
               className="hover:text-ink hover:underline"
             >
               {legal.label}
-            </Link>
+            </BoundaryLink>
           ))}
         </div>
       </div>

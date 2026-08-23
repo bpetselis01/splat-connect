@@ -11,7 +11,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { Rail } from '@/components/rail'
-import { Menu } from '@/components/icons'
+import { Breadcrumb } from '@/components/breadcrumb'
+import { useDrawer } from '@/components/drawer-context'
 import type { NavGroup } from '@/lib/nav-model'
 // Re-exported (not defined here): a plain constant exported straight from a
 // 'use client' file is unreadable from server code — see lib/rail-cookie.ts.
@@ -20,14 +21,20 @@ import { RAIL_COOKIE } from '@/lib/rail-cookie'
 export function ShellFrame({
   groups,
   collapsed: initialCollapsed,
+  footer,
   children,
 }: {
   groups: NavGroup[]
   collapsed: boolean
+  /** Rendered inside .shell-main, below <main>, so it picks up the same
+      margin-inline-start offset that keeps main content clear of the rail —
+      rendering it outside .shell-main (as app/layout.tsx does for a
+      signed-out visitor) leaves its leftmost column under the fixed rail. */
+  footer?: React.ReactNode
   children: React.ReactNode
 }) {
   const [collapsed, setCollapsed] = useState(initialCollapsed)
-  const [drawerOpen, setDrawerOpen] = useState(false)
+  const { isOpen: drawerOpen, close: closeDrawer } = useDrawer()
   const drawerRef = useRef<HTMLDialogElement>(null)
   // Null outside an App Router context (the unit tests render this directly).
   const pathname = usePathname() ?? ''
@@ -49,18 +56,6 @@ export function ShellFrame({
 
   return (
     <div className="shell" data-collapsed={collapsed ? 'true' : 'false'}>
-      {/* WCAG 2.4.1: the rail is up to fourteen tab stops ahead of the page on
-          every route, so it needs a bypass. A fragment link to a focusable
-          target is the platform's own mechanism — browsers move focus to the
-          target, not just the scroll position, as long as it can hold focus
-          (hence tabIndex={-1} on <main> below). No JS, no focus() call. */}
-      <a
-        href="#main"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-field focus:bg-surface focus:px-4 focus:py-2 focus:font-bold focus:text-ink focus:outline focus:outline-2 focus:outline-brand"
-      >
-        Skip to main content
-      </a>
-
       {/* Desktop rail. Hidden below lg, where the drawer takes over. */}
       <div className="shell-rail hidden lg:block">
         <Rail groups={groups} pathname={pathname} collapsed={collapsed} onToggle={toggle} />
@@ -70,11 +65,11 @@ export function ShellFrame({
         ref={drawerRef}
         className="shell-drawer lg:hidden"
         aria-label="Navigation"
-        onClose={() => setDrawerOpen(false)}
+        onClose={() => closeDrawer()}
         // The backdrop is part of the dialog's box, so a click lands here when
         // it misses the rail.
         onClick={(e) => {
-          if (e.target === drawerRef.current) setDrawerOpen(false)
+          if (e.target === drawerRef.current) closeDrawer()
         }}
       >
         <div className="h-full">
@@ -82,25 +77,13 @@ export function ShellFrame({
             groups={groups}
             pathname={pathname}
             collapsed={false}
-            onToggle={() => setDrawerOpen(false)}
-            onNavigate={() => setDrawerOpen(false)}
+            onToggle={() => closeDrawer()}
+            onNavigate={() => closeDrawer()}
           />
         </div>
       </dialog>
 
       <div className="shell-main">
-        <header className="sticky top-0 z-30 flex items-center gap-2 border-b border-line bg-surface px-4 py-3 lg:hidden">
-          <button
-            type="button"
-            onClick={() => setDrawerOpen(true)}
-            aria-label="Open navigation"
-            className="rounded-field p-2 text-ink transition-colors hover:bg-sunken"
-          >
-            <Menu className="h-6 w-6" />
-          </button>
-          <span className="font-bold text-ink">SPLAT Connect</span>
-        </header>
-
         {/* Left-aligned against the rail rather than mx-auto max-w-6xl:
             centring a fixed width inside the space left after the rail pushes
             content visibly off-centre. Still capped, though — this is the root
@@ -113,8 +96,10 @@ export function ShellFrame({
           tabIndex={-1}
           className="w-full max-w-[100rem] px-4 py-8 sm:px-6 sm:py-10"
         >
+          <Breadcrumb pathname={pathname} />
           {children}
         </main>
+        {footer}
       </div>
     </div>
   )

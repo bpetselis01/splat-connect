@@ -20,6 +20,10 @@
   --color-canvas: #eaf4fa;
   --color-surface: #ffffff;
   --color-sunken: #dcedf6;
+  /* The account section's header sits between the white bar and the blue canvas
+     so it separates from both the page below it and the white cards on it.
+     A receding bar still has to be a surface, not a hole. */
+  --color-surface-quiet: #f6fbfd;
 
   /* Brand ramp */
   --color-brand: #1998d5;
@@ -458,6 +462,30 @@
   /* The section you are in sits proud of the shelf rather than merely tinted. */
   .playroom .nav-pill[aria-current='page'] {
     box-shadow: 0 3px 0 color-mix(in srgb, currentColor 45%, transparent);
+  }
+
+  /* The quiet bar. Everything here is weight, nothing is presence: no label is
+     removed, resized past legibility, or hidden behind a hover. The rail below
+     is brand-deep at full saturation and wins the contrast comparison on its
+     own once the bar stops competing. */
+  .playroom .nav-quiet {
+    background-color: var(--color-surface-quiet);
+  }
+
+  .playroom .nav-quiet .nav-pill {
+    background-color: transparent;
+    box-shadow: none;
+    color: var(--color-muted);
+  }
+
+  /* Hover restores full contrast, so a receding control never reads as
+     disabled. */
+  .playroom .nav-quiet .nav-pill:hover {
+    background-color: var(--color-sunken);
+    color: var(--color-brand-deep);
+    /* No rotate: a bar that is deliberately receding should not also be the
+       most playful thing on the page. */
+    transform: none;
   }
 
   /*
@@ -1080,6 +1108,36 @@
     box-shadow: var(--shadow-lift);
   }
 
+  /* --- Back-to-My-SPLAT dock (components/back-to-my-splat-dock.tsx) ------ */
+  .dock-my-splat {
+    position: fixed;
+    bottom: 1.5rem;
+    inset-inline-end: 1.5rem;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.125rem;
+    border-radius: 9999px;
+    background-color: var(--color-brand-deep);
+    color: #ffffff;
+    font-size: 0.8125rem;
+    font-weight: 800;
+    box-shadow: var(--shadow-lift);
+    transition: transform 180ms var(--ease-out-quart);
+  }
+
+  .dock-my-splat:hover {
+    transform: translateY(-2px);
+  }
+
+  .dock-my-splat-dot {
+    width: 0.625rem;
+    height: 0.625rem;
+    border-radius: 9999px;
+    background-color: var(--color-mint);
+  }
+
   /* --- File drop zone --------------------------------------------------- */
   .dropzone {
     padding: 1.25rem;
@@ -1215,9 +1273,19 @@
     --rail-w: 4.5rem;
   }
 
+  /*
+   * The rail used to be the whole page (inset-block: 0), which is wrong now
+   * that a header (components/nav.tsx, sticky top-0 z-30) sits above it and a
+   * footer sits below it on account pages. --header-h is written by nav.tsx
+   * (a ResizeObserver, since the header's height isn't constant — quiet vs
+   * normal padding, a wrapping pill row), so the rail's top edge sits exactly
+   * at the header's bottom edge and never overlaps it, regardless of z-index.
+   * The 4rem fallback covers the one frame before that effect runs.
+   */
   .shell-rail {
     position: fixed;
-    inset-block: 0;
+    top: var(--header-h, 4rem);
+    bottom: 0;
     inset-inline-start: 0;
     z-index: 40;
     width: var(--rail-w);

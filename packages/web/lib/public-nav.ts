@@ -63,6 +63,12 @@ export interface NavSection {
   children: NavItem[]
 }
 
+/**
+ * The subset of a section that navigation chrome actually reads. Declared so
+ * ACCOUNT_NAV can be a sectionFor() result without being a full NavSection.
+ */
+export type NavTarget = Pick<NavSection, 'href' | 'label' | 'tone'>
+
 export const PUBLIC_NAV: NavSection[] = [
   {
     href: '/library',
@@ -207,8 +213,7 @@ export const PUBLIC_NAV: NavSection[] = [
       {
         href: '/get-involved/design-challenges',
         label: 'Design challenges',
-        state: 'soon',
-        featureKey: 'design-challenges',
+        state: 'live',
         blurb: 'Problems nobody has solved yet, open to anyone.',
       },
     ],
@@ -288,6 +293,31 @@ export const PUBLIC_NAV: NavSection[] = [
   },
 ]
 
+/**
+ * The signed-in account area, as a navigation target.
+ *
+ * Deliberately NOT a NavSection and NOT a member of PUBLIC_NAV. NavSection
+ * requires `art` and `rank`, and the seven illustrations in public/illustrations
+ * are the whole set; more to the point, components/public-footer.tsx and the
+ * homepage launcher both map PUBLIC_NAV, so an eighth entry there would
+ * advertise the account area to people who cannot reach it.
+ *
+ * It carries exactly the three fields every sectionFor() consumer reads, so the
+ * breadcrumb, the backdrop and the top bar treat it as a section for free.
+ */
+export const ACCOUNT_NAV = {
+  href: '/dashboard',
+  label: 'My SPLAT',
+  tone: 'brand',
+} as const satisfies NavTarget
+
+/** The account prefixes that belong to ACCOUNT_NAV. Admin is reached through a
+    rail row under Account, so it is inside the account section, not beside it.
+    /notifications is a top-level route rather than a /dashboard child, but it
+    is a rail row too (see lib/nav-model.ts) — omitting it here silently drops
+    the rail and the quiet header on that one page. */
+const ACCOUNT_PREFIXES = ['/dashboard', '/admin', '/notifications']
+
 /** Footer-only. Never in the top bar, never a section. */
 export const FOOTER_LEGAL: NavItem[] = [
   { href: '/privacy', label: 'Privacy policy', state: 'live', blurb: 'What we collect and why.' },
@@ -310,10 +340,52 @@ export const SCAFFOLD_KEYS: readonly string[] = PUBLIC_NAV.flatMap((s) =>
  * and shares no prefix with /impact. So children are matched explicitly before
  * falling back to the section's own prefix.
  */
-export function sectionFor(pathname: string): NavSection | undefined {
+export function sectionFor(pathname: string): NavTarget | undefined {
   const inside = (href: string) => pathname === href || pathname.startsWith(`${href}/`)
+  if (ACCOUNT_PREFIXES.some(inside)) return ACCOUNT_NAV
   return (
     PUBLIC_NAV.find((s) => s.children.some((c) => inside(c.href))) ??
     PUBLIC_NAV.find((s) => inside(s.href))
   )
+}
+
+/**
+ * Whether this path renders the rail (components/rail.tsx) rather than the
+ * header (components/nav.tsx).
+ *
+ * True for every account page except the account root itself: `/dashboard`
+ * ("My SPLAT") is the one page that keeps the header instead — see
+ * docs/superpowers/specs/2026-08-23-my-splat-front-door-design.md. Exported
+ * for crossesAccountBoundary below and for app/layout.tsx's shell decision,
+ * so the two never drift apart.
+ */
+export function nestsRail(pathname: string): boolean {
+  return sectionFor(pathname) === ACCOUNT_NAV && pathname !== ACCOUNT_NAV.href
+}
+
+/**
+ * Whether navigating from `pathname` to `href` crosses a boundary the root
+ * layout renders differently across, and therefore needs a full page load
+ * rather than a soft <Link> transition (see components/boundary-link.tsx and
+ * components/nav.tsx's NavLink for why).
+ *
+ * Two boundaries, not one: crossing between the public site and the account
+ * section (as before), or crossing between `/dashboard` and every other
+ * account page — since 2026-08-23 those render different chrome (header vs.
+ * rail) despite both being "the account section". A link from the My SPLAT
+ * hub grid to any of its own cards, or the floating back-to-My-SPLAT dock in
+ * the other direction, would otherwise go stale exactly like the original
+ * account/public bug.
+ *
+ * `sectionFor` returns undefined for a pathname/href it cannot resolve to any
+ * known section (e.g. /upload, /tutorials/[id]/edit — real pages, just not
+ * modelled in either nav). Those are treated as "not the account section"
+ * here, the same as any other public/unclassified page.
+ */
+export function crossesAccountBoundary(pathname: string, href: string): boolean {
+  const fromAccount = sectionFor(pathname) === ACCOUNT_NAV
+  const toAccount = sectionFor(href) === ACCOUNT_NAV
+  if (fromAccount !== toAccount) return true
+  if (!fromAccount) return false
+  return nestsRail(pathname) !== nestsRail(href)
 }

@@ -120,7 +120,7 @@ test('a contributor builds a tutorial from creation through to pending', async (
     })
     .toBe('pending')
 
-  await page.goto('/dashboard')
+  await page.goto('/dashboard/tutorials')
   const card = page.getByTestId('tutorial-row').filter({ hasText: title })
   await expect(card).toBeVisible()
   await expect(card.getByText('PENDING', { exact: true })).toBeVisible()

@@ -1,10 +1,13 @@
 'use client'
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { sanitiseNextPath } from '@/lib/safe-next-path'
 
-export default function LoginPage() {
+function LoginForm() {
   const supabase = createClient()
+  const next = useSearchParams().get('next')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -36,7 +39,11 @@ export default function LoginPage() {
       // Everyone shares one dashboard; only the admin area is separate. The
       // role column no longer decides what a user may do, so it no longer
       // decides where they land.
-      window.location.href = profile?.role === 'admin' ? '/admin' : '/dashboard'
+      // `next` is only honoured once sanitiseNextPath has confirmed it is a
+      // same-origin path — see lib/safe-next-path.ts for why that check
+      // exists. Absent or rejected, it falls back to the role-based default.
+      const fallback = profile?.role === 'admin' ? '/admin' : '/dashboard'
+      window.location.href = sanitiseNextPath(next) ?? fallback
     } finally {
       setLoading(false)
     }
@@ -88,5 +95,16 @@ export default function LoginPage() {
         </Link>
       </p>
     </div>
+  )
+}
+
+// useSearchParams() requires a Suspense boundary, or `next build` fails to
+// prerender this page (it can't statically render something that reads the
+// query string) — same reasoning as app/onboarding/contributor-terms/page.tsx.
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   )
 }

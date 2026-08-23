@@ -10,6 +10,10 @@
  * column (see lib/capabilities.ts), and one account is routinely both a parent
  * and an author.
  *
+ * Browse rows are gone as of 2026-08-21: the public top bar renders on every
+ * page now, signed in or out, so the seven sections are always one click away
+ * and duplicating four of them here put two navs at one level.
+ *
  * An affordance, not a control. Every page re-checks its own access — see
  * lib/org-access.ts for the same rule stated about organisations.
  *
@@ -50,23 +54,11 @@ export type NavGroup = { heading: string; rows: NavRow[] }
 export function buildNav(caps: Capabilities, unreadNotifications: number): NavGroup[] {
   const groups: NavGroup[] = [
     {
-      heading: 'Browse',
-      rows: [
-        // Matches the public top bar's label for the same catalogue
-        // (lib/public-nav.ts) — it should not carry two names depending on
-        // whether the visitor is signed in.
-        { href: '/library', label: 'Guides', icon: 'book' },
-        { href: '/toy-library', label: 'Toy library', icon: 'toy' },
-        { href: '/printing', label: '3D printing', icon: 'printer', soon: true },
-        { href: '/organizations', label: 'Organisations', icon: 'building' },
-      ],
-    },
-    {
       heading: 'Yours',
       rows: [
-        // Route stays /dashboard: it is the post-login landing every redirect
-        // and e2e waitForURL depends on. Only the label changed.
-        { href: '/dashboard', label: 'My tutorials', icon: 'file' },
+        // Moved off /dashboard on 2026-08-21: that URL is the account section's
+        // hub now, the way /learn and /get-involved are hubs for theirs.
+        { href: '/dashboard/tutorials', label: 'My tutorials', icon: 'file' },
         { href: '/dashboard/toys', label: 'My toys', icon: 'box' },
         {
           href: '/dashboard/exchanges',
@@ -76,6 +68,9 @@ export function buildNav(caps: Capabilities, unreadNotifications: number): NavGr
           // marks "waiting on you". See needsAction in @splat-connect/types.
           count: caps.exchangeActions || undefined,
         },
+        // 'clipboard' rather than 'file' (My tutorials, above): this row lists
+        // ideas submitted for review, not the guides someone authored.
+        { href: '/dashboard/challenges', label: 'Design challenges', icon: 'clipboard' },
         {
           href: '/dashboard/print-requests',
           label: 'My print requests',

@@ -16,7 +16,13 @@ import { buildNav } from '@/lib/nav-model'
 import { ShellFrame } from '@/components/shell-frame'
 import { RAIL_COOKIE } from '@/lib/rail-cookie'
 
-export async function AppShell({ children }: { children: React.ReactNode }) {
+export async function AppShell({
+  children,
+  footer,
+}: {
+  children: React.ReactNode
+  footer?: React.ReactNode
+}) {
   const caps = await getCapabilities()
   if (!caps) return null
 
@@ -24,7 +30,11 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
   const collapsed = store.get(RAIL_COOKIE)?.value === '1'
 
   return (
-    <ShellFrame groups={buildNav(caps, caps.unreadNotifications)} collapsed={collapsed}>
+    <ShellFrame
+      groups={buildNav(caps, caps.unreadNotifications)}
+      collapsed={collapsed}
+      footer={footer}
+    >
       {children}
     </ShellFrame>
   )

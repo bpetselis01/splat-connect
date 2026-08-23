@@ -39,6 +39,7 @@ test('an admin rejects a pending tutorial with a note visible to the contributor
 
   await signIn(page, contributor.email, contributor.password)
   await page.waitForURL('**/dashboard')
+  await page.goto('/dashboard/tutorials')
   await expect(page.getByText('Needs clearer photos.')).toBeVisible()
   await expect(page.getByText('REJECTED', { exact: true })).toBeVisible()
 })
@@ -124,5 +125,6 @@ test('rejecting without a note shows the contributor the fallback text', async (
 
   await signIn(page, contributor.email, contributor.password)
   await page.waitForURL('**/dashboard')
+  await page.goto('/dashboard/tutorials')
   await expect(page.getByText('No feedback was provided.')).toBeVisible()
 })

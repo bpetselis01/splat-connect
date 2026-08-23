@@ -37,7 +37,7 @@ test('editing an approved tutorial resets its status to pending', async ({ page 
   // The edit page's own field can lag a save (a known re-render quirk for
   // everything except the difficulty <select>) — re-check on the dashboard,
   // which is server-rendered fresh from the database on every request.
-  await page.goto('/dashboard')
+  await page.goto('/dashboard/tutorials')
   await expect(page.getByText('E2E Approved Edit Target (updated)')).toBeVisible()
   await expect(page.getByText('PENDING', { exact: true })).toBeVisible()
 })

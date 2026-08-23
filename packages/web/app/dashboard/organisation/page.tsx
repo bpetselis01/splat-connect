@@ -16,13 +16,13 @@
  * - app/organizations/[id]/projects/[tutorialId]: the review screen rows link to
  * - lib/org-access.ts: the same "affordance, not control" rule this notFound() follows
  */
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { apiClient } from '@/lib/api-client'
 import { getCapabilities } from '@/lib/capabilities'
 import { OrgReviewBanner } from '@/components/org-review-banner'
 import { DifficultyBadge } from '@/components/difficulty-badge'
 import { BackingBadge } from '@/components/backing-state'
+import { BoundaryLink } from '@/components/boundary-link'
 import type { Tutorial, TutorialOrg, UserAgreement } from '@splat-connect/types'
 
 type Backed = Tutorial & { tutorial_orgs?: TutorialOrg[] }
@@ -75,12 +75,12 @@ export default async function OrganisationTabPage() {
                 {/* Always the project page, never /tutorials/[id]. That link is
                     the hole: the public page serves only approved work, so every
                     item in this queue 404'd. */}
-                <Link
+                <BoundaryLink
                   href={`/organizations/${org.id}/projects/${tutorial.id}`}
                   className="font-medium text-ink"
                 >
                   {tutorial.title}
-                </Link>
+                </BoundaryLink>
                 <span className="rounded-full bg-brand-tint px-2 py-0.5 text-xs font-semibold text-brand-deep">
                   {org.name}
                 </span>

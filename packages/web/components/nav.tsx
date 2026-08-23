@@ -1,21 +1,91 @@
 'use client'
 import Link from 'next/link'
 import type { Route } from 'next'
+import { useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Logo } from '@/components/icons'
-import { PUBLIC_NAV, sectionFor } from '@/lib/public-nav'
+import { Logo, Menu } from '@/components/icons'
+import { useDrawer } from '@/components/drawer-context'
+import { PUBLIC_NAV, ACCOUNT_NAV, sectionFor, crossesAccountBoundary } from '@/lib/public-nav'
 import { toneClass } from '@/lib/tone'
-import type { Role } from '@splat-connect/types'
+import type { Capabilities } from '@/lib/capabilities'
 
-interface NavProps {
-  role: Role | null
+/** Two letters from a display name, for the avatar. Falls back to one. */
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return '?'
+  return (parts[0][0] + (parts[1]?.[0] ?? '')).toUpperCase()
 }
 
-export function Nav({ role }: NavProps) {
+/**
+ * A pill whose destination crosses the account/public boundary needs a full
+ * navigation, not a soft <Link> transition: the root layout (which decides the
+ * rail, the backdrop and the quiet header) doesn't re-run on client-side
+ * routing, so it can go stale — same reasoning as the hard reload in
+ * signOut() below. Non-crossing pills keep the normal <Link>.
+ */
+function NavLink({
+  href,
+  crossing,
+  className,
+  'aria-current': ariaCurrent,
+  children,
+}: {
+  href: string
+  crossing: boolean
+  className: string
+  'aria-current'?: 'page'
+  children: React.ReactNode
+}) {
+  if (crossing) {
+    return (
+      <a href={href} aria-current={ariaCurrent} className={className}>
+        {children}
+      </a>
+    )
+  }
+  return (
+    <Link href={href as Route<string>} aria-current={ariaCurrent} className={className}>
+      {children}
+    </Link>
+  )
+}
+
+interface NavProps {
+  /** Null when signed out. Non-null is the whole signed-in test. */
+  caps: Capabilities | null
+  /** Inside the account section the bar keeps every label and drops its weight.
+      Wired in Task 6; accepted here so the layout compiles. */
+  quiet?: boolean
+  /** Whether the mobile drawer trigger renders. Only true where the drawer
+      itself exists — inside the account section. */
+  showMenu?: boolean
+}
+
+export function Nav({ caps, quiet = false, showMenu = false }: NavProps) {
   const supabase = createClient()
   // Null outside an App Router context (e.g. the unit tests render Nav directly).
   const pathname = usePathname() ?? ''
+  const drawer = useDrawer()
+  const headerRef = useRef<HTMLElement>(null)
+
+  // .shell-rail (app/globals.css) is fixed and starts below this header via
+  // var(--header-h) rather than under it. The header's height isn't a
+  // constant — quiet vs normal padding, a pill row that can wrap — so a
+  // hardcoded rem value would drift the next time this row's content
+  // changes, same class of bug the CSS file already warns about elsewhere.
+  // A ResizeObserver keeps it correct through both without that guess.
+  useEffect(() => {
+    const el = headerRef.current
+    if (!el) return
+    const set = () => {
+      document.documentElement.style.setProperty('--header-h', `${el.offsetHeight}px`)
+    }
+    set()
+    const observer = new ResizeObserver(set)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
 
   async function signOut() {
     await supabase.auth.signOut()
@@ -26,26 +96,30 @@ export function Nav({ role }: NavProps) {
   }
 
   // Public sections come from the nav model so the top bar, the subnav and the
-  // footer cannot disagree about what the site contains. Role-gated links stay
-  // local — they are not part of the public tree. `as const` keeps the
-  // role-link hrefs as literals so they satisfy Next's typed routes; the
-  // model-driven section hrefs are `string` (see lib/public-nav.ts) and are
-  // cast to `Route<string>` at the `<Link>` call site instead.
+  // footer cannot disagree about what the site contains.
   const sections = PUBLIC_NAV
-  const roleLinks = ([
-    { href: '/admin', label: 'Admin', show: role === 'admin' },
-    // Any signed-in account, not only role='contributor': since 009 every
-    // account may author.
-    { href: '/dashboard', label: 'Dashboard', show: role !== null },
-  ] as const).filter((l) => l.show)
 
   const activeSection = sectionFor(pathname)
 
   return (
-    <header className="sticky top-0 z-30 border-b border-line bg-surface">
-      <nav className="public-shell flex flex-wrap items-center gap-x-3 gap-y-2 py-3">
-        <Link
+    <header
+      ref={headerRef}
+      className={`sticky top-0 z-30 border-b border-line ${quiet ? 'nav-quiet' : 'bg-surface'}`}
+    >
+      <nav className={`public-shell flex flex-wrap items-center gap-x-3 gap-y-2 ${quiet ? 'py-1.5' : 'py-3'}`}>
+        {showMenu && (
+          <button
+            type="button"
+            onClick={drawer.open}
+            aria-label="Open navigation"
+            className="rounded-field p-2 text-ink transition-colors hover:bg-sunken lg:hidden"
+          >
+            <Menu className="h-6 w-6" />
+          </button>
+        )}
+        <NavLink
           href="/"
+          crossing={activeSection === ACCOUNT_NAV}
           className="flex shrink-0 items-center gap-2 text-lg font-black tracking-tight text-ink sm:text-xl"
         >
           {/* The mark sits on a plain tinted disc — no ring. The wordmark is the
@@ -58,7 +132,7 @@ export function Nav({ role }: NavProps) {
             <Logo className="h-5 w-5" />
           </span>
           SPLAT Connect
-        </Link>
+        </NavLink>
 
         {/* On narrow screens the links drop to their own row so the logo and the
             account control stay together on the first one. */}
@@ -67,11 +141,10 @@ export function Nav({ role }: NavProps) {
             const active = activeSection?.href === s.href
             const tone = toneClass(s.tone)
             return (
-              <Link
+              <NavLink
                 key={s.href}
-                // Cast: NavSection.href is `string`, not typedRoutes' `Route`, because
-                // some of these routes are built in later tasks — see lib/public-nav.ts.
-                href={s.href as Route<string>}
+                href={s.href}
+                crossing={activeSection === ACCOUNT_NAV}
                 aria-current={active ? 'page' : undefined}
                 // No colour on the inactive state: `.nav-pill` already sets
                 // brand-deep, and overriding it with `text-muted` was leaving six
@@ -85,37 +158,57 @@ export function Nav({ role }: NavProps) {
                     decorative — the label already says which section this is. */}
                 <span
                   aria-hidden="true"
-                  className={`h-2 w-2 shrink-0 rounded-full ${tone.dot} ${
-                    active ? '' : 'opacity-60'
+                  className={`h-2 w-2 shrink-0 rounded-full ${quiet ? 'bg-line' : tone.dot} ${
+                    active && !quiet ? '' : 'opacity-60'
                   }`}
                 />
                 {s.label}
-              </Link>
+              </NavLink>
             )
           })}
-          {roleLinks.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              aria-current={pathname.startsWith(l.href) ? 'page' : undefined}
-              className={`whitespace-nowrap rounded-full px-3 py-2 text-sm font-semibold transition-colors ${
-                pathname.startsWith(l.href)
-                  ? 'bg-brand-tint text-brand-deep'
-                  : 'text-muted hover:bg-sunken hover:text-ink'
-              }`}
-            >
-              {l.label}
-            </Link>
-          ))}
         </div>
 
-        {role ? (
-          <button
-            onClick={signOut}
-            className="btn btn-quiet btn-sm order-2 ml-auto shrink-0 sm:order-3 sm:ml-0"
-          >
-            Sign out
-          </button>
+        {caps ? (
+          <>
+            <NavLink
+              href={ACCOUNT_NAV.href}
+              // Not `activeSection !== ACCOUNT_NAV`: that missed the split
+              // inside the account section itself — from a rail-only page
+              // (still ACCOUNT_NAV) to /dashboard (no rail), nestsRail
+              // differs, so it is a crossing too. crossesAccountBoundary is
+              // the one place that rule lives; see its docstring.
+              crossing={crossesAccountBoundary(pathname, ACCOUNT_NAV.href)}
+              aria-current={activeSection?.href === ACCOUNT_NAV.href ? 'page' : undefined}
+              className={`nav-pill flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-2 text-sm font-extrabold ${
+                activeSection?.href === ACCOUNT_NAV.href ? 'bg-brand-tint text-brand-deep' : ''
+              }`}
+            >
+              <span aria-hidden="true" className="h-2 w-2 shrink-0 rounded-full bg-brand" />
+              {ACCOUNT_NAV.label}
+              {caps.unreadNotifications > 0 && (
+                <>
+                  <span aria-hidden="true" className="badge bg-apricot text-apricot-deep">
+                    {caps.unreadNotifications}
+                  </span>
+                  {/* The number alone is not self-describing to a screen reader. */}
+                  <span className="sr-only">{caps.unreadNotifications} unread</span>
+                </>
+              )}
+            </NavLink>
+            <button
+              onClick={signOut}
+              className="btn btn-quiet btn-sm order-2 ml-auto shrink-0 sm:order-3 sm:ml-0"
+            >
+              Sign out
+            </button>
+            <span
+              aria-hidden="true"
+              title={caps.profile.name}
+              className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-mint text-sm font-black text-mint-deep"
+            >
+              {initials(caps.profile.name)}
+            </span>
+          </>
         ) : (
           <Link
             href="/login"

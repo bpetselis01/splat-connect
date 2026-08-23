@@ -4,6 +4,7 @@ import { getCapabilities } from '@/lib/capabilities'
 import { apiClient } from '@/lib/api-client'
 import { ExchangeStatusBadge } from '@/components/exchange-status-badge'
 import { Handshake } from '@/components/icons'
+import { BoundaryLink } from '@/components/boundary-link'
 import { needsAction, actionLabel } from '@splat-connect/types'
 import type { ToyTransactionSummary } from '@splat-connect/types'
 
@@ -36,9 +37,9 @@ export default async function ExchangesPage() {
           <p className="mt-1 max-w-xs text-sm leading-relaxed text-muted">
             Ask for a toy from the library, or list one of yours, and the conversation starts here.
           </p>
-          <Link href="/toy-library" className="btn btn-accent mt-6">
+          <BoundaryLink href="/toy-library" className="btn btn-accent mt-6">
             Browse the toy library
-          </Link>
+          </BoundaryLink>
         </div>
       ) : (
         <ul className="flex flex-col gap-3">

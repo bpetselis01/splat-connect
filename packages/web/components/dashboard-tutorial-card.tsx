@@ -13,18 +13,18 @@
  * a property of the build; the line below is about the review, and mixing the
  * two reads as one undifferentiated row of badges.
  */
-import Link from 'next/link'
 import { CardPhoto } from '@/components/card-photo'
 import { DifficultyBadge } from '@/components/difficulty-badge'
 import { StatusBadge } from '@/components/status-badge'
 import { BackingSummary } from '@/components/backing-state'
+import { BoundaryLink } from '@/components/boundary-link'
 import type { Tutorial, Difficulty, TutorialOrg } from '@splat-connect/types'
 
 type Listed = Tutorial & { tutorial_orgs?: TutorialOrg[] }
 
 export function DashboardTutorialCard({ tutorial }: { tutorial: Listed }) {
   return (
-    <Link
+    <BoundaryLink
       href={`/tutorials/${tutorial.id}/edit`}
       data-testid="tutorial-row"
       className="card card-link flex h-full flex-col overflow-hidden"
@@ -51,6 +51,6 @@ export function DashboardTutorialCard({ tutorial }: { tutorial: Listed }) {
           </p>
         )}
       </div>
-    </Link>
+    </BoundaryLink>
   )
 }

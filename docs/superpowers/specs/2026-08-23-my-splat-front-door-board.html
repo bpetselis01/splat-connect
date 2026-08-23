@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>My SPLAT front door — chosen mockup</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; background: #f6f8fa; color: #222; }
+  .wrap { max-width: 720px; margin: 40px auto; padding: 0 20px; }
+  h1 { font-size: 20px; }
+  p.note { color: #555; font-size: 14px; }
+  .mockup { border: 1px solid #dcedf6; border-radius: 10px; overflow: hidden; background: #fff; }
+  .mockup-header { background: #eef6fb; padding: 8px 14px; font-size: 12px; font-weight: 700; color: #0a4f70; }
+  .mockup-body { position: relative; min-height: 220px; }
+  .top-nav { background: #fff; padding: 10px 16px; display: flex; gap: 10px; align-items: center; border-bottom: 1px solid #dcedf6; }
+  .logo-dot { width: 28px; height: 28px; border-radius: 999px; background: #d8ecf7; }
+  .pill { background: #f3f3f3; padding: 4px 10px; border-radius: 999px; font-size: 11px; }
+  .page-content { padding: 30px 16px; color: #999; font-size: 12px; }
+  .dock { position: absolute; bottom: 14px; right: 14px; background: #0a4f70; color: #fff; padding: 10px 16px; border-radius: 999px; font-size: 12px; font-weight: 800; box-shadow: 0 4px 10px rgba(0,0,0,.2); display: flex; align-items: center; gap: 8px; }
+  .dock-dot { width: 18px; height: 18px; border-radius: 999px; background: #2fbf9f; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Option C — floating "Back to My SPLAT" dock</h1>
+  <p class="note">Chosen 2026-08-23. Shown wherever a signed-in user is on a page with no
+  header pointing home: public pages, and every account page except <code>/dashboard</code>.
+  Header (when present) is unchanged — no restyling.</p>
+
+  <div class="mockup">
+    <div class="mockup-header">Signed-in user on a public page, or on a rail-only account page</div>
+    <div class="mockup-body">
+      <div class="top-nav">
+        <div class="logo-dot"></div>
+        <b style="font-size:14px;">SPLAT Connect</b>
+        <div style="margin-left:auto;display:flex;gap:6px;">
+          <span class="pill">Guides</span>
+          <span class="pill">Toy Library</span>
+          <span class="pill">3D Printing</span>
+        </div>
+      </div>
+      <div class="page-content">(page content...)</div>
+      <div class="dock">
+        <div class="dock-dot"></div>
+        Back to My SPLAT
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

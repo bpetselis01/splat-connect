@@ -38,7 +38,7 @@ test('browsing stays open without accepted terms', async ({ page }) => {
   await expect(page).toHaveURL(new RegExp(`/tutorials/${tutorialId}$`))
 })
 
-test('accepting on first login lands on the dashboard with the sidebar shell, not the bare layout', async ({ page }) => {
+test('accepting on first login lands on the dashboard with its real header, not the bare layout', async ({ page }) => {
   const contributor = await createContributor()
   await signIn(page, contributor.email, contributor.password)
   await page.waitForURL(/\/onboarding\/contributor-terms/)
@@ -47,8 +47,11 @@ test('accepting on first login lands on the dashboard with the sidebar shell, no
   await page.getByRole('button', { name: /I accept/i }).click()
 
   await page.waitForURL('**/dashboard')
-  await expect(page.locator('.shell-rail')).toBeVisible()
-  await expect(page.getByRole('link', { name: 'My tutorials', exact: true })).toBeVisible()
+  // /dashboard has no rail (it keeps the header instead) — the bare
+  // onboarding layout has neither, so the header's presence is what proves
+  // this landed on the real layout.
+  await expect(page.getByRole('banner')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'My SPLAT', level: 1 })).toBeVisible()
 })
 
 test('accepting returns the user to where they were blocked and unblocks editing', async ({ page }) => {

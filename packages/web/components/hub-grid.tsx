@@ -25,13 +25,12 @@
  * card against white siblings that carry the tone in their type reads as a
  * section *and* as a hierarchy, for the same number of colours.
  */
-import Link from 'next/link'
-import type { Route } from 'next'
 import type { NavItem } from '@/lib/public-nav'
 import type { IllustrationKey } from '@/components/editorial-image'
 import { toneClass, type Tone } from '@/lib/tone'
 import { Tilt } from '@/components/tilt'
 import { Sticker } from '@/components/slot'
+import { BoundaryLink } from '@/components/boundary-link'
 
 export function HubGrid({
   items,
@@ -75,10 +74,8 @@ export function HubGrid({
             index={i}
             className={spread ? 'sm:col-span-2' : undefined}
           >
-            <Link
-              // Cast: most of these routes are built in later tasks, so
-              // typedRoutes doesn't know them yet.
-              href={item.href as Route<string>}
+            <BoundaryLink
+              href={item.href}
               className={`card-playroom card-link group relative flex h-full flex-col overflow-hidden p-5 ${
                 spread ? 'sm:p-8' : ''
               } ${
@@ -139,7 +136,7 @@ export function HubGrid({
               >
                 →
               </span>
-            </Link>
+            </BoundaryLink>
           </Tilt>
         )
       })}

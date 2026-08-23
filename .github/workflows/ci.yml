@@ -427,3 +427,33 @@ jobs:
       - name: Stop local Supabase
         if: always()
         run: supabase stop --no-backup
+
+  # The three suites above run against an ephemeral local Supabase, so they can
+  # never notice that a committed migration was never pushed to the real project
+  # — which is exactly how 032/033 shipped in code while production stayed on the
+  # old schema (toys.owner_org_id missing, Toy Library and Exchanges 500ing).
+  # This job talks to the linked remote and fails a merge that left migrations
+  # unpushed. It self-skips when the deploy secrets are absent, so forks and
+  # secret-less runs stay green.
+  migration-drift:
+    name: Migration Drift
+    needs: changes
+    if: needs.changes.outputs.api == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.109.1
+      - name: Check remote migration drift
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: |
+          if [ -z "$SUPABASE_ACCESS_TOKEN" ] || [ -z "$SUPABASE_PROJECT_REF" ]; then
+            echo "Deploy secrets not configured — skipping migration drift check."
+            exit 0
+          fi
+          supabase link --project-ref "$SUPABASE_PROJECT_REF"
+          bash scripts/check-migration-drift.sh
