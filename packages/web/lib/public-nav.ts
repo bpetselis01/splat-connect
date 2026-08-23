@@ -350,18 +350,42 @@ export function sectionFor(pathname: string): NavTarget | undefined {
 }
 
 /**
- * Whether navigating from `pathname` to `href` crosses the account/public
- * boundary, and therefore needs a full page load rather than a soft <Link>
- * transition (see components/boundary-link.tsx and components/nav.tsx's
- * NavLink for why).
+ * Whether this path renders the rail (components/rail.tsx) rather than the
+ * header (components/nav.tsx).
+ *
+ * True for every account page except the account root itself: `/dashboard`
+ * ("My SPLAT") is the one page that keeps the header instead — see
+ * docs/superpowers/specs/2026-08-23-my-splat-front-door-design.md. Exported
+ * for crossesAccountBoundary below and for app/layout.tsx's shell decision,
+ * so the two never drift apart.
+ */
+export function nestsRail(pathname: string): boolean {
+  return sectionFor(pathname) === ACCOUNT_NAV && pathname !== ACCOUNT_NAV.href
+}
+
+/**
+ * Whether navigating from `pathname` to `href` crosses a boundary the root
+ * layout renders differently across, and therefore needs a full page load
+ * rather than a soft <Link> transition (see components/boundary-link.tsx and
+ * components/nav.tsx's NavLink for why).
+ *
+ * Two boundaries, not one: crossing between the public site and the account
+ * section (as before), or crossing between `/dashboard` and every other
+ * account page — since 2026-08-23 those render different chrome (header vs.
+ * rail) despite both being "the account section". A link from the My SPLAT
+ * hub grid to any of its own cards, or the floating back-to-My-SPLAT dock in
+ * the other direction, would otherwise go stale exactly like the original
+ * account/public bug.
  *
  * `sectionFor` returns undefined for a pathname/href it cannot resolve to any
  * known section (e.g. /upload, /tutorials/[id]/edit — real pages, just not
- * modelled in either nav). Those are treated as "not the account section" here,
- * the same as any other public/unclassified page, which is exactly right: a
- * page sectionFor cannot place is never rendered inside the rail, so leaving
- * one crosses the boundary only when the OTHER side is the account section.
+ * modelled in either nav). Those are treated as "not the account section"
+ * here, the same as any other public/unclassified page.
  */
 export function crossesAccountBoundary(pathname: string, href: string): boolean {
-  return (sectionFor(pathname) === ACCOUNT_NAV) !== (sectionFor(href) === ACCOUNT_NAV)
+  const fromAccount = sectionFor(pathname) === ACCOUNT_NAV
+  const toAccount = sectionFor(href) === ACCOUNT_NAV
+  if (fromAccount !== toAccount) return true
+  if (!fromAccount) return false
+  return nestsRail(pathname) !== nestsRail(href)
 }
