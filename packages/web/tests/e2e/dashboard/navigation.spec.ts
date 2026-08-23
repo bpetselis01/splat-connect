@@ -83,12 +83,42 @@ test.describe('signed-in navigation', () => {
     // The branch's headline change: /dashboard keeps the header instead of
     // the rail, unlike every other account page.
     await expect(page.locator('.shell-rail')).toHaveCount(0)
+    await expect(page.getByRole('banner')).toBeVisible()
 
+    // The other half of that headline change, in reverse: a rail page has no
+    // header at all — the two are mutually exclusive by construction. This
+    // caught a real bug where Nav rendered unconditionally in app/layout.tsx,
+    // regardless of whether the rail was also on screen.
     await page.goto('/dashboard/toys')
     await expect(page.getByRole('link', { name: 'Design challenges' }).first()).toBeVisible()
+    await expect(page.locator('.shell-rail')).toHaveCount(1)
+    await expect(page.getByRole('banner')).toHaveCount(0)
 
     await page.goto('/library')
     await expect(page.locator('.shell-rail')).toHaveCount(0)
+  })
+
+  // Tests: the rail's own "Back to My SPLAT" link forces a real navigation
+  //        back to /dashboard, restoring the header and dropping the rail —
+  //        not a soft transition that would leave the rail on screen with no
+  //        header (the reported defect this link was added to fix)
+  // How:   clicks the rail's link from a rail-only account page, then checks
+  //        both halves of the header/rail split on the far side
+  test('the rail\'s Back to My SPLAT link restores the header and drops the rail', async ({
+    page,
+  }) => {
+    const contributor = await createContributor()
+    await acceptTerms(contributor.id)
+    await signIn(page, contributor.email, contributor.password)
+    await page.waitForURL('**/dashboard')
+    await page.goto('/dashboard/toys')
+    await expect(page.locator('.shell-rail')).toHaveCount(1)
+
+    await page.locator('.shell-rail').getByRole('link', { name: /Back to My SPLAT/ }).click()
+
+    await expect(page).toHaveURL(/\/dashboard$/)
+    await expect(page.locator('.shell-rail')).toHaveCount(0)
+    await expect(page.getByRole('banner')).toBeVisible()
   })
 
   // The final review round's headline gap: components/public-footer.tsx
