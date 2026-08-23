@@ -376,6 +376,9 @@ test('a placeholder route explains the feature instead of 404ing', async ({ page
   try {
     await signIn(page, contributor.email, contributor.password)
     await page.waitForURL('**/dashboard')
+    // /dashboard itself has no rail (it keeps the header instead) — this
+    // test is about the rail specifically, so it needs a page that has one.
+    await page.goto('/dashboard/toys')
 
     // Repointed from /printing to /dashboard/print-requests. /printing was a
     // ComingSoon child of Get Involved when this was written; it has since been
