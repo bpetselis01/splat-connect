@@ -7,9 +7,9 @@ test('signing out returns to the home page and restores the Sign in link', async
   await signIn(page, contributor.email, contributor.password)
   await page.waitForURL('**/dashboard')
 
-  // The account section now shows the header AND the rail together (that's
-  // the whole point of this plan), and both carry a Sign out control — scope
-  // to the header's, which exists on every signed-in page.
+  // /dashboard keeps the header (components/nav.tsx), which carries its own
+  // Sign out control distinct from the rail's — scope to the header's
+  // (role=banner), the one guaranteed present here.
   await page.getByRole('banner').getByRole('button', { name: 'Sign out' }).click()
   await page.waitForURL(/localhost:\d+\/$/)
 
