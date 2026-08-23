@@ -80,6 +80,10 @@ test.describe('signed-in navigation', () => {
     await signIn(page, contributor.email, contributor.password)
     await page.waitForURL('**/dashboard')
 
+    // The branch's headline change: /dashboard keeps the header instead of
+    // the rail, unlike every other account page.
+    await expect(page.locator('.shell-rail')).toHaveCount(0)
+
     await page.goto('/dashboard/toys')
     await expect(page.getByRole('link', { name: 'Design challenges' }).first()).toBeVisible()
 
