@@ -9,7 +9,7 @@ import { AppShell } from '@/components/app-shell'
 import { PublicFooter } from '@/components/public-footer'
 import { Breadcrumb } from '@/components/breadcrumb'
 import { PlayroomBackdrop } from '@/components/playroom-backdrop'
-import { sectionFor, ACCOUNT_NAV } from '@/lib/public-nav'
+import { sectionFor, ACCOUNT_NAV, nestsRail } from '@/lib/public-nav'
 
 // Nunito is the mobile app's family (packages/mobile/lib/theme.ts). One rounded
 // sans across headings, labels, buttons and data — product UI doesn't need a
@@ -57,8 +57,10 @@ export function isBare(pathname: string): boolean {
   return BARE_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))
 }
 
-/** Exported for tests, exactly as isBare is: whether this route nests the rail
-    and takes the header's quiet variant. */
+/** Exported for tests, exactly as isBare is: whether this route is inside the
+    account section, and therefore takes the header's quiet variant. Does NOT
+    mean the rail renders — /dashboard is in the account section but keeps the
+    header instead of the rail; see lib/public-nav.ts's nestsRail for that. */
 export function isAccountRoute(pathname: string): boolean {
   return !isBare(pathname) && sectionFor(pathname) === ACCOUNT_NAV
 }
@@ -120,7 +122,10 @@ export default async function RootLayout({
   // AppShell -> ShellFrame renders it inside .shell-main, where it inherits
   // the same margin-inline-start offset that already keeps <main> clear of
   // the rail.
-  const shell = account ? await AppShell({ children, footer: <PublicFooter /> }) : null
+  const caps = await getCapabilities()
+  // /dashboard ("My SPLAT") is the one account page that keeps the header
+  // instead of the rail — see nestsRail's docstring in lib/public-nav.ts.
+  const shell = nestsRail(pathname) ? await AppShell({ children, footer: <PublicFooter /> }) : null
 
   return (
     <html lang="en" className={`${nunito.variable} ${plexMono.variable}`}>
@@ -142,7 +147,11 @@ export default async function RootLayout({
                 so quiet/showMenu have to track whether a shell actually
                 rendered, not just whether the route is nominally an account
                 one. */}
-            <Nav caps={await getCapabilities()} quiet={shell !== null} showMenu={shell !== null} />
+            {/* quiet tracks account-section membership, not shell presence: the
+                header renders quiet on /dashboard too, even though /dashboard
+                has no shell. showMenu still tracks shell presence — there is
+                never a drawer to open on a page with no rail. */}
+            <Nav caps={caps} quiet={account} showMenu={shell !== null} />
             {shell ?? (
               <div className="relative overflow-hidden">
                 <PlayroomBackdrop tone={tone} />
