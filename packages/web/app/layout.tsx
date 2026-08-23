@@ -141,28 +141,33 @@ export default async function RootLayout({
             Skip to main content
           </a>
           <DrawerProvider>
-            {/* quiet tracks account-section membership (isAccountRoute), not
-                shell presence: the header renders quiet on /dashboard too,
-                even though /dashboard has no shell.
-                showMenu tracks shell presence, not just account-section
-                membership: /notifications is an account route that also
-                renders for a signed-out visitor (it isn't in middleware.ts's
-                auth-gated list, and the page swallows a failed fetch rather
-                than redirecting), and AppShell returns null with no session —
-                there is never a drawer to open on a page with no rail. */}
-            <Nav caps={caps} quiet={account} showMenu={shell !== null} />
             {shell ?? (
-              <div className="relative overflow-hidden">
-                <PlayroomBackdrop tone={tone} />
-                <main id="main" tabIndex={-1} className="public-shell relative py-8 sm:py-10">
-                  {/* Same shell !== null tracking as Nav above: /notifications
-                      resolves to the account section even signed out, and a
-                      "← My SPLAT" link back to a page you can't reach is worse
-                      than no breadcrumb. */}
-                  {!(account && shell === null) && <Breadcrumb pathname={pathname} />}
-                  {children}
-                </main>
-              </div>
+              <>
+                {/* Nav only renders when there is no shell: the header and
+                    the rail are mutually exclusive by construction, never
+                    both on screen together (components/rail.tsx carries its
+                    own "Back to My SPLAT" link for pages that have the rail
+                    instead). quiet tracks account-section membership
+                    (isAccountRoute), not shell presence — the header renders
+                    quiet on /dashboard too, even though /dashboard has no
+                    shell. A signed-out visitor on an account-shaped route
+                    like /notifications still gets Nav here (shell is null
+                    because AppShell returned null with no session, not
+                    because nestsRail said no) — they need a way to sign in. */}
+                <Nav caps={caps} quiet={account} />
+                <div className="relative overflow-hidden">
+                  <PlayroomBackdrop tone={tone} />
+                  <main id="main" tabIndex={-1} className="public-shell relative py-8 sm:py-10">
+                    {/* /notifications resolves to the account section even
+                        signed out, and a "← My SPLAT" link back to a page you
+                        can't reach is worse than no breadcrumb — Nav above
+                        stays visible either way, since a signed-out visitor
+                        still needs a way to sign in. */}
+                    {!(account && shell === null) && <Breadcrumb pathname={pathname} />}
+                    {children}
+                  </main>
+                </div>
+              </>
             )}
           </DrawerProvider>
           {/* Signed-out visitor on any non-bare route, account or public: no
