@@ -60,11 +60,12 @@ describe('layout chrome rules', () => {
     expect(isBare('/admin/review')).toBe(false)
   })
 
-  // Tests: the layout can tell an account route from a public one
+  // Tests: isAccountRoute marks account-section membership — quiet header,
+  //        breadcrumb suppression — not whether the rail renders. My SPLAT
+  //        (/dashboard) is in the account section but does not nest the rail;
+  //        see tests/unit/lib/public-nav.test.ts's nestsRail suite for that.
   // How:   calls the exported rule directly
-  // Chain: this is what decides whether the rail nests and whether the header
-  //        takes its quiet variant, so it is asserted rather than inferred
-  it('identifies which routes nest the rail', () => {
+  it('identifies account-section routes, including /dashboard itself', () => {
     expect(isAccountRoute('/dashboard')).toBe(true)
     expect(isAccountRoute('/dashboard/toys')).toBe(true)
     expect(isAccountRoute('/admin')).toBe(true)
