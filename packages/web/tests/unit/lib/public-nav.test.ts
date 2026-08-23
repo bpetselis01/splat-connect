@@ -6,6 +6,7 @@ import {
   SCAFFOLD_KEYS,
   ACCOUNT_NAV,
   crossesAccountBoundary,
+  nestsRail,
 } from '@/lib/public-nav'
 
 describe('public nav model', () => {
@@ -201,14 +202,27 @@ describe('crossesAccountBoundary', () => {
   //        broad it downgrades every link on the site
   // How:   both same-section (Learn -> Learn) and same-side-different-section
   //        (Learn -> Impact, /dashboard -> /dashboard/tutorials)
-  it('is false within the public site and within the account section', () => {
+  it('is false within the public site and between two rail pages', () => {
     expect(crossesAccountBoundary('/learn/switch-types', '/learn/safety-and-cleaning')).toBe(
       false
     )
     expect(crossesAccountBoundary('/learn', '/impact')).toBe(false)
-    expect(crossesAccountBoundary('/dashboard', '/dashboard/tutorials')).toBe(false)
     expect(crossesAccountBoundary('/dashboard/tutorials', '/dashboard/challenges')).toBe(false)
   })
+
+  // Tests: /dashboard itself renders the header, not the rail — every other
+  //        account page renders the rail, not the header. Crossing between
+  //        them needs a full page load in both directions, or the stale-chrome
+  //        bug the account/public boundary was fixed for reopens one level in.
+  // How:   both directions between /dashboard and a rail page
+  // Chain: components/hub-grid.tsx (My SPLAT's own cards) and the
+  //        back-to-My-SPLAT dock both rely on this
+  it('is true between /dashboard and any other account page', () => {
+    expect(crossesAccountBoundary('/dashboard', '/dashboard/tutorials')).toBe(true)
+    expect(crossesAccountBoundary('/dashboard/challenges', '/dashboard')).toBe(true)
+    expect(crossesAccountBoundary('/dashboard', '/admin')).toBe(true)
+  })
+
 
   // Tests: sectionFor's real handling of an href it cannot resolve to any
   //        section — /upload and /tutorials/[id]/edit are real pages, just
@@ -224,5 +238,22 @@ describe('crossesAccountBoundary', () => {
     expect(crossesAccountBoundary('/upload', '/dashboard')).toBe(true)
     expect(crossesAccountBoundary('/upload', '/tutorials/abc/edit')).toBe(false)
     expect(crossesAccountBoundary('/library', '/upload')).toBe(false)
+  })
+})
+
+describe('nestsRail', () => {
+  it('is false for /dashboard itself', () => {
+    expect(nestsRail('/dashboard')).toBe(false)
+  })
+
+  it('is true for every other account page', () => {
+    expect(nestsRail('/dashboard/toys')).toBe(true)
+    expect(nestsRail('/admin')).toBe(true)
+    expect(nestsRail('/notifications')).toBe(true)
+  })
+
+  it('is false outside the account section', () => {
+    expect(nestsRail('/library')).toBe(false)
+    expect(nestsRail('/login')).toBe(false)
   })
 })
