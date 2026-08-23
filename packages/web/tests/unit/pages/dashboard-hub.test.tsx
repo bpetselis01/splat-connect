@@ -112,17 +112,21 @@ describe('DashboardHub', () => {
     ).toBe(false)
   })
 
-  // Tests: an account-internal tile (not crossing) still goes through
-  //        next/link — nothing else would catch the guard becoming
-  //        accidentally too broad and downgrading every tile on the hub
+  // Tests: a tile from /dashboard to another rail-only account page also
+  //        crosses, since /dashboard itself no longer nests the rail —
+  //        nestsRail (lib/public-nav.ts) makes every one of the hub's own
+  //        tiles a boundary crossing, not just the idea-form tile
   // How:   pathname is /dashboard (the default); the "My tutorials" tile's
   //        href is checked against next/link's mock calls
-  it('renders an account-internal tile through next/link', async () => {
+  // Chain: crossesAccountBoundary('/dashboard', '/dashboard/tutorials') is
+  //        now true (tests/unit/lib/public-nav.test.ts), so hub-grid.tsx
+  //        must route this tile through BoundaryLink, not next/link
+  it('renders an account-internal tile as a plain anchor, since /dashboard does not nest the rail', async () => {
     const ui = await DashboardHub()
     render(ui)
     const tutorials = screen.getByRole('link', { name: /My tutorials/ })
     expect(tutorials).toHaveAttribute('href', '/dashboard/tutorials')
-    expect(mockLink.mock.calls.some((call) => call[0].href === '/dashboard/tutorials')).toBe(true)
+    expect(mockLink.mock.calls.some((call) => call[0].href === '/dashboard/tutorials')).toBe(false)
   })
 
   // Tests: tiles carry live counts, not static prose
