@@ -1,9 +1,25 @@
 import { describe, it, expect, vi } from 'vitest'
-// fireEvent, not user-event: @testing-library/user-event is not a dependency
-// of this package and the no-new-dependencies constraint applies to tests too.
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { Rail } from '@/components/rail'
 import type { NavGroup } from '@/lib/nav-model'
+
+// Rows now render through BoundaryLink, which reads usePathname() itself (separate
+// from the `pathname` prop Rail takes for marking the active row) to decide whether
+// a row crosses the account boundary. next/link is mocked as a plain <a>, tracked
+// via mockLink, so a crossing test can assert a row bypassed it entirely — the same
+// strategy tests/unit/components/nav.test.tsx already uses for its own boundary tests.
+const pathname = vi.hoisted(() => ({ current: '/dashboard' }))
+const mockLink = vi.fn(
+  ({ href, children, ...props }: { href: string; children: React.ReactNode; [key: string]: unknown }) => (
+    <a href={href} {...props}>{children}</a>
+  ),
+)
+vi.mock('next/link', () => ({
+  default: (props: { href: string; children: React.ReactNode; [key: string]: unknown }) => mockLink(props),
+}))
+vi.mock('next/navigation', () => ({
+  usePathname: () => pathname.current,
+}))
 
 vi.mock('@/lib/supabase/client', () => ({
   createClient: () => ({ auth: { signOut: vi.fn() } }),
@@ -21,25 +37,23 @@ const GROUPS: NavGroup[] = [
     heading: 'Yours',
     rows: [
       { href: '/dashboard', label: 'My tutorials', icon: 'file' },
-      { href: '/dashboard/child', label: 'Child profile', icon: 'child' },
+      { href: '/dashboard/toys', label: 'My toys', icon: 'box' },
     ],
   },
 ]
 
-const noop = () => {}
-
 describe('Rail', () => {
   it('renders every group heading and row', () => {
-    render(<Rail groups={GROUPS} pathname="/dashboard" collapsed={false} onToggle={noop} />)
+    render(<Rail groups={GROUPS} pathname="/dashboard" />)
     expect(screen.getByText('Browse')).toBeInTheDocument()
     expect(screen.getByText('Yours')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Guides' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Child profile' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'My toys' })).toBeInTheDocument()
   })
 
   it('marks the current row', () => {
-    render(<Rail groups={GROUPS} pathname="/dashboard/child" collapsed={false} onToggle={noop} />)
-    expect(screen.getByRole('link', { name: 'Child profile' })).toHaveAttribute(
+    render(<Rail groups={GROUPS} pathname="/dashboard/toys" />)
+    expect(screen.getByRole('link', { name: 'My toys' })).toHaveAttribute(
       'aria-current',
       'page'
     )
@@ -48,49 +62,18 @@ describe('Rail', () => {
   // Chain: /dashboard prefixes every other dashboard route, so a startsWith
   //        match would light My tutorials on every page in the group.
   it('does not mark My tutorials current on a sibling route', () => {
-    render(<Rail groups={GROUPS} pathname="/dashboard/child" collapsed={false} onToggle={noop} />)
+    render(<Rail groups={GROUPS} pathname="/dashboard/toys" />)
     expect(screen.getByRole('link', { name: 'My tutorials' })).not.toHaveAttribute('aria-current')
   })
 
-  // Chain: collapsed to icons, the label is the only thing a screen reader has.
-  it('keeps an accessible name for every row when collapsed', () => {
-    render(<Rail groups={GROUPS} pathname="/dashboard" collapsed onToggle={noop} />)
-    expect(screen.getByRole('link', { name: 'Guides' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'My tutorials' })).toBeInTheDocument()
-  })
-
-  // Chain: collapsed, the visible "Soon" chip vanishes. If the accessible
-  // name were built from the chip alone every placeholder row would announce
-  // as just "Soon", indistinguishable from every other placeholder row.
-  it('names a collapsed soon row with its destination, not just "Soon"', () => {
-    render(<Rail groups={GROUPS} pathname="/dashboard" collapsed onToggle={noop} />)
-    expect(screen.getByRole('link', { name: /Toy library/ })).toBeInTheDocument()
-  })
-
-  // Chain: collapsed, headings are replaced by a decorative divider. Without
-  // this, a screen reader gets one undifferentiated list of links with no
-  // indication of which of the four groups a row belongs to.
-  it('keeps group headings for assistive tech when collapsed', () => {
-    render(<Rail groups={GROUPS} pathname="/dashboard" collapsed onToggle={noop} />)
-    expect(screen.getByText('Browse')).toBeInTheDocument()
-    expect(screen.getByText('Yours')).toBeInTheDocument()
-  })
-
   it('marks unbuilt rows so they are not mistaken for working ones', () => {
-    render(<Rail groups={GROUPS} pathname="/dashboard" collapsed={false} onToggle={noop} />)
+    render(<Rail groups={GROUPS} pathname="/dashboard" />)
     const soon = screen.getByRole('link', { name: /Toy library/ })
     expect(soon).toHaveTextContent('Soon')
   })
 
-  it('calls onToggle when the collapse control is used', () => {
-    const onToggle = vi.fn()
-    render(<Rail groups={GROUPS} pathname="/dashboard" collapsed={false} onToggle={onToggle} />)
-    fireEvent.click(screen.getByRole('button', { name: /collapse|expand/i }))
-    expect(onToggle).toHaveBeenCalledOnce()
-  })
-
   it('offers a sign out control', () => {
-    render(<Rail groups={GROUPS} pathname="/dashboard" collapsed={false} onToggle={noop} />)
+    render(<Rail groups={GROUPS} pathname="/dashboard" />)
     expect(screen.getByRole('button', { name: 'Sign out' })).toBeInTheDocument()
   })
 
@@ -101,7 +84,7 @@ describe('Rail', () => {
         rows: [{ href: '/notifications', label: 'Notifications', icon: 'bell' as const, count: 5 }],
       },
     ]
-    render(<Rail groups={groups} pathname="/dashboard" collapsed={false} onToggle={noop} />)
+    render(<Rail groups={groups} pathname="/dashboard" />)
     expect(screen.getByText('5')).toBeInTheDocument()
   })
 
@@ -112,7 +95,7 @@ describe('Rail', () => {
         rows: [{ href: '/notifications', label: 'Notifications', icon: 'bell' as const }],
       },
     ]
-    render(<Rail groups={groups} pathname="/dashboard" collapsed={false} onToggle={noop} />)
+    render(<Rail groups={groups} pathname="/dashboard" />)
     expect(screen.queryByText(/^\d+$/)).not.toBeInTheDocument()
   })
 
@@ -123,18 +106,33 @@ describe('Rail', () => {
   //        keeps the header instead — a page with no header needs its own
   //        way home rather than relying on one that isn't there
   it('offers a Back to My SPLAT link at the top, pointing at /dashboard', () => {
-    render(<Rail groups={GROUPS} pathname="/dashboard/child" collapsed={false} onToggle={noop} />)
+    render(<Rail groups={GROUPS} pathname="/dashboard/toys" />)
     expect(screen.getByRole('link', { name: /Back to My SPLAT/ })).toHaveAttribute(
       'href',
       '/dashboard'
     )
   })
 
-  // Tests: the link keeps an accessible name once collapsed to icons, same as
-  //        every other row
-  // How:   renders collapsed and checks the link's accessible name
-  it('keeps an accessible name for the Back to My SPLAT link when collapsed', () => {
-    render(<Rail groups={GROUPS} pathname="/dashboard/child" collapsed onToggle={noop} />)
-    expect(screen.getByRole('link', { name: /Back to My SPLAT/ })).toBeInTheDocument()
+  // Tests: a row pointing outside the account section (e.g. Submit an idea)
+  //        gets a full navigation, not a soft next/link transition
+  // How:   renders from an account pathname with a row href that resolves to a
+  //        public section, and asserts next/link was never asked to render it
+  // Chain: the root layout doesn't re-run its rail/header decision on a client
+  //        transition, so a soft <Link> here would leave stale chrome on screen
+  //        — see components/boundary-link.tsx.
+  it('crosses to a full page load for a row outside the account section', () => {
+    pathname.current = '/dashboard/toys'
+    const groups: NavGroup[] = [
+      {
+        heading: 'Give us a challenge',
+        rows: [{ href: '/get-involved/submit-an-idea', label: 'Submit an idea', icon: 'clipboard' }],
+      },
+    ]
+    render(<Rail groups={groups} pathname="/dashboard/toys" />)
+    const link = screen.getByRole('link', { name: 'Submit an idea' })
+    expect(link).toHaveAttribute('href', '/get-involved/submit-an-idea')
+    expect(mockLink).not.toHaveBeenCalledWith(
+      expect.objectContaining({ href: '/get-involved/submit-an-idea' })
+    )
   })
 })
