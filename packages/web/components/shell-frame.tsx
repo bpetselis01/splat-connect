@@ -71,7 +71,7 @@ export function ShellFrame({
           tabIndex={-1}
           className="w-full max-w-[100rem] px-4 py-8 sm:px-6 sm:py-10"
         >
-          <Breadcrumb pathname={pathname} />
+          <Breadcrumb />
           {children}
         </main>
         {footer}
