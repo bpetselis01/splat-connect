@@ -1,3 +1,4 @@
+'use client'
 /**
  * Where you are, on pages that sit inside a section.
  *
@@ -9,8 +10,11 @@
  * Renders nothing on the homepage or on a section hub: you are already at the
  * top of the tree, and a link pointing at the page you are on is noise.
  *
- * Lives in the layout rather than in each page because the layout is the only
- * place that knows the pathname without threading it through forty files.
+ * Reads its own pathname via usePathname (same pattern as components/nav.tsx)
+ * rather than taking it as a prop from the server layout: the layout only
+ * re-reads headers() on a hard page load, so a prop computed there goes stale
+ * across any soft <Link> transition and leaves the previous page's section
+ * label stuck on screen indefinitely.
  *
  * Uses BoundaryLink, not next/link directly: on a rail-only account page this
  * points back at /dashboard, which is a boundary crossing now that /dashboard
@@ -18,11 +22,13 @@
  * screen with no header, the exact stale-chrome bug BoundaryLink exists to
  * prevent (see its own docstring).
  */
+import { usePathname } from 'next/navigation'
 import { BoundaryLink } from '@/components/boundary-link'
 import { sectionFor } from '@/lib/public-nav'
 import { toneClass } from '@/lib/tone'
 
-export function Breadcrumb({ pathname }: { pathname: string }) {
+export function Breadcrumb() {
+  const pathname = usePathname() ?? ''
   const section = sectionFor(pathname)
   if (!section || pathname === section.href) return null
 
