@@ -43,7 +43,10 @@ describe('buildNav', () => {
   //        would offer a capability the visitor cannot obtain.
   it('adds the Organisation group only when the account leads an org', () => {
     expect(headings(buildNav(caps({ ledOrgs: [org] }), 0))).toEqual([
-      'Yours',
+      'Add a tutorial',
+      'Exchange a toy',
+      'Give us a challenge',
+      'Print requests',
       'Organisation',
       'Account',
     ])
@@ -53,7 +56,7 @@ describe('buildNav', () => {
   // Pins the href, not just the label: the hub's accessible-name test covers
   // the heading, but nothing else asserts this row still points at the moved
   // tutorial list rather than the old /dashboard.
-  it('points the Yours group\'s first row at /dashboard/tutorials', () => {
+  it('points the Add a tutorial group\'s first row at /dashboard/tutorials', () => {
     expect(buildNav(caps(), 0)[0].rows[0].href).toBe('/dashboard/tutorials')
   })
 
@@ -66,16 +69,8 @@ describe('buildNav', () => {
     expect(hrefs(buildNav(caps(), 0))).toContain('/dashboard/exchanges')
   })
 
-  // Chain: gating Child profiles on parenthood would mean the only way to create
-  //        a child profile is to already have one. Capabilities no longer even
-  //        carries an isParent flag, precisely because nothing may branch on it.
-  it('shows Child profiles to accounts that are not yet parents', () => {
-    expect(hrefs(buildNav(caps(), 0))).toContain('/dashboard/child')
-  })
-
-  it('labels the row for more than one child', () => {
-    const labels = buildNav(caps(), 0).flatMap((g) => g.rows).map((r) => r.label)
-    expect(labels).toContain('Child profiles')
+  it('includes a Submit an idea row that points outside the account section', () => {
+    expect(hrefs(buildNav(caps(), 0))).toContain('/get-involved/submit-an-idea')
   })
 
   it('marks the two unbuilt rows as soon, and no others', () => {
@@ -91,9 +86,8 @@ describe('buildNav', () => {
     ])
   })
 
-  // The spec's fifteenth row is Sign out, which is an action the rail footer
-  // renders rather than a nav row — hence twelve here (eight plus
-  // Notifications, Exchanges and Design challenges, minus Browse's four).
+  // Same total as before Child profiles moved to the Account page: it left
+  // and Submit an idea arrived in its place.
   it('builds twelve linked rows for a leader-admin', () => {
     const rows = buildNav(caps({ ledOrgs: [org], isAdmin: true }), 0).flatMap((g) => g.rows)
     expect(rows).toHaveLength(12)
@@ -143,7 +137,13 @@ describe('buildNav', () => {
   //        them in the rail would be two controls competing at one level
   it('drops the Browse group now the header carries it', () => {
     const groups = buildNav(caps(), 0)
-    expect(groups.map((g) => g.heading)).toEqual(['Yours', 'Account'])
+    expect(groups.map((g) => g.heading)).toEqual([
+      'Add a tutorial',
+      'Exchange a toy',
+      'Give us a challenge',
+      'Print requests',
+      'Account',
+    ])
     const hrefs = groups.flatMap((g) => g.rows.map((r) => r.href))
     expect(hrefs).not.toContain('/library')
     expect(hrefs).not.toContain('/toy-library')
@@ -151,13 +151,15 @@ describe('buildNav', () => {
     expect(hrefs).not.toContain('/organizations')
   })
 
-  // Tests: every remaining row is an account-owned destination
-  // How:   asserts each row href sits under /dashboard, /admin or /notifications
+  // Tests: every row is an account-owned destination, aside from the one row
+  //        that deliberately crosses out to the public "Submit an idea" page
+  // How:   asserts each other row href sits under /dashboard, /admin or /notifications
   // Chain: the rail is now the account section's secondary nav; a row outside it
   //        would be navigating out of the section it belongs to
-  it('keeps only account destinations', () => {
+  it('keeps only account destinations, aside from Submit an idea', () => {
     const rows = buildNav(caps(), 0).flatMap((g) => g.rows)
     for (const row of rows) {
+      if (row.href === '/get-involved/submit-an-idea') continue
       expect(row.href).toMatch(/^\/(dashboard|admin|notifications)/)
     }
   })
