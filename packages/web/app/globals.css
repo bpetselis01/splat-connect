@@ -1260,41 +1260,33 @@
  */
 
 /*
-  Rail width as a custom property rather than a swapped utility class: <main>
-  reacts through margin-inline-start: var(--rail-w) without either element
-  knowing the other's state, so collapsing animates one value.
+  Rail width as a custom property rather than a hardcoded value in both
+  places: <main> reacts through margin-inline-start: var(--rail-w) without
+  either element repeating the other's number.
 */
 @layer components {
   .shell {
     --rail-w: 15rem;
   }
 
-  .shell[data-collapsed='true'] {
-    --rail-w: 4.5rem;
-  }
-
   /*
    * The rail used to be the whole page (inset-block: 0), which is wrong now
-   * that a header (components/nav.tsx, sticky top-0 z-30) sits above it and a
-   * footer sits below it on account pages. --header-h is written by nav.tsx
-   * (a ResizeObserver, since the header's height isn't constant — quiet vs
-   * normal padding, a wrapping pill row), so the rail's top edge sits exactly
-   * at the header's bottom edge and never overlaps it, regardless of z-index.
-   * The 4rem fallback covers the one frame before that effect runs.
+   * that a footer sits below it on account pages. top: 0 is safe — the rail
+   * and the header (components/nav.tsx, sticky top-0 z-30) are mutually
+   * exclusive by construction (app/layout.tsx), never both on screen, so
+   * there is never a header edge to clear.
    */
   .shell-rail {
     position: fixed;
-    top: var(--header-h, 4rem);
+    top: 0;
     bottom: 0;
     inset-inline-start: 0;
     z-index: 40;
     width: var(--rail-w);
-    transition: width 200ms var(--ease-out-quart);
   }
 
   .shell-main {
     min-height: 100vh;
-    transition: margin-inline-start 200ms var(--ease-out-quart);
   }
 
   @media (min-width: 1024px) {
