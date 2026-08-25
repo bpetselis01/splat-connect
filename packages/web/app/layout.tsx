@@ -100,7 +100,7 @@ export default async function RootLayout({
             <DrawerProvider>
               <div className="relative overflow-hidden">
                 <main id="main" tabIndex={-1} className="public-shell relative py-8 sm:py-10">
-                  <Breadcrumb pathname={pathname} />
+                  <Breadcrumb />
                   {children}
                 </main>
               </div>
@@ -163,7 +163,7 @@ export default async function RootLayout({
                         can't reach is worse than no breadcrumb — Nav above
                         stays visible either way, since a signed-out visitor
                         still needs a way to sign in. */}
-                    {!(account && shell === null) && <Breadcrumb pathname={pathname} />}
+                    {!(account && shell === null) && <Breadcrumb />}
                     {children}
                   </main>
                 </div>
