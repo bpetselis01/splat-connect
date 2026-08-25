@@ -34,8 +34,7 @@ test('a contributor sees no Organisation group', async ({ page }) => {
     await page.waitForURL('**/dashboard')
 
     await expect(page.getByRole('link', { name: 'My tutorials', exact: true })).toBeVisible()
-    await expect(page.getByRole('link', { name: 'Child profiles', exact: true })).toBeVisible()
-    await expect(page.getByRole('link', { name: 'Profile', exact: true })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Account', exact: true })).toBeVisible()
     await expect(page.getByText('Organisation', { exact: true })).toHaveCount(0)
     await expect(page.getByRole('link', { name: 'Review queue', exact: true })).toHaveCount(0)
   } finally {
@@ -131,8 +130,8 @@ test('a contributor adds two children, edits one, and deletes one', async ({ pag
     await signIn(page, contributor.email, contributor.password)
     await page.waitForURL('**/dashboard')
 
-    await page.getByRole('link', { name: 'Child profiles', exact: true }).click()
-    await expect(page).toHaveURL('/dashboard/child')
+    await page.getByRole('link', { name: 'Account', exact: true }).click()
+    await expect(page).toHaveURL('/dashboard/profile')
 
     // Name, age, diagnosis and MACS live on the Ability pill, not the one the
     // stepper opens on — ChildEditor splits the profile across four steps and
@@ -150,8 +149,8 @@ test('a contributor adds two children, edits one, and deletes one', async ({ pag
     await page.getByRole('button', { name: 'Save' }).click()
     await expect(page.getByText('Saved')).toBeVisible()
     await expect(page).toHaveURL(/\/dashboard\/child\/[0-9a-f-]{36}/)
-    await page.getByRole('link', { name: '← Child profiles' }).click()
-    await expect(page).toHaveURL('/dashboard/child')
+    await page.getByRole('link', { name: '← Account' }).click()
+    await expect(page).toHaveURL('/dashboard/profile')
     await expect(page.getByRole('link', { name: /Emma/ })).toBeVisible()
 
     // Second child, left unnamed — the list must still tell them apart.
@@ -160,8 +159,8 @@ test('a contributor adds two children, edits one, and deletes one', async ({ pag
     await page.locator('#age').fill('4')
     await page.getByRole('button', { name: 'Save' }).click()
     await expect(page.getByText('Saved')).toBeVisible()
-    await page.getByRole('link', { name: '← Child profiles' }).click()
-    await expect(page).toHaveURL('/dashboard/child')
+    await page.getByRole('link', { name: '← Account' }).click()
+    await expect(page).toHaveURL('/dashboard/profile')
     await expect(page.getByRole('link', { name: /Child 2/ })).toBeVisible()
 
     // Edit the first child and confirm it persists across a reload. The pill is
@@ -185,7 +184,7 @@ test('a contributor adds two children, edits one, and deletes one', async ({ pag
     await page.getByRole('button', { name: 'Delete Emma' }).click()
     await page.getByLabel(/to confirm/i).fill('confirm_delete_Emma')
     await page.getByRole('button', { name: 'Delete', exact: true }).click()
-    await expect(page).toHaveURL('/dashboard/child')
+    await expect(page).toHaveURL('/dashboard/profile')
     await expect(page.getByRole('link', { name: /Emma/ })).toHaveCount(0)
     // The survivor renumbers, because position is computed and not stored.
     await expect(page.getByRole('link', { name: /Child 1/ })).toBeVisible()
@@ -202,7 +201,7 @@ test('a contributor adds two children, edits one, and deletes one', async ({ pag
  * same tab, and read the field back — not a nav element that was never
  * wired to the name.
  */
-test('a user renames themselves on the Profile tab and the change persists', async ({ page }) => {
+test('a user renames themselves on the Account tab and the change persists', async ({ page }) => {
   const contributor = await createContributor()
   await acceptTerms(contributor.id)
   const newName = uniqueTitle('Renamed Contributor')
@@ -211,7 +210,7 @@ test('a user renames themselves on the Profile tab and the change persists', asy
     await signIn(page, contributor.email, contributor.password)
     await page.waitForURL('**/dashboard')
 
-    await page.getByRole('link', { name: 'Profile', exact: true }).click()
+    await page.getByRole('link', { name: 'Account', exact: true }).click()
     await expect(page).toHaveURL('/dashboard/profile')
 
     await page.locator('#name').fill(newName)
@@ -225,7 +224,7 @@ test('a user renames themselves on the Profile tab and the change persists', asy
   }
 })
 
-test('the collapsed rail survives a reload without flashing open', async ({ page }) => {
+test('the rail spans the full viewport height, with no header above it', async ({ page }) => {
   const contributor = await createContributor()
   await acceptTerms(contributor.id)
 
@@ -236,34 +235,12 @@ test('the collapsed rail survives a reload without flashing open', async ({ page
     // test is about the rail specifically, so it needs a page that has one.
     await page.goto('/dashboard/toys')
 
-    const shell = page.locator('.shell')
-    await expect(shell).toHaveAttribute('data-collapsed', 'false')
+    const rail = page.locator('.shell-rail')
+    const box = await rail.boundingBox()
+    expect(box?.y).toBe(0)
+    expect(box?.height).toBe((await page.viewportSize())?.height)
 
-    await page.getByRole('button', { name: 'Collapse navigation' }).click()
-    await expect(shell).toHaveAttribute('data-collapsed', 'true')
-
-    // Chain: the cookie is read on the server, so the very first paint after a
-    //        reload is already collapsed. A localStorage read in an effect
-    //        would render expanded and snap.
-    //
-    // The DOM assertion below only proves the settled state — Playwright's
-    // auto-retrying expect would still pass if the first frame rendered
-    // expanded and a client effect corrected it moments later, which is
-    // exactly the flash this test is named for. Fetching the raw HTML
-    // response (sharing the page's cookies, including rail-collapsed) proves
-    // the collapsed attribute was baked in before any client JS ran, which a
-    // client-side determination cannot fake: there is no frame at which the
-    // server-rendered bytes said 'false'.
-    const html = await (await page.request.get(page.url())).text()
-    expect(html).toContain('data-collapsed="true"')
-
-    await page.reload()
-    await expect(shell).toHaveAttribute('data-collapsed', 'true')
-
-    // Survives a navigation too.
-    await page.getByRole('link', { name: 'Profile', exact: true }).click()
-    await expect(page).toHaveURL('/dashboard/profile')
-    await expect(shell).toHaveAttribute('data-collapsed', 'true')
+    await expect(page.locator('header')).toHaveCount(0)
   } finally {
     await deleteUser(contributor.id)
   }
@@ -292,8 +269,8 @@ test.skip('the rail opens as a drawer on a narrow viewport', async ({ page }) =>
     await page.getByRole('button', { name: 'Open navigation' }).click()
     await expect(drawer).toBeVisible()
 
-    await drawer.getByRole('link', { name: 'Child profiles', exact: true }).click()
-    await expect(page).toHaveURL('/dashboard/child')
+    await drawer.getByRole('link', { name: 'Account', exact: true }).click()
+    await expect(page).toHaveURL('/dashboard/profile')
     await expect(drawer).toBeHidden()
   } finally {
     await deleteUser(contributor.id)
