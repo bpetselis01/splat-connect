@@ -17,7 +17,7 @@ const GROUPS: NavGroup[] = [
 
 function shell() {
   return render(
-    <ShellFrame groups={GROUPS} collapsed={false}>
+    <ShellFrame groups={GROUPS}>
       <p>page body</p>
     </ShellFrame>
   )
