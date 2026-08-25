@@ -23,8 +23,8 @@ export default async function EditChildPage({ params }: { params: Promise<{ id: 
 
   return (
     <div>
-      <Link href="/dashboard/child" className="mb-4 inline-block text-sm text-muted">
-        ← Child profiles
+      <Link href="/dashboard/profile" className="mb-4 inline-block text-sm text-muted">
+        ← Account
       </Link>
       <ChildEditor child={child} label={label} />
     </div>
