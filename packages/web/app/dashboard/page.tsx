@@ -43,8 +43,11 @@ export default async function DashboardHub() {
     '/dashboard/organisation': 'Projects waiting for your organisation to review.',
     '/dashboard/organisation/toys': 'What your organisation has on its shelves.',
     '/dashboard/organisation/orders': 'Print jobs your organisation has taken on.',
-    '/dashboard/profile': 'Your name, email and the terms you have accepted.',
+    '/dashboard/profile': 'Your name, email, and the children and terms you have on file.',
     '/admin': 'The review queues and the report inbox.',
+    // The one row buildNav models as a public destination — see its own
+    // comment in lib/nav-model.ts.
+    '/get-involved/submit-an-idea': 'Suggest a toy worth adapting, even if you cannot build it yourself.',
   }
 
   // Built from the same model the rail reads, so a destination cannot exist in
@@ -57,16 +60,6 @@ export default async function DashboardHub() {
       state: row.soon ? 'soon' : 'live',
       blurb: counts[row.href] ?? blurbs[row.href] ?? '',
     }))
-
-  // Appended rather than modelled: submitting an idea is a public page, so it is
-  // not a rail row, but it is the action a signed-in author most often arrives
-  // here to take.
-  items.push({
-    href: '/get-involved/submit-an-idea',
-    label: 'Submit an idea',
-    state: 'live',
-    blurb: 'Suggest a toy worth adapting, even if you cannot build it yourself.',
-  })
 
   return (
     <div>
