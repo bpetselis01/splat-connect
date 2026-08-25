@@ -1,31 +1,21 @@
 /**
- * Owns the two pieces of shell state the server cannot: whether the desktop
- * rail is collapsed, and whether the mobile drawer is open.
- *
- * The collapsed flag arrives as a prop read from a cookie on the server, so the
- * first paint is already correct. Reading it from localStorage in an effect
- * would render expanded and then snap — the class of bug fixed on mobile in
- * 11d1bb1 ("stop the contributor-terms gate flashing").
+ * Owns the one piece of shell state the server cannot: whether the mobile
+ * drawer is open.
  */
 'use client'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation'
 import { Rail } from '@/components/rail'
 import { Breadcrumb } from '@/components/breadcrumb'
 import { useDrawer } from '@/components/drawer-context'
 import type { NavGroup } from '@/lib/nav-model'
-// Re-exported (not defined here): a plain constant exported straight from a
-// 'use client' file is unreadable from server code — see lib/rail-cookie.ts.
-import { RAIL_COOKIE } from '@/lib/rail-cookie'
 
 export function ShellFrame({
   groups,
-  collapsed: initialCollapsed,
   footer,
   children,
 }: {
   groups: NavGroup[]
-  collapsed: boolean
   /** Rendered inside .shell-main, below <main>, so it picks up the same
       margin-inline-start offset that keeps main content clear of the rail —
       rendering it outside .shell-main (as app/layout.tsx does for a
@@ -33,19 +23,10 @@ export function ShellFrame({
   footer?: React.ReactNode
   children: React.ReactNode
 }) {
-  const [collapsed, setCollapsed] = useState(initialCollapsed)
   const { isOpen: drawerOpen, close: closeDrawer } = useDrawer()
   const drawerRef = useRef<HTMLDialogElement>(null)
   // Null outside an App Router context (the unit tests render this directly).
   const pathname = usePathname() ?? ''
-
-  function toggle() {
-    const next = !collapsed
-    setCollapsed(next)
-    // One year. Written here rather than on the server so the rail moves on
-    // click instead of waiting for a round trip.
-    document.cookie = `${RAIL_COOKIE}=${next ? '1' : '0'}; path=/; max-age=31536000; samesite=lax`
-  }
 
   useEffect(() => {
     const dialog = drawerRef.current
@@ -55,10 +36,10 @@ export function ShellFrame({
   }, [drawerOpen])
 
   return (
-    <div className="shell" data-collapsed={collapsed ? 'true' : 'false'}>
+    <div className="shell">
       {/* Desktop rail. Hidden below lg, where the drawer takes over. */}
       <div className="shell-rail hidden lg:block">
-        <Rail groups={groups} pathname={pathname} collapsed={collapsed} onToggle={toggle} />
+        <Rail groups={groups} pathname={pathname} />
       </div>
 
       <dialog
@@ -73,13 +54,7 @@ export function ShellFrame({
         }}
       >
         <div className="h-full">
-          <Rail
-            groups={groups}
-            pathname={pathname}
-            collapsed={false}
-            onToggle={() => closeDrawer()}
-            onNavigate={() => closeDrawer()}
-          />
+          <Rail groups={groups} pathname={pathname} onNavigate={() => closeDrawer()} />
         </div>
       </dialog>
 
@@ -96,7 +71,7 @@ export function ShellFrame({
           tabIndex={-1}
           className="w-full max-w-[100rem] px-4 py-8 sm:px-6 sm:py-10"
         >
-          <Breadcrumb pathname={pathname} />
+          <Breadcrumb />
           {children}
         </main>
         {footer}

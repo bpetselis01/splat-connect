@@ -18,7 +18,7 @@ import { browserApiClient } from '@/lib/browser-api-client'
 function openDialog(
   label = 'Child 1',
   endpoint = '/api/child-profiles/c1',
-  redirectTo = '/dashboard/child'
+  redirectTo = '/dashboard/profile'
 ) {
   render(<DeleteEntityButton endpoint={endpoint} redirectTo={redirectTo as Route<string>} label={label} />)
   fireEvent.click(screen.getByRole('button', { name: `Delete ${label}` }))
@@ -59,7 +59,7 @@ describe('DeleteEntityButton', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
 
     await waitFor(() => expect(browserApiClient.delete).toHaveBeenCalledWith('/api/child-profiles/c1'))
-    expect(push).toHaveBeenCalledWith('/dashboard/child')
+    expect(push).toHaveBeenCalledWith('/dashboard/profile')
     expect(refresh).toHaveBeenCalled()
   })
 

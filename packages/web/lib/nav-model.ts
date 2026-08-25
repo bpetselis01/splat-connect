@@ -14,6 +14,15 @@
  * page now, signed in or out, so the seven sections are always one click away
  * and duplicating four of them here put two navs at one level.
  *
+ * Groups are named for the action they take, not "Yours", as of 2026-08-25:
+ * mirrors the three things SPLAT actually does (a tutorial, a toy, a
+ * challenge) rather than one flat pile. "Submit an idea" is the one row that
+ * lives outside the account section (see lib/public-nav.ts's PUBLIC_NAV) —
+ * components/rail.tsx renders every row through BoundaryLink so that crossing
+ * is handled the same way it already is everywhere else. Child profiles moved
+ * to app/dashboard/profile/page.tsx: it isn't a pillar, it's part of the
+ * account, the same reasoning that already applies to Notifications.
+ *
  * An affordance, not a control. Every page re-checks its own access — see
  * lib/org-access.ts for the same rule stated about organisations.
  *
@@ -31,7 +40,6 @@ export type IconName =
   | 'file'
   | 'box'
   | 'clipboard'
-  | 'child'
   | 'inbox'
   | 'shelf'
   | 'orders'
@@ -54,11 +62,16 @@ export type NavGroup = { heading: string; rows: NavRow[] }
 export function buildNav(caps: Capabilities, unreadNotifications: number): NavGroup[] {
   const groups: NavGroup[] = [
     {
-      heading: 'Yours',
+      heading: 'Add a tutorial',
       rows: [
         // Moved off /dashboard on 2026-08-21: that URL is the account section's
         // hub now, the way /learn and /get-involved are hubs for theirs.
         { href: '/dashboard/tutorials', label: 'My tutorials', icon: 'file' },
+      ],
+    },
+    {
+      heading: 'Exchange a toy',
+      rows: [
         { href: '/dashboard/toys', label: 'My toys', icon: 'box' },
         {
           href: '/dashboard/exchanges',
@@ -68,17 +81,29 @@ export function buildNav(caps: Capabilities, unreadNotifications: number): NavGr
           // marks "waiting on you". See needsAction in @splat-connect/types.
           count: caps.exchangeActions || undefined,
         },
+      ],
+    },
+    {
+      heading: 'Give us a challenge',
+      rows: [
         // 'clipboard' rather than 'file' (My tutorials, above): this row lists
         // ideas submitted for review, not the guides someone authored.
         { href: '/dashboard/challenges', label: 'Design challenges', icon: 'clipboard' },
+        // The one row that isn't an account destination — see lib/public-nav.ts's
+        // PUBLIC_NAV. components/rail.tsx renders every row through BoundaryLink,
+        // so this crosses to a full page load exactly like the header does.
+        { href: '/get-involved/submit-an-idea', label: 'Submit an idea', icon: 'clipboard' },
+      ],
+    },
+    {
+      heading: 'Print requests',
+      rows: [
         {
           href: '/dashboard/print-requests',
           label: 'My print requests',
           icon: 'clipboard',
           soon: true,
         },
-        // Shown to non-parents too: filling it in is what makes them a parent.
-        { href: '/dashboard/child', label: 'Child profiles', icon: 'child' },
       ],
     },
   ]
@@ -112,7 +137,7 @@ export function buildNav(caps: Capabilities, unreadNotifications: number): NavGr
         icon: 'bell',
         count: unreadNotifications || undefined,
       },
-      { href: '/dashboard/profile', label: 'Profile', icon: 'user' },
+      { href: '/dashboard/profile', label: 'Account', icon: 'user' },
       ...(caps.isAdmin
         ? [{ href: '/admin', label: 'Admin', icon: 'shield' as const }]
         : []),

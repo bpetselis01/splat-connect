@@ -71,7 +71,7 @@ describe('DashboardHub', () => {
   it('renders a tile per account destination', async () => {
     const ui = await DashboardHub()
     render(ui)
-    for (const label of ['My tutorials', 'My toys', 'Exchanges', 'Design challenges', 'Child profiles', 'Notifications', 'Profile']) {
+    for (const label of ['My tutorials', 'My toys', 'Exchanges', 'Design challenges', 'Notifications', 'Account']) {
       expect(screen.getByRole('link', { name: new RegExp(label) })).toBeInTheDocument()
     }
   })

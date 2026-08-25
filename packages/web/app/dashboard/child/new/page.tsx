@@ -9,8 +9,8 @@ export default async function NewChildPage() {
 
   return (
     <div>
-      <Link href="/dashboard/child" className="mb-4 inline-block text-sm text-muted">
-        ← Child profiles
+      <Link href="/dashboard/profile" className="mb-4 inline-block text-sm text-muted">
+        ← Account
       </Link>
       <p className="mb-6 max-w-prose text-sm leading-relaxed text-muted">
         Everything is optional and only you can see it.

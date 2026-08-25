@@ -1,7 +1,6 @@
 'use client'
 import Link from 'next/link'
 import type { Route } from 'next'
-import { useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Logo, Menu } from '@/components/icons'
@@ -67,25 +66,6 @@ export function Nav({ caps, quiet = false, showMenu = false }: NavProps) {
   // Null outside an App Router context (e.g. the unit tests render Nav directly).
   const pathname = usePathname() ?? ''
   const drawer = useDrawer()
-  const headerRef = useRef<HTMLElement>(null)
-
-  // .shell-rail (app/globals.css) is fixed and starts below this header via
-  // var(--header-h) rather than under it. The header's height isn't a
-  // constant — quiet vs normal padding, a pill row that can wrap — so a
-  // hardcoded rem value would drift the next time this row's content
-  // changes, same class of bug the CSS file already warns about elsewhere.
-  // A ResizeObserver keeps it correct through both without that guess.
-  useEffect(() => {
-    const el = headerRef.current
-    if (!el) return
-    const set = () => {
-      document.documentElement.style.setProperty('--header-h', `${el.offsetHeight}px`)
-    }
-    set()
-    const observer = new ResizeObserver(set)
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [])
 
   async function signOut() {
     await supabase.auth.signOut()
@@ -103,7 +83,6 @@ export function Nav({ caps, quiet = false, showMenu = false }: NavProps) {
 
   return (
     <header
-      ref={headerRef}
       className={`sticky top-0 z-30 border-b border-line ${quiet ? 'nav-quiet' : 'bg-surface'}`}
     >
       <nav className={`public-shell flex flex-wrap items-center gap-x-3 gap-y-2 ${quiet ? 'py-1.5' : 'py-3'}`}>

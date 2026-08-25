@@ -87,7 +87,7 @@ export function ChildEditor({ child: initialChild, label }: { child: ChildProfil
           child && (
             <DeleteEntityButton
               endpoint={`/api/child-profiles/${child.id}`}
-              redirectTo={'/dashboard/child' as Route<string>}
+              redirectTo={'/dashboard/profile' as Route<string>}
               label={heading}
               className="step-pill step-pill-danger"
             />

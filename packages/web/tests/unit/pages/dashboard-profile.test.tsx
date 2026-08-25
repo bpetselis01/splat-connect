@@ -1,15 +1,16 @@
 import { render, screen } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import ChildListPage from '@/app/dashboard/child/page'
+import ProfileTabPage from '@/app/dashboard/profile/page'
 import type { ChildProfile } from '@splat-connect/types'
 
 vi.mock('@/lib/capabilities', () => ({
   getCapabilities: async () => ({
-    profile: { id: 'u1', name: 'Lee', email: 'lee@example.com', role: 'contributor' },
+    profile: { id: 'u1', name: 'Lee', email: 'lee@example.com', role: 'contributor', created_at: '', public_showcase: true },
     isAdmin: false,
     ledOrgs: [],
     canAuthor: true,
     unreadNotifications: 0,
+    exchangeActions: 0,
   }),
 }))
 vi.mock('@/lib/api-client', () => ({ apiClient: { get: vi.fn() } }))
@@ -48,21 +49,28 @@ const child = (over: Partial<ChildProfile>): ChildProfile => ({
   ...over,
 })
 
-describe('ChildListPage', () => {
+describe('ProfileTabPage', () => {
   beforeEach(() => vi.resetAllMocks())
 
-  // Chain: a brand-new account has to learn why this page exists before it has
-  //        anything to show.
-  it('explains the page and offers Add child when there are none', async () => {
+  it('renders the profile form alongside the child profiles section', async () => {
     vi.mocked(apiClient.get).mockResolvedValue([])
-    render(await ChildListPage())
+    render(await ProfileTabPage())
+    expect(screen.getByLabelText('Full name')).toHaveValue('Lee')
+    expect(screen.getByRole('heading', { name: 'Child profiles' })).toBeInTheDocument()
+  })
+
+  // Chain: a brand-new account has to learn why this section exists before it
+  //        has anything to show.
+  it('explains the section and offers Add child when there are none', async () => {
+    vi.mocked(apiClient.get).mockResolvedValue([])
+    render(await ProfileTabPage())
     expect(screen.getByText(/helps us suggest tutorials/i)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /add child/i })).toHaveAttribute('href', '/dashboard/child/new')
   })
 
   it('shows the empty-state icon and message when there are no children', async () => {
     vi.mocked(apiClient.get).mockResolvedValue([])
-    render(await ChildListPage())
+    render(await ProfileTabPage())
     expect(screen.getByText("You haven't added any child profiles yet.")).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /add your first child/i })).toHaveAttribute(
       'href',
@@ -75,7 +83,7 @@ describe('ChildListPage', () => {
       child({ id: 'c1', name: 'Emma' }),
       child({ id: 'c2', name: null }),
     ])
-    render(await ChildListPage())
+    render(await ProfileTabPage())
     expect(screen.getByRole('link', { name: /Emma/ })).toHaveAttribute('href', '/dashboard/child/c1')
     expect(screen.getByRole('link', { name: /Child 2/ })).toHaveAttribute('href', '/dashboard/child/c2')
   })
@@ -84,6 +92,6 @@ describe('ChildListPage', () => {
   //        their children are gone. The page must fail loudly instead.
   it('throws rather than rendering an empty list when the fetch fails', async () => {
     vi.mocked(apiClient.get).mockRejectedValue(new Error('network'))
-    await expect(ChildListPage()).rejects.toThrow('network')
+    await expect(ProfileTabPage()).rejects.toThrow('network')
   })
 })
