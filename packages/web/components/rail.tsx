@@ -12,7 +12,7 @@
  *
  * An affordance, not a control. Every page re-checks its own access.
  */
-import Link from 'next/link'
+import { BoundaryLink } from '@/components/boundary-link'
 import { createClient } from '@/lib/supabase/client'
 import { ACCOUNT_NAV } from '@/lib/public-nav'
 import type { IconName, NavGroup } from '@/lib/nav-model'
@@ -24,7 +24,6 @@ import {
   Building,
   Box,
   Clipboard,
-  Child,
   Inbox,
   Shelf,
   Orders,
@@ -32,8 +31,6 @@ import {
   Shield,
   Bell,
   Handshake,
-  ChevronsLeft,
-  ChevronsRight,
   LogOut,
 } from '@/components/icons'
 
@@ -48,7 +45,6 @@ const ICONS: Record<IconName, typeof BookOpen> = {
   file: FileText,
   box: Box,
   clipboard: Clipboard,
-  child: Child,
   inbox: Inbox,
   shelf: Shelf,
   orders: Orders,
@@ -61,13 +57,11 @@ const ICONS: Record<IconName, typeof BookOpen> = {
 export type RailProps = {
   groups: NavGroup[]
   pathname: string
-  collapsed: boolean
-  onToggle: () => void
   /** Closes the mobile drawer after a row is chosen. */
   onNavigate?: () => void
 }
 
-export function Rail({ groups, pathname, collapsed, onToggle, onNavigate }: RailProps) {
+export function Rail({ groups, pathname, onNavigate }: RailProps) {
   const supabase = createClient()
 
   async function signOut() {
@@ -79,37 +73,26 @@ export function Rail({ groups, pathname, collapsed, onToggle, onNavigate }: Rail
 
   return (
     <div className="flex h-full flex-col bg-brand-deep text-brand-soft">
-      <div className="flex items-center gap-1 border-b border-white/15 px-2 py-3">
+      <div className="border-b border-white/15 p-2">
         {/* Always a plain anchor, not next/link: every page that renders this
             rail has nestsRail(pathname) === true, and /dashboard always has
             nestsRail === false, so this is always a boundary crossing — see
             lib/public-nav.ts's crossesAccountBoundary. A soft transition here
             would leave the rail on screen with no header, the exact bug this
-            link exists to fix. */}
+            link exists to fix.
+
+            A filled pill rather than a plain row: this is the rail's one way
+            out, not another destination in the list below it, so it carries
+            its own background at rest instead of only lighting up on hover. */}
         <a
           href={ACCOUNT_NAV.href}
-          title={collapsed ? `Back to ${ACCOUNT_NAV.label}` : undefined}
-          className="flex flex-1 items-center gap-2 rounded-field px-2 py-2 text-sm font-bold text-brand-soft transition-colors hover:bg-white/10 hover:text-white"
+          className="flex items-center gap-2 rounded-field bg-white/10 px-3 py-2.5 text-sm font-bold text-white transition-colors hover:bg-white/20"
         >
-          <span aria-hidden="true">←</span>
-          {collapsed ? (
-            <span className="sr-only">Back to {ACCOUNT_NAV.label}</span>
-          ) : (
-            <span className="truncate">Back to {ACCOUNT_NAV.label}</span>
-          )}
+          <span aria-hidden="true" className="text-base leading-none">
+            ←
+          </span>
+          <span className="truncate">Back to {ACCOUNT_NAV.label}</span>
         </a>
-        <button
-          type="button"
-          onClick={onToggle}
-          aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
-          className="hidden shrink-0 rounded-field p-2 text-brand-soft transition-colors hover:bg-white/10 lg:block"
-        >
-          {collapsed ? (
-            <ChevronsRight className="h-5 w-5" />
-          ) : (
-            <ChevronsLeft className="h-5 w-5" />
-          )}
-        </button>
       </div>
 
       {/* Only this band scrolls, so the footer below stays pinned once the
@@ -118,18 +101,9 @@ export function Rail({ groups, pathname, collapsed, onToggle, onNavigate }: Rail
       <nav className="min-h-0 flex-1 overflow-y-auto px-2 pb-2">
         {groups.map((group) => (
           <div key={group.heading} className="mb-1">
-            {collapsed ? (
-              // Text stays in the DOM (not aria-hidden) so the group is still
-              // announced to assistive tech — only the divider is decorative.
-              <>
-                <span className="sr-only">{group.heading}</span>
-                <div aria-hidden="true" className="mx-3 my-2 border-t border-white/15" />
-              </>
-            ) : (
-              <p className="px-3 pb-1 pt-4 text-xs font-bold uppercase tracking-wider text-brand-soft/60">
-                {group.heading}
-              </p>
-            )}
+            <p className="px-3 pb-1 pt-4 text-xs font-bold uppercase tracking-wider text-brand-soft/60">
+              {group.heading}
+            </p>
             <ul>
               {group.rows.map((row) => {
                 // Exact match, not startsWith: /dashboard prefixes every other
@@ -138,19 +112,10 @@ export function Rail({ groups, pathname, collapsed, onToggle, onNavigate }: Rail
                 const IconComponent = ICONS[row.icon]
                 return (
                   <li key={row.href}>
-                    <Link
-                      href={row.href as never}
+                    <BoundaryLink
+                      href={row.href}
                       onClick={onNavigate}
                       aria-current={active ? 'page' : undefined}
-                      title={collapsed ? row.label : undefined}
-                      // Collapsed, the visible "Soon" chip disappears, so the
-                      // accessible name has to carry both the destination and
-                      // its unbuilt status in one string — an aria-label wins
-                      // over text content, so this is the only accessible
-                      // name once collapsed.
-                      aria-label={
-                        collapsed ? (row.soon ? `${row.label} (Soon)` : row.label) : undefined
-                      }
                       className={`flex items-center gap-3 rounded-field px-3 py-2 text-sm font-semibold transition-colors ${
                         active
                           ? 'bg-white/15 text-white'
@@ -158,18 +123,18 @@ export function Rail({ groups, pathname, collapsed, onToggle, onNavigate }: Rail
                       } ${row.soon ? 'opacity-60' : ''}`}
                     >
                       <IconComponent className="h-5 w-5 shrink-0" />
-                      {!collapsed && <span className="truncate">{row.label}</span>}
-                      {!collapsed && row.soon && (
+                      <span className="truncate">{row.label}</span>
+                      {row.soon && (
                         <span className="ml-auto shrink-0 rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-brand-soft/80">
                           Soon
                         </span>
                       )}
-                      {!collapsed && row.count !== undefined && (
+                      {row.count !== undefined && (
                         <span className="ml-auto shrink-0 rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-bold text-white">
                           {row.count}
                         </span>
                       )}
-                    </Link>
+                    </BoundaryLink>
                   </li>
                 )
               })}
@@ -182,11 +147,10 @@ export function Rail({ groups, pathname, collapsed, onToggle, onNavigate }: Rail
         <button
           type="button"
           onClick={signOut}
-          title={collapsed ? 'Sign out' : undefined}
           className="flex w-full items-center gap-3 rounded-field px-3 py-2 text-sm font-semibold text-brand-soft transition-colors hover:bg-white/10 hover:text-white"
         >
           <LogOut className="h-5 w-5 shrink-0" />
-          {collapsed ? <span className="sr-only">Sign out</span> : <span>Sign out</span>}
+          <span>Sign out</span>
         </button>
       </div>
     </div>
