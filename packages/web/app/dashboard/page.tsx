@@ -39,7 +39,6 @@ export default async function DashboardHub() {
     '/dashboard/tutorials': 'Your adaptation guides, and where each one is in review.',
     '/dashboard/toys': 'Toys you have listed for other families.',
     '/dashboard/challenges': 'Ideas you have submitted, and challenges you have joined.',
-    '/dashboard/child': 'What each child can reach, hold and hear.',
     '/dashboard/print-requests': 'Parts you have asked someone to print.',
     '/dashboard/organisation': 'Projects waiting for your organisation to review.',
     '/dashboard/organisation/toys': 'What your organisation has on its shelves.',
