@@ -36,13 +36,13 @@ export default function LearnPage() {
       <p className="mb-4 mt-1 max-w-prose text-sm text-muted">
         Read these three in order and you will know enough to adapt your first toy.
       </p>
-      <HubGrid items={startHere} tone={learn.tone} art={learn.art} />
+      <HubGrid items={startHere} tone={learn.tone} />
 
       <h2 className="title-detail mt-12">Going deeper</h2>
       <p className="mb-4 mt-1 max-w-prose text-sm text-muted">
         Reference material for when you are past the first one.
       </p>
-      <HubGrid items={deeper} tone={learn.tone} art={learn.art} leadFirst={false} />
+      <HubGrid items={deeper} tone={learn.tone} />
     </div>
   )
 }
