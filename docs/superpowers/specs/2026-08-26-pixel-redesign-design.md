@@ -66,15 +66,28 @@ Still true, unchanged from Playroom:
 
 ### Tokens
 
+**Correction after cross-checking the live codebase:** every hex value found in the board already
+exists as a named custom property in `app/globals.css` — `--color-brand: #1998d5`,
+`--color-brand-dark: #0f6f9c`, `--color-brand-deep: #0a4f70`, `--color-brand-tint: #d8ecf7`,
+`--color-apricot: #ff8f5e`, `--color-apricot-deep: #8c3312`, `--color-apricot-soft: #ffe3d5`,
+`--color-mint: #2fbf9f`, `--color-mint-deep: #0f5c4d`, `--color-mint-soft: #d4f2ea`,
+`--color-honey-soft: #fdeecb`, `--color-honey-deep: #7a4e05`, `--color-muted: #4d6a7d`,
+`--color-ink: #12283a`. **The palette is not changing.** What's new is the shadow/border/radius
+model applied to it, and the addition of a display font. `globals.css` already has a `.playroom
+.btn-accent`/`.btn-primary` hard offset box-shadow rule (`0 6px 0 var(--color-...-deep)`, no
+blur) — the pixel system generalises that existing pattern from buttons to cards, badges, chips,
+and every other component still on `border-radius: 9999px` pills or the soft `--shadow-rest`/
+`--shadow-lift` blur pair.
+
 | Token | Value | Notes |
 |---|---|---|
-| Canvas | `#eaf4fa` + tints `#d8ecf7`/`#dcedf6`/`#c6e0ed`/`#bfe4f5` | Unchanged ground from Playroom |
-| Ink | `#12283a` | Text, 2–3px solid borders, hard offset shadows — used ~180× in the board, almost entirely as text/border/shadow, not background |
+| Canvas | `#eaf4fa` + tints | Unchanged — not touched by this work |
+| Ink / accent hex | Unchanged — see correction above | No new colours anywhere in the system |
 | Display type | `'Jersey 10'` | New. Pixel/bitmap display font, headings only |
-| Body/label type | `Nunito`, `IBM Plex Mono` | Unchanged from Playroom |
-| Corner radius | 2–10px typical (up to 20px on a few elements) | No large rounding; consistent with a crisp pixel read |
-| Depth | Hard offset shadow, 4–6px, zero blur | Replaces tilt+lift entirely as the system's depth cue |
-| Accent tones | Rust `#8c3312`, amber `#7a4e05`/`#fdeecb`, green/mint `#0f5c4d`/`#2fbf9f`, orange/coral `#ff8f5e`/`#ff8a80`, blues `#0a4f70`/`#0f6f9c`/`#1998d5` | Replaces Playroom's tone set. Exact per-section (Guides/Toy Library/Printing/Impact/etc.) mapping to be confirmed against the board at implementation time, not guessed here |
+| Body/label type | `Nunito`, `IBM Plex Mono` | Unchanged |
+| Corner radius | 2–10px typical, replacing `9999px` pills and `1rem` soft cards | New shape language |
+| Depth | Hard offset shadow (`Npx Npx 0`, zero blur) against `--color-ink` or a tone's `-deep` shade | Generalises the existing button pattern; replaces `--shadow-rest`/`--shadow-lift` and tilt+lift as the system's one depth cue |
+| Placeholder text | `#8aa7b8` | The one possibly-new value found (input `::placeholder` colour) — confirm at implementation time whether an existing token already covers it |
 
 ### Shape (no tilt)
 
