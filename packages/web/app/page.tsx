@@ -114,7 +114,7 @@ export default async function HomePage() {
         entire budget, and holding to it is why the same language survives on
         a privacy policy.
       */}
-      <section className="relative isolate py-6 sm:py-10">
+      <section className="pixel-hero relative isolate -mt-8 pb-14 pt-12 sm:-mt-10 sm:pb-16">
         <div className="grid items-center gap-10 lg:grid-cols-[1fr_0.85fr] lg:gap-14">
           <div className="rise" style={{ '--rise-delay': '0ms' } as React.CSSProperties}>
             <p className="eyebrow text-brand-dark">Supporting Play by Adapting Toys</p>
@@ -139,20 +139,30 @@ export default async function HomePage() {
               </Link>
             </div>
 
-            {/* Stats as chips rather than a dl: round, tactile, and they
-                wrap without collapsing into a column on a phone. */}
-            <ul className="mt-9 flex flex-wrap gap-2.5">
+            {/* Stats as chips rather than a dl: bordered boxes that wrap
+                without collapsing into a column on a phone.
+
+                White, with the colour carried by a dot rather than by the fill.
+                Three tinted chips in a row put three more washes of colour
+                directly beneath a hero that already has a tinted photo slot and
+                an apricot button in it, and the numbers — the only content here
+                — were the palest thing on the row. On white they read first,
+                and the dot still says which pillar each belongs to. */}
+            <ul className="mt-9 flex flex-wrap gap-3">
               {[
-                { label: 'guides', value: totals.tutorials, cls: 'bg-brand-tint text-brand-deep' },
-                { label: 'toys delivered', value: totals.toysDelivered, cls: 'bg-mint-soft text-mint-deep' },
-                { label: 'contributors', value: totals.contributors, cls: 'bg-apricot-soft text-apricot-deep' },
+                { label: 'guides', value: totals.tutorials, dot: 'bg-brand' },
+                { label: 'toys delivered', value: totals.toysDelivered, dot: 'bg-mint' },
+                { label: 'contributors', value: totals.contributors, dot: 'bg-apricot' },
               ].map((stat) => (
                 <li
                   key={stat.label}
-                  className={`flex items-baseline gap-1.5 rounded-full px-4 py-2 ${stat.cls}`}
+                  className="stat-pixel flex items-center gap-2.5 bg-surface px-4 py-2.5 text-ink"
                 >
-                  <span className="text-xl font-black leading-none">{stat.value}</span>
-                  <span className="meta opacity-80">{stat.label}</span>
+                  <span aria-hidden="true" className={`h-2.5 w-2.5 shrink-0 rounded-full ${stat.dot}`} />
+                  <span className="flex flex-col gap-0.5">
+                    <span className="numeral text-[22px]">{stat.value}</span>
+                    <span className="meta opacity-70">{stat.label}</span>
+                  </span>
                 </li>
               ))}
             </ul>
@@ -201,11 +211,13 @@ export default async function HomePage() {
       <div className="rise relative mt-16" style={{ '--rise-delay': '0ms' } as React.CSSProperties}>
         <h2 className="title-article">SPLAT in 30 seconds</h2>
 
-        {/* The three steps are joined by a 1px hairline, which is the most
-            literal possible drawing of "and then". A hand-drawn path over the
-            top is the version of this that belongs on a site about play, and it
-            has to sit above the row rather than inside any one step — so it is
-            marked here, over the whole band. */}
+        {/* The three steps are joined by a dashed rule, which is the most
+            literal possible drawing of "and then" — and dashed rather than
+            solid because a solid line between three boxes reads as a table
+            border. A hand-drawn path over the top is the version of this that
+            belongs on a site about play, and it has to sit above the row rather
+            than inside any one step — so it is marked here, over the whole
+            band. */}
         <Slot
           kind="overlay"
           note="Hand-drawn dotted path arcing between the three steps, with a small arrow at each join"
@@ -218,10 +230,10 @@ export default async function HomePage() {
               {i < HOW_IT_WORKS.length - 1 && (
                 <span
                   aria-hidden="true"
-                  className="absolute left-6 top-14 hidden h-[calc(100%-2rem)] w-px bg-line sm:left-14 sm:top-6 sm:block sm:h-px sm:w-[calc(100%-2.5rem)]"
+                  className="absolute left-5 top-14 hidden h-[calc(100%-2rem)] border-l-2 border-dashed border-brand-soft sm:left-14 sm:top-5 sm:block sm:h-0 sm:w-[calc(100%-2.5rem)] sm:border-l-0 sm:border-t-2"
                 />
               )}
-              <span className="relative z-10 grid h-12 w-12 shrink-0 place-items-center rounded-full bg-brand-tint text-lg font-bold text-brand-deep sm:mb-4">
+              <span className="step-pixel relative z-10 grid h-11 w-11 shrink-0 place-items-center text-xl leading-none sm:mb-4">
                 {i + 1}
               </span>
               <div>
@@ -238,7 +250,7 @@ export default async function HomePage() {
         <p className="mb-4 mt-1 max-w-prose text-sm text-muted">
           Each of these walks the whole path, start to finish.
         </p>
-        <HubGrid items={tracks} tone={getInvolved.tone} art={getInvolved.art} leadFirst={false} />
+        <HubGrid items={tracks} tone={getInvolved.tone} />
       </div>
 
       <div className="rise mt-16 grid grid-cols-1 gap-10 lg:grid-cols-2" style={{ '--rise-delay': '120ms' } as React.CSSProperties}>
@@ -273,7 +285,7 @@ export default async function HomePage() {
               View all →
             </Link>
           </div>
-          <HubGrid items={liveArticles.slice(0, 3)} tone={learn.tone} art={learn.art} leadFirst={false} />
+          <HubGrid items={liveArticles.slice(0, 3)} tone={learn.tone} />
         </div>
       </div>
     </div>
