@@ -45,7 +45,7 @@ const KIND_LABEL: Record<SlotKind, string> = {
 export const SLOTS_VISIBLE = process.env.NEXT_PUBLIC_SLOTS !== 'off'
 
 /**
- * A small decorative chip: a tilted disc pinned to a corner of something else.
+ * A small decorative chip: a disc pinned to a corner of something else.
  *
  * Filled with one of the brand illustrations it is finished art. Unfilled it is
  * a dashed disc carrying its brief. Either way it is the same size and in the
