@@ -15,6 +15,11 @@
  * otherwise upright body content. The personality on a page like the privacy
  * policy comes from writing the heading like a human and giving one idea a box —
  * not from tilting the paragraphs.
+ *
+ * Quiet is a matter of how much is on the page, not of which language it is
+ * drawn in. The stamp and the pull quote carry the same borders and hard
+ * shadows as a card on the homepage; there are simply two of them on a page
+ * instead of twenty.
  */
 import { PixelBackdrop } from '@/components/pixel-backdrop'
 import type { Tone } from '@/lib/tone'
@@ -39,7 +44,9 @@ export function ProsePage({
       {tone && <PixelBackdrop tone={tone} />}
       <h1 className="title-article">{title}</h1>
       {lastUpdated && (
-        // Tilted, because it is the one flash of personality a legal page gets.
+        // A bordered stamp, because it is the one flash of personality a legal
+        // page gets. It used to be tilted; the edge and the hard shadow do that
+        // job now, in the same language as everything else on the site.
         <p className="stamp mt-3">Last updated {lastUpdated}</p>
       )}
       {intro && (
