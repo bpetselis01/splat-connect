@@ -9,7 +9,7 @@
  * people with disabilities that difference is the whole argument.
  *
  * White, on the canvas, with a hairline across the top and one soft shape behind
- * it. Playroom never goes dark: the direction is a lit room, and a navy slab at
+ * it. The design never goes dark: the canvas stays lit, and a navy slab at
  * the bottom of every page was reading as the end of one site and the start of
  * another.
  *

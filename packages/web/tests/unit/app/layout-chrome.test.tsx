@@ -18,6 +18,7 @@ vi.mock('@/lib/api-client', () => ({ apiClient: { get: vi.fn() } }))
 vi.mock('next/font/google', () => ({
   Nunito: () => ({ variable: '--font-nunito', className: '' }),
   IBM_Plex_Mono: () => ({ variable: '--font-plex-mono', className: '' }),
+  Jersey_10: () => ({ variable: '--font-jersey', className: '' }),
 }))
 
 /**

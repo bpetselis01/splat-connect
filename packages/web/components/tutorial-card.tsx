@@ -13,7 +13,7 @@ export function TutorialCard({ tutorial }: { tutorial: Listed }) {
     <Link
       href={`/tutorials/${tutorial.id}`}
       data-testid="tutorial-card"
-      className="card-playroom card-link overflow-hidden"
+      className="card-pixel card-link overflow-hidden"
     >
       <CardPhoto src={tutorial.toy_photo_url} />
       <div className="p-4">

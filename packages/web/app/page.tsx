@@ -109,9 +109,10 @@ export default async function HomePage() {
         is what stops the homepage reading as a separate landing page bolted onto
         a product.
 
-        Two words of the headline lean. One circular photo slot, tilted. One
-        apricot control with a real bottom edge. That is the entire budget, and
-        holding to it is why the same language survives on a privacy policy.
+        Two words of the headline lean. One circular photo slot. One apricot
+        control with a diagonal ink shadow and a 2px border. That is the
+        entire budget, and holding to it is why the same language survives on
+        a privacy policy.
       */}
       <section className="relative isolate py-6 sm:py-10">
         <div className="grid items-center gap-10 lg:grid-cols-[1fr_0.85fr] lg:gap-14">
@@ -138,17 +139,17 @@ export default async function HomePage() {
               </Link>
             </div>
 
-            {/* Stats as tilted chips rather than a dl: round, tactile, and they
+            {/* Stats as chips rather than a dl: round, tactile, and they
                 wrap without collapsing into a column on a phone. */}
             <ul className="mt-9 flex flex-wrap gap-2.5">
               {[
                 { label: 'guides', value: totals.tutorials, cls: 'bg-brand-tint text-brand-deep' },
                 { label: 'toys delivered', value: totals.toysDelivered, cls: 'bg-mint-soft text-mint-deep' },
                 { label: 'contributors', value: totals.contributors, cls: 'bg-apricot-soft text-apricot-deep' },
-              ].map((stat, i) => (
+              ].map((stat) => (
                 <li
                   key={stat.label}
-                  className={`${i % 2 ? 'tilt-2' : 'tilt-3'} flex items-baseline gap-1.5 rounded-full px-4 py-2 ${stat.cls}`}
+                  className={`flex items-baseline gap-1.5 rounded-full px-4 py-2 ${stat.cls}`}
                 >
                   <span className="text-xl font-black leading-none">{stat.value}</span>
                   <span className="meta opacity-80">{stat.label}</span>
@@ -164,7 +165,7 @@ export default async function HomePage() {
             className="rise relative mx-auto w-full max-w-sm"
             style={{ '--rise-delay': '120ms' } as React.CSSProperties}
           >
-            <div className="tilt-4 [&_figure>div]:rounded-full">
+            <div className="[&_figure>div]:rounded-full">
               <EditorialImage illustration="adapted-toy" ratio="1/1" />
             </div>
 
@@ -183,7 +184,7 @@ export default async function HomePage() {
             <Sticker
               note="Hand-drawn spark or star burst, apricot"
               size="sm"
-              className="absolute -right-1 top-2 tilt-2 sm:-right-3"
+              className="absolute -right-1 top-2 sm:-right-3"
             />
           </div>
         </div>

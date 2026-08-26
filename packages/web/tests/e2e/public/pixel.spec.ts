@@ -1,7 +1,7 @@
 import { test, expect, type Page } from '@playwright/test'
 
 /**
- * The Playroom shell and its decorative layer.
+ * The public shell and its decorative layer.
  *
  * Two properties that no other spec covers, both of which have already been
  * broken once in review rather than in theory:
@@ -47,7 +47,7 @@ const PAGE_CLASSES = [
   { path: '/privacy', kind: 'article (quiet register)' },
 ]
 
-test.describe('the Playroom shell', () => {
+test.describe('the public shell', () => {
   test('keeps the bar, the content and the footer on one left edge', async ({ page }) => {
     // Pinned to 1920 for the same reason the measure test is. At Playwright's
     // default 1280 the shell computes to 1024px, which is byte-identical to
@@ -166,6 +166,6 @@ test.describe('the art placeholders', () => {
   // pointer-events-none and watching the test pass anyway. There is no
   // production change that would make such a test fail, so it would assert
   // nothing. `Slot`'s pointer-events and aria-hidden are covered where they can
-  // actually fail, in tests/unit/components/playroom.test.tsx.
+  // actually fail, in tests/unit/components/pixel.test.tsx.
 
 })

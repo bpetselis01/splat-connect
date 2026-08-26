@@ -32,4 +32,18 @@ describe('HubGrid', () => {
     const { container } = render(<HubGrid items={[]} />)
     expect(container).toBeEmptyDOMElement()
   })
+
+  it('renders every card upright — no tilt class on any grid item', () => {
+    const { container } = render(
+      <HubGrid items={[
+        { href: '/a', label: 'A', blurb: 'a', state: 'live' },
+        { href: '/b', label: 'B', blurb: 'b', state: 'live' },
+      ]} />
+    )
+    const cards = container.querySelectorAll('a.card-pixel')
+    expect(cards.length).toBeGreaterThan(0)
+    for (const card of cards) {
+      expect(card.parentElement?.className).not.toMatch(/tilt-\d/)
+    }
+  })
 })

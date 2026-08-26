@@ -102,18 +102,6 @@ test.describe('public navigation', () => {
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
   })
 
-  test('reduced motion removes every tilt rather than animating to it', async ({ page }) => {
-    await page.emulateMedia({ reducedMotion: 'reduce' })
-    await page.goto('/')
-    const transforms = await page
-      .locator('[class*="tilt-"]')
-      .evaluateAll((els) => els.map((e) => getComputedStyle(e).transform))
-    expect(transforms.length).toBeGreaterThan(0)
-    for (const t of transforms) {
-      expect(['none', 'matrix(1, 0, 0, 1, 0, 0)']).toContain(t)
-    }
-  })
-
   test('no section is left invisible when the entrance animation cannot run', async ({ page }) => {
     // The entrance was briefly a JS scroll reveal that server-rendered sections at
     // opacity:0. This asserts content does not depend on an animation to be seen.
