@@ -8,10 +8,14 @@
  * using plain links instead of a hover-and-focus widget. On a platform serving
  * people with disabilities that difference is the whole argument.
  *
- * White, on the canvas, with a hairline across the top and one soft shape behind
- * it. The design never goes dark: the canvas stays lit, and a navy slab at
- * the bottom of every page was reading as the end of one site and the start of
- * another.
+ * White, on the canvas, with one soft shape behind it. The design never goes
+ * dark: the canvas stays lit, and a navy slab at the bottom of every page was
+ * reading as the end of one site and the start of another.
+ *
+ * The top edge is the same 3px ink rule the nav shelf carries, not the hairline
+ * it used to be. Those two rules are the page's frame — a heavy line closing the
+ * top of the page and a hairline closing the bottom left the site looking like
+ * it had come loose at the bottom of the screen.
  *
  * Generated from PUBLIC_NAV, so a route cannot exist without appearing here —
  * and tests/e2e/public/footer.spec.ts walks every link, which makes this the
@@ -22,7 +26,7 @@ import { BoundaryLink } from '@/components/boundary-link'
 
 export function PublicFooter() {
   return (
-    <footer className="relative mt-20 overflow-hidden border-t border-line bg-surface">
+    <footer className="relative mt-20 overflow-hidden border-t-[3px] border-ink bg-surface">
       {/* The last soft shape on the page, half off the bottom edge. */}
       <span
         aria-hidden="true"
@@ -56,7 +60,7 @@ export function PublicFooter() {
                       >
                         {child.label}
                         {child.state === 'soon' && (
-                          <span className="badge bg-honey-soft text-honey-deep">SOON</span>
+                          <span className="badge bg-honey-soft text-honey-deep text-[9px]">SOON</span>
                         )}
                       </BoundaryLink>
                     </li>
