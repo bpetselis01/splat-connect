@@ -34,7 +34,13 @@
 
   /* Ink. `muted` clears 4.5:1 on both the canvas and white. */
   --color-ink: #12283a;
-  --color-muted: #4d6a7d;
+  /* One step darker than the #4d6a7d this started at. Pixel sets the muted
+     blurb on a tinted card in every section, which the old white-card layout
+     never did, and against Get Involved's #bfe4f5 the original reached only
+     4.26:1. This clears 4.72 there and improves every other surface. The
+     2026-08-26 spec froze the palette; this is an accessibility exception to
+     that freeze, not a change of direction. */
+  --color-muted: #476376;
   --color-line: #c6e0ed;
 
   /* Warm complement of the brand blue. Emphasis and delight, never decoration. */
@@ -60,12 +66,37 @@
 
   /* Pixel's one depth cue: a hard offset with zero blur, laid over --color-ink
      (or a tone's own -deep shade). Replaces both tilt+lift and the old
-     vertical-only button shadow. The three sizes exist because Quiet-register
-     pages use -sm, not because a component picks arbitrarily. */
+     vertical-only button shadow.
+
+     The sizes are a depth ladder read straight off the board, not arbitrary
+     choices: the further up the page hierarchy a thing sits, the further it
+     stands off the canvas. -xs is the chip register, -md the controls, -card
+     the ordinary card, -lg the three launcher pillars. -sm is only ever a
+     pressed state, which is why nothing rests at that depth. */
   --shadow-pixel-sm: 2px 2px 0;
+  --shadow-pixel-xs: 3px 3px 0;
   --shadow-pixel-md: 4px 4px 0;
+  --shadow-pixel-card: 5px 5px 0;
   --shadow-pixel-lg: 6px 6px 0;
-  --border-pixel: 2px;
+  /* Three weights, because the board draws three. 3px is the structural line —
+     what a card, a control or the nav shelf is built from. 2px is the chip
+     register: stat chips, avatars, step badges, art slots. 1px is the SOON
+     badge alone, which is small enough that 2px closes up its interior. */
+  --border-pixel: 3px;
+  --border-pixel-thin: 2px;
+  --border-pixel-hair: 1px;
+  /* Six radii, because the board draws six — this is not a scale invented for
+     tidiness. Cards and empty states sit at 10px; buttons, avatars and step
+     badges at 8px; art slots and inputs at 6px; the SOON badge at 4px; the
+     smallest ticks at 2px. And filter chips stay at 20px: they are the one
+     place the pill survives the sweep away from 9999px, because the board
+     draws them that way. */
+  --radius-pixel: 10px;
+  --radius-pixel-sm: 8px;
+  --radius-pixel-slot: 6px;
+  --radius-pixel-chip: 20px;
+  --radius-pixel-xs: 4px;
+  --radius-pixel-hair: 2px;
 
   /* Tinted rather than near-black: a neutral shadow over a blue canvas reads as dirt. */
   --shadow-rest: 0 3px 10px rgb(10 53 80 / 0.07);
@@ -203,8 +234,13 @@
    * redesign — a signed-in user should not find their controls have grown a
    * bounce because the marketing site did.
    */
+  .pixel .btn {
+    border-radius: var(--radius-pixel-sm);
+  }
+
   .pixel .btn-accent,
-  .pixel .btn-primary {
+  .pixel .btn-primary,
+  .pixel .btn-quiet {
     border: var(--border-pixel) solid var(--color-ink);
     transition: transform 0.16s var(--ease-out-quart), box-shadow 0.16s var(--ease-out-quart),
       background-color 0.16s linear;
@@ -212,6 +248,11 @@
 
   .pixel .btn-accent { box-shadow: var(--shadow-pixel-md) var(--color-ink); }
   .pixel .btn-primary { box-shadow: var(--shadow-pixel-md) var(--color-ink); }
+  /* The secondary control's shadow is the same offset at 35% — it keeps the
+     pair the same physical height while letting the apricot one read as the
+     thing to press. Two identical solid shadows side by side made "or borrow a
+     toy" compete with the primary action for the same click. */
+  .pixel .btn-quiet { box-shadow: var(--shadow-pixel-md) rgb(18 40 58 / 0.35); }
 
   /* Hover lifts the shadow one size up rather than lifting the button — there
      is no bounce left to telegraph, only more or less depth. */
@@ -220,17 +261,23 @@
     box-shadow: var(--shadow-pixel-lg) var(--color-ink);
   }
 
+  .pixel .btn-quiet:hover:not(:disabled) {
+    box-shadow: var(--shadow-pixel-lg) rgb(18 40 58 / 0.35);
+  }
+
   /* Pressed: the button travels exactly the shadow's own offset, so the edge
      visually disappears into the surface as it "sinks" — no squash, no spring. */
   .pixel .btn-accent:active:not(:disabled),
-  .pixel .btn-primary:active:not(:disabled) {
+  .pixel .btn-primary:active:not(:disabled),
+  .pixel .btn-quiet:active:not(:disabled) {
     transform: translate(4px, 4px);
     box-shadow: 0 0 0 var(--color-ink);
   }
 
   @media (prefers-reduced-motion: reduce) {
     .pixel .btn-accent:active:not(:disabled),
-    .pixel .btn-primary:active:not(:disabled) {
+    .pixel .btn-primary:active:not(:disabled),
+    .pixel .btn-quiet:active:not(:disabled) {
       transform: none;
       box-shadow: var(--shadow-pixel-sm) var(--color-ink);
     }
@@ -280,11 +327,14 @@
     letter-spacing: -0.03em;
   }
 
+  /* Flat 32px, not a clamp. The board sets every hub h1 at the same size on
+     every screen it draws — the hierarchy between a hub and the homepage is
+     carried by the hero band, not by the headline growing. */
   .title-hub {
-    font-size: clamp(1.9rem, 4vw, 2.8rem);
+    font-size: 2rem;
     font-weight: 900;
     line-height: 1.04;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.02em;
   }
 
   .title-article {
@@ -361,21 +411,24 @@
    * The date stamp on a prose page, and the whole of Quiet Pixel's decoration
    * budget: one tilted honey pill, then the writing does the rest.
    */
+  /*
+   * The two rules below were the last of the old soft-panel register left on the
+   * public site: a filled pill and a filled box, both knocked off-square, both
+   * with no edge on them. Tilt was removed everywhere else in the foundation
+   * pass and these two were missed, which is why a prose page still read as a
+   * different site from the homepage above it. They are bordered boxes with the
+   * chip register's hard shadow now, and they sit straight.
+   */
   .stamp {
     display: inline-block;
-    border-radius: 9999px;
+    border-radius: var(--radius-pixel-sm);
+    border: var(--border-pixel-thin) solid var(--color-honey-deep);
+    box-shadow: var(--shadow-pixel-xs) var(--color-honey-deep);
     padding: 0.25rem 0.7rem;
     background-color: var(--color-honey-soft);
     color: var(--color-honey-deep);
     font-size: 0.6875rem;
     font-weight: 800;
-    transform: rotate(-1.5deg);
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .stamp {
-      transform: none;
-    }
   }
 
   /*
@@ -384,19 +437,14 @@
    * page with no photographs on it still look designed.
    */
   .pullquote {
-    border-radius: 0.875rem;
-    padding: 0.85rem 1rem;
+    border-radius: var(--radius-pixel);
+    border: var(--border-pixel) solid var(--color-mint-deep);
+    box-shadow: var(--shadow-pixel-card) var(--color-mint-deep);
+    padding: 1rem 1.15rem;
     background-color: var(--color-mint-soft);
     color: var(--color-mint-deep);
     font-weight: 700;
     line-height: 1.45;
-    transform: rotate(-0.7deg);
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .pullquote {
-      transform: none;
-    }
   }
 
   @keyframes pixel-rise {
@@ -423,15 +471,107 @@
   }
 
   /*
-   * The public top bar reads as a row of loose pills on a white shelf rather
-   * than a flat utility strip. Scoped to .pixel so the signed-in rail is
-   * untouched.
+   * The public top bar sits flush on the white shelf — no pill background at
+   * rest, just a dot and a tracked micro-label, same convention as .eyebrow
+   * and .meta. Scoped to .pixel so the signed-in rail is untouched.
    */
   .pixel .nav-pill {
-    background-color: var(--color-surface);
-    color: var(--color-brand-deep);
-    box-shadow: 0 2px 0 rgb(10 79 112 / 0.16);
+    color: var(--color-ink);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
     transition: transform 0.18s var(--ease-spring), box-shadow 0.18s var(--ease-spring);
+  }
+
+  /* Thick ink border under the whole bar, so the nav reads as a shelf the
+     pills sit on. Quiet register keeps the old hairline — it is meant to
+     recede, not gain weight. */
+  .pixel header {
+    border-bottom-width: var(--border-pixel);
+    border-bottom-color: var(--color-ink);
+  }
+
+  .pixel header.nav-quiet {
+    border-bottom-width: 1px;
+    border-bottom-color: var(--color-line);
+  }
+
+  /* The logo mark and the initials avatar — the bar's two icon-in-a-shape
+     moments, bordered like everything else instead of a bare tinted disc. */
+  .pixel .pixel-avatar {
+    border-radius: var(--radius-pixel-sm);
+    border: var(--border-pixel-thin) solid var(--color-ink);
+  }
+
+  /* The homepage's three stat chips — bordered boxes rather than soft pills. */
+  .pixel .stat-pixel {
+    border-radius: var(--radius-pixel-sm);
+    border: var(--border-pixel-thin) solid var(--color-ink);
+    box-shadow: var(--shadow-pixel-xs) var(--color-ink);
+  }
+
+  /*
+   * The only place Jersey 10 appears on the site.
+   *
+   * Three uses, all of them the homepage hero's stat-chip numerals — guides,
+   * toys delivered, contributors. The board sets them at 22px/700 and sets
+   * literally everything else, headings included, in Nunito. A bitmap face
+   * reads as a quantity rendered by a machine, which is what these three are;
+   * a headline set the same way just reads as a different website.
+   */
+  .numeral {
+    font-family: var(--font-display);
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  /*
+   * The hero band.
+   *
+   * Two things the first pass left out, and between them most of the reason the
+   * live homepage read as a softer site than the board: a dot grid over the
+   * canvas, and a hard ink rule closing the band off.
+   *
+   * It full-bleeds out of .public-shell because the rule has to reach both
+   * edges of the window. Contained, it reads as an underline drawn beneath the
+   * content column; edge to edge it reads as the floor the hero stands on,
+   * which is the whole point of it. The wrapper this breaks out of is
+   * `overflow-hidden`, so the 100vw arithmetic cannot introduce a horizontal
+   * scrollbar.
+   *
+   * The dots are 16% ink-blue at 16px. Any denser and the headline sits on
+   * texture rather than on paper.
+   */
+  .pixel-hero {
+    margin-inline: calc(50% - 50vw);
+    padding-inline: calc(50vw - 50%);
+    border-bottom: 4px solid var(--color-ink);
+    background-image: radial-gradient(rgb(10 79 112 / 0.16) 1.5px, transparent 1.5px);
+    background-size: 16px 16px;
+  }
+
+  /*
+   * The numbered steps in "SPLAT in 30 seconds".
+   *
+   * Rounded squares, not discs. Every other round thing on the page is a
+   * sticker or a photo slot — art — so drawing the step numbers as circles put
+   * them in the wrong family, reading as three more decorations rather than as
+   * an ordered list.
+   *
+   * Set in Nunito 900, as the board draws them. An earlier pass set them in the
+   * display face on the theory that "a number that is doing work gets the face
+   * that makes numbers look like numbers" — but the board reserves that face
+   * for the three hero stat chips alone, and a step badge is an ordinal, not a
+   * quantity.
+   */
+  .pixel .step-pixel {
+    border-radius: var(--radius-pixel-sm);
+    border: var(--border-pixel-thin) solid var(--color-brand-dark);
+    background-color: var(--color-brand-tint);
+    color: var(--color-brand-dark);
+    font-weight: 900;
   }
 
   /* A pill that swings rather than lifts. It is the smallest possible statement
@@ -448,7 +588,8 @@
 
   /* The section you are in sits proud of the shelf rather than merely tinted. */
   .pixel .nav-pill[aria-current='page'] {
-    box-shadow: 0 3px 0 color-mix(in srgb, currentColor 45%, transparent);
+    border-radius: var(--radius-pixel-sm);
+    box-shadow: var(--shadow-pixel-xs) var(--color-ink);
   }
 
   /* The quiet bar. Everything here is weight, nothing is presence: no label is
@@ -520,15 +661,44 @@
 
 
   /*
-   * A card laid on a table, not a panel welded to a page. No border and no
-   * blur: a single solid 5px bottom edge in a tinted navy, so the card reads
-   * as an object with a thickness rather than a flat rectangle welded flush
-   * to the page.
+   * The board's card: a thick ink border and a diagonal hard-offset shadow
+   * with zero blur, same depth cue as the buttons — an object sitting on the
+   * page rather than a panel welded flush to it.
    */
   .card-pixel {
     background-color: var(--color-surface);
-    border-radius: 1rem;
-    box-shadow: 0 5px 0 rgb(10 53 80 / 0.11);
+    border-radius: var(--radius-pixel);
+    border: var(--border-pixel) solid var(--color-ink);
+    box-shadow: var(--shadow-pixel-card) var(--color-ink);
+  }
+
+  /* The launcher's three pillars, and nothing else. They stand one step further
+     off the canvas than every other card, which is the only reason a visitor
+     reads Guides / Toy Library / 3D Printing as the site's three products
+     rather than as the first three of seven tiles. */
+  .card-pixel-lead {
+    box-shadow: var(--shadow-pixel-lg) var(--color-ink);
+  }
+
+  /* Depth grows on hover, nothing lifts — same principle as the buttons
+     below: there is no bounce left to telegraph, only more or less shadow. */
+  .pixel .card-link:hover {
+    transform: none;
+    box-shadow: var(--shadow-pixel-lg) var(--color-ink);
+  }
+
+  /* A pillar already rests at -lg, so it needs its own hover or the pointer
+     lands on the site's three most important destinations and nothing at all
+     happens. 8px is a deliberate second exception to the depth vocabulary
+     above (the ladder tops out at -lg, 6px) — there is no 7th rung to grow
+     into, so this hover value is hand-picked rather than drawn from a token. */
+  .pixel .card-pixel-lead.card-link:hover {
+    box-shadow: 8px 8px 0 var(--color-ink);
+  }
+
+  .pixel .card-link:active {
+    transform: translate(2px, 2px);
+    box-shadow: var(--shadow-pixel-sm) var(--color-ink);
   }
 
   .btn-primary:hover:not(:disabled) {
@@ -642,24 +812,38 @@
     accent-color: var(--color-brand-dark);
   }
 
-  /* --- Chips (filter toggles) ------------------------------------------- */
+  /* --- Chips (filter toggles) -------------------------------------------
+   *
+   * The one element that keeps a pill radius. Everything else on the public
+   * site came down from 9999px to the 10/8/6/4 scale; the board draws these at
+   * 20px and it is right to — a filter is a soft, repeatable, low-stakes
+   * control, and squaring it off made a row of them read as a row of buttons.
+   *
+   * The two states are drawn as a contrast rather than a tint shift: off is
+   * white and stands off the page on a 3px shadow, on is a flat ink fill with
+   * no shadow at all. A chip that is "on" has been pushed in.
+   */
   .chip {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     min-height: 36px;
-    padding: 0.375rem 0.875rem;
+    padding: 0.5rem 0.875rem;
     background-color: var(--color-surface);
-    color: var(--color-brand-deep);
-    border: 1px solid var(--color-line);
-    border-radius: 9999px;
-    font-size: 0.8125rem;
+    color: var(--color-ink);
+    border: var(--border-pixel-thin) solid var(--color-ink);
+    border-radius: var(--radius-pixel-chip);
+    box-shadow: var(--shadow-pixel-xs) var(--color-ink);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
     font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
     cursor: pointer;
     transition:
       background-color 140ms var(--ease-out-quart),
-      border-color 140ms var(--ease-out-quart),
       color 140ms var(--ease-out-quart),
+      box-shadow 140ms var(--ease-out-quart),
       transform 140ms var(--ease-out-quart);
   }
 
@@ -667,14 +851,18 @@
     background-color: var(--color-sunken);
   }
 
+  /* Travels its own shadow offset, so the edge sinks into the surface — the
+     same press the buttons and cards use. No scale: the board has none. */
   .chip:active {
-    transform: scale(0.97);
+    transform: translate(3px, 3px);
+    box-shadow: 0 0 0 var(--color-ink);
   }
 
   .chip[aria-pressed='true'] {
-    background-color: var(--color-brand-dark);
-    border-color: var(--color-brand-dark);
+    background-color: var(--color-ink);
+    border-color: var(--color-ink);
     color: #ffffff;
+    box-shadow: none;
   }
 
   .chip[aria-pressed='true']:hover {
@@ -682,15 +870,37 @@
     border-color: var(--color-brand-deep);
   }
 
-  /* --- Badges ----------------------------------------------------------- */
+  @media (prefers-reduced-motion: reduce) {
+    .chip:active {
+      box-shadow: var(--shadow-pixel-sm) var(--color-ink);
+    }
+  }
+
+  /* --- Badges -----------------------------------------------------------
+   *
+   * The board draws exactly one badge, SOON, at 9px — but every other badge
+   * on this site carries a multi-word label the board never drew, and 9px
+   * across the board made those illegible. 11px is not invented: it is the
+   * board's own meta size, used for back-links and chips, so it is inside
+   * the vocabulary rather than outside it. SOON opts back down to 9px at its
+   * own two call sites instead, since it is the one label this size was
+   * drawn for. A 1px edge in the caller's own text colour, a 4px radius —
+   * small enough that 2px would close up its interior, which is why this is
+   * the only 1px border on the site. Tone colours stay with the caller
+   * (`badge bg-honey-soft text-honey-deep`), so `currentColor` picks the
+   * edge up for free.
+   */
   .badge {
     display: inline-flex;
     align-items: center;
-    padding: 0.125rem 0.5rem;
-    border-radius: 9999px;
-    font-size: 0.75rem;
+    padding: 2px 7px;
+    border: var(--border-pixel-hair) solid currentColor;
+    border-radius: var(--radius-pixel-xs);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
     font-weight: 700;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
     white-space: nowrap;
   }
 
@@ -1188,6 +1398,7 @@
   .card-link,
   .card-link:hover,
   .card-link:active,
+  .pixel .card-link:active,
   .btn:active:not(:disabled),
   .chip:active {
     transform: none;
@@ -1201,8 +1412,10 @@
 
 /*
  * The remaining rotations are reset beside their own definitions, in
- * @layer components above — `.lean`, `.stamp`, `.pullquote`, the nav pill's
- * swing and the button hover lift.
+ * @layer components above — `.lean`, the nav pill's swing and the button
+ * hover lift. `.stamp` and `.pullquote` used to be on this list too, but both
+ * lost their rotation (and with it, their reset) when tilt was removed from
+ * the soft-panel register — they are straight bordered boxes now.
  *
  * They were once listed here, in one tidy block alongside the tilt reset. That
  * block sat directly after the tilt rule and carried the identical
