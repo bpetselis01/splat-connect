@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<template id="__bundler_thumbnail" data-bg-color="#d8ecf7">
+  <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+    <rect x="10" y="10" width="100" height="100" fill="#ffffff" stroke="#12283a" stroke-width="6"/>
+    <rect x="26" y="26" width="18" height="18" fill="#1998d5"/>
+    <rect x="52" y="26" width="18" height="18" fill="#2fbf9f"/>
+    <rect x="78" y="26" width="16" height="18" fill="#ff8f5e"/>
+    <rect x="26" y="52" width="68" height="14" fill="#12283a"/>
+    <rect x="26" y="76" width="40" height="14" fill="#7a4e05"/>
+  </svg>
+</template>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,600;0,700;0,800;0,900;1,700&family=Jersey+10&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0;background:#eaf4fa;color:#12283a;font-family:'Nunito',sans-serif;}
+  a{color:#0a4f70;text-decoration:none;}
+  a:hover{color:#1998d5;}
+  input::placeholder{color:#8aa7b8;}
+</style>
+</helmet>
+
+<div data-screen-label="SPLAT Connect — pixel redesign" style="min-height:100vh;background:#eaf4fa;">
+
+  <!-- ================= HEADER (hidden on the bare auth screen) ================= -->
+  <sc-if value="{{ showChrome }}" hint-placeholder-val="{{ true }}">
+  <header style="position:sticky;top:0;z-index:30;background:#ffffff;border-bottom:3px solid #12283a;">
+    <div style="width:min(90%,1400px);margin:0 auto;display:flex;align-items:center;gap:26px;padding:14px 0;flex-wrap:wrap;">
+      <a href="#" onClick="{{ goHome }}" style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+        <span style="width:34px;height:34px;border-radius:8px;background:#d8ecf7;border:2px solid #12283a;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg width="18" height="10" viewBox="0 0 18 10"><circle cx="3" cy="5" r="2.6" fill="none" stroke="#0a4f70" stroke-width="1.6"></circle><circle cx="15" cy="5" r="2.6" fill="none" stroke="#0a4f70" stroke-width="1.6"></circle><line x1="5.6" y1="5" x2="12.4" y2="5" stroke="#0a4f70" stroke-width="1.6"></line></svg>
+        </span>
+        <span style="font-family:'Nunito',sans-serif;font-weight:900;font-size:18px;letter-spacing:-0.01em;color:#12283a;">SPLAT Connect</span>
+      </a>
+
+      <nav style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-left:8px;">
+        <a href="#" onClick="{{ goGuides }}" style="display:flex;align-items:center;gap:7px;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#12283a;"><span style="width:7px;height:7px;border-radius:50%;background:#1998d5;flex-shrink:0;"></span>Guides</a>
+        <a href="#" onClick="{{ goToyLibrary }}" style="display:flex;align-items:center;gap:7px;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#12283a;"><span style="width:7px;height:7px;border-radius:50%;background:#2fbf9f;flex-shrink:0;"></span>Toy Library</a>
+        <a href="#" onClick="{{ goPrinting }}" style="display:flex;align-items:center;gap:7px;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#12283a;"><span style="width:7px;height:7px;border-radius:50%;background:#ff8f5e;flex-shrink:0;"></span>3D Printing</a>
+        <a href="#" onClick="{{ goLearn }}" style="display:flex;align-items:center;gap:7px;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#12283a;"><span style="width:7px;height:7px;border-radius:50%;background:#7a4e05;flex-shrink:0;"></span>Learn</a>
+        <a href="#" onClick="{{ goGetInvolved }}" style="display:flex;align-items:center;gap:7px;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#12283a;"><span style="width:7px;height:7px;border-radius:50%;background:#0f6f9c;flex-shrink:0;"></span>Get Involved</a>
+        <a href="#" onClick="{{ goImpact }}" style="display:flex;align-items:center;gap:7px;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#12283a;"><span style="width:7px;height:7px;border-radius:50%;background:#0a4f70;flex-shrink:0;"></span>Impact</a>
+        <a href="#" onClick="{{ goAbout }}" style="display:flex;align-items:center;gap:7px;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#12283a;"><span style="width:7px;height:7px;border-radius:50%;background:#4d6a7d;flex-shrink:0;"></span>About</a>
+      </nav>
+
+      <div style="display:flex;align-items:center;gap:14px;margin-left:auto;flex-shrink:0;">
+        <a href="#" onClick="{{ goDashboard }}" style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#0a4f70;">My SPLAT</a>
+        <span title="Frankie M." style="width:32px;height:32px;border-radius:8px;background:#2fbf9f;border:2px solid #12283a;display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-weight:800;font-size:12px;color:#0f5c4d;">FM</span>
+        <button type="button" onClick="{{ goSignOut }}" style="font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;color:#12283a;background:#ffffff;border:3px solid #12283a;border-radius:8px;padding:8px 16px;cursor:pointer;box-shadow:3px 3px 0 #12283a;">Sign out</button>
+      </div>
+    </div>
+  </header>
+  </sc-if>
+
+  <main>
+
+    <!-- ================= HOME ================= -->
+    <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+    <div>
+      <section style="position:relative;overflow:hidden;background:#d8ecf7;border-bottom:4px solid #12283a;">
+        <div style="position:absolute;inset:0;background-image:radial-gradient(rgba(10,79,112,0.16) 1.5px, transparent 1.5px);background-size:16px 16px;background-position:60% 0;pointer-events:none;"></div>
+
+        <div style="position:relative;width:min(90%,1400px);margin:0 auto;padding:60px 0 68px;display:grid;grid-template-columns:1.05fr 0.95fr;gap:40px;align-items:center;">
+          <div>
+            <p style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:#0a4f70;margin:0 0 16px;">Supporting play by adapting toys</p>
+
+            <h1 style="font-family:'Nunito',sans-serif;font-weight:900;font-size:clamp(38px,5.5vw,58px);line-height:1.06;margin:0;color:#12283a;">
+              Press it.<br><span style="color:#0f5c4d;">Watch it go.</span>
+            </h1>
+
+            <p style="font-family:'Nunito',sans-serif;font-size:17px;line-height:1.6;color:#4d6a7d;max-width:44ch;margin:18px 0 0;">
+              We turn ordinary toys into ones that answer to a single big switch — so every child gets the bit that matters: making something happen.
+            </p>
+
+            <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:30px;">
+              <a href="#" onClick="{{ goGuides }}" style="display:inline-flex;align-items:center;gap:10px;padding:14px 24px;background:#ff8f5e;border:3px solid #12283a;border-radius:8px;box-shadow:4px 4px 0 #12283a;font-family:'Nunito',sans-serif;font-weight:800;font-size:15px;color:#12283a;">
+                <span style="width:20px;height:15px;border:2px solid #12283a;border-radius:2px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;flex-shrink:0;"><span style="width:8px;height:2px;background:#12283a;margin-bottom:-1px;"></span></span>
+                Browse the guides →
+              </a>
+              <a href="#" onClick="{{ goToyLibrary }}" style="display:inline-flex;align-items:center;gap:10px;padding:14px 24px;background:#ffffff;border:3px solid #12283a;border-radius:8px;box-shadow:4px 4px 0 rgba(18,40,58,0.35);font-family:'Nunito',sans-serif;font-weight:800;font-size:15px;color:#12283a;">
+                <span style="width:18px;height:14px;clip-path:polygon(18% 0%,82% 0%,100% 100%,0% 100%);background:#8c3312;display:inline-block;flex-shrink:0;"></span>
+                Or borrow a toy
+              </a>
+            </div>
+
+            <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:32px;">
+              <div style="display:inline-flex;align-items:center;gap:10px;padding:10px 16px;background:#ffffff;border:2px solid #12283a;border-radius:8px;box-shadow:3px 3px 0 #12283a;">
+                <span style="width:16px;height:16px;border-radius:50%;background:#1998d5;position:relative;flex-shrink:0;"><span style="position:absolute;top:-4px;left:2px;width:5px;height:5px;border-radius:50%;background:#1998d5;"></span><span style="position:absolute;top:-4px;right:2px;width:5px;height:5px;border-radius:50%;background:#1998d5;"></span></span>
+                <span><span style="display:block;font-family:'Jersey 10',sans-serif;font-size:22px;font-weight:700;line-height:1;color:#12283a;">2</span><span style="display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#4d6a7d;">guides</span></span>
+              </div>
+              <div style="display:inline-flex;align-items:center;gap:10px;padding:10px 16px;background:#ffffff;border:2px solid #12283a;border-radius:8px;box-shadow:3px 3px 0 #12283a;">
+                <span style="width:16px;height:14px;border:2px solid #2fbf9f;border-radius:2px;position:relative;flex-shrink:0;"><span style="position:absolute;top:5px;left:-2px;right:-2px;height:2px;background:#2fbf9f;"></span></span>
+                <span><span style="display:block;font-family:'Jersey 10',sans-serif;font-size:22px;font-weight:700;line-height:1;color:#12283a;">1</span><span style="display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#4d6a7d;">toys delivered</span></span>
+              </div>
+              <div style="display:inline-flex;align-items:center;gap:10px;padding:10px 16px;background:#ffffff;border:2px solid #12283a;border-radius:8px;box-shadow:3px 3px 0 #12283a;">
+                <span style="width:14px;height:14px;border-radius:50%;background:#ff8f5e;position:relative;flex-shrink:0;top:-1px;"></span>
+                <span><span style="display:block;font-family:'Jersey 10',sans-serif;font-size:22px;font-weight:700;line-height:1;color:#12283a;">3</span><span style="display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#4d6a7d;">contributors</span></span>
+              </div>
+            </div>
+          </div>
+
+          <div style="position:relative;height:380px;">
+            <div style="position:absolute;top:50%;left:50%;width:300px;height:300px;margin:-150px 0 0 -150px;border:3px dashed #1998d5;border-radius:50%;"></div>
+            <div style="position:absolute;top:14px;right:34px;width:54px;height:54px;border-radius:50%;border:2px dashed #1998d5;background:#eaf4fa;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.08em;color:#0a4f70;">ART</div>
+            <div style="position:absolute;top:50%;left:50%;width:200px;height:200px;margin:-100px 0 0 -100px;border-radius:50%;border:3px dashed #1998d5;background:#d8ecf7;display:flex;align-items:center;justify-content:center;text-align:center;padding:18px;">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;line-height:1.6;letter-spacing:.03em;text-transform:uppercase;color:#0a4f70;">Pixel art — round blue robot mascot reaching for a switch</span>
+            </div>
+            <div style="position:absolute;bottom:6px;left:6px;width:150px;height:106px;border:3px dashed #1998d5;border-radius:10px;background:#ffffff;display:flex;align-items:center;justify-content:center;padding:8px;">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;line-height:1.5;letter-spacing:.03em;text-transform:uppercase;color:#0a4f70;">Pixel art — switch tablet, hand pressing button</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section style="width:min(90%,1400px);margin:0 auto;padding:52px 0 0;">
+        <p style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:#4d6a7d;margin:0 0 18px;">Jump straight in</p>
+
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;">
+          <div style="position:relative;background:#d8ecf7;border:3px solid #12283a;border-radius:10px;box-shadow:6px 6px 0 #12283a;padding:22px;display:flex;flex-direction:column;min-height:360px;">
+            <div style="height:170px;border:2px dashed #0a4f70;border-radius:8px;background:rgba(255,255,255,0.35);background-image:radial-gradient(rgba(10,79,112,0.18) 1.4px, transparent 1.4px);background-size:14px 14px;display:flex;align-items:center;justify-content:center;padding:12px;margin-bottom:16px;">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;line-height:1.6;letter-spacing:.03em;text-transform:uppercase;color:#0a4f70;text-align:center;">Pixel art — isometric desk: guide book, plush toy, screwdriver</span>
+            </div>
+            <h3 style="font-family:'Nunito',sans-serif;font-weight:900;font-size:21px;margin:0;color:#0a4f70;">Guides</h3>
+            <p style="font-family:'Nunito',sans-serif;font-size:13px;color:#0a4f70;opacity:.85;margin:6px 0 0;">Adaptation guides</p>
+            <div style="flex:1;"></div>
+            <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-top:14px;">
+              <span style="font-family:'Nunito',sans-serif;font-weight:900;font-size:46px;line-height:1;color:#0a4f70;">2</span>
+              <span style="width:34px;height:34px;border-radius:50%;background:#ffffff;border:2px solid #0a4f70;display:flex;align-items:center;justify-content:center;position:relative;flex-shrink:0;">
+                <span style="width:12px;height:12px;border-radius:50%;background:#0a4f70;"></span>
+                <span style="position:absolute;top:4px;left:6px;width:6px;height:6px;border-radius:50%;background:#0a4f70;"></span>
+                <span style="position:absolute;top:4px;right:6px;width:6px;height:6px;border-radius:50%;background:#0a4f70;"></span>
+              </span>
+            </div>
+          </div>
+
+          <div style="position:relative;background:#d4f2ea;border:3px solid #12283a;border-radius:10px;box-shadow:6px 6px 0 #12283a;padding:22px;display:flex;flex-direction:column;min-height:360px;">
+            <div style="height:170px;border:2px dashed #0f5c4d;border-radius:8px;background:rgba(255,255,255,0.35);background-image:radial-gradient(rgba(15,92,77,0.18) 1.4px, transparent 1.4px);background-size:14px 14px;display:flex;align-items:center;justify-content:center;padding:12px;margin-bottom:16px;">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;line-height:1.6;letter-spacing:.03em;text-transform:uppercase;color:#0f5c4d;text-align:center;">Pixel art — isometric shelf: stacked toys, teddy, blocks</span>
+            </div>
+            <h3 style="font-family:'Nunito',sans-serif;font-weight:900;font-size:21px;margin:0;color:#0f5c4d;">Toy Library</h3>
+            <p style="font-family:'Nunito',sans-serif;font-size:13px;color:#0f5c4d;opacity:.85;margin:6px 0 0;">Toys being given away</p>
+            <div style="flex:1;"></div>
+            <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-top:14px;">
+              <span style="font-family:'Nunito',sans-serif;font-weight:900;font-size:46px;line-height:1;color:#0f5c4d;">3</span>
+              <span style="width:34px;height:34px;border-radius:8px;background:#ffffff;border:2px solid #0f5c4d;display:flex;flex-direction:column;justify-content:space-evenly;align-items:center;flex-shrink:0;padding:4px 0;">
+                <span style="width:20px;height:2px;background:#0f5c4d;"></span>
+                <span style="width:20px;height:2px;background:#0f5c4d;"></span>
+              </span>
+            </div>
+          </div>
+
+          <div style="position:relative;background:#ffe3d5;border:3px solid #12283a;border-radius:10px;box-shadow:6px 6px 0 #12283a;padding:22px;display:flex;flex-direction:column;min-height:360px;">
+            <div style="height:170px;border:2px dashed #8c3312;border-radius:8px;background:rgba(255,255,255,0.35);background-image:radial-gradient(rgba(140,51,18,0.18) 1.4px, transparent 1.4px);background-size:14px 14px;display:flex;align-items:center;justify-content:center;padding:12px;margin-bottom:16px;">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;line-height:1.6;letter-spacing:.03em;text-transform:uppercase;color:#8c3312;text-align:center;">Pixel art — isometric 3D printer, mid-print, filament spool</span>
+            </div>
+            <h3 style="font-family:'Nunito',sans-serif;font-weight:900;font-size:21px;margin:0;color:#8c3312;">3D Printing</h3>
+            <p style="font-family:'Nunito',sans-serif;font-size:13px;color:#8c3312;opacity:.85;margin:6px 0 0;">Printed parts and mounts</p>
+            <div style="flex:1;"></div>
+            <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-top:14px;">
+              <span style="font-family:'Nunito',sans-serif;font-weight:800;font-size:30px;line-height:1;color:#8c3312;opacity:.55;">→</span>
+              <span style="width:34px;height:34px;border-radius:50%;background:#ffffff;border:2px solid #8c3312;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;overflow:hidden;">
+                <span style="width:12px;height:12px;border-radius:50%;background:#8c3312;margin-top:-6px;"></span>
+                <span style="width:16px;height:8px;clip-path:polygon(15% 100%,85% 100%,100% 0,0 0);background:#8c3312;position:absolute;bottom:5px;left:9px;"></span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:16px;">
+          <div style="background:#fdeecb;border:3px solid #12283a;border-radius:10px;box-shadow:5px 5px 0 #12283a;padding:16px;display:flex;flex-direction:column;min-height:118px;">
+            <div style="display:flex;align-items:center;gap:8px;"><span style="width:7px;height:7px;border-radius:50%;background:#7a4e05;flex-shrink:0;"></span><span style="font-family:'Nunito',sans-serif;font-weight:800;font-size:14px;color:#12283a;">Learn</span></div>
+            <p style="font-family:'Nunito',sans-serif;font-size:12px;color:#4d6a7d;margin:6px 0 0;">Switches, tools, safety</p>
+            <div style="flex:1;"></div>
+            <span style="font-family:'Nunito',sans-serif;font-weight:900;font-size:22px;color:#12283a;margin-top:8px;">5</span>
+          </div>
+          <div style="background:#bfe4f5;border:3px solid #12283a;border-radius:10px;box-shadow:5px 5px 0 #12283a;padding:16px;display:flex;flex-direction:column;min-height:118px;">
+            <div style="display:flex;align-items:center;gap:8px;"><span style="width:7px;height:7px;border-radius:50%;background:#0f6f9c;flex-shrink:0;"></span><span style="font-family:'Nunito',sans-serif;font-weight:800;font-size:14px;color:#12283a;">Get Involved</span></div>
+            <p style="font-family:'Nunito',sans-serif;font-size:12px;color:#4d6a7d;margin:6px 0 0;">Make, give, or back</p>
+            <div style="flex:1;"></div>
+            <span style="font-family:'Nunito',sans-serif;font-weight:800;font-size:20px;color:#12283a;opacity:.45;margin-top:8px;">→</span>
+          </div>
+          <div style="background:#dcedf6;border:3px solid #12283a;border-radius:10px;box-shadow:5px 5px 0 #12283a;padding:16px;display:flex;flex-direction:column;min-height:118px;">
+            <div style="display:flex;align-items:center;gap:8px;"><span style="width:7px;height:7px;border-radius:50%;background:#0a4f70;flex-shrink:0;"></span><span style="font-family:'Nunito',sans-serif;font-weight:800;font-size:14px;color:#12283a;">Impact</span></div>
+            <p style="font-family:'Nunito',sans-serif;font-size:12px;color:#4d6a7d;margin:6px 0 0;">Toys delivered</p>
+            <div style="flex:1;"></div>
+            <span style="font-family:'Nunito',sans-serif;font-weight:900;font-size:22px;color:#12283a;margin-top:8px;">1</span>
+          </div>
+          <div style="background:#ffffff;border:3px solid #12283a;border-radius:10px;box-shadow:5px 5px 0 #12283a;padding:16px;display:flex;flex-direction:column;min-height:118px;">
+            <div style="display:flex;align-items:center;gap:8px;"><span style="width:7px;height:7px;border-radius:50%;background:#4d6a7d;flex-shrink:0;"></span><span style="font-family:'Nunito',sans-serif;font-weight:800;font-size:14px;color:#12283a;">About</span></div>
+            <p style="font-family:'Nunito',sans-serif;font-size:12px;color:#4d6a7d;margin:6px 0 0;">Who runs SPLAT</p>
+            <div style="flex:1;"></div>
+            <span style="font-family:'Nunito',sans-serif;font-weight:800;font-size:20px;color:#12283a;opacity:.45;margin-top:8px;">→</span>
+          </div>
+        </div>
+      </section>
+
+      <section style="width:min(90%,1400px);margin:0 auto;padding:56px 0 80px;">
+        <h2 style="font-family:'Nunito',sans-serif;font-weight:900;font-size:27px;letter-spacing:-0.02em;color:#12283a;margin:0;">SPLAT in 30 seconds</h2>
+
+        <div style="position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:26px;margin-top:30px;">
+          <div style="position:absolute;top:22px;left:44px;right:44px;height:0;border-top:2px dashed #c6e0ed;z-index:0;"></div>
+
+          <div style="position:relative;z-index:1;">
+            <span style="display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:8px;background:#d8ecf7;border:2px solid #0a4f70;font-family:'Nunito',sans-serif;font-weight:900;font-size:18px;color:#0a4f70;">1</span>
+            <h3 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:16px;color:#12283a;margin:14px 0 0;">A guide gets written</h3>
+            <p style="font-family:'Nunito',sans-serif;font-size:13px;line-height:1.6;color:#4d6a7d;margin:6px 0 0;">A contributor adapts a toy and documents every step, with a parts list anyone can buy from.</p>
+          </div>
+
+          <div style="position:relative;z-index:1;">
+            <span style="display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:8px;background:#d8ecf7;border:2px solid #0a4f70;font-family:'Nunito',sans-serif;font-weight:900;font-size:18px;color:#0a4f70;">2</span>
+            <h3 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:16px;color:#12283a;margin:14px 0 0;">An organisation stands behind it</h3>
+            <p style="font-family:'Nunito',sans-serif;font-size:13px;line-height:1.6;color:#4d6a7d;margin:6px 0 0;">A therapy service or school reviews the work and puts their name on it, so a parent knows someone competent read it.</p>
+          </div>
+
+          <div style="position:relative;z-index:1;">
+            <span style="display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:8px;background:#d8ecf7;border:2px solid #0a4f70;font-family:'Nunito',sans-serif;font-weight:900;font-size:18px;color:#0a4f70;">3</span>
+            <h3 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:16px;color:#12283a;margin:14px 0 0;">A family builds it — or receives one</h3>
+            <p style="font-family:'Nunito',sans-serif;font-size:13px;line-height:1.6;color:#4d6a7d;margin:6px 0 0;">Follow the guide with about thirty dollars of parts, or claim a toy someone has already adapted.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+    </sc-if>
+
+    <!-- ================= GUIDES (LIBRARY) ================= -->
+    <sc-if value="{{ isGuides }}" hint-placeholder-val="{{ false }}">
+    <div style="width:min(90%,1400px);margin:0 auto;padding:36px 0 80px;">
+      <a href="#" onClick="{{ goHome }}" style="display:inline-flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#4d6a7d;margin-bottom:18px;">← Home</a>
+      <h1 style="font-family:'Nunito',sans-serif;font-weight:900;font-size:32px;letter-spacing:-0.02em;color:#12283a;margin:0 0 20px;">Toy Adaptation Library</h1>
+
+      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:28px;">
+        <input type="search" disabled placeholder="Search by toy name…" style="font-family:'Nunito',sans-serif;font-size:13px;padding:10px 14px;border:2px solid #12283a;border-radius:6px;min-width:220px;background:#fff;color:#12283a;" />
+        <span style="display:inline-flex;align-items:center;padding:8px 14px;border:2px solid #12283a;border-radius:20px;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;background:#12283a;color:#fff;">All</span>
+        <span style="display:inline-flex;align-items:center;padding:8px 14px;border:2px solid #12283a;border-radius:20px;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;background:#fff;color:#12283a;box-shadow:3px 3px 0 #12283a;">Easy</span>
+        <span style="display:inline-flex;align-items:center;padding:8px 14px;border:2px solid #12283a;border-radius:20px;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;background:#fff;color:#12283a;box-shadow:3px 3px 0 #12283a;">Medium</span>
+        <span style="display:inline-flex;align-items:center;padding:8px 14px;border:2px solid #12283a;border-radius:20px;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;background:#fff;color:#12283a;box-shadow:3px 3px 0 #12283a;">Hard</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:#4d6a7d;margin-left:6px;">0 guides</span>
+      </div>
+
+      <div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:56px 20px;border:2px dashed #c6e0ed;border-radius:10px;background:#ffffff;">
+        <span style="width:44px;height:44px;border-radius:50%;border:3px solid #4d6a7d;position:relative;display:block;"><span style="position:absolute;bottom:-9px;right:-9px;width:16px;height:3px;background:#4d6a7d;transform:rotate(45deg);border-radius:2px;"></span></span>
+        <p style="font-family:'Nunito',sans-serif;font-weight:800;font-size:15px;color:#12283a;margin:18px 0 0;">No guides published yet.</p>
+        <p style="font-family:'Nunito',sans-serif;font-size:13px;color:#4d6a7d;max-width:32ch;margin:6px 0 0;line-height:1.5;">Guides show up here once a contributor writes one and an organisation stands behind it.</p>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ================= TOY LIBRARY ================= -->
+    <sc-if value="{{ isToyLibrary }}" hint-placeholder-val="{{ false }}">
+    <div style="width:min(90%,1400px);margin:0 auto;padding:36px 0 80px;">
+      <a href="#" onClick="{{ goHome }}" style="display:inline-flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#4d6a7d;margin-bottom:18px;">← Home</a>
+      <h1 style="font-family:'Nunito',sans-serif;font-weight:900;font-size:32px;letter-spacing:-0.02em;color:#12283a;margin:0 0 20px;">Toy Library</h1>
+
+      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:28px;">
+        <input type="search" disabled placeholder="Search by toy name…" style="font-family:'Nunito',sans-serif;font-size:13px;padding:10px 14px;border:2px solid #12283a;border-radius:6px;min-width:220px;background:#fff;color:#12283a;" />
+        <span style="display:inline-flex;align-items:center;padding:8px 14px;border:2px solid #12283a;border-radius:20px;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;background:#12283a;color:#fff;">Any</span>
+        <span style="display:inline-flex;align-items:center;padding:8px 14px;border:2px solid #12283a;border-radius:20px;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;background:#fff;color:#12283a;box-shadow:3px 3px 0 #12283a;">Good (7–10)</span>
+        <span style="display:inline-flex;align-items:center;padding:8px 14px;border:2px solid #12283a;border-radius:20px;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;background:#fff;color:#12283a;box-shadow:3px 3px 0 #12283a;">Fair (4–6)</span>
+        <span style="display:inline-flex;align-items:center;padding:8px 14px;border:2px solid #12283a;border-radius:20px;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;background:#fff;color:#12283a;box-shadow:3px 3px 0 #12283a;">Well-loved (1–3)</span>
+        <span style="display:inline-flex;align-items:center;padding:8px 14px;border:2px solid #12283a;border-radius:20px;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;background:#fff;color:#12283a;box-shadow:3px 3px 0 #12283a;">Switch-adapted</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:#4d6a7d;margin-left:6px;">0 toys</span>
+      </div>
+
+      <div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:56px 20px;border:2px dashed #c6e0ed;border-radius:10px;background:#ffffff;">
+        <span style="width:44px;height:44px;border-radius:50%;border:3px solid #4d6a7d;position:relative;display:block;"><span style="position:absolute;bottom:-9px;right:-9px;width:16px;height:3px;background:#4d6a7d;transform:rotate(45deg);border-radius:2px;"></span></span>
+        <p style="font-family:'Nunito',sans-serif;font-weight:800;font-size:15px;color:#12283a;margin:18px 0 0;">No toys listed yet.</p>
+        <p style="font-family:'Nunito',sans-serif;font-size:13px;color:#4d6a7d;max-width:32ch;margin:6px 0 0;line-height:1.5;">Adapted toys families and organisations give away will show up here.</p>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ================= 3D PRINTING ================= -->
+    <sc-if value="{{ isPrinting }}" hint-placeholder-val="{{ false }}">
+    <div style="width:min(90%,1400px);margin:0 auto;padding:36px 0 80px;">
+      <a href="#" onClick="{{ goHome }}" style="display:inline-flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#4d6a7d;margin-bottom:18px;">← Home</a>
+
+      <div style="display:grid;grid-template-columns:1.25fr 0.75fr;gap:40px;align-items:center;">
+        <div>
+          <h1 style="font-family:'Nunito',sans-serif;font-weight:900;font-size:32px;letter-spacing:-0.02em;color:#12283a;margin:0 0 14px;">3D Printing</h1>
+          <p style="font-family:'Nunito',sans-serif;font-size:15px;line-height:1.65;color:#4d6a7d;margin:0;">A lot of what makes a toy usable is not the toy. It is the bracket that holds a switch at the angle a child can actually reach, the case that stops a battery interrupter being pulled apart, the mount that clamps to a wheelchair tray. Those parts are printed, and most of them are small enough to be printed by someone who already owns a printer and would rather use it for this.</p>
+        </div>
+        <div style="height:240px;border:3px dashed #8c3312;border-radius:10px;background:#ffe3d5;background-image:radial-gradient(rgba(140,51,18,0.18) 1.4px, transparent 1.4px);background-size:14px 14px;display:flex;align-items:center;justify-content:center;padding:16px;">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:1.6;letter-spacing:.03em;text-transform:uppercase;color:#8c3312;text-align:center;">Pixel art — isometric 3D printer, mid-print, filament spool</span>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:0.75fr 1.25fr;gap:40px;align-items:center;margin-top:36px;">
+        <div style="height:180px;border:3px dashed #8c3312;border-radius:10px;background:#ffe3d5;background-image:radial-gradient(rgba(140,51,18,0.18) 1.4px, transparent 1.4px);background-size:14px 14px;display:flex;align-items:center;justify-content:center;padding:16px;">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:1.6;letter-spacing:.03em;text-transform:uppercase;color:#8c3312;text-align:center;">Pixel art — makerspace counter, STL file handed to a printer operator</span>
+        </div>
+        <div>
+          <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:19px;color:#12283a;margin:0 0 4px;">You do not need a printer</h2>
+          <p style="font-family:'Nunito',sans-serif;font-size:14px;line-height:1.65;color:#4d6a7d;margin:0;">This is the part that already works, today, with no software from us. Ask a library, a makerspace, a men's shed, a school or a university — many have printers sitting idle and staff who would rather they made something like this than another keyring. Hand over the STL file from a guide and the settings from Printing basics; that is everything a printer operator needs.</p>
+        </div>
+      </div>
+
+      <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:19px;color:#12283a;margin:36px 0 4px;">In this section</h2>
+      <p style="font-family:'Nunito',sans-serif;font-size:13px;color:#4d6a7d;margin:0 0 16px;">Some of this is not built yet. Where it isn't, you can ask to be told when it is.</p>
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
+        <sc-for list="{{ printingChildren }}" as="item" hint-placeholder-count="3">
+          <div style="background:#ffe3d5;border:3px solid #12283a;border-radius:10px;box-shadow:5px 5px 0 #12283a;padding:18px;display:flex;flex-direction:column;gap:6px;">
+            <div style="height:120px;border:2px dashed #8c3312;border-radius:6px;background:rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;"><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#8c3312;">Pixel art</span></div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <h3 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:15px;color:#8c3312;margin:0;">{{ item.label }}</h3>
+              <sc-if value="{{ item.soon }}" hint-placeholder-val="{{ false }}"><span style="display:inline-flex;padding:2px 7px;background:#fdeecb;border:1px solid #7a4e05;border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.05em;color:#7a4e05;">SOON</span></sc-if>
+            </div>
+            <p style="font-family:'Nunito',sans-serif;font-size:13px;color:#4d6a7d;margin:0;line-height:1.5;">{{ item.blurb }}</p>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ================= LEARN ================= -->
+    <sc-if value="{{ isLearn }}" hint-placeholder-val="{{ false }}">
+    <div style="width:min(90%,1400px);margin:0 auto;padding:36px 0 80px;">
+      <a href="#" onClick="{{ goHome }}" style="display:inline-flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#4d6a7d;margin-bottom:18px;">← Home</a>
+      <h1 style="font-family:'Nunito',sans-serif;font-weight:900;font-size:32px;letter-spacing:-0.02em;color:#12283a;margin:0 0 14px;">Learn</h1>
+      <p style="font-family:'Nunito',sans-serif;font-size:15px;line-height:1.65;color:#4d6a7d;max-width:70ch;margin:0;">Adapting a toy is a small piece of electronics and a lot of judgement. These articles cover the judgement — what a switch does, which toys take to it, and how to hand the result over safely. For instructions on one particular toy, head to the Guides.</p>
+
+      <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:19px;color:#12283a;margin:32px 0 4px;">Start here</h2>
+      <p style="font-family:'Nunito',sans-serif;font-size:13px;color:#4d6a7d;margin:0 0 16px;">Read these three in order and you will know enough to adapt your first toy.</p>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
+        <sc-for list="{{ learnStart }}" as="item" hint-placeholder-count="3">
+          <div style="background:#fdeecb;border:3px solid #12283a;border-radius:10px;box-shadow:5px 5px 0 #12283a;padding:18px;display:flex;flex-direction:column;gap:6px;">
+            <div style="height:120px;border:2px dashed #7a4e05;border-radius:6px;background:rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;"><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#7a4e05;">Pixel art</span></div>
+            <h3 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:15px;color:#7a4e05;margin:0;">{{ item.label }}</h3>
+            <p style="font-family:'Nunito',sans-serif;font-size:13px;color:#4d6a7d;margin:0;line-height:1.5;">{{ item.blurb }}</p>
+          </div>
+        </sc-for>
+      </div>
+
+      <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:19px;color:#12283a;margin:32px 0 4px;">Going deeper</h2>
+      <p style="font-family:'Nunito',sans-serif;font-size:13px;color:#4d6a7d;margin:0 0 16px;">Reference material for when you are past the first one.</p>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
+        <sc-for list="{{ learnDeeper }}" as="item" hint-placeholder-count="3">
+          <div style="background:#fdeecb;border:3px solid #12283a;border-radius:10px;box-shadow:5px 5px 0 #12283a;padding:18px;display:flex;flex-direction:column;gap:6px;">
+            <div style="height:120px;border:2px dashed #7a4e05;border-radius:6px;background:rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;"><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#7a4e05;">Pixel art</span></div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <h3 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:15px;color:#7a4e05;margin:0;">{{ item.label }}</h3>
+              <sc-if value="{{ item.soon }}" hint-placeholder-val="{{ false }}"><span style="display:inline-flex;padding:2px 7px;background:#fdeecb;border:1px solid #7a4e05;border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.05em;color:#7a4e05;">SOON</span></sc-if>
+            </div>
+            <p style="font-family:'Nunito',sans-serif;font-size:13px;color:#4d6a7d;margin:0;line-height:1.5;">{{ item.blurb }}</p>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ================= GET INVOLVED ================= -->
+    <sc-if value="{{ isGetInvolved }}" hint-placeholder-val="{{ false }}">
+    <div style="width:min(90%,1400px);margin:0 auto;padding:36px 0 80px;">
+      <a href="#" onClick="{{ goHome }}" style="display:inline-flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#4d6a7d;margin-bottom:18px;">← Home</a>
+      <h1 style="font-family:'Nunito',sans-serif;font-weight:900;font-size:32px;letter-spacing:-0.02em;color:#12283a;margin:0 0 14px;">Get involved</h1>
+      <p style="font-family:'Nunito',sans-serif;font-size:15px;line-height:1.65;color:#4d6a7d;max-width:70ch;margin:0;">SPLAT runs on unpaid work. Contributors adapt toys and write down how, people and organisations pass on toys they no longer need, and organisations put their name behind work so a parent knows someone competent read it. Any of those is a way in.</p>
+
+      <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:19px;color:#12283a;margin:32px 0 4px;">Which one are you?</h2>
+      <p style="font-family:'Nunito',sans-serif;font-size:13px;color:#4d6a7d;margin:0 0 16px;">Each of these walks through the whole path, start to finish.</p>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
+        <sc-for list="{{ involvedTracks }}" as="item" hint-placeholder-count="3">
+          <div style="background:#bfe4f5;border:3px solid #12283a;border-radius:10px;box-shadow:5px 5px 0 #12283a;padding:18px;display:flex;flex-direction:column;gap:6px;">
+            <div style="height:120px;border:2px dashed #0f6f9c;border-radius:6px;background:rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;"><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#0f6f9c;">Pixel art</span></div>
+            <h3 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:15px;color:#0f6f9c;margin:0;">{{ item.label }}</h3>
+            <p style="font-family:'Nunito',sans-serif;font-size:13px;color:#4d6a7d;margin:0;line-height:1.5;">{{ item.blurb }}</p>
+          </div>
+        </sc-for>
+      </div>
+
+      <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:19px;color:#12283a;margin:32px 0 4px;">Specific things you can do</h2>
+      <p style="font-family:'Nunito',sans-serif;font-size:13px;color:#4d6a7d;margin:0 0 16px;">Smaller, more concrete. Some are not built yet — those say so.</p>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;">
+        <sc-for list="{{ involvedActions }}" as="item" hint-placeholder-count="4">
+          <div style="background:#bfe4f5;border:3px solid #12283a;border-radius:10px;box-shadow:5px 5px 0 #12283a;padding:16px;display:flex;flex-direction:column;gap:6px;">
+            <div style="height:100px;border:2px dashed #0f6f9c;border-radius:6px;background:rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;"><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#0f6f9c;">Pixel art</span></div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <h3 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:14px;color:#0f6f9c;margin:0;">{{ item.label }}</h3>
+              <sc-if value="{{ item.soon }}" hint-placeholder-val="{{ false }}"><span style="display:inline-flex;padding:2px 7px;background:#fdeecb;border:1px solid #7a4e05;border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.05em;color:#7a4e05;">SOON</span></sc-if>
+            </div>
+            <p style="font-family:'Nunito',sans-serif;font-size:12px;color:#4d6a7d;margin:0;line-height:1.5;">{{ item.blurb }}</p>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ================= IMPACT ================= -->
+    <sc-if value="{{ isImpact }}" hint-placeholder-val="{{ false }}">
+    <div style="width:min(90%,1400px);margin:0 auto;padding:36px 0 80px;">
+      <a href="#" onClick="{{ goHome }}" style="display:inline-flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#4d6a7d;margin-bottom:18px;">← Home</a>
+      <h1 style="font-family:'Nunito',sans-serif;font-weight:900;font-size:32px;letter-spacing:-0.02em;color:#12283a;margin:0 0 14px;">Community impact</h1>
+      <p style="font-family:'Nunito',sans-serif;font-size:14px;line-height:1.65;color:#4d6a7d;max-width:70ch;margin:0 0 24px;">Guides written, toys shared, and deliveries made by the people and organisations behind SPLAT. Guides here are counted once they are approved and public.</p>
+
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px;">
+        <sc-for list="{{ impactStats }}" as="stat" hint-placeholder-count="5">
+          <div style="background:#d8ecf7;border:3px solid #12283a;border-radius:10px;box-shadow:5px 5px 0 #12283a;padding:18px;text-align:center;">
+            <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:28px;color:#0a4f70;">{{ stat.count }}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#4d6a7d;margin-top:6px;">{{ stat.label }}</div>
+          </div>
+        </sc-for>
+      </div>
+
+      <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:19px;color:#12283a;margin:36px 0 4px;">Contributors and organisations</h2>
+      <div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:44px 20px;border:2px dashed #c6e0ed;border-radius:10px;background:#ffffff;margin-top:12px;">
+        <span style="width:40px;height:40px;border-radius:50%;border:3px solid #4d6a7d;"></span>
+        <p style="font-family:'Nunito',sans-serif;font-weight:800;font-size:15px;color:#12283a;margin:16px 0 0;">No contributors yet.</p>
+        <p style="font-family:'Nunito',sans-serif;font-size:13px;color:#4d6a7d;max-width:34ch;margin:6px 0 0;line-height:1.5;">Check back soon — this page tracks guides, toys, and deliveries across the community.</p>
+      </div>
+
+      <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:19px;color:#12283a;margin:36px 0 4px;">More in Impact</h2>
+      <p style="font-family:'Nunito',sans-serif;font-size:13px;color:#4d6a7d;margin:0 0 16px;">Some of this is not built yet. Those pages say so, and will take your email if you want to know when they are.</p>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;">
+        <sc-for list="{{ impactMore }}" as="item" hint-placeholder-count="4">
+          <div style="background:#dcedf6;border:3px solid #12283a;border-radius:10px;box-shadow:5px 5px 0 #12283a;padding:16px;display:flex;flex-direction:column;gap:6px;">
+            <div style="height:100px;border:2px dashed #0a4f70;border-radius:6px;background:rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;"><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#0a4f70;">Pixel art</span></div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <h3 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:14px;color:#0a4f70;margin:0;">{{ item.label }}</h3>
+              <sc-if value="{{ item.soon }}" hint-placeholder-val="{{ false }}"><span style="display:inline-flex;padding:2px 7px;background:#fdeecb;border:1px solid #7a4e05;border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.05em;color:#7a4e05;">SOON</span></sc-if>
+            </div>
+            <p style="font-family:'Nunito',sans-serif;font-size:12px;color:#4d6a7d;margin:0;line-height:1.5;">{{ item.blurb }}</p>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ================= ABOUT ================= -->
+    <sc-if value="{{ isAbout }}" hint-placeholder-val="{{ false }}">
+    <div style="width:min(90%,1400px);margin:0 auto;padding:36px 0 80px;">
+      <a href="#" onClick="{{ goHome }}" style="display:inline-flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#4d6a7d;margin-bottom:18px;">← Home</a>
+
+      <div style="display:grid;grid-template-columns:1.25fr 0.75fr;gap:40px;align-items:center;">
+        <div>
+          <h1 style="font-family:'Nunito',sans-serif;font-weight:900;font-size:32px;letter-spacing:-0.02em;color:#12283a;margin:0 0 14px;">About SPLAT Connect</h1>
+          <p style="font-family:'Nunito',sans-serif;font-size:15px;line-height:1.65;color:#4d6a7d;margin:0;">SPLAT stands for <strong style="color:#12283a;">Supporting Play by Adapting Toys</strong>. We publish free instructions for modifying ordinary toys so that children with disabilities can operate them, and we connect the people who build them to the families who need them.</p>
+        </div>
+        <div style="height:220px;border:3px dashed #4d6a7d;border-radius:10px;background:#dcedf6;background-image:radial-gradient(rgba(18,40,58,0.14) 1.4px, transparent 1.4px);background-size:14px 14px;display:flex;align-items:center;justify-content:center;padding:16px;">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:1.6;letter-spacing:.03em;text-transform:uppercase;color:#12283a;text-align:center;">Pixel art — organisation illustration, small team at a workbench</span>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:0.75fr 1.25fr;gap:40px;align-items:center;margin-top:36px;">
+        <div style="height:220px;border:3px dashed #4d6a7d;border-radius:10px;background:#dcedf6;background-image:radial-gradient(rgba(18,40,58,0.14) 1.4px, transparent 1.4px);background-size:14px 14px;display:flex;align-items:center;justify-content:center;padding:16px;">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:1.6;letter-spacing:.03em;text-transform:uppercase;color:#12283a;text-align:center;">Pixel art — child pressing a big switch, adapted toy responding</span>
+        </div>
+        <div>
+          <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:19px;color:#12283a;margin:0 0 6px;">Why this exists</h2>
+          <p style="font-family:'Nunito',sans-serif;font-size:14px;line-height:1.65;color:#4d6a7d;margin:0 0 10px;">Play is how children learn that their actions change the world. A child who cannot press a small stiff button is shut out of that, not because the toy is too complex, but because the button is in the wrong place.</p>
+          <p style="font-family:'Nunito',sans-serif;font-size:14px;line-height:1.65;color:#4d6a7d;margin:0;">Purpose-built switch-adapted toys exist. They cost several times what the same toy costs off a shelf, and the range is narrow. Meanwhile the modification itself is often a two-dollar part and twenty minutes — if you know which two wires to touch. That knowledge is the bottleneck, and it is the thing this platform exists to remove.</p>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1.25fr 0.75fr;gap:40px;align-items:center;margin-top:36px;">
+        <div>
+          <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:19px;color:#12283a;margin:0 0 6px;">How the platform works</h2>
+          <p style="font-family:'Nunito',sans-serif;font-size:14px;line-height:1.65;color:#4d6a7d;margin:0;">Contributors adapt a toy and write down how, in enough detail that a parent with no electronics experience can follow it. Organisations — therapy services, schools, disability services — review that work and put their name on it. Families follow the guides, or receive a toy someone has already adapted through the Toy Library.</p>
+        </div>
+        <div style="height:180px;border:3px dashed #4d6a7d;border-radius:10px;background:#dcedf6;background-image:radial-gradient(rgba(18,40,58,0.14) 1.4px, transparent 1.4px);background-size:14px 14px;display:flex;align-items:center;justify-content:center;padding:16px;">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:1.6;letter-spacing:.03em;text-transform:uppercase;color:#12283a;text-align:center;">Pixel art — contributor and organisation reviewer signing off a guide</span>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:0.75fr 1.25fr;gap:40px;align-items:center;margin-top:36px;">
+        <div style="height:150px;border:3px dashed #4d6a7d;border-radius:10px;background:#dcedf6;background-image:radial-gradient(rgba(18,40,58,0.14) 1.4px, transparent 1.4px);background-size:14px 14px;display:flex;align-items:center;justify-content:center;padding:16px;">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:1.6;letter-spacing:.03em;text-transform:uppercase;color:#12283a;text-align:center;">Pixel art — SPLAT badge / seal mark</span>
+        </div>
+        <div>
+          <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:19px;color:#12283a;margin:0 0 6px;">Who runs it</h2>
+          <p style="font-family:'Nunito',sans-serif;font-size:14px;line-height:1.65;color:#4d6a7d;margin:0;">SPLAT Connect is run by <em>[legal name to be confirmed]</em>, based in <em>[city, state to be confirmed]</em>. The platform is free to use and carries no advertising.</p>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:18px;">
+            <span style="display:inline-flex;padding:12px 20px;background:#0f6f9c;color:#fff;border:3px solid #12283a;border-radius:8px;box-shadow:4px 4px 0 #12283a;font-family:'Nunito',sans-serif;font-weight:800;font-size:14px;">Our team</span>
+            <span style="display:inline-flex;padding:12px 20px;background:#d8ecf7;color:#0a4f70;border:3px solid #12283a;border-radius:8px;box-shadow:4px 4px 0 #12283a;font-family:'Nunito',sans-serif;font-weight:800;font-size:14px;">Contact us</span>
+          </div>
+        </div>
+      </div>
+
+      <h2 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:19px;color:#12283a;margin:36px 0 4px;">More about SPLAT</h2>
+      <p style="font-family:'Nunito',sans-serif;font-size:13px;color:#4d6a7d;margin:0 0 16px;">The team, how to reach us, and how to support what we do.</p>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;">
+        <sc-for list="{{ aboutMore }}" as="item" hint-placeholder-count="4">
+          <div style="background:#ffffff;border:3px solid #12283a;border-radius:10px;box-shadow:5px 5px 0 #12283a;padding:16px;display:flex;flex-direction:column;gap:6px;">
+            <div style="height:100px;border:2px dashed #12283a;border-radius:6px;background:#eaf4fa;display:flex;align-items:center;justify-content:center;"><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#12283a;">Pixel art</span></div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <h3 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:14px;color:#12283a;margin:0;">{{ item.label }}</h3>
+              <sc-if value="{{ item.soon }}" hint-placeholder-val="{{ false }}"><span style="display:inline-flex;padding:2px 7px;background:#fdeecb;border:1px solid #7a4e05;border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.05em;color:#7a4e05;">SOON</span></sc-if>
+            </div>
+            <p style="font-family:'Nunito',sans-serif;font-size:12px;color:#4d6a7d;margin:0;line-height:1.5;">{{ item.blurb }}</p>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ================= MY SPLAT (DASHBOARD) ================= -->
+    <sc-if value="{{ isDashboard }}" hint-placeholder-val="{{ false }}">
+    <div style="width:min(90%,1400px);margin:0 auto;padding:36px 0 80px;">
+      <h1 style="font-family:'Nunito',sans-serif;font-weight:900;font-size:32px;letter-spacing:-0.02em;color:#12283a;margin:0 0 12px;">My SPLAT</h1>
+      <p style="font-family:'Nunito',sans-serif;font-size:15px;line-height:1.65;color:#4d6a7d;max-width:60ch;margin:0 0 26px;">Everything that belongs to you — what you have written, what you have lent, and what you have asked for.</p>
+
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;">
+        <sc-for list="{{ dashboardItems }}" as="item" hint-placeholder-count="8">
+          <div style="background:#d8ecf7;border:3px solid #12283a;border-radius:10px;box-shadow:5px 5px 0 #12283a;padding:16px;display:flex;flex-direction:column;gap:6px;min-height:104px;">
+            <div style="height:84px;border:2px dashed #0a4f70;border-radius:6px;background:rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;"><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#0a4f70;">Pixel art</span></div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <h3 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:14px;color:#0a4f70;margin:0;">{{ item.label }}</h3>
+              <sc-if value="{{ item.soon }}" hint-placeholder-val="{{ false }}"><span style="display:inline-flex;padding:2px 7px;background:#fdeecb;border:1px solid #7a4e05;border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.05em;color:#7a4e05;">SOON</span></sc-if>
+            </div>
+            <p style="font-family:'Nunito',sans-serif;font-size:12px;color:#4d6a7d;margin:0;line-height:1.5;">{{ item.blurb }}</p>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ================= SIGN IN / SIGN UP (bare) ================= -->
+    <sc-if value="{{ isAuth }}" hint-placeholder-val="{{ false }}">
+    <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:56px 20px;">
+      <a href="#" onClick="{{ goHome }}" style="display:flex;align-items:center;gap:10px;margin-bottom:30px;">
+        <span style="width:34px;height:34px;border-radius:8px;background:#d8ecf7;border:2px solid #12283a;display:flex;align-items:center;justify-content:center;">
+          <svg width="18" height="10" viewBox="0 0 18 10"><circle cx="3" cy="5" r="2.6" fill="none" stroke="#0a4f70" stroke-width="1.6"></circle><circle cx="15" cy="5" r="2.6" fill="none" stroke="#0a4f70" stroke-width="1.6"></circle><line x1="5.6" y1="5" x2="12.4" y2="5" stroke="#0a4f70" stroke-width="1.6"></line></svg>
+        </span>
+        <span style="font-family:'Nunito',sans-serif;font-weight:900;font-size:18px;letter-spacing:-0.01em;color:#12283a;">SPLAT Connect</span>
+      </a>
+
+      <div style="display:inline-flex;border:3px solid #12283a;border-radius:8px;overflow:hidden;box-shadow:4px 4px 0 #12283a;">
+        <button type="button" onClick="{{ showLogin }}" style="font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:12px;letter-spacing:.05em;text-transform:uppercase;padding:10px 18px;border:none;cursor:pointer;background:{{ loginTabBg }};color:{{ loginTabFg }};">Sign in</button>
+        <button type="button" onClick="{{ showSignup }}" style="font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:12px;letter-spacing:.05em;text-transform:uppercase;padding:10px 18px;border:none;border-left:2px solid #12283a;cursor:pointer;background:{{ signupTabBg }};color:{{ signupTabFg }};">Create account</button>
+      </div>
+
+      <sc-if value="{{ isLoginView }}" hint-placeholder-val="{{ true }}">
+      <div style="background:#fff;border:3px solid #12283a;border-radius:10px;box-shadow:6px 6px 0 #12283a;padding:30px;width:100%;max-width:380px;margin-top:22px;">
+        <h1 style="font-family:'Nunito',sans-serif;font-weight:900;font-size:22px;color:#12283a;margin:0 0 20px;">Sign in</h1>
+        <label style="display:block;font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;color:#12283a;">Email</label>
+        <input type="email" disabled style="display:block;width:100%;padding:10px 12px;border:2px solid #12283a;border-radius:6px;font-family:'Nunito',sans-serif;font-size:14px;margin:6px 0 16px;background:#fff;color:#12283a;" />
+        <label style="display:block;font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;color:#12283a;">Password</label>
+        <input type="password" disabled style="display:block;width:100%;padding:10px 12px;border:2px solid #12283a;border-radius:6px;font-family:'Nunito',sans-serif;font-size:14px;margin:6px 0 20px;background:#fff;color:#12283a;" />
+        <button type="button" onClick="{{ goDashboard }}" style="display:block;width:100%;padding:13px;background:#ff8f5e;border:3px solid #12283a;border-radius:8px;box-shadow:4px 4px 0 #12283a;font-family:'Nunito',sans-serif;font-weight:800;font-size:15px;color:#12283a;cursor:pointer;">Sign in</button>
+        <p style="font-family:'Nunito',sans-serif;font-size:13px;color:#4d6a7d;text-align:center;margin:16px 0 0;">New here? <a href="#" onClick="{{ showSignup }}" style="color:#0a4f70;font-weight:700;">Create an account</a></p>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ isSignupView }}" hint-placeholder-val="{{ false }}">
+      <div style="background:#fff;border:3px solid #12283a;border-radius:10px;box-shadow:6px 6px 0 #12283a;padding:30px;width:100%;max-width:380px;margin-top:22px;">
+        <h1 style="font-family:'Nunito',sans-serif;font-weight:900;font-size:22px;color:#12283a;margin:0 0 6px;">Create your account</h1>
+        <p style="font-family:'Nunito',sans-serif;font-size:13px;color:#4d6a7d;margin:0 0 18px;">One account for everything — browse, contribute, and manage your child's profile.</p>
+        <label style="display:block;font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;color:#12283a;">Full name</label>
+        <input type="text" disabled style="display:block;width:100%;padding:10px 12px;border:2px solid #12283a;border-radius:6px;font-family:'Nunito',sans-serif;font-size:14px;margin:6px 0 14px;background:#fff;color:#12283a;" />
+        <label style="display:block;font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;color:#12283a;">Email</label>
+        <input type="email" disabled style="display:block;width:100%;padding:10px 12px;border:2px solid #12283a;border-radius:6px;font-family:'Nunito',sans-serif;font-size:14px;margin:6px 0 14px;background:#fff;color:#12283a;" />
+        <label style="display:block;font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;color:#12283a;">Password</label>
+        <input type="password" disabled style="display:block;width:100%;padding:10px 12px;border:2px solid #12283a;border-radius:6px;font-family:'Nunito',sans-serif;font-size:14px;margin:6px 0 14px;background:#fff;color:#12283a;" />
+        <label style="display:flex;align-items:center;gap:8px;font-family:'Nunito',sans-serif;font-size:13px;color:#4d6a7d;margin:6px 0 18px;">
+          <span style="width:18px;height:18px;border:2px solid #12283a;border-radius:4px;display:inline-block;"></span>
+          Read and accept the contributor terms
+        </label>
+        <button type="button" onClick="{{ goDashboard }}" style="display:block;width:100%;padding:13px;background:#ff8f5e;border:3px solid #12283a;border-radius:8px;box-shadow:4px 4px 0 #12283a;font-family:'Nunito',sans-serif;font-weight:800;font-size:15px;color:#12283a;cursor:pointer;">Create account</button>
+        <p style="font-family:'Nunito',sans-serif;font-size:13px;color:#4d6a7d;text-align:center;margin:16px 0 0;">Already have an account? <a href="#" onClick="{{ showLogin }}" style="color:#0a4f70;font-weight:700;">Sign in</a></p>
+      </div>
+      </sc-if>
+    </div>
+    </sc-if>
+
+  </main>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { screen: 'home', authView: 'login' };
+
+  go(name) {
+    return (e) => { if (e && e.preventDefault) e.preventDefault(); this.setState({ screen: name }); };
+  }
+
+  renderVals() {
+    const s = this.state.screen;
+    return {
+      showChrome: s !== 'auth',
+      isHome: s === 'home',
+      isGuides: s === 'guides',
+      isToyLibrary: s === 'toylibrary',
+      isPrinting: s === 'printing',
+      isLearn: s === 'learn',
+      isGetInvolved: s === 'getinvolved',
+      isImpact: s === 'impact',
+      isAbout: s === 'about',
+      isDashboard: s === 'dashboard',
+      isAuth: s === 'auth',
+      isLoginView: this.state.authView === 'login',
+      isSignupView: this.state.authView === 'signup',
+      loginTabBg: this.state.authView === 'login' ? '#12283a' : '#ffffff',
+      loginTabFg: this.state.authView === 'login' ? '#ffffff' : '#12283a',
+      signupTabBg: this.state.authView === 'signup' ? '#12283a' : '#ffffff',
+      signupTabFg: this.state.authView === 'signup' ? '#ffffff' : '#12283a',
+
+      goHome: this.go('home'),
+      goGuides: this.go('guides'),
+      goToyLibrary: this.go('toylibrary'),
+      goPrinting: this.go('printing'),
+      goLearn: this.go('learn'),
+      goGetInvolved: this.go('getinvolved'),
+      goImpact: this.go('impact'),
+      goAbout: this.go('about'),
+      goDashboard: this.go('dashboard'),
+      goSignOut: (e) => { if (e && e.preventDefault) e.preventDefault(); this.setState({ screen: 'auth', authView: 'login' }); },
+      showLogin: () => this.setState({ authView: 'login' }),
+      showSignup: () => this.setState({ authView: 'signup' }),
+
+      learnStart: [
+        { label: 'Toy adaptation 101', blurb: 'What a battery interrupter is, and why it is the whole trick.' },
+        { label: 'Switch types explained', blurb: 'Buttons, levers, proximity and grasp — which suits which child.' },
+        { label: 'Choosing a toy to adapt', blurb: 'What makes a toy easy to adapt, and what makes it impossible.' },
+      ],
+      learnDeeper: [
+        { label: 'Tools and materials', blurb: 'The shopping list, and what you can borrow instead of buying.' },
+        { label: 'Safety and cleaning', blurb: 'Batteries, small parts, and getting a toy ready to hand over.' },
+        { label: 'Ask an expert', blurb: 'Put a question to an occupational therapist or a maker.', soon: true },
+      ],
+      involvedTracks: [
+        { label: 'For families', blurb: 'Find a guide, gather the parts, adapt the toy you already own.' },
+        { label: 'For contributors', blurb: 'Adapt a toy, write it up, and get an organisation behind it.' },
+        { label: 'For organisations', blurb: 'Back contributors, hold toys for local families, host a build day.' },
+      ],
+      involvedActions: [
+        { label: 'Submit an idea', blurb: 'Suggest a toy worth adapting, even if you cannot build it.' },
+        { label: 'Submit a guide', blurb: 'What writing up an adaptation involves, start to finish.' },
+        { label: 'Adaptation requests', blurb: 'Ask for a toy to be adapted, and let a maker nearby claim it.', soon: true },
+        { label: 'Design challenges', blurb: 'Problems nobody has solved yet, open to anyone.' },
+      ],
+      impactStats: [
+        { label: 'Guides', count: 2 },
+        { label: 'Toys shared', count: 1 },
+        { label: 'Toys delivered', count: 1 },
+        { label: 'Contributors', count: 3 },
+        { label: 'Organisations', count: 1 },
+      ],
+      impactMore: [
+        { label: 'Organisations', blurb: 'The therapy centres, schools and services standing behind the work.' },
+        { label: 'News and stories', blurb: 'What families and makers have done with SPLAT.', soon: true },
+        { label: 'Events', blurb: 'Build days, workshops and where to find us in person.', soon: true },
+        { label: 'Deliveries map', blurb: 'Where adapted toys have actually landed.', soon: true },
+      ],
+      aboutMore: [
+        { label: 'Our team', blurb: 'The people behind the platform.' },
+        { label: 'Contact', blurb: 'Get in touch about a guide, a toy or a partnership.' },
+        { label: 'Partners and supporters', blurb: 'The organisations and funders making this possible.', soon: true },
+        { label: 'Support SPLAT', blurb: 'Ways to help beyond building a toy.', soon: true },
+      ],
+      printingChildren: [
+        { label: 'Printing basics', blurb: 'Filament, settings and finishing for printed switch parts.' },
+        { label: 'Request a print', blurb: 'Ask an association with a free printer to make a part for you.', soon: true },
+        { label: 'Printable parts', blurb: 'A catalogue of STL files, sized and tested for adaptation work.', soon: true },
+      ],
+      dashboardItems: [
+        { label: 'My tutorials', blurb: 'Your adaptation guides, and where each one is in review.' },
+        { label: 'My toys', blurb: 'Toys you have listed for other families.' },
+        { label: 'Exchanges', blurb: '2 waiting on you.' },
+        { label: 'Design challenges', blurb: 'Ideas you have submitted, and challenges you have joined.' },
+        { label: 'Submit an idea', blurb: 'Suggest a toy worth adapting, even if you cannot build it yourself.' },
+        { label: 'My print requests', blurb: 'Parts you have asked someone to print.', soon: true },
+        { label: 'Notifications', blurb: '3 unread.' },
+        { label: 'Account', blurb: 'Your name, email, and the children and terms you have on file.' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>
