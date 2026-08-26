@@ -5,14 +5,14 @@
  * have hidden is rendered as a page instead, with room for a sentence per
  * destination that a menu never had.
  *
- * Playroom changed two things about it. The cards take their section's colour
+ * Pixel changed two things about it. The cards take their section's colour
  * rather than all being white, and the first one is wider than the rest — a hub's
  * children are written in order, so the first is the one to read first, and an
  * evenly-weighted grid was hiding that. Uniform card grids were also the site's
  * loudest generated-looking tell.
  *
- * The tilt is decorative and lives on the card, never on this grid: strip every
- * transform and what is left is an ordinary responsive grid in source order.
+ * The grid itself carries no transform of its own — cards lay out in an
+ * ordinary responsive grid, upright, in source order.
  *
  * The lead card is not just wider now, it is set in the display face at article
  * size. Width alone was not carrying the "read this one first" job — a wide card
@@ -28,7 +28,6 @@
 import type { NavItem } from '@/lib/public-nav'
 import type { IllustrationKey } from '@/components/editorial-image'
 import { toneClass, type Tone } from '@/lib/tone'
-import { Tilt } from '@/components/tilt'
 import { Sticker } from '@/components/slot'
 import { BoundaryLink } from '@/components/boundary-link'
 
@@ -58,7 +57,7 @@ export function HubGrid({
   // this one first" signal. It only takes extra *width* when there are more than
   // three cards to share the row with: at exactly three the row is already full,
   // and promoting the lead there produced a box two columns wide and two rows
-  // tall holding one sentence. Three equal tilted cards is the shape the
+  // tall holding one sentence. Three equal cards in a row is the shape the
   // direction was drawn around.
   const wide = leadFirst && items.length > 3
 
@@ -69,14 +68,10 @@ export function HubGrid({
         const spread = wide && i === 0
 
         return (
-          <Tilt
-            key={item.href}
-            index={i}
-            className={spread ? 'sm:col-span-2' : undefined}
-          >
+          <div key={item.href} className={spread ? 'h-full sm:col-span-2' : 'h-full'}>
             <BoundaryLink
               href={item.href}
-              className={`card-playroom card-link group relative flex h-full flex-col overflow-hidden p-5 ${
+              className={`card-pixel card-link group relative flex h-full flex-col overflow-hidden p-5 ${
                 spread ? 'sm:p-8' : ''
               } ${
                 spec
@@ -127,7 +122,7 @@ export function HubGrid({
 
               {/* Pushed to the bottom so every card in a row ends on the same
                   line however ragged the blurbs are — the cheapest thing that
-                  makes a tilted grid read as deliberate. */}
+                  makes the grid read as deliberate rather than accidental. */}
               <span
                 aria-hidden="true"
                 className={`relative mt-auto font-bold opacity-50 transition-transform duration-200 group-hover:translate-x-1.5 ${
@@ -137,7 +132,7 @@ export function HubGrid({
                 →
               </span>
             </BoundaryLink>
-          </Tilt>
+          </div>
         )
       })}
     </div>

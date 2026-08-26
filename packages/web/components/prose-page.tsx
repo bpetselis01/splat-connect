@@ -11,12 +11,12 @@
  * renders above it lines up with the heading, and the backdrop shapes have a side
  * of the page to occupy.
  *
- * This is Playroom's quiet register: one backdrop shape, one accent element, and
+ * This is Pixel's quiet register: one backdrop shape, one accent element, and
  * otherwise upright body content. The personality on a page like the privacy
  * policy comes from writing the heading like a human and giving one idea a box —
  * not from tilting the paragraphs.
  */
-import { PlayroomBackdrop } from '@/components/playroom-backdrop'
+import { PixelBackdrop } from '@/components/pixel-backdrop'
 import type { Tone } from '@/lib/tone'
 
 export function ProsePage({
@@ -36,7 +36,7 @@ export function ProsePage({
 }) {
   return (
     <article className="relative max-w-prose">
-      {tone && <PlayroomBackdrop tone={tone} />}
+      {tone && <PixelBackdrop tone={tone} />}
       <h1 className="title-article">{title}</h1>
       {lastUpdated && (
         // Tilted, because it is the one flash of personality a legal page gets.

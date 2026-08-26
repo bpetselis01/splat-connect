@@ -26,7 +26,7 @@
  */
 import { toneClass, type Tone } from '@/lib/tone'
 
-export function PlayroomBackdrop({ tone }: { tone: Tone }) {
+export function PixelBackdrop({ tone }: { tone: Tone }) {
   const { surface } = toneClass(tone)
 
   return (

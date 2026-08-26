@@ -46,4 +46,14 @@ describe('LauncherGrid', () => {
     expect(pillar.innerHTML).toContain('bg-brand-tint')
     expect(supporting.innerHTML).toContain('bg-surface')
   })
+
+  it('renders every tile upright — no tilt class on any grid item', () => {
+    const { container } = render(
+      <LauncherGrid tiles={[
+        { href: '/a', label: 'A', blurb: 'a', tone: 'brand', art: 'adapted-toy', rank: 'pillar', count: 1 },
+      ]} />
+    )
+    const tile = container.querySelector('a.card-pixel')
+    expect(tile?.parentElement?.className).not.toMatch(/tilt-\d/)
+  })
 })

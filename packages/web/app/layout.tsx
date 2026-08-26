@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Nunito, IBM_Plex_Mono } from 'next/font/google'
+import { Nunito, IBM_Plex_Mono, Jersey_10 } from 'next/font/google'
 import { headers } from 'next/headers'
 import './globals.css'
 import { Nav } from '@/components/nav'
@@ -8,7 +8,7 @@ import { getCapabilities } from '@/lib/capabilities'
 import { AppShell } from '@/components/app-shell'
 import { PublicFooter } from '@/components/public-footer'
 import { Breadcrumb } from '@/components/breadcrumb'
-import { PlayroomBackdrop } from '@/components/playroom-backdrop'
+import { PixelBackdrop } from '@/components/pixel-backdrop'
 import { BackToMySplatDock } from '@/components/back-to-my-splat-dock'
 import { sectionFor, ACCOUNT_NAV, nestsRail } from '@/lib/public-nav'
 
@@ -16,7 +16,7 @@ import { sectionFor, ACCOUNT_NAV, nestsRail } from '@/lib/public-nav'
 // sans across headings, labels, buttons and data — product UI doesn't need a
 // display/body pairing, and the shared family is what makes the two surfaces
 // read as one product.
-// 900 and italic 700 are the Playroom additions. The heading register runs on
+// 900 and italic 700 are the Pixel additions. The heading register runs on
 // Nunito's heaviest weight rather than on a second display family: a black
 // rounded sans at 3.9rem is already a different voice from the same face at
 // 16px, and keeping one family is what holds the mobile-app parity argument.
@@ -39,6 +39,17 @@ const plexMono = IBM_Plex_Mono({
   // Not `--font-mono`: that is the Tailwind theme key below, and a token that
   // resolves to itself resolves to nothing.
   variable: '--font-plex-mono',
+  display: 'swap',
+})
+
+// The pixel system's one display face — headings only, never body text. Full
+// Pixel pages use it; Quiet Pixel pages (see the spec's register table) fall
+// back to Nunito instead, so this variable is opt-in per page class rather
+// than global.
+const jersey = Jersey_10({
+  subsets: ['latin'],
+  weight: ['400'],
+  variable: '--font-jersey',
   display: 'swap',
 })
 
@@ -81,16 +92,16 @@ export default async function RootLayout({
 
   if (bare) {
     // Same scaffolding as the non-bare branch below, minus the three pieces
-    // that are always conditional on !bare there too: Nav, PlayroomBackdrop
+    // that are always conditional on !bare there too: Nav, PixelBackdrop
     // and PublicFooter. A gate page (/login, /signup, /auth/confirmed,
-    // /onboarding/contributor-terms) still needs the .playroom ancestor its
+    // /onboarding/contributor-terms) still needs the .pixel ancestor its
     // buttons are styled under, the skip link (WCAG 2.4.1), and a <main>
     // landmark — losing all three was a real regression from before this
     // branch, caught in the final review round.
     return (
-      <html lang="en" className={`${nunito.variable} ${plexMono.variable}`}>
+      <html lang="en" className={`${nunito.variable} ${plexMono.variable} ${jersey.variable}`}>
         <body className="min-h-screen font-sans antialiased">
-          <div className="playroom">
+          <div className="pixel">
             <a
               href="#main"
               className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-field focus:bg-surface focus:px-4 focus:py-2 focus:font-bold focus:text-ink focus:outline focus:outline-2 focus:outline-brand"
@@ -129,9 +140,9 @@ export default async function RootLayout({
   const shell = nestsRail(pathname) ? await AppShell({ children, footer: <PublicFooter /> }) : null
 
   return (
-    <html lang="en" className={`${nunito.variable} ${plexMono.variable}`}>
+    <html lang="en" className={`${nunito.variable} ${plexMono.variable} ${jersey.variable}`}>
       <body className="min-h-screen font-sans antialiased">
-        <div className="playroom">
+        <div className="pixel">
           {/* WCAG 2.4.1 — one skip link for the whole app, since there is now
               exactly one path to <main>. */}
           <a
@@ -156,7 +167,7 @@ export default async function RootLayout({
                     because nestsRail said no) — they need a way to sign in. */}
                 <Nav caps={caps} quiet={account} />
                 <div className="relative overflow-hidden">
-                  <PlayroomBackdrop tone={tone} />
+                  <PixelBackdrop tone={tone} />
                   <main id="main" tabIndex={-1} className="public-shell relative py-8 sm:py-10">
                     {/* /notifications resolves to the account section even
                         signed out, and a "← My SPLAT" link back to a page you
