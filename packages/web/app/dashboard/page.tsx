@@ -69,7 +69,7 @@ export default async function DashboardHub() {
         you have asked for.
       </p>
       <div className="mt-10">
-        <HubGrid items={items} tone={ACCOUNT_NAV.tone} leadFirst={false} />
+        <HubGrid items={items} tone={ACCOUNT_NAV.tone} columns={4} />
       </div>
     </div>
   )
