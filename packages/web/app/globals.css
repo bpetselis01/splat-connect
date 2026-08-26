@@ -58,6 +58,15 @@
 
   --radius-field: 14px;
 
+  /* Pixel's one depth cue: a hard offset with zero blur, laid over --color-ink
+     (or a tone's own -deep shade). Replaces both tilt+lift and the old
+     vertical-only button shadow. The three sizes exist because Quiet-register
+     pages use -sm, not because a component picks arbitrarily. */
+  --shadow-pixel-sm: 2px 2px 0;
+  --shadow-pixel-md: 4px 4px 0;
+  --shadow-pixel-lg: 6px 6px 0;
+  --border-pixel: 2px;
+
   /* Tinted rather than near-black: a neutral shadow over a blue canvas reads as dirt. */
   --shadow-rest: 0 3px 10px rgb(10 53 80 / 0.07);
   --shadow-lift: 0 10px 24px rgb(10 53 80 / 0.14);
@@ -70,6 +79,7 @@
   --font-sans: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
   /* Micro-labels only — see the note on IBM_Plex_Mono in app/layout.tsx. */
   --font-mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-display: var(--font-jersey), var(--font-sans);
 }
 
 @layer base {
@@ -188,67 +198,44 @@
   }
 
   /*
-   * Scoped to .playroom, which only the public shell sets. The dashboard shares
+   * Scoped to .pixel, which only the public shell sets. The dashboard shares
    * .btn-accent and .btn-primary and is deliberately out of scope for this
    * redesign — a signed-in user should not find their controls have grown a
    * bounce because the marketing site did.
    */
-  .playroom .btn-accent,
-  .playroom .btn-primary {
-    transition: transform 0.16s var(--ease-spring), box-shadow 0.16s var(--ease-spring),
+  .pixel .btn-accent,
+  .pixel .btn-primary {
+    border: var(--border-pixel) solid var(--color-ink);
+    transition: transform 0.16s var(--ease-out-quart), box-shadow 0.16s var(--ease-out-quart),
       background-color 0.16s linear;
   }
 
-  .playroom .btn-accent { box-shadow: 0 6px 0 var(--color-apricot-deep); }
-  .playroom .btn-primary { box-shadow: 0 6px 0 var(--color-brand-deep); }
+  .pixel .btn-accent { box-shadow: var(--shadow-pixel-md) var(--color-ink); }
+  .pixel .btn-primary { box-shadow: var(--shadow-pixel-md) var(--color-ink); }
 
-  /* Hover raises the button off its own edge before the press drives it back
-     down, so the control has somewhere to travel from as well as to. */
-  .playroom .btn-accent:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 0 var(--color-apricot-deep);
+  /* Hover lifts the shadow one size up rather than lifting the button — there
+     is no bounce left to telegraph, only more or less depth. */
+  .pixel .btn-accent:hover:not(:disabled),
+  .pixel .btn-primary:hover:not(:disabled) {
+    box-shadow: var(--shadow-pixel-lg) var(--color-ink);
   }
 
-  .playroom .btn-primary:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 0 var(--color-brand-deep);
+  /* Pressed: the button travels exactly the shadow's own offset, so the edge
+     visually disappears into the surface as it "sinks" — no squash, no spring. */
+  .pixel .btn-accent:active:not(:disabled),
+  .pixel .btn-primary:active:not(:disabled) {
+    transform: translate(4px, 4px);
+    box-shadow: 0 0 0 var(--color-ink);
   }
 
-  /* The hover lift goes; the deepened edge stays, so the control still answers
-     the pointer. */
   @media (prefers-reduced-motion: reduce) {
-    .playroom .btn-accent:hover:not(:disabled),
-    .playroom .btn-primary:hover:not(:disabled) {
+    .pixel .btn-accent:active:not(:disabled),
+    .pixel .btn-primary:active:not(:disabled) {
       transform: none;
+      box-shadow: var(--shadow-pixel-sm) var(--color-ink);
     }
   }
 
-  /* Pressed: the button travels the full height of its own edge and squashes,
-     so the edge disappears exactly as it reaches the surface. */
-  .playroom .btn-accent:active:not(:disabled) {
-    transform: translateY(6px) scaleY(0.94);
-    box-shadow: 0 0 0 var(--color-apricot-deep);
-  }
-
-  .playroom .btn-primary:active:not(:disabled) {
-    transform: translateY(6px) scaleY(0.94);
-    box-shadow: 0 0 0 var(--color-brand-deep);
-  }
-
-  /*
-   * Decorative rotation, cycled by index from components/tilt.tsx.
-   *
-   * Applied to the card, never to the grid that positions it: strip every
-   * transform here and the layout underneath is an ordinary upright grid that
-   * still reads in order. That property is what makes the tilt safe at browser
-   * zoom, with long translated strings, and across 42 pages rather than 6.
-   */
-  /*
-   * A card that is going to lie at an angle has to read as an object first.
-   * With the soft blurred rest-shadow the rotation just looked like a
-   * misalignment; a solid offset edge — the same language as the buttons —
-   * makes the same angle read as deliberate.
-   */
   /*
    * Entrance, in CSS rather than JavaScript, and the reason is robustness rather
    * than bundle size.
@@ -334,8 +321,8 @@
 
   /*
    * A highlighter drawn behind two or three words of a headline. Honey rather
-   * than apricot, and unrotated: apricot is the button colour and the page gets
-   * exactly one of those, while the tilt on this page belongs to the cards.
+   * than apricot, and unrotated, unlike the stamp below: apricot is the
+   * button colour, and the page keeps to exactly one of those.
    * `box-decoration-break` is what keeps the slab intact when the phrase wraps.
    */
   .mark {
@@ -371,7 +358,7 @@
   }
 
   /*
-   * The date stamp on a prose page, and the whole of Quiet Playroom's decoration
+   * The date stamp on a prose page, and the whole of Quiet Pixel's decoration
    * budget: one tilted honey pill, then the writing does the rest.
    */
   .stamp {
@@ -412,13 +399,13 @@
     }
   }
 
-  @keyframes playroom-rise {
+  @keyframes pixel-rise {
     from { opacity: 0; transform: translateY(14px); }
     to   { opacity: 1; transform: none; }
   }
 
   .rise {
-    animation: playroom-rise 0.5s var(--ease-out-quart) both;
+    animation: pixel-rise 0.5s var(--ease-out-quart) both;
     animation-delay: var(--rise-delay, 0ms);
   }
 
@@ -437,10 +424,10 @@
 
   /*
    * The public top bar reads as a row of loose pills on a white shelf rather
-   * than a flat utility strip. Scoped to .playroom so the signed-in rail is
+   * than a flat utility strip. Scoped to .pixel so the signed-in rail is
    * untouched.
    */
-  .playroom .nav-pill {
+  .pixel .nav-pill {
     background-color: var(--color-surface);
     color: var(--color-brand-deep);
     box-shadow: 0 2px 0 rgb(10 79 112 / 0.16);
@@ -449,18 +436,18 @@
 
   /* A pill that swings rather than lifts. It is the smallest possible statement
      of the same idea the cards make — nothing on this site is bolted down. */
-  .playroom .nav-pill:hover {
+  .pixel .nav-pill:hover {
     transform: rotate(-2deg);
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .playroom .nav-pill:hover {
+    .pixel .nav-pill:hover {
       transform: none;
     }
   }
 
   /* The section you are in sits proud of the shelf rather than merely tinted. */
-  .playroom .nav-pill[aria-current='page'] {
+  .pixel .nav-pill[aria-current='page'] {
     box-shadow: 0 3px 0 color-mix(in srgb, currentColor 45%, transparent);
   }
 
@@ -468,11 +455,11 @@
      removed, resized past legibility, or hidden behind a hover. The rail below
      is brand-deep at full saturation and wins the contrast comparison on its
      own once the bar stops competing. */
-  .playroom .nav-quiet {
+  .pixel .nav-quiet {
     background-color: var(--color-surface-quiet);
   }
 
-  .playroom .nav-quiet .nav-pill {
+  .pixel .nav-quiet .nav-pill {
     background-color: transparent;
     box-shadow: none;
     color: var(--color-muted);
@@ -480,7 +467,7 @@
 
   /* Hover restores full contrast, so a receding control never reads as
      disabled. */
-  .playroom .nav-quiet .nav-pill:hover {
+  .pixel .nav-quiet .nav-pill:hover {
     background-color: var(--color-sunken);
     color: var(--color-brand-deep);
     /* No rotate: a bar that is deliberately receding should not also be the
@@ -533,33 +520,15 @@
 
 
   /*
-   * A card laid on a table, not a panel welded to a page. No border and no blur:
-   * a single solid 5px bottom edge in the same tinted navy the buttons use, so
-   * the card reads as an object with a thickness and the rotation below reads as
-   * "placed by hand" rather than as a misalignment.
+   * A card laid on a table, not a panel welded to a page. No border and no
+   * blur: a single solid 5px bottom edge in a tinted navy, so the card reads
+   * as an object with a thickness rather than a flat rectangle welded flush
+   * to the page.
    */
-  .card-playroom {
+  .card-pixel {
     background-color: var(--color-surface);
     border-radius: 1rem;
     box-shadow: 0 5px 0 rgb(10 53 80 / 0.11);
-  }
-
-  /*
-   * The fixed rotation set, cycled by index from components/tilt.tsx. Four
-   * values, none of them repeating adjacently in a three-column grid.
-   */
-  .tilt-1 { transform: rotate(-1.6deg); }
-  .tilt-2 { transform: rotate(0.9deg); }
-  .tilt-3 { transform: rotate(-0.7deg); }
-  .tilt-4 { transform: rotate(1.4deg); }
-
-  .tilt-1, .tilt-2, .tilt-3, .tilt-4 {
-    transition: transform 0.22s var(--ease-spring), box-shadow 0.22s var(--ease-out-quart);
-  }
-
-  /* Straightening on hover is the reward: the card snaps to true and lifts. */
-  .tilt-1:hover, .tilt-2:hover, .tilt-3:hover, .tilt-4:hover {
-    transform: rotate(0deg) translateY(-5px);
   }
 
   .btn-primary:hover:not(:disabled) {
@@ -569,7 +538,7 @@
   /* The one warm control on the page: contribute, upload, submit. Ink on apricot
      rather than white on apricot, which would sit at 2.4:1. */
   /*
-   * Playroom: a solid bottom edge rather than a soft drop shadow, so the button
+   * Pixel: a solid bottom edge rather than a soft drop shadow, so the button
    * reads as a thing with a side to it. Zero blur is deliberate — a blurred
    * shadow under a 1px border is the "ghost card" look this replaces.
    */
@@ -1227,21 +1196,6 @@
   .panel-summary::after,
   details[open] > .panel-summary::after {
     transition: none;
-  }
-
-  /*
-   * The tilt is personality, not information, so it is removed outright rather
-   * than animated to. What is left is the upright grid the cards were always
-   * laid out on — a designed state, not a degraded one.
-   */
-  .tilt-1, .tilt-2, .tilt-3, .tilt-4,
-  .tilt-1:hover, .tilt-2:hover, .tilt-3:hover, .tilt-4:hover {
-    transform: none;
-  }
-
-  .playroom .btn-accent:active:not(:disabled),
-  .playroom .btn-primary:active:not(:disabled) {
-    transform: none;
   }
 }
 
