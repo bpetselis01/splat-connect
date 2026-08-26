@@ -99,14 +99,14 @@ export function Nav({ caps, quiet = false, showMenu = false }: NavProps) {
         <NavLink
           href="/"
           crossing={activeSection === ACCOUNT_NAV}
-          className="flex shrink-0 items-center gap-2 text-lg font-black tracking-tight text-ink sm:text-xl"
+          className="flex shrink-0 items-center gap-2.5 text-lg font-black tracking-tight text-brand-deep sm:text-xl"
         >
           {/* The mark sits on a plain tinted disc — no ring. The wordmark is the
               only thing in the bar that is not a pill, and it earns that by
               being the heaviest weight on the page rather than by being drawn. */}
           <span
             aria-hidden="true"
-            className="grid h-9 w-9 place-items-center rounded-full bg-brand-tint text-brand-dark"
+            className="pixel-avatar grid h-9 w-9 place-items-center bg-brand-tint text-brand-dark"
           >
             <Logo className="h-5 w-5" />
           </span>
@@ -114,8 +114,13 @@ export function Nav({ caps, quiet = false, showMenu = false }: NavProps) {
         </NavLink>
 
         {/* On narrow screens the links drop to their own row so the logo and the
-            account control stay together on the first one. */}
-        <div className="order-3 flex w-full flex-wrap items-center gap-1 sm:order-2 sm:ml-auto sm:w-auto">
+            account control stay together on the first one. On a wide screen
+            they run on directly from the wordmark — the account cluster below
+            takes the `ml-auto` instead. Pushing the sections right as well left
+            nothing between the two groups and forced the whole bar onto a
+            second row at 1440px, at which point a 71px shelf was rendering
+            105px tall. */}
+        <div className="order-3 flex w-full flex-wrap items-center gap-x-4 gap-y-1 sm:order-2 sm:w-auto">
           {sections.map((s) => {
             const active = activeSection?.href === s.href
             const tone = toneClass(s.tone)
@@ -128,8 +133,15 @@ export function Nav({ caps, quiet = false, showMenu = false }: NavProps) {
                 // No colour on the inactive state: `.nav-pill` already sets
                 // brand-deep, and overriding it with `text-muted` was leaving six
                 // of the seven pills grey on a white shelf.
-                className={`nav-pill flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-2 text-sm font-extrabold ${
-                  active ? `${tone.surface} ${tone.ink}` : ''
+                // No horizontal padding at rest. A pill-shaped hit area was the
+                // last piece of the old rounded-pill nav left standing, and
+                // seven of them at px-3.5 is ~170px the bar does not have: the
+                // row overflowed its shell and wrapped, which is what made the
+                // shelf render 116px tall against the board's 71px. The
+                // vertical padding stays — it is what keeps every pill a 40px
+                // target, well clear of the 24px floor.
+                className={`nav-pill flex items-center gap-1.5 whitespace-nowrap py-3 ${
+                  active ? `${tone.surface} ${tone.ink} px-3` : ''
                 }`}
               >
                 {/* The dot is what makes rank legible: the three pillars carry the
@@ -148,7 +160,11 @@ export function Nav({ caps, quiet = false, showMenu = false }: NavProps) {
         </div>
 
         {caps ? (
-          <>
+          // The account cluster, kept together and pushed to the far edge —
+          // "My SPLAT", the unread count, the avatar and the way out, in that
+          // order. They were three loose flex children each doing their own
+          // ordering, which is why sign-out ended up on the pills' row.
+          <div className="order-2 ml-auto flex shrink-0 items-center gap-2.5 sm:order-3">
             <NavLink
               href={ACCOUNT_NAV.href}
               // Not `activeSection !== ACCOUNT_NAV`: that missed the split
@@ -158,15 +174,15 @@ export function Nav({ caps, quiet = false, showMenu = false }: NavProps) {
               // the one place that rule lives; see its docstring.
               crossing={crossesAccountBoundary(pathname, ACCOUNT_NAV.href)}
               aria-current={activeSection?.href === ACCOUNT_NAV.href ? 'page' : undefined}
-              className={`nav-pill flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-2 text-sm font-extrabold ${
-                activeSection?.href === ACCOUNT_NAV.href ? 'bg-brand-tint text-brand-deep' : ''
+              className={`nav-pill flex items-center gap-1.5 whitespace-nowrap py-3 ${
+                activeSection?.href === ACCOUNT_NAV.href ? 'bg-brand-tint text-brand-deep px-3' : ''
               }`}
             >
               <span aria-hidden="true" className="h-2 w-2 shrink-0 rounded-full bg-brand" />
               {ACCOUNT_NAV.label}
               {caps.unreadNotifications > 0 && (
                 <>
-                  <span aria-hidden="true" className="badge bg-apricot text-apricot-deep">
+                  <span aria-hidden="true" className="badge bg-apricot-soft text-apricot-deep">
                     {caps.unreadNotifications}
                   </span>
                   {/* The number alone is not self-describing to a screen reader. */}
@@ -174,20 +190,20 @@ export function Nav({ caps, quiet = false, showMenu = false }: NavProps) {
                 </>
               )}
             </NavLink>
-            <button
-              onClick={signOut}
-              className="btn btn-quiet btn-sm order-2 ml-auto shrink-0 sm:order-3 sm:ml-0"
-            >
-              Sign out
-            </button>
+            {/* Avatar before the way out, as the board has it: the identity
+                reads first and "Sign out" ends the row, rather than the button
+                sitting between a user's name and their own initials. */}
             <span
               aria-hidden="true"
               title={caps.profile.name}
-              className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-mint text-sm font-black text-mint-deep"
+              className="pixel-avatar grid h-8 w-8 shrink-0 place-items-center bg-mint text-sm font-black text-mint-deep"
             >
               {initials(caps.profile.name)}
             </span>
-          </>
+            <button onClick={signOut} className="btn btn-quiet btn-sm shrink-0">
+              Sign out
+            </button>
+          </div>
         ) : (
           <Link
             href="/login"
