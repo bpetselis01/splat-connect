@@ -295,8 +295,7 @@ git commit -m "feat(web): rename the playroom shell class to pixel"
 **Files:**
 - Modify: `app/globals.css` (`@theme` block for new tokens; the `.pixel .btn-accent`/`.btn-primary`
   block), `app/layout.tsx` (add `Jersey_10` font)
-- Test: `tests/unit/app/no-playroom-references.test.ts` (extend), or a new
-  `tests/unit/app/pixel-tokens.test.ts`
+- Test: new `tests/unit/app/pixel-tokens.test.ts` and new `tests/unit/app/pixel-font.test.ts`
 
 **Interfaces:**
 - Consumes: `.pixel` scope from Task 3
@@ -329,6 +328,25 @@ describe('pixel depth tokens', () => {
 
   it('drops the squash-on-press transform', () => {
     expect(css).not.toContain('scaleY(0.94)')
+  })
+
+  it('wires the Jersey 10 display font into the theme', () => {
+    expect(css).toMatch(/--font-display:\s*var\(--font-jersey\)/)
+  })
+})
+
+// A second file, not a second describe block in the one above: this one reads
+// app/layout.tsx rather than app/globals.css, and pixel-tokens.test.ts already
+// established the read-the-source-file pattern this follows.
+// tests/unit/app/pixel-font.test.ts
+import { readFileSync } from 'node:fs'
+import { describe, it, expect } from 'vitest'
+
+describe('the Jersey 10 font', () => {
+  it('is imported and wired into both html branches', () => {
+    const src = readFileSync(new URL('../../../app/layout.tsx', import.meta.url), 'utf8')
+    expect(src).toContain('Jersey_10')
+    expect(src).toContain('jersey.variable')
   })
 })
 ```
@@ -377,10 +395,15 @@ const jersey = Jersey_10({
 ```
 
 Add `jersey.variable` to both `<html className={...}>` template strings (the bare and non-bare
-branches) alongside `nunito.variable` and `plexMono.variable`. Add
-`--font-jersey: var(--font-jersey), var(--font-sans);` is unnecessary — instead add a Tailwind
-theme entry in `app/globals.css`'s `@theme` block: `--font-display: var(--font-jersey),
-var(--font-sans);` so `font-display` becomes a usable utility class for Phase 2.
+branches) alongside `nunito.variable` and `plexMono.variable`. Then, in `app/globals.css`'s
+`@theme` block, add one new font entry alongside the existing `--font-sans`/`--font-mono`:
+
+```css
+--font-display: var(--font-jersey), var(--font-sans);
+```
+
+This makes `font-display` a usable Tailwind utility class for Phase 2 — this task only wires the
+token through, it does not apply `font-display` to any heading yet.
 
 - [ ] **Step 5: Rewrite the button depth rules**
 
@@ -431,7 +454,7 @@ Expected: PASS
 
 ```bash
 git add packages/web/app/globals.css packages/web/app/layout.tsx \
-  packages/web/tests/unit/app/pixel-tokens.test.ts
+  packages/web/tests/unit/app/pixel-tokens.test.ts packages/web/tests/unit/app/pixel-font.test.ts
 git commit -m "feat(web): add the pixel depth system and Jersey 10, wire buttons to it"
 ```
 
@@ -535,3 +558,14 @@ Also deferred, since their targets aren't touched by this plan: card hover shado
 (cards keep `--shadow-rest`/`--shadow-lift` until the card-shape task above lands), and the
 backdrop's drop-in entrance (`PixelBackdrop` is a straight rename in Task 2, no new animation —
 today's version has no scroll parallax to remove either, so there's nothing to replace yet).
+
+**Ruling (added after the final whole-branch review):** the Global Constraint "no rotation
+anywhere" refers to the card-tilt system this plan targets (the `Tilt` component and its
+`.tilt-1`..`.tilt-4` classes) — not a blanket ban on every `transform: rotate()` in
+`globals.css`. Four decorative rotations survive this plan on purpose, three of them already
+covered by the deferrals above: `.pixel .nav-pill:hover` (nav pills, named above),
+`.stamp`/`.pullquote` on prose pages (prose-page register, named above), and `.lean` on the
+homepage headline (`app/page.tsx:124` — a homepage-specific flourish outside every task's file
+list, added to this deferred list now rather than left as a silent gap). None of the four are
+touched by Tasks 1-5, and none are the card-grid tilt mechanism the constraint was written
+against.
