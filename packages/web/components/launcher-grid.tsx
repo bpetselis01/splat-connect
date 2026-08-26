@@ -15,16 +15,17 @@
  * The twelve-column track is what makes both rows come out even: three pillars
  * at four columns, four supporting sections at three.
  *
- * A pillar is now a tall tile with the count set huge in the display face and
- * the switch motif bleeding off its corner. The first pass gave pillars the
- * extra width but nothing to fill it with, so three of the site's most important
- * destinations came out as pale rectangles that were mostly empty space.
+ * A pillar is now a tall tile with a big illustration filling most of it and
+ * the section's own mark resting beside its count. The first pass gave
+ * pillars the extra width but nothing to fill it with, so three of the
+ * site's most important destinations came out as pale rectangles that were
+ * mostly empty space.
  */
 import Link from 'next/link'
 import type { Route } from 'next'
 import type { IllustrationKey } from '@/components/editorial-image'
 import { toneClass, type Tone } from '@/lib/tone'
-import { Sticker } from '@/components/slot'
+import { Slot, Sticker } from '@/components/slot'
 
 export interface LauncherTile {
   href: string
@@ -54,30 +55,32 @@ export function LauncherGrid({ tiles }: { tiles: LauncherTile[] }) {
               // Cast: NavSection.href is `string`, not typedRoutes' `Route` — see
               // lib/public-nav.ts for why.
               href={tile.href as Route<string>}
-              className={`card-pixel card-link group relative flex h-full flex-col overflow-hidden ${
-                pillar
-                  ? `${tone.surface} ${tone.ink} min-h-[13rem] p-6`
-                  : 'bg-surface p-4 text-ink'
+              className={`card-pixel card-link group relative flex h-full flex-col overflow-hidden ${tone.surface} ${
+                pillar ? `card-pixel-lead ${tone.ink} min-h-[22rem] p-5` : `${tone.ink} p-4`
               }`}
             >
-              {/* The motif this tile was always described as having and never
-                  had. Hung off the bottom corner and clipped by the tile's own
-                  overflow, so it reads as a thing the tile is standing on rather
-                  than an icon placed in it — and it fills the dead space beside
-                  the count without competing with it for the first fixation. */}
+              {/*
+                The art region, which is most of a pillar.
+
+                It was a small disc hung off the bottom corner, and that is why
+                three of the site's most important destinations came out as
+                mostly-empty rectangles: a tile whose art is an afterthought in
+                the margin has nothing holding its middle. Here the picture is
+                the tile's largest element and the words sit beneath it, which
+                is the arrangement every one of these tiles was drawn with.
+              */}
               {pillar && (
-                <Sticker
-                  art={tile.art}
-                  note={`${tile.label} — section illustration`}
-                  size="lg"
-                  className="!absolute -bottom-5 -right-4 !bg-transparent !shadow-none opacity-70"
+                <Slot
+                  kind="art"
+                  note={`${tile.label} — isometric scene, one object per product`}
+                  className="mb-4 h-[10.5rem] w-full"
                 />
               )}
 
-              <p className={`relative font-black ${pillar ? 'text-lg' : 'text-sm'}`}>{tile.label}</p>
+              <p className={`relative font-black ${pillar ? 'text-xl' : 'text-sm'}`}>{tile.label}</p>
               <p
                 className={`relative mt-1 leading-snug ${
-                  pillar ? 'text-sm opacity-80' : 'text-xs text-muted'
+                  pillar ? 'text-sm opacity-85' : 'text-xs text-muted'
                 }`}
               >
                 {tile.blurb}
@@ -85,23 +88,35 @@ export function LauncherGrid({ tiles }: { tiles: LauncherTile[] }) {
 
               {/* The number is the payoff, so it sits at the bottom where the
                   eye finishes rather than at the top where it competes with the
-                  label for the first fixation. */}
-              {tile.count !== undefined ? (
-                <p
-                  className={`relative mt-auto pt-4 font-black leading-none tracking-tight ${
-                    pillar ? 'text-6xl' : 'text-2xl text-brand-deep'
-                  }`}
-                >
-                  {tile.count}
-                </p>
-              ) : (
-                <span
-                  aria-hidden="true"
-                  className="relative mt-auto pt-4 text-xl font-bold opacity-40 transition-transform duration-200 group-hover:translate-x-1"
-                >
-                  →
-                </span>
-              )}
+                  label for the first fixation. On a pillar the section's own
+                  mark sits opposite it, closing the row. */}
+              <div className="relative mt-auto flex items-end justify-between gap-3 pt-4">
+                {tile.count !== undefined ? (
+                  <p
+                    className={`font-black leading-none tracking-tight ${
+                      pillar ? 'title-hero !text-current !text-5xl' : 'text-2xl'
+                    }`}
+                  >
+                    {tile.count}
+                  </p>
+                ) : (
+                  <span
+                    aria-hidden="true"
+                    className="text-xl font-bold opacity-40 transition-transform duration-200 group-hover:translate-x-1"
+                  >
+                    →
+                  </span>
+                )}
+
+                {pillar && (
+                  <Sticker
+                    art={tile.art}
+                    note={`${tile.label} — section mark`}
+                    size="sm"
+                    className="!h-11 !w-11 !bg-transparent !shadow-none opacity-70"
+                  />
+                )}
+              </div>
             </Link>
           </div>
         )
