@@ -32,13 +32,13 @@ export default function GetInvolvedPage() {
       <p className="mb-4 mt-1 max-w-prose text-sm text-muted">
         Each of these walks through the whole path, start to finish.
       </p>
-      <HubGrid items={tracks} tone={section.tone} art={section.art} />
+      <HubGrid items={tracks} tone={section.tone} />
 
       <h2 className="title-detail mt-12">Specific things you can do</h2>
       <p className="mb-4 mt-1 max-w-prose text-sm text-muted">
         Smaller, more concrete. Some are not built yet — those say so.
       </p>
-      <HubGrid items={actions} tone={section.tone} art={section.art} leadFirst={false} />
+      <HubGrid items={actions} tone={section.tone} columns={4} />
     </div>
   )
 }
