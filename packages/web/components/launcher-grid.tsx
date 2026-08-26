@@ -24,7 +24,6 @@ import Link from 'next/link'
 import type { Route } from 'next'
 import type { IllustrationKey } from '@/components/editorial-image'
 import { toneClass, type Tone } from '@/lib/tone'
-import { Tilt } from '@/components/tilt'
 import { Sticker } from '@/components/slot'
 
 export interface LauncherTile {
@@ -47,16 +46,15 @@ export function LauncherGrid({ tiles }: { tiles: LauncherTile[] }) {
         const tone = toneClass(tile.tone)
 
         return (
-          <Tilt
+          <div
             key={tile.href}
-            index={i}
-            className={pillar ? 'col-span-2 lg:col-span-4' : 'col-span-1 lg:col-span-3'}
+            className={pillar ? 'h-full col-span-2 lg:col-span-4' : 'h-full col-span-1 lg:col-span-3'}
           >
             <Link
               // Cast: NavSection.href is `string`, not typedRoutes' `Route` — see
               // lib/public-nav.ts for why.
               href={tile.href as Route<string>}
-              className={`card-playroom card-link group relative flex h-full flex-col overflow-hidden ${
+              className={`card-pixel card-link group relative flex h-full flex-col overflow-hidden ${
                 pillar
                   ? `${tone.surface} ${tone.ink} min-h-[13rem] p-6`
                   : 'bg-surface p-4 text-ink'
@@ -105,7 +103,7 @@ export function LauncherGrid({ tiles }: { tiles: LauncherTile[] }) {
                 </span>
               )}
             </Link>
-          </Tilt>
+          </div>
         )
       })}
     </div>
