@@ -62,7 +62,7 @@ export default function PrintingPage() {
         Some of this is not built yet. Where it isn&apos;t, you can ask to be told when
         it is.
       </p>
-      <HubGrid items={printing.children} tone={printing.tone} art={printing.art} />
+      <HubGrid items={printing.children} tone={printing.tone} />
     </div>
   )
 }
