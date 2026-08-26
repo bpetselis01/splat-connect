@@ -1,8 +1,13 @@
 # Pixel: replacing Playroom as the public site's visual system
 
 **Date:** 2026-08-26
-**Status:** Design, awaiting review
-**Scope:** The same 42 public-facing pages Playroom covered. No change to authenticated product UI.
+**Status:** Shipped as far as the foundation layer. **Two decisions below were corrected on
+2026-08-27** — see `2026-08-27-pixel-page-templates-design.md`. Corrected passages are marked
+inline; do not implement from them.
+**Scope:** ~~The same 42 public-facing pages Playroom covered. No change to authenticated product
+UI.~~ **Corrected 2026-08-27:** 45 pages — the 42 public pages plus `/dashboard` (front door
+only), `/login` and `/signup`, all three of which the board draws. `AppShell`, `ShellFrame` and
+`lib/nav-model.ts` remain out of scope.
 **Supersedes:** `2026-08-20-playroom-public-site-design.md`. Playroom is fully shipped (homepage,
 all 7 hubs, all 4 prose pages, nav, footer, cards, backdrop, tilt) — this is a replacement of a
 live system, not a greenfield build.
@@ -58,9 +63,12 @@ Still true, unchanged from Playroom:
 - **`lib/tone.ts`** — still the single place tone maps to classes; the classes it maps to change.
 - **Register by page class** (Full / Quiet / Plain) — the credibility mechanism that kept Playroom
   serious for therapists and funders carries over. Its old differentiator (tilt on/off) is gone
-  with tilt itself; the new one is shadow depth and display type: Quiet drops `Jersey 10` headings
-  back to `Nunito` and shrinks the hard shadow from 4–6px to 2px. Flag this for explicit review —
-  it's the one judgment call in this spec not directly confirmed against the board.
+  with tilt itself; the new one is shadow depth alone. ~~Quiet drops `Jersey 10` headings back to
+  `Nunito` and shrinks the hard shadow from 4–6px to 2px.~~ **Corrected 2026-08-27:** no register
+  ever carried `Jersey 10` headings, so there is nothing to drop; and the board draws no 2px
+  shadow anywhere — its ladder is 6/5/4/3, with 2px reserved for the pressed state. This passage
+  was flagged in the original as the one judgment call not confirmed against the board, and it
+  was indeed the one that was wrong.
 
 ## The design system
 
@@ -83,7 +91,7 @@ and every other component still on `border-radius: 9999px` pills or the soft `--
 |---|---|---|
 | Canvas | `#eaf4fa` + tints | Unchanged — not touched by this work |
 | Ink / accent hex | Unchanged — see correction above | No new colours anywhere in the system |
-| Display type | `'Jersey 10'` | New. Pixel/bitmap display font, headings only |
+| Display type | `'Jersey 10'` | ~~New. Pixel/bitmap display font, headings only~~ **Corrected 2026-08-27:** numerals only. The board uses it 3 times, all of them the homepage hero stat chips at 22px. Every heading on every screen is `Nunito`. |
 | Body/label type | `Nunito`, `IBM Plex Mono` | Unchanged |
 | Corner radius | 2–10px typical, replacing `9999px` pills and `1rem` soft cards | New shape language |
 | Depth | Hard offset shadow (`Npx Npx 0`, zero blur) against `--color-ink` or a tone's `-deep` shade | Generalises the existing button pattern; replaces `--shadow-rest`/`--shadow-lift` and tilt+lift as the system's one depth cue |
@@ -99,10 +107,11 @@ entirely by the border + hard shadow pair; hover/press states animate shadow off
 
 Same three tiers as Playroom, re-skinned:
 
-- **Full Pixel** — homepage and all 7 hubs. Full border/shadow depth, `Jersey 10` display
-  headings, backdrop shapes, photo slots.
+- **Full Pixel** — homepage and all 7 hubs. Full border/shadow depth, backdrop shapes, photo
+  slots. (~~`Jersey 10` display headings~~ — corrected 2026-08-27; headings are `Nunito`.)
 - **Quiet Pixel** — Learn articles, trust pages, org and contributor profiles. Shadow depth
-  reduced to 2px, `Nunito`-only headings (no `Jersey 10`), one accent element, no backdrop shapes.
+  reduced, one accent element, no backdrop shapes. (`Nunito`-only headings is not a
+  differentiator — corrected 2026-08-27, every register uses Nunito headings.)
 - **Plain** — data-dense detail views (`/organizations/[id]/projects/[tutorialId]` etc.). Section
   colour in the header only; otherwise unchanged.
 
@@ -186,7 +195,8 @@ Unchanged constraints from Playroom, still non-negotiable:
 
 ## Non-goals
 
-- No change to authenticated product UI or `AppShell`
+- ~~No change to authenticated product UI or `AppShell`~~ **Corrected 2026-08-27:** `AppShell` is
+  still out, but the `/dashboard` front door and the two auth screens are in — the board draws them.
 - No 3D, no GSAP, no shadcn/Radix
 - No new copy — this is a chrome/token swap on settled IA and content
 - Real photography/pixel-art illustration is still out of scope; slots stay placeholder-ready
