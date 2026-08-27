@@ -161,9 +161,12 @@ describe('DashboardHub', () => {
   })
 
   // Eight before: Submit an idea folded into Design challenges.
-  it('renders seven cards for a plain account', async () => {
+  it('renders eight cards for a plain account', async () => {
     const { container } = render(await DashboardHub())
-    expect(container.querySelectorAll('a.card-pixel')).toHaveLength(7)
+    // Eight, not seven: the Saved rail row produces a card here too, because
+    // this hub is built from the same nav model. Deliberate — two complete rows
+    // of four rather than a row of four and a stranded three.
+    expect(container.querySelectorAll('a.card-pixel')).toHaveLength(8)
   })
 
   // Tests: a signed-out visitor is sent to login rather than shown an empty hub

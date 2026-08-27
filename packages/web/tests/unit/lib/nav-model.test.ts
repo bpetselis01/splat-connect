@@ -89,9 +89,9 @@ describe('buildNav', () => {
 
   // Same total as before Child profiles moved to the Account page: it left
   // and Submit an idea arrived in its place.
-  it('builds twelve linked rows for a leader-admin', () => {
+  it('builds thirteen linked rows for a leader-admin', () => {
     const rows = buildNav(caps({ ledOrgs: [org], isAdmin: true }), 0).flatMap((g) => g.rows)
-    expect(rows).toHaveLength(12)
+    expect(rows).toHaveLength(13)
   })
 
   it('includes a Design challenges row for every account', () => {
@@ -163,5 +163,16 @@ describe('buildNav', () => {
       if (row.href === '/get-involved/submit-an-idea') continue
       expect(row.href).toMatch(/^\/(dashboard|admin|notifications)/)
     }
+  })
+
+  /**
+   * One row, two surfaces. The rail shows it and so does My SPLAT, because the
+   * hub is built from this model — which is why adding it here was the whole of
+   * decision 8 rather than two separate changes.
+   */
+  it('puts Saved first in the Account group, ahead of Notifications', () => {
+    const account = buildNav(caps(), 0).find((g) => g.heading === 'Account')!
+    expect(account.rows.map((r) => r.label)).toEqual(['Saved', 'Notifications', 'Account'])
+    expect(account.rows[0].href).toBe('/dashboard/saved')
   })
 })
