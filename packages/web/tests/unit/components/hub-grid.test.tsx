@@ -33,17 +33,113 @@ describe('HubGrid', () => {
     expect(container).toBeEmptyDOMElement()
   })
 
-  it('renders every card upright — no tilt class on any grid item', () => {
-    const { container } = render(
-      <HubGrid items={[
-        { href: '/a', label: 'A', blurb: 'a', state: 'live' },
-        { href: '/b', label: 'B', blurb: 'b', state: 'live' },
-      ]} />
-    )
+  /*
+   * The board tints every child card, not just the first. HubGrid used to tint
+   * only a "lead" card and leave its siblings white, on the reasoning that a
+   * six-card hub all in one hue reads as "a wall of one hue". That was sound
+   * about a flat six-card grid and does not apply here: every hub page already
+   * splits its children into labelled groups, so no grid on the site renders
+   * more than four cards. See the spec, "Grouped hub children — already done".
+   */
+  it('tints every card, not just the first', () => {
+    const { container } = render(<HubGrid items={items} tone="honey" />)
     const cards = container.querySelectorAll('a.card-pixel')
-    expect(cards.length).toBeGreaterThan(0)
+    expect(cards).toHaveLength(2)
     for (const card of cards) {
-      expect(card.parentElement?.className).not.toMatch(/tilt-\d/)
+      expect(card.className).toContain('bg-honey-soft')
     }
+  })
+
+  it('gives every card a tone-coloured art slot', () => {
+    const { container } = render(<HubGrid items={items} tone="honey" />)
+    const slots = container.querySelectorAll('[aria-hidden="true"].border-dashed')
+    expect(slots).toHaveLength(2)
+    for (const slot of slots) {
+      expect(slot.className).toContain('text-honey-deep')
+    }
+  })
+
+  /* The board draws no arrow on a hub child card, and no card is wider than
+     any other — both were this component's own inventions. */
+  it('draws no arrow and no wide lead card', () => {
+    const { container } = render(<HubGrid items={items} tone="honey" />)
+    expect(container.textContent).not.toContain('→')
+    for (const cell of container.querySelectorAll('a.card-pixel')) {
+      expect(cell.className).not.toContain('col-span-2')
+      expect(cell.parentElement?.className).not.toContain('col-span-2')
+    }
+  })
+
+  /* Two column counts, because the board draws two — 3-up for the primary
+     groups, 4-up for the "more in this section" tails. */
+  it('lays out four columns when asked', () => {
+    const { container } = render(<HubGrid items={items} tone="honey" columns={4} />)
+    expect(container.firstElementChild!.className).toContain('lg:grid-cols-4')
+  })
+
+  it('lays out three columns by default', () => {
+    const { container } = render(<HubGrid items={items} tone="honey" />)
+    expect(container.firstElementChild!.className).toContain('lg:grid-cols-3')
+  })
+
+  /*
+   * My SPLAT's cards list what is behind them instead of describing themselves.
+   * The lines are TEXT, deliberately: the whole card is one link, so a line
+   * that looked and behaved like a control would navigate somewhere other than
+   * what it names. See decision 1 in the spec.
+   */
+  const signpost: NavItem[] = [
+    {
+      href: '/dashboard/tutorials',
+      label: 'My tutorials',
+      state: 'live',
+      count: 2,
+      blurb: [
+        'Add a tutorial to SPLAT Connect',
+        'View saved tutorials',
+        'Browse tutorial library',
+      ],
+    },
+  ]
+
+  it('renders an array blurb as a list of lines', () => {
+    render(<HubGrid items={signpost} tone="brand" />)
+    expect(screen.getByText('Add a tutorial to SPLAT Connect')).toBeInTheDocument()
+    expect(screen.getByText('View saved tutorials')).toBeInTheDocument()
+    expect(screen.getByText('Browse tutorial library')).toBeInTheDocument()
+  })
+
+  it('makes no line a link of its own', () => {
+    render(<HubGrid items={signpost} tone="brand" />)
+    // One link for the card, and nothing else. Three tags that each looked
+    // pressable but went to the card's href would teach that tags lie.
+    expect(screen.getAllByRole('link')).toHaveLength(1)
+    expect(screen.getByText('Browse tutorial library').closest('a')).toHaveAttribute(
+      'href',
+      '/dashboard/tutorials'
+    )
+  })
+
+  it('badges a non-zero count', () => {
+    render(<HubGrid items={signpost} tone="brand" />)
+    expect(screen.getByText('2')).toBeInTheDocument()
+  })
+
+  it('renders no badge at zero rather than a zero badge', () => {
+    render(<HubGrid items={[{ ...signpost[0], count: 0 }]} tone="brand" />)
+    expect(screen.queryByText('0')).not.toBeInTheDocument()
+  })
+
+  it('renders no badge when the item has no count at all', () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- dropping count is the point of the destructure
+    const { count: _count, ...noCount } = signpost[0]
+    const { container } = render(<HubGrid items={[noCount]} tone="brand" />)
+    expect(container.querySelector('.badge')).toBeNull()
+  })
+
+  it('still renders a string blurb as a paragraph', () => {
+    const { container } = render(<HubGrid items={items} tone="honey" />)
+    expect(container.querySelector('ul')).toBeNull()
+    expect(screen.getByText('Which switch suits which child.')).toBeInTheDocument()
   })
 })

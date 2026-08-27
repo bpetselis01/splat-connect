@@ -114,7 +114,7 @@ export default async function ImpactPage() {
           Some of this is not built yet. Those pages say so, and will take your email if
           you want to know when they are.
         </p>
-        <HubGrid items={impactSection.children} tone={impactSection.tone} art={impactSection.art} />
+        <HubGrid items={impactSection.children} tone={impactSection.tone} columns={4} />
       </div>
     </div>
   )

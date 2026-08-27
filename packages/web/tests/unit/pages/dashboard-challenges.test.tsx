@@ -24,6 +24,9 @@ vi.mock('next/link', () => ({
     </a>
   ),
 }))
+vi.mock('@/components/mark-notifications-read', () => ({
+  MarkNotificationsRead: () => null,
+}))
 
 import { apiClient } from '@/lib/api-client'
 
@@ -133,5 +136,20 @@ describe('DashboardChallengesPage', () => {
     const link = screen.getByRole('link', { name: /one-handed jar opener/i })
     expect(link).toHaveAttribute('href', '/get-involved/design-challenges/idea-2')
     expect(screen.getByText('Looking for makers')).toBeInTheDocument()
+  })
+
+  /*
+   * The hub's Design challenges card names "Submit an idea" as one of the
+   * things behind it, and that tag is text, not a link. This button is the
+   * only route to the idea form from inside the account area — and it has to
+   * survive having ideas already, which the empty-state button does not.
+   */
+  it('offers the idea form even when ideas already exist', async () => {
+    mockLists({ mine: [idea({ status: 'pending' })] })
+    render(await DashboardChallengesPage())
+    expect(screen.getByRole('link', { name: /submit an idea/i })).toHaveAttribute(
+      'href',
+      '/get-involved/submit-an-idea'
+    )
   })
 })

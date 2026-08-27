@@ -7,8 +7,10 @@
  * beneath it, and breadcrumbs earn their place at three levels, not two. What a
  * visitor actually needs here is the way back up, so that is all this renders.
  *
- * Renders nothing on the homepage or on a section hub: you are already at the
- * top of the tree, and a link pointing at the page you are on is noise.
+ * Renders nothing on the homepage — a link pointing at the page you are on is
+ * noise. On a section hub it points Home, as the board draws it: a hub is a
+ * page people land on from search as often as from the nav above it, and the
+ * board puts "← Home" over every one of them.
  *
  * Reads its own pathname via usePathname (same pattern as components/nav.tsx)
  * rather than taking it as a prop from the server layout: the layout only
@@ -24,25 +26,37 @@
  */
 import { usePathname } from 'next/navigation'
 import { BoundaryLink } from '@/components/boundary-link'
-import { sectionFor } from '@/lib/public-nav'
+import { ACCOUNT_NAV, sectionFor } from '@/lib/public-nav'
 import { toneClass } from '@/lib/tone'
 
 export function Breadcrumb() {
   const pathname = usePathname() ?? ''
-  const section = sectionFor(pathname)
-  if (!section || pathname === section.href) return null
+  if (pathname === '/') return null
 
+  const section = sectionFor(pathname)
+  if (!section) return null
+
+  // The board draws a back-link over all seven public hubs and none over My SPLAT.
+  // A signed-in user's way out of their account root is not the public homepage.
+  // Note: app/layout.tsx also gates this component away from /dashboard today; this
+  // guard keeps the component correct on its own terms so it doesn't depend on that.
+  if (section === ACCOUNT_NAV) return null
+
+  // On the hub itself the way up is Home; inside a section it is the hub.
+  const onHub = pathname === section.href
+  const href = onHub ? '/' : section.href
+  const label = onHub ? 'Home' : section.label
   const tone = toneClass(section.tone)
 
   return (
     <nav aria-label="Breadcrumb" className="mb-5">
       <BoundaryLink
-        href={section.href}
+        href={href}
         className="eyebrow inline-flex items-center gap-2 text-brand-dark transition-colors hover:text-brand-deep"
       >
         <span aria-hidden="true" className={`h-2 w-2 rounded-full ${tone.dot}`} />
         <span aria-hidden="true">←</span>
-        {section.label}
+        {label}
       </BoundaryLink>
     </nav>
   )

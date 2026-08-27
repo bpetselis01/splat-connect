@@ -88,6 +88,36 @@ describe('Slot', () => {
   })
 })
 
+describe('Slot tone', () => {
+  /*
+   * The board draws a child card's art slot in that section's deep colour —
+   * honey on Learn, apricot on 3D Printing — not in a single brand blue. It
+   * derives the dash from the label colour via border-current rather than
+   * adding a `deepEdge` to ToneSpec, because the two are always the same value
+   * and a second token would be a second thing to keep in step.
+   */
+  it('takes the section colour when given a tone', () => {
+    const { container } = render(<Slot kind="art" tone="honey" note="x" />)
+    const slot = container.firstElementChild!
+    expect(slot.className).toContain('text-honey-deep')
+    expect(slot.className).toContain('border-current')
+    expect(slot.className).not.toContain('border-brand')
+  })
+
+  it('stays brand blue when given no tone', () => {
+    const { container } = render(<Slot kind="art" note="x" />)
+    expect(container.firstElementChild!.className).toContain('border-brand')
+  })
+
+  /* Placeholders never reach a screen reader or swallow a click. */
+  it('is decorative in every tone', () => {
+    const { container } = render(<Slot kind="art" tone="mint" note="x" />)
+    const slot = container.firstElementChild!
+    expect(slot).toHaveAttribute('aria-hidden', 'true')
+    expect(slot.className).toContain('pointer-events-none')
+  })
+})
+
 describe('NEXT_PUBLIC_SLOTS=off', () => {
   // The whole point of the flag: dashed boxes must never reach a real family
   // just because nobody remembered to strip the placeholders out of forty pages.

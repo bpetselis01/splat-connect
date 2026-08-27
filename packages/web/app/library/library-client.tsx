@@ -42,7 +42,7 @@ export function LibraryClient({ tutorials }: { tutorials: Tutorial[] }) {
               type="button"
               aria-pressed={difficulty === d}
               onClick={() => setDifficulty(d)}
-              className="chip capitalize"
+              className="chip"
             >
               {d}
             </button>

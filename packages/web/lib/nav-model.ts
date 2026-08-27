@@ -75,7 +75,7 @@ export function buildNav(caps: Capabilities, unreadNotifications: number): NavGr
         { href: '/dashboard/toys', label: 'My toys', icon: 'box' },
         {
           href: '/dashboard/exchanges',
-          label: 'Exchanges',
+          label: 'My exchanges',
           icon: 'handshake',
           // Requests to answer and handoffs to confirm — the same rows the list
           // marks "waiting on you". See needsAction in @splat-connect/types.

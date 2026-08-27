@@ -42,19 +42,20 @@ describe('getCapabilities', () => {
   //        getUser() inside the API on every cold load. /api/child-profile was fetched to
   //        derive an isParent nobody branched on; app/dashboard/child fetches the row
   //        itself because it needs the body. Nothing may be added back without a reader.
-  //        action-count has one: the Exchanges badge in lib/nav-model.ts. The three
+  //        action-count has one: the My exchanges badge in lib/nav-model.ts. unread-counts
+  //        has one too: the My SPLAT hub's badges in app/dashboard/page.tsx. The three
   //        secondary fetches run in parallel, so the cost is one round of latency, not four.
   it('fetches only the profile, the led organisations, and the two counts', async () => {
     route({
       '/api/contributors/me': PROFILE,
       '/api/organizations/mine': [],
-      '/api/notifications/me/unread-count': { count: 0 },
+      '/api/notifications/me/unread-counts': { tutorials: 0, exchanges: 0, challenges: 0, total: 0 },
       '/api/toy-transactions/action-count': { count: 0 },
     })
     await subject()
     expect(get.mock.calls.map(([path]) => path).sort()).toEqual([
       '/api/contributors/me',
-      '/api/notifications/me/unread-count',
+      '/api/notifications/me/unread-counts',
       '/api/organizations/mine',
       '/api/toy-transactions/action-count',
     ])
@@ -62,13 +63,13 @@ describe('getCapabilities', () => {
 
   // Tests: the exchange action count reaches the caller, for the rail badge
   // How:   the endpoint resolves to 3; checks exchangeActions is 3
-  // Chain: lib/nav-model.ts puts this on the Exchanges row, and the same needsAction
+  // Chain: lib/nav-model.ts puts this on the My exchanges row, and the same needsAction
   //        predicate marks the matching cards — the number must agree with them
   it('reports the exchange action count', async () => {
     route({
       '/api/contributors/me': PROFILE,
       '/api/organizations/mine': [],
-      '/api/notifications/me/unread-count': { count: 0 },
+      '/api/notifications/me/unread-counts': { tutorials: 0, exchanges: 0, challenges: 0, total: 0 },
       '/api/toy-transactions/action-count': { count: 3 },
     })
     expect((await subject())?.exchangeActions).toBe(3)
@@ -82,7 +83,7 @@ describe('getCapabilities', () => {
     route({
       '/api/contributors/me': PROFILE,
       '/api/organizations/mine': [],
-      '/api/notifications/me/unread-count': { count: 0 },
+      '/api/notifications/me/unread-counts': { tutorials: 0, exchanges: 0, challenges: 0, total: 0 },
       '/api/toy-transactions/action-count': new Error('boom'),
     })
     const caps = await subject()
@@ -98,7 +99,7 @@ describe('getCapabilities', () => {
     route({
       '/api/contributors/me': PROFILE,
       '/api/organizations/mine': [{ id: 'o1', name: 'Splat', status: 'active' }],
-      '/api/notifications/me/unread-count': { count: 0 },
+      '/api/notifications/me/unread-counts': { tutorials: 0, exchanges: 0, challenges: 0, total: 0 },
       '/api/toy-transactions/action-count': { count: 0 },
     })
     expect((await subject())?.ledOrgs).toHaveLength(1)
@@ -112,7 +113,7 @@ describe('getCapabilities', () => {
     route({
       '/api/contributors/me': { ...PROFILE, role: 'admin' },
       '/api/organizations/mine': [],
-      '/api/notifications/me/unread-count': { count: 0 },
+      '/api/notifications/me/unread-counts': { tutorials: 0, exchanges: 0, challenges: 0, total: 0 },
       '/api/toy-transactions/action-count': { count: 0 },
     })
     expect((await subject())?.isAdmin).toBe(true)
@@ -126,7 +127,7 @@ describe('getCapabilities', () => {
     route({
       '/api/contributors/me': PROFILE,
       '/api/organizations/mine': new Error('boom'),
-      '/api/notifications/me/unread-count': { count: 0 },
+      '/api/notifications/me/unread-counts': { tutorials: 0, exchanges: 0, challenges: 0, total: 0 },
       '/api/toy-transactions/action-count': { count: 0 },
     })
     const caps = await subject()

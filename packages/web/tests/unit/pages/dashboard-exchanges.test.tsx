@@ -20,6 +20,9 @@ vi.mock('next/navigation', () => ({ redirect: vi.fn(), usePathname: () => null }
 vi.mock('next/link', () => ({
   default: ({ href, children }: { href: string; children: React.ReactNode }) => <a href={href}>{children}</a>,
 }))
+vi.mock('@/components/mark-notifications-read', () => ({
+  MarkNotificationsRead: () => null,
+}))
 
 import { apiClient } from '@/lib/api-client'
 
@@ -134,5 +137,57 @@ describe('ExchangesPage', () => {
     vi.mocked(apiClient.get).mockResolvedValue([])
     render(await ExchangesPage())
     expect(screen.getByText(/no donation or exchange requests yet/i)).toBeInTheDocument()
+  })
+})
+
+describe('exchanges active/history split', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('puts requested and accepted under active', async () => {
+    vi.mocked(apiClient.get).mockResolvedValue([
+      tx({ id: 'a', toy_name: 'Requested toy', status: 'requested' }),
+      tx({ id: 'b', toy_name: 'Accepted toy', status: 'accepted' }),
+    ])
+    render(await ExchangesPage())
+
+    expect(screen.getByRole('heading', { name: /active/i })).toBeInTheDocument()
+    expect(screen.getByText('Requested toy')).toBeInTheDocument()
+    expect(screen.getByText('Accepted toy')).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: /history/i })).not.toBeInTheDocument()
+  })
+
+  it('puts completed, rejected and withdrawn under history', async () => {
+    vi.mocked(apiClient.get).mockResolvedValue([
+      tx({ id: 'c', toy_name: 'Done toy', status: 'completed' }),
+      tx({ id: 'd', toy_name: 'Refused toy', status: 'rejected' }),
+      tx({ id: 'e', toy_name: 'Pulled toy', status: 'withdrawn' }),
+    ])
+    render(await ExchangesPage())
+
+    expect(screen.getByRole('heading', { name: /history/i })).toBeInTheDocument()
+    expect(screen.getByText('Done toy')).toBeInTheDocument()
+    expect(screen.getByText('Refused toy')).toBeInTheDocument()
+    expect(screen.getByText('Pulled toy')).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: /^active$/i })).not.toBeInTheDocument()
+  })
+
+  /* A section heading over nothing reads as "you have none of these", which is
+     wrong when the other section is full. Show a heading only when it has rows. */
+  it('shows neither heading when there is nothing at all', async () => {
+    vi.mocked(apiClient.get).mockResolvedValue([])
+    render(await ExchangesPage())
+    expect(screen.queryByRole('heading', { name: /active/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: /history/i })).not.toBeInTheDocument()
+    expect(screen.getByText(/no donation or exchange requests yet/i)).toBeInTheDocument()
+  })
+
+  it('shows both when both have rows', async () => {
+    vi.mocked(apiClient.get).mockResolvedValue([
+      tx({ id: 'a', toy_name: 'Live toy', status: 'accepted' }),
+      tx({ id: 'c', toy_name: 'Done toy', status: 'completed' }),
+    ])
+    render(await ExchangesPage())
+    expect(screen.getByRole('heading', { name: /active/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /history/i })).toBeInTheDocument()
   })
 })

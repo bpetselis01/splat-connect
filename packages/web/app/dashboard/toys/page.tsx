@@ -5,6 +5,7 @@ import { getCapabilities } from '@/lib/capabilities'
 import { CardPhoto } from '@/components/card-photo'
 import { ToyStatusBadge } from '@/components/toy-status-badge'
 import { Box } from '@/components/icons'
+import { BoundaryLink } from '@/components/boundary-link'
 import type { Toy } from '@splat-connect/types'
 
 export default async function ToyListPage() {
@@ -28,9 +29,17 @@ export default async function ToyListPage() {
             The adapted toys you hold, ready to offer for exchange with an association.
           </p>
         </div>
-        <Link href="/dashboard/toys/new" className="btn btn-accent">
-          + Add a toy
-        </Link>
+        {/* The My SPLAT card promises three things here. Two of them exist;
+            "Saved toys" waits on the saves subsystem, and an absent button
+            beats one that leads nowhere. */}
+        <div className="flex flex-wrap gap-3">
+          <Link href="/dashboard/toys/new" className="btn btn-accent">
+            + Add a toy
+          </Link>
+          <BoundaryLink href="/toy-library" className="btn btn-quiet">
+            Browse toy library
+          </BoundaryLink>
+        </div>
       </div>
 
       {activeToys.length === 0 ? (

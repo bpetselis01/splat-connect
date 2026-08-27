@@ -23,6 +23,9 @@ vi.mock('next/link', () => ({
 vi.mock('@/components/difficulty-badge', () => ({
   DifficultyBadge: () => null,
 }))
+vi.mock('@/components/mark-notifications-read', () => ({
+  MarkNotificationsRead: () => null,
+}))
 
 import { apiClient } from '@/lib/api-client'
 import { redirect } from 'next/navigation'
@@ -214,5 +217,40 @@ describe('DashboardPage', () => {
       ])
     render(await DashboardPage())
     expect(screen.getByText('Riverside Therapy is deciding')).toBeInTheDocument()
+  })
+
+  // Tests: the header offers a way into the public library alongside the
+  //        primary "New tutorial" action
+  // Chain: the My SPLAT card names "Browse the library" as behind this tile,
+  //        and the tile itself is text — this button is the only route
+  it('gives My tutorials a way into the public library', async () => {
+    vi.mocked(apiClient.get)
+      .mockResolvedValueOnce(mockProfile)
+      .mockResolvedValueOnce([])
+    render(await DashboardPage())
+    expect(screen.getByRole('link', { name: /browse the library/i })).toHaveAttribute(
+      'href',
+      '/library'
+    )
+  })
+
+  // Tests: the primary action stays put once the browse link is added
+  it('keeps the primary action on My tutorials', async () => {
+    vi.mocked(apiClient.get)
+      .mockResolvedValueOnce(mockProfile)
+      .mockResolvedValueOnce([])
+    render(await DashboardPage())
+    expect(screen.getByRole('link', { name: /new tutorial/i })).toHaveAttribute('href', '/upload')
+  })
+
+  // Tests: no "Saved" button ships — the saves subsystem has no spec, no
+  //        table and no route, so a button that leads nowhere is worse than
+  //        an absent one
+  it('ships no Saved button yet', async () => {
+    vi.mocked(apiClient.get)
+      .mockResolvedValueOnce(mockProfile)
+      .mockResolvedValueOnce([])
+    render(await DashboardPage())
+    expect(screen.queryByRole('link', { name: /saved/i })).not.toBeInTheDocument()
   })
 })

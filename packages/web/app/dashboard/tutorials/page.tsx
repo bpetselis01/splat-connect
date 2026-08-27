@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { DashboardTutorialCard } from '@/components/dashboard-tutorial-card'
 import { BookOpen } from '@/components/icons'
 import { BoundaryLink } from '@/components/boundary-link'
+import { MarkNotificationsRead } from '@/components/mark-notifications-read'
 import type { Tutorial, Profile, TutorialOrg } from '@splat-connect/types'
 
 export default async function DashboardPage() {
@@ -28,6 +29,8 @@ export default async function DashboardPage() {
 
   return (
     <div>
+      <MarkNotificationsRead bucket="tutorials" />
+
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-ink">My tutorials</h1>
@@ -36,9 +39,17 @@ export default async function DashboardPage() {
             SPLAT — before it reaches the library.
           </p>
         </div>
-        <BoundaryLink href="/upload" className="btn btn-accent">
-          + New tutorial
-        </BoundaryLink>
+        {/* The My SPLAT card promises three things here. Two of them exist;
+            "Saved tutorials" waits on the saves subsystem, and an absent
+            button beats one that leads nowhere. */}
+        <div className="flex flex-wrap gap-3">
+          <BoundaryLink href="/upload" className="btn btn-accent">
+            + New tutorial
+          </BoundaryLink>
+          <BoundaryLink href="/library" className="btn btn-quiet">
+            Browse the library
+          </BoundaryLink>
+        </div>
       </div>
 
       {/* One strip rather than three big-number cards — these counts are a

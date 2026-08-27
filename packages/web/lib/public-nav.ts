@@ -29,9 +29,18 @@ export interface NavItem {
   href: string
   label: string
   state: NavState
-  /** One line. Used on hub cards, in the footer's title attribute, and as the
-      scaffold page's promise. */
-  blurb: string
+  /**
+   * One line, or a short list of what is behind the card.
+   *
+   * Used on hub cards, in the footer's title attribute, and as the scaffold
+   * page's promise — all of which pass a string. The array form is My SPLAT's
+   * alone (app/dashboard/page.tsx): its cards list what they lead to rather
+   * than describing themselves. They stay text, never links — the card is one
+   * link and a nested one would be invalid as well as a lie.
+   */
+  blurb: string | string[]
+  /** Unread items behind this card. Omit or 0 for no badge. */
+  count?: number
   /** Set on 'soon' items only — the allowlisted key POST /api/public/notify accepts. */
   featureKey?: string
 }

@@ -25,7 +25,7 @@
  */
 import { cache } from 'react'
 import { apiClient } from '@/lib/api-client'
-import type { Profile, Organization } from '@splat-connect/types'
+import type { Profile, Organization, UnreadCounts } from '@splat-connect/types'
 
 export type Capabilities = {
   profile: Profile
@@ -33,7 +33,9 @@ export type Capabilities = {
   ledOrgs: Organization[]
   canAuthor: boolean
   unreadNotifications: number
-  /** Transactions waiting on this user, for the Exchanges badge in the rail. */
+  /** The same unread total, split by which My SPLAT card owns it. */
+  unread: UnreadCounts
+  /** Transactions waiting on this user, for the My exchanges badge in the rail. */
   exchangeActions: number
 }
 
@@ -52,12 +54,11 @@ export const getCapabilities = cache(async (): Promise<Capabilities | null> => {
   //
   // Each degrades to "capability absent" on failure so one flaky fetch hides one
   // nav group or badge rather than blanking the dashboard.
-  const [ledOrgs, unreadNotifications, exchangeActions] = await Promise.all([
+  const [ledOrgs, unread, exchangeActions] = await Promise.all([
     apiClient.get<Organization[]>('/api/organizations/mine').catch(() => [] as Organization[]),
     apiClient
-      .get<{ count: number }>('/api/notifications/me/unread-count')
-      .then((r) => r.count)
-      .catch(() => 0),
+      .get<UnreadCounts>('/api/notifications/me/unread-counts')
+      .catch(() => ({ tutorials: 0, exchanges: 0, challenges: 0, total: 0 }) as UnreadCounts),
     apiClient
       .get<{ count: number }>('/api/toy-transactions/action-count')
       .then((r) => r.count)
@@ -69,7 +70,8 @@ export const getCapabilities = cache(async (): Promise<Capabilities | null> => {
     isAdmin: profile.role === 'admin',
     ledOrgs,
     canAuthor: true,
-    unreadNotifications,
+    unreadNotifications: unread.total,
+    unread,
     exchangeActions,
   }
 })

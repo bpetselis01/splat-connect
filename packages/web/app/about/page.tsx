@@ -89,7 +89,7 @@ export default function AboutPage() {
       <p className="mb-4 mt-1 max-w-prose text-sm text-muted">
         The team, how to reach us, and how to support what we do.
       </p>
-      <HubGrid items={about.children} tone={about.tone} art={about.art} />
+      <HubGrid items={about.children} tone={about.tone} columns={4} />
     </div>
   )
 }

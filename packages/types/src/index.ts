@@ -409,6 +409,64 @@ export type NotificationType =
   | 'challenge_removed'
   | 'idea_graduated'
 
+/** Which My SPLAT card a notification's badge belongs to. */
+export type NotificationBucket = 'tutorials' | 'exchanges' | 'challenges'
+
+/**
+ * Notification type → the hub card that counts it.
+ *
+ * Declared here rather than in the web app because the API groups by it and
+ * the hub renders by it; two copies would drift the first time a type is added.
+ *
+ * `satisfies Record<NotificationType, NotificationBucket>` is load-bearing: a
+ * nineteenth NotificationType becomes a compile error on this object rather
+ * than a badge that silently never counts it.
+ *
+ * Note there is no 'toys' bucket. Every toy_* type is an event on a
+ * transaction, not on a toy, so they all belong to My exchanges — a toy
+ * sitting on a shelf generates nothing.
+ */
+const NOTIFICATION_BUCKET = {
+  collaborator_invited: 'tutorials',
+  collaborator_accepted: 'tutorials',
+  collaborator_declined: 'tutorials',
+  collaborator_removed: 'tutorials',
+  collaborator_left: 'tutorials',
+  tutorial_approved: 'tutorials',
+  tutorial_rejected: 'tutorials',
+  toy_request: 'exchanges',
+  toy_accepted: 'exchanges',
+  toy_rejected: 'exchanges',
+  toy_withdrawn: 'exchanges',
+  toy_message: 'exchanges',
+  idea_approved: 'challenges',
+  idea_rejected: 'challenges',
+  idea_graduated: 'challenges',
+  challenge_joined: 'challenges',
+  challenge_left: 'challenges',
+  challenge_removed: 'challenges',
+} satisfies Record<NotificationType, NotificationBucket>
+
+/** Every notification type, for iteration at runtime — the union alone is compile-time only. */
+export const NOTIFICATION_TYPES = Object.keys(NOTIFICATION_BUCKET) as NotificationType[]
+
+export function notificationBucket(type: NotificationType): NotificationBucket {
+  return NOTIFICATION_BUCKET[type]
+}
+
+/** The types in one bucket, for a grouped update. */
+export function typesInBucket(bucket: NotificationBucket): NotificationType[] {
+  return NOTIFICATION_TYPES.filter((t) => NOTIFICATION_BUCKET[t] === bucket)
+}
+
+/** The shape GET /api/notifications/me/unread-counts returns. */
+export interface UnreadCounts {
+  tutorials: number
+  exchanges: number
+  challenges: number
+  total: number
+}
+
 export interface Notification {
   id: string
   recipient_id: string

@@ -31,14 +31,16 @@
  */
 import Image from 'next/image'
 import type { IllustrationKey } from '@/components/editorial-image'
+import { toneClass, type Tone } from '@/lib/tone'
 
 /** What the finished asset will be. Drives the label, and nothing else. */
-export type SlotKind = 'sticker' | 'overlay' | 'animation'
+export type SlotKind = 'sticker' | 'overlay' | 'animation' | 'art'
 
 const KIND_LABEL: Record<SlotKind, string> = {
   sticker: 'Sticker',
   overlay: 'Overlay',
   animation: 'Animation',
+  art: 'Pixel art',
 }
 
 /** Unfilled slots are visible by default: the point of them is to be seen. */
@@ -119,20 +121,40 @@ export function Sticker({
  */
 export function Slot({
   kind,
+  tone,
   note,
   className = '',
 }: {
   kind: Exclude<SlotKind, 'sticker'>
+  /**
+   * The section this slot sits in. The board draws a child card's art slot in
+   * that section's deep colour — honey on Learn, apricot on 3D Printing — so a
+   * slot inside a tinted card belongs to the card rather than floating on it.
+   * Omit on the canvas, where the brand-blue placeholder treatment is right.
+   */
+  tone?: Tone
   /** The brief: what belongs here, in a few words. */
   note: string
   className?: string
 }) {
   if (!SLOTS_VISIBLE) return null
 
+  // border-current rather than a `deepEdge` entry on ToneSpec: the dash and the
+  // label are always the same colour on the board, and a second token would be
+  // a second thing to keep in step with the first.
+  const edge = tone
+    ? `${toneClass(tone).ink} border-current`
+    : 'border-brand text-brand-deep'
+
   return (
     <span
       aria-hidden="true"
-      className={`pointer-events-none flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-brand bg-brand-tint/60 p-3 text-center text-brand-deep ${className}`.trim()}
+      // Translucent white rather than the brand tint: these sit inside tinted
+      // cards as well as on the canvas, and a blue fill laid over an apricot
+      // pillar read as a stain rather than as a held space. White at 50% — the
+      // board's own value — lightens whatever is under it without arguing with
+      // its hue.
+      className={`pointer-events-none flex flex-col items-center justify-center gap-1 rounded-[var(--radius-pixel-slot)] border-2 border-dashed bg-surface/50 p-3 text-center ${edge} ${className}`.trim()}
     >
       <span className="meta">{KIND_LABEL[kind]}</span>
       <span className="max-w-[22ch] text-[11px] leading-tight opacity-85">{note}</span>

@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { sanitiseNextPath } from '@/lib/safe-next-path'
+import { AuthShell, AuthCard } from '@/components/auth-shell'
 
 function LoginForm() {
   const supabase = createClient()
@@ -50,9 +51,9 @@ function LoginForm() {
   }
 
   return (
-    <div className="mx-auto mt-8 max-w-sm sm:mt-16">
-      <div className="card p-6 sm:p-8">
-        <h1 className="mb-6 text-2xl font-bold text-ink">Sign in</h1>
+    <AuthShell current="login">
+      <AuthCard>
+        <h1 className="mb-5 text-[22px] font-black text-ink">Sign in</h1>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
             <label htmlFor="email" className="field-label">Email</label>
@@ -83,18 +84,20 @@ function LoginForm() {
               {error}
             </p>
           )}
-          <button type="submit" disabled={loading} className="btn btn-primary btn-block mt-2">
+          <button type="submit" disabled={loading} className="btn btn-accent btn-block mt-2">
             {loading ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
-      </div>
-      <p className="mt-4 text-center text-sm text-muted">
-        New here?{' '}
-        <Link href="/signup" className="font-semibold text-brand-dark hover:underline">
-          Create an account
-        </Link>
-      </p>
-    </div>
+        {/* Inside the card, as the board has it — it was floating below on the
+            canvas, which left the card ending on a button with no way out. */}
+        <p className="mt-4 text-center text-[13px] text-muted">
+          New here?{' '}
+          <Link href="/signup" className="font-bold text-brand-deep hover:underline">
+            Create an account
+          </Link>
+        </p>
+      </AuthCard>
+    </AuthShell>
   )
 }
 

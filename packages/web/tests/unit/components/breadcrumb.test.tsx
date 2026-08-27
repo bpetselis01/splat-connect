@@ -39,4 +39,23 @@ describe('Breadcrumb', () => {
     rerender(<Breadcrumb />)
     expect(screen.queryByText('Get Involved')).not.toBeInTheDocument()
   })
+
+  /*
+   * The board puts "← Home" above the h1 on every hub. This component used to
+   * render nothing there, on the reasoning that "you are already at the top of
+   * the tree". True of the tree, but the board draws the link anyway and the
+   * board wins — a hub is a page people land on from search, not only from the
+   * nav above it.
+   */
+  it('points home from a section hub', () => {
+    pathname.current = '/learn'
+    render(<Breadcrumb />)
+    expect(screen.getByRole('link', { name: /Home/ })).toHaveAttribute('href', '/')
+  })
+
+  it('renders nothing on the account root', () => {
+    pathname.current = '/dashboard'
+    render(<Breadcrumb />)
+    expect(screen.queryByRole('navigation', { name: 'Breadcrumb' })).not.toBeInTheDocument()
+  })
 })

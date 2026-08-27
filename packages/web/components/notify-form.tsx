@@ -65,7 +65,11 @@ export function NotifyForm({ featureKey }: { featureKey: string }) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@example.com"
-          className="min-w-0 flex-1 rounded-field border border-line bg-surface px-3 py-2 text-sm text-ink"
+          // `.field`, not a hand-rolled copy of it. This was the one input on
+          // the site spelling out its own border and radius, so it kept the old
+          // hairline-on-14px look after .field moved to the board's 2px ink at
+          // 6px — the same drift the shared classes exist to prevent.
+          className="field min-w-0 flex-1"
         />
         <button type="submit" className="btn btn-accent shrink-0" disabled={state === 'sending'}>
           {state === 'sending' ? 'Sending…' : "Tell me when it's ready"}
