@@ -23,6 +23,11 @@ vi.mock('next/image', () => ({
   // eslint-disable-next-line @next/next/no-img-element
   default: ({ src, alt }: { src: string; alt: string }) => <img src={src} alt={alt} />,
 }))
+vi.mock('@/components/boundary-link', () => ({
+  BoundaryLink: ({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) => (
+    <a href={href} className={className}>{children}</a>
+  ),
+}))
 
 import { apiClient } from '@/lib/api-client'
 
@@ -117,5 +122,17 @@ describe('ToyListPage', () => {
     vi.mocked(apiClient.get).mockResolvedValue([toy({ id: '1', archived_at: null })])
     render(await ToyListPage())
     expect(screen.queryByRole('heading', { name: /archived/i })).not.toBeInTheDocument()
+  })
+
+  // Tests: the header offers a way into the public toy library
+  // Chain: the My SPLAT card names "Browse toy library" as behind this tile,
+  //        and the tile itself is text — this button is the only route
+  it('gives My toys a way into the toy library', async () => {
+    vi.mocked(apiClient.get).mockResolvedValue([])
+    render(await ToyListPage())
+    expect(screen.getByRole('link', { name: /browse toy library/i })).toHaveAttribute(
+      'href',
+      '/toy-library'
+    )
   })
 })
