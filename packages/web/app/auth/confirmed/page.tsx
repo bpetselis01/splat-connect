@@ -13,14 +13,17 @@
  * want to wait, and doubles as an escape hatch for anyone who'd rather just
  * close the tab.
  */
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useEffect, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
 const REDIRECT_SECONDS = 3
 
-export default function EmailConfirmedPage() {
+function EmailConfirmed() {
   const router = useRouter()
+  // Passed through from /signup. /login already honours ?next=, so handing it
+  // on is the whole of getting someone back to the page they started on.
+  const next = useSearchParams().get('next')
   const [secondsLeft, setSecondsLeft] = useState(REDIRECT_SECONDS)
 
   useEffect(() => {
@@ -28,14 +31,14 @@ export default function EmailConfirmedPage() {
       setSecondsLeft((s) => {
         if (s <= 1) {
           clearInterval(interval)
-          router.replace('/login')
+          router.replace(next ? `/login?next=${encodeURIComponent(next)}` : '/login')
           return 0
         }
         return s - 1
       })
     }, 1000)
     return () => clearInterval(interval)
-  }, [router])
+  }, [router, next])
 
   return (
     <div className="mx-auto mt-8 max-w-sm sm:mt-16">
@@ -55,5 +58,15 @@ export default function EmailConfirmedPage() {
         </Link>
       </div>
     </div>
+  )
+}
+
+// useSearchParams() requires a Suspense boundary, or `next build` fails to
+// prerender this page — same reasoning as app/login/page.tsx.
+export default function EmailConfirmedPage() {
+  return (
+    <Suspense>
+      <EmailConfirmed />
+    </Suspense>
   )
 }
