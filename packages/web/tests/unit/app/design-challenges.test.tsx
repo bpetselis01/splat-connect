@@ -20,6 +20,17 @@ vi.stubGlobal('fetch', fetchMock)
 
 const jsonResponse = (body: unknown) => ({ ok: true, json: () => Promise.resolve(body) })
 
+// The page now asks which challenges this visitor saved. That reaches the
+// server-only API client, which a jsdom test cannot import — and this file is
+// about the listing, not about saves. null is the signed-out answer, so the
+// islands render unfilled and route to /signup.
+vi.mock('@/lib/saves', () => ({ getSavedIds: async () => null }))
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
+  usePathname: () => '/get-involved/design-challenges',
+}))
+
 vi.mock('next/link', () => ({
   default: ({
     href,
