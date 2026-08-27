@@ -254,34 +254,11 @@
      toy" compete with the primary action for the same click. */
   .pixel .btn-quiet { box-shadow: var(--shadow-pixel-md) rgb(18 40 58 / 0.35); }
 
-  /* Hover lifts the shadow one size up rather than lifting the button — there
-     is no bounce left to telegraph, only more or less depth. */
-  .pixel .btn-accent:hover:not(:disabled),
-  .pixel .btn-primary:hover:not(:disabled) {
-    box-shadow: var(--shadow-pixel-lg) var(--color-ink);
-  }
-
-  .pixel .btn-quiet:hover:not(:disabled) {
-    box-shadow: var(--shadow-pixel-lg) rgb(18 40 58 / 0.35);
-  }
-
-  /* Pressed: the button travels exactly the shadow's own offset, so the edge
-     visually disappears into the surface as it "sinks" — no squash, no spring. */
-  .pixel .btn-accent:active:not(:disabled),
-  .pixel .btn-primary:active:not(:disabled),
-  .pixel .btn-quiet:active:not(:disabled) {
-    transform: translate(4px, 4px);
-    box-shadow: 0 0 0 var(--color-ink);
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .pixel .btn-accent:active:not(:disabled),
-    .pixel .btn-primary:active:not(:disabled),
-    .pixel .btn-quiet:active:not(:disabled) {
-      transform: none;
-      box-shadow: var(--shadow-pixel-sm) var(--color-ink);
-    }
-  }
+  /* Hover and press for every button now come from the shared press-motion
+     block at the end of this file — see "Press motion, in one place". The
+     numbers that used to live here (grow to -lg, travel 4px) are what
+     --pop-rest: 4px computes, so the buttons are unchanged; they simply no
+     longer state it themselves. */
 
   /*
    * Entrance, in CSS rather than JavaScript, and the reason is robustness rather
@@ -320,10 +297,13 @@
     text-wrap: balance;
   }
 
+  /* clamp(38px, 5.5vw, 58px) — the board's own numbers. The previous
+     clamp(38.4px, 6vw, 62.4px) overshot the ceiling by 4.4px at every
+     viewport wide enough to reach it. */
   .title-hero {
-    font-size: clamp(2.4rem, 6vw, 3.9rem);
+    font-size: clamp(2.375rem, 5.5vw, 3.625rem);
     font-weight: 900;
-    line-height: 1.03;
+    line-height: 1.06;
     letter-spacing: -0.03em;
   }
 
@@ -395,10 +375,12 @@
     text-transform: uppercase;
   }
 
+  /* 12px at 0.16em, which is what the board sets on every eyebrow it draws —
+     hero, section lead-ins and hub pages alike. Was 11px/0.14em. */
   .eyebrow {
-    font-size: 0.6875rem;
+    font-size: 0.75rem;
     font-weight: 600;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.16em;
   }
 
   .meta {
@@ -476,13 +458,49 @@
    * and .meta. Scoped to .pixel so the signed-in rail is untouched.
    */
   .pixel .nav-pill {
+    position: relative;
+    /* The ::before pill sits at z-index:-1 so it paints behind the label.
+       `isolate` keeps that negative layer inside the link, so it can only ever
+       go behind the label — never behind the shelf's own white background,
+       which is what it would fall through to otherwise. The hover state gets
+       this for free from its transform; the current-page state, which has no
+       transform, does not. */
+    isolation: isolate;
     color: var(--color-ink);
     font-family: var(--font-mono);
     font-size: 0.75rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    transition: transform 0.18s var(--ease-spring), box-shadow 0.18s var(--ease-spring);
+    transition: transform 0.16s var(--ease-spring), color 0.14s linear;
+  }
+
+  /*
+   * The pill is drawn *behind* the label, not around it.
+   *
+   * The obvious implementation gives the pill real padding, and that is the
+   * trap: seven tabs at px-2.5 is ~140px against the ~144px of slack this bar
+   * has at 1440, so the row overflows the shell, wraps, and renders the shelf
+   * half again as tall. A pseudo-element with negative inline inset costs
+   * exactly zero layout, so the pill can be as wide as it needs to be.
+   *
+   * It also fixes a real bug: the current-page tab used to take a genuine
+   * `px-3` that its neighbours did not, so every tab in the row shifted
+   * sideways as you navigated. Both states live here now, and nothing moves.
+   *
+   * Vertical inset is positive — the link keeps its full 40px touch target
+   * (see the py-3 note in components/nav.tsx) while the drawn pill stays the
+   * 32px the bar has room for.
+   */
+  .pixel .nav-pill::before {
+    content: '';
+    position: absolute;
+    inset: 4px -10px;
+    z-index: -1;
+    border-radius: var(--radius-pixel-sm);
+    border: var(--border-pixel-thin) solid transparent;
+    transition: background-color 0.14s linear, border-color 0.14s linear,
+      box-shadow 0.16s var(--ease-spring);
   }
 
   /* Thick ink border under the whole bar, so the nav reads as a shelf the
@@ -548,6 +566,10 @@
     margin-inline: calc(50% - 50vw);
     padding-inline: calc(50vw - 50%);
     border-bottom: 4px solid var(--color-ink);
+    /* The band is a *tone* darker than the canvas, not the canvas with a rule
+       under it. Without this the 4px ink border below reads as an arbitrary
+       line across the page rather than as the bottom edge of something. */
+    background-color: var(--color-brand-tint);
     background-image: radial-gradient(rgb(10 79 112 / 0.16) 1.5px, transparent 1.5px);
     background-size: 16px 16px;
   }
@@ -574,21 +596,58 @@
     font-weight: 900;
   }
 
-  /* A pill that swings rather than lifts. It is the smallest possible statement
-     of the same idea the cards make — nothing on this site is bolted down. */
+  /*
+   * Hover lifts the tab up-left onto a hard ink shadow; pressing it drops the
+   * tab into that shadow. It is the same two-part motion the board gives its
+   * buttons, so the bar borrows a vocabulary the page already speaks rather
+   * than inventing a third one — and lift-versus-drop is what makes "I am
+   * over this" impossible to confuse with "I clicked this".
+   *
+   * It replaces a rotate(-2deg) swing that had no press state at all: hover
+   * and click looked identical.
+   *
+   * The tint and the text colour come from the section's own tone, passed in
+   * as --pill-tint/--pill-ink by components/nav.tsx. That pairing is exactly
+   * the bg/fg pair tests/unit/lib/tone.test.ts already checks for contrast, so
+   * the hover state is covered by the existing guard rather than needing a
+   * new one.
+   */
   .pixel .nav-pill:hover {
-    transform: rotate(-2deg);
+    color: var(--pill-ink, var(--color-brand-deep));
+    transform: translate(-2px, -2px);
   }
 
+  .pixel .nav-pill:hover::before {
+    background-color: var(--pill-tint, var(--color-brand-tint));
+    border-color: var(--color-ink);
+    box-shadow: var(--shadow-pixel-xs) var(--color-ink);
+  }
+
+  .pixel .nav-pill:active {
+    transform: translate(1px, 1px);
+  }
+
+  .pixel .nav-pill:active::before {
+    box-shadow: 0 0 0 var(--color-ink);
+  }
+
+  /* Reduced motion keeps the colour change — losing the cue entirely would
+     leave a hover with no feedback — and drops only the travel. */
   @media (prefers-reduced-motion: reduce) {
-    .pixel .nav-pill:hover {
+    .pixel .nav-pill:hover,
+    .pixel .nav-pill:active {
       transform: none;
     }
   }
 
   /* The section you are in sits proud of the shelf rather than merely tinted. */
   .pixel .nav-pill[aria-current='page'] {
-    border-radius: var(--radius-pixel-sm);
+    color: var(--pill-ink, var(--color-brand-deep));
+  }
+
+  .pixel .nav-pill[aria-current='page']::before {
+    background-color: var(--pill-tint, var(--color-brand-tint));
+    border-color: var(--color-ink);
     box-shadow: var(--shadow-pixel-xs) var(--color-ink);
   }
 
@@ -601,18 +660,33 @@
   }
 
   .pixel .nav-quiet .nav-pill {
-    background-color: transparent;
-    box-shadow: none;
     color: var(--color-muted);
+  }
+
+  /* The quiet bar opts out of the pill entirely — border and shadow included,
+     since both now live on ::before rather than on the link itself. */
+  .pixel .nav-quiet .nav-pill::before,
+  .pixel .nav-quiet .nav-pill:hover::before,
+  .pixel .nav-quiet .nav-pill[aria-current='page']::before {
+    background-color: transparent;
+    border-color: transparent;
+    box-shadow: none;
   }
 
   /* Hover restores full contrast, so a receding control never reads as
      disabled. */
   .pixel .nav-quiet .nav-pill:hover {
-    background-color: var(--color-sunken);
     color: var(--color-brand-deep);
-    /* No rotate: a bar that is deliberately receding should not also be the
-       most playful thing on the page. */
+    /* No lift and no press: a bar that is deliberately receding should not
+       also be the most playful thing on the page. */
+    transform: none;
+  }
+
+  .pixel .nav-quiet .nav-pill:hover::before {
+    background-color: var(--color-sunken);
+  }
+
+  .pixel .nav-quiet .nav-pill:active {
     transform: none;
   }
 
@@ -680,26 +754,10 @@
     box-shadow: var(--shadow-pixel-lg) var(--color-ink);
   }
 
-  /* Depth grows on hover, nothing lifts — same principle as the buttons
-     below: there is no bounce left to telegraph, only more or less shadow. */
-  .pixel .card-link:hover {
-    transform: none;
-    box-shadow: var(--shadow-pixel-lg) var(--color-ink);
-  }
-
-  /* A pillar already rests at -lg, so it needs its own hover or the pointer
-     lands on the site's three most important destinations and nothing at all
-     happens. 8px is a deliberate second exception to the depth vocabulary
-     above (the ladder tops out at -lg, 6px) — there is no 7th rung to grow
-     into, so this hover value is hand-picked rather than drawn from a token. */
-  .pixel .card-pixel-lead.card-link:hover {
-    box-shadow: 8px 8px 0 var(--color-ink);
-  }
-
-  .pixel .card-link:active {
-    transform: translate(2px, 2px);
-    box-shadow: var(--shadow-pixel-sm) var(--color-ink);
-  }
+  /* Card hover and press also come from the shared press-motion block at the
+     end of this file. The pillar's hand-picked 8px hover is gone: 6px rest
+     plus the shared 2px lift arrives at the same number, so the exception the
+     old comment here had to argue for stops being an exception. */
 
   .btn-primary:hover:not(:disabled) {
     background-color: var(--color-brand-deep);
@@ -761,23 +819,40 @@
   }
 
   /* --- Form controls ---------------------------------------------------- */
+  /*
+   * The board's input: a 2px ink border at a 6px radius, same weight and corner
+   * as every other bordered small thing it draws.
+   *
+   * This was a 1.5px --color-line hairline at --radius-field (14px), and the
+   * inconsistency was already recorded in this file: --radius-pixel-slot's own
+   * comment reads "art slots and inputs at 6px", while 14px appears nowhere in
+   * the board's radius vocabulary at all. The token said one thing and .field
+   * did another.
+   *
+   * min-height stays 44px — the board draws a 38px input, but that is below the
+   * touch-target floor and an artboard has no fingers.
+   */
   .field {
     display: block;
     width: 100%;
     min-height: 44px;
-    padding: 0.625rem 0.875rem;
+    padding: 0.625rem 0.75rem;
     background-color: var(--color-surface);
     color: var(--color-ink);
-    border: 1.5px solid var(--color-line);
-    border-radius: var(--radius-field);
+    border: var(--border-pixel-thin) solid var(--color-ink);
+    border-radius: var(--radius-pixel-slot);
     font-size: 0.875rem;
     transition:
       border-color 140ms var(--ease-out-quart),
       box-shadow 140ms var(--ease-out-quart);
   }
 
+  /* Hover tints the field rather than recolouring its border. The old rule sent
+     the border to --color-brand-soft, which was a step *up* in weight from the
+     hairline it used to have and is a step *down* from the ink border it has
+     now — pointing at an input made it look less interactive, not more. */
   .field:hover:not(:disabled):not(:focus) {
-    border-color: var(--color-brand-soft);
+    background-color: var(--color-surface-quiet);
   }
 
   /* The ring is the focus indicator, so suppressing the default outline here
@@ -791,6 +866,52 @@
   textarea.field {
     min-height: 0;
     line-height: 1.5;
+  }
+
+  /*
+   * The Sign in / Create account switch on the auth screens.
+   *
+   * One border and one shadow around the pair, with the divider carried as a
+   * border on the second tab — that is what makes it read as a single control
+   * rather than two buttons that happen to touch. overflow:hidden is what lets
+   * the filled tab's ink background meet the outer border cleanly at the
+   * rounded corners.
+   */
+  .auth-switch {
+    display: inline-flex;
+    border: var(--border-pixel) solid var(--color-ink);
+    border-radius: var(--radius-pixel-sm);
+    overflow: hidden;
+    box-shadow: var(--shadow-pixel-md) var(--color-ink);
+  }
+
+  .auth-switch a {
+    padding: 0.625rem 1.125rem;
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    transition: background-color 140ms var(--ease-out-quart), color 140ms var(--ease-out-quart);
+  }
+
+  .auth-switch a + a {
+    border-left: var(--border-pixel-thin) solid var(--color-ink);
+  }
+
+  /* The tab you are on is filled, not merely tinted — the board draws it at
+     full ink, and at 12px a tint would not carry the distinction. */
+  .auth-switch a[aria-current='page'] {
+    background-color: var(--color-ink);
+    color: #ffffff;
+  }
+
+  /* The other tab is a live destination, so it says so on hover. The filled one
+     is where you already are and stays put. */
+  .auth-switch a:not([aria-current='page']):hover {
+    background-color: var(--color-sunken);
   }
 
   .field-sm {
@@ -851,13 +972,6 @@
     background-color: var(--color-sunken);
   }
 
-  /* Travels its own shadow offset, so the edge sinks into the surface — the
-     same press the buttons and cards use. No scale: the board has none. */
-  .chip:active {
-    transform: translate(3px, 3px);
-    box-shadow: 0 0 0 var(--color-ink);
-  }
-
   .chip[aria-pressed='true'] {
     background-color: var(--color-ink);
     border-color: var(--color-ink);
@@ -868,12 +982,6 @@
   .chip[aria-pressed='true']:hover {
     background-color: var(--color-brand-deep);
     border-color: var(--color-brand-deep);
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .chip:active {
-      box-shadow: var(--shadow-pixel-sm) var(--color-ink);
-    }
   }
 
   /* --- Badges -----------------------------------------------------------
@@ -1303,12 +1411,11 @@
     font-size: 0.8125rem;
     font-weight: 800;
     box-shadow: var(--shadow-lift);
-    transition: transform 180ms var(--ease-out-quart);
   }
 
-  .dock-my-splat:hover {
-    transform: translateY(-2px);
-  }
+  /* Hover and press come from the shared press-motion block. This used to be
+     the one control on the site that lifted on hover, and it had no pressed
+     state to go with it — now it takes the same pair as everything else. */
 
   .dock-my-splat-dot {
     width: 0.625rem;
@@ -1553,6 +1660,190 @@
 
     .dialog-panel[open] {
       transition: opacity 180ms var(--ease-out-quart) allow-discrete;
+    }
+  }
+}
+
+/* ==========================================================================
+ * Press motion, in one place.
+ *
+ * Hover pops a clickable thing UP; pressing it pops it DOWN into its own
+ * shadow. Every interactive family on the site runs on this one block — the
+ * only thing a family declares for itself is --pop-rest, how deep it sits at
+ * rest. Everything else is arithmetic:
+ *
+ *   hover  -> travel up-left by --pop-lift, and grow the shadow by the same
+ *             amount, so the gap opens and the object reads as lifted
+ *   press  -> travel by the element's OWN resting offset and drop the shadow
+ *             to zero, so it lands flush against the page
+ *
+ * That single rule is what gives the "variability by context" without a rule
+ * per family: a flat control pops up from nothing (0 -> 2px), an ordinary card
+ * pops from 5px to 7px, a launcher pillar from 6px to 8px. Depth in, depth out.
+ *
+ * It replaces eight scattered hover/active blocks that each hand-picked their
+ * own numbers and disagreed about whether hover should lift at all — .btn and
+ * .card-link grew without moving, .dock-my-splat moved without growing, .chip
+ * and .step-pill only changed colour, and .panel-summary, .dropzone and
+ * .step-pill had no pressed state whatever.
+ *
+ * Resting shadows are deliberately NOT set here. Each family keeps the one it
+ * already declares (hard ink offsets in the pixel families, the soft tinted
+ * --shadow-rest on .card and .dock-my-splat); this block only says how that
+ * depth changes under the pointer.
+ * ========================================================================== */
+@layer components {
+  /*
+   * The panel selector is deliberately NOT grouped with this list, and the
+   * three rules below repeat themselves for the same reason.
+   *
+   * Tailwind compiles a comma group into a single :is(), and :is() takes the
+   * specificity of its most specific argument. `.panel:has(> .panel-summary)`
+   * scores (0,3,0), so grouping it here dragged the whole rule to (0,3,0) and
+   * silently outranked every per-family --pop-rest override at (0,2,0) — every
+   * family stayed flat at 0px and nothing moved by its own depth. Same trap
+   * .step-pill documents above for :not(). Keep these apart.
+   */
+  .pixel :is(.btn, .card-link, .chip, .step-pill, .dropzone, .dock-my-splat) {
+    /* Overridden per family below. 0 means "flat at rest": hover gives it a
+       shadow it did not have, and the press has nowhere to travel, so it
+       collapses that new shadow instead. */
+    --pop-rest: 0px;
+    --pop-lift: 2px;
+    --pop-color: var(--color-ink);
+    transition:
+      transform 0.16s var(--ease-spring),
+      box-shadow 0.16s var(--ease-spring),
+      background-color 0.14s var(--ease-out-quart),
+      border-color 0.14s var(--ease-out-quart),
+      color 0.14s var(--ease-out-quart);
+  }
+
+  /*
+   * The panel pops, not its summary.
+   *
+   * .panel-summary is a full-width row inside a .panel that sets
+   * overflow: hidden for its rounded corners — lifting the row alone would
+   * clip its top-left and open a gap at its bottom-right, and it would read as
+   * a strip peeling out of its own card. The summary is the handle; the panel
+   * is the object being clicked, so the panel is what moves.
+   */
+  .pixel .panel:has(> .panel-summary) {
+    --pop-rest: 2px;
+    --pop-lift: 2px;
+    --pop-color: var(--color-ink);
+    transition:
+      transform 0.16s var(--ease-spring),
+      box-shadow 0.16s var(--ease-spring);
+  }
+
+  /*
+   * Behind `hover: hover` because a touch device keeps :hover applied after a
+   * tap: without this guard a card stays stuck in its lifted state on a phone
+   * until something else is tapped. That was a live bug on every one of these
+   * families before this block existed, not a new risk this one introduces.
+   */
+  @media (hover: hover) {
+    .pixel :is(.btn, .card-link, .chip, .step-pill, .dropzone, .dock-my-splat):hover:not(:disabled):not([aria-disabled='true']) {
+      transform: translate(calc(-1 * var(--pop-lift)), calc(-1 * var(--pop-lift)));
+      box-shadow: calc(var(--pop-rest) + var(--pop-lift)) calc(var(--pop-rest) + var(--pop-lift))
+        0 var(--pop-color);
+    }
+
+    .pixel .panel:has(> .panel-summary:hover) {
+      transform: translate(calc(-1 * var(--pop-lift)), calc(-1 * var(--pop-lift)));
+      box-shadow: calc(var(--pop-rest) + var(--pop-lift)) calc(var(--pop-rest) + var(--pop-lift))
+        0 var(--pop-color);
+    }
+  }
+
+  .pixel :is(.btn, .card-link, .chip, .step-pill, .dropzone, .dock-my-splat):active:not(:disabled):not([aria-disabled='true']) {
+    transform: translate(var(--pop-rest), var(--pop-rest));
+    box-shadow: 0 0 0 var(--pop-color);
+  }
+
+  .pixel .panel:has(> .panel-summary:active) {
+    transform: translate(var(--pop-rest), var(--pop-rest));
+    box-shadow: 0 0 0 var(--pop-color);
+  }
+
+  /* --- how deep each family rests -------------------------------------- */
+
+  /* The controls. 4px is the board's button depth; the secondary control keeps
+     its 35% shadow so the pair stays the same physical height while only one
+     reads as the thing to press. */
+  .pixel :is(.btn-accent, .btn-primary, .btn-quiet) {
+    --pop-rest: 4px;
+  }
+
+  .pixel .btn-quiet {
+    --pop-color: rgb(18 40 58 / 0.35);
+  }
+
+  /* Cards. -card is the ordinary card, -lg the three launcher pillars, which
+     is why a pillar pops to 8px and its neighbours to 7px: the hierarchy that
+     holds at rest has to hold under the pointer too. A plain soft .card keeps
+     its blurred resting shadow and takes a shallow 2px press — enough to
+     register as pressed without pretending it is a bordered pixel card. */
+  .pixel .card-pixel {
+    --pop-rest: 5px;
+  }
+
+  .pixel .card-pixel-lead {
+    --pop-rest: 6px;
+  }
+
+  .pixel .card:not(.card-pixel) {
+    --pop-rest: 2px;
+  }
+
+  /* The chip register. */
+  .pixel .chip {
+    --pop-rest: 3px;
+  }
+
+  /*
+   * A selected chip is a special case twice over.
+   *
+   * It is ink-on-ink, so an ink shadow under an ink fill is invisible — it
+   * pops on the brand instead, or the one control that most needs to confirm
+   * a click is the one that looks dead.
+   *
+   * And it rests flat (`box-shadow: none` above — a selected chip is already
+   * "pressed in"), so its resting depth is 0, not the 3px of an unselected
+   * one. With 3px it would travel down-right past its own resting position on
+   * click, with no shadow to sink into. At 0 the hover lift is the pop up and
+   * the return to baseline is the pop down, which is how every other flat
+   * control here behaves.
+   */
+  .pixel .chip[aria-pressed='true'] {
+    --pop-rest: 0px;
+    --pop-color: var(--color-brand-deep);
+  }
+
+  /* The dock rests on a soft blurred shadow rather than a hard edge, so it
+     takes the same shallow press as a soft card. */
+  .pixel .dock-my-splat {
+    --pop-rest: 2px;
+  }
+
+  /* The dropzone is dashed and tinted, and an ink shadow under it reads as a
+     mistake — it pops on the brand line it is already drawn in. */
+  .pixel .dropzone {
+    --pop-color: var(--color-brand-soft);
+  }
+
+  /*
+   * Reduced motion keeps the depth change and drops the travel. Losing both
+   * would leave a hover with no feedback at all, which is worse for the people
+   * this setting exists to serve than a shadow that changes size.
+   */
+  @media (prefers-reduced-motion: reduce) {
+    .pixel :is(.btn, .card-link, .chip, .step-pill, .dropzone, .dock-my-splat):hover,
+    .pixel :is(.btn, .card-link, .chip, .step-pill, .dropzone, .dock-my-splat):active,
+    .pixel .panel:has(> .panel-summary:hover),
+    .pixel .panel:has(> .panel-summary:active) {
+      transform: none;
     }
   }
 }
