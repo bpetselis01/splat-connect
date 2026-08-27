@@ -37,6 +37,7 @@ import { apiClient } from '@/lib/api-client'
 import { IdeaStatusBadge } from '@/components/idea-status-badge'
 import { FileText, Handshake } from '@/components/icons'
 import { BoundaryLink } from '@/components/boundary-link'
+import { MarkNotificationsRead } from '@/components/mark-notifications-read'
 import type { ToyIdea } from '@splat-connect/types'
 
 async function loadIdeas(path: string): Promise<{ items: ToyIdea[]; failed: boolean }> {
@@ -93,12 +94,23 @@ export default async function DashboardChallengesPage() {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-ink">Design challenges</h1>
-        <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted">
-          Ideas you have submitted, at every stage of review, and challenges you have joined as a
-          maker.
-        </p>
+      <MarkNotificationsRead bucket="challenges" />
+
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-ink">Design challenges</h1>
+          <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted">
+            Ideas you have submitted, at every stage of review, and challenges you have joined as
+            a maker.
+          </p>
+        </div>
+        {/* Persistent, not empty-state-only. The My SPLAT card names this as
+            what is behind the Design challenges tile, and the tile itself is
+            text — this button is the only way through once an idea already
+            exists and the empty-state button below has gone. */}
+        <BoundaryLink href="/get-involved/submit-an-idea" className="btn btn-accent">
+          + Submit an idea
+        </BoundaryLink>
       </div>
 
       <section>
