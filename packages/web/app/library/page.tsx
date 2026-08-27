@@ -1,4 +1,5 @@
 import { LibraryClient } from './library-client'
+import { getSavedIds } from '@/lib/saves'
 import type { Tutorial } from '@splat-connect/types'
 
 export default async function LibraryPage() {
@@ -12,5 +13,15 @@ export default async function LibraryPage() {
     tutorials = []
   }
 
-  return <LibraryClient tutorials={tutorials} />
+  // null means signed out, which is what the cards pass on as signedIn — the
+  // button still renders, it just routes to /signup instead of saving.
+  const saved = await getSavedIds()
+
+  return (
+    <LibraryClient
+      tutorials={tutorials}
+      savedIds={saved?.tutorials ?? []}
+      signedIn={saved !== null}
+    />
+  )
 }
