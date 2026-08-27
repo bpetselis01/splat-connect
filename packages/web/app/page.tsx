@@ -114,10 +114,17 @@ export default async function HomePage() {
         entire budget, and holding to it is why the same language survives on
         a privacy policy.
       */}
-      <section className="pixel-hero relative isolate -mt-8 pb-14 pt-12 sm:-mt-10 sm:pb-16">
+      {/* pt-[60px]/pb-[68px] are the board's. The negative top margin stays and
+          now earns its keep: with the band tinted it is what runs the fill up
+          flush under the header, instead of leaving a canvas-coloured stripe
+          between the two. */}
+      <section className="pixel-hero relative isolate -mt-8 pb-[68px] pt-[60px] sm:-mt-10">
         <div className="grid items-center gap-10 lg:grid-cols-[1fr_0.85fr] lg:gap-14">
           <div className="rise" style={{ '--rise-delay': '0ms' } as React.CSSProperties}>
-            <p className="eyebrow text-brand-dark">Supporting Play by Adapting Toys</p>
+            {/* brand-deep, not brand-dark — the board sets the hero eyebrow at
+                #0a4f70, and on the newly tinted band the lighter #0f6f9c no
+                longer clears 4.5:1. */}
+            <p className="eyebrow text-brand-deep">Supporting Play by Adapting Toys</p>
 
             <h1 className="title-hero mt-3">
               Press it.
