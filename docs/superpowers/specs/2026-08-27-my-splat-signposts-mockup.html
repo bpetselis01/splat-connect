@@ -1,0 +1,146 @@
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&family=IBM+Plex+Mono:wght@600;700&display=swap');
+
+.splat {
+  --ink:#12283a; --muted:#476376; --line:#c6e0ed;
+  --tint:#d8ecf7; --soft:#bfe4f5; --deep:#0a4f70;
+  --honey-soft:#fdeecb; --honey-deep:#7a4e05;
+  --apricot:#ff8f5e;
+  font-family:'Nunito',system-ui,sans-serif;
+}
+.splat * { box-sizing:border-box; }
+
+.stage { background:#f6fbfd; border:1px solid var(--line); border-radius:8px; padding:22px; }
+.g4 { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; align-items:start; }
+.g3 { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; align-items:start; }
+
+.pcard {
+  background:var(--tint); border:3px solid var(--ink); border-radius:10px;
+  box-shadow:5px 5px 0 var(--ink); padding:16px;
+  display:flex; flex-direction:column; gap:6px;
+}
+.pcard.pillar { box-shadow:6px 6px 0 var(--ink); padding:18px; }
+.art {
+  height:84px; border:2px dashed var(--deep); border-radius:6px;
+  background:rgba(255,255,255,.5); display:flex; align-items:center; justify-content:center;
+  text-align:center; padding:0 8px; font-family:'IBM Plex Mono',monospace;
+  font-size:9px; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+  color:var(--deep); margin-bottom:2px;
+}
+.art.big { height:118px; }
+.head { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.pcard h3 { font-size:14px; font-weight:800; color:var(--deep); margin:0; line-height:1.25; }
+.pcard.pillar h3 { font-size:15px; }
+.blurb { font-size:12px; line-height:1.5; color:var(--muted); margin:0; }
+
+/* the chosen treatment: flat tinted tags */
+.tags { display:flex; flex-wrap:wrap; gap:5px; margin-top:6px; }
+.tags span {
+  font-size:11px; font-weight:700; color:var(--deep);
+  background:rgba(255,255,255,.75); border-radius:20px;
+  padding:4px 10px; line-height:1.35;
+}
+
+.count { font-family:'IBM Plex Mono',monospace; font-size:10px; font-weight:700;
+  background:var(--apricot); color:var(--ink); border:2px solid var(--ink);
+  border-radius:4px; padding:1px 6px; flex:none; line-height:1.4; }
+.soon { font-family:'IBM Plex Mono',monospace; font-size:9px; font-weight:700;
+  background:var(--honey-soft); color:var(--honey-deep); border:1px solid var(--honey-deep);
+  border-radius:4px; padding:1px 5px; flex:none; }
+
+.gh { font-size:16px; font-weight:800; color:var(--ink); margin:26px 0 3px; }
+.gh:first-child { margin-top:0; }
+.gb { font-size:12px; color:var(--muted); margin:0 0 14px; }
+
+.caption { font-family:'IBM Plex Mono',monospace; font-size:10px; font-weight:700;
+  letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin:0 0 10px; }
+.note { font-size:13px; line-height:1.6; color:#444; margin:12px 0 0; }
+.note b { color:#111; }
+.warn { background:#fff4ee; border-left:3px solid #8c3312; padding:12px 14px;
+  border-radius:0 6px 6px 0; margin-top:12px; font-size:13px; line-height:1.6; color:#3a2a24; }
+.ok { background:#eefaf5; border-left:3px solid #0f5c4d; padding:12px 14px;
+  border-radius:0 6px 6px 0; margin-top:12px; font-size:13px; line-height:1.6; color:#234; }
+</style>
+
+<h2>Last visual question — how the seven cards sit on the page</h2>
+<p class="subtitle">Drawn with the treatment you picked: flat tinted tags, whole card is one link. Note <b>Submit an idea</b> is no longer its own card in any of these — it became a tag on Design challenges, which is where it pointed anyway. Eight cards became seven.</p>
+
+<div class="splat">
+  <div class="options">
+
+    <div class="option" data-choice="flat" onclick="toggleSelect(this)">
+      <div class="letter">A</div>
+      <div class="content">
+        <h3>Flat — all seven in one 4-up grid</h3>
+        <p>No headings. Exactly today's structure, new card contents.</p>
+        <div class="stage" style="margin-top:14px">
+          <div class="g4">
+            <div class="pcard"><div class="art">art</div><div class="head"><h3>My tutorials</h3><span class="count">2</span></div><div class="tags"><span>Add a tutorial</span><span>Saved tutorials</span><span>Browse library</span></div></div>
+            <div class="pcard"><div class="art">art</div><div class="head"><h3>My toys</h3></div><div class="tags"><span>Add a toy to donate</span><span>Saved toys</span><span>Browse toy library</span></div></div>
+            <div class="pcard"><div class="art">art</div><div class="head"><h3>My exchanges</h3><span class="count">3</span></div><div class="tags"><span>Active exchanges</span><span>Exchange history</span></div></div>
+            <div class="pcard"><div class="art">art</div><div class="head"><h3>Design challenges</h3></div><div class="tags"><span>Submit an idea</span><span>Saved challenges</span></div></div>
+            <div class="pcard"><div class="art">art</div><div class="head"><h3>My print requests</h3><span class="soon">SOON</span></div><p class="blurb">Parts you have asked someone to print.</p></div>
+            <div class="pcard"><div class="art">art</div><div class="head"><h3>Notifications</h3><span class="count">5</span></div><p class="blurb">Everything SPLAT has told you.</p></div>
+            <div class="pcard"><div class="art">art</div><div class="head"><h3>Account</h3></div><p class="blurb">Your name, email, children and terms.</p></div>
+          </div>
+        </div>
+        <div class="warn"><b>Still breaks the 27 Aug rule.</b> That spec justifies tinting every card with <i>"no grid on the site renders more than four cards today"</i>. Seven in one grid is seven. Account also sits at the same weight as My tutorials.</div>
+      </div>
+    </div>
+
+    <div class="option" data-choice="groups" onclick="toggleSelect(this)">
+      <div class="letter">B</div>
+      <div class="content">
+        <h3>Two labelled groups, same card size <span style="font-size:11px;background:#d4f2ea;color:#0f5c4d;padding:2px 7px;border-radius:4px;margin-left:6px;font-family:'IBM Plex Mono',monospace">recommended</span></h3>
+        <p>Four, then three. Exactly how Learn, Get&nbsp;Involved, Impact and About already work — <code>HubGrid</code> called twice with a slice, headings above each.</p>
+        <div class="stage" style="margin-top:14px">
+          <p class="gh">What you're working on</p>
+          <p class="gb">The three things SPLAT does, and the ideas you've put forward.</p>
+          <div class="g4">
+            <div class="pcard"><div class="art">My tutorials — one object, no background</div><div class="head"><h3>My tutorials</h3><span class="count">2</span></div><div class="tags"><span>Add a tutorial</span><span>Saved tutorials</span><span>Browse library</span></div></div>
+            <div class="pcard"><div class="art">My toys — one object, no background</div><div class="head"><h3>My toys</h3></div><div class="tags"><span>Add a toy to donate</span><span>Saved toys</span><span>Browse toy library</span></div></div>
+            <div class="pcard"><div class="art">Exchanges — one object, no background</div><div class="head"><h3>My exchanges</h3><span class="count">3</span></div><div class="tags"><span>Active exchanges</span><span>Exchange history</span></div></div>
+            <div class="pcard"><div class="art">Challenges — one object, no background</div><div class="head"><h3>Design challenges</h3></div><div class="tags"><span>Submit an idea</span><span>Saved challenges</span></div></div>
+          </div>
+          <p class="gh">Your account</p>
+          <p class="gb">Settings, and what SPLAT has told you.</p>
+          <div class="g4">
+            <div class="pcard"><div class="art">Print requests — one object</div><div class="head"><h3>My print requests</h3><span class="soon">SOON</span></div><p class="blurb">Parts you have asked someone to print.</p></div>
+            <div class="pcard"><div class="art">Notifications — one object</div><div class="head"><h3>Notifications</h3><span class="count">5</span></div><p class="blurb">Everything SPLAT has told you.</p></div>
+            <div class="pcard"><div class="art">Account — one object</div><div class="head"><h3>Account</h3></div><p class="blurb">Your name, email, children and terms.</p></div>
+          </div>
+        </div>
+        <div class="ok"><b>No new component, no new card size, no new CSS.</b> Five other hub pages already do exactly this. An org leader gets a third group, <i>Your organisation</i> (Review queue · Toy inventory · Print orders), and an admin a fourth — so the grid never exceeds four no matter who's signed in.</div>
+      </div>
+    </div>
+
+    <div class="option" data-choice="pillars" onclick="toggleSelect(this)">
+      <div class="letter">C</div>
+      <div class="content">
+        <h3>Three pillars at 3-up, then a tail of four</h3>
+        <p>Borrows the homepage's own shape — bigger art, 6px shadow on the three things you actually do.</p>
+        <div class="stage" style="margin-top:14px">
+          <p class="gh">What you're working on</p>
+          <p class="gb">The three things SPLAT does, and where yours are.</p>
+          <div class="g3">
+            <div class="pcard pillar"><div class="art big">My tutorials — one object, no background</div><div class="head"><h3>My tutorials</h3><span class="count">2</span></div><div class="tags"><span>Add a tutorial</span><span>Saved tutorials</span><span>Browse library</span></div></div>
+            <div class="pcard pillar"><div class="art big">My toys — one object, no background</div><div class="head"><h3>My toys</h3></div><div class="tags"><span>Add a toy to donate</span><span>Saved toys</span><span>Browse toy library</span></div></div>
+            <div class="pcard pillar"><div class="art big">Exchanges — one object, no background</div><div class="head"><h3>My exchanges</h3><span class="count">3</span></div><div class="tags"><span>Active exchanges</span><span>Exchange history</span></div></div>
+          </div>
+          <p class="gh">Everything else</p>
+          <p class="gb">Ideas, printing, and your account.</p>
+          <div class="g4">
+            <div class="pcard"><div class="art">art</div><div class="head"><h3>Design challenges</h3></div><div class="tags"><span>Submit an idea</span><span>Saved</span></div></div>
+            <div class="pcard"><div class="art">art</div><div class="head"><h3>My print requests</h3><span class="soon">SOON</span></div><p class="blurb">Parts you have asked someone to print.</p></div>
+            <div class="pcard"><div class="art">art</div><div class="head"><h3>Notifications</h3><span class="count">5</span></div><p class="blurb">Everything SPLAT has told you.</p></div>
+            <div class="pcard"><div class="art">art</div><div class="head"><h3>Account</h3></div><p class="blurb">Your name, email, children and terms.</p></div>
+          </div>
+        </div>
+        <p class="note"><b>Cost:</b> needs a <code>size</code> prop and a pillar variant on <code>HubGrid</code> — the one structural change in the whole job, and the 27 Aug spec is proud that the walk has none. Worth it only if you want My SPLAT to feel like a second home page.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <p class="note" style="margin-top:26px"><b>After this I stop asking and write the spec.</b> Everything else is settled: rename <code>Exchanges</code> → <code>My exchanges</code> in <code>nav-model.ts</code> (the rail picks it up too), apricot count badge fed by a new bucketed unread endpoint, destination pages gain their buttons, and <i>saves</i> gets its own spec as the prerequisite.</p>
+</div>
