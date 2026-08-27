@@ -20,7 +20,17 @@ function matchesCondition(condition: number, bucket: ConditionBucket): boolean {
   return condition <= 3
 }
 
-export function ToyLibraryClient({ toys }: { toys: ToyWithOwner[] }) {
+export function ToyLibraryClient({
+  toys,
+  savedIds,
+  signedIn,
+}: {
+  toys: ToyWithOwner[]
+  savedIds: string[]
+  signedIn: boolean
+}) {
+  // A Set rather than repeated .includes: the lookup runs once per card.
+  const saved = new Set(savedIds)
   const [search, setSearch] = useState('')
   const [condition, setCondition] = useState<ConditionBucket>('all')
   const [switchAdaptedOnly, setSwitchAdaptedOnly] = useState(false)
@@ -84,7 +94,11 @@ export function ToyLibraryClient({ toys }: { toys: ToyWithOwner[] }) {
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           {filtered.map((t) => (
-            <ToyLibraryCard key={t.id} toy={t} />
+            <ToyLibraryCard
+              key={t.id}
+              toy={t}
+              save={{ slug: 'toys', id: t.id, saved: saved.has(t.id), signedIn }}
+            />
           ))}
         </div>
       )}
