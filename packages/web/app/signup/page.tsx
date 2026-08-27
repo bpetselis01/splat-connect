@@ -1,14 +1,19 @@
 'use client'
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { ContributorTermsDialog } from '@/components/contributor-terms-dialog'
 import { Check } from '@/components/icons'
 import { AuthShell, AuthCard } from '@/components/auth-shell'
 import { AGREEMENT_VERSIONS } from '@splat-connect/types'
 
-export default function SignupPage() {
+function SignupForm() {
   const supabase = createClient()
+  const params = useSearchParams()
+  // Where the visitor was, and why they were sent here. SaveButton sets both.
+  const next = params.get('next')
+  const reason = params.get('reason')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -41,7 +46,13 @@ export default function SignupPage() {
       password,
       options: {
         data: { name, contributor_terms_version: AGREEMENT_VERSIONS.contributor_terms },
-        emailRedirectTo: `${window.location.origin}/auth/confirmed`,
+        // Carry the destination through the email round trip. Without it the
+        // chain ends at /login with no idea where the visitor started, which
+        // for someone who clicked save on one of twelve results means coming
+        // back with no memory of which.
+        emailRedirectTo: `${window.location.origin}/auth/confirmed${
+          next ? `?next=${encodeURIComponent(next)}` : ''
+        }`,
       },
     })
 
@@ -79,6 +90,11 @@ export default function SignupPage() {
   return (
     <AuthShell current="signup">
       <AuthCard>
+        {reason === 'save' && (
+          <p className="alert mb-4 bg-brand-tint text-ink">
+            You need an account to save things. Create one and we&apos;ll take you back.
+          </p>
+        )}
         <h1 className="text-[22px] font-black text-ink">Create your account</h1>
         <p className="mb-[18px] mt-1.5 text-[13px] leading-relaxed text-muted">
           One account for everything — browse, contribute, and manage your child&apos;s profile.
@@ -191,5 +207,15 @@ export default function SignupPage() {
         }}
       />
     </AuthShell>
+  )
+}
+
+// useSearchParams() requires a Suspense boundary, or `next build` fails to
+// prerender this page — same reasoning as app/login/page.tsx.
+export default function SignupPage() {
+  return (
+    <Suspense>
+      <SignupForm />
+    </Suspense>
   )
 }
