@@ -29,6 +29,7 @@ function caps(over: Partial<Capabilities> = {}): Capabilities {
     ledOrgs: [],
     canAuthor: true,
     unreadNotifications: 0,
+    unread: { tutorials: 0, exchanges: 0, challenges: 0, total: 0 },
     exchangeActions: 0,
     ...over,
   }
@@ -65,7 +66,7 @@ describe('buildNav', () => {
     expect(hrefs(buildNav(caps({ isAdmin: true }), 0))).toContain('/admin')
   })
 
-  it('includes an Exchanges row for every account', () => {
+  it('includes a My exchanges row for every account', () => {
     expect(hrefs(buildNav(caps(), 0))).toContain('/dashboard/exchanges')
   })
 
@@ -122,11 +123,11 @@ describe('buildNav', () => {
       .flatMap((g) => g.rows)
       .find((r) => r.href === '/dashboard/exchanges')
 
-  it('leaves the Exchanges row uncounted when nothing is waiting on the user', () => {
+  it('leaves the My exchanges row uncounted when nothing is waiting on the user', () => {
     expect(exchangesRow()?.count).toBeUndefined()
   })
 
-  it('badges the Exchanges row with the number of transactions awaiting action', () => {
+  it('badges the My exchanges row with the number of transactions awaiting action', () => {
     expect(exchangesRow({ exchangeActions: 2 })?.count).toBe(2)
   })
 
