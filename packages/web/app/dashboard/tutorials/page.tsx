@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { apiClient } from '@/lib/api-client'
 import { redirect } from 'next/navigation'
 import { DashboardTutorialCard } from '@/components/dashboard-tutorial-card'
@@ -49,6 +50,12 @@ export default async function DashboardPage() {
           <BoundaryLink href="/library" className="btn btn-quiet">
             Browse the library
           </BoundaryLink>
+          {/* The tag on this page's My SPLAT card names "saved tutorials";
+              this is where that tag leads. It skips the saved hub on purpose —
+              the label names a destination, so it lands on the destination. */}
+          <Link href="/dashboard/saved/tutorials" className="btn btn-quiet">
+            Saved tutorials
+          </Link>
         </div>
       </div>
 
