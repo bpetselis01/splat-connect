@@ -4,10 +4,10 @@
  * is inside it, with a sentence per destination that a menu never had room for.
  *
  * It is not a duplicate of the rail. The rail says where you can go; this says
- * what you can do when you get there, which is why most blurbs are a list
- * rather than a sentence. The lists are text: the card is a single link, and a
- * line that behaved like a control would navigate somewhere other than what it
- * names.
+ * what you can do when you get there, which is why the busiest blurbs are a
+ * comma list rather than a description. They are prose: the card is a single
+ * link, and anything inside it that looked like a control would navigate
+ * somewhere other than what it names.
  *
  * Related files:
  * - lib/nav-model.ts: the destination list, shared with the rail
@@ -31,30 +31,20 @@ export default async function DashboardHub() {
   /*
    * What is behind each card, rather than a sentence about the card.
    *
-   * An array renders as tags (components/hub-grid.tsx); a string renders as
-   * today's paragraph. The three cards with nothing to do keep prose, because a
-   * one-item list is a sentence wearing a costume.
-   *
-   * These are text, not links. The card is one link — see the spec's decision 1.
+   * The four busy cards name their destinations as a comma list; the rest
+   * describe themselves, because a one-item list is a sentence wearing a
+   * costume. Both are one paragraph — see the spec's decision 2.
    */
-  const blurbs: Record<string, string | string[]> = {
-    '/dashboard/tutorials': [
-      'Add a tutorial to SPLAT Connect',
-      'View saved tutorials',
-      'Browse tutorial library',
-    ],
-    '/dashboard/toys': [
-      'Add a toy you want to donate or exchange',
-      'View saved toys',
-      'Browse toy library',
-    ],
-    '/dashboard/exchanges': ['View active exchanges or donations', 'Exchange history'],
-    '/dashboard/challenges': ['Submit an idea', 'View saved challenges'],
+  const blurbs: Record<string, string> = {
+    '/dashboard/tutorials': 'Add a tutorial, saved tutorials, browse library.',
+    '/dashboard/toys': 'Add a toy to donate, saved toys, browse toy library.',
+    '/dashboard/exchanges': 'Active exchanges, exchange history.',
+    '/dashboard/challenges': 'Submit an idea, saved challenges.',
     '/dashboard/print-requests': 'Parts you have asked someone to print.',
     '/dashboard/organisation': 'Projects waiting for your organisation to review.',
     '/dashboard/organisation/toys': 'What your organisation has on its shelves.',
     '/dashboard/organisation/orders': 'Print jobs your organisation has taken on.',
-    '/dashboard/profile': 'Your name, email, and the children and terms you have on file.',
+    '/dashboard/profile': 'Your name, email, children and terms.',
     '/notifications': 'Everything SPLAT has told you.',
     '/admin': 'The review queues and the report inbox.',
   }
