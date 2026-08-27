@@ -23,6 +23,7 @@ import notifications from './routes/notifications.js'
 import toys from './routes/toys.js'
 import toyTransactions from './routes/toy-transactions.js'
 import toyIdeas from './routes/toy-ideas.js'
+import saves from './routes/saves.js'
 
 const app = new Hono()
 
@@ -55,6 +56,8 @@ app.use('/api/notifications', authMiddleware)
 app.use('/api/notifications/*', authMiddleware)
 app.use('/api/ideas', authMiddleware)
 app.use('/api/ideas/*', authMiddleware)
+app.use('/api/saves', authMiddleware)
+app.use('/api/saves/*', authMiddleware)
 
 app.route('/api/tutorials', tutorials)
 app.route('/api/upload', upload)
@@ -73,5 +76,6 @@ app.route('/api/organizations', organizations)
 app.route('/api/collaborators', collaboratorInvites)
 app.route('/api/notifications', notifications)
 app.route('/api/ideas', toyIdeas)
+app.route('/api/saves', saves)
 
 export default app
