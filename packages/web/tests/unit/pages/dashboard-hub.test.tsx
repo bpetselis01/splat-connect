@@ -16,6 +16,7 @@ const baseCaps: Capabilities = {
   ledOrgs: [],
   canAuthor: true,
   unreadNotifications: 0,
+  unread: { tutorials: 0, exchanges: 0, challenges: 0, total: 0 },
   exchangeActions: 0,
 }
 
@@ -71,51 +72,15 @@ describe('DashboardHub', () => {
   it('renders a tile per account destination', async () => {
     const ui = await DashboardHub()
     render(ui)
-    for (const label of ['My tutorials', 'My toys', 'Exchanges', 'Design challenges', 'Notifications', 'Account']) {
+    for (const label of ['My tutorials', 'My toys', 'My exchanges', 'Design challenges', 'Notifications', 'Account']) {
       expect(screen.getByRole('link', { name: new RegExp(label) })).toBeInTheDocument()
     }
-  })
-
-  // Tests: submitting an idea is reachable from inside the account area
-  // How:   asserts a link to the public form is on the hub
-  // Chain: this is the reported defect in its narrowest form — the idea form was
-  //        unreachable without signing out, and the hub is where a signed-in
-  //        author looks first
-  it('links to the idea form', async () => {
-    const ui = await DashboardHub()
-    render(ui)
-    expect(screen.getByRole('link', { name: /Submit an idea/ })).toHaveAttribute(
-      'href',
-      '/get-involved/submit-an-idea'
-    )
-  })
-
-  // Tests: the idea-form tile crosses from the account section to a public
-  //        destination, so it needs a full page load, not a soft <Link>
-  //        transition — this is the branch's headline feature (the original
-  //        bug report was "can't reach the idea form without signing out")
-  //        and it was still soft-navigating into stale chrome until this fix
-  // How:   pathname is /dashboard (the default); the tile still resolves to
-  //        /get-involved/submit-an-idea but must not have gone through
-  //        next/link
-  // Chain: same staleness class components/nav.tsx's NavLink already guards
-  //        against for the header — components/boundary-link.tsx (used by
-  //        components/hub-grid.tsx, which renders every hub tile) closes it
-  //        here too
-  it('renders the idea-form tile as a plain anchor from the account section', async () => {
-    const ui = await DashboardHub()
-    render(ui)
-    const idea = screen.getByRole('link', { name: /Submit an idea/ })
-    expect(idea).toHaveAttribute('href', '/get-involved/submit-an-idea')
-    expect(
-      mockLink.mock.calls.some((call) => call[0].href === '/get-involved/submit-an-idea')
-    ).toBe(false)
   })
 
   // Tests: a tile from /dashboard to another rail-only account page also
   //        crosses, since /dashboard itself no longer nests the rail —
   //        nestsRail (lib/public-nav.ts) makes every one of the hub's own
-  //        tiles a boundary crossing, not just the idea-form tile
+  //        tiles a boundary crossing
   // How:   pathname is /dashboard (the default); the "My tutorials" tile's
   //        href is checked against next/link's mock calls
   // Chain: crossesAccountBoundary('/dashboard', '/dashboard/tutorials') is
@@ -129,15 +94,81 @@ describe('DashboardHub', () => {
     expect(mockLink.mock.calls.some((call) => call[0].href === '/dashboard/tutorials')).toBe(false)
   })
 
-  // Tests: tiles carry live counts, not static prose
-  // How:   stubs capabilities with two exchange actions and reads the blurb
-  // Chain: a hub of seven identical "go here" cards is a worse table of contents
-  //        than the rail it duplicates; the counts are what make it worth a page
-  it('summarises what is waiting on you', async () => {
-    caps.current = { ...baseCaps, exchangeActions: 2 }
-    const ui = await DashboardHub()
-    render(ui)
-    expect(screen.getByText(/2 waiting on you/)).toBeInTheDocument()
+  // Submit an idea was the one row here pointing at a public route, and
+  // Design challenges already leads to the same section. Reachability moved
+  // with it — see the persistent button on /dashboard/challenges.
+  it('folds Submit an idea into Design challenges rather than giving it a card', async () => {
+    render(await DashboardHub())
+    expect(screen.queryByRole('link', { name: /^Submit an idea$/ })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Design challenges/ })).toHaveTextContent(
+      'Submit an idea'
+    )
+  })
+
+  it('lists what is behind My tutorials', async () => {
+    render(await DashboardHub())
+    const card = screen.getByRole('link', { name: /My tutorials/ })
+    expect(card).toHaveTextContent('Add a tutorial to SPLAT Connect')
+    expect(card).toHaveTextContent('View saved tutorials')
+    expect(card).toHaveTextContent('Browse tutorial library')
+  })
+
+  it('lists what is behind My toys', async () => {
+    render(await DashboardHub())
+    const card = screen.getByRole('link', { name: /My toys/ })
+    expect(card).toHaveTextContent('Add a toy you want to donate or exchange')
+    expect(card).toHaveTextContent('View saved toys')
+    expect(card).toHaveTextContent('Browse toy library')
+  })
+
+  it('lists what is behind My exchanges', async () => {
+    render(await DashboardHub())
+    const card = screen.getByRole('link', { name: /My exchanges/ })
+    expect(card).toHaveTextContent('View active exchanges or donations')
+    expect(card).toHaveTextContent('Exchange history')
+  })
+
+  /*
+   * Replaces "summarises what is waiting on you". The bug that test encoded:
+   * `counts` used to overwrite the blurb, so a card with pending actions read
+   * only "3 waiting on you" and lost its description exactly when it mattered
+   * most. The count moved to a badge so both survive.
+   */
+  it('badges the unread count without eating the description', async () => {
+    caps.current = {
+      ...baseCaps,
+      unread: { tutorials: 2, exchanges: 3, challenges: 0, total: 5 },
+    }
+    render(await DashboardHub())
+    const card = screen.getByRole('link', { name: /My exchanges/ })
+    expect(card).toHaveTextContent('3')
+    expect(card).toHaveTextContent('Exchange history')
+  })
+
+  // exchangeActions is the rail's signal — a different number that clears on a
+  // different event. Four actions must not surface here as a badge.
+  it('badges unread, not the needs-action count', async () => {
+    caps.current = { ...baseCaps, exchangeActions: 4 }
+    render(await DashboardHub())
+    expect(screen.getByRole('link', { name: /My exchanges/ })).not.toHaveTextContent('4')
+  })
+
+  // Every toy_* type is a transaction event, so My toys has no bucket at all.
+  it('gives My toys no badge', async () => {
+    caps.current = {
+      ...baseCaps,
+      unread: { tutorials: 2, exchanges: 3, challenges: 0, total: 5 },
+    }
+    render(await DashboardHub())
+    expect(
+      screen.getByRole('link', { name: /My toys/ }).querySelector('.badge')
+    ).toBeNull()
+  })
+
+  // Eight before: Submit an idea folded into Design challenges.
+  it('renders seven cards for a plain account', async () => {
+    const { container } = render(await DashboardHub())
+    expect(container.querySelectorAll('a.card-pixel')).toHaveLength(7)
   })
 
   // Tests: a signed-out visitor is sent to login rather than shown an empty hub
