@@ -1,9 +1,9 @@
 import Link from 'next/link'
 import { TutorialCard } from '@/components/tutorial-card'
 import { LauncherGrid, type LauncherTile } from '@/components/launcher-grid'
-import { EditorialImage } from '@/components/editorial-image'
-import { Slot, Sticker } from '@/components/slot'
+import { Slot } from '@/components/slot'
 import { HubGrid } from '@/components/hub-grid'
+import { SwitchAdaptedBear } from '@/components/switch-adapted-bear'
 import { PUBLIC_NAV } from '@/lib/public-nav'
 import type { Tutorial, ImpactSummary } from '@splat-connect/types'
 
@@ -109,8 +109,8 @@ export default async function HomePage() {
         is what stops the homepage reading as a separate landing page bolted onto
         a product.
 
-        Two words of the headline lean. One circular photo slot. One apricot
-        control with a diagonal ink shadow and a 2px border. That is the
+        Two words of the headline lean. One pixel-art mascot you can press. One
+        apricot control with a diagonal ink shadow and a 2px border. That is the
         entire budget, and holding to it is why the same language survives on
         a privacy policy.
       */}
@@ -175,34 +175,21 @@ export default async function HomePage() {
             </ul>
           </div>
 
-          {/* Circular photo slot. A photo of a child mid-press drops straight
-              into EditorialImage and the ratio is already fixed, so nothing
-              reflows around it when the real image arrives. */}
+          {/*
+            The mascot, which is the whole hero's argument made playable: hold
+            the switch, the bear waves and its badge lights up.
+
+            This replaces three placeholders at once — the round photo slot, the
+            animation slot briefed as "switch press → toy lights up", and the
+            spark sticker whose only job was breaking the photo disc's edge. All
+            three were reserving space for this, and a placeholder next to the
+            finished thing it was holding space for is just clutter.
+          */}
           <div
-            className="rise relative mx-auto w-full max-w-sm"
+            className="rise mx-auto w-full max-w-sm"
             style={{ '--rise-delay': '120ms' } as React.CSSProperties}
           >
-            <div className="[&_figure>div]:rounded-full">
-              <EditorialImage illustration="adapted-toy" ratio="1/1" />
-            </div>
-
-            {/* The headline promises a thing that moves and nothing on the page
-                moves. This is where that gets built — pinned to the photo rather
-                than floated loose, because the animation has to read as the toy
-                in the picture responding, not as an effect playing next to it. */}
-            <Slot
-              kind="animation"
-              note="Switch press → toy lights up. Loops once on view, replays on hover."
-              className="absolute -bottom-6 left-0 w-44 sm:-left-10"
-            />
-
-            {/* One sticker, top of the circle, breaking its edge so the photo
-                slot stops reading as a sealed disc. */}
-            <Sticker
-              note="Hand-drawn spark or star burst, apricot"
-              size="sm"
-              className="absolute -right-1 top-2 sm:-right-3"
-            />
+            <SwitchAdaptedBear />
           </div>
         </div>
       </section>
