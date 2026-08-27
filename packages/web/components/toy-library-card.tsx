@@ -1,11 +1,12 @@
 import Link from 'next/link'
+import { SaveButton, type SaveProps } from './save-button'
 import { CardPhoto } from './card-photo'
 import { toyHolderName } from '@splat-connect/types'
 import type { ToyWithOwner } from '@splat-connect/types'
 
-export function ToyLibraryCard({ toy }: { toy: ToyWithOwner }) {
+export function ToyLibraryCard({ toy, save }: { toy: ToyWithOwner; save?: SaveProps }) {
   const holder = toyHolderName(toy)
-  return (
+  const card = (
     <Link
       href={`/toy-library/${toy.id}`}
       data-testid="toy-library-card"
@@ -28,5 +29,24 @@ export function ToyLibraryCard({ toy }: { toy: ToyWithOwner }) {
         )}
       </div>
     </Link>
+  )
+
+  /*
+   * No wrapper at all when saving is off, so every existing call site renders
+   * byte-identically. That default is load-bearing rather than tidy: this card
+   * also appears on pages that show your OWN work, where a save button reads as
+   * a bug. Default-off keeps those correct by doing nothing, instead of by
+   * remembering to switch something off.
+   *
+   * The island is a SIBLING of the anchor, never inside it — a <button> within
+   * an <a> is invalid HTML with an ambiguous click target.
+   */
+  if (!save) return card
+
+  return (
+    <div className="save-host relative">
+      {card}
+      <SaveButton {...save} className="absolute right-2.5 top-2.5" />
+    </div>
   )
 }
