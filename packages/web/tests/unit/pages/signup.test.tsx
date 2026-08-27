@@ -2,6 +2,11 @@ import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import SignupPage from '@/app/signup/page'
 
+// The page reads ?next= and ?reason= for the save detour.
+vi.mock('next/navigation', () => ({
+  useSearchParams: () => new URLSearchParams(),
+}))
+
 vi.mock('@/lib/supabase/client', () => ({
   createClient: () => ({ auth: { signUp: vi.fn() } }),
 }))
