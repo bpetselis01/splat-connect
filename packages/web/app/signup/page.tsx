@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { ContributorTermsDialog } from '@/components/contributor-terms-dialog'
 import { Check } from '@/components/icons'
+import { AuthShell, AuthCard } from '@/components/auth-shell'
 import { AGREEMENT_VERSIONS } from '@splat-connect/types'
 
 export default function SignupPage() {
@@ -55,29 +56,31 @@ export default function SignupPage() {
 
   if (submitted) {
     return (
-      <div className="mx-auto mt-8 max-w-sm sm:mt-16">
-        <div className="card flex flex-col items-center p-6 text-center sm:p-8">
-          <span aria-hidden="true" className="empty-badge">
-            ✅
-          </span>
-          <h1 className="mt-4 text-2xl font-bold text-ink">Check your email</h1>
-          <p className="mt-2 text-sm leading-relaxed text-muted">
-            We&apos;ve sent a confirmation link to <strong>{email}</strong>. Confirm
-            your email, then sign in.
-          </p>
-          <Link href="/login" className="btn btn-soft mt-6">
-            Back to sign in
-          </Link>
-        </div>
-      </div>
+      <AuthShell current="signup">
+        <AuthCard>
+          <div className="flex flex-col items-center text-center">
+            <span aria-hidden="true" className="empty-badge">
+              ✅
+            </span>
+            <h1 className="mt-4 text-[22px] font-black text-ink">Check your email</h1>
+            <p className="mt-2 text-[13px] leading-relaxed text-muted">
+              We&apos;ve sent a confirmation link to <strong>{email}</strong>. Confirm
+              your email, then sign in.
+            </p>
+            <Link href="/login" className="btn btn-accent mt-6">
+              Back to sign in
+            </Link>
+          </div>
+        </AuthCard>
+      </AuthShell>
     )
   }
 
   return (
-    <div className="mx-auto mt-8 max-w-sm sm:mt-16">
-      <div className="card p-6 sm:p-8">
-        <h1 className="text-2xl font-bold text-ink">Create your account</h1>
-        <p className="mt-2 mb-6 text-sm leading-relaxed text-muted">
+    <AuthShell current="signup">
+      <AuthCard>
+        <h1 className="text-[22px] font-black text-ink">Create your account</h1>
+        <p className="mb-[18px] mt-1.5 text-[13px] leading-relaxed text-muted">
           One account for everything — browse, contribute, and manage your child&apos;s profile.
         </p>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -142,10 +145,8 @@ export default function SignupPage() {
           >
             <span
               aria-hidden="true"
-              className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full ${
-                acceptedTerms
-                  ? 'bg-brand-dark text-white'
-                  : 'border border-brand-soft text-transparent'
+              className={`mt-0.5 grid h-[18px] w-[18px] shrink-0 place-items-center rounded-pixel-xs border-2 border-ink ${
+                acceptedTerms ? 'bg-ink text-white' : 'text-transparent'
               }`}
             >
               <Check className="h-3 w-3" />
@@ -174,13 +175,13 @@ export default function SignupPage() {
             {loading ? 'Creating…' : 'Create account'}
           </button>
         </form>
-      </div>
-      <p className="mt-4 text-center text-sm text-muted">
-        Already have an account?{' '}
-        <Link href="/login" className="font-semibold text-brand-dark hover:underline">
-          Sign in
-        </Link>
-      </p>
+        <p className="mt-4 text-center text-[13px] text-muted">
+          Already have an account?{' '}
+          <Link href="/login" className="font-bold text-brand-deep hover:underline">
+            Sign in
+          </Link>
+        </p>
+      </AuthCard>
       <ContributorTermsDialog
         open={termsDialogOpen}
         onClose={() => setTermsDialogOpen(false)}
@@ -189,6 +190,6 @@ export default function SignupPage() {
           setTermsDialogOpen(false)
         }}
       />
-    </div>
+    </AuthShell>
   )
 }
