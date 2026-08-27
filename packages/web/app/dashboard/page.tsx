@@ -45,6 +45,7 @@ export default async function DashboardHub() {
     '/dashboard/organisation/toys': 'What your organisation has on its shelves.',
     '/dashboard/organisation/orders': 'Print jobs your organisation has taken on.',
     '/dashboard/profile': 'Your name, email, children and terms.',
+    '/dashboard/saved': 'Tutorials, toys and challenges you have kept.',
     '/notifications': 'Everything SPLAT has told you.',
     '/admin': 'The review queues and the report inbox.',
   }
