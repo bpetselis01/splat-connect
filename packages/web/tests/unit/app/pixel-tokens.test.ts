@@ -114,10 +114,55 @@ describe('pixel depth tokens', () => {
   })
 
   /* The board has no scale transform anywhere; a chip presses the same way a
-     button does — it travels its own shadow offset and the edge disappears. */
+     button does — it travels its own shadow offset and the edge disappears.
+
+     The 3px is no longer written as a literal `.chip:active` rule: the shared
+     press-motion block travels every family by its own --pop-rest, and the
+     chip declares 3px. Same distance, one source. The chip's share of that is
+     asserted precisely here; the shared machinery has its own guards in
+     tests/unit/lib/press-motion.test.ts. */
   it('presses the chip by collapsing its shadow, not by scaling it', () => {
-    const active = css.match(/\.chip:active \{[^}]*\}/)?.[0] ?? ''
+    const chip = css.match(/\.pixel \.chip \{[^}]*\}/)?.[0] ?? ''
+    expect(chip).toMatch(/--pop-rest:\s*3px/)
+    // The press itself: travel by --pop-rest, shadow to zero, never a scale.
+    const press = css.slice(css.lastIndexOf('Press motion, in one place'))
+    const active = press.match(/:active:not\(:disabled\)[^{]*\{[^}]*\}/)?.[0] ?? ''
+    expect(active).toMatch(/transform:\s*translate\(var\(--pop-rest\), var\(--pop-rest\)\)/)
+    expect(active).toMatch(/box-shadow:\s*0 0 0/)
     expect(active).not.toContain('scale(')
-    expect(active).toMatch(/translate\(3px, 3px\)/)
+  })
+
+  /* The board draws inputs with a 2px ink border at a 6px radius — the same
+     weight and corner as every other bordered small thing on it. This shipped
+     as a 1.5px --color-line hairline at --radius-field (14px), a value that is
+     not in the board's radius vocabulary at all, while --radius-pixel-slot's
+     own comment in this file already said "art slots and inputs at 6px". The
+     token and the class disagreed; the token was right. */
+  it('draws inputs at the board\'s border and radius', () => {
+    const field = css.match(/\.field \{[^}]*\}/)?.[0] ?? ''
+    expect(field).toMatch(/border:\s*var\(--border-pixel-thin\) solid var\(--color-ink\)/)
+    expect(field).toMatch(/border-radius:\s*var\(--radius-pixel-slot\)/)
+    // Below 44px is under the touch-target floor; the board has no fingers.
+    expect(field).toMatch(/min-height:\s*44px/)
+  })
+
+  /* --radius-field is no longer what .field uses, but eight `rounded-field`
+     call sites still consume it (the skip link, the nav menu button, the rail,
+     an exchanges pill). Deleting an orphaned-looking token that something else
+     still reads is the exact failure that has bitten this branch before. */
+  it('keeps --radius-field while anything still consumes it', () => {
+    expect(css).toMatch(/--radius-field:\s*14px/)
+  })
+
+  /* One border and one shadow around the pair, divider carried by the second
+     tab — what makes the auth switch read as a single control. */
+  it('draws the auth switch as one control, not two buttons', () => {
+    const box = css.match(/\.auth-switch \{[^}]*\}/)?.[0] ?? ''
+    expect(box).toMatch(/border:\s*var\(--border-pixel\) solid var\(--color-ink\)/)
+    expect(box).toMatch(/overflow:\s*hidden/)
+    expect(box).toMatch(/box-shadow:\s*var\(--shadow-pixel-md\)/)
+    expect(css).toMatch(/\.auth-switch a \+ a \{[^}]*border-left:\s*var\(--border-pixel-thin\)/)
+    // The active tab is filled ink, not tinted — at 12px a tint would not carry.
+    expect(css).toMatch(/\.auth-switch a\[aria-current='page'\] \{[^}]*background-color:\s*var\(--color-ink\)/)
   })
 })
