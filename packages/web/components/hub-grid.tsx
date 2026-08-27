@@ -76,18 +76,42 @@ export function HubGrid({
               // caller carries, but this is the one label 9px fits.
               <span className="badge bg-honey-soft text-honey-deep text-[9px]">SOON</span>
             )}
+            {/* Apricot, the board's one warm accent, so the number reads before
+                the title on the only cards that carry one. Nothing at zero: a
+                grey 0 is noise that trains you to ignore the badge. */}
+            {item.count ? (
+              <span className="badge bg-apricot text-ink">{item.count}</span>
+            ) : null}
           </div>
 
-          {/* Always muted, never the tone's own ink: the board keeps the blurb
-              at #4d6a7d on every section so the title is the only coloured
-              thing in the card and reads first. */}
-          <p
-            className={`leading-relaxed text-muted ${
-              wide ? 'text-[13px]' : 'text-[12px]'
-            }`}
-          >
-            {item.blurb}
-          </p>
+          {Array.isArray(item.blurb) ? (
+            /* Tinted tags rather than outlined chips. Button-shaped, but
+               deliberately without the board's two button signals (3px ink
+               border, hard shadow) — these are labels inside a link, and the
+               outlined form is pixel-identical to the real, pressable filter
+               chips on /library. */
+            <ul className={`flex flex-wrap gap-1.5 ${wide ? 'text-[12px]' : 'text-[11px]'}`}>
+              {item.blurb.map((line) => (
+                <li
+                  key={line}
+                  className="rounded-full bg-surface/75 px-2.5 py-1 font-bold leading-snug"
+                >
+                  {line}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            /* Always muted, never the tone's own ink: the board keeps the blurb
+                at #4d6a7d on every section so the title is the only coloured
+                thing in the card and reads first. */
+            <p
+              className={`leading-relaxed text-muted ${
+                wide ? 'text-[13px]' : 'text-[12px]'
+              }`}
+            >
+              {item.blurb}
+            </p>
+          )}
         </BoundaryLink>
       ))}
     </div>
