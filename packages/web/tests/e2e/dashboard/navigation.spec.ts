@@ -56,8 +56,11 @@ test.describe('signed-in navigation', () => {
       await expect(page.getByRole('link', { name: new RegExp(label) }).first()).toBeVisible()
     }
 
-    // Every other account page has no header — the dock is the way back to
-    // My SPLAT, and from there every public section is reachable again.
+    // Every other account page has no header — the rail's own pill is the way
+    // back to My SPLAT, and from there every public section is reachable again.
+    // Deliberately unscoped: the floating dock yields across the whole account
+    // section precisely so this stays a single link, and strict mode is what
+    // catches it if a second one ever comes back.
     for (const path of ['/dashboard/challenges', '/admin']) {
       await page.goto(path)
       await expect(page.getByRole('link', { name: /Back to My SPLAT/ })).toBeVisible()
