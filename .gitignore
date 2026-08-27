@@ -53,6 +53,12 @@ packages/api/.env
 .claude/settings.local.json
 .claude/skills/
 .claude/.headroom_wrap_marker.json
+# The skills themselves. .claude/skills/ is a directory of symlinks pointing in
+# here, so ignoring one without the other left every target showing as
+# untracked. These are third-party skills carrying no licence of their own and
+# this repo is public — they are synced between machines by copying the folder,
+# never by committing it.
+.agents/
 
 # git worktrees
 .worktrees/
