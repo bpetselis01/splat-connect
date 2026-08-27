@@ -29,12 +29,16 @@ describe('BackToMySplatDock', () => {
     expect(link).toHaveAttribute('href', '/dashboard')
   })
 
-  // Tests: the dock also covers rail-only account pages, not just public ones
+  // Tests: the dock yields on a rail page, because the rail has carried its own
+  //        "Back to My SPLAT" pill since 2026-08-24 (components/rail.tsx)
   // How:   renders signed in on a deep account page
-  it('renders on a rail-only account page', () => {
+  // Note:  this asserted the opposite until that pill landed, and the two
+  //        together put a second link to /dashboard on every rail page — a
+  //        strict-mode violation in dashboard/navigation.spec.ts
+  it('renders nothing on a rail-only account page', () => {
     pathname.current = '/dashboard/toys'
     render(<BackToMySplatDock signedIn />)
-    expect(screen.getByRole('link', { name: /Back to My SPLAT/ })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Back to My SPLAT/ })).not.toBeInTheDocument()
   })
 
   // Tests: My SPLAT itself already has the header, so the dock would be
