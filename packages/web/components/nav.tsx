@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Logo, Menu } from '@/components/icons'
 import { useDrawer } from '@/components/drawer-context'
 import { PUBLIC_NAV, ACCOUNT_NAV, sectionFor, crossesAccountBoundary } from '@/lib/public-nav'
-import { toneClass } from '@/lib/tone'
+import { toneClass, TONES } from '@/lib/tone'
 import type { Capabilities } from '@/lib/capabilities'
 
 /** Two letters from a display name, for the avatar. Falls back to one. */
@@ -27,24 +27,32 @@ function NavLink({
   href,
   crossing,
   className,
+  style,
   'aria-current': ariaCurrent,
   children,
 }: {
   href: string
   crossing: boolean
   className: string
+  /** Carries the section's --pill-tint/--pill-ink through to the CSS. */
+  style?: React.CSSProperties
   'aria-current'?: 'page'
   children: React.ReactNode
 }) {
   if (crossing) {
     return (
-      <a href={href} aria-current={ariaCurrent} className={className}>
+      <a href={href} aria-current={ariaCurrent} className={className} style={style}>
         {children}
       </a>
     )
   }
   return (
-    <Link href={href as Route<string>} aria-current={ariaCurrent} className={className}>
+    <Link
+      href={href as Route<string>}
+      aria-current={ariaCurrent}
+      className={className}
+      style={style}
+    >
       {children}
     </Link>
   )
@@ -82,10 +90,18 @@ export function Nav({ caps, quiet = false, showMenu = false }: NavProps) {
   const activeSection = sectionFor(pathname)
 
   return (
-    <header
-      className={`sticky top-0 z-30 border-b border-line ${quiet ? 'nav-quiet' : 'bg-surface'}`}
-    >
-      <nav className={`public-shell flex flex-wrap items-center gap-x-3 gap-y-2 ${quiet ? 'py-1.5' : 'py-3'}`}>
+    // No `border-b border-line` here. app/globals.css already gives
+    // `.pixel header` the board's 3px ink rule and `.pixel header.nav-quiet`
+    // the hairline the quiet register wants — but both sit in @layer
+    // components, and a Tailwind utility wins over that layer whatever the
+    // specificity says. The utility was silently overriding the correct rule
+    // back to 1px of --color-line on every page.
+    <header className={`sticky top-0 z-30 ${quiet ? 'nav-quiet' : 'bg-surface'}`}>
+      <nav
+        className={`public-shell flex flex-wrap items-center gap-x-[26px] gap-y-2 ${
+          quiet ? 'py-1.5' : 'py-[14px]'
+        }`}
+      >
         {showMenu && (
           <button
             type="button"
@@ -99,14 +115,14 @@ export function Nav({ caps, quiet = false, showMenu = false }: NavProps) {
         <NavLink
           href="/"
           crossing={activeSection === ACCOUNT_NAV}
-          className="flex shrink-0 items-center gap-2.5 text-lg font-black tracking-tight text-brand-deep sm:text-xl"
+          className="flex shrink-0 items-center gap-2.5 text-[18px] font-black tracking-tight text-ink"
         >
           {/* The mark sits on a plain tinted disc — no ring. The wordmark is the
               only thing in the bar that is not a pill, and it earns that by
               being the heaviest weight on the page rather than by being drawn. */}
           <span
             aria-hidden="true"
-            className="pixel-avatar grid h-9 w-9 place-items-center bg-brand-tint text-brand-dark"
+            className="pixel-avatar grid h-[34px] w-[34px] place-items-center bg-brand-tint text-brand-dark"
           >
             <Logo className="h-5 w-5" />
           </span>
@@ -120,7 +136,10 @@ export function Nav({ caps, quiet = false, showMenu = false }: NavProps) {
             nothing between the two groups and forced the whole bar onto a
             second row at 1440px, at which point a 71px shelf was rendering
             105px tall. */}
-        <div className="order-3 flex w-full flex-wrap items-center gap-x-4 gap-y-1 sm:order-2 sm:w-auto">
+        {/* gap-x-5 is the board's 20px between tabs; ml-2 is its 8px, which
+            lands on top of the bar's own 26px gap to give the 34px the board
+            puts between the wordmark and "Guides". */}
+        <div className="order-3 ml-2 flex w-full flex-wrap items-center gap-x-5 gap-y-1 sm:order-2 sm:w-auto">
           {sections.map((s) => {
             const active = activeSection?.href === s.href
             const tone = toneClass(s.tone)
@@ -133,16 +152,27 @@ export function Nav({ caps, quiet = false, showMenu = false }: NavProps) {
                 // No colour on the inactive state: `.nav-pill` already sets
                 // brand-deep, and overriding it with `text-muted` was leaving six
                 // of the seven pills grey on a white shelf.
-                // No horizontal padding at rest. A pill-shaped hit area was the
-                // last piece of the old rounded-pill nav left standing, and
-                // seven of them at px-3.5 is ~170px the bar does not have: the
-                // row overflowed its shell and wrapped, which is what made the
-                // shelf render 116px tall against the board's 71px. The
-                // vertical padding stays — it is what keeps every pill a 40px
-                // target, well clear of the 24px floor.
-                className={`nav-pill flex items-center gap-1.5 whitespace-nowrap py-3 ${
-                  active ? `${tone.surface} ${tone.ink} px-3` : ''
-                }`}
+                // No horizontal padding, at rest OR active. A pill-shaped hit
+                // area was the last piece of the old rounded-pill nav left
+                // standing, and seven of them at px-3.5 is ~170px the bar does
+                // not have: the row overflowed its shell and wrapped, which is
+                // what made the shelf render 116px tall against the board's
+                // 71px. Hover and current-page both draw their pill on
+                // `.nav-pill::before` instead, which costs no layout at all —
+                // and stops the row shifting sideways as you navigate, which
+                // is what the active `px-3` used to do. The vertical padding
+                // stays — it is what keeps every pill a 40px target, well
+                // clear of the 24px floor.
+                className="nav-pill flex items-center gap-1.5 whitespace-nowrap py-3"
+                // The section's own tone, handed to CSS so hover and
+                // current-page can tint per-section without seven variants of
+                // the rule. Same bg/fg pair tone.test.ts checks for contrast.
+                style={
+                  {
+                    '--pill-tint': tone.hex.bg,
+                    '--pill-ink': tone.hex.fg,
+                  } as React.CSSProperties
+                }
               >
                 {/* The dot is what makes rank legible: the three pillars carry the
                     three distinct accents, the supporting sections stay blue. It is
@@ -164,7 +194,7 @@ export function Nav({ caps, quiet = false, showMenu = false }: NavProps) {
           // "My SPLAT", the unread count, the avatar and the way out, in that
           // order. They were three loose flex children each doing their own
           // ordering, which is why sign-out ended up on the pills' row.
-          <div className="order-2 ml-auto flex shrink-0 items-center gap-2.5 sm:order-3">
+          <div className="order-2 ml-auto flex shrink-0 items-center gap-[14px] sm:order-3">
             <NavLink
               href={ACCOUNT_NAV.href}
               // Not `activeSection !== ACCOUNT_NAV`: that missed the split
@@ -174,11 +204,18 @@ export function Nav({ caps, quiet = false, showMenu = false }: NavProps) {
               // the one place that rule lives; see its docstring.
               crossing={crossesAccountBoundary(pathname, ACCOUNT_NAV.href)}
               aria-current={activeSection?.href === ACCOUNT_NAV.href ? 'page' : undefined}
-              className={`nav-pill flex items-center gap-1.5 whitespace-nowrap py-3 ${
-                activeSection?.href === ACCOUNT_NAV.href ? 'bg-brand-tint text-brand-deep px-3' : ''
-              }`}
+              // No dot, unlike the seven section tabs. The board draws "My
+              // SPLAT" as the one bare label in the bar, and that absence is
+              // what separates the account cluster from the sections — with a
+              // dot it read as an eighth section that had drifted right.
+              className="nav-pill flex items-center gap-1.5 whitespace-nowrap py-3 text-brand-deep"
+              style={
+                {
+                  '--pill-tint': TONES.brand.hex.bg,
+                  '--pill-ink': TONES.brand.hex.fg,
+                } as React.CSSProperties
+              }
             >
-              <span aria-hidden="true" className="h-2 w-2 shrink-0 rounded-full bg-brand" />
               {ACCOUNT_NAV.label}
               {caps.unreadNotifications > 0 && (
                 <>
@@ -200,15 +237,24 @@ export function Nav({ caps, quiet = false, showMenu = false }: NavProps) {
             >
               {initials(caps.profile.name)}
             </span>
-            <button onClick={signOut} className="btn btn-quiet btn-sm shrink-0">
+            {/* The board draws this one with a solid ink shadow, not the 35%
+                one `.btn-quiet` carries. The class itself stays untouched:
+                that softer shadow is exactly what the board specifies for the
+                hero's "Or borrow a toy", so changing it would fix the header
+                and break the hero. */}
+            <button
+              onClick={signOut}
+              className="btn btn-quiet btn-sm shrink-0 shadow-[3px_3px_0_var(--color-ink)]"
+            >
               Sign out
             </button>
           </div>
         ) : (
-          <Link
-            href="/login"
-            className="btn btn-accent btn-sm order-2 ml-auto shrink-0 sm:order-3 sm:ml-0"
-          >
+          // `ml-auto` with no `sm:ml-0`. The signed-out button belongs at the
+          // far right edge, where the signed-in cluster sits — the override
+          // was cancelling it at 640px and up, dropping "Sign in" against the
+          // end of the tab row instead.
+          <Link href="/login" className="btn btn-accent btn-sm order-2 ml-auto shrink-0 sm:order-3">
             Sign in
           </Link>
         )}
