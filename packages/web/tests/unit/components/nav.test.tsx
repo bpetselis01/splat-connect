@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { Nav } from '@/components/nav'
 import { DrawerProvider, useDrawer } from '@/components/drawer-context'
 import type { Capabilities } from '@/lib/capabilities'
+import { TONES } from '@/lib/tone'
 
 const mockSignOut = vi.fn()
 const pathname = vi.hoisted(() => ({ current: '/' }))
@@ -364,5 +365,70 @@ describe('Nav', () => {
   it('shows no menu button outside the account section', () => {
     render(<DrawerProvider><Nav caps={signedIn} /></DrawerProvider>)
     expect(screen.queryByRole('button', { name: /open navigation/i })).not.toBeInTheDocument()
+  })
+
+  // Tests: Sign in is pushed to the far edge at every width, like the signed-in cluster
+  // How:   renders with caps={null} and asserts ml-auto survives with no sm: override
+  // Chain: the button carried `ml-auto sm:ml-0`, so at 640px and up the auto margin
+  //        was cancelled and Sign in sat against the end of the tab row instead of
+  //        the right edge — the one place the two auth states disagreed on layout
+  it('pushes Sign in to the right edge at every width', () => {
+    render(<Nav caps={null} />)
+    const link = screen.getByRole('link', { name: 'Sign in' })
+    expect(link).toHaveClass('ml-auto')
+    expect(link.className).not.toMatch(/sm:ml-0/)
+  })
+
+  // Tests: the header carries no border utility, so the .pixel header rule can apply
+  // How:   asserts the banner has neither border-b nor border-line
+  // Chain: `.pixel header` sets the board's 3px ink rule from @layer components, and a
+  //        Tailwind utility beats that layer regardless of specificity. The utility was
+  //        silently pinning every page back to a 1px --color-line hairline; the only
+  //        way to keep the correct rule winning is for the utility to stay absent
+  it('leaves the shelf rule to CSS rather than a border utility', () => {
+    const { container } = render(<Nav caps={null} />)
+    const header = container.querySelector('header')!
+    expect(header.className).not.toMatch(/border-b\b/)
+    expect(header.className).not.toMatch(/border-line/)
+  })
+
+  // Tests: the current section is marked without taking horizontal padding
+  // How:   sets pathname to /library and asserts the active link has no px- class
+  // Chain: the active tab used to take a real `px-3` its six neighbours did not, so
+  //        every tab in the row shifted sideways on navigation. Both the hover and
+  //        current-page pills now draw on .nav-pill::before, which costs no layout
+  it('marks the current section without shifting the row', () => {
+    pathname.current = '/library'
+    render(<Nav caps={null} />)
+    const current = screen.getByRole('link', { name: /Guides/ })
+    expect(current).toHaveAttribute('aria-current', 'page')
+    expect(current.className).not.toMatch(/(^|\s)px-/)
+  })
+
+  // Tests: every tab hands its section's own tone to the CSS as custom properties
+  // How:   asserts Toy Library carries mint's bg/fg pair
+  // Chain: hover and current-page tint per-section from --pill-tint/--pill-ink rather
+  //        than seven copies of the rule. The pair is the same one tone.test.ts checks
+  //        for contrast, so the hover state inherits that guard instead of needing
+  //        its own — if this stops matching TONES, the contrast test stops covering it
+  it('hands each tab its section tone for the hover and current pill', () => {
+    render(<Nav caps={null} />)
+    const toys = screen.getByRole('link', { name: /Toy Library/ })
+    expect(toys.style.getPropertyValue('--pill-tint')).toBe(TONES.mint.hex.bg)
+    expect(toys.style.getPropertyValue('--pill-ink')).toBe(TONES.mint.hex.fg)
+  })
+
+  // Tests: My SPLAT is the one bare label in the bar
+  // How:   asserts the account link renders no decorative dot span
+  // Chain: the board draws the seven section tabs with a tone dot and My SPLAT without
+  //        one — that absence is what separates the account cluster from the sections.
+  //        With a dot it read as an eighth section that had drifted right
+  it('draws the account entry without a section dot', () => {
+    render(<Nav caps={signedIn} />)
+    const account = screen.getByRole('link', { name: /My SPLAT/ })
+    // The dot specifically, not any decorative span — the unread badge is
+    // aria-hidden too and is meant to stay.
+    expect(account.querySelector('span.rounded-full')).toBeNull()
+    expect(screen.getByRole('link', { name: /Guides/ }).querySelector('span.rounded-full')).not.toBeNull()
   })
 })
