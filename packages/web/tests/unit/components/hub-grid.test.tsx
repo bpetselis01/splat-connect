@@ -81,4 +81,65 @@ describe('HubGrid', () => {
     const { container } = render(<HubGrid items={items} tone="honey" />)
     expect(container.firstElementChild!.className).toContain('lg:grid-cols-3')
   })
+
+  /*
+   * My SPLAT's cards list what is behind them instead of describing themselves.
+   * The lines are TEXT, deliberately: the whole card is one link, so a line
+   * that looked and behaved like a control would navigate somewhere other than
+   * what it names. See decision 1 in the spec.
+   */
+  const signpost: NavItem[] = [
+    {
+      href: '/dashboard/tutorials',
+      label: 'My tutorials',
+      state: 'live',
+      count: 2,
+      blurb: [
+        'Add a tutorial to SPLAT Connect',
+        'View saved tutorials',
+        'Browse tutorial library',
+      ],
+    },
+  ]
+
+  it('renders an array blurb as a list of lines', () => {
+    render(<HubGrid items={signpost} tone="brand" />)
+    expect(screen.getByText('Add a tutorial to SPLAT Connect')).toBeInTheDocument()
+    expect(screen.getByText('View saved tutorials')).toBeInTheDocument()
+    expect(screen.getByText('Browse tutorial library')).toBeInTheDocument()
+  })
+
+  it('makes no line a link of its own', () => {
+    render(<HubGrid items={signpost} tone="brand" />)
+    // One link for the card, and nothing else. Three tags that each looked
+    // pressable but went to the card's href would teach that tags lie.
+    expect(screen.getAllByRole('link')).toHaveLength(1)
+    expect(screen.getByText('Browse tutorial library').closest('a')).toHaveAttribute(
+      'href',
+      '/dashboard/tutorials'
+    )
+  })
+
+  it('badges a non-zero count', () => {
+    render(<HubGrid items={signpost} tone="brand" />)
+    expect(screen.getByText('2')).toBeInTheDocument()
+  })
+
+  it('renders no badge at zero rather than a zero badge', () => {
+    render(<HubGrid items={[{ ...signpost[0], count: 0 }]} tone="brand" />)
+    expect(screen.queryByText('0')).not.toBeInTheDocument()
+  })
+
+  it('renders no badge when the item has no count at all', () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- dropping count is the point of the destructure
+    const { count: _count, ...noCount } = signpost[0]
+    const { container } = render(<HubGrid items={[noCount]} tone="brand" />)
+    expect(container.querySelector('.badge')).toBeNull()
+  })
+
+  it('still renders a string blurb as a paragraph', () => {
+    const { container } = render(<HubGrid items={items} tone="honey" />)
+    expect(container.querySelector('ul')).toBeNull()
+    expect(screen.getByText('Which switch suits which child.')).toBeInTheDocument()
+  })
 })
