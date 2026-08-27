@@ -108,24 +108,19 @@ describe('DashboardHub', () => {
   it('lists what is behind My tutorials', async () => {
     render(await DashboardHub())
     const card = screen.getByRole('link', { name: /My tutorials/ })
-    expect(card).toHaveTextContent('Add a tutorial to SPLAT Connect')
-    expect(card).toHaveTextContent('View saved tutorials')
-    expect(card).toHaveTextContent('Browse tutorial library')
+    expect(card).toHaveTextContent('Add a tutorial, saved tutorials, browse library.')
   })
 
   it('lists what is behind My toys', async () => {
     render(await DashboardHub())
     const card = screen.getByRole('link', { name: /My toys/ })
-    expect(card).toHaveTextContent('Add a toy you want to donate or exchange')
-    expect(card).toHaveTextContent('View saved toys')
-    expect(card).toHaveTextContent('Browse toy library')
+    expect(card).toHaveTextContent('Add a toy to donate, saved toys, browse toy library.')
   })
 
   it('lists what is behind My exchanges', async () => {
     render(await DashboardHub())
     const card = screen.getByRole('link', { name: /My exchanges/ })
-    expect(card).toHaveTextContent('View active exchanges or donations')
-    expect(card).toHaveTextContent('Exchange history')
+    expect(card).toHaveTextContent('Active exchanges, exchange history.')
   })
 
   /*
@@ -142,7 +137,7 @@ describe('DashboardHub', () => {
     render(await DashboardHub())
     const card = screen.getByRole('link', { name: /My exchanges/ })
     expect(card).toHaveTextContent('3')
-    expect(card).toHaveTextContent('Exchange history')
+    expect(card).toHaveTextContent('Active exchanges, exchange history.')
   })
 
   // exchangeActions is the rail's signal — a different number that clears on a

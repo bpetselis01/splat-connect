@@ -84,9 +84,11 @@ describe('HubGrid', () => {
 
   /*
    * My SPLAT's cards list what is behind them instead of describing themselves.
-   * The lines are TEXT, deliberately: the whole card is one link, so a line
-   * that looked and behaved like a control would navigate somewhere other than
-   * what it names. See decision 1 in the spec.
+   * The list is PROSE, deliberately: the whole card is one link, so anything
+   * inside it shaped like a control would navigate somewhere other than what it
+   * names. It rendered as tinted tags until 2026-08-28 and read as exactly that
+   * — the buttons-that-are-not-buttons the spec's risk note predicted. See
+   * decision 2 in the spec.
    */
   const signpost: NavItem[] = [
     {
@@ -94,30 +96,27 @@ describe('HubGrid', () => {
       label: 'My tutorials',
       state: 'live',
       count: 2,
-      blurb: [
-        'Add a tutorial to SPLAT Connect',
-        'View saved tutorials',
-        'Browse tutorial library',
-      ],
+      blurb: 'Add a tutorial, saved tutorials, browse library.',
     },
   ]
 
-  it('renders an array blurb as a list of lines', () => {
-    render(<HubGrid items={signpost} tone="brand" />)
-    expect(screen.getByText('Add a tutorial to SPLAT Connect')).toBeInTheDocument()
-    expect(screen.getByText('View saved tutorials')).toBeInTheDocument()
-    expect(screen.getByText('Browse tutorial library')).toBeInTheDocument()
+  it('renders the destination list as one paragraph, not a list of tags', () => {
+    const { container } = render(<HubGrid items={signpost} tone="brand" />)
+    expect(container.querySelector('ul')).toBeNull()
+    expect(container.querySelector('li')).toBeNull()
+    expect(
+      screen.getByText('Add a tutorial, saved tutorials, browse library.')
+    ).toBeInTheDocument()
   })
 
-  it('makes no line a link of its own', () => {
+  it('leaves the card as the only link', () => {
     render(<HubGrid items={signpost} tone="brand" />)
-    // One link for the card, and nothing else. Three tags that each looked
-    // pressable but went to the card's href would teach that tags lie.
+    // One link for the card, and nothing else. A tag that looked pressable but
+    // went to the card's href would teach that tags lie.
     expect(screen.getAllByRole('link')).toHaveLength(1)
-    expect(screen.getByText('Browse tutorial library').closest('a')).toHaveAttribute(
-      'href',
-      '/dashboard/tutorials'
-    )
+    expect(
+      screen.getByText('Add a tutorial, saved tutorials, browse library.').closest('a')
+    ).toHaveAttribute('href', '/dashboard/tutorials')
   })
 
   it('badges a non-zero count', () => {
@@ -137,7 +136,7 @@ describe('HubGrid', () => {
     expect(container.querySelector('.badge')).toBeNull()
   })
 
-  it('still renders a string blurb as a paragraph', () => {
+  it('renders a self-describing blurb as the same paragraph', () => {
     const { container } = render(<HubGrid items={items} tone="honey" />)
     expect(container.querySelector('ul')).toBeNull()
     expect(screen.getByText('Which switch suits which child.')).toBeInTheDocument()
