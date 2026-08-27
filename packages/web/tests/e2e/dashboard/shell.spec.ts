@@ -23,6 +23,16 @@ const PHOTO_FIXTURE = path.join(__dirname, '..', 'fixtures', 'test.jpg')
  * itself introduces — collapse persistence, the narrow-viewport drawer and its
  * two native dismissals, the /my-tutorials redirect, a placeholder route, and
  * the bare onboarding gate.
+ *
+ * Every rail assertion below starts with a hop to /dashboard/tutorials rather
+ * than reading the page sign-in lands on. Since 2026-08-23 /dashboard is the
+ * one account page with no rail: it keeps the header and lists its children as
+ * hub cards (nestsRail, lib/public-nav.ts). A hub card is a single link whose
+ * accessible name is its whole content — title, count and blurb — so no card
+ * ever matches a bare row label, and the rows only exist one step in. The
+ * assertions are scoped to .shell-rail for the same reason the equivalent check
+ * in dashboard/navigation.spec.ts is: the fat footer renders inside the shell
+ * too, and repeats many of the same destinations.
  */
 
 test('a contributor sees no Organisation group', async ({ page }) => {
@@ -33,10 +43,14 @@ test('a contributor sees no Organisation group', async ({ page }) => {
     await signIn(page, contributor.email, contributor.password)
     await page.waitForURL('**/dashboard')
 
-    await expect(page.getByRole('link', { name: 'My tutorials', exact: true })).toBeVisible()
-    await expect(page.getByRole('link', { name: 'Account', exact: true })).toBeVisible()
-    await expect(page.getByText('Organisation', { exact: true })).toHaveCount(0)
-    await expect(page.getByRole('link', { name: 'Review queue', exact: true })).toHaveCount(0)
+    // One step in, because /dashboard has no rail — see the note at the top.
+    await page.goto('/dashboard/tutorials')
+    const rail = page.locator('.shell-rail')
+
+    await expect(rail.getByRole('link', { name: 'My tutorials', exact: true })).toBeVisible()
+    await expect(rail.getByRole('link', { name: 'Account', exact: true })).toBeVisible()
+    await expect(rail.getByText('Organisation', { exact: true })).toHaveCount(0)
+    await expect(rail.getByRole('link', { name: 'Review queue', exact: true })).toHaveCount(0)
   } finally {
     await deleteUser(contributor.id)
   }
@@ -62,10 +76,14 @@ test('a leader sees the Organisation group, and the queue merges across two orga
     await signIn(page, leader.email, leader.password)
     await page.waitForURL('**/dashboard')
 
-    await expect(page.getByRole('link', { name: 'My tutorials', exact: true })).toBeVisible()
-    await expect(page.getByRole('link', { name: 'Review queue', exact: true })).toBeVisible()
+    // One step in, because /dashboard has no rail — see the note at the top.
+    await page.goto('/dashboard/tutorials')
+    const rail = page.locator('.shell-rail')
 
-    await page.getByRole('link', { name: 'Review queue', exact: true }).click()
+    await expect(rail.getByRole('link', { name: 'My tutorials', exact: true })).toBeVisible()
+    await expect(rail.getByRole('link', { name: 'Review queue', exact: true })).toBeVisible()
+
+    await rail.getByRole('link', { name: 'Review queue', exact: true }).click()
     await expect(page).toHaveURL('/dashboard/organisation')
 
     // Both requests show in the single merged queue — no organisation picker
@@ -99,7 +117,11 @@ test('a leader reaches the existing review screen from the tab and approves a tu
     await signIn(page, leader.email, leader.password)
     await page.waitForURL('**/dashboard')
 
-    await page.getByRole('link', { name: 'Review queue', exact: true }).click()
+    // One step in, because /dashboard has no rail — see the note at the top.
+    await page.goto('/dashboard/tutorials')
+    const rail = page.locator('.shell-rail')
+
+    await rail.getByRole('link', { name: 'Review queue', exact: true }).click()
     await expect(page).toHaveURL('/dashboard/organisation')
 
     // The row links to the existing per-project review screen, not a new one.
@@ -130,7 +152,11 @@ test('a contributor adds two children, edits one, and deletes one', async ({ pag
     await signIn(page, contributor.email, contributor.password)
     await page.waitForURL('**/dashboard')
 
-    await page.getByRole('link', { name: 'Account', exact: true }).click()
+    // One step in, because /dashboard has no rail — see the note at the top.
+    await page.goto('/dashboard/tutorials')
+    const rail = page.locator('.shell-rail')
+
+    await rail.getByRole('link', { name: 'Account', exact: true }).click()
     await expect(page).toHaveURL('/dashboard/profile')
 
     // Name, age, diagnosis and MACS live on the Ability pill, not the one the
@@ -210,7 +236,11 @@ test('a user renames themselves on the Account tab and the change persists', asy
     await signIn(page, contributor.email, contributor.password)
     await page.waitForURL('**/dashboard')
 
-    await page.getByRole('link', { name: 'Account', exact: true }).click()
+    // One step in, because /dashboard has no rail — see the note at the top.
+    await page.goto('/dashboard/tutorials')
+    const rail = page.locator('.shell-rail')
+
+    await rail.getByRole('link', { name: 'Account', exact: true }).click()
     await expect(page).toHaveURL('/dashboard/profile')
 
     await page.locator('#name').fill(newName)
