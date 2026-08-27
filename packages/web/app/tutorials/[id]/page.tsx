@@ -1,5 +1,7 @@
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
+import { SaveButton } from '@/components/save-button'
+import { getSavedIds } from '@/lib/saves'
 import { DifficultyBadge } from '@/components/difficulty-badge'
 import { OrgBadges } from '@/components/org-badges'
 import { FileText, Download } from '@/components/icons'
@@ -22,6 +24,7 @@ export default async function TutorialPage({
     reviewed_for?: { name: string } | null
   }
 
+  const saved = await getSavedIds()
   const contributors = tutorial.tutorial_contributors ?? []
   const primaryContributor = contributors.find((c) => c.role === 'primary')
   const collaborators = contributors.filter((c) => c.role === 'collaborator')
@@ -56,6 +59,17 @@ export default async function TutorialPage({
           <div className="mb-2 flex flex-wrap items-center gap-3">
             <h1 className="text-2xl font-bold text-ink">{tutorial.title}</h1>
             <DifficultyBadge difficulty={tutorial.difficulty} />
+        {/* Not an island here: there is no card to sit on, and you often
+            arrive at this page from a shared link with no card in sight. An
+            ordinary control in the header row, sized up from the 34px square
+            the browse grid uses. */}
+            <SaveButton
+              slug="tutorials"
+              id={tutorial.id}
+              saved={saved?.tutorials.includes(tutorial.id) ?? false}
+              signedIn={saved !== null}
+              className="ml-auto !h-9 !w-auto gap-2 px-3"
+            />
           </div>
           {tutorial.description && (
             <p className="max-w-prose text-sm leading-relaxed text-muted">
