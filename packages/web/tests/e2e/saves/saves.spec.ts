@@ -18,15 +18,23 @@ import {
  * traffic is signed out, which is exactly when browse-and-triage happens.
  *
  * Screenshots land in docs/superpowers/plans/artifacts/saves/ and are the
- * visual check against the design doc — they are a deliberate side effect of
- * this spec, not a separate script, so they cannot drift from what the app
+ * visual check against the design doc — a deliberate side effect of this spec
+ * rather than a separate script, so they cannot drift from what the app
  * actually renders.
+ *
+ * They are OPT-IN, behind SAVE_SHOTS=1. Fixture titles carry a unique id, so
+ * every run produces different pixels; writing them unconditionally left the
+ * committed record dirty after any e2e run, which trains you to `git checkout`
+ * the very thing you meant to inspect. Refresh them deliberately:
+ *
+ *   SAVE_SHOTS=1 npx playwright test tests/e2e/saves
  */
 // Absolute, from this file rather than the process CWD: Playwright runs from
 // packages/web, so a relative path lands outside the repo entirely.
 const SHOTS = path.join(__dirname, '../../../../..', 'docs/superpowers/plans/artifacts/saves')
 
 async function shot(page: Page, name: string) {
+  if (!process.env.SAVE_SHOTS) return
   await page.screenshot({ path: path.join(SHOTS, `${name}.png`), fullPage: true })
 }
 
