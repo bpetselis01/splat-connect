@@ -21,6 +21,11 @@ vi.mock('next/image', () => ({
   ),
 }))
 
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
+  usePathname: () => '/library',
+}))
+
 const mockTutorial: Tutorial = {
   id: '1',
   title: 'Switch Adaptation Tutorial',
@@ -117,5 +122,50 @@ describe('TutorialCard', () => {
   it('says nothing about backing when there is none', () => {
     render(<TutorialCard tutorial={{ ...mockTutorial, tutorial_orgs: [] }} />)
     expect(screen.queryByText(/Reviewed by SPLAT/)).not.toBeInTheDocument()
+  })
+})
+
+/**
+ * The save island.
+ *
+ * Default-off is the assertion that matters: this card also renders on pages
+ * that show your own work, where a save button reads as a bug. Keeping those
+ * correct by DOING NOTHING beats keeping them correct by remembering to switch
+ * something off at each call site.
+ */
+describe('the save island', () => {
+  it('renders no control and no wrapper when save is omitted', () => {
+    const { container } = render(<TutorialCard tutorial={mockTutorial} />)
+    expect(container.querySelector('.save-host')).toBeNull()
+    expect(screen.queryByRole('button')).toBeNull()
+    // The card itself is still the outermost element.
+    expect(container.firstElementChild).toHaveAttribute('data-testid', 'tutorial-card')
+  })
+
+  it('renders the control as a sibling of the card link when save is given', () => {
+    const { container } = render(
+      <TutorialCard
+        tutorial={mockTutorial}
+        save={{ slug: 'tutorials', id: '1', saved: false, signedIn: true }}
+      />
+    )
+    const host = container.querySelector('.save-host')
+    expect(host).not.toBeNull()
+
+    // A <button> inside an <a> is invalid HTML with an ambiguous click target.
+    // This is the assertion that pins the island's whole shape.
+    const button = screen.getByRole('button', { name: 'Save' })
+    expect(button.closest('a')).toBeNull()
+    expect(host!.querySelector('a')).not.toBeNull()
+  })
+
+  it('shows the saved state as pressed', () => {
+    render(
+      <TutorialCard
+        tutorial={mockTutorial}
+        save={{ slug: 'tutorials', id: '1', saved: true, signedIn: true }}
+      />
+    )
+    expect(screen.getByRole('button', { name: 'Saved' })).toHaveAttribute('aria-pressed', 'true')
   })
 })
