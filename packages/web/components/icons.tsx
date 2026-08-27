@@ -239,6 +239,15 @@ export function LogOut(props: SVGProps<SVGSVGElement>) {
   )
 }
 
+export function Bookmark(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      {/* The same shape SaveButton draws, at the rail's scale. */}
+      <path d="M6 3h12v18l-6-5-6 5z" />
+    </Icon>
+  )
+}
+
 export function Bell(props: SVGProps<SVGSVGElement>) {
   return (
     <Icon {...props}>
