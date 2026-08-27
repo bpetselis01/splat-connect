@@ -47,6 +47,7 @@ export type IconName =
   | 'shield'
   | 'bell'
   | 'handshake'
+  | 'bookmark'
 
 /** `soon` marks a route that exists but has no feature behind it yet. */
 export type NavRow = {
@@ -131,6 +132,11 @@ export function buildNav(caps: Capabilities, unreadNotifications: number): NavGr
   groups.push({
     heading: 'Account',
     rows: [
+      // First in the group: what you kept is a place you go back to, which is
+      // the same kind of thing as your settings and unlike the four verb-named
+      // groups above. This single row also produces My SPLAT's eighth card —
+      // the hub is built from this model.
+      { href: '/dashboard/saved', label: 'Saved', icon: 'bookmark' },
       {
         href: '/notifications',
         label: 'Notifications',
