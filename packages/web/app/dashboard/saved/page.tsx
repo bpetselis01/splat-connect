@@ -2,10 +2,14 @@
  * The saved hub — the same shape as /learn and My SPLAT itself: a landing page
  * that lists what is inside it, with a sentence per destination.
  *
- * Two labelled groups rather than one flat five. Five cards at 4-up is four
- * plus a stranded one, and unlike My SPLAT's deliberately flat eight the split
+ * Two labelled groups rather than one flat five. Five cards in one grid strands
+ * a card at any width, and unlike My SPLAT's deliberately flat eight the split
  * here carries real information: it is the line between the three types that
  * work and the two that are drawn so the shape is visible.
+ *
+ * 3-up, not 4-up, which is HubGrid's default and what /learn uses. Ready now
+ * holds exactly three, so at 4-up it left a dead column on every screen wide
+ * enough to show one — caught on the built page, not in the spec.
  *
  * Related files:
  * - lib/nav-model.ts: the Saved row that reaches this page
@@ -81,13 +85,13 @@ export default async function SavedHub() {
       <p className="mb-4 mt-1 max-w-prose text-sm text-muted">
         The three things you can save today, from anywhere they appear on the site.
       </p>
-      <HubGrid items={READY} tone="brand" columns={4} />
+      <HubGrid items={READY} tone="brand" />
 
       <h2 className="title-detail mt-12">Coming soon</h2>
       <p className="mb-4 mt-1 max-w-prose text-sm text-muted">
         Not savable yet, listed so you know they are planned.
       </p>
-      <HubGrid items={SOON} tone="brand" columns={4} />
+      <HubGrid items={SOON} tone="brand" />
     </div>
   )
 }
