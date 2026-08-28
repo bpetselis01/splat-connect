@@ -22,30 +22,14 @@
  * - components/org-review-banner.tsx: the terms gate for reviewing
  */
 import Link from 'next/link'
+import { BoundaryLink } from '@/components/boundary-link'
 import { notFound, redirect } from 'next/navigation'
-import { revalidatePath } from 'next/cache'
 import { apiClient } from '@/lib/api-client'
 import { isOrgLeader } from '@/lib/org-access'
 import { OrgReviewBanner } from '@/components/org-review-banner'
 import { DifficultyBadge } from '@/components/difficulty-badge'
 import { BackingBadge } from '@/components/backing-state'
 import type { Tutorial, TutorialOrg, UserAgreement, Organization, OrgLeader } from '@splat-connect/types'
-
-async function acceptBacking(formData: FormData) {
-  'use server'
-  const tutorialId = formData.get('tutorialId') as string
-  const orgId = formData.get('orgId') as string
-  await apiClient.post(`/api/tutorials/${tutorialId}/orgs/${orgId}/accept`, {})
-  revalidatePath(`/organizations/${orgId}`)
-}
-
-async function declineBacking(formData: FormData) {
-  'use server'
-  const tutorialId = formData.get('tutorialId') as string
-  const orgId = formData.get('orgId') as string
-  await apiClient.post(`/api/tutorials/${tutorialId}/orgs/${orgId}/decline`, {})
-  revalidatePath(`/organizations/${orgId}`)
-}
 
 type Backed = Tutorial & { tutorial_orgs?: TutorialOrg[] }
 
@@ -130,9 +114,12 @@ export default async function OrganizationPage({
           <ul className="flex flex-col gap-3">
             {backed.map((t) => (
               <li key={t.id} className="card p-4">
-                <Link href={`/tutorials/${t.id}`} className="text-sm font-bold text-ink">
+                {/* The leader dashboard carries the rail; /tutorials/[id] is the
+                    public page. BoundaryLink forces the full load that lets the
+                    header replace it. */}
+                <BoundaryLink href={`/tutorials/${t.id}`} className="text-sm font-bold text-ink">
                   {t.title}
-                </Link>
+                </BoundaryLink>
                 {t.description && (
                   <p className="mt-1 max-w-prose text-xs leading-relaxed text-muted">
                     {t.description}
