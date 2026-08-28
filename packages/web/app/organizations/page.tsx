@@ -30,7 +30,7 @@ export default async function OrganizationsPage() {
   if (orgs.length === 0) {
     return (
       <div>
-        <h1 className="mb-4 text-2xl font-bold text-ink">Organisations</h1>
+        <h1 className="mb-4 title-hub">Organisations</h1>
         <div className="flex flex-col items-center px-6 py-16 text-center">
           <span aria-hidden="true" className="empty-badge">
             🏢
@@ -47,7 +47,7 @@ export default async function OrganizationsPage() {
 
   return (
     <div>
-      <h1 className="mb-2 text-2xl font-bold text-ink">Organisations</h1>
+      <h1 className="mb-2 title-hub">Organisations</h1>
       <p className="mb-6 max-w-prose text-sm leading-relaxed text-muted">
         Organisations review guides from contributors who ask them to. Their name
         on a guide means one of their leaders read it and stood behind it.
