@@ -89,7 +89,7 @@ export default function ContributorTermsOnboarding() {
         <span aria-hidden="true" className="empty-badge text-brand-deep">
           <FileText className="h-8 w-8" />
         </span>
-        <h1 className="mt-4 text-2xl font-bold text-ink">One thing before you continue</h1>
+        <h1 className="mt-4 title-article">One thing before you continue</h1>
         <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted">
           Please review and accept the contributor terms to carry on.
         </p>
