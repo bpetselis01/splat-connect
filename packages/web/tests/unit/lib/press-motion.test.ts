@@ -60,15 +60,24 @@ describe('press motion', () => {
   //        which is the state this whole block exists to fix
   it('gives every family with a resting shadow its own depth', () => {
     expect(restFor(':is(.btn-accent, .btn-primary, .btn-quiet)')).toBe(4)
-    expect(restFor('.pixel .card-pixel {')).toBe(5)
-    expect(restFor('.pixel .card-pixel-lead')).toBe(6)
+    expect(restFor('.pixel .card {')).toBe(5)
+    expect(restFor('.pixel .card-lead')).toBe(6)
     expect(restFor('.pixel .chip {')).toBe(3)
     // A selected chip rests flat (box-shadow: none), so 3px would slide it past
     // its own resting position on click with no shadow to sink into.
     expect(restFor(".pixel .chip[aria-pressed='true']")).toBe(0)
     // The panel moves in place of its summary, which cannot lift without being
     // clipped by the panel's own overflow: hidden.
-    expect(restFor('.pixel .panel:has(> .panel-summary) {')).toBe(2)
+    expect(restFor('.pixel .panel:has(> .panel-summary) {')).toBe(5)
+
+    // The stepper joined the chip register on 2026-08-29. Same two depths and
+    // the same reason: a selected pill rests flat, so it has nowhere to travel
+    // and 3px would slide it past its own resting position.
+    expect(restFor('.pixel .step-pill {')).toBe(3)
+    expect(restFor('.pixel .step-pill[data-active]')).toBe(0)
+
+    // The dock took a control's 4px when it stopped resting on a blurred halo.
+    expect(restFor('.pixel .dock-my-splat {')).toBe(4)
   })
 
   // Tests: hover is gated behind a hover-capable pointer
