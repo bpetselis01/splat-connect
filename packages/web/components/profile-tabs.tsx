@@ -20,7 +20,10 @@ export function ProfileTabs({ tabs }: { tabs: ProfileTab[] }) {
 
   return (
     <div className="mt-6">
-      <div role="tablist" className="flex gap-2 overflow-x-auto pb-1">
+      {/* pr-1.5 is the room the buttons' 4px hard shadow needs — a scroll
+          container clips at its padding edge, and with pr-0 the last tab lost
+          its shadow flat against that edge. pb-1 (4px) already cleared it. */}
+      <div role="tablist" className="flex gap-2 overflow-x-auto pb-1 pr-1.5">
         {tabs.map((tab) => (
           <button
             key={tab.key}
