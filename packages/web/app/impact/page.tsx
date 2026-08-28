@@ -53,7 +53,10 @@ export default async function ImpactPage() {
       {recent.length > 0 && (
         <div className="mt-8">
           <h2 className="title-detail">Recently active</h2>
-          <div className="mt-3 flex gap-3 overflow-x-auto pb-2">
+          {/* pr-2/pb-2 are the room the cards' 5px hard shadow needs: a scroll
+              container clips at its padding edge, so with pr-0 the last card in
+              the row lost its shadow flat against the edge at every width. */}
+          <div className="mt-3 flex gap-3 overflow-x-auto pb-2 pr-2">
             {recent.map((r) => (
               <Link
                 key={`${r.kind}-${r.id}`}
