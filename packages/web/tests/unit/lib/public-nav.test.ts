@@ -157,6 +157,20 @@ describe('the account section', () => {
     expect(sectionFor('/tutorials/abc')).toBeUndefined()
   })
 
+  // Tests: the organisation leader pages resolve to the account section, and
+  //        the public routes they are nested among do not
+  // How:   the leader dashboard and its review screen against the public list
+  //        and the public profile that sits one segment deeper
+  // Chain: /organizations nests public -> account -> public, so a prefix in
+  //        either direction is wrong: '/organizations' would drag the leader
+  //        pages public, and a leader prefix would drag /public account
+  it('resolves the organisation leader pages to the account section', () => {
+    expect(sectionFor('/organizations/abc')).toBe(ACCOUNT_NAV)
+    expect(sectionFor('/organizations/abc/projects/def')).toBe(ACCOUNT_NAV)
+    expect(sectionFor('/organizations')?.href).toBe('/impact')
+    expect(sectionFor('/organizations/abc/public')?.href).toBe('/impact')
+  })
+
   // Tests: /notifications is a rail row too, even though it is not a /dashboard
   //        child
   // How:   calls sectionFor with the bare route
@@ -256,6 +270,12 @@ describe('crossesAccountBoundary', () => {
   // How:   the same id, with and without the /edit segment
   // Chain: a prefix match on /tutorials would put the whole public detail page
   //        behind the rail — this is why sectionFor matches a pattern there
+  it('keeps a leader inside the account section across the review flow', () => {
+    expect(crossesAccountBoundary('/dashboard/organisation', '/organizations/a/projects/b')).toBe(false)
+    expect(crossesAccountBoundary('/organizations', '/organizations/a')).toBe(true)
+    expect(crossesAccountBoundary('/organizations/a', '/organizations/a/public')).toBe(true)
+  })
+
   it('leaves the public tutorial page on the public side', () => {
     expect(crossesAccountBoundary('/library', '/tutorials/abc')).toBe(false)
     expect(crossesAccountBoundary('/dashboard/tutorials', '/tutorials/abc')).toBe(true)
@@ -287,5 +307,17 @@ describe('nestsRail', () => {
     expect(nestsRail('/upload')).toBe(true)
     expect(nestsRail('/tutorials/abc/edit')).toBe(true)
     expect(nestsRail('/tutorials/abc')).toBe(false)
+  })
+
+  // Tests: a leader gets the rail on both organisation pages, and the public
+  //        profile beside them still gets the header
+  // How:   the leader dashboard, its review screen, and /public
+  // Chain: both are reached from /dashboard/organisation, which has the rail —
+  //        without this the chrome flips halfway through a leader's review
+  it('is true for the organisation leader pages', () => {
+    expect(nestsRail('/organizations/abc')).toBe(true)
+    expect(nestsRail('/organizations/abc/projects/def')).toBe(true)
+    expect(nestsRail('/organizations/abc/public')).toBe(false)
+    expect(nestsRail('/organizations')).toBe(false)
   })
 })
