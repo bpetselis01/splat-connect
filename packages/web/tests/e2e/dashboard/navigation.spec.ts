@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { signIn, createContributor, createAdmin, acceptTerms } from '../helpers'
+import { signIn, createContributor, createAdmin, acceptTerms, createTutorial } from '../helpers'
 
 const PUBLIC_LABELS = ['Guides', 'Toy Library', '3D Printing', 'Learn', 'Get Involved', 'Impact', 'About']
 
@@ -122,6 +122,98 @@ test.describe('signed-in navigation', () => {
     await expect(page).toHaveURL(/\/dashboard$/)
     await expect(page.locator('.shell-rail')).toHaveCount(0)
     await expect(page.getByRole('banner')).toBeVisible()
+  })
+
+  // Tests: the empty saved list's way out lands on the public library with the
+  //        header, not with the saved list's rail still on screen
+  // How:   a signed-in contributor with nothing saved clicks "Browse the guide
+  //        library" and both halves of the split are checked on the far side
+  // Chain: the reported defect. app/dashboard/saved/[type]/page.tsx used a
+  //        plain next/link, so the root layout never re-ran and /library
+  //        rendered inside the rail until the next hard navigation — clicking
+  //        a card or a save button was what accidentally fixed it. A mocked-
+  //        Link unit assertion cannot prove this; only a real click can
+  test('the empty saved list\'s browse link lands on the public library with the header', async ({
+    page,
+  }) => {
+    const contributor = await createContributor()
+    await acceptTerms(contributor.id)
+    await signIn(page, contributor.email, contributor.password)
+    await page.waitForURL('**/dashboard')
+
+    // Nothing has been saved, so this is the empty state with the way out.
+    await page.goto('/dashboard/saved/tutorials')
+    await expect(page.locator('.shell-rail')).toHaveCount(1)
+
+    await page.getByRole('link', { name: 'Browse the guide library' }).click()
+
+    await expect(page).toHaveURL(/\/library$/)
+    await expect(page.locator('.shell-rail')).toHaveCount(0)
+    await expect(page.getByRole('banner')).toBeVisible()
+  })
+
+  // Tests: the editor's back control goes where its label says — My tutorials,
+  //        with the rail — not to My SPLAT
+  // How:   opens a real draft's editor and clicks the control in <main>; the
+  //        rail carries a "My tutorials" row of its own, so the locator is
+  //        scoped or it matches the wrong element
+  // Chain: the reported defect. The label read "My tutorials" while the href
+  //        said /dashboard, which is both the wrong destination AND a chrome
+  //        flip, since /dashboard is the one account page that keeps the
+  //        header. Nothing caught it: a next/link to /dashboard is perfectly
+  //        valid, just wrong. /upload carried the identical bug
+  test('@responsive the editor\'s back control lands on My tutorials, not My SPLAT', async ({ page }) => {
+    const contributor = await createContributor()
+    await acceptTerms(contributor.id)
+    const tutorialId = await createTutorial(contributor.id, { status: 'draft' })
+    await signIn(page, contributor.email, contributor.password)
+    await page.waitForURL('**/dashboard')
+
+    await page.goto(`/tutorials/${tutorialId}/edit`)
+    await page.locator('main').getByRole('link', { name: 'My tutorials' }).click()
+
+    await expect(page).toHaveURL(/\/dashboard\/tutorials$/)
+    // Both halves: the right page, and the rail it is supposed to keep.
+    await expect(page.locator('.shell-rail')).toHaveCount(1)
+    await expect(page.getByRole('banner')).toHaveCount(0)
+  })
+
+  // Tests: /upload's back control, which carried the identical wrong href
+  test('@responsive the upload page\'s back control lands on My tutorials too', async ({ page }) => {
+    const contributor = await createContributor()
+    await acceptTerms(contributor.id)
+    await signIn(page, contributor.email, contributor.password)
+    await page.waitForURL('**/dashboard')
+
+    await page.goto('/upload')
+    await page.locator('main').getByRole('link', { name: 'My tutorials' }).click()
+
+    await expect(page).toHaveURL(/\/dashboard\/tutorials$/)
+    await expect(page.locator('.shell-rail')).toHaveCount(1)
+  })
+
+  // Tests: at desktop width the back control gives way to the rail entirely
+  // How:   on the editor at 1280px, the control in <main> is not visible while
+  //        the rail's own "My tutorials" row is
+  // Chain: every back destination — My tutorials, My toys, My exchanges,
+  //        Account — is already a rail row, so above lg the control was a
+  //        second copy of a link sitting two inches to its left. It is
+  //        `lg:hidden` for that reason, and this is the only thing that would
+  //        notice if someone dropped that class and reintroduced the clutter
+  test('the back control gives way to the rail at desktop width', async ({ page }) => {
+    const contributor = await createContributor()
+    await acceptTerms(contributor.id)
+    const tutorialId = await createTutorial(contributor.id, { status: 'draft' })
+    await signIn(page, contributor.email, contributor.password)
+    await page.waitForURL('**/dashboard')
+
+    await page.goto(`/tutorials/${tutorialId}/edit`)
+    await expect(page.locator('main').getByRole('link', { name: 'My tutorials' })).toBeHidden()
+    // The rail row it defers to, which must actually be on screen for the
+    // hiding to be safe rather than merely tidy.
+    await expect(
+      page.locator('.shell-rail').getByRole('link', { name: 'My tutorials' })
+    ).toBeVisible()
   })
 
   // The final review round's headline gap: components/public-footer.tsx
