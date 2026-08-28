@@ -1785,3 +1785,33 @@ Five things the plan got wrong, corrected while running it:
    real counterpart `.dialog-panel` was confirmed correct directly.
 
 Nothing is committed, per Byron's convention.
+
+## The visual pass, done 2026-08-29
+
+Run against a real production build on local Supabase (the E2E harness's own
+webServer config, ports 3104/3105), signed in as a seeded contributor, at
+375 / 768 / 1280 across `/dashboard/tutorials`, `/tutorials/[id]/edit`,
+`/dashboard/toys`, `/dashboard/exchanges`, `/notifications`, `/upload`,
+`/dashboard/saved`, `/dashboard/profile`, and signed out across `/contact`,
+`/impact` and `/library`.
+
+**Density reads as structure, not noise.** The three-card grid, the stat strip
+and the stepper-over-panel stack all hold at every width. No change proposed.
+
+**No viewport overflow at any width.** This was the regression to fear — 3px
+borders add 6px to every box — and there is none.
+
+**One real bug, found and fixed.** `/impact`'s horizontal card row had `pr-0`,
+and a scroll container clips at its padding edge, so the last card's 5px hard
+offset was sliced flat at every width. The blurred shadow it replaced faded out
+there and hid the same clip. Fixed at `02fe575e`.
+
+**One pre-existing bug of the same class, also fixed.** `components/profile-tabs.tsx`
+has always had `pr-0` around buttons that have carried a 4px hard offset since
+the foundation shipped. Fixed at `eaed637d`.
+
+**One false alarm worth recording.** `.step-pill-row` looked clipped in the
+first sweep, but it has 12px of padding against a 3px shadow and 15px of room
+at scroll-end — what the check was seeing was pills scrolled out of view, which
+is what a scroller is for. Measure `scrollHeight > clientHeight` and the room at
+`scrollLeft = scrollWidth` before believing a clipping report.
