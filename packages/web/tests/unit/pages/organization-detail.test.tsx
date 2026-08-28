@@ -6,9 +6,12 @@ vi.mock('@/lib/api-client', () => ({
   apiClient: { get: (...a: unknown[]) => get(...a), post: vi.fn() },
 }))
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
+// usePathname is here for BoundaryLink, which the backed-tutorials list uses to
+// force a full load out of the rail into the public /tutorials/[id] page.
 vi.mock('next/navigation', () => ({
   notFound: vi.fn(() => { throw new Error('NOT_FOUND') }),
   redirect: vi.fn((url: string) => { throw new Error(`REDIRECT:${url}`) }),
+  usePathname: () => '/organizations/org-1',
 }))
 vi.mock('next/link', () => ({
   default: ({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) => (
