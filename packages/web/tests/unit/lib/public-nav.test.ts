@@ -144,6 +144,19 @@ describe('the account section', () => {
     expect(sectionFor('/admin/review')).toBe(ACCOUNT_NAV)
   })
 
+  // Tests: the authoring pages resolve to the account section even though one
+  //        of them is nested under a public prefix
+  // How:   /upload (a plain prefix) and /tutorials/[id]/edit (a pattern),
+  //        against the public /tutorials/[id] that must not follow it
+  // Chain: sectionFor is the single input to nestsRail, isAccountRoute, the
+  //        breadcrumb and the back-to-My-SPLAT dock — all four were wrong on
+  //        these pages together
+  it('resolves the authoring pages to the account section', () => {
+    expect(sectionFor('/upload')).toBe(ACCOUNT_NAV)
+    expect(sectionFor('/tutorials/abc/edit')).toBe(ACCOUNT_NAV)
+    expect(sectionFor('/tutorials/abc')).toBeUndefined()
+  })
+
   // Tests: /notifications is a rail row too, even though it is not a /dashboard
   //        child
   // How:   calls sectionFor with the bare route
@@ -224,20 +237,28 @@ describe('crossesAccountBoundary', () => {
   })
 
 
-  // Tests: sectionFor's real handling of an href it cannot resolve to any
-  //        section — /upload and /tutorials/[id]/edit are real pages, just
-  //        not modelled in PUBLIC_NAV or ACCOUNT_PREFIXES. Per sectionFor's
-  //        semantics that resolves to undefined, i.e. "not the account
-  //        section", so navigating there from the account section still
-  //        counts as crossing (matches how app/dashboard/tutorials/page.tsx
-  //        and components/dashboard-tutorial-card.tsx are guarded), while
-  //        navigating there from another such page, or from a public page,
-  //        does not.
-  it('treats an unresolvable href as outside the account section', () => {
-    expect(crossesAccountBoundary('/dashboard/tutorials', '/upload')).toBe(true)
-    expect(crossesAccountBoundary('/upload', '/dashboard')).toBe(true)
+  // Tests: the authoring pages that live outside /dashboard are on the account
+  //        side of the boundary like any other rail page
+  // How:   /upload and the tutorial editor against a rail page, /dashboard and
+  //        a public page
+  // Chain: while these resolved to undefined, entering them from the public
+  //        site was a soft transition, which left the header on a page that
+  //        renders the rail — the exact staleness bug this guard exists for.
+  it('puts the authoring pages on the account side', () => {
+    expect(crossesAccountBoundary('/dashboard/tutorials', '/upload')).toBe(false)
     expect(crossesAccountBoundary('/upload', '/tutorials/abc/edit')).toBe(false)
-    expect(crossesAccountBoundary('/library', '/upload')).toBe(false)
+    expect(crossesAccountBoundary('/upload', '/dashboard')).toBe(true)
+    expect(crossesAccountBoundary('/library', '/upload')).toBe(true)
+    expect(crossesAccountBoundary('/library', '/tutorials/abc/edit')).toBe(true)
+  })
+
+  // Tests: the public tutorial page is NOT dragged across with its own editor
+  // How:   the same id, with and without the /edit segment
+  // Chain: a prefix match on /tutorials would put the whole public detail page
+  //        behind the rail — this is why sectionFor matches a pattern there
+  it('leaves the public tutorial page on the public side', () => {
+    expect(crossesAccountBoundary('/library', '/tutorials/abc')).toBe(false)
+    expect(crossesAccountBoundary('/dashboard/tutorials', '/tutorials/abc')).toBe(true)
   })
 })
 
@@ -255,5 +276,16 @@ describe('nestsRail', () => {
   it('is false outside the account section', () => {
     expect(nestsRail('/library')).toBe(false)
     expect(nestsRail('/login')).toBe(false)
+  })
+
+  // Tests: the two authoring pages that do not live under /dashboard still get
+  //        the rail, and the public tutorial page still does not
+  // How:   /upload and /tutorials/[id]/edit against /tutorials/[id]
+  // Chain: app/layout.tsx reads nestsRail to choose AppShell over Nav, so a
+  //        false here is literally the header rendering on a signed-in page
+  it('is true for the authoring pages outside /dashboard', () => {
+    expect(nestsRail('/upload')).toBe(true)
+    expect(nestsRail('/tutorials/abc/edit')).toBe(true)
+    expect(nestsRail('/tutorials/abc')).toBe(false)
   })
 })
