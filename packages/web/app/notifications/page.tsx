@@ -36,7 +36,7 @@ export default async function NotificationsPage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-xl font-bold text-ink">Notifications</h1>
+      <h1 className="mb-6 title-hub">Notifications</h1>
       <NotificationsList
         notifications={notifications}
         pendingInvitesByTutorial={pendingInvitesByTutorial}
