@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import { BackLink } from '@/components/back-link'
 import { redirect } from 'next/navigation'
 import { getCapabilities } from '@/lib/capabilities'
 import { ChildEditor } from '@/components/child-editor'
@@ -9,9 +9,7 @@ export default async function NewChildPage() {
 
   return (
     <div>
-      <Link href="/dashboard/profile" className="mb-4 inline-block text-sm text-muted">
-        ← Account
-      </Link>
+      <BackLink href="/dashboard/profile" label="Account" />
       <p className="mb-6 max-w-prose text-sm leading-relaxed text-muted">
         Everything is optional and only you can see it.
       </p>
