@@ -69,14 +69,14 @@ describe('auth shell', () => {
   })
 
   // Tests: the card is the bordered pixel card, not the soft one
-  // How:   asserts card-pixel and the deeper 6px shadow the board draws here
+  // How:   asserts card and the deeper 6px shadow the board draws here
   // Chain: it shipped as .card — borderless, 16px radius, blurred shadow — which is
   //        the pre-pixel surface. The 6px is a rung deeper than an ordinary
-  //        .card-pixel because it is the only object on the screen
+  //        .card because it is the only object on the screen
   it('sits the form in the bordered card at the depth the board draws', () => {
     const { container } = render(<AuthCard>form</AuthCard>)
     const card = container.firstElementChild!
-    expect(card).toHaveClass('card-pixel')
+    expect(card).toHaveClass('card')
     expect(card.className).toContain('shadow-[6px_6px_0_var(--color-ink)]')
   })
 })
