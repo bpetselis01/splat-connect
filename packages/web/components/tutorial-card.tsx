@@ -17,7 +17,7 @@ export function TutorialCard({ tutorial, save }: { tutorial: Listed; save?: Save
     <BoundaryLink
       href={`/tutorials/${tutorial.id}`}
       data-testid="tutorial-card"
-      className="card-pixel card-link overflow-hidden"
+      className="card card-link overflow-hidden"
     >
       <CardPhoto src={tutorial.toy_photo_url} />
       <div className="p-4">
