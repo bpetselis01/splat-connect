@@ -38,7 +38,7 @@ export default async function SpotCheckPage({
 
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="mb-2 text-2xl font-bold text-ink">Spot-check</h1>
+      <h1 className="mb-2 title-hub">Spot-check</h1>
       <p className="mb-6 text-sm leading-relaxed text-muted">
         A random sample of tutorials approved by organisation leaders rather than by
         you. Refresh for a different sample. Leaders can approve their own work, so
