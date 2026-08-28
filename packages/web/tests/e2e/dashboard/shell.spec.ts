@@ -6,6 +6,7 @@ import {
   createTutorial,
   createOrgWithLeader,
   seedBackingRequest,
+  seedLeaderApproval,
   acceptTerms,
   deleteOrg,
   deleteUser,
@@ -538,5 +539,48 @@ test('the authoring pages render the rail, and the public tutorial page does not
     await expect(page.locator('.shell-rail')).toHaveCount(0)
   } finally {
     await deleteUser(contributor.id)
+  }
+})
+
+/**
+ * /organizations alternates sides: the list is public, /organizations/[id] is
+ * the leader dashboard, its /projects/[tutorialId] child is the review screen,
+ * and /organizations/[id]/public is the public profile one segment deeper.
+ * Neither direction can be a prefix, so all four are asserted together.
+ *
+ * The tutorial is approved for the organisation so the public profile has
+ * something to show — GET /api/public/organizations/:id 404s an organisation
+ * with no public work, and a 404 renders no chrome to assert on.
+ */
+test('the organisation leader pages render the rail, and the public ones do not', async ({
+  page,
+}) => {
+  const leader = await createContributor()
+  await acceptTerms(leader.id)
+  const orgId = await createOrgWithLeader(leader.id, uniqueTitle('E2E Leader Chrome Org'))
+  const tutorialId = await createTutorial(leader.id, {
+    title: uniqueTitle('E2E Leader Chrome'),
+    status: 'pending',
+  })
+  await seedLeaderApproval(tutorialId, orgId, leader.id)
+
+  try {
+    await signIn(page, leader.email, leader.password)
+    await page.waitForURL('**/dashboard')
+
+    await page.goto(`/organizations/${orgId}`)
+    await expect(page.locator('.shell-rail')).toBeVisible()
+
+    await page.goto(`/organizations/${orgId}/projects/${tutorialId}`)
+    await expect(page.locator('.shell-rail')).toBeVisible()
+
+    await page.goto(`/organizations/${orgId}/public`)
+    await expect(page.locator('.shell-rail')).toHaveCount(0)
+
+    await page.goto('/organizations')
+    await expect(page.locator('.shell-rail')).toHaveCount(0)
+  } finally {
+    await deleteOrg(orgId)
+    await deleteUser(leader.id)
   }
 })
