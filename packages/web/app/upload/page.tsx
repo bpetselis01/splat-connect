@@ -22,10 +22,10 @@
  * - components/new-tutorial-form.tsx: creates the draft and redirects
  * - app/tutorials/[id]/edit/page.tsx: every step after this one
  */
+import { BackLink } from '@/components/back-link'
 import { Suspense } from 'react'
 import { EditStepper } from '@/components/edit-stepper'
 import { NewTutorialForm } from '@/components/new-tutorial-form'
-import { BoundaryLink } from '@/components/boundary-link'
 import type { EditStep } from '@/lib/edit-steps'
 
 /** The steps the editor owns. Listed so the journey reads end to end, locked
@@ -59,9 +59,7 @@ export default function NewTutorialPage() {
 
   return (
     <div>
-      <BoundaryLink href="/dashboard" className="mb-4 inline-block text-sm text-muted">
-        &larr; My tutorials
-      </BoundaryLink>
+      <BackLink href="/dashboard/tutorials" label="My tutorials" />
       <h1 className="mb-2 text-2xl font-bold text-ink">New tutorial</h1>
       <p className="mb-6 max-w-prose text-sm leading-relaxed text-muted">
         Name it now — the guide, parts, tools and everything else come next.
