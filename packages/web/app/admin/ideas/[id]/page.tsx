@@ -109,7 +109,7 @@ export default async function AdminIdeaPage({ params }: { params: Promise<{ id: 
   return (
     <div className="max-w-2xl">
       <div className="mb-2 flex flex-wrap items-center gap-3">
-        <h1 className="text-2xl font-bold text-ink">{idea.title}</h1>
+        <h1 className="title-detail">{idea.title}</h1>
         <IdeaStatusBadge status={idea.status} />
       </div>
       <p className="mb-6 text-sm text-muted">
