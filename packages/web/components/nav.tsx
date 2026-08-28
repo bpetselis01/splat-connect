@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Logo, Menu } from '@/components/icons'
 import { useDrawer } from '@/components/drawer-context'
 import { PUBLIC_NAV, ACCOUNT_NAV, sectionFor, crossesAccountBoundary } from '@/lib/public-nav'
-import { toneClass, TONES } from '@/lib/tone'
+import { toneClass } from '@/lib/tone'
 import type { Capabilities } from '@/lib/capabilities'
 
 /** Two letters from a display name, for the avatar. Falls back to one. */
@@ -191,10 +191,21 @@ export function Nav({ caps, quiet = false, showMenu = false }: NavProps) {
 
         {caps ? (
           // The account cluster, kept together and pushed to the far edge —
-          // "My SPLAT", the unread count, the avatar and the way out, in that
-          // order. They were three loose flex children each doing their own
-          // ordering, which is why sign-out ended up on the pills' row.
+          // the avatar, "My SPLAT" with its unread count, and the way out, in
+          // that order. They were three loose flex children each doing their
+          // own ordering, which is why sign-out ended up on the pills' row.
           <div className="order-2 ml-auto flex shrink-0 items-center gap-[14px] sm:order-3">
+            {/* Avatar first, then the door, then the way out. The identity
+                reads before the destination — and with My SPLAT now drawn as a
+                solid button rather than a bare label, an avatar sitting to its
+                right read as a stray chip that had come loose from the button. */}
+            <span
+              aria-hidden="true"
+              title={caps.profile.name}
+              className="pixel-avatar grid h-8 w-8 shrink-0 place-items-center bg-mint text-sm font-black text-mint-deep"
+            >
+              {initials(caps.profile.name)}
+            </span>
             <NavLink
               href={ACCOUNT_NAV.href}
               // Not `activeSection !== ACCOUNT_NAV`: that missed the split
@@ -204,22 +215,27 @@ export function Nav({ caps, quiet = false, showMenu = false }: NavProps) {
               // the one place that rule lives; see its docstring.
               crossing={crossesAccountBoundary(pathname, ACCOUNT_NAV.href)}
               aria-current={activeSection?.href === ACCOUNT_NAV.href ? 'page' : undefined}
-              // No dot, unlike the seven section tabs. The board draws "My
-              // SPLAT" as the one bare label in the bar, and that absence is
-              // what separates the account cluster from the sections — with a
-              // dot it read as an eighth section that had drifted right.
-              className="nav-pill flex items-center gap-1.5 whitespace-nowrap py-3 text-brand-deep"
-              style={
-                {
-                  '--pill-tint': TONES.brand.hex.bg,
-                  '--pill-ink': TONES.brand.hex.fg,
-                } as React.CSSProperties
-              }
+              // The apricot button, not a `.nav-pill`, and not conditional on
+              // where you are. As a bare label it was the quietest thing in a
+              // bar of seven tinted section tabs — the one control a signed-in
+              // person actually needs was the hardest one to find. `.btn-accent`
+              // is the same solid apricot the signed-out "Sign in" uses, so the
+              // far-right corner means "your way in" in both states.
+              //
+              // No --pill-tint/--pill-ink here any more: those feed `.nav-pill`'s
+              // hover and current-page ::before, and the class is gone. Still no
+              // tone dot — see the seven section tabs above for why that absence
+              // is what separates this cluster from them.
+              className="btn btn-accent btn-sm flex shrink-0 items-center gap-1.5 whitespace-nowrap"
             >
               {ACCOUNT_NAV.label}
               {caps.unreadNotifications > 0 && (
                 <>
-                  <span aria-hidden="true" className="badge bg-apricot-soft text-apricot-deep">
+                  {/* Ink on apricot, not the apricot-soft/apricot-deep pair the
+                      badge carries elsewhere: that pairing is drawn for a white
+                      shelf and all but disappeared once the button underneath it
+                      became apricot too. */}
+                  <span aria-hidden="true" className="badge bg-ink text-surface">
                     {caps.unreadNotifications}
                   </span>
                   {/* The number alone is not self-describing to a screen reader. */}
@@ -227,16 +243,6 @@ export function Nav({ caps, quiet = false, showMenu = false }: NavProps) {
                 </>
               )}
             </NavLink>
-            {/* Avatar before the way out, as the board has it: the identity
-                reads first and "Sign out" ends the row, rather than the button
-                sitting between a user's name and their own initials. */}
-            <span
-              aria-hidden="true"
-              title={caps.profile.name}
-              className="pixel-avatar grid h-8 w-8 shrink-0 place-items-center bg-mint text-sm font-black text-mint-deep"
-            >
-              {initials(caps.profile.name)}
-            </span>
             {/* The board draws this one with a solid ink shadow, not the 35%
                 one `.btn-quiet` carries. The class itself stays untouched:
                 that softer shadow is exactly what the board specifies for the
