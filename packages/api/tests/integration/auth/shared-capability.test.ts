@@ -103,8 +103,19 @@ describe('profile identity is frozen against its owner', () => {
     expect(error).toBeNull()
   })
 
-  // Tests: an admin retains authority over another account's role.
-  it('allows an admin to change another profile role', async () => {
+  // Tests: role is unwritable over PostgREST by ANY holder of the anon key,
+  //        including an admin.
+  // Chain: this asserted the opposite until 045. The trigger alone could tell an
+  //        admin from anyone else, and when it turned out to be missing from the
+  //        cloud project on 2026-08-28 there was nothing behind it — one PATCH
+  //        with the browser's anon key produced an admin. 045 removes the column
+  //        grant so the escalation cannot reopen if the trigger is ever dropped
+  //        again, and a GRANT cannot make that exception: admin and contributor
+  //        are both the Postgres role `authenticated`.
+  //        The capability is not lost, only moved off the anon key — role
+  //        changes now need the service-role client (no route writes
+  //        profiles.role today; adding one means createAdminClient).
+  it('refuses an admin changing another profile role over PostgREST', async () => {
     const admin = await createTestUser('admin')
     const target = await createTestUser('contributor')
 
@@ -113,9 +124,30 @@ describe('profile identity is frozen against its owner', () => {
       .update({ role: 'admin' })
       .eq('id', target.id)
 
-    expect(error).toBeNull()
+    expect(error?.code).toBe('42501') // permission denied for table profiles
+
+    const { data } = await adminClient()
+      .from('profiles')
+      .select('role')
+      .eq('id', target.id)
+      .single()
+    expect(data?.role).toBe('contributor')
 
     await deleteTestUser(admin.id)
+    await deleteTestUser(target.id)
+  })
+
+  // Tests: the service-role path an admin must now use still works.
+  it('allows a service-role client to change a profile role', async () => {
+    const target = await createTestUser('contributor')
+
+    const { error } = await adminClient()
+      .from('profiles')
+      .update({ role: 'admin' })
+      .eq('id', target.id)
+
+    expect(error).toBeNull()
+
     await deleteTestUser(target.id)
   })
 
