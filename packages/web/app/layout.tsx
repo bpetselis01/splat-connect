@@ -161,19 +161,20 @@ export default async function RootLayout({
                     instead). quiet tracks account-section membership
                     (isAccountRoute), not shell presence — the header renders
                     quiet on /dashboard too, even though /dashboard has no
-                    shell. A signed-out visitor on an account-shaped route
-                    like /notifications still gets Nav here (shell is null
-                    because AppShell returned null with no session, not
-                    because nestsRail said no) — they need a way to sign in. */}
+                    shell. The signed-out-inside-the-account-section case
+                    this branch also covers is defence in depth now rather
+                    than a live path: every account route redirects a visitor
+                    with no session, /notifications included since it joined
+                    middleware.ts's signedInRoutes. */}
                 <Nav caps={caps} quiet={account} />
                 <div className="relative overflow-hidden">
                   <PixelBackdrop tone={tone} />
                   <main id="main" tabIndex={-1} className="public-shell relative py-8 sm:py-10">
-                    {/* /notifications resolves to the account section even
-                        signed out, and a "← My SPLAT" link back to a page you
-                        can't reach is worse than no breadcrumb — Nav above
-                        stays visible either way, since a signed-out visitor
-                        still needs a way to sign in. */}
+                    {/* A "← My SPLAT" link back to a page you cannot reach is
+                        worse than no breadcrumb. /notifications was the route
+                        that reached this signed out; it redirects now, so this
+                        holds the line for any account route added later
+                        without a guard of its own. */}
                     {!(account && shell === null) && <Breadcrumb />}
                     {children}
                   </main>
