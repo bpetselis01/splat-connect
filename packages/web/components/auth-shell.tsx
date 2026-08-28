@@ -59,11 +59,11 @@ export function AuthShell({
  * the same box.
  */
 export function AuthCard({ children }: { children: React.ReactNode }) {
-  // 6px, not the 5px an ordinary .card-pixel rests at. The board draws this one
+  // 6px, not the 5px an ordinary .card rests at. The board draws this one
   // a rung deeper because it is the only object on the screen — there is no
   // grid of siblings for it to sit level with.
   return (
-    <div className="card-pixel mt-[22px] w-full max-w-[380px] p-[30px] shadow-[6px_6px_0_var(--color-ink)]">
+    <div className="card mt-[22px] w-full max-w-[380px] p-[30px] shadow-[6px_6px_0_var(--color-ink)]">
       {children}
     </div>
   )
