@@ -55,7 +55,11 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  const signedInRoutes = ['/upload', '/dashboard']
+  // /notifications belongs here for the same reason /dashboard does: it is an
+  // account page, it renders the rail, and both of its fetches swallow failure
+  // — so without it a signed-out visitor landed on an empty "Notifications"
+  // heading rather than being asked to sign in.
+  const signedInRoutes = ['/upload', '/dashboard', '/notifications']
   const adminRoutes = ['/admin']
 
   const needsSignedInAuth = signedInRoutes.some((r) =>
