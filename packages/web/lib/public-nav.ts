@@ -324,8 +324,34 @@ export const ACCOUNT_NAV = {
     rail row under Account, so it is inside the account section, not beside it.
     /notifications is a top-level route rather than a /dashboard child, but it
     is a rail row too (see lib/nav-model.ts) — omitting it here silently drops
-    the rail and the quiet header on that one page. */
-const ACCOUNT_PREFIXES = ['/dashboard', '/admin', '/notifications']
+    the rail and the quiet header on that one page. /upload is the same story:
+    it is the first screen of the authoring journey that continues in the
+    tutorial editor, and it was rendering the header while the editor it hands
+    over to did the same. */
+const ACCOUNT_PREFIXES = ['/dashboard', '/admin', '/notifications', '/upload']
+
+/**
+ * Account routes nested UNDER a public one, which a prefix cannot express.
+ *
+ * /tutorials/[id] is the public detail page and keeps the header; only its
+ * /edit child is the contributor's own editor and takes the rail. A prefix of
+ * '/tutorials' above would drag the public page across with it, so the editor
+ * is matched by shape instead — the same distinction, written the same way, as
+ * the contributor-terms gate in middleware.ts.
+ *
+ * /organizations nests the two sides alternately, so neither direction can be
+ * a prefix: the list is public, /organizations/[id] is the leader dashboard
+ * (a non-leader is redirected off it by lib/org-access.ts) and its
+ * /projects/[tutorialId] child is the review screen, while
+ * /organizations/[id]/public is the public profile one segment deeper. Both
+ * leader pages are reached from /dashboard/organisation, which carries the
+ * rail — without these the chrome flipped halfway through a review.
+ */
+const ACCOUNT_PATTERNS = [
+  /^\/tutorials\/[^/]+\/edit(\/|$)/,
+  /^\/organizations\/[^/]+$/,
+  /^\/organizations\/[^/]+\/projects(\/|$)/,
+]
 
 /** Footer-only. Never in the top bar, never a section. */
 export const FOOTER_LEGAL: NavItem[] = [
@@ -351,7 +377,8 @@ export const SCAFFOLD_KEYS: readonly string[] = PUBLIC_NAV.flatMap((s) =>
  */
 export function sectionFor(pathname: string): NavTarget | undefined {
   const inside = (href: string) => pathname === href || pathname.startsWith(`${href}/`)
-  if (ACCOUNT_PREFIXES.some(inside)) return ACCOUNT_NAV
+  if (ACCOUNT_PREFIXES.some(inside) || ACCOUNT_PATTERNS.some((p) => p.test(pathname)))
+    return ACCOUNT_NAV
   return (
     PUBLIC_NAV.find((s) => s.children.some((c) => inside(c.href))) ??
     PUBLIC_NAV.find((s) => inside(s.href))
@@ -387,9 +414,9 @@ export function nestsRail(pathname: string): boolean {
  * account/public bug.
  *
  * `sectionFor` returns undefined for a pathname/href it cannot resolve to any
- * known section (e.g. /upload, /tutorials/[id]/edit — real pages, just not
- * modelled in either nav). Those are treated as "not the account section"
- * here, the same as any other public/unclassified page.
+ * known section (e.g. /contributors/[id], /tutorials/[id] — real public pages,
+ * just not modelled in PUBLIC_NAV). Those are treated as "not the account
+ * section" here, the same as any other public/unclassified page.
  */
 export function crossesAccountBoundary(pathname: string, href: string): boolean {
   const fromAccount = sectionFor(pathname) === ACCOUNT_NAV

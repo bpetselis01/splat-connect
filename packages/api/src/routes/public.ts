@@ -484,9 +484,13 @@ publicRoutes.get('/contributors/:id', async (c) => {
  * Tutorials backed/approved and toys currently shared are still public via
  * the anon client, same as the other public routes above.
  *
- * 404 for an unknown org or zero contributions across all four collections —
- * indistinguishable from a nonexistent org, same reasoning as the other
- * detail routes.
+ * 404 for an unknown org only. Zero contributions across all four collections
+ * used to 404 as well, so that such an org read as nonexistent — but GET
+ * /api/public/organizations lists every org by id and name, so that hid
+ * nothing a caller could not already read, while making each one a dead link
+ * from the Organisations page that links to this route. An org with nothing
+ * yet now returns its empty collections, which is what the page's own "No
+ * tutorials yet." and "No toys yet." states were written for.
  */
 publicRoutes.get('/organizations/:id', async (c) => {
   const sb = createAnonClient()
@@ -539,15 +543,6 @@ publicRoutes.get('/organizations/:id', async (c) => {
     const { data, error } = await admin.from('toys').select('*').in('id', deliveredToyIds)
     if (error) return c.json({ error: 'Failed to load organisation profile' }, 500)
     toysDelivered = data ?? []
-  }
-
-  if (
-    tutorialsBacked.length === 0 &&
-    (tutorialsApproved ?? []).length === 0 &&
-    (toysShared ?? []).length === 0 &&
-    toysDelivered.length === 0
-  ) {
-    return c.json({ error: 'Not found' }, 404)
   }
 
   const result: OrgPublicProfile = {

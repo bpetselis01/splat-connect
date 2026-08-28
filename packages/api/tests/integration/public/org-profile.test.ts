@@ -121,10 +121,23 @@ describe('GET /api/public/organizations/:id', () => {
     expect(body.toysShared.length).toBeGreaterThanOrEqual(1)
   })
 
-  it('404s for a zero-contribution org and an unknown id', async () => {
-    const empty = await app.request(`${BASE}/api/public/organizations/${emptyOrg}`)
-    expect(empty.status).toBe(404)
+  // An org with nothing to show used to 404, so that it was indistinguishable
+  // from one that does not exist. GET /api/public/organizations already lists
+  // every org by id and name, so that told a caller nothing they could not
+  // already read — while making every such org a dead link from the
+  // Organisations page, which links each row to this profile.
+  it('returns an empty profile for a zero-contribution org', async () => {
+    const res = await app.request(`${BASE}/api/public/organizations/${emptyOrg}`)
+    expect(res.status).toBe(200)
+    const body = (await res.json()) as any
+    expect(body.id).toBe(emptyOrg)
+    expect(body.tutorialsBacked).toEqual([])
+    expect(body.tutorialsApproved).toEqual([])
+    expect(body.toysShared).toEqual([])
+    expect(body.toysDelivered).toEqual([])
+  })
 
+  it('404s for an unknown id', async () => {
     const missing = await app.request(
       `${BASE}/api/public/organizations/00000000-0000-0000-0000-000000000000`
     )
