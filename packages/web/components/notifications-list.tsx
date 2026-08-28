@@ -15,6 +15,11 @@ const COPY: Record<NotificationType, (n: Notification) => string> = {
   collaborator_declined: (n) => `${n.actor_name} declined your invite to "${n.tutorial_title}"`,
   collaborator_removed: (n) => `${n.actor_name} removed you from "${n.tutorial_title}"`,
   collaborator_left: (n) => `${n.actor_name} left "${n.tutorial_title}"`,
+  // The two review-queue types. Both name the actor and the project, because
+  // unlike every other type above the recipient did not start this and has no
+  // context for it — a leader may be looking at a title they have never seen.
+  backing_requested: (n) => `${n.actor_name} asked your organisation to back "${n.tutorial_title}"`,
+  tutorial_submitted: (n) => `${n.actor_name} submitted "${n.tutorial_title}" for review`,
   tutorial_approved: (n) => `"${n.tutorial_title}" was approved and is now published`,
   tutorial_rejected: (n) => `"${n.tutorial_title}" was rejected`,
   toy_request: (n) => `${n.actor_name} requested ${n.toy_name}`,
@@ -39,8 +44,23 @@ const COPY: Record<NotificationType, (n: Notification) => string> = {
   idea_graduated: () => 'A challenge you were part of is being written up as a guide, and you are credited on it',
 }
 
-function linkFor(n: Notification): string {
+function linkFor(n: Notification, isAdmin: boolean): string {
   if (n.toy_transaction_id) return `/dashboard/exchanges/${n.toy_transaction_id}`
+  // The two review-queue types must be answered BEFORE the tutorial_id branch
+  // below: their recipient is a reviewer, not a contributor, and
+  // /tutorials/:id/edit is the author's editor — a leader following it lands on
+  // a screen RLS will not let them save, having been told to go there.
+  //
+  // Where a reviewer belongs depends on which kind they are, and the row itself
+  // cannot say: it carries no org_id, so the exact review screen
+  // (/organizations/:id/projects/:tutorialId) is not constructible from it. A
+  // leader goes to their own organisation hub, which already lists everything
+  // waiting on them; an admin goes straight to the review screen they own.
+  // Adding org_id to notifications would collapse the leader's two clicks to
+  // one — deliberately deferred until that click is actually felt.
+  if (n.type === 'backing_requested' || n.type === 'tutorial_submitted') {
+    return isAdmin && n.tutorial_id ? `/admin/review/${n.tutorial_id}` : '/dashboard/organisation'
+  }
   if (n.tutorial_id) return `/tutorials/${n.tutorial_id}/edit`
   // A rejected idea has no public page. Not because of RLS — 037 also grants
   // "Authors see their own ideas at any status", so an author's own rejected
@@ -67,12 +87,17 @@ function linkFor(n: Notification): string {
 export function NotificationsList({
   notifications,
   pendingInvitesByTutorial,
+  isAdmin = false,
   onMarkRead,
   onAcceptInvite,
   onDeclineInvite,
 }: {
   notifications: Notification[]
   pendingInvitesByTutorial: Record<string, string>
+  /** Only linkFor reads it: an admin and a leader are sent to different review
+      screens by the same notification type. Defaults false so every existing
+      call site and test keeps its current behaviour. */
+  isAdmin?: boolean
   onMarkRead: (id: string) => Promise<void>
   onAcceptInvite: (inviteId: string) => Promise<void>
   onDeclineInvite: (inviteId: string) => Promise<void>
@@ -104,7 +129,7 @@ export function NotificationsList({
               type="button"
               onClick={() => run(n.id, async () => {
                 await onMarkRead(n.id)
-                router.push(linkFor(n) as Route<string>)
+                router.push(linkFor(n, isAdmin) as Route<string>)
               })}
               className="text-left font-medium text-ink hover:underline"
             >
