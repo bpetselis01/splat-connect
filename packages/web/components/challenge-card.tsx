@@ -1,6 +1,5 @@
-import Link from 'next/link'
 import { SaveButton, type SaveProps } from './save-button'
-import type { Route } from 'next'
+import { BoundaryLink } from './boundary-link'
 import type { ToyIdea } from '@splat-connect/types'
 
 /**
@@ -26,8 +25,10 @@ export function ChallengeCard({
   save?: SaveProps
 }) {
   const card = (
-    <Link
-      href={`/get-involved/design-challenges/${idea.id}` as Route<string>}
+    // Same crossing as the other two saved cards — see tutorial-card.tsx. The
+    // Route cast goes with next/link; BoundaryLink takes a plain string.
+    <BoundaryLink
+      href={`/get-involved/design-challenges/${idea.id}`}
       className="card card-link p-5"
       data-testid="challenge-card"
     >
@@ -40,7 +41,7 @@ export function ChallengeCard({
         )}
       </div>
       <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-muted">{idea.summary}</p>
-    </Link>
+    </BoundaryLink>
   )
 
   /*
