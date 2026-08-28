@@ -15,7 +15,7 @@ export default async function ContributorsPage() {
   if (all.length === 0) {
     return (
       <div>
-        <h1 className="mb-4 text-2xl font-bold text-ink">Accounts</h1>
+        <h1 className="mb-4 title-hub">Accounts</h1>
         <div className="flex flex-col items-center px-6 py-16 text-center">
           <span aria-hidden="true" className="empty-badge">
             👥
@@ -31,7 +31,7 @@ export default async function ContributorsPage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold text-ink">Accounts</h1>
+      <h1 className="mb-6 title-hub">Accounts</h1>
       {total > all.length && (
         <p className="mb-4 text-sm text-muted">
           Showing the {all.length.toLocaleString()} most recent of {total.toLocaleString()} accounts.
