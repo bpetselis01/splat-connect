@@ -76,7 +76,7 @@ export default async function AdminOrganizationsPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="mb-6 text-2xl font-bold text-ink">Organisations</h1>
+      <h1 className="mb-6 title-hub">Organisations</h1>
 
       {/* Behind a disclosure so the list is what you land on. Creating is rare;
           looking is not. */}
