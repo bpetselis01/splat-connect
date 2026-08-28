@@ -31,6 +31,7 @@ import {
   Shield,
   Bell,
   Handshake,
+  Bookmark,
   LogOut,
 } from '@/components/icons'
 
@@ -52,6 +53,7 @@ const ICONS: Record<IconName, typeof BookOpen> = {
   shield: Shield,
   bell: Bell,
   handshake: Handshake,
+  bookmark: Bookmark,
 }
 
 export type RailProps = {

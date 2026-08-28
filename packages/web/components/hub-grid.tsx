@@ -78,40 +78,36 @@ export function HubGrid({
             )}
             {/* Apricot, the board's one warm accent, so the number reads before
                 the title on the only cards that carry one. Nothing at zero: a
-                grey 0 is noise that trains you to ignore the badge. */}
+                grey 0 is noise that trains you to ignore the badge.
+
+                Three overrides on .badge, all of them what the signposts mockup
+                drew: ml-auto pins it to the card's right edge so every number
+                down the grid sits on one vertical line, and 2px/10px is the
+                weight it was drawn at. .badge's own 1px hairline is a step
+                lighter than every other ink border on the card, which is the
+                one thing an alert count should not be. */}
             {item.count ? (
-              <span className="badge bg-apricot text-ink">{item.count}</span>
+              <span className="badge ml-auto border-2 bg-apricot text-[10px] text-ink">
+                {item.count}
+              </span>
             ) : null}
           </div>
 
-          {Array.isArray(item.blurb) ? (
-            /* Tinted tags rather than outlined chips. Button-shaped, but
-               deliberately without the board's two button signals (3px ink
-               border, hard shadow) — these are labels inside a link, and the
-               outlined form is pixel-identical to the real, pressable filter
-               chips on /library. */
-            <ul className={`flex flex-wrap gap-1.5 ${wide ? 'text-[12px]' : 'text-[11px]'}`}>
-              {item.blurb.map((line) => (
-                <li
-                  key={line}
-                  className="rounded-full bg-surface/75 px-2.5 py-1 font-bold leading-snug"
-                >
-                  {line}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            /* Always muted, never the tone's own ink: the board keeps the blurb
-                at #4d6a7d on every section so the title is the only coloured
-                thing in the card and reads first. */
-            <p
-              className={`leading-relaxed text-muted ${
-                wide ? 'text-[13px]' : 'text-[12px]'
-              }`}
-            >
-              {item.blurb}
-            </p>
-          )}
+          {/* Always muted, never the tone's own ink: the board keeps the blurb
+              at #4d6a7d on every section so the title is the only coloured
+              thing in the card and reads first.
+
+              My SPLAT's cards list what is behind them, and for a while that
+              list rendered as tinted tags. Removed 2026-08-28: button-shaped
+              and inside a link, they read as controls that did not control
+              anything — which is the failure the spec's own risk note predicted
+              and the fallback it named. A comma list is the same information
+              with no false affordance, and one element instead of a branch. */}
+          <p
+            className={`leading-relaxed text-muted ${wide ? 'text-[13px]' : 'text-[12px]'}`}
+          >
+            {item.blurb}
+          </p>
         </BoundaryLink>
       ))}
     </div>

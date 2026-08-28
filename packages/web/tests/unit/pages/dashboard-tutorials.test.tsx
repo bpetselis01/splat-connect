@@ -243,14 +243,22 @@ describe('DashboardPage', () => {
     expect(screen.getByRole('link', { name: /new tutorial/i })).toHaveAttribute('href', '/upload')
   })
 
-  // Tests: no "Saved" button ships — the saves subsystem has no spec, no
-  //        table and no route, so a button that leads nowhere is worse than
-  //        an absent one
-  it('ships no Saved button yet', async () => {
+  // Tests: the Saved button now ships and leads somewhere real
+  // How:   renders the page and checks the link's href
+  // Chain: this assertion used to be its inverse — "ships no Saved button yet",
+  //        because the saves subsystem had no table and no route, and a button
+  //        leading nowhere is worse than an absent one. 044_saves.sql and
+  //        /api/saves landed, so the condition it was waiting on is gone.
+  //        It skips the saved hub deliberately: the label names a destination,
+  //        so it goes to the destination.
+  it('leads to the saved tutorials list', async () => {
     vi.mocked(apiClient.get)
       .mockResolvedValueOnce(mockProfile)
       .mockResolvedValueOnce([])
     render(await DashboardPage())
-    expect(screen.queryByRole('link', { name: /saved/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /saved tutorials/i })).toHaveAttribute(
+      'href',
+      '/dashboard/saved/tutorials'
+    )
   })
 })

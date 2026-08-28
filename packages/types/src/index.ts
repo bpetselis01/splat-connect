@@ -634,3 +634,39 @@ export interface OrgPublicProfile {
   toysShared: Toy[]
   toysDelivered: Toy[]
 }
+
+/**
+ * What a save can point at.
+ *
+ * All five exist from day one so switching organisations and printable parts on
+ * later is a code change rather than a migration. Only the three in SAVE_SLUGS
+ * are live — see that constant.
+ */
+export type SaveEntityType =
+  | 'tutorial'
+  | 'toy'
+  | 'challenge'
+  | 'organisation'
+  | 'printable_part'
+
+/**
+ * The live save types, keyed by their URL segment.
+ *
+ * This is the single place that decides which types work. The API 404s on a
+ * slug that is not a key here, and so does /dashboard/saved/[type] — one
+ * missing key produces both behaviours, which is why it lives here rather than
+ * being written twice and drifting.
+ *
+ * Plural in the URL, singular in the enum: a column value describing one row
+ * should be singular, and a route listing many should not be.
+ */
+export const SAVE_SLUGS = {
+  tutorials: 'tutorial',
+  toys: 'toy',
+  challenges: 'challenge',
+} as const satisfies Record<string, SaveEntityType>
+
+export type SaveSlug = keyof typeof SAVE_SLUGS
+
+/** GET /api/saves/ids — every saved id the caller has, grouped by slug. */
+export type SavedIds = Record<SaveSlug, string[]>

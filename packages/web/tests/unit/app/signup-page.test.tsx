@@ -5,6 +5,12 @@ import { AGREEMENT_VERSIONS } from '@splat-connect/types'
 
 const signUp = vi.fn()
 
+// The page reads ?next= and ?reason= to carry a save detour through the email
+// round trip and to explain why the visitor was sent here.
+vi.mock('next/navigation', () => ({
+  useSearchParams: () => new URLSearchParams(),
+}))
+
 vi.mock('@/lib/supabase/client', () => ({
   createClient: () => ({ auth: { signUp: (...a: unknown[]) => signUp(...a) } }),
 }))

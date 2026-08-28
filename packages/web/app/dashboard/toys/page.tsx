@@ -39,6 +39,12 @@ export default async function ToyListPage() {
           <BoundaryLink href="/toy-library" className="btn btn-quiet">
             Browse toy library
           </BoundaryLink>
+          {/* The tag on this page's My SPLAT card names "saved toys";
+              this is where that tag leads. It skips the saved hub on purpose —
+              the label names a destination, so it lands on the destination. */}
+          <Link href="/dashboard/saved/toys" className="btn btn-quiet">
+            Saved toys
+          </Link>
         </div>
       </div>
 

@@ -37,13 +37,22 @@ it is drawn in the board's real values.
    links. This is the decision the rest follow from, and it is why this work is
    small: no nested-anchor problem, no structural change to `HubGrid`.
 
-2. **The lines render as flat tinted tags** — rounded, `rgba(255,255,255,.75)`
-   fill, no border and no shadow. Button-*shaped*, deliberately without the
-   board's two button signals (`3px solid ink`, hard shadow), so they read as
-   labels rather than controls. The outlined-chip variant was rejected: it is
-   pixel-identical to the real, pressable filter chips on `/library` and
+2. **The lines render as one comma list, in prose.** ~~Struck: flat tinted tags
+   — rounded, `rgba(255,255,255,.75)` fill, no border and no shadow.
+   Button-*shaped*, deliberately without the board's two button signals (`3px
+   solid ink`, hard shadow), so they read as labels rather than controls.~~
+
+   **Corrected 2026-08-28.** Dropping the border and the shadow was not enough:
+   built, the tags still read as buttons, which is the exact risk this document
+   files below and the fallback it names. Byron's ruling on seeing them: revert
+   to text. "Add a tutorial, saved tutorials, browse library." — one `<p>`,
+   sentence case after the first item, same muted colour as every other blurb.
+
+   The rejection of the *outlined*-chip variant still stands and is now moot:
+   it is pixel-identical to the real, pressable filter chips on `/library` and
    `/toy-library`, and here it would be inert decoration that navigates
-   somewhere other than what it names.
+   somewhere other than what it names. Prose cannot make that mistake, which is
+   why this is the end of the question rather than a third treatment.
 
 3. **The grid stays flat.** All cards in one `HubGrid`, no group headings.
 
@@ -91,31 +100,39 @@ Printable parts get the enum value and no save control, because
 
 ## What changes
 
-### 1. `lib/public-nav.ts` — `NavItem.blurb` widens
+### 1. `lib/public-nav.ts` — ~~`NavItem.blurb` widens~~
 
-```ts
-blurb: string | string[]
-```
+**Corrected 2026-08-28: nothing changes here.** ~~`blurb: string | string[]`~~
 
-`NavItem` is referenced by exactly three files — `lib/public-nav.ts`,
-`components/hub-grid.tsx` and `app/dashboard/page.tsx` — so the blast radius is
-one component and one page. All 43 public entries keep passing a string.
-`NavSection.blurb` is untouched: the footer, `launcher-grid` and `app/page.tsx`
-read that one, and none of them wants a list.
+The union existed only to carry the tag list, and with decision 2 reverted the
+rendered result is a sentence either way — so a `string[]` was a data structure
+with no rendering consequence. It is gone, along with the branch in `HubGrid`
+that read it. `blurb: string`, as before.
 
-### 2. `components/hub-grid.tsx` — render a list when given one
+`NavSection.blurb` was never touched: the footer, `launcher-grid` and
+`app/page.tsx` read that one, and none of them wants a list.
 
-One branch at `:89`. An array renders a `<ul>` of chevron-led tags; a string
-renders today's `<p>` unchanged, so every public hub is byte-identical.
+### 2. `components/hub-grid.tsx` — ~~render a list when given one~~ the badge only
 
-Tag: Nunito 11/700 in `--color-brand-deep`, `rgba(255,255,255,.75)` fill,
-`radius: 20px`, `padding: 4px 10px`, wrapping freely. No new token — `radius 20`
-is already in the board's vocabulary and explicitly exempt from the `9999px`
-pill sweep.
+**Corrected 2026-08-28.** ~~One branch at `:89`. An array renders a `<ul>` of
+chevron-led tags; a string renders today's `<p>` unchanged. Tag: Nunito 11/700
+in `--color-brand-deep`, `rgba(255,255,255,.75)` fill, `radius: 20px`,
+`padding: 4px 10px`.~~ The branch and the `<ul>` are removed; the blurb is one
+`<p>` for every card on every hub, which is what it was before this spec. The
+only thing this component gains is the badge below.
 
 The badge is a new element in the card's title row: `--color-apricot` fill,
-`2px solid ink`, `radius 4`, IBM Plex Mono 10/700. Rendered only when the count
-is non-zero. Every value is from the board's table.
+`2px solid ink`, `radius 4`, IBM Plex Mono 10/700, pushed to the card's right
+edge with `ml-auto` so every number down the grid sits on one vertical line.
+Rendered only when the count is non-zero. Every value is from the board's table.
+
+It reaches those values as three utilities overriding `.badge` — `ml-auto
+border-2 text-[10px]` — rather than a fourth badge variant in `globals.css`.
+`.badge` is a 1px hairline at 11px, which is a step lighter than every other ink
+border on the card; an alert count is the one thing that must not read lighter
+than its surroundings. **Corrected 2026-08-28:** first built on bare `.badge`,
+so it shipped at the hairline weight and sat beside the title rather than at the
+edge.
 
 ### 3. `app/dashboard/page.tsx` — the copy, and the two literals it lives in
 
@@ -124,15 +141,28 @@ The `counts` and `blurbs` maps merge into one `Record<string, string | string[]>
 the Exchanges blurb entirely with `"3 waiting on you"`, so the card loses its
 description exactly when it matters most. Counts move to the badge.
 
+**Corrected 2026-08-28:** this table was written longer than the mockup it was
+written from, and the implementation followed the table. The board wins over the
+spec, so the drawn copy below is the copy. ~~Struck: "Add a tutorial to SPLAT
+Connect", "View saved tutorials", "Browse tutorial library", "Add a toy you want
+to donate or exchange", "View saved toys", "View active exchanges or donations",
+"View saved challenges", and the Account prose "Your name, email, and the
+children and terms you have on file."~~ Every tag had gained a verb (`View`) or
+an object (`to SPLAT Connect`, `tutorial library`); at a 4-up card width each
+extra word costs a line.
+
+**Corrected again 2026-08-28,** with decision 2: the separators are commas in a
+sentence, not tag boundaries.
+
 | Card | Renders |
 |---|---|
-| My tutorials | Add a tutorial to SPLAT Connect · View saved tutorials · Browse tutorial library |
-| My toys | Add a toy you want to donate or exchange · View saved toys · Browse toy library |
-| My exchanges | View active exchanges or donations · Exchange history |
-| Design challenges | Submit an idea · View saved challenges |
+| My tutorials | Add a tutorial, saved tutorials, browse library. |
+| My toys | Add a toy to donate, saved toys, browse toy library. |
+| My exchanges | Active exchanges, exchange history. |
+| Design challenges | Submit an idea, saved challenges. |
 | My print requests | *(prose, unchanged)* |
 | Notifications | *(prose, unchanged)* |
-| Account | *(prose, unchanged)* |
+| Account | Your name, email, children and terms. |
 
 **`Submit an idea` stops being its own card.** It becomes the first tag on
 Design challenges. It was the one row in the account hub pointing at a public
@@ -193,9 +223,12 @@ opening `/dashboard/tutorials` also marks those rows read in `/notifications`.
 
 ## Testing impact
 
-- `tests/unit/components/hub-grid.test.tsx` — the string branch stays green
-  unchanged; add the array branch, the badge's zero/non-zero cases, and that a
-  tag is not an anchor. That last one is the assertion that pins decision 1.
+- `tests/unit/components/hub-grid.test.tsx` — the blurb paragraph stays green
+  unchanged; add the badge's zero/non-zero cases, that My SPLAT's destination
+  list renders as one `<p>` with no `<ul>` or `<li>` in it, and that the card is
+  the only anchor. The last two are the assertions that pin decisions 1 and 2.
+  **Corrected 2026-08-28:** the second one asserted the tag markup it now
+  forbids.
 - `tests/unit/components/rail.test.tsx`, `nav.test.tsx` — `My exchanges`.
 - New: `tests/unit/app/my-splat-hub.test.tsx` — seven cards, no `Submit an idea`
   card, and the tag copy per card.
@@ -219,11 +252,15 @@ opening `/dashboard/tutorials` also marks those rows read in `/notifications`.
 spec argues against. Taken knowingly (decision 3); remedy is two `HubGrid`
 calls if it reads badly built.
 
-**A tag that looks pressable but is not.** Mitigated by dropping the border and
-shadow, and pinned by a test. If it still reads as a control in the browser, the
-fallback is chevron-led plain text — same one-line change.
+**A tag that looks pressable but is not.** ~~Mitigated by dropping the border
+and shadow, and pinned by a test.~~ **This one happened, 2026-08-28.** Dropping
+the border and the shadow was not enough — button-shaped and inside a link is
+enough on its own. The fallback named here was taken, in its plainer form: not
+chevron-led lines but a single comma list. See decision 2.
 
-**Copy length at 4-up.** "Add a toy you want to donate or exchange" is 38
+**Copy length at 4-up.** ~~"Add a toy you want to donate or exchange" is 38
 characters in a ~300px card. It will wrap to two lines. That is fine, but it
 sets the height of the whole row, so check the built page before shortening
-anything.
+anything.~~ **Corrected 2026-08-28:** the risk was real and the mitigation was
+backwards — the copy was already drawn short and this spec lengthened it. The
+longest tag is now "Browse toy library" at 18 characters.

@@ -5,7 +5,18 @@ import type { Tutorial, Difficulty } from '@splat-connect/types'
 
 const DIFFICULTIES: (Difficulty | 'all')[] = ['all', 'easy', 'medium', 'hard']
 
-export function LibraryClient({ tutorials }: { tutorials: Tutorial[] }) {
+export function LibraryClient({
+  tutorials,
+  savedIds,
+  signedIn,
+}: {
+  tutorials: Tutorial[]
+  savedIds: string[]
+  signedIn: boolean
+}) {
+  // A Set rather than repeated .includes: this is the busiest page on the site
+  // and the lookup runs once per card.
+  const saved = new Set(savedIds)
   const [search, setSearch] = useState('')
   const [difficulty, setDifficulty] = useState<Difficulty | 'all'>('all')
 
@@ -65,7 +76,11 @@ export function LibraryClient({ tutorials }: { tutorials: Tutorial[] }) {
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           {filtered.map((t) => (
-            <TutorialCard key={t.id} tutorial={t} />
+            <TutorialCard
+              key={t.id}
+              tutorial={t}
+              save={{ slug: 'tutorials', id: t.id, saved: saved.has(t.id), signedIn }}
+            />
           ))}
         </div>
       )}

@@ -31,6 +31,7 @@
  * - components/idea-status-badge.tsx: the status → copy/colour map
  * - components/challenge-card.tsx: the public listing's equivalent row
  */
+import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { getCapabilities } from '@/lib/capabilities'
 import { apiClient } from '@/lib/api-client'
@@ -108,9 +109,17 @@ export default async function DashboardChallengesPage() {
             what is behind the Design challenges tile, and the tile itself is
             text — this button is the only way through once an idea already
             exists and the empty-state button below has gone. */}
-        <BoundaryLink href="/get-involved/submit-an-idea" className="btn btn-accent">
-          + Submit an idea
-        </BoundaryLink>
+        <div className="flex flex-wrap gap-3">
+          <BoundaryLink href="/get-involved/submit-an-idea" className="btn btn-accent">
+            + Submit an idea
+          </BoundaryLink>
+          {/* The tag on this page's My SPLAT card names "saved challenges";
+              this is where that tag leads. It skips the saved hub on purpose —
+              the label names a destination, so it lands on the destination. */}
+          <Link href="/dashboard/saved/challenges" className="btn btn-quiet">
+            Saved challenges
+          </Link>
+        </div>
       </div>
 
       <section>

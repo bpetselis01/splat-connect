@@ -1,4 +1,5 @@
 import { ToyLibraryClient } from './toy-library-client'
+import { getSavedIds } from '@/lib/saves'
 import type { ToyWithOwner } from '@splat-connect/types'
 
 export default async function ToyLibraryPage() {
@@ -10,5 +11,9 @@ export default async function ToyLibraryPage() {
     toys = []
   }
 
-  return <ToyLibraryClient toys={toys} />
+  const saved = await getSavedIds()
+
+  return (
+    <ToyLibraryClient toys={toys} savedIds={saved?.toys ?? []} signedIn={saved !== null} />
+  )
 }

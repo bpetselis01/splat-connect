@@ -18,6 +18,7 @@
 import Link from 'next/link'
 import { StepList } from '@/components/step-list'
 import { ChallengeCard } from '@/components/challenge-card'
+import { getSavedIds } from '@/lib/saves'
 import type { ToyIdea } from '@splat-connect/types'
 
 export const metadata = {
@@ -43,6 +44,13 @@ const HOW_IT_WORKS = [
 ]
 
 export default async function DesignChallengesPage() {
+  // null means signed out — the island still renders, it just routes to
+  // /signup instead of saving. Sets rather than .includes: the lookup runs
+  // once per card.
+  const saved = await getSavedIds()
+  const signedIn = saved !== null
+  const savedChallenges = new Set(saved?.challenges ?? [])
+
   let challenges: Challenge[] = []
   // Two distinct failure shapes: a non-OK response and a network/parse throw.
   // Both count as "could not load" rather than "nothing published" — telling
@@ -96,7 +104,16 @@ export default async function DesignChallengesPage() {
       ) : (
         <div className="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {challenges.map((idea) => (
-            <ChallengeCard key={idea.id} idea={idea} />
+            <ChallengeCard
+              key={idea.id}
+              idea={idea}
+              save={{
+                slug: 'challenges',
+                id: idea.id,
+                saved: savedChallenges.has(idea.id),
+                signedIn,
+              }}
+            />
           ))}
         </div>
       )}

@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import { ProfileTabs } from '@/components/profile-tabs'
 import { TutorialCard } from '@/components/tutorial-card'
 import { ToyLibraryCard } from '@/components/toy-library-card'
+import { getSavedIds } from '@/lib/saves'
 import type { OrgPublicProfile, Toy, ToyWithOwner } from '@splat-connect/types'
 
 export default async function OrgPublicProfilePage({
@@ -17,6 +18,14 @@ export default async function OrgPublicProfilePage({
 
   const org = (await res.json()) as OrgPublicProfile
   const initial = org.name.charAt(0).toUpperCase()
+
+  // null means signed out — the island still renders, it just routes to
+  // /signup instead of saving. Sets rather than .includes: the lookup runs
+  // once per card.
+  const saved = await getSavedIds()
+  const signedIn = saved !== null
+  const savedTutorials = new Set(saved?.tutorials ?? [])
+  const savedToys = new Set(saved?.toys ?? [])
 
   // ToyLibraryCard names the current holder; here that's always this org, so
   // it's filled in from the page rather than a second embed the public
@@ -77,7 +86,11 @@ export default async function OrgPublicProfilePage({
                       <h3 className="text-sm font-bold text-ink">Approved</h3>
                       <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         {org.tutorialsApproved.map((t) => (
-                          <TutorialCard key={t.id} tutorial={t} />
+                          <TutorialCard
+                            key={t.id}
+                            tutorial={t}
+                            save={{ slug: 'tutorials', id: t.id, saved: savedTutorials.has(t.id), signedIn }}
+                          />
                         ))}
                       </div>
                     </div>
@@ -87,7 +100,11 @@ export default async function OrgPublicProfilePage({
                       <h3 className="text-sm font-bold text-ink">Backed</h3>
                       <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         {org.tutorialsBacked.map((t) => (
-                          <TutorialCard key={t.id} tutorial={t} />
+                          <TutorialCard
+                            key={t.id}
+                            tutorial={t}
+                            save={{ slug: 'tutorials', id: t.id, saved: savedTutorials.has(t.id), signedIn }}
+                          />
                         ))}
                       </div>
                     </div>
@@ -108,7 +125,11 @@ export default async function OrgPublicProfilePage({
                       <h3 className="text-sm font-bold text-ink">Currently shared</h3>
                       <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         {org.toysShared.map((t) => (
-                          <ToyLibraryCard key={t.id} toy={asHeld(t)} />
+                          <ToyLibraryCard
+                            key={t.id}
+                            toy={asHeld(t)}
+                            save={{ slug: 'toys', id: t.id, saved: savedToys.has(t.id), signedIn }}
+                          />
                         ))}
                       </div>
                     </div>
@@ -118,7 +139,11 @@ export default async function OrgPublicProfilePage({
                       <h3 className="text-sm font-bold text-ink">Delivered</h3>
                       <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         {org.toysDelivered.map((t) => (
-                          <ToyLibraryCard key={t.id} toy={asHeld(t)} />
+                          <ToyLibraryCard
+                            key={t.id}
+                            toy={asHeld(t)}
+                            save={{ slug: 'toys', id: t.id, saved: savedToys.has(t.id), signedIn }}
+                          />
                         ))}
                       </div>
                     </div>

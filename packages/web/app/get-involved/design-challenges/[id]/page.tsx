@@ -19,6 +19,8 @@
  * - components/challenge-thread.tsx: the client half — join button + live thread
  */
 import { notFound } from 'next/navigation'
+import { SaveButton } from '@/components/save-button'
+import { getSavedIds } from '@/lib/saves'
 import { getCapabilities } from '@/lib/capabilities'
 import { ChallengeThread } from '@/components/challenge-thread'
 import type { ToyIdeaDetail, ContactPref } from '@splat-connect/types'
@@ -40,11 +42,23 @@ export default async function ChallengeDetailPage({
 
   const challenge = (await res.json()) as ToyIdeaDetail
   const caps = await getCapabilities()
+  const saved = await getSavedIds()
 
   return (
     <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
       <div>
-        <h1 className="title-article">{challenge.title}</h1>
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="title-article">{challenge.title}</h1>
+          {/* Not an island here: there is no card to sit on, and you often
+              arrive at this page from a shared link with no card in sight. */}
+          <SaveButton
+            slug="challenges"
+            id={challenge.id}
+            saved={saved?.challenges.includes(challenge.id) ?? false}
+            signedIn={saved !== null}
+            className="ml-auto !h-9 !w-auto gap-2 px-3"
+          />
+        </div>
         <p className="mt-2 text-base font-semibold leading-relaxed text-muted">
           {challenge.summary}
         </p>

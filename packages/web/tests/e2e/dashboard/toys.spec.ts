@@ -30,7 +30,11 @@ test('a contributor adds a toy, edits it, uploads a cover photo, publishes it, a
     await page.getByRole('tab', { name: 'Details' }).click()
     await page.locator('#toy-condition').fill('9')
     await page.getByRole('button', { name: 'Save' }).click()
-    await expect(page.getByText('Saved')).toBeVisible()
+    // Scoped to <main>: the rail now carries a "Saved" row of its own, so an
+    // unscoped getByText('Saved') matches the nav item as well as this
+    // confirmation and trips strict mode. The confirmation is page content;
+    // the row is navigation.
+    await expect(page.getByRole('main').getByText('Saved')).toBeVisible()
 
     await page.getByRole('tab', { name: 'Review' }).click()
     // The pointer is still resting on the pill just clicked. Its active colour

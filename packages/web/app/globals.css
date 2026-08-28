@@ -746,6 +746,32 @@
     box-shadow: var(--shadow-pixel-card) var(--color-ink);
   }
 
+  /*
+   * The save island.
+   *
+   * Sits over a browse card's photo as a SIBLING of the card's anchor — a
+   * <button> inside an <a> is invalid HTML — and appears unpositioned in a
+   * detail page's header row. Every value is from the board's measured
+   * vocabulary; the board draws no save control anywhere, so this is a
+   * derivation from it rather than something it sanctions.
+   */
+  .save-btn {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+    border: var(--border-pixel) solid var(--color-ink);
+    border-radius: var(--radius-pixel-slot);
+    box-shadow: 3px 3px 0 var(--color-ink);
+    cursor: pointer;
+  }
+
+  .save-btn.is-saved {
+    background-color: var(--color-apricot);
+  }
+
   /* The launcher's three pillars, and nothing else. They stand one step further
      off the canvas than every other card, which is the only reason a visitor
      reads Guides / Toy Library / 3D Printing as the site's three products
@@ -1704,7 +1730,7 @@
    * family stayed flat at 0px and nothing moved by its own depth. Same trap
    * .step-pill documents above for :not(). Keep these apart.
    */
-  .pixel :is(.btn, .card-link, .chip, .step-pill, .dropzone, .dock-my-splat) {
+  .pixel :is(.btn, .card-link, .chip, .step-pill, .dropzone, .dock-my-splat, .save-btn) {
     /* Overridden per family below. 0 means "flat at rest": hover gives it a
        shadow it did not have, and the press has nowhere to travel, so it
        collapses that new shadow instead. */
@@ -1744,7 +1770,7 @@
    * families before this block existed, not a new risk this one introduces.
    */
   @media (hover: hover) {
-    .pixel :is(.btn, .card-link, .chip, .step-pill, .dropzone, .dock-my-splat):hover:not(:disabled):not([aria-disabled='true']) {
+    .pixel :is(.btn, .card-link, .chip, .step-pill, .dropzone, .dock-my-splat, .save-btn):hover:not(:disabled):not([aria-disabled='true']) {
       transform: translate(calc(-1 * var(--pop-lift)), calc(-1 * var(--pop-lift)));
       box-shadow: calc(var(--pop-rest) + var(--pop-lift)) calc(var(--pop-rest) + var(--pop-lift))
         0 var(--pop-color);
@@ -1757,7 +1783,7 @@
     }
   }
 
-  .pixel :is(.btn, .card-link, .chip, .step-pill, .dropzone, .dock-my-splat):active:not(:disabled):not([aria-disabled='true']) {
+  .pixel :is(.btn, .card-link, .chip, .step-pill, .dropzone, .dock-my-splat, .save-btn):active:not(:disabled):not([aria-disabled='true']) {
     transform: translate(var(--pop-rest), var(--pop-rest));
     box-shadow: 0 0 0 var(--pop-color);
   }
@@ -1833,14 +1859,39 @@
     --pop-color: var(--color-brand-soft);
   }
 
+  /* The save island rests at 3px — shallower than the 5px card it sits on, so
+     it reads as attached to the card rather than as a second card. */
+  .pixel .save-btn {
+    --pop-rest: 3px;
+  }
+
+  /*
+   * The island is a SIBLING of the card's anchor, so it does not inherit the
+   * card's lift — without this the card slides up and out from under its own
+   * control while the button stays put.
+   *
+   * Its own rule, deliberately. It cannot join the family :is() above: that
+   * group lists simple classes, and folding a descendant-with-pseudo-class
+   * selector into :is() would both change what the group matches and hand it
+   * this selector's specificity. Same trap the group's own comment documents
+   * for .panel:has().
+   */
+  @media (hover: hover) {
+    .pixel .save-host:hover .save-btn {
+      transform: translate(calc(-1 * var(--pop-lift)), calc(-1 * var(--pop-lift)));
+      box-shadow: calc(var(--pop-rest) + var(--pop-lift)) calc(var(--pop-rest) + var(--pop-lift))
+        0 var(--pop-color);
+    }
+  }
+
   /*
    * Reduced motion keeps the depth change and drops the travel. Losing both
    * would leave a hover with no feedback at all, which is worse for the people
    * this setting exists to serve than a shadow that changes size.
    */
   @media (prefers-reduced-motion: reduce) {
-    .pixel :is(.btn, .card-link, .chip, .step-pill, .dropzone, .dock-my-splat):hover,
-    .pixel :is(.btn, .card-link, .chip, .step-pill, .dropzone, .dock-my-splat):active,
+    .pixel :is(.btn, .card-link, .chip, .step-pill, .dropzone, .dock-my-splat, .save-btn):hover,
+    .pixel :is(.btn, .card-link, .chip, .step-pill, .dropzone, .dock-my-splat, .save-btn):active,
     .pixel .panel:has(> .panel-summary:hover),
     .pixel .panel:has(> .panel-summary:active) {
       transform: none;

@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import { ProfileTabs } from '@/components/profile-tabs'
 import { TutorialCard } from '@/components/tutorial-card'
 import { ToyLibraryCard } from '@/components/toy-library-card'
+import { getSavedIds } from '@/lib/saves'
 import type { ContributorProfile, Toy, ToyWithOwner } from '@splat-connect/types'
 
 export default async function ContributorPage({
@@ -17,6 +18,14 @@ export default async function ContributorPage({
 
   const contributor = (await res.json()) as ContributorProfile
   const initial = contributor.name.charAt(0).toUpperCase()
+
+  // null means signed out — the island still renders, it just routes to
+  // /signup instead of saving. Sets rather than .includes: the lookup runs
+  // once per card.
+  const saved = await getSavedIds()
+  const signedIn = saved !== null
+  const savedTutorials = new Set(saved?.tutorials ?? [])
+  const savedToys = new Set(saved?.toys ?? [])
 
   // ToyLibraryCard names the current holder; here that's always this
   // contributor, so it's filled in from the page rather than a second embed
@@ -62,7 +71,11 @@ export default async function ContributorPage({
               ) : (
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {contributor.tutorials.map((t) => (
-                    <TutorialCard key={t.id} tutorial={t} />
+                    <TutorialCard
+                      key={t.id}
+                      tutorial={t}
+                      save={{ slug: 'tutorials', id: t.id, saved: savedTutorials.has(t.id), signedIn }}
+                    />
                   ))}
                 </div>
               ),
@@ -80,7 +93,11 @@ export default async function ContributorPage({
                       <h3 className="text-sm font-bold text-ink">Currently shared</h3>
                       <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         {contributor.toysShared.map((t) => (
-                          <ToyLibraryCard key={t.id} toy={asHeld(t)} />
+                          <ToyLibraryCard
+                            key={t.id}
+                            toy={asHeld(t)}
+                            save={{ slug: 'toys', id: t.id, saved: savedToys.has(t.id), signedIn }}
+                          />
                         ))}
                       </div>
                     </div>
@@ -90,7 +107,11 @@ export default async function ContributorPage({
                       <h3 className="text-sm font-bold text-ink">Delivered</h3>
                       <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         {contributor.toysDelivered.map((t) => (
-                          <ToyLibraryCard key={t.id} toy={asHeld(t)} />
+                          <ToyLibraryCard
+                            key={t.id}
+                            toy={asHeld(t)}
+                            save={{ slug: 'toys', id: t.id, saved: savedToys.has(t.id), signedIn }}
+                          />
                         ))}
                       </div>
                     </div>

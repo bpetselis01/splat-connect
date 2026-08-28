@@ -173,7 +173,11 @@ test('a contributor adds two children, edits one, and deletes one', async ({ pag
     await page.locator('#primary_diagnosis').fill('Cerebral palsy')
     await page.locator('#macs_level').selectOption('II')
     await page.getByRole('button', { name: 'Save' }).click()
-    await expect(page.getByText('Saved')).toBeVisible()
+    // Scoped to <main>: the rail now carries a "Saved" row of its own, so an
+    // unscoped getByText('Saved') matches the nav item as well as this
+    // confirmation and trips strict mode. The confirmation is page content;
+    // the row is navigation.
+    await expect(page.getByRole('main').getByText('Saved')).toBeVisible()
     await expect(page).toHaveURL(/\/dashboard\/child\/[0-9a-f-]{36}/)
     await page.getByRole('link', { name: '← Account' }).click()
     await expect(page).toHaveURL('/dashboard/profile')
@@ -184,7 +188,11 @@ test('a contributor adds two children, edits one, and deletes one', async ({ pag
     await page.getByRole('tab', { name: 'Ability' }).click()
     await page.locator('#age').fill('4')
     await page.getByRole('button', { name: 'Save' }).click()
-    await expect(page.getByText('Saved')).toBeVisible()
+    // Scoped to <main>: the rail now carries a "Saved" row of its own, so an
+    // unscoped getByText('Saved') matches the nav item as well as this
+    // confirmation and trips strict mode. The confirmation is page content;
+    // the row is navigation.
+    await expect(page.getByRole('main').getByText('Saved')).toBeVisible()
     await page.getByRole('link', { name: '← Account' }).click()
     await expect(page).toHaveURL('/dashboard/profile')
     await expect(page.getByRole('link', { name: /Child 2/ })).toBeVisible()
@@ -198,7 +206,11 @@ test('a contributor adds two children, edits one, and deletes one', async ({ pag
     await expect(page.locator('#macs_level')).toHaveValue('II')
     await page.locator('#age').fill('8')
     await page.getByRole('button', { name: 'Save' }).click()
-    await expect(page.getByText('Saved')).toBeVisible()
+    // Scoped to <main>: the rail now carries a "Saved" row of its own, so an
+    // unscoped getByText('Saved') matches the nav item as well as this
+    // confirmation and trips strict mode. The confirmation is page content;
+    // the row is navigation.
+    await expect(page.getByRole('main').getByText('Saved')).toBeVisible()
     await page.reload()
     await page.getByRole('tab', { name: 'Ability' }).click()
     await expect(page.locator('#age')).toHaveValue('8')
@@ -245,7 +257,11 @@ test('a user renames themselves on the Account tab and the change persists', asy
 
     await page.locator('#name').fill(newName)
     await page.getByRole('button', { name: 'Save' }).click()
-    await expect(page.getByText('Saved')).toBeVisible()
+    // Scoped to <main>: the rail now carries a "Saved" row of its own, so an
+    // unscoped getByText('Saved') matches the nav item as well as this
+    // confirmation and trips strict mode. The confirmation is page content;
+    // the row is navigation.
+    await expect(page.getByRole('main').getByText('Saved')).toBeVisible()
 
     await page.reload()
     await expect(page.locator('#name')).toHaveValue(newName)

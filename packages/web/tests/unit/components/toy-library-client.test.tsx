@@ -7,6 +7,10 @@ vi.mock('next/image', () => ({
   // eslint-disable-next-line @next/next/no-img-element
   default: ({ src, alt }: { src: string; alt: string }) => <img src={src} alt={alt} />,
 }))
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
+  usePathname: () => '/toy-library',
+}))
 vi.mock('next/link', () => ({
   default: ({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) => (
     <a href={href} className={className}>{children}</a>
@@ -41,6 +45,8 @@ describe('ToyLibraryClient', () => {
     render(
       <ToyLibraryClient
         toys={[toy({ id: 't1', name: 'Fire truck' }), toy({ id: 't2', name: 'Blocks' })]}
+        savedIds={[]}
+        signedIn={false}
       />
     )
     fireEvent.change(screen.getByLabelText('Search by toy name'), { target: { value: 'fire' } })
@@ -56,6 +62,8 @@ describe('ToyLibraryClient', () => {
           toy({ id: 't2', name: 'Fair toy', condition: 5 }),
           toy({ id: 't3', name: 'Loved toy', condition: 2 }),
         ]}
+        savedIds={[]}
+        signedIn={false}
       />
     )
     fireEvent.click(screen.getByRole('button', { name: 'Good (7–10)' }))
@@ -71,6 +79,8 @@ describe('ToyLibraryClient', () => {
           toy({ id: 't1', name: 'Adapted toy', switch_adapted: true, condition: 3 }),
           toy({ id: 't2', name: 'Plain toy', switch_adapted: false, condition: 3 }),
         ]}
+        savedIds={[]}
+        signedIn={false}
       />
     )
     fireEvent.click(screen.getByRole('button', { name: 'Switch-adapted' }))
@@ -82,7 +92,7 @@ describe('ToyLibraryClient', () => {
   })
 
   it('shows the empty state when nothing matches', () => {
-    render(<ToyLibraryClient toys={[toy({ name: 'Fire truck' })]} />)
+    render(<ToyLibraryClient toys={[toy({ name: 'Fire truck' })]} savedIds={[]} signedIn={false} />)
     fireEvent.change(screen.getByLabelText('Search by toy name'), { target: { value: 'zzz' } })
     expect(screen.getByText('No toys found.')).toBeInTheDocument()
   })

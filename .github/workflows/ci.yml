@@ -433,8 +433,16 @@ jobs:
   # — which is exactly how 032/033 shipped in code while production stayed on the
   # old schema (toys.owner_org_id missing, Toy Library and Exchanges 500ing).
   # This job talks to the linked remote and fails a merge that left migrations
-  # unpushed. It self-skips when the deploy secrets are absent, so forks and
-  # secret-less runs stay green.
+  # unpushed.
+  #
+  # It used to `exit 0` whenever the deploy secrets were absent. On a repo where
+  # they were never configured that is indistinguishable from passing, and it is
+  # how this job reported green while the cloud project was missing the
+  # profiles_freeze_identity trigger — the 2026-08-28 pentest escalated an
+  # ordinary account to admin through exactly that gap. A check that cannot run
+  # must now say so loudly. Forks are the one legitimate case: this repo is
+  # public and a fork PR genuinely cannot read secrets, so it still skips there
+  # and nowhere else.
   migration-drift:
     name: Migration Drift
     needs: changes
@@ -450,10 +458,34 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
           SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          IS_FORK: ${{ github.event.pull_request.head.repo.fork }}
         run: |
           if [ -z "$SUPABASE_ACCESS_TOKEN" ] || [ -z "$SUPABASE_PROJECT_REF" ]; then
-            echo "Deploy secrets not configured — skipping migration drift check."
-            exit 0
+            if [ "$IS_FORK" = "true" ]; then
+              echo "Fork PR — deploy secrets are unavailable by design. Skipping."
+              exit 0
+            fi
+            echo "::error::SUPABASE_ACCESS_TOKEN / SUPABASE_PROJECT_REF are not configured." >&2
+            echo "This check cannot verify the remote, so it fails rather than passes silently." >&2
+            echo "Set them under Settings > Secrets and variables > Actions." >&2
+            exit 1
           fi
           supabase link --project-ref "$SUPABASE_PROJECT_REF"
           bash scripts/check-migration-drift.sh
+
+      # The ledger check above cannot see a migration that was marked applied
+      # without being executed (`supabase migration repair --status applied`),
+      # because the ledger row is written in full either way. That is the actual
+      # 2026-08-28 root cause: 009 read as applied, statements and all, while
+      # none of its three objects existed. This asserts the objects themselves.
+      - name: Check security-critical schema guards
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          IS_FORK: ${{ github.event.pull_request.head.repo.fork }}
+        run: |
+          if [ -z "$SUPABASE_ACCESS_TOKEN" ] || [ -z "$SUPABASE_PROJECT_REF" ]; then
+            [ "$IS_FORK" = "true" ] && exit 0
+            exit 1
+          fi
+          bash scripts/check-schema-guards.sh

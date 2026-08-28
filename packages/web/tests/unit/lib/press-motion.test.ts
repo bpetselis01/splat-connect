@@ -17,7 +17,7 @@ const css = readFileSync(
 )
 
 /** The families driven by the shared block. */
-const FAMILIES = ['.btn', '.card-link', '.chip', '.step-pill', '.dropzone', '.dock-my-splat']
+const FAMILIES = ['.btn', '.card-link', '.chip', '.step-pill', '.dropzone', '.dock-my-splat', '.save-btn']
 
 /**
  * Just the shared block, anchored on the LAST occurrence of the marker — the
@@ -120,5 +120,37 @@ describe('press motion', () => {
     const base = BLOCK.split('\n').find((l) => l.includes('.pixel :is(.btn,') && l.endsWith('{'))
     expect(base).toBeTruthy()
     for (const f of FAMILIES) expect(base).toContain(f)
+  })
+})
+
+/**
+ * The save island sits over a card as a sibling of the card's anchor, so it
+ * does not inherit the card's lift. These pin the two halves of that: the
+ * button presses like every other family, and a separate rule moves it when the
+ * CARD is hovered.
+ */
+describe('the save island', () => {
+  it('joins the family group, so it presses by its own resting depth', () => {
+    expect(BLOCK).toMatch(/--pop-rest:\s*3px/)
+    expect(BLOCK).toContain('.save-btn')
+  })
+
+  it('lifts with the card through its own rule, not by joining the :is() group', () => {
+    expect(BLOCK).toMatch(/\.pixel \.save-host:hover \.save-btn\s*\{/)
+
+    // A descendant-with-pseudo-class selector folded into the family :is()
+    // would change what the group matches AND hand the whole group this
+    // selector's specificity — the same trap the block's own comment documents
+    // for .panel:has(). Keep it out.
+    expect(BLOCK).not.toMatch(/:is\([^)]*\.save-host/)
+  })
+
+  it('keeps that lift behind a hover-capable media query', () => {
+    const at = BLOCK.indexOf('.pixel .save-host:hover .save-btn')
+    const guard = BLOCK.lastIndexOf('@media (hover: hover)', at)
+    const closes = BLOCK.lastIndexOf('}\n  }', at)
+    // Without the guard a tapped card keeps the island lifted on a phone.
+    expect(guard).toBeGreaterThan(-1)
+    expect(guard).toBeGreaterThan(closes)
   })
 })

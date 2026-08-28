@@ -1,6 +1,8 @@
 import { notFound } from 'next/navigation'
 import { ToySummary } from '@/components/toy-summary'
 import { ToyTransactionRequest } from '@/components/toy-transaction-request'
+import { SaveButton } from '@/components/save-button'
+import { getSavedIds } from '@/lib/saves'
 import { getCapabilities } from '@/lib/capabilities'
 import { apiClient } from '@/lib/api-client'
 import type { Toy, ToyWithOwner } from '@splat-connect/types'
@@ -20,12 +22,27 @@ export default async function ToyLibraryDetailPage({
   const rawMyToys = caps ? await apiClient.get<Toy[]>('/api/toys').catch(() => [] as Toy[]) : []
   const myToys = rawMyToys.filter((t) => t.status === 'published' && !t.archived_at)
 
+  const saved = await getSavedIds()
+
   return (
     <div className="panel pt-5">
       <div className="flex flex-col gap-4 px-5 pb-5">
-        {toy.profiles?.name && (
-          <p className="text-sm font-semibold text-muted">Held by {toy.profiles.name}</p>
-        )}
+        <div className="flex flex-wrap items-center gap-3">
+          {toy.profiles?.name && (
+            <p className="text-sm font-semibold text-muted">Held by {toy.profiles.name}</p>
+          )}
+        {/* Not an island here: there is no card to sit on, and you often
+            arrive at this page from a shared link with no card in sight. An
+            ordinary control in the header row, sized up from the 34px square
+            the browse grid uses. */}
+          <SaveButton
+            slug="toys"
+            id={toy.id}
+            saved={saved?.toys.includes(toy.id) ?? false}
+            signedIn={saved !== null}
+            className="ml-auto !h-9 !w-auto gap-2 px-3"
+          />
+        </div>
         <ToySummary toy={toy} />
         <ToyTransactionRequest toy={toy} viewerId={caps?.profile.id ?? null} myToys={myToys} />
       </div>
