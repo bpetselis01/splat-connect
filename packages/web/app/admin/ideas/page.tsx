@@ -34,7 +34,7 @@ export default async function AdminIdeasPage() {
   if (ideas.length === 0) {
     return (
       <div>
-        <h1 className="mb-4 text-2xl font-bold text-ink">Design challenge queue</h1>
+        <h1 className="mb-4 title-hub">Design challenge queue</h1>
         <div className="flex flex-col items-center px-6 py-16 text-center">
           <span aria-hidden="true" className="empty-badge">
             💡
@@ -50,7 +50,7 @@ export default async function AdminIdeasPage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold text-ink">Design challenge queue</h1>
+      <h1 className="mb-6 title-hub">Design challenge queue</h1>
       <div className="flex flex-col gap-3">
         {ideas.map((idea) => (
           <Link
