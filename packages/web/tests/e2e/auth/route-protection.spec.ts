@@ -1,5 +1,7 @@
 // The redirects asserted here come from packages/web/middleware.ts:
-//   signedInRoutes = ['/upload', '/my-tutorials', '/dashboard']  → /login when signed out
+//   signedInRoutes = ['/upload', '/dashboard', '/notifications'] → /login when signed out
+// (/my-tutorials reaches /dashboard/tutorials through next.config.ts's redirect,
+//  so it is covered by the /dashboard prefix rather than listed itself.)
 //   adminRoutes       = ['/admin']                                  → / when not an admin
 // app/dashboard/page.tsx no longer has a page-level role guard: every signed-in
 // account (parent, contributor, admin) shares one dashboard. A permission hole in
@@ -28,16 +30,19 @@ test('an unauthenticated visitor is redirected from /admin to /login', async ({ 
   await expect(page).toHaveURL(/\/login$/)
 })
 
-// /notifications is deliberately not in signedInRoutes above (the page
-// swallows a failed fetch instead of redirecting), so a signed-out visitor
-// can land on it directly. It still resolves to the account section
-// (lib/public-nav.ts's ACCOUNT_PREFIXES), so nothing account-only may leak
-// into its chrome for a visitor with no session.
-test('an unauthenticated visitor on /notifications gets no account chrome', async ({ page }) => {
+// /notifications was the one account route left out of signedInRoutes: both of
+// its fetches swallow failure, so a signed-out visitor landed on an empty
+// "Notifications" heading under the public header instead of being asked to
+// sign in. It is an account page by every other measure — lib/public-nav.ts
+// resolves it to the account section and it renders the rail — so it redirects
+// like the rest. That also retires the only route where account chrome had to
+// be suppressed for a visitor with no session, which is a stronger guarantee
+// than asserting the chrome stayed hidden.
+test('an unauthenticated visitor is redirected from /notifications to /login', async ({
+  page,
+}) => {
   await page.goto('/notifications')
-  await expect(page).toHaveURL(/\/notifications$/)
-  await expect(page.getByRole('button', { name: /navigation/i })).not.toBeVisible()
-  await expect(page.getByRole('link', { name: /my splat/i })).not.toBeVisible()
+  await expect(page).toHaveURL(/\/login$/)
 })
 
 test('a contributor is redirected away from /admin', async ({ page }) => {
