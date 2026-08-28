@@ -46,7 +46,7 @@ function EmailConfirmed() {
         <span aria-hidden="true" className="empty-badge">
           ✅
         </span>
-        <h1 className="mt-4 text-2xl font-bold text-ink">Email confirmed</h1>
+        <h1 className="mt-4 title-article">Email confirmed</h1>
         <p className="mt-2 text-sm leading-relaxed text-muted">
           Your email has been confirmed. Sign in to your account to continue.
         </p>

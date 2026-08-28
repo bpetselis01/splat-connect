@@ -57,7 +57,7 @@ export default async function TutorialPage({
         />
         <div className="mt-4">
           <div className="mb-2 flex flex-wrap items-center gap-3">
-            <h1 className="text-2xl font-bold text-ink">{tutorial.title}</h1>
+            <h1 className="title-detail">{tutorial.title}</h1>
             <DifficultyBadge difficulty={tutorial.difficulty} />
         {/* Not an island here: there is no card to sit on, and you often
             arrive at this page from a shared link with no card in sight. An

@@ -52,7 +52,7 @@ export default async function OrgInventoryPage() {
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-ink">Toy inventory</h1>
+          <h1 className="title-hub">Toy inventory</h1>
           <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted">
             Stock your organisation offers for donation or exchange. Say how many you hold and
             families can ask for one; the count drops as each is handed over.

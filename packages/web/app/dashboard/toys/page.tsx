@@ -24,7 +24,7 @@ export default async function ToyListPage() {
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-ink">My toys</h1>
+          <h1 className="title-hub">My toys</h1>
           <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted">
             The adapted toys you hold, ready to offer for exchange with an association.
           </p>

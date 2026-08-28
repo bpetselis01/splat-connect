@@ -60,7 +60,7 @@ export default function NewTutorialPage() {
   return (
     <div>
       <BackLink href="/dashboard/tutorials" label="My tutorials" />
-      <h1 className="mb-2 text-2xl font-bold text-ink">New tutorial</h1>
+      <h1 className="mb-2 title-article">New tutorial</h1>
       <p className="mb-6 max-w-prose text-sm leading-relaxed text-muted">
         Name it now — the guide, parts, tools and everything else come next.
       </p>

@@ -55,8 +55,8 @@ export function LauncherGrid({ tiles }: { tiles: LauncherTile[] }) {
               // Cast: NavSection.href is `string`, not typedRoutes' `Route` — see
               // lib/public-nav.ts for why.
               href={tile.href as Route<string>}
-              className={`card-pixel card-link group relative flex h-full flex-col overflow-hidden ${tone.surface} ${
-                pillar ? `card-pixel-lead ${tone.ink} min-h-[22rem] p-5` : `${tone.ink} p-4`
+              className={`card card-link group relative flex h-full flex-col overflow-hidden ${tone.surface} ${
+                pillar ? `card-lead ${tone.ink} min-h-[22rem] p-5` : `${tone.ink} p-4`
               }`}
             >
               {/*

@@ -53,7 +53,7 @@ describe('LauncherGrid', () => {
         { href: '/a', label: 'A', blurb: 'a', tone: 'brand', art: 'adapted-toy', rank: 'pillar', count: 1 },
       ]} />
     )
-    const tile = container.querySelector('a.card-pixel')
+    const tile = container.querySelector('a.card')
     expect(tile?.parentElement?.className).not.toMatch(/tilt-\d/)
   })
 })

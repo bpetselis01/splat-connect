@@ -99,7 +99,7 @@ export default async function DashboardChallengesPage() {
 
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-ink">Design challenges</h1>
+          <h1 className="title-hub">Design challenges</h1>
           <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted">
             Ideas you have submitted, at every stage of review, and challenges you have joined as
             a maker.

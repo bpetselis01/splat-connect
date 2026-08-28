@@ -57,7 +57,7 @@ export default async function OrganisationTabPage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold text-ink">Organisation</h1>
+      <h1 className="mb-6 title-hub">Organisation</h1>
 
       {!hasTerms && <OrgReviewBanner />}
 

@@ -33,7 +33,7 @@ export default async function ProfileTabPage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold text-ink">Account</h1>
+      <h1 className="mb-6 title-hub">Account</h1>
       <ProfileForm profile={caps.profile} />
 
       <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-line pt-8">

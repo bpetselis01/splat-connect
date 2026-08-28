@@ -55,7 +55,7 @@ export default async function AdminPage() {
 
   return (
     <div>
-      <h1 className="mb-8 text-2xl font-bold text-ink">Admin dashboard</h1>
+      <h1 className="mb-8 title-hub">Admin dashboard</h1>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {cards.map((c) => (
           <Link key={c.label} href={c.href} className="card card-link p-6">

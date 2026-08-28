@@ -12,7 +12,7 @@ export function ToyLibraryCard({ toy, save }: { toy: ToyWithOwner; save?: SavePr
     <BoundaryLink
       href={`/toy-library/${toy.id}`}
       data-testid="toy-library-card"
-      className="card-pixel card-link overflow-hidden"
+      className="card card-link overflow-hidden"
     >
       <CardPhoto src={toy.cover_photo_url} />
       <div className="p-4">

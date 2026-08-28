@@ -11,7 +11,7 @@ export default async function NewToyPage() {
   return (
     <div>
       <BackLink href="/dashboard/toys" label="My toys" />
-      <h1 className="mb-2 text-2xl font-bold text-ink">Add a toy</h1>
+      <h1 className="mb-2 title-article">Add a toy</h1>
       <p className="mb-6 max-w-prose text-sm leading-relaxed text-muted">
         Add the basics now — photos and switch details come next.
       </p>

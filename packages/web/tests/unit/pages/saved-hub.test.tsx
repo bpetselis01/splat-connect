@@ -100,6 +100,6 @@ describe('SavedHub', () => {
 
   it('renders five cards in total', async () => {
     const { container } = render(await SavedHub())
-    expect(container.querySelectorAll('a.card-pixel')).toHaveLength(5)
+    expect(container.querySelectorAll('a.card')).toHaveLength(5)
   })
 })

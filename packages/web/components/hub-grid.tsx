@@ -55,7 +55,7 @@ export function HubGrid({
         <BoundaryLink
           key={item.href}
           href={item.href}
-          className={`card-pixel card-link flex h-full flex-col gap-1.5 ${
+          className={`card card-link flex h-full flex-col gap-1.5 ${
             wide ? 'p-[18px]' : 'p-4'
           } ${spec ? `${spec.surface} ${spec.ink}` : ''}`}
         >

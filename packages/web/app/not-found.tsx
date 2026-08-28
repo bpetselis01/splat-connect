@@ -22,7 +22,7 @@ export default function NotFound() {
       <span aria-hidden="true" className="empty-badge text-2xl font-bold text-brand-dark">
         ?
       </span>
-      <h1 className="mt-4 text-2xl font-bold text-ink">We couldn&apos;t find that page</h1>
+      <h1 className="mt-4 title-article">We couldn&apos;t find that page</h1>
       <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted">
         The link may be out of date, or whatever it pointed at may have been removed.
       </p>

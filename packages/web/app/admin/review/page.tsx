@@ -38,7 +38,7 @@ export default async function ReviewListPage({
   if (tutorials.length === 0) {
     return (
       <div>
-        <h1 className="mb-4 text-2xl font-bold text-ink">Tutorial review queue</h1>
+        <h1 className="mb-4 title-hub">Tutorial review queue</h1>
         <div className="flex flex-col items-center px-6 py-16 text-center">
           <span aria-hidden="true" className="empty-badge">
             ☕
@@ -65,7 +65,7 @@ export default async function ReviewListPage({
 
   return (
     <div>
-      <h1 className="mb-2 text-2xl font-bold text-ink">Tutorial review queue</h1>
+      <h1 className="mb-2 title-hub">Tutorial review queue</h1>
       {handledCount > 0 && (
         <p className="mb-6 text-sm text-muted">
           {hidingHandled ? (

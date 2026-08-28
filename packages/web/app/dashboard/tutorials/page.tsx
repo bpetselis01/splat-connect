@@ -34,7 +34,7 @@ export default async function DashboardPage() {
 
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-ink">My tutorials</h1>
+          <h1 className="title-hub">My tutorials</h1>
           <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted">
             Your adaptation guides. Each one is reviewed — by an organisation you ask, or by
             SPLAT — before it reaches the library.

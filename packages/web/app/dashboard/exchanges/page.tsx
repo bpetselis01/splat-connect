@@ -103,7 +103,7 @@ export default async function ExchangesPage() {
       <MarkNotificationsRead bucket="exchanges" />
 
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-ink">My exchanges</h1>
+        <h1 className="title-hub">My exchanges</h1>
         <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted">
           Toys you have asked for and toys people have asked you for. Each one is a conversation
           until the handoff is confirmed by both sides.

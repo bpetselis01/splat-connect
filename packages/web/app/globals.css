@@ -153,38 +153,54 @@
  */
 @layer components {
   /* --- Surfaces --------------------------------------------------------- */
+  /*
+   * The card, and after 2026-08-29 there is one of them rather than two.
+   *
+   * A thick ink border and a diagonal hard-offset shadow with zero blur, the
+   * same depth cue as the buttons — an object sitting on the page rather than
+   * a panel welded flush to it.
+   *
+   * This was a 16px corner on a blurred --shadow-rest: the register the whole
+   * site had before Pixel. A second class, `.card-pixel`, carried the board's
+   * card from the foundation until 2026-08-29, so the site had two names for
+   * one object and only one of them was ever updated — which is precisely how
+   * the signed-in side drifted while the public side did not. They are one
+   * class again.
+   *
+   * `.card-tint` went at the same time: zero call sites, and a tinted box with
+   * no edge is the one shape the pixel vocabulary has no answer for.
+   */
   .card {
     background-color: var(--color-surface);
-    border-radius: 1rem;
-    box-shadow: var(--shadow-rest);
+    border-radius: var(--radius-pixel);
+    border: var(--border-pixel) solid var(--color-ink);
+    box-shadow: var(--shadow-pixel-card) var(--color-ink);
   }
 
+  /*
+   * The flat register — a bordered box with no depth, for things that sit
+   * inside another surface rather than on the canvas: notification rows, the
+   * editor's file rows, a tutorial's parts/tools/files blocks, and the
+   * three-up stat tiles on the contributor, organisation and impact pages.
+   *
+   * 2px ink at 6px is .field's pair, not a new one. --radius-pixel-slot's own
+   * comment reads "art slots and inputs at 6px"; a flat row is the same
+   * register, and the 1px --color-line hairline it had was the last pre-Pixel
+   * edge on a surface.
+   */
   .card-flat {
     background-color: var(--color-surface);
-    border: 1px solid var(--color-line);
-    border-radius: 1rem;
+    border: var(--border-pixel-thin) solid var(--color-ink);
+    border-radius: var(--radius-pixel-slot);
   }
 
-  .card-tint {
-    background-color: var(--color-brand-tint);
-    border-radius: 1rem;
-  }
-
-  /* Applied alongside .card on anything clickable. */
+  /* Applied alongside .card on anything clickable. Hover, press and the
+     transition that carries them all come from the shared press-motion block
+     at the end of this file, which outranks anything declared here — the
+     translateY(-2px)/--shadow-lift pair this used to carry stopped rendering
+     the day that block landed. */
   .card-link {
     display: block;
-    transition:
-      transform 180ms var(--ease-out-quart),
-      box-shadow 180ms var(--ease-out-quart);
-  }
-
-  .card-link:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-lift);
-  }
-
-  .card-link:active {
-    transform: translateY(0);
   }
 
   /* --- Buttons ---------------------------------------------------------- */
@@ -196,7 +212,7 @@
     min-height: 44px;
     padding: 0.625rem 1.25rem;
     border: 1px solid transparent;
-    border-radius: 9999px;
+    border-radius: var(--radius-pixel-sm);
     font-size: 0.875rem;
     font-weight: 700;
     line-height: 1.2;
@@ -225,19 +241,20 @@
   .btn-primary {
     background-color: var(--color-brand-dark);
     color: #ffffff;
-    box-shadow: var(--shadow-rest);
   }
 
   /*
-   * Scoped to .pixel, which only the public shell sets. The dashboard shares
-   * .btn-accent and .btn-primary and is deliberately out of scope for this
-   * redesign — a signed-in user should not find their controls have grown a
-   * bounce because the marketing site did.
+   * The rules below are scoped to .pixel, which app/layout.tsx sets on the body
+   * wrapper for EVERY route — the bare branch at :104 and the main one at :145.
+   *
+   * A comment here used to claim it was the public shell only and that the
+   * dashboard was "deliberately out of scope for this redesign". That had been
+   * wrong since the foundation shipped: these rules have always reached the
+   * signed-in side, which is why its buttons were already Pixel while its cards
+   * were not — and it is why the scope of the 2026-08-29 sweep was misread on
+   * the first pass. The scoping survives because these three controls are the
+   * only ones that take a border, not because it draws a public/private line.
    */
-  .pixel .btn {
-    border-radius: var(--radius-pixel-sm);
-  }
-
   .pixel .btn-accent,
   .pixel .btn-primary,
   .pixel .btn-quiet {
@@ -357,7 +374,9 @@
    */
   .mark {
     padding: 0 0.25em;
-    border-radius: 0.5rem;
+    /* 0.5rem was already 8px — the right value written as a literal rather
+       than as the token that holds it. */
+    border-radius: var(--radius-pixel-sm);
     background-color: var(--color-honey-soft);
     color: var(--color-honey-deep);
     box-decoration-break: clone;
@@ -735,18 +754,6 @@
 
 
   /*
-   * The board's card: a thick ink border and a diagonal hard-offset shadow
-   * with zero blur, same depth cue as the buttons — an object sitting on the
-   * page rather than a panel welded flush to it.
-   */
-  .card-pixel {
-    background-color: var(--color-surface);
-    border-radius: var(--radius-pixel);
-    border: var(--border-pixel) solid var(--color-ink);
-    box-shadow: var(--shadow-pixel-card) var(--color-ink);
-  }
-
-  /*
    * The save island.
    *
    * Sits over a browse card's photo as a SIBLING of the card's anchor — a
@@ -776,7 +783,7 @@
      off the canvas than every other card, which is the only reason a visitor
      reads Guides / Toy Library / 3D Printing as the site's three products
      rather than as the first three of seven tiles. */
-  .card-pixel-lead {
+  .card-lead {
     box-shadow: var(--shadow-pixel-lg) var(--color-ink);
   }
 
@@ -799,7 +806,6 @@
   .btn-accent {
     background-color: var(--color-apricot);
     color: var(--color-ink);
-    box-shadow: var(--shadow-rest);
   }
 
   .btn-accent:hover:not(:disabled) {
@@ -1038,9 +1044,20 @@
     white-space: nowrap;
   }
 
-  /* --- Alerts ----------------------------------------------------------- */
+  /* --- Alerts -----------------------------------------------------------
+   *
+   * currentColor, so the edge follows whatever ink the caller set: .alert-danger
+   * and .alert-warning below, and the handful of `alert bg-brand-tint text-ink`
+   * call sites. Same trick .badge uses, and the reason neither variant needs a
+   * border rule of its own.
+   *
+   * A side effect worth having: a bare .alert (app/admin/review/[id]/page.tsx:230)
+   * has neither background nor border and has never been visible as an object.
+   * It has an edge now.
+   */
   .alert {
-    border-radius: 1rem;
+    border: var(--border-pixel-thin) solid currentColor;
+    border-radius: var(--radius-pixel-slot);
     padding: 0.875rem 1.25rem;
     font-size: 0.875rem;
   }
@@ -1058,11 +1075,23 @@
     color: var(--color-honey-deep);
   }
 
-  /* --- Accordion panels (edit page) ------------------------------------- */
+  /* --- Editor section panels -------------------------------------------- */
+  /*
+   * A card with overflow: hidden, and it always was — the two definitions were
+   * byte-identical apart from that one declaration.
+   *
+   * This section header used to read "Accordion panels (edit page)", which
+   * stopped being true when EditStepper landed: the tutorial, toy and child
+   * editors render a .step-pill-row and one `<div class="panel pt-5">` at a
+   * time. 20 of the 21 call sites are those static boxes. The 21st, and the
+   * only <details> left in the app, is app/admin/organizations/page.tsx:83 —
+   * which is the only thing .panel-summary below has ever matched.
+   */
   .panel {
     background-color: var(--color-surface);
-    border-radius: 1rem;
-    box-shadow: var(--shadow-rest);
+    border-radius: var(--radius-pixel);
+    border: var(--border-pixel) solid var(--color-ink);
+    box-shadow: var(--shadow-pixel-card) var(--color-ink);
     overflow: hidden;
   }
 
@@ -1167,7 +1196,7 @@
   .chat-daymark,
   .chat-system {
     align-self: center;
-    border-radius: 9999px;
+    border-radius: var(--radius-pixel-xs);
     background-color: var(--color-sunken);
     color: var(--color-muted);
     text-align: center;
@@ -1204,7 +1233,8 @@
     place-items: center;
     width: 28px;
     height: 28px;
-    border-radius: 9999px;
+    border-radius: var(--radius-pixel-sm);
+    border: var(--border-pixel-thin) solid var(--color-ink);
     background-color: var(--color-brand-soft);
     color: var(--color-brand-deep);
     font-size: 0.75rem;
@@ -1235,26 +1265,34 @@
     color: var(--color-muted);
   }
 
+  /*
+   * The bubbles keep their tails — a tail is what makes a bubble a bubble —
+   * but at --radius-pixel-xs rather than the 0.35rem (5.6px) they had, which
+   * was in none of the board's six radii.
+   */
   .chat-bubble {
     padding: 0.55rem 0.85rem;
-    border-radius: 1rem;
+    border-radius: var(--radius-pixel);
+    border: var(--border-pixel-thin) solid var(--color-ink);
     font-size: 0.875rem;
     line-height: 1.45;
     overflow-wrap: anywhere;
-    box-shadow: var(--shadow-rest);
+    box-shadow: var(--shadow-pixel-sm) var(--color-ink);
   }
 
   .chat-bubble-theirs {
     background-color: var(--color-surface);
-    border: 1px solid var(--color-line);
-    border-bottom-left-radius: 0.35rem;
+    border-bottom-left-radius: var(--radius-pixel-xs);
     color: var(--color-ink);
   }
 
-  /* brand-deep, not brand: white on #1998d5 is 3.2:1 and this is body text. */
+  /* brand-deep, not brand: white on #1998d5 is 3.2:1 and this is body text.
+     The ink edge and shadow above stay — the shadow falls on the light
+     .chat-log ground, not on the bubble, so unlike a selected .chip this is
+     not ink on ink and needs no --pop-color exception. */
   .chat-bubble-mine {
     background-color: var(--color-brand-deep);
-    border-bottom-right-radius: 0.35rem;
+    border-bottom-right-radius: var(--radius-pixel-xs);
     color: #ffffff;
   }
 
@@ -1271,10 +1309,6 @@
     padding: 0.85rem;
     border-top: 1px solid var(--color-line);
     background-color: var(--color-surface);
-  }
-
-  .chat-composer .field {
-    border-radius: 1.25rem;
   }
 
   /* Letter-spacing rather than a literal space between digit groups: the e2e
@@ -1296,20 +1330,33 @@
     margin-bottom: 1.5rem;
     overflow-x: auto;
     background-color: var(--color-surface);
-    border-radius: 1rem;
-    box-shadow: var(--shadow-rest);
+    border-radius: var(--radius-pixel);
+    border: var(--border-pixel) solid var(--color-ink);
+    box-shadow: var(--shadow-pixel-card) var(--color-ink);
   }
 
+  /*
+   * The step selector, and it is a chip in everything but name — which is why
+   * every value below is .chip's.
+   *
+   * The 20px pill radius survives the squaring-off for the reason .chip
+   * records: a repeatable low-stakes selector reads as a row of buttons once
+   * you square it. The states are a contrast rather than the tint shift this
+   * had (brand-tint -> brand-soft -> brand-dark): white standing off the page
+   * on a 3px shadow when off, a flat ink fill when on. A selected step has
+   * been pushed in.
+   */
   .step-pill {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
     flex-shrink: 0;
     padding: 0.5rem 0.9rem;
-    background-color: var(--color-brand-tint);
-    color: var(--color-brand-deep);
-    border: none;
-    border-radius: 9999px;
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+    border: var(--border-pixel-thin) solid var(--color-ink);
+    border-radius: var(--radius-pixel-chip);
+    box-shadow: var(--shadow-pixel-xs) var(--color-ink);
     font-size: 0.8125rem;
     font-weight: 700;
     cursor: pointer;
@@ -1319,12 +1366,13 @@
   }
 
   .step-pill:hover {
-    background-color: var(--color-brand-soft);
+    background-color: var(--color-sunken);
   }
 
   .step-pill[data-active] {
-    background-color: var(--color-brand-dark);
+    background-color: var(--color-ink);
     color: #ffffff;
+    box-shadow: none;
   }
 
   /* Locked steps on the Add-a-toy page: still listed so the journey reads end
@@ -1356,7 +1404,7 @@
     place-items: center;
     width: 1.1rem;
     height: 1.1rem;
-    border-radius: 9999px;
+    border-radius: var(--radius-pixel-hair);
     background-color: var(--color-line);
     color: var(--color-muted);
     font-size: 0.6875rem;
@@ -1391,9 +1439,9 @@
     margin-top: 1rem;
     padding: 0.875rem 1.25rem;
     background-color: var(--color-surface);
-    border-top: 1px solid var(--color-line);
-    border-radius: 1rem;
-    box-shadow: var(--shadow-lift);
+    border: var(--border-pixel) solid var(--color-ink);
+    border-radius: var(--radius-pixel);
+    box-shadow: var(--shadow-pixel-card) var(--color-ink);
   }
 
   .sticky-submit-bar-quiet {
@@ -1415,10 +1463,11 @@
     padding: 0.625rem 1.25rem;
     background-color: var(--color-success);
     color: #ffffff;
-    border-radius: 9999px;
+    border: var(--border-pixel-thin) solid var(--color-ink);
+    border-radius: var(--radius-pixel-sm);
     font-size: 0.8125rem;
     font-weight: 700;
-    box-shadow: var(--shadow-lift);
+    box-shadow: var(--shadow-pixel-xs) var(--color-ink);
   }
 
   /* --- Back-to-My-SPLAT dock (components/back-to-my-splat-dock.tsx) ------ */
@@ -1431,12 +1480,13 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.625rem 1.125rem;
-    border-radius: 9999px;
+    border: var(--border-pixel) solid var(--color-ink);
+    border-radius: var(--radius-pixel-sm);
     background-color: var(--color-brand-deep);
     color: #ffffff;
     font-size: 0.8125rem;
     font-weight: 800;
-    box-shadow: var(--shadow-lift);
+    box-shadow: var(--shadow-pixel-md) var(--color-ink);
   }
 
   /* Hover and press come from the shared press-motion block. This used to be
@@ -1446,7 +1496,7 @@
   .dock-my-splat-dot {
     width: 0.625rem;
     height: 0.625rem;
-    border-radius: 9999px;
+    border-radius: var(--radius-pixel-hair);
     background-color: var(--color-mint);
   }
 
@@ -1454,8 +1504,8 @@
   .dropzone {
     padding: 1.25rem;
     background-color: var(--color-sunken);
-    border: 2px dashed var(--color-line);
-    border-radius: 1rem;
+    border: var(--border-pixel) dashed var(--color-ink);
+    border-radius: var(--radius-pixel);
     text-align: center;
     transition:
       background-color 180ms var(--ease-out-quart),
@@ -1477,7 +1527,8 @@
     place-items: center;
     width: 72px;
     height: 72px;
-    border-radius: 9999px;
+    border-radius: var(--radius-pixel-sm);
+    border: var(--border-pixel-thin) solid var(--color-ink);
     background-color: var(--color-brand-tint);
     font-size: 30px;
     line-height: 1;
@@ -1630,11 +1681,11 @@
     width: calc(100vw - 2rem);
     max-height: calc(100dvh - 4rem);
     overflow-y: auto;
-    border: 0;
-    border-radius: 0.75rem;
+    border: var(--border-pixel) solid var(--color-ink);
+    border-radius: var(--radius-pixel);
     padding: 1.75rem;
     background: var(--color-surface);
-    box-shadow: var(--shadow-lift);
+    box-shadow: var(--shadow-pixel-lg) var(--color-ink);
   }
 
   .dialog-panel::backdrop {
@@ -1642,7 +1693,7 @@
   }
 
   .dialog-panel code {
-    border-radius: 0.375rem;
+    border-radius: var(--radius-pixel-xs);
     background: var(--color-sunken);
     padding: 0.125rem 0.375rem;
     font-size: 0.8125em;
@@ -1753,9 +1804,15 @@
    * clip its top-left and open a gap at its bottom-right, and it would read as
    * a strip peeling out of its own card. The summary is the handle; the panel
    * is the object being clicked, so the panel is what moves.
+   *
+   * 5px because .panel now rests on a 5px hard shadow like the card it is.
+   * The invariant this whole block runs on is that a press travels by the
+   * element's OWN resting offset, so leaving this at the 2px it had while
+   * .panel rode a blurred halo would land the press short of the page instead
+   * of flush against it.
    */
   .pixel .panel:has(> .panel-summary) {
-    --pop-rest: 2px;
+    --pop-rest: 5px;
     --pop-lift: 2px;
     --pop-color: var(--color-ink);
     transition:
@@ -1808,19 +1865,19 @@
 
   /* Cards. -card is the ordinary card, -lg the three launcher pillars, which
      is why a pillar pops to 8px and its neighbours to 7px: the hierarchy that
-     holds at rest has to hold under the pointer too. A plain soft .card keeps
-     its blurred resting shadow and takes a shallow 2px press — enough to
-     register as pressed without pretending it is a bordered pixel card. */
-  .pixel .card-pixel {
+     holds at rest has to hold under the pointer too.
+
+     The `:not(.card-pixel)` that used to hold a shallower 2px press for a
+     soft .card went with the soft .card, and with it a (0,3,0) selector
+     sitting in a block where everything else scores (0,2,0). */
+  .pixel .card {
     --pop-rest: 5px;
   }
 
-  .pixel .card-pixel-lead {
+  /* After .card, and both score (0,2,0), so source order is what puts the
+     pillar a rung deeper. Do not move it above .card. */
+  .pixel .card-lead {
     --pop-rest: 6px;
-  }
-
-  .pixel .card:not(.card-pixel) {
-    --pop-rest: 2px;
   }
 
   /* The chip register. */
@@ -1847,10 +1904,27 @@
     --pop-color: var(--color-brand-deep);
   }
 
-  /* The dock rests on a soft blurred shadow rather than a hard edge, so it
-     takes the same shallow press as a soft card. */
+  /* The stepper, which is the chip register under another name — same two
+     depths, and the selected one rests flat for the same reason: it is
+     already "pressed in", so 3px would send it travelling down-right past its
+     own resting position with no shadow to sink into.
+
+     Its own rules rather than a comma group with .chip: the [data-active]
+     selector scores (0,3,0) and grouping it would drag the pair up with it,
+     which is the trap the top of this block documents. */
+  .pixel .step-pill {
+    --pop-rest: 3px;
+  }
+
+  .pixel .step-pill[data-active] {
+    --pop-rest: 0px;
+  }
+
+  /* The dock is a control and rests at a control's depth. It was 2px while it
+     rode on a blurred --shadow-lift; it carries the board's 4px hard offset
+     now, and the press has to travel by the offset it actually has. */
   .pixel .dock-my-splat {
-    --pop-rest: 2px;
+    --pop-rest: 4px;
   }
 
   /* The dropzone is dashed and tinted, and an ink shadow under it reads as a
