@@ -165,4 +165,226 @@ describe('pixel depth tokens', () => {
     // The active tab is filled ink, not tinted — at 12px a tint would not carry.
     expect(css).toMatch(/\.auth-switch a\[aria-current='page'\] \{[^}]*background-color:\s*var\(--color-ink\)/)
   })
+
+  /*
+   * The card, and there is one of them.
+   *
+   * Until 2026-08-29 there were two: `.card-pixel` carried the board's card
+   * from the foundation onward while `.card` kept the pre-Pixel 16px corner on
+   * a blurred --shadow-rest. Two names for one object, and only one of them
+   * ever got updated — which is how the signed-in side drifted while the
+   * public side did not. This asserts the surviving one is the right one.
+   */
+  it('draws the card as the board does', () => {
+    const card = css.match(/\.card \{[^}]*\}/)?.[0] ?? ''
+    expect(card).toMatch(/border-radius:\s*var\(--radius-pixel\)/)
+    expect(card).toMatch(/border:\s*var\(--border-pixel\) solid var\(--color-ink\)/)
+    expect(card).toMatch(/box-shadow:\s*var\(--shadow-pixel-card\) var\(--color-ink\)/)
+    expect(card).not.toContain('--shadow-rest')
+  })
+
+  // .card-tint had zero call sites when this ran. A tinted 16px box with no
+  // edge is the one shape the sweep has no Pixel answer for, and it does not
+  // need one.
+  //
+  // Matches the rule, not the name: the comment on .card above explains the
+  // removal and names the class while doing so, which is the note being
+  // useful rather than the class coming back.
+  it('has dropped the .card-tint rule entirely', () => {
+    expect(css).not.toMatch(/\.card-tint\s*\{/)
+  })
+
+  /*
+   * The flat register: notification rows, the editor's file rows, the
+   * parts/tools/files reference blocks, and every three-up stat tile. The
+   * precedent is .field, which took exactly this pair on 2026-08-27 — and
+   * whose own token comment already reads "art slots and inputs at 6px".
+   */
+  it('draws the flat card in the same register as an input', () => {
+    const flat = css.match(/\.card-flat \{[^}]*\}/)?.[0] ?? ''
+    expect(flat).toMatch(/border:\s*var\(--border-pixel-thin\) solid var\(--color-ink\)/)
+    expect(flat).toMatch(/border-radius:\s*var\(--radius-pixel-slot\)/)
+    expect(flat).not.toContain('--color-line')
+  })
+
+  /*
+   * .panel is a card with overflow:hidden and always was. 20 of its 21 call
+   * sites are the static section boxes EditStepper swaps in; the 21st is the
+   * one surviving accordion, on /admin/organizations. The section comment
+   * calling this "accordion panels" predates the stepper.
+   */
+  it('draws the panel exactly as it draws the card', () => {
+    const panel = css.match(/\.panel \{[^}]*\}/)?.[0] ?? ''
+    expect(panel).toMatch(/border-radius:\s*var\(--radius-pixel\)/)
+    expect(panel).toMatch(/border:\s*var\(--border-pixel\) solid var\(--color-ink\)/)
+    expect(panel).toMatch(/box-shadow:\s*var\(--shadow-pixel-card\) var\(--color-ink\)/)
+    expect(panel).toContain('overflow: hidden')
+    expect(panel).not.toContain('--shadow-rest')
+  })
+
+  /*
+   * The alert's edge is currentColor, the same trick .badge uses: the three
+   * variants (.alert-danger, .alert-warning, and the ad-hoc
+   * `alert bg-brand-tint text-ink` call sites) each set their own ink, so one
+   * declaration covers all of them with no per-variant rule.
+   */
+  it('gives the alert an edge in its own ink', () => {
+    const alert = css.match(/\.alert \{[^}]*\}/)?.[0] ?? ''
+    expect(alert).toMatch(/border:\s*var\(--border-pixel-thin\) solid currentColor/)
+    expect(alert).toMatch(/border-radius:\s*var\(--radius-pixel-slot\)/)
+
+    // The variants must keep supplying only colour — an edge declared on one
+    // of them would be an edge the other two silently lack.
+    const danger = css.match(/\.alert-danger \{[^}]*\}/)?.[0] ?? ''
+    expect(danger).not.toContain('border')
+  })
+
+  /*
+   * .pixel is on the body wrapper for every route (app/layout.tsx:104, :145),
+   * so every `.pixel …` rule reaches the dashboard too. Four base declarations
+   * those rules override had therefore never rendered anywhere, and the comment
+   * claiming the dashboard was "deliberately out of scope" had been wrong since
+   * the foundation shipped. It was also why the scope of the 2026-08-29 sweep
+   * was misread on the first pass, which is the reason this test names it.
+   */
+  it('has no pre-Pixel declaration left for a .pixel rule to override', () => {
+    const btn = css.match(/\.btn \{[^}]*\}/)?.[0] ?? ''
+    expect(btn).toMatch(/border-radius:\s*var\(--radius-pixel-sm\)/)
+    expect(btn).not.toContain('9999px')
+
+    expect(css).not.toMatch(/\.pixel \.btn \{/)
+    expect(css).not.toMatch(/\.card-link:hover \{/)
+
+    for (const sel of ['.btn-primary', '.btn-accent']) {
+      const rule = css.match(new RegExp(`\\${sel} \\{[^}]*\\}`))?.[0] ?? ''
+      expect(rule, `${sel} still carries the soft shadow`).not.toContain('--shadow-rest')
+    }
+
+    // The claim itself, verbatim as it stood. The replacement comment
+    // paraphrases it rather than quoting it, so this stays a live assertion
+    // instead of matching the note that records the correction.
+    expect(css).not.toContain('which only the public shell sets')
+  })
+
+  /*
+   * The editor stepper, on all three editors. Everything here is .chip's
+   * answer reused: the 20px pill radius survives because a step selector is
+   * the same kind of low-stakes repeatable control a filter is, and the states
+   * are a contrast rather than a tint shift — white standing off the page when
+   * off, an ink fill lying flat when on.
+   */
+  it('draws the stepper in the chip register', () => {
+    const row = css.match(/\.step-pill-row \{[^}]*\}/)?.[0] ?? ''
+    expect(row).toMatch(/border-radius:\s*var\(--radius-pixel\)/)
+    expect(row).toMatch(/box-shadow:\s*var\(--shadow-pixel-card\) var\(--color-ink\)/)
+    expect(row).not.toContain('--shadow-rest')
+
+    const pill = css.match(/\.step-pill \{[^}]*\}/)?.[0] ?? ''
+    expect(pill).toMatch(/border-radius:\s*var\(--radius-pixel-chip\)/)
+    expect(pill).toMatch(/border:\s*var\(--border-pixel-thin\) solid var\(--color-ink\)/)
+    expect(pill).toMatch(/box-shadow:\s*var\(--shadow-pixel-xs\) var\(--color-ink\)/)
+    expect(pill).not.toContain('9999px')
+
+    const active = css.match(/\.step-pill\[data-active\] \{[^}]*\}/)?.[0] ?? ''
+    expect(active).toMatch(/background-color:\s*var\(--color-ink\)/)
+    expect(active).toMatch(/box-shadow:\s*none/)
+
+    const dot = css.match(/\.step-pill-dot \{[^}]*\}/)?.[0] ?? ''
+    expect(dot).toMatch(/border-radius:\s*var\(--radius-pixel-hair\)/)
+  })
+
+  /*
+   * The exchange thread — the one screen behind the rail a family spends real
+   * time on, and four different shapes before this: round avatars, 16px
+   * blurred bubbles, round daymarks and a 20px composer field.
+   *
+   * The avatar's target is not a derivation: .pixel .pixel-avatar is the
+   * header's initials disc and already draws exactly this pair.
+   */
+  it('draws the chat thread in the pixel register', () => {
+    const bubble = css.match(/\.chat-bubble \{[^}]*\}/)?.[0] ?? ''
+    expect(bubble).toMatch(/border-radius:\s*var\(--radius-pixel\)/)
+    expect(bubble).toMatch(/border:\s*var\(--border-pixel-thin\) solid var\(--color-ink\)/)
+    expect(bubble).toMatch(/box-shadow:\s*var\(--shadow-pixel-sm\) var\(--color-ink\)/)
+    expect(bubble).not.toContain('--shadow-rest')
+
+    const avatar = css.match(/\.chat-avatar \{[^}]*\}/)?.[0] ?? ''
+    expect(avatar).toMatch(/border-radius:\s*var\(--radius-pixel-sm\)/)
+    expect(avatar).toMatch(/border:\s*var\(--border-pixel-thin\) solid var\(--color-ink\)/)
+
+    // The daymark and the system line share one rule.
+    const marks = css.match(/\.chat-daymark,\s*\n\s*\.chat-system \{[^}]*\}/)?.[0] ?? ''
+    expect(marks).toMatch(/border-radius:\s*var\(--radius-pixel-xs\)/)
+
+    // The composer stops overriding .field's radius rather than restating it.
+    expect(css).not.toMatch(/\.chat-composer \.field \{/)
+  })
+
+  /*
+   * The dropzone's dashed edge is already board vocabulary (it draws both 2px
+   * and 3px dashed); only the weight and the corner move. .empty-badge is the
+   * last 9999px shape on the site, and it becomes the same bordered square the
+   * header avatar and the chat avatar already are.
+   */
+  it('draws the dropzone and the empty badge in the pixel register', () => {
+    const drop = css.match(/\.dropzone \{[^}]*\}/)?.[0] ?? ''
+    expect(drop).toMatch(/border:\s*var\(--border-pixel\) dashed var\(--color-ink\)/)
+    expect(drop).toMatch(/border-radius:\s*var\(--radius-pixel\)/)
+
+    const badge = css.match(/\.empty-badge \{[^}]*\}/)?.[0] ?? ''
+    expect(badge).toMatch(/border-radius:\s*var\(--radius-pixel-sm\)/)
+    expect(badge).toMatch(/border:\s*var\(--border-pixel-thin\) solid var\(--color-ink\)/)
+    expect(badge).not.toContain('9999px')
+  })
+
+  /*
+   * Both rode on --shadow-lift, the blurred halo the foundation replaced
+   * outright. The bar is a card and takes a card's depth; the toast is a small
+   * floating label and takes the chip register's.
+   */
+  it('lands the save bar and the toast on hard shadows', () => {
+    const bar = css.match(/\.sticky-submit-bar \{[^}]*\}/)?.[0] ?? ''
+    expect(bar).toMatch(/border:\s*var\(--border-pixel\) solid var\(--color-ink\)/)
+    expect(bar).toMatch(/border-radius:\s*var\(--radius-pixel\)/)
+    expect(bar).toMatch(/box-shadow:\s*var\(--shadow-pixel-card\) var\(--color-ink\)/)
+    expect(bar).not.toContain('--shadow-lift')
+    expect(bar).not.toContain('border-top')
+
+    const toast = css.match(/\.edit-toast \{[^}]*\}/)?.[0] ?? ''
+    expect(toast).toMatch(/border-radius:\s*var\(--radius-pixel-sm\)/)
+    expect(toast).toMatch(/box-shadow:\s*var\(--shadow-pixel-xs\) var\(--color-ink\)/)
+    expect(toast).not.toContain('9999px')
+  })
+
+  /*
+   * The dock is the last soft pill on the site, and it floats over public
+   * pages as well as the dashboard — so leaving it round would put a blurred
+   * 9999px halo on top of every surface this sweep just squared off.
+   */
+  it('draws the dock as a control, not a pill', () => {
+    const dock = css.match(/\.dock-my-splat \{[^}]*\}/)?.[0] ?? ''
+    expect(dock).toMatch(/border-radius:\s*var\(--radius-pixel-sm\)/)
+    expect(dock).toMatch(/border:\s*var\(--border-pixel\) solid var\(--color-ink\)/)
+    expect(dock).toMatch(/box-shadow:\s*var\(--shadow-pixel-md\) var\(--color-ink\)/)
+    expect(dock).not.toContain('--shadow-lift')
+
+    const dot = css.match(/\.dock-my-splat-dot \{[^}]*\}/)?.[0] ?? ''
+    expect(dot).toMatch(/border-radius:\s*var\(--radius-pixel-hair\)/)
+  })
+
+  /*
+   * A modal sits one rung deeper than an ordinary card because it is the only
+   * object on the screen — the same reasoning auth-shell.tsx:62 records for
+   * the sign-in card, which is the other object that has the screen to itself.
+   */
+  it('draws the dialog a rung deeper than a card', () => {
+    const dialog = css.match(/\.dialog-panel \{[^}]*\}/)?.[0] ?? ''
+    expect(dialog).toMatch(/border:\s*var\(--border-pixel\) solid var\(--color-ink\)/)
+    expect(dialog).toMatch(/border-radius:\s*var\(--radius-pixel\)/)
+    expect(dialog).toMatch(/box-shadow:\s*var\(--shadow-pixel-lg\) var\(--color-ink\)/)
+    expect(dialog).not.toContain('--shadow-lift')
+
+    const code = css.match(/\.dialog-panel code \{[^}]*\}/)?.[0] ?? ''
+    expect(code).toMatch(/border-radius:\s*var\(--radius-pixel-xs\)/)
+  })
 })
