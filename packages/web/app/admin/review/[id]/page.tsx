@@ -86,7 +86,7 @@ export default async function ReviewTutorialPage({
   return (
     <div className="max-w-3xl">
       <div className="mb-2 flex flex-wrap items-center gap-3">
-        <h1 className="text-2xl font-bold text-ink">{tutorial!.title}</h1>
+        <h1 className="title-detail">{tutorial!.title}</h1>
         <DifficultyBadge difficulty={tutorial!.difficulty as Difficulty} />
       </div>
       {contributor && (
