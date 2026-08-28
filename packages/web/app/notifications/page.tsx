@@ -1,9 +1,13 @@
 import { apiClient } from '@/lib/api-client'
+import { getCapabilities } from '@/lib/capabilities'
 import { revalidatePath } from 'next/cache'
 import { NotificationsList } from '@/components/notifications-list'
 import type { Notification, TutorialCollaboratorInvite } from '@splat-connect/types'
 
 export default async function NotificationsPage() {
+  // caps is React-cached and the root layout has already fetched it on this
+  // request, so this costs nothing beyond the lookup.
+  const caps = await getCapabilities()
   const [notifications, invites] = await Promise.all([
     apiClient.get<Notification[]>('/api/notifications/me').catch(() => [] as Notification[]),
     apiClient.get<TutorialCollaboratorInvite[]>('/api/collaborators/me/invites').catch(() => [] as TutorialCollaboratorInvite[]),
@@ -36,6 +40,7 @@ export default async function NotificationsPage() {
       <NotificationsList
         notifications={notifications}
         pendingInvitesByTutorial={pendingInvitesByTutorial}
+        isAdmin={!!caps?.isAdmin}
         onMarkRead={markRead}
         onAcceptInvite={acceptInvite}
         onDeclineInvite={declineInvite}

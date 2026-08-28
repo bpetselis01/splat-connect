@@ -36,6 +36,7 @@
  */
 import { Hono, type Context } from 'hono'
 import { createUserClient } from '../supabase/user-client.js'
+import { notifyBackingRequested } from '../review-notifications.js'
 import type { AuthVariables } from '../middleware/auth.js'
 
 const tutorialOrgs = new Hono<{ Variables: AuthVariables }>()
@@ -73,6 +74,14 @@ tutorialOrgs.post('/:id/orgs', async (c) => {
     }
     return c.json({ error: error.message }, 500)
   }
+  // Only on the 201 path. The 23505 branch above returns before this on
+  // purpose: nothing new happened there, and re-notifying would let an author
+  // spam a leader by pressing the button twice.
+  await notifyBackingRequested({
+    tutorialId: c.req.param('id'),
+    orgId: body.org_id,
+    actorId: c.get('userId'),
+  })
   return c.json(data, 201)
 })
 

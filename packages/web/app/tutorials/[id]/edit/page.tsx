@@ -1,3 +1,4 @@
+import { BackLink } from '@/components/back-link'
 import { apiClient } from '@/lib/api-client'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
@@ -10,7 +11,6 @@ import { EditDetailsSection } from '@/components/edit-details-section'
 import { EditCollaboratorsSection } from '@/components/edit-collaborators-section'
 import { EditStepper } from '@/components/edit-stepper'
 import { TutorialReviewPanel } from '@/components/tutorial-review-panel'
-import { BoundaryLink } from '@/components/boundary-link'
 import { computeStepStatuses, type EditStep } from '@/lib/edit-steps'
 import { getMissingFields } from '@/lib/validation'
 import type { Tutorial, Part, Tool, StlFile, TutorialWithDetails, Difficulty, BuyLink, Profile, TutorialOrg, Organization } from '@splat-connect/types'
@@ -292,13 +292,8 @@ export default async function EditTutorialPage({
 
   return (
     <div>
-      <div className="mb-6 flex flex-wrap items-center gap-4">
-        <BoundaryLink
-          href="/dashboard"
-          className="text-sm font-semibold text-brand-dark hover:underline"
-        >
-          &larr; My tutorials
-        </BoundaryLink>
+      <div className="mb-6">
+        <BackLink href="/dashboard/tutorials" label="My tutorials" />
         <h1 className="truncate text-2xl font-bold text-ink">{tutorial!.title}</h1>
       </div>
 

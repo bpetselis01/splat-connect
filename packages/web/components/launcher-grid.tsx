@@ -42,7 +42,7 @@ export interface LauncherTile {
 export function LauncherGrid({ tiles }: { tiles: LauncherTile[] }) {
   return (
     <div className="grid grid-cols-2 gap-4 lg:grid-cols-12">
-      {tiles.map((tile, i) => {
+      {tiles.map((tile) => {
         const pillar = tile.rank === 'pillar'
         const tone = toneClass(tile.tone)
 

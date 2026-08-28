@@ -11,6 +11,12 @@ const mockAdminClient = { from: vi.fn() }
 // and token directly into the Hono context, isolating the route logic under test.
 vi.mock('../../../src/supabase/user-client.js', () => ({ createUserClient: () => mockUserClient }))
 vi.mock('../../../src/supabase/client.js', () => ({ createAdminClient: () => mockAdminClient }))
+// PATCH's draft -> pending branch calls the notifier after the write commits.
+// Mocked so the route's gating can be asserted without a database.
+const mockNotifySubmitted = vi.fn().mockResolvedValue(undefined)
+vi.mock('../../../src/review-notifications.js', () => ({
+  notifyTutorialSubmitted: (...args: unknown[]) => mockNotifySubmitted(...args),
+}))
 
 const { default: tutorials } = await import('../../../src/routes/tutorials.js')
 
@@ -196,17 +202,71 @@ describe('PATCH /:id', () => {
   // How:   mockUserClient.from returns an update/eq/select/single chain; checks status 200
   // Chain: the upload wizard calls this on each step after Step 1 to save progress →
   //        the tutorial record in the DB is kept in sync with the wizard state step by step
+  /** The tutorials table now answers two shapes on a submit: the pre-read of the
+   *  current status (select -> eq -> maybeSingle) and the update itself. `was` is
+   *  the status the pre-read reports. */
+  function patchable(updated: unknown, was: string | null) {
+    return {
+      select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: was ? { status: was } : null, error: null }) }) }),
+      update: () => ({ eq: () => ({ eq: () => ({ select: () => ({ data: [updated], error: null }) }) }) }),
+    }
+  }
+
   it('updates tutorial', async () => {
     const updated = { id: '1', status: 'pending' }
-    withTerms(true, {
-      update: () => ({ eq: () => ({ eq: () => ({ select: () => ({ data: [updated], error: null }) }) }) }),
-    })
+    withTerms(true, patchable(updated, 'draft'))
     const res = await makeApp().request('/1', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: 'pending', updated_at: '2026-01-01T00:00:00Z' }),
     })
     expect(res.status).toBe(200)
+  })
+
+  // Tests: draft -> pending notifies the review queue exactly once, with the title
+  // How:   the pre-read reports 'draft'; asserts the notifier's argument
+  // Chain: this is the moment work is offered to someone else, and nothing told
+  //        them before this — see src/review-notifications.ts
+  it('notifies the review queue when a draft is submitted', async () => {
+    withTerms(true, patchable({ id: '1', title: 'Spoon Holder', status: 'pending' }, 'draft'))
+    await makeApp().request('/1', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'pending', updated_at: '2026-01-01T00:00:00Z' }),
+    })
+    expect(mockNotifySubmitted).toHaveBeenCalledTimes(1)
+    expect(mockNotifySubmitted).toHaveBeenCalledWith({
+      tutorialId: '1',
+      tutorialTitle: 'Spoon Holder',
+      actorId: 'user-1',
+    })
+  })
+
+  // Tests: re-saving an already-pending tutorial notifies nobody
+  // How:   the pre-read reports 'pending' while the body still carries it
+  // Chain: the editor sends the whole form on every save, so without the
+  //        pre-read a leader's badge climbed each time an author fixed a typo
+  it('does not re-notify when the tutorial was already pending', async () => {
+    withTerms(true, patchable({ id: '1', title: 'Spoon Holder', status: 'pending' }, 'pending'))
+    const res = await makeApp().request('/1', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'pending', updated_at: '2026-01-01T00:00:00Z' }),
+    })
+    expect(res.status).toBe(200)
+    expect(mockNotifySubmitted).not.toHaveBeenCalled()
+  })
+
+  // Tests: an ordinary field edit never touches the notifier, and never pays for
+  //        the pre-read either
+  it('does not notify on an edit that is not a submission', async () => {
+    withTerms(true, patchable({ id: '1', title: 'Spoon Holder', status: 'draft' }, 'draft'))
+    await makeApp().request('/1', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: 'Spoon Holder', updated_at: '2026-01-01T00:00:00Z' }),
+    })
+    expect(mockNotifySubmitted).not.toHaveBeenCalled()
   })
 
   // Tests: PATCH /:id returns 500 when the database update fails

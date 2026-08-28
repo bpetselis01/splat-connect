@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import { BackLink } from '@/components/back-link'
 import { redirect, notFound } from 'next/navigation'
 import { apiClient } from '@/lib/api-client'
 import { getCapabilities } from '@/lib/capabilities'
@@ -20,9 +20,7 @@ export default async function ToyEditPage({ params }: { params: Promise<{ id: st
 
   return (
     <div>
-      <Link href="/dashboard/toys" className="mb-4 inline-block text-sm text-muted">
-        ← My toys
-      </Link>
+      <BackLink href="/dashboard/toys" label="My toys" />
       <h1 className="mb-6 text-2xl font-bold text-ink">{toy.name}</h1>
       {toy.archived_at ? (
         <div className="panel p-5">

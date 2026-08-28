@@ -13,13 +13,17 @@ describe('notificationBucket', () => {
    * compile error; this makes a *wrong* value a test failure.
    */
   it('gives every notification type a bucket', () => {
-    expect(NOTIFICATION_TYPES.length).toBe(18)
+    expect(NOTIFICATION_TYPES.length).toBe(20)
     for (const type of NOTIFICATION_TYPES) {
       expect(['tutorials', 'exchanges', 'challenges']).toContain(notificationBucket(type))
     }
   })
 
   it('buckets authoring and collaboration to tutorials', () => {
+    // The two review-queue types go to a reviewer rather than to the person the
+    // subject belongs to, but the card that counts them is still the guides one.
+    expect(notificationBucket('backing_requested')).toBe('tutorials')
+    expect(notificationBucket('tutorial_submitted')).toBe('tutorials')
     expect(notificationBucket('tutorial_approved')).toBe('tutorials')
     expect(notificationBucket('collaborator_invited')).toBe('tutorials')
     expect(notificationBucket('collaborator_left')).toBe('tutorials')

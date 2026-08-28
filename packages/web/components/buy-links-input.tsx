@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import type { BuyLink } from '@splat-connect/types'
 
 interface BuyLinksInputProps {

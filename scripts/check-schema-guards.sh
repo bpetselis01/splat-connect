@@ -70,7 +70,19 @@ select * from (values
       where table_schema = 'public' and table_name = 'profiles'
         and column_name in ('role', 'email')
         and grantee in ('anon', 'authenticated')
-        and privilege_type = 'UPDATE'))
+        and privilege_type = 'UPDATE')),
+
+  -- 046. Not a security guard like the rows above, but the same failure shape:
+  -- the ledger can read as applied while the constraint was never widened, and
+  -- the only symptom is that every review-queue notification insert is rejected
+  -- and logged — packages/api/src/review-notifications.ts swallows the error on
+  -- purpose, so a leader is simply never told and nothing surfaces anywhere.
+  ('046 notifications_type_check permits the review-queue types',
+   (select pg_get_constraintdef(oid) like '%backing_requested%'
+       and pg_get_constraintdef(oid) like '%tutorial_submitted%'
+      from pg_constraint
+     where conname = 'notifications_type_check'
+       and conrelid = 'public.notifications'::regclass))
 ) as t(guard, ok)
 where not ok;
 EOSQL

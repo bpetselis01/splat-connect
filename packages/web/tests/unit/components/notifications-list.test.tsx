@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { useRouter } from 'next/navigation'
 import { NotificationsList } from '@/components/notifications-list'
 import type { Notification } from '@splat-connect/types'
 
@@ -148,6 +147,63 @@ describe('NotificationsList', () => {
       )
       fireEvent.click(screen.getByText(/reviewed and not taken forward/i))
       await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/dashboard/challenges'))
+    })
+
+    /*
+     * The review-queue types are the only ones whose recipient is a reviewer
+     * rather than the person the subject belongs to, and the only ones whose
+     * destination depends on WHO is reading. Both branches are asserted because
+     * the failure mode of the leader one is silent: /tutorials/:id/edit renders
+     * for a leader and only fails when they try to save.
+     */
+    for (const type of ['backing_requested', 'tutorial_submitted'] as const) {
+      it(`routes a ${type} row to the organisation hub for a leader`, async () => {
+        render(
+          <NotificationsList
+            notifications={[baseNotif({ type, tutorial_id: 't9', tutorial_title: 'Spoon Holder' })]}
+            pendingInvitesByTutorial={{}}
+            onMarkRead={vi.fn().mockResolvedValue(undefined)}
+            onAcceptInvite={vi.fn()}
+            onDeclineInvite={vi.fn()}
+          />
+        )
+        fireEvent.click(screen.getByText(/spoon holder/i))
+        await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/dashboard/organisation'))
+      })
+
+      it(`routes a ${type} row to the admin review screen for an admin`, async () => {
+        render(
+          <NotificationsList
+            notifications={[baseNotif({ type, tutorial_id: 't9', tutorial_title: 'Spoon Holder' })]}
+            pendingInvitesByTutorial={{}}
+            isAdmin
+            onMarkRead={vi.fn().mockResolvedValue(undefined)}
+            onAcceptInvite={vi.fn()}
+            onDeclineInvite={vi.fn()}
+          />
+        )
+        fireEvent.click(screen.getByText(/spoon holder/i))
+        await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/admin/review/t9'))
+      })
+    }
+
+    // Tests: neither review-queue type falls through to the contributor's editor
+    // How:   asserts on the copy, which names the actor — the tutorial_approved
+    //        row above shares the same tutorial_id and would push /tutorials/t9/edit
+    it('never sends a reviewer to the author\'s editor', async () => {
+      render(
+        <NotificationsList
+          notifications={[baseNotif({ type: 'tutorial_submitted', tutorial_id: 't9', actor_name: 'Dana' })]}
+          pendingInvitesByTutorial={{}}
+          onMarkRead={vi.fn().mockResolvedValue(undefined)}
+          onAcceptInvite={vi.fn()}
+          onDeclineInvite={vi.fn()}
+        />
+      )
+      expect(screen.getByText(/Dana submitted "Spoon Holder" for review/)).toBeInTheDocument()
+      fireEvent.click(screen.getByText(/Dana submitted/))
+      await waitFor(() => expect(mockPush).toHaveBeenCalled())
+      expect(mockPush).not.toHaveBeenCalledWith('/tutorials/t9/edit')
     })
   })
 })

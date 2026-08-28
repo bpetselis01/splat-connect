@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import { BoundaryLink } from './boundary-link'
 import { SaveButton, type SaveProps } from './save-button'
 import { CardPhoto } from './card-photo'
 import { DifficultyBadge } from './difficulty-badge'
@@ -11,7 +11,10 @@ type Listed = Tutorial & { tutorial_orgs?: TutorialOrg[] }
 export function TutorialCard({ tutorial, save }: { tutorial: Listed; save?: SaveProps }) {
   const backed = (tutorial.tutorial_orgs ?? []).some((b) => b.status === 'accepted')
   const card = (
-    <Link
+    // BoundaryLink because this card also renders on /dashboard/saved/tutorials,
+    // where /tutorials/[id] is a crossing out of the rail. On the public lists it
+    // is not a crossing and this falls through to next/link unchanged.
+    <BoundaryLink
       href={`/tutorials/${tutorial.id}`}
       data-testid="tutorial-card"
       className="card-pixel card-link overflow-hidden"
@@ -33,7 +36,7 @@ export function TutorialCard({ tutorial, save }: { tutorial: Listed; save?: Save
           <DifficultyBadge difficulty={tutorial.difficulty} />
         </div>
       </div>
-    </Link>
+    </BoundaryLink>
   )
 
   /*

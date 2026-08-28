@@ -1,4 +1,3 @@
-import path from 'node:path'
 import { test, expect } from '@playwright/test'
 import {
   signIn,
@@ -12,9 +11,6 @@ import {
   deleteUser,
   uniqueTitle,
 } from '../helpers'
-
-const PDF_FIXTURE = path.join(__dirname, '..', 'fixtures', 'test.pdf')
-const PHOTO_FIXTURE = path.join(__dirname, '..', 'fixtures', 'test.jpg')
 
 /**
  * The journeys that prove the app shell replaces the tab strip without losing
@@ -163,7 +159,11 @@ test('a contributor adds two children, edits one, and deletes one', async ({ pag
     // Name, age, diagnosis and MACS live on the Ability pill, not the one the
     // stepper opens on — ChildEditor splits the profile across four steps and
     // starts at Survey. Saving stays on the editor and swaps /new for the new
-    // id, so the list is reached by the back link rather than a redirect.
+    // id, so the list is reached by navigating rather than by a redirect.
+    //
+    // Via the rail's Account row, not the page's own back control: that control
+    // is `lg:hidden` (components/back-link.tsx) because every destination it
+    // offers is already a rail row, and this project runs at desktop width.
 
     // First child, named.
     await page.getByRole('link', { name: 'Add child' }).click()
@@ -180,7 +180,7 @@ test('a contributor adds two children, edits one, and deletes one', async ({ pag
     // the row is navigation.
     await expect(page.getByRole('main').getByText('Saved')).toBeVisible()
     await expect(page).toHaveURL(/\/dashboard\/child\/[0-9a-f-]{36}/)
-    await page.getByRole('link', { name: '← Account' }).click()
+    await page.locator('.shell-rail').getByRole('link', { name: 'Account' }).click()
     await expect(page).toHaveURL('/dashboard/profile')
     await expect(page.getByRole('link', { name: /Emma/ })).toBeVisible()
 
@@ -194,7 +194,7 @@ test('a contributor adds two children, edits one, and deletes one', async ({ pag
     // confirmation and trips strict mode. The confirmation is page content;
     // the row is navigation.
     await expect(page.getByRole('main').getByText('Saved')).toBeVisible()
-    await page.getByRole('link', { name: '← Account' }).click()
+    await page.locator('.shell-rail').getByRole('link', { name: 'Account' }).click()
     await expect(page).toHaveURL('/dashboard/profile')
     await expect(page.getByRole('link', { name: /Child 2/ })).toBeVisible()
 

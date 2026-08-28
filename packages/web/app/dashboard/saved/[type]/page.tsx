@@ -17,7 +17,7 @@
  */
 import type { Route } from 'next'
 import { notFound, redirect } from 'next/navigation'
-import Link from 'next/link'
+import { BoundaryLink } from '@/components/boundary-link'
 import { SAVE_SLUGS, type SaveSlug } from '@splat-connect/types'
 import type { Tutorial, ToyWithOwner, ToyIdea } from '@splat-connect/types'
 import { getCapabilities } from '@/lib/capabilities'
@@ -72,9 +72,14 @@ export default async function SavedList({ params }: { params: Promise<{ type: st
       {items.length === 0 ? (
         <p className="mt-4 max-w-prose text-base leading-relaxed text-muted">
           Nothing saved yet.{' '}
-          <Link href={view.browse} className="font-semibold text-brand-dark hover:underline">
+          {/* BoundaryLink, not next/link: every one of these three destinations is
+              a public page reached from a rail-only account page, and the root
+              layout does not re-run on a soft transition — so /library rendered
+              with the saved list's rail still on screen until the next hard
+              navigation. See components/boundary-link.tsx. */}
+          <BoundaryLink href={view.browse} className="font-semibold text-brand-dark hover:underline">
             {view.browseLabel}
-          </Link>{' '}
+          </BoundaryLink>{' '}
           and use the bookmark on anything you want to keep.
         </p>
       ) : (

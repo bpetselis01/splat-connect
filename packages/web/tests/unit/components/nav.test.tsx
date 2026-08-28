@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { Nav } from '@/components/nav'
 import { DrawerProvider, useDrawer } from '@/components/drawer-context'
@@ -430,5 +430,37 @@ describe('Nav', () => {
     // aria-hidden too and is meant to stay.
     expect(account.querySelector('span.rounded-full')).toBeNull()
     expect(screen.getByRole('link', { name: /Guides/ }).querySelector('span.rounded-full')).not.toBeNull()
+  })
+
+  // Tests: My SPLAT is drawn as the solid apricot button on every route, not as
+  //        a .nav-pill that only tints on hover or when current
+  // How:   renders on a public route and on /dashboard itself, asserting the
+  //        class both times
+  // Chain: as a bare label it was the quietest thing in a bar of seven tinted
+  //        section tabs. If it ever regresses to .nav-pill the header still
+  //        renders and every other assertion here still passes, so this is the
+  //        only thing standing between that and shipping
+  it('draws My SPLAT as the accent button everywhere', () => {
+    render(<Nav caps={signedIn} />)
+    expect(screen.getByRole('link', { name: /My SPLAT/ })).toHaveClass('btn-accent')
+    expect(screen.getByRole('link', { name: /My SPLAT/ })).not.toHaveClass('nav-pill')
+    cleanup()
+
+    pathname.current = '/dashboard'
+    render(<Nav caps={signedIn} />)
+    expect(screen.getByRole('link', { name: /My SPLAT/ })).toHaveClass('btn-accent')
+  })
+
+  // Tests: the avatar sits to the LEFT of the My SPLAT button
+  // How:   compares document order of the initials span and the account link
+  // Chain: the avatar used to follow the label; once the label became a solid
+  //        button an avatar on its right read as a chip that had come loose
+  //        from it. Nothing else in this file asserts cluster order
+  it('places the avatar before the My SPLAT button', () => {
+    render(<Nav caps={signedIn} />)
+    const avatar = screen.getByTitle(signedIn.profile.name)
+    const account = screen.getByRole('link', { name: /My SPLAT/ })
+    // Node.DOCUMENT_POSITION_FOLLOWING — the account link comes after the avatar.
+    expect(avatar.compareDocumentPosition(account) & 4).toBeTruthy()
   })
 })

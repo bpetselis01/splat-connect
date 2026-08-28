@@ -8,6 +8,7 @@
 import { Hono } from 'hono'
 import { createUserClient } from '../supabase/user-client.js'
 import { createAdminClient } from '../supabase/client.js'
+import { notifyTutorialSubmitted } from '../review-notifications.js'
 import type { AuthVariables } from '../middleware/auth.js'
 
 const tutorials = new Hono<{ Variables: AuthVariables }>()
@@ -161,6 +162,18 @@ tutorials.patch('/:id', async (c) => {
   if (!Object.keys(update).length) return c.json({ error: 'nothing to update' }, 400)
 
   const supabase = createUserClient(c.get('token'))
+
+  // Read the status BEFORE the write, and only on the submit path. draft ->
+  // pending is one event; a later save that happens to resend status 'pending'
+  // (the editor sends the whole form) is not, and notifying on it would have
+  // meant a leader's badge climbing every time an author fixed a typo.
+  const submitting = body.status === 'pending'
+  const wasDraft =
+    submitting &&
+    (
+      await supabase.from('tutorials').select('status').eq('id', c.req.param('id')).maybeSingle()
+    ).data?.status === 'draft'
+
   const { data, error } = await supabase
     .from('tutorials')
     .update(update)
@@ -176,6 +189,14 @@ tutorials.patch('/:id', async (c) => {
     // refusal on a normal field patch is not otherwise expected for a
     // tutorial's own contributor.
     return c.json({ error: 'This was updated by someone else while you were editing.' }, 409)
+  }
+  // After the update commits, so a failed notify cannot lose a submission.
+  if (wasDraft) {
+    await notifyTutorialSubmitted({
+      tutorialId: c.req.param('id'),
+      tutorialTitle: data[0].title,
+      actorId: c.get('userId'),
+    })
   }
   return c.json(data[0])
 })

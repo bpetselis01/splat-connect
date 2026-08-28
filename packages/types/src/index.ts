@@ -395,6 +395,8 @@ export type NotificationType =
   | 'collaborator_declined'
   | 'collaborator_removed'
   | 'collaborator_left'
+  | 'backing_requested'
+  | 'tutorial_submitted'
   | 'tutorial_approved'
   | 'tutorial_rejected'
   | 'toy_request'
@@ -419,8 +421,14 @@ export type NotificationBucket = 'tutorials' | 'exchanges' | 'challenges'
  * the hub renders by it; two copies would drift the first time a type is added.
  *
  * `satisfies Record<NotificationType, NotificationBucket>` is load-bearing: a
- * nineteenth NotificationType becomes a compile error on this object rather
+ * twenty-first NotificationType becomes a compile error on this object rather
  * than a badge that silently never counts it.
+ *
+ * backing_requested and tutorial_submitted are the only two types whose
+ * recipient is not the person the subject belongs to — they go to the leaders
+ * who have to act, or to admins when no organisation is backing the work. They
+ * still bucket as 'tutorials': the My SPLAT card that counts them is the one
+ * about guides either way.
  *
  * Note there is no 'toys' bucket. Every toy_* type is an event on a
  * transaction, not on a toy, so they all belong to My exchanges — a toy
@@ -432,6 +440,8 @@ const NOTIFICATION_BUCKET = {
   collaborator_declined: 'tutorials',
   collaborator_removed: 'tutorials',
   collaborator_left: 'tutorials',
+  backing_requested: 'tutorials',
+  tutorial_submitted: 'tutorials',
   tutorial_approved: 'tutorials',
   tutorial_rejected: 'tutorials',
   toy_request: 'exchanges',
