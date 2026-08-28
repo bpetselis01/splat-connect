@@ -71,7 +71,7 @@ export default async function ExchangeDetailPage({ params }: { params: Promise<{
           needs a way back that does not assume browser history. */}
       <div className="mb-6">
         <BackLink href="/dashboard/exchanges" label="My exchanges" />
-        <h1 className="mt-1 text-2xl font-bold text-ink">{tx.toy_name}</h1>
+        <h1 className="mt-1 title-detail">{tx.toy_name}</h1>
         <p className="mt-1 text-sm text-muted">
           {tx.type === 'donation' ? 'Donation' : 'Exchange'} with {otherPartyName}
         </p>
