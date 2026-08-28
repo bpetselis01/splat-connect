@@ -112,7 +112,7 @@ export default async function LeaderProjectPage({
         <p className="text-sm text-muted">For {org.name}</p>
         {mine && <BackingBadge status={mine.status} />}
       </div>
-      <h1 className="mb-2 text-2xl font-bold text-ink">{tutorial!.title}</h1>
+      <h1 className="mb-2 title-detail">{tutorial!.title}</h1>
       <DifficultyBadge difficulty={tutorial!.difficulty} />
       {tutorial!.description && <p className="mt-4">{tutorial!.description}</p>}
 
