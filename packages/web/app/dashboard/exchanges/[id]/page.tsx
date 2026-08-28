@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import { BackLink } from '@/components/back-link'
 import { notFound, redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { getCapabilities } from '@/lib/capabilities'
@@ -70,9 +70,7 @@ export default async function ExchangeDetailPage({ params }: { params: Promise<{
       {/* The thread is reachable from a notification as well as the list, so it
           needs a way back that does not assume browser history. */}
       <div className="mb-6">
-        <Link href="/dashboard/exchanges" className="text-sm font-bold text-brand-dark hover:underline">
-          ← My exchanges
-        </Link>
+        <BackLink href="/dashboard/exchanges" label="My exchanges" />
         <h1 className="mt-1 text-2xl font-bold text-ink">{tx.toy_name}</h1>
         <p className="mt-1 text-sm text-muted">
           {tx.type === 'donation' ? 'Donation' : 'Exchange'} with {otherPartyName}
