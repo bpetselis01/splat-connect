@@ -501,3 +501,42 @@ test('the onboarding gate renders without the rail', async ({ page }) => {
     await deleteUser(contributor.id)
   }
 })
+
+/**
+ * The authoring journey lives outside /dashboard — /upload creates the row and
+ * /tutorials/[id]/edit is every step after it — so both are account pages that
+ * ACCOUNT_PREFIXES cannot reach by prefix alone. They rendered the public
+ * header instead of the rail until lib/public-nav.ts learned to match the
+ * editor by shape.
+ *
+ * The public /tutorials/[id] assertion is the other half of that rule: the two
+ * routes differ by one segment, and a prefix match on /tutorials would drag the
+ * public detail page behind the rail with them.
+ */
+test('the authoring pages render the rail, and the public tutorial page does not', async ({
+  page,
+}) => {
+  const contributor = await createContributor()
+  await acceptTerms(contributor.id)
+  const tutorialId = await createTutorial(contributor.id, {
+    title: uniqueTitle('E2E Rail Chrome'),
+    status: 'approved',
+  })
+
+  try {
+    await signIn(page, contributor.email, contributor.password)
+    await page.waitForURL('**/dashboard')
+
+    await page.goto(`/tutorials/${tutorialId}/edit`)
+    await expect(page.locator('.shell-rail')).toBeVisible()
+
+    await page.goto('/upload')
+    await expect(page.locator('.shell-rail')).toBeVisible()
+
+    // Signed in, on the public detail page: still the header, no rail.
+    await page.goto(`/tutorials/${tutorialId}`)
+    await expect(page.locator('.shell-rail')).toHaveCount(0)
+  } finally {
+    await deleteUser(contributor.id)
+  }
+})
