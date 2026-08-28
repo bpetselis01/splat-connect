@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import { BoundaryLink } from './boundary-link'
 import { SaveButton, type SaveProps } from './save-button'
 import { CardPhoto } from './card-photo'
 import { toyHolderName } from '@splat-connect/types'
@@ -7,7 +7,9 @@ import type { ToyWithOwner } from '@splat-connect/types'
 export function ToyLibraryCard({ toy, save }: { toy: ToyWithOwner; save?: SaveProps }) {
   const holder = toyHolderName(toy)
   const card = (
-    <Link
+    // Same crossing as tutorial-card.tsx: this renders on /dashboard/saved/toys
+    // too, where /toy-library/[id] leaves the rail behind.
+    <BoundaryLink
       href={`/toy-library/${toy.id}`}
       data-testid="toy-library-card"
       className="card-pixel card-link overflow-hidden"
@@ -28,7 +30,7 @@ export function ToyLibraryCard({ toy, save }: { toy: ToyWithOwner; save?: SavePr
           </span>
         )}
       </div>
-    </Link>
+    </BoundaryLink>
   )
 
   /*
