@@ -294,7 +294,7 @@ export default async function EditTutorialPage({
     <div>
       <div className="mb-6">
         <BackLink href="/dashboard/tutorials" label="My tutorials" />
-        <h1 className="truncate text-2xl font-bold text-ink">{tutorial!.title}</h1>
+        <h1 className="truncate title-detail">{tutorial!.title}</h1>
       </div>
 
       {tutorial!.status === 'rejected' && (
