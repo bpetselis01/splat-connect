@@ -43,7 +43,7 @@ describe('HubGrid', () => {
    */
   it('tints every card, not just the first', () => {
     const { container } = render(<HubGrid items={items} tone="honey" />)
-    const cards = container.querySelectorAll('a.card-pixel')
+    const cards = container.querySelectorAll('a.card')
     expect(cards).toHaveLength(2)
     for (const card of cards) {
       expect(card.className).toContain('bg-honey-soft')
@@ -64,7 +64,7 @@ describe('HubGrid', () => {
   it('draws no arrow and no wide lead card', () => {
     const { container } = render(<HubGrid items={items} tone="honey" />)
     expect(container.textContent).not.toContain('→')
-    for (const cell of container.querySelectorAll('a.card-pixel')) {
+    for (const cell of container.querySelectorAll('a.card')) {
       expect(cell.className).not.toContain('col-span-2')
       expect(cell.parentElement?.className).not.toContain('col-span-2')
     }
