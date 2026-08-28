@@ -338,8 +338,20 @@ const ACCOUNT_PREFIXES = ['/dashboard', '/admin', '/notifications', '/upload']
  * '/tutorials' above would drag the public page across with it, so the editor
  * is matched by shape instead — the same distinction, written the same way, as
  * the contributor-terms gate in middleware.ts.
+ *
+ * /organizations nests the two sides alternately, so neither direction can be
+ * a prefix: the list is public, /organizations/[id] is the leader dashboard
+ * (a non-leader is redirected off it by lib/org-access.ts) and its
+ * /projects/[tutorialId] child is the review screen, while
+ * /organizations/[id]/public is the public profile one segment deeper. Both
+ * leader pages are reached from /dashboard/organisation, which carries the
+ * rail — without these the chrome flipped halfway through a review.
  */
-const ACCOUNT_PATTERNS = [/^\/tutorials\/[^/]+\/edit(\/|$)/]
+const ACCOUNT_PATTERNS = [
+  /^\/tutorials\/[^/]+\/edit(\/|$)/,
+  /^\/organizations\/[^/]+$/,
+  /^\/organizations\/[^/]+\/projects(\/|$)/,
+]
 
 /** Footer-only. Never in the top bar, never a section. */
 export const FOOTER_LEGAL: NavItem[] = [
