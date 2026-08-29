@@ -204,8 +204,7 @@ describe('EditTutorialPage', () => {
     expect(stepper.querySelector('[data-step="parts"]')).toHaveAttribute('data-step-status', 'attention')
     expect(stepper.querySelector('[data-step="tools"]')).toHaveAttribute('data-step-status', 'attention')
     expect(stepper.querySelector('[data-step="stl"]')).toHaveAttribute('data-step-status', 'neutral')
-    expect(stepper.querySelector('[data-step="backing"]')).toHaveAttribute('data-step-status', 'neutral')
-    expect(stepper.querySelector('[data-step="collaborators"]')).toHaveAttribute('data-step-status', 'neutral')
+    expect(stepper.querySelector('[data-step="team"]')).toHaveAttribute('data-step-status', 'neutral')
   })
 
   it('adds a Review step, neutral while the tutorial is still a draft', async () => {
