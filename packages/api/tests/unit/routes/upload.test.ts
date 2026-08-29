@@ -98,18 +98,22 @@ describe('POST /pdf', () => {
     expect(res.status).toBe(400)
   })
 
-  // Tests: POST /pdf uploads the file to Supabase storage and returns the public URL
+  // Tests: POST /pdf uploads the file to Supabase storage and returns the object path
   // How:   mockUpload and mockGetPublicUrl resolve successfully; checks status 200 and body.url
-  // Chain: the returned URL is PATCHed onto the tutorial record via the next API call →
-  //        the tutorial's PDF is accessible to users via the public CDN URL
-  it('uploads file and returns public URL', async () => {
+  // Chain: the returned path is PATCHed onto the tutorial record via the next API call →
+  //        the web app serves it through /files/tutorial-pdfs/<path>, which signs a
+  //        short-lived URL per click rather than exposing the bucket publicly
+  it('returns the object path, not a public URL', async () => {
     const form = new FormData()
     form.append('file', new Blob(['pdf'], { type: 'application/pdf' }), 'file.pdf')
     form.append('tutorialId', 'tid-1')
     const res = await makeApp().request('/pdf', { method: 'POST', body: form })
     expect(res.status).toBe(200)
     const body = await res.json() as any
-    expect(body.url).toBe('https://example.com/tid-1/tutorial.pdf')
+    // Since 049 the bucket is private: a public URL would be a dead link, so
+    // the response carries the object path for /files/tutorial-pdfs/<path>.
+    expect(body.url).toBe('tid-1/tutorial.pdf')
+    expect(mockGetPublicUrl).not.toHaveBeenCalled()
   })
 
   it('returns 404 when the caller is not a contributor on the tutorial', async () => {
@@ -288,19 +292,21 @@ describe('POST /stl', () => {
     expect(res.status).toBe(500)
   })
 
-  // Tests: POST /stl uploads the file and returns 200 with both the public URL and original filename
+  // Tests: POST /stl uploads the file and returns 200 with both the object path and original filename
   // How:   mockUpload and mockGetPublicUrl resolve successfully; checks body.url and body.filename
-  // Chain: both values are stored in the stl_files table → the tutorial detail page displays
-  //        the original filename as the download link label and the URL as the href
-  it('returns 200 with url and filename on success', async () => {
+  // Chain: both values are stored in the stl_files table → the tutorial detail page serves
+  //        the download through /files/stl-files/<path>, which signs a short-lived URL and
+  //        forces the original filename as the attachment name
+  it('returns the object path, not a public URL', async () => {
     const form = new FormData()
     form.append('file', new Blob(['stl'], { type: 'model/stl' }), 'bracket.stl')
     form.append('tutorialId', 'tid-1')
     const res = await makeApp().request('/stl', { method: 'POST', body: form })
     expect(res.status).toBe(200)
     const body = await res.json() as any
-    expect(body.url).toBe('https://example.com/tid-1/bracket.stl')
+    expect(body.url).toBe('tid-1/bracket.stl')
     expect(body.filename).toBe('bracket.stl')
+    expect(mockGetPublicUrl).not.toHaveBeenCalled()
   })
 
   it('returns 404 when the caller is not a contributor on the tutorial', async () => {
