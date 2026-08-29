@@ -75,17 +75,21 @@ describe('computeStepStatuses', () => {
     ).toBe('done')
   })
 
-  it('backing is neutral when no organisation has been asked and done once one has', () => {
-    expect(computeStepStatuses(tutorial(), []).backing).toBe('neutral')
+  it('team is neutral when the contributor is alone and nobody has been asked', () => {
+    expect(computeStepStatuses(tutorial(), []).team).toBe('neutral')
+  })
+
+  // Either half on its own is enough — the two used to be separate steps with
+  // a dot each, and merging them must not make one of them stop counting.
+  it('team is done once an organisation has been asked, with no collaborator', () => {
     expect(
       computeStepStatuses(tutorial(), [
         { id: 'b1', tutorial_id: 't1', org_id: 'o1', status: 'pending', requested_at: '', responded_at: null, responded_by: null },
-      ]).backing
+      ]).team
     ).toBe('done')
   })
 
-  it('collaborators is neutral with only the primary and done once a second contributor joins', () => {
-    expect(computeStepStatuses(tutorial(), []).collaborators).toBe('neutral')
+  it('team is done once a second contributor joins, with no backing', () => {
     const withCollaborator = tutorial({
       tutorial_contributors: [
         ...tutorial().tutorial_contributors,
@@ -98,6 +102,6 @@ describe('computeStepStatuses', () => {
         },
       ],
     })
-    expect(computeStepStatuses(withCollaborator, []).collaborators).toBe('done')
+    expect(computeStepStatuses(withCollaborator, []).team).toBe('done')
   })
 })
