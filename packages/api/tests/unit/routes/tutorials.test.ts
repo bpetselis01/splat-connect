@@ -68,6 +68,29 @@ describe('GET /', () => {
     expect(body[0].title).toBe('T1')
   })
 
+  // Tests: the backing rows this endpoint embeds carry their own id
+  // How:   captures the select string both list routes are built from
+  // Chain: /dashboard/organisation flattens tutorial_orgs into one queue and keys
+  //        each row by row.id, because org_id repeats once two tutorials ask the
+  //        same organisation. The embed used to request only status and org_id,
+  //        so every key was undefined and React rendered the queue unkeyed —
+  //        "Each child in a list should have a unique key prop", pointing at a
+  //        <li> that visibly had one
+  it('embeds the backing row id the review queue keys on', async () => {
+    const selects: string[] = []
+    mockUserClient.from.mockReturnValue({
+      select: (arg: string) => {
+        selects.push(arg)
+        return { order: () => ({ data: [], error: null }) }
+      },
+    })
+
+    const res = await makeApp().request('/')
+    expect(res.status).toBe(200)
+    expect(selects).toHaveLength(1)
+    expect(selects[0]).toContain('tutorial_orgs(id,')
+  })
+
   // Tests: GET / returns 500 when the database query fails
   // How:   mockUserClient.from returns { data: null, error: { message: 'DB error' } }; checks status 500
   // Chain: the web layer receives an error response → the library page can display an error

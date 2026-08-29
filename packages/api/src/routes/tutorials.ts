@@ -21,7 +21,14 @@ tutorials.get('/', async (c) => {
     // lists by each row's backing status. The embed is itself RLS-filtered, so a
     // caller only ever sees backing rows for a project they authored or an
     // organisation they lead — the same list serves both without a second call.
-    .select('*, tutorial_contributors!inner(profile_id), tutorial_orgs(status, org_id, organizations(id, name))')
+    //
+    // `id` is listed first and is not decoration: the review queue flattens
+    // these rows across tutorials and keys each one by row.id, since org_id
+    // repeats as soon as two tutorials ask the same organisation. Leaving it out
+    // handed the page a TutorialOrg whose declared, non-optional id was
+    // undefined — invisible to TypeScript, and visible in the browser only as
+    // React's missing-key warning pointing at a <li> that plainly had a key.
+    .select('*, tutorial_contributors!inner(profile_id), tutorial_orgs(id, status, org_id, organizations(id, name))')
     .order('created_at', { ascending: false })
   if (error) return c.json({ error: error.message }, 500)
   return c.json(data)
@@ -35,7 +42,14 @@ tutorials.get('/mine', async (c) => {
     // lists by each row's backing status. The embed is itself RLS-filtered, so a
     // caller only ever sees backing rows for a project they authored or an
     // organisation they lead — the same list serves both without a second call.
-    .select('*, tutorial_contributors!inner(profile_id), tutorial_orgs(status, org_id, organizations(id, name))')
+    //
+    // `id` is listed first and is not decoration: the review queue flattens
+    // these rows across tutorials and keys each one by row.id, since org_id
+    // repeats as soon as two tutorials ask the same organisation. Leaving it out
+    // handed the page a TutorialOrg whose declared, non-optional id was
+    // undefined — invisible to TypeScript, and visible in the browser only as
+    // React's missing-key warning pointing at a <li> that plainly had a key.
+    .select('*, tutorial_contributors!inner(profile_id), tutorial_orgs(id, status, org_id, organizations(id, name))')
     .eq('tutorial_contributors.profile_id', c.get('userId'))
     .order('created_at', { ascending: false })
   if (error) return c.json({ error: error.message }, 500)
