@@ -59,12 +59,16 @@ export function AuthShell({
  * the same box.
  */
 export function AuthCard({ children }: { children: React.ReactNode }) {
-  // 6px, not the 5px an ordinary .card rests at. The board draws this one
-  // a rung deeper because it is the only object on the screen — there is no
-  // grid of siblings for it to sit level with.
+  // No shadow of its own, so .card's rung-3 rule in globals.css draws it.
+  //
+  // This carried a literal shadow-[6px_6px_0_var(--color-ink)] — the launcher
+  // pillar's depth — on the argument that the card is the only object on the
+  // screen and has no siblings to sit level with. Depth is not what says that:
+  // being alone on the page already does. What the literal actually bought was
+  // a form box shouting louder than the Sign in button inside it, and because
+  // a Tailwind utility beats the stylesheet it was the one surface the
+  // 2026-08-29 hierarchy pass could not reach from CSS.
   return (
-    <div className="card mt-[22px] w-full max-w-[380px] p-[30px] shadow-[6px_6px_0_var(--color-ink)]">
-      {children}
-    </div>
+    <div className="card mt-[22px] w-full max-w-[380px] p-[30px]">{children}</div>
   )
 }
