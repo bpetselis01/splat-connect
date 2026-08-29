@@ -1,11 +1,10 @@
 import { notFound, redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
-import Image from 'next/image'
 import { apiClient } from '@/lib/api-client'
-import { DifficultyBadge } from '@/components/difficulty-badge'
+import { TutorialView } from '@/components/tutorial-view'
 import { adminActions } from '@/components/project-actions'
-import { FileText, Download, Check, X } from '@/components/icons'
-import type { TutorialWithDetails, Difficulty } from '@splat-connect/types'
+import { Check, X } from '@/components/icons'
+import type { TutorialWithDetails } from '@splat-connect/types'
 
 type Reviewed = TutorialWithDetails & {
   reviewer?: { name: string } | null
@@ -84,99 +83,20 @@ export default async function ReviewTutorialPage({
   const contributor = tutorial!.tutorial_contributors?.[0]?.profiles
 
   return (
-    <div className="max-w-3xl">
-      <div className="mb-2 flex flex-wrap items-center gap-3">
-        <h1 className="title-detail">{tutorial!.title}</h1>
-        <DifficultyBadge difficulty={tutorial!.difficulty as Difficulty} />
-      </div>
+    <div className="max-w-5xl">
+      {/* The one thing an admin needs that a parent does not: who to write to.
+          Everything else comes from the public view, so the page an admin
+          judges is the page that gets published. The approver line that used to
+          sit at the bottom is inside that view now, said once. */}
       {contributor && (
-        <p className="mb-6 text-sm text-muted">
+        <p className="mb-4 text-sm text-muted">
           Submitted by <strong className="text-ink">{contributor.name}</strong> ({contributor.email})
         </p>
       )}
 
-      {tutorial!.toy_photo_url && (
-        <div className="relative mb-6 h-48 w-full overflow-hidden rounded-2xl bg-sunken">
-          <Image src={tutorial!.toy_photo_url} alt={tutorial!.title} fill className="object-cover" />
-        </div>
-      )}
+      <TutorialView tutorial={tutorial!} />
 
-      {tutorial!.tutorial_pdf_url && (
-        <a
-          href={tutorial!.tutorial_pdf_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn btn-primary mb-6"
-        >
-          <FileText /> Open Tutorial PDF
-        </a>
-      )}
-
-      {tutorial!.parts.length > 0 && (
-        <div className="mb-6">
-          <h2 className="mb-2 text-sm font-bold text-ink">Parts ({tutorial!.parts.length})</h2>
-          <div className="flex flex-col gap-2">
-            {tutorial!.parts.map((p) => (
-              <div key={p.id} className="card-flat flex flex-wrap justify-between gap-2 px-3 py-2 text-sm">
-                <span>{p.name} × {p.quantity}</span>
-                {p.buy_links.length > 0 && (
-                  <div className="flex gap-3">
-                    {p.buy_links.map((bl, i) => (
-                      <a key={i} href={bl.url} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-brand-dark hover:underline">
-                        {bl.label || 'Link →'}
-                      </a>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {tutorial!.tools.length > 0 && (
-        <div className="mb-6">
-          <h2 className="mb-2 text-sm font-bold text-ink">Tools ({tutorial!.tools.length})</h2>
-          <div className="flex flex-col gap-2">
-            {tutorial!.tools.map((t) => (
-              <div key={t.id} className="card-flat flex flex-wrap justify-between gap-2 px-3 py-2 text-sm">
-                <span>{t.name}</span>
-                {t.buy_links.length > 0 && (
-                  <div className="flex gap-3">
-                    {t.buy_links.map((bl, i) => (
-                      <a key={i} href={bl.url} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-brand-dark hover:underline">
-                        {bl.label || 'Link →'}
-                      </a>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {tutorial!.stl_files.length > 0 && (
-        <div className="mb-6">
-          <h2 className="mb-2 text-sm font-bold text-ink">STL Files ({tutorial!.stl_files.length})</h2>
-          <div className="flex flex-col items-start gap-1">
-            {tutorial!.stl_files.map((f) => (
-              <a key={f.id} href={f.file_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm font-semibold text-brand-dark hover:underline">
-                <Download /> {f.filename}
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {tutorial!.reviewer && (
-        <p className="mb-4 text-sm text-muted">
-          Approved by <strong className="text-ink">{tutorial!.reviewer.name}</strong>
-          {tutorial!.reviewed_for ? `, ${tutorial!.reviewed_for.name}` : ''}.
-        </p>
-      )}
-
-      <div className="flex flex-col gap-4 border-t border-line pt-6">
+      <div className="mt-10 flex max-w-2xl flex-col gap-4 border-t border-line pt-6">
         {actions.includes('approve') && (
           <form action={approveTutorial.bind(null, tutorial!.id)}>
             <button
