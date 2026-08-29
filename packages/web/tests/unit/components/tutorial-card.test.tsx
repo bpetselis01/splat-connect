@@ -30,6 +30,7 @@ const mockTutorial: Tutorial = {
   id: '1',
   title: 'Switch Adaptation Tutorial',
   difficulty: 'easy',
+  kind: 'toy_adaptation',
   status: 'approved',
   description: 'A helpful tutorial',
   tutorial_pdf_url: 'https://example.com/tutorial.pdf',
@@ -43,6 +44,13 @@ const mockTutorial: Tutorial = {
 }
 
 describe('TutorialCard', () => {
+  // The library lists both kinds side by side; the badge is how a parent
+  // tells a switch-adapted toy from a printed assistive-tech build.
+  it('renders the kind badge', () => {
+    render(<TutorialCard tutorial={{ ...mockTutorial, kind: 'assistive_tech' }} />)
+    expect(screen.getByText('Assistive tech')).toBeInTheDocument()
+  })
+
   // Tests: TutorialCard displays the tutorial title
   // How:   renders a card with the mock tutorial; checks text 'Switch Adaptation Tutorial' is present
   // Chain: the title is the primary identifier in the library grid → users can read and
