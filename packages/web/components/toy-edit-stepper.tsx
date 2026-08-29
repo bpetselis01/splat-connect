@@ -2,7 +2,9 @@
 import { useState, type ReactNode } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import type { Route } from 'next'
-import type { ToyStep, ToyStepId, ToyStepStatus } from '@/lib/toy-steps'
+import type { MissingToyStep, ToyStep, ToyStepId, ToyStepStatus } from '@/lib/toy-steps'
+import { FinishBar } from '@/components/finish-bar'
+import { NextStepProvider } from '@/components/panel-actions'
 
 const STATUS_GLYPH: Record<ToyStepStatus, string> = { done: '✓', attention: '!', neutral: '·' }
 
@@ -11,8 +13,27 @@ const STATUS_GLYPH: Record<ToyStepStatus, string> = { done: '✓', attention: '!
  * edit page hangs Delete toy off it. It sits outside the tablist on purpose:
  * a tablist's children are meant to be tabs, and a delete button announced as
  * "tab 4 of 4" would be a lie.
+ *
+ * `finish` is the publish bar, which used to be rendered by ToyReviewPanel and
+ * so only existed on the Review step. Same gap the tutorial editor had, same
+ * answer: it follows you, and it keeps the toy's own verb.
  */
-export function ToyEditStepper({ steps, trailing }: { steps: ToyStep[]; trailing?: ReactNode }) {
+export interface ToyFinish {
+  missing: MissingToyStep[]
+  onPublish: () => Promise<void>
+  /** Set once the toy is published — there is nothing left to do. */
+  done?: ReactNode
+}
+
+export function ToyEditStepper({
+  steps,
+  trailing,
+  finish,
+}: {
+  steps: ToyStep[]
+  trailing?: ReactNode
+  finish?: ToyFinish
+}) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -27,6 +48,15 @@ export function ToyEditStepper({ steps, trailing }: { steps: ToyStep[]; trailing
   }
 
   const active = steps.find((s) => s.id === activeId) ?? steps[0]
+
+  // The next step still wanting something, searched forward from where you are
+  // — the same rule the tutorial stepper runs, and see its note for why the
+  // search has to start after the active step rather than at the top.
+  const last = steps[steps.length - 1]
+  const after = steps.slice(steps.findIndex((s) => s.id === activeId) + 1)
+  const nextStep =
+    after.find((s) => s.status === 'attention' && !s.disabled) ??
+    (activeId !== last.id && !last.disabled ? last : undefined)
 
   return (
     <>
@@ -57,7 +87,37 @@ export function ToyEditStepper({ steps, trailing }: { steps: ToyStep[]; trailing
         {trailing && <div className="ml-auto pl-2">{trailing}</div>}
       </div>
 
-      <div role="tabpanel">{active.content}</div>
+      <div role="tabpanel">
+        <NextStepProvider
+          value={
+            finish && nextStep ? (
+              <button
+                type="button"
+                onClick={() => selectStep(nextStep.id)}
+                className="btn btn-quiet btn-sm"
+              >
+                {nextStep.id === last.id && finish.missing.length === 0
+                  ? 'Review and publish →'
+                  : `Next: ${nextStep.label} →`}
+              </button>
+            ) : null
+          }
+        >
+          {active.content}
+        </NextStepProvider>
+      </div>
+
+      {finish && (
+        <FinishBar
+          missing={finish.missing}
+          submitLabel="Publish"
+          busyLabel="Publishing…"
+          errorMessage="Could not publish this toy. Please try again."
+          onSubmit={finish.onPublish}
+          onJump={(step) => selectStep(step as ToyStepId)}
+          done={finish.done}
+        />
+      )}
     </>
   )
 }
