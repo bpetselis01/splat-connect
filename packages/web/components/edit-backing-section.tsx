@@ -167,8 +167,10 @@ export function EditBackingSection({
       )}
 
       {/* Ask belongs to the organisation picker above, not to the step — it
-          adds one backer rather than saving the section — so Next gets a row
-          of its own rather than standing level with it. */}
+          adds one backer rather than saving the section — so this row carries
+          only whatever the stepper puts in it, and collapses to nothing on the
+          Team step, which is quiet. Kept so the panel keeps the same shape as
+          every other one. */}
       <PanelActions />
     </div>
   )
