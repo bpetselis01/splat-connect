@@ -1,5 +1,6 @@
 'use client'
 import { useRef, useState, type DragEvent, type ChangeEvent } from 'react'
+import Image from 'next/image'
 
 interface FileDropZoneProps {
   id?: string
@@ -8,6 +9,11 @@ interface FileDropZoneProps {
   multiple?: boolean
   label: string
   currentFileLabel?: string
+  /** The image already on file, shown in place. A picture answers "is the
+   *  right one up there?" — which currentFileLabel alone never could — and it
+   *  is why the toy editor no longer needs a dialog for the same job. Only for
+   *  image dropzones: a PDF or an STL has nothing to show. */
+  currentFileUrl?: string | null
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
 }
 
@@ -18,6 +24,7 @@ export function FileDropZone({
   multiple = false,
   label,
   currentFileLabel,
+  currentFileUrl,
   onChange,
 }: FileDropZoneProps) {
   const inputRef = useRef<HTMLInputElement>(null)
@@ -63,6 +70,9 @@ export function FileDropZone({
   }
 
   const displayLabel = fileLabel ?? currentFileLabel ?? null
+  // Hidden once a replacement is chosen: the thumbnail would then be showing
+  // the photo about to be overwritten, right above its replacement's name.
+  const showCurrent = currentFileUrl != null && fileLabel === null
 
   return (
     <div
@@ -81,6 +91,15 @@ export function FileDropZone({
         onChange={handleChange}
         className="sr-only"
       />
+      {showCurrent && (
+        <Image
+          src={currentFileUrl}
+          alt={`${label} currently on file`}
+          width={132}
+          height={96}
+          className="mx-auto mb-3 h-[96px] w-[132px] rounded-md border-2 border-ink object-cover"
+        />
+      )}
       <p className="mb-3 text-xs text-muted">
         {dragging ? 'Drop file here' : `Drag & drop or choose ${label.toLowerCase()}`}
       </p>
