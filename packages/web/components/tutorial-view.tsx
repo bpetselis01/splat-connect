@@ -21,10 +21,13 @@
  * - app/tutorials/[id]/page.tsx: the public page this was lifted from
  * - app/organizations/[id]/projects/[tutorialId]/page.tsx: leader review
  * - app/admin/review/[id]/page.tsx: admin review
+ * - app/files/[bucket]/[...path]/route.ts: where the file links go
  */
 import type { ReactNode } from 'react'
 import Image from 'next/image'
 import { DifficultyBadge } from '@/components/difficulty-badge'
+import { KindBadge } from '@/components/kind-badge'
+import { TutorialCard } from '@/components/tutorial-card'
 import { OrgBadges } from '@/components/org-badges'
 import { FileText, Download } from '@/components/icons'
 import type { TutorialWithDetails, TutorialOrg } from '@splat-connect/types'
@@ -39,15 +42,31 @@ export function TutorialView({
   tutorial,
   backing,
   headerAction,
+  signedIn,
 }: {
   tutorial: Viewable
   /** The leader page fetches backing separately; everyone else has it embedded. */
   backing?: TutorialOrg[]
   headerAction?: ReactNode
+  /**
+   * Whether file links go to /files (signs on click) or to signup. Required,
+   * not defaulted: a gate that defaults open is the wrong default, and there
+   * are three callers.
+   */
+  signedIn: boolean
 }) {
   const contributors = tutorial.tutorial_contributors ?? []
   const primaryContributor = contributors.find((c) => c.role === 'primary')
   const collaborators = contributors.filter((c) => c.role === 'collaborator')
+
+  // A signed-out visitor is sent to sign up from the same <a>; the route
+  // handler behind /files would do the same, but the page already knows and
+  // should not hand out a link it knows will bounce.
+  const signupHref = `/signup?next=${encodeURIComponent(`/tutorials/${tutorial.id}`)}&reason=download`
+  const fileHref = (bucket: 'tutorial-pdfs' | 'stl-files', path: string) =>
+    signedIn ? `/files/${bucket}/${path}` : signupHref
+  // Only a link to a file opens in a new tab; the signup detour is this tab.
+  const newTab = signedIn ? { target: '_blank', rel: 'noopener noreferrer' } : {}
 
   return (
     <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
@@ -79,6 +98,7 @@ export function TutorialView({
           <div className="mb-2 flex flex-wrap items-center gap-3">
             <h1 className="title-detail">{tutorial.title}</h1>
             <DifficultyBadge difficulty={tutorial.difficulty} />
+            <KindBadge kind={tutorial.kind} />
             {headerAction}
           </div>
           {tutorial.description && (
@@ -99,9 +119,8 @@ export function TutorialView({
         </div>
         {tutorial.tutorial_pdf_url && (
           <a
-            href={tutorial.tutorial_pdf_url}
-            target="_blank"
-            rel="noopener noreferrer"
+            href={fileHref('tutorial-pdfs', tutorial.tutorial_pdf_url)}
+            {...newTab}
             className="btn btn-primary btn-block mt-6"
           >
             <FileText /> Download Tutorial PDF
@@ -183,20 +202,43 @@ export function TutorialView({
             ))}
           </div>
         )}
-        {tutorial.stl_files.length > 0 && (
+        {/* Gated on kind as well as on rows: a toy adaptation has no STL step,
+            and one switched from assistive tech keeps its old rows without
+            showing them. */}
+        {tutorial.kind === 'assistive_tech' && tutorial.stl_files.length > 0 && (
           <div className="card-flat ref-section ref-section--files">
             <h2 className="mb-1 text-sm font-bold">Files for 3D printing</h2>
             {tutorial.stl_files.map((f) => (
               <a
                 key={f.id}
-                href={f.file_url}
-                target="_blank"
-                rel="noopener noreferrer"
+                href={fileHref('stl-files', f.file_url)}
                 className="ref-row flex items-center gap-2 text-sm font-semibold text-brand-dark hover:underline"
               >
                 <Download /> {f.filename}
               </a>
             ))}
+          </div>
+        )}
+        {/* Where the creator points next. The public route has already dropped
+            anything a parent could not open, so on the public page every card
+            here leads somewhere; the review pages get the unfiltered list and
+            tag the ones that are still hidden, because a reviewer should know
+            the recommendation exists even though a parent cannot follow it. */}
+        {(tutorial.tutorial_recommendations ?? []).length > 0 && (
+          <div>
+            <h2 className="mb-3 text-sm font-bold">Also worth a look</h2>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {tutorial.tutorial_recommendations.map((r) => (
+                <div key={r.tutorials.id} className="flex flex-col gap-2">
+                  <TutorialCard tutorial={r.tutorials} />
+                  {r.tutorials.status !== 'approved' && (
+                    <span className="badge self-start bg-honey-soft text-honey-deep">
+                      Not yet approved — hidden from the public page
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
