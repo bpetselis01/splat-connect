@@ -2,11 +2,17 @@ import { BoundaryLink } from './boundary-link'
 import { SaveButton, type SaveProps } from './save-button'
 import { CardPhoto } from './card-photo'
 import { DifficultyBadge } from './difficulty-badge'
+import { KindBadge } from './kind-badge'
 import { BackingSummary } from './backing-state'
 import type { Tutorial, TutorialOrg } from '@splat-connect/types'
 
-/** GET /api/public/tutorials embeds accepted backing on every row. */
-type Listed = Tutorial & { tutorial_orgs?: TutorialOrg[] }
+/** GET /api/public/tutorials embeds accepted backing on every row. Only the
+ *  fields the card reads, so a recommendation's embedded target — a pick of
+ *  the tutorial — can be a card too. */
+type Listed = Pick<Tutorial, 'id' | 'title' | 'difficulty' | 'kind' | 'toy_photo_url'> & {
+  description?: string | null
+  tutorial_orgs?: TutorialOrg[]
+}
 
 export function TutorialCard({ tutorial, save }: { tutorial: Listed; save?: SaveProps }) {
   const backed = (tutorial.tutorial_orgs ?? []).some((b) => b.status === 'accepted')
@@ -32,8 +38,9 @@ export function TutorialCard({ tutorial, save }: { tutorial: Listed; save?: Save
             the review path means something; on a public card it is internal jargon
             to a parent, and the absence of a badge is the correct signal. */}
         {backed && <BackingSummary backing={tutorial.tutorial_orgs ?? []} />}
-        <div className="mt-3">
+        <div className="mt-3 flex flex-wrap gap-2">
           <DifficultyBadge difficulty={tutorial.difficulty} />
+          <KindBadge kind={tutorial.kind} />
         </div>
       </div>
     </BoundaryLink>
