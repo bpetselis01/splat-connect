@@ -18,7 +18,7 @@ const NARRATIVE_FIELDS = [
  * idea reaches a reviewer with nothing to judge, so this rejects rather than
  * storing blanks — the same reasoning as readPickupAddress in toy-transactions.
  */
-export function readIdeaBody(body: unknown): Record<string, unknown> | null {
+function readIdeaBody(body: unknown): Record<string, unknown> | null {
   if (body === null || typeof body !== 'object' || Array.isArray(body)) return null
   const source = body as Record<string, unknown>
   const out: Record<string, unknown> = {}

@@ -46,7 +46,6 @@ async function answer(c: Context<{ Variables: AuthVariables }>, status: 'accepte
   const { data: invitee } = await admin.from('profiles').select('name').eq('id', data.invited_profile_id).single()
   const { data: tutorial } = await admin.from('tutorials').select('title').eq('id', data.tutorial_id).single()
 
-  let primaryRow: { profile_id: string } | null = null
   if (status === 'accepted') {
     // Retry-safe: if the tutorial_contributors insert fails midway on a
     // client retry, a duplicate-key error here (23505) is already a seat,
@@ -57,29 +56,17 @@ async function answer(c: Context<{ Variables: AuthVariables }>, status: 'accepte
     if (claimError && claimError.code !== '23505') {
       return c.json({ error: claimError.message }, 500)
     }
-
-    // That insert just made the invitee a current contributor, so RLS's
-    // "Contributors can view their team" policy (012) now admits this read
-    // under their own JWT — no admin client needed here.
-    const { data: row } = await supabase
-      .from('tutorial_contributors')
-      .select('profile_id')
-      .eq('tutorial_id', data.tutorial_id)
-      .eq('role', 'primary')
-      .single()
-    primaryRow = row
-  } else {
-    // A decline never adds a tutorial_contributors row, so the invitee has no
-    // team visibility at any point in this flow — the admin client is the
-    // only option for this lookup.
-    const { data: row } = await admin
-      .from('tutorial_contributors')
-      .select('profile_id')
-      .eq('tutorial_id', data.tutorial_id)
-      .eq('role', 'primary')
-      .single()
-    primaryRow = row
   }
+
+  // Who to notify. Read with the admin client on both paths: a decline never
+  // adds a tutorial_contributors row, so on that path the invitee has no team
+  // visibility to read this under their own JWT.
+  const { data: primaryRow } = await admin
+    .from('tutorial_contributors')
+    .select('profile_id')
+    .eq('tutorial_id', data.tutorial_id)
+    .eq('role', 'primary')
+    .single()
 
   if (primaryRow) {
     const { error: notifyError } = await admin.from('notifications').insert({

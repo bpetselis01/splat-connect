@@ -35,30 +35,19 @@ app.get('/health', (c) => c.json({ status: 'ok' }))
 // Public routes — no auth required
 app.route('/api/public', publicRoutes)
 
-// Protected routes — auth middleware per route group
-app.use('/api/tutorials/*', authMiddleware)
-app.use('/api/tutorials', authMiddleware)
-app.use('/api/upload/*', authMiddleware)
-app.use('/api/admin/*', authMiddleware)
-app.use('/api/contributors/*', authMiddleware)
-app.use('/api/child-profiles', authMiddleware)
-app.use('/api/child-profiles/*', authMiddleware)
-app.use('/api/toys', authMiddleware)
-app.use('/api/toys/*', authMiddleware)
-app.use('/api/toy-transactions', authMiddleware)
-app.use('/api/toy-transactions/*', authMiddleware)
-app.use('/api/agreements', authMiddleware)
-app.use('/api/agreements/*', authMiddleware)
-app.use('/api/organizations', authMiddleware)
-app.use('/api/organizations/*', authMiddleware)
-app.use('/api/collaborators', authMiddleware)
-app.use('/api/collaborators/*', authMiddleware)
-app.use('/api/notifications', authMiddleware)
-app.use('/api/notifications/*', authMiddleware)
-app.use('/api/ideas', authMiddleware)
-app.use('/api/ideas/*', authMiddleware)
-app.use('/api/saves', authMiddleware)
-app.use('/api/saves/*', authMiddleware)
+// Protected routes. Both forms per prefix: Hono matches '/x' and '/x/*'
+// separately, and a bare-collection route (GET /api/toys) needs the first.
+// Mounting one authed sub-app at '/api' instead would put the middleware on
+// '/api/*', which also matches the public routes above.
+const AUTHED = [
+  'tutorials', 'upload', 'admin', 'contributors', 'child-profiles', 'toys',
+  'toy-transactions', 'agreements', 'organizations', 'collaborators',
+  'notifications', 'ideas', 'saves',
+] as const
+for (const prefix of AUTHED) {
+  app.use(`/api/${prefix}`, authMiddleware)
+  app.use(`/api/${prefix}/*`, authMiddleware)
+}
 
 app.route('/api/tutorials', tutorials)
 app.route('/api/upload', upload)
