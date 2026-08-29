@@ -1454,6 +1454,31 @@
     background-color: #ffcdbb;
   }
 
+  /* Team, riding at the right end of the rail as a stop beside the walk rather
+     than a step on it. Apricot at full strength, which is the same orange the
+     attention dot uses: this is the one pill in the row that is asking to be
+     noticed, and borrowing a colour already in the rail keeps that to one
+     note. Same source-order reasoning as the danger pill above. */
+  .step-pill-accent {
+    background-color: var(--color-apricot);
+    color: var(--color-ink);
+  }
+
+  .step-pill-accent:hover {
+    background-color: var(--color-apricot-hover);
+  }
+
+  /* Selected, and still recognisably the orange one. The row's ordinary
+     selected state is a flat ink fill, which on this pill would mean the only
+     stop with a colour of its own loses it at the moment you are standing on
+     it — reading as a different button rather than as the same one, pressed.
+     Deep apricot is that fill in this pill's own hue. Needs the [data-active]
+     to outweigh .step-pill[data-active] above; the plain class alone loses. */
+  .step-pill-accent[data-active] {
+    background-color: var(--color-apricot-deep);
+    color: #ffffff;
+  }
+
   .step-pill-dot {
     display: grid;
     place-items: center;
@@ -1499,10 +1524,6 @@
     box-shadow: var(--shadow-pixel-card) var(--color-ink);
   }
 
-  .sticky-submit-bar-quiet {
-    justify-content: flex-start;
-  }
-
   .sticky-submit-note {
     font-size: 0.8125rem;
     color: var(--color-muted);
@@ -1545,6 +1566,9 @@
      The lead half is a flex child rather than a bare button so a panel with no
      action of its own still pushes Next to the right edge. */
   .panel-actions {
+    /* The step's own work ends above this line. Without the margin the Save
+       button sits tight against the last field and reads as one more field. */
+    margin-top: 1.25rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
