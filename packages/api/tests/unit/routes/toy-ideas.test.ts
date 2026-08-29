@@ -21,11 +21,9 @@ function defaultAdminFrom(table: string) {
 // Replaces the per-user Supabase client with one controlled fake so these tests
 // exercise validation and status codes only. RLS itself is covered by the
 // integration tests in tests/integration/toy-ideas/.
-vi.mock('../../../src/supabase/user-client.js', () => ({
-  createUserClient: () => ({ from: mockFrom }),
-}))
 vi.mock('../../../src/supabase/client.js', () => ({
   createAdminClient: () => ({ from: mockAdminFrom }),
+  createUserClient: () => ({ from: mockFrom }),
 }))
 
 const { default: toyIdeas } = await import('../../../src/routes/toy-ideas.js')

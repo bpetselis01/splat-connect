@@ -6,8 +6,8 @@
  * must set ownership itself.
  */
 import { Hono } from 'hono'
-import { createUserClient } from '../supabase/user-client.js'
-import { createAdminClient } from '../supabase/client.js'
+import { createUserClient, createAdminClient } from '../supabase/client.js'
+import { pickEditable } from './pick-editable.js'
 import { notifyTutorialSubmitted } from '../review-notifications.js'
 import type { AuthVariables } from '../middleware/auth.js'
 
@@ -204,8 +204,7 @@ tutorials.patch('/:id', async (c) => {
     return c.json({ error: 'updated_at is required' }, 400)
   }
 
-  const update: Record<string, unknown> = {}
-  for (const key of EDITABLE) if (key in body) update[key] = body[key]
+  const update = pickEditable(body, EDITABLE)
   if (!Object.keys(update).length) return c.json({ error: 'nothing to update' }, 400)
 
   const supabase = createUserClient(c.get('token'))

@@ -7,7 +7,7 @@ const mockUserFrom = vi.fn()
 // child-profiles writes/reads go through the user client so Postgres RLS
 // (parent_id = auth.uid()) is the authorization boundary — see the mocking
 // strategy in contributors.test.ts.
-vi.mock('../../../src/supabase/user-client.js', () => ({ createUserClient: () => ({ from: mockUserFrom }) }))
+vi.mock('../../../src/supabase/client.js', () => ({ createUserClient: () => ({ from: mockUserFrom }) }))
 
 const { default: childProfiles } = await import('../../../src/routes/child-profiles.js')
 

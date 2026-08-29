@@ -5,6 +5,7 @@
  */
 import { Hono } from 'hono'
 import { createAnonClient, createAdminClient } from '../supabase/client.js'
+import { atCapacityToyIds } from '../toy-access.js'
 import type {
   ImpactSummary,
   ImpactEntity,
@@ -13,39 +14,6 @@ import type {
   ContributorProfile,
   OrgPublicProfile,
 } from '@splat-connect/types'
-
-/**
- * Toys with nothing left to promise, and so nothing to show a browsing parent.
- *
- * This used to be "any toy with an accepted handoff", which was the same set
- * only while one row meant one object. An organisation holding five bears with
- * one handoff running still has four: hiding the card would empty the library
- * on the first request. So a toy is hidden when its accepted handoffs reach its
- * quantity — which also covers out of stock, since quantity 0 is at capacity by
- * definition.
- *
- * An offered exchange toy is hidden outright, unconditionally. It is one
- * person's single object, promised to someone, and quantity has no bearing.
- */
-async function unavailableToyIds(): Promise<string[] | null> {
-  const admin = createAdminClient()
-  const [{ data: accepted, error }, { data: toys, error: toysError }] = await Promise.all([
-    admin.from('toy_transactions').select('toy_id, offered_toy_id').eq('status', 'accepted'),
-    admin.from('toys').select('id, quantity').eq('status', 'published').is('archived_at', null),
-  ])
-  if (error || toysError) return null
-
-  const takenPerToy = new Map<string, number>()
-  const hidden = new Set<string>()
-  for (const row of accepted ?? []) {
-    takenPerToy.set(row.toy_id, (takenPerToy.get(row.toy_id) ?? 0) + 1)
-    if (row.offered_toy_id) hidden.add(row.offered_toy_id)
-  }
-  for (const toy of (toys ?? []) as Array<{ id: string; quantity: number }>) {
-    if ((takenPerToy.get(toy.id) ?? 0) >= toy.quantity) hidden.add(toy.id)
-  }
-  return [...hidden]
-}
 
 const publicRoutes = new Hono()
 
@@ -134,7 +102,7 @@ publicRoutes.get('/toys', async (c) => {
     .is('archived_at', null)
     .order('created_at', { ascending: false })
   if (error) return c.json({ error: error.message }, 500)
-  const unavailable = await unavailableToyIds()
+  const unavailable = await atCapacityToyIds(createAdminClient(), null, true)
   if (unavailable === null) return c.json({ error: 'Failed to load toys' }, 500)
   const hidden = new Set(unavailable)
   return c.json((data ?? []).filter((t) => !hidden.has(t.id)))
@@ -153,7 +121,7 @@ publicRoutes.get('/toys/:id', async (c) => {
   // be distinguishable from a nonexistent one to an unauthenticated caller,
   // same reasoning as the tutorial detail route above.
   if (error) return c.json({ error: error.message }, 404)
-  const unavailable = await unavailableToyIds()
+  const unavailable = await atCapacityToyIds(createAdminClient(), null, true)
   if (unavailable === null) return c.json({ error: 'Failed to load toys' }, 500)
   const hidden = new Set(unavailable)
   if (hidden.has(data.id)) return c.json({ error: 'Not found' }, 404)

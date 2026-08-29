@@ -10,8 +10,7 @@
  * - POST /api/collaborators/invites/:id/decline   — decline
  */
 import { Hono, type Context } from 'hono'
-import { createUserClient } from '../supabase/user-client.js'
-import { createAdminClient } from '../supabase/client.js'
+import { createUserClient, createAdminClient } from '../supabase/client.js'
 import type { AuthVariables } from '../middleware/auth.js'
 
 const collaboratorInvites = new Hono<{ Variables: AuthVariables }>()

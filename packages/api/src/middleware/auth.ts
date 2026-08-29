@@ -2,7 +2,7 @@
  * JWT middleware for every protected route: validates the bearer token with
  * Supabase auth, loads the profile role, and attaches userId / role / token
  * to context. The token is kept so handlers can build RLS-respecting clients
- * (supabase/user-client.ts).
+ * (createUserClient in supabase/client.ts).
  */
 import type { MiddlewareHandler } from 'hono'
 import { createAdminClient } from '../supabase/client.js'

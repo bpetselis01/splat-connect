@@ -5,11 +5,9 @@ import type { AuthVariables } from '../../../src/middleware/auth.js'
 const userClient = { from: vi.fn() }
 const adminClient = { from: vi.fn(), rpc: vi.fn() }
 
-vi.mock('../../../src/supabase/user-client.js', () => ({
-  createUserClient: () => userClient,
-}))
 vi.mock('../../../src/supabase/client.js', () => ({
   createAdminClient: () => adminClient,
+  createUserClient: () => userClient,
 }))
 
 function table(methods: Record<string, unknown>) {

@@ -9,8 +9,7 @@
  * per-organisation data, not a profile role.
  */
 import { Hono, type Context } from 'hono'
-import { createUserClient } from '../supabase/user-client.js'
-import { createAdminClient } from '../supabase/client.js'
+import { createUserClient, createAdminClient } from '../supabase/client.js'
 import type { AuthVariables } from '../middleware/auth.js'
 
 const organizations = new Hono<{ Variables: AuthVariables }>()

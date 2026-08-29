@@ -6,7 +6,7 @@
  * this file is read/acknowledge only.
  */
 import { Hono } from 'hono'
-import { createUserClient } from '../supabase/user-client.js'
+import { createUserClient } from '../supabase/client.js'
 import type { AuthVariables } from '../middleware/auth.js'
 import {
   notificationBucket,

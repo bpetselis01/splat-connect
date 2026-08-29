@@ -1,7 +1,6 @@
 import { Hono } from 'hono'
 import { CONTACT_PREFS, type ContactPref } from '@splat-connect/types'
-import { createUserClient } from '../supabase/user-client.js'
-import { createAdminClient } from '../supabase/client.js'
+import { createUserClient, createAdminClient } from '../supabase/client.js'
 import type { AuthVariables } from '../middleware/auth.js'
 
 const toyIdeas = new Hono<{ Variables: AuthVariables }>()

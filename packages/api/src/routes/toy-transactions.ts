@@ -1,29 +1,18 @@
 import { Hono, type Context } from 'hono'
 import { randomInt } from 'node:crypto'
 import { needsAction, isOwnerSide } from '@splat-connect/types'
-import { createUserClient } from '../supabase/user-client.js'
-import { createAdminClient } from '../supabase/client.js'
+import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
+import { ledOrgIds, atCapacityToyIds } from '../toy-access.js'
+import { profileName } from '../profile-name.js'
 import type { AuthVariables } from '../middleware/auth.js'
 
 const toyTransactions = new Hono<{ Variables: AuthVariables }>()
 
-export { INVALID_TEXT_REPRESENTATION }
-export const RLS_VIOLATION = '42501'
+const RLS_VIOLATION = '42501'
 
-export function generateCode(): string {
+function generateCode(): string {
   return randomInt(0, 1_000_000).toString().padStart(6, '0')
-}
-
-// The organisations this caller leads. Every owner-side decision below needs
-// it, because an org transaction has no owner_id to compare against — see
-// isOwnerSide in @splat-connect/types.
-export async function ledOrgIds(
-  admin: ReturnType<typeof createAdminClient>,
-  userId: string
-): Promise<string[]> {
-  const { data } = await admin.from('org_leaders').select('org_id').eq('user_id', userId)
-  return (data ?? []).map((row: { org_id: string }) => row.org_id)
 }
 
 // Each party proves the handoff happened by reciting the OTHER party's code
@@ -59,40 +48,6 @@ function readPickupAddress(body: unknown): Record<string, string> | null {
   return address
 }
 
-// The toys whose every unit is spoken for. Rival requests stay 'requested'
-// while a handoff runs — they are rejected when the stock runs out, not on
-// accept — so this is what tells the giving side (and the accept guard) that
-// there is nothing left to promise.
-//
-// This replaced "does this toy have any accepted handoff", which was the same
-// question only while one row meant one object. An organisation holding five
-// bears can run five handoffs at once; a person is the quantity=1 case and
-// behaves exactly as before.
-//
-// Advisory only. It is read before a write it does not hold a lock across, so
-// it may be stale by the time the caller acts — the authoritative check is the
-// one inside accept_toy_transaction(), under a row lock. This exists to render
-// a badge and to fail early, never to be the thing that stops an oversell.
-async function atCapacityToyIds(
-  admin: ReturnType<typeof createAdminClient>,
-  toyIds: string[]
-): Promise<Set<string>> {
-  if (toyIds.length === 0) return new Set()
-  const [{ data: toys }, { data: accepted }] = await Promise.all([
-    admin.from('toys').select('id, quantity').in('id', toyIds),
-    admin.from('toy_transactions').select('toy_id').eq('status', 'accepted').in('toy_id', toyIds),
-  ])
-  const takenPerToy = new Map<string, number>()
-  for (const row of accepted ?? []) {
-    takenPerToy.set(row.toy_id, (takenPerToy.get(row.toy_id) ?? 0) + 1)
-  }
-  const full = new Set<string>()
-  for (const toy of (toys ?? []) as Array<{ id: string; quantity: number }>) {
-    if ((takenPerToy.get(toy.id) ?? 0) >= toy.quantity) full.add(toy.id)
-  }
-  return full
-}
-
 // The name the giving side acts under. A family dealt with Cerebral Palsy
 // Alliance, not with whichever leader happened to press the button, so their
 // notifications say so.
@@ -101,9 +56,12 @@ async function ownerSideName(
   tx: { owner_id: string | null; owner_org_id: string | null },
   fallback: string
 ): Promise<string> {
-  const { data } = tx.owner_org_id
-    ? await admin.from('organizations').select('name').eq('id', tx.owner_org_id).maybeSingle()
-    : await admin.from('profiles').select('name').eq('id', tx.owner_id!).maybeSingle()
+  if (!tx.owner_org_id) return profileName(admin, tx.owner_id!, fallback)
+  const { data } = await admin
+    .from('organizations')
+    .select('name')
+    .eq('id', tx.owner_org_id)
+    .maybeSingle()
   return data?.name ?? fallback
 }
 
@@ -199,10 +157,12 @@ toyTransactions.get('/', async (c) => {
       org: { name: string } | null
     }
   >
-  const blockedToyIds = await atCapacityToyIds(
-    admin,
-    rows.filter((r) => r.status === 'requested').map((r) => r.toy_id)
-  )
+  // Advisory, and fail-open by design: a failed scan must not blank the list.
+  const blockedToyIds =
+    (await atCapacityToyIds(
+      admin,
+      rows.filter((r) => r.status === 'requested').map((r) => r.toy_id)
+    )) ?? new Set<string>()
   const previews = await lastMessages(
     supabase,
     rows.map((r) => r.id)
@@ -243,10 +203,12 @@ toyTransactions.get('/action-count', async (c) => {
   const admin = createAdminClient()
   const userId = c.get('userId')
   const ledOrgs = await ledOrgIds(admin, userId)
-  const blockedToyIds = await atCapacityToyIds(
-    admin,
-    rows.filter((r) => r.status === 'requested').map((r) => r.toy_id)
-  )
+  // Advisory, and fail-open by design: a failed scan must not blank the list.
+  const blockedToyIds =
+    (await atCapacityToyIds(
+      admin,
+      rows.filter((r) => r.status === 'requested').map((r) => r.toy_id)
+    )) ?? new Set<string>()
   const count = rows.filter((r) =>
     needsAction({ ...r, blocked_by_rival_accept: blockedToyIds.has(r.toy_id) }, userId, ledOrgs)
   ).length
@@ -286,7 +248,7 @@ toyTransactions.get('/:id', async (c) => {
   const admin = createAdminClient()
   const ledOrgs = await ledOrgIds(admin, userId)
   const blockedToyIds =
-    row.status === 'requested' ? await atCapacityToyIds(admin, [row.toy_id]) : new Set<string>()
+    row.status === 'requested' ? (await atCapacityToyIds(admin, [row.toy_id])) ?? new Set<string>() : new Set<string>()
   // Who received what is decided here rather than in the client, for the same
   // reason the codes are: the answer depends on who is asking. The requester
   // takes the requested toy; on an exchange the owner takes the offered one.
@@ -353,7 +315,7 @@ toyTransactions.post('/', async (c) => {
   //
   // An org with five bears and one handoff running is NOT at capacity, which is
   // the whole difference from the check this replaced.
-  const atCapacity = await atCapacityToyIds(admin, [toy.id])
+  const atCapacity = (await atCapacityToyIds(admin, [toy.id])) ?? new Set<string>()
   if (atCapacity.has(toy.id)) return c.json({ error: 'Not found' }, 404)
 
   const type = body.type as 'donation' | 'exchange'

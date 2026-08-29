@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
-import { createUserClient } from '../../../src/supabase/user-client.js'
+import { createUserClient } from '../../../src/supabase/client.js'
 import { createTestUser, deleteTestUser, type TestUser } from '../../helpers/auth.js'
 
 let contributor: TestUser

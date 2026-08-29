@@ -9,8 +9,7 @@ const mockAdminClient = { from: vi.fn() }
 // Replaces both Supabase clients (user and admin) with minimal fake objects so tests run
 // without a real database. makeApp() bypasses real auth by injecting fake userId, role,
 // and token directly into the Hono context, isolating the route logic under test.
-vi.mock('../../../src/supabase/user-client.js', () => ({ createUserClient: () => mockUserClient }))
-vi.mock('../../../src/supabase/client.js', () => ({ createAdminClient: () => mockAdminClient }))
+vi.mock('../../../src/supabase/client.js', () => ({ createAdminClient: () => mockAdminClient, createUserClient: () => mockUserClient }))
 // PATCH's draft -> pending branch calls the notifier after the write commits.
 // Mocked so the route's gating can be asserted without a database.
 const mockNotifySubmitted = vi.fn().mockResolvedValue(undefined)

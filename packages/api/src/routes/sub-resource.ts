@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { createUserClient } from '../supabase/user-client.js'
+import { createUserClient } from '../supabase/client.js'
 import type { AuthVariables } from '../middleware/auth.js'
 
 // Shared by parts.ts, tools.ts, stl-files.ts: each sub-resource is fully

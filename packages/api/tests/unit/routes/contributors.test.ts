@@ -10,8 +10,7 @@ const mockUserFrom = vi.fn()
 // the admin client for elevated read access across all profiles); mockUserFrom is used by
 // POST /me/tutorials/:id (the contributor_tutorials join table is written using the user's
 // own session to enforce row-level security).
-vi.mock('../../../src/supabase/client.js', () => ({ createAdminClient: () => ({ from: mockAdminFrom }) }))
-vi.mock('../../../src/supabase/user-client.js', () => ({ createUserClient: () => ({ from: mockUserFrom }) }))
+vi.mock('../../../src/supabase/client.js', () => ({ createAdminClient: () => ({ from: mockAdminFrom }), createUserClient: () => ({ from: mockUserFrom }) }))
 
 const { default: contributors } = await import('../../../src/routes/contributors.js')
 

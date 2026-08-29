@@ -16,8 +16,7 @@
  * - routes/tutorial-orgs.ts: the pattern this follows
  */
 import { Hono } from 'hono'
-import { createUserClient } from '../supabase/user-client.js'
-import { createAdminClient } from '../supabase/client.js'
+import { createUserClient, createAdminClient } from '../supabase/client.js'
 import type { AuthVariables } from '../middleware/auth.js'
 
 const collaborators = new Hono<{ Variables: AuthVariables }>()

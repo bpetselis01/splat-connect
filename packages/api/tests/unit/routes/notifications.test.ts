@@ -8,7 +8,7 @@ const mockFrom = vi.fn()
 // notifications.ts builds a per-request client from the caller's JWT via
 // createUserClient, so RLS does the ownership check. Replacing that with one
 // controlled fake lets each test drive the query chain's return value directly.
-vi.mock('../../../src/supabase/user-client.js', () => ({
+vi.mock('../../../src/supabase/client.js', () => ({
   createUserClient: () => ({ from: mockFrom }),
 }))
 

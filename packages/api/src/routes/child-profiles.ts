@@ -27,7 +27,7 @@
  * confirm the row exists.
  */
 import { Hono } from 'hono'
-import { createUserClient } from '../supabase/user-client.js'
+import { createUserClient } from '../supabase/client.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import { pickEditable } from './pick-editable.js'
 import type { AuthVariables } from '../middleware/auth.js'

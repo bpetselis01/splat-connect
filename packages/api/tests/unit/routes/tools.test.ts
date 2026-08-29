@@ -14,7 +14,7 @@ const mockFrom = vi.fn((table: string) => {
   return {}
 })
 
-vi.mock('../../../src/supabase/user-client.js', () => ({ createUserClient: () => ({ from: mockFrom }) }))
+vi.mock('../../../src/supabase/client.js', () => ({ createUserClient: () => ({ from: mockFrom }) }))
 
 const { default: tools } = await import('../../../src/routes/tools.js')
 
