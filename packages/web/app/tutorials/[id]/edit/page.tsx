@@ -232,41 +232,6 @@ export default async function EditTutorialPage({
       ),
     },
     {
-      id: 'backing',
-      label: 'Backing',
-      status: stepStatuses.backing,
-      content: (
-        <div className="panel pt-5">
-          <EditBackingSection
-            backing={backing}
-            organizations={organizations}
-            tutorialStatus={tutorial!.status}
-            reviewedForOrgId={tutorial!.reviewed_for_org_id}
-            onAsk={askOrg}
-            onWithdraw={withdrawOrg}
-          />
-        </div>
-      ),
-    },
-    {
-      id: 'collaborators',
-      label: 'Collaborators',
-      status: stepStatuses.collaborators,
-      content: (
-        <div className="panel pt-5">
-          <EditCollaboratorsSection
-            contributors={tutorial!.tutorial_contributors}
-            currentProfileId={profile!.id}
-            isPrimary={tutorial!.tutorial_contributors.some(
-              (tc) => tc.profile_id === profile!.id && tc.role === 'primary'
-            )}
-            onInvite={inviteCollaborator}
-            onRemove={removeCollaborator}
-          />
-        </div>
-      ),
-    },
-    {
       id: 'review',
       label: 'Review',
       status: stepStatuses.review,
@@ -282,6 +247,46 @@ export default async function EditTutorialPage({
           stlCount={stlFiles.length}
           backing={backing}
         />
+      ),
+    },
+    {
+      id: 'team',
+      label: 'Team',
+      status: stepStatuses.team,
+      // Beside the walk, not on it: the pill sits at the right end of the
+      // rail in its own colour, nothing offers it as Next, and it carries no
+      // finish bar. Review is where a contributor is asked whether they want
+      // it. See EditStep.trailing.
+      trailing: true,
+      content: (
+        // Two cards rather than one, because they are two separate asks — you
+        // invite a person, you ask an organisation — and the heading each one
+        // now carries is the one the pill used to give it.
+        <div className="flex flex-col gap-4">
+          <div className="panel pt-5">
+            <h2 className="px-5 pb-3 text-sm font-bold text-ink">Collaborators</h2>
+            <EditCollaboratorsSection
+              contributors={tutorial!.tutorial_contributors}
+              currentProfileId={profile!.id}
+              isPrimary={tutorial!.tutorial_contributors.some(
+                (tc) => tc.profile_id === profile!.id && tc.role === 'primary'
+              )}
+              onInvite={inviteCollaborator}
+              onRemove={removeCollaborator}
+            />
+          </div>
+          <div className="panel pt-5">
+            <h2 className="px-5 pb-3 text-sm font-bold text-ink">Backing</h2>
+            <EditBackingSection
+              backing={backing}
+              organizations={organizations}
+              tutorialStatus={tutorial!.status}
+              reviewedForOrgId={tutorial!.reviewed_for_org_id}
+              onAsk={askOrg}
+              onWithdraw={withdrawOrg}
+            />
+          </div>
+        </div>
       ),
     },
   ]
