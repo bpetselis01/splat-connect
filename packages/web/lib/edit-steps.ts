@@ -32,13 +32,50 @@ export interface EditStep {
   disabled?: boolean
 }
 
-const DETAILS_FIELDS = ['Title', 'Difficulty']
-const FILES_FIELDS = ['Tutorial PDF', 'Toy photo']
-const PARTS_FIELDS = ['At least one part']
-const TOOLS_FIELDS = ['At least one tool']
+/** A gap left in the tutorial, and the step that fixes it. */
+export interface MissingStep {
+  step: EditStepId
+  /** What a person would call it, not what the validator calls it. */
+  label: string
+}
 
-function fieldStatus(missing: string[], fields: string[]): EditStepStatus {
-  return missing.some((f) => fields.includes(f)) ? 'attention' : 'done'
+/*
+ * The four required steps, the getMissingFields() labels each one owns, and
+ * the words to show a contributor instead of those labels.
+ *
+ * One table rather than the four arrays this held before, because the same
+ * mapping now answers two questions: which pill takes a status dot, and which
+ * step a gap in the submit bar sends you to. Splitting them was how they would
+ * drift.
+ *
+ * getMissingFields() stays the single source of truth for *what* is missing —
+ * these are only its display names, which is why the keys are its strings
+ * verbatim.
+ */
+const REQUIRED: { step: EditStepId; fields: Record<string, string> }[] = [
+  { step: 'details', fields: { Title: 'A title', Difficulty: 'A difficulty' } },
+  { step: 'files', fields: { 'Tutorial PDF': 'The guide PDF', 'Toy photo': 'A toy photo' } },
+  { step: 'parts', fields: { 'At least one part': 'A part' } },
+  { step: 'tools', fields: { 'At least one tool': 'A tool' } },
+]
+
+function fieldStatus(missing: string[], step: EditStepId): EditStepStatus {
+  const owned = REQUIRED.find((r) => r.step === step)
+  return owned && missing.some((f) => f in owned.fields) ? 'attention' : 'done'
+}
+
+/**
+ * Every gap still open, in step order, each paired with the step that closes
+ * it. The submit bar renders these as controls, so a contributor reads what is
+ * left and reaches the fix in one click rather than hunting the pill row.
+ */
+export function missingByStep(
+  tutorial: TutorialWithDetails
+): MissingStep[] {
+  const missing = getMissingFields(tutorial)
+  return REQUIRED.flatMap(({ step, fields }) =>
+    missing.filter((f) => f in fields).map((f) => ({ step, label: fields[f] }))
+  )
 }
 
 export function computeStepStatuses(
@@ -47,10 +84,10 @@ export function computeStepStatuses(
 ): Record<EditStepId, EditStepStatus> {
   const missing = getMissingFields(tutorial)
   return {
-    details: fieldStatus(missing, DETAILS_FIELDS),
-    files: fieldStatus(missing, FILES_FIELDS),
-    parts: fieldStatus(missing, PARTS_FIELDS),
-    tools: fieldStatus(missing, TOOLS_FIELDS),
+    details: fieldStatus(missing, 'details'),
+    files: fieldStatus(missing, 'files'),
+    parts: fieldStatus(missing, 'parts'),
+    tools: fieldStatus(missing, 'tools'),
     stl: tutorial.stl_files.length > 0 ? 'done' : 'neutral',
     backing: backing.length > 0 ? 'done' : 'neutral',
     collaborators: tutorial.tutorial_contributors.length > 1 ? 'done' : 'neutral',
