@@ -43,6 +43,7 @@ const baseTutorial: Tutorial = {
   id: '1',
   title: 'Test Tutorial',
   difficulty: 'easy',
+  kind: 'toy_adaptation',
   status: 'approved',
   description: null,
   tutorial_pdf_url: null,
