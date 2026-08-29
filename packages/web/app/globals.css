@@ -1506,6 +1506,57 @@
   .sticky-submit-note {
     font-size: 0.8125rem;
     color: var(--color-muted);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  /* One gap still open, as a control that opens the step that closes it.
+     Honey, because "waiting on something" reads the same here as it does on a
+     pending StatusBadge and on a step pill's attention dot. The chip register:
+     2px ink at the small radius, same as .badge, because that is the size this
+     is. */
+  .finish-gap {
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.125rem 0.5rem;
+    background-color: var(--color-honey-soft);
+    color: var(--color-honey-deep);
+    border: var(--border-pixel-thin) solid var(--color-ink);
+    border-radius: var(--radius-pixel-slot);
+    cursor: pointer;
+    transition: background-color 140ms var(--ease-out-quart);
+  }
+
+  .finish-gap:hover {
+    background-color: var(--color-honey);
+    color: var(--color-ink);
+  }
+
+  /* The foot of every editor panel: the step's own action on the left, the
+     way onward on the right.
+
+     This was .next-step-row, a strip of its own between the panel and the
+     finish bar — which put the control that says where to go next outside the
+     card holding the work. Inside, and level with the step's own button, it
+     reads as part of the step rather than as page furniture.
+
+     The lead half is a flex child rather than a bare button so a panel with no
+     action of its own still pushes Next to the right edge. */
+  .panel-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .panel-actions-lead {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
   }
 
   /* --- Save toast (edit-tutorial page) ------------------------------------ */
