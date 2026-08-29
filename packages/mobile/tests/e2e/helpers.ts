@@ -84,7 +84,7 @@ export async function createTutorial(
     difficulty: overrides.difficulty ?? 'easy',
     status: overrides.status ?? 'approved',
     tutorial_pdf_url:
-      overrides.withPdf === false ? null : 'https://placeholder.invalid/tutorial.pdf',
+      overrides.withPdf === false ? null : `${id}/tutorial.pdf`,
     toy_photo_url: 'https://placeholder.invalid/photo.jpg',
   })
   if (error) throw new Error(`Failed to create tutorial: ${error.message}`)
