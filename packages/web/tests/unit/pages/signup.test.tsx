@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import SignupPage from '@/app/signup/page'
 
@@ -7,6 +7,11 @@ let search = ''
 vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(search),
 }))
+// Reset here, not at the end of the test that sets it: a failing assertion
+// would otherwise leave the query string in place for whatever runs next.
+afterEach(() => {
+  search = ''
+})
 
 vi.mock('@/lib/supabase/client', () => ({
   createClient: () => ({ auth: { signUp: vi.fn() } }),
@@ -38,6 +43,5 @@ describe('signup copy', () => {
     expect(
       screen.getByText("You need an account to download tutorial files. Create one and we'll take you back.")
     ).toBeInTheDocument()
-    search = ''
   })
 })
