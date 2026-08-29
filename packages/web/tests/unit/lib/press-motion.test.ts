@@ -68,7 +68,12 @@ describe('press motion', () => {
     expect(restFor(".pixel .chip[aria-pressed='true']")).toBe(0)
     // The panel moves in place of its summary, which cannot lift without being
     // clipped by the panel's own overflow: hidden.
-    expect(restFor('.pixel .panel:has(> .panel-summary) {')).toBe(5)
+    //
+    // 0 since the 2026-08-29 hierarchy pass: .panel is rung 3 — a box holding
+    // a form — so it rests flat, and a press travels by the element's own
+    // resting offset. Same answer as the selected chip above and the selected
+    // step pill below, for the same reason: nothing to sink into.
+    expect(restFor('.pixel .panel:has(> .panel-summary) {')).toBe(0)
 
     // The stepper joined the chip register on 2026-08-29. Same two depths and
     // the same reason: a selected pill rests flat, so it has nowhere to travel
