@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { EditDetailsSection } from '@/components/edit-details-section'
 import { ToastProvider } from '@/components/toast'
+import { renderLeavable } from '@/tests/unit/leaving'
 import type { Tutorial } from '@splat-connect/types'
 
 // The component calls router.refresh() after a successful write, because
@@ -92,5 +93,49 @@ describe('EditDetailsSection', () => {
     fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'New Title' } })
     fireEvent.click(screen.getByText('Save details'))
     await waitFor(() => expect(screen.getByText('Save details')).toBeDisabled())
+  })
+})
+
+describe('EditDetailsSection on leaving the step', () => {
+  function setup(onSave: ReturnType<typeof vi.fn>) {
+    return renderLeavable(
+      <ToastProvider>
+        <EditDetailsSection tutorial={tutorial} onSave={onSave} />
+      </ToastProvider>
+    )
+  }
+
+  // Tests: an edited but unsaved form is written on the way out
+  // Chain: the form is uncontrolled and the panel unmounts on a step change, so
+  //        the edit lived only in the DOM that was about to be torn down
+  it('saves an edited form', async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined)
+    const { leave } = setup(onSave)
+    fireEvent.change(screen.getByLabelText(/title/i), { target: { value: 'Renamed' } })
+
+    expect(await leave()).toBe(true)
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ title: 'Renamed' }))
+  })
+
+  // Tests: an untouched form is left alone
+  // Chain: every write here carries the updated_at loaded at render, and a write
+  //        nobody asked for is the one most likely to lose a conflict to a real one
+  it('writes nothing when the form was never touched', async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined)
+    const { leave, holding } = setup(onSave)
+    expect(holding()).toBe(false)
+    expect(await leave()).toBe(true)
+    expect(onSave).not.toHaveBeenCalled()
+  })
+
+  // Tests: a conflicting write keeps the contributor on the step
+  // Chain: this panel's whole reason for being a client component is showing the
+  //        conflict rather than crashing to an error boundary; navigating away
+  //        from it would be the same loss by another route
+  it('reports a rejected save so the step holds', async () => {
+    const onSave = vi.fn().mockRejectedValue(new Error('conflict'))
+    const { leave } = setup(onSave)
+    fireEvent.change(screen.getByLabelText(/title/i), { target: { value: 'Renamed' } })
+    expect(await leave()).toBe(false)
   })
 })

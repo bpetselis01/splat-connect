@@ -11,8 +11,8 @@ import { EditDetailsSection } from '@/components/edit-details-section'
 import { EditCollaboratorsSection } from '@/components/edit-collaborators-section'
 import { EditStepper } from '@/components/edit-stepper'
 import { TutorialReviewPanel } from '@/components/tutorial-review-panel'
-import { computeStepStatuses, type EditStep } from '@/lib/edit-steps'
-import { getMissingFields } from '@/lib/validation'
+import { computeStepStatuses, missingByStep, type EditStep } from '@/lib/edit-steps'
+import { SaveStatusLine } from '@/components/save-status-line'
 import type { Tutorial, Part, Tool, StlFile, TutorialWithDetails, Difficulty, BuyLink, Profile, TutorialOrg, Organization } from '@splat-connect/types'
 
 export default async function EditTutorialPage({
@@ -149,7 +149,7 @@ export default async function EditTutorialPage({
   }
 
 
-  const missingFields = getMissingFields(tutorial!)
+  const missing = missingByStep(tutorial!)
   const stepStatuses = computeStepStatuses(tutorial!, backing)
 
   const steps: EditStep[] = [
@@ -232,41 +232,6 @@ export default async function EditTutorialPage({
       ),
     },
     {
-      id: 'backing',
-      label: 'Backing',
-      status: stepStatuses.backing,
-      content: (
-        <div className="panel pt-5">
-          <EditBackingSection
-            backing={backing}
-            organizations={organizations}
-            tutorialStatus={tutorial!.status}
-            reviewedForOrgId={tutorial!.reviewed_for_org_id}
-            onAsk={askOrg}
-            onWithdraw={withdrawOrg}
-          />
-        </div>
-      ),
-    },
-    {
-      id: 'collaborators',
-      label: 'Collaborators',
-      status: stepStatuses.collaborators,
-      content: (
-        <div className="panel pt-5">
-          <EditCollaboratorsSection
-            contributors={tutorial!.tutorial_contributors}
-            currentProfileId={profile!.id}
-            isPrimary={tutorial!.tutorial_contributors.some(
-              (tc) => tc.profile_id === profile!.id && tc.role === 'primary'
-            )}
-            onInvite={inviteCollaborator}
-            onRemove={removeCollaborator}
-          />
-        </div>
-      ),
-    },
-    {
       id: 'review',
       label: 'Review',
       status: stepStatuses.review,
@@ -281,11 +246,48 @@ export default async function EditTutorialPage({
           toolCount={tools.length}
           stlCount={stlFiles.length}
           backing={backing}
-          status={tutorial!.status}
-          updatedAt={tutorial!.updated_at}
-          missingFields={missingFields}
-          onSubmit={submitForReview}
         />
+      ),
+    },
+    {
+      id: 'team',
+      label: 'Team',
+      status: stepStatuses.team,
+      // Beside the walk, not on it: the pill sits at the right end of the
+      // rail in its own colour, nothing offers it as Next, and it carries no
+      // finish bar. Review is where a contributor is asked whether they want
+      // it. See EditStep.trailing.
+      trailing: true,
+      content: (
+        // Two cards rather than one, because they are two separate asks — you
+        // invite a person, you ask an organisation — and the heading each one
+        // now carries is the one the pill used to give it.
+        <div className="flex flex-col gap-4">
+          <div className="panel pt-5">
+            <h2 className="px-5 pb-3 text-sm font-bold text-ink">Collaborators</h2>
+            <EditCollaboratorsSection
+              contributors={tutorial!.tutorial_contributors}
+              invites={tutorial!.tutorial_collaborator_invites ?? []}
+              currentProfileId={profile!.id}
+              isPrimary={tutorial!.tutorial_contributors.some(
+                (tc) => tc.profile_id === profile!.id && tc.role === 'primary'
+              )}
+              onInvite={inviteCollaborator}
+              onRemove={removeCollaborator}
+            />
+          </div>
+          <div className="panel pt-5">
+            <h2 className="px-5 pb-3 text-sm font-bold text-ink">Backing</h2>
+            <EditBackingSection
+              backing={backing}
+              organizations={organizations}
+              tutorialStatus={tutorial!.status}
+              reviewedForOrgId={tutorial!.reviewed_for_org_id}
+              onAsk={askOrg}
+              onWithdraw={withdrawOrg}
+            />
+          </div>
+        </div>
       ),
     },
   ]
@@ -310,7 +312,22 @@ export default async function EditTutorialPage({
           `next build` fails to prerender this page — same reasoning as
           app/onboarding/contributor-terms/page.tsx. */}
       <Suspense>
-        <EditStepper steps={steps} />
+        <EditStepper
+          steps={steps}
+          finish={{
+            missing,
+            submitLabel: 'Submit for review',
+            busyLabel: 'Submitting…',
+            errorMessage: 'Could not submit this tutorial. Please try again.',
+            onSubmit: submitForReview,
+            // Once it has left the contributor's hands there is nothing to
+            // finish, so the bar carries the last-saved line instead.
+            done:
+              tutorial!.status === 'draft' ? undefined : (
+                <SaveStatusLine savedAt={tutorial!.updated_at} />
+              ),
+          }}
+        />
       </Suspense>
     </div>
   )

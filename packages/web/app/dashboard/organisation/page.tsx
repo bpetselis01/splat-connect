@@ -23,6 +23,7 @@ import { OrgReviewBanner } from '@/components/org-review-banner'
 import { DifficultyBadge } from '@/components/difficulty-badge'
 import { BackingBadge } from '@/components/backing-state'
 import { BoundaryLink } from '@/components/boundary-link'
+import { Inbox } from '@/components/icons'
 import type { Tutorial, TutorialOrg, UserAgreement } from '@splat-connect/types'
 
 type Backed = Tutorial & { tutorial_orgs?: TutorialOrg[] }
@@ -62,37 +63,49 @@ export default async function OrganisationTabPage() {
       {!hasTerms && <OrgReviewBanner />}
 
       {waiting.length === 0 ? (
-        <p className="empty-badge">
-          Nothing waiting. Contributors ask by choosing your organisation when they
-          submit a tutorial.
-        </p>
+        <div className="flex flex-col items-center px-6 py-12 text-center">
+          <span aria-hidden="true" className="empty-badge text-brand-dark">
+            <Inbox className="h-8 w-8" />
+          </span>
+          <p className="mt-4 font-bold text-ink">Nothing waiting.</p>
+          <p className="mt-1 max-w-xs text-sm leading-relaxed text-muted">
+            Contributors ask by choosing your organisation when they submit a
+            tutorial.
+          </p>
+        </div>
       ) : (
         <ul className="flex flex-col gap-3">
           {waiting.map(({ tutorial, row, org }) => (
-            <li key={row.id} className="card p-4">
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                <BackingBadge status={row.status} />
-                {/* Always the project page, never /tutorials/[id]. That link is
-                    the hole: the public page serves only approved work, so every
-                    item in this queue 404'd. */}
-                <BoundaryLink
-                  href={`/organizations/${org.id}/projects/${tutorial.id}`}
-                  className="font-medium text-ink"
-                >
-                  {tutorial.title}
-                </BoundaryLink>
-                <span className="rounded-full bg-brand-tint px-2 py-0.5 text-xs font-semibold text-brand-deep">
-                  {org.name}
-                </span>
-                <span className="ml-auto">
-                  <DifficultyBadge difficulty={tutorial.difficulty} />
-                </span>
-              </div>
-              {org.status === 'suspended' && (
-                <p className="mt-2 text-xs text-muted">
-                  Suspended — you can look, but not approve
-                </p>
-              )}
+            <li key={row.id}>
+              {/* The whole row is the target, the way an exchange row is. The
+                  title alone was the link, so a queue whose entire purpose is
+                  opening things had no hover, no press, and a hit area a
+                  fraction of the card it sat in. .card-link is the only hook
+                  the shared press-motion block looks for.
+
+                  Always the project page, never /tutorials/[id]. That link is
+                  the hole: the public page serves only approved work, so every
+                  item in this queue 404'd. */}
+              <BoundaryLink
+                href={`/organizations/${org.id}/projects/${tutorial.id}`}
+                className="card card-link p-4"
+              >
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <BackingBadge status={row.status} />
+                  <span className="text-sm font-bold text-ink">{tutorial.title}</span>
+                  <span className="rounded-full bg-brand-tint px-2 py-0.5 text-xs font-semibold text-brand-deep">
+                    {org.name}
+                  </span>
+                  <span className="ml-auto">
+                    <DifficultyBadge difficulty={tutorial.difficulty} />
+                  </span>
+                </div>
+                {org.status === 'suspended' && (
+                  <p className="mt-2 text-xs text-muted">
+                    Suspended — you can look, but not approve
+                  </p>
+                )}
+              </BoundaryLink>
             </li>
           ))}
         </ul>

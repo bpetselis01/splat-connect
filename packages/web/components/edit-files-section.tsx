@@ -1,4 +1,5 @@
 'use client'
+import { PanelActions, useSaveOnLeave } from '@/components/panel-actions'
 import { useState } from 'react'
 import { browserApiClient } from '@/lib/browser-api-client'
 import { FileDropZone } from '@/components/file-drop-zone'
@@ -46,7 +47,7 @@ export function EditFilesSection({
   }
 
   async function handleSave() {
-    if (!hasChanges || saving) return
+    if (!hasChanges || saving) return true
     setSaving(true)
     setError(null)
     try {
@@ -60,14 +61,22 @@ export function EditFilesSection({
       showToast('Files saved')
       setPhotoFile(null)
       setPdfFile(null)
+      return true
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload failed')
+      return false
     } finally {
       setSaving(false)
     }
   }
 
-  const btnCls = 'btn btn-primary btn-sm self-end'
+  /* A picked file is not on the server until this runs, so leaving without it
+     would silently drop the upload. On failure the step holds, with the error
+     above still on screen — the file is only in this component's memory, and
+     unmounting is how it would be lost for good. */
+  useSaveOnLeave(hasChanges && !saving ? handleSave : null)
+
+  const btnCls = 'btn btn-primary btn-sm'
 
   return (
     <div className="flex flex-col gap-4 px-5 pb-5">
@@ -84,7 +93,8 @@ export function EditFilesSection({
           accept="image/*"
           label="Toy Photo"
           onChange={handlePhotoChange}
-          currentFileLabel={currentPhotoUrl ? 'Current photo on file — upload to replace' : undefined}
+          currentFileUrl={currentPhotoUrl}
+          currentFileLabel={currentPhotoUrl ? 'On file — upload to replace' : undefined}
         />
       </div>
       <div>
@@ -99,7 +109,7 @@ export function EditFilesSection({
         />
       </div>
       {saving && <p className="text-sm font-semibold text-brand-dark">Saving…</p>}
-      <div className="flex justify-end">
+      <PanelActions>
         <button
           type="button"
           disabled={!hasChanges || saving}
@@ -108,7 +118,7 @@ export function EditFilesSection({
         >
           Save files
         </button>
-      </div>
+      </PanelActions>
     </div>
   )
 }

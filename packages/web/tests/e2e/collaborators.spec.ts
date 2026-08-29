@@ -58,8 +58,9 @@ test('a collaborator is invited, accepts, edits, submits, and both are notified 
     await page.waitForURL('**/dashboard')
     await page.goto(`/tutorials/${tutorialId}/edit`)
 
-    // 2. Invite the collaborator by email from the Collaborators panel.
-    const collabPanel = await openStep(page, 'Collaborators')
+    // 2. Invite the collaborator by email from the Team step, which holds the
+    //    collaborator list and the backing panel below it.
+    const collabPanel = await openStep(page, 'Team')
     await collabPanel.locator('#invite-email').fill(collaborator.email)
     await collabPanel.getByRole('button', { name: 'Invite' }).click()
     await expect

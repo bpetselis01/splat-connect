@@ -1,17 +1,15 @@
 'use client'
 /**
  * The photos already on file for a toy, shown as pictures rather than URLs.
+ * Rendered by the Review step, next to the fields it is asking you to approve.
  *
- * Two exports because there are two needs. Review wants the photos in the page
- * next to the fields it is asking you to approve, so it renders the grid
- * directly. The Photos tab is already a column of dropzones and would be
- * pushed around by a second set of images, so it gets the dialog instead.
- *
- * Dialog mechanics are delete-entity-button.tsx's: a native <dialog> driven by
- * showModal()/close() from an effect, so the focus trap, Escape and the inert
- * background all come from the platform.
+ * There was a second export, ToyPhotoViewer — the same grid in a <dialog>,
+ * opened by a "View uploaded photos" button on the Photos tab, because that
+ * tab is a column of dropzones and would have been pushed around by a second
+ * set of images. FileDropZone shows the photo on file in place now, so the
+ * question that button answered is answered where it is asked, and a modal
+ * for looking at your own upload is a lot of machinery for that.
  */
-import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 
 function PhotoTile({ url, caption }: { url: string | null; caption: string }) {
@@ -52,56 +50,5 @@ export function ToyPhotoGrid({
         />
       ))}
     </ul>
-  )
-}
-
-export function ToyPhotoViewer({
-  coverPhotoUrl,
-  switchPhotoUrls,
-}: {
-  coverPhotoUrl: string | null
-  switchPhotoUrls: string[]
-}) {
-  const ref = useRef<HTMLDialogElement>(null)
-  const [open, setOpen] = useState(false)
-  const hasPhotos = coverPhotoUrl !== null || switchPhotoUrls.length > 0
-
-  useEffect(() => {
-    const dialog = ref.current
-    if (!dialog) return
-    if (open && !dialog.open) dialog.showModal()
-    if (!open && dialog.open) dialog.close()
-  }, [open])
-
-  return (
-    <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        disabled={!hasPhotos}
-        className="btn btn-soft"
-      >
-        View uploaded photos
-      </button>
-
-      <dialog
-        ref={ref}
-        className="dialog-panel"
-        onCancel={() => setOpen(false)}
-        onClick={(e) => {
-          if (e.target === ref.current) setOpen(false)
-        }}
-      >
-        <div onClick={(e) => e.stopPropagation()} className="flex flex-col gap-4">
-          <h2 className="text-lg font-bold text-ink">Uploaded photos</h2>
-          <ToyPhotoGrid coverPhotoUrl={coverPhotoUrl} switchPhotoUrls={switchPhotoUrls} />
-          <div className="flex justify-end">
-            <button type="button" onClick={() => setOpen(false)} className="btn btn-soft">
-              Close
-            </button>
-          </div>
-        </div>
-      </dialog>
-    </>
   )
 }

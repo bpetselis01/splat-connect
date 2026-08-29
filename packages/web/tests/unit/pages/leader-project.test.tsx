@@ -26,7 +26,10 @@ const tutorial = (status: string) => ({
   created_at: '', reviewed_at: null, reviewed_by: null, reviewed_for_org_id: null,
   reviewer: status === 'approved' ? { name: 'Sam' } : null,
   reviewed_for: status === 'approved' ? { name: 'Riverside' } : null,
-  tutorial_contributors: [], parts: [], tools: [], stl_files: [],
+  tutorial_contributors: [],
+  parts: [{ id: 'p1', tutorial_id: 't1', name: 'M3 bolt', quantity: 4, is_optional: false, buy_links: [] }],
+  tools: [{ id: 'w1', tutorial_id: 't1', name: 'Hex key', is_optional: false, buy_links: [] }],
+  stl_files: [{ id: 'f1', tutorial_id: 't1', filename: 'mount.stl', file_url: 'https://x/mount.stl' }],
 })
 
 const route = (o: { leads: boolean; tutorialStatus: string; backing: string | null }) => (path: string) =>
@@ -88,5 +91,20 @@ describe('leader project page', () => {
     get.mockImplementation(route({ leads: false, tutorialStatus: 'pending', backing: 'pending' }))
     const { default: Page } = await import('@/app/organizations/[id]/projects/[tutorialId]/page')
     await expect(Page({ params: params() })).rejects.toThrow('NOT_FOUND')
+  })
+
+  // Tests: the leader judges the same page the library publishes
+  // How:   pending backing; checks the parts, tools and files the old preview dropped
+  // Chain: this page used to hand-roll a title, a photo and a bare PDF link — a
+  //        leader was asked to approve a build without seeing what it was built from
+  it('renders the public view, not a stripped-down preview', async () => {
+    get.mockImplementation(route({ leads: true, tutorialStatus: 'pending', backing: 'pending' }))
+    const { default: Page } = await import('@/app/organizations/[id]/projects/[tutorialId]/page')
+    render(await Page({ params: params() }))
+    expect(screen.getByRole('heading', { name: 'Parts needed' })).toBeInTheDocument()
+    expect(screen.getByText('M3 bolt')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Tools needed' })).toBeInTheDocument()
+    expect(screen.getByText('Hex key')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /mount\.stl/ })).toBeInTheDocument()
   })
 })

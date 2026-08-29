@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { TutorialReviewPanel } from '@/components/tutorial-review-panel'
+import { StepJumpProvider } from '@/components/panel-actions'
 import type { TutorialOrg } from '@splat-connect/types'
 
 vi.mock('next/image', () => ({
@@ -10,8 +11,7 @@ vi.mock('next/image', () => ({
 
 type Props = Parameters<typeof TutorialReviewPanel>[0]
 
-function setup(overrides: Partial<Props> = {}) {
-  const onSubmit = overrides.onSubmit ?? vi.fn().mockResolvedValue(undefined)
+function panel(overrides: Partial<Props> = {}) {
   const props: Props = {
     title: 'Sensory light box',
     description: 'A calming light box.',
@@ -22,13 +22,13 @@ function setup(overrides: Partial<Props> = {}) {
     toolCount: 2,
     stlCount: 0,
     backing: [] as TutorialOrg[],
-    status: 'draft',
-    updatedAt: new Date().toISOString(),
-    missingFields: [],
     ...overrides,
-    onSubmit,
   }
-  return { ...render(<TutorialReviewPanel {...props} />), onSubmit }
+  return <TutorialReviewPanel {...props} />
+}
+
+function setup(overrides: Partial<Props> = {}) {
+  return render(panel(overrides))
 }
 
 describe('TutorialReviewPanel', () => {
@@ -60,28 +60,34 @@ describe('TutorialReviewPanel', () => {
     expect(screen.getByText('Not uploaded')).toBeInTheDocument()
   })
 
-  it('disables submit and names the missing fields when required data is absent', () => {
-    setup({ missingFields: ['Title', 'At least one part'] })
-    expect(screen.getByText('Add Title, At least one part to submit')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /submit for review/i })).toBeDisabled()
-  })
-
-  it('enables submit and calls onSubmit when nothing is missing', async () => {
-    const { onSubmit } = setup()
-    fireEvent.click(screen.getByRole('button', { name: /submit for review/i }))
-    await waitFor(() => expect(onSubmit).toHaveBeenCalled())
-  })
-
-  it('surfaces a failed submit instead of leaving the button spinning', async () => {
-    setup({ onSubmit: vi.fn().mockRejectedValue(new Error('boom')) })
-    fireEvent.click(screen.getByRole('button', { name: /submit for review/i }))
-    expect(await screen.findByRole('alert')).toHaveTextContent('Could not submit')
-    expect(screen.getByRole('button', { name: /submit for review/i })).not.toBeDisabled()
-  })
-
-  it('shows a quiet last-saved indicator instead of Submit when status is not draft', () => {
-    setup({ status: 'pending' })
+  // Tests: the summary carries no submit control of its own
+  // How:   asserts neither the button nor the bar renders here
+  // Chain: this panel owned the submit bar until 2026-08-29, which is exactly why
+  //        the other seven steps never mentioned that submitting existed. The bar
+  //        is EditStepper's now, and it follows the contributor between steps; a
+  //        second one here would let the same work be handed over twice
+  it('carries no submit control — the stepper owns the bar now', () => {
+    const { container } = setup()
     expect(screen.queryByRole('button', { name: /submit for review/i })).toBeNull()
-    expect(screen.getByText(/last saved/i)).toBeInTheDocument()
+    expect(container.querySelector('.sticky-submit-bar')).toBeNull()
+  })
+
+  // Tests: the summary asks about Team, and opens it
+  // Chain: Team sits beside the rail rather than on it, so the walk never passes
+  //        through it. Without this, a contributor reaches the end having never
+  //        been told that collaborators and backers exist
+  it('asks whether anyone else should be added, and opens Team', () => {
+    const jump = vi.fn()
+    render(<StepJumpProvider value={jump}>{panel()}</StepJumpProvider>)
+    expect(screen.getByText(/want to add collaborators or backers/i)).toBeInTheDocument()
+    screen.getByRole('button', { name: /open team/i }).click()
+    expect(jump).toHaveBeenCalledWith('team')
+  })
+
+  // Tests: and asks nothing when there is no stepper to answer
+  // Chain: a button that opens a step is a lie anywhere the steps do not exist
+  it('leaves the question out when no stepper can act on it', () => {
+    setup()
+    expect(screen.queryByText(/want to add collaborators or backers/i)).toBeNull()
   })
 })

@@ -47,7 +47,7 @@ test('the later steps are locked until the tutorial exists', async ({ page }) =>
   // Listed so the journey reads end to end, but not reachable — each one needs
   // an id to save against. Exact names throughout: 'Files' would also match the
   // 'STL Files' pill.
-  for (const label of ['Files', 'Parts', 'Tools', 'STL Files', 'Backing', 'Collaborators', 'Review']) {
+  for (const label of ['Files', 'Parts', 'Tools', 'STL Files', 'Team', 'Review']) {
     await expect(page.getByRole('tab', { name: label, exact: true })).toBeDisabled()
   }
   await expect(page.getByRole('tab', { name: 'Details', exact: true })).toBeEnabled()

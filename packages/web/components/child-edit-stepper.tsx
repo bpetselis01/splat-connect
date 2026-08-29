@@ -9,6 +9,7 @@
 import { useState, type ReactNode } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import type { Route } from 'next'
+import { NextStepProvider } from '@/components/panel-actions'
 import type { ChildStep, ChildStepId, ChildStepStatus } from '@/lib/child-steps'
 
 const STATUS_GLYPH: Record<ChildStepStatus, string> = { done: '✓', attention: '!', neutral: '·' }
@@ -28,6 +29,19 @@ export function ChildEditStepper({ steps, trailing }: { steps: ChildStep[]; trai
   }
 
   const active = steps.find((s) => s.id === activeId) ?? steps[0]
+
+  /*
+   * No finish bar here: a child profile is never submitted or published, so
+   * there is nothing to gate and nothing to be missing. It gets Next anyway,
+   * because it is the third stepper and the one editor that behaved
+   * differently would be the one people notice.
+   *
+   * Every step is optional, so no pill ever reads 'attention' — this walks the
+   * list rather than hunting the next gap, which is the right rule here for
+   * the same reason it is the wrong one in the other two editors.
+   */
+  const index = steps.findIndex((s) => s.id === activeId)
+  const nextStep = index >= 0 ? steps[index + 1] : undefined
 
   return (
     <>
@@ -53,7 +67,23 @@ export function ChildEditStepper({ steps, trailing }: { steps: ChildStep[]; trai
         {trailing && <div className="ml-auto pl-2">{trailing}</div>}
       </div>
 
-      <div role="tabpanel">{active.content}</div>
+      <div role="tabpanel">
+        <NextStepProvider
+          value={
+            nextStep ? (
+              <button
+                type="button"
+                onClick={() => selectStep(nextStep.id)}
+                className="btn btn-quiet btn-sm"
+              >
+                {`Next: ${nextStep.label} →`}
+              </button>
+            ) : null
+          }
+        >
+          {active.content}
+        </NextStepProvider>
+      </div>
     </>
   )
 }

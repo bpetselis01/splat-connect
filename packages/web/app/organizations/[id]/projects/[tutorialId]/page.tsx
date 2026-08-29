@@ -17,10 +17,9 @@
  */
 import { notFound, redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
-import Image from 'next/image'
 import { apiClient } from '@/lib/api-client'
 import { isOrgLeader } from '@/lib/org-access'
-import { DifficultyBadge } from '@/components/difficulty-badge'
+import { TutorialView } from '@/components/tutorial-view'
 import { leaderActions } from '@/components/project-actions'
 import { BackingBadge } from '@/components/backing-state'
 import type { TutorialWithDetails, Organization, TutorialOrg } from '@splat-connect/types'
@@ -107,89 +106,77 @@ export default async function LeaderProjectPage({
   const actions = leaderActions(mine?.status ?? null, tutorial!.status)
 
   return (
-    <div className="max-w-2xl">
-      <div className="mb-2 flex flex-wrap items-center gap-2">
+    <div className="max-w-5xl">
+      <div className="mb-4 flex flex-wrap items-center gap-2">
         <p className="text-sm text-muted">For {org.name}</p>
         {mine && <BackingBadge status={mine.status} />}
       </div>
-      <h1 className="mb-2 title-detail">{tutorial!.title}</h1>
-      <DifficultyBadge difficulty={tutorial!.difficulty} />
-      {tutorial!.description && <p className="mt-4">{tutorial!.description}</p>}
 
-      {tutorial!.toy_photo_url && (
-        <Image
-          src={tutorial!.toy_photo_url}
-          alt={tutorial!.title}
-          width={640}
-          height={480}
-          className="mt-4 rounded"
-        />
-      )}
+      {/* The same view a parent gets in the library. A leader approves what
+          they can see: what this replaced was a title, a photo and a bare PDF
+          link, with no parts, tools or files anywhere on the page. */}
+      <TutorialView tutorial={tutorial!} backing={backingRows} />
 
-      {tutorial!.tutorial_pdf_url && (
-        <p className="mt-4">
-          <a href={tutorial!.tutorial_pdf_url} target="_blank" rel="noreferrer">
-            Open the tutorial PDF
-          </a>
-        </p>
-      )}
-
-      {actions.includes('back') && (
-        <div className="mt-8">
-          <p className="max-w-prose text-sm leading-relaxed text-muted">
-            Backing this means your organisation will review it. You are agreeing to
-            look, not to publish.
-          </p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <form action={backProject}>
-              <input type="hidden" name="tutorialId" value={tutorialId} />
-              <input type="hidden" name="orgId" value={orgId} />
-              <button type="submit" className="btn btn-accent">Back this project</button>
-            </form>
-            <form action={declineProject}>
-              <input type="hidden" name="tutorialId" value={tutorialId} />
-              <input type="hidden" name="orgId" value={orgId} />
-              <button type="submit" className="btn btn-quiet">Decline</button>
-            </form>
+      {/* One column for every decision, at reading width, under the view they
+          are decided from. */}
+      <div className="mt-10 max-w-2xl">
+        {actions.includes('back') && (
+          <div>
+            <p className="max-w-prose text-sm leading-relaxed text-muted">
+              Backing this means your organisation will review it. You are agreeing to
+              look, not to publish.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <form action={backProject}>
+                <input type="hidden" name="tutorialId" value={tutorialId} />
+                <input type="hidden" name="orgId" value={orgId} />
+                <button type="submit" className="btn btn-accent">Back this project</button>
+              </form>
+              <form action={declineProject}>
+                <input type="hidden" name="tutorialId" value={tutorialId} />
+                <input type="hidden" name="orgId" value={orgId} />
+                <button type="submit" className="btn btn-quiet">Decline</button>
+              </form>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {actions.includes('approve') && (
-        <form action={approve} className="mt-8">
-          <input type="hidden" name="tutorialId" value={tutorialId} />
-          <input type="hidden" name="orgId" value={orgId} />
-          {/* Said plainly, because this is the action with consequences outside the
-              platform: it puts the organisation's name on work parents will use. */}
-          <p className="max-w-prose text-sm leading-relaxed text-muted">
-            This publishes the tutorial to the library under {org.name}&apos;s name.
+        {actions.includes('approve') && (
+          <form action={approve}>
+            <input type="hidden" name="tutorialId" value={tutorialId} />
+            <input type="hidden" name="orgId" value={orgId} />
+            {/* Said plainly, because this is the action with consequences outside the
+                platform: it puts the organisation's name on work parents will use. */}
+            <p className="max-w-prose text-sm leading-relaxed text-muted">
+              This publishes the tutorial to the library under {org.name}&apos;s name.
+            </p>
+            <button type="submit" className="btn btn-accent mt-3">Approve and publish</button>
+          </form>
+        )}
+
+        {actions.includes('reject') && (
+          <form action={reject} className="mt-6">
+            <input type="hidden" name="tutorialId" value={tutorialId} />
+            <input type="hidden" name="orgId" value={orgId} />
+            <label htmlFor="note" className="block font-medium text-ink">
+              Why are you rejecting this?
+            </label>
+            <textarea id="note" name="note" required rows={4} className="mt-2 w-full" />
+            <p className="mt-1 text-xs text-muted">The contributor sees this. It is required.</p>
+            <button type="submit" className="btn btn-quiet mt-3">Reject</button>
+          </form>
+        )}
+
+        {actions.length === 0 && (
+          <p className="alert max-w-prose">
+            {tutorial!.status === 'approved'
+              ? 'Published. Only SPLAT can take it down.'
+              : mine?.status === 'declined'
+                ? `${org.name} declined this project.`
+                : `${org.name} has not been asked to back this project.`}
           </p>
-          <button type="submit" className="btn btn-accent mt-3">Approve and publish</button>
-        </form>
-      )}
-
-      {actions.includes('reject') && (
-        <form action={reject} className="mt-6">
-          <input type="hidden" name="tutorialId" value={tutorialId} />
-          <input type="hidden" name="orgId" value={orgId} />
-          <label htmlFor="note" className="block font-medium text-ink">
-            Why are you rejecting this?
-          </label>
-          <textarea id="note" name="note" required rows={4} className="mt-2 w-full" />
-          <p className="mt-1 text-xs text-muted">The contributor sees this. It is required.</p>
-          <button type="submit" className="btn btn-quiet mt-3">Reject</button>
-        </form>
-      )}
-
-      {actions.length === 0 && (
-        <p className="alert mt-8 max-w-prose">
-          {tutorial!.status === 'approved'
-            ? `Published${tutorial!.reviewer ? ` — approved by ${tutorial!.reviewer.name}` : ''}${tutorial!.reviewed_for ? `, ${tutorial!.reviewed_for.name}` : ''}. Only SPLAT can take it down.`
-            : mine?.status === 'declined'
-              ? `${org.name} declined this project.`
-              : `${org.name} has not been asked to back this project.`}
-        </p>
-      )}
+        )}
+      </div>
     </div>
   )
 }

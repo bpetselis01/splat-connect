@@ -39,7 +39,12 @@ export function NewTutorialForm() {
       await browserApiClient.post(`/api/contributors/me/tutorials/${id}`, {})
       // Straight on to Files: this page shows the same pills, so landing back
       // on Details would look like the save had not taken.
-      router.push(`/tutorials/${id}/edit?step=files` as Route<string>)
+      //
+      // created=1 is what makes the handover audible. Both pages draw the same
+      // eight pills and the same panel, so a silent redirect reads as being
+      // thrown somewhere else rather than as a step completed; EditStepper
+      // turns this into a toast and drops it from the URL.
+      router.push(`/tutorials/${id}/edit?step=files&created=1` as Route<string>)
     } catch {
       setError('Could not create this tutorial. Please try again.')
       setBusy(false)

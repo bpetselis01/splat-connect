@@ -16,6 +16,19 @@ describe('pixel depth tokens', () => {
   })
 
   /*
+   * The second shadow ink, and the reason the depth scale above stopped
+   * carrying the hierarchy on its own: five offsets one pixel apart are
+   * invisible at a glance, so every rung read as the same plane. Weight is
+   * what the eye sorts by. This value is not new — .btn-quiet has drawn its
+   * shadow at exactly this since the foundation, and it is the only reason
+   * "Browse the library" reads as secondary beside "+ New tutorial". The
+   * 2026-08-29 hierarchy pass let it out of the button file.
+   */
+  it('defines the quiet shadow ink the ladder ranks by', () => {
+    expect(css).toMatch(/--shadow-ink-quiet:\s*rgb\(18 40 58 \/ 0\.35\)/)
+  })
+
+  /*
    * Six radii, because the artboard draws six. Counted from the artboard:
    * 10px ×28 (cards, empty states), 8px ×21 (buttons, avatars, step badges),
    * 6px ×15 (art slots, inputs), 20px ×9 (filter chips), 4px ×7 (SOON badge),
@@ -175,12 +188,71 @@ describe('pixel depth tokens', () => {
    * ever got updated — which is how the signed-in side drifted while the
    * public side did not. This asserts the surviving one is the right one.
    */
-  it('draws the card as the board does', () => {
+  it('draws the card as the board does, at the browse weight', () => {
     const card = css.match(/\.card \{[^}]*\}/)?.[0] ?? ''
     expect(card).toMatch(/border-radius:\s*var\(--radius-pixel\)/)
     expect(card).toMatch(/border:\s*var\(--border-pixel\) solid var\(--color-ink\)/)
-    expect(card).toMatch(/box-shadow:\s*var\(--shadow-pixel-card\) var\(--color-ink\)/)
     expect(card).not.toContain('--shadow-rest')
+
+    // Card depth, quiet ink. A card is the thing a page has most of, so it is
+    // the one object that must not be drawn at the weight of a control.
+    expect(card).toMatch(/box-shadow:\s*var\(--shadow-pixel-card\) var\(--shadow-ink-quiet\)/)
+    expect(card).not.toMatch(/box-shadow:[^;]*var\(--color-ink\)/)
+  })
+
+  /*
+   * Rung 3: a surface that holds content rather than answering a click keeps
+   * its edge and loses its shadow, because a hard offset is a promise that
+   * something can be pressed.
+   *
+   * The sort needs no per-call-site edit, because the answer was already in
+   * the markup: anything clickable carries .card-link, and .panel and
+   * .step-pill-row are the frame of every editor — one open form box and the
+   * tray its step chips sit in. Neither is ever pressed.
+   */
+  it('takes the shadow off the surfaces that only hold content', () => {
+    const passive =
+      css.match(/\.panel,\s*\.step-pill-row,\s*\.card:not\(\.card-link\) \{[^}]*\}/)?.[0] ?? ''
+    expect(passive).toMatch(/box-shadow:\s*none/)
+  })
+
+  /*
+   * Rung 1 survives on the two families whose shadow is doing a different job.
+   *
+   * The launcher's three pillars rank against their four neighbours, which is
+   * the whole reason .card-lead exists — at 6px solid over 5px solid it never
+   * managed it, and over 5px quiet it does.
+   *
+   * The floating chrome — the sticky submit bar, the dock, the toast, the
+   * dialog — is not being ranked at all: its shadow separates it from content
+   * sliding underneath it, so flattening it would be a different bug wearing
+   * this pass's clothes.
+   */
+  it('keeps solid ink where the shadow is not ranking anything', () => {
+    const lead = css.match(/\.card-lead \{[^}]*\}/)?.[0] ?? ''
+    expect(lead).toMatch(/box-shadow:\s*var\(--shadow-pixel-lg\) var\(--color-ink\)/)
+
+    for (const sel of ['.sticky-submit-bar', '.dock-my-splat', '.edit-toast', '.dialog-panel']) {
+      const rule = css.match(new RegExp(`\\${sel} \\{[^}]*\\}`))?.[0] ?? ''
+      expect(rule, `${sel} lost the shadow that holds it off the content`).toMatch(
+        /box-shadow:[^;]*var\(--color-ink\)/,
+      )
+    }
+  })
+
+  /*
+   * Press motion reads the resting ink from --pop-color per family, so hover
+   * and press follow the rest weight without restating it. Without these two
+   * the cards would rest quiet and pop back to solid under the pointer.
+   */
+  it('carries the rest weight through to hover and press', () => {
+    const card = css.match(/\.pixel \.card \{[^}]*\}/)?.[0] ?? ''
+    expect(card).toMatch(/--pop-color:\s*var\(--shadow-ink-quiet\)/)
+    expect(card).toMatch(/--pop-rest:\s*5px/)
+
+    const lead = css.match(/\.pixel \.card-lead \{[^}]*\}/)?.[0] ?? ''
+    expect(lead).toMatch(/--pop-color:\s*var\(--color-ink\)/)
+    expect(lead).toMatch(/--pop-rest:\s*6px/)
   })
 
   // .card-tint had zero call sites when this ran. A tinted 16px box with no
@@ -212,13 +284,19 @@ describe('pixel depth tokens', () => {
    * sites are the static section boxes EditStepper swaps in; the 21st is the
    * one surviving accordion, on /admin/organizations. The section comment
    * calling this "accordion panels" predates the stepper.
+   *
+   * It keeps the card's geometry and drops the card's shadow: 20 of those 21
+   * are a box holding a form, which is rung 3 by definition. Its own rule must
+   * declare no shadow at all — a `none` here would be an override of the
+   * passive rule rather than the same answer, and the next person to read it
+   * would have to work out which one was winning.
    */
-  it('draws the panel exactly as it draws the card', () => {
+  it('draws the panel at the card geometry with no depth of its own', () => {
     const panel = css.match(/\.panel \{[^}]*\}/)?.[0] ?? ''
     expect(panel).toMatch(/border-radius:\s*var\(--radius-pixel\)/)
     expect(panel).toMatch(/border:\s*var\(--border-pixel\) solid var\(--color-ink\)/)
-    expect(panel).toMatch(/box-shadow:\s*var\(--shadow-pixel-card\) var\(--color-ink\)/)
     expect(panel).toContain('overflow: hidden')
+    expect(panel).not.toContain('box-shadow')
     expect(panel).not.toContain('--shadow-rest')
   })
 
@@ -274,9 +352,12 @@ describe('pixel depth tokens', () => {
    * off, an ink fill lying flat when on.
    */
   it('draws the stepper in the chip register', () => {
+    // The tray holds the chips; it is not one. At 5px solid it competed with
+    // the 3px chips inside it, which are the thing you are actually choosing
+    // between — and which carry the step's status marker.
     const row = css.match(/\.step-pill-row \{[^}]*\}/)?.[0] ?? ''
     expect(row).toMatch(/border-radius:\s*var\(--radius-pixel\)/)
-    expect(row).toMatch(/box-shadow:\s*var\(--shadow-pixel-card\) var\(--color-ink\)/)
+    expect(row).not.toContain('box-shadow')
     expect(row).not.toContain('--shadow-rest')
 
     const pill = css.match(/\.step-pill \{[^}]*\}/)?.[0] ?? ''
@@ -373,9 +454,14 @@ describe('pixel depth tokens', () => {
   })
 
   /*
-   * A modal sits one rung deeper than an ordinary card because it is the only
-   * object on the screen — the same reasoning auth-shell.tsx:62 records for
-   * the sign-in card, which is the other object that has the screen to itself.
+   * A modal sits one rung deeper than an ordinary card because it floats over
+   * the page: the shadow separates it from content behind it rather than
+   * ranking it against anything.
+   *
+   * This used to cite auth-shell.tsx as the other object drawn a rung deeper
+   * for having the screen to itself. The sign-in card joined rung 3 on
+   * 2026-08-29 — it is a box holding a form, and it does not float — so the
+   * pair no longer holds and the reasoning here stands on its own.
    */
   it('draws the dialog a rung deeper than a card', () => {
     const dialog = css.match(/\.dialog-panel \{[^}]*\}/)?.[0] ?? ''

@@ -30,14 +30,14 @@ import type { EditStep } from '@/lib/edit-steps'
 
 /** The steps the editor owns. Listed so the journey reads end to end, locked
  *  because each one needs an id to save against. */
-const LOCKED: { id: EditStep['id']; label: string }[] = [
+const LOCKED: { id: EditStep['id']; label: string; trailing?: boolean }[] = [
   { id: 'files', label: 'Files' },
   { id: 'parts', label: 'Parts' },
   { id: 'tools', label: 'Tools' },
   { id: 'stl', label: 'STL Files' },
-  { id: 'backing', label: 'Backing' },
-  { id: 'collaborators', label: 'Collaborators' },
   { id: 'review', label: 'Review' },
+  // Last, and off to the right, exactly where the editor puts it.
+  { id: 'team', label: 'Team', trailing: true },
 ]
 
 export default function NewTutorialPage() {

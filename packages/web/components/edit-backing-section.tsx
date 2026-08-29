@@ -1,4 +1,5 @@
 'use client'
+import { PanelActions } from '@/components/panel-actions'
 /**
  * Backing controls for one project.
  *
@@ -164,6 +165,13 @@ export function EditBackingSection({
           )}
         </div>
       )}
+
+      {/* Ask belongs to the organisation picker above, not to the step — it
+          adds one backer rather than saving the section — so this row carries
+          only whatever the stepper puts in it, and collapses to nothing on the
+          Team step, which is quiet. Kept so the panel keeps the same shape as
+          every other one. */}
+      <PanelActions />
     </div>
   )
 }

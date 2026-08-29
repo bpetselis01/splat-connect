@@ -39,14 +39,25 @@ describe('EditItemsSection (parts)', () => {
     expect(screen.getByText(/Heat Shrink/)).toBeInTheDocument()
   })
 
-  // Tests: each part row shows a chevron (▼) to indicate it's expandable
-  // How:   checks screen.getAllByText('▼') has length 2 (one per mock part)
-  // Chain: the chevron communicates the expand/collapse interaction pattern → users know
-  //        to click a row to reveal the inline edit form
-  it('renders a chevron indicator on each part row', () => {
+  // Tests: each part row says it is editable in words, and says so to a screen
+  //        reader as a collapsed control
+  // How:   checks for one Edit pill per mock part, and aria-expanded on the rows
+  // Chain: the affordance used to be a 12px ▼ and nothing else, which is the
+  //        complaint this replaced — a row has to look editable before you
+  //        discover it is by clicking it
+  it('marks every part row as an editable control', () => {
     setup()
-    const chevrons = screen.getAllByText('▼')
-    expect(chevrons).toHaveLength(2)
+    expect(screen.getAllByText('Edit')).toHaveLength(2)
+    const rows = screen.getAllByRole('button', { expanded: false })
+    expect(rows.length).toBeGreaterThanOrEqual(2)
+  })
+
+  // Tests: quantity is its own column rather than a suffix on the name
+  // Chain: a builder scans the left edge to count what they need to buy
+  it('gives each part row a quantity cell', () => {
+    setup()
+    expect(screen.getByText('2')).toBeInTheDocument()
+    expect(screen.getByText('10')).toBeInTheDocument()
   })
 
   // Tests: the edit form (with input fields) is hidden until a row is clicked
@@ -122,6 +133,8 @@ describe('EditItemsSection (parts)', () => {
   it('submitting the Add part form calls onSave with the new part appended', async () => {
     const onSave = vi.fn().mockResolvedValue(undefined)
     setup(onSave)
+    // The add row is the last row of the table and opens like any other.
+    fireEvent.click(screen.getByRole('button', { name: /Add a part/ }))
     fireEvent.change(screen.getByPlaceholderText('Name'), {
       target: { value: 'New Part' },
     })

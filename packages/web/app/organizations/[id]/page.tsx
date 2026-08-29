@@ -29,6 +29,7 @@ import { isOrgLeader } from '@/lib/org-access'
 import { OrgReviewBanner } from '@/components/org-review-banner'
 import { DifficultyBadge } from '@/components/difficulty-badge'
 import { BackingBadge } from '@/components/backing-state'
+import { BookOpen, Inbox } from '@/components/icons'
 import type { Tutorial, TutorialOrg, UserAgreement, Organization, OrgLeader } from '@splat-connect/types'
 
 type Backed = Tutorial & { tutorial_orgs?: TutorialOrg[] }
@@ -103,28 +104,35 @@ export default async function OrganizationPage({
           This is the answer to "who are they?" that a badge on a library card
           cannot give, and it is the same for a leader and a stranger. */}
       <section className="mt-8">
-        <h2 className="mb-3 text-lg font-semibold text-ink">
+        <h2 className="mb-3 text-lg font-bold text-ink">
           Tutorials backed ({backed.length})
         </h2>
         {backed.length === 0 ? (
-          <p className="empty-badge">
-            This organisation has not backed a published tutorial yet.
-          </p>
+          <div className="flex flex-col items-center px-6 py-12 text-center">
+            <span aria-hidden="true" className="empty-badge text-brand-dark">
+              <BookOpen className="h-8 w-8" />
+            </span>
+            <p className="mt-4 font-bold text-ink">Nothing backed yet.</p>
+            <p className="mt-1 max-w-xs text-sm leading-relaxed text-muted">
+              This organisation has not backed a published tutorial yet.
+            </p>
+          </div>
         ) : (
           <ul className="flex flex-col gap-3">
             {backed.map((t) => (
-              <li key={t.id} className="card p-4">
+              <li key={t.id}>
                 {/* The leader dashboard carries the rail; /tutorials/[id] is the
                     public page. BoundaryLink forces the full load that lets the
-                    header replace it. */}
-                <BoundaryLink href={`/tutorials/${t.id}`} className="text-sm font-bold text-ink">
-                  {t.title}
+                    header replace it. The whole card is the target — the same
+                    change the merged queue in dashboard/organisation carries. */}
+                <BoundaryLink href={`/tutorials/${t.id}`} className="card card-link p-4">
+                  <span className="text-sm font-bold text-ink">{t.title}</span>
+                  {t.description && (
+                    <p className="mt-1 max-w-prose text-xs leading-relaxed text-muted">
+                      {t.description}
+                    </p>
+                  )}
                 </BoundaryLink>
-                {t.description && (
-                  <p className="mt-1 max-w-prose text-xs leading-relaxed text-muted">
-                    {t.description}
-                  </p>
-                )}
               </li>
             ))}
           </ul>
@@ -134,33 +142,39 @@ export default async function OrganizationPage({
       {!hasTerms && <OrgReviewBanner />}
 
       <section className="mt-8">
-        <h2 className="mb-3 text-lg font-semibold text-ink">
+        <h2 className="mb-3 text-lg font-bold text-ink">
           Waiting on you ({waiting.length})
         </h2>
         {waiting.length === 0 ? (
-          <p className="empty-badge">
-            Nothing waiting. Contributors ask by choosing your organisation when
-            they submit a tutorial.
-          </p>
+          <div className="flex flex-col items-center px-6 py-12 text-center">
+            <span aria-hidden="true" className="empty-badge text-brand-dark">
+              <Inbox className="h-8 w-8" />
+            </span>
+            <p className="mt-4 font-bold text-ink">Nothing waiting.</p>
+            <p className="mt-1 max-w-xs text-sm leading-relaxed text-muted">
+              Contributors ask by choosing your organisation when they submit a
+              tutorial.
+            </p>
+          </div>
         ) : (
           <ul className="flex flex-col gap-3">
             {waiting.map((t) => (
-              <li key={t.id} className="card p-4">
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                  <BackingBadge status={rowFor(t)!.status} />
-                  {/* Always the project page, never /tutorials/[id]. That link is
-                      the hole: the public page serves only approved work, so every
-                      item in this queue 404'd. */}
-                  <Link
-                    href={`/organizations/${orgId}/projects/${t.id}`}
-                    className="font-medium text-ink"
-                  >
-                    {t.title}
-                  </Link>
-                  <span className="ml-auto">
-                    <DifficultyBadge difficulty={t.difficulty} />
-                  </span>
-                </div>
+              <li key={t.id}>
+                {/* Always the project page, never /tutorials/[id]. That link is
+                    the hole: the public page serves only approved work, so every
+                    item in this queue 404'd. */}
+                <Link
+                  href={`/organizations/${orgId}/projects/${t.id}`}
+                  className="card card-link p-4"
+                >
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <BackingBadge status={rowFor(t)!.status} />
+                    <span className="text-sm font-bold text-ink">{t.title}</span>
+                    <span className="ml-auto">
+                      <DifficultyBadge difficulty={t.difficulty} />
+                    </span>
+                  </div>
+                </Link>
               </li>
             ))}
           </ul>

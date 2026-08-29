@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react'
 import { ToyPhotosSection } from '@/components/toy-photos-section'
 import { browserApiClient } from '@/lib/browser-api-client'
 import { ToastProvider } from '@/components/toast'
@@ -132,14 +132,33 @@ describe('ToyPhotosSection', () => {
     expect(screen.queryByRole('button', { name: 'Remove' })).not.toBeInTheDocument()
   })
 
-  it('tells the user a switch photo is already on file, as the cover dropzone does', () => {
-    setup({ switchAdapted: true, switchPhotoUrls: ['https://x/switch-1.jpg'] })
-    expect(screen.getByText('Current switch photo on file — upload to replace')).toBeInTheDocument()
+  // Tests: an existing switch photo is shown, not just described
+  // How:   asserts both the picture and the shortened label
+  // Chain: the label used to carry the whole message because the picture lived in a
+  //        dialog behind a button. It shows in place now, so the words only have to
+  //        say what pressing Choose file will do to it
+  // Scoped to the switch dropzone: the default toy has a cover photo too, and
+  // both dropzones now carry the same short "On file" line under their own
+  // heading and their own thumbnail. Which file it refers to is answered by
+  // where it sits, so the assertion has to ask the same way.
+  const switchZone = (switchInput: () => HTMLInputElement) =>
+    within(switchInput().closest('.dropzone') as HTMLElement)
+
+  it('shows the switch photo already on file, as the cover dropzone does', () => {
+    const { switchInput } = setup({ switchAdapted: true, switchPhotoUrls: ['https://x/switch-1.jpg'] })
+    const zone = switchZone(switchInput)
+    expect(zone.getByAltText('Switch Photo currently on file')).toHaveAttribute(
+      'src',
+      'https://x/switch-1.jpg'
+    )
+    expect(zone.getByText('On file — upload to replace')).toBeInTheDocument()
   })
 
   it('says nothing is on file when the toy has no switch photo yet', () => {
-    setup({ switchAdapted: true, switchPhotoUrls: [] })
-    expect(screen.queryByText(/current switch photo on file/i)).not.toBeInTheDocument()
+    const { switchInput } = setup({ switchAdapted: true, switchPhotoUrls: [] })
+    const zone = switchZone(switchInput)
+    expect(zone.queryByText(/on file/i)).toBeNull()
+    expect(zone.queryByAltText(/currently on file/i)).toBeNull()
   })
 
   it('uploading a switch photo replaces the existing one rather than appending', async () => {
@@ -176,16 +195,22 @@ describe('ToyPhotosSection', () => {
     expect(switchInput().multiple).toBe(false)
   })
 
-  it('opens a dialog of the photos already uploaded', () => {
+  // Tests: both photos on file are visible without opening anything
+  // How:   asserts each dropzone renders its own current image
+  // Chain: this was a "View uploaded photos" button opening a dialog of the same two
+  //        pictures. A modal for looking at your own upload is a lot of machinery for
+  //        a question best answered where it is asked — and with the button gone, the
+  //        right of the action row is where the way onward stands
+  it('shows both photos already uploaded, with nothing to open', () => {
     setup({ coverPhotoUrl: 'https://x/cover.jpg', switchAdapted: true, switchPhotoUrls: ['https://x/switch-1.jpg'] })
-    fireEvent.click(screen.getByRole('button', { name: 'View uploaded photos' }))
-    expect(screen.getByAltText('Cover photo')).toHaveAttribute('src', 'https://x/cover.jpg')
-    expect(screen.getByAltText('Switch photo')).toHaveAttribute('src', 'https://x/switch-1.jpg')
+    expect(screen.getByAltText('Cover Photo currently on file')).toHaveAttribute('src', 'https://x/cover.jpg')
+    expect(screen.getByAltText('Switch Photo currently on file')).toHaveAttribute('src', 'https://x/switch-1.jpg')
+    expect(screen.queryByRole('button', { name: /view uploaded photos/i })).toBeNull()
   })
 
-  it('disables the photo viewer when nothing has been uploaded', () => {
+  it('shows no photo at all when nothing has been uploaded', () => {
     setup({ coverPhotoUrl: null, switchPhotoUrls: [] })
-    expect(screen.getByRole('button', { name: 'View uploaded photos' })).toBeDisabled()
+    expect(screen.queryByAltText(/currently on file/i)).toBeNull()
   })
 
   it('saves in accent, the same warm variant Details and Review use', () => {
@@ -194,16 +219,16 @@ describe('ToyPhotosSection', () => {
     expect(saveButton).not.toHaveClass('btn-sm')
   })
 
-  it('puts Save on the left and the photo viewer on the right of one row', () => {
-    const { saveButton } = setup()
-    const viewButton = screen.getByRole('button', { name: 'View uploaded photos' })
-    const row = saveButton.parentElement as HTMLElement
-
-    expect(row).toContainElement(viewButton)
-    expect(row).toHaveClass('justify-between')
-    expect(saveButton.compareDocumentPosition(viewButton)).toBe(
-      Node.DOCUMENT_POSITION_FOLLOWING
-    )
+  // Tests: Save sits in the shared panel action row
+  // How:   asserts the row wrapping Save is .panel-actions, not a local flex box
+  // Chain: every panel in all three editors ends in this row now, so the way onward
+  //        stands in the same place on each of them. A panel that kept its own
+  //        hand-rolled row would be the one where Next went missing
+  it('puts Save in the shared action row every panel ends with', () => {
+    const { container, saveButton } = setup()
+    const row = container.querySelector('.panel-actions') as HTMLElement
+    expect(row).not.toBeNull()
+    expect(row.querySelector('.panel-actions-lead')).toContainElement(saveButton)
   })
 
   it('Save button is disabled again after a successful save', async () => {

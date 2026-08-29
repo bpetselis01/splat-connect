@@ -1,4 +1,5 @@
 'use client'
+import { PanelActions, useSaveOnLeave } from '@/components/panel-actions'
 import { useState } from 'react'
 
 export function ToyDetailsForm({
@@ -15,20 +16,32 @@ export function ToyDetailsForm({
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
 
-  async function save(e: React.FormEvent) {
-    e.preventDefault()
+  async function save(e?: React.FormEvent) {
+    e?.preventDefault()
     setBusy(true)
     setError(null)
     setSaved(false)
     try {
       await onSave({ name, description: description === '' ? null : description, condition })
       setSaved(true)
+      return true
     } catch {
       setError('Could not save your changes. Please try again.')
+      return false
     } finally {
       setBusy(false)
     }
   }
+
+  /* Leaving the step saves it. Dirty is a comparison against the toy as loaded
+     rather than a flag set on the first keystroke: these fields are controlled,
+     so typing a character and typing it back out leaves nothing to write, and
+     an empty name is something the API refuses anyway. */
+  const dirty =
+    name !== toy.name ||
+    description !== (toy.description ?? '') ||
+    condition !== toy.condition
+  useSaveOnLeave(dirty && name.trim() !== '' && !busy ? () => save() : null)
 
   return (
     <form onSubmit={save} className="flex flex-col gap-4 px-5 pb-5">
@@ -69,13 +82,13 @@ export function ToyDetailsForm({
           rows={4}
         />
       </div>
-      <div className="flex items-center gap-3">
+      <PanelActions>
         <button type="submit" disabled={busy} className="btn btn-accent">
           {busy ? 'Saving…' : 'Save'}
         </button>
         {error && <p role="alert" className="alert alert-danger">{error}</p>}
         {saved && <p className="text-sm font-semibold text-mint-deep">Saved</p>}
-      </div>
+      </PanelActions>
     </form>
   )
 }
