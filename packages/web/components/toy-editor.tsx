@@ -8,8 +8,9 @@ import { ToyPhotosSection } from '@/components/toy-photos-section'
 import { ToySummary } from '@/components/toy-summary'
 import { DeleteEntityButton } from '@/components/delete-entity-button'
 import { ToastProvider } from '@/components/toast'
+import { PanelActions } from '@/components/panel-actions'
 import { browserApiClient } from '@/lib/browser-api-client'
-import { computeToyStepStatuses, getMissingToyFields } from '@/lib/toy-steps'
+import { computeToyStepStatuses, missingToyByStep } from '@/lib/toy-steps'
 
 const OFFER_TYPE_COPY: Record<OfferType, string> = {
   donation: 'The recipient keeps this toy for good — no return expected.',
@@ -17,27 +18,15 @@ const OFFER_TYPE_COPY: Record<OfferType, string> = {
   both: "Open to either a donation or a swap — you'll agree with the recipient on which.",
 }
 
-function ToyReviewPanel({ toy, onPublished, onSaveOfferType }: { toy: Toy; onPublished: (t: Toy) => void; onSaveOfferType: (offerType: OfferType) => Promise<void> }) {
-  const [publishing, setPublishing] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const missingFields = getMissingToyFields(toy)
-
-  async function publish() {
-    setPublishing(true)
-    setError(null)
-    try {
-      const updated = await browserApiClient.patch<Toy>(`/api/toys/${toy.id}/publish`, {})
-      onPublished(updated)
-    } catch {
-      setError('Could not publish this toy. Please try again.')
-    } finally {
-      setPublishing(false)
-    }
-  }
-
-  // The panel wraps only the summary: `.panel` sets overflow:hidden, which
-  // would kill the sticky bar's positioning if it lived inside. Same layering
-  // as the edit-tutorial page, where the submit bar is a sibling of the panel.
+/**
+ * The Review step: what is about to be published, and how it is offered.
+ *
+ * Publishing itself moved to ToyEditStepper on 2026-08-29. The bar lived here,
+ * which meant it only existed on this step — so Details and Photos never said
+ * how far the toy was from being publishable. Same gap the tutorial editor
+ * had, same fix.
+ */
+function ToyReviewPanel({ toy, onSaveOfferType }: { toy: Toy; onSaveOfferType: (offerType: OfferType) => Promise<void> }) {
   return (
     <>
       <div className="panel pt-5">
@@ -66,35 +55,12 @@ function ToyReviewPanel({ toy, onPublished, onSaveOfferType }: { toy: Toy; onPub
             </p>
           </div>
 
-          {error && (
-            <p role="alert" className="alert alert-danger">
-              {error}
-            </p>
-          )}
+          {/* Empty here — Review is the last step. Present so the panel keeps
+              the same shape as every other one. */}
+          <PanelActions />
+
         </div>
       </div>
-
-      {toy.status === 'published' ? (
-        <div className="sticky-submit-bar sticky-submit-bar-quiet">
-          <span className="text-sm font-semibold text-mint-deep">Published</span>
-        </div>
-      ) : (
-        <div className="sticky-submit-bar">
-          <span className="sticky-submit-note">
-            {missingFields.length > 0
-              ? `Add ${missingFields.join(', ')} to publish`
-              : 'Ready to publish'}
-          </span>
-          <button
-            type="button"
-            disabled={missingFields.length > 0 || publishing}
-            onClick={publish}
-            className="btn btn-accent"
-          >
-            {publishing ? 'Publishing…' : 'Publish'}
-          </button>
-        </div>
-      )}
     </>
   )
 }
@@ -119,6 +85,12 @@ export function ToyEditor({ toy: initialToy }: { toy: Toy }) {
   async function saveOfferType(offerType: OfferType) {
     const updated = await browserApiClient.patch<Toy>(`/api/toys/${toy.id}`, { offer_type: offerType })
     setToy(updated)
+  }
+
+  // Throws on failure rather than swallowing: FinishBar owns the error state
+  // now, and it needs the rejection to show it.
+  async function publish() {
+    setToy(await browserApiClient.patch<Toy>(`/api/toys/${toy.id}/publish`, {}))
   }
 
   const statuses = computeToyStepStatuses(toy)
@@ -157,9 +129,17 @@ export function ToyEditor({ toy: initialToy }: { toy: Toy }) {
             id: 'review',
             label: 'Review',
             status: statuses.review,
-            content: <ToyReviewPanel toy={toy} onPublished={setToy} onSaveOfferType={saveOfferType} />,
+            content: <ToyReviewPanel toy={toy} onSaveOfferType={saveOfferType} />,
           },
         ]}
+        finish={{
+          missing: missingToyByStep(toy),
+          onPublish: publish,
+          done:
+            toy.status === 'published' ? (
+              <span className="text-sm font-semibold text-mint-deep">Published</span>
+            ) : undefined,
+        }}
         trailing={
           <DeleteEntityButton
             endpoint={`/api/toys/${toy.id}`}
