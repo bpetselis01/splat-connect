@@ -199,25 +199,6 @@ export function Shield(props: SVGProps<SVGSVGElement>) {
   )
 }
 
-/** Rail collapse control. Chevrons point the way the rail will move. */
-export function ChevronsLeft(props: SVGProps<SVGSVGElement>) {
-  return (
-    <Icon {...props}>
-      <path d="M11 17l-5-5 5-5" />
-      <path d="M18 17l-5-5 5-5" />
-    </Icon>
-  )
-}
-
-export function ChevronsRight(props: SVGProps<SVGSVGElement>) {
-  return (
-    <Icon {...props}>
-      <path d="M13 17l5-5-5-5" />
-      <path d="M6 17l5-5-5-5" />
-    </Icon>
-  )
-}
-
 /** Mobile drawer trigger. */
 export function Menu(props: SVGProps<SVGSVGElement>) {
   return (

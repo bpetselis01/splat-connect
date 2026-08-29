@@ -1,11 +1,11 @@
 'use client'
 import Link from 'next/link'
-import type { Route } from 'next'
 import { usePathname } from 'next/navigation'
+import { BoundaryLink } from '@/components/boundary-link'
 import { createClient } from '@/lib/supabase/client'
 import { Logo, Menu } from '@/components/icons'
 import { useDrawer } from '@/components/drawer-context'
-import { PUBLIC_NAV, ACCOUNT_NAV, sectionFor, crossesAccountBoundary } from '@/lib/public-nav'
+import { PUBLIC_NAV, ACCOUNT_NAV, sectionFor } from '@/lib/public-nav'
 import { toneClass } from '@/lib/tone'
 import type { Capabilities } from '@/lib/capabilities'
 
@@ -14,48 +14,6 @@ function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean)
   if (parts.length === 0) return '?'
   return (parts[0][0] + (parts[1]?.[0] ?? '')).toUpperCase()
-}
-
-/**
- * A pill whose destination crosses the account/public boundary needs a full
- * navigation, not a soft <Link> transition: the root layout (which decides the
- * rail, the backdrop and the quiet header) doesn't re-run on client-side
- * routing, so it can go stale — same reasoning as the hard reload in
- * signOut() below. Non-crossing pills keep the normal <Link>.
- */
-function NavLink({
-  href,
-  crossing,
-  className,
-  style,
-  'aria-current': ariaCurrent,
-  children,
-}: {
-  href: string
-  crossing: boolean
-  className: string
-  /** Carries the section's --pill-tint/--pill-ink through to the CSS. */
-  style?: React.CSSProperties
-  'aria-current'?: 'page'
-  children: React.ReactNode
-}) {
-  if (crossing) {
-    return (
-      <a href={href} aria-current={ariaCurrent} className={className} style={style}>
-        {children}
-      </a>
-    )
-  }
-  return (
-    <Link
-      href={href as Route<string>}
-      aria-current={ariaCurrent}
-      className={className}
-      style={style}
-    >
-      {children}
-    </Link>
-  )
 }
 
 interface NavProps {
@@ -112,9 +70,8 @@ export function Nav({ caps, quiet = false, showMenu = false }: NavProps) {
             <Menu className="h-6 w-6" />
           </button>
         )}
-        <NavLink
+        <BoundaryLink
           href="/"
-          crossing={activeSection === ACCOUNT_NAV}
           className="flex shrink-0 items-center gap-2.5 text-[18px] font-black tracking-tight text-ink"
         >
           {/* The mark sits on a plain tinted disc — no ring. The wordmark is the
@@ -127,7 +84,7 @@ export function Nav({ caps, quiet = false, showMenu = false }: NavProps) {
             <Logo className="h-5 w-5" />
           </span>
           SPLAT Connect
-        </NavLink>
+        </BoundaryLink>
 
         {/* On narrow screens the links drop to their own row so the logo and the
             account control stay together on the first one. On a wide screen
@@ -144,10 +101,9 @@ export function Nav({ caps, quiet = false, showMenu = false }: NavProps) {
             const active = activeSection?.href === s.href
             const tone = toneClass(s.tone)
             return (
-              <NavLink
+              <BoundaryLink
                 key={s.href}
                 href={s.href}
-                crossing={activeSection === ACCOUNT_NAV}
                 aria-current={active ? 'page' : undefined}
                 // No colour on the inactive state: `.nav-pill` already sets
                 // brand-deep, and overriding it with `text-muted` was leaving six
@@ -184,7 +140,7 @@ export function Nav({ caps, quiet = false, showMenu = false }: NavProps) {
                   }`}
                 />
                 {s.label}
-              </NavLink>
+              </BoundaryLink>
             )
           })}
         </div>
@@ -206,14 +162,13 @@ export function Nav({ caps, quiet = false, showMenu = false }: NavProps) {
             >
               {initials(caps.profile.name)}
             </span>
-            <NavLink
+            <BoundaryLink
               href={ACCOUNT_NAV.href}
-              // Not `activeSection !== ACCOUNT_NAV`: that missed the split
-              // inside the account section itself — from a rail-only page
-              // (still ACCOUNT_NAV) to /dashboard (no rail), nestsRail
-              // differs, so it is a crossing too. crossesAccountBoundary is
-              // the one place that rule lives; see its docstring.
-              crossing={crossesAccountBoundary(pathname, ACCOUNT_NAV.href)}
+              // BoundaryLink, not <Link>: `activeSection !== ACCOUNT_NAV`
+              // would miss the split inside the account section itself — from
+              // a rail-only page (still ACCOUNT_NAV) to /dashboard (no rail),
+              // nestsRail differs, so it is a crossing too. That rule lives in
+              // crossesAccountBoundary, which BoundaryLink applies for us.
               aria-current={activeSection?.href === ACCOUNT_NAV.href ? 'page' : undefined}
               // The apricot button, not a `.nav-pill`, and not conditional on
               // where you are. As a bare label it was the quietest thing in a
@@ -229,20 +184,20 @@ export function Nav({ caps, quiet = false, showMenu = false }: NavProps) {
               className="btn btn-accent btn-sm flex shrink-0 items-center gap-1.5 whitespace-nowrap"
             >
               {ACCOUNT_NAV.label}
-              {caps.unreadNotifications > 0 && (
+              {caps.unread.total > 0 && (
                 <>
                   {/* Ink on apricot, not the apricot-soft/apricot-deep pair the
                       badge carries elsewhere: that pairing is drawn for a white
                       shelf and all but disappeared once the button underneath it
                       became apricot too. */}
                   <span aria-hidden="true" className="badge bg-ink text-surface">
-                    {caps.unreadNotifications}
+                    {caps.unread.total}
                   </span>
                   {/* The number alone is not self-describing to a screen reader. */}
-                  <span className="sr-only">{caps.unreadNotifications} unread</span>
+                  <span className="sr-only">{caps.unread.total} unread</span>
                 </>
               )}
-            </NavLink>
+            </BoundaryLink>
             {/* The board draws this one with a solid ink shadow, not the 35%
                 one `.btn-quiet` carries. The class itself stays untouched:
                 that softer shadow is exactly what the board specifies for the
