@@ -33,7 +33,7 @@
 import Link from 'next/link'
 import { BackLink } from '@/components/back-link'
 import { Suspense } from 'react'
-import { EditStepper } from '@/components/edit-stepper'
+import { Stepper } from '@/components/stepper'
 import { NewTutorialForm } from '@/components/new-tutorial-form'
 import { stepsFor, type EditStep, type EditStepId } from '@/lib/edit-steps'
 import { KIND_LABEL, type TutorialKind } from '@splat-connect/types'
@@ -87,7 +87,7 @@ export default async function NewTutorialPage({
   }
 
   // Listed so the journey reads end to end, locked because each one needs an
-  // id to save against. Trailing pills sit where the editor puts them.
+  // id to save against. Off-walk pills sit where the editor puts them.
   const [first, ...rest] = stepsFor(kind)
   const steps: EditStep[] = [
     {
@@ -107,7 +107,7 @@ export default async function NewTutorialPage({
       label: LABELS[id],
       status: 'neutral' as const,
       disabled: true,
-      trailing: id === 'team',
+      offWalk: id === 'team',
       content: null,
     })),
   ]
@@ -119,10 +119,10 @@ export default async function NewTutorialPage({
       <p className="mb-6 max-w-prose text-sm leading-relaxed text-muted">
         Name it now — the guide, parts, tools and everything else come next.
       </p>
-      {/* useSearchParams() inside EditStepper requires a Suspense boundary, or
+      {/* useSearchParams() inside Stepper requires a Suspense boundary, or
           `next build` fails to prerender this page. */}
       <Suspense>
-        <EditStepper steps={steps} />
+        <Stepper steps={steps} label="Tutorial sections" />
       </Suspense>
     </div>
   )

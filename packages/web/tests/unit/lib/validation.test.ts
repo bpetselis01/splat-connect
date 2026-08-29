@@ -25,39 +25,50 @@ const baseTutorial: TutorialWithDetails = {
 }
 
 describe('getMissingFields', () => {
-  // Chain: an empty list is what enables the Review step's Submit button
+  // Chain: an empty list is what enables the submit bar's action
   it('returns empty array when all fields are present', () => {
     expect(getMissingFields(baseTutorial)).toEqual([])
   })
 
-  // Chain: the Review step names the missing field → the contributor knows
-  //        which step to go back to before they can submit
-  it('includes "Title" when title is empty', () => {
-    expect(getMissingFields({ ...baseTutorial, title: '' })).toContain('Title')
+  // Chain: the gap chip names the field and opens the step that fixes it, so
+  //        the step it is paired with is half the answer — a label alone was
+  //        what the old edit-steps.ts translation table existed to make good
+  it('pairs a missing title with the Details step', () => {
+    expect(getMissingFields({ ...baseTutorial, title: '' })).toContainEqual({
+      step: 'details',
+      label: 'A title',
+    })
   })
 
-  it('includes "Difficulty" when difficulty is not one of the three', () => {
+  it('pairs a difficulty that is not one of the three with Details', () => {
     expect(
       getMissingFields({
         ...baseTutorial,
         difficulty: 'extreme' as TutorialWithDetails['difficulty'],
       })
-    ).toContain('Difficulty')
+    ).toContainEqual({ step: 'details', label: 'A difficulty' })
   })
 
-  it('includes "Tutorial PDF" when tutorial_pdf_url is null', () => {
-    expect(getMissingFields({ ...baseTutorial, tutorial_pdf_url: null })).toContain('Tutorial PDF')
+  it('pairs a missing guide PDF with the Files step', () => {
+    expect(getMissingFields({ ...baseTutorial, tutorial_pdf_url: null })).toContainEqual({
+      step: 'files',
+      label: 'The guide PDF',
+    })
   })
 
-  it('includes "Photo" when toy_photo_url is null', () => {
-    expect(getMissingFields({ ...baseTutorial, toy_photo_url: null })).toContain('Photo')
+  it('pairs a missing photo with the Files step', () => {
+    expect(getMissingFields({ ...baseTutorial, toy_photo_url: null })).toContainEqual({
+      step: 'files',
+      label: 'A photo',
+    })
   })
 
   // The only kind-aware rule. An assistive-tech tutorial is its printed part;
   // a toy adaptation has no STL step to send anyone back to.
   it('requires an STL file for assistive tech only', () => {
-    expect(getMissingFields({ ...baseTutorial, kind: 'assistive_tech', stl_files: [] })).toContain('At least one STL file')
-    expect(getMissingFields({ ...baseTutorial, kind: 'toy_adaptation', stl_files: [] })).not.toContain('At least one STL file')
+    const stlGap = { step: 'stl', label: 'A 3D-print file' }
+    expect(getMissingFields({ ...baseTutorial, kind: 'assistive_tech', stl_files: [] })).toContainEqual(stlGap)
+    expect(getMissingFields({ ...baseTutorial, kind: 'toy_adaptation', stl_files: [] })).not.toContainEqual(stlGap)
     expect(
       getMissingFields({
         ...baseTutorial,
@@ -67,11 +78,29 @@ describe('getMissingFields', () => {
     ).toEqual([])
   })
 
-  it('includes "At least one part" when parts array is empty', () => {
-    expect(getMissingFields({ ...baseTutorial, parts: [] })).toContain('At least one part')
+  it('pairs an empty parts list with the Parts step', () => {
+    expect(getMissingFields({ ...baseTutorial, parts: [] })).toContainEqual({
+      step: 'parts',
+      label: 'A part',
+    })
   })
 
-  it('includes "At least one tool" when tools array is empty', () => {
-    expect(getMissingFields({ ...baseTutorial, tools: [] })).toContain('At least one tool')
+  it('pairs an empty tools list with the Tools step', () => {
+    expect(getMissingFields({ ...baseTutorial, tools: [] })).toContainEqual({
+      step: 'tools',
+      label: 'A tool',
+    })
+  })
+
+  // Chain: the bar renders these in order, and reading "A photo" before "The
+  //        guide PDF" would not match the order the Files step asks for them
+  it('lists gaps in step order', () => {
+    expect(
+      getMissingFields({ ...baseTutorial, title: '', tutorial_pdf_url: null, tools: [] })
+    ).toEqual([
+      { step: 'details', label: 'A title' },
+      { step: 'files', label: 'The guide PDF' },
+      { step: 'tools', label: 'A tool' },
+    ])
   })
 })

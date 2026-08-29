@@ -21,12 +21,7 @@
  * a bordered box with a shadow reads as a control that wants something.
  */
 import { useState, type ReactNode } from 'react'
-
-/** Structurally what MissingStep and MissingToyStep both are. */
-export interface Gap {
-  step: string
-  label: string
-}
+import type { Gap } from '@/lib/steps'
 
 export function FinishBar({
   missing,

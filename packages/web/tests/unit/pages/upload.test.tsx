@@ -13,8 +13,8 @@ vi.mock('@/components/new-tutorial-form', () => ({
 }))
 // The real stepper reads useSearchParams; a flat list of tabs is all this
 // page's contract with it — which pills, and which are locked.
-vi.mock('@/components/edit-stepper', () => ({
-  EditStepper: ({ steps }: { steps: EditStep[] }) => (
+vi.mock('@/components/stepper', () => ({
+  Stepper: ({ steps }: { steps: EditStep[] }) => (
     <div>
       {steps.map((s) => (
         <button key={s.id} role="tab" disabled={s.disabled}>{s.label}</button>

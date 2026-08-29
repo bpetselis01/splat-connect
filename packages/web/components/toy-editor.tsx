@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import type { Route } from 'next'
 import type { Toy, OfferType } from '@splat-connect/types'
-import { ToyEditStepper } from '@/components/toy-edit-stepper'
+import { Stepper } from '@/components/stepper'
 import { ToyDetailsForm } from '@/components/toy-details-form'
 import { ToyPhotosSection } from '@/components/toy-photos-section'
 import { ToySummary } from '@/components/toy-summary'
@@ -10,7 +10,7 @@ import { DeleteEntityButton } from '@/components/delete-entity-button'
 import { ToastProvider } from '@/components/toast'
 import { PanelActions } from '@/components/panel-actions'
 import { browserApiClient } from '@/lib/browser-api-client'
-import { computeToyStepStatuses, missingToyByStep } from '@/lib/toy-steps'
+import { computeToyStepStatuses, getMissingToyFields } from '@/lib/toy-steps'
 
 const OFFER_TYPE_COPY: Record<OfferType, string> = {
   donation: 'The recipient keeps this toy for good — no return expected.',
@@ -21,7 +21,7 @@ const OFFER_TYPE_COPY: Record<OfferType, string> = {
 /**
  * The Review step: what is about to be published, and how it is offered.
  *
- * Publishing itself moved to ToyEditStepper on 2026-08-29. The bar lived here,
+ * Publishing itself moved to the Stepper on 2026-08-29. The bar lived here,
  * which meant it only existed on this step — so Details and Photos never said
  * how far the toy was from being publishable. Same gap the tutorial editor
  * had, same fix.
@@ -97,7 +97,8 @@ export function ToyEditor({ toy: initialToy }: { toy: Toy }) {
 
   return (
     <ToastProvider>
-      <ToyEditStepper
+      <Stepper
+        label="Toy sections"
         steps={[
           {
             id: 'details',
@@ -133,8 +134,12 @@ export function ToyEditor({ toy: initialToy }: { toy: Toy }) {
           },
         ]}
         finish={{
-          missing: missingToyByStep(toy),
-          onPublish: publish,
+          missing: getMissingToyFields(toy),
+          submitLabel: 'Publish',
+          busyLabel: 'Publishing…',
+          errorMessage: 'Could not publish this toy. Please try again.',
+          endLabel: 'Review and publish',
+          onSubmit: publish,
           done:
             toy.status === 'published' ? (
               <span className="text-sm font-semibold text-mint-deep">Published</span>

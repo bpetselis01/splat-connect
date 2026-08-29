@@ -38,10 +38,13 @@ vi.mock('@/components/tutorial-review-panel', () => ({
     <div data-testid="review-panel" data-title={title} />
   ),
 }))
-vi.mock('@/components/edit-stepper', () => ({
+// Reads ?created= through hooks this test does not mock, and announces the
+// redirect out of /upload rather than anything the page computes.
+vi.mock('@/components/created-toast', () => ({ CreatedToast: () => null }))
+vi.mock('@/components/stepper', () => ({
   // Renders each step's content, which is how the review panel above is
   // reached. Every section component is mocked to null, so this stays cheap.
-  EditStepper: ({ steps, finish }: { steps: EditStep[]; finish?: { missing: { step: string; label: string }[]; done?: unknown } }) => (
+  Stepper: ({ steps, finish }: { steps: EditStep[]; finish?: { missing: { step: string; label: string }[]; done?: unknown } }) => (
     <div
       data-testid="edit-stepper"
       data-missing={(finish?.missing ?? []).map((m) => `${m.step}:${m.label}`).join('|')}
@@ -103,7 +106,7 @@ describe('EditTutorialPage', () => {
     vi.resetAllMocks()
     // The page makes two further reads after the ones each test sets up with
     // mockResolvedValueOnce — the backing rows and the organisation list for the
-    // EditStepper's Backing step. Without a fallback those return undefined and
+    // the Team step's Backing panel. Without a fallback those return undefined and
     // every test dies on it. Empty is the ordinary case: most projects have
     // asked nobody.
     vi.mocked(apiClient.get).mockResolvedValue([])
@@ -207,7 +210,7 @@ describe('EditTutorialPage', () => {
     expect(document.querySelector('[data-step="stl"]')).toHaveAttribute('data-step-status', 'attention')
   })
 
-  it('wires computeStepStatuses and missingByStep into the step manifest', async () => {
+  it('wires computeStepStatuses and getMissingFields into the step manifest', async () => {
     vi.mocked(apiClient.get)
       .mockResolvedValueOnce(baseTutorialWithDetails)
     render(await EditTutorialPage(pageParams))

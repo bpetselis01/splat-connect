@@ -1,9 +1,28 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
-import { EditStepper, type EditFinish } from '@/components/edit-stepper'
+import { Stepper, type Finish } from '@/components/stepper'
 import { PanelActions, useSaveOnLeave } from '@/components/panel-actions'
-import type { EditStep } from '@/lib/edit-steps'
+import type { EditStep, EditStepId } from '@/lib/edit-steps'
+import type { ToyStep } from '@/lib/toy-steps'
+import type { ChildStep } from '@/lib/child-steps'
+
+/**
+ * One component, three call-site shapes: a tutorial (a finish bar, a step
+ * parked off the walk, panels that hold unsaved work), a toy (a finish bar and
+ * a row-level Delete), a child profile (neither). The three used to be three
+ * components with three test files; the describes below are what each one
+ * asked of the shared behaviour, kept whole.
+ */
+
+const replace = vi.fn()
+let pathname = '/tutorials/t1/edit'
+let searchParamsValue = ''
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ replace }),
+  usePathname: () => pathname,
+  useSearchParams: () => new URLSearchParams(searchParamsValue),
+}))
 
 /**
  * A stand-in for a real step panel. Next is delivered through context and
@@ -20,46 +39,41 @@ function Panel({ children }: { children: ReactNode }) {
   )
 }
 
-const replace = vi.fn()
-let searchParamsValue = ''
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({ replace }),
-  usePathname: () => '/tutorials/t1/edit',
-  useSearchParams: () => new URLSearchParams(searchParamsValue),
-}))
-
-function makeSteps(content: { details: ReactNode; files: ReactNode }): EditStep[] {
-  return [
-    { id: 'details', label: 'Details', status: 'attention', content: <Panel>{content.details}</Panel> },
-    { id: 'files', label: 'Files', status: 'done', content: <Panel>{content.files}</Panel> },
-  ]
-}
-
-function renderStepper(finish?: EditFinish) {
-  return render(
-    <EditStepper
-      steps={makeSteps({ details: <p>Details content</p>, files: <p>Files content</p> })}
-      finish={finish}
-    />
-  )
-}
-
-function makeFinish(overrides: Partial<EditFinish> = {}): EditFinish {
-  return {
-    missing: [],
-    submitLabel: 'Submit for review',
-    busyLabel: 'Submitting…',
-    errorMessage: 'Could not submit this tutorial. Please try again.',
-    onSubmit: vi.fn().mockResolvedValue(undefined),
-    ...overrides,
-  }
-}
-
-describe('EditStepper', () => {
+describe('Stepper: the tutorial editor', () => {
   beforeEach(() => {
     replace.mockClear()
+    pathname = '/tutorials/t1/edit'
     searchParamsValue = ''
   })
+
+  function makeSteps(content: { details: ReactNode; files: ReactNode }): EditStep[] {
+    return [
+      { id: 'details', label: 'Details', status: 'attention', content: <Panel>{content.details}</Panel> },
+      { id: 'files', label: 'Files', status: 'done', content: <Panel>{content.files}</Panel> },
+    ]
+  }
+
+  function renderStepper(finish?: Finish<EditStepId>) {
+    return render(
+      <Stepper
+        label="Tutorial sections"
+        steps={makeSteps({ details: <p>Details content</p>, files: <p>Files content</p> })}
+        finish={finish}
+      />
+    )
+  }
+
+  function makeFinish(overrides: Partial<Finish<EditStepId>> = {}): Finish<EditStepId> {
+    return {
+      missing: [],
+      submitLabel: 'Submit for review',
+      busyLabel: 'Submitting…',
+      errorMessage: 'Could not submit this tutorial. Please try again.',
+      endLabel: 'Review and submit',
+      onSubmit: vi.fn().mockResolvedValue(undefined),
+      ...overrides,
+    }
+  }
 
   it('shows the first step content by default', () => {
     renderStepper()
@@ -132,7 +146,8 @@ describe('EditStepper', () => {
   //        never shown it — and going back to a gap is the finish bar's job
   it('walks to the next step in order, including one with nothing wrong with it', () => {
     render(
-      <EditStepper
+      <Stepper
+        label="Tutorial sections"
         steps={[
           { id: 'tools', label: 'Tools', status: 'done', content: <Panel><p>Tools content</p></Panel> },
           { id: 'stl', label: 'STL Files', status: 'neutral', content: <Panel><p>STL content</p></Panel> },
@@ -155,7 +170,8 @@ describe('EditStepper', () => {
   //        a Next pointing at one would be a button that does nothing
   it('steps over a disabled step', () => {
     render(
-      <EditStepper
+      <Stepper
+        label="Tutorial sections"
         steps={[
           { id: 'tools', label: 'Tools', status: 'done', content: <Panel><p>Tools content</p></Panel> },
           { id: 'stl', label: 'STL Files', status: 'neutral', disabled: true, content: null },
@@ -186,7 +202,8 @@ describe('EditStepper', () => {
   //        bar owns "go back and fix this"; Next owns "keep going"
   it('offers nothing onward from the last step, even with a gap behind it', () => {
     render(
-      <EditStepper
+      <Stepper
+        label="Tutorial sections"
         steps={[
           { id: 'details', label: 'Details', status: 'attention', content: <Panel><p>Details content</p></Panel> },
           { id: 'review', label: 'Review', status: 'neutral', content: <Panel><p>Review content</p></Panel> },
@@ -210,26 +227,27 @@ describe('EditStepper', () => {
   })
 
   // A walk of two steps with Team parked beside it, which is the editor's shape.
-  function withTrailing() {
+  function withOffWalk() {
     return render(
-      <EditStepper
+      <Stepper
+        label="Tutorial sections"
         steps={[
           { id: 'details', label: 'Details', status: 'done', content: <Panel><p>Details content</p></Panel> },
           { id: 'review', label: 'Review', status: 'neutral', content: <Panel><p>Review content</p></Panel> },
-          { id: 'team', label: 'Team', status: 'neutral', trailing: true, content: <Panel><p>Team content</p></Panel> },
+          { id: 'team', label: 'Team', status: 'neutral', offWalk: true, content: <Panel><p>Team content</p></Panel> },
         ]}
         finish={makeFinish()}
       />
     )
   }
 
-  // Tests: a trailing step carries neither the submit bar nor a way onward
+  // Tests: an off-walk step carries neither the submit bar nor a way onward
   // How:   opens Team with nothing missing — the case that used to draw both
   //        "Submit for review" and "Review and submit →" on the same screen
   // Chain: nothing on Team is required and nothing on it is submitted, so a submit
   //        control beside an invite field only asks what it would submit
-  it('draws no finish bar and no Next on a trailing step', () => {
-    withTrailing()
+  it('draws no finish bar and no Next on an off-walk step', () => {
+    withOffWalk()
     fireEvent.click(screen.getByRole('tab', { name: /team/i }))
     expect(screen.getByText('Team content')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Submit for review' })).toBeNull()
@@ -242,13 +260,13 @@ describe('EditStepper', () => {
     expect(screen.getByRole('button', { name: 'Submit for review' })).toBeInTheDocument()
   })
 
-  // Tests: the walk never leads to a trailing step, and does not end on one
+  // Tests: the walk never leads to an off-walk step, and does not end on one
   // Chain: Team is last in the steps array so the pill row can float it right, and
   //        the fallback used to be "the last step" flat. Left alone, Details would
   //        offer "Review and submit →" and open Team — the wrong panel under the
   //        right words, and a walk that quietly runs one step past its own end
-  it('sends Next to the end of the walk, never to the trailing step', () => {
-    withTrailing()
+  it('sends Next to the end of the walk, never to the off-walk step', () => {
+    withOffWalk()
     expect(screen.getByRole('button', { name: /review and submit/i })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /review and submit/i }))
     expect(screen.getByText('Review content')).toBeInTheDocument()
@@ -267,7 +285,8 @@ describe('EditStepper', () => {
 
   function renderHolding(save: () => Promise<boolean>) {
     return render(
-      <EditStepper
+      <Stepper
+        label="Tutorial sections"
         steps={[
           { id: 'details', label: 'Details', status: 'done', content: <Panel><Holding save={save} /></Panel> },
           { id: 'files', label: 'Files', status: 'done', content: <Panel><p>Files content</p></Panel> },
@@ -315,19 +334,157 @@ describe('EditStepper', () => {
     fireEvent.click(screen.getByRole('tab', { name: /files/i }))
     expect(screen.getByText('Files content')).toBeInTheDocument()
   })
+})
 
-  // Tests: arriving from /upload announces that the tutorial was created
-  // How:   renders with created=1 in the query and waits for the live region
-  // Chain: /upload and the editor draw the same pills and the same panel, so
-  //        the redirect between them changed almost nothing on screen. A correct
-  //        redirect that announces nothing reads as being thrown somewhere else
-  it('announces the create when it arrives from the new-tutorial form', async () => {
-    searchParamsValue = 'step=details&created=1'
-    renderStepper(makeFinish())
-    expect(await screen.findByRole('status')).toHaveTextContent('Tutorial created')
-    // And drops the flag, so a refresh does not announce it twice.
-    await waitFor(() =>
-      expect(replace).toHaveBeenCalledWith('/tutorials/t1/edit?step=details', { scroll: false })
+describe('Stepper: the toy editor', () => {
+  beforeEach(() => {
+    replace.mockClear()
+    pathname = '/dashboard/toys/t1'
+    searchParamsValue = ''
+  })
+
+  function makeSteps(content: { details: ReactNode; photos: ReactNode; review: ReactNode }): ToyStep[] {
+    return [
+      { id: 'details', label: 'Details', status: 'done', content: content.details },
+      { id: 'photos', label: 'Photos', status: 'attention', content: content.photos },
+      { id: 'review', label: 'Review', status: 'neutral', content: content.review },
+    ]
+  }
+
+  function steps() {
+    return makeSteps({
+      details: <p>Details content</p>,
+      photos: <p>Photos content</p>,
+      review: <p>Review content</p>,
+    })
+  }
+
+  it('shows the first step content by default', () => {
+    render(<Stepper label="Toy sections" steps={steps()} />)
+    expect(screen.getByText('Details content')).toBeInTheDocument()
+    expect(screen.queryByText('Photos content')).toBeNull()
+  })
+
+  it('names each tab after its label alone, not the decorative status glyph', () => {
+    render(<Stepper label="Toy sections" steps={steps()} />)
+    expect(screen.getByRole('tab', { name: 'Photos' })).toBeInTheDocument()
+  })
+
+  it('switches content and writes ?step= when a pill is clicked', () => {
+    render(<Stepper label="Toy sections" steps={steps()} />)
+    fireEvent.click(screen.getByRole('tab', { name: /photos/i }))
+    expect(screen.getByText('Photos content')).toBeInTheDocument()
+    expect(replace).toHaveBeenCalledWith('/dashboard/toys/t1?step=photos', { scroll: false })
+  })
+
+  it('opens on the step named in ?step= on load', () => {
+    searchParamsValue = 'step=review'
+    render(<Stepper label="Toy sections" steps={steps()} />)
+    expect(screen.getByText('Review content')).toBeInTheDocument()
+  })
+
+  it('renders a trailing action inside the pill row, after the last tab', () => {
+    const { container } = render(
+      <Stepper
+        label="Toy sections"
+        steps={steps()}
+        trailing={<button type="button">Delete toy</button>}
+      />
     )
+    const row = container.querySelector('.step-pill-row') as HTMLElement
+    const deleteButton = screen.getByRole('button', { name: 'Delete toy' })
+    expect(row).toContainElement(deleteButton)
+
+    const buttons = Array.from(row.querySelectorAll('button'))
+    expect(buttons[buttons.length - 1]).toBe(deleteButton)
+  })
+
+  it('keeps the trailing action out of the tablist, since it is not a tab', () => {
+    render(
+      <Stepper
+        label="Toy sections"
+        steps={steps()}
+        trailing={<button type="button">Delete toy</button>}
+      />
+    )
+    expect(screen.getAllByRole('tab')).toHaveLength(3)
+    expect(screen.getByRole('tablist')).not.toContainElement(
+      screen.getByRole('button', { name: 'Delete toy' })
+    )
+  })
+
+  it('renders no trailing slot when none is given', () => {
+    const { container } = render(<Stepper label="Toy sections" steps={steps()} />)
+    const row = container.querySelector('.step-pill-row') as HTMLElement
+    expect(row.querySelectorAll('button')).toHaveLength(3)
+  })
+
+  it("renders each pill's status dot from the step status", () => {
+    render(<Stepper label="Toy sections" steps={steps()} />)
+    const photosTab = screen.getByRole('tab', { name: /photos/i })
+    expect(photosTab.querySelector('[data-status="attention"]')).toHaveTextContent('!')
+  })
+})
+
+describe('Stepper: the child-profile editor', () => {
+  beforeEach(() => {
+    replace.mockClear()
+    pathname = '/dashboard/child/c1'
+    searchParamsValue = ''
+  })
+
+  function steps(): ChildStep[] {
+    return [
+      { id: 'survey', label: 'Survey', status: 'attention', content: <p>Survey content</p> },
+      { id: 'ability', label: 'Ability', status: 'done', content: <p>Ability content</p> },
+      { id: 'everyday-needs', label: 'Everyday needs', status: 'attention', content: <p>Everyday needs content</p> },
+      { id: 'customization', label: 'Customization', status: 'neutral', content: <p>Customization content</p> },
+    ]
+  }
+
+  it('shows the first step content by default', () => {
+    render(<Stepper label="Child profile sections" steps={steps()} />)
+    expect(screen.getByText('Survey content')).toBeInTheDocument()
+    expect(screen.queryByText('Ability content')).toBeNull()
+  })
+
+  it('switches content and writes ?step= when a pill is clicked', () => {
+    render(<Stepper label="Child profile sections" steps={steps()} />)
+    fireEvent.click(screen.getByRole('tab', { name: /ability/i }))
+    expect(screen.getByText('Ability content')).toBeInTheDocument()
+    expect(replace).toHaveBeenCalledWith('/dashboard/child/c1?step=ability', { scroll: false })
+  })
+
+  it('opens on the step named in ?step= on load', () => {
+    searchParamsValue = 'step=customization'
+    render(<Stepper label="Child profile sections" steps={steps()} />)
+    expect(screen.getByText('Customization content')).toBeInTheDocument()
+  })
+
+  it('has no locked pills — every step is a clickable tab', () => {
+    render(<Stepper label="Child profile sections" steps={steps()} />)
+    for (const tab of screen.getAllByRole('tab')) {
+      expect(tab).not.toBeDisabled()
+    }
+  })
+
+  it('renders a trailing action inside the pill row, after the last tab', () => {
+    const { container } = render(
+      <Stepper
+        label="Child profile sections"
+        steps={steps()}
+        trailing={<button type="button">Delete child</button>}
+      />
+    )
+    const row = container.querySelector('.step-pill-row') as HTMLElement
+    const deleteButton = screen.getByRole('button', { name: 'Delete child' })
+    expect(row).toContainElement(deleteButton)
+    expect(screen.getByRole('tablist')).not.toContainElement(deleteButton)
+  })
+
+  it("renders each pill's status dot from the step status", () => {
+    render(<Stepper label="Child profile sections" steps={steps()} />)
+    const surveyTab = screen.getByRole('tab', { name: /survey/i })
+    expect(surveyTab.querySelector('[data-status="attention"]')).toHaveTextContent('!')
   })
 })

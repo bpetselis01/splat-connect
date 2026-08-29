@@ -11,7 +11,7 @@
  * mentioned that submitting was a thing that happened, and a contributor could
  * fill in every field without ever finding the finish line.
  *
- * EditStepper renders the bar now, which keeps the reachability without giving
+ * The Stepper renders the bar now, which keeps the reachability without giving
  * the summary up: the bar names what is still missing wherever you stand, and
  * this step remains the place that shows what is about to be sent.
  *
@@ -22,7 +22,7 @@
  * same context that delivers Next.
  */
 import { CardPhoto } from '@/components/card-photo'
-import { DifficultyBadge } from '@/components/difficulty-badge'
+import { Badge } from '@/components/badge'
 import { BackingSummary } from '@/components/backing-state'
 import { PanelActions, useStepJump } from '@/components/panel-actions'
 import type { Difficulty, TutorialOrg } from '@splat-connect/types'
@@ -63,7 +63,7 @@ export function TutorialReviewPanel({
           <div>
             <dt className="font-semibold text-ink">Difficulty</dt>
             <dd className="mt-1">
-              <DifficultyBadge difficulty={difficulty} />
+              <Badge status={difficulty} />
             </dd>
           </div>
           <div>

@@ -1,21 +1,16 @@
 /**
- * Step manifest and status rules for the child-profile editor stepper.
- * Unlike lib/toy-steps.ts, no step is ever locked — every child-profile
- * field is a plain column with no upload/id dependency, so any pill can be
- * the one that creates the profile.
+ * Status rules for the child-profile editor stepper. Unlike lib/toy-steps.ts,
+ * no step is ever locked — every child-profile field is a plain column with no
+ * upload/id dependency, so any pill can be the one that creates the profile.
+ *
+ * No gaps either: a child profile is never submitted or published, so there is
+ * nothing to gate and nothing to be missing.
  */
-import type { ReactNode } from 'react'
 import type { ChildProfile } from '@splat-connect/types'
+import type { Step, StepStatus } from '@/lib/steps'
 
 export type ChildStepId = 'survey' | 'ability' | 'everyday-needs' | 'customization'
-export type ChildStepStatus = 'done' | 'attention' | 'neutral'
-
-export interface ChildStep {
-  id: ChildStepId
-  label: string
-  status: ChildStepStatus
-  content: ReactNode
-}
+export type ChildStep = Step<ChildStepId>
 
 function hasSurveyData(c: ChildProfile): boolean {
   // Specifically whether the survey produced the current values — a MACS/BFMF
@@ -56,7 +51,7 @@ function hasCustomizationData(c: ChildProfile): boolean {
 // null before the first save: a blank slate has nothing to flag as a hazard.
 export function computeChildStepStatuses(
   child: ChildProfile | null
-): Record<ChildStepId, ChildStepStatus> {
+): Record<ChildStepId, StepStatus> {
   if (!child) {
     return { survey: 'neutral', ability: 'neutral', 'everyday-needs': 'neutral', customization: 'neutral' }
   }

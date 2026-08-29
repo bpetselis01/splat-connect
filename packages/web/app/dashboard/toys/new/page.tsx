@@ -1,7 +1,7 @@
 import { BackLink } from '@/components/back-link'
 import { requireCapabilities } from '@/lib/require-capabilities'
 import { NewToyForm } from '@/components/new-toy-form'
-import { ToyEditStepper } from '@/components/toy-edit-stepper'
+import { Stepper } from '@/components/stepper'
 
 export default async function NewToyPage() {
   const caps = await requireCapabilities()
@@ -16,7 +16,8 @@ export default async function NewToyPage() {
       {/* Same stepper as the edit page so the journey is visible from the
           start. Photos and Review stay locked until the toy exists: both need
           an id to upload against, and the review reads saved fields. */}
-      <ToyEditStepper
+      <Stepper
+        label="Toy sections"
         steps={[
           {
             id: 'details',

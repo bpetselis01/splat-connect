@@ -23,9 +23,14 @@ function toy(overrides: Partial<Toy> = {}): Toy {
   }
 }
 
+// Each gap carries the step that closes it, so the publish bar can name what
+// is missing and hand over the fix in one gesture. Offer type is chosen in the
+// Review panel, which is why it points there rather than at Photos.
 describe('getMissingToyFields', () => {
-  it('flags a missing cover photo', () => {
-    expect(getMissingToyFields(toy({ cover_photo_url: null }))).toEqual(['Cover photo'])
+  it('flags a missing cover photo, pointing at Photos', () => {
+    expect(getMissingToyFields(toy({ cover_photo_url: null }))).toEqual([
+      { step: 'photos', label: 'A cover photo' },
+    ])
   })
 
   it('does not require switch photos when not switch-adapted', () => {
@@ -33,7 +38,9 @@ describe('getMissingToyFields', () => {
   })
 
   it('requires at least one switch photo when switch-adapted', () => {
-    expect(getMissingToyFields(toy({ switch_adapted: true, switch_photo_urls: [] }))).toEqual(['Switch photo'])
+    expect(getMissingToyFields(toy({ switch_adapted: true, switch_photo_urls: [] }))).toEqual([
+      { step: 'photos', label: 'A switch photo' },
+    ])
   })
 
   it('is satisfied once a switch photo exists', () => {
@@ -42,8 +49,10 @@ describe('getMissingToyFields', () => {
     ).toEqual([])
   })
 
-  it('flags a missing offer type', () => {
-    expect(getMissingToyFields(toy({ offer_type: null }))).toEqual(['Offer type'])
+  it('flags a missing offer type, pointing at Review rather than Photos', () => {
+    expect(getMissingToyFields(toy({ offer_type: null }))).toEqual([
+      { step: 'review', label: 'How it is offered' },
+    ])
   })
 })
 

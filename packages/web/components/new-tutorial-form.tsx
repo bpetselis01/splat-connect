@@ -43,7 +43,7 @@ export function NewTutorialForm({ kind }: { kind: TutorialKind }) {
       //
       // created=1 is what makes the handover audible. Both pages draw the same
       // eight pills and the same panel, so a silent redirect reads as being
-      // thrown somewhere else rather than as a step completed; EditStepper
+      // thrown somewhere else rather than as a step completed; CreatedToast
       // turns this into a toast and drops it from the URL.
       router.push(`/tutorials/${id}/edit?step=files&created=1` as Route<string>)
     } catch {

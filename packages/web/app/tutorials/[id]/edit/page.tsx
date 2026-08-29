@@ -11,9 +11,12 @@ import { EditBackingSection } from '@/components/edit-backing-section'
 import { EditDetailsSection } from '@/components/edit-details-section'
 import { EditCollaboratorsSection } from '@/components/edit-collaborators-section'
 import { EditRecommendationsSection } from '@/components/edit-recommendations-section'
-import { EditStepper } from '@/components/edit-stepper'
+import { Stepper } from '@/components/stepper'
+import { CreatedToast } from '@/components/created-toast'
+import { ToastProvider } from '@/components/toast'
 import { TutorialReviewPanel } from '@/components/tutorial-review-panel'
-import { computeStepStatuses, missingByStep, stepsFor, type EditStep } from '@/lib/edit-steps'
+import { computeStepStatuses, stepsFor, type EditStep } from '@/lib/edit-steps'
+import { getMissingFields } from '@/lib/validation'
 import { SaveStatusLine } from '@/components/save-status-line'
 import type { Tutorial, Part, Tool, StlFile, TutorialWithDetails, Difficulty, TutorialKind, BuyLink, Profile, TutorialOrg, Organization } from '@splat-connect/types'
 
@@ -158,7 +161,7 @@ export default async function EditTutorialPage({
   }
 
 
-  const missing = missingByStep(tutorial!)
+  const missing = getMissingFields(tutorial!)
   const stepStatuses = computeStepStatuses(tutorial!, backing)
 
   // Every step this page knows how to draw. Which of them show, and in what
@@ -283,8 +286,8 @@ export default async function EditTutorialPage({
       // Beside the walk, not on it: the pill sits at the right end of the
       // rail in its own colour, nothing offers it as Next, and it carries no
       // finish bar. Review is where a contributor is asked whether they want
-      // it. See EditStep.trailing.
-      trailing: true,
+      // it. See Step.offWalk.
+      offWalk: true,
       content: (
         // Two cards rather than one, because they are two separate asks — you
         // invite a person, you ask an organisation — and the heading each one
@@ -336,26 +339,36 @@ export default async function EditTutorialPage({
         </div>
       )}
 
-      {/* useSearchParams() inside EditStepper requires a Suspense boundary, or
-          `next build` fails to prerender this page — same reasoning as
-          app/onboarding/contributor-terms/page.tsx. */}
+      {/* useSearchParams() inside Stepper and CreatedToast requires a Suspense
+          boundary, or `next build` fails to prerender this page — same
+          reasoning as app/onboarding/contributor-terms/page.tsx.
+
+          ToastProvider sits here rather than inside the stepper: every panel's
+          save announces itself through it, and so does the arrival from
+          /upload, which is the one thing the stepper never had a reason to
+          know about. */}
       <Suspense>
-        <EditStepper
-          steps={steps}
-          finish={{
-            missing,
-            submitLabel: 'Submit for review',
-            busyLabel: 'Submitting…',
-            errorMessage: 'Could not submit this tutorial. Please try again.',
-            onSubmit: submitForReview,
-            // Once it has left the contributor's hands there is nothing to
-            // finish, so the bar carries the last-saved line instead.
-            done:
-              tutorial.status === 'draft' ? undefined : (
-                <SaveStatusLine savedAt={tutorial.updated_at} />
-              ),
-          }}
-        />
+        <ToastProvider>
+          <CreatedToast />
+          <Stepper
+            steps={steps}
+            label="Tutorial sections"
+            finish={{
+              missing,
+              submitLabel: 'Submit for review',
+              busyLabel: 'Submitting…',
+              errorMessage: 'Could not submit this tutorial. Please try again.',
+              endLabel: 'Review and submit',
+              onSubmit: submitForReview,
+              // Once it has left the contributor's hands there is nothing to
+              // finish, so the bar carries the last-saved line instead.
+              done:
+                tutorial.status === 'draft' ? undefined : (
+                  <SaveStatusLine savedAt={tutorial.updated_at} />
+                ),
+            }}
+          />
+        </ToastProvider>
       </Suspense>
     </div>
   )
