@@ -197,6 +197,8 @@ test('an STL file record can be added', async ({ page }) => {
     title: uniqueTitle('E2E Edit STL'),
     status: 'draft',
     withStl: false,
+    // The step exists only for this kind; a toy adaptation has no pill to open.
+    kind: 'assistive_tech',
   })
 
   await signIn(page, contributor.email, contributor.password)
