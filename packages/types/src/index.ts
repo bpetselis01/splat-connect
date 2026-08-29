@@ -520,12 +520,24 @@ export interface AdminAccountsResponse {
   total: number
 }
 
+/** Which walk a tutorial is on. The two differ by exactly one step — an
+ *  assistive-tech build has STL files and needs at least one; a toy adaptation
+ *  never shows the step — so this is a column rather than a second pipeline. */
+export type TutorialKind = 'toy_adaptation' | 'assistive_tech'
+/** The one place the display names live. */
+export const KIND_LABEL: Record<TutorialKind, string> = {
+  toy_adaptation: 'Toy adaptation',
+  assistive_tech: 'Assistive tech',
+}
+
 export interface Tutorial {
   id: string
   title: string
   description: string | null
   difficulty: Difficulty
+  kind: TutorialKind
   status: TutorialStatus
+  /** Storage object path in `tutorial-pdfs` (`<id>/tutorial.pdf`), not a URL — served via /files/tutorial-pdfs/<path>. Null until uploaded. */
   tutorial_pdf_url: string | null
   toy_photo_url: string | null
   rejection_note: string | null
@@ -576,7 +588,17 @@ export interface StlFile {
   id: string
   tutorial_id: string
   filename: string
+  /** Storage object path in `stl-files` (`<tutorial id>/<filename>`), not a URL — served via /files/stl-files/<path>. */
   file_url: string
+}
+
+/** One row of tutorial_recommendations with its target embedded. `status`
+ *  rides along on the contributor-facing payload so the editor can badge a
+ *  target that is not yet public; the public detail route drops such rows
+ *  entirely, the way it drops backing that was never accepted. */
+export interface Recommendation {
+  position: number
+  tutorials: Pick<Tutorial, 'id' | 'title' | 'kind' | 'difficulty' | 'toy_photo_url' | 'status'>
 }
 
 // A tutorial with all its related information: the parts needed, tools needed,
@@ -587,6 +609,7 @@ export interface TutorialWithDetails extends Tutorial {
   parts: Part[]
   tools: Tool[]
   stl_files: StlFile[]
+  tutorial_recommendations: Recommendation[]
   tutorial_contributors: (TutorialContributor & { profiles: Profile })[]
   /** Optional because only the contributor-facing GET /api/tutorials/:id embeds
    *  it — the public detail route has no business exposing who was asked and
