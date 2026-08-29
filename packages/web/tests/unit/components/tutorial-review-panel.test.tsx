@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { TutorialReviewPanel } from '@/components/tutorial-review-panel'
+import { StepJumpProvider } from '@/components/panel-actions'
 import type { TutorialOrg } from '@splat-connect/types'
 
 vi.mock('next/image', () => ({
@@ -10,7 +11,7 @@ vi.mock('next/image', () => ({
 
 type Props = Parameters<typeof TutorialReviewPanel>[0]
 
-function setup(overrides: Partial<Props> = {}) {
+function panel(overrides: Partial<Props> = {}) {
   const props: Props = {
     title: 'Sensory light box',
     description: 'A calming light box.',
@@ -23,7 +24,11 @@ function setup(overrides: Partial<Props> = {}) {
     backing: [] as TutorialOrg[],
     ...overrides,
   }
-  return render(<TutorialReviewPanel {...props} />)
+  return <TutorialReviewPanel {...props} />
+}
+
+function setup(overrides: Partial<Props> = {}) {
+  return render(panel(overrides))
 }
 
 describe('TutorialReviewPanel', () => {
@@ -65,5 +70,24 @@ describe('TutorialReviewPanel', () => {
     const { container } = setup()
     expect(screen.queryByRole('button', { name: /submit for review/i })).toBeNull()
     expect(container.querySelector('.sticky-submit-bar')).toBeNull()
+  })
+
+  // Tests: the summary asks about Team, and opens it
+  // Chain: Team sits beside the rail rather than on it, so the walk never passes
+  //        through it. Without this, a contributor reaches the end having never
+  //        been told that collaborators and backers exist
+  it('asks whether anyone else should be added, and opens Team', () => {
+    const jump = vi.fn()
+    render(<StepJumpProvider value={jump}>{panel()}</StepJumpProvider>)
+    expect(screen.getByText(/want to add collaborators or backers/i)).toBeInTheDocument()
+    screen.getByRole('button', { name: /open team/i }).click()
+    expect(jump).toHaveBeenCalledWith('team')
+  })
+
+  // Tests: and asks nothing when there is no stepper to answer
+  // Chain: a button that opens a step is a lie anywhere the steps do not exist
+  it('leaves the question out when no stepper can act on it', () => {
+    setup()
+    expect(screen.queryByText(/want to add collaborators or backers/i)).toBeNull()
   })
 })
