@@ -113,7 +113,9 @@ describe('GET /:id', () => {
   //        full tutorial content including PDF link, parts, and tools
   it('returns single tutorial', async () => {
     mockUserClient.from.mockReturnValue({
-      select: () => ({ eq: () => ({ single: () => ({ data: { id: '1', title: 'T1' }, error: null }) }) }),
+      // order() sorts the recommendations embed by position; the chain has one
+      // more link than it used to.
+      select: () => ({ eq: () => ({ order: () => ({ single: () => ({ data: { id: '1', title: 'T1' }, error: null }) }) }) }),
     })
     const res = await makeApp().request('/1')
     expect(res.status).toBe(200)
@@ -125,7 +127,7 @@ describe('GET /:id', () => {
   //        of crashing with a null data error when the component tries to render
   it('returns 404 when tutorial not found', async () => {
     mockUserClient.from.mockReturnValue({
-      select: () => ({ eq: () => ({ single: () => ({ data: null, error: { message: 'not found' } }) }) }),
+      select: () => ({ eq: () => ({ order: () => ({ single: () => ({ data: null, error: { message: 'not found' } }) }) }) }),
     })
     const res = await makeApp().request('/nonexistent')
     expect(res.status).toBe(404)
@@ -192,6 +194,28 @@ describe('POST /', () => {
     expect(res.status).toBe(201)
     const body = await res.json() as any
     expect(body.status).toBe('draft')
+  })
+
+  // Tests: POST / writes kind, and a body that does not name one gets a toy
+  //        adaptation — the default every pre-048 row already carries.
+  // Chain: /upload sends the card the contributor picked; kind is what decides
+  //        whether the STL step exists for this tutorial at all
+  it('inserts kind, defaulting to toy_adaptation', async () => {
+    const insert = vi.fn((_row: Record<string, unknown>) => ({ select: () => ({ single: () => ({ data: { id: 'x' }, error: null }) }) }))
+    withTerms(true)
+    mockAdminClient.from.mockReturnValue({ insert })
+    await makeApp().request('/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 'x', title: 'T', difficulty: 'easy' }),
+    })
+    expect(insert.mock.calls[0][0]).toMatchObject({ kind: 'toy_adaptation' })
+    await makeApp().request('/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 'y', title: 'T', difficulty: 'easy', kind: 'assistive_tech' }),
+    })
+    expect(insert.mock.calls[1][0]).toMatchObject({ kind: 'assistive_tech' })
   })
 
   // Tests: POST / returns 200 with the existing ID when the same tutorial ID is submitted twice
