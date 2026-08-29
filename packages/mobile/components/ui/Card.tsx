@@ -4,11 +4,9 @@ import { theme } from '../../lib/theme'
 
 /**
  * `raised`  — white on the tinted canvas. The default; list rows, content.
- * `flat`    — outlined, no shadow. Grouped/settings-shaped content, where a
- *             stack of shadows would read as clutter.
  * `feature` — brand-tinted. One per screen at most, for the thing that matters.
  */
-type CardVariant = 'raised' | 'flat' | 'feature'
+type CardVariant = 'raised' | 'feature'
 
 export function Card({
   variant = 'raised',
@@ -31,11 +29,6 @@ const styles = StyleSheet.create({
   raised: {
     backgroundColor: theme.colors.surface,
     ...theme.elevation.rest,
-  },
-  flat: {
-    backgroundColor: theme.colors.surface,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
   },
   feature: {
     backgroundColor: theme.colors.accentLight,

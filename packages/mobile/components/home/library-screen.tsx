@@ -1,14 +1,9 @@
 // packages/mobile/components/home/library-screen.tsx
 import { useEffect, useState } from 'react'
-import { View, Text, TextInput, StyleSheet, Image, type TextStyle } from 'react-native'
+import { View, Text, FlatList, StyleSheet, Image } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import Animated, {
-  interpolateColor,
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated'
+import Animated, { FadeInDown } from 'react-native-reanimated'
 import type { Tutorial, Difficulty } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
@@ -16,19 +11,12 @@ import { DifficultyBadge } from '../difficulty-badge'
 import { ScreenHeader } from '../ui/ScreenHeader'
 import { Chip } from '../ui/Chip'
 import { Card } from '../ui/Card'
-import { StaggeredList } from '../ui/StaggeredList'
+import { TextField } from '../ui/TextField'
 import { Screen } from '../ui/Screen'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
 import { Button } from '../ui/Button'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
-
-// react-native-web paints the browser's default focus ring on a focused
-// TextInput: a square outline that ignores the pill radius and escapes its
-// container. The animated border below is the focus indicator, so this
-// suppresses a duplicate rather than removing the only one. `outlineStyle` is
-// web-only and absent from React Native's TextStyle, hence the cast.
-const noWebOutline = { outlineStyle: 'none' } as unknown as TextStyle
 
 const FILTERS: { label: string; value: Difficulty | null }[] = [
   { label: 'All', value: null },
@@ -36,38 +24,6 @@ const FILTERS: { label: string; value: Difficulty | null }[] = [
   { label: 'Medium', value: 'medium' },
   { label: 'Hard', value: 'hard' },
 ]
-
-/** The search field grows a brand-coloured ring on focus rather than cutting to it. */
-function SearchField({ value, onChangeText }: { value: string; onChangeText: (v: string) => void }) {
-  const focus = useSharedValue(0)
-
-  const ring = useAnimatedStyle(() => ({
-    borderColor: interpolateColor(
-      focus.value,
-      [0, 1],
-      [theme.colors.border, theme.colors.primary]
-    ),
-  }))
-
-  return (
-    <Animated.View style={[styles.searchBar, ring]}>
-      <Ionicons name="search" size={19} color={theme.colors.muted} style={styles.searchIcon} />
-      <TextInput
-        style={styles.searchInput}
-        placeholder="Search tutorials"
-        placeholderTextColor={theme.colors.muted}
-        value={value}
-        onChangeText={onChangeText}
-        onFocus={() => {
-          focus.value = withTiming(1, { duration: theme.motion.fast })
-        }}
-        onBlur={() => {
-          focus.value = withTiming(0, { duration: theme.motion.fast })
-        }}
-      />
-    </Animated.View>
-  )
-}
 
 function TutorialRow({ item, onPress }: { item: Tutorial; onPress: () => void }) {
   return (
@@ -174,7 +130,13 @@ export function LibraryScreen() {
         showLogo
       />
 
-      <SearchField value={search} onChangeText={setSearch} />
+      <TextField
+        icon="search"
+        placeholder="Search tutorials"
+        value={search}
+        onChangeText={setSearch}
+        boxStyle={styles.searchBar}
+      />
 
       <View style={styles.filterRow}>
         {FILTERS.map((f) => (
@@ -217,17 +179,25 @@ export function LibraryScreen() {
           }
         />
       ) : (
-        <StaggeredList
+        <FlatList
           key={`${difficulty ?? 'all'}`}
           data={visible}
           keyExtractor={(t) => t.id}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
-          renderItem={({ item }) => (
-            <TutorialRow
-              item={item}
-              onPress={() => router.push({ pathname: '/home/[id]', params: { id: item.id } })}
-            />
+          renderItem={({ item, index }) => (
+            // Past the first screenful the stagger is invisible and only adds
+            // latency, so the delay is capped rather than growing with the index.
+            <Animated.View
+              entering={FadeInDown.delay(Math.min(index, 7) * theme.motion.stagger).duration(
+                theme.motion.base
+              )}
+            >
+              <TutorialRow
+                item={item}
+                onPress={() => router.push({ pathname: '/home/[id]', params: { id: item.id } })}
+              />
+            </Animated.View>
           )}
         />
       )}
@@ -237,24 +207,9 @@ export function LibraryScreen() {
 
 const styles = StyleSheet.create({
   searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
     borderRadius: theme.radii.pill,
-    borderWidth: 1.5,
-    backgroundColor: theme.colors.surface,
     paddingHorizontal: theme.spacing(4),
-    marginBottom: theme.spacing(3),
     ...theme.elevation.rest,
-  },
-  searchIcon: { marginRight: theme.spacing(2) },
-  searchInput: {
-    flex: 1,
-    paddingVertical: theme.spacing(3),
-    minHeight: 48,
-    fontFamily: theme.fonts.regular,
-    fontSize: theme.type.body,
-    color: theme.colors.text,
-    ...noWebOutline,
   },
   filterRow: { flexDirection: 'row', gap: theme.spacing(2), marginBottom: theme.spacing(4) },
   retry: { marginTop: theme.spacing(5), alignSelf: 'center', paddingHorizontal: theme.spacing(8) },

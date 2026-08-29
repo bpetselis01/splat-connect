@@ -1,6 +1,6 @@
 // packages/mobile/components/profile/ability-screen.tsx
 import { useState } from 'react'
-import { ScrollView, View, Text, StyleSheet } from 'react-native'
+import { View, Text, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import Animated, {
   useAnimatedStyle,
@@ -10,7 +10,7 @@ import Animated, {
 import { estimateAbility, QUESTIONS, type ChildProfile } from '@splat-connect/types'
 import { useChildProfile } from '../../lib/use-child-profile'
 import { theme } from '../../lib/theme'
-import { Dropdown } from './fields'
+import { Dropdown, FormScreen } from './fields'
 import { Chip } from '../ui/Chip'
 import { Button } from '../ui/Button'
 import { Card } from '../ui/Card'
@@ -57,10 +57,7 @@ export function AbilityScreen() {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.intro}>
-        Used to match tutorials and 3D print models to your child&apos;s needs.
-      </Text>
+    <FormScreen intro="Used to match tutorials and 3D print models to your child's needs.">
 
       <Section title="Diagnosis">
         <Dropdown
@@ -140,20 +137,11 @@ export function AbilityScreen() {
           <Button label="Estimate" onPress={runEstimate} disabled={answered < QUESTIONS.length} />
         </View>
       ) : null}
-    </ScrollView>
+    </FormScreen>
   )
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.background },
-  content: { padding: theme.spacing(4), paddingBottom: theme.spacing(10) },
-  intro: {
-    fontFamily: theme.fonts.regular,
-    fontSize: theme.type.label,
-    color: theme.colors.muted,
-    lineHeight: 21,
-    marginBottom: theme.spacing(5),
-  },
   quizToggle: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3) },
   quizToggleBody: { flex: 1 },
   quizToggleText: {

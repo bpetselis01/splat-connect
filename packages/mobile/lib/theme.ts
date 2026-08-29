@@ -6,14 +6,12 @@ export const theme = {
     primary: '#1998d5',
     primaryDark: '#0f6f9c',
     primaryDeep: '#0a4f70',
-    primarySoft: '#bfe4f5',
 
     // Surfaces
     background: '#eaf4fa',
     surface: '#ffffff',
     surfaceSunken: '#dcedf6',
     accentLight: '#d8ecf7',
-    accentLighter: '#ffffff',
 
     // Ink. `muted` was #6b7a82 — about 4.4:1 on white, under the 4.5:1 floor
     // while carrying 13px body copy. It now clears 4.5:1 on both surfaces.
@@ -23,9 +21,7 @@ export const theme = {
 
     // Warm complement of the brand blue. Reserved for delight and emphasis,
     // never used as decoration.
-    apricot: '#ff8f5e',
     apricotSoft: '#ffe3d5',
-    mint: '#2fbf9f',
     // Readable success text: mint itself is ~1.9:1 on the canvas. Matches the
     // web --color-mint-deep so "Saved" reads the same green on both surfaces.
     mintDeep: '#0f5c4d',
@@ -45,19 +41,12 @@ export const theme = {
   },
   // Fixed scale at a ~1.2 ratio. Product UI is read at a consistent size on a
   // phone; fluid type buys nothing here and makes headings unpredictable.
-  type: { display: 30, title: 24, heading: 19, body: 16, label: 14, caption: 13 },
+  type: { title: 24, heading: 19, body: 16, label: 14, caption: 13 },
   spacing: (n: number) => n * 4,
   radii: { sm: 10, md: 14, lg: 18, pill: 999 },
   // Shadows are tinted blue rather than near-black: a neutral shadow over a
   // blue canvas reads as dirt. `elevation` is not optional — Android ignores
   // the shadow* props entirely, so the old preset rendered flat there.
-  shadow: {
-    shadowColor: '#0a3550',
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-  },
   elevation: {
     rest: {
       shadowColor: '#0a3550',
@@ -66,20 +55,11 @@ export const theme = {
       shadowOffset: { width: 0, height: 3 },
       elevation: 2,
     },
-    lift: {
-      shadowColor: '#0a3550',
-      shadowOpacity: 0.14,
-      shadowRadius: 20,
-      shadowOffset: { width: 0, height: 8 },
-      elevation: 7,
-    },
   },
   motion: {
     pressScale: 0.96,
-    duration: 180,
     fast: 140,
     base: 240,
-    slow: 360,
     stagger: 55,
     // Low overshoot on purpose: a control that dips and settles feels tactile,
     // one that bounces feels like a toy.

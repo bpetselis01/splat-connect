@@ -39,6 +39,41 @@ function useProfileSegment() {
   return { segment, select }
 }
 
+function TermsCheckbox({ testID, checked, onPress }: {
+  testID: string
+  checked: boolean
+  onPress: () => void
+}) {
+  return (
+    <Pressable
+      testID={testID}
+      onPress={onPress}
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked }}
+      style={styles.termsRow}
+    >
+      <Ionicons name={checked ? 'checkbox' : 'square-outline'} size={22} color={theme.colors.primary} />
+      <Text style={styles.termsText}>
+        I have read and accept the{' '}
+        <Text onPress={openContributorTerms} style={styles.termsLink}>
+          contributor terms
+        </Text>
+        .
+      </Text>
+    </Pressable>
+  )
+}
+
+function ErrorRow({ message }: { message: string | null }) {
+  if (!message) return null
+  return (
+    <View style={styles.errorRow}>
+      <Ionicons name="alert-circle" size={18} color={theme.colors.danger} />
+      <Text style={styles.error}>{message}</Text>
+    </View>
+  )
+}
+
 export function ProfileScreen() {
   const { session, profile, signIn, signUp, signOut, hasContributorTerms, acceptContributorTerms } = useAuth()
   const { segment, select: selectSegment } = useProfileSegment()
@@ -149,32 +184,12 @@ export function ProfileScreen() {
               These terms have not been written yet, and anything you accept now is not
               binding.
             </Text>
-            <Pressable
+            <TermsCheckbox
               testID="gate-accept-checkbox"
+              checked={gateTicked}
               onPress={() => setGateTicked((v) => !v)}
-              accessibilityRole="checkbox"
-              accessibilityState={{ checked: gateTicked }}
-              style={styles.termsRow}
-            >
-              <Ionicons
-                name={gateTicked ? 'checkbox' : 'square-outline'}
-                size={22}
-                color={theme.colors.primary}
-              />
-              <Text style={styles.termsText}>
-                I have read and accept the{' '}
-                <Text onPress={openContributorTerms} style={styles.termsLink}>
-                  contributor terms
-                </Text>
-                .
-              </Text>
-            </Pressable>
-            {gateError ? (
-              <View style={styles.errorRow}>
-                <Ionicons name="alert-circle" size={18} color={theme.colors.danger} />
-                <Text style={styles.error}>{gateError}</Text>
-              </View>
-            ) : null}
+            />
+            <ErrorRow message={gateError} />
             <Button
               label="Accept and continue"
               disabled={!gateTicked}
@@ -263,34 +278,14 @@ export function ProfileScreen() {
           ) : null}
 
           {mode === 'signup' ? (
-            <Pressable
+            <TermsCheckbox
               testID="accept-contributor-terms"
+              checked={acceptedTerms}
               onPress={() => setAcceptedTerms((v) => !v)}
-              accessibilityRole="checkbox"
-              accessibilityState={{ checked: acceptedTerms }}
-              style={styles.termsRow}
-            >
-              <Ionicons
-                name={acceptedTerms ? 'checkbox' : 'square-outline'}
-                size={22}
-                color={theme.colors.primary}
-              />
-              <Text style={styles.termsText}>
-                I have read and accept the{' '}
-                <Text onPress={openContributorTerms} style={styles.termsLink}>
-                  contributor terms
-                </Text>
-                .
-              </Text>
-            </Pressable>
+            />
           ) : null}
 
-          {error ? (
-            <View style={styles.errorRow}>
-              <Ionicons name="alert-circle" size={18} color={theme.colors.danger} />
-              <Text style={styles.error}>{error}</Text>
-            </View>
-          ) : null}
+          <ErrorRow message={error} />
 
           <Button
             label={mode === 'signin' ? 'Sign In' : 'Sign Up'}

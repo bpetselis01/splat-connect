@@ -1,8 +1,8 @@
 // packages/mobile/components/profile/customization-screen.tsx
-import { ScrollView, View, Text, Switch, StyleSheet } from 'react-native'
+import { View, Text, Switch, StyleSheet } from 'react-native'
 import { useChildProfile } from '../../lib/use-child-profile'
 import { theme } from '../../lib/theme'
-import { ChipGroup, Dropdown, NumberField } from './fields'
+import { ChipGroup, Dropdown, FormScreen, NumberField } from './fields'
 import { Section } from '../ui/Section'
 
 const HAND_DOMINANCE = ['Left', 'Right', 'Ambidextrous', 'Not yet established'].map((d) => ({ label: d, value: d }))
@@ -12,10 +12,7 @@ export function CustomizationScreen() {
   const { profile, save } = useChildProfile()
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.intro}>
-        These measurements size the 3D-printed parts. Millimetres, measured on the hand your child leads with.
-      </Text>
+    <FormScreen intro="These measurements size the 3D-printed parts. Millimetres, measured on the hand your child leads with.">
 
       <Section title="Measurements">
         <NumberField
@@ -74,20 +71,11 @@ export function CustomizationScreen() {
           onChange={(v) => save({ sensory_preferences: v })}
         />
       </Section>
-    </ScrollView>
+    </FormScreen>
   )
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.background },
-  content: { padding: theme.spacing(4), paddingBottom: theme.spacing(10) },
-  intro: {
-    fontFamily: theme.fonts.regular,
-    fontSize: theme.type.label,
-    color: theme.colors.muted,
-    lineHeight: 21,
-    marginBottom: theme.spacing(5),
-  },
   toggleRow: {
     flexDirection: 'row',
     alignItems: 'center',
