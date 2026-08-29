@@ -1,10 +1,14 @@
 'use client'
-import { useState, type ReactNode } from 'react'
+import { useRef, useState, type ReactNode } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import type { Route } from 'next'
 import type { MissingToyStep, ToyStep, ToyStepId, ToyStepStatus } from '@/lib/toy-steps'
 import { FinishBar } from '@/components/finish-bar'
-import { NextStepProvider } from '@/components/panel-actions'
+import {
+  NextStepProvider,
+  SaveOnLeaveProvider,
+  type PendingSave,
+} from '@/components/panel-actions'
 
 const STATUS_GLYPH: Record<ToyStepStatus, string> = { done: '✓', attention: '!', neutral: '·' }
 
@@ -42,21 +46,36 @@ export function ToyEditStepper({
     steps.find((s) => s.id === requested && !s.disabled)?.id ?? steps[0].id
   )
 
-  function selectStep(id: ToyStepId) {
+  // The open panel's save, run before any step change. Same arrangement as the
+  // tutorial stepper, and see its note for why it hangs off selectStep rather
+  // than off the Next button, and why the no-op case stays synchronous.
+  const pendingSave = useRef<(() => Promise<boolean>) | null>(null)
+  const [leaving, setLeaving] = useState(false)
+
+  function go(id: ToyStepId) {
     setActiveId(id)
     router.replace(`${pathname}?step=${id}` as Route<string>, { scroll: false })
   }
 
+  function selectStep(id: ToyStepId) {
+    const save = pendingSave.current
+    if (!save) return go(id)
+    if (leaving) return
+    setLeaving(true)
+    void save()
+      .then((saved) => {
+        if (saved) go(id)
+      })
+      .finally(() => setLeaving(false))
+  }
+
   const active = steps.find((s) => s.id === activeId) ?? steps[0]
 
-  // The next step still wanting something, searched forward from where you are
-  // — the same rule the tutorial stepper runs, and see its note for why the
-  // search has to start after the active step rather than at the top.
+  // The step after this one — the same rule the tutorial stepper runs, and see
+  // its note for why Next walks in order rather than hunting the next gap.
   const last = steps[steps.length - 1]
   const after = steps.slice(steps.findIndex((s) => s.id === activeId) + 1)
-  const nextStep =
-    after.find((s) => s.status === 'attention' && !s.disabled) ??
-    (activeId !== last.id && !last.disabled ? last : undefined)
+  const nextStep = after.find((s) => !s.disabled)
 
   return (
     <>
@@ -103,7 +122,9 @@ export function ToyEditStepper({
             ) : null
           }
         >
-          {active.content}
+          <SaveOnLeaveProvider value={pendingSave as PendingSave}>
+            {active.content}
+          </SaveOnLeaveProvider>
         </NextStepProvider>
       </div>
 
