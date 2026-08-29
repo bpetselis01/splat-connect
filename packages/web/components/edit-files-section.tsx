@@ -1,5 +1,5 @@
 'use client'
-import { PanelActions } from '@/components/panel-actions'
+import { PanelActions, useSaveOnLeave } from '@/components/panel-actions'
 import { useState } from 'react'
 import { browserApiClient } from '@/lib/browser-api-client'
 import { FileDropZone } from '@/components/file-drop-zone'
@@ -47,7 +47,7 @@ export function EditFilesSection({
   }
 
   async function handleSave() {
-    if (!hasChanges || saving) return
+    if (!hasChanges || saving) return true
     setSaving(true)
     setError(null)
     try {
@@ -61,12 +61,20 @@ export function EditFilesSection({
       showToast('Files saved')
       setPhotoFile(null)
       setPdfFile(null)
+      return true
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload failed')
+      return false
     } finally {
       setSaving(false)
     }
   }
+
+  /* A picked file is not on the server until this runs, so leaving without it
+     would silently drop the upload. On failure the step holds, with the error
+     above still on screen — the file is only in this component's memory, and
+     unmounting is how it would be lost for good. */
+  useSaveOnLeave(hasChanges && !saving ? handleSave : null)
 
   const btnCls = 'btn btn-primary btn-sm'
 
