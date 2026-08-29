@@ -1,4 +1,5 @@
 'use client'
+import { PanelActions } from '@/components/panel-actions'
 import { useState } from 'react'
 import { browserApiClient } from '@/lib/browser-api-client'
 import { FileDropZone } from '@/components/file-drop-zone'
@@ -67,7 +68,7 @@ export function EditFilesSection({
     }
   }
 
-  const btnCls = 'btn btn-primary btn-sm self-end'
+  const btnCls = 'btn btn-primary btn-sm'
 
   return (
     <div className="flex flex-col gap-4 px-5 pb-5">
@@ -84,7 +85,8 @@ export function EditFilesSection({
           accept="image/*"
           label="Toy Photo"
           onChange={handlePhotoChange}
-          currentFileLabel={currentPhotoUrl ? 'Current photo on file — upload to replace' : undefined}
+          currentFileUrl={currentPhotoUrl}
+          currentFileLabel={currentPhotoUrl ? 'On file — upload to replace' : undefined}
         />
       </div>
       <div>
@@ -99,7 +101,7 @@ export function EditFilesSection({
         />
       </div>
       {saving && <p className="text-sm font-semibold text-brand-dark">Saving…</p>}
-      <div className="flex justify-end">
+      <PanelActions>
         <button
           type="button"
           disabled={!hasChanges || saving}
@@ -108,7 +110,7 @@ export function EditFilesSection({
         >
           Save files
         </button>
-      </div>
+      </PanelActions>
     </div>
   )
 }
