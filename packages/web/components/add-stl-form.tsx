@@ -1,5 +1,5 @@
 'use client'
-import { PanelActions } from '@/components/panel-actions'
+import { PanelActions, useSaveOnLeave } from '@/components/panel-actions'
 import { useToast } from '@/components/toast'
 import { useState, useTransition } from 'react'
 import { browserApiClient } from '@/lib/browser-api-client'
@@ -24,7 +24,7 @@ export function AddStlForm({
   }
 
   async function handleUpload() {
-    if (!selectedFile) return
+    if (!selectedFile) return true
     setUploading(true)
     setError(null)
     try {
@@ -35,24 +35,40 @@ export function AddStlForm({
         '/api/upload/stl',
         fd
       )
-      startTransition(async () => {
-        try {
-          await onAdd(filename ?? selectedFile.name, url)
-          showToast('STL file added')
-        } catch (err) {
-          // onAdd failed: no toast, no "Last saved" line, and surface the
-          // failure through the same error UI as the upload step above,
-          // instead of a silently swallowed rejection.
-          setError(err instanceof Error ? err.message : 'Failed to save STL file')
-        }
+      // Awaited rather than left to the transition: leaving the step depends
+      // on whether the record was written, and a transition that resolves
+      // after the panel unmounts cannot answer that. startTransition still
+      // wraps it so the router refresh it triggers stays non-blocking.
+      let added = true
+      await new Promise<void>((done) => {
+        startTransition(async () => {
+          try {
+            await onAdd(filename ?? selectedFile.name, url)
+            showToast('STL file added')
+            setSelectedFile(null)
+          } catch (err) {
+            // onAdd failed: no toast, no "Last saved" line, and surface the
+            // failure through the same error UI as the upload step above,
+            // instead of a silently swallowed rejection.
+            setError(err instanceof Error ? err.message : 'Failed to save STL file')
+            added = false
+          }
+          done()
+        })
       })
-      setSelectedFile(null)
+      return added
     } catch (err) {
       setError(err instanceof Error ? err.message : 'STL upload failed')
+      return false
     } finally {
       setUploading(false)
     }
   }
+
+  /* A chosen file that was never uploaded is the whole step's work, and it
+     lives only in this component. STL files are optional, which makes it more
+     likely someone picks one and walks on rather than less. */
+  useSaveOnLeave(selectedFile && !uploading && !pending ? handleUpload : null)
 
   const btnCls = 'btn btn-primary btn-sm'
 
