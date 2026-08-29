@@ -277,24 +277,6 @@ export interface ToyIdeaParticipant {
   name?: string | null
 }
 
-/**
- * A flag against a participant or the idea's author, filed by the idea's
- * author or a current participant (041). Never selectable by anon or
- * authenticated — read through the service role (admin) only, so the
- * reported person can never see reason/resolution_note.
- */
-export interface ToyIdeaReport {
-  id: string
-  idea_id: string
-  reported_profile_id: string
-  reported_by: string
-  reason: string
-  created_at: string
-  resolved_at: string | null
-  resolved_by: string | null
-  resolution_note: string | null
-}
-
 export interface ToyIdeaMessage {
   id: string
   idea_id: string
