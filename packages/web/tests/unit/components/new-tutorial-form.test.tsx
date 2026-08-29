@@ -23,18 +23,18 @@ describe('NewTutorialForm', () => {
   })
 
   it('creates the draft and links the contributor to it', async () => {
-    render(<NewTutorialForm />)
+    render(<NewTutorialForm kind="toy_adaptation" />)
     fillAndSubmit()
 
     await waitFor(() => expect(mockPost).toHaveBeenCalledTimes(2))
     const [createPath, body] = mockPost.mock.calls[0] as [string, Record<string, unknown>]
     expect(createPath).toBe('/api/tutorials')
-    expect(body).toMatchObject({ title: 'Sensory light box', difficulty: 'easy', description: null })
+    expect(body).toMatchObject({ title: 'Sensory light box', difficulty: 'easy', description: null, kind: 'toy_adaptation' })
     expect(mockPost.mock.calls[1][0]).toBe(`/api/contributors/me/tutorials/${body.id}`)
   })
 
   it('generates the id itself, which is what makes the create retry-safe', async () => {
-    render(<NewTutorialForm />)
+    render(<NewTutorialForm kind="toy_adaptation" />)
     fillAndSubmit()
 
     await waitFor(() => expect(mockPost).toHaveBeenCalled())
@@ -43,7 +43,7 @@ describe('NewTutorialForm', () => {
   })
 
   it('hands over to the editor on the Files step', async () => {
-    render(<NewTutorialForm />)
+    render(<NewTutorialForm kind="toy_adaptation" />)
     fillAndSubmit()
 
     await waitFor(() => expect(push).toHaveBeenCalled())
@@ -56,7 +56,7 @@ describe('NewTutorialForm', () => {
   })
 
   it('sends the chosen difficulty and an empty description as null', async () => {
-    render(<NewTutorialForm />)
+    render(<NewTutorialForm kind="toy_adaptation" />)
     fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Kazoo' } })
     fireEvent.change(screen.getByLabelText('Difficulty'), { target: { value: 'hard' } })
     fireEvent.click(screen.getByRole('button', { name: 'Create' }))
@@ -71,7 +71,7 @@ describe('NewTutorialForm', () => {
 
   it('reports a failed create and stays put instead of redirecting', async () => {
     mockPost.mockRejectedValue(new Error('boom'))
-    render(<NewTutorialForm />)
+    render(<NewTutorialForm kind="toy_adaptation" />)
     fillAndSubmit()
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Could not create this tutorial')
