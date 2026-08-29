@@ -18,7 +18,7 @@ import { TutorialReviewPanel } from '@/components/tutorial-review-panel'
 import { computeStepStatuses, stepsFor, type EditStep } from '@/lib/edit-steps'
 import { getMissingFields } from '@/lib/validation'
 import { SaveStatusLine } from '@/components/save-status-line'
-import type { Tutorial, Part, Tool, StlFile, TutorialWithDetails, Difficulty, TutorialKind, BuyLink, Profile, TutorialOrg, Organization } from '@splat-connect/types'
+import type { Tutorial, Part, Tool, StlFile, TutorialWithDetails, Difficulty, TutorialKind, BuyLink, TutorialOrg, Organization } from '@splat-connect/types'
 
 export default async function EditTutorialPage({
   params,
