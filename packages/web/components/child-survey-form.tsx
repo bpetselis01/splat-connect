@@ -1,4 +1,5 @@
 'use client'
+import { PanelActions } from '@/components/panel-actions'
 /**
  * The MACS/BFMF quiz, now its own pill instead of a <dialog> launched from
  * inside the Ability panel. Answers stay local, same as before: only the
@@ -61,13 +62,13 @@ export function ChildSurveyForm({
           </div>
         </fieldset>
       ))}
-      <div className="flex items-center gap-3">
+      <PanelActions>
         <button type="button" onClick={estimateAndSave} disabled={!complete || busy} className="btn btn-accent">
           {busy ? 'Saving…' : 'Estimate & save'}
         </button>
         {error && <p role="alert" className="alert alert-danger">{error}</p>}
         {saved && <p className="text-sm font-semibold text-mint-deep">Saved</p>}
-      </div>
+      </PanelActions>
     </div>
   )
 }
