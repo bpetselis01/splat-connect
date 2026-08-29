@@ -9,17 +9,11 @@
 # Usage: bash scripts/check-migration-drift.sh   (requires a linked project)
 set -euo pipefail
 
-json=$(supabase migration list --linked --output-format json 2>/dev/null)
-
-pending=$(printf '%s\n' "$json" | python3 -c '
-import sys, json
-# The CLI may prefix banner lines; take the first JSON object on stdin.
-raw = sys.stdin.read()
-start = raw.find("{")
-data = json.loads(raw[start:]) if start >= 0 else {}
-rows = data.get("migrations", []) if isinstance(data, dict) else data
-print("\n".join(m["local"] for m in rows if m.get("local") and not m.get("remote")))
-')
+# The CLI may prefix banner lines; start at the first line of JSON.
+pending=$(supabase migration list --linked --output-format json 2>/dev/null \
+  | sed -n '/^[[{]/,$p' \
+  | jq -r '(if type == "array" then . else .migrations end) // [] | .[]
+           | select(.local and (.remote | not)) | .local')
 
 if [ -n "$pending" ]; then
   echo "✗ Migrations committed but NOT applied to the remote database:" >&2
