@@ -20,6 +20,7 @@ function tutorial(overrides: Partial<Tutorial & { tutorial_orgs?: TutorialOrg[] 
     id: 't1',
     title: 'Sensory light box',
     difficulty: 'easy' as const,
+    kind: 'toy_adaptation' as const,
     status: 'approved' as const,
     description: null,
     tutorial_pdf_url: null,

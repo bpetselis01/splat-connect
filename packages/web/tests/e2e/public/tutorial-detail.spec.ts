@@ -12,11 +12,11 @@ test('the detail page renders a tutorial in full', async ({ page }) => {
   await expect(page.getByText('Created by a Playwright E2E test.')).toBeVisible()
   await expect(page.getByText(new RegExp(`By\\s+${contributor.name}`))).toBeVisible()
 
-  await expect(page.getByRole('link', { name: 'Download Tutorial PDF' })).toHaveAttribute(
-    'href',
-    'https://placeholder.invalid/tutorial.pdf'
-  )
-  await expect(page.getByRole('link', { name: 'e2e-mount.stl' })).toBeVisible()
+  // Signed out: the file links are the gate (049). The download itself is
+  // covered in tutorial-downloads.spec.ts.
+  const detour = `/signup?next=%2Ftutorials%2F${tutorialId}&reason=download`
+  await expect(page.getByRole('link', { name: 'Download Tutorial PDF' })).toHaveAttribute('href', detour)
+  await expect(page.getByRole('link', { name: 'e2e-mount.stl' })).toHaveAttribute('href', detour)
 
   await expect(page.getByRole('heading', { name: 'Parts needed' })).toBeVisible()
   await expect(page.getByText(/E2E part\s*×\s*2/)).toBeVisible()

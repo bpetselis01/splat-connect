@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { computeStepStatuses } from '@/lib/edit-steps'
+import { computeStepStatuses, stepsFor } from '@/lib/edit-steps'
 import type { TutorialWithDetails } from '@splat-connect/types'
 
 function tutorial(overrides: Partial<TutorialWithDetails> = {}): TutorialWithDetails {
@@ -8,6 +8,7 @@ function tutorial(overrides: Partial<TutorialWithDetails> = {}): TutorialWithDet
     title: 'Spoon Holder',
     description: null,
     difficulty: 'easy',
+    kind: 'toy_adaptation',
     status: 'draft',
     toy_photo_url: 'https://example.com/photo.jpg',
     tutorial_pdf_url: 'https://example.com/tutorial.pdf',
@@ -20,6 +21,7 @@ function tutorial(overrides: Partial<TutorialWithDetails> = {}): TutorialWithDet
     parts: [{ id: 'p1', tutorial_id: 't1', name: 'Screw', quantity: 4, is_optional: false, buy_links: [] }],
     tools: [{ id: 'to1', tutorial_id: 't1', name: 'Screwdriver', is_optional: false, buy_links: [] }],
     stl_files: [],
+    tutorial_recommendations: [],
     tutorial_contributors: [
       {
         tutorial_id: 't1',
@@ -67,11 +69,33 @@ describe('computeStepStatuses', () => {
     expect(statuses.tools).toBe('attention')
   })
 
-  it('stl is neutral when empty and done once a file exists', () => {
-    expect(computeStepStatuses(tutorial({ stl_files: [] }), []).stl).toBe('neutral')
+  // The STL pill is a required step for assistive tech and not a step at all
+  // for a toy adaptation, so its dot only ever means something for the former.
+  it('stl needs attention on an assistive-tech tutorial with no file, done once one exists', () => {
+    expect(computeStepStatuses(tutorial({ kind: 'assistive_tech', stl_files: [] }), []).stl).toBe('attention')
     expect(
-      computeStepStatuses(tutorial({ stl_files: [{ id: 's1', tutorial_id: 't1', filename: 'a.stl', file_url: 'https://x/a.stl' }] }), [])
-        .stl
+      computeStepStatuses(
+        tutorial({ kind: 'assistive_tech', stl_files: [{ id: 's1', tutorial_id: 't1', filename: 'a.stl', file_url: 'https://x/a.stl' }] }),
+        []
+      ).stl
+    ).toBe('done')
+  })
+
+  it('stl is never flagged on a toy adaptation', () => {
+    expect(computeStepStatuses(tutorial({ stl_files: [] }), []).stl).toBe('done')
+  })
+
+  it('recommended is neutral when empty and done once one exists', () => {
+    expect(computeStepStatuses(tutorial(), []).recommended).toBe('neutral')
+    expect(
+      computeStepStatuses(
+        tutorial({
+          tutorial_recommendations: [
+            { position: 1, tutorials: { id: 't2', title: 'Other', kind: 'toy_adaptation', difficulty: 'easy', toy_photo_url: null, status: 'approved' } },
+          ],
+        }),
+        []
+      ).recommended
     ).toBe('done')
   })
 
@@ -103,5 +127,15 @@ describe('computeStepStatuses', () => {
       ],
     })
     expect(computeStepStatuses(withCollaborator, []).team).toBe('done')
+  })
+})
+
+describe('stepsFor', () => {
+  it('a toy adaptation never shows the STL pill', () => {
+    expect(stepsFor('toy_adaptation')).toEqual(['details', 'files', 'parts', 'tools', 'recommended', 'review', 'team'])
+  })
+
+  it('an assistive-tech tutorial has STL between tools and review', () => {
+    expect(stepsFor('assistive_tech')).toEqual(['details', 'files', 'parts', 'tools', 'stl', 'recommended', 'review', 'team'])
   })
 })

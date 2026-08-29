@@ -130,6 +130,9 @@ export async function createTutorial(
     withPdf: boolean
     /** false omits the STL row, so the detail page drops its 3D-print section. */
     withStl: boolean
+    /** Defaults to whatever the STL row implies: a tutorial seeded with one is
+     *  assistive tech, since 048 that is the only kind that shows the section. */
+    kind: 'toy_adaptation' | 'assistive_tech'
     /** true adds one optional part and one optional tool alongside the required pair. */
     withOptionalExtras: boolean
   }> = {}
@@ -142,9 +145,10 @@ export async function createTutorial(
     title: overrides.title ?? `E2E Tutorial ${id.slice(0, 8)}`,
     description: 'Created by a Playwright E2E test.',
     difficulty: overrides.difficulty ?? 'easy',
+    kind: overrides.kind ?? (overrides.withStl === false ? 'toy_adaptation' : 'assistive_tech'),
     status: overrides.status ?? 'pending',
     tutorial_pdf_url:
-      overrides.withPdf === false ? null : 'https://placeholder.invalid/tutorial.pdf',
+      overrides.withPdf === false ? null : `${id}/tutorial.pdf`,
     toy_photo_url:
       overrides.toyPhotoUrl === undefined
         ? 'https://placeholder.invalid/photo.jpg'
@@ -173,7 +177,7 @@ export async function createTutorial(
     await admin.from('stl_files').insert({
       tutorial_id: id,
       filename: 'e2e-mount.stl',
-      file_url: 'https://placeholder.invalid/e2e-mount.stl',
+      file_url: `${id}/e2e-mount.stl`,
     })
   }
 

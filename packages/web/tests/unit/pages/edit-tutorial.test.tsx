@@ -27,6 +27,7 @@ vi.mock('@/components/edit-items-section', () => ({ EditItemsSection: () => null
 vi.mock('@/components/edit-details-section', () => ({ EditDetailsSection: () => null }))
 vi.mock('@/components/edit-backing-section', () => ({ EditBackingSection: () => null }))
 vi.mock('@/components/edit-collaborators-section', () => ({ EditCollaboratorsSection: () => null }))
+vi.mock('@/components/edit-recommendations-section', () => ({ EditRecommendationsSection: () => null }))
 // The Review step is a summary and nothing else since 2026-08-29 — what is
 // missing, and whether the tutorial has been handed over, reach the stepper's
 // finish bar instead, so that is where both are asserted.
@@ -69,6 +70,7 @@ const baseTutorialWithDetails: TutorialWithDetails = {
   id: 'tutorial-1',
   title: 'Test Tutorial',
   difficulty: 'easy',
+  kind: 'toy_adaptation',
   status: 'draft',
   description: null,
   tutorial_pdf_url: null,
@@ -82,6 +84,7 @@ const baseTutorialWithDetails: TutorialWithDetails = {
   parts: [],
   tools: [],
   stl_files: [],
+  tutorial_recommendations: [],
   tutorial_contributors: [{
     tutorial_id: 'tutorial-1',
     profile_id: 'user-1',
@@ -187,6 +190,24 @@ describe('EditTutorialPage', () => {
     expect(screen.getByTestId('edit-stepper')).toHaveAttribute('data-handed-over', 'no')
   })
 
+  // The one step that depends on kind. Its absence for a toy is the whole
+  // reason kind exists — nobody should be asked for a file they do not have.
+  it('shows the STL step only for an assistive-tech tutorial', async () => {
+    vi.mocked(apiClient.get)
+      .mockResolvedValueOnce(mockProfile)
+      .mockResolvedValueOnce(baseTutorialWithDetails)
+    const { unmount } = render(await EditTutorialPage(pageParams))
+    expect(document.querySelector('[data-step="stl"]')).toBeNull()
+    expect(document.querySelector('[data-step="recommended"]')).not.toBeNull()
+    unmount()
+
+    vi.mocked(apiClient.get)
+      .mockResolvedValueOnce(mockProfile)
+      .mockResolvedValueOnce({ ...baseTutorialWithDetails, kind: 'assistive_tech' })
+    render(await EditTutorialPage(pageParams))
+    expect(document.querySelector('[data-step="stl"]')).toHaveAttribute('data-step-status', 'attention')
+  })
+
   it('wires computeStepStatuses and missingByStep into the step manifest', async () => {
     vi.mocked(apiClient.get)
       .mockResolvedValueOnce(mockProfile)
@@ -197,13 +218,15 @@ describe('EditTutorialPage', () => {
     // hand over the fix rather than only name the problem.
     expect(stepper).toHaveAttribute(
       'data-missing',
-      'files:The guide PDF|files:A toy photo|parts:A part|tools:A tool'
+      'files:The guide PDF|files:A photo|parts:A part|tools:A tool'
     )
     expect(stepper.querySelector('[data-step="details"]')).toHaveAttribute('data-step-status', 'done')
     expect(stepper.querySelector('[data-step="files"]')).toHaveAttribute('data-step-status', 'attention')
     expect(stepper.querySelector('[data-step="parts"]')).toHaveAttribute('data-step-status', 'attention')
     expect(stepper.querySelector('[data-step="tools"]')).toHaveAttribute('data-step-status', 'attention')
-    expect(stepper.querySelector('[data-step="stl"]')).toHaveAttribute('data-step-status', 'neutral')
+    // No STL pill on a toy adaptation; see the kind test above.
+    expect(stepper.querySelector('[data-step="stl"]')).toBeNull()
+    expect(stepper.querySelector('[data-step="recommended"]')).toHaveAttribute('data-step-status', 'neutral')
     expect(stepper.querySelector('[data-step="team"]')).toHaveAttribute('data-step-status', 'neutral')
   })
 

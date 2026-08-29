@@ -14,9 +14,9 @@ import { useState, type FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Route } from 'next'
 import { browserApiClient } from '@/lib/browser-api-client'
-import type { Difficulty } from '@splat-connect/types'
+import type { Difficulty, TutorialKind } from '@splat-connect/types'
 
-export function NewTutorialForm() {
+export function NewTutorialForm({ kind }: { kind: TutorialKind }) {
   const router = useRouter()
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -35,6 +35,7 @@ export function NewTutorialForm() {
         title,
         description: description || null,
         difficulty,
+        kind,
       })
       await browserApiClient.post(`/api/contributors/me/tutorials/${id}`, {})
       // Straight on to Files: this page shows the same pills, so landing back

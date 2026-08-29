@@ -7,6 +7,7 @@ const baseTutorial: TutorialWithDetails = {
   title: 'My Tutorial',
   description: null,
   difficulty: 'easy',
+  kind: 'toy_adaptation',
   status: 'draft',
   tutorial_pdf_url: 'https://example.com/tutorial.pdf',
   toy_photo_url: 'https://example.com/photo.jpg',
@@ -17,6 +18,7 @@ const baseTutorial: TutorialWithDetails = {
   parts: [{ id: 'p-1', tutorial_id: 'tut-1', name: 'Screw', quantity: 4, is_optional: false, buy_links: [] }],
   tools: [{ id: 't-1', tutorial_id: 'tut-1', name: 'Screwdriver', is_optional: false, buy_links: [] }],
   stl_files: [],
+  tutorial_recommendations: [],
   tutorial_contributors: [],
   reviewed_by: null,
   reviewed_for_org_id: null,
@@ -47,8 +49,22 @@ describe('getMissingFields', () => {
     expect(getMissingFields({ ...baseTutorial, tutorial_pdf_url: null })).toContain('Tutorial PDF')
   })
 
-  it('includes "Toy photo" when toy_photo_url is null', () => {
-    expect(getMissingFields({ ...baseTutorial, toy_photo_url: null })).toContain('Toy photo')
+  it('includes "Photo" when toy_photo_url is null', () => {
+    expect(getMissingFields({ ...baseTutorial, toy_photo_url: null })).toContain('Photo')
+  })
+
+  // The only kind-aware rule. An assistive-tech tutorial is its printed part;
+  // a toy adaptation has no STL step to send anyone back to.
+  it('requires an STL file for assistive tech only', () => {
+    expect(getMissingFields({ ...baseTutorial, kind: 'assistive_tech', stl_files: [] })).toContain('At least one STL file')
+    expect(getMissingFields({ ...baseTutorial, kind: 'toy_adaptation', stl_files: [] })).not.toContain('At least one STL file')
+    expect(
+      getMissingFields({
+        ...baseTutorial,
+        kind: 'assistive_tech',
+        stl_files: [{ id: 's1', tutorial_id: 'tut-1', filename: 'a.stl', file_url: 'https://x/a.stl' }],
+      })
+    ).toEqual([])
   })
 
   it('includes "At least one part" when parts array is empty', () => {

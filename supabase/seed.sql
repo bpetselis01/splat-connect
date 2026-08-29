@@ -61,14 +61,18 @@ update public.profiles set role = 'admin',       name = 'Seed Admin'
 
 -- ============================================================
 -- Approved tutorial (public library / detail flows)
--- File URLs are placeholders: E2E asserts page rendering, not downloads.
+-- PDF and STL values are storage paths (049) with no object behind them: E2E
+-- asserts page rendering; the one download E2E uploads its own file.
+-- toy_photo_url stays a placeholder URL — toy-photos is still a public bucket.
 -- ============================================================
+-- assistive_tech because it carries an STL below, and since 048 an STL is
+-- required for that kind and never shown for a toy adaptation.
 insert into public.tutorials
-  (id, title, description, difficulty, status, tutorial_pdf_url, toy_photo_url, created_at, reviewed_at)
+  (id, title, description, difficulty, status, kind, tutorial_pdf_url, toy_photo_url, created_at, reviewed_at)
 values
   ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Seeded Switch-Adapted Bubble Machine',
-   'A seeded, approved tutorial used by E2E tests.', 'easy', 'approved',
-   'https://placeholder.invalid/tutorial.pdf', 'https://placeholder.invalid/photo.jpg',
+   'A seeded, approved tutorial used by E2E tests.', 'easy', 'approved', 'assistive_tech',
+   'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/tutorial.pdf', 'https://placeholder.invalid/photo.jpg',
    now(), now());
 
 insert into public.tutorial_contributors (tutorial_id, profile_id, role)
@@ -82,7 +86,7 @@ insert into public.tools (tutorial_id, name, is_optional, buy_links)
 values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Soldering iron', false, '[]');
 
 insert into public.stl_files (tutorial_id, filename, file_url)
-values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'mount.stl', 'https://placeholder.invalid/mount.stl');
+values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'mount.stl', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/mount.stl');
 
 -- ============================================================
 -- Pending tutorial (admin review flow)
@@ -92,7 +96,12 @@ insert into public.tutorials
 values
   ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'Seeded Pending Plush Toy',
    'A seeded tutorial awaiting admin review.', 'medium', 'pending',
-   'https://placeholder.invalid/tutorial2.pdf', 'https://placeholder.invalid/photo2.jpg');
+   'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb/tutorial.pdf', 'https://placeholder.invalid/photo2.jpg');
 
 insert into public.tutorial_contributors (tutorial_id, profile_id, role)
 values ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', '11111111-1111-1111-1111-111111111111', 'primary');
+
+-- The approved tutorial recommends the pending one: the public detail route
+-- must show nothing under "Also worth a look", which is the filter E2E checks.
+insert into public.tutorial_recommendations (tutorial_id, recommended_id, position)
+values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 1);

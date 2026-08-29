@@ -9,7 +9,9 @@ export function subResourceRoutes<Item>(opts: {
   path: string
   table: string
   bodyKey: string
-  mapRow: (item: Item, tutorialId: string) => Record<string, unknown>
+  /** `index` is the item's place in the posted list — recommendations turn it
+   *  into `position`; parts, tools and STL files ignore it. */
+  mapRow: (item: Item, tutorialId: string, index: number) => Record<string, unknown>
 }) {
   const router = new Hono<{ Variables: AuthVariables }>()
 
@@ -20,7 +22,7 @@ export function subResourceRoutes<Item>(opts: {
 
     await supabase.from(opts.table).delete().eq('tutorial_id', tutorialId)
 
-    const rows = body[opts.bodyKey].map((item) => opts.mapRow(item, tutorialId))
+    const rows = body[opts.bodyKey].map((item, i) => opts.mapRow(item, tutorialId, i))
 
     const { data, error } = await supabase.from(opts.table).insert(rows).select()
     if (error) return c.json({ error: error.message }, 500)

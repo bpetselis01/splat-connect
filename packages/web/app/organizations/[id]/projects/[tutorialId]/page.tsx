@@ -115,7 +115,7 @@ export default async function LeaderProjectPage({
       {/* The same view a parent gets in the library. A leader approves what
           they can see: what this replaced was a title, a photo and a bare PDF
           link, with no parts, tools or files anywhere on the page. */}
-      <TutorialView tutorial={tutorial!} backing={backingRows} />
+      <TutorialView tutorial={tutorial!} backing={backingRows} signedIn />
 
       {/* One column for every decision, at reading width, under the view they
           are decided from. */}

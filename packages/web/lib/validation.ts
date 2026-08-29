@@ -15,8 +15,13 @@ export function getMissingFields(tutorial: TutorialWithDetails): string[] {
   if (!(['easy', 'medium', 'hard'] as string[]).includes(tutorial.difficulty))
     missing.push('Difficulty')
   if (!tutorial.tutorial_pdf_url?.trim()) missing.push('Tutorial PDF')
-  if (!tutorial.toy_photo_url?.trim()) missing.push('Toy photo')
+  if (!tutorial.toy_photo_url?.trim()) missing.push('Photo')
   if (tutorial.parts.length === 0) missing.push('At least one part')
   if (tutorial.tools.length === 0) missing.push('At least one tool')
+  // The one rule that reads the kind: a printed part is what an assistive-tech
+  // tutorial IS, so it cannot be submitted without one. A toy adaptation has no
+  // STL step at all, so the label must never appear for it.
+  if (tutorial.kind === 'assistive_tech' && tutorial.stl_files.length === 0)
+    missing.push('At least one STL file')
   return missing
 }

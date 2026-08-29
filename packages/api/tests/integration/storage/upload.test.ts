@@ -55,7 +55,7 @@ afterAll(async () => {
 })
 
 describe('storage uploads', () => {
-  it('uploads a PDF to the tutorial-pdfs bucket and returns its URL', async () => {
+  it('uploads a PDF to the tutorial-pdfs bucket and returns its path', async () => {
     const res = await uploadRequest(
       '/api/upload/pdf',
       user.token,
@@ -63,8 +63,7 @@ describe('storage uploads', () => {
     )
     expect(res.status).toBe(200)
     const { url } = (await res.json()) as { url: string }
-    expect(url).toContain('/tutorial-pdfs/')
-    expect(url).toContain(`${tutorialId}/tutorial.pdf`)
+    expect(url).toBe(`${tutorialId}/tutorial.pdf`)
   })
 
   it('replacing a photo deletes the old file (jpg -> png leaves exactly one)', async () => {
@@ -87,7 +86,7 @@ describe('storage uploads', () => {
     expect(files?.[0].name).toBe('photo.png')
   })
 
-  it('uploads an STL to the stl-files bucket and returns url + filename', async () => {
+  it('uploads an STL to the stl-files bucket and returns path + filename', async () => {
     const res = await uploadRequest(
       '/api/upload/stl',
       user.token,
@@ -95,7 +94,7 @@ describe('storage uploads', () => {
     )
     expect(res.status).toBe(200)
     const body = (await res.json()) as { url: string; filename: string }
-    expect(body.url).toContain('/stl-files/')
+    expect(body.url).toBe(`${tutorialId}/bracket.stl`)
     expect(body.filename).toBe('bracket.stl')
   })
 })

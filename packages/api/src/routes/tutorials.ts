@@ -71,12 +71,17 @@ tutorials.get('/:id', async (c) => {
     // the embed on its own — 012's "Participants can read an invite" admits the
     // primary contributor and the invitee, nobody else — so no filter here.
     // The alias names the FK column because the table points at profiles twice.
+    // Recommendations come with their target's status, unfiltered: the editor
+    // badges the ones a parent cannot see yet, and this route is the only one
+    // that tells it which those are. The public route strips them instead.
     .select(
       '*, parts(*), tools(*), stl_files(*), tutorial_contributors(*, profiles(id, name, role, created_at)), \
 tutorial_collaborator_invites(*, profiles:invited_profile_id(id, name, role, created_at)), \
+tutorial_recommendations!tutorial_id(position, tutorials!recommended_id(id, title, kind, difficulty, toy_photo_url, status)), \
 reviewer:reviewed_by(name), reviewed_for:reviewed_for_org_id(name)'
     )
     .eq('id', c.req.param('id'))
+    .order('position', { referencedTable: 'tutorial_recommendations', ascending: true })
     .single()
   if (error) return c.json({ error: error.message }, 404)
 
@@ -112,6 +117,9 @@ tutorials.post('/', async (c) => {
       id: body.id,
       title: body.title,
       difficulty: body.difficulty,
+      // The card the contributor picked on /upload. Defaulted here as well as
+      // in 048 so a caller that predates kind gets what every row before it got.
+      kind: body.kind ?? 'toy_adaptation',
       description: body.description ?? null,
       status: 'draft',
       tutorial_pdf_url: body.tutorial_pdf_url ?? null,
@@ -135,7 +143,7 @@ tutorials.post('/', async (c) => {
 /** Only these may be set through the generic edit endpoint. Unknown keys are
  *  dropped silently; the protected ones return 403 so a caller learns rather than
  *  wonders. */
-const EDITABLE = ['title', 'description', 'difficulty', 'tutorial_pdf_url', 'toy_photo_url', 'status'] as const
+const EDITABLE = ['title', 'description', 'difficulty', 'kind', 'tutorial_pdf_url', 'toy_photo_url', 'status'] as const
 const PROTECTED = ['reviewed_by', 'reviewed_for_org_id', 'reviewed_at', 'rejection_note']
 
 async function hasAcceptedContributorTerms(token: string, userId: string) {

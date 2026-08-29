@@ -85,11 +85,10 @@ upload.post('/pdf', async (c) => {
 
   if (error) return c.json({ error: error.message }, 500)
 
-  const { data: urlData } = supabase.storage
-    .from('tutorial-pdfs')
-    .getPublicUrl(data.path)
-
-  return c.json({ url: urlData.publicUrl })
+  // The object path, not a URL: the bucket has been private since 049, and
+  // the web serves this through /files/tutorial-pdfs/<path> with a signed
+  // URL minted per click. The key stays `url` so the editor is unchanged.
+  return c.json({ url: data.path })
 })
 
 upload.post('/photo', async (c) => {
@@ -154,11 +153,8 @@ upload.post('/stl', async (c) => {
 
   if (error) return c.json({ error: error.message }, 500)
 
-  const { data: urlData } = supabase.storage
-    .from('stl-files')
-    .getPublicUrl(data.path)
-
-  return c.json({ url: urlData.publicUrl, filename: file.name })
+  // Path, not URL — see /pdf above; served via /files/stl-files/<path>.
+  return c.json({ url: data.path, filename: file.name })
 })
 
 upload.post('/toy-cover', async (c) => {

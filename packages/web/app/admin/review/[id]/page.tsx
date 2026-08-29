@@ -94,7 +94,7 @@ export default async function ReviewTutorialPage({
         </p>
       )}
 
-      <TutorialView tutorial={tutorial!} />
+      <TutorialView tutorial={tutorial!} signedIn />
 
       <div className="mt-10 flex max-w-2xl flex-col gap-4 border-t border-line pt-6">
         {actions.includes('approve') && (

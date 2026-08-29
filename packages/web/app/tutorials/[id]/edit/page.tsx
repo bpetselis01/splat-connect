@@ -9,11 +9,12 @@ import { EditItemsSection, type ItemInput } from '@/components/edit-items-sectio
 import { EditBackingSection } from '@/components/edit-backing-section'
 import { EditDetailsSection } from '@/components/edit-details-section'
 import { EditCollaboratorsSection } from '@/components/edit-collaborators-section'
+import { EditRecommendationsSection } from '@/components/edit-recommendations-section'
 import { EditStepper } from '@/components/edit-stepper'
 import { TutorialReviewPanel } from '@/components/tutorial-review-panel'
-import { computeStepStatuses, missingByStep, type EditStep } from '@/lib/edit-steps'
+import { computeStepStatuses, missingByStep, stepsFor, type EditStep } from '@/lib/edit-steps'
 import { SaveStatusLine } from '@/components/save-status-line'
-import type { Tutorial, Part, Tool, StlFile, TutorialWithDetails, Difficulty, BuyLink, Profile, TutorialOrg, Organization } from '@splat-connect/types'
+import type { Tutorial, Part, Tool, StlFile, TutorialWithDetails, Difficulty, TutorialKind, BuyLink, Profile, TutorialOrg, Organization } from '@splat-connect/types'
 
 export default async function EditTutorialPage({
   params,
@@ -48,9 +49,13 @@ export default async function EditTutorialPage({
   // Backing rows and the organisation list for the picker. Both tolerate failure:
   // a backing panel that cannot load is a worse reason to 500 the whole edit page
   // than it is to render empty.
-  const [backing, organizations] = await Promise.all([
+  // The recommendation picker's choices ride along on the same terms: approved
+  // tutorials from the public list, which is already exactly the set a parent
+  // could follow a recommendation to.
+  const [backing, organizations, candidates] = await Promise.all([
     apiClient.get<TutorialOrg[]>(`/api/tutorials/${id}/orgs`).catch(() => [] as TutorialOrg[]),
     apiClient.get<Organization[]>('/api/organizations').catch(() => [] as Organization[]),
+    apiClient.get<Tutorial[]>('/api/public/tutorials').catch(() => [] as Tutorial[]),
   ])
 
   async function askOrg(orgId: string) {
@@ -67,7 +72,7 @@ export default async function EditTutorialPage({
     revalidatePath('/dashboard')
   }
 
-  async function saveDetails(patch: { title: string; description: string | null; difficulty: Difficulty; updated_at: string }) {
+  async function saveDetails(patch: { title: string; description: string | null; difficulty: Difficulty; kind: TutorialKind; updated_at: string }) {
     'use server'
     const body: Record<string, unknown> = { ...patch }
     if (tutorial.status === 'approved' || tutorial.status === 'rejected') {
@@ -141,6 +146,14 @@ export default async function EditTutorialPage({
     revalidatePath(`/tutorials/${id}/edit`)
   }
 
+  async function saveRecommendations(recommendedIds: string[]) {
+    'use server'
+    await apiClient.post(`/api/tutorials/${id}/recommendations`, {
+      recommendations: recommendedIds.map((recommended_id) => ({ recommended_id })),
+    })
+    revalidatePath(`/tutorials/${id}/edit`)
+  }
+
   async function submitForReview() {
     'use server'
     const current = await apiClient.get<Tutorial>(`/api/tutorials/${id}`)
@@ -152,7 +165,11 @@ export default async function EditTutorialPage({
   const missing = missingByStep(tutorial!)
   const stepStatuses = computeStepStatuses(tutorial!, backing)
 
-  const steps: EditStep[] = [
+  // Every step this page knows how to draw. Which of them show, and in what
+  // order, is stepsFor()'s answer below — the STL step exists only for an
+  // assistive-tech tutorial, and /upload draws its locked preview from the
+  // same list so the two never disagree.
+  const allSteps: EditStep[] = [
     {
       id: 'details',
       label: 'Details',
@@ -216,9 +233,7 @@ export default async function EditTutorialPage({
               {stlFiles.map((f) => (
                 <li key={f.id} className="card-flat px-4 py-3 text-sm">
                   <a
-                    href={f.file_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href={`/files/stl-files/${f.file_url}`}
                     className="font-semibold text-brand-dark hover:underline"
                   >
                     {f.filename}
@@ -247,6 +262,22 @@ export default async function EditTutorialPage({
           stlCount={stlFiles.length}
           backing={backing}
         />
+      ),
+    },
+    {
+      id: 'recommended',
+      label: 'Recommended',
+      status: stepStatuses.recommended,
+      content: (
+        <div className="panel pt-5">
+          <h2 className="px-5 pb-3 text-sm font-bold text-ink">Recommended tutorials</h2>
+          <EditRecommendationsSection
+            tutorialId={id}
+            recommendations={tutorial!.tutorial_recommendations}
+            candidates={candidates}
+            onSave={saveRecommendations}
+          />
+        </div>
       ),
     },
     {
@@ -291,6 +322,7 @@ export default async function EditTutorialPage({
       ),
     },
   ]
+  const steps = stepsFor(tutorial!.kind).map((stepId) => allSteps.find((s) => s.id === stepId)!)
 
   return (
     <div>

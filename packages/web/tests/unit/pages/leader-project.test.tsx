@@ -21,7 +21,7 @@ const theOrg = {
 }
 
 const tutorial = (status: string) => ({
-  id: 't1', title: 'Spoon holder', description: 'A spoon holder', difficulty: 'easy',
+  id: 't1', title: 'Spoon holder', description: 'A spoon holder', difficulty: 'easy', kind: 'assistive_tech',
   status, tutorial_pdf_url: null, toy_photo_url: null, rejection_note: null,
   created_at: '', reviewed_at: null, reviewed_by: null, reviewed_for_org_id: null,
   reviewer: status === 'approved' ? { name: 'Sam' } : null,
@@ -30,6 +30,7 @@ const tutorial = (status: string) => ({
   parts: [{ id: 'p1', tutorial_id: 't1', name: 'M3 bolt', quantity: 4, is_optional: false, buy_links: [] }],
   tools: [{ id: 'w1', tutorial_id: 't1', name: 'Hex key', is_optional: false, buy_links: [] }],
   stl_files: [{ id: 'f1', tutorial_id: 't1', filename: 'mount.stl', file_url: 'https://x/mount.stl' }],
+  tutorial_recommendations: [],
 })
 
 const route = (o: { leads: boolean; tutorialStatus: string; backing: string | null }) => (path: string) =>

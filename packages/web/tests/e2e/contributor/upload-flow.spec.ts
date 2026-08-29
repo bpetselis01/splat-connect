@@ -20,7 +20,7 @@ test('creating a tutorial hands straight over to the editor', async ({ page }) =
   await page.waitForURL('**/dashboard')
 
   const title = uniqueTitle('E2E Create Handoff')
-  await page.goto('/upload')
+  await page.goto('/upload?kind=toy_adaptation')
   await page.getByLabel('Title').fill(title)
   await page.getByLabel('Difficulty').selectOption('easy')
   await page.getByRole('button', { name: 'Create' }).click()
@@ -30,11 +30,27 @@ test('creating a tutorial hands straight over to the editor', async ({ page }) =
 
   const { data } = await adminClient()
     .from('tutorials')
-    .select('status, difficulty')
+    .select('status, difficulty, kind')
     .eq('title', title)
     .single()
   expect(data?.status).toBe('draft')
   expect(data?.difficulty).toBe('easy')
+  expect(data?.kind).toBe('toy_adaptation')
+})
+
+test('the first question is which kind, and the answer is a link', async ({ page }) => {
+  const contributor = await createContributor()
+  await acceptTerms(contributor.id)
+  await signIn(page, contributor.email, contributor.password)
+  await page.waitForURL('**/dashboard')
+  await page.goto('/upload')
+
+  await expect(page.getByLabel('Title')).toHaveCount(0)
+  await page.getByRole('link', { name: /Assistive tech/ }).click()
+  await page.waitForURL(/\/upload\?kind=assistive_tech$/)
+  await expect(page.getByLabel('Title')).toBeVisible()
+  // The one pill a toy adaptation never gets.
+  await expect(page.getByRole('tab', { name: 'STL Files', exact: true })).toBeDisabled()
 })
 
 test('the later steps are locked until the tutorial exists', async ({ page }) => {
@@ -42,14 +58,15 @@ test('the later steps are locked until the tutorial exists', async ({ page }) =>
   await acceptTerms(contributor.id)
   await signIn(page, contributor.email, contributor.password)
   await page.waitForURL('**/dashboard')
-  await page.goto('/upload')
+  await page.goto('/upload?kind=toy_adaptation')
 
   // Listed so the journey reads end to end, but not reachable — each one needs
   // an id to save against. Exact names throughout: 'Files' would also match the
-  // 'STL Files' pill.
-  for (const label of ['Files', 'Parts', 'Tools', 'STL Files', 'Team', 'Review']) {
+  // 'STL Files' pill — which a toy adaptation does not have at all.
+  for (const label of ['Files', 'Parts', 'Tools', 'Recommended', 'Review', 'Team']) {
     await expect(page.getByRole('tab', { name: label, exact: true })).toBeDisabled()
   }
+  await expect(page.getByRole('tab', { name: 'STL Files', exact: true })).toHaveCount(0)
   await expect(page.getByRole('tab', { name: 'Details', exact: true })).toBeEnabled()
 })
 
@@ -73,7 +90,7 @@ test('a contributor builds a tutorial from creation through to pending', async (
   await page.waitForURL('**/dashboard')
 
   const title = uniqueTitle('E2E Full Journey')
-  await page.goto('/upload')
+  await page.goto('/upload?kind=toy_adaptation')
   await page.getByLabel('Title').fill(title)
   await page.getByLabel('Difficulty').selectOption('easy')
   await page.getByRole('button', { name: 'Create' }).click()

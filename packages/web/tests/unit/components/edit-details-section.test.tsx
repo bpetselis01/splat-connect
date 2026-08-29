@@ -15,6 +15,7 @@ const tutorial: Tutorial = {
   title: 'Spoon Holder',
   description: null,
   difficulty: 'easy',
+  kind: 'toy_adaptation',
   status: 'draft',
   tutorial_pdf_url: null,
   toy_photo_url: null,
@@ -27,6 +28,18 @@ const tutorial: Tutorial = {
 }
 
 describe('EditDetailsSection', () => {
+  // Kind is a select like difficulty, so a wrong card on /upload is one save
+  // to fix rather than a new tutorial.
+  it('submits the chosen kind', async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined)
+    render(<ToastProvider><EditDetailsSection tutorial={tutorial} onSave={onSave} /></ToastProvider>)
+    fireEvent.change(screen.getByLabelText('Kind'), { target: { value: 'assistive_tech' } })
+    fireEvent.click(screen.getByText('Save details'))
+    await waitFor(() =>
+      expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ kind: 'assistive_tech' }))
+    )
+  })
+
   it('submits the loaded updated_at alongside the edited fields', async () => {
     const onSave = vi.fn().mockResolvedValue(undefined)
     render(<EditDetailsSection tutorial={tutorial} onSave={onSave} />)

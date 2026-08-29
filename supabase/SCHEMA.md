@@ -17,6 +17,8 @@ current definition is shown and the change is noted.
 | 003 | `003_ability_profile.sql` | Adds the `parent` role, makes the signup trigger role-aware, and creates the `child_profiles` table with its RLS. |
 | 004 | `004_data_api_grants.sql` | Grants the Data API roles (`anon`, `authenticated`, `service_role`) access to the `public` schema so PostgREST works; RLS remains the access-control layer. |
 | 007 | `007_organizations.sql` | Adds `organizations`, `org_leaders`, `user_agreements` and `tutorial_orgs`, so an author can ask organisations to back a project and a leader of any that accepted can approve or reject it — instead of every tutorial going through the single platform admin queue. Adds `reviewed_by` and `reviewed_for_org_id` to `tutorials`. Adds the org RLS and `tutorial_orgs_freeze_identity`. |
+| 048 | `048_tutorial_kind.sql` | Adds `tutorials.kind` (`toy_adaptation` \| `assistive_tech`) and `tutorial_recommendations`, a positioned join table capped at three rows per tutorial by constraint. |
+| 049 | `049_gate_tutorial_files.sql` | Makes `tutorial-pdfs` and `stl-files` private with a signed-in-only SELECT policy; rewrites `tutorials.tutorial_pdf_url` and `stl_files.file_url` from public URLs to object paths. |
 | 008 | `008_tutorial_contributor_scope.sql` | Narrows the `tutorial_contributors` INSERT policy so a contributor can only claim a tutorial that has no contributors yet (adds `tutorial_has_contributor()`), closing a path that let a stranger's private draft be published under an organisation. Adds `tutorials_freeze_review_provenance`, which reserves `reviewed_by` and `reviewed_for_org_id` to admins and backing org leaders. |
 
 ---
@@ -59,8 +61,9 @@ A published (or in-progress) build tutorial. Status drives visibility and the re
 | `description` | text | nullable |
 | `difficulty` | text | not null, check in (`easy`, `medium`, `hard`) |
 | `status` | text | not null, default `'draft'`, check in (`draft`, `pending`, `approved`, `rejected`) |
-| `tutorial_pdf_url` | text | nullable |
+| `tutorial_pdf_url` | text | nullable — since 049 a storage object path in `tutorial-pdfs` (`<tutorial id>/tutorial.pdf`), not a URL; served via `GET /files/tutorial-pdfs/<path>` |
 | `toy_photo_url` | text | nullable |
+| `kind` | text | not null, default `'toy_adaptation'`, check in (`toy_adaptation`, `assistive_tech`) *(048)* |
 | `rejection_note` | text | nullable |
 | `created_at` | timestamptz | not null, default `now()` |
 | `reviewed_at` | timestamptz | nullable |
@@ -163,7 +166,7 @@ create table public.tools (
 | `id` | uuid | PK, default `gen_random_uuid()` |
 | `tutorial_id` | uuid | FK → `tutorials` on delete cascade, not null |
 | `filename` | text | not null |
-| `file_url` | text | not null |
+| `file_url` | text | not null — since 049 a storage object path in `stl-files` (`<tutorial id>/<filename>`), not a URL; served via `GET /files/stl-files/<path>` |
 
 ```sql
 create table public.stl_files (
@@ -173,6 +176,29 @@ create table public.stl_files (
   file_url text not null
 );
 ```
+
+### `tutorial_recommendations`  *(added in 048)*
+Up to three tutorials a creator points readers at. `position` is the order shown and, with the unique constraint, the 3-cap — there is no trigger. The public API additionally drops rows whose *target* is not approved.
+
+| Column | Type | Constraints / default |
+|--------|------|-----------------------|
+| `tutorial_id` | uuid | FK → `tutorials` on delete cascade, not null, part of PK |
+| `recommended_id` | uuid | FK → `tutorials` on delete cascade, not null, part of PK |
+| `position` | smallint | not null, check between 1 and 3, unique with `tutorial_id` |
+| | | check `tutorial_id <> recommended_id` |
+
+```sql
+create table public.tutorial_recommendations (
+  tutorial_id    uuid not null references public.tutorials on delete cascade,
+  recommended_id uuid not null references public.tutorials on delete cascade,
+  position       smallint not null check (position between 1 and 3),
+  primary key (tutorial_id, recommended_id),
+  unique (tutorial_id, position),
+  check (tutorial_id <> recommended_id)
+);
+```
+
+RLS mirrors `parts`: anyone reads rows of an approved tutorial, a contributor reads and writes their own, admin has full access.
 
 ### `child_profiles`  *(added in 003)*
 One row per parent account (unique `parent_id`) holding a child's ability, everyday-needs, and customization data. Backs the mobile parent experience.
@@ -826,21 +852,23 @@ create policy "Admin full access to tutorial_orgs"
 
 ## 4. Storage
 
-Three **public** buckets (open-source access — anyone can read):
+Three buckets were created public in 001. Since 049, `tutorial-pdfs` and `stl-files` are **private** — a tutorial's files need an account, the way Makers Making Change gates design files — and of the three buckets 001 created, only `toy-photos` is still public (cover photos are on every browse card).
 
 ```sql
 insert into storage.buckets (id, name, public) values
-  ('tutorial-pdfs', 'tutorial-pdfs', true),
+  ('tutorial-pdfs', 'tutorial-pdfs', true),   -- flipped to false in 049
   ('toy-photos',    'toy-photos',    true),
-  ('stl-files',     'stl-files',     true);
+  ('stl-files',     'stl-files',     true);   -- flipped to false in 049
 ```
 
-Per bucket there are three policies — **public SELECT**, approved-contributor **INSERT**, and approved-contributor **UPDATE** (file replacement). The UPDATE policies matter because the upload routes use `upsert: true` (`INSERT ... ON CONFLICT DO UPDATE`), and Postgres evaluates **both** INSERT and UPDATE RLS during an upsert; without the UPDATE policy, replacing an existing file fails with *"new row violates row-level security policy."*
+Per bucket there are three policies — **SELECT** (public for `toy-photos`; `auth.uid() is not null` for the other two since 049), contributor **INSERT**, and contributor **UPDATE** (file replacement). The UPDATE policies matter because the upload routes use `upsert: true` (`INSERT ... ON CONFLICT DO UPDATE`), and Postgres evaluates **both** INSERT and UPDATE RLS during an upsert; without the UPDATE policy, replacing an existing file fails with *"new row violates row-level security policy."*
 
 ```sql
--- shown for tutorial-pdfs; toy-photos and stl-files are identical with the bucket id swapped
-create policy "Public read tutorial-pdfs"
-  on storage.objects for select using (bucket_id = 'tutorial-pdfs');
+-- shown for tutorial-pdfs; stl-files is identical with the bucket id swapped.
+-- toy-photos keeps the original "Public read" policy with no auth.uid() test.
+create policy "Signed-in read tutorial-pdfs"
+  on storage.objects for select
+  using (bucket_id = 'tutorial-pdfs' and auth.uid() is not null);
 
 create policy "Authenticated upload tutorial-pdfs"
   on storage.objects for insert
@@ -853,6 +881,8 @@ create policy "Authenticated update tutorial-pdfs"
 ```
 
 > **002 note:** the three UPDATE policies are created in 001 (for fresh databases) and **re-applied idempotently** in `002_storage_update_policies.sql` (each `create` preceded by `drop policy if exists`) so an already-running database that predates the fix also gets them. On a fresh DB the drops are no-ops.
+
+> **049 note:** signed-in users never fetch these two buckets directly. The web route handler `packages/web/app/files/[bucket]/[...path]/route.ts` checks the session cookie, creates a 60-second signed URL with the user's own JWT (which is why the SELECT policy exists — Storage checks it before signing), and redirects. A signed-out visitor is redirected to `/signup?next=/tutorials/<id>&reason=download` instead. The SELECT policy is "any signed-in user," not ownership-scoped — a signed-in user who knows a tutorial id can sign that tutorial's files whatever its status; that is the account gate the spec asked for, not an authorship gate.
 
 ---
 

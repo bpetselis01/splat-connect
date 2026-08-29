@@ -26,6 +26,7 @@ export default async function TutorialPage({
   return (
     <TutorialView
       tutorial={tutorial}
+      signedIn={saved !== null}
       headerAction={
         /* Not an island here: there is no card to sit on, and you often
            arrive at this page from a shared link with no card in sight. An
