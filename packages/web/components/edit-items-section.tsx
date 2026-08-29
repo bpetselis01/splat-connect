@@ -1,4 +1,5 @@
 'use client'
+import { PanelActions } from '@/components/panel-actions'
 // The parts and tools editors, which were line-for-line identical except for
 // labels and the quantity field and had already drifted once. Callers pass
 // noun="part" withQuantity or noun="tool"; `withQuantity` is the only
@@ -273,9 +274,11 @@ export function EditItemsSection({ noun, withQuantity, initialItems, onSave }: E
             {addError}
           </p>
         )}
-        <button type="submit" disabled={saving} className={btnCls}>
-          Add {noun}
-        </button>
+        <PanelActions>
+          <button type="submit" disabled={saving} className={btnCls}>
+            Add {noun}
+          </button>
+        </PanelActions>
       </form>
     </div>
   )
