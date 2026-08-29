@@ -72,11 +72,15 @@ describe('ToyEditor', () => {
     )
   })
 
-  it('disables Publish and names the missing field when the cover photo is absent', () => {
+  // Chain: the bar was rendered by ToyReviewPanel until 2026-08-29, so it only
+  //        existed on the Review step and Details and Photos said nothing about how
+  //        far the toy was from publishable. It is the stepper's now — this asserts
+  //        it from Details, without visiting Review at all
+  it('names the missing photo and disables Publish from the very first step', () => {
     render(<ToyEditor toy={toy({ cover_photo_url: null })} />)
-    fireEvent.click(screen.getByRole('tab', { name: 'Review' }))
 
-    expect(screen.getByText('Add Cover photo to publish')).toBeInTheDocument()
+    expect(screen.getByText('1 thing left')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'A cover photo' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Publish' })).toBeDisabled()
   })
 
