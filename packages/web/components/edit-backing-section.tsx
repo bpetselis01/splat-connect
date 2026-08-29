@@ -1,4 +1,5 @@
 'use client'
+import { PanelActions } from '@/components/panel-actions'
 /**
  * Backing controls for one project.
  *
@@ -164,6 +165,11 @@ export function EditBackingSection({
           )}
         </div>
       )}
+
+      {/* Ask belongs to the organisation picker above, not to the step — it
+          adds one backer rather than saving the section — so Next gets a row
+          of its own rather than standing level with it. */}
+      <PanelActions />
     </div>
   )
 }
