@@ -11,6 +11,7 @@ import upload from './routes/upload.js'
 import parts from './routes/parts.js'
 import tools from './routes/tools.js'
 import stlFiles from './routes/stl-files.js'
+import recommendations from './routes/recommendations.js'
 import admin from './routes/admin.js'
 import contributors from './routes/contributors.js'
 import childProfiles from './routes/child-profiles.js'
@@ -64,6 +65,7 @@ app.route('/api/upload', upload)
 app.route('/api/tutorials', parts)
 app.route('/api/tutorials', tools)
 app.route('/api/tutorials', stlFiles)
+app.route('/api/tutorials', recommendations)
 app.route('/api/tutorials', tutorialOrgs)
 app.route('/api/tutorials', collaborators)
 app.route('/api/admin', admin)
