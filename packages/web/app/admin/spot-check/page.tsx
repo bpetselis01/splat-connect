@@ -61,23 +61,26 @@ export default async function SpotCheckPage({
           {sample.map((t) => {
             const backing = (t.tutorial_orgs ?? []).filter((b) => b.status === 'accepted')
             return (
-              <li key={t.id} className="card">
-                <div className="flex items-start justify-between gap-3">
-                  <Link href={`/admin/review/${t.id}`} className="font-medium">
-                    {t.title}
-                  </Link>
-                  <DifficultyBadge difficulty={t.difficulty} />
-                </div>
-                {backing.length > 0 && (
-                  <p className="mt-2 text-sm text-muted">
-                    Backed by {backing.map((b) => b.organizations?.name).filter(Boolean).join(', ')}
-                  </p>
-                )}
-                {t.reviewed_at && (
-                  <p className="mt-1 text-xs text-muted">
-                    Approved {new Date(t.reviewed_at).toLocaleDateString('en-AU')}
-                  </p>
-                )}
+              <li key={t.id}>
+                {/* Whole card, not just the title — and a bare .card with no
+                    padding was the other half of the same oversight. */}
+                <Link href={`/admin/review/${t.id}`} className="card card-link p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="font-medium text-ink">{t.title}</span>
+                    <DifficultyBadge difficulty={t.difficulty} />
+                  </div>
+                  {backing.length > 0 && (
+                    <p className="mt-2 text-sm text-muted">
+                      Backed by{' '}
+                      {backing.map((b) => b.organizations?.name).filter(Boolean).join(', ')}
+                    </p>
+                  )}
+                  {t.reviewed_at && (
+                    <p className="mt-1 text-xs text-muted">
+                      Approved {new Date(t.reviewed_at).toLocaleDateString('en-AU')}
+                    </p>
+                  )}
+                </Link>
               </li>
             )
           })}

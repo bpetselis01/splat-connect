@@ -91,4 +91,15 @@ describe('Organisation tab', () => {
     expect(screen.getByText('EASY')).toBeInTheDocument()
     expect(screen.getByText('MEDIUM')).toBeInTheDocument()
   })
+
+  // Tests: a queue row responds to the pointer the way an exchange row does
+  // How:   asserts the whole card carries .card-link, the single hook the shared
+  //        press-motion block in globals.css looks for
+  // Chain: the title alone was the link, so the queue had no hover, no press and
+  //        a hit area a fraction of the card it sat in
+  it('makes the whole row the target, like an exchange row', async () => {
+    render(await Page())
+    const row = screen.getByRole('link', { name: /Older request/ })
+    expect(row).toHaveClass('card', 'card-link')
+  })
 })

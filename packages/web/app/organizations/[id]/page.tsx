@@ -120,18 +120,19 @@ export default async function OrganizationPage({
         ) : (
           <ul className="flex flex-col gap-3">
             {backed.map((t) => (
-              <li key={t.id} className="card p-4">
+              <li key={t.id}>
                 {/* The leader dashboard carries the rail; /tutorials/[id] is the
                     public page. BoundaryLink forces the full load that lets the
-                    header replace it. */}
-                <BoundaryLink href={`/tutorials/${t.id}`} className="text-sm font-bold text-ink">
-                  {t.title}
+                    header replace it. The whole card is the target — the same
+                    change the merged queue in dashboard/organisation carries. */}
+                <BoundaryLink href={`/tutorials/${t.id}`} className="card card-link p-4">
+                  <span className="text-sm font-bold text-ink">{t.title}</span>
+                  {t.description && (
+                    <p className="mt-1 max-w-prose text-xs leading-relaxed text-muted">
+                      {t.description}
+                    </p>
+                  )}
                 </BoundaryLink>
-                {t.description && (
-                  <p className="mt-1 max-w-prose text-xs leading-relaxed text-muted">
-                    {t.description}
-                  </p>
-                )}
               </li>
             ))}
           </ul>
@@ -158,22 +159,22 @@ export default async function OrganizationPage({
         ) : (
           <ul className="flex flex-col gap-3">
             {waiting.map((t) => (
-              <li key={t.id} className="card p-4">
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                  <BackingBadge status={rowFor(t)!.status} />
-                  {/* Always the project page, never /tutorials/[id]. That link is
-                      the hole: the public page serves only approved work, so every
-                      item in this queue 404'd. */}
-                  <Link
-                    href={`/organizations/${orgId}/projects/${t.id}`}
-                    className="text-sm font-bold text-ink"
-                  >
-                    {t.title}
-                  </Link>
-                  <span className="ml-auto">
-                    <DifficultyBadge difficulty={t.difficulty} />
-                  </span>
-                </div>
+              <li key={t.id}>
+                {/* Always the project page, never /tutorials/[id]. That link is
+                    the hole: the public page serves only approved work, so every
+                    item in this queue 404'd. */}
+                <Link
+                  href={`/organizations/${orgId}/projects/${t.id}`}
+                  className="card card-link p-4"
+                >
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <BackingBadge status={rowFor(t)!.status} />
+                    <span className="text-sm font-bold text-ink">{t.title}</span>
+                    <span className="ml-auto">
+                      <DifficultyBadge difficulty={t.difficulty} />
+                    </span>
+                  </div>
+                </Link>
               </li>
             ))}
           </ul>

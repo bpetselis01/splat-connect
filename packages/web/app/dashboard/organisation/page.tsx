@@ -76,30 +76,36 @@ export default async function OrganisationTabPage() {
       ) : (
         <ul className="flex flex-col gap-3">
           {waiting.map(({ tutorial, row, org }) => (
-            <li key={row.id} className="card p-4">
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                <BackingBadge status={row.status} />
-                {/* Always the project page, never /tutorials/[id]. That link is
-                    the hole: the public page serves only approved work, so every
-                    item in this queue 404'd. */}
-                <BoundaryLink
-                  href={`/organizations/${org.id}/projects/${tutorial.id}`}
-                  className="text-sm font-bold text-ink"
-                >
-                  {tutorial.title}
-                </BoundaryLink>
-                <span className="rounded-full bg-brand-tint px-2 py-0.5 text-xs font-semibold text-brand-deep">
-                  {org.name}
-                </span>
-                <span className="ml-auto">
-                  <DifficultyBadge difficulty={tutorial.difficulty} />
-                </span>
-              </div>
-              {org.status === 'suspended' && (
-                <p className="mt-2 text-xs text-muted">
-                  Suspended — you can look, but not approve
-                </p>
-              )}
+            <li key={row.id}>
+              {/* The whole row is the target, the way an exchange row is. The
+                  title alone was the link, so a queue whose entire purpose is
+                  opening things had no hover, no press, and a hit area a
+                  fraction of the card it sat in. .card-link is the only hook
+                  the shared press-motion block looks for.
+
+                  Always the project page, never /tutorials/[id]. That link is
+                  the hole: the public page serves only approved work, so every
+                  item in this queue 404'd. */}
+              <BoundaryLink
+                href={`/organizations/${org.id}/projects/${tutorial.id}`}
+                className="card card-link p-4"
+              >
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <BackingBadge status={row.status} />
+                  <span className="text-sm font-bold text-ink">{tutorial.title}</span>
+                  <span className="rounded-full bg-brand-tint px-2 py-0.5 text-xs font-semibold text-brand-deep">
+                    {org.name}
+                  </span>
+                  <span className="ml-auto">
+                    <DifficultyBadge difficulty={tutorial.difficulty} />
+                  </span>
+                </div>
+                {org.status === 'suspended' && (
+                  <p className="mt-2 text-xs text-muted">
+                    Suspended — you can look, but not approve
+                  </p>
+                )}
+              </BoundaryLink>
             </li>
           ))}
         </ul>
