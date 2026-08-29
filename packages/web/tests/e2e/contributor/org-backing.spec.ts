@@ -123,7 +123,9 @@ test('a contributor sees a decline and asks someone else', async ({ page }) => {
 
     // And asks someone else, from the project itself.
     await page.goto(`/tutorials/${tutorialId}/edit`)
-    await page.getByRole('tab', { name: 'Backing' }).click()
+    // Backing lives under Team, with collaborators — both answer who else is
+    // attached to the tutorial.
+    await page.getByRole('tab', { name: 'Team' }).click()
     await page.getByLabel(/Ask another organisation/i).selectOption(orgB)
     await page.getByRole('button', { name: /^Ask$/ }).click()
     // The panel shows the state badge beside the organisation's name; the
