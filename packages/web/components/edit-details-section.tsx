@@ -1,4 +1,5 @@
 'use client'
+import { PanelActions } from '@/components/panel-actions'
 /**
  * The tutorial's core fields (title/description/difficulty), extracted from
  * a plain server-action form into a client component so a save conflict —
@@ -68,11 +69,11 @@ export function EditDetailsSection({
           <option value="hard">Hard</option>
         </select>
       </div>
-      <div className="flex justify-end">
-        <button type="submit" disabled={!dirty || pending} className="btn btn-primary btn-sm self-end">
+      <PanelActions>
+        <button type="submit" disabled={!dirty || pending} className="btn btn-primary btn-sm">
           {pending ? 'Saving…' : 'Save details'}
         </button>
-      </div>
+      </PanelActions>
     </form>
   )
 }
