@@ -148,6 +148,9 @@ test('a part can be added, edited and deleted', async ({ page }) => {
 
   const parts = await openStep(page, 'Parts')
 
+  // The add form is closed when the list already has rows (ce15f51a); the
+  // fixture seeds one, so it has to be opened first.
+  await parts.getByRole('button', { name: 'Add a part' }).click()
   await parts.getByPlaceholder('Name').fill('Added part')
   await parts.getByRole('button', { name: 'Add part' }).click()
   await expect(parts.getByRole('button', { name: /Added part/ })).toBeVisible()
@@ -176,6 +179,9 @@ test('a tool can be added, edited and deleted', async ({ page }) => {
 
   const tools = await openStep(page, 'Tools')
 
+  // The add form is closed when the list already has rows (ce15f51a); the
+  // fixture seeds one, so it has to be opened first.
+  await tools.getByRole('button', { name: 'Add a tool' }).click()
   await tools.getByPlaceholder('Name').fill('Added tool')
   await tools.getByRole('button', { name: 'Add tool' }).click()
   await expect(tools.getByRole('button', { name: /Added tool/ })).toBeVisible()
@@ -234,7 +240,7 @@ test('submit-for-review is blocked when required fields are missing', async ({ p
   await page.getByRole('tab', { name: 'Review' }).click()
   const submitButton = page.getByRole('button', { name: 'Submit for review' })
   await expect(submitButton).toBeDisabled()
-  await expect(page.locator('.sticky-submit-note')).toContainText('Tutorial PDF')
+  await expect(page.locator('.sticky-submit-note')).toContainText('The guide PDF')
   // getMissingFields is unit-tested, but nothing checked that the disabled
   // button actually prevents the status transition.
   const { data } = await adminClient().from('tutorials').select('status').eq('id', id).single()
