@@ -68,15 +68,18 @@ describe('auth shell', () => {
     expect(hrefs).toEqual(['/login', '/signup'])
   })
 
-  // Tests: the card is the bordered pixel card, not the soft one
-  // How:   asserts card and the deeper 6px shadow the board draws here
-  // Chain: it shipped as .card — borderless, 16px radius, blurred shadow — which is
-  //        the pre-pixel surface. The 6px is a rung deeper than an ordinary
-  //        .card because it is the only object on the screen
-  it('sits the form in the bordered card at the depth the board draws', () => {
+  // Tests: the card carries no shadow of its own, so .card's rung-3 rule reaches it
+  // How:   asserts the class is plain .card with no arbitrary shadow utility
+  // Chain: it carried a literal shadow-[6px_6px_0_var(--color-ink)] — the launcher
+  //        pillar's depth, on a form. A utility beats the stylesheet, so the
+  //        hierarchy pass would have left this one box the loudest passive surface
+  //        on the site. The literal is the only reason the sweep needed a component
+  //        edit at all; with it gone, .card:not(.card-link) draws this box
+  it('leaves the sign-in card to the stylesheet rather than a shadow literal', () => {
     const { container } = render(<AuthCard>form</AuthCard>)
     const card = container.firstElementChild!
     expect(card).toHaveClass('card')
-    expect(card.className).toContain('shadow-[6px_6px_0_var(--color-ink)]')
+    expect(card).not.toHaveClass('card-link')
+    expect(card.className).not.toContain('shadow-[')
   })
 })
