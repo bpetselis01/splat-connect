@@ -1,5 +1,5 @@
 'use client'
-import { PanelActions } from '@/components/panel-actions'
+import { PanelActions, useSaveOnLeave } from '@/components/panel-actions'
 /**
  * The tutorial's core fields (title/description/difficulty), extracted from
  * a plain server-action form into a client component so a save conflict —
@@ -7,7 +7,7 @@ import { PanelActions } from '@/components/panel-actions'
  * boundary. Every call carries the updated_at loaded at page render, not a
  * freshly re-fetched one: that's the whole point of the check.
  */
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Tutorial, Difficulty } from '@splat-connect/types'
 import { useToast } from '@/components/toast'
@@ -38,15 +38,38 @@ export function EditDetailsSection({
       setDirty(false)
       showToast('Details saved')
       router.refresh()
+      return true
     } catch {
       setConflict(true)
+      return false
     } finally {
       setPending(false)
     }
   }
 
+  /* Leaving the step saves it, so that walking on with Next costs nothing.
+     The form is uncontrolled — the fields are the state — so the values come
+     back out of the DOM the same way the submit handler gets them. Held to the
+     same `dirty` guard as the Save button: an untouched form has nothing to
+     write, and a conflicting write is the one thing this page has always been
+     careful not to make by accident. */
+  const formRef = useRef<HTMLFormElement>(null)
+  useSaveOnLeave(
+    dirty && !pending
+      ? () => handleSubmit(new FormData(formRef.current!))
+      : null
+  )
+
   return (
-    <form action={handleSubmit} onChange={() => setDirty(true)} className="flex flex-col gap-3 px-5 pb-5">
+    // Wrapped because handleSubmit reports whether it saved, which `action`
+    // has no use for. Safe to wrap here where the same thing on the page's
+    // server actions would not be: this is a client function already.
+    <form
+      ref={formRef}
+      action={(formData) => void handleSubmit(formData)}
+      onChange={() => setDirty(true)}
+      className="flex flex-col gap-3 px-5 pb-5"
+    >
       {conflict && (
         <p role="alert" className="alert alert-danger">
           This was updated while you were editing — reload to see the latest version before
