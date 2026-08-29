@@ -9,7 +9,7 @@ import { PanelActions, useSaveOnLeave } from '@/components/panel-actions'
  */
 import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import type { Tutorial, Difficulty } from '@splat-connect/types'
+import { KIND_LABEL, type Tutorial, type Difficulty, type TutorialKind } from '@splat-connect/types'
 import { useToast } from '@/components/toast'
 
 export function EditDetailsSection({
@@ -17,7 +17,7 @@ export function EditDetailsSection({
   onSave,
 }: {
   tutorial: Tutorial
-  onSave: (patch: { title: string; description: string | null; difficulty: Difficulty; updated_at: string }) => Promise<void>
+  onSave: (patch: { title: string; description: string | null; difficulty: Difficulty; kind: TutorialKind; updated_at: string }) => Promise<void>
 }) {
   const router = useRouter()
   const showToast = useToast()
@@ -33,6 +33,7 @@ export function EditDetailsSection({
         title: formData.get('title') as string,
         description: (formData.get('description') as string) || null,
         difficulty: formData.get('difficulty') as Difficulty,
+        kind: formData.get('kind') as TutorialKind,
         updated_at: tutorial.updated_at,
       })
       setDirty(false)
@@ -90,6 +91,18 @@ export function EditDetailsSection({
           <option value="easy">Easy</option>
           <option value="medium">Medium</option>
           <option value="hard">Hard</option>
+        </select>
+      </div>
+      <div>
+        {/* Editable, not just shown: picking the wrong card on /upload should
+            cost a select change, not a new tutorial. Changing it redraws the
+            pill row — the STL step appears or goes — on the refresh that
+            follows the save. */}
+        <label htmlFor="edit-kind" className="field-label">Kind</label>
+        <select id="edit-kind" key={tutorial.kind} name="kind" defaultValue={tutorial.kind} className="field">
+          {(Object.keys(KIND_LABEL) as TutorialKind[]).map((k) => (
+            <option key={k} value={k}>{KIND_LABEL[k]}</option>
+          ))}
         </select>
       </div>
       <PanelActions>
