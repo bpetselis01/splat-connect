@@ -27,18 +27,23 @@ vi.mock('@/components/edit-items-section', () => ({ EditItemsSection: () => null
 vi.mock('@/components/edit-details-section', () => ({ EditDetailsSection: () => null }))
 vi.mock('@/components/edit-backing-section', () => ({ EditBackingSection: () => null }))
 vi.mock('@/components/edit-collaborators-section', () => ({ EditCollaboratorsSection: () => null }))
-// Status and the missing-field list now reach the Review step's panel rather
-// than the stepper, so that is where these are asserted.
+// The Review step is a summary and nothing else since 2026-08-29 — what is
+// missing, and whether the tutorial has been handed over, reach the stepper's
+// finish bar instead, so that is where both are asserted.
 vi.mock('@/components/tutorial-review-panel', () => ({
-  TutorialReviewPanel: ({ status, missingFields }: { status: string; missingFields: string[] }) => (
-    <div data-testid="review-panel" data-status={status} data-missing={missingFields.join('|')} />
+  TutorialReviewPanel: ({ title }: { title: string }) => (
+    <div data-testid="review-panel" data-title={title} />
   ),
 }))
 vi.mock('@/components/edit-stepper', () => ({
   // Renders each step's content, which is how the review panel above is
   // reached. Every section component is mocked to null, so this stays cheap.
-  EditStepper: ({ steps }: { steps: EditStep[] }) => (
-    <div data-testid="edit-stepper">
+  EditStepper: ({ steps, finish }: { steps: EditStep[]; finish?: { missing: { step: string; label: string }[]; done?: unknown } }) => (
+    <div
+      data-testid="edit-stepper"
+      data-missing={(finish?.missing ?? []).map((m) => `${m.step}:${m.label}`).join('|')}
+      data-handed-over={finish?.done ? 'yes' : 'no'}
+    >
       {steps.map((s) => (
         <span key={s.id} data-step={s.id} data-step-status={s.status}>
           {s.content}
@@ -163,23 +168,36 @@ describe('EditTutorialPage', () => {
     expect(screen.queryByText('This tutorial was rejected')).toBeNull()
   })
 
-  it('passes the tutorial status through to the Review panel', async () => {
+  // Chain: a tutorial that has been handed over has nothing left to finish, so the
+  //        bar shows when it was last saved instead of a control that would submit
+  //        the same work twice
+  it('tells the finish bar the tutorial has been handed over', async () => {
     vi.mocked(apiClient.get)
       .mockResolvedValueOnce(mockProfile)
       .mockResolvedValueOnce({ ...baseTutorialWithDetails, status: 'pending' })
     render(await EditTutorialPage(pageParams))
-    expect(screen.getByTestId('review-panel')).toHaveAttribute('data-status', 'pending')
+    expect(screen.getByTestId('edit-stepper')).toHaveAttribute('data-handed-over', 'yes')
   })
 
-  it('wires computeStepStatuses and getMissingFields into the step manifest', async () => {
+  it('leaves the finish bar open while the tutorial is still a draft', async () => {
+    vi.mocked(apiClient.get)
+      .mockResolvedValueOnce(mockProfile)
+      .mockResolvedValueOnce(baseTutorialWithDetails)
+    render(await EditTutorialPage(pageParams))
+    expect(screen.getByTestId('edit-stepper')).toHaveAttribute('data-handed-over', 'no')
+  })
+
+  it('wires computeStepStatuses and missingByStep into the step manifest', async () => {
     vi.mocked(apiClient.get)
       .mockResolvedValueOnce(mockProfile)
       .mockResolvedValueOnce(baseTutorialWithDetails)
     render(await EditTutorialPage(pageParams))
     const stepper = screen.getByTestId('edit-stepper')
-    expect(screen.getByTestId('review-panel')).toHaveAttribute(
+    // Each gap paired with the step that closes it, which is what lets the bar
+    // hand over the fix rather than only name the problem.
+    expect(stepper).toHaveAttribute(
       'data-missing',
-      'Tutorial PDF|Toy photo|At least one part|At least one tool'
+      'files:The guide PDF|files:A toy photo|parts:A part|tools:A tool'
     )
     expect(stepper.querySelector('[data-step="details"]')).toHaveAttribute('data-step-status', 'done')
     expect(stepper.querySelector('[data-step="files"]')).toHaveAttribute('data-step-status', 'attention')
