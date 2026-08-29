@@ -16,8 +16,6 @@ const baseCaps = {
   profile: { id: 'p1', name: 'Test', role: 'contributor' },
   isAdmin: false,
   ledOrgs: [],
-  canAuthor: true,
-  unreadNotifications: 0,
   unread: { tutorials: 0, exchanges: 0, challenges: 0, total: 0 },
   exchangeActions: 0,
 } as unknown as Capabilities

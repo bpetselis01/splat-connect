@@ -1,7 +1,6 @@
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
 import { apiClient } from '@/lib/api-client'
-import { getCapabilities } from '@/lib/capabilities'
+import { requireCapabilities } from '@/lib/require-capabilities'
 import { CardPhoto } from '@/components/card-photo'
 import { ToyStatusBadge } from '@/components/toy-status-badge'
 import { Box } from '@/components/icons'
@@ -9,8 +8,7 @@ import { BoundaryLink } from '@/components/boundary-link'
 import type { Toy } from '@splat-connect/types'
 
 export default async function ToyListPage() {
-  const caps = await getCapabilities()
-  if (!caps) redirect('/login')
+  const caps = await requireCapabilities()
 
   // No .catch() here: an empty array is already the legitimate "no toys yet"
   // value, so swallowing a fetch failure into the same empty array would tell

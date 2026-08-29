@@ -3,6 +3,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import DashboardPage from '@/app/dashboard/tutorials/page'
 import type { Tutorial, Profile } from '@splat-connect/types'
 
+const { mockGetCapabilities } = vi.hoisted(() => ({ mockGetCapabilities: vi.fn() }))
+vi.mock('@/lib/capabilities', () => ({ getCapabilities: mockGetCapabilities }))
 vi.mock('@/lib/api-client', () => ({
   apiClient: { get: vi.fn() },
 }))
@@ -59,15 +61,22 @@ const baseTutorial: Tutorial = {
 describe('DashboardPage', () => {
   beforeEach(() => {
     vi.resetAllMocks()
+    mockGetCapabilities.mockResolvedValue({
+      profile: mockProfile,
+      isAdmin: false,
+      ledOrgs: [],
+      unread: { tutorials: 0, exchanges: 0, challenges: 0, total: 0 },
+      exchangeActions: 0,
+    })
   })
 
-  // Tests: redirects to /login when the profile API call fails
-  // How:   mocks apiClient.get to throw and redirect to throw NEXT_REDIRECT;
+  // Tests: redirects to /login when there is no signed-in account
+  // How:   getCapabilities resolves null and redirect throws NEXT_REDIRECT;
   //        asserts the component throws and redirect('/login') was called
   // Chain: unauthenticated users cannot access the dashboard → they are sent to /login
-  it('redirects to /login when profile API throws', async () => {
+  it('redirects to /login when there are no capabilities', async () => {
     vi.mocked(redirect).mockImplementation(() => { throw new Error('NEXT_REDIRECT') })
-    vi.mocked(apiClient.get).mockRejectedValueOnce(new Error('Unauthorized'))
+    mockGetCapabilities.mockResolvedValue(null)
     await expect(DashboardPage()).rejects.toThrow('NEXT_REDIRECT')
     expect(redirect).toHaveBeenCalledWith('/login')
   })
@@ -77,7 +86,6 @@ describe('DashboardPage', () => {
   // Chain: contributors scan the summary to track how many tutorials are in each state
   it('renders pending, approved, rejected counts', async () => {
     vi.mocked(apiClient.get)
-      .mockResolvedValueOnce(mockProfile)
       .mockResolvedValueOnce([
         { ...baseTutorial, id: '1', status: 'pending' },
         { ...baseTutorial, id: '2', status: 'pending' },
@@ -101,7 +109,6 @@ describe('DashboardPage', () => {
   //        clicking anywhere on the card, as they already do on My toys
   it('renders the tutorial title and links the whole card to the editor', async () => {
     vi.mocked(apiClient.get)
-      .mockResolvedValueOnce(mockProfile)
       .mockResolvedValueOnce([{ ...baseTutorial, id: 'abc', title: 'Switch Tutorial' }])
     render(await DashboardPage())
     expect(screen.getByText('Switch Tutorial')).toBeInTheDocument()
@@ -116,7 +123,6 @@ describe('DashboardPage', () => {
   //        statuses prevents the 404 and keeps the UI consistent
   it('does not render a View link for any tutorial status', async () => {
     vi.mocked(apiClient.get)
-      .mockResolvedValueOnce(mockProfile)
       .mockResolvedValueOnce([
         { ...baseTutorial, id: '1', status: 'draft' },
         { ...baseTutorial, id: '2', status: 'pending' },
@@ -132,7 +138,6 @@ describe('DashboardPage', () => {
   //        and no link out to a page that no longer exists
   it('lists every tutorial with no view-all link', async () => {
     vi.mocked(apiClient.get)
-      .mockResolvedValueOnce(mockProfile)
       .mockResolvedValueOnce(
         Array.from({ length: 6 }, (_, i) => ({ ...baseTutorial, id: String(i), title: `T${i}` }))
       )
@@ -146,7 +151,6 @@ describe('DashboardPage', () => {
   // Chain: first-time contributors see a prompt to create their first tutorial
   it('shows empty state when no tutorials', async () => {
     vi.mocked(apiClient.get)
-      .mockResolvedValueOnce(mockProfile)
       .mockResolvedValueOnce([])
     render(await DashboardPage())
     expect(screen.getByText(/haven't submitted any tutorials/i)).toBeInTheDocument()
@@ -158,7 +162,6 @@ describe('DashboardPage', () => {
   // Chain: contributor reads the admin's specific feedback and knows what to fix
   it('shows rejection note for rejected tutorial with a note', async () => {
     vi.mocked(apiClient.get)
-      .mockResolvedValueOnce(mockProfile)
       .mockResolvedValueOnce([{ ...baseTutorial, status: 'rejected', rejection_note: 'Needs more detail' }])
     render(await DashboardPage())
     expect(screen.getByText('Needs more detail')).toBeInTheDocument()
@@ -170,7 +173,6 @@ describe('DashboardPage', () => {
   // Chain: contributor knows their tutorial was rejected even when the admin gave no reason
   it('shows fallback text for rejected tutorial with no note', async () => {
     vi.mocked(apiClient.get)
-      .mockResolvedValueOnce(mockProfile)
       .mockResolvedValueOnce([{ ...baseTutorial, status: 'rejected', rejection_note: null }])
     render(await DashboardPage())
     expect(screen.getByText('No feedback was provided.')).toBeInTheDocument()
@@ -182,7 +184,6 @@ describe('DashboardPage', () => {
   // Chain: the callout is rejection-specific — other statuses must not show it
   it('does not show rejection callout for draft, pending, or approved tutorials', async () => {
     vi.mocked(apiClient.get)
-      .mockResolvedValueOnce(mockProfile)
       .mockResolvedValueOnce([
         { ...baseTutorial, id: '1', status: 'draft' },
         { ...baseTutorial, id: '2', status: 'pending' },
@@ -198,7 +199,6 @@ describe('DashboardPage', () => {
   //        same state described two ways depending which page they landed on
   it('shows backing state on the recent tutorials rows', async () => {
     vi.mocked(apiClient.get)
-      .mockResolvedValueOnce(mockProfile)
       .mockResolvedValueOnce([
         {
           ...baseTutorial,
@@ -226,7 +226,6 @@ describe('DashboardPage', () => {
   //        and the tile itself is text — this button is the only route
   it('gives My tutorials a way into the public library', async () => {
     vi.mocked(apiClient.get)
-      .mockResolvedValueOnce(mockProfile)
       .mockResolvedValueOnce([])
     render(await DashboardPage())
     expect(screen.getByRole('link', { name: /browse the library/i })).toHaveAttribute(
@@ -238,7 +237,6 @@ describe('DashboardPage', () => {
   // Tests: the primary action stays put once the browse link is added
   it('keeps the primary action on My tutorials', async () => {
     vi.mocked(apiClient.get)
-      .mockResolvedValueOnce(mockProfile)
       .mockResolvedValueOnce([])
     render(await DashboardPage())
     expect(screen.getByRole('link', { name: /new tutorial/i })).toHaveAttribute('href', '/upload')
@@ -254,7 +252,6 @@ describe('DashboardPage', () => {
   //        so it goes to the destination.
   it('leads to the saved tutorials list', async () => {
     vi.mocked(apiClient.get)
-      .mockResolvedValueOnce(mockProfile)
       .mockResolvedValueOnce([])
     render(await DashboardPage())
     expect(screen.getByRole('link', { name: /saved tutorials/i })).toHaveAttribute(

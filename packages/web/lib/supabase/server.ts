@@ -1,12 +1,10 @@
 /**
  * Cookie-session Supabase client for server components and route handlers.
  *
- * Extracted from lib/auth.ts when the /files route handler became the second
- * caller. The setAll try/catch is load-bearing: a Server Component cannot set
- * cookies, and the middleware owns the refresh.
+ * The setAll try/catch is load-bearing: a Server Component cannot set cookies,
+ * and the middleware owns the refresh.
  *
  * Related files:
- * - lib/auth.ts: getUserRole, the first caller
  * - app/files/[bucket]/[...path]/route.ts: signs storage URLs with this
  */
 import { cookies } from 'next/headers'

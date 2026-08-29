@@ -89,12 +89,8 @@ export default async function HomePage() {
   }
 
   const tiles: LauncherTile[] = PUBLIC_NAV.map((s) => ({
-    href: s.href,
-    label: s.label,
+    ...s,
     blurb: BLURB[s.href] ?? s.blurb,
-    tone: s.tone,
-    art: s.art,
-    rank: s.rank,
     count: COUNT[s.href],
   }))
 

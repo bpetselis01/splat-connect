@@ -16,11 +16,11 @@
  * - components/save-button.tsx: the filled control that removes a row
  */
 import type { Route } from 'next'
-import { notFound, redirect } from 'next/navigation'
+import { notFound } from 'next/navigation'
 import { BoundaryLink } from '@/components/boundary-link'
 import { SAVE_SLUGS, type SaveSlug } from '@splat-connect/types'
 import type { Tutorial, ToyWithOwner, ToyIdea } from '@splat-connect/types'
-import { getCapabilities } from '@/lib/capabilities'
+import { requireCapabilities } from '@/lib/require-capabilities'
 import { apiClient } from '@/lib/api-client'
 import { TutorialCard } from '@/components/tutorial-card'
 import { ToyLibraryCard } from '@/components/toy-library-card'
@@ -57,8 +57,7 @@ export default async function SavedList({ params }: { params: Promise<{ type: st
   if (!Object.hasOwn(SAVE_SLUGS, type)) notFound()
   const slug = type as SaveSlug
 
-  const caps = await getCapabilities()
-  if (!caps) redirect('/login')
+  const caps = await requireCapabilities()
 
   const view = VIEW[slug]
   // Degrades to empty rather than throwing: an unreachable API should read as

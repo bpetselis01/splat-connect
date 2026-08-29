@@ -1,11 +1,9 @@
 import { BackLink } from '@/components/back-link'
-import { redirect } from 'next/navigation'
-import { getCapabilities } from '@/lib/capabilities'
+import { requireCapabilities } from '@/lib/require-capabilities'
 import { ChildEditor } from '@/components/child-editor'
 
 export default async function NewChildPage() {
-  const caps = await getCapabilities()
-  if (!caps) redirect('/login')
+  const caps = await requireCapabilities()
 
   return (
     <div>

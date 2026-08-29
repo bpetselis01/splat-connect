@@ -14,8 +14,6 @@ const baseCaps: Capabilities = {
   },
   isAdmin: false,
   ledOrgs: [],
-  canAuthor: true,
-  unreadNotifications: 0,
   unread: { tutorials: 0, exchanges: 0, challenges: 0, total: 0 },
   exchangeActions: 0,
 }

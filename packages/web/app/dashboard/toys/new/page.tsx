@@ -1,12 +1,10 @@
 import { BackLink } from '@/components/back-link'
-import { redirect } from 'next/navigation'
-import { getCapabilities } from '@/lib/capabilities'
+import { requireCapabilities } from '@/lib/require-capabilities'
 import { NewToyForm } from '@/components/new-toy-form'
 import { ToyEditStepper } from '@/components/toy-edit-stepper'
 
 export default async function NewToyPage() {
-  const caps = await getCapabilities()
-  if (!caps) redirect('/login')
+  const caps = await requireCapabilities()
 
   return (
     <div>

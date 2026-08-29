@@ -25,7 +25,7 @@ export async function AppShell({
   if (!caps) return null
 
   return (
-    <ShellFrame groups={buildNav(caps, caps.unreadNotifications)} footer={footer}>
+    <ShellFrame groups={buildNav(caps)} footer={footer}>
       {children}
     </ShellFrame>
   )

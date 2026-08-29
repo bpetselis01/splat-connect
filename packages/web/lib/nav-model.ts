@@ -60,7 +60,7 @@ export type NavRow = {
 
 export type NavGroup = { heading: string; rows: NavRow[] }
 
-export function buildNav(caps: Capabilities, unreadNotifications: number): NavGroup[] {
+export function buildNav(caps: Capabilities): NavGroup[] {
   const groups: NavGroup[] = [
     {
       heading: 'Add a tutorial',
@@ -141,7 +141,7 @@ export function buildNav(caps: Capabilities, unreadNotifications: number): NavGr
         href: '/notifications',
         label: 'Notifications',
         icon: 'bell',
-        count: unreadNotifications || undefined,
+        count: caps.unread.total || undefined,
       },
       { href: '/dashboard/profile', label: 'Account', icon: 'user' },
       ...(caps.isAdmin

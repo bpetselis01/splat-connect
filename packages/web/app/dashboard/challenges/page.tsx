@@ -32,8 +32,7 @@
  * - components/challenge-card.tsx: the public listing's equivalent row
  */
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
-import { getCapabilities } from '@/lib/capabilities'
+import { requireCapabilities } from '@/lib/require-capabilities'
 import { apiClient } from '@/lib/api-client'
 import { IdeaStatusBadge } from '@/components/idea-status-badge'
 import { FileText, Handshake } from '@/components/icons'
@@ -85,8 +84,7 @@ function IdeaRow({ idea }: { idea: ToyIdea }) {
 }
 
 export default async function DashboardChallengesPage() {
-  const caps = await getCapabilities()
-  if (!caps) redirect('/login')
+  const caps = await requireCapabilities()
 
   const [mine, joined] = await Promise.all([
     loadIdeas('/api/ideas/mine'),

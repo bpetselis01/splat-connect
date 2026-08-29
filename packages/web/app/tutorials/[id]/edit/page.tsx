@@ -1,6 +1,7 @@
 import { BackLink } from '@/components/back-link'
 import { apiClient } from '@/lib/api-client'
 import { redirect } from 'next/navigation'
+import { requireCapabilities } from '@/lib/require-capabilities'
 import { revalidatePath } from 'next/cache'
 import { Suspense } from 'react'
 import { EditFilesSection } from '@/components/edit-files-section'
@@ -23,12 +24,7 @@ export default async function EditTutorialPage({
 }) {
   const { id } = await params
 
-  let profile: Profile
-  try {
-    profile = await apiClient.get<Profile>('/api/contributors/me')
-  } catch {
-    redirect('/login')
-  }
+  const { profile } = await requireCapabilities()
 
   let tutorial: TutorialWithDetails
   try {
@@ -37,14 +33,14 @@ export default async function EditTutorialPage({
     redirect('/dashboard')
   }
 
-  const isContributor = tutorial!.tutorial_contributors.some(
-    (tc) => tc.profile_id === profile!.id
+  const isContributor = tutorial.tutorial_contributors.some(
+    (tc) => tc.profile_id === profile.id
   )
   if (!isContributor) redirect('/dashboard')
 
-  const parts = tutorial!.parts as Part[]
-  const tools = tutorial!.tools as Tool[]
-  const stlFiles = tutorial!.stl_files as StlFile[]
+  const parts = tutorial.parts as Part[]
+  const tools = tutorial.tools as Tool[]
+  const stlFiles = tutorial.stl_files as StlFile[]
 
   // Backing rows and the organisation list for the picker. Both tolerate failure:
   // a backing panel that cannot load is a worse reason to 500 the whole edit page
@@ -188,8 +184,8 @@ export default async function EditTutorialPage({
         <div className="panel pt-5">
           <EditFilesSection
             tutorialId={id}
-            currentPhotoUrl={tutorial!.toy_photo_url}
-            currentPdfUrl={tutorial!.tutorial_pdf_url}
+            currentPhotoUrl={tutorial.toy_photo_url}
+            currentPdfUrl={tutorial.tutorial_pdf_url}
             onSave={patchFileUrls}
           />
         </div>
@@ -252,11 +248,11 @@ export default async function EditTutorialPage({
       status: stepStatuses.review,
       content: (
         <TutorialReviewPanel
-          title={tutorial!.title}
-          description={tutorial!.description}
-          difficulty={tutorial!.difficulty as Difficulty}
-          toyPhotoUrl={tutorial!.toy_photo_url}
-          hasPdf={tutorial!.tutorial_pdf_url !== null}
+          title={tutorial.title}
+          description={tutorial.description}
+          difficulty={tutorial.difficulty as Difficulty}
+          toyPhotoUrl={tutorial.toy_photo_url}
+          hasPdf={tutorial.tutorial_pdf_url !== null}
           partCount={parts.length}
           toolCount={tools.length}
           stlCount={stlFiles.length}
@@ -273,7 +269,7 @@ export default async function EditTutorialPage({
           <h2 className="px-5 pb-3 text-sm font-bold text-ink">Recommended tutorials</h2>
           <EditRecommendationsSection
             tutorialId={id}
-            recommendations={tutorial!.tutorial_recommendations}
+            recommendations={tutorial.tutorial_recommendations}
             candidates={candidates}
             onSave={saveRecommendations}
           />
@@ -297,11 +293,11 @@ export default async function EditTutorialPage({
           <div className="panel pt-5">
             <h2 className="px-5 pb-3 text-sm font-bold text-ink">Collaborators</h2>
             <EditCollaboratorsSection
-              contributors={tutorial!.tutorial_contributors}
-              invites={tutorial!.tutorial_collaborator_invites ?? []}
-              currentProfileId={profile!.id}
-              isPrimary={tutorial!.tutorial_contributors.some(
-                (tc) => tc.profile_id === profile!.id && tc.role === 'primary'
+              contributors={tutorial.tutorial_contributors}
+              invites={tutorial.tutorial_collaborator_invites ?? []}
+              currentProfileId={profile.id}
+              isPrimary={tutorial.tutorial_contributors.some(
+                (tc) => tc.profile_id === profile.id && tc.role === 'primary'
               )}
               onInvite={inviteCollaborator}
               onRemove={removeCollaborator}
@@ -312,8 +308,8 @@ export default async function EditTutorialPage({
             <EditBackingSection
               backing={backing}
               organizations={organizations}
-              tutorialStatus={tutorial!.status}
-              reviewedForOrgId={tutorial!.reviewed_for_org_id}
+              tutorialStatus={tutorial.status}
+              reviewedForOrgId={tutorial.reviewed_for_org_id}
               onAsk={askOrg}
               onWithdraw={withdrawOrg}
             />
@@ -322,20 +318,20 @@ export default async function EditTutorialPage({
       ),
     },
   ]
-  const steps = stepsFor(tutorial!.kind).map((stepId) => allSteps.find((s) => s.id === stepId)!)
+  const steps = stepsFor(tutorial.kind).map((stepId) => allSteps.find((s) => s.id === stepId)!)
 
   return (
     <div>
       <div className="mb-6">
         <BackLink href="/dashboard/tutorials" label="My tutorials" />
-        <h1 className="truncate title-detail">{tutorial!.title}</h1>
+        <h1 className="truncate title-detail">{tutorial.title}</h1>
       </div>
 
-      {tutorial!.status === 'rejected' && (
+      {tutorial.status === 'rejected' && (
         <div className="alert alert-danger mb-3">
           <p className="mb-1 font-bold">This tutorial was rejected</p>
           <p className="leading-relaxed">
-            {tutorial!.rejection_note ?? 'No feedback was provided.'}
+            {tutorial.rejection_note ?? 'No feedback was provided.'}
           </p>
         </div>
       )}
@@ -355,8 +351,8 @@ export default async function EditTutorialPage({
             // Once it has left the contributor's hands there is nothing to
             // finish, so the bar carries the last-saved line instead.
             done:
-              tutorial!.status === 'draft' ? undefined : (
-                <SaveStatusLine savedAt={tutorial!.updated_at} />
+              tutorial.status === 'draft' ? undefined : (
+                <SaveStatusLine savedAt={tutorial.updated_at} />
               ),
           }}
         />
