@@ -1,4 +1,5 @@
 'use client'
+import { PanelActions } from '@/components/panel-actions'
 /**
  * Collaborator management for one project. Same run()-busy-state shape as
  * EditBackingSection.
@@ -104,6 +105,10 @@ export function EditCollaboratorsSection({
           </div>
         </div>
       )}
+
+      {/* Invite adds a person; it does not save the step. Same reasoning as
+          the backing panel. */}
+      <PanelActions />
     </div>
   )
 }
