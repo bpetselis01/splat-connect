@@ -107,7 +107,7 @@ export function EditCollaboratorsSection({
       )}
 
       {/* Invite adds a person; it does not save the step. Same reasoning as
-          the backing panel. */}
+          the backing panel below it. */}
       <PanelActions />
     </div>
   )
