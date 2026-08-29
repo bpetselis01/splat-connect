@@ -1,4 +1,5 @@
 'use client'
+import { PanelActions } from '@/components/panel-actions'
 import { useState } from 'react'
 
 export function ToyDetailsForm({
@@ -69,13 +70,13 @@ export function ToyDetailsForm({
           rows={4}
         />
       </div>
-      <div className="flex items-center gap-3">
+      <PanelActions>
         <button type="submit" disabled={busy} className="btn btn-accent">
           {busy ? 'Saving…' : 'Save'}
         </button>
         {error && <p role="alert" className="alert alert-danger">{error}</p>}
         {saved && <p className="text-sm font-semibold text-mint-deep">Saved</p>}
-      </div>
+      </PanelActions>
     </form>
   )
 }
