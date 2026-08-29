@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import type { Tutorial, Part, Tool, StlFile } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
+import { supabase } from '../../lib/supabase'
 import { theme } from '../../lib/theme'
 import { DifficultyBadge } from '../difficulty-badge'
 import { Button } from '../ui/Button'
@@ -68,6 +69,24 @@ export function DetailScreen({ id }: { id: string }) {
     )
   }
 
+  // 049 made tutorial-pdfs private: tutorial_pdf_url is now an object path,
+  // not a URL. There's no /files route on mobile, so sign it in-process with
+  // the app's own session rather than routing through the web app. The
+  // 60-second window matches the web handler's — it only needs to survive
+  // the WebView opening it, not sit around.
+  async function openPreview() {
+    const path = tutorial!.tutorial_pdf_url
+    if (!path) {
+      router.push({ pathname: '/home/[id]/preview', params: { id: tutorial!.id, pdfUrl: '' } })
+      return
+    }
+    const { data, error } = await supabase.storage.from('tutorial-pdfs').createSignedUrl(path, 60)
+    router.push({
+      pathname: '/home/[id]/preview',
+      params: { id: tutorial!.id, pdfUrl: error || !data ? '' : data.signedUrl },
+    })
+  }
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {tutorial.toy_photo_url ? (
@@ -112,15 +131,7 @@ export function DetailScreen({ id }: { id: string }) {
         )}
       </Section>
 
-      <Button
-        label="Preview Tutorial"
-        onPress={() =>
-          router.push({
-            pathname: '/home/[id]/preview',
-            params: { id: tutorial.id, pdfUrl: tutorial.tutorial_pdf_url ?? '' },
-          })
-        }
-      />
+      <Button label="Preview Tutorial" onPress={openPreview} />
     </ScrollView>
   )
 }
