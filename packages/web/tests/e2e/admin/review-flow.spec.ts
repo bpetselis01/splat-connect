@@ -1,5 +1,23 @@
 import { test, expect } from '@playwright/test'
-import { signIn, createContributor, createAdmin, createTutorial, uniqueTitle, acceptTerms } from '../helpers'
+import { signIn, createContributor, createAdmin, createTutorial, uniqueTitle, acceptTerms, adminClient } from '../helpers'
+
+/**
+ * Wait for the review action to land in the database, not for the network to
+ * go quiet. The Approve/Reject buttons submit a server action; if the click
+ * comes before hydration the browser posts the form natively, networkidle
+ * resolves against the still-current document, and the next page.goto()
+ * cancels that navigation — the tutorial stays pending and the contributor's
+ * dashboard never shows the note. Polling the row is the same wait
+ * edit-tutorial.spec.ts uses for uploads.
+ */
+async function expectStatus(tutorialId: string, status: string) {
+  await expect
+    .poll(async () => {
+      const { data } = await adminClient().from('tutorials').select('status').eq('id', tutorialId).single()
+      return data?.status
+    }, { timeout: 30_000 })
+    .toBe(status)
+}
 
 test('an admin approves a pending tutorial and it appears in the public library', async ({ page }) => {
   const contributor = await createContributor()
@@ -15,7 +33,7 @@ test('an admin approves a pending tutorial and it appears in the public library'
   await page.waitForURL(`**/admin/review/${tutorialId}`)
 
   await page.getByRole('button', { name: 'Approve — publish to library' }).click()
-  await page.waitForLoadState('networkidle')
+  await expectStatus(tutorialId, 'approved')
 
   await page.goto('/library')
   await expect(page.getByText(title)).toBeVisible()
@@ -35,7 +53,7 @@ test('an admin rejects a pending tutorial with a note visible to the contributor
 
   await page.locator('textarea[name="note"]').fill('Needs clearer photos.')
   await page.getByRole('button', { name: 'Reject' }).click()
-  await page.waitForLoadState('networkidle')
+  await expectStatus(tutorialId, 'rejected')
 
   await signIn(page, contributor.email, contributor.password)
   await page.waitForURL('**/dashboard')
@@ -71,12 +89,20 @@ test('the review detail page renders parts, tools, STL files and the PDF link', 
   await page.waitForURL('**/admin')
   await page.goto(`/admin/review/${id}`)
 
-  await expect(page.getByRole('link', { name: 'Open Tutorial PDF' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: /Parts \(/ })).toBeVisible()
-  await expect(page.getByRole('heading', { name: /Tools \(/ })).toBeVisible()
-  await expect(page.getByRole('heading', { name: /STL Files \(/ })).toBeVisible()
-  await expect(page.getByText('E2E part × 2')).toBeVisible()
-  await expect(page.getByText('e2e-mount.stl')).toBeVisible()
+  // The same TutorialView a parent sees (4a56d8c0), so the assertions are the
+  // public page's: the admin is signed in, so the file links go through /files.
+  await expect(page.getByRole('link', { name: 'Download Tutorial PDF' })).toHaveAttribute(
+    'href',
+    `/files/tutorial-pdfs/${id}/tutorial.pdf`
+  )
+  await expect(page.getByRole('heading', { name: 'Parts needed' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Tools needed' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Files for 3D printing' })).toBeVisible()
+  await expect(page.getByText(/E2E part\s*×\s*2/)).toBeVisible()
+  await expect(page.getByRole('link', { name: 'e2e-mount.stl' })).toHaveAttribute(
+    'href',
+    `/files/stl-files/${id}/e2e-mount.stl`
+  )
 })
 
 /**
@@ -121,7 +147,7 @@ test('rejecting without a note shows the contributor the fallback text', async (
   await page.waitForLoadState('networkidle')
 
   await page.getByRole('button', { name: 'Reject' }).click()
-  await page.waitForLoadState('networkidle')
+  await expectStatus(id, 'rejected')
 
   await signIn(page, contributor.email, contributor.password)
   await page.waitForURL('**/dashboard')
