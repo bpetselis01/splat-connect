@@ -132,6 +132,39 @@ describe('GET /:id', () => {
     const res = await makeApp().request('/nonexistent')
     expect(res.status).toBe(404)
   })
+
+  // Tests: a recommendation whose target RLS hides from the caller still comes
+  //        back with the target attached
+  // How:   the user-client embed returns { tutorials: null } for one row; the
+  //        admin client is asked for that id; checks the merged row
+  // Chain: the picker only offers approved tutorials, so a hidden target is one
+  //        that went back into review after being chosen. The editor and both
+  //        review pages read r.tutorials.id unguarded — without this fill they
+  //        crash on exactly the case the "Not yet approved" badge exists for.
+  it('fills in a recommendation target the caller cannot read', async () => {
+    mockUserClient.from.mockReturnValue({
+      select: () => ({ eq: () => ({ order: () => ({ single: () => ({
+        data: {
+          id: '1',
+          title: 'T1',
+          tutorial_recommendations: [
+            { position: 1, recommended_id: 'hidden', tutorials: null },
+            { position: 2, recommended_id: 'seen', tutorials: { id: 'seen', title: 'Seen', status: 'approved' } },
+          ],
+        },
+        error: null,
+      }) }) }) }),
+    })
+    const inMock = vi.fn(() => ({ data: [{ id: 'hidden', title: 'Hidden', kind: 'toy_adaptation', difficulty: 'easy', toy_photo_url: null, status: 'pending' }], error: null }))
+    mockAdminClient.from.mockReturnValue({ select: () => ({ in: inMock }) })
+
+    const res = await makeApp().request('/1')
+    expect(res.status).toBe(200)
+    const body = (await res.json()) as { tutorial_recommendations: { tutorials: { id: string; status: string } }[] }
+    expect(inMock).toHaveBeenCalledWith('id', ['hidden'])
+    expect(body.tutorial_recommendations.map((r) => r.tutorials.id)).toEqual(['hidden', 'seen'])
+    expect(body.tutorial_recommendations[0].tutorials.status).toBe('pending')
+  })
 })
 
 describe('GET /mine', () => {

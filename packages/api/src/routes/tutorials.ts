@@ -77,13 +77,31 @@ tutorials.get('/:id', async (c) => {
     .select(
       '*, parts(*), tools(*), stl_files(*), tutorial_contributors(*, profiles(id, name, role, created_at)), \
 tutorial_collaborator_invites(*, profiles:invited_profile_id(id, name, role, created_at)), \
-tutorial_recommendations!tutorial_id(position, tutorials!recommended_id(id, title, kind, difficulty, toy_photo_url, status)), \
+tutorial_recommendations!tutorial_id(position, recommended_id, tutorials!recommended_id(id, title, kind, difficulty, toy_photo_url, status)), \
 reviewer:reviewed_by(name), reviewed_for:reviewed_for_org_id(name)'
     )
     .eq('id', c.req.param('id'))
     .order('position', { referencedTable: 'tutorial_recommendations', ascending: true })
     .single()
   if (error) return c.json({ error: error.message }, 404)
+
+  // A target the caller cannot read arrives as `tutorials: null`: RLS hides
+  // other people's unapproved rows, and the picker only ever offered approved
+  // ones, so a null here is a target that went back into review after it was
+  // chosen. That is the one case the "Not yet approved" badge exists for, and
+  // the editor and both review pages read r.tutorials.id unguarded — so the
+  // target is filled in with the admin client. The caller already saw this
+  // tutorial when it was approved; the card fields are all it gets back.
+  const recs = (data.tutorial_recommendations ?? []) as { recommended_id: string; tutorials: unknown }[]
+  const hiddenIds = recs.filter((r) => r.tutorials === null).map((r) => r.recommended_id)
+  if (hiddenIds.length) {
+    const { data: targets } = await createAdminClient()
+      .from('tutorials')
+      .select('id, title, kind, difficulty, toy_photo_url, status')
+      .in('id', hiddenIds)
+    const byId = new Map((targets ?? []).map((t) => [t.id, t]))
+    for (const r of recs) if (r.tutorials === null) r.tutorials = byId.get(r.recommended_id) ?? null
+  }
 
   if (c.get('role') === 'admin' && data.tutorial_contributors?.length) {
     const admin = createAdminClient()
