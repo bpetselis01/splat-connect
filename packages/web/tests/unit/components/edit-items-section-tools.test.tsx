@@ -37,14 +37,21 @@ describe('EditItemsSection (tools)', () => {
     expect(screen.getByText(/Heat Gun/)).toBeInTheDocument()
   })
 
-  // Tests: each tool row shows a chevron (▼) expand indicator
-  // How:   checks getAllByText('▼') has length 2
-  // Chain: same expand/collapse pattern as the parts section → users click to reveal the
-  //        inline edit form for a specific tool
-  it('renders a chevron indicator on each tool row', () => {
+  // Tests: each tool row says it is editable in words
+  // Chain: same affordance as the parts table — the ▼ this replaced was the
+  //        only thing marking a row as openable
+  it('marks every tool row as an editable control', () => {
     setup()
-    const chevrons = screen.getAllByText('▼')
-    expect(chevrons).toHaveLength(2)
+    expect(screen.getAllByText('Edit')).toHaveLength(2)
+  })
+
+  // Tests: the tools table has no quantity column
+  // How:   the Qty header the parts table carries is absent here
+  // Chain: a tool is a tool — you do not need two soldering irons — so
+  //        withQuantity is off and the row drops to two columns
+  it('omits the quantity column tools have no use for', () => {
+    setup()
+    expect(screen.queryByText('Qty')).not.toBeInTheDocument()
   })
 
   // Tests: the tool edit form is hidden until its row is clicked
@@ -117,6 +124,7 @@ describe('EditItemsSection (tools)', () => {
   it('submitting the Add tool form calls onSave with the new tool appended', async () => {
     const onSave = vi.fn().mockResolvedValue(undefined)
     setup(onSave)
+    fireEvent.click(screen.getByRole('button', { name: /Add a tool/ }))
     fireEvent.change(screen.getByPlaceholderText('Name'), {
       target: { value: 'New Tool' },
     })

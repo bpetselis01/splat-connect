@@ -8,6 +8,7 @@ describe('EditItemsSection save feedback', () => {
   it('shows a "Last saved" line after adding an item', async () => {
     const onSave = vi.fn().mockResolvedValue(undefined)
     render(<EditItemsSection noun="part" initialItems={[]} onSave={onSave} />)
+    fireEvent.click(screen.getByRole('button', { name: /Add a part/ }))
     fireEvent.change(screen.getByPlaceholderText('Name'), { target: { value: 'Screw' } })
     fireEvent.click(screen.getByRole('button', { name: 'Add part' }))
     await waitFor(() => expect(screen.getByText(/last saved just now/i)).toBeInTheDocument())
@@ -20,6 +21,7 @@ describe('EditItemsSection save feedback', () => {
         <EditItemsSection noun="part" initialItems={[]} onSave={onSave} />
       </ToastProvider>
     )
+    fireEvent.click(screen.getByRole('button', { name: /Add a part/ }))
     fireEvent.change(screen.getByPlaceholderText('Name'), { target: { value: 'Screw' } })
     fireEvent.click(screen.getByRole('button', { name: 'Add part' }))
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Part added'))
@@ -54,6 +56,7 @@ describe('EditItemsSection on leaving the step', () => {
         <EditItemsSection noun="part" initialItems={[]} onSave={onSave} />
       </ToastProvider>
     )
+    fireEvent.click(screen.getByRole('button', { name: /Add a part/ }))
     fireEvent.change(screen.getByPlaceholderText('Name'), { target: { value: 'M3 screw' } })
 
     expect(await leave()).toBe(true)
@@ -83,6 +86,11 @@ describe('EditItemsSection on leaving the step', () => {
   //        setItems is not visible to the next statement — running one then the
   //        other would write the second on top of a list that never learnt about
   //        the first, silently dropping it
+  //
+  // Only one editor is open at a time now, so the two drafts are built in this
+  // order: type the new row, then open an item, which collapses the add row
+  // without unmounting its form. That collapsed draft still has to reach the
+  // server, which is the half of this that the redesign could have broken.
   it('carries an open edit and a new row in a single save', async () => {
     const onSave = vi.fn().mockResolvedValue(undefined)
     const { leave } = renderLeavable(
@@ -94,14 +102,15 @@ describe('EditItemsSection on leaving the step', () => {
         />
       </ToastProvider>
     )
-    fireEvent.click(screen.getByRole('button', { name: /Old/ }))
-    fireEvent.change(screen.getByDisplayValue('Old'), { target: { value: 'Renamed' } })
-    // The open row has a Name field too — this is the Add form's, which is the
-    // one inside the <form> that carries the Add button.
-    const addForm = screen.getByRole('button', { name: 'Add part' }).closest('form')!
+    const addRow = screen.getByRole('button', { name: /Add a part/ })
+    fireEvent.click(addRow)
+    const addForm = addRow.closest('form')!
     fireEvent.change(within(addForm).getByPlaceholderText('Name'), {
       target: { value: 'Brand new' },
     })
+
+    fireEvent.click(screen.getByRole('button', { name: /Old/ }))
+    fireEvent.change(screen.getByDisplayValue('Old'), { target: { value: 'Renamed' } })
 
     expect(await leave()).toBe(true)
     expect(onSave).toHaveBeenCalledTimes(1)
@@ -109,6 +118,25 @@ describe('EditItemsSection on leaving the step', () => {
       expect.objectContaining({ name: 'Renamed' }),
       expect.objectContaining({ name: 'Brand new' }),
     ])
+  })
+
+  // Tests: collapsing the add row keeps what was typed into it
+  // Chain: the fields are uncontrolled, so unmounting the form on collapse
+  //        would silently bin a half-typed row every time someone clicked an
+  //        item to edit
+  it('keeps a typed row when the add row is collapsed and reopened', async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined)
+    renderLeavable(
+      <ToastProvider>
+        <EditItemsSection noun="part" initialItems={[]} onSave={onSave} />
+      </ToastProvider>
+    )
+    const addRow = screen.getByRole('button', { name: /Add a part/ })
+    fireEvent.click(addRow)
+    fireEvent.change(screen.getByPlaceholderText('Name'), { target: { value: 'M3 screw' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    fireEvent.click(addRow)
+    expect(screen.getByPlaceholderText('Name')).toHaveValue('M3 screw')
   })
 
   // Tests: a failed write keeps the contributor on the step
@@ -120,6 +148,7 @@ describe('EditItemsSection on leaving the step', () => {
         <EditItemsSection noun="part" initialItems={[]} onSave={onSave} />
       </ToastProvider>
     )
+    fireEvent.click(screen.getByRole('button', { name: /Add a part/ }))
     fireEvent.change(screen.getByPlaceholderText('Name'), { target: { value: 'M3 screw' } })
     expect(await leave()).toBe(false)
   })

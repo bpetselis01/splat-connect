@@ -48,6 +48,8 @@ export function EditItemsSection({ noun, withQuantity, initialItems, onSave }: E
   // render and make every pill click wait for an answer of "nothing to do".
   const [addDirty, setAddDirty] = useState(false)
   const [savedAt, setSavedAt] = useState<string | null>(null)
+  /** Whether the add row is expanded. One editor is open at a time. */
+  const [addOpen, setAddOpen] = useState(false)
 
   const capitalizedNoun = noun.charAt(0).toUpperCase() + noun.slice(1)
 
@@ -88,10 +90,23 @@ export function EditItemsSection({ noun, withQuantity, initialItems, onSave }: E
     }
   }
 
+  /* One editor open at a time, which is the point of the redesign: the add
+     form and an open row used to be two identical stacks of fields on screen
+     together. Closing the add row only collapses it — the form stays mounted,
+     so a half-typed row is still there when it reopens, and still gets written
+     by commit() on the way out of the step. Closing an open item, on the other
+     hand, drops its draft, exactly as switching from one item to another
+     always has. */
   function openEdit(item: EditableItem) {
+    setAddOpen(false)
     setEditingId(item.id)
     setDraft(toInput(item))
     setEditError(null)
+  }
+
+  function openAdd(open: boolean) {
+    if (open) closeEdit()
+    setAddOpen(open)
   }
 
   function closeEdit() {
@@ -229,36 +244,40 @@ export function EditItemsSection({ noun, withQuantity, initialItems, onSave }: E
 
   const inputCls = 'field'
   const btnCls = 'btn btn-primary btn-sm'
+  const rowCols = withQuantity ? 'bom-row bom-qty-cols' : 'bom-row'
 
   return (
     <div className="px-5 pb-5">
-      {items.length > 0 && (
-        <ul className="mb-4 flex flex-col gap-2">
-          {items.map((i) => (
-            <li key={i.id} className="card-flat text-sm">
-              <button
-                type="button"
-                onClick={() => (editingId === i.id ? closeEdit() : openEdit(i))}
-                className="flex w-full items-center justify-between gap-2 rounded-2xl px-4 py-3 text-left transition-colors hover:bg-sunken"
-              >
-                <span className="font-bold text-ink">
-                  {withQuantity ? (
-                    <>
-                      {i.name} &times; {i.quantity}
-                    </>
-                  ) : (
-                    i.name
-                  )}
-                </span>
-                <div className="flex shrink-0 items-center gap-2">
-                  {i.is_optional && (
-                    <span className="badge bg-sunken text-brand-deep">Optional</span>
-                  )}
-                  <span className="text-xs text-muted">{editingId === i.id ? '▲' : '▼'}</span>
-                </div>
-              </button>
-              {editingId === i.id && draft && (
-                <div className="flex flex-col gap-2 border-t border-line px-4 pt-3 pb-4">
+      <div className="bom">
+        {items.length > 0 && (
+          <div className={withQuantity ? 'bom-head bom-qty-cols' : 'bom-head'} aria-hidden="true">
+            {withQuantity && <span>Qty</span>}
+            <span>{capitalizedNoun}</span>
+            <span />
+          </div>
+        )}
+        {items.map((i) => (
+          <div key={i.id}>
+            <button
+              type="button"
+              aria-expanded={editingId === i.id}
+              onClick={() => (editingId === i.id ? closeEdit() : openEdit(i))}
+              className={rowCols}
+            >
+              {withQuantity && <span className="bom-qty numeral">{i.quantity}</span>}
+              <span className="bom-name">
+                <span className="truncate">{i.name}</span>
+                {i.is_optional && (
+                  <span className="badge bg-sunken text-brand-deep">Optional</span>
+                )}
+              </span>
+              {/* The word the chevron never was. aria-expanded on the row
+                  carries the open/closed state for a screen reader, so this
+                  stays a plain label rather than changing to "Close". */}
+              <span className="edit-pill">Edit</span>
+            </button>
+            {editingId === i.id && draft && (
+                <div className="bom-editor flex flex-col gap-2">
                   <input
                     value={draft.name}
                     onChange={(e) => setDraft((d) => (d ? { ...d, name: e.target.value } : d))}
@@ -318,49 +337,88 @@ export function EditItemsSection({ noun, withQuantity, initialItems, onSave }: E
                     </button>
                   </div>
                 </div>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
-      <SaveStatusLine savedAt={savedAt} />
-      <form
-        ref={addFormRef}
-        onSubmit={handleAdd}
-        onChange={() => setAddDirty(true)}
-        className="mt-2 flex flex-col gap-2"
-      >
-        <p className="text-sm font-bold text-ink">Add {noun}</p>
-        <input name="name" placeholder="Name" required className={inputCls} />
-        {withQuantity && (
-          <input
-            name="quantity"
-            type="number"
-            min="1"
-            defaultValue="1"
-            placeholder="Quantity"
-            className={inputCls}
-          />
-        )}
-        <label className="flex cursor-pointer select-none items-center gap-2 text-sm">
-          <input type="checkbox" name="is_optional" className="field-check" />
-          Optional (not required)
-        </label>
-        <div>
-          <p className="mb-1 text-xs font-bold text-muted">Buy links</p>
-          <BuyLinksInput key={addKey} />
-        </div>
-        {addError && (
-          <p role="alert" className="text-sm font-semibold text-danger">
-            {addError}
-          </p>
-        )}
-        <PanelActions>
-          <button type="submit" disabled={saving} className={btnCls}>
-            Add {noun}
+            )}
+          </div>
+        ))}
+
+        {/* The add row, and the form is scoped to it alone: readAddForm() reads
+            this element with FormData, so an item editor's inputs must never be
+            inside it. Keeping the form here rather than around the whole table
+            makes that structural instead of a rule someone has to remember. */}
+        <form
+          ref={addFormRef}
+          onSubmit={handleAdd}
+          onChange={() => setAddDirty(true)}
+          aria-label={`Add ${noun}`}
+        >
+          <button
+            type="button"
+            aria-expanded={addOpen}
+            onClick={() => openAdd(!addOpen)}
+            className={withQuantity ? 'bom-add bom-qty-cols' : 'bom-add'}
+          >
+            {withQuantity && (
+              <span className="bom-add-mark" aria-hidden="true">
+                +
+              </span>
+            )}
+            <span>
+              {!withQuantity && <span aria-hidden="true">+ </span>}
+              Add a {noun}
+            </span>
+            <span />
           </button>
-        </PanelActions>
-      </form>
+          {/* Hidden rather than unmounted. The fields are uncontrolled, so
+              unmounting would throw away a half-typed row the moment someone
+              opened an item to edit — and the whole point of useSaveOnLeave
+              below is that a typed row survives. `hidden` also takes the
+              collapsed fields out of the tab order and the a11y tree. */}
+          <div hidden={!addOpen} className="bom-editor flex flex-col gap-2">
+            <input name="name" placeholder="Name" required className={inputCls} />
+            {withQuantity && (
+              <input
+                name="quantity"
+                type="number"
+                min="1"
+                defaultValue="1"
+                placeholder="Quantity"
+                className={inputCls}
+              />
+            )}
+            <label className="flex cursor-pointer select-none items-center gap-2 text-sm">
+              <input type="checkbox" name="is_optional" className="field-check" />
+              Optional (not required)
+            </label>
+            <div>
+              <p className="mb-1 text-xs font-bold text-muted">Buy links</p>
+              <BuyLinksInput key={addKey} />
+            </div>
+            {addError && (
+              <p role="alert" className="text-sm font-semibold text-danger">
+                {addError}
+              </p>
+            )}
+            <div className="flex flex-wrap gap-2">
+              <button type="submit" disabled={saving} className="btn btn-accent btn-sm">
+                Add {noun}
+              </button>
+              <button
+                type="button"
+                onClick={() => openAdd(false)}
+                className="btn btn-quiet btn-sm"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <SaveStatusLine savedAt={savedAt} />
+      {/* Still rendered with nothing in it: this row is also what holds the
+          stepper's Next against the right edge, and Add now lives in the row
+          it belongs to rather than at the foot of the panel. */}
+      <PanelActions />
     </div>
   )
 }

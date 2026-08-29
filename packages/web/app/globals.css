@@ -1583,6 +1583,155 @@
     gap: 0.75rem;
   }
 
+  /* --- Bill of materials (components/edit-items-section.tsx) --------------
+     The parts and tools lists, drawn as the thing they are: a parts list for a
+     build. Two problems drove this shape.
+
+     A row used to be a .card-flat — the "read this" rung of the depth ladder
+     above, no shadow at all — and its only affordance was a 12px chevron. So
+     nothing about a part said it could be opened. Rows now sit in a bordered
+     table that reads as one object, light up on hover, and carry an explicit
+     Edit pill.
+
+     The add form used to be a second identical stack of fields below the list,
+     told apart from an open editor only by a bold line of text that scrolled
+     out of view. It is now the table's last row: add and edit are one
+     affordance in one place, and the only difference is that this row starts
+     empty. */
+  .bom {
+    border: var(--border-pixel-thin) solid var(--color-ink);
+    border-radius: var(--radius-pixel-sm);
+    /* Clips the child rows' square corners against the rounded frame. */
+    overflow: hidden;
+  }
+
+  /* The quantity column exists only for parts — a tool is a tool, you do not
+     need two of it — so the grid is declared per-row by .bom-qty-cols rather
+     than on .bom, and the tools table simply omits it. */
+  .bom-row,
+  .bom-add,
+  .bom-head {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.625rem 0.875rem;
+    text-align: start;
+  }
+
+  .bom-qty-cols {
+    grid-template-columns: 3.5rem 1fr auto;
+  }
+
+  .bom-head {
+    background-color: var(--color-brand-deep);
+    color: var(--color-brand-soft);
+    font-family: var(--font-mono);
+    font-size: 0.5625rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding-block: 0.375rem;
+  }
+
+  .bom-row,
+  .bom-add {
+    border: 0;
+    /* A hairline between rows, not a full pixel border: the table's own 2px
+       frame is the structural line, and repeating it inside would read as a
+       stack of separate cards again — which is what this replaces. */
+    border-top: var(--border-pixel-hair) solid var(--color-line);
+    font-size: 0.875rem;
+    color: var(--color-ink);
+    cursor: pointer;
+    transition: background-color 140ms var(--ease-out-quart);
+  }
+
+  .bom-row {
+    background-color: var(--color-surface);
+  }
+
+  .bom-row:hover,
+  .bom-add:hover {
+    background-color: var(--color-brand-tint);
+  }
+
+  /* The open row keeps the hover tint so the row and the editor beneath it
+     read as one block rather than a row with a panel stuck under it. */
+  .bom-row[aria-expanded='true'] {
+    background-color: var(--color-brand-tint);
+  }
+
+  .bom-qty {
+    display: grid;
+    place-items: center;
+    height: 1.875rem;
+    border: var(--border-pixel-thin) solid var(--color-ink);
+    border-radius: var(--radius-pixel-slot);
+    background-color: var(--color-sunken);
+    /* The face itself comes from .numeral, which is the display face's one
+       home — see the pixel-tokens guard. A builder scans this column to count,
+       which is the whole reason quantity gets a column of its own. */
+    font-size: 1.375rem;
+    color: var(--color-brand-deep);
+  }
+
+  .bom-name {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 700;
+    /* min-width:0 lets a long part name ellipsize instead of widening the
+       grid track and pushing the Edit pill off the row. */
+    min-width: 0;
+  }
+
+  .bom-editor {
+    border-top: var(--border-pixel-thin) solid var(--color-ink);
+    background-color: var(--color-brand-tint);
+    padding: 0.875rem 0.875rem 1rem;
+  }
+
+  /* The add row: dashed, because an empty slot is not a part yet. */
+  .bom-add {
+    border-top-style: dashed;
+    border-top-width: var(--border-pixel-thin);
+    border-top-color: var(--color-ink);
+    background-color: var(--color-surface-quiet);
+    font-weight: 800;
+    color: var(--color-brand-deep);
+  }
+
+  .bom-add-mark {
+    display: grid;
+    place-items: center;
+    height: 1.875rem;
+    border: var(--border-pixel-thin) dashed var(--color-ink);
+    border-radius: var(--radius-pixel-slot);
+    font-size: 1rem;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  /* The affordance the chevron never was: a word, in the brand tint, sized
+     like the badges it sits beside. */
+  .edit-pill {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    padding: 0.25rem 0.625rem;
+    border: var(--border-pixel-thin) solid var(--color-ink);
+    border-radius: var(--radius-pixel-chip);
+    background-color: var(--color-brand-tint);
+    color: var(--color-brand-deep);
+    font-size: 0.6875rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+
   /* --- Save toast (edit-tutorial page) ------------------------------------ */
   .edit-toast {
     position: fixed;
