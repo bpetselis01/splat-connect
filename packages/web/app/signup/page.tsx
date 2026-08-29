@@ -95,6 +95,11 @@ function SignupForm() {
             You need an account to save things. Create one and we&apos;ll take you back.
           </p>
         )}
+        {reason === 'download' && (
+          <p className="alert mb-4 bg-brand-tint text-ink">
+            You need an account to download tutorial files. Create one and we&apos;ll take you back.
+          </p>
+        )}
         <h1 className="text-[22px] font-black text-ink">Create your account</h1>
         <p className="mb-[18px] mt-1.5 text-[13px] leading-relaxed text-muted">
           One account for everything — browse, contribute, and manage your child&apos;s profile.
