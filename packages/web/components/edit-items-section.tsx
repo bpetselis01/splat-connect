@@ -1,10 +1,10 @@
 'use client'
-import { PanelActions } from '@/components/panel-actions'
+import { PanelActions, useSaveOnLeave } from '@/components/panel-actions'
 // The parts and tools editors, which were line-for-line identical except for
 // labels and the quantity field and had already drifted once. Callers pass
 // noun="part" withQuantity or noun="tool"; `withQuantity` is the only
 // structural difference between them.
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { BuyLink } from '@splat-connect/types'
 import { BuyLinksInput } from '@/components/buy-links-input'
 import { useToast } from '@/components/toast'
@@ -41,6 +41,12 @@ export function EditItemsSection({ noun, withQuantity, initialItems, onSave }: E
   const [editError, setEditError] = useState<string | null>(null)
   const [addError, setAddError] = useState<string | null>(null)
   const [addKey, setAddKey] = useState(0)
+  // Whether the Add form has been typed into since it was last written. The
+  // form is uncontrolled, so nothing else re-renders when it changes and there
+  // is no other way to know during render — the same reason EditDetailsSection
+  // keeps a `dirty` flag. Without it this panel would park a save on every
+  // render and make every pill click wait for an answer of "nothing to do".
+  const [addDirty, setAddDirty] = useState(false)
   const [savedAt, setSavedAt] = useState<string | null>(null)
 
   const capitalizedNoun = noun.charAt(0).toUpperCase() + noun.slice(1)
@@ -125,17 +131,86 @@ export function EditItemsSection({ noun, withQuantity, initialItems, onSave }: E
     }
   }
 
-  async function handleAdd(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    const form = e.currentTarget
+  /**
+   * What the Add form is currently holding, or null when it is holding nothing
+   * worth writing. The form is uncontrolled — the inputs are the state — so
+   * this is the only way to read it, and both submitting and leaving the step
+   * go through here rather than each parsing the fields their own way.
+   *
+   * An empty name means null: it is the one field the API requires, and the
+   * input is `required`, so there is no version of this row the server would
+   * accept. Anything else typed alongside a blank name goes with it.
+   */
+  function readAddForm(form: HTMLFormElement): ItemInput | null {
     const data = new FormData(form)
+    const name = ((data.get('name') as string) ?? '').trim()
+    if (!name) return null
     const rawLinks = data.get('buy_links') as string
-    const newItem: ItemInput = {
-      name: (data.get('name') as string).trim(),
+    return {
+      name,
       is_optional: data.get('is_optional') === 'on',
       buy_links: rawLinks ? JSON.parse(rawLinks) : [],
       ...(withQuantity ? { quantity: Number(data.get('quantity') ?? 1) } : {}),
     }
+  }
+
+  const addFormRef = useRef<HTMLFormElement>(null)
+
+  /**
+   * Everything this panel is holding that the server has not got, written in
+   * one call: the open row's edits, a filled-in Add form, or both at once.
+   *
+   * Both at once is the reason this is not simply handleSave() followed by
+   * handleAdd(). Each of those builds its payload from `items`, and setItems is
+   * not visible to the next statement — running them back to back would write
+   * the second on top of a list that never learnt about the first, dropping it.
+   * One merge, one write.
+   */
+  async function commit(): Promise<boolean> {
+    const pendingAdd = addFormRef.current ? readAddForm(addFormRef.current) : null
+    const openEdit = draft !== null && editingId !== null
+    if (!pendingAdd && !openEdit) return true
+
+    const kept = openEdit
+      ? items.map((i) => (i.id === editingId ? { ...i, ...draft } : i))
+      : items
+    const payload = kept.map(toInput)
+    if (pendingAdd) payload.push(pendingAdd)
+
+    setSaving(true)
+    setAddError(null)
+    setEditError(null)
+    try {
+      await onSave(payload)
+      setItems(
+        pendingAdd ? [...kept, { ...pendingAdd, id: `temp-${Date.now()}` }] : kept
+      )
+      markSaved(pendingAdd ? 'added' : 'updated')
+      closeEdit()
+      addFormRef.current?.reset()
+      setAddDirty(false)
+      setAddKey((k) => k + 1)
+      return true
+    } catch {
+      setAddError(`Failed to save, please try again`)
+      return false
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  /* Walking on with Next writes the row you were part-way through typing, so
+     the text survives the panel unmounting. What it does not do is make the
+     step look finished: the status dot and the finish bar both read
+     getMissingFields() on the server, so a step that still has nothing in it
+     keeps its exclamation mark and its chip. */
+  useSaveOnLeave(!saving && (addDirty || draft !== null) ? commit : null)
+
+  async function handleAdd(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    const form = e.currentTarget
+    const newItem = readAddForm(form)
+    if (!newItem) return
     setSaving(true)
     setAddError(null)
     try {
@@ -143,6 +218,7 @@ export function EditItemsSection({ noun, withQuantity, initialItems, onSave }: E
       setItems((prev) => [...prev, { ...newItem, id: `temp-${Date.now()}` }])
       markSaved('added')
       form.reset()
+      setAddDirty(false)
       setAddKey((k) => k + 1)
     } catch {
       setAddError(`Failed to add ${noun}, please try again`)
@@ -248,7 +324,12 @@ export function EditItemsSection({ noun, withQuantity, initialItems, onSave }: E
         </ul>
       )}
       <SaveStatusLine savedAt={savedAt} />
-      <form onSubmit={handleAdd} className="mt-2 flex flex-col gap-2">
+      <form
+        ref={addFormRef}
+        onSubmit={handleAdd}
+        onChange={() => setAddDirty(true)}
+        className="mt-2 flex flex-col gap-2"
+      >
         <p className="text-sm font-bold text-ink">Add {noun}</p>
         <input name="name" placeholder="Name" required className={inputCls} />
         {withQuantity && (
