@@ -1,4 +1,5 @@
 'use client'
+import { PanelActions } from '@/components/panel-actions'
 import { useToast } from '@/components/toast'
 import { useState, useTransition } from 'react'
 import { browserApiClient } from '@/lib/browser-api-client'
@@ -53,7 +54,7 @@ export function AddStlForm({
     }
   }
 
-  const btnCls = 'btn btn-primary btn-sm self-end'
+  const btnCls = 'btn btn-primary btn-sm'
 
   return (
     <div className="flex flex-col gap-2">
@@ -65,7 +66,7 @@ export function AddStlForm({
           {error}
         </p>
       )}
-      <div className="flex justify-end">
+      <PanelActions>
         <button
           type="button"
           disabled={!selectedFile || uploading || pending}
@@ -74,7 +75,7 @@ export function AddStlForm({
         >
           {uploading || pending ? 'Uploading…' : 'Upload STL'}
         </button>
-      </div>
+      </PanelActions>
     </div>
   )
 }
