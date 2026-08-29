@@ -16,7 +16,9 @@
  * borrows the other's verb.
  *
  * `done` is what replaces the action once the thing has been handed over: the
- * last-saved line for a tutorial, a "Published" note for a toy.
+ * last-saved line for a tutorial, a "Published" note for a toy. It is rendered
+ * bare rather than in the bar's own card: there is nothing left to act on, and
+ * a bordered box with a shadow reads as a control that wants something.
  */
 import { useState, type ReactNode } from 'react'
 
@@ -62,7 +64,7 @@ export function FinishBar({
   }
 
   if (done) {
-    return <div className="sticky-submit-bar sticky-submit-bar-quiet">{done}</div>
+    return <div className="mt-4">{done}</div>
   }
 
   return (
