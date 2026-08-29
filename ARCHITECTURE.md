@@ -18,7 +18,7 @@ README.
 The architectural fact that shapes every diagram below: **the API never trusts its own privileges to
 answer a user's question.** `middleware/auth.ts` uses a service-role admin client purely to *verify*
 the JWT, then every route re-issues a second client bound to that same user JWT
-(`supabase/user-client.ts`) so Postgres RLS — not application code — decides which rows come back.
+(`createUserClient` in `supabase/client.ts`) so Postgres RLS — not application code — decides which rows come back.
 Authorization lives in `001_schema.sql` and `003_ability_profile.sql`, not in the route handlers.
 
 ---
@@ -55,7 +55,7 @@ flowchart TB
         RPUB["routes/public.ts<br/>NO auth"]
         RPROT["routes/tutorials.ts · parts.ts · tools.ts<br/>stl-files.ts · upload.ts · admin.ts<br/>contributors.ts · child-profile.ts"]
         SBA["supabase/client.ts<br/>ADMIN client — service role<br/>bypasses RLS"]
-        SBU["supabase/user-client.ts<br/>USER client — anon key + caller JWT<br/>RLS enforced"]
+        SBU["supabase/client.ts createUserClient<br/>USER client — anon key + caller JWT<br/>RLS enforced"]
     end
 
     subgraph SUP["4 · PERSISTENCE — Supabase"]
@@ -148,7 +148,7 @@ flowchart LR
         ACP["routes/child-profile.ts"]
         AOT["routes/tutorials · parts · tools<br/>stl-files · upload · admin<br/>contributors · public"]
         AAD["supabase/client.ts — admin"]
-        AUC["supabase/user-client.ts"]
+        AUC["supabase/client.ts createUserClient"]
         AEN["src/env.ts"]
 
         AAP --> AMW
@@ -438,104 +438,39 @@ That is the one gap in this flow worth closing first — a `failed` flag alongsi
 
 ## 5. CI Pipeline
 
-From `.github/workflows/ci.yml`. There is no CD workflow in this repository — CI is the whole
-pipeline.
+`.github/workflows/ci.yml` is the source of truth; it is short enough to read directly. There is no
+CD workflow in this repository — CI is the whole pipeline.
 
-```mermaid
-flowchart TB
-    subgraph TRIG["Triggers"]
-        T1["push → main only"]
-        T2["pull_request — any branch"]
-        T3["workflow_dispatch"]
-    end
+The shape worth knowing: `changes` (dorny/paths-filter) computes per-package outputs, and
+`integration`, `mobile-e2e` and `web-e2e` are each gated on one of them. Every gated job boots its
+own local Supabase, roughly two minutes of Docker before a single assertion runs, which is the whole
+reason the gate exists — a mobile-only PR skips `integration` and `web-e2e` entirely. The filter
+deliberately over-triggers on shared paths: a change to `packages/api`, `packages/types`,
+`supabase/`, the lockfile, or `ci.yml` itself sets all three outputs, because any of those can break
+any client.
 
-    CC["concurrency group = workflow + ref<br/>cancel-in-progress UNLESS ref is main"]
-    T1 & T2 & T3 --> CC
+The repeated setup lives in two composite actions, `.github/actions/setup` (pnpm, Node, install) and
+`.github/actions/supabase-start` (pinned CLI, port reservation, `supabase start`). The port
+reservation is load-bearing: 54320-54329 sit inside the runner's ephemeral range, so the kernel can
+hand 54322 to an outbound socket and Docker then fails to publish it.
 
-    CC --> CH["changes · Detect Changed Packages<br/>dorny/paths-filter@v3"]
-    CC --> CK["check · Type Check<br/>pnpm -r typecheck"]
-    CC --> TE["test · Unit Tests<br/>api → web → mobile, sequential"]
+### The device-e2e gap
 
-    CH -.->|"outputs: api · web · mobile<br/>shared paths set ALL THREE:<br/>packages/api, packages/types,<br/>supabase, ci.yml, lockfile,<br/>workspace, root package.json"| GATE{{"per-package gates"}}
+An Android emulator job used to run the Maestro flows on merges to `main`. It was removed after
+being dispatched once, failing, and never going green; the flows and
+`scripts/provision-device-parent.mjs` remain and run locally via `pnpm device:test`.
 
-    CK --> GATE
-    TE --> GATE
+Two things it covered are now uncovered on CI, and are worth remembering before trusting a mobile
+release:
 
-    GATE -->|"if changes.api"| IT["integration · Integration Tests"]
-    GATE -->|"if changes.mobile"| ME["mobile-e2e · Mobile E2E"]
-    GATE -->|"if changes.web"| WE["web-e2e · Web E2E"]
-
-    CK --> DE
-    TE --> DE["device-e2e · Device E2E Android<br/>if ref == main OR workflow_dispatch<br/>NOTE: does not need 'changes'"]
-
-    subgraph IT2["integration — ubuntu-latest"]
-        I1["supabase/setup-cli pinned 2.109.1"]
-        I2["sysctl reserve ports 54320-54329<br/>they sit inside the ephemeral range"]
-        I3["supabase start"]
-        I4["vitest -c vitest.integration.config.ts"]
-        I5["supabase stop · if always()"]
-        I1 --> I2 --> I3 --> I4 --> I5
-    end
-
-    subgraph ME2["mobile-e2e — ubuntu-latest"]
-        M1["supabase start"]
-        M2["playwright install chromium"]
-        M3["playwright test<br/>webServer boots API :3102<br/>+ expo export -p web served on :3103"]
-        M4["supabase stop"]
-        M1 --> M2 --> M3 --> M4
-    end
-
-    subgraph WE2["web-e2e — ubuntu-latest"]
-        W1["supabase start"]
-        W2["playwright install chromium"]
-        W3["playwright test<br/>webServer boots API :3104<br/>+ next build && next start on :3105"]
-        W4["supabase stop"]
-        W1 --> W2 --> W3 --> W4
-    end
-
-    subgraph DE2["device-e2e — ubuntu-latest"]
-        D1["setup-java 17 temurin"]
-        D2["actions/cache — app-release.apk<br/>key hashes app.json, package.json,<br/>lockfile, ci.yml, app/, components/,<br/>lib/, assets/, packages/types"]
-        D3["expo prebuild --clean<br/>+ gradlew assembleRelease<br/>skipped on cache hit"]
-        D4["supabase start · reserve ports"]
-        D5["start API on :3106<br/>curl retry loop, 60 × 2s"]
-        D6["device:fixture → GITHUB_ENV<br/>--silent is load-bearing"]
-        D7["assert bundle baked 10.0.2.2<br/>and NOT localhost:54321<br/>Hermes bytecode → grep -a, piped"]
-        D8["install Maestro"]
-        D9["android-emulator-runner@v2<br/>api-level 34 · pixel_6 · x86_64<br/>adb install + maestro test"]
-        D10["upload maestro-debug · if failure()"]
-        D1 --> D2 --> D3 --> D4 --> D5 --> D6 --> D7 --> D8 --> D9 --> D10
-    end
-
-    IT --> IT2
-    ME --> ME2
-    WE --> WE2
-    DE --> DE2
-
-    style CH stroke:#16a34a,stroke-width:2px
-    style DE stroke:#d97706,stroke-width:2px
-    style D7 stroke:#16a34a,stroke-width:2px
-```
-
-Every gated job boots its own local Supabase, which is roughly two minutes of Docker before a single
-assertion runs. That cost is why `changes` exists at all: a mobile-only PR skips `integration` and
-`web-e2e` entirely. The filter deliberately over-triggers on shared paths — a change to
-`packages/api`, `packages/types`, `supabase/`, the lockfile, or `ci.yml` itself sets all three
-outputs, because any of those can break any client.
-
-`device-e2e` is the deliberate exception to the whole shape of this pipeline. It depends on `check`
-and `test` but **not** on `changes`, and it runs only on `main` or manual dispatch, so it never gates
-a PR. It is also the only job that covers `lib/supabase-storage.ts`'s SecureStore branch: the
-Playwright mobile suite runs the Expo *web* export, where `resolveAuthStorage` returns the
-localStorage adapter, so no Playwright test can reach the native path. Paying emulator time on every
-PR to cover one branch would cost more than it saves; paying it on every merge to `main` does not.
-
-The bundle-host assertion (`D7`) is the interesting guard. Because `EXPO_PUBLIC_*` values are *baked
-into* the JS bundle at export time rather than read at runtime, a stale Metro cache can freeze a
-`localhost` URL into an APK that then fails on the emulator as an inscrutable timeout. Asserting
-against the built artifact rather than the environment means the check still holds on a cache hit.
-
----
+- **`lib/supabase-storage.ts`'s SecureStore branch.** The Playwright mobile suite runs the Expo *web*
+  export, where `resolveAuthStorage` returns the localStorage adapter, so no Playwright test reaches
+  the native path.
+- **The baked bundle host.** `EXPO_PUBLIC_*` values are compiled *into* the JS bundle at export time
+  rather than read at runtime, so a stale Metro cache can freeze a `localhost` URL into an APK that
+  then fails on device as an inscrutable timeout. The old job asserted against the built artifact
+  (not the environment) so the check survived a cache hit; `device:build` clears the Metro cache for
+  the same reason.
 
 ## 6. Technology Stack
 
