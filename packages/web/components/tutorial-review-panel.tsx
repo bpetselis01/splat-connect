@@ -1,3 +1,4 @@
+'use client'
 /**
  * The Review step of the edit-tutorial stepper: a read-only summary of
  * everything the other steps collected.
@@ -6,7 +7,7 @@
  * replaced until 2026-08-29, and putting it here fixed a real bug — a sticky
  * bar on every step let a contributor hand work over while looking at the
  * Tools tab, with no sight of what was about to be sent. But it created a
- * larger one: the bar existed *only* here, so the other seven steps never
+ * larger one: the bar existed *only* here, so every other step never
  * mentioned that submitting was a thing that happened, and a contributor could
  * fill in every field without ever finding the finish line.
  *
@@ -14,13 +15,16 @@
  * the summary up: the bar names what is still missing wherever you stand, and
  * this step remains the place that shows what is about to be sent.
  *
- * No longer a client component — with the submit state gone there is nothing
- * left here to hold.
+ * A client component again, but for one line rather than for the submit state
+ * it used to carry: Team sits beside the rail instead of on it, so the walk
+ * never passes through it, and this is the last place that can ask whether
+ * anyone wants it. Opening a step is the stepper's job, reached through the
+ * same context that delivers Next.
  */
 import { CardPhoto } from '@/components/card-photo'
 import { DifficultyBadge } from '@/components/difficulty-badge'
 import { BackingSummary } from '@/components/backing-state'
-import { PanelActions } from '@/components/panel-actions'
+import { PanelActions, useStepJump } from '@/components/panel-actions'
 import type { Difficulty, TutorialOrg } from '@splat-connect/types'
 
 export function TutorialReviewPanel({
@@ -89,11 +93,44 @@ export function TutorialReviewPanel({
           </div>
         </dl>
 
-        {/* Renders nothing here: Review is the last step, so there is nowhere
-            onward, and the summary has no action of its own. It is present so
-            the panel behaves like every other one if that ever changes. */}
+        <TeamPrompt />
+
+        {/* Renders nothing here: Review is the last step of the walk, so there
+            is nowhere onward, and the summary has no action of its own. It is
+            present so the panel behaves like every other one if that ever
+            changes. */}
         <PanelActions />
       </div>
+    </div>
+  )
+}
+
+/**
+ * The one place the walk mentions Team. Both halves are optional and neither
+ * blocks submitting, which is exactly why a contributor can reach the end
+ * without knowing they exist — so the summary asks, on the step where "am I
+ * done?" is the question already being answered.
+ *
+ * Renders nothing outside a stepper, where there is no step to open.
+ */
+function TeamPrompt() {
+  const jump = useStepJump()
+  if (!jump) return null
+
+  return (
+    <div className="card-flat flex flex-col gap-2 px-4 py-3">
+      <p className="text-sm font-bold text-ink">Want to add collaborators or backers?</p>
+      <p className="text-xs leading-relaxed text-muted">
+        A collaborator edits this tutorial with you. A backer is an organisation that
+        reviews it instead of SPLAT. Both are optional — you can submit without either.
+      </p>
+      <button
+        type="button"
+        onClick={() => jump('team')}
+        className="btn btn-quiet btn-sm self-start"
+      >
+        Open Team →
+      </button>
     </div>
   )
 }
