@@ -47,7 +47,12 @@ describe('NewTutorialForm', () => {
     fillAndSubmit()
 
     await waitFor(() => expect(push).toHaveBeenCalled())
-    expect(push.mock.calls[0][0]).toMatch(/^\/tutorials\/[0-9a-f-]{36}\/edit\?step=files$/)
+    // created=1 is what lets the editor announce the handover; without it the
+    // redirect changes almost nothing on screen and reads as being thrown
+    // somewhere else.
+    expect(push.mock.calls[0][0]).toMatch(
+      /^\/tutorials\/[0-9a-f-]{36}\/edit\?step=files&created=1$/
+    )
   })
 
   it('sends the chosen difficulty and an empty description as null', async () => {
