@@ -11,8 +11,8 @@ import { EditDetailsSection } from '@/components/edit-details-section'
 import { EditCollaboratorsSection } from '@/components/edit-collaborators-section'
 import { EditStepper } from '@/components/edit-stepper'
 import { TutorialReviewPanel } from '@/components/tutorial-review-panel'
-import { computeStepStatuses, type EditStep } from '@/lib/edit-steps'
-import { getMissingFields } from '@/lib/validation'
+import { computeStepStatuses, missingByStep, type EditStep } from '@/lib/edit-steps'
+import { SaveStatusLine } from '@/components/save-status-line'
 import type { Tutorial, Part, Tool, StlFile, TutorialWithDetails, Difficulty, BuyLink, Profile, TutorialOrg, Organization } from '@splat-connect/types'
 
 export default async function EditTutorialPage({
@@ -149,7 +149,7 @@ export default async function EditTutorialPage({
   }
 
 
-  const missingFields = getMissingFields(tutorial!)
+  const missing = missingByStep(tutorial!)
   const stepStatuses = computeStepStatuses(tutorial!, backing)
 
   const steps: EditStep[] = [
@@ -281,10 +281,6 @@ export default async function EditTutorialPage({
           toolCount={tools.length}
           stlCount={stlFiles.length}
           backing={backing}
-          status={tutorial!.status}
-          updatedAt={tutorial!.updated_at}
-          missingFields={missingFields}
-          onSubmit={submitForReview}
         />
       ),
     },
@@ -310,7 +306,22 @@ export default async function EditTutorialPage({
           `next build` fails to prerender this page — same reasoning as
           app/onboarding/contributor-terms/page.tsx. */}
       <Suspense>
-        <EditStepper steps={steps} />
+        <EditStepper
+          steps={steps}
+          finish={{
+            missing,
+            submitLabel: 'Submit for review',
+            busyLabel: 'Submitting…',
+            errorMessage: 'Could not submit this tutorial. Please try again.',
+            onSubmit: submitForReview,
+            // Once it has left the contributor's hands there is nothing to
+            // finish, so the bar carries the last-saved line instead.
+            done:
+              tutorial!.status === 'draft' ? undefined : (
+                <SaveStatusLine savedAt={tutorial!.updated_at} />
+              ),
+          }}
+        />
       </Suspense>
     </div>
   )
