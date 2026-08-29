@@ -128,7 +128,7 @@ export default async function AdminOrganizationsPage() {
       </details>
 
       <section className="mt-8">
-        <h2 className="mb-3 text-lg font-semibold text-ink">
+        <h2 className="mb-3 text-lg font-bold text-ink">
           All organisations ({detailed.length})
         </h2>
         {detailed.length === 0 ? (

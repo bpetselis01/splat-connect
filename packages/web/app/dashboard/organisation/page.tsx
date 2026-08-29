@@ -23,6 +23,7 @@ import { OrgReviewBanner } from '@/components/org-review-banner'
 import { DifficultyBadge } from '@/components/difficulty-badge'
 import { BackingBadge } from '@/components/backing-state'
 import { BoundaryLink } from '@/components/boundary-link'
+import { Inbox } from '@/components/icons'
 import type { Tutorial, TutorialOrg, UserAgreement } from '@splat-connect/types'
 
 type Backed = Tutorial & { tutorial_orgs?: TutorialOrg[] }
@@ -62,10 +63,16 @@ export default async function OrganisationTabPage() {
       {!hasTerms && <OrgReviewBanner />}
 
       {waiting.length === 0 ? (
-        <p className="empty-badge">
-          Nothing waiting. Contributors ask by choosing your organisation when they
-          submit a tutorial.
-        </p>
+        <div className="flex flex-col items-center px-6 py-12 text-center">
+          <span aria-hidden="true" className="empty-badge text-brand-dark">
+            <Inbox className="h-8 w-8" />
+          </span>
+          <p className="mt-4 font-bold text-ink">Nothing waiting.</p>
+          <p className="mt-1 max-w-xs text-sm leading-relaxed text-muted">
+            Contributors ask by choosing your organisation when they submit a
+            tutorial.
+          </p>
+        </div>
       ) : (
         <ul className="flex flex-col gap-3">
           {waiting.map(({ tutorial, row, org }) => (
@@ -77,7 +84,7 @@ export default async function OrganisationTabPage() {
                     item in this queue 404'd. */}
                 <BoundaryLink
                   href={`/organizations/${org.id}/projects/${tutorial.id}`}
-                  className="font-medium text-ink"
+                  className="text-sm font-bold text-ink"
                 >
                   {tutorial.title}
                 </BoundaryLink>
