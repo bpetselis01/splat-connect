@@ -78,6 +78,25 @@
   --shadow-pixel-md: 4px 4px 0;
   --shadow-pixel-card: 5px 5px 0;
   --shadow-pixel-lg: 6px 6px 0;
+
+  /* The second shadow ink, and what actually carries the hierarchy.
+     The offsets above are a depth ladder, but the rungs sit a pixel apart and
+     a pixel of offset is invisible at a glance — so while everything was drawn
+     in solid ink, a card, a control and a stat strip all read as one plane.
+     Weight is what the eye sorts by.
+
+     Three ranks, and the question that sorts them is about the object rather
+     than how it looks: do you act on it, browse it, or only read it?
+       solid --color-ink   act on this   buttons, pillars, chips, floating chrome
+       --shadow-ink-quiet  browse this   every repeated card you scan through
+       no shadow           read this     a box that holds a form or a summary
+
+     The value is not new. .btn-quiet has drawn its shadow at exactly this
+     since the foundation, and its own note says why — it keeps the pair the
+     same physical height while letting only one of them read as the thing to
+     press. It was simply never let out of the button file. */
+  --shadow-ink-quiet: rgb(18 40 58 / 0.35);
+
   /* Three weights, because the board draws three. 3px is the structural line —
      what a card, a control or the nav shelf is built from. 2px is the chip
      register: stat chips, avatars, step badges, art slots. 1px is the SOON
@@ -174,7 +193,12 @@
     background-color: var(--color-surface);
     border-radius: var(--radius-pixel);
     border: var(--border-pixel) solid var(--color-ink);
-    box-shadow: var(--shadow-pixel-card) var(--color-ink);
+    /* Card depth, quiet ink. A card is what a page has most of, so drawing it
+       at a control's weight is what made every page read as flat — on
+       /dashboard/tutorials the heaviest object was a stat strip showing three
+       zeros, and on the homepage the launcher's three pillars could not
+       separate from their four neighbours. */
+    box-shadow: var(--shadow-pixel-card) var(--shadow-ink-quiet);
   }
 
   /*
@@ -201,6 +225,32 @@
      the day that block landed. */
   .card-link {
     display: block;
+  }
+
+  /*
+   * Rung 3: a surface that only holds content keeps its edge and loses its
+   * depth, because a hard offset is a promise that something can be pressed.
+   *
+   * No call site had to change to sort these, because the markup already knew:
+   * anything clickable carries .card-link, so everything that does not is a
+   * form, an empty state, a summary or a conversation. .panel and
+   * .step-pill-row join them as the two halves of every editor's frame — one
+   * open form box, and the tray its step chips sit in. Neither is ever
+   * pressed, and both spent the whole Pixel era at a card's depth.
+   *
+   * Deliberately not extended to the floating chrome — .sticky-submit-bar,
+   * .dock-my-splat, .edit-toast, .dialog-panel. Their shadow is not ranking
+   * them against the page; it separates them from content sliding underneath.
+   */
+  /* Order matters, and only to the guard tests: those match a rule by its own
+     `.name {`, so whichever selector sits last here would collide with the
+     definition of that name elsewhere in the file. .card:not(.card-link) has
+     no bare definition to shadow, so it goes last. Specificity is per-selector
+     in a list, so nothing about the cascade depends on this. */
+  .panel,
+  .step-pill-row,
+  .card:not(.card-link) {
+    box-shadow: none;
   }
 
   /* --- Buttons ---------------------------------------------------------- */
@@ -1087,11 +1137,13 @@
    * only <details> left in the app, is app/admin/organizations/page.tsx:83 —
    * which is the only thing .panel-summary below has ever matched.
    */
+  /* Depth comes from the rung-3 rule beside .card-link, not from here: 20 of
+     the 21 call sites are a box holding a form. Declaring `none` again would
+     read as an override of that rule rather than the same answer. */
   .panel {
     background-color: var(--color-surface);
     border-radius: var(--radius-pixel);
     border: var(--border-pixel) solid var(--color-ink);
-    box-shadow: var(--shadow-pixel-card) var(--color-ink);
     overflow: hidden;
   }
 
@@ -1323,6 +1375,10 @@
   }
 
   /* --- Edit stepper (edit-tutorial page) --------------------------------- */
+  /* The tray holds the chips; it is not one. Its depth comes from the rung-3
+     rule beside .card-link — at 5px solid it competed with the 3px chips
+     inside it, which are both the thing you choose between and the thing that
+     carries each step's status marker. */
   .step-pill-row {
     display: flex;
     gap: 0.5rem;
@@ -1332,7 +1388,6 @@
     background-color: var(--color-surface);
     border-radius: var(--radius-pixel);
     border: var(--border-pixel) solid var(--color-ink);
-    box-shadow: var(--shadow-pixel-card) var(--color-ink);
   }
 
   /*
@@ -1805,14 +1860,16 @@
    * a strip peeling out of its own card. The summary is the handle; the panel
    * is the object being clicked, so the panel is what moves.
    *
-   * 5px because .panel now rests on a 5px hard shadow like the card it is.
-   * The invariant this whole block runs on is that a press travels by the
-   * element's OWN resting offset, so leaving this at the 2px it had while
-   * .panel rode a blurred halo would land the press short of the page instead
-   * of flush against it.
+   * 0px because .panel rests flat from 2026-08-29 — it is rung 3, a box that
+   * holds a form. The invariant this whole block runs on is that a press
+   * travels by the element's OWN resting offset, so a panel that rests at 0
+   * presses by 0: the hover lift is the pop up and the return to baseline is
+   * the pop down, exactly as a selected chip behaves. Leaving this at 5px
+   * would send the one remaining <details> travelling down-right past its own
+   * resting position with no shadow to sink into.
    */
   .pixel .panel:has(> .panel-summary) {
-    --pop-rest: 5px;
+    --pop-rest: 0px;
     --pop-lift: 2px;
     --pop-color: var(--color-ink);
     transition:
@@ -1872,12 +1929,21 @@
      sitting in a block where everything else scores (0,2,0). */
   .pixel .card {
     --pop-rest: 5px;
+    /* Without this the cards would rest quiet and pop back to solid under the
+       pointer, which is the hierarchy inverting itself on hover. */
+    --pop-color: var(--shadow-ink-quiet);
   }
 
   /* After .card, and both score (0,2,0), so source order is what puts the
      pillar a rung deeper. Do not move it above .card. */
   .pixel .card-lead {
     --pop-rest: 6px;
+    /* The pillars are rung 1 and .card just moved to rung 2, so this now has
+       to restate the ink it used to inherit. It is also the reason .card-lead
+       finally does its job: 6px solid over 5px quiet separates the three
+       products from their four neighbours, which 6px over 5px solid never
+       managed. */
+    --pop-color: var(--color-ink);
   }
 
   /* The chip register. */
