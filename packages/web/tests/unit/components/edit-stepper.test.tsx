@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { EditStepper, type EditFinish } from '@/components/edit-stepper'
-import { PanelActions } from '@/components/panel-actions'
+import { PanelActions, useSaveOnLeave } from '@/components/panel-actions'
 import type { EditStep } from '@/lib/edit-steps'
 
 /**
@@ -123,32 +123,57 @@ describe('EditStepper', () => {
     expect(screen.getByText('Files content')).toBeInTheDocument()
   })
 
-  // Tests: Next points at the first step still wanting something
-  // How:   makes Details the active step and Files the one needing attention
-  // Chain: three of the eight steps are optional and never carry 'attention', so a
-  //        Next that walked the array would march everyone through STL Files,
-  //        Backing and Collaborators on the way to Review and teach them the button
-  //        is not worth pressing
-  it('offers the next step that still wants something, not the next in the list', () => {
+  // Tests: Next walks the steps in order, optional ones included
+  // How:   puts a settled optional step between two that want something, which is
+  //        exactly where Tools -> STL Files -> Review sits
+  // Chain: Next used to scan forward for the next 'attention' and fall back to the
+  //        last step, so finishing Tools read "Review and submit" and jumped STL
+  //        Files outright. Optional means you may leave it empty, not that you are
+  //        never shown it — and going back to a gap is the finish bar's job
+  it('walks to the next step in order, including one with nothing wrong with it', () => {
     render(
       <EditStepper
         steps={[
-          { id: 'details', label: 'Details', status: 'done', content: <Panel><p>Details content</p></Panel> },
+          { id: 'tools', label: 'Tools', status: 'done', content: <Panel><p>Tools content</p></Panel> },
           { id: 'stl', label: 'STL Files', status: 'neutral', content: <Panel><p>STL content</p></Panel> },
-          { id: 'tools', label: 'Tools', status: 'attention', content: <Panel><p>Tools content</p></Panel> },
+          { id: 'review', label: 'Review', status: 'neutral', content: <Panel><p>Review content</p></Panel> },
         ]}
-        finish={makeFinish({ missing: [{ step: 'tools', label: 'A tool' }] })}
+        finish={makeFinish()}
       />
     )
-    fireEvent.click(screen.getByRole('button', { name: /next: tools/i }))
-    expect(screen.getByText('Tools content')).toBeInTheDocument()
+    // Not "Review and submit", which is what the skip used to offer here.
+    fireEvent.click(screen.getByRole('button', { name: /next: stl files/i }))
+    expect(screen.getByText('STL content')).toBeInTheDocument()
+
+    // And STL Files leads on to Review rather than being a dead end.
+    fireEvent.click(screen.getByRole('button', { name: /review and submit/i }))
+    expect(screen.getByText('Review content')).toBeInTheDocument()
   })
 
-  // Tests: with nothing missing, Next points at the summary rather than a gap
+  // Tests: a disabled step is stepped over rather than offered
+  // Chain: /upload draws the whole journey with every step but Details locked, so
+  //        a Next pointing at one would be a button that does nothing
+  it('steps over a disabled step', () => {
+    render(
+      <EditStepper
+        steps={[
+          { id: 'tools', label: 'Tools', status: 'done', content: <Panel><p>Tools content</p></Panel> },
+          { id: 'stl', label: 'STL Files', status: 'neutral', disabled: true, content: null },
+          { id: 'review', label: 'Review', status: 'neutral', content: <Panel><p>Review content</p></Panel> },
+        ]}
+        finish={makeFinish()}
+      />
+    )
+    fireEvent.click(screen.getByRole('button', { name: /review and submit/i }))
+    expect(screen.getByText('Review content')).toBeInTheDocument()
+  })
+
+  // Tests: the step before the end names the end, once there is nothing missing
   // Chain: the bar can submit from anywhere once the tutorial is complete, so the
   //        last step stops being somewhere you must reach — but reading what is
-  //        about to be sent before sending it is still worth offering
-  it('offers the summary once nothing is missing', () => {
+  //        about to be sent before sending it is still worth offering, and the
+  //        arrow should say so rather than reading "Next: Review"
+  it('names the summary as the end once nothing is missing', () => {
     renderStepper(makeFinish())
     expect(screen.getByRole('button', { name: /review and submit/i })).toBeInTheDocument()
   })
@@ -184,9 +209,116 @@ describe('EditStepper', () => {
     expect(screen.queryByRole('button', { name: 'Submit for review' })).toBeNull()
   })
 
+  // A walk of two steps with Team parked beside it, which is the editor's shape.
+  function withTrailing() {
+    return render(
+      <EditStepper
+        steps={[
+          { id: 'details', label: 'Details', status: 'done', content: <Panel><p>Details content</p></Panel> },
+          { id: 'review', label: 'Review', status: 'neutral', content: <Panel><p>Review content</p></Panel> },
+          { id: 'team', label: 'Team', status: 'neutral', trailing: true, content: <Panel><p>Team content</p></Panel> },
+        ]}
+        finish={makeFinish()}
+      />
+    )
+  }
+
+  // Tests: a trailing step carries neither the submit bar nor a way onward
+  // How:   opens Team with nothing missing — the case that used to draw both
+  //        "Submit for review" and "Review and submit →" on the same screen
+  // Chain: nothing on Team is required and nothing on it is submitted, so a submit
+  //        control beside an invite field only asks what it would submit
+  it('draws no finish bar and no Next on a trailing step', () => {
+    withTrailing()
+    fireEvent.click(screen.getByRole('tab', { name: /team/i }))
+    expect(screen.getByText('Team content')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Submit for review' })).toBeNull()
+    expect(screen.queryByRole('button', { name: /review and submit/i })).toBeNull()
+    expect(screen.queryByRole('button', { name: /^next:/i })).toBeNull()
+
+    // And the bar comes straight back on a step of the walk, so leaving Team is
+    // all it takes to find the finish line again.
+    fireEvent.click(screen.getByRole('tab', { name: /review/i }))
+    expect(screen.getByRole('button', { name: 'Submit for review' })).toBeInTheDocument()
+  })
+
+  // Tests: the walk never leads to a trailing step, and does not end on one
+  // Chain: Team is last in the steps array so the pill row can float it right, and
+  //        the fallback used to be "the last step" flat. Left alone, Details would
+  //        offer "Review and submit →" and open Team — the wrong panel under the
+  //        right words, and a walk that quietly runs one step past its own end
+  it('sends Next to the end of the walk, never to the trailing step', () => {
+    withTrailing()
+    expect(screen.getByRole('button', { name: /review and submit/i })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /review and submit/i }))
+    expect(screen.getByText('Review content')).toBeInTheDocument()
+    // And Review is the end: nothing onward, even with Team sitting after it.
+    expect(screen.queryByRole('button', { name: /review and submit/i })).toBeNull()
+    expect(screen.queryByRole('button', { name: /^next:/i })).toBeNull()
+  })
+
+  /* A panel holding unsaved work, which is every editor panel with something
+     typed in it: it parks a save with the stepper and expects to be asked
+     before the step changes. */
+  function Holding({ save }: { save: () => Promise<boolean> }) {
+    useSaveOnLeave(save)
+    return <p>Details content</p>
+  }
+
+  function renderHolding(save: () => Promise<boolean>) {
+    return render(
+      <EditStepper
+        steps={[
+          { id: 'details', label: 'Details', status: 'done', content: <Panel><Holding save={save} /></Panel> },
+          { id: 'files', label: 'Files', status: 'done', content: <Panel><p>Files content</p></Panel> },
+        ]}
+        finish={makeFinish()}
+      />
+    )
+  }
+
+  // Tests: leaving a step writes what the panel is holding first
+  // How:   a panel parks a save; the step is changed by pill rather than by Next
+  // Chain: the panels unmount on a step change, so anything typed and not saved is
+  //        gone. Hanging this off selectStep rather than off Next is the point —
+  //        the pill row and the finish bar's gap chips leave the step too, and a
+  //        rule that only covered one of the three would lose work by which
+  //        control you happened to reach for
+  it('saves what the open panel is holding before the step changes', async () => {
+    const save = vi.fn().mockResolvedValue(true)
+    renderHolding(save)
+
+    fireEvent.click(screen.getByRole('tab', { name: /files/i }))
+    await waitFor(() => expect(screen.getByText('Files content')).toBeInTheDocument())
+    expect(save).toHaveBeenCalledTimes(1)
+  })
+
+  // Tests: a failed save keeps the contributor on the step
+  // Chain: the work only exists in that panel's state, so moving on would be the
+  //        one thing that makes it unrecoverable. The panel is already showing why
+  it('stays put when the panel cannot save', async () => {
+    const save = vi.fn().mockResolvedValue(false)
+    renderHolding(save)
+
+    fireEvent.click(screen.getByRole('tab', { name: /files/i }))
+    await waitFor(() => expect(save).toHaveBeenCalled())
+    expect(screen.getByText('Details content')).toBeInTheDocument()
+    expect(screen.queryByText('Files content')).toBeNull()
+  })
+
+  // Tests: a panel holding nothing does not make navigation wait
+  // Chain: the hook parks null rather than a promise resolving true, so a pill
+  //        click on a settled step stays the synchronous setState it always was.
+  //        Asserting without awaiting is the assertion
+  it('changes step synchronously when the panel is holding nothing', () => {
+    renderStepper(makeFinish())
+    fireEvent.click(screen.getByRole('tab', { name: /files/i }))
+    expect(screen.getByText('Files content')).toBeInTheDocument()
+  })
+
   // Tests: arriving from /upload announces that the tutorial was created
   // How:   renders with created=1 in the query and waits for the live region
-  // Chain: /upload and the editor draw the same eight pills and the same panel, so
+  // Chain: /upload and the editor draw the same pills and the same panel, so
   //        the redirect between them changed almost nothing on screen. A correct
   //        redirect that announces nothing reads as being thrown somewhere else
   it('announces the create when it arrives from the new-tutorial form', async () => {
