@@ -1,6 +1,7 @@
 'use client'
 import { PanelActions } from '@/components/panel-actions'
 import { useState } from 'react'
+import { useSave } from '@/components/use-save'
 import type { ChildProfile } from '@splat-connect/types'
 
 const CHALLENGES = ['Grasping', 'Holding', 'Fine motor', 'Strength', 'Coordination', 'Fatigue', 'Other']
@@ -20,9 +21,7 @@ export function ChildEverydayNeedsForm({
     grip_type: profile?.grip_type ?? null,
     env_context: profile?.env_context ?? null,
   })
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [saved, setSaved] = useState(false)
+  const { busy, error, saved, run } = useSave(onSave)
 
   function set<K extends keyof Fields>(key: K, value: Fields[K]) {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -39,17 +38,7 @@ export function ChildEverydayNeedsForm({
 
   async function save(e: React.FormEvent) {
     e.preventDefault()
-    setBusy(true)
-    setError(null)
-    setSaved(false)
-    try {
-      await onSave(form)
-      setSaved(true)
-    } catch {
-      setError('Could not save your changes. Please try again.')
-    } finally {
-      setBusy(false)
-    }
+    await run(form)
   }
 
   return (

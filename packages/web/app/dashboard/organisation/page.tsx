@@ -20,7 +20,7 @@ import { notFound } from 'next/navigation'
 import { apiClient } from '@/lib/api-client'
 import { getCapabilities } from '@/lib/capabilities'
 import { OrgReviewBanner } from '@/components/org-review-banner'
-import { DifficultyBadge } from '@/components/difficulty-badge'
+import { Badge } from '@/components/badge'
 import { BackingBadge } from '@/components/backing-state'
 import { BoundaryLink } from '@/components/boundary-link'
 import { Inbox } from '@/components/icons'
@@ -97,7 +97,7 @@ export default async function OrganisationTabPage() {
                     {org.name}
                   </span>
                   <span className="ml-auto">
-                    <DifficultyBadge difficulty={tutorial.difficulty} />
+                    <Badge status={tutorial.difficulty} />
                   </span>
                 </div>
                 {org.status === 'suspended' && (

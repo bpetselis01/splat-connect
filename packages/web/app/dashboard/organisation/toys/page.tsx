@@ -20,7 +20,7 @@ import { notFound } from 'next/navigation'
 import { apiClient } from '@/lib/api-client'
 import { getCapabilities } from '@/lib/capabilities'
 import { CardPhoto } from '@/components/card-photo'
-import { ToyStatusBadge } from '@/components/toy-status-badge'
+import { Badge } from '@/components/badge'
 import { OrgPickupForm, type OrgPickup } from '@/components/org-pickup-form'
 import { Shelf } from '@/components/icons'
 import type { Toy } from '@splat-connect/types'
@@ -95,7 +95,7 @@ export default async function OrgInventoryPage() {
                 <div className="p-4">
                   <div className="flex items-start justify-between gap-2">
                     <p className="truncate text-sm font-bold text-ink">{toy.name}</p>
-                    <ToyStatusBadge status={toy.status} />
+                    <Badge status={toy.status} />
                   </div>
                   <p className="mt-1 text-xs text-muted">{toy.organizations?.name}</p>
                   <p className="mt-1 text-xs font-bold text-ink">

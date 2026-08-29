@@ -15,7 +15,7 @@
  */
 import Link from 'next/link'
 import { apiClient } from '@/lib/api-client'
-import { DifficultyBadge } from '@/components/difficulty-badge'
+import { Badge } from '@/components/badge'
 import type { Tutorial, TutorialOrg, Difficulty } from '@splat-connect/types'
 
 type Queued = Tutorial & { tutorial_orgs?: TutorialOrg[] }
@@ -89,7 +89,7 @@ export default async function ReviewListPage({
               className="card card-link flex items-center justify-between gap-4 p-4"
             >
               <div className="flex items-center gap-3">
-                <DifficultyBadge difficulty={t.difficulty as Difficulty} />
+                <Badge status={t.difficulty as Difficulty} />
                 <div>
                   <p className="text-sm font-bold text-ink">{t.title}</p>
                   <p className="text-xs text-muted">

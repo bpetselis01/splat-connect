@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { requireCapabilities } from '@/lib/require-capabilities'
 import { apiClient } from '@/lib/api-client'
-import { ExchangeStatusBadge } from '@/components/exchange-status-badge'
+import { Badge } from '@/components/badge'
 import { Handshake } from '@/components/icons'
 import { BoundaryLink } from '@/components/boundary-link'
 import { MarkNotificationsRead } from '@/components/mark-notifications-read'
@@ -39,7 +39,7 @@ function TransactionRow({
               </p>
             )}
           </div>
-          <ExchangeStatusBadge status={tx.status} />
+          <Badge status={tx.status} />
         </div>
 
         {/* The one line on this card that is an instruction rather than

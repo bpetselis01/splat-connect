@@ -22,9 +22,6 @@ vi.mock('next/link', () => ({
     <a href={href} {...rest}>{children}</a>
   ),
 }))
-vi.mock('@/components/difficulty-badge', () => ({
-  DifficultyBadge: () => null,
-}))
 vi.mock('@/components/mark-notifications-read', () => ({
   MarkNotificationsRead: () => null,
 }))

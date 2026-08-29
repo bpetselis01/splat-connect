@@ -1,10 +1,9 @@
 import { BoundaryLink } from './boundary-link'
 import { SaveButton, type SaveProps } from './save-button'
 import { CardPhoto } from './card-photo'
-import { DifficultyBadge } from './difficulty-badge'
-import { KindBadge } from './kind-badge'
+import { Badge } from './badge'
 import { BackingSummary } from './backing-state'
-import type { Tutorial, TutorialOrg } from '@splat-connect/types'
+import { KIND_LABEL, type Tutorial, type TutorialOrg } from '@splat-connect/types'
 
 /** GET /api/public/tutorials embeds accepted backing on every row. Only the
  *  fields the card reads, so a recommendation's embedded target — a pick of
@@ -39,8 +38,8 @@ export function TutorialCard({ tutorial, save }: { tutorial: Listed; save?: Save
             to a parent, and the absence of a badge is the correct signal. */}
         {backed && <BackingSummary backing={tutorial.tutorial_orgs ?? []} />}
         <div className="mt-3 flex flex-wrap gap-2">
-          <DifficultyBadge difficulty={tutorial.difficulty} />
-          <KindBadge kind={tutorial.kind} />
+          <Badge status={tutorial.difficulty} />
+          <Badge status={tutorial.kind} label={KIND_LABEL[tutorial.kind]} />
         </div>
       </div>
     </BoundaryLink>

@@ -28,13 +28,13 @@
  *
  * Related files:
  * - packages/api/src/routes/toy-ideas.ts: GET /api/ideas/mine, GET /api/ideas/joined
- * - components/idea-status-badge.tsx: the status → copy/colour map
+ * - components/badge.tsx: the status → copy/colour map
  * - components/challenge-card.tsx: the public listing's equivalent row
  */
 import Link from 'next/link'
 import { requireCapabilities } from '@/lib/require-capabilities'
 import { apiClient } from '@/lib/api-client'
-import { IdeaStatusBadge } from '@/components/idea-status-badge'
+import { Badge, IDEA_LABEL } from '@/components/badge'
 import { FileText, Handshake } from '@/components/icons'
 import { BoundaryLink } from '@/components/boundary-link'
 import { MarkNotificationsRead } from '@/components/mark-notifications-read'
@@ -59,7 +59,7 @@ function IdeaRow({ idea }: { idea: ToyIdea }) {
     <>
       <div className="flex items-start justify-between gap-3">
         <p className="min-w-0 truncate font-bold text-ink">{idea.title}</p>
-        <IdeaStatusBadge status={idea.status} />
+        <Badge status={idea.status} label={IDEA_LABEL[idea.status]} />
       </div>
       <p className="mt-1 line-clamp-2 text-sm text-muted">{idea.summary}</p>
       {/* review_note is the point of the rejected state — an admin's reason

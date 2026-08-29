@@ -9,13 +9,13 @@
  *
  * Related files:
  * - packages/api/src/routes/admin.ts: GET /api/admin/ideas
- * - components/idea-status-badge.tsx: the status → copy/colour map, reused
+ * - components/badge.tsx: the status → copy/colour map, reused
  *   rather than a third copy of that logic
  */
 import Link from 'next/link'
 import type { Route } from 'next'
 import { apiClient } from '@/lib/api-client'
-import { IdeaStatusBadge } from '@/components/idea-status-badge'
+import { Badge, IDEA_LABEL } from '@/components/badge'
 import type { ToyIdea } from '@splat-connect/types'
 
 type Queued = ToyIdea & { profiles: { name: string } | null }
@@ -59,7 +59,7 @@ export default async function AdminIdeasPage() {
             className="card card-link flex items-center justify-between gap-4 p-4"
           >
             <div className="flex items-center gap-3">
-              <IdeaStatusBadge status={idea.status} />
+              <Badge status={idea.status} label={IDEA_LABEL[idea.status]} />
               <div>
                 <p className="text-sm font-bold text-ink">{idea.title}</p>
                 <p className="text-xs text-muted">

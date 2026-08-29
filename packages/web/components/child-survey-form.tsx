@@ -7,6 +7,7 @@ import { PanelActions } from '@/components/panel-actions'
  * answers would mean versioning the question set.
  */
 import { useState } from 'react'
+import { useSave } from '@/components/use-save'
 import { QUESTIONS, estimateAbility, type ChildProfile } from '@splat-connect/types'
 
 export function ChildSurveyForm({
@@ -16,26 +17,14 @@ export function ChildSurveyForm({
   onSave: (fields: Partial<ChildProfile>) => Promise<void>
 }) {
   const [answers, setAnswers] = useState<(number | null)[]>(() => QUESTIONS.map(() => null))
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [saved, setSaved] = useState(false)
+  const { busy, error, saved, run } = useSave(onSave)
 
   const complete = answers.every((a) => a != null)
 
   async function estimateAndSave() {
     if (!complete) return
     const { macs, bfmf } = estimateAbility(answers as number[])
-    setBusy(true)
-    setError(null)
-    setSaved(false)
-    try {
-      await onSave({ macs_level: macs, bfmf_score: bfmf, macs_source: 'estimated', bfmf_source: 'estimated' })
-      setSaved(true)
-    } catch {
-      setError('Could not save your changes. Please try again.')
-    } finally {
-      setBusy(false)
-    }
+    await run({ macs_level: macs, bfmf_score: bfmf, macs_source: 'estimated', bfmf_source: 'estimated' })
   }
 
   return (

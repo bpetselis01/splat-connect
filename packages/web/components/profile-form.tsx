@@ -7,11 +7,13 @@
  * Deliberately does not set `saved` on a failed request — see terms-gate.tsx
  * for the same rule stated about its own request: telling the user a change
  * was recorded when the server never recorded it leaves them confused later.
+ * That rule now lives in components/use-save.ts, which every panel form shares.
  *
  * Related files:
  * - packages/api/src/routes/contributors.ts: PATCH /api/contributors/me
  */
 import { useState } from 'react'
+import { useSave } from '@/components/use-save'
 import { browserApiClient } from '@/lib/browser-api-client'
 import type { Profile } from '@splat-connect/types'
 
@@ -22,30 +24,20 @@ export function ProfileForm({ profile }: { profile: Profile }) {
   const [pickupState, setPickupState] = useState(profile.pickup_state || '')
   const [pickupPostcode, setPickupPostcode] = useState(profile.pickup_postcode || '')
   const [publicShowcase, setPublicShowcase] = useState(profile.public_showcase)
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [saved, setSaved] = useState(false)
+  const { busy, error, saved, run } = useSave((body: unknown) =>
+    browserApiClient.patch('/api/contributors/me', body),
+  )
 
   async function save(e: React.FormEvent) {
     e.preventDefault()
-    setBusy(true)
-    setError(null)
-    setSaved(false)
-    try {
-      await browserApiClient.patch('/api/contributors/me', {
-        name,
-        pickup_line1: pickupLine1,
-        pickup_suburb: pickupSuburb,
-        pickup_state: pickupState,
-        pickup_postcode: pickupPostcode,
-        public_showcase: publicShowcase,
-      })
-      setSaved(true)
-    } catch {
-      setError('Could not save your changes. Please try again.')
-    } finally {
-      setBusy(false)
-    }
+    await run({
+      name,
+      pickup_line1: pickupLine1,
+      pickup_suburb: pickupSuburb,
+      pickup_state: pickupState,
+      pickup_postcode: pickupPostcode,
+      public_showcase: publicShowcase,
+    })
   }
 
   return (

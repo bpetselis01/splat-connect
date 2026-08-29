@@ -2,10 +2,10 @@
  * Backing State — the single owner of how backing is worded and coloured.
  *
  * Every surface renders through this. The status→colour map used to live in two
- * pages and drifted apart, which is why StatusBadge exists; this exists for the
+ * pages and drifted apart, which is why Badge exists; this exists for the
  * same reason, before the drift rather than after it.
  *
- * The three states reuse StatusBadge's palette deliberately: honey already means
+ * The three states reuse Badge's palette deliberately: honey already means
  * "waiting" on this platform, mint means "went through", apricot means "did not".
  * A contributor should not have to learn a second colour language, and a leader
  * looking at both badges on one row should see them agree.
@@ -22,7 +22,7 @@
  * read as a failure.
  *
  * Related files:
- * - components/status-badge.tsx: the palette and badge shape this follows
+ * - components/badge.tsx: the palette and badge shape this follows
  * - docs/superpowers/specs/2026-07-28-contributor-backing-experience-design.md §1
  */
 import type { TutorialOrg } from '@splat-connect/types'

@@ -27,7 +27,7 @@ import { notFound, redirect } from 'next/navigation'
 import { apiClient } from '@/lib/api-client'
 import { isOrgLeader } from '@/lib/org-access'
 import { OrgReviewBanner } from '@/components/org-review-banner'
-import { DifficultyBadge } from '@/components/difficulty-badge'
+import { Badge } from '@/components/badge'
 import { BackingBadge } from '@/components/backing-state'
 import { BookOpen, Inbox } from '@/components/icons'
 import type { Tutorial, TutorialOrg, UserAgreement, Organization, OrgLeader } from '@splat-connect/types'
@@ -171,7 +171,7 @@ export default async function OrganizationPage({
                     <BackingBadge status={rowFor(t)!.status} />
                     <span className="text-sm font-bold text-ink">{t.title}</span>
                     <span className="ml-auto">
-                      <DifficultyBadge difficulty={t.difficulty} />
+                      <Badge status={t.difficulty} />
                     </span>
                   </div>
                 </Link>

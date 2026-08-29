@@ -19,7 +19,7 @@
  */
 import Link from 'next/link'
 import { apiClient } from '@/lib/api-client'
-import { DifficultyBadge } from '@/components/difficulty-badge'
+import { Badge } from '@/components/badge'
 import type { Tutorial, TutorialOrg } from '@splat-connect/types'
 
 type Sampled = Tutorial & { tutorial_orgs?: TutorialOrg[] }
@@ -67,7 +67,7 @@ export default async function SpotCheckPage({
                 <Link href={`/admin/review/${t.id}`} className="card card-link p-4">
                   <div className="flex items-start justify-between gap-3">
                     <span className="font-medium text-ink">{t.title}</span>
-                    <DifficultyBadge difficulty={t.difficulty} />
+                    <Badge status={t.difficulty} />
                   </div>
                   {backing.length > 0 && (
                     <p className="mt-2 text-sm text-muted">
