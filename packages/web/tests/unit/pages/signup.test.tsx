@@ -3,8 +3,9 @@ import { render, screen } from '@testing-library/react'
 import SignupPage from '@/app/signup/page'
 
 // The page reads ?next= and ?reason= for the save detour.
+let search = ''
 vi.mock('next/navigation', () => ({
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => new URLSearchParams(search),
 }))
 
 vi.mock('@/lib/supabase/client', () => ({
@@ -27,5 +28,16 @@ describe('signup copy', () => {
     render(<SignupPage />)
     expect(screen.getByRole('heading', { name: 'Create your account' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Create account' })).toBeInTheDocument()
+  })
+
+  // The download detour says why the visitor is here, the way the save one
+  // does — a signup page with no explanation reads as a paywall.
+  it('explains the download detour', () => {
+    search = 'next=%2Ftutorials%2Ft1&reason=download'
+    render(<SignupPage />)
+    expect(
+      screen.getByText("You need an account to download tutorial files. Create one and we'll take you back.")
+    ).toBeInTheDocument()
+    search = ''
   })
 })
