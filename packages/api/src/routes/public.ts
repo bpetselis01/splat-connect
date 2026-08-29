@@ -85,25 +85,40 @@ publicRoutes.get('/tutorials/:id', async (c) => {
     // Backing and the approver are part of what a parent is deciding on, so they
     // come down with the tutorial rather than needing a second, authenticated call
     // — this endpoint serves logged-out visitors.
+    // The two !hints on the recommendations embed are load-bearing: the table
+    // points at tutorials twice, and PostgREST refuses an ambiguous embed
+    // outright rather than guessing. See the same select in tutorials.ts.
     .select(
       '*, parts(*), tools(*), stl_files(*), tutorial_contributors(role, profiles(name)), ' +
         'tutorial_orgs(status, organizations(id, name)), ' +
+        'tutorial_recommendations!tutorial_id(position, tutorials!recommended_id(id, title, kind, difficulty, toy_photo_url, status)), ' +
         'reviewer:reviewed_by(name), reviewed_for:reviewed_for_org_id(name)'
     )
     .eq('id', c.req.param('id'))
     .eq('status', 'approved')
+    .order('position', { referencedTable: 'tutorial_recommendations', ascending: true })
     .single()
   if (error) return c.json({ error: error.message }, 404)
   // Filter the embed here rather than in the select: PostgREST cannot constrain an
   // embedded relation's rows from the parent query, and an organisation's mark must
   // never appear on a request it did not accept. This route uses the admin client,
   // so the public RLS badge policy is not doing it for us.
+  //
+  // Recommendations get the same treatment for the same reason, with one more:
+  // a creator may point at a tutorial that is still in review, or that has since
+  // gone back into review, and the public page must not show a door a parent
+  // cannot open. Dropping the row is the whole design — there is no "not yet
+  // approved" page to send them to.
   const tutorial = data as unknown as Record<string, unknown> & {
     tutorial_orgs?: Array<{ status: string }>
+    tutorial_recommendations?: Array<{ tutorials: { status: string } | null }>
   }
   return c.json({
     ...tutorial,
     tutorial_orgs: (tutorial.tutorial_orgs ?? []).filter((b) => b.status === 'accepted'),
+    tutorial_recommendations: (tutorial.tutorial_recommendations ?? []).filter(
+      (r) => r.tutorials?.status === 'approved'
+    ),
   })
 })
 
