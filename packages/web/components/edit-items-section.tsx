@@ -48,8 +48,20 @@ export function EditItemsSection({ noun, withQuantity, initialItems, onSave }: E
   // render and make every pill click wait for an answer of "nothing to do".
   const [addDirty, setAddDirty] = useState(false)
   const [savedAt, setSavedAt] = useState<string | null>(null)
-  /** Whether the add row is expanded. One editor is open at a time. */
-  const [addOpen, setAddOpen] = useState(false)
+  /**
+   * Whether the add row is expanded. One editor is open at a time.
+   *
+   * Open from the start when the list is empty. Collapsing the add row is what
+   * keeps a long list readable, but a list with nothing in it has nothing to
+   * read: collapsed, the panel is a single dashed row and the only thing this
+   * step exists to do is hidden behind a click nobody has a reason to make.
+   * Every new tutorial starts here, so that is the first thing a contributor
+   * would have seen.
+   *
+   * Only the initial value — once a row exists the list can be browsed, and
+   * after an add the form deliberately stays open for the next one.
+   */
+  const [addOpen, setAddOpen] = useState(initialItems.length === 0)
 
   const capitalizedNoun = noun.charAt(0).toUpperCase() + noun.slice(1)
 

@@ -4,11 +4,38 @@ import { EditItemsSection } from '@/components/edit-items-section'
 import { ToastProvider } from '@/components/toast'
 import { renderLeavable } from '@/tests/unit/leaving'
 
+describe('EditItemsSection empty state', () => {
+  // Tests: an empty list opens with the add form already showing
+  // How:   renders with no items and asserts the fields are visible unclicked
+  // Chain: collapsing the add row is what makes a long list readable, but on a
+  //        list with nothing in it there is nothing to read — the panel became a
+  //        single dashed row with no visible way to add anything, and every new
+  //        tutorial starts in exactly that state
+  it('opens the add form when there is nothing in the list yet', () => {
+    render(<EditItemsSection noun="part" initialItems={[]} onSave={vi.fn()} />)
+    expect(screen.getByPlaceholderText('Name')).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Add part' })).toBeVisible()
+  })
+
+  // Tests: an existing list still opens collapsed
+  // Chain: this is the half worth keeping — once rows exist, one open editor at a
+  //        time is the whole point of the redesign
+  it('leaves the add form collapsed when the list already has rows', () => {
+    render(
+      <EditItemsSection
+        noun="part"
+        initialItems={[{ id: 'p1', name: 'Screw', is_optional: false, buy_links: [] }]}
+        onSave={vi.fn()}
+      />
+    )
+    expect(screen.getByPlaceholderText('Name')).not.toBeVisible()
+  })
+})
+
 describe('EditItemsSection save feedback', () => {
   it('shows a "Last saved" line after adding an item', async () => {
     const onSave = vi.fn().mockResolvedValue(undefined)
     render(<EditItemsSection noun="part" initialItems={[]} onSave={onSave} />)
-    fireEvent.click(screen.getByRole('button', { name: /Add a part/ }))
     fireEvent.change(screen.getByPlaceholderText('Name'), { target: { value: 'Screw' } })
     fireEvent.click(screen.getByRole('button', { name: 'Add part' }))
     await waitFor(() => expect(screen.getByText(/last saved just now/i)).toBeInTheDocument())
@@ -21,7 +48,6 @@ describe('EditItemsSection save feedback', () => {
         <EditItemsSection noun="part" initialItems={[]} onSave={onSave} />
       </ToastProvider>
     )
-    fireEvent.click(screen.getByRole('button', { name: /Add a part/ }))
     fireEvent.change(screen.getByPlaceholderText('Name'), { target: { value: 'Screw' } })
     fireEvent.click(screen.getByRole('button', { name: 'Add part' }))
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Part added'))
@@ -56,7 +82,6 @@ describe('EditItemsSection on leaving the step', () => {
         <EditItemsSection noun="part" initialItems={[]} onSave={onSave} />
       </ToastProvider>
     )
-    fireEvent.click(screen.getByRole('button', { name: /Add a part/ }))
     fireEvent.change(screen.getByPlaceholderText('Name'), { target: { value: 'M3 screw' } })
 
     expect(await leave()).toBe(true)
@@ -131,8 +156,9 @@ describe('EditItemsSection on leaving the step', () => {
         <EditItemsSection noun="part" initialItems={[]} onSave={onSave} />
       </ToastProvider>
     )
+    // Open already, this list being empty. Collapse it, reopen it, and the
+    // uncontrolled fields must still be holding what was typed.
     const addRow = screen.getByRole('button', { name: /Add a part/ })
-    fireEvent.click(addRow)
     fireEvent.change(screen.getByPlaceholderText('Name'), { target: { value: 'M3 screw' } })
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
     fireEvent.click(addRow)
@@ -148,7 +174,6 @@ describe('EditItemsSection on leaving the step', () => {
         <EditItemsSection noun="part" initialItems={[]} onSave={onSave} />
       </ToastProvider>
     )
-    fireEvent.click(screen.getByRole('button', { name: /Add a part/ }))
     fireEvent.change(screen.getByPlaceholderText('Name'), { target: { value: 'M3 screw' } })
     expect(await leave()).toBe(false)
   })
