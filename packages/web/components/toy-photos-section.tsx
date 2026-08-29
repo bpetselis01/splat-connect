@@ -2,8 +2,8 @@
 import { useState } from 'react'
 import { browserApiClient } from '@/lib/browser-api-client'
 import { FileDropZone } from '@/components/file-drop-zone'
-import { ToyPhotoViewer } from '@/components/toy-photo-viewer'
 import { useToast } from '@/components/toast'
+import { PanelActions } from '@/components/panel-actions'
 
 export function ToyPhotosSection({
   toyId,
@@ -93,7 +93,8 @@ export function ToyPhotosSection({
           accept="image/*"
           label="Cover Photo"
           onChange={handleCoverChange}
-          currentFileLabel={coverPhotoUrl ? 'Current cover photo on file — upload to replace' : undefined}
+          currentFileUrl={coverPhotoUrl}
+          currentFileLabel={coverPhotoUrl ? 'On file — upload to replace' : undefined}
         />
       </div>
       <div>
@@ -124,19 +125,17 @@ export function ToyPhotosSection({
             accept="image/*"
             label="Switch Photo"
             onChange={handleSwitchFileChange}
-            currentFileLabel={
-              switchPhotoUrls.length > 0
-                ? 'Current switch photo on file — upload to replace'
-                : undefined
-            }
+            currentFileUrl={switchPhotoUrls[0] ?? null}
+            currentFileLabel={switchPhotoUrls.length > 0 ? 'On file — upload to replace' : undefined}
           />
         </div>
       )}
       {saving && <p className="text-sm font-semibold text-brand-dark">Saving…</p>}
-      {/* Save leads on the left in accent, as it does on Details and Review;
-          viewing what is already uploaded is the secondary action, so it sits
-          out of the way on the right. */}
-      <div className="flex items-center justify-between gap-3">
+      {/* Save leads on the left in accent, as it does on Details and Review.
+          The right of this row held "View uploaded photos", a dialog showing
+          the same pictures the dropzones above now show in place; the way
+          onward stands there instead. */}
+      <PanelActions>
         <button
           type="button"
           disabled={!hasChanges || saving}
@@ -145,8 +144,7 @@ export function ToyPhotosSection({
         >
           Save photos
         </button>
-        <ToyPhotoViewer coverPhotoUrl={coverPhotoUrl} switchPhotoUrls={switchPhotoUrls} />
-      </div>
+      </PanelActions>
     </div>
   )
 }
