@@ -288,4 +288,11 @@ export async function signIn(page: Page, email: string, password: string) {
   await page.locator('#email').fill(email)
   await page.locator('#password').fill(password)
   await page.getByRole('button', { name: 'Sign in' }).click()
+  // The click resolves before the login handler has finished: it awaits
+  // signInWithPassword, a getUser and a profile read, and only then sets
+  // window.location — so the auth cookie is not written yet when click()
+  // returns. A spec that navigates straight away arrives signed out. "Anywhere
+  // but /login" rather than a fixed destination, because a contributor who
+  // has not accepted terms lands on /onboarding, not /dashboard.
+  await page.waitForURL((url) => !url.pathname.startsWith('/login'))
 }
