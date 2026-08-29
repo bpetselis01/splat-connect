@@ -10,16 +10,22 @@ import { PanelActions } from '@/components/panel-actions'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/toast'
-import type { TutorialContributor, Profile } from '@splat-connect/types'
+import { TeamBadge, teamRows } from '@/components/team-state'
+import type { TutorialContributor, TutorialCollaboratorInvite, Profile } from '@splat-connect/types'
 
 export function EditCollaboratorsSection({
   contributors,
+  invites,
   currentProfileId,
   isPrimary,
   onInvite,
   onRemove,
 }: {
   contributors: (TutorialContributor & { profiles: Profile })[]
+  /** Unanswered and declined invites. Without these the list cannot change
+   *  until the invitee answers, which is what made Invite look like it did
+   *  nothing. */
+  invites: (TutorialCollaboratorInvite & { profiles: Profile })[]
   currentProfileId: string
   isPrimary: boolean
   onInvite: (email: string) => Promise<void>
@@ -47,22 +53,28 @@ export function EditCollaboratorsSection({
 
   return (
     <div className="px-5 pb-5">
-      <ul className="flex flex-col gap-2">
-        {contributors.map((c) => {
-          const isSelf = c.profile_id === currentProfileId
-          const canAct = c.role === 'collaborator' && (isPrimary || isSelf)
+      {/* Same row shape as the Backing panel below: state badge, then the name,
+          then whatever action the row allows. The badge replaces the plain role
+          word this list used to print — it says the same thing and agrees with
+          the panel underneath. */}
+      <ul className="flex flex-col gap-3">
+        {teamRows(contributors, invites).map((r) => {
+          const isSelf = r.profileId === currentProfileId
+          // An invite has no seat to give up, so it offers neither Remove nor
+          // Leave — the primary withdraws interest by re-inviting or ignoring it.
+          const canAct = r.isContributor && r.state === 'collaborator' && (isPrimary || isSelf)
           return (
-            <li key={c.profile_id} className="flex items-center gap-3">
-              <span className="text-sm font-medium text-ink">{c.profiles.name}</span>
-              <span className="text-xs text-muted">{c.role}</span>
+            <li key={r.profileId} className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <TeamBadge state={r.state} />
+              <span className="text-sm font-medium text-ink">{r.name}</span>
               {canAct && (
                 <button
                   type="button"
                   disabled={pending !== null}
-                  onClick={() => run(c.profile_id, () => onRemove(c.profile_id), isSelf ? 'Left tutorial' : 'Removed collaborator')}
+                  onClick={() => run(r.profileId, () => onRemove(r.profileId), isSelf ? 'Left tutorial' : 'Removed collaborator')}
                   className="btn btn-quiet btn-sm ml-auto"
                 >
-                  {pending === c.profile_id ? 'Working…' : isSelf ? 'Leave' : 'Remove'}
+                  {pending === r.profileId ? 'Working…' : isSelf ? 'Leave' : 'Remove'}
                 </button>
               )}
             </li>

@@ -51,8 +51,15 @@ tutorials.get('/:id', async (c) => {
     // profiles.email is withheld here — this route is shared with the public
     // contributor edit page, not just admin review — and merged back in below
     // only for admins.
+    // The invites embed is what makes an invite visible before it is answered:
+    // inviting writes only to tutorial_collaborator_invites, and no
+    // tutorial_contributors row exists until the invitee accepts. RLS scopes
+    // the embed on its own — 012's "Participants can read an invite" admits the
+    // primary contributor and the invitee, nobody else — so no filter here.
+    // The alias names the FK column because the table points at profiles twice.
     .select(
       '*, parts(*), tools(*), stl_files(*), tutorial_contributors(*, profiles(id, name, role, created_at)), \
+tutorial_collaborator_invites(*, profiles:invited_profile_id(id, name, role, created_at)), \
 reviewer:reviewed_by(name), reviewed_for:reviewed_for_org_id(name)'
     )
     .eq('id', c.req.param('id'))

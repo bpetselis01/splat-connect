@@ -588,6 +588,11 @@ export interface TutorialWithDetails extends Tutorial {
   tools: Tool[]
   stl_files: StlFile[]
   tutorial_contributors: (TutorialContributor & { profiles: Profile })[]
+  /** Optional because only the contributor-facing GET /api/tutorials/:id embeds
+   *  it — the public detail route has no business exposing who was asked and
+   *  said no. An accepted invite's person also holds a tutorial_contributors
+   *  row above; components/team-state.tsx drops the duplicate. */
+  tutorial_collaborator_invites?: (TutorialCollaboratorInvite & { profiles: Profile })[]
 }
 
 // UploadDraft lived here: the in-progress state of the six-step upload wizard,

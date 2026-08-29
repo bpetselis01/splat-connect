@@ -267,6 +267,7 @@ export default async function EditTutorialPage({
             <h2 className="px-5 pb-3 text-sm font-bold text-ink">Collaborators</h2>
             <EditCollaboratorsSection
               contributors={tutorial!.tutorial_contributors}
+              invites={tutorial!.tutorial_collaborator_invites ?? []}
               currentProfileId={profile!.id}
               isPrimary={tutorial!.tutorial_contributors.some(
                 (tc) => tc.profile_id === profile!.id && tc.role === 'primary'
