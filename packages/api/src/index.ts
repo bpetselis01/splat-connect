@@ -1,8 +1,8 @@
 /**
- * API Server Entry Point — loads env, then serves the app.
- * App construction lives in app.ts so tests can import it directly.
+ * API Server Entry Point. Env comes from the --env-file-if-exists flags in the
+ * dev/start scripts; app construction lives in app.ts so tests can import it
+ * directly WITHOUT loading .env.local (which points at the cloud project).
  */
-import './env.js'
 import { serve } from '@hono/node-server'
 import app from './app.js'
 
