@@ -91,6 +91,33 @@ describe('uploadFile — native', () => {
       uploadFile('/api/upload/photo', 't1', { uri: 'file:///x.jpg', name: 'x.jpg' })
     ).rejects.toThrow(/500/)
   })
+
+  // The toy-library routes read a `toyId` part (packages/api/src/routes/upload.ts
+  // readUpload), not `tutorialId` — the 4th arg is how a caller asks for that.
+  it('appends toyId instead of tutorialId when the toyId idField is passed', async () => {
+    fetchMock.mockResolvedValue(okResponse({ url: 'toy1/cover.jpg' }))
+    const result = await uploadFile(
+      '/api/upload/toy-cover',
+      'toy1',
+      { uri: 'file:///tmp/cover.jpg', name: 'cover.jpg', mimeType: 'image/jpeg' },
+      'toyId'
+    )
+    const parts = FakeFormData.instances[0].parts
+    expect(parts.find(([name]) => name === 'toyId')?.[1]).toBe('toy1')
+    expect(parts.find(([name]) => name === 'tutorialId')).toBeUndefined()
+    expect(result).toEqual({ url: 'toy1/cover.jpg' })
+  })
+
+  it('posts to /api/upload/toy-switch-photo with the toyId field', async () => {
+    fetchMock.mockResolvedValue(okResponse({ url: 'toy1/switch-1.jpg' }))
+    await uploadFile(
+      '/api/upload/toy-switch-photo',
+      'toy1',
+      { uri: 'file:///tmp/switch.jpg', name: 'switch.jpg' },
+      'toyId'
+    )
+    expect(fetchMock.mock.calls[0][0]).toBe('http://localhost:3101/api/upload/toy-switch-photo')
+  })
 })
 
 describe('uploadFile — web', () => {
