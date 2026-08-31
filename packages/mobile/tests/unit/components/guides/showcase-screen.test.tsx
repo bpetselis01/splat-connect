@@ -55,6 +55,11 @@ describe('ShowcaseScreen', () => {
     expect(screen.getByText('Build a Robot Arm')).toBeTruthy()
     expect(screen.getByText('1 guides · 0 toys shared')).toBeTruthy()
     expect(screen.queryByText('Toys on their shelf')).toBeNull()
+    // Badges are hidden from the accessibility tree, same as library-screen's
+    // TutorialRow — the row's hint carries difficulty and kind instead.
+    expect(screen.queryByText('EASY')).toBeNull()
+    expect(screen.getAllByText('EASY', { includeHiddenElements: true }).length).toBe(1)
+    expect(screen.getByLabelText('Build a Robot Arm').props.accessibilityHint).toContain('Toy adaptation')
   })
 
   it('renders an organisation profile with the guides it backs and its toy shelf', async () => {

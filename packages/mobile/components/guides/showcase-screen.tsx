@@ -29,6 +29,7 @@ function GuideCard({ tutorial, onPress }: { tutorial: Tutorial; onPress: () => v
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={tutorial.title}
+      accessibilityHint={`${tutorial.difficulty} difficulty. ${KIND_LABEL[tutorial.kind]}. Opens the guide.`}
       pressScale={0.985}
       style={styles.rowPress}
     >
@@ -44,7 +45,11 @@ function GuideCard({ tutorial, onPress }: { tutorial: Tutorial; onPress: () => v
           <Text style={styles.cardTitle} numberOfLines={2}>
             {tutorial.title}
           </Text>
-          <View style={styles.badgeRow}>
+          {/* Hidden from the accessibility tree, same reason as library-screen's
+              TutorialRow: the row is already a button whose spoken name would
+              otherwise absorb these badges and double-announce them. The
+              row's hint carries difficulty and kind instead. */}
+          <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.badgeRow}>
             <Badge status={tutorial.difficulty} />
             <Badge status={tutorial.kind} label={KIND_LABEL[tutorial.kind]} />
           </View>
@@ -198,10 +203,10 @@ const styles = StyleSheet.create({
   sectionTitle: { fontFamily: theme.fonts.bold, fontSize: theme.type.heading, color: theme.colors.text, marginBottom: theme.spacing(3) },
   rowPress: { marginBottom: theme.spacing(3) },
   card: { flexDirection: 'row', gap: theme.spacing(4), padding: theme.spacing(3) },
-  thumbnail: { width: 88, height: 88, borderRadius: theme.radii.md, backgroundColor: theme.colors.surfaceSunken },
+  thumbnail: { width: 104, height: 104, borderRadius: theme.radii.md, backgroundColor: theme.colors.surfaceSunken },
   thumbnailPlaceholder: {
-    width: 88,
-    height: 88,
+    width: 104,
+    height: 104,
     borderRadius: theme.radii.md,
     backgroundColor: theme.colors.accentLight,
     alignItems: 'center',
