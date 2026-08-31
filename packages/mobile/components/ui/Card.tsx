@@ -23,14 +23,13 @@ export function Card({
 
 const styles = StyleSheet.create({
   base: {
-    borderRadius: theme.radii.lg,
+    borderRadius: theme.radii.md,
+    borderWidth: theme.border.thin,
+    borderColor: theme.colors.ink,
     padding: theme.spacing(4),
-  },
-  raised: {
     backgroundColor: theme.colors.surface,
-    ...theme.elevation.rest,
   },
-  feature: {
-    backgroundColor: theme.colors.accentLight,
-  },
+  raised: { ...theme.shadow(4) },
+  // Feature cards sit one rung deeper and on the brand tint — the hero box on a screen.
+  feature: { backgroundColor: theme.colors.accentLight, borderWidth: theme.border.thick, ...theme.shadow(5) },
 })
