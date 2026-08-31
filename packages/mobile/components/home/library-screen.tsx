@@ -125,8 +125,8 @@ export function LibraryScreen() {
   return (
     <Screen>
       <ScreenHeader
-        title="Tutorial Library"
-        subtitle="Step-by-step guides for switch-adapting your child's toys."
+        title="Guides"
+        subtitle="Step-by-step guides for switch-adapting toys and building assistive tech."
         showLogo
       />
 
@@ -195,7 +195,7 @@ export function LibraryScreen() {
             >
               <TutorialRow
                 item={item}
-                onPress={() => router.push({ pathname: '/home/[id]', params: { id: item.id } })}
+                onPress={() => router.push({ pathname: '/guides/[id]', params: { id: item.id } })}
               />
             </Animated.View>
           )}
@@ -207,9 +207,10 @@ export function LibraryScreen() {
 
 const styles = StyleSheet.create({
   searchBar: {
-    borderRadius: theme.radii.pill,
+    borderRadius: theme.radii.md,
+    borderWidth: theme.border.thin,
     paddingHorizontal: theme.spacing(4),
-    ...theme.elevation.rest,
+    ...theme.shadow(4),
   },
   filterRow: { flexDirection: 'row', gap: theme.spacing(2), marginBottom: theme.spacing(4) },
   retry: { marginTop: theme.spacing(5), alignSelf: 'center', paddingHorizontal: theme.spacing(8) },
