@@ -5,9 +5,9 @@ type ToneKey = keyof typeof theme.colors.tone
 const TONE: Record<string, ToneKey> = {
   draft: 'sunken', withdrawn: 'sunken', toy_adaptation: 'sunken', assistive_tech: 'sunken',
   pending: 'honey', requested: 'honey', medium: 'honey',
-  approved: 'mint', published: 'mint', completed: 'mint', graduated: 'mint', easy: 'mint',
+  approved: 'mint', published: 'mint', completed: 'mint', graduated: 'mint', easy: 'mint', switch_adapted: 'mint',
   rejected: 'apricot', hard: 'apricot',
-  accepted: 'brand', challenge: 'brand',
+  accepted: 'brand', challenge: 'brand', available: 'brand',
 }
 
 export function Badge({ status, label }: { status: string; label?: string }) {
