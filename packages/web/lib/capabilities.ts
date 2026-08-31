@@ -25,17 +25,9 @@
  */
 import { cache } from 'react'
 import { apiClient } from '@/lib/api-client'
-import type { Profile, Organization, UnreadCounts } from '@splat-connect/types'
+import type { Profile, Organization, UnreadCounts, Capabilities } from '@splat-connect/types'
 
-export type Capabilities = {
-  profile: Profile
-  isAdmin: boolean
-  ledOrgs: Organization[]
-  /** The same unread total, split by which My SPLAT card owns it. */
-  unread: UnreadCounts
-  /** Transactions waiting on this user, for the My exchanges badge in the rail. */
-  exchangeActions: number
-}
+export type { Capabilities } from '@splat-connect/types'
 
 export const getCapabilities = cache(async (): Promise<Capabilities | null> => {
   let profile: Profile
