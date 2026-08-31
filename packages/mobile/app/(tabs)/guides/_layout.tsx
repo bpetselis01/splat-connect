@@ -1,8 +1,8 @@
-// packages/mobile/app/(tabs)/home/_layout.tsx
+// packages/mobile/app/(tabs)/guides/_layout.tsx
 import { Stack } from 'expo-router'
 import { stackScreenOptions } from '../../../lib/nav-options'
 
-export default function HomeStackLayout() {
+export default function GuidesStackLayout() {
   return (
     <Stack screenOptions={stackScreenOptions}>
       {/*
@@ -11,7 +11,7 @@ export default function HomeStackLayout() {
         keep theirs — that is where the back affordance lives.
       */}
       <Stack.Screen name="index" options={{ headerShown: false }} />
-      <Stack.Screen name="[id]/index" options={{ title: 'Tutorial' }} />
+      <Stack.Screen name="[id]/index" options={{ title: 'Guide' }} />
       <Stack.Screen name="[id]/preview" options={{ title: 'Preview' }} />
     </Stack>
   )
