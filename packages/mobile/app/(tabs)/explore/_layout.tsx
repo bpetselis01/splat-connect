@@ -11,6 +11,10 @@ export default function ExploreStackLayout() {
         keep theirs — that is where the back affordance lives.
       */}
       <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="learn/index" options={{ title: 'Learn' }} />
+      {/* Overridden per-article by article-screen.tsx's own <Stack.Screen>
+          once the slug resolves; this is the fallback for an unknown one. */}
+      <Stack.Screen name="learn/[slug]" options={{ title: 'Guide' }} />
       <Stack.Screen name="about" options={{ title: 'About SPLAT' }} />
     </Stack>
   )
