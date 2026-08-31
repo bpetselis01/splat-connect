@@ -1,22 +1,14 @@
 // packages/mobile/components/profile-screen.tsx
 import { useState, useEffect } from 'react'
-import { ScrollView, View, Text, Pressable, StyleSheet, Linking } from 'react-native'
-import { Ionicons } from '@expo/vector-icons'
+import { View, Text, Pressable, StyleSheet, Linking } from 'react-native'
 import { useAuth } from '../lib/auth-context'
 import { theme } from '../lib/theme'
-import { ScreenHeader } from './ui/ScreenHeader'
 import { Button } from './ui/Button'
 import { Screen } from './ui/Screen'
 import { Card } from './ui/Card'
-import { TextField } from './ui/TextField'
 import { ChildProfileHome } from './profile/child-profile-home'
 import { resolveAuthStorage } from '../lib/supabase-storage'
-
-// Same base URL + pattern as the "Open Web Dashboard" link below (Linking.openURL
-// against EXPO_PUBLIC_WEB_URL). The terms document itself lives on web only.
-function openContributorTerms() {
-  Linking.openURL(`${process.env.EXPO_PUBLIC_WEB_URL}/legal/contributor-terms`)
-}
+import { TermsCheckbox, ErrorRow } from './auth-screen'
 
 const PROFILE_SEGMENT_KEY = 'profile-tab-segment'
 type ProfileSegment = 'account' | 'child-profile'
@@ -39,285 +31,90 @@ function useProfileSegment() {
   return { segment, select }
 }
 
-function TermsCheckbox({ testID, checked, onPress }: {
-  testID: string
-  checked: boolean
-  onPress: () => void
-}) {
-  return (
-    <Pressable
-      testID={testID}
-      onPress={onPress}
-      accessibilityRole="checkbox"
-      accessibilityState={{ checked }}
-      style={styles.termsRow}
-    >
-      <Ionicons name={checked ? 'checkbox' : 'square-outline'} size={22} color={theme.colors.primary} />
-      <Text style={styles.termsText}>
-        I have read and accept the{' '}
-        <Text onPress={openContributorTerms} style={styles.termsLink}>
-          contributor terms
-        </Text>
-        .
-      </Text>
-    </Pressable>
-  )
-}
-
-function ErrorRow({ message }: { message: string | null }) {
-  if (!message) return null
-  return (
-    <View style={styles.errorRow}>
-      <Ionicons name="alert-circle" size={18} color={theme.colors.danger} />
-      <Text style={styles.error}>{message}</Text>
-    </View>
-  )
-}
-
 export function ProfileScreen() {
-  const { session, profile, signIn, signUp, signOut, hasContributorTerms, acceptContributorTerms } = useAuth()
+  const { session, profile, signOut, hasContributorTerms, acceptContributorTerms } = useAuth()
   const { segment, select: selectSegment } = useProfileSegment()
-  const [mode, setMode] = useState<'signin' | 'signup' | 'check-email'>('signin')
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [acceptedTerms, setAcceptedTerms] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [submitting, setSubmitting] = useState(false)
   const [gateTicked, setGateTicked] = useState(false)
   const [gateError, setGateError] = useState<string | null>(null)
 
-  async function handleSubmit() {
-    setError(null)
-    if (mode === 'signup' && password !== confirmPassword) {
-      setError('Passwords do not match.')
-      return
-    }
-    if (mode === 'signup' && !acceptedTerms) {
-      setError('Please accept the contributor terms to create an account.')
-      return
-    }
-    setSubmitting(true)
-    try {
-      if (mode === 'signin') {
-        const res = await signIn(email, password)
-        if (res.error === 'Email not confirmed') {
-          setError('Please confirm your email before signing in — check your inbox for the confirmation link.')
-        } else if (res.error) {
-          setError(res.error)
-        }
-        return
-      }
-      const res = await signUp(email, password, name)
-      if (res.error) {
-        setError(res.error)
-        return
-      }
-      setMode('check-email')
-      setName('')
-      setPassword('')
-      setConfirmPassword('')
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  if (mode === 'check-email') {
-    return (
-      <Screen>
-        <ScreenHeader title="Profile" showLogo />
-        <Card style={styles.panel}>
-          <View style={styles.confirmBadge}>
-            <Ionicons name="mail-unread-outline" size={26} color={theme.colors.primary} />
-          </View>
-          <Text style={styles.heading}>Check Your Email</Text>
-          <Text style={styles.checkEmailText}>
-            We&apos;ve sent a confirmation link to {email}. Confirm your email, then sign in below.
-          </Text>
-          <Pressable onPress={() => { setMode('signin'); setError(null) }}>
-            <Text style={styles.link}>Back to sign in</Text>
-          </Pressable>
-        </Card>
-      </Screen>
-    )
-  }
-
-  // The Child Profile segment is reachable regardless of the catch-up gate below —
-  // it never went through that gate before this screen merged with ChildProfileHome,
-  // matching web's own precedent (capabilities.ts keeps child-profile access
-  // unconditional). Only the Account segment is blocked by unaccepted terms.
-  if (session) {
-    return (
-      <Screen>
-        <ScreenHeader title="Profile" showLogo />
-        <View style={styles.segmented}>
-          <Pressable
-            onPress={() => selectSegment('account')}
-            style={[styles.segment, segment === 'account' && styles.segmentActive]}
-          >
-            <Text style={[styles.segmentText, segment === 'account' && styles.segmentTextActive]}>
-              Account
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => selectSegment('child-profile')}
-            style={[styles.segment, segment === 'child-profile' && styles.segmentActive]}
-          >
-            <Text style={[styles.segmentText, segment === 'child-profile' && styles.segmentTextActive]}>
-              Child Profile
-            </Text>
-          </Pressable>
-        </View>
-        {segment === 'child-profile' ? (
-          <ChildProfileHome />
-        ) : // Catch-up gate for accounts created before terms were part of signup.
-        // Strict `=== false`: hasContributorTerms is null until the /api/agreements/me
-        // fetch resolves. Treating null as "unaccepted" flashed this gate for every
-        // already-accepted user on every app launch, for as long as that fetch was in
-        // flight.
-        hasContributorTerms === false ? (
-          <Card>
-            <Text style={styles.heading}>Before you continue</Text>
-            <Text style={styles.checkEmailText}>
-              Your account was created before we asked contributors to accept terms.
-              These terms have not been written yet, and anything you accept now is not
-              binding.
-            </Text>
-            <TermsCheckbox
-              testID="gate-accept-checkbox"
-              checked={gateTicked}
-              onPress={() => setGateTicked((v) => !v)}
-            />
-            <ErrorRow message={gateError} />
-            <Button
-              label="Accept and continue"
-              disabled={!gateTicked}
-              onPress={async () => {
-                const res = await acceptContributorTerms()
-                setGateError(res.error)
-              }}
-            />
-            {/* Escape hatch: if acceptance keeps failing (offline, API down), the user
-                is stuck on this screen with no other nav — they must still be able to
-                sign out or switch accounts. */}
-            <Button label="Sign Out" onPress={() => signOut()} variant="ghost" />
-          </Card>
-        ) : (
-          <Card style={styles.panel}>
-            <Text style={styles.signedInText}>Signed in as {session.user.email}</Text>
-            {profile ? (
-              <Button
-                label="Open Web Dashboard"
-                onPress={() => Linking.openURL(`${process.env.EXPO_PUBLIC_WEB_URL}/dashboard`)}
-                variant="secondary"
-                style={styles.stackedButton}
-              />
-            ) : null}
-            <Button label="Sign Out" onPress={() => signOut()} variant="ghost" />
-          </Card>
-        )}
-      </Screen>
-    )
-  }
+  // Reached only through the (my) group, whose layout redirects to sign-in
+  // without a session — by the time this renders, one is guaranteed to exist.
+  const user = session!.user
 
   return (
     <Screen>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-        <ScreenHeader
-          title="Profile"
-          subtitle="Sign in to save your child's profile and get tutorials matched to them."
-          showLogo
-        />
-
-        <Card>
-          <Text style={styles.heading}>{mode === 'signin' ? 'Welcome Back' : 'Create Account'}</Text>
-
-          {mode === 'signup' ? (
-            <TextField
-              label="Name"
-              placeholder="Name"
-              accessibilityLabel="Name"
-              value={name}
-              onChangeText={setName}
-            />
-          ) : null}
-
-          <TextField
-            // testID so E2E can target the input directly; "Email" also
-            // matches the sibling label Text, which isn't focusable.
-            testID="email-input"
-            label="Email"
-            placeholder="Email"
-            accessibilityLabel="Email"
-            autoCapitalize="none"
-            keyboardType="email-address"
-            value={email}
-            onChangeText={setEmail}
-          />
-
-          <TextField
-            testID="password-input"
-            label="Password"
-            placeholder="Password"
-            accessibilityLabel="Password"
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword}
-          />
-
-          {mode === 'signup' ? (
-            <TextField
-              label="Confirm Password"
-              placeholder="Confirm Password"
-              accessibilityLabel="Confirm Password"
-              secureTextEntry
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-            />
-          ) : null}
-
-          {mode === 'signup' ? (
-            <TermsCheckbox
-              testID="accept-contributor-terms"
-              checked={acceptedTerms}
-              onPress={() => setAcceptedTerms((v) => !v)}
-            />
-          ) : null}
-
-          <ErrorRow message={error} />
-
-          <Button
-            label={mode === 'signin' ? 'Sign In' : 'Sign Up'}
-            onPress={handleSubmit}
-            loading={submitting}
-          />
-        </Card>
-
+      <View style={styles.segmented}>
         <Pressable
-          onPress={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(null); setConfirmPassword('') }}
+          onPress={() => selectSegment('account')}
+          style={[styles.segment, segment === 'account' && styles.segmentActive]}
         >
-          <Text style={styles.link}>
-            {mode === 'signin' ? 'Create an account' : 'Have an account? Sign in'}
+          <Text style={[styles.segmentText, segment === 'account' && styles.segmentTextActive]}>
+            Account
           </Text>
         </Pressable>
-      </ScrollView>
+        <Pressable
+          onPress={() => selectSegment('child-profile')}
+          style={[styles.segment, segment === 'child-profile' && styles.segmentActive]}
+        >
+          <Text style={[styles.segmentText, segment === 'child-profile' && styles.segmentTextActive]}>
+            Child Profile
+          </Text>
+        </Pressable>
+      </View>
+      {segment === 'child-profile' ? (
+        <ChildProfileHome />
+      ) : // Catch-up gate for accounts created before terms were part of signup.
+      // Strict `=== false`: hasContributorTerms is null until the /api/agreements/me
+      // fetch resolves. Treating null as "unaccepted" flashed this gate for every
+      // already-accepted user on every app launch, for as long as that fetch was in
+      // flight.
+      hasContributorTerms === false ? (
+        <Card>
+          <Text style={styles.heading}>Before you continue</Text>
+          <Text style={styles.checkEmailText}>
+            Your account was created before we asked contributors to accept terms.
+            These terms have not been written yet, and anything you accept now is not
+            binding.
+          </Text>
+          <TermsCheckbox
+            testID="gate-accept-checkbox"
+            checked={gateTicked}
+            onPress={() => setGateTicked((v) => !v)}
+          />
+          <ErrorRow message={gateError} />
+          <Button
+            label="Accept and continue"
+            disabled={!gateTicked}
+            onPress={async () => {
+              const res = await acceptContributorTerms()
+              setGateError(res.error)
+            }}
+          />
+          {/* Escape hatch: if acceptance keeps failing (offline, API down), the user
+              is stuck on this screen with no other nav — they must still be able to
+              sign out or switch accounts. */}
+          <Button label="Sign Out" onPress={() => signOut()} variant="ghost" />
+        </Card>
+      ) : (
+        <Card style={styles.panel}>
+          <Text style={styles.signedInText}>Signed in as {user.email}</Text>
+          {profile ? (
+            <Button
+              label="Open Web Dashboard"
+              onPress={() => Linking.openURL(`${process.env.EXPO_PUBLIC_WEB_URL}/dashboard`)}
+              variant="secondary"
+              style={styles.stackedButton}
+            />
+          ) : null}
+          <Button label="Sign Out" onPress={() => signOut()} variant="ghost" />
+        </Card>
+      )}
     </Screen>
   )
 }
 
 const styles = StyleSheet.create({
-  content: { paddingBottom: theme.spacing(8) },
   panel: { alignItems: 'center' },
-  confirmBadge: {
-    width: 60,
-    height: 60,
-    borderRadius: theme.radii.pill,
-    backgroundColor: theme.colors.accentLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: theme.spacing(4),
-  },
   heading: {
     fontFamily: theme.fonts.bold,
     fontSize: theme.type.title,
@@ -325,32 +122,6 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing(4),
   },
   stackedButton: { marginBottom: theme.spacing(2), alignSelf: 'stretch' },
-  // Paired with a warning glyph rather than relying on red alone, which is
-  // invisible to the most common forms of colour blindness.
-  errorRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: theme.spacing(2),
-    backgroundColor: theme.colors.apricotSoft,
-    borderRadius: theme.radii.md,
-    padding: theme.spacing(3),
-    marginBottom: theme.spacing(3),
-  },
-  error: {
-    flex: 1,
-    color: theme.colors.danger,
-    fontFamily: theme.fonts.semiBold,
-    fontSize: theme.type.caption,
-    lineHeight: 18,
-  },
-  termsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing(2),
-    marginBottom: theme.spacing(3),
-  },
-  termsText: { flex: 1, color: theme.colors.muted, fontFamily: theme.fonts.regular },
-  termsLink: { color: theme.colors.primaryDark, fontFamily: theme.fonts.semiBold, textDecorationLine: 'underline' },
   checkEmailText: {
     fontFamily: theme.fonts.regular,
     fontSize: theme.type.label,
@@ -388,12 +159,5 @@ const styles = StyleSheet.create({
   },
   segmentTextActive: {
     color: theme.colors.primary,
-  },
-  link: {
-    color: theme.colors.primaryDark,
-    fontFamily: theme.fonts.bold,
-    fontSize: theme.type.label,
-    textAlign: 'center',
-    marginTop: theme.spacing(4),
   },
 })
