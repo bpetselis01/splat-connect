@@ -59,7 +59,7 @@ describe('DetailScreen', () => {
     await waitFor(() => expect(mockPush).toHaveBeenCalled())
     expect(mockCreateSignedUrl).toHaveBeenCalledWith('1/tutorial.pdf', 60)
     expect(mockPush).toHaveBeenCalledWith({
-      pathname: '/home/[id]/preview',
+      pathname: '/guides/[id]/preview',
       params: { id: '1', pdfUrl: 'https://supabase.test/signed.pdf' },
     })
   })
@@ -73,7 +73,7 @@ describe('DetailScreen', () => {
 
     await waitFor(() => expect(mockPush).toHaveBeenCalled())
     expect(mockPush).toHaveBeenCalledWith({
-      pathname: '/home/[id]/preview',
+      pathname: '/guides/[id]/preview',
       params: { id: '1', pdfUrl: '' },
     })
   })
