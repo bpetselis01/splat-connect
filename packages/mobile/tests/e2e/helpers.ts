@@ -80,10 +80,21 @@ export async function createTutorial(
     title: string
     status: 'draft' | 'pending' | 'approved' | 'rejected'
     difficulty: 'easy' | 'medium' | 'hard'
+    /** Column default is 'toy_adaptation' (048_tutorial_kind.sql). */
+    kind: 'toy_adaptation' | 'assistive_tech'
     /** false leaves tutorial_pdf_url null, so the preview screen has nothing to open. */
     withPdf: boolean
     /** true adds one optional part and one optional tool alongside the required pair. */
     withOptionalExtras: boolean
+    /**
+     * Renames the primary contributor's profile, so the byline and the
+     * contributor showcase carry a string this spec alone can assert on —
+     * every createContributor() otherwise answers to "E2E Contributor", and
+     * four parallel workers share that name.
+     */
+    contributorName: string
+    /** Creates an active organisation of this name and an ACCEPTED backing row. */
+    backedByOrg: string
   }> = {}
 ) {
   const admin = adminClient()
@@ -95,6 +106,7 @@ export async function createTutorial(
     title: overrides.title ?? uniqueTitle('E2E Tutorial'),
     description: 'Created by a Playwright E2E test.',
     difficulty: overrides.difficulty ?? 'easy',
+    kind: overrides.kind ?? 'toy_adaptation',
     status: overrides.status ?? 'approved',
     tutorial_pdf_url: pdfPath,
     toy_photo_url: 'https://placeholder.invalid/photo.jpg',
@@ -112,10 +124,39 @@ export async function createTutorial(
     if (uploadError) throw new Error(`Failed to upload tutorial PDF: ${uploadError.message}`)
   }
 
+  // tutorial_contributors is (tutorial_id, profile_id, role, added_at) with a
+  // composite primary key — no id column, and role is checked against
+  // ('primary','collaborator'). See 001_schema.sql.
   const { error: linkError } = await admin
     .from('tutorial_contributors')
     .insert({ tutorial_id: id, profile_id: contributorId, role: 'primary' })
   if (linkError) throw new Error(`Failed to link tutorial contributor: ${linkError.message}`)
+
+  if (overrides.contributorName) {
+    // The service role passes freeze_profile_identity()'s `auth.uid() is null`
+    // early return (045), so this is a plain update — no trigger to work around.
+    const { error: nameError } = await admin
+      .from('profiles')
+      .update({ name: overrides.contributorName })
+      .eq('id', contributorId)
+    if (nameError) throw new Error(`Failed to rename contributor: ${nameError.message}`)
+  }
+
+  if (overrides.backedByOrg) {
+    // organizations needs name + status ('active' | 'suspended'); tutorial_orgs
+    // is (tutorial_id, org_id, status, requested_at, ...) and only an ACCEPTED
+    // row is public — the list and detail routes filter the embed to it.
+    const { data: org, error: orgError } = await admin
+      .from('organizations')
+      .insert({ name: overrides.backedByOrg, status: 'active' })
+      .select('id')
+      .single()
+    if (orgError || !org) throw new Error(`Failed to create organisation: ${orgError?.message}`)
+    const { error: backingError } = await admin
+      .from('tutorial_orgs')
+      .insert({ tutorial_id: id, org_id: org.id, status: 'accepted' })
+    if (backingError) throw new Error(`Failed to back tutorial: ${backingError.message}`)
+  }
 
   await admin.from('parts').insert({ tutorial_id: id, name: 'E2E part', quantity: 2, is_optional: false, buy_links: [] })
   await admin.from('tools').insert({ tutorial_id: id, name: 'E2E tool', is_optional: false, buy_links: [] })
