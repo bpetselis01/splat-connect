@@ -43,6 +43,7 @@ export default function MyLayout() {
       {/* Every screen is named here: an undeclared one takes its route name as the
           header title, so /toys would say "toys/index" over the top of it. */}
       <Stack.Screen name="tutorials/index" options={{ title: 'My tutorials' }} />
+      <Stack.Screen name="tutorials/[id]" options={{ title: 'Edit guide' }} />
       <Stack.Screen name="toys/index" options={{ title: 'My toys' }} />
       <Stack.Screen name="exchanges/index" options={{ title: 'My exchanges' }} />
       <Stack.Screen name="challenges/index" options={{ title: 'Design challenges' }} />

@@ -10,7 +10,7 @@ import {
 import { theme } from '../../lib/theme'
 import { AnimatedPressable } from './AnimatedPressable'
 
-type ButtonVariant = 'primary' | 'accent' | 'secondary' | 'ghost'
+type ButtonVariant = 'primary' | 'accent' | 'secondary' | 'ghost' | 'danger'
 
 const VARIANTS: Record<ButtonVariant, { container: ViewStyle; text: TextStyle }> = {
   primary: { container: { backgroundColor: theme.colors.primary, ...theme.shadow(4) }, text: { color: '#ffffff' } },
@@ -18,6 +18,9 @@ const VARIANTS: Record<ButtonVariant, { container: ViewStyle; text: TextStyle }>
   secondary: { container: { backgroundColor: theme.colors.surface, ...theme.shadow(3) }, text: { color: theme.colors.ink } },
   // Ghost is the one flat button: no border, no shadow — a quiet text action.
   ghost: { container: { backgroundColor: 'transparent', borderWidth: 0 }, text: { color: theme.colors.primaryDeep } },
+  // Same flat shape as ghost, danger-toned — the delete-this-forever action
+  // that a guide, toy and child editor all need off the same footer.
+  danger: { container: { backgroundColor: 'transparent', borderWidth: 0 }, text: { color: theme.colors.danger } },
 }
 
 export function Button({
