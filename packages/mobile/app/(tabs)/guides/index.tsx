@@ -1,6 +1,6 @@
-// packages/mobile/app/(tabs)/home/index.tsx
+// packages/mobile/app/(tabs)/guides/index.tsx
 import { LibraryScreen } from '../../../components/home/library-screen'
 
-export default function HomeTabRoute() {
+export default function GuidesTabRoute() {
   return <LibraryScreen />
 }
