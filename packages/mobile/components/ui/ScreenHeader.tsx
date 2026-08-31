@@ -34,7 +34,7 @@ const styles = StyleSheet.create({
   logo: { width: 34, height: 34 },
   title: {
     flex: 1,
-    fontFamily: theme.fonts.bold,
+    fontFamily: theme.fonts.black,
     fontSize: theme.type.title,
     color: theme.colors.text,
     letterSpacing: -0.4,
@@ -43,6 +43,7 @@ const styles = StyleSheet.create({
     fontFamily: theme.fonts.regular,
     fontSize: theme.type.label,
     color: theme.colors.muted,
-    marginTop: theme.spacing(1),
+    marginTop: theme.spacing(2),
+    lineHeight: 18,
   },
 })
