@@ -32,6 +32,7 @@ export function TextField({
   hint,
   icon,
   boxStyle,
+  boxTestID,
   style,
   ...input
 }: TextInputProps & {
@@ -41,6 +42,8 @@ export function TextField({
   icon?: React.ComponentProps<typeof Ionicons>['name']
   /** Overrides on the bordered box itself — a pill radius, extra padding. */
   boxStyle?: StyleProp<ViewStyle>
+  /** testID for the bordered box, not the inner TextInput. */
+  boxTestID?: string
 }) {
   const focus = useSharedValue(0)
 
@@ -48,7 +51,7 @@ export function TextField({
     borderColor: interpolateColor(
       focus.value,
       [0, 1],
-      [theme.colors.border, theme.colors.primary]
+      [theme.colors.ink, theme.colors.primary]
     ),
   }))
 
@@ -56,7 +59,10 @@ export function TextField({
     <View style={styles.field}>
       {label ? <Text style={styles.label}>{label}</Text> : null}
       {hint ? <Text style={styles.hint}>{hint}</Text> : null}
-      <Animated.View style={[styles.box, icon ? styles.boxRow : null, boxStyle, ring]}>
+      <Animated.View
+        testID={boxTestID}
+        style={[styles.box, icon ? styles.boxRow : null, boxStyle, ring]}
+      >
         {icon ? (
           <Ionicons name={icon} size={19} color={theme.colors.muted} style={styles.icon} />
         ) : null}
@@ -94,8 +100,8 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing(2),
   },
   box: {
-    borderWidth: 1.5,
-    borderRadius: theme.radii.md,
+    borderWidth: theme.border.thin,
+    borderRadius: theme.radii.sm,
     backgroundColor: theme.colors.surface,
   },
   boxRow: { flexDirection: 'row', alignItems: 'center' },
