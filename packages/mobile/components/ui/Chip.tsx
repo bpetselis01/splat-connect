@@ -30,17 +30,14 @@ export function Chip({
     backgroundColor: interpolateColor(
       on.value,
       [0, 1],
-      [theme.colors.surface, theme.colors.primary]
+      [theme.colors.surface, theme.colors.ink]
     ),
-    borderColor: interpolateColor(
-      on.value,
-      [0, 1],
-      [theme.colors.border, theme.colors.primary]
-    ),
+    // The border no longer changes with selection — always ink.
+    borderColor: interpolateColor(on.value, [0, 1], [theme.colors.ink, theme.colors.ink]),
   }))
 
   const text = useAnimatedStyle(() => ({
-    color: interpolateColor(on.value, [0, 1], [theme.colors.primaryDeep, '#ffffff']),
+    color: interpolateColor(on.value, [0, 1], [theme.colors.ink, theme.colors.background]),
   }))
 
   return (
@@ -50,6 +47,7 @@ export function Chip({
       accessibilityLabel={label}
       accessibilityState={{ selected: active }}
       aria-selected={active}
+      hitSlop={{ top: 4, bottom: 4 }}
       style={styles.chip}
     >
       <Animated.View style={[styles.fill, fill]}>
@@ -60,12 +58,13 @@ export function Chip({
 }
 
 const styles = StyleSheet.create({
-  // 48 clears both the iOS 44pt and Android 48dp touch-target floors.
-  chip: { borderRadius: theme.radii.pill, minHeight: 48, justifyContent: 'center' },
+  // 40px visual height, under the 44px touch floor — hitSlop above and below
+  // restores the floor invisibly instead of growing the filter row.
+  chip: { borderRadius: theme.radii.pill, minHeight: 40, justifyContent: 'center' },
   fill: {
     borderRadius: theme.radii.pill,
-    borderWidth: 1,
-    paddingVertical: theme.spacing(3),
+    borderWidth: theme.border.thin,
+    paddingVertical: theme.spacing(2),
     paddingHorizontal: theme.spacing(4),
     alignItems: 'center',
     justifyContent: 'center',
