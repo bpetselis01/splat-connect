@@ -45,7 +45,10 @@ export default function MyLayout() {
       <Stack.Screen name="tutorials/index" options={{ title: 'My tutorials' }} />
       <Stack.Screen name="tutorials/[id]" options={{ title: 'Edit guide' }} />
       <Stack.Screen name="toys/index" options={{ title: 'My toys' }} />
+      <Stack.Screen name="toys/new" options={{ title: 'Add a toy' }} />
+      <Stack.Screen name="toys/[id]" options={{ title: 'Toy' }} />
       <Stack.Screen name="exchanges/index" options={{ title: 'My exchanges' }} />
+      <Stack.Screen name="exchanges/[id]" options={{ title: 'Exchange' }} />
       <Stack.Screen name="challenges/index" options={{ title: 'Design challenges' }} />
       <Stack.Screen name="saved/index" options={{ title: 'Saved' }} />
       <Stack.Screen name="notifications" options={{ title: 'Notifications' }} />
