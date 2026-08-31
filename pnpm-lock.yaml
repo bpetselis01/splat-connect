@@ -48,6 +48,9 @@ importers:
 
   packages/mobile:
     dependencies:
+      '@expo-google-fonts/jersey-10':
+        specifier: ^0.4.1
+        version: 0.4.1
       '@expo-google-fonts/nunito':
         specifier: ^0.4.2
         version: 0.4.2
@@ -1104,6 +1107,9 @@ packages:
   '@eslint/plugin-kit@0.4.1':
     resolution: {integrity: sha512-43/qtrDUokr7LJqoF2c3+RInu/t4zfrpYdoSDfYyhg52rwLV6TnOvdG4fXm7IkSB3wErkcmJS9iEhjVtOSEjjA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+
+  '@expo-google-fonts/jersey-10@0.4.1':
+    resolution: {integrity: sha512-1iiHd4LnKugo2drDlrAs7OQ2Xxly1ZC4nJppzT4zSzV/s+mtHurA06yL3die4ox/CuxIkz04n2ReNO/NWcXZ0A==}
 
   '@expo-google-fonts/material-symbols@0.4.41':
     resolution: {integrity: sha512-BKNSJ6oFGWi+aXu6PF+1EdI43J8Ag+Sm7Ste1SXYmC2eYOJasyjXHkKjgkIieBB1eDZQJSPWuPv421Vg6N5tCQ==}
@@ -7235,6 +7241,8 @@ snapshots:
     dependencies:
       '@eslint/core': 0.17.0
       levn: 0.4.1
+
+  '@expo-google-fonts/jersey-10@0.4.1': {}
 
   '@expo-google-fonts/material-symbols@0.4.41': {}
 
