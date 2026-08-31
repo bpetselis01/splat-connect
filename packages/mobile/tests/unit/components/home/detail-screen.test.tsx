@@ -34,11 +34,10 @@ const DETAIL = {
   created_at: '',
   reviewed_at: null,
   // Widened in Task 3 alongside the public embed's profile_id — provenance,
-  // picks and the 3D-print placeholder all read one of these four.
+  // picks and the 3D-print placeholder all read one of these three.
   tutorial_contributors: [{ profile_id: 'c1', role: 'primary', profiles: { name: 'Sam T.' } }],
   tutorial_orgs: [],
   tutorial_recommendations: [],
-  reviewed_for: null,
   parts: [{ id: 'p1', tutorial_id: '1', name: 'Servo Motor', quantity: 2, is_optional: false, buy_links: [] }],
   tools: [{ id: 't1', tutorial_id: '1', name: 'Screwdriver', is_optional: false, buy_links: [] }],
   stl_files: [],

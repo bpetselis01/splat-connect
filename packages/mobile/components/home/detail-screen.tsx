@@ -24,7 +24,6 @@ type TutorialDetail = Tutorial & {
   tutorial_contributors: ProvenanceContributor[]
   tutorial_orgs: ProvenanceOrg[]
   tutorial_recommendations: Recommendation[]
-  reviewed_for: { name: string } | null
 }
 
 /**
@@ -135,7 +134,6 @@ export function DetailScreen({ id }: { id: string }) {
       <Provenance
         contributors={tutorial.tutorial_contributors}
         orgs={tutorial.tutorial_orgs}
-        reviewedFor={tutorial.reviewed_for}
         onPerson={(pid) => router.push(`/guides/contributor/${pid}`)}
         onOrg={(oid) => router.push(`/guides/organisation/${oid}`)}
       />

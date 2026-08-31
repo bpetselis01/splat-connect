@@ -25,22 +25,21 @@ export type ProvenanceOrg = {
 /**
  * Byline + backing chip for the guide detail screen.
  *
- * "Reviewed by SPLAT" is the default path, not an absence — same reasoning as
- * library-screen's backing() line. When the tutorial was reviewed for a
- * specific organisation's queue but no org ended up backing it (no accepted
- * tutorial_orgs row), that org's name replaces the generic "SPLAT" rather than
- * hiding which queue it actually went through.
+ * "Reviewed by SPLAT" is the fixed, literal copy for the no-backer case —
+ * same fixed copy as web's backing-state.tsx and mobile's own library-screen
+ * backing(). It is the default path, not an absence: naming it as one would
+ * make the default case read as a failure. It is never templated with an
+ * org name, even when the tutorial went through a specific org's leader
+ * queue — that queue is not the same claim as an org backing the project.
  */
 export function Provenance({
   contributors,
   orgs,
-  reviewedFor,
   onPerson,
   onOrg,
 }: {
   contributors: ProvenanceContributor[]
   orgs: ProvenanceOrg[]
-  reviewedFor: { name: string } | null
   onPerson: (profileId: string) => void
   onOrg: (orgId: string) => void
 }) {
@@ -84,9 +83,7 @@ export function Provenance({
       ) : (
         <View style={[styles.chip, { backgroundColor: theme.colors.tone.sunken.bg }]}>
           <Ionicons name="checkmark" size={14} color={theme.colors.tone.sunken.fg} />
-          <Text style={[styles.chipText, { color: theme.colors.tone.sunken.fg }]}>
-            {reviewedFor ? `Reviewed by ${reviewedFor.name}` : 'Reviewed by SPLAT'}
-          </Text>
+          <Text style={[styles.chipText, { color: theme.colors.tone.sunken.fg }]}>Reviewed by SPLAT</Text>
         </View>
       )}
     </View>

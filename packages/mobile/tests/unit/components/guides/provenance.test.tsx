@@ -11,7 +11,6 @@ it('orders the byline primary-first and truncates at two names', () => {
     <Provenance
       contributors={[person('Priya K.'), person('Sam T.', 'primary'), person('Mei W.')]}
       orgs={[]}
-      reviewedFor={null}
       onPerson={onPerson}
       onOrg={jest.fn()}
     />
@@ -28,7 +27,6 @@ it('shows the mint backed-by chip for an accepted org and fires onOrg on press',
     <Provenance
       contributors={[person('Sam T.', 'primary')]}
       orgs={[{ org_id: 'o1', status: 'accepted', organizations: { name: 'TAD Australia' } }]}
-      reviewedFor={null}
       onPerson={jest.fn()}
       onOrg={onOrg}
     />
@@ -43,7 +41,6 @@ it('shows the inert reviewed-by-SPLAT chip with no press handler when there is n
     <Provenance
       contributors={[person('Sam T.', 'primary')]}
       orgs={[]}
-      reviewedFor={null}
       onPerson={jest.fn()}
       onOrg={onOrg}
     />
