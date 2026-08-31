@@ -24,10 +24,12 @@ export function useLearnProgress(): LearnProgress {
   }, [])
 
   function markRead(slug: string) {
-    if (read.has(slug)) return
-    const next = new Set(read).add(slug)
-    setRead(next)
-    storage.setItem(LEARN_PROGRESS_KEY, JSON.stringify([...next]))
+    setRead((prev) => {
+      if (prev.has(slug)) return prev
+      const next = new Set(prev).add(slug)
+      void storage.setItem(LEARN_PROGRESS_KEY, JSON.stringify([...next]))
+      return next
+    })
   }
 
   return {

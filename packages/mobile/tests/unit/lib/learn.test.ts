@@ -58,6 +58,22 @@ describe('useLearnProgress', () => {
     expect(mockSetItem).not.toHaveBeenCalled()
   })
 
+  it('two markRead calls for different slugs in one tick both stick', async () => {
+    const { result } = renderHook(() => useLearnProgress())
+    await waitFor(() => expect(mockGetItem).toHaveBeenCalled())
+    act(() => {
+      result.current.markRead('toy-adaptation-101')
+      result.current.markRead('switch-types')
+    })
+    expect(result.current.read.has('toy-adaptation-101')).toBe(true)
+    expect(result.current.read.has('switch-types')).toBe(true)
+    expect(result.current.count).toBe(2)
+    expect(mockSetItem).toHaveBeenCalledWith(
+      LEARN_PROGRESS_KEY,
+      JSON.stringify(['toy-adaptation-101', 'switch-types']),
+    )
+  })
+
   it('next advances through order and is null once all six are read', async () => {
     mockGetItem.mockResolvedValue(JSON.stringify(LEARN_ARTICLES.slice(0, 5).map((a) => a.slug)))
     const { result } = renderHook(() => useLearnProgress())
