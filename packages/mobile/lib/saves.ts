@@ -31,7 +31,7 @@ export function useSaves(): Saves {
       if (was) await apiClient.delete(`/api/saves/${slug}/${id}`)
       else await apiClient.post('/api/saves', { entity_type: SAVE_SLUGS[slug], entity_id: id })
     } catch {
-      setSavedIds((ids) => flip(ids, was)) // revert — the server didn't take it
+      setSavedIds((ids) => flip(ids, was))
     }
   }, [savedIds])
 
