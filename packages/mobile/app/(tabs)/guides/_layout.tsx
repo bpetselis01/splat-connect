@@ -11,6 +11,7 @@ export default function GuidesStackLayout() {
         keep theirs — that is where the back affordance lives.
       */}
       <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="new" options={{ title: 'Add a guide', presentation: 'modal' }} />
       <Stack.Screen name="[id]/index" options={{ title: 'Guide' }} />
       <Stack.Screen name="[id]/preview" options={{ title: 'Preview' }} />
       <Stack.Screen name="contributor/[id]" options={{ title: 'Contributor' }} />

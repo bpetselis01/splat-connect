@@ -162,11 +162,21 @@ export function LibraryScreen() {
 
   return (
     <Screen>
-      <ScreenHeader
-        title="Guides"
-        subtitle="Step-by-step guides for switch-adapting toys and building assistive tech."
-        showLogo
-      />
+      <View style={styles.headerRow}>
+        <View style={styles.headerTitle}>
+          <ScreenHeader
+            title="Guides"
+            subtitle="Step-by-step guides for switch-adapting toys and building assistive tech."
+            showLogo
+          />
+        </View>
+        <Button
+          label="+ Add a guide"
+          variant="accent"
+          onPress={() => router.push('/guides/new')}
+          style={styles.addGuide}
+        />
+      </View>
 
       <TextField
         icon="search"
@@ -258,6 +268,9 @@ export function LibraryScreen() {
 }
 
 const styles = StyleSheet.create({
+  headerRow: { flexDirection: 'row', alignItems: 'flex-start', gap: theme.spacing(2) },
+  headerTitle: { flex: 1 },
+  addGuide: { paddingVertical: theme.spacing(2), paddingHorizontal: theme.spacing(3) },
   searchBar: {
     borderRadius: theme.radii.md,
     borderWidth: theme.border.thin,
