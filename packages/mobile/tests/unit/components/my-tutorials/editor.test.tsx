@@ -6,7 +6,7 @@ import { Editor } from '../../../../components/my-tutorials/editor'
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
 
 const mockBack = jest.fn()
-jest.mock('expo-router', () => ({ useRouter: () => ({ back: mockBack }) }))
+jest.mock('expo-router', () => ({ useRouter: () => ({ back: mockBack, push: jest.fn() }) }))
 
 // The editor pulls ErrorRow in from components/auth-screen, which imports
 // useAuth from lib/auth-context — and that module's real implementation
@@ -15,15 +15,43 @@ jest.mock('expo-router', () => ({ useRouter: () => ({ back: mockBack }) }))
 // guides-new.test.tsx does for the same transitive reason.
 jest.mock('../../../../lib/auth-context', () => ({ useAuth: jest.fn() }))
 
+// The editor imports the real supabase client directly (for the PDF preview's
+// signed-URL flow) — same reason components/home/detail-screen.tsx's own test
+// mocks it: the real module reads env vars that don't exist under Jest.
+jest.mock('../../../../lib/supabase', () => ({
+  supabase: { storage: { from: () => ({ createSignedUrl: jest.fn() }) } },
+}))
+
 const mockGet = jest.fn()
+const mockPost = jest.fn()
 const mockPatch = jest.fn()
 const mockDelete = jest.fn()
 jest.mock('../../../../lib/api-client', () => ({
   apiClient: {
     get: (...a: unknown[]) => mockGet(...a),
+    post: (...a: unknown[]) => mockPost(...a),
     patch: (...a: unknown[]) => mockPatch(...a),
     delete: (...a: unknown[]) => mockDelete(...a),
   },
+}))
+
+const mockUploadFile = jest.fn()
+jest.mock('../../../../lib/upload', () => ({ uploadFile: (...a: unknown[]) => mockUploadFile(...a) }))
+
+const mockRequestCameraPermissions = jest.fn()
+const mockRequestMediaLibraryPermissions = jest.fn()
+const mockLaunchCamera = jest.fn()
+const mockLaunchLibrary = jest.fn()
+jest.mock('expo-image-picker', () => ({
+  requestCameraPermissionsAsync: (...a: unknown[]) => mockRequestCameraPermissions(...a),
+  requestMediaLibraryPermissionsAsync: (...a: unknown[]) => mockRequestMediaLibraryPermissions(...a),
+  launchCameraAsync: (...a: unknown[]) => mockLaunchCamera(...a),
+  launchImageLibraryAsync: (...a: unknown[]) => mockLaunchLibrary(...a),
+}))
+
+const mockGetDocumentAsync = jest.fn()
+jest.mock('expo-document-picker', () => ({
+  getDocumentAsync: (...a: unknown[]) => mockGetDocumentAsync(...a),
 }))
 
 const draft = (over: object) => ({
@@ -33,6 +61,12 @@ const draft = (over: object) => ({
   reviewed_for_org_id: null, parts: [], tools: [], stl_files: [], tutorial_recommendations: [],
   tutorial_contributors: [], ...over,
 })
+
+// Routes /orgs (the review step's backing fetch) to its own resolved value so
+// it never collides with the tutorial-shaped one every other GET returns.
+const mockGetRoutingOrgsTo = (orgs: unknown[], tutorial: object) => {
+  mockGet.mockImplementation((path: string) => Promise.resolve(path.endsWith('/orgs') ? orgs : tutorial))
+}
 
 describe('Editor', () => {
   beforeEach(() => {
@@ -126,15 +160,215 @@ describe('Editor', () => {
     expect(mockBack).not.toHaveBeenCalled()
   })
 
-  it('renders a static heading and gap status for steps beyond Details, never "coming in the next commit"', async () => {
-    mockGet.mockResolvedValue(draft({}))
-    render(<Editor id="t1" />)
-    await screen.findByRole('tab', { name: 'Details' })
+  describe('Parts and Tools', () => {
+    it('adds a part row and saves the replace-set with the typed name and quantity, leaving the existing row\'s buy_links untouched', async () => {
+      mockGet.mockResolvedValue(
+        draft({
+          parts: [{ id: 'p1', name: 'Switch', quantity: 2, is_optional: false, buy_links: [{ label: 'Amazon', url: 'https://a.test' }] }],
+        })
+      )
+      mockPost.mockResolvedValue([])
+      render(<Editor id="t1" />)
 
-    fireEvent.press(screen.getByRole('tab', { name: 'Parts' }))
-    // Both the pill label and the step's own heading say "Parts".
-    expect(screen.getAllByText('Parts').length).toBe(2)
-    expect(screen.getByText(/needs attention/i)).toBeTruthy()
-    expect(screen.queryByText(/coming in the next commit/i)).toBeNull()
+      await screen.findByRole('tab', { name: 'Details' })
+      fireEvent.press(screen.getByRole('tab', { name: 'Parts' }))
+
+      fireEvent.press(screen.getByLabelText('+ Add a part'))
+      fireEvent.changeText(screen.getByLabelText('Part 2 name'), 'Micro switch')
+      fireEvent.press(screen.getByLabelText('Increase quantity for part 2'))
+      fireEvent.press(screen.getByLabelText('Save parts'))
+
+      await waitFor(() =>
+        expect(mockPost).toHaveBeenCalledWith('/api/tutorials/t1/parts', {
+          parts: [
+            { name: 'Switch', quantity: 2, is_optional: false, buy_links: [{ label: 'Amazon', url: 'https://a.test' }] },
+            { name: 'Micro switch', quantity: 2, is_optional: false, buy_links: [] },
+          ],
+        })
+      )
+    })
+
+    it('saves the tools replace-set with no quantity field', async () => {
+      mockGet.mockResolvedValue(draft({ tools: [{ id: 'to1', name: 'Screwdriver', is_optional: true, buy_links: [] }] }))
+      mockPost.mockResolvedValue([])
+      render(<Editor id="t1" />)
+
+      await screen.findByRole('tab', { name: 'Details' })
+      fireEvent.press(screen.getByRole('tab', { name: 'Tools' }))
+      fireEvent.press(screen.getByLabelText('Save tools'))
+
+      await waitFor(() =>
+        expect(mockPost).toHaveBeenCalledWith('/api/tutorials/t1/tools', {
+          tools: [{ name: 'Screwdriver', is_optional: true, buy_links: [] }],
+        })
+      )
+    })
+  })
+
+  describe('Files', () => {
+    it('picks a PDF, uploads it, then PATCHes tutorial_pdf_url with the returned path', async () => {
+      mockGet.mockResolvedValue(draft({}))
+      mockGetDocumentAsync.mockResolvedValue({
+        canceled: false,
+        assets: [{ uri: 'file://guide.pdf', name: 'guide.pdf', mimeType: 'application/pdf' }],
+      })
+      mockUploadFile.mockResolvedValue({ url: 't1/tutorial.pdf' })
+      mockPatch.mockResolvedValue(draft({ tutorial_pdf_url: 't1/tutorial.pdf' }))
+      render(<Editor id="t1" />)
+
+      await screen.findByRole('tab', { name: 'Details' })
+      fireEvent.press(screen.getByRole('tab', { name: 'Files' }))
+      fireEvent.press(screen.getByLabelText('Choose PDF from Files'))
+
+      await waitFor(() =>
+        expect(mockUploadFile).toHaveBeenCalledWith('/api/upload/pdf', 't1', {
+          uri: 'file://guide.pdf',
+          name: 'guide.pdf',
+          mimeType: 'application/pdf',
+        })
+      )
+      await waitFor(() =>
+        expect(mockPatch).toHaveBeenCalledWith('/api/tutorials/t1', {
+          tutorial_pdf_url: 't1/tutorial.pdf',
+          updated_at: '2026-08-30T00:00:00.000Z',
+        })
+      )
+    })
+
+    it('takes a photo, uploads it, then PATCHes toy_photo_url with the returned url', async () => {
+      mockGet.mockResolvedValue(draft({}))
+      mockRequestCameraPermissions.mockResolvedValue({ granted: true })
+      mockLaunchCamera.mockResolvedValue({
+        canceled: false,
+        assets: [{ uri: 'file://photo.jpg', fileName: 'photo.jpg', mimeType: 'image/jpeg' }],
+      })
+      mockUploadFile.mockResolvedValue({ url: 'https://cdn.test/photo.jpg' })
+      mockPatch.mockResolvedValue(draft({ toy_photo_url: 'https://cdn.test/photo.jpg' }))
+      render(<Editor id="t1" />)
+
+      await screen.findByRole('tab', { name: 'Details' })
+      fireEvent.press(screen.getByRole('tab', { name: 'Files' }))
+      fireEvent.press(screen.getByLabelText('Take a photo'))
+
+      await waitFor(() =>
+        expect(mockLaunchCamera).toHaveBeenCalledWith({ quality: 0.7 })
+      )
+      await waitFor(() =>
+        expect(mockUploadFile).toHaveBeenCalledWith('/api/upload/photo', 't1', {
+          uri: 'file://photo.jpg',
+          name: 'photo.jpg',
+          mimeType: 'image/jpeg',
+        })
+      )
+      await waitFor(() =>
+        expect(mockPatch).toHaveBeenCalledWith('/api/tutorials/t1', {
+          toy_photo_url: 'https://cdn.test/photo.jpg',
+          updated_at: '2026-08-30T00:00:00.000Z',
+        })
+      )
+    })
+
+    it('surfaces a denied camera permission as an inline error instead of a silent no-op', async () => {
+      mockGet.mockResolvedValue(draft({}))
+      mockRequestCameraPermissions.mockResolvedValue({ granted: false })
+      render(<Editor id="t1" />)
+
+      await screen.findByRole('tab', { name: 'Details' })
+      fireEvent.press(screen.getByRole('tab', { name: 'Files' }))
+      fireEvent.press(screen.getByLabelText('Take a photo'))
+
+      expect(await screen.findByText('Camera access is needed to take a photo.')).toBeTruthy()
+      expect(mockLaunchCamera).not.toHaveBeenCalled()
+      expect(mockUploadFile).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('STL', () => {
+    it('rejects a picked file that is not a .stl, with an inline error and no upload', async () => {
+      mockGet.mockResolvedValue(draft({ kind: 'assistive_tech', stl_files: [] }))
+      mockGetDocumentAsync.mockResolvedValue({
+        canceled: false,
+        assets: [{ uri: 'file://model.obj', name: 'model.obj', mimeType: 'model/obj' }],
+      })
+      render(<Editor id="t1" />)
+
+      await screen.findByRole('tab', { name: 'Details' })
+      fireEvent.press(screen.getByRole('tab', { name: 'STL' }))
+      fireEvent.press(screen.getByLabelText('Choose STL from Files'))
+
+      expect(await screen.findByText('Please choose a .stl file.')).toBeTruthy()
+      expect(mockUploadFile).not.toHaveBeenCalled()
+    })
+
+    it('uploads a valid .stl file and registers it through the stl-files replace-set, keeping the existing row', async () => {
+      mockGet.mockResolvedValue(
+        draft({ kind: 'assistive_tech', stl_files: [{ id: 's1', filename: 'base.stl', file_url: 't1/base.stl' }] })
+      )
+      mockGetDocumentAsync.mockResolvedValue({
+        canceled: false,
+        assets: [{ uri: 'file://arm.stl', name: 'arm.stl', mimeType: 'model/stl' }],
+      })
+      mockUploadFile.mockResolvedValue({ url: 't1/arm.stl', filename: 'arm.stl' })
+      mockPost.mockResolvedValue([
+        { id: 's1', filename: 'base.stl', file_url: 't1/base.stl' },
+        { id: 's2', filename: 'arm.stl', file_url: 't1/arm.stl' },
+      ])
+      render(<Editor id="t1" />)
+
+      await screen.findByRole('tab', { name: 'Details' })
+      fireEvent.press(screen.getByRole('tab', { name: 'STL' }))
+      fireEvent.press(screen.getByLabelText('Choose STL from Files'))
+
+      await waitFor(() =>
+        expect(mockPost).toHaveBeenCalledWith('/api/tutorials/t1/stl-files', {
+          stl_files: [
+            { filename: 'base.stl', file_url: 't1/base.stl' },
+            { filename: 'arm.stl', file_url: 't1/arm.stl' },
+          ],
+        })
+      )
+    })
+  })
+
+  describe('Review', () => {
+    it('disables Submit for review while gaps remain, and lists what is still needed', async () => {
+      mockGetRoutingOrgsTo([], draft({}))
+      render(<Editor id="t1" />)
+
+      await screen.findByRole('tab', { name: 'Details' })
+      fireEvent.press(screen.getByRole('tab', { name: 'Review' }))
+
+      expect(await screen.findByText(/^Still needed:/)).toBeTruthy()
+      await waitFor(() =>
+        expect(screen.getByLabelText('Submit for review').props.accessibilityState.disabled).toBe(true)
+      )
+    })
+
+    it('submits a gapless draft for review with a PATCH to status pending', async () => {
+      const complete = draft({
+        tutorial_pdf_url: 't1/tutorial.pdf',
+        toy_photo_url: 'https://cdn.test/photo.jpg',
+        parts: [{ id: 'p1', name: 'Switch', quantity: 1, is_optional: false, buy_links: [] }],
+        tools: [{ id: 'to1', name: 'Screwdriver', is_optional: false, buy_links: [] }],
+      })
+      mockGetRoutingOrgsTo([], complete)
+      mockPatch.mockResolvedValue(complete)
+      render(<Editor id="t1" />)
+
+      await screen.findByRole('tab', { name: 'Details' })
+      fireEvent.press(screen.getByRole('tab', { name: 'Review' }))
+
+      await waitFor(() =>
+        expect(screen.getByLabelText('Submit for review').props.accessibilityState.disabled).toBe(false)
+      )
+      fireEvent.press(screen.getByLabelText('Submit for review'))
+
+      await waitFor(() =>
+        expect(mockPatch).toHaveBeenCalledWith('/api/tutorials/t1', {
+          status: 'pending',
+          updated_at: '2026-08-30T00:00:00.000Z',
+        })
+      )
+    })
   })
 })

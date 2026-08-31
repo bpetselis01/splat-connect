@@ -1,10 +1,24 @@
 // packages/mobile/components/my-tutorials/editor.tsx
 import { useEffect, useState } from 'react'
-import { View, Text, ScrollView, Alert, StyleSheet } from 'react-native'
+import { View, Text, ScrollView, Alert, Image, Pressable, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
-import type { Difficulty, TutorialKind, TutorialWithDetails } from '@splat-connect/types'
+import { Ionicons } from '@expo/vector-icons'
+import * as ImagePicker from 'expo-image-picker'
+import * as DocumentPicker from 'expo-document-picker'
+import type {
+  BuyLink,
+  Difficulty,
+  Part,
+  StlFile,
+  Tool,
+  TutorialKind,
+  TutorialOrg,
+  TutorialWithDetails,
+} from '@splat-connect/types'
 import { KIND_LABEL } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
+import { uploadFile } from '../../lib/upload'
+import { supabase } from '../../lib/supabase'
 import { theme } from '../../lib/theme'
 import { Screen } from '../ui/Screen'
 import { ScreenHeader } from '../ui/ScreenHeader'
@@ -87,10 +101,126 @@ const DIFFICULTY_OPTIONS: { label: string; value: Difficulty }[] = [
   { label: 'Hard', value: 'hard' },
 ]
 
-const STATUS_COPY: Record<StepPillStatus, string> = {
-  done: 'Complete.',
-  attention: 'Needs attention.',
-  neutral: 'Nothing required yet.',
+/** One editable row of the parts/tools replace-set. `quantity` is only ever
+ *  read for parts — tools leave it undefined and the stepper never renders. */
+interface ItemRow {
+  name: string
+  quantity?: number
+  is_optional: boolean
+  buy_links: BuyLink[]
+}
+
+/**
+ * Backed-by, reduced to the one line the brief asks for: an accepted org's
+ * name and status, or the plain fact that nothing has been asked yet. Pending
+ * and declined rows read the same as "not requested" here — the full state
+ * machine (BackingSummary) is web's job; this is "ask on the web" territory.
+ */
+function backingText(rows: TutorialOrg[]): string {
+  const accepted = rows.find((r) => r.status === 'accepted')
+  if (!accepted) return 'Not requested — ask on the web'
+  return `${accepted.organizations?.name ?? 'An organisation'} · ${accepted.status}`
+}
+
+/**
+ * One editable replace-set list. Parts and tools share every row control
+ * except the quantity stepper, which only parts carry.
+ */
+function ItemsStep({
+  noun,
+  rows,
+  onChange,
+  withQuantity,
+  saving,
+  error,
+  onSave,
+}: {
+  noun: 'part' | 'tool'
+  rows: ItemRow[]
+  onChange: (rows: ItemRow[]) => void
+  withQuantity: boolean
+  saving: boolean
+  error: string | null
+  onSave: () => void
+}) {
+  const nounLabel = noun === 'part' ? 'Part' : 'Tool'
+
+  function updateRow(index: number, patch: Partial<ItemRow>) {
+    onChange(rows.map((r, i) => (i === index ? { ...r, ...patch } : r)))
+  }
+  function removeRow(index: number) {
+    onChange(rows.filter((_, i) => i !== index))
+  }
+  function addRow() {
+    onChange([...rows, { name: '', quantity: withQuantity ? 1 : undefined, is_optional: false, buy_links: [] }])
+  }
+
+  return (
+    <View style={styles.itemsForm}>
+      {rows.map((row, index) => (
+        <View key={index} style={styles.itemRow}>
+          <TextField
+            placeholder={`${nounLabel} name`}
+            accessibilityLabel={`${nounLabel} ${index + 1} name`}
+            value={row.name}
+            onChangeText={(text) => updateRow(index, { name: text })}
+          />
+          <View style={styles.itemControlsRow}>
+            {withQuantity ? (
+              <View style={styles.quantityRow}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Decrease quantity for part ${index + 1}`}
+                  onPress={() => updateRow(index, { quantity: Math.max(1, (row.quantity ?? 1) - 1) })}
+                  style={styles.stepperButton}
+                  hitSlop={8}
+                >
+                  <Text style={styles.stepperGlyph}>−</Text>
+                </Pressable>
+                <Text style={styles.quantityValue}>{row.quantity ?? 1}</Text>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Increase quantity for part ${index + 1}`}
+                  onPress={() => updateRow(index, { quantity: (row.quantity ?? 1) + 1 })}
+                  style={styles.stepperButton}
+                  hitSlop={8}
+                >
+                  <Text style={styles.stepperGlyph}>+</Text>
+                </Pressable>
+              </View>
+            ) : null}
+            <Pressable
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: row.is_optional }}
+              accessibilityLabel={`${nounLabel} ${index + 1} optional`}
+              onPress={() => updateRow(index, { is_optional: !row.is_optional })}
+              style={styles.optionalToggle}
+            >
+              <Ionicons
+                name={row.is_optional ? 'checkbox' : 'square-outline'}
+                size={20}
+                color={theme.colors.primary}
+              />
+              <Text style={styles.optionalLabel}>Optional</Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Remove ${noun} ${index + 1}`}
+              onPress={() => removeRow(index)}
+              style={styles.removeButton}
+              hitSlop={8}
+            >
+              <Ionicons name="close" size={18} color={theme.colors.danger} />
+            </Pressable>
+          </View>
+        </View>
+      ))}
+
+      <Button label={`+ Add a ${noun}`} variant="ghost" onPress={addRow} />
+      <ErrorRow message={error} />
+      <Button label={`Save ${noun}s`} onPress={onSave} loading={saving} />
+    </View>
+  )
 }
 
 export function Editor({ id }: { id: string }) {
@@ -107,6 +237,31 @@ export function Editor({ id }: { id: string }) {
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
 
+  // Parts / Tools — editable replace-set rows, seeded from the fetched
+  // tutorial once it loads.
+  const [partsRows, setPartsRows] = useState<ItemRow[]>([])
+  const [toolsRows, setToolsRows] = useState<ItemRow[]>([])
+  const [partsSaving, setPartsSaving] = useState(false)
+  const [partsError, setPartsError] = useState<string | null>(null)
+  const [toolsSaving, setToolsSaving] = useState(false)
+  const [toolsError, setToolsError] = useState<string | null>(null)
+
+  // Files
+  const [photoUploading, setPhotoUploading] = useState(false)
+  const [pdfUploading, setPdfUploading] = useState(false)
+  const [filesError, setFilesError] = useState<string | null>(null)
+
+  // STL
+  const [stlUploading, setStlUploading] = useState(false)
+  const [stlError, setStlError] = useState<string | null>(null)
+
+  // Review — backing is a second fetch (GET /api/tutorials/:id doesn't embed
+  // tutorial_orgs, unlike the leader-dashboard list route), so it starts null
+  // and is filled in lazily once the step is actually opened.
+  const [backing, setBacking] = useState<TutorialOrg[] | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+
   useEffect(() => {
     let ignore = false
     apiClient
@@ -118,6 +273,10 @@ export function Editor({ id }: { id: string }) {
         setDescription(data.description ?? '')
         setKind(data.kind)
         setDifficulty(data.difficulty)
+        setPartsRows(
+          data.parts.map((p) => ({ name: p.name, quantity: p.quantity, is_optional: p.is_optional, buy_links: p.buy_links }))
+        )
+        setToolsRows(data.tools.map((t) => ({ name: t.name, is_optional: t.is_optional, buy_links: t.buy_links })))
       })
       .catch((err) => {
         console.error('[Editor] tutorial fetch failed:', err)
@@ -130,6 +289,14 @@ export function Editor({ id }: { id: string }) {
       ignore = true
     }
   }, [id])
+
+  useEffect(() => {
+    if (activeStep !== 'review' || backing !== null) return
+    apiClient
+      .get<TutorialOrg[]>(`/api/tutorials/${id}/orgs`)
+      .then(setBacking)
+      .catch(() => setBacking([]))
+  }, [activeStep, backing, id])
 
   if (loading) {
     return (
@@ -159,11 +326,12 @@ export function Editor({ id }: { id: string }) {
     label: STEP_LABEL[step],
     status: statusFor(missing, step, tutorial),
   }))
-  const activePill = pills.find((p) => p.id === activeStep) ?? pills[0]
-  // Captured here, not read off `tutorial` inside the closure below: TS does
+  // Captured here, not read off `tutorial` inside the closures below: TS does
   // not carry the `tutorial !== null` narrowing from the guards above across
   // a nested function boundary.
   const loadedUpdatedAt = tutorial.updated_at
+  const currentPdfPath = tutorial.tutorial_pdf_url
+  const currentStlFiles = tutorial.stl_files
 
   async function handleSaveDetails() {
     setSaving(true)
@@ -185,6 +353,175 @@ export function Editor({ id }: { id: string }) {
       setSaveError('Could not save details. Please try again.')
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function handleSaveParts() {
+    setPartsSaving(true)
+    setPartsError(null)
+    try {
+      const saved = await apiClient.post<Part[]>(`/api/tutorials/${id}/parts`, {
+        parts: partsRows.map(({ name, quantity, is_optional, buy_links }) => ({
+          name,
+          quantity: quantity ?? 1,
+          is_optional,
+          buy_links,
+        })),
+      })
+      setTutorial((prev) => (prev ? { ...prev, parts: saved } : prev))
+    } catch (err) {
+      console.error('[Editor] save parts failed:', err)
+      setPartsError('Could not save parts. Please try again.')
+    } finally {
+      setPartsSaving(false)
+    }
+  }
+
+  async function handleSaveTools() {
+    setToolsSaving(true)
+    setToolsError(null)
+    try {
+      const saved = await apiClient.post<Tool[]>(`/api/tutorials/${id}/tools`, {
+        tools: toolsRows.map(({ name, is_optional, buy_links }) => ({ name, is_optional, buy_links })),
+      })
+      setTutorial((prev) => (prev ? { ...prev, tools: saved } : prev))
+    } catch (err) {
+      console.error('[Editor] save tools failed:', err)
+      setToolsError('Could not save tools. Please try again.')
+    } finally {
+      setToolsSaving(false)
+    }
+  }
+
+  async function pickPhoto(source: 'camera' | 'library') {
+    setFilesError(null)
+    try {
+      const permission =
+        source === 'camera'
+          ? await ImagePicker.requestCameraPermissionsAsync()
+          : await ImagePicker.requestMediaLibraryPermissionsAsync()
+      if (!permission.granted) {
+        setFilesError(
+          source === 'camera'
+            ? 'Camera access is needed to take a photo.'
+            : 'Photo library access is needed to choose a photo.'
+        )
+        return
+      }
+      const result =
+        source === 'camera'
+          ? await ImagePicker.launchCameraAsync({ quality: 0.7 })
+          : await ImagePicker.launchImageLibraryAsync({ quality: 0.7 })
+      if (result.canceled || !result.assets?.[0]) return
+      const asset = result.assets[0]
+      setPhotoUploading(true)
+      const { url } = await uploadFile('/api/upload/photo', id, {
+        uri: asset.uri,
+        name: asset.fileName ?? 'photo.jpg',
+        mimeType: asset.mimeType ?? 'image/jpeg',
+      })
+      const updated = await apiClient.patch<EditorTutorial>(`/api/tutorials/${id}`, {
+        toy_photo_url: url,
+        updated_at: loadedUpdatedAt,
+      })
+      setTutorial((prev) => (prev ? { ...prev, ...updated } : updated))
+    } catch (err) {
+      console.error('[Editor] photo upload failed:', err)
+      setFilesError('Could not upload the photo. Please try again.')
+    } finally {
+      setPhotoUploading(false)
+    }
+  }
+
+  async function pickPdf() {
+    setFilesError(null)
+    try {
+      const result = await DocumentPicker.getDocumentAsync({ type: 'application/pdf' })
+      if (result.canceled || !result.assets?.[0]) return
+      const asset = result.assets[0]
+      setPdfUploading(true)
+      const { url } = await uploadFile('/api/upload/pdf', id, {
+        uri: asset.uri,
+        name: asset.name,
+        mimeType: asset.mimeType ?? 'application/pdf',
+      })
+      const updated = await apiClient.patch<EditorTutorial>(`/api/tutorials/${id}`, {
+        tutorial_pdf_url: url,
+        updated_at: loadedUpdatedAt,
+      })
+      setTutorial((prev) => (prev ? { ...prev, ...updated } : updated))
+    } catch (err) {
+      console.error('[Editor] pdf upload failed:', err)
+      setFilesError('Could not upload the PDF. Please try again.')
+    } finally {
+      setPdfUploading(false)
+    }
+  }
+
+  // 049 made tutorial-pdfs private: tutorial_pdf_url is an object path, not a
+  // URL. Signed in-process with the app's own session, same as
+  // components/home/detail-screen.tsx's openPreview — there is no /files
+  // route on mobile to route through instead.
+  async function openPdfPreview() {
+    if (!currentPdfPath) return
+    const { data, error } = await supabase.storage.from('tutorial-pdfs').createSignedUrl(currentPdfPath, 60)
+    router.push({
+      pathname: '/guides/[id]/preview',
+      params: { id, pdfUrl: error || !data ? '' : data.signedUrl },
+    })
+  }
+
+  async function pickStl() {
+    setStlError(null)
+    try {
+      const result = await DocumentPicker.getDocumentAsync({ type: '*/*' })
+      if (result.canceled || !result.assets?.[0]) return
+      const asset = result.assets[0]
+      if (!asset.name.toLowerCase().endsWith('.stl')) {
+        setStlError('Please choose a .stl file.')
+        return
+      }
+      setStlUploading(true)
+      const { url, filename } = await uploadFile('/api/upload/stl', id, {
+        uri: asset.uri,
+        name: asset.name,
+        mimeType: asset.mimeType ?? 'application/octet-stream',
+      })
+      // /api/upload/stl only writes the storage object — it does not insert a
+      // stl_files row. Web's AddStlForm (components/add-stl-form.tsx) covers
+      // that gap by POSTing the replace-set sub-resource with the existing
+      // rows plus the new one; this mirrors that exactly rather than any
+      // server-side insert, which does not exist for this route.
+      const nextStlFiles = [
+        ...currentStlFiles.map((f) => ({ filename: f.filename, file_url: f.file_url })),
+        { filename: filename ?? asset.name, file_url: url },
+      ]
+      const inserted = await apiClient.post<StlFile[]>(`/api/tutorials/${id}/stl-files`, {
+        stl_files: nextStlFiles,
+      })
+      setTutorial((prev) => (prev ? { ...prev, stl_files: inserted } : prev))
+    } catch (err) {
+      console.error('[Editor] stl upload failed:', err)
+      setStlError('Could not upload the STL file. Please try again.')
+    } finally {
+      setStlUploading(false)
+    }
+  }
+
+  async function handleSubmitForReview() {
+    setSubmitting(true)
+    setSubmitError(null)
+    try {
+      const updated = await apiClient.patch<EditorTutorial>(`/api/tutorials/${id}`, {
+        status: 'pending',
+        updated_at: loadedUpdatedAt,
+      })
+      setTutorial((prev) => (prev ? { ...prev, ...updated } : updated))
+    } catch (err) {
+      console.error('[Editor] submit for review failed:', err)
+      setSubmitError('Could not submit for review. Please try again.')
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -266,14 +603,114 @@ export function Editor({ id }: { id: string }) {
             <ErrorRow message={saveError} />
             <Button label="Save details" onPress={handleSaveDetails} loading={saving} />
           </View>
-        ) : (
-          // Task 7 fills these in. Each pill's own status already carries what
-          // is missing — this is a real landing spot, not a placeholder screen.
-          <View style={styles.stepPlaceholder}>
-            <Text style={styles.stepHeading}>{activePill.label}</Text>
-            <Text style={styles.stepStatus}>{STATUS_COPY[activePill.status]}</Text>
+        ) : activeStep === 'parts' ? (
+          <ItemsStep
+            noun="part"
+            rows={partsRows}
+            onChange={setPartsRows}
+            withQuantity
+            saving={partsSaving}
+            error={partsError}
+            onSave={handleSaveParts}
+          />
+        ) : activeStep === 'tools' ? (
+          <ItemsStep
+            noun="tool"
+            rows={toolsRows}
+            onChange={setToolsRows}
+            withQuantity={false}
+            saving={toolsSaving}
+            error={toolsError}
+            onSave={handleSaveTools}
+          />
+        ) : activeStep === 'files' ? (
+          <View style={styles.filesForm}>
+            <View style={styles.photoTile}>
+              {tutorial.toy_photo_url ? (
+                <Image source={{ uri: tutorial.toy_photo_url }} style={styles.photoImage} />
+              ) : (
+                <View style={styles.photoPlaceholder}>
+                  <Ionicons name="image-outline" size={32} color={theme.colors.primary} />
+                </View>
+              )}
+              <View style={styles.photoActions}>
+                <Button
+                  label="Take a photo"
+                  variant="secondary"
+                  onPress={() => pickPhoto('camera')}
+                  loading={photoUploading}
+                />
+                <Button
+                  label="Choose from library"
+                  variant="secondary"
+                  onPress={() => pickPhoto('library')}
+                  loading={photoUploading}
+                />
+              </View>
+            </View>
+
+            <View style={styles.pdfRow}>
+              <Text style={styles.pdfLabel}>{currentPdfPath ? currentPdfPath.split('/').pop() : 'No PDF yet'}</Text>
+              <Button label="Choose PDF from Files" variant="secondary" onPress={pickPdf} loading={pdfUploading} />
+              {currentPdfPath ? <Button label="Preview" variant="ghost" onPress={openPdfPreview} /> : null}
+            </View>
+
+            <ErrorRow message={filesError} />
           </View>
-        )}
+        ) : activeStep === 'stl' ? (
+          <View style={styles.stlForm}>
+            {tutorial.stl_files.length ? (
+              tutorial.stl_files.map((f) => (
+                <View key={f.id} style={styles.stlRow}>
+                  <Ionicons name="cube-outline" size={18} color={theme.colors.primary} />
+                  <Text style={styles.stlFilename}>{f.filename}</Text>
+                </View>
+              ))
+            ) : (
+              <Text style={styles.stlEmpty}>No 3D-print files yet.</Text>
+            )}
+            <Button label="Choose STL from Files" variant="secondary" onPress={pickStl} loading={stlUploading} />
+            <ErrorRow message={stlError} />
+          </View>
+        ) : activeStep === 'review' ? (
+          <View style={styles.reviewForm}>
+            <View style={styles.reviewRow}>
+              <Text style={styles.reviewLabel}>Backed by</Text>
+              <Text style={styles.reviewValue}>{backing === null ? 'Checking…' : backingText(backing)}</Text>
+            </View>
+            <View style={styles.reviewRow}>
+              <Text style={styles.reviewLabel}>Collaborators</Text>
+              <Text style={styles.reviewValue}>
+                {tutorial.tutorial_contributors.map((c) => c.profiles.name).join(', ')} · edit on the web
+              </Text>
+            </View>
+            <View style={styles.reviewRow}>
+              <Text style={styles.reviewLabel}>Recommendations</Text>
+              <Text style={styles.reviewValue}>{tutorial.tutorial_recommendations.length} of 3 · edit on the web</Text>
+            </View>
+
+            {tutorial.status === 'pending' ? (
+              <Text style={styles.submittedRow}>Submitted · waiting for review</Text>
+            ) : tutorial.status === 'approved' ? (
+              <View style={styles.approvedRow}>
+                <Text style={styles.approvedText}>✓ Approved · in Guides</Text>
+              </View>
+            ) : (
+              <>
+                {missing.length > 0 ? (
+                  <Text style={styles.gapList}>Still needed: {missing.map((g) => g.label).join(', ')}</Text>
+                ) : null}
+                <ErrorRow message={submitError} />
+                <Button
+                  label="Submit for review"
+                  onPress={handleSubmitForReview}
+                  disabled={missing.length > 0}
+                  loading={submitting}
+                />
+              </>
+            )}
+          </View>
+        ) : null}
       </ScrollView>
 
       <View style={styles.footer}>
@@ -312,8 +749,80 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing(2),
   },
   chipRow: { flexDirection: 'row', gap: theme.spacing(2), marginBottom: theme.spacing(4) },
-  stepPlaceholder: { paddingVertical: theme.spacing(8), alignItems: 'center' },
-  stepHeading: { fontFamily: theme.fonts.bold, fontSize: theme.type.heading, color: theme.colors.text },
-  stepStatus: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.muted, marginTop: theme.spacing(2) },
   footer: { borderTopWidth: theme.border.thin, borderTopColor: theme.colors.border, paddingTop: theme.spacing(3) },
+
+  // Parts / Tools
+  itemsForm: { paddingBottom: theme.spacing(6) },
+  itemRow: {
+    marginBottom: theme.spacing(4),
+    paddingBottom: theme.spacing(3),
+    borderBottomWidth: theme.border.thin,
+    borderBottomColor: theme.colors.border,
+  },
+  itemControlsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: theme.spacing(1),
+  },
+  quantityRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2) },
+  stepperButton: {
+    width: 28,
+    height: 28,
+    borderRadius: theme.radii.sm,
+    borderWidth: theme.border.thin,
+    borderColor: theme.colors.ink,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.surface,
+  },
+  stepperGlyph: { fontFamily: theme.fonts.bold, fontSize: theme.type.body, color: theme.colors.ink },
+  quantityValue: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.text, minWidth: 20, textAlign: 'center' },
+  optionalToggle: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(1) },
+  optionalLabel: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted },
+  removeButton: { padding: theme.spacing(1) },
+
+  // Files
+  filesForm: { paddingBottom: theme.spacing(6) },
+  photoTile: { marginBottom: theme.spacing(5) },
+  photoImage: { width: '100%', height: 180, borderRadius: theme.radii.lg, backgroundColor: theme.colors.surfaceSunken, marginBottom: theme.spacing(3) },
+  photoPlaceholder: {
+    width: '100%',
+    height: 180,
+    borderRadius: theme.radii.lg,
+    backgroundColor: theme.colors.accentLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: theme.spacing(3),
+  },
+  photoActions: { flexDirection: 'row', gap: theme.spacing(2) },
+  pdfRow: { gap: theme.spacing(2), marginBottom: theme.spacing(4) },
+  pdfLabel: { fontFamily: theme.fonts.semiBold, fontSize: theme.type.label, color: theme.colors.text },
+
+  // STL
+  stlForm: { paddingBottom: theme.spacing(6) },
+  stlRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2), marginBottom: theme.spacing(2) },
+  stlFilename: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.text },
+  stlEmpty: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.muted, marginBottom: theme.spacing(3) },
+
+  // Review
+  reviewForm: { paddingBottom: theme.spacing(6) },
+  reviewRow: { marginBottom: theme.spacing(3) },
+  reviewLabel: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.text },
+  reviewValue: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.muted, marginTop: theme.spacing(1) },
+  gapList: {
+    fontFamily: theme.fonts.regular,
+    fontSize: theme.type.label,
+    color: theme.colors.apricotDeep,
+    marginBottom: theme.spacing(3),
+  },
+  submittedRow: { fontFamily: theme.fonts.semiBold, fontSize: theme.type.label, color: theme.colors.muted },
+  approvedRow: {
+    alignSelf: 'flex-start',
+    backgroundColor: theme.colors.mintSoft,
+    borderRadius: theme.radii.pill,
+    paddingVertical: theme.spacing(2),
+    paddingHorizontal: theme.spacing(4),
+  },
+  approvedText: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.mintDeep },
 })
