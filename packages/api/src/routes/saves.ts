@@ -14,6 +14,7 @@
  * - packages/web/app/dashboard/saved/[type]/page.tsx: the same slug validation
  */
 import { Hono } from 'hono'
+import { chunk } from '../chunk.js'
 import { SAVE_SLUGS, type SaveSlug, type SavedIds } from '@splat-connect/types'
 import { createUserClient } from '../supabase/client.js'
 import type { AuthVariables } from '../middleware/auth.js'
@@ -111,17 +112,23 @@ saves.get('/:slug', async (c) => {
   // One cast, here rather than inside SOURCE: the builder is structurally what
   // EntityQuery describes, but its own type is generated per-table and does not
   // unify across the three.
-  const query = sb
-    .from(source.table)
-    .select(source.select)
-    .in('id', ids) as unknown as EntityQuery
-  const { data: entities, error: entityError } = await source.filter(query)
+  // Chunked: a heavy saver's id list would push .in() past the URL limit.
+  const results = await Promise.all(
+    chunk(ids).map((part) => {
+      const query = sb
+        .from(source.table)
+        .select(source.select)
+        .in('id', part) as unknown as EntityQuery
+      return source.filter(query)
+    })
+  )
+  const entityError = results.find((r) => r.error)?.error
   if (entityError) return c.json({ error: entityError.message }, 500)
 
-  // Re-sorted into save order: the second query returns entity order, and RLS
+  // Re-sorted into save order: the queries return entity order, and RLS
   // has already removed anything the caller can no longer read.
   const byId = new Map(
-    ((entities ?? []) as { id: string }[]).map((e) => [e.id, e])
+    results.flatMap((r) => (r.data ?? []) as { id: string }[]).map((e) => [e.id, e])
   )
   return c.json(ids.map((id) => byId.get(id)).filter(Boolean))
 })

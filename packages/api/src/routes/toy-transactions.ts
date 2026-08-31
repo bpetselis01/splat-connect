@@ -1,3 +1,4 @@
+import { chunk } from '../chunk.js'
 import { Hono, type Context } from 'hono'
 import { randomInt } from 'node:crypto'
 import { needsAction, isOwnerSide } from '@splat-connect/types'
@@ -98,12 +99,19 @@ async function lastMessages(
 ): Promise<Map<string, MessagePreview>> {
   const previews = new Map<string, MessagePreview>()
   if (transactionIds.length === 0) return previews
-  const { data } = await supabase
-    .from('toy_transaction_messages')
-    .select('transaction_id, body, sender_id, kind, created_at')
-    .in('transaction_id', transactionIds)
-    .order('created_at', { ascending: true })
-  for (const row of data ?? []) {
+  // Chunked: the caller passes every transaction the user can see. A
+  // transaction's messages all arrive in its own chunk's (ascending) result,
+  // so last-write-wins per id still lands on the latest message.
+  const results = await Promise.all(
+    chunk(transactionIds).map((ids) =>
+      supabase
+        .from('toy_transaction_messages')
+        .select('transaction_id, body, sender_id, kind, created_at')
+        .in('transaction_id', ids)
+        .order('created_at', { ascending: true })
+    )
+  )
+  for (const row of results.flatMap((r) => r.data ?? [])) {
     const { transaction_id, ...preview } = row as MessagePreview & { transaction_id: string }
     previews.set(transaction_id, preview)
   }

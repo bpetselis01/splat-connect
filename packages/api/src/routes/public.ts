@@ -4,6 +4,7 @@
  * backstop behind each query's own explicit filter.
  */
 import { Hono } from 'hono'
+import { chunk } from '../chunk.js'
 import { createAnonClient, createAdminClient } from '../supabase/client.js'
 import { atCapacityToyIds } from '../toy-access.js'
 import type {
@@ -289,12 +290,15 @@ publicRoutes.get('/impact', async (c) => {
   const personIds = [...personCounts.keys()]
   let people: Array<{ id: string; name: string; public_showcase: boolean }> = []
   if (personIds.length > 0) {
-    const { data: profiles, error: profilesError } = await admin
-      .from('profiles')
-      .select('id, name, public_showcase')
-      .in('id', personIds)
-    if (profilesError) return c.json({ error: 'Failed to load impact data' }, 500)
-    people = profiles ?? []
+    // Chunked: every approved contributor lands in this list, and .in() dies
+    // with "URI too long" a few hundred uuids in. See src/chunk.ts.
+    const results = await Promise.all(
+      chunk(personIds).map((ids) =>
+        admin.from('profiles').select('id, name, public_showcase').in('id', ids)
+      )
+    )
+    if (results.some((r) => r.error)) return c.json({ error: 'Failed to load impact data' }, 500)
+    people = results.flatMap((r) => r.data ?? [])
   }
   const showcased = new Map(
     people.filter((p) => p.public_showcase === true).map((p) => [p.id, p.name])
@@ -433,7 +437,11 @@ publicRoutes.get('/contributors/:id', async (c) => {
   const deliveredToyIds = [...new Set((deliveredTx ?? []).map((tx) => tx.toy_id))]
   let toysDelivered: unknown[] = []
   if (deliveredToyIds.length > 0) {
-    const { data, error } = await admin.from('toys').select('*').in('id', deliveredToyIds)
+    const results = await Promise.all(
+      chunk(deliveredToyIds).map((ids) => admin.from('toys').select('*').in('id', ids))
+    )
+    const data = results.flatMap((r) => r.data ?? [])
+    const error = results.find((r) => r.error)?.error
     if (error) return c.json({ error: 'Failed to load contributor profile' }, 500)
     toysDelivered = data ?? []
   }
@@ -523,7 +531,11 @@ publicRoutes.get('/organizations/:id', async (c) => {
   const deliveredToyIds = [...new Set((deliveredTx ?? []).map((tx) => tx.toy_id))]
   let toysDelivered: unknown[] = []
   if (deliveredToyIds.length > 0) {
-    const { data, error } = await admin.from('toys').select('*').in('id', deliveredToyIds)
+    const results = await Promise.all(
+      chunk(deliveredToyIds).map((ids) => admin.from('toys').select('*').in('id', ids))
+    )
+    const data = results.flatMap((r) => r.data ?? [])
+    const error = results.find((r) => r.error)?.error
     if (error) return c.json({ error: 'Failed to load organisation profile' }, 500)
     toysDelivered = data ?? []
   }
