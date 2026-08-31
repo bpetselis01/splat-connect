@@ -22,7 +22,7 @@ appId: com.splatconnect.mobile
       text: "Skip intro"
     timeout: 10000
 
-# Still useful as a check that the router mounted, but does not by itself prove
-# the intro is gone — the extendedWaitUntil above is what gates that.
-- assertVisible:
-    text: "Home"
+# No landing assertion here on purpose: this subflow is run both signed out
+# (lands on sign-in) and after a stopApp with a live session (lands on Guides),
+# so there is no one string true of both. Each flow asserts its own landing on
+# the line after `runFlow`.
