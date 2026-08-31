@@ -28,10 +28,13 @@ describe('GET /api/public/tutorials/:id', () => {
     const res = await app.request(`/api/public/tutorials/${tutorialId}`)
     expect(res.status).toBe(200)
     const body = (await res.json()) as {
-      tutorial_contributors: Array<{ profiles: { name: string } | null }>
+      tutorial_contributors: Array<{ profile_id: string; profiles: { name: string } | null }>
       reviewer: { name: string } | null
     }
     expect(body.tutorial_contributors[0]?.profiles).not.toBeNull()
+    // The byline links to /guides/contributor/[id] on mobile, which needs the
+    // profile id alongside the name the embed already carried.
+    expect(body.tutorial_contributors[0]?.profile_id).toBe(author.id)
     expect(body.reviewer).not.toBeNull()
   })
 })
