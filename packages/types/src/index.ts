@@ -2,6 +2,7 @@
 // web child-profile-form.tsx quiz. Runtime values, not just types — this
 // package is consumed as raw TypeScript, so that is safe.
 export * from './estimate-ability'
+export * from './nav-model'
 
 export type Role = 'admin' | 'contributor'
 
