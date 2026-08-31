@@ -22,7 +22,7 @@ import { isOwnerSide } from '@splat-connect/types'
 import type { PickupAddress, ToyTransactionDetail } from '@splat-connect/types'
 import { AcceptPickupDialog } from '@/components/accept-pickup-dialog'
 import { ExchangeChat } from '@/components/exchange-chat'
-import { ExchangeStatusBadge } from '@/components/exchange-status-badge'
+import { Badge } from '@/components/badge'
 
 export const BLOCKED_ACCEPT_HINT =
   'You need to either complete the current transaction or withdraw from it.'
@@ -101,7 +101,7 @@ export function ToyTransactionThread({
         <div className="card flex flex-col gap-3 p-4">
           <div className="flex items-center justify-between gap-2">
             <h2 className="text-base font-bold text-ink">Details</h2>
-            <ExchangeStatusBadge status={tx.status} />
+            <Badge status={tx.status} />
           </div>
 
           <dl className="flex flex-col text-sm">

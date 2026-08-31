@@ -2,6 +2,7 @@
 // web child-profile-form.tsx quiz. Runtime values, not just types — this
 // package is consumed as raw TypeScript, so that is safe.
 export * from './estimate-ability'
+export * from './nav-model'
 
 export type Role = 'admin' | 'contributor'
 
@@ -275,24 +276,6 @@ export interface ToyIdeaParticipant {
   removed_by: string | null
   /** Joined from profiles at read time for display. */
   name?: string | null
-}
-
-/**
- * A flag against a participant or the idea's author, filed by the idea's
- * author or a current participant (041). Never selectable by anon or
- * authenticated — read through the service role (admin) only, so the
- * reported person can never see reason/resolution_note.
- */
-export interface ToyIdeaReport {
-  id: string
-  idea_id: string
-  reported_profile_id: string
-  reported_by: string
-  reason: string
-  created_at: string
-  resolved_at: string | null
-  resolved_by: string | null
-  resolution_note: string | null
 }
 
 export interface ToyIdeaMessage {

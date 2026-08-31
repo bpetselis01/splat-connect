@@ -50,6 +50,18 @@ export async function createContributor() {
   return { id: data.user.id, email, password: PASSWORD }
 }
 
+/**
+ * A contributor, signed in through the UI. Every tab lives behind the sign-in
+ * gate (app/(tabs)/_layout.tsx), so a spec that only provisions an account and
+ * then visits a tab lands on the sign-in screen instead.
+ */
+export async function signInAsNewContributor(page: Page) {
+  const contributor = await createContributor()
+  await signIn(page, contributor.email, contributor.password)
+  await expect(page).toHaveURL(/\/guides$/)
+  return contributor
+}
+
 /** Record contributor-terms acceptance for a service-role-provisioned user. */
 export async function acceptTerms(userId: string) {
   const { error } = await adminClient()
@@ -76,6 +88,7 @@ export async function createTutorial(
 ) {
   const admin = adminClient()
   const id = crypto.randomUUID()
+  const pdfPath = overrides.withPdf === false ? null : `${id}/tutorial.pdf`
 
   const { error } = await admin.from('tutorials').insert({
     id,
@@ -83,11 +96,21 @@ export async function createTutorial(
     description: 'Created by a Playwright E2E test.',
     difficulty: overrides.difficulty ?? 'easy',
     status: overrides.status ?? 'approved',
-    tutorial_pdf_url:
-      overrides.withPdf === false ? null : `${id}/tutorial.pdf`,
+    tutorial_pdf_url: pdfPath,
     toy_photo_url: 'https://placeholder.invalid/photo.jpg',
   })
   if (error) throw new Error(`Failed to create tutorial: ${error.message}`)
+
+  // The column holds a path, and the preview signs it before opening it
+  // (detail-screen.tsx openPreview). Signing a path with no object behind it
+  // fails and the screen falls back to its no-PDF state, so a fixture that
+  // sets the column has to put a file there too.
+  if (pdfPath) {
+    const { error: uploadError } = await admin.storage
+      .from('tutorial-pdfs')
+      .upload(pdfPath, new Blob(['%PDF-1.4 E2E'], { type: 'application/pdf' }))
+    if (uploadError) throw new Error(`Failed to upload tutorial PDF: ${uploadError.message}`)
+  }
 
   const { error: linkError } = await admin
     .from('tutorial_contributors')
@@ -115,17 +138,17 @@ export async function deleteUser(id: string) {
 }
 
 /**
- * Sign up a fresh account through the Profile-tab UI. Local Supabase requires
- * email confirmation (supabase/config.toml enable_confirmations=true), so
- * signUp leaves no session — confirm out of band via the admin API, the same
- * as a real confirmation-link click would, then sign in through the UI.
+ * Sign up a fresh account. Local Supabase requires email confirmation
+ * (supabase/config.toml enable_confirmations=true), so signUp leaves no
+ * session — confirm out of band via the admin API, the same as a real
+ * confirmation-link click would, then sign in through the UI.
  *
- * Leaves the Child Profile segment selected before returning: every caller
- * of this helper wants to land on child-profile content, so selecting it
- * here once means none of them have to.
+ * Returns on the Guides landing and goes no further: Account lives behind the
+ * MY SPLAT modal stack now, so a caller that wants child-profile content asks
+ * for it with openChildProfile().
  */
 export async function signUpNewAccount(page: Page, email: string) {
-  await page.goto('/profile')
+  await page.goto('/sign-in')
   await page.getByText('Create an account').click()
   await page.getByPlaceholder('Name').fill('E2E Contributor')
   await page.getByPlaceholder('Email').fill(email)
@@ -147,21 +170,32 @@ export async function signUpNewAccount(page: Page, email: string) {
   await page.getByPlaceholder('Email').fill(email)
   await page.getByPlaceholder('Password').fill(PASSWORD)
   await page.getByText('Sign In', { exact: true }).click()
+  await expect(page).toHaveURL(/\/guides$/)
+}
+
+/**
+ * Open Account on its Child Profile segment. Account is a (my) modal route,
+ * reachable from any tab, so going straight to the URL is the same thing the
+ * MY SPLAT popover does — with none of the popover's animation to wait on.
+ */
+export async function openChildProfile(page: Page) {
+  await page.goto('/account')
   // Account is the default segment on first visit.
   await page.getByText('Child Profile').click()
   await expect(page.getByText('Customization Metrics')).toBeVisible()
 }
 
-/** Sign in through the Profile-tab UI (signed-out screen defaults to sign-in mode). */
+/** Sign in through the sign-in screen (it defaults to sign-in mode). */
 export async function signIn(page: Page, email: string, password: string) {
-  await page.goto('/profile')
+  await page.goto('/sign-in')
   await page.getByPlaceholder('Email').fill(email)
   await page.getByPlaceholder('Password').fill(password)
   await page.getByText('Sign In', { exact: true }).click()
 }
 
-/** From the child-profile home, tap one of the three sub-screen rows. */
+/** From a fresh sign-in, reach one of the three child-profile sub-screens. */
 export async function openSubScreen(page: Page, label: 'Ability Profile' | 'Everyday Needs' | 'Customization Metrics') {
+  await openChildProfile(page)
   await page.getByText(label).click()
 }
 

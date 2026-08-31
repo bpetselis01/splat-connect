@@ -35,7 +35,7 @@
  * - routes/admin.ts: who may lead an organisation at all
  */
 import { Hono, type Context } from 'hono'
-import { createUserClient } from '../supabase/user-client.js'
+import { createUserClient } from '../supabase/client.js'
 import { notifyBackingRequested } from '../review-notifications.js'
 import type { AuthVariables } from '../middleware/auth.js'
 

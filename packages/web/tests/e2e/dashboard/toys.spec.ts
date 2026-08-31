@@ -38,13 +38,16 @@ test('a contributor adds a toy, edits it, uploads a cover photo, publishes it, a
 
     await page.getByRole('tab', { name: 'Review' }).click()
     // The pointer is still resting on the pill just clicked. Its active colour
-    // (--color-brand-dark) has to survive :hover, or every selection looks
-    // like it did not take.
+    // (--color-ink since the pixel register, 03ef998e) has to survive :hover,
+    // or every selection looks like it did not take.
     await expect(page.getByRole('tab', { name: 'Review' })).toHaveCSS(
       'background-color',
-      'rgb(15, 111, 156)'
+      'rgb(18, 40, 58)'
     )
-    await expect(page.getByText(/Add .*to publish/)).toBeVisible()
+    // The review tab carries the same finish bar as the tutorial editor: a
+    // count, and each gap as a button that jumps to the step that fixes it.
+    await expect(page.getByText('2 things left')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'A cover photo' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Publish' })).toBeDisabled()
 
     await page.getByRole('tab', { name: 'Photos' }).click()

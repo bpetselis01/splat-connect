@@ -1,16 +1,14 @@
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
 import { apiClient } from '@/lib/api-client'
-import { getCapabilities } from '@/lib/capabilities'
+import { requireCapabilities } from '@/lib/require-capabilities'
 import { CardPhoto } from '@/components/card-photo'
-import { ToyStatusBadge } from '@/components/toy-status-badge'
+import { Badge } from '@/components/badge'
 import { Box } from '@/components/icons'
 import { BoundaryLink } from '@/components/boundary-link'
 import type { Toy } from '@splat-connect/types'
 
 export default async function ToyListPage() {
-  const caps = await getCapabilities()
-  if (!caps) redirect('/login')
+  const caps = await requireCapabilities()
 
   // No .catch() here: an empty array is already the legitimate "no toys yet"
   // value, so swallowing a fetch failure into the same empty array would tell
@@ -76,7 +74,7 @@ export default async function ToyListPage() {
                 <div className="flex flex-1 flex-col gap-1 p-4">
                   <p className="truncate text-sm font-bold text-ink">{toy.name}</p>
                   <div className="flex flex-wrap items-center gap-2">
-                    <ToyStatusBadge status={toy.status} />
+                    <Badge status={toy.status} />
                     <p className="text-xs leading-relaxed text-muted">
                       Condition {toy.condition} / 10
                     </p>
@@ -104,7 +102,7 @@ export default async function ToyListPage() {
                   <div className="flex flex-1 flex-col gap-1 p-4">
                     <p className="truncate text-sm font-bold text-ink">{t.name}</p>
                     <div className="flex flex-wrap items-center gap-2">
-                      <ToyStatusBadge status={t.status} />
+                      <Badge status={t.status} />
                       <p className="text-xs leading-relaxed text-muted">
                         Condition {t.condition} / 10
                       </p>

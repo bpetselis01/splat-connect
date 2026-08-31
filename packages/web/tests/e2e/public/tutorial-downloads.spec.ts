@@ -38,18 +38,9 @@ test('a signed-in visitor gets the PDF', async ({ page }) => {
   expect(error).toBeNull()
 
   try {
+    // signIn() waits out the login handler's cookie write (see helpers.ts);
+    // this spec is where that race was first found.
     await signIn(page, contributor.email, contributor.password)
-    // signIn()'s click resolves as soon as the click event fires, not once the
-    // login form's async handler finishes (signInWithPassword, then getUser,
-    // then a profile fetch, then the redirect) — that handler is what writes
-    // the sb-*-auth-token cookie. Navigating immediately after the click loses
-    // that race every time: the SSR tutorial page sees no cookie and renders
-    // the signed-out (signup) href. Every other spec sidesteps this by
-    // asserting a specific post-login URL; a fresh contributor here has not
-    // accepted terms, so it lands on /onboarding/contributor-terms instead of
-    // /dashboard — waiting for "anywhere but /login" is the one wait that
-    // holds regardless of which page wins.
-    await page.waitForURL((url) => !url.pathname.startsWith('/login'))
     await page.goto(`/tutorials/${tutorialId}`)
     const href = await page.getByRole('link', { name: 'Download Tutorial PDF' }).getAttribute('href')
     expect(href).toBe(`/files/tutorial-pdfs/${objectPath}`)

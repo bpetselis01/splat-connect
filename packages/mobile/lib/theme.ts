@@ -1,37 +1,36 @@
-// Canvas is blue-tinted, cards are white — a white canvas with near-white
-// cards left every card at ~1.02:1 against its background and invisible.
+// Pixel language: ink borders, hard offset shadows, small radii. The blurred
+// shadow and 14–18px radii of the soft pass are gone; nothing reads them once
+// Task 2 lands.
 export const theme = {
   colors: {
-    // Brand
     primary: '#1998d5',
     primaryDark: '#0f6f9c',
     primaryDeep: '#0a4f70',
-    primarySoft: '#bfe4f5',
-
-    // Surfaces
     background: '#eaf4fa',
     surface: '#ffffff',
     surfaceSunken: '#dcedf6',
     accentLight: '#d8ecf7',
-    accentLighter: '#ffffff',
-
-    // Ink. `muted` was #6b7a82 — about 4.4:1 on white, under the 4.5:1 floor
-    // while carrying 13px body copy. It now clears 4.5:1 on both surfaces.
     text: '#12283a',
-    muted: '#4d6a7d',
+    ink: '#12283a',
+    muted: '#476376',
     border: '#c6e0ed',
-
-    // Warm complement of the brand blue. Reserved for delight and emphasis,
-    // never used as decoration.
     apricot: '#ff8f5e',
     apricotSoft: '#ffe3d5',
+    apricotDeep: '#8c3312',
     mint: '#2fbf9f',
-    // Readable success text: mint itself is ~1.9:1 on the canvas. Matches the
-    // web --color-mint-deep so "Saved" reads the same green on both surfaces.
+    mintSoft: '#d4f2ea',
     mintDeep: '#0f5c4d',
-
+    honeySoft: '#fdeecb',
+    honeyDeep: '#7a4e05',
     danger: '#a3301a',
-
+    // Badge tones — the same bg/fg pairs as web's badge.tsx. tone.test guards contrast.
+    tone: {
+      sunken: { bg: '#dcedf6', fg: '#0a4f70' },
+      honey: { bg: '#fdeecb', fg: '#7a4e05' },
+      mint: { bg: '#d4f2ea', fg: '#0f5c4d' },
+      apricot: { bg: '#ffe3d5', fg: '#8c3312' },
+      brand: { bg: '#d8ecf7', fg: '#0a4f70' },
+    },
     difficulty: {
       easy: { bg: '#d4f2ea', text: '#0f5c4d' },
       medium: { bg: '#fdeecb', text: '#7a4e05' },
@@ -42,47 +41,28 @@ export const theme = {
     regular: 'Nunito_400Regular',
     semiBold: 'Nunito_600SemiBold',
     bold: 'Nunito_700Bold',
+    black: 'Nunito_900Black',
+    // Numerals only — the board draws Jersey 10 on counts and nothing else.
+    numeral: 'Jersey10_400Regular',
   },
-  // Fixed scale at a ~1.2 ratio. Product UI is read at a consistent size on a
-  // phone; fluid type buys nothing here and makes headings unpredictable.
-  type: { display: 30, title: 24, heading: 19, body: 16, label: 14, caption: 13 },
+  type: { title: 24, heading: 19, body: 16, label: 14, caption: 13 },
   spacing: (n: number) => n * 4,
-  radii: { sm: 10, md: 14, lg: 18, pill: 999 },
-  // Shadows are tinted blue rather than near-black: a neutral shadow over a
-  // blue canvas reads as dirt. `elevation` is not optional — Android ignores
-  // the shadow* props entirely, so the old preset rendered flat there.
-  shadow: {
-    shadowColor: '#0a3550',
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-  },
-  elevation: {
-    rest: {
-      shadowColor: '#0a3550',
-      shadowOpacity: 0.07,
-      shadowRadius: 10,
-      shadowOffset: { width: 0, height: 3 },
-      elevation: 2,
-    },
-    lift: {
-      shadowColor: '#0a3550',
-      shadowOpacity: 0.14,
-      shadowRadius: 20,
-      shadowOffset: { width: 0, height: 8 },
-      elevation: 7,
-    },
-  },
+  border: { thin: 2, thick: 3 },
+  radii: { sm: 6, md: 8, lg: 10, pill: 20 },
+  // A hard shadow is an offset copy of the box in ink. `elevation` mirrors the
+  // depth so Android draws something; it will be soft there, which is accepted.
+  shadow: (depth: 3 | 4 | 5 | 6) => ({
+    shadowColor: '#12283a',
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    shadowOffset: { width: depth, height: depth },
+    elevation: depth,
+  }),
   motion: {
     pressScale: 0.96,
-    duration: 180,
     fast: 140,
     base: 240,
-    slow: 360,
     stagger: 55,
-    // Low overshoot on purpose: a control that dips and settles feels tactile,
-    // one that bounces feels like a toy.
     press: { damping: 20, stiffness: 320, mass: 0.85 },
     settle: { damping: 16, stiffness: 170, mass: 0.9 },
   },

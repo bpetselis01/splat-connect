@@ -38,8 +38,7 @@ const signedIn = {
   profile: { id: 'u1', name: 'Byron Petselis', email: 'b@example.com', role: 'contributor', public_showcase: true, created_at: '' },
   isAdmin: false,
   ledOrgs: [],
-  canAuthor: true,
-  unreadNotifications: 3,
+  unread: { tutorials: 1, exchanges: 1, challenges: 1, total: 3 },
   exchangeActions: 0,
 } as unknown as Capabilities
 
@@ -185,7 +184,7 @@ describe('Nav', () => {
   })
 
   // Tests: the unread badge carries the count the rail used to surface
-  // How:   renders with unreadNotifications: 3 and reads the accessible name
+  // How:   renders with unread.total: 3 and reads the accessible name
   // Chain: the rail is absent on public routes now, so if the badge did not move
   //        to the header an unread notification would be invisible site-wide
   it('badges the account pill with unread notifications', () => {
@@ -194,10 +193,10 @@ describe('Nav', () => {
   })
 
   // Tests: a zero count renders no badge
-  // How:   renders with unreadNotifications: 0
+  // How:   renders with unread.total: 0
   // Chain: a badge showing 0 is noise, and trains people to ignore the badge
   it('shows no badge at zero unread', () => {
-    render(<Nav caps={{ ...signedIn, unreadNotifications: 0 }} />)
+    render(<Nav caps={{ ...signedIn, unread: { tutorials: 0, exchanges: 0, challenges: 0, total: 0 } }} />)
     expect(screen.getByRole('link', { name: /My SPLAT/ })).not.toHaveAccessibleName(/unread/)
   })
 

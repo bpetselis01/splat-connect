@@ -1,4 +1,4 @@
-// Embedded as the "Child Profile" segment of the merged Profile tab
+// Embedded as the "Child Profile" segment of the merged Account screen
 // (components/profile-screen.tsx) — it owns none of the screen chrome
 // (header, account identity, sign out) since that segment shares a screen
 // with the "Account" segment, which already provides all of it.
@@ -19,19 +19,19 @@ const SUB_SCREENS: {
 }[] = [
   {
     label: 'Ability Profile',
-    path: '/profile/ability',
+    path: '/account/ability',
     icon: 'accessibility-outline',
     hint: 'Diagnosis, hand involvement, MACS and BFMF',
   },
   {
     label: 'Everyday Needs',
-    path: '/profile/everyday-needs',
+    path: '/account/everyday-needs',
     icon: 'today-outline',
     hint: 'Challenges, grip type and where it gets used',
   },
   {
     label: 'Customization Metrics',
-    path: '/profile/customization',
+    path: '/account/customization',
     icon: 'resize-outline',
     hint: 'Measurements that size the 3D-printed parts',
   },

@@ -14,8 +14,7 @@
  * two reads as one undifferentiated row of badges.
  */
 import { CardPhoto } from '@/components/card-photo'
-import { DifficultyBadge } from '@/components/difficulty-badge'
-import { StatusBadge } from '@/components/status-badge'
+import { Badge } from '@/components/badge'
 import { BackingSummary } from '@/components/backing-state'
 import { BoundaryLink } from '@/components/boundary-link'
 import type { Tutorial, Difficulty, TutorialOrg } from '@splat-connect/types'
@@ -33,14 +32,14 @@ export function DashboardTutorialCard({ tutorial }: { tutorial: Listed }) {
         <CardPhoto src={tutorial.toy_photo_url} />
         {/* Badges carry solid backgrounds, so this stays legible over any photo. */}
         <span className="absolute left-3 top-3">
-          <DifficultyBadge difficulty={tutorial.difficulty as Difficulty} />
+          <Badge status={tutorial.difficulty as Difficulty} />
         </span>
       </div>
 
       <div className="flex flex-1 flex-col gap-1 p-4">
         <p className="truncate text-sm font-bold text-ink">{tutorial.title}</p>
         <div className="flex flex-wrap items-center gap-2">
-          <StatusBadge status={tutorial.status} />
+          <Badge status={tutorial.status} />
           <BackingSummary backing={tutorial.tutorial_orgs ?? []} />
         </div>
         {tutorial.status === 'rejected' && (

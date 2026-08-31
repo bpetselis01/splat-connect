@@ -15,7 +15,7 @@
  */
 import { Hono } from 'hono'
 import { SAVE_SLUGS, type SaveSlug, type SavedIds } from '@splat-connect/types'
-import { createUserClient } from '../supabase/user-client.js'
+import { createUserClient } from '../supabase/client.js'
 import type { AuthVariables } from '../middleware/auth.js'
 
 const saves = new Hono<{ Variables: AuthVariables }>()

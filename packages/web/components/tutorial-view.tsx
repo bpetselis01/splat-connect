@@ -25,12 +25,11 @@
  */
 import type { ReactNode } from 'react'
 import Image from 'next/image'
-import { DifficultyBadge } from '@/components/difficulty-badge'
-import { KindBadge } from '@/components/kind-badge'
+import { Badge } from '@/components/badge'
 import { TutorialCard } from '@/components/tutorial-card'
 import { OrgBadges } from '@/components/org-badges'
 import { FileText, Download } from '@/components/icons'
-import type { TutorialWithDetails, TutorialOrg } from '@splat-connect/types'
+import { KIND_LABEL, type TutorialWithDetails, type TutorialOrg } from '@splat-connect/types'
 
 type Viewable = TutorialWithDetails & {
   tutorial_orgs?: TutorialOrg[]
@@ -97,8 +96,8 @@ export function TutorialView({
         <div className="mt-4">
           <div className="mb-2 flex flex-wrap items-center gap-3">
             <h1 className="title-detail">{tutorial.title}</h1>
-            <DifficultyBadge difficulty={tutorial.difficulty} />
-            <KindBadge kind={tutorial.kind} />
+            <Badge status={tutorial.difficulty} />
+            <Badge status={tutorial.kind} label={KIND_LABEL[tutorial.kind]} />
             {headerAction}
           </div>
           {tutorial.description && (

@@ -17,7 +17,7 @@ describe('ChildProfileHome', () => {
     expect(screen.getByText('Everyday Needs')).toBeTruthy()
     expect(screen.getByText('Customization Metrics')).toBeTruthy()
     fireEvent.press(screen.getByText('Ability Profile'))
-    expect(mockPush).toHaveBeenCalledWith('/profile/ability')
+    expect(mockPush).toHaveBeenCalledWith('/account/ability')
   })
   it('saves the age field on change', () => {
     render(<ChildProfileHome />)

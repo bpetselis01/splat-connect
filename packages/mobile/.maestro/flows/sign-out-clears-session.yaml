@@ -11,8 +11,8 @@ appId: com.splatconnect.mobile
 # would wipe the SecureStore entry this suite exists to test.
 - clearState
 - runFlow: ../subflows/launch.yaml
-- tapOn:
-    text: "Profile"
+- assertVisible:
+    text: "Welcome Back"
 # TextField renders its label as a sibling <Text> with the same string as the
 # input's own accessibilityLabel, so "Email"/"Password" match two nodes —
 # target the inputs by testID instead.
@@ -25,11 +25,13 @@ appId: com.splatconnect.mobile
 - hideKeyboard
 - tapOn:
     text: "Sign In"
-- assertVisible:
-    text: "Child profile"
 
-# ChildProfileHome carries its own Sign Out (child-profile-home.tsx:109), so the
-# parent view does not need to be left first.
+# Sign Out lives on Account, which is behind the MY SPLAT popover now — the
+# centre button, then the tile that opens it.
+- tapOn:
+    text: "MY SPLAT"
+- tapOn:
+    text: "Account & child profiles"
 - tapOn:
     text: "Sign Out"
 - assertVisible:
@@ -39,8 +41,7 @@ appId: com.splatconnect.mobile
 # is on screen. secureStoreAdapter.removeItem has to have actually deleted the key.
 - stopApp
 - runFlow: ../subflows/launch.yaml
-- tapOn:
-    text: "Profile"
+# No tab to tap first: a signed-out launch lands on the sign-in screen.
 - assertVisible:
     text: "Welcome Back"
 - assertNotVisible:

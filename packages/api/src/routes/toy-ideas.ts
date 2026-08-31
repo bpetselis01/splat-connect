@@ -1,7 +1,6 @@
 import { Hono } from 'hono'
 import { CONTACT_PREFS, type ContactPref } from '@splat-connect/types'
-import { createUserClient } from '../supabase/user-client.js'
-import { createAdminClient } from '../supabase/client.js'
+import { createUserClient, createAdminClient } from '../supabase/client.js'
 import type { AuthVariables } from '../middleware/auth.js'
 
 const toyIdeas = new Hono<{ Variables: AuthVariables }>()
@@ -19,7 +18,7 @@ const NARRATIVE_FIELDS = [
  * idea reaches a reviewer with nothing to judge, so this rejects rather than
  * storing blanks — the same reasoning as readPickupAddress in toy-transactions.
  */
-export function readIdeaBody(body: unknown): Record<string, unknown> | null {
+function readIdeaBody(body: unknown): Record<string, unknown> | null {
   if (body === null || typeof body !== 'object' || Array.isArray(body)) return null
   const source = body as Record<string, unknown>
   const out: Record<string, unknown> = {}

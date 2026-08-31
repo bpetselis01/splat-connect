@@ -7,8 +7,7 @@
  * (009) — role was an escalation path, and email mirrors auth.users.
  */
 import { Hono } from 'hono'
-import { createUserClient } from '../supabase/user-client.js'
-import { createAdminClient } from '../supabase/client.js'
+import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { pickEditable } from './pick-editable.js'
 import type { AuthVariables } from '../middleware/auth.js'
 

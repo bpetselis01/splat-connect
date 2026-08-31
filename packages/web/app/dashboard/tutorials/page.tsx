@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { apiClient } from '@/lib/api-client'
-import { redirect } from 'next/navigation'
+import { requireCapabilities } from '@/lib/require-capabilities'
 import { DashboardTutorialCard } from '@/components/dashboard-tutorial-card'
 import { BookOpen } from '@/components/icons'
 import { BoundaryLink } from '@/components/boundary-link'
@@ -8,11 +8,7 @@ import { MarkNotificationsRead } from '@/components/mark-notifications-read'
 import type { Tutorial, Profile, TutorialOrg } from '@splat-connect/types'
 
 export default async function DashboardPage() {
-  try {
-    await apiClient.get<Profile>('/api/contributors/me')
-  } catch {
-    redirect('/login')
-  }
+  await requireCapabilities()
 
   const tutorials = await apiClient.get<(Tutorial & { tutorial_orgs?: TutorialOrg[] })[]>(
     '/api/tutorials/mine'

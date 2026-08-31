@@ -27,8 +27,6 @@ function caps(over: Partial<Capabilities> = {}): Capabilities {
     profile,
     isAdmin: false,
     ledOrgs: [],
-    canAuthor: true,
-    unreadNotifications: 0,
     unread: { tutorials: 0, exchanges: 0, challenges: 0, total: 0 },
     exchangeActions: 0,
     ...over,
@@ -43,7 +41,7 @@ describe('buildNav', () => {
   // Chain: leadership is granted by an admin, so an empty Organisation group
   //        would offer a capability the visitor cannot obtain.
   it('adds the Organisation group only when the account leads an org', () => {
-    expect(headings(buildNav(caps({ ledOrgs: [org] }), 0))).toEqual([
+    expect(headings(buildNav(caps({ ledOrgs: [org] })))).toEqual([
       'Add a tutorial',
       'Exchange a toy',
       'Give us a challenge',
@@ -51,31 +49,31 @@ describe('buildNav', () => {
       'Organisation',
       'Account',
     ])
-    expect(hrefs(buildNav(caps({ ledOrgs: [org] }), 0))).toContain('/dashboard/organisation')
+    expect(hrefs(buildNav(caps({ ledOrgs: [org] })))).toContain('/dashboard/organisation')
   })
 
   // Pins the href, not just the label: the hub's accessible-name test covers
   // the heading, but nothing else asserts this row still points at the moved
   // tutorial list rather than the old /dashboard.
   it('points the Add a tutorial group\'s first row at /dashboard/tutorials', () => {
-    expect(buildNav(caps(), 0)[0].rows[0].href).toBe('/dashboard/tutorials')
+    expect(buildNav(caps())[0].rows[0].href).toBe('/dashboard/tutorials')
   })
 
   it('adds Admin to the Account group only for admins', () => {
-    expect(hrefs(buildNav(caps(), 0))).not.toContain('/admin')
-    expect(hrefs(buildNav(caps({ isAdmin: true }), 0))).toContain('/admin')
+    expect(hrefs(buildNav(caps()))).not.toContain('/admin')
+    expect(hrefs(buildNav(caps({ isAdmin: true })))).toContain('/admin')
   })
 
   it('includes a My exchanges row for every account', () => {
-    expect(hrefs(buildNav(caps(), 0))).toContain('/dashboard/exchanges')
+    expect(hrefs(buildNav(caps()))).toContain('/dashboard/exchanges')
   })
 
   it('includes a Submit an idea row that points outside the account section', () => {
-    expect(hrefs(buildNav(caps(), 0))).toContain('/get-involved/submit-an-idea')
+    expect(hrefs(buildNav(caps()))).toContain('/get-involved/submit-an-idea')
   })
 
   it('marks the two unbuilt rows as soon, and no others', () => {
-    const soon = buildNav(caps({ ledOrgs: [org], isAdmin: true }), 0)
+    const soon = buildNav(caps({ ledOrgs: [org], isAdmin: true }))
       .flatMap((g) => g.rows)
       .filter((r) => r.soon)
       .map((r) => r.href)
@@ -90,21 +88,21 @@ describe('buildNav', () => {
   // Same total as before Child profiles moved to the Account page: it left
   // and Submit an idea arrived in its place.
   it('builds thirteen linked rows for a leader-admin', () => {
-    const rows = buildNav(caps({ ledOrgs: [org], isAdmin: true }), 0).flatMap((g) => g.rows)
+    const rows = buildNav(caps({ ledOrgs: [org], isAdmin: true })).flatMap((g) => g.rows)
     expect(rows).toHaveLength(13)
   })
 
   it('includes a Design challenges row for every account', () => {
-    expect(hrefs(buildNav(caps(), 0))).toContain('/dashboard/challenges')
+    expect(hrefs(buildNav(caps()))).toContain('/dashboard/challenges')
   })
 
   it('gives every row a unique href', () => {
-    const all = hrefs(buildNav(caps({ ledOrgs: [org], isAdmin: true }), 0))
+    const all = hrefs(buildNav(caps({ ledOrgs: [org], isAdmin: true })))
     expect(new Set(all).size).toBe(all.length)
   })
 
   it('includes a Notifications row with no count when there are no unread notifications', () => {
-    const row = buildNav(caps(), 0)
+    const row = buildNav(caps())
       .flatMap((g) => g.rows)
       .find((r) => r.href === '/notifications')
     expect(row).toBeDefined()
@@ -112,14 +110,14 @@ describe('buildNav', () => {
   })
 
   it('carries the unread count when there are unread notifications', () => {
-    const row = buildNav(caps(), 3)
+    const row = buildNav(caps({ unread: { tutorials: 1, exchanges: 1, challenges: 1, total: 3 } }))
       .flatMap((g) => g.rows)
       .find((r) => r.href === '/notifications')
     expect(row?.count).toBe(3)
   })
 
   const exchangesRow = (over: Partial<Capabilities> = {}) =>
-    buildNav(caps(over), 0)
+    buildNav(caps(over))
       .flatMap((g) => g.rows)
       .find((r) => r.href === '/dashboard/exchanges')
 
@@ -137,7 +135,7 @@ describe('buildNav', () => {
   // Chain: the header renders those four sections on every page now, so keeping
   //        them in the rail would be two controls competing at one level
   it('drops the Browse group now the header carries it', () => {
-    const groups = buildNav(caps(), 0)
+    const groups = buildNav(caps())
     expect(groups.map((g) => g.heading)).toEqual([
       'Add a tutorial',
       'Exchange a toy',
@@ -158,7 +156,7 @@ describe('buildNav', () => {
   // Chain: the rail is now the account section's secondary nav; a row outside it
   //        would be navigating out of the section it belongs to
   it('keeps only account destinations, aside from Submit an idea', () => {
-    const rows = buildNav(caps(), 0).flatMap((g) => g.rows)
+    const rows = buildNav(caps()).flatMap((g) => g.rows)
     for (const row of rows) {
       if (row.href === '/get-involved/submit-an-idea') continue
       expect(row.href).toMatch(/^\/(dashboard|admin|notifications)/)
@@ -171,7 +169,7 @@ describe('buildNav', () => {
    * decision 8 rather than two separate changes.
    */
   it('puts Saved first in the Account group, ahead of Notifications', () => {
-    const account = buildNav(caps(), 0).find((g) => g.heading === 'Account')!
+    const account = buildNav(caps()).find((g) => g.heading === 'Account')!
     expect(account.rows.map((r) => r.label)).toEqual(['Saved', 'Notifications', 'Account'])
     expect(account.rows[0].href).toBe('/dashboard/saved')
   })

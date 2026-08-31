@@ -13,8 +13,7 @@
  * - lib/nav-model.ts: the destination list, shared with the rail
  * - components/hub-grid.tsx: the grid, shared with every public hub
  */
-import { redirect } from 'next/navigation'
-import { getCapabilities } from '@/lib/capabilities'
+import { requireCapabilities } from '@/lib/require-capabilities'
 import { buildNav } from '@/lib/nav-model'
 import { HubGrid } from '@/components/hub-grid'
 import { ACCOUNT_NAV } from '@/lib/public-nav'
@@ -25,8 +24,7 @@ export const metadata = {
 }
 
 export default async function DashboardHub() {
-  const caps = await getCapabilities()
-  if (!caps) redirect('/login')
+  const caps = await requireCapabilities()
 
   /*
    * What is behind each card, rather than a sentence about the card.
@@ -67,7 +65,7 @@ export default async function DashboardHub() {
   // one and not the other — with one subtraction. "Submit an idea" is the only
   // row here that points at a public route, and Design challenges already leads
   // to the same section, so it is a line on that card instead of a card.
-  const items: NavItem[] = buildNav(caps, caps.unreadNotifications)
+  const items: NavItem[] = buildNav(caps)
     .flatMap((g) => g.rows)
     .filter((row) => row.href !== '/get-involved/submit-an-idea')
     .map((row) => ({

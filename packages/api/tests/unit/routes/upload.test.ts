@@ -48,9 +48,6 @@ const mockToysFrom = vi.fn((table: string) =>
 // toy-cover/toy-switch-photo ownership check can be driven per-test.
 vi.mock('../../../src/supabase/client.js', () => ({
   createAdminClient: () => ({ storage: mockAdminStorage }),
-}))
-
-vi.mock('../../../src/supabase/user-client.js', () => ({
   createUserClient: () => ({ storage: mockUserStorage, from: mockToysFrom }),
 }))
 

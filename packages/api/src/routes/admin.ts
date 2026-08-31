@@ -4,8 +4,7 @@
  * appointment).
  */
 import { Hono } from 'hono'
-import { createAdminClient } from '../supabase/client.js'
-import { createUserClient } from '../supabase/user-client.js'
+import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { ORG_COLUMNS } from './organizations.js'
 import { systemMessage } from './toy-ideas.js'
 import type { AuthVariables } from '../middleware/auth.js'

@@ -8,8 +8,6 @@ vi.mock('@/lib/capabilities', () => ({
     profile: { id: 'owner-1', name: 'Sam', email: 'sam@example.com', role: 'contributor' },
     isAdmin: false,
     ledOrgs: [],
-    canAuthor: true,
-    unreadNotifications: 0,
     exchangeActions: 1,
   }),
 }))

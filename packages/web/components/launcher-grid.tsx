@@ -23,21 +23,13 @@
  */
 import Link from 'next/link'
 import type { Route } from 'next'
-import type { IllustrationKey } from '@/components/editorial-image'
-import { toneClass, type Tone } from '@/lib/tone'
+import type { NavSection } from '@/lib/public-nav'
+import { toneClass } from '@/lib/tone'
 import { Slot, Sticker } from '@/components/slot'
 
-export interface LauncherTile {
-  href: string
-  label: string
-  blurb: string
-  tone: Tone
-  /** The section's illustration, worn by pillar tiles. */
-  art: IllustrationKey
-  rank: 'pillar' | 'supporting'
-  /** Omitted where a number would be meaningless, e.g. About. */
-  count?: number
-}
+/** A section as the nav model already declares it, plus the one thing the
+ *  launcher adds: a count, omitted where a number would be meaningless. */
+export type LauncherTile = NavSection & { count?: number }
 
 export function LauncherGrid({ tiles }: { tiles: LauncherTile[] }) {
   return (

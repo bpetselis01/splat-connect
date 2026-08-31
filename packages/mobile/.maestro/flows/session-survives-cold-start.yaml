@@ -12,12 +12,11 @@ appId: com.splatconnect.mobile
 - clearState
 - runFlow: ../subflows/launch.yaml
 
-# Sign in on the Profile tab. Button sets accessibilityLabel={label}, so
-# "Sign In" etc. are addressable by text. TextField renders its label as a
-# sibling <Text> with the same string as the input's own accessibilityLabel,
-# so "Email"/"Password" match two nodes — target the inputs by testID instead.
-- tapOn:
-    text: "Profile"
+# The app now lives behind sign-in — a signed-out launch lands directly on
+# the sign-in screen. Button sets accessibilityLabel={label}, so "Sign In"
+# etc. are addressable by text. TextField renders its label as a sibling
+# <Text> with the same string as the input's own accessibilityLabel, so
+# "Email"/"Password" match two nodes — target the inputs by testID instead.
 - assertVisible:
     text: "Welcome Back"
 - tapOn:
@@ -30,23 +29,18 @@ appId: com.splatconnect.mobile
 - tapOn:
     text: "Sign In"
 
-# A parent with role resolved from GET /api/contributors/me lands on
-# ChildProfileHome (app/(tabs)/profile/index.tsx), not the "Signed in as" card.
+# A signed-in visitor lands on the Guides tab.
 - assertVisible:
-    text: "Child profile"
-- assertVisible:
-    text: "Customization Metrics"
+    text: "Guides"
 
 # The actual test: kill the process, then cold-start again. Anything held only in
 # React state or memory is gone; only what secureStoreAdapter wrote survives.
 - stopApp
 - runFlow: ../subflows/launch.yaml
-- tapOn:
-    text: "Profile"
 
 # Still signed in — no sign-in form. Asserting the form is absent matters as much
 # as asserting the home is present: a half-restored session could render both.
 - assertVisible:
-    text: "Child profile"
+    text: "Guides"
 - assertNotVisible:
     text: "Welcome Back"

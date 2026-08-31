@@ -1,8 +1,6 @@
 // packages/mobile/components/profile/everyday-needs-screen.tsx
-import { ScrollView, Text, StyleSheet } from 'react-native'
 import { useChildProfile } from '../../lib/use-child-profile'
-import { theme } from '../../lib/theme'
-import { ChipGroup, Dropdown } from './fields'
+import { ChipGroup, Dropdown, FormScreen } from './fields'
 import { TextField } from '../ui/TextField'
 import { Section } from '../ui/Section'
 
@@ -15,10 +13,7 @@ export function EverydayNeedsScreen() {
   const challenges = profile?.challenges ?? []
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.intro}>
-        What&apos;s hardest day to day? This steers which tutorials get suggested first.
-      </Text>
+    <FormScreen intro="What's hardest day to day? This steers which tutorials get suggested first.">
 
       <Section title="Top challenges" hint="Pick up to three, so the suggestions stay focused.">
         <ChipGroup
@@ -52,18 +47,7 @@ export function EverydayNeedsScreen() {
           onChange={(v) => save({ env_context: v })}
         />
       </Section>
-    </ScrollView>
+    </FormScreen>
   )
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.background },
-  content: { padding: theme.spacing(4), paddingBottom: theme.spacing(10) },
-  intro: {
-    fontFamily: theme.fonts.regular,
-    fontSize: theme.type.label,
-    color: theme.colors.muted,
-    lineHeight: 21,
-    marginBottom: theme.spacing(5),
-  },
-})

@@ -10,7 +10,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Route } from 'next'
 import type { ChildProfile } from '@splat-connect/types'
-import { ChildEditStepper } from '@/components/child-edit-stepper'
+import { Stepper } from '@/components/stepper'
 import { ChildSurveyForm } from '@/components/child-survey-form'
 import { ChildAbilityForm } from '@/components/child-ability-form'
 import { ChildEverydayNeedsForm } from '@/components/child-everyday-needs-form'
@@ -40,7 +40,8 @@ export function ChildEditor({ child: initialChild, label }: { child: ChildProfil
   return (
     <div>
       <h1 className="mb-6 text-2xl font-bold text-ink">{heading}</h1>
-      <ChildEditStepper
+      <Stepper
+        label="Child profile sections"
         steps={[
           {
             id: 'survey',

@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { StepList } from '@/components/step-list'
 import { IdeaForm } from '@/components/idea-form'
-import { getUserRole } from '@/lib/auth'
+import { getCapabilities } from '@/lib/capabilities'
 
 export const metadata = {
   title: 'Submit an idea — SPLAT Connect',
@@ -23,7 +23,9 @@ const SCOPE_EXCLUSIONS = [
 ]
 
 export default async function SubmitAnIdea() {
-  const role = await getUserRole()
+  // getCapabilities is cached and the root layout already ran it, so this is
+  // free — and only its truthiness matters here.
+  const signedIn = !!(await getCapabilities())
 
   return (
     <div className="max-w-3xl">
@@ -67,7 +69,7 @@ export default async function SubmitAnIdea() {
         </ul>
       </div>
 
-      {role ? (
+      {signedIn ? (
         <IdeaForm />
       ) : (
         <div className="mt-6">

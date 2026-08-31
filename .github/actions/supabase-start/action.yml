@@ -1,0 +1,24 @@
+name: Start local Supabase
+description: Installs the pinned Supabase CLI and brings a local stack up.
+
+runs:
+  using: composite
+  steps:
+    - uses: supabase/setup-cli@v1
+      with:
+        # Pinned: 'latest' resolves via an unauthenticated GitHub API call
+        # that gets rate-limited on shared runners, and CLI behavior drift
+        # has bitten before (see migration 004). Bump deliberately.
+        version: 2.109.1
+
+    # 54320-54329 sit inside the runner's ephemeral port range
+    # (net.ipv4.ip_local_port_range = 32768 60999), so the kernel can hand
+    # 54322 to an outbound socket — the image pulls above open dozens — and
+    # Docker then fails to publish it: "address already in use".
+    - name: Reserve Supabase ports from the ephemeral range
+      shell: bash
+      run: sudo sysctl -w net.ipv4.ip_local_reserved_ports=54320-54329
+
+    - name: Start local Supabase
+      shell: bash
+      run: supabase start

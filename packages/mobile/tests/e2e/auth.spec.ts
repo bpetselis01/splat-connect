@@ -1,17 +1,15 @@
 import { test, expect } from '@playwright/test'
 import { createContributor, signIn, signUpNewAccount, uniqueSignupEmail, adminClient } from './helpers'
 
-test('a contributor signs in to the account segment by default', async ({ page }) => {
+test('a contributor signs in and lands on Guides', async ({ page }) => {
   const { email, password } = await createContributor()
   await signIn(page, email, password)
 
-  await expect(page.getByText(`Signed in as ${email}`)).toBeVisible()
-  // Account is the default segment; Child Profile only renders once selected.
-  await expect(page.getByText('Customization Metrics')).toHaveCount(0)
+  await expect(page).toHaveURL(/\/guides$/)
 })
 
 test('mismatched passwords are rejected before any request is sent', async ({ page }) => {
-  await page.goto('/profile')
+  await page.goto('/sign-in')
   await page.getByText('Create an account').click()
   await page.getByPlaceholder('Name').fill('E2E Mismatch')
   await page.getByPlaceholder('Email').fill(uniqueSignupEmail())
@@ -33,7 +31,7 @@ test('invalid credentials show an error and stay on the form', async ({ page }) 
 test('signing up with an already-registered email shows an error', async ({ page }) => {
   const { email } = await createContributor()
 
-  await page.goto('/profile')
+  await page.goto('/sign-in')
   await page.getByText('Create an account').click()
   await page.getByPlaceholder('Name').fill('E2E Duplicate')
   await page.getByPlaceholder('Email').fill(email)
@@ -45,7 +43,7 @@ test('signing up with an already-registered email shows an error', async ({ page
 })
 
 test('the signed-out screen toggles between sign in and sign up', async ({ page }) => {
-  await page.goto('/profile')
+  await page.goto('/sign-in')
 
   await expect(page.getByText('Welcome Back')).toBeVisible()
   await page.getByText('Create an account').click()
@@ -60,15 +58,19 @@ test('the signed-out screen toggles between sign in and sign up', async ({ page 
 test('the contributor account view offers the web dashboard and sign out', async ({ page }) => {
   const { email, password } = await createContributor()
   await signIn(page, email, password)
+  // Wait for the landing: /account is gated too, so navigating before the
+  // session lands bounces straight back to the sign-in screen.
+  await expect(page).toHaveURL(/\/guides$/)
+  await page.goto('/account')
 
   await expect(page.getByText(`Signed in as ${email}`)).toBeVisible()
   await expect(page.getByText('Open Web Dashboard')).toBeVisible()
   await expect(page.getByText('Sign Out')).toBeVisible()
 })
 
-test('a new signup lands on Account by default and can switch to Child Profile', async ({ page }) => {
+test('a new signup lands on Guides', async ({ page }) => {
   const email = uniqueSignupEmail()
-  await page.goto('/profile')
+  await page.goto('/sign-in')
   await page.getByText('Create an account').click()
   await page.getByPlaceholder('Name').fill('E2E Contributor')
   await page.getByPlaceholder('Email').fill(email)
@@ -90,16 +92,5 @@ test('a new signup lands on Account by default and can switch to Child Profile',
   await page.getByPlaceholder('Password').fill('Test1234!')
   await page.getByText('Sign In', { exact: true }).click()
 
-  // Account is the true first-visit default — this is the one caller in the
-  // suite that signs up without using signUpNewAccount's own final Child
-  // Profile selection, specifically to observe it.
-  await expect(page.getByText('Open Web Dashboard')).toBeVisible()
-  await expect(page.getByText('Customization Metrics')).toHaveCount(0)
-
-  await page.getByText('Child Profile').click()
-
-  await expect(page.getByText('Ability Profile')).toBeVisible()
-  await expect(page.getByText('Everyday Needs')).toBeVisible()
-  await expect(page.getByText('Customization Metrics')).toBeVisible()
-  await expect(page.getByText('Open Web Dashboard')).toHaveCount(0)
+  await expect(page).toHaveURL(/\/guides$/)
 })

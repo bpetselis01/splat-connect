@@ -67,3 +67,6 @@ packages/api/.env
 graphify-out/
 
 .playwright-mcp/
+
+# stray logs
+*.log

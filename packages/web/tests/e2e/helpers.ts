@@ -283,9 +283,22 @@ export async function deleteOrg(orgId: string) {
   await adminClient().from('organizations').delete().eq('id', orgId)
 }
 
-export async function signIn(page: Page, email: string, password: string) {
+/** Fill and submit the login form, and nothing more — for a spec that expects
+ *  the attempt to fail. A successful sign-in wants signIn(). */
+export async function submitLogin(page: Page, email: string, password: string) {
   await page.goto('/login')
   await page.locator('#email').fill(email)
   await page.locator('#password').fill(password)
   await page.getByRole('button', { name: 'Sign in' }).click()
+}
+
+export async function signIn(page: Page, email: string, password: string) {
+  await submitLogin(page, email, password)
+  // The click resolves before the login handler has finished: it awaits
+  // signInWithPassword, a getUser and a profile read, and only then sets
+  // window.location — so the auth cookie is not written yet when click()
+  // returns. A spec that navigates straight away arrives signed out. "Anywhere
+  // but /login" rather than a fixed destination, because a contributor who
+  // has not accepted terms lands on /onboarding, not /dashboard.
+  await page.waitForURL((url) => !url.pathname.startsWith('/login'))
 }

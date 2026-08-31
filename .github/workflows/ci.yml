@@ -61,18 +61,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install
+      - uses: ./.github/actions/setup
 
       - name: Type check all packages
         run: pnpm -r typecheck
@@ -84,18 +73,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install
+      - uses: ./.github/actions/setup
 
       - name: Test API
         run: pnpm --filter @splat-connect/api test:unit
@@ -115,35 +93,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11
+      - uses: ./.github/actions/setup
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install
-
-      - uses: supabase/setup-cli@v1
-        with:
-          # Pinned: 'latest' resolves via an unauthenticated GitHub API call
-          # that gets rate-limited on shared runners, and CLI behavior drift
-          # has bitten before (see migration 004). Bump deliberately.
-          version: 2.109.1
-
-      # 54320-54329 sit inside the runner's ephemeral port range
-      # (net.ipv4.ip_local_port_range = 32768 60999), so the kernel can hand
-      # 54322 to an outbound socket — the image pulls above open dozens — and
-      # Docker then fails to publish it: "address already in use".
-      - name: Reserve Supabase ports from the ephemeral range
-        run: sudo sysctl -w net.ipv4.ip_local_reserved_ports=54320-54329
-
-      - name: Start local Supabase
-        run: supabase start
+      - uses: ./.github/actions/supabase-start
 
       - name: Run integration tests
         run: pnpm --filter @splat-connect/api test:integration
@@ -161,32 +113,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11
+      - uses: ./.github/actions/setup
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install
-
-      - uses: supabase/setup-cli@v1
-        with:
-          version: 2.109.1
-
-      # 54320-54329 sit inside the runner's ephemeral port range
-      # (net.ipv4.ip_local_port_range = 32768 60999), so the kernel can hand
-      # 54322 to an outbound socket — the image pulls above open dozens — and
-      # Docker then fails to publish it: "address already in use".
-      - name: Reserve Supabase ports from the ephemeral range
-        run: sudo sysctl -w net.ipv4.ip_local_reserved_ports=54320-54329
-
-      - name: Start local Supabase
-        run: supabase start
+      - uses: ./.github/actions/supabase-start
 
       # The Expo web app + API servers are started by Playwright's webServer
       # (see packages/mobile/playwright.config.ts) and pointed at local Supabase.
@@ -209,32 +138,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11
+      - uses: ./.github/actions/setup
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install
-
-      - uses: supabase/setup-cli@v1
-        with:
-          version: 2.109.1
-
-      # 54320-54329 sit inside the runner's ephemeral port range
-      # (net.ipv4.ip_local_port_range = 32768 60999), so the kernel can hand
-      # 54322 to an outbound socket — the image pulls above open dozens — and
-      # Docker then fails to publish it: "address already in use".
-      - name: Reserve Supabase ports from the ephemeral range
-        run: sudo sysctl -w net.ipv4.ip_local_reserved_ports=54320-54329
-
-      - name: Start local Supabase
-        run: supabase start
+      - uses: ./.github/actions/supabase-start
 
       # The API + Next.js production build are started by Playwright's
       # webServer (see packages/web/playwright.config.ts) and pointed at
@@ -244,185 +150,6 @@ jobs:
 
       - name: Run web E2E tests
         run: pnpm --filter @splat-connect/web test:e2e
-
-      - name: Stop local Supabase
-        if: always()
-        run: supabase stop --no-backup
-
-  # Native-only coverage: the one suite that exercises expo-secure-store as the
-  # Supabase auth storage adapter (lib/supabase-storage.ts). The Expo-web harness
-  # runs webAdapter, so no Playwright test can reach that branch.
-  #
-  # Disabled off the main push trigger for now — kept as workflow_dispatch only
-  # so it can still be run manually. Re-add `github.ref == 'refs/heads/main'` to
-  # the condition below to resume automatic runs on merges to main.
-  device-e2e:
-    name: Device E2E Tests (Android)
-    needs: [check, test]
-    if: github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install
-
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
-
-      # expo prebuild + assembleRelease dominates this job. assembleRelease runs
-      # Metro and bundles the app's JS into the APK, so the key must cover
-      # everything that can change the built artifact: config, dependencies, and
-      # the JS/assets that get bundled. That way the cache can never serve an APK
-      # that does not match the tree under test.
-      - name: Cache the release APK
-        id: apk-cache
-        uses: actions/cache@v4
-        with:
-          path: packages/mobile/android/app/build/outputs/apk/release/app-release.apk
-          key: apk-${{ hashFiles('packages/mobile/app.json', 'packages/mobile/package.json', 'pnpm-lock.yaml', '.github/workflows/ci.yml', 'packages/mobile/app/**', 'packages/mobile/components/**', 'packages/mobile/lib/**', 'packages/mobile/assets/**', 'packages/types/**') }}
-
-      - name: Build the release APK
-        if: steps.apk-cache.outputs.cache-hit != 'true'
-        working-directory: packages/mobile
-        env:
-          EXPO_PUBLIC_SUPABASE_URL: http://10.0.2.2:54321
-          EXPO_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
-          EXPO_PUBLIC_API_URL: http://10.0.2.2:3106
-          # 3105, not the E2E API port 3104: nothing serves either port in this
-          # job and no flow exercises this variable, so it's inert — set only so
-          # the value is not undefined.
-          EXPO_PUBLIC_WEB_URL: http://10.0.2.2:3105
-        run: pnpm device:build
-
-      - uses: supabase/setup-cli@v1
-        with:
-          version: 2.109.1
-
-      # 54320-54329 sit inside the runner's ephemeral port range, so the kernel
-      # can hand 54322 to an outbound socket and Docker then fails to publish it.
-      - name: Reserve Supabase ports from the ephemeral range
-        run: sudo sysctl -w net.ipv4.ip_local_reserved_ports=54320-54329
-
-      - name: Start local Supabase
-        run: supabase start
-
-      # Unlike the Playwright suites, nothing here starts the API for us: Maestro
-      # has no webServer equivalent. The app resolves a parent's role through
-      # GET /api/contributors/me, and without it the Profile tab renders the
-      # signed-in card instead of ChildProfileHome and both flows fail.
-      - name: Start the API on the device port
-        env:
-          SUPABASE_URL: http://localhost:54321
-          SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
-          SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU
-          PORT: 3106
-          API_PORT: 3106
-        run: |
-          pnpm --filter @splat-connect/api dev &
-          # A curl retry loop rather than `npx wait-on`: wait-on is not a dependency of this
-          # repo, and npx would silently fetch it at CI time. Four lines beats a new dependency.
-          for i in $(seq 1 60); do
-            curl -sf -o /dev/null http://localhost:3106/api/public/tutorials && break
-            [ "$i" = 60 ] && echo "API never came up on 3106" && exit 1
-            sleep 2
-          done
-
-      - name: Provision the parent fixture
-        # --silent is required, not cosmetic: this redirects stdout straight into
-        # $GITHUB_ENV, so a single extra stdout line (a pnpm banner) would corrupt
-        # the environment file. The script itself prints exactly two KEY=value
-        # lines; --silent guarantees pnpm adds nothing to them rather than relying
-        # on pnpm's banner happening to go to stderr.
-        run: pnpm --silent --filter @splat-connect/mobile device:fixture >> "$GITHUB_ENV"
-
-      # A stale Metro cache can freeze a `localhost` value into the bundle, which
-      # would point the device app at nothing and fail as an inscrutable timeout.
-      # Assert against the APK so this holds on a cache hit too.
-      #
-      # `index.android.bundle` is Hermes BYTECODE (magic c61fbc03), not text, so:
-      #   - grep needs -a, or it reports "binary file matches" instead of matching;
-      #   - the bundle must be piped straight in, never held in a shell variable —
-      #     shell vars cannot carry NUL bytes, which truncates the data. That form
-      #     was measured failing against a known-good APK on 2026-07-26, i.e. it
-      #     would have failed every healthy build.
-      # The trailing `echo` is load-bearing: it makes the step exit 0 in the success
-      # case, where the second grep deliberately finds nothing and returns 1.
-      - name: Verify the bundle baked the emulator host
-        working-directory: packages/mobile
-        env:
-          APK: android/app/build/outputs/apk/release/app-release.apk
-        run: |
-          unzip -p "$APK" assets/index.android.bundle | grep -aq "10.0.2.2" \
-            || { echo "bundle does not contain 10.0.2.2"; exit 1; }
-          unzip -p "$APK" assets/index.android.bundle | grep -aq "localhost:54321" \
-            && { echo "bundle baked a localhost Supabase URL"; exit 1; }
-          echo "bundle baked the emulator host correctly"
-
-      - name: Install Maestro
-        run: |
-          curl -fsSL "https://get.maestro.mobile.dev" | bash
-          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
-
-      # ubuntu-24.04 ships /dev/kvm but leaves the `kvm` group empty, so the
-      # runner user cannot open it. android-emulator-runner's
-      # `disable-linux-hw-accel: auto` then falls back to `-accel off` and boots
-      # an x86_64 guest under QEMU binary translation — measured on 2026-07-26 at
-      # ~7 min to boot and ~6 min to `adb install` the APK. Maestro's driver
-      # startup budget is ~2 min, so it timed out mid-install and reported the
-      # useless "driver did not start up in time".
-      #
-      # A udev rule rather than `gpasswd -a $USER kvm`: group membership only
-      # applies to a new login session, which a CI step never gets, so gpasswd
-      # would leave this silently broken. `test -w` is the guard — without it the
-      # next regression is another 16-minute job failing at the wrong layer.
-      - name: Enable KVM for the emulator
-        run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
-            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
-          # `trigger` only enqueues the uevent; udev applies the rule (the actual
-          # chmod) asynchronously. Without waiting for the queue to drain, `test -w`
-          # races that application and intermittently fails on an identical script —
-          # measured passing and failing in the same ~50-90ms window on 2026-07-31.
-          sudo udevadm settle --timeout=30
-          test -w /dev/kvm || { echo "/dev/kvm is not writable; the emulator would fall back to -accel off"; exit 1; }
-
-      - name: Run the Maestro flows
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 34
-          arch: x86_64
-          profile: pixel_6
-          # AVD boot is minutes of the job.
-          emulator-boot-timeout: 900
-          working-directory: packages/mobile
-          script: |
-            adb install -r android/app/build/outputs/apk/release/app-release.apk
-            maestro test .maestro/flows/ --env DEVICE_EMAIL=$DEVICE_EMAIL --env DEVICE_PASSWORD=$DEVICE_PASSWORD
-
-      # Maestro writes a screenshot and a hierarchy dump per failed step. Without
-      # these, a device failure is unreproducible on a machine you cannot see.
-      - name: Upload Maestro artifacts
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: maestro-debug
-          path: /home/runner/.maestro/tests/**
 
       - name: Stop local Supabase
         if: always()
@@ -448,17 +175,17 @@ jobs:
     needs: changes
     if: needs.changes.outputs.api == 'true'
     runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+      IS_FORK: ${{ github.event.pull_request.head.repo.fork }}
     steps:
       - uses: actions/checkout@v4
       - uses: supabase/setup-cli@v1
         with:
           version: 2.109.1
       - name: Check remote migration drift
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
-          IS_FORK: ${{ github.event.pull_request.head.repo.fork }}
         run: |
           if [ -z "$SUPABASE_ACCESS_TOKEN" ] || [ -z "$SUPABASE_PROJECT_REF" ]; then
             if [ "$IS_FORK" = "true" ]; then
@@ -479,10 +206,6 @@ jobs:
       # 2026-08-28 root cause: 009 read as applied, statements and all, while
       # none of its three objects existed. This asserts the objects themselves.
       - name: Check security-critical schema guards
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
-          IS_FORK: ${{ github.event.pull_request.head.repo.fork }}
         run: |
           if [ -z "$SUPABASE_ACCESS_TOKEN" ] || [ -z "$SUPABASE_PROJECT_REF" ]; then
             [ "$IS_FORK" = "true" ] && exit 0

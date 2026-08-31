@@ -13,7 +13,7 @@ const mockLedOrgs = (orgIds: string[]) => {
   ledOrgs = orgIds.map((org_id) => ({ org_id }))
 }
 
-vi.mock('../../../src/supabase/user-client.js', () => ({
+vi.mock('../../../src/supabase/client.js', () => ({
   createUserClient: () => ({
     from: (table: string) =>
       table === 'org_leaders'

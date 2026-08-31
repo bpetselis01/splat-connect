@@ -31,7 +31,7 @@
  *
  * Related files:
  * - packages/api/src/routes/admin.ts: GET /ideas, PATCH /ideas/:id/status, POST /ideas/:id/graduate
- * - components/idea-status-badge.tsx: the status → copy/colour map, reused here
+ * - components/badge.tsx: the status → copy/colour map, reused here
  */
 import { notFound } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
@@ -39,7 +39,7 @@ import Link from 'next/link'
 import type { Route } from 'next'
 import { apiClient } from '@/lib/api-client'
 import { isApiError } from '@/lib/api-core'
-import { IdeaStatusBadge } from '@/components/idea-status-badge'
+import { Badge, IDEA_LABEL } from '@/components/badge'
 import { Check, X } from '@/components/icons'
 import type { ToyIdea, ContactPref } from '@splat-connect/types'
 
@@ -110,7 +110,7 @@ export default async function AdminIdeaPage({ params }: { params: Promise<{ id: 
     <div className="max-w-2xl">
       <div className="mb-2 flex flex-wrap items-center gap-3">
         <h1 className="title-detail">{idea.title}</h1>
-        <IdeaStatusBadge status={idea.status} />
+        <Badge status={idea.status} label={IDEA_LABEL[idea.status]} />
       </div>
       <p className="mb-6 text-sm text-muted">
         Submitted by <strong className="text-ink">{idea.profiles?.name ?? 'Someone'}</strong> on{' '}

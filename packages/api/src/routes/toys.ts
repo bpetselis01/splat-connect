@@ -21,9 +21,10 @@
  * mapped to 404 rather than 500 for the same reason.
  */
 import { Hono } from 'hono'
-import { createUserClient } from '../supabase/user-client.js'
+import { createUserClient } from '../supabase/client.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import { pickEditable } from './pick-editable.js'
+import { ledOrgIds, ownedByCaller } from '../toy-access.js'
 import type { AuthVariables } from '../middleware/auth.js'
 import type { OfferType } from '@splat-connect/types'
 
@@ -62,17 +63,8 @@ function readQuantity(value: unknown): number | null {
   return value
 }
 
-/** The orgs this caller leads, for scoping every org-toy read and write. */
-async function ledOrgIds(token: string, userId: string): Promise<string[]> {
-  const { data } = await createUserClient(token)
-    .from('org_leaders')
-    .select('org_id')
-    .eq('user_id', userId)
-  return (data ?? []).map((row: { org_id: string }) => row.org_id)
-}
-
 /** Fields still missing before a toy may be published. */
-export function missingPublishFields(toy: {
+function missingPublishFields(toy: {
   cover_photo_url: string | null
   switch_adapted: boolean
   switch_photo_urls: string[]
@@ -102,7 +94,7 @@ toys.get('/', async (c) => {
 // personally. Declared before '/:id' so 'inventory' is not swallowed as an id.
 toys.get('/inventory', async (c) => {
   const supabase = createUserClient(c.get('token'))
-  const orgIds = await ledOrgIds(c.get('token'), c.get('userId'))
+  const orgIds = await ledOrgIds(supabase, c.get('userId'))
   if (orgIds.length === 0) return c.json([])
   const { data, error } = await supabase
     .from('toys')
@@ -121,7 +113,7 @@ toys.post('/', async (c) => {
   // caller's leaderships here and by the insert policy in 033, so a spoofed one
   // fails twice. Absent, this is an ordinary personal toy and nothing changes.
   const orgId = typeof body.owner_org_id === 'string' ? body.owner_org_id : null
-  if (orgId && !(await ledOrgIds(c.get('token'), c.get('userId'))).includes(orgId)) {
+  if (orgId && !(await ledOrgIds(supabase, c.get('userId'))).includes(orgId)) {
     return c.json({ error: 'You do not lead that organisation' }, 403)
   }
 
@@ -145,24 +137,10 @@ toys.post('/', async (c) => {
   return c.json(data)
 })
 
-/**
- * "Mine, or my organisation's" as a PostgREST filter.
- *
- * The :id handlers scope by ownership themselves as defence in depth on top of
- * RLS, which is why they answer 404 and never 403 for someone else's row. That
- * property is preserved here — a leader gets the same 404 for another org's toy
- * that a stranger gets.
- */
-function ownedByCaller(userId: string, orgIds: string[]): string {
-  const clauses = [`owner_id.eq.${userId}`]
-  if (orgIds.length) clauses.push(`owner_org_id.in.(${orgIds.join(',')})`)
-  return clauses.join(',')
-}
-
 toys.patch('/:id', async (c) => {
   const body = await c.req.json()
   const supabase = createUserClient(c.get('token'))
-  const orgIds = await ledOrgIds(c.get('token'), c.get('userId'))
+  const orgIds = await ledOrgIds(supabase, c.get('userId'))
 
   // Read first, to know whether quantity is an editable field on this row. A
   // person's toy has no stock to top up, and 033 would reject the write anyway.
@@ -201,7 +179,7 @@ toys.patch('/:id', async (c) => {
 
 toys.patch('/:id/publish', async (c) => {
   const supabase = createUserClient(c.get('token'))
-  const orgIds = await ledOrgIds(c.get('token'), c.get('userId'))
+  const orgIds = await ledOrgIds(supabase, c.get('userId'))
   const { data: existing, error: fetchError } = await supabase
     .from('toys')
     .select('cover_photo_url, switch_adapted, switch_photo_urls, offer_type')
@@ -231,7 +209,7 @@ toys.patch('/:id/publish', async (c) => {
 
 toys.delete('/:id', async (c) => {
   const supabase = createUserClient(c.get('token'))
-  const orgIds = await ledOrgIds(c.get('token'), c.get('userId'))
+  const orgIds = await ledOrgIds(supabase, c.get('userId'))
   const { data, error } = await supabase
     .from('toys')
     .delete()

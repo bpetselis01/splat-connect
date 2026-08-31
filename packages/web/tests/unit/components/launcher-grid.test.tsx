@@ -3,8 +3,8 @@ import { render, screen } from '@testing-library/react'
 import { LauncherGrid, type LauncherTile } from '@/components/launcher-grid'
 
 const tiles: LauncherTile[] = [
-  { href: '/library', label: 'Guides', blurb: 'Adaptation tutorials', tone: 'brand', art: 'adapted-toy', rank: 'pillar', count: 42 },
-  { href: '/about', label: 'About', blurb: 'Who we are', tone: 'plain', art: 'organisation', rank: 'supporting' },
+  { href: '/library', label: 'Guides', blurb: 'Adaptation tutorials', tone: 'brand', art: 'adapted-toy', rank: 'pillar', children: [], count: 42 },
+  { href: '/about', label: 'About', blurb: 'Who we are', tone: 'plain', art: 'organisation', rank: 'supporting', children: [] },
 ]
 
 describe('LauncherGrid', () => {
@@ -50,7 +50,7 @@ describe('LauncherGrid', () => {
   it('renders every tile upright — no tilt class on any grid item', () => {
     const { container } = render(
       <LauncherGrid tiles={[
-        { href: '/a', label: 'A', blurb: 'a', tone: 'brand', art: 'adapted-toy', rank: 'pillar', count: 1 },
+        { href: '/a', label: 'A', blurb: 'a', tone: 'brand', art: 'adapted-toy', rank: 'pillar', children: [], count: 1 },
       ]} />
     )
     const tile = container.querySelector('a.card')

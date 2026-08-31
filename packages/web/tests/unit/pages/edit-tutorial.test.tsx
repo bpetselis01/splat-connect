@@ -4,6 +4,8 @@ import EditTutorialPage from '@/app/tutorials/[id]/edit/page'
 import type { Profile, TutorialWithDetails } from '@splat-connect/types'
 import type { EditStep } from '@/lib/edit-steps'
 
+const { mockGetCapabilities } = vi.hoisted(() => ({ mockGetCapabilities: vi.fn() }))
+vi.mock('@/lib/capabilities', () => ({ getCapabilities: mockGetCapabilities }))
 vi.mock('@/lib/api-client', () => ({
   apiClient: { get: vi.fn(), patch: vi.fn(), post: vi.fn() },
 }))
@@ -36,10 +38,13 @@ vi.mock('@/components/tutorial-review-panel', () => ({
     <div data-testid="review-panel" data-title={title} />
   ),
 }))
-vi.mock('@/components/edit-stepper', () => ({
+// Reads ?created= through hooks this test does not mock, and announces the
+// redirect out of /upload rather than anything the page computes.
+vi.mock('@/components/created-toast', () => ({ CreatedToast: () => null }))
+vi.mock('@/components/stepper', () => ({
   // Renders each step's content, which is how the review panel above is
   // reached. Every section component is mocked to null, so this stays cheap.
-  EditStepper: ({ steps, finish }: { steps: EditStep[]; finish?: { missing: { step: string; label: string }[]; done?: unknown } }) => (
+  Stepper: ({ steps, finish }: { steps: EditStep[]; finish?: { missing: { step: string; label: string }[]; done?: unknown } }) => (
     <div
       data-testid="edit-stepper"
       data-missing={(finish?.missing ?? []).map((m) => `${m.step}:${m.label}`).join('|')}
@@ -101,15 +106,22 @@ describe('EditTutorialPage', () => {
     vi.resetAllMocks()
     // The page makes two further reads after the ones each test sets up with
     // mockResolvedValueOnce — the backing rows and the organisation list for the
-    // EditStepper's Backing step. Without a fallback those return undefined and
+    // the Team step's Backing panel. Without a fallback those return undefined and
     // every test dies on it. Empty is the ordinary case: most projects have
     // asked nobody.
     vi.mocked(apiClient.get).mockResolvedValue([])
+    mockGetCapabilities.mockResolvedValue({
+      profile: mockProfile,
+      isAdmin: false,
+      ledOrgs: [],
+      unread: { tutorials: 0, exchanges: 0, challenges: 0, total: 0 },
+      exchangeActions: 0,
+    })
   })
 
-  it('redirects to /login when profile fetch throws', async () => {
+  it('redirects to /login when there is no signed-in account', async () => {
     vi.mocked(redirect).mockImplementation(() => { throw new Error('NEXT_REDIRECT') })
-    vi.mocked(apiClient.get).mockRejectedValueOnce(new Error('Unauthorized'))
+    mockGetCapabilities.mockResolvedValue(null)
     await expect(EditTutorialPage(pageParams)).rejects.toThrow('NEXT_REDIRECT')
     expect(redirect).toHaveBeenCalledWith('/login')
   })
@@ -117,7 +129,6 @@ describe('EditTutorialPage', () => {
   it('redirects to /dashboard when tutorial fetch throws', async () => {
     vi.mocked(redirect).mockImplementation(() => { throw new Error('NEXT_REDIRECT') })
     vi.mocked(apiClient.get)
-      .mockResolvedValueOnce(mockProfile)
       .mockRejectedValueOnce(new Error('Not Found'))
     await expect(EditTutorialPage(pageParams)).rejects.toThrow('NEXT_REDIRECT')
     expect(redirect).toHaveBeenCalledWith('/dashboard')
@@ -126,7 +137,6 @@ describe('EditTutorialPage', () => {
   it('redirects to /dashboard when user is not a contributor on the tutorial', async () => {
     vi.mocked(redirect).mockImplementation(() => { throw new Error('NEXT_REDIRECT') })
     vi.mocked(apiClient.get)
-      .mockResolvedValueOnce(mockProfile)
       .mockResolvedValueOnce({
         ...baseTutorialWithDetails,
         tutorial_contributors: [{
@@ -140,7 +150,6 @@ describe('EditTutorialPage', () => {
 
   it('renders the tutorial title', async () => {
     vi.mocked(apiClient.get)
-      .mockResolvedValueOnce(mockProfile)
       .mockResolvedValueOnce(baseTutorialWithDetails)
     render(await EditTutorialPage(pageParams))
     expect(screen.getByRole('heading', { name: /test tutorial/i })).toBeInTheDocument()
@@ -148,7 +157,6 @@ describe('EditTutorialPage', () => {
 
   it('shows the rejection banner with note when status is rejected', async () => {
     vi.mocked(apiClient.get)
-      .mockResolvedValueOnce(mockProfile)
       .mockResolvedValueOnce({ ...baseTutorialWithDetails, status: 'rejected', rejection_note: 'Needs more parts' })
     render(await EditTutorialPage(pageParams))
     expect(screen.getByText('This tutorial was rejected')).toBeInTheDocument()
@@ -157,7 +165,6 @@ describe('EditTutorialPage', () => {
 
   it('shows the rejection banner with fallback text when rejection_note is null', async () => {
     vi.mocked(apiClient.get)
-      .mockResolvedValueOnce(mockProfile)
       .mockResolvedValueOnce({ ...baseTutorialWithDetails, status: 'rejected', rejection_note: null })
     render(await EditTutorialPage(pageParams))
     expect(screen.getByText('No feedback was provided.')).toBeInTheDocument()
@@ -165,7 +172,6 @@ describe('EditTutorialPage', () => {
 
   it('does not show the rejection banner when status is draft', async () => {
     vi.mocked(apiClient.get)
-      .mockResolvedValueOnce(mockProfile)
       .mockResolvedValueOnce(baseTutorialWithDetails)
     render(await EditTutorialPage(pageParams))
     expect(screen.queryByText('This tutorial was rejected')).toBeNull()
@@ -176,7 +182,6 @@ describe('EditTutorialPage', () => {
   //        the same work twice
   it('tells the finish bar the tutorial has been handed over', async () => {
     vi.mocked(apiClient.get)
-      .mockResolvedValueOnce(mockProfile)
       .mockResolvedValueOnce({ ...baseTutorialWithDetails, status: 'pending' })
     render(await EditTutorialPage(pageParams))
     expect(screen.getByTestId('edit-stepper')).toHaveAttribute('data-handed-over', 'yes')
@@ -184,7 +189,6 @@ describe('EditTutorialPage', () => {
 
   it('leaves the finish bar open while the tutorial is still a draft', async () => {
     vi.mocked(apiClient.get)
-      .mockResolvedValueOnce(mockProfile)
       .mockResolvedValueOnce(baseTutorialWithDetails)
     render(await EditTutorialPage(pageParams))
     expect(screen.getByTestId('edit-stepper')).toHaveAttribute('data-handed-over', 'no')
@@ -194,7 +198,6 @@ describe('EditTutorialPage', () => {
   // reason kind exists — nobody should be asked for a file they do not have.
   it('shows the STL step only for an assistive-tech tutorial', async () => {
     vi.mocked(apiClient.get)
-      .mockResolvedValueOnce(mockProfile)
       .mockResolvedValueOnce(baseTutorialWithDetails)
     const { unmount } = render(await EditTutorialPage(pageParams))
     expect(document.querySelector('[data-step="stl"]')).toBeNull()
@@ -202,15 +205,13 @@ describe('EditTutorialPage', () => {
     unmount()
 
     vi.mocked(apiClient.get)
-      .mockResolvedValueOnce(mockProfile)
       .mockResolvedValueOnce({ ...baseTutorialWithDetails, kind: 'assistive_tech' })
     render(await EditTutorialPage(pageParams))
     expect(document.querySelector('[data-step="stl"]')).toHaveAttribute('data-step-status', 'attention')
   })
 
-  it('wires computeStepStatuses and missingByStep into the step manifest', async () => {
+  it('wires computeStepStatuses and getMissingFields into the step manifest', async () => {
     vi.mocked(apiClient.get)
-      .mockResolvedValueOnce(mockProfile)
       .mockResolvedValueOnce(baseTutorialWithDetails)
     render(await EditTutorialPage(pageParams))
     const stepper = screen.getByTestId('edit-stepper')
@@ -232,7 +233,6 @@ describe('EditTutorialPage', () => {
 
   it('adds a Review step, neutral while the tutorial is still a draft', async () => {
     vi.mocked(apiClient.get)
-      .mockResolvedValueOnce(mockProfile)
       .mockResolvedValueOnce(baseTutorialWithDetails)
     render(await EditTutorialPage(pageParams))
     expect(
@@ -242,7 +242,6 @@ describe('EditTutorialPage', () => {
 
   it('marks the Review step done once the tutorial has been handed over', async () => {
     vi.mocked(apiClient.get)
-      .mockResolvedValueOnce(mockProfile)
       .mockResolvedValueOnce({ ...baseTutorialWithDetails, status: 'pending' })
     render(await EditTutorialPage(pageParams))
     expect(

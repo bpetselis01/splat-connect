@@ -10,18 +10,14 @@ import {
 import { theme } from '../../lib/theme'
 import { AnimatedPressable } from './AnimatedPressable'
 
-type ButtonVariant = 'primary' | 'secondary' | 'ghost'
+type ButtonVariant = 'primary' | 'accent' | 'secondary' | 'ghost'
 
 const VARIANTS: Record<ButtonVariant, { container: ViewStyle; text: TextStyle }> = {
-  primary: {
-    container: { backgroundColor: theme.colors.primary, ...theme.elevation.rest },
-    text: { color: '#ffffff' },
-  },
-  secondary: {
-    container: { backgroundColor: theme.colors.accentLight },
-    text: { color: theme.colors.primaryDeep },
-  },
-  ghost: { container: { backgroundColor: 'transparent' }, text: { color: theme.colors.primaryDark } },
+  primary: { container: { backgroundColor: theme.colors.primary, ...theme.shadow(4) }, text: { color: '#ffffff' } },
+  accent: { container: { backgroundColor: theme.colors.apricot, ...theme.shadow(4) }, text: { color: theme.colors.ink } },
+  secondary: { container: { backgroundColor: theme.colors.surface, ...theme.shadow(3) }, text: { color: theme.colors.ink } },
+  // Ghost is the one flat button: no border, no shadow — a quiet text action.
+  ghost: { container: { backgroundColor: 'transparent', borderWidth: 0 }, text: { color: theme.colors.primaryDeep } },
 }
 
 export function Button({
@@ -64,13 +60,15 @@ export function Button({
 
 const styles = StyleSheet.create({
   base: {
-    borderRadius: theme.radii.pill,
-    paddingVertical: theme.spacing(4),
-    paddingHorizontal: theme.spacing(6),
+    borderRadius: theme.radii.sm,
+    borderWidth: theme.border.thin,
+    borderColor: theme.colors.ink,
+    paddingVertical: theme.spacing(3),
+    paddingHorizontal: theme.spacing(5),
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 48,
   },
   disabled: { opacity: 0.5 },
-  text: { fontFamily: theme.fonts.bold, fontSize: theme.type.body },
+  text: { fontFamily: theme.fonts.black, fontSize: theme.type.body },
 })

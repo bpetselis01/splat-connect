@@ -10,7 +10,7 @@ import type { AuthVariables } from '../../../src/middleware/auth.js'
  * that split.
  */
 const mockUserClient = { from: vi.fn() }
-vi.mock('../../../src/supabase/user-client.js', () => ({ createUserClient: () => mockUserClient }))
+vi.mock('../../../src/supabase/client.js', () => ({ createUserClient: () => mockUserClient }))
 
 const mockNotifyBacking = vi.fn().mockResolvedValue(undefined)
 vi.mock('../../../src/review-notifications.js', () => ({

@@ -33,23 +33,8 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   return handleResponse<T>(res, method, path)
 }
 
-async function requestFormData<T>(method: string, path: string, formData: FormData): Promise<T> {
-  const token = await getToken()
-  const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL}${path}`, {
-    method,
-    headers: {
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    body: formData,
-  })
-  return handleResponse<T>(res, method, path)
-}
-
 export const apiClient = {
   get: <T>(path: string) => request<T>('GET', path),
   post: <T>(path: string, body: unknown) => request<T>('POST', path, body),
-  put: <T>(path: string, body: unknown) => request<T>('PUT', path, body),
   patch: <T>(path: string, body: unknown) => request<T>('PATCH', path, body),
-  delete: <T>(path: string) => request<T>('DELETE', path),
-  postFormData: <T>(path: string, formData: FormData) => requestFormData<T>('POST', path, formData),
 }

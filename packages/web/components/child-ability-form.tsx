@@ -1,6 +1,7 @@
 'use client'
 import { PanelActions } from '@/components/panel-actions'
 import { useState } from 'react'
+import { useSave } from '@/components/use-save'
 import type { ChildProfile } from '@splat-connect/types'
 
 const MACS_LEVELS = ['I', 'II', 'III', 'IV', 'V']
@@ -37,9 +38,7 @@ export function ChildAbilityForm({
     hand_involvement: profile?.hand_involvement ?? null,
     assist_hand: profile?.assist_hand ?? null,
   })
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [saved, setSaved] = useState(false)
+  const { busy, error, saved, run } = useSave(onSave)
 
   function set<K extends keyof Fields>(key: K, value: Fields[K]) {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -47,17 +46,7 @@ export function ChildAbilityForm({
 
   async function save(e: React.FormEvent) {
     e.preventDefault()
-    setBusy(true)
-    setError(null)
-    setSaved(false)
-    try {
-      await onSave(form)
-      setSaved(true)
-    } catch {
-      setError('Could not save your changes. Please try again.')
-    } finally {
-      setBusy(false)
-    }
+    await run(form)
   }
 
   return (

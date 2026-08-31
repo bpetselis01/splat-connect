@@ -1,6 +1,7 @@
 'use client'
 import { PanelActions, useSaveOnLeave } from '@/components/panel-actions'
 import { useState } from 'react'
+import { useSave } from '@/components/use-save'
 
 export function ToyDetailsForm({
   toy,
@@ -12,25 +13,11 @@ export function ToyDetailsForm({
   const [name, setName] = useState(toy.name)
   const [description, setDescription] = useState(toy.description ?? '')
   const [condition, setCondition] = useState(toy.condition)
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [saved, setSaved] = useState(false)
+  const { busy, error, saved, run } = useSave(onSave)
 
   async function save(e?: React.FormEvent) {
     e?.preventDefault()
-    setBusy(true)
-    setError(null)
-    setSaved(false)
-    try {
-      await onSave({ name, description: description === '' ? null : description, condition })
-      setSaved(true)
-      return true
-    } catch {
-      setError('Could not save your changes. Please try again.')
-      return false
-    } finally {
-      setBusy(false)
-    }
+    return run({ name, description: description === '' ? null : description, condition })
   }
 
   /* Leaving the step saves it. Dirty is a comparison against the toy as loaded

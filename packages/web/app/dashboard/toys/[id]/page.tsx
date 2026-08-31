@@ -1,15 +1,14 @@
 import { BackLink } from '@/components/back-link'
-import { redirect, notFound } from 'next/navigation'
+import { notFound } from 'next/navigation'
 import { apiClient } from '@/lib/api-client'
-import { getCapabilities } from '@/lib/capabilities'
+import { requireCapabilities } from '@/lib/require-capabilities'
 import { ToyEditor } from '@/components/toy-editor'
 import { ToySummary } from '@/components/toy-summary'
 import type { Toy } from '@splat-connect/types'
 
 export default async function ToyEditPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const caps = await getCapabilities()
-  if (!caps) redirect('/login')
+  const caps = await requireCapabilities()
 
   // Reads the collection rather than one row, same reasoning as
   // EditChildPage: RLS scopes it to the caller, so a toy missing from it is

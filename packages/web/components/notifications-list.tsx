@@ -39,7 +39,7 @@ const COPY: Record<NotificationType, (n: Notification) => string> = {
   // author's idea from a participant's side either. Also honest about what
   // graduation actually did: a tutorial row now exists with status 'draft'
   // (admin.ts:375), not solved, not in review, not published. Matches
-  // challenge-card.tsx's "Being written up" and idea-status-badge.tsx
+  // challenge-card.tsx's "Being written up" and badge.tsx
   // exactly; must never claim more than those two do.
   idea_graduated: () => 'A challenge you were part of is being written up as a guide, and you are credited on it',
 }

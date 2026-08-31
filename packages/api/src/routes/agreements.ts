@@ -6,7 +6,7 @@
  * tutorial submission; org_leader_terms gates review grants.
  */
 import { Hono } from 'hono'
-import { createUserClient } from '../supabase/user-client.js'
+import { createUserClient } from '../supabase/client.js'
 import type { AuthVariables } from '../middleware/auth.js'
 import { AGREEMENT_VERSIONS, type AgreementType } from '@splat-connect/types'
 

@@ -14,17 +14,14 @@
  * the list moved.
  */
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
 import { apiClient } from '@/lib/api-client'
-import { getCapabilities } from '@/lib/capabilities'
-import { childLabel } from '@/lib/child-label'
+import { requireCapabilities } from '@/lib/require-capabilities'
 import { ProfileForm } from '@/components/profile-form'
 import { Child } from '@/components/icons'
 import type { ChildProfile } from '@splat-connect/types'
 
 export default async function ProfileTabPage() {
-  const caps = await getCapabilities()
-  if (!caps) redirect('/login')
+  const caps = await requireCapabilities()
 
   // No .catch() here: an empty array is already the legitimate "no children yet"
   // value, so swallowing a fetch failure into the same empty array would tell a
@@ -77,7 +74,7 @@ export default async function ProfileTabPage() {
                     null-src fallback is a toy emoji, wrong here. */}
                 <div className="flex flex-1 flex-col gap-1 p-4">
                   <p className="truncate text-sm font-bold text-ink">
-                    {childLabel(child, i)}
+                    {child.name?.trim() || `Child ${i + 1}`}
                   </p>
                   {/* Clamped so one long diagnosis cannot stretch its row of cards,
                       same fix as the rejection note in dashboard-tutorial-card.tsx. Falls

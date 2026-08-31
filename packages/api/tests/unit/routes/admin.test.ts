@@ -15,6 +15,9 @@ vi.mock('../../../src/supabase/client.js', () => ({
     from: mockAdminFrom,
     auth: { admin: { deleteUser: mockDeleteUser } },
   }),
+  // The contributor-account routes go through the user client; no case here
+  // reaches one, this only keeps the module mock complete.
+  createUserClient: () => ({ from: mockAdminFrom }),
 }))
 
 const { default: admin } = await import('../../../src/routes/admin.js')

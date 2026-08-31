@@ -7,25 +7,14 @@
  */
 import 'server-only'
 import { cache } from 'react'
-import { cookies } from 'next/headers'
-import { createServerClient } from '@supabase/ssr'
+import { createServerSupabase } from '@/lib/supabase/server'
 import { makeApiClient } from './api-core'
 
 // cache(): a single page render calls apiClient 4-5x (profile, tutorial,
 // backing, orgs); without this, each call re-verifies the session against
 // Supabase, stacking redundant round-trips into every page load.
 const getToken = cache(async (): Promise<string | null> => {
-  const cookieStore = await cookies()
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll: () => cookieStore.getAll(),
-        setAll: () => {},
-      },
-    }
-  )
+  const supabase = await createServerSupabase()
   const {
     data: { session },
   } = await supabase.auth.getSession()

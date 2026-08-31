@@ -4,6 +4,7 @@
   "private": true,
   "main": "expo-router/entry",
   "dependencies": {
+    "@expo-google-fonts/jersey-10": "^0.4.1",
     "@expo-google-fonts/nunito": "^0.4.2",
     "@expo/vector-icons": "^15.1.1",
     "@splat-connect/types": "workspace:*",
@@ -11,13 +12,11 @@
     "expo": "~57.0.7",
     "expo-build-properties": "~57.0.7",
     "expo-constants": "~57.0.6",
-    "expo-dev-client": "~57.0.9",
     "expo-font": "~57.0.1",
     "expo-linking": "~57.0.3",
     "expo-router": "~57.0.7",
     "expo-secure-store": "~57.0.1",
     "expo-splash-screen": "~57.0.5",
-    "expo-status-bar": "~57.0.1",
     "expo-video": "~57.0.2",
     "react": "19.2.3",
     "react-dom": "19.2.3",
@@ -63,9 +62,6 @@
     ],
     "setupFiles": [
       "<rootDir>/jest-setup.js"
-    ],
-    "transformIgnorePatterns": [
-      "node_modules/(?!(\\.pnpm|(jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|expo-router|expo-linking|expo-constants|expo-status-bar|expo-secure-store|expo-font|react-native-webview|react-native-url-polyfill|react-native-css-interop|react-native-reanimated|react-native-worklets|@testing-library/react-native))"
     ]
   }
 }

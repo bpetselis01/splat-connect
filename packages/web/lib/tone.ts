@@ -14,8 +14,6 @@
  * can compute WCAG ratios without a browser. If you change a class here, change the
  * hex with it — the test is the guard, but only if the two stay in step.
  */
-import type { NavSection } from './public-nav'
-
 export type Tone = 'brand' | 'mint' | 'apricot' | 'honey' | 'sky' | 'sunken' | 'plain'
 
 export interface ToneSpec {
@@ -94,9 +92,4 @@ export const TONES: Record<Tone, ToneSpec> = {
 
 export function toneClass(tone: Tone): ToneSpec {
   return TONES[tone]
-}
-
-/** The tone of the section a page belongs to, defaulting to the brand's own. */
-export function toneFor(section: NavSection | undefined): ToneSpec {
-  return TONES[section?.tone ?? 'brand']
 }

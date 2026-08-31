@@ -1,6 +1,7 @@
 'use client'
 import { PanelActions } from '@/components/panel-actions'
 import { useState } from 'react'
+import { useSave } from '@/components/use-save'
 import type { ChildProfile } from '@splat-connect/types'
 
 const SENSORY_PREFERENCES = ['Soft', 'Firm', 'Smooth', 'Textured', 'Lightweight', 'No preference']
@@ -30,9 +31,7 @@ export function ChildCustomizationForm({
     needs_arm_attachment: profile?.needs_arm_attachment ?? false,
     sensory_preferences: profile?.sensory_preferences ?? [],
   })
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [saved, setSaved] = useState(false)
+  const { busy, error, saved, run } = useSave(onSave)
 
   function set<K extends keyof Fields>(key: K, value: Fields[K]) {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -55,17 +54,7 @@ export function ChildCustomizationForm({
 
   async function save(e: React.FormEvent) {
     e.preventDefault()
-    setBusy(true)
-    setError(null)
-    setSaved(false)
-    try {
-      await onSave(form)
-      setSaved(true)
-    } catch {
-      setError('Could not save your changes. Please try again.')
-    } finally {
-      setBusy(false)
-    }
+    await run(form)
   }
 
   return (

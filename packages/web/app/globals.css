@@ -1131,7 +1131,7 @@
    * byte-identical apart from that one declaration.
    *
    * This section header used to read "Accordion panels (edit page)", which
-   * stopped being true when EditStepper landed: the tutorial, toy and child
+   * stopped being true when the shared Stepper landed: the tutorial, toy and child
    * editors render a .step-pill-row and one `<div class="panel pt-5">` at a
    * time. 20 of the 21 call sites are those static boxes. The 21st, and the
    * only <details> left in the app, is app/admin/organizations/page.tsx:83 —

@@ -3,8 +3,8 @@
  * One shared toast for every edit-page save action. useToast() defaults to a
  * no-op outside a ToastProvider so section components — most of which already
  * have standalone unit tests that render them without a provider — keep
- * working unchanged; only the live app (ToastProvider lives in EditStepper)
- * ever shows anything.
+ * working unchanged; only the live app (each editor mounts a
+ * ToastProvider around its stepper) ever shows anything.
  */
 import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react'
 

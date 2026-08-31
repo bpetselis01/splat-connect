@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { signIn, createContributor, createAdmin, acceptTerms } from '../helpers'
+import { signIn, submitLogin, createContributor, createAdmin, acceptTerms } from '../helpers'
 
 test('a contributor signs in and lands on the dashboard', async ({ page }) => {
   const contributor = await createContributor()
@@ -17,7 +17,9 @@ test('an admin signs in and lands on the admin dashboard', async ({ page }) => {
 
 test('an invalid password shows an error and stays on /login', async ({ page }) => {
   const contributor = await createContributor()
-  await signIn(page, contributor.email, 'wrong-password')
+  // submitLogin, not signIn: signIn waits to leave /login, which is exactly
+  // what must not happen here.
+  await submitLogin(page, contributor.email, 'wrong-password')
   await expect(page.getByText('Invalid login credentials')).toBeVisible()
   await expect(page).toHaveURL(/\/login$/)
 })

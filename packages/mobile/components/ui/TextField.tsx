@@ -1,11 +1,21 @@
 // packages/mobile/components/ui/TextField.tsx
-import { View, Text, TextInput, StyleSheet, type TextInputProps, type TextStyle } from 'react-native'
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  type StyleProp,
+  type TextInputProps,
+  type TextStyle,
+  type ViewStyle,
+} from 'react-native'
 import Animated, {
   interpolateColor,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated'
+import { Ionicons } from '@expo/vector-icons'
 import { theme } from '../../lib/theme'
 
 // react-native-web paints the browser's default focus ring on top of ours: a
@@ -20,16 +30,28 @@ const noWebOutline = { outlineStyle: 'none' } as unknown as TextStyle
 export function TextField({
   label,
   hint,
+  icon,
+  boxStyle,
+  boxTestID,
   style,
   ...input
-}: TextInputProps & { label?: string; hint?: string }) {
+}: TextInputProps & {
+  label?: string
+  hint?: string
+  /** Renders inside the focus ring, ahead of the input. */
+  icon?: React.ComponentProps<typeof Ionicons>['name']
+  /** Overrides on the bordered box itself — a pill radius, extra padding. */
+  boxStyle?: StyleProp<ViewStyle>
+  /** testID for the bordered box, not the inner TextInput. */
+  boxTestID?: string
+}) {
   const focus = useSharedValue(0)
 
   const ring = useAnimatedStyle(() => ({
     borderColor: interpolateColor(
       focus.value,
       [0, 1],
-      [theme.colors.border, theme.colors.primary]
+      [theme.colors.ink, theme.colors.primary]
     ),
   }))
 
@@ -37,10 +59,16 @@ export function TextField({
     <View style={styles.field}>
       {label ? <Text style={styles.label}>{label}</Text> : null}
       {hint ? <Text style={styles.hint}>{hint}</Text> : null}
-      <Animated.View style={[styles.box, ring]}>
+      <Animated.View
+        testID={boxTestID}
+        style={[styles.box, icon ? styles.boxRow : null, boxStyle, ring]}
+      >
+        {icon ? (
+          <Ionicons name={icon} size={19} color={theme.colors.muted} style={styles.icon} />
+        ) : null}
         <TextInput
           {...input}
-          style={[styles.input, style]}
+          style={[styles.input, icon ? styles.inputWithIcon : null, style]}
           placeholderTextColor={theme.colors.muted}
           onFocus={(e) => {
             focus.value = withTiming(1, { duration: theme.motion.fast })
@@ -72,10 +100,13 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing(2),
   },
   box: {
-    borderWidth: 1.5,
-    borderRadius: theme.radii.md,
+    borderWidth: theme.border.thin,
+    borderRadius: theme.radii.sm,
     backgroundColor: theme.colors.surface,
   },
+  boxRow: { flexDirection: 'row', alignItems: 'center' },
+  icon: { marginRight: theme.spacing(2) },
+  inputWithIcon: { flex: 1, paddingHorizontal: 0 },
   input: {
     paddingHorizontal: theme.spacing(4),
     paddingVertical: theme.spacing(3),

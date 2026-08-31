@@ -16,8 +16,7 @@
  * - app/dashboard/saved/[type]/page.tsx: the lists these cards lead to
  * - packages/types/src/index.ts: SAVE_SLUGS, which decides what is live
  */
-import { redirect } from 'next/navigation'
-import { getCapabilities } from '@/lib/capabilities'
+import { requireCapabilities } from '@/lib/require-capabilities'
 import { HubGrid } from '@/components/hub-grid'
 import type { NavItem } from '@/lib/public-nav'
 
@@ -71,8 +70,7 @@ const SOON: NavItem[] = [
 ]
 
 export default async function SavedHub() {
-  const caps = await getCapabilities()
-  if (!caps) redirect('/login')
+  const caps = await requireCapabilities()
 
   return (
     <div>

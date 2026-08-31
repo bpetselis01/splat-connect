@@ -64,6 +64,18 @@ describe('GET /files/[bucket]/[...path]', () => {
     expect(createSignedUrl).not.toHaveBeenCalled()
   })
 
+  // Same detour for the other gated bucket: the branch runs before the
+  // per-bucket download option is chosen, and this pins that it stays so.
+  it('sends a signed-out visitor to sign up from an STL too', async () => {
+    getUser.mockResolvedValue({ data: { user: null } })
+    const res = await call('stl-files', ['t1', 'bracket.stl'])
+    expect(res.status).toBe(302)
+    expect(res.headers.get('location')).toBe(
+      'http://web.test/signup?next=%2Ftutorials%2Ft1&reason=download'
+    )
+    expect(createSignedUrl).not.toHaveBeenCalled()
+  })
+
   it('redirects a signed-in user to a 60-second signed URL for a PDF, opened inline', async () => {
     const res = await call('tutorial-pdfs', ['t1', 'tutorial.pdf'])
     expect(res.status).toBe(302)

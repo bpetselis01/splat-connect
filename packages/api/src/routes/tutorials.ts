@@ -6,29 +6,35 @@
  * must set ownership itself.
  */
 import { Hono } from 'hono'
-import { createUserClient } from '../supabase/user-client.js'
-import { createAdminClient } from '../supabase/client.js'
+import { createUserClient, createAdminClient } from '../supabase/client.js'
+import { pickEditable } from './pick-editable.js'
 import { notifyTutorialSubmitted } from '../review-notifications.js'
 import type { AuthVariables } from '../middleware/auth.js'
 
 const tutorials = new Hono<{ Variables: AuthVariables }>()
 
+// tutorial_orgs is embedded for the leader dashboard, which splits its two
+// lists by each row's backing status. The embed is itself RLS-filtered, so a
+// caller only ever sees backing rows for a project they authored or an
+// organisation they lead — the same list serves both without a second call.
+//
+// `id` is listed first and is not decoration: the review queue flattens these
+// rows across tutorials and keys each one by row.id, since org_id repeats as
+// soon as two tutorials ask the same organisation. Leaving it out handed the
+// page a TutorialOrg whose declared, non-optional id was undefined — invisible
+// to TypeScript, and visible in the browser only as React's missing-key
+// warning pointing at a <li> that plainly had a key.
+const LIST_SELECT =
+  '*, tutorial_contributors!inner(profile_id), tutorial_orgs(id, status, org_id, organizations(id, name))'
+
+// Every tutorial the caller may see, and the same list narrowed to the ones
+// they contribute to. RLS does the visibility work in both; /mine only adds
+// the authorship filter on top.
 tutorials.get('/', async (c) => {
   const supabase = createUserClient(c.get('token'))
   const { data, error } = await supabase
     .from('tutorials')
-    // tutorial_orgs is embedded for the leader dashboard, which splits its two
-    // lists by each row's backing status. The embed is itself RLS-filtered, so a
-    // caller only ever sees backing rows for a project they authored or an
-    // organisation they lead — the same list serves both without a second call.
-    //
-    // `id` is listed first and is not decoration: the review queue flattens
-    // these rows across tutorials and keys each one by row.id, since org_id
-    // repeats as soon as two tutorials ask the same organisation. Leaving it out
-    // handed the page a TutorialOrg whose declared, non-optional id was
-    // undefined — invisible to TypeScript, and visible in the browser only as
-    // React's missing-key warning pointing at a <li> that plainly had a key.
-    .select('*, tutorial_contributors!inner(profile_id), tutorial_orgs(id, status, org_id, organizations(id, name))')
+    .select(LIST_SELECT)
     .order('created_at', { ascending: false })
   if (error) return c.json({ error: error.message }, 500)
   return c.json(data)
@@ -38,18 +44,7 @@ tutorials.get('/mine', async (c) => {
   const supabase = createUserClient(c.get('token'))
   const { data, error } = await supabase
     .from('tutorials')
-    // tutorial_orgs is embedded for the leader dashboard, which splits its two
-    // lists by each row's backing status. The embed is itself RLS-filtered, so a
-    // caller only ever sees backing rows for a project they authored or an
-    // organisation they lead — the same list serves both without a second call.
-    //
-    // `id` is listed first and is not decoration: the review queue flattens
-    // these rows across tutorials and keys each one by row.id, since org_id
-    // repeats as soon as two tutorials ask the same organisation. Leaving it out
-    // handed the page a TutorialOrg whose declared, non-optional id was
-    // undefined — invisible to TypeScript, and visible in the browser only as
-    // React's missing-key warning pointing at a <li> that plainly had a key.
-    .select('*, tutorial_contributors!inner(profile_id), tutorial_orgs(id, status, org_id, organizations(id, name))')
+    .select(LIST_SELECT)
     .eq('tutorial_contributors.profile_id', c.get('userId'))
     .order('created_at', { ascending: false })
   if (error) return c.json({ error: error.message }, 500)
@@ -77,13 +72,31 @@ tutorials.get('/:id', async (c) => {
     .select(
       '*, parts(*), tools(*), stl_files(*), tutorial_contributors(*, profiles(id, name, role, created_at)), \
 tutorial_collaborator_invites(*, profiles:invited_profile_id(id, name, role, created_at)), \
-tutorial_recommendations!tutorial_id(position, tutorials!recommended_id(id, title, kind, difficulty, toy_photo_url, status)), \
+tutorial_recommendations!tutorial_id(position, recommended_id, tutorials!recommended_id(id, title, kind, difficulty, toy_photo_url, status)), \
 reviewer:reviewed_by(name), reviewed_for:reviewed_for_org_id(name)'
     )
     .eq('id', c.req.param('id'))
     .order('position', { referencedTable: 'tutorial_recommendations', ascending: true })
     .single()
   if (error) return c.json({ error: error.message }, 404)
+
+  // A target the caller cannot read arrives as `tutorials: null`: RLS hides
+  // other people's unapproved rows, and the picker only ever offered approved
+  // ones, so a null here is a target that went back into review after it was
+  // chosen. That is the one case the "Not yet approved" badge exists for, and
+  // the editor and both review pages read r.tutorials.id unguarded — so the
+  // target is filled in with the admin client. The caller already saw this
+  // tutorial when it was approved; the card fields are all it gets back.
+  const recs = (data.tutorial_recommendations ?? []) as { recommended_id: string; tutorials: unknown }[]
+  const hiddenIds = recs.filter((r) => r.tutorials === null).map((r) => r.recommended_id)
+  if (hiddenIds.length) {
+    const { data: targets } = await createAdminClient()
+      .from('tutorials')
+      .select('id, title, kind, difficulty, toy_photo_url, status')
+      .in('id', hiddenIds)
+    const byId = new Map((targets ?? []).map((t) => [t.id, t]))
+    for (const r of recs) if (r.tutorials === null) r.tutorials = byId.get(r.recommended_id) ?? null
+  }
 
   if (c.get('role') === 'admin' && data.tutorial_contributors?.length) {
     const admin = createAdminClient()
@@ -186,8 +199,7 @@ tutorials.patch('/:id', async (c) => {
     return c.json({ error: 'updated_at is required' }, 400)
   }
 
-  const update: Record<string, unknown> = {}
-  for (const key of EDITABLE) if (key in body) update[key] = body[key]
+  const update = pickEditable(body, EDITABLE)
   if (!Object.keys(update).length) return c.json({ error: 'nothing to update' }, 400)
 
   const supabase = createUserClient(c.get('token'))

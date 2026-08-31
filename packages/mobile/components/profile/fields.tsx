@@ -1,11 +1,21 @@
 // Selectable pills use the shared ui/Chip, not a local copy — a hand-rolled
 // pill here is how the profile screens drifted from the library filter's styling.
-import { View, Text, StyleSheet } from 'react-native'
+import { ScrollView, View, Text, StyleSheet } from 'react-native'
 import { theme } from '../../lib/theme'
 import { Chip } from '../ui/Chip'
 import { TextField } from '../ui/TextField'
 
 type Option = { label: string; value: string }
+
+/** The scrolling shell every profile form shares: tinted canvas, padded content, lead-in copy. */
+export function FormScreen({ intro, children }: { intro: string; children: React.ReactNode }) {
+  return (
+    <ScrollView style={styles.screen} contentContainerStyle={styles.screenContent}>
+      <Text style={styles.intro}>{intro}</Text>
+      {children}
+    </ScrollView>
+  )
+}
 
 export function Dropdown({ label, value, options, onChange }: {
   label: string
@@ -91,4 +101,13 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing(2),
   },
   pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2) },
+  screen: { flex: 1, backgroundColor: theme.colors.background },
+  screenContent: { padding: theme.spacing(4), paddingBottom: theme.spacing(10) },
+  intro: {
+    fontFamily: theme.fonts.regular,
+    fontSize: theme.type.label,
+    color: theme.colors.muted,
+    lineHeight: 21,
+    marginBottom: theme.spacing(5),
+  },
 })

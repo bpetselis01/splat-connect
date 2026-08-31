@@ -1,7 +1,7 @@
 import { BackLink } from '@/components/back-link'
-import { notFound, redirect } from 'next/navigation'
+import { notFound } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
-import { getCapabilities } from '@/lib/capabilities'
+import { requireCapabilities } from '@/lib/require-capabilities'
 import { apiClient } from '@/lib/api-client'
 import { LiveTransaction } from '@/components/live-transaction'
 import { ToyTransactionThread } from '@/components/toy-transaction-thread'
@@ -18,8 +18,7 @@ function defaultAddress(profile: Profile): PickupAddress | null {
 
 export default async function ExchangeDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const caps = await getCapabilities()
-  if (!caps) redirect('/login')
+  const caps = await requireCapabilities()
 
   let tx: ToyTransactionDetail
   try {

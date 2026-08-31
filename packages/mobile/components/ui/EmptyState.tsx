@@ -1,11 +1,6 @@
 // packages/mobile/components/ui/EmptyState.tsx
-import { useEffect } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-} from 'react-native-reanimated'
+import Animated, { FadeIn } from 'react-native-reanimated'
 import { Ionicons } from '@expo/vector-icons'
 import { theme } from '../../lib/theme'
 
@@ -24,18 +19,8 @@ export function EmptyState({
   hint?: string
   children?: React.ReactNode
 }) {
-  const enter = useSharedValue(0)
-  useEffect(() => {
-    enter.value = withSpring(1, { ...theme.motion.settle })
-  }, [enter])
-
-  const style = useAnimatedStyle(() => ({
-    opacity: enter.value,
-    transform: [{ scale: 0.94 + enter.value * 0.06 }],
-  }))
-
   return (
-    <Animated.View style={[styles.wrap, style]}>
+    <Animated.View entering={FadeIn.duration(theme.motion.base)} style={styles.wrap}>
       <View style={styles.badge}>
         <Ionicons name={icon} size={30} color={theme.colors.primary} />
       </View>

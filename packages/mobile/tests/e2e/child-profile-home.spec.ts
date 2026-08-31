@@ -1,8 +1,9 @@
 import { test, expect } from '@playwright/test'
-import { signUpNewAccount, uniqueSignupEmail } from './helpers'
+import { signUpNewAccount, uniqueSignupEmail, openChildProfile } from './helpers'
 
 test('the age field autosaves and survives a reload', async ({ page }) => {
   await signUpNewAccount(page, uniqueSignupEmail())
+  await openChildProfile(page)
   await page.getByPlaceholder('Age').fill('6')
   await page.waitForTimeout(1000) // debounced autosave → PUT
   await page.reload()
@@ -13,8 +14,8 @@ test('the age field autosaves and survives a reload', async ({ page }) => {
 
 test('signing out returns to the login form', async ({ page }) => {
   await signUpNewAccount(page, uniqueSignupEmail())
-  // Sign Out lives on the Account segment now, not Child Profile.
-  await page.getByText('Account').click()
+  // Sign Out lives on the Account segment, which is the one a fresh account opens on.
+  await page.goto('/account')
   await page.getByText('Sign Out').click()
   await expect(page.getByText('Welcome Back')).toBeVisible()
   await expect(page.getByText('Create an account')).toBeVisible()

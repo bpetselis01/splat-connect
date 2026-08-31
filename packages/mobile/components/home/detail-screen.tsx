@@ -77,12 +77,12 @@ export function DetailScreen({ id }: { id: string }) {
   async function openPreview() {
     const path = tutorial!.tutorial_pdf_url
     if (!path) {
-      router.push({ pathname: '/home/[id]/preview', params: { id: tutorial!.id, pdfUrl: '' } })
+      router.push({ pathname: '/guides/[id]/preview', params: { id: tutorial!.id, pdfUrl: '' } })
       return
     }
     const { data, error } = await supabase.storage.from('tutorial-pdfs').createSignedUrl(path, 60)
     router.push({
-      pathname: '/home/[id]/preview',
+      pathname: '/guides/[id]/preview',
       params: { id: tutorial!.id, pdfUrl: error || !data ? '' : data.signedUrl },
     })
   }
