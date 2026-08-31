@@ -56,9 +56,13 @@ publicRoutes.get('/tutorials/:id', async (c) => {
     // The two !hints on the recommendations embed are load-bearing: the table
     // points at tutorials twice, and PostgREST refuses an ambiguous embed
     // outright rather than guessing. See the same select in tutorials.ts.
+    // org_id rides along for the same reason profile_id does on the
+    // contributors embed above: mobile's backing chip links to that
+    // organisation's showcase, and without the column it linked to
+    // /guides/organisation/undefined.
     .select(
       '*, parts(*), tools(*), stl_files(*), tutorial_contributors(profile_id, role, profiles(name)), ' +
-        'tutorial_orgs(status, organizations(id, name)), ' +
+        'tutorial_orgs(org_id, status, organizations(id, name)), ' +
         'tutorial_recommendations!tutorial_id(position, tutorials!recommended_id(id, title, kind, difficulty, toy_photo_url, status)), ' +
         'reviewer:reviewed_by(name), reviewed_for:reviewed_for_org_id(name)'
     )
