@@ -71,6 +71,45 @@ describe('useLearnProgress', () => {
     expect(result.current.next?.slug).toBe('switch-types')
   })
 
+  it('a focus reload merges instead of replacing, so a pending-persist markRead survives it', async () => {
+    // Storage already has one slug from before this test's markRead call.
+    mockGetItem.mockResolvedValueOnce(JSON.stringify(['toy-adaptation-101']))
+    const { result } = renderHook(() => useLearnProgress())
+    await waitFor(() => expect(result.current.count).toBe(1))
+
+    // markRead's setItem is fire-and-forget — leave it pending so the
+    // persist genuinely has not landed by the time the focus reload below runs.
+    mockSetItem.mockReturnValue(new Promise<void>(() => {}))
+    act(() => {
+      result.current.markRead('switch-types')
+    })
+    expect(result.current.read.has('switch-types')).toBe(true)
+
+    // Control the reload's getItem explicitly rather than a pre-resolved
+    // mock: count is already 2 synchronously from the markRead above, so a
+    // waitFor keyed on count (or on getItem's call count) would pass before
+    // the reload's own promise ever resolves, proving nothing. Resolving it
+    // ourselves and flushing microtasks inside act() lets the assertions
+    // below run strictly after the reload's setRead has actually landed.
+    let resolveGetItem: ((value: string) => void) | undefined
+    mockGetItem.mockReturnValueOnce(new Promise<string>((resolve) => { resolveGetItem = resolve }))
+    act(() => {
+      latestFocusEffect?.()
+    })
+    // Resolves with the OLD (pre-markRead) array — exactly what the reload
+    // would see racing ahead of the still-pending setItem above. A replace
+    // would drop 'switch-types' back out here; a merge must not.
+    await act(async () => {
+      resolveGetItem?.(JSON.stringify(['toy-adaptation-101']))
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+
+    expect(result.current.read.has('switch-types')).toBe(true)
+    expect(result.current.read.has('toy-adaptation-101')).toBe(true)
+    expect(result.current.count).toBe(2)
+  })
+
   it('markRead persists and updates state', async () => {
     const { result } = renderHook(() => useLearnProgress())
     await waitFor(() => expect(mockGetItem).toHaveBeenCalled())

@@ -19,7 +19,14 @@ export function useLearnProgress(): LearnProgress {
   const reload = useCallback(() => {
     return storage.getItem(LEARN_PROGRESS_KEY).then((saved) => {
       if (!saved) return
-      setRead(new Set(JSON.parse(saved) as string[]))
+      const fromStorage = JSON.parse(saved) as string[]
+      // Union, not replace: markRead's setItem isn't awaited, so a focus
+      // reload's getItem can resolve before it lands and would otherwise
+      // wipe the just-marked slug back out of state. Read state is
+      // monotonic here — nothing ever un-reads an article — so merging
+      // what's on disk into what's already in memory is always correct,
+      // never stale.
+      setRead((prev) => new Set([...prev, ...fromStorage]))
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
