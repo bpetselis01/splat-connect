@@ -1,12 +1,12 @@
 import { test, expect } from '@playwright/test'
-import { createContributor, createTutorial, uniqueTitle } from './helpers'
+import { signInAsNewContributor, createTutorial, uniqueTitle } from './helpers'
 
 test('tapping a tutorial navigates to its detail screen', async ({ page }) => {
-  const contributor = await createContributor()
+  const contributor = await signInAsNewContributor(page)
   const title = uniqueTitle('E2E Mobile Detail')
   await createTutorial(contributor.id, { title, status: 'approved', difficulty: 'easy' })
 
-  await page.goto('/home')
+  await page.goto('/guides')
   await page.getByText(title).click()
 
   // .last() throughout: the library screen stays mounted behind the detail
@@ -19,11 +19,11 @@ test('tapping a tutorial navigates to its detail screen', async ({ page }) => {
 })
 
 test('tapping Preview Tutorial navigates to the preview screen', async ({ page }) => {
-  const contributor = await createContributor()
+  const contributor = await signInAsNewContributor(page)
   const title = uniqueTitle('E2E Mobile Preview')
   await createTutorial(contributor.id, { title, status: 'approved' })
 
-  await page.goto('/home')
+  await page.goto('/guides')
   await page.getByText(title).click()
   await page.getByText('Preview Tutorial').click()
 
@@ -31,20 +31,23 @@ test('tapping Preview Tutorial navigates to the preview screen', async ({ page }
 })
 
 test('an aborted detail request shows the retry message', async ({ page }) => {
-  const contributor = await createContributor()
+  const contributor = await signInAsNewContributor(page)
   const id = await createTutorial(contributor.id, {
     title: uniqueTitle('E2E Mobile Detail Error'),
     status: 'approved',
   })
 
+  // Signed in before the route is armed: the sign-in landing fetches the
+  // library, and aborting that too would confuse this spec's subject.
   await page.route(`**/api/public/tutorials/${id}`, (route) => route.abort())
-  await page.goto(`/home/${id}`)
+  await page.goto(`/guides/${id}`)
 
   await expect(page.getByText("Couldn't load tutorial. Please try again.")).toBeVisible()
 })
 
 test('an unknown tutorial id shows the load-failure state', async ({ page }) => {
-  await page.goto('/home/00000000-0000-0000-0000-000000000000')
+  await signInAsNewContributor(page)
+  await page.goto('/guides/00000000-0000-0000-0000-000000000000')
 
   // The API answers an unknown id with a 404, which apiClient raises, so the
   // screen takes its `error` branch. The `!tutorial` branch ("Tutorial not
@@ -54,11 +57,11 @@ test('an unknown tutorial id shows the load-failure state', async ({ page }) => 
 })
 
 test('optional parts and tools are badged on the detail screen', async ({ page }) => {
-  const contributor = await createContributor()
+  const contributor = await signInAsNewContributor(page)
   const title = uniqueTitle('E2E Mobile Optional')
   await createTutorial(contributor.id, { title, status: 'approved', withOptionalExtras: true })
 
-  await page.goto('/home')
+  await page.goto('/guides')
   await page.getByText(title).click()
 
   // Mobile marks optional items inline in the row label — there is no separate
@@ -69,11 +72,11 @@ test('optional parts and tools are badged on the detail screen', async ({ page }
 })
 
 test('the preview screen explains when a tutorial has no PDF', async ({ page }) => {
-  const contributor = await createContributor()
+  const contributor = await signInAsNewContributor(page)
   const title = uniqueTitle('E2E Mobile No PDF')
   await createTutorial(contributor.id, { title, status: 'approved', withPdf: false })
 
-  await page.goto('/home')
+  await page.goto('/guides')
   await page.getByText(title).click()
   await page.getByText('Preview Tutorial').click()
 
