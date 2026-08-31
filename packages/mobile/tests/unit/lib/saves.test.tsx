@@ -30,3 +30,17 @@ it('reverts the optimistic flip when the API fails', async () => {
   await act(async () => { await result.current.toggle('tutorials', 't9') })
   expect(result.current.isSaved('tutorials', 't9')).toBe(false)
 })
+
+it('back-to-back toggles pick opposite verbs from the ref', async () => {
+  const { result } = renderHook(() => useSaves())
+  await waitFor(() => expect(result.current.isSaved('tutorials', 't1')).toBe(true))
+  await act(async () => {
+    const p1 = result.current.toggle('tutorials', 'tx')
+    const p2 = result.current.toggle('tutorials', 'tx')
+    await Promise.all([p1, p2])
+  })
+  // First toggle: tx not saved, posts. Second toggle: tx now saved (from first), deletes.
+  expect(mockPost).toHaveBeenCalledWith('/api/saves', { entity_type: 'tutorial', entity_id: 'tx' })
+  expect(mockDelete).toHaveBeenCalledWith('/api/saves/tutorials/tx')
+  expect(result.current.isSaved('tutorials', 'tx')).toBe(false)
+})
