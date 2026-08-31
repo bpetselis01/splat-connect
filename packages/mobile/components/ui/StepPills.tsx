@@ -53,6 +53,12 @@ export function StepPills({
               <View
                 accessibilityElementsHidden
                 importantForAccessibility="no-hide-descendants"
+                // The two props above are native-only. This pill has no
+                // accessibilityLabel of its own — unlike the library and
+                // showcase cards, whose explicit label already overrides
+                // their descendants — so on the web target the glyph leaked
+                // into the computed name and the pill answered to "✓ Details".
+                aria-hidden
                 testID={`step-pill-${step.status === 'done' ? 'check' : 'dot'}-${step.id}`}
               >
                 {step.status === 'done' ? (
