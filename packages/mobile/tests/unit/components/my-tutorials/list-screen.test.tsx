@@ -8,7 +8,16 @@ const mockGet = jest.fn()
 jest.mock('../../../../lib/api-client', () => ({ apiClient: { get: (...a: unknown[]) => mockGet(...a) } }))
 
 const mockPush = jest.fn()
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }))
+// useFocusEffect fires on navigation focus, which a unit render has no
+// navigator to simulate — standing in with a plain mount-time useEffect is
+// enough to exercise the refetch-on-focus wiring itself.
+jest.mock('expo-router', () => {
+  const { useEffect } = jest.requireActual('react')
+  return {
+    useRouter: () => ({ push: mockPush }),
+    useFocusEffect: (effect: () => void) => useEffect(effect, []),
+  }
+})
 
 const tutorial = (over: object) => ({
   id: 't1', title: 'Bubble machine switch', description: null, difficulty: 'easy', kind: 'toy_adaptation',

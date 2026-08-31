@@ -58,13 +58,13 @@ export function Provenance({
       {primary ? (
         <Text style={styles.byline}>
           By{' '}
-          <Text onPress={() => onPerson(primary.profile_id)} style={styles.name}>
+          <Text onPress={() => onPerson(primary.profile_id)} accessibilityRole="link" style={styles.name}>
             {primary.profiles.name}
           </Text>
           {others.length === 1 && (
             <Text>
               {' and '}
-              <Text onPress={() => onPerson(others[0].profile_id)} style={styles.name}>
+              <Text onPress={() => onPerson(others[0].profile_id)} accessibilityRole="link" style={styles.name}>
                 {others[0].profiles.name}
               </Text>
             </Text>

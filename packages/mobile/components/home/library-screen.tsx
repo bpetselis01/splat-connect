@@ -180,7 +180,7 @@ export function LibraryScreen() {
 
       <TextField
         icon="search"
-        placeholder="Search tutorials"
+        placeholder="Search by toy name"
         value={search}
         onChangeText={setSearch}
         boxStyle={styles.searchBar}
@@ -209,6 +209,12 @@ export function LibraryScreen() {
           />
         ))}
       </View>
+
+      {!loading && !error ? (
+        <Text style={styles.countLine}>
+          {visible.length} guide{visible.length === 1 ? '' : 's'}
+        </Text>
+      ) : null}
 
       {loading ? (
         <View>
@@ -284,6 +290,12 @@ const styles = StyleSheet.create({
   // app (preview-screen, customization-screen), so this reuses it rather than
   // adding a second name for one value.
   divider: { height: 2, backgroundColor: theme.colors.border, marginBottom: theme.spacing(2) },
+  countLine: {
+    fontFamily: theme.fonts.regular,
+    fontSize: theme.type.caption,
+    color: theme.colors.muted,
+    marginBottom: theme.spacing(2),
+  },
   retry: { marginTop: theme.spacing(5), alignSelf: 'center', paddingHorizontal: theme.spacing(8) },
   listContent: { paddingBottom: theme.spacing(6) },
   rowPress: { marginBottom: theme.spacing(3) },
@@ -304,7 +316,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cardBody: { flex: 1, justifyContent: 'space-between', paddingVertical: theme.spacing(1) },
+  // paddingRight leaves room for the save island (40x40, top-right of the
+  // card) so a two-line title never runs under it.
+  cardBody: { flex: 1, justifyContent: 'space-between', paddingVertical: theme.spacing(1), paddingRight: 40 },
   cardTitle: {
     fontFamily: theme.fonts.bold,
     color: theme.colors.text,

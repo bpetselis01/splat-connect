@@ -22,10 +22,10 @@ test('search narrows the list and clearing it restores the tutorial', async ({ p
 
   await page.goto('/guides')
 
-  await page.getByPlaceholder('Search tutorials').fill('no such toy')
+  await page.getByPlaceholder('Search by toy name').fill('no such toy')
   await expect(page.getByText(title)).toHaveCount(0)
 
-  await page.getByPlaceholder('Search tutorials').fill('')
+  await page.getByPlaceholder('Search by toy name').fill('')
   await expect(page.getByText(title)).toBeVisible()
 })
 
@@ -65,7 +65,7 @@ test('a search with no matches shows the empty state', async ({ page }) => {
   await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile Empty'), status: 'approved' })
 
   await page.goto('/guides')
-  await page.getByPlaceholder('Search tutorials').fill('zzz-no-such-toy-zzz')
+  await page.getByPlaceholder('Search by toy name').fill('zzz-no-such-toy-zzz')
 
   await expect(page.getByText('zzz-no-such-toy-zzz')).toBeVisible()
   await expect(page.locator('text=/No tutorials/i').first()).toBeVisible()
@@ -125,7 +125,7 @@ test('a backed guide names its organisation on the card', async ({ page }) => {
 
   // "Reviewed by SPLAT" is the default path, not an absence, so it gets the
   // same billing as a name — narrowed to the unbacked card to prove it.
-  await page.getByPlaceholder('Search tutorials').fill(plain)
+  await page.getByPlaceholder('Search by toy name').fill(plain)
   await expect(page.getByText('Reviewed by SPLAT')).toBeVisible()
   await expect(page.getByText(`Backed by ${org}`)).toHaveCount(0)
 })
@@ -138,7 +138,7 @@ test('tapping Save on a card flips the bookmark and the flip survives a reload',
   await page.goto('/guides')
   // Narrowed to the one row first: every card carries its own bookmark, and
   // the button has no per-row name to tell them apart by.
-  await page.getByPlaceholder('Search tutorials').fill(title)
+  await page.getByPlaceholder('Search by toy name').fill(title)
   await expect(page.getByText(title)).toBeVisible()
 
   // Awaited, not just clicked: the flip is optimistic, so a reload fired
@@ -154,6 +154,6 @@ test('tapping Save on a card flips the bookmark and the flip survives a reload',
   // The reload is the point: only a fresh /api/saves/ids proves the row is
   // really there, rather than the optimistic flip still showing.
   await page.reload()
-  await page.getByPlaceholder('Search tutorials').fill(title)
+  await page.getByPlaceholder('Search by toy name').fill(title)
   await expect(page.getByLabel('Saved', { exact: true })).toBeVisible()
 })

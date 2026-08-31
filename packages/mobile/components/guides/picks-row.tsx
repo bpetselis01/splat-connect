@@ -31,7 +31,13 @@ export function PicksRow({
       </Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.content}>
         {picks.map(({ tutorials: t }) => (
-          <AnimatedPressable key={t.id} onPress={() => onOpen(t.id)} pressScale={0.97}>
+          <AnimatedPressable
+            key={t.id}
+            onPress={() => onOpen(t.id)}
+            pressScale={0.97}
+            accessibilityRole="button"
+            accessibilityLabel={t.title}
+          >
             <View style={styles.card}>
               {t.toy_photo_url ? (
                 <Image source={{ uri: t.toy_photo_url }} style={styles.photo} />

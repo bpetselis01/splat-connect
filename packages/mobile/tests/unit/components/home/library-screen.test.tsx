@@ -60,7 +60,7 @@ describe('LibraryScreen', () => {
   it('filters the list by search text', async () => {
     render(<LibraryScreen />)
     await screen.findByText('Build a Robot Arm')
-    fireEvent.changeText(screen.getByPlaceholderText('Search tutorials'), 'gearbox')
+    fireEvent.changeText(screen.getByPlaceholderText('Search by toy name'), 'gearbox')
     expect(screen.queryByText('Build a Robot Arm')).toBeNull()
     expect(screen.getByText('Advanced Gearbox')).toBeTruthy()
   })
@@ -74,7 +74,7 @@ describe('LibraryScreen', () => {
     })
     render(<LibraryScreen />)
     await screen.findByText('Build a Robot Arm')
-    fireEvent.changeText(screen.getByPlaceholderText('Search tutorials'), 'spinning')
+    fireEvent.changeText(screen.getByPlaceholderText('Search by toy name'), 'spinning')
     expect(screen.getByText('Build a Robot Arm')).toBeTruthy()
     expect(screen.queryByText('Advanced Gearbox')).toBeNull()
   })

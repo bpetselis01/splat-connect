@@ -1,7 +1,7 @@
 // packages/mobile/components/my-tutorials/list-screen.tsx
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { View, Text, FlatList, StyleSheet, Image } from 'react-native'
-import { useRouter } from 'expo-router'
+import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import type { Tutorial } from '@splat-connect/types'
 import { KIND_LABEL } from '@splat-connect/types'
@@ -84,6 +84,15 @@ export function MyTutorialsListScreen() {
       ignore = true
     }
   }, [reloadKey])
+
+  // Refetch every time this screen regains focus — otherwise a guide created
+  // or edited elsewhere (guides/new, the editor) shows stale until the user
+  // backgrounds and reopens the app.
+  useFocusEffect(
+    useCallback(() => {
+      setReloadKey((k) => k + 1)
+    }, [])
+  )
 
   return (
     <Screen>
