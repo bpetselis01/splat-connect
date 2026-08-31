@@ -64,7 +64,7 @@ describe('ExploreScreen', () => {
     render(<ExploreScreen />)
     await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(3))
 
-    fireEvent.changeText(screen.getByPlaceholderText('Search guides, toys and organisations'), 'switch')
+    fireEvent.changeText(screen.getByPlaceholderText('Search guides, toys, organisations'), 'switch')
 
     expect(await screen.findByText('Switch car')).toBeTruthy()
     expect(screen.getByText('Toys')).toBeTruthy()
@@ -78,7 +78,7 @@ describe('ExploreScreen', () => {
     render(<ExploreScreen />)
     await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(3))
 
-    fireEvent.changeText(screen.getByPlaceholderText('Search guides, toys and organisations'), 'switch')
+    fireEvent.changeText(screen.getByPlaceholderText('Search guides, toys, organisations'), 'switch')
     fireEvent.press(await screen.findByLabelText('Switch car'))
     expect(mockPush).toHaveBeenCalledWith('/toy-library/t1')
   })
@@ -87,11 +87,52 @@ describe('ExploreScreen', () => {
     render(<ExploreScreen />)
     await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(3))
 
-    const field = screen.getByPlaceholderText('Search guides, toys and organisations')
+    const field = screen.getByPlaceholderText('Search guides, toys, organisations')
     fireEvent.changeText(field, 'switch')
     expect(await screen.findByText('Switch car')).toBeTruthy()
 
     fireEvent.changeText(field, '')
     expect(screen.queryByText('Switch car')).toBeNull()
+  })
+
+  it('still lists results from the sources that succeeded when one source fails, and shows a retry', async () => {
+    mockGet.mockImplementation((path: string) => {
+      if (path === '/api/public/tutorials') return Promise.reject(new Error('API GET failed with status 500'))
+      if (path === '/api/public/toys') return Promise.resolve([{ id: 't1', name: 'Switch car' }])
+      if (path === '/api/public/organizations') return Promise.resolve([{ id: 'o1', name: 'TAD Australia' }])
+      return Promise.resolve([])
+    })
+    render(<ExploreScreen />)
+    await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(3))
+    expect(await screen.findByText("Couldn't load everything — try again.")).toBeTruthy()
+
+    fireEvent.changeText(screen.getByPlaceholderText('Search guides, toys, organisations'), 'a')
+    expect(screen.getByText('Switch car')).toBeTruthy()
+    expect(screen.getByText('TAD Australia')).toBeTruthy()
+    expect(screen.queryByText('Bubble machine guide')).toBeNull()
+    expect(screen.queryByText('Guides')).toBeNull()
+  })
+
+  it('retrying refetches all three sources and clears the error once they all succeed', async () => {
+    mockGet.mockImplementation((path: string) => {
+      if (path === '/api/public/tutorials') return Promise.reject(new Error('API GET failed with status 500'))
+      if (path === '/api/public/toys') return Promise.resolve([{ id: 't1', name: 'Switch car' }])
+      if (path === '/api/public/organizations') return Promise.resolve([{ id: 'o1', name: 'TAD Australia' }])
+      return Promise.resolve([])
+    })
+    render(<ExploreScreen />)
+    await screen.findByText("Couldn't load everything — try again.")
+    expect(mockGet).toHaveBeenCalledTimes(3)
+
+    mockGet.mockImplementation((path: string) => {
+      if (path === '/api/public/tutorials') return Promise.resolve([{ id: 'g1', title: 'Bubble machine guide' }])
+      if (path === '/api/public/toys') return Promise.resolve([{ id: 't1', name: 'Switch car' }])
+      if (path === '/api/public/organizations') return Promise.resolve([{ id: 'o1', name: 'TAD Australia' }])
+      return Promise.resolve([])
+    })
+    fireEvent.press(screen.getByRole('button', { name: 'Try again' }))
+
+    await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(6))
+    expect(screen.queryByText("Couldn't load everything — try again.")).toBeNull()
   })
 })
