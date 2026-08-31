@@ -6,17 +6,29 @@
 import { Platform } from 'react-native'
 import { getToken } from './api-client'
 
-export type UploadPath = '/api/upload/photo' | '/api/upload/pdf' | '/api/upload/stl'
+export type UploadPath =
+  | '/api/upload/photo'
+  | '/api/upload/pdf'
+  | '/api/upload/stl'
+  | '/api/upload/toy-cover'
+  | '/api/upload/toy-switch-photo'
 
 export interface UploadResult {
   url: string
   filename?: string
 }
 
+/**
+ * `idField` names the form part the API's readUpload(c, idField) expects
+ * (packages/api/src/routes/upload.ts) — 'tutorialId' for the three guide
+ * routes, 'toyId' for the two toy-library ones. Defaulted so every existing
+ * P2 call site (photo/pdf/stl) is unchanged.
+ */
 export async function uploadFile(
   path: UploadPath,
-  tutorialId: string,
-  file: { uri: string; name: string; mimeType?: string }
+  id: string,
+  file: { uri: string; name: string; mimeType?: string },
+  idField: 'tutorialId' | 'toyId' = 'tutorialId'
 ): Promise<UploadResult> {
   const token = await getToken()
 
@@ -41,7 +53,7 @@ export async function uploadFile(
       type: file.mimeType ?? 'application/octet-stream',
     } as unknown as Blob)
   }
-  formData.append('tutorialId', tutorialId)
+  formData.append(idField, id)
 
   const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL}${path}`, {
     method: 'POST',
