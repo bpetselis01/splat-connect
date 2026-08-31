@@ -64,7 +64,7 @@ function TutorialRow({
         // "Hard" alongside the filter chip. The hint carries the difficulty
         // instead, where it cannot collide with another control's name.
         accessibilityLabel={item.title}
-        accessibilityHint={`${item.difficulty} difficulty. Opens the tutorial.`}
+        accessibilityHint={`${item.difficulty} difficulty. ${KIND_LABEL[item.kind]}. Opens the tutorial.`}
         // Full-width surfaces need less travel than a button, or the press
         // reads as the card tipping over.
         pressScale={0.985}
@@ -89,19 +89,17 @@ function TutorialRow({
               </Text>
             ) : null}
             <View style={styles.cardFooter}>
-              <View style={styles.badgeRow}>
-                {/*
-                  Hidden from the accessibility tree on purpose: the row is
-                  already a button, and a nested "Hard" text node would both
-                  double-announce the difficulty and make the row answer to the
-                  same accessible name as the "Hard" filter chip. The row's hint
-                  carries it instead. The kind badge doesn't need this — its
-                  uppercase text ("TOY ADAPTATION") never matches the kind
-                  chip's title-case label ("Toy adaptation"), so it stays put.
-                */}
-                <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-                  <Badge status={item.difficulty} />
-                </View>
+              {/*
+                Hidden from the accessibility tree on purpose: the row is
+                already a button, and nested "Hard" / "Toy adaptation" text
+                nodes would both double-announce the value and make the row
+                answer to the same spoken name as the matching filter chip —
+                casing doesn't survive speech synthesis, so the kind badge
+                needs this exactly as much as the difficulty badge does. The
+                row's hint carries both instead.
+              */}
+              <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.badgeRow}>
+                <Badge status={item.difficulty} />
                 <Badge status={item.kind} label={KIND_LABEL[item.kind]} />
               </View>
               <Ionicons name="chevron-forward" size={18} color={theme.colors.primary} />
