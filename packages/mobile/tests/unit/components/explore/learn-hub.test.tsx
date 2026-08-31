@@ -12,6 +12,20 @@ jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }))
 const mockUseLearnProgress = jest.fn()
 jest.mock('../../../../lib/learn', () => ({ useLearnProgress: () => mockUseLearnProgress() }))
 
+// An integration test that exercised the REAL hook here (render the hub,
+// mutate storage behind its back, fire a refocus, assert the tick/Continue
+// card move) was tried and dropped: every test in this file shares the
+// static jest.mock('../../../../lib/learn', ...) above, hoisted file-wide,
+// so un-mocking it for one test needs jest.resetModules() + jest.doMock()
+// + a dynamic require() of LearnHub inside that one test. No test anywhere
+// in this suite uses that pattern — every other file's fix-verification
+// lives at the hook level, same as this file's sibling
+// tests/unit/lib/learn.test.ts, which now covers the real refocus wiring
+// directly. Risk this leaves open: nothing here proves LearnHub itself is
+// wired to the real (non-mocked) useLearnProgress export at all — only that
+// the hook behaves correctly in isolation, and that the mocked hub renders
+// correctly for whatever shape the hook returns.
+
 beforeEach(() => {
   jest.clearAllMocks()
 })

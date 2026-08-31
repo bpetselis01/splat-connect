@@ -12,8 +12,26 @@ jest.mock('../../../lib/supabase-storage', () => ({
   }),
 }))
 
+// useFocusEffect fires on navigation focus, which a unit render has no
+// navigator to simulate — standing in with a plain mount-time useEffect is
+// enough to exercise the refetch-on-focus wiring itself, same as
+// my-toys/list-screen.test.tsx. This file also stashes the latest effect so
+// a test can invoke it a second time to stand in for a real refocus, which
+// the screen-level stand-ins don't need since they only assert the mount call.
+let latestFocusEffect: (() => void) | null = null
+jest.mock('expo-router', () => {
+  const { useEffect } = jest.requireActual('react')
+  return {
+    useFocusEffect: (effect: () => void) => {
+      latestFocusEffect = effect
+      useEffect(effect, [])
+    },
+  }
+})
+
 beforeEach(() => {
   jest.clearAllMocks()
+  latestFocusEffect = null
   mockGetItem.mockResolvedValue(null)
   mockSetItem.mockResolvedValue(undefined)
 })
@@ -35,6 +53,22 @@ describe('useLearnProgress', () => {
     expect(result.current.read.has('choosing-a-toy')).toBe(true)
     // next = first article in LEARN_ARTICLES order not yet read
     expect(result.current.next?.slug).toBe('toy-adaptation-101')
+  })
+
+  it('re-reads storage on focus and picks up a slug persisted by another instance', async () => {
+    const { result } = renderHook(() => useLearnProgress())
+    await waitFor(() => expect(result.current.count).toBe(0))
+
+    // Stands in for a sibling instance of this hook (the article screen)
+    // having called markRead and persisted independently of this instance.
+    mockGetItem.mockResolvedValue(JSON.stringify(['toy-adaptation-101']))
+    act(() => {
+      latestFocusEffect?.()
+    })
+
+    await waitFor(() => expect(result.current.count).toBe(1))
+    expect(result.current.read.has('toy-adaptation-101')).toBe(true)
+    expect(result.current.next?.slug).toBe('switch-types')
   })
 
   it('markRead persists and updates state', async () => {
