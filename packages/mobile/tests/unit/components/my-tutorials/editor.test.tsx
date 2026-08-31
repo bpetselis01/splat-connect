@@ -120,7 +120,7 @@ describe('Editor', () => {
     mockGet.mockResolvedValue(draft({ status: 'pending', reviewed_for: null }))
     render(<Editor id="t1" />)
     expect(
-      await screen.findByText('With SPLAT for review. Saving any change pulls it back to draft.')
+      await screen.findByText('With SPLAT for review. You can still make changes.')
     ).toBeTruthy()
   })
 
@@ -128,8 +128,38 @@ describe('Editor', () => {
     mockGet.mockResolvedValue(draft({ status: 'pending', reviewed_for: { name: 'Riverside Therapy' } }))
     render(<Editor id="t1" />)
     expect(
-      await screen.findByText('With Riverside Therapy for review. Saving any change pulls it back to draft.')
+      await screen.findByText('With Riverside Therapy for review. You can still make changes.')
     ).toBeTruthy()
+  })
+
+  describe('requeue on save', () => {
+    it('PATCHes status: pending when Save details is pressed on an approved guide', async () => {
+      mockGet.mockResolvedValue(draft({ status: 'approved' }))
+      mockPatch.mockResolvedValue(draft({ status: 'pending' }))
+      render(<Editor id="t1" />)
+
+      await screen.findByPlaceholderText('Title')
+      fireEvent.press(screen.getByLabelText('Save details'))
+
+      await waitFor(() =>
+        expect(mockPatch).toHaveBeenCalledWith(
+          '/api/tutorials/t1',
+          expect.objectContaining({ status: 'pending' })
+        )
+      )
+    })
+
+    it('leaves status off the PATCH when Save details is pressed on a draft', async () => {
+      mockGet.mockResolvedValue(draft({}))
+      mockPatch.mockResolvedValue(draft({}))
+      render(<Editor id="t1" />)
+
+      await screen.findByPlaceholderText('Title')
+      fireEvent.press(screen.getByLabelText('Save details'))
+
+      await waitFor(() => expect(mockPatch).toHaveBeenCalled())
+      expect(mockPatch.mock.calls[0][1]).not.toHaveProperty('status')
+    })
   })
 
   it('deletes the guide after the confirm alert, and goes back', async () => {
@@ -186,6 +216,20 @@ describe('Editor', () => {
           ],
         })
       )
+    })
+
+    it('disables Save parts while a row has a blank name', async () => {
+      mockGet.mockResolvedValue(draft({}))
+      render(<Editor id="t1" />)
+
+      await screen.findByRole('tab', { name: 'Details' })
+      fireEvent.press(screen.getByRole('tab', { name: 'Parts' }))
+
+      fireEvent.press(screen.getByLabelText('+ Add a part'))
+      expect(screen.getByLabelText('Save parts').props.accessibilityState.disabled).toBe(true)
+
+      fireEvent.changeText(screen.getByLabelText('Part 1 name'), 'Micro switch')
+      expect(screen.getByLabelText('Save parts').props.accessibilityState.disabled).toBe(false)
     })
 
     it('saves the tools replace-set with no quantity field', async () => {

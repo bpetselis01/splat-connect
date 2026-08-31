@@ -144,6 +144,7 @@ function ItemsStep({
   onSave: () => void
 }) {
   const nounLabel = noun === 'part' ? 'Part' : 'Tool'
+  const hasBlankRow = rows.some((r) => !r.name.trim())
 
   function updateRow(index: number, patch: Partial<ItemRow>) {
     onChange(rows.map((r, i) => (i === index ? { ...r, ...patch } : r)))
@@ -218,7 +219,7 @@ function ItemsStep({
 
       <Button label={`+ Add a ${noun}`} variant="ghost" onPress={addRow} />
       <ErrorRow message={error} />
-      <Button label={`Save ${noun}s`} onPress={onSave} loading={saving} />
+      <Button label={`Save ${noun}s`} onPress={onSave} loading={saving} disabled={hasBlankRow} />
     </View>
   )
 }
@@ -332,6 +333,11 @@ export function Editor({ id }: { id: string }) {
   const loadedUpdatedAt = tutorial.updated_at
   const currentPdfPath = tutorial.tutorial_pdf_url
   const currentStlFiles = tutorial.stl_files
+  // RLS (supabase/migrations/001_schema.sql) only allows a contributor's
+  // update to land in draft/pending/rejected — a status-preserving PATCH on an
+  // approved or rejected row matches zero rows and 409s. Mirrors web's
+  // edit/page.tsx saveDetails/patchFileUrls: requeue it to pending instead.
+  const requeue = tutorial.status === 'approved' || tutorial.status === 'rejected'
 
   async function handleSaveDetails() {
     setSaving(true)
@@ -346,6 +352,7 @@ export function Editor({ id }: { id: string }) {
         kind,
         difficulty,
         updated_at: loadedUpdatedAt,
+        ...(requeue && { status: 'pending' as const }),
       })
       setTutorial((prev) => (prev ? { ...prev, ...updated } : updated))
     } catch (err) {
@@ -423,6 +430,7 @@ export function Editor({ id }: { id: string }) {
       const updated = await apiClient.patch<EditorTutorial>(`/api/tutorials/${id}`, {
         toy_photo_url: url,
         updated_at: loadedUpdatedAt,
+        ...(requeue && { status: 'pending' as const }),
       })
       setTutorial((prev) => (prev ? { ...prev, ...updated } : updated))
     } catch (err) {
@@ -448,6 +456,7 @@ export function Editor({ id }: { id: string }) {
       const updated = await apiClient.patch<EditorTutorial>(`/api/tutorials/${id}`, {
         tutorial_pdf_url: url,
         updated_at: loadedUpdatedAt,
+        ...(requeue && { status: 'pending' as const }),
       })
       setTutorial((prev) => (prev ? { ...prev, ...updated } : updated))
     } catch (err) {
@@ -562,7 +571,7 @@ export function Editor({ id }: { id: string }) {
       {tutorial.status === 'pending' ? (
         <View style={styles.pendingBanner}>
           <Text style={styles.pendingText}>
-            With {reviewerName} for review. Saving any change pulls it back to draft.
+            With {reviewerName} for review. You can still make changes.
           </Text>
         </View>
       ) : null}
