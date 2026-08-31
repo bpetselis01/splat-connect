@@ -112,15 +112,22 @@ test('a backed guide names its organisation on the card', async ({ page }) => {
   const title = uniqueTitle('E2E Mobile Backed')
   const org = uniqueTitle('E2E Backing Org')
   await createTutorial(contributor.id, { title, status: 'approved', backedByOrg: org })
+  // Its own unbacked guide, not another worker's: the default line has to be
+  // asserted against a row this test controls, or the assertion passes on
+  // whatever else happens to be in the library.
+  const plain = uniqueTitle('E2E Mobile Unbacked Card')
+  await createTutorial(contributor.id, { title: plain, status: 'approved' })
 
   await page.goto('/guides')
 
   await expect(page.getByText(title)).toBeVisible()
   await expect(page.getByText(`Backed by ${org}`)).toBeVisible()
-  // Every other worker's fixture is unbacked, so the default line is on screen
-  // too — this asserts the backed card took the other branch, not that the
-  // default one is gone.
-  await expect(page.getByText('Reviewed by SPLAT').first()).toBeVisible()
+
+  // "Reviewed by SPLAT" is the default path, not an absence, so it gets the
+  // same billing as a name — narrowed to the unbacked card to prove it.
+  await page.getByPlaceholder('Search tutorials').fill(plain)
+  await expect(page.getByText('Reviewed by SPLAT')).toBeVisible()
+  await expect(page.getByText(`Backed by ${org}`)).toHaveCount(0)
 })
 
 test('tapping Save on a card flips the bookmark and the flip survives a reload', async ({ page }) => {

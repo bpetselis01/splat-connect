@@ -16,10 +16,14 @@ export type ProvenanceContributor = {
   profiles: { name: string }
 }
 
+// `organizations` is not optional: the public detail embed selects
+// organizations(id, name) through tutorial_orgs.org_id, a NOT NULL FK, so
+// PostgREST always returns the object. It is also the only place the org's
+// id reaches this screen — the embed does not send org_id, and it does not
+// need to when the same uuid is already on the wire here.
 export type ProvenanceOrg = {
-  org_id: string
   status: string
-  organizations?: { name: string }
+  organizations: { id: string; name: string }
 }
 
 /**
@@ -71,13 +75,13 @@ export function Provenance({
 
       {backer ? (
         <Pressable
-          onPress={() => onOrg(backer.org_id)}
+          onPress={() => onOrg(backer.organizations.id)}
           accessibilityRole="button"
           style={[styles.chip, { backgroundColor: theme.colors.tone.mint.bg }]}
         >
           <Ionicons name="checkmark" size={14} color={theme.colors.tone.mint.fg} />
           <Text style={[styles.chipText, { color: theme.colors.tone.mint.fg }]}>
-            Backed by {backer.organizations?.name ?? 'an organisation'}
+            Backed by {backer.organizations.name}
           </Text>
         </Pressable>
       ) : (

@@ -26,7 +26,7 @@ it('shows the mint backed-by chip for an accepted org and fires onOrg on press',
   render(
     <Provenance
       contributors={[person('Sam T.', 'primary')]}
-      orgs={[{ org_id: 'o1', status: 'accepted', organizations: { name: 'TAD Australia' } }]}
+      orgs={[{ status: 'accepted', organizations: { id: 'o1', name: 'TAD Australia' } }]}
       onPerson={jest.fn()}
       onOrg={onOrg}
     />
