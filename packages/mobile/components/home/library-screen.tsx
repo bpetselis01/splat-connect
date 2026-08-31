@@ -4,10 +4,11 @@ import { View, Text, FlatList, StyleSheet, Image } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import Animated, { FadeInDown } from 'react-native-reanimated'
-import type { Tutorial, Difficulty } from '@splat-connect/types'
+import type { Tutorial, TutorialOrg, TutorialKind, Difficulty } from '@splat-connect/types'
+import { KIND_LABEL } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
-import { DifficultyBadge } from '../difficulty-badge'
+import { useSaves, type Saves } from '../../lib/saves'
 import { ScreenHeader } from '../ui/ScreenHeader'
 import { Chip } from '../ui/Chip'
 import { Card } from '../ui/Card'
@@ -17,6 +18,8 @@ import { AnimatedPressable } from '../ui/AnimatedPressable'
 import { Button } from '../ui/Button'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
+import { Badge } from '../ui/Badge'
+import { SaveButton } from '../ui/SaveButton'
 
 const FILTERS: { label: string; value: Difficulty | null }[] = [
   { label: 'All', value: null },
@@ -25,64 +28,103 @@ const FILTERS: { label: string; value: Difficulty | null }[] = [
   { label: 'Hard', value: 'hard' },
 ]
 
-function TutorialRow({ item, onPress }: { item: Tutorial; onPress: () => void }) {
+const KIND_FILTERS: { label: string; value: TutorialKind }[] = [
+  { label: KIND_LABEL.toy_adaptation, value: 'toy_adaptation' },
+  { label: KIND_LABEL.assistive_tech, value: 'assistive_tech' },
+]
+
+/** The public list embeds only accepted backings on each row. */
+type ListedTutorial = Tutorial & { tutorial_orgs?: TutorialOrg[] }
+
+// "Reviewed by SPLAT" is the default path, not an absence — every contributor
+// took it before organisations existed, so it gets equal billing with a name.
+function backing(t: ListedTutorial): string {
+  const accepted = (t.tutorial_orgs ?? []).find((o) => o.status === 'accepted')
+  return accepted ? `Backed by ${accepted.organizations?.name ?? 'an organisation'}` : 'Reviewed by SPLAT'
+}
+
+function TutorialRow({
+  item,
+  saves,
+  onPress,
+}: {
+  item: ListedTutorial
+  saves: Saves
+  onPress: () => void
+}) {
   return (
-    <AnimatedPressable
-      onPress={onPress}
-      accessibilityRole="button"
-      // Without an explicit label the row's accessible name is assembled from
-      // every descendant Text, so the difficulty badge made the card answer to
-      // "Hard" alongside the filter chip. The hint carries the difficulty
-      // instead, where it cannot collide with another control's name.
-      accessibilityLabel={item.title}
-      accessibilityHint={`${item.difficulty} difficulty. Opens the tutorial.`}
-      // Full-width surfaces need less travel than a button, or the press
-      // reads as the card tipping over.
-      pressScale={0.985}
-      style={styles.rowPress}
-    >
-      <Card style={styles.card}>
-        {item.toy_photo_url ? (
-          <Image source={{ uri: item.toy_photo_url }} style={styles.thumbnail} />
-        ) : (
-          <View style={styles.thumbnailPlaceholder}>
-            <Ionicons name="color-wand-outline" size={30} color={theme.colors.primary} />
-          </View>
-        )}
-        <View style={styles.cardBody}>
-          <Text style={styles.cardTitle} numberOfLines={2}>
-            {item.title}
-          </Text>
-          {item.description ? (
-            <Text style={styles.cardDescription} numberOfLines={2}>
-              {item.description}
-            </Text>
-          ) : null}
-          <View style={styles.cardFooter}>
-            {/*
-              Hidden from the accessibility tree on purpose: the row is already
-              a button, and a nested "Hard" text node would both double-announce
-              the difficulty and make the row answer to the same accessible name
-              as the "Hard" filter chip. The row's hint carries it instead.
-            */}
-            <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-              <DifficultyBadge difficulty={item.difficulty} />
+    // The save bookmark is a sibling of the pressable, never a child of it —
+    // a nested Pressable would fight the row's own press target for the touch.
+    <View style={styles.saveHost}>
+      <AnimatedPressable
+        onPress={onPress}
+        accessibilityRole="button"
+        // Without an explicit label the row's accessible name is assembled from
+        // every descendant Text, so the difficulty badge made the card answer to
+        // "Hard" alongside the filter chip. The hint carries the difficulty
+        // instead, where it cannot collide with another control's name.
+        accessibilityLabel={item.title}
+        accessibilityHint={`${item.difficulty} difficulty. Opens the tutorial.`}
+        // Full-width surfaces need less travel than a button, or the press
+        // reads as the card tipping over.
+        pressScale={0.985}
+        style={styles.rowPress}
+      >
+        <Card style={styles.card}>
+          {item.toy_photo_url ? (
+            <Image source={{ uri: item.toy_photo_url }} style={styles.thumbnail} />
+          ) : (
+            <View style={styles.thumbnailPlaceholder}>
+              <Ionicons name="color-wand-outline" size={30} color={theme.colors.primary} />
             </View>
-            <Ionicons name="chevron-forward" size={18} color={theme.colors.primary} />
+          )}
+          <View style={styles.cardBody}>
+            <Text style={styles.cardTitle} numberOfLines={2}>
+              {item.title}
+            </Text>
+            <Text style={styles.backingLine}>{backing(item)}</Text>
+            {item.description ? (
+              <Text style={styles.cardDescription} numberOfLines={2}>
+                {item.description}
+              </Text>
+            ) : null}
+            <View style={styles.cardFooter}>
+              <View style={styles.badgeRow}>
+                {/*
+                  Hidden from the accessibility tree on purpose: the row is
+                  already a button, and a nested "Hard" text node would both
+                  double-announce the difficulty and make the row answer to the
+                  same accessible name as the "Hard" filter chip. The row's hint
+                  carries it instead. The kind badge doesn't need this — its
+                  uppercase text ("TOY ADAPTATION") never matches the kind
+                  chip's title-case label ("Toy adaptation"), so it stays put.
+                */}
+                <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+                  <Badge status={item.difficulty} />
+                </View>
+                <Badge status={item.kind} label={KIND_LABEL[item.kind]} />
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={theme.colors.primary} />
+            </View>
           </View>
-        </View>
-      </Card>
-    </AnimatedPressable>
+        </Card>
+      </AnimatedPressable>
+      <View style={styles.saveButtonWrap}>
+        <SaveButton slug="tutorials" id={item.id} saves={saves} />
+      </View>
+    </View>
   )
 }
 
 export function LibraryScreen() {
   const router = useRouter()
-  const [tutorials, setTutorials] = useState<Tutorial[]>([])
+  const saves = useSaves()
+  const [tutorials, setTutorials] = useState<ListedTutorial[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null)
+  const [kind, setKind] = useState<TutorialKind | null>(null)
   // Bumping this re-runs the fetch — the retry button's handle, since the error
   // state is a static view with no pull-to-refresh to lean on.
   const [reloadKey, setReloadKey] = useState(0)
@@ -93,7 +135,7 @@ export function LibraryScreen() {
     setError(null)
     const path = difficulty ? `/api/public/tutorials?difficulty=${difficulty}` : '/api/public/tutorials'
     apiClient
-      .get<Tutorial[]>(path)
+      .get<ListedTutorial[]>(path)
       .then((data) => {
         if (!ignore) setTutorials(data)
       })
@@ -114,13 +156,11 @@ export function LibraryScreen() {
   // the description too stops "search" from silently missing tutorials whose
   // relevant words live in the blurb rather than the name.
   const q = search.trim().toLowerCase()
-  const visible = q
-    ? tutorials.filter(
-        (t) =>
-          t.title.toLowerCase().includes(q) ||
-          (t.description?.toLowerCase().includes(q) ?? false)
-      )
-    : tutorials
+  const visible = tutorials.filter((t) => {
+    const matchesQuery =
+      !q || t.title.toLowerCase().includes(q) || (t.description?.toLowerCase().includes(q) ?? false)
+    return matchesQuery && (!kind || t.kind === kind)
+  })
 
   return (
     <Screen>
@@ -145,6 +185,19 @@ export function LibraryScreen() {
             label={f.label}
             active={difficulty === f.value}
             onPress={() => setDifficulty(f.value)}
+          />
+        ))}
+      </View>
+
+      <View style={styles.divider} />
+
+      <View style={[styles.filterRow, styles.kindRow]}>
+        {KIND_FILTERS.map((f) => (
+          <Chip
+            key={f.value}
+            label={f.label}
+            active={kind === f.value}
+            onPress={() => setKind((k) => (k === f.value ? null : f.value))}
           />
         ))}
       </View>
@@ -195,6 +248,7 @@ export function LibraryScreen() {
             >
               <TutorialRow
                 item={item}
+                saves={saves}
                 onPress={() => router.push({ pathname: '/guides/[id]', params: { id: item.id } })}
               />
             </Animated.View>
@@ -212,10 +266,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing(4),
     ...theme.shadow(4),
   },
-  filterRow: { flexDirection: 'row', gap: theme.spacing(2), marginBottom: theme.spacing(4) },
+  filterRow: { flexDirection: 'row', gap: theme.spacing(2), marginBottom: theme.spacing(2) },
+  kindRow: { marginBottom: theme.spacing(4) },
+  // theme has no dedicated "line" token — colors.border is the same 2px
+  // divider colour already used for the two other top-border dividers in this
+  // app (preview-screen, customization-screen), so this reuses it rather than
+  // adding a second name for one value.
+  divider: { height: 2, backgroundColor: theme.colors.border, marginBottom: theme.spacing(2) },
   retry: { marginTop: theme.spacing(5), alignSelf: 'center', paddingHorizontal: theme.spacing(8) },
   listContent: { paddingBottom: theme.spacing(6) },
   rowPress: { marginBottom: theme.spacing(3) },
+  saveHost: { position: 'relative' },
+  saveButtonWrap: { position: 'absolute', top: 2, right: 2 },
   card: { flexDirection: 'row', gap: theme.spacing(4), padding: theme.spacing(3) },
   thumbnail: {
     width: 104,
@@ -245,10 +307,17 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     marginTop: theme.spacing(1),
   },
+  backingLine: {
+    fontFamily: theme.fonts.regular,
+    color: theme.colors.muted,
+    fontSize: 11,
+    marginTop: theme.spacing(1),
+  },
   cardFooter: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginTop: theme.spacing(2),
   },
+  badgeRow: { flexDirection: 'row', gap: theme.spacing(2) },
 })
