@@ -13,6 +13,8 @@ export default function GuidesStackLayout() {
       <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="[id]/index" options={{ title: 'Guide' }} />
       <Stack.Screen name="[id]/preview" options={{ title: 'Preview' }} />
+      <Stack.Screen name="contributor/[id]" options={{ title: 'Contributor' }} />
+      <Stack.Screen name="organisation/[id]" options={{ title: 'Organisation' }} />
     </Stack>
   )
 }
