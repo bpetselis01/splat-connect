@@ -251,3 +251,78 @@ export async function selectPill(page: Page, name: string) {
   await pill.click()
   await expect(pill).toHaveAttribute('aria-selected', 'true')
 }
+
+/**
+ * A published toy owned by one person, inserted straight through the service
+ * role. Deliberately not driven through the UI: POST /api/toys publishes only
+ * after the photo gaps are filled (routes/toys.ts), and a read-side spec has
+ * no business uploading a cover photo to get a row into the library.
+ *
+ * Mirrors packages/web/tests/e2e/helpers.ts createPublishedToy, plus the
+ * overrides the mobile library screen filters and badges on. Every optional
+ * fact defaults OFF — no switch adaptation, no photo — so a spec that asserts
+ * one of them has to have asked for it.
+ */
+export async function createPublishedToy(
+  ownerId: string,
+  overrides: Partial<{
+    name: string
+    /** 1–10. The library's condition buckets cut at 3/4 and 6/7. */
+    condition: number
+    /** null lists the toy without offering it — the request block's "not offered" branch. */
+    offer_type: 'donation' | 'exchange' | 'both' | null
+    switch_adapted: boolean
+    cover_photo_url: string
+  }> = {}
+): Promise<string> {
+  const { data, error } = await adminClient()
+    .from('toys')
+    .insert({
+      owner_id: ownerId,
+      name: overrides.name ?? uniqueTitle('E2E Toy'),
+      condition: overrides.condition ?? 7,
+      switch_adapted: overrides.switch_adapted ?? false,
+      cover_photo_url: overrides.cover_photo_url ?? null,
+      // `in` rather than `??`: null is a meaningful value here, not an absence.
+      offer_type: 'offer_type' in overrides ? overrides.offer_type : 'donation',
+      status: 'published',
+    })
+    .select('id')
+    .single()
+  if (error || !data) throw new Error(`createPublishedToy failed: ${error?.message}`)
+  return data.id
+}
+
+/** Rename a service-role-provisioned profile, so a spec can assert on a name
+ *  only its own fixture answers to — every createContributor() is otherwise
+ *  "E2E Contributor", and four parallel workers share that. */
+export async function renameProfile(profileId: string, name: string) {
+  const { error } = await adminClient().from('profiles').update({ name }).eq('id', profileId)
+  if (error) throw new Error(`renameProfile failed: ${error.message}`)
+}
+
+/** Seed the saved pickup address the exchange thread pre-fills its accept form
+ *  from (caps.profile.pickup_*). */
+export async function setPickupAddress(
+  profileId: string,
+  address: { pickup_line1: string; pickup_suburb: string; pickup_state: string; pickup_postcode: string }
+) {
+  const { error } = await adminClient().from('profiles').update(address).eq('id', profileId)
+  if (error) throw new Error(`setPickupAddress failed: ${error.message}`)
+}
+
+/**
+ * The handoff codes as the database holds them. The thread shows each party
+ * only their OWN code (sanitizeCodes in routes/toy-transactions.ts), so the
+ * side doing the confirming can never read the code it has to type — in real
+ * life it is read aloud at the pickup, and here it comes from the row.
+ */
+export async function handoffCodes(transactionId: string) {
+  const { data, error } = await adminClient()
+    .from('toy_transactions')
+    .select('owner_code, requester_code')
+    .eq('id', transactionId)
+    .single()
+  if (error || !data) throw new Error(`handoffCodes failed: ${error?.message}`)
+  return data as { owner_code: string; requester_code: string }
+}
