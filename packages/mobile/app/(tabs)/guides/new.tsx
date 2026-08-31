@@ -43,6 +43,13 @@ export default function NewGuideRoute() {
 
   async function createDraft(id: string) {
     await apiClient.post('/api/tutorials', { id, title, difficulty, kind })
+    // POST /api/tutorials writes the tutorials row and nothing else — the
+    // author is linked by this second call, exactly as web's
+    // new-tutorial-form.tsx does it. Without it the draft has no
+    // tutorial_contributors row, every RLS policy on a draft reads through
+    // that table, and the editor this line redirects into 404s on its own
+    // GET. Retry-safe on the API side (23505 -> 200), same as the create.
+    await apiClient.post(`/api/contributors/me/tutorials/${id}`, {})
     router.replace(`/tutorials/${id}`)
   }
 

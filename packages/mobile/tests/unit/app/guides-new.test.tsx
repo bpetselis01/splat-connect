@@ -46,6 +46,10 @@ describe('NewGuideRoute', () => {
         kind: 'toy_adaptation',
       })
     )
+    // The second POST is the author's own contributor row. POST /api/tutorials
+    // writes the tutorials row alone, and every RLS policy on a draft reads
+    // through tutorial_contributors — without this the editor 404s on load.
+    expect(mockPost).toHaveBeenCalledWith('/api/contributors/me/tutorials/uuid-1', {})
     expect(mockReplace).toHaveBeenCalledWith('/tutorials/uuid-1')
   })
 
@@ -88,10 +92,14 @@ describe('NewGuideRoute', () => {
     fireEvent.press(screen.getByLabelText('Accept and continue'))
 
     await waitFor(() => expect(mockAccept).toHaveBeenCalledTimes(1))
-    await waitFor(() => expect(mockPost).toHaveBeenCalledTimes(2))
+    // Filtered by path rather than counted: createDraft also claims the
+    // contributor row, so the total is three calls, two of them creates.
+    await waitFor(() => expect(mockPost).toHaveBeenCalledTimes(3))
+    const creates = mockPost.mock.calls.filter((call) => call[0] === '/api/tutorials')
     // Both attempts carry the same id — a retry must not mint a second draft.
-    expect(mockPost.mock.calls[0][1].id).toBe('uuid-1')
-    expect(mockPost.mock.calls[1][1].id).toBe('uuid-1')
+    expect(creates).toHaveLength(2)
+    expect(creates[0][1].id).toBe('uuid-1')
+    expect(creates[1][1].id).toBe('uuid-1')
     expect(mockReplace).toHaveBeenCalledWith('/tutorials/uuid-1')
   })
 
