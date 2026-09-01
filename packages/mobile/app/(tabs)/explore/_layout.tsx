@@ -15,6 +15,10 @@ export default function ExploreStackLayout() {
       {/* Overridden per-article by article-screen.tsx's own <Stack.Screen>
           once the slug resolves; this is the fallback for an unknown one. */}
       <Stack.Screen name="learn/[slug]" options={{ title: 'Guide' }} />
+      <Stack.Screen name="challenges/index" options={{ title: 'Design challenges' }} />
+      {/* The brief carries its own title, so the header stays generic rather
+          than repeating a long challenge name in a narrow bar. */}
+      <Stack.Screen name="challenges/[id]" options={{ title: 'Challenge' }} />
       <Stack.Screen name="about" options={{ title: 'About SPLAT' }} />
     </Stack>
   )
