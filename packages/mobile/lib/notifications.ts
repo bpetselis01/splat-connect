@@ -70,18 +70,45 @@ const DIVISIONS: [number, Intl.RelativeTimeFormatUnit][] = [
   [Number.POSITIVE_INFINITY, 'year'],
 ]
 
+// The numeric:'auto' words for ±1, which is the only place Intl and plain
+// "N units ago" phrasing differ. second/minute/hour have no such words.
+const AUTO_WORDS: Partial<Record<Intl.RelativeTimeFormatUnit, [past: string, future: string]>> = {
+  day: ['yesterday', 'tomorrow'],
+  week: ['last week', 'next week'],
+  month: ['last month', 'next month'],
+  year: ['last year', 'next year'],
+}
+
+// Hermes — the one runtime this module actually ships to — does not implement
+// Intl.RelativeTimeFormat; `new` on it crashed the whole inbox (2026-09-01).
+// This mirrors Intl's en-AU numeric:'auto' output for the values we produce.
+function fallbackRelative(value: number, unit: Intl.RelativeTimeFormatUnit): string {
+  if (value === 0) return unit === 'second' ? 'now' : `this ${unit}`
+  const words = AUTO_WORDS[unit]
+  if (words && Math.abs(value) === 1) return value < 0 ? words[0] : words[1]
+  const n = Math.abs(value)
+  const noun = n === 1 ? unit : `${unit}s`
+  return value < 0 ? `${n} ${noun} ago` : `in ${n} ${noun}`
+}
+
 /**
- * "3 hours ago", "yesterday". Intl.RelativeTimeFormat rather than a hand-rolled
- * ladder of thresholds — it is in the runtime already and it is the one that
- * gets "yesterday" and the plurals right.
+ * "3 hours ago", "yesterday". Intl.RelativeTimeFormat where the runtime has
+ * it — it gets "yesterday" and the plurals right — with a fallback matching
+ * its output on Hermes, which does not.
  *
  * `now` is a parameter so a test can pin it; nothing else passes it.
  */
 export function relativeTime(iso: string, now: number = Date.now()): string {
-  const format = new Intl.RelativeTimeFormat('en-AU', { numeric: 'auto' })
+  const format =
+    typeof Intl.RelativeTimeFormat === 'function'
+      ? new Intl.RelativeTimeFormat('en-AU', { numeric: 'auto' })
+      : null
   let delta = (new Date(iso).getTime() - now) / 1000
   for (const [amount, unit] of DIVISIONS) {
-    if (Math.abs(delta) < amount) return format.format(Math.round(delta), unit)
+    if (Math.abs(delta) < amount) {
+      const value = Math.round(delta)
+      return format ? format.format(value, unit) : fallbackRelative(value, unit)
+    }
     delta /= amount
   }
   // Unreachable: the last division is Infinity, so the loop always returns.
