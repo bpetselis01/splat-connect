@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import { View, StyleSheet, type DimensionValue } from 'react-native'
 import Animated, {
   Easing,
+  FadeOut,
   useAnimatedStyle,
   useSharedValue,
   withRepeat,
@@ -49,16 +50,21 @@ export function Skeleton({
 /** The library row's loading shape — thumbnail block plus two text lines. */
 export function SkeletonRow() {
   return (
-    // testID so E2E can assert the loading state; react-native-web renders it
-    // as data-testid.
-    <Card testID="skeleton-row" style={styles.row}>
-      <Skeleton width={104} height={104} style={styles.thumb} />
-      <View style={styles.body}>
-        <Skeleton width="72%" height={16} />
-        <Skeleton width="94%" height={12} />
-        <Skeleton width="55%" height={12} />
-      </View>
-    </Card>
+    // The exiting fade is here, not per screen, because ~20 screens swap this
+    // for content in one frame — every conditional render inherits the
+    // crossfade from this one wrapper.
+    <Animated.View exiting={FadeOut.duration(theme.motion.fast)}>
+      {/* testID so E2E can assert the loading state; react-native-web renders
+          it as data-testid. */}
+      <Card testID="skeleton-row" style={styles.row}>
+        <Skeleton width={104} height={104} style={styles.thumb} />
+        <View style={styles.body}>
+          <Skeleton width="72%" height={16} />
+          <Skeleton width="94%" height={12} />
+          <Skeleton width="55%" height={12} />
+        </View>
+      </Card>
+    </Animated.View>
   )
 }
 
