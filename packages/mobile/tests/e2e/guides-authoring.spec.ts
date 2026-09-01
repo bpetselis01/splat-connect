@@ -45,6 +45,9 @@ test('a new account writes a guide end to end and submits it for review', async 
   // --- Details -----------------------------------------------------------
   await expect(page.getByRole('tab', { name: 'Details', exact: true })).toBeVisible()
   await page.getByPlaceholder('Description').fill('Written by a Playwright E2E test.')
+  // The safety declaration gates submission; affirming it rides along on the
+  // same details save that the PATCH below waits out.
+  await page.getByRole('checkbox', { name: /checked this design against every point/ }).click()
   // Waited out rather than fired and forgotten: every PATCH carries the
   // updated_at the screen last saw, and a stale one comes back 409 — so each
   // write has to have been merged back into state before the next one starts.

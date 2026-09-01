@@ -27,6 +27,8 @@ const DETAIL = {
   difficulty: 'easy',
   kind: 'toy_adaptation',
   status: 'approved',
+  maturity: 'complete',
+  safety_declared_at: null,
   // Object path (049), not a URL — the preview button signs it in-process.
   tutorial_pdf_url: '1/tutorial.pdf',
   toy_photo_url: null,

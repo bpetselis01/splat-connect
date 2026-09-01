@@ -4,7 +4,7 @@ import { apiClient } from '@/lib/api-client'
 import { TutorialView } from '@/components/tutorial-view'
 import { adminActions } from '@/components/project-actions'
 import { Check, X } from '@/components/icons'
-import type { TutorialWithDetails } from '@splat-connect/types'
+import { SAFETY_CHECKLIST, type TutorialWithDetails } from '@splat-connect/types'
 
 type Reviewed = TutorialWithDetails & {
   reviewer?: { name: string } | null
@@ -96,7 +96,23 @@ export default async function ReviewTutorialPage({
 
       <TutorialView tutorial={tutorial!} signedIn />
 
-      <div className="mt-10 flex max-w-2xl flex-col gap-4 border-t border-line pt-6">
+      {/* The reviewer's half of the contributor's safety declaration: the same
+          list, checked against the actual guide before approving. */}
+      <div className="mt-10 max-w-2xl border-t border-line pt-6">
+        <h2 className="text-sm font-bold text-ink">Safety checklist</h2>
+        <p className="mt-1 text-sm leading-relaxed text-muted">
+          {tutorial!.safety_declared_at
+            ? `The contributor declared this on ${new Date(tutorial!.safety_declared_at).toLocaleDateString('en-AU')}. Check it holds:`
+            : 'This tutorial predates the safety declaration — check every point yourself:'}
+        </p>
+        <ul className="mt-2 list-disc pl-5 text-sm leading-relaxed text-muted">
+          {SAFETY_CHECKLIST.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="mt-6 flex max-w-2xl flex-col gap-4 border-t border-line pt-6">
         {actions.includes('approve') && (
           <form action={approveTutorial.bind(null, tutorial!.id)}>
             <button

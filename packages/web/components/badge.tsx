@@ -57,6 +57,10 @@ export const STATUS_TONE = {
   // tutorial kind — no lifecycle, so it takes the neutral pair
   toy_adaptation: SUNKEN,
   assistive_tech: SUNKEN,
+  // maturity — 'complete' never renders a badge, absence is the signal
+  concept: SUNKEN,
+  prototype: HONEY,
+  in_progress: BRAND,
 }
 
 export type BadgeStatus = keyof typeof STATUS_TONE

@@ -284,9 +284,9 @@ describe('PATCH /:id', () => {
   /** The tutorials table now answers two shapes on a submit: the pre-read of the
    *  current status (select -> eq -> maybeSingle) and the update itself. `was` is
    *  the status the pre-read reports. */
-  function patchable(updated: unknown, was: string | null) {
+  function patchable(updated: unknown, was: string | null, declared = '2026-08-01T00:00:00Z') {
     return {
-      select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: was ? { status: was } : null, error: null }) }) }),
+      select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: was ? { status: was, safety_declared_at: declared } : null, error: null }) }) }),
       update: () => ({ eq: () => ({ eq: () => ({ select: () => ({ data: [updated], error: null }) }) }) }),
     }
   }
@@ -333,6 +333,18 @@ describe('PATCH /:id', () => {
       body: JSON.stringify({ status: 'pending', updated_at: '2026-01-01T00:00:00Z' }),
     })
     expect(res.status).toBe(200)
+    expect(mockNotifySubmitted).not.toHaveBeenCalled()
+  })
+
+  // Tests: the safety gate — a submit with no declaration anywhere is refused
+  it('refuses draft -> pending when the safety checklist was never affirmed', async () => {
+    withTerms(true, patchable({ id: '1', status: 'pending' }, 'draft', null as never))
+    const res = await makeApp().request('/1', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'pending', updated_at: '2026-01-01T00:00:00Z' }),
+    })
+    expect(res.status).toBe(400)
     expect(mockNotifySubmitted).not.toHaveBeenCalled()
   })
 

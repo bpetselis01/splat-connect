@@ -37,4 +37,19 @@ describe('GET /api/public/tutorials/:id', () => {
     expect(body.tutorial_contributors[0]?.profile_id).toBe(author.id)
     expect(body.reviewer).not.toBeNull()
   })
+
+  it('keeps anything less mature than complete out of the default listing, but not the detail route', async () => {
+    await adminClient().from('tutorials').update({ maturity: 'prototype' }).eq('id', tutorialId)
+    const list = await app.request('/api/public/tutorials')
+    const rows = (await list.json()) as Array<{ id: string }>
+    expect(rows.some((t) => t.id === tutorialId)).toBe(false)
+
+    const detail = await app.request(`/api/public/tutorials/${tutorialId}`)
+    expect(detail.status).toBe(200)
+
+    await adminClient().from('tutorials').update({ maturity: 'complete' }).eq('id', tutorialId)
+    const relisted = await app.request('/api/public/tutorials')
+    const relistedRows = (await relisted.json()) as Array<{ id: string }>
+    expect(relistedRows.some((t) => t.id === tutorialId)).toBe(true)
+  })
 })

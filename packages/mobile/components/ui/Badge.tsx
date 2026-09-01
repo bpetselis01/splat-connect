@@ -8,6 +8,8 @@ const TONE: Record<string, ToneKey> = {
   approved: 'mint', published: 'mint', completed: 'mint', graduated: 'mint', easy: 'mint', switch_adapted: 'mint',
   rejected: 'apricot', hard: 'apricot',
   accepted: 'brand', challenge: 'brand', available: 'brand',
+  // maturity — 'complete' never renders a badge, absence is the signal
+  concept: 'sunken', prototype: 'honey', in_progress: 'brand',
 }
 
 export function Badge({ status, label }: { status: string; label?: string }) {

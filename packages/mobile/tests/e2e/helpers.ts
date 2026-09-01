@@ -108,6 +108,8 @@ export async function createTutorial(
     difficulty: overrides.difficulty ?? 'easy',
     kind: overrides.kind ?? 'toy_adaptation',
     status: overrides.status ?? 'approved',
+    // Fixtures model tutorials whose author already affirmed the safety checklist.
+    safety_declared_at: new Date().toISOString(),
     tutorial_pdf_url: pdfPath,
     toy_photo_url: 'https://placeholder.invalid/photo.jpg',
   })

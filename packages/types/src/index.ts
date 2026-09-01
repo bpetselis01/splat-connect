@@ -390,6 +390,30 @@ export interface ThreadMessage {
 
 export type Difficulty = 'easy' | 'medium' | 'hard'
 export type TutorialStatus = 'draft' | 'pending' | 'approved' | 'rejected'
+
+/** How far along a design is, declared by its author and worn as a badge.
+ *  Only 'complete' items appear in the default public library listing — the
+ *  practical control that stops an untested design reaching a child. */
+export type TutorialMaturity = 'concept' | 'prototype' | 'in_progress' | 'complete'
+
+export const MATURITY_LABEL: Record<TutorialMaturity, string> = {
+  concept: 'Concept',
+  prototype: 'Prototype',
+  in_progress: 'In progress',
+  complete: 'Complete',
+}
+
+/** The safety checklist a contributor affirms before a tutorial can be
+ *  submitted for review, and the reviewer checks against. One copy, shown on
+ *  web and mobile submission and on the admin review screen. */
+export const SAFETY_CHECKLIST: readonly string[] = [
+  'Any button or coin cell sits behind a compartment that needs a tool to open',
+  'No small parts that could choke a child of the intended age',
+  'No sharp edges or pinch points',
+  'Materials are non-toxic and cleanable — children mouth these',
+  'No mains voltage anywhere in the design',
+  'Cords and straps checked for strangulation risk',
+]
 export type ContributorRole = 'primary' | 'collaborator'
 
 export type OrgStatus = 'active' | 'suspended'
@@ -627,6 +651,10 @@ export interface Tutorial {
   difficulty: Difficulty
   kind: TutorialKind
   status: TutorialStatus
+  maturity: TutorialMaturity
+  /** When the author affirmed SAFETY_CHECKLIST; null until they have, and a
+   *  draft cannot be submitted for review while it is null. */
+  safety_declared_at: string | null
   /** Storage object path in `tutorial-pdfs` (`<id>/tutorial.pdf`), not a URL — served via /files/tutorial-pdfs/<path>. Null until uploaded. */
   tutorial_pdf_url: string | null
   toy_photo_url: string | null
@@ -688,7 +716,7 @@ export interface StlFile {
  *  entirely, the way it drops backing that was never accepted. */
 export interface Recommendation {
   position: number
-  tutorials: Pick<Tutorial, 'id' | 'title' | 'kind' | 'difficulty' | 'toy_photo_url' | 'status'>
+  tutorials: Pick<Tutorial, 'id' | 'title' | 'kind' | 'difficulty' | 'toy_photo_url' | 'status' | 'maturity'>
 }
 
 // A tutorial with all its related information: the parts needed, tools needed,

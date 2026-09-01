@@ -30,5 +30,6 @@ export function getMissingFields(tutorial: TutorialWithDetails): Gap<EditStepId>
   // STL step at all, so the gap must never appear for it.
   if (tutorial.kind === 'assistive_tech' && tutorial.stl_files.length === 0)
     missing.push({ step: 'stl', label: 'A 3D-print file' })
+  if (!tutorial.safety_declared_at) missing.push({ step: 'details', label: 'The safety declaration' })
   return missing
 }

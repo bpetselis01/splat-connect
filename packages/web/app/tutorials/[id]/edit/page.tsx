@@ -18,7 +18,7 @@ import { TutorialReviewPanel } from '@/components/tutorial-review-panel'
 import { computeStepStatuses, stepsFor, type EditStep } from '@/lib/edit-steps'
 import { getMissingFields } from '@/lib/validation'
 import { SaveStatusLine } from '@/components/save-status-line'
-import type { Tutorial, Part, Tool, StlFile, TutorialWithDetails, Difficulty, TutorialKind, BuyLink, TutorialOrg, Organization } from '@splat-connect/types'
+import type { Tutorial, Part, Tool, StlFile, TutorialWithDetails, Difficulty, TutorialKind, BuyLink, TutorialOrg, Organization , TutorialMaturity } from '@splat-connect/types'
 
 export default async function EditTutorialPage({
   params,
@@ -71,7 +71,7 @@ export default async function EditTutorialPage({
     revalidatePath('/dashboard')
   }
 
-  async function saveDetails(patch: { title: string; description: string | null; difficulty: Difficulty; kind: TutorialKind; updated_at: string }) {
+  async function saveDetails(patch: { title: string; description: string | null; difficulty: Difficulty; kind: TutorialKind; maturity: TutorialMaturity; safety_declared?: true; updated_at: string }) {
     'use server'
     const body: Record<string, unknown> = { ...patch }
     if (tutorial.status === 'approved' || tutorial.status === 'rejected') {

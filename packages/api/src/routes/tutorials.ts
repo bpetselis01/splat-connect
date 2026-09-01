@@ -72,7 +72,7 @@ tutorials.get('/:id', async (c) => {
     .select(
       '*, parts(*), tools(*), stl_files(*), tutorial_contributors(*, profiles(id, name, role, created_at)), \
 tutorial_collaborator_invites(*, profiles:invited_profile_id(id, name, role, created_at)), \
-tutorial_recommendations!tutorial_id(position, recommended_id, tutorials!recommended_id(id, title, kind, difficulty, toy_photo_url, status)), \
+tutorial_recommendations!tutorial_id(position, recommended_id, tutorials!recommended_id(id, title, kind, difficulty, toy_photo_url, status, maturity)), \
 reviewer:reviewed_by(name), reviewed_for:reviewed_for_org_id(name)'
     )
     .eq('id', c.req.param('id'))
@@ -156,7 +156,7 @@ tutorials.post('/', async (c) => {
 /** Only these may be set through the generic edit endpoint. Unknown keys are
  *  dropped silently; the protected ones return 403 so a caller learns rather than
  *  wonders. */
-const EDITABLE = ['title', 'description', 'difficulty', 'kind', 'tutorial_pdf_url', 'toy_photo_url', 'status'] as const
+const EDITABLE = ['title', 'description', 'difficulty', 'kind', 'maturity', 'tutorial_pdf_url', 'toy_photo_url', 'status'] as const
 const PROTECTED = ['reviewed_by', 'reviewed_for_org_id', 'reviewed_at', 'rejection_note']
 
 async function hasAcceptedContributorTerms(token: string, userId: string) {
@@ -200,6 +200,9 @@ tutorials.patch('/:id', async (c) => {
   }
 
   const update = pickEditable(body, EDITABLE)
+  // Not in EDITABLE because the client never chooses the timestamp: it affirms
+  // the checklist (safety_declared: true) and the server stamps when.
+  if (body.safety_declared === true) update.safety_declared_at = new Date().toISOString()
   if (!Object.keys(update).length) return c.json({ error: 'nothing to update' }, 400)
 
   const supabase = createUserClient(c.get('token'))
@@ -209,11 +212,23 @@ tutorials.patch('/:id', async (c) => {
   // (the editor sends the whole form) is not, and notifying on it would have
   // meant a leader's badge climbing every time an author fixed a typo.
   const submitting = body.status === 'pending'
-  const wasDraft =
-    submitting &&
-    (
-      await supabase.from('tutorials').select('status').eq('id', c.req.param('id')).maybeSingle()
-    ).data?.status === 'draft'
+  const current = submitting
+    ? (
+        await supabase
+          .from('tutorials')
+          .select('status, safety_declared_at')
+          .eq('id', c.req.param('id'))
+          .maybeSingle()
+      ).data
+    : null
+  const wasDraft = current?.status === 'draft'
+
+  // The safety gate: a draft is not offered for review until its author has
+  // affirmed the checklist (SAFETY_CHECKLIST in @splat-connect/types). Checked
+  // server-side because the UI gate is only the browser's opinion.
+  if (submitting && !current?.safety_declared_at && !update.safety_declared_at) {
+    return c.json({ error: 'The safety declaration is required before submitting' }, 400)
+  }
 
   const { data, error } = await supabase
     .from('tutorials')

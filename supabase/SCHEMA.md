@@ -65,6 +65,8 @@ A published (or in-progress) build tutorial. Status drives visibility and the re
 | `toy_photo_url` | text | nullable |
 | `kind` | text | not null, default `'toy_adaptation'`, check in (`toy_adaptation`, `assistive_tech`) *(048)* |
 | `rejection_note` | text | nullable |
+| `maturity` | text | not null, default `'complete'`, check in (`concept`, `prototype`, `in_progress`, `complete`) *(052)* |
+| `safety_declared_at` | timestamptz | nullable *(052)* |
 | `created_at` | timestamptz | not null, default `now()` |
 | `reviewed_at` | timestamptz | nullable |
 | `reviewed_by` | uuid | nullable, FK → `profiles` on delete set null *(007)* |
@@ -84,6 +86,9 @@ create table public.tutorials (
   tutorial_pdf_url text,
   toy_photo_url text,
   rejection_note text,
+  -- Added in 052:
+  maturity text not null default 'complete' check (maturity in ('concept','prototype','in_progress','complete')),
+  safety_declared_at timestamptz,
   created_at timestamptz not null default now(),
   reviewed_at timestamptz,
   -- Added in 007:

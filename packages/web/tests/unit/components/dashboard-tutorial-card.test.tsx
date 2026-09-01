@@ -22,6 +22,8 @@ function tutorial(overrides: Partial<Tutorial & { tutorial_orgs?: TutorialOrg[] 
     difficulty: 'easy' as const,
     kind: 'toy_adaptation' as const,
     status: 'approved' as const,
+    maturity: 'complete' as const,
+    safety_declared_at: null,
     description: null,
     tutorial_pdf_url: null,
     toy_photo_url: null,

@@ -9,7 +9,7 @@ import { PanelActions, useSaveOnLeave } from '@/components/panel-actions'
  */
 import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { KIND_LABEL, type Tutorial, type Difficulty, type TutorialKind } from '@splat-connect/types'
+import { KIND_LABEL, MATURITY_LABEL, SAFETY_CHECKLIST, type Tutorial, type Difficulty, type TutorialKind, type TutorialMaturity } from '@splat-connect/types'
 import { useToast } from '@/components/toast'
 
 export function EditDetailsSection({
@@ -17,7 +17,7 @@ export function EditDetailsSection({
   onSave,
 }: {
   tutorial: Tutorial
-  onSave: (patch: { title: string; description: string | null; difficulty: Difficulty; kind: TutorialKind; updated_at: string }) => Promise<void>
+  onSave: (patch: { title: string; description: string | null; difficulty: Difficulty; kind: TutorialKind; maturity: TutorialMaturity; safety_declared?: true; updated_at: string }) => Promise<void>
 }) {
   const router = useRouter()
   const showToast = useToast()
@@ -34,6 +34,10 @@ export function EditDetailsSection({
         description: (formData.get('description') as string) || null,
         difficulty: formData.get('difficulty') as Difficulty,
         kind: formData.get('kind') as TutorialKind,
+        maturity: formData.get('maturity') as TutorialMaturity,
+        // Once declared, always declared — the timestamp on the row is the
+        // record; the checkbox only exists until then.
+        ...(formData.get('safety_declared') === 'on' ? { safety_declared: true as const } : {}),
         updated_at: tutorial.updated_at,
       })
       setDirty(false)
@@ -105,6 +109,42 @@ export function EditDetailsSection({
           ))}
         </select>
       </div>
+      <div>
+        <label htmlFor="edit-maturity" className="field-label">How far along is it?</label>
+        <select id="edit-maturity" key={tutorial.maturity} name="maturity" defaultValue={tutorial.maturity} className="field">
+          {(Object.keys(MATURITY_LABEL) as TutorialMaturity[]).map((m) => (
+            <option key={m} value={m}>{MATURITY_LABEL[m]}</option>
+          ))}
+        </select>
+        <p className="mt-1 text-xs leading-relaxed text-muted">
+          Only complete guides appear in the public library listing. Anything earlier
+          wears its stage as a badge.
+        </p>
+      </div>
+      <fieldset>
+        <legend className="field-label">Safety declaration</legend>
+        {tutorial.safety_declared_at ? (
+          <p className="text-sm leading-relaxed text-muted">
+            Declared on {new Date(tutorial.safety_declared_at).toLocaleDateString('en-AU')}.
+          </p>
+        ) : (
+          <>
+            <ul className="list-disc pl-5 text-sm leading-relaxed text-muted">
+              {SAFETY_CHECKLIST.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+            {/* Defaults to unchecked on purpose — a declaration is made, never assumed. */}
+            <label className="mt-2 flex items-start gap-2 text-sm leading-relaxed text-ink">
+              <input type="checkbox" name="safety_declared" className="mt-1" />
+              <span>
+                I have checked this design against every point above. A guide cannot be
+                submitted for review without this.
+              </span>
+            </label>
+          </>
+        )}
+      </fieldset>
       <PanelActions>
         <button type="submit" disabled={!dirty || pending} className="btn btn-primary btn-sm">
           {pending ? 'Saving…' : 'Save details'}

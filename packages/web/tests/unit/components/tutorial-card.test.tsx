@@ -32,6 +32,8 @@ const mockTutorial: Tutorial = {
   difficulty: 'easy',
   kind: 'toy_adaptation',
   status: 'approved',
+    maturity: 'complete',
+    safety_declared_at: null,
   description: 'A helpful tutorial',
   tutorial_pdf_url: 'https://example.com/tutorial.pdf',
   toy_photo_url: 'https://example.com/photo.jpg',

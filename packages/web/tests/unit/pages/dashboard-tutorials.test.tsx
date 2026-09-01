@@ -44,6 +44,8 @@ const baseTutorial: Tutorial = {
   difficulty: 'easy',
   kind: 'toy_adaptation',
   status: 'approved',
+  maturity: 'complete',
+  safety_declared_at: null,
   description: null,
   tutorial_pdf_url: null,
   toy_photo_url: null,
