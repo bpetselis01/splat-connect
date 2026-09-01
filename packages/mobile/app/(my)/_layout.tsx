@@ -51,6 +51,10 @@ export default function MyLayout() {
       <Stack.Screen name="exchanges/[id]" options={{ title: 'Exchange' }} />
       <Stack.Screen name="challenges/index" options={{ title: 'Design challenges' }} />
       <Stack.Screen name="saved/index" options={{ title: 'Saved' }} />
+      {/* One route, three titles would need the param at layout level; the
+          generic word covers all three lists and the back chevron says where
+          you are anyway. */}
+      <Stack.Screen name="saved/[slug]" options={{ title: 'Saved' }} />
       <Stack.Screen name="notifications" options={{ title: 'Notifications' }} />
       <Stack.Screen name="print-requests" options={{ title: 'My print requests' }} />
       <Stack.Screen name="organisation/index" options={{ title: 'Review queue' }} />
