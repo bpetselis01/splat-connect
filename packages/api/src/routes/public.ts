@@ -601,7 +601,12 @@ publicRoutes.get('/challenges/:id', async (c) => {
 
   const { data: participants, error: participantsError } = await admin
     .from('toy_idea_participants')
-    .select('idea_id, profile_id, joined_at, profiles(name)')
+    // The FK is named explicitly because 042 added removed_by, a SECOND
+    // reference from this table to profiles. A bare profiles(name) has been
+    // ambiguous ever since — PostgREST answers "more than one relationship was
+    // found" with a 500, which this route hands to web's challenge detail page
+    // as a notFound(). Every public challenge brief was unreachable.
+    .select('idea_id, profile_id, joined_at, profiles!toy_idea_participants_profile_id_fkey(name)')
     .eq('idea_id', idea.id)
     // Reads via the admin client, so RLS is not what keeps a removed person
     // off this public list -- this filter is. Without it a removed person
