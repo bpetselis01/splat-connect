@@ -1,6 +1,6 @@
 // packages/mobile/components/exchanges/list-screen.tsx
 import { useCallback, useEffect, useState } from 'react'
-import { View, Text, FlatList, StyleSheet } from 'react-native'
+import { View, Text, FlatList, RefreshControl, StyleSheet } from 'react-native'
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router'
 import type { ToyTransactionSummary, ToyTransactionStatus } from '@splat-connect/types'
 import { needsAction, actionLabel } from '@splat-connect/types'
@@ -98,10 +98,18 @@ export function ExchangesListScreen() {
   // Bumping this re-runs the fetch — the retry button's handle, same as
   // my-toys/list-screen.tsx's reloadKey.
   const [reloadKey, setReloadKey] = useState(0)
+  const [refreshing, setRefreshing] = useState(false)
+
+  const onRefresh = () => {
+    setRefreshing(true)
+    setReloadKey((k) => k + 1)
+  }
 
   useEffect(() => {
     let ignore = false
-    setLoading(true)
+    // A pull-driven reload keeps the current rows on screen; skeletons are
+    // for arriving with nothing.
+    if (!refreshing) setLoading(true)
     setError(null)
     apiClient
       .get<ToyTransactionSummary[]>('/api/toy-transactions')
@@ -113,7 +121,10 @@ export function ExchangesListScreen() {
         if (!ignore) setError("Couldn't load your exchanges.")
       })
       .finally(() => {
-        if (!ignore) setLoading(false)
+        if (!ignore) {
+          setLoading(false)
+          setRefreshing(false)
+        }
       })
     return () => {
       ignore = true
@@ -203,6 +214,9 @@ export function ExchangesListScreen() {
         </EmptyState>
       ) : (
         <FlatList
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.ink} />
+          }
           data={active}
           keyExtractor={(t) => t.id}
           showsVerticalScrollIndicator={false}

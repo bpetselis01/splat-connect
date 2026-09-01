@@ -6,7 +6,7 @@
 // Mobile's half of web's app/notifications/page.tsx + notifications-list.tsx.
 // The copy and the routing live in lib/notifications.ts.
 import { useCallback, useEffect, useState } from 'react'
-import { View, Text, ScrollView, StyleSheet } from 'react-native'
+import { View, Text, ScrollView, RefreshControl, StyleSheet } from 'react-native'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
@@ -95,10 +95,18 @@ export function InboxScreen({ showHeader = false }: { showHeader?: boolean }) {
   const [loading, setLoading] = useState(true)
   const [busyInvite, setBusyInvite] = useState<string | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
+  const [refreshing, setRefreshing] = useState(false)
+
+  const onRefresh = () => {
+    setRefreshing(true)
+    setReloadKey((k) => k + 1)
+  }
 
   useEffect(() => {
     let ignore = false
-    setLoading(true)
+    // A pull-driven reload keeps the current rows on screen; skeletons are
+    // for arriving with nothing.
+    if (!refreshing) setLoading(true)
     Promise.all([
       apiClient.get<Notification[]>('/api/notifications/me').catch((err) => {
         console.error('[InboxScreen] notifications fetch failed:', err)
@@ -115,6 +123,7 @@ export function InboxScreen({ showHeader = false }: { showHeader?: boolean }) {
       setNotifications(rows)
       setInvites(pending)
       setLoading(false)
+      setRefreshing(false)
     })
     return () => {
       ignore = true
@@ -199,7 +208,13 @@ export function InboxScreen({ showHeader = false }: { showHeader?: boolean }) {
   return (
     <Screen>
       {header}
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.ink} />
+        }
+      >
         {BUCKETS.map(({ key, title }) => {
           const rows = notifications.filter((n) => notificationBucket(n.type) === key)
           if (rows.length === 0) return null

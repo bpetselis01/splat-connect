@@ -1,6 +1,6 @@
 // packages/mobile/components/my-tutorials/list-screen.tsx
 import { useCallback, useEffect, useState } from 'react'
-import { View, Text, FlatList, StyleSheet, Image } from 'react-native'
+import { View, Text, FlatList, RefreshControl, StyleSheet, Image } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import type { Tutorial } from '@splat-connect/types'
@@ -63,10 +63,18 @@ export function MyTutorialsListScreen() {
   // Bumping this re-runs the fetch — the retry button's handle, same as
   // library-screen's reloadKey.
   const [reloadKey, setReloadKey] = useState(0)
+  const [refreshing, setRefreshing] = useState(false)
+
+  const onRefresh = () => {
+    setRefreshing(true)
+    setReloadKey((k) => k + 1)
+  }
 
   useEffect(() => {
     let ignore = false
-    setLoading(true)
+    // A pull-driven reload keeps the current rows on screen; skeletons are
+    // for arriving with nothing.
+    if (!refreshing) setLoading(true)
     setError(null)
     apiClient
       .get<Tutorial[]>('/api/tutorials/mine')
@@ -78,7 +86,10 @@ export function MyTutorialsListScreen() {
         if (!ignore) setError("Couldn't load your tutorials.")
       })
       .finally(() => {
-        if (!ignore) setLoading(false)
+        if (!ignore) {
+          setLoading(false)
+          setRefreshing(false)
+        }
       })
     return () => {
       ignore = true
@@ -143,6 +154,9 @@ export function MyTutorialsListScreen() {
         </EmptyState>
       ) : (
         <FlatList
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.ink} />
+          }
           data={tutorials}
           keyExtractor={(t) => t.id}
           showsVerticalScrollIndicator={false}
