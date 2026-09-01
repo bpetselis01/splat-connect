@@ -3,8 +3,8 @@ import { useCallback, useEffect, useState } from 'react'
 import { View, Text, FlatList, StyleSheet, Image } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import type { OfferType, Toy, ToyTransactionSummary } from '@splat-connect/types'
-import { isOwnerSide } from '@splat-connect/types'
+import type { GivenAwayToy, OfferType, Toy, ToyTransactionSummary } from '@splat-connect/types'
+import { givenAway, isOwnerSide } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { useCapabilities } from '../../lib/capabilities'
@@ -109,6 +109,54 @@ function ToyRow({
   )
 }
 
+/**
+ * A toy that is not on this shelf any more. It cannot come from /api/toys —
+ * the row belongs to whoever received it now — so it is read back off the
+ * completed handoff. Tapping opens that handoff, which is the only remaining
+ * record of the meeting.
+ */
+function GivenAwayRow({ row, onPress }: { row: GivenAwayToy; onPress: () => void }) {
+  const line = row.received_name
+    ? `Swapped with ${row.other_party_name} for ${row.received_name}`
+    : `Donated to ${row.other_party_name}`
+
+  return (
+    <AnimatedPressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={row.name}
+      accessibilityHint={`${line}. Opens the exchange.`}
+      pressScale={0.99}
+      style={styles.rowWrap}
+    >
+      <Card style={[styles.card, styles.goneCard]}>
+        {row.cover_photo_url ? (
+          <Image source={{ uri: row.cover_photo_url }} style={styles.thumbnail} />
+        ) : (
+          <View style={styles.thumbnailPlaceholder}>
+            <Ionicons name="cube-outline" size={22} color={theme.colors.primary} />
+          </View>
+        )}
+        <View style={styles.cardBody}>
+          <Text style={styles.cardTitle} numberOfLines={1}>
+            {row.name}
+          </Text>
+          {/* Hidden: the row's hint above already reads both lines out. */}
+          <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+            <Text style={styles.goneLine}>{line}</Text>
+            <Text style={styles.goneDate}>{handoffDate(row.at)}</Text>
+          </View>
+        </View>
+        <Ionicons name="chevron-forward" size={18} color={theme.colors.primary} />
+      </Card>
+    </AnimatedPressable>
+  )
+}
+
+function handoffDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
 export function MyToysListScreen() {
   const router = useRouter()
   const { caps } = useCapabilities()
@@ -163,8 +211,23 @@ export function MyToysListScreen() {
   // read-side guard for the day a route does start archiving, and costs
   // nothing to leave in.
   const activeToys = toys.filter((t) => !t.archived_at)
+  const gone = caps ? givenAway(transactions, caps.profile.id, caps.ledOrgs.map((o) => o.id)) : []
 
   const goToToy = (id: string) => router.push({ pathname: '/toys/[id]', params: { id } })
+
+  const givenAwaySection =
+    gone.length > 0 ? (
+      <View style={styles.goneSection}>
+        <Text style={styles.goneHeading}>Given away</Text>
+        {gone.map((row) => (
+          <GivenAwayRow
+            key={row.transaction_id}
+            row={row}
+            onPress={() => router.push(`/exchanges/${row.transaction_id}`)}
+          />
+        ))}
+      </View>
+    ) : null
 
   return (
     <Screen>
@@ -199,7 +262,7 @@ export function MyToysListScreen() {
             style={styles.retry}
           />
         </EmptyState>
-      ) : toys.length === 0 ? (
+      ) : toys.length === 0 && gone.length === 0 ? (
         <EmptyState
           icon="cube-outline"
           title="No toys yet"
@@ -223,6 +286,9 @@ export function MyToysListScreen() {
               <ToyRow item={item} waiting={counts.get(item.id) ?? 0} onPress={() => goToToy(item.id)} />
             </View>
           )}
+          // Someone who hands over their only toy still has a record of it.
+          ListEmptyComponent={<Text style={styles.noneLeft}>No toys on your shelf right now.</Text>}
+          ListFooterComponent={givenAwaySection}
         />
       )}
     </Screen>
@@ -241,6 +307,28 @@ const styles = StyleSheet.create({
   addToy: { paddingVertical: theme.spacing(2), paddingHorizontal: theme.spacing(3) },
   retry: { marginTop: theme.spacing(5), alignSelf: 'center', paddingHorizontal: theme.spacing(8) },
   listContent: { paddingBottom: theme.spacing(6) },
+  noneLeft: {
+    fontFamily: theme.fonts.regular,
+    fontSize: theme.type.label,
+    color: theme.colors.muted,
+    marginBottom: theme.spacing(4),
+  },
+  goneSection: { marginTop: theme.spacing(4) },
+  goneHeading: {
+    fontFamily: theme.fonts.bold,
+    fontSize: theme.type.heading,
+    color: theme.colors.text,
+    marginBottom: theme.spacing(2),
+  },
+  // Receded, not hidden — the same 60% web's section takes.
+  goneCard: { opacity: 0.6 },
+  goneLine: {
+    fontFamily: theme.fonts.regular,
+    fontSize: theme.type.caption,
+    color: theme.colors.muted,
+    lineHeight: 18,
+  },
+  goneDate: { fontFamily: theme.fonts.regular, fontSize: 11, color: theme.colors.muted, marginTop: 2 },
   rowWrap: { marginBottom: theme.spacing(3) },
   card: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3), padding: theme.spacing(3) },
   thumbnail: { width: 56, height: 56, borderRadius: theme.radii.sm, backgroundColor: theme.colors.surfaceSunken },

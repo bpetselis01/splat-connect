@@ -80,7 +80,9 @@ const tx = (over: object) => ({
   created_at: '',
   updated_at: '',
   toy_name: 'Bubble machine',
+  toy_cover_photo_url: null,
   offered_toy_name: null,
+  offered_toy_cover_photo_url: null,
   other_party_name: 'A requester',
   acting_for_org_name: null,
   blocked_by_rival_accept: false,
@@ -213,5 +215,74 @@ describe('MyToysListScreen', () => {
     mockEndpoints({ toys: Promise.reject(new Error('API GET failed with status 500')) })
     render(<MyToysListScreen />)
     await waitFor(() => expect(screen.getByText("Couldn't load your toys.")).toBeTruthy())
+  })
+
+  describe('given away', () => {
+    const handedOver = (over: object = {}) =>
+      tx({ id: 'txg', toy_id: 'gone1', status: 'completed', toy_name: 'Fire truck', other_party_name: 'Priya', updated_at: '2026-08-12T00:00:00Z', ...over })
+
+    it('lists a donated toy under Given away, naming who received it', async () => {
+      mockEndpoints({
+        toys: Promise.resolve([toy({ id: 'toy1', name: 'Bubble machine' })]),
+        transactions: Promise.resolve([handedOver()]),
+      })
+      render(<MyToysListScreen />)
+
+      expect(await screen.findByText('Given away')).toBeTruthy()
+      expect(screen.getByText('Fire truck')).toBeTruthy()
+      // Hidden from the a11y tree on purpose — the row's hint reads it out —
+      // so the query opts in, same as the toy library's meter line.
+      expect(screen.getByText('Donated to Priya', { includeHiddenElements: true })).toBeTruthy()
+    })
+
+    it('names what a swap was traded for', async () => {
+      mockEndpoints({
+        transactions: Promise.resolve([
+          handedOver({ type: 'exchange', offered_toy_id: 'toy2', offered_toy_name: 'Spinning top' }),
+        ]),
+      })
+      render(<MyToysListScreen />)
+      expect(
+        await screen.findByText('Swapped with Priya for Spinning top', { includeHiddenElements: true })
+      ).toBeTruthy()
+    })
+
+    it('still shows what you gave away when you have no toys left', async () => {
+      // The likeliest case of all: someone hands over their only toy. The
+      // empty state must not swallow the record of it.
+      mockEndpoints({ toys: Promise.resolve([]), transactions: Promise.resolve([handedOver()]) })
+      render(<MyToysListScreen />)
+
+      expect(await screen.findByText('Given away')).toBeTruthy()
+      expect(screen.getByText('Fire truck')).toBeTruthy()
+    })
+
+    it('opens the handoff a given-away row came from', async () => {
+      mockEndpoints({ transactions: Promise.resolve([handedOver({ id: 'tx9' })]) })
+      render(<MyToysListScreen />)
+
+      fireEvent.press(await screen.findByRole('button', { name: 'Fire truck' }))
+      expect(mockPush).toHaveBeenCalledWith('/exchanges/tx9')
+    })
+
+    it('says nothing at all when nothing has been handed over', async () => {
+      mockEndpoints({ toys: Promise.resolve([toy({ id: 'toy1' })]) })
+      render(<MyToysListScreen />)
+
+      await screen.findByText('Bubble machine')
+      expect(screen.queryByText('Given away')).toBeNull()
+    })
+
+    it('keeps an incoming donation out of it — receiving is not giving', async () => {
+      mockEndpoints({
+        transactions: Promise.resolve([
+          handedOver({ owner_id: 'someone-else', requester_id: 'viewer1' }),
+        ]),
+      })
+      render(<MyToysListScreen />)
+
+      await waitFor(() => expect(mockGet).toHaveBeenCalledWith('/api/toy-transactions'))
+      expect(screen.queryByText('Given away')).toBeNull()
+    })
   })
 })
