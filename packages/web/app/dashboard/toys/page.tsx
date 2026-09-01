@@ -5,7 +5,37 @@ import { CardPhoto } from '@/components/card-photo'
 import { Badge } from '@/components/badge'
 import { Box } from '@/components/icons'
 import { BoundaryLink } from '@/components/boundary-link'
-import type { Toy } from '@splat-connect/types'
+import { givenAway } from '@splat-connect/types'
+import type { Toy, ToyTransactionSummary, GivenAwayToy } from '@splat-connect/types'
+
+/**
+ * What a person gave away: the toy is not theirs any more, so it cannot come
+ * from /api/toys. It is read back off the completed handoffs instead — see
+ * givenAway() in packages/types for which side gave what.
+ */
+function GivenAwayCard({ row }: { row: GivenAwayToy }) {
+  return (
+    <Link
+      href={`/dashboard/exchanges/${row.transaction_id}`}
+      className="card card-link flex h-full flex-col overflow-hidden"
+    >
+      <CardPhoto src={row.cover_photo_url} />
+      <div className="flex flex-1 flex-col gap-1 p-4">
+        <p className="truncate text-sm font-bold text-ink">{row.name}</p>
+        <p className="text-xs leading-relaxed text-muted">
+          {row.received_name
+            ? `Swapped with ${row.other_party_name} for ${row.received_name}`
+            : `Donated to ${row.other_party_name}`}
+        </p>
+        <p className="text-xs text-muted">{formatHandoffDate(row.at)}</p>
+      </div>
+    </Link>
+  )
+}
+
+function formatHandoffDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })
+}
 
 export default async function ToyListPage() {
   const caps = await requireCapabilities()
@@ -15,8 +45,16 @@ export default async function ToyListPage() {
   // an owner their toys are gone. Let a failed fetch throw into error.tsx.
   const toys = await apiClient.get<Toy[]>('/api/toys')
 
+  // Given away is a nice-to-have beside the toys someone still holds, so unlike
+  // the fetch above it degrades: a failed read costs the section, not the page.
+  const transactions = await apiClient
+    .get<ToyTransactionSummary[]>('/api/toy-transactions')
+    .catch(() => [] as ToyTransactionSummary[])
+  const gone = givenAway(transactions, caps.profile.id, caps.ledOrgs.map((o) => o.id))
+
+  // The archived_at filter stays until the column itself goes (its own commit).
+  // Nothing writes a non-null value, so today this keeps every toy.
   const activeToys = toys.filter((t) => !t.archived_at)
-  const archivedToys = toys.filter((t) => t.archived_at)
 
   return (
     <div>
@@ -86,29 +124,13 @@ export default async function ToyListPage() {
         </ul>
       )}
 
-      {archivedToys.length > 0 && (
+      {gone.length > 0 && (
         <div className="mt-10">
-          <h2 className="mb-4 text-lg font-bold text-muted">Archived</h2>
+          <h2 className="mb-4 text-lg font-bold text-muted">Given away</h2>
           <ul className="grid grid-cols-1 gap-4 opacity-60 sm:grid-cols-2 lg:grid-cols-3">
-            {archivedToys.map((t) => (
-              <li key={t.id}>
-                <Link
-                  href={`/dashboard/toys/${t.id}`}
-                  className="card card-link flex h-full flex-col overflow-hidden"
-                >
-                  <CardPhoto src={t.cover_photo_url} />
-                  {/* Same block as dashboard-tutorial-card.tsx: title, then a
-                      status pill beside one line of detail. */}
-                  <div className="flex flex-1 flex-col gap-1 p-4">
-                    <p className="truncate text-sm font-bold text-ink">{t.name}</p>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Badge status={t.status} />
-                      <p className="text-xs leading-relaxed text-muted">
-                        Condition {t.condition} / 10
-                      </p>
-                    </div>
-                  </div>
-                </Link>
+            {gone.map((row) => (
+              <li key={row.transaction_id}>
+                <GivenAwayCard row={row} />
               </li>
             ))}
           </ul>
