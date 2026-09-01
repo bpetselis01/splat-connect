@@ -7,6 +7,7 @@
 // The copy and the routing live in lib/notifications.ts.
 import { useCallback, useEffect, useState } from 'react'
 import { View, Text, ScrollView, StyleSheet } from 'react-native'
+import Animated, { FadeInDown } from 'react-native-reanimated'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import type { Notification, NotificationBucket, TutorialCollaboratorInvite } from '@splat-connect/types'
@@ -221,20 +222,26 @@ export function InboxScreen({ showHeader = false }: { showHeader?: boolean }) {
                 ) : null}
               </View>
 
-              {rows.map((n) => {
+              {rows.map((n, i) => {
                 const inviteId =
                   n.type === 'collaborator_invited' && n.tutorial_id
                     ? inviteByTutorial.get(n.tutorial_id)
                     : undefined
                 return (
-                  <Row
+                  // Same settle as the library lists: capped stagger, because
+                  // past the first screenful the delay is invisible latency.
+                  <Animated.View
                     key={n.id}
-                    n={n}
-                    inviteBusy={inviteId ? { id: inviteId, busy: busyInvite !== null } : undefined}
-                    onOpen={() => open(n)}
-                    onAccept={(id) => void answerInvite(id, 'accept')}
-                    onDecline={(id) => void answerInvite(id, 'decline')}
-                  />
+                    entering={FadeInDown.delay(Math.min(i, 7) * theme.motion.stagger).duration(theme.motion.base)}
+                  >
+                    <Row
+                      n={n}
+                      inviteBusy={inviteId ? { id: inviteId, busy: busyInvite !== null } : undefined}
+                      onOpen={() => open(n)}
+                      onAccept={(id) => void answerInvite(id, 'accept')}
+                      onDecline={(id) => void answerInvite(id, 'decline')}
+                    />
+                  </Animated.View>
                 )
               })}
             </View>
