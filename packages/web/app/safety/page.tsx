@@ -31,6 +31,12 @@ export default function SafetyPage() {
             Do not mix old and new cells, or different chemistries, in the same toy.
           </li>
           <li>
+            The screw-secured compartment is not just good practice. Australia&apos;s
+            mandatory toy safety standard requires that toys for children up to 36
+            months keep small parts and batteries behind a fastening that needs a tool
+            to open. That is law, not advice.
+          </li>
+          <li>
             A battery interrupter goes between one battery and its contact. It does not
             change the toy&apos;s voltage and must never be used to connect a toy to
             anything other than a switch.
@@ -60,8 +66,28 @@ export default function SafetyPage() {
         <h2>Wiring and soldering</h2>
         <ul>
           <li>
-            Solder in a ventilated space, away from children and pets, and let the iron
-            cool in its stand before you move it.
+            A soldering iron tip runs at around 350°C and will burn you before you
+            feel it. Use a weighted stand, and put the iron back every single time.
+          </li>
+          <li>
+            Use lead-free solder. If you&apos;re working anywhere near children, this
+            isn&apos;t optional.
+          </li>
+          <li>
+            Solder in a ventilated space, away from children and pets, with a fume
+            absorber if you have one — flux fumes irritate the airways, and repeated
+            exposure can cause occupational asthma. Let the iron cool in its stand
+            before you move it.
+          </li>
+          <li>
+            Safety glasses, for everyone at the bench including anyone watching.
+            Clipped component leads fly.
+          </li>
+          <li>Wash your hands before you eat. No food or drink at the bench.</li>
+          <li>
+            For a burn: cool running water for 20 minutes. Not ice, not butter, not
+            creams. Get medical help for anything bigger than a 20-cent coin, anything
+            on the face or hands, and anything on a child.
           </li>
           <li>
             Insulate every joint with heat-shrink or tape. Bare copper inside a toy

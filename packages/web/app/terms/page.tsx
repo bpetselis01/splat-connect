@@ -7,7 +7,7 @@ export default function TermsPage() {
   return (
     <ProsePage
       title="Terms of use"
-      lastUpdated="19 August 2026"
+      lastUpdated="1 September 2026"
       intro="These terms cover using this site. If you publish guides there are additional contributor terms, and if you lead an organisation there are organisation leader terms."
     >
       <PullQuote>
@@ -24,6 +24,16 @@ export default function TermsPage() {
       </section>
 
       <section>
+        <h2>Not a medical device</h2>
+        <p>
+          SPLAT Connect is a consumer tool for finding and customising adapted toys
+          and everyday aids. It is not a medical device, and its suggestions are not
+          clinical advice — read{' '}
+          <Link href="/legal/intended-purpose">what SPLAT Connect is (and isn&apos;t)</Link>.
+        </p>
+      </section>
+
+      <section>
         <h2>Guides are instructions, not products</h2>
         <p>
           Every guide is written by a volunteer and reviewed before publication.
@@ -32,6 +42,11 @@ export default function TermsPage() {
           responsible for the work you do and for deciding whether the result is safe
           for the child who will use it. Please read the <Link href="/safety">safety
           page</Link> before you start.
+        </p>
+        <p>
+          Nothing in these terms excludes, restricts or modifies any guarantee, right
+          or remedy you have under the Australian Consumer Law that cannot lawfully be
+          excluded.
         </p>
       </section>
 

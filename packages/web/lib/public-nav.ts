@@ -359,6 +359,7 @@ export const FOOTER_LEGAL: NavItem[] = [
   { href: '/terms', label: 'Terms of use', state: 'live', blurb: 'The rules for using the site.' },
   { href: '/safety', label: 'Safety', state: 'live', blurb: 'Batteries, small parts and supervision.' },
   { href: '/code-of-conduct', label: 'Code of conduct', state: 'live', blurb: 'How we expect people to treat each other.' },
+  { href: '/legal/intended-purpose', label: 'What Connect is (and isn\u2019t)', state: 'live', blurb: 'Not a medical device, and why that matters.' },
   { href: '/legal/contributor-terms', label: 'Contributor terms', state: 'live', blurb: 'For anyone submitting a guide.' },
   { href: '/legal/org-leader-terms', label: 'Organisation leader terms', state: 'live', blurb: 'For anyone leading an organisation.' },
 ]
