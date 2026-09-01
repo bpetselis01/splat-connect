@@ -4,7 +4,14 @@ import { apiClient } from './api-client'
 
 export type SaveState = 'idle' | 'saving' | 'saved'
 
-export function useChildProfile() {
+/**
+ * @param childId Pin the hook to one child. With it, the write chain PATCHes
+ * that row and never creates — a missing row is an error, not an invitation.
+ * Without it, the original single-child behaviour: edit the oldest child,
+ * creating one on the first save. The no-arg form remains only for the
+ * questionnaire-era flows; every list-driven screen passes the id.
+ */
+export function useChildProfile(childId?: string) {
   const [profile, setProfile] = useState<ChildProfile | null>(null)
   const [loading, setLoading] = useState(true)
   // Surfaced so the screen can confirm the silent autosave actually persisted —
@@ -33,7 +40,7 @@ export function useChildProfile() {
     const load = apiClient
       .get<ChildProfile[]>('/api/child-profiles')
       .then((list) => {
-        const first = list?.[0] ?? null
+        const first = (childId ? list?.find((c) => c.id === childId) : list?.[0]) ?? null
         // Assigned unconditionally, even after unmount (ignore) or once the
         // user has started editing (dirty): refs are safe to write post-unmount
         // and have no render effect, and a write already queued behind this
@@ -71,15 +78,21 @@ export function useChildProfile() {
           // Re-reading also self-heals the two ways id goes unknown: a mount
           // load that failed, and a POST whose response was lost after the row
           // landed.
-          if (!id.current) {
-            const list = await apiClient.get<ChildProfile[]>('/api/child-profiles')
-            id.current = list?.[0]?.id ?? null
-          }
-          if (id.current) {
-            await apiClient.patch<ChildProfile>(`/api/child-profiles/${id.current}`, body)
+          if (childId) {
+            // Pinned: the row exists (a list handed out its id). PATCH it,
+            // never create — a failed PATCH must not fork a second child.
+            await apiClient.patch<ChildProfile>(`/api/child-profiles/${childId}`, body)
           } else {
-            const created = await apiClient.post<ChildProfile>('/api/child-profiles', body)
-            id.current = created.id
+            if (!id.current) {
+              const list = await apiClient.get<ChildProfile[]>('/api/child-profiles')
+              id.current = list?.[0]?.id ?? null
+            }
+            if (id.current) {
+              await apiClient.patch<ChildProfile>(`/api/child-profiles/${id.current}`, body)
+            } else {
+              const created = await apiClient.post<ChildProfile>('/api/child-profiles', body)
+              id.current = created.id
+            }
           }
           setSaveState('saved')
         })

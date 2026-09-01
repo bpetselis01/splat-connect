@@ -1,2 +1,12 @@
+// packages/mobile/app/(my)/organisation/orders.tsx
 import { SectionStub } from '../../../components/ui/SectionStub'
-export default function OrgOrders() { return <SectionStub title="Print orders" blurb="Requests families send your organisation will queue here once printing goes live." /> }
+
+export default function OrgOrders() {
+  return (
+    <SectionStub
+      soon
+      title="Print orders"
+      blurb="Print requests from families near your organisation's printers will queue here once printing goes live."
+    />
+  )
+}

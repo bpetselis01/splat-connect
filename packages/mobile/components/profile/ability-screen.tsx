@@ -29,8 +29,8 @@ const ASSIST_HAND = [
   { label: 'Right', value: 'right' },
 ]
 
-export function AbilityScreen() {
-  const { profile, save } = useChildProfile()
+export function AbilityScreen({ childId }: { childId?: string } = {}) {
+  const { profile, save } = useChildProfile(childId)
   const [showQuiz, setShowQuiz] = useState(false)
   const [answers, setAnswers] = useState<(number | null)[]>(() => QUESTIONS.map(() => null))
 

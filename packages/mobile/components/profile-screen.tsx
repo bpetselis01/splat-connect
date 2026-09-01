@@ -1,14 +1,23 @@
 // packages/mobile/components/profile-screen.tsx
 import { useState, useEffect } from 'react'
 import { View, Text, Pressable, StyleSheet, Linking } from 'react-native'
+import { useRouter } from 'expo-router'
+import type { UserAgreement } from '@splat-connect/types'
 import { useAuth } from '../lib/auth-context'
+import { apiClient } from '../lib/api-client'
 import { theme } from '../lib/theme'
 import { Button } from './ui/Button'
 import { Screen } from './ui/Screen'
 import { Card } from './ui/Card'
+import { TextField } from './ui/TextField'
 import { ChildProfileHome } from './profile/child-profile-home'
 import { resolveAuthStorage } from '../lib/supabase-storage'
 import { TermsCheckbox, ErrorRow } from './auth-screen'
+
+/** "12 Aug 2026" — the terms row's date. */
+function acceptedDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })
+}
 
 const PROFILE_SEGMENT_KEY = 'profile-tab-segment'
 type ProfileSegment = 'account' | 'child-profile'
@@ -39,10 +48,42 @@ function useProfileSegment() {
 }
 
 export function ProfileScreen() {
+  const router = useRouter()
   const { session, profile, signOut, hasContributorTerms, acceptContributorTerms } = useAuth()
   const { segment, select: selectSegment } = useProfileSegment()
   const [gateTicked, setGateTicked] = useState(false)
   const [gateError, setGateError] = useState<string | null>(null)
+  // The display name is the one profile field editable here. Committed on end
+  // of editing rather than per keystroke — a name is typed once, not streamed.
+  const [nameState, setNameState] = useState<'idle' | 'saving' | 'saved' | 'failed'>('idle')
+  const [terms, setTerms] = useState<UserAgreement | null>(null)
+
+  useEffect(() => {
+    let ignore = false
+    // The row is a fact display; losing it costs the row, nothing else.
+    apiClient
+      .get<UserAgreement[]>('/api/agreements/me')
+      .then((rows) => {
+        if (!ignore) setTerms(rows.find((r) => r.agreement_type === 'contributor_terms') ?? null)
+      })
+      .catch(() => {})
+    return () => {
+      ignore = true
+    }
+  }, [])
+
+  async function saveName(raw: string) {
+    const name = raw.trim()
+    if (!name || name === profile?.name) return
+    setNameState('saving')
+    try {
+      await apiClient.patch('/api/contributors/me', { name })
+      setNameState('saved')
+    } catch (err) {
+      console.error('[ProfileScreen] rename failed:', err)
+      setNameState('failed')
+    }
+  }
 
   // Reached only through the (my) group, whose layout redirects to sign-in
   // without a session — by the time this renders, one is guaranteed to exist.
@@ -103,25 +144,77 @@ export function ProfileScreen() {
           <Button label="Sign Out" onPress={() => signOut()} variant="ghost" />
         </Card>
       ) : (
-        <Card style={styles.panel}>
-          <Text style={styles.signedInText}>Signed in as {user.email}</Text>
-          {profile ? (
+        <View>
+          <Card style={styles.panel}>
+            <Text style={styles.signedInText}>Signed in as {user.email}</Text>
+            <Text style={styles.frozenHint}>Your email can&apos;t be changed here.</Text>
+            <TextField
+              label="Display name"
+              accessibilityLabel="Display name"
+              defaultValue={profile?.name ?? ''}
+              onEndEditing={(e) => void saveName(e.nativeEvent.text)}
+            />
+            <Text accessibilityLiveRegion="polite" style={styles.nameStatus}>
+              {nameState === 'saving'
+                ? 'Saving…'
+                : nameState === 'saved'
+                  ? 'Saved'
+                  : nameState === 'failed'
+                    ? 'Could not save your name. Please try again.'
+                    : ' '}
+            </Text>
+
+            {terms ? (
+              <Text style={styles.termsRow}>
+                {`Contributor terms · accepted ${terms.version} · ${acceptedDate(terms.accepted_at)}`}
+              </Text>
+            ) : null}
+
+            {profile ? (
+              <Button
+                label="Open Web Dashboard"
+                onPress={() => Linking.openURL(`${process.env.EXPO_PUBLIC_WEB_URL}/dashboard`)}
+                variant="secondary"
+                style={styles.stackedButton}
+              />
+            ) : null}
             <Button
-              label="Open Web Dashboard"
-              onPress={() => Linking.openURL(`${process.env.EXPO_PUBLIC_WEB_URL}/dashboard`)}
+              label="About SPLAT"
+              onPress={() => router.push('/explore/about')}
               variant="secondary"
               style={styles.stackedButton}
             />
-          ) : null}
-          <Button label="Sign Out" onPress={() => signOut()} variant="ghost" />
-        </Card>
+            <Button label="Sign Out" onPress={() => signOut()} variant="ghost" />
+          </Card>
+        </View>
       )}
     </Screen>
   )
 }
 
 const styles = StyleSheet.create({
-  panel: { alignItems: 'center' },
+  panel: { alignItems: 'stretch' },
+  frozenHint: {
+    fontFamily: theme.fonts.regular,
+    fontSize: theme.type.caption,
+    color: theme.colors.muted,
+    textAlign: 'center',
+    marginBottom: theme.spacing(3),
+  },
+  nameStatus: {
+    fontFamily: theme.fonts.regular,
+    fontSize: theme.type.caption,
+    color: theme.colors.muted,
+    minHeight: 16,
+    marginTop: -theme.spacing(2),
+    marginBottom: theme.spacing(2),
+  },
+  termsRow: {
+    fontFamily: theme.fonts.regular,
+    fontSize: theme.type.caption,
+    color: theme.colors.muted,
+    marginBottom: theme.spacing(3),
+  },
   heading: {
     fontFamily: theme.fonts.bold,
     fontSize: theme.type.title,

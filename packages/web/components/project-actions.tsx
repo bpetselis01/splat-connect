@@ -19,23 +19,12 @@
  * - docs/superpowers/specs/2026-07-28-review-surfaces-design.md §1, §2
  * - supabase/migrations/007_organizations.sql: the grant this mirrors
  */
-import type { TutorialOrg, TutorialStatus } from '@splat-connect/types'
-
-export type LeaderAction = 'back' | 'decline' | 'approve' | 'reject'
-export type AdminAction = 'approve' | 'reject' | 'unpublish'
-
-export function leaderActions(
-  backing: TutorialOrg['status'] | null,
-  tutorial: TutorialStatus
-): LeaderAction[] {
-  if (backing === 'pending') return ['back', 'decline']
-  if (backing === 'accepted' && tutorial === 'pending') return ['approve', 'reject']
-  return []
-}
-
-export function adminActions(tutorial: TutorialStatus): AdminAction[] {
-  if (tutorial === 'pending') return ['approve', 'reject']
-  // The reactive control decision 14 promised and never wired up.
-  if (tutorial === 'approved') return ['unpublish']
-  return []
-}
+// The matrices themselves moved to @splat-connect/types when mobile's review
+// detail became their second consumer; this module stays as the import path
+// web already uses everywhere.
+export {
+  leaderActions,
+  adminActions,
+  type LeaderAction,
+  type AdminAction,
+} from '@splat-connect/types'

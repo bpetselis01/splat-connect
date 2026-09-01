@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react-native'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { Linking } from 'react-native'
 import { ProfileScreen } from '../../../components/profile-screen'
 import { useAuth } from '../../../lib/auth-context'
@@ -7,7 +7,43 @@ jest.mock('../../../lib/auth-context', () => ({ useAuth: jest.fn() }))
 jest.mock('../../../lib/use-child-profile', () => ({
   useChildProfile: () => ({ profile: null, loading: false, save: jest.fn(), saveState: 'idle' }),
 }))
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }) }))
+
+const mockGet = jest.fn()
+const mockPatch = jest.fn()
+jest.mock('../../../lib/api-client', () => ({
+  apiClient: {
+    get: (...a: unknown[]) => mockGet(...a),
+    patch: (...a: unknown[]) => mockPatch(...a),
+    post: jest.fn(),
+  },
+}))
+
+const mockPush = jest.fn()
+jest.mock('expo-router', () => {
+  const { useEffect } = jest.requireActual('react')
+  return {
+    useRouter: () => ({ push: mockPush }),
+    useFocusEffect: (effect: () => void) => useEffect(effect, []),
+  }
+})
+
+/** The signed-in shape most tests want; override per test. */
+function auth(over: object) {
+  return {
+    session: { user: { email: 'contributor@example.com' } },
+    profile: { id: '2', name: 'Cory', email: 'contributor@example.com', role: 'contributor', created_at: '' },
+    signIn: jest.fn(),
+    signOut: jest.fn(),
+    hasContributorTerms: true,
+    ...over,
+  }
+}
+const mockUseAuth = useAuth as jest.Mock
+
+beforeEach(() => {
+  jest.clearAllMocks()
+  mockGet.mockResolvedValue([])
+})
 
 describe('ProfileScreen', () => {
   it('shows signed-in state with the user email', () => {
@@ -46,7 +82,9 @@ describe('ProfileScreen', () => {
 
     fireEvent.press(screen.getByText('Child Profile'))
 
-    expect(screen.getByText('Ability Profile')).toBeTruthy()
+    // The segment now hosts the child list, whose own header line proves the
+    // switch; the sub-screens moved behind each child's editor.
+    expect(screen.getByText('+ Add child')).toBeTruthy()
     expect(screen.queryByText('Open Web Dashboard')).toBeNull()
   })
 
@@ -63,7 +101,7 @@ describe('ProfileScreen', () => {
 
     fireEvent.press(screen.getByText('Child Profile'))
 
-    expect(screen.getByText('Ability Profile')).toBeTruthy()
+    expect(screen.getByText('+ Add child')).toBeTruthy()
     expect(screen.queryByText('Before you continue')).toBeNull()
   })
 
@@ -147,5 +185,40 @@ describe('ProfileScreen', () => {
 
     expect(screen.queryByText('Before you continue')).toBeNull()
     expect(screen.getByText('Signed in as parent@example.com')).toBeTruthy()
+  })
+
+  describe('the account panel additions', () => {
+    it('saves a display-name change when editing ends', async () => {
+      mockUseAuth.mockReturnValue(auth({}))
+      render(<ProfileScreen />)
+
+      const field = await screen.findByLabelText('Display name')
+      fireEvent(field, 'endEditing', { nativeEvent: { text: '  New Name  ' } })
+      await waitFor(() =>
+        expect(mockPatch).toHaveBeenCalledWith('/api/contributors/me', { name: 'New Name' })
+      )
+      expect(await screen.findByText('Saved')).toBeTruthy()
+    })
+
+    it('does not save an unchanged or empty name', async () => {
+      mockUseAuth.mockReturnValue(auth({}))
+      render(<ProfileScreen />)
+
+      const field = await screen.findByLabelText('Display name')
+      fireEvent(field, 'endEditing', { nativeEvent: { text: '   ' } })
+      expect(mockPatch).not.toHaveBeenCalled()
+    })
+
+    it('shows when the contributor terms were accepted', async () => {
+      mockUseAuth.mockReturnValue(auth({}))
+      mockGet.mockResolvedValue([
+        { id: 'a1', user_id: 'u1', agreement_type: 'contributor_terms', version: 'v0-todo', accepted_at: '2026-08-12T00:00:00Z' },
+      ])
+      render(<ProfileScreen />)
+
+      expect(
+        await screen.findByText('Contributor terms · accepted v0-todo · 12 Aug 2026')
+      ).toBeTruthy()
+    })
   })
 })

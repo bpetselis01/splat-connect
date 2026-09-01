@@ -8,8 +8,8 @@ import { Section } from '../ui/Section'
 const HAND_DOMINANCE = ['Left', 'Right', 'Ambidextrous', 'Not yet established'].map((d) => ({ label: d, value: d }))
 const SENSORY = ['Soft', 'Firm', 'Smooth', 'Textured', 'Lightweight', 'No preference'].map((s) => ({ label: s, value: s }))
 
-export function CustomizationScreen() {
-  const { profile, save } = useChildProfile()
+export function CustomizationScreen({ childId }: { childId?: string } = {}) {
+  const { profile, save } = useChildProfile(childId)
 
   return (
     <FormScreen intro="These measurements size the 3D-printed parts. Millimetres, measured on the hand your child leads with.">

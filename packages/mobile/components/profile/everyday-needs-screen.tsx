@@ -8,8 +8,8 @@ const CHALLENGES = ['Grasping', 'Holding', 'Fine motor', 'Strength', 'Coordinati
 const GRIP_TYPES = ['Palmar', 'Pincer', 'Cylindrical', 'Hook', 'Spherical'].map((g) => ({ label: g, value: g }))
 const ENVIRONMENTS = ['Home', 'School', 'Therapy', 'Outdoors', 'Mixed'].map((e) => ({ label: e, value: e }))
 
-export function EverydayNeedsScreen() {
-  const { profile, save } = useChildProfile()
+export function EverydayNeedsScreen({ childId }: { childId?: string } = {}) {
+  const { profile, save } = useChildProfile(childId)
   const challenges = profile?.challenges ?? []
 
   return (
