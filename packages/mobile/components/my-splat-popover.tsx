@@ -4,7 +4,7 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import Animated, { FadeIn, ZoomIn } from 'react-native-reanimated'
+import Animated, { FadeIn, FadeOut, ZoomIn, ZoomOut } from 'react-native-reanimated'
 import type { Capabilities } from '@splat-connect/types'
 import { theme } from '../lib/theme'
 import { popoverTiles } from '../lib/my-splat-tiles'
@@ -15,11 +15,20 @@ export function MySplatPopover({ caps, tabBarHeight, onClose }: { caps: Capabili
   const go = (href: string) => { onClose(); router.push(href as never) }
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
-      <Animated.View entering={FadeIn.duration(theme.motion.fast)} style={[styles.scrim, { bottom: tabBarHeight }]}>
+      <Animated.View
+        entering={FadeIn.duration(theme.motion.fast)}
+        exiting={FadeOut.duration(theme.motion.fast)}
+        style={[styles.scrim, { bottom: tabBarHeight }]}
+      >
         <Pressable testID="my-splat-scrim" onPress={onClose} accessibilityLabel="Close My SPLAT" style={StyleSheet.absoluteFill} />
       </Animated.View>
+      {/* springify so the panel settles like everything else that moves here
+          (same physics family as theme.motion.settle); the exit matters more —
+          without it the panel vanished in one frame while the scrim it rode in
+          with was still fading. */}
       <Animated.View
-        entering={ZoomIn.duration(theme.motion.base)}
+        entering={ZoomIn.springify().damping(16).stiffness(170).mass(0.9)}
+        exiting={ZoomOut.duration(theme.motion.fast)}
         accessibilityViewIsModal
         onAccessibilityEscape={onClose}
         style={[styles.panel, { bottom: tabBarHeight + 30 }]}
