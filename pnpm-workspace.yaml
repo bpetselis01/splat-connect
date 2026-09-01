@@ -8,3 +8,6 @@ minimumReleaseAgeExclude:
   - expo-dev-client@57.0.9
   - expo-dev-launcher@57.0.9
   - expo-dev-menu@57.0.9
+  - '@expo/env@2.4.3'
+  - '@expo/image-utils@0.11.5'
+  - '@react-native/dev-middleware@0.86.3'
