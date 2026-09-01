@@ -58,6 +58,7 @@ export default function MyLayout() {
       <Stack.Screen name="notifications" options={{ title: 'Notifications' }} />
       <Stack.Screen name="print-requests" options={{ title: 'My print requests' }} />
       <Stack.Screen name="organisation/index" options={{ title: 'Review queue' }} />
+      <Stack.Screen name="organisation/[tutorialId]" options={{ title: 'Review' }} />
       <Stack.Screen name="organisation/toys" options={{ title: 'Toy inventory' }} />
       <Stack.Screen name="organisation/orders" options={{ title: 'Print orders' }} />
       <Stack.Screen name="admin" options={{ title: 'Admin' }} />

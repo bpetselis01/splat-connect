@@ -1,2 +1,6 @@
-import { SectionStub } from '../../../components/ui/SectionStub'
-export default function OrgReviewQueue() { return <SectionStub title="Review queue" blurb="Guides that asked your organisation to back them." /> }
+// packages/mobile/app/(my)/organisation/index.tsx
+import { ReviewQueueScreen } from '../../../components/organisation/review-queue-screen'
+
+export default function OrganisationQueue() {
+  return <ReviewQueueScreen />
+}
