@@ -326,3 +326,63 @@ export async function handoffCodes(transactionId: string) {
   if (error || !data) throw new Error(`handoffCodes failed: ${error?.message}`)
   return data as { owner_code: string; requester_code: string }
 }
+
+/**
+ * A published design challenge, straight into toy_ideas at status 'challenge'
+ * — the status GET /api/public/challenges filters to. Going through the real
+ * submit-then-admin-approve path would need an admin account and two screens
+ * for a row every challenge spec needs as a precondition, not as its subject.
+ */
+export async function createChallenge(
+  authorId: string,
+  overrides: Partial<{
+    title: string
+    summary: string
+    /** 'graduated' puts it under "Solved · became guides" instead. */
+    status: 'challenge' | 'graduated' | 'pending' | 'rejected'
+    contact_prefs: ('clarification' | 'co_design' | 'user_testing')[]
+  }> = {}
+): Promise<string> {
+  const { data, error } = await adminClient()
+    .from('toy_ideas')
+    .insert({
+      author_id: authorId,
+      title: overrides.title ?? uniqueTitle('E2E Challenge'),
+      summary: overrides.summary ?? 'Seeded by a Playwright E2E test.',
+      description: 'The toy resists every switch we have tried.',
+      intended_use: 'A bubble machine during therapy.',
+      primary_user: 'A three-year-old with low muscle tone.',
+      contact_prefs: overrides.contact_prefs ?? [],
+      status: overrides.status ?? 'challenge',
+    })
+    .select('id')
+    .single()
+  if (error || !data) throw new Error(`createChallenge failed: ${error?.message}`)
+  return data.id
+}
+
+/**
+ * One notification, as the API's own handlers write them: the row carries the
+ * subject id its COPY line and its link both read (idea_id, tutorial_id or
+ * toy_transaction_id), never all three.
+ */
+export async function createNotification(
+  recipientId: string,
+  fields: {
+    type: string
+    actor_name?: string
+    tutorial_id?: string
+    tutorial_title?: string
+    toy_transaction_id?: string
+    toy_name?: string
+    idea_id?: string
+  }
+): Promise<string> {
+  const { data, error } = await adminClient()
+    .from('notifications')
+    .insert({ recipient_id: recipientId, actor_name: 'E2E Actor', ...fields })
+    .select('id')
+    .single()
+  if (error || !data) throw new Error(`createNotification failed: ${error?.message}`)
+  return data.id
+}
