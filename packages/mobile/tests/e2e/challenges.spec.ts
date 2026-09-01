@@ -93,3 +93,25 @@ test('a submitted idea lands in My challenges, awaiting review', async ({ page }
   await expect(page.getByText('PENDING REVIEW')).toBeVisible()
   await expect(page.getByRole('button', { name: title })).toBeHidden()
 })
+
+test('My challenges reaches the public brief, across the modal boundary', async ({ page }) => {
+  // The one navigation in this phase with no precedent anywhere in the app:
+  // My challenges lives in the (my) modal group and its rows push into (tabs).
+  // Nothing else crosses that boundary, so it is asserted rather than assumed.
+  await signInAsNewContributor(page)
+  const author = await createContributor()
+  const joinable = uniqueTitle('E2E Crossing Challenge')
+  const id = await createChallenge(author.id, { title: joinable })
+
+  await page.goto(`/explore/challenges/${id}`)
+  await page.getByRole('button', { name: 'Join this challenge' }).click()
+  await expect(page.getByText('✓ You joined')).toBeVisible()
+
+  await page.goto('/challenges')
+  await expect(page.getByText('Challenges you joined')).toBeVisible()
+
+  await page.getByRole('button', { name: joinable }).click()
+  await expect(page).toHaveURL(new RegExp(`/explore/challenges/${id}$`))
+  // Landed on the real brief, not an empty shell.
+  await expect(page.getByText('THE PROBLEM')).toBeVisible()
+})
