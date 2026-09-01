@@ -8,6 +8,7 @@
 // the same reading web's stepper gives a tutorial's sections. Nothing here is
 // required, so 'attention' is a gap dot, not an error.
 import { View, Text, Alert, StyleSheet } from 'react-native'
+import { NotMedicalNote } from '../ui/NotMedicalNote'
 import { useRouter } from 'expo-router'
 import type { ChildProfile } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
@@ -35,9 +36,9 @@ const STEPS: {
     id: 'ability',
     label: 'Ability',
     path: '/account/ability',
-    hint: 'Diagnosis, hand involvement, MACS and BFMF',
+    hint: 'Hand use, and any clinical scores from your therapist',
     icon: 'accessibility-outline',
-    done: (p) => !!(p.primary_diagnosis || p.macs_level || p.bfmf_score),
+    done: (p) => !!(p.macs_level || p.bfmf_score || p.hand_involvement),
   },
   {
     id: 'everyday-needs',
@@ -158,6 +159,8 @@ export function ChildEditorHome({ childId }: { childId: string }) {
           </Card>
         </AnimatedPressable>
       ))}
+
+      <NotMedicalNote />
 
       <Button label="Delete profile" variant="danger" onPress={confirmDelete} style={styles.delete} />
     </View>

@@ -18,6 +18,7 @@ import { ChildCustomizationForm } from '@/components/child-customization-form'
 import { DeleteEntityButton } from '@/components/delete-entity-button'
 import { browserApiClient } from '@/lib/browser-api-client'
 import { computeChildStepStatuses } from '@/lib/child-steps'
+import { NotMedicalNote } from '@/components/not-medical-note'
 
 export function ChildEditor({ child: initialChild, label }: { child: ChildProfile | null; label?: string }) {
   const router = useRouter()
@@ -39,7 +40,8 @@ export function ChildEditor({ child: initialChild, label }: { child: ChildProfil
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold text-ink">{heading}</h1>
+      <h1 className="mb-2 text-2xl font-bold text-ink">{heading}</h1>
+      <div className="mb-6"><NotMedicalNote /></div>
       <Stepper
         label="Child profile sections"
         steps={[

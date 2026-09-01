@@ -8,7 +8,6 @@ function child(over: Partial<ChildProfile> = {}): ChildProfile {
     parent_id: 'u1',
     name: null,
     age: null,
-    primary_diagnosis: null,
     macs_level: null,
     macs_source: 'manual',
     hand_involvement: null,

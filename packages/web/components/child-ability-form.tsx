@@ -11,7 +11,6 @@ type Fields = Pick<
   ChildProfile,
   | 'name'
   | 'age'
-  | 'primary_diagnosis'
   | 'macs_level'
   | 'macs_source'
   | 'bfmf_score'
@@ -30,7 +29,6 @@ export function ChildAbilityForm({
   const [form, setForm] = useState<Fields>({
     name: profile?.name ?? null,
     age: profile?.age ?? null,
-    primary_diagnosis: profile?.primary_diagnosis ?? null,
     macs_level: profile?.macs_level ?? null,
     macs_source: profile?.macs_source ?? 'manual',
     bfmf_score: profile?.bfmf_score ?? null,
@@ -77,18 +75,14 @@ export function ChildAbilityForm({
         />
       </div>
 
-      <div>
-        <label htmlFor="primary_diagnosis" className="field-label">Primary diagnosis</label>
-        <input
-          id="primary_diagnosis"
-          type="text"
-          value={form.primary_diagnosis ?? ''}
-          onChange={(e) => set('primary_diagnosis', e.target.value || null)}
-          className="field"
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
+      <details className="group">
+        <summary className="field-label cursor-pointer select-none">Clinical scores (optional)</summary>
+        <p className="mt-1 text-sm leading-relaxed text-muted">
+          If an occupational therapist or paediatrician has given you a MACS or BFMF
+          level, you can enter it here and we&apos;ll use it instead of our own estimate.
+          Leave this blank if you&apos;re not sure — you don&apos;t need it.
+        </p>
+        <div className="mt-3 grid grid-cols-2 gap-4">
         <div>
           <label htmlFor="macs_level" className="field-label">MACS level</label>
           <select
@@ -118,7 +112,8 @@ export function ChildAbilityForm({
             ))}
           </select>
         </div>
-      </div>
+        </div>
+      </details>
 
       <div className="grid grid-cols-2 gap-4">
         <div>

@@ -24,6 +24,7 @@
  * - app/files/[bucket]/[...path]/route.ts: where the file links go
  */
 import type { ReactNode } from 'react'
+import { NotMedicalNote } from '@/components/not-medical-note'
 import Image from 'next/image'
 import { Badge } from '@/components/badge'
 import { TutorialCard } from '@/components/tutorial-card'
@@ -238,6 +239,7 @@ export function TutorialView({
                 </div>
               ))}
             </div>
+            <div className="mt-3"><NotMedicalNote /></div>
           </div>
         )}
       </div>

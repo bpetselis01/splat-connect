@@ -19,13 +19,9 @@ import { Button } from '../ui/Button'
 import { ErrorRow } from '../auth-screen'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
 
-/** "Age 5 · Cerebral palsy", either half optional; 'Not set yet' when both are. */
+/** "Age 5", or 'Not set yet' when the profile is still blank. */
 function summaryOf(child: ChildProfile): string {
-  return (
-    [child.age !== null ? `Age ${child.age}` : null, child.primary_diagnosis]
-      .filter(Boolean)
-      .join(' · ') || 'Not set yet'
-  )
+  return child.age !== null ? `Age ${child.age}` : 'Not set yet'
 }
 
 export function ChildProfileHome() {
@@ -99,7 +95,7 @@ export function ChildProfileHome() {
 
       {!loading && !error && children.length === 0 ? (
         <Text style={styles.empty}>
-          No child profiles yet. A profile can hold age, diagnosis and grip details — all
+          No child profiles yet. A profile can hold age, hand use and grip details — all
           optional, all private to you.
         </Text>
       ) : null}

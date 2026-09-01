@@ -26,7 +26,6 @@ const child = (over: object = {}) => ({
   parent_id: 'u1',
   name: 'Maya',
   age: 5,
-  primary_diagnosis: null,
   macs_level: null,
   macs_source: 'manual',
   hand_involvement: null,
@@ -67,7 +66,7 @@ describe('ChildEditorHome', () => {
   })
 
   it('marks a filled step done and an empty one with the gap dot', async () => {
-    mockGet.mockResolvedValue([child({ primary_diagnosis: 'CP' })])
+    mockGet.mockResolvedValue([child({ macs_level: 'II' })])
     render(<ChildEditorHome childId="cp1" />)
 
     // StepPills renders one tab per step; status carries via the pill's a11y.

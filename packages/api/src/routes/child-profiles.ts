@@ -39,7 +39,7 @@ const childProfiles = new Hono<{ Variables: AuthVariables }>()
 // input filtering.
 const EDITABLE = [
   'name', 'age',
-  'primary_diagnosis', 'macs_level', 'macs_source', 'hand_involvement', 'assist_hand', 'bfmf_score', 'bfmf_source',
+  'macs_level', 'macs_source', 'hand_involvement', 'assist_hand', 'bfmf_score', 'bfmf_source',
   'challenges', 'challenge_other', 'grip_type', 'env_context',
   'palm_width_mm', 'wrist_circ_mm', 'needs_arm_attachment', 'forearm_length_mm', 'hand_dominance', 'sensory_preferences',
 ] as const

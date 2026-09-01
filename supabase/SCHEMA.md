@@ -209,7 +209,6 @@ One row per parent account (unique `parent_id`) holding a child's ability, every
 | `parent_id` | uuid | FK → `profiles` on delete cascade, not null, **unique** |
 | `age` | integer | nullable |
 | **Ability Profile** | | |
-| `primary_diagnosis` | text | nullable |
 | `macs_level` | text | nullable |
 | `macs_source` | text | not null, default `'manual'`, check in (`manual`, `estimated`) |
 | `hand_involvement` | text | check in (`bilateral`, `unilateral`) |
@@ -238,7 +237,6 @@ create table public.child_profiles (
   parent_id uuid references public.profiles on delete cascade not null unique,
   age integer,
   -- Ability Profile
-  primary_diagnosis text,
   macs_level text,
   macs_source text not null default 'manual' check (macs_source in ('manual','estimated')),
   hand_involvement text check (hand_involvement in ('bilateral','unilateral')),

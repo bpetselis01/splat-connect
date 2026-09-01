@@ -1,7 +1,7 @@
-// The MACS/BFMF estimator behind both mobile's ability-screen.tsx quiz and the
-// web child-profile-form.tsx quiz. Runtime values, not just types — this
-// package is consumed as raw TypeScript, so that is safe.
-export * from './estimate-ability'
+// The internal fit-profile derivation behind both mobile's ability-screen.tsx
+// quiz and the web child-survey-form.tsx quiz. Runtime values, not just types —
+// this package is consumed as raw TypeScript, so that is safe.
+export * from './derive-fit-profile'
 export * from './nav-model'
 
 export type Role = 'admin' | 'contributor'
@@ -14,7 +14,6 @@ export interface ChildProfile {
   name: string | null
   age: number | null
   // Ability Profile
-  primary_diagnosis: string | null
   macs_level: string | null
   macs_source: 'manual' | 'estimated'
   hand_involvement: 'bilateral' | 'unilateral' | null

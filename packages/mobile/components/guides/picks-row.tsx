@@ -1,5 +1,6 @@
 // packages/mobile/components/guides/picks-row.tsx
 import { View, Text, Image, ScrollView, StyleSheet } from 'react-native'
+import { NotMedicalNote } from '../ui/NotMedicalNote'
 import type { Recommendation } from '@splat-connect/types'
 import { theme } from '../../lib/theme'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
@@ -52,6 +53,7 @@ export function PicksRow({
           </AnimatedPressable>
         ))}
       </ScrollView>
+      <NotMedicalNote />
     </View>
   )
 }
