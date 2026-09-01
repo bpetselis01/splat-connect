@@ -19,6 +19,7 @@ export default function ExploreStackLayout() {
       {/* The brief carries its own title, so the header stays generic rather
           than repeating a long challenge name in a narrow bar. */}
       <Stack.Screen name="challenges/[id]" options={{ title: 'Challenge' }} />
+      <Stack.Screen name="challenges/new" options={{ title: 'Submit an idea' }} />
       <Stack.Screen name="about" options={{ title: 'About SPLAT' }} />
     </Stack>
   )
