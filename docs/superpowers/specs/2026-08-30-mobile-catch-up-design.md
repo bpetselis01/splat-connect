@@ -183,12 +183,12 @@ Support, Which one are you, Impact, Contact, Safety) that open the web.
 "Open challenges" (title, makers joined, "you're in") · "Solved · became guides".
 Detail (`explore/challenges/[id]`): title, save, `open challenge` badge, summary,
 fact tiles (makers, attempts), "What's been tried", **Join this challenge** /
-"✓ You joined · leave". Reads `GET /api/toy-ideas/challenges[/:id]`; writes
-`POST /api/toy-ideas/:id/join`, `DELETE …/participants/:profileId`,
-saves on `challenges`.
+"✓ You joined · leave". Reads `GET /api/public/challenges[/:id]` (anonymous —
+the same endpoints web's public pages use); writes `POST /api/ideas/:id/join`,
+`DELETE /api/ideas/:id/participants/:profileId`, saves on `challenges`.
 
 **Submit an idea** (`explore/challenges/new`, modal) — title, who it's for, the
-problem, optional photo → **Send idea**. Writes `POST /api/toy-ideas`.
+problem, optional photo → **Send idea**. Writes `POST /api/ideas`.
 
 ### Inbox tab
 
@@ -265,7 +265,7 @@ it back to draft." · step pills **Details · Parts · Tools · Files · STL
 
 **Design challenges (mine)** — "Joined" (→ detail) and "Your ideas" (status
 pending / open / rejected / graduated with the review note). Reads
-`GET /api/toy-ideas/mine`, `…/joined`.
+`GET /api/ideas/mine`, `…/joined`.
 
 **Saved** — three count tiles (Guides, Toys, Challenges) → per-type lists ·
 "Recently saved". Reads `GET /api/saves/:slug`.

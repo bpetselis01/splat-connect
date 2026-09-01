@@ -14,10 +14,20 @@ export function Chip({
   label,
   active,
   onPress,
+  role = 'button',
 }: {
   label: string
   active: boolean
   onPress: () => void
+  /**
+   * 'radio' for a chip that is one option in a single-select row wrapped in
+   * an accessibilityRole="radiogroup" View (the exchange-toy chooser in
+   * request-block.tsx is the existing precedent for that pairing). Defaults
+   * to 'button' — most Chip rows here are independent filter toggles, not a
+   * mutually exclusive choice, so 'radio' has to be opted into per call site
+   * rather than assumed.
+   */
+  role?: 'button' | 'radio'
 }) {
   // Selection crossfades instead of cutting. The fill and the label are driven
   // by the same value so they can never disagree mid-transition.
@@ -43,7 +53,7 @@ export function Chip({
   return (
     <AnimatedPressable
       onPress={onPress}
-      accessibilityRole="button"
+      accessibilityRole={role}
       accessibilityLabel={label}
       accessibilityState={{ selected: active }}
       aria-selected={active}

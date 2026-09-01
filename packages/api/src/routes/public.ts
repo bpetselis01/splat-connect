@@ -4,6 +4,7 @@
  * backstop behind each query's own explicit filter.
  */
 import { Hono } from 'hono'
+import { chunk } from '../chunk.js'
 import { createAnonClient, createAdminClient } from '../supabase/client.js'
 import { atCapacityToyIds } from '../toy-access.js'
 import type {
@@ -57,7 +58,7 @@ publicRoutes.get('/tutorials/:id', async (c) => {
     // points at tutorials twice, and PostgREST refuses an ambiguous embed
     // outright rather than guessing. See the same select in tutorials.ts.
     .select(
-      '*, parts(*), tools(*), stl_files(*), tutorial_contributors(role, profiles(name)), ' +
+      '*, parts(*), tools(*), stl_files(*), tutorial_contributors(profile_id, role, profiles(name)), ' +
         'tutorial_orgs(status, organizations(id, name)), ' +
         'tutorial_recommendations!tutorial_id(position, tutorials!recommended_id(id, title, kind, difficulty, toy_photo_url, status)), ' +
         'reviewer:reviewed_by(name), reviewed_for:reviewed_for_org_id(name)'
@@ -99,7 +100,6 @@ publicRoutes.get('/toys', async (c) => {
     // same shape via owner_org_id, and exactly one of the two is ever present.
     .select('*, profiles(name), organizations(name)')
     .eq('status', 'published')
-    .is('archived_at', null)
     .order('created_at', { ascending: false })
   if (error) return c.json({ error: error.message }, 500)
   const unavailable = await atCapacityToyIds(createAdminClient(), null, true)
@@ -115,7 +115,6 @@ publicRoutes.get('/toys/:id', async (c) => {
     .select('*, profiles(name), organizations(name)')
     .eq('id', c.req.param('id'))
     .eq('status', 'published')
-    .is('archived_at', null)
     .single()
   // 404 for both "no such row" and "draft row" — an unpublished toy must not
   // be distinguishable from a nonexistent one to an unauthenticated caller,
@@ -166,8 +165,7 @@ publicRoutes.get('/impact', async (c) => {
     sb
       .from('toys')
       .select('id, owner_id, owner_org_id, created_at')
-      .eq('status', 'published')
-      .is('archived_at', null),
+      .eq('status', 'published'),
     // Ruling B: admin client, restricted columns only — counts a completed
     // handoff toward its giver, never the counterparty or any message/pickup detail.
     admin
@@ -239,7 +237,7 @@ publicRoutes.get('/impact', async (c) => {
     }
   }
 
-  // toysShared: published, non-archived toys, grouped by owner.
+  // toysShared: published toys, grouped by owner.
   for (const toy of (toys ?? []) as Array<{
     id: string
     owner_id: string | null
@@ -289,12 +287,15 @@ publicRoutes.get('/impact', async (c) => {
   const personIds = [...personCounts.keys()]
   let people: Array<{ id: string; name: string; public_showcase: boolean }> = []
   if (personIds.length > 0) {
-    const { data: profiles, error: profilesError } = await admin
-      .from('profiles')
-      .select('id, name, public_showcase')
-      .in('id', personIds)
-    if (profilesError) return c.json({ error: 'Failed to load impact data' }, 500)
-    people = profiles ?? []
+    // Chunked: every approved contributor lands in this list, and .in() dies
+    // with "URI too long" a few hundred uuids in. See src/chunk.ts.
+    const results = await Promise.all(
+      chunk(personIds).map((ids) =>
+        admin.from('profiles').select('id, name, public_showcase').in('id', ids)
+      )
+    )
+    if (results.some((r) => r.error)) return c.json({ error: 'Failed to load impact data' }, 500)
+    people = results.flatMap((r) => r.data ?? [])
   }
   const showcased = new Map(
     people.filter((p) => p.public_showcase === true).map((p) => [p.id, p.name])
@@ -417,7 +418,7 @@ publicRoutes.get('/contributors/:id', async (c) => {
       .select('tutorials!inner(*)')
       .eq('profile_id', id)
       .eq('tutorials.status', 'approved'),
-    sb.from('toys').select('*').eq('owner_id', id).eq('status', 'published').is('archived_at', null),
+    sb.from('toys').select('*').eq('owner_id', id).eq('status', 'published'),
     admin
       .from('toy_transactions')
       .select('toy_id, owner_id, updated_at')
@@ -433,7 +434,11 @@ publicRoutes.get('/contributors/:id', async (c) => {
   const deliveredToyIds = [...new Set((deliveredTx ?? []).map((tx) => tx.toy_id))]
   let toysDelivered: unknown[] = []
   if (deliveredToyIds.length > 0) {
-    const { data, error } = await admin.from('toys').select('*').in('id', deliveredToyIds)
+    const results = await Promise.all(
+      chunk(deliveredToyIds).map((ids) => admin.from('toys').select('*').in('id', ids))
+    )
+    const data = results.flatMap((r) => r.data ?? [])
+    const error = results.find((r) => r.error)?.error
     if (error) return c.json({ error: 'Failed to load contributor profile' }, 500)
     toysDelivered = data ?? []
   }
@@ -504,8 +509,7 @@ publicRoutes.get('/organizations/:id', async (c) => {
       .from('toys')
       .select('*')
       .eq('owner_org_id', id)
-      .eq('status', 'published')
-      .is('archived_at', null),
+      .eq('status', 'published'),
     admin
       .from('toy_transactions')
       .select('toy_id, owner_org_id, updated_at')
@@ -523,7 +527,11 @@ publicRoutes.get('/organizations/:id', async (c) => {
   const deliveredToyIds = [...new Set((deliveredTx ?? []).map((tx) => tx.toy_id))]
   let toysDelivered: unknown[] = []
   if (deliveredToyIds.length > 0) {
-    const { data, error } = await admin.from('toys').select('*').in('id', deliveredToyIds)
+    const results = await Promise.all(
+      chunk(deliveredToyIds).map((ids) => admin.from('toys').select('*').in('id', ids))
+    )
+    const data = results.flatMap((r) => r.data ?? [])
+    const error = results.find((r) => r.error)?.error
     if (error) return c.json({ error: 'Failed to load organisation profile' }, 500)
     toysDelivered = data ?? []
   }
@@ -589,7 +597,12 @@ publicRoutes.get('/challenges/:id', async (c) => {
 
   const { data: participants, error: participantsError } = await admin
     .from('toy_idea_participants')
-    .select('idea_id, profile_id, joined_at, profiles(name)')
+    // The FK is named explicitly because 042 added removed_by, a SECOND
+    // reference from this table to profiles. A bare profiles(name) has been
+    // ambiguous ever since — PostgREST answers "more than one relationship was
+    // found" with a 500, which this route hands to web's challenge detail page
+    // as a notFound(). Every public challenge brief was unreachable.
+    .select('idea_id, profile_id, joined_at, profiles!toy_idea_participants_profile_id_fkey(name)')
     .eq('idea_id', idea.id)
     // Reads via the admin client, so RLS is not what keeps a removed person
     // off this public list -- this filter is. Without it a removed person

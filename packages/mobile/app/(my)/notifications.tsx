@@ -1,2 +1,7 @@
-import { SectionStub } from '../../components/ui/SectionStub'
-export default function MyNotifications() { return <SectionStub title="Notifications" blurb="Everything waiting on you, newest first." /> }
+// packages/mobile/app/(my)/notifications.tsx
+import { InboxScreen } from '../../components/inbox/inbox-screen'
+
+export default function MyNotifications() {
+  // Title comes from the native header (app/(my)/_layout.tsx: "Notifications").
+  return <InboxScreen />
+}

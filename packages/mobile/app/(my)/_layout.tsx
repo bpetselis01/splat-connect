@@ -40,16 +40,26 @@ export default function MyLayout() {
       <Stack.Screen name="account/ability" options={{ title: 'Ability Profile' }} />
       <Stack.Screen name="account/everyday-needs" options={{ title: 'Everyday Needs' }} />
       <Stack.Screen name="account/customization" options={{ title: 'Customization Metrics' }} />
+      <Stack.Screen name="account/child/[id]" options={{ title: 'Child profile' }} />
       {/* Every screen is named here: an undeclared one takes its route name as the
           header title, so /toys would say "toys/index" over the top of it. */}
       <Stack.Screen name="tutorials/index" options={{ title: 'My tutorials' }} />
+      <Stack.Screen name="tutorials/[id]" options={{ title: 'Edit guide' }} />
       <Stack.Screen name="toys/index" options={{ title: 'My toys' }} />
+      <Stack.Screen name="toys/new" options={{ title: 'Add a toy' }} />
+      <Stack.Screen name="toys/[id]" options={{ title: 'Toy' }} />
       <Stack.Screen name="exchanges/index" options={{ title: 'My exchanges' }} />
+      <Stack.Screen name="exchanges/[id]" options={{ title: 'Exchange' }} />
       <Stack.Screen name="challenges/index" options={{ title: 'Design challenges' }} />
       <Stack.Screen name="saved/index" options={{ title: 'Saved' }} />
+      {/* One route, three titles would need the param at layout level; the
+          generic word covers all three lists and the back chevron says where
+          you are anyway. */}
+      <Stack.Screen name="saved/[slug]" options={{ title: 'Saved' }} />
       <Stack.Screen name="notifications" options={{ title: 'Notifications' }} />
       <Stack.Screen name="print-requests" options={{ title: 'My print requests' }} />
       <Stack.Screen name="organisation/index" options={{ title: 'Review queue' }} />
+      <Stack.Screen name="organisation/[tutorialId]" options={{ title: 'Review' }} />
       <Stack.Screen name="organisation/toys" options={{ title: 'Toy inventory' }} />
       <Stack.Screen name="organisation/orders" options={{ title: 'Print orders' }} />
       <Stack.Screen name="admin" options={{ title: 'Admin' }} />

@@ -18,6 +18,6 @@ it('maps every href the hub and popover can emit to a mobile route, and nothing 
 })
 
 it('sends the one public row to Explore and unknown hrefs to the hub', () => {
-  expect(myRoute('/get-involved/submit-an-idea')).toBe('/explore')
+  expect(myRoute('/get-involved/submit-an-idea')).toBe('/explore/challenges/new')
   expect(myRoute('/nowhere')).toBe('/my-splat')
 })

@@ -92,7 +92,7 @@ export default function ToolsAndMaterials() {
           and universities often have one and are usually delighted to be asked. Some
           SPLAT <Link href="/organizations">organisations</Link> hold printers for
           exactly this. You do not need to own a printer to build a printed switch — see
-          <Link href="/learn/3d-printing-basics"> 3D printing basics</Link>.
+          <Link href="/printing/basics"> 3D printing basics</Link>.
         </p>
       </section>
 

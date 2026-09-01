@@ -14,8 +14,8 @@ test('the selected profile segment persists across a re-visit', async ({ page })
 
   await page.goto('/account')
 
-  await expect(page.getByText('Customization Metrics')).toBeVisible()
-  await expect(page.getByText('Ability Profile')).toBeVisible()
+  // The child segment's own furniture is the proof the segment persisted.
+  await expect(page.getByRole('button', { name: '+ Add child' })).toBeVisible()
 })
 
 test('the tab bar reaches every tab', async ({ page }) => {

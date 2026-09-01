@@ -33,6 +33,14 @@
       "expo-video",
       "expo-splash-screen",
       [
+        "expo-image-picker",
+        {
+          "cameraPermission": "SPLAT Connect uses your camera so you can photograph the toy you adapted for your guide.",
+          "photosPermission": "SPLAT Connect uses your photo library so you can pick an existing photo of the toy for your guide.",
+          "microphonePermission": false
+        }
+      ],
+      [
         "expo-build-properties",
         {
           "android": {

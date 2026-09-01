@@ -1,2 +1,6 @@
-import { SectionStub } from '../../../components/ui/SectionStub'
-export default function OrgToys() { return <SectionStub title="Toy inventory" blurb={"What's on the shelf. Five of the same bear is one listing."} /> }
+// packages/mobile/app/(my)/organisation/toys.tsx
+import { InventoryScreen } from '../../../components/organisation/inventory-screen'
+
+export default function OrgToys() {
+  return <InventoryScreen />
+}

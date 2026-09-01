@@ -80,10 +80,21 @@ export async function createTutorial(
     title: string
     status: 'draft' | 'pending' | 'approved' | 'rejected'
     difficulty: 'easy' | 'medium' | 'hard'
+    /** Column default is 'toy_adaptation' (048_tutorial_kind.sql). */
+    kind: 'toy_adaptation' | 'assistive_tech'
     /** false leaves tutorial_pdf_url null, so the preview screen has nothing to open. */
     withPdf: boolean
     /** true adds one optional part and one optional tool alongside the required pair. */
     withOptionalExtras: boolean
+    /**
+     * Renames the primary contributor's profile, so the byline and the
+     * contributor showcase carry a string this spec alone can assert on —
+     * every createContributor() otherwise answers to "E2E Contributor", and
+     * four parallel workers share that name.
+     */
+    contributorName: string
+    /** Creates an active organisation of this name and an ACCEPTED backing row. */
+    backedByOrg: string
   }> = {}
 ) {
   const admin = adminClient()
@@ -95,6 +106,7 @@ export async function createTutorial(
     title: overrides.title ?? uniqueTitle('E2E Tutorial'),
     description: 'Created by a Playwright E2E test.',
     difficulty: overrides.difficulty ?? 'easy',
+    kind: overrides.kind ?? 'toy_adaptation',
     status: overrides.status ?? 'approved',
     tutorial_pdf_url: pdfPath,
     toy_photo_url: 'https://placeholder.invalid/photo.jpg',
@@ -112,10 +124,39 @@ export async function createTutorial(
     if (uploadError) throw new Error(`Failed to upload tutorial PDF: ${uploadError.message}`)
   }
 
+  // tutorial_contributors is (tutorial_id, profile_id, role, added_at) with a
+  // composite primary key — no id column, and role is checked against
+  // ('primary','collaborator'). See 001_schema.sql.
   const { error: linkError } = await admin
     .from('tutorial_contributors')
     .insert({ tutorial_id: id, profile_id: contributorId, role: 'primary' })
   if (linkError) throw new Error(`Failed to link tutorial contributor: ${linkError.message}`)
+
+  if (overrides.contributorName) {
+    // The service role passes freeze_profile_identity()'s `auth.uid() is null`
+    // early return (045), so this is a plain update — no trigger to work around.
+    const { error: nameError } = await admin
+      .from('profiles')
+      .update({ name: overrides.contributorName })
+      .eq('id', contributorId)
+    if (nameError) throw new Error(`Failed to rename contributor: ${nameError.message}`)
+  }
+
+  if (overrides.backedByOrg) {
+    // organizations needs name + status ('active' | 'suspended'); tutorial_orgs
+    // is (tutorial_id, org_id, status, requested_at, ...) and only an ACCEPTED
+    // row is public — the list and detail routes filter the embed to it.
+    const { data: org, error: orgError } = await admin
+      .from('organizations')
+      .insert({ name: overrides.backedByOrg, status: 'active' })
+      .select('id')
+      .single()
+    if (orgError || !org) throw new Error(`Failed to create organisation: ${orgError?.message}`)
+    const { error: backingError } = await admin
+      .from('tutorial_orgs')
+      .insert({ tutorial_id: id, org_id: org.id, status: 'accepted' })
+    if (backingError) throw new Error(`Failed to back tutorial: ${backingError.message}`)
+  }
 
   await admin.from('parts').insert({ tutorial_id: id, name: 'E2E part', quantity: 2, is_optional: false, buy_links: [] })
   await admin.from('tools').insert({ tutorial_id: id, name: 'E2E tool', is_optional: false, buy_links: [] })
@@ -178,11 +219,17 @@ export async function signUpNewAccount(page: Page, email: string) {
  * reachable from any tab, so going straight to the URL is the same thing the
  * MY SPLAT popover does — with none of the popover's animation to wait on.
  */
+/**
+ * From /account, land inside ONE child's editor home. The segment lists every
+ * child now; a fresh account has none, so this creates the first through the
+ * same + Add child a parent would use and waits for its editor.
+ */
 export async function openChildProfile(page: Page) {
   await page.goto('/account')
   // Account is the default segment on first visit.
   await page.getByText('Child Profile').click()
-  await expect(page.getByText('Customization Metrics')).toBeVisible()
+  await page.getByRole('button', { name: '+ Add child' }).click()
+  await expect(page.getByText('Delete profile')).toBeVisible()
 }
 
 /** Sign in through the sign-in screen (it defaults to sign-in mode). */
@@ -193,10 +240,16 @@ export async function signIn(page: Page, email: string, password: string) {
   await page.getByText('Sign In', { exact: true }).click()
 }
 
-/** From a fresh sign-in, reach one of the three child-profile sub-screens. */
+/** From a fresh sign-in, reach one of the three step screens of a new child. */
 export async function openSubScreen(page: Page, label: 'Ability Profile' | 'Everyday Needs' | 'Customization Metrics') {
   await openChildProfile(page)
-  await page.getByText(label).click()
+  // The editor home's rows carry the short step names.
+  const row: Record<typeof label, string> = {
+    'Ability Profile': 'Ability',
+    'Everyday Needs': 'Everyday needs',
+    'Customization Metrics': 'Customisation',
+  }
+  await page.getByRole('button', { name: row[label], exact: true }).click()
 }
 
 /**
@@ -209,4 +262,174 @@ export async function selectPill(page: Page, name: string) {
   const pill = page.getByRole('button', { name, exact: true })
   await pill.click()
   await expect(pill).toHaveAttribute('aria-selected', 'true')
+}
+
+/**
+ * A published toy owned by one person, inserted straight through the service
+ * role. Deliberately not driven through the UI: POST /api/toys publishes only
+ * after the photo gaps are filled (routes/toys.ts), and a read-side spec has
+ * no business uploading a cover photo to get a row into the library.
+ *
+ * Mirrors packages/web/tests/e2e/helpers.ts createPublishedToy, plus the
+ * overrides the mobile library screen filters and badges on. Every optional
+ * fact defaults OFF — no switch adaptation, no photo — so a spec that asserts
+ * one of them has to have asked for it.
+ */
+export async function createPublishedToy(
+  ownerId: string,
+  overrides: Partial<{
+    name: string
+    /** 1–10. The library's condition buckets cut at 3/4 and 6/7. */
+    condition: number
+    /** null lists the toy without offering it — the request block's "not offered" branch. */
+    offer_type: 'donation' | 'exchange' | 'both' | null
+    switch_adapted: boolean
+    cover_photo_url: string
+  }> = {}
+): Promise<string> {
+  const { data, error } = await adminClient()
+    .from('toys')
+    .insert({
+      owner_id: ownerId,
+      name: overrides.name ?? uniqueTitle('E2E Toy'),
+      condition: overrides.condition ?? 7,
+      switch_adapted: overrides.switch_adapted ?? false,
+      cover_photo_url: overrides.cover_photo_url ?? null,
+      // `in` rather than `??`: null is a meaningful value here, not an absence.
+      offer_type: 'offer_type' in overrides ? overrides.offer_type : 'donation',
+      status: 'published',
+    })
+    .select('id')
+    .single()
+  if (error || !data) throw new Error(`createPublishedToy failed: ${error?.message}`)
+  return data.id
+}
+
+/** Rename a service-role-provisioned profile, so a spec can assert on a name
+ *  only its own fixture answers to — every createContributor() is otherwise
+ *  "E2E Contributor", and four parallel workers share that. */
+export async function renameProfile(profileId: string, name: string) {
+  const { error } = await adminClient().from('profiles').update({ name }).eq('id', profileId)
+  if (error) throw new Error(`renameProfile failed: ${error.message}`)
+}
+
+/** Seed the saved pickup address the exchange thread pre-fills its accept form
+ *  from (caps.profile.pickup_*). */
+export async function setPickupAddress(
+  profileId: string,
+  address: { pickup_line1: string; pickup_suburb: string; pickup_state: string; pickup_postcode: string }
+) {
+  const { error } = await adminClient().from('profiles').update(address).eq('id', profileId)
+  if (error) throw new Error(`setPickupAddress failed: ${error.message}`)
+}
+
+/**
+ * The handoff codes as the database holds them. The thread shows each party
+ * only their OWN code (sanitizeCodes in routes/toy-transactions.ts), so the
+ * side doing the confirming can never read the code it has to type — in real
+ * life it is read aloud at the pickup, and here it comes from the row.
+ */
+export async function handoffCodes(transactionId: string) {
+  const { data, error } = await adminClient()
+    .from('toy_transactions')
+    .select('owner_code, requester_code')
+    .eq('id', transactionId)
+    .single()
+  if (error || !data) throw new Error(`handoffCodes failed: ${error?.message}`)
+  return data as { owner_code: string; requester_code: string }
+}
+
+/**
+ * A published design challenge, straight into toy_ideas at status 'challenge'
+ * — the status GET /api/public/challenges filters to. Going through the real
+ * submit-then-admin-approve path would need an admin account and two screens
+ * for a row every challenge spec needs as a precondition, not as its subject.
+ */
+export async function createChallenge(
+  authorId: string,
+  overrides: Partial<{
+    title: string
+    summary: string
+    /** 'graduated' puts it under "Solved · became guides" instead. */
+    status: 'challenge' | 'graduated' | 'pending' | 'rejected'
+    contact_prefs: ('clarification' | 'co_design' | 'user_testing')[]
+  }> = {}
+): Promise<string> {
+  const { data, error } = await adminClient()
+    .from('toy_ideas')
+    .insert({
+      author_id: authorId,
+      title: overrides.title ?? uniqueTitle('E2E Challenge'),
+      summary: overrides.summary ?? 'Seeded by a Playwright E2E test.',
+      description: 'The toy resists every switch we have tried.',
+      intended_use: 'A bubble machine during therapy.',
+      primary_user: 'A three-year-old with low muscle tone.',
+      contact_prefs: overrides.contact_prefs ?? [],
+      status: overrides.status ?? 'challenge',
+    })
+    .select('id')
+    .single()
+  if (error || !data) throw new Error(`createChallenge failed: ${error?.message}`)
+  return data.id
+}
+
+/**
+ * One notification, as the API's own handlers write them: the row carries the
+ * subject id its COPY line and its link both read (idea_id, tutorial_id or
+ * toy_transaction_id), never all three.
+ */
+export async function createNotification(
+  recipientId: string,
+  fields: {
+    type: string
+    actor_name?: string
+    tutorial_id?: string
+    tutorial_title?: string
+    toy_transaction_id?: string
+    toy_name?: string
+    idea_id?: string
+  }
+): Promise<string> {
+  const { data, error } = await adminClient()
+    .from('notifications')
+    .insert({ recipient_id: recipientId, actor_name: 'E2E Actor', ...fields })
+    .select('id')
+    .single()
+  if (error || !data) throw new Error(`createNotification failed: ${error?.message}`)
+  return data.id
+}
+
+/**
+ * An organisation with this contributor as its leader, org-leader terms
+ * accepted — the review policies (007) check both. Returns the org id.
+ */
+export async function makeOrgLeader(userId: string, orgName?: string): Promise<string> {
+  const admin = adminClient()
+  const { data: org, error } = await admin
+    .from('organizations')
+    .insert({ name: orgName ?? uniqueTitle('E2E Org'), status: 'active' })
+    .select('id')
+    .single()
+  if (error || !org) throw new Error(`makeOrgLeader org insert failed: ${error?.message}`)
+  const { error: leaderError } = await admin
+    .from('org_leaders')
+    .insert({ org_id: org.id, user_id: userId })
+  if (leaderError) throw new Error(`makeOrgLeader leader insert failed: ${leaderError.message}`)
+  const { error: termsError } = await admin
+    .from('user_agreements')
+    .insert({ user_id: userId, agreement_type: 'org_leader_terms', version: 'v0-todo' })
+  if (termsError) throw new Error(`makeOrgLeader terms insert failed: ${termsError.message}`)
+  return org.id
+}
+
+/** A backing request (or an accepted backing) from a tutorial to an org. */
+export async function requestBacking(
+  tutorialId: string,
+  orgId: string,
+  status: 'pending' | 'accepted' = 'pending'
+) {
+  const { error } = await adminClient()
+    .from('tutorial_orgs')
+    .insert({ tutorial_id: tutorialId, org_id: orgId, status })
+  if (error) throw new Error(`requestBacking failed: ${error.message}`)
 }

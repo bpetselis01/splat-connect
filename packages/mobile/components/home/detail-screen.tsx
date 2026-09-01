@@ -2,17 +2,29 @@ import { useEffect, useState } from 'react'
 import { View, Text, ScrollView, StyleSheet, Image } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import type { Tutorial, Part, Tool, StlFile } from '@splat-connect/types'
+import type { Tutorial, Part, Tool, StlFile, Recommendation } from '@splat-connect/types'
+import { KIND_LABEL } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { supabase } from '../../lib/supabase'
+import { useSaves } from '../../lib/saves'
 import { theme } from '../../lib/theme'
-import { DifficultyBadge } from '../difficulty-badge'
+import { Provenance, type ProvenanceContributor, type ProvenanceOrg } from '../guides/provenance'
+import { PicksRow } from '../guides/picks-row'
+import { Badge } from '../ui/Badge'
+import { SaveButton } from '../ui/SaveButton'
 import { Button } from '../ui/Button'
 import { Section } from '../ui/Section'
 import { Skeleton } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 
-type TutorialDetail = Tutorial & { parts: Part[]; tools: Tool[]; stl_files: StlFile[] }
+type TutorialDetail = Tutorial & {
+  parts: Part[]
+  tools: Tool[]
+  stl_files: StlFile[]
+  tutorial_contributors: ProvenanceContributor[]
+  tutorial_orgs: ProvenanceOrg[]
+  tutorial_recommendations: Recommendation[]
+}
 
 /**
  * One line of the parts or tools list.
@@ -32,6 +44,7 @@ function ListRow({ icon, label }: { icon: keyof typeof Ionicons.glyphMap; label:
 
 export function DetailScreen({ id }: { id: string }) {
   const router = useRouter()
+  const saves = useSaves()
   const [tutorial, setTutorial] = useState<TutorialDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
@@ -87,6 +100,8 @@ export function DetailScreen({ id }: { id: string }) {
     })
   }
 
+  const primary = tutorial.tutorial_contributors.find((c) => c.role === 'primary') ?? tutorial.tutorial_contributors[0]
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {tutorial.toy_photo_url ? (
@@ -99,9 +114,29 @@ export function DetailScreen({ id }: { id: string }) {
 
       <View style={styles.titleRow}>
         <Text style={styles.title}>{tutorial.title}</Text>
-        <DifficultyBadge difficulty={tutorial.difficulty} />
+        <SaveButton slug="tutorials" id={tutorial.id} saves={saves} />
+      </View>
+      {/*
+        Plain, visible badges rather than library-screen's a11y-hidden wrapper:
+        that hiding exists there because the whole row is one accessible
+        button whose spoken name absorbs every descendant Text, so an unhidden
+        badge both double-announces and collides with the filter chip's own
+        name. Here the title is a plain Text, not a button — nothing
+        aggregates these badges into another element's name, so each is just
+        its own stop in the screen's natural top-to-bottom reading order.
+      */}
+      <View style={styles.badgeRow}>
+        <Badge status={tutorial.difficulty} />
+        <Badge status={tutorial.kind} label={KIND_LABEL[tutorial.kind]} />
       </View>
       {tutorial.description ? <Text style={styles.description}>{tutorial.description}</Text> : null}
+
+      <Provenance
+        contributors={tutorial.tutorial_contributors}
+        orgs={tutorial.tutorial_orgs}
+        onPerson={(pid) => router.push(`/guides/contributor/${pid}`)}
+        onOrg={(oid) => router.push(`/guides/organisation/${oid}`)}
+      />
 
       <Section title="Parts" hint="What you'll need to buy or salvage.">
         {tutorial.parts.length ? (
@@ -132,6 +167,24 @@ export function DetailScreen({ id }: { id: string }) {
       </Section>
 
       <Button label="Preview Tutorial" onPress={openPreview} />
+
+      {tutorial.kind === 'assistive_tech' ? (
+        <View style={styles.printCard}>
+          <View style={styles.printHeader}>
+            <Text style={styles.printTitle}>Request this 3D print</Text>
+            <Badge status="pending" label="Soon" />
+          </View>
+          <Text style={styles.printHint}>Ask a contributor or organisation with a printer</Text>
+        </View>
+      ) : null}
+
+      {tutorial.tutorial_recommendations.length > 0 ? (
+        <PicksRow
+          recommendations={tutorial.tutorial_recommendations}
+          firstName={primary?.profiles.name.split(' ')[0] ?? 'Creator'}
+          onOpen={(rid) => router.push(`/guides/${rid}`)}
+        />
+      ) : null}
     </ScrollView>
   )
 }
@@ -174,6 +227,25 @@ const styles = StyleSheet.create({
     fontSize: theme.type.title,
     color: theme.colors.text,
     lineHeight: 30,
+  },
+  badgeRow: { flexDirection: 'row', gap: theme.spacing(2), marginTop: theme.spacing(2) },
+  printCard: {
+    marginTop: theme.spacing(5),
+    opacity: 0.62,
+    borderRadius: theme.radii.md,
+    borderWidth: theme.border.thin,
+    borderColor: theme.colors.ink,
+    backgroundColor: theme.colors.surface,
+    padding: theme.spacing(4),
+    ...theme.shadow(4),
+  },
+  printHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  printTitle: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.text },
+  printHint: {
+    fontFamily: theme.fonts.regular,
+    fontSize: theme.type.caption,
+    color: theme.colors.muted,
+    marginTop: theme.spacing(1),
   },
   description: {
     fontFamily: theme.fonts.regular,

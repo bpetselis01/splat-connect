@@ -1,6 +1,8 @@
 import { supabase } from './supabase'
 
-async function getToken(): Promise<string | null> {
+// Exported so lib/upload.ts can reuse the exact same session lookup for its
+// multipart requests instead of a second copy of this.
+export async function getToken(): Promise<string | null> {
   const {
     data: { session },
   } = await supabase.auth.getSession()
@@ -37,4 +39,5 @@ export const apiClient = {
   get: <T>(path: string) => request<T>('GET', path),
   post: <T>(path: string, body: unknown) => request<T>('POST', path, body),
   patch: <T>(path: string, body: unknown) => request<T>('PATCH', path, body),
+  delete: <T>(path: string) => request<T>('DELETE', path),
 }

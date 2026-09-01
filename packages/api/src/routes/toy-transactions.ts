@@ -1,3 +1,4 @@
+import { chunk } from '../chunk.js'
 import { Hono, type Context } from 'hono'
 import { randomInt } from 'node:crypto'
 import { needsAction, isOwnerSide } from '@splat-connect/types'
@@ -98,12 +99,19 @@ async function lastMessages(
 ): Promise<Map<string, MessagePreview>> {
   const previews = new Map<string, MessagePreview>()
   if (transactionIds.length === 0) return previews
-  const { data } = await supabase
-    .from('toy_transaction_messages')
-    .select('transaction_id, body, sender_id, kind, created_at')
-    .in('transaction_id', transactionIds)
-    .order('created_at', { ascending: true })
-  for (const row of data ?? []) {
+  // Chunked: the caller passes every transaction the user can see. A
+  // transaction's messages all arrive in its own chunk's (ascending) result,
+  // so last-write-wins per id still lands on the latest message.
+  const results = await Promise.all(
+    chunk(transactionIds).map((ids) =>
+      supabase
+        .from('toy_transaction_messages')
+        .select('transaction_id, body, sender_id, kind, created_at')
+        .in('transaction_id', ids)
+        .order('created_at', { ascending: true })
+    )
+  )
+  for (const row of results.flatMap((r) => r.data ?? [])) {
     const { transaction_id, ...preview } = row as MessagePreview & { transaction_id: string }
     previews.set(transaction_id, preview)
   }
@@ -135,7 +143,7 @@ toyTransactions.get('/', async (c) => {
   const { data, error } = await supabase
     .from('toy_transactions')
     .select(
-      '*, toy:toys!toy_transactions_toy_id_fkey(name), offered:toys!toy_transactions_offered_toy_id_fkey(name), owner:profiles!toy_transactions_owner_id_fkey(name), requester:profiles!toy_transactions_requester_id_fkey(name), org:organizations!toy_transactions_owner_org_id_fkey(name)'
+      '*, toy:toys!toy_transactions_toy_id_fkey(name, cover_photo_url), offered:toys!toy_transactions_offered_toy_id_fkey(name, cover_photo_url), owner:profiles!toy_transactions_owner_id_fkey(name), requester:profiles!toy_transactions_requester_id_fkey(name), org:organizations!toy_transactions_owner_org_id_fkey(name)'
     )
     .order('updated_at', { ascending: false })
   if (error) return c.json({ error: error.message }, 500)
@@ -150,8 +158,8 @@ toyTransactions.get('/', async (c) => {
       status: string
       owner_id: string | null
       owner_org_id: string | null
-      toy: { name: string } | null
-      offered: { name: string } | null
+      toy: { name: string; cover_photo_url: string | null } | null
+      offered: { name: string; cover_photo_url: string | null } | null
       owner: { name: string } | null
       requester: { name: string } | null
       org: { name: string } | null
@@ -171,7 +179,12 @@ toyTransactions.get('/', async (c) => {
     rows.map((r) => ({
       ...sanitizeCodes(r, userId, ledOrgs),
       toy_name: r.toy?.name ?? '',
+      // Both embeds survive a completed handoff for either party: 025's
+      // "Transaction parties can view each other's toy" policy has no end date,
+      // which is what lets a giver still see the toy they handed over.
+      toy_cover_photo_url: r.toy?.cover_photo_url ?? null,
       offered_toy_name: r.offered?.name ?? null,
+      offered_toy_cover_photo_url: r.offered?.cover_photo_url ?? null,
       // A leader sees the family's name; a family sees the organisation's, not
       // the name of whichever leader happens to be on shift.
       other_party_name: isOwnerSide(r, userId, ledOrgs)
@@ -293,14 +306,14 @@ toyTransactions.post('/', async (c) => {
 
   const { data: toy, error: toyError } = await admin
     .from('toys')
-    .select('id, owner_id, owner_org_id, quantity, offer_type, status, archived_at')
+    .select('id, owner_id, owner_org_id, quantity, offer_type, status')
     .eq('id', body.toy_id)
     .maybeSingle()
   if (toyError) {
     if (toyError.code === INVALID_TEXT_REPRESENTATION) return c.json({ error: 'Not found' }, 404)
     return c.json({ error: toyError.message }, 500)
   }
-  if (!toy || toy.status !== 'published' || toy.archived_at) return c.json({ error: 'Not found' }, 404)
+  if (!toy || toy.status !== 'published') return c.json({ error: 'Not found' }, 404)
   if (toy.owner_id === userId) return c.json({ error: 'You cannot request your own toy' }, 400)
   // A leader asking their own organisation for stock would be approving their
   // own request — the org side of "you cannot request your own toy".
@@ -308,8 +321,8 @@ toyTransactions.post('/', async (c) => {
     return c.json({ error: "You cannot request your own organisation's toy" }, 400)
   }
 
-  // Every unit already spoken for. A toy mid-handoff stays 'published' and
-  // unarchived, so the status check above doesn't catch it. Hide it the same
+  // Every unit already spoken for. A toy mid-handoff stays 'published', so
+  // the status check above doesn't catch it. Hide it the same
   // way an inaccessible toy is hidden elsewhere: a bare 404, not a 409, so a
   // prober can't distinguish "already spoken for" from "doesn't exist."
   //
@@ -330,11 +343,11 @@ toyTransactions.post('/', async (c) => {
     if (!body.offered_toy_id) return c.json({ error: 'Choose one of your toys to offer' }, 400)
     const { data: offered, error: offeredError } = await admin
       .from('toys')
-      .select('id, owner_id, status, archived_at')
+      .select('id, owner_id, status')
       .eq('id', body.offered_toy_id)
       .maybeSingle()
     if (offeredError) return c.json({ error: offeredError.message }, 500)
-    if (!offered || offered.owner_id !== userId || offered.status !== 'published' || offered.archived_at) {
+    if (!offered || offered.owner_id !== userId || offered.status !== 'published') {
       return c.json({ error: 'Choose one of your own, active toys to offer' }, 400)
     }
 
@@ -675,8 +688,8 @@ toyTransactions.post('/:id/confirm', async (c) => {
   // 'draft' is the load-bearing half. It pulls the toy out of the public
   // library the moment it moves, because the receiver has not agreed to list
   // it — leaving it published would re-offer a toy its new owner just carried
-  // home. Clearing archived_at matters for the exchange case, where a toy that
-  // went out and came back would otherwise stay hidden from its new owner.
+  // home. (archived_at, 025's earlier answer to the same problem, is gone —
+  // migration 050.)
   //
   // The giver needs no update: My Toys filters on owner_id, so their list
   // clears itself.
@@ -692,7 +705,7 @@ toyTransactions.post('/:id/confirm', async (c) => {
   async function transferToy(toyId: string, to: { owner_id: string | null; owner_org_id: string | null }) {
     return admin
       .from('toys')
-      .update({ ...to, status: 'draft', archived_at: null, updated_at: now })
+      .update({ ...to, status: 'draft', updated_at: now })
       .eq('id', toyId)
   }
 

@@ -22,10 +22,10 @@ test('search narrows the list and clearing it restores the tutorial', async ({ p
 
   await page.goto('/guides')
 
-  await page.getByPlaceholder('Search tutorials').fill('no such toy')
+  await page.getByPlaceholder('Search by toy name').fill('no such toy')
   await expect(page.getByText(title)).toHaveCount(0)
 
-  await page.getByPlaceholder('Search tutorials').fill('')
+  await page.getByPlaceholder('Search by toy name').fill('')
   await expect(page.getByText(title)).toBeVisible()
 })
 
@@ -65,7 +65,7 @@ test('a search with no matches shows the empty state', async ({ page }) => {
   await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile Empty'), status: 'approved' })
 
   await page.goto('/guides')
-  await page.getByPlaceholder('Search tutorials').fill('zzz-no-such-toy-zzz')
+  await page.getByPlaceholder('Search by toy name').fill('zzz-no-such-toy-zzz')
 
   await expect(page.getByText('zzz-no-such-toy-zzz')).toBeVisible()
   await expect(page.locator('text=/No tutorials/i').first()).toBeVisible()
@@ -85,4 +85,75 @@ test('the skeleton renders while the tutorial request is in flight', async ({ pa
   await page.goto('/guides')
 
   await expect(page.getByTestId('skeleton-row').first()).toBeVisible()
+})
+
+test('the kind chips narrow the list to one kind, and tapping again clears them', async ({ page }) => {
+  const contributor = await signInAsNewContributor(page)
+  const toy = uniqueTitle('E2E Mobile Kind Toy')
+  const tech = uniqueTitle('E2E Mobile Kind Tech')
+  await createTutorial(contributor.id, { title: toy, status: 'approved' })
+  await createTutorial(contributor.id, { title: tech, status: 'approved', kind: 'assistive_tech' })
+
+  await page.goto('/guides')
+  await expect(page.getByText(toy)).toBeVisible()
+
+  const techChip = page.getByRole('button', { name: 'Assistive tech', exact: true })
+  await techChip.click()
+  await expect(page.getByText(tech)).toBeVisible()
+  await expect(page.getByText(toy)).toHaveCount(0)
+
+  // The kind chips are a toggle, not a radio set — the same chip clears itself.
+  await techChip.click()
+  await expect(page.getByText(toy)).toBeVisible()
+})
+
+test('a backed guide names its organisation on the card', async ({ page }) => {
+  const contributor = await signInAsNewContributor(page)
+  const title = uniqueTitle('E2E Mobile Backed')
+  const org = uniqueTitle('E2E Backing Org')
+  await createTutorial(contributor.id, { title, status: 'approved', backedByOrg: org })
+  // Its own unbacked guide, not another worker's: the default line has to be
+  // asserted against a row this test controls, or the assertion passes on
+  // whatever else happens to be in the library.
+  const plain = uniqueTitle('E2E Mobile Unbacked Card')
+  await createTutorial(contributor.id, { title: plain, status: 'approved' })
+
+  await page.goto('/guides')
+
+  await expect(page.getByText(title)).toBeVisible()
+  await expect(page.getByText(`Backed by ${org}`)).toBeVisible()
+
+  // "Reviewed by SPLAT" is the default path, not an absence, so it gets the
+  // same billing as a name — narrowed to the unbacked card to prove it.
+  await page.getByPlaceholder('Search by toy name').fill(plain)
+  await expect(page.getByText('Reviewed by SPLAT')).toBeVisible()
+  await expect(page.getByText(`Backed by ${org}`)).toHaveCount(0)
+})
+
+test('tapping Save on a card flips the bookmark and the flip survives a reload', async ({ page }) => {
+  const contributor = await signInAsNewContributor(page)
+  const title = uniqueTitle('E2E Mobile Save')
+  await createTutorial(contributor.id, { title, status: 'approved' })
+
+  await page.goto('/guides')
+  // Narrowed to the one row first: every card carries its own bookmark, and
+  // the button has no per-row name to tell them apart by.
+  await page.getByPlaceholder('Search by toy name').fill(title)
+  await expect(page.getByText(title)).toBeVisible()
+
+  // Awaited, not just clicked: the flip is optimistic, so a reload fired
+  // straight after the click aborts the POST in flight and the save never
+  // reaches the database — which is exactly what this spec would then miss.
+  const saved = page.waitForResponse(
+    (r) => r.url().endsWith('/api/saves') && r.request().method() === 'POST'
+  )
+  await page.getByLabel('Save', { exact: true }).click()
+  await expect(page.getByLabel('Saved', { exact: true })).toBeVisible()
+  expect((await saved).status()).toBe(201)
+
+  // The reload is the point: only a fresh /api/saves/ids proves the row is
+  // really there, rather than the optimistic flip still showing.
+  await page.reload()
+  await page.getByPlaceholder('Search by toy name').fill(title)
+  await expect(page.getByLabel('Saved', { exact: true })).toBeVisible()
 })

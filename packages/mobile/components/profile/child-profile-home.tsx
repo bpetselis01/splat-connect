@@ -2,119 +2,156 @@
 // (components/profile-screen.tsx) — it owns none of the screen chrome
 // (header, account identity, sign out) since that segment shares a screen
 // with the "Account" segment, which already provides all of it.
+//
+// Was a single-child editor; now the list web's profile page keeps — one row
+// per child, "+ Add child", each row into that child's own editor. The row's
+// second line is the one-line ability summary the spec asks for, or "Not set
+// yet" when the profile is still blank.
+import { useCallback, useEffect, useState } from 'react'
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native'
-import { useRouter } from 'expo-router'
+import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import { useChildProfile } from '../../lib/use-child-profile'
+import type { ChildProfile } from '@splat-connect/types'
+import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { Card } from '../ui/Card'
-import { TextField } from '../ui/TextField'
+import { Button } from '../ui/Button'
+import { ErrorRow } from '../auth-screen'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
 
-const SUB_SCREENS: {
-  label: string
-  path: string
-  icon: keyof typeof Ionicons.glyphMap
-  hint: string
-}[] = [
-  {
-    label: 'Ability Profile',
-    path: '/account/ability',
-    icon: 'accessibility-outline',
-    hint: 'Diagnosis, hand involvement, MACS and BFMF',
-  },
-  {
-    label: 'Everyday Needs',
-    path: '/account/everyday-needs',
-    icon: 'today-outline',
-    hint: 'Challenges, grip type and where it gets used',
-  },
-  {
-    label: 'Customization Metrics',
-    path: '/account/customization',
-    icon: 'resize-outline',
-    hint: 'Measurements that size the 3D-printed parts',
-  },
-]
+/** "Age 5 · Cerebral palsy", either half optional; 'Not set yet' when both are. */
+function summaryOf(child: ChildProfile): string {
+  return (
+    [child.age !== null ? `Age ${child.age}` : null, child.primary_diagnosis]
+      .filter(Boolean)
+      .join(' · ') || 'Not set yet'
+  )
+}
 
 export function ChildProfileHome() {
   const router = useRouter()
-  const { profile, loading, save, saveState } = useChildProfile()
+  const [children, setChildren] = useState<ChildProfile[]>([])
+  const [loading, setLoading] = useState(true)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [reloadKey, setReloadKey] = useState(0)
 
-  function onChangeAge(v: string) {
-    if (v.trim() !== '' && !Number.isNaN(Number(v))) save({ age: Number(v) })
+  useEffect(() => {
+    let ignore = false
+    apiClient
+      .get<ChildProfile[]>('/api/child-profiles')
+      .then((list) => {
+        if (!ignore) {
+          setChildren(list)
+          setError(null)
+        }
+      })
+      .catch((err) => {
+        console.error('[ChildProfileHome] children fetch failed:', err)
+        // Never fold into the empty state: telling a parent their children are
+        // gone when the endpoint fell over is a lie about their own family.
+        if (!ignore) setError("Couldn't load your child profiles — try again.")
+      })
+      .finally(() => {
+        if (!ignore) setLoading(false)
+      })
+    return () => {
+      ignore = true
+    }
+  }, [reloadKey])
+
+  // Ages and names change in the per-child editor; the list is stale on the
+  // way back without this.
+  useFocusEffect(
+    useCallback(() => {
+      setReloadKey((k) => k + 1)
+    }, [])
+  )
+
+  async function addChild() {
+    setBusy(true)
+    setError(null)
+    try {
+      // An empty row on purpose: every field is optional, and the editor is
+      // where the details go — the same order web's Add child flow uses.
+      const created = await apiClient.post<ChildProfile>('/api/child-profiles', {})
+      router.push({ pathname: '/account/child/[id]', params: { id: created.id } })
+    } catch (err) {
+      console.error('[ChildProfileHome] create failed:', err)
+      setError('Could not add a child profile. Please try again.')
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
     <View>
-        <TextField
-          label="Child's age"
-          placeholder="Age"
-          keyboardType="numeric"
-          defaultValue={profile?.age != null ? String(profile.age) : ''}
-          onChangeText={onChangeAge}
-        />
-
-        {/* Confirms the debounced autosave. Polite live region so a screen reader
-            announces "Saved" without stealing focus from the field. */}
-        <Text
-          accessibilityLiveRegion="polite"
-          style={[styles.saveStatus, saveState === 'saved' && styles.saveStatusDone]}
-        >
-          {saveState === 'saving' ? 'Saving…' : saveState === 'saved' ? 'Saved' : ' '}
+      <View style={styles.headerRow}>
+        <Text style={styles.intro}>
+          This helps us suggest guides that suit your children. Everything is optional and only
+          you can see it.
         </Text>
+        <Button label="+ Add child" variant="accent" loading={busy} onPress={() => void addChild()} style={styles.addChild} />
+      </View>
 
-        {loading ? <ActivityIndicator color={theme.colors.primary} /> : null}
+      <ErrorRow message={error} />
+      {loading ? <ActivityIndicator color={theme.colors.primary} /> : null}
 
-        <Text style={styles.sectionTitle}>Child profile</Text>
-        {SUB_SCREENS.map((s) => (
-          <AnimatedPressable
-            key={s.path}
-            onPress={() => router.push(s.path)}
-            accessibilityRole="button"
-            accessibilityLabel={s.label}
-            accessibilityHint={s.hint}
-            pressScale={0.985}
-            style={styles.tilePress}
-          >
-            <Card style={styles.tile}>
-              <View style={styles.tileIcon}>
-                <Ionicons name={s.icon} size={22} color={theme.colors.primary} />
-              </View>
-              <View style={styles.tileBody}>
-                <Text style={styles.tileLabel}>{s.label}</Text>
-                <Text style={styles.tileHint} numberOfLines={2}>{s.hint}</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={18} color={theme.colors.primary} />
-            </Card>
-          </AnimatedPressable>
-        ))}
+      {!loading && !error && children.length === 0 ? (
+        <Text style={styles.empty}>
+          No child profiles yet. A profile can hold age, diagnosis and grip details — all
+          optional, all private to you.
+        </Text>
+      ) : null}
 
+      {children.map((child, i) => (
+        <AnimatedPressable
+          key={child.id}
+          onPress={() => router.push({ pathname: '/account/child/[id]', params: { id: child.id } })}
+          accessibilityRole="button"
+          accessibilityLabel={child.name?.trim() || `Child ${i + 1}`}
+          accessibilityHint={`${summaryOf(child)}. Opens the profile.`}
+          pressScale={0.985}
+          style={styles.rowPress}
+        >
+          <Card style={styles.row}>
+            <View style={styles.rowIcon}>
+              <Ionicons name="happy-outline" size={22} color={theme.colors.primary} />
+            </View>
+            <View style={styles.rowBody}>
+              <Text style={styles.rowLabel}>{child.name?.trim() || `Child ${i + 1}`}</Text>
+              <Text style={styles.rowHint} numberOfLines={1}>
+                {summaryOf(child)}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={theme.colors.primary} />
+          </Card>
+        </AnimatedPressable>
+      ))}
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  saveStatus: {
+  headerRow: { marginBottom: theme.spacing(3) },
+  intro: {
     fontFamily: theme.fonts.regular,
     fontSize: theme.type.caption,
     color: theme.colors.muted,
-    textAlign: 'right',
-    // Pull up under the field and reserve a line so toggling doesn't shift layout.
-    marginTop: -theme.spacing(2),
-    marginBottom: theme.spacing(3),
-    minHeight: 16,
-  },
-  saveStatusDone: { color: theme.colors.mintDeep },
-  sectionTitle: {
-    fontFamily: theme.fonts.bold,
-    fontSize: theme.type.heading,
-    color: theme.colors.text,
+    lineHeight: 19,
     marginBottom: theme.spacing(3),
   },
-  tilePress: { marginBottom: theme.spacing(3) },
-  tile: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(4) },
-  tileIcon: {
+  addChild: { alignSelf: 'flex-start', paddingVertical: theme.spacing(2), paddingHorizontal: theme.spacing(4) },
+  empty: {
+    fontFamily: theme.fonts.regular,
+    fontSize: theme.type.label,
+    color: theme.colors.muted,
+    lineHeight: 21,
+    marginTop: theme.spacing(2),
+  },
+  rowPress: { marginBottom: theme.spacing(3) },
+  row: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(4) },
+  rowIcon: {
     width: 44,
     height: 44,
     borderRadius: theme.radii.md,
@@ -122,13 +159,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  tileBody: { flex: 1 },
-  tileLabel: { fontFamily: theme.fonts.bold, fontSize: theme.type.body, color: theme.colors.text },
-  tileHint: {
+  rowBody: { flex: 1 },
+  rowLabel: { fontFamily: theme.fonts.bold, fontSize: theme.type.body, color: theme.colors.text },
+  rowHint: {
     fontFamily: theme.fonts.regular,
     fontSize: theme.type.caption,
     color: theme.colors.muted,
-    lineHeight: 18,
     marginTop: theme.spacing(1),
   },
 })

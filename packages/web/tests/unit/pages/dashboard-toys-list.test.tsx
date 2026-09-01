@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import ToyListPage from '@/app/dashboard/toys/page'
-import type { Toy } from '@splat-connect/types'
+import type { Toy, ToyTransactionSummary } from '@splat-connect/types'
 
 vi.mock('@/lib/capabilities', () => ({
   getCapabilities: async () => ({
@@ -45,9 +45,49 @@ function toy(overrides: Partial<Toy> = {}): Toy {
     created_at: '',
     updated_at: '',
     offer_type: null,
-    archived_at: null,
     ...overrides,
   }
+}
+
+/** A completed handoff, as GET /api/toy-transactions returns it. */
+function handoff(overrides: Partial<ToyTransactionSummary> = {}): ToyTransactionSummary {
+  return {
+    id: 'tx-1',
+    toy_id: 'gone-1',
+    offered_toy_id: null,
+    type: 'donation',
+    status: 'completed',
+    requester_id: 'them',
+    owner_id: 'u1',
+    owner_org_id: null,
+    owner_code: null,
+    requester_code: null,
+    owner_confirmed_at: null,
+    requester_confirmed_at: null,
+    pickup_line1: null,
+    pickup_suburb: null,
+    pickup_state: null,
+    pickup_postcode: null,
+    pickup_instructions: null,
+    created_at: '2026-08-01T00:00:00Z',
+    updated_at: '2026-08-12T00:00:00Z',
+    toy_name: 'Fire truck',
+    toy_cover_photo_url: null,
+    offered_toy_name: null,
+    offered_toy_cover_photo_url: null,
+    other_party_name: 'Priya',
+    acting_for_org_name: null,
+    blocked_by_rival_accept: false,
+    last_message: null,
+    ...overrides,
+  } as ToyTransactionSummary
+}
+
+/** The page makes two calls now; answer them by path rather than by order. */
+function respond(toys: unknown[], transactions: unknown[] = []) {
+  vi.mocked(apiClient.get).mockImplementation((path: string) =>
+    Promise.resolve(path === '/api/toys' ? toys : transactions) as never
+  )
 }
 
 describe('ToyListPage', () => {
@@ -99,28 +139,52 @@ describe('ToyListPage', () => {
     await expect(ToyListPage()).rejects.toThrow('network')
   })
 
-  it('splits toys into Active and Archived sections', async () => {
-    vi.mocked(apiClient.get).mockResolvedValue([
-      toy({ id: '1', name: 'Active toy', archived_at: null }),
-      toy({ id: '2', name: 'Archived toy', archived_at: '2026-08-01T00:00:00Z' }),
-    ])
+  it('lists a donated toy under Given away, naming who got it', async () => {
+    respond([toy({ id: '1', name: 'Active toy' })], [handoff()])
     render(await ToyListPage())
+
     expect(screen.getByText('Active toy')).toBeInTheDocument()
-    expect(screen.getByText('Archived toy')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /archived/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /given away/i })).toBeInTheDocument()
+    expect(screen.getByText('Fire truck')).toBeInTheDocument()
+    expect(screen.getByText('Donated to Priya')).toBeInTheDocument()
   })
 
-  it('shows the empty state when there are no active toys, even if archived toys exist', async () => {
-    vi.mocked(apiClient.get).mockResolvedValue([toy({ id: '1', archived_at: '2026-08-01T00:00:00Z' })])
+  it('names what a swap was traded for', async () => {
+    respond(
+      [],
+      [handoff({ type: 'exchange', offered_toy_id: 'toy-2', offered_toy_name: 'Spinning top' })]
+    )
     render(await ToyListPage())
-    expect(screen.getByText(/haven't added any toys yet/i)).toBeInTheDocument()
+    expect(screen.getByText('Swapped with Priya for Spinning top')).toBeInTheDocument()
   })
 
-  it('omits the Archived heading when nothing is archived', async () => {
-    vi.mocked(apiClient.get).mockResolvedValue([toy({ id: '1', archived_at: null })])
+  it('sends a given-away card to the handoff it came from', async () => {
+    respond([], [handoff({ id: 'tx-9' })])
     render(await ToyListPage())
-    expect(screen.queryByRole('heading', { name: /archived/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Fire truck/ })).toHaveAttribute(
+      'href',
+      '/dashboard/exchanges/tx-9'
+    )
   })
+
+  it('omits the Given away heading when nothing has been handed over', async () => {
+    respond([toy({ id: '1' })], [])
+    render(await ToyListPage())
+    expect(screen.queryByRole('heading', { name: /given away/i })).not.toBeInTheDocument()
+  })
+
+  it('keeps the toys on screen when the handoff fetch fails', async () => {
+    vi.mocked(apiClient.get).mockImplementation((path: string) =>
+      path === '/api/toys'
+        ? (Promise.resolve([toy({ id: '1', name: 'Still here' })]) as never)
+        : (Promise.reject(new Error('down')) as never)
+    )
+    render(await ToyListPage())
+    // The section is a nice-to-have; losing it must not lose the page.
+    expect(screen.getByText('Still here')).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: /given away/i })).not.toBeInTheDocument()
+  })
+
 
   // Tests: the header offers a way into the public toy library
   // Chain: the My SPLAT card names "Browse toy library" as behind this tile,
