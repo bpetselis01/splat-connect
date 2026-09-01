@@ -428,6 +428,32 @@ export interface OrgLeader {
 
 /** One organisation's answer to one project. The author creates it as
  *  'pending'; only a leader of that organisation may answer. */
+/**
+ * What one leader may do with one project, derived from (backing, tutorial)
+ * state — never from which route was opened. Lifted here from web's
+ * components/project-actions.tsx when mobile's review detail became the second
+ * consumer: two copies would let the clients offer a leader different actions
+ * on the same project.
+ */
+export type LeaderAction = 'back' | 'decline' | 'approve' | 'reject'
+export type AdminAction = 'approve' | 'reject' | 'unpublish'
+
+export function leaderActions(
+  backing: TutorialOrgStatus | null,
+  tutorial: TutorialStatus
+): LeaderAction[] {
+  if (backing === 'pending') return ['back', 'decline']
+  if (backing === 'accepted' && tutorial === 'pending') return ['approve', 'reject']
+  return []
+}
+
+export function adminActions(tutorial: TutorialStatus): AdminAction[] {
+  if (tutorial === 'pending') return ['approve', 'reject']
+  // The reactive control decision 14 promised and never wired up.
+  if (tutorial === 'approved') return ['unpublish']
+  return []
+}
+
 export interface TutorialOrg {
   id: string
   tutorial_id: string
