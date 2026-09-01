@@ -219,11 +219,17 @@ export async function signUpNewAccount(page: Page, email: string) {
  * reachable from any tab, so going straight to the URL is the same thing the
  * MY SPLAT popover does — with none of the popover's animation to wait on.
  */
+/**
+ * From /account, land inside ONE child's editor home. The segment lists every
+ * child now; a fresh account has none, so this creates the first through the
+ * same + Add child a parent would use and waits for its editor.
+ */
 export async function openChildProfile(page: Page) {
   await page.goto('/account')
   // Account is the default segment on first visit.
   await page.getByText('Child Profile').click()
-  await expect(page.getByText('Customization Metrics')).toBeVisible()
+  await page.getByRole('button', { name: '+ Add child' }).click()
+  await expect(page.getByText('Delete profile')).toBeVisible()
 }
 
 /** Sign in through the sign-in screen (it defaults to sign-in mode). */
@@ -234,10 +240,16 @@ export async function signIn(page: Page, email: string, password: string) {
   await page.getByText('Sign In', { exact: true }).click()
 }
 
-/** From a fresh sign-in, reach one of the three child-profile sub-screens. */
+/** From a fresh sign-in, reach one of the three step screens of a new child. */
 export async function openSubScreen(page: Page, label: 'Ability Profile' | 'Everyday Needs' | 'Customization Metrics') {
   await openChildProfile(page)
-  await page.getByText(label).click()
+  // The editor home's rows carry the short step names.
+  const row: Record<typeof label, string> = {
+    'Ability Profile': 'Ability',
+    'Everyday Needs': 'Everyday needs',
+    'Customization Metrics': 'Customisation',
+  }
+  await page.getByRole('button', { name: row[label], exact: true }).click()
 }
 
 /**
@@ -385,4 +397,39 @@ export async function createNotification(
     .single()
   if (error || !data) throw new Error(`createNotification failed: ${error?.message}`)
   return data.id
+}
+
+/**
+ * An organisation with this contributor as its leader, org-leader terms
+ * accepted — the review policies (007) check both. Returns the org id.
+ */
+export async function makeOrgLeader(userId: string, orgName?: string): Promise<string> {
+  const admin = adminClient()
+  const { data: org, error } = await admin
+    .from('organizations')
+    .insert({ name: orgName ?? uniqueTitle('E2E Org'), status: 'active' })
+    .select('id')
+    .single()
+  if (error || !org) throw new Error(`makeOrgLeader org insert failed: ${error?.message}`)
+  const { error: leaderError } = await admin
+    .from('org_leaders')
+    .insert({ org_id: org.id, user_id: userId })
+  if (leaderError) throw new Error(`makeOrgLeader leader insert failed: ${leaderError.message}`)
+  const { error: termsError } = await admin
+    .from('user_agreements')
+    .insert({ user_id: userId, agreement_type: 'org_leader_terms', version: 'v0-todo' })
+  if (termsError) throw new Error(`makeOrgLeader terms insert failed: ${termsError.message}`)
+  return org.id
+}
+
+/** A backing request (or an accepted backing) from a tutorial to an org. */
+export async function requestBacking(
+  tutorialId: string,
+  orgId: string,
+  status: 'pending' | 'accepted' = 'pending'
+) {
+  const { error } = await adminClient()
+    .from('tutorial_orgs')
+    .insert({ tutorial_id: tutorialId, org_id: orgId, status })
+  if (error) throw new Error(`requestBacking failed: ${error.message}`)
 }
