@@ -18,14 +18,21 @@ function useProfileSegment() {
   const storage = resolveAuthStorage()
 
   useEffect(() => {
-    storage.getItem(PROFILE_SEGMENT_KEY).then((saved) => {
-      if (saved === 'child-profile') setSegment('child-profile')
-    })
+    // Storage is a convenience here, not a source of truth: a failed read
+    // leaves the default segment rather than an unhandled rejection.
+    storage
+      .getItem(PROFILE_SEGMENT_KEY)
+      .then((saved) => {
+        if (saved === 'child-profile') setSegment('child-profile')
+      })
+      .catch((err) => console.error('[useProfileSegment] could not read segment:', err))
   }, [])
 
   function select(next: ProfileSegment) {
     setSegment(next)
-    storage.setItem(PROFILE_SEGMENT_KEY, next)
+    storage
+      .setItem(PROFILE_SEGMENT_KEY, next)
+      .catch((err) => console.error('[useProfileSegment] could not save segment:', err))
   }
 
   return { segment, select }

@@ -181,4 +181,81 @@ describe('LEARN_ARTICLES content sanity', () => {
       }
     }
   })
+
+  describe('when the device gives back something unusable', () => {
+    // Each of these permanently broke the hook before: the throw escaped into
+    // an unhandled rejection and read state never loaded, on every focus, with
+    // nothing on screen to explain it.
+    //
+    // The console.error assertions are load-bearing, not decoration: a hook
+    // that swallows the failure and one that lets the rejection escape both
+    // leave read state empty, so "still empty" alone does not tell the two
+    // apart. Proving the catch RAN is what makes these tests discriminate.
+    let logged: jest.SpyInstance
+
+    beforeEach(() => {
+      logged = jest.spyOn(console, 'error').mockImplementation(() => {})
+    })
+    afterEach(() => {
+      logged.mockRestore()
+    })
+    it('survives a truncated write rather than throwing on every focus', async () => {
+      mockGetItem.mockResolvedValue('["switch-types её')
+      const { result } = renderHook(() => useLearnProgress())
+
+      await waitFor(() => expect(logged).toHaveBeenCalledWith(
+        '[useLearnProgress] could not read saved progress:',
+        expect.any(Error)
+      ))
+      expect(result.current.read.size).toBe(0)
+      // Still usable: a fresh mark works and persists.
+      act(() => result.current.markRead('switch-types'))
+      expect(result.current.read.has('switch-types')).toBe(true)
+    })
+
+    it('ignores a value that parses but is not a list of slugs', async () => {
+      mockGetItem.mockResolvedValue(JSON.stringify({ switchTypes: true }))
+      const { result } = renderHook(() => useLearnProgress())
+
+      await waitFor(() => expect(logged).toHaveBeenCalledWith(
+        '[useLearnProgress] saved progress was not a list:',
+        { switchTypes: true }
+      ))
+      expect(result.current.read.size).toBe(0)
+    })
+
+    it('keeps the slugs out of a list that is only partly slugs', async () => {
+      mockGetItem.mockResolvedValue(JSON.stringify(['switch-types', 7, null]))
+      const { result } = renderHook(() => useLearnProgress())
+
+      await waitFor(() => expect(result.current.read.has('switch-types')).toBe(true))
+      expect(result.current.read.size).toBe(1)
+    })
+
+    it('survives storage that refuses to be read at all', async () => {
+      mockGetItem.mockRejectedValue(new Error('SecureStore unavailable'))
+      const { result } = renderHook(() => useLearnProgress())
+
+      await waitFor(() => expect(logged).toHaveBeenCalledWith(
+        '[useLearnProgress] could not read saved progress:',
+        expect.any(Error)
+      ))
+      expect(result.current.read.size).toBe(0)
+    })
+
+    it('survives storage that refuses to be written', async () => {
+      mockSetItem.mockRejectedValue(new Error('quota'))
+      const { result } = renderHook(() => useLearnProgress())
+      await waitFor(() => expect(mockGetItem).toHaveBeenCalled())
+
+      // The mark still lands in memory — this session keeps working, it just
+      // will not be there next launch.
+      act(() => result.current.markRead('switch-types'))
+      expect(result.current.read.has('switch-types')).toBe(true)
+      await waitFor(() => expect(logged).toHaveBeenCalledWith(
+        '[useLearnProgress] could not save progress:',
+        expect.any(Error)
+      ))
+    })
+  })
 })
