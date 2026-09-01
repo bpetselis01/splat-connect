@@ -6,6 +6,7 @@ import { View, Text, Pressable, Image, StyleSheet } from 'react-native'
 // the npm package, so the type comes from expo-router's own re-export.
 import type { BottomTabBarProps } from 'expo-router/js-tabs'
 import { Ionicons } from '@expo/vector-icons'
+import * as Haptics from 'expo-haptics'
 import { theme } from '../lib/theme'
 
 export const TAB_BAR_HEIGHT = 64
@@ -26,7 +27,12 @@ export function PixelTabBar({ state, descriptors, navigation, insets, badge, cen
     const icon = ICONS[route.name] ?? ICONS.guides
     const onPress = () => {
       const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true })
-      if (!focused && !event.defaultPrevented) navigation.navigate(route.name)
+      if (!focused && !event.defaultPrevented) {
+        // Selection feedback, not impact: a tab change is a selection in
+        // iOS's haptic grammar. Fire-and-forget — web rejects, not no-ops.
+        Haptics.selectionAsync().catch(() => {})
+        navigation.navigate(route.name)
+      }
     }
     return (
       <Pressable
@@ -52,7 +58,10 @@ export function PixelTabBar({ state, descriptors, navigation, insets, badge, cen
     <Pressable
       key="my-splat"
       testID="my-splat-button"
-      onPress={onCentrePress}
+      onPress={() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {})
+        onCentrePress()
+      }}
       accessibilityRole="button"
       accessibilityLabel="Open My SPLAT"
       accessibilityState={{ expanded: centreOpen }}
