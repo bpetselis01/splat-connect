@@ -143,7 +143,7 @@ toyTransactions.get('/', async (c) => {
   const { data, error } = await supabase
     .from('toy_transactions')
     .select(
-      '*, toy:toys!toy_transactions_toy_id_fkey(name), offered:toys!toy_transactions_offered_toy_id_fkey(name), owner:profiles!toy_transactions_owner_id_fkey(name), requester:profiles!toy_transactions_requester_id_fkey(name), org:organizations!toy_transactions_owner_org_id_fkey(name)'
+      '*, toy:toys!toy_transactions_toy_id_fkey(name, cover_photo_url), offered:toys!toy_transactions_offered_toy_id_fkey(name, cover_photo_url), owner:profiles!toy_transactions_owner_id_fkey(name), requester:profiles!toy_transactions_requester_id_fkey(name), org:organizations!toy_transactions_owner_org_id_fkey(name)'
     )
     .order('updated_at', { ascending: false })
   if (error) return c.json({ error: error.message }, 500)
@@ -158,8 +158,8 @@ toyTransactions.get('/', async (c) => {
       status: string
       owner_id: string | null
       owner_org_id: string | null
-      toy: { name: string } | null
-      offered: { name: string } | null
+      toy: { name: string; cover_photo_url: string | null } | null
+      offered: { name: string; cover_photo_url: string | null } | null
       owner: { name: string } | null
       requester: { name: string } | null
       org: { name: string } | null
@@ -179,7 +179,12 @@ toyTransactions.get('/', async (c) => {
     rows.map((r) => ({
       ...sanitizeCodes(r, userId, ledOrgs),
       toy_name: r.toy?.name ?? '',
+      // Both embeds survive a completed handoff for either party: 025's
+      // "Transaction parties can view each other's toy" policy has no end date,
+      // which is what lets a giver still see the toy they handed over.
+      toy_cover_photo_url: r.toy?.cover_photo_url ?? null,
       offered_toy_name: r.offered?.name ?? null,
+      offered_toy_cover_photo_url: r.offered?.cover_photo_url ?? null,
       // A leader sees the family's name; a family sees the organisation's, not
       // the name of whichever leader happens to be on shift.
       other_party_name: isOwnerSide(r, userId, ledOrgs)
