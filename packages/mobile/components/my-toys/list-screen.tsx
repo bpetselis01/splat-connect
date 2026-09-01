@@ -205,12 +205,7 @@ export function MyToysListScreen() {
   const counts = caps
     ? waitingCounts(transactions, caps.profile.id, caps.ledOrgs.map((o) => o.id))
     : new Map<string, number>()
-  // No route writes archived_at today (confirming a handoff transfers the toy
-  // to the requester instead — see tests/e2e/exchanges.spec.ts's comment), so
-  // this filter never excludes anything in practice. Kept anyway: it is the
-  // read-side guard for the day a route does start archiving, and costs
-  // nothing to leave in.
-  const activeToys = toys.filter((t) => !t.archived_at)
+  const activeToys = toys
   const gone = caps ? givenAway(transactions, caps.profile.id, caps.ledOrgs.map((o) => o.id)) : []
 
   const goToToy = (id: string) => router.push({ pathname: '/toys/[id]', params: { id } })

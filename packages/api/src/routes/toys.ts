@@ -166,7 +166,6 @@ toys.patch('/:id', async (c) => {
     .update(editableFrom(body, isOrgToy))
     .eq('id', c.req.param('id'))
     .or(ownedByCaller(c.get('userId'), orgIds))
-    .is('archived_at', null)
     .select()
     .maybeSingle()
   if (error) {
@@ -215,7 +214,6 @@ toys.delete('/:id', async (c) => {
     .delete()
     .eq('id', c.req.param('id'))
     .or(ownedByCaller(c.get('userId'), orgIds))
-    .is('archived_at', null)
     .select()
     .maybeSingle()
   if (error) {

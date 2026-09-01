@@ -52,9 +52,6 @@ export default async function ToyListPage() {
     .catch(() => [] as ToyTransactionSummary[])
   const gone = givenAway(transactions, caps.profile.id, caps.ledOrgs.map((o) => o.id))
 
-  // The archived_at filter stays until the column itself goes (its own commit).
-  // Nothing writes a non-null value, so today this keeps every toy.
-  const activeToys = toys.filter((t) => !t.archived_at)
 
   return (
     <div>
@@ -84,7 +81,7 @@ export default async function ToyListPage() {
         </div>
       </div>
 
-      {activeToys.length === 0 ? (
+      {toys.length === 0 ? (
         <div className="flex flex-col items-center px-6 py-12 text-center">
           <span aria-hidden="true" className="empty-badge text-brand-dark">
             <Box className="h-8 w-8" />
@@ -100,7 +97,7 @@ export default async function ToyListPage() {
         </div>
       ) : (
         <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
-          {activeToys.map((toy) => (
+          {toys.map((toy) => (
             <li key={toy.id}>
               <Link
                 href={`/dashboard/toys/${toy.id}`}

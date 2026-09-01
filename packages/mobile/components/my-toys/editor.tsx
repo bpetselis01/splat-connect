@@ -95,9 +95,9 @@ export function Editor({ id }: { id: string }) {
   // toys.ts is deliberately GET-collection-only ("nothing in the UI needs a
   // single-row fetch outside the collection"), so this reads the whole list
   // and picks the one row, same as web's dashboard/toys/[id]/page.tsx. The
-  // transactions list rides along on the same load — Review's offers row and
-  // the archived record both need it, and there is no toy-scoped filter on
-  // the API to fetch it lazily per step.
+  // transactions list rides along on the same load — Review's offers row
+  // needs it, and there is no toy-scoped filter on the API to fetch it
+  // lazily per step.
   useEffect(() => {
     let ignore = false
     setLoading(true)

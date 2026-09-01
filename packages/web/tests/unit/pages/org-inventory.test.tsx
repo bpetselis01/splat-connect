@@ -57,7 +57,6 @@ function toy(overrides: Partial<Toy> = {}): Toy & { organizations: { name: strin
     switch_photo_urls: [],
     status: 'published',
     offer_type: 'donation',
-    archived_at: null,
     created_at: '',
     updated_at: '',
     organizations: { name: ORG.name },

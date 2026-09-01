@@ -76,7 +76,6 @@ const toy = (over: object) => ({
   switch_photo_urls: [],
   status: 'draft',
   offer_type: null,
-  archived_at: null,
   created_at: '',
   updated_at: '',
   ...over,

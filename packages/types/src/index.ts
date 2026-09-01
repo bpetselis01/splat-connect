@@ -57,7 +57,6 @@ export interface Toy {
   switch_photo_urls: string[]
   status: 'draft' | 'published'
   offer_type: OfferType | null
-  archived_at: string | null
   created_at: string
   updated_at: string
 }

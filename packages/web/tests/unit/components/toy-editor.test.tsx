@@ -39,7 +39,6 @@ function toy(overrides: Partial<Toy> = {}): Toy {
     created_at: '',
     updated_at: '',
     offer_type: 'donation',
-    archived_at: null,
     ...overrides,
   }
 }

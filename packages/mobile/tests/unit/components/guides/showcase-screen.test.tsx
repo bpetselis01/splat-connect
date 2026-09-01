@@ -20,7 +20,7 @@ const tutorial = (over: object) => ({
 const toy = (over: object) => ({
   id: 'ty1', owner_id: null, owner_org_id: 'o1', quantity: 1, name: 'Bubble machine', description: null,
   condition: 5, switch_adapted: true, cover_photo_url: null, switch_photo_urls: [], status: 'published',
-  offer_type: null, archived_at: null, created_at: '', updated_at: '', ...over,
+  offer_type: null, created_at: '', updated_at: '', ...over,
 })
 
 const PERSON = {

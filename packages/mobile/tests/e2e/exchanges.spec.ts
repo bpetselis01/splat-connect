@@ -185,7 +185,7 @@ test('an exchange request names both toys in the thread', async ({ page }) => {
   const theirToy = uniqueTitle('E2E Wanted Toy')
   const myToy = uniqueTitle('E2E Offered Toy')
   const toyId = await createPublishedToy(owner.id, { name: theirToy, offer_type: 'exchange' })
-  // The chooser lists the requester's own published, unarchived toys — with
+  // The chooser lists the requester's own published toys — with
   // none, Arrange exchange refuses rather than opening an empty radio group.
   await createPublishedToy(requester.id, { name: myToy })
 

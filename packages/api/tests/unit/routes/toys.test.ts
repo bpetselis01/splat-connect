@@ -123,10 +123,8 @@ describe('PATCH /:id', () => {
       update: () => ({
         eq: () => ({
           or: () => ({
-            is: () => ({
-              select: () => ({
-                maybeSingle: () => Promise.resolve({ data: null, error: { message: 'boom' } }),
-              }),
+            select: () => ({
+              maybeSingle: () => Promise.resolve({ data: null, error: { message: 'boom' } }),
             }),
           }),
         }),
@@ -146,10 +144,8 @@ describe('PATCH /:id', () => {
       update: () => ({
         eq: () => ({
           or: () => ({
-            is: () => ({
-              select: () => ({
-                maybeSingle: () => Promise.resolve({ data: null, error: { code: '22P02' } }),
-              }),
+            select: () => ({
+              maybeSingle: () => Promise.resolve({ data: null, error: { code: '22P02' } }),
             }),
           }),
         }),
@@ -171,10 +167,8 @@ describe('PATCH /:id', () => {
       update: () => ({
         eq: () => ({
           or: () => ({
-            is: () => ({
-              select: () => ({
-                maybeSingle: () => Promise.resolve({ data: null, error: null }),
-              }),
+            select: () => ({
+              maybeSingle: () => Promise.resolve({ data: null, error: null }),
             }),
           }),
         }),
@@ -188,30 +182,6 @@ describe('PATCH /:id', () => {
     expect(res.status).toBe(404)
   })
 
-  it('filters out an archived toy, yielding 404', async () => {
-    const isSpy = vi.fn(() => ({
-      select: () => ({
-        maybeSingle: () => Promise.resolve({ data: null, error: null }),
-      }),
-    }))
-    mockUserFrom.mockReturnValue({
-      ...patchRead({ owner_org_id: null }),
-      update: () => ({
-        eq: () => ({
-          or: () => ({
-            is: isSpy,
-          }),
-        }),
-      }),
-    })
-    const res = await makeApp().request('/t1', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: 'New name' }),
-    })
-    expect(res.status).toBe(404)
-    expect(isSpy).toHaveBeenCalledWith('archived_at', null)
-  })
 })
 
 describe('PATCH /:id/publish', () => {
@@ -351,10 +321,8 @@ describe('DELETE /:id', () => {
       delete: () => ({
         eq: () => ({
           or: () => ({
-            is: () => ({
-              select: () => ({
-                maybeSingle: () => Promise.resolve({ data: null, error: { message: 'boom' } }),
-              }),
+            select: () => ({
+              maybeSingle: () => Promise.resolve({ data: null, error: { message: 'boom' } }),
             }),
           }),
         }),
@@ -369,10 +337,8 @@ describe('DELETE /:id', () => {
       delete: () => ({
         eq: () => ({
           or: () => ({
-            is: () => ({
-              select: () => ({
-                maybeSingle: () => Promise.resolve({ data: { id: 't1' }, error: null }),
-              }),
+            select: () => ({
+              maybeSingle: () => Promise.resolve({ data: { id: 't1' }, error: null }),
             }),
           }),
         }),
@@ -383,23 +349,4 @@ describe('DELETE /:id', () => {
     expect(await res.json()).toEqual({ id: 't1' })
   })
 
-  it('filters out an archived toy, yielding 404', async () => {
-    const isSpy = vi.fn(() => ({
-      select: () => ({
-        maybeSingle: () => Promise.resolve({ data: null, error: null }),
-      }),
-    }))
-    mockUserFrom.mockReturnValue({
-      delete: () => ({
-        eq: () => ({
-          or: () => ({
-            is: isSpy,
-          }),
-        }),
-      }),
-    })
-    const res = await makeApp().request('/t1', { method: 'DELETE' })
-    expect(res.status).toBe(404)
-    expect(isSpy).toHaveBeenCalledWith('archived_at', null)
-  })
 })

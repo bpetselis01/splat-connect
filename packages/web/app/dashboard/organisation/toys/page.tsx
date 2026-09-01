@@ -45,7 +45,6 @@ export default async function OrgInventoryPage() {
     ),
   ])
 
-  const active = toys.filter((t) => !t.archived_at)
   const missingPickup = pickups.filter((p) => !p.pickup?.pickup_line1)
 
   return (
@@ -73,7 +72,7 @@ export default async function OrgInventoryPage() {
         </p>
       )}
 
-      {active.length === 0 ? (
+      {toys.length === 0 ? (
         <div className="flex flex-col items-center px-6 py-12 text-center">
           <span aria-hidden="true" className="empty-badge text-brand-dark">
             <Shelf className="h-8 w-8" />
@@ -88,7 +87,7 @@ export default async function OrgInventoryPage() {
         </div>
       ) : (
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {active.map((toy) => (
+          {toys.map((toy) => (
             <li key={toy.id}>
               <Link href={`/dashboard/toys/${toy.id}`} className="card card-link overflow-hidden">
                 <CardPhoto src={toy.cover_photo_url} />

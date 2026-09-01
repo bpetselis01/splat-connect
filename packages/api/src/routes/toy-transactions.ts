@@ -306,14 +306,14 @@ toyTransactions.post('/', async (c) => {
 
   const { data: toy, error: toyError } = await admin
     .from('toys')
-    .select('id, owner_id, owner_org_id, quantity, offer_type, status, archived_at')
+    .select('id, owner_id, owner_org_id, quantity, offer_type, status')
     .eq('id', body.toy_id)
     .maybeSingle()
   if (toyError) {
     if (toyError.code === INVALID_TEXT_REPRESENTATION) return c.json({ error: 'Not found' }, 404)
     return c.json({ error: toyError.message }, 500)
   }
-  if (!toy || toy.status !== 'published' || toy.archived_at) return c.json({ error: 'Not found' }, 404)
+  if (!toy || toy.status !== 'published') return c.json({ error: 'Not found' }, 404)
   if (toy.owner_id === userId) return c.json({ error: 'You cannot request your own toy' }, 400)
   // A leader asking their own organisation for stock would be approving their
   // own request — the org side of "you cannot request your own toy".
@@ -321,8 +321,8 @@ toyTransactions.post('/', async (c) => {
     return c.json({ error: "You cannot request your own organisation's toy" }, 400)
   }
 
-  // Every unit already spoken for. A toy mid-handoff stays 'published' and
-  // unarchived, so the status check above doesn't catch it. Hide it the same
+  // Every unit already spoken for. A toy mid-handoff stays 'published', so
+  // the status check above doesn't catch it. Hide it the same
   // way an inaccessible toy is hidden elsewhere: a bare 404, not a 409, so a
   // prober can't distinguish "already spoken for" from "doesn't exist."
   //
@@ -343,11 +343,11 @@ toyTransactions.post('/', async (c) => {
     if (!body.offered_toy_id) return c.json({ error: 'Choose one of your toys to offer' }, 400)
     const { data: offered, error: offeredError } = await admin
       .from('toys')
-      .select('id, owner_id, status, archived_at')
+      .select('id, owner_id, status')
       .eq('id', body.offered_toy_id)
       .maybeSingle()
     if (offeredError) return c.json({ error: offeredError.message }, 500)
-    if (!offered || offered.owner_id !== userId || offered.status !== 'published' || offered.archived_at) {
+    if (!offered || offered.owner_id !== userId || offered.status !== 'published') {
       return c.json({ error: 'Choose one of your own, active toys to offer' }, 400)
     }
 
@@ -688,8 +688,8 @@ toyTransactions.post('/:id/confirm', async (c) => {
   // 'draft' is the load-bearing half. It pulls the toy out of the public
   // library the moment it moves, because the receiver has not agreed to list
   // it — leaving it published would re-offer a toy its new owner just carried
-  // home. Clearing archived_at matters for the exchange case, where a toy that
-  // went out and came back would otherwise stay hidden from its new owner.
+  // home. (archived_at, 025's earlier answer to the same problem, is gone —
+  // migration 050.)
   //
   // The giver needs no update: My Toys filters on owner_id, so their list
   // clears itself.
@@ -705,7 +705,7 @@ toyTransactions.post('/:id/confirm', async (c) => {
   async function transferToy(toyId: string, to: { owner_id: string | null; owner_org_id: string | null }) {
     return admin
       .from('toys')
-      .update({ ...to, status: 'draft', archived_at: null, updated_at: now })
+      .update({ ...to, status: 'draft', updated_at: now })
       .eq('id', toyId)
   }
 
