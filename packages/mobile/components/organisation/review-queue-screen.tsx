@@ -69,7 +69,7 @@ function Row({
 
 export function ReviewQueueScreen() {
   const router = useRouter()
-  const { caps } = useCapabilities()
+  const { caps, loading: capsLoading } = useCapabilities()
   const ledOrgs = caps?.ledOrgs ?? []
   const [tutorials, setTutorials] = useState<Backed[]>([])
   const [loading, setLoading] = useState(true)
@@ -111,6 +111,17 @@ export function ReviewQueueScreen() {
     }, [])
   )
 
+  // While capabilities are in flight, ledOrgs is empty for everyone — showing
+  // the not-a-leader copy in that window tells a real leader this isn't their
+  // screen for as long as the fetch takes.
+  if (capsLoading) {
+    return (
+      <Screen>
+        <SkeletonRow />
+        <SkeletonRow />
+      </Screen>
+    )
+  }
   if (!isLeader) {
     return (
       <Screen>

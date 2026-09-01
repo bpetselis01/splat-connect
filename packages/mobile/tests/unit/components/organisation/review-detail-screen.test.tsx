@@ -41,6 +41,18 @@ const leader = (orgs: { id: string; name: string }[]) => ({
   refresh: jest.fn(),
 })
 
+/** Answers the detail and its backings separately, in whatever order. */
+function respond(brief: object, orgs: unknown[]) {
+  mockGet.mockImplementation((path: string) => {
+    if (path === '/api/tutorials/t1') return Promise.resolve(brief)
+    if (path === '/api/tutorials/t1/orgs') return Promise.resolve(orgs)
+    return Promise.reject(new Error(`unexpected GET ${path}`))
+  })
+}
+
+const pendingBacking = { id: 'b1', tutorial_id: 't1', org_id: 'org1', status: 'pending', requested_at: '', responded_at: null, responded_by: null }
+const acceptedBacking = { ...pendingBacking, status: 'accepted' }
+
 const detail = (over: object = {}) => ({
   id: 't1',
   title: 'Bubble machine',
@@ -56,16 +68,13 @@ const detail = (over: object = {}) => ({
   tools: [{ id: 'tool1' }],
   stl_files: [],
   tutorial_contributors: [{ profile_id: 'author1', role: 'primary', profiles: { id: 'author1', name: 'Sam' } }],
-  tutorial_orgs: [
-    { id: 'b1', tutorial_id: 't1', org_id: 'org1', status: 'pending', requested_at: '', responded_at: null, responded_by: null },
-  ],
   ...over,
 })
 
 beforeEach(() => {
   jest.clearAllMocks()
   mockUseCapabilities.mockReturnValue(leader([{ id: 'org1', name: 'Riverside Therapy' }]))
-  mockGet.mockResolvedValue(detail())
+  respond(detail(), [pendingBacking])
   mockPost.mockResolvedValue({})
 })
 
@@ -100,9 +109,7 @@ describe('ReviewDetailScreen', () => {
   })
 
   it('offers Approve and Request changes once backing is accepted and the guide is submitted', async () => {
-    mockGet.mockResolvedValue(
-      detail({ status: 'pending', tutorial_orgs: [{ id: 'b1', tutorial_id: 't1', org_id: 'org1', status: 'accepted', requested_at: '', responded_at: null, responded_by: null }] })
-    )
+    respond(detail({ status: 'pending' }), [acceptedBacking])
     render(<ReviewDetailScreen tutorialId="t1" />)
 
     fireEvent.press(await screen.findByRole('button', { name: 'Approve' }))
@@ -115,9 +122,7 @@ describe('ReviewDetailScreen', () => {
   })
 
   it('refuses Request changes without a note, before spending the round trip', async () => {
-    mockGet.mockResolvedValue(
-      detail({ status: 'pending', tutorial_orgs: [{ id: 'b1', tutorial_id: 't1', org_id: 'org1', status: 'accepted', requested_at: '', responded_at: null, responded_by: null }] })
-    )
+    respond(detail({ status: 'pending' }), [acceptedBacking])
     render(<ReviewDetailScreen tutorialId="t1" />)
 
     fireEvent.press(await screen.findByRole('button', { name: 'Request changes' }))
@@ -126,9 +131,7 @@ describe('ReviewDetailScreen', () => {
   })
 
   it('sends the note with a rejection', async () => {
-    mockGet.mockResolvedValue(
-      detail({ status: 'pending', tutorial_orgs: [{ id: 'b1', tutorial_id: 't1', org_id: 'org1', status: 'accepted', requested_at: '', responded_at: null, responded_by: null }] })
-    )
+    respond(detail({ status: 'pending' }), [acceptedBacking])
     render(<ReviewDetailScreen tutorialId="t1" />)
 
     fireEvent.changeText(
@@ -147,9 +150,7 @@ describe('ReviewDetailScreen', () => {
   })
 
   it('shows no actions at all once there is nothing for this leader to do', async () => {
-    mockGet.mockResolvedValue(
-      detail({ status: 'approved', tutorial_orgs: [{ id: 'b1', tutorial_id: 't1', org_id: 'org1', status: 'accepted', requested_at: '', responded_at: null, responded_by: null }] })
-    )
+    respond(detail({ status: 'approved' }), [acceptedBacking])
     render(<ReviewDetailScreen tutorialId="t1" />)
 
     await screen.findByText('Bubble machine')

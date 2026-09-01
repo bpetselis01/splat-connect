@@ -30,7 +30,7 @@ import { AnimatedPressable } from '../ui/AnimatedPressable'
 import { EmptyState } from '../ui/EmptyState'
 import { ErrorRow } from '../auth-screen'
 
-type Detail = TutorialWithDetails & { tutorial_orgs?: TutorialOrg[] }
+type Detail = TutorialWithDetails
 
 /** Same helper, same reasoning, as exchanges/thread-screen.tsx: the API's 4xx
  *  bodies are written for humans; 5xx keeps the fallback. */
@@ -63,6 +63,7 @@ export function ReviewDetailScreen({ tutorialId }: { tutorialId: string }) {
   const router = useRouter()
   const { caps } = useCapabilities()
   const [tutorial, setTutorial] = useState<Detail | null>(null)
+  const [backings, setBackings] = useState<TutorialOrg[]>([])
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [note, setNote] = useState('')
@@ -74,8 +75,19 @@ export function ReviewDetailScreen({ tutorialId }: { tutorialId: string }) {
   const load = useCallback(async () => {
     const at = generation.current
     try {
-      const fresh = await apiClient.get<Detail>(`/api/tutorials/${tutorialId}`)
-      if (generation.current === at) setTutorial(fresh)
+      // Two fetches, not one: the detail route does not embed tutorial_orgs
+      // (read it — LIST_SELECT does, the detail select does not), and
+      // GET /:id/orgs exists precisely to answer this question. Both must
+      // land before the action pair is decided, or a leader briefly sees a
+      // brief with nothing to do on it.
+      const [fresh, orgs] = await Promise.all([
+        apiClient.get<Detail>(`/api/tutorials/${tutorialId}`),
+        apiClient.get<TutorialOrg[]>(`/api/tutorials/${tutorialId}/orgs`),
+      ])
+      if (generation.current === at) {
+        setTutorial(fresh)
+        setBackings(orgs)
+      }
     } catch (err) {
       console.error('[ReviewDetailScreen] tutorial fetch failed:', err)
     } finally {
@@ -92,7 +104,7 @@ export function ReviewDetailScreen({ tutorialId }: { tutorialId: string }) {
   const ledOrgIds = new Set((caps?.ledOrgs ?? []).map((o) => o.id))
   // The backing this leader answers for: the first of their orgs' rows that is
   // still actionable, falling back to any of theirs so the Backed state shows.
-  const myRows = (tutorial?.tutorial_orgs ?? []).filter((r) => ledOrgIds.has(r.org_id))
+  const myRows = backings.filter((r) => ledOrgIds.has(r.org_id))
   const backing =
     myRows.find((r) => r.status === 'pending') ?? myRows.find((r) => r.status === 'accepted') ?? myRows[0] ?? null
 

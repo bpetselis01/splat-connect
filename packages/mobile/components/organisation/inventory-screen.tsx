@@ -58,7 +58,7 @@ function StockRow({ toy, onPress }: { toy: ToyWithOwner; onPress: () => void }) 
 
 export function InventoryScreen() {
   const router = useRouter()
-  const { caps } = useCapabilities()
+  const { caps, loading: capsLoading } = useCapabilities()
   const ledOrgs = caps?.ledOrgs ?? []
   const [toys, setToys] = useState<ToyWithOwner[]>([])
   const [loading, setLoading] = useState(true)
@@ -98,6 +98,17 @@ export function InventoryScreen() {
     }, [])
   )
 
+  // While capabilities are in flight, ledOrgs is empty for everyone — showing
+  // the not-a-leader copy in that window tells a real leader this isn't their
+  // screen for as long as the fetch takes.
+  if (capsLoading) {
+    return (
+      <Screen>
+        <SkeletonRow />
+        <SkeletonRow />
+      </Screen>
+    )
+  }
   if (!isLeader) {
     return (
       <Screen>
