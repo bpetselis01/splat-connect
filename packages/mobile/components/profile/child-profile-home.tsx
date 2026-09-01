@@ -8,7 +8,7 @@
 // second line is the one-line ability summary the spec asks for, or "Not set
 // yet" when the profile is still blank.
 import { useCallback, useEffect, useState } from 'react'
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native'
+import { View, Text, StyleSheet, ActivityIndicator, Linking } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import type { ChildProfile } from '@splat-connect/types'
@@ -19,13 +19,9 @@ import { Button } from '../ui/Button'
 import { ErrorRow } from '../auth-screen'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
 
-/** "Age 5 · Cerebral palsy", either half optional; 'Not set yet' when both are. */
+/** "Age 5", or 'Not set yet' when the profile is still blank. */
 function summaryOf(child: ChildProfile): string {
-  return (
-    [child.age !== null ? `Age ${child.age}` : null, child.primary_diagnosis]
-      .filter(Boolean)
-      .join(' · ') || 'Not set yet'
-  )
+  return child.age !== null ? `Age ${child.age}` : 'Not set yet'
 }
 
 export function ChildProfileHome() {
@@ -89,7 +85,14 @@ export function ChildProfileHome() {
       <View style={styles.headerRow}>
         <Text style={styles.intro}>
           This helps us suggest guides that suit your children. Everything is optional and only
-          you can see it.
+          you can see it — see the{' '}
+          <Text
+            style={styles.introLink}
+            onPress={() => Linking.openURL(`${process.env.EXPO_PUBLIC_WEB_URL}/privacy`)}
+          >
+            privacy policy
+          </Text>
+          .
         </Text>
         <Button label="+ Add child" variant="accent" loading={busy} onPress={() => void addChild()} style={styles.addChild} />
       </View>
@@ -99,7 +102,7 @@ export function ChildProfileHome() {
 
       {!loading && !error && children.length === 0 ? (
         <Text style={styles.empty}>
-          No child profiles yet. A profile can hold age, diagnosis and grip details — all
+          No child profiles yet. A profile can hold age, hand use and grip details — all
           optional, all private to you.
         </Text>
       ) : null}
@@ -141,6 +144,7 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     marginBottom: theme.spacing(3),
   },
+  introLink: { textDecorationLine: 'underline' },
   addChild: { alignSelf: 'flex-start', paddingVertical: theme.spacing(2), paddingHorizontal: theme.spacing(4) },
   empty: {
     fontFamily: theme.fonts.regular,

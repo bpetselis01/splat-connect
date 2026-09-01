@@ -10,6 +10,8 @@ function tutorial(overrides: Partial<TutorialWithDetails> = {}): TutorialWithDet
     difficulty: 'easy',
     kind: 'toy_adaptation',
     status: 'draft',
+    maturity: 'complete',
+    safety_declared_at: '2026-08-01T00:00:00Z',
     toy_photo_url: 'https://example.com/photo.jpg',
     tutorial_pdf_url: 'https://example.com/tutorial.pdf',
     rejection_note: null,
@@ -91,7 +93,7 @@ describe('computeStepStatuses', () => {
       computeStepStatuses(
         tutorial({
           tutorial_recommendations: [
-            { position: 1, tutorials: { id: 't2', title: 'Other', kind: 'toy_adaptation', difficulty: 'easy', toy_photo_url: null, status: 'approved' } },
+            { position: 1, tutorials: { id: 't2', title: 'Other', kind: 'toy_adaptation', difficulty: 'easy', toy_photo_url: null, status: 'approved', maturity: 'complete' } },
           ],
         }),
         []

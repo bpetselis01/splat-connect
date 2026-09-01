@@ -156,7 +156,7 @@ test('a contributor adds two children, edits one, and deletes one', async ({ pag
     await rail.getByRole('link', { name: 'Account', exact: true }).click()
     await expect(page).toHaveURL('/dashboard/profile')
 
-    // Name, age, diagnosis and MACS live on the Ability pill, not the one the
+    // Name, age and the clinical scores live on the Ability pill, not the one the
     // stepper opens on — ChildEditor splits the profile across four steps and
     // starts at Survey. Saving stays on the editor and swaps /new for the new
     // id, so the list is reached by navigating rather than by a redirect.
@@ -171,7 +171,9 @@ test('a contributor adds two children, edits one, and deletes one', async ({ pag
     await page.getByRole('tab', { name: 'Ability' }).click()
     await page.locator('#name').fill('Emma')
     await page.locator('#age').fill('7')
-    await page.locator('#primary_diagnosis').fill('Cerebral palsy')
+    // The MACS/BFMF selects sit inside the collapsed "Clinical scores
+    // (optional)" disclosure; a closed <details> hides them from actionability.
+    await page.getByText('Clinical scores (optional)').click()
     await page.locator('#macs_level').selectOption('II')
     await page.getByRole('button', { name: 'Save' }).click()
     // Scoped to <main>: the rail now carries a "Saved" row of its own, so an

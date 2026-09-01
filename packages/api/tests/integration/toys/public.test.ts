@@ -82,20 +82,9 @@ describe('GET /api/public/toys', () => {
     expect(body.profiles).not.toBeNull()
   })
 
-  it('excludes an archived toy from the public list and its detail page', async () => {
-    const archivedId = await createPublishedToy(owner.token, 'Archived unicycle')
-    // Directly flip archived_at the way the confirm route would — this test
-    // only needs to prove public.ts's filter, not re-run the whole handoff flow.
-    const admin = (await import('../../../src/supabase/client.js')).createAdminClient()
-    await admin.from('toys').update({ archived_at: new Date().toISOString() }).eq('id', archivedId)
-
-    const list = await app.request('/api/public/toys')
-    const ids = ((await list.json()) as Array<{ id: string }>).map((r) => r.id)
-    expect(ids).not.toContain(archivedId)
-
-    const detail = await app.request(`/api/public/toys/${archivedId}`)
-    expect(detail.status).toBe(404)
-  })
+  // The archived_at exclusion test retired with migration 050: a completed
+  // handoff now transfers the toy and flips it to draft, and draft exclusion
+  // is already proven above.
 
   it('excludes a mid-handoff toy (accepted toy_transaction) from the public list and its detail page', async () => {
     const requester = await createTestUser('contributor')

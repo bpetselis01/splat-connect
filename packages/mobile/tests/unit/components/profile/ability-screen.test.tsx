@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { AbilityScreen } from '../../../../components/profile/ability-screen'
-import { QUESTIONS, estimateAbility } from '@splat-connect/types'
+import { QUESTIONS, deriveFitProfile } from '@splat-connect/types'
 
 let mockProfile: Record<string, unknown> = {}
 const mockSave = jest.fn()
@@ -16,6 +16,7 @@ describe('AbilityScreen', () => {
 
   it('saves a manually chosen MACS level with source "manual"', () => {
     render(<AbilityScreen />)
+    fireEvent.press(screen.getByText('Clinical scores (optional)'))
     fireEvent.press(screen.getByText('II'))
     expect(mockSave).toHaveBeenCalledWith({ macs_level: 'II', macs_source: 'manual' })
   })
@@ -28,15 +29,15 @@ describe('AbilityScreen', () => {
     expect(screen.queryByText('Assisting hand')).toBeTruthy()
   })
 
-  it('estimates MACS/BFMF from the questionnaire and saves with source "estimated"', () => {
+  it('derives the fit pair from the questionnaire and saves with source "estimated"', () => {
     render(<AbilityScreen />)
-    fireEvent.press(screen.getByText('Not sure of the clinical terms?'))
+    fireEvent.press(screen.getByText('How does your child use their hands?'))
     for (const q of QUESTIONS) fireEvent.press(screen.getByText(q.options[0]))
-    fireEvent.press(screen.getByText('Estimate'))
-    const { macs, bfmf } = estimateAbility([0, 0, 0, 0])
+    fireEvent.press(screen.getByText('Save answers'))
+    const { macsInternal, bfmfInternal } = deriveFitProfile([0, 0, 0, 0])
     expect(mockSave).toHaveBeenCalledWith({
-      macs_level: macs,
-      bfmf_score: bfmf,
+      macs_level: macsInternal,
+      bfmf_score: bfmfInternal,
       macs_source: 'estimated',
       bfmf_source: 'estimated',
     })

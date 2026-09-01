@@ -75,8 +75,8 @@ describe('public nav model', () => {
     expect(new Set(SCAFFOLD_KEYS).size).toBe(SCAFFOLD_KEYS.length)
   })
 
-  it('has six footer legal links', () => {
-    expect(FOOTER_LEGAL).toHaveLength(6)
+  it('has seven footer legal links', () => {
+    expect(FOOTER_LEGAL).toHaveLength(7)
   })
 })
 

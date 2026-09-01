@@ -1,14 +1,18 @@
 'use client'
 import { PanelActions } from '@/components/panel-actions'
 /**
- * The MACS/BFMF quiz, now its own pill instead of a <dialog> launched from
- * inside the Ability panel. Answers stay local, same as before: only the
- * derived MACS/BFMF pair is worth persisting, and re-deriving it from stored
- * answers would mean versioning the question set.
+ * The hand-use questions, now their own pill instead of a <dialog> launched
+ * from inside the Ability panel. Answers stay local, same as before: only the
+ * derived internal fit pair is worth persisting, and re-deriving it from
+ * stored answers would mean versioning the question set.
+ *
+ * Copy here is deliberate (see /legal/intended-purpose): the questions are
+ * framed as fitting/matching, never as estimating a clinical score for the
+ * parent. Do not reintroduce MACS/BFMF names or "estimate" into this UI.
  */
 import { useState } from 'react'
 import { useSave } from '@/components/use-save'
-import { QUESTIONS, estimateAbility, type ChildProfile } from '@splat-connect/types'
+import { QUESTIONS, deriveFitProfile, type ChildProfile } from '@splat-connect/types'
 
 export function ChildSurveyForm({
   onSave,
@@ -21,17 +25,19 @@ export function ChildSurveyForm({
 
   const complete = answers.every((a) => a != null)
 
-  async function estimateAndSave() {
+  async function saveAnswers() {
     if (!complete) return
-    const { macs, bfmf } = estimateAbility(answers as number[])
-    await run({ macs_level: macs, bfmf_score: bfmf, macs_source: 'estimated', bfmf_source: 'estimated' })
+    const { macsInternal, bfmfInternal } = deriveFitProfile(answers as number[])
+    await run({ macs_level: macsInternal, bfmf_score: bfmfInternal, macs_source: 'estimated', bfmf_source: 'estimated' })
   }
 
   return (
     <div className="flex flex-col gap-4 px-5 pb-5">
       <p className="text-sm leading-relaxed text-muted">
-        Not sure of your child&apos;s MACS or BFMF level? Answer these questions and
-        we&apos;ll estimate both for you.
+        A few questions about how your child uses their hands. We use your answers to
+        suggest guides and devices that are likely to suit them. This is not an
+        assessment, and it doesn&apos;t replace advice from your child&apos;s
+        occupational therapist.
       </p>
       {QUESTIONS.map((q, qi) => (
         <fieldset key={qi}>
@@ -52,11 +58,11 @@ export function ChildSurveyForm({
         </fieldset>
       ))}
       <PanelActions>
-        <button type="button" onClick={estimateAndSave} disabled={!complete || busy} className="btn btn-accent">
-          {busy ? 'Saving…' : 'Estimate & save'}
+        <button type="button" onClick={saveAnswers} disabled={!complete || busy} className="btn btn-accent">
+          {busy ? 'Saving…' : 'Save answers'}
         </button>
         {error && <p role="alert" className="alert alert-danger">{error}</p>}
-        {saved && <p className="text-sm font-semibold text-mint-deep">Saved</p>}
+        {saved && <p className="text-sm font-semibold text-mint-deep">Saved — we&apos;ll use this to suggest guides</p>}
       </PanelActions>
     </div>
   )

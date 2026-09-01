@@ -24,12 +24,13 @@
  * - app/files/[bucket]/[...path]/route.ts: where the file links go
  */
 import type { ReactNode } from 'react'
+import { NotMedicalNote } from '@/components/not-medical-note'
 import Image from 'next/image'
 import { Badge } from '@/components/badge'
 import { TutorialCard } from '@/components/tutorial-card'
 import { OrgBadges } from '@/components/org-badges'
 import { FileText, Download } from '@/components/icons'
-import { KIND_LABEL, type TutorialWithDetails, type TutorialOrg } from '@splat-connect/types'
+import { KIND_LABEL, MATURITY_LABEL, type TutorialWithDetails, type TutorialOrg } from '@splat-connect/types'
 
 type Viewable = TutorialWithDetails & {
   tutorial_orgs?: TutorialOrg[]
@@ -98,6 +99,9 @@ export function TutorialView({
             <h1 className="title-detail">{tutorial.title}</h1>
             <Badge status={tutorial.difficulty} />
             <Badge status={tutorial.kind} label={KIND_LABEL[tutorial.kind]} />
+            {tutorial.maturity !== 'complete' && (
+              <Badge status={tutorial.maturity} label={MATURITY_LABEL[tutorial.maturity]} />
+            )}
             {headerAction}
           </div>
           {tutorial.description && (
@@ -238,6 +242,7 @@ export function TutorialView({
                 </div>
               ))}
             </div>
+            <div className="mt-3"><NotMedicalNote /></div>
           </div>
         )}
       </div>

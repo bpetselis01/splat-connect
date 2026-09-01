@@ -68,10 +68,14 @@ test.describe('Toy donation and exchange', () => {
       await page.getByRole('button', { name: 'Confirm handoff' }).click()
       await expect(page.getByText(/handoff complete/i)).toBeVisible()
 
-      // The toy left the donor's hands, so it leaves their list entirely —
-      // it is not archived, it belongs to someone else now.
+      // The toy left the donor's hands, so it leaves the active grid and
+      // reappears once under Given away — a card that links back to the
+      // handoff thread, not to a toy the donor no longer owns.
       await page.goto('/dashboard/toys')
-      await expect(page.getByText('Fire truck')).toHaveCount(0)
+      await expect(page.getByRole('heading', { name: 'Given away' })).toBeVisible()
+      const goneCard = page.getByRole('link', { name: /Fire truck/ })
+      await expect(goneCard).toHaveCount(1)
+      await expect(goneCard).toHaveAttribute('href', /\/dashboard\/exchanges\//)
 
       // And it is waiting for the requester, unlisted, with the thread offering
       // them the way to list it.

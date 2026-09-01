@@ -109,6 +109,13 @@ test('a contributor builds a tutorial from creation through to pending', async (
   // Save files goes straight back to disabled and never reports completion.
   await expect(page.getByRole('status')).toContainText('Files saved', { timeout: 30_000 })
 
+  // The safety declaration lives on the Details step and gates submission.
+  await page.goto(`${editUrl}?step=details`)
+  const details = page.getByRole('tabpanel')
+  await details.getByRole('checkbox', { name: /checked this design against every point/ }).check()
+  await details.getByRole('button', { name: 'Save details' }).click()
+  await expect(page.getByRole('status')).toContainText('Details saved')
+
   await page.goto(`${editUrl}?step=parts`)
   const parts = page.getByRole('tabpanel')
   await parts.getByPlaceholder('Name').fill('E2E test part')

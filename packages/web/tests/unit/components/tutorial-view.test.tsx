@@ -16,7 +16,7 @@ const stl = [{ id: 's1', tutorial_id: 't1', filename: 'bracket.stl', file_url: '
 function rec(id: string, position: number, status: Recommendation['tutorials']['status'] = 'approved'): Recommendation {
   return {
     position,
-    tutorials: { id, title: `Rec ${id}`, kind: 'assistive_tech', difficulty: 'easy', toy_photo_url: null, status },
+    tutorials: { id, title: `Rec ${id}`, kind: 'assistive_tech', difficulty: 'easy', toy_photo_url: null, status, maturity: 'complete' },
   }
 }
 
@@ -28,6 +28,8 @@ function tutorial(overrides: Partial<TutorialWithDetails> = {}): TutorialWithDet
     difficulty: 'easy',
     kind: 'toy_adaptation',
     status: 'approved',
+    maturity: 'complete',
+    safety_declared_at: null,
     tutorial_pdf_url: null,
     toy_photo_url: null,
     rejection_note: null,

@@ -12,10 +12,11 @@ import type {
   StlFile,
   Tool,
   TutorialKind,
+  TutorialMaturity,
   TutorialOrg,
   TutorialWithDetails,
 } from '@splat-connect/types'
-import { KIND_LABEL } from '@splat-connect/types'
+import { KIND_LABEL, MATURITY_LABEL, SAFETY_CHECKLIST } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { uploadFile } from '../../lib/upload'
 import { supabase } from '../../lib/supabase'
@@ -64,6 +65,7 @@ function getMissingFields(tutorial: TutorialWithDetails): Gap[] {
   // STL step at all, so the gap must never appear for it.
   if (tutorial.kind === 'assistive_tech' && tutorial.stl_files.length === 0)
     missing.push({ step: 'stl', label: 'A 3D-print file' })
+  if (!tutorial.safety_declared_at) missing.push({ step: 'details', label: 'The safety declaration' })
   return missing
 }
 
@@ -100,6 +102,11 @@ const DIFFICULTY_OPTIONS: { label: string; value: Difficulty }[] = [
   { label: 'Medium', value: 'medium' },
   { label: 'Hard', value: 'hard' },
 ]
+
+const MATURITY_OPTIONS = (Object.keys(MATURITY_LABEL) as TutorialMaturity[]).map((m) => ({
+  label: MATURITY_LABEL[m],
+  value: m,
+}))
 
 /** One editable row of the parts/tools replace-set. `quantity` is only ever
  *  read for parts — tools leave it undefined and the stepper never renders. */
@@ -235,6 +242,8 @@ export function Editor({ id }: { id: string }) {
   const [description, setDescription] = useState('')
   const [kind, setKind] = useState<TutorialKind>('toy_adaptation')
   const [difficulty, setDifficulty] = useState<Difficulty>('easy')
+  const [maturity, setMaturity] = useState<TutorialMaturity>('complete')
+  const [safetyTicked, setSafetyTicked] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
 
@@ -274,6 +283,7 @@ export function Editor({ id }: { id: string }) {
         setDescription(data.description ?? '')
         setKind(data.kind)
         setDifficulty(data.difficulty)
+        setMaturity(data.maturity)
         setPartsRows(
           data.parts.map((p) => ({ name: p.name, quantity: p.quantity, is_optional: p.is_optional, buy_links: p.buy_links }))
         )
@@ -351,6 +361,9 @@ export function Editor({ id }: { id: string }) {
         description: description.trim() ? description : null,
         kind,
         difficulty,
+        maturity,
+        // The server stamps safety_declared_at; the client only ever affirms.
+        ...(safetyTicked && !tutorial?.safety_declared_at ? { safety_declared: true } : {}),
         updated_at: loadedUpdatedAt,
         ...(requeue && { status: 'pending' as const }),
       })
@@ -609,6 +622,53 @@ export function Editor({ id }: { id: string }) {
               ))}
             </View>
 
+            <Text style={styles.label}>How far along is it?</Text>
+            <View style={styles.chipRow}>
+              {MATURITY_OPTIONS.map((o) => (
+                <Chip
+                  key={o.value}
+                  label={o.label}
+                  active={maturity === o.value}
+                  onPress={() => setMaturity(o.value)}
+                />
+              ))}
+            </View>
+            <Text style={styles.safetyHint}>
+              Only complete guides appear in the public library listing.
+            </Text>
+
+            <Text style={styles.label}>Safety declaration</Text>
+            {tutorial.safety_declared_at ? (
+              <Text style={styles.safetyHint}>
+                Declared on {new Date(tutorial.safety_declared_at).toLocaleDateString('en-AU')}.
+              </Text>
+            ) : (
+              <>
+                {SAFETY_CHECKLIST.map((item) => (
+                  <Text key={item} style={styles.safetyItem}>
+                    {'\u2022'} {item}
+                  </Text>
+                ))}
+                {/* Defaults to off on purpose — a declaration is made, never assumed. */}
+                <Pressable
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: safetyTicked }}
+                  onPress={() => setSafetyTicked((t) => !t)}
+                  style={styles.safetyTick}
+                >
+                  <Ionicons
+                    name={safetyTicked ? 'checkbox' : 'square-outline'}
+                    size={20}
+                    color={theme.colors.primaryDeep}
+                  />
+                  <Text style={styles.safetyTickText}>
+                    I have checked this design against every point above. A guide cannot
+                    be submitted for review without this.
+                  </Text>
+                </Pressable>
+              </>
+            )}
+
             <ErrorRow message={saveError} />
             <Button label="Save details" onPress={handleSaveDetails} loading={saving} />
           </View>
@@ -730,6 +790,33 @@ export function Editor({ id }: { id: string }) {
 }
 
 const styles = StyleSheet.create({
+  safetyHint: {
+    fontFamily: theme.fonts.regular,
+    fontSize: theme.type.caption,
+    color: theme.colors.muted,
+    lineHeight: 18,
+    marginBottom: theme.spacing(2),
+  },
+  safetyItem: {
+    fontFamily: theme.fonts.regular,
+    fontSize: theme.type.caption,
+    color: theme.colors.muted,
+    lineHeight: 18,
+  },
+  safetyTick: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: theme.spacing(2),
+    marginTop: theme.spacing(2),
+    marginBottom: theme.spacing(2),
+  },
+  safetyTickText: {
+    flex: 1,
+    fontFamily: theme.fonts.regular,
+    fontSize: theme.type.caption,
+    color: theme.colors.text,
+    lineHeight: 18,
+  },
   statusRow: { flexDirection: 'row', marginBottom: theme.spacing(2) },
   noteBox: {
     borderWidth: theme.border.thin,

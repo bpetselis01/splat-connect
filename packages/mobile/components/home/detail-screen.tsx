@@ -3,7 +3,7 @@ import { View, Text, ScrollView, StyleSheet, Image } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import type { Tutorial, Part, Tool, StlFile, Recommendation } from '@splat-connect/types'
-import { KIND_LABEL } from '@splat-connect/types'
+import { KIND_LABEL, MATURITY_LABEL } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { supabase } from '../../lib/supabase'
 import { useSaves } from '../../lib/saves'
@@ -128,6 +128,9 @@ export function DetailScreen({ id }: { id: string }) {
       <View style={styles.badgeRow}>
         <Badge status={tutorial.difficulty} />
         <Badge status={tutorial.kind} label={KIND_LABEL[tutorial.kind]} />
+        {tutorial.maturity !== 'complete' ? (
+          <Badge status={tutorial.maturity} label={MATURITY_LABEL[tutorial.maturity]} />
+        ) : null}
       </View>
       {tutorial.description ? <Text style={styles.description}>{tutorial.description}</Text> : null}
 

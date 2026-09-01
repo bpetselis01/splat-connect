@@ -55,7 +55,7 @@ export default async function ProfileTabPage() {
             You haven&apos;t added any child profiles yet.
           </p>
           <p className="mt-1 max-w-xs text-sm leading-relaxed text-muted">
-            A profile can include age, diagnosis and grip details — all optional, all
+            A profile can include age, hand use and grip details — all optional, all
             private to you.
           </p>
           <Link href="/dashboard/child/new" className="btn btn-accent mt-6">
@@ -76,14 +76,11 @@ export default async function ProfileTabPage() {
                   <p className="truncate text-sm font-bold text-ink">
                     {child.name?.trim() || `Child ${i + 1}`}
                   </p>
-                  {/* Clamped so one long diagnosis cannot stretch its row of cards,
-                      same fix as the rejection note in dashboard-tutorial-card.tsx. Falls
-                      back to a non-breaking space: an empty text node collapses to 0
-                      height, squishing the card whenever no taller sibling shares its row. */}
+                  {/* Falls back to a non-breaking space: an empty text node
+                      collapses to 0 height, squishing the card whenever no
+                      taller sibling shares its row. */}
                   <p className="truncate text-xs leading-relaxed text-muted">
-                    {[child.age !== null ? `Age ${child.age}` : null, child.primary_diagnosis]
-                      .filter(Boolean)
-                      .join(' · ') || ' '}
+                    {child.age !== null ? `Age ${child.age}` : ' '}
                   </p>
                 </div>
               </Link>

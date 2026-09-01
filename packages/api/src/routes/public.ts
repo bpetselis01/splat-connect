@@ -27,6 +27,9 @@ publicRoutes.get('/tutorials', async (c) => {
     // The alternative is a request per card on the busiest page on the site.
     .select('*, tutorial_orgs(status, organizations(id, name))')
     .eq('status', 'approved')
+    // The default public listing carries only finished designs; anything less
+    // mature stays reachable by direct link, wearing its maturity badge.
+    .eq('maturity', 'complete')
     .order('created_at', { ascending: false })
   if (difficulty) query = query.eq('difficulty', difficulty)
   const { data, error } = await query
@@ -60,7 +63,7 @@ publicRoutes.get('/tutorials/:id', async (c) => {
     .select(
       '*, parts(*), tools(*), stl_files(*), tutorial_contributors(profile_id, role, profiles(name)), ' +
         'tutorial_orgs(status, organizations(id, name)), ' +
-        'tutorial_recommendations!tutorial_id(position, tutorials!recommended_id(id, title, kind, difficulty, toy_photo_url, status)), ' +
+        'tutorial_recommendations!tutorial_id(position, tutorials!recommended_id(id, title, kind, difficulty, toy_photo_url, status, maturity)), ' +
         'reviewer:reviewed_by(name), reviewed_for:reviewed_for_org_id(name)'
     )
     .eq('id', c.req.param('id'))

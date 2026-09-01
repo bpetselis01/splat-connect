@@ -147,6 +147,9 @@ export async function createTutorial(
     difficulty: overrides.difficulty ?? 'easy',
     kind: overrides.kind ?? (overrides.withStl === false ? 'toy_adaptation' : 'assistive_tech'),
     status: overrides.status ?? 'pending',
+    // Fixtures model tutorials whose author already affirmed the safety
+    // checklist — the declaration flow itself is upload-flow.spec's job.
+    safety_declared_at: new Date().toISOString(),
     tutorial_pdf_url:
       overrides.withPdf === false ? null : `${id}/tutorial.pdf`,
     toy_photo_url:

@@ -3,13 +3,14 @@ import { SaveButton, type SaveProps } from './save-button'
 import { CardPhoto } from './card-photo'
 import { Badge } from './badge'
 import { BackingSummary } from './backing-state'
-import { KIND_LABEL, type Tutorial, type TutorialOrg } from '@splat-connect/types'
+import { KIND_LABEL, MATURITY_LABEL, type Tutorial, type TutorialOrg } from '@splat-connect/types'
 
 /** GET /api/public/tutorials embeds accepted backing on every row. Only the
  *  fields the card reads, so a recommendation's embedded target — a pick of
  *  the tutorial — can be a card too. */
 type Listed = Pick<Tutorial, 'id' | 'title' | 'difficulty' | 'kind' | 'toy_photo_url'> & {
   description?: string | null
+  maturity?: Tutorial['maturity']
   tutorial_orgs?: TutorialOrg[]
 }
 
@@ -40,6 +41,9 @@ export function TutorialCard({ tutorial, save }: { tutorial: Listed; save?: Save
         <div className="mt-3 flex flex-wrap gap-2">
           <Badge status={tutorial.difficulty} />
           <Badge status={tutorial.kind} label={KIND_LABEL[tutorial.kind]} />
+          {tutorial.maturity && tutorial.maturity !== 'complete' && (
+            <Badge status={tutorial.maturity} label={MATURITY_LABEL[tutorial.maturity]} />
+          )}
         </div>
       </div>
     </BoundaryLink>

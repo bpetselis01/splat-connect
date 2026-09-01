@@ -258,7 +258,6 @@ erDiagram
         uuid id PK
         uuid parent_id FK "cascade"
         integer age
-        text primary_diagnosis
         text macs_level
         text macs_source "manual | estimated"
         text hand_involvement "bilateral | unilateral"
@@ -310,7 +309,7 @@ flowchart LR
 ## 4. Primary Data Flow — mobile Ability Profile
 
 `/get`-scale end-to-end flows exist for every screen; this traces **one**: a parent opening the
-Ability tab, answering the four screening questions, and having an estimated MACS/BFMF written back.
+Ability tab, answering the four screening questions, and having a derived internal fit pair written back.
 It is the flow that touches the most layers — local pure logic, optimistic UI, debounced write,
 JWT minting from device storage, dual-client auth, a column whitelist, and RLS.
 
@@ -363,10 +362,10 @@ sequenceDiagram
         AS->>AS: setAnswer(qi, oi) — local useState
     end
     AS->>AS: Button disabled until answered === QUESTIONS.length
-    U->>AS: press "Estimate"
-    AS->>EA: estimateAbility(answers)
+    U->>AS: press "Save answers"
+    AS->>EA: deriveFitProfile(answers)
     EA->>EA: sum answers → 0..12<br/>index MACS_BY_TOTAL / BFMF_BY_TOTAL
-    EA-->>AS: { macs, bfmf }
+    EA-->>AS: { macsInternal, bfmfInternal }
     Note right of EA: placeholder clinical mapping —<br/>flagged in-file as needing MACS/BFMF<br/>domain review before production use
 
     Note over AS,PG: SAVE — optimistic, debounced, whitelisted
@@ -579,7 +578,7 @@ The split worth internalizing is **what each tier is allowed to touch**:
 
 | Tier | Runner | Database | Auth | What it proves |
 |---|---|---|---|---|
-| Unit | Vitest (api, web) / Jest + jest-expo (mobile) | none — mocked | mocked | Pure logic and component rendering. `estimateAbility`, `resolveAuthStorage`, screen states. |
+| Unit | Vitest (api, web) / Jest + jest-expo (mobile) | none — mocked | mocked | Pure logic and component rendering. `deriveFitProfile`, `resolveAuthStorage`, screen states. |
 | Integration | Vitest against local Supabase | **real Postgres** | **real users**, created and deleted per test | That the RLS policies actually do what `SCHEMA.md` claims — the assertions that cannot be mocked without asserting the mock. |
 | E2E (web) | Playwright + chromium | real, local | real | The Next.js **production build**, not the dev server, wired to a real API. |
 | E2E (mobile) | Playwright + chromium against `expo export -p web` | real, local | real | Every screen and navigation flow — but on the react-native-web target. |

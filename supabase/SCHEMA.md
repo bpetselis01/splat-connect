@@ -65,6 +65,8 @@ A published (or in-progress) build tutorial. Status drives visibility and the re
 | `toy_photo_url` | text | nullable |
 | `kind` | text | not null, default `'toy_adaptation'`, check in (`toy_adaptation`, `assistive_tech`) *(048)* |
 | `rejection_note` | text | nullable |
+| `maturity` | text | not null, default `'complete'`, check in (`concept`, `prototype`, `in_progress`, `complete`) *(052)* |
+| `safety_declared_at` | timestamptz | nullable *(052)* |
 | `created_at` | timestamptz | not null, default `now()` |
 | `reviewed_at` | timestamptz | nullable |
 | `reviewed_by` | uuid | nullable, FK → `profiles` on delete set null *(007)* |
@@ -84,6 +86,9 @@ create table public.tutorials (
   tutorial_pdf_url text,
   toy_photo_url text,
   rejection_note text,
+  -- Added in 052:
+  maturity text not null default 'complete' check (maturity in ('concept','prototype','in_progress','complete')),
+  safety_declared_at timestamptz,
   created_at timestamptz not null default now(),
   reviewed_at timestamptz,
   -- Added in 007:
@@ -209,7 +214,6 @@ One row per parent account (unique `parent_id`) holding a child's ability, every
 | `parent_id` | uuid | FK → `profiles` on delete cascade, not null, **unique** |
 | `age` | integer | nullable |
 | **Ability Profile** | | |
-| `primary_diagnosis` | text | nullable |
 | `macs_level` | text | nullable |
 | `macs_source` | text | not null, default `'manual'`, check in (`manual`, `estimated`) |
 | `hand_involvement` | text | check in (`bilateral`, `unilateral`) |
@@ -238,7 +242,6 @@ create table public.child_profiles (
   parent_id uuid references public.profiles on delete cascade not null unique,
   age integer,
   -- Ability Profile
-  primary_diagnosis text,
   macs_level text,
   macs_source text not null default 'manual' check (macs_source in ('manual','estimated')),
   hand_involvement text check (hand_involvement in ('bilateral','unilateral')),

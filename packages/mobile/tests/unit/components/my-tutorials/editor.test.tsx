@@ -56,7 +56,8 @@ jest.mock('expo-document-picker', () => ({
 
 const draft = (over: object) => ({
   id: 't1', title: 'Bubble machine switch', description: null, difficulty: 'easy', kind: 'toy_adaptation',
-  status: 'draft', tutorial_pdf_url: null, toy_photo_url: null, rejection_note: null,
+  status: 'draft', maturity: 'complete', safety_declared_at: '2026-08-01T00:00:00Z',
+  tutorial_pdf_url: null, toy_photo_url: null, rejection_note: null,
   created_at: '', updated_at: '2026-08-30T00:00:00.000Z', reviewed_at: null, reviewed_by: null,
   reviewed_for_org_id: null, parts: [], tools: [], stl_files: [], tutorial_recommendations: [],
   tutorial_contributors: [], ...over,

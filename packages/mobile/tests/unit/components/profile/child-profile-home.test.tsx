@@ -29,7 +29,6 @@ const child = (over: object) => ({
   parent_id: 'u1',
   name: null,
   age: null,
-  primary_diagnosis: null,
   macs_level: null,
   macs_source: 'manual',
   hand_involvement: null,
@@ -59,13 +58,13 @@ beforeEach(() => {
 describe('ChildProfileHome', () => {
   it('lists each child with its one-line summary, falling back per the spec', async () => {
     mockGet.mockResolvedValue([
-      child({ id: 'cp1', name: 'Maya', age: 5, primary_diagnosis: 'Cerebral palsy' }),
+      child({ id: 'cp1', name: 'Maya', age: 5 }),
       child({ id: 'cp2', name: null }),
     ])
     render(<ChildProfileHome />)
 
     expect(await screen.findByText('Maya')).toBeTruthy()
-    expect(screen.getByText('Age 5 · Cerebral palsy')).toBeTruthy()
+    expect(screen.getByText('Age 5')).toBeTruthy()
     // Unnamed children take their position; a blank profile says so plainly.
     expect(screen.getByText('Child 2')).toBeTruthy()
     expect(screen.getByText('Not set yet')).toBeTruthy()

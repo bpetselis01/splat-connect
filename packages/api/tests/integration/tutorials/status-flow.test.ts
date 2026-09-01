@@ -47,7 +47,7 @@ describe('tutorial status flow', () => {
     const { data: current } = await adminClient().from('tutorials').select('updated_at').eq('id', tutorialId).single()
     const res = await app.request(
       `/api/tutorials/${tutorialId}`,
-      authed(owner.token, { method: 'PATCH', body: JSON.stringify({ status: 'pending', updated_at: current!.updated_at }) })
+      authed(owner.token, { method: 'PATCH', body: JSON.stringify({ status: 'pending', safety_declared: true, updated_at: current!.updated_at }) })
     )
     expect(res.status).toBe(200)
     const body = (await res.json()) as {
@@ -56,6 +56,21 @@ describe('tutorial status flow', () => {
       rejection_note: string | null
     }
     expect(body.status).toBe('pending')
+  })
+
+  it('a draft with no safety declaration cannot be submitted', async () => {
+    const { data: fresh } = await adminClient()
+      .from('tutorials')
+      .insert({ title: 'Undeclared', difficulty: 'easy', status: 'draft' })
+      .select('id, updated_at')
+      .single()
+    await adminClient().from('tutorial_contributors').insert({ tutorial_id: fresh!.id, profile_id: owner.id, role: 'primary' })
+    const res = await app.request(
+      `/api/tutorials/${fresh!.id}`,
+      authed(owner.token, { method: 'PATCH', body: JSON.stringify({ status: 'pending', updated_at: fresh!.updated_at }) })
+    )
+    expect(res.status).toBe(400)
+    await adminClient().from('tutorials').delete().eq('id', fresh!.id)
   })
 
   it('owner cannot self-approve (RLS WITH CHECK blocks)', async () => {

@@ -7,7 +7,7 @@ export default function PrivacyPage() {
   return (
     <ProsePage
       title="Privacy policy"
-      lastUpdated="19 August 2026"
+      lastUpdated="1 September 2026"
       intro="SPLAT Connect is used by families describing their children's needs. We collect as little as the platform can function on, and we say plainly what happens to it."
     >
       <PullQuote>
@@ -61,6 +61,18 @@ export default function PrivacyPage() {
       </section>
 
       <section>
+        <h2>Health information, and why the rules apply to us</h2>
+        <p>
+          Some of what you tell us about your child — how they use their hands, and
+          any clinical scores you choose to share — is health information under
+          Australian privacy law. Organisations our size are often exempt from the
+          Privacy Act 1988. We don&apos;t rely on that exemption. Because we hold
+          health information about children, we treat ourselves as fully bound by the
+          Act and the Australian Privacy Principles.
+        </p>
+      </section>
+
+      <section>
         <h2>Public by design</h2>
         <p>
           Some information is public because the platform would not work otherwise:
@@ -73,12 +85,47 @@ export default function PrivacyPage() {
       </section>
 
       <section>
+        {/* TODO(splat): these periods are commitments, not yet automation — there is
+            no scheduled deletion job. Build one, or document the manual process,
+            before relying on this section. */}
+        <h2>How long we keep things</h2>
+        <ul>
+          <li>Child profiles: while your account is open, then 12 months after you close it, then deleted.</li>
+          <li>Your account: while it&apos;s open, then 12 months.</li>
+          <li>Pickup addresses: 12 months after the exchange is completed.</li>
+          <li>
+            Published guides and toys: indefinitely, because others rely on them. Your
+            display name stays credited unless you ask us to remove it.
+          </li>
+          <li>Records we&apos;re required by law to keep: 7 years.</li>
+        </ul>
+      </section>
+
+      <section>
         <h2>Where it is stored</h2>
         <p>
           Data is held in Supabase (PostgreSQL and object storage). Access is
           restricted at the database level by row-level security, so one account
           cannot read another account&apos;s private records even if application code
           were to ask for them.
+        </p>
+        <p>
+          {/* TODO(splat): confirm the hosted Supabase project's region and name it
+              here. Australian residency is strongly preferred for this data. */}
+          If any of your information is stored or handled outside Australia we&apos;ll
+          name the country here, and we take reasonable steps to make sure it&apos;s
+          handled to Australian standards. We stay responsible for it either way.
+        </p>
+      </section>
+
+      <section>
+        <h2>Automated suggestions</h2>
+        <p>
+          Your answers are turned into suggestions automatically. It&apos;s a matching
+          process, not a clinical judgement — see{' '}
+          <Link href="/legal/intended-purpose">what SPLAT Connect is (and isn&apos;t)</Link>.
+          You can ask us how a suggestion was reached, and you can ask a person to
+          review it.
         </p>
       </section>
 
@@ -90,18 +137,39 @@ export default function PrivacyPage() {
           We ask for the minimum needed to match a guide to a child, and we recommend
           using a first name or nickname rather than a full legal name.
         </p>
+        <p>
+          If your child is old enough to understand, please ask them before you create
+          their profile. It&apos;s their information too, and if they&apos;d rather you
+          didn&apos;t, that&apos;s a good enough reason not to.
+        </p>
       </section>
 
       <section>
-        <h2>Getting your data, or getting it deleted</h2>
+        <h2>Getting a copy, fixing it, or complaining</h2>
         <p>
           You can delete a child profile, a toy, or a draft guide yourself at any time
-          from your dashboard. To request a copy of everything associated with your
-          account, or deletion of the account entirely,{' '}
-          <Link href="/contact">contact us</Link>. Deleting an
+          from your dashboard. To get a copy of what we hold about you or your child,
+          to correct it, or to delete the account entirely,{' '}
+          <Link href="/contact">contact us</Link>. We&apos;ll respond within 30 days
+          and we don&apos;t charge. Deleting an
           account removes your child profiles, your unpublished work and your pickup
           addresses. Published guides that other people have contributed to remain,
           with your name removed unless you ask otherwise.
+        </p>
+        <p>
+          If you&apos;re unhappy with how we&apos;ve handled your information, tell us
+          first — we&apos;ll investigate and come back to you within 30 days. If
+          you&apos;re still unhappy you can complain to the Office of the Australian
+          Information Commissioner at oaic.gov.au or 1300 363 992.
+        </p>
+      </section>
+
+      <section>
+        <h2>If something goes wrong</h2>
+        <p>
+          If information is exposed in a way that&apos;s likely to cause you serious
+          harm, we&apos;ll tell you and we&apos;ll notify the Office of the Australian
+          Information Commissioner, as the Notifiable Data Breaches scheme requires.
         </p>
       </section>
 

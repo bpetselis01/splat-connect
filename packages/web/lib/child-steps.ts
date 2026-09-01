@@ -23,7 +23,6 @@ function hasAbilityData(c: ChildProfile): boolean {
   return Boolean(
     c.name ||
       c.age != null ||
-      c.primary_diagnosis ||
       c.macs_level ||
       c.bfmf_score ||
       c.hand_involvement ||

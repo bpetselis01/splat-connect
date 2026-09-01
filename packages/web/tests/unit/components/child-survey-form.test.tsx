@@ -12,22 +12,22 @@ function answerAllQuestions(optionIndex = 0) {
 describe('ChildSurveyForm', () => {
   it('explains what the survey is for', () => {
     render(<ChildSurveyForm profile={null} onSave={vi.fn()} />)
-    expect(screen.getByText(/we'll estimate both for you/i)).toBeInTheDocument()
+    expect(screen.getByText(/suggest guides and devices that are likely to suit them/i)).toBeInTheDocument()
   })
 
-  it('disables Estimate & save until every question is answered', () => {
+  it('disables Save answers until every question is answered', () => {
     render(<ChildSurveyForm profile={null} onSave={vi.fn()} />)
-    expect(screen.getByRole('button', { name: 'Estimate & save' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Save answers' })).toBeDisabled()
   })
 
-  it('computes MACS/BFMF from the answers and saves both scores as estimated', async () => {
+  it('derives the internal fit pair from the answers and saves both as estimated', async () => {
     const onSave = vi.fn().mockResolvedValue(undefined)
     render(<ChildSurveyForm profile={null} onSave={onSave} />)
 
     answerAllQuestions(0)
-    fireEvent.click(screen.getByRole('button', { name: 'Estimate & save' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Save answers' }))
 
-    await screen.findByText('Saved')
+    await screen.findByText(/^Saved — we'll use this/)
     expect(onSave).toHaveBeenCalledWith({
       macs_level: 'I',
       bfmf_score: '1',
@@ -41,9 +41,9 @@ describe('ChildSurveyForm', () => {
     render(<ChildSurveyForm profile={null} onSave={onSave} />)
 
     answerAllQuestions(0)
-    fireEvent.click(screen.getByRole('button', { name: 'Estimate & save' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Save answers' }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Could not save your changes')
-    expect(screen.queryByText('Saved')).not.toBeInTheDocument()
+    expect(screen.queryByText(/^Saved — we'll use this/)).not.toBeInTheDocument()
   })
 })

@@ -9,6 +9,8 @@ const baseTutorial: TutorialWithDetails = {
   difficulty: 'easy',
   kind: 'toy_adaptation',
   status: 'draft',
+  maturity: 'complete',
+  safety_declared_at: '2026-08-01T00:00:00Z',
   tutorial_pdf_url: 'https://example.com/tutorial.pdf',
   toy_photo_url: 'https://example.com/photo.jpg',
   rejection_note: null,

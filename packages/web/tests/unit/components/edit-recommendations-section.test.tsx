@@ -9,7 +9,7 @@ vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn() }) }))
 function rec(id: string, status: Recommendation['tutorials']['status'] = 'approved'): Recommendation {
   return {
     position: 1,
-    tutorials: { id, title: `Tutorial ${id}`, kind: 'toy_adaptation', difficulty: 'easy', toy_photo_url: null, status },
+    tutorials: { id, title: `Tutorial ${id}`, kind: 'toy_adaptation', difficulty: 'easy', toy_photo_url: null, status, maturity: 'complete' },
   }
 }
 const candidates = ['self', 'a', 'b', 'c', 'd'].map((id) => ({ id, title: `Tutorial ${id}`, kind: 'toy_adaptation' as const }))
