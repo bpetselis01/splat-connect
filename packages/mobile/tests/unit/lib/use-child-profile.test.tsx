@@ -223,4 +223,35 @@ describe('useChildProfile', () => {
     await act(async () => { resolvePost({ id: 'new1', age: 7 }) })
     await waitFor(() => expect(mockPatch).toHaveBeenCalledWith('/api/child-profiles/new1', expect.objectContaining({ age: 8 })))
   })
+
+  describe('pinned to one child', () => {
+    it('loads the named child, not the oldest', async () => {
+      mockGet.mockResolvedValue([{ id: 'cp1', age: 5 }, { id: 'cp2', age: 9 }])
+      const { result } = renderHook(() => useChildProfile('cp2'))
+      await waitFor(() => expect(result.current.profile?.age).toBe(9))
+    })
+
+    it('PATCHes the pinned id and never creates, even when the load failed', async () => {
+      // The one behaviour that separates pinned from the no-arg form: a list
+      // handed this id out, so the row exists — a failed PATCH must not fork
+      // a second child the way the no-arg form's create chain would.
+      mockGet.mockRejectedValue(new Error('offline'))
+      mockPatch.mockResolvedValue({})
+      const { result } = renderHook(() => useChildProfile('cp2'))
+      await waitFor(() => expect(result.current.loading).toBe(false))
+
+      act(() => result.current.save({ age: 4 }))
+      await act(async () => { jest.advanceTimersByTime(300) })
+
+      expect(mockPatch).toHaveBeenCalledWith('/api/child-profiles/cp2', expect.objectContaining({ age: 4 }))
+      expect(mockPost).not.toHaveBeenCalled()
+    })
+
+    it('shows null for an id the collection no longer holds', async () => {
+      mockGet.mockResolvedValue([{ id: 'cp1', age: 5 }])
+      const { result } = renderHook(() => useChildProfile('gone'))
+      await waitFor(() => expect(result.current.loading).toBe(false))
+      expect(result.current.profile).toBeNull()
+    })
+  })
 })
