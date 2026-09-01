@@ -7,6 +7,7 @@
  * /dashboard/child/{id}.
  */
 import { useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import type { Route } from 'next'
 import type { ChildProfile } from '@splat-connect/types'
@@ -41,7 +42,14 @@ export function ChildEditor({ child: initialChild, label }: { child: ChildProfil
   return (
     <div>
       <h1 className="mb-2 text-2xl font-bold text-ink">{heading}</h1>
-      <div className="mb-6"><NotMedicalNote /></div>
+      <div className="mb-6 flex flex-col gap-1">
+        <p className="text-xs leading-relaxed text-muted">
+          What you enter here is used only to suggest guides and devices for your
+          child, and is visible only to your account — see the{' '}
+          <Link href="/privacy" className="underline">privacy policy</Link>.
+        </p>
+        <NotMedicalNote />
+      </div>
       <Stepper
         label="Child profile sections"
         steps={[

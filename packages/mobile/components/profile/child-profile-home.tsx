@@ -8,7 +8,7 @@
 // second line is the one-line ability summary the spec asks for, or "Not set
 // yet" when the profile is still blank.
 import { useCallback, useEffect, useState } from 'react'
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native'
+import { View, Text, StyleSheet, ActivityIndicator, Linking } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import type { ChildProfile } from '@splat-connect/types'
@@ -85,7 +85,14 @@ export function ChildProfileHome() {
       <View style={styles.headerRow}>
         <Text style={styles.intro}>
           This helps us suggest guides that suit your children. Everything is optional and only
-          you can see it.
+          you can see it — see the{' '}
+          <Text
+            style={styles.introLink}
+            onPress={() => Linking.openURL(`${process.env.EXPO_PUBLIC_WEB_URL}/privacy`)}
+          >
+            privacy policy
+          </Text>
+          .
         </Text>
         <Button label="+ Add child" variant="accent" loading={busy} onPress={() => void addChild()} style={styles.addChild} />
       </View>
@@ -137,6 +144,7 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     marginBottom: theme.spacing(3),
   },
+  introLink: { textDecorationLine: 'underline' },
   addChild: { alignSelf: 'flex-start', paddingVertical: theme.spacing(2), paddingHorizontal: theme.spacing(4) },
   empty: {
     fontFamily: theme.fonts.regular,

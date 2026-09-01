@@ -18,8 +18,8 @@ describe('trust pages', () => {
   // it forces the change to be a conscious one, not a silent one.
   it('names the sensitive data the platform actually holds', () => {
     render(<PrivacyPage />)
-    expect(screen.getAllByText(/child profile/i)).toHaveLength(5)
-    expect(screen.getAllByText(/pickup address/i)).toHaveLength(2)
+    expect(screen.getAllByText(/child profile/i)).toHaveLength(6)
+    expect(screen.getAllByText(/pickup address/i)).toHaveLength(3)
     expect(screen.getAllByText(/email address/i)).toHaveLength(2)
   })
 
