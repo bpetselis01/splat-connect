@@ -139,7 +139,12 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing(5),
   },
   path: { marginBottom: theme.spacing(5) },
-  pathItem: { flexDirection: 'row', gap: theme.spacing(3), marginBottom: theme.spacing(4) },
+  // padding, not margin: the connector below is flex:1 inside nodeColumn, which
+  // stretches to the row's own box. With the gap as a MARGIN the row's box ends
+  // at the title, so the line stopped one gap short of the next node and the
+  // path read as six dashes rather than one path. As padding, the gap is inside
+  // the row and the connector spans it.
+  pathItem: { flexDirection: 'row', gap: theme.spacing(3), paddingBottom: theme.spacing(4) },
   nodeColumn: { alignItems: 'center', width: 28 },
   node: {
     width: 28,
