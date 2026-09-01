@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
+import * as Haptics from 'expo-haptics'
 import type { SaveSlug } from '@splat-connect/types'
 import { theme } from '../../lib/theme'
 import type { Saves } from '../../lib/saves'
@@ -8,7 +9,15 @@ export function SaveButton({ slug, id, saves, size = 20 }: { slug: SaveSlug; id:
   const on = saves.isSaved(slug, id)
   return (
     <Pressable
-      onPress={() => saves.toggle(slug, id)}
+      onPress={() => {
+        // Success notification on save, plain light impact on unsave — putting
+        // something on the shelf is the moment worth celebrating.
+        ;(on
+          ? Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+          : Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+        ).catch(() => {})
+        saves.toggle(slug, id)
+      }}
       accessibilityRole="button"
       accessibilityLabel={on ? 'Saved' : 'Save'}
       hitSlop={10}
