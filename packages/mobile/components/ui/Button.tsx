@@ -30,6 +30,7 @@ export function Button({
   style,
   disabled,
   loading,
+  accessibilityLabel,
 }: {
   label: string
   onPress: () => void
@@ -37,11 +38,17 @@ export function Button({
   style?: StyleProp<ViewStyle>
   disabled?: boolean
   loading?: boolean
+  /**
+   * Overrides the visible label as the accessibility name. For a button whose
+   * text only makes sense next to something else on screen — three "Mark read"
+   * buttons, one per bucket, are three identical names to a screen reader.
+   */
+  accessibilityLabel?: string
 }) {
   return (
     <AnimatedPressable
       accessibilityRole="button"
-      accessibilityLabel={label}
+      accessibilityLabel={accessibilityLabel ?? label}
       accessibilityState={{ disabled: disabled || loading }}
       disabled={disabled || loading}
       onPress={onPress}
