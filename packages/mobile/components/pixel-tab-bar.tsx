@@ -1,7 +1,14 @@
 // react-navigation's bar can't raise one item above the shelf, so the bar is
 // ours: four ordinary items, and in the middle a disc that is a button, not a
 // tab — it opens the MY SPLAT popover (Task 7) and never navigates.
+import { useEffect, type ReactNode } from 'react'
 import { View, Text, Pressable, Image, StyleSheet } from 'react-native'
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withSpring,
+} from 'react-native-reanimated'
 // expo-router 57 vendors react-navigation internally rather than depending on
 // the npm package, so the type comes from expo-router's own re-export.
 import type { BottomTabBarProps } from 'expo-router/js-tabs'
@@ -16,6 +23,24 @@ const ICONS: Record<string, { on: keyof typeof Ionicons.glyphMap; off: keyof typ
   'toy-library': { on: 'cube', off: 'cube-outline' },
   explore: { on: 'compass', off: 'compass-outline' },
   inbox: { on: 'mail', off: 'mail-outline' },
+}
+
+/**
+ * A small overshoot-and-settle on the icon when its tab becomes current —
+ * the visual twin of the selection haptic firing at the same moment.
+ */
+function SpringIcon({ focused, children }: { focused: boolean; children: ReactNode }) {
+  const scale = useSharedValue(1)
+  useEffect(() => {
+    if (focused) {
+      scale.value = withSequence(
+        withSpring(1.18, { ...theme.motion.press }),
+        withSpring(1, { ...theme.motion.settle })
+      )
+    }
+  }, [focused, scale])
+  const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }))
+  return <Animated.View style={style}>{children}</Animated.View>
 }
 
 type Props = BottomTabBarProps & { badge: number; centreOpen: boolean; onCentrePress: () => void }
@@ -43,12 +68,12 @@ export function PixelTabBar({ state, descriptors, navigation, insets, badge, cen
         accessibilityLabel={route.name === 'inbox' && badge > 0 ? `${label}, ${badge} unread` : label}
         style={styles.item}
       >
-        <View>
+        <SpringIcon focused={focused}>
           <Ionicons name={focused ? icon.on : icon.off} size={22} color={focused ? theme.colors.ink : theme.colors.muted} />
           {route.name === 'inbox' && badge > 0 ? (
             <View style={styles.badge}><Text style={styles.badgeText}>{String(badge)}</Text></View>
           ) : null}
-        </View>
+        </SpringIcon>
         <Text style={[styles.label, focused && styles.labelOn]}>{label}</Text>
       </Pressable>
     )
