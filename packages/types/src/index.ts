@@ -57,7 +57,6 @@ export interface Toy {
   switch_photo_urls: string[]
   status: 'draft' | 'published'
   offer_type: OfferType | null
-  archived_at: string | null
   created_at: string
   updated_at: string
 }
@@ -142,7 +141,12 @@ export interface PickupAddress {
 // or is withdrawn.
 export interface ToyTransactionSummary extends ToyTransaction {
   toy_name: string
+  /** Null when the toy has none. Readable by both parties for good: 025's
+   *  "Transaction parties can view each other's toy" policy outlives the
+   *  handoff, which is what lets a giver still see what they gave. */
+  toy_cover_photo_url: string | null
   offered_toy_name: string | null
+  offered_toy_cover_photo_url: string | null
   other_party_name: string
   /** The organisation the viewer is answering for, when they are its leader.
    *  Null for a personal handoff and for the family on the other side. */
@@ -212,6 +216,84 @@ export function actionLabel(tx: Pick<ToyTransaction, 'status'>): string {
   return tx.status === 'requested'
     ? 'Waiting on you — accept or decline'
     : 'Waiting on you — confirm the handoff'
+}
+
+/**
+ * One toy this viewer no longer has, because they handed it over.
+ *
+ * `at` is the completion time (updated_at on a completed row), not when the
+ * request was made — the date a person remembers is the day they met.
+ */
+export interface GivenAwayToy {
+  transaction_id: string
+  toy_id: string
+  name: string
+  cover_photo_url: string | null
+  other_party_name: string
+  type: ToyTransactionType
+  /** On an exchange, what came back the other way. Null on a donation. */
+  received_name: string | null
+  at: string
+}
+
+/**
+ * What the viewer gave away, newest first.
+ *
+ * The exact inverse of `received_toy` (see ReceivedToy above): the requester
+ * takes toy_id and, on an exchange, the owner takes offered_toy_id — so the
+ * GIVER of toy_id is the owner side, and the giver of offered_toy_id is the
+ * requester. A requester on a donation gave nothing and gets no row.
+ *
+ * Shared rather than written twice because both clients render this section
+ * and a disagreement between them is a person told they gave away a different
+ * set of toys depending on which screen they opened — the same reasoning that
+ * put isOwnerSide and needsAction here.
+ *
+ * Organisation stock is deliberately excluded. isOwnerSide answers true for a
+ * leader, but a unit leaving org inventory is not something that leader
+ * personally gave away, and it belongs on the organisation's own screen.
+ */
+export function givenAway(
+  transactions: readonly ToyTransactionSummary[],
+  viewerId: string,
+  ledOrgIds: readonly string[] = []
+): GivenAwayToy[] {
+  const rows: GivenAwayToy[] = []
+
+  for (const tx of transactions) {
+    if (tx.status !== 'completed') continue
+    if (tx.owner_org_id) continue
+
+    const base = {
+      transaction_id: tx.id,
+      other_party_name: tx.other_party_name,
+      type: tx.type,
+      at: tx.updated_at,
+    }
+
+    if (isOwnerSide(tx, viewerId, ledOrgIds)) {
+      rows.push({
+        ...base,
+        toy_id: tx.toy_id,
+        name: tx.toy_name,
+        cover_photo_url: tx.toy_cover_photo_url,
+        received_name: tx.offered_toy_name,
+      })
+    } else if (tx.requester_id === viewerId && tx.offered_toy_id) {
+      // Their half of a swap. Guarded on offered_toy_id rather than on
+      // type === 'exchange': a row typed as an exchange that never got a toy
+      // attached has nothing of theirs that changed hands.
+      rows.push({
+        ...base,
+        toy_id: tx.offered_toy_id,
+        name: tx.offered_toy_name ?? '',
+        cover_photo_url: tx.offered_toy_cover_photo_url,
+        received_name: tx.toy_name,
+      })
+    }
+  }
+
+  return rows.sort((a, b) => b.at.localeCompare(a.at))
 }
 
 export type ToyTransactionMessageKind = 'system' | 'user'

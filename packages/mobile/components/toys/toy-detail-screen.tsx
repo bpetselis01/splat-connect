@@ -85,7 +85,7 @@ export function ToyDetailScreen({ id }: { id: string }) {
     apiClient
       .get<Toy[]>('/api/toys')
       .then((all) => {
-        if (!ignore) setMyToys(all.filter((t) => t.status === 'published' && !t.archived_at))
+        if (!ignore) setMyToys(all.filter((t) => t.status === 'published'))
       })
       .catch(() => {
         // RequestBlock reads this to keep "Arrange exchange" from claiming

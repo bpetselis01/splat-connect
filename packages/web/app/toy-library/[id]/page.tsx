@@ -20,7 +20,7 @@ export default async function ToyLibraryDetailPage({
 
   const caps = await getCapabilities()
   const rawMyToys = caps ? await apiClient.get<Toy[]>('/api/toys').catch(() => [] as Toy[]) : []
-  const myToys = rawMyToys.filter((t) => t.status === 'published' && !t.archived_at)
+  const myToys = rawMyToys.filter((t) => t.status === 'published')
 
   const saved = await getSavedIds()
 

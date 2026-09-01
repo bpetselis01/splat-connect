@@ -100,7 +100,6 @@ publicRoutes.get('/toys', async (c) => {
     // same shape via owner_org_id, and exactly one of the two is ever present.
     .select('*, profiles(name), organizations(name)')
     .eq('status', 'published')
-    .is('archived_at', null)
     .order('created_at', { ascending: false })
   if (error) return c.json({ error: error.message }, 500)
   const unavailable = await atCapacityToyIds(createAdminClient(), null, true)
@@ -116,7 +115,6 @@ publicRoutes.get('/toys/:id', async (c) => {
     .select('*, profiles(name), organizations(name)')
     .eq('id', c.req.param('id'))
     .eq('status', 'published')
-    .is('archived_at', null)
     .single()
   // 404 for both "no such row" and "draft row" — an unpublished toy must not
   // be distinguishable from a nonexistent one to an unauthenticated caller,
@@ -167,8 +165,7 @@ publicRoutes.get('/impact', async (c) => {
     sb
       .from('toys')
       .select('id, owner_id, owner_org_id, created_at')
-      .eq('status', 'published')
-      .is('archived_at', null),
+      .eq('status', 'published'),
     // Ruling B: admin client, restricted columns only — counts a completed
     // handoff toward its giver, never the counterparty or any message/pickup detail.
     admin
@@ -240,7 +237,7 @@ publicRoutes.get('/impact', async (c) => {
     }
   }
 
-  // toysShared: published, non-archived toys, grouped by owner.
+  // toysShared: published toys, grouped by owner.
   for (const toy of (toys ?? []) as Array<{
     id: string
     owner_id: string | null
@@ -421,7 +418,7 @@ publicRoutes.get('/contributors/:id', async (c) => {
       .select('tutorials!inner(*)')
       .eq('profile_id', id)
       .eq('tutorials.status', 'approved'),
-    sb.from('toys').select('*').eq('owner_id', id).eq('status', 'published').is('archived_at', null),
+    sb.from('toys').select('*').eq('owner_id', id).eq('status', 'published'),
     admin
       .from('toy_transactions')
       .select('toy_id, owner_id, updated_at')
@@ -512,8 +509,7 @@ publicRoutes.get('/organizations/:id', async (c) => {
       .from('toys')
       .select('*')
       .eq('owner_org_id', id)
-      .eq('status', 'published')
-      .is('archived_at', null),
+      .eq('status', 'published'),
     admin
       .from('toy_transactions')
       .select('toy_id, owner_org_id, updated_at')

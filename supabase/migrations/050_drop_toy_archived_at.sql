@@ -1,0 +1,12 @@
+-- supabase/migrations/050_drop_toy_archived_at.sql
+-- WHY: archived_at was 025's mechanism for a completed handoff — archive the
+--      toy so it leaves both My Toys and the library without being deleted.
+--      That mechanism gave the toy to nobody (two people met, swapped, and the
+--      record of both objects went dark), so the confirm handler was changed
+--      to transfer ownership instead (toy-transactions.ts transferToy), and
+--      from that day no route ever wrote a non-null value here. Every
+--      `archived_at is null` filter has matched every row; the dashboard's
+--      Archived section has never rendered. The giver's record of a handoff
+--      lives on the transaction now — the Given away section reads it from
+--      there — so the column retires with nothing left to say.
+alter table public.toys drop column archived_at;

@@ -36,7 +36,7 @@ export function ownedByCaller(userId: string, orgIds: string[]): string {
  * bears can run five handoffs at once; a person is the quantity=1 case and
  * behaves exactly as before. Quantity 0 is at capacity by definition.
  *
- * `toyIds` scopes the scan; null means every published, unarchived toy.
+ * `toyIds` scopes the scan; null means every published toy.
  * `hideOffered` also hides the toy someone put up in an exchange — one
  * person's single object, promised to someone, where quantity has no bearing.
  *
@@ -61,7 +61,7 @@ export async function atCapacityToyIds(
   const stock = admin.from('toys').select('id, quantity')
   const [{ data: acceptedRows, error }, { data: toys, error: toysError }] = await Promise.all([
     toyIds ? accepted.in('toy_id', toyIds) : accepted,
-    toyIds ? stock.in('id', toyIds) : stock.eq('status', 'published').is('archived_at', null),
+    toyIds ? stock.in('id', toyIds) : stock.eq('status', 'published'),
   ])
   if (error || toysError) return null
 

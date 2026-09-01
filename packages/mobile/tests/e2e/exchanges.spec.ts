@@ -111,17 +111,17 @@ test('a donation runs from request to handoff, and the toy changes hands', async
     // button named after the toy (ToyRow's accessibilityLabel).
     await expect(requesterPage.getByRole('button', { name: toyName, exact: true })).toHaveCount(0)
 
-    // WHY these two assertions and not "archived in the giver's list": the
-    // confirm handler transfers a person's toy to the requester as a draft
-    // (routes/toy-transactions.ts transferToy) rather than archiving it. It
-    // used to archive, which gave the toy to nobody. My Toys filters on
-    // owner_id, so the giver's list clears itself and the receiver's gains an
-    // unlisted row. archived_at is written by no route at all today.
+    // The confirm handler transfers a person's toy to the requester as a draft
+    // (routes/toy-transactions.ts transferToy) rather than archiving it — My
+    // Toys filters on owner_id, so the giver's shelf clears itself. What the
+    // giver keeps is the Given away section, read back off the completed
+    // handoff: the toy's name, who got it, and a tap through to the thread.
     await ownerPage.goto('/toys')
-    // Same rule as above: wait for the list to have actually loaded before
-    // reading an absence off it, or the skeletons satisfy the assertion.
-    await expect(ownerPage.getByText('No toys yet')).toBeVisible()
-    await expect(ownerPage.getByRole('button', { name: toyName, exact: true })).toHaveCount(0)
+    await expect(ownerPage.getByText('Given away')).toBeVisible()
+    await expect(ownerPage.getByText('No toys on your shelf right now.')).toBeVisible()
+    // One row: the toy, receding, and it opens the handoff it records.
+    await ownerPage.getByRole('button', { name: toyName, exact: true }).click()
+    await expect(ownerPage).toHaveURL(new RegExp(`/exchanges/${txId}$`))
 
     await requesterPage.goto('/toys')
     await expect(requesterPage.getByText(toyName)).toBeVisible()
@@ -185,7 +185,7 @@ test('an exchange request names both toys in the thread', async ({ page }) => {
   const theirToy = uniqueTitle('E2E Wanted Toy')
   const myToy = uniqueTitle('E2E Offered Toy')
   const toyId = await createPublishedToy(owner.id, { name: theirToy, offer_type: 'exchange' })
-  // The chooser lists the requester's own published, unarchived toys — with
+  // The chooser lists the requester's own published toys — with
   // none, Arrange exchange refuses rather than opening an empty radio group.
   await createPublishedToy(requester.id, { name: myToy })
 

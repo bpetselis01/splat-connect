@@ -54,7 +54,7 @@ const SOURCE = {
   toys: {
     table: 'toys',
     select: '*, profiles(name), organizations(name)',
-    filter: (q: EntityQuery) => q.eq('status', 'published').is('archived_at', null),
+    filter: (q: EntityQuery) => q.eq('status', 'published'),
   },
   challenges: {
     table: 'toy_ideas',

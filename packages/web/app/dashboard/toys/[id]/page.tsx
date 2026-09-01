@@ -21,13 +21,7 @@ export default async function ToyEditPage({ params }: { params: Promise<{ id: st
     <div>
       <BackLink href="/dashboard/toys" label="My toys" />
       <h1 className="mb-6 title-detail">{toy.name}</h1>
-      {toy.archived_at ? (
-        <div className="panel p-5">
-          <ToySummary toy={toy} />
-        </div>
-      ) : (
-        <ToyEditor toy={toy} />
-      )}
+      <ToyEditor toy={toy} />
     </div>
   )
 }

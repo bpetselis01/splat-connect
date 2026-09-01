@@ -66,7 +66,6 @@ const toy = (over: object) => ({
   switch_photo_urls: [],
   status: 'published',
   offer_type: 'donation',
-  archived_at: null,
   created_at: '',
   updated_at: '',
   profiles: { name: 'Jamie' },
@@ -87,7 +86,6 @@ const myToy = (over: object) => ({
   switch_photo_urls: [],
   status: 'published',
   offer_type: null,
-  archived_at: null,
   created_at: '',
   updated_at: '',
   ...over,
@@ -189,13 +187,12 @@ describe('ToyDetailScreen', () => {
     expect(screen.getByText('Not currently offered for donation or exchange.')).toBeTruthy()
   })
 
-  it('fetches the caller\'s toys and filters the chooser to published, unarchived ones', async () => {
+  it('fetches the caller\'s toys and filters the chooser to published ones', async () => {
     mockEndpoints({
       detail: Promise.resolve(toy({ offer_type: 'exchange' })),
       myToys: Promise.resolve([
-        myToy({ id: 'mine1', name: 'Puzzle', status: 'published', archived_at: null }),
-        myToy({ id: 'mine2', name: 'Draft toy', status: 'draft', archived_at: null }),
-        myToy({ id: 'mine3', name: 'Archived toy', status: 'published', archived_at: '2026-01-01' }),
+        myToy({ id: 'mine1', name: 'Puzzle', status: 'published' }),
+        myToy({ id: 'mine2', name: 'Draft toy', status: 'draft' }),
       ]),
     })
     render(<ToyDetailScreen id="toy1" />)
@@ -205,7 +202,6 @@ describe('ToyDetailScreen', () => {
     fireEvent.press(screen.getByRole('button', { name: 'Arrange exchange' }))
     expect(await screen.findByText('Puzzle')).toBeTruthy()
     expect(screen.queryByText('Draft toy')).toBeNull()
-    expect(screen.queryByText('Archived toy')).toBeNull()
   })
 
   it('disables Arrange exchange while the caller\'s own toys are still in flight', async () => {
