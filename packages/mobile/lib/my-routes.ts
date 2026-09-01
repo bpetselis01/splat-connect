@@ -5,7 +5,9 @@ const ROUTES: Record<string, string> = {
   '/dashboard/toys': '/toys',
   '/dashboard/exchanges': '/exchanges',
   '/dashboard/challenges': '/challenges',
-  '/get-involved/submit-an-idea': '/explore',
+  // Was '/explore' while the form did not exist yet — a hub row that landed
+  // on the tab and left you to find it. Now it names its own screen.
+  '/get-involved/submit-an-idea': '/explore/challenges/new',
   '/dashboard/print-requests': '/print-requests',
   '/dashboard/organisation': '/organisation',
   '/dashboard/organisation/toys': '/organisation/toys',

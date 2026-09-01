@@ -31,6 +31,7 @@ import { Button } from '../ui/Button'
 import { TextField } from '../ui/TextField'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
+import { MessageBubble } from '../ui/MessageBubble'
 import { ErrorRow } from '../auth-screen'
 
 const POLL_MS = 10_000
@@ -55,43 +56,6 @@ type PickupDraft = Record<(typeof PICKUP_FIELDS)[number]['key'], string>
 function apiMessage(err: unknown, fallback: string): string {
   const match = /failed with status 4\d\d: (.+)$/.exec(err instanceof Error ? err.message : '')
   return match ? match[1] : fallback
-}
-
-function timeOf(iso: string): string {
-  return new Date(iso).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })
-}
-
-function MessageRow({
-  message,
-  mine,
-  senderName,
-}: {
-  message: ToyTransactionMessage
-  mine: boolean
-  senderName: string
-}) {
-  if (message.kind === 'system') {
-    return (
-      <View style={styles.systemRow}>
-        <Text style={styles.systemText}>{message.body}</Text>
-      </View>
-    )
-  }
-  return (
-    <View style={[styles.bubbleRow, mine && styles.bubbleRowMine]}>
-      <View
-        // Left/right and the tint are the only things separating your messages
-        // from theirs on screen, and neither reaches a screen reader.
-        accessible
-        accessibilityLabel={`${mine ? 'You' : senderName} said: ${message.body}`}
-        style={[styles.bubble, mine ? styles.bubbleMine : styles.bubbleTheirs]}
-      >
-        {!mine ? <Text style={styles.bubbleWho}>{senderName}</Text> : null}
-        <Text style={styles.bubbleText}>{message.body}</Text>
-        <Text style={styles.stamp}>{timeOf(message.created_at)}</Text>
-      </View>
-    </View>
-  )
 }
 
 export function ExchangeThreadScreen({ id }: { id: string }) {
@@ -333,7 +297,7 @@ export function ExchangeThreadScreen({ id }: { id: string }) {
             style={styles.log}
           >
             {tx.messages.map((m) => (
-              <MessageRow
+              <MessageBubble
                 key={m.id}
                 message={m}
                 mine={m.sender_id === viewerId && m.kind === 'user'}
@@ -527,35 +491,6 @@ const styles = StyleSheet.create({
   // Jersey 10 is numerals-only, which is exactly what this is.
   codeDigits: { fontFamily: theme.fonts.numeral, fontSize: theme.type.title, color: theme.colors.primaryDeep },
   log: { gap: theme.spacing(2) },
-  systemRow: { alignItems: 'center', paddingVertical: theme.spacing(1) },
-  systemText: {
-    fontFamily: theme.fonts.regular,
-    fontSize: theme.type.caption,
-    color: theme.colors.muted,
-    textAlign: 'center',
-    borderWidth: theme.border.thin,
-    borderStyle: 'dashed',
-    borderColor: theme.colors.border,
-    borderRadius: theme.radii.sm,
-    paddingHorizontal: theme.spacing(3),
-    paddingVertical: theme.spacing(1),
-  },
-  bubbleRow: { flexDirection: 'row' },
-  bubbleRowMine: { justifyContent: 'flex-end' },
-  bubble: {
-    maxWidth: '82%',
-    borderWidth: theme.border.thin,
-    borderColor: theme.colors.ink,
-    borderRadius: theme.radii.md,
-    paddingHorizontal: theme.spacing(3),
-    paddingVertical: theme.spacing(2),
-    gap: theme.spacing(1),
-  },
-  bubbleMine: { backgroundColor: theme.colors.accentLight },
-  bubbleTheirs: { backgroundColor: theme.colors.surface },
-  bubbleWho: { fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.primaryDeep },
-  bubbleText: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.text, lineHeight: 20 },
-  stamp: { fontFamily: theme.fonts.regular, fontSize: 11, color: theme.colors.muted, alignSelf: 'flex-end' },
   footer: {
     borderTopWidth: theme.border.thin,
     borderTopColor: theme.colors.border,

@@ -1,5 +1,7 @@
-import { SectionStub } from '../../components/ui/SectionStub'
+// packages/mobile/app/(tabs)/inbox.tsx
+import { InboxScreen } from '../../components/inbox/inbox-screen'
 
 export default function InboxTab() {
-  return <SectionStub title="Inbox" blurb="Everything waiting on you, newest first." />
+  // The tab root has no native header, so the screen draws its own.
+  return <InboxScreen showHeader />
 }
