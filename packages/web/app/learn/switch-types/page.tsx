@@ -85,7 +85,7 @@ export default function SwitchTypes() {
         <p>
           Commercial assistive switches cost anywhere from $40 to several hundred. Many
           designs can be printed and built for a fraction of that — see
-          <Link href="/learn/3d-printing-basics"> 3D printing basics</Link> and the
+          <Link href="/printing/basics"> 3D printing basics</Link> and the
           <Link href="/library"> Guides</Link>. Whatever you use, standardise on a
           3.5 mm mono plug so switches and toys stay interchangeable.
         </p>
