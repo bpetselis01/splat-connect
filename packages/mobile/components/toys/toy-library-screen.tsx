@@ -21,6 +21,8 @@ import { EmptyState } from '../ui/EmptyState'
 import { Badge } from '../ui/Badge'
 import { SaveButton } from '../ui/SaveButton'
 import { Meter } from '../ui/Meter'
+import { CornerMenu } from '../ui/CornerMenu'
+import { useCapabilities } from '../../lib/capabilities'
 
 // Copied verbatim from packages/web/app/toy-library/toy-library-client.tsx —
 // same buckets, same labels, same thresholds. Two copies rather than a shared
@@ -123,6 +125,7 @@ function OrganisationsRow({ onPress }: { onPress: () => void }) {
 export function ToyLibraryScreen() {
   const router = useRouter()
   const saves = useSaves()
+  const { caps } = useCapabilities()
   const [toys, setToys] = useState<ToyWithOwner[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -201,12 +204,8 @@ export function ToyLibraryScreen() {
                   showLogo
                 />
               </View>
-              <Button
-                label="+ Give a toy"
-                variant="accent"
-                onPress={() => router.push('/toys/new')}
-                style={styles.giveToy}
-              />
+              {/* Clears the pinned CornerMenu trigger so the title never runs under it. */}
+              <View style={styles.menuSpacer} />
             </View>
 
             <TextField
@@ -280,6 +279,15 @@ export function ToyLibraryScreen() {
           !loading && !error ? <OrganisationsRow onPress={() => router.push('/toy-library/organisations')} /> : null
         }
       />
+      <CornerMenu
+        label="Toy actions"
+        items={[
+          { label: 'Give a toy', icon: 'add', href: '/toys/new', primary: true },
+          { label: 'My toys', icon: 'cube-outline', href: '/toys' },
+          { label: 'My exchanges', icon: 'swap-horizontal-outline', href: '/exchanges', count: caps?.exchangeActions },
+          { label: 'Saved toys', icon: 'bookmark-outline', href: '/saved/toys' },
+        ]}
+      />
     </Screen>
   )
 }
@@ -287,7 +295,7 @@ export function ToyLibraryScreen() {
 const styles = StyleSheet.create({
   headerRow: { flexDirection: 'row', alignItems: 'flex-start', gap: theme.spacing(2) },
   headerTitle: { flex: 1 },
-  giveToy: { paddingVertical: theme.spacing(2), paddingHorizontal: theme.spacing(3) },
+  menuSpacer: { width: 48 },
   searchBar: {
     borderRadius: theme.radii.md,
     borderWidth: theme.border.thin,
