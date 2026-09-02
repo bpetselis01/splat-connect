@@ -31,6 +31,7 @@ export function Button({
   disabled,
   loading,
   accessibilityLabel,
+  testID,
 }: {
   label: string
   onPress: () => void
@@ -38,6 +39,12 @@ export function Button({
   style?: StyleProp<ViewStyle>
   disabled?: boolean
   loading?: boolean
+  /**
+   * For Maestro and Playwright. A button's label is rarely unique on screen —
+   * "Sign in" is a heading, a switch tab and this button at once on the auth
+   * gate — and a text-matched tap lands on whichever node comes first.
+   */
+  testID?: string
   /**
    * Overrides the visible label as the accessibility name. For a button whose
    * text only makes sense next to something else on screen — three "Mark read"
@@ -47,6 +54,7 @@ export function Button({
 }) {
   return (
     <AnimatedPressable
+      testID={testID}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityState={{ disabled: disabled || loading }}

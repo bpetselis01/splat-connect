@@ -1,6 +1,6 @@
 // packages/mobile/components/toys/toy-library-screen.tsx
 import { useEffect, useState } from 'react'
-import { View, Text, FlatList, StyleSheet, Image } from 'react-native'
+import { View, Text, FlatList, RefreshControl, StyleSheet, Image } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import Animated, { FadeInDown } from 'react-native-reanimated'
@@ -21,6 +21,8 @@ import { EmptyState } from '../ui/EmptyState'
 import { Badge } from '../ui/Badge'
 import { SaveButton } from '../ui/SaveButton'
 import { Meter } from '../ui/Meter'
+import { CornerMenu } from '../ui/CornerMenu'
+import { useCapabilities } from '../../lib/capabilities'
 
 // Copied verbatim from packages/web/app/toy-library/toy-library-client.tsx —
 // same buckets, same labels, same thresholds. Two copies rather than a shared
@@ -123,19 +125,28 @@ function OrganisationsRow({ onPress }: { onPress: () => void }) {
 export function ToyLibraryScreen() {
   const router = useRouter()
   const saves = useSaves()
+  const { caps } = useCapabilities()
   const [toys, setToys] = useState<ToyWithOwner[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [condition, setCondition] = useState<ConditionBucket>('all')
   const [switchAdaptedOnly, setSwitchAdaptedOnly] = useState(false)
-  // Bumping this re-runs the fetch — the retry button's handle, since the error
-  // state is a static view with no pull-to-refresh to lean on.
+  // Bumping this re-runs the fetch — the retry button's and pull-to-refresh's
+  // shared handle.
   const [reloadKey, setReloadKey] = useState(0)
+  const [refreshing, setRefreshing] = useState(false)
+
+  const onRefresh = () => {
+    setRefreshing(true)
+    setReloadKey((k) => k + 1)
+  }
 
   useEffect(() => {
     let ignore = false
-    setLoading(true)
+    // A pull-driven reload keeps the current rows on screen; skeletons are
+    // for arriving with nothing.
+    if (!refreshing) setLoading(true)
     setError(null)
     apiClient
       .get<ToyWithOwner[]>('/api/public/toys')
@@ -147,7 +158,10 @@ export function ToyLibraryScreen() {
         if (!ignore) setError("Couldn't load toys.")
       })
       .finally(() => {
-        if (!ignore) setLoading(false)
+        if (!ignore) {
+          setLoading(false)
+          setRefreshing(false)
+        }
       })
     return () => {
       ignore = true
@@ -163,97 +177,117 @@ export function ToyLibraryScreen() {
     return matchesSearch && matchesCondition(t.condition, condition) && matchesSwitch
   })
 
+  // One always-mounted list: header, search and filters live inside it as
+  // ListHeaderComponent so they scroll away with the content instead of
+  // pinning the top half of the screen (they used to sit above the list as
+  // fixed views). Loading/error/empty render through ListEmptyComponent so
+  // the header holds across every state.
   return (
     <Screen>
-      <View style={styles.headerRow}>
-        <View style={styles.headerTitle}>
-          <ScreenHeader
-            title="Toy Library"
-            subtitle="Adapted toys that families and organisations are giving away."
-            showLogo
-          />
-        </View>
-        <Button
-          label="+ Give a toy"
-          variant="accent"
-          onPress={() => router.push('/toys/new')}
-          style={styles.giveToy}
-        />
-      </View>
+      <FlatList
+        key={condition}
+        data={loading || error ? [] : visible}
+        keyExtractor={(t) => t.id}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.listContent}
+        keyboardShouldPersistTaps="handled"
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.ink} />
+        }
+        ListHeaderComponent={
+          <>
+            <View style={styles.headerRow}>
+              <View style={styles.headerTitle}>
+                <ScreenHeader
+                  title="Toy Library"
+                  subtitle="Adapted toys that families and organisations are giving away."
+                  showLogo
+                />
+              </View>
+              {/* Clears the pinned CornerMenu trigger so the title never runs under it. */}
+              <View style={styles.menuSpacer} />
+            </View>
 
-      <TextField
-        icon="search"
-        placeholder="Search by toy name"
-        value={search}
-        onChangeText={setSearch}
-        boxStyle={styles.searchBar}
-      />
+            <TextField
+              icon="search"
+              placeholder="Search by toy name"
+              value={search}
+              onChangeText={setSearch}
+              boxStyle={styles.searchBar}
+            />
 
-      <View style={styles.filterRow}>
-        {CONDITIONS.map((c) => (
-          <Chip key={c} label={CONDITION_LABELS[c]} active={condition === c} onPress={() => setCondition(c)} />
-        ))}
-      </View>
+            <View style={styles.filterRow}>
+              {CONDITIONS.map((c) => (
+                <Chip key={c} label={CONDITION_LABELS[c]} active={condition === c} onPress={() => setCondition(c)} />
+              ))}
+            </View>
 
-      <View style={styles.divider} />
+            <View style={styles.divider} />
 
-      <View style={[styles.filterRow, styles.switchRow]}>
-        <Chip
-          label="Switch-adapted"
-          active={switchAdaptedOnly}
-          onPress={() => setSwitchAdaptedOnly((v) => !v)}
-        />
-      </View>
-
-      {!loading && !error ? (
-        <Text style={styles.countLine}>
-          {visible.length} toy{visible.length === 1 ? '' : 's'}
-        </Text>
-      ) : null}
-
-      {loading ? (
-        <View>
-          <SkeletonRow />
-          <SkeletonRow />
-          <SkeletonRow />
-        </View>
-      ) : error ? (
-        <EmptyState icon="cloud-offline-outline" title="Couldn't load toys." hint="Check your connection and try again.">
-          <Button label="Try again" variant="secondary" onPress={() => setReloadKey((k) => k + 1)} style={styles.retry} />
-        </EmptyState>
-      ) : visible.length === 0 ? (
-        <EmptyState
-          icon="search-outline"
-          title="No toys here yet"
-          hint={
-            search
-              ? `Nothing matches "${search}". Try a different word, or clear the search.`
-              : 'Try another condition — new toys are added as they are shared.'
-          }
-        />
-      ) : (
-        <FlatList
-          key={condition}
-          data={visible}
-          keyExtractor={(t) => t.id}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContent}
-          renderItem={({ item, index }) => (
-            // Past the first screenful the stagger is invisible and only adds
-            // latency, so the delay is capped rather than growing with the index.
-            <Animated.View
-              entering={FadeInDown.delay(Math.min(index, 7) * theme.motion.stagger).duration(theme.motion.base)}
-            >
-              <ToyRow
-                item={item}
-                saves={saves}
-                onPress={() => router.push(`/toy-library/${item.id}`)}
+            <View style={[styles.filterRow, styles.switchRow]}>
+              <Chip
+                label="Switch-adapted"
+                active={switchAdaptedOnly}
+                onPress={() => setSwitchAdaptedOnly((v) => !v)}
               />
-            </Animated.View>
-          )}
-          ListFooterComponent={<OrganisationsRow onPress={() => router.push('/toy-library/organisations')} />}
-        />
-      )}
+            </View>
+
+            {!loading && !error ? (
+              <Text style={styles.countLine}>
+                {visible.length} toy{visible.length === 1 ? '' : 's'}
+              </Text>
+            ) : null}
+          </>
+        }
+        ListEmptyComponent={
+          loading ? (
+            <View>
+              <SkeletonRow />
+              <SkeletonRow />
+              <SkeletonRow />
+            </View>
+          ) : error ? (
+            <EmptyState icon="cloud-offline-outline" title="Couldn't load toys." hint="Check your connection and try again.">
+              <Button label="Try again" variant="secondary" onPress={() => setReloadKey((k) => k + 1)} style={styles.retry} />
+            </EmptyState>
+          ) : (
+            <EmptyState
+              icon="search-outline"
+              title="No toys here yet"
+              hint={
+                search
+                  ? `Nothing matches "${search}". Try a different word, or clear the search.`
+                  : 'Try another condition — new toys are added as they are shared.'
+              }
+            />
+          )
+        }
+        renderItem={({ item, index }) => (
+          // Past the first screenful the stagger is invisible and only adds
+          // latency, so the delay is capped rather than growing with the index.
+          <Animated.View
+            entering={FadeInDown.delay(Math.min(index, 7) * theme.motion.stagger).duration(theme.motion.base)}
+          >
+            <ToyRow
+              item={item}
+              saves={saves}
+              onPress={() => router.push(`/toy-library/${item.id}`)}
+            />
+          </Animated.View>
+        )}
+        ListFooterComponent={
+          !loading && !error ? <OrganisationsRow onPress={() => router.push('/toy-library/organisations')} /> : null
+        }
+      />
+      <CornerMenu
+        label="Toy actions"
+        items={[
+          { label: 'Give a toy', icon: 'add', href: '/toys/new', primary: true },
+          { label: 'My toys', icon: 'cube-outline', href: '/toys' },
+          { label: 'My exchanges', icon: 'swap-horizontal-outline', href: '/exchanges', count: caps?.exchangeActions },
+          { label: 'Saved toys', icon: 'bookmark-outline', href: '/saved/toys' },
+        ]}
+      />
     </Screen>
   )
 }
@@ -261,7 +295,7 @@ export function ToyLibraryScreen() {
 const styles = StyleSheet.create({
   headerRow: { flexDirection: 'row', alignItems: 'flex-start', gap: theme.spacing(2) },
   headerTitle: { flex: 1 },
-  giveToy: { paddingVertical: theme.spacing(2), paddingHorizontal: theme.spacing(3) },
+  menuSpacer: { width: 48 },
   searchBar: {
     borderRadius: theme.radii.md,
     borderWidth: theme.border.thin,

@@ -101,3 +101,25 @@ describe('relativeTime', () => {
     expect(relativeTime('2026-08-31T12:00:00Z', now)).toBe('yesterday')
   })
 })
+
+describe('relativeTime on Hermes (no Intl.RelativeTimeFormat)', () => {
+  // Hermes does not implement Intl.RelativeTimeFormat; on device it is
+  // undefined and `new` on it crashed the whole inbox (2026-09-01). Node and
+  // Chromium both have it, which is why nothing above ever caught that.
+  const original = (Intl as { RelativeTimeFormat?: unknown }).RelativeTimeFormat
+  beforeAll(() => {
+    delete (Intl as { RelativeTimeFormat?: unknown }).RelativeTimeFormat
+  })
+  afterAll(() => {
+    ;(Intl as { RelativeTimeFormat?: unknown }).RelativeTimeFormat = original
+  })
+
+  const now = Date.parse('2026-09-01T12:00:00Z')
+
+  it('renders the same strings the Intl path renders', () => {
+    expect(relativeTime('2026-09-01T11:59:30Z', now)).toBe('30 seconds ago')
+    expect(relativeTime('2026-09-01T09:00:00Z', now)).toBe('3 hours ago')
+    expect(relativeTime('2026-08-31T12:00:00Z', now)).toBe('yesterday')
+    expect(relativeTime('2026-08-25T12:00:00Z', now)).toBe('last week')
+  })
+})

@@ -1,0 +1,73 @@
+# The Hermes-runtime smoke: sign in and land on every tab, asserting each
+# screen's own content rendered. Jest runs on Node and Playwright on Chromium;
+# this suite is the only layer that executes the app's JS on Hermes, where the
+# runtime is smaller — Intl.RelativeTimeFormat being undefined there crashed
+# the whole Inbox on 2026-09-01 while every other layer stayed green. A screen
+# that throws during render never shows its subtitle, so each assert below is
+# a crash detector, not a copy check.
+#
+# DEVICE_EMAIL / DEVICE_PASSWORD come from `maestro test --env`, fed by
+# scripts/provision-device-parent.mjs — see sign-out-clears-session.yaml for
+# why they are deliberately not given env: defaults here.
+appId: com.splatconnect.mobile
+---
+- clearState
+- runFlow: ../subflows/launch.yaml
+# On iOS clearState wipes app data but NOT the Keychain, and the session lives
+# in expo-secure-store — so a prior run's sign-in survives and the app boots
+# straight into the tabs. Sign in only when the gate is actually showing.
+- runFlow:
+    when:
+      visible:
+        id: "auth-tab-signin"
+    commands:
+      - tapOn:
+          id: "email-input"
+      - inputText: ${DEVICE_EMAIL}
+      - tapOn:
+          id: "password-input"
+      - inputText: ${DEVICE_PASSWORD}
+      - hideKeyboard
+      - tapOn:
+          id: "auth-submit"
+      # iOS offers to save the password a beat after sign-in, and the system
+      # alert owns the whole accessibility hierarchy until dismissed — every
+      # assert after it would fail behind the sheet. Inside this branch on
+      # purpose: it only ever appears after an actual sign-in.
+      - tapOn:
+          text: "Not Now"
+          optional: true
+
+# Signed-in landing is Guides.
+- assertVisible:
+    text: "Step-by-step guides for switch-adapting toys and building assistive tech."
+
+
+- tapOn:
+    text: "Toy Library"
+- assertVisible:
+    text: "Adapted toys that families and organisations are giving away."
+
+- tapOn:
+    text: "Explore"
+- assertVisible:
+    text: "Search everything, plus Learn, Get Involved and About."
+
+# Inbox must render an actual row, not just its header: rows are where
+# relativeTime runs, and the fixture seeds exactly one notification so this
+# assert exercises that path.
+# The tab's accessibilityLabel is "Inbox, N unread" while the seeded
+# notification is unread, so a bare "Inbox" matches nothing on iOS.
+- tapOn:
+    text: "Inbox.*"
+- assertVisible:
+    text: "Everything waiting on you, newest first."
+- assertVisible:
+    text: "Your idea was published as a design challenge"
+
+# iOS surfaces the centre button as its accessibilityLabel ("Open My SPLAT"),
+# not its visible caption — the testID is the same on both platforms.
+- tapOn:
+    id: "my-splat-button"
+- assertVisible:
+    text: "All of My SPLAT"

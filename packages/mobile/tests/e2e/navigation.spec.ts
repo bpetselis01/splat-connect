@@ -4,7 +4,7 @@ import { signUpNewAccount, uniqueSignupEmail, openChildProfile } from './helpers
 test('a signed-out visitor is sent to sign-in from any tab', async ({ page }) => {
   await page.goto('/guides')
   await expect(page).toHaveURL(/\/sign-in$/)
-  await expect(page.getByText('Welcome Back')).toBeVisible()
+  await expect(page.getByTestId('auth-tab-signin')).toBeVisible()
 })
 
 test('the selected profile segment persists across a re-visit', async ({ page }) => {

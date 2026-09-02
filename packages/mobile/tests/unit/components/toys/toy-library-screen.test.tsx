@@ -24,6 +24,12 @@ jest.mock('../../../../lib/saves', () => ({
   useSaves: () => ({ savedIds: NO_SAVES, isSaved: () => false, toggle: mockToggle }),
 }))
 
+// The CornerMenu shows an exchange-action count from capabilities; the screen
+// must render without them (signed out, or the fetch failing).
+jest.mock('../../../../lib/capabilities', () => ({
+  useCapabilities: () => ({ caps: null, loading: false, refresh: jest.fn() }),
+}))
+
 const toy = (over: object) => ({
   id: 'toy1',
   owner_id: 'u1',
@@ -160,7 +166,8 @@ describe('ToyLibraryScreen', () => {
     mockGet.mockResolvedValue([toy({ id: 't1', name: 'Bubble machine' })])
     render(<ToyLibraryScreen />)
     await screen.findByText('Bubble machine')
-    fireEvent.press(screen.getByLabelText('+ Give a toy'))
+    fireEvent.press(screen.getByLabelText('Toy actions'))
+    fireEvent.press(screen.getByLabelText('Give a toy'))
     expect(mockPush).toHaveBeenCalledWith('/toys/new')
     fireEvent.press(screen.getByLabelText('Organisations'))
     expect(mockPush).toHaveBeenCalledWith('/toy-library/organisations')

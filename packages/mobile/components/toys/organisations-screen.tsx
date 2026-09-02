@@ -1,6 +1,6 @@
 // packages/mobile/components/toys/organisations-screen.tsx
 import { useEffect, useState } from 'react'
-import { View, Text, FlatList, StyleSheet } from 'react-native'
+import { View, Text, FlatList, RefreshControl, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import type { Organization } from '@splat-connect/types'
@@ -49,10 +49,16 @@ export function OrganisationsScreen() {
   // Bumping this re-runs the fetch — the retry button's handle, same as
   // toy-library-screen's reloadKey.
   const [reloadKey, setReloadKey] = useState(0)
+  const [refreshing, setRefreshing] = useState(false)
+
+  const onRefresh = () => {
+    setRefreshing(true)
+    setReloadKey((k) => k + 1)
+  }
 
   useEffect(() => {
     let ignore = false
-    setLoading(true)
+    if (!refreshing) setLoading(true)
     setError(null)
     apiClient
       .get<OrgRow[]>('/api/public/organizations')
@@ -64,7 +70,10 @@ export function OrganisationsScreen() {
         if (!ignore) setError("Couldn't load organisations.")
       })
       .finally(() => {
-        if (!ignore) setLoading(false)
+        if (!ignore) {
+          setLoading(false)
+          setRefreshing(false)
+        }
       })
     return () => {
       ignore = true
@@ -97,6 +106,9 @@ export function OrganisationsScreen() {
           keyExtractor={(o) => o.id}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.ink} />
+          }
           renderItem={({ item }) => (
             <OrgRow item={item} onPress={() => router.push(`/toy-library/organisation/${item.id}`)} />
           )}

@@ -6,7 +6,7 @@
 //
 // The native header carries the type's name (app/(my)/_layout.tsx).
 import { useCallback, useEffect, useState } from 'react'
-import { View, Text, StyleSheet } from 'react-native'
+import { View, Text, ScrollView, RefreshControl, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import type { SaveSlug } from '@splat-connect/types'
@@ -72,10 +72,18 @@ export function SavedListScreen({ slug }: { slug: SaveSlug }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
   const [reloadKey, setReloadKey] = useState(0)
+  const [refreshing, setRefreshing] = useState(false)
+
+  const onRefresh = () => {
+    setRefreshing(true)
+    setReloadKey((k) => k + 1)
+  }
 
   useEffect(() => {
     let ignore = false
-    setLoading(true)
+    // A pull-driven reload keeps the current rows on screen; skeletons are
+    // for arriving with nothing.
+    if (!refreshing) setLoading(true)
     setError(false)
     apiClient
       .get<SavedEntity[]>(`/api/saves/${slug}`)
@@ -87,7 +95,10 @@ export function SavedListScreen({ slug }: { slug: SaveSlug }) {
         if (!ignore) setError(true)
       })
       .finally(() => {
-        if (!ignore) setLoading(false)
+        if (!ignore) {
+          setLoading(false)
+          setRefreshing(false)
+        }
       })
     return () => {
       ignore = true
@@ -129,7 +140,16 @@ export function SavedListScreen({ slug }: { slug: SaveSlug }) {
           <Button label={kind.browseLabel} variant="accent" onPress={() => router.push(kind.browse)} style={styles.retry} />
         </EmptyState>
       ) : (
-        <View>
+        // A ScrollView, not a View: this used to be a static container, which
+        // capped the shelf at one screenful — anything below the fold was
+        // unreachable.
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.listContent}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.ink} />
+          }
+        >
           {items.map((item) => {
             // tutorials/challenges carry title; toys carry name.
             const label = item.title ?? item.name ?? ''
@@ -165,13 +185,14 @@ export function SavedListScreen({ slug }: { slug: SaveSlug }) {
               </View>
             )
           })}
-        </View>
+        </ScrollView>
       )}
     </Screen>
   )
 }
 
 const styles = StyleSheet.create({
+  listContent: { paddingBottom: theme.spacing(6) },
   retry: { marginTop: theme.spacing(5), alignSelf: 'center', paddingHorizontal: theme.spacing(6) },
   saveHost: { position: 'relative', marginBottom: theme.spacing(3) },
   saveButtonWrap: { position: 'absolute', top: 2, right: 2 },

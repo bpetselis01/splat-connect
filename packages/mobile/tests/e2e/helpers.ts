@@ -192,27 +192,27 @@ export async function deleteUser(id: string) {
  */
 export async function signUpNewAccount(page: Page, email: string) {
   await page.goto('/sign-in')
-  await page.getByText('Create an account').click()
-  await page.getByPlaceholder('Name').fill('E2E Contributor')
-  await page.getByPlaceholder('Email').fill(email)
-  await page.getByPlaceholder('Password', { exact: true }).fill(PASSWORD)
-  await page.getByPlaceholder('Confirm Password').fill(PASSWORD)
+  await page.getByTestId('auth-tab-signup').click()
+  await page.getByLabel('Full name', { exact: true }).fill('E2E Contributor')
+  await page.getByLabel('Email', { exact: true }).fill(email)
+  await page.getByLabel('Password', { exact: true }).fill(PASSWORD)
+  await page.getByLabel('Confirm password', { exact: true }).fill(PASSWORD)
   await page.getByTestId('accept-contributor-terms').click()
 
   const [signupResponse] = await Promise.all([
     page.waitForResponse(
       (res) => res.url().includes('/auth/v1/signup') && res.request().method() === 'POST'
     ),
-    page.getByText('Sign Up').click(),
+    page.getByTestId('auth-submit').click(),
   ])
   const body = await signupResponse.json()
   const userId = body.user?.id ?? body.id
   await adminClient().auth.admin.updateUserById(userId, { email_confirm: true })
 
   await page.getByText('Back to sign in').click()
-  await page.getByPlaceholder('Email').fill(email)
-  await page.getByPlaceholder('Password').fill(PASSWORD)
-  await page.getByText('Sign In', { exact: true }).click()
+  await page.getByLabel('Email', { exact: true }).fill(email)
+  await page.getByLabel('Password', { exact: true }).fill(PASSWORD)
+  await page.getByTestId('auth-submit').click()
   await expect(page).toHaveURL(/\/guides$/)
 }
 
@@ -237,9 +237,9 @@ export async function openChildProfile(page: Page) {
 /** Sign in through the sign-in screen (it defaults to sign-in mode). */
 export async function signIn(page: Page, email: string, password: string) {
   await page.goto('/sign-in')
-  await page.getByPlaceholder('Email').fill(email)
-  await page.getByPlaceholder('Password').fill(password)
-  await page.getByText('Sign In', { exact: true }).click()
+  await page.getByLabel('Email', { exact: true }).fill(email)
+  await page.getByLabel('Password', { exact: true }).fill(password)
+  await page.getByTestId('auth-submit').click()
 }
 
 /** From a fresh sign-in, reach one of the three step screens of a new child. */

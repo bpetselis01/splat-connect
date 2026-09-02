@@ -330,7 +330,14 @@ export function Editor({ id }: { id: string }) {
 
       <StepPills steps={pills} active={activeStep} onSelect={(s) => setActiveStep(s as ToyStepId)} />
 
-      <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.body}
+        showsVerticalScrollIndicator={false}
+        // iOS: scroll the focused field clear of the keyboard — without this,
+        // everything below the fold types blind. Android already resizes the
+        // window (adjustResize) and ignores the prop.
+        automaticallyAdjustKeyboardInsets
+      >
         {activeStep === 'details' ? (
           <View style={styles.detailsForm}>
             <TextField label="Name" placeholder="Name" value={name} onChangeText={setName} />

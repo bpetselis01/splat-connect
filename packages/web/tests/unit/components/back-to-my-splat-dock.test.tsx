@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { BackToMySplatDock } from '@/components/back-to-my-splat-dock'
 
-const pathname = vi.hoisted(() => ({ current: '/library' }))
+const pathname = vi.hoisted(() => ({ current: '/learn' }))
 
 vi.mock('next/navigation', () => ({
   usePathname: () => pathname.current,
@@ -16,7 +16,7 @@ vi.mock('next/link', () => ({
 
 describe('BackToMySplatDock', () => {
   beforeEach(() => {
-    pathname.current = '/library'
+    pathname.current = '/learn'
   })
 
   // Tests: the dock is the way back to My SPLAT from a page with no header
@@ -56,5 +56,34 @@ describe('BackToMySplatDock', () => {
   it('renders nothing for a signed-out visitor', () => {
     render(<BackToMySplatDock signedIn={false} />)
     expect(screen.queryByRole('link', { name: /Back to My SPLAT/ })).not.toBeInTheDocument()
+  })
+
+  // Tests: on the two library list pages the dock grows into the corner menu —
+  //        a trigger plus that page's actions, with Back to My SPLAT kept as
+  //        the anchor item so the way back never disappears
+  // How:   renders signed in on /library and /toy-library
+  it('renders the corner menu on /library, anchor link included', () => {
+    pathname.current = '/library'
+    render(<BackToMySplatDock signedIn />)
+    expect(screen.getByRole('button', { name: 'Library actions' })).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.getByRole('link', { name: /Back to My SPLAT/, hidden: true })).toHaveAttribute('href', '/dashboard')
+    expect(screen.getByRole('link', { name: 'Upload a tutorial', hidden: true })).toHaveAttribute('href', '/upload')
+  })
+
+  it('renders the corner menu on /toy-library with toy actions', () => {
+    pathname.current = '/toy-library'
+    render(<BackToMySplatDock signedIn />)
+    expect(screen.getByRole('button', { name: 'Toy library actions' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Give a toy', hidden: true })).toHaveAttribute('href', '/dashboard/toys/new')
+  })
+
+  // Tests: only the list pages get the menu — a toy's detail page keeps the
+  //        plain pill
+  // How:   renders signed in on a /toy-library/[id] path
+  it('keeps the plain pill on a library detail page', () => {
+    pathname.current = '/toy-library/abc123'
+    render(<BackToMySplatDock signedIn />)
+    expect(screen.getByRole('link', { name: /Back to My SPLAT/ })).toHaveAttribute('href', '/dashboard')
+    expect(screen.queryByRole('button', { name: 'Toy library actions' })).not.toBeInTheDocument()
   })
 })

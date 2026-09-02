@@ -1,6 +1,6 @@
 // packages/mobile/components/my-toys/list-screen.tsx
 import { useCallback, useEffect, useState } from 'react'
-import { View, Text, FlatList, StyleSheet, Image } from 'react-native'
+import { View, Text, FlatList, RefreshControl, StyleSheet, Image } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import type { GivenAwayToy, OfferType, Toy, ToyTransactionSummary } from '@splat-connect/types'
@@ -167,10 +167,18 @@ export function MyToysListScreen() {
   // Bumping this re-runs the fetch — the retry button's handle, same as
   // my-tutorials/list-screen.tsx's reloadKey.
   const [reloadKey, setReloadKey] = useState(0)
+  const [refreshing, setRefreshing] = useState(false)
+
+  const onRefresh = () => {
+    setRefreshing(true)
+    setReloadKey((k) => k + 1)
+  }
 
   useEffect(() => {
     let ignore = false
-    setLoading(true)
+    // A pull-driven reload keeps the current rows on screen; skeletons are
+    // for arriving with nothing.
+    if (!refreshing) setLoading(true)
     setError(null)
     Promise.all([
       apiClient.get<Toy[]>('/api/toys'),
@@ -187,7 +195,10 @@ export function MyToysListScreen() {
         if (!ignore) setError("Couldn't load your toys.")
       })
       .finally(() => {
-        if (!ignore) setLoading(false)
+        if (!ignore) {
+          setLoading(false)
+          setRefreshing(false)
+        }
       })
     return () => {
       ignore = true
@@ -272,6 +283,9 @@ export function MyToysListScreen() {
         </EmptyState>
       ) : (
         <FlatList
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.ink} />
+          }
           data={activeToys}
           keyExtractor={(t) => t.id}
           showsVerticalScrollIndicator={false}

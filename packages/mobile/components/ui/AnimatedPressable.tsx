@@ -1,5 +1,6 @@
 import { Pressable, type PressableProps, type StyleProp, type ViewStyle } from 'react-native'
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated'
+import * as Haptics from 'expo-haptics'
 import { theme } from '../../lib/theme'
 
 const ReanimatedPressable = Animated.createAnimatedComponent(Pressable)
@@ -32,6 +33,9 @@ export function AnimatedPressable({
         // Spring rather than timing: the release settles instead of stopping
         // dead, which is what makes the press read as physical.
         scale.value = withSpring(target, { ...theme.motion.press })
+        // The tap you can feel, not just see — fire-and-forget because web
+        // and haptic-less hardware reject rather than no-op.
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {})
         onPressIn?.(e)
       }}
       onPressOut={(e) => {

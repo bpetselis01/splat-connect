@@ -17,6 +17,12 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL ?? `http://localhost:${apiPort}`,
   },
   typedRoutes: true,
+  // The phone reaches the dev server over Tailscale (see the mobile .env.local,
+  // which pins the same IP). Next dev blocks cross-origin requests to its own
+  // /_next assets from unlisted origins, which silently breaks hydration on
+  // that host — nothing interactive works, and sign-in falls back to a native
+  // GET submit. Update alongside the mobile .env.local if the IP changes.
+  allowedDevOrigins: ['100.102.50.23'],
   // Runs before middleware, so /my-tutorials never reaches the route table.
   // Permanent: the page merged into /dashboard/tutorials, it did not move
   // temporarily. (/dashboard itself is the account hub, not the tutorial list.)

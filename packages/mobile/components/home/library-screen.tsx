@@ -1,6 +1,6 @@
 // packages/mobile/components/home/library-screen.tsx
 import { useEffect, useState } from 'react'
-import { View, Text, FlatList, StyleSheet, Image } from 'react-native'
+import { View, Text, FlatList, RefreshControl, StyleSheet, Image } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import Animated, { FadeInDown } from 'react-native-reanimated'
@@ -20,6 +20,7 @@ import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { Badge } from '../ui/Badge'
 import { SaveButton } from '../ui/SaveButton'
+import { CornerMenu } from '../ui/CornerMenu'
 
 const FILTERS: { label: string; value: Difficulty | null }[] = [
   { label: 'All', value: null },
@@ -123,13 +124,21 @@ export function LibraryScreen() {
   const [search, setSearch] = useState('')
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null)
   const [kind, setKind] = useState<TutorialKind | null>(null)
-  // Bumping this re-runs the fetch — the retry button's handle, since the error
-  // state is a static view with no pull-to-refresh to lean on.
+  // Bumping this re-runs the fetch — the retry button's and pull-to-refresh's
+  // shared handle.
   const [reloadKey, setReloadKey] = useState(0)
+  const [refreshing, setRefreshing] = useState(false)
+
+  const onRefresh = () => {
+    setRefreshing(true)
+    setReloadKey((k) => k + 1)
+  }
 
   useEffect(() => {
     let ignore = false
-    setLoading(true)
+    // A pull-driven reload keeps the current rows on screen; skeletons are
+    // for arriving with nothing.
+    if (!refreshing) setLoading(true)
     setError(null)
     const path = difficulty ? `/api/public/tutorials?difficulty=${difficulty}` : '/api/public/tutorials'
     apiClient
@@ -142,7 +151,10 @@ export function LibraryScreen() {
         if (!ignore) setError("Couldn't load tutorials.")
       })
       .finally(() => {
-        if (!ignore) setLoading(false)
+        if (!ignore) {
+          setLoading(false)
+          setRefreshing(false)
+        }
       })
     return () => {
       ignore = true
@@ -160,115 +172,132 @@ export function LibraryScreen() {
     return matchesQuery && (!kind || t.kind === kind)
   })
 
+  // One always-mounted list: header, search and filters live inside it as
+  // ListHeaderComponent so they scroll away with the content instead of
+  // pinning the top half of the screen (they used to sit above the list as
+  // fixed views). Loading/error/empty render through ListEmptyComponent so
+  // the header holds across every state.
   return (
     <Screen>
-      <View style={styles.headerRow}>
-        <View style={styles.headerTitle}>
-          <ScreenHeader
-            title="Guides"
-            subtitle="Step-by-step guides for switch-adapting toys and building assistive tech."
-            showLogo
-          />
-        </View>
-        <Button
-          label="+ Add a guide"
-          variant="accent"
-          onPress={() => router.push('/guides/new')}
-          style={styles.addGuide}
-        />
-      </View>
+      <FlatList
+        key={`${difficulty ?? 'all'}`}
+        data={loading || error ? [] : visible}
+        keyExtractor={(t) => t.id}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.listContent}
+        keyboardShouldPersistTaps="handled"
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.ink} />
+        }
+        ListHeaderComponent={
+          <>
+            <View style={styles.headerRow}>
+              <View style={styles.headerTitle}>
+                <ScreenHeader
+                  title="Guides"
+                  subtitle="Step-by-step guides for switch-adapting toys and building assistive tech."
+                  showLogo
+                />
+              </View>
+              {/* Clears the pinned CornerMenu trigger so the title never runs under it. */}
+              <View style={styles.menuSpacer} />
+            </View>
 
-      <TextField
-        icon="search"
-        placeholder="Search by toy name"
-        value={search}
-        onChangeText={setSearch}
-        boxStyle={styles.searchBar}
-      />
+            <TextField
+              icon="search"
+              placeholder="Search by toy name"
+              value={search}
+              onChangeText={setSearch}
+              boxStyle={styles.searchBar}
+            />
 
-      <View style={styles.filterRow}>
-        {FILTERS.map((f) => (
-          <Chip
-            key={f.label}
-            label={f.label}
-            active={difficulty === f.value}
-            onPress={() => setDifficulty(f.value)}
-          />
-        ))}
-      </View>
+            <View style={styles.filterRow}>
+              {FILTERS.map((f) => (
+                <Chip
+                  key={f.label}
+                  label={f.label}
+                  active={difficulty === f.value}
+                  onPress={() => setDifficulty(f.value)}
+                />
+              ))}
+            </View>
 
-      <View style={styles.divider} />
+            <View style={styles.divider} />
 
-      <View style={[styles.filterRow, styles.kindRow]}>
-        {KIND_FILTERS.map((f) => (
-          <Chip
-            key={f.value}
-            label={f.label}
-            active={kind === f.value}
-            onPress={() => setKind((k) => (k === f.value ? null : f.value))}
-          />
-        ))}
-      </View>
+            <View style={[styles.filterRow, styles.kindRow]}>
+              {KIND_FILTERS.map((f) => (
+                <Chip
+                  key={f.value}
+                  label={f.label}
+                  active={kind === f.value}
+                  onPress={() => setKind((k) => (k === f.value ? null : f.value))}
+                />
+              ))}
+            </View>
 
-      {!loading && !error ? (
-        <Text style={styles.countLine}>
-          {visible.length} guide{visible.length === 1 ? '' : 's'}
-        </Text>
-      ) : null}
-
-      {loading ? (
-        <View>
-          <SkeletonRow />
-          <SkeletonRow />
-          <SkeletonRow />
-        </View>
-      ) : error ? (
-        <EmptyState
-          icon="cloud-offline-outline"
-          title="Couldn't load tutorials."
-          hint="Check your connection and try again."
-        >
-          <Button
-            label="Try again"
-            variant="secondary"
-            onPress={() => setReloadKey((k) => k + 1)}
-            style={styles.retry}
-          />
-        </EmptyState>
-      ) : visible.length === 0 ? (
-        <EmptyState
-          icon="search-outline"
-          title="No tutorials here yet"
-          hint={
-            search
-              ? `Nothing matches "${search}". Try a different word, or clear the search.`
-              : 'Try another difficulty — new guides are added as contributors share them.'
-          }
-        />
-      ) : (
-        <FlatList
-          key={`${difficulty ?? 'all'}`}
-          data={visible}
-          keyExtractor={(t) => t.id}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContent}
-          renderItem={({ item, index }) => (
-            // Past the first screenful the stagger is invisible and only adds
-            // latency, so the delay is capped rather than growing with the index.
-            <Animated.View
-              entering={FadeInDown.delay(Math.min(index, 7) * theme.motion.stagger).duration(
-                theme.motion.base
-              )}
+            {!loading && !error ? (
+              <Text style={styles.countLine}>
+                {visible.length} guide{visible.length === 1 ? '' : 's'}
+              </Text>
+            ) : null}
+          </>
+        }
+        ListEmptyComponent={
+          loading ? (
+            <View>
+              <SkeletonRow />
+              <SkeletonRow />
+              <SkeletonRow />
+            </View>
+          ) : error ? (
+            <EmptyState
+              icon="cloud-offline-outline"
+              title="Couldn't load tutorials."
+              hint="Check your connection and try again."
             >
-              <TutorialRow
-                item={item}
-                saves={saves}
-                onPress={() => router.push({ pathname: '/guides/[id]', params: { id: item.id } })}
+              <Button
+                label="Try again"
+                variant="secondary"
+                onPress={() => setReloadKey((k) => k + 1)}
+                style={styles.retry}
               />
-            </Animated.View>
-          )}
-        />
-      )}
+            </EmptyState>
+          ) : (
+            <EmptyState
+              icon="search-outline"
+              title="No tutorials here yet"
+              hint={
+                search
+                  ? `Nothing matches "${search}". Try a different word, or clear the search.`
+                  : 'Try another difficulty — new guides are added as contributors share them.'
+              }
+            />
+          )
+        }
+        renderItem={({ item, index }) => (
+          // Past the first screenful the stagger is invisible and only adds
+          // latency, so the delay is capped rather than growing with the index.
+          <Animated.View
+            entering={FadeInDown.delay(Math.min(index, 7) * theme.motion.stagger).duration(
+              theme.motion.base
+            )}
+          >
+            <TutorialRow
+              item={item}
+              saves={saves}
+              onPress={() => router.push({ pathname: '/guides/[id]', params: { id: item.id } })}
+            />
+          </Animated.View>
+        )}
+      />
+      <CornerMenu
+        label="Guide actions"
+        items={[
+          { label: 'Add a guide', icon: 'add', href: '/guides/new', primary: true },
+          { label: 'My guides', icon: 'book-outline', href: '/tutorials' },
+          { label: 'Saved guides', icon: 'bookmark-outline', href: '/saved/tutorials' },
+        ]}
+      />
     </Screen>
   )
 }
@@ -276,7 +305,7 @@ export function LibraryScreen() {
 const styles = StyleSheet.create({
   headerRow: { flexDirection: 'row', alignItems: 'flex-start', gap: theme.spacing(2) },
   headerTitle: { flex: 1 },
-  addGuide: { paddingVertical: theme.spacing(2), paddingHorizontal: theme.spacing(3) },
+  menuSpacer: { width: 48 },
   searchBar: {
     borderRadius: theme.radii.md,
     borderWidth: theme.border.thin,

@@ -13,12 +13,13 @@ appId: com.splatconnect.mobile
 - runFlow: ../subflows/launch.yaml
 
 # The app now lives behind sign-in — a signed-out launch lands directly on
-# the sign-in screen. Button sets accessibilityLabel={label}, so "Sign In"
-# etc. are addressable by text. TextField renders its label as a sibling
-# <Text> with the same string as the input's own accessibilityLabel, so
-# "Email"/"Password" match two nodes — target the inputs by testID instead.
+# the sign-in screen. Everything here is addressed by testID rather than text:
+# "Sign in" is the card heading, a switch tab AND the submit button, and
+# TextField renders its label as a sibling <Text> carrying the same string as
+# the input's own accessibilityLabel. Every one of those matches two or more
+# nodes, and a text-matched tap lands on whichever comes first.
 - assertVisible:
-    text: "Welcome Back"
+    id: "auth-tab-signin"
 - tapOn:
     id: "email-input"
 - inputText: ${DEVICE_EMAIL}
@@ -27,7 +28,7 @@ appId: com.splatconnect.mobile
 - inputText: ${DEVICE_PASSWORD}
 - hideKeyboard
 - tapOn:
-    text: "Sign In"
+    id: "auth-submit"
 
 # A signed-in visitor lands on the Guides tab.
 - assertVisible:
@@ -43,4 +44,4 @@ appId: com.splatconnect.mobile
 - assertVisible:
     text: "Guides"
 - assertNotVisible:
-    text: "Welcome Back"
+    id: "auth-tab-signin"
