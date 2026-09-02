@@ -166,7 +166,7 @@ describe('ToyLibraryScreen', () => {
     mockGet.mockResolvedValue([toy({ id: 't1', name: 'Bubble machine' })])
     render(<ToyLibraryScreen />)
     await screen.findByText('Bubble machine')
-    fireEvent.press(screen.getByLabelText('Toy actions'))
+    // Give a toy is the corner button itself — no trigger press first.
     fireEvent.press(screen.getByLabelText('Give a toy'))
     expect(mockPush).toHaveBeenCalledWith('/toys/new')
     fireEvent.press(screen.getByLabelText('Organisations'))
