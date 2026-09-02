@@ -184,7 +184,7 @@ export function InboxScreen({ showHeader = false }: { showHeader?: boolean }) {
 
   if (loading) {
     return (
-      <Screen>
+      <Screen ownHeader={showHeader}>
         {header}
         <SkeletonRow />
         <SkeletonRow />
@@ -194,7 +194,7 @@ export function InboxScreen({ showHeader = false }: { showHeader?: boolean }) {
 
   if (notifications.length === 0) {
     return (
-      <Screen>
+      <Screen ownHeader={showHeader}>
         {header}
         <EmptyState
           icon="notifications-outline"
@@ -206,7 +206,7 @@ export function InboxScreen({ showHeader = false }: { showHeader?: boolean }) {
   }
 
   return (
-    <Screen>
+    <Screen ownHeader={showHeader}>
       {header}
       <ScrollView
         showsVerticalScrollIndicator={false}

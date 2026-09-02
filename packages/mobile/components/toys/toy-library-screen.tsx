@@ -183,7 +183,7 @@ export function ToyLibraryScreen() {
   // fixed views). Loading/error/empty render through ListEmptyComponent so
   // the header holds across every state.
   return (
-    <Screen>
+    <Screen ownHeader>
       <FlatList
         key={condition}
         data={loading || error ? [] : visible}

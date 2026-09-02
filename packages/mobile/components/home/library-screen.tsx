@@ -178,7 +178,7 @@ export function LibraryScreen() {
   // fixed views). Loading/error/empty render through ListEmptyComponent so
   // the header holds across every state.
   return (
-    <Screen>
+    <Screen ownHeader>
       <FlatList
         key={`${difficulty ?? 'all'}`}
         data={loading || error ? [] : visible}
