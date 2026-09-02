@@ -13,7 +13,7 @@ import { Screen } from '../../ui/Screen'
 import { TextField } from '../../ui/TextField'
 import { Chip } from '../../ui/Chip'
 import { ErrorRow } from '../../auth-screen'
-import { SaveChip } from './save-chip'
+import { SectionFooter } from '../section-footer'
 
 const KIND_OPTIONS: { label: string; value: TutorialKind }[] = [
   { label: KIND_LABEL.toy_adaptation, value: 'toy_adaptation' },
@@ -30,12 +30,11 @@ const MATURITY_OPTIONS = (Object.keys(MATURITY_LABEL) as TutorialMaturity[]).map
 }))
 
 export function DetailsSection() {
-  const { tutorial, save, saveState, saveError } = useDraft()
+  const { tutorial, save, saveError } = useDraft()
   if (!tutorial) return null
 
   return (
     <Screen>
-      <SaveChip state={saveState} />
       <ScrollView showsVerticalScrollIndicator={false} automaticallyAdjustKeyboardInsets>
         <TextField
           label="Title"
@@ -90,6 +89,7 @@ export function DetailsSection() {
 
         <ErrorRow message={saveError} />
       </ScrollView>
+      <SectionFooter section="details" />
     </Screen>
   )
 }

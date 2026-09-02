@@ -34,6 +34,8 @@ export type DraftSaveState = 'idle' | 'saving' | 'saved' | 'error'
 
 const SAVE_ERROR = 'Could not save. Your changes are still here - try again.'
 const DEBOUNCE_MS = 250
+// How long "Saved" stays up before the chip goes quiet again.
+const SAVED_VISIBLE_MS = 2000
 
 export interface TutorialDraft {
   tutorial: EditorTutorial | null
@@ -63,6 +65,7 @@ export function useTutorialDraft(id: string): TutorialDraft {
   const pendingFields = useRef<Record<string, unknown>>({})
   const pendingItems = useRef<Partial<Record<'parts' | 'tools', ItemRow[]>>>({})
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const savedTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const writes = useRef<Promise<unknown>>(Promise.resolve())
   // The token and status the next write must quote. Refs, not state: a write
   // queued behind another needs the value the earlier one established, and
@@ -151,6 +154,16 @@ export function useTutorialDraft(id: string): TutorialDraft {
         if (hasFields) await patchNow(fields)
         for (const noun of nouns) await postItems(noun, items[noun] as ItemRow[])
         setSaveState('saved')
+        // "Saved" is news, and news goes stale. One provider serves the hub and
+        // all six sections, so a chip left reading Saved followed the
+        // contributor to the next screen and reported a write they had not made
+        // there — Safety greeted you with Saved before you touched it. Clearing
+        // it makes the chip say what it means: a save just happened.
+        if (savedTimer.current) clearTimeout(savedTimer.current)
+        savedTimer.current = setTimeout(
+          () => setSaveState((s) => (s === 'saved' ? 'idle' : s)),
+          SAVED_VISIBLE_MS
+        )
       })
       .catch((err) => {
         console.error('[useTutorialDraft] save failed:', err)
@@ -192,6 +205,7 @@ export function useTutorialDraft(id: string): TutorialDraft {
   useEffect(() => {
     return () => {
       if (timer.current) clearTimeout(timer.current)
+      if (savedTimer.current) clearTimeout(savedTimer.current)
     }
   }, [])
 
