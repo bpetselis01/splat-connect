@@ -43,29 +43,37 @@ export function TermsCheckbox({ testID, checked, onPress }: {
   onPress: () => void
 }) {
   return (
-    <Pressable
-      testID={testID}
-      onPress={onPress}
-      accessibilityRole="checkbox"
-      accessibilityState={{ checked }}
-      style={styles.termsRow}
-    >
-      <Ionicons name={checked ? 'checkbox' : 'square-outline'} size={22} color={theme.colors.primary} />
-      {/* Web's wording, which flips rather than staying imperative once the box
-          is ticked — the row then reads as a statement of fact. */}
-      <Text style={styles.termsText}>
-        {checked ? (
-          'Contributor terms accepted'
-        ) : (
-          <>
-            Read and accept the{' '}
-            <Text onPress={openContributorTerms} style={styles.termsLink}>
-              contributor terms
-            </Text>
-          </>
-        )}
-      </Text>
-    </Pressable>
+    <View>
+      <Pressable
+        testID={testID}
+        onPress={onPress}
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked }}
+        style={styles.termsRow}
+      >
+        <Ionicons name={checked ? 'checkbox' : 'square-outline'} size={22} color={theme.colors.primary} />
+        {/* Web's wording, which flips rather than staying imperative once the box
+            is ticked — the row then reads as a statement of fact. */}
+        <Text style={styles.termsText}>
+          {checked ? 'Contributor terms accepted' : 'Read and accept the contributor terms'}
+        </Text>
+      </Pressable>
+
+      {/* The link is a sibling of the toggle, not a Text nested inside it.
+          Nested, it sat under the row's centre point once the copy shortened,
+          so a tap aimed at the checkbox opened the browser instead — the box
+          never ticked and the submit button stayed disabled. A unit test cannot
+          see this (fireEvent.press targets an element, not a coordinate); only
+          the e2e, which clicks the centre, caught it. */}
+      <Pressable
+        accessibilityRole="link"
+        onPress={openContributorTerms}
+        style={styles.termsLinkRow}
+        hitSlop={6}
+      >
+        <Text style={styles.termsLink}>Read the terms</Text>
+      </Pressable>
+    </View>
   )
 }
 
@@ -443,8 +451,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing(2),
-    marginBottom: theme.spacing(3),
   },
+  termsLinkRow: { marginLeft: theme.spacing(8), marginTop: theme.spacing(1), marginBottom: theme.spacing(3) },
   termsText: { flex: 1, color: theme.colors.muted, fontFamily: theme.fonts.regular },
   termsLink: { color: theme.colors.primaryDark, fontFamily: theme.fonts.semiBold, textDecorationLine: 'underline' },
   checkEmailText: {

@@ -168,7 +168,7 @@ describe('ProfileScreen', () => {
     const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(true)
     render(<ProfileScreen />)
 
-    fireEvent.press(screen.getByText('contributor terms'))
+    fireEvent.press(screen.getByText('Read the terms'))
     expect(openURL).toHaveBeenCalledWith(expect.stringContaining('/legal/contributor-terms'))
   })
 
