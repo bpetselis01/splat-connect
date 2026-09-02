@@ -259,11 +259,21 @@ tutorials.patch('/:id', async (c) => {
 
 tutorials.delete('/:id', async (c) => {
   const supabase = createUserClient(c.get('token'))
-  const { error } = await supabase
+  // .select() is load-bearing, not decoration. RLS (001_schema.sql
+  // "Contributors can delete own draft tutorials") only admits a delete while
+  // status = 'draft', and a policy that matches zero rows is not an error — so
+  // without the returned rows this route answered 204 for a delete it had not
+  // performed, and every client believed it. Mobile's editor showed a Delete
+  // button on an approved guide, navigated away on the 204, and left the guide
+  // exactly where it was.
+  const { data, error } = await supabase
     .from('tutorials')
     .delete()
     .eq('id', c.req.param('id'))
+    .select('id')
   if (error) return c.json({ error: error.message }, 500)
+  if (!data || data.length === 0)
+    return c.json({ error: 'Only draft guides can be deleted.' }, 409)
   return c.body(null, 204)
 })
 
