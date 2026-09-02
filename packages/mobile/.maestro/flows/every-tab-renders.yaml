@@ -18,7 +18,8 @@ appId: com.splatconnect.mobile
 # straight into the tabs. Sign in only when the gate is actually showing.
 - runFlow:
     when:
-      visible: "Welcome Back"
+      visible:
+        id: "auth-tab-signin"
     commands:
       - tapOn:
           id: "email-input"
@@ -28,7 +29,7 @@ appId: com.splatconnect.mobile
       - inputText: ${DEVICE_PASSWORD}
       - hideKeyboard
       - tapOn:
-          text: "Sign In"
+          id: "auth-submit"
       # iOS offers to save the password a beat after sign-in, and the system
       # alert owns the whole accessibility hierarchy until dismissed — every
       # assert after it would fail behind the sheet. Inside this branch on
