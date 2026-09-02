@@ -12,10 +12,10 @@ appId: com.splatconnect.mobile
 - clearState
 - runFlow: ../subflows/launch.yaml
 - assertVisible:
-    text: "Welcome Back"
-# TextField renders its label as a sibling <Text> with the same string as the
-# input's own accessibilityLabel, so "Email"/"Password" match two nodes —
-# target the inputs by testID instead.
+    id: "auth-tab-signin"
+# Addressed by testID rather than text: "Sign in" is the card heading, a switch
+# tab AND the submit button, and TextField renders its label as a sibling <Text>
+# carrying the same string as the input's own accessibilityLabel.
 - tapOn:
     id: "email-input"
 - inputText: ${DEVICE_EMAIL}
@@ -24,7 +24,7 @@ appId: com.splatconnect.mobile
 - inputText: ${DEVICE_PASSWORD}
 - hideKeyboard
 - tapOn:
-    text: "Sign In"
+    id: "auth-submit"
 
 # Sign Out lives on Account, which is behind the MY SPLAT popover now — the
 # centre button, then the tile that opens it.
@@ -35,7 +35,7 @@ appId: com.splatconnect.mobile
 - tapOn:
     text: "Sign Out"
 - assertVisible:
-    text: "Welcome Back"
+    id: "auth-tab-signin"
 
 # The point of the flow: the cleared state must be what persisted, not just what
 # is on screen. secureStoreAdapter.removeItem has to have actually deleted the key.
@@ -43,6 +43,6 @@ appId: com.splatconnect.mobile
 - runFlow: ../subflows/launch.yaml
 # No tab to tap first: a signed-out launch lands on the sign-in screen.
 - assertVisible:
-    text: "Welcome Back"
+    id: "auth-tab-signin"
 - assertNotVisible:
     text: "Child profile"
