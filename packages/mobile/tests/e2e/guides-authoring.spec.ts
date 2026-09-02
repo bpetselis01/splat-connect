@@ -31,57 +31,87 @@ test('a new account writes a guide end to end and submits it for review', async 
 
   // --- Add a guide -------------------------------------------------------
   const title = uniqueTitle('E2E Mobile Authored')
-  await page.getByRole('button', { name: '+ Add a guide', exact: true }).click()
+  // The Guides tab's create pill became a corner-menu item in afe42958; the
+  // trigger is labelled by the menu, each entry by itself.
+  await page.getByRole('button', { name: 'Guide actions', exact: true }).click()
+  await page.getByRole('button', { name: 'Add a guide', exact: true }).click()
   await expect(page).toHaveURL(/\/guides\/new$/)
 
   await page.getByPlaceholder('Title').fill(title)
   await page.getByRole('button', { name: 'Create draft', exact: true }).click()
 
   // The signup form already accepted the contributor terms, so POST
-  // /api/tutorials is not gated and the draft opens straight away.
-  await expect(page).toHaveURL(/\/tutorials\/[0-9a-f-]{36}$/)
-  const id = page.url().split('/').pop() as string
+  // /api/tutorials is not gated and the draft opens straight away — onto the
+  // hub, which says what is still missing before anything has been typed.
+  await expect(page).toHaveURL(/\/tutorials\/[0-9a-f-]{36}/)
+  const id = (page.url().split('/tutorials/')[1] ?? '').split(/[/?]/)[0]
+  await expect(page.getByTestId('hub-created-note')).toBeVisible()
+  await expect(page.getByTestId('hub-submit')).toBeDisabled()
+
+  // Every save below is waited out rather than fired and forgotten: each PATCH
+  // carries the updated_at the screen last saw, and a stale one comes back 400
+  // — so a write has to be merged back into state before the next one starts.
+  // Autosave makes the writes closer together, so this matters more, not less.
+  const patched = () =>
+    page.waitForResponse(
+      (r) => r.url().includes(`/api/tutorials/${id}`) && r.request().method() === 'PATCH'
+    )
+  // The replace-set sub-resources answer 201, not 200 — one shared handler in
+  // packages/api/src/routes/sub-resource.ts serves parts, tools and stl-files.
+  const posted = (sub: string) =>
+    page.waitForResponse(
+      (r) => r.url().includes(`/api/tutorials/${id}/${sub}`) && r.request().method() === 'POST'
+    )
+  const backToHub = async () => {
+    await page.getByLabel('Back').click()
+    await expect(page.getByTestId('hub-submit')).toBeVisible()
+  }
 
   // --- Details -----------------------------------------------------------
-  await expect(page.getByRole('tab', { name: 'Details', exact: true })).toBeVisible()
-  await page.getByPlaceholder('Description').fill('Written by a Playwright E2E test.')
-  // The safety declaration gates submission; affirming it rides along on the
-  // same details save that the PATCH below waits out.
-  await page.getByRole('checkbox', { name: /checked this design against every point/ }).click()
-  // Waited out rather than fired and forgotten: every PATCH carries the
-  // updated_at the screen last saw, and a stale one comes back 409 — so each
-  // write has to have been merged back into state before the next one starts.
-  const detailsSaved = page.waitForResponse(
-    (r) => r.url().includes(`/api/tutorials/${id}`) && r.request().method() === 'PATCH'
-  )
-  await page.getByRole('button', { name: 'Save details', exact: true }).click()
-  expect((await detailsSaved).status()).toBe(200)
+  await page.getByTestId('hub-row-details').click()
+  let saved = patched()
+  await page.getByLabel('Description').fill('Written by a Playwright E2E test.')
+  expect((await saved).status()).toBe(200)
+  await backToHub()
+
+  // --- Safety ------------------------------------------------------------
+  // Its own screen now, and its own gate: nothing submits without it.
+  await page.getByTestId('hub-row-safety').click()
+  saved = patched()
+  await page.getByTestId('safety-declare').click()
+  expect((await saved).status()).toBe(200)
+  await backToHub()
+  await expect(page.getByTestId('hub-row-safety')).toContainText('Declared')
 
   // --- Parts -------------------------------------------------------------
-  await page.getByRole('tab', { name: 'Parts', exact: true }).click()
+  await page.getByTestId('hub-row-parts').click()
   await page.getByRole('button', { name: '+ Add a part', exact: true }).click()
+  let itemsSaved = posted('parts')
   await page.getByLabel('Part 1 name').fill('Micro switch')
+  expect((await itemsSaved).status()).toBe(201)
+  itemsSaved = posted('parts')
   await page.getByRole('button', { name: 'Increase quantity for part 1' }).click()
-  await page.getByRole('button', { name: 'Save parts', exact: true }).click()
+  expect((await itemsSaved).status()).toBe(201)
+  await backToHub()
+  // The assertion the old rail could not make: the hub reports what a section
+  // holds without being asked to refetch.
+  await expect(page.getByTestId('hub-row-parts')).toContainText('1 part')
 
   // --- Tools -------------------------------------------------------------
-  await page.getByRole('tab', { name: 'Tools', exact: true }).click()
+  await page.getByTestId('hub-row-tools').click()
   await page.getByRole('button', { name: '+ Add a tool', exact: true }).click()
+  itemsSaved = posted('tools')
   await page.getByLabel('Tool 1 name').fill('Soldering iron')
-  await page.getByRole('button', { name: 'Save tools', exact: true }).click()
+  expect((await itemsSaved).status()).toBe(201)
+  await backToHub()
+  await expect(page.getByTestId('hub-row-tools')).toContainText('1 tool')
 
-  // --- Review, mid-draft: the files gap holds Submit shut -----------------
-  await page.getByRole('tab', { name: 'Review', exact: true }).click()
-  const gaps = page.getByText(/^Still needed:/)
-  await expect(gaps).toContainText('The guide PDF')
-  await expect(gaps).toContainText('A photo')
-  // Saved, so no longer listed — this is what proves the two saves above landed.
-  await expect(gaps).not.toContainText('A part')
-  await expect(gaps).not.toContainText('A tool')
-  await expect(page.getByRole('button', { name: 'Submit for review', exact: true })).toBeDisabled()
+  // Files still hold Submit shut.
+  await expect(page.getByTestId('hub-row-files')).toContainText('Guide PDF and a photo')
+  await expect(page.getByTestId('hub-submit')).toBeDisabled()
 
   // --- Files -------------------------------------------------------------
-  await page.getByRole('tab', { name: 'Files', exact: true }).click()
+  await page.getByTestId('hub-row-files').click()
   await expect(page.getByText('No PDF yet')).toBeVisible()
 
   await chooseFile(page, 'Choose PDF from Files', PDF_FIXTURE)
@@ -91,14 +121,16 @@ test('a new account writes a guide end to end and submits it for review', async 
   await expect(page.getByText('tutorial.pdf')).toBeVisible()
 
   await chooseFile(page, 'Choose from library', PHOTO_FIXTURE)
+  await backToHub()
+  await expect(page.getByTestId('hub-row-files')).toContainText('PDF and photo added')
 
-  // --- Review, complete: Submit opens ------------------------------------
-  await page.getByRole('tab', { name: 'Review', exact: true }).click()
-  const submit = page.getByRole('button', { name: 'Submit for review', exact: true })
+  // --- Submit, from the hub ----------------------------------------------
+  await expect(page.getByText('5 of 5 ready')).toBeVisible()
+  const submit = page.getByTestId('hub-submit')
   await expect(submit).toBeEnabled()
   await submit.click()
 
-  await expect(page.getByText('Submitted · waiting for review')).toBeVisible()
+  await expect(page.getByText('Submitted - waiting for review')).toBeVisible()
 
   // --- My tutorials --------------------------------------------------------
   await page.goto('/tutorials')
