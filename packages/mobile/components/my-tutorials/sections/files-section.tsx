@@ -4,7 +4,7 @@
 // show and nothing to coalesce — so they go through saveNow, which still owns
 // the concurrency token and the approved-to-pending requeue.
 import { useState } from 'react'
-import { View, Text, Image, StyleSheet } from 'react-native'
+import { View, Text, Image, ScrollView, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import * as ImagePicker from 'expo-image-picker'
@@ -16,13 +16,15 @@ import { theme } from '../../../lib/theme'
 import { Screen } from '../../ui/Screen'
 import { Button } from '../../ui/Button'
 import { ErrorRow } from '../../auth-screen'
-import { SaveChip } from './save-chip'
+import { SectionFooter } from '../section-footer'
+import { PickerNote } from './picker-note'
 
 export function FilesSection() {
   const router = useRouter()
-  const { tutorial, saveNow, saveState, saveError } = useDraft()
+  const { tutorial, saveNow, saveError } = useDraft()
   const [photoUploading, setPhotoUploading] = useState(false)
   const [pdfUploading, setPdfUploading] = useState(false)
+  const [photoBroken, setPhotoBroken] = useState(false)
   const [localError, setLocalError] = useState<string | null>(null)
 
   if (!tutorial) return null
@@ -52,6 +54,7 @@ export function FilesSection() {
       if (result.canceled || !result.assets?.[0]) return
       const asset = result.assets[0]
       setPhotoUploading(true)
+      setPhotoBroken(false)
       const { url } = await uploadFile('/api/upload/photo', id, {
         uri: asset.uri,
         name: asset.fileName ?? 'photo.jpg',
@@ -104,52 +107,95 @@ export function FilesSection() {
 
   return (
     <Screen>
-      <SaveChip state={saveState} />
-      <View style={styles.photoTile}>
-        {tutorial.toy_photo_url ? (
-          <Image source={{ uri: tutorial.toy_photo_url }} style={styles.photoImage} />
-        ) : (
-          <View style={styles.photoPlaceholder}>
-            <Ionicons name="image-outline" size={32} color={theme.colors.primary} />
+      <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
+        {/* Both halves are labelled. Unlabelled, the only thing naming the PDF
+            was its own filename, so which button belonged to which artefact had
+            to be read off the order they happened to be in. */}
+        <Text style={styles.heading}>Photo of the toy</Text>
+        <View style={styles.photoTile}>
+          {tutorial.toy_photo_url && !photoBroken ? (
+            <Image
+              source={{ uri: tutorial.toy_photo_url }}
+              style={styles.photoImage}
+              // Without this, a URL that will not decode leaves an empty
+              // bordered box: the placeholder has already been swapped out for
+              // an Image that draws nothing, and the photo is the one upload
+              // here with no filename to fall back on. Found via a 55-byte
+              // ASCII fixture named .jpg — the bucket is public and the happy
+              // path works, but the failure had no visible form at all.
+              onError={() => setPhotoBroken(true)}
+            />
+          ) : (
+            <View style={styles.photoPlaceholder}>
+              <Ionicons
+                name={photoBroken ? 'alert-circle-outline' : 'image-outline'}
+                size={32}
+                color={photoBroken ? theme.colors.apricotDeep : theme.colors.primary}
+              />
+              {photoBroken ? (
+                <Text style={styles.photoBroken}>
+                  Photo saved, but it can&apos;t be shown here. Choose it again to replace it.
+                </Text>
+              ) : null}
+            </View>
+          )}
+          <View style={styles.photoActions}>
+            <Button
+              label="Take a photo"
+              variant="secondary"
+              onPress={() => pickPhoto('camera')}
+              loading={photoUploading}
+            />
+            <Button
+              label="Choose from library"
+              variant="secondary"
+              onPress={() => pickPhoto('library')}
+              loading={photoUploading}
+            />
           </View>
-        )}
-        <View style={styles.photoActions}>
-          <Button
-            label="Take a photo"
-            variant="secondary"
-            onPress={() => pickPhoto('camera')}
-            loading={photoUploading}
-          />
-          <Button
-            label="Choose from library"
-            variant="secondary"
-            onPress={() => pickPhoto('library')}
-            loading={photoUploading}
-          />
         </View>
-      </View>
 
-      <View style={styles.pdfRow}>
-        <Text style={styles.pdfLabel}>
-          {currentPdfPath ? currentPdfPath.split('/').pop() : 'No PDF yet'}
-        </Text>
-        <Button
-          label="Choose PDF from Files"
-          variant="secondary"
-          onPress={pickPdf}
-          loading={pdfUploading}
-        />
-        {currentPdfPath ? (
-          <Button label="Preview" variant="ghost" onPress={openPdfPreview} />
-        ) : null}
-      </View>
+        <Text style={styles.heading}>Guide PDF</Text>
+        <View style={styles.pdfRow}>
+          <Text style={styles.pdfLabel}>
+            {currentPdfPath ? currentPdfPath.split('/').pop() : 'No PDF yet'}
+          </Text>
+          <Button
+            label="Choose PDF from Files"
+            variant="secondary"
+            onPress={pickPdf}
+            loading={pdfUploading}
+          />
+          {currentPdfPath ? (
+            <Button label="Preview" variant="ghost" onPress={openPdfPreview} />
+          ) : null}
+        </View>
+        <PickerNote noun="PDF" />
 
-      <ErrorRow message={localError ?? saveError} />
+        <ErrorRow message={localError ?? saveError} />
+      </ScrollView>
+      <SectionFooter section="files" />
     </Screen>
   )
 }
 
 const styles = StyleSheet.create({
+  body: { flex: 1 },
+  heading: {
+    fontFamily: theme.fonts.bold,
+    fontSize: theme.type.label,
+    color: theme.colors.text,
+    marginBottom: theme.spacing(2),
+  },
+  photoBroken: {
+    fontFamily: theme.fonts.regular,
+    fontSize: theme.type.caption,
+    color: theme.colors.apricotDeep,
+    textAlign: 'center',
+    lineHeight: 18,
+    marginTop: theme.spacing(2),
+    paddingHorizontal: theme.spacing(4),
+  },
   photoTile: { marginBottom: theme.spacing(5) },
   photoImage: {
     width: '100%',
@@ -171,7 +217,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing(3),
   },
   photoActions: { gap: theme.spacing(2) },
-  pdfRow: { gap: theme.spacing(2) },
+  pdfRow: { gap: theme.spacing(2), marginBottom: theme.spacing(2) },
   pdfLabel: {
     fontFamily: theme.fonts.regular,
     fontSize: theme.type.label,

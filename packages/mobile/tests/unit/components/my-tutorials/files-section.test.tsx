@@ -68,6 +68,12 @@ beforeEach(() => {
     tutorial_pdf_url: null,
     toy_photo_url: null,
     stl_files: [],
+    kind: 'toy_adaptation',
+    difficulty: 'easy',
+    title: 'T',
+    safety_declared_at: null,
+    parts: [],
+    tools: [],
   }
 })
 
@@ -130,6 +136,12 @@ it('appends an uploaded STL to the replace-set', async () => {
     tutorial_pdf_url: null,
     toy_photo_url: null,
     stl_files: [{ id: 's1', filename: 'old.stl', file_url: 'stl/old.stl' }],
+    kind: 'toy_adaptation',
+    difficulty: 'easy',
+    title: 'T',
+    safety_declared_at: null,
+    parts: [],
+    tools: [],
   }
   mockGetDocument.mockResolvedValue({
     canceled: false,
