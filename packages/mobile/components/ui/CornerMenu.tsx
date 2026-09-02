@@ -1,14 +1,7 @@
-// Pinned corner actions: a create button, and a ⋯ holding the navigation that
-// used to sit beside it. Replaces the header CTAs on Guides and Toy Library,
-// which scrolled away with the header — this stays reachable from anywhere in
-// the list.
-//
-// The create action is the trigger, not a row inside it. It used to be the
-// first item of a three-item speed dial, which put the front door of the
-// authoring flow two taps and a scrim away from a contributor who opened the
-// app to write a guide. `primary: true` made it apricot and first; it did not
-// make it reachable. Now it is the apricot button itself and the rest fan out
-// from a quieter ⋯ below it.
+// Pinned corner action menu: a "+" in the top-right that fans its items
+// downward. Replaces the header CTA buttons on Guides and Toy Library, which
+// scrolled away with the header — this stays reachable from anywhere in the
+// list. Speed-dial, not navigation, so the trigger is a plus, not a hamburger.
 import { useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
@@ -31,7 +24,7 @@ export type CornerMenuItem = {
   href: string
   /** Small Jersey-10 count pill, e.g. exchange actions waiting. */
   count?: number
-  /** The create action. Rendered as the corner button itself, never in the menu. */
+  /** The create action: apricot, first slot. */
   primary?: boolean
 }
 
@@ -42,15 +35,9 @@ export function CornerMenu({ label, items }: { label: string; items: CornerMenuI
   const rotation = useSharedValue(0)
   const iconStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${rotation.value}deg` }] }))
 
-  const primary = items.find((i) => i.primary)
-  const rest = items.filter((i) => !i.primary)
-  // A count on a hidden row is a count nobody sees, so the trigger carries the
-  // total — the same signal the row keeps once the menu is open.
-  const hiddenCount = rest.reduce((n, i) => n + (i.count ?? 0), 0)
-
   const toggle = () => {
-    // 135° turns the ⋯ into a close ×; the settle spring is the same physics
-    // family as the My SPLAT popover, so the two menus feel related.
+    // 135° turns the plus into a close ×; the settle spring is the same
+    // physics family as the My SPLAT popover, so the two menus feel related.
     rotation.value = withSpring(open ? 0 : 135, { ...theme.motion.settle })
     setOpen(!open)
   }
@@ -76,42 +63,22 @@ export function CornerMenu({ label, items }: { label: string; items: CornerMenuI
         </Animated.View>
       ) : null}
       {/* Screen pads for the notch, but absolute positioning ignores padding,
-          so the zone re-applies the same inset itself. Both call sites are tab
-          roots with headerShown: false, which is exactly where Screen's own
-          `ownHeader` inset applies — the two stay in step. */}
+          so the zone re-applies the same inset itself. */}
       <View style={[styles.zone, { top: insets.top + theme.spacing(4) }]} pointerEvents="box-none">
-        {primary ? (
-          <AnimatedPressable
-            testID="corner-menu-primary"
-            onPress={() => router.push(primary.href as never)}
-            accessibilityRole="button"
-            accessibilityLabel={primary.label}
-            style={styles.create}
-          >
-            <Ionicons name={primary.icon} size={28} color={theme.colors.ink} />
-          </AnimatedPressable>
-        ) : null}
-        {rest.length ? (
-          <AnimatedPressable
-            onPress={toggle}
-            accessibilityRole="button"
-            accessibilityLabel={label}
-            accessibilityState={{ expanded: open }}
-            style={styles.trigger}
-          >
-            <Animated.View style={iconStyle}>
-              <Ionicons name="ellipsis-horizontal" size={20} color={theme.colors.ink} />
-            </Animated.View>
-            {!open && hiddenCount ? (
-              <View style={styles.triggerCount}>
-                <Text style={styles.countText}>{hiddenCount}</Text>
-              </View>
-            ) : null}
-          </AnimatedPressable>
-        ) : null}
+        <AnimatedPressable
+          onPress={toggle}
+          accessibilityRole="button"
+          accessibilityLabel={label}
+          accessibilityState={{ expanded: open }}
+          style={styles.trigger}
+        >
+          <Animated.View style={iconStyle}>
+            <Ionicons name="add" size={28} color={theme.colors.ink} />
+          </Animated.View>
+        </AnimatedPressable>
         {open ? (
           <View accessibilityViewIsModal onAccessibilityEscape={toggle} style={styles.menu}>
-            {rest.map((item, i) => (
+            {items.map((item, i) => (
               <Animated.View
                 key={item.label}
                 entering={FadeInDown.delay(i * theme.motion.stagger)
@@ -125,7 +92,7 @@ export function CornerMenu({ label, items }: { label: string; items: CornerMenuI
                   onPress={() => go(item.href)}
                   accessibilityRole="button"
                   accessibilityLabel={item.label}
-                  style={styles.item}
+                  style={[styles.item, item.primary && styles.itemPrimary]}
                 >
                   <Ionicons name={item.icon} size={16} color={theme.colors.ink} />
                   <Text style={styles.itemLabel}>{item.label}</Text>
@@ -159,7 +126,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     gap: theme.spacing(2),
   },
-  create: {
+  trigger: {
     width: 48,
     height: 48,
     borderRadius: theme.radii.lg,
@@ -169,30 +136,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     ...theme.shadow(4),
-  },
-  // Quieter than the create button on purpose: same corner, lower billing.
-  trigger: {
-    width: 40,
-    height: 40,
-    borderRadius: theme.radii.md,
-    borderWidth: theme.border.thin,
-    borderColor: theme.colors.ink,
-    backgroundColor: theme.colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...theme.shadow(3),
-  },
-  triggerCount: {
-    position: 'absolute',
-    top: -6,
-    right: -6,
-    minWidth: 18,
-    alignItems: 'center',
-    borderWidth: theme.border.thin,
-    borderColor: theme.colors.ink,
-    borderRadius: theme.radii.sm,
-    backgroundColor: theme.colors.mintSoft,
-    paddingHorizontal: theme.spacing(1),
   },
   menu: { alignItems: 'flex-end', gap: theme.spacing(2) },
   item: {
@@ -207,6 +150,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
     ...theme.shadow(4),
   },
+  itemPrimary: { backgroundColor: theme.colors.apricot },
   itemLabel: {
     fontFamily: theme.fonts.bold,
     fontSize: theme.type.label,

@@ -31,8 +31,9 @@ test('a new account writes a guide end to end and submits it for review', async 
 
   // --- Add a guide -------------------------------------------------------
   const title = uniqueTitle('E2E Mobile Authored')
-  // The create action IS the corner button — it was a row inside the menu
-  // until the front door of this flow turned out to be two taps deep.
+  // The Guides tab's create pill became a corner-menu item in afe42958; the
+  // trigger is labelled by the menu, each entry by itself.
+  await page.getByRole('button', { name: 'Guide actions', exact: true }).click()
   await page.getByRole('button', { name: 'Add a guide', exact: true }).click()
   await expect(page).toHaveURL(/\/guides\/new$/)
 
