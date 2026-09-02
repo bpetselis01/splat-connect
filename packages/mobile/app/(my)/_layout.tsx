@@ -44,7 +44,10 @@ export default function MyLayout() {
       {/* Every screen is named here: an undeclared one takes its route name as the
           header title, so /toys would say "toys/index" over the top of it. */}
       <Stack.Screen name="tutorials/index" options={{ title: 'My tutorials' }} />
-      <Stack.Screen name="tutorials/[id]" options={{ title: 'Edit guide' }} />
+      {/* The editor is its own nested stack now (tutorials/[id]/_layout.tsx),
+          which draws the headers for the hub and its six sections. Leaving this
+          one shown would put a second header over the top of them. */}
+      <Stack.Screen name="tutorials/[id]" options={{ headerShown: false }} />
       <Stack.Screen name="toys/index" options={{ title: 'My toys' }} />
       <Stack.Screen name="toys/new" options={{ title: 'Add a toy' }} />
       <Stack.Screen name="toys/[id]" options={{ title: 'Toy' }} />
