@@ -20,6 +20,7 @@ import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { Badge } from '../ui/Badge'
 import { SaveButton } from '../ui/SaveButton'
+import { CornerMenu } from '../ui/CornerMenu'
 
 const FILTERS: { label: string; value: Difficulty | null }[] = [
   { label: 'All', value: null },
@@ -198,12 +199,8 @@ export function LibraryScreen() {
                   showLogo
                 />
               </View>
-              <Button
-                label="+ Add a guide"
-                variant="accent"
-                onPress={() => router.push('/guides/new')}
-                style={styles.addGuide}
-              />
+              {/* Clears the pinned CornerMenu trigger so the title never runs under it. */}
+              <View style={styles.menuSpacer} />
             </View>
 
             <TextField
@@ -293,6 +290,14 @@ export function LibraryScreen() {
           </Animated.View>
         )}
       />
+      <CornerMenu
+        label="Guide actions"
+        items={[
+          { label: 'Add a guide', icon: 'add', href: '/guides/new', primary: true },
+          { label: 'My guides', icon: 'book-outline', href: '/tutorials' },
+          { label: 'Saved guides', icon: 'bookmark-outline', href: '/saved/tutorials' },
+        ]}
+      />
     </Screen>
   )
 }
@@ -300,7 +305,7 @@ export function LibraryScreen() {
 const styles = StyleSheet.create({
   headerRow: { flexDirection: 'row', alignItems: 'flex-start', gap: theme.spacing(2) },
   headerTitle: { flex: 1 },
-  addGuide: { paddingVertical: theme.spacing(2), paddingHorizontal: theme.spacing(3) },
+  menuSpacer: { width: 48 },
   searchBar: {
     borderRadius: theme.radii.md,
     borderWidth: theme.border.thin,
