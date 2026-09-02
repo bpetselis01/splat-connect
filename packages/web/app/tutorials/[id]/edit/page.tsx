@@ -18,6 +18,7 @@ import { TutorialReviewPanel } from '@/components/tutorial-review-panel'
 import { computeStepStatuses, stepsFor, type EditStep } from '@/lib/edit-steps'
 import { getMissingFields } from '@/lib/validation'
 import { SaveStatusLine } from '@/components/save-status-line'
+import { DeleteEntityButton } from '@/components/delete-entity-button'
 import type { Tutorial, Part, Tool, StlFile, TutorialWithDetails, Difficulty, TutorialKind, BuyLink, TutorialOrg, Organization , TutorialMaturity } from '@splat-connect/types'
 
 export default async function EditTutorialPage({
@@ -329,6 +330,22 @@ export default async function EditTutorialPage({
         <BackLink href="/dashboard/tutorials" label="My tutorials" />
         <h1 className="truncate title-detail">{tutorial.title}</h1>
       </div>
+
+      {/* Rendered only on a draft, and absent rather than disabled off one.
+          RLS (001_schema.sql "Contributors can delete own draft tutorials")
+          refuses the delete on every other status, so a control here would be
+          one that cannot work -- and "how do I enable it?" has no answer worth
+          giving. Web had no tutorial delete at all before this, which left an
+          abandoned draft unremovable from the surface it was written on. */}
+      {tutorial.status === 'draft' && (
+        <div className="mb-6">
+          <DeleteEntityButton
+            endpoint={`/api/tutorials/${id}`}
+            redirectTo="/dashboard/tutorials"
+            label="draft"
+          />
+        </div>
+      )}
 
       {tutorial.status === 'rejected' && (
         <div className="alert alert-danger mb-3">

@@ -34,8 +34,10 @@ export function StepPills({
 }) {
   return (
     <ScrollView
+      testID="step-rail"
       horizontal
       showsHorizontalScrollIndicator={false}
+      style={styles.scroller}
       contentContainerStyle={styles.row}
       accessibilityRole="tablist"
     >
@@ -77,7 +79,23 @@ export function StepPills({
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', gap: theme.spacing(2), paddingVertical: theme.spacing(1) },
+  // The rail is a fixed-height strip, never a region that absorbs leftover
+  // space. Without this it does, and the pills stretch with it: on the toy
+  // editor -- StepPills as a direct flex child of a flex:1 Screen, beside a
+  // flex:1 ScrollView -- they rendered 245px tall instead of 40, eating the
+  // screen and pushing that step's own controls off it. Measured 2026-09-02 on
+  // react-native-web; the child editor, where the row sits in ordinary content
+  // flow with no leftover height to claim, was 40px from the same code.
+  //
+  // alignItems guards the other half of it: a stretched content container
+  // would size the pills even if the scroller itself were pinned.
+  scroller: { flexGrow: 0, flexShrink: 0 },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing(2),
+    paddingVertical: theme.spacing(1),
+  },
   pill: {
     flexDirection: 'row',
     alignItems: 'center',

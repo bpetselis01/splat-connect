@@ -50,7 +50,7 @@ export default function NewGuideRoute() {
     // that table, and the editor this line redirects into 404s on its own
     // GET. Retry-safe on the API side (23505 -> 200), same as the create.
     await apiClient.post(`/api/contributors/me/tutorials/${id}`, {})
-    router.replace(`/tutorials/${id}`)
+    router.replace({ pathname: '/tutorials/[id]', params: { id, justCreated: '1' } })
   }
 
   async function handleCreate() {

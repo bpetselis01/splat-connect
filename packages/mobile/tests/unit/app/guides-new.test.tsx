@@ -50,7 +50,13 @@ describe('NewGuideRoute', () => {
     // writes the tutorials row alone, and every RLS policy on a draft reads
     // through tutorial_contributors — without this the editor 404s on load.
     expect(mockPost).toHaveBeenCalledWith('/api/contributors/me/tutorials/uuid-1', {})
-    expect(mockReplace).toHaveBeenCalledWith('/tutorials/uuid-1')
+    expect(mockReplace).toHaveBeenCalledWith({
+      pathname: '/tutorials/[id]',
+      // justCreated is what lets the hub reassure once, and only on the first
+      // landing — keying it off status would show it on every visit to an
+      // untouched draft.
+      params: { id: 'uuid-1', justCreated: '1' },
+    })
   })
 
   it('posts the picked kind and difficulty when the chips are changed', async () => {
@@ -100,7 +106,13 @@ describe('NewGuideRoute', () => {
     expect(creates).toHaveLength(2)
     expect(creates[0][1].id).toBe('uuid-1')
     expect(creates[1][1].id).toBe('uuid-1')
-    expect(mockReplace).toHaveBeenCalledWith('/tutorials/uuid-1')
+    expect(mockReplace).toHaveBeenCalledWith({
+      pathname: '/tutorials/[id]',
+      // justCreated is what lets the hub reassure once, and only on the first
+      // landing — keying it off status would show it on every visit to an
+      // untouched draft.
+      params: { id: 'uuid-1', justCreated: '1' },
+    })
   })
 
   it('shows a generic error on a non-403 failure, without revealing the terms gate', async () => {

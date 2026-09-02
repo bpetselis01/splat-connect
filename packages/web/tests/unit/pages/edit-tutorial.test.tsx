@@ -14,6 +14,8 @@ vi.mock('next/navigation', () => ({
   // components/boundary-link.tsx reads this; null is what the real hook
   // returns outside an App Router context too.
   usePathname: () => null,
+  // delete-entity-button.tsx pushes to redirectTo after a successful delete.
+  useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
 }))
 vi.mock('next/cache', () => ({
   revalidatePath: vi.fn(),
@@ -177,6 +179,25 @@ describe('EditTutorialPage', () => {
       .mockResolvedValueOnce(baseTutorialWithDetails)
     render(await EditTutorialPage(pageParams))
     expect(screen.queryByText('This tutorial was rejected')).toBeNull()
+  })
+
+  describe('deleting a draft', () => {
+    it('offers delete on a draft', async () => {
+      vi.mocked(apiClient.get).mockResolvedValueOnce(baseTutorialWithDetails)
+      render(await EditTutorialPage(pageParams))
+      expect(screen.getByRole('button', { name: /delete draft/i })).toBeInTheDocument()
+    })
+
+    // Absent, not disabled: RLS refuses the delete off a draft, so a control
+    // here would be one that cannot work.
+    it.each(['pending', 'approved', 'rejected'] as const)(
+      'offers no delete on a %s guide',
+      async (status) => {
+        vi.mocked(apiClient.get).mockResolvedValueOnce({ ...baseTutorialWithDetails, status })
+        render(await EditTutorialPage(pageParams))
+        expect(screen.queryByRole('button', { name: /delete draft/i })).not.toBeInTheDocument()
+      }
+    )
   })
 
   // Chain: a tutorial that has been handed over has nothing left to finish, so the
