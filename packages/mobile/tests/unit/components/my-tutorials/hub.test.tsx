@@ -8,6 +8,14 @@ const mockPush = jest.fn()
 const mockReplace = jest.fn()
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush, replace: mockReplace, back: jest.fn() }),
+  // The hub retires its created note when it loses focus; in a test there is
+  // no navigator, so run the effect and ignore the cleanup.
+  useFocusEffect: (cb: () => void) => {
+    const { useEffect } = jest.requireActual('react')
+    useEffect(() => {
+      cb()
+    }, [cb])
+  },
 }))
 
 const mockDraft = {

@@ -7,9 +7,9 @@
 // prose — so the one screen that knew what was wrong could not take you to
 // where it was fixed. Here every gap getMissingFields reports is a row you can
 // tap, and Submit sits under the count that gates it.
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { View, Text, ScrollView, Pressable, Alert, StyleSheet } from 'react-native'
-import { useRouter } from 'expo-router'
+import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { apiClient } from '../../lib/api-client'
 import { useDraft } from '../../lib/use-tutorial-draft'
@@ -32,6 +32,17 @@ export function TutorialHub({ id, justCreated }: { id: string; justCreated?: boo
   const [menuOpen, setMenuOpen] = useState(false)
   const [noteDismissed, setNoteDismissed] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+
+  // The note is for the moment of arrival, not for the whole session. It keys
+  // off a route param, and a route param outlives every trip into a section and
+  // back — so it used to still be sitting above the checklist at submit time,
+  // telling someone who had just finished a complete guide to come back and
+  // finish it later. Opening any section is proof the message landed.
+  useFocusEffect(
+    useCallback(() => {
+      return () => setNoteDismissed(true)
+    }, [])
+  )
 
   if (loading) {
     return (
@@ -115,9 +126,23 @@ export function TutorialHub({ id, justCreated }: { id: string; justCreated?: boo
               setMenuOpen(false)
               router.replace('/tutorials')
             }}
-            style={[styles.menuItem, !isDraft && styles.menuItemLast]}
+            style={styles.menuItem}
           >
             <Text style={styles.menuText}>My tutorials</Text>
+          </Pressable>
+          {/* The reader's view of your own guide, before you ask anyone to
+              review it. The route already exists — the Files section opens it
+              for the PDF — so this was only ever a missing entry point. */}
+          <Pressable
+            testID="hub-menu-preview"
+            accessibilityRole="button"
+            onPress={() => {
+              setMenuOpen(false)
+              router.push({ pathname: '/guides/[id]', params: { id } })
+            }}
+            style={[styles.menuItem, !isDraft && styles.menuItemLast]}
+          >
+            <Text style={styles.menuText}>Preview as a reader</Text>
           </Pressable>
           {/* Rendered only on a draft. RLS refuses the delete on any other
               status, so a control here would be one that cannot work — and

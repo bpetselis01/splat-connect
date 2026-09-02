@@ -53,6 +53,32 @@ export function sectionsFor(kind: TutorialKind): SectionId[] {
   return kind === 'assistive_tech' ? [...base, 'stl'] : base
 }
 
+/**
+ * Where a section's "Next" goes: the next section still missing something,
+ * wrapping past the end, skipping the one you are on.
+ *
+ * Deliberately not "the next screen in the list" — that would make the sections
+ * a wizard, which the hub exists to not be. A fresh draft walks straight
+ * through because everything is incomplete; a contributor who came back to fix
+ * one gap is offered the gap, not a tour. Returns null when nothing is left,
+ * and the footer offers Submit instead.
+ */
+export function nextIncompleteSection(
+  current: SectionId,
+  tutorial: TutorialWithDetails
+): SectionId | null {
+  const sections = sectionsFor(tutorial.kind)
+  const incomplete = new Set(getMissingFields(tutorial).map((g) => g.section))
+  const from = sections.indexOf(current)
+  // Start one past `current` and wrap, so the last section points back at
+  // whatever is still open near the top rather than dead-ending.
+  for (let i = 1; i <= sections.length; i++) {
+    const section = sections[(from + i) % sections.length]
+    if (section !== current && incomplete.has(section)) return section
+  }
+  return null
+}
+
 const DIFFICULTY_LABEL: Record<Difficulty, string> = {
   easy: 'Easy',
   medium: 'Medium',
