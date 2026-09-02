@@ -1,7 +1,13 @@
-// Pinned corner action menu: a "+" in the top-right that fans its items
+// Pinned corner action menu: a hamburger in the top-right that fans its items
 // downward. Replaces the header CTA buttons on Guides and Toy Library, which
 // scrolled away with the header — this stays reachable from anywhere in the
-// list. Speed-dial, not navigation, so the trigger is a plus, not a hamburger.
+// list.
+//
+// It was a plus until 2026-09-02, on the reasoning that this is a speed dial
+// rather than navigation. The contents have since drifted the other way: two of
+// Guides' three items and three of Toy Library's four are places to go, not
+// things to make. A plus promises "create" and then opens a menu that is mostly
+// navigation, so the icon was the part that had stopped being true.
 import { useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
@@ -13,7 +19,7 @@ import Animated, {
   FadeOut,
   useAnimatedStyle,
   useSharedValue,
-  withSpring,
+  withTiming,
 } from 'react-native-reanimated'
 import { theme } from '../../lib/theme'
 import { AnimatedPressable } from './AnimatedPressable'
@@ -32,13 +38,19 @@ export function CornerMenu({ label, items }: { label: string; items: CornerMenuI
   const router = useRouter()
   const insets = useSafeAreaInsets()
   const [open, setOpen] = useState(false)
-  const rotation = useSharedValue(0)
-  const iconStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${rotation.value}deg` }] }))
+  // Cross-fade, not rotation. The old 135° spin worked because a plus turned
+  // 135° IS an ×; three stacked lines turned 135° are three stacked lines on a
+  // diagonal, which reads as broken rather than as closed. So the two glyphs
+  // are stacked and their opacity is swapped instead.
+  const openness = useSharedValue(0)
+  const menuIcon = useAnimatedStyle(() => ({ opacity: 1 - openness.value }))
+  const closeIcon = useAnimatedStyle(() => ({ opacity: openness.value }))
 
   const toggle = () => {
-    // 135° turns the plus into a close ×; the settle spring is the same
-    // physics family as the My SPLAT popover, so the two menus feel related.
-    rotation.value = withSpring(open ? 0 : 135, { ...theme.motion.settle })
+    // Timing rather than the settle spring the plus used: a spring overshoots,
+    // and an opacity that overshoots just clamps — the bounce is spent where it
+    // cannot be seen. The items keep the spring; they have distance to travel.
+    openness.value = withTiming(open ? 0 : 1, { duration: theme.motion.fast })
     setOpen(!open)
   }
   const go = (href: string) => {
@@ -72,8 +84,13 @@ export function CornerMenu({ label, items }: { label: string; items: CornerMenuI
           accessibilityState={{ expanded: open }}
           style={styles.trigger}
         >
-          <Animated.View style={iconStyle}>
-            <Ionicons name="add" size={28} color={theme.colors.ink} />
+          <Animated.View style={menuIcon}>
+            <Ionicons name="menu" size={26} color={theme.colors.ink} />
+          </Animated.View>
+          {/* Absolute so the two glyphs share one box and neither shifts the
+              other while they cross. */}
+          <Animated.View style={[styles.triggerIcon, closeIcon]}>
+            <Ionicons name="close" size={26} color={theme.colors.ink} />
           </Animated.View>
         </AnimatedPressable>
         {open ? (
@@ -126,6 +143,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     gap: theme.spacing(2),
   },
+  triggerIcon: { position: 'absolute' },
   trigger: {
     width: 48,
     height: 48,
