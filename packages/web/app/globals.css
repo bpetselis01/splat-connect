@@ -1779,6 +1779,122 @@
     background-color: var(--color-mint);
   }
 
+  /* --- Corner menu (library pages' dock) -------------------------------- */
+  /* The dock's spot, grown into a speed dial: trigger where the pill was,
+     items fanning upward with a per-item stagger driven by --i. Press motion
+     is self-contained rather than joining the .pixel press family — the
+     family lifts via transform, which would fight the stagger's translateY. */
+  .corner-menu {
+    position: fixed;
+    bottom: 1.5rem;
+    inset-inline-end: 1.5rem;
+    z-index: 50;
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: flex-end;
+    gap: 0.5rem;
+  }
+
+  .corner-menu-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 49;
+    background-color: rgb(18 40 58 / 0.28);
+  }
+
+  .corner-menu-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    border: var(--border-pixel) solid var(--color-ink);
+    border-radius: var(--radius-pixel-sm);
+    background-color: var(--color-brand-deep);
+    color: #ffffff;
+    box-shadow: var(--shadow-pixel-md) var(--color-ink);
+    cursor: pointer;
+  }
+
+  .corner-menu-trigger svg {
+    transition: transform 250ms var(--ease-spring);
+  }
+
+  .corner-menu[data-open] .corner-menu-trigger svg {
+    transform: rotate(135deg);
+  }
+
+  .corner-menu-items {
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: flex-end;
+    gap: 0.5rem;
+  }
+
+  .corner-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.125rem;
+    border: var(--border-pixel) solid var(--color-ink);
+    border-radius: var(--radius-pixel-sm);
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+    font-size: 0.8125rem;
+    font-weight: 800;
+    white-space: nowrap;
+    box-shadow: var(--shadow-pixel-md) var(--color-ink);
+    opacity: 0;
+    transform: translateY(10px);
+    transition:
+      opacity 130ms var(--ease-out-quart),
+      transform 130ms var(--ease-out-quart);
+  }
+
+  .corner-menu[data-open] .corner-menu-item {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity 180ms var(--ease-out-quart),
+      transform 380ms var(--ease-spring);
+    transition-delay: calc(var(--i) * 55ms);
+  }
+
+  .corner-menu-item:hover {
+    background-color: var(--color-surface-quiet);
+  }
+
+  .corner-menu-item--primary {
+    background-color: var(--color-apricot);
+  }
+
+  .corner-menu-item--primary:hover {
+    background-color: var(--color-apricot-hover);
+  }
+
+  .corner-menu-item--anchor {
+    background-color: var(--color-brand-deep);
+    color: #ffffff;
+  }
+
+  .corner-menu-item--anchor:hover {
+    background-color: var(--color-brand-dark);
+  }
+
+  .corner-menu-trigger:active,
+  .corner-menu-item:active {
+    translate: 3px 3px;
+    box-shadow: 1px 1px 0 var(--color-ink);
+    transition-delay: 0ms;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .corner-menu-trigger svg,
+    .corner-menu-item {
+      transition: none;
+    }
+  }
+
   /* --- File drop zone --------------------------------------------------- */
   .dropzone {
     padding: 1.25rem;
