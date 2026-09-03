@@ -11,6 +11,11 @@
  * gallery: the tile IS the commitment, and × is how you take it back — which
  * also deletes the object, so nothing is kept that the owner removed.
  *
+ * The last photo cannot be removed. The api refuses that save too, but a ×
+ * that only fails when pressed teaches nothing — so it is disabled here and
+ * the hint below says why, and the api's 400 is the backstop rather than the
+ * explanation.
+ *
  * Order is upload order and the first photo is the cover; ★ promotes one to
  * the front. Deliberately not drag-to-reorder: with five photos the only
  * question anyone asks is which one leads, and a drag affordance would have
@@ -43,6 +48,8 @@ export function PhotoTiles({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const tagging = switchUrl !== undefined
+  // A draft with no photos yet is fine; going back to none is not.
+  const canRemove = urls.length > 1
 
   async function save(next: PhotoSave, toast: string) {
     setBusy(true)
@@ -76,6 +83,7 @@ export function PhotoTiles({
   }
 
   function remove(url: string) {
+    if (!canRemove) return
     const next = urls.filter((u) => u !== url)
     save(
       {
@@ -125,9 +133,14 @@ export function PhotoTiles({
               )}
               <button
                 type="button"
-                disabled={busy}
+                disabled={busy || !canRemove}
                 onClick={() => remove(url)}
-                aria-label={`Remove photo ${i + 1}`}
+                aria-label={
+                  canRemove
+                    ? `Remove photo ${i + 1}`
+                    : 'Remove photo 1 — add another photo first'
+                }
+                title={canRemove ? undefined : 'Add another photo before removing this one'}
                 className="absolute right-1.5 top-1.5 h-7 w-7 rounded-md border-2 border-ink bg-surface text-sm leading-none disabled:opacity-50"
               >
                 ×
@@ -176,6 +189,7 @@ export function PhotoTiles({
       <p className="text-xs leading-relaxed text-muted">
         Up to {MAX_PHOTOS} photos. The first one is the cover — it is what shows on cards and in
         search. ★ moves a photo to the front.
+        {urls.length === 1 && ' Add another photo before you can remove this one.'}
       </p>
     </div>
   )

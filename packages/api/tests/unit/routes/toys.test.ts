@@ -138,6 +138,51 @@ describe('PATCH /:id', () => {
     expect(res.status).toBe(500)
   })
 
+  // Tests: a save that would empty a non-empty gallery is refused
+  // How:   the row holds one photo, the body sends []; checks the 400
+  // Chain: not a check constraint, because a draft legitimately starts empty
+  //        and would be unsaveable at creation — the rule is about the
+  //        transition, and only a handler can see a transition
+  it('refuses to remove the last photo', async () => {
+    mockUserFrom.mockReturnValue({
+      ...patchRead({ owner_org_id: null, photo_urls: ['https://x/a.jpg'] }),
+      update: () => {
+        throw new Error('the update must not run')
+      },
+    })
+    const res = await makeApp().request('/t1', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ photo_urls: [] }),
+    })
+    expect(res.status).toBe(400)
+    expect((await res.json() as any).error).toMatch(/at least one photo/)
+  })
+
+  // The floor is "do not go back to none", not "must always have one": a draft
+  // that never had a photo is still saveable.
+  it('allows an empty save on a toy that never had a photo', async () => {
+    mockUserFrom.mockReturnValue({
+      ...patchRead({ owner_org_id: null, photo_urls: [] }),
+      update: () => ({
+        eq: () => ({
+          or: () => ({
+            select: () => ({
+              maybeSingle: () =>
+                Promise.resolve({ data: { id: 't1', photo_urls: [] }, error: null }),
+            }),
+          }),
+        }),
+      }),
+    })
+    const res = await makeApp().request('/t1', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ photo_urls: [] }),
+    })
+    expect(res.status).toBe(200)
+  })
+
   it('maps a malformed id to 404', async () => {
     mockUserFrom.mockReturnValue({
       ...patchRead({ owner_org_id: null }),

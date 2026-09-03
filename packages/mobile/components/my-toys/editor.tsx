@@ -288,7 +288,9 @@ export function Editor({ id }: { id: string }) {
   }
 
   async function removePhoto(url: string) {
-    if (photosBusy) return
+    // The api refuses this save too; the button is disabled so it is a rule
+    // you can see rather than one you discover by pressing.
+    if (photosBusy || currentPhotoUrls.length <= 1) return
     setPhotosError(null)
     setPhotosBusy(true)
     try {
@@ -469,10 +471,18 @@ export function Editor({ id }: { id: string }) {
                       )}
                       <Pressable
                         onPress={() => removePhoto(url)}
-                        disabled={photosBusy}
+                        disabled={photosBusy || toy.photo_urls.length <= 1}
                         accessibilityRole="button"
-                        accessibilityLabel={`Remove photo ${i + 1}`}
-                        style={[styles.tileButton, styles.tileButtonRight]}
+                        accessibilityLabel={
+                          toy.photo_urls.length > 1
+                            ? `Remove photo ${i + 1}`
+                            : 'Remove photo 1 — add another photo first'
+                        }
+                        style={[
+                          styles.tileButton,
+                          styles.tileButtonRight,
+                          toy.photo_urls.length <= 1 && styles.tileButtonDisabled,
+                        ]}
                       >
                         <Ionicons name="close" size={15} color={theme.colors.ink} />
                       </Pressable>
@@ -511,6 +521,12 @@ export function Editor({ id }: { id: string }) {
                 <Ionicons name="image-outline" size={32} color={theme.colors.primary} />
               </View>
             )}
+
+            {toy.photo_urls.length === 1 ? (
+              <Text style={styles.photoHint}>
+                Add another photo before you can remove this one.
+              </Text>
+            ) : null}
 
             {toy.photo_urls.length < MAX_PHOTOS ? (
               <View style={styles.photoActions}>
@@ -676,6 +692,7 @@ const styles = StyleSheet.create({
   },
   tileButtonLeft: { left: theme.spacing(1.5) },
   tileButtonRight: { right: theme.spacing(1.5) },
+  tileButtonDisabled: { opacity: 0.4 },
   switchTagRow: {
     flexDirection: 'row',
     alignItems: 'center',

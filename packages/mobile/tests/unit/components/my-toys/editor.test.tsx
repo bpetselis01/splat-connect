@@ -263,6 +263,33 @@ describe('Editor', () => {
       )
     })
 
+    // A draft may legitimately hold none, but once there is one it stays. The
+    // api refuses the save too; disabling the control is what makes it a rule
+    // you can see rather than one you discover by pressing.
+    it('will not let the last photo be removed', async () => {
+      mockGetRouting([toy({ photo_urls: ['a'] })])
+      render(<Editor id="toy1" />)
+
+      await screen.findByRole('tab', { name: 'Details' })
+      fireEvent.press(screen.getByRole('tab', { name: 'Photos' }))
+
+      const remove = screen.getByLabelText('Remove photo 1 — add another photo first')
+      expect(remove.props.accessibilityState.disabled).toBe(true)
+      fireEvent.press(remove)
+      expect(mockPatch).not.toHaveBeenCalled()
+      expect(await screen.findByText(/Add another photo before you can remove this one/)).toBeTruthy()
+    })
+
+    it('allows removal again as soon as there are two', async () => {
+      mockGetRouting([toy({ photo_urls: ['a', 'b'] })])
+      render(<Editor id="toy1" />)
+
+      await screen.findByRole('tab', { name: 'Details' })
+      fireEvent.press(screen.getByRole('tab', { name: 'Photos' }))
+      expect(screen.getByLabelText('Remove photo 1').props.accessibilityState.disabled).toBe(false)
+      expect(screen.queryByText(/before you can remove this one/)).toBeNull()
+    })
+
     it('does not offer the switch tag until switch-adapted is on', async () => {
       mockGetRouting([toy({ photo_urls: ['a'], switch_adapted: false })])
       render(<Editor id="toy1" />)

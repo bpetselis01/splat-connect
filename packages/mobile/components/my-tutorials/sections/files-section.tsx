@@ -86,7 +86,9 @@ export function FilesSection() {
   }
 
   async function removePhoto(url: string) {
-    if (photoUploading) return
+    // The api refuses this save too; the button is disabled so it is a rule
+    // you can see rather than one you discover by pressing.
+    if (photoUploading || currentPhotoUrls.length <= 1) return
     setLocalError(null)
     setPhotoUploading(true)
     try {
@@ -204,10 +206,18 @@ export function FilesSection() {
                 )}
                 <Pressable
                   onPress={() => removePhoto(url)}
-                  disabled={photoUploading}
+                  disabled={photoUploading || currentPhotoUrls.length <= 1}
                   accessibilityRole="button"
-                  accessibilityLabel={`Remove photo ${i + 1}`}
-                  style={[styles.tileButton, styles.tileButtonRight]}
+                  accessibilityLabel={
+                    currentPhotoUrls.length > 1
+                      ? `Remove photo ${i + 1}`
+                      : 'Remove photo 1 — add another photo first'
+                  }
+                  style={[
+                    styles.tileButton,
+                    styles.tileButtonRight,
+                    currentPhotoUrls.length <= 1 && styles.tileButtonDisabled,
+                  ]}
                 >
                   <Ionicons name="close" size={15} color={theme.colors.ink} />
                 </Pressable>
@@ -219,6 +229,10 @@ export function FilesSection() {
             <Ionicons name="image-outline" size={32} color={theme.colors.primary} />
           </View>
         )}
+
+        {currentPhotoUrls.length === 1 ? (
+          <Text style={styles.photoHint}>Add another photo before you can remove this one.</Text>
+        ) : null}
 
         {currentPhotoUrls.length < MAX_PHOTOS ? (
           <View style={styles.photoActions}>
@@ -349,6 +363,7 @@ const styles = StyleSheet.create({
   },
   tileButtonLeft: { left: theme.spacing(1.5) },
   tileButtonRight: { right: theme.spacing(1.5) },
+  tileButtonDisabled: { opacity: 0.4 },
   photoActions: { gap: theme.spacing(2) },
   pdfRow: { gap: theme.spacing(2), marginBottom: theme.spacing(2) },
   pdfLabel: {

@@ -224,6 +224,15 @@ tutorials.patch('/:id', async (c) => {
       ).data?.photo_urls
     : null
 
+  // A guide that has a photo keeps one — same transition rule as toys.ts, and
+  // the same reason it is not a check constraint: a draft starts with none.
+  if (Array.isArray(body.photo_urls) && body.photo_urls.length === 0 && (photosBefore?.length ?? 0) > 0) {
+    return c.json(
+      { error: 'Every guide needs at least one photo. Add another before removing this one.' },
+      400
+    )
+  }
+
   const submitting = body.status === 'pending'
   const current = submitting
     ? (

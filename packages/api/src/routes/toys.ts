@@ -165,6 +165,17 @@ toys.patch('/:id', async (c) => {
     return c.json({ error: 'Quantity must be a whole number, 1 or more' }, 400)
   }
 
+  // A toy that has a photo keeps one. Not a check constraint, because a draft
+  // legitimately starts empty and would be unsaveable at creation — the rule is
+  // "do not go back to none", which is about the transition rather than the row,
+  // and only a handler can see a transition.
+  if (Array.isArray(body.photo_urls) && body.photo_urls.length === 0 && (existing.photo_urls?.length ?? 0) > 0) {
+    return c.json(
+      { error: 'Every toy needs at least one photo. Add another before removing this one.' },
+      400
+    )
+  }
+
   const { data, error } = await supabase
     .from('toys')
     .update(editableFrom(body, isOrgToy))

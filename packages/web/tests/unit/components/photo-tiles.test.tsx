@@ -122,6 +122,27 @@ describe('PhotoTiles', () => {
     expect(screen.getByRole('button', { name: 'Remove photo 5' })).toBeInTheDocument()
   })
 
+  // A draft may legitimately hold none, but once there is one it stays: the
+  // api refuses the save, and a × that only fails when pressed teaches nothing.
+  it('will not let the last photo be removed', async () => {
+    const { onSave } = setup({ urls: [A] })
+    const remove = screen.getByRole('button', { name: /Remove photo 1/ })
+    expect(remove).toBeDisabled()
+    fireEvent.click(remove)
+    await waitFor(() => expect(onSave).not.toHaveBeenCalled())
+  })
+
+  it('says why the last photo cannot be removed', () => {
+    setup({ urls: [A] })
+    expect(screen.getByText(/Add another photo before you can remove this one/)).toBeInTheDocument()
+  })
+
+  it('allows removal again as soon as there are two', () => {
+    setup({ urls: [A, B] })
+    expect(screen.getByRole('button', { name: 'Remove photo 1' })).not.toBeDisabled()
+    expect(screen.queryByText(/before you can remove this one/)).toBeNull()
+  })
+
   it('shows the count against the cap', () => {
     setup()
     expect(screen.getByText('2/5')).toBeInTheDocument()
