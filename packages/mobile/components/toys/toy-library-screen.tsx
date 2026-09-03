@@ -22,6 +22,7 @@ import { Badge } from '../ui/Badge'
 import { SaveButton } from '../ui/SaveButton'
 import { Meter } from '../ui/Meter'
 import { CornerMenu } from '../ui/CornerMenu'
+import { FilterSheet } from '../ui/FilterSheet'
 import { useCapabilities } from '../../lib/capabilities'
 
 // Copied verbatim from packages/web/app/toy-library/toy-library-client.tsx —
@@ -185,9 +186,11 @@ export function ToyLibraryScreen() {
   return (
     <Screen ownHeader>
       <FlatList
-        key={condition}
         data={loading || error ? [] : visible}
-        keyExtractor={(t) => t.id}
+        // The bucket is part of each row's key so a new bucket replays the
+        // rows' entrance. It used to key the whole list, which also remounted
+        // the header — and the filter sheet inside it, closing it on every tap.
+        keyExtractor={(t) => `${condition}:${t.id}`}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
         keyboardShouldPersistTaps="handled"
@@ -208,28 +211,32 @@ export function ToyLibraryScreen() {
               <View style={styles.menuSpacer} />
             </View>
 
-            <TextField
-              icon="search"
-              placeholder="Search by toy name"
-              value={search}
-              onChangeText={setSearch}
-              boxStyle={styles.searchBar}
-            />
-
-            <View style={styles.filterRow}>
-              {CONDITIONS.map((c) => (
-                <Chip key={c} label={CONDITION_LABELS[c]} active={condition === c} onPress={() => setCondition(c)} />
-              ))}
-            </View>
-
-            <View style={styles.divider} />
-
-            <View style={[styles.filterRow, styles.switchRow]}>
-              <Chip
-                label="Switch-adapted"
-                active={switchAdaptedOnly}
-                onPress={() => setSwitchAdaptedOnly((v) => !v)}
-              />
+            {/* Search stays on the screen; the chip rows moved into the
+                sheet so the first toy sits above the fold. */}
+            <View style={styles.searchRow}>
+              <View style={styles.searchGrow}>
+                <TextField
+                  icon="search"
+                  placeholder="Search by toy name"
+                  value={search}
+                  onChangeText={setSearch}
+                  boxStyle={styles.searchBar}
+                />
+              </View>
+              <FilterSheet count={(condition !== 'all' ? 1 : 0) + (switchAdaptedOnly ? 1 : 0)}>
+                <View style={styles.filterRow}>
+                  {CONDITIONS.map((c) => (
+                    <Chip key={c} label={CONDITION_LABELS[c]} active={condition === c} onPress={() => setCondition(c)} />
+                  ))}
+                </View>
+                <View style={styles.filterRow}>
+                  <Chip
+                    label="Switch-adapted"
+                    active={switchAdaptedOnly}
+                    onPress={() => setSwitchAdaptedOnly((v) => !v)}
+                  />
+                </View>
+              </FilterSheet>
             </View>
 
             {!loading && !error ? (
@@ -302,9 +309,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing(4),
     ...theme.shadow(4),
   },
-  filterRow: { flexDirection: 'row', gap: theme.spacing(2), marginBottom: theme.spacing(2) },
-  switchRow: { marginBottom: theme.spacing(4) },
-  divider: { height: 2, backgroundColor: theme.colors.border, marginBottom: theme.spacing(2) },
+  searchRow: { flexDirection: 'row', alignItems: 'flex-start', gap: theme.spacing(2) },
+  searchGrow: { flex: 1 },
+  filterRow: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2), marginBottom: theme.spacing(2) },
   countLine: {
     fontFamily: theme.fonts.regular,
     fontSize: theme.type.caption,
