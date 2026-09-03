@@ -105,7 +105,7 @@ test('the difficulty select shows the newly saved value after a save', async ({ 
   await expect(page.locator('#edit-difficulty')).toHaveValue('medium')
 })
 
-test('the toy photo and tutorial PDF can be replaced', async ({ page }) => {
+test('a photo is added to a guide, and the tutorial PDF replaced', async ({ page }) => {
   const contributor = await createContributor()
   await acceptTerms(contributor.id)
   const id = await createTutorial(contributor.id, {
@@ -122,7 +122,9 @@ test('the toy photo and tutorial PDF can be replaced', async ({ page }) => {
   // through a server action that revalidates this page, and the PDF is still
   // only in the browser's memory until Save files runs.
   await files.locator('#guide-add-photo').setInputFiles(PHOTO_FIXTURE)
-  await expect(page.getByText('Cover')).toBeVisible({ timeout: 30_000 })
+  // exact: the default is a case-insensitive substring, which also matches the
+  // hint below the tiles ("The first one is the cover") and trips strict mode.
+  await expect(page.getByText('Cover', { exact: true })).toBeVisible({ timeout: 30_000 })
   await files.locator('input[name="tutorial_pdf"]').setInputFiles(PDF_FIXTURE)
   await files.getByRole('button', { name: 'Save files' }).click()
 
@@ -130,12 +132,24 @@ test('the toy photo and tutorial PDF can be replaced', async ({ page }) => {
     .poll(async () => {
       const { data } = await adminClient()
         .from('tutorials')
-        .select('toy_photo_url')
+        .select('photo_urls')
         .eq('id', id)
         .single()
-      return data?.toy_photo_url ?? ''
+      return data?.photo_urls ?? []
     }, { timeout: 30_000 })
-    .not.toContain('placeholder.invalid')
+    // Appended, not replaced: the box is a gallery since 053, so the seeded
+    // placeholder stays at [0] and stays the cover. Polling toy_photo_url —
+    // generated from photo_urls[1] — would therefore never change no matter
+    // how well the save worked, and would report success as failure.
+    //
+    // This is the assertion that proves the save itself ran: the upload
+    // reaches storage on its own, and it is the server action after it that
+    // writes the row. That action was the one throwing "patchFiles is not
+    // defined", which left exactly this array untouched.
+    .toEqual([
+      'https://placeholder.invalid/photo.jpg',
+      expect.stringContaining('/toy-photos/'),
+    ])
 })
 
 test('a part can be added, edited and deleted', async ({ page }) => {
