@@ -123,6 +123,7 @@ export async function createTutorial(
     // Fixtures model tutorials whose author already affirmed the safety checklist.
     safety_declared_at: new Date().toISOString(),
     tutorial_pdf_url: pdfPath,
+    photo_urls: ['https://placeholder.invalid/photo.jpg'],
     toy_photo_url: 'https://placeholder.invalid/photo.jpg',
   })
   if (error) throw new Error(`Failed to create tutorial: ${error.message}`)
@@ -308,6 +309,7 @@ export async function createPublishedToy(
       name: overrides.name ?? uniqueTitle('E2E Toy'),
       condition: overrides.condition ?? 7,
       switch_adapted: overrides.switch_adapted ?? false,
+      photo_urls: [overrides.cover_photo_url ?? null],
       cover_photo_url: overrides.cover_photo_url ?? null,
       // `in` rather than `??`: null is a meaningful value here, not an absence.
       offer_type: 'offer_type' in overrides ? overrides.offer_type : 'donation',

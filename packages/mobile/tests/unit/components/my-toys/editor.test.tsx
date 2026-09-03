@@ -72,8 +72,9 @@ const toy = (over: object) => ({
   description: null,
   condition: 5,
   switch_adapted: false,
+  photo_urls: [],
   cover_photo_url: null,
-  switch_photo_urls: [],
+  switch_photo_url: null,
   status: 'draft',
   offer_type: null,
   created_at: '',
@@ -166,46 +167,114 @@ describe('Editor', () => {
   })
 
   describe('Photos', () => {
-    it('takes a cover photo, uploads with the toyId field, then PATCHes cover_photo_url', async () => {
-      mockGetRouting([toy({})])
+    it('takes a photo, uploads through the one toy route, then appends it', async () => {
+      mockGetRouting([toy({ photo_urls: [] })])
       mockRequestCameraPermissions.mockResolvedValue({ granted: true })
       mockLaunchCamera.mockResolvedValue({
         canceled: false,
         assets: [{ uri: 'file://cover.jpg', fileName: 'cover.jpg', mimeType: 'image/jpeg' }],
       })
       mockUploadFile.mockResolvedValue({ url: 'toy1/cover.jpg' })
-      mockPatch.mockResolvedValue(toy({ cover_photo_url: 'toy1/cover.jpg' }))
+      mockPatch.mockResolvedValue(toy({ photo_urls: ['toy1/cover.jpg'] }))
       render(<Editor id="toy1" />)
 
       await screen.findByRole('tab', { name: 'Details' })
       fireEvent.press(screen.getByRole('tab', { name: 'Photos' }))
-      fireEvent.press(screen.getByLabelText('Take a cover photo'))
+      fireEvent.press(screen.getByLabelText('Take a photo'))
 
       await waitFor(() =>
         expect(mockUploadFile).toHaveBeenCalledWith(
-          '/api/upload/toy-cover',
+          '/api/upload/toy-photo',
           'toy1',
           { uri: 'file://cover.jpg', name: 'cover.jpg', mimeType: 'image/jpeg' },
           'toyId'
         )
       )
       await waitFor(() =>
-        expect(mockPatch).toHaveBeenCalledWith('/api/toys/toy1', { cover_photo_url: 'toy1/cover.jpg' })
+        expect(mockPatch).toHaveBeenCalledWith('/api/toys/toy1', {
+          photo_urls: ['toy1/cover.jpg'],
+        })
       )
     })
 
-    it('does not offer switch photo tiles until switch-adapted is on', async () => {
-      mockGetRouting([toy({ switch_adapted: false })])
+    // Tests: the library picker is capped at the slots actually left
+    // How:   three photos already on; checks selectionLimit is 2
+    // Chain: the api refuses a sixth and 053's check constraint rejects it —
+    //        neither should be how someone finds out they were full
+    it('offers the library only as many photos as there is room for', async () => {
+      mockGetRouting([toy({ photo_urls: ['a', 'b', 'c'] })])
+      mockRequestMediaLibraryPermissions.mockResolvedValue({ granted: true })
+      mockLaunchLibrary.mockResolvedValue({ canceled: true })
       render(<Editor id="toy1" />)
 
       await screen.findByRole('tab', { name: 'Details' })
       fireEvent.press(screen.getByRole('tab', { name: 'Photos' }))
-      expect(screen.queryByText('Switch photos')).toBeNull()
+      fireEvent.press(screen.getByLabelText('Choose from library'))
+
+      await waitFor(() =>
+        expect(mockLaunchLibrary).toHaveBeenCalledWith(
+          expect.objectContaining({ allowsMultipleSelection: true, selectionLimit: 2 })
+        )
+      )
     })
 
-    it('gates the switch section on the saved toy.switch_adapted, not the unsaved Details toggle', async () => {
-      mockGetRouting([toy({ switch_adapted: false })])
-      mockPatch.mockResolvedValue(toy({ switch_adapted: true }))
+    it('hides the pickers once five photos are on the toy', async () => {
+      mockGetRouting([toy({ photo_urls: ['a', 'b', 'c', 'd', 'e'] })])
+      render(<Editor id="toy1" />)
+
+      await screen.findByRole('tab', { name: 'Details' })
+      fireEvent.press(screen.getByRole('tab', { name: 'Photos' }))
+      expect(screen.queryByLabelText('Take a photo')).toBeNull()
+      expect(await screen.findByText(/That is all 5/)).toBeTruthy()
+    })
+
+    it('promotes a photo to the cover, keeping the others in order', async () => {
+      mockGetRouting([toy({ photo_urls: ['a', 'b', 'c'] })])
+      mockPatch.mockResolvedValue(toy({ photo_urls: ['b', 'a', 'c'] }))
+      render(<Editor id="toy1" />)
+
+      await screen.findByRole('tab', { name: 'Details' })
+      fireEvent.press(screen.getByRole('tab', { name: 'Photos' }))
+      fireEvent.press(screen.getByLabelText('Make photo 2 the cover'))
+
+      await waitFor(() =>
+        expect(mockPatch).toHaveBeenCalledWith('/api/toys/toy1', { photo_urls: ['b', 'a', 'c'] })
+      )
+    })
+
+    // A removed photo cannot go on being the one that shows the switch: 053's
+    // toys_switch_photo_member would reject the save outright.
+    it('clears the switch tag when the tagged photo is removed', async () => {
+      mockGetRouting([
+        toy({ photo_urls: ['a', 'b'], switch_adapted: true, switch_photo_url: 'b' }),
+      ])
+      mockPatch.mockResolvedValue(toy({ photo_urls: ['a'], switch_adapted: true }))
+      render(<Editor id="toy1" />)
+
+      await screen.findByRole('tab', { name: 'Details' })
+      fireEvent.press(screen.getByRole('tab', { name: 'Photos' }))
+      fireEvent.press(screen.getByLabelText('Remove photo 2'))
+
+      await waitFor(() =>
+        expect(mockPatch).toHaveBeenCalledWith('/api/toys/toy1', {
+          photo_urls: ['a'],
+          switch_photo_url: null,
+        })
+      )
+    })
+
+    it('does not offer the switch tag until switch-adapted is on', async () => {
+      mockGetRouting([toy({ photo_urls: ['a'], switch_adapted: false })])
+      render(<Editor id="toy1" />)
+
+      await screen.findByRole('tab', { name: 'Details' })
+      fireEvent.press(screen.getByRole('tab', { name: 'Photos' }))
+      expect(screen.queryByText('Shows the switch')).toBeNull()
+    })
+
+    it('gates the switch tag on the saved toy.switch_adapted, not the unsaved Details toggle', async () => {
+      mockGetRouting([toy({ photo_urls: ['a'], switch_adapted: false })])
+      mockPatch.mockResolvedValue(toy({ photo_urls: ['a'], switch_adapted: true }))
       render(<Editor id="toy1" />)
 
       // Flip the toggle in Details, but never press Save details.
@@ -213,50 +282,44 @@ describe('Editor', () => {
       fireEvent(screen.getByTestId('switch-adapted-switch'), 'valueChange', true)
 
       fireEvent.press(screen.getByRole('tab', { name: 'Photos' }))
-      expect(screen.queryByText('Switch photos')).toBeNull()
+      expect(screen.queryByText('Shows the switch')).toBeNull()
 
-      // Now actually save — the server's response is what should open the
-      // section, not the local draft that already said true a moment ago.
+      // Now actually save — the server's response is what should open the tag,
+      // not the local draft that already said true a moment ago.
       fireEvent.press(screen.getByRole('tab', { name: 'Details' }))
       fireEvent.press(screen.getByLabelText('Save details'))
       await waitFor(() => expect(mockPatch).toHaveBeenCalled())
 
       fireEvent.press(screen.getByRole('tab', { name: 'Photos' }))
-      expect(await screen.findByText('Switch photos')).toBeTruthy()
+      expect(await screen.findByText('Shows the switch')).toBeTruthy()
     })
 
-    it('appends the new url to the existing switch_photo_urls on a switch photo upload', async () => {
-      mockGetRouting([toy({ switch_adapted: true, switch_photo_urls: ['toy1/switch-a.jpg'] })])
-      mockRequestMediaLibraryPermissions.mockResolvedValue({ granted: true })
-      mockLaunchLibrary.mockResolvedValue({
-        canceled: false,
-        assets: [{ uri: 'file://switch-b.jpg', fileName: 'switch-b.jpg', mimeType: 'image/jpeg' }],
-      })
-      mockUploadFile.mockResolvedValue({ url: 'toy1/switch-b.jpg' })
+    it('tags a photo as the one showing the switch', async () => {
+      mockGetRouting([
+        toy({ photo_urls: ['a', 'b'], switch_adapted: true, switch_photo_url: null }),
+      ])
       mockPatch.mockResolvedValue(
-        toy({ switch_adapted: true, switch_photo_urls: ['toy1/switch-a.jpg', 'toy1/switch-b.jpg'] })
+        toy({ photo_urls: ['a', 'b'], switch_adapted: true, switch_photo_url: 'b' })
       )
       render(<Editor id="toy1" />)
 
       await screen.findByRole('tab', { name: 'Details' })
       fireEvent.press(screen.getByRole('tab', { name: 'Photos' }))
-      fireEvent.press(screen.getByLabelText('Choose switch photo from library'))
+      fireEvent.press(screen.getByLabelText('Photo 2 shows the switch'))
 
       await waitFor(() =>
-        expect(mockPatch).toHaveBeenCalledWith('/api/toys/toy1', {
-          switch_photo_urls: ['toy1/switch-a.jpg', 'toy1/switch-b.jpg'],
-        })
+        expect(mockPatch).toHaveBeenCalledWith('/api/toys/toy1', { switch_photo_url: 'b' })
       )
     })
 
     it('surfaces a denied camera permission as an inline error instead of a silent no-op', async () => {
-      mockGetRouting([toy({})])
+      mockGetRouting([toy({ photo_urls: [] })])
       mockRequestCameraPermissions.mockResolvedValue({ granted: false })
       render(<Editor id="toy1" />)
 
       await screen.findByRole('tab', { name: 'Details' })
       fireEvent.press(screen.getByRole('tab', { name: 'Photos' }))
-      fireEvent.press(screen.getByLabelText('Take a cover photo'))
+      fireEvent.press(screen.getByLabelText('Take a photo'))
 
       expect(await screen.findByText('Camera access is needed to take a photo.')).toBeTruthy()
       expect(mockUploadFile).not.toHaveBeenCalled()
@@ -302,7 +365,7 @@ describe('Editor', () => {
     })
 
     it('publishes a gapless draft with a PATCH to /publish, and shows the published state', async () => {
-      const gapless = toy({ cover_photo_url: 'toy1/cover.jpg', offer_type: 'donation' })
+      const gapless = toy({ photo_urls: ['toy1/cover.jpg'], offer_type: 'donation' })
       mockGetRouting([gapless])
       mockPatch.mockResolvedValue({ ...gapless, status: 'published' })
       render(<Editor id="toy1" />)
@@ -320,6 +383,7 @@ describe('Editor', () => {
 
     it('shows no "Take off the shelf" control — the API has no unpublish route', async () => {
       const published = toy({
+        photo_urls: ['toy1/cover.jpg'],
         cover_photo_url: 'toy1/cover.jpg',
         offer_type: 'donation',
         status: 'published',

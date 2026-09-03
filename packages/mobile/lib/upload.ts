@@ -10,8 +10,7 @@ export type UploadPath =
   | '/api/upload/photo'
   | '/api/upload/pdf'
   | '/api/upload/stl'
-  | '/api/upload/toy-cover'
-  | '/api/upload/toy-switch-photo'
+  | '/api/upload/toy-photo'
 
 export interface UploadResult {
   url: string

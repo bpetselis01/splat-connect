@@ -35,6 +35,7 @@ beforeEach(() => {
     title: 'T',
     safety_declared_at: null,
     tutorial_pdf_url: null,
+    photo_urls: [],
     toy_photo_url: null,
   }
 })

@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import * as ImagePicker from 'expo-image-picker'
 import type { OfferType, Toy, ToyTransactionSummary } from '@splat-connect/types'
-import { isOwnerSide } from '@splat-connect/types'
+import { isOwnerSide, MAX_PHOTOS } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { uploadFile } from '../../lib/upload'
 import { theme } from '../../lib/theme'
@@ -36,15 +36,15 @@ interface Gap {
  * own local shape, the same way the tutorial editor does.
  */
 function getMissingToyFields(toy: {
-  cover_photo_url: string | null
+  photo_urls: string[]
   switch_adapted: boolean
-  switch_photo_urls: string[]
+  switch_photo_url: string | null
   offer_type: OfferType | null
 }): Gap[] {
   const missing: Gap[] = []
-  if (!toy.cover_photo_url) missing.push({ step: 'photos', label: 'A cover photo' })
-  if (toy.switch_adapted && toy.switch_photo_urls.length === 0)
-    missing.push({ step: 'photos', label: 'A switch photo' })
+  if (toy.photo_urls.length === 0) missing.push({ step: 'photos', label: 'A photo' })
+  if (toy.switch_adapted && !toy.switch_photo_url)
+    missing.push({ step: 'photos', label: 'A photo showing the switch' })
   if (!toy.offer_type) missing.push({ step: 'review', label: 'How it is offered' })
   return missing
 }
@@ -52,13 +52,16 @@ function getMissingToyFields(toy: {
 /** Ported verbatim from web's lib/toy-steps.ts computeToyStepStatuses. */
 function computeToyStepStatuses(toy: Toy): Record<ToyStepId, StepPillStatus> {
   const photosMissing =
-    !toy.cover_photo_url || (toy.switch_adapted && toy.switch_photo_urls.length === 0)
+    toy.photo_urls.length === 0 || (toy.switch_adapted && !toy.switch_photo_url)
   return {
     details: 'done',
     photos: photosMissing ? 'attention' : 'done',
     review: toy.status === 'published' ? 'done' : 'neutral',
   }
 }
+
+/** Mirrors 053's file_size_limit on the photo buckets. */
+const MAX_PHOTO_BYTES = 10 * 1024 * 1024
 
 const STEP_LABEL: Record<ToyStepId, string> = { details: 'Details', photos: 'Photos', review: 'Review' }
 const CONDITIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
@@ -85,8 +88,7 @@ export function Editor({ id }: { id: string }) {
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
 
-  const [coverUploading, setCoverUploading] = useState(false)
-  const [switchUploading, setSwitchUploading] = useState(false)
+  const [photosBusy, setPhotosBusy] = useState(false)
   const [photosError, setPhotosError] = useState<string | null>(null)
 
   const [publishing, setPublishing] = useState(false)
@@ -157,7 +159,8 @@ export function Editor({ id }: { id: string }) {
   // carry the `toy !== null` narrowing from the guards above across a nested
   // function boundary — same reason the tutorial editor captures
   // loadedUpdatedAt/currentPdfPath ahead of its own closures.
-  const currentSwitchPhotoUrls = toy.switch_photo_urls
+  const currentPhotoUrls = toy.photo_urls
+  const currentSwitchPhotoUrl = toy.switch_photo_url
 
   const missing = getMissingToyFields(toy)
   const statuses = computeToyStepStatuses(toy)
@@ -197,9 +200,13 @@ export function Editor({ id }: { id: string }) {
     }
   }
 
-  // Shared by the cover and switch pickers below — same permission/pick flow,
-  // only what happens with the picked asset differs between them.
-  async function pickImageAsset(source: 'camera' | 'library') {
+  /**
+   * Picks one or more images. The library allows a multi-select capped at the
+   * slots actually left (v57 `selectionLimit`, iOS 14+), so someone adding
+   * their last two photos does not have to come back twice; the camera returns
+   * one shot by definition.
+   */
+  async function pickImageAssets(source: 'camera' | 'library', remaining: number) {
     const permission =
       source === 'camera'
         ? await ImagePicker.requestCameraPermissionsAsync()
@@ -210,70 +217,120 @@ export function Editor({ id }: { id: string }) {
           ? 'Camera access is needed to take a photo.'
           : 'Photo library access is needed to choose a photo.'
       )
-      return null
+      return []
     }
     const result =
       source === 'camera'
         ? await ImagePicker.launchCameraAsync({ quality: 0.7 })
-        : await ImagePicker.launchImageLibraryAsync({ quality: 0.7 })
-    if (result.canceled || !result.assets?.[0]) return null
-    return result.assets[0]
+        : await ImagePicker.launchImageLibraryAsync({
+            quality: 0.7,
+            mediaTypes: ['images'],
+            allowsMultipleSelection: remaining > 1,
+            selectionLimit: remaining,
+          })
+    if (result.canceled || !result.assets?.length) return []
+    return result.assets
   }
 
-  async function pickCover(source: 'camera' | 'library') {
+  /** Saves the photo fields and folds the server's answer back into state. */
+  async function savePhotos(fields: { photo_urls?: string[]; switch_photo_url?: string | null }) {
+    const updated = await apiClient.patch<Toy>(`/api/toys/${id}`, fields)
+    setToy((prev) => (prev ? { ...prev, ...updated } : updated))
+  }
+
+  async function addPhotos(source: 'camera' | 'library') {
     // Set before the picker (an async, user-paced step) rather than after it
     // resolves, and bail if a prior press is still in flight — otherwise the
     // camera and library buttons (or a fast double-press) can both reach the
     // upload below before either one's `loading` prop has re-rendered true.
-    if (coverUploading) return
+    if (photosBusy) return
     setPhotosError(null)
-    setCoverUploading(true)
+    setPhotosBusy(true)
     try {
-      const asset = await pickImageAsset(source)
-      if (!asset) return
-      const { url } = await uploadFile(
-        '/api/upload/toy-cover',
-        id,
-        { uri: asset.uri, name: asset.fileName ?? 'cover.jpg', mimeType: asset.mimeType ?? 'image/jpeg' },
-        'toyId'
-      )
-      const updated = await apiClient.patch<Toy>(`/api/toys/${id}`, { cover_photo_url: url })
-      setToy((prev) => (prev ? { ...prev, ...updated } : updated))
+      const remaining = MAX_PHOTOS - currentPhotoUrls.length
+      const assets = await pickImageAssets(source, remaining)
+      if (!assets.length) return
+
+      // Checked here as well as by the api and the bucket, because this is the
+      // only one of the three that can say which photo was the problem while
+      // the others still upload.
+      const tooBig = assets.find((a) => (a.fileSize ?? 0) > MAX_PHOTO_BYTES)
+      if (tooBig) {
+        setPhotosError(
+          `${tooBig.fileName ?? 'That photo'} is over 10 MB. Try a smaller one.`
+        )
+        return
+      }
+
+      const urls: string[] = []
+      for (const asset of assets.slice(0, remaining)) {
+        const { url } = await uploadFile(
+          '/api/upload/toy-photo',
+          id,
+          {
+            uri: asset.uri,
+            name: asset.fileName ?? 'photo.jpg',
+            mimeType: asset.mimeType ?? 'image/jpeg',
+          },
+          'toyId'
+        )
+        urls.push(url)
+      }
+      // One save for the batch, and built from the server's list rather than
+      // local state, the way the switch gallery already was.
+      await savePhotos({ photo_urls: [...currentPhotoUrls, ...urls] })
     } catch (err) {
-      console.error('[Editor] cover upload failed:', err)
+      console.error('[Editor] photo upload failed:', err)
       setPhotosError('Could not upload the photo. Please try again.')
     } finally {
-      setCoverUploading(false)
+      setPhotosBusy(false)
     }
   }
 
-  async function pickSwitchPhoto(source: 'camera' | 'library') {
-    // Same reentrancy guard as pickCover above — set ahead of the async
-    // picker, not after it resolves, and bail while a press is in flight.
-    if (switchUploading) return
+  async function removePhoto(url: string) {
+    if (photosBusy) return
     setPhotosError(null)
-    setSwitchUploading(true)
+    setPhotosBusy(true)
     try {
-      const asset = await pickImageAsset(source)
-      if (!asset) return
-      const { url } = await uploadFile(
-        '/api/upload/toy-switch-photo',
-        id,
-        { uri: asset.uri, name: asset.fileName ?? 'switch.jpg', mimeType: asset.mimeType ?? 'image/jpeg' },
-        'toyId'
-      )
-      // The gallery is a replace-set append, not a form field, so the
-      // current server list (not local component state) is what gets
-      // extended.
-      const updated = await apiClient.patch<Toy>(`/api/toys/${id}`, {
-        switch_photo_urls: [...currentSwitchPhotoUrls, url],
+      await savePhotos({
+        photo_urls: currentPhotoUrls.filter((u) => u !== url),
+        // A removed photo cannot go on being the one that shows the switch —
+        // 053's toys_switch_photo_member would reject the save outright.
+        ...(currentSwitchPhotoUrl === url ? { switch_photo_url: null } : {}),
       })
-      setToy((prev) => (prev ? { ...prev, ...updated } : updated))
     } catch (err) {
-      console.error('[Editor] switch photo upload failed:', err)
-      setPhotosError('Could not upload the photo. Please try again.')
+      console.error('[Editor] photo remove failed:', err)
+      setPhotosError('Could not remove that photo. Please try again.')
     } finally {
-      setSwitchUploading(false)
+      setPhotosBusy(false)
+    }
+  }
+
+  async function makeCover(url: string) {
+    if (photosBusy) return
+    setPhotosError(null)
+    setPhotosBusy(true)
+    try {
+      await savePhotos({ photo_urls: [url, ...currentPhotoUrls.filter((u) => u !== url)] })
+    } catch (err) {
+      console.error('[Editor] cover change failed:', err)
+      setPhotosError('Could not change the cover. Please try again.')
+    } finally {
+      setPhotosBusy(false)
+    }
+  }
+
+  async function tagSwitchPhoto(url: string) {
+    if (photosBusy) return
+    setPhotosError(null)
+    setPhotosBusy(true)
+    try {
+      await savePhotos({ switch_photo_url: url })
+    } catch (err) {
+      console.error('[Editor] switch tag failed:', err)
+      setPhotosError('Could not save that. Please try again.')
+    } finally {
+      setPhotosBusy(false)
     }
   }
 
@@ -383,64 +440,98 @@ export function Editor({ id }: { id: string }) {
           </View>
         ) : activeStep === 'photos' ? (
           <View style={styles.photosForm}>
-            <Text style={styles.label}>Cover photo</Text>
-            <View style={styles.photoTile}>
-              {toy.cover_photo_url ? (
-                <Image source={{ uri: toy.cover_photo_url }} style={styles.photoImage} />
-              ) : (
-                <View style={styles.photoPlaceholder}>
-                  <Ionicons name="image-outline" size={32} color={theme.colors.primary} />
-                </View>
-              )}
+            <Text style={styles.label}>Photos</Text>
+            <Text style={styles.photoHint}>
+              Up to {MAX_PHOTOS}. The first one is the cover — it is what shows on cards and in
+              search.
+            </Text>
+
+            {toy.photo_urls.length > 0 ? (
+              <View style={styles.photoGrid}>
+                {toy.photo_urls.map((url, i) => (
+                  <View key={url} style={styles.photoCell}>
+                    <View style={styles.photoTile}>
+                      <Image source={{ uri: url }} style={styles.photoImage} />
+                      {i === 0 ? (
+                        <View style={styles.coverFlag}>
+                          <Text style={styles.coverFlagText}>Cover</Text>
+                        </View>
+                      ) : (
+                        <Pressable
+                          onPress={() => makeCover(url)}
+                          disabled={photosBusy}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Make photo ${i + 1} the cover`}
+                          style={[styles.tileButton, styles.tileButtonLeft]}
+                        >
+                          <Ionicons name="star" size={15} color={theme.colors.ink} />
+                        </Pressable>
+                      )}
+                      <Pressable
+                        onPress={() => removePhoto(url)}
+                        disabled={photosBusy}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Remove photo ${i + 1}`}
+                        style={[styles.tileButton, styles.tileButtonRight]}
+                      >
+                        <Ionicons name="close" size={15} color={theme.colors.ink} />
+                      </Pressable>
+                    </View>
+
+                    {/* Gated on the persisted toy.switch_adapted, not the local
+                        unsaved `switchAdapted` draft — every gap check
+                        (getMissingToyFields, computeToyStepStatuses, the
+                        server's own publish check) reads the saved column, so a
+                        flipped-but-unsaved toggle must not open a path none of
+                        them see. */}
+                    {toy.switch_adapted ? (
+                      <Pressable
+                        onPress={() => tagSwitchPhoto(url)}
+                        disabled={photosBusy}
+                        accessibilityRole="radio"
+                        accessibilityState={{ selected: toy.switch_photo_url === url }}
+                        accessibilityLabel={`Photo ${i + 1} shows the switch`}
+                        style={styles.switchTagRow}
+                      >
+                        <Ionicons
+                          name={
+                            toy.switch_photo_url === url ? 'radio-button-on' : 'radio-button-off'
+                          }
+                          size={16}
+                          color={theme.colors.primary}
+                        />
+                        <Text style={styles.switchTagText}>Shows the switch</Text>
+                      </Pressable>
+                    ) : null}
+                  </View>
+                ))}
+              </View>
+            ) : (
+              <View style={styles.photoPlaceholder}>
+                <Ionicons name="image-outline" size={32} color={theme.colors.primary} />
+              </View>
+            )}
+
+            {toy.photo_urls.length < MAX_PHOTOS ? (
               <View style={styles.photoActions}>
                 <Button
-                  label="Take a cover photo"
+                  label="Take a photo"
                   variant="secondary"
-                  onPress={() => pickCover('camera')}
-                  loading={coverUploading}
+                  onPress={() => addPhotos('camera')}
+                  loading={photosBusy}
                 />
                 <Button
-                  label="Choose cover photo from library"
+                  label="Choose from library"
                   variant="secondary"
-                  onPress={() => pickCover('library')}
-                  loading={coverUploading}
+                  onPress={() => addPhotos('library')}
+                  loading={photosBusy}
                 />
               </View>
-            </View>
-
-            {/* Gated on the persisted toy.switch_adapted, not the local
-                unsaved `switchAdapted` draft above — every gap check
-                (getMissingToyFields, computeToyStepStatuses, the server's
-                own publish check) reads the saved column, so a flipped-but-
-                unsaved toggle must not open an upload path none of them see. */}
-            {toy.switch_adapted ? (
-              <View style={styles.switchPhotosSection}>
-                <Text style={styles.label}>Switch photos</Text>
-                {toy.switch_photo_urls.length > 0 ? (
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.switchStripContent}>
-                    {toy.switch_photo_urls.map((url) => (
-                      <Image key={url} source={{ uri: url }} style={styles.switchImage} />
-                    ))}
-                  </ScrollView>
-                ) : (
-                  <Text style={styles.switchEmpty}>No switch photos yet.</Text>
-                )}
-                <View style={styles.photoActions}>
-                  <Button
-                    label="Take a switch photo"
-                    variant="secondary"
-                    onPress={() => pickSwitchPhoto('camera')}
-                    loading={switchUploading}
-                  />
-                  <Button
-                    label="Choose switch photo from library"
-                    variant="secondary"
-                    onPress={() => pickSwitchPhoto('library')}
-                    loading={switchUploading}
-                  />
-                </View>
-              </View>
-            ) : null}
+            ) : (
+              <Text style={styles.photoHint}>
+                That is all {MAX_PHOTOS}. Remove one to add another.
+              </Text>
+            )}
 
             <ErrorRow message={photosError} />
           </View>
@@ -526,13 +617,75 @@ const styles = StyleSheet.create({
   detailsForm: { paddingBottom: theme.spacing(6) },
 
   photosForm: { paddingBottom: theme.spacing(6) },
-  photoTile: { marginBottom: theme.spacing(5) },
+  photoHint: {
+    fontFamily: theme.fonts.regular,
+    fontSize: theme.type.caption,
+    color: theme.colors.muted,
+    marginBottom: theme.spacing(3),
+  },
+  photoGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing(3),
+    marginBottom: theme.spacing(4),
+  },
+  // Two per row on the narrowest phone this ships to, with the gap taken out
+  // of the width rather than left to overflow.
+  photoCell: { width: '47%' },
+  photoTile: { position: 'relative' },
   photoImage: {
     width: '100%',
-    height: 180,
-    borderRadius: theme.radii.lg,
+    height: 110,
+    borderRadius: theme.radii.md,
+    borderWidth: theme.border.thin,
+    borderColor: theme.colors.ink,
     backgroundColor: theme.colors.surfaceSunken,
-    marginBottom: theme.spacing(3),
+  },
+  coverFlag: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: theme.colors.apricot,
+    borderTopWidth: theme.border.thin,
+    borderTopColor: theme.colors.ink,
+    borderBottomLeftRadius: theme.radii.md,
+    borderBottomRightRadius: theme.radii.md,
+    paddingVertical: theme.spacing(0.5),
+  },
+  coverFlagText: {
+    fontFamily: theme.fonts.black,
+    fontSize: 10,
+    color: theme.colors.ink,
+    textAlign: 'center',
+    textTransform: 'uppercase',
+  },
+  // 32px square: the tap targets sit on top of a 110px tile, and anything
+  // smaller is a control you aim at rather than press.
+  tileButton: {
+    position: 'absolute',
+    top: theme.spacing(1.5),
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: theme.radii.sm,
+    borderWidth: theme.border.thin,
+    borderColor: theme.colors.ink,
+    backgroundColor: theme.colors.surface,
+  },
+  tileButtonLeft: { left: theme.spacing(1.5) },
+  tileButtonRight: { right: theme.spacing(1.5) },
+  switchTagRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing(1.5),
+    paddingVertical: theme.spacing(1.5),
+  },
+  switchTagText: {
+    fontFamily: theme.fonts.semiBold,
+    fontSize: theme.type.caption,
+    color: theme.colors.text,
   },
   photoPlaceholder: {
     width: '100%',
@@ -544,15 +697,6 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing(3),
   },
   photoActions: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2) },
-  switchPhotosSection: { marginBottom: theme.spacing(5) },
-  switchStripContent: { gap: theme.spacing(2), paddingBottom: theme.spacing(3) },
-  switchImage: { width: 100, height: 100, borderRadius: theme.radii.md, backgroundColor: theme.colors.surfaceSunken },
-  switchEmpty: {
-    fontFamily: theme.fonts.regular,
-    fontSize: theme.type.label,
-    color: theme.colors.muted,
-    marginBottom: theme.spacing(3),
-  },
 
   reviewForm: { paddingBottom: theme.spacing(6) },
   reviewRow: { marginBottom: theme.spacing(3) },

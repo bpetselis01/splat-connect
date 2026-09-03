@@ -66,6 +66,7 @@ beforeEach(() => {
     id: 't1',
     status: 'draft',
     tutorial_pdf_url: null,
+    photo_urls: [],
     toy_photo_url: null,
     stl_files: [],
     kind: 'toy_adaptation',
@@ -77,7 +78,7 @@ beforeEach(() => {
   }
 })
 
-it('uploads a chosen photo and records its url immediately', async () => {
+it('uploads a chosen photo and appends it to the guide immediately', async () => {
   mockRequestMedia.mockResolvedValue({ granted: true })
   mockLaunchLibrary.mockResolvedValue({
     canceled: false,
@@ -89,7 +90,7 @@ it('uploads a chosen photo and records its url immediately', async () => {
   fireEvent.press(screen.getByText('Choose from library'))
 
   await waitFor(() =>
-    expect(mockDraft.saveNow).toHaveBeenCalledWith({ toy_photo_url: 'photos/a.jpg' })
+    expect(mockDraft.saveNow).toHaveBeenCalledWith({ photo_urls: ['photos/a.jpg'] })
   )
 })
 
@@ -134,6 +135,7 @@ it('appends an uploaded STL to the replace-set', async () => {
     id: 't1',
     status: 'draft',
     tutorial_pdf_url: null,
+    photo_urls: [],
     toy_photo_url: null,
     stl_files: [{ id: 's1', filename: 'old.stl', file_url: 'stl/old.stl' }],
     kind: 'toy_adaptation',

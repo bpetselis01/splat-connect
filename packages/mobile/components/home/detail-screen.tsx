@@ -12,6 +12,7 @@ import { Provenance, type ProvenanceContributor, type ProvenanceOrg } from '../g
 import { PicksRow } from '../guides/picks-row'
 import { Badge } from '../ui/Badge'
 import { SaveButton } from '../ui/SaveButton'
+import { PhotoCarousel } from '../ui/PhotoCarousel'
 import { Button } from '../ui/Button'
 import { Section } from '../ui/Section'
 import { Skeleton } from '../ui/Skeleton'
@@ -104,13 +105,7 @@ export function DetailScreen({ id }: { id: string }) {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {tutorial.toy_photo_url ? (
-        <Image source={{ uri: tutorial.toy_photo_url }} style={styles.photo} />
-      ) : (
-        <View style={styles.photoPlaceholder}>
-          <Ionicons name="color-wand-outline" size={48} color={theme.colors.primary} />
-        </View>
-      )}
+      <PhotoCarousel urls={tutorial.photo_urls} emptyIcon="color-wand-outline" />
 
       <View style={styles.titleRow}>
         <Text style={styles.title}>{tutorial.title}</Text>

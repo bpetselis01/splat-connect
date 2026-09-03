@@ -1,10 +1,10 @@
 // packages/mobile/components/my-tutorials/sections/files-section.tsx
 //
-// The guide PDF and the photo. Uploads are not debounced — there is a result to
-// show and nothing to coalesce — so they go through saveNow, which still owns
-// the concurrency token and the approved-to-pending requeue.
+// The guide PDF and its photos. Uploads are not debounced — there is a result
+// to show and nothing to coalesce — so they go through saveNow, which still
+// owns the concurrency token and the approved-to-pending requeue.
 import { useState } from 'react'
-import { View, Text, Image, ScrollView, StyleSheet } from 'react-native'
+import { View, Text, Image, Pressable, ScrollView, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import * as ImagePicker from 'expo-image-picker'
@@ -12,6 +12,7 @@ import * as DocumentPicker from 'expo-document-picker'
 import { uploadFile } from '../../../lib/upload'
 import { supabase } from '../../../lib/supabase'
 import { useDraft } from '../../../lib/use-tutorial-draft'
+import { MAX_PHOTOS } from '@splat-connect/types'
 import { theme } from '../../../lib/theme'
 import { Screen } from '../../ui/Screen'
 import { Button } from '../../ui/Button'
@@ -24,15 +25,19 @@ export function FilesSection() {
   const { tutorial, saveNow, saveError } = useDraft()
   const [photoUploading, setPhotoUploading] = useState(false)
   const [pdfUploading, setPdfUploading] = useState(false)
-  const [photoBroken, setPhotoBroken] = useState(false)
+  const [broken, setBroken] = useState<Set<string>>(new Set())
   const [localError, setLocalError] = useState<string | null>(null)
 
   if (!tutorial) return null
 
   const id = tutorial.id
   const currentPdfPath = tutorial.tutorial_pdf_url
+  // Captured for the same reason the toy editor captures its own: TS does not
+  // carry the `tutorial !== null` narrowing across a nested function boundary.
+  const currentPhotoUrls = tutorial.photo_urls
 
   async function pickPhoto(source: 'camera' | 'library') {
+    if (photoUploading) return
     setLocalError(null)
     try {
       const permission =
@@ -47,23 +52,62 @@ export function FilesSection() {
         )
         return
       }
+      const remaining = MAX_PHOTOS - currentPhotoUrls.length
       const result =
         source === 'camera'
           ? await ImagePicker.launchCameraAsync({ quality: 0.7 })
-          : await ImagePicker.launchImageLibraryAsync({ quality: 0.7 })
-      if (result.canceled || !result.assets?.[0]) return
-      const asset = result.assets[0]
+          : // The library takes as many as there are slots left (v57
+            // selectionLimit, iOS 14+), so adding the last two is one trip.
+            await ImagePicker.launchImageLibraryAsync({
+              quality: 0.7,
+              mediaTypes: ['images'],
+              allowsMultipleSelection: remaining > 1,
+              selectionLimit: remaining,
+            })
+      if (result.canceled || !result.assets?.length) return
       setPhotoUploading(true)
-      setPhotoBroken(false)
-      const { url } = await uploadFile('/api/upload/photo', id, {
-        uri: asset.uri,
-        name: asset.fileName ?? 'photo.jpg',
-        mimeType: asset.mimeType ?? 'image/jpeg',
-      })
-      await saveNow({ toy_photo_url: url })
+
+      const urls: string[] = []
+      for (const asset of result.assets.slice(0, remaining)) {
+        const { url } = await uploadFile('/api/upload/photo', id, {
+          uri: asset.uri,
+          name: asset.fileName ?? 'photo.jpg',
+          mimeType: asset.mimeType ?? 'image/jpeg',
+        })
+        urls.push(url)
+      }
+      await saveNow({ photo_urls: [...currentPhotoUrls, ...urls] })
     } catch (err) {
       console.error('[FilesSection] photo upload failed:', err)
       setLocalError('Could not upload the photo. Please try again.')
+    } finally {
+      setPhotoUploading(false)
+    }
+  }
+
+  async function removePhoto(url: string) {
+    if (photoUploading) return
+    setLocalError(null)
+    setPhotoUploading(true)
+    try {
+      await saveNow({ photo_urls: currentPhotoUrls.filter((u) => u !== url) })
+    } catch (err) {
+      console.error('[FilesSection] photo remove failed:', err)
+      setLocalError('Could not remove that photo. Please try again.')
+    } finally {
+      setPhotoUploading(false)
+    }
+  }
+
+  async function makeCover(url: string) {
+    if (photoUploading) return
+    setLocalError(null)
+    setPhotoUploading(true)
+    try {
+      await saveNow({ photo_urls: [url, ...currentPhotoUrls.filter((u) => u !== url)] })
+    } catch (err) {
+      console.error('[FilesSection] cover change failed:', err)
+      setLocalError('Could not change the cover. Please try again.')
     } finally {
       setPhotoUploading(false)
     }
@@ -111,34 +155,72 @@ export function FilesSection() {
         {/* Both halves are labelled. Unlabelled, the only thing naming the PDF
             was its own filename, so which button belonged to which artefact had
             to be read off the order they happened to be in. */}
-        <Text style={styles.heading}>Photo of the toy</Text>
-        <View style={styles.photoTile}>
-          {tutorial.toy_photo_url && !photoBroken ? (
-            <Image
-              source={{ uri: tutorial.toy_photo_url }}
-              style={styles.photoImage}
-              // Without this, a URL that will not decode leaves an empty
-              // bordered box: the placeholder has already been swapped out for
-              // an Image that draws nothing, and the photo is the one upload
-              // here with no filename to fall back on. Found via a 55-byte
-              // ASCII fixture named .jpg — the bucket is public and the happy
-              // path works, but the failure had no visible form at all.
-              onError={() => setPhotoBroken(true)}
-            />
-          ) : (
-            <View style={styles.photoPlaceholder}>
-              <Ionicons
-                name={photoBroken ? 'alert-circle-outline' : 'image-outline'}
-                size={32}
-                color={photoBroken ? theme.colors.apricotDeep : theme.colors.primary}
-              />
-              {photoBroken ? (
-                <Text style={styles.photoBroken}>
-                  Photo saved, but it can&apos;t be shown here. Choose it again to replace it.
-                </Text>
-              ) : null}
-            </View>
-          )}
+        <Text style={styles.heading}>Photos of the toy</Text>
+        <Text style={styles.photoHint}>
+          Up to {MAX_PHOTOS}. The first one is the cover — it is what shows on cards and in search.
+        </Text>
+
+        {currentPhotoUrls.length > 0 ? (
+          <View style={styles.photoGrid}>
+            {currentPhotoUrls.map((url, i) => (
+              <View key={url} style={styles.photoCell}>
+                {broken.has(url) ? (
+                  <View style={styles.photoPlaceholder}>
+                    <Ionicons
+                      name="alert-circle-outline"
+                      size={28}
+                      color={theme.colors.apricotDeep}
+                    />
+                    <Text style={styles.photoBroken}>Saved, but it can&apos;t be shown here.</Text>
+                  </View>
+                ) : (
+                  <Image
+                    source={{ uri: url }}
+                    style={styles.photoImage}
+                    // Without this, a URL that will not decode leaves an empty
+                    // bordered box: the placeholder has already been swapped out
+                    // for an Image that draws nothing, and a photo is the one
+                    // upload here with no filename to fall back on. Found via a
+                    // 55-byte ASCII fixture named .jpg — the bucket is public and
+                    // the happy path works, but the failure had no visible form
+                    // at all. Tracked per URL now that there are five of them.
+                    onError={() => setBroken((prev) => new Set(prev).add(url))}
+                  />
+                )}
+                {i === 0 ? (
+                  <View style={styles.coverFlag}>
+                    <Text style={styles.coverFlagText}>Cover</Text>
+                  </View>
+                ) : (
+                  <Pressable
+                    onPress={() => makeCover(url)}
+                    disabled={photoUploading}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Make photo ${i + 1} the cover`}
+                    style={[styles.tileButton, styles.tileButtonLeft]}
+                  >
+                    <Ionicons name="star" size={15} color={theme.colors.ink} />
+                  </Pressable>
+                )}
+                <Pressable
+                  onPress={() => removePhoto(url)}
+                  disabled={photoUploading}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Remove photo ${i + 1}`}
+                  style={[styles.tileButton, styles.tileButtonRight]}
+                >
+                  <Ionicons name="close" size={15} color={theme.colors.ink} />
+                </Pressable>
+              </View>
+            ))}
+          </View>
+        ) : (
+          <View style={styles.photoPlaceholder}>
+            <Ionicons name="image-outline" size={32} color={theme.colors.primary} />
+          </View>
+        )}
+
+        {currentPhotoUrls.length < MAX_PHOTOS ? (
           <View style={styles.photoActions}>
             <Button
               label="Take a photo"
@@ -153,7 +235,9 @@ export function FilesSection() {
               loading={photoUploading}
             />
           </View>
-        </View>
+        ) : (
+          <Text style={styles.photoHint}>That is all {MAX_PHOTOS}. Remove one to add another.</Text>
+        )}
 
         <Text style={styles.heading}>Guide PDF</Text>
         <View style={styles.pdfRow}>
@@ -196,18 +280,32 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing(2),
     paddingHorizontal: theme.spacing(4),
   },
-  photoTile: { marginBottom: theme.spacing(5) },
+  photoHint: {
+    fontFamily: theme.fonts.regular,
+    fontSize: theme.type.caption,
+    color: theme.colors.muted,
+    marginBottom: theme.spacing(3),
+  },
+  photoGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing(3),
+    marginBottom: theme.spacing(4),
+  },
+  // Two per row on the narrowest phone this ships to, with the gap taken out
+  // of the width rather than left to overflow.
+  photoCell: { width: '47%', position: 'relative' },
   photoImage: {
     width: '100%',
-    height: 180,
+    height: 110,
     borderWidth: theme.border.thin,
     borderColor: theme.colors.ink,
     borderRadius: theme.radii.md,
-    marginBottom: theme.spacing(3),
+    backgroundColor: theme.colors.surfaceSunken,
   },
   photoPlaceholder: {
     width: '100%',
-    height: 180,
+    height: 110,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: theme.colors.accentLight,
@@ -216,6 +314,41 @@ const styles = StyleSheet.create({
     borderRadius: theme.radii.md,
     marginBottom: theme.spacing(3),
   },
+  coverFlag: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: theme.colors.apricot,
+    borderTopWidth: theme.border.thin,
+    borderTopColor: theme.colors.ink,
+    borderBottomLeftRadius: theme.radii.md,
+    borderBottomRightRadius: theme.radii.md,
+    paddingVertical: theme.spacing(0.5),
+  },
+  coverFlagText: {
+    fontFamily: theme.fonts.black,
+    fontSize: 10,
+    color: theme.colors.ink,
+    textAlign: 'center',
+    textTransform: 'uppercase',
+  },
+  // 32px square: the tap targets sit on top of a 110px tile, and anything
+  // smaller is a control you aim at rather than press.
+  tileButton: {
+    position: 'absolute',
+    top: theme.spacing(1.5),
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: theme.radii.sm,
+    borderWidth: theme.border.thin,
+    borderColor: theme.colors.ink,
+    backgroundColor: theme.colors.surface,
+  },
+  tileButtonLeft: { left: theme.spacing(1.5) },
+  tileButtonRight: { right: theme.spacing(1.5) },
   photoActions: { gap: theme.spacing(2) },
   pdfRow: { gap: theme.spacing(2), marginBottom: theme.spacing(2) },
   pdfLabel: {

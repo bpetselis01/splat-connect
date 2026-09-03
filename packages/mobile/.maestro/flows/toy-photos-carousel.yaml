@@ -1,0 +1,62 @@
+# The photo carousel on Hermes. Jest renders it with react-test-renderer, which
+# runs neither `pagingEnabled` (the platform's own paging — the whole reason
+# mobile needed no gesture library) nor the Reanimated worklet that drives the
+# dots. This is the only layer that executes either.
+#
+# The toy is seeded by scripts/provision-device-parent.mjs rather than picked
+# out of the library: whether the first toy on the shelf happens to carry two
+# photos is someone else's upload, not a property of this build.
+#
+# DEVICE_EMAIL / DEVICE_PASSWORD come from `maestro test --env` — see
+# sign-out-clears-session.yaml for why they carry no env: defaults here.
+appId: com.splatconnect.mobile
+---
+- clearState
+- runFlow: ../subflows/launch.yaml
+# Same Keychain caveat as every-tab-renders.yaml: clearState wipes app data but
+# not the Keychain, so the session can survive and land straight on the tabs.
+- runFlow:
+    when:
+      visible:
+        id: "auth-tab-signin"
+    commands:
+      - tapOn:
+          id: "email-input"
+      - inputText: ${DEVICE_EMAIL}
+      - tapOn:
+          id: "password-input"
+      - inputText: ${DEVICE_PASSWORD}
+      - hideKeyboard
+      - tapOn:
+          id: "auth-submit"
+      - tapOn:
+          text: "Not Now"
+          optional: true
+
+- tapOn:
+    text: "Toy Library"
+- assertVisible:
+    text: "Adapted toys that families and organisations are giving away."
+
+- tapOn:
+    text: "Device smoke toy.*"
+
+# The carousel opens on the cover, and the flag belongs to the second photo —
+# so its absence here is what proves only one page is showing.
+- assertVisible:
+    text: "Device smoke toy.*"
+- assertNotVisible:
+    text: "Shows the switch"
+
+# Swiping is the assertion: if pagingEnabled or the scroll handler threw on
+# Hermes, the second photo never arrives and the flag never appears.
+- swipe:
+    direction: LEFT
+- assertVisible:
+    text: "Shows the switch"
+
+# And back, so a one-way scroll that cannot return still fails here.
+- swipe:
+    direction: RIGHT
+- assertNotVisible:
+    text: "Shows the switch"

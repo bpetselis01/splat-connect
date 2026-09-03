@@ -11,34 +11,9 @@ import { useCapabilities } from '../../lib/capabilities'
 import { Meter } from '../ui/Meter'
 import { SaveButton } from '../ui/SaveButton'
 import { Skeleton } from '../ui/Skeleton'
+import { PhotoCarousel } from '../ui/PhotoCarousel'
 import { EmptyState } from '../ui/EmptyState'
 import { RequestBlock } from './request-block'
-
-/**
- * The horizontal photo strip: cover photo first, then the switch-adapted
- * photos (only when the toy is switch-adapted, matching web's ToyPhotoGrid).
- *
- * The ScrollView's contentContainerStyle pads past the 4px hard shadow on
- * every frame, on both axes — the Phase 1 lesson (see picks-row.tsx) that a
- * hard shadow clips at the scroll edge without room for it to fall into.
- */
-function PhotoStrip({ toy }: { toy: ToyWithOwner }) {
-  const urls = [toy.cover_photo_url, ...(toy.switch_adapted ? toy.switch_photo_urls : [])].filter(
-    (u): u is string => !!u
-  )
-
-  return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.photoStripContent}>
-      {urls.length > 0 ? (
-        urls.map((url, i) => <Image key={url + i} source={{ uri: url }} style={styles.photo} />)
-      ) : (
-        <View style={styles.photoPlaceholder}>
-          <Ionicons name="cube-outline" size={48} color={theme.colors.primary} />
-        </View>
-      )}
-    </ScrollView>
-  )
-}
 
 export function ToyDetailScreen({ id }: { id: string }) {
   const router = useRouter()
@@ -124,7 +99,10 @@ export function ToyDetailScreen({ id }: { id: string }) {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <PhotoStrip toy={toy} />
+      <PhotoCarousel
+        urls={toy.photo_urls}
+        switchUrl={toy.switch_adapted ? toy.switch_photo_url : null}
+      />
 
       <View style={styles.titleRow}>
         <Text style={styles.title}>{toy.name}</Text>
