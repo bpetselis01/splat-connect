@@ -20,6 +20,11 @@
  * the front. Deliberately not drag-to-reorder: with five photos the only
  * question anyone asks is which one leads, and a drag affordance would have
  * cost a gesture dependency on mobile to answer it.
+ *
+ * Dragging files IN is a different matter — the two dropzones this replaced
+ * both took a drop, and losing that was an accident of the rewrite rather
+ * than a decision. Several at once, trimmed to the free slots, because that
+ * is what someone with five photos in a folder does.
  */
 import { useState } from 'react'
 import Image from 'next/image'
@@ -46,6 +51,7 @@ export function PhotoTiles({
 }) {
   const showToast = useToast()
   const [busy, setBusy] = useState(false)
+  const [dragging, setDragging] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const tagging = switchUrl !== undefined
   // A draft with no photos yet is fine; going back to none is not.
@@ -64,22 +70,59 @@ export function PhotoTiles({
     }
   }
 
-  async function add(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    // Clear it straight away, or picking the same file twice in a row is silent.
-    e.target.value = ''
-    if (!file || busy) return
+  /** The one path in, shared by the picker and the drop. */
+  async function addFiles(picked: File[]) {
+    if (busy) return
+    // Trimmed to the free slots here rather than left to the api: it counts
+    // photo_urls before each upload, and a batch that has not saved yet still
+    // reads as the old count — so a drop of six would clear all six of those
+    // checks and only fail at the save, after six objects had been written.
+    const files = picked.slice(0, MAX_PHOTOS - urls.length)
+    if (!files.length) return
     setBusy(true)
     setError(null)
+
+    const added: string[] = []
     try {
-      const url = await upload(file)
-      await onSave({ photo_urls: [...urls, url], ...(tagging ? { switch_photo_url: switchUrl } : {}) })
-      showToast('Photo added')
+      // Sequential: storage is the slow part, and firing five at once buys
+      // nothing but a harder failure to explain when the third one dies.
+      for (const file of files) added.push(await upload(file))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not upload that photo.')
-    } finally {
-      setBusy(false)
     }
+
+    // Whatever reached storage is saved even when a later one failed: those
+    // objects exist now, and leaving them out of the array would orphan them
+    // in the bucket with nothing pointing at them — the same reason the api
+    // counts before it uploads rather than after.
+    if (added.length) {
+      try {
+        await onSave({
+          photo_urls: [...urls, ...added],
+          ...(tagging ? { switch_photo_url: switchUrl } : {}),
+        })
+        showToast(added.length === 1 ? 'Photo added' : `${added.length} photos added`)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Could not save that. Please try again.')
+      }
+    }
+    setBusy(false)
+  }
+
+  function add(e: React.ChangeEvent<HTMLInputElement>) {
+    // Read before clearing: setting value empties the FileList too. Cleared at
+    // all because picking the same file twice in a row is otherwise silent.
+    const files = Array.from(e.target.files ?? [])
+    e.target.value = ''
+    void addFiles(files)
+  }
+
+  function drop(e: React.DragEvent) {
+    e.preventDefault()
+    setDragging(false)
+    // Non-images are not filtered out here: the api's 400 names the formats it
+    // takes, which is a better answer than a file vanishing on release.
+    void addFiles(Array.from(e.dataTransfer.files))
   }
 
   function remove(url: string) {
@@ -102,8 +145,22 @@ export function PhotoTiles({
     )
   }
 
+  const full = urls.length >= MAX_PHOTOS
+
   return (
-    <div className="flex flex-col gap-3">
+    // The whole block is the drop target, not just the Add tile: aiming at a
+    // 144px square is a worse gesture than letting go anywhere over the row.
+    // dragover has to preventDefault or the browser navigates to the file.
+    <div
+      onDragOver={(e) => {
+        if (full) return
+        e.preventDefault()
+        setDragging(true)
+      }}
+      onDragLeave={() => setDragging(false)}
+      onDrop={drop}
+      className={`flex flex-col gap-3 rounded-lg ${dragging ? 'outline outline-2 outline-offset-4 outline-dashed outline-brand-dark' : ''}`}
+    >
       {error && (
         <p role="alert" className="alert alert-danger">
           {error}
@@ -169,7 +226,7 @@ export function PhotoTiles({
               className="flex h-28 w-36 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border-[3px] border-dashed border-brand-dark bg-brand-tint text-xs font-black text-brand-deep"
             >
               <span className="text-2xl leading-none">+</span>
-              {busy ? 'Working…' : 'Add photo'}
+              {busy ? 'Working…' : dragging ? 'Drop to add' : 'Add photo'}
               <span className="font-semibold">
                 {urls.length}/{MAX_PHOTOS}
               </span>
@@ -177,7 +234,10 @@ export function PhotoTiles({
             <input
               id={`${idPrefix}-add-photo`}
               type="file"
-              accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+              // Mirrors the api's PHOTO_MIME and 054's bucket allowlist. AVIF
+              // belongs here: the library's own photos are avif files.
+              accept="image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif"
+              multiple
               className="sr-only"
               disabled={busy}
               onChange={add}
@@ -187,8 +247,8 @@ export function PhotoTiles({
       </ul>
 
       <p className="text-xs leading-relaxed text-muted">
-        Up to {MAX_PHOTOS} photos. The first one is the cover — it is what shows on cards and in
-        search. ★ moves a photo to the front.
+        Up to {MAX_PHOTOS} photos — drop them here or use the box. The first one is the cover — it
+        is what shows on cards and in search. ★ moves a photo to the front.
         {urls.length === 1 && ' Add another photo before you can remove this one.'}
       </p>
     </div>

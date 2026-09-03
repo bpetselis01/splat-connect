@@ -164,4 +164,70 @@ describe('PhotoTiles', () => {
     await waitFor(() => expect(upload).toHaveBeenCalledOnce())
     expect(addInput().value).toBe('')
   })
+
+  // Tests: a dropped file goes through the same upload-then-save path as one
+  //        picked from the box
+  // How:   fires a drop carrying one file on the tile block
+  // Chain: the two dropzones PhotoTiles replaced both took a drop, and the
+  //        rewrite dropped the handler without meaning to
+  it('uploads a dropped file', async () => {
+    const { container, onSave, upload } = setup()
+    fireEvent.drop(container.firstChild as Element, { dataTransfer: { files: [png()] } })
+    await waitFor(() => expect(upload).toHaveBeenCalledOnce())
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ photo_urls: [A, B, C] }))
+  })
+
+  // Tests: several files in one drop are all added, in one save
+  // How:   drops three onto a row of two; the cap is five
+  // Chain: one save rather than three keeps photo_urls[0] — and so every card's
+  //        cover — from changing twice on the way to its final value
+  it('adds every dropped file in a single save', async () => {
+    const upload = vi
+      .fn()
+      .mockResolvedValueOnce('u1')
+      .mockResolvedValueOnce('u2')
+      .mockResolvedValueOnce('u3')
+    const { container, onSave } = setup({ upload })
+    fireEvent.drop(container.firstChild as Element, {
+      dataTransfer: { files: [png(), png(), png()] },
+    })
+    await waitFor(() => expect(upload).toHaveBeenCalledTimes(3))
+    expect(onSave).toHaveBeenCalledOnce()
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({ photo_urls: [A, B, 'u1', 'u2', 'u3'] })
+    )
+  })
+
+  // Tests: a drop past the cap uploads only what there is room for
+  // How:   drops three onto a row of four
+  // Chain: the api counts photo_urls *before* each upload, so an unsaved batch
+  //        still reads as the old count — every one of the three would pass
+  //        that check and the objects would be written before the save failed
+  it('takes only as many dropped files as there are free slots', async () => {
+    const upload = vi.fn().mockResolvedValue('u1')
+    const { container, onSave } = setup({ urls: [A, B, C, 'd'], upload })
+    fireEvent.drop(container.firstChild as Element, {
+      dataTransfer: { files: [png(), png(), png()] },
+    })
+    await waitFor(() => expect(onSave).toHaveBeenCalledOnce())
+    expect(upload).toHaveBeenCalledOnce()
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({ photo_urls: [A, B, C, 'd', 'u1'] })
+    )
+  })
+
+  // Tests: photos that did upload are saved even when a later one fails
+  // How:   two files, the second rejects; checks the first is still saved
+  // Chain: the object is in the bucket the moment upload() resolves — leaving
+  //        it out of photo_urls orphans it there with nothing pointing at it
+  it('saves the photos that uploaded before one of them failed', async () => {
+    const upload = vi
+      .fn()
+      .mockResolvedValueOnce('u1')
+      .mockRejectedValueOnce(new Error('That photo is 18.2 MB'))
+    const { container, onSave } = setup({ upload })
+    fireEvent.drop(container.firstChild as Element, { dataTransfer: { files: [png(), png()] } })
+    expect(await screen.findByRole('alert')).toHaveTextContent('That photo is 18.2 MB')
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ photo_urls: [A, B, 'u1'] }))
+  })
 })
