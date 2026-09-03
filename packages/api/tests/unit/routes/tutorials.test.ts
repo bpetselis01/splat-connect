@@ -385,15 +385,27 @@ describe('DELETE /:id', () => {
   beforeEach(() => vi.clearAllMocks())
 
   // Tests: DELETE /:id removes the tutorial record and returns 204 No Content
-  // How:   mockUserClient.from returns a delete/eq chain with { error: null }; checks status 204
+  // How:   mockUserClient.from returns a delete/eq/select chain with one returned row; checks status 204
   // Chain: the dashboard delete action calls this → the tutorial is removed from the DB and
   //        disappears from the contributor's "My Tutorials" list on next load
   it('deletes tutorial and returns 204', async () => {
     mockUserClient.from.mockReturnValue({
-      delete: () => ({ eq: () => ({ error: null }) }),
+      delete: () => ({ eq: () => ({ select: () => ({ data: [{ id: '1' }], error: null }) }) }),
     })
     const res = await makeApp().request('/1', { method: 'DELETE' })
     expect(res.status).toBe(204)
+  })
+
+  // Tests: DELETE /:id answers 409 when RLS lets the delete match zero rows
+  // How:   the select after delete returns an empty array; checks status 409
+  // Chain: a non-draft guide is refused by policy, not silently "deleted" → the editor keeps
+  //        the guide on screen instead of navigating away on a false 204
+  it('returns 409 when no row was deleted', async () => {
+    mockUserClient.from.mockReturnValue({
+      delete: () => ({ eq: () => ({ select: () => ({ data: [], error: null }) }) }),
+    })
+    const res = await makeApp().request('/1', { method: 'DELETE' })
+    expect(res.status).toBe(409)
   })
 })
 
