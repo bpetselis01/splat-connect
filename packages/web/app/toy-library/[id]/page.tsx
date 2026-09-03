@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import { ToySummary } from '@/components/toy-summary'
+import { PhotoCarousel } from '@/components/photo-carousel'
 import { ToyTransactionRequest } from '@/components/toy-transaction-request'
 import { SaveButton } from '@/components/save-button'
 import { getSavedIds } from '@/lib/saves'
@@ -43,7 +44,16 @@ export default async function ToyLibraryDetailPage({
             className="ml-auto !h-9 !w-auto gap-2 px-3"
           />
         </div>
-        <ToySummary toy={toy} />
+        <ToySummary
+          toy={toy}
+          photos={
+            <PhotoCarousel
+              urls={toy.photo_urls}
+              switchUrl={toy.switch_adapted ? toy.switch_photo_url : null}
+              alt={toy.name}
+            />
+          }
+        />
         <ToyTransactionRequest toy={toy} viewerId={caps?.profile.id ?? null} myToys={myToys} />
       </div>
     </div>

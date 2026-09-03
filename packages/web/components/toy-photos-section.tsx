@@ -1,102 +1,73 @@
 'use client'
+/**
+ * The Photos step of the toy editor. Two dropzones until 053 — a cover and,
+ * when the toy was switch-adapted, a switch photo that replaced itself on
+ * every upload. Now one box of up to five, with one of them tagged as the
+ * photo that shows the switch.
+ *
+ * Switch-adapted stays a checkbox here and keeps driving the library filter
+ * and the card badge. What changed is what proves it: the publish rule reads
+ * switch_photo_url rather than counting a separate gallery, so "switch-adapted"
+ * and "you can see the switch" are the same claim rather than two.
+ */
 import { useState } from 'react'
 import { browserApiClient } from '@/lib/browser-api-client'
-import { FileDropZone } from '@/components/file-drop-zone'
-import { useToast } from '@/components/toast'
+import { PhotoTiles, type PhotoSave } from '@/components/photo-tiles'
 import { PanelActions } from '@/components/panel-actions'
 
 export function ToyPhotosSection({
   toyId,
-  coverPhotoUrl,
+  photoUrls,
   switchAdapted,
-  switchPhotoUrls,
+  switchPhotoUrl,
   onSave,
 }: {
   toyId: string
-  coverPhotoUrl: string | null
+  photoUrls: string[]
   switchAdapted: boolean
-  switchPhotoUrls: string[]
+  switchPhotoUrl: string | null
   onSave: (fields: {
-    cover_photo_url: string | null
-    switch_adapted: boolean
-    switch_photo_urls: string[]
+    photo_urls?: string[]
+    switch_photo_url?: string | null
+    switch_adapted?: boolean
   }) => Promise<void>
 }) {
-  const showToast = useToast()
-  const [coverFile, setCoverFile] = useState<File | null>(null)
-  const [switchFile, setSwitchFile] = useState<File | null>(null)
   const [switchAdaptedInput, setSwitchAdaptedInput] = useState(switchAdapted)
   const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
-  const hasChanges =
-    coverFile !== null || switchFile !== null || switchAdaptedInput !== switchAdapted
-
-  function handleCoverChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setCoverFile(e.target.files?.[0] ?? null)
-    setError(null)
-  }
-
-  function handleSwitchFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setSwitchFile(e.target.files?.[0] ?? null)
-    setError(null)
-  }
-
-  async function uploadFile(endpoint: string, file: File): Promise<string> {
+  async function uploadPhoto(file: File): Promise<string> {
     const fd = new FormData()
     fd.append('file', file)
     fd.append('toyId', toyId)
-    const { url } = await browserApiClient.postFormData<{ url: string }>(endpoint, fd)
+    const { url } = await browserApiClient.postFormData<{ url: string }>(
+      '/api/upload/toy-photo',
+      fd
+    )
     return url
   }
 
-  async function handleSave() {
-    if (!hasChanges || saving) return
+  async function saveSwitchAdapted() {
     setSaving(true)
-    setError(null)
     try {
-      const newCoverUrl = coverFile
-        ? await uploadFile('/api/upload/toy-cover', coverFile)
-        : coverPhotoUrl
-      // Replaces rather than appends: a toy carries one switch photo, so
-      // uploading is also how you remove the wrong one.
-      const switchUrls = switchFile
-        ? [await uploadFile('/api/upload/toy-switch-photo', switchFile)]
-        : switchPhotoUrls
-      await onSave({
-        cover_photo_url: newCoverUrl,
-        switch_adapted: switchAdaptedInput,
-        switch_photo_urls: switchUrls,
-      })
-      showToast('Photos saved')
-      setCoverFile(null)
-      setSwitchFile(null)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Upload failed')
+      await onSave({ switch_adapted: switchAdaptedInput })
     } finally {
       setSaving(false)
     }
   }
 
   return (
-    <div className="flex flex-col gap-4 px-5 pb-5">
-      {error && (
-        <p role="alert" className="alert alert-danger">
-          {error}
-        </p>
-      )}
+    <div className="flex flex-col gap-5 px-5 pb-5">
       <div>
-        <label className="field-label" htmlFor="toy_cover_photo">Cover photo</label>
-        <FileDropZone
-          id="toy_cover_photo"
-          name="toy_cover_photo"
-          accept="image/*"
-          label="Cover Photo"
-          onChange={handleCoverChange}
-          currentFileUrl={coverPhotoUrl}
-          currentFileLabel={coverPhotoUrl ? 'On file — upload to replace' : undefined}
+        <span className="field-label">Photos</span>
+        <PhotoTiles
+          idPrefix="toy"
+          urls={photoUrls}
+          switchUrl={switchPhotoUrl}
+          upload={uploadPhoto}
+          onSave={(next: PhotoSave) => onSave(next)}
         />
       </div>
+
       <div>
         <label
           htmlFor="toy_switch_adapted"
@@ -113,36 +84,21 @@ export function ToyPhotosSection({
         </label>
         <p className="mt-1 text-xs leading-relaxed text-muted">
           Tick this if the toy has been rewired to work with an accessibility switch. You&rsquo;ll
-          need a switch photo before you can publish.
+          need to mark which photo shows the switch before you can publish.
         </p>
       </div>
-      {switchAdaptedInput && (
-        <div>
-          <label className="field-label" htmlFor="toy_switch_photo">Switch photo</label>
-          <FileDropZone
-            id="toy_switch_photo"
-            name="toy_switch_photo"
-            accept="image/*"
-            label="Switch Photo"
-            onChange={handleSwitchFileChange}
-            currentFileUrl={switchPhotoUrls[0] ?? null}
-            currentFileLabel={switchPhotoUrls.length > 0 ? 'On file — upload to replace' : undefined}
-          />
-        </div>
-      )}
+
       {saving && <p className="text-sm font-semibold text-brand-dark">Saving…</p>}
-      {/* Save leads on the left in accent, as it does on Details and Review.
-          The right of this row held "View uploaded photos", a dialog showing
-          the same pictures the dropzones above now show in place; the way
-          onward stands there instead. */}
+      {/* Photos save as they are added; this button is only for the checkbox
+          above it, which is a claim about the toy rather than a file. */}
       <PanelActions>
         <button
           type="button"
-          disabled={!hasChanges || saving}
-          onClick={handleSave}
+          disabled={switchAdaptedInput === switchAdapted || saving}
+          onClick={saveSwitchAdapted}
           className="btn btn-accent"
         >
-          Save photos
+          Save
         </button>
       </PanelActions>
     </div>

@@ -12,6 +12,7 @@ function tutorial(overrides: Partial<TutorialWithDetails> = {}): TutorialWithDet
     status: 'draft',
     maturity: 'complete',
     safety_declared_at: '2026-08-01T00:00:00Z',
+    photo_urls: ['https://example.com/photo.jpg'],
     toy_photo_url: 'https://example.com/photo.jpg',
     tutorial_pdf_url: 'https://example.com/tutorial.pdf',
     rejection_note: null,
@@ -57,7 +58,7 @@ describe('computeStepStatuses', () => {
   })
 
   it('flags files as attention when either the photo or PDF is missing', () => {
-    const statuses = computeStepStatuses(tutorial({ toy_photo_url: null }), [])
+    const statuses = computeStepStatuses(tutorial({ photo_urls: [] }), [])
     expect(statuses.files).toBe('attention')
   })
 

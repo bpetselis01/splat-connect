@@ -22,7 +22,7 @@ const theOrg = {
 
 const tutorial = (status: string) => ({
   id: 't1', title: 'Spoon holder', description: 'A spoon holder', difficulty: 'easy', kind: 'assistive_tech',
-  status, tutorial_pdf_url: null, toy_photo_url: null, rejection_note: null,
+  status, tutorial_pdf_url: null, photo_urls: [], toy_photo_url: null, rejection_note: null,
   created_at: '', reviewed_at: null, reviewed_by: null, reviewed_for_org_id: null,
   reviewer: status === 'approved' ? { name: 'Sam' } : null,
   reviewed_for: status === 'approved' ? { name: 'Riverside' } : null,

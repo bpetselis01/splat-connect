@@ -6,177 +6,135 @@ import { ToastProvider } from '@/components/toast'
 
 // --- Mock strategy ---
 // browserApiClient.postFormData is mocked via vi.mock so the component can be tested without
-// real HTTP calls. The setup() helper renders the component with a default onSave spy and
-// returns direct references to the photo input, PDF input, and Save button for convenient
-// use in individual tests.
+// real HTTP calls. The setup() helper renders the component with default spies and returns
+// direct references to the add-photo input, the PDF input, and the Save button.
+//
+// The two files on this step no longer save the same way, and that is what most of these
+// assert: the PDF is held until Save (picking one must not upload it), while a photo is a
+// gallery entry and saves as it is added. The tile behaviour itself belongs to PhotoTiles
+// and is tested in photo-tiles.test.tsx.
 vi.mock('@/lib/browser-api-client', () => ({
   browserApiClient: { postFormData: vi.fn() },
 }))
 
+vi.mock('next/image', () => ({
+  // eslint-disable-next-line @next/next/no-img-element
+  default: ({ src, alt }: { src: string; alt: string }) => <img src={src} alt={alt} />,
+}))
+
 const mockPostFormData = vi.mocked(browserApiClient.postFormData)
 
-function setup(onSave = vi.fn().mockResolvedValue(undefined)) {
+function setup(
+  onSave = vi.fn().mockResolvedValue(undefined),
+  onSavePhotos = vi.fn().mockResolvedValue(undefined),
+  photoUrls: string[] = ['https://example.com/photo.jpg']
+) {
   const result = render(
-    <EditFilesSection
-      tutorialId="tid-1"
-      currentPhotoUrl="https://example.com/photo.jpg"
-      currentPdfUrl="https://example.com/tutorial.pdf"
-      onSave={onSave}
-    />
+    <ToastProvider>
+      <EditFilesSection
+        tutorialId="tid-1"
+        photoUrls={photoUrls}
+        currentPdfUrl="https://example.com/tutorial.pdf"
+        onSavePhotos={onSavePhotos}
+        onSave={onSave}
+      />
+    </ToastProvider>
   )
-  const photoInput = result.container.querySelector('input[name="toy_photo"]') as HTMLInputElement
+  const photoInput = () => result.container.querySelector('#guide-add-photo') as HTMLInputElement
   const pdfInput = result.container.querySelector('input[name="tutorial_pdf"]') as HTMLInputElement
   const saveButton = screen.getByRole('button', { name: 'Save files' })
-  return { ...result, photoInput, pdfInput, saveButton, onSave }
+  return { ...result, photoInput, pdfInput, saveButton, onSave, onSavePhotos }
 }
+
+const png = () => new File(['img'], 'photo.png', { type: 'image/png' })
+const pdf = () => new File(['pdf'], 'tutorial.pdf', { type: 'application/pdf' })
 
 describe('EditFilesSection', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  // Tests: the Save button is disabled when neither a photo nor a PDF has been selected
-  // How:   calls setup() with no file interactions; checks saveButton has disabled attribute
-  // Chain: prevents an empty save call → the component only calls postFormData when at least
-  //        one file is queued, avoiding a wasted API call
-  it('Save button is disabled when no file is selected', () => {
+  it('Save button is disabled when no PDF is selected', () => {
     const { saveButton } = setup()
     expect(saveButton).toBeDisabled()
   })
 
-  // Tests: selecting a photo file enables the Save button
-  // How:   fires change on photoInput with a PNG file; checks saveButton is not disabled
-  // Chain: the save state tracks whether any new file is pending → users get clear visual
-  //        feedback that their selection is ready to upload
-  it('Save button is enabled after selecting a photo', () => {
-    const { photoInput, saveButton } = setup()
-    fireEvent.change(photoInput, {
-      target: { files: [new File(['img'], 'photo.png', { type: 'image/png' })] },
-    })
-    expect(saveButton).not.toBeDisabled()
-  })
-
-  // Tests: selecting a PDF file enables the Save button
-  // How:   fires change on pdfInput with a PDF file; checks saveButton is not disabled
-  // Chain: selecting either file type activates the Save path — the component tracks pending
-  //        changes regardless of which file type was chosen
   it('Save button is enabled after selecting a PDF', () => {
     const { pdfInput, saveButton } = setup()
-    fireEvent.change(pdfInput, {
-      target: { files: [new File(['pdf'], 'tutorial.pdf', { type: 'application/pdf' })] },
-    })
+    fireEvent.change(pdfInput, { target: { files: [pdf()] } })
     expect(saveButton).not.toBeDisabled()
   })
 
-  // Tests: file selection alone does not trigger an upload — it only queues the file
-  // How:   fires change on photoInput; checks mockPostFormData was not called
-  // Chain: uploads are deferred to the Save button click → the user can change their mind
-  //        and select a different file without incurring an unnecessary upload
-  it('selecting a photo does not call postFormData', () => {
-    const { photoInput } = setup()
-    fireEvent.change(photoInput, {
-      target: { files: [new File(['img'], 'photo.png', { type: 'image/png' })] },
-    })
-    expect(mockPostFormData).not.toHaveBeenCalled()
-  })
-
-  // Tests: selecting a PDF does not trigger an upload until Save is clicked
-  // How:   fires change on pdfInput; checks mockPostFormData was not called
-  // Chain: same deferred-upload pattern as photo → selection queues, Save executes the upload
+  // Tests: picking a PDF still queues rather than uploads
+  // How:   fires change on pdfInput; checks postFormData was not called
+  // Chain: the original reason for the deferred upload — a file reaching storage
+  //        before the person committed to it — is unchanged for the PDF
   it('selecting a PDF does not call postFormData', () => {
     const { pdfInput } = setup()
-    fireEvent.change(pdfInput, {
-      target: { files: [new File(['pdf'], 'tutorial.pdf', { type: 'application/pdf' })] },
-    })
+    fireEvent.change(pdfInput, { target: { files: [pdf()] } })
     expect(mockPostFormData).not.toHaveBeenCalled()
   })
 
-  // Tests: clicking Save after selecting a photo calls postFormData with the photo upload endpoint
-  // How:   fires change then saveButton click; waitFor checks mockPostFormData was called with '/api/upload/photo'
-  // Chain: the photo is uploaded to Supabase storage → the returned URL is passed to onSave,
-  //        which PATCHes the tutorial record so the new photo appears on the tutorial page
-  it('clicking Save after selecting photo calls postFormData with /api/upload/photo', async () => {
-    mockPostFormData.mockResolvedValue({ url: 'https://example.com/new-photo.png' })
-    const { photoInput, saveButton } = setup()
-    fireEvent.change(photoInput, {
-      target: { files: [new File(['img'], 'photo.png', { type: 'image/png' })] },
-    })
-    fireEvent.click(saveButton)
-    await waitFor(() => expect(mockPostFormData).toHaveBeenCalledTimes(1))
-    const [calledPath] = mockPostFormData.mock.calls[0] as [string, FormData]
-    expect(calledPath).toBe('/api/upload/photo')
-  })
-
-  // Tests: clicking Save after selecting a PDF calls postFormData with the PDF upload endpoint
-  // How:   fires change on pdfInput then saveButton click; checks path is '/api/upload/pdf'
-  // Chain: the PDF is uploaded to Supabase storage → the returned URL is PATCHed onto the
-  //        tutorial record so viewers can download the updated PDF
-  it('clicking Save after selecting PDF calls postFormData with /api/upload/pdf', async () => {
+  it('clicking Save after selecting a PDF uploads it to /api/upload/pdf', async () => {
     mockPostFormData.mockResolvedValue({ url: 'https://example.com/new-tutorial.pdf' })
-    const { pdfInput, saveButton } = setup()
-    fireEvent.change(pdfInput, {
-      target: { files: [new File(['pdf'], 'tutorial.pdf', { type: 'application/pdf' })] },
-    })
+    const { pdfInput, saveButton, onSave } = setup()
+    fireEvent.change(pdfInput, { target: { files: [pdf()] } })
     fireEvent.click(saveButton)
-    await waitFor(() => expect(mockPostFormData).toHaveBeenCalledTimes(1))
-    const [calledPath] = mockPostFormData.mock.calls[0] as [string, FormData]
-    expect(calledPath).toBe('/api/upload/pdf')
+    await waitFor(() => expect(mockPostFormData).toHaveBeenCalledOnce())
+    expect(mockPostFormData.mock.calls[0][0]).toBe('/api/upload/pdf')
+    expect(onSave).toHaveBeenCalledWith('https://example.com/new-tutorial.pdf')
   })
 
-  // Tests: when both files are selected and Save is clicked, onSave is called with both returned URLs
-  // How:   mockPostFormData returns two different URLs; fires both inputs then clicks Save;
-  //        checks onSave was called with (photoUrl, pdfUrl)
-  // Chain: the parent component patches the tutorial record with both URLs in one PATCH call →
-  //        photo and PDF are updated atomically without needing two separate save cycles
-  it('clicking Save with both files selected calls onSave with correct URLs', async () => {
-    mockPostFormData
-      .mockResolvedValueOnce({ url: 'https://example.com/new-photo.png' })
-      .mockResolvedValueOnce({ url: 'https://example.com/new-tutorial.pdf' })
-    const onSave = vi.fn().mockResolvedValue(undefined)
-    const { photoInput, pdfInput, saveButton } = setup(onSave)
-    fireEvent.change(photoInput, {
-      target: { files: [new File(['img'], 'photo.png', { type: 'image/png' })] },
-    })
-    fireEvent.change(pdfInput, {
-      target: { files: [new File(['pdf'], 'tutorial.pdf', { type: 'application/pdf' })] },
-    })
-    fireEvent.click(saveButton)
-    await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1))
-    expect(onSave).toHaveBeenCalledWith(
+  // Tests: a photo does NOT wait for Save
+  // How:   picks a photo without touching Save; checks it uploaded and persisted
+  // Chain: a tile is the commitment, and × is how it is taken back — which also
+  //        deletes the object, so nothing lingers that the author removed
+  it('adding a photo uploads and saves it without clicking Save', async () => {
+    mockPostFormData.mockResolvedValue({ url: 'https://example.com/new-photo.png' })
+    const { photoInput, onSavePhotos } = setup()
+    fireEvent.change(photoInput(), { target: { files: [png()] } })
+    await waitFor(() => expect(mockPostFormData).toHaveBeenCalledOnce())
+    expect(mockPostFormData.mock.calls[0][0]).toBe('/api/upload/photo')
+    expect(onSavePhotos).toHaveBeenCalledWith([
+      'https://example.com/photo.jpg',
       'https://example.com/new-photo.png',
-      'https://example.com/new-tutorial.pdf'
+    ])
+  })
+
+  // Tests: a photo appends rather than replacing the one already there
+  // How:   the guide already holds a photo; checks both survive the save
+  // Chain: /photo used to delete every file in the folder first, which is what
+  //        held a guide to one photo
+  it('appends to the photos already on the guide', async () => {
+    mockPostFormData.mockResolvedValue({ url: 'https://example.com/second.png' })
+    const { photoInput, onSavePhotos } = setup(undefined, undefined, [
+      'https://example.com/first.png',
+    ])
+    fireEvent.change(photoInput(), { target: { files: [png()] } })
+    await waitFor(() =>
+      expect(onSavePhotos).toHaveBeenCalledWith([
+        'https://example.com/first.png',
+        'https://example.com/second.png',
+      ])
     )
   })
 
-  // Tests: after a successful save the Save button becomes disabled again
-  // How:   fires change + save; waitFor checks button returns to disabled state
-  // Chain: the component resets to its "no pending changes" state after saving → the button
-  //        signals there are no unsaved changes, preventing accidental double-saves
+  it('the guide has no switch column — there is no switch to picture', () => {
+    setup()
+    expect(screen.queryByLabelText('Shows the switch')).toBeNull()
+  })
+
   it('Save button is disabled again after a successful save', async () => {
-    mockPostFormData.mockResolvedValue({ url: 'https://example.com/new-photo.png' })
-    const { photoInput, saveButton } = setup()
-    fireEvent.change(photoInput, {
-      target: { files: [new File(['img'], 'photo.png', { type: 'image/png' })] },
-    })
+    mockPostFormData.mockResolvedValue({ url: 'https://example.com/new-tutorial.pdf' })
+    const { pdfInput, saveButton } = setup()
+    fireEvent.change(pdfInput, { target: { files: [pdf()] } })
     fireEvent.click(saveButton)
     await waitFor(() => expect(saveButton).toBeDisabled())
   })
 
   it('fires the shared toast with "Files saved" after a successful save', async () => {
-    mockPostFormData.mockResolvedValue({ url: 'https://example.com/new-photo.png' })
-    render(
-      <ToastProvider>
-        <EditFilesSection
-          tutorialId="tid-1"
-          currentPhotoUrl={null}
-          currentPdfUrl={null}
-          onSave={vi.fn().mockResolvedValue(undefined)}
-        />
-      </ToastProvider>
-    )
-    const photoInput = screen.getByLabelText(/toy photo/i, { selector: 'input' })
-    fireEvent.change(photoInput, {
-      target: { files: [new File(['img'], 'photo.png', { type: 'image/png' })] },
-    })
-    fireEvent.click(screen.getByRole('button', { name: 'Save files' }))
+    mockPostFormData.mockResolvedValue({ url: 'https://example.com/new-tutorial.pdf' })
+    const { pdfInput, saveButton } = setup()
+    fireEvent.change(pdfInput, { target: { files: [pdf()] } })
+    fireEvent.click(saveButton)
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Files saved'))
   })
 })

@@ -102,8 +102,12 @@ test('a contributor builds a tutorial from creation through to pending', async (
   const editUrl = page.url().replace(/\?step=files$/, '')
 
   const files = page.getByRole('tabpanel')
+  // The photo first, and settled before the PDF is picked: adding a photo saves
+  // through a server action that revalidates this page, and the PDF is still
+  // only in the browser's memory until Save files runs.
+  await files.locator('#guide-add-photo').setInputFiles(PHOTO_FIXTURE)
+  await expect(page.getByText('Cover')).toBeVisible({ timeout: 30_000 })
   await files.locator('input[name="tutorial_pdf"]').setInputFiles(PDF_FIXTURE)
-  await files.locator('input[name="toy_photo"]').setInputFiles(PHOTO_FIXTURE)
   await files.getByRole('button', { name: /Save files/i }).click()
   // The toast, not the button: a successful save clears the pending files, so
   // Save files goes straight back to disabled and never reports completion.

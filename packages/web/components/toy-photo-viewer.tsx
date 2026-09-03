@@ -1,14 +1,14 @@
 'use client'
 /**
- * The photos already on file for a toy, shown as pictures rather than URLs.
- * Rendered by the Review step, next to the fields it is asking you to approve.
+ * The photos already on file for a toy, shown as pictures rather than URLs —
+ * all of them at once, which is what the Review step wants: it is asking you to
+ * approve what you uploaded, and a carousel would hide four of the five behind
+ * a swipe. The public page shows the same photos in PhotoCarousel instead.
  *
  * There was a second export, ToyPhotoViewer — the same grid in a <dialog>,
- * opened by a "View uploaded photos" button on the Photos tab, because that
- * tab is a column of dropzones and would have been pushed around by a second
- * set of images. FileDropZone shows the photo on file in place now, so the
- * question that button answered is answered where it is asked, and a modal
- * for looking at your own upload is a lot of machinery for that.
+ * opened by a "View uploaded photos" button on the Photos tab. The Photos tab
+ * is now the tiles themselves (PhotoTiles), so the question that button asked
+ * is answered where it is asked.
  */
 import Image from 'next/image'
 
@@ -30,23 +30,25 @@ function PhotoTile({ url, caption }: { url: string | null; caption: string }) {
 }
 
 export function ToyPhotoGrid({
-  coverPhotoUrl,
-  switchPhotoUrls,
+  urls,
+  switchUrl,
 }: {
-  coverPhotoUrl: string | null
-  switchPhotoUrls: string[]
+  urls: string[]
+  switchUrl?: string | null
 }) {
   return (
     <ul className="grid grid-cols-2 gap-3">
-      <PhotoTile url={coverPhotoUrl} caption="Cover photo" />
-      {/* Uploading now writes a single switch photo, but toys created before
-          that still hold several. Show every one rather than hiding the extras
-          — the next upload collapses them to one. */}
-      {switchPhotoUrls.map((url, i) => (
+      {urls.length === 0 && <PhotoTile url={null} caption="Photo" />}
+      {urls.map((url, i) => (
         <PhotoTile
           key={url}
           url={url}
-          caption={switchPhotoUrls.length > 1 ? `Switch photo ${i + 1}` : 'Switch photo'}
+          caption={
+            // Says what the photo is FOR where that is known, and falls back to
+            // its position where it isn't. Both are things a reviewer checking
+            // their own listing wants confirmed before they publish it.
+            url === switchUrl ? 'Shows the switch' : i === 0 ? 'Cover photo' : `Photo ${i + 1}`
+          }
         />
       ))}
     </ul>

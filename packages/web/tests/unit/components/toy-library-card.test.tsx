@@ -30,6 +30,7 @@ const toy = {
   quantity: 1,
   owner_id: 'someone',
   owner_org_id: null,
+  photo_urls: ['https://example.com/toy.jpg'],
   cover_photo_url: 'https://example.com/toy.jpg',
 } as unknown as ToyWithOwner
 

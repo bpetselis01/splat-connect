@@ -60,6 +60,7 @@ const tutorial = {
   difficulty: 'easy',
   status: 'approved',
   description: 'A first adaptation.',
+  photo_urls: ['https://example.com/p.jpg'],
   toy_photo_url: 'https://example.com/p.jpg',
 }
 

@@ -26,6 +26,7 @@ function tutorial(overrides: Partial<Tutorial & { tutorial_orgs?: TutorialOrg[] 
     safety_declared_at: null,
     description: null,
     tutorial_pdf_url: null,
+    photo_urls: [],
     toy_photo_url: null,
     rejection_note: null,
     created_at: '',

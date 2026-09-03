@@ -3,35 +3,33 @@ import { PanelActions, useSaveOnLeave } from '@/components/panel-actions'
 import { useState } from 'react'
 import { browserApiClient } from '@/lib/browser-api-client'
 import { FileDropZone } from '@/components/file-drop-zone'
+import { PhotoTiles } from '@/components/photo-tiles'
 import { useToast } from '@/components/toast'
 
 export function EditFilesSection({
   tutorialId,
-  currentPhotoUrl,
+  photoUrls,
   currentPdfUrl,
+  onSavePhotos,
   onSave,
 }: {
   tutorialId: string
-  currentPhotoUrl: string | null
+  photoUrls: string[]
   currentPdfUrl: string | null
-  onSave: (photoUrl: string | null, pdfUrl: string | null) => Promise<void>
+  onSavePhotos: (photoUrls: string[]) => Promise<void>
+  onSave: (pdfUrl: string | null) => Promise<void>
 }) {
   // WHY: Previously, picking a file immediately uploaded it to cloud storage —
   //      files were being saved even if the user cancelled or changed their mind.
-  // HOW: Files are held in memory as File objects and only uploaded when the
-  //      Save button is clicked.
+  // HOW: The PDF is held in memory as a File and only uploaded when Save is
+  //      clicked. Photos do not work that way and do not need to: a tile is
+  //      itself the commitment, and × removes both the tile and the object.
   const showToast = useToast()
-  const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [pdfFile, setPdfFile] = useState<File | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const hasChanges = photoFile !== null || pdfFile !== null
-
-  function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setPhotoFile(e.target.files?.[0] ?? null)
-    setError(null)
-  }
+  const hasChanges = pdfFile !== null
 
   function handlePdfChange(e: React.ChangeEvent<HTMLInputElement>) {
     setPdfFile(e.target.files?.[0] ?? null)
@@ -51,15 +49,11 @@ export function EditFilesSection({
     setSaving(true)
     setError(null)
     try {
-      const newPhotoUrl = photoFile
-        ? await uploadFile('/api/upload/photo', photoFile)
-        : currentPhotoUrl
       const newPdfUrl = pdfFile
         ? await uploadFile('/api/upload/pdf', pdfFile)
         : currentPdfUrl
-      await onSave(newPhotoUrl, newPdfUrl)
+      await onSave(newPdfUrl)
       showToast('Files saved')
-      setPhotoFile(null)
       setPdfFile(null)
       return true
     } catch (err) {
@@ -86,15 +80,12 @@ export function EditFilesSection({
         </p>
       )}
       <div>
-        <label className="field-label" htmlFor="toy_photo">Replace toy photo</label>
-        <FileDropZone
-          id="toy_photo"
-          name="toy_photo"
-          accept="image/*"
-          label="Toy Photo"
-          onChange={handlePhotoChange}
-          currentFileUrl={currentPhotoUrl}
-          currentFileLabel={currentPhotoUrl ? 'On file — upload to replace' : undefined}
+        <span className="field-label">Photos</span>
+        <PhotoTiles
+          idPrefix="guide"
+          urls={photoUrls}
+          upload={(file) => uploadFile('/api/upload/photo', file)}
+          onSave={({ photo_urls }) => onSavePhotos(photo_urls)}
         />
       </div>
       <div>

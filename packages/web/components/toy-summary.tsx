@@ -1,19 +1,22 @@
 /**
- * The photo grid + fact list for one toy — shared by the owner's own Review
- * step (ToyReviewPanel in toy-editor.tsx) and the public toy detail page.
- * No owner name here: the owner's own review has no need to name themselves,
- * and the public page renders that above this component instead.
+ * The fact list for one toy, under whatever the caller shows the photos in —
+ * shared by the owner's own Review step (ToyReviewPanel in toy-editor.tsx) and
+ * the public toy detail page. No owner name here: the owner's own review has no
+ * need to name themselves, and the public page renders that above this
+ * component instead.
+ *
+ * `photos` is a slot rather than a flag because the two callers genuinely want
+ * different things: a reviewer checking their own listing wants all five at
+ * once, and a stranger deciding whether to ask for the toy wants to look
+ * through them one at a time.
  */
-import { ToyPhotoGrid } from '@/components/toy-photo-viewer'
+import type { ReactNode } from 'react'
 import type { Toy } from '@splat-connect/types'
 
-export function ToySummary({ toy }: { toy: Toy }) {
+export function ToySummary({ toy, photos }: { toy: Toy; photos: ReactNode }) {
   return (
     <div className="flex flex-col gap-4">
-      <ToyPhotoGrid
-        coverPhotoUrl={toy.cover_photo_url}
-        switchPhotoUrls={toy.switch_adapted ? toy.switch_photo_urls : []}
-      />
+      {photos}
 
       <dl className="flex flex-col gap-2 text-sm">
         <div>

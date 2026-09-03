@@ -25,7 +25,7 @@
  */
 import type { ReactNode } from 'react'
 import { NotMedicalNote } from '@/components/not-medical-note'
-import Image from 'next/image'
+import { PhotoCarousel } from '@/components/photo-carousel'
 import { Badge } from '@/components/badge'
 import { TutorialCard } from '@/components/tutorial-card'
 import { OrgBadges } from '@/components/org-badges'
@@ -75,20 +75,7 @@ export function TutorialView({
           giving it room to move within the grid area before sticky release at the
           containing block (the row) boundary. */}
       <div className="md:sticky md:top-20 md:self-start">
-        {tutorial.toy_photo_url ? (
-          <div className="relative h-56 w-full overflow-hidden rounded-2xl bg-sunken">
-            <Image
-              src={tutorial.toy_photo_url}
-              alt={tutorial.title}
-              fill
-              className="object-cover"
-            />
-          </div>
-        ) : (
-          <div className="flex h-56 items-center justify-center rounded-2xl bg-brand-tint text-6xl">
-            🧸
-          </div>
-        )}
+        <PhotoCarousel urls={tutorial.photo_urls} alt={tutorial.title} className="h-56" />
         <OrgBadges
           backing={backing ?? tutorial.tutorial_orgs ?? []}
           approvedByName={tutorial.reviewer?.name}

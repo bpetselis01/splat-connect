@@ -36,6 +36,7 @@ const mockTutorial: Tutorial = {
     safety_declared_at: null,
   description: 'A helpful tutorial',
   tutorial_pdf_url: 'https://example.com/tutorial.pdf',
+  photo_urls: ['https://example.com/photo.jpg'],
   toy_photo_url: 'https://example.com/photo.jpg',
   rejection_note: null,
   created_at: '2026-01-01T00:00:00Z',

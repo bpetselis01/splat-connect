@@ -125,6 +125,15 @@
   /* Overshoots and settles. The site is about switches; its controls should
      feel like one is being pressed rather than merely recoloured. */
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* A damped oscillator sampled into linear() — duration included, so it is
+     used whole: `transition: transform var(--spring-photo)`.
+     --ease-spring above stays right for a control that snaps back on its own;
+     this one is for a rail released mid-drag, where the settle after the
+     overshoot is most of what you feel. A cubic-bezier cannot describe that
+     tail: it has one hump and then stops. Only the photo carousel wants it. */
+  --spring-photo: 0.58s
+    linear(0, 0.041, 0.138, 0.26, 0.39, 0.514, 0.624, 0.719, 0.797, 0.859, 0.907, 0.943, 0.969,
+      0.986, 0.998, 1.005, 1.009, 1.011, 1.011, 1.01, 1.009, 1.008, 1.006, 1.005, 1.004, 1.003, 1);
 
   --font-sans: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
   /* Micro-labels only — see the note on IBM_Plex_Mono in app/layout.tsx. */
@@ -136,6 +145,16 @@
   body {
     background-color: var(--color-canvas);
     color: var(--color-ink);
+  }
+
+  /* The carousel sets `transition: transform var(--spring-photo)` inline, where
+     a rule cannot outrank it — so the token itself is what gets collapsed.
+     Redefined rather than removed: the rail must still arrive at the photo it
+     was released towards, just without travelling there. */
+  @media (prefers-reduced-motion: reduce) {
+    :root {
+      --spring-photo: 1ms linear;
+    }
   }
 
   h1,

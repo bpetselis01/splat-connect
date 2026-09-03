@@ -6,6 +6,7 @@ import { Stepper } from '@/components/stepper'
 import { ToyDetailsForm } from '@/components/toy-details-form'
 import { ToyPhotosSection } from '@/components/toy-photos-section'
 import { ToySummary } from '@/components/toy-summary'
+import { ToyPhotoGrid } from '@/components/toy-photo-viewer'
 import { DeleteEntityButton } from '@/components/delete-entity-button'
 import { ToastProvider } from '@/components/toast'
 import { PanelActions } from '@/components/panel-actions'
@@ -31,7 +32,15 @@ function ToyReviewPanel({ toy, onSaveOfferType }: { toy: Toy; onSaveOfferType: (
     <>
       <div className="panel pt-5">
         <div className="flex flex-col gap-4 px-5 pb-5">
-          <ToySummary toy={toy} />
+          <ToySummary
+            toy={toy}
+            photos={
+              <ToyPhotoGrid
+                urls={toy.photo_urls}
+                switchUrl={toy.switch_adapted ? toy.switch_photo_url : null}
+              />
+            }
+          />
 
           <div className="flex flex-col gap-2">
             <p className="field-label">Offer this toy for</p>
@@ -74,9 +83,9 @@ export function ToyEditor({ toy: initialToy }: { toy: Toy }) {
   }
 
   async function savePhotos(form: {
-    cover_photo_url: string | null
-    switch_adapted: boolean
-    switch_photo_urls: string[]
+    photo_urls?: string[]
+    switch_photo_url?: string | null
+    switch_adapted?: boolean
   }) {
     const updated = await browserApiClient.patch<Toy>(`/api/toys/${toy.id}`, form)
     setToy(updated)
@@ -118,9 +127,9 @@ export function ToyEditor({ toy: initialToy }: { toy: Toy }) {
               <div className="panel pt-5">
                 <ToyPhotosSection
                   toyId={toy.id}
-                  coverPhotoUrl={toy.cover_photo_url}
+                  photoUrls={toy.photo_urls}
                   switchAdapted={toy.switch_adapted}
-                  switchPhotoUrls={toy.switch_photo_urls}
+                  switchPhotoUrl={toy.switch_photo_url}
                   onSave={savePhotos}
                 />
               </div>

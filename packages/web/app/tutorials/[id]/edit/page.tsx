@@ -96,12 +96,23 @@ export default async function EditTutorialPage({
 
   // Receives only string URLs (no file bytes) — no Server Action body size limit risk.
   // File bytes are uploaded directly browser -> Hono API by EditFilesSection.
-  async function patchFileUrls(photoUrl: string | null, pdfUrl: string | null) {
+  async function patchFileUrls(pdfUrl: string | null) {
     'use server'
-    const updates: Record<string, string | null> = {
-      toy_photo_url: photoUrl,
-      tutorial_pdf_url: pdfUrl,
-    }
+    return patchFiles({ tutorial_pdf_url: pdfUrl })
+  }
+
+  // Photos save one at a time as they are added or removed, so they get their
+  // own action rather than riding along with the PDF's Save button.
+  async function patchPhotoUrls(photoUrls: string[]) {
+    'use server'
+    return patchFiles({ photo_urls: photoUrls })
+  }
+
+  async function patchFiles(updates: Record<string, unknown>) {
+    'use server'
+    // Read first for updated_at: the tutorials PATCH takes it as an optimistic
+    // lock, so a save built on a stale copy is refused rather than silently
+    // overwriting a collaborator.
     const current = await apiClient.get<Tutorial>(`/api/tutorials/${id}`)
     if (current.status === 'approved' || current.status === 'rejected') {
       updates.status = 'pending'
@@ -188,8 +199,9 @@ export default async function EditTutorialPage({
         <div className="panel pt-5">
           <EditFilesSection
             tutorialId={id}
-            currentPhotoUrl={tutorial.toy_photo_url}
+            photoUrls={tutorial.photo_urls}
             currentPdfUrl={tutorial.tutorial_pdf_url}
+            onSavePhotos={patchPhotoUrls}
             onSave={patchFileUrls}
           />
         </div>

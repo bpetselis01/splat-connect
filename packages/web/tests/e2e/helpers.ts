@@ -102,7 +102,9 @@ export async function createPublishedToy(
       owner_id: ownerId,
       name: overrides.name ?? 'Test toy',
       condition: 7,
-      cover_photo_url: 'https://example.com/cover.jpg',
+      // Not cover_photo_url: 053 made it generated from photo_urls[1], and an
+      // insert that names a generated column is rejected outright.
+      photo_urls: ['https://example.com/cover.jpg'],
       status: 'published',
       offer_type: overrides.offer_type ?? 'donation',
     })

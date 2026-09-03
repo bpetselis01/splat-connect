@@ -47,15 +47,15 @@ test('a contributor adds a toy, edits it, uploads a cover photo, publishes it, a
     // The review tab carries the same finish bar as the tutorial editor: a
     // count, and each gap as a button that jumps to the step that fixes it.
     await expect(page.getByText('2 things left')).toBeVisible()
-    await expect(page.getByRole('button', { name: 'A cover photo' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'A photo' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Publish' })).toBeDisabled()
 
     await page.getByRole('tab', { name: 'Photos' }).click()
-    await page.locator('input[name="toy_cover_photo"]').setInputFiles(PHOTO_FIXTURE)
-    await page.getByRole('button', { name: 'Save photos' }).click()
-    await expect(page.getByRole('button', { name: 'Save photos' })).toBeDisabled({
-      timeout: 20_000,
-    })
+    // One box now, and no Save beside it: a photo uploads and saves as it is
+    // added, so the tile appearing IS the confirmation. Save on this step
+    // belongs to the switch-adapted checkbox alone.
+    await page.locator('#toy-add-photo').setInputFiles(PHOTO_FIXTURE)
+    await expect(page.getByText('Cover')).toBeVisible({ timeout: 20_000 })
 
     await page.getByRole('tab', { name: 'Review' }).click()
     // Publish also needs an offer type, so the photo alone does not unlock it.

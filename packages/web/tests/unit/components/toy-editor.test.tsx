@@ -33,8 +33,9 @@ function toy(overrides: Partial<Toy> = {}): Toy {
     description: null,
     condition: 8,
     switch_adapted: false,
+    photo_urls: ['https://example.com/cover.jpg'],
     cover_photo_url: 'https://example.com/cover.jpg',
-    switch_photo_urls: [],
+    switch_photo_url: null,
     status: 'draft',
     created_at: '',
     updated_at: '',
@@ -76,10 +77,10 @@ describe('ToyEditor', () => {
   //        far the toy was from publishable. It is the stepper's now — this asserts
   //        it from Details, without visiting Review at all
   it('names the missing photo and disables Publish from the very first step', () => {
-    render(<ToyEditor toy={toy({ cover_photo_url: null })} />)
+    render(<ToyEditor toy={toy({ photo_urls: [] })} />)
 
     expect(screen.getByText('1 thing left')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'A cover photo' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'A photo' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Publish' })).toBeDisabled()
   })
 
@@ -173,22 +174,29 @@ describe('ToyEditor', () => {
     )
   })
 
-  it('shows the switch photo in Review only when the toy is switch-adapted', () => {
-    const switchPhotos = { switch_photo_urls: ['https://example.com/switch.jpg'] }
-    const { unmount } = render(<ToyEditor toy={toy({ ...switchPhotos, switch_adapted: false })} />)
+  // The tagged photo is captioned by what it shows rather than by its position,
+  // and only while the toy still claims to be switch-adapted: untick the box and
+  // it goes back to being the second photo.
+  it('captions the tagged photo in Review only when the toy is switch-adapted', () => {
+    const tagged = {
+      photo_urls: ['https://example.com/cover.jpg', 'https://example.com/switch.jpg'],
+      switch_photo_url: 'https://example.com/switch.jpg',
+    }
+    const { unmount } = render(<ToyEditor toy={toy({ ...tagged, switch_adapted: false })} />)
     fireEvent.click(screen.getByRole('tab', { name: 'Review' }))
-    expect(screen.queryByAltText('Switch photo')).not.toBeInTheDocument()
+    expect(screen.queryByAltText('Shows the switch')).not.toBeInTheDocument()
+    expect(screen.getByAltText('Photo 2')).toBeInTheDocument()
     unmount()
 
-    render(<ToyEditor toy={toy({ ...switchPhotos, switch_adapted: true })} />)
+    render(<ToyEditor toy={toy({ ...tagged, switch_adapted: true })} />)
     fireEvent.click(screen.getByRole('tab', { name: 'Review' }))
-    expect(screen.getByAltText('Switch photo')).toBeInTheDocument()
+    expect(screen.getByAltText('Shows the switch')).toBeInTheDocument()
   })
 
-  it('falls back to the placeholder tile in Review when there is no cover photo', () => {
-    render(<ToyEditor toy={toy({ cover_photo_url: null })} />)
+  it('falls back to the placeholder tile in Review when there are no photos', () => {
+    render(<ToyEditor toy={toy({ photo_urls: [] })} />)
     fireEvent.click(screen.getByRole('tab', { name: 'Review' }))
     expect(screen.queryByAltText('Cover photo')).not.toBeInTheDocument()
-    expect(screen.getByText('No cover photo yet')).toBeInTheDocument()
+    expect(screen.getByText('No photo yet')).toBeInTheDocument()
   })
 })

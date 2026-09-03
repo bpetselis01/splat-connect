@@ -12,8 +12,9 @@ function toy(overrides: Partial<Toy> = {}): Toy {
     description: null,
     condition: 8,
     switch_adapted: false,
+    photo_urls: ['https://example.com/cover.jpg'],
     cover_photo_url: 'https://example.com/cover.jpg',
-    switch_photo_urls: [],
+    switch_photo_url: null,
     status: 'draft',
     created_at: '',
     updated_at: '',
@@ -26,25 +27,39 @@ function toy(overrides: Partial<Toy> = {}): Toy {
 // is missing and hand over the fix in one gesture. Offer type is chosen in the
 // Review panel, which is why it points there rather than at Photos.
 describe('getMissingToyFields', () => {
-  it('flags a missing cover photo, pointing at Photos', () => {
-    expect(getMissingToyFields(toy({ cover_photo_url: null }))).toEqual([
-      { step: 'photos', label: 'A cover photo' },
+  it('flags having no photos at all, pointing at Photos', () => {
+    expect(getMissingToyFields(toy({ photo_urls: [] }))).toEqual([
+      { step: 'photos', label: 'A photo' },
     ])
   })
 
-  it('does not require switch photos when not switch-adapted', () => {
-    expect(getMissingToyFields(toy({ switch_adapted: false, switch_photo_urls: [] }))).toEqual([])
+  it('does not ask which photo shows the switch when not switch-adapted', () => {
+    expect(getMissingToyFields(toy({ switch_adapted: false, switch_photo_url: null }))).toEqual([])
   })
 
-  it('requires at least one switch photo when switch-adapted', () => {
-    expect(getMissingToyFields(toy({ switch_adapted: true, switch_photo_urls: [] }))).toEqual([
-      { step: 'photos', label: 'A switch photo' },
-    ])
-  })
-
-  it('is satisfied once a switch photo exists', () => {
+  // The rule is that the switch was pictured, not that a second file exists —
+  // so five untagged photos is still a gap, and one tagged photo closes it.
+  it('requires a tagged photo when switch-adapted, however many are uploaded', () => {
     expect(
-      getMissingToyFields(toy({ switch_adapted: true, switch_photo_urls: ['https://x/switch-1.jpg'] }))
+      getMissingToyFields(
+        toy({
+          switch_adapted: true,
+          switch_photo_url: null,
+          photo_urls: ['https://x/1.jpg', 'https://x/2.jpg'],
+        })
+      )
+    ).toEqual([{ step: 'photos', label: 'A photo showing the switch' }])
+  })
+
+  it('is satisfied once one of the photos is tagged as showing the switch', () => {
+    expect(
+      getMissingToyFields(
+        toy({
+          switch_adapted: true,
+          photo_urls: ['https://x/cover.jpg', 'https://x/switch-1.jpg'],
+          switch_photo_url: 'https://x/switch-1.jpg',
+        })
+      )
     ).toEqual([])
   })
 
@@ -60,8 +75,14 @@ describe('computeToyStepStatuses', () => {
     expect(computeToyStepStatuses(toy()).details).toBe('done')
   })
 
-  it('flags photos as attention when the cover photo is missing', () => {
-    expect(computeToyStepStatuses(toy({ cover_photo_url: null })).photos).toBe('attention')
+  it('flags photos as attention when there are none', () => {
+    expect(computeToyStepStatuses(toy({ photo_urls: [] })).photos).toBe('attention')
+  })
+
+  it('flags photos as attention when switch-adapted but nothing is tagged', () => {
+    expect(
+      computeToyStepStatuses(toy({ switch_adapted: true, switch_photo_url: null })).photos
+    ).toBe('attention')
   })
 
   it('marks photos done once every publish precondition is met', () => {

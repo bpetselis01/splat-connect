@@ -13,15 +13,15 @@ export type ToyStep = Step<ToyStepId>
  * it out of the Photos dot.
  */
 export function getMissingToyFields(toy: {
-  cover_photo_url: string | null
+  photo_urls: string[]
   switch_adapted: boolean
-  switch_photo_urls: string[]
+  switch_photo_url: string | null
   offer_type: OfferType | null
 }): Gap<ToyStepId>[] {
   const missing: Gap<ToyStepId>[] = []
-  if (!toy.cover_photo_url) missing.push({ step: 'photos', label: 'A cover photo' })
-  if (toy.switch_adapted && toy.switch_photo_urls.length === 0)
-    missing.push({ step: 'photos', label: 'A switch photo' })
+  if (toy.photo_urls.length === 0) missing.push({ step: 'photos', label: 'A photo' })
+  if (toy.switch_adapted && !toy.switch_photo_url)
+    missing.push({ step: 'photos', label: 'A photo showing the switch' })
   if (!toy.offer_type) missing.push({ step: 'review', label: 'How it is offered' })
   return missing
 }
@@ -30,7 +30,7 @@ export function computeToyStepStatuses(toy: Toy): Record<ToyStepId, StepStatus> 
   // Photos status stays scoped to photo fields — offer_type belongs to the
   // Review step, so an unset offer_type shouldn't flag Photos for attention.
   const photosMissing =
-    !toy.cover_photo_url || (toy.switch_adapted && toy.switch_photo_urls.length === 0)
+    toy.photo_urls.length === 0 || (toy.switch_adapted && !toy.switch_photo_url)
   return {
     details: 'done',
     photos: photosMissing ? 'attention' : 'done',
