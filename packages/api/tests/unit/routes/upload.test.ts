@@ -186,8 +186,22 @@ describe('POST /photo', () => {
       body: photoForm({ type: 'application/pdf', name: 'guide.pdf' }),
     })
     expect(res.status).toBe(400)
-    expect((await res.json() as any).error).toMatch(/JPEG, PNG, WebP or HEIC/)
+    expect((await res.json() as any).error).toMatch(/JPEG, PNG, WebP, AVIF or HEIC/)
     expect(mockUpload).not.toHaveBeenCalled()
+  })
+
+  // Tests: AVIF reaches storage rather than being turned away at the guard
+  // How:   posts an avif; checks the upload happened
+  // Chain: 053's allowlist left avif out and banned a format the library was
+  //        already storing — every .avif already in the bucket predates it.
+  //        054 puts it back on the bucket; this is the route's half.
+  it('accepts an AVIF photo', async () => {
+    const res = await makeApp().request('/photo', {
+      method: 'POST',
+      body: photoForm({ type: 'image/avif', name: 'photo.avif' }),
+    })
+    expect(res.status).toBe(200)
+    expect(mockUpload).toHaveBeenCalled()
   })
 
   it('returns 400 for a photo over 10 MB', async () => {

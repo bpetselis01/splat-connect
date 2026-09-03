@@ -15,8 +15,15 @@ const upload = new Hono<{ Variables: AuthVariables }>()
 type Ctx = Context<{ Variables: AuthVariables }>
 type UserClient = ReturnType<typeof createUserClient>
 
-/** Mirrors 053's allowed_mime_types on both photo buckets. */
-const PHOTO_MIME = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif']
+/** Mirrors 054's allowed_mime_types on both photo buckets. */
+const PHOTO_MIME = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/avif',
+  'image/heic',
+  'image/heif',
+]
 /** Mirrors 053's file_size_limit on both photo buckets. */
 const PHOTO_MAX_BYTES = 10 * 1024 * 1024
 
@@ -116,7 +123,7 @@ function photoRoute(
     // rejected upload with "mime type application/pdf is not supported", which
     // is a sentence about the bucket rather than about the photo.
     if (!PHOTO_MIME.includes(file.type)) {
-      return c.json({ error: 'Photos need to be a JPEG, PNG, WebP or HEIC image.' }, 400)
+      return c.json({ error: 'Photos need to be a JPEG, PNG, WebP, AVIF or HEIC image.' }, 400)
     }
     if (file.size > PHOTO_MAX_BYTES) {
       const mb = (file.size / 1024 / 1024).toFixed(1)
