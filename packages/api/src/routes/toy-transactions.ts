@@ -724,7 +724,7 @@ toyTransactions.post('/:id/confirm', async (c) => {
   async function handOutOneUnit(toyId: string, toOwnerId: string): Promise<string | null> {
     const { data: source, error: readError } = await admin
       .from('toys')
-      .select('name, description, condition, switch_adapted, cover_photo_url, switch_photo_urls, offer_type, quantity')
+      .select('name, description, condition, switch_adapted, photo_urls, switch_photo_url, offer_type, quantity')
       .eq('id', toyId)
       .single()
     if (readError) return readError.message
@@ -734,8 +734,10 @@ toyTransactions.post('/:id/confirm', async (c) => {
       description: source.description,
       condition: source.condition,
       switch_adapted: source.switch_adapted,
-      cover_photo_url: source.cover_photo_url,
-      switch_photo_urls: source.switch_photo_urls,
+      // cover_photo_url is generated from photo_urls[1] since 053 — naming it
+      // in an insert is rejected outright, so the array carries it across.
+      photo_urls: source.photo_urls,
+      switch_photo_url: source.switch_photo_url,
       offer_type: source.offer_type,
       owner_id: toOwnerId,
       quantity: 1,

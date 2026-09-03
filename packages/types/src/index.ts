@@ -38,6 +38,13 @@ export interface ChildProfile {
 
 export type OfferType = 'donation' | 'exchange' | 'both'
 
+/**
+ * How many photos a toy or a guide may carry. One number for four enforcers —
+ * the api's 400, both editors' "Add photo" button, and 053's check constraint
+ * on each table — so the cap cannot say five in one place and six in another.
+ */
+export const MAX_PHOTOS = 5
+
 export interface Toy {
   id: string
   /** Null when an organisation holds it. Exactly one of this and
@@ -52,8 +59,15 @@ export interface Toy {
   description: string | null
   condition: number
   switch_adapted: boolean
+  /** Up to MAX_PHOTOS, in display order. The first is the cover. */
+  photo_urls: string[]
+  /** Which of photo_urls shows the accessibility switch. A switch-adapted toy
+   *  cannot be published until one is named; the database enforces that this
+   *  is a member of photo_urls. */
+  switch_photo_url: string | null
+  /** Generated from photo_urls[1] by the database (053). Read-only — a write
+   *  naming this column is rejected, so set photo_urls instead. */
   cover_photo_url: string | null
-  switch_photo_urls: string[]
   status: 'draft' | 'published'
   offer_type: OfferType | null
   created_at: string
@@ -657,6 +671,10 @@ export interface Tutorial {
   safety_declared_at: string | null
   /** Storage object path in `tutorial-pdfs` (`<id>/tutorial.pdf`), not a URL — served via /files/tutorial-pdfs/<path>. Null until uploaded. */
   tutorial_pdf_url: string | null
+  /** Up to MAX_PHOTOS, in display order. The first is the cover. */
+  photo_urls: string[]
+  /** Generated from photo_urls[1] by the database (053). Read-only — a write
+   *  naming this column is rejected, so set photo_urls instead. */
   toy_photo_url: string | null
   rejection_note: string | null
   created_at: string

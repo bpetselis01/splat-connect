@@ -156,7 +156,7 @@ describe("an organisation's toy inventory", () => {
 
     await req(`/toys/${toy.id}`, leader.token, {
       method: 'PATCH',
-      body: JSON.stringify({ cover_photo_url: 'https://example.com/bear.jpg', offer_type: 'both' }),
+      body: JSON.stringify({ photo_urls: ['https://example.com/bear.jpg'], offer_type: 'both' }),
     })
     const published = await req(`/toys/${toy.id}/publish`, leader.token, { method: 'PATCH' })
     expect(published.status).toBe(200)

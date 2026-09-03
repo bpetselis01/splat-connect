@@ -104,7 +104,7 @@ describe('toys CRUD', () => {
 
     await req(`/${toy.id}`, owner.token, {
       method: 'PATCH',
-      body: JSON.stringify({ cover_photo_url: 'https://example.com/cover.jpg', offer_type: 'donation' }),
+      body: JSON.stringify({ photo_urls: ['https://example.com/cover.jpg'], offer_type: 'donation' }),
     })
 
     const published = await req(`/${toy.id}/publish`, owner.token, { method: 'PATCH' })

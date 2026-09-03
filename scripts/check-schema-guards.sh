@@ -82,7 +82,21 @@ select * from (values
        and pg_get_constraintdef(oid) like '%tutorial_submitted%'
       from pg_constraint
      where conname = 'notifications_type_check'
-       and conrelid = 'public.notifications'::regclass))
+       and conrelid = 'public.notifications'::regclass)),
+
+  -- 053. Both photo buckets are public, and until 053 they had no size limit
+  -- and no MIME allowlist — the only bound was /photo deleting every existing
+  -- file before writing, which five-photo uploads removed. Without these the
+  -- buckets accept arbitrary files of arbitrary size at a public URL, so their
+  -- absence is a vulnerability rather than a bug, which is the bar for this
+  -- list. storage.buckets is settings rather than DDL, so a repair that skips
+  -- 053 leaves no other trace at all.
+  ('053 photo buckets carry a size limit and an image-only MIME allowlist',
+   (select count(*) = 2 from storage.buckets
+      where id in ('toy-photos', 'toy-photos-library')
+        and file_size_limit is not null
+        and allowed_mime_types is not null
+        and not (allowed_mime_types && array['text/html', 'image/svg+xml'])))
 ) as t(guard, ok)
 where not ok;
 EOSQL

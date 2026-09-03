@@ -28,7 +28,7 @@ async function createPublishedToy(token: string, name: string) {
   const toy = (await create.json()) as { id: string }
   await req(`/${toy.id}`, token, {
     method: 'PATCH',
-    body: JSON.stringify({ cover_photo_url: 'https://example.com/cover.jpg', offer_type: 'donation' }),
+    body: JSON.stringify({ photo_urls: ['https://example.com/cover.jpg'], offer_type: 'donation' }),
   })
   await req(`/${toy.id}/publish`, token, { method: 'PATCH' })
   return toy.id
@@ -96,7 +96,7 @@ describe('GET /api/public/toys', () => {
       const handoffId = ((await createToy.json()) as { id: string }).id
       await req(`/${handoffId}`, owner.token, {
         method: 'PATCH',
-        body: JSON.stringify({ cover_photo_url: 'https://example.com/cover.jpg', offer_type: 'donation' }),
+        body: JSON.stringify({ photo_urls: ['https://example.com/cover.jpg'], offer_type: 'donation' }),
       })
       await req(`/${handoffId}/publish`, owner.token, { method: 'PATCH' })
 

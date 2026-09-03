@@ -9,6 +9,7 @@ import { Hono } from 'hono'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { pickEditable } from './pick-editable.js'
 import { notifyTutorialSubmitted } from '../review-notifications.js'
+import { removeDroppedPhotos } from '../photo-storage.js'
 import type { AuthVariables } from '../middleware/auth.js'
 
 const tutorials = new Hono<{ Variables: AuthVariables }>()
@@ -136,7 +137,7 @@ tutorials.post('/', async (c) => {
       description: body.description ?? null,
       status: 'draft',
       tutorial_pdf_url: body.tutorial_pdf_url ?? null,
-      toy_photo_url: body.toy_photo_url ?? null,
+      photo_urls: body.photo_urls ?? [],
     })
     .select()
     .single()
@@ -156,7 +157,7 @@ tutorials.post('/', async (c) => {
 /** Only these may be set through the generic edit endpoint. Unknown keys are
  *  dropped silently; the protected ones return 403 so a caller learns rather than
  *  wonders. */
-const EDITABLE = ['title', 'description', 'difficulty', 'kind', 'maturity', 'tutorial_pdf_url', 'toy_photo_url', 'status'] as const
+const EDITABLE = ['title', 'description', 'difficulty', 'kind', 'maturity', 'tutorial_pdf_url', 'photo_urls', 'status'] as const
 const PROTECTED = ['reviewed_by', 'reviewed_for_org_id', 'reviewed_at', 'rejection_note']
 
 async function hasAcceptedContributorTerms(token: string, userId: string) {
@@ -211,6 +212,18 @@ tutorials.patch('/:id', async (c) => {
   // pending is one event; a later save that happens to resend status 'pending'
   // (the editor sends the whole form) is not, and notifying on it would have
   // meant a leader's badge climbing every time an author fixed a typo.
+  // Read before the write, and only when photos are part of this save: the
+  // sweep below needs to know which URLs the row held a moment ago.
+  const photosBefore = Array.isArray(body.photo_urls)
+    ? (
+        await supabase
+          .from('tutorials')
+          .select('photo_urls')
+          .eq('id', c.req.param('id'))
+          .maybeSingle()
+      ).data?.photo_urls
+    : null
+
   const submitting = body.status === 'pending'
   const current = submitting
     ? (
@@ -246,6 +259,9 @@ tutorials.patch('/:id', async (c) => {
     // tutorial's own contributor.
     return c.json({ error: 'This was updated by someone else while you were editing.' }, 409)
   }
+  // After the write, not before: a photo's object outlives a save that failed.
+  if (photosBefore) await removeDroppedPhotos('toy-photos', photosBefore, data[0].photo_urls)
+
   // After the update commits, so a failed notify cannot lose a submission.
   if (wasDraft) {
     await notifyTutorialSubmitted({

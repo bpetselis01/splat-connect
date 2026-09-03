@@ -40,12 +40,14 @@ const mockToysFrom = vi.fn((table: string) =>
 )
 
 // --- Mock strategy ---
-// Two Supabase storage clients are mocked: the admin client (mockAdminList, mockAdminRemove)
-// is used by the photo route to list and delete existing photos before uploading a replacement;
-// the user client (mockUpload, mockGetPublicUrl) is used by all three upload routes to upload
-// files and retrieve their public CDN URLs. No real files are sent to Supabase in any test.
-// The user client also stubs `.from('toys')` (mockToysFrom/mockToysMaybeSingle) so the
-// toy-cover/toy-switch-photo ownership check can be driven per-test.
+// The user client (mockUpload, mockGetPublicUrl) is used by all four upload routes to
+// upload files and retrieve their public CDN URLs. No real files are sent to Supabase.
+// The user client also stubs `.from(...)` (mockToysFrom/mockToysMaybeSingle), which answers
+// both reads a photo upload makes: the ownership check, and the photo count behind the cap.
+//
+// The admin client's list/remove are still mocked, but only so a test can assert they are
+// NOT called: /photo used to delete every existing file before writing, and that delete
+// going away is what lets a tutorial hold five photos.
 vi.mock('../../../src/supabase/client.js', () => ({
   createAdminClient: () => ({ storage: mockAdminStorage }),
   createUserClient: () => ({ storage: mockUserStorage, from: mockToysFrom }),
@@ -137,17 +139,28 @@ describe('POST /pdf', () => {
 describe('POST /photo', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockToysMaybeSingle.mockResolvedValue({ data: { tutorial_id: 'tid-1' }, error: null })
-    mockAdminList.mockResolvedValue({ data: [], error: null })
-    mockAdminRemove.mockResolvedValue({ error: null })
-    mockUpload.mockResolvedValue({ data: { path: 'tid-1/photo.png' }, error: null })
-    mockGetPublicUrl.mockReturnValue({ data: { publicUrl: 'https://example.com/tid-1/photo.png' } })
+    // One value serves both reads the route makes: the contributor check and
+    // the photo count that enforces the cap before anything is written.
+    mockToysMaybeSingle.mockResolvedValue({
+      data: { tutorial_id: 'tid-1', photo_urls: [] },
+      error: null,
+    })
+    mockUpload.mockResolvedValue({ data: { path: 'tid-1/uuid.png' }, error: null })
+    mockGetPublicUrl.mockReturnValue({ data: { publicUrl: 'https://example.com/tid-1/uuid.png' } })
   })
 
-  // Tests: POST /photo returns 400 when no photo file is in the form data
-  // How:   sends FormData with only tutorialId; checks status 400
-  // Chain: the upload wizard keeps the user on Step 2 until a photo is provided →
-  //        every published tutorial has a visible cover image
+  function photoForm(overrides: { type?: string; name?: string; bytes?: number } = {}) {
+    const form = new FormData()
+    const size = overrides.bytes ?? 3
+    form.append(
+      'file',
+      new Blob([new Uint8Array(size)], { type: overrides.type ?? 'image/png' }),
+      overrides.name ?? 'photo.png'
+    )
+    form.append('tutorialId', 'tid-1')
+    return form
+  }
+
   it('returns 400 when file is missing', async () => {
     const form = new FormData()
     form.append('tutorialId', 'tid-1')
@@ -155,9 +168,6 @@ describe('POST /photo', () => {
     expect(res.status).toBe(400)
   })
 
-  // Tests: POST /photo returns 400 when tutorialId is missing from the form data
-  // How:   sends FormData with only the file; checks status 400
-  // Chain: prevents photos from being stored in Supabase storage with no tutorial to attach to
   it('returns 400 when tutorialId is missing', async () => {
     const form = new FormData()
     form.append('file', new Blob(['img'], { type: 'image/png' }), 'photo.png')
@@ -165,83 +175,81 @@ describe('POST /photo', () => {
     expect(res.status).toBe(400)
   })
 
-  // Tests: POST /photo lists and deletes any existing photos before uploading the new one
-  // How:   mockAdminList returns one existing file; verifies mockAdminRemove was called with the correct path
-  // Chain: ensures each tutorial has exactly one cover photo at a time → prevents orphaned
-  //        old images from accumulating in Supabase storage
-  it('calls remove with correct paths when existing files are present', async () => {
-    mockAdminList.mockResolvedValue({ data: [{ name: 'photo.jpg' }], error: null })
-    const form = new FormData()
-    form.append('file', new Blob(['img'], { type: 'image/png' }), 'photo.png')
-    form.append('tutorialId', 'tid-1')
-    const res = await makeApp().request('/photo', { method: 'POST', body: form })
-    expect(res.status).toBe(200)
-    expect(mockAdminList).toHaveBeenCalledWith('tid-1')
-    expect(mockAdminRemove).toHaveBeenCalledWith(['tid-1/photo.jpg'])
+  // Tests: a file that is not an image is refused before it reaches storage
+  // How:   posts a PDF; checks the 400 and that nothing was uploaded
+  // Chain: 053 set allowed_mime_types on the bucket too, so this is the second
+  //        of two guards — the one that can say what to do about it, since
+  //        storage answers with a sentence about the bucket
+  it('returns 400 for a file that is not an image', async () => {
+    const res = await makeApp().request('/photo', {
+      method: 'POST',
+      body: photoForm({ type: 'application/pdf', name: 'guide.pdf' }),
+    })
+    expect(res.status).toBe(400)
+    expect((await res.json() as any).error).toMatch(/JPEG, PNG, WebP or HEIC/)
+    expect(mockUpload).not.toHaveBeenCalled()
   })
 
-  // Tests: POST /photo skips the delete step when there are no existing photos for the tutorial
-  // How:   mockAdminList returns an empty array; verifies mockAdminRemove was not called
-  // Chain: avoids an unnecessary storage API call on the first upload → the route handles
-  //        both first-time uploads and replacements without branching logic in the caller
-  it('does not call remove when no existing files', async () => {
-    mockAdminList.mockResolvedValue({ data: [], error: null })
-    const form = new FormData()
-    form.append('file', new Blob(['img'], { type: 'image/png' }), 'photo.png')
-    form.append('tutorialId', 'tid-1')
-    const res = await makeApp().request('/photo', { method: 'POST', body: form })
-    expect(res.status).toBe(200)
-    expect(mockAdminRemove).not.toHaveBeenCalled()
+  it('returns 400 for a photo over 10 MB', async () => {
+    const res = await makeApp().request('/photo', {
+      method: 'POST',
+      body: photoForm({ bytes: 10 * 1024 * 1024 + 1 }),
+    })
+    expect(res.status).toBe(400)
+    expect((await res.json() as any).error).toMatch(/under 10 MB/)
+    expect(mockUpload).not.toHaveBeenCalled()
   })
 
-  // Tests: POST /photo returns 500 when the Supabase storage upload fails
-  // How:   mockUpload resolves with { data: null, error: { message: 'Storage error' } }; checks status 500
-  // Chain: the upload wizard receives 500 → the UI displays the error message and keeps the
-  //        user on Step 2 so they can retry the photo upload
+  // Tests: the sixth photo is refused BEFORE the upload, not after
+  // How:   the row already holds five; checks the 400 and that mockUpload never ran
+  // Chain: rejecting it after the write would leave an object in the bucket
+  //        with nothing in photo_urls pointing at it — an orphan no UI can reach
+  it('returns 400 when the tutorial already holds five photos', async () => {
+    mockToysMaybeSingle.mockResolvedValue({
+      data: { tutorial_id: 'tid-1', photo_urls: ['a', 'b', 'c', 'd', 'e'] },
+      error: null,
+    })
+    const res = await makeApp().request('/photo', { method: 'POST', body: photoForm() })
+    expect(res.status).toBe(400)
+    expect((await res.json() as any).error).toMatch(/5 photos is the limit/)
+    expect(mockUpload).not.toHaveBeenCalled()
+  })
+
   it('returns 500 when upload fails', async () => {
     mockUpload.mockResolvedValue({ data: null, error: { message: 'Storage error' } })
-    const form = new FormData()
-    form.append('file', new Blob(['img'], { type: 'image/png' }), 'photo.png')
-    form.append('tutorialId', 'tid-1')
-    const res = await makeApp().request('/photo', { method: 'POST', body: form })
+    const res = await makeApp().request('/photo', { method: 'POST', body: photoForm() })
     expect(res.status).toBe(500)
   })
 
-  // Tests: POST /photo uploads with the correct storage path pattern and returns 200 with url
-  // How:   verifies mockUpload was called with 'tid-1/photo.png' and upsert:false; checks body.url
-  // Chain: the URL is stored on the tutorial record and served as the cover image → users see
-  //        the tutorial photo in the library card and on the tutorial detail page
-  it('returns 200 with url on success', async () => {
-    const form = new FormData()
-    form.append('file', new Blob(['img'], { type: 'image/png' }), 'photo.png')
-    form.append('tutorialId', 'tid-1')
-    const res = await makeApp().request('/photo', { method: 'POST', body: form })
+  // Tests: a photo is APPENDED under its own name rather than overwriting
+  // How:   checks the object path is <tutorialId>/<uuid>.<ext>, and that nothing
+  //        in the tutorial's folder was listed or removed first
+  // Chain: the route this replaced deleted every existing file before writing,
+  //        which is what capped a tutorial at one photo. Five photos need five
+  //        objects, so that delete had to go — and its absence is the assertion
+  it('appends a uniquely named object without removing the existing ones', async () => {
+    const res = await makeApp().request('/photo', { method: 'POST', body: photoForm() })
     expect(res.status).toBe(200)
-    const body = await res.json() as any
-    expect(body.url).toBe('https://example.com/tid-1/photo.png')
+    expect(await res.json()).toEqual({ url: 'https://example.com/tid-1/uuid.png' })
     expect(mockUpload).toHaveBeenCalledWith(
-      'tid-1/photo.png',
+      expect.stringMatching(/^tid-1\/[0-9a-f-]{36}\.png$/),
       expect.any(Blob),
       { upsert: false }
     )
+    expect(mockAdminRemove).not.toHaveBeenCalled()
+    expect(mockUserRemove).not.toHaveBeenCalled()
   })
 
   it('returns 404 when the caller is not a contributor on the tutorial', async () => {
     mockToysMaybeSingle.mockResolvedValue({ data: null, error: null })
-    const form = new FormData()
-    form.append('file', new Blob(['img'], { type: 'image/png' }), 'photo.png')
-    form.append('tutorialId', 'tid-1')
-    const res = await makeApp().request('/photo', { method: 'POST', body: form })
+    const res = await makeApp().request('/photo', { method: 'POST', body: photoForm() })
     expect(res.status).toBe(404)
     expect(mockUpload).not.toHaveBeenCalled()
   })
 
   it('returns 404 when tutorialId is malformed', async () => {
     mockToysMaybeSingle.mockResolvedValue({ data: null, error: { code: '22P02' } })
-    const form = new FormData()
-    form.append('file', new Blob(['img'], { type: 'image/png' }), 'photo.png')
-    form.append('tutorialId', 'not-a-uuid')
-    const res = await makeApp().request('/photo', { method: 'POST', body: form })
+    const res = await makeApp().request('/photo', { method: 'POST', body: photoForm() })
     expect(res.status).toBe(404)
     expect(mockUpload).not.toHaveBeenCalled()
   })
@@ -327,152 +335,88 @@ describe('POST /stl', () => {
   })
 })
 
-describe('POST /toy-cover', () => {
+describe('POST /toy-photo', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockToysMaybeSingle.mockResolvedValue({ data: { id: 'toy-1' }, error: null })
-    mockUserList.mockResolvedValue({ data: [], error: null })
-    mockUserRemove.mockResolvedValue({ error: null })
-    mockUpload.mockResolvedValue({ data: { path: 'toy-1/cover.png' }, error: null })
-    mockGetPublicUrl.mockReturnValue({ data: { publicUrl: 'https://example.com/toy-1/cover.png' } })
+    mockToysMaybeSingle.mockResolvedValue({ data: { id: 'toy-1', photo_urls: [] }, error: null })
+    mockUpload.mockResolvedValue({ data: { path: 'toy-1/uuid.png' }, error: null })
+    mockGetPublicUrl.mockReturnValue({ data: { publicUrl: 'https://example.com/toy-1/uuid.png' } })
   })
+
+  function toyForm(type = 'image/png') {
+    const form = new FormData()
+    form.append('file', new Blob(['img'], { type }), 'photo.png')
+    form.append('toyId', 'toy-1')
+    return form
+  }
 
   it('returns 400 when file is missing', async () => {
     const form = new FormData()
     form.append('toyId', 'toy-1')
-    const res = await makeApp().request('/toy-cover', { method: 'POST', body: form })
+    const res = await makeApp().request('/toy-photo', { method: 'POST', body: form })
     expect(res.status).toBe(400)
   })
 
   it('returns 400 when toyId is missing', async () => {
     const form = new FormData()
-    form.append('file', new Blob(['img'], { type: 'image/png' }), 'cover.png')
-    const res = await makeApp().request('/toy-cover', { method: 'POST', body: form })
+    form.append('file', new Blob(['img'], { type: 'image/png' }), 'photo.png')
+    const res = await makeApp().request('/toy-photo', { method: 'POST', body: form })
     expect(res.status).toBe(400)
   })
 
-  it('removes only existing cover files, leaving switch photos alone', async () => {
-    mockUserList.mockResolvedValue({
-      data: [{ name: 'cover.jpg' }, { name: 'switch-abc.jpg' }],
+  it('returns 400 for a file that is not an image', async () => {
+    const res = await makeApp().request('/toy-photo', {
+      method: 'POST',
+      body: toyForm('application/pdf'),
+    })
+    expect(res.status).toBe(400)
+    expect(mockUpload).not.toHaveBeenCalled()
+  })
+
+  it('returns 400 when the toy already holds five photos', async () => {
+    mockToysMaybeSingle.mockResolvedValue({
+      data: { id: 'toy-1', photo_urls: ['a', 'b', 'c', 'd', 'e'] },
       error: null,
     })
-    const form = new FormData()
-    form.append('file', new Blob(['img'], { type: 'image/png' }), 'cover.png')
-    form.append('toyId', 'toy-1')
-    const res = await makeApp().request('/toy-cover', { method: 'POST', body: form })
-    expect(res.status).toBe(200)
-    expect(mockUserList).toHaveBeenCalledWith('toy-1')
-    expect(mockUserRemove).toHaveBeenCalledWith(['toy-1/cover.jpg'])
-  })
-
-  it('returns 500 when upload fails', async () => {
-    mockUpload.mockResolvedValue({ data: null, error: { message: 'Storage error' } })
-    const form = new FormData()
-    form.append('file', new Blob(['img'], { type: 'image/png' }), 'cover.png')
-    form.append('toyId', 'toy-1')
-    const res = await makeApp().request('/toy-cover', { method: 'POST', body: form })
-    expect(res.status).toBe(500)
-  })
-
-  it('returns 200 with url on success', async () => {
-    const form = new FormData()
-    form.append('file', new Blob(['img'], { type: 'image/png' }), 'cover.png')
-    form.append('toyId', 'toy-1')
-    const res = await makeApp().request('/toy-cover', { method: 'POST', body: form })
-    expect(res.status).toBe(200)
-    const body = (await res.json()) as { url: string }
-    expect(body.url).toBe('https://example.com/toy-1/cover.png')
-    expect(mockUpload).toHaveBeenCalledWith('toy-1/cover.png', expect.any(Blob), { upsert: false })
-  })
-
-  it('returns 404 when the toy is not owned by the caller', async () => {
-    mockToysMaybeSingle.mockResolvedValue({ data: null, error: null })
-    const form = new FormData()
-    form.append('file', new Blob(['img'], { type: 'image/png' }), 'cover.png')
-    form.append('toyId', 'toy-1')
-    const res = await makeApp().request('/toy-cover', { method: 'POST', body: form })
-    expect(res.status).toBe(404)
+    const res = await makeApp().request('/toy-photo', { method: 'POST', body: toyForm() })
+    expect(res.status).toBe(400)
     expect(mockUpload).not.toHaveBeenCalled()
   })
 
-  it('returns 404 when toyId is malformed', async () => {
-    mockToysMaybeSingle.mockResolvedValue({ data: null, error: { code: '22P02' } })
-    const form = new FormData()
-    form.append('file', new Blob(['img'], { type: 'image/png' }), 'cover.png')
-    form.append('toyId', 'not-a-uuid')
-    const res = await makeApp().request('/toy-cover', { method: 'POST', body: form })
-    expect(res.status).toBe(404)
-    expect(mockUpload).not.toHaveBeenCalled()
-  })
-})
-
-describe('POST /toy-switch-photo', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-    mockToysMaybeSingle.mockResolvedValue({ data: { id: 'toy-1' }, error: null })
-    mockUpload.mockResolvedValue({ data: { path: 'toy-1/switch-uuid.jpg' }, error: null })
-    mockGetPublicUrl.mockReturnValue({ data: { publicUrl: 'https://example.com/toy-1/switch-uuid.jpg' } })
-  })
-
-  it('returns 400 when file is missing', async () => {
-    const form = new FormData()
-    form.append('toyId', 'toy-1')
-    const res = await makeApp().request('/toy-switch-photo', { method: 'POST', body: form })
-    expect(res.status).toBe(400)
-  })
-
-  it('returns 400 when toyId is missing', async () => {
-    const form = new FormData()
-    form.append('file', new Blob(['img'], { type: 'image/jpeg' }), 'switch.jpg')
-    const res = await makeApp().request('/toy-switch-photo', { method: 'POST', body: form })
-    expect(res.status).toBe(400)
-  })
-
-  it('never lists or removes existing files — always appends', async () => {
-    const form = new FormData()
-    form.append('file', new Blob(['img'], { type: 'image/jpeg' }), 'switch.jpg')
-    form.append('toyId', 'toy-1')
-    const res = await makeApp().request('/toy-switch-photo', { method: 'POST', body: form })
+  // Tests: the cover and the switch shot come through this one route now
+  // How:   checks the uuid object path and that no cover.* was listed or removed
+  // Chain: /toy-cover replaced cover.* on every upload and /toy-switch-photo
+  //        appended switch-*.*; one upload box means one route, and which photo
+  //        is the cover is photo_urls[0], not a filename
+  it('appends a uniquely named object, replacing nothing', async () => {
+    const res = await makeApp().request('/toy-photo', { method: 'POST', body: toyForm() })
     expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({ url: 'https://example.com/toy-1/uuid.png' })
+    expect(mockUpload).toHaveBeenCalledWith(
+      expect.stringMatching(/^toy-1\/[0-9a-f-]{36}\.png$/),
+      expect.any(Blob),
+      { upsert: false }
+    )
     expect(mockUserList).not.toHaveBeenCalled()
     expect(mockUserRemove).not.toHaveBeenCalled()
   })
 
   it('returns 500 when upload fails', async () => {
     mockUpload.mockResolvedValue({ data: null, error: { message: 'Storage error' } })
-    const form = new FormData()
-    form.append('file', new Blob(['img'], { type: 'image/jpeg' }), 'switch.jpg')
-    form.append('toyId', 'toy-1')
-    const res = await makeApp().request('/toy-switch-photo', { method: 'POST', body: form })
+    const res = await makeApp().request('/toy-photo', { method: 'POST', body: toyForm() })
     expect(res.status).toBe(500)
   })
 
-  it('returns 200 with url on success', async () => {
-    const form = new FormData()
-    form.append('file', new Blob(['img'], { type: 'image/jpeg' }), 'switch.jpg')
-    form.append('toyId', 'toy-1')
-    const res = await makeApp().request('/toy-switch-photo', { method: 'POST', body: form })
-    expect(res.status).toBe(200)
-    const body = (await res.json()) as { url: string }
-    expect(body.url).toBe('https://example.com/toy-1/switch-uuid.jpg')
-  })
-
-  it('returns 404 when the toy is not owned by the caller', async () => {
+  it('returns 404 when the caller does not own the toy', async () => {
     mockToysMaybeSingle.mockResolvedValue({ data: null, error: null })
-    const form = new FormData()
-    form.append('file', new Blob(['img'], { type: 'image/jpeg' }), 'switch.jpg')
-    form.append('toyId', 'toy-1')
-    const res = await makeApp().request('/toy-switch-photo', { method: 'POST', body: form })
+    const res = await makeApp().request('/toy-photo', { method: 'POST', body: toyForm() })
     expect(res.status).toBe(404)
     expect(mockUpload).not.toHaveBeenCalled()
   })
 
   it('returns 404 when toyId is malformed', async () => {
     mockToysMaybeSingle.mockResolvedValue({ data: null, error: { code: '22P02' } })
-    const form = new FormData()
-    form.append('file', new Blob(['img'], { type: 'image/jpeg' }), 'switch.jpg')
-    form.append('toyId', 'not-a-uuid')
-    const res = await makeApp().request('/toy-switch-photo', { method: 'POST', body: form })
+    const res = await makeApp().request('/toy-photo', { method: 'POST', body: toyForm() })
     expect(res.status).toBe(404)
     expect(mockUpload).not.toHaveBeenCalled()
   })

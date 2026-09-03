@@ -213,14 +213,14 @@ describe('PATCH /:id/publish', () => {
     expect(res.status).toBe(404)
   })
 
-  it('returns 400 with missing fields when cover photo is not set', async () => {
+  it('returns 400 with missing fields when no photo is set', async () => {
     mockUserFrom.mockReturnValue({
       select: () => ({
         eq: () => ({
           or: () => ({
             maybeSingle: () =>
               Promise.resolve({
-                data: { cover_photo_url: null, switch_adapted: false, switch_photo_urls: [] },
+                data: { photo_urls: [], switch_adapted: false, switch_photo_url: null },
                 error: null,
               }),
           }),
@@ -230,17 +230,17 @@ describe('PATCH /:id/publish', () => {
     const res = await makeApp().request('/t1/publish', { method: 'PATCH' })
     expect(res.status).toBe(400)
     const body = await res.json() as any
-    expect(body.missing).toContain('Cover photo')
+    expect(body.missing).toContain('A photo')
   })
 
-  it('returns 400 with missing fields when switch-adapted but no switch photos', async () => {
+  it('returns 400 when switch-adapted but no photo is tagged as showing the switch', async () => {
     mockUserFrom.mockReturnValue({
       select: () => ({
         eq: () => ({
           or: () => ({
             maybeSingle: () =>
               Promise.resolve({
-                data: { cover_photo_url: 'https://x/cover.jpg', switch_adapted: true, switch_photo_urls: [] },
+                data: { photo_urls: ['https://x/cover.jpg'], switch_adapted: true, switch_photo_url: null },
                 error: null,
               }),
           }),
@@ -250,7 +250,7 @@ describe('PATCH /:id/publish', () => {
     const res = await makeApp().request('/t1/publish', { method: 'PATCH' })
     expect(res.status).toBe(400)
     const body = await res.json() as any
-    expect(body.missing).toContain('Switch photo')
+    expect(body.missing).toContain('A photo showing the switch')
   })
 
   it('returns 400 with missing fields when offer type is not set', async () => {
@@ -261,9 +261,9 @@ describe('PATCH /:id/publish', () => {
             maybeSingle: () =>
               Promise.resolve({
                 data: {
-                  cover_photo_url: 'https://x/cover.jpg',
+                  photo_urls: ['https://x/cover.jpg'],
                   switch_adapted: false,
-                  switch_photo_urls: [],
+                  switch_photo_url: null,
                   offer_type: null,
                 },
                 error: null,
@@ -286,9 +286,9 @@ describe('PATCH /:id/publish', () => {
             maybeSingle: () =>
               Promise.resolve({
                 data: {
-                  cover_photo_url: 'https://x/cover.jpg',
+                  photo_urls: ['https://x/cover.jpg'],
                   switch_adapted: false,
-                  switch_photo_urls: [],
+                  switch_photo_url: null,
                   offer_type: 'donation',
                 },
                 error: null,

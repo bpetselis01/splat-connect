@@ -44,7 +44,7 @@ describe('POST /api/toy-transactions/:id/accept', () => {
     await toysReq(`/${toyId}`, owner.token, {
       method: 'PATCH',
       body: JSON.stringify({
-        cover_photo_url: 'https://example.com/c.jpg',
+        photo_urls: ['https://example.com/c.jpg'],
         offer_type: 'donation',
       }),
     })

@@ -4,7 +4,8 @@
  * public URL in the draft until tutorial submission.
  */
 import { Hono, type Context } from 'hono'
-import { createUserClient, createAdminClient } from '../supabase/client.js'
+import { MAX_PHOTOS } from '@splat-connect/types'
+import { createUserClient } from '../supabase/client.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import { ledOrgIds, ownedByCaller } from '../toy-access.js'
 import type { AuthVariables } from '../middleware/auth.js'
@@ -13,6 +14,11 @@ const upload = new Hono<{ Variables: AuthVariables }>()
 
 type Ctx = Context<{ Variables: AuthVariables }>
 type UserClient = ReturnType<typeof createUserClient>
+
+/** Mirrors 053's allowed_mime_types on both photo buckets. */
+const PHOTO_MIME = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif']
+/** Mirrors 053's file_size_limit on both photo buckets. */
+const PHOTO_MAX_BYTES = 10 * 1024 * 1024
 
 /** Reads the one shape every upload posts. Returns the 400 instead on a bad body. */
 async function readUpload(c: Ctx, idField: 'tutorialId' | 'toyId') {
@@ -86,96 +92,69 @@ function fileRoute(bucket: string, objectPath: (id: string, file: File) => strin
 upload.post('/pdf', fileRoute('tutorial-pdfs', (id) => `${id}/tutorial.pdf`, false))
 upload.post('/stl', fileRoute('stl-files', (id, file) => `${id}/${file.name}`, true))
 
-upload.post('/photo', async (c) => {
-  const read = await readUpload(c, 'tutorialId')
-  if (read instanceof Response) return read
-  const [file, tutorialId] = read
+/**
+ * A photo appended to an entity's gallery. Both photo buckets work this way
+ * since 053: a uuid per file, nothing overwritten, up to MAX_PHOTOS of them.
+ *
+ * The route this replaced deleted every existing file before writing, so a
+ * tutorial could only ever hold one photo. That delete WAS the cap; removing
+ * it is what the cap below is for.
+ */
+function photoRoute(
+  bucket: string,
+  idField: 'tutorialId' | 'toyId',
+  table: 'tutorials' | 'toys',
+  check: (c: Ctx, supabase: UserClient, id: string) => Promise<Response | null>
+) {
+  return async (c: Ctx) => {
+    const read = await readUpload(c, idField)
+    if (read instanceof Response) return read
+    const [file, id] = read
 
-  const userClient = createUserClient(c.get('token'))
-  const no = await checkTutorialContributor(c, userClient, tutorialId)
-  if (no) return no
+    // 053 set the same two limits on the bucket, so this is not the only guard
+    // — it is the one that can say what to do about it. Storage answers a
+    // rejected upload with "mime type application/pdf is not supported", which
+    // is a sentence about the bucket rather than about the photo.
+    if (!PHOTO_MIME.includes(file.type)) {
+      return c.json({ error: 'Photos need to be a JPEG, PNG, WebP or HEIC image.' }, 400)
+    }
+    if (file.size > PHOTO_MAX_BYTES) {
+      const mb = (file.size / 1024 / 1024).toFixed(1)
+      return c.json({ error: `That photo is ${mb} MB — photos need to be under 10 MB.` }, 400)
+    }
 
-  const ext = file.name.split('.').pop() ?? 'jpg'
-  const admin = createAdminClient()
+    const supabase = createUserClient(c.get('token'))
+    const no = await check(c, supabase, id)
+    if (no) return no
 
-  // WHY: Uploading a new photo in a different format (e.g. switching from .jpg
-  //      to .png) left the old file sitting in storage because the filename
-  //      changed with the extension, creating two photos for the same tutorial.
-  // HOW: All files in the tutorial's photo folder are deleted before uploading
-  //      the new one. Admin client used because no DELETE storage policy exists.
-  const { data: existing } = await admin.storage.from('toy-photos').list(tutorialId)
-  if (existing?.length) {
-    await admin.storage
-      .from('toy-photos')
-      .remove(existing.map((f) => `${tutorialId}/${f.name}`))
+    // Counted before the upload rather than left to the PATCH that follows: a
+    // sixth photo rejected after it had been written would leave the object
+    // orphaned in the bucket with nothing pointing at it.
+    const { data: row, error: countError } = await supabase
+      .from(table)
+      .select('photo_urls')
+      .eq('id', id)
+      .maybeSingle()
+    if (countError) return c.json({ error: countError.message }, 500)
+    if ((row?.photo_urls?.length ?? 0) >= MAX_PHOTOS) {
+      return c.json(
+        { error: `${MAX_PHOTOS} photos is the limit. Remove one to add another.` },
+        400
+      )
+    }
+
+    const ext = file.name.split('.').pop() ?? 'jpg'
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .upload(`${id}/${crypto.randomUUID()}.${ext}`, file, { upsert: false })
+    if (error) return c.json({ error: error.message }, 500)
+
+    const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(data.path)
+    return c.json({ url: urlData.publicUrl })
   }
+}
 
-  const { data, error } = await userClient.storage
-    .from('toy-photos')
-    .upload(`${tutorialId}/photo.${ext}`, file, { upsert: false })
-
-  if (error) return c.json({ error: error.message }, 500)
-
-  const { data: urlData } = userClient.storage
-    .from('toy-photos')
-    .getPublicUrl(data.path)
-
-  return c.json({ url: urlData.publicUrl })
-})
-
-upload.post('/toy-cover', async (c) => {
-  const read = await readUpload(c, 'toyId')
-  if (read instanceof Response) return read
-  const [file, toyId] = read
-
-  const supabase = createUserClient(c.get('token'))
-  const no = await checkToyOwner(c, supabase, toyId)
-  if (no) return no
-
-  const ext = file.name.split('.').pop() ?? 'jpg'
-
-  // A toy's folder holds both cover.* and switch-*.* files, so only the
-  // existing cover files are removed before uploading the replacement.
-  const { data: existing } = await supabase.storage.from('toy-photos-library').list(toyId)
-  const existingCovers = existing?.filter((f) => f.name.startsWith('cover.')) ?? []
-  if (existingCovers.length) {
-    await supabase.storage
-      .from('toy-photos-library')
-      .remove(existingCovers.map((f) => `${toyId}/${f.name}`))
-  }
-
-  const { data, error } = await supabase.storage
-    .from('toy-photos-library')
-    .upload(`${toyId}/cover.${ext}`, file, { upsert: false })
-
-  if (error) return c.json({ error: error.message }, 500)
-
-  const { data: urlData } = supabase.storage.from('toy-photos-library').getPublicUrl(data.path)
-
-  return c.json({ url: urlData.publicUrl })
-})
-
-upload.post('/toy-switch-photo', async (c) => {
-  const read = await readUpload(c, 'toyId')
-  if (read instanceof Response) return read
-  const [file, toyId] = read
-
-  const supabase = createUserClient(c.get('token'))
-  const no = await checkToyOwner(c, supabase, toyId)
-  if (no) return no
-
-  const ext = file.name.split('.').pop() ?? 'jpg'
-
-  // A gallery, not a replace — each switch photo gets its own filename.
-  const { data, error } = await supabase.storage
-    .from('toy-photos-library')
-    .upload(`${toyId}/switch-${crypto.randomUUID()}.${ext}`, file, { upsert: false })
-
-  if (error) return c.json({ error: error.message }, 500)
-
-  const { data: urlData } = supabase.storage.from('toy-photos-library').getPublicUrl(data.path)
-
-  return c.json({ url: urlData.publicUrl })
-})
+upload.post('/photo', photoRoute('toy-photos', 'tutorialId', 'tutorials', checkTutorialContributor))
+upload.post('/toy-photo', photoRoute('toy-photos-library', 'toyId', 'toys', checkToyOwner))
 
 export default upload

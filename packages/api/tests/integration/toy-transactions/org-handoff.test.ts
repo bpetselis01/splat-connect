@@ -247,7 +247,7 @@ describe('an organisation giving from stock', () => {
     const offered = (await create.json()) as { id: string }
     await toysReq(`/${offered.id}`, family.token, {
       method: 'PATCH',
-      body: JSON.stringify({ cover_photo_url: 'https://example.com/x.jpg', offer_type: 'exchange' }),
+      body: JSON.stringify({ photo_urls: ['https://example.com/x.jpg'], offer_type: 'exchange' }),
     })
     await toysReq(`/${offered.id}/publish`, family.token, { method: 'PATCH' })
 

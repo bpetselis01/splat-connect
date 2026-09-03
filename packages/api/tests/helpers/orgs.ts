@@ -129,7 +129,7 @@ export async function createOrgToy(opts: {
       owner_org_id: opts.orgId,
       quantity: opts.quantity ?? 1,
       offer_type: opts.offerType ?? 'donation',
-      cover_photo_url: 'https://example.com/bear.jpg',
+      photo_urls: ['https://example.com/bear.jpg'],
       status: opts.status ?? 'published',
     })
     .select('id')

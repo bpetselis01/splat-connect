@@ -6,8 +6,8 @@
  * - GET   /api/toys/inventory     → stock of every org the caller leads
  * - POST  /api/toys               → create a draft toy, personal or an org's
  * - PATCH /api/toys/:id           → update one
- * - PATCH /api/toys/:id/publish   → publish, once cover photo (and switch
- *                                   photos, if switch_adapted) are present
+ * - PATCH /api/toys/:id/publish   → publish, once a photo (and one tagged as
+ *                                   showing the switch, if switch_adapted) exists
  * - DELETE /api/toys/:id          → remove one
  *
  * There is deliberately no GET /:id — nothing in the UI needs a single-row
@@ -25,6 +25,7 @@ import { createUserClient } from '../supabase/client.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import { pickEditable } from './pick-editable.js'
 import { ledOrgIds, ownedByCaller } from '../toy-access.js'
+import { removeDroppedPhotos } from '../photo-storage.js'
 import type { AuthVariables } from '../middleware/auth.js'
 import type { OfferType } from '@splat-connect/types'
 
@@ -38,8 +39,8 @@ const EDITABLE = [
   'description',
   'condition',
   'switch_adapted',
-  'cover_photo_url',
-  'switch_photo_urls',
+  'photo_urls',
+  'switch_photo_url',
   'offer_type',
 ] as const
 
@@ -65,14 +66,17 @@ function readQuantity(value: unknown): number | null {
 
 /** Fields still missing before a toy may be published. */
 function missingPublishFields(toy: {
-  cover_photo_url: string | null
+  photo_urls: string[]
   switch_adapted: boolean
-  switch_photo_urls: string[]
+  switch_photo_url: string | null
   offer_type: OfferType | null
 }): string[] {
   const missing: string[] = []
-  if (!toy.cover_photo_url) missing.push('Cover photo')
-  if (toy.switch_adapted && toy.switch_photo_urls.length === 0) missing.push('Switch photo')
+  if (toy.photo_urls.length === 0) missing.push('A photo')
+  // Not "two photos": the rule is that the switch was pictured, and one of the
+  // five has to be the one that shows it. 053's toys_switch_photo_member keeps
+  // that pointer inside the array.
+  if (toy.switch_adapted && !toy.switch_photo_url) missing.push('A photo showing the switch')
   if (!toy.offer_type) missing.push('Offer type')
   return missing
 }
@@ -146,7 +150,7 @@ toys.patch('/:id', async (c) => {
   // person's toy has no stock to top up, and 033 would reject the write anyway.
   const { data: existing, error: readError } = await supabase
     .from('toys')
-    .select('owner_org_id')
+    .select('owner_org_id, photo_urls')
     .eq('id', c.req.param('id'))
     .or(ownedByCaller(c.get('userId'), orgIds))
     .maybeSingle()
@@ -173,6 +177,9 @@ toys.patch('/:id', async (c) => {
     return c.json({ error: error.message }, 500)
   }
   if (!data) return c.json({ error: 'Not found' }, 404)
+
+  // After the write, not before: a photo's object outlives a save that failed.
+  await removeDroppedPhotos('toy-photos-library', existing.photo_urls, data.photo_urls)
   return c.json(data)
 })
 
@@ -181,7 +188,7 @@ toys.patch('/:id/publish', async (c) => {
   const orgIds = await ledOrgIds(supabase, c.get('userId'))
   const { data: existing, error: fetchError } = await supabase
     .from('toys')
-    .select('cover_photo_url, switch_adapted, switch_photo_urls, offer_type')
+    .select('photo_urls, switch_adapted, switch_photo_url, offer_type')
     .eq('id', c.req.param('id'))
     .or(ownedByCaller(c.get('userId'), orgIds))
     .maybeSingle()
