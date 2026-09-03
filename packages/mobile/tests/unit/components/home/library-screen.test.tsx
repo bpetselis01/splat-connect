@@ -82,6 +82,7 @@ describe('LibraryScreen', () => {
   it('refetches with a difficulty filter when a chip is pressed', async () => {
     render(<LibraryScreen />)
     await screen.findByText('Build a Robot Arm')
+    fireEvent.press(screen.getByRole('button', { name: 'Filters' }))
     fireEvent.press(screen.getByRole('button', { name: 'Hard' }))
     await waitFor(() => expect(mockGet).toHaveBeenCalledWith('/api/public/tutorials?difficulty=hard'))
   })
@@ -136,6 +137,7 @@ describe('LibraryScreen', () => {
     })
     render(<LibraryScreen />)
     await waitFor(() => expect(screen.getByText('Bubble machine')).toBeTruthy())
+    fireEvent.press(screen.getByRole('button', { name: 'Filters' }))
     fireEvent.press(screen.getByLabelText('Assistive tech'))
     expect(screen.queryByText('Bubble machine')).toBeNull()
     expect(screen.getByText('Head switch arm')).toBeTruthy()
