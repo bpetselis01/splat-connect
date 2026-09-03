@@ -11,3 +11,4 @@ minimumReleaseAgeExclude:
   - '@expo/env@2.4.3'
   - '@expo/image-utils@0.11.5'
   - '@react-native/dev-middleware@0.86.3'
+  - '@expo/ui@57.0.15'
