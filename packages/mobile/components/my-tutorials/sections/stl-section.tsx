@@ -4,7 +4,7 @@
 // entirely for a toy adaptation, because a printed part is what an
 // assistive-tech tutorial IS and a toy adaptation has no use for one.
 import { useState } from 'react'
-import { View, Text, StyleSheet } from 'react-native'
+import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import * as DocumentPicker from 'expo-document-picker'
 import type { StlFile } from '@splat-connect/types'
@@ -15,10 +15,11 @@ import { theme } from '../../../lib/theme'
 import { Screen } from '../../ui/Screen'
 import { Button } from '../../ui/Button'
 import { ErrorRow } from '../../auth-screen'
-import { SaveChip } from './save-chip'
+import { SectionFooter } from '../section-footer'
+import { PickerNote } from './picker-note'
 
 export function StlSection() {
-  const { tutorial, saveState, saveError } = useDraft()
+  const { tutorial, saveError } = useDraft()
   const [uploading, setUploading] = useState(false)
   const [localError, setLocalError] = useState<string | null>(null)
   const [files, setFiles] = useState<StlFile[]>(() => tutorial?.stl_files ?? [])
@@ -66,29 +67,33 @@ export function StlSection() {
 
   return (
     <Screen>
-      <SaveChip state={saveState} />
-      {files.length ? (
-        files.map((f) => (
-          <View key={f.id} style={styles.row}>
-            <Ionicons name="cube-outline" size={18} color={theme.colors.primary} />
-            <Text style={styles.filename}>{f.filename}</Text>
-          </View>
-        ))
-      ) : (
-        <Text style={styles.empty}>No 3D-print files yet.</Text>
-      )}
-      <Button
-        label="Choose STL from Files"
-        variant="secondary"
-        onPress={pickStl}
-        loading={uploading}
-      />
-      <ErrorRow message={localError ?? saveError} />
+      <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
+        {files.length ? (
+          files.map((f) => (
+            <View key={f.id} style={styles.row}>
+              <Ionicons name="cube-outline" size={18} color={theme.colors.primary} />
+              <Text style={styles.filename}>{f.filename}</Text>
+            </View>
+          ))
+        ) : (
+          <Text style={styles.empty}>No 3D-print files yet.</Text>
+        )}
+        <Button
+          label="Choose STL from Files"
+          variant="secondary"
+          onPress={pickStl}
+          loading={uploading}
+        />
+        <PickerNote noun="STL" />
+        <ErrorRow message={localError ?? saveError} />
+      </ScrollView>
+      <SectionFooter section="stl" />
     </Screen>
   )
 }
 
 const styles = StyleSheet.create({
+  body: { flex: 1 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

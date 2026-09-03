@@ -5,6 +5,7 @@ import {
   renameProfile,
   signInAsNewContributor,
   uniqueTitle,
+  pickFilter,
 } from './helpers'
 
 /**
@@ -55,17 +56,17 @@ test('the condition buckets keep only the toys that fall in them', async ({ page
   await expect(page.getByText(good)).toBeVisible()
   await expect(page.getByText(wellLoved)).toBeVisible()
 
-  await page.getByRole('button', { name: 'Good (7–10)', exact: true }).click()
+  await pickFilter(page, 'Good (7–10)')
   await expect(page.getByText(good)).toBeVisible()
   await expect(page.getByText(wellLoved)).toHaveCount(0)
 
-  await page.getByRole('button', { name: 'Well-loved (1–3)', exact: true }).click()
+  await pickFilter(page, 'Well-loved (1–3)')
   await expect(page.getByText(wellLoved)).toBeVisible()
   await expect(page.getByText(good)).toHaveCount(0)
 
   // Fair sits between the two, so it is the bucket that proves the thresholds
   // exclude as well as include.
-  await page.getByRole('button', { name: 'Fair (4–6)', exact: true }).click()
+  await pickFilter(page, 'Fair (4–6)')
   await expect(page.getByText(good)).toHaveCount(0)
   await expect(page.getByText(wellLoved)).toHaveCount(0)
 })

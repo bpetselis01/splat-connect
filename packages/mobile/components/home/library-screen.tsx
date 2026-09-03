@@ -21,6 +21,7 @@ import { EmptyState } from '../ui/EmptyState'
 import { Badge } from '../ui/Badge'
 import { SaveButton } from '../ui/SaveButton'
 import { CornerMenu } from '../ui/CornerMenu'
+import { FilterSheet } from '../ui/FilterSheet'
 
 const FILTERS: { label: string; value: Difficulty | null }[] = [
   { label: 'All', value: null },
@@ -178,11 +179,13 @@ export function LibraryScreen() {
   // fixed views). Loading/error/empty render through ListEmptyComponent so
   // the header holds across every state.
   return (
-    <Screen>
+    <Screen ownHeader>
       <FlatList
-        key={`${difficulty ?? 'all'}`}
         data={loading || error ? [] : visible}
-        keyExtractor={(t) => t.id}
+        // The filter is part of each row's key so a new difficulty replays the
+        // rows' entrance. It used to key the whole list, which also remounted
+        // the header — and the filter sheet inside it, closing it on every tap.
+        keyExtractor={(t) => `${difficulty ?? 'all'}:${t.id}`}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
         keyboardShouldPersistTaps="handled"
@@ -203,36 +206,40 @@ export function LibraryScreen() {
               <View style={styles.menuSpacer} />
             </View>
 
-            <TextField
-              icon="search"
-              placeholder="Search by toy name"
-              value={search}
-              onChangeText={setSearch}
-              boxStyle={styles.searchBar}
-            />
-
-            <View style={styles.filterRow}>
-              {FILTERS.map((f) => (
-                <Chip
-                  key={f.label}
-                  label={f.label}
-                  active={difficulty === f.value}
-                  onPress={() => setDifficulty(f.value)}
+            {/* Search stays on the screen; the chip rows moved into the
+                sheet so the first guide sits above the fold. */}
+            <View style={styles.searchRow}>
+              <View style={styles.searchGrow}>
+                <TextField
+                  icon="search"
+                  placeholder="Search by toy name"
+                  value={search}
+                  onChangeText={setSearch}
+                  boxStyle={styles.searchBar}
                 />
-              ))}
-            </View>
-
-            <View style={styles.divider} />
-
-            <View style={[styles.filterRow, styles.kindRow]}>
-              {KIND_FILTERS.map((f) => (
-                <Chip
-                  key={f.value}
-                  label={f.label}
-                  active={kind === f.value}
-                  onPress={() => setKind((k) => (k === f.value ? null : f.value))}
-                />
-              ))}
+              </View>
+              <FilterSheet count={(difficulty ? 1 : 0) + (kind ? 1 : 0)}>
+                <View style={styles.filterRow}>
+                  {FILTERS.map((f) => (
+                    <Chip
+                      key={f.label}
+                      label={f.label}
+                      active={difficulty === f.value}
+                      onPress={() => setDifficulty(f.value)}
+                    />
+                  ))}
+                </View>
+                <View style={styles.filterRow}>
+                  {KIND_FILTERS.map((f) => (
+                    <Chip
+                      key={f.value}
+                      label={f.label}
+                      active={kind === f.value}
+                      onPress={() => setKind((k) => (k === f.value ? null : f.value))}
+                    />
+                  ))}
+                </View>
+              </FilterSheet>
             </View>
 
             {!loading && !error ? (
@@ -312,13 +319,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing(4),
     ...theme.shadow(4),
   },
-  filterRow: { flexDirection: 'row', gap: theme.spacing(2), marginBottom: theme.spacing(2) },
-  kindRow: { marginBottom: theme.spacing(4) },
-  // theme has no dedicated "line" token — colors.border is the same 2px
-  // divider colour already used for the two other top-border dividers in this
-  // app (preview-screen, customization-screen), so this reuses it rather than
-  // adding a second name for one value.
-  divider: { height: 2, backgroundColor: theme.colors.border, marginBottom: theme.spacing(2) },
+  searchRow: { flexDirection: 'row', alignItems: 'flex-start', gap: theme.spacing(2) },
+  searchGrow: { flex: 1 },
+  filterRow: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2), marginBottom: theme.spacing(2) },
   countLine: {
     fontFamily: theme.fonts.regular,
     fontSize: theme.type.caption,

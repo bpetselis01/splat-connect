@@ -10,17 +10,16 @@ import { useDraft } from '../../../lib/use-tutorial-draft'
 import { theme } from '../../../lib/theme'
 import { Screen } from '../../ui/Screen'
 import { ErrorRow } from '../../auth-screen'
-import { SaveChip } from './save-chip'
+import { SectionFooter } from '../section-footer'
 
 export function SafetySection() {
-  const { tutorial, save, saveState, saveError } = useDraft()
+  const { tutorial, save, saveError } = useDraft()
   if (!tutorial) return null
 
   const declared = tutorial.safety_declared_at
 
   return (
     <Screen>
-      <SaveChip state={saveState} />
       <ScrollView showsVerticalScrollIndicator={false}>
         {SAFETY_CHECKLIST.map((item) => (
           <Text key={item} style={styles.item}>
@@ -54,6 +53,7 @@ export function SafetySection() {
 
         <ErrorRow message={saveError} />
       </ScrollView>
+      <SectionFooter section="safety" />
     </Screen>
   )
 }

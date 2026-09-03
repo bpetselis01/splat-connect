@@ -36,6 +36,18 @@ export function uniqueTitle(prefix: string) {
  * trigger defaults new accounts to the contributor role). Returns credentials
  * for signing in through the UI.
  */
+/**
+ * Taps one chip inside the Guides / Toy Library filter sheet. Opens the sheet
+ * (whose trigger is named "Filters, N active" once something is on), taps the
+ * chip, then Done — the sheet is a modal drawer on web, so anything asserted
+ * about the list behind it should be asserted with the sheet away.
+ */
+export async function pickFilter(page: Page, chip: string) {
+  await page.getByRole('button', { name: /^Filters/ }).click()
+  await page.getByRole('button', { name: chip, exact: true }).click()
+  await page.getByRole('button', { name: 'Done' }).click()
+}
+
 export async function createContributor() {
   const admin = adminClient()
   const email = uniqueEmail('contrib')

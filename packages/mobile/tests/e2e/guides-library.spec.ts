@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { signInAsNewContributor, createTutorial, uniqueTitle } from './helpers'
+import { signInAsNewContributor, createTutorial, uniqueTitle, pickFilter } from './helpers'
 
 test('the library lists a tutorial with its difficulty badge', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
@@ -9,10 +9,11 @@ test('the library lists a tutorial with its difficulty badge', async ({ page }) 
   await page.goto('/guides')
 
   await expect(page.getByText(title)).toBeVisible()
-  // The badge is uppercased in CSS, not in the string, so the text node stays
-  // "Easy" — getByText matches textContent, not the rendered transform.
-  // .last() because the "Easy" difficulty filter chip renders above the list.
-  await expect(page.getByText('Easy', { exact: true }).last()).toBeVisible()
+  // EASY, not "Easy": Badge.tsx uppercases the string itself. This used to
+  // assert "Easy" and pass on the difficulty filter chip above the list, not
+  // the badge; the chips now live in the sheet, so only badges are left —
+  // dozens of them across other workers' rows, hence scoping to this row.
+  await expect(page.getByRole('button', { name: title }).getByText('EASY', { exact: true })).toBeVisible()
 })
 
 test('search narrows the list and clearing it restores the tutorial', async ({ page }) => {
@@ -36,10 +37,10 @@ test('the difficulty filter narrows results', async ({ page }) => {
 
   await page.goto('/guides')
 
-  await page.getByText('Medium', { exact: true }).click()
+  await pickFilter(page, 'Medium')
   await expect(page.getByText(title)).toHaveCount(0)
 
-  await page.getByText('Easy', { exact: true }).click()
+  await pickFilter(page, 'Easy')
   await expect(page.getByText(title)).toBeVisible()
 })
 
@@ -97,13 +98,12 @@ test('the kind chips narrow the list to one kind, and tapping again clears them'
   await page.goto('/guides')
   await expect(page.getByText(toy)).toBeVisible()
 
-  const techChip = page.getByRole('button', { name: 'Assistive tech', exact: true })
-  await techChip.click()
+  await pickFilter(page, 'Assistive tech')
   await expect(page.getByText(tech)).toBeVisible()
   await expect(page.getByText(toy)).toHaveCount(0)
 
   // The kind chips are a toggle, not a radio set — the same chip clears itself.
-  await techChip.click()
+  await pickFilter(page, 'Assistive tech')
   await expect(page.getByText(toy)).toBeVisible()
 })
 

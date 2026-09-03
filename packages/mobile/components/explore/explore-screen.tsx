@@ -133,7 +133,7 @@ export function ExploreScreen() {
   const matchedOrgs = q ? orgs.filter((o) => o.name.toLowerCase().includes(q)) : []
 
   return (
-    <Screen>
+    <Screen ownHeader>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <ScreenHeader
           title="Explore"

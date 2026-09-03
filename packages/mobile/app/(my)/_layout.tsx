@@ -1,29 +1,14 @@
 // Everything behind MY SPLAT presents modally over the tabs. The tab beneath
 // keeps its own stack and its highlight; Close returns to exactly where you were.
-import { Pressable } from 'react-native'
-import { Redirect, Stack, useRouter } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
+import { Redirect, Stack } from 'expo-router'
 import { stackScreenOptions } from '../../lib/nav-options'
 import { useAuth } from '../../lib/auth-context'
-import { theme } from '../../lib/theme'
+import { CloseButton } from '../../components/ui/CloseButton'
 
 // The whole (my) group is already presented as one modal by the root layout
 // (app/_layout.tsx). Pushes inside this stack are ordinary drill-downs — if
 // this inner Stack also carried presentation: 'modal', every push would stack
 // as its own modal and lose its back chevron.
-function CloseButton() {
-  const router = useRouter()
-  return (
-    <Pressable
-      onPress={() => (router.canGoBack() ? router.back() : router.dismiss())}
-      accessibilityRole="button"
-      accessibilityLabel="Close"
-      hitSlop={8}
-    >
-      <Ionicons name="close" size={24} color={theme.colors.ink} />
-    </Pressable>
-  )
-}
 
 export default function MyLayout() {
   // (my) is a sibling of (tabs) at the root, so the tab layout's gate does not

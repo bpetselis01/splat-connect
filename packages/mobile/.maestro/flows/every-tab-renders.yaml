@@ -42,6 +42,15 @@ appId: com.splatconnect.mobile
 - assertVisible:
     text: "Step-by-step guides for switch-adapting toys and building assistive tech."
 
+# The filter sheet is @expo/ui's native SwiftUI / Compose sheet — Playwright
+# only ever sees its vaul drawer, so this is the one layer that presents the
+# real thing. A chip inside it proves the sheet mounted its content.
+- tapOn:
+    text: "Filters"
+- assertVisible:
+    text: "Easy"
+- tapOn:
+    text: "Done"
 
 - tapOn:
     text: "Toy Library"

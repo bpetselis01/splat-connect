@@ -32,3 +32,14 @@ it('closes on the scrim without navigating', () => {
   expect(screen.queryByLabelText('Add a guide')).toBeNull()
   expect(mockPush).not.toHaveBeenCalled()
 })
+
+it('tells a screen reader whether it is open, since the glyph only cross-fades', () => {
+  render(<CornerMenu label="Guide actions" items={items} />)
+  const trigger = screen.getByLabelText('Guide actions')
+  expect(trigger.props.accessibilityState.expanded).toBe(false)
+  fireEvent.press(trigger)
+  // Open, the menu is accessibilityViewIsModal and hides the trigger behind it
+  // from accessibility queries — opt back in, as the scrim test does.
+  const opened = screen.getByLabelText('Guide actions', { includeHiddenElements: true })
+  expect(opened.props.accessibilityState.expanded).toBe(true)
+})

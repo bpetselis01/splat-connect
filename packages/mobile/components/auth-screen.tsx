@@ -211,7 +211,7 @@ export function AuthScreen() {
   // visitor is waiting on an email that may never arrive.
   const chrome = (body: React.ReactNode) => (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <Screen>
+      <Screen ownHeader>
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
           {/* flexGrow + centre, so the card sits mid-screen on a tall phone and
               scrolls rather than squashing on a short one. maxWidth is web's

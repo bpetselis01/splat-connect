@@ -17,12 +17,12 @@ import { Screen } from '../../ui/Screen'
 import { TextField } from '../../ui/TextField'
 import { Button } from '../../ui/Button'
 import { ErrorRow } from '../../auth-screen'
-import { SaveChip } from './save-chip'
+import { SectionFooter } from '../section-footer'
 
 const NOUN_LABEL = { parts: 'Part', tools: 'Tool' } as const
 
 export function ItemsSection({ noun }: { noun: 'parts' | 'tools' }) {
-  const { tutorial, replaceItems, saveState, saveError } = useDraft()
+  const { tutorial, replaceItems, saveError } = useDraft()
   const withQuantity = noun === 'parts'
   const singular = NOUN_LABEL[noun]
 
@@ -47,7 +47,6 @@ export function ItemsSection({ noun }: { noun: 'parts' | 'tools' }) {
 
   return (
     <Screen>
-      <SaveChip state={saveState} />
       <ScrollView showsVerticalScrollIndicator={false} automaticallyAdjustKeyboardInsets>
         {rows.length === 0 ? <Text style={styles.empty}>No {noun} yet.</Text> : null}
 
@@ -137,6 +136,7 @@ export function ItemsSection({ noun }: { noun: 'parts' | 'tools' }) {
         />
         <ErrorRow message={saveError} />
       </ScrollView>
+      <SectionFooter section={noun} />
     </Screen>
   )
 }

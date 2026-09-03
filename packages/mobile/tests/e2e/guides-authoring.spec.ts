@@ -62,8 +62,10 @@ test('a new account writes a guide end to end and submits it for review', async 
     page.waitForResponse(
       (r) => r.url().includes(`/api/tutorials/${id}/${sub}`) && r.request().method() === 'POST'
     )
+  // Every section ends in the same pair. "Checklist" is the way back; the
+  // native chevron still works, but this is the control a contributor sees.
   const backToHub = async () => {
-    await page.getByLabel('Back').click()
+    await page.getByTestId('section-back').click()
     await expect(page.getByTestId('hub-submit')).toBeVisible()
   }
 
@@ -82,6 +84,9 @@ test('a new account writes a guide end to end and submits it for review', async 
   expect((await saved).status()).toBe(200)
   await backToHub()
   await expect(page.getByTestId('hub-row-safety')).toContainText('Declared')
+  // The note is for the moment of arrival. Having opened two sections, the
+  // contributor has plainly found them, and it stops holding the top of the hub.
+  await expect(page.getByTestId('hub-created-note')).toBeHidden()
 
   // --- Parts -------------------------------------------------------------
   await page.getByTestId('hub-row-parts').click()

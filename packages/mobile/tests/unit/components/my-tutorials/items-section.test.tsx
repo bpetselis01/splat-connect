@@ -2,6 +2,10 @@ import { render, screen, fireEvent } from '@testing-library/react-native'
 import { ItemsSection } from '../../../../components/my-tutorials/sections/items-section'
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
+
+jest.mock('expo-router', () => ({
+  useRouter: () => ({ push: jest.fn(), replace: jest.fn(), back: jest.fn(), canGoBack: () => true }),
+}))
 jest.mock('../../../../lib/auth-context', () => ({ useAuth: jest.fn() }))
 
 const mockDraft = {
@@ -25,6 +29,13 @@ beforeEach(() => {
     status: 'draft',
     parts: [{ id: 'p1', name: 'Switch', quantity: 2, is_optional: false, buy_links: [] }],
     tools: [],
+    stl_files: [],
+    kind: 'toy_adaptation',
+    difficulty: 'easy',
+    title: 'T',
+    safety_declared_at: null,
+    tutorial_pdf_url: null,
+    toy_photo_url: null,
   }
 })
 

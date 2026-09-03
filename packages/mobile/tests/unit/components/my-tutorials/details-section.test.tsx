@@ -3,6 +3,10 @@ import { DetailsSection } from '../../../../components/my-tutorials/sections/det
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
 
+jest.mock('expo-router', () => ({
+  useRouter: () => ({ push: jest.fn(), replace: jest.fn(), back: jest.fn(), canGoBack: () => true }),
+}))
+
 // ErrorRow comes from components/auth-screen, which imports useAuth from
 // lib/auth-context — and that module reaches the live supabase client. Mocking
 // it here (unused by this section) is what keeps that import inert.
@@ -19,6 +23,11 @@ const mockDraft = {
     status: 'draft',
     updated_at: 'v1',
     safety_declared_at: null,
+    tutorial_pdf_url: null,
+    toy_photo_url: null,
+    parts: [],
+    tools: [],
+    stl_files: [],
   } as Record<string, unknown>,
   loading: false,
   loadError: false,
@@ -56,12 +65,6 @@ it('saves a chip choice', () => {
   expect(mockDraft.save).toHaveBeenCalledWith({ difficulty: 'medium' })
   fireEvent.press(screen.getByText('Assistive tech'))
   expect(mockDraft.save).toHaveBeenCalledWith({ kind: 'assistive_tech' })
-})
-
-it('shows the save state', () => {
-  mockDraft.saveState = 'saving'
-  render(<DetailsSection />)
-  expect(screen.getByText('Saving...')).toBeTruthy()
 })
 
 it('shows a save failure without losing the edit', () => {
