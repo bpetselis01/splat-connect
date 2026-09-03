@@ -154,10 +154,17 @@ export async function createTutorial(
     safety_declared_at: new Date().toISOString(),
     tutorial_pdf_url:
       overrides.withPdf === false ? null : `${id}/tutorial.pdf`,
-    toy_photo_url:
+    // Not toy_photo_url: 053 made it generated from photo_urls[1], and an
+    // insert naming a generated column is rejected outright (428C9). The toys
+    // helper above was migrated at the time and this one was missed, so every
+    // spec built on createTutorial threw in setup — which is why none of them
+    // caught the guide photo save being broken.
+    photo_urls:
       overrides.toyPhotoUrl === undefined
-        ? 'https://placeholder.invalid/photo.jpg'
-        : overrides.toyPhotoUrl,
+        ? ['https://placeholder.invalid/photo.jpg']
+        : overrides.toyPhotoUrl === null
+          ? []
+          : [overrides.toyPhotoUrl],
     rejection_note: overrides.rejection_note ?? null,
   })
   if (error) throw new Error(`Failed to create tutorial: ${error.message}`)
