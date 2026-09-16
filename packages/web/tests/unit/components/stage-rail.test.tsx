@@ -61,6 +61,25 @@ describe('StageRail', () => {
    * Why: the rail is a stepper on a detail page and a read-only summary inside a
    * list row. Without a handler the steps must not look or behave clickable.
    */
+  /*
+   * Why: Closed is `done` on a record that stopped early, so a bar that looked
+   * at the step to its right filled the gap between a Handover that never
+   * happened and the Closed step after it — the rail drew progress through a
+   * step it had just marked "Never got here".
+   */
+  it('fills a connector only out of a step that is done', () => {
+    const { container } = render(<StageRail stages={stopped} />)
+    const bars = [...container.querySelectorAll('span[aria-hidden="true"]')].filter(
+      (el) => (el as HTMLElement).style.height === '3px' || el.className.includes('h-[3px]')
+    ) as HTMLElement[]
+    // Requested is done -> filled. Accepted stopped and Handover was never
+    // reached -> both grey.
+    expect(bars).toHaveLength(3)
+    expect(bars[0].style.background).toContain('--b600')
+    expect(bars[1].style.background).toContain('--surface2')
+    expect(bars[2].style.background).toContain('--surface2')
+  })
+
   it('renders inert steps when it is read-only', () => {
     render(<StageRail stages={live} />)
     for (const b of screen.getAllByRole('button')) expect(b).toBeDisabled()

@@ -71,8 +71,17 @@ export function StageRail({
         const tone = TONE[stage.state]
         const Glyph = GLYPH[stage.state]
         const interactive = Boolean(onSelect)
-        // The bar belongs to the step on its left, so the last one has none.
-        const barDone = stages[i + 1] && stages[i + 1].state !== 'todo'
+        /*
+         * The bar belongs to the step on its left, so the last one has none,
+         * and it is filled only when that step is itself `done`.
+         *
+         * It used to look at the step on the RIGHT, which drew a filled bar
+         * into the Closed step of a record that stopped early — Closed is
+         * `done` on a rejected exchange, so the rail showed progress through a
+         * Handover that never happened. A bar is the journey out of a step, not
+         * the arrival at the next one.
+         */
+        const barDone = stage.state === 'done'
         return (
           <li key={stage.key} className="min-w-0">
             <button
