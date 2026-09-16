@@ -32,6 +32,9 @@ const GATED = {
   // are tighter than 049's: signing uses the visitor's own session, so a
   // non-party cannot mint a URL for somebody else's receipt at all.
   'exchange-receipts': { download: false, folder: 'exchange' },
+  // 057. Same shape and the same tight policies: the folder is the build's
+  // transaction, and only its two parties can sign a URL for the photo.
+  'build-shots': { download: false, folder: 'exchange' },
 } as const
 
 export async function GET(

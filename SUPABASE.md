@@ -12,6 +12,34 @@ org role gating, and badge counts that must be accurate.
 
 ## Pending
 
+### [F5] A build request cannot be posted to nobody
+
+**Why:** the artboard's "makers wanted" board lists open build requests that any
+maker within range can claim. 057 makes a build an ordinary toy transaction, and
+`toy_transactions_one_owner` (033) insists exactly one of `owner_id` and
+`owner_org_id` is set — so a request with no maker on it is a row the table will
+not accept. A family therefore asks a named maker: an organisation, or a person
+whose profile is public.
+
+**Blocks:** the open board and its claim button. Nothing else — the thread, the
+stages, the costs and the handover all work on a named ask, which is what
+shipped.
+
+**Proposed migration:** not written. Two shapes: relax the owner XOR to "at most
+one" and let `status = 'requested'` with no owner mean open, which touches a
+constraint every exchange depends on; or a small `build_claims` table where
+makers register interest and accepting one stamps the owner. The second leaves
+033 alone and gives the board a natural read, and is the better answer unless
+print jobs (F6/F7) want the same open-pool shape, in which case it is worth
+designing once.
+
+**RLS impact:** an open request is readable by makers who are not yet parties to
+it, which `is_toy_transaction_party()` does not cover. That is the substantive
+piece of work, not the column.
+
+**Workaround in place:** none that fakes data. `/get-involved/requests` says what
+it does — ask a named maker — and does not draw a board that is not there.
+
 ### [F8] An organisation-held exchange cannot carry a cost line
 
 **Why:** `exchange_costs` names a `payer_id` and a `payee_id`, both profiles,
@@ -68,6 +96,39 @@ _(F5, F6, F7, F10 and F12 build routes that do not exist and are likely to add
 further entries here.)_
 
 ## Applied
+
+### [F5] `057_build_requests.sql` — applied 2026-09-17
+
+A build is a toy transaction with a guide for a subject rather than a toy. The
+alternative — a `build_requests` table with its own messages, codes, costs, RLS
+and notification plumbing — would have forked every one of those to gain a
+different subject line.
+
+Three things it had to change underneath, each of which was a real break rather
+than a tidy-up:
+
+- **`accept_toy_transaction` (033) locked the toy row and counted it against
+  quantity.** With no toy the lookup found nothing and the whole accept returned
+  `missing`, so a maker taking one on would have been told the request does not
+  exist. The stock check is now skipped where there is no stock, and the lock is
+  otherwise untouched.
+- **`confirm` transfers a toy, decrements org stock and sweeps rival requests.**
+  A build hands over an object that exists nowhere in `toys`, so all of it is
+  skipped and the record simply closes.
+- **Five notification sites did `.eq('id', tx.toy_id).single()`.** One helper
+  now answers "what is this record about", and it reads the guide on a build.
+
+The extra stage is two timestamps, not two status members. `built` and
+`approved` as statuses would mean every `status = 'accepted'` predicate in the
+API silently stops matching a live build.
+
+Storage: `build-shots`, private, with 056's four policies gated on
+`is_toy_transaction_party()` of the path's first folder segment. A working shot
+is a photograph taken inside somebody's home often enough that the public photo
+buckets are the wrong precedent.
+
+Verified past the ledger on local: both constraints, the type check, the index,
+the private bucket, its four policies, and the two new notification types.
 
 ### [F2/F8] `055_exchange_costs.sql` — applied 2026-09-16
 

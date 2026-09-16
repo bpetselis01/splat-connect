@@ -60,7 +60,10 @@ describe('PublicFooter', () => {
 
   it('marks not-yet-built destinations so the footer is not a set of traps', () => {
     render(<PublicFooter />)
-    expect(screen.getByRole('link', { name: /adaptation requests/i })).toHaveTextContent(/soon/i)
+    // Adaptation requests used to be the example here and went live with 057;
+    // the claim is about the marking, so it needs any entry that is still
+    // unbuilt rather than that one in particular.
+    expect(screen.getByRole('link', { name: /ask an expert/i })).toHaveTextContent(/soon/i)
   })
 
   it('contains no button or expandable control — it is plain links only', () => {

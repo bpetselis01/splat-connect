@@ -222,9 +222,10 @@ export const PUBLIC_NAV: NavSection[] = [
       {
         href: '/get-involved/requests',
         label: 'Adaptation requests',
-        state: 'soon',
-        featureKey: 'requests',
-        blurb: 'Ask for a toy to be adapted, and let a maker nearby claim it.',
+        // Live since 057: a build request is an ordinary toy transaction with
+        // a guide for a subject, so the whole thread came with it.
+        state: 'live',
+        blurb: 'Ask a maker to build one of our guides for your child.',
       },
       {
         href: '/get-involved/design-challenges',

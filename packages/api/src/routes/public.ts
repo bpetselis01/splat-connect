@@ -7,6 +7,7 @@ import { Hono } from 'hono'
 import { chunk } from '../chunk.js'
 import { createAnonClient, createAdminClient } from '../supabase/client.js'
 import { atCapacityToyIds } from '../toy-access.js'
+import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import type {
   ImpactSummary,
   ImpactEntity,
@@ -483,6 +484,35 @@ publicRoutes.get('/contributors/:id', async (c) => {
  * yet now returns its empty collections, which is what the page's own "No
  * tutorials yet." and "No toys yet." states were written for.
  */
+/**
+ * A maker who can be asked for a build: their name, and nothing else.
+ *
+ * Deliberately not `/contributors/:id`, which 404s on zero public
+ * contributions — right for a showcase profile, wrong here, because somebody
+ * who has never published a guide can still be asked to build one. The gate is
+ * the same one 057's build endpoint applies: `public_showcase`, which 034 made
+ * opt-OUT, so this is "has not asked to be left alone".
+ *
+ * 404 covers both no such account and opted out, for the same reason the
+ * contributor route gives: distinguishing them would make this an
+ * account-existence oracle.
+ */
+publicRoutes.get('/makers/:id', async (c) => {
+  const admin = createAdminClient()
+  const { data, error } = await admin
+    .from('profiles')
+    .select('id, name, public_showcase')
+    .eq('id', c.req.param('id'))
+    .maybeSingle()
+  if (error) {
+    if (error.code === INVALID_TEXT_REPRESENTATION) return c.json({ error: 'Not found' }, 404)
+    return c.json({ error: error.message }, 500)
+  }
+  const row = data as { id: string; name: string; public_showcase: boolean } | null
+  if (!row || !row.public_showcase) return c.json({ error: 'Not found' }, 404)
+  return c.json({ id: row.id, name: row.name })
+})
+
 publicRoutes.get('/organizations/:id', async (c) => {
   const sb = createAnonClient()
   const admin = createAdminClient()

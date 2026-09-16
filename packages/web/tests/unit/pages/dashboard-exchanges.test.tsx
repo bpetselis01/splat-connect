@@ -38,6 +38,10 @@ function tx(overrides: Partial<ToyTransactionSummary> = {}): ToyTransactionSumma
     requester_code: null,
     owner_confirmed_at: null,
     requester_confirmed_at: null,
+    tutorial_id: null,
+    build_brief: null,
+    working_photo_url: null,
+    work_approved_at: null,
     pickup_line1: null,
     pickup_suburb: null,
     pickup_state: null,
@@ -46,6 +50,7 @@ function tx(overrides: Partial<ToyTransactionSummary> = {}): ToyTransactionSumma
     created_at: '2026-08-01T00:00:00Z',
     updated_at: '2026-08-01T00:00:00Z',
     toy_name: 'Fire truck',
+    tutorial_title: null,
     toy_cover_photo_url: null,
     offered_toy_name: null,
     offered_toy_cover_photo_url: null,
@@ -136,7 +141,7 @@ describe('ExchangesPage', () => {
   it('falls back to the empty state with no transactions', async () => {
     vi.mocked(apiClient.get).mockResolvedValue([])
     render(await ExchangesPage())
-    expect(screen.getByText(/no donation or exchange requests yet/i)).toBeInTheDocument()
+    expect(screen.getByText(/nothing has been asked for yet/i)).toBeInTheDocument()
   })
 })
 
@@ -178,7 +183,7 @@ describe('exchanges active/history split', () => {
     render(await ExchangesPage())
     expect(screen.queryByRole('heading', { name: /active/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: /history/i })).not.toBeInTheDocument()
-    expect(screen.getByText(/no donation or exchange requests yet/i)).toBeInTheDocument()
+    expect(screen.getByText(/nothing has been asked for yet/i)).toBeInTheDocument()
   })
 
   it('shows both when both have rows', async () => {

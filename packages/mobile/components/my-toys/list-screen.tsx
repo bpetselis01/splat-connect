@@ -43,6 +43,8 @@ function waitingCounts(
   for (const tx of transactions) {
     if (tx.status !== 'requested') continue
     if (!isOwnerSide(tx, viewerId, ledOrgIds)) continue
+    // A build has no toy row (057), so it has no card here to badge.
+    if (!tx.toy_id) continue
     counts.set(tx.toy_id, (counts.get(tx.toy_id) ?? 0) + 1)
   }
   return counts

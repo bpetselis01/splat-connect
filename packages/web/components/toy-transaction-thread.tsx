@@ -16,7 +16,7 @@
  */
 'use client'
 
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { isOwnerSide } from '@splat-connect/types'
 import type { PickupAddress, ToyTransactionDetail } from '@splat-connect/types'
@@ -37,6 +37,7 @@ export function ToyTransactionThread({
   onReject,
   onWithdraw,
   onConfirm,
+  asideTop,
 }: {
   transaction: ToyTransactionDetail
   viewerId: string
@@ -53,6 +54,9 @@ export function ToyTransactionThread({
   onReject: () => Promise<void>
   onWithdraw: () => Promise<void>
   onConfirm: (code: string) => Promise<void>
+  /** The tinted next-step card the canonical layout puts first in the sidebar.
+   *  A build's is about its extra stage, which only the build page knows. */
+  asideTop?: ReactNode
 }) {
   const [code, setCode] = useState('')
   const [busy, setBusy] = useState(false)
@@ -81,10 +85,20 @@ export function ToyTransactionThread({
   }
 
   const open = tx.status === 'requested' || tx.status === 'accepted'
-  const canConfirm = tx.status === 'accepted' && (tx.type === 'exchange' || isOwner)
+  const isBuild = tx.type === 'build'
+  /*
+   * A build's handover is mutual like an exchange's: the family is receiving
+   * something made for them, and their confirmation is the only record that it
+   * arrived. It is also gated on the working shot being approved — confirming
+   * before that would close a build the family has never seen (057).
+   */
+  const canConfirm =
+    tx.status === 'accepted' &&
+    (tx.type !== 'donation' || isOwner) &&
+    (!isBuild || tx.work_approved_at !== null)
   const alreadyConfirmed = isOwner ? tx.owner_confirmed_at !== null : tx.requester_confirmed_at !== null
   const myCode = isOwner ? tx.owner_code : tx.requester_code
-  const showMyCode = tx.status === 'accepted' && (tx.type === 'exchange' || !isOwner)
+  const showMyCode = tx.status === 'accepted' && (tx.type !== 'donation' || !isOwner)
 
   return (
     <div className="exchange-grid">
@@ -95,6 +109,10 @@ export function ToyTransactionThread({
           </p>
         )}
 
+        {/* First in the sidebar, per the canonical detail layout: what to do
+            next comes before the supporting panels and the quiet links. */}
+        {asideTop}
+
         <div className="card flex flex-col gap-3 p-4">
           <div className="flex items-center justify-between gap-2">
             <h2 className="text-base font-bold text-ink">Details</h2>
@@ -104,7 +122,9 @@ export function ToyTransactionThread({
           <dl className="flex flex-col text-sm">
             <div className="flex justify-between gap-3 border-b border-line py-1.5">
               <dt className="font-bold text-muted">Type</dt>
-              <dd className="font-bold text-ink">{tx.type === 'donation' ? 'Donation' : 'Exchange'}</dd>
+              <dd className="font-bold text-ink">
+                {tx.type === 'donation' ? 'Donation' : isBuild ? 'Build' : 'Exchange'}
+              </dd>
             </div>
             <div className="flex justify-between gap-3 border-b border-line py-1.5">
               <dt className="font-bold text-muted">With</dt>
@@ -130,7 +150,9 @@ export function ToyTransactionThread({
         {tx.status === 'requested' && isOwner && (
           <div className="card flex flex-col gap-3 p-4">
             <h2 className="text-base font-bold text-ink">
-              {otherPartyName} wants this toy
+              {isBuild
+                ? `${otherPartyName} is asking for a build`
+                : `${otherPartyName} wants this toy`}
             </h2>
             <p className="text-sm leading-relaxed text-muted">
               {tx.owner_org_id
@@ -173,7 +195,11 @@ export function ToyTransactionThread({
           </div>
         )}
 
-        {tx.status === 'accepted' && (
+        {/* A build's handover cannot start until the family has approved the
+            working shot, so its code and its confirm box do not appear before
+            then — showing a code for a meeting that cannot be arranged yet is
+            the same class of mistake as a dead control. */}
+        {tx.status === 'accepted' && (!isBuild || tx.work_approved_at) && (
           <div className="card flex flex-col gap-3 p-4">
             <h2 className="text-base font-bold text-ink">Handoff</h2>
 

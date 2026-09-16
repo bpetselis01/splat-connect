@@ -1,4 +1,7 @@
+import Link from 'next/link'
+import type { Route } from 'next'
 import { notFound } from 'next/navigation'
+import { Hammer } from '@phosphor-icons/react/dist/ssr'
 import { ProfileTabs } from '@/components/profile-tabs'
 import { TutorialCard } from '@/components/tutorial-card'
 import { ToyLibraryCard } from '@/components/toy-library-card'
@@ -43,6 +46,25 @@ export default async function ContributorPage({
           {initial}
         </span>
         <h1 className="title-detail">{contributor.name}</h1>
+      </div>
+
+      {/* The only way to ask one person for a build. 057 gates that on the
+          maker having a public profile, and this page IS the public profile —
+          there is no directory of every account to ask from, which would be a
+          spam surface nobody asked for. Signed out it routes to signup, the
+          same rule the save island follows above. */}
+      <div className="mt-4">
+        <Link
+          href={
+            (signedIn
+              ? `/get-involved/requests/new?maker=${id}`
+              : '/signup?next=' + encodeURIComponent(`/get-involved/requests/new?maker=${id}`)) as Route
+          }
+          className="btn btn-quiet no-underline"
+        >
+          <Hammer size={18} weight="bold" aria-hidden="true" />
+          Ask {contributor.name.split(' ')[0]} to build a guide
+        </Link>
       </div>
 
       <div className="mt-6 grid grid-cols-3 gap-4">

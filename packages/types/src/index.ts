@@ -89,7 +89,16 @@ export function toyHolderName(toy: Pick<ToyWithOwner, 'profiles' | 'organization
   return toy.organizations?.name ?? toy.profiles?.name ?? null
 }
 
-export type ToyTransactionType = 'donation' | 'exchange'
+/**
+ * What the transaction is about.
+ *
+ * `build` is 057: a family asking a maker to build them an adapted toy from a
+ * published guide. It is the same record as a donation or an exchange — two
+ * parties, a thread, an accept, two handover codes — with a different subject
+ * and one extra stage, so it lives on the same table rather than forking all of
+ * that to gain a different subject line.
+ */
+export type ToyTransactionType = 'donation' | 'exchange' | 'build'
 export type ToyTransactionStatus = 'requested' | 'accepted' | 'rejected' | 'withdrawn' | 'completed'
 
 /**
@@ -156,7 +165,8 @@ export interface ExchangeSettlement {
 
 export interface ToyTransaction {
   id: string
-  toy_id: string
+  /** Null on a build: there is no toy yet, the maker makes one (057). */
+  toy_id: string | null
   offered_toy_id: string | null
   type: ToyTransactionType
   status: ToyTransactionStatus
@@ -177,8 +187,43 @@ export interface ToyTransaction {
   /** Copied from the organisation at accept time, so the requester reads it off
    *  their own transaction row rather than off a table they cannot select. */
   pickup_instructions: string | null
+  /** The guide being built. Set on a build and null otherwise (057). */
+  tutorial_id: string | null
+  /** What the family asked for, in their words. Builds only. */
+  build_brief: string | null
+  /** A storage path in the private `build-shots` bucket, never a URL. Set once
+   *  the maker posts a photo of the finished build working. */
+  working_photo_url: string | null
+  /** When the family accepted that shot. The handover cannot start before it. */
+  work_approved_at: string | null
   created_at: string
   updated_at: string
+}
+
+/**
+ * Which step of a build a record is at, derived from what the row stores.
+ *
+ * 057 deliberately added no status members: `built` and `approved` as statuses
+ * would mean every `status = 'accepted'` predicate in the API silently stops
+ * matching a live build. The extra stage is two timestamps instead, and this is
+ * the one place that reads them.
+ */
+export type BuildStep = 'asked' | 'claimed' | 'shot' | 'approved' | 'handover' | 'closed'
+
+export function buildStep(
+  tx: Pick<
+    ToyTransaction,
+    'status' | 'working_photo_url' | 'work_approved_at' | 'owner_confirmed_at' | 'requester_confirmed_at'
+  >
+): BuildStep {
+  if (tx.status === 'completed') return 'closed'
+  if (tx.status === 'requested') return 'asked'
+  // rejected and withdrawn stop where they stopped; the rail decides where that
+  // was, and it is not a step of its own.
+  if (tx.status !== 'accepted') return 'asked'
+  if (!tx.working_photo_url) return 'claimed'
+  if (!tx.work_approved_at) return 'shot'
+  return 'handover'
 }
 
 /**
@@ -216,6 +261,8 @@ export interface PickupAddress {
 // or is withdrawn.
 export interface ToyTransactionSummary extends ToyTransaction {
   toy_name: string
+  /** The guide being built, on a build (057). Null on a donation or exchange. */
+  tutorial_title: string | null
   /** Null when the toy has none. Readable by both parties for good: 025's
    *  "Transaction parties can view each other's toy" policy outlives the
    *  handoff, which is what lets a giver still see what they gave. */
@@ -229,6 +276,19 @@ export interface ToyTransactionSummary extends ToyTransaction {
   blocked_by_rival_accept: boolean
   /** Newest message in the thread, for the list preview. Null before any exists. */
   last_message: ToyTransactionMessagePreview | null
+}
+
+/**
+ * What the record is about, in the words a person would use for it.
+ *
+ * A build's subject is the guide, not a toy — `toy_name` is empty on one. Every
+ * list row, card title and page heading asks the same question, so it is
+ * answered once here rather than with a ternary at each of them.
+ */
+export function subjectName(
+  tx: Pick<ToyTransactionSummary, 'type' | 'toy_name' | 'tutorial_title'>
+): string {
+  return tx.type === 'build' ? tx.tutorial_title ?? 'A build' : tx.toy_name
 }
 
 export type ToyTransactionMessagePreview = Pick<
@@ -264,6 +324,8 @@ export function needsAction(
     | 'owner_org_id'
     | 'owner_confirmed_at'
     | 'requester_confirmed_at'
+    | 'working_photo_url'
+    | 'work_approved_at'
   > & { blocked_by_rival_accept?: boolean },
   viewerId: string,
   // The orgs the viewer leads. Without it an org request waiting on a leader
@@ -277,8 +339,19 @@ export function needsAction(
   if (tx.status === 'requested') return isOwner && !tx.blocked_by_rival_accept
 
   if (tx.status === 'accepted') {
-    // Donations are confirmed by the owner alone; exchanges need both parties.
-    const confirms = tx.type === 'exchange' || isOwner
+    /*
+     * A build has a stage before the handover, and it alternates sides: the
+     * maker owes a working shot, then the family owes an approval. Falling
+     * through to the confirm rule would tell both of them to confirm a handover
+     * that cannot happen yet.
+     */
+    if (tx.type === 'build') {
+      if (!tx.working_photo_url) return isOwner
+      if (!tx.work_approved_at) return !isOwner
+    }
+    // Donations are confirmed by the owner alone; exchanges and builds need
+    // both parties.
+    const confirms = tx.type !== 'donation' || isOwner
     const alreadyConfirmed = isOwner ? tx.owner_confirmed_at : tx.requester_confirmed_at
     return confirms && alreadyConfirmed === null
   }
@@ -287,10 +360,22 @@ export function needsAction(
 }
 
 /** The copy the Exchanges badge is counting, shown on the card itself. */
-export function actionLabel(tx: Pick<ToyTransaction, 'status'>): string {
-  return tx.status === 'requested'
-    ? 'Waiting on you — accept or decline'
-    : 'Waiting on you — confirm the handoff'
+export function actionLabel(
+  tx: Pick<ToyTransaction, 'status' | 'type' | 'working_photo_url' | 'work_approved_at'>,
+  isOwner = false
+): string {
+  if (tx.status === 'requested') {
+    return tx.type === 'build'
+      ? 'Waiting on you — take it on or decline'
+      : 'Waiting on you — accept or decline'
+  }
+  if (tx.type === 'build' && !tx.working_photo_url && isOwner) {
+    return 'Waiting on you — post the working shot'
+  }
+  if (tx.type === 'build' && tx.working_photo_url && !tx.work_approved_at && !isOwner) {
+    return 'Waiting on you — approve the working shot'
+  }
+  return 'Waiting on you — confirm the handoff'
 }
 
 /**
@@ -338,6 +423,10 @@ export function givenAway(
   for (const tx of transactions) {
     if (tx.status !== 'completed') continue
     if (tx.owner_org_id) continue
+    // A build has no toy row (057): the maker made the thing, so there is
+    // nothing in anyone's library that stopped being theirs. It belongs on the
+    // exchange record, not on "toys I gave away".
+    if (!tx.toy_id) continue
 
     const base = {
       transaction_id: tx.id,
@@ -391,6 +480,8 @@ export type ReceivedToy = { id: string; name: string; status: Toy['status'] }
 
 export interface ToyTransactionDetail extends ToyTransaction {
   toy_name: string
+  /** The guide being built, on a build (057). Null on a donation or exchange. */
+  tutorial_title: string | null
   offered_toy_name: string | null
   owner_name: string
   requester_name: string

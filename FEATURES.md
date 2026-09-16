@@ -17,7 +17,7 @@ likelier to need a migration. See
 | 2 | `/dashboard` hub | `/dashboard` | restyle | awaiting review | 055 applied | full suite + CI; screenshot vs artboard |
 | 3 | Exchanges list | `/dashboard/exchanges` | restyle | awaiting review | no | full suite; screenshot vs artboard |
 | 4 | Exchange detail (canonical layout) | `/dashboard/exchanges/[id]` | restyle | awaiting review | 056 applied | full suite; screenshot vs artboard |
-| 5 | Build detail | `/dashboard/exchanges/build/[id]` | new build | todo | | |
+| 5 | Build detail | `/dashboard/exchanges/build/[id]` | new build | awaiting review | 057 applied | full suite + Playwright end to end; open makers-wanted board parked |
 | 6 | Print requests + detail | `/dashboard/print-requests`, `/[id]` | new build | todo | | |
 | 7 | Printers | `/dashboard/printers` | new build | todo | | |
 | 8 | Cost panel | component | restyle | awaiting review | 056 applied | full suite + Playwright; view and edit share one shell |

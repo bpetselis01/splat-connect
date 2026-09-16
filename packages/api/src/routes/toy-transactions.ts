@@ -93,6 +93,28 @@ type MessagePreview = { body: string; sender_id: string; kind: string; created_a
 // Newest message per transaction, for the list preview. PostgREST has no clean
 // "latest per group", so this reads the caller's messages in order and keeps the
 // last of each — RLS already limits the rows to threads they are part of.
+/**
+ * What this record is about, for a notification's `toy_name`.
+ *
+ * A build has no toy (057) — the maker makes one — so the subject is the guide.
+ * Written as one lookup rather than a ternary at each of the five notification
+ * sites, all of which did `.eq('id', tx.toy_id).single()` and would now throw
+ * on a null id.
+ */
+async function subjectName(
+  admin: ReturnType<typeof createAdminClient>,
+  tx: { type: string; toy_id: string | null; tutorial_id: string | null }
+): Promise<string> {
+  if (tx.type === 'build') {
+    if (!tx.tutorial_id) return 'a build'
+    const { data } = await admin.from('tutorials').select('title').eq('id', tx.tutorial_id).maybeSingle()
+    return (data as { title: string } | null)?.title ?? 'a build'
+  }
+  if (!tx.toy_id) return 'a toy'
+  const { data } = await admin.from('toys').select('name').eq('id', tx.toy_id).maybeSingle()
+  return (data as { name: string } | null)?.name ?? 'a toy'
+}
+
 async function lastMessages(
   supabase: ReturnType<typeof createUserClient>,
   transactionIds: string[]
@@ -143,7 +165,7 @@ toyTransactions.get('/', async (c) => {
   const { data, error } = await supabase
     .from('toy_transactions')
     .select(
-      '*, toy:toys!toy_transactions_toy_id_fkey(name, cover_photo_url), offered:toys!toy_transactions_offered_toy_id_fkey(name, cover_photo_url), owner:profiles!toy_transactions_owner_id_fkey(name), requester:profiles!toy_transactions_requester_id_fkey(name), org:organizations!toy_transactions_owner_org_id_fkey(name)'
+      '*, toy:toys!toy_transactions_toy_id_fkey(name, cover_photo_url), offered:toys!toy_transactions_offered_toy_id_fkey(name, cover_photo_url), owner:profiles!toy_transactions_owner_id_fkey(name), requester:profiles!toy_transactions_requester_id_fkey(name), org:organizations!toy_transactions_owner_org_id_fkey(name), tutorial:tutorials(title)'
     )
     .order('updated_at', { ascending: false })
   if (error) return c.json({ error: error.message }, 500)
@@ -154,11 +176,12 @@ toyTransactions.get('/', async (c) => {
   const rows = (data ?? []) as unknown as Array<
     Record<string, unknown> & {
       id: string
-      toy_id: string
+      toy_id: string | null
       status: string
       owner_id: string | null
       owner_org_id: string | null
       toy: { name: string; cover_photo_url: string | null } | null
+      tutorial: { title: string } | null
       offered: { name: string; cover_photo_url: string | null } | null
       owner: { name: string } | null
       requester: { name: string } | null
@@ -169,7 +192,11 @@ toyTransactions.get('/', async (c) => {
   const blockedToyIds =
     (await atCapacityToyIds(
       admin,
-      rows.filter((r) => r.status === 'requested').map((r) => r.toy_id)
+      rows
+        .filter((r) => r.status === 'requested')
+        .map((r) => r.toy_id)
+        // A build has no toy, so it has no capacity to be blocked by (057).
+        .filter((id): id is string => id !== null)
     )) ?? new Set<string>()
   const previews = await lastMessages(
     supabase,
@@ -179,6 +206,7 @@ toyTransactions.get('/', async (c) => {
     rows.map((r) => ({
       ...sanitizeCodes(r, userId, ledOrgs),
       toy_name: r.toy?.name ?? '',
+      tutorial_title: r.tutorial?.title ?? null,
       // Both embeds survive a completed handoff for either party: 025's
       // "Transaction parties can view each other's toy" policy has no end date,
       // which is what lets a giver still see the toy they handed over.
@@ -193,7 +221,8 @@ toyTransactions.get('/', async (c) => {
       // Which side of the handoff the caller is on. A leader's own toys and
       // their org's arrive in one list, and nothing else distinguishes them.
       acting_for_org_name: isOwnerSide(r, userId, ledOrgs) ? r.org?.name ?? null : null,
-      blocked_by_rival_accept: r.status === 'requested' && blockedToyIds.has(r.toy_id),
+      blocked_by_rival_accept:
+        r.status === 'requested' && r.toy_id !== null && blockedToyIds.has(r.toy_id),
       last_message: previews.get(r.id) ?? null,
     }))
   )
@@ -207,12 +236,18 @@ toyTransactions.get('/action-count', async (c) => {
   const { data, error } = await supabase
     .from('toy_transactions')
     .select(
-      'id, toy_id, status, type, owner_id, owner_org_id, owner_confirmed_at, requester_confirmed_at'
+      // working_photo_url and work_approved_at are here because a build's extra
+      // stage alternates sides before the handover (057): without them the
+      // badge tells the maker to confirm a handover the family has not
+      // approved yet.
+      'id, toy_id, status, type, owner_id, owner_org_id, owner_confirmed_at, requester_confirmed_at, working_photo_url, work_approved_at'
     )
     .in('status', ['requested', 'accepted'])
   if (error) return c.json({ error: error.message }, 500)
 
-  const rows = (data ?? []) as Array<Parameters<typeof needsAction>[0] & { toy_id: string; status: string }>
+  const rows = (data ?? []) as Array<
+    Parameters<typeof needsAction>[0] & { toy_id: string | null; status: string }
+  >
   const admin = createAdminClient()
   const userId = c.get('userId')
   const ledOrgs = await ledOrgIds(admin, userId)
@@ -220,10 +255,17 @@ toyTransactions.get('/action-count', async (c) => {
   const blockedToyIds =
     (await atCapacityToyIds(
       admin,
-      rows.filter((r) => r.status === 'requested').map((r) => r.toy_id)
+      rows
+        .filter((r) => r.status === 'requested')
+        .map((r) => r.toy_id)
+        .filter((id): id is string => id !== null)
     )) ?? new Set<string>()
   const count = rows.filter((r) =>
-    needsAction({ ...r, blocked_by_rival_accept: blockedToyIds.has(r.toy_id) }, userId, ledOrgs)
+    needsAction(
+      { ...r, blocked_by_rival_accept: r.toy_id !== null && blockedToyIds.has(r.toy_id) },
+      userId,
+      ledOrgs
+    )
   ).length
   return c.json({ count })
 })
@@ -233,7 +275,7 @@ toyTransactions.get('/:id', async (c) => {
   const { data, error } = await supabase
     .from('toy_transactions')
     .select(
-      '*, toy:toys!toy_transactions_toy_id_fkey(name, status), offered:toys!toy_transactions_offered_toy_id_fkey(name, status), owner:profiles!toy_transactions_owner_id_fkey(name), requester:profiles!toy_transactions_requester_id_fkey(name), org:organizations!toy_transactions_owner_org_id_fkey(name)'
+      '*, toy:toys!toy_transactions_toy_id_fkey(name, status), offered:toys!toy_transactions_offered_toy_id_fkey(name, status), owner:profiles!toy_transactions_owner_id_fkey(name), requester:profiles!toy_transactions_requester_id_fkey(name), org:organizations!toy_transactions_owner_org_id_fkey(name), tutorial:tutorials(title)'
     )
     .eq('id', c.req.param('id'))
     .maybeSingle()
@@ -257,11 +299,14 @@ toyTransactions.get('/:id', async (c) => {
     owner: { name: string } | null
     requester: { name: string } | null
     org: { name: string } | null
+    tutorial: { title: string } | null
   }
   const admin = createAdminClient()
   const ledOrgs = await ledOrgIds(admin, userId)
   const blockedToyIds =
-    row.status === 'requested' ? (await atCapacityToyIds(admin, [row.toy_id])) ?? new Set<string>() : new Set<string>()
+    row.status === 'requested' && row.toy_id
+      ? (await atCapacityToyIds(admin, [row.toy_id])) ?? new Set<string>()
+      : new Set<string>()
   // Who received what is decided here rather than in the client, for the same
   // reason the codes are: the answer depends on who is asking. The requester
   // takes the requested toy; on an exchange the owner takes the offered one.
@@ -284,6 +329,7 @@ toyTransactions.get('/:id', async (c) => {
   return c.json({
     ...sanitizeCodes(row, userId, ledOrgs),
     toy_name: row.toy?.name ?? '',
+    tutorial_title: row.tutorial?.title ?? null,
     offered_toy_name: row.offered?.name ?? null,
     // The organisation's name where there is one: a family is dealing with
     // Cerebral Palsy Alliance, not with whichever leader is on shift.
@@ -448,11 +494,10 @@ toyTransactions.post('/:id/messages', async (c) => {
     const userId = c.get('userId')
     const ledOrgs = await ledOrgIds(admin, userId)
     const { data: sender } = await admin.from('profiles').select('name').eq('id', userId).single()
-    const { data: toy } = await admin.from('toys').select('name').eq('id', tx.toy_id).single()
     const payload = {
       type: 'toy_message',
       toy_transaction_id: c.req.param('id'),
-      toy_name: toy?.name ?? 'a toy',
+      toy_name: await subjectName(admin, tx as any),
       actor_name: sender?.name ?? 'A contributor',
     }
     // A leader posting notifies the family; the family posting notifies every
@@ -530,12 +575,11 @@ toyTransactions.post('/:id/accept', async (c) => {
     body: 'Request accepted. Pickup and handoff details are ready.',
   })
 
-  const { data: toy } = await admin.from('toys').select('name').eq('id', tx.toy_id).single()
   await admin.from('notifications').insert({
     recipient_id: tx.requester_id,
     type: 'toy_accepted',
     toy_transaction_id: tx.id,
-    toy_name: toy?.name ?? 'a toy',
+    toy_name: await subjectName(admin, tx as any),
     actor_name: await ownerSideName(admin, tx as any, 'The owner'),
   })
 
@@ -574,12 +618,11 @@ toyTransactions.post('/:id/reject', async (c) => {
     body: 'Request declined.',
   })
 
-  const { data: toy } = await admin.from('toys').select('name').eq('id', tx.toy_id).single()
   await admin.from('notifications').insert({
     recipient_id: tx.requester_id,
     type: 'toy_rejected',
     toy_transaction_id: tx.id,
-    toy_name: toy?.name ?? 'a toy',
+    toy_name: await subjectName(admin, tx as any),
     actor_name: await ownerSideName(admin, tx as any, 'The owner'),
   })
 
@@ -615,12 +658,11 @@ toyTransactions.post('/:id/withdraw', async (c) => {
     body: 'Request withdrawn.',
   })
 
-  const { data: toy } = await admin.from('toys').select('name').eq('id', tx.toy_id).single()
   const { data: actor } = await admin.from('profiles').select('name').eq('id', userId).single()
   const payload = {
     type: 'toy_withdrawn',
     toy_transaction_id: tx.id,
-    toy_name: toy?.name ?? 'a toy',
+    toy_name: await subjectName(admin, tx as any),
     actor_name: fromOwnerSide
       ? await ownerSideName(admin, tx as any, 'The other party')
       : actor?.name ?? 'The other party',
@@ -649,8 +691,18 @@ toyTransactions.post('/:id/confirm', async (c) => {
   if (!isOwner && userId !== tx.requester_id) return c.json({ error: 'Not found' }, 404)
   if (tx.status !== 'accepted') return c.json({ error: 'This request is not ready to confirm' }, 409)
 
-  const canConfirm = tx.type === 'exchange' || isOwner
+  // Donations are confirmed by the owner alone; exchanges and builds need both
+  // — on a build the family is receiving something made for them and their
+  // confirmation is the only record that it arrived.
+  const canConfirm = tx.type !== 'donation' || isOwner
   if (!canConfirm) return c.json({ error: 'Only the owner confirms a donation' }, 403)
+
+  // A build has a stage before the handover. Confirming past an unapproved
+  // working shot would close the record with the family never having seen what
+  // was made — the exact thing the extra stage exists to prevent.
+  if (tx.type === 'build' && !tx.work_approved_at) {
+    return c.json({ error: 'The family approves the working shot before the handover' }, 409)
+  }
 
   const expectedCode = isOwner ? tx.requester_code : tx.owner_code
   if (body.code !== expectedCode) return c.json({ error: 'Incorrect code' }, 400)
@@ -670,6 +722,13 @@ toyTransactions.post('/:id/confirm', async (c) => {
     tx.type === 'donation'
       ? updated.owner_confirmed_at !== null
       : updated.owner_confirmed_at !== null && updated.requester_confirmed_at !== null
+
+  /*
+   * A build hands over an object that exists nowhere in `toys`: the maker made
+   * it. There is no row to transfer, no stock to decrement and no rival request
+   * to sweep, so the whole block below is skipped and the record simply closes.
+   */
+  const movesAToy = tx.type !== 'build'
 
   if (!bothConfirmed) {
     await admin.from('toy_transaction_messages').insert({
@@ -765,7 +824,9 @@ toyTransactions.post('/:id/confirm', async (c) => {
   // sweep below correct for both cases from one number.
   let stockRemaining = 0
 
-  if (tx.owner_org_id) {
+  if (!movesAToy) {
+    stockRemaining = 0
+  } else if (tx.owner_org_id) {
     const { data: stock } = await admin.from('toys').select('quantity').eq('id', tx.toy_id).single()
     const failure = await handOutOneUnit(tx.toy_id, tx.requester_id)
     if (failure) return c.json({ error: failure }, 500)
@@ -782,7 +843,7 @@ toyTransactions.post('/:id/confirm', async (c) => {
   // so it moves rather than being cloned — into the org's inventory as an
   // unlisted draft when an org is the receiving side, for a leader to look over
   // and publish or discard.
-  if (tx.offered_toy_id) {
+  if (movesAToy && tx.offered_toy_id) {
     const { error: offeredError } = await transferToy(
       tx.offered_toy_id,
       tx.owner_org_id
@@ -814,7 +875,7 @@ toyTransactions.post('/:id/confirm', async (c) => {
   // never reached a handoff leaves them in the running; doing it on STOCK rather
   // than on any completion means an org that just gave away one of five bears
   // does not decline four families who can still have one.
-  const { data: rivals } = stockRemaining > 0
+  const { data: rivals } = !movesAToy || stockRemaining > 0
     ? { data: [] as Array<{ id: string; requester_id: string }> }
     : await admin
         .from('toy_transactions')
@@ -848,6 +909,262 @@ toyTransactions.post('/:id/confirm', async (c) => {
   }
 
   return c.json(sanitizeCodes(completedTx, userId, ledOrgs))
+})
+
+/**
+ * POST /api/toy-transactions/build
+ *
+ * A family asks somebody to build them an adapted toy from a published guide.
+ * It is an ordinary toy transaction with a guide for a subject (057), so
+ * everything after this point — the thread, the accept, the codes, the costs —
+ * is the code that was already there.
+ *
+ * Who may be asked is the one judgement here. An organisation, because that is
+ * what the product's maker model already is and because its pickup address is
+ * on file; or a contributor who has not opted out of a public profile (034),
+ * because letting one account address an unsolicited request to any other by id
+ * is a spam and safety hole that no amount of UI hides.
+ */
+toyTransactions.post('/build', async (c) => {
+  const body = await c.req.json().catch(() => null)
+  if (body === null || typeof body !== 'object' || Array.isArray(body)) {
+    return c.json({ error: 'Body must be an object' }, 400)
+  }
+  const userId = c.get('userId')
+  const admin = createAdminClient()
+
+  const brief = typeof body.build_brief === 'string' ? body.build_brief.trim() : ''
+  if (brief.length < 1 || brief.length > 2000) {
+    return c.json({ error: 'Say what you need built, in 2000 characters or fewer.' }, 400)
+  }
+
+  const { data: tutorial, error: tutorialError } = await admin
+    .from('tutorials')
+    .select('id, title, status')
+    .eq('id', body.tutorial_id)
+    .maybeSingle()
+  if (tutorialError) {
+    if (tutorialError.code === INVALID_TEXT_REPRESENTATION) return c.json({ error: 'Not found' }, 404)
+    return c.json({ error: tutorialError.message }, 500)
+  }
+  // A draft or rejected guide is not something to ask a stranger to build: a
+  // bare 404, so a prober cannot tell an unapproved guide from a missing one.
+  if (!tutorial || tutorial.status !== 'approved') return c.json({ error: 'Not found' }, 404)
+
+  const makerOrgId = typeof body.maker_org_id === 'string' ? body.maker_org_id : null
+  const makerId = typeof body.maker_id === 'string' ? body.maker_id : null
+  if ((makerOrgId === null) === (makerId === null)) {
+    return c.json({ error: 'Choose exactly one maker — a person or an organisation.' }, 400)
+  }
+
+  let ownerId: string | null = null
+  let ownerOrgId: string | null = null
+
+  if (makerOrgId) {
+    const { data: org, error: orgError } = await admin
+      .from('organizations')
+      .select('id, status')
+      .eq('id', makerOrgId)
+      .maybeSingle()
+    if (orgError) {
+      if (orgError.code === INVALID_TEXT_REPRESENTATION) return c.json({ error: 'Not found' }, 404)
+      return c.json({ error: orgError.message }, 500)
+    }
+    if (!org || org.status !== 'active') return c.json({ error: 'Not found' }, 404)
+    // The org side of "you cannot request your own toy": a leader asking their
+    // own organisation would be accepting their own request.
+    if ((await ledOrgIds(admin, userId)).includes(org.id)) {
+      return c.json({ error: 'You cannot ask your own organisation for a build' }, 400)
+    }
+    ownerOrgId = org.id
+  } else {
+    if (makerId === userId) return c.json({ error: 'You cannot ask yourself for a build' }, 400)
+    const { data: maker, error: makerError } = await admin
+      .from('profiles')
+      .select('id, public_showcase')
+      .eq('id', makerId)
+      .maybeSingle()
+    if (makerError) {
+      if (makerError.code === INVALID_TEXT_REPRESENTATION) return c.json({ error: 'Not found' }, 404)
+      return c.json({ error: makerError.message }, 500)
+    }
+    // Not "no such account" — somebody who opted out of a public profile is
+    // not addressable, and saying which of the two it is would turn this into
+    // an account-existence oracle.
+    if (!maker || !maker.public_showcase) return c.json({ error: 'Not found' }, 404)
+    ownerId = maker.id
+  }
+
+  // One open ask per family per guide per maker. Without it a refresh on the
+  // form doubles the request and the maker answers the same thing twice.
+  const openAsk = admin
+    .from('toy_transactions')
+    .select('id')
+    .eq('requester_id', userId)
+    .eq('tutorial_id', tutorial.id)
+    .in('status', ['requested', 'accepted'])
+  const { data: existing, error: existingError } = await (ownerOrgId
+    ? openAsk.eq('owner_org_id', ownerOrgId)
+    : openAsk.eq('owner_id', ownerId as string)
+  ).maybeSingle()
+  if (existingError) return c.json({ error: existingError.message }, 500)
+  if (existing) return c.json({ error: 'You already have an open build request with them for this guide' }, 409)
+
+  const { data: tx, error: insertError } = await admin
+    .from('toy_transactions')
+    .insert({
+      toy_id: null,
+      offered_toy_id: null,
+      tutorial_id: tutorial.id,
+      build_brief: brief,
+      type: 'build',
+      status: 'requested',
+      requester_id: userId,
+      owner_id: ownerId,
+      owner_org_id: ownerOrgId,
+    })
+    .select()
+    .single()
+  if (insertError) return c.json({ error: insertError.message }, 500)
+
+  const { data: requesterProfile } = await admin.from('profiles').select('name').eq('id', userId).single()
+
+  await admin.from('toy_transaction_messages').insert({
+    transaction_id: tx.id,
+    sender_id: userId,
+    kind: 'system',
+    body: 'Asked for a build of this guide.',
+  })
+
+  await notifyOwnerSide(admin, tx, {
+    type: 'toy_request',
+    toy_transaction_id: tx.id,
+    toy_name: tutorial.title,
+    actor_name: requesterProfile?.name ?? 'A contributor',
+  })
+
+  return c.json(tx, 201)
+})
+
+/**
+ * POST /api/toy-transactions/:id/working-shot
+ *
+ * The maker's photo of the finished build working. This is the extra stage: the
+ * family approves what they are looking at before anybody travels.
+ *
+ * The object goes to `<transaction_id>/<file>` in the private `build-shots`
+ * bucket, because 057's storage policies read the first folder segment as the
+ * exchange whose parties may see it. A file written anywhere else is readable
+ * by nobody, which is the correct failure direction.
+ */
+toyTransactions.post('/:id/working-shot', async (c) => {
+  const loaded = await loadForParty(c)
+  if ('status' in loaded) return c.json({ error: 'message' in loaded ? loaded.message : 'Not found' }, loaded.status)
+  const tx = loaded.data
+  const userId = c.get('userId')
+  const admin = createAdminClient()
+  const ledOrgs = await ledOrgIds(admin, userId)
+
+  if (tx.type !== 'build') return c.json({ error: 'Only a build has a working shot' }, 400)
+  if (!isOwnerSide(tx as any, userId, ledOrgs)) {
+    return c.json({ error: 'Only the maker posts the working shot' }, 403)
+  }
+  if (tx.status !== 'accepted') return c.json({ error: 'This build is not under way' }, 409)
+
+  const form = await c.req.formData().catch(() => null)
+  const file = form?.get('file')
+  if (!(file instanceof File)) return c.json({ error: 'A photo is required' }, 400)
+
+  // The caller's own client, so 057's storage policy is what decides — the
+  // admin client would bypass the gate this whole path exists to enforce.
+  const supabase = createUserClient(c.get('token'))
+  const { data: uploaded, error: uploadError } = await supabase.storage
+    .from('build-shots')
+    .upload(`${tx.id}/${file.name}`, file, { upsert: true })
+  if (uploadError) return c.json({ error: uploadError.message }, 500)
+
+  const now = new Date().toISOString()
+  const { data: updated, error } = await admin
+    .from('toy_transactions')
+    .update({
+      working_photo_url: uploaded.path,
+      // Reposting resets the approval: the family approved a different photo,
+      // and carrying that approval onto a new one would close the stage with
+      // nobody having looked at what is now on the record.
+      work_approved_at: null,
+      updated_at: now,
+    })
+    .eq('id', tx.id)
+    .select()
+    .single()
+  if (error) return c.json({ error: error.message }, 500)
+
+  await admin.from('toy_transaction_messages').insert({
+    transaction_id: tx.id,
+    sender_id: userId,
+    kind: 'system',
+    body: 'Posted a photo of the build working.',
+  })
+  await admin.from('notifications').insert({
+    recipient_id: tx.requester_id,
+    type: 'build_shot_posted',
+    toy_transaction_id: tx.id,
+    toy_name: await subjectName(admin, tx as any),
+    actor_name: await ownerSideName(admin, tx as any, 'The maker'),
+  })
+
+  return c.json(sanitizeCodes(updated, userId, ledOrgs))
+})
+
+/**
+ * POST /api/toy-transactions/:id/approve-work
+ *
+ * The family accepts the working shot. Only they can: the point of the stage is
+ * that the person it was made for looks at it, so a maker approving their own
+ * photo would be the stage approving itself.
+ */
+toyTransactions.post('/:id/approve-work', async (c) => {
+  const loaded = await loadForParty(c)
+  if ('status' in loaded) return c.json({ error: 'message' in loaded ? loaded.message : 'Not found' }, loaded.status)
+  const tx = loaded.data
+  const userId = c.get('userId')
+  const admin = createAdminClient()
+  const ledOrgs = await ledOrgIds(admin, userId)
+
+  if (tx.type !== 'build') return c.json({ error: 'Only a build has a working shot' }, 400)
+  if (userId !== tx.requester_id) {
+    return c.json({ error: 'Only the family who asked approves the working shot' }, 403)
+  }
+  if (tx.status !== 'accepted') return c.json({ error: 'This build is not under way' }, 409)
+  if (!tx.working_photo_url) return c.json({ error: 'There is no working shot to approve yet' }, 409)
+  if (tx.work_approved_at) return c.json({ error: 'You have already approved it' }, 409)
+
+  const now = new Date().toISOString()
+  const { data: updated, error } = await admin
+    .from('toy_transactions')
+    .update({ work_approved_at: now, updated_at: now })
+    .eq('id', tx.id)
+    .eq('status', 'accepted')
+    .select()
+    .single()
+  if (error) return c.json({ error: error.message }, 500)
+
+  await admin.from('toy_transaction_messages').insert({
+    transaction_id: tx.id,
+    sender_id: userId,
+    kind: 'system',
+    body: 'Approved the working shot. Agree a time and place for the handover.',
+  })
+  await notifyOwnerSide(admin, tx as any, {
+    type: 'build_approved',
+    toy_transaction_id: tx.id,
+    toy_name: await subjectName(admin, tx as any),
+    actor_name: (
+      await admin.from('profiles').select('name').eq('id', userId).single()
+    ).data?.name ?? 'The family',
+  })
+
+  return c.json(sanitizeCodes(updated, userId, ledOrgs))
 })
 
 export default toyTransactions
