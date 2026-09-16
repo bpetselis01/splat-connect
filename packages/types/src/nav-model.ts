@@ -128,6 +128,10 @@ export function buildNav(caps: Capabilities): NavGroup[] {
         { href: '/dashboard/organisation', label: 'Review queue', icon: 'inbox' },
         { href: '/dashboard/organisation/toys', label: 'Toy inventory', icon: 'shelf' },
         { href: '/dashboard/organisation/orders', label: 'Print orders', icon: 'orders' },
+        // 059. Three screens that had nowhere to read or write until then.
+        { href: '/dashboard/organisation/publish', label: 'Events and stories', icon: 'clipboard' },
+        { href: '/dashboard/organisation/recycling', label: 'Recycling intake', icon: 'box' },
+        { href: '/dashboard/organisation/profile', label: 'Organisation profile', icon: 'shield' },
       ],
     })
   }

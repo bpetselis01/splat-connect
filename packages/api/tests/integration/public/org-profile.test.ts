@@ -105,11 +105,19 @@ describe('GET /api/public/organizations/:id', () => {
     expect(body.toysShared.length).toBeGreaterThanOrEqual(1)
     expect(body.toysDelivered.length).toBeGreaterThanOrEqual(1)
 
-    // Security: this is a dedicated public projection. It must never leak
-    // leadership, agreements, email, or pickup details.
+    /*
+     * Security: this is a dedicated public projection. It must never leak
+     * leadership, agreements, a person's email, or pickup details.
+     *
+     * The email assertion is narrowed rather than dropped. 059 added
+     * `contact_email` — the address an organisation publishes so a family can
+     * reach it, written on the profile editor and public by design — and a bare
+     * `not.toContain('email')` caught that as a leak. What must never appear is
+     * a person's address, so the check now names the key an embed would use.
+     */
     const json = JSON.stringify(body)
     expect(json).not.toContain('org_leaders')
-    expect(json).not.toContain('email')
+    expect(json).not.toContain('"email"')
     expect(json).not.toContain('pickup')
   })
 

@@ -1,19 +1,31 @@
 import Link from 'next/link'
 import { apiClient } from '@/lib/api-client'
-import type { Tutorial, AdminAccountsResponse, Organization, ToyIdea } from '@splat-connect/types'
+import type {
+  Tutorial,
+  AdminAccountsResponse,
+  Organization,
+  ToyIdea,
+  OrganizationRequest,
+} from '@splat-connect/types'
 
 export default async function AdminPage() {
-  const [tutorials, accounts, organizations, spotCheck, ideas] = await Promise.all([
+  const [tutorials, accounts, organizations, spotCheck, ideas, orgRequests] = await Promise.all([
     apiClient.get<Tutorial[]>('/api/admin/tutorials?status=pending'),
     apiClient.get<AdminAccountsResponse>('/api/admin/contributors'),
     apiClient.get<Organization[]>('/api/organizations'),
     apiClient.get<Tutorial[]>('/api/admin/spot-check'),
     apiClient.get<ToyIdea[]>('/api/admin/ideas'),
+    // Degrades to empty rather than taking the dashboard down: an admin who
+    // came here to answer a report does not care that one count is missing.
+    apiClient
+      .get<OrganizationRequest[]>('/api/admin/organization-requests')
+      .catch(() => [] as OrganizationRequest[]),
   ])
 
   const pendingTutorials = tutorials.length
   const totalContributors = accounts.total
   const pendingIdeas = ideas.filter((i) => i.status === 'pending').length
+  const pendingOrgRequests = orgRequests.filter((r) => r.status === 'pending').length
 
   const cards = [
     {
@@ -36,6 +48,13 @@ export default async function AdminPage() {
       href: '/admin/organizations' as const,
       icon: '🏢',
       hint: 'Create organisations, appoint leaders, suspend',
+    },
+    {
+      label: 'Organisation requests',
+      count: pendingOrgRequests,
+      href: '/admin/organization-requests' as const,
+      icon: '🏗️',
+      hint: 'Approve one and the organisation is created with its first leader',
     },
     {
       label: 'Spot-check',

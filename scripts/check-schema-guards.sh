@@ -190,7 +190,49 @@ select * from (values
 
   ('058 print_job_files has RLS enabled',
    (select coalesce(bool_and(relrowsecurity), false) from pg_class
-      where relname = 'print_job_files' and relnamespace = 'public'::regnamespace))
+      where relname = 'print_job_files' and relnamespace = 'public'::regnamespace)),
+
+  -- 059. Credit is minted by the organisation weighing a drop-off, never by
+  -- the contributor. The insert policy and the update policy are SEPARATE for
+  -- that reason: one combined policy would let a contributor write their own
+  -- `credit_grams`, and nothing in the product would look different.
+  ('059 recycling_dropoffs update is gated on leading the organisation',
+   (select count(*) > 0 from pg_policies
+      where tablename = 'recycling_dropoffs'
+        and cmd = 'UPDATE'
+        and coalesce(qual, with_check) like '%is_org_leader%')),
+
+  ('059 recycling_dropoffs insert does NOT admit a leader write',
+   (select count(*) > 0 from pg_policies
+      where tablename = 'recycling_dropoffs'
+        and cmd = 'INSERT'
+        and coalesce(with_check, qual) not like '%is_org_leader%')),
+
+  -- A story cannot be published without consent for everyone named or
+  -- pictured. A check constraint, not a checkbox: the constraint is what holds
+  -- when somebody writes the row by any other route.
+  ('059 org_stories_published_needs_consent constraint is present',
+   (select count(*) > 0 from pg_constraint
+      where conrelid = 'public.org_stories'::regclass
+        and conname = 'org_stories_published_needs_consent')),
+
+  -- 060. Leadership is granted by an admin and never self-started. A requester
+  -- who could update their own row could set it to approved.
+  ('060 organization_requests update is admin-only',
+   (select count(*) > 0 from pg_policies
+      where tablename = 'organization_requests'
+        and cmd = 'UPDATE'
+        and coalesce(qual, with_check) like '%is_admin%')
+   and (select count(*) = 0 from pg_policies
+      where tablename = 'organization_requests'
+        and cmd = 'UPDATE'
+        and coalesce(qual, with_check) like '%requester_id%')),
+
+  ('060 approve_organization_request() checks is_admin() itself',
+   (select count(*) > 0 from pg_proc
+      where pronamespace = 'public'::regnamespace
+        and proname = 'approve_organization_request'
+        and prosrc like '%is_admin()%'))
 ) as t(guard, ok)
 where not ok;
 EOSQL

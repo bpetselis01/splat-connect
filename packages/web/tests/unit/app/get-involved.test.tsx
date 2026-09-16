@@ -46,8 +46,22 @@ describe('audience tracks', () => {
     expect(screen.getByRole('link', { name: /create an account|sign up/i })).toHaveAttribute('href', '/signup')
   })
 
-  it('sends an organisation to contact, because onboarding is manual', () => {
+  /*
+   * Was "sends an organisation to contact, because onboarding is manual". It is
+   * still manual — an admin reviews every request and creates the organisation
+   * — but 060 gave that review a queue, so the page's primary door is the
+   * request rather than a contact form somebody has to triage by hand.
+   */
+  it('sends an organisation to the request an admin reviews', () => {
     render(<OrganisationsPage />)
-    expect(screen.getByRole('link', { name: /get in touch|contact/i })).toHaveAttribute('href', '/contact')
+    expect(screen.getByRole('link', { name: /request an organisation/i })).toHaveAttribute(
+      'href',
+      '/get-involved/organisations/request'
+    )
+    // Still reachable, for somebody who wants to ask before they commit.
+    expect(screen.getByRole('link', { name: /ask a question first/i })).toHaveAttribute(
+      'href',
+      '/contact'
+    )
   })
 })

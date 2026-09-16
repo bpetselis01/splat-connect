@@ -22,9 +22,9 @@ likelier to need a migration. See
 | 7 | Printers | `/dashboard/printers`, `/new` | new build | awaiting review | 058 applied | full suite + Playwright; org print orders render the same screen |
 | 8 | Cost panel | component | restyle | awaiting review | 056 applied | full suite + Playwright; view and edit share one shell |
 | 9 | Tutorials + saved | `/dashboard/tutorials`, `/dashboard/saved/*` | restyle | awaiting review | no | full suite; card type measured off the artboard |
-| 10 | Organisation screens | `/dashboard/organisation/*` | new build | todo | | |
+| 10 | Organisation screens | `/dashboard/organisation/{profile,publish,recycling,orders}` | new build | awaiting review | 059 applied | full suite + Playwright; public org page consumes all of it |
 | 11 | Get involved explainers | `/get-involved/*` | restyle | awaiting review | no | full suite; leads trimmed, step bodies left (safety copy) |
-| 12 | Org onboarding + admin queue | `/dashboard/organisation`, `/admin` | new build | todo | | |
+| 12 | Org onboarding + admin queue | `/get-involved/organisations/request`, `/admin/organization-requests` | new build | awaiting review | 060 applied | full suite + Playwright end to end |
 
 ## Scope, measured
 

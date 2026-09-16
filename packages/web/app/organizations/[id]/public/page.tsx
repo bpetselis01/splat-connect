@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import { ProfileTabs } from '@/components/profile-tabs'
+import { BookDropoffForm } from '@/components/book-dropoff-form'
 import { TutorialCard } from '@/components/tutorial-card'
 import { ToyLibraryCard } from '@/components/toy-library-card'
 import { getSavedIds } from '@/lib/saves'
@@ -56,6 +57,52 @@ export default async function OrgPublicProfilePage({
         </div>
       </div>
 
+      {/* 059's profile fields. Every one of them has an input on the editor at
+          /dashboard/organisation/profile — a public field nobody can edit is a
+          field that goes stale. */}
+      {(org.capabilities ?? []).length > 0 && (
+        <ul className="mt-4 flex list-none flex-wrap gap-2">
+          {(org.capabilities ?? []).map((capability) => (
+            <li key={capability} className="badge bg-sunken text-brand-deep">
+              {capability}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {org.about && (
+        <p className="mt-4 max-w-prose whitespace-pre-line text-sm leading-relaxed text-ink">
+          {org.about}
+        </p>
+      )}
+
+      {(org.suburb || org.rate_note || org.contact_email || org.contact_phone || org.website_url) && (
+        <dl className="mt-4 grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(200px,1fr))]">
+          {org.suburb && (
+            <div>
+              <dt className="text-[13px] uppercase tracking-wide text-muted">Where</dt>
+              <dd className="mt-0.5 font-bold text-ink">
+                {[org.suburb, org.state].filter(Boolean).join(', ')}
+              </dd>
+            </div>
+          )}
+          {org.rate_note && (
+            <div>
+              <dt className="text-[13px] uppercase tracking-wide text-muted">What they quote</dt>
+              <dd className="mt-0.5 font-bold text-ink">{org.rate_note}</dd>
+            </div>
+          )}
+          {(org.contact_email || org.contact_phone || org.website_url) && (
+            <div>
+              <dt className="text-[13px] uppercase tracking-wide text-muted">Reaching them</dt>
+              <dd className="mt-0.5 font-bold text-ink">
+                {[org.contact_email, org.contact_phone, org.website_url].filter(Boolean).join(' · ')}
+              </dd>
+            </div>
+          )}
+        </dl>
+      )}
+
       <div className="mt-6 grid grid-cols-3 gap-4">
         <div data-testid="org-stat-tutorials" className="card-flat px-4 py-5 text-center">
           <p className="text-2xl font-bold text-brand-deep">{tutorialsTotal}</p>
@@ -70,6 +117,57 @@ export default async function OrgPublicProfilePage({
           <p className="mt-1 text-sm font-semibold text-muted">Toys delivered</p>
         </div>
       </div>
+
+      {(org.events ?? []).length > 0 && (
+        <section className="mt-8">
+          <h2 className="mb-3 text-lg font-bold text-ink">What is on</h2>
+          <ul className="flex list-none flex-col gap-2">
+            {(org.events ?? []).map((event) => (
+              <li key={event.id} className="rounded-[var(--radius-panel)] bg-canvas p-4">
+                <p className="font-bold text-ink">{event.title}</p>
+                <p className="text-sm text-muted">
+                  {new Date(event.starts_at).toLocaleString('en-AU')} ·{' '}
+                  {/* An online event's joining link is never public — the API
+                      does not return it, so there is nothing here to leak. */}
+                  {event.format === 'online' ? 'Online' : event.location}
+                  {event.audience && ` · ${event.audience}`}
+                </p>
+                {event.summary && (
+                  <p className="mt-1 text-sm leading-relaxed text-ink">{event.summary}</p>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {(org.stories ?? []).length > 0 && (
+        <section className="mt-8">
+          <h2 className="mb-3 text-lg font-bold text-ink">Stories</h2>
+          <ul className="flex list-none flex-col gap-2">
+            {(org.stories ?? []).map((story) => (
+              <li key={story.id} className="rounded-[var(--radius-panel)] bg-canvas p-4">
+                <p className="font-bold text-ink">{story.title}</p>
+                <p className="mt-1 text-sm leading-relaxed text-ink">{story.summary}</p>
+                {/* Attributed to an organisation and a byline, always. */}
+                <p className="mt-1 text-[13px] text-muted">{story.byline}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {(org.recycling_materials ?? []).length > 0 && (
+        <section className="mt-8">
+          <BookDropoffForm
+            orgId={org.id}
+            orgName={org.name}
+            materials={org.recycling_materials ?? []}
+            note={org.recycling_note ?? null}
+            signedIn={signedIn}
+          />
+        </section>
+      )}
 
       <ProfileTabs
         tabs={[

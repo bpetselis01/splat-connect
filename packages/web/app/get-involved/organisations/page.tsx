@@ -20,7 +20,7 @@ export default function OrganisationsPage() {
       <StepList
         steps={[
           {
-            title: 'Get in touch',
+            title: 'Ask for your organisation',
             body: 'Organisations are set up by the SPLAT team rather than self-registered, so that a name on a guide means something. Tell us who you are and what you would like to do.',
           },
           {
@@ -43,8 +43,13 @@ export default function OrganisationsPage() {
       />
 
       <div className="mt-10 flex flex-wrap gap-3">
-        <Link href="/contact" className="btn btn-primary">
-          Get in touch
+        {/* The door the page has described since it shipped, which until 060
+            went to a contact form. It now goes to the request an admin reviews. */}
+        <Link href="/get-involved/organisations/request" className="btn btn-primary">
+          Request an organisation
+        </Link>
+        <Link href="/contact" className="btn btn-soft">
+          Ask a question first
         </Link>
         <Link href="/organizations" className="btn btn-soft">
           See who is already involved

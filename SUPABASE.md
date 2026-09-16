@@ -97,6 +97,65 @@ further entries here.)_
 
 ## Applied
 
+### [F10] `059_organisation_screens.sql` — applied 2026-09-17
+
+The profile is columns; events, stories and drop-offs are tables. Each of the
+three had nowhere to read or write, which is why three of feature 10's six
+screens did not exist.
+
+The column grant moved with the columns. 033 revoked the table-level SELECT on
+`organizations` and granted back only what is public, because "Anyone can read
+organizations" is `using (true)` and RLS is row-level: once that policy admits a
+row, every granted column on it is readable by anyone. The new fields are public
+by design, so they are granted explicitly rather than inheriting anything — and
+`ORG_COLUMNS` in the API had to move in the same commit, which is what that
+constant's comment warns about.
+
+Two rules the database holds rather than the UI:
+
+- **A story cannot be published without consent** for everyone named or
+  pictured. A check constraint, not a checkbox — the button is the courtesy.
+- **Credit is minted by the organisation, never by the contributor.** The insert
+  policy and the update policy are separate for that reason: one combined policy
+  would let a contributor write their own `credit_grams` and nothing in the
+  product would look different.
+
+Credit is grams, integer, for 055's reason about money. The yield between what
+is weighed and what is credited is the leader's to apply rather than a constant
+— about three quarters is typical, and "typical" is not a number to put in a
+ledger.
+
+`check-schema-guards.sh` gained three assertions, including the negative one:
+that the INSERT policy does *not* mention `is_org_leader`. A guard that only
+checked the update policy would pass a schema where the two had been merged.
+
+### [F12] `060_organisation_requests.sql` — applied 2026-09-17
+
+Leadership is granted by an admin and never self-started. Until now there was no
+way for the people who run an organisation to ask — an admin created one from
+`/admin/organizations` and appointed a leader, and nothing let the conversation
+start.
+
+Approving is a function rather than three writes from a route. The organisation,
+its first leader and the request's outcome must not come apart, and the failure
+mode of doing them by hand is an approved request with nothing behind it and a
+person told they lead something that does not exist. It is idempotent on the
+request's status, so a double-click cannot mint two organisations.
+
+The update policy is admin-only and deliberately does not have a
+`requester_id = auth.uid()` arm: a requester who could update their own row
+could set it to approved, and the trust model is the one thing on this table
+worth protecting. `check-schema-guards.sh` asserts both halves of that — the
+admin arm present, and no requester arm at all.
+
+One thing found while wiring it up, and worth recording because it failed
+silently: the queue's PostgREST embed of `profiles(name, email)` returned
+"permission denied for table profiles" and the whole query failed, so the queue
+rendered empty with no error anywhere. 045 revoked the column grants on
+`profiles`. The names are read with the admin client instead, which is the
+narrowest reason to widen that: an admin verifying somebody works where they say
+they do has to see who is asking.
+
 ### [F6/F7] `058_printers_and_print_jobs.sql` — applied 2026-09-17
 
 Two halves, and only one of them new.

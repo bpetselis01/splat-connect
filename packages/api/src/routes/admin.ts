@@ -537,4 +537,104 @@ admin.delete('/ideas/:id/participants/:profileId/removal', async (c) => {
   return c.body(null, 204)
 })
 
+/* -------------------------------------------------- organisation requests --
+ *
+ * Feature 12. Leadership is granted by an admin and never self-started — the
+ * artboard calls that the trust model — so this is the queue where somebody
+ * asks and an admin decides.
+ *
+ * Approving runs 060's function rather than three writes from here. An approval
+ * that only flips a status leaves an admin to remember to create the
+ * organisation and appoint the requester, and the failure mode is an approved
+ * request with nothing behind it and a person told they lead something that
+ * does not exist.
+ */
+
+const ORG_REQUEST_COLUMNS =
+  'id, requester_id, org_name, what_they_do, verification, status, review_note, reviewed_by, reviewed_at, organization_id, created_at, updated_at'
+
+admin.get('/organization-requests', async (c) => {
+  const supabase = createUserClient(c.get('token'))
+  const { data, error } = await supabase
+    .from('organization_requests')
+    .select(ORG_REQUEST_COLUMNS)
+    // Oldest first: an admin arrives asking what has waited longest, not what
+    // arrived most recently. Same ordering rule as the review queue.
+    .order('created_at', { ascending: true })
+  if (error) return c.json({ error: error.message }, 500)
+
+  /*
+   * The requester's name and email, read with the ADMIN client.
+   *
+   * Not a PostgREST embed: 045 revoked the column grants on `profiles` and
+   * granted back only what a signed-in account may read, which does not include
+   * `email` — the embed failed the whole query with "permission denied for
+   * table profiles", and the queue rendered empty with no error anywhere.
+   *
+   * An admin verifying that somebody works where they say they do needs to see
+   * who is asking, which is the narrowest possible reason to widen this.
+   */
+  const rows = (data ?? []) as Array<Record<string, unknown> & { requester_id: string }>
+  const ids = [...new Set(rows.map((r) => r.requester_id))]
+  const { data: people } = ids.length
+    ? await createAdminClient().from('profiles').select('id, name, email').in('id', ids)
+    : { data: [] }
+  const byId = new Map(
+    ((people ?? []) as Array<{ id: string; name: string; email: string }>).map((p) => [p.id, p])
+  )
+
+  return c.json(
+    rows.map((r) => ({
+      ...r,
+      requester: byId.get(r.requester_id) ?? null,
+    }))
+  )
+})
+
+admin.post('/organization-requests/:id/approve', async (c) => {
+  const supabase = createUserClient(c.get('token'))
+  const body = (await c.req.json().catch(() => ({}))) as { note?: unknown }
+  const note = typeof body.note === 'string' && body.note.trim() ? body.note.trim() : null
+
+  const { data, error } = await supabase.rpc('approve_organization_request', {
+    p_request_id: c.req.param('id'),
+    p_note: note,
+  })
+  if (error) return c.json({ error: error.message }, 500)
+
+  const result = data as { outcome: string; organization_id?: string; status?: string }
+  if (result.outcome === 'forbidden') return c.json({ error: 'Admins only' }, 403)
+  if (result.outcome === 'missing') return c.json({ error: 'Not found' }, 404)
+  // Idempotent rather than an error: a double-click must not mint two
+  // organisations, and the first outcome is more useful than a 409.
+  return c.json(result)
+})
+
+admin.post('/organization-requests/:id/decline', async (c) => {
+  const supabase = createUserClient(c.get('token'))
+  const body = (await c.req.json().catch(() => ({}))) as { note?: unknown }
+  const note = typeof body.note === 'string' ? body.note.trim() : ''
+  // A refusal with no reason is the thing that stops somebody asking again when
+  // they should — 037 says the same about a rejected idea.
+  if (!note) return c.json({ error: 'Say why, so they can act on it.' }, 400)
+  if (note.length > 1000) return c.json({ error: 'The note is longer than 1000 characters.' }, 400)
+
+  const { data, error } = await supabase
+    .from('organization_requests')
+    .update({
+      status: 'declined',
+      review_note: note,
+      reviewed_by: c.get('userId'),
+      reviewed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', c.req.param('id'))
+    .eq('status', 'pending')
+    .select(ORG_REQUEST_COLUMNS)
+    .maybeSingle()
+  if (error) return c.json({ error: error.message }, 500)
+  if (!data) return c.json({ error: 'That request is not open.' }, 404)
+  return c.json(data)
+})
+
 export default admin

@@ -209,6 +209,14 @@ export const PUBLIC_NAV: NavSection[] = [
         blurb: 'Back contributors, hold toys for local families, host a build day.',
       },
       {
+        href: '/get-involved/organisations/request',
+        label: 'Request an organisation',
+        // Live since 060. Leadership is granted by an admin and never
+        // self-started; this is where the conversation starts.
+        state: 'live',
+        blurb: 'Ask for your organisation to be set up, and an admin verifies it.',
+      },
+      {
         href: '/get-involved/submit-an-idea',
         label: 'Submit an idea',
         state: 'live',

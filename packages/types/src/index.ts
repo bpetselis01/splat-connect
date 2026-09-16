@@ -705,6 +705,130 @@ export interface Organization {
   created_by: string | null
   created_at: string
   updated_at: string
+  /** 059. Everything below is what the public profile draws and the profile
+   *  editor writes. All of it is public by design — the street address stays on
+   *  the pickup columns, which 033 deliberately keeps off the public grant. */
+  about?: string | null
+  suburb?: string | null
+  state?: string | null
+  capabilities?: string[]
+  contact_email?: string | null
+  contact_phone?: string | null
+  website_url?: string | null
+  /** The rates families are quoted, in the organisation's own words. Free text
+   *  because a structured price list would be a claim SPLAT cannot stand behind. */
+  rate_note?: string | null
+  recycling_materials?: string[]
+  recycling_note?: string | null
+}
+
+/** What an organisation does, shown as chips. Presentational, so it lives here
+ *  rather than in a check constraint (037's rule about `contact_prefs`). */
+export const ORG_CAPABILITIES = [
+  'Backs guides',
+  'Holds toys',
+  'Builds adaptations',
+  'Has a printer',
+  'Takes recycling',
+  'Runs build days',
+] as const
+export type OrgCapability = (typeof ORG_CAPABILITIES)[number]
+
+export type OrgPublishStatus = 'draft' | 'published'
+
+/** 059. An event an organisation has published. No review, so the leader terms
+ *  carry the risk — which is why the editor restates them at the foot. */
+export interface OrgEvent {
+  id: string
+  org_id: string
+  title: string
+  summary: string | null
+  starts_at: string
+  ends_at: string | null
+  format: 'in_person' | 'online'
+  /** Set on an in-person event; null on an online one. The constraint is 059's. */
+  location: string | null
+  /** Set on an online event; never public until somebody has RSVPed. */
+  online_url: string | null
+  audience: string | null
+  status: OrgPublishStatus
+  created_by: string
+  created_at: string
+  updated_at: string
+}
+
+export const STORY_KINDS = ['delivery', 'build_day', 'partnership', 'other'] as const
+export type StoryKind = (typeof STORY_KINDS)[number]
+
+/** 059. A story an organisation has published. */
+export interface OrgStory {
+  id: string
+  org_id: string
+  kind: StoryKind
+  title: string
+  summary: string
+  body: string
+  byline: string
+  /** Publishing is refused without it — a check constraint, not a checkbox. */
+  consent_confirmed: boolean
+  status: OrgPublishStatus
+  created_by: string
+  created_at: string
+  updated_at: string
+}
+
+export type DropoffStatus = 'booked' | 'received' | 'declined' | 'cancelled'
+
+/**
+ * 059. Waste plastic booked in to an organisation.
+ *
+ * Grams throughout, integer, for 055's reason about money: a rounding error in
+ * a number two parties agreed between them is an argument rather than a display
+ * bug. `estimated_grams` is the contributor's word; `weighed_grams` is the
+ * organisation's, and `credit_grams` is what that is worth as filament — minted
+ * at the door and never by the contributor.
+ */
+export interface RecyclingDropoff {
+  id: string
+  org_id: string
+  contributor_id: string
+  material: string
+  estimated_grams: number
+  condition_declared: boolean
+  note: string | null
+  status: DropoffStatus
+  weighed_grams: number | null
+  credit_grams: number | null
+  decided_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type OrgRequestStatus = 'pending' | 'approved' | 'declined'
+
+/**
+ * 060. Somebody asking for an organisation to exist.
+ *
+ * Leadership is granted by an admin and never self-started — that is the trust
+ * model, and this row is how the conversation starts. Approving it creates the
+ * organisation and appoints the requester, in one transaction, because an
+ * approval that only flips a status leaves an admin two more things to remember.
+ */
+export interface OrganizationRequest {
+  id: string
+  requester_id: string
+  org_name: string
+  what_they_do: string
+  /** How an admin can check the requester actually works there. */
+  verification: string
+  status: OrgRequestStatus
+  review_note: string | null
+  reviewed_by: string | null
+  reviewed_at: string | null
+  /** What approving it created. Null while pending or declined. */
+  organization_id: string | null
+  created_at: string
+  updated_at: string
 }
 
 export interface OrgLeader {
@@ -1061,6 +1185,31 @@ export interface OrgPublicProfile {
   tutorialsApproved: Tutorial[]
   toysShared: Toy[]
   toysDelivered: Toy[]
+  /** 059's profile fields, all public by design. The street address is not
+   *  among them — it lives on the pickup columns, which 033 keeps off the
+   *  public grant. */
+  description?: string | null
+  about?: string | null
+  suburb?: string | null
+  state?: string | null
+  capabilities?: string[]
+  contact_email?: string | null
+  contact_phone?: string | null
+  website_url?: string | null
+  rate_note?: string | null
+  recycling_materials?: string[]
+  recycling_note?: string | null
+  /** Published only. An online event's joining link is deliberately absent —
+   *  "online links are never public". */
+  events?: Array<
+    Pick<
+      OrgEvent,
+      'id' | 'org_id' | 'title' | 'summary' | 'starts_at' | 'ends_at' | 'format' | 'location' | 'audience' | 'status'
+    >
+  >
+  stories?: Array<
+    Pick<OrgStory, 'id' | 'org_id' | 'kind' | 'title' | 'summary' | 'byline' | 'status' | 'created_at'>
+  >
 }
 
 /**

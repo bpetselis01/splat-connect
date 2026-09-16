@@ -520,7 +520,11 @@ publicRoutes.get('/organizations/:id', async (c) => {
 
   const { data: org } = await sb
     .from('organizations')
-    .select('id, name, status')
+    // 059's profile fields. Public by design and granted in that migration —
+    // the street address is NOT among them and stays on the pickup columns.
+    .select(
+      'id, name, status, description, about, suburb, state, capabilities, contact_email, contact_phone, website_url, rate_note, recycling_materials, recycling_note'
+    )
     .eq('id', id)
     .maybeSingle()
   if (!org) return c.json({ error: 'Not found' }, 404)
@@ -549,6 +553,31 @@ publicRoutes.get('/organizations/:id', async (c) => {
       .eq('owner_org_id', id)
       .eq('status', 'completed'),
   ])
+
+  /*
+   * What the organisation has published (059). The anon client reads these, so
+   * the "published rows are public" policy is what admits them and a draft is
+   * never returned here — the leader's own view of their drafts comes through
+   * the authenticated route instead.
+   *
+   * An online event's joining link is stripped: "online links are never
+   * public" is the artboard's rule, and returning it here would publish it to
+   * anyone who opens the profile.
+   */
+  const [{ data: events }, { data: stories }] = await Promise.all([
+    sb
+      .from('org_events')
+      .select('id, org_id, title, summary, starts_at, ends_at, format, location, audience, status')
+      .eq('org_id', id)
+      .eq('status', 'published')
+      .order('starts_at', { ascending: false }),
+    sb
+      .from('org_stories')
+      .select('id, org_id, kind, title, summary, byline, status, created_at')
+      .eq('org_id', id)
+      .eq('status', 'published')
+      .order('created_at', { ascending: false }),
+  ])
   if (backedError || approvedError || toysError || deliveredError) {
     return c.json({ error: 'Failed to load organisation profile' }, 500)
   }
@@ -570,9 +599,12 @@ publicRoutes.get('/organizations/:id', async (c) => {
   }
 
   const result: OrgPublicProfile = {
+    ...org,
     id: org.id,
     name: org.name,
     status: org.status,
+    events: (events ?? []) as OrgPublicProfile['events'],
+    stories: (stories ?? []) as OrgPublicProfile['stories'],
     tutorialsBacked: tutorialsBacked as OrgPublicProfile['tutorialsBacked'],
     tutorialsApproved: (tutorialsApproved ?? []) as OrgPublicProfile['tutorialsApproved'],
     toysShared: (toysShared ?? []) as OrgPublicProfile['toysShared'],
