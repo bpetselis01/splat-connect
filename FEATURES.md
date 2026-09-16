@@ -12,8 +12,8 @@ likelier to need a migration. See
 
 | # | Feature | Screens | Kind | Status | Needs DB | Verified by |
 |---|---------|---------|------|--------|----------|-------------|
-| 0 | Green the branch + ledgers | none | chore | in progress | no | |
-| 1 | Design tokens + shared primitives | global (web `globals.css` + mobile `theme.ts`) | restyle | todo | no | |
+| 0 | Green the branch + ledgers | none | chore | done | no | local suite; CI blocked on the `workflow` scope |
+| 1 | Design tokens + shared primitives | global (web `globals.css` + mobile `theme.ts`) | restyle | awaiting review | no | 1006 web + 533 mobile unit; /design-system vs artboard |
 | 2 | `/dashboard` hub | `/dashboard` | restyle | todo | | |
 | 3 | Exchanges list | `/dashboard/exchanges` | restyle | todo | | |
 | 4 | Exchange detail (canonical layout) | `/dashboard/exchanges/[id]` | restyle | todo | | |
@@ -25,6 +25,25 @@ likelier to need a migration. See
 | 10 | Organisation screens | `/dashboard/organisation/*` | new build | todo | | |
 | 11 | Get involved explainers | `/get-involved/*` | restyle | todo | no | |
 | 12 | Org onboarding + admin queue | `/dashboard/organisation`, `/admin` | new build | todo | | |
+
+## Scope, measured
+
+The brief's 12 features are a starting order, not the scope. The prototype's own
+screen picker maps **119 screens to routes**; matched against the repo with
+dynamic segments accounted for, **71 have a route and 48 do not**. The full list
+is `docs/superpowers/specs/2026-09-16-soft-pop-routes.json`, and the breakdown is
+in §3 of the extraction spec beside it.
+
+Three things that changes:
+
+- **`/learn` goes from 6 lessons to 19.** Thirteen new lessons — three named
+  builds, four checkpoints, wiring a connector, handover. That is a content
+  project, not a restyle, and `uploads/` holds the workshop printout and the Ms
+  Rachel maker guide they are presumably drawn from.
+- **Some "missing" routes are renames.** `/toys` is today's `/toy-library`,
+  `/learn/ask` is `/learn/ask-an-expert`. Those need redirects, not screens.
+- **`/design-system` and `/design-system/states` are real routes in the
+  prototype.** The first now exists.
 
 Mobile screens are not in this table. F1 converts `packages/mobile/lib/theme.ts`
 alongside the web tokens because `tone.test.ts` contrast-checks the same badge
