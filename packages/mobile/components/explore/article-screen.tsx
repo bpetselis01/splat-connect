@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
   readState: {
     fontFamily: theme.fonts.bold,
     fontSize: theme.type.label,
-    color: theme.colors.mintDeep,
+    color: theme.colors.ink,
     textAlign: 'center',
     marginTop: theme.spacing(2),
   },

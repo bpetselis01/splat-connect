@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
     left: theme.spacing(3),
     top: theme.spacing(3),
     backgroundColor: theme.colors.mintSoft,
-    borderWidth: theme.border.thin,
+    borderWidth: theme.border.hairline,
     borderColor: theme.colors.ink,
     borderRadius: theme.radii.pill,
     paddingHorizontal: theme.spacing(2.5),
@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
   flagText: {
     fontFamily: theme.fonts.black,
     fontSize: 11,
-    color: theme.colors.mintDeep,
+    color: theme.colors.ink,
     textTransform: 'uppercase',
   },
   dots: {
@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
     width: DOT,
     height: DOT,
     borderRadius: DOT / 2,
-    borderWidth: theme.border.thin,
+    borderWidth: theme.border.hairline,
     borderColor: theme.colors.ink,
   },
 })

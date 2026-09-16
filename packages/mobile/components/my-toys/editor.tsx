@@ -628,7 +628,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: theme.spacing(4),
   },
-  footer: { borderTopWidth: theme.border.thin, borderTopColor: theme.colors.border, paddingTop: theme.spacing(3) },
+  footer: { borderTopWidth: theme.border.hairline, borderTopColor: theme.colors.border, paddingTop: theme.spacing(3) },
 
   detailsForm: { paddingBottom: theme.spacing(6) },
 
@@ -652,8 +652,8 @@ const styles = StyleSheet.create({
   photoImage: {
     width: '100%',
     height: 110,
-    borderRadius: theme.radii.md,
-    borderWidth: theme.border.thin,
+    borderRadius: theme.radii.field,
+    borderWidth: theme.border.hairline,
     borderColor: theme.colors.ink,
     backgroundColor: theme.colors.surfaceSunken,
   },
@@ -663,10 +663,10 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     backgroundColor: theme.colors.apricot,
-    borderTopWidth: theme.border.thin,
+    borderTopWidth: theme.border.hairline,
     borderTopColor: theme.colors.ink,
-    borderBottomLeftRadius: theme.radii.md,
-    borderBottomRightRadius: theme.radii.md,
+    borderBottomLeftRadius: theme.radii.field,
+    borderBottomRightRadius: theme.radii.field,
     paddingVertical: theme.spacing(0.5),
   },
   coverFlagText: {
@@ -685,8 +685,8 @@ const styles = StyleSheet.create({
     height: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: theme.radii.sm,
-    borderWidth: theme.border.thin,
+    borderRadius: theme.radii.field,
+    borderWidth: theme.border.hairline,
     borderColor: theme.colors.ink,
     backgroundColor: theme.colors.surface,
   },
@@ -707,7 +707,7 @@ const styles = StyleSheet.create({
   photoPlaceholder: {
     width: '100%',
     height: 180,
-    borderRadius: theme.radii.lg,
+    borderRadius: theme.radii.card,
     backgroundColor: theme.colors.accentLight,
     alignItems: 'center',
     justifyContent: 'center',
@@ -722,7 +722,7 @@ const styles = StyleSheet.create({
   gapList: {
     fontFamily: theme.fonts.regular,
     fontSize: theme.type.label,
-    color: theme.colors.apricotDeep,
+    color: theme.colors.ink,
     marginBottom: theme.spacing(3),
   },
   publishedRow: {
@@ -732,14 +732,14 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing(2),
     paddingHorizontal: theme.spacing(4),
   },
-  publishedText: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.mintDeep },
+  publishedText: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.ink },
   offersRow: {
-    borderWidth: theme.border.thin,
+    borderWidth: theme.border.hairline,
     borderColor: theme.colors.ink,
-    borderRadius: theme.radii.sm,
+    borderRadius: theme.radii.field,
     backgroundColor: theme.colors.honeySoft,
     padding: theme.spacing(3),
     marginBottom: theme.spacing(4),
   },
-  offersText: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.honeyDeep },
+  offersText: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.ink },
 })

@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
     minHeight: 40,
-    borderWidth: theme.border.thin,
+    borderWidth: theme.border.hairline,
     borderColor: theme.colors.ink,
     borderRadius: theme.radii.pill,
     paddingHorizontal: theme.spacing(3),

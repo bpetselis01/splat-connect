@@ -171,7 +171,7 @@ export function FilesSection() {
                     <Ionicons
                       name="alert-circle-outline"
                       size={28}
-                      color={theme.colors.apricotDeep}
+                      color={theme.colors.ink}
                     />
                     <Text style={styles.photoBroken}>Saved, but it can&apos;t be shown here.</Text>
                   </View>
@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
   photoBroken: {
     fontFamily: theme.fonts.regular,
     fontSize: theme.type.caption,
-    color: theme.colors.apricotDeep,
+    color: theme.colors.ink,
     textAlign: 'center',
     lineHeight: 18,
     marginTop: theme.spacing(2),
@@ -312,9 +312,9 @@ const styles = StyleSheet.create({
   photoImage: {
     width: '100%',
     height: 110,
-    borderWidth: theme.border.thin,
+    borderWidth: theme.border.hairline,
     borderColor: theme.colors.ink,
-    borderRadius: theme.radii.md,
+    borderRadius: theme.radii.field,
     backgroundColor: theme.colors.surfaceSunken,
   },
   photoPlaceholder: {
@@ -323,9 +323,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: theme.colors.accentLight,
-    borderWidth: theme.border.thin,
+    borderWidth: theme.border.hairline,
     borderColor: theme.colors.ink,
-    borderRadius: theme.radii.md,
+    borderRadius: theme.radii.field,
     marginBottom: theme.spacing(3),
   },
   coverFlag: {
@@ -334,10 +334,10 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     backgroundColor: theme.colors.apricot,
-    borderTopWidth: theme.border.thin,
+    borderTopWidth: theme.border.hairline,
     borderTopColor: theme.colors.ink,
-    borderBottomLeftRadius: theme.radii.md,
-    borderBottomRightRadius: theme.radii.md,
+    borderBottomLeftRadius: theme.radii.field,
+    borderBottomRightRadius: theme.radii.field,
     paddingVertical: theme.spacing(0.5),
   },
   coverFlagText: {
@@ -356,8 +356,8 @@ const styles = StyleSheet.create({
     height: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: theme.radii.sm,
-    borderWidth: theme.border.thin,
+    borderRadius: theme.radii.field,
+    borderWidth: theme.border.hairline,
     borderColor: theme.colors.ink,
     backgroundColor: theme.colors.surface,
   },

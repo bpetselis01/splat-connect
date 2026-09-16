@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
   photo: {
     width: '100%',
     height: 180,
-    borderRadius: theme.radii.md,
+    borderRadius: theme.radii.field,
     backgroundColor: theme.colors.surfaceSunken,
     marginBottom: theme.spacing(3),
   },

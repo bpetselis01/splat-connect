@@ -479,7 +479,7 @@ const styles = StyleSheet.create({
   },
   swapLine: { flex: 1, fontFamily: theme.fonts.black, fontSize: theme.type.heading, color: theme.colors.text },
   headerMeta: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted },
-  waiting: { fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.apricotDeep },
+  waiting: { fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.ink },
   block: { gap: theme.spacing(1), marginBottom: theme.spacing(3), padding: theme.spacing(3) },
   blockTitle: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.text },
   blockBody: {
@@ -492,7 +492,7 @@ const styles = StyleSheet.create({
   codeDigits: { fontFamily: theme.fonts.numeral, fontSize: theme.type.title, color: theme.colors.primaryDeep },
   log: { gap: theme.spacing(2) },
   footer: {
-    borderTopWidth: theme.border.thin,
+    borderTopWidth: theme.border.hairline,
     borderTopColor: theme.colors.border,
     paddingTop: theme.spacing(3),
   },

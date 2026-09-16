@@ -23,7 +23,7 @@ export function Badge({ status, label }: { status: string; label?: string }) {
 
 const styles = StyleSheet.create({
   badge: {
-    borderWidth: theme.border.thin, borderColor: theme.colors.ink, borderRadius: 4,
+    borderWidth: theme.border.hairline, borderColor: theme.colors.ink, borderRadius: 4,
     paddingHorizontal: 5, paddingVertical: 1, alignSelf: 'flex-start',
   },
   text: { fontFamily: theme.fonts.bold, fontSize: 9, letterSpacing: 0.6 },

@@ -122,8 +122,8 @@ const styles = StyleSheet.create({
   tileIcon: {
     width: 44,
     height: 44,
-    borderRadius: theme.radii.md,
-    borderWidth: theme.border.thin,
+    borderRadius: theme.radii.field,
+    borderWidth: theme.border.hairline,
     borderColor: theme.colors.ink,
     backgroundColor: theme.colors.accentLight,
     alignItems: 'center',

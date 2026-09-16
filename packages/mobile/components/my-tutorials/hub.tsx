@@ -174,7 +174,7 @@ export function TutorialHub({ id, justCreated }: { id: string; justCreated?: boo
             onPress={() => setNoteDismissed(true)}
             hitSlop={8}
           >
-            <Ionicons name="close" size={18} color={theme.colors.mintDeep} />
+            <Ionicons name="close" size={18} color={theme.colors.ink} />
           </Pressable>
         </View>
       ) : null}
@@ -202,7 +202,7 @@ export function TutorialHub({ id, justCreated }: { id: string; justCreated?: boo
                 <Ionicons
                   name={done ? 'checkmark' : 'alert'}
                   size={14}
-                  color={done ? theme.colors.ink : theme.colors.apricotDeep}
+                  color={done ? theme.colors.ink : theme.colors.ink}
                 />
               </View>
               <View style={styles.rowText}>
@@ -280,23 +280,23 @@ const styles = StyleSheet.create({
     height: 34,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: theme.border.thin,
+    borderWidth: theme.border.hairline,
     borderColor: theme.colors.ink,
-    borderRadius: theme.radii.sm,
+    borderRadius: theme.radii.field,
     backgroundColor: theme.colors.surface,
   },
   menu: {
-    borderWidth: theme.border.thin,
+    borderWidth: theme.border.hairline,
     borderColor: theme.colors.ink,
-    borderRadius: theme.radii.md,
+    borderRadius: theme.radii.field,
     backgroundColor: theme.colors.surface,
     marginBottom: theme.spacing(3),
     overflow: 'hidden',
-    ...theme.shadow(4),
+    ...theme.shadow(2),
   },
   menuItem: {
     padding: theme.spacing(3),
-    borderBottomWidth: theme.border.thin,
+    borderBottomWidth: theme.border.hairline,
     borderBottomColor: theme.colors.ink,
   },
   menuItemLast: { borderBottomWidth: 0 },
@@ -307,12 +307,12 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: theme.spacing(2),
     backgroundColor: theme.colors.mintSoft,
-    borderWidth: theme.border.thin,
+    borderWidth: theme.border.hairline,
     borderColor: theme.colors.ink,
-    borderRadius: theme.radii.md,
+    borderRadius: theme.radii.field,
     padding: theme.spacing(3),
     marginBottom: theme.spacing(3),
-    ...theme.shadow(3),
+    ...theme.shadow(1),
   },
   noteText: { flex: 1 },
   noteTitle: {
@@ -323,7 +323,7 @@ const styles = StyleSheet.create({
   noteBody: {
     fontFamily: theme.fonts.regular,
     fontSize: theme.type.caption,
-    color: theme.colors.mintDeep,
+    color: theme.colors.ink,
     lineHeight: 18,
   },
   statusRow: {
@@ -343,11 +343,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: theme.spacing(3),
     backgroundColor: theme.colors.surface,
-    borderWidth: theme.border.thin,
+    borderWidth: theme.border.hairline,
     borderColor: theme.colors.ink,
-    borderRadius: theme.radii.md,
+    borderRadius: theme.radii.field,
     padding: theme.spacing(3),
-    ...theme.shadow(3),
+    ...theme.shadow(1),
   },
   rowDone: { backgroundColor: theme.colors.mintSoft },
   mark: {
@@ -355,9 +355,9 @@ const styles = StyleSheet.create({
     height: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: theme.border.thin,
+    borderWidth: theme.border.hairline,
     borderColor: theme.colors.ink,
-    borderRadius: theme.radii.sm,
+    borderRadius: theme.radii.field,
   },
   markDone: { backgroundColor: theme.colors.mint },
   markTodo: { backgroundColor: theme.colors.apricotSoft },
