@@ -1,125 +1,114 @@
 @import "tailwindcss";
 
 /*
- * The web palette is a direct port of packages/mobile/lib/theme.ts, so a parent
- * who uses the app and then opens the site lands in the same product. Every hue
- * still derives from the SPLAT light blue (#1998d5): neutrals are tinted toward
- * its hue rather than left pure gray, and the warm accents sit on its complement.
+ * SOFT POP. The third visual direction this site has had, and it replaces the
+ * second outright rather than sitting beside it. The earlier two are named in
+ * the spec and deliberately not here: a guard in tests/unit/app greps this tree
+ * for the first one's name, and a history note would trip it. Decisions and what changed about the
+ * incoming brief: docs/superpowers/specs/2026-09-16-soft-pop-design.md.
+ * Measured values: .../2026-09-16-soft-pop-extraction.md.
  *
- * Surface model, also from mobile: the canvas is blue-tinted and cards are white.
- * The inverse (white canvas, near-white cards) is what left the old web cards at
- * ~1.02:1 against their background.
+ * Pixel separated planes with a hard zero-blur offset over a blue canvas and a
+ * 3px ink border. Soft Pop separates them with blurred elevation over a warm
+ * off-white, behind a 9%-ink hairline. They are opposites, so nothing here is a
+ * tweak of what was: the canvas stopped carrying hierarchy and the shadow
+ * started.
  *
- * One deliberate deviation from mobile: `brand` (#1998d5) reaches only 3.2:1
- * against white, so anything that carries a white label uses `brand-dark`
- * (#0f6f9c, 5.6:1). `brand` itself is kept for borders, focus rings and tints,
- * where the 3:1 non-text floor applies.
+ * `brand` (#1998d5) still reaches only 3.2:1 on white, so anything carrying a
+ * white label uses `brand-dark` (#1179b0). `brand` itself stays for borders,
+ * focus rings and tints, where the 3:1 non-text floor applies. That constraint
+ * outlived the redesign because it is about the hue, not the system.
  */
 @theme {
-  /* Surfaces */
-  --color-canvas: #eaf4fa;
+  /* ------------------------------------------------------------------ *
+   * SOFT POP — measured off the artboard, not transcribed from a brief.
+   * Values and method: docs/superpowers/specs/2026-09-16-soft-pop-extraction.md
+   *
+   * The token NAMES here are Tailwind v4 utility sources: --color-muted is
+   * what makes `text-muted` exist, and that class is used 246 times. So the
+   * names stay and the values change. What retires is the Pixel-specific
+   * vocabulary — --shadow-pixel-*, --radius-pixel-*, --border-pixel* — whose
+   * ~115 references all live in this file. A name like --shadow-pixel-card
+   * holding a soft blurred shadow would be a lie the next reader pays for.
+   *
+   * The artboard's own names (--surface, --e2, --b600 …) are declared on
+   * `body` further down, so markup lifted from the prototype works verbatim.
+   * ------------------------------------------------------------------ */
+
+  /* Surfaces. The canvas is now a warm off-white rather than Pixel's blue:
+     Soft Pop separates planes with elevation, so the canvas stops doing that
+     job and gets out of the way. */
+  --color-canvas: #faf9f7;
   --color-surface: #ffffff;
-  --color-sunken: #dcedf6;
-  /* The account section's header sits between the white bar and the blue canvas
-     so it separates from both the page below it and the white cards on it.
-     A receding bar still has to be a surface, not a hole. */
-  --color-surface-quiet: #f6fbfd;
+  --color-sunken: #f3f1ed;
+  --color-surface-quiet: #f3f1ed;
 
-  /* Brand ramp */
   --color-brand: #1998d5;
-  --color-brand-dark: #0f6f9c;
-  --color-brand-deep: #0a4f70;
-  --color-brand-soft: #bfe4f5;
-  --color-brand-tint: #d8ecf7;
+  --color-brand-dark: #1179b0;
+  --color-brand-deep: #0f5f8c;
+  --color-brand-soft: #dcf0fb;
+  --color-brand-tint: #dcf0fb;
+  /* Soft Pop has one blue tint where Pixel had two, which would have collapsed
+     the `brand` and `sky` tones onto the same colour. --b50 is the artboard's
+     own lighter step, so sky takes it and the seven tones stay distinguishable. */
+  --color-brand-50: #f0f9ff;
 
-  /* Ink. `muted` clears 4.5:1 on both the canvas and white. */
-  --color-ink: #12283a;
-  /* One step darker than the #4d6a7d this started at. Pixel sets the muted
-     blurb on a tinted card in every section, which the old white-card layout
-     never did, and against Get Involved's #bfe4f5 the original reached only
-     4.26:1. This clears 4.72 there and improves every other surface. The
-     2026-08-26 spec froze the palette; this is an accessibility exception to
-     that freeze, not a change of direction. */
-  --color-muted: #476376;
-  --color-line: #c6e0ed;
+  --color-ink: #1c2530;
+  --color-muted: #5a6675;
+  /* A hairline at 9% ink, not a solid blue rule. Paired with --border-width
+     below so high contrast can thicken every edge at once. */
+  --color-line: rgba(28, 37, 48, 0.09);
 
-  /* Warm complement of the brand blue. Emphasis and delight, never decoration. */
-  --color-apricot: #ff8f5e;
-  --color-apricot-hover: #ff7c43;
-  --color-apricot-soft: #ffe3d5;
-  --color-apricot-deep: #8c3312;
+  /* Accents, and the tint each one sits on. Soft Pop puts --color-ink on every
+     tint rather than a per-hue -deep shade, which is why the -deep values are
+     gone: one text colour, checked once. tone.test.ts asserts that. */
+  --color-apricot: #ff8a5c;
+  --color-apricot-soft: #ffe9de;
+  --color-mint: #12b3a6;
+  --color-mint-soft: #d9f4f1;
+  --color-honey: #ffb020;
+  --color-honey-soft: #fff0cc;
+  --color-violet: #8b6df0;
+  --color-violet-soft: #ece6fc;
 
-  /* Semantic pairs, rebuilt from the palette rather than borrowed from Tailwind. */
-  --color-mint: #2fbf9f;
-  --color-mint-soft: #d4f2ea;
-  --color-mint-deep: #0f5c4d;
-  /* `honey` proper was missing: the ramp had a tint and an ink but no
-     saturated middle, so anything that needed one reached for honey-deep — a
-     brown, which at 15% over the blue canvas comes out khaki. */
-  --color-honey: #f0b429;
-  --color-honey-soft: #fdeecb;
-  --color-honey-deep: #7a4e05;
-  --color-danger: #a3301a;
-  --color-success: #0f5c4d;
+  --color-success: #2f9e6b;
+  --color-success-soft: #dff3ea;
+  /* The board fills "Approve and publish" with --ok #2f9e6b under white text,
+     which measures 3.37:1 — below AA for a 15px label, and this is a product
+     for disabled children's families. So success splits the way brand already
+     does a few lines up: the board value for tints, dots and icons where the
+     3:1 non-text floor applies, and this darker one wherever white text sits on
+     it. #237e51 is #2f9e6b darkened to 5.03:1, hue untouched.
 
+     Deviating from the board for contrast alone has precedent here — the Pixel
+     pass moved --color-muted #4d6a7d -> #476376 for the same reason and nothing
+     else. Board wins on design; it does not win on 3.37:1. */
+  --color-success-deep: #237e51;
+  --color-warning: #e8a317;
+  --color-danger: #e05252;
+  --color-danger-soft: #fde3e3;
+
+  /* Inputs and small controls. 14px is Soft Pop's input radius and happens to
+     be what --radius-field already held, so its eight consumers are untouched.
+     Do not delete it — pixel-tokens.test.ts guards those call sites. */
   --radius-field: 14px;
+  --radius-panel: 18px;
+  --radius-card: 24px;
+  --radius-pill: 999px;
 
-  /* Pixel's one depth cue: a hard offset with zero blur, laid over --color-ink
-     (or a tone's own -deep shade). Replaces both tilt+lift and the old
-     vertical-only button shadow.
+  /* One border width, tokenised so body[data-mode="hc"] can double it. */
+  --border-width: 1px;
 
-     The sizes are a depth ladder read straight off the board, not arbitrary
-     choices: the further up the page hierarchy a thing sits, the further it
-     stands off the canvas. -xs is the chip register, -md the controls, -card
-     the ordinary card, -lg the three launcher pillars. -sm is only ever a
-     pressed state, which is why nothing rests at that depth. */
-  --shadow-pixel-sm: 2px 2px 0;
-  --shadow-pixel-xs: 3px 3px 0;
-  --shadow-pixel-md: 4px 4px 0;
-  --shadow-pixel-card: 5px 5px 0;
-  --shadow-pixel-lg: 6px 6px 0;
-
-  /* The second shadow ink, and what actually carries the hierarchy.
-     The offsets above are a depth ladder, but the rungs sit a pixel apart and
-     a pixel of offset is invisible at a glance — so while everything was drawn
-     in solid ink, a card, a control and a stat strip all read as one plane.
-     Weight is what the eye sorts by.
-
-     Three ranks, and the question that sorts them is about the object rather
-     than how it looks: do you act on it, browse it, or only read it?
-       solid --color-ink   act on this   buttons, pillars, chips, floating chrome
-       --shadow-ink-quiet  browse this   every repeated card you scan through
-       no shadow           read this     a box that holds a form or a summary
-
-     The value is not new. .btn-quiet has drawn its shadow at exactly this
-     since the foundation, and its own note says why — it keeps the pair the
-     same physical height while letting only one of them read as the thing to
-     press. It was simply never let out of the button file. */
-  --shadow-ink-quiet: rgb(18 40 58 / 0.35);
-
-  /* Three weights, because the board draws three. 3px is the structural line —
-     what a card, a control or the nav shelf is built from. 2px is the chip
-     register: stat chips, avatars, step badges, art slots. 1px is the SOON
-     badge alone, which is small enough that 2px closes up its interior. */
-  --border-pixel: 3px;
-  --border-pixel-thin: 2px;
-  --border-pixel-hair: 1px;
-  /* Six radii, because the board draws six — this is not a scale invented for
-     tidiness. Cards and empty states sit at 10px; buttons, avatars and step
-     badges at 8px; art slots and inputs at 6px; the SOON badge at 4px; the
-     smallest ticks at 2px. And filter chips stay at 20px: they are the one
-     place the pill survives the sweep away from 9999px, because the board
-     draws them that way. */
-  --radius-pixel: 10px;
-  --radius-pixel-sm: 8px;
-  --radius-pixel-slot: 6px;
-  --radius-pixel-chip: 20px;
-  --radius-pixel-xs: 4px;
-  --radius-pixel-hair: 2px;
-
-  /* Tinted rather than near-black: a neutral shadow over a blue canvas reads as dirt. */
-  --shadow-rest: 0 3px 10px rgb(10 53 80 / 0.07);
-  --shadow-lift: 0 10px 24px rgb(10 53 80 / 0.14);
+  /* Four elevations and two effects. This is the whole depth system — there is
+     no second shadow ink and no offset ladder. In high contrast every one of
+     these becomes `none` and borders carry the hierarchy instead, so nothing
+     may rely on a shadow to do a border's job. */
+  --shadow-e1: 0 1px 2px rgba(28, 37, 48, 0.06);
+  --shadow-e2: 0 4px 12px rgba(28, 37, 48, 0.08);
+  --shadow-e3: 0 12px 28px rgba(28, 37, 48, 0.10);
+  --shadow-e4: 0 24px 48px rgba(28, 37, 48, 0.14);
+  --shadow-glow: 0 8px 20px rgba(25, 152, 213, 0.28);
+  --shadow-hi: inset 0 1px 0 rgba(255, 255, 255, 0.7);
 
   --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
   /* Overshoots and settles. The site is about switches; its controls should
@@ -136,15 +125,136 @@
       0.986, 0.998, 1.005, 1.009, 1.011, 1.011, 1.01, 1.009, 1.008, 1.006, 1.005, 1.004, 1.003, 1);
 
   --font-sans: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
-  /* Micro-labels only — see the note on IBM_Plex_Mono in app/layout.tsx. */
-  --font-mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
-  --font-display: var(--font-jersey), var(--font-sans);
+  /* Numerics, with tabular-nums at the call site. Replaces IBM Plex Mono. */
+  --font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* Every heading. Soft Pop has a real display face, so unlike Jersey 10 this
+     one is not numerals-only and not opt-in per page. */
+  --font-display: var(--font-baloo), var(--font-sans);
 }
-
 @layer base {
+  /* The artboard's own token names, aliased onto the @theme values above.
+     Prototype markup is written against these — var(--surface), var(--e2),
+     var(--b600) appear about nine thousand times across the two .dc.html files
+     — so declaring them here means a screen can be lifted from the prototype
+     without rewriting every colour reference. They are aliases, not a second
+     source of truth: change the @theme block, never these.
+
+     Declared on `body` rather than `:root` because that is where the artboard
+     puts them, and because the two mode variants below key off body's own
+     data-mode attribute. */
   body {
+    --canvas: var(--color-canvas);
+    --surface: var(--color-surface);
+    --surface2: var(--color-sunken);
+    --ink: var(--color-ink);
+    --muted: var(--color-muted);
+    --line: var(--color-line);
+    --bw: var(--border-width);
+
+    --brand: var(--color-brand);
+    --b600: var(--color-brand-dark);
+    --b700: var(--color-brand-deep);
+    --b100: var(--color-brand-tint);
+    --b50: var(--color-brand-50);
+    --onbrand: #ffffff;
+    --focus: var(--color-ink);
+
+    --coral: var(--color-apricot);
+    --amber: var(--color-honey);
+    --violet: var(--color-violet);
+    --mint: var(--color-mint);
+    --ok: var(--color-success);
+    --warn: var(--color-warning);
+    --bad: var(--color-danger);
+
+    --tcoral: var(--color-apricot-soft);
+    --tmint: var(--color-mint-soft);
+    --tamber: var(--color-honey-soft);
+    --tviolet: var(--color-violet-soft);
+    --tok: var(--color-success-soft);
+    --tbad: var(--color-danger-soft);
+    /* One text colour for every tint. Pixel used a per-hue -deep shade; Soft
+       Pop uses ink on all of them, which is one contrast pair to check rather
+       than five. tone.test.ts asserts it. */
+    --tink: var(--color-ink);
+
+    --e1: var(--shadow-e1);
+    --e2: var(--shadow-e2);
+    --e3: var(--shadow-e3);
+    --e4: var(--shadow-e4);
+    --glow: var(--shadow-glow);
+    --hi: var(--shadow-hi);
+
     background-color: var(--color-canvas);
     color: var(--color-ink);
+  }
+
+  /* Dark and high contrast are the artboard's, and the brief never mentions
+     either — the header draws three live toggles for them, and board wins over
+     spec. Both redefine the alias layer only, so every component that reads a
+     token follows automatically.
+
+     Note what high contrast does: every elevation becomes `none` and --bw
+     doubles. Depth is carried by borders there. A component that separates from
+     its background with a shadow and no border disappears in this mode, so test
+     it rather than assuming the tokens cover you. */
+  body[data-mode='dark'] {
+    --canvas: #141a21;
+    --surface: #1c242e;
+    --surface2: #243040;
+    --ink: #e7edf2;
+    --muted: #a3afbc;
+    --line: rgba(231, 237, 242, 0.12);
+    --brand: #4fb4e6;
+    --b600: #4fb4e6;
+    --b700: #87cdf0;
+    --b100: #124f73;
+    --b50: #0d2a3f;
+    --onbrand: #0d2a3f;
+    --focus: #e7edf2;
+    --tcoral: #4a2a1c;
+    --tmint: #123d3a;
+    --tamber: #4a3810;
+    --tviolet: #2e2650;
+    --tok: #173f2e;
+    --tbad: #4a1f1f;
+    --tink: #e7edf2;
+    --e1: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --e2: 0 4px 12px rgba(0, 0, 0, 0.35);
+    --e3: 0 12px 28px rgba(0, 0, 0, 0.4);
+    --e4: 0 24px 48px rgba(0, 0, 0, 0.5);
+    --glow: 0 8px 20px rgba(79, 180, 230, 0.25);
+    --hi: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  body[data-mode='hc'] {
+    --canvas: #ffffff;
+    --surface: #ffffff;
+    --surface2: #f2f2f2;
+    --ink: #000000;
+    --muted: #2b3440;
+    --line: #000000;
+    --bw: 2px;
+    --brand: #0f5f8c;
+    --b600: #0f5f8c;
+    --b700: #0d2a3f;
+    --b100: #e6f2fb;
+    --b50: #ffffff;
+    --onbrand: #ffffff;
+    --focus: #000000;
+    --tink: #000000;
+    --e1: none;
+    --e2: none;
+    --e3: none;
+    --e4: none;
+    --glow: none;
+    --hi: none;
+  }
+
+  body[data-mode='dark'],
+  body[data-mode='hc'] {
+    background-color: var(--canvas);
+    color: var(--ink);
   }
 
   /* The carousel sets `transition: transform var(--spring-photo)` inline, where
@@ -210,14 +320,14 @@
    */
   .card {
     background-color: var(--color-surface);
-    border-radius: var(--radius-pixel);
-    border: var(--border-pixel) solid var(--color-ink);
+    border-radius: var(--radius-card);
+    border: var(--border-width) solid var(--color-line);
     /* Card depth, quiet ink. A card is what a page has most of, so drawing it
        at a control's weight is what made every page read as flat — on
        /dashboard/tutorials the heaviest object was a stat strip showing three
        zeros, and on the homepage the launcher's three pillars could not
        separate from their four neighbours. */
-    box-shadow: var(--shadow-pixel-card) var(--shadow-ink-quiet);
+    box-shadow: var(--shadow-e2);
   }
 
   /*
@@ -233,8 +343,8 @@
    */
   .card-flat {
     background-color: var(--color-surface);
-    border: var(--border-pixel-thin) solid var(--color-ink);
-    border-radius: var(--radius-pixel-slot);
+    border: var(--border-width) solid var(--color-line);
+    border-radius: var(--radius-field);
   }
 
   /* Applied alongside .card on anything clickable. Hover, press and the
@@ -281,7 +391,7 @@
     min-height: 44px;
     padding: 0.625rem 1.25rem;
     border: 1px solid transparent;
-    border-radius: var(--radius-pixel-sm);
+    border-radius: var(--radius-field);
     font-size: 0.875rem;
     font-weight: 700;
     line-height: 1.2;
@@ -327,18 +437,18 @@
   .pixel .btn-accent,
   .pixel .btn-primary,
   .pixel .btn-quiet {
-    border: var(--border-pixel) solid var(--color-ink);
+    border: var(--border-width) solid var(--color-line);
     transition: transform 0.16s var(--ease-out-quart), box-shadow 0.16s var(--ease-out-quart),
       background-color 0.16s linear;
   }
 
-  .pixel .btn-accent { box-shadow: var(--shadow-pixel-md) var(--color-ink); }
-  .pixel .btn-primary { box-shadow: var(--shadow-pixel-md) var(--color-ink); }
+  .pixel .btn-accent { box-shadow: var(--shadow-e2); }
+  .pixel .btn-primary { box-shadow: var(--shadow-e2); }
   /* The secondary control's shadow is the same offset at 35% — it keeps the
      pair the same physical height while letting the apricot one read as the
      thing to press. Two identical solid shadows side by side made "or borrow a
      toy" compete with the primary action for the same click. */
-  .pixel .btn-quiet { box-shadow: var(--shadow-pixel-md) rgb(18 40 58 / 0.35); }
+  .pixel .btn-quiet { box-shadow: var(--shadow-e2); }
 
   /* Hover and press for every button now come from the shared press-motion
      block at the end of this file — see "Press motion, in one place". The
@@ -425,7 +535,7 @@
    */
   .lean {
     display: inline-block;
-    color: var(--color-mint-deep);
+    color: var(--color-ink);
     transform: rotate(-3deg);
   }
 
@@ -445,9 +555,9 @@
     padding: 0 0.25em;
     /* 0.5rem was already 8px — the right value written as a literal rather
        than as the token that holds it. */
-    border-radius: var(--radius-pixel-sm);
+    border-radius: var(--radius-field);
     background-color: var(--color-honey-soft);
-    color: var(--color-honey-deep);
+    color: var(--color-ink);
     box-decoration-break: clone;
     -webkit-box-decoration-break: clone;
   }
@@ -491,12 +601,12 @@
    */
   .stamp {
     display: inline-block;
-    border-radius: var(--radius-pixel-sm);
-    border: var(--border-pixel-thin) solid var(--color-honey-deep);
-    box-shadow: var(--shadow-pixel-xs) var(--color-honey-deep);
+    border-radius: var(--radius-field);
+    border: var(--border-width) solid var(--color-ink);
+    box-shadow: var(--shadow-e1);
     padding: 0.25rem 0.7rem;
     background-color: var(--color-honey-soft);
-    color: var(--color-honey-deep);
+    color: var(--color-ink);
     font-size: 0.6875rem;
     font-weight: 800;
   }
@@ -507,12 +617,12 @@
    * page with no photographs on it still look designed.
    */
   .pullquote {
-    border-radius: var(--radius-pixel);
-    border: var(--border-pixel) solid var(--color-mint-deep);
-    box-shadow: var(--shadow-pixel-card) var(--color-mint-deep);
+    border-radius: var(--radius-card);
+    border: var(--border-width) solid var(--color-ink);
+    box-shadow: var(--shadow-e2);
     padding: 1rem 1.15rem;
     background-color: var(--color-mint-soft);
-    color: var(--color-mint-deep);
+    color: var(--color-ink);
     font-weight: 700;
     line-height: 1.45;
   }
@@ -585,8 +695,8 @@
     position: absolute;
     inset: 4px -10px;
     z-index: -1;
-    border-radius: var(--radius-pixel-sm);
-    border: var(--border-pixel-thin) solid transparent;
+    border-radius: var(--radius-field);
+    border: var(--border-width) solid transparent;
     transition: background-color 0.14s linear, border-color 0.14s linear,
       box-shadow 0.16s var(--ease-spring);
   }
@@ -595,7 +705,7 @@
      pills sit on. Quiet register keeps the old hairline — it is meant to
      recede, not gain weight. */
   .pixel header {
-    border-bottom-width: var(--border-pixel);
+    border-bottom-width: var(--border-width);
     border-bottom-color: var(--color-ink);
   }
 
@@ -607,15 +717,15 @@
   /* The logo mark and the initials avatar — the bar's two icon-in-a-shape
      moments, bordered like everything else instead of a bare tinted disc. */
   .pixel .pixel-avatar {
-    border-radius: var(--radius-pixel-sm);
-    border: var(--border-pixel-thin) solid var(--color-ink);
+    border-radius: var(--radius-field);
+    border: var(--border-width) solid var(--color-line);
   }
 
   /* The homepage's three stat chips — bordered boxes rather than soft pills. */
   .pixel .stat-pixel {
-    border-radius: var(--radius-pixel-sm);
-    border: var(--border-pixel-thin) solid var(--color-ink);
-    box-shadow: var(--shadow-pixel-xs) var(--color-ink);
+    border-radius: var(--radius-field);
+    border: var(--border-width) solid var(--color-line);
+    box-shadow: var(--shadow-e1);
   }
 
   /*
@@ -677,8 +787,8 @@
    * quantity.
    */
   .pixel .step-pixel {
-    border-radius: var(--radius-pixel-sm);
-    border: var(--border-pixel-thin) solid var(--color-brand-dark);
+    border-radius: var(--radius-field);
+    border: var(--border-width) solid var(--color-brand-dark);
     background-color: var(--color-brand-tint);
     color: var(--color-brand-dark);
     font-weight: 900;
@@ -708,7 +818,7 @@
   .pixel .nav-pill:hover::before {
     background-color: var(--pill-tint, var(--color-brand-tint));
     border-color: var(--color-ink);
-    box-shadow: var(--shadow-pixel-xs) var(--color-ink);
+    box-shadow: var(--shadow-e1);
   }
 
   .pixel .nav-pill:active {
@@ -736,7 +846,7 @@
   .pixel .nav-pill[aria-current='page']::before {
     background-color: var(--pill-tint, var(--color-brand-tint));
     border-color: var(--color-ink);
-    box-shadow: var(--shadow-pixel-xs) var(--color-ink);
+    box-shadow: var(--shadow-e1);
   }
 
   /* The quiet bar. Everything here is weight, nothing is presence: no label is
@@ -838,9 +948,9 @@
     height: 34px;
     background-color: var(--color-surface);
     color: var(--color-ink);
-    border: var(--border-pixel) solid var(--color-ink);
-    border-radius: var(--radius-pixel-slot);
-    box-shadow: 3px 3px 0 var(--color-ink);
+    border: var(--border-width) solid var(--color-line);
+    border-radius: var(--radius-field);
+    box-shadow: var(--shadow-e1);
     cursor: pointer;
   }
 
@@ -853,7 +963,7 @@
      reads Guides / Toy Library / 3D Printing as the site's three products
      rather than as the first three of seven tiles. */
   .card-lead {
-    box-shadow: var(--shadow-pixel-lg) var(--color-ink);
+    box-shadow: var(--shadow-e3);
   }
 
   /* Card hover and press also come from the shared press-motion block at the
@@ -940,8 +1050,8 @@
     padding: 0.625rem 0.75rem;
     background-color: var(--color-surface);
     color: var(--color-ink);
-    border: var(--border-pixel-thin) solid var(--color-ink);
-    border-radius: var(--radius-pixel-slot);
+    border: var(--border-width) solid var(--color-line);
+    border-radius: var(--radius-field);
     font-size: 0.875rem;
     transition:
       border-color 140ms var(--ease-out-quart),
@@ -980,10 +1090,10 @@
    */
   .auth-switch {
     display: inline-flex;
-    border: var(--border-pixel) solid var(--color-ink);
-    border-radius: var(--radius-pixel-sm);
+    border: var(--border-width) solid var(--color-line);
+    border-radius: var(--radius-field);
     overflow: hidden;
-    box-shadow: var(--shadow-pixel-md) var(--color-ink);
+    box-shadow: var(--shadow-e2);
   }
 
   .auth-switch a {
@@ -999,7 +1109,7 @@
   }
 
   .auth-switch a + a {
-    border-left: var(--border-pixel-thin) solid var(--color-ink);
+    border-left: var(--border-width) solid var(--color-line);
   }
 
   /* The tab you are on is filled, not merely tinted — the board draws it at
@@ -1053,9 +1163,9 @@
     padding: 0.5rem 0.875rem;
     background-color: var(--color-surface);
     color: var(--color-ink);
-    border: var(--border-pixel-thin) solid var(--color-ink);
-    border-radius: var(--radius-pixel-chip);
-    box-shadow: var(--shadow-pixel-xs) var(--color-ink);
+    border: var(--border-width) solid var(--color-line);
+    border-radius: var(--radius-pill);
+    box-shadow: var(--shadow-e1);
     font-family: var(--font-mono);
     font-size: 0.6875rem;
     font-weight: 700;
@@ -1103,8 +1213,8 @@
     display: inline-flex;
     align-items: center;
     padding: 2px 7px;
-    border: var(--border-pixel-hair) solid currentColor;
-    border-radius: var(--radius-pixel-xs);
+    border: var(--border-width) solid currentColor;
+    border-radius: var(--radius-field);
     font-family: var(--font-mono);
     font-size: 0.6875rem;
     font-weight: 700;
@@ -1125,8 +1235,8 @@
    * It has an edge now.
    */
   .alert {
-    border: var(--border-pixel-thin) solid currentColor;
-    border-radius: var(--radius-pixel-slot);
+    border: var(--border-width) solid currentColor;
+    border-radius: var(--radius-field);
     padding: 0.875rem 1.25rem;
     font-size: 0.875rem;
   }
@@ -1141,7 +1251,7 @@
      something" reads the same here as it does on a pending StatusBadge. */
   .alert-warning {
     background-color: var(--color-honey-soft);
-    color: var(--color-honey-deep);
+    color: var(--color-ink);
   }
 
   /* --- Editor section panels -------------------------------------------- */
@@ -1161,8 +1271,8 @@
      read as an override of that rule rather than the same answer. */
   .panel {
     background-color: var(--color-surface);
-    border-radius: var(--radius-pixel);
-    border: var(--border-pixel) solid var(--color-ink);
+    border-radius: var(--radius-card);
+    border: var(--border-width) solid var(--color-line);
     overflow: hidden;
   }
 
@@ -1267,7 +1377,7 @@
   .chat-daymark,
   .chat-system {
     align-self: center;
-    border-radius: var(--radius-pixel-xs);
+    border-radius: var(--radius-field);
     background-color: var(--color-sunken);
     color: var(--color-muted);
     text-align: center;
@@ -1304,8 +1414,8 @@
     place-items: center;
     width: 28px;
     height: 28px;
-    border-radius: var(--radius-pixel-sm);
-    border: var(--border-pixel-thin) solid var(--color-ink);
+    border-radius: var(--radius-field);
+    border: var(--border-width) solid var(--color-line);
     background-color: var(--color-brand-soft);
     color: var(--color-brand-deep);
     font-size: 0.75rem;
@@ -1343,17 +1453,17 @@
    */
   .chat-bubble {
     padding: 0.55rem 0.85rem;
-    border-radius: var(--radius-pixel);
-    border: var(--border-pixel-thin) solid var(--color-ink);
+    border-radius: var(--radius-card);
+    border: var(--border-width) solid var(--color-line);
     font-size: 0.875rem;
     line-height: 1.45;
     overflow-wrap: anywhere;
-    box-shadow: var(--shadow-pixel-sm) var(--color-ink);
+    box-shadow: var(--shadow-e1);
   }
 
   .chat-bubble-theirs {
     background-color: var(--color-surface);
-    border-bottom-left-radius: var(--radius-pixel-xs);
+    border-bottom-left-radius: var(--radius-field);
     color: var(--color-ink);
   }
 
@@ -1363,7 +1473,7 @@
      not ink on ink and needs no --pop-color exception. */
   .chat-bubble-mine {
     background-color: var(--color-brand-deep);
-    border-bottom-right-radius: var(--radius-pixel-xs);
+    border-bottom-right-radius: var(--radius-field);
     color: #ffffff;
   }
 
@@ -1405,8 +1515,8 @@
     margin-bottom: 1.5rem;
     overflow-x: auto;
     background-color: var(--color-surface);
-    border-radius: var(--radius-pixel);
-    border: var(--border-pixel) solid var(--color-ink);
+    border-radius: var(--radius-card);
+    border: var(--border-width) solid var(--color-line);
   }
 
   /*
@@ -1428,9 +1538,9 @@
     padding: 0.5rem 0.9rem;
     background-color: var(--color-surface);
     color: var(--color-ink);
-    border: var(--border-pixel-thin) solid var(--color-ink);
-    border-radius: var(--radius-pixel-chip);
-    box-shadow: var(--shadow-pixel-xs) var(--color-ink);
+    border: var(--border-width) solid var(--color-line);
+    border-radius: var(--radius-pill);
+    box-shadow: var(--shadow-e1);
     font-size: 0.8125rem;
     font-weight: 700;
     cursor: pointer;
@@ -1494,7 +1604,7 @@
      Deep apricot is that fill in this pill's own hue. Needs the [data-active]
      to outweigh .step-pill[data-active] above; the plain class alone loses. */
   .step-pill-accent[data-active] {
-    background-color: var(--color-apricot-deep);
+    background-color: var(--color-ink);
     color: #ffffff;
   }
 
@@ -1503,7 +1613,7 @@
     place-items: center;
     width: 1.1rem;
     height: 1.1rem;
-    border-radius: var(--radius-pixel-hair);
+    border-radius: var(--radius-field);
     background-color: var(--color-line);
     color: var(--color-muted);
     font-size: 0.6875rem;
@@ -1538,9 +1648,9 @@
     margin-top: 1rem;
     padding: 0.875rem 1.25rem;
     background-color: var(--color-surface);
-    border: var(--border-pixel) solid var(--color-ink);
-    border-radius: var(--radius-pixel);
-    box-shadow: var(--shadow-pixel-card) var(--color-ink);
+    border: var(--border-width) solid var(--color-line);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-e2);
   }
 
   .sticky-submit-note {
@@ -1562,9 +1672,9 @@
     font-weight: 700;
     padding: 0.125rem 0.5rem;
     background-color: var(--color-honey-soft);
-    color: var(--color-honey-deep);
-    border: var(--border-pixel-thin) solid var(--color-ink);
-    border-radius: var(--radius-pixel-slot);
+    color: var(--color-ink);
+    border: var(--border-width) solid var(--color-line);
+    border-radius: var(--radius-field);
     cursor: pointer;
     transition: background-color 140ms var(--ease-out-quart);
   }
@@ -1618,8 +1728,8 @@
      affordance in one place, and the only difference is that this row starts
      empty. */
   .bom {
-    border: var(--border-pixel-thin) solid var(--color-ink);
-    border-radius: var(--radius-pixel-sm);
+    border: var(--border-width) solid var(--color-line);
+    border-radius: var(--radius-field);
     /* Clips the child rows' square corners against the rounded frame. */
     overflow: hidden;
   }
@@ -1660,7 +1770,7 @@
     /* A hairline between rows, not a full pixel border: the table's own 2px
        frame is the structural line, and repeating it inside would read as a
        stack of separate cards again — which is what this replaces. */
-    border-top: var(--border-pixel-hair) solid var(--color-line);
+    border-top: var(--border-width) solid var(--color-line);
     font-size: 0.875rem;
     color: var(--color-ink);
     cursor: pointer;
@@ -1686,8 +1796,8 @@
     display: grid;
     place-items: center;
     height: 1.875rem;
-    border: var(--border-pixel-thin) solid var(--color-ink);
-    border-radius: var(--radius-pixel-slot);
+    border: var(--border-width) solid var(--color-line);
+    border-radius: var(--radius-field);
     background-color: var(--color-sunken);
     /* The face itself comes from .numeral, which is the display face's one
        home — see the pixel-tokens guard. A builder scans this column to count,
@@ -1708,7 +1818,7 @@
   }
 
   .bom-editor {
-    border-top: var(--border-pixel-thin) solid var(--color-ink);
+    border-top: var(--border-width) solid var(--color-line);
     background-color: var(--color-brand-tint);
     padding: 0.875rem 0.875rem 1rem;
   }
@@ -1716,7 +1826,7 @@
   /* The add row: dashed, because an empty slot is not a part yet. */
   .bom-add {
     border-top-style: dashed;
-    border-top-width: var(--border-pixel-thin);
+    border-top-width: var(--border-width);
     border-top-color: var(--color-ink);
     background-color: var(--color-surface-quiet);
     font-weight: 800;
@@ -1727,8 +1837,8 @@
     display: grid;
     place-items: center;
     height: 1.875rem;
-    border: var(--border-pixel-thin) dashed var(--color-ink);
-    border-radius: var(--radius-pixel-slot);
+    border: var(--border-width) dashed var(--color-line);
+    border-radius: var(--radius-field);
     font-size: 1rem;
     font-weight: 800;
     line-height: 1;
@@ -1741,8 +1851,8 @@
     align-items: center;
     flex-shrink: 0;
     padding: 0.25rem 0.625rem;
-    border: var(--border-pixel-thin) solid var(--color-ink);
-    border-radius: var(--radius-pixel-chip);
+    border: var(--border-width) solid var(--color-line);
+    border-radius: var(--radius-pill);
     background-color: var(--color-brand-tint);
     color: var(--color-brand-deep);
     font-size: 0.6875rem;
@@ -1761,11 +1871,11 @@
     padding: 0.625rem 1.25rem;
     background-color: var(--color-success);
     color: #ffffff;
-    border: var(--border-pixel-thin) solid var(--color-ink);
-    border-radius: var(--radius-pixel-sm);
+    border: var(--border-width) solid var(--color-line);
+    border-radius: var(--radius-field);
     font-size: 0.8125rem;
     font-weight: 700;
-    box-shadow: var(--shadow-pixel-xs) var(--color-ink);
+    box-shadow: var(--shadow-e1);
   }
 
   /* --- Back-to-My-SPLAT dock (components/back-to-my-splat-dock.tsx) ------ */
@@ -1778,13 +1888,13 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.625rem 1.125rem;
-    border: var(--border-pixel) solid var(--color-ink);
-    border-radius: var(--radius-pixel-sm);
+    border: var(--border-width) solid var(--color-line);
+    border-radius: var(--radius-field);
     background-color: var(--color-brand-deep);
     color: #ffffff;
     font-size: 0.8125rem;
     font-weight: 800;
-    box-shadow: var(--shadow-pixel-md) var(--color-ink);
+    box-shadow: var(--shadow-e2);
   }
 
   /* Hover and press come from the shared press-motion block. This used to be
@@ -1794,7 +1904,7 @@
   .dock-my-splat-dot {
     width: 0.625rem;
     height: 0.625rem;
-    border-radius: var(--radius-pixel-hair);
+    border-radius: var(--radius-field);
     background-color: var(--color-mint);
   }
 
@@ -1827,11 +1937,11 @@
     justify-content: center;
     width: 3rem;
     height: 3rem;
-    border: var(--border-pixel) solid var(--color-ink);
-    border-radius: var(--radius-pixel-sm);
+    border: var(--border-width) solid var(--color-line);
+    border-radius: var(--radius-field);
     background-color: var(--color-brand-deep);
     color: #ffffff;
-    box-shadow: var(--shadow-pixel-md) var(--color-ink);
+    box-shadow: var(--shadow-e2);
     cursor: pointer;
   }
 
@@ -1855,14 +1965,14 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.625rem 1.125rem;
-    border: var(--border-pixel) solid var(--color-ink);
-    border-radius: var(--radius-pixel-sm);
+    border: var(--border-width) solid var(--color-line);
+    border-radius: var(--radius-field);
     background-color: var(--color-surface);
     color: var(--color-ink);
     font-size: 0.8125rem;
     font-weight: 800;
     white-space: nowrap;
-    box-shadow: var(--shadow-pixel-md) var(--color-ink);
+    box-shadow: var(--shadow-e2);
     opacity: 0;
     transform: translateY(10px);
     transition:
@@ -1918,8 +2028,8 @@
   .dropzone {
     padding: 1.25rem;
     background-color: var(--color-sunken);
-    border: var(--border-pixel) dashed var(--color-ink);
-    border-radius: var(--radius-pixel);
+    border: var(--border-width) dashed var(--color-line);
+    border-radius: var(--radius-card);
     text-align: center;
     transition:
       background-color 180ms var(--ease-out-quart),
@@ -1941,8 +2051,8 @@
     place-items: center;
     width: 72px;
     height: 72px;
-    border-radius: var(--radius-pixel-sm);
-    border: var(--border-pixel-thin) solid var(--color-ink);
+    border-radius: var(--radius-field);
+    border: var(--border-width) solid var(--color-line);
     background-color: var(--color-brand-tint);
     font-size: 30px;
     line-height: 1;
@@ -1966,7 +2076,7 @@
     border-color: var(--color-honey-soft);
   }
   .ref-section--tools h2 {
-    color: var(--color-honey-deep);
+    color: var(--color-ink);
   }
 
   .ref-section--files {
@@ -1974,7 +2084,7 @@
     border-color: var(--color-mint-soft);
   }
   .ref-section--files h2 {
-    color: var(--color-mint-deep);
+    color: var(--color-ink);
   }
 
   .ref-row {
@@ -2095,11 +2205,11 @@
     width: calc(100vw - 2rem);
     max-height: calc(100dvh - 4rem);
     overflow-y: auto;
-    border: var(--border-pixel) solid var(--color-ink);
-    border-radius: var(--radius-pixel);
+    border: var(--border-width) solid var(--color-line);
+    border-radius: var(--radius-card);
     padding: 1.75rem;
     background: var(--color-surface);
-    box-shadow: var(--shadow-pixel-lg) var(--color-ink);
+    box-shadow: var(--shadow-e3);
   }
 
   .dialog-panel::backdrop {
@@ -2107,7 +2217,7 @@
   }
 
   .dialog-panel code {
-    border-radius: var(--radius-pixel-xs);
+    border-radius: var(--radius-field);
     background: var(--color-sunken);
     padding: 0.125rem 0.375rem;
     font-size: 0.8125em;
@@ -2290,7 +2400,7 @@
     --pop-rest: 5px;
     /* Without this the cards would rest quiet and pop back to solid under the
        pointer, which is the hierarchy inverting itself on hover. */
-    --pop-color: var(--shadow-ink-quiet);
+    --pop-color: var(--shadow-e2);
   }
 
   /* After .card, and both score (0,2,0), so source order is what puts the
