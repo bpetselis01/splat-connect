@@ -70,3 +70,9 @@ graphify-out/
 
 # stray logs
 *.log
+
+# Claude Design export of the Soft Pop prototype (46MB) and the
+# understand-anything scratch output (12MB). Both are working material,
+# not source — see docs/superpowers/specs/2026-09-16-soft-pop-design.md.
+Splat Connect frontend overhaul/
+.ua/
