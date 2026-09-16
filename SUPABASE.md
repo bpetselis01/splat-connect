@@ -12,6 +12,34 @@ org role gating, and badge counts that must be accurate.
 
 ## Pending
 
+### [F3/F4] An exchange does not record where it stopped
+
+**Why:** the stage rail must show a record that ended early stopping at the step
+it died at. `toy_transactions.status` is overwritten on withdrawal, so
+"requested then withdrawn" and "accepted then withdrawn" are the same row, and
+the rail cannot tell them apart.
+
+`rejected` is exact — it can only happen at the one step where somebody answers.
+`withdrawn` is not. A handover confirmation (`owner_confirmed_at` /
+`requester_confirmed_at`) proves it got that far, which narrows it; between
+Requested and Accepted the row genuinely cannot say, and
+`packages/web/lib/exchange-stages.ts` places the stop at Accepted and documents
+the limit.
+
+**Blocks:** nothing. The rail is honest about what is stored and the list ships.
+
+**Proposed migration:** not written. Two shapes are plausible — a
+`stopped_at_stage text` column, or a `toy_transaction_events` table recording
+every transition, which would also give the thread a history. The second is the
+better answer if F5's build stages need a vocabulary of their own, so this is
+worth deciding once rather than twice.
+
+**RLS impact:** an events table would need the same `is_toy_transaction_party()`
+gate as the messages and costs on the same exchange.
+
+**Workaround in place:** none that fakes data. The rail shows what the row
+supports.
+
 _(F5, F6, F7, F10 and F12 build routes that do not exist and are likely to add
 further entries here.)_
 
