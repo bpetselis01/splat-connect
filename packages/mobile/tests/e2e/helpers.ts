@@ -123,8 +123,11 @@ export async function createTutorial(
     // Fixtures model tutorials whose author already affirmed the safety checklist.
     safety_declared_at: new Date().toISOString(),
     tutorial_pdf_url: pdfPath,
+    // Not toy_photo_url: 053 made it generated from photo_urls[1], and an
+    // insert naming a generated column is rejected outright (428C9). The web
+    // helper was fixed in 82623653; this copy and createPublishedToy below
+    // were missed, so every mobile spec built on them threw in setup.
     photo_urls: ['https://placeholder.invalid/photo.jpg'],
-    toy_photo_url: 'https://placeholder.invalid/photo.jpg',
   })
   if (error) throw new Error(`Failed to create tutorial: ${error.message}`)
 
@@ -310,7 +313,6 @@ export async function createPublishedToy(
       condition: overrides.condition ?? 7,
       switch_adapted: overrides.switch_adapted ?? false,
       photo_urls: [overrides.cover_photo_url ?? null],
-      cover_photo_url: overrides.cover_photo_url ?? null,
       // `in` rather than `??`: null is a meaningful value here, not an absence.
       offer_type: 'offer_type' in overrides ? overrides.offer_type : 'donation',
       status: 'published',
