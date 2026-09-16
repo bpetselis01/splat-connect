@@ -32,6 +32,19 @@ const pathname = vi.hoisted(() => ({ current: '/dashboard' }))
 vi.mock('@/lib/capabilities', () => ({
   getCapabilities: async () => caps.current,
 }))
+// The hub now fetches its outstanding costs. api-client imports `server-only`,
+// which throws on import under vitest, so the module has to be mocked rather
+// than the call stubbed. Same category of test-environment plumbing as the
+// next/navigation mock below — no change to the page itself.
+//
+// Defaults to nothing outstanding, which is both the common case and the one
+// where MoneyPanel renders nothing at all; the money tests reassign it.
+const money = vi.hoisted(() => ({
+  current: { lines: [] as unknown[], total_cents: 0, exchange_count: 0 },
+}))
+vi.mock('@/lib/api-client', () => ({
+  apiClient: { get: async () => money.current },
+}))
 // Real redirect() throws a special digest error rather than returning; the
 // hub's own redirect branch relies on that to stop rendering, so the mock
 // must throw too, not just record the call.
@@ -174,5 +187,118 @@ describe('DashboardHub', () => {
   it('redirects a signed-out visitor', async () => {
     caps.current = null
     await expect(DashboardHub()).rejects.toThrow('NEXT_REDIRECT')
+  })
+
+  it('greets the person by their first name only', async () => {
+    caps.current = { ...baseCaps, profile: { ...baseCaps.profile, name: 'Sam Okonkwo' } }
+    render(await DashboardHub())
+    expect(screen.getByRole('heading', { name: 'Welcome back, Sam.' })).toBeInTheDocument()
+  })
+
+  /*
+   * Why: the three groups are cut here rather than in the shared nav model, so
+   * nothing but this page enforces where a row lands. A new /dashboard/
+   * organisation route silently joining "your content" is the failure.
+   */
+  it('files organisation rows under their own heading, not with your content', async () => {
+    caps.current = {
+      ...baseCaps,
+      ledOrgs: [{ id: 'org-1', name: 'Northside Therapy', slug: 'northside' }],
+    } as Capabilities
+    render(await DashboardHub())
+
+    const orgHeading = screen.getByRole('heading', { name: 'Your organisation', level: 2 })
+    const orgSection = orgHeading.closest('section')!
+    expect(orgSection).toBeTruthy()
+    // Every link under that heading is an organisation route.
+    for (const a of orgSection.querySelectorAll('a')) {
+      expect(a.getAttribute('href')).toMatch(/^\/dashboard\/organisation/)
+    }
+  })
+
+  it('puts Saved, Notifications and Account under Account', async () => {
+    caps.current = baseCaps
+    render(await DashboardHub())
+    // level 2 deliberately: the section is "Account" and so is one of the cards
+    // inside it, which is how the artboard draws it too.
+    const section = screen.getByRole('heading', { name: 'Account', level: 2 }).closest('section')!
+    const hrefs = [...section.querySelectorAll('a')].map((a) => a.getAttribute('href'))
+    expect(hrefs).toEqual(expect.arrayContaining(['/dashboard/saved', '/notifications', '/dashboard/profile']))
+  })
+
+  /*
+   * Why: an empty money summary is a worry with no object. The common case is
+   * owing nothing, and the panel must not appear to say so.
+   */
+  it('draws no money panel when nothing is outstanding', async () => {
+    caps.current = baseCaps
+    money.current = { lines: [], total_cents: 0, exchange_count: 0 }
+    render(await DashboardHub())
+    expect(screen.queryByText(/Money you have agreed to/i)).not.toBeInTheDocument()
+  })
+
+  it('totals what is outstanding and counts exchanges, not lines', async () => {
+    caps.current = baseCaps
+    money.current = {
+      lines: [
+        {
+          id: 'c1',
+          transaction_id: 'tx-1',
+          description: 'Filament for your switch mount',
+          amount_cents: 500,
+          toy_transactions: { id: 'tx-1', type: 'donation', toys: { name: 'Bubble machine' } },
+        },
+        {
+          id: 'c2',
+          transaction_id: 'tx-1',
+          description: 'Postage on the handover',
+          amount_cents: 1060,
+          toy_transactions: { id: 'tx-1', type: 'donation', toys: { name: 'Bubble machine' } },
+        },
+      ],
+      total_cents: 1560,
+      exchange_count: 1,
+    }
+    render(await DashboardHub())
+    expect(screen.getByText('$15.60')).toBeInTheDocument()
+    // Singular, because two lines on one exchange is one exchange.
+    expect(screen.getByText(/across 1 exchange\./)).toBeInTheDocument()
+    expect(screen.getByText('Filament for your switch mount')).toBeInTheDocument()
+  })
+
+  /*
+   * Why: the panel is a summary, not a destination, and a dollar figure above
+   * the guides says the wrong thing about what SPLAT is.
+   */
+  it('puts the money panel below the cards', async () => {
+    caps.current = baseCaps
+    money.current = {
+      lines: [
+        {
+          id: 'c1',
+          transaction_id: 'tx-1',
+          description: 'Postage',
+          amount_cents: 500,
+          toy_transactions: null,
+        },
+      ],
+      total_cents: 500,
+      exchange_count: 1,
+    }
+    const { container } = render(await DashboardHub())
+    const firstCard = container.querySelector('a.card')!
+    const panel = screen.getByText(/Money you have agreed to/i)
+    expect(firstCard.compareDocumentPosition(panel) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  /*
+   * Why: a failing costs fetch must not take the hub down with it — somebody
+   * reaching their guides does not care that a summary is unavailable.
+   */
+  it('still renders the hub when the costs fetch fails', async () => {
+    caps.current = baseCaps
+    money.current = null as never
+    render(await DashboardHub())
+    expect(screen.getByRole('heading', { name: /Welcome back/ })).toBeInTheDocument()
   })
 })
