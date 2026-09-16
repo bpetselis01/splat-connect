@@ -37,7 +37,7 @@ export function DashboardTutorialCard({ tutorial }: { tutorial: Listed }) {
       </div>
 
       <div className="flex flex-1 flex-col gap-1 p-4">
-        <p className="truncate text-sm font-bold text-ink">{tutorial.title}</p>
+        <p className="truncate text-[18px] font-extrabold leading-snug text-ink">{tutorial.title}</p>
         <div className="flex flex-wrap items-center gap-2">
           <Badge status={tutorial.status} />
           <BackingSummary backing={tutorial.tutorial_orgs ?? []} />
@@ -45,7 +45,7 @@ export function DashboardTutorialCard({ tutorial }: { tutorial: Listed }) {
         {tutorial.status === 'rejected' && (
           // Clamped so one long note cannot stretch its row of cards. The whole
           // note has a home in the callout at the top of the edit page.
-          <p className="line-clamp-2 text-xs leading-relaxed text-danger">
+          <p className="line-clamp-2 text-[13px] leading-relaxed text-danger">
             {tutorial.rejection_note ?? 'No feedback was provided.'}
           </p>
         )}

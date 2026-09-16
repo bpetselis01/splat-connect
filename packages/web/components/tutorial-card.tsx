@@ -14,6 +14,13 @@ type Listed = Pick<Tutorial, 'id' | 'title' | 'difficulty' | 'kind' | 'toy_photo
   tutorial_orgs?: TutorialOrg[]
 }
 
+/*
+ * Title is 18px Nunito 800, measured off the artboard's library cards — NOT the
+ * 20px Baloo 2 the brief gives for a card title. That line is about RecordCard,
+ * the list row for a record with a process. A library card is a different
+ * object: many of them tile a grid and are scanned rather than read, so the
+ * display face would shout. Two card titles, two sizes, both from the board.
+ */
 export function TutorialCard({ tutorial, save }: { tutorial: Listed; save?: SaveProps }) {
   const backed = (tutorial.tutorial_orgs ?? []).some((b) => b.status === 'accepted')
   const card = (
@@ -27,9 +34,9 @@ export function TutorialCard({ tutorial, save }: { tutorial: Listed; save?: Save
     >
       <CardPhoto src={tutorial.toy_photo_url} />
       <div className="p-4">
-        <p className="truncate text-sm font-bold text-ink">{tutorial.title}</p>
+        <p className="truncate text-[18px] font-extrabold leading-snug text-ink">{tutorial.title}</p>
         {tutorial.description && (
-          <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted">
+          <p className="mt-1 line-clamp-2 text-[13px] leading-relaxed text-muted">
             {tutorial.description}
           </p>
         )}
