@@ -13,6 +13,7 @@
 
 import type { IllustrationKey } from '@/components/editorial-image'
 import type { Tone } from './tone'
+import type { IconName } from '@splat-connect/types'
 
 export type NavState = 'live' | 'soon'
 
@@ -41,6 +42,12 @@ export interface NavItem {
   blurb: string
   /** Unread items behind this card. Omit or 0 for no badge. */
   count?: number
+  /**
+   * The nav model's own icon name, carried through for HubGrid's `tile`
+   * variant. Optional because the public hubs draw artwork instead and have no
+   * icon to give.
+   */
+  icon?: IconName
   /** Set on 'soon' items only — the allowlisted key POST /api/public/notify accepts. */
   featureKey?: string
 }

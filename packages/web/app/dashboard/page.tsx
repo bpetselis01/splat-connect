@@ -76,6 +76,8 @@ export default async function DashboardHub() {
       state: row.soon ? 'soon' : 'live',
       blurb: blurbs[row.href] ?? '',
       count: counts[row.href],
+      // Carried through for the tile variant. The rail already draws these.
+      icon: row.icon,
     }))
 
   /*
@@ -124,14 +126,14 @@ export default async function DashboardHub() {
       </section>
 
       <div className="mt-10">
-        <HubGrid items={yours} tone={ACCOUNT_NAV.tone} columns={4} />
+        <HubGrid items={yours} tone={ACCOUNT_NAV.tone} columns={4} variant="tile" />
       </div>
 
       {organisation.length > 0 && (
         <section className="mt-12">
           <h2 className="font-display text-2xl font-extrabold text-ink">Your organisation</h2>
           <div className="mt-4">
-            <HubGrid items={organisation} tone={ACCOUNT_NAV.tone} columns={4} />
+            <HubGrid items={organisation} tone={ACCOUNT_NAV.tone} columns={4} variant="tile" />
           </div>
         </section>
       )}
@@ -140,7 +142,7 @@ export default async function DashboardHub() {
         <section className="mt-12">
           <h2 className="font-display text-2xl font-extrabold text-ink">Account</h2>
           <div className="mt-4">
-            <HubGrid items={account} tone={ACCOUNT_NAV.tone} columns={4} />
+            <HubGrid items={account} tone={ACCOUNT_NAV.tone} columns={4} variant="tile" />
           </div>
         </section>
       )}

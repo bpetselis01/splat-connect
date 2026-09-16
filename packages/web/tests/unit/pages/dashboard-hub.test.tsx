@@ -203,7 +203,17 @@ describe('DashboardHub', () => {
   it('files organisation rows under their own heading, not with your content', async () => {
     caps.current = {
       ...baseCaps,
-      ledOrgs: [{ id: 'org-1', name: 'Northside Therapy', slug: 'northside' }],
+      ledOrgs: [
+        {
+          id: 'org-1',
+          name: 'Northside Therapy',
+          description: null,
+          status: 'active',
+          created_by: null,
+          created_at: '2026-01-01T00:00:00Z',
+          updated_at: '2026-01-01T00:00:00Z',
+        },
+      ],
     } as Capabilities
     render(await DashboardHub())
 

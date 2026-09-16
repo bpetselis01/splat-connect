@@ -21,6 +21,7 @@
  * The grid carries no transform — cards lay out upright, in source order.
  */
 import type { NavItem } from '@/lib/public-nav'
+import { NavIcon } from '@/components/nav-icon'
 import { toneClass, type Tone } from '@/lib/tone'
 import { Slot } from '@/components/slot'
 import { BoundaryLink } from '@/components/boundary-link'
@@ -29,6 +30,7 @@ export function HubGrid({
   items,
   tone,
   columns = 3,
+  variant = 'art',
 }: {
   items: NavItem[]
   /** Omit on mixed lists that do not belong to one section. */
@@ -39,11 +41,24 @@ export function HubGrid({
    * step down a size at 4-up, which is why this is one prop rather than three.
    */
   columns?: 3 | 4
+  /**
+   * 'art'  — a public hub card: tinted, with a full-width illustration slot.
+   * 'tile' — a My SPLAT card: white, with a 40px tinted icon tile and no
+   *          artwork at all.
+   *
+   * A variant rather than a second component because everything below the top
+   * of the card — title, SOON badge, count, blurb, the boundary-link behaviour
+   * — is identical, and the dashboard is the only caller that differs. A fork
+   * would have duplicated all of it to change one element.
+   */
+  variant?: 'art' | 'tile'
 }) {
   if (items.length === 0) return null
 
   const spec = tone ? toneClass(tone) : undefined
   const wide = columns === 3
+  const tiles = variant === 'tile'
+  const tileTint = spec?.hex.bg ?? 'var(--b100)'
 
   return (
     <div
@@ -57,14 +72,24 @@ export function HubGrid({
           href={item.href}
           className={`card card-link flex h-full flex-col gap-1.5 ${
             wide ? 'p-[18px]' : 'p-4'
-          } ${spec ? `${spec.surface} ${spec.ink}` : ''}`}
+          } ${tiles ? '' : spec ? `${spec.surface} ${spec.ink}` : ''}`}
         >
-          <Slot
-            kind="art"
-            tone={tone}
-            note={`${item.label} — one object, no background`}
-            className={`mb-1 w-full ${wide ? 'h-[7.5rem]' : 'h-[6.25rem]'}`}
-          />
+          {tiles ? (
+            <span
+              aria-hidden="true"
+              className="mb-2 grid h-10 w-10 place-items-center rounded-[var(--radius-field)]"
+              style={{ background: tileTint, color: 'var(--tink)' }}
+            >
+              <NavIcon name={item.icon} />
+            </span>
+          ) : (
+            <Slot
+              kind="art"
+              tone={tone}
+              note={`${item.label} — one object, no background`}
+              className={`mb-1 w-full ${wide ? 'h-[7.5rem]' : 'h-[6.25rem]'}`}
+            />
+          )}
 
           <div className="flex flex-wrap items-center gap-2">
             <h3 className={`font-extrabold ${wide ? 'text-[15px]' : 'text-[14px]'}`}>
