@@ -139,7 +139,30 @@ select * from (values
    (select count(*) = 4 from pg_policies
       where schemaname = 'storage'
         and policyname like '%exchange receipts%'
-        and coalesce(qual, with_check) like '%is_toy_transaction_party%'))
+        and coalesce(qual, with_check) like '%is_toy_transaction_party%')),
+
+  -- Same failure mode as the receipts bucket above, one step worse in one
+  -- respect: a working shot is a photograph taken inside somebody's home, and
+  -- a public bucket would publish it to anyone who can guess a transaction id
+  -- with nothing in the product looking different.
+  ('057 build-shots bucket is private',
+   (select coalesce(bool_and(not public), false) from storage.buckets
+      where id = 'build-shots')),
+
+  ('057 build-shots policies all check the exchange party',
+   (select count(*) = 4 from pg_policies
+      where schemaname = 'storage'
+        and policyname like '%build shots%'
+        and coalesce(qual, with_check) like '%is_toy_transaction_party%')),
+
+  -- Not a security guard but the one thing in 057 whose absence is silent: the
+  -- shape constraint is what stops a build carrying a toy_id and a donation
+  -- carrying a build_brief, and every read would then have to guess which of
+  -- the two subjects it is looking at.
+  ('057 toy_transactions_subject constraint is present',
+   (select count(*) > 0 from pg_constraint
+      where conrelid = 'public.toy_transactions'::regclass
+        and conname = 'toy_transactions_subject'))
 ) as t(guard, ok)
 where not ok;
 EOSQL
