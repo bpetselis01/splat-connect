@@ -13,8 +13,8 @@ likelier to need a migration. See
 | # | Feature | Screens | Kind | Status | Needs DB | Verified by |
 |---|---------|---------|------|--------|----------|-------------|
 | 0 | Green the branch + ledgers | none | chore | done | no | local suite; CI blocked on the `workflow` scope |
-| 1 | Design tokens + shared primitives | global (web `globals.css` + mobile `theme.ts`) | restyle | awaiting review | no | 1006 web + 533 mobile unit; /design-system vs artboard |
-| 2 | `/dashboard` hub | `/dashboard` | restyle | todo | | |
+| 1 | Design tokens + shared primitives | global (web `globals.css` + mobile `theme.ts`) | restyle | done | no | full suite + CI; /design-system vs artboard |
+| 2 | `/dashboard` hub | `/dashboard` | restyle | awaiting review | 055 applied | full suite + CI; screenshot vs artboard |
 | 3 | Exchanges list | `/dashboard/exchanges` | restyle | todo | | |
 | 4 | Exchange detail (canonical layout) | `/dashboard/exchanges/[id]` | restyle | todo | | |
 | 5 | Build detail | `/dashboard/exchanges/build/[id]` | new build | todo | | |
