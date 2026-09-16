@@ -105,7 +105,9 @@ exchangeCosts.get('/:transactionId', async (c) => {
   const [lines, settlement] = await Promise.all([
     supabase
       .from('exchange_costs')
-      .select('id, transaction_id, description, amount_cents, claiming, payer_id, payee_id, settled_at, settled_by, created_at')
+      .select(
+        'id, transaction_id, description, amount_cents, claiming, payer_id, payee_id, settled_at, settled_by, created_by, created_at'
+      )
       .eq('transaction_id', transactionId)
       .order('created_at', { ascending: true }),
     supabase
@@ -168,6 +170,221 @@ exchangeCosts.patch('/:id/settle', async (c) => {
   // RLS returns no row rather than refusing, so an absent row IS the refusal.
   if (!data) return c.json({ error: 'No such cost on an exchange you are part of.' }, 404)
   return c.json(data)
+})
+
+/**
+ * The party on the other side of an exchange from the caller, or a Response
+ * saying why there is not one.
+ *
+ * A cost line names a payer and a payee and 055's trigger insists both are
+ * parties to THIS exchange. The client does not get to say who they are: it
+ * would be able to name the wrong pair, and the only honest reading of "add a
+ * cost" is "I paid this" — so the caller is always the payee and the other
+ * party the payer.
+ *
+ * An organisation-owned exchange has `owner_id` null (033 moved the owner to
+ * `owner_org_id`), so there is no profile to put on the other side of the line.
+ * That is refused here with the reason rather than left to the trigger, which
+ * would surface as a 500 with a Postgres message in it.
+ */
+async function otherParty(
+  supabase: ReturnType<typeof createUserClient>,
+  transactionId: string,
+  userId: string
+) {
+  const { data, error } = await supabase
+    .from('toy_transactions')
+    .select('id, requester_id, owner_id, owner_org_id, status')
+    .eq('id', transactionId)
+    .maybeSingle()
+
+  if (error) return { error: error.message, status: 500 as const }
+  // RLS returns no row rather than refusing, so an absent row IS the refusal.
+  if (!data) return { error: 'No such exchange.', status: 404 as const }
+
+  const tx = data as unknown as {
+    requester_id: string
+    owner_id: string | null
+    owner_org_id: string | null
+  }
+  if (!tx.owner_id) {
+    return {
+      error:
+        'Costs on an organisation-held exchange are not recorded yet — a cost line names two people and this exchange is held by an organisation.',
+      status: 400 as const,
+    }
+  }
+  if (tx.requester_id !== userId && tx.owner_id !== userId) {
+    return { error: 'Only a party to the exchange can record a cost on it.', status: 403 as const }
+  }
+  return { payer: tx.requester_id === userId ? tx.owner_id : tx.requester_id }
+}
+
+/**
+ * POST /api/exchange-costs/:transactionId
+ *
+ * Records one cost the caller paid on this exchange. Validated here rather than
+ * left to the table's checks: these are the same bounds 055 and 056 state, and
+ * a constraint violation reaches the browser as an opaque 500.
+ */
+exchangeCosts.post('/:transactionId', async (c) => {
+  const supabase = createUserClient(c.get('token'))
+  const userId = c.get('userId')
+  const transactionId = c.req.param('transactionId')
+  const body = (await c.req.json().catch(() => ({}))) as {
+    description?: unknown
+    amount_cents?: unknown
+    claiming?: unknown
+  }
+
+  const description = typeof body.description === 'string' ? body.description.trim() : ''
+  if (description.length < 1 || description.length > 200) {
+    return c.json({ error: 'Say what the cost is for, in 200 characters or fewer.' }, 400)
+  }
+  const amount = body.amount_cents
+  if (typeof amount !== 'number' || !Number.isInteger(amount) || amount < 0 || amount > 100000000) {
+    return c.json({ error: 'The amount must be a whole number of cents, up to $1,000,000.' }, 400)
+  }
+  const claiming = body.claiming !== false
+  // 056 relaxed the positive check for covered lines only: somebody recording
+  // that they absorbed the postage need not price it, but a line being claimed
+  // has to be worth something.
+  if (claiming && amount < 1) {
+    return c.json({ error: 'A cost you are claiming back has to be more than nothing.' }, 400)
+  }
+
+  const party = await otherParty(supabase, transactionId, userId)
+  if ('error' in party) return c.json({ error: party.error }, party.status)
+
+  const { data, error } = await supabase
+    .from('exchange_costs')
+    .insert({
+      transaction_id: transactionId,
+      description,
+      amount_cents: amount,
+      claiming,
+      payer_id: party.payer,
+      payee_id: userId,
+      created_by: userId,
+    })
+    .select(
+      'id, transaction_id, description, amount_cents, claiming, payer_id, payee_id, settled_at, settled_by, created_by, created_at'
+    )
+    .maybeSingle()
+
+  if (error) return c.json({ error: error.message }, 500)
+  if (!data) return c.json({ error: 'That exchange is not yours to add a cost to.' }, 403)
+  return c.json(data, 201)
+})
+
+/**
+ * DELETE /api/exchange-costs/:id
+ *
+ * Removes a line. 055's delete policy is `created_by = auth.uid()` and that is
+ * the whole rule: settling is the other party's lever, deleting somebody else's
+ * record of what they are owed is not.
+ */
+exchangeCosts.delete('/:id', async (c) => {
+  const supabase = createUserClient(c.get('token'))
+  const { data, error } = await supabase
+    .from('exchange_costs')
+    .delete()
+    .eq('id', c.req.param('id'))
+    .select('id')
+    .maybeSingle()
+
+  if (error) return c.json({ error: error.message }, 500)
+  if (!data) return c.json({ error: 'No such cost line of yours.' }, 404)
+  return c.json({ id: (data as { id: string }).id })
+})
+
+/**
+ * PUT /api/exchange-costs/:transactionId/settlement
+ *
+ * The note, the method and the receipt: one row per exchange, so this upserts
+ * on the primary key rather than choosing between insert and update.
+ *
+ * `note_by` and `updated_by` are the caller, never the client's word for it —
+ * the byline under a quote is the only thing that makes the quote worth having.
+ */
+exchangeCosts.put('/:transactionId/settlement', async (c) => {
+  const supabase = createUserClient(c.get('token'))
+  const userId = c.get('userId')
+  const transactionId = c.req.param('transactionId')
+  const body = (await c.req.json().catch(() => ({}))) as {
+    note?: unknown
+    method?: unknown
+    receipt_path?: unknown
+  }
+
+  const note = typeof body.note === 'string' && body.note.trim() ? body.note.trim() : null
+  if (note && note.length > 1000) {
+    return c.json({ error: 'The note is longer than 1000 characters.' }, 400)
+  }
+  const method = typeof body.method === 'string' && body.method.trim() ? body.method.trim() : null
+  if (method && method.length > 60) {
+    return c.json({ error: 'The method is longer than 60 characters.' }, 400)
+  }
+  const receiptPath =
+    typeof body.receipt_path === 'string' && body.receipt_path.trim()
+      ? body.receipt_path.trim()
+      : null
+
+  const party = await otherParty(supabase, transactionId, userId)
+  if ('error' in party) return c.json({ error: party.error }, party.status)
+
+  const { data, error } = await supabase
+    .from('exchange_settlements')
+    .upsert(
+      {
+        transaction_id: transactionId,
+        note,
+        note_by: note ? userId : null,
+        method,
+        receipt_path: receiptPath,
+        updated_at: new Date().toISOString(),
+        updated_by: userId,
+      },
+      { onConflict: 'transaction_id' }
+    )
+    .select('transaction_id, note, note_by, receipt_path, method, updated_at, updated_by')
+    .maybeSingle()
+
+  if (error) return c.json({ error: error.message }, 500)
+  if (!data) return c.json({ error: 'That exchange is not yours to settle.' }, 403)
+  return c.json(data)
+})
+
+/**
+ * POST /api/exchange-costs/:transactionId/receipt
+ *
+ * Uploads a receipt into the private `exchange-receipts` bucket and returns its
+ * path. The path shape is `<transaction_id>/<file>` because 056's storage
+ * policies read the first folder segment as the exchange id — a file written
+ * anywhere else matches no exchange and is readable by nobody.
+ *
+ * It returns the path rather than storing it: the settlement row is written by
+ * PUT above, so an upload that succeeds and a settlement that fails leaves an
+ * orphan object rather than a row pointing at a file that is not there.
+ */
+exchangeCosts.post('/:transactionId/receipt', async (c) => {
+  const supabase = createUserClient(c.get('token'))
+  const userId = c.get('userId')
+  const transactionId = c.req.param('transactionId')
+
+  const form = await c.req.formData().catch(() => null)
+  const file = form?.get('file')
+  if (!(file instanceof File)) return c.json({ error: 'A file is required.' }, 400)
+
+  const party = await otherParty(supabase, transactionId, userId)
+  if ('error' in party) return c.json({ error: party.error }, party.status)
+
+  const { data, error } = await supabase.storage
+    .from('exchange-receipts')
+    .upload(`${transactionId}/${file.name}`, file, { upsert: true })
+
+  if (error) return c.json({ error: error.message }, 500)
+  return c.json({ receipt_path: data.path })
 })
 
 export default exchangeCosts

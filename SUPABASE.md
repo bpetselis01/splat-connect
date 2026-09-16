@@ -12,6 +12,30 @@ org role gating, and badge counts that must be accurate.
 
 ## Pending
 
+### [F8] An organisation-held exchange cannot carry a cost line
+
+**Why:** `exchange_costs` names a `payer_id` and a `payee_id`, both profiles,
+and 055's trigger insists both are parties to the transaction. Since 033 an
+organisation-held exchange has `owner_id` null and `owner_org_id` set, so there
+is no profile to put on the giving side of a line. The cost panel's edit mode is
+therefore withheld on those exchanges rather than offered and refused.
+
+**Blocks:** recording costs on an org handover (F8 edit mode, F10's print
+orders when they land). Reading costs is unaffected —
+`is_toy_transaction_party()` already counts the owning organisation's leaders,
+so a leader can see and settle a line somebody else entered.
+
+**Proposed migration:** not written; the shape is a real choice. Either the
+columns become nullable in pairs with an `payer_org_id`/`payee_org_id` beside
+them and the trigger widened, or the leader who acts is stamped as the person
+— which is honest about who agreed it but wrong about who owes it. Worth
+deciding once, alongside whether a print job's costs hang off the same table.
+
+**RLS impact:** none beyond the existing `is_toy_transaction_party()` gate.
+
+**Workaround in place:** none that fakes data. `canEditCosts` on the exchange
+detail page is false when `owner_id` is null, and the panel renders read-only.
+
 ### [F3/F4] An exchange does not record where it stopped
 
 **Why:** the stage rail must show a record that ended early stopping at the step

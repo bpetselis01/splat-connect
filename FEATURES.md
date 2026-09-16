@@ -20,7 +20,7 @@ likelier to need a migration. See
 | 5 | Build detail | `/dashboard/exchanges/build/[id]` | new build | todo | | |
 | 6 | Print requests + detail | `/dashboard/print-requests`, `/[id]` | new build | todo | | |
 | 7 | Printers | `/dashboard/printers` | new build | todo | | |
-| 8 | Cost panel | component | restyle | awaiting review (view mode) | 056 applied | full suite; edit mode not built |
+| 8 | Cost panel | component | restyle | awaiting review | 056 applied | full suite + Playwright; view and edit share one shell |
 | 9 | Tutorials + saved | `/dashboard/tutorials`, `/dashboard/saved/*` | restyle | awaiting review | no | full suite; card type measured off the artboard |
 | 10 | Organisation screens | `/dashboard/organisation/*` | new build | todo | | |
 | 11 | Get involved explainers | `/get-involved/*` | restyle | awaiting review | no | full suite; leads trimmed, step bodies left (safety copy) |

@@ -81,6 +81,23 @@ export default async function ExchangeDetailPage({ params }: { params: Promise<{
     costs = null
   }
 
+  /*
+   * Editing is offered only where the write would actually land. A cost line
+   * names two profiles and 055's trigger insists both are parties, so an
+   * organisation-held exchange — `owner_id` null since 033 — has nobody to put
+   * on the other side of the line and the API refuses it. Offering the form
+   * there would be a dead control; it is filed in SUPABASE.md instead.
+   *
+   * A rejected or withdrawn exchange is over. Money agreed on one that
+   * completed is not: somebody still owes the postage, so `completed` keeps the
+   * panel editable.
+   */
+  const canEditCosts =
+    tx.owner_id !== null &&
+    (tx.owner_id === caps.profile.id || tx.requester_id === caps.profile.id) &&
+    tx.status !== 'rejected' &&
+    tx.status !== 'withdrawn'
+
   // Computed here, after tx is assigned and after the viewer's side is known —
   // the brief's warning about facts quoting values assigned later is about
   // exactly this block, and the code in it is the viewer's own.
@@ -118,13 +135,17 @@ export default async function ExchangeDetailPage({ params }: { params: Promise<{
         </Link>
       </div>
 
-      {costs && costs.lines.length > 0 && (
+      {costs && (
         <div className="mb-6">
           <CostPanel
             lines={costs.lines}
             settlement={costs.settlement}
             noteByName={otherPartyName}
+            viewerName={caps.profile.name}
             viewerOwes={!ownerSide}
+            transactionId={id}
+            viewerId={caps.profile.id}
+            canEdit={canEditCosts}
           />
         </div>
       )}
