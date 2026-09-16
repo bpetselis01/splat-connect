@@ -16,11 +16,11 @@ likelier to need a migration. See
 | 1 | Design tokens + shared primitives | global (web `globals.css` + mobile `theme.ts`) | restyle | done | no | full suite + CI; /design-system vs artboard |
 | 2 | `/dashboard` hub | `/dashboard` | restyle | awaiting review | 055 applied | full suite + CI; screenshot vs artboard |
 | 3 | Exchanges list | `/dashboard/exchanges` | restyle | awaiting review | no | full suite; screenshot vs artboard |
-| 4 | Exchange detail (canonical layout) | `/dashboard/exchanges/[id]` | restyle | todo | | |
+| 4 | Exchange detail (canonical layout) | `/dashboard/exchanges/[id]` | restyle | todo | ⚠ needs 056 for the cost panel | |
 | 5 | Build detail | `/dashboard/exchanges/build/[id]` | new build | todo | | |
 | 6 | Print requests + detail | `/dashboard/print-requests`, `/[id]` | new build | todo | | |
 | 7 | Printers | `/dashboard/printers` | new build | todo | | |
-| 8 | Cost panel | component | restyle | todo | | |
+| 8 | Cost panel | component | restyle | todo | ⚠ needs 056 | |
 | 9 | Tutorials + saved | `/dashboard/tutorials`, `/dashboard/saved/*` | restyle | todo | no | |
 | 10 | Organisation screens | `/dashboard/organisation/*` | new build | todo | | |
 | 11 | Get involved explainers | `/get-involved/*` | restyle | todo | no | |
