@@ -63,5 +63,5 @@ test('an admin can also reach the dashboard', async ({ page }) => {
 
   await page.goto('/dashboard')
   await expect(page).toHaveURL(/\/dashboard$/)
-  await expect(page.getByRole('heading', { name: 'My SPLAT' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /^Welcome back,/ })).toBeVisible()
 })
