@@ -20,7 +20,14 @@ beforeAll(async () => {
   const admin = adminClient()
   await admin.storage.from('tutorial-pdfs').upload(pdfPath, new Blob(['%PDF-1.4 gate']), { upsert: true })
   await admin.storage.from('stl-files').upload(stlPath, new Blob(['solid gate']), { upsert: true })
-  await admin.storage.from('toy-photos').upload(photoPath, new Blob(['photo gate']), { upsert: true })
+  // 053 gave the photo buckets an allowed_mime_types list. An untyped Blob is
+  // sent as application/octet-stream and refused, and this upload's error is not
+  // checked — so an untyped fixture fails three lines down instead, as a 400 on
+  // the public fetch of an object that was never written. The pdf and stl
+  // buckets above carry no MIME list, which is why only this one needs the type.
+  await admin.storage
+    .from('toy-photos')
+    .upload(photoPath, new Blob(['photo gate'], { type: 'image/jpeg' }), { upsert: true })
 })
 
 afterAll(async () => {
