@@ -40,48 +40,6 @@ gate as the messages and costs on the same exchange.
 **Workaround in place:** none that fakes data. The rail shows what the row
 supports.
 
-### [F4/F8] The cost panel needs more than 055 models
-
-**Why:** 055 was written from the dashboard's money *summary*, which is a list of
-descriptions and amounts. The full cost panel on the exchange detail screen —
-captured at `.playwright-mcp/artboard-thread-detail.png` — carries four things
-it does not model:
-
-- **Per line, who is absorbing it.** Each line is tagged "Claiming back" or
-  "Covering it". A line someone is covering shows $0.00 to the other party but
-  is still listed, because the point is that they are not being asked for it.
-  Without this the panel cannot distinguish "you owe nothing" from "nobody has
-  said what this costs".
-- **A note, attributed.** One free-text note under the lines with a byline
-  ("Northside Therapy Collective's note"), rendered as a quote. Per exchange,
-  not per line.
-- **A receipt.** An image slot captioned "Their receipt, if they added one".
-  Per exchange.
-- **A settlement method.** "Bank transfer", shown once at the foot of the panel.
-
-`settled_at` / `settled_by` already cover "Mark as settled", which is the only
-part 055 got ahead of.
-
-**Blocks:** the cost panel (F8) and the top third of the exchange detail (F4).
-Neither the dashboard summary nor F3's list is affected — those ship on 055 as
-it stands.
-
-**Proposed migration:** not written, because the shape is a real choice. The
-per-line flag is clearly a column on `exchange_costs`. The note, receipt and
-method are per exchange, so they are either three columns on
-`toy_transactions` — which makes that table carry money concerns it otherwise
-does not — or a small `exchange_settlements` row per transaction. The second
-keeps money in one place and gives the receipt somewhere to hang; it is also one
-more table to gate. Worth one decision rather than drifting into the first.
-
-**RLS impact:** whichever shape, the same `is_toy_transaction_party()` gate as
-the costs and messages on that exchange. A receipt is an image of somebody's
-bank statement often enough that the storage bucket needs the same care 049 gave
-tutorial PDFs — private, with a signed-in-only policy, not the public photo
-buckets.
-
-**Workaround in place:** none. F4 has not been started.
-
 _(F5, F6, F7, F10 and F12 build routes that do not exist and are likely to add
 further entries here.)_
 
@@ -144,6 +102,74 @@ those yet. `exchange_costs` is scoped to what exists rather than inventing two
 parent tables to satisfy one panel. When those land, the choice is a polymorphic
 parent or a second table; the saves subsystem already set a precedent for the
 former in this repo.
+
+### [F4/F8] `056_exchange_settlements.sql` — applied 2026-09-16
+
+Byron chose the settlements row over money columns on `toy_transactions`.
+
+The per-line `claiming` flag went on `exchange_costs` where it belongs, and the
+`amount_cents > 0` check relaxed to `>= 0` for covered lines only — somebody
+recording that they absorbed the postage need not price it, while a line being
+claimed still has to be worth something.
+
+The receipt bucket is **private, and its policies are tighter than 049's**. That
+migration lets any signed-in account read a tutorial PDF, which is right for
+shared work. A receipt is frequently a photograph of somebody's bank statement,
+so all four verbs are gated on being a party to the exchange named by the path's
+first folder segment. A file uploaded outside that shape matches no exchange and
+is readable by nobody, which is the correct failure direction.
+
+`check-schema-guards.sh` gained four assertions, including that the bucket is
+not public — the worst failure mode in that file, since it would publish
+receipts to anyone who could guess a transaction id with nothing in the product
+looking different. Mutation-checked against a public bucket and a missing one.
+
+Verified past the ledger on the remote: table, RLS, three policies, four storage
+policies, private bucket, and the `claiming` column.
+
+The original entry, with the reasoning behind the shape, follows.
+
+### [F4/F8] The cost panel needs more than 055 models
+
+**Why:** 055 was written from the dashboard's money *summary*, which is a list of
+descriptions and amounts. The full cost panel on the exchange detail screen —
+captured at `.playwright-mcp/artboard-thread-detail.png` — carries four things
+it does not model:
+
+- **Per line, who is absorbing it.** Each line is tagged "Claiming back" or
+  "Covering it". A line someone is covering shows $0.00 to the other party but
+  is still listed, because the point is that they are not being asked for it.
+  Without this the panel cannot distinguish "you owe nothing" from "nobody has
+  said what this costs".
+- **A note, attributed.** One free-text note under the lines with a byline
+  ("Northside Therapy Collective's note"), rendered as a quote. Per exchange,
+  not per line.
+- **A receipt.** An image slot captioned "Their receipt, if they added one".
+  Per exchange.
+- **A settlement method.** "Bank transfer", shown once at the foot of the panel.
+
+`settled_at` / `settled_by` already cover "Mark as settled", which is the only
+part 055 got ahead of.
+
+**Blocks:** the cost panel (F8) and the top third of the exchange detail (F4).
+Neither the dashboard summary nor F3's list is affected — those ship on 055 as
+it stands.
+
+**Proposed migration:** not written, because the shape is a real choice. The
+per-line flag is clearly a column on `exchange_costs`. The note, receipt and
+method are per exchange, so they are either three columns on
+`toy_transactions` — which makes that table carry money concerns it otherwise
+does not — or a small `exchange_settlements` row per transaction. The second
+keeps money in one place and gives the receipt somewhere to hang; it is also one
+more table to gate. Worth one decision rather than drifting into the first.
+
+**RLS impact:** whichever shape, the same `is_toy_transaction_party()` gate as
+the costs and messages on that exchange. A receipt is an image of somebody's
+bank statement often enough that the storage bucket needs the same care 049 gave
+tutorial PDFs — private, with a signed-in-only policy, not the public photo
+buckets.
+
+**Workaround in place:** none. F4 has not been started.
 
 _(Migrations 001-054 predate this project; 054 was applied 2026-09-03.)_
 

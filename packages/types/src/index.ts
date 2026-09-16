@@ -114,6 +114,12 @@ export interface ExchangeCost {
   amount_cents: number
   payer_id: string
   payee_id: string
+  /**
+   * Whether the payer is being asked for this. False means the payee absorbed
+   * it: the line still shows, at $0.00 to the payer, because the point is that
+   * they are not being asked. Only claimed lines count toward a total.
+   */
+  claiming: boolean
   settled_at: string | null
   settled_by: string | null
   created_by: string
@@ -124,6 +130,28 @@ export interface ExchangeCost {
 /** Cents to the string the panel shows. Money formatting in exactly one place. */
 export function formatCents(cents: number, currency = 'AUD', locale = 'en-AU'): string {
   return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(cents / 100)
+}
+
+/**
+ * How one exchange was settled. 056, one row per transaction.
+ *
+ * Separate from `exchange_costs` because these are properties of the settlement
+ * rather than of a line: which of the two wrote the note, the receipt, and how
+ * the money actually moved. Kept off `toy_transactions`, which otherwise knows
+ * nothing about money.
+ */
+export interface ExchangeSettlement {
+  transaction_id: string
+  /** Rendered as a quote with a byline, which is why the author is stored. */
+  note: string | null
+  note_by: string | null
+  /** A storage path in the private `exchange-receipts` bucket, never a URL. */
+  receipt_path: string | null
+  /** Free text: the artboard shows only "Bank transfer", and the rest of the
+   *  vocabulary is not known yet. Narrow it when it is. */
+  method: string | null
+  updated_at: string
+  updated_by: string
 }
 
 export interface ToyTransaction {

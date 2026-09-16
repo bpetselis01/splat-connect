@@ -117,7 +117,29 @@ select * from (values
   -- two strangers, and the RLS policies would happily allow it.
   ('055 exchange_costs party trigger is present',
    (select count(*) > 0 from pg_trigger
-      where tgname = 'exchange_costs_parties_match' and not tgisinternal))
+      where tgname = 'exchange_costs_parties_match' and not tgisinternal)),
+
+  ('056 exchange_settlements has RLS enabled',
+   (select coalesce(bool_and(relrowsecurity), false) from pg_class
+      where relname = 'exchange_settlements' and relnamespace = 'public'::regnamespace)),
+
+  -- The one in this file with the worst failure mode. A receipt is often a
+  -- photograph of somebody's bank statement; the bucket being public would
+  -- publish them to anyone who can guess a transaction id, with no error
+  -- anywhere and nothing in the product looking different.
+  ('056 exchange-receipts bucket is private',
+   (select coalesce(bool_and(not public), false) from storage.buckets
+      where id = 'exchange-receipts')),
+
+  -- Four verbs, each gated on being a party. 049 lets any signed-in account
+  -- read a tutorial PDF, which is right for shared work and would be wrong
+  -- here; if these are ever replaced by a signed-in-only policy the count
+  -- stays the same, so the policy bodies are checked too.
+  ('056 exchange-receipts policies all check the exchange party',
+   (select count(*) = 4 from pg_policies
+      where schemaname = 'storage'
+        and policyname like '%exchange receipts%'
+        and coalesce(qual, with_check) like '%is_toy_transaction_party%'))
 ) as t(guard, ok)
 where not ok;
 EOSQL
