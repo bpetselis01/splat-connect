@@ -1256,16 +1256,24 @@
    * (`badge bg-honey-soft text-honey-deep`), so `currentColor` picks the
    * edge up for free.
    */
+  /* The status pill, measured off the artboard's exchanges rows: 4px 12px in a
+     999px pill, 800/12 Nunito, 0.04em, and no border at all — the tint is what
+     separates it from the card, which is why it needs no edge.
+
+     Pixel drew this in mono with an ink outline at the SOON badge's size. Both
+     went: the outline made every pill read as a control you could press, and
+     mono at 11px made a status look like a serial number. */
   .badge {
     display: inline-flex;
     align-items: center;
-    padding: 2px 7px;
-    border: var(--border-width) solid currentColor;
-    border-radius: var(--radius-field);
-    font-family: var(--font-mono);
-    font-size: 0.6875rem;
-    font-weight: 700;
-    letter-spacing: 0.05em;
+    gap: 6px;
+    padding: 4px 12px;
+    border: 0;
+    border-radius: var(--radius-pill);
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
     white-space: nowrap;
   }
