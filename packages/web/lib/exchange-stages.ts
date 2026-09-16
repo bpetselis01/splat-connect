@@ -23,7 +23,7 @@
  * it is filed in SUPABASE.md rather than papered over here.
  */
 import type { Stage } from '@/components/stage-rail'
-import type { ToyTransaction } from '@splat-connect/types'
+import type { ToyTransaction, ToyTransactionDetail } from '@splat-connect/types'
 
 type Row = Pick<
   ToyTransaction,
@@ -95,5 +95,99 @@ export function exchangeStages(tx: Row): Stage[] {
             { key: 'handover', label: 'Handover', caption: 'Never got here', state: 'todo' },
             { key: 'closed', label: 'Closed', caption: `Closed ${ended}`, state: 'done' },
           ]
+  }
+}
+
+/**
+ * The four facts that sit under the rail on a detail page, for the stage the
+ * record is actually at.
+ *
+ * Every value is read off the record. The brief warns that facts must be
+ * computed AFTER the values they quote are assigned — the failure it describes
+ * is a panel quoting a stale address or somebody else's code because it was
+ * built from variables assigned later, and deriving the whole block from `tx`
+ * in one place is what makes that impossible here.
+ *
+ * "Not agreed yet" and "Not shared yet" are deliberate. A fact panel with a
+ * blank in it reads as broken; one that says nothing has been agreed is telling
+ * you what to do next.
+ */
+export interface StageFacts {
+  title: string
+  facts: Array<{ label: string; value: string }>
+}
+
+export function stageFacts(tx: ToyTransactionDetail, viewerIsOwnerSide: boolean): StageFacts {
+  const address = [tx.pickup_line1, tx.pickup_suburb, tx.pickup_state, tx.pickup_postcode]
+    .filter(Boolean)
+    .join(', ')
+  // The viewer's own code, never the other party's. Each side reads theirs out
+  // and the other types it in; showing both would defeat the point of two.
+  const code = viewerIsOwnerSide ? tx.owner_code : tx.requester_code
+  const confirmedByViewer = viewerIsOwnerSide ? tx.owner_confirmed_at : tx.requester_confirmed_at
+  const confirmedByOther = viewerIsOwnerSide ? tx.requester_confirmed_at : tx.owner_confirmed_at
+
+  switch (tx.status) {
+    case 'requested':
+      return {
+        title: 'Waiting to hear back',
+        facts: [
+          { label: 'Asked', value: new Date(tx.created_at).toLocaleDateString('en-AU') },
+          { label: 'Toy', value: tx.toy_name },
+          { label: 'Kind', value: tx.type === 'donation' ? 'Donation' : 'Exchange' },
+          {
+            label: 'Offered back',
+            value: tx.offered_toy_name ?? (tx.type === 'donation' ? 'Nothing — it is a donation' : 'Nothing yet'),
+          },
+        ],
+      }
+
+    case 'accepted':
+      return {
+        title: 'Meeting them',
+        facts: [
+          { label: 'When', value: tx.pickup_instructions || 'Not agreed yet — say so in the thread' },
+          { label: 'Where', value: address || 'Not shared yet' },
+          {
+            label: 'Your code',
+            value: code ?? 'Not issued yet',
+          },
+          {
+            label: 'Confirmed',
+            value: confirmedByViewer
+              ? confirmedByOther
+                ? 'Both of you'
+                : 'You — waiting on them'
+              : confirmedByOther
+                ? 'Them — waiting on you'
+                : 'Neither of you yet',
+          },
+        ],
+      }
+
+    case 'completed':
+      return {
+        title: 'Handed over',
+        facts: [
+          { label: 'Closed', value: new Date(tx.updated_at).toLocaleDateString('en-AU') },
+          { label: 'Toy', value: tx.toy_name },
+          { label: 'Where', value: address || 'Not recorded' },
+          { label: 'Kind', value: tx.type === 'donation' ? 'Donation' : 'Exchange' },
+        ],
+      }
+
+    default:
+      return {
+        title: tx.status === 'rejected' ? 'Not taken forward' : 'Withdrawn',
+        facts: [
+          { label: 'Asked', value: new Date(tx.created_at).toLocaleDateString('en-AU') },
+          { label: 'Closed', value: new Date(tx.updated_at).toLocaleDateString('en-AU') },
+          { label: 'Toy', value: tx.toy_name },
+          {
+            label: 'What now',
+            value: tx.type === 'donation' ? 'The toy stays with its owner' : 'Nothing was exchanged',
+          },
+        ],
+      }
   }
 }
