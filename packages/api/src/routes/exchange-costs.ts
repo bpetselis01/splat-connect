@@ -86,4 +86,88 @@ exchangeCosts.get('/outstanding', async (c) => {
   })
 })
 
+/**
+ * GET /api/exchange-costs/:transactionId
+ *
+ * Every cost line on one exchange plus its settlement, for the cost panel on
+ * the detail screen. RLS is the gate: a caller who is not a party to this
+ * exchange gets empty arrays rather than a 403, because 055's policies mean the
+ * rows are never returned in the first place.
+ *
+ * Both claimed and covered lines come back. A covered line is the point of the
+ * flag — it says somebody absorbed a cost rather than that no cost existed —
+ * so filtering it out here would lose exactly the thing it records.
+ */
+exchangeCosts.get('/:transactionId', async (c) => {
+  const supabase = createUserClient(c.get('token'))
+  const transactionId = c.req.param('transactionId')
+
+  const [lines, settlement] = await Promise.all([
+    supabase
+      .from('exchange_costs')
+      .select('id, transaction_id, description, amount_cents, claiming, payer_id, payee_id, settled_at, settled_by, created_at')
+      .eq('transaction_id', transactionId)
+      .order('created_at', { ascending: true }),
+    supabase
+      .from('exchange_settlements')
+      .select('transaction_id, note, note_by, receipt_path, method, updated_at, updated_by')
+      .eq('transaction_id', transactionId)
+      .maybeSingle(),
+  ])
+
+  if (lines.error) return c.json({ error: lines.error.message }, 500)
+
+  const rows = (lines.data ?? []) as unknown as Array<{
+    amount_cents: number
+    claiming: boolean
+    settled_at: string | null
+  }>
+
+  return c.json({
+    lines: lines.data ?? [],
+    settlement: settlement.data ?? null,
+    // Only claimed lines count. A covered one is listed at its own cost and
+    // owed by nobody, so adding it to a total the payer reads as "what I owe"
+    // would be wrong in the direction that costs somebody money.
+    total_cents: rows.filter((r) => r.claiming).reduce((sum, r) => sum + r.amount_cents, 0),
+    outstanding_cents: rows
+      .filter((r) => r.claiming && !r.settled_at)
+      .reduce((sum, r) => sum + r.amount_cents, 0),
+  })
+})
+
+/**
+ * PATCH /api/exchange-costs/:id/settle
+ *
+ * Marks one line settled, or un-marks it. Either party may, because either may
+ * be the one who was paid and so the one who knows — 055's update policy says
+ * the same thing.
+ *
+ * `settled_by` is always the caller. It is not a field the client supplies:
+ * the whole value of the column is that it records who made the claim, and a
+ * client-supplied one records who the client said made it.
+ */
+exchangeCosts.patch('/:id/settle', async (c) => {
+  const supabase = createUserClient(c.get('token'))
+  const userId = c.get('userId')
+  const body = (await c.req.json().catch(() => ({}))) as { settled?: boolean }
+  const settled = body.settled !== false
+
+  const { data, error } = await supabase
+    .from('exchange_costs')
+    .update(
+      settled
+        ? { settled_at: new Date().toISOString(), settled_by: userId }
+        : { settled_at: null, settled_by: null }
+    )
+    .eq('id', c.req.param('id'))
+    .select('id, settled_at, settled_by')
+    .maybeSingle()
+
+  if (error) return c.json({ error: error.message }, 500)
+  // RLS returns no row rather than refusing, so an absent row IS the refusal.
+  if (!data) return c.json({ error: 'No such cost on an exchange you are part of.' }, 404)
+  return c.json(data)
+})
+
 export default exchangeCosts
