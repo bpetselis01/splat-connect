@@ -2,11 +2,19 @@ name: CI
 
 # `push` without a branch filter meant every push to a branch with an open PR
 # ran this workflow twice — once for `push`, once for `pull_request` — for
-# identical coverage at double the runner minutes. PR branches are covered by
-# the `pull_request` trigger; `push` now only fires for merges to main.
+# identical coverage at double the runner minutes. So `push` is filtered to the
+# two branches that are not otherwise covered: main, and development, which
+# takes direct pushes between PRs. A feature branch with an open PR is still
+# covered once, by `pull_request`.
 on:
   push:
-    branches: [main]
+    # `development` is here because work lands on it directly between PRs, and a
+    # push with no open PR used to run nothing at all. Roughly nine commits of
+    # the photo-array line reached the shared branch that way in September 2026;
+    # by the time anything ran them, 33 of 77 mobile E2E tests were dying in
+    # setup on a generated-column write. The concurrency group below still
+    # cancels superseded runs here — only main is exempt from that.
+    branches: [main, development]
   pull_request:
   workflow_dispatch:
 
