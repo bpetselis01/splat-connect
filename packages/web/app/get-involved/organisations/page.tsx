@@ -13,8 +13,7 @@ export default function OrganisationsPage() {
       <EditorialImage illustration="organisation" ratio="2/1" />
       <h1 className="mt-6 title-article">For organisations</h1>
       <p className="mt-3 max-w-prose text-base leading-relaxed text-muted">
-        Therapy services, schools, disability organisations and community groups. What
-        you bring is the thing a volunteer platform cannot generate on its own:
+        What you bring is what a volunteer platform cannot generate on its own:
         professional judgement, and a physical place families can get to.
       </p>
 
