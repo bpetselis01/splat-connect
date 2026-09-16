@@ -92,6 +92,40 @@ export function toyHolderName(toy: Pick<ToyWithOwner, 'profiles' | 'organization
 export type ToyTransactionType = 'donation' | 'exchange'
 export type ToyTransactionStatus = 'requested' | 'accepted' | 'rejected' | 'withdrawn' | 'completed'
 
+/**
+ * A cost two parties agreed between themselves on an exchange. 055.
+ *
+ * SPLAT never handles the money — the dashboard panel says so in as many words
+ * — so this is a record rather than a payment. `settled_at` means somebody said
+ * it was paid and `settled_by` says which of them, which is the most the
+ * platform can honestly claim to know. Either party may settle, because either
+ * may be the one who was paid.
+ */
+export interface ExchangeCost {
+  id: string
+  transaction_id: string
+  /** In the words the two of them used. Rendered verbatim. */
+  description: string
+  /**
+   * Integer cents, always positive. Never a float — a rounding error in a
+   * number two families agreed between them is an argument, not a display bug.
+   * A refund is the line being settled or removed, not a negative amount.
+   */
+  amount_cents: number
+  payer_id: string
+  payee_id: string
+  settled_at: string | null
+  settled_by: string | null
+  created_by: string
+  created_at: string
+  updated_at: string
+}
+
+/** Cents to the string the panel shows. Money formatting in exactly one place. */
+export function formatCents(cents: number, currency = 'AUD', locale = 'en-AU'): string {
+  return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(cents / 100)
+}
+
 export interface ToyTransaction {
   id: string
   toy_id: string
