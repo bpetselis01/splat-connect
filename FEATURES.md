@@ -23,7 +23,7 @@ likelier to need a migration. See
 | 8 | Cost panel | component | restyle | todo | ⚠ needs 056 | |
 | 9 | Tutorials + saved | `/dashboard/tutorials`, `/dashboard/saved/*` | restyle | awaiting review | no | full suite; card type measured off the artboard |
 | 10 | Organisation screens | `/dashboard/organisation/*` | new build | todo | | |
-| 11 | Get involved explainers | `/get-involved/*` | restyle | todo | no | |
+| 11 | Get involved explainers | `/get-involved/*` | restyle | awaiting review | no | full suite; leads trimmed, step bodies left (safety copy) |
 | 12 | Org onboarding + admin queue | `/dashboard/organisation`, `/admin` | new build | todo | | |
 
 ## Scope, measured
