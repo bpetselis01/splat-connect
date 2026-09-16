@@ -99,7 +99,7 @@ describe('toys CRUD', () => {
     const blocked = await req(`/${toy.id}/publish`, owner.token, { method: 'PATCH' })
     expect(blocked.status).toBe(400)
     const blockedBody = (await blocked.json()) as { missing: string[] }
-    expect(blockedBody.missing).toContain('Cover photo')
+    expect(blockedBody.missing).toContain('A photo')
     expect(blockedBody.missing).toContain('Offer type')
 
     await req(`/${toy.id}`, owner.token, {
