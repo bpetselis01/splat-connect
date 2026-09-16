@@ -21,7 +21,7 @@ likelier to need a migration. See
 | 6 | Print requests + detail | `/dashboard/print-requests`, `/[id]` | new build | todo | | |
 | 7 | Printers | `/dashboard/printers` | new build | todo | | |
 | 8 | Cost panel | component | restyle | todo | ⚠ needs 056 | |
-| 9 | Tutorials + saved | `/dashboard/tutorials`, `/dashboard/saved/*` | restyle | todo | no | |
+| 9 | Tutorials + saved | `/dashboard/tutorials`, `/dashboard/saved/*` | restyle | awaiting review | no | full suite; card type measured off the artboard |
 | 10 | Organisation screens | `/dashboard/organisation/*` | new build | todo | | |
 | 11 | Get involved explainers | `/get-involved/*` | restyle | todo | no | |
 | 12 | Org onboarding + admin queue | `/dashboard/organisation`, `/admin` | new build | todo | | |
