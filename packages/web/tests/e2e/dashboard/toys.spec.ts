@@ -38,12 +38,23 @@ test('a contributor adds a toy, edits it, uploads a cover photo, publishes it, a
 
     await page.getByRole('tab', { name: 'Review' }).click()
     // The pointer is still resting on the pill just clicked. Its active colour
-    // (--color-ink since the pixel register, 03ef998e) has to survive :hover,
-    // or every selection looks like it did not take.
-    await expect(page.getByRole('tab', { name: 'Review' })).toHaveCSS(
-      'background-color',
-      'rgb(18, 40, 58)'
-    )
+    // (--color-ink) has to survive :hover, or every selection looks like it did
+    // not take.
+    //
+    // Read out of the page rather than written here as a literal. This assertion
+    // used to name rgb(18, 40, 58) and broke the moment --color-ink moved with
+    // the design system, reporting a token change as a broken toy editor. The
+    // rule under test is "the active pill stays inked", which is true whatever
+    // ink is — the same reason tone.test.ts reads its values at test time.
+    const ink = await page.evaluate(() => {
+      const el = document.createElement('span')
+      el.style.color = 'var(--color-ink)'
+      document.body.append(el)
+      const c = getComputedStyle(el).color
+      el.remove()
+      return c
+    })
+    await expect(page.getByRole('tab', { name: 'Review' })).toHaveCSS('background-color', ink)
     // The review tab carries the same finish bar as the tutorial editor: a
     // count, and each gap as a button that jumps to the step that fixes it.
     await expect(page.getByText('2 things left')).toBeVisible()
