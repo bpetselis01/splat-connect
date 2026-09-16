@@ -154,7 +154,7 @@ export function Slot({
       // pillar read as a stain rather than as a held space. White at 50% — the
       // board's own value — lightens whatever is under it without arguing with
       // its hue.
-      className={`pointer-events-none flex flex-col items-center justify-center gap-1 rounded-[var(--radius-pixel-slot)] border-2 border-dashed bg-surface/50 p-3 text-center ${edge} ${className}`.trim()}
+      className={`pointer-events-none flex flex-col items-center justify-center gap-1 rounded-field border-2 border-dashed bg-surface/50 p-3 text-center ${edge} ${className}`.trim()}
     >
       <span className="meta">{KIND_LABEL[kind]}</span>
       <span className="max-w-[22ch] text-[11px] leading-tight opacity-85">{note}</span>

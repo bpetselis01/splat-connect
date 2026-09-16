@@ -151,7 +151,7 @@ export function ToyEditor({ toy: initialToy }: { toy: Toy }) {
           onSubmit: publish,
           done:
             toy.status === 'published' ? (
-              <span className="text-sm font-semibold text-mint-deep">Published</span>
+              <span className="text-sm font-semibold text-ink">Published</span>
             ) : undefined,
         }}
         trailing={

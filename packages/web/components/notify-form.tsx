@@ -28,7 +28,7 @@ export function NotifyForm({ featureKey }: { featureKey: string }) {
         role="status"
         tabIndex={-1}
         ref={(el) => el?.focus()}
-        className="mt-6 text-sm font-semibold text-mint-deep"
+        className="mt-6 text-sm font-semibold text-ink"
       >
         Thanks — we&apos;ll email you when it&apos;s ready.
       </p>

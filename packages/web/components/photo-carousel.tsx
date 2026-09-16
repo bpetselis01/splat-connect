@@ -123,7 +123,7 @@ export function PhotoCarousel({
                 draggable={false}
               />
               {switchUrl === url && (
-                <span className="absolute left-3 top-3 rounded-full border-2 border-ink bg-mint-soft px-2.5 py-0.5 text-[11px] font-black uppercase tracking-wide text-mint-deep">
+                <span className="absolute left-3 top-3 rounded-full border-2 border-ink bg-mint-soft px-2.5 py-0.5 text-[11px] font-black uppercase tracking-wide text-ink">
                   Shows the switch
                 </span>
               )}

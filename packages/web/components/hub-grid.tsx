@@ -74,7 +74,7 @@ export function HubGrid({
               // The board's four-character SOON, at the size it was drawn:
               // .badge defaults to 11px for the multi-word labels every other
               // caller carries, but this is the one label 9px fits.
-              <span className="badge bg-honey-soft text-honey-deep text-[9px]">SOON</span>
+              <span className="badge bg-honey-soft text-ink text-[9px]">SOON</span>
             )}
             {/* Apricot, the board's one warm accent, so the number reads before
                 the title on the only cards that carry one. Nothing at zero: a

@@ -253,7 +253,7 @@ export function ToyTransactionThread({
             them. Declining is not clicking: the toy stays a draft they own. */}
         {tx.status === 'completed' && (
           <div className="card flex flex-col gap-3 p-4">
-            <p className="font-bold text-mint-deep">Handoff complete.</p>
+            <p className="font-bold text-ink">Handoff complete.</p>
             {tx.received_toy?.status === 'draft' && (
               <>
                 <p className="text-sm leading-relaxed text-muted">

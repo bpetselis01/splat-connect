@@ -158,7 +158,7 @@ export function Nav({ caps, quiet = false, showMenu = false }: NavProps) {
             <span
               aria-hidden="true"
               title={caps.profile.name}
-              className="pixel-avatar grid h-8 w-8 shrink-0 place-items-center bg-mint text-sm font-black text-mint-deep"
+              className="pixel-avatar grid h-8 w-8 shrink-0 place-items-center bg-mint text-sm font-black text-ink"
             >
               {initials(caps.profile.name)}
             </span>

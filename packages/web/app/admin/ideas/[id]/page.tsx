@@ -183,7 +183,7 @@ export default async function AdminIdeaPage({ params }: { params: Promise<{ id: 
             <form action={publishAsChallenge.bind(null, idea.id)}>
               <button
                 type="submit"
-                className="btn btn-block bg-mint-deep text-white shadow-rest hover:brightness-90"
+                className="btn btn-block bg-success-deep text-white shadow-e2 hover:brightness-90"
               >
                 <Check /> Publish as challenge
               </button>
@@ -211,7 +211,7 @@ export default async function AdminIdeaPage({ params }: { params: Promise<{ id: 
               </p>
               <button
                 type="submit"
-                className="btn btn-block bg-mint-deep text-white shadow-rest hover:brightness-90"
+                className="btn btn-block bg-success-deep text-white shadow-e2 hover:brightness-90"
               >
                 Graduate to draft guide
               </button>

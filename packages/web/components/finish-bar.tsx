@@ -72,7 +72,7 @@ export function FinishBar({
       <div className="sticky-submit-bar">
         <span className="sticky-submit-note">
           {missing.length === 0 ? (
-            <span className="font-bold text-mint-deep">Ready to {submitLabel.toLowerCase()}</span>
+            <span className="font-bold text-ink">Ready to {submitLabel.toLowerCase()}</span>
           ) : (
             <>
               <span className="font-bold text-ink">

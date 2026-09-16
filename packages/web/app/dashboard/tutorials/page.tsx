@@ -19,9 +19,9 @@ export default async function DashboardPage() {
   const rejectedCount = tutorials.filter((t) => t.status === 'rejected').length
 
   const stats = [
-    { label: 'Pending', count: pendingCount, tone: 'text-honey-deep' },
-    { label: 'Approved', count: approvedCount, tone: 'text-mint-deep' },
-    { label: 'Rejected', count: rejectedCount, tone: 'text-apricot-deep' },
+    { label: 'Pending', count: pendingCount, tone: 'text-ink' },
+    { label: 'Approved', count: approvedCount, tone: 'text-ink' },
+    { label: 'Rejected', count: rejectedCount, tone: 'text-ink' },
   ]
 
   return (

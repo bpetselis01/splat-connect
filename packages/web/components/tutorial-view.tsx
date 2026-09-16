@@ -222,7 +222,7 @@ export function TutorialView({
                 <div key={r.tutorials.id} className="flex flex-col gap-2">
                   <TutorialCard tutorial={r.tutorials} />
                   {r.tutorials.status !== 'approved' && (
-                    <span className="badge self-start bg-honey-soft text-honey-deep">
+                    <span className="badge self-start bg-honey-soft text-ink">
                       Not yet approved — hidden from the public page
                     </span>
                   )}

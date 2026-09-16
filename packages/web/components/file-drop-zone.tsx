@@ -111,7 +111,7 @@ export function FileDropZone({
         Choose file
       </button>
       {displayLabel && (
-        <p className="mt-3 truncate text-xs font-bold text-mint-deep">{displayLabel}</p>
+        <p className="mt-3 truncate text-xs font-bold text-ink">{displayLabel}</p>
       )}
     </div>
   )

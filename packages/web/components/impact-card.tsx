@@ -26,7 +26,7 @@ export function ImpactCard({ kind, entity }: ImpactCardProps) {
         <p className="truncate text-sm font-bold text-ink">{entity.name}</p>
         <span
           className={`badge shrink-0 ${
-            kind === 'person' ? 'bg-brand-tint text-brand-deep' : 'bg-mint-soft text-mint-deep'
+            kind === 'person' ? 'bg-brand-tint text-brand-deep' : 'bg-mint-soft text-ink'
           }`}
         >
           {kind === 'person' ? 'Person' : 'Organisation'}

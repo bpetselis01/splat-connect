@@ -29,9 +29,9 @@
 import type { ToyIdeaStatus } from '@splat-connect/types'
 
 const SUNKEN = 'bg-sunken text-brand-deep'
-const HONEY = 'bg-honey-soft text-honey-deep'
-const MINT = 'bg-mint-soft text-mint-deep'
-const APRICOT = 'bg-apricot-soft text-apricot-deep'
+const HONEY = 'bg-honey-soft text-ink'
+const MINT = 'bg-mint-soft text-ink'
+const APRICOT = 'bg-apricot-soft text-ink'
 const BRAND = 'bg-brand-tint text-brand-deep'
 
 export const STATUS_TONE = {

@@ -60,7 +60,7 @@ export function PublicFooter() {
                       >
                         {child.label}
                         {child.state === 'soon' && (
-                          <span className="badge bg-honey-soft text-honey-deep text-[9px]">SOON</span>
+                          <span className="badge bg-honey-soft text-ink text-[9px]">SOON</span>
                         )}
                       </BoundaryLink>
                     </li>

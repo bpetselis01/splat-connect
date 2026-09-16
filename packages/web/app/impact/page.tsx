@@ -72,7 +72,7 @@ export default async function ImpactPage() {
                 <p className="max-w-40 truncate text-sm font-bold text-ink">{r.name}</p>
                 <span
                   className={`badge mt-1 ${
-                    r.kind === 'person' ? 'bg-brand-tint text-brand-deep' : 'bg-mint-soft text-mint-deep'
+                    r.kind === 'person' ? 'bg-brand-tint text-brand-deep' : 'bg-mint-soft text-ink'
                   }`}
                 >
                   {r.kind === 'person' ? 'Person' : 'Organisation'}

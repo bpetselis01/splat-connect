@@ -45,7 +45,7 @@ function TransactionRow({
         {/* The one line on this card that is an instruction rather than
             a fact, so it is the one line that is not muted grey. */}
         {needsAction(tx, viewerId, ledOrgIds) && (
-          <p className="self-start rounded-field bg-mint-soft px-2.5 py-1 text-sm font-bold text-mint-deep">
+          <p className="self-start rounded-field bg-mint-soft px-2.5 py-1 text-sm font-bold text-ink">
             {actionLabel(tx)}
           </p>
         )}

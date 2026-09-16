@@ -127,7 +127,7 @@ export function OrgPickupForm({ orgId, pickup }: { orgId: string; pickup: OrgPic
           {error}
         </p>
       )}
-      {saved && !error && <p className="text-sm font-bold text-mint-deep">Pickup details saved.</p>}
+      {saved && !error && <p className="text-sm font-bold text-ink">Pickup details saved.</p>}
 
       <button type="submit" disabled={busy} className="btn btn-accent self-start">
         {busy ? 'Saving…' : 'Save pickup details'}

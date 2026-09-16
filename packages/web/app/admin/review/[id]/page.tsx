@@ -117,7 +117,7 @@ export default async function ReviewTutorialPage({
           <form action={approveTutorial.bind(null, tutorial!.id)}>
             <button
               type="submit"
-              className="btn btn-block bg-mint-deep text-white shadow-rest hover:brightness-90"
+              className="btn btn-block bg-success-deep text-white shadow-e2 hover:brightness-90"
             >
               <Check /> Approve — publish to library
             </button>

@@ -257,9 +257,9 @@ export function SwitchAdaptedBear({ className = '' }: { className?: string }) {
             second announcement of the same fact is noise. */}
         <span
           aria-hidden="true"
-          className={`meta absolute -right-3 -top-2 rounded-[var(--radius-pixel-chip)] border-2 px-2.5 py-1 leading-none ${
+          className={`meta absolute -right-3 -top-2 rounded-pill border-2 px-2.5 py-1 leading-none ${
             pressed
-              ? 'border-honey bg-honey-soft text-honey-deep'
+              ? 'border-honey bg-honey-soft text-ink'
               : 'border-ink bg-surface text-muted'
           }`}
         >

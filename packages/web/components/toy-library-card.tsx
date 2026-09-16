@@ -25,7 +25,7 @@ export function ToyLibraryCard({ toy, save }: { toy: ToyWithOwner; save?: SavePr
           <p className="mt-1 text-xs text-muted">{toy.quantity} available</p>
         )}
         {toy.switch_adapted && (
-          <span className="badge mt-3 inline-block bg-mint-soft text-mint-deep">
+          <span className="badge mt-3 inline-block bg-mint-soft text-ink">
             Switch-adapted
           </span>
         )}

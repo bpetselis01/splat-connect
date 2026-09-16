@@ -155,7 +155,7 @@ export default async function AdminOrganizationsPage() {
                       )}
                     </div>
                     <span
-                      className={`badge ${org.status === 'active' ? 'bg-mint-soft text-mint-deep' : 'bg-sunken text-muted'}`}
+                      className={`badge ${org.status === 'active' ? 'bg-mint-soft text-ink' : 'bg-sunken text-muted'}`}
                     >
                       {org.status.toUpperCase()}
                     </span>

@@ -166,7 +166,7 @@ function SignupForm() {
           >
             <span
               aria-hidden="true"
-              className={`mt-0.5 grid h-[18px] w-[18px] shrink-0 place-items-center rounded-pixel-xs border-2 border-ink ${
+              className={`mt-0.5 grid h-[18px] w-[18px] shrink-0 place-items-center rounded-field border border-line ${
                 acceptedTerms ? 'bg-ink text-white' : 'text-transparent'
               }`}
             >
