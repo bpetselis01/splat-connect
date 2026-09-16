@@ -5,7 +5,13 @@ import { requireCapabilities } from '@/lib/require-capabilities'
 import { apiClient } from '@/lib/api-client'
 import { LiveTransaction } from '@/components/live-transaction'
 import { ToyTransactionThread } from '@/components/toy-transaction-thread'
+import Link from 'next/link'
+import { Tag } from '@phosphor-icons/react/dist/ssr'
 import { isOwnerSide } from '@splat-connect/types'
+import { Badge } from '@/components/badge'
+import { CostPanel, type CostLine, type Settlement } from '@/components/cost-panel'
+import { StageRailCard } from '@/components/stage-rail-card'
+import { exchangeStages, stageFacts } from '@/lib/exchange-stages'
 import type { PickupAddress, Profile, ToyTransactionDetail } from '@splat-connect/types'
 
 // A partly-filled profile address is no use as a default — the accept dialog
@@ -59,22 +65,74 @@ export default async function ExchangeDetailPage({ params }: { params: Promise<{
   }
 
   const ledOrgIds = caps.ledOrgs.map((org) => org.id)
-  const otherPartyName = isOwnerSide(tx, caps.profile.id, ledOrgIds)
-    ? tx.requester_name
-    : tx.owner_name
+  const ownerSide = isOwnerSide(tx, caps.profile.id, ledOrgIds)
+  const otherPartyName = ownerSide ? tx.requester_name : tx.owner_name
+
+  /*
+   * Costs degrade to absent rather than taking the thread down. Somebody who
+   * came here from a notification to read a message does not care that a money
+   * panel is unavailable, and the panel renders nothing when there are no lines
+   * anyway.
+   */
+  let costs: { lines: CostLine[]; settlement: Settlement | null } | null = null
+  try {
+    costs = await apiClient.get(`/api/exchange-costs/${id}`)
+  } catch {
+    costs = null
+  }
+
+  // Computed here, after tx is assigned and after the viewer's side is known —
+  // the brief's warning about facts quoting values assigned later is about
+  // exactly this block, and the code in it is the viewer's own.
+  const stages = exchangeStages(tx)
+  const facts = stageFacts(tx, ownerSide)
 
   return (
     <div>
       <LiveTransaction transactionId={id} />
       {/* The thread is reachable from a notification as well as the list, so it
           needs a way back that does not assume browser history. */}
-      <div className="mb-6">
-        <BackLink href="/dashboard/exchanges" label="My exchanges" />
-        <h1 className="mt-1 title-detail">{tx.toy_name}</h1>
-        <p className="mt-1 text-sm text-muted">
-          {tx.type === 'donation' ? 'Donation' : 'Exchange'} with {otherPartyName}
-        </p>
+      {/* The full-width header: pills, title, one meta line, and the secondary
+          action right-aligned away from everything that acts on the record. */}
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0">
+          <BackLink href="/dashboard/exchanges" label="My exchanges" />
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <Badge status={tx.status} />
+            <Badge
+              status={tx.type === 'donation' ? 'toy_adaptation' : 'assistive_tech'}
+              label={tx.type === 'donation' ? 'Donation' : 'Exchange'}
+            />
+            <span className="text-sm text-muted">
+              Requested {new Date(tx.created_at).toLocaleDateString('en-AU')}
+            </span>
+          </div>
+          <h1 className="mt-1 title-detail">{tx.toy_name}</h1>
+          <p className="mt-1 text-sm text-muted">
+            {ownerSide ? 'You are giving this to' : 'You are receiving this from'} {otherPartyName}
+          </p>
+        </div>
+        <Link href={`/toy-library/${tx.toy_id}`} className="btn btn-quiet no-underline">
+          <Tag size={18} weight="bold" aria-hidden="true" />
+          View the listing
+        </Link>
       </div>
+
+      {costs && costs.lines.length > 0 && (
+        <div className="mb-6">
+          <CostPanel
+            lines={costs.lines}
+            settlement={costs.settlement}
+            noteByName={otherPartyName}
+            viewerOwes={!ownerSide}
+          />
+        </div>
+      )}
+
+      <div className="mb-6">
+        <StageRailCard stages={stages} facts={facts} />
+      </div>
+
       <ToyTransactionThread
         transaction={tx}
         viewerId={caps.profile.id}

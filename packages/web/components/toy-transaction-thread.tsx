@@ -85,9 +85,6 @@ export function ToyTransactionThread({
   const alreadyConfirmed = isOwner ? tx.owner_confirmed_at !== null : tx.requester_confirmed_at !== null
   const myCode = isOwner ? tx.owner_code : tx.requester_code
   const showMyCode = tx.status === 'accepted' && (tx.type === 'exchange' || !isOwner)
-  const pickup = [tx.pickup_line1, tx.pickup_suburb, tx.pickup_state, tx.pickup_postcode]
-    .filter(Boolean)
-    .join(', ')
 
   return (
     <div className="exchange-grid">
@@ -121,12 +118,12 @@ export function ToyTransactionThread({
                 <dd className="text-right font-bold text-ink">{tx.offered_toy_name}</dd>
               </div>
             )}
-            {tx.status === 'accepted' && pickup && (
-              <div className="flex justify-between gap-3 py-1.5">
-                <dt className="font-bold text-muted">Pickup</dt>
-                <dd className="text-right font-bold text-ink">{pickup}</dd>
-              </div>
-            )}
+            {/* Pickup used to sit here. It moved to the stage-facts panel under
+                the rail, where it belongs: it is a fact about the handover
+                stage, and that panel shows it beside when, the viewer's code
+                and who has confirmed. Rendering it in both places put the same
+                address on screen twice, which is how the duplication was
+                found — a strict locator matched two elements. */}
           </dl>
         </div>
 
