@@ -1,8 +1,11 @@
 import Link from 'next/link'
+import { ChatCircle, Gift, ArrowsLeftRight } from '@phosphor-icons/react/dist/ssr'
 import { requireCapabilities } from '@/lib/require-capabilities'
 import { apiClient } from '@/lib/api-client'
 import { Badge } from '@/components/badge'
 import { Handshake } from '@/components/icons'
+import { RecordCard } from '@/components/record-card'
+import { exchangeStages } from '@/lib/exchange-stages'
 import { BoundaryLink } from '@/components/boundary-link'
 import { MarkNotificationsRead } from '@/components/mark-notifications-read'
 import { needsAction, actionLabel } from '@splat-connect/types'
@@ -17,60 +20,76 @@ function TransactionRow({
   viewerId: string
   ledOrgIds: string[]
 }) {
+  /*
+   * The meta line is "kind · counterparty · when", in that order, and one line
+   * only. A leader's personal handoffs and their organisation's arrive in one
+   * list and nothing else tells them apart — which of the two they are
+   * answering as changes who the toy belongs to — so the organisation goes here
+   * rather than on a second line the artboard does not draw.
+   */
+  const kind = tx.type === 'donation' ? 'Donation' : 'Exchange'
+  const meta = [
+    `${kind} with ${tx.other_party_name}`,
+    tx.acting_for_org_name ? `for ${tx.acting_for_org_name}` : null,
+    new Date(tx.created_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' }),
+  ]
+    .filter(Boolean)
+    .join(' · ')
+
   return (
     <li>
-      <Link
-        href={`/dashboard/exchanges/${tx.id}`}
-        className="card card-link flex flex-col gap-2 p-4"
-      >
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="truncate font-bold text-ink">{tx.toy_name}</p>
-            <p className="truncate text-sm text-muted">
-              {tx.type === 'donation' ? 'Donation' : 'Exchange'} with {tx.other_party_name}
-            </p>
-            {/* A leader's personal handoffs and their organisation's
-                arrive in one list, and nothing else tells them apart —
-                which of the two they are answering as changes who the
-                toy belongs to. */}
-            {tx.acting_for_org_name && (
-              <p className="mt-1 truncate text-xs text-muted">
-                On behalf of {tx.acting_for_org_name}
-              </p>
-            )}
-          </div>
-          <Badge status={tx.status} />
-        </div>
-
-        {/* The one line on this card that is an instruction rather than
-            a fact, so it is the one line that is not muted grey. */}
-        {needsAction(tx, viewerId, ledOrgIds) && (
-          <p className="self-start rounded-field bg-mint-soft px-2.5 py-1 text-sm font-bold text-ink">
-            {actionLabel(tx)}
-          </p>
-        )}
-
-        {tx.blocked_by_rival_accept && (
-          <p className="text-sm text-muted">Locked — another request accepted</p>
-        )}
-
-        {tx.last_message && (
-          <div className="flex items-baseline justify-between gap-3 border-t border-line pt-2">
-            <p className="truncate text-sm text-muted">
-              {tx.last_message.sender_id === viewerId &&
-                tx.last_message.kind === 'user' &&
-                'You: '}
-              {tx.last_message.body}
-            </p>
-            <time
-              dateTime={tx.last_message.created_at}
-              className="shrink-0 text-xs text-muted"
+      <RecordCard
+        icon={
+          tx.type === 'donation' ? (
+            <Gift size={22} weight="duotone" />
+          ) : (
+            <ArrowsLeftRight size={22} weight="duotone" />
+          )
+        }
+        tint={tx.type === 'donation' ? 'var(--tmint)' : 'var(--tviolet)'}
+        title={tx.toy_name}
+        meta={meta}
+        pill={<Badge status={tx.status} />}
+        // Derived from this row's own status and confirmations — see
+        // lib/exchange-stages.ts for what the data can and cannot say.
+        stages={exchangeStages(tx)}
+        note={
+          tx.blocked_by_rival_accept
+            ? 'Locked — another request accepted'
+            : tx.last_message
+              ? `${
+                  tx.last_message.sender_id === viewerId && tx.last_message.kind === 'user'
+                    ? 'You: '
+                    : ''
+                }${tx.last_message.body}`
+              : undefined
+        }
+        // Exactly one filled primary, and on a conversation record it is Thread.
+        primary={
+          <Link href={`/dashboard/exchanges/${tx.id}`} className="btn btn-primary no-underline">
+            <ChatCircle size={18} weight="fill" aria-hidden="true" />
+            Thread
+          </Link>
+        }
+        /*
+         * The stage-specific action, right-aligned past the spacer. It is a link
+         * to the thread rather than a control that acts from here: accepting or
+         * confirming a handoff is a decision you make with the conversation in
+         * front of you, and the brief's "no dead controls" cuts both ways — a
+         * button that acts without that context is worse than a link that takes
+         * you to it.
+         */
+        stageAction={
+          needsAction(tx, viewerId, ledOrgIds) ? (
+            <Link
+              href={`/dashboard/exchanges/${tx.id}`}
+              className="btn btn-quiet no-underline"
             >
-              {new Date(tx.last_message.created_at).toLocaleDateString('en-AU')}
-            </time>
-          </div>
-        )}
-      </Link>
+              {actionLabel(tx)}
+            </Link>
+          ) : undefined
+        }
+      />
     </li>
   )
 }
@@ -117,7 +136,7 @@ export default async function ExchangesPage() {
           <p className="mt-1 max-w-xs text-sm leading-relaxed text-muted">
             Ask for a toy from the library, or list one of yours, and the conversation starts here.
           </p>
-          <BoundaryLink href="/toy-library" className="btn btn-accent mt-6">
+          <BoundaryLink href="/toy-library" className="btn btn-primary mt-6">
             Browse the toy library
           </BoundaryLink>
         </div>
