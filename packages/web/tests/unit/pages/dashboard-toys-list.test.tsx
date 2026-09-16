@@ -132,7 +132,7 @@ describe('ToyListPage', () => {
     // Draft is byte-identical to a tutorial draft; published takes the mint
     // that approved uses.
     expect(screen.getByText('DRAFT')).toHaveClass('badge', 'bg-sunken', 'text-brand-deep')
-    expect(screen.getByText('PUBLISHED')).toHaveClass('badge', 'bg-mint-soft', 'text-mint-deep')
+    expect(screen.getByText('PUBLISHED')).toHaveClass('badge', 'bg-mint-soft', 'text-ink')
   })
 
   it('throws rather than rendering an empty list when the fetch fails', async () => {

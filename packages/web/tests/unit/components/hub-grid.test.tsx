@@ -55,7 +55,7 @@ describe('HubGrid', () => {
     const slots = container.querySelectorAll('[aria-hidden="true"].border-dashed')
     expect(slots).toHaveLength(2)
     for (const slot of slots) {
-      expect(slot.className).toContain('text-honey-deep')
+      expect(slot.className).toContain('text-ink')
     }
   })
 

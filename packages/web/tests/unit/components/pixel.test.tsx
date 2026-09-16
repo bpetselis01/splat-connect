@@ -99,7 +99,7 @@ describe('Slot tone', () => {
   it('takes the section colour when given a tone', () => {
     const { container } = render(<Slot kind="art" tone="honey" note="x" />)
     const slot = container.firstElementChild!
-    expect(slot.className).toContain('text-honey-deep')
+    expect(slot.className).toContain('text-ink')
     expect(slot.className).toContain('border-current')
     expect(slot.className).not.toContain('border-brand')
   })
