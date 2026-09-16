@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { apiClient } from '@/lib/api-client'
 import { requireCapabilities } from '@/lib/require-capabilities'
 import { CardPhoto } from '@/components/card-photo'
-import { Badge } from '@/components/badge'
+import { Badge, TOY_LABEL } from '@/components/badge'
 import { Box } from '@/components/icons'
 import { BoundaryLink } from '@/components/boundary-link'
 import { givenAway } from '@splat-connect/types'
@@ -109,7 +109,7 @@ export default async function ToyListPage() {
                 <div className="flex flex-1 flex-col gap-1 p-4">
                   <p className="truncate text-sm font-bold text-ink">{toy.name}</p>
                   <div className="flex flex-wrap items-center gap-2">
-                    <Badge status={toy.status} />
+                    <Badge status={toy.status} label={TOY_LABEL[toy.status]} />
                     <p className="text-xs leading-relaxed text-muted">
                       Condition {toy.condition} / 10
                     </p>

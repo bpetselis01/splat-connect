@@ -65,6 +65,28 @@ export const STATUS_TONE = {
 
 export type BadgeStatus = keyof typeof STATUS_TONE
 
+/**
+ * A toy's own wording for the two states it has.
+ *
+ * Both a toy and a guide are stored as `draft`, and the badge is keyed on the
+ * status word, so without this they would both read DRAFT. They do not mean the
+ * same thing. A draft guide is one you are still writing; a toy has nothing to
+ * write, so the same stored state means only that nobody else can see it yet.
+ * "Hidden" is what that is.
+ *
+ * The brief is explicit — status words are a fixed vocabulary, guides use Draft,
+ * toys and challenges use Hidden — and this is the first case where one stored
+ * word needs two labels. The badge's own note says the six status components
+ * were collapsed because "no word ever meant two different colours"; the colour
+ * is still the same, which is why this is a label rather than a second map.
+ */
+export const TOY_LABEL: Partial<Record<'draft' | 'published', string>> = {
+  draft: 'Hidden',
+  // `published` is deliberately absent. It falls through to the badge's default
+  // — the status word in caps — because that is already the right word, and an
+  // override that restates the default only moves where the string lives.
+}
+
 /** The author-facing wording for an idea's lifecycle. */
 export const IDEA_LABEL: Record<ToyIdeaStatus, string> = {
   pending: 'Pending review',

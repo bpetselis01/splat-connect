@@ -80,10 +80,15 @@ test('a contributor adds a toy, edits it, uploads a cover photo, publishes it, a
     const card = page.getByRole('link', { name: /E2E Test Toy/ })
     await expect(card).toBeVisible()
     // Positive assertion now that published carries its own badge: the old
-    // "no Draft text" check would pass on a draft too, since the badge reads
-    // DRAFT and getByText is case-sensitive.
+    // "no Draft text" check would pass on a draft too, since getByText is
+    // case-sensitive.
+    //
+    // The two words come from different places, which is why their casing
+    // differs here. PUBLISHED is the badge's default — the status word upper-
+    // cased — while a hidden toy carries an explicit "Hidden" label, and the
+    // capitals you see in the browser are .badge's text-transform.
     await expect(card.getByText('PUBLISHED')).toBeVisible()
-    await expect(card.getByText('DRAFT')).toHaveCount(0)
+    await expect(card.getByText('Hidden')).toHaveCount(0)
 
     await card.click()
     await page.getByRole('button', { name: 'Delete toy' }).click()
