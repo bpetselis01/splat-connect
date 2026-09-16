@@ -388,12 +388,15 @@
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    min-height: 44px;
-    padding: 0.625rem 1.25rem;
-    border: 1px solid transparent;
-    border-radius: var(--radius-field);
-    font-size: 0.875rem;
-    font-weight: 700;
+    /* 48px standard, 999px, 800/15 Nunito — measured off the artboard's
+       /design-system/states screen, where every control is drawn in all six
+       of its states. .btn-sm below is the 36px quiet register. */
+    min-height: 48px;
+    padding: 0 20px;
+    border: var(--border-width) solid transparent;
+    border-radius: var(--radius-pill);
+    font-size: 15px;
+    font-weight: 800;
     line-height: 1.2;
     text-align: center;
     cursor: pointer;
@@ -405,50 +408,77 @@
       transform 140ms var(--ease-out-quart);
   }
 
-  /* Mirrors the mobile press scale (0.96) — a control that dips and settles
-     feels tactile, one that bounces feels like a toy. */
-  .btn:active:not(:disabled) {
-    transform: scale(0.97);
+  /* Measured: the active primary renders 46px against a 48px default, which is
+     48 x .96. The whole press is this one transform plus the shadow dropping —
+     there is no travel and no shadow arithmetic. It is also exactly what
+     packages/mobile/lib/theme.ts already sets as motion.pressScale, so the two
+     platforms press identically for the first time. */
+  .btn:active:not(:disabled):not([aria-disabled='true']) {
+    transform: scale(0.96);
+    box-shadow: none;
+  }
+
+  .btn:focus-visible {
+    outline: 3px solid var(--color-ink);
+    outline-offset: 2px;
   }
 
   .btn:disabled,
   .btn[aria-disabled='true'] {
-    opacity: 0.5;
     cursor: not-allowed;
-  }
-
-  .btn-primary {
-    background-color: var(--color-brand-dark);
-    color: #ffffff;
+    box-shadow: none;
   }
 
   /*
-   * The rules below are scoped to .pixel, which app/layout.tsx sets on the body
-   * wrapper for EVERY route — the bare branch at :104 and the main one at :145.
-   *
-   * A comment here used to claim it was the public shell only and that the
-   * dashboard was "deliberately out of scope for this redesign". That had been
-   * wrong since the foundation shipped: these rules have always reached the
-   * signed-in side, which is why its buttons were already Pixel while its cards
-   * were not — and it is why the scope of the 2026-08-29 sweep was misread on
-   * the first pass. The scoping survives because these three controls are the
-   * only ones that take a border, not because it draws a public/private line.
+   * The primary. .btn-accent is the same rule because Pixel made apricot the
+   * primary CTA and 58 call sites followed it there, against 20 on .btn-primary
+   * — so the cheap correction is to point both at the blue the artboard draws,
+   * and collapse the two names in their own sweep rather than inside a token
+   * pass. There is no apricot button anywhere in the states sheet.
    */
-  .pixel .btn-accent,
-  .pixel .btn-primary,
-  .pixel .btn-quiet {
-    border: var(--border-width) solid var(--color-line);
-    transition: transform 0.16s var(--ease-out-quart), box-shadow 0.16s var(--ease-out-quart),
+  .btn-primary,
+  .btn-accent {
+    background-color: var(--color-brand-dark);
+    color: #ffffff;
+    border-color: transparent;
+    box-shadow: var(--shadow-glow), var(--shadow-hi);
+  }
+
+  .btn-primary:disabled,
+  .btn-primary[aria-disabled='true'],
+  .btn-accent:disabled,
+  .btn-accent[aria-disabled='true'] {
+    background-color: var(--color-sunken);
+    color: var(--color-muted);
+    opacity: 0.7;
+  }
+
+  /*
+   * A .pixel-scoped rule used to give these three controls a border here. It is
+   * gone, and removing it was not cosmetic: .pixel .btn-accent is (0,2,0) and
+   * outranks the .btn-accent (0,1,0) that now sets border-color: transparent,
+   * so the primary would have kept a hairline it is not supposed to have and
+   * the variant rules above would have looked simply wrong in the browser.
+   *
+   * This is the same shape as the trap press-motion.test.ts documents: the CSS
+   * reads correctly in the file and loses in the cascade. When a rule looks
+   * right here and wrong on screen, check what outranks it before editing it.
+   *
+   * Each variant states its own border and elevation now, so nothing needs the
+   * scoping. .pixel itself stays on the body wrapper for the rules further down
+   * that still use it.
+   */
+  .btn {
+    transition:
+      transform 0.16s var(--ease-out-quart),
+      box-shadow 0.16s var(--ease-out-quart),
       background-color 0.16s linear;
   }
 
-  .pixel .btn-accent { box-shadow: var(--shadow-e2); }
-  .pixel .btn-primary { box-shadow: var(--shadow-e2); }
-  /* The secondary control's shadow is the same offset at 35% — it keeps the
-     pair the same physical height while letting the apricot one read as the
-     thing to press. Two identical solid shadows side by side made "or borrow a
-     toy" compete with the primary action for the same click. */
-  .pixel .btn-quiet { box-shadow: var(--shadow-e2); }
+  /* The per-variant shadows that used to sit here are gone: each variant now
+     states its own elevation above, and a .pixel-scoped override would have
+     outranked them. What separated the pair was the apricot fill; what
+     separates it now is the glow against a flat --e1. */
 
   /* Hover and press for every button now come from the shared press-motion
      block at the end of this file — see "Press motion, in one place". The
@@ -982,47 +1012,64 @@
    * reads as a thing with a side to it. Zero blur is deliberate — a blurred
    * shadow under a 1px border is the "ghost card" look this replaces.
    */
-  .btn-accent {
-    background-color: var(--color-apricot);
-    color: var(--color-ink);
-  }
-
-  .btn-accent:hover:not(:disabled) {
-    background-color: var(--color-apricot-hover);
+  /* Loading. The artboard darkens to --b700 and drops the glow, so the control
+     stops inviting a second click without moving or resizing. */
+  .btn-primary[data-loading='true'],
+  .btn-accent[data-loading='true'] {
+    background-color: var(--color-brand-deep);
+    box-shadow: none;
   }
 
   .btn-soft {
     background-color: var(--color-brand-tint);
-    color: var(--color-brand-deep);
+    color: var(--color-ink);
   }
 
   .btn-soft:hover:not(:disabled) {
     background-color: var(--color-brand-soft);
   }
 
+  /* The secondary. Everything that is not the main action. */
   .btn-quiet {
     background-color: var(--color-surface);
     border-color: var(--color-line);
-    color: var(--color-brand-deep);
+    color: var(--color-ink);
+    box-shadow: var(--shadow-e1);
   }
 
   .btn-quiet:hover:not(:disabled) {
     background-color: var(--color-sunken);
   }
 
+  .btn-quiet:active:not(:disabled) {
+    background-color: var(--color-sunken);
+  }
+
+  .btn-quiet:disabled,
+  .btn-quiet[aria-disabled='true'] {
+    color: var(--color-muted);
+    opacity: 0.6;
+  }
+
+  /* Destructive, and never the default focus target. An outline control rather
+     than a filled one: delete, suspend and unpublish should take a deliberate
+     read, not catch the eye first. */
   .btn-danger {
-    background-color: var(--color-apricot-soft);
+    background-color: var(--color-surface);
+    border-color: var(--color-line);
     color: var(--color-danger);
+    box-shadow: var(--shadow-e1);
   }
 
   .btn-danger:hover:not(:disabled) {
-    background-color: #ffcdbb;
+    background-color: var(--color-danger-soft);
   }
 
+  /* The 36px quiet register. */
   .btn-sm {
     min-height: 36px;
-    padding: 0.375rem 0.875rem;
-    font-size: 0.8125rem;
+    padding: 0 14px;
+    font-size: 14px;
   }
 
   .btn-block {
