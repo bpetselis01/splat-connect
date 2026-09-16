@@ -63,16 +63,22 @@ update public.profiles set role = 'admin',       name = 'Seed Admin'
 -- Approved tutorial (public library / detail flows)
 -- PDF and STL values are storage paths (049) with no object behind them: E2E
 -- asserts page rendering; the one download E2E uploads its own file.
--- toy_photo_url stays a placeholder URL — toy-photos is still a public bucket.
+-- The photo is seeded through photo_urls, not toy_photo_url: 053 made that
+-- scalar a generated column reading photo_urls[1], and an insert naming a
+-- generated column is rejected outright (428C9). This file was missed when the
+-- fixture helpers were migrated, and nothing ran it — a local stack started
+-- from a backup never re-seeds — so it sat broken from 2026-09-03 until CI
+-- reached it.
 -- ============================================================
 -- assistive_tech because it carries an STL below, and since 048 an STL is
 -- required for that kind and never shown for a toy adaptation.
 insert into public.tutorials
-  (id, title, description, difficulty, status, kind, tutorial_pdf_url, toy_photo_url, created_at, reviewed_at)
+  (id, title, description, difficulty, status, kind, tutorial_pdf_url, photo_urls, created_at, reviewed_at)
 values
   ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Seeded Switch-Adapted Bubble Machine',
    'A seeded, approved tutorial used by E2E tests.', 'easy', 'approved', 'assistive_tech',
-   'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/tutorial.pdf', 'https://placeholder.invalid/photo.jpg',
+   'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/tutorial.pdf',
+   array['https://placeholder.invalid/photo.jpg'],
    now(), now());
 
 insert into public.tutorial_contributors (tutorial_id, profile_id, role)
@@ -92,11 +98,12 @@ values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'mount.stl', 'aaaaaaaa-aaaa-aaaa
 -- Pending tutorial (admin review flow)
 -- ============================================================
 insert into public.tutorials
-  (id, title, description, difficulty, status, tutorial_pdf_url, toy_photo_url)
+  (id, title, description, difficulty, status, tutorial_pdf_url, photo_urls)
 values
   ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'Seeded Pending Plush Toy',
    'A seeded tutorial awaiting admin review.', 'medium', 'pending',
-   'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb/tutorial.pdf', 'https://placeholder.invalid/photo2.jpg');
+   'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb/tutorial.pdf',
+   array['https://placeholder.invalid/photo2.jpg']);
 
 insert into public.tutorial_contributors (tutorial_id, profile_id, role)
 values ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', '11111111-1111-1111-1111-111111111111', 'primary');
