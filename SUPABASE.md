@@ -12,6 +12,25 @@ org role gating, and badge counts that must be accurate.
 
 ## Pending
 
+_(F5, F6, F7, F10 and F12 build routes that do not exist and are likely to add
+further entries here.)_
+
+## Applied
+
+### [F2/F8] `055_exchange_costs.sql` — applied 2026-09-16
+
+Applied to the hosted `development` project (which is the live one — there is no
+separate prod). Verified beyond the ledger, because a ledger row is written
+whether or not the SQL ran: the table exists, RLS is on, all four policies are
+present, the party trigger is there and both indexes were created.
+
+`scripts/check-schema-guards.sh` gained three assertions for it, per that file's
+own rule about guards whose absence is a vulnerability rather than a bug. RLS off
+on this table would not break a feature — it would publish every family's private
+financial arrangements to every signed-in account.
+
+The original entry, with the reasoning and the design decisions, follows.
+
 ### [F2/F8] Agreed costs on an exchange have nowhere to live
 
 **Why:** the Soft Pop dashboard draws a "Money you have agreed to" panel — a
@@ -56,13 +75,7 @@ parent tables to satisfy one panel. When those land, the choice is a polymorphic
 parent or a second table; the saves subsystem already set a precedent for the
 former in this repo.
 
-_(F5, F6, F7, F10 and F12 build routes that do not exist and are likely to add
-further entries here.)_
-
-## Applied
-
-_(none yet in this project. Migrations 001-054 predate it; 054 was the last,
-applied to the hosted `development` project on 2026-09-03.)_
+_(Migrations 001-054 predate this project; 054 was applied 2026-09-03.)_
 
 ## Filed, not blocking
 

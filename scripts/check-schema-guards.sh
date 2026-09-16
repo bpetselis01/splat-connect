@@ -96,7 +96,28 @@ select * from (values
       where id in ('toy-photos', 'toy-photos-library')
         and file_size_limit is not null
         and allowed_mime_types is not null
-        and not (allowed_mime_types && array['text/html', 'image/svg+xml'])))
+        and not (allowed_mime_types && array['text/html', 'image/svg+xml']))),
+
+  -- 055 exchange_costs records what one family owes another. RLS off here does
+  -- not break a feature, it publishes everybody's private financial
+  -- arrangements to every signed-in account — which is the definition this
+  -- file uses for "a guard whose absence is a vulnerability rather than a bug".
+  ('055 exchange_costs has RLS enabled',
+   (select coalesce(bool_and(relrowsecurity), false) from pg_class
+      where relname = 'exchange_costs' and relnamespace = 'public'::regnamespace)),
+
+  -- Four policies, one per verb. A permissive policy set is OR'd together, so
+  -- a fifth that forgot its party check would silently widen all of them.
+  ('055 exchange_costs has exactly its four policies',
+   (select count(*) = 4 from pg_policies
+      where schemaname = 'public' and tablename = 'exchange_costs')),
+
+  -- The trigger enforces what the foreign keys cannot: that payer and payee are
+  -- both parties to THIS exchange. Without it a leader can write a line naming
+  -- two strangers, and the RLS policies would happily allow it.
+  ('055 exchange_costs party trigger is present',
+   (select count(*) > 0 from pg_trigger
+      where tgname = 'exchange_costs_parties_match' and not tgisinternal))
 ) as t(guard, ok)
 where not ok;
 EOSQL
