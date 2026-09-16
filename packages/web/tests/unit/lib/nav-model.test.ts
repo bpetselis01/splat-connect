@@ -72,24 +72,27 @@ describe('buildNav', () => {
     expect(hrefs(buildNav(caps()))).toContain('/get-involved/submit-an-idea')
   })
 
-  it('marks the two unbuilt rows as soon, and no others', () => {
+  it('marks no row as soon, because every destination is now built', () => {
     const soon = buildNav(caps({ ledOrgs: [org], isAdmin: true }))
       .flatMap((g) => g.rows)
       .filter((r) => r.soon)
       .map((r) => r.href)
     // Toy inventory left this list when the organisation shelf was built.
-    // /printing left when the Browse group was deleted.
-    expect(soon).toEqual([
-      '/dashboard/print-requests',
-      '/dashboard/organisation/orders',
-    ])
+    // /printing left when the Browse group was deleted. The last two — my print
+    // requests and the org's print orders — left with 058.
+    //
+    // The assertion stays rather than being deleted with the last `soon`: the
+    // field is what stops a rail advertising a door that does not open, and a
+    // row added with it set should have to say so here.
+    expect(soon).toEqual([])
   })
 
   // Same total as before Child profiles moved to the Account page: it left
   // and Submit an idea arrived in its place.
-  it('builds thirteen linked rows for a leader-admin', () => {
+  it('builds fourteen linked rows for a leader-admin', () => {
     const rows = buildNav(caps({ ledOrgs: [org], isAdmin: true })).flatMap((g) => g.rows)
-    expect(rows).toHaveLength(13)
+    // Fourteen since 058 added Print for others.
+    expect(rows).toHaveLength(14)
   })
 
   it('includes a Design challenges row for every account', () => {

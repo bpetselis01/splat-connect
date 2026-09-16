@@ -97,6 +97,49 @@ further entries here.)_
 
 ## Applied
 
+### [F6/F7] `058_printers_and_print_jobs.sql` — applied 2026-09-17
+
+Two halves, and only one of them new.
+
+**`printers` is new.** Bed size, materials loaded, an availability toggle and a
+capacity, owned by a person or an organisation on 033's XOR. Reads are public —
+somebody has to find a machine to send a job to it — and the columns that are
+NOT public are the pickup ones, which is why they are not on this table at all:
+the address lives on the owner's profile or the org's record and is copied onto
+a job at accept, exactly as 028 does for a toy handover.
+
+**The job is not new.** A print job is a requester, a giving side, a status
+machine, a pickup, two handover codes, a thread and a cost panel — that is
+`toy_transactions`, as a build was in 057. The subject becomes a printer plus
+the files wanted.
+
+As in 057 the extra steps are timestamps, not status members: `printing` and
+`ready` as statuses would mean every `status = 'accepted'` predicate in the API
+stops matching a job that is on the bed.
+
+Three things the schema insists on rather than the UI:
+
+- **Ready needs a photo.** `ready_at is null or ready_photo_url is not null`.
+  Ready without one is the state that lets somebody drive across town for
+  nothing.
+- **Ready cannot precede printing.** Without it a job jumps the middle of its
+  own rail and the stepper has to guess what happened.
+- **The files are rows.** `print_job_files`, not a JSON blob of filenames: a set
+  that is a blob cannot be joined to the files it names, and a renamed or
+  deleted STL would leave the job pointing at a string nobody can resolve.
+
+The decline reason is stored. The artboard requires one, and a reason that
+exists only as a chat message cannot be rendered on the list row that needs it.
+
+Storage: `print-shots`, private, with the same four party-gated policies as
+056's receipts and 057's working shots.
+
+Verified past the ledger on the remote by `check-schema-guards.sh`, which gained
+four assertions: the private bucket, its four policies, RLS plus the org-leader
+arm of the printers write policy, and RLS on `print_job_files`. The printers one
+matters because that table's SELECT is `using (true)` on purpose — an owner
+check that went missing would let anybody close somebody else's machine.
+
 ### [F5] `057_build_requests.sql` — applied 2026-09-17
 
 A build is a toy transaction with a guide for a subject rather than a toy. The

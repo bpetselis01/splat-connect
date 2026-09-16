@@ -15,6 +15,8 @@ type Subject = Pick<
   | 'requester_confirmed_at'
   | 'working_photo_url'
   | 'work_approved_at'
+  | 'printing_started_at'
+  | 'ready_at'
 > & { blocked_by_rival_accept?: boolean }
 
 function tx(overrides: Partial<Subject> = {}): Subject {
@@ -27,6 +29,8 @@ function tx(overrides: Partial<Subject> = {}): Subject {
     requester_confirmed_at: null,
     working_photo_url: null,
     work_approved_at: null,
+    printing_started_at: null,
+    ready_at: null,
     ...overrides,
   }
 }

@@ -7,7 +7,6 @@ import EventsPage from '@/app/impact/events/page'
 import MapPage from '@/app/impact/map/page'
 import PartnersPage from '@/app/about/partners/page'
 import SupportPage from '@/app/about/support/page'
-import PrintingRequestsPage from '@/app/printing/requests/page'
 import PrintingPartsPage from '@/app/printing/parts/page'
 
 // Paired with the featureKey each page actually passes to NotifyForm, not
@@ -21,7 +20,6 @@ const pages = [
   ['map', MapPage],
   ['partners', PartnersPage],
   ['support', SupportPage],
-  ['printing', PrintingRequestsPage],
   ['printing-parts', PrintingPartsPage],
 ] as const
 

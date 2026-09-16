@@ -41,6 +41,7 @@ export default async function DashboardHub() {
     '/dashboard/exchanges': 'Active exchanges, exchange history.',
     '/dashboard/challenges': 'Submit an idea, saved challenges.',
     '/dashboard/print-requests': 'Parts you have asked someone to print.',
+    '/dashboard/printers': 'Your printers, requests waiting on you, what is on the bed.',
     '/dashboard/organisation': 'Projects waiting for your organisation to review.',
     '/dashboard/organisation/toys': 'What your organisation has on its shelves.',
     '/dashboard/organisation/orders': 'Print jobs your organisation has taken on.',

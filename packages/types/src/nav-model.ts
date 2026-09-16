@@ -107,12 +107,12 @@ export function buildNav(caps: Capabilities): NavGroup[] {
     {
       heading: 'Print requests',
       rows: [
-        {
-          href: '/dashboard/print-requests',
-          label: 'My print requests',
-          icon: 'clipboard',
-          soon: true,
-        },
+        // Both live since 058. The two are deliberately separate rows rather
+        // than one screen with a toggle: the parts you asked for and the jobs
+        // on your own machine have different controls entirely, and merging
+        // them would put "start the print" next to "collect it".
+        { href: '/dashboard/print-requests', label: 'My print requests', icon: 'clipboard' },
+        { href: '/dashboard/printers', label: 'Print for others', icon: 'orders' },
       ],
     },
   ]
@@ -127,12 +127,7 @@ export function buildNav(caps: Capabilities): NavGroup[] {
         // add a member or create an org. The label names what exists.
         { href: '/dashboard/organisation', label: 'Review queue', icon: 'inbox' },
         { href: '/dashboard/organisation/toys', label: 'Toy inventory', icon: 'shelf' },
-        {
-          href: '/dashboard/organisation/orders',
-          label: 'Print orders',
-          icon: 'orders',
-          soon: true,
-        },
+        { href: '/dashboard/organisation/orders', label: 'Print orders', icon: 'orders' },
       ],
     })
   }

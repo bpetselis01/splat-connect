@@ -240,7 +240,7 @@ toyTransactions.get('/action-count', async (c) => {
       // stage alternates sides before the handover (057): without them the
       // badge tells the maker to confirm a handover the family has not
       // approved yet.
-      'id, toy_id, status, type, owner_id, owner_org_id, owner_confirmed_at, requester_confirmed_at, working_photo_url, work_approved_at'
+      'id, toy_id, status, type, owner_id, owner_org_id, owner_confirmed_at, requester_confirmed_at, working_photo_url, work_approved_at, printing_started_at, ready_at'
     )
     .in('status', ['requested', 'accepted'])
   if (error) return c.json({ error: error.message }, 500)
@@ -275,7 +275,7 @@ toyTransactions.get('/:id', async (c) => {
   const { data, error } = await supabase
     .from('toy_transactions')
     .select(
-      '*, toy:toys!toy_transactions_toy_id_fkey(name, status), offered:toys!toy_transactions_offered_toy_id_fkey(name, status), owner:profiles!toy_transactions_owner_id_fkey(name), requester:profiles!toy_transactions_requester_id_fkey(name), org:organizations!toy_transactions_owner_org_id_fkey(name), tutorial:tutorials(title)'
+      '*, toy:toys!toy_transactions_toy_id_fkey(name, status), offered:toys!toy_transactions_offered_toy_id_fkey(name, status), owner:profiles!toy_transactions_owner_id_fkey(name), requester:profiles!toy_transactions_requester_id_fkey(name), org:organizations!toy_transactions_owner_org_id_fkey(name), tutorial:tutorials(title), printer:printers(id, name, suburb, state, materials), print_job_files(quantity, stl_files(id, filename))'
     )
     .eq('id', c.req.param('id'))
     .maybeSingle()
@@ -300,6 +300,8 @@ toyTransactions.get('/:id', async (c) => {
     requester: { name: string } | null
     org: { name: string } | null
     tutorial: { title: string } | null
+    printer: { id: string; name: string; suburb: string | null; state: string | null; materials: string[] } | null
+    print_job_files: Array<{ quantity: number; stl_files: { id: string; filename: string } | null }> | null
   }
   const admin = createAdminClient()
   const ledOrgs = await ledOrgIds(admin, userId)
@@ -330,6 +332,12 @@ toyTransactions.get('/:id', async (c) => {
     ...sanitizeCodes(row, userId, ledOrgs),
     toy_name: row.toy?.name ?? '',
     tutorial_title: row.tutorial?.title ?? null,
+    printer: row.printer ?? null,
+    // Flattened here rather than in the client: the embed's shape is a
+    // PostgREST detail, and three pages would each have to know it.
+    print_files: (row.print_job_files ?? [])
+      .filter((f) => f.stl_files)
+      .map((f) => ({ id: f.stl_files!.id, filename: f.stl_files!.filename, quantity: f.quantity })),
     offered_toy_name: row.offered?.name ?? null,
     // The organisation's name where there is one: a family is dealing with
     // Cerebral Palsy Alliance, not with whichever leader is on shift.
@@ -590,6 +598,12 @@ toyTransactions.post('/:id/accept', async (c) => {
   return c.json(sanitizeCodes(updated, userId, ledOrgs))
 })
 
+/*
+ * Declining. A print job's refusal carries a reason, because the artboard
+ * requires one and because a reason that lives only in the thread cannot be
+ * rendered on the list row that needs it. It is optional on the other kinds,
+ * where nothing asks for it.
+ */
 toyTransactions.post('/:id/reject', async (c) => {
   const loaded = await loadForParty(c)
   if ('status' in loaded) return c.json({ error: 'message' in loaded ? loaded.message : 'Not found' }, loaded.status)
@@ -602,10 +616,20 @@ toyTransactions.post('/:id/reject', async (c) => {
   }
   if (tx.status !== 'requested') return c.json({ error: 'This request is no longer open' }, 409)
 
+  const body = (await c.req.json().catch(() => ({}))) as { reason?: unknown }
+  const reason = typeof body.reason === 'string' ? body.reason.trim() : ''
+  if (reason.length > 500) return c.json({ error: 'The reason is longer than 500 characters.' }, 400)
+  // Required on a print job only. "Declining needs a reason" is the artboard's
+  // rule for the offer screen, and a printer who says no without one leaves a
+  // family with nothing to act on.
+  if (tx.type === 'print' && reason.length === 0) {
+    return c.json({ error: 'Say why you cannot take this job.' }, 400)
+  }
+
   const now = new Date().toISOString()
   const { data: updated, error } = await admin
     .from('toy_transactions')
-    .update({ status: 'rejected', updated_at: now })
+    .update({ status: 'rejected', decline_reason: reason || null, updated_at: now })
     .eq('id', tx.id)
     .select()
     .single()
@@ -615,7 +639,7 @@ toyTransactions.post('/:id/reject', async (c) => {
     transaction_id: tx.id,
     sender_id: userId,
     kind: 'system',
-    body: 'Request declined.',
+    body: reason ? `Request declined — ${reason}` : 'Request declined.',
   })
 
   await admin.from('notifications').insert({
@@ -703,6 +727,10 @@ toyTransactions.post('/:id/confirm', async (c) => {
   if (tx.type === 'build' && !tx.work_approved_at) {
     return c.json({ error: 'The family approves the working shot before the handover' }, 409)
   }
+  // Same rule, the print job's version: nothing is collected before it exists.
+  if (tx.type === 'print' && !tx.ready_at) {
+    return c.json({ error: 'The parts are not ready to collect yet' }, 409)
+  }
 
   const expectedCode = isOwner ? tx.requester_code : tx.owner_code
   if (body.code !== expectedCode) return c.json({ error: 'Incorrect code' }, 400)
@@ -724,11 +752,12 @@ toyTransactions.post('/:id/confirm', async (c) => {
       : updated.owner_confirmed_at !== null && updated.requester_confirmed_at !== null
 
   /*
-   * A build hands over an object that exists nowhere in `toys`: the maker made
-   * it. There is no row to transfer, no stock to decrement and no rival request
-   * to sweep, so the whole block below is skipped and the record simply closes.
+   * A build hands over an object that exists nowhere in `toys` — the maker made
+   * it — and a print job hands over parts that were never a toy either. Neither
+   * has a row to transfer, stock to decrement or a rival request to sweep, so
+   * the whole block below is skipped and the record simply closes.
    */
-  const movesAToy = tx.type !== 'build'
+  const movesAToy = tx.type !== 'build' && tx.type !== 'print'
 
   if (!bothConfirmed) {
     await admin.from('toy_transaction_messages').insert({
@@ -1162,6 +1191,251 @@ toyTransactions.post('/:id/approve-work', async (c) => {
     actor_name: (
       await admin.from('profiles').select('name').eq('id', userId).single()
     ).data?.name ?? 'The family',
+  })
+
+  return c.json(sanitizeCodes(updated, userId, ledOrgs))
+})
+
+/**
+ * POST /api/toy-transactions/print
+ *
+ * A family asks one printer for the printed parts of a guide. 058 makes that a
+ * toy transaction with a printer and a set of STL files for a subject, so
+ * everything after this point is the code that was already there.
+ *
+ * "Parts come from the guide, never uploaded" is the artboard's rule and the
+ * reason there is no upload path within reach of this: the files named must be
+ * STL rows belonging to the guide named, which is checked below rather than
+ * trusted.
+ */
+toyTransactions.post('/print', async (c) => {
+  const body = await c.req.json().catch(() => null)
+  if (body === null || typeof body !== 'object' || Array.isArray(body)) {
+    return c.json({ error: 'Body must be an object' }, 400)
+  }
+  const userId = c.get('userId')
+  const admin = createAdminClient()
+
+  const note = typeof body.note === 'string' ? body.note.trim() : ''
+  if (note.length > 1000) return c.json({ error: 'The note is longer than 1000 characters.' }, 400)
+
+  const fileIds = Array.isArray(body.stl_file_ids) ? body.stl_file_ids : []
+  if (fileIds.length === 0 || !fileIds.every((id: unknown) => typeof id === 'string')) {
+    return c.json({ error: 'Tick at least one part to print.' }, 400)
+  }
+
+  const { data: printer, error: printerError } = await admin
+    .from('printers')
+    .select('id, owner_id, owner_org_id, accepting, capacity')
+    .eq('id', body.printer_id)
+    .maybeSingle()
+  if (printerError) {
+    if (printerError.code === INVALID_TEXT_REPRESENTATION) return c.json({ error: 'Not found' }, 404)
+    return c.json({ error: printerError.message }, 500)
+  }
+  if (!printer) return c.json({ error: 'Not found' }, 404)
+
+  if (printer.owner_id === userId) {
+    return c.json({ error: 'You cannot send a job to your own printer' }, 400)
+  }
+  if (printer.owner_org_id && (await ledOrgIds(admin, userId)).includes(printer.owner_org_id)) {
+    return c.json({ error: "You cannot send a job to your own organisation's printer" }, 400)
+  }
+
+  // Either closes the machine, and both are checked: the toggle is the
+  // deliberate act and the capacity is the honest one. A machine at capacity
+  // that still reads "accepting" would take a job it cannot start.
+  if (!printer.accepting) return c.json({ error: 'That printer is not taking new jobs' }, 409)
+  const { count: openJobs } = await admin
+    .from('toy_transactions')
+    .select('id', { count: 'exact', head: true })
+    .eq('printer_id', printer.id)
+    .eq('status', 'accepted')
+  if ((openJobs ?? 0) >= printer.capacity) {
+    return c.json({ error: 'That printer is full right now' }, 409)
+  }
+
+  // Every file must belong to the guide named. Without this a request could
+  // name any STL on the platform and the printer would be shown a part from a
+  // guide nobody in the conversation has read.
+  const { data: files, error: filesError } = await admin
+    .from('stl_files')
+    .select('id, tutorial_id')
+    .in('id', fileIds)
+  if (filesError) return c.json({ error: filesError.message }, 500)
+  const rows = (files ?? []) as Array<{ id: string; tutorial_id: string }>
+  if (rows.length !== fileIds.length || rows.some((f) => f.tutorial_id !== body.tutorial_id)) {
+    return c.json({ error: 'Those parts do not all belong to that guide' }, 400)
+  }
+
+  const { data: tutorial } = await admin
+    .from('tutorials')
+    .select('id, title, status')
+    .eq('id', body.tutorial_id)
+    .maybeSingle()
+  if (!tutorial || tutorial.status !== 'approved') return c.json({ error: 'Not found' }, 404)
+
+  const { data: existing, error: existingError } = await admin
+    .from('toy_transactions')
+    .select('id')
+    .eq('requester_id', userId)
+    .eq('printer_id', printer.id)
+    .eq('tutorial_id', tutorial.id)
+    .in('status', ['requested', 'accepted'])
+    .maybeSingle()
+  if (existingError) return c.json({ error: existingError.message }, 500)
+  if (existing) return c.json({ error: 'You already have an open job on that printer for this guide' }, 409)
+
+  const { data: tx, error: insertError } = await admin
+    .from('toy_transactions')
+    .insert({
+      toy_id: null,
+      offered_toy_id: null,
+      tutorial_id: tutorial.id,
+      printer_id: printer.id,
+      print_note: note || null,
+      type: 'print',
+      status: 'requested',
+      requester_id: userId,
+      owner_id: printer.owner_id,
+      owner_org_id: printer.owner_org_id,
+    })
+    .select()
+    .single()
+  if (insertError) return c.json({ error: insertError.message }, 500)
+
+  const { error: linkError } = await admin.from('print_job_files').insert(
+    rows.map((f) => ({ transaction_id: tx.id, stl_file_id: f.id }))
+  )
+  // The files ARE the request. A job with none is a job nobody can fill, so it
+  // is rolled back rather than left as a row that looks fine and is not.
+  if (linkError) {
+    await admin.from('toy_transactions').delete().eq('id', tx.id)
+    return c.json({ error: linkError.message }, 500)
+  }
+
+  const { data: requesterProfile } = await admin.from('profiles').select('name').eq('id', userId).single()
+
+  await admin.from('toy_transaction_messages').insert({
+    transaction_id: tx.id,
+    sender_id: userId,
+    kind: 'system',
+    body: `Asked for ${rows.length} part${rows.length === 1 ? '' : 's'} from this guide.`,
+  })
+
+  await notifyOwnerSide(admin, tx, {
+    type: 'toy_request',
+    toy_transaction_id: tx.id,
+    toy_name: tutorial.title,
+    actor_name: requesterProfile?.name ?? 'A contributor',
+  })
+
+  return c.json(tx, 201)
+})
+
+/**
+ * POST /api/toy-transactions/:id/print-started
+ *
+ * The printer says the job is on the bed. One timestamp, and it is the
+ * printer's to set — a requester marking their own job as printing would be
+ * reporting on a machine they cannot see.
+ */
+toyTransactions.post('/:id/print-started', async (c) => {
+  const loaded = await loadForParty(c)
+  if ('status' in loaded) return c.json({ error: 'message' in loaded ? loaded.message : 'Not found' }, loaded.status)
+  const tx = loaded.data
+  const userId = c.get('userId')
+  const admin = createAdminClient()
+  const ledOrgs = await ledOrgIds(admin, userId)
+
+  if (tx.type !== 'print') return c.json({ error: 'Only a print job goes on a bed' }, 400)
+  if (!isOwnerSide(tx as any, userId, ledOrgs)) {
+    return c.json({ error: 'Only the printer can start the job' }, 403)
+  }
+  if (tx.status !== 'accepted') return c.json({ error: 'This job is not under way' }, 409)
+  if (tx.printing_started_at) return c.json({ error: 'This job is already printing' }, 409)
+
+  const now = new Date().toISOString()
+  const { data: updated, error } = await admin
+    .from('toy_transactions')
+    .update({ printing_started_at: now, updated_at: now })
+    .eq('id', tx.id)
+    .eq('status', 'accepted')
+    .select()
+    .single()
+  if (error) return c.json({ error: error.message }, 500)
+
+  await admin.from('toy_transaction_messages').insert({
+    transaction_id: tx.id,
+    sender_id: userId,
+    kind: 'system',
+    body: 'The job is on the bed.',
+  })
+  await admin.from('notifications').insert({
+    recipient_id: tx.requester_id,
+    type: 'print_started',
+    toy_transaction_id: tx.id,
+    toy_name: await subjectName(admin, tx as any),
+    actor_name: await ownerSideName(admin, tx as any, 'The printer'),
+  })
+
+  return c.json(sanitizeCodes(updated, userId, ledOrgs))
+})
+
+/**
+ * POST /api/toy-transactions/:id/print-ready
+ *
+ * Ready to collect, with the photo that proves it. The photo is required by
+ * 058's own constraint as well as here: "ready" without one is the state that
+ * lets somebody drive across town for nothing.
+ */
+toyTransactions.post('/:id/print-ready', async (c) => {
+  const loaded = await loadForParty(c)
+  if ('status' in loaded) return c.json({ error: 'message' in loaded ? loaded.message : 'Not found' }, loaded.status)
+  const tx = loaded.data
+  const userId = c.get('userId')
+  const admin = createAdminClient()
+  const ledOrgs = await ledOrgIds(admin, userId)
+
+  if (tx.type !== 'print') return c.json({ error: 'Only a print job is marked ready' }, 400)
+  if (!isOwnerSide(tx as any, userId, ledOrgs)) {
+    return c.json({ error: 'Only the printer can mark the job ready' }, 403)
+  }
+  if (tx.status !== 'accepted') return c.json({ error: 'This job is not under way' }, 409)
+  if (!tx.printing_started_at) return c.json({ error: 'Start the print before marking it ready' }, 409)
+
+  const form = await c.req.formData().catch(() => null)
+  const file = form?.get('file')
+  if (!(file instanceof File)) return c.json({ error: 'A photo of the finished part is required' }, 400)
+
+  const supabase = createUserClient(c.get('token'))
+  const { data: uploaded, error: uploadError } = await supabase.storage
+    .from('print-shots')
+    .upload(`${tx.id}/${file.name}`, file, { upsert: true })
+  if (uploadError) return c.json({ error: uploadError.message }, 500)
+
+  const now = new Date().toISOString()
+  const { data: updated, error } = await admin
+    .from('toy_transactions')
+    .update({ ready_photo_url: uploaded.path, ready_at: now, updated_at: now })
+    .eq('id', tx.id)
+    .eq('status', 'accepted')
+    .select()
+    .single()
+  if (error) return c.json({ error: error.message }, 500)
+
+  await admin.from('toy_transaction_messages').insert({
+    transaction_id: tx.id,
+    sender_id: userId,
+    kind: 'system',
+    body: 'The parts are printed and ready to collect.',
+  })
+  await admin.from('notifications').insert({
+    recipient_id: tx.requester_id,
+    type: 'print_ready',
+    toy_transaction_id: tx.id,
+    toy_name: await subjectName(admin, tx as any),
+    actor_name: await ownerSideName(admin, tx as any, 'The printer'),
   })
 
   return c.json(sanitizeCodes(updated, userId, ledOrgs))

@@ -207,6 +207,16 @@ export function TutorialView({
                 <Download /> {f.filename}
               </a>
             ))}
+            {/* Where a print request starts. "Parts come from the guide, never
+                uploaded" is only true if the door is on the guide — putting it
+                on the printing section instead would leave somebody there with
+                nothing to ask for. */}
+            <a
+              href={`/printing/requests?guide=${tutorial.id}`}
+              className="btn btn-quiet mt-3 no-underline"
+            >
+              Ask a printer for these parts
+            </a>
           </div>
         )}
         {/* Where the creator points next. The public route has already dropped

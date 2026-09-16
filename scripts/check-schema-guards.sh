@@ -162,7 +162,35 @@ select * from (values
   ('057 toy_transactions_subject constraint is present',
    (select count(*) > 0 from pg_constraint
       where conrelid = 'public.toy_transactions'::regclass
-        and conname = 'toy_transactions_subject'))
+        and conname = 'toy_transactions_subject')),
+
+  -- 058. A printer row is a public offer and readable by design; what must not
+  -- be public is the photo of somebody's finished parts, taken wherever their
+  -- machine lives.
+  ('058 print-shots bucket is private',
+   (select coalesce(bool_and(not public), false) from storage.buckets
+      where id = 'print-shots')),
+
+  ('058 print-shots policies all check the exchange party',
+   (select count(*) = 4 from pg_policies
+      where schemaname = 'storage'
+        and policyname like '%print shots%'
+        and coalesce(qual, with_check) like '%is_toy_transaction_party%')),
+
+  -- The write policy is the one that matters on this table: the select is
+  -- `using (true)` on purpose, so an owner check that went missing would let
+  -- anybody close somebody else's machine or point it at a different bed.
+  ('058 printers has RLS enabled and an owner-gated write policy',
+   (select coalesce(bool_and(relrowsecurity), false) from pg_class
+      where relname = 'printers' and relnamespace = 'public'::regnamespace)
+   and (select count(*) > 0 from pg_policies
+      where tablename = 'printers'
+        and cmd = 'ALL'
+        and coalesce(qual, with_check) like '%is_org_leader%')),
+
+  ('058 print_job_files has RLS enabled',
+   (select coalesce(bool_and(relrowsecurity), false) from pg_class
+      where relname = 'print_job_files' and relnamespace = 'public'::regnamespace))
 ) as t(guard, ok)
 where not ok;
 EOSQL

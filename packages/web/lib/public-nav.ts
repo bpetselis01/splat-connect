@@ -121,9 +121,10 @@ export const PUBLIC_NAV: NavSection[] = [
       {
         href: '/printing/requests',
         label: 'Request a print',
-        state: 'soon',
-        featureKey: 'printing',
-        blurb: 'Ask an association with a free printer to make a part for you.',
+        // Live since 058: a print job is a toy transaction with a printer and a
+        // set of the guide's own STL files for a subject.
+        state: 'live',
+        blurb: 'Ask somebody with a free printer for the parts of a guide.',
       },
       {
         href: '/printing/parts',

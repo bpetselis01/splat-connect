@@ -35,6 +35,9 @@ const GATED = {
   // 057. Same shape and the same tight policies: the folder is the build's
   // transaction, and only its two parties can sign a URL for the photo.
   'build-shots': { download: false, folder: 'exchange' },
+  // 058. Same shape again: the folder is the print job, and only its two
+  // parties can sign a URL for the photo of the finished parts.
+  'print-shots': { download: false, folder: 'exchange' },
 } as const
 
 export async function GET(

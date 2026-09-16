@@ -92,13 +92,14 @@ export function toyHolderName(toy: Pick<ToyWithOwner, 'profiles' | 'organization
 /**
  * What the transaction is about.
  *
- * `build` is 057: a family asking a maker to build them an adapted toy from a
- * published guide. It is the same record as a donation or an exchange — two
- * parties, a thread, an accept, two handover codes — with a different subject
- * and one extra stage, so it lives on the same table rather than forking all of
- * that to gain a different subject line.
+ * `build` is 057 and `print` is 058: a family asking a maker to build them an
+ * adapted toy from a published guide, and a family asking somebody's printer
+ * for the printed parts of one. Each is the same record as a donation or an
+ * exchange — two parties, a thread, an accept, two handover codes — with a
+ * different subject and its own middle, so they live on the same table rather
+ * than forking all of that to gain a different subject line.
  */
-export type ToyTransactionType = 'donation' | 'exchange' | 'build'
+export type ToyTransactionType = 'donation' | 'exchange' | 'build' | 'print'
 export type ToyTransactionStatus = 'requested' | 'accepted' | 'rejected' | 'withdrawn' | 'completed'
 
 /**
@@ -196,8 +197,85 @@ export interface ToyTransaction {
   working_photo_url: string | null
   /** When the family accepted that shot. The handover cannot start before it. */
   work_approved_at: string | null
+  /** The machine a print job is on. Set on a print and null otherwise (058). */
+  printer_id: string | null
+  /** What the requester said about the print. The printer sees this and their
+   *  suburb, and nothing else about them. */
+  print_note: string | null
+  printing_started_at: string | null
+  /** Ready to collect. Never set without `ready_photo_url` — the constraint is
+   *  in 058, and the point is that nobody travels for a part on somebody's
+   *  word alone. */
+  ready_at: string | null
+  ready_photo_url: string | null
+  /** Why a request was declined. Stored rather than left to the thread: a
+   *  reason that exists only as a chat message cannot be shown on the list row
+   *  that needs it. */
+  decline_reason: string | null
   created_at: string
   updated_at: string
+}
+
+/**
+ * A 3D printer somebody offers to other families. 058.
+ *
+ * Bed size and materials are the fit check a print request runs before it is
+ * offered to a machine. Availability is two separate facts on purpose: the
+ * toggle is the deliberate act, the capacity is the honest one, and a machine
+ * with three jobs on it is full whatever the toggle says.
+ */
+export interface Printer {
+  id: string
+  /** A person's machine or an organisation's, never both — the same XOR 033
+   *  gave toys. */
+  owner_id: string | null
+  owner_org_id: string | null
+  name: string
+  materials: string[]
+  /** Millimetres. */
+  bed_x: number
+  bed_y: number
+  bed_z: number
+  /** Suburb and state only. The street address is the pickup point and is
+   *  copied onto the job at accept, exactly as 028 does for a toy handover. */
+  suburb: string | null
+  state: string | null
+  accepting: boolean
+  capacity: number
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface PrinterWithOwner extends Printer {
+  owner_name: string | null
+  org_name: string | null
+  /** Accepted jobs on this machine right now, against its capacity. */
+  open_jobs: number
+}
+
+/** The materials a printer can declare. Presentational, so it lives here
+ *  rather than in a check constraint (037's rule about `contact_prefs`). */
+export const PRINT_MATERIALS = ['PLA', 'PETG', 'ABS', 'TPU', 'ASA', 'Nylon'] as const
+export type PrintMaterial = (typeof PRINT_MATERIALS)[number]
+
+/**
+ * Which step of a print job a record is at, derived from what the row stores.
+ *
+ * As with `buildStep`, 058 added no status members: `printing` and `ready` as
+ * statuses would mean every `status = 'accepted'` predicate in the API stops
+ * matching a job that is on the bed.
+ */
+export type PrintStep = 'asked' | 'accepted' | 'printing' | 'ready' | 'closed'
+
+export function printStep(
+  tx: Pick<ToyTransaction, 'status' | 'printing_started_at' | 'ready_at'>
+): PrintStep {
+  if (tx.status === 'completed') return 'closed'
+  if (tx.status !== 'accepted') return 'asked'
+  if (!tx.printing_started_at) return 'accepted'
+  if (!tx.ready_at) return 'printing'
+  return 'ready'
 }
 
 /**
@@ -288,7 +366,9 @@ export interface ToyTransactionSummary extends ToyTransaction {
 export function subjectName(
   tx: Pick<ToyTransactionSummary, 'type' | 'toy_name' | 'tutorial_title'>
 ): string {
-  return tx.type === 'build' ? tx.tutorial_title ?? 'A build' : tx.toy_name
+  if (tx.type === 'build') return tx.tutorial_title ?? 'A build'
+  if (tx.type === 'print') return tx.tutorial_title ? `${tx.tutorial_title} — parts` : 'A print job'
+  return tx.toy_name
 }
 
 export type ToyTransactionMessagePreview = Pick<
@@ -326,6 +406,8 @@ export function needsAction(
     | 'requester_confirmed_at'
     | 'working_photo_url'
     | 'work_approved_at'
+    | 'printing_started_at'
+    | 'ready_at'
   > & { blocked_by_rival_accept?: boolean },
   viewerId: string,
   // The orgs the viewer leads. Without it an org request waiting on a leader
@@ -349,6 +431,12 @@ export function needsAction(
       if (!tx.working_photo_url) return isOwner
       if (!tx.work_approved_at) return !isOwner
     }
+    /*
+     * A print job's middle is both owed by the printer: start it, then say it
+     * is ready with a photo. Only once it is ready does collecting it become
+     * something the requester can do.
+     */
+    if (tx.type === 'print' && !tx.ready_at) return isOwner
     // Donations are confirmed by the owner alone; exchanges and builds need
     // both parties.
     const confirms = tx.type !== 'donation' || isOwner
@@ -361,13 +449,22 @@ export function needsAction(
 
 /** The copy the Exchanges badge is counting, shown on the card itself. */
 export function actionLabel(
-  tx: Pick<ToyTransaction, 'status' | 'type' | 'working_photo_url' | 'work_approved_at'>,
+  tx: Pick<
+    ToyTransaction,
+    'status' | 'type' | 'working_photo_url' | 'work_approved_at' | 'printing_started_at' | 'ready_at'
+  >,
   isOwner = false
 ): string {
   if (tx.status === 'requested') {
-    return tx.type === 'build'
-      ? 'Waiting on you — take it on or decline'
-      : 'Waiting on you — accept or decline'
+    if (tx.type === 'build') return 'Waiting on you — take it on or decline'
+    if (tx.type === 'print') return 'Waiting on you — take the job or decline'
+    return 'Waiting on you — accept or decline'
+  }
+  if (tx.type === 'print' && isOwner && !tx.printing_started_at) {
+    return 'Waiting on you — start the print'
+  }
+  if (tx.type === 'print' && isOwner && !tx.ready_at) {
+    return 'Waiting on you — mark it ready'
   }
   if (tx.type === 'build' && !tx.working_photo_url && isOwner) {
     return 'Waiting on you — post the working shot'
@@ -482,6 +579,10 @@ export interface ToyTransactionDetail extends ToyTransaction {
   toy_name: string
   /** The guide being built, on a build (057). Null on a donation or exchange. */
   tutorial_title: string | null
+  /** The machine a print job is on, and where it is. Null on every other kind. */
+  printer: Pick<Printer, 'id' | 'name' | 'suburb' | 'state' | 'materials'> | null
+  /** The parts a print job asks for (058), flattened out of the join. */
+  print_files: Array<{ id: string; filename: string; quantity: number }>
   offered_toy_name: string | null
   owner_name: string
   requester_name: string
