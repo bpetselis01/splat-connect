@@ -70,7 +70,14 @@ export function StageRail({
       {stages.map((stage, i) => {
         const tone = TONE[stage.state]
         const Glyph = GLYPH[stage.state]
+        // A step only becomes a control when there is somewhere for it to go.
+        // Read-only rails used to render <button disabled>, which put a dead
+        // control in the accessibility tree for something purely informational
+        // — a screen reader announced four dimmed buttons on every list row —
+        // and collided by accessible name with the page's real actions: the
+        // "Accepted" step and an "Accept" button are two different things.
         const interactive = Boolean(onSelect)
+        const Step = interactive ? 'button' : 'div'
         /*
          * The bar belongs to the step on its left, so the last one has none,
          * and it is filled only when that step is itself `done`.
@@ -84,12 +91,12 @@ export function StageRail({
         const barDone = stage.state === 'done'
         return (
           <li key={stage.key} className="min-w-0">
-            <button
-              type="button"
-              disabled={!interactive}
-              onClick={interactive ? () => onSelect?.(stage) : undefined}
+            <Step
+              {...(interactive
+                ? { type: 'button' as const, onClick: () => onSelect?.(stage) }
+                : {})}
               aria-current={stage.state === 'now' ? 'step' : undefined}
-              className="flex w-full flex-col items-start gap-1.5 bg-transparent p-0 text-left disabled:cursor-default"
+              className="flex w-full flex-col items-start gap-1.5 bg-transparent p-0 text-left"
             >
               <span className="flex w-full items-center gap-2">
                 <span
@@ -109,7 +116,7 @@ export function StageRail({
               </span>
               <span className="text-sm font-extrabold text-ink">{stage.label}</span>
               <span className="text-[13px] leading-[1.4] text-muted">{stage.caption}</span>
-            </button>
+            </Step>
           </li>
         )
       })}

@@ -19,8 +19,8 @@ const stopped: Stage[] = [
 
 describe('StageRail', () => {
   it('marks only the live step as the current one', () => {
-    render(<StageRail stages={live} />)
-    const current = screen.getAllByRole('button').filter((b) => b.getAttribute('aria-current') === 'step')
+    const { container } = render(<StageRail stages={live} />)
+    const current = [...container.querySelectorAll('[aria-current="step"]')]
     expect(current).toHaveLength(1)
     expect(current[0]).toHaveTextContent('Handover')
   })
@@ -30,8 +30,8 @@ describe('StageRail', () => {
    * an in-progress dot tells the reader somebody is still waiting on them.
    */
   it('never shows an in-progress step on a record that stopped', () => {
-    render(<StageRail stages={stopped} />)
-    expect(screen.queryAllByRole('button').filter((b) => b.getAttribute('aria-current') === 'step')).toHaveLength(0)
+    const { container } = render(<StageRail stages={stopped} />)
+    expect(container.querySelectorAll('[aria-current="step"]')).toHaveLength(0)
   })
 
   /*
@@ -80,8 +80,14 @@ describe('StageRail', () => {
     expect(bars[2].style.background).toContain('--surface2')
   })
 
-  it('renders inert steps when it is read-only', () => {
+  /*
+   * Why: a read-only step used to be <button disabled>, which announced four
+   * dead controls per list row to a screen reader and collided by accessible
+   * name with the page's real actions — an "Accepted" step and an "Accept"
+   * button are two different things, and a strict locator saw both.
+   */
+  it('renders no controls at all when it is read-only', () => {
     render(<StageRail stages={live} />)
-    for (const b of screen.getAllByRole('button')) expect(b).toBeDisabled()
+    expect(screen.queryAllByRole('button')).toHaveLength(0)
   })
 })
