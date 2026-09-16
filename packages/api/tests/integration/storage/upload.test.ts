@@ -66,7 +66,10 @@ describe('storage uploads', () => {
     expect(url).toBe(`${tutorialId}/tutorial.pdf`)
   })
 
-  it('replacing a photo deletes the old file (jpg -> png leaves exactly one)', async () => {
+  // Why:   this route appended-only since a4359f7c; it used to delete every
+  //        existing object before writing, which capped a guide at one photo.
+  // How:   uploads two and expects both, which is the inverse of the old assertion.
+  it('appends each photo, so a guide can carry a gallery', async () => {
     const first = await uploadRequest(
       '/api/upload/photo',
       user.token,
@@ -82,8 +85,7 @@ describe('storage uploads', () => {
     expect(second.status).toBe(200)
 
     const { data: files } = await adminClient().storage.from('toy-photos').list(tutorialId)
-    expect(files?.length).toBe(1)
-    expect(files?.[0].name).toBe('photo.png')
+    expect(files?.length).toBe(2)
   })
 
   it('uploads an STL to the stl-files bucket and returns path + filename', async () => {
