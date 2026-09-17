@@ -46,46 +46,82 @@ export default async function AdminPrintJobsPage() {
       {jobs.length === 0 ? (
         <p className="card p-6 text-sm text-muted">No print jobs yet.</p>
       ) : (
-        <ul className="flex list-none flex-col gap-3">
-          {jobs.map((j) => (
-            <li key={j.id} className="card flex flex-wrap items-center gap-4 p-5">
-              <span
-                aria-hidden="true"
-                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-card ${
-                  j.stalled ? 'bg-honey-soft text-ink' : 'bg-sunken text-brand-deep'
-                }`}
-              >
-                {j.stalled ? <Warning className="h-5 w-5" /> : <Printer className="h-5 w-5" />}
-              </span>
-
-              <div className="min-w-0 flex-1">
-                <p className="font-bold text-ink">
-                  {j.tutorial_title ?? 'A guide that is no longer published'}
-                </p>
-                <p className="mt-0.5 text-xs text-muted">
-                  {/* An event-hosted job has no printer: 061 made a build day a
-                      valid destination for one. */}
-                  {j.printer_name ?? (j.event_id ? 'Printed at a build day' : 'No printer')} ·
-                  untouched {j.idle_days} day{j.idle_days === 1 ? '' : 's'}
-                  {j.decline_reason && ` · declined — ${j.decline_reason}`}
-                </p>
-                {j.stalled && (
-                  <p className="mt-1 text-sm font-semibold text-ink">
-                    Accepted, not started, ten days quiet.
-                  </p>
-                )}
-              </div>
-
-              <Badge status={j.status} />
-              <Link
-                href={`/dashboard/print-requests/${j.id}`}
-                className="btn btn-quiet btn-sm shrink-0"
-              >
-                Open
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <div className="overflow-x-auto">
+          {/* JOB | PRINTER | STATUS | AGE, as the board draws this queue. Its
+              REQUESTER column is absent: /api/admin/print-jobs returns no
+              requester, and inventing one is worse than a missing column. */}
+          <table className="w-full border-collapse text-left">
+            <thead>
+              <tr className="border-b border-line">
+                <th scope="col" className="eyebrow pb-2 pr-3 text-muted">Job</th>
+                <th scope="col" className="eyebrow pb-2 pr-3 text-muted">Printer</th>
+                <th scope="col" className="eyebrow pb-2 pr-3 text-muted">Status</th>
+                <th scope="col" className="eyebrow whitespace-nowrap pb-2 pr-3 text-right text-muted">
+                  Age
+                </th>
+                <th scope="col" className="pb-2">
+                  <span className="sr-only">Actions</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {jobs.map((j) => (
+                <tr key={j.id} className="border-b border-line align-middle last:border-0">
+                  <td className="py-3 pr-3">
+                    <span className="flex items-center gap-3">
+                      <span
+                        aria-hidden="true"
+                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-card ${
+                          j.stalled ? 'bg-honey-soft text-ink' : 'bg-sunken text-brand-deep'
+                        }`}
+                      >
+                        {j.stalled ? (
+                          <Warning className="h-5 w-5" />
+                        ) : (
+                          <Printer className="h-5 w-5" />
+                        )}
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block font-bold text-ink">
+                          {j.tutorial_title ?? 'A guide that is no longer published'}
+                        </span>
+                        {j.stalled && (
+                          <span className="block text-xs text-muted">
+                            Accepted, not started, ten days quiet.
+                          </span>
+                        )}
+                        {j.decline_reason && (
+                          <span className="block text-xs text-muted">
+                            Declined — {j.decline_reason}
+                          </span>
+                        )}
+                      </span>
+                    </span>
+                  </td>
+                  <td className="py-3 pr-3 text-sm text-muted">
+                    {/* An event-hosted job has no printer: 061 made a build day a
+                        valid destination for one. */}
+                    {j.printer_name ?? (j.event_id ? 'Printed at a build day' : 'No printer')}
+                  </td>
+                  <td className="py-3 pr-3">
+                    <Badge status={j.status} />
+                  </td>
+                  <td className="whitespace-nowrap py-3 pr-3 text-right text-sm tabular-nums text-muted">
+                    {j.idle_days} day{j.idle_days === 1 ? '' : 's'}
+                  </td>
+                  <td className="py-3 text-right">
+                    <Link
+                      href={`/dashboard/print-requests/${j.id}`}
+                      className="btn btn-quiet btn-sm"
+                    >
+                      Open
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   )

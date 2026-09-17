@@ -37,29 +37,47 @@ export default async function ContributorsPage() {
           Showing the {all.length.toLocaleString()} most recent of {total.toLocaleString()} accounts.
         </p>
       )}
-      <div className="flex flex-col gap-3">
-        {all.map((p) => (
-          <div
-            key={p.id}
-            data-testid="contributor-row"
-            className="card flex flex-wrap items-center justify-between gap-4 p-4"
-          >
-            <div className="min-w-0">
-              <p className="card-title">{p.name}</p>
-              <p className="text-xs text-muted">{p.email}</p>
-              <p className="mt-0.5 text-xs text-muted">
-                Joined {new Date(p.created_at).toLocaleDateString()}
-              </p>
-            </div>
-            <div className="flex shrink-0 gap-2">
-              <form action={deleteContributor.bind(null, p.id)}>
-                <button type="submit" className="btn btn-danger btn-sm">
-                  Delete
-                </button>
-              </form>
-            </div>
-          </div>
-        ))}
+      <div className="overflow-x-auto">
+        {/* ACCOUNT | JOINED, as the board draws this queue. Its CAPABILITY,
+            GUIDES and TOYS columns are absent: /api/admin/contributors returns
+            name, email and created_at and nothing to fill them with. */}
+        <table className="w-full border-collapse text-left">
+          <thead>
+            <tr className="border-b border-line">
+              <th scope="col" className="eyebrow pb-2 pr-3 text-muted">Account</th>
+              <th scope="col" className="eyebrow whitespace-nowrap pb-2 pr-3 text-right text-muted">
+                Joined
+              </th>
+              <th scope="col" className="pb-2">
+                <span className="sr-only">Actions</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {all.map((p) => (
+              <tr
+                key={p.id}
+                data-testid="contributor-row"
+                className="border-b border-line align-middle last:border-0"
+              >
+                <td className="py-3 pr-3">
+                  <span className="card-title block">{p.name}</span>
+                  <span className="block text-xs text-muted">{p.email}</span>
+                </td>
+                <td className="whitespace-nowrap py-3 pr-3 text-right text-sm tabular-nums text-muted">
+                  {new Date(p.created_at).toLocaleDateString()}
+                </td>
+                <td className="py-3 text-right">
+                  <form action={deleteContributor.bind(null, p.id)}>
+                    <button type="submit" className="btn btn-danger btn-sm">
+                      Delete
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   )
