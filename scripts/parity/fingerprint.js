@@ -95,6 +95,14 @@ function collectFingerprint(rootSelector) {
     if (rect.width < 2 || rect.height < 2) return false
     return st.boxShadow !== 'none' || parseFloat(st.borderTopWidth) > 0
   })
+  // Leaf-most only: a bordered box that CONTAINS another bordered box is a
+  // container, not a card. Keeping both made the grid wrapper on /library the
+  // "card" whose radius and title got measured — reporting the page's own 36px
+  // h1 as the card title and the wrapper's 24px as the card radius, while the
+  // nineteen actual toy cards went unmeasured.
+  const leafCards = cardEls.filter((el) => !cardEls.some((o) => o !== el && el.contains(o)))
+  cardEls.length = 0
+  cardEls.push(...leafCards)
   const cardSet = new Set(cardEls)
   const insideCard = (el) => {
     for (let n = el.parentElement; n; n = n.parentElement) if (cardSet.has(n)) return true
@@ -170,6 +178,41 @@ function collectFingerprint(rootSelector) {
 
   const pick = (sel) => [...root.querySelectorAll(sel)].filter(visible)
 
+  /*
+   * The title of each card, found by prominence rather than by threshold.
+   *
+   * Relying on "is it heading-like" to spot a record title begs the question:
+   * live sets its toy-card titles at 14px/700, which is below any sensible
+   * heading threshold — so they vanished from the fingerprint and the report
+   * said "board lists records, live shows none" of a page showing nineteen
+   * toys. Being too small IS the finding, so the title has to be identified
+   * structurally and then measured, never identified BY its measurements.
+   *
+   * Prominence = the largest own-text descendant, earliest wins a tie.
+   */
+  const titleOf = (card) => {
+    let best = null
+    for (const el of card.querySelectorAll('*')) {
+      const own = [...el.childNodes]
+        .filter((n) => n.nodeType === 3)
+        .map((n) => n.textContent.trim())
+        .join('')
+      if (own.length < 2) continue
+      // Must contain actual words. CardPhoto's 🧸 placeholder is set at
+      // text-4xl, making it the largest "text" in every photo-less card — so
+      // the card title measured 36px/400 on every listing screen and the report
+      // blamed the design for an emoji.
+      if (!/[\p{L}\p{N}]{2}/u.test(own)) continue
+      if (!visible(el)) continue
+      const st = cs(el)
+      const size = px(st.fontSize)
+      if (!best || size > best.size) {
+        best = { size, weight: +st.fontWeight, font: st.fontFamily.split(',')[0].replace(/["']/g, '').trim() }
+      }
+    }
+    return best
+  }
+
   // Cards are named differently on each side, so identify them structurally:
   // a block with a radius and either a shadow or a border.
   const candidates = pick('button,[role="button"],a[class*="btn"],a[class*="button"]')
@@ -219,8 +262,11 @@ function collectFingerprint(rootSelector) {
     .filter((t) => t.length > 25)
     .slice(0, 40)
 
+  const cardTitles = cardEls.map(titleOf).filter(Boolean)
+
   return {
     headings,
+    cardTitles,
     counts: {
       cards: cardEls.length,
       buttons: buttons.length,

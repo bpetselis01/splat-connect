@@ -77,28 +77,30 @@ function compare(board, live, opts = {}) {
 
   const { pairs, extras } = matchHeadings(chrome(board.headings), chrome(live.headings))
 
-  const bRec = records(board.headings)
-  const lRec = records(live.headings)
-  if (bRec.length && lRec.length) {
+  // Card titles, measured structurally (see titleOf in fingerprint.js) so that
+  // "live sets these too small to read as titles" surfaces as a size finding
+  // rather than as a phantom missing section.
+  const bT = board.cardTitles || []
+  const lT = live.cardTitles || []
+  if (bT.length && lT.length) {
     const modeOf = (xs, key) => {
       const c = new Map()
       for (const x of xs) c.set(x[key], (c.get(x[key]) || 0) + 1)
       return [...c.entries()].sort((a, b) => b[1] - a[1])[0][0]
     }
-    const bf = modeOf(bRec, 'font')
-    const lf = modeOf(lRec, 'font')
-    if (bf !== lf) out.push(f('font', 'high', 'record title font', bf, lf))
-    const bs = modeOf(bRec, 'size')
-    const ls = modeOf(lRec, 'size')
+    const bf = modeOf(bT, 'font')
+    const lf = modeOf(lT, 'font')
+    if (bf !== lf) out.push(f('font', 'high', 'card title font', bf, lf))
+    const bs = modeOf(bT, 'size')
+    const ls = modeOf(lT, 'size')
     if (Math.abs(bs - ls) > SIZE_TOLERANCE)
-      out.push(f('size', 'medium', 'record title size', bs + 'px', ls + 'px'))
-    const bw = modeOf(bRec, 'weight')
-    const lw = modeOf(lRec, 'weight')
-    if (Math.abs(bw - lw) >= 100)
-      out.push(f('weight', 'low', 'record title weight', bw, lw))
-  } else if (bRec.length && !lRec.length) {
+      out.push(f('size', 'medium', 'card title size', bs + 'px', ls + 'px'))
+    const bw = modeOf(bT, 'weight')
+    const lw = modeOf(lT, 'weight')
+    if (Math.abs(bw - lw) >= 100) out.push(f('weight', 'low', 'card title weight', bw, lw))
+  } else if (board.counts.cards > 2 && live.counts.cards === 0) {
     out.push(
-      f('missing-section', 'high', 'board lists records, live shows none', bRec.length, 0)
+      f('missing-section', 'high', 'board lists cards, live shows none', board.counts.cards, 0)
     )
   }
 
@@ -132,7 +134,15 @@ function compare(board, live, opts = {}) {
     if (!extrasByLevel.has(e.level)) extrasByLevel.set(e.level, [])
     extrasByLevel.get(e.level).push(e.text)
   }
+  const boardHasLevel = new Set(board.headings.map((h) => h.level))
   for (const [level, texts] of extrasByLevel) {
+    // The board's artboard sections do not all contain their own page title —
+    // several screens are anchored on the content block, with the <h1> drawn in
+    // a sibling section outside data-screen-label. Live's <main> always has it,
+    // so it read as "an extra h1" on every such screen. If the board draws
+    // nothing at this level at all, the level is out of the section's scope
+    // rather than absent from the design.
+    if (!boardHasLevel.has(level)) continue
     out.push(
       f(
         'extra-section',
@@ -199,7 +209,14 @@ function compare(board, live, opts = {}) {
 
   const bh = board.page.height
   const lh = live.page.height
-  if (bh > 200 && lh > 200) {
+  // Skipped when the two sides hold very different numbers of records: the
+  // board draws six sample guides and live renders the four hundred in the
+  // database, so /library is legitimately 31,000px against the board's 1,005.
+  // That is data volume, which this report ignores everywhere else.
+  const bc = board.counts.cards
+  const lc = live.counts.cards
+  const volumeSkew = bc > 2 && lc > 2 && Math.max(bc, lc) / Math.min(bc, lc) > 2
+  if (bh > 200 && lh > 200 && !volumeSkew) {
     const ratio = Math.min(bh, lh) / Math.max(bh, lh)
     if (ratio < HEIGHT_RATIO)
       out.push(f('missing-section', 'high', 'page height differs grossly', bh + 'px', lh + 'px'))

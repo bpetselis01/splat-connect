@@ -34,7 +34,7 @@ export function TutorialCard({ tutorial, save }: { tutorial: Listed; save?: Save
     >
       <CardPhoto src={tutorial.toy_photo_url} />
       <div className="p-4">
-        <p className="truncate text-[18px] font-extrabold leading-snug text-ink">{tutorial.title}</p>
+        <p className="card-title truncate">{tutorial.title}</p>
         {tutorial.description && (
           <p className="mt-1 line-clamp-2 text-[13px] leading-relaxed text-muted">
             {tutorial.description}

@@ -37,7 +37,7 @@ export function DashboardTutorialCard({ tutorial }: { tutorial: Listed }) {
       </div>
 
       <div className="flex flex-1 flex-col gap-1 p-4">
-        <p className="truncate text-[18px] font-extrabold leading-snug text-ink">{tutorial.title}</p>
+        <p className="card-title truncate">{tutorial.title}</p>
         <div className="flex flex-wrap items-center gap-2">
           <Badge status={tutorial.status} />
           <BackingSummary backing={tutorial.tutorial_orgs ?? []} />

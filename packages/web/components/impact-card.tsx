@@ -23,7 +23,7 @@ export function ImpactCard({ kind, entity }: ImpactCardProps) {
   return (
     <Link href={href} data-testid="impact-card" className="card card-link block p-4">
       <div className="flex items-start justify-between gap-2">
-        <p className="truncate text-sm font-bold text-ink">{entity.name}</p>
+        <p className="card-title truncate">{entity.name}</p>
         <span
           className={`badge shrink-0 ${
             kind === 'person' ? 'bg-brand-tint text-brand-deep' : 'bg-mint-soft text-ink'

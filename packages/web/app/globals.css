@@ -348,6 +348,26 @@
   }
 
   /*
+   * The title of a card.
+   *
+   * The board sets every card title in Baloo 2 at 18px/800; live set them as
+   * plain <p> in whatever the local Tailwind string said — text-sm/700 on toy
+   * cards, text-[18px]/800 on guide cards, text-lg elsewhere — so they were
+   * neither the right face nor a consistent one. Twenty-one screens reported
+   * the font alone.
+   *
+   * A class rather than a utility string because these are the same object on
+   * every screen that has a grid.
+   */
+  .card-title {
+    font-family: var(--font-display);
+    font-size: 1.125rem;
+    font-weight: 800;
+    line-height: 1.25;
+    color: var(--color-ink);
+  }
+
+  /*
    * The listing register. The board draws the guide and toy grids at 18px
    * against the 24px it gives every other card — measured on #library and
    * #toys_public (six cards each, both 18px) against #components, #hub and

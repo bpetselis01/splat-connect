@@ -40,7 +40,7 @@ export function OrgCard({
           <Buildings className="h-6 w-6" />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block font-bold text-ink">{org.name}</span>
+          <span className="card-title block">{org.name}</span>
           {where && <span className="block text-xs text-muted">{where}</span>}
           {org.description && (
             <span className="mt-1 block text-sm leading-relaxed text-muted">{org.description}</span>

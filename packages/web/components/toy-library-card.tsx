@@ -16,7 +16,7 @@ export function ToyLibraryCard({ toy, save }: { toy: ToyWithOwner; save?: SavePr
     >
       <CardPhoto src={toy.cover_photo_url} />
       <div className="p-4">
-        <p className="truncate text-sm font-bold text-ink">{toy.name}</p>
+        <p className="card-title truncate">{toy.name}</p>
         <p className="mt-1 text-xs text-muted">Condition {toy.condition} / 10</p>
         {holder && <p className="mt-1 text-xs text-muted">Held by {holder}</p>}
         {/* Only ever shown for an organisation: a person's toy is always one
