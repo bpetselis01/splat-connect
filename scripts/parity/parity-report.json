@@ -1,5 +1,5 @@
 {
- "at": "2026-09-17T10:58:30.188Z",
+ "at": "2026-09-17T11:09:56.621Z",
  "live": "http://localhost:3110",
  "screens": [
   {
@@ -194,7 +194,7 @@
    "id": "toy_public",
    "name": "Toy detail",
    "group": "Public site",
-   "route": "/toy-library/d976edc9-ae03-477d-9459-d251720f6bdc",
+   "route": "/toy-library/6f2b0e42-528b-4c20-bbcb-21a3ffa76276",
    "findings": [
     {
      "type": "missing-section",
@@ -247,7 +247,7 @@
     }
    ],
    "role": "guest",
-   "finalUrl": "/toy-library/d976edc9-ae03-477d-9459-d251720f6bdc",
+   "finalUrl": "/toy-library/6f2b0e42-528b-4c20-bbcb-21a3ffa76276",
    "boardHeadings": 10,
    "liveHeadings": 0
   },
@@ -255,7 +255,7 @@
    "id": "toy_request",
    "name": "Request a toy",
    "group": "Public site",
-   "route": "/toy-library/d976edc9-ae03-477d-9459-d251720f6bdc/request",
+   "route": "/toy-library/6f2b0e42-528b-4c20-bbcb-21a3ffa76276/request",
    "findings": [
     {
      "type": "missing-section",
@@ -287,7 +287,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/toy-library/d976edc9-ae03-477d-9459-d251720f6bdc/request",
+   "finalUrl": "/toy-library/6f2b0e42-528b-4c20-bbcb-21a3ffa76276/request",
    "boardHeadings": 4,
    "liveHeadings": 1
   },
@@ -2178,7 +2178,7 @@
      "severity": "medium",
      "what": "h2 wording",
      "board": "in this section",
-     "live": "more about splat"
+     "live": "why this exists"
     },
     {
      "type": "copy",
@@ -2186,6 +2186,13 @@
      "what": "4/4 board paragraphs absent",
      "board": "splat stands for supporting play by adapting toys. we make toy adaptat",
      "live": "splat stands for supporting play by adapting toys. we publish free ins"
+    },
+    {
+     "type": "extra-section",
+     "severity": "low",
+     "what": "live has 4 extra h2 the board does not draw",
+     "board": null,
+     "live": "how the platform works | who runs it | what we are working on next"
     },
     {
      "type": "radius",
@@ -2354,7 +2361,7 @@
      "severity": "medium",
      "what": "5/5 board paragraphs absent",
      "board": "everything a family can ask of an organisation, in one place. say no w",
-     "live": "every ask a family can make of parity org mu#ewlfobfdu, in one queue: "
+     "live": "every ask a family can make of parity org mu#fbpg#vs, in one queue: a "
     }
    ],
    "role": "leader",
@@ -2444,7 +2451,7 @@
    "id": "org_event_manage",
    "name": "Manage event",
    "group": "My SPLAT",
-   "route": "/dashboard/org/events/90b04f1c-37be-44e7-a2d9-b565200e916a",
+   "route": "/dashboard/org/events/b073322f-6c71-42ea-b6f0-3774a0c97b94",
    "findings": [
     {
      "type": "missing-section",
@@ -2476,7 +2483,7 @@
     }
    ],
    "role": "leader",
-   "finalUrl": "/dashboard/org/events/90b04f1c-37be-44e7-a2d9-b565200e916a",
+   "finalUrl": "/dashboard/org/events/b073322f-6c71-42ea-b6f0-3774a0c97b94",
    "boardHeadings": 4,
    "liveHeadings": 2
   },
@@ -2887,7 +2894,7 @@
    "id": "editor",
    "name": "Tutorial editor",
    "group": "My SPLAT",
-   "route": "/tutorials/75de8eff-5f48-488b-9f04-17364582c6e0/edit",
+   "route": "/tutorials/39296b0c-890b-4a6f-867a-9bf35c3db2ee/edit",
    "findings": [
     {
      "type": "missing-section",
@@ -2940,7 +2947,7 @@
     }
    ],
    "role": "contributor",
-   "finalUrl": "/tutorials/75de8eff-5f48-488b-9f04-17364582c6e0/edit",
+   "finalUrl": "/tutorials/39296b0c-890b-4a6f-867a-9bf35c3db2ee/edit",
    "boardHeadings": 5,
    "liveHeadings": 1
   },
@@ -3007,7 +3014,7 @@
    "id": "toy_detail",
    "name": "Toy detail",
    "group": "My SPLAT",
-   "route": "/dashboard/toys/d976edc9-ae03-477d-9459-d251720f6bdc",
+   "route": "/dashboard/toys/6f2b0e42-528b-4c20-bbcb-21a3ffa76276",
    "findings": [
     {
      "type": "missing-section",
@@ -3067,7 +3074,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/toys/d976edc9-ae03-477d-9459-d251720f6bdc",
+   "finalUrl": "/dashboard/toys/6f2b0e42-528b-4c20-bbcb-21a3ffa76276",
    "boardHeadings": 8,
    "liveHeadings": 1
   },
@@ -3101,7 +3108,7 @@
    "id": "thread",
    "name": "Exchange thread",
    "group": "My SPLAT",
-   "route": "/dashboard/exchanges/9352fe25-e13d-41ef-922f-19227ae2ec82",
+   "route": "/dashboard/exchanges/6bb120b5-55a5-4d32-8a3e-1ea69add6ac2",
    "findings": [
     {
      "type": "font",
@@ -3182,7 +3189,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/exchanges/9352fe25-e13d-41ef-922f-19227ae2ec82",
+   "finalUrl": "/dashboard/exchanges/6bb120b5-55a5-4d32-8a3e-1ea69add6ac2",
    "boardHeadings": 4,
    "liveHeadings": 6
   },
@@ -3473,7 +3480,7 @@
    "id": "print_job",
    "name": "Print job",
    "group": "My SPLAT",
-   "route": "/dashboard/print-requests/d8838f19-694d-40cf-abfb-5b745f7f75d5",
+   "route": "/dashboard/print-requests/8487f45a-2154-4b29-89a2-7fa41ff90635",
    "findings": [
     {
      "type": "font",
@@ -3547,7 +3554,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/print-requests/d8838f19-694d-40cf-abfb-5b745f7f75d5",
+   "finalUrl": "/dashboard/print-requests/8487f45a-2154-4b29-89a2-7fa41ff90635",
    "boardHeadings": 3,
    "liveHeadings": 5
   },
@@ -3717,7 +3724,7 @@
    "id": "child",
    "name": "Child profile",
    "group": "My SPLAT",
-   "route": "/dashboard/child/60121ec5-bb05-407e-ae14-252cad8a489f",
+   "route": "/dashboard/child/f131f277-ca39-4eb7-9f65-a8ddff3fa903",
    "findings": [
     {
      "type": "size",
@@ -3756,7 +3763,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/child/60121ec5-bb05-407e-ae14-252cad8a489f",
+   "finalUrl": "/dashboard/child/f131f277-ca39-4eb7-9f65-a8ddff3fa903",
    "boardHeadings": 4,
    "liveHeadings": 1
   },
@@ -4001,7 +4008,7 @@
      "severity": "medium",
      "what": "5/5 board paragraphs absent",
      "board": "published items are live on the public pages right now.",
-     "live": "what parity org mu#ewlfobfdu has published, and what is still a draft."
+     "live": "what parity org mu#fbpg#vs has published, and what is still a draft."
     },
     {
      "type": "weight",
@@ -4838,27 +4845,6 @@
      "live": "Baloo 2"
     },
     {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"buttons\" has no counterpart",
-     "board": "buttons",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"elevation & radii\" has no counterpart",
-     "board": "elevation & radii",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"mascot — \"splat\" the bear\" has no counterpart",
-     "board": "mascot — \"splat\" the bear",
-     "live": null
-    },
-    {
      "type": "size",
      "severity": "medium",
      "what": "card title size",
@@ -4866,31 +4852,31 @@
      "live": "20px"
     },
     {
-     "type": "size",
-     "severity": "medium",
-     "what": "h1 \"components & states\" size",
-     "board": "44px",
-     "live": "36px"
-    },
-    {
-     "type": "missing-section",
-     "severity": "medium",
-     "what": "no inputs on live",
-     "board": 10,
-     "live": 0
-    },
-    {
      "type": "copy",
      "severity": "medium",
      "what": "7/7 board paragraphs absent",
      "board": "every control at #px+, a visible #px ink focus ring (never a glow), st",
      "live": "every shared control, at rest. hover and focus them to see the rest."
+    },
+    {
+     "type": "weight",
+     "severity": "low",
+     "what": "card title weight",
+     "board": 800,
+     "live": 700
+    },
+    {
+     "type": "extra-section",
+     "severity": "low",
+     "what": "live has 7 extra h2 the board does not draw",
+     "board": null,
+     "live": "status pills | record card | inputs"
     }
    ],
    "role": "guest",
    "finalUrl": "/design-system",
    "boardHeadings": 9,
-   "liveHeadings": 7
+   "liveHeadings": 14
   },
   {
    "id": "states",
@@ -4917,17 +4903,17 @@
   "clean": 5,
   "withFindings": 114,
   "errored": 0,
-  "findings": 498,
+  "findings": 496,
   "byType": {
-   "missing-section": 144,
-   "size": 75,
+   "missing-section": 140,
+   "size": 74,
    "copy": 113,
    "radius": 41,
    "colour": 33,
    "shadow": 28,
-   "extra-section": 20,
+   "extra-section": 22,
    "font": 18,
-   "weight": 26
+   "weight": 27
   }
  }
 }

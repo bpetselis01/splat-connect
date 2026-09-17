@@ -128,8 +128,14 @@ function collectFingerprint(rootSelector) {
   //     heading missing seconds after it was added;
   //   - three or more of them, so a two-column layout is not a list either.
   const ROW_TAGS = new Set(['LI', 'TR', 'A', 'BUTTON', 'ARTICLE'])
+  // <section> is never a row. A page built from uniform sections — the design
+  // system sheet is nine of them sharing one className — otherwise reads as a
+  // nine-row list, and every heading on it gets written off as data. Its own
+  // headings then have "no counterpart" however many of them you add, which is
+  // exactly what happened after adding six.
   const rowish = (el) =>
-    ROW_TAGS.has(el.tagName) || (el.className || '').toString().trim().length > 0
+    ROW_TAGS.has(el.tagName) ||
+    (el.tagName !== 'SECTION' && (el.className || '').toString().trim().length > 0)
   const inRepeatedRow = (el) => {
     let depth = 0
     for (let n = el; n && n !== root && depth < 5; n = n.parentElement, depth++) {
