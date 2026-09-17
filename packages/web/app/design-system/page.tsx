@@ -119,7 +119,7 @@ export default function DesignSystemPage() {
           particular kind of wrong on the page whose job is to show what the
           design system contains. Every example is a resting render — the states
           needing a pointer live at /design-system/states. */}
-      <Section title="Inputs" blurb="Sunk into the canvas, not raised onto white. 48px, 14px radius.">
+      <Section title="Inputs" blurb="44px on --surface, 0 14px, a 14px radius and a hairline.">
         <div className="grid max-w-xl gap-3">
           <label className="flex flex-col gap-1.5">
             <span className="text-sm font-bold text-ink">Toy name</span>
@@ -224,7 +224,7 @@ export default function DesignSystemPage() {
         <div className="flex flex-wrap items-end gap-4">
           {[
             ['field', '14px'],
-            ['panel', '18px'],
+            ['inset', '18px'],
             ['card', '24px'],
             ['pill', '999px'],
           ].map(([name, size]) => (

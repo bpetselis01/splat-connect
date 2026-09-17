@@ -65,7 +65,7 @@ function WeighIn({
   }
 
   return (
-    <div className="mt-3 flex flex-col gap-3 rounded-[var(--radius-panel)] bg-canvas p-4">
+    <div className="mt-3 flex flex-col gap-3 rounded-[var(--radius-inset)] bg-canvas p-4">
       <div className="flex flex-wrap items-end gap-3">
         <label className="w-32">
           <span className="block text-[13px] font-bold text-muted">Weighed, kg</span>

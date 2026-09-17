@@ -64,7 +64,7 @@ export function MoneyPanel({
           <li key={line.id}>
             <Link
               href={`/dashboard/exchanges/${line.transaction_id}`}
-              className="flex items-center gap-3 rounded-[var(--radius-panel)] border border-line bg-canvas p-3 no-underline transition-colors hover:bg-sunken"
+              className="flex items-center gap-3 rounded-[var(--radius-inset)] border border-line bg-canvas p-3 no-underline transition-colors hover:bg-sunken"
             >
               <span
                 aria-hidden="true"

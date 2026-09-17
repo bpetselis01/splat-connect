@@ -64,7 +64,7 @@ export function StageRail({
   return (
     <ol
       aria-label={label}
-      className="grid list-none gap-2.5 rounded-[var(--radius-panel)] border border-line bg-canvas p-4 px-[18px]"
+      className="grid list-none gap-2.5 rounded-[var(--radius-inset)] border border-line bg-canvas p-4 px-[18px]"
       style={{ gridTemplateColumns: `repeat(${stages.length}, minmax(0, 1fr))` }}
     >
       {stages.map((stage, i) => {

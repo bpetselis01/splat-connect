@@ -32,7 +32,7 @@ describe('soft pop tokens', () => {
 
   it('defines the radius scale and one tokenised border width', () => {
     expect(declarations).toMatch(/--radius-field:\s*14px/)
-    expect(declarations).toMatch(/--radius-panel:\s*18px/)
+    expect(declarations).toMatch(/--radius-inset:\s*18px/)
     expect(declarations).toMatch(/--radius-card:\s*24px/)
     expect(declarations).toMatch(/--radius-pill:\s*999px/)
     expect(declarations).toMatch(/--border-width:\s*1px/)

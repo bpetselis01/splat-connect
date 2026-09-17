@@ -37,7 +37,7 @@ export function Alert({
   return (
     <div
       role={tone === 'bad' ? 'alert' : undefined}
-      className={`flex items-start gap-3 rounded-[var(--radius-panel)] border border-line p-[14px_16px] text-sm font-semibold leading-[1.55] text-ink ${className}`.trim()}
+      className={`flex items-start gap-3 rounded-[var(--radius-inset)] border border-line p-[14px_16px] text-sm font-semibold leading-[1.55] text-ink ${className}`.trim()}
       style={{ backgroundColor: bg }}
     >
       <span aria-hidden="true" className="mt-px shrink-0">

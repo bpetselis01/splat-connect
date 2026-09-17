@@ -78,7 +78,7 @@ function AddCostForm({
 
   return (
     <form
-      className="mt-3 flex flex-wrap items-end gap-2 rounded-[var(--radius-panel)] bg-canvas p-4"
+      className="mt-3 flex flex-wrap items-end gap-2 rounded-[var(--radius-inset)] bg-canvas p-4"
       onSubmit={(e) => {
         e.preventDefault()
         if (!valid || cents === null) return
@@ -246,7 +246,7 @@ export function CostPanel({
   return (
     <section
       aria-labelledby="cost-heading"
-      className="rounded-[var(--radius-panel)] border border-line bg-surface shadow-e1"
+      className="rounded-[var(--radius-inset)] border border-line bg-surface shadow-e1"
     >
       <div className="flex flex-wrap items-start justify-between gap-[14px] p-[18px_20px] pb-[13px]">
         <div className="min-w-0">
@@ -329,7 +329,7 @@ export function CostPanel({
 
         {editing ? (
           <form
-            className="mt-3 flex flex-col gap-3 rounded-[var(--radius-panel)] bg-canvas p-4"
+            className="mt-3 flex flex-col gap-3 rounded-[var(--radius-inset)] bg-canvas p-4"
             onSubmit={(e) => {
               e.preventDefault()
               const form = new FormData(e.currentTarget)
@@ -392,7 +392,7 @@ export function CostPanel({
         ) : (
           <>
             {terms.note && (
-              <figure className="mt-3 flex gap-3 rounded-[var(--radius-panel)] bg-canvas p-4">
+              <figure className="mt-3 flex gap-3 rounded-[var(--radius-inset)] bg-canvas p-4">
                 <Quotes size={20} weight="fill" aria-hidden="true" className="shrink-0 text-muted" />
                 <div className="min-w-0">
                   <p className="text-sm leading-relaxed text-ink">{terms.note}</p>

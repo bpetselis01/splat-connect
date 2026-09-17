@@ -99,7 +99,7 @@ export default async function RequestAPrintPage({
                 return (
                   <li
                     key={printer.id}
-                    className="flex items-start gap-3 rounded-[var(--radius-panel)] bg-canvas p-4"
+                    className="flex items-start gap-3 rounded-[var(--radius-inset)] bg-canvas p-4"
                   >
                     <span aria-hidden="true" className="empty-badge text-brand-deep">
                       <PrinterIcon size={22} weight="duotone" />

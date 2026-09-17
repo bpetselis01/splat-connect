@@ -111,7 +111,7 @@ export function RequestPrintForm({
             return (
               <label
                 key={printer.id}
-                className={`flex items-start gap-3 rounded-[var(--radius-panel)] bg-canvas p-3 text-sm ${
+                className={`flex items-start gap-3 rounded-[var(--radius-inset)] bg-canvas p-3 text-sm ${
                   unavailable ? 'opacity-60' : ''
                 }`}
               >

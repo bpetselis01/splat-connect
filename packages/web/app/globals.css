@@ -92,7 +92,7 @@
      be what --radius-field already held, so its eight consumers are untouched.
      Do not delete it — pixel-tokens.test.ts guards those call sites. */
   --radius-field: 14px;
-  --radius-panel: 18px;
+  --radius-inset: 18px;
   --radius-card: 24px;
   --radius-pill: 999px;
 
@@ -384,12 +384,12 @@
    * edge on a surface.
    */
   /* 18px, not 14px. Across the whole report the board asks a flat card for
-     18px sixteen times and for 14px once — --radius-panel is the token named
+     18px sixteen times and for 14px once — --radius-inset is the token named
      for exactly this box, and --radius-field belongs to inputs. */
   .card-flat {
     background-color: var(--color-surface);
     border: var(--border-width) solid var(--color-line);
-    border-radius: var(--radius-panel);
+    border-radius: var(--radius-inset);
   }
 
   /*
@@ -2801,7 +2801,7 @@
     align-items: center;
     gap: 10px;
     padding: 12px 18px 12px 12px;
-    border-radius: var(--radius-panel);
+    border-radius: var(--radius-inset);
     background-color: var(--color-surface);
     box-shadow: var(--shadow-e1);
   }
@@ -2848,7 +2848,7 @@
     max-width: 17rem;
     margin: 0;
     padding: 12px 16px;
-    border-radius: var(--radius-panel);
+    border-radius: var(--radius-inset);
     background-color: var(--color-surface);
     box-shadow: var(--shadow-e2);
     font-size: 15px;
@@ -2946,7 +2946,7 @@
     place-items: center;
     width: 44px;
     height: 44px;
-    border-radius: var(--radius-panel);
+    border-radius: var(--radius-inset);
     background-color: var(--color-surface);
     box-shadow: var(--shadow-e2);
     color: var(--color-brand-dark);
@@ -3112,7 +3112,7 @@
     place-items: center;
     width: 46px;
     height: 46px;
-    border-radius: var(--radius-panel);
+    border-radius: var(--radius-inset);
     color: var(--color-brand-deep);
   }
 
@@ -3287,7 +3287,7 @@
     flex-direction: column;
     min-width: 11rem;
     padding: 6px;
-    border-radius: var(--radius-panel);
+    border-radius: var(--radius-inset);
     border: var(--border-width) solid var(--color-line);
     background-color: var(--color-surface);
     box-shadow: var(--shadow-e3);

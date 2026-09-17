@@ -124,7 +124,7 @@ export default async function OrgPublicProfilePage({
           <h2 className="title-section mb-3">What is on</h2>
           <ul className="flex list-none flex-col gap-2">
             {(org.events ?? []).map((event) => (
-              <li key={event.id} className="rounded-[var(--radius-panel)] bg-canvas p-4">
+              <li key={event.id} className="rounded-[var(--radius-inset)] bg-canvas p-4">
                 <p className="card-title">{event.title}</p>
                 <p className="text-sm text-muted">
                   {new Date(event.starts_at).toLocaleString('en-AU')} ·{' '}
@@ -147,7 +147,7 @@ export default async function OrgPublicProfilePage({
           <h2 className="title-section mb-3">Stories</h2>
           <ul className="flex list-none flex-col gap-2">
             {(org.stories ?? []).map((story) => (
-              <li key={story.id} className="rounded-[var(--radius-panel)] bg-canvas p-4">
+              <li key={story.id} className="rounded-[var(--radius-inset)] bg-canvas p-4">
                 <p className="card-title">{story.title}</p>
                 <p className="mt-1 text-sm leading-relaxed text-ink">{story.summary}</p>
                 {/* Attributed to an organisation and a byline, always. */}
