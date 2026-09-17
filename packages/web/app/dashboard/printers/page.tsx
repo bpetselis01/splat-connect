@@ -26,6 +26,78 @@ import type { PrinterWithOwner, ToyTransactionSummary } from '@splat-connect/typ
 export const metadata = { title: 'Print for others — SPLAT Connect' }
 
 /**
+ * One job on one of the viewer's machines.
+ *
+ * Module scope rather than inside the screen: a component declared during a
+ * render is a new type on every pass, which remounts its whole subtree — and
+ * react-hooks/static-components refuses it outright.
+ */
+function JobRow({
+  tx,
+  viewerId,
+  ledOrgIds,
+}: {
+  tx: ToyTransactionSummary
+  viewerId: string
+  ledOrgIds: string[]
+}) {
+  return (
+    <li>
+      <RecordCard
+        icon={<PrinterIcon size={22} weight="duotone" />}
+        tint="var(--tviolet)"
+        title={subjectName(tx)}
+        meta={`${tx.other_party_name} · ${new Date(tx.created_at).toLocaleDateString('en-AU', {
+          day: 'numeric',
+          month: 'short',
+        })}`}
+        pill={<Badge status={tx.status} />}
+        stages={printStages(tx)}
+        note={tx.last_message ? tx.last_message.body : undefined}
+        primary={
+          <Link href={`/dashboard/print-requests/${tx.id}`} className="btn btn-primary no-underline">
+            <ChatCircle size={18} weight="fill" aria-hidden="true" />
+            Thread
+          </Link>
+        }
+        stageAction={
+          needsAction(tx, viewerId, ledOrgIds) ? (
+            <Link href={`/dashboard/print-requests/${tx.id}`} className="btn btn-quiet no-underline">
+              {/* isOwner is true on every row here by construction: these are
+                  jobs on the viewer's own machines. */}
+              {actionLabel(tx, true)}
+            </Link>
+          ) : undefined
+        }
+      />
+    </li>
+  )
+}
+
+function JobList({
+  rows,
+  empty,
+  viewerId,
+  ledOrgIds,
+}: {
+  rows: ToyTransactionSummary[]
+  empty: string
+  viewerId: string
+  ledOrgIds: string[]
+}) {
+  if (rows.length === 0) {
+    return <p className="py-6 text-sm leading-relaxed text-muted">{empty}</p>
+  }
+  return (
+    <ul className="flex list-none flex-col gap-3">
+      {rows.map((tx) => (
+        <JobRow key={tx.id} tx={tx} viewerId={viewerId} ledOrgIds={ledOrgIds} />
+      ))}
+    </ul>
+  )
+}
+
+/**
  * The screen itself, so the organisation's print orders can render it scoped to
  * one organisation's machines without copying three tabs.
  */
@@ -64,59 +136,6 @@ export async function PrintOfferScreen({
   const onTheBed = jobs.filter((tx) => tx.status === 'accepted')
   const done = jobs.filter((tx) => !['requested', 'accepted'].includes(tx.status))
 
-  function JobRow({ tx }: { tx: ToyTransactionSummary }) {
-    return (
-      <li>
-        <RecordCard
-          icon={<PrinterIcon size={22} weight="duotone" />}
-          tint="var(--tviolet)"
-          title={subjectName(tx)}
-          meta={`${tx.other_party_name} · ${new Date(tx.created_at).toLocaleDateString('en-AU', {
-            day: 'numeric',
-            month: 'short',
-          })}`}
-          pill={<Badge status={tx.status} />}
-          stages={printStages(tx)}
-          note={tx.last_message ? tx.last_message.body : undefined}
-          primary={
-            <Link
-              href={`/dashboard/print-requests/${tx.id}`}
-              className="btn btn-primary no-underline"
-            >
-              <ChatCircle size={18} weight="fill" aria-hidden="true" />
-              Thread
-            </Link>
-          }
-          stageAction={
-            needsAction(tx, viewerId, ledOrgIds) ? (
-              <Link
-                href={`/dashboard/print-requests/${tx.id}`}
-                className="btn btn-quiet no-underline"
-              >
-                {/* isOwner is true on every row here by construction: these are
-                    jobs on the viewer's own machines. */}
-                {actionLabel(tx, true)}
-              </Link>
-            ) : undefined
-          }
-        />
-      </li>
-    )
-  }
-
-  function JobList({ rows, empty }: { rows: ToyTransactionSummary[]; empty: string }) {
-    if (rows.length === 0) {
-      return <p className="py-6 text-sm leading-relaxed text-muted">{empty}</p>
-    }
-    return (
-      <ul className="flex list-none flex-col gap-3">
-        {rows.map((tx) => (
-          <JobRow key={tx.id} tx={tx} />
-        ))}
-      </ul>
-    )
-  }
-
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
@@ -153,7 +172,12 @@ export async function PrintOfferScreen({
             key: 'requests',
             label: `Requests (${waiting.length})`,
             content: (
-              <JobList rows={waiting} empty="Nothing is waiting on you right now." />
+              <JobList
+                rows={waiting}
+                empty="Nothing is waiting on you right now."
+                viewerId={viewerId}
+                ledOrgIds={ledOrgIds}
+              />
             ),
           },
           {
@@ -161,11 +185,16 @@ export async function PrintOfferScreen({
             label: `Jobs (${onTheBed.length})`,
             content: (
               <>
-                <JobList rows={onTheBed} empty="Nothing is on the bed." />
+                <JobList
+                  rows={onTheBed}
+                  empty="Nothing is on the bed."
+                  viewerId={viewerId}
+                  ledOrgIds={ledOrgIds}
+                />
                 {done.length > 0 && (
                   <section className="mt-10">
                     <h2 className="mb-3 text-lg font-bold text-ink">Finished</h2>
-                    <JobList rows={done} empty="" />
+                    <JobList rows={done} empty="" viewerId={viewerId} ledOrgIds={ledOrgIds} />
                   </section>
                 )}
               </>
