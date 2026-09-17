@@ -80,8 +80,17 @@ function compare(board, live, opts = {}) {
   // Card titles, measured structurally (see titleOf in fingerprint.js) so that
   // "live sets these too small to read as titles" surfaces as a size finding
   // rather than as a phantom missing section.
-  const bT = board.cardTitles || []
-  const lT = live.cardTitles || []
+  //
+  // Only when BOTH sides elected something that actually looks like a title.
+  // "The largest text in the card" identifies a title well on a text card and
+  // badly elsewhere: on the board's listing screens it elected a 12px eyebrow
+  // badge, a 13px byline and a 15px button in turn, each time reporting a
+  // confident difference against live's real 18px title. If what was elected is
+  // body-sized, there is no title here to compare and the honest output is
+  // nothing.
+  const TITLE_MIN = 15
+  const bT = (board.cardTitles || []).filter((t) => t.size >= TITLE_MIN)
+  const lT = (live.cardTitles || []).filter((t) => t.size >= TITLE_MIN)
   if (bT.length && lT.length) {
     const modeOf = (xs, key) => {
       const c = new Map()

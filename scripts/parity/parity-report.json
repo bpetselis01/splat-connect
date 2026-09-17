@@ -1,5 +1,5 @@
 {
- "at": "2026-09-17T09:28:36.045Z",
+ "at": "2026-09-17T09:48:54.552Z",
  "live": "http://localhost:3110",
  "screens": [
   {
@@ -70,13 +70,6 @@
    "route": "/library",
    "findings": [
     {
-     "type": "font",
-     "severity": "high",
-     "what": "card title font",
-     "board": "Nunito",
-     "live": "Baloo 2"
-    },
-    {
      "type": "missing-section",
      "severity": "high",
      "what": "h2 \"filters\" has no counterpart",
@@ -126,13 +119,6 @@
     {
      "type": "size",
      "severity": "medium",
-     "what": "card title size",
-     "board": "30px",
-     "live": "14px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
      "what": "h1 \"guide c — plush dog that barks\" size",
      "board": "44px",
      "live": "25px"
@@ -150,13 +136,6 @@
      "what": "10/10 board paragraphs absent",
      "board": "add a battery interrupter so one press of any #mm switch makes the dog",
      "live": "created by a playwright e#e test."
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "card title weight",
-     "board": 800,
-     "live": 700
     },
     {
      "type": "shadow",
@@ -184,13 +163,6 @@
    "group": "Public site",
    "route": "/toy-library",
    "findings": [
-    {
-     "type": "font",
-     "severity": "high",
-     "what": "card title font",
-     "board": "Nunito",
-     "live": "Baloo 2"
-    },
     {
      "type": "missing-section",
      "severity": "high",
@@ -222,7 +194,7 @@
    "id": "toy_public",
    "name": "Toy detail",
    "group": "Public site",
-   "route": "/toy-library/e0d9be37-560e-4eff-8cac-a90c7fcbe14d",
+   "route": "/toy-library/a219960c-fa54-4be2-9744-9f087548550c",
    "findings": [
     {
      "type": "missing-section",
@@ -260,13 +232,6 @@
      "live": "sign in to request this toy."
     },
     {
-     "type": "weight",
-     "severity": "low",
-     "what": "card title weight",
-     "board": 800,
-     "live": 600
-    },
-    {
      "type": "radius",
      "severity": "low",
      "what": "button radius range",
@@ -282,7 +247,7 @@
     }
    ],
    "role": "guest",
-   "finalUrl": "/toy-library/e0d9be37-560e-4eff-8cac-a90c7fcbe14d",
+   "finalUrl": "/toy-library/a219960c-fa54-4be2-9744-9f087548550c",
    "boardHeadings": 10,
    "liveHeadings": 0
   },
@@ -290,7 +255,7 @@
    "id": "toy_request",
    "name": "Request a toy",
    "group": "Public site",
-   "route": "/toy-library/e0d9be37-560e-4eff-8cac-a90c7fcbe14d/request",
+   "route": "/toy-library/a219960c-fa54-4be2-9744-9f087548550c/request",
    "findings": [
     {
      "type": "missing-section",
@@ -322,7 +287,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/toy-library/e0d9be37-560e-4eff-8cac-a90c7fcbe14d/request",
+   "finalUrl": "/toy-library/a219960c-fa54-4be2-9744-9f087548550c/request",
    "boardHeadings": 4,
    "liveHeadings": 1
   },
@@ -453,13 +418,6 @@
      "what": "8/8 board paragraphs absent",
      "board": "what adapting a toy means, the two ways to do it, and why it is worth ",
      "live": "unit # · set up your bench"
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "card title weight",
-     "board": 600,
-     "live": 400
     }
    ],
    "role": "guest",
@@ -474,25 +432,11 @@
    "route": "/learn/switch-types",
    "findings": [
     {
-     "type": "font",
-     "severity": "high",
-     "what": "card title font",
-     "board": "Baloo 2",
-     "live": "Nunito"
-    },
-    {
      "type": "copy",
      "severity": "medium",
      "what": "7/7 board paragraphs absent",
      "board": "buttons, levers, proximity and grasp — which suits which child. the ri",
      "live": "unit # · set up your bench"
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "card title weight",
-     "board": 800,
-     "live": 400
     }
    ],
    "role": "guest",
@@ -526,13 +470,6 @@
      "what": "2/2 board paragraphs absent",
      "board": "what makes a toy easy to adapt, and what makes it impossible. run a ca",
      "live": "unit # · set up your bench"
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "card title weight",
-     "board": 600,
-     "live": 400
     }
    ],
    "role": "guest",
@@ -566,13 +503,6 @@
      "what": "3/3 board paragraphs absent",
      "board": "buy these once and you can adapt any number of toys. every build lists",
      "live": "unit # · set up your bench"
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "card title weight",
-     "board": 600,
-     "live": 400
     },
     {
      "type": "extra-section",
@@ -627,13 +557,6 @@
      "what": "4/4 board paragraphs absent",
      "board": "hot irons, lead solder, and small batteries. none of it is dangerous i",
      "live": "unit # · set up your bench"
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "card title weight",
-     "board": 600,
-     "live": 400
     }
    ],
    "role": "guest",
@@ -659,11 +582,18 @@
    "route": "/learn/how-a-switch-works",
    "findings": [
     {
+     "type": "font",
+     "severity": "high",
+     "what": "card title font",
+     "board": "Baloo 2",
+     "live": "Nunito"
+    },
+    {
      "type": "weight",
      "severity": "low",
      "what": "card title weight",
-     "board": 600,
-     "live": 400
+     "board": 800,
+     "live": 700
     }
    ],
    "role": "guest",
@@ -678,6 +608,20 @@
    "route": "/learn/checkpoint-1",
    "findings": [
     {
+     "type": "font",
+     "severity": "high",
+     "what": "card title font",
+     "board": "Baloo 2",
+     "live": "Nunito"
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "card title size",
+     "board": "22px",
+     "live": "16px"
+    },
+    {
      "type": "copy",
      "severity": "medium",
      "what": "1/1 board paragraphs absent",
@@ -688,8 +632,8 @@
      "type": "weight",
      "severity": "low",
      "what": "card title weight",
-     "board": 600,
-     "live": 400
+     "board": 800,
+     "live": 700
     }
    ],
    "role": "guest",
@@ -704,6 +648,20 @@
    "route": "/learn/checkpoint-2",
    "findings": [
     {
+     "type": "font",
+     "severity": "high",
+     "what": "card title font",
+     "board": "Baloo 2",
+     "live": "Nunito"
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "card title size",
+     "board": "22px",
+     "live": "16px"
+    },
+    {
      "type": "copy",
      "severity": "medium",
      "what": "1/1 board paragraphs absent",
@@ -714,8 +672,8 @@
      "type": "weight",
      "severity": "low",
      "what": "card title weight",
-     "board": 600,
-     "live": 400
+     "board": 800,
+     "live": 700
     }
    ],
    "role": "guest",
@@ -730,6 +688,13 @@
    "route": "/learn/wire-a-connector",
    "findings": [
     {
+     "type": "font",
+     "severity": "high",
+     "what": "card title font",
+     "board": "Baloo 2",
+     "live": "Nunito"
+    },
+    {
      "type": "missing-section",
      "severity": "medium",
      "what": "no tables on live",
@@ -741,7 +706,7 @@
      "severity": "low",
      "what": "card title weight",
      "board": 800,
-     "live": 400
+     "live": 700
     }
    ],
    "role": "guest",
@@ -756,6 +721,20 @@
    "route": "/learn/checkpoint-3",
    "findings": [
     {
+     "type": "font",
+     "severity": "high",
+     "what": "card title font",
+     "board": "Baloo 2",
+     "live": "Nunito"
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "card title size",
+     "board": "22px",
+     "live": "16px"
+    },
+    {
      "type": "copy",
      "severity": "medium",
      "what": "1/1 board paragraphs absent",
@@ -766,8 +745,8 @@
      "type": "weight",
      "severity": "low",
      "what": "card title weight",
-     "board": 600,
-     "live": 400
+     "board": 800,
+     "live": 700
     }
    ],
    "role": "guest",
@@ -782,6 +761,13 @@
    "route": "/learn/build-hamster-mania",
    "findings": [
     {
+     "type": "font",
+     "severity": "high",
+     "what": "card title font",
+     "board": "Baloo 2",
+     "live": "Nunito"
+    },
+    {
      "type": "missing-section",
      "severity": "medium",
      "what": "no tables on live",
@@ -793,7 +779,7 @@
      "severity": "low",
      "what": "card title weight",
      "board": 800,
-     "live": 400
+     "live": 700
     }
    ],
    "role": "guest",
@@ -808,6 +794,13 @@
    "route": "/learn/build-duck-bubbles",
    "findings": [
     {
+     "type": "font",
+     "severity": "high",
+     "what": "card title font",
+     "board": "Baloo 2",
+     "live": "Nunito"
+    },
+    {
      "type": "missing-section",
      "severity": "medium",
      "what": "no tables on live",
@@ -819,7 +812,7 @@
      "severity": "low",
      "what": "card title weight",
      "board": 800,
-     "live": 400
+     "live": 700
     }
    ],
    "role": "guest",
@@ -845,7 +838,7 @@
      "severity": "medium",
      "what": "card title size",
      "board": "21px",
-     "live": "14px"
+     "live": "16px"
     },
     {
      "type": "missing-section",
@@ -859,7 +852,7 @@
      "severity": "low",
      "what": "card title weight",
      "board": 800,
-     "live": 400
+     "live": 700
     },
     {
      "type": "shadow",
@@ -880,6 +873,13 @@
    "group": "Learn",
    "route": "/learn/build-a-switch",
    "findings": [
+    {
+     "type": "font",
+     "severity": "high",
+     "what": "card title font",
+     "board": "Baloo 2",
+     "live": "Nunito"
+    },
     {
      "type": "radius",
      "severity": "medium",
@@ -921,13 +921,6 @@
    "route": "/learn/handover",
    "findings": [
     {
-     "type": "size",
-     "severity": "medium",
-     "what": "card title size",
-     "board": "14px",
-     "live": "18px"
-    },
-    {
      "type": "radius",
      "severity": "medium",
      "what": "card radius",
@@ -961,6 +954,20 @@
    "route": "/learn/final-checkpoint",
    "findings": [
     {
+     "type": "font",
+     "severity": "high",
+     "what": "card title font",
+     "board": "Baloo 2",
+     "live": "Nunito"
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "card title size",
+     "board": "22px",
+     "live": "16px"
+    },
+    {
      "type": "copy",
      "severity": "medium",
      "what": "1/1 board paragraphs absent",
@@ -971,8 +978,8 @@
      "type": "weight",
      "severity": "low",
      "what": "card title weight",
-     "board": 600,
-     "live": 400
+     "board": 800,
+     "live": 700
     }
    ],
    "role": "guest",
@@ -1095,13 +1102,6 @@
    "route": "/printing/requests",
    "findings": [
     {
-     "type": "font",
-     "severity": "high",
-     "what": "card title font",
-     "board": "JetBrains Mono",
-     "live": "Nunito"
-    },
-    {
      "type": "missing-section",
      "severity": "high",
      "what": "h2 \"who you asked\" has no counterpart",
@@ -1174,7 +1174,7 @@
      "severity": "medium",
      "what": "card title size",
      "board": "26px",
-     "live": "14px"
+     "live": "15px"
     },
     {
      "type": "size",
@@ -1751,13 +1751,6 @@
    "route": "/organizations/1373de43-4898-4161-9d7d-0f8961874e96/public",
    "findings": [
     {
-     "type": "font",
-     "severity": "high",
-     "what": "card title font",
-     "board": "Baloo 2",
-     "live": "Nunito"
-    },
-    {
      "type": "missing-section",
      "severity": "high",
      "what": "h2 \"about\" has no counterpart",
@@ -1807,13 +1800,6 @@
      "live": null
     },
     {
-     "type": "size",
-     "severity": "medium",
-     "what": "card title size",
-     "board": "18px",
-     "live": "14px"
-    },
-    {
      "type": "extra-section",
      "severity": "medium",
      "what": "live has an extra h1: \"e#e backing org #-#\"",
@@ -1833,13 +1819,6 @@
      "what": "11/11 board paragraphs absent",
      "board": "paediatric ot service newcastle, nsw on splat since # thanked # times",
      "live": "created by a playwright e#e test."
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "card title weight",
-     "board": 800,
-     "live": 600
     },
     {
      "type": "shadow",
@@ -1936,13 +1915,6 @@
      "what": "7/7 board paragraphs absent",
      "board": "paediatric ot who writes up whatever the thursday switch clinic adapts",
      "live": "seeded switch-adapted bubble machine"
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "card title weight",
-     "board": 800,
-     "live": 600
     }
    ],
    "role": "guest",
@@ -1969,13 +1941,6 @@
      "what": "h3 \"past events (#)\" has no counterpart",
      "board": "past events (#)",
      "live": null
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "card title size",
-     "board": "26px",
-     "live": "18px"
     },
     {
      "type": "size",
@@ -2260,6 +2225,13 @@
    "route": "/about/stories",
    "findings": [
     {
+     "type": "font",
+     "severity": "high",
+     "what": "card title font",
+     "board": "Nunito",
+     "live": "Baloo 2"
+    },
+    {
      "type": "missing-section",
      "severity": "high",
      "what": "h4 \"got a story from your organisation?\" has no counterpart",
@@ -2272,6 +2244,13 @@
      "what": "h1 \"stories\" size",
      "board": "52px",
      "live": "44px"
+    },
+    {
+     "type": "weight",
+     "severity": "low",
+     "what": "card title weight",
+     "board": 400,
+     "live": 800
     },
     {
      "type": "shadow",
@@ -2382,13 +2361,6 @@
     {
      "type": "size",
      "severity": "medium",
-     "what": "card title size",
-     "board": "21px",
-     "live": "14px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
      "what": "h1 \"about\" size",
      "board": "52px",
      "live": "44px"
@@ -2495,20 +2467,6 @@
    "route": "/contact",
    "findings": [
     {
-     "type": "font",
-     "severity": "high",
-     "what": "card title font",
-     "board": "Nunito",
-     "live": "Baloo 2"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "card title size",
-     "board": "14px",
-     "live": "18px"
-    },
-    {
      "type": "radius",
      "severity": "medium",
      "what": "card radius",
@@ -2581,7 +2539,7 @@
      "severity": "medium",
      "what": "5/5 board paragraphs absent",
      "board": "everything a family can ask of an organisation, in one place. say no w",
-     "live": "every ask a family can make of parity org mu#bplnh#aa# in one queue: a"
+     "live": "every ask a family can make of parity org mu#cfy#yfr# in one queue: a "
     },
     {
      "type": "shadow",
@@ -2626,13 +2584,6 @@
      "what": "5/7 board paragraphs absent",
      "board": "bayside ot collective · yesterday",
      "live": "messages from the contact form. safety reports sit at the top of open "
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "card title weight",
-     "board": 800,
-     "live": 700
     },
     {
      "type": "shadow",
@@ -2691,28 +2642,14 @@
    "id": "org_event_manage",
    "name": "Manage event",
    "group": "My SPLAT",
-   "route": "/dashboard/org/events/45a9d805-9d44-4ec3-9bc7-9fa2cfae233e",
+   "route": "/dashboard/org/events/604e7b37-5f7e-49ea-b5e3-c77d843156a2",
    "findings": [
-    {
-     "type": "font",
-     "severity": "high",
-     "what": "card title font",
-     "board": "Nunito",
-     "live": "JetBrains Mono"
-    },
     {
      "type": "missing-section",
      "severity": "high",
      "what": "h2 \"parts to print before the day\" has no counterpart",
      "board": "parts to print before the day",
      "live": null
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "card title size",
-     "board": "16px",
-     "live": "12px"
     },
     {
      "type": "size",
@@ -2736,13 +2673,6 @@
      "live": "build day · thursday # october #"
     },
     {
-     "type": "weight",
-     "severity": "low",
-     "what": "card title weight",
-     "board": 800,
-     "live": 600
-    },
-    {
      "type": "shadow",
      "severity": "low",
      "what": "card shadow",
@@ -2751,7 +2681,7 @@
     }
    ],
    "role": "leader",
-   "finalUrl": "/dashboard/org/events/45a9d805-9d44-4ec3-9bc7-9fa2cfae233e",
+   "finalUrl": "/dashboard/org/events/604e7b37-5f7e-49ea-b5e3-c77d843156a2",
    "boardHeadings": 4,
    "liveHeadings": 2
   },
@@ -3056,7 +2986,7 @@
      "severity": "medium",
      "what": "card title size",
      "board": "46px",
-     "live": "14px"
+     "live": "36px"
     },
     {
      "type": "size",
@@ -3104,25 +3034,11 @@
    "route": "/upload",
    "findings": [
     {
-     "type": "font",
-     "severity": "high",
-     "what": "card title font",
-     "board": "Baloo 2",
-     "live": "Nunito"
-    },
-    {
      "type": "missing-section",
      "severity": "high",
      "what": "page height differs grossly",
      "board": "1337px",
      "live": "333px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "card title size",
-     "board": "19px",
-     "live": "14px"
     },
     {
      "type": "copy",
@@ -3153,13 +3069,6 @@
      "live": "what are you writing up? this decides which steps you see."
     },
     {
-     "type": "weight",
-     "severity": "low",
-     "what": "card title weight",
-     "board": 800,
-     "live": 700
-    },
-    {
      "type": "shadow",
      "severity": "low",
      "what": "card shadow",
@@ -3183,7 +3092,7 @@
    "id": "editor",
    "name": "Tutorial editor",
    "group": "My SPLAT",
-   "route": "/tutorials/d496462b-6149-44ed-a62e-1bfbc2f99319/edit",
+   "route": "/tutorials/eab014f1-70f1-43f4-86b6-be0c893bfa32/edit",
    "findings": [
     {
      "type": "missing-section",
@@ -3228,13 +3137,6 @@
      "live": "only complete guides appear in the public library listing. anything ea"
     },
     {
-     "type": "weight",
-     "severity": "low",
-     "what": "card title weight",
-     "board": 800,
-     "live": 700
-    },
-    {
      "type": "colour",
      "severity": "low",
      "what": "card background",
@@ -3243,7 +3145,7 @@
     }
    ],
    "role": "contributor",
-   "finalUrl": "/tutorials/d496462b-6149-44ed-a62e-1bfbc2f99319/edit",
+   "finalUrl": "/tutorials/eab014f1-70f1-43f4-86b6-be0c893bfa32/edit",
    "boardHeadings": 5,
    "liveHeadings": 1
   },
@@ -3266,13 +3168,6 @@
      "what": "page height differs grossly",
      "board": "1496px",
      "live": "453px"
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "card title weight",
-     "board": 800,
-     "live": 700
     }
    ],
    "role": "parent",
@@ -3317,15 +3212,8 @@
    "id": "toy_detail",
    "name": "Toy detail",
    "group": "My SPLAT",
-   "route": "/dashboard/toys/e0d9be37-560e-4eff-8cac-a90c7fcbe14d",
+   "route": "/dashboard/toys/a219960c-fa54-4be2-9744-9f087548550c",
    "findings": [
-    {
-     "type": "font",
-     "severity": "high",
-     "what": "card title font",
-     "board": "Baloo 2",
-     "live": "Nunito"
-    },
     {
      "type": "missing-section",
      "severity": "high",
@@ -3357,13 +3245,6 @@
     {
      "type": "size",
      "severity": "medium",
-     "what": "card title size",
-     "board": "26px",
-     "live": "13px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
      "what": "h1 \"light-up drum\" size",
      "board": "40px",
      "live": "25px"
@@ -3383,13 +3264,6 @@
      "live": "# means brand new, # means heavily worn — scuffed, faded or missing pi"
     },
     {
-     "type": "weight",
-     "severity": "low",
-     "what": "card title weight",
-     "board": 800,
-     "live": 700
-    },
-    {
      "type": "colour",
      "severity": "low",
      "what": "card background",
@@ -3398,7 +3272,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/toys/e0d9be37-560e-4eff-8cac-a90c7fcbe14d",
+   "finalUrl": "/dashboard/toys/a219960c-fa54-4be2-9744-9f087548550c",
    "boardHeadings": 8,
    "liveHeadings": 1
   },
@@ -3432,14 +3306,14 @@
    "id": "thread",
    "name": "Exchange thread",
    "group": "My SPLAT",
-   "route": "/dashboard/exchanges/3279814c-c1d5-4b47-adb7-5916800290f2",
+   "route": "/dashboard/exchanges/7557e47c-404f-4597-9669-ec2d43959351",
    "findings": [
     {
      "type": "font",
      "severity": "high",
      "what": "card title font",
      "board": "Baloo 2",
-     "live": "Nunito"
+     "live": "JetBrains Mono"
     },
     {
      "type": "missing-section",
@@ -3513,7 +3387,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/exchanges/3279814c-c1d5-4b47-adb7-5916800290f2",
+   "finalUrl": "/dashboard/exchanges/7557e47c-404f-4597-9669-ec2d43959351",
    "boardHeadings": 4,
    "liveHeadings": 6
   },
@@ -3804,14 +3678,14 @@
    "id": "print_job",
    "name": "Print job",
    "group": "My SPLAT",
-   "route": "/dashboard/print-requests/37b06b92-7c04-4b48-a1d3-0d69391f393e",
+   "route": "/dashboard/print-requests/79078ecd-ba38-438b-a6ea-f341bb47305e",
    "findings": [
     {
      "type": "font",
      "severity": "high",
      "what": "card title font",
      "board": "Baloo 2",
-     "live": "Nunito"
+     "live": "JetBrains Mono"
     },
     {
      "type": "size",
@@ -3849,6 +3723,13 @@
      "live": "printing on sam printer’s prusa mk#"
     },
     {
+     "type": "weight",
+     "severity": "low",
+     "what": "card title weight",
+     "board": 800,
+     "live": 700
+    },
+    {
      "type": "colour",
      "severity": "low",
      "what": "h3 \"$#\" colour",
@@ -3878,7 +3759,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/print-requests/37b06b92-7c04-4b48-a1d3-0d69391f393e",
+   "finalUrl": "/dashboard/print-requests/79078ecd-ba38-438b-a6ea-f341bb47305e",
    "boardHeadings": 3,
    "liveHeadings": 5
   },
@@ -3997,20 +3878,6 @@
    "route": "/dashboard/profile",
    "findings": [
     {
-     "type": "font",
-     "severity": "high",
-     "what": "card title font",
-     "board": "Baloo 2",
-     "live": "Nunito"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "card title size",
-     "board": "18px",
-     "live": "14px"
-    },
-    {
      "type": "size",
      "severity": "medium",
      "what": "h2 \"child profiles\" size",
@@ -4030,13 +3897,6 @@
      "what": "card radius",
      "board": "18px",
      "live": "24px"
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "card title weight",
-     "board": 800,
-     "live": 700
     },
     {
      "type": "weight",
@@ -4069,22 +3929,8 @@
    "id": "child",
    "name": "Child profile",
    "group": "My SPLAT",
-   "route": "/dashboard/child/bef76e28-0120-4b8f-9966-f14de5818d48",
+   "route": "/dashboard/child/87e5e362-7096-480a-a524-07be77858e22",
    "findings": [
-    {
-     "type": "font",
-     "severity": "high",
-     "what": "card title font",
-     "board": "Baloo 2",
-     "live": "Nunito"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "card title size",
-     "board": "20px",
-     "live": "13px"
-    },
     {
      "type": "size",
      "severity": "medium",
@@ -4109,13 +3955,6 @@
     {
      "type": "weight",
      "severity": "low",
-     "what": "card title weight",
-     "board": 800,
-     "live": 700
-    },
-    {
-     "type": "weight",
-     "severity": "low",
      "what": "h1 \"ollie\" weight",
      "board": 800,
      "live": 700
@@ -4129,7 +3968,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/child/bef76e28-0120-4b8f-9966-f14de5818d48",
+   "finalUrl": "/dashboard/child/87e5e362-7096-480a-a524-07be77858e22",
    "boardHeadings": 4,
    "liveHeadings": 1
   },
@@ -4139,20 +3978,6 @@
    "group": "My SPLAT",
    "route": "/dashboard/child/new",
    "findings": [
-    {
-     "type": "font",
-     "severity": "high",
-     "what": "card title font",
-     "board": "Baloo 2",
-     "live": "Nunito"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "card title size",
-     "board": "20px",
-     "live": "13px"
-    },
     {
      "type": "size",
      "severity": "medium",
@@ -4180,13 +4005,6 @@
      "what": "3/3 board paragraphs absent",
      "board": "every field is optional. we use this only to suggest guides that suit ",
      "live": "everything is optional and only you can see it."
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "card title weight",
-     "board": 800,
-     "live": 700
     },
     {
      "type": "weight",
@@ -4395,7 +4213,7 @@
      "severity": "medium",
      "what": "5/5 board paragraphs absent",
      "board": "published items are live on the public pages right now.",
-     "live": "what parity org mu#bplnh#aa# has published, and what is still a draft."
+     "live": "what parity org mu#cfy#yfr# has published, and what is still a draft."
     },
     {
      "type": "weight",
@@ -5038,7 +4856,7 @@
      "severity": "medium",
      "what": "1/1 board paragraphs absent",
      "board": "review and remove accounts. # total, # flagged.",
-     "live": "parity-contributor-mu#bpls#pdp@example.com"
+     "live": "parity-contributor-mu#cfy#euuqj@example.com"
     },
     {
      "type": "shadow",
@@ -5353,13 +5171,6 @@
    "route": "/onboarding/contributor-terms",
    "findings": [
     {
-     "type": "font",
-     "severity": "high",
-     "what": "card title font",
-     "board": "Baloo 2",
-     "live": "Nunito"
-    },
-    {
      "type": "missing-section",
      "severity": "high",
      "what": "h3 \"splat connect\" has no counterpart",
@@ -5535,17 +5346,17 @@
   "clean": 3,
   "withFindings": 116,
   "errored": 0,
-  "findings": 586,
+  "findings": 559,
   "byType": {
    "missing-section": 159,
-   "size": 87,
+   "size": 79,
    "copy": 118,
    "radius": 43,
    "colour": 34,
-   "font": 30,
-   "weight": 50,
    "shadow": 45,
-   "extra-section": 20
+   "extra-section": 20,
+   "font": 27,
+   "weight": 34
   }
  }
 }

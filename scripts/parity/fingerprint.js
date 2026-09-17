@@ -232,6 +232,20 @@ function collectFingerprint(rootSelector) {
   const titleOf = (card) => {
     let best = null
     for (const el of card.querySelectorAll('*')) {
+      // A control nested INSIDE the card is not its title — in a card of small
+      // text with a prominent button, "largest text" elected the button.
+      //
+      // Nested, not merely "inside a control": the board renders most of its
+      // cards AS buttons, so excluding everything under a button excluded the
+      // entire card and elected a 14px byline as the title on every listing
+      // screen.
+      const ctrl = el.closest('button,[role="button"],a[class*="btn"]')
+      if (ctrl && ctrl !== card && card.contains(ctrl)) continue
+      // No position constraint. "A title sits near the top of its card" is true
+      // of a text card and false of a photo card, where the image takes the top
+      // two thirds and the title sits under it — requiring the top 60% elected
+      // the 12px eyebrow badge overlaid on the photo instead, on every listing
+      // screen.
       const own = [...el.childNodes]
         .filter((n) => n.nodeType === 3)
         .map((n) => n.textContent.trim())
