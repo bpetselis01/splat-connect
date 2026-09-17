@@ -145,7 +145,7 @@ export function Nav({ caps, quiet = false }: NavProps) {
             <details className="nav-more">
               <summary className="nav-pill nav-more__summary" aria-label="More sections">
                 More
-                <CaretDown className="h-3.5 w-3.5" aria-hidden="true" />
+                <CaretDown weight="bold" className="h-3.5 w-3.5" aria-hidden="true" />
               </summary>
               <div className="nav-more__menu">
                 {overflow.map((s) => (

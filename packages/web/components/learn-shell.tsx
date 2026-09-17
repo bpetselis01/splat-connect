@@ -73,7 +73,7 @@ export function LearnShell({ slug, children }: { slug: string; children: React.R
             // deliberately no shadow: the outline sits beside the lesson rather
             // than on top of it. Live drew them as bare divs, so the course
             // outline read as one long list instead of five units.
-            <div key={u.n} className="card-flat card-grid p-3">
+            <div key={u.n} className="card-flat p-3">
               <p className="eyebrow text-muted">
                 Unit {u.n} · {u.title}
               </p>

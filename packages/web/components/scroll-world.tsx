@@ -111,7 +111,7 @@ function SceneBody({ scene, index }: { scene: Scene; index: number }) {
       <div className="sw-scene__art" style={{ backgroundColor: scene.tint }}>
         <Slot kind="art" note={scene.art} className="h-full w-full" />
         <span aria-hidden="true" className="sw-scene__badge">
-          <Icon className="h-5 w-5" />
+          <Icon weight="duotone" className="h-5 w-5" />
         </span>
       </div>
       <div className="sw-scene__copy">
@@ -125,7 +125,7 @@ function SceneBody({ scene, index }: { scene: Scene; index: number }) {
         <p className="sw-scene__body">{scene.body}</p>
         <Link href={scene.href} className="btn btn-quiet no-underline">
           {scene.cta}
-          <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          <ArrowRight weight="bold" className="h-4 w-4" aria-hidden="true" />
         </Link>
       </div>
     </div>

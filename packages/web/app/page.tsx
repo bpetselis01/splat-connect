@@ -124,11 +124,11 @@ export default async function HomePage() {
           </p>
           <div className="hero__actions">
             <Link href="/library" className="btn btn-primary btn-hero no-underline">
-              <BookOpen className="h-5 w-5" aria-hidden="true" />
+              <BookOpen weight="bold" className="h-5 w-5" aria-hidden="true" />
               Find a guide
             </Link>
             <Link href="/toy-library" className="btn btn-quiet btn-hero no-underline">
-              <Gift className="h-5 w-5" aria-hidden="true" />
+              <Gift weight="bold" className="h-5 w-5" aria-hidden="true" />
               Borrow a toy
             </Link>
           </div>
@@ -136,7 +136,7 @@ export default async function HomePage() {
             {stats.map(({ icon: Icon, value, label, tint }) => (
               <li key={label} className="hero__stat">
                 <span aria-hidden="true" className="hero__stat-icon" style={{ backgroundColor: tint }}>
-                  <Icon className="h-5 w-5" />
+                  <Icon weight="duotone" className="h-5 w-5" />
                 </span>
                 <span>
                   <span className="hero__stat-value">{value.toLocaleString()}</span>{' '}
@@ -161,13 +161,13 @@ export default async function HomePage() {
             <li key={title} className={quiet ? 'door-cell--quiet' : undefined}>
               <Link href={href} className={`door no-underline${quiet ? ' door--quiet' : ''}`}>
                 <span aria-hidden="true" className="door__icon" style={{ backgroundColor: tint }}>
-                  <Icon className="h-6 w-6" />
+                  <Icon weight="duotone" className="h-6 w-6" />
                 </span>
                 <span className="door__title">{title}</span>
                 <span className="door__body">{body}</span>
                 <span className="door__cta">
                   {cta}
-                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                  <ArrowRight weight="bold" className="h-4 w-4" aria-hidden="true" />
                 </span>
               </Link>
             </li>
@@ -178,7 +178,7 @@ export default async function HomePage() {
       <section className="band band--split" aria-label="What things cost">
         <div className="cost-card">
           <span aria-hidden="true" className="door__icon" style={{ backgroundColor: 'var(--color-honey-soft)' }}>
-            <Receipt className="h-6 w-6" />
+            <Receipt weight="duotone" className="h-6 w-6" />
           </span>
           <h2 className="door__title">No price tags. Every cost written down.</h2>
           <p className="band__body">
@@ -190,13 +190,13 @@ export default async function HomePage() {
           {/* Arrow leads on the board here — the button reads as "go this way"
               rather than as a label with a decoration after it. */}
           <Link href="/printing/basics" className="cost-cta cost-cta--light no-underline">
-            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            <ArrowRight weight="bold" className="h-4 w-4" aria-hidden="true" />
             See how printing costs work
           </Link>
         </div>
         <div className="cost-card cost-card--mint">
           <span aria-hidden="true" className="door__icon" style={{ backgroundColor: 'var(--color-surface)' }}>
-            <Recycle className="h-6 w-6" />
+            <Recycle weight="duotone" className="h-6 w-6" />
           </span>
           <h3 className="door__title">Bring your failed prints. Leave with credit.</h3>
           <p className="band__body">
@@ -205,7 +205,7 @@ export default async function HomePage() {
             weighed and issued at the door.
           </p>
           <Link href="/get-involved/recycling" className="cost-cta cost-cta--ink no-underline">
-            <Recycle className="h-4 w-4" aria-hidden="true" />
+            <Recycle weight="bold" className="h-4 w-4" aria-hidden="true" />
             See who takes plastic
           </Link>
         </div>
@@ -220,7 +220,7 @@ export default async function HomePage() {
             <h2 className="door__title">Recent guides</h2>
             <Link href="/library" className="door__cta no-underline">
               View all
-              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              <ArrowRight weight="bold" className="h-4 w-4" aria-hidden="true" />
             </Link>
           </div>
           <ul className="recent__row">
@@ -236,7 +236,7 @@ export default async function HomePage() {
             <h2 className="door__title">Recent toys</h2>
             <Link href="/toy-library" className="door__cta no-underline">
               View all
-              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              <ArrowRight weight="bold" className="h-4 w-4" aria-hidden="true" />
             </Link>
           </div>
           <ul className="recent__row">

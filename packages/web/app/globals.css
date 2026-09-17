@@ -359,9 +359,11 @@
    * A class rather than a utility string because these are the same object on
    * every screen that has a grid.
    */
+  /* 20px — design-system-update/tokens/typography.css sets --fs-card-title:20px.
+     18px was measured off a rendered screen; the token is the spec. */
   .card-title {
     font-family: var(--font-display);
-    font-size: 1.125rem;
+    font-size: 1.25rem;
     font-weight: 800;
     line-height: 1.25;
     color: var(--color-ink);
@@ -388,18 +390,15 @@
   }
 
   /*
-   * The 18px register. The board is bimodal and deliberate about it: swept
-   * across all 119 screens its cards land on 18px 47 times and 24px 49 times.
-   * 24px is .card's default; this is the other half — the listing grids and the
-   * Learn course outline.
+   * .card-grid is gone.
    *
-   * Declared AFTER .card-flat on purpose. Both are single-class selectors, so
-   * source order is the whole of the specificity story, and .card-flat's own
-   * radius silently won when this sat above it.
+   * It existed because a sweep of the artboard found cards at 18px on 47 screens
+   * and 24px on 49, and I read that as two deliberate registers. The system says
+   * otherwise: there are four radii and 18px is --radius-inset, "panels nested
+   * inside a card". A listing card is a card, so it is 24px. What the sweep
+   * actually measured was a prototype drawn by hand, which is not the same thing
+   * as a rule.
    */
-  .card-grid {
-    border-radius: var(--radius-panel);
-  }
 
   /* Applied alongside .card on anything clickable. Hover, press and the
      transition that carries them all come from the shared press-motion block
@@ -601,7 +600,12 @@
   }
 
   /*
-   * Flat 44px, not a clamp, and the same 44px as .title-article.
+   * clamp(28px, 3.2vw, 40px) — the system's --type-page-h1.
+   *
+   * This was a flat 44px, chosen by sweeping the board's rendered h1 sizes and
+   * taking the value that satisfied the most screens. That was the wrong method:
+   * design-system-update/tokens/typography.css states the page heading outright,
+   * and a hand-set prototype screen is not a licence to average it.
    *
    * The two were set to the medians of what the board draws under each — 42
    * and 46 — and that 4px split turned out to track nothing. Fifteen screens
@@ -615,17 +619,16 @@
    * call sites carry meaning worth keeping.
    */
   .title-hub {
-    font-size: 2.75rem;
+    font-size: clamp(28px, 3.2vw, 40px);
     font-weight: 800;
     line-height: 1.04;
     letter-spacing: -0.02em;
   }
 
-  /* 44px, matching .title-hub — see the note there for why the 42/46 split was
-     dropped. The page title on an article-shaped page: every Learn lesson, the
-     printing primers, /contact. */
+  /* Same --type-page-h1 as .title-hub. The page title on an article-shaped
+     page: every Learn lesson, the printing primers, /contact. */
   .title-article {
-    font-size: 2.75rem;
+    font-size: clamp(28px, 3.2vw, 40px);
     font-weight: 800;
     line-height: 1.12;
     letter-spacing: -0.028em;
@@ -717,7 +720,8 @@
     font-family: var(--font-sans);
     font-size: 0.75rem;
     font-weight: 800;
-    letter-spacing: 0.1em;
+    /* --tracking-label:.08em */
+    letter-spacing: 0.08em;
   }
 
   .meta {
@@ -2936,7 +2940,7 @@
     font-size: 13px;
     font-weight: 800;
     letter-spacing: 0;
-    color: #ffffff;
+    color: var(--color-on-brand, var(--color-surface));
   }
 
   .sw-scene__title {
@@ -3110,10 +3114,12 @@
    * below was read off it rather than chosen.
    */
 
-  /* 56px, not .btn's 48px — the hero pair is the one place the board draws a
-     taller button, and at 48 they sat small under a 68px headline. */
+  /* 52px — the system's --control-primary. The rendered hero measures 56, but
+     the scale has four control heights (36 quiet, 44 secondary, 48 standard, 52
+     primary) and "apply these exactly" is what the brief says about them. A
+     fifth height invented from one screen is how a scale stops being one. */
   .btn-hero {
-    min-height: 56px;
+    min-height: 52px;
     padding-inline: 28px;
     font-size: 17px;
   }
@@ -3178,10 +3184,12 @@
     color: var(--color-ink);
   }
 
-  /* Ink on mint, not brand — the board's only ink-filled button on this page. */
+  /* Ink on mint, not brand — the board's only ink-filled button on this page.
+     --color-surface rather than #ffffff: §4 of the brief says never introduce a
+     hex, and white here is the surface token doing its job. */
   .cost-cta--ink {
     background-color: var(--color-ink);
-    color: #ffffff;
+    color: var(--color-surface);
   }
 
   .recent {
