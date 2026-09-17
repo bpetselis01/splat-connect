@@ -60,8 +60,8 @@ const tutorial = {
   difficulty: 'easy',
   status: 'approved',
   description: 'A first adaptation.',
-  photo_urls: ['https://example.com/p.jpg'],
-  toy_photo_url: 'https://example.com/p.jpg',
+  photo_urls: ['https://test.supabase.co/storage/v1/object/public/photos/p.jpg'],
+  toy_photo_url: 'https://test.supabase.co/storage/v1/object/public/photos/p.jpg',
 }
 
 beforeEach(() => {

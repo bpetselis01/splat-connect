@@ -8,9 +8,9 @@ vi.mock('next/image', () => ({
   default: ({ src, alt }: { src: string; alt: string }) => <img src={src} alt={alt} />,
 }))
 
-const A = 'https://example.com/a.jpg'
-const B = 'https://example.com/b.jpg'
-const C = 'https://example.com/c.jpg'
+const A = 'https://test.supabase.co/storage/v1/object/public/photos/a.jpg'
+const B = 'https://test.supabase.co/storage/v1/object/public/photos/b.jpg'
+const C = 'https://test.supabase.co/storage/v1/object/public/photos/c.jpg'
 
 function setup(
   props: Partial<{

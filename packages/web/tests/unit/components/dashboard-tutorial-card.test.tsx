@@ -46,9 +46,9 @@ describe('DashboardTutorialCard', () => {
 
   it('shows the toy photo when there is one', () => {
     const { container } = render(
-      <DashboardTutorialCard tutorial={tutorial({ toy_photo_url: 'https://x/toy.jpg' })} />
+      <DashboardTutorialCard tutorial={tutorial({ toy_photo_url: 'https://test.supabase.co/storage/v1/object/public/photos/toy.jpg' })} />
     )
-    expect(container.querySelector('img')).toHaveAttribute('src', 'https://x/toy.jpg')
+    expect(container.querySelector('img')).toHaveAttribute('src', 'https://test.supabase.co/storage/v1/object/public/photos/toy.jpg')
   })
 
   it('leaves the photo unlabelled, so a broken one cannot repaint the title', () => {
@@ -56,7 +56,7 @@ describe('DashboardTutorialCard', () => {
     // duplicate announcement, and a non-empty alt is what a failed image falls
     // back to painting inside the band, under the difficulty badge.
     const { container } = render(
-      <DashboardTutorialCard tutorial={tutorial({ toy_photo_url: 'https://x/toy.jpg' })} />
+      <DashboardTutorialCard tutorial={tutorial({ toy_photo_url: 'https://test.supabase.co/storage/v1/object/public/photos/toy.jpg' })} />
     )
     expect(container.querySelector('img')).toHaveAttribute('alt', '')
     expect(screen.getAllByText('Sensory light box')).toHaveLength(1)

@@ -27,7 +27,7 @@ const mockPostFormData = vi.mocked(browserApiClient.postFormData)
 function setup(
   onSave = vi.fn().mockResolvedValue(undefined),
   onSavePhotos = vi.fn().mockResolvedValue(undefined),
-  photoUrls: string[] = ['https://example.com/photo.jpg']
+  photoUrls: string[] = ['https://test.supabase.co/storage/v1/object/public/photos/photo.jpg']
 ) {
   const result = render(
     <ToastProvider>
@@ -88,14 +88,14 @@ describe('EditFilesSection', () => {
   // Chain: a tile is the commitment, and × is how it is taken back — which also
   //        deletes the object, so nothing lingers that the author removed
   it('adding a photo uploads and saves it without clicking Save', async () => {
-    mockPostFormData.mockResolvedValue({ url: 'https://example.com/new-photo.png' })
+    mockPostFormData.mockResolvedValue({ url: 'https://test.supabase.co/storage/v1/object/public/photos/new-photo.png' })
     const { photoInput, onSavePhotos } = setup()
     fireEvent.change(photoInput(), { target: { files: [png()] } })
     await waitFor(() => expect(mockPostFormData).toHaveBeenCalledOnce())
     expect(mockPostFormData.mock.calls[0][0]).toBe('/api/upload/photo')
     expect(onSavePhotos).toHaveBeenCalledWith([
-      'https://example.com/photo.jpg',
-      'https://example.com/new-photo.png',
+      'https://test.supabase.co/storage/v1/object/public/photos/photo.jpg',
+      'https://test.supabase.co/storage/v1/object/public/photos/new-photo.png',
     ])
   })
 
@@ -104,15 +104,15 @@ describe('EditFilesSection', () => {
   // Chain: /photo used to delete every file in the folder first, which is what
   //        held a guide to one photo
   it('appends to the photos already on the guide', async () => {
-    mockPostFormData.mockResolvedValue({ url: 'https://example.com/second.png' })
+    mockPostFormData.mockResolvedValue({ url: 'https://test.supabase.co/storage/v1/object/public/photos/second.png' })
     const { photoInput, onSavePhotos } = setup(undefined, undefined, [
-      'https://example.com/first.png',
+      'https://test.supabase.co/storage/v1/object/public/photos/first.png',
     ])
     fireEvent.change(photoInput(), { target: { files: [png()] } })
     await waitFor(() =>
       expect(onSavePhotos).toHaveBeenCalledWith([
-        'https://example.com/first.png',
-        'https://example.com/second.png',
+        'https://test.supabase.co/storage/v1/object/public/photos/first.png',
+        'https://test.supabase.co/storage/v1/object/public/photos/second.png',
       ])
     )
   })

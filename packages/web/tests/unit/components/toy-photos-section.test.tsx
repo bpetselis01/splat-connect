@@ -35,7 +35,7 @@ function setup(
     <ToastProvider>
       <ToyPhotosSection
         toyId="toy-1"
-        photoUrls={overrides.photoUrls ?? ['https://example.com/cover.jpg']}
+        photoUrls={overrides.photoUrls ?? ['https://test.supabase.co/storage/v1/object/public/photos/cover.jpg']}
         switchAdapted={overrides.switchAdapted ?? false}
         switchPhotoUrl={overrides.switchPhotoUrl ?? null}
         onSave={onSave}
@@ -56,7 +56,7 @@ describe('ToyPhotosSection', () => {
   // Chain: /toy-cover and /toy-switch-photo were two routes because this step
   //        had two upload boxes; one box means one route
   it('uploads through /api/upload/toy-photo with the toy id', async () => {
-    mockPostFormData.mockResolvedValue({ url: 'https://example.com/new.png' })
+    mockPostFormData.mockResolvedValue({ url: 'https://test.supabase.co/storage/v1/object/public/photos/new.png' })
     const { addInput, onSave } = setup()
     fireEvent.change(addInput(), {
       target: { files: [new File(['img'], 'photo.png', { type: 'image/png' })] },
@@ -68,7 +68,7 @@ describe('ToyPhotosSection', () => {
     await waitFor(() =>
       expect(onSave).toHaveBeenCalledWith(
         expect.objectContaining({
-          photo_urls: ['https://example.com/cover.jpg', 'https://example.com/new.png'],
+          photo_urls: ['https://test.supabase.co/storage/v1/object/public/photos/cover.jpg', 'https://test.supabase.co/storage/v1/object/public/photos/new.png'],
         })
       )
     )
@@ -94,7 +94,7 @@ describe('ToyPhotosSection', () => {
   //        is the only place it can be
   it('offers a switch radio on every photo', () => {
     setup({
-      photoUrls: ['https://example.com/a.jpg', 'https://example.com/b.jpg'],
+      photoUrls: ['https://test.supabase.co/storage/v1/object/public/photos/a.jpg', 'https://test.supabase.co/storage/v1/object/public/photos/b.jpg'],
       switchAdapted: true,
     })
     expect(screen.getAllByLabelText('Shows the switch')).toHaveLength(2)

@@ -33,8 +33,8 @@ function toy(overrides: Partial<Toy> = {}): Toy {
     description: null,
     condition: 8,
     switch_adapted: false,
-    photo_urls: ['https://example.com/cover.jpg'],
-    cover_photo_url: 'https://example.com/cover.jpg',
+    photo_urls: ['https://test.supabase.co/storage/v1/object/public/photos/cover.jpg'],
+    cover_photo_url: 'https://test.supabase.co/storage/v1/object/public/photos/cover.jpg',
     switch_photo_url: null,
     status: 'draft',
     created_at: '',
@@ -170,7 +170,7 @@ describe('ToyEditor', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Review' }))
     expect(screen.getByAltText('Cover photo')).toHaveAttribute(
       'src',
-      'https://example.com/cover.jpg'
+      'https://test.supabase.co/storage/v1/object/public/photos/cover.jpg'
     )
   })
 
@@ -179,8 +179,8 @@ describe('ToyEditor', () => {
   // it goes back to being the second photo.
   it('captions the tagged photo in Review only when the toy is switch-adapted', () => {
     const tagged = {
-      photo_urls: ['https://example.com/cover.jpg', 'https://example.com/switch.jpg'],
-      switch_photo_url: 'https://example.com/switch.jpg',
+      photo_urls: ['https://test.supabase.co/storage/v1/object/public/photos/cover.jpg', 'https://test.supabase.co/storage/v1/object/public/photos/switch.jpg'],
+      switch_photo_url: 'https://test.supabase.co/storage/v1/object/public/photos/switch.jpg',
     }
     const { unmount } = render(<ToyEditor toy={toy({ ...tagged, switch_adapted: false })} />)
     fireEvent.click(screen.getByRole('tab', { name: 'Review' }))
