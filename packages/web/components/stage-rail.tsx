@@ -96,7 +96,7 @@ export function StageRail({
                 ? { type: 'button' as const, onClick: () => onSelect?.(stage) }
                 : {})}
               aria-current={stage.state === 'now' ? 'step' : undefined}
-              className="flex w-full flex-col items-start gap-1.5 bg-transparent p-0 text-left"
+              className="-m-2 flex w-full flex-col items-start gap-2 rounded-[var(--radius-field)] bg-transparent p-2 text-left"
             >
               <span className="flex w-full items-center gap-2">
                 <span
@@ -115,7 +115,7 @@ export function StageRail({
                 )}
               </span>
               <span className="text-sm font-extrabold text-ink">{stage.label}</span>
-              <span className="text-[13px] leading-[1.4] text-muted">{stage.caption}</span>
+              <span className="text-[13px] font-semibold leading-[1.4] text-muted">{stage.caption}</span>
             </Step>
           </li>
         )

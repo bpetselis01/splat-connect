@@ -24,7 +24,7 @@ export function Disclosure({
 }) {
   return (
     <details open={defaultOpen} className="disclosure group">
-      <summary className="flex cursor-pointer list-none items-center gap-2 px-5 py-3.5 text-sm font-extrabold text-brand-deep [&::-webkit-details-marker]:hidden">
+      <summary className="flex cursor-pointer list-none items-center gap-2 px-5 py-3.5 text-sm font-extrabold text-brand-deep [&::-webkit-details-marker]:hidden [&::marker]:content-['']">
         <CaretRight
           size={14}
           weight="bold"

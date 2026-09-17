@@ -35,6 +35,7 @@ import { TutorialCard } from '@/components/tutorial-card'
 import { ToyLibraryCard } from '@/components/toy-library-card'
 import { ScrollWorld } from '@/components/scroll-world'
 import { SplatMascot } from '@/components/splat-mascot'
+import { StatChips } from '@/components/stat-chips'
 import type { Tutorial, ImpactSummary, ToyWithOwner } from '@splat-connect/types'
 
 const EMPTY_TOTALS: ImpactSummary['totals'] = {
@@ -132,19 +133,14 @@ export default async function HomePage() {
               Borrow a toy
             </Link>
           </div>
-          <ul className="hero__stats">
-            {stats.map(({ icon: Icon, value, label, tint }) => (
-              <li key={label} className="hero__stat">
-                <span aria-hidden="true" className="hero__stat-icon" style={{ backgroundColor: tint }}>
-                  <Icon weight="duotone" className="h-5 w-5" />
-                </span>
-                <span>
-                  <span className="hero__stat-value">{value.toLocaleString()}</span>{' '}
-                  <span className="hero__stat-label">{label}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
+          <StatChips
+            stats={stats.map(({ icon: Icon, value, label, tint }) => ({
+              label,
+              value: value.toLocaleString(),
+              icon: <Icon weight="duotone" className="h-5 w-5" />,
+              tint,
+            }))}
+          />
         </div>
 
         <div className="hero__mascot">

@@ -59,29 +59,37 @@ export function RecordCard({
   /** Right-aligned, past the spacer: the action this stage affords. */
   stageAction?: ReactNode
 }) {
+  // 22px, and deliberately not one of the four radii: §5 of the brief gives
+  // RecordCard its own. --e2 is paired with --hi, the inset highlight that keeps
+  // a card from reading as a flat rectangle on the canvas.
   return (
-    <article className="flex flex-col gap-3.5 rounded-[var(--radius-card)] border border-line bg-surface p-5 shadow-e2">
+    <article
+      className="flex flex-col gap-3.5 rounded-[22px] border border-line bg-surface p-5"
+      style={{ boxShadow: 'var(--shadow-e2), var(--shadow-hi)' }}
+    >
       <div className="flex items-start gap-3.5">
         <span
           aria-hidden="true"
           className="grid h-12 w-12 shrink-0 place-items-center rounded-[var(--radius-field)]"
-          style={{ background: tint, color: 'var(--tink)' }}
+          // --b700 on the tile, not --tink: the duotone glyph is brand-deep on
+          // its own tint, which is what gives the tile its colour.
+          style={{ background: tint, color: 'var(--color-brand-deep)' }}
         >
           {icon}
         </span>
         <div className="min-w-0 flex-1">
-          <h3 className="font-display text-xl font-extrabold text-ink">{title}</h3>
-          <p className="mt-0.5 text-sm text-muted">{meta}</p>
+          <h3 className="font-display text-xl font-extrabold tracking-[-0.01em] text-ink">{title}</h3>
+          <p className="mt-1 truncate text-sm font-semibold text-muted">{meta}</p>
         </div>
         {pill ? <div className="shrink-0">{pill}</div> : null}
       </div>
 
       {stages?.length ? <StageRail stages={stages} onSelect={onStageSelect} /> : null}
 
-      {note ? <p className="text-sm text-muted">{note}</p> : null}
+      {note ? <p className="truncate text-sm font-semibold text-muted">{note}</p> : null}
 
       {primary || secondary || stageAction ? (
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2">
           {primary}
           {secondary}
           <span className="flex-1" />

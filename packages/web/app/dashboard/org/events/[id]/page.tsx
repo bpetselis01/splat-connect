@@ -28,6 +28,7 @@ import { longDate } from '@/lib/dates'
 import { formatRelativeTime } from '@/lib/relative-time'
 import { EventPartQueue } from '@/components/event-part-queue'
 import { EventWithdrawActions } from '@/components/event-withdraw-actions'
+import { StatChips } from '@/components/stat-chips'
 import {
   EVENT_KIND_LABEL,
   type OrgEvent,
@@ -98,8 +99,9 @@ export default async function ManageEventPage({ params }: { params: Promise<{ id
         cancelled={!!event.cancelled_at}
       />
 
-      <dl className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {[
+      <StatChips
+        className="mt-6"
+        stats={[
           { label: 'Going', value: registrations.length },
           { label: 'Part requests', value: partRequests.length },
           { label: 'To answer', value: open.length },
@@ -107,13 +109,8 @@ export default async function ManageEventPage({ params }: { params: Promise<{ id
             label: 'Seats',
             value: event.capacity === null ? '—' : Math.max(0, event.capacity - registrations.length),
           },
-        ].map((stat) => (
-          <div key={stat.label} className="card p-4">
-            <dt className="eyebrow text-muted">{stat.label}</dt>
-            <dd className="mt-1 font-display text-2xl font-extrabold text-ink">{stat.value}</dd>
-          </div>
-        ))}
-      </dl>
+        ]}
+      />
 
       {event.prints_parts && (
         <section className="mt-8">

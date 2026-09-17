@@ -2753,7 +2753,7 @@
     gap: 12px;
   }
 
-  .hero__stats {
+  .stat-chips {
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
@@ -2762,7 +2762,7 @@
     list-style: none;
   }
 
-  .hero__stat {
+  .stat-chip {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -2774,7 +2774,7 @@
 
   /* The icon sits in a tinted rounded square — the board's tell for a stat
      tile, and what separates it from a plain count. */
-  .hero__stat-icon {
+  .stat-chip__icon {
     display: grid;
     place-items: center;
     width: 38px;
@@ -2783,14 +2783,14 @@
     color: var(--color-brand-deep);
   }
 
-  .hero__stat-value {
+  .stat-chip__value {
     font-family: var(--font-display);
     font-size: 24px;
     font-weight: 800;
     color: var(--color-ink);
   }
 
-  .hero__stat-label {
+  .stat-chip__label {
     font-size: 14px;
     color: var(--color-muted);
   }
