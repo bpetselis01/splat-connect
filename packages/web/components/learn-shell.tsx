@@ -38,7 +38,7 @@ export function LearnShell({ slug, children }: { slug: string; children: React.R
   const isDone = !!done[slug]
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[17rem_1fr]">
+    <div className="grid gap-8 lg:grid-cols-[minmax(0,284px)_minmax(0,880px)]">
       <aside className="lg:sticky lg:top-24 lg:self-start">
         <Link href="/learn" className="btn btn-quiet btn-sm">
           <CaretLeft className="h-4 w-4" aria-hidden="true" />
@@ -73,11 +73,19 @@ export function LearnShell({ slug, children }: { slug: string; children: React.R
             // deliberately no shadow: the outline sits beside the lesson rather
             // than on top of it. Live drew them as bare divs, so the course
             // outline read as one long list instead of five units.
-            <div key={u.n} className="card-flat p-3">
-              <p className="eyebrow text-muted">
+            <div key={u.n} className="overflow-hidden rounded-[var(--radius-inset)] border border-line bg-surface">
+              {/* A filled band, not a line of muted caps floating above the
+                  lessons: the board gives each unit a header row so six units
+                  read as six objects rather than as one list with labels in
+                  it. The current unit's is tinted. */}
+              <p
+                className={`eyebrow px-3.5 pb-2 pt-2.5 ${
+                  unit?.n === u.n ? 'bg-brand-tint text-brand-deep' : 'bg-sunken text-muted'
+                }`}
+              >
                 Unit {u.n} · {u.title}
               </p>
-              <ul className="mt-1.5 flex list-none flex-col">
+              <ul className="flex list-none flex-col">
                 {u.lessons.map((l) => {
                   const Icon = KIND_ICON[l.kind]
                   const here = l.slug === slug
@@ -89,7 +97,7 @@ export function LearnShell({ slug, children }: { slug: string; children: React.R
                         // only source of these and every one has a page.
                         href={`/learn/${l.slug}` as Route}
                         aria-current={here ? 'page' : undefined}
-                        className={`flex items-center gap-2 rounded-field px-2 py-1.5 text-sm transition-colors ${
+                        className={`flex min-h-11 items-center gap-2.5 border-t border-line px-3.5 py-2 text-sm transition-colors ${
                           here ? 'bg-brand-tint font-bold text-brand-deep' : 'text-ink hover:bg-sunken'
                         }`}
                       >
@@ -117,7 +125,9 @@ export function LearnShell({ slug, children }: { slug: string; children: React.R
           is one, and nesting two says the page contains two documents. */}
       <section aria-label="Lesson" className="min-w-0">
         {unit && lesson && (
-          <p className="eyebrow text-muted">
+          // Amber, as the board draws it: the crumb is the one warm thing on a
+          // lesson, and in muted it disappeared under the headline.
+          <p className="eyebrow" style={{ color: 'var(--color-warning)' }}>
             Unit {unit.n} · {unit.title} · {lesson.minutes} min
           </p>
         )}
