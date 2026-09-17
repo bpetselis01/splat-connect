@@ -411,15 +411,20 @@
   }
 
   /*
-   * Rung 3: a surface that only holds content keeps its edge and loses its
-   * depth, because a hard offset is a promise that something can be pressed.
+   * .panel and .step-pill-row are the two halves of every editor's frame — one
+   * open form box, and the tray its step chips sit in. Neither is ever pressed.
    *
-   * No call site had to change to sort these, because the markup already knew:
-   * anything clickable carries .card-link, so everything that does not is a
-   * form, an empty state, a summary or a conversation. .panel and
-   * .step-pill-row join them as the two halves of every editor's frame — one
-   * open form box, and the tray its step chips sit in. Neither is ever
-   * pressed, and both spent the whole Pixel era at a card's depth.
+   * .card:not(.card-link) used to sit here too, on the reasoning that "a hard
+   * offset is a promise that something can be pressed". That is a good rule and
+   * it is not the board's. Measured across 60 artboard screens, shadow does not
+   * track clickability at all — clickable cards carry one 82 times against 115
+   * without, and NON-clickable ones 130 against 105, so the correlation runs
+   * mildly the other way. What it tracks is the surface: a white card carries a
+   * shadow 64% of the time, a tinted one 13%. Live's tinted boxes are
+   * `rounded-card bg-*-soft` rather than .card, so leaving .card at its default
+   * depth lands on the board's behaviour.
+   *
+   * Another Pixel inheritance, like the numerals-only --font-display rule.
    *
    * Deliberately not extended to the floating chrome — .sticky-submit-bar,
    * .dock-my-splat, .edit-toast, .dialog-panel. Their shadow is not ranking
@@ -431,8 +436,7 @@
      no bare definition to shadow, so it goes last. Specificity is per-selector
      in a list, so nothing about the cascade depends on this. */
   .panel,
-  .step-pill-row,
-  .card:not(.card-link) {
+  .step-pill-row {
     box-shadow: none;
   }
 
