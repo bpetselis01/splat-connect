@@ -195,10 +195,12 @@ function compare(board, live, opts = {}) {
       out.push(f('radius', 'medium', `${kind} radius`, b.radius + 'px', l.radius + 'px'))
     if (b.shadow !== l.shadow) out.push(f('shadow', 'low', `${kind} shadow`, b.shadow, l.shadow))
     if (b.bg !== l.bg) out.push(f('colour', 'low', `${kind} background`, b.bg, l.bg))
-    if (Math.abs(b.padY - l.padY) > 4 || Math.abs(b.padX - l.padX) > 4)
-      out.push(
-        f('spacing', 'low', `${kind} padding`, `${b.padY}/${b.padX}`, `${l.padY}/${l.padX}`)
-      )
+    // Card padding is deliberately NOT compared. The two sides put it in
+    // different places — the board pads an inner wrapper and leaves the card
+    // itself at 0, live pads the card — so the comparison reported 0/0 against
+    // 12/12 on fifteen screens and 22/24 against 0/0 on four more, in both
+    // directions, for cards that look identical. Measuring where the padding is
+    // declared rather than what it does is not worth a finding.
   }
 
   // ---- page-level --------------------------------------------------------

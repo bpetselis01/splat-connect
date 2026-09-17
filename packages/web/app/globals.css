@@ -378,10 +378,13 @@
    * register, and the 1px --color-line hairline it had was the last pre-Pixel
    * edge on a surface.
    */
+  /* 18px, not 14px. Across the whole report the board asks a flat card for
+     18px sixteen times and for 14px once — --radius-panel is the token named
+     for exactly this box, and --radius-field belongs to inputs. */
   .card-flat {
     background-color: var(--color-surface);
     border: var(--border-width) solid var(--color-line);
-    border-radius: var(--radius-field);
+    border-radius: var(--radius-panel);
   }
 
   /*
