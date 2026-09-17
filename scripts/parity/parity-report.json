@@ -1,7 +1,162 @@
 {
- "at": "2026-09-17T09:57:22.766Z",
+ "at": "2026-09-17T10:22:43.125Z",
  "live": "http://localhost:3110",
  "screens": [
+  {
+   "id": "printing_basics",
+   "name": "Printing basics",
+   "group": "3D Printing",
+   "route": "/printing/basics",
+   "findings": [
+    {
+     "type": "extra-section",
+     "severity": "medium",
+     "what": "live has 3 extra h2 the board does not draw",
+     "board": null,
+     "live": "if you don't have a printer | settings that matter | cleaning and safety"
+    },
+    {
+     "type": "radius",
+     "severity": "medium",
+     "what": "card radius",
+     "board": "18px",
+     "live": "24px"
+    },
+    {
+     "type": "weight",
+     "severity": "low",
+     "what": "card title weight",
+     "board": 800,
+     "live": 700
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "set",
+     "live": "none"
+    }
+   ],
+   "role": "guest",
+   "finalUrl": "/printing/basics",
+   "boardHeadings": 12,
+   "liveHeadings": 9
+  },
+  {
+   "id": "about",
+   "name": "About",
+   "group": "About",
+   "route": "/about",
+   "findings": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "page height differs grossly",
+     "board": "668px",
+     "live": "2027px"
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "h1 \"about\" size",
+     "board": "52px",
+     "live": "44px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "h2 wording",
+     "board": "in this section",
+     "live": "more about splat"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "4/4 board paragraphs absent",
+     "board": "splat stands for supporting play by adapting toys. we make toy adaptat",
+     "live": "splat stands for supporting play by adapting toys. we publish free ins"
+    },
+    {
+     "type": "radius",
+     "severity": "low",
+     "what": "button radius range",
+     "board": "18px",
+     "live": "999px"
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "none",
+     "live": "set"
+    },
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "card background",
+     "board": null,
+     "live": "rgb(255,255,255)"
+    }
+   ],
+   "role": "guest",
+   "finalUrl": "/about",
+   "boardHeadings": 9,
+   "liveHeadings": 11
+  },
+  {
+   "id": "login",
+   "name": "Sign in",
+   "group": "Auth",
+   "route": "/login",
+   "findings": [
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "card title size",
+     "board": "26px",
+     "live": "22px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "h3 wording",
+     "board": "splat connect",
+     "live": "splat"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "3/3 board paragraphs absent",
+     "board": "one account for everything — browse, contribute, and manage your child",
+     "live": "new here? create an account"
+    },
+    {
+     "type": "weight",
+     "severity": "low",
+     "what": "card title weight",
+     "board": 800,
+     "live": 900
+    },
+    {
+     "type": "radius",
+     "severity": "low",
+     "what": "input radius",
+     "board": "999px",
+     "live": "14px"
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "set",
+     "live": "none"
+    }
+   ],
+   "role": "guest",
+   "finalUrl": "/login",
+   "boardHeadings": 3,
+   "liveHeadings": 3
+  },
   {
    "id": "home",
    "name": "Home",
@@ -1054,46 +1209,6 @@
    "finalUrl": "/printing",
    "boardHeadings": 4,
    "liveHeadings": 6
-  },
-  {
-   "id": "printing_basics",
-   "name": "Printing basics",
-   "group": "3D Printing",
-   "route": "/printing/basics",
-   "findings": [
-    {
-     "type": "extra-section",
-     "severity": "medium",
-     "what": "live has 3 extra h2 the board does not draw",
-     "board": null,
-     "live": "if you don't have a printer | settings that matter | cleaning and safety"
-    },
-    {
-     "type": "radius",
-     "severity": "medium",
-     "what": "card radius",
-     "board": "18px",
-     "live": "24px"
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "card title weight",
-     "board": 800,
-     "live": 700
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "set",
-     "live": "none"
-    }
-   ],
-   "role": "guest",
-   "finalUrl": "/printing/basics",
-   "boardHeadings": 12,
-   "liveHeadings": 9
   },
   {
    "id": "print_request_new",
@@ -2344,67 +2459,6 @@
    "finalUrl": "/impact/map",
    "boardHeadings": 1,
    "liveHeadings": 2
-  },
-  {
-   "id": "about",
-   "name": "About",
-   "group": "About",
-   "route": "/about",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "page height differs grossly",
-     "board": "668px",
-     "live": "2027px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h1 \"about\" size",
-     "board": "52px",
-     "live": "44px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h2 wording",
-     "board": "in this section",
-     "live": "more about splat"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "4/4 board paragraphs absent",
-     "board": "splat stands for supporting play by adapting toys. we make toy adaptat",
-     "live": "splat stands for supporting play by adapting toys. we publish free ins"
-    },
-    {
-     "type": "radius",
-     "severity": "low",
-     "what": "button radius range",
-     "board": "18px",
-     "live": "999px"
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "none",
-     "live": "set"
-    },
-    {
-     "type": "colour",
-     "severity": "low",
-     "what": "card background",
-     "board": null,
-     "live": "rgb(255,255,255)"
-    }
-   ],
-   "role": "guest",
-   "finalUrl": "/about",
-   "boardHeadings": 9,
-   "liveHeadings": 11
   },
   {
    "id": "about_team",
@@ -4872,60 +4926,6 @@
    "liveHeadings": 19
   },
   {
-   "id": "login",
-   "name": "Sign in",
-   "group": "Auth",
-   "route": "/login",
-   "findings": [
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "card title size",
-     "board": "26px",
-     "live": "22px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h3 wording",
-     "board": "splat connect",
-     "live": "splat"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "3/3 board paragraphs absent",
-     "board": "one account for everything — browse, contribute, and manage your child",
-     "live": "new here? create an account"
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "card title weight",
-     "board": 800,
-     "live": 900
-    },
-    {
-     "type": "radius",
-     "severity": "low",
-     "what": "input radius",
-     "board": "999px",
-     "live": "14px"
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "set",
-     "live": "none"
-    }
-   ],
-   "role": "guest",
-   "finalUrl": "/login",
-   "boardHeadings": 3,
-   "liveHeadings": 3
-  },
-  {
    "id": "signup",
    "name": "Create account",
    "group": "Auth",
@@ -5271,15 +5271,15 @@
   "errored": 0,
   "findings": 548,
   "byType": {
+   "extra-section": 20,
+   "radius": 43,
+   "weight": 31,
+   "shadow": 45,
    "missing-section": 153,
    "size": 78,
    "copy": 120,
-   "radius": 43,
    "colour": 33,
-   "shadow": 45,
-   "extra-section": 20,
-   "font": 25,
-   "weight": 31
+   "font": 25
   }
  }
 }

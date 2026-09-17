@@ -22,6 +22,18 @@ SUPABASE_URL='http://localhost:54321'
 ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0'
 SERVICE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU'
 
+# Detach a service into its own session, so it survives its parent.
+#
+# `nohup cmd &` is not enough: it blocks SIGHUP but leaves the child in this
+# script's process group, and a supervisor that kills the group — which is what
+# happened twice when the agent harness reaped this script under memory
+# pressure — takes every service with it. macOS ships no setsid, so perl's is
+# the portable one. The log path is the first argument.
+detach() {
+  local log="$1"; shift
+  perl -e 'use POSIX qw(setsid); open(STDOUT, ">>", $ARGV[0]) or die; open(STDERR, ">&", \*STDOUT); open(STDIN, "<", "/dev/null"); shift @ARGV; setsid(); exec @ARGV or die;' "$log" "$@" &
+}
+
 free_port() {
   local pid; pid="$(lsof -ti:"$1" 2>/dev/null || true)"
   [ -n "$pid" ] && kill -9 $pid 2>/dev/null && echo "  freed :$1" || true
@@ -46,12 +58,12 @@ case "${1:-up}" in
 
     echo "Artboard (static) :$ARTBOARD_PORT"
     (cd "$ROOT/Splat Connect frontend overhaul" && \
-      nohup python3 -m http.server $ARTBOARD_PORT >"$LOG_DIR/artboard.log" 2>&1 &)
+      detach "$LOG_DIR/artboard.log" python3 -m http.server $ARTBOARD_PORT)
 
     echo "API :$API_PORT"
     (cd "$ROOT" && SUPABASE_URL="$SUPABASE_URL" SUPABASE_ANON_KEY="$ANON_KEY" \
       SUPABASE_SERVICE_ROLE_KEY="$SERVICE_KEY" API_PORT=$API_PORT PORT=$API_PORT \
-      nohup pnpm --filter @splat-connect/api dev >"$LOG_DIR/api.log" 2>&1 &)
+      detach "$LOG_DIR/api.log" pnpm --filter @splat-connect/api dev)
 
     # Its own distDir: Next 16 permits one `next dev` per project directory and
     # refuses the second, so without this the parity server cannot run beside an
@@ -63,7 +75,7 @@ case "${1:-up}" in
       SUPABASE_SERVICE_ROLE_KEY="$SERVICE_KEY" \
       API_URL="http://localhost:$API_PORT" NEXT_PUBLIC_API_URL="http://localhost:$API_PORT" \
       PORT=$WEB_PORT \
-      nohup pnpm --filter @splat-connect/web dev >"$LOG_DIR/web.log" 2>&1 &)
+      detach "$LOG_DIR/web.log" pnpm --filter @splat-connect/web dev)
 
     wait_for "http://localhost:$ARTBOARD_PORT/support.js" "artboard" 15
     wait_for "http://localhost:$API_PORT/api/public/tutorials" "api" 60
