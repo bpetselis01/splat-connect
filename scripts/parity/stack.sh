@@ -53,8 +53,12 @@ case "${1:-up}" in
       SUPABASE_SERVICE_ROLE_KEY="$SERVICE_KEY" API_PORT=$API_PORT PORT=$API_PORT \
       nohup pnpm --filter @splat-connect/api dev >"$LOG_DIR/api.log" 2>&1 &)
 
+    # Its own distDir: Next 16 permits one `next dev` per project directory and
+    # refuses the second, so without this the parity server cannot run beside an
+    # ordinary dev server on :3100. See next.config.ts.
     echo "Web :$WEB_PORT"
-    (cd "$ROOT" && NEXT_PUBLIC_SUPABASE_URL="$SUPABASE_URL" \
+    (cd "$ROOT" && NEXT_DIST_DIR=.next-parity \
+      NEXT_PUBLIC_SUPABASE_URL="$SUPABASE_URL" \
       NEXT_PUBLIC_SUPABASE_ANON_KEY="$ANON_KEY" \
       SUPABASE_SERVICE_ROLE_KEY="$SERVICE_KEY" \
       API_URL="http://localhost:$API_PORT" NEXT_PUBLIC_API_URL="http://localhost:$API_PORT" \
