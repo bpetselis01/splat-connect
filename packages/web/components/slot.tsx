@@ -40,7 +40,7 @@ const KIND_LABEL: Record<SlotKind, string> = {
   sticker: 'Sticker',
   overlay: 'Overlay',
   animation: 'Animation',
-  art: 'Pixel art',
+  art: 'Artwork',
 }
 
 /** Unfilled slots are visible by default: the point of them is to be seen. */

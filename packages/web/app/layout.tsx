@@ -102,7 +102,7 @@ export default async function RootLayout({
             >
               Skip to main content
             </a>
-            <div className="relative overflow-hidden">
+            <div className="relative overflow-x-clip">
               <main id="main" tabIndex={-1} className="public-shell relative py-8 sm:py-10">
                 <Breadcrumb />
                 {children}
@@ -137,7 +137,7 @@ export default async function RootLayout({
               header renders in its quiet register across My SPLAT and every
               page under it. */}
           <Nav caps={caps} quiet={account} />
-          <div className="relative overflow-hidden">
+          <div className="relative overflow-x-clip">
             <PixelBackdrop tone={tone} />
             <main id="main" tabIndex={-1} className="public-shell relative py-8 sm:py-10">
               {/* A "← My SPLAT" link back to a page you cannot reach is worse

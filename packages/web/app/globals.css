@@ -947,10 +947,30 @@
      * itself lets each one be positioned against the element and fade out on
      * its own terms.
      */
+    /*
+     * No explicit radius. Sizing the circle makes it reach `transparent` well
+     * inside the element and the eye reads the boundary as an edge — three pale
+     * discs rather than light in the room. Without a size each layer runs to
+     * the farthest corner, so the stop percentage alone controls the falloff
+     * and it stays a wash. Tints are halved for the same reason: at full
+     * strength --color-brand-soft is a shape, not a glow.
+     */
     background-image:
-      radial-gradient(circle 340px at 74% 30%, var(--color-apricot-soft), transparent 70%),
-      radial-gradient(circle 300px at 88% 76%, var(--color-mint-soft), transparent 70%),
-      radial-gradient(circle 380px at 8% 22%, var(--color-brand-soft), transparent 70%);
+      radial-gradient(
+        circle at 76% 26%,
+        color-mix(in srgb, var(--color-apricot-soft) 55%, transparent),
+        transparent 46%
+      ),
+      radial-gradient(
+        circle at 92% 82%,
+        color-mix(in srgb, var(--color-mint-soft) 55%, transparent),
+        transparent 44%
+      ),
+      radial-gradient(
+        circle at 4% 16%,
+        color-mix(in srgb, var(--color-brand-soft) 50%, transparent),
+        transparent 48%
+      );
   }
 
   /*
@@ -2647,5 +2667,439 @@
     .pixel .panel:has(> .panel-summary:active) {
       transform: none;
     }
+  }
+}
+
+/*
+ * ---------------------------------------------------------------------------
+ * The homepage, rebuilt against the artboard's #home.
+ *
+ * Every number here was measured off the board rather than estimated — the
+ * hero headline is 68px because the board's is, the scene headline is 44px
+ * because the board's is. Where a value is a token it uses the token; where the
+ * board sets a one-off it is written as a one-off and says so.
+ * ---------------------------------------------------------------------------
+ */
+@layer components {
+  /* ---- hero ---- */
+  .hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 40px;
+    align-items: center;
+    padding: 56px 0 72px;
+  }
+
+  @media (min-width: 900px) {
+    .hero {
+      grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+      gap: 48px;
+    }
+  }
+
+  .hero__copy {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+  }
+
+  /* A white pill on the canvas, not an uppercase mono eyebrow. */
+  .hero__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    padding: 8px 14px;
+    border-radius: var(--radius-pill);
+    background-color: var(--color-surface);
+    box-shadow: var(--shadow-e1);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--color-ink);
+  }
+
+  /* 68px flat — the board does not clamp this one. */
+  .hero__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(2.75rem, 5.4vw, 4.25rem);
+    font-weight: 800;
+    line-height: 1.04;
+    letter-spacing: -0.03em;
+    color: var(--color-ink);
+  }
+
+  /* One word in brand, and only one. The board colours "go." and nothing else. */
+  .hero__accent {
+    color: var(--color-brand-dark);
+  }
+
+  .hero__lede {
+    max-width: 34rem;
+    margin: 0;
+    font-size: 19px;
+    line-height: 1.55;
+    color: var(--color-muted);
+  }
+
+  .hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .hero__stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 4px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .hero__stat {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 18px 12px 12px;
+    border-radius: var(--radius-panel);
+    background-color: var(--color-surface);
+    box-shadow: var(--shadow-e1);
+  }
+
+  /* The icon sits in a tinted rounded square — the board's tell for a stat
+     tile, and what separates it from a plain count. */
+  .hero__stat-icon {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: var(--radius-field);
+    color: var(--color-brand-deep);
+  }
+
+  .hero__stat-value {
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--color-ink);
+  }
+
+  .hero__stat-label {
+    font-size: 14px;
+    color: var(--color-muted);
+  }
+
+  .hero__mascot {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .hero__bubble {
+    max-width: 17rem;
+    margin: 0;
+    padding: 12px 16px;
+    border-radius: var(--radius-panel);
+    background-color: var(--color-surface);
+    box-shadow: var(--shadow-e2);
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.35;
+    text-align: center;
+    color: var(--color-ink);
+  }
+
+  .splat-mascot {
+    display: block;
+    overflow: visible;
+  }
+
+  .splat-mascot__arm {
+    transform-box: view-box;
+    transform-origin: 32px 50px;
+    animation: bwave 1.6s ease-in-out infinite;
+  }
+
+  @keyframes bwave {
+    0%,
+    100% {
+      transform: rotate(0);
+    }
+    50% {
+      transform: rotate(-28deg);
+    }
+  }
+
+  /* ---- the scroll-world ---- */
+  .sw-spacer {
+    position: relative;
+    margin-inline: calc(50% - 50vw);
+    padding-inline: calc(50vw - 50%);
+  }
+
+  .sw-stage {
+    position: sticky;
+    top: 70px;
+    display: grid;
+    align-items: center;
+    height: min(890px, calc(100vh - 70px));
+    overflow: hidden;
+    perspective: 1200px;
+  }
+
+  .sw-kicker {
+    position: absolute;
+    top: 24px;
+    left: 0;
+    margin: 0;
+    color: var(--color-muted);
+  }
+
+  /* Every scene occupies the same cell, so they cross-fade in place. */
+  .sw-scene {
+    grid-area: 1 / 1;
+    transition:
+      opacity 0.18s linear,
+      transform 0.18s linear;
+    will-change: opacity, transform;
+  }
+
+  .sw-scene__inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+    align-items: center;
+  }
+
+  @media (min-width: 900px) {
+    .sw-scene__inner {
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+      gap: 48px;
+    }
+  }
+
+  .sw-scene__art {
+    position: relative;
+    border-radius: var(--radius-card);
+    padding: 18px;
+    min-height: 320px;
+    display: grid;
+    place-items: center;
+  }
+
+  /* The small white disc on the art, bottom-left — the board puts the scene's
+     own icon there so a still frame still says which step it is. */
+  .sw-scene__badge {
+    position: absolute;
+    left: 18px;
+    bottom: 18px;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-panel);
+    background-color: var(--color-surface);
+    box-shadow: var(--shadow-e2);
+    color: var(--color-brand-dark);
+  }
+
+  .sw-scene__copy {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .sw-scene__place {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-brand-deep);
+  }
+
+  .sw-scene__num {
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border-radius: var(--radius-pill);
+    background-color: var(--color-brand-dark);
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0;
+    color: #ffffff;
+  }
+
+  .sw-scene__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(1.75rem, 3vw, 2.75rem);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--color-ink);
+  }
+
+  .sw-scene__body {
+    max-width: 30rem;
+    margin: 0;
+    font-size: 18px;
+    line-height: 1.55;
+    color: var(--color-muted);
+  }
+
+  /* Five dots at the right edge; the current one stretches into a bar. */
+  .sw-rail {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .sw-rail li {
+    width: 6px;
+    height: 6px;
+    border-radius: var(--radius-pill);
+    background-color: var(--color-line);
+    transition:
+      height 0.2s var(--ease-out-quart),
+      background-color 0.2s linear;
+  }
+
+  .sw-rail li.is-active {
+    height: 20px;
+    background-color: var(--color-brand-dark);
+  }
+
+  /* Reduced motion: five ordinary blocks, no stage, no spacer. */
+  .sw-static {
+    display: flex;
+    flex-direction: column;
+    gap: 56px;
+    padding: 48px 0;
+  }
+
+  /* ---- bands below the flight ---- */
+  .band {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 56px 0;
+  }
+
+  .band--split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+    align-items: start;
+  }
+
+  @media (min-width: 900px) {
+    .band--split {
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+      gap: 48px;
+    }
+  }
+
+  .band__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .band__body {
+    max-width: 36rem;
+    margin: 12px 0 20px;
+    font-size: 17px;
+    line-height: 1.6;
+    color: var(--color-muted);
+  }
+
+  .band__aside {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 24px;
+  }
+
+  .door-grid,
+  .card-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .door {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    height: 100%;
+    padding: 24px;
+    border-radius: var(--radius-card);
+    border: var(--border-width) solid var(--color-line);
+    background-color: var(--color-surface);
+    box-shadow: var(--shadow-e2);
+  }
+
+  .door__icon {
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    border-radius: var(--radius-panel);
+    color: var(--color-brand-deep);
+  }
+
+  .door__body {
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--color-muted);
+  }
+
+  .door__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: auto;
+    padding-top: 8px;
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--color-brand-dark);
+  }
+}
+
+@layer components {
+  /* The board's scene art fills its card — the dashed edge IS the card's edge,
+     not a small box floating in the middle of it. `stretch` rather than the
+     default `center`, which sizes the slot to its caption. */
+  .sw-scene__art {
+    place-items: stretch;
+  }
+
+  /* The board's rail reads at a glance; --color-line is a hairline meant to
+     recede, which made five dots nobody could see. */
+  .sw-rail li {
+    background-color: color-mix(in srgb, var(--color-ink) 22%, transparent);
   }
 }
