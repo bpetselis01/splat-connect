@@ -90,7 +90,7 @@ export default async function RequestAPrintPage({
           </div>
 
           <section>
-            <h2 className="mb-3 text-lg font-bold text-ink">Printers on the platform</h2>
+            <h2 className="title-section mb-3">Printers on the platform</h2>
             <ul className="flex list-none flex-col gap-2">
               {theirs.length === 0 && (
                 <li className="text-sm leading-relaxed text-muted">

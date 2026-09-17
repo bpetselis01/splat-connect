@@ -159,7 +159,7 @@ export default async function ExchangesPage() {
         <>
           {active.length > 0 && (
             <section>
-              <h2 className="mb-3 text-lg font-bold text-ink">Active</h2>
+              <h2 className="title-section mb-3">Active</h2>
               <ul className="flex flex-col gap-3">
                 {active.map((tx) => (
                   <TransactionRow key={tx.id} tx={tx} viewerId={viewerId} ledOrgIds={ledOrgIds} />
@@ -170,7 +170,7 @@ export default async function ExchangesPage() {
 
           {history.length > 0 && (
             <section className={active.length > 0 ? 'mt-10' : undefined}>
-              <h2 className="mb-3 text-lg font-bold text-ink">History</h2>
+              <h2 className="title-section mb-3">History</h2>
               <ul className="flex flex-col gap-3">
                 {history.map((tx) => (
                   <TransactionRow key={tx.id} tx={tx} viewerId={viewerId} ledOrgIds={ledOrgIds} />

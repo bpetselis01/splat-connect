@@ -121,7 +121,7 @@ export default async function OrgPublicProfilePage({
 
       {(org.events ?? []).length > 0 && (
         <section className="mt-8">
-          <h2 className="mb-3 text-lg font-bold text-ink">What is on</h2>
+          <h2 className="title-section mb-3">What is on</h2>
           <ul className="flex list-none flex-col gap-2">
             {(org.events ?? []).map((event) => (
               <li key={event.id} className="rounded-[var(--radius-panel)] bg-canvas p-4">
@@ -144,7 +144,7 @@ export default async function OrgPublicProfilePage({
 
       {(org.stories ?? []).length > 0 && (
         <section className="mt-8">
-          <h2 className="mb-3 text-lg font-bold text-ink">Stories</h2>
+          <h2 className="title-section mb-3">Stories</h2>
           <ul className="flex list-none flex-col gap-2">
             {(org.stories ?? []).map((story) => (
               <li key={story.id} className="rounded-[var(--radius-panel)] bg-canvas p-4">

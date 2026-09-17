@@ -104,7 +104,7 @@ export default async function OrganizationPage({
           This is the answer to "who are they?" that a badge on a library card
           cannot give, and it is the same for a leader and a stranger. */}
       <section className="mt-8">
-        <h2 className="mb-3 text-lg font-bold text-ink">
+        <h2 className="title-section mb-3">
           Tutorials backed ({backed.length})
         </h2>
         {backed.length === 0 ? (
@@ -142,7 +142,7 @@ export default async function OrganizationPage({
       {!hasTerms && <OrgReviewBanner />}
 
       <section className="mt-8">
-        <h2 className="mb-3 text-lg font-bold text-ink">
+        <h2 className="title-section mb-3">
           Waiting on you ({waiting.length})
         </h2>
         {waiting.length === 0 ? (

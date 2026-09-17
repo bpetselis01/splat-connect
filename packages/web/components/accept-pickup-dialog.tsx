@@ -71,7 +71,7 @@ export function AcceptPickupDialog({
       }}
     >
       <div onClick={(e) => e.stopPropagation()} className="flex flex-col gap-4">
-        <h2 className="text-lg font-bold text-ink">Where should they collect it?</h2>
+        <h2 className="title-section">Where should they collect it?</h2>
         <p className="text-sm text-muted">
           This is shared with the other party once you accept, so they know where to meet you.
         </p>

@@ -200,7 +200,7 @@ export function RecyclingIntake({
   return (
     <div className="flex flex-col gap-8">
       <section>
-        <h2 className="mb-3 text-lg font-bold text-ink">Booked in ({booked.length})</h2>
+        <h2 className="title-section mb-3">Booked in ({booked.length})</h2>
         {booked.length === 0 ? (
           <p className="text-sm leading-relaxed text-muted">Nothing booked in right now.</p>
         ) : (
@@ -214,7 +214,7 @@ export function RecyclingIntake({
 
       {settled.length > 0 && (
         <section>
-          <h2 className="mb-3 text-lg font-bold text-ink">Weighed in</h2>
+          <h2 className="title-section mb-3">Weighed in</h2>
           <ul className="flex list-none flex-col gap-3">
             {settled.map((dropoff) => (
               <Row key={dropoff.id} dropoff={dropoff} />

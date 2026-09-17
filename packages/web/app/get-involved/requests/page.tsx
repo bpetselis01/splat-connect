@@ -81,7 +81,7 @@ export default async function AdaptationRequestsPage() {
 
       {mine.length > 0 && (
         <section className="mt-10">
-          <h2 className="mb-3 text-lg font-bold text-ink">Your build requests</h2>
+          <h2 className="title-section mb-3">Your build requests</h2>
           <ul className="flex flex-col gap-3">
             {mine.map((tx) => (
               <li key={tx.id}>

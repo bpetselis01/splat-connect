@@ -108,7 +108,7 @@ export default async function OrgInventoryPage() {
       )}
 
       <section className="mt-10">
-        <h2 className="text-lg font-bold text-ink">Pickup details</h2>
+        <h2 className="title-section">Pickup details</h2>
         <p className="mt-1 max-w-prose text-sm leading-relaxed text-muted">
           Where families collect from. Fixed for every handoff — unlike a person-to-person
           exchange, this is not chosen per request.

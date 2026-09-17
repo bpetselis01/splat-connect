@@ -54,7 +54,7 @@ export function OrgRequestForm({ existing }: { existing: OrganizationRequest[] }
     <div className="flex flex-col gap-6">
       {existing.length > 0 && (
         <section>
-          <h2 className="mb-3 text-lg font-bold text-ink">What you have asked for</h2>
+          <h2 className="title-section mb-3">What you have asked for</h2>
           <ul className="flex list-none flex-col gap-3">
             {existing.map((request) => (
               <li key={request.id} className="card flex flex-col gap-2 p-4">

@@ -121,7 +121,10 @@ function collectFingerprint(rootSelector) {
     for (const v of values) counts.set(v, (counts.get(v) || 0) + 1)
     let best = null, n = 0
     for (const [v, c] of counts) if (c > n) { best = v; n = c }
-    return best
+    // A "most common" value that only a third of instances share is describing
+    // a mixed population, not the design. Report nothing rather than a number
+    // that looks authoritative and is not.
+    return values.length >= 3 && n / values.length < 0.34 ? null : best
   }
 
   const shapeOf = (els) => {
@@ -151,7 +154,42 @@ function collectFingerprint(rootSelector) {
     return s.boxShadow !== 'none' || parseFloat(s.borderTopWidth) > 0
   })
 
-  const buttons = pick('button,[role="button"],a[class*="btn"],a[class*="button"]')
+  const candidates = pick('button,[role="button"],a[class*="btn"],a[class*="button"]')
+
+  // The PRIMARY action button, not "all buttons".
+  //
+  // A modal across everything tagged <button> describes whichever kind is most
+  // numerous, and the two sides do not agree on what a button is: the board
+  // renders the Learn course nav as fifteen <button> rows with no background,
+  // so "the board's button" came back as a flat transparent row and every Learn
+  // screen reported a false radius and shadow difference against live's pill
+  // CTA. The primary action is well-defined on both sides — it is the one with
+  // a filled, non-neutral background — so that is what gets compared.
+  const NEUTRAL = new Set([
+    'rgba(0,0,0,0)',
+    'transparent',
+    'rgb(255,255,255)',
+    colour(cs(document.body).backgroundColor),
+  ])
+  // Among filled buttons, the primary action is the darkest: a brand fill sits
+  // well below a brand *tint*, and the board highlights the current Learn nav
+  // row with the lightest tint in the palette. Picking by "non-neutral" alone
+  // tied that row against the real CTA and the row won.
+  const lum = (c) => {
+    const m = /rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)/.exec(c)
+    return m ? 0.2126 * +m[1] + 0.7152 * +m[2] + 0.0722 * +m[3] : 255
+  }
+  const filled = candidates.filter((el) => !NEUTRAL.has(colour(cs(el).backgroundColor)))
+  const darkest = filled.length
+    ? filled.reduce((a, b) => (lum(cs(a).backgroundColor) <= lum(cs(b).backgroundColor) ? a : b))
+    : null
+  // Every button sharing the primary's fill — so the shape is still a modal
+  // over a homogeneous set rather than one arbitrary element.
+  const buttons = darkest
+    ? filled.filter(
+        (el) => colour(cs(el).backgroundColor) === colour(cs(darkest).backgroundColor)
+      )
+    : []
   const inputs = pick('input,select,textarea')
 
   // ---- prose copy ---------------------------------------------------------

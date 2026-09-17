@@ -540,38 +540,68 @@
     text-wrap: balance;
   }
 
-  /* clamp(38px, 5.5vw, 58px) — the board's own numbers. The previous
-     clamp(38.4px, 6vw, 62.4px) overshot the ceiling by 4.4px at every
-     viewport wide enough to reach it. */
+  /*
+   * Sizes and weights below are the Soft Pop board's, measured off it rather
+   * than estimated: every number is the median of what the board sets across
+   * the screens that use the class (n in brackets).
+   *
+   * Weight is 800 throughout, not 900. Baloo 2 is loaded at 600/700/800 — the
+   * board's own range — so a 900 here asked for a weight that does not exist
+   * and got a synthesised one. These four classes carried 900 from the Pixel
+   * era, when the face was Nunito and 900 was real.
+   */
+
+  /* clamp(44px, 6vw, 68px) — the board's own numbers. [n=2] */
   .title-hero {
-    font-size: clamp(2.375rem, 5.5vw, 3.625rem);
-    font-weight: 900;
+    font-size: clamp(2.75rem, 6vw, 4.25rem);
+    font-weight: 800;
     line-height: 1.06;
     letter-spacing: -0.03em;
   }
 
-  /* Flat 32px, not a clamp. The board sets every hub h1 at the same size on
+  /* Flat 42px, not a clamp. The board sets every hub h1 at the same size on
      every screen it draws — the hierarchy between a hub and the homepage is
-     carried by the hero band, not by the headline growing. */
+     carried by the hero band, not by the headline growing. [n=40] */
   .title-hub {
-    font-size: 2rem;
-    font-weight: 900;
+    font-size: 2.625rem;
+    font-weight: 800;
     line-height: 1.04;
     letter-spacing: -0.02em;
   }
 
+  /* 46px. The page title on an article-shaped page — every Learn lesson, the
+     printing primers, /contact. Larger than .title-hub because these pages
+     open on the title rather than on a hero band. [n=37] */
   .title-article {
-    font-size: 1.55rem;
-    font-weight: 900;
+    font-size: 2.875rem;
+    font-weight: 800;
     line-height: 1.12;
     letter-spacing: -0.028em;
   }
 
+  /* 25px. [n=42] */
   .title-detail {
-    font-size: 1.25rem;
+    font-size: 1.5625rem;
     font-weight: 800;
     line-height: 1.2;
     letter-spacing: -0.02em;
+  }
+
+  /*
+   * The section heading inside a page.
+   *
+   * Twenty-four headings shared the class string "mb-3 text-lg font-bold
+   * text-ink" — an 18px/700 section head where the board sets 21px/800. That
+   * one string accounts for the largest single cluster in the parity report
+   * (47 size findings and 24 weight findings), so it becomes a class in the
+   * title-* family rather than being corrected in twenty-four places.
+   */
+  .title-section {
+    font-size: 1.3125rem;
+    font-weight: 800;
+    line-height: 1.25;
+    letter-spacing: -0.015em;
+    color: var(--color-ink);
   }
 
   /*

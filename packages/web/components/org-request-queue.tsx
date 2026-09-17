@@ -186,7 +186,7 @@ export function OrgRequestQueue({ requests }: { requests: QueuedRequest[] }) {
       )}
 
       <section>
-        <h2 className="mb-3 text-lg font-bold text-ink">Waiting ({open.length})</h2>
+        <h2 className="title-section mb-3">Waiting ({open.length})</h2>
         {open.length === 0 ? (
           <p className="text-sm leading-relaxed text-muted">Nothing waiting.</p>
         ) : (
@@ -200,7 +200,7 @@ export function OrgRequestQueue({ requests }: { requests: QueuedRequest[] }) {
 
       {decided.length > 0 && (
         <section>
-          <h2 className="mb-3 text-lg font-bold text-ink">Decided</h2>
+          <h2 className="title-section mb-3">Decided</h2>
           <ul className="flex list-none flex-col gap-3">
             {decided.map((request) => (
               <Row key={request.id} request={request} />

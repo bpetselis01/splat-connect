@@ -52,7 +52,7 @@ export function ProsePage({
       {intro && (
         <p className="mt-4 text-base leading-relaxed text-ink">{intro}</p>
       )}
-      <div className="mt-8 flex flex-col gap-6 text-sm leading-relaxed text-muted [&_h2]:text-lg [&_h2]:font-black [&_h2]:text-ink [&_h3]:font-black [&_h3]:text-ink [&_li]:mt-1.5 [&_p]:mt-3 [&_strong]:text-ink [&_ul]:list-disc [&_ul]:pl-5">
+      <div className="mt-8 flex flex-col gap-6 text-sm leading-relaxed text-muted [&_h2]:text-[25px] [&_h2]:font-extrabold [&_h2]:text-ink [&_h3]:text-[21px] [&_h3]:font-extrabold [&_h3]:text-ink [&_li]:mt-1.5 [&_p]:mt-3 [&_strong]:text-ink [&_ul]:list-disc [&_ul]:pl-5">
         {children}
       </div>
     </article>

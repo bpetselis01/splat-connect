@@ -112,7 +112,7 @@ export default async function MyPrintRequestsPage() {
         <>
           {active.length > 0 && (
             <section>
-              <h2 className="mb-3 text-lg font-bold text-ink">Active</h2>
+              <h2 className="title-section mb-3">Active</h2>
               <ul className="flex flex-col gap-3">
                 {active.map((tx) => (
                   <Row key={tx.id} tx={tx} />
@@ -123,7 +123,7 @@ export default async function MyPrintRequestsPage() {
 
           {history.length > 0 && (
             <section className={active.length > 0 ? 'mt-10' : undefined}>
-              <h2 className="mb-3 text-lg font-bold text-ink">History</h2>
+              <h2 className="title-section mb-3">History</h2>
               <ul className="flex flex-col gap-3">
                 {history.map((tx) => (
                   <Row key={tx.id} tx={tx} />

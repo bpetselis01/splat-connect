@@ -193,7 +193,7 @@ export async function PrintOfferScreen({
                 />
                 {done.length > 0 && (
                   <section className="mt-10">
-                    <h2 className="mb-3 text-lg font-bold text-ink">Finished</h2>
+                    <h2 className="title-section mb-3">Finished</h2>
                     <JobList rows={done} empty="" viewerId={viewerId} ledOrgIds={ledOrgIds} />
                   </section>
                 )}

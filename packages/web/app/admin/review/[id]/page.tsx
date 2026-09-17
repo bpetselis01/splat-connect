@@ -146,7 +146,7 @@ export default async function ReviewTutorialPage({
         {actions.includes('unpublish') && (
           <form action={unpublishTutorial} className="flex flex-col gap-2">
             <input type="hidden" name="id" value={tutorial!.id} />
-            <h2 className="text-lg font-bold text-ink">Unpublish this tutorial</h2>
+            <h2 className="title-section">Unpublish this tutorial</h2>
             <p className="max-w-prose text-sm leading-relaxed text-muted">
               It is live in the library now and a parent may be following it.
               Unpublishing removes it and shows this note to the contributor, who can
