@@ -16,6 +16,12 @@
  * site's switch motif — two rings and a white cap — so the slot is a deliberate
  * graphic at any size. The photo state is untouched: `src` still fills the same
  * fixed ratio edge to edge, so swapping one in is still the entire change.
+ *
+ * Both states are drawn in Soft Pop's vocabulary now. The unfilled one was a
+ * 2px BRAND dash on brand-tint at a 12px radius — Pixel's slot, three ways: a
+ * saturated edge where the system has a 9%-ink hairline, a coloured fill where
+ * it has --surface2, and a radius that is not one of the four. Against a real
+ * illustration it also read as a load failure rather than as a held space.
  */
 import Image from 'next/image'
 
@@ -73,16 +79,16 @@ export function EditorialImage({
     <figure className={`m-0 ${MAX_WIDTH[ratio]}`.trim()}>
       <div
         data-ratio={ratio}
-        // The unfilled state is drawn as a slot rather than as a picture: tinted
-        // fill, 2px dashed brand edge, illustration floating inside it. The dash
+        // The unfilled state is drawn as a slot rather than as a picture: a
+        // hairline dash on --surface2, illustration floating inside it. The dash
         // is doing real work — it says "an image belongs here and there isn't one
         // yet", which a solid frame around a flat illustration does not, and it
-        // is the same slot the mockups mark every photo position with. Filling in
+        // is the same edge MediaSlot marks every photo position with. Filling in
         // `src` swaps the whole treatment for the photo.
         className={`relative w-full overflow-hidden ${RATIO_CLASS[ratio]} ${
           isPhoto
-            ? 'rounded-[14px] bg-sunken'
-            : 'rounded-xl border-2 border-dashed border-brand bg-brand-tint'
+            ? 'rounded-card border border-line bg-sunken shadow-e2'
+            : 'rounded-[var(--radius-inset)] border border-dashed border-line bg-sunken'
         }`}
       >
         <Image
