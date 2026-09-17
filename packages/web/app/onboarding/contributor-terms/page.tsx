@@ -22,6 +22,7 @@ import { TermsGate } from '@/components/terms-gate'
 import { ContributorTermsContent } from '@/components/contributor-terms-content'
 import { createClient } from '@/lib/supabase/client'
 import { FileText } from '@/components/icons'
+import { AuthWordmark } from '@/components/auth-wordmark'
 
 /**
  * `next` arrives from the query string, so it is attacker-controllable. Only a
@@ -84,12 +85,16 @@ function ContributorTermsForm() {
 // boundary so they render immediately rather than waiting on it.
 export default function ContributorTermsOnboarding() {
   return (
-    <div className="mx-auto mt-8 max-w-lg sm:mt-16">
-      <div className="card flex flex-col items-center p-6 text-center sm:p-8">
+    <div className="mx-auto mt-8 flex max-w-lg flex-col items-center sm:mt-16">
+      {/* The board puts the wordmark above every signed-out screen, this one
+          included. It had none, because it is not part of the sign-in pair and
+          so never went through AuthShell. */}
+      <AuthWordmark className="mb-[30px]" />
+      <div className="card flex w-full flex-col items-center p-6 text-center sm:p-8">
         <span aria-hidden="true" className="empty-badge text-brand-deep">
           <FileText className="h-8 w-8" />
         </span>
-        <h1 className="mt-4 title-article">One thing before you continue</h1>
+        <h1 className="mt-4 title-detail">Contributor terms</h1>
         <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted">
           Please review and accept the contributor terms to carry on.
         </p>

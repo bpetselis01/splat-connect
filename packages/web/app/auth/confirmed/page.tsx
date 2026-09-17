@@ -16,6 +16,7 @@
 import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { AuthWordmark } from '@/components/auth-wordmark'
 
 const REDIRECT_SECONDS = 3
 
@@ -41,8 +42,9 @@ function EmailConfirmed() {
   }, [router, next])
 
   return (
-    <div className="mx-auto mt-8 max-w-sm sm:mt-16">
-      <div className="card flex flex-col items-center p-6 text-center sm:p-8">
+    <div className="mx-auto mt-8 flex max-w-sm flex-col items-center sm:mt-16">
+      <AuthWordmark className="mb-[30px]" />
+      <div className="card flex w-full flex-col items-center p-6 text-center sm:p-8">
         <span aria-hidden="true" className="empty-badge">
           ✅
         </span>
