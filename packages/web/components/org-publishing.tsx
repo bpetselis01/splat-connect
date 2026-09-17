@@ -19,6 +19,8 @@
  */
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import type { Route } from 'next'
 import { CalendarPlus, PenNib, Trash } from '@phosphor-icons/react/dist/ssr'
 import { STORY_KINDS } from '@splat-connect/types'
 import type { OrgEvent, OrgStory } from '@splat-connect/types'
@@ -116,17 +118,26 @@ export function OrgPublishing({
     title,
     meta,
     status,
+    href,
   }: {
     kind: 'events' | 'stories'
     id: string
     title: string
     meta: string
     status: 'draft' | 'published'
+    /** Where the title links, when the thing has a screen of its own. */
+    href?: Route
   }) {
     return (
       <li className="card flex flex-wrap items-center gap-3 p-4">
         <span className="min-w-0 flex-1">
-          <span className="block font-bold text-ink">{title}</span>
+          {href ? (
+            <Link href={href} className="block font-bold text-ink hover:underline">
+              {title}
+            </Link>
+          ) : (
+            <span className="block font-bold text-ink">{title}</span>
+          )}
           <span className="block text-sm text-muted">{meta}</span>
         </span>
         <Badge status={status === 'published' ? 'published' : 'draft'} />
@@ -166,85 +177,17 @@ export function OrgPublishing({
             label: `Events (${events.length})`,
             content: (
               <div className="flex flex-col gap-4">
-                <div className="card p-0">
-                  <Disclosure summary="Publish an event">
-                    <form className="flex flex-col gap-4" onSubmit={addEvent}>
-                      <label>
-                        <span className="field-label">Name</span>
-                        <input name="title" className="field mt-1 w-full" maxLength={160} />
-                      </label>
-                      <label>
-                        <span className="field-label">When</span>
-                        <input
-                          name="starts_at"
-                          type="datetime-local"
-                          className="field mt-1 w-full"
-                        />
-                      </label>
-                      <fieldset>
-                        <legend className="field-label">Where</legend>
-                        <div className="mt-2 flex gap-4">
-                          {(['in_person', 'online'] as const).map((value) => (
-                            <label key={value} className="flex items-center gap-2 text-sm text-ink">
-                              <input
-                                type="radio"
-                                name="format"
-                                checked={format === value}
-                                onChange={() => setFormat(value)}
-                              />
-                              {value === 'in_person' ? 'In person' : 'Online'}
-                            </label>
-                          ))}
-                        </div>
-                        {format === 'in_person' ? (
-                          <label className="mt-2 block">
-                            {/* Its own label rather than the legend's: a legend
-                                names the group, and an input inside one has no
-                                accessible name of its own. */}
-                            <span className="field-label">Address</span>
-                            <input
-                              name="location"
-                              className="field mt-1 w-full"
-                              placeholder="Newtown Library, front room"
-                            />
-                          </label>
-                        ) : (
-                          <>
-                            <label className="mt-2 block">
-                              <span className="field-label">Joining link</span>
-                              <input
-                                name="online_url"
-                                className="field mt-1 w-full"
-                                placeholder="https://…"
-                              />
-                            </label>
-                            {/* The artboard's rule, stated where it matters. */}
-                            <span className="mt-1 block text-[13px] text-muted">
-                              The link is never shown publicly — only to people who have said they
-                              are coming.
-                            </span>
-                          </>
-                        )}
-                      </fieldset>
-                      <label>
-                        <span className="field-label">Who it is for</span>
-                        <input name="audience" className="field mt-1 w-full" maxLength={200} />
-                      </label>
-                      <label>
-                        <span className="field-label">One sentence</span>
-                        <input name="summary" className="field mt-1 w-full" maxLength={300} />
-                      </label>
-                      <label className="flex items-center gap-2 text-sm text-ink">
-                        <input type="checkbox" name="publish" />
-                        Publish it now
-                      </label>
-                      <button type="submit" className="btn btn-primary self-start" disabled={pending}>
-                        <CalendarPlus size={18} weight="bold" aria-hidden="true" />
-                        Save the event
-                      </button>
-                    </form>
-                  </Disclosure>
-                </div>
+                {/* The full form is its own screen. It was a cut-down
+                    disclosure here until 061 gave an event a kind, a capacity,
+                    a bench list, a part-print offer and a registration form of
+                    its own — eleven more fields than a disclosure over a list
+                    can hold, and the artboard draws them on a page. */}
+                <p>
+                  <Link href="/dashboard/organisation/events/new" className="btn btn-primary btn-sm">
+                    <CalendarPlus size={18} weight="bold" aria-hidden="true" />
+                    Publish an event
+                  </Link>
+                </p>
 
                 {events.length === 0 ? (
                   <p className="text-sm leading-relaxed text-muted">Nothing published yet.</p>
@@ -256,6 +199,7 @@ export function OrgPublishing({
                         kind="events"
                         id={event.id}
                         title={event.title}
+                        href={`/dashboard/org/events/${event.id}` as Route}
                         meta={`${new Date(event.starts_at).toLocaleString('en-AU')} · ${
                           event.format === 'online' ? 'Online' : event.location ?? 'In person'
                         }`}

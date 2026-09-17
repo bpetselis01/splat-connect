@@ -232,7 +232,41 @@ select * from (values
    (select count(*) > 0 from pg_proc
       where pronamespace = 'public'::regnamespace
         and proname = 'approve_organization_request'
-        and prosrc like '%is_admin()%'))
+        and prosrc like '%is_admin()%')),
+
+  -- 061. A registration carries a name, an email and free-text answers about a
+  -- child's access and sensory needs. The artboard is explicit that "Answers
+  -- are shown to leaders only", so there are exactly two ways to read one: you
+  -- wrote it, or you lead the organisation running the event. A public-read
+  -- policy here would put those answers on the open internet.
+  ('061 org_event_registrations is never readable by anon',
+   (select count(*) = 0 from pg_policies
+      where tablename = 'org_event_registrations'
+        and 'anon' = any(roles))),
+
+  ('061 org_event_registrations read is own-row or org leader',
+   (select count(*) = 0 from pg_policies
+      where tablename = 'org_event_registrations'
+        and cmd in ('SELECT', 'ALL')
+        and coalesce(qual, with_check) not like '%auth.uid()%'
+        and coalesce(qual, with_check) not like '%is_org_leader%')),
+
+  -- The questions are public, and must stay scoped to a published, live event:
+  -- an unscoped read would leak the shape of a draft or cancelled one.
+  ('061 org_event_questions public read is scoped to a published event',
+   (select count(*) > 0 from pg_policies
+      where tablename = 'org_event_questions'
+        and 'anon' = any(roles)
+        and qual like '%published%')),
+
+  -- A print request is done by a printer OR at an event, never both and never
+  -- neither: a row naming both has no single party who can accept it, and the
+  -- accept/decline buttons on two different screens would each half-own it.
+  ('061 toy_transactions_subject requires exactly one print destination',
+   (select count(*) > 0 from pg_constraint
+      where conrelid = 'public.toy_transactions'::regclass
+        and conname = 'toy_transactions_subject'
+        and pg_get_constraintdef(oid) like '%num_nonnulls(printer_id, event_id) = 1%'))
 ) as t(guard, ok)
 where not ok;
 EOSQL

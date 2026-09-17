@@ -748,4 +748,175 @@ publicRoutes.post('/notify', async (c) => {
   return c.json({ ok: true })
 })
 
+/* ---------------------------------------------------------------- events --
+ *
+ * The public list and one event's detail. Both read through the ANON client,
+ * so 059's "published rows are public" policy is the backstop behind each
+ * query's own status filter.
+ *
+ * Two things never cross this boundary, and both are the artboard's own rules:
+ * an online event's joining link ("online links are never public"), and
+ * anything a registrant answered ("Answers are shown to leaders only"). What
+ * IS public is the shape of the crowd — a count, and the initials on the
+ * detail page's "Who is going" row.
+ */
+
+// One literal, not a concatenation: supabase-js infers the row type from the
+// select string, and a `+` anywhere in it collapses every column to
+// GenericStringError.
+const EVENT_PUBLIC_COLUMNS =
+  'id, org_id, kind, title, summary, starts_at, ends_at, format, location, suburb, state, audience, description, what_to_bring, tools, capacity, prints_parts, part_sets_max, accessibility_note, photo_urls, status, registrations_closed_at, cancelled_at, created_by, created_at, updated_at'
+
+/** Live registrations per event, and whether the viewer is among them. */
+async function goingCounts(eventIds: string[], viewerId: string | null) {
+  if (eventIds.length === 0) return { counts: new Map<string, number>(), mine: new Set<string>() }
+  // The admin client, because org_event_registrations is readable only by its
+  // own author or the organisation's leaders — by design. A count is not a
+  // disclosure, so it is computed here rather than made readable to everyone.
+  const admin = createAdminClient()
+  const { data } = await admin
+    .from('org_event_registrations')
+    .select('event_id, user_id')
+    .in('event_id', eventIds)
+    .is('cancelled_at', null)
+
+  const counts = new Map<string, number>()
+  const mine = new Set<string>()
+  for (const r of data ?? []) {
+    const id = r.event_id as string
+    counts.set(id, (counts.get(id) ?? 0) + 1)
+    if (viewerId && r.user_id === viewerId) mine.add(id)
+  }
+  return { counts, mine }
+}
+
+publicRoutes.get('/events', async (c) => {
+  const sb = createAnonClient()
+  const admin = createAdminClient()
+
+  // `viewer` is a plain query parameter, not a session: these routes are
+  // mounted before authMiddleware. It only ever decides whether a card reads
+  // "I'm going" or "You're going", so a forged one reveals nothing — the
+  // answers and the joining link are not in this response at any value of it.
+  const viewer = c.req.query('viewer') ?? null
+
+  let query = sb
+    .from('org_events')
+    .select(EVENT_PUBLIC_COLUMNS)
+    .eq('status', 'published')
+    .is('cancelled_at', null)
+    .order('starts_at', { ascending: true })
+
+  const format = c.req.query('format')
+  if (format === 'in_person' || format === 'online') query = query.eq('format', format)
+
+  // An online event shows under every state filter, which is the artboard's
+  // rule and the reason this is an `or` rather than an equality.
+  const state = c.req.query('state')
+  if (state) query = query.or(`state.eq.${state},format.eq.online`)
+
+  const { data: rows, error } = await query
+  if (error) return c.json({ error: error.message }, 500)
+
+  const events = rows ?? []
+  const eventIds = events.map((e) => e.id as string)
+  const orgIds = [...new Set(events.map((e) => e.org_id as string))]
+  const [{ data: orgs }, { counts, mine }, { data: questionRows }] = await Promise.all([
+    // Resolved through the admin client rather than an embed: embedding
+    // organizations kills the whole query under 033/045's column grants, and
+    // returns empty with no error.
+    admin.from('organizations').select('id, name').in('id', orgIds),
+    goingCounts(eventIds, viewer),
+    // Which events ask something beyond name and email. The card needs this to
+    // decide whether "I'm going" can be one tap or has to open the form — a
+    // tap that silently skipped three required questions would put a family on
+    // a list the host cannot use. Ids only; the questions themselves belong to
+    // the detail route.
+    sb.from('org_event_questions').select('event_id').in('event_id', eventIds),
+  ])
+  const orgName = new Map((orgs ?? []).map((o) => [o.id as string, o.name as string]))
+  const asks = new Set((questionRows ?? []).map((q) => q.event_id as string))
+
+  return c.json(
+    events.map((e) => {
+      const id = e.id as string
+      const going = counts.get(id) ?? 0
+      const capacity = e.capacity as number | null
+      const { online_url: _dropped, ...rest } = e as Record<string, unknown>
+      return {
+        ...rest,
+        org_name: orgName.get(e.org_id as string) ?? '',
+        going_count: going,
+        seats_left: capacity === null ? null : Math.max(0, capacity - going),
+        viewer_going: mine.has(id),
+        has_questions: asks.has(id),
+      }
+    }),
+  )
+})
+
+publicRoutes.get('/events/:id', async (c) => {
+  const sb = createAnonClient()
+  const admin = createAdminClient()
+  const id = c.req.param('id')
+  const viewer = c.req.query('viewer') ?? null
+
+  const { data: event, error } = await sb
+    .from('org_events')
+    .select(EVENT_PUBLIC_COLUMNS)
+    .eq('id', id)
+    .eq('status', 'published')
+    .maybeSingle()
+  if (error && error.code !== INVALID_TEXT_REPRESENTATION) {
+    return c.json({ error: error.message }, 500)
+  }
+  if (!event) return c.json({ error: 'Not found' }, 404)
+
+  const [{ data: org }, { data: questions }, { counts, mine }] = await Promise.all([
+    admin
+      .from('organizations')
+      .select('id, name, description, suburb, state')
+      .eq('id', event.org_id as string)
+      .maybeSingle(),
+    sb
+      .from('org_event_questions')
+      .select('id, event_id, position, prompt, answer_type, required, options')
+      .eq('event_id', id)
+      .order('position'),
+    goingCounts([id], viewer),
+  ])
+
+  // Initials only. The artboard draws two avatars and a count on "Who is
+  // going" — a name would tell anyone who opened the page which families
+  // attend which therapy service.
+  const { data: attendees } = await admin
+    .from('org_event_registrations')
+    .select('name')
+    .eq('event_id', id)
+    .is('cancelled_at', null)
+    .order('created_at')
+    .limit(8)
+
+  const going = counts.get(id) ?? 0
+  const capacity = event.capacity as number | null
+  return c.json({
+    ...event,
+    // Never public, whatever the format. A registrant is given it after they
+    // confirm, through the authenticated route.
+    online_url: null,
+    org: org ?? null,
+    questions: questions ?? [],
+    going_count: going,
+    seats_left: capacity === null ? null : Math.max(0, capacity - going),
+    viewer_going: mine.has(id),
+    attendee_initials: (attendees ?? []).map((a) =>
+      String(a.name)
+        .split(/\s+/)
+        .slice(0, 2)
+        .map((w) => w[0]?.toUpperCase() ?? '')
+        .join(''),
+    ),
+  })
+})
+
 export default publicRoutes

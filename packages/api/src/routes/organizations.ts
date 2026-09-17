@@ -8,8 +8,11 @@
  * succeed. /mine drives the dashboard link into /org/[orgId] — leadership is
  * per-organisation data, not a profile role.
  */
+import { randomUUID } from 'node:crypto'
 import { Hono, type Context } from 'hono'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
+import { ledOrgIds } from '../toy-access.js'
+import { EVENT_KINDS, EVENT_TOOLS, AU_STATES, ANSWER_TYPES } from '@splat-connect/types'
 import type { AuthVariables } from '../middleware/auth.js'
 
 const organizations = new Hono<{ Variables: AuthVariables }>()
@@ -224,10 +227,86 @@ organizations.patch('/:id/profile', async (c) => {
  * not drift into one policy body that admits both.
  */
 
+// One literal, not a concatenation: supabase-js infers the row type from the
+// select string, and a `+` anywhere in it collapses every column to
+// GenericStringError.
 const EVENT_COLUMNS =
-  'id, org_id, title, summary, starts_at, ends_at, format, location, online_url, audience, status, created_by, created_at, updated_at'
+  'id, org_id, kind, title, summary, starts_at, ends_at, format, location, suburb, state, online_url, audience, description, what_to_bring, tools, capacity, prints_parts, part_sets_max, accessibility_note, photo_urls, status, registrations_closed_at, cancelled_at, created_by, created_at, updated_at'
 const STORY_COLUMNS =
   'id, org_id, kind, title, summary, body, byline, consent_confirmed, status, created_by, created_at, updated_at'
+
+/**
+ * The 061 columns, read off a request body and normalised.
+ *
+ * Shared by create and edit so the two cannot disagree about what a blank
+ * means — and blanks matter here. `capacity: null` is "no limit", which is what
+ * the form's "Seats (blank = no limit)" says; 0 would be a full event, a
+ * different thing entirely.
+ */
+function eventShape(
+  body: Record<string, unknown>,
+  format: 'in_person' | 'online',
+):
+  | { error: string }
+  | {
+      kind: string
+      suburb: string | null
+      state: string | null
+      description: string | null
+      what_to_bring: string | null
+      tools: string[]
+      capacity: number | null
+      prints_parts: boolean
+      part_sets_max: number | null
+      accessibility_note: string | null
+    } {
+  const kind = typeof body.kind === 'string' && body.kind in EVENT_KINDS ? body.kind : 'build_day'
+
+  const text = (key: string, max: number): string | null => {
+    const v = typeof body[key] === 'string' ? (body[key] as string).trim() : ''
+    return v ? v.slice(0, max) : null
+  }
+
+  const count = (key: string): number | null => {
+    const raw = body[key]
+    if (raw === null || raw === undefined || raw === '') return null
+    const n = Number(raw)
+    return Number.isFinite(n) && n > 0 ? Math.floor(n) : null
+  }
+
+  const suburbRaw = typeof body.suburb === 'string' ? body.suburb.trim() : ''
+  const stateRaw = typeof body.state === 'string' ? body.state.trim().toUpperCase() : ''
+  if (stateRaw && !(AU_STATES as readonly string[]).includes(stateRaw)) {
+    return { error: 'That is not an Australian state or territory.' }
+  }
+
+  const prints = body.prints_parts === true || body.prints_parts === 'true'
+  const partSetsMax = count('part_sets_max')
+  // Offering to print parts without saying how many is an open-ended promise,
+  // and the leader is the one who would have to keep it.
+  if (prints && partSetsMax === null) {
+    return { error: 'Say how many part sets you can print before the day.' }
+  }
+
+  return {
+    kind,
+    // An online event has no place, whatever was typed into the fields before
+    // the format was switched.
+    suburb: format === 'in_person' && suburbRaw ? suburbRaw.slice(0, 80) : null,
+    state: format === 'in_person' && stateRaw ? stateRaw : null,
+    description: text('description', 4000),
+    what_to_bring: text('what_to_bring', 500),
+    tools: Array.isArray(body.tools)
+      ? (body.tools as unknown[])
+          .filter((t): t is string => typeof t === 'string')
+          .filter((t) => (EVENT_TOOLS as readonly string[]).includes(t))
+      : [],
+    capacity: count('capacity'),
+    prints_parts: prints,
+    part_sets_max: prints ? partSetsMax : null,
+    accessibility_note: text('accessibility_note', 500),
+  }
+}
 
 organizations.get('/:id/events', async (c) => {
   const supabase = createUserClient(c.get('token'))
@@ -288,15 +367,64 @@ organizations.post('/:id/events', async (c) => {
   return c.json(data, 201)
 })
 
-/** Publish or unpublish. One click each, and it takes effect immediately. */
+/**
+ * Publish, unpublish, close registrations, cancel, or edit the whole thing.
+ *
+ * The two withdrawals are separate fields rather than one status, because they
+ * are separate promises: closing registrations leaves the event on the public
+ * list with its date intact, so somebody already coming still sees where to
+ * turn up; cancelling takes it off. The manage screen offers them as two
+ * buttons for the same reason.
+ */
 organizations.patch('/:orgId/events/:id', async (c) => {
   const supabase = createUserClient(c.get('token'))
-  const body = (await c.req.json().catch(() => ({}))) as { status?: unknown }
-  const status = body.status === 'published' ? 'published' : 'draft'
+  const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>
+
+  const patch: Record<string, unknown> = { updated_at: new Date().toISOString() }
+
+  if ('status' in body) patch.status = body.status === 'published' ? 'published' : 'draft'
+  if ('registrations_closed' in body) {
+    patch.registrations_closed_at = body.registrations_closed ? new Date().toISOString() : null
+  }
+  if ('cancelled' in body) {
+    patch.cancelled_at = body.cancelled ? new Date().toISOString() : null
+  }
+
+  // A full edit only when the body carries a title, so a one-field call like
+  // { cancelled: true } cannot blank every other column by omission.
+  if (typeof body.title === 'string') {
+    const title = body.title.trim()
+    if (!title || title.length > 160) return c.json({ error: 'Give the event a name.' }, 400)
+    const format = body.format === 'online' ? 'online' : 'in_person'
+    const location = typeof body.location === 'string' ? body.location.trim() : ''
+    const onlineUrl = typeof body.online_url === 'string' ? body.online_url.trim() : ''
+    if (format === 'in_person' && !location) return c.json({ error: 'Say where it is.' }, 400)
+    if (format === 'online' && !onlineUrl) return c.json({ error: 'Give the joining link.' }, 400)
+
+    const shape = eventShape(body, format)
+    if ('error' in shape) return c.json({ error: shape.error }, 400)
+    if (patch.status === 'published' && format === 'in_person' && (!shape.suburb || !shape.state)) {
+      return c.json({ error: 'A published event needs a suburb and a state.' }, 400)
+    }
+
+    Object.assign(patch, shape, {
+      title,
+      summary: typeof body.summary === 'string' && body.summary.trim() ? body.summary.trim() : null,
+      format,
+      location: format === 'in_person' ? location : null,
+      online_url: format === 'online' ? onlineUrl : null,
+      audience:
+        typeof body.audience === 'string' && body.audience.trim() ? body.audience.trim() : null,
+    })
+    if (typeof body.starts_at === 'string' && !Number.isNaN(Date.parse(body.starts_at))) {
+      patch.starts_at = body.starts_at
+    }
+    patch.ends_at = typeof body.ends_at === 'string' && body.ends_at ? body.ends_at : null
+  }
 
   const { data, error } = await supabase
     .from('org_events')
-    .update({ status, updated_at: new Date().toISOString() })
+    .update(patch)
     .eq('id', c.req.param('id'))
     .eq('org_id', c.req.param('orgId'))
     .select(EVENT_COLUMNS)
@@ -318,6 +446,132 @@ organizations.delete('/:orgId/events/:id', async (c) => {
   if (error) return c.json({ error: error.message }, 500)
   if (!data) return c.json({ error: 'No such event of yours.' }, 404)
   return c.json({ id: (data as { id: string }).id })
+})
+
+/* ------------------------------------------- the registration form, and who
+ * answered it
+ *
+ * Questions are replaced wholesale rather than patched one at a time. The form
+ * reorders with Move up / Move down and removes with a bin icon, so what the
+ * leader hands back is always the complete list in its final order — diffing it
+ * into insert/update/delete calls would be three round trips to arrive at the
+ * same rows, and would have to invent an answer for what a reordered question's
+ * id means to an answer already stored against it. Replacing keeps ids stable
+ * for the questions that survive, because the client sends them back.
+ */
+
+const QUESTION_COLUMNS = 'id, event_id, position, prompt, answer_type, required, options'
+
+organizations.get('/:orgId/events/:id/questions', async (c) => {
+  const supabase = createUserClient(c.get('token'))
+  const { data, error } = await supabase
+    .from('org_event_questions')
+    .select(QUESTION_COLUMNS)
+    .eq('event_id', c.req.param('id'))
+    .order('position')
+  if (error) return c.json({ error: error.message }, 500)
+  return c.json(data ?? [])
+})
+
+organizations.put('/:orgId/events/:id/questions', async (c) => {
+  const supabase = createUserClient(c.get('token'))
+  const eventId = c.req.param('id')
+  const body = (await c.req.json().catch(() => null)) as { questions?: unknown } | null
+  if (!body || !Array.isArray(body.questions)) {
+    return c.json({ error: 'Send the whole list of questions.' }, 400)
+  }
+  if (body.questions.length > 20) {
+    return c.json({ error: 'Twenty questions is the most a form can ask.' }, 400)
+  }
+
+  // Leadership, checked explicitly. Reading the event back through the user
+  // client is NOT enough: a published event is readable by anyone under 059's
+  // public policy, so an outsider passed that check and got a 200 for a write
+  // RLS had silently refused — the response said "saved" about nothing.
+  const admin = createAdminClient()
+  if (!(await ledOrgIds(admin, c.get('userId'))).includes(c.req.param('orgId'))) {
+    return c.json({ error: 'No such event of yours.' }, 404)
+  }
+  const { data: event } = await admin
+    .from('org_events')
+    .select('id')
+    .eq('id', eventId)
+    .eq('org_id', c.req.param('orgId'))
+    .maybeSingle()
+  if (!event) return c.json({ error: 'No such event of yours.' }, 404)
+
+  const rows: Array<Record<string, unknown>> = []
+  for (const [i, raw] of body.questions.entries()) {
+    const q = raw as Record<string, unknown>
+    const prompt = typeof q.prompt === 'string' ? q.prompt.trim() : ''
+    if (!prompt) return c.json({ error: 'Every question needs something to ask.' }, 400)
+    if (prompt.length > 200) return c.json({ error: 'That question is too long to read.' }, 400)
+
+    const answerType =
+      typeof q.answer_type === 'string' && q.answer_type in ANSWER_TYPES ? q.answer_type : 'short'
+    const options =
+      Array.isArray(q.options) && answerType === 'choice'
+        ? (q.options as unknown[])
+            .filter((o): o is string => typeof o === 'string')
+            .map((o) => o.trim())
+            .filter(Boolean)
+        : []
+    // A 'choose one' with nothing to choose is a dead control on a public
+    // form. 061's constraint refuses it too; this refuses it in a sentence.
+    if (answerType === 'choice' && options.length === 0) {
+      return c.json({ error: `Give "${prompt}" some options to choose between.` }, 400)
+    }
+
+    rows.push({
+      // Every row carries an id, including the new ones, and that is not
+      // cosmetic: PostgREST builds ONE insert from the union of the keys across
+      // a bulk payload, so a row that omitted `id` beside a row that had one got
+      // an explicit NULL rather than the column default, and the whole call
+      // failed on the not-null constraint. Generating the id here also keeps an
+      // answer already stored against a surviving question resolving to it,
+      // which is why the client sends the existing ones back.
+      id: typeof q.id === 'string' && q.id ? q.id : randomUUID(),
+      event_id: eventId,
+      position: i + 1,
+      prompt,
+      answer_type: answerType,
+      required: q.required === true || q.required === 'true',
+      options,
+    })
+  }
+
+  const { error: clearError } = await supabase
+    .from('org_event_questions')
+    .delete()
+    .eq('event_id', eventId)
+  if (clearError) return c.json({ error: clearError.message }, 500)
+
+  if (rows.length === 0) return c.json([])
+
+  const { data, error } = await supabase
+    .from('org_event_questions')
+    .insert(rows)
+    .select(QUESTION_COLUMNS)
+  if (error) return c.json({ error: error.message }, 500)
+  return c.json(data ?? [])
+})
+
+/**
+ * Who is coming, with what they answered.
+ *
+ * 061's leader-read policy is what admits this, and it is the only route
+ * anywhere that returns an answer. "Answers are shown to leaders only."
+ */
+organizations.get('/:orgId/events/:id/registrations', async (c) => {
+  const supabase = createUserClient(c.get('token'))
+  const { data, error } = await supabase
+    .from('org_event_registrations')
+    .select('id, event_id, user_id, name, email, answers, created_at, cancelled_at')
+    .eq('event_id', c.req.param('id'))
+    .is('cancelled_at', null)
+    .order('created_at')
+  if (error) return c.json({ error: error.message }, 500)
+  return c.json(data ?? [])
 })
 
 organizations.get('/:id/stories', async (c) => {

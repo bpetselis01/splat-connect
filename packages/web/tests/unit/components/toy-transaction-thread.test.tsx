@@ -27,6 +27,8 @@ function tx(overrides: Partial<ToyTransactionDetail> = {}): ToyTransactionDetail
     working_photo_url: null,
     work_approved_at: null,
     printer_id: null,
+    event_id: null,
+    part_sets: null,
     print_note: null,
     printing_started_at: null,
     ready_at: null,

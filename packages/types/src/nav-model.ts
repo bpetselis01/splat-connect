@@ -56,6 +56,7 @@ export type IconName =
   | 'bell'
   | 'handshake'
   | 'bookmark'
+  | 'calendar'
 
 /** `soon` marks a route that exists but has no feature behind it yet. */
 export type NavRow = {
@@ -113,6 +114,16 @@ export function buildNav(caps: Capabilities): NavGroup[] {
         // them would put "start the print" next to "collect it".
         { href: '/dashboard/print-requests', label: 'My print requests', icon: 'clipboard' },
         { href: '/dashboard/printers', label: 'Print for others', icon: 'orders' },
+      ],
+    },
+    {
+      heading: 'Out in the world',
+      rows: [
+        // A door of its own rather than a row under Print requests, even though
+        // the two meet: an event's part-print request lands on My events as
+        // well. What a family comes here to check is "am I still going on
+        // Sunday", which is a different question from "where are my parts".
+        { href: '/dashboard/events', label: 'My events', icon: 'calendar' },
       ],
     },
   ]

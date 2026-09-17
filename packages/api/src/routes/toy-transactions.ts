@@ -218,6 +218,10 @@ toyTransactions.get('/', async (c) => {
       other_party_name: isOwnerSide(r, userId, ledOrgs)
         ? r.requester?.name ?? ''
         : r.org?.name ?? r.owner?.name ?? '',
+      // The family, named for what they are. A queue that only ever shows one
+      // direction — an event's part requests, say — should not have to work out
+      // which end of `other_party_name` it is looking at.
+      requester_name: r.requester?.name ?? null,
       // Which side of the handoff the caller is on. A leader's own toys and
       // their org's arrive in one list, and nothing else distinguishes them.
       acting_for_org_name: isOwnerSide(r, userId, ledOrgs) ? r.org?.name ?? null : null,
@@ -1321,6 +1325,156 @@ toyTransactions.post('/print', async (c) => {
     sender_id: userId,
     kind: 'system',
     body: `Asked for ${rows.length} part${rows.length === 1 ? '' : 's'} from this guide.`,
+  })
+
+  await notifyOwnerSide(admin, tx, {
+    type: 'toy_request',
+    toy_transaction_id: tx.id,
+    toy_name: tutorial.title,
+    actor_name: requesterProfile?.name ?? 'A contributor',
+  })
+
+  return c.json(tx, 201)
+})
+
+/**
+ * POST /api/toy-transactions/print-at-event
+ *
+ * The other half of a print request: a family asking the HOST of a build day to
+ * print their parts before the day, rather than sending them to a machine.
+ *
+ * Deliberately the same row, the same type and the same status flow as a job
+ * sent to a printer. 061 swapped `printer_id is not null` for "exactly one of
+ * printer_id and event_id", and nothing else about a print changed. That is
+ * what makes the artboard's rule work — a declined request "is told straight
+ * away and asked to pick a printer nearby instead", which is one record moving
+ * rather than a second one being made — and it is why accept, reject and the
+ * thread all work here without knowing events exist.
+ *
+ * `owner_org_id` is the event's organisation, so isOwnerSide() already answers
+ * "may this leader accept it" correctly with no new branch.
+ */
+toyTransactions.post('/print-at-event', async (c) => {
+  const body = await c.req.json().catch(() => null)
+  if (body === null || typeof body !== 'object' || Array.isArray(body)) {
+    return c.json({ error: 'Body must be an object' }, 400)
+  }
+  const userId = c.get('userId')
+  const admin = createAdminClient()
+
+  const note = typeof body.note === 'string' ? body.note.trim() : ''
+  if (note.length > 1000) return c.json({ error: 'The note is longer than 1000 characters.' }, 400)
+
+  const sets = Number(body.part_sets ?? 1)
+  if (!Number.isInteger(sets) || sets < 1 || sets > 20) {
+    return c.json({ error: 'Ask for between one and twenty sets.' }, 400)
+  }
+
+  const fileIds = Array.isArray(body.stl_file_ids) ? body.stl_file_ids : []
+  if (fileIds.length === 0 || !fileIds.every((id: unknown) => typeof id === 'string')) {
+    return c.json({ error: 'Tick at least one part to print.' }, 400)
+  }
+
+  const { data: event, error: eventError } = await admin
+    .from('org_events')
+    .select('id, org_id, status, cancelled_at, prints_parts, part_sets_max, title')
+    .eq('id', body.event_id)
+    .maybeSingle()
+  if (eventError) {
+    if (eventError.code === INVALID_TEXT_REPRESENTATION) return c.json({ error: 'Not found' }, 404)
+    return c.json({ error: eventError.message }, 500)
+  }
+  if (!event || event.status !== 'published' || event.cancelled_at) {
+    return c.json({ error: 'Not found' }, 404)
+  }
+  if (!event.prints_parts) {
+    return c.json({ error: 'This host is not printing parts before the day.' }, 409)
+  }
+  if ((await ledOrgIds(admin, userId)).includes(event.org_id)) {
+    return c.json({ error: 'You cannot ask your own organisation to print for you' }, 400)
+  }
+
+  // Sets, not requests. The manage screen counts the same way — "You said up to
+  // 6 sets; 0 accepted so far" — because six requests for one set each and one
+  // request for six are the same amount of filament.
+  const { data: accepted } = await admin
+    .from('toy_transactions')
+    .select('part_sets')
+    .eq('event_id', event.id)
+    .eq('status', 'accepted')
+  const takenSets = (accepted ?? []).reduce((n, r) => n + ((r.part_sets as number) ?? 0), 0)
+  if (takenSets + sets > (event.part_sets_max as number)) {
+    return c.json({ error: 'The host has no room left for part sets on this one.' }, 409)
+  }
+
+  // Every file must belong to the guide named — the same rule the printer path
+  // holds, and for the same reason: otherwise a request could name any STL on
+  // the platform and the host would be shown a part from a guide nobody in the
+  // conversation has read.
+  const { data: files, error: filesError } = await admin
+    .from('stl_files')
+    .select('id, tutorial_id')
+    .in('id', fileIds)
+  if (filesError) return c.json({ error: filesError.message }, 500)
+  const rows = (files ?? []) as Array<{ id: string; tutorial_id: string }>
+  if (rows.length !== fileIds.length || rows.some((f) => f.tutorial_id !== body.tutorial_id)) {
+    return c.json({ error: 'Those parts do not all belong to that guide' }, 400)
+  }
+
+  const { data: tutorial } = await admin
+    .from('tutorials')
+    .select('id, title, status')
+    .eq('id', body.tutorial_id)
+    .maybeSingle()
+  if (!tutorial || tutorial.status !== 'approved') return c.json({ error: 'Not found' }, 404)
+
+  const { data: existing, error: existingError } = await admin
+    .from('toy_transactions')
+    .select('id')
+    .eq('requester_id', userId)
+    .eq('event_id', event.id)
+    .in('status', ['requested', 'accepted'])
+    .maybeSingle()
+  if (existingError) return c.json({ error: existingError.message }, 500)
+  if (existing) return c.json({ error: 'You already have a part request open with this host' }, 409)
+
+  const { data: tx, error: insertError } = await admin
+    .from('toy_transactions')
+    .insert({
+      toy_id: null,
+      offered_toy_id: null,
+      tutorial_id: tutorial.id,
+      printer_id: null,
+      event_id: event.id,
+      part_sets: sets,
+      print_note: note || null,
+      type: 'print',
+      status: 'requested',
+      requester_id: userId,
+      owner_id: null,
+      owner_org_id: event.org_id,
+    })
+    .select()
+    .single()
+  if (insertError) return c.json({ error: insertError.message }, 500)
+
+  const { error: linkError } = await admin.from('print_job_files').insert(
+    rows.map((f) => ({ transaction_id: tx.id, stl_file_id: f.id }))
+  )
+  // The files ARE the request. A job with none is a job nobody can fill, so it
+  // is rolled back rather than left as a row that looks fine and is not.
+  if (linkError) {
+    await admin.from('toy_transactions').delete().eq('id', tx.id)
+    return c.json({ error: linkError.message }, 500)
+  }
+
+  const { data: requesterProfile } = await admin.from('profiles').select('name').eq('id', userId).single()
+
+  await admin.from('toy_transaction_messages').insert({
+    transaction_id: tx.id,
+    sender_id: userId,
+    kind: 'system',
+    body: `Asked for ${sets} set${sets === 1 ? '' : 's'} of parts to be printed before ${event.title}.`,
   })
 
   await notifyOwnerSide(admin, tx, {

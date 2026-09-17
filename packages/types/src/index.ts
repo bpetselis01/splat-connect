@@ -197,8 +197,16 @@ export interface ToyTransaction {
   working_photo_url: string | null
   /** When the family accepted that shot. The handover cannot start before it. */
   work_approved_at: string | null
-  /** The machine a print job is on. Set on a print and null otherwise (058). */
+  /** The machine a print job is on. Set on a print sent to a printer, and null
+   *  on one a build day's host is printing — exactly one of this and
+   *  `event_id` is set on a print, and both are null on every other type. */
   printer_id: string | null
+  /** The build day whose host is printing these, when that is who was asked
+   *  rather than a machine (061). */
+  event_id: string | null
+  /** How many sets of parts. Set only on an event's print request: sets are an
+   *  event's unit of work, and a printer takes the job whole. */
+  part_sets: number | null
   /** What the requester said about the print. The printer sees this and their
    *  suburb, and nothing else about them. */
   print_note: string | null
@@ -348,6 +356,10 @@ export interface ToyTransactionSummary extends ToyTransaction {
   offered_toy_name: string | null
   offered_toy_cover_photo_url: string | null
   other_party_name: string
+  /** The family who asked. Same value as `other_party_name` when the viewer is
+   *  the owner side, and named for what it is so a queue that only ever shows
+   *  one direction does not have to explain itself. */
+  requester_name: string | null
   /** The organisation the viewer is answering for, when they are its leader.
    *  Null for a personal handoff and for the family on the other side. */
   acting_for_org_name: string | null
@@ -736,25 +748,137 @@ export type OrgCapability = (typeof ORG_CAPABILITIES)[number]
 
 export type OrgPublishStatus = 'draft' | 'published'
 
-/** 059. An event an organisation has published. No review, so the leader terms
- *  carry the risk — which is why the editor restates them at the foot. */
+/** The four kinds the publish form offers as radios, with the sentence each
+ *  one carries there. 061. */
+export const EVENT_KINDS = {
+  build_day: 'Toys adapted on the day',
+  workshop: 'Teach one thing, in person or online',
+  open_day: 'Come and see the library or the space',
+  print_day: 'Clear the print queue together',
+} as const
+export type EventKind = keyof typeof EVENT_KINDS
+
+export const EVENT_KIND_LABEL: Record<EventKind, string> = {
+  build_day: 'Build day',
+  workshop: 'Workshop',
+  open_day: 'Open day',
+  print_day: 'Print day',
+}
+
+/** The state filter on /get-involved/events, and the publish form's dropdown. */
+export const AU_STATES = ['NSW', 'VIC', 'QLD', 'WA', 'SA', 'TAS', 'ACT', 'NT'] as const
+export type AuState = (typeof AU_STATES)[number]
+
+/** What a host can have out on the benches. 061. */
+export const EVENT_TOOLS = [
+  'Soldering irons',
+  'Drill',
+  'Hot glue',
+  'Multimeter',
+  'Screwdrivers',
+  '3D printer on site',
+] as const
+
+/** 059, widened by 061. An event an organisation has published. No review, so
+ *  the leader terms carry the risk — which is why the editor restates them at
+ *  the foot. */
 export interface OrgEvent {
   id: string
   org_id: string
+  kind: EventKind
   title: string
   summary: string | null
   starts_at: string
   ends_at: string | null
   format: 'in_person' | 'online'
-  /** Set on an in-person event; null on an online one. The constraint is 059's. */
+  /** Venue and street, as the publish form labels it. Set on an in-person
+   *  event; null on an online one. The constraint is 059's. */
   location: string | null
+  /** Their own columns rather than parsed back out of `location`, because the
+   *  public list filters on state. Same split printers use. */
+  suburb: string | null
+  state: AuState | null
   /** Set on an online event; never public until somebody has RSVPed. */
   online_url: string | null
   audience: string | null
+  description: string | null
+  what_to_bring: string | null
+  tools: string[]
+  /** Null means no limit — the form's "Seats (blank = no limit)". */
+  capacity: number | null
+  prints_parts: boolean
+  part_sets_max: number | null
+  accessibility_note: string | null
+  photo_urls: string[]
   status: OrgPublishStatus
+  /** Two separate withdrawals. Closing registrations leaves the event on the
+   *  public list with its date intact; cancelling takes it off. */
+  registrations_closed_at: string | null
+  cancelled_at: string | null
   created_by: string
   created_at: string
   updated_at: string
+}
+
+/** The five answer shapes the publish form offers. 061. */
+export const ANSWER_TYPES = {
+  short: 'Short answer',
+  paragraph: 'Paragraph',
+  number: 'Number',
+  choice: 'Choose one',
+  boolean: 'Yes / no',
+} as const
+export type AnswerType = keyof typeof ANSWER_TYPES
+
+/**
+ * A question the organiser added to an event's registration form.
+ *
+ * Name and email are NOT rows here — they are columns on the registration,
+ * because every event asks them and a question that cannot be removed is not a
+ * question.
+ */
+export interface OrgEventQuestion {
+  id: string
+  event_id: string
+  position: number
+  prompt: string
+  answer_type: AnswerType
+  required: boolean
+  /** Only 'choice' uses these. */
+  options: string[]
+}
+
+/**
+ * Somebody coming to an event.
+ *
+ * `name` and `email` are copied onto the row rather than read off the profile:
+ * a family books under whichever name the host should call out on the day.
+ * `answers` is keyed by question id.
+ *
+ * Never public. The artboard: "Answers are shown to leaders only."
+ */
+export interface OrgEventRegistration {
+  id: string
+  event_id: string
+  user_id: string
+  name: string
+  email: string
+  answers: Record<string, string | number | boolean>
+  created_at: string
+  cancelled_at: string | null
+}
+
+/** One row on /get-involved/events, with the numbers the card shows. */
+export interface EventListItem extends OrgEvent {
+  org_name: string
+  going_count: number
+  /** Null when the event has no capacity. */
+  seats_left: number | null
+  /** Whether the viewer has said they are going. Always false for a guest. */
+  viewer_going: boolean
+  /** Whether the event asks anything beyond name and email, which decides
+   *  whether "I'm going" can be one tap or has to open the form. */
+  has_questions: boolean
 }
 
 export const STORY_KINDS = ['delivery', 'build_day', 'partnership', 'other'] as const
