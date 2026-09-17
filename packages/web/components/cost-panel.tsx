@@ -246,9 +246,9 @@ export function CostPanel({
   return (
     <section
       aria-labelledby="cost-heading"
-      className="rounded-[var(--radius-card)] border border-line bg-surface shadow-e2"
+      className="rounded-[var(--radius-panel)] border border-line bg-surface shadow-e1"
     >
-      <div className="flex flex-wrap items-start justify-between gap-4 p-6 pb-4">
+      <div className="flex flex-wrap items-start justify-between gap-[14px] p-[18px_20px] pb-[13px]">
         <div className="min-w-0">
           <h2 id="cost-heading" className="text-xs font-extrabold uppercase tracking-widest text-muted">
             {viewerOwes ? 'What the handover costs you' : 'What you asked back'}
@@ -268,7 +268,7 @@ export function CostPanel({
           </span>
           <span
             data-testid="cost-total"
-            className="font-mono text-2xl font-bold tabular-nums text-ink"
+            className="font-display text-[22px] font-extrabold leading-[1.1] tabular-nums text-ink"
           >
             {formatCents(outstanding)}
           </span>
@@ -285,13 +285,13 @@ export function CostPanel({
             {rows.map((line) => (
               <li
                 key={line.id}
-                className="flex flex-wrap items-center gap-3 rounded-[var(--radius-panel)] bg-canvas px-4 py-3"
+                className="flex flex-wrap items-center gap-[10px] rounded-[var(--radius-field)] bg-sunken px-[13px] py-[10px]"
               >
-                <span className="min-w-0 flex-1 truncate text-ink">{line.description}</span>
+                <span className="min-w-0 flex-1 truncate text-[15px] font-bold text-ink">{line.description}</span>
                 <span className="badge bg-sunken text-brand-deep">
                   {line.claiming ? 'Claiming back' : 'Covering it'}
                 </span>
-                <span className="font-mono font-bold tabular-nums text-ink">
+                <span className="font-mono text-[15px] font-bold tabular-nums text-ink">
                   {/* A covered line reads as nothing owed, because it is. Its own
                       cost still sits in the row above as the description. */}
                   {formatCents(line.claiming ? line.amount_cents : 0)}
