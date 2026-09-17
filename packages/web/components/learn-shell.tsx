@@ -69,7 +69,11 @@ export function LearnShell({ slug, children }: { slug: string; children: React.R
 
         <nav aria-label="Course outline" className="mt-5 flex flex-col gap-4">
           {UNITS.map((u) => (
-            <div key={u.n}>
+            // Each unit is a card on the board — white, hairline, 18px, and
+            // deliberately no shadow: the outline sits beside the lesson rather
+            // than on top of it. Live drew them as bare divs, so the course
+            // outline read as one long list instead of five units.
+            <div key={u.n} className="card-flat card-grid p-3">
               <p className="eyebrow text-muted">
                 Unit {u.n} · {u.title}
               </p>

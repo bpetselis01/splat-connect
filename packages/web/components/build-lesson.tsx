@@ -143,7 +143,7 @@ export function BuildLesson({ lesson, title }: { lesson: BuildLesson; title: str
                   {i + 1}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <h3 className="font-display text-lg font-extrabold text-ink">{step.title}</h3>
+                  <h3 className="title-section">{step.title}</h3>
                   <p className="mt-1 max-w-prose text-base leading-relaxed text-ink">{step.body}</p>
 
                   {step.warn && (

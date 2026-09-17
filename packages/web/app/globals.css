@@ -368,17 +368,6 @@
   }
 
   /*
-   * The listing register. The board draws the guide and toy grids at 18px
-   * against the 24px it gives every other card — measured on #library and
-   * #toys_public (six cards each, both 18px) against #components, #hub and
-   * #about (24px). A tighter radius on a dense grid reads as a denser grid,
-   * which is the point of those two screens.
-   */
-  .card-grid {
-    border-radius: var(--radius-panel);
-  }
-
-  /*
    * The flat register — a bordered box with no depth, for things that sit
    * inside another surface rather than on the canvas: notification rows, the
    * editor's file rows, a tutorial's parts/tools/files blocks, and the
@@ -393,6 +382,20 @@
     background-color: var(--color-surface);
     border: var(--border-width) solid var(--color-line);
     border-radius: var(--radius-field);
+  }
+
+  /*
+   * The 18px register. The board is bimodal and deliberate about it: swept
+   * across all 119 screens its cards land on 18px 47 times and 24px 49 times.
+   * 24px is .card's default; this is the other half — the listing grids and the
+   * Learn course outline.
+   *
+   * Declared AFTER .card-flat on purpose. Both are single-class selectors, so
+   * source order is the whole of the specificity story, and .card-flat's own
+   * radius silently won when this sat above it.
+   */
+  .card-grid {
+    border-radius: var(--radius-panel);
   }
 
   /* Applied alongside .card on anything clickable. Hover, press and the

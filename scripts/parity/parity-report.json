@@ -1,5 +1,5 @@
 {
- "at": "2026-09-17T06:19:00.826Z",
+ "at": "2026-09-17T06:32:22.925Z",
  "live": "http://localhost:3110",
  "screens": [
   {
@@ -592,7 +592,7 @@
      "severity": "medium",
      "what": "card radius",
      "board": "18px",
-     "live": "12px"
+     "live": "14px"
     },
     {
      "type": "copy",
@@ -602,11 +602,18 @@
      "live": "unit # · set up your bench"
     },
     {
-     "type": "colour",
+     "type": "weight",
      "severity": "low",
-     "what": "card background",
-     "board": "rgb(255,255,255)",
-     "live": "rgb(220,240,251)"
+     "what": "card title weight",
+     "board": 600,
+     "live": 400
+    },
+    {
+     "type": "spacing",
+     "severity": "low",
+     "what": "card padding",
+     "board": "0/0",
+     "live": "12/12"
     }
    ],
    "role": "guest",
@@ -621,18 +628,18 @@
    "route": "/learn/switch-types",
    "findings": [
     {
-     "type": "missing-section",
+     "type": "font",
      "severity": "high",
-     "what": "board lists cards, live shows none",
-     "board": 13,
-     "live": 0
+     "what": "card title font",
+     "board": "Baloo 2",
+     "live": "Nunito"
     },
     {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "board has cards, live has none",
-     "board": 13,
-     "live": 0
+     "type": "radius",
+     "severity": "medium",
+     "what": "card radius",
+     "board": "18px",
+     "live": "14px"
     },
     {
      "type": "copy",
@@ -640,6 +647,20 @@
      "what": "7/7 board paragraphs absent",
      "board": "buttons, levers, proximity and grasp — which suits which child. the ri",
      "live": "unit # · set up your bench"
+    },
+    {
+     "type": "weight",
+     "severity": "low",
+     "what": "card title weight",
+     "board": 800,
+     "live": 400
+    },
+    {
+     "type": "spacing",
+     "severity": "low",
+     "what": "card padding",
+     "board": "0/0",
+     "live": "12/12"
     }
    ],
    "role": "guest",
@@ -653,20 +674,6 @@
    "group": "Learn",
    "route": "/learn/choosing-a-toy",
    "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "board lists cards, live shows none",
-     "board": 10,
-     "live": 0
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "board has cards, live has none",
-     "board": 10,
-     "live": 0
-    },
     {
      "type": "copy",
      "severity": "medium",
@@ -682,11 +689,32 @@
      "live": "signs a toy will fight you | match the toy to the child, not to your skills | check the library first"
     },
     {
+     "type": "radius",
+     "severity": "medium",
+     "what": "card radius",
+     "board": "18px",
+     "live": "14px"
+    },
+    {
      "type": "copy",
      "severity": "medium",
      "what": "2/2 board paragraphs absent",
      "board": "what makes a toy easy to adapt, and what makes it impossible. run a ca",
      "live": "unit # · set up your bench"
+    },
+    {
+     "type": "weight",
+     "severity": "low",
+     "what": "card title weight",
+     "board": 600,
+     "live": 400
+    },
+    {
+     "type": "spacing",
+     "severity": "low",
+     "what": "card padding",
+     "board": "0/0",
+     "live": "12/12"
     }
    ],
    "role": "guest",
@@ -701,25 +729,18 @@
    "route": "/learn/tools-and-materials",
    "findings": [
     {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "board lists cards, live shows none",
-     "board": 10,
-     "live": 0
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "board has cards, live has none",
-     "board": 10,
-     "live": 0
-    },
-    {
      "type": "copy",
      "severity": "medium",
      "what": "h2 wording",
      "board": "borrow before you buy",
      "live": "the minimum"
+    },
+    {
+     "type": "radius",
+     "severity": "medium",
+     "what": "card radius",
+     "board": "18px",
+     "live": "14px"
     },
     {
      "type": "missing-section",
@@ -736,11 +757,25 @@
      "live": "unit # · set up your bench"
     },
     {
+     "type": "weight",
+     "severity": "low",
+     "what": "card title weight",
+     "board": 600,
+     "live": 400
+    },
+    {
      "type": "extra-section",
      "severity": "low",
      "what": "live has 5 extra h2 the board does not draw",
      "board": null,
      "live": "soldering, when you get to it | nice to have | battery interrupters"
+    },
+    {
+     "type": "spacing",
+     "severity": "low",
+     "what": "card padding",
+     "board": "0/0",
+     "live": "12/12"
     }
    ],
    "role": "guest",
@@ -754,20 +789,6 @@
    "group": "Learn",
    "route": "/learn/safety-and-cleaning",
    "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "board lists cards, live shows none",
-     "board": 11,
-     "live": 0
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "board has cards, live has none",
-     "board": 11,
-     "live": 0
-    },
     {
      "type": "copy",
      "severity": "medium",
@@ -804,11 +825,32 @@
      "live": "making a joint that survives a child | printed parts specifically"
     },
     {
+     "type": "radius",
+     "severity": "medium",
+     "what": "card radius",
+     "board": "18px",
+     "live": "14px"
+    },
+    {
      "type": "copy",
      "severity": "medium",
      "what": "4/4 board paragraphs absent",
      "board": "hot irons, lead solder, and small batteries. none of it is dangerous i",
      "live": "unit # · set up your bench"
+    },
+    {
+     "type": "weight",
+     "severity": "low",
+     "what": "card title weight",
+     "board": 600,
+     "live": 400
+    },
+    {
+     "type": "spacing",
+     "severity": "low",
+     "what": "card padding",
+     "board": "0/0",
+     "live": "12/12"
     }
    ],
    "role": "guest",
@@ -874,21 +916,21 @@
      "severity": "medium",
      "what": "card radius",
      "board": "18px",
-     "live": "24px"
+     "live": "14px"
     },
     {
      "type": "weight",
      "severity": "low",
      "what": "card title weight",
      "board": 600,
-     "live": 700
+     "live": 400
     },
     {
      "type": "spacing",
      "severity": "low",
      "what": "card padding",
      "board": "0/0",
-     "live": "20/20"
+     "live": "12/12"
     }
    ],
    "role": "guest",
@@ -907,7 +949,7 @@
      "severity": "medium",
      "what": "card radius",
      "board": "18px",
-     "live": "24px"
+     "live": "14px"
     },
     {
      "type": "copy",
@@ -921,14 +963,14 @@
      "severity": "low",
      "what": "card title weight",
      "board": 600,
-     "live": 700
+     "live": 400
     },
     {
      "type": "spacing",
      "severity": "low",
      "what": "card padding",
      "board": "0/0",
-     "live": "20/20"
+     "live": "12/12"
     }
    ],
    "role": "guest",
@@ -947,7 +989,7 @@
      "severity": "medium",
      "what": "card radius",
      "board": "18px",
-     "live": "24px"
+     "live": "14px"
     },
     {
      "type": "copy",
@@ -961,14 +1003,14 @@
      "severity": "low",
      "what": "card title weight",
      "board": 600,
-     "live": 700
+     "live": 400
     },
     {
      "type": "spacing",
      "severity": "low",
      "what": "card padding",
      "board": "0/0",
-     "live": "20/20"
+     "live": "12/12"
     }
    ],
    "role": "guest",
@@ -1004,55 +1046,6 @@
      "live": "the build"
     },
     {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"remove the casing\" size",
-     "board": "21px",
-     "live": "18px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"cut your wire\" size",
-     "board": "21px",
-     "live": "18px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"strip and twist\" size",
-     "board": "21px",
-     "live": "18px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"slide the heat shrink on now\" size",
-     "board": "21px",
-     "live": "18px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"solder the wires to the pins\" size",
-     "board": "21px",
-     "live": "18px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"shrink the insulation\" size",
-     "board": "21px",
-     "live": "18px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"test, then put the casing back on\" size",
-     "board": "21px",
-     "live": "18px"
-    },
-    {
      "type": "extra-section",
      "severity": "medium",
      "what": "live has an extra h2: \"what to have out\"",
@@ -1071,7 +1064,7 @@
      "severity": "medium",
      "what": "card radius",
      "board": "18px",
-     "live": "24px"
+     "live": "14px"
     },
     {
      "type": "missing-section",
@@ -1085,14 +1078,14 @@
      "severity": "low",
      "what": "card title weight",
      "board": 800,
-     "live": 700
+     "live": 400
     },
     {
      "type": "spacing",
      "severity": "low",
      "what": "card padding",
      "board": "0/0",
-     "live": "16/16"
+     "live": "12/12"
     }
    ],
    "role": "guest",
@@ -1111,7 +1104,7 @@
      "severity": "medium",
      "what": "card radius",
      "board": "18px",
-     "live": "24px"
+     "live": "14px"
     },
     {
      "type": "copy",
@@ -1125,14 +1118,14 @@
      "severity": "low",
      "what": "card title weight",
      "board": 600,
-     "live": 700
+     "live": 400
     },
     {
      "type": "spacing",
      "severity": "low",
      "what": "card padding",
      "board": "0/0",
-     "live": "20/20"
+     "live": "12/12"
     }
    ],
    "role": "guest",
@@ -1168,55 +1161,6 @@
      "live": "the build"
     },
     {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"batteries out, find the screws\" size",
-     "board": "21px",
-     "live": "18px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"remove the bottom casing\" size",
-     "board": "21px",
-     "live": "18px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"open the body\" size",
-     "board": "21px",
-     "live": "18px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"find the two solder points\" size",
-     "board": "21px",
-     "live": "18px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"thread the socket wires through the plush\" size",
-     "board": "21px",
-     "live": "18px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"solder to the board\" size",
-     "board": "21px",
-     "live": "18px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"test, then reassemble\" size",
-     "board": "21px",
-     "live": "18px"
-    },
-    {
      "type": "extra-section",
      "severity": "medium",
      "what": "live has an extra h2: \"what to have out\"",
@@ -1228,7 +1172,7 @@
      "severity": "medium",
      "what": "card radius",
      "board": "18px",
-     "live": "24px"
+     "live": "14px"
     },
     {
      "type": "missing-section",
@@ -1242,14 +1186,14 @@
      "severity": "low",
      "what": "card title weight",
      "board": 800,
-     "live": 700
+     "live": 400
     },
     {
      "type": "spacing",
      "severity": "low",
      "what": "card padding",
      "board": "0/0",
-     "live": "16/16"
+     "live": "12/12"
     }
    ],
    "role": "guest",
@@ -1285,55 +1229,6 @@
      "live": "the build"
     },
     {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"batteries out, base off\" size",
-     "board": "21px",
-     "live": "18px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"open the casing\" size",
-     "board": "21px",
-     "live": "18px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"find the on/off button\" size",
-     "board": "21px",
-     "live": "18px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"make a hole and thread the wires\" size",
-     "board": "21px",
-     "live": "18px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"tie a knot for strain relief\" size",
-     "board": "21px",
-     "live": "18px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"solder to the button\" size",
-     "board": "21px",
-     "live": "18px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"test, then reassemble\" size",
-     "board": "21px",
-     "live": "18px"
-    },
-    {
      "type": "extra-section",
      "severity": "medium",
      "what": "live has an extra h2: \"what to have out\"",
@@ -1345,7 +1240,7 @@
      "severity": "medium",
      "what": "card radius",
      "board": "18px",
-     "live": "24px"
+     "live": "14px"
     },
     {
      "type": "missing-section",
@@ -1359,14 +1254,14 @@
      "severity": "low",
      "what": "card title weight",
      "board": 800,
-     "live": 700
+     "live": 400
     },
     {
      "type": "spacing",
      "severity": "low",
      "what": "card padding",
      "board": "0/0",
-     "live": "16/16"
+     "live": "12/12"
     }
    ],
    "role": "guest",
@@ -1399,7 +1294,7 @@
      "severity": "medium",
      "what": "card title size",
      "board": "21px",
-     "live": "16px"
+     "live": "14px"
     },
     {
      "type": "copy",
@@ -1423,34 +1318,6 @@
      "live": "the build"
     },
     {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"unpack and open the back\" size",
-     "board": "21px",
-     "live": "18px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"strip the toy wires\" size",
-     "board": "21px",
-     "live": "18px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"splice: three wires into one joint\" size",
-     "board": "21px",
-     "live": "18px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"close up and test again\" size",
-     "board": "21px",
-     "live": "18px"
-    },
-    {
      "type": "extra-section",
      "severity": "medium",
      "what": "live has an extra h2: \"what to have out\"",
@@ -1462,7 +1329,7 @@
      "severity": "medium",
      "what": "card radius",
      "board": "18px",
-     "live": "24px"
+     "live": "14px"
     },
     {
      "type": "missing-section",
@@ -1476,7 +1343,7 @@
      "severity": "low",
      "what": "card title weight",
      "board": 800,
-     "live": 700
+     "live": 400
     },
     {
      "type": "extra-section",
@@ -1497,7 +1364,7 @@
      "severity": "low",
      "what": "card padding",
      "board": "0/0",
-     "live": "16/16"
+     "live": "12/12"
     }
    ],
    "role": "guest",
@@ -1531,69 +1398,6 @@
      "what": "h2 wording",
      "board": "step by step",
      "live": "the build"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"thread the cable into the base\" size",
-     "board": "21px",
-     "live": "18px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"solder the wires to the limit switch\" size",
-     "board": "21px",
-     "live": "18px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"test the switch\" size",
-     "board": "21px",
-     "live": "18px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"seat the switch in the base\" size",
-     "board": "21px",
-     "live": "18px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"fit the switch-insert to the cap\" size",
-     "board": "21px",
-     "live": "18px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"place the brass inserts\" size",
-     "board": "21px",
-     "live": "18px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"melt the inserts home\" size",
-     "board": "21px",
-     "live": "18px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"fit the connector into the cap\" size",
-     "board": "21px",
-     "live": "18px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"screw it together\" size",
-     "board": "21px",
-     "live": "18px"
     },
     {
      "type": "extra-section",
@@ -1701,7 +1505,7 @@
      "severity": "medium",
      "what": "card radius",
      "board": "18px",
-     "live": "24px"
+     "live": "14px"
     },
     {
      "type": "copy",
@@ -1715,14 +1519,14 @@
      "severity": "low",
      "what": "card title weight",
      "board": 600,
-     "live": 700
+     "live": 400
     },
     {
      "type": "spacing",
      "severity": "low",
      "what": "card padding",
      "board": "0/0",
-     "live": "20/20"
+     "live": "12/12"
     }
    ],
    "role": "guest",
@@ -4297,7 +4101,7 @@
      "severity": "medium",
      "what": "5/5 board paragraphs absent",
      "board": "everything a family can ask of an organisation, in one place. say no w",
-     "live": "every ask a family can make of parity org mu#xt#pbsy# in one queue: a "
+     "live": "every ask a family can make of parity org mu#etby#ird, in one queue: a"
     },
     {
      "type": "shadow",
@@ -4422,7 +4226,7 @@
    "id": "org_event_manage",
    "name": "Manage event",
    "group": "My SPLAT",
-   "route": "/dashboard/org/events/44a295e9-98d7-4897-92e9-cc0ebd55cd4e",
+   "route": "/dashboard/org/events/ce22b5fb-4fc4-41d9-a23f-d2908147f4e2",
    "findings": [
     {
      "type": "font",
@@ -4489,7 +4293,7 @@
     }
    ],
    "role": "leader",
-   "finalUrl": "/dashboard/org/events/44a295e9-98d7-4897-92e9-cc0ebd55cd4e",
+   "finalUrl": "/dashboard/org/events/ce22b5fb-4fc4-41d9-a23f-d2908147f4e2",
    "boardHeadings": 4,
    "liveHeadings": 2
   },
@@ -5124,7 +4928,7 @@
    "id": "editor",
    "name": "Tutorial editor",
    "group": "My SPLAT",
-   "route": "/tutorials/0754121b-92bc-4997-a4e3-1f951628a339/edit",
+   "route": "/tutorials/c7a80324-c56e-4821-81eb-4dc621272a12/edit",
    "findings": [
     {
      "type": "missing-section",
@@ -5198,7 +5002,7 @@
     }
    ],
    "role": "contributor",
-   "finalUrl": "/tutorials/0754121b-92bc-4997-a4e3-1f951628a339/edit",
+   "finalUrl": "/tutorials/c7a80324-c56e-4821-81eb-4dc621272a12/edit",
    "boardHeadings": 5,
    "liveHeadings": 1
   },
@@ -5457,7 +5261,7 @@
    "id": "thread",
    "name": "Exchange thread",
    "group": "My SPLAT",
-   "route": "/dashboard/exchanges/e2dd70e7-1c40-4c27-9ffa-3b44e8955bc4",
+   "route": "/dashboard/exchanges/d86c8a9c-942f-4831-9a98-18ce021ec049",
    "findings": [
     {
      "type": "font",
@@ -5545,7 +5349,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/exchanges/e2dd70e7-1c40-4c27-9ffa-3b44e8955bc4",
+   "finalUrl": "/dashboard/exchanges/d86c8a9c-942f-4831-9a98-18ce021ec049",
    "boardHeadings": 4,
    "liveHeadings": 6
   },
@@ -6018,7 +5822,7 @@
    "id": "print_job",
    "name": "Print job",
    "group": "My SPLAT",
-   "route": "/dashboard/print-requests/36e414b5-a1d6-4ce4-9e59-6a577807f55f",
+   "route": "/dashboard/print-requests/37cc8f71-1ca0-4add-aa5b-7357faa25f5b",
    "findings": [
     {
      "type": "font",
@@ -6099,7 +5903,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/print-requests/36e414b5-a1d6-4ce4-9e59-6a577807f55f",
+   "finalUrl": "/dashboard/print-requests/37cc8f71-1ca0-4add-aa5b-7357faa25f5b",
    "boardHeadings": 3,
    "liveHeadings": 5
   },
@@ -6297,7 +6101,7 @@
    "id": "child",
    "name": "Child profile",
    "group": "My SPLAT",
-   "route": "/dashboard/child/a1faa0ca-724b-4e63-8fad-4f30220c03cd",
+   "route": "/dashboard/child/80c693d1-8e27-4ddb-9dff-217247566848",
    "findings": [
     {
      "type": "font",
@@ -6371,7 +6175,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/child/a1faa0ca-724b-4e63-8fad-4f30220c03cd",
+   "finalUrl": "/dashboard/child/80c693d1-8e27-4ddb-9dff-217247566848",
    "boardHeadings": 4,
    "liveHeadings": 1
   },
@@ -6651,7 +6455,7 @@
      "severity": "medium",
      "what": "5/5 board paragraphs absent",
      "board": "published items are live on the public pages right now.",
-     "live": "what parity org mu#xt#pbsy# has published, and what is still a draft."
+     "live": "what parity org mu#etby#ird has published, and what is still a draft."
     },
     {
      "type": "weight",
@@ -7428,7 +7232,7 @@
      "severity": "medium",
      "what": "1/1 board paragraphs absent",
      "board": "review and remove accounts. # total, # flagged.",
-     "live": "parity-contributor-mu#xt#bjm#@example.com"
+     "live": "parity-contributor-mu#etf#em@example.com"
     },
     {
      "type": "weight",
@@ -7925,16 +7729,16 @@
   "clean": 0,
   "withFindings": 119,
   "errored": 0,
-  "findings": 927,
+  "findings": 899,
   "byType": {
-   "missing-section": 302,
-   "size": 135,
+   "missing-section": 294,
+   "size": 101,
    "copy": 166,
-   "radius": 52,
-   "colour": 36,
-   "spacing": 47,
-   "font": 30,
-   "weight": 61,
+   "radius": 56,
+   "colour": 35,
+   "spacing": 52,
+   "font": 31,
+   "weight": 66,
    "shadow": 68,
    "extra-section": 30
   }
