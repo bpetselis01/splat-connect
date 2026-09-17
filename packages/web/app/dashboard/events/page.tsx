@@ -19,7 +19,7 @@ import Link from 'next/link'
 import { CalendarCheck, Printer, Warning } from '@phosphor-icons/react/dist/ssr'
 import { requireCapabilities } from '@/lib/require-capabilities'
 import { apiClient } from '@/lib/api-client'
-import { dateBadge, formatTimeRange, isPast } from '@/lib/event-dates'
+import { dateBadge, formatTimeRange, isPast } from '@/lib/dates'
 import { Badge } from '@/components/badge'
 import { EVENT_KIND_LABEL, type EventKind, type ToyTransactionStatus } from '@splat-connect/types'
 

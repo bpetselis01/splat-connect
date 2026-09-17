@@ -242,6 +242,15 @@ export const PUBLIC_NAV: NavSection[] = [
         state: 'live',
         blurb: 'Problems nobody has solved yet, open to anyone.',
       },
+      {
+        href: '/get-involved/events',
+        label: 'Events',
+        // Live since 061. Under Get Involved rather than Impact because an
+        // event is something you turn up to, not something already achieved —
+        // the artboard puts it here for the same reason.
+        state: 'live',
+        blurb: 'Build days, workshops and open afternoons, run by organisations.',
+      },
     ],
   },
   {
@@ -258,20 +267,11 @@ export const PUBLIC_NAV: NavSection[] = [
         state: 'live',
         blurb: 'The therapy centres, schools and services standing behind the work.',
       },
-      {
-        href: '/impact/news',
-        label: 'News and stories',
-        state: 'soon',
-        featureKey: 'news',
-        blurb: 'What families and makers have done with SPLAT.',
-      },
-      {
-        href: '/impact/events',
-        label: 'Events',
-        state: 'soon',
-        featureKey: 'events',
-        blurb: 'Build days, workshops and where to find us in person.',
-      },
+      // Stories and Events moved out of Impact on 2026-09-17, to About and Get
+      // Involved. The artboard puts them there, and the reason holds: Impact is
+      // what the community has MADE — counts, organisations, a map — and a
+      // story is an account of it, while an event is something you can turn up
+      // to. /impact/news and /impact/events redirect (app/impact/*/page.tsx).
       {
         href: '/impact/map',
         label: 'Deliveries map',
@@ -289,6 +289,12 @@ export const PUBLIC_NAV: NavSection[] = [
     rank: 'supporting',
     blurb: 'Who runs SPLAT, and how to reach us.',
     children: [
+      {
+        href: '/about/stories',
+        label: 'Stories',
+        state: 'live',
+        blurb: 'What families, makers and organisations have actually done with SPLAT.',
+      },
       {
         href: '/about/team',
         label: 'Our team',

@@ -17,7 +17,7 @@
  */
 import Link from 'next/link'
 import { CalendarDots, MapPin, Clock } from '@phosphor-icons/react/dist/ssr'
-import { dateBadge, formatTimeRange } from '@/lib/event-dates'
+import { dateBadge, formatTimeRange } from '@/lib/dates'
 import { EventRsvpButton } from '@/components/event-rsvp-button'
 import { EVENT_KIND_LABEL, type EventListItem } from '@splat-connect/types'
 

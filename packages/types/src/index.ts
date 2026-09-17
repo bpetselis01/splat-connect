@@ -881,13 +881,38 @@ export interface EventListItem extends OrgEvent {
   has_questions: boolean
 }
 
-export const STORY_KINDS = ['delivery', 'build_day', 'partnership', 'other'] as const
-export type StoryKind = (typeof STORY_KINDS)[number]
+/**
+ * The four the publish form offers, with the sentence each carries there.
+ *
+ * 059's vocabulary was delivery / build_day / partnership / other, which
+ * described what HAPPENED. 062 replaced it with these, which describe WHOSE
+ * VOICE it is — what a reader actually chooses by. A delivery and a build day
+ * both read as a family story when the family is the one telling it.
+ */
+export const STORY_KINDS = {
+  family: 'What changed for one child, in the family’s words',
+  maker: 'What you built, what you learned',
+  org_update: 'A milestone, a new service, a thank-you',
+  announcement: 'Something families should know about',
+} as const
+export type StoryKind = keyof typeof STORY_KINDS
 
-/** 059. A story an organisation has published. */
+export const STORY_KIND_LABEL: Record<StoryKind, string> = {
+  family: 'Family story',
+  maker: 'Maker story',
+  org_update: 'Organisation update',
+  // Not "Announcement": the list filters by who is speaking, and what a reader
+  // wants to know about this one is that it is the platform rather than a
+  // therapy service.
+  announcement: 'From SPLAT',
+}
+
+/** 059, widened by 062. A story an organisation — or SPLAT — has published. */
 export interface OrgStory {
   id: string
-  org_id: string
+  /** Null on an announcement, which speaks for SPLAT and has no organisation
+   *  behind it. A story with no org must be an announcement (062). */
+  org_id: string | null
   kind: StoryKind
   title: string
   summary: string
@@ -895,10 +920,41 @@ export interface OrgStory {
   byline: string
   /** Publishing is refused without it — a check constraint, not a checkbox. */
   consent_confirmed: boolean
+  photo_urls: string[]
+  /** The one slot at the top of /about/stories. Not a rank. */
+  featured: boolean
+  pull_quote: string | null
+  /** Never null when there is a quote: an unattributed one reads as the
+   *  platform's voice put in a family's mouth (062). */
+  pull_quote_by: string | null
+  /** The one link back into the product. */
+  link_tutorial_id: string | null
   status: OrgPublishStatus
+  /** When it went public, which is not when the row was written. */
+  published_at: string | null
   created_by: string
   created_at: string
   updated_at: string
+}
+
+/** One row on /about/stories, with what the card shows beyond the story. */
+export interface StoryListItem extends OrgStory {
+  org_name: string | null
+  /** Rounded up from the body's word count at 200 wpm. Never stored: it is a
+   *  property of the text, and a stored copy is one more thing to drift. */
+  read_minutes: number
+}
+
+/**
+ * Reading time in whole minutes, at 200 words a minute, never less than one.
+ *
+ * Two callers — the public card and the publish form's live counter — so it is
+ * here rather than in either of them, and the number a leader sees while
+ * writing is the number a reader is shown.
+ */
+export function readMinutes(body: string): number {
+  const words = body.trim().split(/\s+/).filter(Boolean).length
+  return Math.max(1, Math.round(words / 200))
 }
 
 export type DropoffStatus = 'booked' | 'received' | 'declined' | 'cancelled'

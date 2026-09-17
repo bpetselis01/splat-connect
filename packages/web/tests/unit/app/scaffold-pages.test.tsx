@@ -2,8 +2,6 @@ import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { SCAFFOLD_KEYS } from '@/lib/public-nav'
 import AskAnExpertPage from '@/app/learn/ask-an-expert/page'
-import NewsPage from '@/app/impact/news/page'
-import EventsPage from '@/app/impact/events/page'
 import MapPage from '@/app/impact/map/page'
 import PartnersPage from '@/app/about/partners/page'
 import SupportPage from '@/app/about/support/page'
@@ -13,10 +11,11 @@ import PrintingPartsPage from '@/app/printing/parts/page'
 // just position — SCAFFOLD_KEYS order (derived from PUBLIC_NAV) does not
 // match this array's order, so a length check alone would not catch page N
 // carrying the wrong key.
+// /impact/news and /impact/events were on this list until 2026-09-17. Both are
+// real screens now — /about/stories and /get-involved/events — and the old
+// URLs redirect rather than render, so there is no scaffold left to check.
 const pages = [
   ['ask-an-expert', AskAnExpertPage],
-  ['news', NewsPage],
-  ['events', EventsPage],
   ['map', MapPage],
   ['partners', PartnersPage],
   ['support', SupportPage],

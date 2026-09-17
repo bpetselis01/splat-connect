@@ -8,6 +8,7 @@ import { chunk } from '../chunk.js'
 import { createAnonClient, createAdminClient } from '../supabase/client.js'
 import { atCapacityToyIds } from '../toy-access.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
+import { readMinutes } from '@splat-connect/types'
 import type {
   ImpactSummary,
   ImpactEntity,
@@ -916,6 +917,96 @@ publicRoutes.get('/events/:id', async (c) => {
         .map((w) => w[0]?.toUpperCase() ?? '')
         .join(''),
     ),
+  })
+})
+
+/* --------------------------------------------------------------- stories --
+ *
+ * The public reading surface. The anon client reads these, so 059's "published
+ * rows are public" policy is the backstop behind each query's own status
+ * filter, and a draft is never returned here.
+ *
+ * Read time is computed rather than stored: it is a property of the text, and a
+ * stored copy is one more thing that can drift from the words it describes.
+ */
+
+const STORY_PUBLIC_COLUMNS =
+  'id, org_id, kind, title, summary, body, byline, photo_urls, featured, pull_quote, pull_quote_by, link_tutorial_id, status, published_at, created_at, updated_at'
+
+publicRoutes.get('/stories', async (c) => {
+  const sb = createAnonClient()
+  const admin = createAdminClient()
+
+  const { data: rows, error } = await sb
+    .from('org_stories')
+    .select(STORY_PUBLIC_COLUMNS)
+    .eq('status', 'published')
+    .order('published_at', { ascending: false })
+  if (error) return c.json({ error: error.message }, 500)
+
+  const stories = rows ?? []
+  // Through the admin client rather than an embed: embedding organizations
+  // kills the whole query under 033/045's column grants and returns empty with
+  // no error.
+  const orgIds = [...new Set(stories.map((s) => s.org_id).filter((id): id is string => !!id))]
+  const { data: orgs } = await admin.from('organizations').select('id, name').in('id', orgIds)
+  const orgName = new Map((orgs ?? []).map((o) => [o.id as string, o.name as string]))
+
+  return c.json(
+    stories.map((s) => ({
+      ...s,
+      org_name: s.org_id ? (orgName.get(s.org_id as string) ?? null) : null,
+      read_minutes: readMinutes(String(s.body ?? '')),
+    })),
+  )
+})
+
+publicRoutes.get('/stories/:id', async (c) => {
+  const sb = createAnonClient()
+  const admin = createAdminClient()
+  const id = c.req.param('id')
+
+  const { data: story, error } = await sb
+    .from('org_stories')
+    .select(STORY_PUBLIC_COLUMNS)
+    .eq('id', id)
+    .eq('status', 'published')
+    .maybeSingle()
+  if (error && error.code !== INVALID_TEXT_REPRESENTATION) {
+    return c.json({ error: error.message }, 500)
+  }
+  if (!story) return c.json({ error: 'Not found' }, 404)
+
+  const [{ data: org }, { data: tutorial }, { data: more }] = await Promise.all([
+    story.org_id
+      ? admin.from('organizations').select('id, name').eq('id', story.org_id as string).maybeSingle()
+      : Promise.resolve({ data: null }),
+    story.link_tutorial_id
+      ? // The guide has to still be approved. A story linking to a withdrawn
+        // guide would send a reader to a 404 from a page that reads as current.
+        sb
+          .from('tutorials')
+          .select('id, title, status')
+          .eq('id', story.link_tutorial_id as string)
+          .eq('status', 'approved')
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+    sb
+      .from('org_stories')
+      .select('id, kind, title, byline, published_at')
+      .eq('status', 'published')
+      .neq('id', id)
+      .order('published_at', { ascending: false })
+      .limit(3),
+  ])
+
+  return c.json({
+    ...story,
+    org: org ?? null,
+    link_tutorial: tutorial ? { id: tutorial.id, title: tutorial.title } : null,
+    org_name: (org as { name?: string } | null)?.name ?? null,
+    read_minutes: readMinutes(String(story.body ?? '')),
+    more: more ?? [],
   })
 })
 

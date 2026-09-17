@@ -1,12 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import {
   dateBadge,
+  shortDate,
   monthHeading,
   monthKey,
   longDate,
   formatTimeRange,
   isPast,
-} from '@/lib/event-dates'
+} from '@/lib/dates'
 
 // 20 September 2026 is a Sunday. 10am–2pm Sydney is 00:00–04:00 UTC, which is
 // deliberately the awkward case: a naive local render on a machine set to UTC
@@ -33,6 +34,14 @@ describe('event dates', () => {
   it('groups by month, and sorts across a year boundary', () => {
     expect(monthHeading(START)).toBe('September 2026')
     expect(monthKey('2026-12-01T00:00:00Z') < monthKey('2027-01-01T00:00:00Z')).toBe(true)
+  })
+
+  // Tests: the short form clips the month the same way the badge does
+  // Chain: en-AU renders September as "Sept" and every other month as three,
+  //        so an unclipped list of story dates jogs one month a year
+  it('writes the short date with a three-letter month', () => {
+    expect(shortDate(START)).toBe('20 Sep')
+    expect(shortDate('2026-08-25T00:00:00Z')).toBe('25 Aug')
   })
 
   it('writes the long date for a detail page', () => {

@@ -34,7 +34,7 @@ import {
 import { apiClient } from '@/lib/api-client'
 import { getCapabilities } from '@/lib/capabilities'
 import { EventRsvpButton } from '@/components/event-rsvp-button'
-import { longDate, formatTimeRange, dateBadge, isPast } from '@/lib/event-dates'
+import { longDate, formatTimeRange, dateBadge, isPast } from '@/lib/dates'
 import { EVENT_KIND_LABEL, type EventListItem, type OrgEventQuestion } from '@splat-connect/types'
 
 type EventDetail = EventListItem & {

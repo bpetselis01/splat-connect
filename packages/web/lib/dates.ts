@@ -1,10 +1,13 @@
 /**
- * How an event's date and time are written, in one place.
+ * How a date is written, in one place.
  *
- * Every event screen shows the same instant in four different shapes — a
- * three-line date badge, a month heading, a long date, a time range — and they
- * have to agree or the same build day reads as two. So they are here rather
- * than inlined per page.
+ * Every screen that shows an instant shows it in one of five shapes — a
+ * three-line date badge, a month heading, a long date, a time range, a short
+ * `8 Sep` — and they have to agree, or the same build day reads as two.
+ *
+ * Was lib/event-dates.ts until stories needed the short form too. Nothing here
+ * is event-specific: a story's publication date and a build day's start are the
+ * same problem.
  *
  * Australia/Sydney throughout, and deliberately fixed rather than read off the
  * viewer's machine. SPLAT is Australian, an event's start time is a wall-clock
@@ -46,6 +49,18 @@ export function dateBadge(iso: string): { weekday: string; day: string; month: s
     day: p.day ?? '',
     month: (p.month ?? '').slice(0, 3),
   }
+}
+
+/**
+ * `8 Sep` — a story's date, a card's meta line.
+ *
+ * Three letters, clipped for the same reason as the badge: en-AU renders
+ * September as "Sept" and every other month as three, so an unclipped list
+ * jogs one month a year.
+ */
+export function shortDate(iso: string): string {
+  const p = parts(iso)
+  return `${p.day} ${(p.month ?? '').slice(0, 3)}`
 }
 
 /** The month heading a list groups under: `September 2026`. */

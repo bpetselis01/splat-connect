@@ -18,7 +18,7 @@ import { CalendarDots, Clock, MapPin } from '@phosphor-icons/react/dist/ssr'
 import { apiClient } from '@/lib/api-client'
 import { getCapabilities } from '@/lib/capabilities'
 import { EventRegisterForm } from '@/components/event-register-form'
-import { dateBadge, formatTimeRange } from '@/lib/event-dates'
+import { dateBadge, formatTimeRange } from '@/lib/dates'
 import type { EventListItem, OrgEventQuestion } from '@splat-connect/types'
 
 export const metadata = { title: 'Register for an event — SPLAT Connect' }

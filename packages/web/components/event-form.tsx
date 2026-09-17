@@ -173,10 +173,14 @@ export function EventForm({
       const body = {
         title: title.trim(),
         kind,
-        // Sent as a local wall-clock time with no zone. The host typed the time
-        // they will open the door, and that is what a family reads back.
-        starts_at: date && starts ? `${date}T${starts}:00` : undefined,
-        ends_at: date && ends ? `${date}T${ends}:00` : null,
+        // Parsed through Date before sending, NOT passed through as
+        // `2026-09-26T10:00`. A datetime-local value carries no offset and
+        // Postgres reads one without an offset as UTC — an event entered as 6pm
+        // in Sydney came back as 5am the next day, which is the bug
+        // components/org-publishing.tsx already records. `new Date` here reads
+        // it in the browser's own zone, which is what the host meant by "10am".
+        starts_at: date && starts ? new Date(`${date}T${starts}`).toISOString() : undefined,
+        ends_at: date && ends ? new Date(`${date}T${ends}`).toISOString() : null,
         format,
         location: location.trim(),
         suburb: suburb.trim(),

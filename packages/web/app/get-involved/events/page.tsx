@@ -24,7 +24,7 @@ import { apiClient } from '@/lib/api-client'
 import { getCapabilities } from '@/lib/capabilities'
 import { EventCard } from '@/components/event-card'
 import { Disclosure } from '@/components/disclosure'
-import { monthHeading, monthKey, isPast } from '@/lib/event-dates'
+import { monthHeading, monthKey, isPast } from '@/lib/dates'
 import { AU_STATES, type EventListItem } from '@splat-connect/types'
 
 export const metadata = {

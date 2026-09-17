@@ -22,19 +22,12 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { Route } from 'next'
 import { CalendarPlus, PenNib, Trash } from '@phosphor-icons/react/dist/ssr'
-import { STORY_KINDS } from '@splat-connect/types'
+import { STORY_KIND_LABEL } from '@splat-connect/types'
 import type { OrgEvent, OrgStory } from '@splat-connect/types'
 import { Badge } from '@/components/badge'
 import { Disclosure } from '@/components/disclosure'
 import { ProfileTabs } from '@/components/profile-tabs'
 import { browserApiClient } from '@/lib/browser-api-client'
-
-const KIND_LABEL: Record<string, string> = {
-  delivery: 'Delivery',
-  build_day: 'Build day',
-  partnership: 'Partnership',
-  other: 'Other',
-}
 
 export function OrgPublishing({
   orgId,
@@ -48,7 +41,6 @@ export function OrgPublishing({
   const router = useRouter()
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
-  const [consent, setConsent] = useState(false)
   const [format, setFormat] = useState<'in_person' | 'online'>('in_person')
 
   function run(work: () => Promise<void>) {
@@ -90,25 +82,6 @@ export function OrgPublishing({
         status: form.get('publish') === 'on' ? 'published' : 'draft',
       })
       el.reset()
-    })
-  }
-
-  function addStory(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    const form = new FormData(e.currentTarget)
-    const el = e.currentTarget
-    run(async () => {
-      await browserApiClient.post(`/api/organizations/${orgId}/stories`, {
-        kind: String(form.get('kind') ?? 'other'),
-        title: String(form.get('title') ?? ''),
-        summary: String(form.get('summary') ?? ''),
-        body: String(form.get('body') ?? ''),
-        byline: String(form.get('byline') ?? ''),
-        consent_confirmed: consent,
-        status: form.get('publish') === 'on' ? 'published' : 'draft',
-      })
-      el.reset()
-      setConsent(false)
     })
   }
 
@@ -216,54 +189,16 @@ export function OrgPublishing({
             label: `Stories (${stories.length})`,
             content: (
               <div className="flex flex-col gap-4">
-                <div className="card p-0">
-                  <Disclosure summary="Publish a story">
-                    <form className="flex flex-col gap-4" onSubmit={addStory}>
-                      <label>
-                        <span className="field-label">Type</span>
-                        <select name="kind" className="field mt-1 w-full">
-                          {STORY_KINDS.map((kind) => (
-                            <option key={kind} value={kind}>
-                              {KIND_LABEL[kind]}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <label>
-                        <span className="field-label">Title</span>
-                        <input name="title" className="field mt-1 w-full" maxLength={160} />
-                      </label>
-                      <label>
-                        <span className="field-label">One sentence</span>
-                        <input name="summary" className="field mt-1 w-full" maxLength={300} />
-                      </label>
-                      <label>
-                        <span className="field-label">The story</span>
-                        <textarea name="body" rows={8} className="field mt-1 w-full" maxLength={20000} />
-                      </label>
-                      <label>
-                        <span className="field-label">Byline</span>
-                        <input name="byline" className="field mt-1 w-full" maxLength={120} />
-                      </label>
-                      <label className="flex items-start gap-2 text-sm text-ink">
-                        <input
-                          type="checkbox"
-                          checked={consent}
-                          onChange={(e) => setConsent(e.target.checked)}
-                        />
-                        Everyone named or pictured has agreed to this being published.
-                      </label>
-                      <label className="flex items-center gap-2 text-sm text-ink">
-                        <input type="checkbox" name="publish" disabled={!consent} />
-                        Publish it now
-                      </label>
-                      <button type="submit" className="btn btn-primary self-start" disabled={pending}>
-                        <PenNib size={18} weight="bold" aria-hidden="true" />
-                        Save the story
-                      </button>
-                    </form>
-                  </Disclosure>
-                </div>
+                {/* Its own screen, for the same reason the event form got one:
+                    062 gave a story a cover photo, a featured slot, a pull
+                    quote and a link back into the product, and the artboard
+                    draws them on a page. */}
+                <p>
+                  <Link href="/dashboard/organisation/stories/new" className="btn btn-primary btn-sm">
+                    <PenNib size={18} weight="bold" aria-hidden="true" />
+                    Publish a story
+                  </Link>
+                </p>
 
                 {stories.length === 0 ? (
                   <p className="text-sm leading-relaxed text-muted">Nothing published yet.</p>
@@ -275,7 +210,7 @@ export function OrgPublishing({
                         kind="stories"
                         id={story.id}
                         title={story.title}
-                        meta={`${KIND_LABEL[story.kind]} · ${story.byline}${
+                        meta={`${STORY_KIND_LABEL[story.kind]} · ${story.byline}${
                           story.consent_confirmed ? '' : ' · consent not confirmed'
                         }`}
                         status={story.status}
