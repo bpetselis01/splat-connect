@@ -143,6 +143,11 @@ export function buildNav(caps: Capabilities): NavGroup[] {
         // "Review queue", not "Manage team": no page anywhere lets a leader
         // add a member or create an org. The label names what exists.
         { href: '/dashboard/organisation', label: 'Review queue', icon: 'inbox' },
+        // A different question from the review queue above it: that one asks
+        // "is this guide good enough to put our name on", this one asks "can we
+        // do this". Merging them would put "approve and publish" next to "we
+        // can print those".
+        { href: '/dashboard/organisation/requests', label: 'Requests to you', icon: 'handshake' },
         { href: '/dashboard/organisation/toys', label: 'Toy inventory', icon: 'shelf' },
         { href: '/dashboard/organisation/orders', label: 'Print orders', icon: 'orders' },
         // 059. Three screens that had nowhere to read or write until then.

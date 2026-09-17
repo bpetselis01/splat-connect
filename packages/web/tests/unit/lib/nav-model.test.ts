@@ -90,12 +90,12 @@ describe('buildNav', () => {
 
   // Same total as before Child profiles moved to the Account page: it left
   // and Submit an idea arrived in its place.
-  it('builds nineteen linked rows for a leader-admin', () => {
+  it('builds twenty linked rows for a leader-admin', () => {
     const rows = buildNav(caps({ ledOrgs: [org], isAdmin: true })).flatMap((g) => g.rows)
     // Fourteen after 058 added Print for others; seventeen after 059 added the
     // organisation's own three — events and stories, recycling intake, and the
     // profile editor.
-    expect(rows).toHaveLength(19)
+    expect(rows).toHaveLength(20)
   })
 
   it('includes a Design challenges row for every account', () => {

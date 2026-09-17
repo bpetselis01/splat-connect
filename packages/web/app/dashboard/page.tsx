@@ -46,6 +46,8 @@ export default async function DashboardHub() {
     '/get-involved/recycling':
       'Drop clean waste plastic at an organisation that can extrude it, and earn print credit.',
     '/dashboard/organisation': 'Projects waiting for your organisation to review.',
+    '/dashboard/organisation/requests':
+      'Toys, builds and print jobs families have asked your organisation for.',
     '/dashboard/organisation/toys': 'What your organisation has on its shelves.',
     '/dashboard/organisation/orders': 'Print jobs your organisation has taken on.',
     '/dashboard/organisation/publish': 'Events and stories on your public page.',

@@ -54,6 +54,10 @@ export default async function ToyLibraryDetailPage({
             />
           }
         />
+        {/* The inline control is the entry to /request now, not the request
+            itself: asking has three parts — how, what you offer, and a
+            paragraph about a child — and the artboard draws that on its own
+            screen. */}
         <ToyTransactionRequest toy={toy} viewerId={caps?.profile.id ?? null} myToys={myToys} />
       </div>
     </div>

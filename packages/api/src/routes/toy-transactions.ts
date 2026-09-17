@@ -514,6 +514,25 @@ toyTransactions.post('/', async (c) => {
     body: type === 'donation' ? 'Requested this toy for donation.' : 'Requested an exchange for this toy.',
   })
 
+  // The note the requester wrote, as their own first message rather than a
+  // column. It is prose addressed to one person — "a line or two about the
+  // child is what gets a yes" — and the thread is where prose between these
+  // two belongs. It also means the owner's list row previews it for free,
+  // through last_message, which a column would not have done.
+  const note = typeof body.note === 'string' ? body.note.trim() : ''
+  if (note) {
+    if (note.length > 2000) return c.json({ error: 'That note is longer than we can store.' }, 400)
+    await admin.from('toy_transaction_messages').insert({
+      transaction_id: tx.id,
+      sender_id: userId,
+      // 'user', not 'text': the table's check constraint admits exactly
+      // 'system' and 'user', and an insert with anything else fails the whole
+      // request after the transaction row is already written.
+      kind: 'user',
+      body: note,
+    })
+  }
+
   await notifyOwnerSide(admin, tx, {
     type: 'toy_request',
     toy_transaction_id: tx.id,
