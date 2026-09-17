@@ -34,22 +34,37 @@ const MINT = 'bg-mint-soft text-ink'
 const APRICOT = 'bg-apricot-soft text-ink'
 const BRAND = 'bg-brand-tint text-brand-deep'
 
+/*
+ * The four the artboard actually draws, on /design-system/states: Published,
+ * Pending, Returned, Draft. Its status pills use the SEMANTIC tints (--tok,
+ * --tbad) rather than the accent tints (--tmint, --tcoral) that carry no
+ * meaning of their own, and its one neutral pill is muted rather than brand —
+ * a draft is the absence of a state, and brand ink made it read as a link.
+ *
+ * Only the lifecycle statuses move. Difficulty and the kind labels keep their
+ * accent tints: they are categories, not outcomes, and colouring "easy" with
+ * the success tint would say a hard guide had failed something.
+ */
+const OK = 'bg-success-soft text-ink'
+const BAD = 'bg-danger-soft text-ink'
+const DRAFT = 'bg-sunken text-muted'
+
 export const STATUS_TONE = {
   // tutorial review
-  draft: SUNKEN,
+  draft: DRAFT,
   pending: HONEY,
-  approved: MINT,
-  rejected: APRICOT,
+  approved: OK,
+  rejected: BAD,
   // toy
-  published: MINT,
+  published: OK,
   // exchange
   requested: HONEY,
   accepted: BRAND,
-  completed: MINT,
-  withdrawn: SUNKEN,
+  completed: OK,
+  withdrawn: DRAFT,
   // idea → challenge
   challenge: BRAND,
-  graduated: MINT,
+  graduated: OK,
   // difficulty
   easy: MINT,
   medium: HONEY,

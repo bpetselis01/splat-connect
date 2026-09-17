@@ -136,9 +136,11 @@ describe('ToyListPage', () => {
     // which is why this stayed a label override rather than a second tone map.
     // Asserted in sentence case: .badge uppercases in CSS, which jsdom does not
     // apply, so the DOM text is what the label map holds.
-    // Published takes the mint that approved uses.
-    expect(screen.getByText('Hidden')).toHaveClass('badge', 'bg-sunken', 'text-brand-deep')
-    expect(screen.getByText('PUBLISHED')).toHaveClass('badge', 'bg-mint-soft', 'text-ink')
+    // Published takes the success tint that approved uses; a draft takes the
+    // neutral one — both the artboard's own status pills, see
+    // app/design-system/states.
+    expect(screen.getByText('Hidden')).toHaveClass('badge', 'bg-sunken', 'text-muted')
+    expect(screen.getByText('PUBLISHED')).toHaveClass('badge', 'bg-success-soft', 'text-ink')
   })
 
   it('throws rather than rendering an empty list when the fetch fails', async () => {

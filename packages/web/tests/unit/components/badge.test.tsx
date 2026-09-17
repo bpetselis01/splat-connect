@@ -8,17 +8,17 @@ import { Badge, IDEA_LABEL, type BadgeStatus } from '@/components/badge'
    repaint a status. */
 const EXPECTED: Array<[BadgeStatus, string, string]> = [
   // tutorial review — was StatusBadge
-  ['draft', 'DRAFT', 'badge bg-sunken text-brand-deep'],
+  ['draft', 'DRAFT', 'badge bg-sunken text-muted'],
   ['pending', 'PENDING', 'badge bg-honey-soft text-ink'],
-  ['approved', 'APPROVED', 'badge bg-mint-soft text-ink'],
-  ['rejected', 'REJECTED', 'badge bg-apricot-soft text-ink'],
+  ['approved', 'APPROVED', 'badge bg-success-soft text-ink'],
+  ['rejected', 'REJECTED', 'badge bg-danger-soft text-ink'],
   // toy — was ToyStatusBadge
-  ['published', 'PUBLISHED', 'badge bg-mint-soft text-ink'],
+  ['published', 'PUBLISHED', 'badge bg-success-soft text-ink'],
   // exchange — was ExchangeStatusBadge
   ['requested', 'REQUESTED', 'badge bg-honey-soft text-ink'],
   ['accepted', 'ACCEPTED', 'badge bg-brand-tint text-brand-deep'],
-  ['completed', 'COMPLETED', 'badge bg-mint-soft text-ink'],
-  ['withdrawn', 'WITHDRAWN', 'badge bg-sunken text-brand-deep'],
+  ['completed', 'COMPLETED', 'badge bg-success-soft text-ink'],
+  ['withdrawn', 'WITHDRAWN', 'badge bg-sunken text-muted'],
   // difficulty — was DifficultyBadge
   ['easy', 'EASY', 'badge bg-mint-soft text-ink'],
   ['medium', 'MEDIUM', 'badge bg-honey-soft text-ink'],
@@ -28,7 +28,7 @@ const EXPECTED: Array<[BadgeStatus, string, string]> = [
   ['assistive_tech', 'Assistive tech', 'badge bg-sunken text-brand-deep'],
   // idea → challenge — was IdeaStatusBadge, which carries its own copy
   ['challenge', 'Looking for makers', 'badge bg-brand-tint text-brand-deep'],
-  ['graduated', 'Being written up', 'badge bg-mint-soft text-ink'],
+  ['graduated', 'Being written up', 'badge bg-success-soft text-ink'],
 ]
 
 const LABELS: Partial<Record<BadgeStatus, string>> = {

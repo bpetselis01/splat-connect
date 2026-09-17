@@ -392,7 +392,7 @@
        /design-system/states screen, where every control is drawn in all six
        of its states. .btn-sm below is the 36px quiet register. */
     min-height: 48px;
-    padding: 0 20px;
+    padding: 0 22px;
     border: var(--border-width) solid transparent;
     border-radius: var(--radius-pill);
     font-size: 15px;
@@ -1001,9 +1001,12 @@
      plus the shared 2px lift arrives at the same number, so the exception the
      old comment here had to argue for stops being an exception. */
 
-  .btn-primary:hover:not(:disabled) {
-    background-color: var(--color-brand-deep);
-  }
+  /* No hover rule for the primary fill. The artboard's hover keeps --b600 and
+     changes only elevation — lift 2px, glow to --e3 — which the shared press
+     block at the end of this file does for every control at once. Darkening to
+     --b700 here was Pixel's rule and is what /design-system/states caught:
+     --b700 is the LOADING fill, and using it for hover made a hovered button
+     and a sending one look identical. */
 
   /* The one warm control on the page: contribute, upload, submit. Ink on apricot
      rather than white on apricot, which would sit at 2.4:1. */
@@ -1029,18 +1032,19 @@
     background-color: var(--color-brand-soft);
   }
 
-  /* The secondary. Everything that is not the main action. */
+  /* The secondary. Everything that is not the main action. --e2 at rest, so it
+     sits at the same physical height as the primary's glow and only the fill
+     says which is the main action. */
   .btn-quiet {
     background-color: var(--color-surface);
     border-color: var(--color-line);
     color: var(--color-ink);
-    box-shadow: var(--shadow-e1);
+    box-shadow: var(--shadow-e2);
   }
 
-  .btn-quiet:hover:not(:disabled) {
-    background-color: var(--color-sunken);
-  }
-
+  /* No hover fill: the artboard's secondary hover keeps --surface and changes
+     only elevation, which the shared press block does. The press is the one
+     state that does change fill. */
   .btn-quiet:active:not(:disabled) {
     background-color: var(--color-sunken);
   }
@@ -1061,6 +1065,8 @@
     box-shadow: var(--shadow-e1);
   }
 
+  /* The tint. Its elevation change — one step to --e2, and no lift — is in the
+     shared press block, which is also the only place that can outrank it. */
   .btn-danger:hover:not(:disabled) {
     background-color: var(--color-danger-soft);
   }
@@ -1212,7 +1218,10 @@
     color: var(--color-ink);
     border: var(--border-width) solid var(--color-line);
     border-radius: var(--radius-pill);
-    box-shadow: var(--shadow-e1);
+    /* Flat at rest. The artboard's off-state chip carries no shadow at all —
+       it is a 36px control on a card, and an elevation under it reads as a
+       second card. */
+    box-shadow: none;
     font-family: var(--font-mono);
     font-size: 0.6875rem;
     font-weight: 700;
@@ -1230,16 +1239,27 @@
     background-color: var(--color-sunken);
   }
 
+  /* Selected fills --b600, the same blue as the primary button, with no border
+     and no shadow. It was ink under Pixel; the artboard has no ink-filled
+     control anywhere. */
   .chip[aria-pressed='true'] {
-    background-color: var(--color-ink);
-    border-color: var(--color-ink);
+    background-color: var(--color-brand-dark);
+    border-color: transparent;
     color: #ffffff;
     box-shadow: none;
   }
 
   .chip[aria-pressed='true']:hover {
     background-color: var(--color-brand-deep);
-    border-color: var(--color-brand-deep);
+    border-color: transparent;
+  }
+
+  /* Focus draws the brand on the border as well as the outline, so the chip
+     reads as the focused one even against a row of its siblings. */
+  .chip:focus-visible {
+    border-color: var(--color-brand);
+    outline: 3px solid var(--color-ink);
+    outline-offset: 2px;
   }
 
   /* --- Badges -----------------------------------------------------------
@@ -2267,232 +2287,172 @@
   }
 }
 
-/* ==========================================================================
+ /* ==========================================================================
  * Press motion, in one place.
  *
- * Hover pops a clickable thing UP; pressing it pops it DOWN into its own
- * shadow. Every interactive family on the site runs on this one block — the
- * only thing a family declares for itself is --pop-rest, how deep it sits at
- * rest. Everything else is arithmetic:
+ * Soft Pop presses with `transform: scale(.96)` and drops the shadow; a
+ * pointer hover lifts 2px and swaps the resting elevation for --e3. Both
+ * numbers are measured, not chosen: the artboard's /design-system/states
+ * screen draws every control in every state with explicit values, and
+ * `scale(.96)` is already what packages/mobile/lib/theme.ts sets as
+ * motion.pressScale — so the two platforms press identically.
  *
- *   hover  -> travel up-left by --pop-lift, and grow the shadow by the same
- *             amount, so the gap opens and the object reads as lifted
- *   press  -> travel by the element's OWN resting offset and drop the shadow
- *             to zero, so it lands flush against the page
+ * This replaced Pixel's rule wholesale on 2026-09-17. Pixel popped every
+ * clickable thing UP-LEFT on hover and DOWN-RIGHT by its own resting offset on
+ * press, with a hard ink shadow and per-family --pop-rest arithmetic. None of
+ * that survives in Soft Pop, which has no hard offsets at all. The block had
+ * to go rather than be left alongside the new rule: `.pixel :is(.btn, ...)`
+ * scores (0,2,0) and outranked the `.btn:active` (0,1,0) that states the real
+ * press, so the artboard's scale was in the file and never once on screen.
  *
- * That single rule is what gives the "variability by context" without a rule
- * per family: a flat control pops up from nothing (0 -> 2px), an ordinary card
- * pops from 5px to 7px, a launcher pillar from 6px to 8px. Depth in, depth out.
- *
- * It replaces eight scattered hover/active blocks that each hand-picked their
- * own numbers and disagreed about whether hover should lift at all — .btn and
- * .card-link grew without moving, .dock-my-splat moved without growing, .chip
- * and .step-pill only changed colour, and .panel-summary, .dropzone and
- * .step-pill had no pressed state whatever.
- *
- * Resting shadows are deliberately NOT set here. Each family keeps the one it
- * already declares (hard ink offsets in the pixel families, the soft tinted
- * --shadow-rest on .card and .dock-my-splat); this block only says how that
- * depth changes under the pointer.
+ * Hover motion is scoped to the families the artboard actually draws lifting.
+ * Chips and step-pills change colour and nothing else — they are 36px flat
+ * controls, and growing an --e3 under one reads as a card, not a chip.
  * ========================================================================== */
 @layer components {
   /*
    * The panel selector is deliberately NOT grouped with this list, and the
-   * three rules below repeat themselves for the same reason.
+   * rules below repeat themselves for the same reason.
    *
    * Tailwind compiles a comma group into a single :is(), and :is() takes the
    * specificity of its most specific argument. `.panel:has(> .panel-summary)`
-   * scores (0,3,0), so grouping it here dragged the whole rule to (0,3,0) and
-   * silently outranked every per-family --pop-rest override at (0,2,0) — every
-   * family stayed flat at 0px and nothing moved by its own depth. Same trap
-   * .step-pill documents above for :not(). Keep these apart.
+   * scores (0,3,0), so grouping it here would drag the whole rule to (0,3,0)
+   * and outrank every per-variant rule at (0,2,0). Keep these apart.
    */
   .pixel :is(.btn, .card-link, .chip, .step-pill, .dropzone, .dock-my-splat, .save-btn) {
-    /* Overridden per family below. 0 means "flat at rest": hover gives it a
-       shadow it did not have, and the press has nowhere to travel, so it
-       collapses that new shadow instead. */
-    --pop-rest: 0px;
-    --pop-lift: 2px;
-    --pop-color: var(--color-ink);
     transition:
-      transform 0.16s var(--ease-spring),
-      box-shadow 0.16s var(--ease-spring),
+      transform 0.16s var(--ease-out-quart),
+      box-shadow 0.16s var(--ease-out-quart),
       background-color 0.14s var(--ease-out-quart),
       border-color 0.14s var(--ease-out-quart),
       color 0.14s var(--ease-out-quart);
   }
 
-  /*
-   * The panel pops, not its summary.
-   *
-   * .panel-summary is a full-width row inside a .panel that sets
-   * overflow: hidden for its rounded corners — lifting the row alone would
-   * clip its top-left and open a gap at its bottom-right, and it would read as
-   * a strip peeling out of its own card. The summary is the handle; the panel
-   * is the object being clicked, so the panel is what moves.
-   *
-   * 0px because .panel rests flat from 2026-08-29 — it is rung 3, a box that
-   * holds a form. The invariant this whole block runs on is that a press
-   * travels by the element's OWN resting offset, so a panel that rests at 0
-   * presses by 0: the hover lift is the pop up and the return to baseline is
-   * the pop down, exactly as a selected chip behaves. Leaving this at 5px
-   * would send the one remaining <details> travelling down-right past its own
-   * resting position with no shadow to sink into.
-   */
   .pixel .panel:has(> .panel-summary) {
-    --pop-rest: 0px;
-    --pop-lift: 2px;
-    --pop-color: var(--color-ink);
     transition:
-      transform 0.16s var(--ease-spring),
-      box-shadow 0.16s var(--ease-spring);
+      transform 0.16s var(--ease-out-quart),
+      box-shadow 0.16s var(--ease-out-quart);
   }
 
   /*
    * Behind `hover: hover` because a touch device keeps :hover applied after a
    * tap: without this guard a card stays stuck in its lifted state on a phone
-   * until something else is tapped. That was a live bug on every one of these
-   * families before this block existed, not a new risk this one introduces.
+   * until something else is tapped.
    */
   @media (hover: hover) {
-    .pixel :is(.btn, .card-link, .chip, .step-pill, .dropzone, .dock-my-splat, .save-btn):hover:not(:disabled):not([aria-disabled='true']) {
-      transform: translate(calc(-1 * var(--pop-lift)), calc(-1 * var(--pop-lift)));
-      box-shadow: calc(var(--pop-rest) + var(--pop-lift)) calc(var(--pop-rest) + var(--pop-lift))
-        0 var(--pop-color);
+    .pixel :is(.btn, .card-link, .dropzone, .dock-my-splat, .save-btn):hover:not(:disabled):not([aria-disabled='true']) {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-e3);
     }
 
     .pixel .panel:has(> .panel-summary:hover) {
-      transform: translate(calc(-1 * var(--pop-lift)), calc(-1 * var(--pop-lift)));
-      box-shadow: calc(var(--pop-rest) + var(--pop-lift)) calc(var(--pop-rest) + var(--pop-lift))
-        0 var(--pop-color);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-e3);
+    }
+
+    /*
+     * The one hover the artboard draws WITHOUT a lift. Destructive is an
+     * outline control that should take a deliberate read rather than catch the
+     * eye, so it tints and grows one step to --e2 and stays where it is. After
+     * the shared rule and equally specific, so source order is what wins —
+     * do not move it above.
+     */
+    .pixel .btn-danger:hover:not(:disabled) {
+      transform: none;
+      box-shadow: var(--shadow-e2);
+    }
+
+    /*
+     * The island is a SIBLING of the card's anchor, so it does not inherit the
+     * card's lift — without this the card slides up and out from under its own
+     * control while the button stays put.
+     */
+    .pixel .save-host:hover .save-btn {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-e3);
     }
   }
 
   .pixel :is(.btn, .card-link, .chip, .step-pill, .dropzone, .dock-my-splat, .save-btn):active:not(:disabled):not([aria-disabled='true']) {
-    transform: translate(var(--pop-rest), var(--pop-rest));
-    box-shadow: 0 0 0 var(--pop-color);
+    transform: scale(0.96);
+    box-shadow: none;
+  }
+
+  /*
+   * The primary keeps its glow while pressed, and it is the only control that
+   * does. Measured off the artboard's states sheet: a pressed "Request this
+   * toy" still carries --glow, while a pressed "Save" drops --e2 to nothing.
+   *
+   * The distinction is what the shadow IS. --e2 is elevation, and a control
+   * pressed flat against the page has none; --glow is a coloured halo around
+   * the brand fill, which does not describe height and has no reason to go
+   * when the button is held. Dropping it made the one control the eye is meant
+   * to follow flicker colourless for the length of a click.
+   *
+   * (0,3,0) against the group's (0,2,0), so it wins wherever it is placed.
+   */
+  .pixel :is(.btn-primary, .btn-accent):active:not(:disabled):not([aria-disabled='true']) {
+    box-shadow: var(--shadow-glow);
   }
 
   .pixel .panel:has(> .panel-summary:active) {
-    transform: translate(var(--pop-rest), var(--pop-rest));
-    box-shadow: 0 0 0 var(--pop-color);
+    transform: scale(0.96);
+    box-shadow: none;
   }
 
-  /* --- how deep each family rests -------------------------------------- */
-
-  /* The controls. 4px is the board's button depth; the secondary control keeps
-     its 35% shadow so the pair stays the same physical height while only one
-     reads as the thing to press. */
-  .pixel :is(.btn-accent, .btn-primary, .btn-quiet) {
-    --pop-rest: 4px;
-  }
-
-  .pixel .btn-quiet {
-    --pop-color: rgb(18 40 58 / 0.35);
-  }
-
-  /* Cards. -card is the ordinary card, -lg the three launcher pillars, which
-     is why a pillar pops to 8px and its neighbours to 7px: the hierarchy that
-     holds at rest has to hold under the pointer too.
-
-     The `:not(.card-pixel)` that used to hold a shallower 2px press for a
-     soft .card went with the soft .card, and with it a (0,3,0) selector
-     sitting in a block where everything else scores (0,2,0). */
-  .pixel .card {
-    --pop-rest: 5px;
-    /* Without this the cards would rest quiet and pop back to solid under the
-       pointer, which is the hierarchy inverting itself on hover. */
-    --pop-color: var(--shadow-e2);
-  }
-
-  /* After .card, and both score (0,2,0), so source order is what puts the
-     pillar a rung deeper. Do not move it above .card. */
-  .pixel .card-lead {
-    --pop-rest: 6px;
-    /* The pillars are rung 1 and .card just moved to rung 2, so this now has
-       to restate the ink it used to inherit. It is also the reason .card-lead
-       finally does its job: 6px solid over 5px quiet separates the three
-       products from their four neighbours, which 6px over 5px solid never
-       managed. */
-    --pop-color: var(--color-ink);
-  }
-
-  /* The chip register. */
-  .pixel .chip {
-    --pop-rest: 3px;
-  }
-
-  /*
-   * A selected chip is a special case twice over.
+  /* ------------------------------------------------------------------------
+   * Forced states, for /design-system/states only.
    *
-   * It is ink-on-ink, so an ink shadow under an ink fill is invisible — it
-   * pops on the brand instead, or the one control that most needs to confirm
-   * a click is the one that looks dead.
+   * That page draws every control in every state at once, which no pointer can
+   * do. `data-state` is the forcing attribute, and every rule below is one of
+   * the real rules above with `[data-state='…']` added to its selector group —
+   * never a transcription of the artboard's numbers.
    *
-   * And it rests flat (`box-shadow: none` above — a selected chip is already
-   * "pressed in"), so its resting depth is 0, not the 3px of an unselected
-   * one. With 3px it would travel down-right past its own resting position on
-   * click, with no shadow to sink into. At 0 the hover lift is the pop up and
-   * the return to baseline is the pop down, which is how every other flat
-   * control here behaves.
-   */
-  .pixel .chip[aria-pressed='true'] {
-    --pop-rest: 0px;
-    --pop-color: var(--color-brand-deep);
-  }
-
-  /* The stepper, which is the chip register under another name — same two
-     depths, and the selected one rests flat for the same reason: it is
-     already "pressed in", so 3px would send it travelling down-right past its
-     own resting position with no shadow to sink into.
-
-     Its own rules rather than a comma group with .chip: the [data-active]
-     selector scores (0,3,0) and grouping it would drag the pair up with it,
-     which is the trap the top of this block documents. */
-  .pixel .step-pill {
-    --pop-rest: 3px;
-  }
-
-  .pixel .step-pill[data-active] {
-    --pop-rest: 0px;
-  }
-
-  /* The dock is a control and rests at a control's depth. It was 2px while it
-     rode on a blurred --shadow-lift; it carries the board's 4px hard offset
-     now, and the press has to travel by the offset it actually has. */
-  .pixel .dock-my-splat {
-    --pop-rest: 4px;
-  }
-
-  /* The dropzone is dashed and tinted, and an ink shadow under it reads as a
-     mistake — it pops on the brand line it is already drawn in. */
-  .pixel .dropzone {
-    --pop-color: var(--color-brand-soft);
-  }
-
-  /* The save island rests at 3px — shallower than the 5px card it sits on, so
-     it reads as attached to the card rather than as a second card. */
-  .pixel .save-btn {
-    --pop-rest: 3px;
-  }
-
-  /*
-   * The island is a SIBLING of the card's anchor, so it does not inherit the
-   * card's lift — without this the card slides up and out from under its own
-   * control while the button stays put.
+   * That distinction is the whole point. A sheet that inlined the values would
+   * be a picture of the design system, green through exactly the regressions it
+   * exists to catch; these rules can only show a state the product does not
+   * have if the product's own rule changed underneath them.
    *
-   * Its own rule, deliberately. It cannot join the family :is() above: that
-   * group lists simple classes, and folding a descendant-with-pseudo-class
-   * selector into :is() would both change what the group matches and hand it
-   * this selector's specificity. Same trap the group's own comment documents
-   * for .panel:has().
-   */
-  @media (hover: hover) {
-    .pixel .save-host:hover .save-btn {
-      transform: translate(calc(-1 * var(--pop-lift)), calc(-1 * var(--pop-lift)));
-      box-shadow: calc(var(--pop-rest) + var(--pop-lift)) calc(var(--pop-rest) + var(--pop-lift))
-        0 var(--pop-color);
-    }
+   * `disabled` and `loading` need nothing here: the page sets the real
+   * `disabled` attribute and the real `data-loading`, which the rules above
+   * already read.
+   *
+   * Placed after the press block so it outranks the shared hover and press —
+   * it has to win against a real pointer, since a state being forced does not
+   * stop the mouse from also being over the control.
+   * --------------------------------------------------------------------- */
+  .pixel :is(.btn, .card-link, .dropzone, .dock-my-splat, .save-btn)[data-state='hover'] {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-e3);
+  }
+
+  .pixel .btn-danger[data-state='hover'] {
+    transform: none;
+    box-shadow: var(--shadow-e2);
+    background-color: var(--color-danger-soft);
+  }
+
+  .pixel :is(.btn, .card-link, .chip, .step-pill, .dropzone, .dock-my-splat, .save-btn)[data-state='active'] {
+    transform: scale(0.96);
+    box-shadow: none;
+  }
+
+  .pixel :is(.btn-primary, .btn-accent)[data-state='active'] {
+    box-shadow: var(--shadow-glow);
+  }
+
+  .btn-quiet[data-state='active'] {
+    background-color: var(--color-sunken);
+  }
+
+  .btn[data-state='focus'],
+  .chip[data-state='focus'] {
+    outline: 3px solid var(--color-ink);
+    outline-offset: 2px;
+  }
+
+  .chip[data-state='focus'] {
+    border-color: var(--color-brand);
   }
 
   /*
