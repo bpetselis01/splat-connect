@@ -1,4 +1,5 @@
 'use client'
+import { EnvelopeSimple } from '@phosphor-icons/react/dist/ssr'
 import { Suspense, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
@@ -70,9 +71,9 @@ function SignupForm() {
       <AuthShell current="signup">
         <AuthCard>
           <div className="flex flex-col items-center text-center">
-            <span aria-hidden="true" className="empty-badge">
-              ✅
-            </span>
+            <span aria-hidden="true" className="empty-badge text-brand-deep">
+  <EnvelopeSimple className="h-8 w-8" />
+</span>
             <h1 className="mt-4 text-[22px] font-extrabold text-ink">Check your email</h1>
             <p className="mt-2 text-[13px] leading-relaxed text-muted">
               We&apos;ve sent a confirmation link to <strong>{email}</strong>. Confirm

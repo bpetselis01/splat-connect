@@ -16,7 +16,7 @@
  * the hint below says why, and the api's 400 is the backstop rather than the
  * explanation.
  *
- * Order is upload order and the first photo is the cover; ★ promotes one to
+ * Order is upload order and the first photo is the cover; the star promotes one to
  * the front. Deliberately not drag-to-reorder: with five photos the only
  * question anyone asks is which one leads, and a drag affordance would have
  * cost a gesture dependency on mobile to answer it.
@@ -26,6 +26,7 @@
  * than a decision. Several at once, trimmed to the free slots, because that
  * is what someone with five photos in a folder does.
  */
+import { Star } from '@phosphor-icons/react/dist/ssr'
 import { useState } from 'react'
 import Image from 'next/image'
 
@@ -190,9 +191,9 @@ export function PhotoTiles({
                   onClick={() => makeCover(url)}
                   title="Make this the cover"
                   aria-label={`Make photo ${i + 1} the cover`}
-                  className="absolute left-1.5 top-1.5 h-7 w-7 rounded-field border border-line bg-surface text-sm leading-none disabled:opacity-50"
+                  className="absolute left-1.5 top-1.5 grid h-7 w-7 place-items-center rounded-field border border-line bg-surface text-ink disabled:opacity-50"
                 >
-                  ★
+                  <Star size={15} weight="fill" aria-hidden="true" />
                 </button>
               )}
               <button
@@ -255,7 +256,7 @@ export function PhotoTiles({
 
       <p className="text-xs leading-relaxed text-muted">
         Up to {MAX_PHOTOS} photos — drop them here or use the box. The first one is the cover — it
-        is what shows on cards and in search. ★ moves a photo to the front.
+        is what shows on cards and in search. The star moves a photo to the front.
         {urls.length === 1 && ' Add another photo before you can remove this one.'}
       </p>
     </div>

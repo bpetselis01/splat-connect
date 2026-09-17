@@ -13,6 +13,7 @@
  * - packages/api/src/routes/admin.ts: GET /api/admin/tutorials, which embeds tutorial_orgs
  * - app/organizations/[id]: where a leader handles the ones marked accepted here
  */
+import { CheckCircle } from '@phosphor-icons/react/dist/ssr'
 import Link from 'next/link'
 import { apiClient } from '@/lib/api-client'
 import { formatRelativeTime } from '@/lib/relative-time'
@@ -41,9 +42,9 @@ export default async function ReviewListPage({
       <div>
         <h1 className="mb-4 title-hub">Review queue</h1>
         <div className="flex flex-col items-center px-6 py-16 text-center">
-          <span aria-hidden="true" className="empty-badge">
-            ☕
-          </span>
+          <span aria-hidden="true" className="empty-badge text-brand-deep">
+  <CheckCircle className="h-8 w-8" />
+</span>
           <p className="mt-4 font-bold text-ink">
             {hidingHandled && handledCount > 0
               ? 'Nothing left for you.'

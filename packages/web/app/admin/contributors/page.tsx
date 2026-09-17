@@ -1,3 +1,4 @@
+import { UsersThree } from '@phosphor-icons/react/dist/ssr'
 import { apiClient } from '@/lib/api-client'
 import { revalidatePath } from 'next/cache'
 import type { AdminAccountsResponse } from '@splat-connect/types'
@@ -17,9 +18,9 @@ export default async function ContributorsPage() {
       <div>
         <h1 className="mb-4 title-hub">Accounts</h1>
         <div className="flex flex-col items-center px-6 py-16 text-center">
-          <span aria-hidden="true" className="empty-badge">
-            👥
-          </span>
+          <span aria-hidden="true" className="empty-badge text-brand-deep">
+  <UsersThree className="h-8 w-8" />
+</span>
           <p className="mt-4 font-bold text-ink">No accounts yet.</p>
           <p className="mt-1 max-w-xs text-sm leading-relaxed text-muted">
             Accounts appear here once someone signs up.

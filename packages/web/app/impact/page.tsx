@@ -1,3 +1,4 @@
+import { Handshake } from '@phosphor-icons/react/dist/ssr'
 import Link from 'next/link'
 import type { Route } from 'next'
 import { ImpactCard } from '@/components/impact-card'
@@ -87,9 +88,9 @@ export default async function ImpactPage() {
         <h2 className="title-detail">Contributors and organisations</h2>
         {contributors.length === 0 && organisations.length === 0 ? (
           <div className="flex flex-col items-center px-6 py-12 text-center">
-            <span aria-hidden="true" className="empty-badge">
-              🤝
-            </span>
+            <span aria-hidden="true" className="empty-badge text-brand-deep">
+  <Handshake className="h-8 w-8" />
+</span>
             <p className="mt-4 font-bold text-ink">No contributors yet.</p>
             <p className="mt-1 max-w-xs text-sm leading-relaxed text-muted">
               Check back soon — this page tracks guides, toys, and deliveries across the

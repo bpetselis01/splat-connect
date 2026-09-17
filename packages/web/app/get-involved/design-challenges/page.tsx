@@ -15,6 +15,7 @@
  * - components/challenge-card.tsx: one row of the grid below
  * - app/get-involved/submit-an-idea/page.tsx: where the empty state points
  */
+import { WarningCircle, PuzzlePiece } from '@phosphor-icons/react/dist/ssr'
 import Link from 'next/link'
 import { StepList } from '@/components/step-list'
 import { ChallengeCard } from '@/components/challenge-card'
@@ -79,9 +80,9 @@ export default async function DesignChallengesPage() {
 
       {failed ? (
         <div className="card mt-4 flex flex-col items-center px-6 py-16 text-center">
-          <span aria-hidden="true" className="empty-badge">
-            ⚠️
-          </span>
+          <span aria-hidden="true" className="empty-badge text-brand-deep">
+  <WarningCircle className="h-8 w-8" />
+</span>
           <p className="mt-4 font-bold text-ink">Could not load design challenges.</p>
           <p className="mt-1 max-w-xs text-sm leading-relaxed text-muted">
             Something has gone wrong on our end. Try refreshing in a moment.
@@ -89,9 +90,9 @@ export default async function DesignChallengesPage() {
         </div>
       ) : challenges.length === 0 ? (
         <div className="card mt-4 flex flex-col items-center px-6 py-16 text-center">
-          <span aria-hidden="true" className="empty-badge">
-            🧩
-          </span>
+          <span aria-hidden="true" className="empty-badge text-brand-deep">
+  <PuzzlePiece className="h-8 w-8" />
+</span>
           <p className="mt-4 font-bold text-ink">No challenges are open yet.</p>
           <p className="mt-1 max-w-sm text-sm leading-relaxed text-muted">
             A design challenge is a problem our usual guides cannot answer yet — a toy that

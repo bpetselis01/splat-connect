@@ -13,6 +13,7 @@
  * want to wait, and doubles as an escape hatch for anyone who'd rather just
  * close the tab.
  */
+import { SealCheck } from '@phosphor-icons/react/dist/ssr'
 import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
@@ -45,9 +46,9 @@ function EmailConfirmed() {
     <div className="mx-auto mt-8 flex max-w-sm flex-col items-center sm:mt-16">
       <AuthWordmark className="mb-[30px]" />
       <div className="card flex w-full flex-col items-center p-6 text-center sm:p-8">
-        <span aria-hidden="true" className="empty-badge">
-          ✅
-        </span>
+        <span aria-hidden="true" className="empty-badge text-brand-deep">
+  <SealCheck className="h-8 w-8" />
+</span>
         <h1 className="mt-4 title-article">Email confirmed</h1>
         <p className="mt-2 text-sm leading-relaxed text-muted">
           Your email has been confirmed. Sign in to your account to continue.

@@ -1,3 +1,16 @@
+import {
+  Buildings,
+  ClipboardText,
+  Envelope,
+  Flag,
+  Hammer,
+  Handshake,
+  Lightbulb,
+  MagnifyingGlass,
+  NotePencil,
+  Printer,
+  UsersThree,
+} from '@phosphor-icons/react/dist/ssr'
 import Link from 'next/link'
 import { apiClient } from '@/lib/api-client'
 import type {
@@ -44,77 +57,77 @@ export default async function AdminPage() {
       label: 'Accounts',
       count: totalContributors,
       href: '/admin/contributors' as const,
-      icon: '👥',
+      icon: UsersThree,
       hint: 'Review and remove accounts',
     },
     {
       label: 'Tutorials awaiting review',
       count: pendingTutorials,
       href: '/admin/review' as const,
-      icon: '📋',
+      icon: ClipboardText,
       hint: 'Approve or reject submitted tutorials',
     },
     {
       label: 'Organisations',
       count: organizations.length,
       href: '/admin/organizations' as const,
-      icon: '🏢',
+      icon: Buildings,
       hint: 'Create organisations, appoint leaders, suspend',
     },
     {
       label: 'Organisation requests',
       count: pendingOrgRequests,
       href: '/admin/organization-requests' as const,
-      icon: '🏗️',
+      icon: Handshake,
       hint: 'Approve one and the organisation is created with its first leader',
     },
     {
       label: 'Spot-check',
       count: spotCheck.length,
       href: '/admin/spot-check' as const,
-      icon: '🔍',
+      icon: MagnifyingGlass,
       hint: 'Audit tutorials that org leaders approved',
     },
     {
       label: 'Design challenges awaiting review',
       count: pendingIdeas,
       href: '/admin/ideas' as const,
-      icon: '💡',
+      icon: Lightbulb,
       hint: 'Publish or reject submitted ideas',
     },
     {
       label: 'Inbox',
       count: inbox.filter((m) => m.status === 'open').length,
       href: '/admin/inbox' as const,
-      icon: '📨',
+      icon: Envelope,
       hint: 'Contact-form messages. Safety jumps the queue',
     },
     {
       label: 'Reports',
       count: memberReports.filter((r) => r.status !== 'resolved').length,
       href: '/admin/reports' as const,
-      icon: '🚩',
+      icon: Flag,
       hint: 'Private problem reports. Safety sorts to the top whatever its age',
     },
     {
       label: 'Build requests needing a look',
       count: buildRequests.filter((b) => b.unclaimed_too_long || b.claimed_and_silent).length,
       href: '/admin/build-requests' as const,
-      icon: '🔨',
+      icon: Hammer,
       hint: 'Unclaimed for two weeks, or claimed and silent for ten days',
     },
     {
       label: 'Stalled print jobs',
       count: printJobs.filter((j) => j.stalled).length,
       href: '/admin/print-jobs' as const,
-      icon: '🖨️',
+      icon: Printer,
       hint: 'Accepted but not moved in ten days',
     },
     {
       label: 'Site content',
       count: 4,
       href: '/admin/content' as const,
-      icon: '📝',
+      icon: NotePencil,
       hint: 'Home page, About, the Learn outline and the four legal documents',
     },
   ]
@@ -126,11 +139,18 @@ export default async function AdminPage() {
         {cards.map((c) => (
           <Link key={c.label} href={c.href} className="card card-link p-6">
             <div className="flex items-start gap-4">
-              <span aria-hidden="true" className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-brand-tint text-2xl">
-                {c.icon}
+              {/* A duotone glyph on the tint, not an emoji: an emoji renders
+                  in the reader's system font, carries none of the palette, and
+                  is a different drawing on every operating system. */}
+              <span
+                aria-hidden="true"
+                className="grid h-12 w-12 shrink-0 place-items-center rounded-[var(--radius-field)]"
+                style={{ background: 'var(--b100)', color: 'var(--tink)' }}
+              >
+                <c.icon size={26} weight="duotone" />
               </span>
               <div>
-                <p className="text-3xl font-bold text-ink">{c.count}</p>
+                <p className="font-display text-3xl font-extrabold tabular-nums text-ink">{c.count}</p>
                 <p className="card-title">{c.label}</p>
                 <p className="mt-1 text-sm text-muted">{c.hint}</p>
               </div>

@@ -14,6 +14,7 @@
  * - supabase/migrations/007_organizations.sql: the admin-only write policies
  * - app/org/[orgId]: where a leader appointed here ends up
  */
+import { Buildings } from '@phosphor-icons/react/dist/ssr'
 import { revalidatePath } from 'next/cache'
 import { apiClient } from '@/lib/api-client'
 import type { Organization, OrgLeader, AdminAccountsResponse } from '@splat-connect/types'
@@ -133,9 +134,9 @@ export default async function AdminOrganizationsPage() {
         </h2>
         {detailed.length === 0 ? (
           <div className="flex flex-col items-center px-6 py-16 text-center">
-            <span aria-hidden="true" className="empty-badge">
-              🏢
-            </span>
+            <span aria-hidden="true" className="empty-badge text-brand-deep">
+  <Buildings className="h-8 w-8" />
+</span>
             <p className="mt-4 font-bold text-ink">No organisations yet.</p>
             <p className="mt-1 max-w-xs text-sm leading-relaxed text-muted">
               Create one above to start delegating tutorial review.

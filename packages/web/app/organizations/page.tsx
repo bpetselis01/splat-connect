@@ -13,6 +13,7 @@
  * - app/organizations/[id]/page.tsx: one organisation, plus its leader's workspace
  * - components/edit-backing-section.tsx: where a contributor acts on this
  */
+import { Buildings } from '@phosphor-icons/react/dist/ssr'
 import Link from 'next/link'
 import type { Organization } from '@splat-connect/types'
 
@@ -32,9 +33,9 @@ export default async function OrganizationsPage() {
       <div>
         <h1 className="mb-4 title-hub">Organisations</h1>
         <div className="flex flex-col items-center px-6 py-16 text-center">
-          <span aria-hidden="true" className="empty-badge">
-            🏢
-          </span>
+          <span aria-hidden="true" className="empty-badge text-brand-deep">
+  <Buildings className="h-8 w-8" />
+</span>
           <p className="mt-4 font-bold text-ink">No organisations yet.</p>
           <p className="mt-1 max-w-xs text-sm leading-relaxed text-muted">
             Organisations are set up by SPLAT. Once one exists, you can ask it to

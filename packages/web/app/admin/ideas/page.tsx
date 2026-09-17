@@ -12,6 +12,7 @@
  * - components/badge.tsx: the status → copy/colour map, reused
  *   rather than a third copy of that logic
  */
+import { Lightbulb } from '@phosphor-icons/react/dist/ssr'
 import Link from 'next/link'
 import type { Route } from 'next'
 import { apiClient } from '@/lib/api-client'
@@ -36,9 +37,9 @@ export default async function AdminIdeasPage() {
       <div>
         <h1 className="mb-4 title-hub">Design challenges awaiting review</h1>
         <div className="flex flex-col items-center px-6 py-16 text-center">
-          <span aria-hidden="true" className="empty-badge">
-            💡
-          </span>
+          <span aria-hidden="true" className="empty-badge text-brand-deep">
+  <Lightbulb className="h-8 w-8" />
+</span>
           <p className="mt-4 font-bold text-ink">No ideas submitted yet.</p>
           <p className="mt-1 max-w-xs text-sm leading-relaxed text-muted">
             Submissions land here the moment someone sends one in.
