@@ -1,5 +1,5 @@
 {
- "at": "2026-09-17T08:28:27.118Z",
+ "at": "2026-09-17T08:45:44.294Z",
  "live": "http://localhost:3110",
  "screens": [
   {
@@ -159,13 +159,6 @@
      "live": "25px"
     },
     {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h1 wording",
-     "board": "guide c — plush dog that barks",
-     "live": "e#e reflow detail #-#"
-    },
-    {
      "type": "radius",
      "severity": "medium",
      "what": "card radius",
@@ -244,13 +237,13 @@
    "role": "guest",
    "finalUrl": "/toy-library",
    "boardHeadings": 8,
-   "liveHeadings": 14
+   "liveHeadings": 15
   },
   {
    "id": "toy_public",
    "name": "Toy detail",
    "group": "Public site",
-   "route": "/toy-library/56a03287-d7b6-4731-b240-09361ed3df5c",
+   "route": "/toy-library/b8820d38-a739-40d7-bb4f-fb6af6f36b87",
    "findings": [
     {
      "type": "missing-section",
@@ -331,7 +324,7 @@
     }
    ],
    "role": "guest",
-   "finalUrl": "/toy-library/56a03287-d7b6-4731-b240-09361ed3df5c",
+   "finalUrl": "/toy-library/b8820d38-a739-40d7-bb4f-fb6af6f36b87",
    "boardHeadings": 10,
    "liveHeadings": 0
   },
@@ -339,7 +332,7 @@
    "id": "toy_request",
    "name": "Request a toy",
    "group": "Public site",
-   "route": "/toy-library/56a03287-d7b6-4731-b240-09361ed3df5c/request",
+   "route": "/toy-library/b8820d38-a739-40d7-bb4f-fb6af6f36b87/request",
    "findings": [
     {
      "type": "missing-section",
@@ -360,25 +353,18 @@
      "severity": "high",
      "what": "page height differs grossly",
      "board": "1818px",
-     "live": "604px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h1 wording",
-     "board": "ask family # for the plush dog",
-     "live": "ask e#e contributor for kite"
+     "live": "653px"
     },
     {
      "type": "copy",
      "severity": "medium",
      "what": "5/5 board paragraphs absent",
      "board": "family # is open to either. offer one of your own toys, or just ask an",
-     "live": "e#e contributor is giving this one, so this is a straight ask."
+     "live": "parity parent is giving this one, so this is a straight ask."
     }
    ],
    "role": "parent",
-   "finalUrl": "/toy-library/56a03287-d7b6-4731-b240-09361ed3df5c/request",
+   "finalUrl": "/toy-library/b8820d38-a739-40d7-bb4f-fb6af6f36b87/request",
    "boardHeadings": 4,
    "liveHeadings": 1
   },
@@ -480,13 +466,6 @@
     {
      "type": "copy",
      "severity": "medium",
-     "what": "h1 wording",
-     "board": "switch adapting toys, from first switch to handover.",
-     "live": "switch adapting toys"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
      "what": "h2 wording",
      "board": "what you will be able to do",
      "live": "alongside the course"
@@ -502,7 +481,7 @@
    "role": "guest",
    "finalUrl": "/learn",
    "boardHeadings": 20,
-   "liveHeadings": 9
+   "liveHeadings": 13
   },
   {
    "id": "learn_101",
@@ -684,13 +663,6 @@
    "group": "Learn",
    "route": "/learn/safety-and-cleaning",
    "findings": [
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h1 wording",
-     "board": "safe handling",
-     "live": "safety and cleaning"
-    },
     {
      "type": "copy",
      "severity": "medium",
@@ -1069,11 +1041,11 @@
    "route": "/learn/handover",
    "findings": [
     {
-     "type": "font",
-     "severity": "high",
-     "what": "card title font",
-     "board": "Baloo 2",
-     "live": "Nunito"
+     "type": "size",
+     "severity": "medium",
+     "what": "card title size",
+     "board": "14px",
+     "live": "18px"
     },
     {
      "type": "radius",
@@ -1090,13 +1062,6 @@
      "live": "unit # · set up your bench"
     },
     {
-     "type": "weight",
-     "severity": "low",
-     "what": "card title weight",
-     "board": 800,
-     "live": 700
-    },
-    {
      "type": "shadow",
      "severity": "low",
      "what": "card shadow",
@@ -1107,7 +1072,7 @@
    "role": "guest",
    "finalUrl": "/learn/handover",
    "boardHeadings": 12,
-   "liveHeadings": 4
+   "liveHeadings": 12
   },
   {
    "id": "learn_q4",
@@ -1209,13 +1174,6 @@
    "group": "3D Printing",
    "route": "/printing/basics",
    "findings": [
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h1 wording",
-     "board": "printing basics",
-     "live": "#d printing basics"
-    },
     {
      "type": "copy",
      "severity": "medium",
@@ -1358,13 +1316,6 @@
      "what": "h1 \"make something, give something, or back someone.\" size",
      "board": "54px",
      "live": "44px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h1 wording",
-     "board": "make something, give something, or back someone.",
-     "live": "get involved"
     },
     {
      "type": "size",
@@ -1682,13 +1633,6 @@
    "route": "/get-involved/makers-wanted",
    "findings": [
     {
-     "type": "font",
-     "severity": "high",
-     "what": "card title font",
-     "board": "Baloo 2",
-     "live": "Nunito"
-    },
-    {
      "type": "missing-section",
      "severity": "high",
      "what": "h3 \"a family picks a guide and asks\" has no counterpart",
@@ -1717,25 +1661,11 @@
      "live": null
     },
     {
-     "type": "size",
-     "severity": "medium",
-     "what": "card title size",
-     "board": "20px",
-     "live": "16px"
-    },
-    {
      "type": "extra-section",
      "severity": "medium",
      "what": "live has an extra h2: \"parts and money\"",
      "board": null,
      "live": "parts and money"
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "card title weight",
-     "board": 800,
-     "live": 700
     },
     {
      "type": "colour",
@@ -1748,7 +1678,7 @@
    "role": "guest",
    "finalUrl": "/get-involved/makers-wanted",
    "boardHeadings": 6,
-   "liveHeadings": 2
+   "liveHeadings": 6
   },
   {
    "id": "mw_new",
@@ -1769,13 +1699,6 @@
      "what": "board has cards, live has none",
      "board": 3,
      "live": 0
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h1 wording",
-     "board": "ask a maker nearby to build it",
-     "live": "ask for a build"
     },
     {
      "type": "shadow",
@@ -1816,13 +1739,6 @@
      "what": "h1 \"guide a — bubble machine\" size",
      "board": "40px",
      "live": "25px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h1 wording",
-     "board": "guide a — bubble machine",
-     "live": "backing fixture"
     },
     {
      "type": "size",
@@ -1998,13 +1914,6 @@
     {
      "type": "copy",
      "severity": "medium",
-     "what": "h1 wording",
-     "board": "a bubble machine any child can start",
-     "live": "e#e mysplat challenge #-#"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
      "what": "3/3 board paragraphs absent",
      "board": "where this idea is, and what happens to it next.",
      "live": "seeded by a playwright e#e test."
@@ -2150,13 +2059,6 @@
     {
      "type": "copy",
      "severity": "medium",
-     "what": "h1 wording",
-     "board": "what this community has made, given and delivered",
-     "live": "community impact"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
      "what": "h2 wording",
      "board": "toys delivered over time",
      "live": "recently active"
@@ -2179,7 +2081,7 @@
    "role": "guest",
    "finalUrl": "/impact",
    "boardHeadings": 23,
-   "liveHeadings": 21
+   "liveHeadings": 22
   },
   {
    "id": "orgs",
@@ -2255,7 +2157,7 @@
      "severity": "medium",
      "what": "h4 wording",
      "board": "riverina makerspace",
-     "live": "parity org mu#ifpdusw#"
+     "live": "parity org mu#a#fsvqa#"
     },
     {
      "type": "copy",
@@ -2645,7 +2547,7 @@
    "role": "guest",
    "finalUrl": "/get-involved/events/af0fe7fd-53ca-4335-bd8b-738ef5297c14",
    "boardHeadings": 5,
-   "liveHeadings": 3
+   "liveHeadings": 4
   },
   {
    "id": "event_register",
@@ -2694,13 +2596,6 @@
    "route": "/get-involved/recycling",
    "findings": [
     {
-     "type": "font",
-     "severity": "high",
-     "what": "card title font",
-     "board": "Baloo 2",
-     "live": "Nunito"
-    },
-    {
      "type": "missing-section",
      "severity": "high",
      "what": "h3 \"sort it and weigh it\" has no counterpart",
@@ -2722,13 +2617,6 @@
      "live": null
     },
     {
-     "type": "size",
-     "severity": "medium",
-     "what": "card title size",
-     "board": "20px",
-     "live": "16px"
-    },
-    {
      "type": "extra-section",
      "severity": "medium",
      "what": "live has 2 extra h2 the board does not draw",
@@ -2743,13 +2631,6 @@
      "live": "# organisations take plastic"
     },
     {
-     "type": "weight",
-     "severity": "low",
-     "what": "card title weight",
-     "board": 800,
-     "live": 700
-    },
-    {
      "type": "shadow",
      "severity": "low",
      "what": "card shadow",
@@ -2760,7 +2641,7 @@
    "role": "guest",
    "finalUrl": "/get-involved/recycling",
    "boardHeadings": 8,
-   "liveHeadings": 4
+   "liveHeadings": 7
   },
   {
    "id": "recycle_new",
@@ -2955,7 +2836,7 @@
    "role": "guest",
    "finalUrl": "/about/stories/2b8a6d88-711a-4d6e-bfb0-8d243d216b07",
    "boardHeadings": 6,
-   "liveHeadings": 3
+   "liveHeadings": 6
   },
   {
    "id": "impact_map",
@@ -3051,13 +2932,6 @@
      "what": "h1 \"about\" size",
      "board": "52px",
      "live": "44px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h1 wording",
-     "board": "about",
-     "live": "about splat connect"
     },
     {
      "type": "copy",
@@ -3303,7 +3177,7 @@
      "severity": "medium",
      "what": "5/5 board paragraphs absent",
      "board": "everything a family can ask of an organisation, in one place. say no w",
-     "live": "every ask a family can make of parity org mu#ifpdusw# in one queue: a "
+     "live": "every ask a family can make of parity org mu#a#fsvqa# in one queue: a "
     },
     {
      "type": "shadow",
@@ -3413,7 +3287,7 @@
    "id": "org_event_manage",
    "name": "Manage event",
    "group": "My SPLAT",
-   "route": "/dashboard/org/events/a4a03a89-249e-468a-9a4b-a64d7d94fa5a",
+   "route": "/dashboard/org/events/086bdcfa-38a5-4c0d-b09e-2802435b97b6",
    "findings": [
     {
      "type": "font",
@@ -3442,13 +3316,6 @@
      "what": "h1 \"switch-adaptation build day\" size",
      "board": "40px",
      "live": "44px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h1 wording",
-     "board": "switch-adaptation build day",
-     "live": "parity fixture build day"
     },
     {
      "type": "radius",
@@ -3480,7 +3347,7 @@
     }
    ],
    "role": "leader",
-   "finalUrl": "/dashboard/org/events/a4a03a89-249e-468a-9a4b-a64d7d94fa5a",
+   "finalUrl": "/dashboard/org/events/086bdcfa-38a5-4c0d-b09e-2802435b97b6",
    "boardHeadings": 4,
    "liveHeadings": 2
   },
@@ -4059,7 +3926,7 @@
    "id": "editor",
    "name": "Tutorial editor",
    "group": "My SPLAT",
-   "route": "/tutorials/bd3a6660-3d8f-4ff7-bc09-77099f8e3af9/edit",
+   "route": "/tutorials/710daadb-a8df-4f39-93d1-db2b43be01de/edit",
    "findings": [
     {
      "type": "missing-section",
@@ -4088,13 +3955,6 @@
      "what": "h1 \"bubble blower, four-second burst\" size",
      "board": "40px",
      "live": "25px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h1 wording",
-     "board": "bubble blower, four-second burst",
-     "live": "parity fixture guide"
     },
     {
      "type": "radius",
@@ -4126,7 +3986,7 @@
     }
    ],
    "role": "contributor",
-   "finalUrl": "/tutorials/bd3a6660-3d8f-4ff7-bc09-77099f8e3af9/edit",
+   "finalUrl": "/tutorials/710daadb-a8df-4f39-93d1-db2b43be01de/edit",
    "boardHeadings": 5,
    "liveHeadings": 1
   },
@@ -4136,13 +3996,6 @@
    "group": "My SPLAT",
    "route": "/dashboard/toys",
    "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "board lists cards, live shows none",
-     "board": 4,
-     "live": 0
-    },
     {
      "type": "missing-section",
      "severity": "high",
@@ -4197,14 +4050,14 @@
      "severity": "high",
      "what": "page height differs grossly",
      "board": "1496px",
-     "live": "577px"
+     "live": "453px"
     },
     {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "board has cards, live has none",
-     "board": 4,
-     "live": 0
+     "type": "weight",
+     "severity": "low",
+     "what": "card title weight",
+     "board": 800,
+     "live": 700
     }
    ],
    "role": "parent",
@@ -4249,7 +4102,7 @@
    "id": "toy_detail",
    "name": "Toy detail",
    "group": "My SPLAT",
-   "route": "/dashboard/toys/new",
+   "route": "/dashboard/toys/b8820d38-a739-40d7-bb4f-fb6af6f36b87",
    "findings": [
     {
      "type": "font",
@@ -4298,14 +4151,7 @@
      "severity": "medium",
      "what": "h1 \"light-up drum\" size",
      "board": "40px",
-     "live": "44px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h1 wording",
-     "board": "light-up drum",
-     "live": "add a toy"
+     "live": "25px"
     },
     {
      "type": "radius",
@@ -4319,7 +4165,7 @@
      "severity": "medium",
      "what": "7/7 board paragraphs absent",
      "board": "live in the library. edits show to families straight away — there is n",
-     "live": "add the basics now — photos and switch details come next."
+     "live": "# means brand new, # means heavily worn — scuffed, faded or missing pi"
     },
     {
      "type": "weight",
@@ -4337,7 +4183,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/toys/new",
+   "finalUrl": "/dashboard/toys/b8820d38-a739-40d7-bb4f-fb6af6f36b87",
    "boardHeadings": 8,
    "liveHeadings": 1
   },
@@ -4371,7 +4217,7 @@
    "id": "thread",
    "name": "Exchange thread",
    "group": "My SPLAT",
-   "route": "/dashboard/exchanges/a4e7c41a-3395-4351-83c7-36ade4e0ce7b",
+   "route": "/dashboard/exchanges/6f15009d-4c1a-4c49-92f1-652d9968bf63",
    "findings": [
     {
      "type": "font",
@@ -4400,13 +4246,6 @@
      "what": "h1 \"bubble machine\" size",
      "board": "40px",
      "live": "25px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h1 wording",
-     "board": "bubble machine",
-     "live": "fire truck"
     },
     {
      "type": "size",
@@ -4459,7 +4298,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/exchanges/a4e7c41a-3395-4351-83c7-36ade4e0ce7b",
+   "finalUrl": "/dashboard/exchanges/6f15009d-4c1a-4c49-92f1-652d9968bf63",
    "boardHeadings": 4,
    "liveHeadings": 6
   },
@@ -4918,7 +4757,7 @@
    "id": "print_job",
    "name": "Print job",
    "group": "My SPLAT",
-   "route": "/dashboard/print-requests/f72abcdc-626e-40a4-a74f-f16861a797f0",
+   "route": "/dashboard/print-requests/8e8d485b-8e87-4c2b-9286-402911b10e17",
    "findings": [
     {
      "type": "font",
@@ -4940,13 +4779,6 @@
      "what": "h1 \"switch mount, printable · # parts\" size",
      "board": "40px",
      "live": "25px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h1 wording",
-     "board": "switch mount, printable · # parts",
-     "live": "e#e review target approve #-# — parts"
     },
     {
      "type": "size",
@@ -4999,7 +4831,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/print-requests/f72abcdc-626e-40a4-a74f-f16861a797f0",
+   "finalUrl": "/dashboard/print-requests/8e8d485b-8e87-4c2b-9286-402911b10e17",
    "boardHeadings": 3,
    "liveHeadings": 5
   },
@@ -5190,7 +5022,7 @@
    "id": "child",
    "name": "Child profile",
    "group": "My SPLAT",
-   "route": "/dashboard/child/515b6d57-c72d-4caf-8a3f-af806f33aacb",
+   "route": "/dashboard/child/99eb5bff-9039-4df4-bd50-e47bc7f7ebb3",
    "findings": [
     {
      "type": "font",
@@ -5212,13 +5044,6 @@
      "what": "h1 \"ollie\" size",
      "board": "42px",
      "live": "24px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h1 wording",
-     "board": "ollie",
-     "live": "child #"
     },
     {
      "type": "missing-section",
@@ -5257,7 +5082,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/child/515b6d57-c72d-4caf-8a3f-af806f33aacb",
+   "finalUrl": "/dashboard/child/99eb5bff-9039-4df4-bd50-e47bc7f7ebb3",
    "boardHeadings": 4,
    "liveHeadings": 1
   },
@@ -5523,7 +5348,7 @@
      "severity": "medium",
      "what": "5/5 board paragraphs absent",
      "board": "published items are live on the public pages right now.",
-     "live": "what parity org mu#ifpdusw# has published, and what is still a draft."
+     "live": "what parity org mu#a#fsvqa# has published, and what is still a draft."
     },
     {
      "type": "weight",
@@ -5791,7 +5616,7 @@
    "role": "admin",
    "finalUrl": "/admin",
    "boardHeadings": 13,
-   "liveHeadings": 2
+   "liveHeadings": 13
   },
   {
    "id": "admin_review",
@@ -5799,6 +5624,13 @@
    "group": "Admin",
    "route": "/admin/review",
    "findings": [
+    {
+     "type": "font",
+     "severity": "high",
+     "what": "card title font",
+     "board": "Nunito",
+     "live": "Baloo 2"
+    },
     {
      "type": "missing-section",
      "severity": "high",
@@ -5811,7 +5643,14 @@
      "severity": "high",
      "what": "page height differs grossly",
      "board": "1258px",
-     "live": "14434px"
+     "live": "14869px"
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "card title size",
+     "board": "15px",
+     "live": "18px"
     },
     {
      "type": "size",
@@ -5847,19 +5686,12 @@
      "what": "1/1 board paragraphs absent",
      "board": "contributor # · submitted # days",
      "live": "edited after accepting terms"
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "card title weight",
-     "board": 800,
-     "live": 700
     }
    ],
    "role": "admin",
    "finalUrl": "/admin/review",
    "boardHeadings": 2,
-   "liveHeadings": 1
+   "liveHeadings": 15
   },
   {
    "id": "admin_review_detail",
@@ -5887,13 +5719,6 @@
      "what": "h1 \"vibrating cushion with a lever\" size",
      "board": "40px",
      "live": "25px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h1 wording",
-     "board": "vibrating cushion with a lever",
-     "live": "seeded pending plush toy"
     },
     {
      "type": "extra-section",
@@ -6028,7 +5853,7 @@
    "role": "admin",
    "finalUrl": "/admin/ideas",
    "boardHeadings": 6,
-   "liveHeadings": 1
+   "liveHeadings": 10
   },
   {
    "id": "admin_idea_detail",
@@ -6070,13 +5895,6 @@
      "what": "h1 \"a bubble machine any child can start\" size",
      "board": "40px",
      "live": "25px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h1 wording",
-     "board": "a bubble machine any child can start",
-     "live": "e#e submitted idea #-#"
     },
     {
      "type": "copy",
@@ -6239,11 +6057,25 @@
    "route": "/admin/contributors",
    "findings": [
     {
+     "type": "font",
+     "severity": "high",
+     "what": "card title font",
+     "board": "Nunito",
+     "live": "Baloo 2"
+    },
+    {
      "type": "missing-section",
      "severity": "high",
      "what": "page height differs grossly",
      "board": "753px",
-     "live": "88984px"
+     "live": "91181px"
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "card title size",
+     "board": "15px",
+     "live": "18px"
     },
     {
      "type": "size",
@@ -6271,14 +6103,7 @@
      "severity": "medium",
      "what": "1/1 board paragraphs absent",
      "board": "review and remove accounts. # total, # flagged.",
-     "live": "parity-contributor-mu#iftsoa#@example.com"
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "card title weight",
-     "board": 800,
-     "live": 700
+     "live": "parity-contributor-mu#a#fw#n#k@example.com"
     },
     {
      "type": "shadow",
@@ -6291,7 +6116,7 @@
    "role": "admin",
    "finalUrl": "/admin/contributors",
    "boardHeadings": 1,
-   "liveHeadings": 1
+   "liveHeadings": 19
   },
   {
    "id": "login",
@@ -6705,13 +6530,6 @@
     {
      "type": "copy",
      "severity": "medium",
-     "what": "h1 wording",
-     "board": "components & states",
-     "live": "component sheet"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
      "what": "h2 wording",
      "board": "elevation & radii",
      "live": "record card"
@@ -6782,15 +6600,15 @@
   "clean": 2,
   "withFindings": 117,
   "errored": 0,
-  "findings": 764,
+  "findings": 738,
   "byType": {
-   "missing-section": 287,
-   "size": 86,
-   "copy": 159,
+   "missing-section": 285,
+   "size": 87,
+   "copy": 139,
    "radius": 43,
    "colour": 35,
-   "font": 31,
-   "weight": 53,
+   "font": 30,
+   "weight": 49,
    "shadow": 45,
    "extra-section": 25
   }

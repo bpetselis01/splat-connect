@@ -33,7 +33,7 @@ export default async function AskOpenlyPage({
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="title-article">Ask for a build</h1>
+      <h1 className="title-article">Ask a maker nearby to build it</h1>
       <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted">
         Pick the guide, say who it is for, and agree how far you can travel. A maker nearby
         claims it — you do not have to find one yourself.

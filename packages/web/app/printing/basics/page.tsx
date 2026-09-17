@@ -10,7 +10,7 @@ export const metadata = {
 export default function PrintingBasics() {
   return (
     <ProsePage
-      title="3D printing basics"
+      title="Printing basics"
       intro="Many switches, mounts and battery interrupters on this site are printed. You do not need to own a printer, and you do not need to understand slicing deeply — just enough to get a part that holds up."
     >
       <EditorialImage illustration="printer" ratio="2/1" />

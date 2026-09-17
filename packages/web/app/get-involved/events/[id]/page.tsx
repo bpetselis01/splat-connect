@@ -90,7 +90,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
                   {event.org.name.slice(0, 2).toUpperCase()}
                 </span>
                 <span className="min-w-0">
-                  <span className="block truncate font-bold text-ink">{event.org.name}</span>
+                  <span className="card-title block truncate">{event.org.name}</span>
                   <span className="block truncate text-xs text-muted">
                     {[event.org.suburb, event.org.state].filter(Boolean).join(' ')}
                   </span>

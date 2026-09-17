@@ -105,7 +105,7 @@ export default function Page() {
                 <c.icon className="h-5 w-5" />
               </span>
               <span>
-                <span className="block font-bold text-ink">{c.title}</span>
+                <span className="card-title block">{c.title}</span>
                 <span className="block text-sm leading-relaxed text-muted">{c.body}</span>
               </span>
             </li>
@@ -132,7 +132,7 @@ export default function Page() {
                 <c.icon className="h-5 w-5" />
               </span>
               <span>
-                <span className="block font-bold text-ink">{c.title}</span>
+                <span className="card-title block">{c.title}</span>
                 <span className="block text-sm leading-relaxed text-muted">{c.body}</span>
               </span>
             </li>

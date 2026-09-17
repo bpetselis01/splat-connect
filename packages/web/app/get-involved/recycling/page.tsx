@@ -68,7 +68,7 @@ export default async function RecyclingPage() {
               {i + 1}
             </span>
             <span>
-              <span className="block font-bold text-ink">{step.title}</span>
+              <span className="card-title block">{step.title}</span>
               <span className="block text-sm leading-relaxed text-muted">{step.body}</span>
             </span>
           </li>

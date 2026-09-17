@@ -118,7 +118,8 @@ function compare(board, live, opts = {}) {
     if (Math.abs(b.weight - l.weight) >= 100)
       out.push(f('weight', 'low', `${where} weight`, b.weight, l.weight))
     if (b.colour !== l.colour) out.push(f('colour', 'low', `${where} colour`, b.colour, l.colour))
-    if (via === 'ordinal' && allowCopy && b.text !== l.text)
+    const isRecordTitle = opts.recordTitleH1 && b.level === 1
+    if (via === 'ordinal' && allowCopy && !isRecordTitle && b.text !== l.text)
       out.push(f('copy', 'medium', `h${b.level} wording`, b.text, l.text))
   }
 

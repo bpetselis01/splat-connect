@@ -16,7 +16,7 @@ vi.mock('@/lib/capabilities', () => ({ getCapabilities: async () => null }))
 describe('About', () => {
   it('explains what SPLAT is and why it exists', () => {
     render(<AboutPage />)
-    expect(screen.getByRole('heading', { level: 1, name: /about splat/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: /^about$/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /why this exists/i })).toBeInTheDocument()
   })
 

@@ -89,10 +89,14 @@ async function resolveDynamic(page, entry, cache) {
         '$'
       found = await page.evaluate((pat) => {
         const re = new RegExp(pat)
+        // "new", "create" and friends are forms, not records. /dashboard/toys
+        // links to /dashboard/toys/new, and scraping that made the harness
+        // compare the board's toy DETAIL screen against live's add-a-toy form.
+        const RESERVED = new Set(['new', 'create', 'add', 'edit', 'request'])
         return (
           [...document.querySelectorAll('a[href]')]
             .map((x) => new URL(x.href, location.origin).pathname)
-            .find((p) => re.test(p)) || null
+            .find((p) => re.test(p) && !RESERVED.has(p.split('/').pop())) || null
         )
       }, pattern)
     } catch {
@@ -233,7 +237,14 @@ async function fingerprintOf(page, url, rootSel) {
       }
       const live = await livePage.evaluate(collectFingerprint, 'main')
 
-      row.findings = compare(board, live, { copy: !NO_COPY.test(route) })
+      row.findings = compare(board, live, {
+        copy: !NO_COPY.test(route),
+        // On a detail screen the <h1> is the record's own name — the board's
+        // "Bubble machine" against a fixture's "E2E reflow detail 1-2". That is
+        // the sample data differing, which this report ignores everywhere else,
+        // so the title is compared for how it is SET but not for what it says.
+        recordTitleH1: !!(s.sampleFrom || s.derivedFrom),
+      })
       row.boardHeadings = board.headings.length
       row.liveHeadings = live.headings.length
       results.push(row)

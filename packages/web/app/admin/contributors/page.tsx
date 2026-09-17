@@ -45,7 +45,7 @@ export default async function ContributorsPage() {
             className="card flex flex-wrap items-center justify-between gap-4 p-4"
           >
             <div className="min-w-0">
-              <p className="text-sm font-bold text-ink">{p.name}</p>
+              <p className="card-title">{p.name}</p>
               <p className="text-xs text-muted">{p.email}</p>
               <p className="mt-0.5 text-xs text-muted">
                 Joined {new Date(p.created_at).toLocaleDateString()}

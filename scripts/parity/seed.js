@@ -125,6 +125,31 @@ async function seedOrgEvent(db, leaderId, orgId) {
   return error ? null : data.id
 }
 
+/**
+ * A toy the parent owns — /dashboard/toys/[id].
+ *
+ * Without one, /dashboard/toys links only to /dashboard/toys/new and the
+ * harness compared the board's toy DETAIL screen against live's add-a-toy form.
+ *
+ * Not cover_photo_url: 053 made it generated from photo_urls, and an insert
+ * naming a generated column is rejected outright.
+ */
+async function seedOwnedToy(db, parentId) {
+  const { data, error } = await db
+    .from('toys')
+    .insert({
+      owner_id: parentId,
+      name: 'Parity fixture toy',
+      condition: 8,
+      photo_urls: [],
+      status: 'published',
+      offer_type: 'donation',
+    })
+    .select('id')
+    .single()
+  return error ? null : data.id
+}
+
 /** A child on the parent — /dashboard/child/[id]. */
 async function seedChild(db, parentId) {
   const { data, error } = await db
@@ -150,6 +175,8 @@ async function seed(db, users) {
     if (child) routes.child = `/dashboard/child/${child}`
     const pj = await seedPrintRequest(db, parent.id)
     if (pj) routes.print_job = `/dashboard/print-requests/${pj}`
+    const toy = await seedOwnedToy(db, parent.id)
+    if (toy) routes.toy_detail = `/dashboard/toys/${toy}`
   }
   if (contributor) {
     const t = await seedOwnedTutorial(db, contributor.id)

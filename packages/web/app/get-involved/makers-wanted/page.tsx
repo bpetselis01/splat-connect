@@ -70,7 +70,7 @@ export default async function MakersWantedPage() {
                 <step.icon className="h-5 w-5" />
               </span>
               <span>
-                <span className="block font-bold text-ink">{step.title}</span>
+                <span className="card-title block">{step.title}</span>
                 <span className="block text-sm leading-relaxed text-muted">{step.body}</span>
               </span>
             </li>

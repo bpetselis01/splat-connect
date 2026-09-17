@@ -34,7 +34,7 @@ export default async function AdminIdeasPage() {
   if (ideas.length === 0) {
     return (
       <div>
-        <h1 className="mb-4 title-hub">Design challenge queue</h1>
+        <h1 className="mb-4 title-hub">Design challenges awaiting review</h1>
         <div className="flex flex-col items-center px-6 py-16 text-center">
           <span aria-hidden="true" className="empty-badge">
             💡
@@ -61,7 +61,7 @@ export default async function AdminIdeasPage() {
             <div className="flex items-center gap-3">
               <Badge status={idea.status} label={IDEA_LABEL[idea.status]} />
               <div>
-                <p className="text-sm font-bold text-ink">{idea.title}</p>
+                <p className="card-title">{idea.title}</p>
                 <p className="text-xs text-muted">
                   {idea.profiles?.name ?? 'Someone'} · Submitted{' '}
                   {new Date(idea.created_at).toLocaleDateString()}

@@ -120,7 +120,7 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
                 className="card-link card flex flex-col p-4"
               >
                 <span className="eyebrow text-muted">{STORY_KIND_LABEL[other.kind]}</span>
-                <span className="mt-1 font-bold text-ink">{other.title}</span>
+                <span className="card-title mt-1">{other.title}</span>
                 <span className="mt-0.5 text-xs text-muted">
                   {other.byline}
                   {other.published_at && ` · ${shortDate(other.published_at)}`}

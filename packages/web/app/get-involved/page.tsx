@@ -20,7 +20,7 @@ export default function GetInvolvedPage() {
 
   return (
     <div>
-      <h1 className="title-hub">Get involved</h1>
+      <h1 className="title-hub">Make something, give something, or back someone.</h1>
       <p className="mt-3 max-w-prose text-base leading-relaxed text-muted">
         SPLAT runs on unpaid work — adapting a toy, passing one on, or putting your
         name behind a guide.

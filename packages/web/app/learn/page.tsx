@@ -63,7 +63,7 @@ export default function LearnPage() {
                 <r.icon className="h-5 w-5" />
               </span>
               <span>
-                <span className="block font-bold text-ink">{r.label}</span>
+                <span className="card-title block">{r.label}</span>
                 <span className="block text-sm leading-relaxed text-muted">{r.blurb}</span>
               </span>
             </Link>

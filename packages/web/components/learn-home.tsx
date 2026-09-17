@@ -44,7 +44,7 @@ export function LearnHome() {
       <div className="flex flex-wrap items-start justify-between gap-6">
         <div className="min-w-0 flex-1">
           <p className="eyebrow text-muted">Learn</p>
-          <h1 className="mt-1.5 title-hub">Switch adapting toys</h1>
+          <h1 className="mt-1.5 title-hub">Switch adapting toys, from first switch to handover.</h1>
           <p className="mt-2 max-w-prose text-base leading-relaxed text-muted">
             A course in six units, from what a switch actually does to three toys adapted step by
             step and a switch you print yourself. No experience needed, and nothing here assumes

@@ -11,7 +11,7 @@ export default function SafetyAndCleaning() {
   return (
     <LearnShell slug="safety-and-cleaning">
       <ProsePage
-      title="Safety and cleaning"
+      title="Safe handling"
       intro="This article is the practical companion to the site's formal safety page. Read both before your first handover."
     >
       <section>

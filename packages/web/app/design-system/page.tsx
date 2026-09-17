@@ -47,7 +47,7 @@ export default function DesignSystemPage() {
     <main className="mx-auto flex max-w-5xl flex-col gap-12 px-6 py-10">
       <header>
         <p className="text-xs font-extrabold uppercase tracking-widest text-muted">Soft Pop</p>
-        <h1 className="font-display text-4xl font-extrabold text-ink">Component sheet</h1>
+        <h1 className="font-display text-4xl font-extrabold text-ink">Components & states</h1>
         <p className="max-w-prose text-muted">
           Every shared control, at rest. Hover and focus them to see the rest.
         </p>

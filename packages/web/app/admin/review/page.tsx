@@ -38,7 +38,7 @@ export default async function ReviewListPage({
   if (tutorials.length === 0) {
     return (
       <div>
-        <h1 className="mb-4 title-hub">Tutorial review queue</h1>
+        <h1 className="mb-4 title-hub">Review queue</h1>
         <div className="flex flex-col items-center px-6 py-16 text-center">
           <span aria-hidden="true" className="empty-badge">
             ☕
@@ -91,7 +91,7 @@ export default async function ReviewListPage({
               <div className="flex items-center gap-3">
                 <Badge status={t.difficulty as Difficulty} />
                 <div>
-                  <p className="text-sm font-bold text-ink">{t.title}</p>
+                  <p className="card-title">{t.title}</p>
                   <p className="text-xs text-muted">
                     Submitted {new Date(t.created_at).toLocaleDateString()}
                   </p>

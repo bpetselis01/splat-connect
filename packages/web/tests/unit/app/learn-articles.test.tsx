@@ -29,8 +29,8 @@ const articles: Array<[string, () => ReactElement]> = [
   ['Switch types explained', SwitchTypes],
   ['Choosing a toy to adapt', ChoosingAToy],
   ['Tools and materials', ToolsAndMaterials],
-  ['Safety and cleaning', SafetyAndCleaning],
-  ['3D printing basics', PrintingBasics],
+  ['Safe handling', SafetyAndCleaning],
+  ['Printing basics', PrintingBasics],
 ]
 
 describe('long-form articles', () => {

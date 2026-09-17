@@ -131,7 +131,7 @@ export default async function AdminPage() {
               </span>
               <div>
                 <p className="text-3xl font-bold text-ink">{c.count}</p>
-                <p className="text-sm font-bold text-ink">{c.label}</p>
+                <p className="card-title">{c.label}</p>
                 <p className="mt-1 text-sm text-muted">{c.hint}</p>
               </div>
             </div>
