@@ -25,7 +25,6 @@ import { CalendarPlus, PenNib, Trash } from '@phosphor-icons/react/dist/ssr'
 import { STORY_KIND_LABEL } from '@splat-connect/types'
 import type { OrgEvent, OrgStory } from '@splat-connect/types'
 import { Badge } from '@/components/badge'
-import { Disclosure } from '@/components/disclosure'
 import { ProfileTabs } from '@/components/profile-tabs'
 import { browserApiClient } from '@/lib/browser-api-client'
 
@@ -41,7 +40,6 @@ export function OrgPublishing({
   const router = useRouter()
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
-  const [format, setFormat] = useState<'in_person' | 'online'>('in_person')
 
   function run(work: () => Promise<void>) {
     setError(null)
@@ -61,29 +59,6 @@ export function OrgPublishing({
 
   const remove = (kind: 'events' | 'stories', id: string) =>
     run(() => browserApiClient.delete(`/api/organizations/${orgId}/${kind}/${id}`))
-
-  function addEvent(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    const form = new FormData(e.currentTarget)
-    const el = e.currentTarget
-    run(async () => {
-      await browserApiClient.post(`/api/organizations/${orgId}/events`, {
-        title: String(form.get('title') ?? ''),
-        summary: String(form.get('summary') ?? ''),
-        // A datetime-local value carries no offset, and Postgres reads one
-        // without an offset as UTC — an event entered as 6pm in Sydney came
-        // back as 5am the next day. Parsed here, where the browser's own
-        // timezone is what "6pm" meant.
-        starts_at: new Date(String(form.get('starts_at') ?? '')).toISOString(),
-        format,
-        location: String(form.get('location') ?? ''),
-        online_url: String(form.get('online_url') ?? ''),
-        audience: String(form.get('audience') ?? ''),
-        status: form.get('publish') === 'on' ? 'published' : 'draft',
-      })
-      el.reset()
-    })
-  }
 
   function Row({
     kind,

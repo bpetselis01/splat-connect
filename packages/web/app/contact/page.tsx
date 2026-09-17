@@ -1,9 +1,14 @@
 import Link from 'next/link'
 import { ORG_FACTS } from '@/lib/org-facts'
+import { ContactForm } from '@/components/contact-form'
+import { getCapabilities } from '@/lib/capabilities'
 
 export const metadata = { title: 'Contact — SPLAT Connect' }
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  // Prefilled when there is a session, and not required either way: somebody
+  // reporting a hazard should not have to make an account first.
+  const caps = await getCapabilities()
   return (
     <div className="max-w-2xl">
       <h1 className="title-article">Contact</h1>
@@ -11,10 +16,19 @@ export default function ContactPage() {
         Email reaches a person. There is no ticketing system and no chatbot.
       </p>
 
-      <p className="mt-6">
-        <a href={`mailto:${ORG_FACTS.contactEmail}`} className="btn btn-primary">
+      <div className="mt-6">
+        <ContactForm
+          defaultName={caps?.profile.name ?? ''}
+          defaultEmail={caps?.profile.email ?? ''}
+        />
+      </div>
+
+      <p className="mt-4 text-sm text-muted">
+        Or email{' '}
+        <a href={`mailto:${ORG_FACTS.contactEmail}`} className="font-semibold text-brand-dark hover:underline">
           {ORG_FACTS.contactEmail}
-        </a>
+        </a>{' '}
+        directly. Both reach the same people.
       </p>
 
       <div className="mt-10 flex flex-col gap-5">

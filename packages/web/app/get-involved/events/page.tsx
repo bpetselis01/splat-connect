@@ -108,11 +108,12 @@ export default async function EventsPage({
             <Link
               key={f.label}
               role="tab"
+              // aria-selected, not aria-pressed: role="tab" does not support
+              // the latter, and two conflicting states read worse than one.
               aria-selected={format === f.value}
               href={href({ format: f.value })}
               className="chip"
-              data-selected={format === f.value ? 'true' : undefined}
-              aria-pressed={format === f.value}
+              data-on={format === f.value ? 'true' : undefined}
             >
               {f.label}
             </Link>

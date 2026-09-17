@@ -21,7 +21,7 @@
  * would be inventing precision it does not have, which is why the control reads
  * "families who can travel" rather than "within".
  */
-import { useState, useTransition } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Hammer, MapPin, Clock, Package, User } from '@phosphor-icons/react/dist/ssr'
@@ -49,7 +49,6 @@ export function MakersWantedBoard({ builds }: { builds: OpenBuild[] }) {
   const [range, setRange] = useState<number>(0)
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [, startTransition] = useTransition()
 
   const shown = range === 0 ? builds : builds.filter((b) => (b.travel_km ?? 0) >= range)
 
@@ -58,8 +57,10 @@ export function MakersWantedBoard({ builds }: { builds: OpenBuild[] }) {
     setBusy(id)
     try {
       await browserApiClient.post(`/api/toy-transactions/${id}/claim`, {})
+      // Straight to the thread. There is nothing left on the board for this
+      // row, and a refresh here would leave the maker looking at a list their
+      // own claim just shortened.
       router.push(`/dashboard/exchanges/build/${id}`)
-      router.refresh()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'That did not go through. Try once more.')
       setBusy(null)

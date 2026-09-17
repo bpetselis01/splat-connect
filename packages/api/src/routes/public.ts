@@ -1015,4 +1015,46 @@ publicRoutes.get('/stories/:id', async (c) => {
   })
 })
 
+/* --------------------------------------------------------------- contact --
+ *
+ * The contact form. Unauthenticated on purpose: somebody reporting that a
+ * battery pack gets warm should not have to make an account first, and
+ * requiring one is the difference between hearing about a hazard and not.
+ *
+ * `sender_id` is set only when the caller happens to be signed in, and is
+ * never taken from the body — a client-supplied author would let one account
+ * file a safety report in another's name.
+ */
+
+const CONTACT_TOPICS = new Set(['safety', 'organisation', 'guide', 'other'])
+
+publicRoutes.post('/contact', async (c) => {
+  const body = (await c.req.json().catch(() => null)) as Record<string, unknown> | null
+  if (!body) return c.json({ error: 'Body must be an object' }, 400)
+
+  const topic = typeof body.topic === 'string' ? body.topic : ''
+  if (!CONTACT_TOPICS.has(topic)) return c.json({ error: 'Pick what it is about.' }, 400)
+
+  const name = typeof body.name === 'string' ? body.name.trim() : ''
+  if (!name || name.length > 120) return c.json({ error: 'Tell us who you are.' }, 400)
+
+  const email = typeof body.email === 'string' ? body.email.trim() : ''
+  if (!EMAIL_RE.test(email)) return c.json({ error: 'That email address does not look right.' }, 400)
+
+  const message = typeof body.body === 'string' ? body.body.trim() : ''
+  if (!message || message.length > 4000) {
+    return c.json({ error: 'Say what happened, in 4000 characters or fewer.' }, 400)
+  }
+
+  const { error } = await createAnonClient()
+    .from('contact_messages')
+    .insert({ topic, name, email, body: message })
+  if (error) {
+    console.error('[public/contact] insert failed:', error.message)
+    return c.json({ error: 'That did not send. Try again, or email us directly.' }, 500)
+  }
+
+  return c.json({ ok: true }, 201)
+})
+
 export default publicRoutes

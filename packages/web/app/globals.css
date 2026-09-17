@@ -1239,17 +1239,31 @@
     background-color: var(--color-sunken);
   }
 
-  /* Selected fills --b600, the same blue as the primary button, with no border
-     and no shadow. It was ink under Pixel; the artboard has no ink-filled
-     control anywhere. */
-  .chip[aria-pressed='true'] {
+  /*
+   * Selected fills --b600, the same blue as the primary button, with no border
+   * and no shadow. It was ink under Pixel; the artboard has no ink-filled
+   * control anywhere.
+   *
+   * Three selectors for one state, because the right ARIA attribute depends on
+   * the role the chip is playing. A filter chip is a toggle button and takes
+   * aria-pressed; a chip in a tablist takes aria-selected; a chip with
+   * role="switch" takes aria-checked and supports neither. `data-on` is the
+   * fallback for that last case — the alternative was to put aria-pressed on
+   * every one of them, which is invalid on two of the three roles and made the
+   * linter right about it.
+   */
+  .chip[aria-pressed='true'],
+  .chip[aria-selected='true'],
+  .chip[data-on='true'] {
     background-color: var(--color-brand-dark);
     border-color: transparent;
     color: #ffffff;
     box-shadow: none;
   }
 
-  .chip[aria-pressed='true']:hover {
+  .chip[aria-pressed='true']:hover,
+  .chip[aria-selected='true']:hover,
+  .chip[data-on='true']:hover {
     background-color: var(--color-brand-deep);
     border-color: transparent;
   }

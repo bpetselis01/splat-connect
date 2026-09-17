@@ -8,6 +8,8 @@ import type {
   OrganizationRequest,
 } from '@splat-connect/types'
 
+type Counted = Array<Record<string, unknown>>
+
 export default async function AdminPage() {
   const [tutorials, accounts, organizations, spotCheck, ideas, orgRequests] = await Promise.all([
     apiClient.get<Tutorial[]>('/api/admin/tutorials?status=pending'),
@@ -20,6 +22,16 @@ export default async function AdminPage() {
     apiClient
       .get<OrganizationRequest[]>('/api/admin/organization-requests')
       .catch(() => [] as OrganizationRequest[]),
+  ])
+
+  // The 065 queues, all degrading to empty for the same reason as the
+  // organisation requests above: an admin who came here to answer a safety
+  // report does not care that one count is missing.
+  const [inbox, memberReports, buildRequests, printJobs] = await Promise.all([
+    apiClient.get<Counted>('/api/admin/inbox').catch(() => [] as Counted),
+    apiClient.get<Counted>('/api/admin/member-reports').catch(() => [] as Counted),
+    apiClient.get<Counted>('/api/admin/build-requests').catch(() => [] as Counted),
+    apiClient.get<Counted>('/api/admin/print-jobs').catch(() => [] as Counted),
   ])
 
   const pendingTutorials = tutorials.length
@@ -69,6 +81,41 @@ export default async function AdminPage() {
       href: '/admin/ideas' as const,
       icon: '💡',
       hint: 'Publish or reject submitted ideas',
+    },
+    {
+      label: 'Inbox',
+      count: inbox.filter((m) => m.status === 'open').length,
+      href: '/admin/inbox' as const,
+      icon: '📨',
+      hint: 'Contact-form messages. Safety jumps the queue',
+    },
+    {
+      label: 'Reports',
+      count: memberReports.filter((r) => r.status !== 'resolved').length,
+      href: '/admin/reports' as const,
+      icon: '🚩',
+      hint: 'Private problem reports. Safety sorts to the top whatever its age',
+    },
+    {
+      label: 'Build requests needing a look',
+      count: buildRequests.filter((b) => b.unclaimed_too_long || b.claimed_and_silent).length,
+      href: '/admin/build-requests' as const,
+      icon: '🔨',
+      hint: 'Unclaimed for two weeks, or claimed and silent for ten days',
+    },
+    {
+      label: 'Stalled print jobs',
+      count: printJobs.filter((j) => j.stalled).length,
+      href: '/admin/print-jobs' as const,
+      icon: '🖨️',
+      hint: 'Accepted but not moved in ten days',
+    },
+    {
+      label: 'Site content',
+      count: 4,
+      href: '/admin/content' as const,
+      icon: '📝',
+      hint: 'Home page, About, the Learn outline and the four legal documents',
     },
   ]
 

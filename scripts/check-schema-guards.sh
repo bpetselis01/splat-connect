@@ -287,7 +287,39 @@ select * from (values
    (select count(*) = 0 from pg_policies
       where tablename = 'toy_transactions'
         and policyname = 'toy_transactions_open_builds_readable'
-        and 'anon' = any(roles)))
+        and 'anon' = any(roles))),
+
+  -- 065. A contact message carries a name, an email and, on a safety report,
+  -- what somebody found wrong with a guide their child is using. Anyone may
+  -- SEND one — a person reporting a hazard should not have to make an account
+  -- first — and only an admin may read one.
+  ('065 contact_messages is writable by anyone and readable by admins only',
+   (select count(*) > 0 from pg_policies
+      where tablename = 'contact_messages' and cmd = 'INSERT' and 'anon' = any(roles))
+   and (select count(*) = 0 from pg_policies
+      where tablename = 'contact_messages' and cmd in ('SELECT', 'ALL') and 'anon' = any(roles))),
+
+  -- The person reported is never told who filed it. Every read of a report is
+  -- either the reporter's own row or an admin's — there is no policy that could
+  -- show one to its subject.
+  ('065 member_reports is readable only by its reporter or an admin',
+   (select count(*) = 0 from pg_policies
+      where tablename = 'member_reports'
+        and cmd in ('SELECT', 'ALL')
+        and coalesce(qual, with_check) not like '%auth.uid()%'
+        and coalesce(qual, with_check) not like '%is_admin%')),
+
+  ('065 member_reports is never readable by anon',
+   (select count(*) = 0 from pg_policies
+      where tablename = 'member_reports' and 'anon' = any(roles))),
+
+  -- Site copy is public to read and admin-only to write. A write policy that
+  -- admitted anyone else would let them edit the home page.
+  ('065 site_content is writable by admins only',
+   (select count(*) = 0 from pg_policies
+      where tablename = 'site_content'
+        and cmd in ('INSERT', 'UPDATE', 'DELETE', 'ALL')
+        and coalesce(with_check, qual) not like '%is_admin%'))
 ) as t(guard, ok)
 where not ok;
 EOSQL
