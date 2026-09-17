@@ -794,11 +794,20 @@
        transform, does not. */
     isolation: isolate;
     color: var(--color-ink);
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
+    /*
+     * Nunito 15px/700, sentence case. This was --font-mono at 12px, uppercase,
+     * letter-spaced — a monospace shouty nav, which is Pixel's voice and not
+     * Soft Pop's. The board sets every tab in the body face at 15px/700 and
+     * writes them "Guides", not "GUIDES".
+     *
+     * This is the header, so it is on every page, and it is the first thing
+     * anyone sees. It survived the whole Soft Pop pass because the parity
+     * harness roots the live side at <main> and never looked above it.
+     */
+    font-family: var(--font-sans);
+    font-size: 0.9375rem;
     font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
+    letter-spacing: 0;
     transition: transform 0.16s var(--ease-spring), color 0.14s linear;
   }
 
@@ -824,7 +833,9 @@
     position: absolute;
     inset: 4px -10px;
     z-index: -1;
-    border-radius: var(--radius-field);
+    /* 999px. The board draws these as pills; --radius-field is the input
+       token and gave them a squared-off 14px. */
+    border-radius: var(--radius-pill);
     border: var(--border-width) solid transparent;
     transition: background-color 0.14s linear, border-color 0.14s linear,
       box-shadow 0.16s var(--ease-spring);

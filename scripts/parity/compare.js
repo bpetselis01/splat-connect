@@ -216,6 +216,24 @@ function compare(board, live, opts = {}) {
     // declared rather than what it does is not worth a finding.
   }
 
+  // ---- site chrome -------------------------------------------------------
+  // The header is on every page, so a difference here is 119 screens wrong at
+  // once — which is precisely what happened while nothing measured it.
+  if (board.chrome && live.chrome) {
+    const b = board.chrome
+    const l = live.chrome
+    if (b.navFont !== l.navFont)
+      out.push(f('font', 'high', 'header nav font', b.navFont, l.navFont))
+    if (Math.abs(b.navSize - l.navSize) > SIZE_TOLERANCE)
+      out.push(f('size', 'high', 'header nav size', b.navSize + 'px', l.navSize + 'px'))
+    if (Math.abs(b.navWeight - l.navWeight) >= 100)
+      out.push(f('weight', 'medium', 'header nav weight', b.navWeight, l.navWeight))
+    if (b.navTransform !== l.navTransform)
+      out.push(f('copy', 'high', 'header nav letter case', b.navTransform, l.navTransform))
+    if (Math.abs(b.navRadius - l.navRadius) > SIZE_TOLERANCE)
+      out.push(f('radius', 'medium', 'header nav pill', b.navRadius + 'px', l.navRadius + 'px'))
+  }
+
   // ---- page-level --------------------------------------------------------
   if (board.page.bodyFont !== live.page.bodyFont)
     out.push(f('font', 'high', 'body font', board.page.bodyFont, live.page.bodyFont))

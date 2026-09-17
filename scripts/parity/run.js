@@ -11,7 +11,7 @@
  */
 const fs = require('fs')
 const path = require('path')
-const { collectFingerprint } = require('./fingerprint')
+const { collectFingerprint, collectChrome } = require('./fingerprint')
 const { compare } = require('./compare')
 const { provision, signIn, cleanup, adminClient } = require('./auth')
 const { seed, dbSample } = require('./seed')
@@ -236,6 +236,7 @@ async function fingerprintOf(page, url, rootSel) {
         continue
       }
       const live = await livePage.evaluate(collectFingerprint, 'main')
+      live.chrome = await livePage.evaluate(collectChrome)
 
       row.findings = compare(board, live, {
         copy: !NO_COPY.test(route),

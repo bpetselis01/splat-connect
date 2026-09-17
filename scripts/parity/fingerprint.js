@@ -21,6 +21,59 @@
  * are the design — see `copy` below.
  */
 
+/**
+ * The site chrome — the header — measured separately from the page body.
+ *
+ * Its own function because the two sides scope it differently: live's header
+ * sits outside <main>, and the board's sits outside the screen section. Rooting
+ * both fingerprints at the content meant NOBODY ever compared the header, and
+ * it stayed in Pixel's voice — JetBrains Mono, 12px, uppercase, square pills —
+ * through the entire Soft Pop pass, on every page, above the fold.
+ *
+ * Only the nav links' typography and pill shape. The board's <header> also
+ * holds the prototype's own chrome (a role switcher, a design-notes toggle),
+ * so anything structural here would compare the artboard's furniture.
+ */
+function collectChrome() {
+  const header = document.querySelector('header')
+  if (!header) return null
+  // Takes the pseudo-element argument: the nav pill is drawn on ::before on
+  // both sides, and a helper that silently dropped it reported every live pill
+  // as square.
+  const cs = (el, pseudo) => getComputedStyle(el, pseudo)
+  const px = (v) => Math.round(parseFloat(v) || 0)
+
+  const links = [...header.querySelectorAll('a, button')].filter((el) => {
+    const r = el.getBoundingClientRect()
+    if (r.height < 8 || r.width < 8) return false
+    const t = (el.innerText || '').trim()
+    return t.length > 1 && t.length < 24
+  })
+  if (!links.length) return null
+
+  const modal = (values) => {
+    const counts = new Map()
+    for (const v of values) counts.set(v, (counts.get(v) || 0) + 1)
+    return [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0]
+  }
+
+  const S = links.map(cs)
+  return {
+    navFont: modal(S.map((x) => x.fontFamily.split(',')[0].replace(/["']/g, '').trim())),
+    navSize: modal(S.map((x) => px(x.fontSize))),
+    navWeight: modal(S.map((x) => +x.fontWeight)),
+    navTransform: modal(S.map((x) => x.textTransform)),
+    navRadius: modal(
+      links.map((el) => {
+        // The pill is often drawn on ::before rather than the link itself.
+        const own = px(cs(el).borderTopLeftRadius)
+        const before = px(cs(el, '::before').borderTopLeftRadius)
+        return Math.max(own, before)
+      })
+    ),
+  }
+}
+
 /** Serialised into the page by run.js. Must be self-contained. */
 function collectFingerprint(rootSelector) {
   const root = document.querySelector(rootSelector) || document.body
@@ -378,4 +431,4 @@ function collectFingerprint(rootSelector) {
   }
 }
 
-module.exports = { collectFingerprint }
+module.exports = { collectFingerprint, collectChrome }
