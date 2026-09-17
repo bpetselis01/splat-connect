@@ -596,21 +596,32 @@
     letter-spacing: -0.03em;
   }
 
-  /* Flat 42px, not a clamp. The board sets every hub h1 at the same size on
-     every screen it draws — the hierarchy between a hub and the homepage is
-     carried by the hero band, not by the headline growing. [n=40] */
+  /*
+   * Flat 44px, not a clamp, and the same 44px as .title-article.
+   *
+   * The two were set to the medians of what the board draws under each — 42
+   * and 46 — and that 4px split turned out to track nothing. Fifteen screens
+   * wanted them the other way round: the forms were 46 and should have been
+   * 42, the directories were 42 and should have been 46, with no semantic line
+   * between them. The board draws a page title at roughly 44px and varies it by
+   * hand per screen; 44 lands within tolerance of both clusters, so one number
+   * is a truer reading of the design than two.
+   *
+   * The classes stay separate: they differ in leading and tracking, and the
+   * call sites carry meaning worth keeping.
+   */
   .title-hub {
-    font-size: 2.625rem;
+    font-size: 2.75rem;
     font-weight: 800;
     line-height: 1.04;
     letter-spacing: -0.02em;
   }
 
-  /* 46px. The page title on an article-shaped page — every Learn lesson, the
-     printing primers, /contact. Larger than .title-hub because these pages
-     open on the title rather than on a hero band. [n=37] */
+  /* 44px, matching .title-hub — see the note there for why the 42/46 split was
+     dropped. The page title on an article-shaped page: every Learn lesson, the
+     printing primers, /contact. */
   .title-article {
-    font-size: 2.875rem;
+    font-size: 2.75rem;
     font-weight: 800;
     line-height: 1.12;
     letter-spacing: -0.028em;

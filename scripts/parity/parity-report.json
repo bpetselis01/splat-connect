@@ -1,5 +1,5 @@
 {
- "at": "2026-09-17T06:48:45.135Z",
+ "at": "2026-09-17T06:54:00.552Z",
  "live": "http://localhost:3110",
  "screens": [
   {
@@ -360,14 +360,7 @@
      "severity": "high",
      "what": "page height differs grossly",
      "board": "1818px",
-     "live": "606px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h1 \"ask family # for the plush dog\" size",
-     "board": "42px",
-     "live": "46px"
+     "live": "604px"
     },
     {
      "type": "copy",
@@ -400,7 +393,7 @@
      "severity": "medium",
      "what": "card title size",
      "board": "34px",
-     "live": "46px"
+     "live": "44px"
     },
     {
      "type": "colour",
@@ -482,7 +475,7 @@
      "severity": "medium",
      "what": "h1 \"switch adapting toys, from first switch to handover.\" size",
      "board": "54px",
-     "live": "42px"
+     "live": "44px"
     },
     {
      "type": "copy",
@@ -779,13 +772,6 @@
      "what": "h4 \"i need a person, not an answer\" has no counterpart",
      "board": "i need a person, not an answer",
      "live": null
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h1 \"have a question?\" size",
-     "board": "46px",
-     "live": "42px"
     }
    ],
    "role": "guest",
@@ -1511,7 +1497,7 @@
      "severity": "medium",
      "what": "h1 \"make something, give something, or back someone.\" size",
      "board": "54px",
-     "live": "42px"
+     "live": "44px"
     },
     {
      "type": "copy",
@@ -2004,13 +1990,6 @@
      "live": "16px"
     },
     {
-     "type": "size",
-     "severity": "medium",
-     "what": "h1 \"makers wanted\" size",
-     "board": "46px",
-     "live": "42px"
-    },
-    {
      "type": "extra-section",
      "severity": "medium",
      "what": "live has an extra h2: \"parts and money\"",
@@ -2056,13 +2035,6 @@
      "what": "board has cards, live has none",
      "board": 3,
      "live": 0
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h1 \"ask a maker nearby to build it\" size",
-     "board": "42px",
-     "live": "46px"
     },
     {
      "type": "copy",
@@ -2185,13 +2157,6 @@
      "what": "h3 \"write it up as a guide\" has no counterpart",
      "board": "write it up as a guide",
      "live": null
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h1 \"design challenges\" size",
-     "board": "46px",
-     "live": "42px"
     },
     {
      "type": "size",
@@ -2336,7 +2301,7 @@
      "severity": "medium",
      "what": "h1 \"a bubble machine any child can start\" size",
      "board": "40px",
-     "live": "46px"
+     "live": "44px"
     },
     {
      "type": "copy",
@@ -2613,13 +2578,6 @@
      "what": "h4 \"geelong men’s shed\" has no counterpart",
      "board": "geelong men’s shed",
      "live": null
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h1 \"organisations\" size",
-     "board": "46px",
-     "live": "42px"
     },
     {
      "type": "missing-section",
@@ -2900,7 +2858,7 @@
      "severity": "medium",
      "what": "h1 \"events\" size",
      "board": "52px",
-     "live": "42px"
+     "live": "44px"
     },
     {
      "type": "size",
@@ -2948,6 +2906,13 @@
      "what": "h3 \"$#\" has no counterpart",
      "board": "$#",
      "live": null
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "h1 \"switch-adaptation build day\" size",
+     "board": "48px",
+     "live": "44px"
     },
     {
      "type": "size",
@@ -3011,13 +2976,6 @@
      "live": "20px"
     },
     {
-     "type": "size",
-     "severity": "medium",
-     "what": "h1 \"register for this event\" size",
-     "board": "42px",
-     "live": "46px"
-    },
-    {
      "type": "radius",
      "severity": "medium",
      "what": "card radius",
@@ -3079,13 +3037,6 @@
      "live": "16px"
     },
     {
-     "type": "size",
-     "severity": "medium",
-     "what": "h1 \"waste plastic in, filament out\" size",
-     "board": "46px",
-     "live": "42px"
-    },
-    {
      "type": "extra-section",
      "severity": "medium",
      "what": "live has 2 extra h2 the board does not draw",
@@ -3125,13 +3076,6 @@
    "group": "Get involved",
    "route": "/get-involved/recycling/drop-off",
    "findings": [
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h1 \"book a drop-off\" size",
-     "board": "42px",
-     "live": "46px"
-    },
     {
      "type": "radius",
      "severity": "medium",
@@ -3177,7 +3121,7 @@
      "severity": "high",
      "what": "page height differs grossly",
      "board": "1385px",
-     "live": "468px"
+     "live": "470px"
     },
     {
      "type": "size",
@@ -3245,7 +3189,7 @@
      "severity": "medium",
      "what": "h1 \"stories\" size",
      "board": "52px",
-     "live": "42px"
+     "live": "44px"
     },
     {
      "type": "shadow",
@@ -3292,7 +3236,7 @@
      "severity": "medium",
      "what": "h1 \"leo’s drum, six weeks on\" size",
      "board": "50px",
-     "live": "46px"
+     "live": "44px"
     },
     {
      "type": "size",
@@ -3400,7 +3344,7 @@
      "severity": "high",
      "what": "page height differs grossly",
      "board": "668px",
-     "live": "2025px"
+     "live": "2027px"
     },
     {
      "type": "size",
@@ -3414,7 +3358,7 @@
      "severity": "medium",
      "what": "h1 \"about\" size",
      "board": "52px",
-     "live": "42px"
+     "live": "44px"
     },
     {
      "type": "copy",
@@ -3667,7 +3611,7 @@
      "severity": "medium",
      "what": "5/5 board paragraphs absent",
      "board": "everything a family can ask of an organisation, in one place. say no w",
-     "live": "every ask a family can make of parity org mu#zqwk#k# in one queue: a t"
+     "live": "every ask a family can make of parity org mu#pbrvud# in one queue: a t"
     },
     {
      "type": "shadow",
@@ -3777,7 +3721,7 @@
    "id": "org_event_manage",
    "name": "Manage event",
    "group": "My SPLAT",
-   "route": "/dashboard/org/events/8e091f1d-238f-49dd-93a8-2af41ec4708b",
+   "route": "/dashboard/org/events/b5725089-91ca-44b9-825d-604db5354c28",
    "findings": [
     {
      "type": "font",
@@ -3805,7 +3749,7 @@
      "severity": "medium",
      "what": "h1 \"switch-adaptation build day\" size",
      "board": "40px",
-     "live": "46px"
+     "live": "44px"
     },
     {
      "type": "copy",
@@ -3844,7 +3788,7 @@
     }
    ],
    "role": "leader",
-   "finalUrl": "/dashboard/org/events/8e091f1d-238f-49dd-93a8-2af41ec4708b",
+   "finalUrl": "/dashboard/org/events/b5725089-91ca-44b9-825d-604db5354c28",
    "boardHeadings": 4,
    "liveHeadings": 2
   },
@@ -3867,13 +3811,6 @@
      "what": "h2 \"past supporters\" has no counterpart",
      "board": "past supporters",
      "live": null
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h1 \"partners and supporters\" size",
-     "board": "46px",
-     "live": "42px"
     },
     {
      "type": "radius",
@@ -3942,13 +3879,6 @@
      "what": "card title size",
      "board": "26px",
      "live": "18px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h1 \"support splat\" size",
-     "board": "46px",
-     "live": "42px"
     }
    ],
    "role": "guest",
@@ -3986,7 +3916,7 @@
      "severity": "high",
      "what": "page height differs grossly",
      "board": "1127px",
-     "live": "2611px"
+     "live": "2609px"
     },
     {
      "type": "extra-section",
@@ -4369,7 +4299,7 @@
      "severity": "high",
      "what": "page height differs grossly",
      "board": "1337px",
-     "live": "335px"
+     "live": "333px"
     },
     {
      "type": "size",
@@ -4377,13 +4307,6 @@
      "what": "card title size",
      "board": "19px",
      "live": "14px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h1 \"add a tutorial\" size",
-     "board": "42px",
-     "live": "46px"
     },
     {
      "type": "copy",
@@ -4444,7 +4367,7 @@
    "id": "editor",
    "name": "Tutorial editor",
    "group": "My SPLAT",
-   "route": "/tutorials/731ffb21-92f4-4ad5-8aab-3cb0c1668698/edit",
+   "route": "/tutorials/fd476705-8e5f-4709-a442-2b96d729617d/edit",
    "findings": [
     {
      "type": "missing-section",
@@ -4511,7 +4434,7 @@
     }
    ],
    "role": "contributor",
-   "finalUrl": "/tutorials/731ffb21-92f4-4ad5-8aab-3cb0c1668698/edit",
+   "finalUrl": "/tutorials/fd476705-8e5f-4709-a442-2b96d729617d/edit",
    "boardHeadings": 5,
    "liveHeadings": 1
   },
@@ -4582,7 +4505,7 @@
      "severity": "high",
      "what": "page height differs grossly",
      "board": "1496px",
-     "live": "575px"
+     "live": "577px"
     },
     {
      "type": "missing-section",
@@ -4603,13 +4526,6 @@
    "group": "My SPLAT",
    "route": "/dashboard/toys/new",
    "findings": [
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h1 \"add a toy\" size",
-     "board": "42px",
-     "live": "46px"
-    },
     {
      "type": "radius",
      "severity": "medium",
@@ -4690,7 +4606,7 @@
      "severity": "medium",
      "what": "h1 \"light-up drum\" size",
      "board": "40px",
-     "live": "46px"
+     "live": "44px"
     },
     {
      "type": "copy",
@@ -4763,7 +4679,7 @@
    "id": "thread",
    "name": "Exchange thread",
    "group": "My SPLAT",
-   "route": "/dashboard/exchanges/f2a67834-9bbb-4bd2-b0d7-074a56266a30",
+   "route": "/dashboard/exchanges/258ef10e-cea1-4ef7-b544-4e77bf972295",
    "findings": [
     {
      "type": "font",
@@ -4851,7 +4767,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/exchanges/f2a67834-9bbb-4bd2-b0d7-074a56266a30",
+   "finalUrl": "/dashboard/exchanges/258ef10e-cea1-4ef7-b544-4e77bf972295",
    "boardHeadings": 4,
    "liveHeadings": 6
   },
@@ -4880,7 +4796,7 @@
      "severity": "medium",
      "what": "h1 \"inbox\" size",
      "board": "26px",
-     "live": "42px"
+     "live": "44px"
     },
     {
      "type": "copy",
@@ -4995,7 +4911,7 @@
      "severity": "high",
      "what": "page height differs grossly",
      "board": "391px",
-     "live": "877px"
+     "live": "879px"
     }
    ],
    "role": "parent",
@@ -5056,7 +4972,14 @@
      "severity": "high",
      "what": "page height differs grossly",
      "board": "1033px",
-     "live": "236px"
+     "live": "238px"
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "h1 \"saved tutorials\" size",
+     "board": "40px",
+     "live": "44px"
     },
     {
      "type": "copy",
@@ -5110,7 +5033,14 @@
      "severity": "high",
      "what": "page height differs grossly",
      "board": "1033px",
-     "live": "236px"
+     "live": "238px"
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "h1 \"saved toys\" size",
+     "board": "40px",
+     "live": "44px"
     },
     {
      "type": "copy",
@@ -5157,7 +5087,14 @@
      "severity": "high",
      "what": "page height differs grossly",
      "board": "572px",
-     "live": "236px"
+     "live": "238px"
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "h1 \"saved design challenges\" size",
+     "board": "40px",
+     "live": "44px"
     },
     {
      "type": "copy",
@@ -5211,7 +5148,14 @@
      "severity": "high",
      "what": "page height differs grossly",
      "board": "567px",
-     "live": "236px"
+     "live": "238px"
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "h1 \"saved organisations\" size",
+     "board": "40px",
+     "live": "44px"
     },
     {
      "type": "copy",
@@ -5237,7 +5181,7 @@
      "severity": "high",
      "what": "page height differs grossly",
      "board": "721px",
-     "live": "212px"
+     "live": "214px"
     },
     {
      "type": "copy",
@@ -5282,7 +5226,7 @@
    "id": "print_job",
    "name": "Print job",
    "group": "My SPLAT",
-   "route": "/dashboard/print-requests/0c6dd8a1-cf2f-477a-84de-7a73a0789167",
+   "route": "/dashboard/print-requests/7663c431-a25b-4edd-986a-d05917cbbea0",
    "findings": [
     {
      "type": "font",
@@ -5363,7 +5307,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/print-requests/0c6dd8a1-cf2f-477a-84de-7a73a0789167",
+   "finalUrl": "/dashboard/print-requests/7663c431-a25b-4edd-986a-d05917cbbea0",
    "boardHeadings": 3,
    "liveHeadings": 5
   },
@@ -5385,7 +5329,7 @@
      "severity": "high",
      "what": "page height differs grossly",
      "board": "1336px",
-     "live": "349px"
+     "live": "351px"
     },
     {
      "type": "missing-section",
@@ -5554,7 +5498,7 @@
    "id": "child",
    "name": "Child profile",
    "group": "My SPLAT",
-   "route": "/dashboard/child/3d451d23-6b20-4b55-b40d-4bd84bccf621",
+   "route": "/dashboard/child/982b6d0a-dd45-470e-8f20-efd1acc7ee42",
    "findings": [
     {
      "type": "font",
@@ -5621,7 +5565,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/child/3d451d23-6b20-4b55-b40d-4bd84bccf621",
+   "finalUrl": "/dashboard/child/982b6d0a-dd45-470e-8f20-efd1acc7ee42",
    "boardHeadings": 4,
    "liveHeadings": 1
   },
@@ -5718,7 +5662,7 @@
      "severity": "high",
      "what": "page height differs grossly",
      "board": "1052px",
-     "live": "449px"
+     "live": "451px"
     },
     {
      "type": "missing-section",
@@ -5793,7 +5737,7 @@
      "severity": "high",
      "what": "page height differs grossly",
      "board": "3731px",
-     "live": "1606px"
+     "live": "1608px"
     },
     {
      "type": "missing-section",
@@ -5887,7 +5831,7 @@
      "severity": "medium",
      "what": "5/5 board paragraphs absent",
      "board": "published items are live on the public pages right now.",
-     "live": "what parity org mu#zqwk#k# has published, and what is still a draft."
+     "live": "what parity org mu#pbrvud# has published, and what is still a draft."
     },
     {
      "type": "weight",
@@ -5930,13 +5874,6 @@
      "live": 0
     },
     {
-     "type": "size",
-     "severity": "medium",
-     "what": "h1 \"publish an event\" size",
-     "board": "42px",
-     "live": "46px"
-    },
-    {
      "type": "copy",
      "severity": "medium",
      "what": "8/10 board paragraphs absent",
@@ -5954,15 +5891,7 @@
    "name": "Publish a story",
    "group": "Organisation",
    "route": "/dashboard/organisation/stories/new",
-   "findings": [
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h1 \"publish a story\" size",
-     "board": "42px",
-     "live": "46px"
-    }
-   ],
+   "findings": [],
    "role": "leader",
    "finalUrl": "/dashboard/organisation/stories/new",
    "boardHeadings": 1,
@@ -5986,7 +5915,7 @@
      "severity": "high",
      "what": "page height differs grossly",
      "board": "1499px",
-     "live": "349px"
+     "live": "351px"
     },
     {
      "type": "missing-section",
@@ -6190,14 +6119,14 @@
      "severity": "high",
      "what": "page height differs grossly",
      "board": "1258px",
-     "live": "14432px"
+     "live": "14434px"
     },
     {
      "type": "size",
      "severity": "medium",
      "what": "h1 \"review queue\" size",
      "board": "36px",
-     "live": "42px"
+     "live": "44px"
     },
     {
      "type": "copy",
@@ -6312,7 +6241,7 @@
      "severity": "high",
      "what": "page height differs grossly",
      "board": "707px",
-     "live": "315px"
+     "live": "317px"
     },
     {
      "type": "missing-section",
@@ -6320,6 +6249,13 @@
      "what": "board has cards, live has none",
      "board": 4,
      "live": 0
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "h1 \"reports\" size",
+     "board": "40px",
+     "live": "44px"
     },
     {
      "type": "copy",
@@ -6374,6 +6310,13 @@
      "what": "h4 \"musical mat that responds to one step\" has no counterpart",
      "board": "musical mat that responds to one step",
      "live": null
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "h1 \"design challenges awaiting review\" size",
+     "board": "40px",
+     "live": "44px"
     },
     {
      "type": "copy",
@@ -6463,6 +6406,13 @@
    "route": "/admin/print-jobs",
    "findings": [
     {
+     "type": "size",
+     "severity": "medium",
+     "what": "h1 \"print jobs\" size",
+     "board": "40px",
+     "live": "44px"
+    },
+    {
      "type": "radius",
      "severity": "medium",
      "what": "card radius",
@@ -6503,6 +6453,13 @@
    "route": "/admin/spot-check",
    "findings": [
     {
+     "type": "size",
+     "severity": "medium",
+     "what": "h1 \"spot-check\" size",
+     "board": "40px",
+     "live": "44px"
+    },
+    {
      "type": "radius",
      "severity": "medium",
      "what": "card radius",
@@ -6540,7 +6497,14 @@
      "severity": "high",
      "what": "page height differs grossly",
      "board": "574px",
-     "live": "3110px"
+     "live": "3112px"
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "h1 \"organisations\" size",
+     "board": "40px",
+     "live": "44px"
     },
     {
      "type": "missing-section",
@@ -6587,7 +6551,14 @@
      "severity": "high",
      "what": "page height differs grossly",
      "board": "753px",
-     "live": "88982px"
+     "live": "88984px"
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "h1 \"accounts\" size",
+     "board": "40px",
+     "live": "44px"
     },
     {
      "type": "missing-section",
@@ -6608,7 +6579,7 @@
      "severity": "medium",
      "what": "1/1 board paragraphs absent",
      "board": "review and remove accounts. # total, # flagged.",
-     "live": "parity-contributor-mu#zqzk#dsp@example.com"
+     "live": "parity-contributor-mu#pfgaa#h@example.com"
     },
     {
      "type": "weight",
@@ -6876,11 +6847,18 @@
      "live": null
     },
     {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "page height differs grossly",
+     "board": "1219px",
+     "live": "497px"
+    },
+    {
      "type": "size",
      "severity": "medium",
      "what": "card title size",
      "board": "25px",
-     "live": "46px"
+     "live": "44px"
     },
     {
      "type": "shadow",
@@ -6948,7 +6926,7 @@
      "severity": "medium",
      "what": "h1 \"contributor terms\" size",
      "board": "25px",
-     "live": "46px"
+     "live": "44px"
     },
     {
      "type": "copy",
@@ -7109,13 +7087,13 @@
  ],
  "summary": {
   "screens": 119,
-  "clean": 1,
-  "withFindings": 118,
+  "clean": 2,
+  "withFindings": 117,
   "errored": 0,
-  "findings": 811,
+  "findings": 808,
   "byType": {
-   "missing-section": 294,
-   "size": 101,
+   "missing-section": 295,
+   "size": 97,
    "copy": 166,
    "radius": 43,
    "colour": 35,
