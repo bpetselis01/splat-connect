@@ -3199,3 +3199,67 @@
     list-style: none;
   }
 }
+
+@layer components {
+  /*
+   * The bar's More disclosure. Six tabs and a More is the board's shape; seven
+   * equal tabs was live's.
+   */
+  .nav-more {
+    position: relative;
+  }
+
+  .nav-more__summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 44px;
+    padding-inline: 14px;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  /* Both spellings: Chrome uses ::marker on a flex summary, older WebKit uses
+     ::-webkit-details-marker, and leaving either in place drew a ▶ beside the
+     label and pushed the caret onto a second line. */
+  .nav-more__summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .nav-more__summary::marker {
+    content: '';
+  }
+
+  .nav-more__menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    min-width: 11rem;
+    padding: 6px;
+    border-radius: var(--radius-panel);
+    border: var(--border-width) solid var(--color-line);
+    background-color: var(--color-surface);
+    box-shadow: var(--shadow-e3);
+  }
+
+  .nav-more__item {
+    padding: 9px 12px;
+    border-radius: var(--radius-field);
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--color-ink);
+    text-decoration: none;
+  }
+
+  .nav-more__item:hover {
+    background-color: var(--color-sunken);
+    text-decoration: none;
+  }
+
+  .nav-more__item[aria-current='page'] {
+    color: var(--color-brand-deep);
+  }
+}

@@ -369,18 +369,21 @@ describe('Nav', () => {
     expect(toys.style.getPropertyValue('--pill-ink')).toBe(TONES.mint.hex.fg)
   })
 
-  // Tests: My SPLAT is the one bare label in the bar
-  // How:   asserts the account link renders no decorative dot span
-  // Chain: the board draws the seven section tabs with a tone dot and My SPLAT without
-  //        one — that absence is what separates the account cluster from the sections.
-  //        With a dot it read as an eighth section that had drifted right
-  it('draws the account entry without a section dot', () => {
+  // Tests: no tab in the bar carries a decorative dot
+  // How:   asserts neither a section tab nor the account link renders one
+  // Chain: this test used to assert the opposite for sections — that each of the
+  //        seven carried a tone dot, and My SPLAT's lack of one was what set the
+  //        account cluster apart. That was Pixel's bar. Measured on the Soft Pop
+  //        artboard, a nav tab is a <button> holding a single label span and
+  //        nothing else; rank is carried by the pill behind the current tab, and
+  //        the account cluster by My SPLAT being a filled apricot button (the
+  //        next test). The dots went with Pixel.
+  it('draws every tab as a bare label, with no section dot', () => {
     render(<Nav caps={signedIn} />)
-    const account = screen.getByRole('link', { name: /My SPLAT/ })
     // The dot specifically, not any decorative span — the unread badge is
     // aria-hidden too and is meant to stay.
-    expect(account.querySelector('span.rounded-full')).toBeNull()
-    expect(screen.getByRole('link', { name: /Guides/ }).querySelector('span.rounded-full')).not.toBeNull()
+    expect(screen.getByRole('link', { name: /My SPLAT/ }).querySelector('span.rounded-full')).toBeNull()
+    expect(screen.getByRole('link', { name: /Guides/ }).querySelector('span.rounded-full')).toBeNull()
   })
 
   // Tests: My SPLAT is drawn as the solid apricot button on every route, not as

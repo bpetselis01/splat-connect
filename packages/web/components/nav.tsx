@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { BoundaryLink } from '@/components/boundary-link'
 import { createClient } from '@/lib/supabase/client'
+import { CaretDown } from '@phosphor-icons/react/dist/ssr'
 import { Logo } from '@/components/icons'
 import { PUBLIC_NAV, ACCOUNT_NAV, sectionFor } from '@/lib/public-nav'
 import { toneClass } from '@/lib/tone'
@@ -38,7 +39,17 @@ export function Nav({ caps, quiet = false }: NavProps) {
 
   // Public sections come from the nav model so the top bar, the subnav and the
   // footer cannot disagree about what the site contains.
-  const sections = PUBLIC_NAV
+  //
+  // The board draws six tabs and a More: Guides, Toy Library, 3D Printing, Get
+  // Involved, About, More. Live carried all seven on the bar, which is a
+  // different shape at a glance — seven equal tabs read as a flat site, six and
+  // a disclosure read as three pillars plus the rest. Learn and Impact go under
+  // More, matching it. The nav MODEL is untouched: the footer and the subnav
+  // still see every section, because this is a presentation decision about one
+  // bar rather than a claim about what the site contains.
+  const BAR = ['/library', '/toy-library', '/printing', '/get-involved', '/about']
+  const sections = PUBLIC_NAV.filter((s) => BAR.includes(s.href))
+  const overflow = PUBLIC_NAV.filter((s) => !BAR.includes(s.href))
 
   const activeSection = sectionFor(pathname)
 
@@ -126,6 +137,30 @@ export function Nav({ caps, quiet = false }: NavProps) {
               </BoundaryLink>
             )
           })}
+
+          {/* A native <details>, not a popover: it needs no JavaScript, closes
+              on Escape for free, and the bar is a server component everywhere
+              else. */}
+          {overflow.length > 0 && (
+            <details className="nav-more">
+              <summary className="nav-pill nav-more__summary" aria-label="More sections">
+                More
+                <CaretDown className="h-3.5 w-3.5" aria-hidden="true" />
+              </summary>
+              <div className="nav-more__menu">
+                {overflow.map((s) => (
+                  <BoundaryLink
+                    key={s.href}
+                    href={s.href}
+                    aria-current={activeSection?.href === s.href ? 'page' : undefined}
+                    className="nav-more__item"
+                  >
+                    {s.label}
+                  </BoundaryLink>
+                ))}
+              </div>
+            </details>
+          )}
         </div>
 
         {caps ? (
