@@ -1,7 +1,322 @@
 {
- "at": "2026-09-17T10:27:17.419Z",
+ "at": "2026-09-17T10:38:26.836Z",
  "live": "http://localhost:3110",
  "screens": [
+  {
+   "id": "home",
+   "name": "Home",
+   "group": "Public site",
+   "route": "/",
+   "findings": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h4 \"find a guide\" has no counterpart",
+     "board": "find a guide",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h4 \"borrow a toy\" has no counterpart",
+     "board": "borrow a toy",
+     "live": null
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "card title size",
+     "board": "24px",
+     "live": "15px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "h1 wording",
+     "board": "go.",
+     "live": "watch it go."
+    },
+    {
+     "type": "radius",
+     "severity": "medium",
+     "what": "card radius",
+     "board": "18px",
+     "live": "24px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "2/2 board paragraphs absent",
+     "board": "we help families turn ordinary toys into ones that answer to one big s",
+     "live": "supporting play by adapting toys"
+    },
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "h1 \"go.\" colour",
+     "board": "rgb(17,121,176)",
+     "live": "rgb(28,37,48)"
+    }
+   ],
+   "role": "guest",
+   "finalUrl": "/",
+   "boardHeadings": 4,
+   "liveHeadings": 23
+  },
+  {
+   "id": "library",
+   "name": "Guides library",
+   "group": "Public site",
+   "route": "/library",
+   "findings": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"filters\" has no counterpart",
+     "board": "filters",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"all guides\" has no counterpart",
+     "board": "all guides",
+     "live": null
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "8/8 board paragraphs absent",
+     "board": "not sure what to filter by? answer five quick questions about your chi",
+     "live": "created by a playwright e#e test."
+    }
+   ],
+   "role": "guest",
+   "finalUrl": "/library",
+   "boardHeadings": 8,
+   "liveHeadings": 62
+  },
+  {
+   "id": "tutorial",
+   "name": "Guide detail",
+   "group": "Public site",
+   "route": "/tutorials/5e299a8b-387c-42af-8731-a8b2757d4cd5",
+   "findings": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"also worth a look\" has no counterpart",
+     "board": "also worth a look",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "page height differs grossly",
+     "board": "1926px",
+     "live": "529px"
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "h1 \"guide c — plush dog that barks\" size",
+     "board": "44px",
+     "live": "25px"
+    },
+    {
+     "type": "radius",
+     "severity": "medium",
+     "what": "card radius",
+     "board": "24px",
+     "live": "18px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "10/10 board paragraphs absent",
+     "board": "add a battery interrupter so one press of any #mm switch makes the dog",
+     "live": "created by a playwright e#e test."
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "set",
+     "live": "none"
+    },
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "card background",
+     "board": "rgb(255,255,255)",
+     "live": null
+    }
+   ],
+   "role": "guest",
+   "finalUrl": "/tutorials/5e299a8b-387c-42af-8731-a8b2757d4cd5",
+   "boardHeadings": 12,
+   "liveHeadings": 4
+  },
+  {
+   "id": "toys_public",
+   "name": "Toy library",
+   "group": "Public site",
+   "route": "/toy-library",
+   "findings": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"filters\" has no counterpart",
+     "board": "filters",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"all toys\" has no counterpart",
+     "board": "all toys",
+     "live": null
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "9/9 board paragraphs absent",
+     "board": "sydney · from your profile",
+     "live": "held by e#e detail holder #-#"
+    }
+   ],
+   "role": "guest",
+   "finalUrl": "/toy-library",
+   "boardHeadings": 8,
+   "liveHeadings": 15
+  },
+  {
+   "id": "toy_public",
+   "name": "Toy detail",
+   "group": "Public site",
+   "route": "/toy-library/1b7affd3-984d-472f-ae9d-af147a1d669c",
+   "findings": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h1 \"toy # — plush dog that barks\" has no counterpart",
+     "board": "toy # — plush dog that barks",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"notes from family #\" has no counterpart",
+     "board": "notes from family #",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"also worth a look\" has no counterpart",
+     "board": "also worth a look",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "page height differs grossly",
+     "board": "2172px",
+     "live": "742px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "9/9 board paragraphs absent",
+     "board": "one press makes it bark and wag. adapted from guide c, cleaned, and lo",
+     "live": "sign in to request this toy."
+    },
+    {
+     "type": "radius",
+     "severity": "low",
+     "what": "button radius range",
+     "board": "999px",
+     "live": "14px"
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "set",
+     "live": "none"
+    }
+   ],
+   "role": "guest",
+   "finalUrl": "/toy-library/1b7affd3-984d-472f-ae9d-af147a1d669c",
+   "boardHeadings": 10,
+   "liveHeadings": 0
+  },
+  {
+   "id": "toy_request",
+   "name": "Request a toy",
+   "group": "Public site",
+   "route": "/toy-library/1b7affd3-984d-472f-ae9d-af147a1d669c/request",
+   "findings": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h4 \"offer a toy back\" has no counterpart",
+     "board": "offer a toy back",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h4 \"just ask\" has no counterpart",
+     "board": "just ask",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "page height differs grossly",
+     "board": "1818px",
+     "live": "653px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "5/5 board paragraphs absent",
+     "board": "family # is open to either. offer one of your own toys, or just ask an",
+     "live": "parity parent is giving this one, so this is a straight ask."
+    }
+   ],
+   "role": "parent",
+   "finalUrl": "/toy-library/1b7affd3-984d-472f-ae9d-af147a1d669c/request",
+   "boardHeadings": 4,
+   "liveHeadings": 1
+  },
+  {
+   "id": "wizard",
+   "name": "Child profile wizard",
+   "group": "My SPLAT",
+   "route": "/onboarding/child",
+   "findings": [
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "card title size",
+     "board": "34px",
+     "live": "44px"
+    },
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "input background",
+     "board": "rgb(255,255,255)",
+     "live": "rgb(250,249,247)"
+    }
+   ],
+   "role": "parent",
+   "finalUrl": "/onboarding/child",
+   "boardHeadings": 1,
+   "liveHeadings": 1
+  },
   {
    "id": "learn",
    "name": "Learn · Course home",
@@ -530,685 +845,6 @@
    "liveHeadings": 1
   },
   {
-   "id": "login",
-   "name": "Sign in",
-   "group": "Auth",
-   "route": "/login",
-   "findings": [
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "card title size",
-     "board": "26px",
-     "live": "22px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "3/3 board paragraphs absent",
-     "board": "one account for everything — browse, contribute, and manage your child",
-     "live": "new here? create an account"
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "card title weight",
-     "board": 800,
-     "live": 900
-    },
-    {
-     "type": "radius",
-     "severity": "low",
-     "what": "input radius",
-     "board": "999px",
-     "live": "14px"
-    }
-   ],
-   "role": "guest",
-   "finalUrl": "/login",
-   "boardHeadings": 3,
-   "liveHeadings": 3
-  },
-  {
-   "id": "signup",
-   "name": "Create account",
-   "group": "Auth",
-   "route": "/signup",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h1 \"welcome to splat connect\" has no counterpart",
-     "board": "welcome to splat connect",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"create my account\" has no counterpart",
-     "board": "create my account",
-     "live": null
-    },
-    {
-     "type": "shadow",
-     "severity": "medium",
-     "what": "no button on live carries a shadow",
-     "board": "set",
-     "live": "none"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "1/1 board paragraphs absent",
-     "board": "one account for browsing, saving, requesting toys and — if you make th",
-     "live": "one account for everything — browse, contribute, and manage your child"
-    },
-    {
-     "type": "radius",
-     "severity": "low",
-     "what": "button radius range",
-     "board": "999px",
-     "live": "0px"
-    },
-    {
-     "type": "colour",
-     "severity": "low",
-     "what": "input background",
-     "board": "rgb(255,255,255)/rgba(0,0,0,0)",
-     "live": "rgb(250,249,247)"
-    }
-   ],
-   "role": "guest",
-   "finalUrl": "/signup",
-   "boardHeadings": 2,
-   "liveHeadings": 3
-  },
-  {
-   "id": "signup_sent",
-   "name": "Check your email",
-   "group": "Auth",
-   "route": "/signup",
-   "findings": [
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "card title size",
-     "board": "25px",
-     "live": "22px"
-    },
-    {
-     "type": "shadow",
-     "severity": "medium",
-     "what": "no button on live carries a shadow",
-     "board": "set",
-     "live": "none"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "2/2 board paragraphs absent",
-     "board": "we've sent a confirmation link to sam.mitchell@example.com. confirm yo",
-     "live": "one account for everything — browse, contribute, and manage your child"
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "card title weight",
-     "board": 800,
-     "live": 900
-    },
-    {
-     "type": "radius",
-     "severity": "low",
-     "what": "button radius range",
-     "board": "999px",
-     "live": "0px"
-    },
-    {
-     "type": "radius",
-     "severity": "low",
-     "what": "input radius",
-     "board": "999px",
-     "live": "14px"
-    },
-    {
-     "type": "colour",
-     "severity": "low",
-     "what": "input background",
-     "board": "rgb(255,255,255)/rgba(0,0,0,0)",
-     "live": "rgb(250,249,247)"
-    }
-   ],
-   "role": "guest",
-   "finalUrl": "/signup",
-   "boardHeadings": 3,
-   "liveHeadings": 3
-  },
-  {
-   "id": "confirmed",
-   "name": "Email confirmed",
-   "group": "Auth",
-   "route": "/auth/confirmed",
-   "findings": [
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "card title size",
-     "board": "25px",
-     "live": "44px"
-    },
-    {
-     "type": "shadow",
-     "severity": "medium",
-     "what": "no button on live carries a shadow",
-     "board": "set",
-     "live": "none"
-    },
-    {
-     "type": "missing-section",
-     "severity": "medium",
-     "what": "no inputs on live",
-     "board": 2,
-     "live": 0
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "2/2 board paragraphs absent",
-     "board": "you're all set. we'll take you back to the guide you were saving.",
-     "live": "your email has been confirmed. sign in to your account to continue."
-    }
-   ],
-   "role": "guest",
-   "finalUrl": "/auth/confirmed",
-   "boardHeadings": 3,
-   "liveHeadings": 3
-  },
-  {
-   "id": "terms_gate",
-   "name": "Contributor terms gate",
-   "group": "Auth",
-   "route": "/onboarding/contributor-terms",
-   "findings": [
-    {
-     "type": "shadow",
-     "severity": "medium",
-     "what": "no button on live carries a shadow",
-     "board": "set",
-     "live": "none"
-    },
-    {
-     "type": "radius",
-     "severity": "medium",
-     "what": "card radius",
-     "board": "18px",
-     "live": "24px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "7/7 board paragraphs absent",
-     "board": "version # you keep the copyright on everything you write.",
-     "live": "please review and accept the contributor terms to carry on."
-    },
-    {
-     "type": "radius",
-     "severity": "low",
-     "what": "button radius range",
-     "board": "999px",
-     "live": "0px"
-    },
-    {
-     "type": "radius",
-     "severity": "low",
-     "what": "input radius",
-     "board": "999px",
-     "live": "0px"
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "none",
-     "live": "set"
-    },
-    {
-     "type": "colour",
-     "severity": "low",
-     "what": "card background",
-     "board": "rgb(250,249,247)",
-     "live": "rgb(255,255,255)"
-    }
-   ],
-   "role": "guest",
-   "finalUrl": "/onboarding/contributor-terms",
-   "boardHeadings": 8,
-   "liveHeadings": 3
-  },
-  {
-   "id": "printing_basics",
-   "name": "Printing basics",
-   "group": "3D Printing",
-   "route": "/printing/basics",
-   "findings": [
-    {
-     "type": "extra-section",
-     "severity": "medium",
-     "what": "live has 3 extra h2 the board does not draw",
-     "board": null,
-     "live": "if you don't have a printer | settings that matter | cleaning and safety"
-    },
-    {
-     "type": "radius",
-     "severity": "medium",
-     "what": "card radius",
-     "board": "18px",
-     "live": "24px"
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "card title weight",
-     "board": 800,
-     "live": 700
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "set",
-     "live": "none"
-    }
-   ],
-   "role": "guest",
-   "finalUrl": "/printing/basics",
-   "boardHeadings": 12,
-   "liveHeadings": 9
-  },
-  {
-   "id": "about",
-   "name": "About",
-   "group": "About",
-   "route": "/about",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "page height differs grossly",
-     "board": "668px",
-     "live": "2027px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h1 \"about\" size",
-     "board": "52px",
-     "live": "44px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h2 wording",
-     "board": "in this section",
-     "live": "more about splat"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "4/4 board paragraphs absent",
-     "board": "splat stands for supporting play by adapting toys. we make toy adaptat",
-     "live": "splat stands for supporting play by adapting toys. we publish free ins"
-    },
-    {
-     "type": "radius",
-     "severity": "low",
-     "what": "button radius range",
-     "board": "18px",
-     "live": "999px"
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "none",
-     "live": "set"
-    },
-    {
-     "type": "colour",
-     "severity": "low",
-     "what": "card background",
-     "board": null,
-     "live": "rgb(255,255,255)"
-    }
-   ],
-   "role": "guest",
-   "finalUrl": "/about",
-   "boardHeadings": 9,
-   "liveHeadings": 11
-  },
-  {
-   "id": "home",
-   "name": "Home",
-   "group": "Public site",
-   "route": "/",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"find a guide\" has no counterpart",
-     "board": "find a guide",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"borrow a toy\" has no counterpart",
-     "board": "borrow a toy",
-     "live": null
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "card title size",
-     "board": "24px",
-     "live": "15px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h1 wording",
-     "board": "go.",
-     "live": "watch it go."
-    },
-    {
-     "type": "radius",
-     "severity": "medium",
-     "what": "card radius",
-     "board": "18px",
-     "live": "24px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "2/2 board paragraphs absent",
-     "board": "we help families turn ordinary toys into ones that answer to one big s",
-     "live": "supporting play by adapting toys"
-    },
-    {
-     "type": "colour",
-     "severity": "low",
-     "what": "h1 \"go.\" colour",
-     "board": "rgb(17,121,176)",
-     "live": "rgb(28,37,48)"
-    }
-   ],
-   "role": "guest",
-   "finalUrl": "/",
-   "boardHeadings": 4,
-   "liveHeadings": 23
-  },
-  {
-   "id": "library",
-   "name": "Guides library",
-   "group": "Public site",
-   "route": "/library",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"filters\" has no counterpart",
-     "board": "filters",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"all guides\" has no counterpart",
-     "board": "all guides",
-     "live": null
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "8/8 board paragraphs absent",
-     "board": "not sure what to filter by? answer five quick questions about your chi",
-     "live": "created by a playwright e#e test."
-    }
-   ],
-   "role": "guest",
-   "finalUrl": "/library",
-   "boardHeadings": 8,
-   "liveHeadings": 62
-  },
-  {
-   "id": "tutorial",
-   "name": "Guide detail",
-   "group": "Public site",
-   "route": "/tutorials/5e299a8b-387c-42af-8731-a8b2757d4cd5",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"also worth a look\" has no counterpart",
-     "board": "also worth a look",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "page height differs grossly",
-     "board": "1926px",
-     "live": "529px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h1 \"guide c — plush dog that barks\" size",
-     "board": "44px",
-     "live": "25px"
-    },
-    {
-     "type": "radius",
-     "severity": "medium",
-     "what": "card radius",
-     "board": "24px",
-     "live": "18px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "10/10 board paragraphs absent",
-     "board": "add a battery interrupter so one press of any #mm switch makes the dog",
-     "live": "created by a playwright e#e test."
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "set",
-     "live": "none"
-    },
-    {
-     "type": "colour",
-     "severity": "low",
-     "what": "card background",
-     "board": "rgb(255,255,255)",
-     "live": null
-    }
-   ],
-   "role": "guest",
-   "finalUrl": "/tutorials/5e299a8b-387c-42af-8731-a8b2757d4cd5",
-   "boardHeadings": 12,
-   "liveHeadings": 4
-  },
-  {
-   "id": "toys_public",
-   "name": "Toy library",
-   "group": "Public site",
-   "route": "/toy-library",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"filters\" has no counterpart",
-     "board": "filters",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"all toys\" has no counterpart",
-     "board": "all toys",
-     "live": null
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "9/9 board paragraphs absent",
-     "board": "sydney · from your profile",
-     "live": "held by e#e detail holder #-#"
-    }
-   ],
-   "role": "guest",
-   "finalUrl": "/toy-library",
-   "boardHeadings": 8,
-   "liveHeadings": 15
-  },
-  {
-   "id": "toy_public",
-   "name": "Toy detail",
-   "group": "Public site",
-   "route": "/toy-library/27a51684-0646-4938-888f-68410736d488",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h1 \"toy # — plush dog that barks\" has no counterpart",
-     "board": "toy # — plush dog that barks",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"notes from family #\" has no counterpart",
-     "board": "notes from family #",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"also worth a look\" has no counterpart",
-     "board": "also worth a look",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "page height differs grossly",
-     "board": "2172px",
-     "live": "742px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "9/9 board paragraphs absent",
-     "board": "one press makes it bark and wag. adapted from guide c, cleaned, and lo",
-     "live": "sign in to request this toy."
-    },
-    {
-     "type": "radius",
-     "severity": "low",
-     "what": "button radius range",
-     "board": "999px",
-     "live": "14px"
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "set",
-     "live": "none"
-    }
-   ],
-   "role": "guest",
-   "finalUrl": "/toy-library/27a51684-0646-4938-888f-68410736d488",
-   "boardHeadings": 10,
-   "liveHeadings": 0
-  },
-  {
-   "id": "toy_request",
-   "name": "Request a toy",
-   "group": "Public site",
-   "route": "/toy-library/27a51684-0646-4938-888f-68410736d488/request",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"offer a toy back\" has no counterpart",
-     "board": "offer a toy back",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"just ask\" has no counterpart",
-     "board": "just ask",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "page height differs grossly",
-     "board": "1818px",
-     "live": "653px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "5/5 board paragraphs absent",
-     "board": "family # is open to either. offer one of your own toys, or just ask an",
-     "live": "parity parent is giving this one, so this is a straight ask."
-    }
-   ],
-   "role": "parent",
-   "finalUrl": "/toy-library/27a51684-0646-4938-888f-68410736d488/request",
-   "boardHeadings": 4,
-   "liveHeadings": 1
-  },
-  {
-   "id": "wizard",
-   "name": "Child profile wizard",
-   "group": "My SPLAT",
-   "route": "/onboarding/child",
-   "findings": [
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "card title size",
-     "board": "34px",
-     "live": "44px"
-    },
-    {
-     "type": "colour",
-     "severity": "low",
-     "what": "input background",
-     "board": "rgb(255,255,255)",
-     "live": "rgb(250,249,247)"
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "set",
-     "live": "none"
-    }
-   ],
-   "role": "parent",
-   "finalUrl": "/onboarding/child",
-   "boardHeadings": 1,
-   "liveHeadings": 1
-  },
-  {
    "id": "printing",
    "name": "Find a printer",
    "group": "3D Printing",
@@ -1277,6 +913,39 @@
    "liveHeadings": 6
   },
   {
+   "id": "printing_basics",
+   "name": "Printing basics",
+   "group": "3D Printing",
+   "route": "/printing/basics",
+   "findings": [
+    {
+     "type": "extra-section",
+     "severity": "medium",
+     "what": "live has 3 extra h2 the board does not draw",
+     "board": null,
+     "live": "if you don't have a printer | settings that matter | cleaning and safety"
+    },
+    {
+     "type": "radius",
+     "severity": "medium",
+     "what": "card radius",
+     "board": "18px",
+     "live": "24px"
+    },
+    {
+     "type": "weight",
+     "severity": "low",
+     "what": "card title weight",
+     "board": 800,
+     "live": 700
+    }
+   ],
+   "role": "guest",
+   "finalUrl": "/printing/basics",
+   "boardHeadings": 12,
+   "liveHeadings": 9
+  },
+  {
    "id": "print_request_new",
    "name": "Request a print",
    "group": "3D Printing",
@@ -1337,6 +1006,13 @@
      "what": "6/6 board paragraphs absent",
      "board": "everything below comes from guide d — switch mount, printable. tick th",
      "live": "pick the parts of a guide you need and send them to one printer."
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "none",
+     "live": "set"
     }
    ],
    "role": "parent",
@@ -1572,6 +1248,13 @@
      "live": "you do not have to be able to build something to be the person who tho"
     },
     {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "none",
+     "live": "set"
+    },
+    {
      "type": "colour",
      "severity": "low",
      "what": "card background",
@@ -1615,6 +1298,13 @@
      "what": "live has an extra h2: \"parts and money\"",
      "board": null,
      "live": "parts and money"
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "none",
+     "live": "set"
     },
     {
      "type": "colour",
@@ -1730,13 +1420,6 @@
      "what": "input background",
      "board": "rgb(255,255,255)",
      "live": "rgb(250,249,247)"
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "set",
-     "live": "none"
     }
    ],
    "role": "parent",
@@ -2143,13 +1826,6 @@
      "what": "h2 \"october #\" size",
      "board": "22px",
      "live": "25px"
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "set",
-     "live": "none"
     }
    ],
    "role": "guest",
@@ -2211,13 +1887,6 @@
      "what": "h4 \"#\" colour",
      "board": "rgb(28,37,48)",
      "live": "rgb(15,95,140)"
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "set",
-     "live": "none"
     }
    ],
    "role": "guest",
@@ -2251,13 +1920,6 @@
      "what": "card radius",
      "board": "18px",
      "live": "24px"
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "set",
-     "live": "none"
     }
    ],
    "role": "parent",
@@ -2284,13 +1946,6 @@
      "what": "live has an extra h4: \"# organisations take plastic\"",
      "board": null,
      "live": "# organisations take plastic"
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "set",
-     "live": "none"
     }
    ],
    "role": "guest",
@@ -2310,6 +1965,13 @@
      "what": "card radius",
      "board": "18px",
      "live": "24px"
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "none",
+     "live": "set"
     },
     {
      "type": "colour",
@@ -2385,13 +2047,6 @@
      "what": "card title weight",
      "board": 800,
      "live": 700
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "set",
-     "live": "none"
     }
    ],
    "role": "leader",
@@ -2432,13 +2087,6 @@
      "what": "card title weight",
      "board": 400,
      "live": 800
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "set",
-     "live": "none"
     }
    ],
    "role": "guest",
@@ -2527,6 +2175,67 @@
    "liveHeadings": 2
   },
   {
+   "id": "about",
+   "name": "About",
+   "group": "About",
+   "route": "/about",
+   "findings": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "page height differs grossly",
+     "board": "668px",
+     "live": "2027px"
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "h1 \"about\" size",
+     "board": "52px",
+     "live": "44px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "h2 wording",
+     "board": "in this section",
+     "live": "more about splat"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "4/4 board paragraphs absent",
+     "board": "splat stands for supporting play by adapting toys. we make toy adaptat",
+     "live": "splat stands for supporting play by adapting toys. we publish free ins"
+    },
+    {
+     "type": "radius",
+     "severity": "low",
+     "what": "button radius range",
+     "board": "18px",
+     "live": "999px"
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "none",
+     "live": "set"
+    },
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "card background",
+     "board": null,
+     "live": "rgb(255,255,255)"
+    }
+   ],
+   "role": "guest",
+   "finalUrl": "/about",
+   "boardHeadings": 9,
+   "liveHeadings": 11
+  },
+  {
    "id": "about_team",
    "name": "Our team",
    "group": "About",
@@ -2566,6 +2275,13 @@
      "what": "card title weight",
      "board": 800,
      "live": 700
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "none",
+     "live": "set"
     },
     {
      "type": "colour",
@@ -2659,14 +2375,7 @@
      "severity": "medium",
      "what": "5/5 board paragraphs absent",
      "board": "everything a family can ask of an organisation, in one place. say no w",
-     "live": "every ask a family can make of parity org mu#cq#eg#tml, in one queue: "
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "set",
-     "live": "none"
+     "live": "every ask a family can make of parity org mu#e#t#inayf, in one queue: "
     }
    ],
    "role": "leader",
@@ -2679,7 +2388,15 @@
    "name": "My events",
    "group": "My SPLAT",
    "route": "/dashboard/events",
-   "findings": [],
+   "findings": [
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "none",
+     "live": "set"
+    }
+   ],
    "role": "parent",
    "finalUrl": "/dashboard/events",
    "boardHeadings": 2,
@@ -2704,13 +2421,6 @@
      "what": "5/7 board paragraphs absent",
      "board": "bayside ot collective · yesterday",
      "live": "messages from the contact form. safety reports sit at the top of open "
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "set",
-     "live": "none"
     }
    ],
    "role": "admin",
@@ -2744,13 +2454,6 @@
      "what": "card title weight",
      "board": 800,
      "live": 700
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "set",
-     "live": "none"
     }
    ],
    "role": "admin",
@@ -2762,7 +2465,7 @@
    "id": "org_event_manage",
    "name": "Manage event",
    "group": "My SPLAT",
-   "route": "/dashboard/org/events/13b37ac0-1da9-4a10-87d8-b8aa19c03113",
+   "route": "/dashboard/org/events/cd1ad67a-be21-4c7f-a326-ba8829e9c3e8",
    "findings": [
     {
      "type": "missing-section",
@@ -2791,17 +2494,10 @@
      "what": "18/19 board paragraphs absent",
      "board": "families who asked for help with a printable guide and chose “the host",
      "live": "build day · thursday # october #"
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "set",
-     "live": "none"
     }
    ],
    "role": "leader",
-   "finalUrl": "/dashboard/org/events/13b37ac0-1da9-4a10-87d8-b8aa19c03113",
+   "finalUrl": "/dashboard/org/events/cd1ad67a-be21-4c7f-a326-ba8829e9c3e8",
    "boardHeadings": 4,
    "liveHeadings": 2
   },
@@ -3212,7 +2908,7 @@
    "id": "editor",
    "name": "Tutorial editor",
    "group": "My SPLAT",
-   "route": "/tutorials/c9145092-37d0-4cdd-bd6e-4aa4b759a217/edit",
+   "route": "/tutorials/3baec8e2-be1c-44d7-aac2-08d47e678e54/edit",
    "findings": [
     {
      "type": "missing-section",
@@ -3265,7 +2961,7 @@
     }
    ],
    "role": "contributor",
-   "finalUrl": "/tutorials/c9145092-37d0-4cdd-bd6e-4aa4b759a217/edit",
+   "finalUrl": "/tutorials/3baec8e2-be1c-44d7-aac2-08d47e678e54/edit",
    "boardHeadings": 5,
    "liveHeadings": 1
   },
@@ -3332,7 +3028,7 @@
    "id": "toy_detail",
    "name": "Toy detail",
    "group": "My SPLAT",
-   "route": "/dashboard/toys/27a51684-0646-4938-888f-68410736d488",
+   "route": "/dashboard/toys/1b7affd3-984d-472f-ae9d-af147a1d669c",
    "findings": [
     {
      "type": "missing-section",
@@ -3392,7 +3088,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/toys/27a51684-0646-4938-888f-68410736d488",
+   "finalUrl": "/dashboard/toys/1b7affd3-984d-472f-ae9d-af147a1d669c",
    "boardHeadings": 8,
    "liveHeadings": 1
   },
@@ -3426,7 +3122,7 @@
    "id": "thread",
    "name": "Exchange thread",
    "group": "My SPLAT",
-   "route": "/dashboard/exchanges/979a8f6f-3ba9-4588-8c9a-60daf13d7092",
+   "route": "/dashboard/exchanges/1b34b146-a171-46e3-b4eb-6cc21035d6c1",
    "findings": [
     {
      "type": "font",
@@ -3507,7 +3203,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/exchanges/979a8f6f-3ba9-4588-8c9a-60daf13d7092",
+   "finalUrl": "/dashboard/exchanges/1b34b146-a171-46e3-b4eb-6cc21035d6c1",
    "boardHeadings": 4,
    "liveHeadings": 6
   },
@@ -3798,7 +3494,7 @@
    "id": "print_job",
    "name": "Print job",
    "group": "My SPLAT",
-   "route": "/dashboard/print-requests/0eaf8883-0bde-4a71-9dca-fc3668a6c7bc",
+   "route": "/dashboard/print-requests/5fbc98be-22d9-44c0-93a9-6b23f8cfbf23",
    "findings": [
     {
      "type": "font",
@@ -3869,17 +3565,10 @@
      "what": "input background",
      "board": "rgb(255,255,255)",
      "live": "rgb(250,249,247)"
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "set",
-     "live": "none"
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/print-requests/0eaf8883-0bde-4a71-9dca-fc3668a6c7bc",
+   "finalUrl": "/dashboard/print-requests/5fbc98be-22d9-44c0-93a9-6b23f8cfbf23",
    "boardHeadings": 3,
    "liveHeadings": 5
   },
@@ -4049,7 +3738,7 @@
    "id": "child",
    "name": "Child profile",
    "group": "My SPLAT",
-   "route": "/dashboard/child/ecbbeb49-5690-4d9f-b9c0-8b4881e2fc2c",
+   "route": "/dashboard/child/b30b8c93-a737-4769-908b-2a72727e6b40",
    "findings": [
     {
      "type": "size",
@@ -4088,7 +3777,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/child/ecbbeb49-5690-4d9f-b9c0-8b4881e2fc2c",
+   "finalUrl": "/dashboard/child/b30b8c93-a737-4769-908b-2a72727e6b40",
    "boardHeadings": 4,
    "liveHeadings": 1
   },
@@ -4333,7 +4022,7 @@
      "severity": "medium",
      "what": "5/5 board paragraphs absent",
      "board": "published items are live on the public pages right now.",
-     "live": "what parity org mu#cq#eg#tml has published, and what is still a draft."
+     "live": "what parity org mu#e#t#inayf has published, and what is still a draft."
     },
     {
      "type": "weight",
@@ -4341,13 +4030,6 @@
      "what": "card title weight",
      "board": 800,
      "live": 700
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "set",
-     "live": "none"
     }
    ],
    "role": "leader",
@@ -4533,13 +4215,6 @@
    "route": "/admin/review",
    "findings": [
     {
-     "type": "font",
-     "severity": "high",
-     "what": "card title font",
-     "board": "Nunito",
-     "live": "Baloo 2"
-    },
-    {
      "type": "missing-section",
      "severity": "high",
      "what": "h2 \"guide g — musical drum\" has no counterpart",
@@ -4551,14 +4226,7 @@
      "severity": "high",
      "what": "page height differs grossly",
      "board": "1258px",
-     "live": "14869px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "card title size",
-     "board": "15px",
-     "live": "18px"
+     "live": "9078px"
     },
     {
      "type": "size",
@@ -4566,20 +4234,6 @@
      "what": "h1 \"review queue\" size",
      "board": "36px",
      "live": "44px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h1 wording",
-     "board": "review queue",
-     "live": "tutorial review queue"
-    },
-    {
-     "type": "missing-section",
-     "severity": "medium",
-     "what": "no tables on live",
-     "board": 1,
-     "live": 0
     },
     {
      "type": "missing-section",
@@ -4593,7 +4247,7 @@
      "severity": "medium",
      "what": "1/1 board paragraphs absent",
      "board": "contributor # · submitted # days",
-     "live": "edited after accepting terms"
+     "live": null
     }
    ],
    "role": "admin",
@@ -4815,13 +4469,6 @@
      "what": "1/1 board paragraphs absent",
      "board": "every job on the platform. stalled means accepted but not moved in ten",
      "live": "every job on the platform. stalled — accepted but not moved in ten day"
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "set",
-     "live": "none"
     }
    ],
    "role": "admin",
@@ -4909,13 +4556,6 @@
      "what": "card title weight",
      "board": 800,
      "live": 500
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "set",
-     "live": "none"
     }
    ],
    "role": "admin",
@@ -4976,20 +4616,269 @@
      "severity": "medium",
      "what": "1/1 board paragraphs absent",
      "board": "review and remove accounts. # total, # flagged.",
-     "live": "parity-contributor-mu#cq#htgk#m@example.com"
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "set",
-     "live": "none"
+     "live": "parity-contributor-mu#e#t#ti#nv@example.com"
     }
    ],
    "role": "admin",
    "finalUrl": "/admin/contributors",
    "boardHeadings": 1,
    "liveHeadings": 19
+  },
+  {
+   "id": "login",
+   "name": "Sign in",
+   "group": "Auth",
+   "route": "/login",
+   "findings": [
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "card title size",
+     "board": "26px",
+     "live": "22px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "3/3 board paragraphs absent",
+     "board": "one account for everything — browse, contribute, and manage your child",
+     "live": "new here? create an account"
+    },
+    {
+     "type": "weight",
+     "severity": "low",
+     "what": "card title weight",
+     "board": 800,
+     "live": 900
+    },
+    {
+     "type": "radius",
+     "severity": "low",
+     "what": "input radius",
+     "board": "999px",
+     "live": "14px"
+    }
+   ],
+   "role": "guest",
+   "finalUrl": "/login",
+   "boardHeadings": 3,
+   "liveHeadings": 3
+  },
+  {
+   "id": "signup",
+   "name": "Create account",
+   "group": "Auth",
+   "route": "/signup",
+   "findings": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h1 \"welcome to splat connect\" has no counterpart",
+     "board": "welcome to splat connect",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h4 \"create my account\" has no counterpart",
+     "board": "create my account",
+     "live": null
+    },
+    {
+     "type": "shadow",
+     "severity": "medium",
+     "what": "no button on live carries a shadow",
+     "board": "set",
+     "live": "none"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "1/1 board paragraphs absent",
+     "board": "one account for browsing, saving, requesting toys and — if you make th",
+     "live": "one account for everything — browse, contribute, and manage your child"
+    },
+    {
+     "type": "radius",
+     "severity": "low",
+     "what": "button radius range",
+     "board": "999px",
+     "live": "0px"
+    },
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "input background",
+     "board": "rgb(255,255,255)/rgba(0,0,0,0)",
+     "live": "rgb(250,249,247)"
+    }
+   ],
+   "role": "guest",
+   "finalUrl": "/signup",
+   "boardHeadings": 2,
+   "liveHeadings": 3
+  },
+  {
+   "id": "signup_sent",
+   "name": "Check your email",
+   "group": "Auth",
+   "route": "/signup",
+   "findings": [
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "card title size",
+     "board": "25px",
+     "live": "22px"
+    },
+    {
+     "type": "shadow",
+     "severity": "medium",
+     "what": "no button on live carries a shadow",
+     "board": "set",
+     "live": "none"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "2/2 board paragraphs absent",
+     "board": "we've sent a confirmation link to sam.mitchell@example.com. confirm yo",
+     "live": "one account for everything — browse, contribute, and manage your child"
+    },
+    {
+     "type": "weight",
+     "severity": "low",
+     "what": "card title weight",
+     "board": 800,
+     "live": 900
+    },
+    {
+     "type": "radius",
+     "severity": "low",
+     "what": "button radius range",
+     "board": "999px",
+     "live": "0px"
+    },
+    {
+     "type": "radius",
+     "severity": "low",
+     "what": "input radius",
+     "board": "999px",
+     "live": "14px"
+    },
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "input background",
+     "board": "rgb(255,255,255)/rgba(0,0,0,0)",
+     "live": "rgb(250,249,247)"
+    }
+   ],
+   "role": "guest",
+   "finalUrl": "/signup",
+   "boardHeadings": 3,
+   "liveHeadings": 3
+  },
+  {
+   "id": "confirmed",
+   "name": "Email confirmed",
+   "group": "Auth",
+   "route": "/auth/confirmed",
+   "findings": [
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "card title size",
+     "board": "25px",
+     "live": "44px"
+    },
+    {
+     "type": "shadow",
+     "severity": "medium",
+     "what": "no button on live carries a shadow",
+     "board": "set",
+     "live": "none"
+    },
+    {
+     "type": "missing-section",
+     "severity": "medium",
+     "what": "no inputs on live",
+     "board": 2,
+     "live": 0
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "2/2 board paragraphs absent",
+     "board": "you're all set. we'll take you back to the guide you were saving.",
+     "live": "your email has been confirmed. sign in to your account to continue."
+    }
+   ],
+   "role": "guest",
+   "finalUrl": "/auth/confirmed",
+   "boardHeadings": 3,
+   "liveHeadings": 3
+  },
+  {
+   "id": "terms_gate",
+   "name": "Contributor terms gate",
+   "group": "Auth",
+   "route": "/onboarding/contributor-terms",
+   "findings": [
+    {
+     "type": "shadow",
+     "severity": "medium",
+     "what": "no button on live carries a shadow",
+     "board": "set",
+     "live": "none"
+    },
+    {
+     "type": "radius",
+     "severity": "medium",
+     "what": "card radius",
+     "board": "18px",
+     "live": "24px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "7/7 board paragraphs absent",
+     "board": "version # you keep the copyright on everything you write.",
+     "live": "please review and accept the contributor terms to carry on."
+    },
+    {
+     "type": "radius",
+     "severity": "low",
+     "what": "button radius range",
+     "board": "999px",
+     "live": "0px"
+    },
+    {
+     "type": "radius",
+     "severity": "low",
+     "what": "input radius",
+     "board": "999px",
+     "live": "0px"
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "none",
+     "live": "set"
+    },
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "card background",
+     "board": "rgb(250,249,247)",
+     "live": "rgb(255,255,255)"
+    }
+   ],
+   "role": "guest",
+   "finalUrl": "/onboarding/contributor-terms",
+   "boardHeadings": 8,
+   "liveHeadings": 3
   },
   {
    "id": "components",
@@ -5071,13 +4960,6 @@
      "what": "h1 \"interaction states\" size",
      "board": "44px",
      "live": "36px"
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "set",
-     "live": "none"
     }
    ],
    "role": "guest",
@@ -5088,20 +4970,20 @@
  ],
  "summary": {
   "screens": 119,
-  "clean": 6,
-  "withFindings": 113,
+  "clean": 5,
+  "withFindings": 114,
   "errored": 0,
-  "findings": 523,
+  "findings": 506,
   "byType": {
-   "missing-section": 148,
-   "size": 77,
-   "copy": 116,
-   "extra-section": 20,
-   "font": 20,
-   "weight": 26,
-   "shadow": 41,
+   "missing-section": 147,
+   "size": 76,
+   "copy": 115,
+   "radius": 42,
    "colour": 33,
-   "radius": 42
+   "shadow": 28,
+   "extra-section": 20,
+   "font": 19,
+   "weight": 26
   }
  }
 }
