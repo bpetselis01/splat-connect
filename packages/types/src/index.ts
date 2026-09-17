@@ -957,6 +957,45 @@ export function readMinutes(body: string): number {
   return Math.max(1, Math.round(words / 200))
 }
 
+/**
+ * The seven lines a contributor ticks before a drop-off, and the version they
+ * ticked.
+ *
+ * Versioned rather than free-standing because a contributor who declared "no
+ * composites, nothing painted" in September has not agreed to whatever the list
+ * says in March — and a dispute at the door is exactly the moment somebody
+ * needs to know which wording was on screen. Bump the version whenever a line
+ * changes; 063 stores it on the row.
+ *
+ * All seven are required. The reason is on the public page and worth repeating
+ * wherever this is rendered: one contaminated bag can ruin a whole extruder run.
+ */
+export const DECLARATION_VERSION = 'v1-2026-09'
+
+export const RECYCLING_DECLARATION = [
+  'Clean and dry, no food residue',
+  'Labels and adhesive removed',
+  'Sorted by polymer — PLA, PETG, ABS or PP',
+  'No composites, nothing painted or coated',
+  'Nothing smaller than a thumbnail',
+  'No unknown plastics — if it is unmarked, leave it out',
+  'Photographed before drop-off',
+] as const
+
+/** Two kilos, so a machine run is worth firing up. Named once, enforced twice. */
+export const MIN_DROPOFF_GRAMS = 2000
+
+/**
+ * What a drop-off is worth as filament, roughly.
+ *
+ * About three quarters of what comes in survives shredding and extrusion. This
+ * is an ESTIMATE and every caller says so: the credit follows the weight the
+ * organisation records at the door, never this number.
+ */
+export function estimatedCreditGrams(grams: number): number {
+  return Math.floor(grams * 0.75)
+}
+
 export type DropoffStatus = 'booked' | 'received' | 'declined' | 'cancelled'
 
 /**
@@ -975,6 +1014,11 @@ export interface RecyclingDropoff {
   material: string
   estimated_grams: number
   condition_declared: boolean
+  /** Which wording of RECYCLING_DECLARATION was ticked (063). Null on rows
+   *  written before the seven-line list existed. */
+  declaration_version: string | null
+  /** A storage path in the private `recycling-photos` bucket, never a URL. */
+  photo_url: string | null
   note: string | null
   status: DropoffStatus
   weighed_grams: number | null

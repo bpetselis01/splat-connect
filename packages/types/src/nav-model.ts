@@ -57,6 +57,7 @@ export type IconName =
   | 'handshake'
   | 'bookmark'
   | 'calendar'
+  | 'recycle'
 
 /** `soon` marks a route that exists but has no feature behind it yet. */
 export type NavRow = {
@@ -124,6 +125,11 @@ export function buildNav(caps: Capabilities): NavGroup[] {
         // well. What a family comes here to check is "am I still going on
         // Sunday", which is a different question from "where are my parts".
         { href: '/dashboard/events', label: 'My events', icon: 'calendar' },
+        // A public page, deliberately, and the one row here that leaves the
+        // account section. Recycling has no "mine" screen — a drop-off is a
+        // booking with one organisation, and what a contributor comes to the
+        // hub for is the way in.
+        { href: '/get-involved/recycling', label: 'Recycle plastic', icon: 'recycle' },
       ],
     },
   ]

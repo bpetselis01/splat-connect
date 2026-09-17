@@ -243,6 +243,13 @@ export const PUBLIC_NAV: NavSection[] = [
         blurb: 'Problems nobody has solved yet, open to anyone.',
       },
       {
+        href: '/get-involved/recycling',
+        label: 'Recycling',
+        // Live since 059 built the table and 063 versioned the declaration.
+        state: 'live',
+        blurb: 'Drop clean waste plastic at an organisation, and earn print credit.',
+      },
+      {
         href: '/get-involved/events',
         label: 'Events',
         // Live since 061. Under Get Involved rather than Impact because an

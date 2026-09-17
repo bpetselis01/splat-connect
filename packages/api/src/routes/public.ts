@@ -372,7 +372,12 @@ publicRoutes.get('/organizations', async (c) => {
   const supabase = createAnonClient()
   const { data, error } = await supabase
     .from('organizations')
-    .select('id, name, description, status')
+    // The recycling columns join the list because /get-involved/recycling and
+    // its booking form both filter on "who can take what" — the alternative was
+    // a fetch per organisation to answer a question the directory already knows.
+    // All four are public by design and granted in 059; the street address is
+    // not among them and stays on the pickup columns.
+    .select('id, name, description, status, suburb, state, recycling_materials, recycling_note')
     .order('name')
 
   if (error) {

@@ -43,6 +43,8 @@ export default async function DashboardHub() {
     '/dashboard/print-requests': 'Parts you have asked someone to print.',
     '/dashboard/printers': 'Your printers, requests waiting on you, what is on the bed.',
     '/dashboard/events': 'Build days you are going to, and whether the host is printing your parts.',
+    '/get-involved/recycling':
+      'Drop clean waste plastic at an organisation that can extrude it, and earn print credit.',
     '/dashboard/organisation': 'Projects waiting for your organisation to review.',
     '/dashboard/organisation/toys': 'What your organisation has on its shelves.',
     '/dashboard/organisation/orders': 'Print jobs your organisation has taken on.',

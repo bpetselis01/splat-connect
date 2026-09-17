@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
+import Link from 'next/link'
+import { Recycle } from '@phosphor-icons/react/dist/ssr'
 import { ProfileTabs } from '@/components/profile-tabs'
-import { BookDropoffForm } from '@/components/book-dropoff-form'
 import { TutorialCard } from '@/components/tutorial-card'
 import { ToyLibraryCard } from '@/components/toy-library-card'
 import { getSavedIds } from '@/lib/saves'
@@ -158,14 +159,31 @@ export default async function OrgPublicProfilePage({
       )}
 
       {(org.recycling_materials ?? []).length > 0 && (
-        <section className="mt-8">
-          <BookDropoffForm
-            orgId={org.id}
-            orgName={org.name}
-            materials={org.recycling_materials ?? []}
-            note={org.recycling_note ?? null}
-            signedIn={signedIn}
-          />
+        // Was an inline booking form. The declaration is seven required lines
+        // with a paragraph explaining why, and that does not belong beside a
+        // list of guides — see components/dropoff-form.tsx. This states the
+        // offer and links to the screen that takes it.
+        <section className="card mt-8 flex flex-col items-start gap-3 p-5 sm:flex-row sm:items-center">
+          <span aria-hidden="true" className="empty-badge shrink-0 text-brand-deep">
+            <Recycle className="h-7 w-7" />
+          </span>
+          <div className="flex-1">
+            <h2 className="text-base font-bold text-ink">Recycling</h2>
+            <p className="mt-1 text-sm leading-relaxed text-muted">
+              {org.name} takes {(org.recycling_materials ?? []).join(', ')} and issues print
+              credit from the weight they record at the door.
+            </p>
+          </div>
+          <Link
+            href={
+              signedIn
+                ? `/get-involved/recycling/drop-off?org=${org.id}`
+                : '/get-involved/recycling'
+            }
+            className="btn btn-quiet btn-sm shrink-0"
+          >
+            {signedIn ? 'Book a drop-off' : 'How recycling works'}
+          </Link>
         </section>
       )}
 

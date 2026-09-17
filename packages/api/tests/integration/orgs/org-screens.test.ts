@@ -17,6 +17,7 @@
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
+import { DECLARATION_VERSION } from '@splat-connect/types'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
 
 let leader: TestUser
@@ -202,6 +203,20 @@ describe('recycling intake', () => {
       json(contributor.token, 'POST', { material: 'PLA', estimated_grams: 4000 })
     )
     expect(undeclared.status).toBe(400)
+
+    // Chain: a stale tab would otherwise record consent to a list nobody has
+    //        read. The client's claimed version is checked against the current
+    //        one rather than stored as given (063).
+    const stale = await app.request(
+      `/api/organizations/${orgId}/recycling`,
+      json(contributor.token, 'POST', {
+        material: 'PLA',
+        estimated_grams: 4000,
+        condition_declared: true,
+        declaration_version: 'v0-from-a-stale-tab',
+      })
+    )
+    expect(stale.status).toBe(409)
   })
 
   it('books one in', async () => {
@@ -211,10 +226,15 @@ describe('recycling intake', () => {
         material: 'PLA',
         estimated_grams: 4000,
         condition_declared: true,
+        declaration_version: DECLARATION_VERSION,
         note: 'Milk bottle tops, sorted.',
       })
     )
     expect(res.status).toBe(201)
+    // The wording is recorded, not merely the fact of ticking.
+    expect(((await res.clone().json()) as { declaration_version: string }).declaration_version).toBe(
+      DECLARATION_VERSION
+    )
     const body = (await res.json()) as { id: string; status: string; credit_grams: null }
     expect(body.status).toBe('booked')
     expect(body.credit_grams).toBeNull()

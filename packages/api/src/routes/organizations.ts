@@ -12,7 +12,15 @@ import { randomUUID } from 'node:crypto'
 import { Hono, type Context } from 'hono'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { ledOrgIds } from '../toy-access.js'
-import { EVENT_KINDS, EVENT_TOOLS, AU_STATES, ANSWER_TYPES, STORY_KINDS } from '@splat-connect/types'
+import {
+  EVENT_KINDS,
+  EVENT_TOOLS,
+  AU_STATES,
+  ANSWER_TYPES,
+  STORY_KINDS,
+  DECLARATION_VERSION,
+  MIN_DROPOFF_GRAMS,
+} from '@splat-connect/types'
 import type { AuthVariables } from '../middleware/auth.js'
 
 const organizations = new Hono<{ Variables: AuthVariables }>()
@@ -709,7 +717,7 @@ organizations.delete('/:orgId/stories/:id', async (c) => {
  */
 
 const DROPOFF_COLUMNS =
-  'id, org_id, contributor_id, material, estimated_grams, condition_declared, note, status, weighed_grams, credit_grams, decided_by, created_at, updated_at'
+  'id, org_id, contributor_id, material, estimated_grams, condition_declared, declaration_version, photo_url, note, status, weighed_grams, credit_grams, decided_by, created_at, updated_at'
 
 organizations.get('/:id/recycling', async (c) => {
   const supabase = createUserClient(c.get('token'))
@@ -736,10 +744,25 @@ organizations.post('/:id/recycling', async (c) => {
   }
   // Two kilos so a machine run is worth firing up — the artboard's minimum, and
   // the one number here that is a policy rather than a bound.
-  if (grams < 2000) return c.json({ error: 'Drop-offs start at two kilos.' }, 400)
+  if (grams < MIN_DROPOFF_GRAMS) return c.json({ error: 'Drop-offs start at two kilos.' }, 400)
 
   if (body.condition_declared !== true) {
     return c.json({ error: 'Tick every line of the condition declaration first.' }, 400)
+  }
+
+  // Which wording was ticked, not merely that something was. 063 stores it for
+  // the reason recorded there: a contributor who declared "no composites,
+  // nothing painted" in September has not agreed to whatever the list says in
+  // March, and a dispute at the door is when somebody needs to know.
+  //
+  // The client's claimed version is NOT trusted — a stale tab would otherwise
+  // record consent to a list nobody has read. If it does not match what is
+  // current, the answer is to go and read the current one.
+  if (body.declaration_version !== DECLARATION_VERSION) {
+    return c.json(
+      { error: 'The condition declaration has changed. Reload and read it before booking.' },
+      409
+    )
   }
 
   const { data, error } = await supabase
@@ -750,6 +773,7 @@ organizations.post('/:id/recycling', async (c) => {
       material,
       estimated_grams: grams,
       condition_declared: true,
+      declaration_version: DECLARATION_VERSION,
       note: typeof body.note === 'string' && body.note.trim() ? body.note.trim() : null,
     })
     .select(DROPOFF_COLUMNS)
