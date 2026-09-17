@@ -1359,46 +1359,60 @@
    * the filled tab's ink background meet the outer border cleanly at the
    * rounded corners.
    */
+  /*
+   * The sign-in / create-account pair, as TabSwitch.
+   *
+   * From design-system-update/components/navigation/TabSwitch.jsx: a pill track
+   * in --surface2 with 4px of padding, each tab 44px on a pill, and the selected
+   * one lifted onto --surface with --e1. 800 14px in the body face.
+   *
+   * It was a hairline box of mono 12px uppercase tabs with the current one
+   * filled solid ink — Pixel's segmented control. The selected tab reads as
+   * raised here rather than as inverted, which is how every other selected
+   * control in the system behaves.
+   */
   .auth-switch {
     display: inline-flex;
-    border: var(--border-width) solid var(--color-line);
-    border-radius: var(--radius-field);
-    overflow: hidden;
-    box-shadow: var(--shadow-e2);
-  }
-
-  .auth-switch a {
-    padding: 0.625rem 1.125rem;
-    background-color: var(--color-surface);
-    color: var(--color-ink);
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    transition: background-color 140ms var(--ease-out-quart), color 140ms var(--ease-out-quart);
-  }
-
-  .auth-switch a + a {
-    border-left: var(--border-width) solid var(--color-line);
-  }
-
-  /* The tab you are on is filled, not merely tinted — the board draws it at
-     full ink, and at 12px a tint would not carry the distinction. */
-  .auth-switch a[aria-current='page'] {
-    background-color: var(--color-ink);
-    color: #ffffff;
-  }
-
-  /* The other tab is a live destination, so it says so on hover. The filled one
-     is where you already are and stays put. */
-  .auth-switch a:not([aria-current='page']):hover {
+    gap: 4px;
+    padding: 4px;
+    border-radius: var(--radius-pill);
     background-color: var(--color-sunken);
   }
 
+  .auth-switch a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 16px;
+    border-radius: var(--radius-pill);
+    background-color: transparent;
+    color: var(--color-muted);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 800;
+    text-decoration: none;
+    transition:
+      background-color 140ms var(--ease-out-quart),
+      color 140ms var(--ease-out-quart);
+  }
+
+  .auth-switch a[aria-current='page'] {
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+    box-shadow: var(--shadow-e1);
+  }
+
+  .auth-switch a:not([aria-current='page']):hover {
+    color: var(--color-ink);
+    text-decoration: none;
+  }
+
+  /* 36px — the quiet step. 38px was not on the scale at all, and §4 is explicit
+     that there are four control heights and nothing interactive below 44px
+     except the quiet register. */
   .field-sm {
-    min-height: 38px;
-    padding: 0.375rem 0.625rem;
+    min-height: 36px;
+    padding: 0 10px;
   }
 
   .field-label {
@@ -1477,7 +1491,7 @@
   .chip[data-on='true'] {
     background-color: var(--color-brand-dark);
     border-color: transparent;
-    color: #ffffff;
+    color: var(--onbrand);
     box-shadow: none;
   }
 
@@ -1783,7 +1797,7 @@
   .chat-bubble-mine {
     background-color: var(--color-brand-deep);
     border-bottom-right-radius: var(--radius-field);
-    color: #ffffff;
+    color: var(--onbrand);
   }
 
   .chat-stamp {
@@ -1864,7 +1878,7 @@
 
   .step-pill[data-active] {
     background-color: var(--color-ink);
-    color: #ffffff;
+    color: var(--onbrand);
     box-shadow: none;
   }
 
@@ -1914,7 +1928,7 @@
      to outweigh .step-pill[data-active] above; the plain class alone loses. */
   .step-pill-accent[data-active] {
     background-color: var(--color-ink);
-    color: #ffffff;
+    color: var(--onbrand);
   }
 
   .step-pill-dot {
@@ -1931,7 +1945,7 @@
 
   .step-pill-dot[data-status='done'] {
     background-color: var(--color-mint);
-    color: #ffffff;
+    color: var(--onbrand);
   }
 
   .step-pill-dot[data-status='attention'] {
@@ -1941,7 +1955,7 @@
 
   .step-pill[data-active] .step-pill-dot {
     background-color: rgb(255 255 255 / 0.25);
-    color: #ffffff;
+    color: var(--onbrand);
   }
 
   /* --- Sticky submit bar (edit-tutorial page) ---------------------------- */
@@ -2062,13 +2076,16 @@
     grid-template-columns: 3.5rem 1fr auto;
   }
 
+  /* A column head is a LABEL, not a figure. §4 reserves the mono face for
+     numerics; this was 9px mono at 0.12em, which is Pixel's micro-label. It
+     takes the same treatment as every other eyebrow on the site. */
   .bom-head {
     background-color: var(--color-brand-deep);
     color: var(--color-brand-soft);
-    font-family: var(--font-mono);
-    font-size: 0.5625rem;
-    font-weight: 600;
-    letter-spacing: 0.12em;
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
     padding-block: 0.375rem;
   }
@@ -2179,7 +2196,7 @@
     z-index: 50;
     padding: 0.625rem 1.25rem;
     background-color: var(--color-success);
-    color: #ffffff;
+    color: var(--onbrand);
     border: var(--border-width) solid var(--color-line);
     border-radius: var(--radius-field);
     font-size: 0.8125rem;
@@ -2200,7 +2217,7 @@
     border: var(--border-width) solid var(--color-line);
     border-radius: var(--radius-field);
     background-color: var(--color-brand-deep);
-    color: #ffffff;
+    color: var(--onbrand);
     font-size: 0.8125rem;
     font-weight: 800;
     box-shadow: var(--shadow-e2);
@@ -2249,7 +2266,7 @@
     border: var(--border-width) solid var(--color-line);
     border-radius: var(--radius-field);
     background-color: var(--color-brand-deep);
-    color: #ffffff;
+    color: var(--onbrand);
     box-shadow: var(--shadow-e2);
     cursor: pointer;
   }
@@ -2312,7 +2329,7 @@
 
   .corner-menu-item--anchor {
     background-color: var(--color-brand-deep);
-    color: #ffffff;
+    color: var(--onbrand);
   }
 
   .corner-menu-item--anchor:hover {
@@ -2975,7 +2992,7 @@
     font-size: 13px;
     font-weight: 800;
     letter-spacing: 0;
-    color: var(--color-on-brand, var(--color-surface));
+    color: var(--onbrand);
   }
 
   .sw-scene__title {
