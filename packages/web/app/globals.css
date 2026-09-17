@@ -2422,33 +2422,49 @@
     line-height: 1;
   }
 
-  /* --- Reference list (public tutorial page) ---------------------------- */
+  /* --- Reference list (public tutorial page) ----------------------------
+   *
+   * Three sections on --surface, told apart by a 4px rule in their own tone
+   * along the top edge, not by a full-bleed tint. Soft Pop spends tint on
+   * small objects — a 48px tile, a status pill — and pays for it with contrast;
+   * three saturated panels stacked down a column outshouted the photograph
+   * above them and the one filled action beside them.
+   */
   .ref-section {
-    padding: 1rem 1.25rem;
+    position: relative;
+    overflow: hidden;
+    padding: 20px 22px;
+    border-radius: var(--radius-inset);
+    border: var(--border-width) solid var(--color-line);
+    background-color: var(--color-surface);
+    box-shadow: var(--shadow-e1);
+  }
+
+  .ref-section::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto;
+    height: 4px;
+    background-color: var(--tone, var(--color-brand));
+  }
+
+  .ref-section h2 {
+    font-family: var(--font-display);
+    font-size: 1.125rem;
+    font-weight: 800;
+    color: var(--color-ink);
   }
 
   .ref-section--parts {
-    background-color: var(--color-brand-tint);
-    border-color: var(--color-brand-soft);
-  }
-  .ref-section--parts h2 {
-    color: var(--color-brand-deep);
+    --tone: var(--color-brand);
   }
 
   .ref-section--tools {
-    background-color: var(--color-honey-soft);
-    border-color: var(--color-honey-soft);
-  }
-  .ref-section--tools h2 {
-    color: var(--color-ink);
+    --tone: var(--color-honey);
   }
 
   .ref-section--files {
-    background-color: var(--color-mint-soft);
-    border-color: var(--color-mint-soft);
-  }
-  .ref-section--files h2 {
-    color: var(--color-ink);
+    --tone: var(--color-mint);
   }
 
   .ref-row {
