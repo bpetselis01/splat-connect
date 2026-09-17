@@ -1,5 +1,5 @@
 {
- "at": "2026-09-17T09:01:25.151Z",
+ "at": "2026-09-17T09:28:36.045Z",
  "live": "http://localhost:3110",
  "screens": [
   {
@@ -119,27 +119,6 @@
     {
      "type": "missing-section",
      "severity": "high",
-     "what": "h4 \"guide b — switch lead, # mm\" has no counterpart",
-     "board": "guide b — switch lead, # mm",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"guide d — switch mount, printable\" has no counterpart",
-     "board": "guide d — switch mount, printable",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"toy # — plush dog\" has no counterpart",
-     "board": "toy # — plush dog",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
      "what": "page height differs grossly",
      "board": "1926px",
      "live": "529px"
@@ -243,7 +222,7 @@
    "id": "toy_public",
    "name": "Toy detail",
    "group": "Public site",
-   "route": "/toy-library/361bbb7d-c93a-403b-b5f4-aafb1e5c976c",
+   "route": "/toy-library/e0d9be37-560e-4eff-8cac-a90c7fcbe14d",
    "findings": [
     {
      "type": "missing-section",
@@ -264,27 +243,6 @@
      "severity": "high",
      "what": "h2 \"also worth a look\" has no counterpart",
      "board": "also worth a look",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"toy # — light-up top\" has no counterpart",
-     "board": "toy # — light-up top",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"guide c — plush dog that barks\" has no counterpart",
-     "board": "guide c — plush dog that barks",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"guide d — switch mount, printable\" has no counterpart",
-     "board": "guide d — switch mount, printable",
      "live": null
     },
     {
@@ -324,7 +282,7 @@
     }
    ],
    "role": "guest",
-   "finalUrl": "/toy-library/361bbb7d-c93a-403b-b5f4-aafb1e5c976c",
+   "finalUrl": "/toy-library/e0d9be37-560e-4eff-8cac-a90c7fcbe14d",
    "boardHeadings": 10,
    "liveHeadings": 0
   },
@@ -332,7 +290,7 @@
    "id": "toy_request",
    "name": "Request a toy",
    "group": "Public site",
-   "route": "/toy-library/361bbb7d-c93a-403b-b5f4-aafb1e5c976c/request",
+   "route": "/toy-library/e0d9be37-560e-4eff-8cac-a90c7fcbe14d/request",
    "findings": [
     {
      "type": "missing-section",
@@ -364,7 +322,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/toy-library/361bbb7d-c93a-403b-b5f4-aafb1e5c976c/request",
+   "finalUrl": "/toy-library/e0d9be37-560e-4eff-8cac-a90c7fcbe14d/request",
    "boardHeadings": 4,
    "liveHeadings": 1
   },
@@ -419,34 +377,6 @@
      "severity": "high",
      "what": "h2 \"keep at hand\" has no counterpart",
      "board": "keep at hand",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"tools and materials\" has no counterpart",
-     "board": "tools and materials",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"safe handling\" has no counterpart",
-     "board": "safe handling",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"ask an expert\" has no counterpart",
-     "board": "ask an expert",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"browse the guides\" has no counterpart",
-     "board": "browse the guides",
      "live": null
     },
     {
@@ -716,36 +646,7 @@
    "name": "Have a question?",
    "group": "Learn",
    "route": "/learn/ask-an-expert",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"about a step in a guide\" has no counterpart",
-     "board": "about a step in a guide",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"which switch, which toy, is this safe?\" has no counterpart",
-     "board": "which switch, which toy, is this safe?",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"nobody has adapted this yet\" has no counterpart",
-     "board": "nobody has adapted this yet",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"i need a person, not an answer\" has no counterpart",
-     "board": "i need a person, not an answer",
-     "live": null
-    }
-   ],
+   "findings": [],
    "role": "guest",
    "finalUrl": "/learn/ask-an-expert",
    "boardHeadings": 5,
@@ -828,13 +729,6 @@
    "group": "Learn",
    "route": "/learn/wire-a-connector",
    "findings": [
-    {
-     "type": "extra-section",
-     "severity": "medium",
-     "what": "live has 2 extra h3 the board does not draw",
-     "board": null,
-     "live": "identify the two pins | tin the ends"
-    },
     {
      "type": "missing-section",
      "severity": "medium",
@@ -947,13 +841,6 @@
      "live": "Nunito"
     },
     {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"#\" has no counterpart",
-     "board": "#",
-     "live": null
-    },
-    {
      "type": "size",
      "severity": "medium",
      "what": "card title size",
@@ -973,13 +860,6 @@
      "what": "card title weight",
      "board": 800,
      "live": 400
-    },
-    {
-     "type": "extra-section",
-     "severity": "low",
-     "what": "live has 6 extra h3 the board does not draw",
-     "board": null,
-     "live": "open a hole in the fabric | cut the wires | prepare the mono cables"
     },
     {
      "type": "shadow",
@@ -1506,34 +1386,6 @@
     {
      "type": "copy",
      "severity": "medium",
-     "what": "h3 wording",
-     "board": "describe the toy and the child",
-     "live": "tell us the toy, and what needs to change"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h3 wording",
-     "board": "an admin reads it",
-     "live": "if it does not, it goes to the makers"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h3 wording",
-     "board": "it becomes a design challenge",
-     "live": "it becomes a guide"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h3 wording",
-     "board": "you stay in the loop",
-     "live": "we check whether it already exists"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
      "what": "3/3 board paragraphs absent",
      "board": "suggest a toy worth adapting, even if you cannot build it. an admin re",
      "live": "you do not have to be able to build something to be the person who tho"
@@ -1560,48 +1412,6 @@
     {
      "type": "copy",
      "severity": "medium",
-     "what": "h3 wording",
-     "board": "draft",
-     "live": "what a guide has to contain"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h3 wording",
-     "board": "choose an organisation",
-     "live": "write for someone who has never done this"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h3 wording",
-     "board": "submit for review",
-     "live": "submit, and expect questions"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h3 wording",
-     "board": "answer the review",
-     "live": "you can work on it with other people"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h3 wording",
-     "board": "published",
-     "live": "optionally, get an organisation behind it"
-    },
-    {
-     "type": "extra-section",
-     "severity": "medium",
-     "what": "live has an extra h3: \"photograph as you go\"",
-     "board": null,
-     "live": "photograph as you go"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
      "what": "2/2 board paragraphs absent",
      "board": "what writing up an adaptation involves, start to finish. nothing goes ",
      "live": "here is exactly what is involved, so you can decide before you start r"
@@ -1618,34 +1428,6 @@
    "group": "Get involved",
    "route": "/get-involved/makers-wanted",
    "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h3 \"a family picks a guide and asks\" has no counterpart",
-     "board": "a family picks a guide and asks",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h3 \"a maker nearby claims it\" has no counterpart",
-     "board": "a maker nearby claims it",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h3 \"build, then post a working shot\" has no counterpart",
-     "board": "build, then post a working shot",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h3 \"meet and swap codes\" has no counterpart",
-     "board": "meet and swap codes",
-     "live": null
-    },
     {
      "type": "extra-section",
      "severity": "medium",
@@ -1788,34 +1570,6 @@
    "route": "/get-involved/design-challenges",
    "findings": [
     {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h3 \"write it up as a guide\" has no counterpart",
-     "board": "write it up as a guide",
-     "live": null
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h3 wording",
-     "board": "pick an open problem",
-     "live": "a family or therapist posts a problem with no known solution"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h3 wording",
-     "board": "join the thread",
-     "live": "a working answer becomes a guide"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h3 wording",
-     "board": "test it with a child",
-     "live": "anyone can work on it"
-    },
-    {
      "type": "extra-section",
      "severity": "medium",
      "what": "live has an extra h2: \"open challenges\"",
@@ -1926,113 +1680,8 @@
     {
      "type": "missing-section",
      "severity": "high",
-     "what": "h4 \"rk\" has no counterpart",
-     "board": "rk",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"rachel kaur\" has no counterpart",
-     "board": "rachel kaur",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"nt\" has no counterpart",
-     "board": "nt",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"northside therapy\" has no counterpart",
-     "board": "northside therapy",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"tb\" has no counterpart",
-     "board": "tb",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"tom beattie\" has no counterpart",
-     "board": "tom beattie",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"es\" has no counterpart",
-     "board": "es",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"eastwood special school\" has no counterpart",
-     "board": "eastwood special school",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"pn\" has no counterpart",
-     "board": "pn",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"priya nadarajah\" has no counterpart",
-     "board": "priya nadarajah",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"rm\" has no counterpart",
-     "board": "rm",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"riverina makerspace\" has no counterpart",
-     "board": "riverina makerspace",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
      "what": "h3 \"leo’s drum, six weeks on\" has no counterpart",
      "board": "leo’s drum, six weeks on",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"organisations\" has no counterpart",
-     "board": "organisations",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"deliveries map\" has no counterpart",
-     "board": "deliveries map",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"all stories\" has no counterpart",
-     "board": "all stories",
      "live": null
     },
     {
@@ -2075,90 +1724,6 @@
    "group": "Impact",
    "route": "/organizations",
    "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"nt\" has no counterpart",
-     "board": "nt",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"es\" has no counterpart",
-     "board": "es",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"rm\" has no counterpart",
-     "board": "rm",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"bk\" has no counterpart",
-     "board": "bk",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"pp\" has no counterpart",
-     "board": "pp",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"gs\" has no counterpart",
-     "board": "gs",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"geelong men’s shed\" has no counterpart",
-     "board": "geelong men’s shed",
-     "live": null
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h4 wording",
-     "board": "northside therapy collective",
-     "live": "e#e backing org #-#"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h4 wording",
-     "board": "eastwood special school",
-     "live": "e#e org #-#"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h4 wording",
-     "board": "riverina makerspace",
-     "live": "parity org mu#aqiavs#r"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h4 wording",
-     "board": "brisbane kids ot",
-     "live": "e#e showcase org #-#"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h4 wording",
-     "board": "perth play project",
-     "live": "e#e detail org #-#"
-    },
     {
      "type": "missing-section",
      "severity": "medium",
@@ -2204,27 +1769,6 @@
      "severity": "high",
      "what": "h2 \"how to work with them\" has no counterpart",
      "board": "how to work with them",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"borrow or take a toy\" has no counterpart",
-     "board": "borrow or take a toy",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"have a part printed\" has no counterpart",
-     "board": "have a part printed",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"bring a toy to the clinic\" has no counterpart",
-     "board": "bring a toy to the clinic",
      "live": null
     },
     {
@@ -2582,27 +2126,6 @@
    "route": "/get-involved/recycling",
    "findings": [
     {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h3 \"sort it and weigh it\" has no counterpart",
-     "board": "sort it and weigh it",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h3 \"book a slot and declare it\" has no counterpart",
-     "board": "book a slot and declare it",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h3 \"they weigh it at the door\" has no counterpart",
-     "board": "they weigh it at the door",
-     "live": null
-    },
-    {
      "type": "extra-section",
      "severity": "medium",
      "what": "live has 2 extra h2 the board does not draw",
@@ -2770,27 +2293,6 @@
    "route": "/about/stories/2b8a6d88-711a-4d6e-bfb0-8d243d216b07",
    "findings": [
     {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"what i learned adapting forty toys in a year\" has no counterpart",
-     "board": "what i learned adapting forty toys in a year",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"eastwood’s toy library passes # loans\" has no counterpart",
-     "board": "eastwood’s toy library passes # loans",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"a deliveries map is coming to impact\" has no counterpart",
-     "board": "a deliveries map is coming to impact",
-     "live": null
-    },
-    {
      "type": "size",
      "severity": "medium",
      "what": "h1 \"leo’s drum, six weeks on\" size",
@@ -2873,34 +2375,6 @@
     {
      "type": "missing-section",
      "severity": "high",
-     "what": "h4 \"our team\" has no counterpart",
-     "board": "our team",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"contact\" has no counterpart",
-     "board": "contact",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"partners and supporters\" has no counterpart",
-     "board": "partners and supporters",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"support splat\" has no counterpart",
-     "board": "support splat",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
      "what": "page height differs grossly",
      "board": "668px",
      "live": "2027px"
@@ -2924,7 +2398,7 @@
      "severity": "medium",
      "what": "h2 wording",
      "board": "in this section",
-     "live": "why this exists"
+     "live": "more about splat"
     },
     {
      "type": "copy",
@@ -2932,13 +2406,6 @@
      "what": "4/4 board paragraphs absent",
      "board": "splat stands for supporting play by adapting toys. we make toy adaptat",
      "live": "splat stands for supporting play by adapting toys. we publish free ins"
-    },
-    {
-     "type": "extra-section",
-     "severity": "low",
-     "what": "live has 4 extra h2 the board does not draw",
-     "board": null,
-     "live": "how the platform works | who runs it | what we are working on next"
     },
     {
      "type": "radius",
@@ -2985,55 +2452,6 @@
      "severity": "high",
      "what": "h2 \"byron petselis\" has no counterpart",
      "board": "byron petselis",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"rachel kaur\" has no counterpart",
-     "board": "rachel kaur",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"tom beattie\" has no counterpart",
-     "board": "tom beattie",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"priya nadarajah\" has no counterpart",
-     "board": "priya nadarajah",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"dan whitmore\" has no counterpart",
-     "board": "dan whitmore",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"aisha rahman\" has no counterpart",
-     "board": "aisha rahman",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"marcus lee\" has no counterpart",
-     "board": "marcus lee",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"jo alvarez\" has no counterpart",
-     "board": "jo alvarez",
      "live": null
     },
     {
@@ -3163,7 +2581,7 @@
      "severity": "medium",
      "what": "5/5 board paragraphs absent",
      "board": "everything a family can ask of an organisation, in one place. say no w",
-     "live": "every ask a family can make of parity org mu#aqiavs#r, in one queue: a"
+     "live": "every ask a family can make of parity org mu#bplnh#aa# in one queue: a"
     },
     {
      "type": "shadow",
@@ -3273,7 +2691,7 @@
    "id": "org_event_manage",
    "name": "Manage event",
    "group": "My SPLAT",
-   "route": "/dashboard/org/events/158cb8f0-2b94-45d2-a8c7-3d8617b29339",
+   "route": "/dashboard/org/events/45a9d805-9d44-4ec3-9bc7-9fa2cfae233e",
    "findings": [
     {
      "type": "font",
@@ -3333,7 +2751,7 @@
     }
    ],
    "role": "leader",
-   "finalUrl": "/dashboard/org/events/158cb8f0-2b94-45d2-a8c7-3d8617b29339",
+   "finalUrl": "/dashboard/org/events/45a9d805-9d44-4ec3-9bc7-9fa2cfae233e",
    "boardHeadings": 4,
    "liveHeadings": 2
   },
@@ -3390,34 +2808,6 @@
    "group": "About",
    "route": "/about/support",
    "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h3 \"give your skills\" has no counterpart",
-     "board": "give your skills",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h3 \"give toys and parts\" has no counterpart",
-     "board": "give toys and parts",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h3 \"register your organisation\" has no counterpart",
-     "board": "register your organisation",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h3 \"send in an idea\" has no counterpart",
-     "board": "send in an idea",
-     "live": null
-    },
     {
      "type": "size",
      "severity": "medium",
@@ -3662,83 +3052,6 @@
    "route": "/dashboard",
    "findings": [
     {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"my tutorials\" has no counterpart",
-     "board": "my tutorials",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"my toys\" has no counterpart",
-     "board": "my toys",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"my exchanges\" has no counterpart",
-     "board": "my exchanges",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"build for a family\" has no counterpart",
-     "board": "build for a family",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"design challenges\" has no counterpart",
-     "board": "design challenges",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"my print requests\" has no counterpart",
-     "board": "my print requests",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"my events\" has no counterpart",
-     "board": "my events",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"print for others\" has no counterpart",
-     "board": "print for others",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"recycle plastic\" has no counterpart",
-     "board": "recycle plastic",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"saved\" has no counterpart",
-     "board": "saved",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"notifications\" has no counterpart",
-     "board": "notifications",
-     "live": null
-    },
-    {
      "type": "size",
      "severity": "medium",
      "what": "card title size",
@@ -3771,48 +3084,6 @@
    "group": "My SPLAT",
    "route": "/dashboard/tutorials",
    "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"switch-adapted light-up drum\" has no counterpart",
-     "board": "switch-adapted light-up drum",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"bubble blower, four-second burst\" has no counterpart",
-     "board": "bubble blower, four-second burst",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"vibrating cushion with a lever\" has no counterpart",
-     "board": "vibrating cushion with a lever",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"remote car, single-press forward\" has no counterpart",
-     "board": "remote car, single-press forward",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"fan with a proximity switch\" has no counterpart",
-     "board": "fan with a proximity switch",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"talking photo album\" has no counterpart",
-     "board": "talking photo album",
-     "live": null
-    },
     {
      "type": "copy",
      "severity": "medium",
@@ -3912,7 +3183,7 @@
    "id": "editor",
    "name": "Tutorial editor",
    "group": "My SPLAT",
-   "route": "/tutorials/fde844f4-8f22-4850-9283-3b38ce50d5d7/edit",
+   "route": "/tutorials/d496462b-6149-44ed-a62e-1bfbc2f99319/edit",
    "findings": [
     {
      "type": "missing-section",
@@ -3972,7 +3243,7 @@
     }
    ],
    "role": "contributor",
-   "finalUrl": "/tutorials/fde844f4-8f22-4850-9283-3b38ce50d5d7/edit",
+   "finalUrl": "/tutorials/d496462b-6149-44ed-a62e-1bfbc2f99319/edit",
    "boardHeadings": 5,
    "liveHeadings": 1
   },
@@ -3982,48 +3253,6 @@
    "group": "My SPLAT",
    "route": "/dashboard/toys",
    "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"light-up drum\" has no counterpart",
-     "board": "light-up drum",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"bubble machine\" has no counterpart",
-     "board": "bubble machine",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"vibrating cushion\" has no counterpart",
-     "board": "vibrating cushion",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"spinning light top\" has no counterpart",
-     "board": "spinning light top",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"fairy light jar\" has no counterpart",
-     "board": "fairy light jar",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"talking photo album\" has no counterpart",
-     "board": "talking photo album",
-     "live": null
-    },
     {
      "type": "missing-section",
      "severity": "high",
@@ -4088,7 +3317,7 @@
    "id": "toy_detail",
    "name": "Toy detail",
    "group": "My SPLAT",
-   "route": "/dashboard/toys/361bbb7d-c93a-403b-b5f4-aafb1e5c976c",
+   "route": "/dashboard/toys/e0d9be37-560e-4eff-8cac-a90c7fcbe14d",
    "findings": [
     {
      "type": "font",
@@ -4169,7 +3398,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/toys/361bbb7d-c93a-403b-b5f4-aafb1e5c976c",
+   "finalUrl": "/dashboard/toys/e0d9be37-560e-4eff-8cac-a90c7fcbe14d",
    "boardHeadings": 8,
    "liveHeadings": 1
   },
@@ -4203,7 +3432,7 @@
    "id": "thread",
    "name": "Exchange thread",
    "group": "My SPLAT",
-   "route": "/dashboard/exchanges/8712a97d-5470-4c45-aea2-0d1700a56e09",
+   "route": "/dashboard/exchanges/3279814c-c1d5-4b47-adb7-5916800290f2",
    "findings": [
     {
      "type": "font",
@@ -4284,7 +3513,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/exchanges/8712a97d-5470-4c45-aea2-0d1700a56e09",
+   "finalUrl": "/dashboard/exchanges/3279814c-c1d5-4b47-adb7-5916800290f2",
    "boardHeadings": 4,
    "liveHeadings": 6
   },
@@ -4349,34 +3578,6 @@
    "route": "/dashboard/challenges",
    "findings": [
     {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"wheelchair tray mount that fits three trays\" has no counterpart",
-     "board": "wheelchair tray mount that fits three trays",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"quiet fan for a sensory corner\" has no counterpart",
-     "board": "quiet fan for a sensory corner",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"a bubble machine any child can start\" has no counterpart",
-     "board": "a bubble machine any child can start",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"toothbrush timer with a light, not a sound\" has no counterpart",
-     "board": "toothbrush timer with a light, not a sound",
-     "live": null
-    },
-    {
      "type": "copy",
      "severity": "medium",
      "what": "7/7 board paragraphs absent",
@@ -4398,34 +3599,6 @@
     {
      "type": "missing-section",
      "severity": "high",
-     "what": "h4 \"tutorials\" has no counterpart",
-     "board": "tutorials",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"toys\" has no counterpart",
-     "board": "toys",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"design challenges\" has no counterpart",
-     "board": "design challenges",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"organisations\" has no counterpart",
-     "board": "organisations",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
      "what": "page height differs grossly",
      "board": "391px",
      "live": "879px"
@@ -4442,48 +3615,6 @@
    "group": "My SPLAT",
    "route": "/dashboard/saved/tutorials",
    "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"switch-adapted light-up drum\" has no counterpart",
-     "board": "switch-adapted light-up drum",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"bubble blower, four-second burst\" has no counterpart",
-     "board": "bubble blower, four-second burst",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"fairy lights on a squeeze switch\" has no counterpart",
-     "board": "fairy lights on a squeeze switch",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"remote car, single-press forward\" has no counterpart",
-     "board": "remote car, single-press forward",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"talking photo album\" has no counterpart",
-     "board": "talking photo album",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"fan with a proximity switch\" has no counterpart",
-     "board": "fan with a proximity switch",
-     "live": null
-    },
     {
      "type": "missing-section",
      "severity": "high",
@@ -4520,34 +3651,6 @@
     {
      "type": "missing-section",
      "severity": "high",
-     "what": "h4 \"light-up drum\" has no counterpart",
-     "board": "light-up drum",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"bubble machine\" has no counterpart",
-     "board": "bubble machine",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"vibrating cushion\" has no counterpart",
-     "board": "vibrating cushion",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"spinning top\" has no counterpart",
-     "board": "spinning top",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
      "what": "page height differs grossly",
      "board": "1033px",
      "live": "238px"
@@ -4578,27 +3681,6 @@
    "group": "My SPLAT",
    "route": "/dashboard/saved/challenges",
    "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"a bubble machine any child can start\" has no counterpart",
-     "board": "a bubble machine any child can start",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"wheelchair tray mount that fits three trays\" has no counterpart",
-     "board": "wheelchair tray mount that fits three trays",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"one switch, two toys, taking turns\" has no counterpart",
-     "board": "one switch, two toys, taking turns",
-     "live": null
-    },
     {
      "type": "missing-section",
      "severity": "high",
@@ -4639,27 +3721,6 @@
    "group": "My SPLAT",
    "route": "/dashboard/saved/organisations",
    "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"northside therapy collective\" has no counterpart",
-     "board": "northside therapy collective",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"brisbane kids ot\" has no counterpart",
-     "board": "brisbane kids ot",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"eastwood special school\" has no counterpart",
-     "board": "eastwood special school",
-     "live": null
-    },
     {
      "type": "missing-section",
      "severity": "high",
@@ -4743,7 +3804,7 @@
    "id": "print_job",
    "name": "Print job",
    "group": "My SPLAT",
-   "route": "/dashboard/print-requests/f4743001-37dc-4379-9745-9e6c6e2de3b8",
+   "route": "/dashboard/print-requests/37b06b92-7c04-4b48-a1d3-0d69391f393e",
    "findings": [
     {
      "type": "font",
@@ -4817,7 +3878,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/print-requests/f4743001-37dc-4379-9745-9e6c6e2de3b8",
+   "finalUrl": "/dashboard/print-requests/37b06b92-7c04-4b48-a1d3-0d69391f393e",
    "boardHeadings": 3,
    "liveHeadings": 5
   },
@@ -5008,7 +4069,7 @@
    "id": "child",
    "name": "Child profile",
    "group": "My SPLAT",
-   "route": "/dashboard/child/9680cb3a-1127-4aa8-982b-912124a13cb0",
+   "route": "/dashboard/child/bef76e28-0120-4b8f-9966-f14de5818d48",
    "findings": [
     {
      "type": "font",
@@ -5068,7 +4129,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/child/9680cb3a-1127-4aa8-982b-912124a13cb0",
+   "finalUrl": "/dashboard/child/bef76e28-0120-4b8f-9966-f14de5818d48",
    "boardHeadings": 4,
    "liveHeadings": 1
   },
@@ -5334,7 +4395,7 @@
      "severity": "medium",
      "what": "5/5 board paragraphs absent",
      "board": "published items are live on the public pages right now.",
-     "live": "what parity org mu#aqiavs#r has published, and what is still a draft."
+     "live": "what parity org mu#bplnh#aa# has published, and what is still a draft."
     },
     {
      "type": "weight",
@@ -5507,83 +4568,6 @@
    "group": "Admin",
    "route": "/admin",
    "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"site content\" has no counterpart",
-     "board": "site content",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"tutorials awaiting review\" has no counterpart",
-     "board": "tutorials awaiting review",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"reports from members\" has no counterpart",
-     "board": "reports from members",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"design challenges awaiting review\" has no counterpart",
-     "board": "design challenges awaiting review",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"spot-check\" has no counterpart",
-     "board": "spot-check",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"print jobs stalled\" has no counterpart",
-     "board": "print jobs stalled",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"build requests needing a nudge\" has no counterpart",
-     "board": "build requests needing a nudge",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"inbox\" has no counterpart",
-     "board": "inbox",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"#\" has no counterpart",
-     "board": "#",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"accounts\" has no counterpart",
-     "board": "accounts",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"organisations\" has no counterpart",
-     "board": "organisations",
-     "live": null
-    },
     {
      "type": "missing-section",
      "severity": "high",
@@ -5779,41 +4763,6 @@
    "group": "Admin",
    "route": "/admin/ideas",
    "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"a bubble machine any child can start\" has no counterpart",
-     "board": "a bubble machine any child can start",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"light box with three brightness steps\" has no counterpart",
-     "board": "light box with three brightness steps",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"switch-adapted kettle\" has no counterpart",
-     "board": "switch-adapted kettle",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"toothbrush timer with a light, not a sound\" has no counterpart",
-     "board": "toothbrush timer with a light, not a sound",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"musical mat that responds to one step\" has no counterpart",
-     "board": "musical mat that responds to one step",
-     "live": null
-    },
     {
      "type": "size",
      "severity": "medium",
@@ -6089,7 +5038,7 @@
      "severity": "medium",
      "what": "1/1 board paragraphs absent",
      "board": "review and remove accounts. # total, # flagged.",
-     "live": "parity-contributor-mu#aqied#rm#@example.com"
+     "live": "parity-contributor-mu#bpls#pdp@example.com"
     },
     {
      "type": "shadow",
@@ -6500,6 +5449,27 @@
      "live": "Baloo 2"
     },
     {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"buttons\" has no counterpart",
+     "board": "buttons",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"elevation & radii\" has no counterpart",
+     "board": "elevation & radii",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"mascot — \"splat\" the bear\" has no counterpart",
+     "board": "mascot — \"splat\" the bear",
+     "live": null
+    },
+    {
      "type": "size",
      "severity": "medium",
      "what": "card title size",
@@ -6512,27 +5482,6 @@
      "what": "h1 \"components & states\" size",
      "board": "44px",
      "live": "36px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h2 wording",
-     "board": "elevation & radii",
-     "live": "record card"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h2 wording",
-     "board": "mascot — \"splat\" the bear",
-     "live": "disclosure"
-    },
-    {
-     "type": "extra-section",
-     "severity": "medium",
-     "what": "live has an extra h2: \"status pills\"",
-     "board": null,
-     "live": "status pills"
     },
     {
      "type": "missing-section",
@@ -6583,20 +5532,20 @@
  ],
  "summary": {
   "screens": 119,
-  "clean": 2,
-  "withFindings": 117,
+  "clean": 3,
+  "withFindings": 116,
   "errored": 0,
-  "findings": 736,
+  "findings": 586,
   "byType": {
-   "missing-section": 285,
+   "missing-section": 159,
    "size": 87,
-   "copy": 137,
+   "copy": 118,
    "radius": 43,
    "colour": 34,
    "font": 30,
    "weight": 50,
    "shadow": 45,
-   "extra-section": 25
+   "extra-section": 20
   }
  }
 }

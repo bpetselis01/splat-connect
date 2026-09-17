@@ -104,9 +104,48 @@ function collectFingerprint(rootSelector) {
   cardEls.length = 0
   cardEls.push(...leafCards)
   const cardSet = new Set(cardEls)
+
+  /*
+   * Is this heading the title of a RECORD rather than a piece of page chrome?
+   *
+   * Two signals, because one was not enough. Sitting inside a card catches
+   * grids; it misses a leaderboard, whose rows carry no border or shadow and so
+   * are not cards. /impact reported twelve missing sections that were simply
+   * the board's sample contributors ("Rachel Kaur", "Northside Therapy")
+   * against live's fixtures.
+   *
+   * The second signal is repetition: an element whose parent has siblings of
+   * the same shape is one row of a list, and a list is data. Comparing those by
+   * text compares fixtures, which this report ignores everywhere else.
+   */
+  const shapeKey = (el) => el.tagName + '.' + (el.className || '').toString().trim()
+  // A row, not a page section. Three constraints, each earned:
+  //   - at most five levels up, because a record's title sits inside its row
+  //     but can be a few wrappers deep inside it;
+  //   - the repeated element is a list item, table row, link, or a div with a
+  //     class — a page's five bare <section> siblings are not a list, and
+  //     counting them as one made /printing/basics report the "Which filament"
+  //     heading missing seconds after it was added;
+  //   - three or more of them, so a two-column layout is not a list either.
+  const ROW_TAGS = new Set(['LI', 'TR', 'A', 'BUTTON', 'ARTICLE'])
+  const rowish = (el) =>
+    ROW_TAGS.has(el.tagName) || (el.className || '').toString().trim().length > 0
+  const inRepeatedRow = (el) => {
+    let depth = 0
+    for (let n = el; n && n !== root && depth < 5; n = n.parentElement, depth++) {
+      const parent = n.parentElement
+      if (!parent || !rowish(n)) continue
+      const key = shapeKey(n)
+      let same = 0
+      for (const sib of parent.children) if (shapeKey(sib) === key) same++
+      if (same >= 3) return true
+    }
+    return false
+  }
+
   const insideCard = (el) => {
     for (let n = el.parentElement; n; n = n.parentElement) if (cardSet.has(n)) return true
-    return false
+    return inRepeatedRow(el)
   }
 
   const seenText = new Set()
