@@ -1,0 +1,907 @@
+[
+ {
+  "id": "home",
+  "name": "Home",
+  "group": "Public site",
+  "boardRoute": "/",
+  "route": "/"
+ },
+ {
+  "id": "library",
+  "name": "Guides library",
+  "group": "Public site",
+  "boardRoute": "/tutorials",
+  "route": "/library"
+ },
+ {
+  "id": "tutorial",
+  "name": "Guide detail",
+  "group": "Public site",
+  "boardRoute": "/tutorials/[id]",
+  "route": "/tutorials/[id]",
+  "sampleFrom": "/tutorials"
+ },
+ {
+  "id": "toys_public",
+  "name": "Toy library",
+  "group": "Public site",
+  "boardRoute": "/toys",
+  "route": "/toy-library"
+ },
+ {
+  "id": "toy_public",
+  "name": "Toy detail",
+  "group": "Public site",
+  "boardRoute": "/toys/[id]",
+  "route": "/toy-library/[id]",
+  "sampleFrom": "/toy-library"
+ },
+ {
+  "id": "toy_request",
+  "name": "Request a toy",
+  "group": "Public site",
+  "boardRoute": "/toys/[id]/request",
+  "route": "/toy-library/[id]/request",
+  "sampleFrom": "/toy-library"
+ },
+ {
+  "id": "wizard",
+  "name": "Child profile wizard",
+  "group": "My SPLAT",
+  "boardRoute": "/onboarding/child",
+  "route": "/onboarding/child",
+  "role": "parent"
+ },
+ {
+  "id": "learn",
+  "name": "Learn \u00b7 Course home",
+  "group": "Learn",
+  "boardRoute": "/learn",
+  "route": "/learn"
+ },
+ {
+  "id": "learn_101",
+  "name": "Toy adaptation 101",
+  "group": "Learn",
+  "boardRoute": "/learn/toy-adaptation-101",
+  "route": "/learn/toy-adaptation-101"
+ },
+ {
+  "id": "learn_switch",
+  "name": "Switch types explained",
+  "group": "Learn",
+  "boardRoute": "/learn/switch-types",
+  "route": "/learn/switch-types"
+ },
+ {
+  "id": "learn_choose",
+  "name": "Choosing a toy",
+  "group": "Learn",
+  "boardRoute": "/learn/choosing-a-toy",
+  "route": "/learn/choosing-a-toy"
+ },
+ {
+  "id": "learn_tools",
+  "name": "Tools and materials",
+  "group": "Learn",
+  "boardRoute": "/learn/tools-and-materials",
+  "route": "/learn/tools-and-materials"
+ },
+ {
+  "id": "learn_safety",
+  "name": "Safe handling",
+  "group": "Learn",
+  "boardRoute": "/learn/safe-handling",
+  "route": "/learn/safety-and-cleaning"
+ },
+ {
+  "id": "learn_ask",
+  "name": "Have a question?",
+  "group": "Learn",
+  "boardRoute": "/learn/ask",
+  "route": "/learn/ask-an-expert"
+ },
+ {
+  "id": "learn_circuit",
+  "name": "How a switch works",
+  "group": "Learn",
+  "boardRoute": "/learn/how-a-switch-works",
+  "route": "/learn/how-a-switch-works"
+ },
+ {
+  "id": "learn_q1",
+  "name": "Checkpoint: the basics",
+  "group": "Learn",
+  "boardRoute": "/learn/checkpoint-1",
+  "route": "/learn/checkpoint-1"
+ },
+ {
+  "id": "learn_q2",
+  "name": "Checkpoint: the bench",
+  "group": "Learn",
+  "boardRoute": "/learn/checkpoint-2",
+  "route": "/learn/checkpoint-2"
+ },
+ {
+  "id": "learn_connector",
+  "name": "Wire a 3.5 mm connector",
+  "group": "Learn",
+  "boardRoute": "/learn/wire-a-connector",
+  "route": "/learn/wire-a-connector"
+ },
+ {
+  "id": "learn_q3",
+  "name": "Checkpoint: the connector",
+  "group": "Learn",
+  "boardRoute": "/learn/checkpoint-3",
+  "route": "/learn/checkpoint-3"
+ },
+ {
+  "id": "learn_hamster",
+  "name": "Build 1: Hamster Mania",
+  "group": "Learn",
+  "boardRoute": "/learn/build-hamster-mania",
+  "route": "/learn/build-hamster-mania"
+ },
+ {
+  "id": "learn_duck",
+  "name": "Build 2: Duck bubble machine",
+  "group": "Learn",
+  "boardRoute": "/learn/build-duck-bubbles",
+  "route": "/learn/build-duck-bubbles"
+ },
+ {
+  "id": "learn_rachel",
+  "name": "Build 3: Ms Rachel doll",
+  "group": "Learn",
+  "boardRoute": "/learn/build-ms-rachel",
+  "route": "/learn/build-ms-rachel"
+ },
+ {
+  "id": "learn_diyswitch",
+  "name": "Build a 3D-printed switch",
+  "group": "Learn",
+  "boardRoute": "/learn/build-a-switch",
+  "route": "/learn/build-a-switch"
+ },
+ {
+  "id": "learn_handover",
+  "name": "Checks, cleaning and handover",
+  "group": "Learn",
+  "boardRoute": "/learn/handover",
+  "route": "/learn/handover"
+ },
+ {
+  "id": "learn_q4",
+  "name": "Final checkpoint",
+  "group": "Learn",
+  "boardRoute": "/learn/final-checkpoint",
+  "route": "/learn/final-checkpoint"
+ },
+ {
+  "id": "printing",
+  "name": "Find a printer",
+  "group": "3D Printing",
+  "boardRoute": "/printing",
+  "route": "/printing"
+ },
+ {
+  "id": "printing_basics",
+  "name": "Printing basics",
+  "group": "3D Printing",
+  "boardRoute": "/printing/basics",
+  "route": "/printing/basics"
+ },
+ {
+  "id": "print_request_new",
+  "name": "Request a print",
+  "group": "3D Printing",
+  "boardRoute": "/printing/request",
+  "route": "/printing/requests",
+  "role": "parent"
+ },
+ {
+  "id": "involved",
+  "name": "Get involved",
+  "group": "Get involved",
+  "boardRoute": "/get-involved",
+  "route": "/get-involved"
+ },
+ {
+  "id": "inv_families",
+  "name": "For families",
+  "group": "Get involved",
+  "boardRoute": "/get-involved/families",
+  "route": "/get-involved/families"
+ },
+ {
+  "id": "inv_contributors",
+  "name": "For contributors",
+  "group": "Get involved",
+  "boardRoute": "/get-involved/contributors",
+  "route": "/get-involved/contributors"
+ },
+ {
+  "id": "inv_orgs",
+  "name": "For organisations",
+  "group": "Get involved",
+  "boardRoute": "/get-involved/organisations",
+  "route": "/get-involved/organisations"
+ },
+ {
+  "id": "org_request",
+  "name": "Request an organisation",
+  "group": "Get involved",
+  "boardRoute": "/get-involved/organisations/request",
+  "route": "/get-involved/organisations/request",
+  "role": "parent"
+ },
+ {
+  "id": "inv_idea",
+  "name": "Submit an idea",
+  "group": "Get involved",
+  "boardRoute": "/get-involved/submit-an-idea",
+  "route": "/get-involved/submit-an-idea"
+ },
+ {
+  "id": "inv_guide",
+  "name": "Submit a guide",
+  "group": "Get involved",
+  "boardRoute": "/get-involved/submit-a-tutorial",
+  "route": "/get-involved/submit-a-tutorial"
+ },
+ {
+  "id": "makers_wanted",
+  "name": "Makers wanted",
+  "group": "Get involved",
+  "boardRoute": "/get-involved/makers-wanted",
+  "route": "/get-involved/makers-wanted"
+ },
+ {
+  "id": "mw_new",
+  "name": "Ask for a build",
+  "group": "Get involved",
+  "boardRoute": "/get-involved/makers-wanted/new",
+  "route": "/get-involved/makers-wanted/new",
+  "role": "parent"
+ },
+ {
+  "id": "build_thread",
+  "name": "Build thread",
+  "group": "My SPLAT",
+  "boardRoute": "/dashboard/exchanges/build/[id]",
+  "route": "/dashboard/exchanges/build/[id]",
+  "role": "parent",
+  "sampleFrom": "/dashboard/exchanges/build"
+ },
+ {
+  "id": "challenges",
+  "name": "Design challenges",
+  "group": "Get involved",
+  "boardRoute": "/get-involved/design-challenges",
+  "route": "/get-involved/design-challenges"
+ },
+ {
+  "id": "challenge_detail",
+  "name": "Challenge detail",
+  "group": "Get involved",
+  "boardRoute": "/get-involved/design-challenges/[id]",
+  "route": "/get-involved/design-challenges/[id]",
+  "sampleFrom": "/get-involved/design-challenges"
+ },
+ {
+  "id": "impact",
+  "name": "Community impact",
+  "group": "Impact",
+  "boardRoute": "/impact",
+  "route": "/impact"
+ },
+ {
+  "id": "orgs",
+  "name": "Organisations",
+  "group": "Impact",
+  "boardRoute": "/organizations",
+  "route": "/organizations"
+ },
+ {
+  "id": "org_public",
+  "name": "Organisation profile",
+  "group": "Impact",
+  "boardRoute": "/organizations/[id]/public",
+  "route": "/organizations/[id]/public",
+  "sampleFrom": "/organizations"
+ },
+ {
+  "id": "contributor",
+  "name": "Contributor profile",
+  "group": "Impact",
+  "boardRoute": "/contributors/[id]",
+  "route": "/contributors/[id]",
+  "sampleFrom": "/contributors"
+ },
+ {
+  "id": "impact_events",
+  "name": "Events",
+  "group": "Get involved",
+  "boardRoute": "/get-involved/events",
+  "route": "/get-involved/events"
+ },
+ {
+  "id": "event_detail",
+  "name": "Event detail",
+  "group": "Get involved",
+  "boardRoute": "/get-involved/events/[id]",
+  "route": "/get-involved/events/[id]",
+  "sampleFrom": "/get-involved/events"
+ },
+ {
+  "id": "event_register",
+  "name": "Register for an event",
+  "group": "Get involved",
+  "boardRoute": "/get-involved/events/[id]/register",
+  "route": "/get-involved/events/[id]/register",
+  "sampleFrom": "/get-involved/events"
+ },
+ {
+  "id": "recycling",
+  "name": "Recycling",
+  "group": "Get involved",
+  "boardRoute": "/get-involved/recycling",
+  "route": "/get-involved/recycling"
+ },
+ {
+  "id": "recycle_new",
+  "name": "Book a drop-off",
+  "group": "Get involved",
+  "boardRoute": "/get-involved/recycling/drop-off",
+  "route": "/get-involved/recycling/drop-off",
+  "role": "parent"
+ },
+ {
+  "id": "org_recycling",
+  "name": "Recycling intake",
+  "group": "Organisation",
+  "boardRoute": "/dashboard/organisation/recycling",
+  "route": "/dashboard/organisation/recycling",
+  "role": "leader"
+ },
+ {
+  "id": "impact_news",
+  "name": "Stories",
+  "group": "About",
+  "boardRoute": "/about/stories",
+  "route": "/about/stories"
+ },
+ {
+  "id": "story_detail",
+  "name": "Story",
+  "group": "About",
+  "boardRoute": "/about/stories/[id]",
+  "route": "/about/stories/[id]",
+  "sampleFrom": "/about/stories"
+ },
+ {
+  "id": "impact_map",
+  "name": "Deliveries map",
+  "group": "Impact",
+  "boardRoute": "/impact/map",
+  "route": "/impact/map"
+ },
+ {
+  "id": "about",
+  "name": "About",
+  "group": "About",
+  "boardRoute": "/about",
+  "route": "/about"
+ },
+ {
+  "id": "about_team",
+  "name": "Our team",
+  "group": "About",
+  "boardRoute": "/about/team",
+  "route": "/about/team"
+ },
+ {
+  "id": "contact",
+  "name": "Contact",
+  "group": "About",
+  "boardRoute": "/contact",
+  "route": "/contact"
+ },
+ {
+  "id": "org_requests",
+  "name": "Requests to your organisation",
+  "group": "Organisation",
+  "boardRoute": "/dashboard/organisation/requests",
+  "route": "/dashboard/organisation/requests",
+  "role": "leader"
+ },
+ {
+  "id": "my_events",
+  "name": "My events",
+  "group": "My SPLAT",
+  "boardRoute": "/dashboard/events",
+  "route": "/dashboard/events",
+  "role": "parent"
+ },
+ {
+  "id": "admin_inbox",
+  "name": "Inbox",
+  "group": "Admin",
+  "boardRoute": "/admin/inbox",
+  "route": "/admin/inbox",
+  "role": "admin"
+ },
+ {
+  "id": "admin_builds",
+  "name": "Build requests",
+  "group": "Admin",
+  "boardRoute": "/admin/build-requests",
+  "route": "/admin/build-requests",
+  "role": "admin"
+ },
+ {
+  "id": "org_event_manage",
+  "name": "Manage event",
+  "group": "My SPLAT",
+  "boardRoute": "/dashboard/org/events/[id]",
+  "route": "/dashboard/org/events/[id]",
+  "role": "leader",
+  "sampleFrom": "/dashboard/org/events"
+ },
+ {
+  "id": "about_partners",
+  "name": "Partners and supporters",
+  "group": "About",
+  "boardRoute": "/about/partners",
+  "route": "/about/partners"
+ },
+ {
+  "id": "about_support",
+  "name": "Support SPLAT",
+  "group": "About",
+  "boardRoute": "/about/support",
+  "route": "/about/support"
+ },
+ {
+  "id": "safety",
+  "name": "Safety",
+  "group": "Legal",
+  "boardRoute": "/safety",
+  "route": "/safety"
+ },
+ {
+  "id": "privacy",
+  "name": "Privacy policy",
+  "group": "Legal",
+  "boardRoute": "/privacy",
+  "route": "/privacy"
+ },
+ {
+  "id": "terms",
+  "name": "Terms of use",
+  "group": "Legal",
+  "boardRoute": "/terms",
+  "route": "/terms"
+ },
+ {
+  "id": "conduct",
+  "name": "Code of conduct",
+  "group": "Legal",
+  "boardRoute": "/code-of-conduct",
+  "route": "/code-of-conduct"
+ },
+ {
+  "id": "legal_purpose",
+  "name": "What Connect is (and isn\u2019t)",
+  "group": "Legal",
+  "boardRoute": "/legal/intended-purpose",
+  "route": "/legal/intended-purpose"
+ },
+ {
+  "id": "legal_contributor",
+  "name": "Contributor terms",
+  "group": "Legal",
+  "boardRoute": "/legal/contributor-terms",
+  "route": "/legal/contributor-terms"
+ },
+ {
+  "id": "legal_org",
+  "name": "Organisation leader terms",
+  "group": "Legal",
+  "boardRoute": "/legal/org-leader-terms",
+  "route": "/legal/org-leader-terms"
+ },
+ {
+  "id": "hub",
+  "name": "My SPLAT",
+  "group": "My SPLAT",
+  "boardRoute": "/dashboard",
+  "route": "/dashboard",
+  "role": "parent"
+ },
+ {
+  "id": "tutorials",
+  "name": "My tutorials",
+  "group": "My SPLAT",
+  "boardRoute": "/dashboard/tutorials",
+  "route": "/dashboard/tutorials",
+  "role": "contributor"
+ },
+ {
+  "id": "upload",
+  "name": "Add a tutorial",
+  "group": "My SPLAT",
+  "boardRoute": "/upload",
+  "route": "/upload",
+  "role": "contributor"
+ },
+ {
+  "id": "editor",
+  "name": "Tutorial editor",
+  "group": "My SPLAT",
+  "boardRoute": "/tutorials/[id]/edit",
+  "route": "/tutorials/[id]/edit",
+  "role": "contributor",
+  "sampleFrom": "/tutorials"
+ },
+ {
+  "id": "toys",
+  "name": "My toys",
+  "group": "My SPLAT",
+  "boardRoute": "/dashboard/toys",
+  "route": "/dashboard/toys",
+  "role": "parent"
+ },
+ {
+  "id": "toy_new",
+  "name": "Add a toy",
+  "group": "My SPLAT",
+  "boardRoute": "/dashboard/toys/new",
+  "route": "/dashboard/toys/new",
+  "role": "parent"
+ },
+ {
+  "id": "toy_detail",
+  "name": "Toy detail",
+  "group": "My SPLAT",
+  "boardRoute": "/dashboard/toys/[id]",
+  "route": "/dashboard/toys/[id]",
+  "role": "parent",
+  "sampleFrom": "/dashboard/toys"
+ },
+ {
+  "id": "exchanges",
+  "name": "My exchanges",
+  "group": "My SPLAT",
+  "boardRoute": "/dashboard/exchanges",
+  "route": "/dashboard/exchanges",
+  "role": "parent"
+ },
+ {
+  "id": "thread",
+  "name": "Exchange thread",
+  "group": "My SPLAT",
+  "boardRoute": "/dashboard/exchanges/[id]",
+  "route": "/dashboard/exchanges/[id]",
+  "role": "parent",
+  "sampleFrom": "/dashboard/exchanges"
+ },
+ {
+  "id": "thread_live",
+  "name": "Exchange inbox (live)",
+  "group": "My SPLAT",
+  "boardRoute": "/dashboard/exchanges (inbox)",
+  "route": "/dashboard/exchanges",
+  "role": "parent"
+ },
+ {
+  "id": "my_challenges",
+  "name": "My design challenges",
+  "group": "My SPLAT",
+  "boardRoute": "/dashboard/challenges",
+  "route": "/dashboard/challenges",
+  "role": "parent"
+ },
+ {
+  "id": "saved",
+  "name": "Saved",
+  "group": "My SPLAT",
+  "boardRoute": "/dashboard/saved",
+  "route": "/dashboard/saved",
+  "role": "parent"
+ },
+ {
+  "id": "saved_tutorials",
+  "name": "Saved tutorials",
+  "group": "My SPLAT",
+  "boardRoute": "/dashboard/saved/tutorials",
+  "route": "/dashboard/saved/tutorials",
+  "role": "parent"
+ },
+ {
+  "id": "saved_toys",
+  "name": "Saved toys",
+  "group": "My SPLAT",
+  "boardRoute": "/dashboard/saved/toys",
+  "route": "/dashboard/saved/toys",
+  "role": "parent"
+ },
+ {
+  "id": "saved_challenges",
+  "name": "Saved challenges",
+  "group": "My SPLAT",
+  "boardRoute": "/dashboard/saved/challenges",
+  "route": "/dashboard/saved/challenges",
+  "role": "parent"
+ },
+ {
+  "id": "saved_orgs",
+  "name": "Saved organisations",
+  "group": "My SPLAT",
+  "boardRoute": "/dashboard/saved/organisations",
+  "route": "/dashboard/saved/organisations",
+  "role": "parent"
+ },
+ {
+  "id": "notifications",
+  "name": "Notifications",
+  "group": "My SPLAT",
+  "boardRoute": "/notifications",
+  "route": "/notifications",
+  "role": "parent"
+ },
+ {
+  "id": "print_requests",
+  "name": "My print requests",
+  "group": "My SPLAT",
+  "boardRoute": "/dashboard/print-requests",
+  "route": "/dashboard/print-requests",
+  "role": "parent"
+ },
+ {
+  "id": "print_job",
+  "name": "Print job",
+  "group": "My SPLAT",
+  "boardRoute": "/dashboard/print-requests/[id]",
+  "route": "/dashboard/print-requests/[id]",
+  "role": "parent",
+  "sampleFrom": "/dashboard/print-requests"
+ },
+ {
+  "id": "print_offer",
+  "name": "Print for others",
+  "group": "My SPLAT",
+  "boardRoute": "/dashboard/printers",
+  "route": "/dashboard/printers",
+  "role": "parent"
+ },
+ {
+  "id": "print_add",
+  "name": "Add a printer",
+  "group": "My SPLAT",
+  "boardRoute": "/dashboard/printers/new",
+  "route": "/dashboard/printers/new",
+  "role": "parent"
+ },
+ {
+  "id": "account",
+  "name": "Account",
+  "group": "My SPLAT",
+  "boardRoute": "/dashboard/profile",
+  "route": "/dashboard/profile",
+  "role": "parent"
+ },
+ {
+  "id": "child",
+  "name": "Child profile",
+  "group": "My SPLAT",
+  "boardRoute": "/dashboard/child/[id]",
+  "route": "/dashboard/child/[id]",
+  "role": "parent",
+  "sampleFrom": "/dashboard/child"
+ },
+ {
+  "id": "child_new",
+  "name": "Add child",
+  "group": "My SPLAT",
+  "boardRoute": "/dashboard/child/new",
+  "route": "/dashboard/child/new",
+  "role": "parent"
+ },
+ {
+  "id": "org_queue",
+  "name": "Org review queue",
+  "group": "Organisation",
+  "boardRoute": "/dashboard/organisation",
+  "route": "/dashboard/organisation",
+  "role": "leader"
+ },
+ {
+  "id": "org_profile",
+  "name": "Organisation profile",
+  "group": "Organisation",
+  "boardRoute": "/dashboard/organisation/profile",
+  "route": "/dashboard/organisation/profile",
+  "role": "leader"
+ },
+ {
+  "id": "org_toys",
+  "name": "Toy inventory",
+  "group": "Organisation",
+  "boardRoute": "/dashboard/organisation/toys",
+  "route": "/dashboard/organisation/toys",
+  "role": "leader"
+ },
+ {
+  "id": "org_posts",
+  "name": "Events and stories",
+  "group": "Organisation",
+  "boardRoute": "/dashboard/organisation/publish",
+  "route": "/dashboard/organisation/publish",
+  "role": "leader"
+ },
+ {
+  "id": "org_event_new",
+  "name": "Publish an event",
+  "group": "Organisation",
+  "boardRoute": "/dashboard/organisation/events/new",
+  "route": "/dashboard/organisation/events/new",
+  "role": "leader"
+ },
+ {
+  "id": "org_story_new",
+  "name": "Publish a story",
+  "group": "Organisation",
+  "boardRoute": "/dashboard/organisation/stories/new",
+  "route": "/dashboard/organisation/stories/new",
+  "role": "leader"
+ },
+ {
+  "id": "org_orders",
+  "name": "Print orders",
+  "group": "Organisation",
+  "boardRoute": "/dashboard/organisation/orders",
+  "route": "/dashboard/organisation/orders",
+  "role": "leader"
+ },
+ {
+  "id": "admin_content",
+  "name": "Site content",
+  "group": "Admin",
+  "boardRoute": "/admin/content",
+  "route": "/admin/content",
+  "role": "admin"
+ },
+ {
+  "id": "admin",
+  "name": "Admin dashboard",
+  "group": "Admin",
+  "boardRoute": "/admin",
+  "route": "/admin",
+  "role": "admin"
+ },
+ {
+  "id": "admin_review",
+  "name": "Review queue (live)",
+  "group": "Admin",
+  "boardRoute": "/admin/review",
+  "route": "/admin/review",
+  "role": "admin"
+ },
+ {
+  "id": "admin_review_detail",
+  "name": "Review a tutorial",
+  "group": "Admin",
+  "boardRoute": "/admin/review/[id]",
+  "route": "/admin/review/[id]",
+  "role": "admin",
+  "sampleFrom": "/admin/review"
+ },
+ {
+  "id": "admin_reports",
+  "name": "Reports",
+  "group": "Admin",
+  "boardRoute": "/admin/reports",
+  "route": "/admin/reports",
+  "role": "admin"
+ },
+ {
+  "id": "admin_ideas",
+  "name": "Ideas queue",
+  "group": "Admin",
+  "boardRoute": "/admin/ideas",
+  "route": "/admin/ideas",
+  "role": "admin"
+ },
+ {
+  "id": "admin_idea_detail",
+  "name": "Review an idea",
+  "group": "Admin",
+  "boardRoute": "/admin/ideas/[id]",
+  "route": "/admin/ideas/[id]",
+  "role": "admin",
+  "sampleFrom": "/admin/ideas"
+ },
+ {
+  "id": "admin_prints",
+  "name": "Print jobs",
+  "group": "Admin",
+  "boardRoute": "/admin/print-jobs",
+  "route": "/admin/print-jobs",
+  "role": "admin"
+ },
+ {
+  "id": "admin_spot",
+  "name": "Spot-check",
+  "group": "Admin",
+  "boardRoute": "/admin/spot-check",
+  "route": "/admin/spot-check",
+  "role": "admin"
+ },
+ {
+  "id": "admin_orgs",
+  "name": "Organisations",
+  "group": "Admin",
+  "boardRoute": "/admin/organizations",
+  "route": "/admin/organizations",
+  "role": "admin"
+ },
+ {
+  "id": "admin_contributors",
+  "name": "Accounts",
+  "group": "Admin",
+  "boardRoute": "/admin/contributors",
+  "route": "/admin/contributors",
+  "role": "admin"
+ },
+ {
+  "id": "login",
+  "name": "Sign in",
+  "group": "Auth",
+  "boardRoute": "/login",
+  "route": "/login"
+ },
+ {
+  "id": "signup",
+  "name": "Create account",
+  "group": "Auth",
+  "boardRoute": "/signup",
+  "route": "/signup"
+ },
+ {
+  "id": "signup_sent",
+  "name": "Check your email",
+  "group": "Auth",
+  "boardRoute": "/signup (sent)",
+  "route": "/signup"
+ },
+ {
+  "id": "confirmed",
+  "name": "Email confirmed",
+  "group": "Auth",
+  "boardRoute": "/auth/confirmed",
+  "route": "/auth/confirmed"
+ },
+ {
+  "id": "terms_gate",
+  "name": "Contributor terms gate",
+  "group": "Auth",
+  "boardRoute": "/onboarding/contributor-terms",
+  "route": "/onboarding/contributor-terms"
+ },
+ {
+  "id": "components",
+  "name": "Component sheet",
+  "group": "Prototype",
+  "boardRoute": "/design-system",
+  "route": "/design-system"
+ },
+ {
+  "id": "states",
+  "name": "Interaction states",
+  "group": "Prototype",
+  "boardRoute": "/design-system/states",
+  "route": "/design-system/states"
+ }
+]

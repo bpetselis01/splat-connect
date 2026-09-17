@@ -12,8 +12,11 @@
  */
 import Image from 'next/image'
 
+import { safePhotoSrc } from '@/lib/photo-src'
+
 export function CardPhoto({ src }: { src: string | null }) {
-  if (!src) {
+  const safe = safePhotoSrc(src)
+  if (!safe) {
     return (
       <div
         aria-hidden="true"
@@ -26,7 +29,7 @@ export function CardPhoto({ src }: { src: string | null }) {
 
   return (
     <div className="relative h-36 w-full bg-sunken">
-      <Image src={src} alt="" fill className="object-cover" />
+      <Image src={safe} alt="" fill className="object-cover" />
     </div>
   )
 }

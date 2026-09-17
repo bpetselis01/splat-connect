@@ -47,6 +47,21 @@ const nextConfig: NextConfig = {
         hostname: '*.supabase.co',
         pathname: '/storage/v1/object/public/**',
       },
+      // The local Supabase stack, for dev and E2E. Without this every photo on
+      // the local stack falls back to its placeholder, which quietly hides
+      // layout the photos are meant to fill. Keep lib/photo-src.ts in step.
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '54321',
+        pathname: '/storage/v1/object/public/**',
+      },
+      {
+        protocol: 'http',
+        hostname: '127.0.0.1',
+        port: '54321',
+        pathname: '/storage/v1/object/public/**',
+      },
     ],
   },
 }

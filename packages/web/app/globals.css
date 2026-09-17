@@ -267,9 +267,26 @@
     }
   }
 
+  /*
+   * The display face, and the reason the app never looked like the board.
+   *
+   * Soft Pop's type ramp puts Baloo 2 on display/h1/h2/h3 and Nunito on
+   * everything from h4 down — `type.*` in splat-soft-pop.tokens.json all
+   * reference `{font.display}`. That was ported as a token and then never
+   * applied to anything: until now the only rule reading --font-display was
+   * `.numeral`, a numerals-only restriction inherited from Pixel, where the
+   * display face was Jersey 10 and genuinely was numerals-only. Soft Pop
+   * repointed the token at Baloo 2 and left the restriction in place, so every
+   * heading in the app rendered in the body font while the board set 478
+   * elements in Baloo 2.
+   *
+   * h4 and below stay on the body font deliberately — that is the ramp, not an
+   * oversight.
+   */
   h1,
   h2,
   h3 {
+    font-family: var(--font-display);
     text-wrap: balance;
     letter-spacing: -0.015em;
   }
