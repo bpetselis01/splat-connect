@@ -72,12 +72,14 @@ describe('StageRail', () => {
     const bars = [...container.querySelectorAll('span[aria-hidden="true"]')].filter(
       (el) => (el as HTMLElement).style.height === '3px' || el.className.includes('h-[3px]')
     ) as HTMLElement[]
-    // Requested is done -> filled. Accepted stopped and Handover was never
-    // reached -> both grey.
-    expect(bars).toHaveLength(3)
+    // One per step, the board's geometry. Requested is done -> filled.
+    // Accepted stopped and Handover was never reached -> both grey. Closed is
+    // `done` on a record that stopped, so its own bar fills.
+    expect(bars).toHaveLength(4)
     expect(bars[0].style.background).toContain('--b600')
     expect(bars[1].style.background).toContain('--surface2')
     expect(bars[2].style.background).toContain('--surface2')
+    expect(bars[3].style.background).toContain('--b600')
   })
 
   /*

@@ -18,7 +18,7 @@ import type { StageFacts } from '@/lib/exchange-stages'
 export function StageRailCard({ stages, facts }: { stages: Stage[]; facts: StageFacts }) {
   return (
     <section aria-label="Progress and details">
-      <div className="rounded-t-[var(--radius-card)] border border-line border-b-0 bg-surface p-5 shadow-[var(--shadow-e2),var(--shadow-hi)]">
+      <div className="rounded-t-[var(--radius-card)] border border-line border-b-0 bg-surface px-[22px] pb-[18px] pt-5 shadow-[var(--shadow-e2),var(--shadow-hi)]">
         {/* The rail inside a card drops its own inset chrome — it is already in
             a box, and a panel inside a panel reads as a mistake. */}
         <div className="[&>ol]:border-0 [&>ol]:bg-transparent [&>ol]:p-0">
@@ -26,15 +26,15 @@ export function StageRailCard({ stages, facts }: { stages: Stage[]; facts: Stage
         </div>
       </div>
 
-      <div className="rounded-b-[var(--radius-card)] border border-t border-dashed border-line bg-surface px-5 pb-5 pt-4 shadow-[var(--shadow-e2),var(--shadow-hi)]">
-        <h3 className="text-xs font-extrabold uppercase tracking-widest text-muted">
-          {facts.title}
-        </h3>
-        <dl className="mt-3 grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(200px,1fr))]">
+      {/* No --hi on the lower half: the inset highlight reads as the top edge
+          of a fresh card, and this half is the bottom of the one above. */}
+      <div className="rounded-b-[var(--radius-card)] border border-t border-dashed border-line bg-surface px-[22px] pb-5 pt-[18px] shadow-[var(--shadow-e2)]">
+        <h3 className="eyebrow text-muted">{facts.title}</h3>
+        <dl className="mt-3 grid gap-3.5 [grid-template-columns:repeat(auto-fit,minmax(200px,1fr))]">
           {facts.facts.map((fact) => (
-            <div key={fact.label}>
-              <dt className="text-[13px] uppercase tracking-wide text-muted">{fact.label}</dt>
-              <dd className="mt-0.5 font-bold text-ink">{fact.value}</dd>
+            <div key={fact.label} className="min-w-0">
+              <dt className="text-[13px] font-extrabold text-muted">{fact.label}</dt>
+              <dd className="mt-1 text-[15px] font-bold text-ink">{fact.value}</dd>
             </div>
           ))}
         </dl>

@@ -53,6 +53,18 @@
      own lighter step, so sky takes it and the seven tones stay distinguishable. */
   --color-brand-50: #f0f9ff;
 
+  /* The rest of the brand ramp. Five of its eleven steps already exist above
+     under the name product code calls them by (brand-50/tint/brand/dark/deep);
+     these six have no semantic job and exist only so the ramp is complete —
+     the design-system page draws all eleven, and the brand mark's gradient
+     runs 400 -> 600. */
+  --color-brand-200: #b9e1f7;
+  --color-brand-300: #87cdf0;
+  --color-brand-400: #4fb4e6;
+  --color-brand-800: #124f73;
+  --color-brand-900: #14425f;
+  --color-brand-950: #0d2a3f;
+
   --color-ink: #1c2530;
   --color-muted: #5a6675;
   /* A hairline at 9% ink, not a solid blue rule. Paired with --border-width
@@ -156,6 +168,20 @@
     --b700: var(--color-brand-deep);
     --b100: var(--color-brand-tint);
     --b50: var(--color-brand-50);
+
+    /* The ramp under the artboard's own names. Product code writes the
+       aliases above; only the design-system sheet walks the ramp. */
+    --brand-50: var(--color-brand-50);
+    --brand-100: var(--color-brand-tint);
+    --brand-200: var(--color-brand-200);
+    --brand-300: var(--color-brand-300);
+    --brand-400: var(--color-brand-400);
+    --brand-500: var(--color-brand);
+    --brand-600: var(--color-brand-dark);
+    --brand-700: var(--color-brand-deep);
+    --brand-800: var(--color-brand-800);
+    --brand-900: var(--color-brand-900);
+    --brand-950: var(--color-brand-950);
     --onbrand: #ffffff;
     --focus: var(--color-ink);
 

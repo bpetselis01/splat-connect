@@ -67,7 +67,7 @@ export function StageRail({
       className="grid list-none gap-2.5 rounded-[var(--radius-inset)] border border-line bg-canvas p-4 px-[18px]"
       style={{ gridTemplateColumns: `repeat(${stages.length}, minmax(0, 1fr))` }}
     >
-      {stages.map((stage, i) => {
+      {stages.map((stage) => {
         const tone = TONE[stage.state]
         const Glyph = GLYPH[stage.state]
         // A step only becomes a control when there is somewhere for it to go.
@@ -79,14 +79,17 @@ export function StageRail({
         const interactive = Boolean(onSelect)
         const Step = interactive ? 'button' : 'div'
         /*
-         * The bar belongs to the step on its left, so the last one has none,
-         * and it is filled only when that step is itself `done`.
+         * Every step draws a bar, filled only when that step is itself `done`.
          *
          * It used to look at the step on the RIGHT, which drew a filled bar
          * into the Closed step of a record that stopped early — Closed is
          * `done` on a rejected exchange, so the rail showed progress through a
          * Handover that never happened. A bar is the journey out of a step, not
          * the arrival at the next one.
+         *
+         * The last step keeps its bar: the board draws four, and the trailing
+         * one is what makes the four columns read as one rail rather than three
+         * links and an orphan.
          */
         const barDone = stage.state === 'done'
         return (
@@ -106,13 +109,11 @@ export function StageRail({
                 >
                   <Glyph size={15} weight="bold" />
                 </span>
-                {i < stages.length - 1 && (
-                  <span
-                    aria-hidden="true"
-                    className="h-[3px] min-w-0 flex-1 rounded-full"
-                    style={{ background: barDone ? 'var(--b600)' : 'var(--surface2)' }}
-                  />
-                )}
+                <span
+                  aria-hidden="true"
+                  className="h-[3px] min-w-0 flex-1 rounded-full"
+                  style={{ background: barDone ? 'var(--b600)' : 'var(--surface2)' }}
+                />
               </span>
               <span className="text-sm font-extrabold text-ink">{stage.label}</span>
               <span className="text-[13px] font-semibold leading-[1.4] text-muted">{stage.caption}</span>
