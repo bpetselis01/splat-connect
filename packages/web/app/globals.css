@@ -3837,3 +3837,129 @@
     text-align: center;
   }
 }
+
+/*
+ * The Learn course home's hero. The board gives it its own shape rather than
+ * the browse hero's: no dot texture, two blobs instead, and a progress panel
+ * where the browse screens put a contribution aside — because the second thing
+ * a returning reader wants is not "give something", it is "where was I".
+ */
+@layer components {
+  .learn-hero {
+    position: relative;
+    overflow: hidden;
+    padding: 32px;
+    border-radius: var(--radius-card);
+    border: var(--border-width) solid var(--color-line);
+    background-color: var(--color-surface);
+    box-shadow: var(--shadow-e3), var(--shadow-hi);
+  }
+
+  @media (min-width: 900px) {
+    .learn-hero {
+      padding: 44px 44px 40px;
+    }
+  }
+
+  .learn-hero__blobs {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .learn-hero__blobs > span {
+    position: absolute;
+    display: block;
+    border-radius: 50%;
+    animation: blob 19s ease-in-out infinite;
+  }
+
+  .learn-hero__blobs > span:nth-child(1) {
+    left: -8%;
+    top: -40%;
+    width: 34vw;
+    height: 34vw;
+    background: radial-gradient(circle at 40% 40%, var(--tamber), transparent 65%);
+    opacity: 0.85;
+  }
+
+  .learn-hero__blobs > span:nth-child(2) {
+    right: -6%;
+    bottom: -45%;
+    width: 28vw;
+    height: 28vw;
+    background: radial-gradient(circle at 50% 50%, var(--b100), transparent 65%);
+    animation-duration: 24s;
+    animation-direction: reverse;
+    opacity: 0.8;
+  }
+
+  .learn-hero__grid {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+    align-items: center;
+  }
+
+  @media (min-width: 900px) {
+    .learn-hero__grid {
+      grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+      gap: 36px;
+    }
+  }
+
+  .learn-hero__title {
+    margin: 6px 0 0;
+    font-family: var(--font-display);
+    font-size: clamp(2.125rem, 4vw, 3.375rem);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+    color: var(--color-ink);
+  }
+
+  /* A course fact. On --surface with a hairline and --e1, not a sunken pill:
+     these sit ON the hero card, and a sunken chip on a raised card reads as a
+     hole punched in it. */
+  .course-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 13px;
+    border-radius: var(--radius-pill);
+    border: var(--border-width) solid var(--color-line);
+    background-color: var(--color-surface);
+    box-shadow: var(--shadow-e1);
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--color-ink);
+  }
+
+  .learn-progress {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 14px;
+    padding: 24px 26px;
+    border-radius: var(--radius-card);
+    border: var(--border-width) solid var(--color-line);
+    background-color: var(--color-surface);
+    box-shadow: var(--shadow-e2), var(--shadow-hi);
+  }
+
+  /* The bear's line. Same tail idea as the homepage bubble, mirrored to point
+     left at the bear beside it rather than down at one underneath. */
+  .learn-hero__bubble {
+    margin: 0;
+    padding: 10px 14px;
+    border-radius: var(--radius-inset) 16px 16px 4px;
+    background-color: var(--color-honey-soft);
+    color: var(--tink);
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.4;
+  }
+}
