@@ -49,7 +49,7 @@ describe('ToyLibraryClient', () => {
         signedIn={false}
       />
     )
-    fireEvent.change(screen.getByLabelText('Search by toy name'), { target: { value: 'fire' } })
+    fireEvent.change(screen.getByLabelText('Search'), { target: { value: 'fire' } })
     expect(screen.getByRole('link', { name: /Fire truck/ })).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /Blocks/ })).not.toBeInTheDocument()
   })
@@ -66,7 +66,7 @@ describe('ToyLibraryClient', () => {
         signedIn={false}
       />
     )
-    fireEvent.click(screen.getByRole('button', { name: 'Good (7–10)' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Good' }))
     expect(screen.getByRole('link', { name: /Good toy/ })).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /Fair toy/ })).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /Loved toy/ })).not.toBeInTheDocument()
@@ -83,17 +83,17 @@ describe('ToyLibraryClient', () => {
         signedIn={false}
       />
     )
-    fireEvent.click(screen.getByRole('button', { name: 'Switch-adapted' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Switch-adapted only' }))
     expect(screen.getByRole('link', { name: /Adapted toy/ })).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /Plain toy/ })).not.toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Well-loved (1–3)' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Well-loved' }))
     expect(screen.getByRole('link', { name: /Adapted toy/ })).toBeInTheDocument()
   })
 
   it('shows the empty state when nothing matches', () => {
     render(<ToyLibraryClient toys={[toy({ name: 'Fire truck' })]} savedIds={[]} signedIn={false} />)
-    fireEvent.change(screen.getByLabelText('Search by toy name'), { target: { value: 'zzz' } })
-    expect(screen.getByText('No toys found.')).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Search'), { target: { value: 'zzz' } })
+    expect(screen.getByText('Nothing matches all of those yet')).toBeInTheDocument()
   })
 })

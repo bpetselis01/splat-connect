@@ -31,28 +31,34 @@ export function TutorialCard({ tutorial, save }: { tutorial: Listed; save?: Save
     <BoundaryLink
       href={`/tutorials/${tutorial.id}`}
       data-testid="tutorial-card"
-      className="card card-link overflow-hidden"
+      className="card card-link flex flex-col overflow-hidden"
     >
       <CardPhoto src={tutorial.toy_photo_url} icon={BookOpen} tint="var(--color-brand-soft)" />
-      <div className="flex flex-col gap-2 p-5">
-        <p className="card-title truncate">{tutorial.title}</p>
-        {tutorial.description && (
-          <p className="mt-1 line-clamp-2 text-[13px] leading-relaxed text-muted">
-            {tutorial.description}
-          </p>
-        )}
-        {/* Only when an organisation actually backed it. BackingSummary's
-            "Reviewed by SPLAT" fallback is for the contributor's own pages, where
-            the review path means something; on a public card it is internal jargon
-            to a parent, and the absence of a badge is the correct signal. */}
-        {backed && <BackingSummary backing={tutorial.tutorial_orgs ?? []} />}
-        <div className="mt-3 flex flex-wrap gap-2">
+      {/* Chips, then title, then blurb, then whatever is true of this one —
+          the board's order. Title-first put the least scannable line at the top
+          of a grid of twelve: you read the difficulty to decide whether the
+          title is worth reading, not the other way round. */}
+      <div className="flex flex-1 flex-col gap-2 px-4 pb-[18px] pt-4">
+        <div className="flex flex-wrap gap-1.5">
           <Badge status={tutorial.difficulty} />
           <Badge status={tutorial.kind} label={KIND_LABEL[tutorial.kind]} />
           {tutorial.maturity && tutorial.maturity !== 'complete' && (
             <Badge status={tutorial.maturity} label={MATURITY_LABEL[tutorial.maturity]} />
           )}
         </div>
+        <p className="card-title-grid line-clamp-2">{tutorial.title}</p>
+        {tutorial.description && (
+          <p className="line-clamp-2 text-sm leading-[1.45] text-muted">{tutorial.description}</p>
+        )}
+        {/* Only when an organisation actually backed it. BackingSummary's
+            "Reviewed by SPLAT" fallback is for the contributor's own pages, where
+            the review path means something; on a public card it is internal jargon
+            to a parent, and the absence of a badge is the correct signal. */}
+        {backed && (
+          <div className="mt-auto pt-1.5">
+            <BackingSummary backing={tutorial.tutorial_orgs ?? []} />
+          </div>
+        )}
       </div>
     </BoundaryLink>
   )

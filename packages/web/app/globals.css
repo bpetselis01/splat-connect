@@ -399,6 +399,24 @@
   }
 
   /*
+   * The title on a card that tiles a grid — a guide, a toy, a challenge.
+   *
+   * 18px Nunito 800/1.3, measured off the board's own library and toy rows, and
+   * deliberately NOT .card-title's 20px Baloo. The brief's "card title 20px
+   * Baloo 2" line is about RecordCard, the list row for a record with a
+   * process: one or two of those on a screen, read. Six to twelve of these tile
+   * a grid and are scanned, and the display face shouts at that density. Two
+   * card titles, two sizes, both from the board.
+   */
+  .card-title-grid {
+    font-family: var(--font-sans);
+    font-size: 18px;
+    font-weight: 800;
+    line-height: 1.3;
+    color: var(--color-ink);
+  }
+
+  /*
    * The flat register — a bordered box with no depth, for things that sit
    * inside another surface rather than on the canvas: notification rows, the
    * editor's file rows, a tutorial's parts/tools/files blocks, and the
@@ -1131,16 +1149,23 @@
    */
   .public-shell {
     /*
-     * A proportional margin rather than a fixed measure: 80% wide, centred, so
-     * every display gets the same 10% of breathing room down each side instead
-     * of a 1440px column that looks generous on a laptop and marooned on a
-     * 27-inch monitor.
+     * 1280px with 32px gutters, which is what every screen in the board sets
+     * on its own outermost section: `max-width:1280px;margin:0 auto;padding:…
+     * 32px`. Screens that want to be narrower than that — a form, a wizard, a
+     * lesson — say so themselves, exactly as the board does.
      *
-     * The 110rem ceiling is the one place the proportion stops. Past roughly a
-     * 2200px viewport, 80% is 1760px of content, and a three-across card grid
-     * that wide stops being a grid and becomes three billboards.
+     * It was `min(80%, 110rem)`, a proportional column, which at a 1280px
+     * viewport gave 1024px of content against the board's 1216. Every screen
+     * in the app was a fifth narrower than the thing it was copied from, which
+     * is why three-across card grids kept coming out two-across and why the
+     * measured type sizes all read slightly too large for their column.
+     *
+     * The proportional rule was the better idea in the abstract and it loses
+     * here for the ordinary reason: the board is the specification, a 20%
+     * width difference changes every line break on every screen, and half a
+     * design system cannot be reconciled with the other half by eye.
      */
-    width: min(80%, 110rem);
+    width: min(100% - 4rem, 1280px);
     margin-inline: auto;
   }
 
@@ -3384,6 +3409,14 @@
     gap: 10px;
   }
 
+  /* 52px — the primary step, for a secondary that has to match a primary
+     beside it. .btn-quiet is 44 on its own, which is right in a toolbar and
+     wrong next to a 52px filled button. */
+  .btn-lg {
+    min-height: 52px;
+    font-size: 16px;
+  }
+
   /* 26px Baloo. These were .card-title at 18px, which made a door read as a
      list row rather than as one of three choices. */
   .door__title {
@@ -3554,5 +3587,253 @@
 
   .nav-more__item[aria-current='page'] {
     color: var(--color-brand-deep);
+  }
+}
+
+/*
+ * The browse hero. Ported from the board's #library and #toys screens, which
+ * open with a card rather than with a heading: the screen has two jobs (find
+ * one, or contribute one) and the card is what fits both without making the
+ * second a footnote.
+ */
+@layer components {
+  .browse-hero {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+    align-items: stretch;
+    overflow: hidden;
+    padding: 32px;
+    border-radius: var(--radius-card);
+    border: var(--border-width) solid var(--color-line);
+    background-color: var(--color-surface);
+    box-shadow: var(--shadow-e3), var(--shadow-hi);
+  }
+
+  @media (min-width: 900px) {
+    .browse-hero {
+      grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+      gap: 36px;
+      padding: 44px 44px 40px;
+    }
+  }
+
+  /* The one dot grid Soft Pop keeps, and it keeps it because it is masked:
+     the ellipse fades it out long before any edge, so it reads as paper
+     rather than as Pixel's hard field. */
+  .browse-hero__texture {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: radial-gradient(
+      color-mix(in srgb, var(--color-brand-dark) 16%, transparent) 1.6px,
+      transparent 1.6px
+    );
+    background-size: 22px 22px;
+    -webkit-mask-image: radial-gradient(ellipse 70% 90% at 18% 20%, #000 20%, transparent 75%);
+    mask-image: radial-gradient(ellipse 70% 90% at 18% 20%, #000 20%, transparent 75%);
+  }
+
+  .browse-hero__copy {
+    position: relative;
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .browse-hero__title {
+    max-width: 16ch;
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(2.5rem, 4.6vw, 3.75rem);
+    font-weight: 800;
+    line-height: 1.02;
+    letter-spacing: -0.022em;
+    text-wrap: balance;
+    color: var(--color-ink);
+  }
+
+  .browse-hero__lede {
+    max-width: 52ch;
+    margin: 0;
+    font-size: 18px;
+    line-height: 1.55;
+    text-wrap: pretty;
+    color: var(--color-muted);
+  }
+
+  /* Above a hairline, not in tiles: a stat that needs a box is a stat
+     competing with the headline, and here the headline wins. */
+  .browse-hero__stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin: 2px 0 0;
+    padding-top: 22px;
+    border-top: var(--border-width) solid var(--color-line);
+  }
+
+  .browse-hero__stat-n {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 36px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-ink);
+  }
+
+  .browse-hero__aside {
+    position: relative;
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 14px;
+    padding: 26px 26px 24px;
+    border-radius: var(--radius-card);
+    background-color: var(--color-honey-soft);
+    color: var(--tink);
+  }
+
+  .browse-hero__aside-title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(1.375rem, 2.2vw, 1.75rem);
+    font-weight: 800;
+    line-height: 1.1;
+    text-wrap: balance;
+  }
+}
+
+/*
+ * The browse layout under the hero: a sticky 280px filter rail beside the grid.
+ * The board gives both /library and /toys this shape, and it is the reason the
+ * filters can be more than four chips in a row — a facet set that grows sideways
+ * pushes the first card below the fold.
+ */
+@layer components {
+  .browse-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+  }
+
+  @media (min-width: 1000px) {
+    .browse-layout {
+      grid-template-columns: 280px minmax(0, 1fr);
+      gap: 32px;
+    }
+  }
+
+  .browse-filters {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    padding: 22px;
+    border-radius: var(--radius-card);
+    border: var(--border-width) solid var(--color-line);
+    background-color: var(--color-surface);
+    box-shadow: var(--shadow-e2), var(--shadow-hi);
+  }
+
+  /* Only once there is a column to stick inside. Below that the rail is just
+     the first block on the page and sticking it would pin it over the grid. */
+  @media (min-width: 1000px) {
+    .browse-filters {
+      position: sticky;
+      top: 94px;
+    }
+  }
+
+  .browse-filters fieldset {
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .browse-filters legend {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--color-ink);
+  }
+
+  /* A tinted note at the foot of the rail — the board runs two, each pointing
+     at the thing to do when the filters come back empty. */
+  .browse-note {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 14px;
+    border-radius: var(--radius-inset);
+    font-size: 14px;
+    line-height: 1.45;
+    color: var(--tink);
+  }
+
+  .browse-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .browse-head h2 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 30px;
+    font-weight: 800;
+    line-height: 1.1;
+    color: var(--color-ink);
+  }
+
+  .browse-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 20px;
+  }
+
+  /* Cards in a row end level. Without this a card with no chips comes up
+     short and the row reads as a ragged edge rather than a grid — the grid
+     item stretches, but the card inside a .save-host wrapper does not. */
+  .browse-grid > *,
+  .browse-grid .save-host > .card {
+    height: 100%;
+  }
+
+  /* An active filter, shown as a dismissable ink pill above the grid. It is
+     inverted on purpose: these are the only thing on the screen you can take
+     away, and the board makes them the darkest object on it. */
+  .browse-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 36px;
+    padding: 0 6px 0 12px;
+    border-radius: var(--radius-pill);
+    background-color: var(--color-ink);
+    color: var(--color-canvas);
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  /* The board's empty state: a dashed card, not a centred emoji. */
+  .browse-empty {
+    display: grid;
+    place-items: center;
+    padding: 48px;
+    border-radius: var(--radius-card);
+    border: var(--border-width) dashed var(--color-line);
+    background-color: var(--color-surface);
+    text-align: center;
   }
 }
