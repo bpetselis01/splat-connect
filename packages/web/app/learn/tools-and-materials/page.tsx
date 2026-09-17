@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { ProsePage } from '@/components/prose-page'
+import { LearnShell } from '@/components/learn-shell'
 
 export const metadata = {
   title: 'Tools and materials — SPLAT Connect',
@@ -8,7 +9,8 @@ export const metadata = {
 
 export default function ToolsAndMaterials() {
   return (
-    <ProsePage
+    <LearnShell slug="tools-and-materials">
+      <ProsePage
       title="Tools and materials"
       intro="A first adaptation needs surprisingly little. Here is what actually gets used, separated from what a hobby electronics shop will try to sell you."
     >
@@ -104,6 +106,7 @@ export default function ToolsAndMaterials() {
           the list before you start, not halfway through.
         </p>
       </section>
-    </ProsePage>
+      </ProsePage>
+    </LearnShell>
   )
 }

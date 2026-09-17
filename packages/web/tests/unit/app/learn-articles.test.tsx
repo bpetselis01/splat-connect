@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import type { ReactElement } from 'react'
 import Adaptation101 from '@/app/learn/toy-adaptation-101/page'
 import SwitchTypes from '@/app/learn/switch-types/page'
@@ -9,6 +9,20 @@ import SafetyAndCleaning from '@/app/learn/safety-and-cleaning/page'
 // Moved out of Learn on 2026-08-20 when 3D printing became a product pillar.
 // Still a long-form article, so it keeps the shared assertions below.
 import PrintingBasics from '@/app/printing/basics/page'
+
+/**
+ * The lesson body, not the page.
+ *
+ * Five of these six render inside components/learn-shell.tsx, whose outline
+ * lists every lesson in the course — so an unscoped query for "3.5 mm" matches
+ * the sidebar as well as the prose. The shell labels its own column "Lesson";
+ * the sixth (printing basics) is not in the course and has no shell, so it
+ * falls back to the whole render.
+ */
+function body() {
+  const region = screen.queryByRole('region', { name: 'Lesson' })
+  return region ? within(region) : screen
+}
 
 const articles: Array<[string, () => ReactElement]> = [
   ['Toy adaptation 101', Adaptation101],
@@ -36,8 +50,8 @@ describe('long-form articles', () => {
   // not a silent regression (see trust-pages.test.tsx for the same shape).
   it('explains the battery interrupter, which is the core idea of the whole site', () => {
     render(<Adaptation101 />)
-    expect(screen.getAllByText(/battery interrupter/i)).toHaveLength(2)
-    expect(screen.getByText(/3\.5\s?mm/i)).toBeInTheDocument()
+    expect(body().getAllByText(/battery interrupter/i)).toHaveLength(2)
+    expect(body().getByText(/3\.5\s?mm/i)).toBeInTheDocument()
   })
 
   // Exact counts, not just >0: each family's heading names it once, and

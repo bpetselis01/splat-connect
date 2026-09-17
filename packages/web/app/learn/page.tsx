@@ -1,48 +1,75 @@
 /**
- * The Learn section hub.
+ * The Learn course home.
  *
- * Learn holds *articles* — general knowledge about switch adaptation. The Guides
- * catalogue at /library holds instructions for one specific toy. Keep the two
- * words apart in all copy.
+ * Was a hub grid of six standalone articles. It is a course now — six units,
+ * sixteen lessons, in an order that teaches — because the artboard's Learn
+ * section is a course rather than a reading list, and half the lessons are
+ * procedures that only make sense after the one before them.
+ *
+ * Learn holds the general knowledge. The Guides catalogue at /library holds
+ * instructions for one specific toy. Keep the two words apart in all copy.
  */
 import Link from 'next/link'
-import { PUBLIC_NAV } from '@/lib/public-nav'
-import { HubGrid } from '@/components/hub-grid'
+import { Wrench, ShieldCheck, ChatsCircle, BookOpen } from '@phosphor-icons/react/dist/ssr'
+import { LearnHome } from '@/components/learn-home'
 
 export const metadata = {
   title: 'Learn — SPLAT Connect',
   description:
-    'How switch adaptation works: battery interrupters, switch types, tools, safety and 3D printing.',
+    'A free course in switch-adapting toys: how a switch works, the one soldering skill, three toys adapted step by step, and a switch you print yourself.',
 }
 
-const START_HERE = ['/learn/toy-adaptation-101', '/learn/switch-types', '/learn/choosing-a-toy']
+const REFS = [
+  {
+    href: '/learn/tools-and-materials' as const,
+    icon: Wrench,
+    label: 'Tools and materials',
+    blurb: 'The shopping list, with what to borrow instead.',
+  },
+  {
+    href: '/learn/safety-and-cleaning' as const,
+    icon: ShieldCheck,
+    label: 'Safe handling',
+    blurb: 'Six habits for irons, cutters and batteries.',
+  },
+  {
+    href: '/learn/ask-an-expert' as const,
+    icon: ChatsCircle,
+    label: 'Ask an expert',
+    blurb: 'Put a question to an OT or a maker.',
+  },
+  {
+    href: '/library' as const,
+    icon: BookOpen,
+    label: 'Browse the guides',
+    blurb: 'Step-by-step for a toy you already own.',
+  },
+]
 
 export default function LearnPage() {
-  const learn = PUBLIC_NAV.find((s) => s.href === '/learn')!
-  const startHere = learn.children.filter((c) => START_HERE.includes(c.href))
-  const deeper = learn.children.filter((c) => !START_HERE.includes(c.href))
-
   return (
     <div>
-      <h1 className="title-hub">Learn</h1>
-      <p className="mt-3 max-w-prose text-base leading-relaxed text-muted">
-        Adapting a toy is a small piece of electronics and a lot of judgement. These
-        articles cover the judgement — what a switch does, which toys take to it, and
-        how to hand the result over safely. For instructions on one particular toy,
-        head to the <Link href="/library" className="font-semibold text-brand-dark hover:underline">Guides</Link>.
-      </p>
+      <LearnHome />
 
-      <h2 className="title-detail mt-12">Start here</h2>
-      <p className="mb-4 mt-1 max-w-prose text-sm text-muted">
-        Read these three in order and you will know enough to adapt your first toy.
-      </p>
-      <HubGrid items={startHere} tone={learn.tone} />
-
-      <h2 className="title-detail mt-12">Going deeper</h2>
-      <p className="mb-4 mt-1 max-w-prose text-sm text-muted">
-        Reference material for when you are past the first one.
-      </p>
-      <HubGrid items={deeper} tone={learn.tone} />
+      <section className="mt-12">
+        <h2 className="title-detail">Alongside the course</h2>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          {REFS.map((r) => (
+            <Link key={r.href} href={r.href} className="card card-link flex items-start gap-3 p-5">
+              <span
+                aria-hidden="true"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-card bg-sunken text-brand-deep"
+              >
+                <r.icon className="h-5 w-5" />
+              </span>
+              <span>
+                <span className="block font-bold text-ink">{r.label}</span>
+                <span className="block text-sm leading-relaxed text-muted">{r.blurb}</span>
+              </span>
+            </Link>
+          ))}
+        </div>
+      </section>
     </div>
   )
 }

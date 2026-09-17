@@ -38,7 +38,6 @@ function blockedReason(toy: Toy, offeredElsewhere: Set<string>): string | null {
 
 export function RequestToyForm({
   toyId,
-  toyName,
   holderName,
   offerType,
   myToys,
@@ -46,7 +45,6 @@ export function RequestToyForm({
   suburb,
 }: {
   toyId: string
-  toyName: string
   holderName: string
   offerType: 'donation' | 'exchange' | 'both' | null
   myToys: Toy[]

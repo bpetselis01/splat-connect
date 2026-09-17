@@ -1,0 +1,866 @@
+{
+  "builds": {
+    "wire-a-connector": {
+      "hero": "/learn/img/16.jpeg",
+      "heroAlt": "A finished 3.5 mm mono jack with two grey wires soldered on",
+      "facts": [
+        {
+          "k": "Time",
+          "v": "20–30 min"
+        },
+        {
+          "k": "Soldering",
+          "v": "2 joints"
+        },
+        {
+          "k": "Parts cost",
+          "v": "Under $3"
+        }
+      ],
+      "note": "Jack or socket, the procedure is identical. Make a socket for a toy, a jack for a switch. Make two or three at once — the second takes half the time.",
+      "materials": [
+        {
+          "item": "3.5 mm mono jack",
+          "why": "For switches. The standard plug across every accessible interface.",
+          "shop": "Jaycar",
+          "qty": "1",
+          "cost": "$1.95",
+          "img": "/learn/img/18.jpeg"
+        },
+        {
+          "item": "3.5 mm mono socket",
+          "why": "For toys. Compatible with jelly bean and every other commercial switch.",
+          "shop": "Jaycar",
+          "qty": "1",
+          "cost": "$0.95",
+          "img": "/learn/img/19.jpeg"
+        },
+        {
+          "item": "Light-duty speaker cable",
+          "why": "About 10 cm for a toy socket, 1–2 m for a switch lead.",
+          "shop": "Jaycar",
+          "qty": "as needed",
+          "cost": "$0.70 / m",
+          "img": "/learn/img/14.jpeg"
+        },
+        {
+          "item": "Heat shrink, 1.5 mm and 2.5 mm",
+          "why": "One small and one large piece per connector.",
+          "shop": "Jaycar",
+          "qty": "2 pieces",
+          "cost": "cents",
+          "img": "/learn/img/13.jpeg"
+        }
+      ],
+      "tools": [
+        "Soldering iron",
+        "Heat gun",
+        "Wire strippers",
+        "Pliers",
+        "Helping hands",
+        "Multimeter"
+      ],
+      "steps": [
+        {
+          "title": "Remove the casing",
+          "body": "Unscrew the plastic barrel from the 3.5 mm jack or socket to expose the metal pins. Put the casing where you will find it again — you will need it in step 9.",
+          "imgs": [
+            {
+              "src": "/learn/img/20.jpeg",
+              "alt": "A 3.5 mm connector with its barrel unscrewed"
+            },
+            {
+              "src": "/learn/img/21.jpeg",
+              "alt": "The exposed metal pins of the connector"
+            }
+          ]
+        },
+        {
+          "title": "Identify the two pins",
+          "body": "Find the two pins that take wires. Some connectors have three; use the large pin at the bottom and the small pin on the right when you are facing the socket hole. The third pin is unused.",
+          "tip": "Mark the two pins with a dot of marker if you are new to this. It saves squinting with a hot iron in your hand."
+        },
+        {
+          "title": "Cut your wire",
+          "body": "Toys want a short lead, around 10 cm, so the socket can sit in a hole in the case. Switches want 1–2 m so the child can hold the switch wherever their body works best.",
+          "imgs": [
+            {
+              "src": "/learn/img/22.jpeg",
+              "alt": "A length of grey two-core speaker cable"
+            }
+          ]
+        },
+        {
+          "title": "Strip and twist",
+          "body": "Strip both ends of both cores to expose the copper strands, then twist each bundle of strands so it holds together neatly. Loose strands are how shorts happen.",
+          "imgs": [
+            {
+              "src": "/learn/img/23.jpeg",
+              "alt": "Cable stripped to expose copper strands"
+            },
+            {
+              "src": "/learn/img/24.jpeg",
+              "alt": "Copper strands twisted neatly"
+            }
+          ]
+        },
+        {
+          "title": "Tin the ends",
+          "body": "Touch the iron to each twisted end and feed in a little solder until the copper is coated. A tinned wire holds its shape and takes solder instantly at the pin, so the connector spends less time under heat."
+        },
+        {
+          "title": "Slide the heat shrink on now",
+          "body": "Feed the wires through one 2.5 mm piece (over the outer cable) and one 1.5 mm piece (over the single core you will solder to the small pin). Push them well back from the joint so they do not shrink early.",
+          "warn": "Do this before soldering. Once the wire is on a pin there is nothing to slide the tubing over.",
+          "imgs": [
+            {
+              "src": "/learn/img/25.jpeg",
+              "alt": "Heat shrink tubing slid over the cable before soldering"
+            }
+          ]
+        },
+        {
+          "title": "Solder the wires to the pins",
+          "body": "Start with the larger pin — it is easier. Bend the metal crimp around the wire with pliers to hold it, then heat the pin and wire together and feed solder into the joint. Repeat on the small pin.",
+          "imgs": [
+            {
+              "src": "/learn/img/26.jpeg",
+              "alt": "Wire soldered to the large pin of the connector"
+            },
+            {
+              "src": "/learn/img/27.jpeg",
+              "alt": "Both wires soldered to the connector pins"
+            }
+          ]
+        },
+        {
+          "title": "Shrink the insulation",
+          "body": "Slide the small tubing over the small-pin joint and the large tubing over the whole thing, then heat with the heat gun in short passes until snug. Point it away from the plastic connector body.",
+          "imgs": [
+            {
+              "src": "/learn/img/28.jpeg",
+              "alt": "A finished 3.5 mm socket with heat shrink over the joints"
+            }
+          ]
+        },
+        {
+          "title": "Test, then put the casing back on",
+          "body": "Set the multimeter to continuity mode. Socket: plug in an accessible switch, hold a probe on each wire, press the switch — it should beep. Jack: hold one probe on a wire end and the other on the plug; each wire should connect to one section of the plug and not the other. Only when it passes do you screw the casing back on.",
+          "tip": "A joint that looks perfect and does not beep is the one you would otherwise discover after the toy is reassembled.",
+          "imgs": [
+            {
+              "src": "/learn/img/29.jpeg",
+              "alt": "A finished 3.5 mm jack ready to use"
+            }
+          ]
+        }
+      ],
+      "doneTitle": "That is the whole skill.",
+      "doneBody": "Every toy in Unit 4 and the switch in Unit 5 uses exactly this connector. Make a spare socket now while the iron is hot."
+    },
+    "build-hamster-mania": {
+      "hero": "/learn/img/30.jpeg",
+      "heroAlt": "A blue plush Hamster Mania toy on a workbench with tools around it",
+      "facts": [
+        {
+          "k": "Time",
+          "v": "About 30 min"
+        },
+        {
+          "k": "Soldering",
+          "v": "2 joints on a board"
+        },
+        {
+          "k": "Toy cost",
+          "v": "About $15"
+        }
+      ],
+      "note": "Batteries are not included with the toy, so it arrives safe to open. Keep them out until step 7.",
+      "materials": [
+        {
+          "item": "Hamster Mania by ZURU",
+          "why": "An interactive pet that sings and runs around at the push of a button.",
+          "shop": "Big W · Kmart · Target",
+          "qty": "1",
+          "cost": "$15.00",
+          "img": "/learn/img/31.jpeg"
+        },
+        {
+          "item": "AAA batteries",
+          "why": "Power for the toy. Only go in at the testing step.",
+          "shop": "Most stores",
+          "qty": "2",
+          "cost": "varies",
+          "img": "/learn/img/32.jpeg"
+        },
+        {
+          "item": "Prepared 3.5 mm mono socket",
+          "why": "The one you made in Unit 3, on about 10 cm of cable.",
+          "shop": "You",
+          "qty": "1",
+          "cost": "under $2",
+          "img": "/learn/img/33.jpeg"
+        }
+      ],
+      "tools": [
+        "Soldering iron",
+        "Screwdriver set",
+        "2.0 mm flathead",
+        "Pliers",
+        "Multimeter",
+        "Scissors"
+      ],
+      "steps": [
+        {
+          "title": "Batteries out, find the screws",
+          "body": "Turn the hamster upside down. The exposed screw heads are on the base. If you have already put batteries in, take them out now.",
+          "imgs": [
+            {
+              "src": "/learn/img/34.jpeg",
+              "alt": "The underside of the Hamster Mania toy on a bench mat"
+            }
+          ]
+        },
+        {
+          "title": "Remove the bottom casing",
+          "body": "Undo the six triangular screws in the base and lift the bottom casing off.",
+          "tip": "Triangle-head screwdrivers are uncommon. A 2.0 mm flathead will turn them if you go slowly — the rotation is off-centre but it works.",
+          "imgs": [
+            {
+              "src": "/learn/img/35.jpeg",
+              "alt": "Six triangular screws visible in the base"
+            },
+            {
+              "src": "/learn/img/36.jpeg",
+              "alt": "The bottom casing removed from the hamster"
+            }
+          ]
+        },
+        {
+          "title": "Open the body",
+          "body": "Peel back the plush layer and remove the four Phillips screws in the sides of the body. Take the casing apart to expose the circuit. The plush is attached to the hamster's face, which is clipped into the casing and will not come free until the screws are out.",
+          "imgs": [
+            {
+              "src": "/learn/img/37.jpeg",
+              "alt": "The plush layer peeled back from the white plastic body"
+            },
+            {
+              "src": "/learn/img/38.jpeg",
+              "alt": "The two halves of the casing open, showing the circuit board"
+            }
+          ]
+        },
+        {
+          "title": "Find the two solder points",
+          "body": "The button is in the centre of the board. Its two connection points are where the socket wires go — follow the traces from the button to the nearest pads or the button's own legs.",
+          "imgs": [
+            {
+              "src": "/learn/img/39.jpeg",
+              "alt": "The circuit board with the button in the centre and a speaker beside it"
+            }
+          ]
+        },
+        {
+          "title": "Thread the socket wires through the plush",
+          "body": "Cut a small slit in the top of the plush layer and feed the socket cable through so the socket sits outside the fur and the wires reach the board.",
+          "imgs": [
+            {
+              "src": "/learn/img/40.jpeg",
+              "alt": "The socket cable threaded through a slit in the top of the plush"
+            }
+          ]
+        },
+        {
+          "title": "Solder to the board",
+          "body": "Tin the pads if they are bare, then solder one socket wire to each of the two button connection points. Polarity does not matter — a switch is just a gap.",
+          "imgs": [
+            {
+              "src": "/learn/img/41.jpeg",
+              "alt": "The socket wires soldered to the button connection points on the board"
+            }
+          ]
+        },
+        {
+          "title": "Test, then reassemble",
+          "body": "Insert the batteries and plug in a switch. Press — the hamster should sing and run. Then close the casing in reverse order.",
+          "warn": "Leave out the plastic button cap you removed during disassembly. It will not fit with the wires in place, and it is a choke hazard on its own — bin it.",
+          "imgs": [
+            {
+              "src": "/learn/img/30.jpeg",
+              "alt": "The finished hamster on the bench"
+            }
+          ]
+        }
+      ],
+      "doneTitle": "You adapted a toy.",
+      "doneBody": "Plug in whichever switch suits the child and watch it go. The duck in the next lesson is the same job with one extra move."
+    },
+    "build-duck-bubbles": {
+      "hero": "/learn/img/42.jpeg",
+      "heroAlt": "A yellow duck-shaped bubble machine on a bench mat",
+      "facts": [
+        {
+          "k": "Time",
+          "v": "About 30 min"
+        },
+        {
+          "k": "Soldering",
+          "v": "2 joints on a button"
+        },
+        {
+          "k": "Toy cost",
+          "v": "About $12"
+        }
+      ],
+      "note": "Bubble machines are wet by design. Keep the socket high on the body, well away from the reservoir, and dry the toy fully before you open it.",
+      "materials": [
+        {
+          "item": "Duck bubble maker",
+          "why": "A bubble machine in the shape of a duck. Bubble liquid included.",
+          "shop": "Kmart",
+          "qty": "1",
+          "cost": "$12.00",
+          "img": "/learn/img/43.png"
+        },
+        {
+          "item": "AA batteries",
+          "why": "Power for the toy. Only go in at the testing step.",
+          "shop": "Most stores",
+          "qty": "4",
+          "cost": "varies",
+          "img": "/learn/img/32.jpeg"
+        },
+        {
+          "item": "Prepared 3.5 mm mono socket",
+          "why": "From Unit 3, on about 10 cm of cable.",
+          "shop": "You",
+          "qty": "1",
+          "cost": "under $2",
+          "img": "/learn/img/33.jpeg"
+        }
+      ],
+      "tools": [
+        "Soldering iron",
+        "Screwdriver set",
+        "Drill or sharp knife",
+        "Pliers",
+        "Multimeter"
+      ],
+      "steps": [
+        {
+          "title": "Batteries out, base off",
+          "body": "Find the seven screws in the base of the duck and remove them. Take out any batteries before you start.",
+          "imgs": [
+            {
+              "src": "/learn/img/44.jpeg",
+              "alt": "The underside of the duck showing the screws in the base"
+            }
+          ]
+        },
+        {
+          "title": "Open the casing",
+          "body": "Lift off the bottom casing, then undo the nine screws in the back of the duck and open the body.",
+          "imgs": [
+            {
+              "src": "/learn/img/45.jpeg",
+              "alt": "The duck open on the bench with its bottom casing beside it"
+            }
+          ]
+        },
+        {
+          "title": "Find the on/off button",
+          "body": "Locate the toy's button and identify its two connection points. On this toy the wires go straight onto the button's legs.",
+          "imgs": [
+            {
+              "src": "/learn/img/46.jpeg",
+              "alt": "The button inside the duck with its two legs visible"
+            }
+          ]
+        },
+        {
+          "title": "Make a hole and thread the wires",
+          "body": "Drill or cut a small hole in the top of the duck, deburr it, and feed the socket cable through from outside so the socket sits on the head and the wires reach the button.",
+          "imgs": [
+            {
+              "src": "/learn/img/47.jpeg",
+              "alt": "The socket cable threaded through a hole in the top of the duck"
+            }
+          ]
+        },
+        {
+          "title": "Tie a knot for strain relief",
+          "body": "Tie an overhand knot in the cable just inside the hole. When the switch lead is yanked — and it will be — the knot takes the pull instead of your solder joints.",
+          "tip": "This is the step most first-timers skip and most repaired toys were missing.",
+          "imgs": [
+            {
+              "src": "/learn/img/48.jpeg",
+              "alt": "An overhand knot tied in the cable inside the case"
+            }
+          ]
+        },
+        {
+          "title": "Solder to the button",
+          "body": "Solder one wire to each leg of the button identified in step 3. Hold the wire with pliers, not fingers — the legs get hot fast.",
+          "imgs": [
+            {
+              "src": "/learn/img/49.jpeg",
+              "alt": "The socket wires soldered to the legs of the button"
+            }
+          ]
+        },
+        {
+          "title": "Test, then reassemble",
+          "body": "Batteries in, switch plugged in, press. Bubbles mean it works. Close the casing, screws back in, base back on.",
+          "imgs": [
+            {
+              "src": "/learn/img/50.jpeg",
+              "alt": "The finished duck bubble machine with a switch lead attached"
+            }
+          ]
+        }
+      ],
+      "doneTitle": "Enjoy the bubbles.",
+      "doneBody": "Two toys down. The third is a different kind of job — a plush with no circuit board to reach, adapted with a splice."
+    },
+    "build-ms-rachel": {
+      "slot": "learn-rachel-hero",
+      "slotPh": "Photo: the Ms Rachel Speak & Sing doll with two mono cables emerging from the back",
+      "facts": [
+        {
+          "k": "Time",
+          "v": "About 35 min"
+        },
+        {
+          "k": "Soldering",
+          "v": "4 splices"
+        },
+        {
+          "k": "Switches",
+          "v": "2 — one per function"
+        }
+      ],
+      "credit": "Adapted from the Switch Adapted Ms. Rachel Speak & Sing Maker Guide, v1.0, August 2025, by Makers Making Change. Licensed CC BY-SA 4.0.",
+      "note": "This toy has two functions, each on its own wire pair, so it gets two sockets — the child can have one switch for talking and one for singing. There is no circuit board to reach; you splice into the wires instead.",
+      "materials": [
+        {
+          "item": "Ms Rachel Speak & Sing doll",
+          "why": "A plush doll with a plastic sound box in the back.",
+          "shop": "Amazon · Walmart · Big W",
+          "qty": "1",
+          "cost": "varies"
+        },
+        {
+          "item": "3.5 mm female mono cable",
+          "why": "A ready-made socket on a lead. Saves wiring one yourself.",
+          "shop": "Jaycar · online",
+          "qty": "2",
+          "cost": "about $4 each"
+        },
+        {
+          "item": "Cable ties",
+          "why": "Hold each new cable to the original so the splice is never under tension.",
+          "shop": "Bunnings",
+          "qty": "2",
+          "cost": "cents"
+        }
+      ],
+      "tools": [
+        "Wire strippers",
+        "Soldering iron",
+        "Flush cutters",
+        "Electrical tape",
+        "Seam ripper",
+        "Safety glasses"
+      ],
+      "steps": [
+        {
+          "title": "Unpack and open the back",
+          "body": "Remove the toy from its packaging carefully. Open the hook-and-loop fastener on the back and pull the plastic sound box out.",
+          "slot": "learn-rachel-1",
+          "slotPh": "Photo: the sound box pulled out of the back of the doll"
+        },
+        {
+          "title": "Open a hole in the fabric",
+          "body": "With the seam ripper, open a small hole in the fabric below the box and pull out the two wires that lead into it."
+        },
+        {
+          "title": "Cut the wires",
+          "body": "Using flush cutters, cut both wires in half about 4 cm from the box. Each wire is a pair — two colours — and each pair is one function."
+        },
+        {
+          "title": "Strip the toy wires",
+          "body": "Strip both ends of every cut wire and separate the two strands about 1 cm down.",
+          "slot": "learn-rachel-4",
+          "slotPh": "Photo: the four cut wire ends stripped and separated"
+        },
+        {
+          "title": "Prepare the mono cables",
+          "body": "Strip about 2 cm of outer casing from each mono cable to reveal the internal wires. If there are two, strip 5 mm from each. If there are three — red, black and a bare wire — strip 15 mm from the red, twist red and bare together, and strip 5 mm from the black.",
+          "tip": "Skip whichever part of this the cable manufacturer has already done for you."
+        },
+        {
+          "title": "Tin everything",
+          "body": "Melt a little solder over every exposed end. Eight toy ends, four cable ends."
+        },
+        {
+          "title": "Splice: three wires into one joint",
+          "body": "Take one wire leading into the box and the wire of the same colour from the cut-off side. Twist both together with one wire from a mono cable, then solder the three. Wrap the joint in a 2–3 cm strip of electrical tape and pinch it flat.",
+          "warn": "Each mono cable connects to one colour pair only: its black wire bridges both sides of one cut wire, its red wire bridges both sides of the other cut wire of that pair.",
+          "slot": "learn-rachel-7",
+          "slotPh": "Photo: a three-way solder joint wrapped in electrical tape"
+        },
+        {
+          "title": "Repeat for all four joints, then test",
+          "body": "When you are done, the wires you cut are joined back together with a mono cable spliced into each pair. Plug a switch into each socket and test both functions before you go further."
+        },
+        {
+          "title": "Cable-tie and tuck",
+          "body": "Tie each mono cable to the original cable it is spliced into, pull tight and trim the tails flush. Tuck the joints back through the hole in the fabric."
+        },
+        {
+          "title": "Close up and test again",
+          "body": "Push the sound box back in, refasten the back, and route the two mono cables out through the bottom of the hole. Test both switches once more. If it all works, the doll is done.",
+          "slot": "learn-rachel-10",
+          "slotPh": "Photo: the finished doll with two switch cables emerging from the base of the back"
+        }
+      ],
+      "doneTitle": "Three toys, three techniques.",
+      "doneBody": "Circuit board, button legs, and a wire splice. Between them they cover almost every battery toy you will meet."
+    },
+    "build-a-switch": {
+      "hero": "/learn/img/51.jpeg",
+      "heroAlt": "A finished orange 3D-printed button switch beside a screwdriver and a switch lead",
+      "facts": [
+        {
+          "k": "Time",
+          "v": "About 40 min + printing"
+        },
+        {
+          "k": "Soldering",
+          "v": "2 joints + 3 inserts"
+        },
+        {
+          "k": "Parts cost",
+          "v": "Under $5"
+        }
+      ],
+      "note": "Print the four parts in PLA at 0.2 mm layers; costs are based on a $20 spool. Do not own a printer? The 3D Printing section will find someone nearby who does.",
+      "materials": [
+        {
+          "item": "Switch-Base (printed)",
+          "why": "The bottom piece, with extra mounting points.",
+          "shop": "3D print",
+          "qty": "1",
+          "cost": "$0.35",
+          "img": "/learn/img/52.png"
+        },
+        {
+          "item": "Switch-Cap (printed)",
+          "why": "The top piece the child presses.",
+          "shop": "3D print",
+          "qty": "1",
+          "cost": "$0.30",
+          "img": "/learn/img/53.png"
+        },
+        {
+          "item": "Switch-Connector (printed)",
+          "why": "Joins cap to base and carries the brass inserts.",
+          "shop": "3D print",
+          "qty": "1",
+          "cost": "$0.06",
+          "img": "/learn/img/54.png"
+        },
+        {
+          "item": "Switch-Insert (printed)",
+          "why": "Adjustable insert that changes how hard the switch is to press.",
+          "shop": "3D print",
+          "qty": "1",
+          "cost": "$0.02",
+          "img": "/learn/img/55.png"
+        },
+        {
+          "item": "M2.5 brass heat-set inserts",
+          "why": "Melted into the plastic to give the screws a real thread.",
+          "shop": "Jaycar · OzFDM",
+          "qty": "3",
+          "cost": "$0.20 each",
+          "img": "/learn/img/56.png"
+        },
+        {
+          "item": "M2.5 × 6 mm screws",
+          "why": "Hold the printed parts together.",
+          "shop": "Bunnings · OzFDM",
+          "qty": "3",
+          "cost": "$0.09 each",
+          "img": "/learn/img/57.png"
+        },
+        {
+          "item": "Omron SS-3GP limit switch",
+          "why": "The actual switch. Light action, reliable click.",
+          "shop": "Mouser · DigiKey · RS",
+          "qty": "1",
+          "cost": "$1.49",
+          "img": "/learn/img/58.png"
+        },
+        {
+          "item": "Prepared 3.5 mm mono jack",
+          "why": "From Unit 3, on 1–2 m of cable.",
+          "shop": "You",
+          "qty": "1",
+          "cost": "under $3",
+          "img": "/learn/img/59.png"
+        }
+      ],
+      "tools": [
+        "Soldering iron",
+        "Pliers",
+        "Small Phillips screwdriver",
+        "Multimeter"
+      ],
+      "steps": [
+        {
+          "title": "Thread the cable into the base",
+          "body": "Feed the jack cable through the hole in the Switch-Base before anything else. Once the wires are soldered to the limit switch they will not fit through.",
+          "imgs": [
+            {
+              "src": "/learn/img/61.jpeg",
+              "alt": "The switch lead threaded through the hole in the printed base"
+            }
+          ]
+        },
+        {
+          "title": "Solder the wires to the limit switch",
+          "body": "Bend the three legs to 90° with pliers. Solder your two wires to the two legs closest to the button — the third leg is the \"normally closed\" contact and stays empty.",
+          "imgs": [
+            {
+              "src": "/learn/img/62.jpeg",
+              "alt": "Pliers bending the legs of the limit switch"
+            },
+            {
+              "src": "/learn/img/63.jpeg",
+              "alt": "Two wires soldered to the two legs nearest the button"
+            }
+          ]
+        },
+        {
+          "title": "Test the switch",
+          "body": "Plug into a switch-adapted toy, or use continuity mode on the multimeter: it should beep only while the lever is pressed.",
+          "imgs": [
+            {
+              "src": "/learn/img/64.jpeg",
+              "alt": "A multimeter testing the wired limit switch on the bench"
+            }
+          ]
+        },
+        {
+          "title": "Seat the switch in the base",
+          "body": "Place the limit switch in its pocket so that, with the cable coming towards you, the soldered legs and button are on the left. Press the wires into the groove around the base.",
+          "imgs": [
+            {
+              "src": "/learn/img/65.jpeg",
+              "alt": "The limit switch seated in the printed base with wires in the groove"
+            }
+          ]
+        },
+        {
+          "title": "Fit the Switch-Insert to the cap",
+          "body": "Turn the cap over and push the insert into the thin slots. It needs a gentle bend to go in — do not force it.",
+          "tip": "The insert is what sets the feel. A thicker print or a second insert makes the switch firmer for a child who presses hard by accident.",
+          "imgs": [
+            {
+              "src": "/learn/img/66.jpeg",
+              "alt": "The underside of the cap with the Y-shaped insert fitted"
+            }
+          ]
+        },
+        {
+          "title": "Place the brass inserts",
+          "body": "Drop a brass insert into each of the three large holes on the Switch-Connector. They should only go in part way by hand.",
+          "imgs": [
+            {
+              "src": "/learn/img/67.jpeg",
+              "alt": "Three brass inserts sitting in the holes of the connector piece"
+            }
+          ]
+        },
+        {
+          "title": "Melt the inserts home",
+          "body": "Turn the soldering iron down to 250 °C. Press the iron tip into each insert to push it the rest of the way in, and stop the moment it is flush.",
+          "warn": "You are melting plastic. If you keep pushing after it is flush, the insert goes straight through.",
+          "imgs": [
+            {
+              "src": "/learn/img/68.jpeg",
+              "alt": "A soldering iron pressing a brass insert into the plastic"
+            },
+            {
+              "src": "/learn/img/69.jpeg",
+              "alt": "A brass insert sitting flush in the connector"
+            }
+          ]
+        },
+        {
+          "title": "Fit the connector into the cap",
+          "body": "Pinch the connector — it bends easily — and slot it into the large slots in the cap.",
+          "imgs": [
+            {
+              "src": "/learn/img/70.jpeg",
+              "alt": "The connector fitted into the underside of the cap"
+            }
+          ]
+        },
+        {
+          "title": "Screw it together",
+          "body": "Line up the three holes in the base with the three inserts and drive the screws in, only partly at first, then snug all three. Do not over-tighten — you will strip the brass out of the plastic.",
+          "imgs": [
+            {
+              "src": "/learn/img/71.png",
+              "alt": "A screwdriver driving the screws into the assembled switch"
+            }
+          ]
+        }
+      ],
+      "doneTitle": "You made an accessible switch.",
+      "doneBody": "Plug it into the hamster, the duck, or anything with a 3.5 mm socket. Every commercial switch does exactly what this one does, at twenty times the price."
+    }
+  },
+  "quizzes": {
+    "checkpoint-1": [
+      {
+        "q": "You solder a 3.5 mm socket to the two sides of a toy's button. What happens to the toy's own button?",
+        "opts": [
+          "It stops working — the socket replaces it",
+          "It still works — either switch now closes the circuit",
+          "It only works while a switch is plugged in"
+        ],
+        "a": 1,
+        "why": "The socket is wired in parallel with the button, so both are alternative ways to close the same gap. Siblings can keep using the toy as normal."
+      },
+      {
+        "q": "Which connector goes inside the toy?",
+        "opts": [
+          "A 3.5 mm mono jack (the plug)",
+          "A 3.5 mm mono socket (the hole)",
+          "Either — they are interchangeable"
+        ],
+        "a": 1,
+        "why": "Sockets go in toys, jacks go on switches. That way any switch a family already owns plugs straight in."
+      },
+      {
+        "q": "A toy has a sealed rechargeable battery and a touchscreen menu. What is the call?",
+        "opts": [
+          "Route A — a battery interrupter",
+          "Route B — open it and find the button",
+          "Walk away"
+        ],
+        "a": 2,
+        "why": "No cells to interrupt, and a menu gives a single switch nothing useful to press. Spend the afternoon on a toy that will take to it."
+      }
+    ],
+    "checkpoint-2": [
+      {
+        "q": "You put the soldering iron down to pick up pliers. Where does the iron go?",
+        "opts": [
+          "On the heat-proof mat",
+          "Back in its stand",
+          "Balanced on the edge of the bench"
+        ],
+        "a": 1,
+        "why": "The tip stays hot enough to burn skin and melt plastic for minutes. The stand is the only place it goes when it is not in your hand."
+      },
+      {
+        "q": "Where does the extraction fan sit?",
+        "opts": [
+          "Anywhere in the room — ventilation is what matters",
+          "As close to the joint as possible, with you working in front of it",
+          "Behind you, drawing air past your face"
+        ],
+        "a": 1,
+        "why": "The fan pulls fumes away from you at the source. Room ventilation is still needed, but the fan is the thing that keeps the smoke out of your face."
+      },
+      {
+        "q": "Which of these do you skip if you are only doing a five-minute job?",
+        "opts": [
+          "Safety glasses",
+          "Taking the batteries out",
+          "Neither — both, every time"
+        ],
+        "a": 2,
+        "why": "Flux spits and cut wire ends fly; a motor can start while the case is open. Both habits cost seconds."
+      }
+    ],
+    "checkpoint-3": [
+      {
+        "q": "When does the heat shrink go onto the wire?",
+        "opts": [
+          "Before soldering — you cannot slide it on afterwards",
+          "After soldering, over the finished joint",
+          "It is optional if you use electrical tape"
+        ],
+        "a": 0,
+        "why": "Once the wire is soldered to a pin there is nothing to slide the tubing over. Thread it first, then push it back out of the way of the heat."
+      },
+      {
+        "q": "What is tinning?",
+        "opts": [
+          "Cleaning the iron tip on a wet sponge",
+          "Coating the stripped wire with a thin layer of solder",
+          "Twisting the copper strands together"
+        ],
+        "a": 1,
+        "why": "A tinned wire holds its shape and takes solder instantly at the pin, so you spend less time heating a small plastic connector."
+      },
+      {
+        "q": "How do you prove a finished socket works before you close it up?",
+        "opts": [
+          "Plug in a switch, hold the multimeter probes on the two wires in continuity mode, press — it should beep",
+          "Plug it into a toy and hope",
+          "Look closely at the joints under a lamp"
+        ],
+        "a": 0,
+        "why": "Continuity mode turns the multimeter into a beeper. A joint that looks fine and does not beep is a joint you would otherwise find after reassembly."
+      }
+    ],
+    "final-checkpoint": [
+      {
+        "q": "A toy takes two CR2032 button cells behind a clip-on door. It works perfectly with the switch. Can it go to a family?",
+        "opts": [
+          "Yes — it passed the test",
+          "Only with a note about the batteries",
+          "No — not until the door is screwed shut"
+        ],
+        "a": 2,
+        "why": "A swallowed coin cell burns through tissue in hours. This is the one non-negotiable in the course."
+      },
+      {
+        "q": "What is the pull test?",
+        "opts": [
+          "Tugging the switch to see if it clicks",
+          "Hanging the toy by its switch lead and checking the lead does not move at the case",
+          "Pulling the battery door open"
+        ],
+        "a": 1,
+        "why": "Cables get yanked. If the lead can move at the hole, the solder joint inside takes every tug and will fail — redo the strain relief."
+      },
+      {
+        "q": "The toy measures 92 dB at 30 cm. What do you do?",
+        "opts": [
+          "Nothing — kids like loud",
+          "Tape over part of the speaker grille or add a series resistor",
+          "Turn the volume down on the switch"
+        ],
+        "a": 1,
+        "why": "Above 85 dB is too loud for a toy held near a face. Switches have no volume control; the fix is at the speaker."
+      },
+      {
+        "q": "What do you do at handover besides handing it over?",
+        "opts": [
+          "Plug the switch in with the family watching, show the socket, the original button and the battery door",
+          "Send them a link to the guide",
+          "Nothing — the note in the battery door covers it"
+        ],
+        "a": 0,
+        "why": "A toy nobody knows how to use is back in the cupboard within a week. Two minutes of showing is worth more than any note."
+      }
+    ]
+  }
+}

@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { ProsePage } from '@/components/prose-page'
+import { LearnShell } from '@/components/learn-shell'
 
 export const metadata = {
   title: 'Choosing a toy to adapt — SPLAT Connect',
@@ -8,7 +9,8 @@ export const metadata = {
 
 export default function ChoosingAToy() {
   return (
-    <ProsePage
+    <LearnShell slug="choosing-a-toy">
+      <ProsePage
       title="Choosing a toy to adapt"
       intro="The best toy to adapt is one the child already wants. Everything below is about whether that toy will cooperate — and if it won't, what to look for instead."
     >
@@ -83,6 +85,7 @@ export default function ChoosingAToy() {
           parent gets to skip the hard part.
         </p>
       </section>
-    </ProsePage>
+      </ProsePage>
+    </LearnShell>
   )
 }

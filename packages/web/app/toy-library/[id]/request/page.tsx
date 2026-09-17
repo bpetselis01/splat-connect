@@ -73,7 +73,6 @@ export default async function RequestToyPage({ params }: { params: Promise<{ id:
 
       <RequestToyForm
         toyId={toy.id}
-        toyName={toy.name}
         holderName={holder}
         offerType={toy.offer_type}
         myToys={myToys}

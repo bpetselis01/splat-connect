@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { ProsePage } from '@/components/prose-page'
+import { LearnShell } from '@/components/learn-shell'
 
 export const metadata = {
   title: 'Safety and cleaning — SPLAT Connect',
@@ -8,7 +9,8 @@ export const metadata = {
 
 export default function SafetyAndCleaning() {
   return (
-    <ProsePage
+    <LearnShell slug="safety-and-cleaning">
+      <ProsePage
       title="Safety and cleaning"
       intro="This article is the practical companion to the site's formal safety page. Read both before your first handover."
     >
@@ -86,6 +88,7 @@ export default function SafetyAndCleaning() {
           published guide, is on the <Link href="/safety">safety page</Link>.
         </p>
       </section>
-    </ProsePage>
+      </ProsePage>
+    </LearnShell>
   )
 }
