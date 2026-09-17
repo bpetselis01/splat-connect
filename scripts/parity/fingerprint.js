@@ -80,6 +80,27 @@ function collectFingerprint(rootSelector) {
     return ownText.length > 1 || /^H[1-6]$/.test(el.tagName)
   }
 
+  // Cards are detected before headings because a heading needs to know whether
+  // it sits inside one — see `inCard` below.
+  //
+  // `a` included: a clickable card is a Link, which renders as an anchor, and
+  // leaving it out made every listing grid report "board has cards, live has
+  // none" while live was showing fifty of them.
+  const cardEls = [...root.querySelectorAll('div,article,li,section,a')].filter((el) => {
+    const st = cs(el)
+    const r = parseFloat(st.borderTopLeftRadius) || 0
+    if (r < 8) return false
+    const rect = el.getBoundingClientRect()
+    if (rect.height < 60 || rect.width < 80) return false
+    if (rect.width < 2 || rect.height < 2) return false
+    return st.boxShadow !== 'none' || parseFloat(st.borderTopWidth) > 0
+  })
+  const cardSet = new Set(cardEls)
+  const insideCard = (el) => {
+    for (let n = el.parentElement; n; n = n.parentElement) if (cardSet.has(n)) return true
+    return false
+  }
+
   const seenText = new Set()
   const headings = [...root.querySelectorAll('h1,h2,h3,h4,div,span,p,dt,strong,button,a')]
     .filter(visible)
@@ -99,6 +120,12 @@ function collectFingerprint(rootSelector) {
         size,
         weight: +s.fontWeight,
         colour: colour(s.color),
+        // A heading inside a card is the title of a RECORD — "Bubble machine",
+        // "Weighted lap snake". The board shows six samples and live shows
+        // whatever is in the database, so matching these by text compares
+        // fixtures, not design. Tagged here and compared by shape rather than
+        // wording in compare.js.
+        inCard: insideCard(h),
       }
     })
     .filter((h) => {
@@ -145,15 +172,6 @@ function collectFingerprint(rootSelector) {
 
   // Cards are named differently on each side, so identify them structurally:
   // a block with a radius and either a shadow or a border.
-  const cards = pick('div,article,li,section').filter((el) => {
-    const s = cs(el)
-    const r = parseFloat(s.borderTopLeftRadius) || 0
-    if (r < 8) return false
-    const rect = el.getBoundingClientRect()
-    if (rect.height < 60 || rect.width < 80) return false
-    return s.boxShadow !== 'none' || parseFloat(s.borderTopWidth) > 0
-  })
-
   const candidates = pick('button,[role="button"],a[class*="btn"],a[class*="button"]')
 
   // The PRIMARY action button, not "all buttons".
@@ -204,7 +222,7 @@ function collectFingerprint(rootSelector) {
   return {
     headings,
     counts: {
-      cards: cards.length,
+      cards: cardEls.length,
       buttons: buttons.length,
       inputs: inputs.length,
       images: pick('img').length,
@@ -212,9 +230,31 @@ function collectFingerprint(rootSelector) {
       lists: pick('ul,ol').length,
     },
     shapes: {
-      card: shapeOf(cards),
+      card: shapeOf(cardEls),
       button: shapeOf(buttons),
       input: shapeOf(inputs),
+    },
+    // The SET of styles each control kind appears in, not one elected
+    // representative.
+    //
+    // Electing a representative kept picking different things on the two
+    // sides — "darkest filled" chose the board's brand CTA against live's
+    // ink-coloured button — and then reported the mismatch it had created. A
+    // set comparison asks the question that actually matters: does live have
+    // ANY button with the shadow the board gives its primary? That is robust
+    // to the two sides ordering, colouring and counting their buttons
+    // differently, which they always do.
+    sets: {
+      buttonRadius: [...new Set(candidates.map((e) => px(cs(e).borderTopLeftRadius)))].sort(
+        (a, b) => a - b
+      ),
+      buttonShadow: [
+        ...new Set(candidates.map((e) => (cs(e).boxShadow === 'none' ? 'none' : 'set'))),
+      ].sort(),
+      inputRadius: [...new Set(inputs.map((e) => px(cs(e).borderTopLeftRadius)))].sort(
+        (a, b) => a - b
+      ),
+      inputBg: [...new Set(inputs.map((e) => colour(cs(e).backgroundColor)))].sort(),
     },
     paragraphs,
     page: {

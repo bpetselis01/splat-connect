@@ -38,8 +38,12 @@ const flag = (n) => {
   return i === -1 ? null : argv[i + 1]
 }
 
+const allScreens = JSON.parse(
+  fs.readFileSync(path.join(__dirname, 'screen-map.json'), 'utf8')
+)
+
 function loadMap() {
-  const all = JSON.parse(fs.readFileSync(path.join(__dirname, 'screen-map.json'), 'utf8'))
+  const all = allScreens
   const group = flag('--group')
   const ids = flag('--id')
   if (ids) return all.filter((s) => ids.split(',').includes(s.id))
@@ -164,6 +168,16 @@ async function fingerprintOf(page, url, rootSel) {
           seeded[s.id] ||
           (await resolveDynamic(livePage, s, cache)) ||
           (await dbSample(adminClient(), s.id))
+        // Nested under a dynamic parent (/toy-library/[id]/request): the link
+        // is on the parent's detail page, never on a list, so take the parent's
+        // already-resolved route and append.
+        if (!route && s.derivedFrom) {
+          const parent = screens.find((x) => x.id === s.derivedFrom) || allScreens.find((x) => x.id === s.derivedFrom)
+          if (parent) {
+            const base = cache.get(parent.route) || (await resolveDynamic(livePage, parent, cache))
+            if (base) route = base + s.suffix
+          }
+        }
         if (!route) {
           row.error = `no ${s.route} link on ${s.sampleFrom}`
           row.skipped = true

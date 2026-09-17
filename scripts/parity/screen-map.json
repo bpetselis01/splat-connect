@@ -42,7 +42,10 @@
   "group": "Public site",
   "boardRoute": "/toys/[id]/request",
   "route": "/toy-library/[id]/request",
-  "sampleFrom": "/toy-library"
+  "sampleFrom": "/toy-library",
+  "derivedFrom": "toy_public",
+  "suffix": "/request",
+  "role": "parent"
  },
  {
   "id": "wizard",
@@ -340,7 +343,10 @@
   "group": "Get involved",
   "boardRoute": "/get-involved/events/[id]/register",
   "route": "/get-involved/events/[id]/register",
-  "sampleFrom": "/get-involved/events"
+  "sampleFrom": "/get-involved/events",
+  "derivedFrom": "event_detail",
+  "suffix": "/register",
+  "role": "parent"
  },
  {
   "id": "recycling",

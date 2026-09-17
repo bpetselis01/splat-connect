@@ -65,7 +65,42 @@ function compare(board, live, opts = {}) {
   const allowCopy = opts.copy !== false
 
   // ---- typography --------------------------------------------------------
-  const { pairs, extras } = matchHeadings(board.headings, live.headings)
+  //
+  // Split first. A heading inside a card titles a RECORD, and the two sides
+  // hold different records by design: the board draws six sample toys, live
+  // renders the fifty in the database. Matching those by text compared
+  // fixtures and reported "Bubble machine has no counterpart" as a design
+  // defect 300-odd times. Record titles are compared by how they are SET —
+  // font, size, weight — which is the part the design actually specifies.
+  const chrome = (hs) => hs.filter((h) => !h.inCard)
+  const records = (hs) => hs.filter((h) => h.inCard)
+
+  const { pairs, extras } = matchHeadings(chrome(board.headings), chrome(live.headings))
+
+  const bRec = records(board.headings)
+  const lRec = records(live.headings)
+  if (bRec.length && lRec.length) {
+    const modeOf = (xs, key) => {
+      const c = new Map()
+      for (const x of xs) c.set(x[key], (c.get(x[key]) || 0) + 1)
+      return [...c.entries()].sort((a, b) => b[1] - a[1])[0][0]
+    }
+    const bf = modeOf(bRec, 'font')
+    const lf = modeOf(lRec, 'font')
+    if (bf !== lf) out.push(f('font', 'high', 'record title font', bf, lf))
+    const bs = modeOf(bRec, 'size')
+    const ls = modeOf(lRec, 'size')
+    if (Math.abs(bs - ls) > SIZE_TOLERANCE)
+      out.push(f('size', 'medium', 'record title size', bs + 'px', ls + 'px'))
+    const bw = modeOf(bRec, 'weight')
+    const lw = modeOf(lRec, 'weight')
+    if (Math.abs(bw - lw) >= 100)
+      out.push(f('weight', 'low', 'record title weight', bw, lw))
+  } else if (bRec.length && !lRec.length) {
+    out.push(
+      f('missing-section', 'high', 'board lists records, live shows none', bRec.length, 0)
+    )
+  }
 
   for (const [b, l, via] of pairs) {
     if (!l) {
@@ -85,11 +120,64 @@ function compare(board, live, opts = {}) {
       out.push(f('copy', 'medium', `h${b.level} wording`, b.text, l.text))
   }
 
-  for (const e of extras)
-    out.push(f('extra-section', 'medium', `live has an extra h${e.level}`, null, e.text))
+  // Collapsed per level.
+  //
+  // The board draws a listing screen with six sample cards; live renders the
+  // fifty rows actually in the database. Reporting each of the extra
+  // forty-four separately produced 56 findings on /library for a single fact —
+  // the same data-volume difference the fingerprint deliberately ignores
+  // everywhere else — and drowned the four real findings on that screen.
+  const extrasByLevel = new Map()
+  for (const e of extras) {
+    if (!extrasByLevel.has(e.level)) extrasByLevel.set(e.level, [])
+    extrasByLevel.get(e.level).push(e.text)
+  }
+  for (const [level, texts] of extrasByLevel) {
+    out.push(
+      f(
+        'extra-section',
+        texts.length > 3 ? 'low' : 'medium',
+        texts.length === 1
+          ? `live has an extra h${level}: "${texts[0]}"`
+          : `live has ${texts.length} extra h${level} the board does not draw`,
+        null,
+        texts.slice(0, 3).join(' | ')
+      )
+    )
+  }
+
+  // ---- control style sets -------------------------------------------------
+  // Asked as "does live offer this at all", which survives the two sides
+  // ordering and counting their controls differently.
+  if (board.sets && live.sets) {
+    const { sets: b } = board
+    const { sets: l } = live
+    if (b.buttonShadow.includes('set') && !l.buttonShadow.includes('set'))
+      out.push(f('shadow', 'medium', 'no button on live carries a shadow', 'set', 'none'))
+    if (b.buttonRadius.length && l.buttonRadius.length) {
+      const bMax = Math.max(...b.buttonRadius)
+      const lMax = Math.max(...l.buttonRadius)
+      if (Math.abs(bMax - lMax) > SIZE_TOLERANCE)
+        out.push(f('radius', 'low', 'button radius range', bMax + 'px', lMax + 'px'))
+    }
+    if (b.inputRadius.length && l.inputRadius.length) {
+      const bi = Math.max(...b.inputRadius)
+      const li = Math.max(...l.inputRadius)
+      if (Math.abs(bi - li) > SIZE_TOLERANCE)
+        out.push(f('radius', 'low', 'input radius', bi + 'px', li + 'px'))
+    }
+    if (b.inputBg.length && l.inputBg.length) {
+      const miss = b.inputBg.filter((c) => !l.inputBg.includes(c))
+      if (miss.length === b.inputBg.length)
+        out.push(f('colour', 'low', 'input background', b.inputBg.join('/'), l.inputBg.join('/')))
+    }
+  }
 
   // ---- component shape ---------------------------------------------------
-  for (const kind of ['card', 'button', 'input']) {
+  // Cards only: they are numerous and consistently classified on both sides, so
+  // a modal describes them well. Buttons and inputs are handled by set
+  // comparison above, for the reason given there.
+  for (const kind of ['card']) {
     const b = board.shapes[kind]
     const l = live.shapes[kind]
     if (!b || !l) continue

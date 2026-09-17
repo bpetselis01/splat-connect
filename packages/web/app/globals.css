@@ -348,6 +348,17 @@
   }
 
   /*
+   * The listing register. The board draws the guide and toy grids at 18px
+   * against the 24px it gives every other card — measured on #library and
+   * #toys_public (six cards each, both 18px) against #components, #hub and
+   * #about (24px). A tighter radius on a dense grid reads as a denser grid,
+   * which is the point of those two screens.
+   */
+  .card-grid {
+    border-radius: var(--radius-panel);
+  }
+
+  /*
    * The flat register — a bordered box with no depth, for things that sit
    * inside another surface rather than on the canvas: notification rows, the
    * editor's file rows, a tutorial's parts/tools/files blocks, and the
@@ -1143,12 +1154,23 @@
    * min-height stays 44px — the board draws a 38px input, but that is below the
    * touch-target floor and an artboard has no fingers.
    */
+  /*
+   * Measured off the board's own forms — #account, #login, #contact all draw a
+   * field the same way: 48px tall, 0 16px, and sunk into the CANVAS colour
+   * rather than raised onto white. That last one is the difference you see: a
+   * white field on a white card has only its hairline to separate it, which is
+   * why live's forms read flatter than the board's.
+   *
+   * Radius stays 14px. The board's search control is a 999px pill, but that is
+   * the search control, not the field — reading the pill off #states and
+   * applying it here would have rounded every form on the site.
+   */
   .field {
     display: block;
     width: 100%;
-    min-height: 44px;
-    padding: 0.625rem 0.75rem;
-    background-color: var(--color-surface);
+    min-height: 48px;
+    padding: 0 1rem;
+    background-color: var(--color-canvas);
     color: var(--color-ink);
     border: var(--border-width) solid var(--color-line);
     border-radius: var(--radius-field);
@@ -1174,8 +1196,12 @@
     box-shadow: 0 0 0 3px rgb(25 152 213 / 0.18);
   }
 
+  /* The base field sets `padding: 0 1rem` for a single-line control centred by
+     min-height; a textarea has no such centring and would sit hard against its
+     top edge. The board draws one at 14px 16px. */
   textarea.field {
     min-height: 0;
+    padding: 0.875rem 1rem;
     line-height: 1.5;
   }
 
