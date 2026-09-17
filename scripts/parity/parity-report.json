@@ -1,7 +1,534 @@
 {
- "at": "2026-09-17T10:23:59.690Z",
+ "at": "2026-09-17T10:27:17.419Z",
  "live": "http://localhost:3110",
  "screens": [
+  {
+   "id": "learn",
+   "name": "Learn · Course home",
+   "group": "Learn",
+   "route": "/learn",
+   "findings": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"the course, unit by unit\" has no counterpart",
+     "board": "the course, unit by unit",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"keep at hand\" has no counterpart",
+     "board": "keep at hand",
+     "live": null
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "card title size",
+     "board": "23px",
+     "live": "20px"
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "h1 \"switch adapting toys, from first switch to handover.\" size",
+     "board": "54px",
+     "live": "44px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "h2 wording",
+     "board": "what you will be able to do",
+     "live": "alongside the course"
+    }
+   ],
+   "role": "guest",
+   "finalUrl": "/learn",
+   "boardHeadings": 20,
+   "liveHeadings": 13
+  },
+  {
+   "id": "learn_101",
+   "name": "Toy adaptation 101",
+   "group": "Learn",
+   "route": "/learn/toy-adaptation-101",
+   "findings": [
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "h2 wording",
+     "board": "the whole trick in one paragraph",
+     "live": "the problem"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "h2 wording",
+     "board": "there are two ways in",
+     "live": "when an interrupter is not enough"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "h2 wording",
+     "board": "why bother",
+     "live": "what to read next"
+    },
+    {
+     "type": "extra-section",
+     "severity": "medium",
+     "what": "live has 2 extra h2 the board does not draw",
+     "board": null,
+     "live": "the battery interrupter | momentary or latching"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "8/8 board paragraphs absent",
+     "board": "what adapting a toy means, the two ways to do it, and why it is worth ",
+     "live": "unit # · set up your bench"
+    }
+   ],
+   "role": "guest",
+   "finalUrl": "/learn/toy-adaptation-101",
+   "boardHeadings": 6,
+   "liveHeadings": 6
+  },
+  {
+   "id": "learn_switch",
+   "name": "Switch types explained",
+   "group": "Learn",
+   "route": "/learn/switch-types",
+   "findings": [
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "7/7 board paragraphs absent",
+     "board": "buttons, levers, proximity and grasp — which suits which child. the ri",
+     "live": "unit # · set up your bench"
+    }
+   ],
+   "role": "guest",
+   "finalUrl": "/learn/switch-types",
+   "boardHeadings": 7,
+   "liveHeadings": 8
+  },
+  {
+   "id": "learn_choose",
+   "name": "Choosing a toy",
+   "group": "Learn",
+   "route": "/learn/choosing-a-toy",
+   "findings": [
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "h2 wording",
+     "board": "the two-minute test in a shop",
+     "live": "signs a toy will be easy"
+    },
+    {
+     "type": "extra-section",
+     "severity": "medium",
+     "what": "live has 3 extra h2 the board does not draw",
+     "board": null,
+     "live": "signs a toy will fight you | match the toy to the child, not to your skills | check the library first"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "2/2 board paragraphs absent",
+     "board": "what makes a toy easy to adapt, and what makes it impossible. run a ca",
+     "live": "unit # · set up your bench"
+    }
+   ],
+   "role": "guest",
+   "finalUrl": "/learn/choosing-a-toy",
+   "boardHeadings": 4,
+   "liveHeadings": 5
+  },
+  {
+   "id": "learn_tools",
+   "name": "Tools and materials",
+   "group": "Learn",
+   "route": "/learn/tools-and-materials",
+   "findings": [
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "h2 wording",
+     "board": "borrow before you buy",
+     "live": "the minimum"
+    },
+    {
+     "type": "missing-section",
+     "severity": "medium",
+     "what": "no tables on live",
+     "board": 2,
+     "live": 0
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "3/3 board paragraphs absent",
+     "board": "buy these once and you can adapt any number of toys. every build lists",
+     "live": "unit # · set up your bench"
+    },
+    {
+     "type": "extra-section",
+     "severity": "low",
+     "what": "live has 5 extra h2 the board does not draw",
+     "board": null,
+     "live": "soldering, when you get to it | nice to have | battery interrupters"
+    }
+   ],
+   "role": "guest",
+   "finalUrl": "/learn/tools-and-materials",
+   "boardHeadings": 4,
+   "liveHeadings": 7
+  },
+  {
+   "id": "learn_safety",
+   "name": "Safe handling",
+   "group": "Learn",
+   "route": "/learn/safety-and-cleaning",
+   "findings": [
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "h2 wording",
+     "board": "wear this every time",
+     "live": "the three that actually hurt children"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "h2 wording",
+     "board": "handling the tools",
+     "live": "cleaning an adapted toy"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "h2 wording",
+     "board": "batteries out first",
+     "live": "the handover checklist"
+    },
+    {
+     "type": "extra-section",
+     "severity": "medium",
+     "what": "live has 2 extra h2 the board does not draw",
+     "board": null,
+     "live": "making a joint that survives a child | printed parts specifically"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "4/4 board paragraphs absent",
+     "board": "hot irons, lead solder, and small batteries. none of it is dangerous i",
+     "live": "unit # · set up your bench"
+    }
+   ],
+   "role": "guest",
+   "finalUrl": "/learn/safety-and-cleaning",
+   "boardHeadings": 7,
+   "liveHeadings": 6
+  },
+  {
+   "id": "learn_ask",
+   "name": "Have a question?",
+   "group": "Learn",
+   "route": "/learn/ask-an-expert",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/learn/ask-an-expert",
+   "boardHeadings": 5,
+   "liveHeadings": 5
+  },
+  {
+   "id": "learn_circuit",
+   "name": "How a switch works",
+   "group": "Learn",
+   "route": "/learn/how-a-switch-works",
+   "findings": [
+    {
+     "type": "font",
+     "severity": "high",
+     "what": "card title font",
+     "board": "Baloo 2",
+     "live": "Nunito"
+    },
+    {
+     "type": "weight",
+     "severity": "low",
+     "what": "card title weight",
+     "board": 800,
+     "live": 700
+    }
+   ],
+   "role": "guest",
+   "finalUrl": "/learn/how-a-switch-works",
+   "boardHeadings": 6,
+   "liveHeadings": 4
+  },
+  {
+   "id": "learn_q1",
+   "name": "Checkpoint: the basics",
+   "group": "Learn",
+   "route": "/learn/checkpoint-1",
+   "findings": [
+    {
+     "type": "font",
+     "severity": "high",
+     "what": "card title font",
+     "board": "Baloo 2",
+     "live": "Nunito"
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "card title size",
+     "board": "22px",
+     "live": "16px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "1/1 board paragraphs absent",
+     "board": "three quick questions on unit # wrong answers explain themselves — tha",
+     "live": "unit # · set up your bench"
+    },
+    {
+     "type": "weight",
+     "severity": "low",
+     "what": "card title weight",
+     "board": 800,
+     "live": 700
+    }
+   ],
+   "role": "guest",
+   "finalUrl": "/learn/checkpoint-1",
+   "boardHeadings": 3,
+   "liveHeadings": 1
+  },
+  {
+   "id": "learn_q2",
+   "name": "Checkpoint: the bench",
+   "group": "Learn",
+   "route": "/learn/checkpoint-2",
+   "findings": [
+    {
+     "type": "font",
+     "severity": "high",
+     "what": "card title font",
+     "board": "Baloo 2",
+     "live": "Nunito"
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "card title size",
+     "board": "22px",
+     "live": "16px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "1/1 board paragraphs absent",
+     "board": "three questions on tools and safety.",
+     "live": "unit # · set up your bench"
+    },
+    {
+     "type": "weight",
+     "severity": "low",
+     "what": "card title weight",
+     "board": 800,
+     "live": 700
+    }
+   ],
+   "role": "guest",
+   "finalUrl": "/learn/checkpoint-2",
+   "boardHeadings": 4,
+   "liveHeadings": 1
+  },
+  {
+   "id": "learn_connector",
+   "name": "Wire a 3.5 mm connector",
+   "group": "Learn",
+   "route": "/learn/wire-a-connector",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/learn/wire-a-connector",
+   "boardHeadings": 17,
+   "liveHeadings": 14
+  },
+  {
+   "id": "learn_q3",
+   "name": "Checkpoint: the connector",
+   "group": "Learn",
+   "route": "/learn/checkpoint-3",
+   "findings": [
+    {
+     "type": "font",
+     "severity": "high",
+     "what": "card title font",
+     "board": "Baloo 2",
+     "live": "Nunito"
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "card title size",
+     "board": "22px",
+     "live": "16px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "1/1 board paragraphs absent",
+     "board": "three questions on the connector build.",
+     "live": "unit # · set up your bench"
+    },
+    {
+     "type": "weight",
+     "severity": "low",
+     "what": "card title weight",
+     "board": 800,
+     "live": 700
+    }
+   ],
+   "role": "guest",
+   "finalUrl": "/learn/checkpoint-3",
+   "boardHeadings": 4,
+   "liveHeadings": 1
+  },
+  {
+   "id": "learn_hamster",
+   "name": "Build 1: Hamster Mania",
+   "group": "Learn",
+   "route": "/learn/build-hamster-mania",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/learn/build-hamster-mania",
+   "boardHeadings": 15,
+   "liveHeadings": 12
+  },
+  {
+   "id": "learn_duck",
+   "name": "Build 2: Duck bubble machine",
+   "group": "Learn",
+   "route": "/learn/build-duck-bubbles",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/learn/build-duck-bubbles",
+   "boardHeadings": 15,
+   "liveHeadings": 12
+  },
+  {
+   "id": "learn_rachel",
+   "name": "Build 3: Ms Rachel doll",
+   "group": "Learn",
+   "route": "/learn/build-ms-rachel",
+   "findings": [
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "set",
+     "live": "none"
+    }
+   ],
+   "role": "guest",
+   "finalUrl": "/learn/build-ms-rachel",
+   "boardHeadings": 19,
+   "liveHeadings": 15
+  },
+  {
+   "id": "learn_diyswitch",
+   "name": "Build a 3D-printed switch",
+   "group": "Learn",
+   "route": "/learn/build-a-switch",
+   "findings": [
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "card background",
+     "board": "rgb(243,241,237)",
+     "live": "rgb(255,255,255)"
+    }
+   ],
+   "role": "guest",
+   "finalUrl": "/learn/build-a-switch",
+   "boardHeadings": 17,
+   "liveHeadings": 14
+  },
+  {
+   "id": "learn_handover",
+   "name": "Checks, cleaning and handover",
+   "group": "Learn",
+   "route": "/learn/handover",
+   "findings": [
+    {
+     "type": "radius",
+     "severity": "medium",
+     "what": "card radius",
+     "board": "18px",
+     "live": "24px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "10/13 board paragraphs absent",
+     "board": "five safety checks, how to clean between families, and what to show th",
+     "live": "unit # · set up your bench"
+    }
+   ],
+   "role": "guest",
+   "finalUrl": "/learn/handover",
+   "boardHeadings": 12,
+   "liveHeadings": 12
+  },
+  {
+   "id": "learn_q4",
+   "name": "Final checkpoint",
+   "group": "Learn",
+   "route": "/learn/final-checkpoint",
+   "findings": [
+    {
+     "type": "font",
+     "severity": "high",
+     "what": "card title font",
+     "board": "Baloo 2",
+     "live": "Nunito"
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "card title size",
+     "board": "22px",
+     "live": "16px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "1/1 board paragraphs absent",
+     "board": "four questions across the whole course. pass this and you are ready fo",
+     "live": "unit # · set up your bench"
+    },
+    {
+     "type": "weight",
+     "severity": "low",
+     "what": "card title weight",
+     "board": 800,
+     "live": 700
+    }
+   ],
+   "role": "guest",
+   "finalUrl": "/learn/final-checkpoint",
+   "boardHeadings": 4,
+   "liveHeadings": 1
+  },
   {
    "id": "login",
    "name": "Sign in",
@@ -679,669 +1206,6 @@
    "role": "parent",
    "finalUrl": "/onboarding/child",
    "boardHeadings": 1,
-   "liveHeadings": 1
-  },
-  {
-   "id": "learn",
-   "name": "Learn · Course home",
-   "group": "Learn",
-   "route": "/learn",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"the course, unit by unit\" has no counterpart",
-     "board": "the course, unit by unit",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"keep at hand\" has no counterpart",
-     "board": "keep at hand",
-     "live": null
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "card title size",
-     "board": "23px",
-     "live": "20px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h1 \"switch adapting toys, from first switch to handover.\" size",
-     "board": "54px",
-     "live": "44px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h2 wording",
-     "board": "what you will be able to do",
-     "live": "alongside the course"
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "set",
-     "live": "none"
-    }
-   ],
-   "role": "guest",
-   "finalUrl": "/learn",
-   "boardHeadings": 20,
-   "liveHeadings": 13
-  },
-  {
-   "id": "learn_101",
-   "name": "Toy adaptation 101",
-   "group": "Learn",
-   "route": "/learn/toy-adaptation-101",
-   "findings": [
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h2 wording",
-     "board": "the whole trick in one paragraph",
-     "live": "the problem"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h2 wording",
-     "board": "there are two ways in",
-     "live": "when an interrupter is not enough"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h2 wording",
-     "board": "why bother",
-     "live": "what to read next"
-    },
-    {
-     "type": "extra-section",
-     "severity": "medium",
-     "what": "live has 2 extra h2 the board does not draw",
-     "board": null,
-     "live": "the battery interrupter | momentary or latching"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "8/8 board paragraphs absent",
-     "board": "what adapting a toy means, the two ways to do it, and why it is worth ",
-     "live": "unit # · set up your bench"
-    }
-   ],
-   "role": "guest",
-   "finalUrl": "/learn/toy-adaptation-101",
-   "boardHeadings": 6,
-   "liveHeadings": 6
-  },
-  {
-   "id": "learn_switch",
-   "name": "Switch types explained",
-   "group": "Learn",
-   "route": "/learn/switch-types",
-   "findings": [
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "7/7 board paragraphs absent",
-     "board": "buttons, levers, proximity and grasp — which suits which child. the ri",
-     "live": "unit # · set up your bench"
-    }
-   ],
-   "role": "guest",
-   "finalUrl": "/learn/switch-types",
-   "boardHeadings": 7,
-   "liveHeadings": 8
-  },
-  {
-   "id": "learn_choose",
-   "name": "Choosing a toy",
-   "group": "Learn",
-   "route": "/learn/choosing-a-toy",
-   "findings": [
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h2 wording",
-     "board": "the two-minute test in a shop",
-     "live": "signs a toy will be easy"
-    },
-    {
-     "type": "extra-section",
-     "severity": "medium",
-     "what": "live has 3 extra h2 the board does not draw",
-     "board": null,
-     "live": "signs a toy will fight you | match the toy to the child, not to your skills | check the library first"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "2/2 board paragraphs absent",
-     "board": "what makes a toy easy to adapt, and what makes it impossible. run a ca",
-     "live": "unit # · set up your bench"
-    }
-   ],
-   "role": "guest",
-   "finalUrl": "/learn/choosing-a-toy",
-   "boardHeadings": 4,
-   "liveHeadings": 5
-  },
-  {
-   "id": "learn_tools",
-   "name": "Tools and materials",
-   "group": "Learn",
-   "route": "/learn/tools-and-materials",
-   "findings": [
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h2 wording",
-     "board": "borrow before you buy",
-     "live": "the minimum"
-    },
-    {
-     "type": "missing-section",
-     "severity": "medium",
-     "what": "no tables on live",
-     "board": 2,
-     "live": 0
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "3/3 board paragraphs absent",
-     "board": "buy these once and you can adapt any number of toys. every build lists",
-     "live": "unit # · set up your bench"
-    },
-    {
-     "type": "extra-section",
-     "severity": "low",
-     "what": "live has 5 extra h2 the board does not draw",
-     "board": null,
-     "live": "soldering, when you get to it | nice to have | battery interrupters"
-    }
-   ],
-   "role": "guest",
-   "finalUrl": "/learn/tools-and-materials",
-   "boardHeadings": 4,
-   "liveHeadings": 7
-  },
-  {
-   "id": "learn_safety",
-   "name": "Safe handling",
-   "group": "Learn",
-   "route": "/learn/safety-and-cleaning",
-   "findings": [
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h2 wording",
-     "board": "wear this every time",
-     "live": "the three that actually hurt children"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h2 wording",
-     "board": "handling the tools",
-     "live": "cleaning an adapted toy"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h2 wording",
-     "board": "batteries out first",
-     "live": "the handover checklist"
-    },
-    {
-     "type": "extra-section",
-     "severity": "medium",
-     "what": "live has 2 extra h2 the board does not draw",
-     "board": null,
-     "live": "making a joint that survives a child | printed parts specifically"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "4/4 board paragraphs absent",
-     "board": "hot irons, lead solder, and small batteries. none of it is dangerous i",
-     "live": "unit # · set up your bench"
-    }
-   ],
-   "role": "guest",
-   "finalUrl": "/learn/safety-and-cleaning",
-   "boardHeadings": 7,
-   "liveHeadings": 6
-  },
-  {
-   "id": "learn_ask",
-   "name": "Have a question?",
-   "group": "Learn",
-   "route": "/learn/ask-an-expert",
-   "findings": [],
-   "role": "guest",
-   "finalUrl": "/learn/ask-an-expert",
-   "boardHeadings": 5,
-   "liveHeadings": 5
-  },
-  {
-   "id": "learn_circuit",
-   "name": "How a switch works",
-   "group": "Learn",
-   "route": "/learn/how-a-switch-works",
-   "findings": [
-    {
-     "type": "font",
-     "severity": "high",
-     "what": "card title font",
-     "board": "Baloo 2",
-     "live": "Nunito"
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "card title weight",
-     "board": 800,
-     "live": 700
-    }
-   ],
-   "role": "guest",
-   "finalUrl": "/learn/how-a-switch-works",
-   "boardHeadings": 6,
-   "liveHeadings": 4
-  },
-  {
-   "id": "learn_q1",
-   "name": "Checkpoint: the basics",
-   "group": "Learn",
-   "route": "/learn/checkpoint-1",
-   "findings": [
-    {
-     "type": "font",
-     "severity": "high",
-     "what": "card title font",
-     "board": "Baloo 2",
-     "live": "Nunito"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "card title size",
-     "board": "22px",
-     "live": "16px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "1/1 board paragraphs absent",
-     "board": "three quick questions on unit # wrong answers explain themselves — tha",
-     "live": "unit # · set up your bench"
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "card title weight",
-     "board": 800,
-     "live": 700
-    }
-   ],
-   "role": "guest",
-   "finalUrl": "/learn/checkpoint-1",
-   "boardHeadings": 3,
-   "liveHeadings": 1
-  },
-  {
-   "id": "learn_q2",
-   "name": "Checkpoint: the bench",
-   "group": "Learn",
-   "route": "/learn/checkpoint-2",
-   "findings": [
-    {
-     "type": "font",
-     "severity": "high",
-     "what": "card title font",
-     "board": "Baloo 2",
-     "live": "Nunito"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "card title size",
-     "board": "22px",
-     "live": "16px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "1/1 board paragraphs absent",
-     "board": "three questions on tools and safety.",
-     "live": "unit # · set up your bench"
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "card title weight",
-     "board": 800,
-     "live": 700
-    }
-   ],
-   "role": "guest",
-   "finalUrl": "/learn/checkpoint-2",
-   "boardHeadings": 4,
-   "liveHeadings": 1
-  },
-  {
-   "id": "learn_connector",
-   "name": "Wire a 3.5 mm connector",
-   "group": "Learn",
-   "route": "/learn/wire-a-connector",
-   "findings": [
-    {
-     "type": "font",
-     "severity": "high",
-     "what": "card title font",
-     "board": "Baloo 2",
-     "live": "Nunito"
-    },
-    {
-     "type": "missing-section",
-     "severity": "medium",
-     "what": "no tables on live",
-     "board": 1,
-     "live": 0
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "card title weight",
-     "board": 800,
-     "live": 700
-    }
-   ],
-   "role": "guest",
-   "finalUrl": "/learn/wire-a-connector",
-   "boardHeadings": 17,
-   "liveHeadings": 14
-  },
-  {
-   "id": "learn_q3",
-   "name": "Checkpoint: the connector",
-   "group": "Learn",
-   "route": "/learn/checkpoint-3",
-   "findings": [
-    {
-     "type": "font",
-     "severity": "high",
-     "what": "card title font",
-     "board": "Baloo 2",
-     "live": "Nunito"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "card title size",
-     "board": "22px",
-     "live": "16px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "1/1 board paragraphs absent",
-     "board": "three questions on the connector build.",
-     "live": "unit # · set up your bench"
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "card title weight",
-     "board": 800,
-     "live": 700
-    }
-   ],
-   "role": "guest",
-   "finalUrl": "/learn/checkpoint-3",
-   "boardHeadings": 4,
-   "liveHeadings": 1
-  },
-  {
-   "id": "learn_hamster",
-   "name": "Build 1: Hamster Mania",
-   "group": "Learn",
-   "route": "/learn/build-hamster-mania",
-   "findings": [
-    {
-     "type": "font",
-     "severity": "high",
-     "what": "card title font",
-     "board": "Baloo 2",
-     "live": "Nunito"
-    },
-    {
-     "type": "missing-section",
-     "severity": "medium",
-     "what": "no tables on live",
-     "board": 1,
-     "live": 0
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "card title weight",
-     "board": 800,
-     "live": 700
-    }
-   ],
-   "role": "guest",
-   "finalUrl": "/learn/build-hamster-mania",
-   "boardHeadings": 15,
-   "liveHeadings": 12
-  },
-  {
-   "id": "learn_duck",
-   "name": "Build 2: Duck bubble machine",
-   "group": "Learn",
-   "route": "/learn/build-duck-bubbles",
-   "findings": [
-    {
-     "type": "font",
-     "severity": "high",
-     "what": "card title font",
-     "board": "Baloo 2",
-     "live": "Nunito"
-    },
-    {
-     "type": "missing-section",
-     "severity": "medium",
-     "what": "no tables on live",
-     "board": 1,
-     "live": 0
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "card title weight",
-     "board": 800,
-     "live": 700
-    }
-   ],
-   "role": "guest",
-   "finalUrl": "/learn/build-duck-bubbles",
-   "boardHeadings": 15,
-   "liveHeadings": 12
-  },
-  {
-   "id": "learn_rachel",
-   "name": "Build 3: Ms Rachel doll",
-   "group": "Learn",
-   "route": "/learn/build-ms-rachel",
-   "findings": [
-    {
-     "type": "font",
-     "severity": "high",
-     "what": "card title font",
-     "board": "Baloo 2",
-     "live": "Nunito"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "card title size",
-     "board": "21px",
-     "live": "16px"
-    },
-    {
-     "type": "missing-section",
-     "severity": "medium",
-     "what": "no tables on live",
-     "board": 1,
-     "live": 0
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "card title weight",
-     "board": 800,
-     "live": 700
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "set",
-     "live": "none"
-    }
-   ],
-   "role": "guest",
-   "finalUrl": "/learn/build-ms-rachel",
-   "boardHeadings": 19,
-   "liveHeadings": 15
-  },
-  {
-   "id": "learn_diyswitch",
-   "name": "Build a 3D-printed switch",
-   "group": "Learn",
-   "route": "/learn/build-a-switch",
-   "findings": [
-    {
-     "type": "font",
-     "severity": "high",
-     "what": "card title font",
-     "board": "Baloo 2",
-     "live": "Nunito"
-    },
-    {
-     "type": "radius",
-     "severity": "medium",
-     "what": "card radius",
-     "board": "18px",
-     "live": "24px"
-    },
-    {
-     "type": "missing-section",
-     "severity": "medium",
-     "what": "no tables on live",
-     "board": 1,
-     "live": 0
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "card title weight",
-     "board": 800,
-     "live": 700
-    },
-    {
-     "type": "colour",
-     "severity": "low",
-     "what": "card background",
-     "board": "rgb(243,241,237)",
-     "live": "rgb(255,255,255)"
-    }
-   ],
-   "role": "guest",
-   "finalUrl": "/learn/build-a-switch",
-   "boardHeadings": 17,
-   "liveHeadings": 14
-  },
-  {
-   "id": "learn_handover",
-   "name": "Checks, cleaning and handover",
-   "group": "Learn",
-   "route": "/learn/handover",
-   "findings": [
-    {
-     "type": "radius",
-     "severity": "medium",
-     "what": "card radius",
-     "board": "18px",
-     "live": "24px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "10/13 board paragraphs absent",
-     "board": "five safety checks, how to clean between families, and what to show th",
-     "live": "unit # · set up your bench"
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "set",
-     "live": "none"
-    }
-   ],
-   "role": "guest",
-   "finalUrl": "/learn/handover",
-   "boardHeadings": 12,
-   "liveHeadings": 12
-  },
-  {
-   "id": "learn_q4",
-   "name": "Final checkpoint",
-   "group": "Learn",
-   "route": "/learn/final-checkpoint",
-   "findings": [
-    {
-     "type": "font",
-     "severity": "high",
-     "what": "card title font",
-     "board": "Baloo 2",
-     "live": "Nunito"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "card title size",
-     "board": "22px",
-     "live": "16px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "1/1 board paragraphs absent",
-     "board": "four questions across the whole course. pass this and you are ready fo",
-     "live": "unit # · set up your bench"
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "card title weight",
-     "board": 800,
-     "live": 700
-    }
-   ],
-   "role": "guest",
-   "finalUrl": "/learn/final-checkpoint",
-   "boardHeadings": 4,
    "liveHeadings": 1
   },
   {
@@ -5224,20 +5088,20 @@
  ],
  "summary": {
   "screens": 119,
-  "clean": 3,
-  "withFindings": 116,
+  "clean": 6,
+  "withFindings": 113,
   "errored": 0,
-  "findings": 542,
+  "findings": 523,
   "byType": {
-   "size": 78,
+   "missing-section": 148,
+   "size": 77,
    "copy": 116,
-   "weight": 31,
-   "radius": 43,
-   "missing-section": 153,
-   "shadow": 43,
-   "colour": 33,
    "extra-section": 20,
-   "font": 25
+   "font": 20,
+   "weight": 26,
+   "shadow": 41,
+   "colour": 33,
+   "radius": 42
   }
  }
 }

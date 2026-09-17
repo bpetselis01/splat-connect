@@ -100,29 +100,54 @@ export function BuildLesson({ lesson, title }: { lesson: BuildLesson; title: str
       */}
       <section className="mt-10">
         <h2 className="title-detail">You will need</h2>
-        <ul className="mt-3 flex list-none flex-col gap-3">
-          {lesson.materials.map((m) => (
-            <li key={m.item} className="card flex items-center gap-4 p-4">
-              {m.img && (
-                <span className="relative hidden h-16 w-16 shrink-0 overflow-hidden rounded-card bg-sunken sm:block">
-                  <Image src={m.img} alt="" fill sizes="64px" className="object-cover" />
-                </span>
-              )}
-              <span className="min-w-0 flex-1">
-                <span className="block font-bold text-ink">{m.item}</span>
-                <span className="block text-sm leading-relaxed text-muted">{m.why}</span>
-              </span>
-              <span className="shrink-0 text-right">
-                <span className="block font-mono text-sm font-bold tabular-nums text-ink">
-                  {m.cost}
-                </span>
-                <span className="block text-xs text-muted">
-                  {m.qty} · {m.shop}
-                </span>
-              </span>
-            </li>
-          ))}
-        </ul>
+        {/*
+          A table, because this is tabular data and the board draws it as one:
+          PART | WHAT IT IS | WHERE · QTY · COST. Live had it as a list of
+          cards, which reads fine down a phone and stops a builder comparing
+          two rows — the thing you actually do with a shopping list. It also
+          gives a screen reader column headers it did not have.
+
+          The photo stays inside the first cell rather than taking a fourth
+          column, so the shape still matches the board's three.
+        */}
+        <div className="mt-3 overflow-x-auto">
+          <table className="w-full border-collapse text-left">
+            <thead>
+              <tr className="border-b border-line">
+                <th scope="col" className="eyebrow pb-2 pr-3 text-muted">Part</th>
+                <th scope="col" className="eyebrow pb-2 pr-3 text-muted">What it is</th>
+                <th scope="col" className="eyebrow whitespace-nowrap pb-2 text-right text-muted">
+                  Where · Qty · Cost
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {lesson.materials.map((m) => (
+                <tr key={m.item} className="border-b border-line align-top last:border-0">
+                  <td className="py-3 pr-3">
+                    <span className="flex items-center gap-3">
+                      {m.img && (
+                        <span className="relative hidden h-12 w-12 shrink-0 overflow-hidden rounded-field bg-sunken sm:block">
+                          <Image src={m.img} alt="" fill sizes="48px" className="object-cover" />
+                        </span>
+                      )}
+                      <span className="font-bold text-ink">{m.item}</span>
+                    </span>
+                  </td>
+                  <td className="py-3 pr-3 text-sm leading-relaxed text-muted">{m.why}</td>
+                  <td className="py-3 text-right">
+                    <span className="block font-mono text-sm font-bold tabular-nums text-ink">
+                      {m.cost}
+                    </span>
+                    <span className="block text-xs text-muted">
+                      {m.qty} · {m.shop}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
         <h3 className="mt-8 text-[19px] font-extrabold text-ink">Tools for this build</h3>
         <div className="mt-3 flex flex-wrap gap-2">
