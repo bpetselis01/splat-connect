@@ -1,5 +1,5 @@
 {
- "at": "2026-09-17T06:54:00.552Z",
+ "at": "2026-09-17T07:04:48.082Z",
  "live": "http://localhost:3110",
  "screens": [
   {
@@ -1707,25 +1707,11 @@
    "route": "/get-involved/submit-an-idea",
    "findings": [
     {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"describe the toy and the child\" size",
-     "board": "20px",
-     "live": "16px"
-    },
-    {
      "type": "copy",
      "severity": "medium",
      "what": "h3 wording",
      "board": "describe the toy and the child",
      "live": "tell us the toy, and what needs to change"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"an admin reads it\" size",
-     "board": "20px",
-     "live": "16px"
     },
     {
      "type": "copy",
@@ -1735,25 +1721,11 @@
      "live": "if it does not, it goes to the makers"
     },
     {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"it becomes a design challenge\" size",
-     "board": "20px",
-     "live": "16px"
-    },
-    {
      "type": "copy",
      "severity": "medium",
      "what": "h3 wording",
      "board": "it becomes a design challenge",
      "live": "it becomes a guide"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"you stay in the loop\" size",
-     "board": "20px",
-     "live": "16px"
     },
     {
      "type": "copy",
@@ -1768,34 +1740,6 @@
      "what": "3/3 board paragraphs absent",
      "board": "suggest a toy worth adapting, even if you cannot build it. an admin re",
      "live": "you do not have to be able to build something to be the person who tho"
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "h3 \"describe the toy and the child\" weight",
-     "board": 800,
-     "live": 700
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "h3 \"an admin reads it\" weight",
-     "board": 800,
-     "live": 700
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "h3 \"it becomes a design challenge\" weight",
-     "board": 800,
-     "live": 700
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "h3 \"you stay in the loop\" weight",
-     "board": 800,
-     "live": 700
     },
     {
      "type": "colour",
@@ -1817,25 +1761,11 @@
    "route": "/get-involved/submit-a-tutorial",
    "findings": [
     {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"draft\" size",
-     "board": "20px",
-     "live": "16px"
-    },
-    {
      "type": "copy",
      "severity": "medium",
      "what": "h3 wording",
      "board": "draft",
      "live": "what a guide has to contain"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"choose an organisation\" size",
-     "board": "20px",
-     "live": "16px"
     },
     {
      "type": "copy",
@@ -1845,13 +1775,6 @@
      "live": "write for someone who has never done this"
     },
     {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"submit for review\" size",
-     "board": "20px",
-     "live": "16px"
-    },
-    {
      "type": "copy",
      "severity": "medium",
      "what": "h3 wording",
@@ -1859,25 +1782,11 @@
      "live": "submit, and expect questions"
     },
     {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"answer the review\" size",
-     "board": "20px",
-     "live": "16px"
-    },
-    {
      "type": "copy",
      "severity": "medium",
      "what": "h3 wording",
      "board": "answer the review",
      "live": "you can work on it with other people"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"published\" size",
-     "board": "20px",
-     "live": "16px"
     },
     {
      "type": "copy",
@@ -1899,41 +1808,6 @@
      "what": "2/2 board paragraphs absent",
      "board": "what writing up an adaptation involves, start to finish. nothing goes ",
      "live": "here is exactly what is involved, so you can decide before you start r"
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "h3 \"draft\" weight",
-     "board": 800,
-     "live": 700
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "h3 \"choose an organisation\" weight",
-     "board": 800,
-     "live": 700
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "h3 \"submit for review\" weight",
-     "board": 800,
-     "live": 700
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "h3 \"answer the review\" weight",
-     "board": 800,
-     "live": 700
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "h3 \"published\" weight",
-     "board": 800,
-     "live": 700
     }
    ],
    "role": "guest",
@@ -2159,13 +2033,6 @@
      "live": null
     },
     {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"pick an open problem\" size",
-     "board": "20px",
-     "live": "16px"
-    },
-    {
      "type": "copy",
      "severity": "medium",
      "what": "h3 wording",
@@ -2173,25 +2040,11 @@
      "live": "a family or therapist posts a problem with no known solution"
     },
     {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"join the thread\" size",
-     "board": "20px",
-     "live": "16px"
-    },
-    {
      "type": "copy",
      "severity": "medium",
      "what": "h3 wording",
      "board": "join the thread",
      "live": "a working answer becomes a guide"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"test it with a child\" size",
-     "board": "20px",
-     "live": "16px"
     },
     {
      "type": "copy",
@@ -2213,27 +2066,6 @@
      "what": "3/3 board paragraphs absent",
      "board": "problems nobody has solved yet, open to anyone. each one started as a ",
      "live": "problems nobody has solved yet — a toy that resists adaptation, or a n"
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "h3 \"pick an open problem\" weight",
-     "board": 800,
-     "live": 700
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "h3 \"join the thread\" weight",
-     "board": 800,
-     "live": 700
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "h3 \"test it with a child\" weight",
-     "board": 800,
-     "live": 700
     },
     {
      "type": "radius",
@@ -2505,22 +2337,8 @@
     {
      "type": "missing-section",
      "severity": "high",
-     "what": "h4 \"northside therapy collective\" has no counterpart",
-     "board": "northside therapy collective",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
      "what": "h2 \"es\" has no counterpart",
      "board": "es",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"eastwood special school\" has no counterpart",
-     "board": "eastwood special school",
      "live": null
     },
     {
@@ -2533,13 +2351,6 @@
     {
      "type": "missing-section",
      "severity": "high",
-     "what": "h4 \"riverina makerspace\" has no counterpart",
-     "board": "riverina makerspace",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
      "what": "h2 \"bk\" has no counterpart",
      "board": "bk",
      "live": null
@@ -2547,22 +2358,8 @@
     {
      "type": "missing-section",
      "severity": "high",
-     "what": "h4 \"brisbane kids ot\" has no counterpart",
-     "board": "brisbane kids ot",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
      "what": "h2 \"pp\" has no counterpart",
      "board": "pp",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"perth play project\" has no counterpart",
-     "board": "perth play project",
      "live": null
     },
     {
@@ -2578,6 +2375,41 @@
      "what": "h4 \"geelong men’s shed\" has no counterpart",
      "board": "geelong men’s shed",
      "live": null
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "h4 wording",
+     "board": "northside therapy collective",
+     "live": "e#e backing org #-#"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "h4 wording",
+     "board": "eastwood special school",
+     "live": "e#e org #-#"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "h4 wording",
+     "board": "riverina makerspace",
+     "live": "parity org mu#ki#qsf#z"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "h4 wording",
+     "board": "brisbane kids ot",
+     "live": "e#e showcase org #-#"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "h4 wording",
+     "board": "perth play project",
+     "live": "e#e detail org #-#"
     },
     {
      "type": "missing-section",
@@ -2597,7 +2429,7 @@
    "role": "guest",
    "finalUrl": "/organizations",
    "boardHeadings": 13,
-   "liveHeadings": 1
+   "liveHeadings": 9
   },
   {
    "id": "org_public",
@@ -3532,6 +3364,13 @@
      "live": "Baloo 2"
     },
     {
+     "type": "size",
+     "severity": "medium",
+     "what": "card title size",
+     "board": "14px",
+     "live": "18px"
+    },
+    {
      "type": "radius",
      "severity": "medium",
      "what": "card radius",
@@ -3544,13 +3383,6 @@
      "what": "3/3 board paragraphs absent",
      "board": "a guide, a toy, a partnership. everyone here is a volunteer with anoth",
      "live": "email reaches a person. there is no ticketing system and no chatbot."
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "card title weight",
-     "board": 800,
-     "live": 700
     },
     {
      "type": "shadow",
@@ -3611,7 +3443,7 @@
      "severity": "medium",
      "what": "5/5 board paragraphs absent",
      "board": "everything a family can ask of an organisation, in one place. say no w",
-     "live": "every ask a family can make of parity org mu#pbrvud# in one queue: a t"
+     "live": "every ask a family can make of parity org mu#ki#qsf#z, in one queue: a"
     },
     {
      "type": "shadow",
@@ -3721,7 +3553,7 @@
    "id": "org_event_manage",
    "name": "Manage event",
    "group": "My SPLAT",
-   "route": "/dashboard/org/events/b5725089-91ca-44b9-825d-604db5354c28",
+   "route": "/dashboard/org/events/a5b49b54-68e6-4556-aad8-40be00cc2c13",
    "findings": [
     {
      "type": "font",
@@ -3788,7 +3620,7 @@
     }
    ],
    "role": "leader",
-   "finalUrl": "/dashboard/org/events/b5725089-91ca-44b9-825d-604db5354c28",
+   "finalUrl": "/dashboard/org/events/a5b49b54-68e6-4556-aad8-40be00cc2c13",
    "boardHeadings": 4,
    "liveHeadings": 2
   },
@@ -4367,7 +4199,7 @@
    "id": "editor",
    "name": "Tutorial editor",
    "group": "My SPLAT",
-   "route": "/tutorials/fd476705-8e5f-4709-a442-2b96d729617d/edit",
+   "route": "/tutorials/d8c681a4-c61b-4412-819a-26cbcd1eac5d/edit",
    "findings": [
     {
      "type": "missing-section",
@@ -4434,7 +4266,7 @@
     }
    ],
    "role": "contributor",
-   "finalUrl": "/tutorials/fd476705-8e5f-4709-a442-2b96d729617d/edit",
+   "finalUrl": "/tutorials/d8c681a4-c61b-4412-819a-26cbcd1eac5d/edit",
    "boardHeadings": 5,
    "liveHeadings": 1
   },
@@ -4679,7 +4511,7 @@
    "id": "thread",
    "name": "Exchange thread",
    "group": "My SPLAT",
-   "route": "/dashboard/exchanges/258ef10e-cea1-4ef7-b544-4e77bf972295",
+   "route": "/dashboard/exchanges/b6c28daa-e743-4615-8ba7-4daff3778cf5",
    "findings": [
     {
      "type": "font",
@@ -4767,7 +4599,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/exchanges/258ef10e-cea1-4ef7-b544-4e77bf972295",
+   "finalUrl": "/dashboard/exchanges/b6c28daa-e743-4615-8ba7-4daff3778cf5",
    "boardHeadings": 4,
    "liveHeadings": 6
   },
@@ -5226,7 +5058,7 @@
    "id": "print_job",
    "name": "Print job",
    "group": "My SPLAT",
-   "route": "/dashboard/print-requests/7663c431-a25b-4edd-986a-d05917cbbea0",
+   "route": "/dashboard/print-requests/e9c188ca-601b-4a7b-8ce3-131d8e01c852",
    "findings": [
     {
      "type": "font",
@@ -5307,7 +5139,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/print-requests/7663c431-a25b-4edd-986a-d05917cbbea0",
+   "finalUrl": "/dashboard/print-requests/e9c188ca-601b-4a7b-8ce3-131d8e01c852",
    "boardHeadings": 3,
    "liveHeadings": 5
   },
@@ -5498,7 +5330,7 @@
    "id": "child",
    "name": "Child profile",
    "group": "My SPLAT",
-   "route": "/dashboard/child/982b6d0a-dd45-470e-8f20-efd1acc7ee42",
+   "route": "/dashboard/child/3998eda7-18f0-4fab-b25b-6eb7f8449fcf",
    "findings": [
     {
      "type": "font",
@@ -5565,7 +5397,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/child/982b6d0a-dd45-470e-8f20-efd1acc7ee42",
+   "finalUrl": "/dashboard/child/3998eda7-18f0-4fab-b25b-6eb7f8449fcf",
    "boardHeadings": 4,
    "liveHeadings": 1
   },
@@ -5831,7 +5663,7 @@
      "severity": "medium",
      "what": "5/5 board paragraphs absent",
      "board": "published items are live on the public pages right now.",
-     "live": "what parity org mu#pbrvud# has published, and what is still a draft."
+     "live": "what parity org mu#ki#qsf#z has published, and what is still a draft."
     },
     {
      "type": "weight",
@@ -6579,7 +6411,7 @@
      "severity": "medium",
      "what": "1/1 board paragraphs absent",
      "board": "review and remove accounts. # total, # flagged.",
-     "live": "parity-contributor-mu#pfgaa#h@example.com"
+     "live": "parity-contributor-mu#ki#qo#y#@example.com"
     },
     {
      "type": "weight",
@@ -7090,15 +6922,15 @@
   "clean": 2,
   "withFindings": 117,
   "errored": 0,
-  "findings": 808,
+  "findings": 784,
   "byType": {
-   "missing-section": 295,
-   "size": 97,
-   "copy": 166,
+   "missing-section": 290,
+   "size": 86,
+   "copy": 171,
    "radius": 43,
    "colour": 35,
    "font": 31,
-   "weight": 66,
+   "weight": 53,
    "shadow": 45,
    "extra-section": 30
   }

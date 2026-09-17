@@ -125,7 +125,7 @@ export default async function OrgPublicProfilePage({
           <ul className="flex list-none flex-col gap-2">
             {(org.events ?? []).map((event) => (
               <li key={event.id} className="rounded-[var(--radius-panel)] bg-canvas p-4">
-                <p className="font-bold text-ink">{event.title}</p>
+                <p className="card-title">{event.title}</p>
                 <p className="text-sm text-muted">
                   {new Date(event.starts_at).toLocaleString('en-AU')} ·{' '}
                   {/* An online event's joining link is never public — the API
@@ -148,7 +148,7 @@ export default async function OrgPublicProfilePage({
           <ul className="flex list-none flex-col gap-2">
             {(org.stories ?? []).map((story) => (
               <li key={story.id} className="rounded-[var(--radius-panel)] bg-canvas p-4">
-                <p className="font-bold text-ink">{story.title}</p>
+                <p className="card-title">{story.title}</p>
                 <p className="mt-1 text-sm leading-relaxed text-ink">{story.summary}</p>
                 {/* Attributed to an organisation and a byline, always. */}
                 <p className="mt-1 text-[13px] text-muted">{story.byline}</p>

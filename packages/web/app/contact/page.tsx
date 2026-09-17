@@ -33,7 +33,7 @@ export default async function ContactPage() {
 
       <div className="mt-10 flex flex-col gap-5">
         <div className="card-flat p-5">
-          <h2 className="font-bold text-ink">A safety problem with a guide</h2>
+          <h2 className="card-title">A safety problem with a guide</h2>
           <p className="mt-1 text-sm leading-relaxed text-muted">
             Tell us immediately and we will take the guide down while we check it. Include
             the guide title and what you found. We would much rather pull a guide than
@@ -46,7 +46,7 @@ export default async function ContactPage() {
         </div>
 
         <div className="card-flat p-5">
-          <h2 className="font-bold text-ink">Bringing an organisation on board</h2>
+          <h2 className="card-title">Bringing an organisation on board</h2>
           <p className="mt-1 text-sm leading-relaxed text-muted">
             Organisations are set up by us rather than self-registered, so a name on a
             guide means something. Tell us who you are and what you would like to do —{' '}
@@ -61,7 +61,7 @@ export default async function ContactPage() {
         </div>
 
         <div className="card-flat p-5">
-          <h2 className="font-bold text-ink">Your account or your data</h2>
+          <h2 className="card-title">Your account or your data</h2>
           <p className="mt-1 text-sm leading-relaxed text-muted">
             To request a copy of everything held against your account, or to have it
             deleted, email us from the address on the account. What we hold is set out in
@@ -74,7 +74,7 @@ export default async function ContactPage() {
         </div>
 
         <div className="card-flat p-5">
-          <h2 className="font-bold text-ink">Reporting someone&apos;s behaviour</h2>
+          <h2 className="card-title">Reporting someone&apos;s behaviour</h2>
           <p className="mt-1 text-sm leading-relaxed text-muted">
             Reports go to the SPLAT team, not to the person being reported, and we tell
             you what we decided. See the{' '}

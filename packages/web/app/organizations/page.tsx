@@ -60,7 +60,7 @@ export default async function OrganizationsPage() {
             className="card card-link p-4"
           >
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-              <p className="text-sm font-bold text-ink">{org.name}</p>
+              <p className="card-title">{org.name}</p>
               {org.status === 'suspended' && (
                 <span className="badge bg-sunken text-muted">SUSPENDED</span>
               )}

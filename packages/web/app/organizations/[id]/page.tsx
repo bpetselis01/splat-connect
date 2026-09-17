@@ -126,7 +126,7 @@ export default async function OrganizationPage({
                     header replace it. The whole card is the target — the same
                     change the merged queue in dashboard/organisation carries. */}
                 <BoundaryLink href={`/tutorials/${t.id}`} className="card card-link p-4">
-                  <span className="text-sm font-bold text-ink">{t.title}</span>
+                  <span className="card-title">{t.title}</span>
                   {t.description && (
                     <p className="mt-1 max-w-prose text-xs leading-relaxed text-muted">
                       {t.description}
@@ -169,7 +169,7 @@ export default async function OrganizationPage({
                 >
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                     <BackingBadge status={rowFor(t)!.status} />
-                    <span className="text-sm font-bold text-ink">{t.title}</span>
+                    <span className="card-title">{t.title}</span>
                     <span className="ml-auto">
                       <Badge status={t.difficulty} />
                     </span>
