@@ -92,8 +92,14 @@ export function BuildLesson({ lesson, title }: { lesson: BuildLesson; title: str
         </p>
       )}
 
+      {/*
+        One section, not two. The board puts the shopping list and the bench
+        list under a single "You will need", with the tools as an h3 inside it —
+        a builder reads them together, and splitting them into sibling h2s made
+        the page claim two topics where the design has one.
+      */}
       <section className="mt-10">
-        <h2 className="title-detail">What to buy</h2>
+        <h2 className="title-detail">You will need</h2>
         <ul className="mt-3 flex list-none flex-col gap-3">
           {lesson.materials.map((m) => (
             <li key={m.item} className="card flex items-center gap-4 p-4">
@@ -117,10 +123,8 @@ export function BuildLesson({ lesson, title }: { lesson: BuildLesson; title: str
             </li>
           ))}
         </ul>
-      </section>
 
-      <section className="mt-8">
-        <h2 className="title-detail">What to have out</h2>
+        <h3 className="mt-8 text-[19px] font-extrabold text-ink">Tools for this build</h3>
         <div className="mt-3 flex flex-wrap gap-2">
           {lesson.tools.map((t) => (
             <span key={t} className="badge bg-sunken text-brand-deep">
@@ -131,7 +135,7 @@ export function BuildLesson({ lesson, title }: { lesson: BuildLesson; title: str
       </section>
 
       <section className="mt-10">
-        <h2 className="title-detail">The build</h2>
+        <h2 className="title-detail">Step by step</h2>
         <ol className="mt-4 flex list-none flex-col gap-8">
           {lesson.steps.map((step, i) => (
             <li key={step.title}>
