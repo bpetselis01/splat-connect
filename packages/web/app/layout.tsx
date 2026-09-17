@@ -32,7 +32,12 @@ const nunito = Nunito({
 // a lowercase label.
 const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
-  weight: ['400', '500'],
+  // 700 as well: design-system-update/tokens/typography.css imports
+  // JetBrains Mono at 400;500;700, and the system asks for the bold — Chip's
+  // stat figure and CostPanel's line amounts are both 700. Without it the
+  // browser synthesises one, which is the same fault the headings had when
+  // --font-display asked Baloo 2 for a 900 it does not ship.
+  weight: ['400', '500', '700'],
   // Not `--font-mono`: that is the Tailwind theme key, and a token that
   // resolves to itself resolves to nothing.
   variable: '--font-jetbrains',

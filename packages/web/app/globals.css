@@ -895,21 +895,15 @@
     border: var(--border-width) solid var(--color-line);
   }
 
-  /* The homepage's three stat chips — bordered boxes rather than soft pills. */
-  .pixel .stat-pixel {
-    border-radius: var(--radius-field);
-    border: var(--border-width) solid var(--color-line);
-    box-shadow: var(--shadow-e1);
-  }
 
   /*
-   * The only place Jersey 10 appears on the site.
+   * A figure set in the display face.
    *
-   * Three uses, all of them the homepage hero's stat-chip numerals — guides,
-   * toys delivered, contributors. The board sets them at 22px/700 and sets
-   * literally everything else, headings included, in Nunito. A bitmap face
-   * reads as a quantity rendered by a machine, which is what these three are;
-   * a headline set the same way just reads as a different website.
+   * This comment used to say "the only place Jersey 10 appears on the site".
+   * Jersey 10 was Pixel's numerals-only bitmap face and is not loaded any more;
+   * --font-display is Baloo 2 and applies to every heading. Left in place
+   * because the four remaining call sites want a figure in the display face —
+   * a count on a tile, not a column of money, which is mono's job.
    */
   .numeral {
     font-family: var(--font-display);
@@ -999,14 +993,7 @@
    * for the three hero stat chips alone, and a step badge is an ordinal, not a
    * quantity.
    */
-  .pixel .step-pixel {
-    border-radius: var(--radius-field);
-    border: var(--border-width) solid var(--color-brand-dark);
-    background-color: var(--color-brand-tint);
-    color: var(--color-brand-dark);
-    font-weight: 900;
-  }
-
+  
   /*
    * Hover lifts the tab up-left onto a hard ink shadow; pressing it drops the
    * tab into that shadow. It is the same two-part motion the board gives its
@@ -2836,7 +2823,9 @@
   .stat-chip__value {
     font-family: var(--font-mono);
     font-size: 17px;
-    font-weight: 800;
+    /* 700 — the heaviest JetBrains Mono weight the system loads. Chip.jsx asks
+       for 800, which would synthesise. */
+    font-weight: 700;
     font-variant-numeric: tabular-nums;
     color: var(--color-ink);
   }
