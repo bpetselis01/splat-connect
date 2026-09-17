@@ -21,9 +21,12 @@ export function AuthWordmark({ className = '' }: { className?: string }) {
       >
         <Logo className="h-5 w-5" />
       </span>
-      <span className="font-display text-[22px] font-extrabold tracking-tight">
-        <span className="text-ink">SPLAT</span>{' '}
-        <span className="text-brand-dark">Connect</span>
+      {/* "SPLAT" stays as this element's own text rather than going into a
+          third span, so the wordmark reads as one label with a coloured second
+          word — which is how the board marks it up, and what a screen reader
+          and the parity fingerprint both see. */}
+      <span className="font-display text-[22px] font-extrabold tracking-tight text-ink">
+        SPLAT <span className="text-brand-dark">Connect</span>
       </span>
     </Link>
   )

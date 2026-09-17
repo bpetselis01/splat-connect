@@ -1,7 +1,263 @@
 {
- "at": "2026-09-17T10:22:43.125Z",
+ "at": "2026-09-17T10:23:59.690Z",
  "live": "http://localhost:3110",
  "screens": [
+  {
+   "id": "login",
+   "name": "Sign in",
+   "group": "Auth",
+   "route": "/login",
+   "findings": [
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "card title size",
+     "board": "26px",
+     "live": "22px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "3/3 board paragraphs absent",
+     "board": "one account for everything — browse, contribute, and manage your child",
+     "live": "new here? create an account"
+    },
+    {
+     "type": "weight",
+     "severity": "low",
+     "what": "card title weight",
+     "board": 800,
+     "live": 900
+    },
+    {
+     "type": "radius",
+     "severity": "low",
+     "what": "input radius",
+     "board": "999px",
+     "live": "14px"
+    }
+   ],
+   "role": "guest",
+   "finalUrl": "/login",
+   "boardHeadings": 3,
+   "liveHeadings": 3
+  },
+  {
+   "id": "signup",
+   "name": "Create account",
+   "group": "Auth",
+   "route": "/signup",
+   "findings": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h1 \"welcome to splat connect\" has no counterpart",
+     "board": "welcome to splat connect",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h4 \"create my account\" has no counterpart",
+     "board": "create my account",
+     "live": null
+    },
+    {
+     "type": "shadow",
+     "severity": "medium",
+     "what": "no button on live carries a shadow",
+     "board": "set",
+     "live": "none"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "1/1 board paragraphs absent",
+     "board": "one account for browsing, saving, requesting toys and — if you make th",
+     "live": "one account for everything — browse, contribute, and manage your child"
+    },
+    {
+     "type": "radius",
+     "severity": "low",
+     "what": "button radius range",
+     "board": "999px",
+     "live": "0px"
+    },
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "input background",
+     "board": "rgb(255,255,255)/rgba(0,0,0,0)",
+     "live": "rgb(250,249,247)"
+    }
+   ],
+   "role": "guest",
+   "finalUrl": "/signup",
+   "boardHeadings": 2,
+   "liveHeadings": 3
+  },
+  {
+   "id": "signup_sent",
+   "name": "Check your email",
+   "group": "Auth",
+   "route": "/signup",
+   "findings": [
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "card title size",
+     "board": "25px",
+     "live": "22px"
+    },
+    {
+     "type": "shadow",
+     "severity": "medium",
+     "what": "no button on live carries a shadow",
+     "board": "set",
+     "live": "none"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "2/2 board paragraphs absent",
+     "board": "we've sent a confirmation link to sam.mitchell@example.com. confirm yo",
+     "live": "one account for everything — browse, contribute, and manage your child"
+    },
+    {
+     "type": "weight",
+     "severity": "low",
+     "what": "card title weight",
+     "board": 800,
+     "live": 900
+    },
+    {
+     "type": "radius",
+     "severity": "low",
+     "what": "button radius range",
+     "board": "999px",
+     "live": "0px"
+    },
+    {
+     "type": "radius",
+     "severity": "low",
+     "what": "input radius",
+     "board": "999px",
+     "live": "14px"
+    },
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "input background",
+     "board": "rgb(255,255,255)/rgba(0,0,0,0)",
+     "live": "rgb(250,249,247)"
+    }
+   ],
+   "role": "guest",
+   "finalUrl": "/signup",
+   "boardHeadings": 3,
+   "liveHeadings": 3
+  },
+  {
+   "id": "confirmed",
+   "name": "Email confirmed",
+   "group": "Auth",
+   "route": "/auth/confirmed",
+   "findings": [
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "card title size",
+     "board": "25px",
+     "live": "44px"
+    },
+    {
+     "type": "shadow",
+     "severity": "medium",
+     "what": "no button on live carries a shadow",
+     "board": "set",
+     "live": "none"
+    },
+    {
+     "type": "missing-section",
+     "severity": "medium",
+     "what": "no inputs on live",
+     "board": 2,
+     "live": 0
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "2/2 board paragraphs absent",
+     "board": "you're all set. we'll take you back to the guide you were saving.",
+     "live": "your email has been confirmed. sign in to your account to continue."
+    }
+   ],
+   "role": "guest",
+   "finalUrl": "/auth/confirmed",
+   "boardHeadings": 3,
+   "liveHeadings": 3
+  },
+  {
+   "id": "terms_gate",
+   "name": "Contributor terms gate",
+   "group": "Auth",
+   "route": "/onboarding/contributor-terms",
+   "findings": [
+    {
+     "type": "shadow",
+     "severity": "medium",
+     "what": "no button on live carries a shadow",
+     "board": "set",
+     "live": "none"
+    },
+    {
+     "type": "radius",
+     "severity": "medium",
+     "what": "card radius",
+     "board": "18px",
+     "live": "24px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "7/7 board paragraphs absent",
+     "board": "version # you keep the copyright on everything you write.",
+     "live": "please review and accept the contributor terms to carry on."
+    },
+    {
+     "type": "radius",
+     "severity": "low",
+     "what": "button radius range",
+     "board": "999px",
+     "live": "0px"
+    },
+    {
+     "type": "radius",
+     "severity": "low",
+     "what": "input radius",
+     "board": "999px",
+     "live": "0px"
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "none",
+     "live": "set"
+    },
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "card background",
+     "board": "rgb(250,249,247)",
+     "live": "rgb(255,255,255)"
+    }
+   ],
+   "role": "guest",
+   "finalUrl": "/onboarding/contributor-terms",
+   "boardHeadings": 8,
+   "liveHeadings": 3
+  },
   {
    "id": "printing_basics",
    "name": "Printing basics",
@@ -102,60 +358,6 @@
    "finalUrl": "/about",
    "boardHeadings": 9,
    "liveHeadings": 11
-  },
-  {
-   "id": "login",
-   "name": "Sign in",
-   "group": "Auth",
-   "route": "/login",
-   "findings": [
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "card title size",
-     "board": "26px",
-     "live": "22px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h3 wording",
-     "board": "splat connect",
-     "live": "splat"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "3/3 board paragraphs absent",
-     "board": "one account for everything — browse, contribute, and manage your child",
-     "live": "new here? create an account"
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "card title weight",
-     "board": 800,
-     "live": 900
-    },
-    {
-     "type": "radius",
-     "severity": "low",
-     "what": "input radius",
-     "board": "999px",
-     "live": "14px"
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "set",
-     "live": "none"
-    }
-   ],
-   "role": "guest",
-   "finalUrl": "/login",
-   "boardHeadings": 3,
-   "liveHeadings": 3
   },
   {
    "id": "home",
@@ -4926,250 +5128,6 @@
    "liveHeadings": 19
   },
   {
-   "id": "signup",
-   "name": "Create account",
-   "group": "Auth",
-   "route": "/signup",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h1 \"welcome to splat connect\" has no counterpart",
-     "board": "welcome to splat connect",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"create my account\" has no counterpart",
-     "board": "create my account",
-     "live": null
-    },
-    {
-     "type": "shadow",
-     "severity": "medium",
-     "what": "no button on live carries a shadow",
-     "board": "set",
-     "live": "none"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "1/1 board paragraphs absent",
-     "board": "one account for browsing, saving, requesting toys and — if you make th",
-     "live": "one account for everything — browse, contribute, and manage your child"
-    },
-    {
-     "type": "radius",
-     "severity": "low",
-     "what": "button radius range",
-     "board": "999px",
-     "live": "0px"
-    },
-    {
-     "type": "colour",
-     "severity": "low",
-     "what": "input background",
-     "board": "rgb(255,255,255)/rgba(0,0,0,0)",
-     "live": "rgb(250,249,247)"
-    }
-   ],
-   "role": "guest",
-   "finalUrl": "/signup",
-   "boardHeadings": 2,
-   "liveHeadings": 3
-  },
-  {
-   "id": "signup_sent",
-   "name": "Check your email",
-   "group": "Auth",
-   "route": "/signup",
-   "findings": [
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "card title size",
-     "board": "25px",
-     "live": "22px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h3 wording",
-     "board": "splat connect",
-     "live": "splat"
-    },
-    {
-     "type": "shadow",
-     "severity": "medium",
-     "what": "no button on live carries a shadow",
-     "board": "set",
-     "live": "none"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "2/2 board paragraphs absent",
-     "board": "we've sent a confirmation link to sam.mitchell@example.com. confirm yo",
-     "live": "one account for everything — browse, contribute, and manage your child"
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "card title weight",
-     "board": 800,
-     "live": 900
-    },
-    {
-     "type": "radius",
-     "severity": "low",
-     "what": "button radius range",
-     "board": "999px",
-     "live": "0px"
-    },
-    {
-     "type": "radius",
-     "severity": "low",
-     "what": "input radius",
-     "board": "999px",
-     "live": "14px"
-    },
-    {
-     "type": "colour",
-     "severity": "low",
-     "what": "input background",
-     "board": "rgb(255,255,255)/rgba(0,0,0,0)",
-     "live": "rgb(250,249,247)"
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "set",
-     "live": "none"
-    }
-   ],
-   "role": "guest",
-   "finalUrl": "/signup",
-   "boardHeadings": 3,
-   "liveHeadings": 3
-  },
-  {
-   "id": "confirmed",
-   "name": "Email confirmed",
-   "group": "Auth",
-   "route": "/auth/confirmed",
-   "findings": [
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "card title size",
-     "board": "25px",
-     "live": "44px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h3 wording",
-     "board": "splat connect",
-     "live": "splat"
-    },
-    {
-     "type": "shadow",
-     "severity": "medium",
-     "what": "no button on live carries a shadow",
-     "board": "set",
-     "live": "none"
-    },
-    {
-     "type": "missing-section",
-     "severity": "medium",
-     "what": "no inputs on live",
-     "board": 2,
-     "live": 0
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "2/2 board paragraphs absent",
-     "board": "you're all set. we'll take you back to the guide you were saving.",
-     "live": "your email has been confirmed. sign in to your account to continue."
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "set",
-     "live": "none"
-    }
-   ],
-   "role": "guest",
-   "finalUrl": "/auth/confirmed",
-   "boardHeadings": 3,
-   "liveHeadings": 3
-  },
-  {
-   "id": "terms_gate",
-   "name": "Contributor terms gate",
-   "group": "Auth",
-   "route": "/onboarding/contributor-terms",
-   "findings": [
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h3 wording",
-     "board": "splat connect",
-     "live": "splat"
-    },
-    {
-     "type": "shadow",
-     "severity": "medium",
-     "what": "no button on live carries a shadow",
-     "board": "set",
-     "live": "none"
-    },
-    {
-     "type": "radius",
-     "severity": "medium",
-     "what": "card radius",
-     "board": "18px",
-     "live": "24px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "7/7 board paragraphs absent",
-     "board": "version # you keep the copyright on everything you write.",
-     "live": "please review and accept the contributor terms to carry on."
-    },
-    {
-     "type": "radius",
-     "severity": "low",
-     "what": "button radius range",
-     "board": "999px",
-     "live": "0px"
-    },
-    {
-     "type": "radius",
-     "severity": "low",
-     "what": "input radius",
-     "board": "999px",
-     "live": "0px"
-    },
-    {
-     "type": "colour",
-     "severity": "low",
-     "what": "card background",
-     "board": "rgb(250,249,247)",
-     "live": "rgb(255,255,255)"
-    }
-   ],
-   "role": "guest",
-   "finalUrl": "/onboarding/contributor-terms",
-   "boardHeadings": 8,
-   "liveHeadings": 3
-  },
-  {
    "id": "components",
    "name": "Component sheet",
    "group": "Prototype",
@@ -5269,16 +5227,16 @@
   "clean": 3,
   "withFindings": 116,
   "errored": 0,
-  "findings": 548,
+  "findings": 542,
   "byType": {
-   "extra-section": 20,
-   "radius": 43,
-   "weight": 31,
-   "shadow": 45,
-   "missing-section": 153,
    "size": 78,
-   "copy": 120,
+   "copy": 116,
+   "weight": 31,
+   "radius": 43,
+   "missing-section": 153,
+   "shadow": 43,
    "colour": 33,
+   "extra-section": 20,
    "font": 25
   }
  }
