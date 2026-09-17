@@ -5,14 +5,15 @@
  * have hidden is rendered as a page instead, with room for a sentence per
  * destination that a menu never had.
  *
- * Every card carries its section's colour and a rectangular art slot in that
- * section's deep shade, exactly as the board draws them. An earlier pass tinted
- * only the first card and gave the rest white, arguing that a six-card hub all
- * in one hue reads as monotony rather than identity. That was a fair objection
- * to a flat six-card grid and it does not apply: every hub page already splits
- * its children into labelled groups ("Start here" / "Going deeper"), so no grid
- * on this site renders more than four cards. The condition the objection
- * depended on is not there.
+ * The card is --surface and the SECTION'S COLOUR lives in its art band, which
+ * is how the board draws it: `background:var(--surface)` on the article, a
+ * 150px tinted block at the top of it. Both were wrong here. The tint was on
+ * the whole card, so a hub read as a wall of one flat colour; and the art band
+ * was a dashed MediaSlot, which announces "a photograph is missing" on six
+ * pages where nothing is missing — the section's own glyph is the art.
+ *
+ * MediaSlot is still right where a real photograph is coming and has not
+ * arrived. It is not right for a card whose picture is a category.
  *
  * There is no lead card and no arrow. Both were this component's own additions;
  * the board draws neither, and the group heading above the grid already does
@@ -23,7 +24,6 @@
 import type { NavItem } from '@/lib/public-nav'
 import { NavIcon } from '@/components/nav-icon'
 import { toneClass, type Tone } from '@/lib/tone'
-import { Slot } from '@/components/slot'
 import { BoundaryLink } from '@/components/boundary-link'
 
 export function HubGrid({
@@ -70,9 +70,9 @@ export function HubGrid({
         <BoundaryLink
           key={item.href}
           href={item.href}
-          className={`card card-link flex h-full flex-col gap-1.5 ${
-            wide ? 'p-[18px]' : 'p-4'
-          } ${tiles ? '' : spec ? `${spec.surface} ${spec.ink}` : ''}`}
+          className={`card card-link flex h-full flex-col ${
+            wide ? 'gap-3 p-7' : 'gap-2 p-5'
+          }`}
         >
           {tiles ? (
             <span
@@ -83,16 +83,27 @@ export function HubGrid({
               <NavIcon name={item.icon} />
             </span>
           ) : (
-            <Slot
-              kind="art"
-              tone={tone}
-              note={`${item.label} — one object, no background`}
-              className={`mb-1 w-full ${wide ? 'h-[7.5rem]' : 'h-[6.25rem]'}`}
-            />
+            /* The board's art band: 150px, the section's tint, radius 18. The
+               glyph is decorative — the title is directly underneath it. */
+            <span
+              aria-hidden="true"
+              className={`grid place-items-center rounded-[var(--radius-inset)] ${
+                wide ? 'h-[150px]' : 'h-[110px]'
+              }`}
+              style={{ background: tileTint, color: 'var(--tink)' }}
+            >
+              <NavIcon name={item.icon} size={wide ? 44 : 36} />
+            </span>
           )}
 
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className={`font-extrabold ${wide ? 'text-[15px]' : 'text-[14px]'}`}>
+            <h3
+              className={
+                wide
+                  ? 'font-display text-[26px] font-extrabold leading-[1.15] tracking-[-0.015em] text-ink'
+                  : 'card-title-grid'
+              }
+            >
               {item.label}
             </h3>
             {item.state === 'soon' && (
@@ -128,9 +139,7 @@ export function HubGrid({
               anything — which is the failure the spec's own risk note predicted
               and the fallback it named. A comma list is the same information
               with no false affordance, and one element instead of a branch. */}
-          <p
-            className={`leading-relaxed text-muted ${wide ? 'text-[13px]' : 'text-[12px]'}`}
-          >
+          <p className={`text-muted ${wide ? 'text-base leading-[1.55]' : 'text-sm leading-[1.5]'}`}>
             {item.blurb}
           </p>
         </BoundaryLink>

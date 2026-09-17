@@ -34,31 +34,33 @@ describe('HubGrid', () => {
   })
 
   /*
-   * The board tints every child card, not just the first. HubGrid used to tint
-   * only a "lead" card and leave its siblings white, on the reasoning that a
-   * six-card hub all in one hue reads as "a wall of one hue". That was sound
-   * about a flat six-card grid and does not apply here: every hub page already
-   * splits its children into labelled groups, so no grid on the site renders
-   * more than four cards. See the spec, "Grouped hub children — already done".
+   * The card is --surface and the TONE is in its art band. HubGrid tinted the
+   * whole card, which is not what the board draws — `background:var(--surface)`
+   * on the article, a 150px tinted block at the top of it — and which made a
+   * hub read as a wall of one flat colour.
    */
-  it('tints every card, not just the first', () => {
+  it('leaves the card on --surface and tints only the art band', () => {
     const { container } = render(<HubGrid items={items} tone="honey" />)
     const cards = container.querySelectorAll('a.card')
     expect(cards).toHaveLength(2)
     for (const card of cards) {
-      expect(card.className).toContain('bg-honey-soft')
+      expect(card.className).not.toContain('bg-honey-soft')
+    }
+    const bands = container.querySelectorAll<HTMLElement>('a.card > span[aria-hidden="true"]')
+    expect(bands).toHaveLength(2)
+    for (const band of bands) {
+      expect(band.style.backgroundColor).not.toBe('')
     }
   })
 
-  // The tone reaches the slot as its FILL now, not as the colour of its dash —
-  // see the note in pixel.test.tsx. The edge is a hairline in --line everywhere.
-  it('gives every card a tone-filled art slot', () => {
+  /*
+   * The art band is the section's glyph on its tint, not a dashed MediaSlot.
+   * A dashed slot says "a photograph is missing", which is a lie on six hub
+   * pages where the picture was always going to be the category itself.
+   */
+  it('draws no dashed placeholder on a hub card', () => {
     const { container } = render(<HubGrid items={items} tone="honey" />)
-    const slots = container.querySelectorAll<HTMLElement>('[aria-hidden="true"].border-dashed')
-    expect(slots).toHaveLength(2)
-    for (const slot of slots) {
-      expect(slot.style.backgroundColor).not.toBe('')
-    }
+    expect(container.querySelectorAll('.border-dashed')).toHaveLength(0)
   })
 
   /* The board draws no arrow on a hub child card, and no card is wider than

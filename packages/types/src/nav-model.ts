@@ -58,6 +58,21 @@ export type IconName =
   | 'bookmark'
   | 'calendar'
   | 'recycle'
+  /* Added for the public hubs. Every card the board draws has a picture, and
+     the account nav's seventeen names could not cover forty public rows
+     without four of them becoming 'book'. */
+  | 'lightbulb'
+  | 'map'
+  | 'chat'
+  | 'heart'
+  | 'wrench'
+  | 'sparkle'
+  | 'lifebuoy'
+  | 'shopping'
+  | 'gift'
+  | 'switch'
+  | 'scales'
+  | 'users'
 
 /** `soon` marks a route that exists but has no feature behind it yet. */
 export type NavRow = {

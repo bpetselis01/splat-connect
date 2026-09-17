@@ -114,13 +114,13 @@ export const PUBLIC_NAV: NavSection[] = [
     children: [
       {
         href: '/printing/basics',
-        label: 'Printing basics',
+        label: 'Printing basics',        icon: 'printer',
         state: 'live',
         blurb: 'Filament, settings and finishing for printed switch parts.',
       },
       {
         href: '/printing/requests',
-        label: 'Request a print',
+        label: 'Request a print',        icon: 'orders',
         // Live since 058: a print job is a toy transaction with a printer and a
         // set of the guide's own STL files for a subject.
         state: 'live',
@@ -128,7 +128,7 @@ export const PUBLIC_NAV: NavSection[] = [
       },
       {
         href: '/printing/parts',
-        label: 'Printable parts',
+        label: 'Printable parts',        icon: 'box',
         state: 'soon',
         featureKey: 'printing-parts',
         blurb: 'A catalogue of STL files, sized and tested for adaptation work.',
@@ -145,37 +145,37 @@ export const PUBLIC_NAV: NavSection[] = [
     children: [
       {
         href: '/learn/toy-adaptation-101',
-        label: 'Toy adaptation 101',
+        label: 'Toy adaptation 101',        icon: 'book',
         state: 'live',
         blurb: 'What a battery interrupter is, and why it is the whole trick.',
       },
       {
         href: '/learn/switch-types',
-        label: 'Switch types explained',
+        label: 'Switch types explained',        icon: 'switch',
         state: 'live',
         blurb: 'Buttons, levers, proximity and grasp — which suits which child.',
       },
       {
         href: '/learn/choosing-a-toy',
-        label: 'Choosing a toy to adapt',
+        label: 'Choosing a toy to adapt',        icon: 'toy',
         state: 'live',
         blurb: 'What makes a toy easy to adapt, and what makes it impossible.',
       },
       {
         href: '/learn/tools-and-materials',
-        label: 'Tools and materials',
+        label: 'Tools and materials',        icon: 'wrench',
         state: 'live',
         blurb: 'The shopping list, and what you can borrow instead of buying.',
       },
       {
         href: '/learn/safety-and-cleaning',
-        label: 'Safety and cleaning',
+        label: 'Safety and cleaning',        icon: 'shield',
         state: 'live',
         blurb: 'Batteries, small parts, and getting a toy ready to hand over.',
       },
       {
         href: '/learn/ask-an-expert',
-        label: 'Ask an expert',
+        label: 'Ask an expert',        icon: 'chat',
         // Live since 2026-09-17. It is a routing page rather than a queue:
         // there is no private expert queue on SPLAT on purpose, because an
         // answer in the open helps the next family too.
@@ -194,25 +194,25 @@ export const PUBLIC_NAV: NavSection[] = [
     children: [
       {
         href: '/get-involved/families',
-        label: 'For families',
+        label: 'For families',        icon: 'heart',
         state: 'live',
         blurb: 'Find a guide, gather the parts, adapt the toy you already own.',
       },
       {
         href: '/get-involved/contributors',
-        label: 'For contributors',
+        label: 'For contributors',        icon: 'wrench',
         state: 'live',
         blurb: 'Adapt a toy, write it up, and get an organisation behind it.',
       },
       {
         href: '/get-involved/organisations',
-        label: 'For organisations',
+        label: 'For organisations',        icon: 'building',
         state: 'live',
         blurb: 'Back contributors, hold toys for local families, host a build day.',
       },
       {
         href: '/get-involved/organisations/request',
-        label: 'Request an organisation',
+        label: 'Request an organisation',        icon: 'building',
         // Live since 060. Leadership is granted by an admin and never
         // self-started; this is where the conversation starts.
         state: 'live',
@@ -220,19 +220,19 @@ export const PUBLIC_NAV: NavSection[] = [
       },
       {
         href: '/get-involved/submit-an-idea',
-        label: 'Submit an idea',
+        label: 'Submit an idea',        icon: 'lightbulb',
         state: 'live',
         blurb: 'Suggest a toy worth adapting, even if you cannot build it.',
       },
       {
         href: '/get-involved/submit-a-tutorial',
-        label: 'Submit a guide',
+        label: 'Submit a guide',        icon: 'file',
         state: 'live',
         blurb: 'What writing up an adaptation involves, start to finish.',
       },
       {
         href: '/get-involved/requests',
-        label: 'Adaptation requests',
+        label: 'Adaptation requests',        icon: 'inbox',
         // Live since 057: a build request is an ordinary toy transaction with
         // a guide for a subject, so the whole thread came with it.
         state: 'live',
@@ -240,13 +240,13 @@ export const PUBLIC_NAV: NavSection[] = [
       },
       {
         href: '/get-involved/design-challenges',
-        label: 'Design challenges',
+        label: 'Design challenges',        icon: 'clipboard',
         state: 'live',
         blurb: 'Problems nobody has solved yet, open to anyone.',
       },
       {
         href: '/get-involved/makers-wanted',
-        label: 'Makers wanted',
+        label: 'Makers wanted',        icon: 'lifebuoy',
         // Live since 064 made a build request with no maker on it legal — the
         // shape SUPABASE.md filed when 057 could not express it.
         state: 'live',
@@ -254,14 +254,14 @@ export const PUBLIC_NAV: NavSection[] = [
       },
       {
         href: '/get-involved/recycling',
-        label: 'Recycling',
+        label: 'Recycling',        icon: 'recycle',
         // Live since 059 built the table and 063 versioned the declaration.
         state: 'live',
         blurb: 'Drop clean waste plastic at an organisation, and earn print credit.',
       },
       {
         href: '/get-involved/events',
-        label: 'Events',
+        label: 'Events',        icon: 'calendar',
         // Live since 061. Under Get Involved rather than Impact because an
         // event is something you turn up to, not something already achieved —
         // the artboard puts it here for the same reason.
@@ -280,7 +280,7 @@ export const PUBLIC_NAV: NavSection[] = [
     children: [
       {
         href: '/organizations',
-        label: 'Organisations',
+        label: 'Organisations',        icon: 'building',
         state: 'live',
         blurb: 'The therapy centres, schools and services standing behind the work.',
       },
@@ -291,7 +291,7 @@ export const PUBLIC_NAV: NavSection[] = [
       // to. /impact/news and /impact/events redirect (app/impact/*/page.tsx).
       {
         href: '/impact/map',
-        label: 'Deliveries map',
+        label: 'Deliveries map',        icon: 'map',
         state: 'soon',
         featureKey: 'map',
         blurb: 'Where adapted toys have actually landed.',
@@ -308,25 +308,25 @@ export const PUBLIC_NAV: NavSection[] = [
     children: [
       {
         href: '/about/stories',
-        label: 'Stories',
+        label: 'Stories',        icon: 'book',
         state: 'live',
         blurb: 'What families, makers and organisations have actually done with SPLAT.',
       },
       {
         href: '/about/team',
-        label: 'Our team',
+        label: 'Our team',        icon: 'users',
         state: 'live',
         blurb: 'The people behind the platform.',
       },
       {
         href: '/contact',
-        label: 'Contact',
+        label: 'Contact',        icon: 'chat',
         state: 'live',
         blurb: 'Get in touch about a guide, a toy or a partnership.',
       },
       {
         href: '/about/partners',
-        label: 'Partners and supporters',
+        label: 'Partners and supporters',        icon: 'handshake',
         // Live: the delivery-partner half always was — it reads the
         // organisations directory. The funder half is honestly empty.
         state: 'live',
@@ -334,7 +334,7 @@ export const PUBLIC_NAV: NavSection[] = [
       },
       {
         href: '/about/support',
-        label: 'Support SPLAT',
+        label: 'Support SPLAT',        icon: 'heart',
         // Live. There was never anything here to wait for.
         state: 'live',
         blurb: 'Ways to help beyond building a toy.',
@@ -396,13 +396,13 @@ const ACCOUNT_PATTERNS = [
 
 /** Footer-only. Never in the top bar, never a section. */
 export const FOOTER_LEGAL: NavItem[] = [
-  { href: '/privacy', label: 'Privacy policy', state: 'live', blurb: 'What we collect and why.' },
-  { href: '/terms', label: 'Terms of use', state: 'live', blurb: 'The rules for using the site.' },
-  { href: '/safety', label: 'Safety', state: 'live', blurb: 'Batteries, small parts and supervision.' },
-  { href: '/code-of-conduct', label: 'Code of conduct', state: 'live', blurb: 'How we expect people to treat each other.' },
-  { href: '/legal/intended-purpose', label: 'What Connect is (and isn\u2019t)', state: 'live', blurb: 'Not a medical device, and why that matters.' },
-  { href: '/legal/contributor-terms', label: 'Contributor terms', state: 'live', blurb: 'For anyone submitting a guide.' },
-  { href: '/legal/org-leader-terms', label: 'Organisation leader terms', state: 'live', blurb: 'For anyone leading an organisation.' },
+  { href: '/privacy', label: 'Privacy policy', icon: 'shield', state: 'live', blurb: 'What we collect and why.' },
+  { href: '/terms', label: 'Terms of use', icon: 'scales', state: 'live', blurb: 'The rules for using the site.' },
+  { href: '/safety', label: 'Safety', icon: 'shield', state: 'live', blurb: 'Batteries, small parts and supervision.' },
+  { href: '/code-of-conduct', label: 'Code of conduct', icon: 'scales', state: 'live', blurb: 'How we expect people to treat each other.' },
+  { href: '/legal/intended-purpose', label: 'What Connect is (and isn\u2019t)', icon: 'scales', state: 'live', blurb: 'Not a medical device, and why that matters.' },
+  { href: '/legal/contributor-terms', label: 'Contributor terms', icon: 'scales', state: 'live', blurb: 'For anyone submitting a guide.' },
+  { href: '/legal/org-leader-terms', label: 'Organisation leader terms', icon: 'scales', state: 'live', blurb: 'For anyone leading an organisation.' },
 ]
 
 /** Every allowlisted notify key, derived so the list cannot drift from the nav. */
