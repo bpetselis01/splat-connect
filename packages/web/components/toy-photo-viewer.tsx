@@ -11,6 +11,7 @@
  * is answered where it is asked.
  */
 import Image from 'next/image'
+import { Package } from '@phosphor-icons/react/dist/ssr'
 
 import { safePhotoSrc } from '@/lib/photo-src'
 
@@ -23,8 +24,8 @@ function PhotoTile({ url, caption }: { url: string | null; caption: string }) {
           <Image src={src} alt={caption} fill className="object-cover" />
         </div>
       ) : (
-        <div className="flex h-32 w-full items-center justify-center rounded-lg bg-brand-tint text-4xl">
-          🧸
+        <div className="grid h-32 w-full place-items-center rounded-[var(--radius-field)] bg-brand-soft text-brand-deep">
+          <Package weight="duotone" size={32} aria-hidden="true" />
         </div>
       )}
       <p className="mt-1 text-xs text-muted">{url ? caption : `No ${caption.toLowerCase()} yet`}</p>

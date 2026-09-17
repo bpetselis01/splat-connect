@@ -14,6 +14,7 @@
  */
 import { useRef, useState } from 'react'
 import Image from 'next/image'
+import { Package } from '@phosphor-icons/react/dist/ssr'
 
 import { safePhotoSrc } from '@/lib/photo-src'
 
@@ -44,8 +45,10 @@ export function PhotoCarousel({
 
   if (urls.length === 0) {
     return (
-      <div className={`flex ${className} items-center justify-center rounded-2xl bg-brand-tint text-6xl`}>
-        🧸
+      <div
+        className={`grid ${className} place-items-center rounded-[var(--radius-card)] bg-brand-soft text-brand-deep`}
+      >
+        <Package weight="duotone" size={48} aria-hidden="true" />
       </div>
     )
   }

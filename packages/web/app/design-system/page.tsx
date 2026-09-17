@@ -11,6 +11,7 @@ import { Gift, ArrowsLeftRight, ChatCircle } from '@phosphor-icons/react/dist/ss
 import { RecordCard } from '@/components/record-card'
 import { Disclosure } from '@/components/disclosure'
 import { Badge } from '@/components/badge'
+import { SplatMascot } from '@/components/splat-mascot'
 import type { Stage } from '@/components/stage-rail'
 import { Alert } from '@/components/alert'
 
@@ -242,9 +243,7 @@ export default function DesignSystemPage() {
 
       <Section title={'Mascot — "Splat" the bear'} blurb="Used for encouragement and empty states, never for status.">
         <div className="flex flex-wrap items-center gap-6">
-          <span className="grid h-24 w-24 place-items-center rounded-card bg-brand-tint text-5xl">
-            🧸
-          </span>
+          <SplatMascot width={120} />
           <p className="max-w-prose text-sm leading-relaxed text-muted">
             The bear turns up when a page has nothing to show yet, and when somebody
             finishes something. It never carries state — a toy is not &ldquo;bear
