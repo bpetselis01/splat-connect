@@ -18,8 +18,12 @@ import { buildNav } from '@/lib/nav-model'
 import { HubGrid } from '@/components/hub-grid'
 import { ACCOUNT_NAV } from '@/lib/public-nav'
 import type { NavItem } from '@/lib/public-nav'
+import Link from 'next/link'
+import type { Route } from 'next'
+import { Handshake, Tray } from '@phosphor-icons/react/dist/ssr'
 import { apiClient } from '@/lib/api-client'
 import { MoneyPanel, type OutstandingLine } from '@/components/money-panel'
+import { SplatMascot } from '@/components/splat-mascot'
 
 export const metadata = {
   title: 'My SPLAT — SPLAT Connect',
@@ -121,17 +125,63 @@ export default async function DashboardHub() {
 
   const firstName = caps.profile.name.trim().split(/\s+/)[0]
 
+  /*
+   * What is waiting, as buttons rather than as a sentence.
+   *
+   * The board puts these in the header because they are the reason somebody
+   * opened the page: an exchange that needs an answer and a queue with guides
+   * in it are both actions, and a hub full of nine equal cards buries them.
+   * Only rendered when the number is real — "0 exchanges need you" is worse
+   * than nothing, and a button that leads to an empty list is a dead control.
+   */
+  const waiting: Array<{ href: Route; icon: typeof Handshake; label: string; primary?: boolean }> = []
+  if (caps.exchangeActions > 0) {
+    waiting.push({
+      href: '/dashboard/exchanges' as Route,
+      icon: Handshake,
+      label: `${caps.exchangeActions} exchange${caps.exchangeActions === 1 ? '' : 's'} need you`,
+      primary: true,
+    })
+  }
+  if (caps.unread.total > 0) {
+    waiting.push({
+      href: '/notifications' as Route,
+      icon: Tray,
+      label: `${caps.unread.total} unread`,
+    })
+  }
+
   return (
     <div>
-      <section className="rounded-[var(--radius-card)] border border-line bg-surface p-6 shadow-e2 sm:p-8">
-        <p className="text-xs font-extrabold uppercase tracking-widest text-muted">
-          {ACCOUNT_NAV.label}
-        </p>
-        <h1 className="font-display text-4xl font-extrabold text-ink">Welcome back, {firstName}.</h1>
-        <p className="mt-2 max-w-prose text-base leading-relaxed text-muted">
-          Everything that belongs to you — what you have written, what you have lent, and what you
-          have asked for.
-        </p>
+      <section className="dash-hero">
+        <div aria-hidden="true" className="dash-hero__blob" />
+        <div className="relative flex flex-wrap items-center gap-7">
+          <div className="flex-none">
+            <SplatMascot width={120} />
+          </div>
+          <div className="min-w-[280px] flex-1">
+            <p className="eyebrow text-muted">{ACCOUNT_NAV.label}</p>
+            <h1 className="dash-hero__title">Welcome back, {firstName}.</h1>
+            <p className="mt-3 max-w-[52ch] text-[17px] leading-[1.6] text-muted">
+              Everything that belongs to you — what you have written, what you have lent, and what
+              you have asked for.
+            </p>
+            {waiting.length > 0 && (
+              <div className="mt-5 flex flex-wrap gap-2.5">
+                {waiting.map((w) => (
+                  <Link
+                    key={w.href}
+                    href={w.href}
+                    className={`btn no-underline ${w.primary ? 'btn-primary' : 'btn-quiet'}`}
+                  >
+                    <w.icon size={18} weight="bold" aria-hidden="true" />
+                    {w.label}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </section>
 
       <div className="mt-10">

@@ -71,16 +71,29 @@ export function HubGrid({
           key={item.href}
           href={item.href}
           className={`card card-link flex h-full flex-col ${
-            wide ? 'gap-3 p-7' : 'gap-2 p-5'
+            tiles ? 'gap-1.5 p-5' : wide ? 'gap-3 p-7' : 'gap-2 p-5'
           }`}
         >
           {tiles ? (
-            <span
-              aria-hidden="true"
-              className="mb-2 grid h-10 w-10 place-items-center rounded-[var(--radius-field)]"
-              style={{ background: tileTint, color: 'var(--tink)' }}
-            >
-              <NavIcon name={item.icon} />
+            /* The board's tile head: a 44px square on the left and whatever is
+               true of this card on the right. The count used to sit inline with
+               the title, where a two-digit number pushed the label onto a second
+               line on half the grid. */
+            <span className="mb-3 flex items-center justify-between">
+              <span
+                aria-hidden="true"
+                className="grid h-11 w-11 place-items-center rounded-[var(--radius-field)]"
+                style={{ background: tileTint, color: 'var(--tink)' }}
+              >
+                <NavIcon name={item.icon} size={24} />
+              </span>
+              {item.count ? (
+                <span className="rounded-pill bg-apricot px-2.5 py-0.5 text-xs font-extrabold text-ink">
+                  {item.count}
+                </span>
+              ) : item.state === 'soon' ? (
+                <span className="text-[10px] font-extrabold tracking-[0.09em] text-muted">SOON</span>
+              ) : null}
             </span>
           ) : (
             /* The board's art band: 150px, the section's tint, radius 18. The
@@ -106,7 +119,7 @@ export function HubGrid({
             >
               {item.label}
             </h3>
-            {item.state === 'soon' && (
+            {!tiles && item.state === 'soon' && (
               // The board's four-character SOON, at the size it was drawn:
               // .badge defaults to 11px for the multi-word labels every other
               // caller carries, but this is the one label 9px fits.
@@ -122,10 +135,8 @@ export function HubGrid({
                 weight it was drawn at. .badge's own 1px hairline is a step
                 lighter than every other ink border on the card, which is the
                 one thing an alert count should not be. */}
-            {item.count ? (
-              <span className="badge ml-auto border-2 bg-apricot text-[10px] text-ink">
-                {item.count}
-              </span>
+            {!tiles && item.count ? (
+              <span className="badge ml-auto bg-apricot text-[10px] text-ink">{item.count}</span>
             ) : null}
           </div>
 

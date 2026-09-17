@@ -4009,3 +4009,54 @@
     transform: translateY(-50%) scale(0.92);
   }
 }
+
+/*
+ * My SPLAT's header. The one screen on the site that greets somebody by name,
+ * and the board treats it accordingly: the bear, a single blue wash, and what
+ * is waiting as buttons rather than as a sentence about the section.
+ */
+@layer components {
+  .dash-hero {
+    position: relative;
+    overflow: hidden;
+    padding: 28px;
+    border-radius: var(--radius-card);
+    border: var(--border-width) solid var(--color-line);
+    background-color: var(--color-surface);
+    box-shadow: var(--shadow-e3), var(--shadow-hi);
+  }
+
+  @media (min-width: 640px) {
+    .dash-hero {
+      padding: 38px 40px;
+    }
+  }
+
+  .dash-hero__blob {
+    position: absolute;
+    right: -6%;
+    top: -60%;
+    width: 30vw;
+    height: 30vw;
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 50%, var(--b100), transparent 65%);
+    opacity: 0.85;
+    pointer-events: none;
+    animation: blob 21s ease-in-out infinite;
+  }
+
+  .dash-hero__title {
+    margin: 6px 0 0;
+    font-family: var(--font-display);
+    font-size: clamp(1.875rem, 3.6vw, 2.875rem);
+    font-weight: 800;
+    line-height: 1.06;
+    letter-spacing: -0.02em;
+    color: var(--color-ink);
+  }
+
+  /* The bear bobs here the way he does on the homepage. */
+  .dash-hero .splat-mascot {
+    animation: bob 4s ease-in-out infinite;
+  }
+}
