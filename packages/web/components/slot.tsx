@@ -142,22 +142,24 @@ export function Slot({
   // border-current rather than a `deepEdge` entry on ToneSpec: the dash and the
   // label are always the same colour on the board, and a second token would be
   // a second thing to keep in step with the first.
-  const edge = tone
-    ? `${toneClass(tone).ink} border-current`
-    : 'border-brand text-brand-deep'
-
+  // From design-system-update/components/cards/MediaSlot.jsx: a hairline DASHED
+  // edge in --line on --surface2, with one uppercase caption in the body face.
+  //
+  // It was a 2px brand-blue dash over translucent white with a mono kind label
+  // above the brief — a held space that announced itself louder than the content
+  // around it. MediaSlot is quieter on purpose: it is a note to whoever supplies
+  // the photograph, not a feature of the page.
   return (
     <span
       aria-hidden="true"
-      // Translucent white rather than the brand tint: these sit inside tinted
-      // cards as well as on the canvas, and a blue fill laid over an apricot
-      // pillar read as a stain rather than as a held space. White at 50% — the
-      // board's own value — lightens whatever is under it without arguing with
-      // its hue.
-      className={`pointer-events-none flex flex-col items-center justify-center gap-1 rounded-field border-2 border-dashed bg-surface/50 p-3 text-center ${edge} ${className}`.trim()}
+      className={`pointer-events-none grid place-items-center rounded-field border border-dashed border-line bg-sunken p-3 text-center ${className}`.trim()}
+      style={tone ? { backgroundColor: toneClass(tone).hex.bg } : undefined}
     >
-      <span className="meta">{KIND_LABEL[kind]}</span>
-      <span className="max-w-[22ch] text-[11px] leading-tight opacity-85">{note}</span>
+      <span
+        className="max-w-[26ch] text-[11px] font-extrabold uppercase leading-tight tracking-[0.08em] text-muted"
+      >
+        {note || KIND_LABEL[kind]}
+      </span>
     </span>
   )
 }

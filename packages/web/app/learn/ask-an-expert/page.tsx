@@ -14,12 +14,12 @@
  */
 import Link from 'next/link'
 import type { Route } from 'next'
+import { Alert } from '@/components/alert'
 import {
   ChatCircleText,
   BookOpen,
   Lightbulb,
   Handshake,
-  Warning,
   ArrowRight,
 } from '@phosphor-icons/react/dist/ssr'
 
@@ -99,8 +99,7 @@ export default function AskAnExpertPage() {
         ))}
       </div>
 
-      <p className="mt-8 flex items-start gap-2 rounded-card bg-danger-soft px-5 py-4 text-sm leading-relaxed text-ink">
-        <Warning className="mt-0.5 h-4 w-4 shrink-0 text-danger" aria-hidden="true" />
+      <Alert tone="bad" className="mt-6">
         <span>
           Something unsafe? Do not post it — use the Safety report topic in{' '}
           <Link href="/contact" className="font-bold underline">
@@ -108,7 +107,7 @@ export default function AskAnExpertPage() {
           </Link>
           . That reaches an administrator the same day.
         </span>
-      </p>
+      </Alert>
     </div>
   )
 }

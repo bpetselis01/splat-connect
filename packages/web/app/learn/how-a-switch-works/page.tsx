@@ -12,6 +12,7 @@
  */
 import Link from 'next/link'
 import { LearnShell } from '@/components/learn-shell'
+import { Alert } from '@/components/alert'
 
 export const metadata = {
   title: 'How a switch works — SPLAT Connect',
@@ -118,11 +119,11 @@ export default function Page() {
             </p>
           </div>
         </div>
-        <p className="mt-4 max-w-prose rounded-card bg-honey-soft px-5 py-4 text-sm leading-relaxed text-ink">
+        <Alert tone="warn" className="mt-6">
           <strong className="font-bold">Mono, not stereo.</strong> A stereo plug has three contacts
           and will sometimes work by luck. Buy mono every time so the child&apos;s switch behaves
           the same in every toy you adapt.
-        </p>
+        </Alert>
         <p className="mt-4 text-sm text-muted">
           Wiring one is the next practical step —{' '}
           <Link href="/learn/wire-a-connector" className="font-semibold text-brand-dark hover:underline">

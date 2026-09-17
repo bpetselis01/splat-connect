@@ -50,12 +50,14 @@ describe('HubGrid', () => {
     }
   })
 
-  it('gives every card a tone-coloured art slot', () => {
+  // The tone reaches the slot as its FILL now, not as the colour of its dash —
+  // see the note in pixel.test.tsx. The edge is a hairline in --line everywhere.
+  it('gives every card a tone-filled art slot', () => {
     const { container } = render(<HubGrid items={items} tone="honey" />)
-    const slots = container.querySelectorAll('[aria-hidden="true"].border-dashed')
+    const slots = container.querySelectorAll<HTMLElement>('[aria-hidden="true"].border-dashed')
     expect(slots).toHaveLength(2)
     for (const slot of slots) {
-      expect(slot.className).toContain('text-ink')
+      expect(slot.style.backgroundColor).not.toBe('')
     }
   })
 

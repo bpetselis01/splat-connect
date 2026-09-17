@@ -12,6 +12,7 @@ import { RecordCard } from '@/components/record-card'
 import { Disclosure } from '@/components/disclosure'
 import { Badge } from '@/components/badge'
 import type { Stage } from '@/components/stage-rail'
+import { Alert } from '@/components/alert'
 
 export const metadata = { title: 'Component sheet — SPLAT Connect' }
 
@@ -172,15 +173,9 @@ export default function DesignSystemPage() {
 
       <Section title="Feedback" blurb="Tint carries the register; the sentence carries the meaning.">
         <div className="flex max-w-xl flex-col gap-3">
-          <p className="rounded-card bg-success-soft px-4 py-3 text-sm leading-relaxed text-ink">
-            Saved. Northside Therapy Collective has been asked to review it.
-          </p>
-          <p className="rounded-card bg-honey-soft px-4 py-3 text-sm leading-relaxed text-ink">
-            This guide has no safety notes yet. Add them before you submit.
-          </p>
-          <p className="rounded-card bg-danger-soft px-4 py-3 text-sm leading-relaxed text-ink">
-            That code did not match. Ask them to read it again.
-          </p>
+          <Alert tone="ok">Saved. Northside Therapy Collective has been asked to review it.</Alert>
+          <Alert tone="warn">This guide has no safety notes yet. Add them before you submit.</Alert>
+          <Alert tone="bad">That code did not match. Ask them to read it again.</Alert>
         </div>
       </Section>
 

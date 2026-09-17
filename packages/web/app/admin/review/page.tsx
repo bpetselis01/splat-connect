@@ -15,6 +15,7 @@
  */
 import Link from 'next/link'
 import { apiClient } from '@/lib/api-client'
+import { formatRelativeTime } from '@/lib/relative-time'
 import { Badge } from '@/components/badge'
 import type { Tutorial, TutorialOrg, Difficulty } from '@splat-connect/types'
 
@@ -105,10 +106,7 @@ export default async function ReviewListPage({
           <tbody>
             {tutorials.map((t) => {
               const accepted = acceptedFor(t)
-              const days = Math.max(
-                0,
-                Math.round((Date.now() - new Date(t.created_at).getTime()) / 86400000)
-              )
+
               return (
                 <tr key={t.id} className="border-b border-line align-middle last:border-0">
                   <td className="py-3 pr-3">
@@ -125,8 +123,11 @@ export default async function ReviewListPage({
                       ? accepted.map((b) => b.organizations?.name).filter(Boolean).join(', ')
                       : '—'}
                   </td>
-                  <td className="whitespace-nowrap py-3 text-right text-sm tabular-nums text-muted">
-                    {days === 0 ? 'Today' : `${days} day${days === 1 ? '' : 's'}`}
+                  <td className="whitespace-nowrap py-3 text-right font-mono text-sm tabular-nums text-muted">
+                    {/* The repo's own helper rather than arithmetic on Date.now()
+                        in render: that is impure, and reading the clock once per
+                        row can straddle midnight and date two rows differently. */}
+                    {formatRelativeTime(t.created_at)}
                   </td>
                 </tr>
               )

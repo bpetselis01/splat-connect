@@ -17,7 +17,8 @@
  * - components/learn-shell.tsx: the outline and the next-lesson control
  */
 import Image from 'next/image'
-import { Warning, Lightbulb, Check } from '@phosphor-icons/react/dist/ssr'
+import { Lightbulb, Check } from '@phosphor-icons/react/dist/ssr'
+import { Alert } from '@/components/alert'
 
 export type BuildStep = {
   title: string
@@ -86,10 +87,9 @@ export function BuildLesson({ lesson, title }: { lesson: BuildLesson; title: str
       )}
 
       {lesson.note && (
-        <p className="mt-5 flex items-start gap-2 rounded-card bg-honey-soft px-5 py-4 text-sm leading-relaxed text-ink">
-          <Lightbulb className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+        <Alert tone="warn" icon={<Lightbulb weight="fill" size={18} />} className="mt-5">
           {lesson.note}
-        </p>
+        </Alert>
       )}
 
       {/*
@@ -176,10 +176,9 @@ export function BuildLesson({ lesson, title }: { lesson: BuildLesson; title: str
                   <p className="mt-1 max-w-prose text-base leading-relaxed text-ink">{step.body}</p>
 
                   {step.warn && (
-                    <p className="mt-3 flex items-start gap-2 rounded-card bg-danger-soft px-4 py-3 text-sm leading-relaxed text-ink">
-                      <Warning className="mt-0.5 h-4 w-4 shrink-0 text-danger" aria-hidden="true" />
+                    <Alert tone="bad" className="mt-3">
                       {step.warn}
-                    </p>
+                    </Alert>
                   )}
                   {step.tip && (
                     <p className="mt-3 flex items-start gap-2 rounded-card bg-sunken px-4 py-3 text-sm leading-relaxed text-muted">
