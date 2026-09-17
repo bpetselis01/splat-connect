@@ -162,7 +162,10 @@ function compare(board, live, opts = {}) {
   if (board.sets && live.sets) {
     const { sets: b } = board
     const { sets: l } = live
-    if (b.buttonShadow.includes('set') && !l.buttonShadow.includes('set'))
+    // Only when live actually has an enabled button to judge. A screen whose
+    // sole control is a disabled submit has an empty set, and "none of your
+    // zero buttons has a shadow" is not a finding.
+    if (l.buttonShadow.length && b.buttonShadow.includes('set') && !l.buttonShadow.includes('set'))
       out.push(f('shadow', 'medium', 'no button on live carries a shadow', 'set', 'none'))
     if (b.buttonRadius.length && l.buttonRadius.length) {
       const bMax = Math.max(...b.buttonRadius)

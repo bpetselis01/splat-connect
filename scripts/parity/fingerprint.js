@@ -215,7 +215,14 @@ function collectFingerprint(rootSelector) {
 
   // Cards are named differently on each side, so identify them structurally:
   // a block with a radius and either a shadow or a border.
-  const candidates = pick('button,[role="button"],a[class*="btn"],a[class*="button"]')
+  // Disabled controls excluded. A form's submit starts disabled on most of
+  // these screens, and .btn:disabled drops the shadow deliberately — so
+  // comparing it against the board, which draws the enabled state, reported
+  // "no button on live carries a shadow" on 28 screens for a state difference
+  // rather than a design one.
+  const candidates = pick('button,[role="button"],a[class*="btn"],a[class*="button"]').filter(
+    (el) => !el.disabled && el.getAttribute('aria-disabled') !== 'true'
+  )
 
   // The PRIMARY action button, not "all buttons".
   //

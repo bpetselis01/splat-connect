@@ -1,5 +1,5 @@
 {
- "at": "2026-09-17T06:38:36.934Z",
+ "at": "2026-09-17T06:48:45.135Z",
  "live": "http://localhost:3110",
  "screens": [
   {
@@ -375,13 +375,6 @@
      "what": "h1 wording",
      "board": "ask family # for the plush dog",
      "live": "ask e#e contributor for kite"
-    },
-    {
-     "type": "shadow",
-     "severity": "medium",
-     "what": "no button on live carries a shadow",
-     "board": "set",
-     "live": "none"
     },
     {
      "type": "copy",
@@ -1338,13 +1331,6 @@
      "live": "in this section"
     },
     {
-     "type": "shadow",
-     "severity": "medium",
-     "what": "no button on live carries a shadow",
-     "board": "set",
-     "live": "none"
-    },
-    {
      "type": "copy",
      "severity": "medium",
      "what": "7/7 board paragraphs absent",
@@ -1547,13 +1533,6 @@
      "what": "live has an extra h2: \"which one are you?\"",
      "board": null,
      "live": "which one are you?"
-    },
-    {
-     "type": "shadow",
-     "severity": "medium",
-     "what": "no button on live carries a shadow",
-     "board": "set",
-     "live": "none"
     },
     {
      "type": "copy",
@@ -2533,13 +2512,6 @@
      "live": "more in impact"
     },
     {
-     "type": "shadow",
-     "severity": "medium",
-     "what": "no button on live carries a shadow",
-     "board": "set",
-     "live": "none"
-    },
-    {
      "type": "copy",
      "severity": "medium",
      "what": "3/3 board paragraphs absent",
@@ -2648,13 +2620,6 @@
      "what": "h1 \"organisations\" size",
      "board": "46px",
      "live": "42px"
-    },
-    {
-     "type": "shadow",
-     "severity": "medium",
-     "what": "no button on live carries a shadow",
-     "board": "set",
-     "live": "none"
     },
     {
      "type": "missing-section",
@@ -3168,13 +3133,6 @@
      "live": "46px"
     },
     {
-     "type": "shadow",
-     "severity": "medium",
-     "what": "no button on live carries a shadow",
-     "board": "set",
-     "live": "none"
-    },
-    {
      "type": "radius",
      "severity": "medium",
      "what": "card radius",
@@ -3590,13 +3548,6 @@
      "live": "30px"
     },
     {
-     "type": "shadow",
-     "severity": "medium",
-     "what": "no button on live carries a shadow",
-     "board": "set",
-     "live": "none"
-    },
-    {
      "type": "copy",
      "severity": "medium",
      "what": "2/2 board paragraphs absent",
@@ -3635,13 +3586,6 @@
      "what": "card title font",
      "board": "Nunito",
      "live": "Baloo 2"
-    },
-    {
-     "type": "shadow",
-     "severity": "medium",
-     "what": "no button on live carries a shadow",
-     "board": "set",
-     "live": "none"
     },
     {
      "type": "radius",
@@ -3712,13 +3656,6 @@
      "live": "requests to your organisation"
     },
     {
-     "type": "shadow",
-     "severity": "medium",
-     "what": "no button on live carries a shadow",
-     "board": "set",
-     "live": "none"
-    },
-    {
      "type": "radius",
      "severity": "medium",
      "what": "card radius",
@@ -3730,7 +3667,7 @@
      "severity": "medium",
      "what": "5/5 board paragraphs absent",
      "board": "everything a family can ask of an organisation, in one place. say no w",
-     "live": "every ask a family can make of parity org mu#mw#caeg, in one queue: a "
+     "live": "every ask a family can make of parity org mu#zqwk#k# in one queue: a t"
     },
     {
      "type": "shadow",
@@ -3840,7 +3777,7 @@
    "id": "org_event_manage",
    "name": "Manage event",
    "group": "My SPLAT",
-   "route": "/dashboard/org/events/8732d8df-5f5d-4439-b1cc-38c6ad198998",
+   "route": "/dashboard/org/events/8e091f1d-238f-49dd-93a8-2af41ec4708b",
    "findings": [
     {
      "type": "font",
@@ -3907,7 +3844,7 @@
     }
    ],
    "role": "leader",
-   "finalUrl": "/dashboard/org/events/8732d8df-5f5d-4439-b1cc-38c6ad198998",
+   "finalUrl": "/dashboard/org/events/8e091f1d-238f-49dd-93a8-2af41ec4708b",
    "boardHeadings": 4,
    "liveHeadings": 2
   },
@@ -3937,13 +3874,6 @@
      "what": "h1 \"partners and supporters\" size",
      "board": "46px",
      "live": "42px"
-    },
-    {
-     "type": "shadow",
-     "severity": "medium",
-     "what": "no button on live carries a shadow",
-     "board": "set",
-     "live": "none"
     },
     {
      "type": "radius",
@@ -4348,13 +4278,6 @@
      "live": "24px"
     },
     {
-     "type": "shadow",
-     "severity": "medium",
-     "what": "no button on live carries a shadow",
-     "board": "set",
-     "live": "none"
-    },
-    {
      "type": "copy",
      "severity": "medium",
      "what": "2/2 board paragraphs absent",
@@ -4470,13 +4393,6 @@
      "live": "new tutorial"
     },
     {
-     "type": "shadow",
-     "severity": "medium",
-     "what": "no button on live carries a shadow",
-     "board": "set",
-     "live": "none"
-    },
-    {
      "type": "radius",
      "severity": "medium",
      "what": "card radius",
@@ -4528,7 +4444,7 @@
    "id": "editor",
    "name": "Tutorial editor",
    "group": "My SPLAT",
-   "route": "/tutorials/b88113e5-2a21-4bb9-91f7-d24983d0b97d/edit",
+   "route": "/tutorials/731ffb21-92f4-4ad5-8aab-3cb0c1668698/edit",
    "findings": [
     {
      "type": "missing-section",
@@ -4595,7 +4511,7 @@
     }
    ],
    "role": "contributor",
-   "finalUrl": "/tutorials/b88113e5-2a21-4bb9-91f7-d24983d0b97d/edit",
+   "finalUrl": "/tutorials/731ffb21-92f4-4ad5-8aab-3cb0c1668698/edit",
    "boardHeadings": 5,
    "liveHeadings": 1
   },
@@ -4847,7 +4763,7 @@
    "id": "thread",
    "name": "Exchange thread",
    "group": "My SPLAT",
-   "route": "/dashboard/exchanges/7f0c7fb0-71d2-4c4f-96ce-8f58c0958ea1",
+   "route": "/dashboard/exchanges/f2a67834-9bbb-4bd2-b0d7-074a56266a30",
    "findings": [
     {
      "type": "font",
@@ -4935,7 +4851,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/exchanges/7f0c7fb0-71d2-4c4f-96ce-8f58c0958ea1",
+   "finalUrl": "/dashboard/exchanges/f2a67834-9bbb-4bd2-b0d7-074a56266a30",
    "boardHeadings": 4,
    "liveHeadings": 6
   },
@@ -5080,13 +4996,6 @@
      "what": "page height differs grossly",
      "board": "391px",
      "live": "877px"
-    },
-    {
-     "type": "shadow",
-     "severity": "medium",
-     "what": "no button on live carries a shadow",
-     "board": "set",
-     "live": "none"
     }
    ],
    "role": "parent",
@@ -5150,13 +5059,6 @@
      "live": "236px"
     },
     {
-     "type": "shadow",
-     "severity": "medium",
-     "what": "no button on live carries a shadow",
-     "board": "set",
-     "live": "none"
-    },
-    {
      "type": "copy",
      "severity": "medium",
      "what": "1/1 board paragraphs absent",
@@ -5209,13 +5111,6 @@
      "what": "page height differs grossly",
      "board": "1033px",
      "live": "236px"
-    },
-    {
-     "type": "shadow",
-     "severity": "medium",
-     "what": "no button on live carries a shadow",
-     "board": "set",
-     "live": "none"
     },
     {
      "type": "copy",
@@ -5272,13 +5167,6 @@
      "live": "saved challenges"
     },
     {
-     "type": "shadow",
-     "severity": "medium",
-     "what": "no button on live carries a shadow",
-     "board": "set",
-     "live": "none"
-    },
-    {
      "type": "copy",
      "severity": "medium",
      "what": "1/1 board paragraphs absent",
@@ -5326,13 +5214,6 @@
      "live": "236px"
     },
     {
-     "type": "shadow",
-     "severity": "medium",
-     "what": "no button on live carries a shadow",
-     "board": "set",
-     "live": "none"
-    },
-    {
      "type": "copy",
      "severity": "medium",
      "what": "1/1 board paragraphs absent",
@@ -5357,13 +5238,6 @@
      "what": "page height differs grossly",
      "board": "721px",
      "live": "212px"
-    },
-    {
-     "type": "shadow",
-     "severity": "medium",
-     "what": "no button on live carries a shadow",
-     "board": "set",
-     "live": "none"
     },
     {
      "type": "copy",
@@ -5408,7 +5282,7 @@
    "id": "print_job",
    "name": "Print job",
    "group": "My SPLAT",
-   "route": "/dashboard/print-requests/5b200107-d0b2-4104-a195-6c22acf26c7a",
+   "route": "/dashboard/print-requests/0c6dd8a1-cf2f-477a-84de-7a73a0789167",
    "findings": [
     {
      "type": "font",
@@ -5489,7 +5363,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/print-requests/5b200107-d0b2-4104-a195-6c22acf26c7a",
+   "finalUrl": "/dashboard/print-requests/0c6dd8a1-cf2f-477a-84de-7a73a0789167",
    "boardHeadings": 3,
    "liveHeadings": 5
   },
@@ -5680,7 +5554,7 @@
    "id": "child",
    "name": "Child profile",
    "group": "My SPLAT",
-   "route": "/dashboard/child/5e35ef04-744e-4a87-ae1e-6bf86a50d437",
+   "route": "/dashboard/child/3d451d23-6b20-4b55-b40d-4bd84bccf621",
    "findings": [
     {
      "type": "font",
@@ -5747,7 +5621,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/child/5e35ef04-744e-4a87-ae1e-6bf86a50d437",
+   "finalUrl": "/dashboard/child/3d451d23-6b20-4b55-b40d-4bd84bccf621",
    "boardHeadings": 4,
    "liveHeadings": 1
   },
@@ -5859,13 +5733,6 @@
      "what": "h1 wording",
      "board": "review queue",
      "live": "organisation"
-    },
-    {
-     "type": "shadow",
-     "severity": "medium",
-     "what": "no button on live carries a shadow",
-     "board": "set",
-     "live": "none"
     },
     {
      "type": "copy",
@@ -6020,7 +5887,7 @@
      "severity": "medium",
      "what": "5/5 board paragraphs absent",
      "board": "published items are live on the public pages right now.",
-     "live": "what parity org mu#mw#caeg has published, and what is still a draft."
+     "live": "what parity org mu#zqwk#k# has published, and what is still a draft."
     },
     {
      "type": "weight",
@@ -6293,13 +6160,6 @@
      "live": null
     },
     {
-     "type": "shadow",
-     "severity": "medium",
-     "what": "no button on live carries a shadow",
-     "board": "set",
-     "live": "none"
-    },
-    {
      "type": "copy",
      "severity": "medium",
      "what": "1/1 board paragraphs absent",
@@ -6345,13 +6205,6 @@
      "what": "h1 wording",
      "board": "review queue",
      "live": "tutorial review queue"
-    },
-    {
-     "type": "shadow",
-     "severity": "medium",
-     "what": "no button on live carries a shadow",
-     "board": "set",
-     "live": "none"
     },
     {
      "type": "missing-section",
@@ -6469,13 +6322,6 @@
      "live": 0
     },
     {
-     "type": "shadow",
-     "severity": "medium",
-     "what": "no button on live carries a shadow",
-     "board": "set",
-     "live": "none"
-    },
-    {
      "type": "copy",
      "severity": "medium",
      "what": "12/13 board paragraphs absent",
@@ -6535,13 +6381,6 @@
      "what": "h1 wording",
      "board": "design challenges awaiting review",
      "live": "design challenge queue"
-    },
-    {
-     "type": "shadow",
-     "severity": "medium",
-     "what": "no button on live carries a shadow",
-     "board": "set",
-     "live": "none"
     },
     {
      "type": "copy",
@@ -6769,7 +6608,7 @@
      "severity": "medium",
      "what": "1/1 board paragraphs absent",
      "board": "review and remove accounts. # total, # flagged.",
-     "live": "parity-contributor-mu#mw#misd#@example.com"
+     "live": "parity-contributor-mu#zqzk#dsp@example.com"
     },
     {
      "type": "weight",
@@ -6908,6 +6747,13 @@
      "live": "rgb(28,37,48)"
     },
     {
+     "type": "radius",
+     "severity": "low",
+     "what": "button radius range",
+     "board": "999px",
+     "live": "0px"
+    },
+    {
      "type": "colour",
      "severity": "low",
      "what": "input background",
@@ -6974,6 +6820,13 @@
      "what": "h3 \"splat connect\" weight",
      "board": 800,
      "live": 900
+    },
+    {
+     "type": "radius",
+     "severity": "low",
+     "what": "button radius range",
+     "board": "999px",
+     "live": "0px"
     },
     {
      "type": "radius",
@@ -7128,6 +6981,13 @@
     {
      "type": "radius",
      "severity": "low",
+     "what": "button radius range",
+     "board": "999px",
+     "live": "0px"
+    },
+    {
+     "type": "radius",
+     "severity": "low",
      "what": "input radius",
      "board": "999px",
      "live": "0px"
@@ -7252,16 +7112,16 @@
   "clean": 1,
   "withFindings": 118,
   "errored": 0,
-  "findings": 831,
+  "findings": 811,
   "byType": {
    "missing-section": 294,
    "size": 101,
    "copy": 166,
-   "radius": 40,
+   "radius": 43,
    "colour": 35,
    "font": 31,
    "weight": 66,
-   "shadow": 68,
+   "shadow": 45,
    "extra-section": 30
   }
  }
