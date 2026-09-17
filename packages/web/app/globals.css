@@ -693,21 +693,35 @@
 
   /*
    * Micro-labels: eyebrows, breadcrumbs, photo-slot captions, the count under a
-   * tile. Monospace at 11px with wide tracking, which reads as a caption rather
-   * than as small body copy and so never competes with the heading above it.
+   * tile. Uppercase with wide tracking, which reads as a caption rather than as
+   * small body copy and so never competes with the heading above it.
    */
   .eyebrow,
   .meta {
-    font-family: var(--font-mono);
     text-transform: uppercase;
   }
 
-  /* 12px at 0.16em, which is what the board sets on every eyebrow it draws —
-     hero, section lead-ins and hub pages alike. Was 11px/0.14em. */
+  /*
+   * Nunito 12px/800 at 0.1em — measured off #printing_basics, #learn_101 and
+   * #impact, where the board sets every eyebrow it draws the same way.
+   *
+   * This was JetBrains Mono at weight 600. A monospace micro-label is Pixel's
+   * voice, and .eyebrow has 64 call sites — every section lead-in, every stat
+   * label, every breadcrumb — so it is one of the loudest things Pixel left
+   * behind after the nav.
+   *
+   * .meta keeps the mono face: the board does use it for dense figures, like
+   * the per-state counts on #impact.
+   */
   .eyebrow {
+    font-family: var(--font-sans);
     font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.16em;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+  }
+
+  .meta {
+    font-family: var(--font-mono);
   }
 
   .meta {
@@ -841,12 +855,20 @@
       box-shadow 0.16s var(--ease-spring);
   }
 
-  /* Thick ink border under the whole bar, so the nav reads as a shelf the
-     pills sit on. Quiet register keeps the old hairline — it is meant to
-     recede, not gain weight. */
+  /*
+   * The bar sits ON the page, not above it: canvas at 88% with a 14px blur
+   * behind it, and a hairline underneath.
+   *
+   * It was opaque white with a full-strength INK rule under it — the Pixel
+   * "shelf" the nav pills sat on. That dark line across the top of every screen
+   * is the single loudest thing Pixel left behind, and the board draws neither
+   * half of it.
+   */
   .pixel header {
+    background-color: color-mix(in srgb, var(--color-canvas) 88%, transparent);
+    backdrop-filter: blur(14px);
     border-bottom-width: var(--border-width);
-    border-bottom-color: var(--color-ink);
+    border-bottom-color: var(--color-line);
   }
 
   .pixel header.nav-quiet {

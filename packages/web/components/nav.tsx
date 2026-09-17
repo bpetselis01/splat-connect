@@ -49,7 +49,7 @@ export function Nav({ caps, quiet = false }: NavProps) {
     // components, and a Tailwind utility wins over that layer whatever the
     // specificity says. The utility was silently overriding the correct rule
     // back to 1px of --color-line on every page.
-    <header className={`sticky top-0 z-30 ${quiet ? 'nav-quiet' : 'bg-surface'}`}>
+    <header className={`sticky top-0 z-30 ${quiet ? 'nav-quiet' : ''}`}>
       <nav
         className={`public-shell flex flex-wrap items-center gap-x-[26px] gap-y-2 ${
           quiet ? 'py-1.5' : 'py-[14px]'
