@@ -1,9 +1,11 @@
 /**
  * The media band at the top of a browse card, or its placeholder.
  *
- * From design-system-update/components/cards/ContentCard.jsx: a 150px band
- * filled with the card's tint, and when there is no photo, the card's own
- * duotone glyph at 48px in --b700. It was a 🧸 emoji on brand-tint, which is
+ * From design-system-update/components/cards/ContentCard.jsx and the board's
+ * own #home rows: a 4:3 band filled with the card's tint, and when there is no
+ * photo, the card's own duotone glyph at 64px in ink at 70%. The band was a
+ * fixed 150px, which made a two-up row of cards on a wide column draw a letter-
+ * box where the board draws a picture. It was a 🧸 emoji on brand-tint, which is
  * the one thing on a listing screen you cannot mistake for the design — an
  * emoji renders in the reader's system font and carries none of the palette.
  *
@@ -34,16 +36,16 @@ export function CardPhoto({
     return (
       <div
         aria-hidden="true"
-        className="grid h-[150px] place-items-center text-brand-deep"
-        style={{ backgroundColor: tint }}
+        className="grid aspect-[4/3] place-items-center"
+        style={{ backgroundColor: tint, color: 'var(--tink)' }}
       >
-        <Glyph weight="duotone" size={48} />
+        <Glyph weight="duotone" size={64} opacity={0.7} />
       </div>
     )
   }
 
   return (
-    <div className="relative h-[150px] w-full bg-sunken">
+    <div className="relative aspect-[4/3] w-full bg-sunken">
       <Image src={safe} alt="" fill className="object-cover" />
     </div>
   )

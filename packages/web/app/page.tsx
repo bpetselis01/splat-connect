@@ -109,9 +109,17 @@ export default async function HomePage() {
   return (
     <>
       <section className="hero">
+        {/* Three drifting washes behind the whole hero. Decorative, and the
+            only thing on the page that moves without being scrolled. */}
+        <div aria-hidden="true" className="hero__blobs">
+          <span />
+          <span />
+          <span />
+        </div>
+
         <div className="hero__copy">
           <p className="hero__badge">
-            <SealCheck weight="fill" className="h-4 w-4 text-success" aria-hidden="true" />
+            <SealCheck weight="fill" className="h-[18px] w-[18px] text-success" aria-hidden="true" />
             Free to read, reviewed guides for switch-adapted play
           </p>
           <h1 className="hero__title">
@@ -137,7 +145,7 @@ export default async function HomePage() {
             stats={stats.map(({ icon: Icon, value, label, tint }) => ({
               label,
               value: value.toLocaleString(),
-              icon: <Icon weight="duotone" className="h-5 w-5" />,
+              icon: <Icon weight="duotone" className="h-[22px] w-[22px]" />,
               tint,
             }))}
           />
@@ -151,13 +159,13 @@ export default async function HomePage() {
 
       <ScrollWorld />
 
-      <section className="band" aria-label="Where to start">
+      <section className="band band--doors" aria-label="Where to start">
         <ul className="door-grid">
           {doors.map(({ icon: Icon, title, body, cta, href, tint, quiet }) => (
-            <li key={title} className={quiet ? 'door-cell--quiet' : undefined}>
+            <li key={title}>
               <Link href={href} className={`door no-underline${quiet ? ' door--quiet' : ''}`}>
                 <span aria-hidden="true" className="door__icon" style={{ backgroundColor: tint }}>
-                  <Icon weight="duotone" className="h-6 w-6" />
+                  <Icon weight="duotone" className="h-[30px] w-[30px]" />
                 </span>
                 <span className="door__title">{title}</span>
                 <span className="door__body">{body}</span>
@@ -174,7 +182,7 @@ export default async function HomePage() {
       <section className="band band--split" aria-label="What things cost">
         <div className="cost-card">
           <span aria-hidden="true" className="door__icon" style={{ backgroundColor: 'var(--color-honey-soft)' }}>
-            <Receipt weight="duotone" className="h-6 w-6" />
+            <Receipt weight="duotone" className="h-[30px] w-[30px]" />
           </span>
           <h2 className="door__title">No price tags. Every cost written down.</h2>
           <p className="band__body">
@@ -192,7 +200,7 @@ export default async function HomePage() {
         </div>
         <div className="cost-card cost-card--mint">
           <span aria-hidden="true" className="door__icon" style={{ backgroundColor: 'var(--color-surface)' }}>
-            <Recycle weight="duotone" className="h-6 w-6" />
+            <Recycle weight="duotone" className="h-[30px] w-[30px]" />
           </span>
           <h3 className="door__title">Bring your failed prints. Leave with credit.</h3>
           <p className="band__body">
@@ -213,7 +221,7 @@ export default async function HomePage() {
       <section className="band band--split" aria-label="Recently added">
         <div className="recent">
           <div className="band__head">
-            <h2 className="door__title">Recent guides</h2>
+            <h2 className="title-band">Recent guides</h2>
             <Link href="/library" className="door__cta no-underline">
               View all
               <ArrowRight weight="bold" className="h-4 w-4" aria-hidden="true" />
@@ -229,7 +237,7 @@ export default async function HomePage() {
         </div>
         <div className="recent">
           <div className="band__head">
-            <h2 className="door__title">Recent toys</h2>
+            <h2 className="title-band">Recent toys</h2>
             <Link href="/toy-library" className="door__cta no-underline">
               View all
               <ArrowRight weight="bold" className="h-4 w-4" aria-hidden="true" />

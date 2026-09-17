@@ -109,9 +109,11 @@ function SceneBody({ scene, index }: { scene: Scene; index: number }) {
   return (
     <div className="sw-scene__inner">
       <div className="sw-scene__art" style={{ backgroundColor: scene.tint }}>
-        <Slot kind="art" note={scene.art} className="h-full w-full" />
+        {/* Transparent and square-cornered: the tinted card IS the art
+            frame here, so the slot contributes only its dashed brief. */}
+        <Slot kind="art" note={scene.art} className="h-full w-full !rounded-none !border-0 !bg-transparent" />
         <span aria-hidden="true" className="sw-scene__badge">
-          <Icon weight="duotone" className="h-5 w-5" />
+          <Icon weight="duotone" className="h-[30px] w-[30px]" />
         </span>
       </div>
       <div className="sw-scene__copy">
@@ -123,7 +125,7 @@ function SceneBody({ scene, index }: { scene: Scene; index: number }) {
         </p>
         <h3 className="sw-scene__title">{scene.title}</h3>
         <p className="sw-scene__body">{scene.body}</p>
-        <Link href={scene.href} className="btn btn-quiet no-underline">
+        <Link href={scene.href} className="btn btn-quiet sw-scene__cta no-underline">
           {scene.cta}
           <ArrowRight weight="bold" className="h-4 w-4" aria-hidden="true" />
         </Link>
@@ -198,7 +200,14 @@ export function ScrollWorld() {
       style={{ height: `${SCENES.length * 180 + 120}vh` }}
     >
       <div className="sw-stage">
-        <p className="sw-kicker eyebrow">How it works · scroll to fly through</p>
+        <div className="sw-kicker">
+          <span className="eyebrow">How it works · scroll to fly through</span>
+          {/* How far through the flight you are. A 1020vh section with no
+              progress read reads as a page that has stopped responding. */}
+          <span className="sw-progress" aria-hidden="true">
+            <span style={{ width: `${Math.round(progress * 100)}%` }} />
+          </span>
+        </div>
         {SCENES.map((scene, i) => {
           const distance = exact - i
           const near = Math.abs(distance) < 1.2
@@ -208,7 +217,7 @@ export function ScrollWorld() {
               className="sw-scene"
               aria-hidden={active !== i}
               style={{
-                opacity: near ? Math.max(0, 1 - Math.abs(distance) * 1.35) : 0,
+                opacity: near ? Math.max(0, 1 - Math.abs(distance) * 2.1) : 0,
                 transform: `translate3d(0, ${distance * -60}px, ${-Math.abs(distance) * 460}px)`,
                 pointerEvents: active === i ? 'auto' : 'none',
               }}
