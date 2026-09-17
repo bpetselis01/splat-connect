@@ -20,7 +20,6 @@ import { requireCapabilities } from '@/lib/require-capabilities'
 import { apiClient } from '@/lib/api-client'
 import { isOwnerSide } from '@splat-connect/types'
 import type { PickupAddress, Profile, ToyTransactionDetail } from '@splat-connect/types'
-import { BackLink } from '@/components/back-link'
 import { Badge } from '@/components/badge'
 import { Disclosure } from '@/components/disclosure'
 import { CostPanel, type CostLine, type Settlement } from '@/components/cost-panel'
@@ -107,7 +106,6 @@ export default async function PrintJobPage({ params }: { params: Promise<{ id: s
 
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
-          <BackLink href="/dashboard/print-requests" label="My print requests" />
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <Badge status={tx.status} />
             <Badge status="toy_adaptation" label="Print" />

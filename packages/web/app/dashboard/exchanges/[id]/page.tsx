@@ -1,4 +1,3 @@
-import { BackLink } from '@/components/back-link'
 import { notFound } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { requireCapabilities } from '@/lib/require-capabilities'
@@ -113,7 +112,6 @@ export default async function ExchangeDetailPage({ params }: { params: Promise<{
           action right-aligned away from everything that acts on the record. */}
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
-          <BackLink href="/dashboard/exchanges" label="My exchanges" />
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <Badge status={tx.status} />
             <Badge

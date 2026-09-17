@@ -1,4 +1,3 @@
-import { BackLink } from '@/components/back-link'
 import { notFound } from 'next/navigation'
 import { apiClient } from '@/lib/api-client'
 import { requireCapabilities } from '@/lib/require-capabilities'
@@ -23,7 +22,6 @@ export default async function EditChildPage({ params }: { params: Promise<{ id: 
 
   return (
     <div>
-      <BackLink href="/dashboard/profile" label="Account" />
       <ChildEditor child={child} label={label} />
     </div>
   )

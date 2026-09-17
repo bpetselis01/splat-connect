@@ -1,7 +1,6 @@
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { Nav } from '@/components/nav'
-import { DrawerProvider, useDrawer } from '@/components/drawer-context'
 import type { Capabilities } from '@/lib/capabilities'
 import { TONES } from '@/lib/tone'
 
@@ -281,23 +280,18 @@ describe('Nav', () => {
     expect(mockLink.mock.calls.some((call) => call[0].href === '/')).toBe(false)
   })
 
-  // Tests: the My SPLAT pill also forces a full page load from a rail-only
-  //        account page, not just from a public one — nestsRail makes this a
-  //        crossing too, since /dashboard (unlike a rail page) has no shell.
-  //        The old hand-rolled check (activeSection !== ACCOUNT_NAV) missed
-  //        this: from a rail page the section is already ACCOUNT_NAV, so it
-  //        never flagged the crossing, and a soft transition left the rail on
-  //        screen with no header on /dashboard.
-  // How:   pathname is a rail-only account page; the My SPLAT pill still
-  //        resolves to /dashboard but must not have gone through next/link
-  // Chain: same nestsRail split lib/public-nav.ts's crossesAccountBoundary
-  //        already covers for BoundaryLink; Nav's own pill must agree with it
-  it('renders My SPLAT as a plain anchor from a rail-only account page', () => {
+  // Tests: the My SPLAT pill is a soft transition from any account page
+  // How:   pathname is an account page; the pill resolves to /dashboard and
+  //        must have gone through next/link
+  // Chain: this used to be a plain anchor because /dashboard rendered the
+  //        header while its children rendered the rail. The rail is gone, so
+  //        both ends render the same chrome and a full load buys nothing
+  it('renders My SPLAT as a soft link from another account page', () => {
     pathname.current = '/dashboard/toys'
     render(<Nav caps={signedIn} />)
     const account = screen.getByRole('link', { name: /My SPLAT/ })
     expect(account).toHaveAttribute('href', '/dashboard')
-    expect(mockLink.mock.calls.some((call) => call[0].href === '/dashboard')).toBe(false)
+    expect(mockLink.mock.calls.some((call) => call[0].href === '/dashboard')).toBe(true)
   })
 
   // Tests: clicking My SPLAT while already on /dashboard is a same-page
@@ -322,48 +316,6 @@ describe('Nav', () => {
     const guides = screen.getByRole('link', { name: /Guides/ })
     expect(guides).toHaveAttribute('href', '/library')
     expect(mockLink.mock.calls.some((call) => call[0].href === '/library')).toBe(true)
-  })
-
-  // Tests: the menu button is a real button, operated by click
-  // How:   renders inside a provider, clicks, and asserts the drawer opened
-  // Chain: hover-revealed navigation does not exist on touch and fails WCAG
-  //        1.4.13; the control has to be pressable
-  it('opens the section menu on click', () => {
-    function Probe() {
-      const { isOpen } = useDrawer()
-      return <span data-testid="drawer">{isOpen ? 'open' : 'closed'}</span>
-    }
-    render(
-      <DrawerProvider>
-        <Nav caps={signedIn} showMenu />
-        <Probe />
-      </DrawerProvider>
-    )
-    expect(screen.getByTestId('drawer')).toHaveTextContent('closed')
-    fireEvent.click(screen.getByRole('button', { name: /open navigation/i }))
-    expect(screen.getByTestId('drawer')).toHaveTextContent('open')
-  })
-
-  // Tests: collapsing is a viewport decision, not an auth decision
-  // How:   asserts the seven sections render with and without a session, and
-  //        that the menu button's visibility is governed by a width class
-  // Chain: a header that collapses when you sign in is the original defect in
-  //        miniature — nav must not change by page type or by auth state
-  it('collapses by viewport, identically signed in and out', () => {
-    const out = render(<DrawerProvider><Nav caps={null} showMenu /></DrawerProvider>)
-    expect(out.getByRole('button', { name: /open navigation/i })).toHaveClass('lg:hidden')
-    out.unmount()
-    render(<DrawerProvider><Nav caps={signedIn} showMenu /></DrawerProvider>)
-    expect(screen.getByRole('button', { name: /open navigation/i })).toHaveClass('lg:hidden')
-  })
-
-  // Tests: public routes get no menu button, because there is no drawer there
-  // How:   renders without showMenu
-  // Chain: a trigger that opens nothing is worse than no trigger; the rail exists
-  //        only inside the account section
-  it('shows no menu button outside the account section', () => {
-    render(<DrawerProvider><Nav caps={signedIn} /></DrawerProvider>)
-    expect(screen.queryByRole('button', { name: /open navigation/i })).not.toBeInTheDocument()
   })
 
   // Tests: Sign in is pushed to the far edge at every width, like the signed-in cluster

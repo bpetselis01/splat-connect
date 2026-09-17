@@ -1,4 +1,3 @@
-import { BackLink } from '@/components/back-link'
 import { apiClient } from '@/lib/api-client'
 import { redirect } from 'next/navigation'
 import { requireCapabilities } from '@/lib/require-capabilities'
@@ -356,7 +355,6 @@ export default async function EditTutorialPage({
   return (
     <div>
       <div className="mb-6">
-        <BackLink href="/dashboard/tutorials" label="My tutorials" />
         <h1 className="truncate title-detail">{tutorial.title}</h1>
       </div>
 

@@ -3,8 +3,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { BoundaryLink } from '@/components/boundary-link'
 import { createClient } from '@/lib/supabase/client'
-import { Logo, Menu } from '@/components/icons'
-import { useDrawer } from '@/components/drawer-context'
+import { Logo } from '@/components/icons'
 import { PUBLIC_NAV, ACCOUNT_NAV, sectionFor } from '@/lib/public-nav'
 import { toneClass } from '@/lib/tone'
 import type { Capabilities } from '@/lib/capabilities'
@@ -22,16 +21,12 @@ interface NavProps {
   /** Inside the account section the bar keeps every label and drops its weight.
       Wired in Task 6; accepted here so the layout compiles. */
   quiet?: boolean
-  /** Whether the mobile drawer trigger renders. Only true where the drawer
-      itself exists — inside the account section. */
-  showMenu?: boolean
 }
 
-export function Nav({ caps, quiet = false, showMenu = false }: NavProps) {
+export function Nav({ caps, quiet = false }: NavProps) {
   const supabase = createClient()
   // Null outside an App Router context (e.g. the unit tests render Nav directly).
   const pathname = usePathname() ?? ''
-  const drawer = useDrawer()
 
   async function signOut() {
     await supabase.auth.signOut()
@@ -60,16 +55,6 @@ export function Nav({ caps, quiet = false, showMenu = false }: NavProps) {
           quiet ? 'py-1.5' : 'py-[14px]'
         }`}
       >
-        {showMenu && (
-          <button
-            type="button"
-            onClick={drawer.open}
-            aria-label="Open navigation"
-            className="rounded-field p-2 text-ink transition-colors hover:bg-sunken lg:hidden"
-          >
-            <Menu className="h-6 w-6" />
-          </button>
-        )}
         <BoundaryLink
           href="/"
           className="flex shrink-0 items-center gap-2.5 text-[18px] font-black tracking-tight text-ink"

@@ -4,10 +4,10 @@
  * where nothing else points there.
  *
  * Deliberately not rendered anywhere in the account section. /dashboard is the
- * destination itself, and every other account page carries the rail, which has
- * had its own "Back to My SPLAT" pill at the top since 2026-08-24 (see
- * components/rail.tsx). Rendering here as well put two links to /dashboard on
- * every rail page — see docs/superpowers/specs/2026-08-23-my-splat-front-door-design.md.
+ * destination itself, and every other account page carries the breadcrumb
+ * trail (lib/trail.ts), whose first crumb is My SPLAT. Rendering here as well
+ * would put two links to /dashboard on every account page — see
+ * docs/superpowers/specs/2026-08-23-my-splat-front-door-design.md.
  *
  * Always a boundary-crossing destination from wherever this renders, so
  * BoundaryLink always resolves to a full page load here — see its own

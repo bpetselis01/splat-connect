@@ -6,9 +6,13 @@ const PUBLIC_LABELS = ['Guides', 'Toy Library', '3D Printing', 'Learn', 'Get Inv
 /**
  * The reported defect: signing in deleted the whole public navigation, so
  * reaching /get-involved/submit-an-idea required signing out, navigating
- * signed-out, and signing back in. These three specs assert the property
- * that actually broke — the public sections stay reachable, and the rail
- * stays scoped to the account section — rather than any one component.
+ * signed-out, and signing back in.
+ *
+ * The rail that used to replace the header inside the account section was
+ * retired on 2026-09-17 — the artboard's note on the My SPLAT hub is "replaces
+ * the old sidebar entirely" — so the property is now simpler and stronger: the
+ * same header renders on every page in the app, and the way back up the
+ * account section is the breadcrumb trail (lib/trail.ts).
  */
 test.describe('signed-in navigation', () => {
   test('reaches the idea form from the dashboard without signing out', async ({ page }) => {
@@ -34,108 +38,80 @@ test.describe('signed-in navigation', () => {
   })
 
   // Admin, not contributor: middleware.ts gates /admin on role === 'admin', so
-  // a contributor session would just bounce off it to "/". createAdmin() +
-  // signIn() is the same helper login.spec.ts already exercises for the admin
-  // sign-in flow, and one admin session covers every path below — the
-  // contributor-terms gate that /dashboard and /dashboard/challenges sit
-  // behind keys off having accepted the terms, not off role, so acceptTerms()
-  // here is enough to reach them the same way a contributor would. Dropping
-  // /admin, as the brief's fallback allowed for a suite with no admin helper,
-  // would have left the account area itself — the exact place the original
-  // bug hid the nav — unchecked.
+  // a contributor session would just bounce off it to "/".
   test('keeps every public section reachable from every signed-in page', async ({ page }) => {
     const admin = await createAdmin()
     await acceptTerms(admin.id)
     await signIn(page, admin.email, admin.password)
     await page.waitForURL('**/admin')
 
-    // /dashboard keeps the header, so every public section is a direct pill
-    // click away.
-    await page.goto('/dashboard')
-    for (const label of PUBLIC_LABELS) {
-      await expect(page.getByRole('link', { name: new RegExp(label) }).first()).toBeVisible()
-    }
-
-    // Every other account page has no header — the rail's own pill is the way
-    // back to My SPLAT, and from there every public section is reachable again.
-    // Deliberately unscoped: the floating dock yields across the whole account
-    // section precisely so this stays a single link, and strict mode is what
-    // catches it if a second one ever comes back.
-    for (const path of ['/dashboard/challenges', '/admin']) {
+    // The point of retiring the rail: the header is now unconditional, so this
+    // holds on the hub, on a page under it, deep in /admin, and out on the
+    // public site — with no "go back to My SPLAT first" step in between.
+    for (const path of ['/dashboard', '/dashboard/challenges', '/admin', '/admin/review', '/library']) {
       await page.goto(path)
-      await expect(page.getByRole('link', { name: /Back to My SPLAT/ })).toBeVisible()
-      await page.getByRole('link', { name: /Back to My SPLAT/ }).click()
-      await expect(page).toHaveURL(/\/dashboard$/)
+      await expect(page.getByRole('banner')).toBeVisible()
       for (const label of PUBLIC_LABELS) {
         await expect(page.getByRole('link', { name: new RegExp(label) }).first()).toBeVisible()
       }
     }
+  })
 
-    await page.goto('/library')
-    for (const label of PUBLIC_LABELS) {
-      await expect(page.getByRole('link', { name: new RegExp(label) }).first()).toBeVisible()
+  // Tests: the header renders on every page, account or public, and no rail
+  //        survives anywhere
+  // How:   the hub, a page under it, and a public page
+  // Chain: the two used to be mutually exclusive by construction. Asserting
+  //        .shell-rail is gone is what catches a revert that reinstates the
+  //        old branch in app/layout.tsx
+  test('renders the header everywhere and the rail nowhere', async ({ page }) => {
+    const contributor = await createContributor()
+    await acceptTerms(contributor.id)
+    await signIn(page, contributor.email, contributor.password)
+    await page.waitForURL('**/dashboard')
+
+    for (const path of ['/dashboard', '/dashboard/toys', '/library']) {
+      await page.goto(path)
+      await expect(page.getByRole('banner')).toBeVisible()
+      await expect(page.locator('.shell-rail')).toHaveCount(0)
     }
   })
 
-  test('shows the rail only inside the account section', async ({ page }) => {
+  // Tests: the breadcrumb trail is the way back up, and it is a real trail —
+  //        the parent chain, not the URL
+  // How:   the tutorial editor, whose trail is My SPLAT / My tutorials /
+  //        Tutorial editor even though its pathname is /tutorials/[id]/edit
+  // Chain: this replaced the rail's "Back to My SPLAT" pill and the per-page
+  //        BackLink together. If trailFor stops matching a route the page
+  //        silently loses every way back, which nothing else would notice
+  test('the breadcrumb trail walks back up the account section', async ({ page }) => {
     const contributor = await createContributor()
     await acceptTerms(contributor.id)
+    const tutorialId = await createTutorial(contributor.id, { status: 'draft' })
     await signIn(page, contributor.email, contributor.password)
     await page.waitForURL('**/dashboard')
 
-    // The branch's headline change: /dashboard keeps the header instead of
-    // the rail, unlike every other account page.
-    await expect(page.locator('.shell-rail')).toHaveCount(0)
-    await expect(page.getByRole('banner')).toBeVisible()
+    await page.goto(`/tutorials/${tutorialId}/edit`)
+    const trail = page.getByRole('navigation', { name: 'Breadcrumb' })
+    await expect(trail).toBeVisible()
+    await expect(trail.getByRole('link', { name: 'My SPLAT' })).toBeVisible()
 
-    // The other half of that headline change, in reverse: a rail page has no
-    // header at all — the two are mutually exclusive by construction. This
-    // caught a real bug where Nav rendered unconditionally in app/layout.tsx,
-    // regardless of whether the rail was also on screen.
-    await page.goto('/dashboard/toys')
-    await expect(page.getByRole('link', { name: 'Design challenges' }).first()).toBeVisible()
-    await expect(page.locator('.shell-rail')).toHaveCount(1)
-    await expect(page.getByRole('banner')).toHaveCount(0)
+    await trail.getByRole('link', { name: 'My tutorials' }).click()
+    await expect(page).toHaveURL(/\/dashboard\/tutorials$/)
 
-    await page.goto('/library')
-    await expect(page.locator('.shell-rail')).toHaveCount(0)
-  })
-
-  // Tests: the rail's own "Back to My SPLAT" link forces a real navigation
-  //        back to /dashboard, restoring the header and dropping the rail —
-  //        not a soft transition that would leave the rail on screen with no
-  //        header (the reported defect this link was added to fix)
-  // How:   clicks the rail's link from a rail-only account page, then checks
-  //        both halves of the header/rail split on the far side
-  test('the rail\'s Back to My SPLAT link restores the header and drops the rail', async ({
-    page,
-  }) => {
-    const contributor = await createContributor()
-    await acceptTerms(contributor.id)
-    await signIn(page, contributor.email, contributor.password)
-    await page.waitForURL('**/dashboard')
-    await page.goto('/dashboard/toys')
-    await expect(page.locator('.shell-rail')).toHaveCount(1)
-
-    await page.locator('.shell-rail').getByRole('link', { name: /Back to My SPLAT/ }).click()
-
+    await page
+      .getByRole('navigation', { name: 'Breadcrumb' })
+      .getByRole('link', { name: 'My SPLAT' })
+      .click()
     await expect(page).toHaveURL(/\/dashboard$/)
-    await expect(page.locator('.shell-rail')).toHaveCount(0)
-    await expect(page.getByRole('banner')).toBeVisible()
   })
 
-  // Tests: the empty saved list's way out lands on the public library with the
-  //        header, not with the saved list's rail still on screen
+  // Tests: the empty saved list's way out lands on the public library
   // How:   a signed-in contributor with nothing saved clicks "Browse the guide
-  //        library" and both halves of the split are checked on the far side
+  //        library"
   // Chain: the reported defect. app/dashboard/saved/[type]/page.tsx used a
   //        plain next/link, so the root layout never re-ran and /library
-  //        rendered inside the rail until the next hard navigation — clicking
-  //        a card or a save button was what accidentally fixed it. A mocked-
-  //        Link unit assertion cannot prove this; only a real click can
-  test('the empty saved list\'s browse link lands on the public library with the header', async ({
-    page,
-  }) => {
+  //        rendered inside the account chrome until the next hard navigation
+  test('the empty saved list\'s browse link lands on the public library', async ({ page }) => {
     const contributor = await createContributor()
     await acceptTerms(contributor.id)
     await signIn(page, contributor.email, contributor.password)
@@ -143,106 +119,28 @@ test.describe('signed-in navigation', () => {
 
     // Nothing has been saved, so this is the empty state with the way out.
     await page.goto('/dashboard/saved/tutorials')
-    await expect(page.locator('.shell-rail')).toHaveCount(1)
-
     await page.getByRole('link', { name: 'Browse the guide library' }).click()
 
     await expect(page).toHaveURL(/\/library$/)
-    await expect(page.locator('.shell-rail')).toHaveCount(0)
-    await expect(page.getByRole('banner')).toBeVisible()
-  })
-
-  // Tests: the editor's back control goes where its label says — My tutorials,
-  //        with the rail — not to My SPLAT
-  // How:   opens a real draft's editor and clicks the control in <main>; the
-  //        rail carries a "My tutorials" row of its own, so the locator is
-  //        scoped or it matches the wrong element
-  // Chain: the reported defect. The label read "My tutorials" while the href
-  //        said /dashboard, which is both the wrong destination AND a chrome
-  //        flip, since /dashboard is the one account page that keeps the
-  //        header. Nothing caught it: a next/link to /dashboard is perfectly
-  //        valid, just wrong. /upload carried the identical bug
-  test('@responsive the editor\'s back control lands on My tutorials, not My SPLAT', async ({ page }) => {
-    const contributor = await createContributor()
-    await acceptTerms(contributor.id)
-    const tutorialId = await createTutorial(contributor.id, { status: 'draft' })
-    await signIn(page, contributor.email, contributor.password)
-    await page.waitForURL('**/dashboard')
-
-    await page.goto(`/tutorials/${tutorialId}/edit`)
-    await page.locator('main').getByRole('link', { name: 'My tutorials' }).click()
-
-    await expect(page).toHaveURL(/\/dashboard\/tutorials$/)
-    // Both halves: the right page, and the rail it is supposed to keep.
-    await expect(page.locator('.shell-rail')).toHaveCount(1)
-    await expect(page.getByRole('banner')).toHaveCount(0)
-  })
-
-  // Tests: /upload's back control, which carried the identical wrong href
-  test('@responsive the upload page\'s back control lands on My tutorials too', async ({ page }) => {
-    const contributor = await createContributor()
-    await acceptTerms(contributor.id)
-    await signIn(page, contributor.email, contributor.password)
-    await page.waitForURL('**/dashboard')
-
-    await page.goto('/upload')
-    await page.locator('main').getByRole('link', { name: 'My tutorials' }).click()
-
-    await expect(page).toHaveURL(/\/dashboard\/tutorials$/)
-    await expect(page.locator('.shell-rail')).toHaveCount(1)
-  })
-
-  // Tests: at desktop width the back control gives way to the rail entirely
-  // How:   on the editor at 1280px, the control in <main> is not visible while
-  //        the rail's own "My tutorials" row is
-  // Chain: every back destination — My tutorials, My toys, My exchanges,
-  //        Account — is already a rail row, so above lg the control was a
-  //        second copy of a link sitting two inches to its left. It is
-  //        `lg:hidden` for that reason, and this is the only thing that would
-  //        notice if someone dropped that class and reintroduced the clutter
-  test('the back control gives way to the rail at desktop width', async ({ page }) => {
-    const contributor = await createContributor()
-    await acceptTerms(contributor.id)
-    const tutorialId = await createTutorial(contributor.id, { status: 'draft' })
-    await signIn(page, contributor.email, contributor.password)
-    await page.waitForURL('**/dashboard')
-
-    await page.goto(`/tutorials/${tutorialId}/edit`)
-    await expect(page.locator('main').getByRole('link', { name: 'My tutorials' })).toBeHidden()
-    // The rail row it defers to, which must actually be on screen for the
-    // hiding to be safe rather than merely tidy.
-    await expect(
-      page.locator('.shell-rail').getByRole('link', { name: 'My tutorials' })
-    ).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Toy Adaptation Library', level: 1 })).toBeVisible()
   })
 
   // The final review round's headline gap: components/public-footer.tsx
-  // renders unconditionally on every account page (app/layout.tsx), with
-  // ~45 plain next/link links, none of which forced a full page load on a
-  // boundary crossing — every one of them could leave the rail on screen
-  // over public content. A real click, not a mocked-Link assertion, is the
-  // only thing that proves the fix: Playwright's .click() also fails if
-  // another element (the rail, before the app/globals.css stacking fix)
-  // visually intercepts the pointer at the footer link's coordinates, so
-  // this test doubles as a regression guard for that CSS fix too.
-  test('crossing via a footer link swaps the account chrome for public chrome', async ({ page }) => {
+  // renders ~45 plain next/link links on every account page, none of which
+  // forced a full page load on a boundary crossing. A real click, not a
+  // mocked-Link assertion, is the only thing that proves the fix.
+  test('crossing via a footer link lands on the public page', async ({ page }) => {
     const contributor = await createContributor()
     await acceptTerms(contributor.id)
     await signIn(page, contributor.email, contributor.password)
     await page.waitForURL('**/dashboard')
-    // /dashboard itself has no rail (it keeps the header instead) — the
-    // property under test needs a page that actually has one.
     await page.goto('/dashboard/toys')
-    await expect(page.locator('.shell-rail')).toHaveCount(1)
 
     // Scoped to <footer>: "Guides" also appears as a nav pill and (via
     // hub-grid.tsx) a hub tile, and the whole point here is the footer's own
-    // link (components/public-footer.tsx), the site's largest unguarded
-    // surface before this fix.
+    // link, the site's largest unguarded surface before this fix.
     await page.locator('footer').getByRole('link', { name: 'Guides' }).click()
     await expect(page).toHaveURL(/\/library$/)
-    await expect(page.locator('.shell-rail')).toHaveCount(0)
-    // The destination's own content, not just the URL — app/library's h1.
     await expect(page.getByRole('heading', { name: 'Toy Adaptation Library', level: 1 })).toBeVisible()
   })
 })

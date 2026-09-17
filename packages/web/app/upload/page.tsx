@@ -69,7 +69,6 @@ export default async function NewTutorialPage({
   if (!isKind(kind)) {
     return (
       <div>
-        <BackLink href="/dashboard/tutorials" label="My tutorials" />
         <h1 className="mb-2 title-article">New tutorial</h1>
         <p className="mb-6 max-w-prose text-sm leading-relaxed text-muted">
           What are you writing up? This decides which steps you see.

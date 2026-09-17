@@ -404,32 +404,17 @@ export function sectionFor(pathname: string): NavTarget | undefined {
 }
 
 /**
- * Whether this path renders the rail (components/rail.tsx) rather than the
- * header (components/nav.tsx).
+ * Whether navigating from `pathname` to `href` crosses the public/account
+ * boundary, which the root layout renders differently across, and therefore
+ * needs a full page load rather than a soft <Link> transition (see
+ * components/boundary-link.tsx and components/nav.tsx's NavLink for why).
  *
- * True for every account page except the account root itself: `/dashboard`
- * ("My SPLAT") is the one page that keeps the header instead — see
- * docs/superpowers/specs/2026-08-23-my-splat-front-door-design.md. Exported
- * for crossesAccountBoundary below and for app/layout.tsx's shell decision,
- * so the two never drift apart.
- */
-export function nestsRail(pathname: string): boolean {
-  return sectionFor(pathname) === ACCOUNT_NAV && pathname !== ACCOUNT_NAV.href
-}
-
-/**
- * Whether navigating from `pathname` to `href` crosses a boundary the root
- * layout renders differently across, and therefore needs a full page load
- * rather than a soft <Link> transition (see components/boundary-link.tsx and
- * components/nav.tsx's NavLink for why).
- *
- * Two boundaries, not one: crossing between the public site and the account
- * section (as before), or crossing between `/dashboard` and every other
- * account page — since 2026-08-23 those render different chrome (header vs.
- * rail) despite both being "the account section". A link from the My SPLAT
- * hub grid to any of its own cards, or the floating back-to-My-SPLAT dock in
- * the other direction, would otherwise go stale exactly like the original
- * account/public bug.
+ * One boundary, not two. Until 2026-09-17 `/dashboard` and the rest of the
+ * account section rendered different chrome (header vs. rail), so a move
+ * between them counted as a crossing too. The rail is gone — the artboard's
+ * own note on the hub is "replaces the old sidebar entirely" — so every
+ * account page now renders the same header as the public site and only the
+ * public/account crossing is left.
  *
  * `sectionFor` returns undefined for a pathname/href it cannot resolve to any
  * known section (e.g. /contributors/[id], /tutorials/[id] — real public pages,
@@ -437,9 +422,5 @@ export function nestsRail(pathname: string): boolean {
  * section" here, the same as any other public/unclassified page.
  */
 export function crossesAccountBoundary(pathname: string, href: string): boolean {
-  const fromAccount = sectionFor(pathname) === ACCOUNT_NAV
-  const toAccount = sectionFor(href) === ACCOUNT_NAV
-  if (fromAccount !== toAccount) return true
-  if (!fromAccount) return false
-  return nestsRail(pathname) !== nestsRail(href)
+  return (sectionFor(pathname) === ACCOUNT_NAV) !== (sectionFor(href) === ACCOUNT_NAV)
 }

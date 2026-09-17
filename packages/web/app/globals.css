@@ -2189,62 +2189,9 @@
  * there is never an adjacent twin to merge with.
  */
 
-/*
-  Rail width as a custom property rather than a hardcoded value in both
-  places: <main> reacts through margin-inline-start: var(--rail-w) without
-  either element repeating the other's number.
-*/
 @layer components {
-  .shell {
-    --rail-w: 15rem;
-  }
-
-  /*
-   * The rail used to be the whole page (inset-block: 0), which is wrong now
-   * that a footer sits below it on account pages. top: 0 is safe — the rail
-   * and the header (components/nav.tsx, sticky top-0 z-30) are mutually
-   * exclusive by construction (app/layout.tsx), never both on screen, so
-   * there is never a header edge to clear.
-   */
-  .shell-rail {
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    inset-inline-start: 0;
-    z-index: 40;
-    width: var(--rail-w);
-  }
-
-  .shell-main {
-    min-height: 100vh;
-  }
-
-  @media (min-width: 1024px) {
-    .shell-main {
-      margin-inline-start: var(--rail-w);
-    }
-  }
-
-  /* The drawer is a native <dialog>: showModal() supplies the focus trap,
-     Escape-to-close and inert background rather than hand-building them. */
-  .shell-drawer {
-    margin: 0;
-    margin-inline-end: auto;
-    height: 100dvh;
-    max-height: 100dvh;
-    width: 15rem;
-    max-width: 85vw;
-    border: 0;
-    padding: 0;
-    background: transparent;
-  }
-
-  .shell-drawer::backdrop {
-    background: rgb(10 53 80 / 0.5);
-  }
-
-  /* Centered, unlike .shell-drawer's edge anchor — a modal panel, not a nav
-     panel. Explicit fixed + translate centering rather than the UA's
+  /* An edge-anchored nav drawer used to sit beside this; it went with the
+     rail. Centered: a modal panel. Explicit fixed + translate centering rather than the UA's
      `dialog:modal { inset: 0; margin: auto }` default, which some engines
      fail to re-center once max-width/max-height clamp the box. Shared by
      contributor-terms-dialog.tsx, delete-child-button.tsx and
