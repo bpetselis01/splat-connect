@@ -1,5 +1,5 @@
 {
- "at": "2026-09-17T08:53:45.986Z",
+ "at": "2026-09-17T09:01:25.151Z",
  "live": "http://localhost:3110",
  "screens": [
   {
@@ -243,7 +243,7 @@
    "id": "toy_public",
    "name": "Toy detail",
    "group": "Public site",
-   "route": "/toy-library/001357bb-4aa9-42d1-95af-1c4648e4ce22",
+   "route": "/toy-library/361bbb7d-c93a-403b-b5f4-aafb1e5c976c",
    "findings": [
     {
      "type": "missing-section",
@@ -324,7 +324,7 @@
     }
    ],
    "role": "guest",
-   "finalUrl": "/toy-library/001357bb-4aa9-42d1-95af-1c4648e4ce22",
+   "finalUrl": "/toy-library/361bbb7d-c93a-403b-b5f4-aafb1e5c976c",
    "boardHeadings": 10,
    "liveHeadings": 0
   },
@@ -332,7 +332,7 @@
    "id": "toy_request",
    "name": "Request a toy",
    "group": "Public site",
-   "route": "/toy-library/001357bb-4aa9-42d1-95af-1c4648e4ce22/request",
+   "route": "/toy-library/361bbb7d-c93a-403b-b5f4-aafb1e5c976c/request",
    "findings": [
     {
      "type": "missing-section",
@@ -364,7 +364,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/toy-library/001357bb-4aa9-42d1-95af-1c4648e4ce22/request",
+   "finalUrl": "/toy-library/361bbb7d-c93a-403b-b5f4-aafb1e5c976c/request",
    "boardHeadings": 4,
    "liveHeadings": 1
   },
@@ -1175,32 +1175,25 @@
    "route": "/printing/basics",
    "findings": [
     {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h2 wording",
-     "board": "finishing — the part people skip",
-     "live": "settings that matter"
-    },
-    {
      "type": "extra-section",
      "severity": "medium",
      "what": "live has 3 extra h2 the board does not draw",
      "board": null,
-     "live": "if you don't have a printer | finishing | cleaning and safety"
+     "live": "if you don't have a printer | settings that matter | cleaning and safety"
     },
     {
      "type": "radius",
      "severity": "medium",
      "what": "card radius",
      "board": "18px",
-     "live": "12px"
+     "live": "24px"
     },
     {
-     "type": "copy",
-     "severity": "medium",
-     "what": "4/4 board paragraphs absent",
-     "board": "filament, settings and finishing for printed switch parts. hand this p",
-     "live": "many switches, mounts and battery interrupters on this site are printe"
+     "type": "weight",
+     "severity": "low",
+     "what": "card title weight",
+     "board": 800,
+     "live": 700
     },
     {
      "type": "shadow",
@@ -1208,19 +1201,12 @@
      "what": "card shadow",
      "board": "set",
      "live": "none"
-    },
-    {
-     "type": "colour",
-     "severity": "low",
-     "what": "card background",
-     "board": "rgb(255,255,255)",
-     "live": "rgb(220,240,251)"
     }
    ],
    "role": "guest",
    "finalUrl": "/printing/basics",
    "boardHeadings": 12,
-   "liveHeadings": 6
+   "liveHeadings": 9
   },
   {
    "id": "print_request_new",
@@ -2157,7 +2143,7 @@
      "severity": "medium",
      "what": "h4 wording",
      "board": "riverina makerspace",
-     "live": "parity org mu#agtufjbx#"
+     "live": "parity org mu#aqiavs#r"
     },
     {
      "type": "copy",
@@ -3177,7 +3163,7 @@
      "severity": "medium",
      "what": "5/5 board paragraphs absent",
      "board": "everything a family can ask of an organisation, in one place. say no w",
-     "live": "every ask a family can make of parity org mu#agtufjbx# in one queue: a"
+     "live": "every ask a family can make of parity org mu#aqiavs#r, in one queue: a"
     },
     {
      "type": "shadow",
@@ -3287,7 +3273,7 @@
    "id": "org_event_manage",
    "name": "Manage event",
    "group": "My SPLAT",
-   "route": "/dashboard/org/events/481e801b-5157-449f-b8bd-26c8c6a4602d",
+   "route": "/dashboard/org/events/158cb8f0-2b94-45d2-a8c7-3d8617b29339",
    "findings": [
     {
      "type": "font",
@@ -3347,7 +3333,7 @@
     }
    ],
    "role": "leader",
-   "finalUrl": "/dashboard/org/events/481e801b-5157-449f-b8bd-26c8c6a4602d",
+   "finalUrl": "/dashboard/org/events/158cb8f0-2b94-45d2-a8c7-3d8617b29339",
    "boardHeadings": 4,
    "liveHeadings": 2
   },
@@ -3926,7 +3912,7 @@
    "id": "editor",
    "name": "Tutorial editor",
    "group": "My SPLAT",
-   "route": "/tutorials/2c2295ea-d828-42d0-afed-d3bcdb4f369a/edit",
+   "route": "/tutorials/fde844f4-8f22-4850-9283-3b38ce50d5d7/edit",
    "findings": [
     {
      "type": "missing-section",
@@ -3986,7 +3972,7 @@
     }
    ],
    "role": "contributor",
-   "finalUrl": "/tutorials/2c2295ea-d828-42d0-afed-d3bcdb4f369a/edit",
+   "finalUrl": "/tutorials/fde844f4-8f22-4850-9283-3b38ce50d5d7/edit",
    "boardHeadings": 5,
    "liveHeadings": 1
   },
@@ -4102,7 +4088,7 @@
    "id": "toy_detail",
    "name": "Toy detail",
    "group": "My SPLAT",
-   "route": "/dashboard/toys/001357bb-4aa9-42d1-95af-1c4648e4ce22",
+   "route": "/dashboard/toys/361bbb7d-c93a-403b-b5f4-aafb1e5c976c",
    "findings": [
     {
      "type": "font",
@@ -4183,7 +4169,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/toys/001357bb-4aa9-42d1-95af-1c4648e4ce22",
+   "finalUrl": "/dashboard/toys/361bbb7d-c93a-403b-b5f4-aafb1e5c976c",
    "boardHeadings": 8,
    "liveHeadings": 1
   },
@@ -4217,7 +4203,7 @@
    "id": "thread",
    "name": "Exchange thread",
    "group": "My SPLAT",
-   "route": "/dashboard/exchanges/442ce096-bd88-4b38-ba39-ba1abdcc287c",
+   "route": "/dashboard/exchanges/8712a97d-5470-4c45-aea2-0d1700a56e09",
    "findings": [
     {
      "type": "font",
@@ -4298,7 +4284,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/exchanges/442ce096-bd88-4b38-ba39-ba1abdcc287c",
+   "finalUrl": "/dashboard/exchanges/8712a97d-5470-4c45-aea2-0d1700a56e09",
    "boardHeadings": 4,
    "liveHeadings": 6
   },
@@ -4757,7 +4743,7 @@
    "id": "print_job",
    "name": "Print job",
    "group": "My SPLAT",
-   "route": "/dashboard/print-requests/1186be77-c63a-423a-a304-8f68b9fd9e31",
+   "route": "/dashboard/print-requests/f4743001-37dc-4379-9745-9e6c6e2de3b8",
    "findings": [
     {
      "type": "font",
@@ -4831,7 +4817,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/print-requests/1186be77-c63a-423a-a304-8f68b9fd9e31",
+   "finalUrl": "/dashboard/print-requests/f4743001-37dc-4379-9745-9e6c6e2de3b8",
    "boardHeadings": 3,
    "liveHeadings": 5
   },
@@ -5022,7 +5008,7 @@
    "id": "child",
    "name": "Child profile",
    "group": "My SPLAT",
-   "route": "/dashboard/child/826b7839-db12-4686-b744-abc41102430a",
+   "route": "/dashboard/child/9680cb3a-1127-4aa8-982b-912124a13cb0",
    "findings": [
     {
      "type": "font",
@@ -5082,7 +5068,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/child/826b7839-db12-4686-b744-abc41102430a",
+   "finalUrl": "/dashboard/child/9680cb3a-1127-4aa8-982b-912124a13cb0",
    "boardHeadings": 4,
    "liveHeadings": 1
   },
@@ -5348,7 +5334,7 @@
      "severity": "medium",
      "what": "5/5 board paragraphs absent",
      "board": "published items are live on the public pages right now.",
-     "live": "what parity org mu#agtufjbx# has published, and what is still a draft."
+     "live": "what parity org mu#aqiavs#r has published, and what is still a draft."
     },
     {
      "type": "weight",
@@ -6103,7 +6089,7 @@
      "severity": "medium",
      "what": "1/1 board paragraphs absent",
      "board": "review and remove accounts. # total, # flagged.",
-     "live": "parity-contributor-mu#agty#d#oo@example.com"
+     "live": "parity-contributor-mu#aqied#rm#@example.com"
     },
     {
      "type": "shadow",
@@ -6600,15 +6586,15 @@
   "clean": 2,
   "withFindings": 117,
   "errored": 0,
-  "findings": 738,
+  "findings": 736,
   "byType": {
    "missing-section": 285,
    "size": 87,
-   "copy": 139,
+   "copy": 137,
    "radius": 43,
-   "colour": 35,
+   "colour": 34,
    "font": 30,
-   "weight": 49,
+   "weight": 50,
    "shadow": 45,
    "extra-section": 25
   }
