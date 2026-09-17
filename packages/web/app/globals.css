@@ -3979,3 +3979,33 @@
     line-height: 1.4;
   }
 }
+
+@layer components {
+  /* The carousel's prev/next disc. Absolute inside the frame, vertically
+     centred, sized at the board's 46px — comfortably over the 44px floor and
+     large enough to hit over a busy photograph. */
+  .carousel-arrow {
+    position: absolute;
+    top: 50%;
+    display: grid;
+    width: 46px;
+    height: 46px;
+    place-items: center;
+    transform: translateY(-50%);
+    border: 0;
+    border-radius: var(--radius-pill);
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+    box-shadow: var(--shadow-e2);
+    cursor: pointer;
+    transition: transform 0.18s var(--ease-out-quart);
+  }
+
+  .carousel-arrow:hover {
+    transform: translateY(-50%) scale(1.08);
+  }
+
+  .carousel-arrow:active {
+    transform: translateY(-50%) scale(0.92);
+  }
+}

@@ -11,10 +11,16 @@
  * One photo renders as one photo. A gallery's dots, counter and drag are all
  * answers to "which of these am I looking at", and with a single image there
  * is no question to answer.
+ *
+ * The frame is a 16:10 card at --e2, the board's shape. It used to be a fixed
+ * h-72, which on a wide column cropped a portrait photo to a letterbox strip
+ * and on a narrow one left it taller than the text beside it. Arrows and a
+ * counter came with the ratio: drag is the only way through a gallery on a
+ * phone, and on a laptop with a mouse it is no way at all.
  */
 import { useRef, useState } from 'react'
 import Image from 'next/image'
-import { Package } from '@phosphor-icons/react/dist/ssr'
+import { CaretLeft, CaretRight, Package } from '@phosphor-icons/react/dist/ssr'
 
 import { safePhotoSrc } from '@/lib/photo-src'
 
@@ -27,7 +33,7 @@ export function PhotoCarousel({
   urls,
   switchUrl,
   alt,
-  className = 'h-72',
+  className = 'aspect-[16/10]',
 }: {
   urls: string[]
   /** Which photo shows the accessibility switch, flagged as it comes past. */
@@ -46,7 +52,7 @@ export function PhotoCarousel({
   if (urls.length === 0) {
     return (
       <div
-        className={`grid ${className} place-items-center rounded-[var(--radius-card)] bg-brand-soft text-brand-deep`}
+        className={`grid ${className} w-full place-items-center rounded-card bg-sunken text-muted shadow-e2`}
       >
         <Package weight="duotone" size={48} aria-hidden="true" />
       </div>
@@ -55,7 +61,7 @@ export function PhotoCarousel({
 
   if (urls.length === 1) {
     return (
-      <div className={`relative ${className} w-full overflow-hidden rounded-card bg-sunken`}>
+      <div className={`relative ${className} w-full overflow-hidden rounded-card bg-sunken shadow-e2`}>
         <Image
           src={safePhotoSrc(urls[0]) ?? '/illustrations/adapted-toy.svg'}
           alt={alt}
@@ -103,7 +109,7 @@ export function PhotoCarousel({
         aria-roledescription="carousel"
         aria-label={alt}
         tabIndex={0}
-        className={`relative ${className} w-full touch-pan-y overflow-hidden rounded-card bg-sunken focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand`}
+        className={`relative ${className} w-full touch-pan-y overflow-hidden rounded-card bg-sunken shadow-e2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand`}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -140,20 +146,56 @@ export function PhotoCarousel({
             </div>
           ))}
         </div>
+
+        {/* 46px discs on --surface at --e2, the board's. They sit over the
+            photo rather than under it so the frame stays one object. */}
+        <button
+          type="button"
+          aria-label="Previous photo"
+          onClick={() => goTo(index - 1)}
+          disabled={index === 0}
+          className="carousel-arrow left-3 disabled:pointer-events-none disabled:opacity-0"
+        >
+          <CaretLeft size={20} weight="bold" aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          aria-label="Next photo"
+          onClick={() => goTo(index + 1)}
+          disabled={index === urls.length - 1}
+          className="carousel-arrow right-3 disabled:pointer-events-none disabled:opacity-0"
+        >
+          <CaretRight size={20} weight="bold" aria-hidden="true" />
+        </button>
+
+        <p
+          aria-live="polite"
+          className="absolute bottom-3 left-3 m-0 rounded-pill bg-surface px-3.5 py-[7px] text-[13px] font-extrabold text-ink shadow-e1"
+        >
+          {index + 1} / {urls.length}
+        </p>
       </div>
 
-      <div className="flex items-center justify-center gap-2">
+      {/* The current dot stretches into a bar rather than changing colour: at
+          8px a colour change is the one thing a photograph behind it can hide. */}
+      <div role="tablist" aria-label={`Photos of ${alt}`} className="flex items-center justify-center gap-2">
         {urls.map((url, i) => (
           <button
             key={url}
             type="button"
-            aria-label={`Photo ${i + 1}`}
-            aria-current={i === index}
+            role="tab"
+            aria-label={`Show photo ${i + 1} of ${urls.length}`}
+            aria-selected={i === index}
             onClick={() => goTo(i)}
-            className={`h-2.5 w-2.5 rounded-full border border-line transition-colors ${
-              i === index ? 'bg-apricot' : 'bg-surface'
-            }`}
-          />
+            className="grid h-[30px] min-w-[30px] place-items-center rounded-[var(--radius-field)]"
+          >
+            <span
+              aria-hidden="true"
+              className={`block h-2 rounded-pill transition-all duration-200 ${
+                i === index ? 'w-6 bg-brand-dark' : 'w-2 bg-line'
+              }`}
+            />
+          </button>
         ))}
       </div>
     </div>
