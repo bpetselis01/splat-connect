@@ -1,4 +1,12 @@
-import { Handshake } from '@phosphor-icons/react/dist/ssr'
+import {
+  BookOpen,
+  Buildings,
+  Gift,
+  Handshake,
+  Package,
+  UsersThree,
+} from '@phosphor-icons/react/dist/ssr'
+import { SplatMascot } from '@/components/splat-mascot'
 import Link from 'next/link'
 import type { Route } from 'next'
 import { ImpactCard } from '@/components/impact-card'
@@ -26,27 +34,53 @@ export default async function ImpactPage() {
   }
 
   const { totals, recent, contributors, organisations } = impact
+  /*
+   * The board draws these big and tinted, and it is right to: the numbers are
+   * the whole point of the screen. §5's "never a 4-tile stat grid" is about
+   * detail and record screens, where a grid of counts pushes the record itself
+   * down the page; here the counts ARE the record.
+   *
+   * Five, not the board's four — this app counts organisations separately from
+   * contributors, and dropping one to fit a row of four would be losing a fact
+   * to a grid.
+   */
   const stats = [
-    { label: 'Guides', count: totals.tutorials },
-    { label: 'Toys shared', count: totals.toysShared },
-    { label: 'Toys delivered', count: totals.toysDelivered },
-    { label: 'Contributors', count: totals.contributors },
-    { label: 'Organisations', count: totals.organisations },
+    { label: 'Guides', count: totals.tutorials, icon: BookOpen, tint: 'var(--b100)' },
+    { label: 'Toys shared', count: totals.toysShared, icon: Package, tint: 'var(--tmint)' },
+    { label: 'Toys delivered', count: totals.toysDelivered, icon: Gift, tint: 'var(--tcoral)' },
+    { label: 'Contributors', count: totals.contributors, icon: UsersThree, tint: 'var(--tviolet)' },
+    { label: 'Organisations', count: totals.organisations, icon: Buildings, tint: 'var(--tamber)' },
   ]
 
   return (
     <div>
-      <h1 className="title-hub">What this community has made, given and delivered</h1>
-      <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted">
-        Guides written, toys shared, and deliveries made by the people and organisations
-        behind SPLAT. Guides here are counted once they are approved and public.
-      </p>
+      <div className="mb-7 grid grid-cols-1 items-center gap-6 sm:grid-cols-[minmax(0,1fr)_auto]">
+        <div className="min-w-0">
+          <p className="eyebrow text-muted">Impact</p>
+          <h1 className="mt-1 title-article">What this community has made, given and delivered</h1>
+          <p className="mt-2 max-w-[60ch] text-[17px] leading-relaxed text-muted">
+            Guides written, toys shared, and deliveries made by the people and organisations
+            behind SPLAT. Guides here are counted once they are approved and public.
+          </p>
+        </div>
+        <div className="hidden justify-self-end sm:block">
+          <SplatMascot width={120} />
+        </div>
+      </div>
 
-      <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-5">
+      <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(190px,1fr))]">
         {stats.map((s) => (
-          <div key={s.label} data-testid={`impact-stat-${s.label.toLowerCase().replace(/\s+/g, '-')}`} className="card-flat px-4 py-5 text-center">
-            <p className="text-2xl font-bold text-brand-deep">{s.count}</p>
-            <p className="mt-1 text-sm font-semibold text-muted">{s.label}</p>
+          <div
+            key={s.label}
+            data-testid={`impact-stat-${s.label.toLowerCase().replace(/\s+/g, '-')}`}
+            className="flex flex-col gap-1.5 rounded-card p-[22px] text-ink shadow-[var(--shadow-e2),var(--shadow-hi)]"
+            style={{ background: s.tint }}
+          >
+            <s.icon size={30} weight="duotone" aria-hidden="true" />
+            <p className="mt-1.5 font-display text-[44px] font-extrabold leading-none tabular-nums">
+              {s.count}
+            </p>
+            <p className="text-[15px] font-bold">{s.label}</p>
           </div>
         ))}
       </div>
