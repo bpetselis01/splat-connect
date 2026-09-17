@@ -55,7 +55,7 @@ export function LibraryClient({
               onClick={() => setDifficulty(d)}
               className="chip"
             >
-              {d}
+              <span className="capitalize">{d}</span>
             </button>
           ))}
         </div>

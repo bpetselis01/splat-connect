@@ -343,8 +343,11 @@
        at a control's weight is what made every page read as flat — on
        /dashboard/tutorials the heaviest object was a stat strip showing three
        zeros, and on the homepage the launcher's three pillars could not
-       separate from their four neighbours. */
-    box-shadow: var(--shadow-e2);
+       separate from their four neighbours.
+
+       Paired with --hi, the inset highlight: every card in the system carries
+       both, and without it a card reads as a flat rectangle on the canvas. */
+    box-shadow: var(--shadow-e2), var(--shadow-hi);
   }
 
   /*
@@ -449,7 +452,8 @@
        /design-system/states screen, where every control is drawn in all six
        of its states. .btn-sm below is the 36px quiet register. */
     min-height: 48px;
-    padding: 0 22px;
+    /* 0 20px — Button.jsx. 22 was a measured value; the component states 20. */
+    padding: 0 20px;
     border: var(--border-width) solid transparent;
     border-radius: var(--radius-pill);
     font-size: 15px;
@@ -493,10 +497,14 @@
    * and collapse the two names in their own sweep rather than inside a token
    * pass. There is no apricot button anywhere in the states sheet.
    */
+  /* 52px/16px: the primary is its own step on the control scale, not .btn's 48
+     with a colour. --glow with --hi, as the component has it. */
   .btn-primary,
   .btn-accent {
+    min-height: 52px;
+    font-size: 16px;
     background-color: var(--color-brand-dark);
-    color: #ffffff;
+    color: var(--color-surface);
     border-color: transparent;
     box-shadow: var(--shadow-glow), var(--shadow-hi);
   }
@@ -1210,11 +1218,14 @@
   /* The secondary. Everything that is not the main action. --e2 at rest, so it
      sits at the same physical height as the primary's glow and only the fill
      says which is the main action. */
+  /* The component's `secondary`: surface, ink, hairline, --e1. It carried --e2,
+     which is a card's elevation worn by a control. */
   .btn-quiet {
+    min-height: 44px;
     background-color: var(--color-surface);
     border-color: var(--color-line);
     color: var(--color-ink);
-    box-shadow: var(--shadow-e2);
+    box-shadow: var(--shadow-e1);
   }
 
   /* No hover fill: the artboard's secondary hover keeps --surface and changes
@@ -1250,7 +1261,7 @@
   .btn-sm {
     min-height: 36px;
     padding: 0 14px;
-    font-size: 14px;
+    font-size: 13px;
   }
 
   .btn-block {
@@ -1282,19 +1293,36 @@
    * the search control, not the field — reading the pill off #states and
    * applying it here would have rounded every form on the site.
    */
+  /*
+   * From design-system-update/components/core/Input.jsx: 44px
+   * (--control-secondary), 0 14px, 14px radius, hairline, on --surface, at
+   * 15px/500.
+   *
+   * An earlier pass set this to 48px, 0 16px and the CANVAS colour, all read off
+   * a rendered artboard screen. The component states all three, and a field sunk
+   * into canvas was me generalising from one form.
+   */
   .field {
     display: block;
     width: 100%;
-    min-height: 48px;
-    padding: 0 1rem;
-    background-color: var(--color-canvas);
+    min-height: 44px;
+    padding: 0 14px;
+    background-color: var(--color-surface);
     color: var(--color-ink);
     border: var(--border-width) solid var(--color-line);
     border-radius: var(--radius-field);
-    font-size: 0.875rem;
+    font-size: 15px;
+    font-weight: 500;
     transition:
       border-color 140ms var(--ease-out-quart),
       box-shadow 140ms var(--ease-out-quart);
+  }
+
+  /* Numerics are mono with tabular figures, per §4. */
+  input[type='number'].field {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
   }
 
   /* Hover tints the field rather than recolouring its border. The old rule sent
@@ -1318,7 +1346,7 @@
      top edge. The board draws one at 14px 16px. */
   textarea.field {
     min-height: 0;
-    padding: 0.875rem 1rem;
+    padding: 12px 14px;
     line-height: 1.5;
   }
 
@@ -1402,21 +1430,23 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 36px;
-    padding: 0.5rem 0.875rem;
+    /* Chip.jsx: 44px (--control-secondary), 0 14px, a 2px edge. */
+    min-height: 44px;
+    padding: 0 14px;
     background-color: var(--color-surface);
     color: var(--color-ink);
-    border: var(--border-width) solid var(--color-line);
+    border: 2px solid var(--color-line);
     border-radius: var(--radius-pill);
     /* Flat at rest. The artboard's off-state chip carries no shadow at all —
        it is a 36px control on a card, and an elevation under it reads as a
        second card. */
     box-shadow: none;
-    font-family: var(--font-mono);
-    font-size: 0.6875rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
+    /* 13px/800 in the BODY face, and not uppercase. It was mono 11px uppercase —
+       Pixel's micro-label worn by an interactive control. */
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0;
     cursor: pointer;
     transition:
       background-color 140ms var(--ease-out-quart),
@@ -2783,15 +2813,20 @@
     color: var(--color-brand-deep);
   }
 
+  /* Chip.jsx's read-only variant: the figure is mono at 17px with tabular
+     figures, and the label goes muted beside it. It was Baloo 24px, read off
+     the artboard's hero; the component is the system's answer for a stat. */
   .stat-chip__value {
-    font-family: var(--font-display);
-    font-size: 24px;
+    font-family: var(--font-mono);
+    font-size: 17px;
     font-weight: 800;
+    font-variant-numeric: tabular-nums;
     color: var(--color-ink);
   }
 
   .stat-chip__label {
-    font-size: 14px;
+    font-size: 13px;
+    font-weight: 800;
     color: var(--color-muted);
   }
 
@@ -3114,10 +3149,9 @@
    * below was read off it rather than chosen.
    */
 
-  /* 52px — the system's --control-primary. The rendered hero measures 56, but
-     the scale has four control heights (36 quiet, 44 secondary, 48 standard, 52
-     primary) and "apply these exactly" is what the brief says about them. A
-     fifth height invented from one screen is how a scale stops being one. */
+  /* Both hero buttons sit at the primary step so the pair matches. Without it
+     the secondary drops to its own 44 and the two read as different weights of
+     the same offer. */
   .btn-hero {
     min-height: 52px;
     padding-inline: 28px;

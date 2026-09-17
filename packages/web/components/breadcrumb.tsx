@@ -31,7 +31,6 @@ import { usePathname } from 'next/navigation'
 import { BoundaryLink } from '@/components/boundary-link'
 import { ACCOUNT_NAV, sectionFor } from '@/lib/public-nav'
 import { trailFor } from '@/lib/trail'
-import { toneClass } from '@/lib/tone'
 
 export function Breadcrumb() {
   const pathname = usePathname() ?? ''
@@ -81,7 +80,6 @@ export function Breadcrumb() {
   const onHub = pathname === section.href
   const href = onHub ? '/' : section.href
   const label = onHub ? 'Home' : section.label
-  const tone = toneClass(section.tone)
 
   return (
     <nav aria-label="Breadcrumb" className="mb-5">
@@ -89,7 +87,7 @@ export function Breadcrumb() {
         href={href}
         className="eyebrow inline-flex items-center gap-2 text-brand-dark transition-colors hover:text-brand-deep"
       >
-        <span aria-hidden="true" className={`h-2 w-2 rounded-full ${tone.dot}`} />
+        
         <span aria-hidden="true">←</span>
         {label}
       </BoundaryLink>

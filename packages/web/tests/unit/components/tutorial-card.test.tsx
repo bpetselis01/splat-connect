@@ -91,13 +91,20 @@ describe('TutorialCard', () => {
     expect(screen.getByText('A helpful tutorial')).toBeInTheDocument()
   })
 
-  // Tests: when toy_photo_url is null, a fallback emoji is shown instead of an image
-  // How:   renders with toy_photo_url: null; checks the fallback emoji character is present
+  // Tests: when toy_photo_url is null, the card's own glyph fills the media band
+  // How:   renders with toy_photo_url: null; checks an inline svg is present and no <img>
   // Chain: cards without an uploaded photo still render correctly in the library →
   //        no broken-image icons appear for tutorials that skipped the photo step
-  it('renders fallback emoji when toy_photo_url is null', () => {
-    render(<TutorialCard tutorial={{ ...mockTutorial, toy_photo_url: null }} />)
-    expect(screen.getByText('🧸')).toBeInTheDocument()
+  //
+  // Was the 🧸 emoji. ContentCard fills an empty media band with the card's icon
+  // at 48px in --b700; an emoji renders in the reader's system font and carries
+  // none of the palette.
+  it('renders the card glyph when toy_photo_url is null', () => {
+    const { container } = render(
+      <TutorialCard tutorial={{ ...mockTutorial, toy_photo_url: null }} />
+    )
+    expect(container.querySelector('img')).toBeNull()
+    expect(container.querySelector('svg')).not.toBeNull()
   })
 
   // Tests: the card names its backers to someone browsing

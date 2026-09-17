@@ -1,5 +1,6 @@
 import { BoundaryLink } from './boundary-link'
 import { SaveButton, type SaveProps } from './save-button'
+import { Gift } from '@phosphor-icons/react/dist/ssr'
 import { CardPhoto } from './card-photo'
 import { toyHolderName } from '@splat-connect/types'
 import type { ToyWithOwner } from '@splat-connect/types'
@@ -14,8 +15,8 @@ export function ToyLibraryCard({ toy, save }: { toy: ToyWithOwner; save?: SavePr
       data-testid="toy-library-card"
       className="card card-link overflow-hidden"
     >
-      <CardPhoto src={toy.cover_photo_url} />
-      <div className="p-4">
+      <CardPhoto src={toy.cover_photo_url} icon={Gift} tint="var(--color-mint-soft)" />
+      <div className="flex flex-col gap-2 p-5">
         <p className="card-title truncate">{toy.name}</p>
         <p className="mt-1 text-xs text-muted">Condition {toy.condition} / 10</p>
         {holder && <p className="mt-1 text-xs text-muted">Held by {holder}</p>}

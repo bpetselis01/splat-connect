@@ -65,7 +65,10 @@ describe('DashboardTutorialCard', () => {
   it('falls back to the placeholder tile when there is no photo', () => {
     const { container } = render(<DashboardTutorialCard tutorial={tutorial()} />)
     expect(container.querySelector('img')).toBeNull()
-    expect(screen.getByText('🧸')).toBeInTheDocument()
+    // A duotone glyph, not the 🧸 it used to draw: ContentCard fills an empty
+    // media band with the card's own icon at 48px. An emoji renders in the
+    // reader's system font and carries none of the palette.
+    expect(container.querySelector('svg')).not.toBeNull()
   })
 
   it('carries the title, status and review route', () => {

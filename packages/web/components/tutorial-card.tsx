@@ -1,5 +1,6 @@
 import { BoundaryLink } from './boundary-link'
 import { SaveButton, type SaveProps } from './save-button'
+import { BookOpen } from '@phosphor-icons/react/dist/ssr'
 import { CardPhoto } from './card-photo'
 import { Badge } from './badge'
 import { BackingSummary } from './backing-state'
@@ -32,8 +33,8 @@ export function TutorialCard({ tutorial, save }: { tutorial: Listed; save?: Save
       data-testid="tutorial-card"
       className="card card-link overflow-hidden"
     >
-      <CardPhoto src={tutorial.toy_photo_url} />
-      <div className="p-4">
+      <CardPhoto src={tutorial.toy_photo_url} icon={BookOpen} tint="var(--color-brand-soft)" />
+      <div className="flex flex-col gap-2 p-5">
         <p className="card-title truncate">{tutorial.title}</p>
         {tutorial.description && (
           <p className="mt-1 line-clamp-2 text-[13px] leading-relaxed text-muted">
