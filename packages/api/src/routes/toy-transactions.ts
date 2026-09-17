@@ -94,6 +94,61 @@ type MessagePreview = { body: string; sender_id: string; kind: string; created_a
 // "latest per group", so this reads the caller's messages in order and keeps the
 // last of each — RLS already limits the rows to threads they are part of.
 /**
+ * GET /api/toy-transactions/open-builds
+ *
+ * The Makers wanted board: build requests nobody has claimed.
+ *
+ * Signed-in only, and 064's policy is what admits the rows rather than this
+ * filter — a public board of children's first names, ages and suburbs is not
+ * something to put behind no account at all, which is why the artboard's
+ * signed-out screen is an explainer.
+ *
+ * The requester's NAME is not returned. The card says "Family in Newtown", and
+ * that is the whole of what a maker gets before they claim.
+ */
+toyTransactions.get('/open-builds', async (c) => {
+  const supabase = createUserClient(c.get('token'))
+  const { data, error } = await supabase
+    .from('toy_transactions')
+    .select(
+      'id, tutorial_id, build_brief, travel_km, urgency, child_label, requester_suburb, family_has_toy, requester_id, created_at'
+    )
+    .eq('type', 'build')
+    .eq('status', 'requested')
+    .is('owner_id', null)
+    .is('owner_org_id', null)
+    .order('created_at', { ascending: false })
+  if (error) return c.json({ error: error.message }, 500)
+
+  const rows = data ?? []
+  const admin = createAdminClient()
+  // Named columns only, and every one checked against the table. A select
+  // naming a column that does not exist fails the whole query and returns null
+  // — which rendered every card on the board as "a guide that is no longer
+  // published", with no error anywhere.
+  const { data: guides, error: guideError } = await admin
+    .from('tutorials')
+    .select('id, title, difficulty, status')
+    .in('id', rows.map((r) => r.tutorial_id as string))
+  if (guideError) return c.json({ error: guideError.message }, 500)
+  const guide = new Map((guides ?? []).map((g) => [g.id as string, g]))
+
+  const userId = c.get('userId')
+  return c.json(
+    rows.map((r) => {
+      const { requester_id, ...rest } = r as Record<string, unknown>
+      return {
+        ...rest,
+        tutorial: guide.get(r.tutorial_id as string) ?? null,
+        // Whether this is the caller's own ask, so the board can say so rather
+        // than offering them a button that would refuse itself.
+        mine: requester_id === userId,
+      }
+    })
+  )
+})
+
+/**
  * What this record is about, for a notification's `toy_name`.
  *
  * A build has no toy (057) — the maker makes one — so the subject is the guide.
@@ -986,14 +1041,21 @@ toyTransactions.post('/build', async (c) => {
 
   const makerOrgId = typeof body.maker_org_id === 'string' ? body.maker_org_id : null
   const makerId = typeof body.maker_id === 'string' ? body.maker_id : null
-  if ((makerOrgId === null) === (makerId === null)) {
-    return c.json({ error: 'Choose exactly one maker — a person or an organisation.' }, 400)
+  // Neither is now legal, and that is the Makers wanted board: a request with
+  // nobody on the other end of it, which any maker within range may claim. 064
+  // widened the owner constraint for exactly this shape. Both is still wrong —
+  // a request cannot be addressed to two people.
+  if (makerOrgId !== null && makerId !== null) {
+    return c.json({ error: 'Choose one maker — a person or an organisation, not both.' }, 400)
   }
+  const open = makerOrgId === null && makerId === null
 
   let ownerId: string | null = null
   let ownerOrgId: string | null = null
 
-  if (makerOrgId) {
+  if (open) {
+    // Nobody to look up. The board is the audience.
+  } else if (makerOrgId) {
     const { data: org, error: orgError } = await admin
       .from('organizations')
       .select('id, status')
@@ -1028,6 +1090,28 @@ toyTransactions.post('/build', async (c) => {
     ownerId = maker.id
   }
 
+  // What the board's cards show, and all of it is deliberately coarse: a
+  // suburb rather than an address, a first name and an age rather than a child
+  // profile. See 064 — the least a maker needs to decide whether they can help
+  // is the most a family should have to publish.
+  const short = (field: string, max: number) => {
+    const v = typeof body[field] === 'string' ? (body[field] as string).trim() : ''
+    return v ? v.slice(0, max) : null
+  }
+  const travelKm = Number(body.travel_km)
+  const board = {
+    travel_km: Number.isInteger(travelKm) && travelKm >= 1 && travelKm <= 500 ? travelKm : null,
+    urgency: short('urgency', 60),
+    child_label: short('child_label', 60),
+    requester_suburb: short('requester_suburb', 80),
+    family_has_toy: body.family_has_toy === true,
+  }
+  // An open request goes on a public board with no maker to ask, so the two
+  // things a maker decides by have to be on the card itself.
+  if (open && (!board.requester_suburb || board.travel_km === null)) {
+    return c.json({ error: 'Say which suburb you are in and how far you can travel.' }, 400)
+  }
+
   // One open ask per family per guide per maker. Without it a refresh on the
   // form doubles the request and the maker answers the same thing twice.
   const openAsk = admin
@@ -1036,9 +1120,12 @@ toyTransactions.post('/build', async (c) => {
     .eq('requester_id', userId)
     .eq('tutorial_id', tutorial.id)
     .in('status', ['requested', 'accepted'])
-  const { data: existing, error: existingError } = await (ownerOrgId
-    ? openAsk.eq('owner_org_id', ownerOrgId)
-    : openAsk.eq('owner_id', ownerId as string)
+  const { data: existing, error: existingError } = await (
+    open
+      ? openAsk.is('owner_id', null).is('owner_org_id', null)
+      : ownerOrgId
+        ? openAsk.eq('owner_org_id', ownerOrgId)
+        : openAsk.eq('owner_id', ownerId as string)
   ).maybeSingle()
   if (existingError) return c.json({ error: existingError.message }, 500)
   if (existing) return c.json({ error: 'You already have an open build request with them for this guide' }, 409)
@@ -1055,6 +1142,7 @@ toyTransactions.post('/build', async (c) => {
       requester_id: userId,
       owner_id: ownerId,
       owner_org_id: ownerOrgId,
+      ...board,
     })
     .select()
     .single()
@@ -1066,17 +1154,99 @@ toyTransactions.post('/build', async (c) => {
     transaction_id: tx.id,
     sender_id: userId,
     kind: 'system',
-    body: 'Asked for a build of this guide.',
+    body: open
+      ? 'Posted to Makers wanted. Waiting for a maker to claim it.'
+      : 'Asked for a build of this guide.',
   })
 
-  await notifyOwnerSide(admin, tx, {
-    type: 'toy_request',
-    toy_transaction_id: tx.id,
-    toy_name: tutorial.title,
-    actor_name: requesterProfile?.name ?? 'A contributor',
-  })
+  // Nobody to notify on an open request — that is what the board is for.
+  if (!open) {
+    await notifyOwnerSide(admin, tx, {
+      type: 'toy_request',
+      toy_transaction_id: tx.id,
+      toy_name: tutorial.title,
+      actor_name: requesterProfile?.name ?? 'A contributor',
+    })
+  }
 
   return c.json(tx, 201)
+})
+
+/**
+ * POST /api/toy-transactions/:id/claim
+ *
+ * A maker takes an open build request.
+ *
+ * Deliberately NOT the accept handler. Accept asks "are you the owner side" and
+ * this is the step that decides who that is — there is nobody to be yet. What
+ * it does after filling owner_id in is exactly what accept does: two handover
+ * codes, a system message, a notification.
+ *
+ * The write is conditional on the row still being unclaimed, so two makers
+ * pressing the button in the same second resolve to one winner and one 409
+ * rather than to whoever wrote last.
+ */
+toyTransactions.post('/:id/claim', async (c) => {
+  const userId = c.get('userId')
+  const admin = createAdminClient()
+
+  const { data: tx, error } = await admin
+    .from('toy_transactions')
+    .select('id, type, status, requester_id, owner_id, owner_org_id, tutorial_id')
+    .eq('id', c.req.param('id'))
+    .maybeSingle()
+  if (error) {
+    if (error.code === INVALID_TEXT_REPRESENTATION) return c.json({ error: 'Not found' }, 404)
+    return c.json({ error: error.message }, 500)
+  }
+  if (!tx || tx.type !== 'build') return c.json({ error: 'Not found' }, 404)
+  if (tx.owner_id || tx.owner_org_id || tx.status !== 'requested') {
+    return c.json({ error: 'Somebody has already claimed this one.' }, 409)
+  }
+  if (tx.requester_id === userId) {
+    return c.json({ error: 'You cannot claim your own request' }, 400)
+  }
+
+  const { data: claimed, error: claimError } = await admin
+    .from('toy_transactions')
+    .update({
+      owner_id: userId,
+      status: 'accepted',
+      owner_code: generateCode(),
+      requester_code: generateCode(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', tx.id)
+    // The race guard. Two makers in the same second: one row updated, one none.
+    .eq('status', 'requested')
+    .is('owner_id', null)
+    .is('owner_org_id', null)
+    .select()
+    .maybeSingle()
+  if (claimError) return c.json({ error: claimError.message }, 500)
+  if (!claimed) return c.json({ error: 'Somebody has already claimed this one.' }, 409)
+
+  const [{ data: maker }, { data: tutorial }] = await Promise.all([
+    admin.from('profiles').select('name').eq('id', userId).maybeSingle(),
+    admin.from('tutorials').select('title').eq('id', tx.tutorial_id as string).maybeSingle(),
+  ])
+
+  await admin.from('toy_transaction_messages').insert({
+    transaction_id: tx.id,
+    sender_id: userId,
+    kind: 'system',
+    body: `${maker?.name ?? 'A maker'} claimed this build.`,
+  })
+
+  await admin.from('notifications').insert({
+    recipient_id: tx.requester_id,
+    type: 'toy_accepted',
+    toy_transaction_id: tx.id,
+    toy_name: tutorial?.title ?? 'your build request',
+    actor_name: maker?.name ?? 'A maker',
+  })
+
+  return c.json(sanitizeCodes(claimed, userId, []))
 })
 
 /**

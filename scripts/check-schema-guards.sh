@@ -266,7 +266,28 @@ select * from (values
    (select count(*) > 0 from pg_constraint
       where conrelid = 'public.toy_transactions'::regclass
         and conname = 'toy_transactions_subject'
-        and pg_get_constraintdef(oid) like '%num_nonnulls(printer_id, event_id) = 1%'))
+        and pg_get_constraintdef(oid) like '%num_nonnulls(printer_id, event_id) = 1%')),
+
+  -- 064. An ownerless transaction is legal for exactly one shape: a build
+  -- request nobody has claimed. Widen it by accident and a donation could be
+  -- written with nobody responsible for handing the toy over, which every
+  -- accept, confirm and handoff check reads as "not my row" and silently
+  -- ignores.
+  ('064 an ownerless transaction is an open build and nothing else',
+   (select count(*) > 0 from pg_constraint
+      where conrelid = 'public.toy_transactions'::regclass
+        and conname = 'toy_transactions_one_owner'
+        and pg_get_constraintdef(oid) like '%type = ''build''%'
+        and pg_get_constraintdef(oid) like '%status = ''requested''%')),
+
+  -- The Makers wanted board is signed-in. A public board of children's first
+  -- names, ages and suburbs is not something to put behind no account at all,
+  -- and the artboard's signed-out screen is an explainer for that reason.
+  ('064 the open-build policy is never granted to anon',
+   (select count(*) = 0 from pg_policies
+      where tablename = 'toy_transactions'
+        and policyname = 'toy_transactions_open_builds_readable'
+        and 'anon' = any(roles)))
 ) as t(guard, ok)
 where not ok;
 EOSQL

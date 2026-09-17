@@ -5,10 +5,10 @@
  * goes: a signed-in visitor sees their own open build requests and a way to
  * start another; a signed-out one sees what it is and how to begin.
  *
- * Deliberately not a public board of every open request. The artboard's
- * "makers wanted" screen is that, and it needs a request with no maker on it,
- * which is a shape 057's owner XOR does not permit — filed in SUPABASE.md
- * rather than half-built here.
+ * Deliberately not a public board of every open request: that is
+ * /get-involved/makers-wanted, which 064 unblocked by making a request with no
+ * maker on it legal. This page is the ADDRESSED half — the requests you sent to
+ * one person or one organisation, and the way to send another.
  */
 import Link from 'next/link'
 import { Hammer } from '@phosphor-icons/react/dist/ssr'
@@ -51,6 +51,9 @@ export default async function AdaptationRequestsPage() {
             Create an account to ask
           </Link>
         )}
+        <Link href="/get-involved/makers-wanted" className="btn btn-quiet no-underline">
+          The open board
+        </Link>
         <Link href="/library" className="btn btn-quiet no-underline">
           Browse the guides
         </Link>

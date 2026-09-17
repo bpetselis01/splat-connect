@@ -243,6 +243,14 @@ export const PUBLIC_NAV: NavSection[] = [
         blurb: 'Problems nobody has solved yet, open to anyone.',
       },
       {
+        href: '/get-involved/makers-wanted',
+        label: 'Makers wanted',
+        // Live since 064 made a build request with no maker on it legal — the
+        // shape SUPABASE.md filed when 057 could not express it.
+        state: 'live',
+        blurb: 'Open build requests, waiting for a maker nearby to claim one.',
+      },
+      {
         href: '/get-involved/recycling',
         label: 'Recycling',
         // Live since 059 built the table and 063 versioned the declaration.

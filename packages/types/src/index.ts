@@ -192,6 +192,20 @@ export interface ToyTransaction {
   tutorial_id: string | null
   /** What the family asked for, in their words. Builds only. */
   build_brief: string | null
+  /** How far the family can travel to meet a maker. The Makers wanted board
+   *  filters on it, and it is the FAMILY's limit — a maker's own range is
+   *  never stored (064). */
+  travel_km: number | null
+  urgency: string | null
+  /** "Leo, 3" — free text, not a child_profiles reference. A child profile
+   *  carries clinical scores and measurements, and none of that belongs on a
+   *  public board (064). */
+  child_label: string | null
+  /** Suburb only. "Family in Newtown" is the whole of what the board shows. */
+  requester_suburb: string | null
+  /** Whether the family already owns the toy, which changes what a maker is
+   *  agreeing to: buy one, or adapt theirs. */
+  family_has_toy: boolean
   /** A storage path in the private `build-shots` bucket, never a URL. Set once
    *  the maker posts a photo of the finished build working. */
   working_photo_url: string | null
