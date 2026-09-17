@@ -73,7 +73,7 @@ function SignupForm() {
             <span aria-hidden="true" className="empty-badge">
               ✅
             </span>
-            <h1 className="mt-4 text-[22px] font-black text-ink">Check your email</h1>
+            <h1 className="mt-4 text-[22px] font-extrabold text-ink">Check your email</h1>
             <p className="mt-2 text-[13px] leading-relaxed text-muted">
               We&apos;ve sent a confirmation link to <strong>{email}</strong>. Confirm
               your email, then sign in.
@@ -100,7 +100,7 @@ function SignupForm() {
             You need an account to download tutorial files. Create one and we&apos;ll take you back.
           </p>
         )}
-        <h1 className="text-[22px] font-black text-ink">Create your account</h1>
+        <h1 className="text-[22px] font-extrabold text-ink">Create your account</h1>
         <p className="mb-[18px] mt-1.5 text-[13px] leading-relaxed text-muted">
           One account for everything — browse, contribute, and manage your child&apos;s profile.
         </p>

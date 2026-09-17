@@ -14,6 +14,7 @@
  * - packages/api/src/routes/public.ts: GET /public/stories/:id
  * - supabase/migrations/062_stories.sql: the columns this draws
  */
+import { Quotes } from '@phosphor-icons/react/dist/ssr'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { BookOpen, ArrowRight } from '@phosphor-icons/react/dist/ssr'
@@ -90,12 +91,19 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
         ))}
       </div>
 
+      {/* A quote glyph and a byline, not a left-border accent bar — §6 of the
+          brief names that rule, and this was the last bar on the site. */}
       {story.pull_quote && (
-        <blockquote className="mt-8 border-l-4 border-brand pl-5">
-          <p className="font-display text-xl font-extrabold leading-snug text-ink">
-            “{story.pull_quote}”
-          </p>
-          <footer className="mt-2 text-sm text-muted">— {story.pull_quote_by}</footer>
+        <blockquote className="mt-8 flex items-start gap-3 rounded-[var(--radius-inset)] bg-sunken p-5">
+          <Quotes size={22} weight="fill" className="mt-1 flex-none text-brand-dark" aria-hidden="true" />
+          <div className="min-w-0">
+            <p className="font-display text-xl font-extrabold leading-snug text-ink">
+              {story.pull_quote}
+            </p>
+            <footer className="mt-1.5 text-xs font-extrabold uppercase tracking-[0.08em] text-muted">
+              {story.pull_quote_by}
+            </footer>
+          </div>
         </blockquote>
       )}
 

@@ -68,7 +68,7 @@ export function Nav({ caps, quiet = false }: NavProps) {
       >
         <BoundaryLink
           href="/"
-          className="flex shrink-0 items-center gap-2.5 text-[18px] font-black tracking-tight text-ink"
+          className="flex shrink-0 items-center gap-2.5 text-[18px] font-extrabold tracking-tight text-ink"
         >
           {/* The mark sits on a plain tinted disc — no ring. The wordmark is the
               only thing in the bar that is not a pill, and it earns that by
@@ -176,7 +176,7 @@ export function Nav({ caps, quiet = false }: NavProps) {
             <span
               aria-hidden="true"
               title={caps.profile.name}
-              className="pixel-avatar grid h-8 w-8 shrink-0 place-items-center bg-mint text-sm font-black text-ink"
+              className="pixel-avatar grid h-8 w-8 shrink-0 place-items-center bg-mint text-sm font-extrabold text-ink"
             >
               {initials(caps.profile.name)}
             </span>

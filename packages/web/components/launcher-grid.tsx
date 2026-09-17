@@ -69,7 +69,7 @@ export function LauncherGrid({ tiles }: { tiles: LauncherTile[] }) {
                 />
               )}
 
-              <p className={`relative font-black ${pillar ? 'text-xl' : 'text-sm'}`}>{tile.label}</p>
+              <p className={`relative font-extrabold ${pillar ? 'text-xl' : 'text-sm'}`}>{tile.label}</p>
               <p
                 className={`relative mt-1 leading-snug ${
                   pillar ? 'text-sm opacity-85' : 'text-xs text-muted'
@@ -85,7 +85,7 @@ export function LauncherGrid({ tiles }: { tiles: LauncherTile[] }) {
               <div className="relative mt-auto flex items-end justify-between gap-3 pt-4">
                 {tile.count !== undefined ? (
                   <p
-                    className={`font-black leading-none tracking-tight ${
+                    className={`font-extrabold leading-none tracking-tight ${
                       pillar ? 'title-hero !text-current !text-5xl' : 'text-2xl'
                     }`}
                   >

@@ -46,7 +46,7 @@ export default async function OrgPublicProfilePage({
       <div className="flex items-center gap-4">
         <span
           aria-hidden="true"
-          className="empty-badge rounded-2xl text-2xl font-bold text-brand-deep"
+          className="empty-badge rounded-card text-2xl font-bold text-brand-deep"
         >
           {initial}
         </span>

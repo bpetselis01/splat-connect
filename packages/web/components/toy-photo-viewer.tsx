@@ -20,7 +20,7 @@ function PhotoTile({ url, caption }: { url: string | null; caption: string }) {
   return (
     <li>
       {src ? (
-        <div className="relative h-32 w-full overflow-hidden rounded-lg bg-sunken">
+        <div className="relative h-32 w-full overflow-hidden rounded-field bg-sunken">
           <Image src={src} alt={caption} fill className="object-cover" />
         </div>
       ) : (

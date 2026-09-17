@@ -89,7 +89,7 @@ export function Sticker({
           // a card that already carries the tone, and tint-on-tint made the art
           // float with no disc under it at all.
           ? 'bg-surface shadow-[0_3px_0_rgb(10_53_80/0.10)]'
-          : 'border-2 border-dashed border-brand bg-brand-tint text-brand-deep'
+          : 'border border-dashed border-line bg-sunken text-muted'
       } ${className}`.trim()}
     >
       {art ? (

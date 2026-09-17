@@ -97,7 +97,7 @@ export function FileDropZone({
           alt={`${label} currently on file`}
           width={132}
           height={96}
-          className="mx-auto mb-3 h-[96px] w-[132px] rounded-md border-2 border-ink object-cover"
+          className="mx-auto mb-3 h-[96px] w-[132px] rounded-field border border-line object-cover"
         />
       )}
       <p className="mb-3 text-xs text-muted">

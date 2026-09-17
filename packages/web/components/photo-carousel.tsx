@@ -55,7 +55,7 @@ export function PhotoCarousel({
 
   if (urls.length === 1) {
     return (
-      <div className={`relative ${className} w-full overflow-hidden rounded-2xl bg-sunken`}>
+      <div className={`relative ${className} w-full overflow-hidden rounded-card bg-sunken`}>
         <Image
           src={safePhotoSrc(urls[0]) ?? '/illustrations/adapted-toy.svg'}
           alt={alt}
@@ -103,7 +103,7 @@ export function PhotoCarousel({
         aria-roledescription="carousel"
         aria-label={alt}
         tabIndex={0}
-        className={`relative ${className} w-full touch-pan-y overflow-hidden rounded-2xl bg-sunken focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand`}
+        className={`relative ${className} w-full touch-pan-y overflow-hidden rounded-card bg-sunken focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand`}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -133,7 +133,7 @@ export function PhotoCarousel({
                 draggable={false}
               />
               {switchUrl === url && (
-                <span className="absolute left-3 top-3 rounded-full border-2 border-ink bg-mint-soft px-2.5 py-0.5 text-[11px] font-black uppercase tracking-wide text-ink">
+                <span className="absolute left-3 top-3 rounded-full border border-line bg-mint-soft px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wide text-ink">
                   Shows the switch
                 </span>
               )}
@@ -150,7 +150,7 @@ export function PhotoCarousel({
             aria-label={`Photo ${i + 1}`}
             aria-current={i === index}
             onClick={() => goTo(i)}
-            className={`h-2.5 w-2.5 rounded-full border-2 border-ink transition-colors ${
+            className={`h-2.5 w-2.5 rounded-full border border-line transition-colors ${
               i === index ? 'bg-apricot' : 'bg-surface'
             }`}
           />

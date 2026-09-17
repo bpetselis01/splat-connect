@@ -161,7 +161,7 @@ export function PhotoTiles({
       }}
       onDragLeave={() => setDragging(false)}
       onDrop={drop}
-      className={`flex flex-col gap-3 rounded-lg ${dragging ? 'outline outline-2 outline-offset-4 outline-dashed outline-brand-dark' : ''}`}
+      className={`flex flex-col gap-3 rounded-field ${dragging ? 'outline outline-2 outline-offset-4 outline-dashed outline-brand-dark' : ''}`}
     >
       {error && (
         <p role="alert" className="alert alert-danger">
@@ -172,7 +172,7 @@ export function PhotoTiles({
       <ul className="flex flex-wrap items-start gap-4">
         {urls.map((url, i) => (
           <li key={url} className="flex w-36 flex-col gap-2">
-            <div className="relative h-28 overflow-hidden rounded-lg border-2 border-ink bg-sunken">
+            <div className="relative h-28 overflow-hidden rounded-field border border-line bg-sunken">
               <Image
                 src={safePhotoSrc(url) ?? '/illustrations/adapted-toy.svg'}
                 alt={`Photo ${i + 1}`}
@@ -180,7 +180,7 @@ export function PhotoTiles({
                 className="object-cover"
               />
               {i === 0 ? (
-                <span className="absolute inset-x-0 bottom-0 border-t-2 border-ink bg-apricot py-0.5 text-center text-[10px] font-black uppercase tracking-wider text-ink">
+                <span className="absolute inset-x-0 bottom-0 border-t-2 border-ink bg-apricot py-0.5 text-center text-[10px] font-extrabold uppercase tracking-wider text-ink">
                   Cover
                 </span>
               ) : (
@@ -190,7 +190,7 @@ export function PhotoTiles({
                   onClick={() => makeCover(url)}
                   title="Make this the cover"
                   aria-label={`Make photo ${i + 1} the cover`}
-                  className="absolute left-1.5 top-1.5 h-7 w-7 rounded-md border-2 border-ink bg-surface text-sm leading-none disabled:opacity-50"
+                  className="absolute left-1.5 top-1.5 h-7 w-7 rounded-field border border-line bg-surface text-sm leading-none disabled:opacity-50"
                 >
                   ★
                 </button>
@@ -205,7 +205,7 @@ export function PhotoTiles({
                     : 'Remove photo 1 — add another photo first'
                 }
                 title={canRemove ? undefined : 'Add another photo before removing this one'}
-                className="absolute right-1.5 top-1.5 h-7 w-7 rounded-md border-2 border-ink bg-surface text-sm leading-none disabled:opacity-50"
+                className="absolute right-1.5 top-1.5 h-7 w-7 rounded-field border border-line bg-surface text-sm leading-none disabled:opacity-50"
               >
                 ×
               </button>
@@ -230,7 +230,7 @@ export function PhotoTiles({
           <li>
             <label
               htmlFor={`${idPrefix}-add-photo`}
-              className="flex h-28 w-36 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border-[3px] border-dashed border-brand-dark bg-brand-tint text-xs font-black text-brand-deep"
+              className="flex h-28 w-36 cursor-pointer flex-col items-center justify-center gap-1 rounded-field border border-dashed border-line bg-sunken text-xs font-extrabold text-brand-deep"
             >
               <span className="text-2xl leading-none">+</span>
               {busy ? 'Working…' : dragging ? 'Drop to add' : 'Add photo'}

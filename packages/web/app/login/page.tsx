@@ -53,7 +53,7 @@ function LoginForm() {
   return (
     <AuthShell current="login">
       <AuthCard>
-        <h1 className="mb-5 text-[22px] font-black text-ink">Sign in</h1>
+        <h1 className="mb-5 text-[22px] font-extrabold text-ink">Sign in</h1>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
             <label htmlFor="email" className="field-label">Email</label>
