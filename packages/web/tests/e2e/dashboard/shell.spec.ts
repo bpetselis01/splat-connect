@@ -395,7 +395,20 @@ test('/my-tutorials redirects to the merged list', async ({ page }) => {
   }
 })
 
-test('a placeholder route explains the feature instead of 404ing', async ({ page }) => {
+/*
+ * Was "a placeholder route explains the feature instead of 404ing", pointed at
+ * My print requests. That stopped being a placeholder with 058, and after 059
+ * the rail has no `soon` row left at all — so the rail-scoped version of the
+ * old claim has nothing to stand on.
+ *
+ * What replaced it is the stronger property: the rail advertises no door that
+ * does not open. `soon` is still a field on NavRow, so a row added with it set
+ * would fail here as well as in nav-model.test.ts, and this side proves the
+ * link goes somewhere real rather than only that the flag is unset.
+ */
+test('the rail advertises no unbuilt destination, and its links open real pages', async ({
+  page,
+}) => {
   const contributor = await createContributor()
   await acceptTerms(contributor.id)
 
@@ -406,23 +419,14 @@ test('a placeholder route explains the feature instead of 404ing', async ({ page
     // test is about the rail specifically, so it needs a page that has one.
     await page.goto('/dashboard/toys')
 
-    // Repointed from /printing to /dashboard/print-requests. /printing was a
-    // ComingSoon child of Get Involved when this was written; it has since been
-    // promoted to a top-level pillar with a real page, precisely because the
-    // public suite forbids a top-level link that says "Not built yet". So it is
-    // no longer a placeholder and cannot demonstrate what this test is about.
-    // "My print requests" is still one, and it is in the signed-in rail, which
-    // is the surface this spec covers.
-    // The account hub (app/dashboard/page.tsx) now renders its own card for
-    // the same destination alongside the rail, so an unscoped query matches
-    // two links — scope to the rail, the surface this spec covers.
-    await page.locator('.shell-rail').getByRole('link', { name: /My print requests/ }).click()
+    const rail = page.locator('.shell-rail')
+    await expect(rail.getByText('Soon')).toHaveCount(0)
+
+    await rail.getByRole('link', { name: /My print requests/ }).click()
     await expect(page).toHaveURL('/dashboard/print-requests')
-    // ComingSoon states its own label as an h1, explains itself with
-    // "Not built yet — here's the plan", and its way out is the Guides link.
-    await expect(page.getByRole('heading', { name: 'My Print Requests' })).toBeVisible()
-    await expect(page.getByText('Not built yet', { exact: true })).toBeVisible()
-    await expect(page.locator('#main').getByRole('link', { name: 'Guides' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'My print requests' })).toBeVisible()
+    // The real screen, not a plan for one.
+    await expect(page.getByText('Not built yet', { exact: true })).toHaveCount(0)
   } finally {
     await deleteUser(contributor.id)
   }

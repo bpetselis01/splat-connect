@@ -79,8 +79,13 @@ test.describe('public navigation', () => {
     expect(page.url()).not.toContain('/login')
   })
 
+  /*
+   * Repointed from /get-involved/requests, which stopped being a scaffold with
+   * 057 — a build request is a real record now. The claim is about what an
+   * unbuilt destination does, so it needs one that is still unbuilt.
+   */
   test('a scaffold page explains itself and offers to notify', async ({ page }) => {
-    await page.goto('/get-involved/requests')
+    await page.goto('/printing/parts')
     await expect(page.getByText('Not built yet', { exact: true })).toBeVisible()
     await expect(page.getByLabel(/email address/i)).toBeVisible()
     await expect(page.getByRole('link', { name: /guides/i }).first()).toBeVisible()
