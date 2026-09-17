@@ -25,6 +25,7 @@ import { apiClient } from '@/lib/api-client'
 import { TutorialCard } from '@/components/tutorial-card'
 import { ToyLibraryCard } from '@/components/toy-library-card'
 import { ChallengeCard } from '@/components/challenge-card'
+import { OrgCard, type OrgCardOrg } from '@/components/org-card'
 
 /** Title and the way out, per slug. The empty state is the only copy that
     differs between the three lists. */
@@ -44,6 +45,13 @@ const VIEW = {
     browse: '/get-involved/design-challenges',
     browseLabel: 'Browse design challenges',
   },
+  organisations: {
+    title: 'Saved organisations',
+    browse: '/organizations',
+    browseLabel: 'Browse organisations',
+  },
+  // `satisfies`, not a cast: it is what turned switching organisations on into
+  // a compile error here rather than a 404 somebody found later.
 } satisfies Record<SaveSlug, { title: string; browse: Route; browseLabel: string }>
 
 export async function generateMetadata({ params }: { params: Promise<{ type: string }> }) {
@@ -71,11 +79,11 @@ export default async function SavedList({ params }: { params: Promise<{ type: st
       {items.length === 0 ? (
         <p className="mt-4 max-w-prose text-base leading-relaxed text-muted">
           Nothing saved yet.{' '}
-          {/* BoundaryLink, not next/link: every one of these three destinations is
-              a public page reached from a rail-only account page, and the root
-              layout does not re-run on a soft transition — so /library rendered
-              with the saved list's rail still on screen until the next hard
-              navigation. See components/boundary-link.tsx. */}
+          {/* BoundaryLink, not next/link: every one of these destinations is a
+              public page reached from an account page, and the root layout does
+              not re-run on a soft transition — so /library rendered with the
+              account chrome still on screen until the next hard navigation. See
+              components/boundary-link.tsx. */}
           <BoundaryLink href={view.browse} className="font-semibold text-brand-dark hover:underline">
             {view.browseLabel}
           </BoundaryLink>{' '}
@@ -90,6 +98,9 @@ export default async function SavedList({ params }: { params: Promise<{ type: st
             }
             if (slug === 'toys') {
               return <ToyLibraryCard key={item.id} toy={item as ToyWithOwner} save={save} />
+            }
+            if (slug === 'organisations') {
+              return <OrgCard key={item.id} org={item as OrgCardOrg} save={save} />
             }
             return (
               <ChallengeCard

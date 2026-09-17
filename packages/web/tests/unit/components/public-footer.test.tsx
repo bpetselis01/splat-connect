@@ -60,10 +60,11 @@ describe('PublicFooter', () => {
 
   it('marks not-yet-built destinations so the footer is not a set of traps', () => {
     render(<PublicFooter />)
-    // Adaptation requests used to be the example here and went live with 057;
-    // the claim is about the marking, so it needs any entry that is still
-    // unbuilt rather than that one in particular.
-    expect(screen.getByRole('link', { name: /ask an expert/i })).toHaveTextContent(/soon/i)
+    // The example has moved twice as things shipped — adaptation requests with
+    // 057, ask an expert on 2026-09-17 — because the claim is about the
+    // MARKING, not about any one destination. Deliveries map is the one left,
+    // and deliberately so: the artboard's own map screen is a "Not built yet".
+    expect(screen.getByRole('link', { name: /deliveries map/i })).toHaveTextContent(/soon/i)
   })
 
   it('contains no button or expandable control — it is plain links only', () => {

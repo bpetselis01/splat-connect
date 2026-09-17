@@ -14,11 +14,15 @@
  * - packages/api/src/routes/saves.ts: GET /api/saves/ids
  */
 import { cache } from 'react'
-import type { SavedIds } from '@splat-connect/types'
+import { SAVE_SLUGS, type SaveSlug, type SavedIds } from '@splat-connect/types'
 import { apiClient } from '@/lib/api-client'
 import { getCapabilities } from '@/lib/capabilities'
 
-const NOTHING: SavedIds = { tutorials: [], toys: [], challenges: [] }
+// Built from SAVE_SLUGS rather than written out, so switching a type on stays
+// the one-line change that constant promises.
+const NOTHING: SavedIds = Object.fromEntries(
+  (Object.keys(SAVE_SLUGS) as SaveSlug[]).map((slug) => [slug, [] as string[]])
+) as SavedIds
 
 export const getSavedIds = cache(async (): Promise<SavedIds | null> => {
   const caps = await getCapabilities()

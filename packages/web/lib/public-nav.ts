@@ -176,8 +176,10 @@ export const PUBLIC_NAV: NavSection[] = [
       {
         href: '/learn/ask-an-expert',
         label: 'Ask an expert',
-        state: 'soon',
-        featureKey: 'ask-an-expert',
+        // Live since 2026-09-17. It is a routing page rather than a queue:
+        // there is no private expert queue on SPLAT on purpose, because an
+        // answer in the open helps the next family too.
+        state: 'live',
         blurb: 'Put a question to an occupational therapist or a maker.',
       },
     ],
@@ -325,15 +327,16 @@ export const PUBLIC_NAV: NavSection[] = [
       {
         href: '/about/partners',
         label: 'Partners and supporters',
-        state: 'soon',
-        featureKey: 'partners',
+        // Live: the delivery-partner half always was — it reads the
+        // organisations directory. The funder half is honestly empty.
+        state: 'live',
         blurb: 'The organisations and funders making this possible.',
       },
       {
         href: '/about/support',
         label: 'Support SPLAT',
-        state: 'soon',
-        featureKey: 'support',
+        // Live. There was never anything here to wait for.
+        state: 'live',
         blurb: 'Ways to help beyond building a toy.',
       },
     ],

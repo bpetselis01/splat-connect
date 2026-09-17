@@ -1479,6 +1479,11 @@ export const SAVE_SLUGS = {
   tutorials: 'tutorial',
   toys: 'toy',
   challenges: 'challenge',
+  // Switched on 2026-09-17, which is exactly the code change the note above
+  // promised: the enum has carried 'organisation' since day one, so this needed
+  // no migration. The artboard draws a Saved organisations screen and the save
+  // control already sits on the public organisation page.
+  organisations: 'organisation',
 } as const satisfies Record<string, SaveEntityType>
 
 export type SaveSlug = keyof typeof SAVE_SLUGS
