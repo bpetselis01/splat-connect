@@ -922,16 +922,35 @@
    * The dots are 16% ink-blue at 16px. Any denser and the headline sits on
    * texture rather than on paper.
    */
+  /*
+   * The hero is the canvas with light in it, not a band ruled off from the page.
+   *
+   * It was --color-brand-tint carrying a 16px dot grid and a 4px INK border
+   * along the bottom — a Pixel device, and the single biggest reason the
+   * homepage still read as the old design after every other pass. Measured on
+   * the board (#home), the hero has no band at all: the body canvas shows
+   * through, and the colour comes from a few large soft blobs —
+   * radial-gradient(circle, <tint>, transparent 65%) at around 600px — sitting
+   * behind the headline and the mascot.
+   *
+   * Kept full-bleed, because that part was right.
+   */
   .pixel-hero {
     margin-inline: calc(50% - 50vw);
     padding-inline: calc(50vw - 50%);
-    border-bottom: 4px solid var(--color-ink);
-    /* The band is a *tone* darker than the canvas, not the canvas with a rule
-       under it. Without this the 4px ink border below reads as an arbitrary
-       line across the page rather than as the bottom edge of something. */
-    background-color: var(--color-brand-tint);
-    background-image: radial-gradient(rgb(10 79 112 / 0.16) 1.5px, transparent 1.5px);
-    background-size: 16px 16px;
+    background-color: var(--color-canvas);
+    /*
+     * Explicit radii rather than background-size. With a size set, each layer
+     * gets its own box anchored top-left and `at X% Y%` resolves inside THAT
+     * box, so all three blobs bunched into the top-left corner and their boxes
+     * ended in a visible rectangular seam across the hero. Sizing the circle
+     * itself lets each one be positioned against the element and fade out on
+     * its own terms.
+     */
+    background-image:
+      radial-gradient(circle 340px at 74% 30%, var(--color-apricot-soft), transparent 70%),
+      radial-gradient(circle 300px at 88% 76%, var(--color-mint-soft), transparent 70%),
+      radial-gradient(circle 380px at 8% 22%, var(--color-brand-soft), transparent 70%);
   }
 
   /*
