@@ -115,15 +115,13 @@ export function Nav({ caps, quiet = false }: NavProps) {
                   } as React.CSSProperties
                 }
               >
-                {/* The dot is what makes rank legible: the three pillars carry the
-                    three distinct accents, the supporting sections stay blue. It is
-                    decorative — the label already says which section this is. */}
-                <span
-                  aria-hidden="true"
-                  className={`h-2 w-2 shrink-0 rounded-full ${quiet ? 'bg-line' : tone.dot} ${
-                    active && !quiet ? '' : 'opacity-60'
-                  }`}
-                />
+                {/*
+                  No dot. The board draws a nav tab as a label in a pill and
+                  nothing else — its "Guides" button is a <button> holding one
+                  span, measured. The coloured tone dot came from Pixel, where
+                  rank was carried by accent; Soft Pop carries it with the pill
+                  behind the current tab.
+                */}
                 {s.label}
               </BoundaryLink>
             )

@@ -3103,3 +3103,99 @@
     background-color: color-mix(in srgb, var(--color-ink) 22%, transparent);
   }
 }
+
+@layer components {
+  /*
+   * Corrections from a measured pass against the board's #home. Each number
+   * below was read off it rather than chosen.
+   */
+
+  /* 56px, not .btn's 48px — the hero pair is the one place the board draws a
+     taller button, and at 48 they sat small under a 68px headline. */
+  .btn-hero {
+    min-height: 56px;
+    padding-inline: 28px;
+    font-size: 17px;
+  }
+
+  /* 26px Baloo. These were .card-title at 18px, which made a door read as a
+     list row rather than as one of three choices. */
+  .door__title {
+    font-family: var(--font-display);
+    font-size: 26px;
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.015em;
+    color: var(--color-ink);
+  }
+
+  .door {
+    padding: 28px;
+  }
+
+  /* The board ranks the three: two white cards, then a quieter sunken one with
+     no lift, narrower than its neighbours. */
+  .door--quiet {
+    background-color: var(--color-sunken);
+    box-shadow: none;
+  }
+
+  .door-cell--quiet {
+    max-width: 340px;
+    justify-self: end;
+  }
+
+  .cost-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 30px 32px;
+    border-radius: var(--radius-card);
+    border: var(--border-width) solid var(--color-line);
+    background-color: var(--color-surface);
+    box-shadow: var(--shadow-e2);
+  }
+
+  .cost-card--mint {
+    background-color: var(--color-mint-soft);
+  }
+
+  /* 52px pills, and flat: the board gives neither of these a shadow. */
+  .cost-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 52px;
+    padding-inline: 24px;
+    border-radius: var(--radius-pill);
+    font-size: 15px;
+    font-weight: 800;
+  }
+
+  .cost-cta--light {
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+  }
+
+  /* Ink on mint, not brand — the board's only ink-filled button on this page. */
+  .cost-cta--ink {
+    background-color: var(--color-ink);
+    color: #ffffff;
+  }
+
+  .recent {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .recent__row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+}

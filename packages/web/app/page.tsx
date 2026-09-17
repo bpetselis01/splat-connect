@@ -26,7 +26,9 @@ import {
   Gift,
   Users,
   MagnifyingGlass,
-  Handshake,
+  Wrench,
+  Receipt,
+  SealCheck,
   Recycle,
 } from '@phosphor-icons/react/dist/ssr'
 import { TutorialCard } from '@/components/tutorial-card'
@@ -87,15 +89,19 @@ export default async function HomePage() {
       body: 'Families and organisations give away toys they’ve already adapted. Request one near you.',
       cta: `See ${toys.length} toy${toys.length === 1 ? '' : 's'} available`,
       href: '/toy-library' as Route,
-      tint: 'var(--color-mint-soft)',
+      tint: 'var(--color-apricot-soft)',
     },
     {
-      icon: Handshake,
+      icon: Wrench,
       title: 'I make things',
       body: 'Write a guide, print a part, or back a build as an organisation.',
       cta: 'Get involved',
       href: '/get-involved' as Route,
-      tint: 'var(--color-apricot-soft)',
+      tint: 'var(--color-violet-soft)',
+      // The board ranks these three: two white cards at full width, then a
+      // quieter sunken one, narrower and without the lift. "I make things" is
+      // the smallest audience of the three and the board says so in the shape.
+      quiet: true,
     },
   ]
 
@@ -104,6 +110,7 @@ export default async function HomePage() {
       <section className="hero">
         <div className="hero__copy">
           <p className="hero__badge">
+            <SealCheck weight="fill" className="h-4 w-4 text-success" aria-hidden="true" />
             Free to read, reviewed guides for switch-adapted play
           </p>
           <h1 className="hero__title">
@@ -116,11 +123,11 @@ export default async function HomePage() {
             every child gets the part that matters: making something happen.
           </p>
           <div className="hero__actions">
-            <Link href="/library" className="btn btn-primary no-underline">
+            <Link href="/library" className="btn btn-primary btn-hero no-underline">
               <BookOpen className="h-5 w-5" aria-hidden="true" />
               Find a guide
             </Link>
-            <Link href="/toy-library" className="btn btn-quiet no-underline">
+            <Link href="/toy-library" className="btn btn-quiet btn-hero no-underline">
               <Gift className="h-5 w-5" aria-hidden="true" />
               Borrow a toy
             </Link>
@@ -150,13 +157,13 @@ export default async function HomePage() {
 
       <section className="band" aria-label="Where to start">
         <ul className="door-grid">
-          {doors.map(({ icon: Icon, title, body, cta, href, tint }) => (
-            <li key={title}>
-              <Link href={href} className="door no-underline">
+          {doors.map(({ icon: Icon, title, body, cta, href, tint, quiet }) => (
+            <li key={title} className={quiet ? 'door-cell--quiet' : undefined}>
+              <Link href={href} className={`door no-underline${quiet ? ' door--quiet' : ''}`}>
                 <span aria-hidden="true" className="door__icon" style={{ backgroundColor: tint }}>
                   <Icon className="h-6 w-6" />
                 </span>
-                <span className="card-title">{title}</span>
+                <span className="door__title">{title}</span>
                 <span className="door__body">{body}</span>
                 <span className="door__cta">
                   {cta}
@@ -169,73 +176,78 @@ export default async function HomePage() {
       </section>
 
       <section className="band band--split" aria-label="What things cost">
-        <div>
-          <h2 className="title-article">No price tags. Every cost written down.</h2>
+        <div className="cost-card">
+          <span aria-hidden="true" className="door__icon" style={{ backgroundColor: 'var(--color-honey-soft)' }}>
+            <Receipt className="h-6 w-6" />
+          </span>
+          <h2 className="door__title">No price tags. Every cost written down.</h2>
           <p className="band__body">
             Nobody on SPLAT charges for their time, and SPLAT never touches your money. What
             people do spend — filament, a switch jack, a satchel, a parts kit — is itemised by
             the person who spent it, with a reason in their own words, and you see the figure
             before you agree to anything.
           </p>
-          <Link href="/printing/basics" className="btn btn-quiet no-underline">
-            See how printing costs work
+          {/* Arrow leads on the board here — the button reads as "go this way"
+              rather than as a label with a decoration after it. */}
+          <Link href="/printing/basics" className="cost-cta cost-cta--light no-underline">
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            See how printing costs work
           </Link>
         </div>
-        <div className="card card-grid band__aside">
-          <span aria-hidden="true" className="door__icon" style={{ backgroundColor: 'var(--color-mint-soft)' }}>
+        <div className="cost-card cost-card--mint">
+          <span aria-hidden="true" className="door__icon" style={{ backgroundColor: 'var(--color-surface)' }}>
             <Recycle className="h-6 w-6" />
           </span>
-          <h3 className="card-title">Bring your failed prints. Leave with credit.</h3>
+          <h3 className="door__title">Bring your failed prints. Leave with credit.</h3>
           <p className="band__body">
             Some organisations here run a shredder and an extruder. Two kilos of clean, sorted
             plastic becomes filament on their machines — and grams of print credit for you,
             weighed and issued at the door.
           </p>
-          <Link href="/get-involved/recycling" className="btn btn-quiet no-underline">
+          <Link href="/get-involved/recycling" className="cost-cta cost-cta--ink no-underline">
+            <Recycle className="h-4 w-4" aria-hidden="true" />
             See who takes plastic
-            <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
         </div>
       </section>
 
-      {tutorials.length > 0 && (
-        <section className="band" aria-label="Recent guides">
+      {/* Side by side, two cards each — the board does not give either list the
+          full width, and stacking them made the page end on two long rows of
+          four. */}
+      <section className="band band--split" aria-label="Recently added">
+        <div className="recent">
           <div className="band__head">
-            <h2 className="title-article">Recent guides</h2>
+            <h2 className="door__title">Recent guides</h2>
             <Link href="/library" className="door__cta no-underline">
               View all
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
           </div>
-          <ul className="card-row">
-            {tutorials.slice(0, 4).map((t) => (
+          <ul className="recent__row">
+            {tutorials.slice(0, 2).map((t) => (
               <li key={t.id}>
                 <TutorialCard tutorial={t} />
               </li>
             ))}
           </ul>
-        </section>
-      )}
-
-      {toys.length > 0 && (
-        <section className="band" aria-label="Recent toys">
+        </div>
+        <div className="recent">
           <div className="band__head">
-            <h2 className="title-article">Recent toys</h2>
+            <h2 className="door__title">Recent toys</h2>
             <Link href="/toy-library" className="door__cta no-underline">
               View all
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
           </div>
-          <ul className="card-row">
-            {toys.slice(0, 4).map((toy) => (
+          <ul className="recent__row">
+            {toys.slice(0, 2).map((toy) => (
               <li key={toy.id}>
                 <ToyLibraryCard toy={toy} />
               </li>
             ))}
           </ul>
-        </section>
-      )}
+        </div>
+      </section>
     </>
   )
 }
