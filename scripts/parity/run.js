@@ -13,7 +13,8 @@ const fs = require('fs')
 const path = require('path')
 const { collectFingerprint } = require('./fingerprint')
 const { compare } = require('./compare')
-const { provision, signIn, cleanup } = require('./auth')
+const { provision, signIn, cleanup, adminClient } = require('./auth')
+const { seed, dbSample } = require('./seed')
 
 const ROOT = path.resolve(__dirname, '../..')
 // Resolved from packages/web: this script lives outside any package, so plain
@@ -51,32 +52,51 @@ function loadMap() {
   return all
 }
 
-/** Dynamic routes need a real record. Scrape one off the list page rather than
- *  guessing an id: a scraped link is guaranteed to be a page that has data. */
+/**
+ * Dynamic routes need a real record id. Scrape one off a list page rather than
+ * querying the database: a scraped link is by construction a page the app
+ * itself considers reachable and populated.
+ *
+ * Matched against the ROUTE TEMPLATE, not against the list page's own path.
+ * Deriving the pattern from the list URL assumed the two share a prefix, and
+ * across this app they frequently do not — guides are listed at /library but
+ * detailed at /tutorials/[id], and /organizations lists links to
+ * /organizations/[id]/public, two segments down. Nine screens went unmeasured
+ * on that assumption.
+ */
 async function resolveDynamic(page, entry, cache) {
-  const base = entry.sampleFrom
-  if (!cache.has(base)) {
+  const key = entry.route
+  if (!cache.has(key)) {
     let found = null
     try {
-      await page.goto(LIVE + base, { waitUntil: 'domcontentloaded', timeout: 30000 })
-      found = await page.evaluate((b) => {
-        const re = new RegExp('^' + b.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '/[^/]+$')
-        const a = [...document.querySelectorAll('a[href]')]
-          .map((x) => new URL(x.href, location.origin).pathname)
-          .find((p) => re.test(p))
-        return a || null
-      }, base)
+      await page.goto(LIVE + entry.sampleFrom, {
+        waitUntil: 'domcontentloaded',
+        timeout: 30000,
+      })
+      await page.waitForTimeout(600)
+      const pattern =
+        '^' +
+        entry.route
+          .split('/')
+          .map((seg) =>
+            /^\[.+\]$/.test(seg) ? '[^/]+' : seg.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+          )
+          .join('/') +
+        '$'
+      found = await page.evaluate((pat) => {
+        const re = new RegExp(pat)
+        return (
+          [...document.querySelectorAll('a[href]')]
+            .map((x) => new URL(x.href, location.origin).pathname)
+            .find((p) => re.test(p)) || null
+        )
+      }, pattern)
     } catch {
       /* falls through to null */
     }
-    cache.set(base, found)
+    cache.set(key, found)
   }
-  const sample = cache.get(base)
-  if (!sample) return null
-  // Substitute the scraped segment into the template's first [param].
-  const tail = entry.route.slice(base.length) // e.g. "/[id]/request"
-  const seg = sample.slice(base.length + 1)
-  return base + '/' + seg + tail.replace(/^\/\[[^\]]+\]/, '')
+  return cache.get(key)
 }
 
 async function fingerprintOf(page, url, rootSel) {
@@ -116,6 +136,19 @@ async function fingerprintOf(page, url, rootSel) {
     pageByRole[role] = pg
   }
 
+  // Records the parity users own, plus DB-resolved routes for anything the UI
+  // does not link to. Keyed by screen id; consulted before scraping.
+  let seeded = {}
+  if (needed.length) {
+    try {
+      seeded = await seed(adminClient(), users)
+      const n = Object.keys(seeded).length
+      if (n) process.stdout.write(`Seeded ${n} fixture route(s)\n`)
+    } catch (err) {
+      process.stdout.write(`  ! seeding failed: ${String(err.message || err).slice(0, 90)}\n`)
+    }
+  }
+
   const cache = new Map()
   const results = []
 
@@ -127,9 +160,12 @@ async function fingerprintOf(page, url, rootSel) {
     try {
       let route = s.route
       if (s.sampleFrom) {
-        route = await resolveDynamic(livePage, s, cache)
+        route =
+          seeded[s.id] ||
+          (await resolveDynamic(livePage, s, cache)) ||
+          (await dbSample(adminClient(), s.id))
         if (!route) {
-          row.error = `no sample record under ${s.sampleFrom}`
+          row.error = `no ${s.route} link on ${s.sampleFrom}`
           row.skipped = true
           results.push(row)
           process.stdout.write(`  ~ ${s.id} (no fixture)\n`)

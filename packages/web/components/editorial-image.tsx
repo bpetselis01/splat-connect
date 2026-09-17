@@ -19,6 +19,8 @@
  */
 import Image from 'next/image'
 
+import { safePhotoSrc } from '@/lib/photo-src'
+
 export type IllustrationKey =
   | 'adapted-toy'
   | 'switch'
@@ -84,7 +86,7 @@ export function EditorialImage({
         }`}
       >
         <Image
-          src={src || `/illustrations/${illustration}.svg`}
+          src={safePhotoSrc(src) ?? `/illustrations/${illustration}.svg`}
           alt=""
           fill
           className={isPhoto ? 'object-cover' : 'object-contain p-[9%]'}

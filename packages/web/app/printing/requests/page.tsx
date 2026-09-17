@@ -13,11 +13,8 @@ import { Printer as PrinterIcon } from '@phosphor-icons/react/dist/ssr'
 import { getCapabilities } from '@/lib/capabilities'
 import { apiClient } from '@/lib/api-client'
 import { BackLink } from '@/components/back-link'
-import {
-  RequestPrintForm,
-  printerAvailability,
-  type PrintablePart,
-} from '@/components/request-print-form'
+import { RequestPrintForm, type PrintablePart } from '@/components/request-print-form'
+import { printerAvailability } from '@/lib/printer-availability'
 import type { PrinterWithOwner } from '@splat-connect/types'
 
 export const metadata = { title: 'Request a print — SPLAT Connect' }

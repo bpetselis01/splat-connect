@@ -19,7 +19,7 @@
   "group": "Public site",
   "boardRoute": "/tutorials/[id]",
   "route": "/tutorials/[id]",
-  "sampleFrom": "/tutorials"
+  "sampleFrom": "/library"
  },
  {
   "id": "toys_public",
@@ -272,7 +272,7 @@
   "boardRoute": "/dashboard/exchanges/build/[id]",
   "route": "/dashboard/exchanges/build/[id]",
   "role": "parent",
-  "sampleFrom": "/dashboard/exchanges/build"
+  "sampleFrom": "/dashboard/exchanges"
  },
  {
   "id": "challenges",
@@ -317,7 +317,7 @@
   "group": "Impact",
   "boardRoute": "/contributors/[id]",
   "route": "/contributors/[id]",
-  "sampleFrom": "/contributors"
+  "sampleFrom": "/get-involved/contributors"
  },
  {
   "id": "impact_events",
@@ -447,7 +447,7 @@
   "boardRoute": "/dashboard/org/events/[id]",
   "route": "/dashboard/org/events/[id]",
   "role": "leader",
-  "sampleFrom": "/dashboard/org/events"
+  "sampleFrom": "/dashboard/organisation"
  },
  {
   "id": "about_partners",
@@ -543,7 +543,7 @@
   "boardRoute": "/tutorials/[id]/edit",
   "route": "/tutorials/[id]/edit",
   "role": "contributor",
-  "sampleFrom": "/tutorials"
+  "sampleFrom": "/library"
  },
  {
   "id": "toys",
@@ -699,7 +699,7 @@
   "boardRoute": "/dashboard/child/[id]",
   "route": "/dashboard/child/[id]",
   "role": "parent",
-  "sampleFrom": "/dashboard/child"
+  "sampleFrom": "/dashboard/profile"
  },
  {
   "id": "child_new",

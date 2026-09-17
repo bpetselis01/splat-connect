@@ -21,18 +21,13 @@ import type { Route } from 'next'
 import { Printer as PrinterIcon } from '@phosphor-icons/react/dist/ssr'
 import type { PrinterWithOwner } from '@splat-connect/types'
 import { browserApiClient } from '@/lib/browser-api-client'
+import { printerAvailability } from '@/lib/printer-availability'
 
 export interface PrintablePart {
   id: string
   filename: string
 }
 
-/** Whether this machine can take a job right now, and why not when it cannot. */
-export function printerAvailability(printer: PrinterWithOwner): string | null {
-  if (!printer.accepting) return 'Not taking new jobs'
-  if (printer.open_jobs >= printer.capacity) return 'Full right now'
-  return null
-}
 
 export function RequestPrintForm({
   tutorialId,

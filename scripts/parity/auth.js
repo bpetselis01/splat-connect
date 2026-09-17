@@ -162,4 +162,4 @@ async function cleanup(users) {
   }
 }
 
-module.exports = { provision, signIn, cleanup }
+module.exports = { provision, signIn, cleanup, adminClient: admin }

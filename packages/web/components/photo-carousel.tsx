@@ -15,6 +15,8 @@
 import { useRef, useState } from 'react'
 import Image from 'next/image'
 
+import { safePhotoSrc } from '@/lib/photo-src'
+
 /** A release past this much of the frame commits to the next photo. */
 const COMMIT_FRACTION = 1 / 3
 /** Past an end there is nothing to reveal, so the rail resists rather than moves. */
@@ -51,7 +53,12 @@ export function PhotoCarousel({
   if (urls.length === 1) {
     return (
       <div className={`relative ${className} w-full overflow-hidden rounded-2xl bg-sunken`}>
-        <Image src={urls[0]} alt={alt} fill className="object-cover" />
+        <Image
+          src={safePhotoSrc(urls[0]) ?? '/illustrations/adapted-toy.svg'}
+          alt={alt}
+          fill
+          className="object-cover"
+        />
       </div>
     )
   }
@@ -115,7 +122,7 @@ export function PhotoCarousel({
           {urls.map((url, i) => (
             <div key={url} className="relative h-full w-full shrink-0">
               <Image
-                src={url}
+                src={safePhotoSrc(url) ?? '/illustrations/adapted-toy.svg'}
                 alt={urls.length > 1 ? `${alt} — photo ${i + 1} of ${urls.length}` : alt}
                 fill
                 sizes="(max-width: 768px) 100vw, 50vw"

@@ -1,5 +1,5 @@
 {
- "at": "2026-09-17T05:34:47.551Z",
+ "at": "2026-09-17T05:45:41.431Z",
  "live": "http://localhost:3110",
  "screens": [
   {
@@ -688,11 +688,202 @@
    "id": "tutorial",
    "name": "Guide detail",
    "group": "Public site",
-   "route": "/tutorials/[id]",
-   "findings": [],
+   "route": "/tutorials/5e299a8b-387c-42af-8731-a8b2757d4cd5",
+   "findings": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h3 \"open the battery compartment\" has no counterpart",
+     "board": "open the battery compartment",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h3 \"slide the interrupter between the battery and the contact\" has no counterpart",
+     "board": "slide the interrupter between the battery and the contact",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h3 \"route the ribbon out of the compartment\" has no counterpart",
+     "board": "route the ribbon out of the compartment",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h4 \"guide b — switch lead, # mm\" has no counterpart",
+     "board": "guide b — switch lead, # mm",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h4 \"guide d — switch mount, printable\" has no counterpart",
+     "board": "guide d — switch mount, printable",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h4 \"toy # — plush dog\" has no counterpart",
+     "board": "toy # — plush dog",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h3 \"# min\" has no counterpart",
+     "board": "# min",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h3 \"$#\" has no counterpart",
+     "board": "$#",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h4 \"need help with this build?\" has no counterpart",
+     "board": "need help with this build?",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "page height differs grossly",
+     "board": "1926px",
+     "live": "529px"
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "h1 \"guide c — plush dog that barks\" size",
+     "board": "44px",
+     "live": "25px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "h1 wording",
+     "board": "guide c — plush dog that barks",
+     "live": "e#e reflow detail #-#"
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "h2 \"sign in to open this guide\" size",
+     "board": "30px",
+     "live": "14px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "h2 wording",
+     "board": "sign in to open this guide",
+     "live": "parts needed"
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "h2 \"also worth a look\" size",
+     "board": "26px",
+     "live": "14px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "h2 wording",
+     "board": "also worth a look",
+     "live": "files for #d printing"
+    },
+    {
+     "type": "extra-section",
+     "severity": "medium",
+     "what": "live has an extra h2",
+     "board": null,
+     "live": "tools needed"
+    },
+    {
+     "type": "radius",
+     "severity": "medium",
+     "what": "card radius",
+     "board": "24px",
+     "live": "14px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "10/10 board paragraphs absent",
+     "board": "add a battery interrupter so one press of any #mm switch makes the dog",
+     "live": "created by a playwright e#e test."
+    },
+    {
+     "type": "weight",
+     "severity": "low",
+     "what": "h2 \"sign in to open this guide\" weight",
+     "board": 800,
+     "live": 700
+    },
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "h2 \"sign in to open this guide\" colour",
+     "board": "rgb(28,37,48)",
+     "live": "rgb(15,95,140)"
+    },
+    {
+     "type": "weight",
+     "severity": "low",
+     "what": "h2 \"also worth a look\" weight",
+     "board": 800,
+     "live": 700
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "set",
+     "live": "none"
+    },
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "card background",
+     "board": "rgb(255,255,255)",
+     "live": null
+    },
+    {
+     "type": "spacing",
+     "severity": "low",
+     "what": "card padding",
+     "board": "0/0",
+     "live": "16/20"
+    },
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "button background",
+     "board": "rgb(28,37,48)",
+     "live": "rgb(17,121,176)"
+    },
+    {
+     "type": "spacing",
+     "severity": "low",
+     "what": "button padding",
+     "board": "1/6",
+     "live": "0/22"
+    }
+   ],
    "role": "guest",
-   "error": "no sample record under /tutorials",
-   "skipped": true
+   "finalUrl": "/tutorials/5e299a8b-387c-42af-8731-a8b2757d4cd5",
+   "boardHeadings": 12,
+   "liveHeadings": 4
   },
   {
    "id": "toys_public",
@@ -806,30 +997,116 @@
     {
      "type": "missing-section",
      "severity": "high",
-     "what": "route /toy-library/56a03287-d7b6-4731-b240-09361ed3df5c returns 500",
-     "board": "/toys/[id]",
-     "live": 500
+     "what": "h1 \"toy # — plush dog that barks\" has no counterpart",
+     "board": "toy # — plush dog that barks",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"notes from family #\" has no counterpart",
+     "board": "notes from family #",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h4 \"built from guide c\" has no counterpart",
+     "board": "built from guide c",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"sign in to see the rest of this listing\" has no counterpart",
+     "board": "sign in to see the rest of this listing",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"also worth a look\" has no counterpart",
+     "board": "also worth a look",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h4 \"toy # — light-up top\" has no counterpart",
+     "board": "toy # — light-up top",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h4 \"guide c — plush dog that barks\" has no counterpart",
+     "board": "guide c — plush dog that barks",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h4 \"guide d — switch mount, printable\" has no counterpart",
+     "board": "guide d — switch mount, printable",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h3 \"# km\" has no counterpart",
+     "board": "# km",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h3 \"good\" has no counterpart",
+     "board": "good",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "page height differs grossly",
+     "board": "2172px",
+     "live": "742px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "9/9 board paragraphs absent",
+     "board": "one press makes it bark and wag. adapted from guide c, cleaned, and lo",
+     "live": "sign in to request this toy."
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "set",
+     "live": "none"
+    },
+    {
+     "type": "spacing",
+     "severity": "low",
+     "what": "card padding",
+     "board": "16/16",
+     "live": "20/0"
     }
    ],
    "role": "guest",
-   "error": "live returned 500"
+   "finalUrl": "/toy-library/56a03287-d7b6-4731-b240-09361ed3df5c",
+   "boardHeadings": 10,
+   "liveHeadings": 0
   },
   {
    "id": "toy_request",
    "name": "Request a toy",
    "group": "Public site",
-   "route": "/toy-library/56a03287-d7b6-4731-b240-09361ed3df5c/request",
-   "findings": [
-    {
-     "type": "redirected",
-     "severity": "high",
-     "what": "asked for /toy-library/56a03287-d7b6-4731-b240-09361ed3df5c/request, landed on /login",
-     "board": "/toy-library/56a03287-d7b6-4731-b240-09361ed3df5c/request",
-     "live": "/login"
-    }
-   ],
+   "route": "/toy-library/[id]/request",
+   "findings": [],
    "role": "guest",
-   "finalUrl": "/login"
+   "error": "no /toy-library/[id]/request link on /toy-library",
+   "skipped": true
   },
   {
    "id": "wizard",
@@ -3038,13 +3315,99 @@
     {
      "type": "missing-section",
      "severity": "high",
-     "what": "route /printing/requests returns 500",
-     "board": "/printing/request",
-     "live": 500
+     "what": "h2 \"what matters to you?\" has no counterpart",
+     "board": "what matters to you?",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"who you asked\" has no counterpart",
+     "board": "who you asked",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"you collect it\" has no counterpart",
+     "board": "you collect it",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h3 \"# h # min\" has no counterpart",
+     "board": "# h # min",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h3 \"# g petg\" has no counterpart",
+     "board": "# g petg",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "page height differs grossly",
+     "board": "1745px",
+     "live": "508px"
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "h1 \"request a print\" size",
+     "board": "40px",
+     "live": "25px"
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "h2 \"which parts?\" size",
+     "board": "26px",
+     "live": "21px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "h2 wording",
+     "board": "which parts?",
+     "live": "printers on the platform"
+    },
+    {
+     "type": "missing-section",
+     "severity": "medium",
+     "what": "no inputs on live",
+     "board": 2,
+     "live": 0
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "6/6 board paragraphs absent",
+     "board": "everything below comes from guide d — switch mount, printable. tick th",
+     "live": "pick the parts of a guide you need and send them to one printer."
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "set",
+     "live": "none"
+    },
+    {
+     "type": "spacing",
+     "severity": "low",
+     "what": "button padding",
+     "board": "1/6",
+     "live": "0/22"
     }
    ],
    "role": "parent",
-   "error": "live returned 500"
+   "finalUrl": "/printing/requests",
+   "boardHeadings": 7,
+   "liveHeadings": 2
   },
   {
    "id": "involved",
@@ -4040,11 +4403,132 @@
    "id": "build_thread",
    "name": "Build thread",
    "group": "My SPLAT",
-   "route": "/dashboard/exchanges/build/[id]",
-   "findings": [],
+   "route": "/dashboard/exchanges/build/70fd954a-5ef7-4b0e-90f0-fd506a61fe3d",
+   "findings": [
+    {
+     "type": "font",
+     "severity": "high",
+     "what": "h4 \"check the working shot\" font",
+     "board": "Baloo 2",
+     "live": "Nunito"
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "h1 \"guide a — bubble machine\" size",
+     "board": "40px",
+     "live": "25px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "h1 wording",
+     "board": "guide a — bubble machine",
+     "live": "backing fixture"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "h4 wording",
+     "board": "check the working shot",
+     "live": "waiting for an answer"
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "h3 \"$#\" size",
+     "board": "22px",
+     "live": "12px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "h3 wording",
+     "board": "$#",
+     "live": "waiting for a maker"
+    },
+    {
+     "type": "extra-section",
+     "severity": "medium",
+     "what": "live has an extra h2",
+     "board": null,
+     "live": "details"
+    },
+    {
+     "type": "radius",
+     "severity": "medium",
+     "what": "input radius",
+     "board": "999px",
+     "live": "14px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "5/5 board paragraphs absent",
+     "board": "tom beattie is building this for you",
+     "live": "you will hear here the moment they answer. nothing to do yet."
+    },
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "h3 \"$#\" colour",
+     "board": "rgb(28,37,48)",
+     "live": "rgb(90,102,117)"
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "set",
+     "live": "none"
+    },
+    {
+     "type": "spacing",
+     "severity": "low",
+     "what": "card padding",
+     "board": "0/0",
+     "live": "20/20"
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "button shadow",
+     "board": "set",
+     "live": "none"
+    },
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "button background",
+     "board": "rgb(17,121,176)",
+     "live": "rgb(243,241,237)"
+    },
+    {
+     "type": "spacing",
+     "severity": "low",
+     "what": "button padding",
+     "board": "1/6",
+     "live": "0/22"
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "input shadow",
+     "board": "set",
+     "live": "none"
+    },
+    {
+     "type": "spacing",
+     "severity": "low",
+     "what": "input padding",
+     "board": "0/18",
+     "live": "10/12"
+    }
+   ],
    "role": "parent",
-   "error": "no sample record under /dashboard/exchanges/build",
-   "skipped": true
+   "finalUrl": "/dashboard/exchanges/build/70fd954a-5ef7-4b0e-90f0-fd506a61fe3d",
+   "boardHeadings": 3,
+   "liveHeadings": 4
   },
   {
    "id": "challenges",
@@ -4630,21 +5114,354 @@
    "id": "org_public",
    "name": "Organisation profile",
    "group": "Impact",
-   "route": "/organizations/[id]/public",
-   "findings": [],
+   "route": "/organizations/1373de43-4898-4161-9d7d-0f8961874e96/public",
+   "findings": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"about\" has no counterpart",
+     "board": "about",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"#\" has no counterpart",
+     "board": "#",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"how to work with them\" has no counterpart",
+     "board": "how to work with them",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h4 \"have a part printed\" has no counterpart",
+     "board": "have a part printed",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h4 \"bring a toy to the clinic\" has no counterpart",
+     "board": "bring a toy to the clinic",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"guides they back #\" has no counterpart",
+     "board": "guides they back #",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"toys on their shelf # available\" has no counterpart",
+     "board": "toys on their shelf # available",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"from families\" has no counterpart",
+     "board": "from families",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"leaders\" has no counterpart",
+     "board": "leaders",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h4 \"rk\" has no counterpart",
+     "board": "rk",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h4 \"tb\" has no counterpart",
+     "board": "tb",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h4 \"pn\" has no counterpart",
+     "board": "pn",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"recent activity\" has no counterpart",
+     "board": "recent activity",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h3 \"they print — you cover the filament\" has no counterpart",
+     "board": "they print — you cover the filament",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h3 \"they take waste plastic\" has no counterpart",
+     "board": "they take waste plastic",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "page height differs grossly",
+     "board": "2814px",
+     "live": "696px"
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "h1 \"northside therapy collective\" size",
+     "board": "38px",
+     "live": "25px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "h1 wording",
+     "board": "northside therapy collective",
+     "live": "e#e backing org #-#"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "h4 wording",
+     "board": "borrow or take a toy",
+     "live": "e#e mobile backed #-#"
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "h3 \"visit\" size",
+     "board": "18px",
+     "live": "14px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "h3 wording",
+     "board": "visit",
+     "live": "backed"
+    },
+    {
+     "type": "radius",
+     "severity": "medium",
+     "what": "card radius",
+     "board": "18px",
+     "live": "14px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "11/11 board paragraphs absent",
+     "board": "paediatric ot service newcastle, nsw on splat since # thanked # times",
+     "live": "created by a playwright e#e test."
+    },
+    {
+     "type": "weight",
+     "severity": "low",
+     "what": "h3 \"visit\" weight",
+     "board": 800,
+     "live": 700
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "set",
+     "live": "none"
+    },
+    {
+     "type": "spacing",
+     "severity": "low",
+     "what": "button padding",
+     "board": "0/22",
+     "live": "0/14"
+    }
+   ],
    "role": "guest",
-   "error": "no sample record under /organizations",
-   "skipped": true
+   "finalUrl": "/organizations/1373de43-4898-4161-9d7d-0f8961874e96/public",
+   "boardHeadings": 18,
+   "liveHeadings": 3
   },
   {
    "id": "contributor",
    "name": "Contributor profile",
    "group": "Impact",
-   "route": "/contributors/[id]",
-   "findings": [],
+   "route": "/contributors/11111111-1111-1111-1111-111111111111",
+   "findings": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"#\" has no counterpart",
+     "board": "#",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"about\" has no counterpart",
+     "board": "about",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"featured\" has no counterpart",
+     "board": "featured",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h3 \"fairy lights on a squeeze switch\" has no counterpart",
+     "board": "fairy lights on a squeeze switch",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"published guides #\" has no counterpart",
+     "board": "published guides #",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"from families who built one\" has no counterpart",
+     "board": "from families who built one",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"recent activity\" has no counterpart",
+     "board": "recent activity",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h3 \"builds from rachel’s guides\" has no counterpart",
+     "board": "builds from rachel’s guides",
+     "live": null
+    },
+    {
+     "type": "font",
+     "severity": "high",
+     "what": "h4 \"rachel\" font",
+     "board": "Baloo 2",
+     "live": "Nunito"
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h3 \"badges\" has no counterpart",
+     "board": "badges",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h4 \"nt\" has no counterpart",
+     "board": "nt",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h4 \"northside therapy collective\" has no counterpart",
+     "board": "northside therapy collective",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h3 \"also on splat\" has no counterpart",
+     "board": "also on splat",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "page height differs grossly",
+     "board": "2769px",
+     "live": "684px"
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "h1 \"rachel kaur\" size",
+     "board": "38px",
+     "live": "25px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "h1 wording",
+     "board": "rachel kaur",
+     "live": "seed contributor"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "h4 wording",
+     "board": "rachel",
+     "live": "seeded switch-adapted bubble machine"
+    },
+    {
+     "type": "radius",
+     "severity": "medium",
+     "what": "card radius",
+     "board": "18px",
+     "live": "14px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "7/7 board paragraphs absent",
+     "board": "paediatric ot who writes up whatever the thursday switch clinic adapts",
+     "live": "seeded switch-adapted bubble machine"
+    },
+    {
+     "type": "spacing",
+     "severity": "low",
+     "what": "card padding",
+     "board": "12/6",
+     "live": "20/16"
+    },
+    {
+     "type": "spacing",
+     "severity": "low",
+     "what": "button padding",
+     "board": "0/22",
+     "live": "0/14"
+    }
+   ],
    "role": "guest",
-   "error": "no sample record under /contributors",
-   "skipped": true
+   "finalUrl": "/contributors/11111111-1111-1111-1111-111111111111",
+   "boardHeadings": 14,
+   "liveHeadings": 2
   },
   {
    "id": "impact_events",
@@ -4720,6 +5537,13 @@
      "severity": "medium",
      "what": "h3 wording",
      "board": "past events (#)",
+     "live": "parity fixture build day"
+    },
+    {
+     "type": "extra-section",
+     "severity": "medium",
+     "what": "live has an extra h3",
+     "board": null,
      "live": "thursday bench, newtown"
     },
     {
@@ -4754,7 +5578,7 @@
    "role": "guest",
    "finalUrl": "/get-involved/events",
    "boardHeadings": 13,
-   "liveHeadings": 8
+   "liveHeadings": 9
   },
   {
    "id": "event_detail",
@@ -4821,18 +5645,11 @@
    "id": "event_register",
    "name": "Register for an event",
    "group": "Get involved",
-   "route": "/get-involved/events/af0fe7fd-53ca-4335-bd8b-738ef5297c14/register",
-   "findings": [
-    {
-     "type": "redirected",
-     "severity": "high",
-     "what": "asked for /get-involved/events/af0fe7fd-53ca-4335-bd8b-738ef5297c14/register, landed on /login",
-     "board": "/get-involved/events/af0fe7fd-53ca-4335-bd8b-738ef5297c14/register",
-     "live": "/login"
-    }
-   ],
+   "route": "/get-involved/events/[id]/register",
+   "findings": [],
    "role": "guest",
-   "finalUrl": "/login"
+   "error": "no /get-involved/events/[id]/register link on /get-involved/events",
+   "skipped": true
   },
   {
    "id": "recycling",
@@ -5681,7 +6498,7 @@
      "severity": "medium",
      "what": "5/5 board paragraphs absent",
      "board": "everything a family can ask of an organisation, in one place. say no w",
-     "live": "every ask a family can make of parity org mu#diw#gevw, in one queue: a"
+     "live": "every ask a family can make of parity org mu#qez#swfy, in one queue: a"
     },
     {
      "type": "shadow",
@@ -5813,11 +6630,69 @@
    "id": "org_event_manage",
    "name": "Manage event",
    "group": "My SPLAT",
-   "route": "/dashboard/org/events/[id]",
-   "findings": [],
+   "route": "/dashboard/org/events/7c83d644-2015-417a-a02d-bee00c9bd860",
+   "findings": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"#\" has no counterpart",
+     "board": "#",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"parts to print before the day\" has no counterpart",
+     "board": "parts to print before the day",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "page height differs grossly",
+     "board": "1394px",
+     "live": "540px"
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "h1 \"switch-adaptation build day\" size",
+     "board": "40px",
+     "live": "46px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "h1 wording",
+     "board": "switch-adaptation build day",
+     "live": "parity fixture build day"
+    },
+    {
+     "type": "radius",
+     "severity": "medium",
+     "what": "card radius",
+     "board": "18px",
+     "live": "24px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "18/19 board paragraphs absent",
+     "board": "families who asked for help with a printable guide and chose “the host",
+     "live": "build day · thursday # october #"
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "set",
+     "live": "none"
+    }
+   ],
    "role": "leader",
-   "error": "no sample record under /dashboard/org/events",
-   "skipped": true
+   "finalUrl": "/dashboard/org/events/7c83d644-2015-417a-a02d-bee00c9bd860",
+   "boardHeadings": 4,
+   "liveHeadings": 2
   },
   {
    "id": "about_partners",
@@ -6368,13 +7243,6 @@
     {
      "type": "missing-section",
      "severity": "high",
-     "what": "h4 \"switch-adapted light-up drum\" has no counterpart",
-     "board": "switch-adapted light-up drum",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
      "what": "h4 \"bubble blower, four-second burst\" has no counterpart",
      "board": "bubble blower, four-second burst",
      "live": null
@@ -6410,6 +7278,13 @@
     {
      "type": "copy",
      "severity": "medium",
+     "what": "h4 wording",
+     "board": "switch-adapted light-up drum",
+     "live": "parity fixture guide"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
      "what": "1/1 board paragraphs absent",
      "board": "guides you have written, at every stage from draft to published.",
      "live": "your adaptation guides. each one is reviewed — by an organisation you "
@@ -6425,7 +7300,7 @@
    "role": "contributor",
    "finalUrl": "/dashboard/tutorials",
    "boardHeadings": 7,
-   "liveHeadings": 1
+   "liveHeadings": 2
   },
   {
    "id": "upload",
@@ -6485,11 +7360,104 @@
    "id": "editor",
    "name": "Tutorial editor",
    "group": "My SPLAT",
-   "route": "/tutorials/[id]/edit",
-   "findings": [],
+   "route": "/tutorials/60bd2e7d-9818-4c6e-97a5-4614c352cd91/edit",
+   "findings": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"status\" has no counterpart",
+     "board": "status",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h3 \"only you can see this\" has no counterpart",
+     "board": "only you can see this",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h3 \"what is left before you can submit\" has no counterpart",
+     "board": "what is left before you can submit",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h3 \"history\" has no counterpart",
+     "board": "history",
+     "live": null
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "h1 \"bubble blower, four-second burst\" size",
+     "board": "40px",
+     "live": "25px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "h1 wording",
+     "board": "bubble blower, four-second burst",
+     "live": "parity fixture guide"
+    },
+    {
+     "type": "radius",
+     "severity": "medium",
+     "what": "card radius",
+     "board": "14px",
+     "live": "24px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "6/6 board paragraphs absent",
+     "board": "# of # sections filled in. worth a look is optional — steps and safety",
+     "live": "only complete guides appear in the public library listing. anything ea"
+    },
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "card background",
+     "board": "rgb(250,249,247)",
+     "live": "rgb(255,255,255)"
+    },
+    {
+     "type": "spacing",
+     "severity": "low",
+     "what": "card padding",
+     "board": "12/16",
+     "live": "null/null"
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "button shadow",
+     "board": "set",
+     "live": "none"
+    },
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "button background",
+     "board": "rgb(17,121,176)",
+     "live": "rgb(28,37,48)"
+    },
+    {
+     "type": "spacing",
+     "severity": "low",
+     "what": "button padding",
+     "board": "0/22",
+     "live": "8/14"
+    }
+   ],
    "role": "contributor",
-   "error": "no sample record under /tutorials",
-   "skipped": true
+   "finalUrl": "/tutorials/60bd2e7d-9818-4c6e-97a5-4614c352cd91/edit",
+   "boardHeadings": 5,
+   "liveHeadings": 1
   },
   {
    "id": "toys",
@@ -6781,20 +7749,6 @@
     {
      "type": "missing-section",
      "severity": "high",
-     "what": "h3 \"vibrating cushion\" has no counterpart",
-     "board": "vibrating cushion",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h3 \"weighted lap snake\" has no counterpart",
-     "board": "weighted lap snake",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
      "what": "h3 \"sensory light panel\" has no counterpart",
      "board": "sensory light panel",
      "live": null
@@ -6860,14 +7814,28 @@
      "severity": "high",
      "what": "page height differs grossly",
      "board": "4024px",
-     "live": "541px"
+     "live": "1125px"
     },
     {
      "type": "copy",
      "severity": "medium",
      "what": "h3 wording",
      "board": "bubble machine",
+     "live": "e#e review target approve #-# — parts"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "h3 wording",
+     "board": "vibrating cushion",
      "live": "backing fixture"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "h3 wording",
+     "board": "weighted lap snake",
+     "live": "fire truck"
     },
     {
      "type": "copy",
@@ -6880,17 +7848,138 @@
    "role": "parent",
    "finalUrl": "/dashboard/exchanges",
    "boardHeadings": 14,
-   "liveHeadings": 3
+   "liveHeadings": 5
   },
   {
    "id": "thread",
    "name": "Exchange thread",
    "group": "My SPLAT",
-   "route": "/dashboard/exchanges/[id]",
-   "findings": [],
+   "route": "/dashboard/exchanges/6f92c60f-34db-4021-a9c0-9c89cb93f9c2",
+   "findings": [
+    {
+     "type": "font",
+     "severity": "high",
+     "what": "h3 \"$#\" font",
+     "board": "Baloo 2",
+     "live": "JetBrains Mono"
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h4 \"thursday after three, newcastle clinic\" has no counterpart",
+     "board": "thursday after three, newcastle clinic",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h4 \"both families confirmed\" has no counterpart",
+     "board": "both families confirmed",
+     "live": null
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "h1 \"bubble machine\" size",
+     "board": "40px",
+     "live": "25px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "h1 wording",
+     "board": "bubble machine",
+     "live": "fire truck"
+    },
+    {
+     "type": "extra-section",
+     "severity": "medium",
+     "what": "live has an extra h2",
+     "board": null,
+     "live": "what the handover costs you"
+    },
+    {
+     "type": "extra-section",
+     "severity": "medium",
+     "what": "live has an extra h3",
+     "board": null,
+     "live": "meeting them"
+    },
+    {
+     "type": "extra-section",
+     "severity": "medium",
+     "what": "live has an extra h2",
+     "board": null,
+     "live": "details"
+    },
+    {
+     "type": "extra-section",
+     "severity": "medium",
+     "what": "live has an extra h2",
+     "board": null,
+     "live": "handoff"
+    },
+    {
+     "type": "radius",
+     "severity": "medium",
+     "what": "input radius",
+     "board": "999px",
+     "live": "14px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "10/10 board paragraphs absent",
+     "board": "you are receiving this from northside therapy collective",
+     "live": "you are receiving this from e#e contributor"
+    },
+    {
+     "type": "weight",
+     "severity": "low",
+     "what": "h3 \"$#\" weight",
+     "board": 800,
+     "live": 700
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "button shadow",
+     "board": "set",
+     "live": "none"
+    },
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "button background",
+     "board": "rgb(17,121,176)",
+     "live": "rgb(220,240,251)"
+    },
+    {
+     "type": "spacing",
+     "severity": "low",
+     "what": "button padding",
+     "board": "1/6",
+     "live": "0/22"
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "input shadow",
+     "board": "set",
+     "live": "none"
+    },
+    {
+     "type": "spacing",
+     "severity": "low",
+     "what": "input padding",
+     "board": "0/18",
+     "live": "10/12"
+    }
+   ],
    "role": "parent",
-   "error": "no sample record under /dashboard/exchanges",
-   "skipped": true
+   "finalUrl": "/dashboard/exchanges/6f92c60f-34db-4021-a9c0-9c89cb93f9c2",
+   "boardHeadings": 4,
+   "liveHeadings": 6
   },
   {
    "id": "thread_live",
@@ -6931,6 +8020,20 @@
      "severity": "medium",
      "what": "live has an extra h3",
      "board": null,
+     "live": "e#e review target approve #-# — parts"
+    },
+    {
+     "type": "extra-section",
+     "severity": "medium",
+     "what": "live has an extra h3",
+     "board": null,
+     "live": "fire truck"
+    },
+    {
+     "type": "extra-section",
+     "severity": "medium",
+     "what": "live has an extra h3",
+     "board": null,
      "live": "backing fixture"
     },
     {
@@ -6958,7 +8061,7 @@
    "role": "parent",
    "finalUrl": "/dashboard/exchanges",
    "boardHeadings": 2,
-   "liveHeadings": 3
+   "liveHeadings": 5
   },
   {
    "id": "my_challenges",
@@ -7368,13 +8471,6 @@
     {
      "type": "missing-section",
      "severity": "high",
-     "what": "h2 \"switch mount, printable\" has no counterpart",
-     "board": "switch mount, printable",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
      "what": "h2 \"lever switch, printable\" has no counterpart",
      "board": "lever switch, printable",
      "live": null
@@ -7387,11 +8483,18 @@
      "live": null
     },
     {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "board has cards, live has none",
-     "board": 3,
-     "live": 0
+     "type": "copy",
+     "severity": "medium",
+     "what": "h2 wording",
+     "board": "switch mount, printable",
+     "live": "active"
+    },
+    {
+     "type": "extra-section",
+     "severity": "medium",
+     "what": "live has an extra h3",
+     "board": null,
+     "live": "e#e review target approve #-# — parts"
     },
     {
      "type": "copy",
@@ -7404,17 +8507,124 @@
    "role": "parent",
    "finalUrl": "/dashboard/print-requests",
    "boardHeadings": 4,
-   "liveHeadings": 1
+   "liveHeadings": 3
   },
   {
    "id": "print_job",
    "name": "Print job",
    "group": "My SPLAT",
-   "route": "/dashboard/print-requests/[id]",
-   "findings": [],
+   "route": "/dashboard/print-requests/4ba43fd4-dd74-4d8d-8708-6922aaba61a5",
+   "findings": [
+    {
+     "type": "font",
+     "severity": "high",
+     "what": "h3 \"$#\" font",
+     "board": "Baloo 2",
+     "live": "JetBrains Mono"
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h4 \"waiting on the printers\" has no counterpart",
+     "board": "waiting on the printers",
+     "live": null
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "h1 \"switch mount, printable · # parts\" size",
+     "board": "40px",
+     "live": "25px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "h1 wording",
+     "board": "switch mount, printable · # parts",
+     "live": "e#e review target approve #-# — parts"
+    },
+    {
+     "type": "extra-section",
+     "severity": "medium",
+     "what": "live has an extra h2",
+     "board": null,
+     "live": "what the handover costs you"
+    },
+    {
+     "type": "extra-section",
+     "severity": "medium",
+     "what": "live has an extra h3",
+     "board": null,
+     "live": "waiting on the printer"
+    },
+    {
+     "type": "extra-section",
+     "severity": "medium",
+     "what": "live has an extra h2",
+     "board": null,
+     "live": "details"
+    },
+    {
+     "type": "radius",
+     "severity": "medium",
+     "what": "input radius",
+     "board": "999px",
+     "live": "14px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "6/6 board paragraphs absent",
+     "board": "switch-mount-body.stl, switch-mount-clamp.stl, cradle-#mm.stl · with o",
+     "live": "printing on sam printer’s prusa mk#"
+    },
+    {
+     "type": "weight",
+     "severity": "low",
+     "what": "h3 \"$#\" weight",
+     "board": 800,
+     "live": 700
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "button shadow",
+     "board": "set",
+     "live": "none"
+    },
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "button background",
+     "board": "rgb(17,121,176)",
+     "live": "rgb(220,240,251)"
+    },
+    {
+     "type": "spacing",
+     "severity": "low",
+     "what": "button padding",
+     "board": "1/6",
+     "live": "0/22"
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "input shadow",
+     "board": "set",
+     "live": "none"
+    },
+    {
+     "type": "spacing",
+     "severity": "low",
+     "what": "input padding",
+     "board": "0/18",
+     "live": "10/12"
+    }
+   ],
    "role": "parent",
-   "error": "no sample record under /dashboard/print-requests",
-   "skipped": true
+   "finalUrl": "/dashboard/print-requests/4ba43fd4-dd74-4d8d-8708-6922aaba61a5",
+   "boardHeadings": 3,
+   "liveHeadings": 5
   },
   {
    "id": "print_offer",
@@ -7617,11 +8827,97 @@
    "id": "child",
    "name": "Child profile",
    "group": "My SPLAT",
-   "route": "/dashboard/child/[id]",
-   "findings": [],
+   "route": "/dashboard/child/a12452bf-0889-4beb-9ee0-59d15603f030",
+   "findings": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"basics\" has no counterpart",
+     "board": "basics",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"ability profile\" has no counterpart",
+     "board": "ability profile",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"everyday needs\" has no counterpart",
+     "board": "everyday needs",
+     "live": null
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "h1 \"ollie\" size",
+     "board": "42px",
+     "live": "24px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "h1 wording",
+     "board": "ollie",
+     "live": "child #"
+    },
+    {
+     "type": "missing-section",
+     "severity": "medium",
+     "what": "no inputs on live",
+     "board": 2,
+     "live": 0
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "3/3 board paragraphs absent",
+     "board": "every field is optional. we use this only to suggest guides that suit ",
+     "live": "what you enter here is used only to suggest guides and devices for you"
+    },
+    {
+     "type": "weight",
+     "severity": "low",
+     "what": "h1 \"ollie\" weight",
+     "board": 800,
+     "live": 700
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "set",
+     "live": "none"
+    },
+    {
+     "type": "spacing",
+     "severity": "low",
+     "what": "card padding",
+     "board": "26/26",
+     "live": "12/12"
+    },
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "button background",
+     "board": "rgb(17,121,176)",
+     "live": "rgb(28,37,48)"
+    },
+    {
+     "type": "spacing",
+     "severity": "low",
+     "what": "button padding",
+     "board": "0/16",
+     "live": "8/14"
+    }
+   ],
    "role": "parent",
-   "error": "no sample record under /dashboard/child",
-   "skipped": true
+   "finalUrl": "/dashboard/child/a12452bf-0889-4beb-9ee0-59d15603f030",
+   "boardHeadings": 4,
+   "liveHeadings": 1
   },
   {
    "id": "child_new",
@@ -7964,7 +9260,7 @@
      "severity": "medium",
      "what": "live has an extra h3",
      "board": null,
-     "live": "parity org mu#diw#gevw"
+     "live": "parity org mu#qez#swfy"
     },
     {
      "type": "copy",
@@ -8014,18 +9310,18 @@
      "live": null
     },
     {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "board has cards, live has none",
-     "board": 3,
-     "live": 0
-    },
-    {
      "type": "copy",
      "severity": "medium",
      "what": "5/5 board paragraphs absent",
      "board": "published items are live on the public pages right now.",
-     "live": "what parity org mu#diw#gevw has published, and what is still a draft."
+     "live": "what parity org mu#qez#swfy has published, and what is still a draft."
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "set",
+     "live": "none"
     }
    ],
    "role": "leader",
@@ -8900,7 +10196,7 @@
      "severity": "medium",
      "what": "1/1 board paragraphs absent",
      "board": "review and remove accounts. # total, # flagged.",
-     "live": "parity-contributor-mu#dizzgqrs@example.com"
+     "live": "parity-contributor-mu#qf#iud#@example.com"
     },
     {
      "type": "shadow",
@@ -9563,21 +10859,20 @@
  "summary": {
   "screens": 119,
   "clean": 0,
-  "withFindings": 110,
-  "errored": 11,
-  "findings": 1165,
+  "withFindings": 117,
+  "errored": 2,
+  "findings": 1347,
   "byType": {
-   "missing-section": 389,
-   "copy": 172,
-   "extra-section": 167,
-   "radius": 41,
-   "colour": 57,
-   "shadow": 53,
-   "spacing": 89,
-   "redirected": 2,
-   "size": 160,
-   "weight": 30,
-   "font": 5
+   "missing-section": 452,
+   "copy": 204,
+   "extra-section": 180,
+   "radius": 49,
+   "colour": 67,
+   "size": 175,
+   "weight": 36,
+   "shadow": 68,
+   "spacing": 107,
+   "font": 9
   }
  }
 }

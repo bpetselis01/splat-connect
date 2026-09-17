@@ -28,6 +28,8 @@
  */
 import { useState } from 'react'
 import Image from 'next/image'
+
+import { safePhotoSrc } from '@/lib/photo-src'
 import { MAX_PHOTOS } from '@splat-connect/types'
 import { useToast } from '@/components/toast'
 
@@ -171,7 +173,12 @@ export function PhotoTiles({
         {urls.map((url, i) => (
           <li key={url} className="flex w-36 flex-col gap-2">
             <div className="relative h-28 overflow-hidden rounded-lg border-2 border-ink bg-sunken">
-              <Image src={url} alt={`Photo ${i + 1}`} fill className="object-cover" />
+              <Image
+                src={safePhotoSrc(url) ?? '/illustrations/adapted-toy.svg'}
+                alt={`Photo ${i + 1}`}
+                fill
+                className="object-cover"
+              />
               {i === 0 ? (
                 <span className="absolute inset-x-0 bottom-0 border-t-2 border-ink bg-apricot py-0.5 text-center text-[10px] font-black uppercase tracking-wider text-ink">
                   Cover

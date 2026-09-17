@@ -12,12 +12,15 @@
  */
 import Image from 'next/image'
 
+import { safePhotoSrc } from '@/lib/photo-src'
+
 function PhotoTile({ url, caption }: { url: string | null; caption: string }) {
+  const src = safePhotoSrc(url)
   return (
     <li>
-      {url ? (
+      {src ? (
         <div className="relative h-32 w-full overflow-hidden rounded-lg bg-sunken">
-          <Image src={url} alt={caption} fill className="object-cover" />
+          <Image src={src} alt={caption} fill className="object-cover" />
         </div>
       ) : (
         <div className="flex h-32 w-full items-center justify-center rounded-lg bg-brand-tint text-4xl">
