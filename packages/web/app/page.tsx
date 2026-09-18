@@ -137,7 +137,7 @@ export default async function HomePage() {
               Find a guide
             </Link>
             <Link href="/toy-library" className="btn btn-quiet btn-hero no-underline">
-              <Gift weight="bold" className="h-5 w-5" aria-hidden="true" />
+              <Gift weight="bold" className="h-5 w-5 text-apricot" aria-hidden="true" />
               Borrow a toy
             </Link>
           </div>

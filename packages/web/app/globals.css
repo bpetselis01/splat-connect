@@ -2879,11 +2879,25 @@
     position: relative;
   }
 
+  /*
+   * No flex gap, on purpose.
+   *
+   * The board sets four different margins down this column — 22px under the
+   * badge, 20px under the headline, 32px above the buttons, 40px above the
+   * stats — and a single `gap: 20px` flattened all four, losing 32px
+   * cumulatively. The band then read as one dense block instead of
+   * badge / headline / offer / proof, which is the order it is meant to be
+   * read in. Each child states its own top margin, exactly as the board does.
+   *
+   * The entrance is the board's `animation:rise .5s`. Its keyframes are
+   * character-for-character @keyframes pixel-rise above, so that is the one
+   * used rather than a second copy under another name.
+   */
   .hero__copy {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 20px;
+    animation: pixel-rise 0.5s var(--ease-out-quart) both;
   }
 
   /* A white pill on the canvas, not an uppercase mono eyebrow. */
@@ -2904,7 +2918,7 @@
 
   /* clamp(44px, 5vw, 68px)/1.05 at -.02em, off the board's own declaration. */
   .hero__title {
-    margin: 0;
+    margin: 22px 0 0;
     font-family: var(--font-display);
     font-size: clamp(2.75rem, 5vw, 4.25rem);
     font-weight: 800;
@@ -2921,7 +2935,7 @@
 
   .hero__lede {
     max-width: 46ch;
-    margin: 0;
+    margin: 20px 0 0;
     font-size: 19px;
     line-height: 1.55;
     color: var(--color-muted);
@@ -2931,6 +2945,7 @@
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
+    margin-top: 32px;
   }
 
   .stat-chips {
@@ -2940,6 +2955,10 @@
     margin: 4px 0 0;
     padding: 0;
     list-style: none;
+  }
+
+  .hero__copy .stat-chips {
+    margin-top: 40px;
   }
 
   .stat-chip {
@@ -2993,6 +3012,9 @@
     flex-direction: column;
     align-items: center;
     gap: 12px;
+    /* The board's `rise .6s .1s` — a beat behind the copy, so the two columns
+       arrive in reading order rather than together. */
+    animation: pixel-rise 0.6s 0.1s var(--ease-out-quart) both;
   }
 
   /* A 420px wash behind the bear. Without it he floats on bare canvas and the
@@ -3044,6 +3066,45 @@
     line-height: 1.45;
     text-align: center;
     color: var(--color-ink);
+    /* Last in, and after the bear has landed: the board's `pop .6s .5s`. It is
+       transform-only, so `both` holds the bubble at scale(.6) rather than
+       hidden for the half-second before it starts — which is what makes it
+       read as the bear speaking rather than as a card fading in. */
+    animation: pop 0.6s 0.5s var(--ease-out-quart) both;
+  }
+
+  /* Transform-only, as the board has it. */
+  @keyframes pop {
+    0% { transform: scale(0.6); }
+    60% { transform: scale(1.08); }
+    100% { transform: scale(1); }
+  }
+
+  /*
+   * Collapsed, not removed, for the same reason .rise is: `both` holds the
+   * first frame until the animation starts, so disabling these outright would
+   * leave the hero's copy invisible and its bubble at 60%.
+   *
+   * blob and bob are stopped outright instead. They are the only INFINITE
+   * animations on the page — a wash that never settles and a bear that never
+   * stops bobbing are precisely what this setting is asked for, and unlike the
+   * three entrances there is no first frame to be stranded on.
+   *
+   * Kept next to the rules it undoes rather than gathered into one block: see
+   * the note on Lightning CSS merging adjacent twins further up this file.
+   */
+  @media (prefers-reduced-motion: reduce) {
+    .hero__copy,
+    .hero__mascot,
+    .hero__bubble {
+      animation-duration: 0.01ms;
+      animation-delay: 0ms;
+    }
+
+    .hero__blobs > span,
+    .hero__mascot .splat-mascot {
+      animation: none;
+    }
   }
 
   .splat-mascot {
@@ -3423,6 +3484,30 @@
     padding-inline: 28px;
     font-size: 17px;
     gap: 10px;
+  }
+
+  /*
+   * The hero pair sits at the same physical height, and only the fill says
+   * which is the main action — the board gives the secondary --e2 + --hi
+   * against the primary's --glow + --hi. .btn-quiet's own --e1 is right in a
+   * toolbar and reads visibly flat beside a 52px glowing button.
+   *
+   * (0,2,0) so it outranks .btn-quiet, and compounded rather than on .btn-hero
+   * alone, which would have stripped the primary's glow — .btn-hero and
+   * .btn-primary are both (0,1,0) and .btn-hero is later in the file.
+   *
+   * Hover needs nothing here: the shared press block already takes every .btn
+   * to --e3, which is what the board draws.
+   */
+  .btn-quiet.btn-hero {
+    box-shadow: var(--shadow-e2), var(--shadow-hi);
+  }
+
+  /* 3px of offset rather than .btn's 2px, which is what the board sets on the
+     hero pair and nowhere else — these are the only two controls with a wash
+     behind them, and at 2px the ring reads as part of the button. */
+  .btn-hero:focus-visible {
+    outline-offset: 3px;
   }
 
   /* 52px — the primary step, for a secondary that has to match a primary

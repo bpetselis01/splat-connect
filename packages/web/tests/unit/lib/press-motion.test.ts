@@ -34,8 +34,18 @@ const FAMILIES = ['.btn', '.card-link', '.chip', '.step-pill', '.dropzone', '.do
  * several `@media (prefers-reduced-motion)` blocks exist earlier in the file
  * for unrelated rules, so an unscoped search finds the wrong one and passes or
  * fails for the wrong reason.
+ *
+ * Bounded at the end too, at the `}` that closes the block's own
+ * `@layer components` — every rule inside it is indented, so a brace in column
+ * zero is the layer's. It ran to end-of-file until 2026-09-18, which was only
+ * ever correct because this was the last section in the sheet. The moment a
+ * later one grew a reduced-motion block of its own, the `lastIndexOf` below
+ * retargeted onto it and the suite failed pointing at a rule it was never
+ * written to guard — the same class of silent mis-scoping the block's own
+ * comments warn about, in the test rather than the CSS.
  */
-const BLOCK = css.slice(css.lastIndexOf('Press motion, in one place'))
+const PRESS = css.lastIndexOf('Press motion, in one place')
+const BLOCK = css.slice(PRESS, css.indexOf('\n}\n', PRESS))
 
 describe('press motion', () => {
   // Tests: the panel's :has() selector is never grouped with the base family list
