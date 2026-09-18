@@ -2,15 +2,24 @@ import { useEffect, useState } from 'react'
 import { Stack } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
-import { useFonts, Nunito_400Regular, Nunito_600SemiBold, Nunito_700Bold, Nunito_900Black } from '@expo-google-fonts/nunito'
-import { Jersey10_400Regular } from '@expo-google-fonts/jersey-10'
+import { useFonts, Nunito_400Regular, Nunito_500Medium, Nunito_600SemiBold, Nunito_700Bold, Nunito_800ExtraBold } from '@expo-google-fonts/nunito'
+import { Baloo2_800ExtraBold } from '@expo-google-fonts/baloo-2'
+import { JetBrainsMono_400Regular } from '@expo-google-fonts/jetbrains-mono'
 import { AuthProvider } from '../lib/auth-context'
 import { IntroVideo } from '../components/ui/IntroVideo'
 
 SplashScreen.preventAutoHideAsync()
 
 export default function RootLayout() {
-  const [fontsLoaded] = useFonts({ Nunito_400Regular, Nunito_600SemiBold, Nunito_700Bold, Nunito_900Black, Jersey10_400Regular })
+  const [fontsLoaded] = useFonts({
+    Nunito_400Regular,
+    Nunito_500Medium,
+    Nunito_600SemiBold,
+    Nunito_700Bold,
+    Nunito_800ExtraBold,
+    Baloo2_800ExtraBold,
+    JetBrainsMono_400Regular,
+  })
   const [showIntro, setShowIntro] = useState(true)
 
   useEffect(() => {

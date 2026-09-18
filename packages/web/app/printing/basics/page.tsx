@@ -10,12 +10,19 @@ export const metadata = {
 export default function PrintingBasics() {
   return (
     <ProsePage
-      title="3D printing basics"
+      title="Printing basics"
       intro="Many switches, mounts and battery interrupters on this site are printed. You do not need to own a printer, and you do not need to understand slicing deeply — just enough to get a part that holds up."
     >
       <EditorialImage illustration="printer" ratio="2/1" />
 
-      <section>
+      {/*
+        The settings grid, straight off the board. Eight numbers somebody reads
+        standing at a printer, so they are a scannable grid rather than the
+        prose bullets this page used to bury them in — the board's intro says
+        "hand this page to whoever owns the printer", and that is the whole
+        design of it.
+      */}
+                  <section>
         <h2>If you don&apos;t have a printer</h2>
         <p>
           Ask a library, a makerspace, a men&apos;s shed, a school or a university. Many
@@ -28,54 +35,50 @@ export default function PrintingBasics() {
 
       <section>
         <h2>Which filament</h2>
-        <ul>
-          <li>
-            <strong>PLA</strong> for most parts. Easy, cheap, dimensionally accurate,
-            stiff enough for switch housings. Its weakness is heat — a PLA part left on a
-            car dashboard will sag.
-          </li>
-          <li>
-            <strong>PETG</strong> where a part flexes or takes repeated impact, such as a
-            lever arm or a clamp. Tougher than PLA, slightly fussier to print, and it
-            tolerates warmth.
-          </li>
-          <li>
-            <strong>Avoid ABS</strong> unless you have an enclosed printer and good
-            ventilation. The fumes are unpleasant and it warps badly.
-          </li>
-          <li>
-            <strong>Avoid flexible filament</strong> for a first print. It needs a
-            direct-drive extruder and a lot of patience.
-          </li>
+        <ul className="mt-3 flex list-none flex-col gap-3 pl-0">
+          {[
+            ['PLA', 'Most parts', 'Cheap, stiff, prints anywhere. Softens in a hot car — fine for indoor play.'],
+            ['PETG', 'Anything clamped', 'Tougher and heat-safe. Use for tray mounts and anything that flexes in service.'],
+            ['TPU', 'Contact surfaces', 'Flexible. Good for pads and grips against skin; slow to print, worth it.'],
+          ].map(([name, role, why]) => (
+            <li key={name} className="card p-4">
+              <p className="card-title">{name}</p>
+              <p className="eyebrow mt-0.5 text-muted">{role}</p>
+              <p className="mt-1.5 text-sm leading-relaxed text-muted">{why}</p>
+            </li>
+          ))}
         </ul>
       </section>
 
       <section>
+        {/*
+          Eight numbers somebody reads standing at a printer, so the board draws
+          them as a scannable grid rather than the prose bullets this page used
+          to bury them in. Its intro says "hand this page to whoever owns the
+          printer", and that is the whole design of the screen.
+        */}
         <h2>Settings that matter</h2>
-        <ul>
-          <li>
-            <strong>Layer height 0.2 mm.</strong> The default, and fine for everything
-            here. Go finer only for a part with fine detail.
-          </li>
-          <li>
-            <strong>Infill 30&ndash;40% for structural parts</strong>, and three or more
-            perimeters. Strength in printed parts comes more from perimeters than from
-            infill.
-          </li>
-          <li>
-            <strong>Print orientation decides strength.</strong> Layers separate under
-            load more readily than they break. Lay a lever flat so the stress runs along
-            the layers, not across them.
-          </li>
-          <li>
-            <strong>Supports</strong> only where the guide says. Every support leaves a
-            surface you then have to clean up.
-          </li>
-        </ul>
+        <dl className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {[
+            ['Layer height', '0.2 mm'],
+            ['Walls', '3'],
+            ['Infill', '25%'],
+            ['Nozzle', '210 °C'],
+            ['Bed', '60 °C'],
+            ['Supports', 'Touching bed'],
+            ['Tolerance', '+0.2 mm'],
+            ['Print time', '~40 min'],
+          ].map(([label, value]) => (
+            <div key={label} className="card p-4">
+              <dt className="eyebrow text-muted">{label}</dt>
+              <dd className="numeral mt-1.5 text-[22px] text-ink">{value}</dd>
+            </div>
+          ))}
+        </dl>
       </section>
 
       <section>
-        <h2>Finishing</h2>
+        <h2>Finishing — the part people skip</h2>
         <p>
           File or sand every edge a child will touch. Remove supports fully, then check
           the part against the guide&apos;s photographs — a stray blob in a switch housing

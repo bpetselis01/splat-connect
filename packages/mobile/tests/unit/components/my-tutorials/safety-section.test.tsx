@@ -10,7 +10,7 @@ jest.mock('expo-router', () => ({
 jest.mock('../../../../lib/auth-context', () => ({ useAuth: jest.fn() }))
 
 const mockDraft = {
-  tutorial: { id: 't1', safety_declared_at: null, status: 'draft', kind: 'toy_adaptation', difficulty: 'easy', title: 'T', tutorial_pdf_url: null, toy_photo_url: null, parts: [], tools: [], stl_files: [], } as Record<string, unknown>,
+  tutorial: { id: 't1', safety_declared_at: null, status: 'draft', kind: 'toy_adaptation', difficulty: 'easy', title: 'T', tutorial_pdf_url: null, photo_urls: [], toy_photo_url: null, parts: [], tools: [], stl_files: [], } as Record<string, unknown>,
   loading: false,
   loadError: false,
   saveState: 'idle',
@@ -25,7 +25,7 @@ jest.mock('../../../../lib/use-tutorial-draft', () => ({ useDraft: () => mockDra
 
 beforeEach(() => {
   jest.clearAllMocks()
-  mockDraft.tutorial = { id: 't1', safety_declared_at: null, status: 'draft', kind: 'toy_adaptation', difficulty: 'easy', title: 'T', tutorial_pdf_url: null, toy_photo_url: null, parts: [], tools: [], stl_files: [], }
+  mockDraft.tutorial = { id: 't1', safety_declared_at: null, status: 'draft', kind: 'toy_adaptation', difficulty: 'easy', title: 'T', tutorial_pdf_url: null, photo_urls: [], toy_photo_url: null, parts: [], tools: [], stl_files: [], }
 })
 
 it('lists every checklist point', () => {
@@ -51,6 +51,7 @@ it('shows the declaration once made and offers no way to unmake it', () => {
     difficulty: 'easy',
     title: 'T',
     tutorial_pdf_url: null,
+    photo_urls: [],
     toy_photo_url: null,
     parts: [],
     tools: [],

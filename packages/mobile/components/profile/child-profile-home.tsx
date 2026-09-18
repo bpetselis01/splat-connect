@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
   rowIcon: {
     width: 44,
     height: 44,
-    borderRadius: theme.radii.md,
+    borderRadius: theme.radii.field,
     backgroundColor: theme.colors.accentLight,
     alignItems: 'center',
     justifyContent: 'center',

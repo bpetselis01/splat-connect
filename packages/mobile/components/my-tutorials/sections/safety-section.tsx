@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
   declared: {
     fontFamily: theme.fonts.semiBold,
     fontSize: theme.type.label,
-    color: theme.colors.mintDeep,
+    color: theme.colors.ink,
     marginTop: theme.spacing(4),
   },
   tick: {

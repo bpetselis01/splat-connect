@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 import { createContributor, createPublishedToy, signIn, deleteUser, acceptTerms } from './helpers'
 
 /**
@@ -22,6 +22,25 @@ import { createContributor, createPublishedToy, signIn, deleteUser, acceptTerms 
  * type === 'exchange' || isOwner) — the owner never sees their own code,
  * they just key in the requester's.
  */
+/**
+ * Ask for a toy, from the detail page through to the open thread.
+ *
+ * Asking moved onto its own screen on 2026-09-17 — the artboard draws it as a
+ * decision with three parts, and the detail page's control is now a link into
+ * that form rather than the ask itself. The note is the only required field,
+ * which is the whole point of the screen: "a line or two about the child is
+ * what gets a yes".
+ */
+async function askForToy(page: Page, toyId: string) {
+  await page.goto(`/toy-library/${toyId}`)
+  await page.getByRole('link', { name: 'Ask for this toy' }).click()
+  await page
+    .getByLabel(/Say who it is for/)
+    .fill('My daughter is five and presses with a flat palm.')
+  await page.getByRole('button', { name: /^Ask / }).click()
+  await expect(page).toHaveURL(/\/dashboard\/exchanges\//)
+}
+
 test.describe('Toy donation and exchange', () => {
   test('a requester can complete a donation handoff end to end', async ({ page }) => {
     const owner = await createContributor()
@@ -33,9 +52,7 @@ test.describe('Toy donation and exchange', () => {
     try {
       await signIn(page, requester.email, requester.password)
       await page.waitForURL('**/dashboard')
-      await page.goto(`/toy-library/${toyId}`)
-      await page.getByRole('button', { name: 'Arrange pickup' }).click()
-      await expect(page).toHaveURL(/\/dashboard\/exchanges\//)
+      await askForToy(page, toyId)
       const txUrl = page.url()
 
       await signIn(page, owner.email, owner.password)
@@ -101,9 +118,7 @@ test.describe('Toy donation and exchange', () => {
     try {
       await signIn(page, requester.email, requester.password)
       await page.waitForURL('**/dashboard')
-      await page.goto(`/toy-library/${toyId}`)
-      await page.getByRole('button', { name: 'Arrange pickup' }).click()
-      await expect(page).toHaveURL(/\/dashboard\/exchanges\//)
+      await askForToy(page, toyId)
       const txUrl = page.url()
 
       await signIn(page, owner.email, owner.password)
@@ -127,9 +142,7 @@ test.describe('Toy donation and exchange', () => {
     try {
       await signIn(page, requester.email, requester.password)
       await page.waitForURL('**/dashboard')
-      await page.goto(`/toy-library/${toyId}`)
-      await page.getByRole('button', { name: 'Arrange pickup' }).click()
-      await expect(page).toHaveURL(/\/dashboard\/exchanges\//)
+      await askForToy(page, toyId)
 
       await page.getByRole('button', { name: 'Withdraw' }).click()
       await expect(page.getByText(/this request was withdrawn/i)).toBeVisible()
@@ -166,9 +179,7 @@ test.describe('Toy donation and exchange', () => {
     try {
       await signIn(requesterPage, requester.email, requester.password)
       await requesterPage.waitForURL('**/dashboard')
-      await requesterPage.goto(`/toy-library/${toyId}`)
-      await requesterPage.getByRole('button', { name: 'Arrange pickup' }).click()
-      await expect(requesterPage).toHaveURL(/\/dashboard\/exchanges\//)
+      await askForToy(requesterPage, toyId)
       const txUrl = requesterPage.url()
 
       await signIn(ownerPage, owner.email, owner.password)

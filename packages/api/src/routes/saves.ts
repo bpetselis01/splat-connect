@@ -41,9 +41,9 @@ type EntityQuery = {
  *
  * The selects are copied from routes/public.ts on purpose: a saved list returns
  * the same shape the public list does, so TutorialCard and ToyLibraryCard
- * render it with no changes at all. 'organisation' and 'printable_part' are in
- * the enum and deliberately absent here, so their routes 404 until someone adds
- * a line — placeholder-ness lives in one place rather than five conditionals.
+ * render it with no changes at all. 'printable_part' is in the enum and
+ * deliberately absent here, so its route 404s until someone adds a line —
+ * placeholder-ness lives in one place rather than five conditionals.
  */
 const SOURCE = {
   tutorials: {
@@ -60,6 +60,14 @@ const SOURCE = {
     table: 'toy_ideas',
     select: '*',
     filter: (q: EntityQuery) => q.eq('status', 'challenge'),
+  },
+  organisations: {
+    table: 'organizations',
+    // The public columns only, and the same ones GET /public/organizations
+    // returns. A saved list must not be a wider read of a row than the page
+    // the save came from.
+    select: 'id, name, description, status, suburb, state',
+    filter: (q: EntityQuery) => q.eq('status', 'active'),
   },
 } satisfies Record<SaveSlug, { table: string; select: string; filter: (q: EntityQuery) => EntityQuery }>
 
@@ -83,7 +91,9 @@ saves.get('/ids', async (c) => {
 
   if (error) return c.json({ error: error.message }, 500)
 
-  const out = { tutorials: [], toys: [], challenges: [] } as SavedIds
+  // Built from SLUGS rather than written out, so switching a type on is the
+  // one-line change SAVE_SLUGS promises rather than two places to remember.
+  const out = Object.fromEntries(SLUGS.map((slug) => [slug, [] as string[]])) as SavedIds
   for (const slug of SLUGS) {
     out[slug] = (data ?? [])
       .filter((r) => r.entity_type === SAVE_SLUGS[slug])

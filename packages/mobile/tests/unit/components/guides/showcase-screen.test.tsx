@@ -13,7 +13,7 @@ jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }) }))
 
 const tutorial = (over: object) => ({
   id: 't1', title: 'Build a Robot Arm', description: null, difficulty: 'easy', kind: 'toy_adaptation',
-  status: 'approved', tutorial_pdf_url: null, toy_photo_url: null, rejection_note: null,
+  status: 'approved', tutorial_pdf_url: null, photo_urls: [], toy_photo_url: null, rejection_note: null,
   created_at: '', updated_at: '', reviewed_at: null, reviewed_by: null, reviewed_for_org_id: null, ...over,
 })
 

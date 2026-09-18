@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { ProsePage } from '@/components/prose-page'
+import { LearnShell } from '@/components/learn-shell'
 import { EditorialImage } from '@/components/editorial-image'
 
 export const metadata = {
@@ -9,7 +10,8 @@ export const metadata = {
 
 export default function Adaptation101() {
   return (
-    <ProsePage
+    <LearnShell slug="toy-adaptation-101">
+      <ProsePage
       title="Toy adaptation 101"
       intro="Almost every adapted toy on this site works the same way, and the trick is smaller than you would expect. Once you have seen it once, you will see it everywhere."
     >
@@ -94,6 +96,7 @@ export default function Adaptation101() {
           specific toys.
         </p>
       </section>
-    </ProsePage>
+      </ProsePage>
+    </LearnShell>
   )
 }

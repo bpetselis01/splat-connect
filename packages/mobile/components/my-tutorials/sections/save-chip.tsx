@@ -33,6 +33,6 @@ const styles = StyleSheet.create({
   chip: {
     fontFamily: theme.fonts.semiBold,
     fontSize: theme.type.caption,
-    color: theme.colors.mintDeep,
+    color: theme.colors.ink,
   },
 })

@@ -537,4 +537,353 @@ admin.delete('/ideas/:id/participants/:profileId/removal', async (c) => {
   return c.body(null, 204)
 })
 
+/* -------------------------------------------------- organisation requests --
+ *
+ * Feature 12. Leadership is granted by an admin and never self-started — the
+ * artboard calls that the trust model — so this is the queue where somebody
+ * asks and an admin decides.
+ *
+ * Approving runs 060's function rather than three writes from here. An approval
+ * that only flips a status leaves an admin to remember to create the
+ * organisation and appoint the requester, and the failure mode is an approved
+ * request with nothing behind it and a person told they lead something that
+ * does not exist.
+ */
+
+const ORG_REQUEST_COLUMNS =
+  'id, requester_id, org_name, what_they_do, verification, status, review_note, reviewed_by, reviewed_at, organization_id, created_at, updated_at'
+
+admin.get('/organization-requests', async (c) => {
+  const supabase = createUserClient(c.get('token'))
+  const { data, error } = await supabase
+    .from('organization_requests')
+    .select(ORG_REQUEST_COLUMNS)
+    // Oldest first: an admin arrives asking what has waited longest, not what
+    // arrived most recently. Same ordering rule as the review queue.
+    .order('created_at', { ascending: true })
+  if (error) return c.json({ error: error.message }, 500)
+
+  /*
+   * The requester's name and email, read with the ADMIN client.
+   *
+   * Not a PostgREST embed: 045 revoked the column grants on `profiles` and
+   * granted back only what a signed-in account may read, which does not include
+   * `email` — the embed failed the whole query with "permission denied for
+   * table profiles", and the queue rendered empty with no error anywhere.
+   *
+   * An admin verifying that somebody works where they say they do needs to see
+   * who is asking, which is the narrowest possible reason to widen this.
+   */
+  const rows = (data ?? []) as Array<Record<string, unknown> & { requester_id: string }>
+  const ids = [...new Set(rows.map((r) => r.requester_id))]
+  const { data: people } = ids.length
+    ? await createAdminClient().from('profiles').select('id, name, email').in('id', ids)
+    : { data: [] }
+  const byId = new Map(
+    ((people ?? []) as Array<{ id: string; name: string; email: string }>).map((p) => [p.id, p])
+  )
+
+  return c.json(
+    rows.map((r) => ({
+      ...r,
+      requester: byId.get(r.requester_id) ?? null,
+    }))
+  )
+})
+
+admin.post('/organization-requests/:id/approve', async (c) => {
+  const supabase = createUserClient(c.get('token'))
+  const body = (await c.req.json().catch(() => ({}))) as { note?: unknown }
+  const note = typeof body.note === 'string' && body.note.trim() ? body.note.trim() : null
+
+  const { data, error } = await supabase.rpc('approve_organization_request', {
+    p_request_id: c.req.param('id'),
+    p_note: note,
+  })
+  if (error) return c.json({ error: error.message }, 500)
+
+  const result = data as { outcome: string; organization_id?: string; status?: string }
+  if (result.outcome === 'forbidden') return c.json({ error: 'Admins only' }, 403)
+  if (result.outcome === 'missing') return c.json({ error: 'Not found' }, 404)
+  // Idempotent rather than an error: a double-click must not mint two
+  // organisations, and the first outcome is more useful than a 409.
+  return c.json(result)
+})
+
+admin.post('/organization-requests/:id/decline', async (c) => {
+  const supabase = createUserClient(c.get('token'))
+  const body = (await c.req.json().catch(() => ({}))) as { note?: unknown }
+  const note = typeof body.note === 'string' ? body.note.trim() : ''
+  // A refusal with no reason is the thing that stops somebody asking again when
+  // they should — 037 says the same about a rejected idea.
+  if (!note) return c.json({ error: 'Say why, so they can act on it.' }, 400)
+  if (note.length > 1000) return c.json({ error: 'The note is longer than 1000 characters.' }, 400)
+
+  const { data, error } = await supabase
+    .from('organization_requests')
+    .update({
+      status: 'declined',
+      review_note: note,
+      reviewed_by: c.get('userId'),
+      reviewed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', c.req.param('id'))
+    .eq('status', 'pending')
+    .select(ORG_REQUEST_COLUMNS)
+    .maybeSingle()
+  if (error) return c.json({ error: error.message }, 500)
+  if (!data) return c.json({ error: 'That request is not open.' }, 404)
+  return c.json(data)
+})
+
+/* ------------------------------------------------------------- 065 queues --
+ *
+ * Three screens the artboard draws and 065 gave tables to. The other two admin
+ * queues — build requests and print jobs — are query surfaces over
+ * toy_transactions and are below.
+ */
+
+const CONTACT_COLUMNS = 'id, topic, name, email, body, sender_id, status, handled_by, handled_at, created_at'
+
+/**
+ * GET /api/admin/inbox
+ *
+ * Contact-form messages. Safety jumps the queue whatever its age — the sort is
+ * the point of the screen, and a safety report that sorted by date would sit
+ * under four weeks of media enquiries.
+ */
+admin.get('/inbox', async (c) => {
+  const { data, error } = await createAdminClient()
+    .from('contact_messages')
+    .select(CONTACT_COLUMNS)
+    .order('created_at', { ascending: true })
+  if (error) return c.json({ error: error.message }, 500)
+
+  // Sorted here rather than in SQL because "safety first, then oldest" is two
+  // orderings of one list and PostgREST can only express it as an expression
+  // index. Small list, and the rule is legible in the place it matters.
+  const rows = data ?? []
+  rows.sort((a, b) => {
+    const safety = Number(b.topic === 'safety') - Number(a.topic === 'safety')
+    return safety !== 0 ? safety : String(a.created_at).localeCompare(String(b.created_at))
+  })
+  return c.json(rows)
+})
+
+admin.patch('/inbox/:id', async (c) => {
+  const body = (await c.req.json().catch(() => ({}))) as { status?: unknown }
+  const status = body.status
+  if (status !== 'open' && status !== 'replied' && status !== 'closed') {
+    return c.json({ error: 'A message is open, replied or closed.' }, 400)
+  }
+  const { data, error } = await createAdminClient()
+    .from('contact_messages')
+    .update({
+      status,
+      // Who dealt with it, and when. Cleared on reopen so the record does not
+      // claim somebody answered something they did not.
+      handled_by: status === 'open' ? null : c.get('userId'),
+      handled_at: status === 'open' ? null : new Date().toISOString(),
+    })
+    .eq('id', c.req.param('id'))
+    .select(CONTACT_COLUMNS)
+    .maybeSingle()
+  if (error) return c.json({ error: error.message }, 500)
+  if (!data) return c.json({ error: 'No such message' }, 404)
+  return c.json(data)
+})
+
+const REPORT_COLUMNS =
+  'id, reporter_id, subject_kind, subject_label, subject_id, category, body, ok_to_contact, status, note_to_reporter, handled_by, handled_at, created_at'
+
+/**
+ * GET /api/admin/member-reports
+ *
+ * Private problem reports. Safety sits at the top whatever its age, then
+ * unresolved before resolved, then oldest first.
+ *
+ * Distinct from GET /reports, which is 041's narrower queue of reports against
+ * a design-challenge participant. Two tables, two screens, deliberately not
+ * merged: one is about conduct inside one thread and the other is about
+ * anything on the platform.
+ */
+admin.get('/member-reports', async (c) => {
+  const supabase = createAdminClient()
+  const { data, error } = await supabase.from('member_reports').select(REPORT_COLUMNS)
+  if (error) return c.json({ error: error.message }, 500)
+
+  const rows = data ?? []
+  const names = new Map<string, string>()
+  const ids = [...new Set(rows.map((r) => r.reporter_id as string))]
+  if (ids.length > 0) {
+    const { data: profiles } = await supabase.from('profiles').select('id, name').in('id', ids)
+    for (const p of profiles ?? []) names.set(p.id as string, p.name as string)
+  }
+
+  rows.sort((a, b) => {
+    const safety = Number(b.category === 'safety') - Number(a.category === 'safety')
+    if (safety !== 0) return safety
+    const open = Number(a.status === 'resolved') - Number(b.status === 'resolved')
+    if (open !== 0) return open
+    return String(a.created_at).localeCompare(String(b.created_at))
+  })
+
+  // The reporter's name is returned to an ADMIN and to nobody else — this route
+  // is behind the admin guard at the top of this file, and 065's policies say
+  // the same thing at the row level. The person reported never sees any of it.
+  return c.json(rows.map((r) => ({ ...r, reporter_name: names.get(r.reporter_id as string) ?? null })))
+})
+
+admin.patch('/member-reports/:id', async (c) => {
+  const body = (await c.req.json().catch(() => ({}))) as {
+    status?: unknown
+    note_to_reporter?: unknown
+  }
+  const patch: Record<string, unknown> = {
+    handled_by: c.get('userId'),
+    handled_at: new Date().toISOString(),
+  }
+  if ('status' in body) {
+    if (body.status !== 'new' && body.status !== 'looking' && body.status !== 'resolved') {
+      return c.json({ error: 'A report is new, looking or resolved.' }, 400)
+    }
+    patch.status = body.status
+  }
+  if ('note_to_reporter' in body) {
+    const note = typeof body.note_to_reporter === 'string' ? body.note_to_reporter.trim() : ''
+    if (note.length > 2000) return c.json({ error: 'That note is too long.' }, 400)
+    patch.note_to_reporter = note || null
+  }
+
+  const { data, error } = await createAdminClient()
+    .from('member_reports')
+    .update(patch)
+    .eq('id', c.req.param('id'))
+    .select(REPORT_COLUMNS)
+    .maybeSingle()
+  if (error) return c.json({ error: error.message }, 500)
+  if (!data) return c.json({ error: 'No such report' }, 404)
+  return c.json(data)
+})
+
+/**
+ * GET /api/admin/build-requests
+ *
+ * Makers-wanted oversight. Two things go wrong with a build request and
+ * neither is an error state: unclaimed for two weeks, or claimed and silent for
+ * ten days. Both are computed here rather than stored, because they are
+ * properties of the clock rather than of the row.
+ */
+admin.get('/build-requests', async (c) => {
+  const supabase = createAdminClient()
+  const { data, error } = await supabase
+    .from('toy_transactions')
+    .select('id, status, tutorial_id, requester_id, owner_id, owner_org_id, requester_suburb, build_brief, created_at, updated_at')
+    .eq('type', 'build')
+    .in('status', ['requested', 'accepted'])
+    .order('created_at', { ascending: true })
+  if (error) return c.json({ error: error.message }, 500)
+
+  const rows = data ?? []
+  const { data: guides } = await supabase
+    .from('tutorials')
+    .select('id, title')
+    .in('id', rows.map((r) => r.tutorial_id as string))
+  const title = new Map((guides ?? []).map((g) => [g.id as string, g.title as string]))
+
+  const now = Date.now()
+  const daysSince = (iso: string) => Math.floor((now - new Date(iso).getTime()) / 864e5)
+
+  return c.json(
+    rows.map((r) => {
+      const unclaimed = r.owner_id === null && r.owner_org_id === null
+      const idleDays = daysSince(String(r.updated_at))
+      return {
+        ...r,
+        tutorial_title: title.get(r.tutorial_id as string) ?? null,
+        age_days: daysSince(String(r.created_at)),
+        idle_days: idleDays,
+        // The two the artboard names. Separate flags rather than one "stalled",
+        // because the answer differs: an unclaimed one needs reopening or
+        // promoting, a silent one needs a nudge to a named person.
+        unclaimed_too_long: unclaimed && daysSince(String(r.created_at)) >= 14,
+        claimed_and_silent: !unclaimed && r.status === 'accepted' && idleDays >= 10,
+      }
+    })
+  )
+})
+
+/**
+ * GET /api/admin/print-jobs
+ *
+ * Every job on the platform. "Stalled — accepted but not moved in ten days — is
+ * a status of its own and sorts to the top." It is not a status column: a job
+ * that stalls and then moves is not a job that changed state, it is a job whose
+ * printer got to it. Computed, and sorted on.
+ */
+admin.get('/print-jobs', async (c) => {
+  const supabase = createAdminClient()
+  const { data, error } = await supabase
+    .from('toy_transactions')
+    .select('id, status, tutorial_id, printer_id, event_id, requester_id, owner_id, owner_org_id, printing_started_at, ready_at, decline_reason, created_at, updated_at')
+    .eq('type', 'print')
+    .order('created_at', { ascending: false })
+  if (error) return c.json({ error: error.message }, 500)
+
+  const rows = data ?? []
+  const [{ data: guides }, { data: printers }] = await Promise.all([
+    supabase.from('tutorials').select('id, title').in('id', rows.map((r) => r.tutorial_id as string)),
+    supabase
+      .from('printers')
+      .select('id, name')
+      .in('id', rows.map((r) => r.printer_id).filter((id): id is string => !!id)),
+  ])
+  const title = new Map((guides ?? []).map((g) => [g.id as string, g.title as string]))
+  const printerName = new Map((printers ?? []).map((p) => [p.id as string, p.name as string]))
+
+  const now = Date.now()
+  const out = rows.map((r) => {
+    const idleDays = Math.floor((now - new Date(String(r.updated_at)).getTime()) / 864e5)
+    return {
+      ...r,
+      tutorial_title: title.get(r.tutorial_id as string) ?? null,
+      printer_name: r.printer_id ? (printerName.get(r.printer_id as string) ?? null) : null,
+      idle_days: idleDays,
+      stalled: r.status === 'accepted' && r.ready_at === null && idleDays >= 10,
+    }
+  })
+  out.sort((a, b) => Number(b.stalled) - Number(a.stalled))
+  return c.json(out)
+})
+
+/**
+ * Site content. One row per section, read by key.
+ */
+admin.get('/content', async (c) => {
+  const { data, error } = await createAdminClient().from('site_content').select('key, value, updated_at')
+  if (error) return c.json({ error: error.message }, 500)
+  return c.json(data ?? [])
+})
+
+admin.put('/content/:key', async (c) => {
+  const key = c.req.param('key')
+  if (!/^[a-z][a-z0-9-]{1,60}$/.test(key)) return c.json({ error: 'Not a content key' }, 400)
+  const body = (await c.req.json().catch(() => null)) as { value?: unknown } | null
+  if (!body || typeof body.value !== 'object' || body.value === null || Array.isArray(body.value)) {
+    return c.json({ error: 'Send the section as an object.' }, 400)
+  }
+
+  const { data, error } = await createAdminClient()
+    .from('site_content')
+    .upsert(
+      { key, value: body.value, updated_by: c.get('userId'), updated_at: new Date().toISOString() },
+      { onConflict: 'key' }
+    )
+    .select('key, value, updated_at')
+    .maybeSingle()
+  if (error) return c.json({ error: error.message }, 500)
+  return c.json(data)
+})
+
 export default admin

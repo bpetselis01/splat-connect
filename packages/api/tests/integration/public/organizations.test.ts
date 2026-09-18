@@ -22,6 +22,12 @@ describe('GET /api/public/organizations', () => {
     expect(Array.isArray(await res.json())).toBe(true)
   })
 
+  // Chain: an allowlist asserted as an exact set, so a column added to the
+  //        select has to be added here too and somebody has to look at it. The
+  //        four recycling/location fields joined on 2026-09-17 because
+  //        /get-involved/recycling and its booking form both filter on "who can
+  //        take what" — all four are granted public by 059. The street address
+  //        is NOT among them and stays on the pickup columns.
   it('returns an organisation with only its public fields', async () => {
     const orgId = await createOrg({ createdBy: owner.id, name: `Public Org ${Date.now()}` })
     orgIds.push(orgId)
@@ -31,7 +37,16 @@ describe('GET /api/public/organizations', () => {
     const found = rows.find((r) => r.id === orgId)
 
     expect(found).toBeDefined()
-    expect(Object.keys(found!).sort()).toEqual(['description', 'id', 'name', 'status'])
+    expect(Object.keys(found!).sort()).toEqual([
+      'description',
+      'id',
+      'name',
+      'recycling_materials',
+      'recycling_note',
+      'state',
+      'status',
+      'suburb',
+    ])
   })
 
   // The field-drift hazard: org_leaders carries user ids.

@@ -121,7 +121,7 @@ export default async function DashboardChallengesPage() {
       </div>
 
       <section>
-        <h2 className="text-lg font-bold text-ink">Your ideas</h2>
+        <h2 className="title-section">Your ideas</h2>
 
         {mine.failed ? (
           <div className="card mt-3 flex flex-col items-center px-6 py-12 text-center">
@@ -156,7 +156,7 @@ export default async function DashboardChallengesPage() {
       </section>
 
       <section className="mt-10">
-        <h2 className="text-lg font-bold text-ink">Challenges you joined</h2>
+        <h2 className="title-section">Challenges you joined</h2>
 
         {joined.failed ? (
           <div className="card mt-3 flex flex-col items-center px-6 py-12 text-center">

@@ -12,36 +12,11 @@ async function expectWithinViewport(locator: Locator, viewportWidth: number) {
   expect(box!.x + box!.width).toBeLessThanOrEqual(viewportWidth + 1)
 }
 
-// Mobile navigation is explicitly out of scope for the My SPLAT front-door
-// change (docs/superpowers/specs/2026-08-23-my-splat-front-door-design.md):
-// the drawer's trigger lived in the header (components/nav.tsx), which no
-// longer renders on any page that has a rail, so "Open navigation" has
-// nothing left to render it. Skipped until mobile nav is redesigned.
-test.skip('@responsive every rail link stays inside the viewport for a contributor', async ({ page }) => {
-  const contributor = await createContributor()
-  await acceptTerms(contributor.id)
-  await signIn(page, contributor.email, contributor.password)
-  await page.waitForURL('**/dashboard')
-
-  const width = page.viewportSize()!.width
-  const openButton = page.getByRole('button', { name: 'Open navigation' })
-  await expect(openButton).toBeVisible()
-  await expectWithinViewport(openButton, width)
-
-  await openButton.click()
-  const drawer = page.locator('dialog.shell-drawer')
-  await expect(drawer).toBeVisible()
-
-  // 'Guides' and 'Organisations' were rail rows before the Browse group moved
-  // to the public top bar (2026-08-21) — the rail now only carries rows a
-  // plain contributor actually has, per lib/nav-model.ts.
-  for (const name of ['My tutorials', 'My toys', 'Notifications']) {
-    const link = drawer.getByRole('link', { name, exact: true })
-    await expect(link).toBeVisible()
-    await expectWithinViewport(link, width)
-  }
-  await expect(drawer.getByRole('button', { name: 'Sign out' })).toBeVisible()
-})
+// The rail and its narrow-viewport drawer were retired on 2026-09-17 — the
+// artboard's note on the My SPLAT hub is "replaces the old sidebar entirely".
+// The header renders on every page at every width now, so the drawer test that
+// stood here has nothing left to open; the header's own reflow is covered by
+// the public cases below.
 
 test('@responsive the hero heading does not overflow', async ({ page }) => {
   await page.goto('/')

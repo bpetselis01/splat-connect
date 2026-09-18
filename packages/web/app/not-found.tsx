@@ -9,9 +9,9 @@
  * result was inconsistent as well as bare: routes whose shell had already been
  * flushed kept their chrome, routes that called notFound() sooner did not.
  *
- * One link, not two: the chrome is back by the time this renders, so the rail
- * already carries "Back to My SPLAT" and the header carries the whole public
- * nav. BoundaryLink rather than Link because that one link crosses the account
+ * One link, not two: the chrome is back by the time this renders, so the
+ * header already carries the whole public nav. BoundaryLink rather than Link
+ * because that one link crosses the account
  * boundary exactly when the miss happened inside the account section.
  */
 import { BoundaryLink } from '@/components/boundary-link'

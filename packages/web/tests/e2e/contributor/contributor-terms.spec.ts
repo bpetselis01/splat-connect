@@ -51,7 +51,7 @@ test('accepting on first login lands on the dashboard with its real header, not 
   // onboarding layout has neither, so the header's presence is what proves
   // this landed on the real layout.
   await expect(page.getByRole('banner')).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'My SPLAT', level: 1 })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /^Welcome back,/, level: 1 })).toBeVisible()
 })
 
 test('accepting returns the user to where they were blocked and unblocks editing', async ({ page }) => {

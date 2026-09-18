@@ -77,13 +77,19 @@ test('a collaborator is invited, accepts, edits, submits, and both are notified 
 
     // 3. The collaborator signs in, finds the invite on /notifications — with
     //    the unread badge already counting it — and accepts.
+    //
+    //    The badge is read off the My SPLAT hub card rather than a nav row:
+    //    the rail carried it until 2026-09-17, and the hub is where buildNav's
+    //    count renders now. Asserted BEFORE opening /notifications, because
+    //    reading them is what clears it.
     await signIn(page, collaborator.email, collaborator.password)
     await page.waitForURL('**/dashboard')
+    await expect(page.getByRole('link', { name: /Notifications/ })).toContainText('1')
+
     await page.goto('/notifications')
     await expect(
       page.getByText(new RegExp(`invited you to collaborate on "${title}"`))
     ).toBeVisible()
-    await expect(page.getByRole('link', { name: /Notifications/ })).toContainText('1')
     await page.getByRole('button', { name: 'Accept' }).click()
     await expect
       .poll(async () => {
@@ -137,30 +143,34 @@ test('a collaborator is invited, accepts, edits, submits, and both are notified 
     await page.waitForLoadState('networkidle')
 
     // 6. Both the author and the collaborator see the approval on
-    //    /notifications, with the unread badge counting it.
+    //    /notifications, with the unread badge on the hub counting it — read
+    //    from /dashboard first, since the badge no longer rides along on every
+    //    page the way the rail's row did.
     await signIn(page, author.email, author.password)
     await page.waitForURL('**/dashboard')
-    await page.goto('/notifications')
-    await expect(
-      page.getByText(new RegExp(`"${renamedTitle}" was approved and is now published`))
-    ).toBeVisible()
     const authorUnread = await unreadCount(author.id)
     expect(authorUnread).toBeGreaterThan(0)
     await expect(page.getByRole('link', { name: /Notifications/ })).toContainText(
       String(authorUnread)
     )
 
-    await signIn(page, collaborator.email, collaborator.password)
-    await page.waitForURL('**/dashboard')
     await page.goto('/notifications')
     await expect(
       page.getByText(new RegExp(`"${renamedTitle}" was approved and is now published`))
     ).toBeVisible()
+
+    await signIn(page, collaborator.email, collaborator.password)
+    await page.waitForURL('**/dashboard')
     const collaboratorUnread = await unreadCount(collaborator.id)
     expect(collaboratorUnread).toBeGreaterThan(0)
     await expect(page.getByRole('link', { name: /Notifications/ })).toContainText(
       String(collaboratorUnread)
     )
+
+    await page.goto('/notifications')
+    await expect(
+      page.getByText(new RegExp(`"${renamedTitle}" was approved and is now published`))
+    ).toBeVisible()
   } finally {
     await deleteUser(author.id)
     await deleteUser(collaborator.id)

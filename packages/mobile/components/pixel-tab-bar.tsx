@@ -128,14 +128,14 @@ const styles = StyleSheet.create({
     width: 54, height: 54, borderRadius: 27,
     borderWidth: theme.border.thick, borderColor: theme.colors.ink,
     backgroundColor: theme.colors.surface, alignItems: 'center', justifyContent: 'center',
-    ...theme.shadow(4),
+    ...theme.shadow(2),
   },
   discImage: { width: 30, height: 30 },
   // Open = pressed: apricot, shifted onto its own shadow.
   discOpen: { backgroundColor: theme.colors.apricot, transform: [{ translateX: 4 }, { translateY: 4 }], shadowOpacity: 0, elevation: 0 },
   badge: {
     position: 'absolute', top: -7, right: -10, minWidth: 20, height: 20, paddingHorizontal: 4,
-    borderRadius: 10, borderWidth: theme.border.thin, borderColor: theme.colors.ink,
+    borderRadius: 10, borderWidth: theme.border.hairline, borderColor: theme.colors.ink,
     backgroundColor: theme.colors.apricot, alignItems: 'center', justifyContent: 'center',
   },
   badgeText: { fontFamily: theme.fonts.numeral, fontSize: 15, lineHeight: 16, color: theme.colors.ink },

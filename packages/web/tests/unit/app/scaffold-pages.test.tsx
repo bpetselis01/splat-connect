@@ -1,29 +1,26 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { SCAFFOLD_KEYS } from '@/lib/public-nav'
-import RequestsPage from '@/app/get-involved/requests/page'
-import AskAnExpertPage from '@/app/learn/ask-an-expert/page'
-import NewsPage from '@/app/impact/news/page'
-import EventsPage from '@/app/impact/events/page'
 import MapPage from '@/app/impact/map/page'
-import PartnersPage from '@/app/about/partners/page'
-import SupportPage from '@/app/about/support/page'
-import PrintingRequestsPage from '@/app/printing/requests/page'
 import PrintingPartsPage from '@/app/printing/parts/page'
 
 // Paired with the featureKey each page actually passes to NotifyForm, not
 // just position — SCAFFOLD_KEYS order (derived from PUBLIC_NAV) does not
 // match this array's order, so a length check alone would not catch page N
 // carrying the wrong key.
+/*
+ * Five became two on 2026-09-17.
+ *
+ * /impact/news and /impact/events are real screens now (/about/stories and
+ * /get-involved/events) and the old URLs redirect. Ask an expert, Partners and
+ * Support are real too.
+ *
+ * The map stays a scaffold ON PURPOSE: the artboard's own Deliveries map screen
+ * is a "Not built yet" with a notify form, so shipping one would be inventing a
+ * feature the design does not have. Printable parts likewise.
+ */
 const pages = [
-  ['requests', RequestsPage],
-  ['ask-an-expert', AskAnExpertPage],
-  ['news', NewsPage],
-  ['events', EventsPage],
   ['map', MapPage],
-  ['partners', PartnersPage],
-  ['support', SupportPage],
-  ['printing', PrintingRequestsPage],
   ['printing-parts', PrintingPartsPage],
 ] as const
 

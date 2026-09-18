@@ -14,7 +14,7 @@ export default function ContributorsPage() {
       <h1 className="mt-6 title-article">For contributors</h1>
       <p className="mt-3 max-w-prose text-base leading-relaxed text-muted">
         A guide you write once gets built many times, by families who would never have
-        worked it out alone. That is the whole leverage of this platform.
+        worked it out alone.
       </p>
 
       <StepList

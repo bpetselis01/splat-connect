@@ -12,7 +12,8 @@ const baseTutorial: TutorialWithDetails = {
   maturity: 'complete',
   safety_declared_at: '2026-08-01T00:00:00Z',
   tutorial_pdf_url: 'https://example.com/tutorial.pdf',
-  toy_photo_url: 'https://example.com/photo.jpg',
+  photo_urls: ['https://test.supabase.co/storage/v1/object/public/photos/photo.jpg'],
+  toy_photo_url: 'https://test.supabase.co/storage/v1/object/public/photos/photo.jpg',
   rejection_note: null,
   created_at: '2026-01-01T00:00:00Z',
   updated_at: '2026-01-01T00:00:00Z',
@@ -59,7 +60,7 @@ describe('getMissingFields', () => {
   })
 
   it('pairs a missing photo with the Files step', () => {
-    expect(getMissingFields({ ...baseTutorial, toy_photo_url: null })).toContainEqual({
+    expect(getMissingFields({ ...baseTutorial, photo_urls: [] })).toContainEqual({
       step: 'files',
       label: 'A photo',
     })

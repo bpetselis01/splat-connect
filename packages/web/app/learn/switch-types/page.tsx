@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { ProsePage } from '@/components/prose-page'
+import { LearnShell } from '@/components/learn-shell'
 
 export const metadata = {
   title: 'Switch types explained — SPLAT Connect',
@@ -8,7 +9,8 @@ export const metadata = {
 
 export default function SwitchTypes() {
   return (
-    <ProsePage
+    <LearnShell slug="switch-types">
+      <ProsePage
       title="Switch types explained"
       intro="A switch is the part the child actually touches, so it matters more than the toy does. Choosing it well is mostly about matching the movement a child already makes reliably."
     >
@@ -90,6 +92,7 @@ export default function SwitchTypes() {
           3.5 mm mono plug so switches and toys stay interchangeable.
         </p>
       </section>
-    </ProsePage>
+      </ProsePage>
+    </LearnShell>
   )
 }

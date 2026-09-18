@@ -13,23 +13,18 @@ import {
 } from '../helpers'
 
 /**
- * The journeys that prove the app shell replaces the tab strip without losing
- * anything: capability-derived nav groups on the rail and a merged dashboard.
+ * The journeys that prove capability-derived navigation and a merged dashboard
+ * survive without a tab strip: what a contributor may reach, what a leader may
+ * reach, the child and account flows, and the /my-tutorials redirect.
  *
- * The first six are the ported tab-strip journeys; the rest are what the shell
- * itself introduces — collapse persistence, the narrow-viewport drawer and its
- * two native dismissals, the /my-tutorials redirect, a placeholder route, and
- * the bare onboarding gate.
+ * Every navigation assertion below reads the My SPLAT hub itself. The rail was
+ * retired on 2026-09-17 — the artboard's note on the hub is "replaces the old
+ * sidebar entirely" — so the hub's cards ARE the capability-gated destination
+ * list now, built from the same buildNav(caps) the rail used.
  *
- * Every rail assertion below starts with a hop to /dashboard/tutorials rather
- * than reading the page sign-in lands on. Since 2026-08-23 /dashboard is the
- * one account page with no rail: it keeps the header and lists its children as
- * hub cards (nestsRail, lib/public-nav.ts). A hub card is a single link whose
- * accessible name is its whole content — title, count and blurb — so no card
- * ever matches a bare row label, and the rows only exist one step in. The
- * assertions are scoped to .shell-rail for the same reason the equivalent check
- * in dashboard/navigation.spec.ts is: the fat footer renders inside the shell
- * too, and repeats many of the same destinations.
+ * Assertions are scoped to <main> because the fat footer repeats many of the
+ * same destinations, and a hub card's accessible name is its whole content —
+ * title, count and blurb — so the locators match by regex rather than exactly.
  */
 
 test('a contributor sees no Organisation group', async ({ page }) => {
@@ -40,14 +35,12 @@ test('a contributor sees no Organisation group', async ({ page }) => {
     await signIn(page, contributor.email, contributor.password)
     await page.waitForURL('**/dashboard')
 
-    // One step in, because /dashboard has no rail — see the note at the top.
-    await page.goto('/dashboard/tutorials')
-    const rail = page.locator('.shell-rail')
+    const hub = page.getByRole('main')
 
-    await expect(rail.getByRole('link', { name: 'My tutorials', exact: true })).toBeVisible()
-    await expect(rail.getByRole('link', { name: 'Account', exact: true })).toBeVisible()
-    await expect(rail.getByText('Organisation', { exact: true })).toHaveCount(0)
-    await expect(rail.getByRole('link', { name: 'Review queue', exact: true })).toHaveCount(0)
+    await expect(hub.getByRole('link', { name: /My tutorials/ })).toBeVisible()
+    await expect(hub.getByRole('link', { name: /Account/ })).toBeVisible()
+    await expect(hub.getByRole('heading', { name: 'Organisation' })).toHaveCount(0)
+    await expect(hub.getByRole('link', { name: /Review queue/ })).toHaveCount(0)
   } finally {
     await deleteUser(contributor.id)
   }
@@ -73,14 +66,12 @@ test('a leader sees the Organisation group, and the queue merges across two orga
     await signIn(page, leader.email, leader.password)
     await page.waitForURL('**/dashboard')
 
-    // One step in, because /dashboard has no rail — see the note at the top.
-    await page.goto('/dashboard/tutorials')
-    const rail = page.locator('.shell-rail')
+    const hub = page.getByRole('main')
 
-    await expect(rail.getByRole('link', { name: 'My tutorials', exact: true })).toBeVisible()
-    await expect(rail.getByRole('link', { name: 'Review queue', exact: true })).toBeVisible()
+    await expect(hub.getByRole('link', { name: /My tutorials/ })).toBeVisible()
+    await expect(hub.getByRole('link', { name: /Review queue/ })).toBeVisible()
 
-    await rail.getByRole('link', { name: 'Review queue', exact: true }).click()
+    await hub.getByRole('link', { name: /Review queue/ }).click()
     await expect(page).toHaveURL('/dashboard/organisation')
 
     // Both requests show in the single merged queue — no organisation picker
@@ -114,11 +105,9 @@ test('a leader reaches the existing review screen from the tab and approves a tu
     await signIn(page, leader.email, leader.password)
     await page.waitForURL('**/dashboard')
 
-    // One step in, because /dashboard has no rail — see the note at the top.
-    await page.goto('/dashboard/tutorials')
-    const rail = page.locator('.shell-rail')
+    const hub = page.getByRole('main')
 
-    await rail.getByRole('link', { name: 'Review queue', exact: true }).click()
+    await hub.getByRole('link', { name: /Review queue/ }).click()
     await expect(page).toHaveURL('/dashboard/organisation')
 
     // The row links to the existing per-project review screen, not a new one.
@@ -149,11 +138,9 @@ test('a contributor adds two children, edits one, and deletes one', async ({ pag
     await signIn(page, contributor.email, contributor.password)
     await page.waitForURL('**/dashboard')
 
-    // One step in, because /dashboard has no rail — see the note at the top.
-    await page.goto('/dashboard/tutorials')
-    const rail = page.locator('.shell-rail')
+    const hub = page.getByRole('main')
 
-    await rail.getByRole('link', { name: 'Account', exact: true }).click()
+    await hub.getByRole('link', { name: /Account/ }).click()
     await expect(page).toHaveURL('/dashboard/profile')
 
     // Name, age and the clinical scores live on the Ability pill, not the one the
@@ -161,9 +148,8 @@ test('a contributor adds two children, edits one, and deletes one', async ({ pag
     // starts at Survey. Saving stays on the editor and swaps /new for the new
     // id, so the list is reached by navigating rather than by a redirect.
     //
-    // Via the rail's Account row, not the page's own back control: that control
-    // is `lg:hidden` (components/back-link.tsx) because every destination it
-    // offers is already a rail row, and this project runs at desktop width.
+    // The way back up is the breadcrumb trail (lib/trail.ts), which is what
+    // replaced both the rail and the per-page back control.
 
     // First child, named.
     await page.getByRole('link', { name: 'Add child' }).click()
@@ -176,13 +162,12 @@ test('a contributor adds two children, edits one, and deletes one', async ({ pag
     await page.getByText('Clinical scores (optional)').click()
     await page.locator('#macs_level').selectOption('II')
     await page.getByRole('button', { name: 'Save' }).click()
-    // Scoped to <main>: the rail now carries a "Saved" row of its own, so an
-    // unscoped getByText('Saved') matches the nav item as well as this
-    // confirmation and trips strict mode. The confirmation is page content;
-    // the row is navigation.
+    // Scoped to <main>: "Saved" is also a hub card and a footer link, so an
+    // unscoped getByText('Saved') trips strict mode. The confirmation is page
+    // content; the others are navigation.
     await expect(page.getByRole('main').getByText('Saved')).toBeVisible()
     await expect(page).toHaveURL(/\/dashboard\/child\/[0-9a-f-]{36}/)
-    await page.locator('.shell-rail').getByRole('link', { name: 'Account' }).click()
+    await page.getByRole('navigation', { name: 'Breadcrumb' }).getByRole('link', { name: 'Account' }).click()
     await expect(page).toHaveURL('/dashboard/profile')
     await expect(page.getByRole('link', { name: /Emma/ })).toBeVisible()
 
@@ -191,12 +176,11 @@ test('a contributor adds two children, edits one, and deletes one', async ({ pag
     await page.getByRole('tab', { name: 'Ability' }).click()
     await page.locator('#age').fill('4')
     await page.getByRole('button', { name: 'Save' }).click()
-    // Scoped to <main>: the rail now carries a "Saved" row of its own, so an
-    // unscoped getByText('Saved') matches the nav item as well as this
-    // confirmation and trips strict mode. The confirmation is page content;
-    // the row is navigation.
+    // Scoped to <main>: "Saved" is also a hub card and a footer link, so an
+    // unscoped getByText('Saved') trips strict mode. The confirmation is page
+    // content; the others are navigation.
     await expect(page.getByRole('main').getByText('Saved')).toBeVisible()
-    await page.locator('.shell-rail').getByRole('link', { name: 'Account' }).click()
+    await page.getByRole('navigation', { name: 'Breadcrumb' }).getByRole('link', { name: 'Account' }).click()
     await expect(page).toHaveURL('/dashboard/profile')
     await expect(page.getByRole('link', { name: /Child 2/ })).toBeVisible()
 
@@ -209,10 +193,9 @@ test('a contributor adds two children, edits one, and deletes one', async ({ pag
     await expect(page.locator('#macs_level')).toHaveValue('II')
     await page.locator('#age').fill('8')
     await page.getByRole('button', { name: 'Save' }).click()
-    // Scoped to <main>: the rail now carries a "Saved" row of its own, so an
-    // unscoped getByText('Saved') matches the nav item as well as this
-    // confirmation and trips strict mode. The confirmation is page content;
-    // the row is navigation.
+    // Scoped to <main>: "Saved" is also a hub card and a footer link, so an
+    // unscoped getByText('Saved') trips strict mode. The confirmation is page
+    // content; the others are navigation.
     await expect(page.getByRole('main').getByText('Saved')).toBeVisible()
     await page.reload()
     await page.getByRole('tab', { name: 'Ability' }).click()
@@ -236,8 +219,8 @@ test('a contributor adds two children, edits one, and deletes one', async ({ pag
 
 /**
  * Journey 5. Checked first whether the nav renders the user's name: it does
- * not — the rail (components/rail.tsx) shows only role-gated links and a
- * Sign out button, static labels, not the account name. So this asserts
+ * not — the header shows only role-gated links and a Sign out button, static
+ * labels, not the account name. So this asserts
  * persistence the way every other row in this file does: save, reload the
  * same tab, and read the field back — not a nav element that was never
  * wired to the name.
@@ -251,19 +234,16 @@ test('a user renames themselves on the Account tab and the change persists', asy
     await signIn(page, contributor.email, contributor.password)
     await page.waitForURL('**/dashboard')
 
-    // One step in, because /dashboard has no rail — see the note at the top.
-    await page.goto('/dashboard/tutorials')
-    const rail = page.locator('.shell-rail')
+    const hub = page.getByRole('main')
 
-    await rail.getByRole('link', { name: 'Account', exact: true }).click()
+    await hub.getByRole('link', { name: /Account/ }).click()
     await expect(page).toHaveURL('/dashboard/profile')
 
     await page.locator('#name').fill(newName)
     await page.getByRole('button', { name: 'Save' }).click()
-    // Scoped to <main>: the rail now carries a "Saved" row of its own, so an
-    // unscoped getByText('Saved') matches the nav item as well as this
-    // confirmation and trips strict mode. The confirmation is page content;
-    // the row is navigation.
+    // Scoped to <main>: "Saved" is also a hub card and a footer link, so an
+    // unscoped getByText('Saved') trips strict mode. The confirmation is page
+    // content; the others are navigation.
     await expect(page.getByRole('main').getByText('Saved')).toBeVisible()
 
     await page.reload()
@@ -273,106 +253,6 @@ test('a user renames themselves on the Account tab and the change persists', asy
   }
 })
 
-test('the rail spans the full viewport height, with no header above it', async ({ page }) => {
-  const contributor = await createContributor()
-  await acceptTerms(contributor.id)
-
-  try {
-    await signIn(page, contributor.email, contributor.password)
-    await page.waitForURL('**/dashboard')
-    // /dashboard itself has no rail (it keeps the header instead) — this
-    // test is about the rail specifically, so it needs a page that has one.
-    await page.goto('/dashboard/toys')
-
-    const rail = page.locator('.shell-rail')
-    const box = await rail.boundingBox()
-    expect(box?.y).toBe(0)
-    expect(box?.height).toBe((await page.viewportSize())?.height)
-
-    await expect(page.locator('header')).toHaveCount(0)
-  } finally {
-    await deleteUser(contributor.id)
-  }
-})
-
-// Mobile navigation is explicitly out of scope for the My SPLAT front-door
-// change (docs/superpowers/specs/2026-08-23-my-splat-front-door-design.md):
-// the drawer's trigger lived in the header (components/nav.tsx), which no
-// longer renders on any page that has a rail. There is currently no way to
-// open the drawer on a narrow viewport — a signed-in user still reaches
-// every destination via My SPLAT's hub grid, just not via this drawer. These
-// three tests are skipped until mobile nav is redesigned; do not delete them,
-// they document exactly what needs to come back.
-test.skip('the rail opens as a drawer on a narrow viewport', async ({ page }) => {
-  const contributor = await createContributor()
-  await acceptTerms(contributor.id)
-
-  try {
-    await page.setViewportSize({ width: 390, height: 844 })
-    await signIn(page, contributor.email, contributor.password)
-    await page.waitForURL('**/dashboard')
-
-    const drawer = page.locator('dialog.shell-drawer')
-    await expect(drawer).toBeHidden()
-
-    await page.getByRole('button', { name: 'Open navigation' }).click()
-    await expect(drawer).toBeVisible()
-
-    await drawer.getByRole('link', { name: 'Account', exact: true }).click()
-    await expect(page).toHaveURL('/dashboard/profile')
-    await expect(drawer).toBeHidden()
-  } finally {
-    await deleteUser(contributor.id)
-  }
-})
-
-// Chain: showModal() gives the drawer two native dismissal paths for free —
-//        Escape and a backdrop click — neither exercised by the "opens as a
-//        drawer" test above, which closes it via a row's onNavigate instead.
-//        This is the last task that can add that coverage (shell-frame.tsx
-//        shipped without unit tests in Task 4).
-test.skip('the drawer closes on Escape', async ({ page }) => {
-  const contributor = await createContributor()
-  await acceptTerms(contributor.id)
-
-  try {
-    await page.setViewportSize({ width: 390, height: 844 })
-    await signIn(page, contributor.email, contributor.password)
-    await page.waitForURL('**/dashboard')
-
-    const drawer = page.locator('dialog.shell-drawer')
-    await page.getByRole('button', { name: 'Open navigation' }).click()
-    await expect(drawer).toBeVisible()
-
-    await page.keyboard.press('Escape')
-    await expect(drawer).toBeHidden()
-  } finally {
-    await deleteUser(contributor.id)
-  }
-})
-
-test.skip('the drawer closes on a backdrop click', async ({ page }) => {
-  const contributor = await createContributor()
-  await acceptTerms(contributor.id)
-
-  try {
-    await page.setViewportSize({ width: 390, height: 844 })
-    await signIn(page, contributor.email, contributor.password)
-    await page.waitForURL('**/dashboard')
-
-    const drawer = page.locator('dialog.shell-drawer')
-    await page.getByRole('button', { name: 'Open navigation' }).click()
-    await expect(drawer).toBeVisible()
-
-    // The drawer box is 15rem (240px) wide on a 390px viewport; clicking past
-    // it lands on the dialog's ::backdrop, whose click target is the dialog
-    // element itself — not inside the rail content.
-    await page.mouse.click(300, 400)
-    await expect(drawer).toBeHidden()
-  } finally {
-    await deleteUser(contributor.id)
-  }
-})
 
 test('/my-tutorials redirects to the merged list', async ({ page }) => {
   const contributor = await createContributor()
@@ -395,45 +275,40 @@ test('/my-tutorials redirects to the merged list', async ({ page }) => {
   }
 })
 
-test('a placeholder route explains the feature instead of 404ing', async ({ page }) => {
+/*
+ * The hub advertises no door that does not open. `soon` is still a field on
+ * NavRow, so a row added with it set would fail here as well as in
+ * nav-model.test.ts, and this side proves the link goes somewhere real rather
+ * than only that the flag is unset.
+ */
+test('the hub advertises no unbuilt destination, and its cards open real pages', async ({
+  page,
+}) => {
   const contributor = await createContributor()
   await acceptTerms(contributor.id)
 
   try {
     await signIn(page, contributor.email, contributor.password)
     await page.waitForURL('**/dashboard')
-    // /dashboard itself has no rail (it keeps the header instead) — this
-    // test is about the rail specifically, so it needs a page that has one.
-    await page.goto('/dashboard/toys')
 
-    // Repointed from /printing to /dashboard/print-requests. /printing was a
-    // ComingSoon child of Get Involved when this was written; it has since been
-    // promoted to a top-level pillar with a real page, precisely because the
-    // public suite forbids a top-level link that says "Not built yet". So it is
-    // no longer a placeholder and cannot demonstrate what this test is about.
-    // "My print requests" is still one, and it is in the signed-in rail, which
-    // is the surface this spec covers.
-    // The account hub (app/dashboard/page.tsx) now renders its own card for
-    // the same destination alongside the rail, so an unscoped query matches
-    // two links — scope to the rail, the surface this spec covers.
-    await page.locator('.shell-rail').getByRole('link', { name: /My print requests/ }).click()
+    const hub = page.getByRole('main')
+    await expect(hub.getByText('Soon')).toHaveCount(0)
+
+    await hub.getByRole('link', { name: /My print requests/ }).click()
     await expect(page).toHaveURL('/dashboard/print-requests')
-    // ComingSoon states its own label as an h1, explains itself with
-    // "Not built yet — here's the plan", and its way out is the Guides link.
-    await expect(page.getByRole('heading', { name: 'My Print Requests' })).toBeVisible()
-    await expect(page.getByText('Not built yet', { exact: true })).toBeVisible()
-    await expect(page.locator('#main').getByRole('link', { name: 'Guides' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'My print requests' })).toBeVisible()
+    // The real screen, not a plan for one.
+    await expect(page.getByText('Not built yet', { exact: true })).toHaveCount(0)
   } finally {
     await deleteUser(contributor.id)
   }
 })
 
-// Chain: the shell's <main> replaced the root layout's `mx-auto w-full
-//        max-w-6xl` for every signed-in page, not just the dashboard. Dropping
-//        the cap outright stretched library grids, prose and admin tables to
-//        the full window on an ultrawide display while a signed-out visitor on
-//        the same URL kept a column. reflow.spec.ts only tests narrow
-//        viewports, so nothing else in the suite looks this way.
+// Chain: dropping the cap outright stretched library grids, prose and admin
+//        tables to the full window on an ultrawide display. Since the rail was
+//        retired every page shares .public-shell's cap, signed in or out, so
+//        this guards one rule for the whole app. reflow.spec.ts only tests
+//        narrow viewports, so nothing else in the suite looks this way.
 test('the main content column stays capped on an ultrawide viewport', async ({ page }) => {
   const contributor = await createContributor()
   await acceptTerms(contributor.id)
@@ -441,23 +316,21 @@ test('the main content column stays capped on an ultrawide viewport', async ({ p
   try {
     await signIn(page, contributor.email, contributor.password)
     await page.waitForURL('**/dashboard')
-    // The cap under test is .shell-main's — /dashboard itself has no shell
-    // now, so this needs a page that does.
     await page.goto('/dashboard/toys')
 
     await page.setViewportSize({ width: 2560, height: 1200 })
     const box = await page.locator('main#main').boundingBox()
     expect(box).not.toBeNull()
-    // max-w-[100rem] = 1600px, border-box. Uncapped it would be ~2320 here
-    // (2560 less the 15rem rail), so this fails loudly on a regression.
-    expect(box!.width).toBeLessThanOrEqual(1601)
+    // .public-shell is width: min(80%, 110rem) — 1760px. Uncapped this would
+    // be the full 2560, so a regression fails loudly.
+    expect(box!.width).toBeLessThanOrEqual(1761)
   } finally {
     await deleteUser(contributor.id)
   }
 })
 
-// Chain: WCAG 2.4.1 Bypass Blocks, Level A. The rail put up to fourteen tab
-//        stops ahead of the page content on every route. A link that only
+// Chain: WCAG 2.4.1 Bypass Blocks, Level A. The header puts a row of section
+//        pills ahead of the page content on every route. A link that only
 //        scrolls does not satisfy the criterion, so this asserts where focus
 //        actually lands — which is why <main> carries tabIndex={-1}.
 test('the skip link is the first tab stop and moves focus to the main content', async ({
@@ -483,9 +356,10 @@ test('the skip link is the first tab stop and moves focus to the main content', 
   }
 })
 
-// Chain: a rail on the terms gate offers links middleware bounces straight
-//        back, which is an escape hatch out of a gate.
-test('the onboarding gate renders without the rail', async ({ page }) => {
+// Chain: navigation on the terms gate offers links middleware bounces straight
+//        back, which is an escape hatch out of a gate. app/layout.tsx's bare
+//        branch is what keeps the header off it.
+test('the onboarding gate renders without site navigation', async ({ page }) => {
   const contributor = await createContributor()
 
   try {
@@ -498,91 +372,11 @@ test('the onboarding gate renders without the rail', async ({ page }) => {
 
     await page.goto('/dashboard')
     await expect(page).toHaveURL(/\/onboarding\/contributor-terms/)
-    await expect(page.locator('.shell-rail')).toHaveCount(0)
+    await expect(page.getByRole('banner')).toHaveCount(0)
     await expect(page.getByRole('link', { name: 'Review queue' })).toHaveCount(0)
   } finally {
     await deleteUser(contributor.id)
   }
 })
 
-/**
- * The authoring journey lives outside /dashboard — /upload creates the row and
- * /tutorials/[id]/edit is every step after it — so both are account pages that
- * ACCOUNT_PREFIXES cannot reach by prefix alone. They rendered the public
- * header instead of the rail until lib/public-nav.ts learned to match the
- * editor by shape.
- *
- * The public /tutorials/[id] assertion is the other half of that rule: the two
- * routes differ by one segment, and a prefix match on /tutorials would drag the
- * public detail page behind the rail with them.
- */
-test('the authoring pages render the rail, and the public tutorial page does not', async ({
-  page,
-}) => {
-  const contributor = await createContributor()
-  await acceptTerms(contributor.id)
-  const tutorialId = await createTutorial(contributor.id, {
-    title: uniqueTitle('E2E Rail Chrome'),
-    status: 'approved',
-  })
 
-  try {
-    await signIn(page, contributor.email, contributor.password)
-    await page.waitForURL('**/dashboard')
-
-    await page.goto(`/tutorials/${tutorialId}/edit`)
-    await expect(page.locator('.shell-rail')).toBeVisible()
-
-    await page.goto('/upload')
-    await expect(page.locator('.shell-rail')).toBeVisible()
-
-    // Signed in, on the public detail page: still the header, no rail.
-    await page.goto(`/tutorials/${tutorialId}`)
-    await expect(page.locator('.shell-rail')).toHaveCount(0)
-  } finally {
-    await deleteUser(contributor.id)
-  }
-})
-
-/**
- * /organizations alternates sides: the list is public, /organizations/[id] is
- * the leader dashboard, its /projects/[tutorialId] child is the review screen,
- * and /organizations/[id]/public is the public profile one segment deeper.
- * Neither direction can be a prefix, so all four are asserted together.
- *
- * The tutorial is approved for the organisation so the public profile has
- * something to show — GET /api/public/organizations/:id 404s an organisation
- * with no public work, and a 404 renders no chrome to assert on.
- */
-test('the organisation leader pages render the rail, and the public ones do not', async ({
-  page,
-}) => {
-  const leader = await createContributor()
-  await acceptTerms(leader.id)
-  const orgId = await createOrgWithLeader(leader.id, uniqueTitle('E2E Leader Chrome Org'))
-  const tutorialId = await createTutorial(leader.id, {
-    title: uniqueTitle('E2E Leader Chrome'),
-    status: 'pending',
-  })
-  await seedLeaderApproval(tutorialId, orgId, leader.id)
-
-  try {
-    await signIn(page, leader.email, leader.password)
-    await page.waitForURL('**/dashboard')
-
-    await page.goto(`/organizations/${orgId}`)
-    await expect(page.locator('.shell-rail')).toBeVisible()
-
-    await page.goto(`/organizations/${orgId}/projects/${tutorialId}`)
-    await expect(page.locator('.shell-rail')).toBeVisible()
-
-    await page.goto(`/organizations/${orgId}/public`)
-    await expect(page.locator('.shell-rail')).toHaveCount(0)
-
-    await page.goto('/organizations')
-    await expect(page.locator('.shell-rail')).toHaveCount(0)
-  } finally {
-    await deleteOrg(orgId)
-    await deleteUser(leader.id)
-  }
-})

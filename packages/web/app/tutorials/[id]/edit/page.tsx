@@ -1,4 +1,3 @@
-import { BackLink } from '@/components/back-link'
 import { apiClient } from '@/lib/api-client'
 import { redirect } from 'next/navigation'
 import { requireCapabilities } from '@/lib/require-capabilities'
@@ -20,6 +19,36 @@ import { getMissingFields } from '@/lib/validation'
 import { SaveStatusLine } from '@/components/save-status-line'
 import { DeleteEntityButton } from '@/components/delete-entity-button'
 import type { Tutorial, Part, Tool, StlFile, TutorialWithDetails, Difficulty, TutorialKind, BuyLink, TutorialOrg, Organization , TutorialMaturity } from '@splat-connect/types'
+
+/**
+ * The body both file-saving actions share. A plain function at module scope,
+ * NOT a third 'use server' action, and that distinction is the whole point.
+ *
+ * Next lifts every inline action out of the component to module scope. One
+ * that closes over a variable — `id`, here — cannot be lifted cleanly, so it
+ * compiles to `var patchFiles = $$RSC_SERVER_ACTION_7.bind(null, <encrypted
+ * id>)` *inside the component body*, created while rendering. The two actions
+ * that called it were lifted out and kept referring to that name, which does
+ * not exist when an action is POSTed on its own: the component never ran.
+ * Every guide photo add answered "patchFiles is not defined" and the upload,
+ * already in storage by then, was never recorded.
+ *
+ * Taking `id` as an argument is what removes the closure and with it the bind.
+ * Ordinary server code called from inside an action needs no marker of its own.
+ * Same family as the wrapped-saveParts bug below: an inline action survives
+ * being *called by* an action, never being wrapped or captured by one.
+ */
+async function patchTutorialFiles(id: string, updates: Record<string, unknown>) {
+  // Read first for updated_at: the tutorials PATCH takes it as an optimistic
+  // lock, so a save built on a stale copy is refused rather than silently
+  // overwriting a collaborator.
+  const current = await apiClient.get<Tutorial>(`/api/tutorials/${id}`)
+  if (current.status === 'approved' || current.status === 'rejected') {
+    updates.status = 'pending'
+  }
+  await apiClient.patch(`/api/tutorials/${id}`, { ...updates, updated_at: current.updated_at })
+  revalidatePath(`/tutorials/${id}/edit`)
+}
 
 export default async function EditTutorialPage({
   params,
@@ -96,18 +125,16 @@ export default async function EditTutorialPage({
 
   // Receives only string URLs (no file bytes) — no Server Action body size limit risk.
   // File bytes are uploaded directly browser -> Hono API by EditFilesSection.
-  async function patchFileUrls(photoUrl: string | null, pdfUrl: string | null) {
+  async function patchFileUrls(pdfUrl: string | null) {
     'use server'
-    const updates: Record<string, string | null> = {
-      toy_photo_url: photoUrl,
-      tutorial_pdf_url: pdfUrl,
-    }
-    const current = await apiClient.get<Tutorial>(`/api/tutorials/${id}`)
-    if (current.status === 'approved' || current.status === 'rejected') {
-      updates.status = 'pending'
-    }
-    await apiClient.patch(`/api/tutorials/${id}`, { ...updates, updated_at: current.updated_at })
-    revalidatePath(`/tutorials/${id}/edit`)
+    return patchTutorialFiles(id, { tutorial_pdf_url: pdfUrl })
+  }
+
+  // Photos save one at a time as they are added or removed, so they get their
+  // own action rather than riding along with the PDF's Save button.
+  async function patchPhotoUrls(photoUrls: string[]) {
+    'use server'
+    return patchTutorialFiles(id, { photo_urls: photoUrls })
   }
 
   // Takes ItemInput, the exact type EditItemsSection emits, so it can be handed
@@ -188,8 +215,9 @@ export default async function EditTutorialPage({
         <div className="panel pt-5">
           <EditFilesSection
             tutorialId={id}
-            currentPhotoUrl={tutorial.toy_photo_url}
+            photoUrls={tutorial.photo_urls}
             currentPdfUrl={tutorial.tutorial_pdf_url}
+            onSavePhotos={patchPhotoUrls}
             onSave={patchFileUrls}
           />
         </div>
@@ -327,7 +355,6 @@ export default async function EditTutorialPage({
   return (
     <div>
       <div className="mb-6">
-        <BackLink href="/dashboard/tutorials" label="My tutorials" />
         <h1 className="truncate title-detail">{tutorial.title}</h1>
       </div>
 

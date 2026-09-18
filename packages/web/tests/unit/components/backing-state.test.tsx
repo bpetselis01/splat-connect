@@ -97,6 +97,6 @@ describe('BackingBadge', () => {
   it('reuses the StatusBadge palette', () => {
     const { container } = render(<BackingBadge status="accepted" />)
     expect(container.firstElementChild?.className).toContain('bg-mint-soft')
-    expect(container.firstElementChild?.className).toContain('text-mint-deep')
+    expect(container.firstElementChild?.className).toContain('text-ink')
   })
 })

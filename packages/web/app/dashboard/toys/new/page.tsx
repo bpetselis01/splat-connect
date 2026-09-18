@@ -1,4 +1,3 @@
-import { BackLink } from '@/components/back-link'
 import { requireCapabilities } from '@/lib/require-capabilities'
 import { NewToyForm } from '@/components/new-toy-form'
 import { Stepper } from '@/components/stepper'
@@ -8,7 +7,6 @@ export default async function NewToyPage() {
 
   return (
     <div>
-      <BackLink href="/dashboard/toys" label="My toys" />
       <h1 className="mb-2 title-article">Add a toy</h1>
       <p className="mb-6 max-w-prose text-sm leading-relaxed text-muted">
         Add the basics now — photos and switch details come next.

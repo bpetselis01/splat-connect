@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Logo } from '@/components/icons'
+import { AuthWordmark } from '@/components/auth-wordmark'
 
 /**
  * The chrome for /login and /signup.
@@ -26,15 +26,7 @@ export function AuthShell({
 }) {
   return (
     <div className="flex flex-col items-center px-5 pb-14 pt-8 sm:pt-14">
-      <Link href="/" className="mb-[30px] flex items-center gap-2.5">
-        <span
-          aria-hidden="true"
-          className="pixel-avatar grid h-[34px] w-[34px] place-items-center bg-brand-tint text-brand-dark"
-        >
-          <Logo className="h-5 w-5" />
-        </span>
-        <span className="text-[18px] font-black tracking-tight text-ink">SPLAT Connect</span>
-      </Link>
+      <AuthWordmark className="mb-[30px]" />
 
       {/* One border and one shadow around the pair, not one each — the divider
           between them is a border on the second tab. That is what makes it read

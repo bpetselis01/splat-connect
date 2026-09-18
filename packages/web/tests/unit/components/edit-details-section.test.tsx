@@ -20,6 +20,7 @@ const tutorial: Tutorial = {
   maturity: 'complete',
   safety_declared_at: '2026-08-01T00:00:00Z',
   tutorial_pdf_url: null,
+  photo_urls: [],
   toy_photo_url: null,
   rejection_note: null,
   created_at: '',

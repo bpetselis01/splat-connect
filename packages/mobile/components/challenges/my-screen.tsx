@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
     fontSize: theme.type.caption,
     color: theme.colors.muted,
     lineHeight: 18,
-    borderTopWidth: theme.border.thin,
+    borderTopWidth: theme.border.hairline,
     borderTopColor: theme.colors.border,
     paddingTop: theme.spacing(2),
     marginTop: theme.spacing(1),

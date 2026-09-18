@@ -14,7 +14,6 @@
 import Link from 'next/link'
 import { PUBLIC_NAV } from '@/lib/public-nav'
 import { HubGrid } from '@/components/hub-grid'
-import { EditorialImage } from '@/components/editorial-image'
 
 export const metadata = {
   title: '3D Printing — SPLAT Connect',
@@ -27,8 +26,8 @@ export default function PrintingPage() {
 
   return (
     <div>
-      <h1 className="title-hub">3D Printing</h1>
-      <p className="mt-3 max-w-prose text-base leading-relaxed text-muted">
+      <h1 className="title-article">3D Printing</h1>
+      <p className="mt-3.5 max-w-[64ch] text-lg leading-[1.6] text-muted [text-wrap:pretty]">
         A lot of what makes a toy usable is not the toy. It is the bracket that holds a
         switch at the angle a child can actually reach, the case that stops a battery
         interrupter being pulled apart, the mount that clamps to a wheelchair tray. Those
@@ -36,11 +35,7 @@ export default function PrintingPage() {
         already owns a printer and would rather use it for this.
       </p>
 
-      <div className="mt-8 max-w-3xl">
-        <EditorialImage illustration="printer" ratio="2/1" />
-      </div>
-
-      <h2 className="title-detail mt-12">You do not need a printer</h2>
+      <h2 className="mt-12 font-display text-[26px] font-extrabold text-ink">You do not need a printer</h2>
       <p className="mb-4 mt-1 max-w-prose text-sm leading-relaxed text-muted">
         This is the part that already works, today, with no software from us. Ask a
         library, a makerspace, a men&apos;s shed, a school or a university — many have
@@ -57,7 +52,7 @@ export default function PrintingPage() {
         ; that is everything a printer operator needs.
       </p>
 
-      <h2 className="title-detail mt-12">In this section</h2>
+      <h2 className="mt-12 font-display text-[26px] font-extrabold text-ink">In this section</h2>
       <p className="mb-4 mt-1 max-w-prose text-sm text-muted">
         Some of this is not built yet. Where it isn&apos;t, you can ask to be told when
         it is.

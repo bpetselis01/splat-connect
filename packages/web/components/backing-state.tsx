@@ -28,9 +28,9 @@
 import type { TutorialOrg } from '@splat-connect/types'
 
 const BADGE: Record<TutorialOrg['status'], string> = {
-  pending: 'bg-honey-soft text-honey-deep',
-  accepted: 'bg-mint-soft text-mint-deep',
-  declined: 'bg-apricot-soft text-apricot-deep',
+  pending: 'bg-honey-soft text-ink',
+  accepted: 'bg-mint-soft text-ink',
+  declined: 'bg-apricot-soft text-ink',
 }
 
 const WORD: Record<TutorialOrg['status'], string> = {
@@ -58,13 +58,13 @@ export function BackingSummary({ backing }: { backing: TutorialOrg[] }) {
   if (accepted.length) {
     text = `Backed by ${join(accepted.map(nameOf))}`
     if (pending.length) text += ` · ${pending.length} still deciding`
-    tone = 'text-mint-deep'
+    tone = 'text-ink'
   } else if (pending.length === 1) {
     text = `${nameOf(pending[0])} is deciding`
-    tone = 'text-honey-deep'
+    tone = 'text-ink'
   } else if (pending.length > 1) {
     text = `${pending.length} organisations deciding`
-    tone = 'text-honey-deep'
+    tone = 'text-ink'
   } else if (declined.length) {
     const who =
       declined.length === 1
@@ -74,7 +74,7 @@ export function BackingSummary({ backing }: { backing: TutorialOrg[] }) {
     // queued, with the platform instead — and a contributor reading only the
     // refusal would reasonably assume their work had stalled.
     text = `${who} · now reviewed by SPLAT`
-    tone = 'text-apricot-deep'
+    tone = 'text-ink'
   } else {
     text = 'Reviewed by SPLAT'
     tone = 'text-muted'

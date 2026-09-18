@@ -39,7 +39,14 @@ export function ProfileTabs({ tabs }: { tabs: ProfileTab[] }) {
           </button>
         ))}
       </div>
-      <div className="mt-4">{active?.content}</div>
+      {/* Keyed on the tab, so React remounts rather than reconciling one tab's
+          tree onto the next. Without it a controlled input in one tab could
+          land on the DOM node of an uncontrolled one in another — which is
+          exactly the warning the events/stories editor started throwing when
+          its two forms sat at the same position in their trees. */}
+      <div key={active?.key} className="mt-4">
+        {active?.content}
+      </div>
     </div>
   )
 }

@@ -16,7 +16,7 @@
  */
 'use client'
 
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { isOwnerSide } from '@splat-connect/types'
 import type { PickupAddress, ToyTransactionDetail } from '@splat-connect/types'
@@ -37,6 +37,7 @@ export function ToyTransactionThread({
   onReject,
   onWithdraw,
   onConfirm,
+  asideTop,
 }: {
   transaction: ToyTransactionDetail
   viewerId: string
@@ -50,14 +51,20 @@ export function ToyTransactionThread({
   /** Null when an organisation is accepting — its address is not the leader's
    *  to choose, and the server reads it from the org record. */
   onAccept: (address: PickupAddress | null) => Promise<void>
-  onReject: () => Promise<void>
+  /** The reason is required on a print job: "declining needs a reason" is the
+   *  artboard's rule, and the API refuses one without it. */
+  onReject: (reason?: string) => Promise<void>
   onWithdraw: () => Promise<void>
   onConfirm: (code: string) => Promise<void>
+  /** The tinted next-step card the canonical layout puts first in the sidebar.
+   *  A build's is about its extra stage, which only the build page knows. */
+  asideTop?: ReactNode
 }) {
   const [code, setCode] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [acceptOpen, setAcceptOpen] = useState(false)
+  const [declineReason, setDeclineReason] = useState<string | null>(null)
 
   const tx = transaction
   const isOwner = isOwnerSide(tx, viewerId, ledOrgIds)
@@ -81,13 +88,22 @@ export function ToyTransactionThread({
   }
 
   const open = tx.status === 'requested' || tx.status === 'accepted'
-  const canConfirm = tx.status === 'accepted' && (tx.type === 'exchange' || isOwner)
+  const isBuild = tx.type === 'build'
+  /*
+   * A build's handover is mutual like an exchange's: the family is receiving
+   * something made for them, and their confirmation is the only record that it
+   * arrived. It is also gated on the working shot being approved — confirming
+   * before that would close a build the family has never seen (057).
+   */
+  const canConfirm =
+    tx.status === 'accepted' &&
+    (tx.type !== 'donation' || isOwner) &&
+    (!isBuild || tx.work_approved_at !== null) &&
+    // Nothing is collected before it exists. 058's constraint says the same.
+    (tx.type !== 'print' || tx.ready_at !== null)
   const alreadyConfirmed = isOwner ? tx.owner_confirmed_at !== null : tx.requester_confirmed_at !== null
   const myCode = isOwner ? tx.owner_code : tx.requester_code
-  const showMyCode = tx.status === 'accepted' && (tx.type === 'exchange' || !isOwner)
-  const pickup = [tx.pickup_line1, tx.pickup_suburb, tx.pickup_state, tx.pickup_postcode]
-    .filter(Boolean)
-    .join(', ')
+  const showMyCode = tx.status === 'accepted' && (tx.type !== 'donation' || !isOwner)
 
   return (
     <div className="exchange-grid">
@@ -98,6 +114,10 @@ export function ToyTransactionThread({
           </p>
         )}
 
+        {/* First in the sidebar, per the canonical detail layout: what to do
+            next comes before the supporting panels and the quiet links. */}
+        {asideTop}
+
         <div className="card flex flex-col gap-3 p-4">
           <div className="flex items-center justify-between gap-2">
             <h2 className="text-base font-bold text-ink">Details</h2>
@@ -107,7 +127,13 @@ export function ToyTransactionThread({
           <dl className="flex flex-col text-sm">
             <div className="flex justify-between gap-3 border-b border-line py-1.5">
               <dt className="font-bold text-muted">Type</dt>
-              <dd className="font-bold text-ink">{tx.type === 'donation' ? 'Donation' : 'Exchange'}</dd>
+              <dd className="font-bold text-ink">
+                {
+                  { donation: 'Donation', exchange: 'Exchange', build: 'Build', print: 'Print' }[
+                    tx.type
+                  ]
+                }
+              </dd>
             </div>
             <div className="flex justify-between gap-3 border-b border-line py-1.5">
               <dt className="font-bold text-muted">With</dt>
@@ -121,19 +147,23 @@ export function ToyTransactionThread({
                 <dd className="text-right font-bold text-ink">{tx.offered_toy_name}</dd>
               </div>
             )}
-            {tx.status === 'accepted' && pickup && (
-              <div className="flex justify-between gap-3 py-1.5">
-                <dt className="font-bold text-muted">Pickup</dt>
-                <dd className="text-right font-bold text-ink">{pickup}</dd>
-              </div>
-            )}
+            {/* Pickup used to sit here. It moved to the stage-facts panel under
+                the rail, where it belongs: it is a fact about the handover
+                stage, and that panel shows it beside when, the viewer's code
+                and who has confirmed. Rendering it in both places put the same
+                address on screen twice, which is how the duplication was
+                found — a strict locator matched two elements. */}
           </dl>
         </div>
 
         {tx.status === 'requested' && isOwner && (
           <div className="card flex flex-col gap-3 p-4">
             <h2 className="text-base font-bold text-ink">
-              {otherPartyName} wants this toy
+              {isBuild
+                ? `${otherPartyName} is asking for a build`
+                : tx.type === 'print'
+                  ? `${otherPartyName} is asking for a print`
+                  : `${otherPartyName} wants this toy`}
             </h2>
             <p className="text-sm leading-relaxed text-muted">
               {tx.owner_org_id
@@ -157,10 +187,62 @@ export function ToyTransactionThread({
               >
                 Accept
               </button>
-              <button type="button" disabled={busy} onClick={() => run(onReject)} className="btn btn-quiet">
-                Reject
+              {/* A print job's decline opens for a reason first. Everything
+                  else declines outright, because nothing asks for one. */}
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() =>
+                  tx.type === 'print' ? setDeclineReason('') : run(() => onReject())
+                }
+                className="btn btn-quiet"
+              >
+                {tx.type === 'print' ? 'Decline' : 'Reject'}
               </button>
             </div>
+            {declineReason !== null && (
+              <form
+                className="flex flex-col gap-2"
+                onSubmit={async (e) => {
+                  e.preventDefault()
+                  const reason = declineReason.trim()
+                  if (!reason) return
+                  setDeclineReason(null)
+                  await run(() => onReject(reason))
+                }}
+              >
+                <label htmlFor="decline-reason" className="field-label">
+                  Why you cannot take it
+                </label>
+                <textarea
+                  id="decline-reason"
+                  className="field"
+                  rows={3}
+                  maxLength={500}
+                  value={declineReason}
+                  onChange={(e) => setDeclineReason(e.target.value)}
+                  placeholder="Bed is too small for the base plate."
+                />
+                <div className="flex gap-2">
+                  <button
+                    type="submit"
+                    className="btn btn-quiet"
+                    disabled={busy || !declineReason.trim()}
+                  >
+                    Send the decline
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-quiet"
+                    onClick={() => setDeclineReason(null)}
+                    disabled={busy}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            )}
+
             {tx.blocked_by_rival_accept && <p className="text-sm text-muted">{BLOCKED_ACCEPT_HINT}</p>}
             {acceptOpen && (
               <AcceptPickupDialog
@@ -176,7 +258,13 @@ export function ToyTransactionThread({
           </div>
         )}
 
-        {tx.status === 'accepted' && (
+        {/* A build's handover cannot start until the family has approved the
+            working shot, so its code and its confirm box do not appear before
+            then — showing a code for a meeting that cannot be arranged yet is
+            the same class of mistake as a dead control. */}
+        {tx.status === 'accepted' &&
+          (!isBuild || tx.work_approved_at) &&
+          (tx.type !== 'print' || tx.ready_at) && (
           <div className="card flex flex-col gap-3 p-4">
             <h2 className="text-base font-bold text-ink">Handoff</h2>
 
@@ -253,7 +341,7 @@ export function ToyTransactionThread({
             them. Declining is not clicking: the toy stays a draft they own. */}
         {tx.status === 'completed' && (
           <div className="card flex flex-col gap-3 p-4">
-            <p className="font-bold text-mint-deep">Handoff complete.</p>
+            <p className="font-bold text-ink">Handoff complete.</p>
             {tx.received_toy?.status === 'draft' && (
               <>
                 <p className="text-sm leading-relaxed text-muted">

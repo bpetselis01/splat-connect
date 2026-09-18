@@ -17,7 +17,7 @@ vi.mock('next/link', () => ({
 
 const baseTutorial = {
   id: 't1', title: 'Spoon holder', description: null, difficulty: 'easy',
-  status: 'pending', tutorial_pdf_url: null, toy_photo_url: null,
+  status: 'pending', tutorial_pdf_url: null, photo_urls: [], toy_photo_url: null,
   rejection_note: null, created_at: '', reviewed_at: null,
   reviewed_by: null, reviewed_for_org_id: null, reviewer: null, reviewed_for: null,
   tutorial_contributors: [], parts: [], tools: [], stl_files: [],

@@ -38,24 +38,35 @@ test('a contributor adds a toy, edits it, uploads a cover photo, publishes it, a
 
     await page.getByRole('tab', { name: 'Review' }).click()
     // The pointer is still resting on the pill just clicked. Its active colour
-    // (--color-ink since the pixel register, 03ef998e) has to survive :hover,
-    // or every selection looks like it did not take.
-    await expect(page.getByRole('tab', { name: 'Review' })).toHaveCSS(
-      'background-color',
-      'rgb(18, 40, 58)'
-    )
+    // (--color-ink) has to survive :hover, or every selection looks like it did
+    // not take.
+    //
+    // Read out of the page rather than written here as a literal. This assertion
+    // used to name rgb(18, 40, 58) and broke the moment --color-ink moved with
+    // the design system, reporting a token change as a broken toy editor. The
+    // rule under test is "the active pill stays inked", which is true whatever
+    // ink is — the same reason tone.test.ts reads its values at test time.
+    const ink = await page.evaluate(() => {
+      const el = document.createElement('span')
+      el.style.color = 'var(--color-ink)'
+      document.body.append(el)
+      const c = getComputedStyle(el).color
+      el.remove()
+      return c
+    })
+    await expect(page.getByRole('tab', { name: 'Review' })).toHaveCSS('background-color', ink)
     // The review tab carries the same finish bar as the tutorial editor: a
     // count, and each gap as a button that jumps to the step that fixes it.
     await expect(page.getByText('2 things left')).toBeVisible()
-    await expect(page.getByRole('button', { name: 'A cover photo' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'A photo' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Publish' })).toBeDisabled()
 
     await page.getByRole('tab', { name: 'Photos' }).click()
-    await page.locator('input[name="toy_cover_photo"]').setInputFiles(PHOTO_FIXTURE)
-    await page.getByRole('button', { name: 'Save photos' }).click()
-    await expect(page.getByRole('button', { name: 'Save photos' })).toBeDisabled({
-      timeout: 20_000,
-    })
+    // One box now, and no Save beside it: a photo uploads and saves as it is
+    // added, so the tile appearing IS the confirmation. Save on this step
+    // belongs to the switch-adapted checkbox alone.
+    await page.locator('#toy-add-photo').setInputFiles(PHOTO_FIXTURE)
+    await expect(page.getByText('Cover')).toBeVisible({ timeout: 20_000 })
 
     await page.getByRole('tab', { name: 'Review' }).click()
     // Publish also needs an offer type, so the photo alone does not unlock it.
@@ -69,10 +80,15 @@ test('a contributor adds a toy, edits it, uploads a cover photo, publishes it, a
     const card = page.getByRole('link', { name: /E2E Test Toy/ })
     await expect(card).toBeVisible()
     // Positive assertion now that published carries its own badge: the old
-    // "no Draft text" check would pass on a draft too, since the badge reads
-    // DRAFT and getByText is case-sensitive.
+    // "no Draft text" check would pass on a draft too, since getByText is
+    // case-sensitive.
+    //
+    // The two words come from different places, which is why their casing
+    // differs here. PUBLISHED is the badge's default — the status word upper-
+    // cased — while a hidden toy carries an explicit "Hidden" label, and the
+    // capitals you see in the browser are .badge's text-transform.
     await expect(card.getByText('PUBLISHED')).toBeVisible()
-    await expect(card.getByText('DRAFT')).toHaveCount(0)
+    await expect(card.getByText('Hidden')).toHaveCount(0)
 
     await card.click()
     await page.getByRole('button', { name: 'Delete toy' }).click()

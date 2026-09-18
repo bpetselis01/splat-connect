@@ -50,14 +50,14 @@ const styles = StyleSheet.create({
   group: { gap: theme.spacing(2) },
   row: {
     flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12,
-    backgroundColor: theme.colors.surface, borderWidth: theme.border.thin, borderColor: theme.colors.ink,
-    borderRadius: theme.radii.md, ...theme.shadow(4),
+    backgroundColor: theme.colors.surface, borderWidth: theme.border.hairline, borderColor: theme.colors.ink,
+    borderRadius: theme.radii.field, ...theme.shadow(2),
   },
   soon: { opacity: 0.62 },
   rowLabel: { flex: 1, fontFamily: theme.fonts.bold, fontSize: 14, color: theme.colors.ink },
   count: {
     fontFamily: theme.fonts.numeral, fontSize: 20, lineHeight: 20, color: theme.colors.primaryDeep,
-    backgroundColor: theme.colors.accentLight, borderWidth: theme.border.thin, borderColor: theme.colors.ink,
+    backgroundColor: theme.colors.accentLight, borderWidth: theme.border.hairline, borderColor: theme.colors.ink,
     borderRadius: 4, paddingHorizontal: 6,
   },
   soonTag: { fontFamily: theme.fonts.bold, fontSize: 9, letterSpacing: 1, color: theme.colors.muted },

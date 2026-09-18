@@ -16,7 +16,7 @@ export function StepList({ steps }: { steps: { title: string; body: string }[] }
             {i + 1}
           </span>
           <div>
-            <h3 className="font-bold text-ink">{step.title}</h3>
+            <h3 className="title-section">{step.title}</h3>
             <p className="mt-1 max-w-prose text-sm leading-relaxed text-muted">{step.body}</p>
           </div>
         </li>

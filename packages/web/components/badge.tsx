@@ -29,27 +29,42 @@
 import type { ToyIdeaStatus } from '@splat-connect/types'
 
 const SUNKEN = 'bg-sunken text-brand-deep'
-const HONEY = 'bg-honey-soft text-honey-deep'
-const MINT = 'bg-mint-soft text-mint-deep'
-const APRICOT = 'bg-apricot-soft text-apricot-deep'
+const HONEY = 'bg-honey-soft text-ink'
+const MINT = 'bg-mint-soft text-ink'
+const APRICOT = 'bg-apricot-soft text-ink'
 const BRAND = 'bg-brand-tint text-brand-deep'
+
+/*
+ * The four the artboard actually draws, on /design-system/states: Published,
+ * Pending, Returned, Draft. Its status pills use the SEMANTIC tints (--tok,
+ * --tbad) rather than the accent tints (--tmint, --tcoral) that carry no
+ * meaning of their own, and its one neutral pill is muted rather than brand —
+ * a draft is the absence of a state, and brand ink made it read as a link.
+ *
+ * Only the lifecycle statuses move. Difficulty and the kind labels keep their
+ * accent tints: they are categories, not outcomes, and colouring "easy" with
+ * the success tint would say a hard guide had failed something.
+ */
+const OK = 'bg-success-soft text-ink'
+const BAD = 'bg-danger-soft text-ink'
+const DRAFT = 'bg-sunken text-muted'
 
 export const STATUS_TONE = {
   // tutorial review
-  draft: SUNKEN,
+  draft: DRAFT,
   pending: HONEY,
-  approved: MINT,
-  rejected: APRICOT,
+  approved: OK,
+  rejected: BAD,
   // toy
-  published: MINT,
+  published: OK,
   // exchange
   requested: HONEY,
   accepted: BRAND,
-  completed: MINT,
-  withdrawn: SUNKEN,
+  completed: OK,
+  withdrawn: DRAFT,
   // idea → challenge
   challenge: BRAND,
-  graduated: MINT,
+  graduated: OK,
   // difficulty
   easy: MINT,
   medium: HONEY,
@@ -64,6 +79,28 @@ export const STATUS_TONE = {
 }
 
 export type BadgeStatus = keyof typeof STATUS_TONE
+
+/**
+ * A toy's own wording for the two states it has.
+ *
+ * Both a toy and a guide are stored as `draft`, and the badge is keyed on the
+ * status word, so without this they would both read DRAFT. They do not mean the
+ * same thing. A draft guide is one you are still writing; a toy has nothing to
+ * write, so the same stored state means only that nobody else can see it yet.
+ * "Hidden" is what that is.
+ *
+ * The brief is explicit — status words are a fixed vocabulary, guides use Draft,
+ * toys and challenges use Hidden — and this is the first case where one stored
+ * word needs two labels. The badge's own note says the six status components
+ * were collapsed because "no word ever meant two different colours"; the colour
+ * is still the same, which is why this is a label rather than a second map.
+ */
+export const TOY_LABEL: Partial<Record<'draft' | 'published', string>> = {
+  draft: 'Hidden',
+  // `published` is deliberately absent. It falls through to the badge's default
+  // — the status word in caps — because that is already the right word, and an
+  // override that restates the default only moves where the string lives.
+}
 
 /** The author-facing wording for an idea's lifecycle. */
 export const IDEA_LABEL: Record<ToyIdeaStatus, string> = {

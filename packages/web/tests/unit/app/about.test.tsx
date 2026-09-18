@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import AboutPage from '@/app/about/page'
 import TeamPage from '@/app/about/team/page'
@@ -6,10 +6,17 @@ import ContactPage from '@/app/contact/page'
 import { ORG_FACTS } from '@/lib/org-facts'
 import { TEAM_MEMBERS } from '@/app/about/team/page'
 
+// The contact page reads capabilities to prefill the form, and lib/capabilities
+// pulls in api-client, which imports `server-only` — that throws on import
+// under vitest. Mocked rather than stubbed for the same reason as every other
+// async page test here. Signed out, because that is the case the assertions
+// below are about: the form does not require an account.
+vi.mock('@/lib/capabilities', () => ({ getCapabilities: async () => null }))
+
 describe('About', () => {
   it('explains what SPLAT is and why it exists', () => {
     render(<AboutPage />)
-    expect(screen.getByRole('heading', { level: 1, name: /about splat/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: /^about$/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /why this exists/i })).toBeInTheDocument()
   })
 
@@ -61,10 +68,22 @@ describe('About', () => {
     }
   })
 
-  it('gives contact routes for the three things people actually write in about', () => {
-    render(<ContactPage />)
+  it('gives contact routes for the three things people actually write in about', async () => {
+    render(await ContactPage())
     expect(screen.getByRole('heading', { level: 1, name: /contact/i })).toBeInTheDocument()
     expect(screen.getAllByText(/safety/i).length).toBeGreaterThan(0)
     expect(screen.getAllByText(/organisation/i).length).toBeGreaterThan(0)
+  })
+
+  // Tests: the form is on the page and asks nothing an anonymous sender cannot
+  //        give
+  // Chain: it was a mailto: link, which meant a safety report reached whichever
+  //        inbox somebody happened to be watching. 065 gave it a queue where
+  //        safety jumps ahead — but only if there is a form to fill in
+  it('offers a form as well as the email address', async () => {
+    render(await ContactPage())
+    expect(screen.getByRole('button', { name: /send it/i })).toBeInTheDocument()
+    expect(screen.getByLabelText(/what is it about/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/your email/i)).toBeInTheDocument()
   })
 })

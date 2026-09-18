@@ -34,7 +34,7 @@ describe('POST /api/toy-transactions/:id/messages', () => {
     const toy = (await create.json()) as { id: string }
     await toysReq(`/${toy.id}`, owner.token, {
       method: 'PATCH',
-      body: JSON.stringify({ cover_photo_url: 'https://example.com/c.jpg', offer_type: 'donation' }),
+      body: JSON.stringify({ photo_urls: ['https://example.com/c.jpg'], offer_type: 'donation' }),
     })
     await toysReq(`/${toy.id}/publish`, owner.token, { method: 'PATCH' })
 

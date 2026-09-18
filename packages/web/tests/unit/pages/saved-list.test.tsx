@@ -60,7 +60,8 @@ const tutorial = {
   difficulty: 'easy',
   status: 'approved',
   description: 'A first adaptation.',
-  toy_photo_url: 'https://example.com/p.jpg',
+  photo_urls: ['https://test.supabase.co/storage/v1/object/public/photos/p.jpg'],
+  toy_photo_url: 'https://test.supabase.co/storage/v1/object/public/photos/p.jpg',
 }
 
 beforeEach(() => {
@@ -70,13 +71,23 @@ beforeEach(() => {
 })
 
 describe('SavedList', () => {
-  it('404s a slug that is not live', async () => {
-    // organisations is in the save enum but has no source, exactly as the API
-    // has none — one missing key, both behaviours.
-    await expect(SavedList({ params: Promise.resolve({ type: 'organisations' }) })).rejects.toThrow(
+  // Chain: organisations was the not-live example here until 2026-09-17, when
+  //        it was switched on — one line in SAVE_SLUGS and one in the API's
+  //        SOURCE, which is exactly what that constant's note promised. The
+  //        assertion moves to printable_part, which is still enum-only, so the
+  //        property under test survives.
+  it('404s a slug that is in the enum but not live', async () => {
+    await expect(SavedList({ params: Promise.resolve({ type: 'parts' }) })).rejects.toThrow(
       'NEXT_NOT_FOUND'
     )
     expect(notFound).toHaveBeenCalled()
+  })
+
+  it('renders a live slug that was switched on', async () => {
+    listed.current = [{ id: 'org-1', name: 'Northside Therapy', description: null }]
+    const ui = await SavedList({ params: Promise.resolve({ type: 'organisations' }) })
+    render(ui)
+    expect(screen.getByText('Northside Therapy')).toBeInTheDocument()
   })
 
   it('404s a slug that is not a save type at all', async () => {

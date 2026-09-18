@@ -33,9 +33,9 @@ export function ChallengeCard({
       data-testid="challenge-card"
     >
       <div className="flex flex-wrap items-center gap-2">
-        <h3 className="font-black text-ink">{idea.title}</h3>
+        <h3 className="card-title">{idea.title}</h3>
         {idea.status === 'graduated' ? (
-          <span className="badge bg-mint-soft text-mint-deep">Being written up</span>
+          <span className="badge bg-mint-soft text-ink">Being written up</span>
         ) : (
           <span className="chip">Looking for makers</span>
         )}

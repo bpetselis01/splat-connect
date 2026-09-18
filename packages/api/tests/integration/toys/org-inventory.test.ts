@@ -152,11 +152,11 @@ describe("an organisation's toy inventory", () => {
 
     const blocked = await req(`/toys/${toy.id}/publish`, leader.token, { method: 'PATCH' })
     expect(blocked.status).toBe(400)
-    expect(((await blocked.json()) as any).missing).toContain('Cover photo')
+    expect(((await blocked.json()) as any).missing).toContain('A photo')
 
     await req(`/toys/${toy.id}`, leader.token, {
       method: 'PATCH',
-      body: JSON.stringify({ cover_photo_url: 'https://example.com/bear.jpg', offer_type: 'both' }),
+      body: JSON.stringify({ photo_urls: ['https://example.com/bear.jpg'], offer_type: 'both' }),
     })
     const published = await req(`/toys/${toy.id}/publish`, leader.token, { method: 'PATCH' })
     expect(published.status).toBe(200)

@@ -31,6 +31,7 @@ function tutorial(overrides: Partial<TutorialWithDetails> = {}): TutorialWithDet
     maturity: 'complete',
     safety_declared_at: null,
     tutorial_pdf_url: null,
+    photo_urls: [],
     toy_photo_url: null,
     rejection_note: null,
     created_at: '',
@@ -92,18 +93,18 @@ describe('TutorialView', () => {
   it('sends a signed-out visitor to sign up from the PDF and each STL', () => {
     render(<TutorialView tutorial={tutorial(files)} signedIn={false} />)
     const detour = '/signup?next=%2Ftutorials%2Ft1&reason=download'
-    expect(screen.getByRole('link', { name: 'Download Tutorial PDF' })).toHaveAttribute('href', detour)
+    expect(screen.getByRole('link', { name: 'Sign in to download' })).toHaveAttribute('href', detour)
     expect(screen.getByRole('link', { name: 'bracket.stl' })).toHaveAttribute('href', detour)
-    expect(screen.getByRole('link', { name: 'Download Tutorial PDF' })).not.toHaveAttribute('target')
+    expect(screen.getByRole('link', { name: 'Sign in to download' })).not.toHaveAttribute('target')
   })
 
   it('links a signed-in visitor through /files, which signs on click', () => {
     render(<TutorialView tutorial={tutorial(files)} signedIn />)
-    expect(screen.getByRole('link', { name: 'Download Tutorial PDF' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Download guide (PDF)' })).toHaveAttribute(
       'href',
       '/files/tutorial-pdfs/t1/tutorial.pdf'
     )
-    expect(screen.getByRole('link', { name: 'Download Tutorial PDF' })).toHaveAttribute('target', '_blank')
+    expect(screen.getByRole('link', { name: 'Download guide (PDF)' })).toHaveAttribute('target', '_blank')
     expect(screen.getByRole('link', { name: 'bracket.stl' })).toHaveAttribute('href', '/files/stl-files/t1/bracket.stl')
     expect(screen.getByRole('link', { name: 'bracket.stl' })).not.toHaveAttribute('target')
   })

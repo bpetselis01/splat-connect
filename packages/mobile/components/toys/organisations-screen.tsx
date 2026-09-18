@@ -126,9 +126,9 @@ const styles = StyleSheet.create({
   avatar: {
     width: 44,
     height: 44,
-    borderRadius: theme.radii.md,
+    borderRadius: theme.radii.field,
     backgroundColor: theme.colors.accentLight,
-    borderWidth: theme.border.thin,
+    borderWidth: theme.border.hairline,
     borderColor: theme.colors.ink,
     alignItems: 'center',
     justifyContent: 'center',

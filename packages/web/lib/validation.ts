@@ -22,7 +22,7 @@ export function getMissingFields(tutorial: TutorialWithDetails): Gap<EditStepId>
   if (!(['easy', 'medium', 'hard'] as string[]).includes(tutorial.difficulty))
     missing.push({ step: 'details', label: 'A difficulty' })
   if (!tutorial.tutorial_pdf_url?.trim()) missing.push({ step: 'files', label: 'The guide PDF' })
-  if (!tutorial.toy_photo_url?.trim()) missing.push({ step: 'files', label: 'A photo' })
+  if (tutorial.photo_urls.length === 0) missing.push({ step: 'files', label: 'A photo' })
   if (tutorial.parts.length === 0) missing.push({ step: 'parts', label: 'A part' })
   if (tutorial.tools.length === 0) missing.push({ step: 'tools', label: 'A tool' })
   // The one rule that reads the kind: a printed part is what an assistive-tech

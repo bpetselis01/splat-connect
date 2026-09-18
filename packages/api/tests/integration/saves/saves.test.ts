@@ -102,9 +102,19 @@ describe('GET /api/saves/:slug', () => {
     expect(rows.map((r) => r.id)).not.toContain(draftId)
   })
 
-  it('404s a slug that is not live', async () => {
-    const res = await app.request('/api/saves/organisations', as(owner))
+  // Chain: organisations was the example here until 2026-09-17, when it was
+  //        switched on — one line in SAVE_SLUGS and one in SOURCE, which is
+  //        exactly what the enum's own note promised. `parts` is the one left
+  //        in the enum with no source, so the property survives the move.
+  it('404s a slug that is in the enum but has no source', async () => {
+    const res = await app.request('/api/saves/parts', as(owner))
     expect(res.status).toBe(404)
+  })
+
+  it('serves a slug that was switched on', async () => {
+    const res = await app.request('/api/saves/organisations', as(owner))
+    expect(res.status).toBe(200)
+    expect(Array.isArray(await res.json())).toBe(true)
   })
 
   it('returns an empty list rather than erroring when nothing is saved', async () => {

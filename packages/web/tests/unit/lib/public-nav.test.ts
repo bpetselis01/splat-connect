@@ -6,7 +6,6 @@ import {
   SCAFFOLD_KEYS,
   ACCOUNT_NAV,
   crossesAccountBoundary,
-  nestsRail,
 } from '@/lib/public-nav'
 
 describe('public nav model', () => {
@@ -148,7 +147,7 @@ describe('the account section', () => {
   //        of them is nested under a public prefix
   // How:   /upload (a plain prefix) and /tutorials/[id]/edit (a pattern),
   //        against the public /tutorials/[id] that must not follow it
-  // Chain: sectionFor is the single input to nestsRail, isAccountRoute, the
+  // Chain: sectionFor is the single input to isAccountRoute, the
   //        breadcrumb and the back-to-My-SPLAT dock — all four were wrong on
   //        these pages together
   it('resolves the authoring pages to the account section', () => {
@@ -237,19 +236,16 @@ describe('crossesAccountBoundary', () => {
     expect(crossesAccountBoundary('/dashboard/tutorials', '/dashboard/challenges')).toBe(false)
   })
 
-  // Tests: /dashboard itself renders the header, not the rail — every other
-  //        account page renders the rail, not the header. Crossing between
-  //        them needs a full page load in both directions, or the stale-chrome
-  //        bug the account/public boundary was fixed for reopens one level in.
-  // How:   both directions between /dashboard and a rail page
-  // Chain: components/hub-grid.tsx (My SPLAT's own cards) and the
-  //        back-to-My-SPLAT dock both rely on this
-  it('is true between /dashboard and any other account page', () => {
-    expect(crossesAccountBoundary('/dashboard', '/dashboard/tutorials')).toBe(true)
-    expect(crossesAccountBoundary('/dashboard/challenges', '/dashboard')).toBe(true)
-    expect(crossesAccountBoundary('/dashboard', '/admin')).toBe(true)
+  // Tests: moving between /dashboard and the pages under it is NOT a boundary
+  // How:   both directions, plus the hop to /admin
+  // Chain: the rail was retired on 2026-09-17, so every account page renders
+  //        the same header — a soft transition between them leaves no stale
+  //        chrome behind, and forcing a full load would only cost a flash
+  it('is false between /dashboard and any other account page', () => {
+    expect(crossesAccountBoundary('/dashboard', '/dashboard/tutorials')).toBe(false)
+    expect(crossesAccountBoundary('/dashboard/challenges', '/dashboard')).toBe(false)
+    expect(crossesAccountBoundary('/dashboard', '/admin')).toBe(false)
   })
-
 
   // Tests: the authoring pages that live outside /dashboard are on the account
   //        side of the boundary like any other rail page
@@ -261,7 +257,7 @@ describe('crossesAccountBoundary', () => {
   it('puts the authoring pages on the account side', () => {
     expect(crossesAccountBoundary('/dashboard/tutorials', '/upload')).toBe(false)
     expect(crossesAccountBoundary('/upload', '/tutorials/abc/edit')).toBe(false)
-    expect(crossesAccountBoundary('/upload', '/dashboard')).toBe(true)
+    expect(crossesAccountBoundary('/upload', '/dashboard')).toBe(false)
     expect(crossesAccountBoundary('/library', '/upload')).toBe(true)
     expect(crossesAccountBoundary('/library', '/tutorials/abc/edit')).toBe(true)
   })
@@ -282,42 +278,3 @@ describe('crossesAccountBoundary', () => {
   })
 })
 
-describe('nestsRail', () => {
-  it('is false for /dashboard itself', () => {
-    expect(nestsRail('/dashboard')).toBe(false)
-  })
-
-  it('is true for every other account page', () => {
-    expect(nestsRail('/dashboard/toys')).toBe(true)
-    expect(nestsRail('/admin')).toBe(true)
-    expect(nestsRail('/notifications')).toBe(true)
-  })
-
-  it('is false outside the account section', () => {
-    expect(nestsRail('/library')).toBe(false)
-    expect(nestsRail('/login')).toBe(false)
-  })
-
-  // Tests: the two authoring pages that do not live under /dashboard still get
-  //        the rail, and the public tutorial page still does not
-  // How:   /upload and /tutorials/[id]/edit against /tutorials/[id]
-  // Chain: app/layout.tsx reads nestsRail to choose AppShell over Nav, so a
-  //        false here is literally the header rendering on a signed-in page
-  it('is true for the authoring pages outside /dashboard', () => {
-    expect(nestsRail('/upload')).toBe(true)
-    expect(nestsRail('/tutorials/abc/edit')).toBe(true)
-    expect(nestsRail('/tutorials/abc')).toBe(false)
-  })
-
-  // Tests: a leader gets the rail on both organisation pages, and the public
-  //        profile beside them still gets the header
-  // How:   the leader dashboard, its review screen, and /public
-  // Chain: both are reached from /dashboard/organisation, which has the rail —
-  //        without this the chrome flips halfway through a leader's review
-  it('is true for the organisation leader pages', () => {
-    expect(nestsRail('/organizations/abc')).toBe(true)
-    expect(nestsRail('/organizations/abc/projects/def')).toBe(true)
-    expect(nestsRail('/organizations/abc/public')).toBe(false)
-    expect(nestsRail('/organizations')).toBe(false)
-  })
-})

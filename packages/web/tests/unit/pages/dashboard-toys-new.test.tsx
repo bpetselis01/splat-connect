@@ -38,7 +38,9 @@ describe('NewToyPage', () => {
     signedIn()
     render(await NewToyPage())
     expect(screen.getByLabelText('Name')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /my toys/i })).toHaveAttribute('href', '/dashboard/toys')
+    // The way back to My toys is the breadcrumb trail, which app/layout.tsx
+    // renders above this page rather than the page rendering it itself — see
+    // lib/trail.ts and tests/unit/lib/trail.test.ts.
   })
 
   it('shows the whole wizard up front, on the Details step', async () => {

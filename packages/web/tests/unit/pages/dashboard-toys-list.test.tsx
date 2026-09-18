@@ -39,8 +39,9 @@ function toy(overrides: Partial<Toy> = {}): Toy {
     description: null,
     condition: 8,
     switch_adapted: false,
+    photo_urls: [],
     cover_photo_url: null,
-    switch_photo_urls: [],
+    switch_photo_url: null,
     status: 'draft',
     created_at: '',
     updated_at: '',
@@ -116,7 +117,10 @@ describe('ToyListPage', () => {
       toy({ id: 't2', name: 'Blocks', status: 'published' }),
     ])
     render(await ToyListPage())
-    expect(screen.getByRole('link', { name: /Fire truck/ })).toHaveTextContent('DRAFT')
+    // "Hidden", not "Draft". The row is stored as `draft` exactly like an
+    // unfinished guide, but a toy has nothing to write — the state only means
+    // nobody else can see it yet, and the vocabulary says so.
+    expect(screen.getByRole('link', { name: /Fire truck/ })).toHaveTextContent('Hidden')
     // Published used to render no badge at all, so the card said nothing about
     // where the toy had got to.
     expect(screen.getByRole('link', { name: /Blocks/ })).toHaveTextContent('PUBLISHED')
@@ -128,10 +132,15 @@ describe('ToyListPage', () => {
       toy({ id: 't2', name: 'Blocks', status: 'published' }),
     ])
     render(await ToyListPage())
-    // Draft is byte-identical to a tutorial draft; published takes the mint
-    // that approved uses.
-    expect(screen.getByText('DRAFT')).toHaveClass('badge', 'bg-sunken', 'text-brand-deep')
-    expect(screen.getByText('PUBLISHED')).toHaveClass('badge', 'bg-mint-soft', 'text-mint-deep')
+    // The COLOUR is byte-identical to a tutorial draft — only the word differs,
+    // which is why this stayed a label override rather than a second tone map.
+    // Asserted in sentence case: .badge uppercases in CSS, which jsdom does not
+    // apply, so the DOM text is what the label map holds.
+    // Published takes the success tint that approved uses; a draft takes the
+    // neutral one — both the artboard's own status pills, see
+    // app/design-system/states.
+    expect(screen.getByText('Hidden')).toHaveClass('badge', 'bg-sunken', 'text-muted')
+    expect(screen.getByText('PUBLISHED')).toHaveClass('badge', 'bg-success-soft', 'text-ink')
   })
 
   it('throws rather than rendering an empty list when the fetch fails', async () => {

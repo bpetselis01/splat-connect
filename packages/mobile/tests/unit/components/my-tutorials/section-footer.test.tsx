@@ -33,6 +33,7 @@ const tutorial = (over: Record<string, unknown> = {}) => ({
   status: 'draft',
   safety_declared_at: '2026-09-02T00:00:00Z',
   tutorial_pdf_url: 't1/tutorial.pdf',
+  photo_urls: ['https://example.test/p.jpg'],
   toy_photo_url: 'https://example.test/p.jpg',
   parts: [{ id: 'p1' }],
   tools: [{ id: 'o1' }],
@@ -54,7 +55,7 @@ it('points Next at the next section still missing something, not the next in the
 
 it('skips complete sections rather than walking them', () => {
   // Only Files is open. From Details, Next jumps past Safety/Parts/Tools.
-  mockDraft.tutorial = tutorial({ toy_photo_url: null })
+  mockDraft.tutorial = tutorial({ photo_urls: [] })
   render(<SectionFooter section="details" />)
   expect(screen.getByText('Next: Files')).toBeTruthy()
 })

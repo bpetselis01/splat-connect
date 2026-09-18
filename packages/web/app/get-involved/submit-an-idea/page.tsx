@@ -57,7 +57,7 @@ export default async function SubmitAnIdea() {
       />
 
       <div className="card mt-10 p-6">
-        <h2 className="text-lg font-bold text-ink">What we can&apos;t take on</h2>
+        <h2 className="title-section">What we can&apos;t take on</h2>
         <p className="mt-1 text-sm text-muted">
           This list is still being confirmed, so treat it as a guide rather than the final
           word. If you are unsure whether an idea fits, submit it anyway and we will tell you.

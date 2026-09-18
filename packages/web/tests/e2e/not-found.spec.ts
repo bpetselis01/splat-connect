@@ -25,12 +25,13 @@ test('a miss inside the account section keeps the rail', async ({ page }) => {
     await page.waitForURL('**/dashboard')
 
     // Two routes, because they lost their chrome differently: exchanges called
-    // notFound() before anything was flushed, child after.
+    // notFound() before anything was flushed, child after. The chrome in
+    // question is the header now — the rail was retired on 2026-09-17.
     for (const url of [`/dashboard/child/${MISSING}`, `/dashboard/exchanges/${MISSING}`]) {
       const res = await page.goto(url)
       expect(res?.status()).toBe(404)
       await expect(page.getByRole('heading', { name: /couldn't find that page/i })).toBeVisible()
-      await expect(page.locator('.shell-rail')).toBeVisible()
+      await expect(page.getByRole('banner')).toBeVisible()
     }
   } finally {
     await deleteUser(contributor.id)

@@ -13,8 +13,7 @@ export default function FamiliesPage() {
       <EditorialImage illustration="family" ratio="2/1" />
       <h1 className="mt-6 title-article">For families</h1>
       <p className="mt-3 max-w-prose text-base leading-relaxed text-muted">
-        You do not need to be technical, and you do not need to buy much. Most first
-        adaptations take an evening and about thirty dollars of parts.
+        Most first adaptations take an evening and about thirty dollars of parts.
       </p>
 
       <StepList

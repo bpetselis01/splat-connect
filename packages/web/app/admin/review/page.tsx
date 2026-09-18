@@ -13,8 +13,10 @@
  * - packages/api/src/routes/admin.ts: GET /api/admin/tutorials, which embeds tutorial_orgs
  * - app/organizations/[id]: where a leader handles the ones marked accepted here
  */
+import { CheckCircle } from '@phosphor-icons/react/dist/ssr'
 import Link from 'next/link'
 import { apiClient } from '@/lib/api-client'
+import { formatRelativeTime } from '@/lib/relative-time'
 import { Badge } from '@/components/badge'
 import type { Tutorial, TutorialOrg, Difficulty } from '@splat-connect/types'
 
@@ -38,11 +40,11 @@ export default async function ReviewListPage({
   if (tutorials.length === 0) {
     return (
       <div>
-        <h1 className="mb-4 title-hub">Tutorial review queue</h1>
+        <h1 className="mb-4 title-hub">Review queue</h1>
         <div className="flex flex-col items-center px-6 py-16 text-center">
-          <span aria-hidden="true" className="empty-badge">
-            ☕
-          </span>
+          <span aria-hidden="true" className="empty-badge text-brand-deep">
+  <CheckCircle className="h-8 w-8" />
+</span>
           <p className="mt-4 font-bold text-ink">
             {hidingHandled && handledCount > 0
               ? 'Nothing left for you.'
@@ -65,7 +67,7 @@ export default async function ReviewListPage({
 
   return (
     <div>
-      <h1 className="mb-2 title-hub">Tutorial review queue</h1>
+      <h1 className="mb-2 title-hub">Review queue</h1>
       {handledCount > 0 && (
         <p className="mb-6 text-sm text-muted">
           {hidingHandled ? (
@@ -79,34 +81,60 @@ export default async function ReviewListPage({
           )}
         </p>
       )}
-      <div className="flex flex-col gap-3">
-        {tutorials.map((t) => {
-          const accepted = acceptedFor(t)
-          return (
-            <Link
-              key={t.id}
-              href={`/admin/review/${t.id}`}
-              className="card card-link flex items-center justify-between gap-4 p-4"
-            >
-              <div className="flex items-center gap-3">
-                <Badge status={t.difficulty as Difficulty} />
-                <div>
-                  <p className="text-sm font-bold text-ink">{t.title}</p>
-                  <p className="text-xs text-muted">
-                    Submitted {new Date(t.created_at).toLocaleDateString()}
-                  </p>
-                  {accepted.length > 0 && (
-                    <p className="text-xs text-muted">
-                      {accepted.map((b) => b.organizations?.name).filter(Boolean).join(', ')}{' '}
-                      accepted — awaiting their review
-                    </p>
-                  )}
-                </div>
-              </div>
-              <span className="shrink-0 text-sm font-semibold text-brand-dark">Review →</span>
-            </Link>
-          )
-        })}
+      {/*
+        A queue is a table on the board — GUIDE | CONTRIBUTOR | BACKING |
+        WAITING | SAFETY — and a table is what a queue wants: rows an admin
+        compares against each other, not cards read one at a time.
+
+        Three of those five columns are here. CONTRIBUTOR and SAFETY are not:
+        /api/admin/tutorials selects tutorial_contributors(profile_id) and no
+        name, and there is no safety field at all. Resolving the name means a
+        second admin-client query rather than an embed — embedding profiles
+        silently kills the whole query under the 033/045 grants. Left for an API
+        change rather than invented here.
+      */}
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-left">
+          <thead>
+            <tr className="border-b border-line">
+              <th scope="col" className="eyebrow pb-2 pr-3 text-muted">Guide</th>
+              <th scope="col" className="eyebrow pb-2 pr-3 text-muted">Backing</th>
+              <th scope="col" className="eyebrow whitespace-nowrap pb-2 text-right text-muted">
+                Waiting
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {tutorials.map((t) => {
+              const accepted = acceptedFor(t)
+
+              return (
+                <tr key={t.id} className="border-b border-line align-middle last:border-0">
+                  <td className="py-3 pr-3">
+                    <Link
+                      href={`/admin/review/${t.id}`}
+                      className="flex items-center gap-3 no-underline"
+                    >
+                      <Badge status={t.difficulty as Difficulty} />
+                      <span className="card-title">{t.title}</span>
+                    </Link>
+                  </td>
+                  <td className="py-3 pr-3 text-sm text-muted">
+                    {accepted.length > 0
+                      ? accepted.map((b) => b.organizations?.name).filter(Boolean).join(', ')
+                      : '—'}
+                  </td>
+                  <td className="whitespace-nowrap py-3 text-right font-mono text-sm tabular-nums text-muted">
+                    {/* The repo's own helper rather than arithmetic on Date.now()
+                        in render: that is impure, and reading the clock once per
+                        row can straddle midnight and date two rows differently. */}
+                    {formatRelativeTime(t.created_at)}
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
       </div>
     </div>
   )

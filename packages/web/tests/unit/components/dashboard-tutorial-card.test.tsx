@@ -26,6 +26,7 @@ function tutorial(overrides: Partial<Tutorial & { tutorial_orgs?: TutorialOrg[] 
     safety_declared_at: null,
     description: null,
     tutorial_pdf_url: null,
+    photo_urls: [],
     toy_photo_url: null,
     rejection_note: null,
     created_at: '',
@@ -45,9 +46,9 @@ describe('DashboardTutorialCard', () => {
 
   it('shows the toy photo when there is one', () => {
     const { container } = render(
-      <DashboardTutorialCard tutorial={tutorial({ toy_photo_url: 'https://x/toy.jpg' })} />
+      <DashboardTutorialCard tutorial={tutorial({ toy_photo_url: 'https://test.supabase.co/storage/v1/object/public/photos/toy.jpg' })} />
     )
-    expect(container.querySelector('img')).toHaveAttribute('src', 'https://x/toy.jpg')
+    expect(container.querySelector('img')).toHaveAttribute('src', 'https://test.supabase.co/storage/v1/object/public/photos/toy.jpg')
   })
 
   it('leaves the photo unlabelled, so a broken one cannot repaint the title', () => {
@@ -55,7 +56,7 @@ describe('DashboardTutorialCard', () => {
     // duplicate announcement, and a non-empty alt is what a failed image falls
     // back to painting inside the band, under the difficulty badge.
     const { container } = render(
-      <DashboardTutorialCard tutorial={tutorial({ toy_photo_url: 'https://x/toy.jpg' })} />
+      <DashboardTutorialCard tutorial={tutorial({ toy_photo_url: 'https://test.supabase.co/storage/v1/object/public/photos/toy.jpg' })} />
     )
     expect(container.querySelector('img')).toHaveAttribute('alt', '')
     expect(screen.getAllByText('Sensory light box')).toHaveLength(1)
@@ -64,7 +65,10 @@ describe('DashboardTutorialCard', () => {
   it('falls back to the placeholder tile when there is no photo', () => {
     const { container } = render(<DashboardTutorialCard tutorial={tutorial()} />)
     expect(container.querySelector('img')).toBeNull()
-    expect(screen.getByText('🧸')).toBeInTheDocument()
+    // A duotone glyph, not the 🧸 it used to draw: ContentCard fills an empty
+    // media band with the card's own icon at 48px. An emoji renders in the
+    // reader's system font and carries none of the palette.
+    expect(container.querySelector('svg')).not.toBeNull()
   })
 
   it('carries the title, status and review route', () => {

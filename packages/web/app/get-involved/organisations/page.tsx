@@ -13,15 +13,14 @@ export default function OrganisationsPage() {
       <EditorialImage illustration="organisation" ratio="2/1" />
       <h1 className="mt-6 title-article">For organisations</h1>
       <p className="mt-3 max-w-prose text-base leading-relaxed text-muted">
-        Therapy services, schools, disability organisations and community groups. What
-        you bring is the thing a volunteer platform cannot generate on its own:
+        What you bring is what a volunteer platform cannot generate on its own:
         professional judgement, and a physical place families can get to.
       </p>
 
       <StepList
         steps={[
           {
-            title: 'Get in touch',
+            title: 'Ask for your organisation',
             body: 'Organisations are set up by the SPLAT team rather than self-registered, so that a name on a guide means something. Tell us who you are and what you would like to do.',
           },
           {
@@ -44,8 +43,13 @@ export default function OrganisationsPage() {
       />
 
       <div className="mt-10 flex flex-wrap gap-3">
-        <Link href="/contact" className="btn btn-primary">
-          Get in touch
+        {/* The door the page has described since it shipped, which until 060
+            went to a contact form. It now goes to the request an admin reviews. */}
+        <Link href="/get-involved/organisations/request" className="btn btn-primary">
+          Request an organisation
+        </Link>
+        <Link href="/contact" className="btn btn-soft">
+          Ask a question first
         </Link>
         <Link href="/organizations" className="btn btn-soft">
           See who is already involved

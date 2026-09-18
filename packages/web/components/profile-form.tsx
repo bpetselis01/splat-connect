@@ -86,7 +86,7 @@ export function ProfileForm({ profile }: { profile: Profile }) {
         <p className="text-xs text-muted">Your name still appears on tutorials you&apos;re credited on.</p>
       </div>
       {error && <p role="alert" className="alert alert-danger">{error}</p>}
-      {saved && <p className="text-sm font-semibold text-mint-deep">Saved</p>}
+      {saved && <p className="text-sm font-semibold text-ink">Saved</p>}
       <button type="submit" disabled={busy} className="btn btn-accent mt-2">
         {busy ? 'Saving…' : 'Save'}
       </button>

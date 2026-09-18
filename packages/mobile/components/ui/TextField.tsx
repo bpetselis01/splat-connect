@@ -100,8 +100,8 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing(2),
   },
   box: {
-    borderWidth: theme.border.thin,
-    borderRadius: theme.radii.sm,
+    borderWidth: theme.border.hairline,
+    borderRadius: theme.radii.field,
     backgroundColor: theme.colors.surface,
   },
   boxRow: { flexDirection: 'row', alignItems: 'center' },

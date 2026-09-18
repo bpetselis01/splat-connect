@@ -1,4 +1,3 @@
-import { BackLink } from '@/components/back-link'
 import { notFound } from 'next/navigation'
 import { apiClient } from '@/lib/api-client'
 import { requireCapabilities } from '@/lib/require-capabilities'
@@ -19,7 +18,6 @@ export default async function ToyEditPage({ params }: { params: Promise<{ id: st
 
   return (
     <div>
-      <BackLink href="/dashboard/toys" label="My toys" />
       <h1 className="mb-6 title-detail">{toy.name}</h1>
       <ToyEditor toy={toy} />
     </div>

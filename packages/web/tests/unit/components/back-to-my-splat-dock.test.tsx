@@ -30,7 +30,7 @@ describe('BackToMySplatDock', () => {
   })
 
   // Tests: the dock yields on a rail page, because the rail has carried its own
-  //        "Back to My SPLAT" pill since 2026-08-24 (components/rail.tsx)
+  //        trail back to My SPLAT since 2026-09-17 (lib/trail.ts)
   // How:   renders signed in on a deep account page
   // Note:  this asserted the opposite until that pill landed, and the two
   //        together put a second link to /dashboard on every rail page — a

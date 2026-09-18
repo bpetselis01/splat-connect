@@ -12,6 +12,7 @@ import { Provenance, type ProvenanceContributor, type ProvenanceOrg } from '../g
 import { PicksRow } from '../guides/picks-row'
 import { Badge } from '../ui/Badge'
 import { SaveButton } from '../ui/SaveButton'
+import { PhotoCarousel } from '../ui/PhotoCarousel'
 import { Button } from '../ui/Button'
 import { Section } from '../ui/Section'
 import { Skeleton } from '../ui/Skeleton'
@@ -104,13 +105,7 @@ export function DetailScreen({ id }: { id: string }) {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {tutorial.toy_photo_url ? (
-        <Image source={{ uri: tutorial.toy_photo_url }} style={styles.photo} />
-      ) : (
-        <View style={styles.photoPlaceholder}>
-          <Ionicons name="color-wand-outline" size={48} color={theme.colors.primary} />
-        </View>
-      )}
+      <PhotoCarousel urls={tutorial.photo_urls} emptyIcon="color-wand-outline" />
 
       <View style={styles.titleRow}>
         <Text style={styles.title}>{tutorial.title}</Text>
@@ -201,18 +196,18 @@ const styles = StyleSheet.create({
     padding: theme.spacing(4),
     gap: theme.spacing(3),
   },
-  loadingPhoto: { borderRadius: theme.radii.lg, marginBottom: theme.spacing(2) },
+  loadingPhoto: { borderRadius: theme.radii.card, marginBottom: theme.spacing(2) },
   photo: {
     width: '100%',
     height: 200,
-    borderRadius: theme.radii.lg,
+    borderRadius: theme.radii.card,
     marginBottom: theme.spacing(4),
     backgroundColor: theme.colors.surfaceSunken,
   },
   photoPlaceholder: {
     width: '100%',
     height: 200,
-    borderRadius: theme.radii.lg,
+    borderRadius: theme.radii.card,
     backgroundColor: theme.colors.accentLight,
     alignItems: 'center',
     justifyContent: 'center',
@@ -235,12 +230,12 @@ const styles = StyleSheet.create({
   printCard: {
     marginTop: theme.spacing(5),
     opacity: 0.62,
-    borderRadius: theme.radii.md,
-    borderWidth: theme.border.thin,
+    borderRadius: theme.radii.field,
+    borderWidth: theme.border.hairline,
     borderColor: theme.colors.ink,
     backgroundColor: theme.colors.surface,
     padding: theme.spacing(4),
-    ...theme.shadow(4),
+    ...theme.shadow(2),
   },
   printHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   printTitle: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.text },

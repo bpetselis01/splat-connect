@@ -47,7 +47,7 @@ export default function TeamPage() {
             ) : (
               <div
                 aria-hidden="true"
-                className="grid aspect-square w-full place-items-center rounded-[14px] bg-brand-tint text-3xl font-bold text-brand-deep"
+                className="grid aspect-square w-full place-items-center rounded-field bg-brand-tint text-3xl font-bold text-brand-deep"
               >
                 {initials(member.name)}
               </div>

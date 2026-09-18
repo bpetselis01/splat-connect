@@ -103,7 +103,7 @@ export function ChildEverydayNeedsForm({
           {busy ? 'Saving…' : 'Save'}
         </button>
         {error && <p role="alert" className="alert alert-danger">{error}</p>}
-        {saved && <p className="text-sm font-semibold text-mint-deep">Saved</p>}
+        {saved && <p className="text-sm font-semibold text-ink">Saved</p>}
       </PanelActions>
     </form>
   )

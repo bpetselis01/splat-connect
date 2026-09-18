@@ -3,8 +3,8 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { BoundaryLink } from '@/components/boundary-link'
 import { createClient } from '@/lib/supabase/client'
-import { Logo, Menu } from '@/components/icons'
-import { useDrawer } from '@/components/drawer-context'
+import { CaretDown } from '@phosphor-icons/react/dist/ssr'
+import { Logo } from '@/components/icons'
 import { PUBLIC_NAV, ACCOUNT_NAV, sectionFor } from '@/lib/public-nav'
 import { toneClass } from '@/lib/tone'
 import type { Capabilities } from '@/lib/capabilities'
@@ -22,16 +22,12 @@ interface NavProps {
   /** Inside the account section the bar keeps every label and drops its weight.
       Wired in Task 6; accepted here so the layout compiles. */
   quiet?: boolean
-  /** Whether the mobile drawer trigger renders. Only true where the drawer
-      itself exists — inside the account section. */
-  showMenu?: boolean
 }
 
-export function Nav({ caps, quiet = false, showMenu = false }: NavProps) {
+export function Nav({ caps, quiet = false }: NavProps) {
   const supabase = createClient()
   // Null outside an App Router context (e.g. the unit tests render Nav directly).
   const pathname = usePathname() ?? ''
-  const drawer = useDrawer()
 
   async function signOut() {
     await supabase.auth.signOut()
@@ -43,7 +39,17 @@ export function Nav({ caps, quiet = false, showMenu = false }: NavProps) {
 
   // Public sections come from the nav model so the top bar, the subnav and the
   // footer cannot disagree about what the site contains.
-  const sections = PUBLIC_NAV
+  //
+  // The board draws six tabs and a More: Guides, Toy Library, 3D Printing, Get
+  // Involved, About, More. Live carried all seven on the bar, which is a
+  // different shape at a glance — seven equal tabs read as a flat site, six and
+  // a disclosure read as three pillars plus the rest. Learn and Impact go under
+  // More, matching it. The nav MODEL is untouched: the footer and the subnav
+  // still see every section, because this is a presentation decision about one
+  // bar rather than a claim about what the site contains.
+  const BAR = ['/library', '/toy-library', '/printing', '/get-involved', '/about']
+  const sections = PUBLIC_NAV.filter((s) => BAR.includes(s.href))
+  const overflow = PUBLIC_NAV.filter((s) => !BAR.includes(s.href))
 
   const activeSection = sectionFor(pathname)
 
@@ -54,25 +60,15 @@ export function Nav({ caps, quiet = false, showMenu = false }: NavProps) {
     // components, and a Tailwind utility wins over that layer whatever the
     // specificity says. The utility was silently overriding the correct rule
     // back to 1px of --color-line on every page.
-    <header className={`sticky top-0 z-30 ${quiet ? 'nav-quiet' : 'bg-surface'}`}>
+    <header className={`sticky top-0 z-30 ${quiet ? 'nav-quiet' : ''}`}>
       <nav
         className={`public-shell flex flex-wrap items-center gap-x-[26px] gap-y-2 ${
           quiet ? 'py-1.5' : 'py-[14px]'
         }`}
       >
-        {showMenu && (
-          <button
-            type="button"
-            onClick={drawer.open}
-            aria-label="Open navigation"
-            className="rounded-field p-2 text-ink transition-colors hover:bg-sunken lg:hidden"
-          >
-            <Menu className="h-6 w-6" />
-          </button>
-        )}
         <BoundaryLink
           href="/"
-          className="flex shrink-0 items-center gap-2.5 text-[18px] font-black tracking-tight text-ink"
+          className="flex shrink-0 items-center gap-2.5 text-[18px] font-extrabold tracking-tight text-ink"
         >
           {/* The mark sits on a plain tinted disc — no ring. The wordmark is the
               only thing in the bar that is not a pill, and it earns that by
@@ -130,19 +126,41 @@ export function Nav({ caps, quiet = false, showMenu = false }: NavProps) {
                   } as React.CSSProperties
                 }
               >
-                {/* The dot is what makes rank legible: the three pillars carry the
-                    three distinct accents, the supporting sections stay blue. It is
-                    decorative — the label already says which section this is. */}
-                <span
-                  aria-hidden="true"
-                  className={`h-2 w-2 shrink-0 rounded-full ${quiet ? 'bg-line' : tone.dot} ${
-                    active && !quiet ? '' : 'opacity-60'
-                  }`}
-                />
+                {/*
+                  No dot. The board draws a nav tab as a label in a pill and
+                  nothing else — its "Guides" button is a <button> holding one
+                  span, measured. The coloured tone dot came from Pixel, where
+                  rank was carried by accent; Soft Pop carries it with the pill
+                  behind the current tab.
+                */}
                 {s.label}
               </BoundaryLink>
             )
           })}
+
+          {/* A native <details>, not a popover: it needs no JavaScript, closes
+              on Escape for free, and the bar is a server component everywhere
+              else. */}
+          {overflow.length > 0 && (
+            <details className="nav-more">
+              <summary className="nav-pill nav-more__summary" aria-label="More sections">
+                More
+                <CaretDown weight="bold" className="h-3.5 w-3.5" aria-hidden="true" />
+              </summary>
+              <div className="nav-more__menu">
+                {overflow.map((s) => (
+                  <BoundaryLink
+                    key={s.href}
+                    href={s.href}
+                    aria-current={activeSection?.href === s.href ? 'page' : undefined}
+                    className="nav-more__item"
+                  >
+                    {s.label}
+                  </BoundaryLink>
+                ))}
+              </div>
+            </details>
+          )}
         </div>
 
         {caps ? (
@@ -158,7 +176,7 @@ export function Nav({ caps, quiet = false, showMenu = false }: NavProps) {
             <span
               aria-hidden="true"
               title={caps.profile.name}
-              className="pixel-avatar grid h-8 w-8 shrink-0 place-items-center bg-mint text-sm font-black text-mint-deep"
+              className="pixel-avatar grid h-8 w-8 shrink-0 place-items-center bg-mint text-sm font-extrabold text-ink"
             >
               {initials(caps.profile.name)}
             </span>

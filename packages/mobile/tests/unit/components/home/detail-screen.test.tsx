@@ -31,6 +31,7 @@ const DETAIL = {
   safety_declared_at: null,
   // Object path (049), not a URL — the preview button signs it in-process.
   tutorial_pdf_url: '1/tutorial.pdf',
+  photo_urls: [],
   toy_photo_url: null,
   rejection_note: null,
   created_at: '',

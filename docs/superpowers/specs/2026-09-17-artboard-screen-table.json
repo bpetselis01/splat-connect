@@ -1,0 +1,1073 @@
+[
+ [
+  "home",
+  "Home",
+  "/",
+  "Public site",
+  null,
+  "ph-house",
+  "The scroll-world hero is one continuous camera flight scrubbed by scroll — five scenes, CSS 3D rather than video, so it stays crisp and respects reduced-motion."
+ ],
+ [
+  "library",
+  "Guides library",
+  "/tutorials",
+  "Public site",
+  null,
+  "ph-books",
+  "Hero is the two-door skeleton shared with Toys and 3D Printing: get on the left, give on the right, three live numbers. Handoff: Magic UI NumberTicker + DotPattern, Motion stagger on load, prefers-reduced-motion snaps. The facet panel is sticky so the result count never scrolls out of view."
+ ],
+ [
+  "tutorial",
+  "Guide detail",
+  "/tutorials/[id]",
+  "Public site",
+  null,
+  "ph-book-open",
+  "Five tabs keep a long guide skimmable; Community notes is where builders add the step the author missed, attached to a step and pinnable by the author, backing org or admin as a revision. Pins surface as a strip above Steps and a count on the step, and are appended to the PDF. A note can also be filed against no step at all — the Missing step button beside the step picker — and pinning that renders it as an extra numbered step at the foot of the list, so a builder can supply what the author left out. Thanks is one tap, shown as a count. Report a problem is the same quiet flag everywhere and goes to SPLAT only. The sidebar answers the two questions a parent actually has: how long, and how much."
+ ],
+ [
+  "toys_public",
+  "Toy library",
+  "/toys",
+  "Public site",
+  null,
+  "ph-gift",
+  "Same two-door hero as Guides: request on the left, \"outgrown it? pass it on\" on the right. Every toy here is given, not sold. Condition is a five-star scale because \"good\" means nothing between strangers."
+ ],
+ [
+  "toy_public",
+  "Toy detail",
+  "/toys/[id]",
+  "Public site",
+  null,
+  "ph-tag",
+  "The public view of one listed toy. Distance, condition and what is actually in the box come before the request button — those are the three facts that decide it."
+ ],
+ [
+  "toy_request",
+  "Request a toy",
+  "/toys/[id]/request",
+  "Public site",
+  null,
+  "ph-hand-heart",
+  "Where an exchange starts. A swap asks you to pick one of your own listed toys; a donation is a one-way ask the holder accepts or declines. Both send the same note about the child."
+ ],
+ [
+  "wizard",
+  "Child profile wizard",
+  "/onboarding/child",
+  "My SPLAT",
+  "parent",
+  "ph-smiley",
+  "Five questions, all skippable, saved locally. The mascot carries the tone so the form never feels like an assessment."
+ ],
+ [
+  "learn",
+  "Learn · Course home",
+  "/learn",
+  "Learn",
+  null,
+  "ph-graduation-cap",
+  "One free course, six units, sixteen lessons. Coursera-style course home (outcomes, outline, progress ring) over a Duolingo-style ordered path; nothing is locked. Progress saves locally for guests."
+ ],
+ [
+  "learn_101",
+  "Toy adaptation 101",
+  "/learn/toy-adaptation-101",
+  "Learn",
+  null,
+  "ph-lightning",
+  "The whole trick in one paragraph, up front. Everything else is elaboration."
+ ],
+ [
+  "learn_switch",
+  "Switch types explained",
+  "/learn/switch-types",
+  "Learn",
+  null,
+  "ph-hand-tap",
+  "Force and cost are given per switch because those are the two facts that decide it."
+ ],
+ [
+  "learn_choose",
+  "Choosing a toy",
+  "/learn/choosing-a-toy",
+  "Learn",
+  null,
+  "ph-magnifying-glass",
+  "Good/walk-away as two columns, then a two-minute in-shop test. Written to be used standing in an aisle."
+ ],
+ [
+  "learn_tools",
+  "Tools and materials",
+  "/learn/tools-and-materials",
+  "Learn",
+  null,
+  "ph-wrench",
+  "The borrow column matters more than the cost column — a soldering iron used twice a year is a waste."
+ ],
+ [
+  "learn_safety",
+  "Safe handling",
+  "/learn/safe-handling",
+  "Learn",
+  null,
+  "ph-shield-check",
+  "Button cells lead, because they are the one non-negotiable. Cleaning and handover moved to their own lesson in Unit 6."
+ ],
+ [
+  "learn_ask",
+  "Have a question?",
+  "/learn/ask",
+  "Learn",
+  null,
+  "ph-chats-circle",
+  "Not a queue. A router: sends each kind of question to the place it already gets answered (community notes, Learn, a public Question, the help sheet). No unmanaged inbox."
+ ],
+ [
+  "learn_circuit",
+  "How a switch works",
+  "/learn/how-a-switch-works",
+  "Learn",
+  null,
+  "ph-plugs-connected",
+  "A button is a gap in a circuit; the external switch is a second way to close it. Two diagrams carry the whole lesson."
+ ],
+ [
+  "learn_q1",
+  "Checkpoint: the basics",
+  "/learn/checkpoint-1",
+  "Learn",
+  null,
+  "ph-seal-check",
+  "Three questions, instant feedback, wrong answers explain themselves. Nothing is locked behind it."
+ ],
+ [
+  "learn_q2",
+  "Checkpoint: the bench",
+  "/learn/checkpoint-2",
+  "Learn",
+  null,
+  "ph-seal-check",
+  "Tools and safety, three questions."
+ ],
+ [
+  "learn_connector",
+  "Wire a 3.5 mm connector",
+  "/learn/wire-a-connector",
+  "Learn",
+  null,
+  "ph-wrench",
+  "The one soldering job the whole course rests on. Nine photographed steps, identical for jack and socket."
+ ],
+ [
+  "learn_q3",
+  "Checkpoint: the connector",
+  "/learn/checkpoint-3",
+  "Learn",
+  null,
+  "ph-seal-check",
+  "Three questions on the connector build."
+ ],
+ [
+  "learn_hamster",
+  "Build 1: Hamster Mania",
+  "/learn/build-hamster-mania",
+  "Learn",
+  null,
+  "ph-wrench",
+  "Workshop toy one. Solder to a board."
+ ],
+ [
+  "learn_duck",
+  "Build 2: Duck bubble machine",
+  "/learn/build-duck-bubbles",
+  "Learn",
+  null,
+  "ph-wrench",
+  "Workshop toy two. Solder to button legs, plus the strain-relief knot."
+ ],
+ [
+  "learn_rachel",
+  "Build 3: Ms Rachel doll",
+  "/learn/build-ms-rachel",
+  "Learn",
+  null,
+  "ph-wrench",
+  "Makers Making Change guide (CC BY-SA). A splice, not a board; two sockets for two functions."
+ ],
+ [
+  "learn_diyswitch",
+  "Build a 3D-printed switch",
+  "/learn/build-a-switch",
+  "Learn",
+  null,
+  "ph-hand-tap",
+  "Four printed parts and a limit switch. Links to 3D Printing for anyone without a printer."
+ ],
+ [
+  "learn_handover",
+  "Checks, cleaning and handover",
+  "/learn/handover",
+  "Learn",
+  null,
+  "ph-hand-heart",
+  "Five safety checks as cards, cleaning, and the two minutes of showing the family."
+ ],
+ [
+  "learn_q4",
+  "Final checkpoint",
+  "/learn/final-checkpoint",
+  "Learn",
+  null,
+  "ph-seal-check",
+  "Four questions across the course; passing it ends with the mascot and a pointer to the Guides."
+ ],
+ [
+  "printing",
+  "Find a printer",
+  "/printing",
+  "3D Printing",
+  null,
+  "ph-printer",
+  "The section’s home. Leads with \"you do not need a printer\", then the same rail as Guides and Toys. Pick up to three printers; the first to accept wins and the rest withdraw themselves. Guests see the list dimmed behind the unlock card."
+ ],
+ [
+  "printing_basics",
+  "Printing basics",
+  "/printing/basics",
+  "3D Printing",
+  null,
+  "ph-sliders",
+  "Written to be handed to whoever owns the printer, so settings come before philosophy."
+ ],
+ [
+  "print_request_new",
+  "Request a print",
+  "/printing/request",
+  "3D Printing",
+  "parent",
+  "ph-hand-heart",
+  "Parts come from the guide, never uploaded. Tick any combination, one request. The printer sees your suburb and your note, nothing else."
+ ],
+ [
+  "involved",
+  "Get involved",
+  "/get-involved",
+  "Get involved",
+  null,
+  "ph-hand-heart",
+  "Three audience doors, then concrete small actions. Nobody self-identifies as a \"contributor\" until they see the path."
+ ],
+ [
+  "inv_families",
+  "For families",
+  "/get-involved/families",
+  "Get involved",
+  null,
+  "ph-house-line",
+  "Ends by offering the toy library, because building is not for everyone right now."
+ ],
+ [
+  "inv_contributors",
+  "For contributors",
+  "/get-involved/contributors",
+  "Get involved",
+  null,
+  "ph-pencil-simple",
+  "Step 1 is photograph as you go — the failure mode nobody warns about."
+ ],
+ [
+  "inv_orgs",
+  "For organisations",
+  "/get-involved/organisations",
+  "Get involved",
+  null,
+  "ph-buildings",
+  "Leadership is granted by an admin, never self-started. That is the trust model."
+ ],
+ [
+  "org_request",
+  "Request an organisation",
+  "/get-involved/organisations/request",
+  "Get involved",
+  "parent",
+  "ph-buildings",
+  "Signed-in only, since we need to know who to verify. Identity, what the org does, and how to check the requester actually works there — an admin reviews every one before an organisation or a leader is created."
+ ],
+ [
+  "inv_idea",
+  "Submit an idea",
+  "/get-involved/submit-an-idea",
+  "Get involved",
+  null,
+  "ph-lightbulb",
+  "Anonymity is offered because the best ideas come from people who feel unqualified to post."
+ ],
+ [
+  "inv_guide",
+  "Submit a guide",
+  "/get-involved/submit-a-tutorial",
+  "Get involved",
+  null,
+  "ph-note-pencil",
+  "Explains review before asking for work, so a rejection is never a surprise."
+ ],
+ [
+  "makers_wanted",
+  "Makers wanted",
+  "/get-involved/makers-wanted",
+  "Get involved",
+  null,
+  "ph-hammer",
+  "Build requests tied to an existing guide. A parent asks, a maker nearby claims, and the rest is an ordinary exchange."
+ ],
+ [
+  "mw_new",
+  "Ask for a build",
+  "/get-involved/makers-wanted/new",
+  "Get involved",
+  "parent",
+  "ph-hammer",
+  "Mirrors /toys/[id]/request: pick the guide, say who it is for, agree how far you can travel. The note is the only free text."
+ ],
+ [
+  "build_thread",
+  "Build thread",
+  "/dashboard/exchanges/build/[id]",
+  "My SPLAT",
+  "parent",
+  "ph-hammer",
+  "The exchange thread with one extra stage: the maker posts a working shot and the family approves it before handover."
+ ],
+ [
+  "challenges",
+  "Design challenges",
+  "/get-involved/design-challenges",
+  "Get involved",
+  null,
+  "ph-puzzle-piece",
+  "Open problems as cards. Maker and post counts signal whether a challenge is alive."
+ ],
+ [
+  "challenge_detail",
+  "Challenge detail",
+  "/get-involved/design-challenges/[id]",
+  "Get involved",
+  null,
+  "ph-chat-circle-dots",
+  "Brief, constraints, then thread. A solved challenge graduates into a guide rather than closing."
+ ],
+ [
+  "impact",
+  "Community impact",
+  "/impact",
+  "Impact",
+  null,
+  "ph-chart-line-up",
+  "Three charts only: delivery over time, guides by difficulty, deliveries by state. Anything more is decoration."
+ ],
+ [
+  "orgs",
+  "Organisations",
+  "/organizations",
+  "Impact",
+  null,
+  "ph-buildings",
+  "Search plus three filters. \"Has a printer\" is the one people actually use."
+ ],
+ [
+  "org_public",
+  "Organisation profile",
+  "/organizations/[id]/public",
+  "Impact",
+  null,
+  "ph-identification-card",
+  "Answers a family’s five questions in order: what do they do, how do I use it, what have they backed, who are they, where and when. Printer card gives machines, materials and turnaround because that is what a requester compares. Follow and Message gate on sign-in. Backed guides come before held toys — the endorsement is the organisation’s real contribution."
+ ],
+ [
+  "contributor",
+  "Contributor profile",
+  "/contributors/[id]",
+  "Impact",
+  null,
+  "ph-user-circle",
+  "LinkedIn header (cover, avatar, headline, one primary action), GitHub-style build heatmap, Printables-style earned badges, and a thanks wall in place of a follower count. Work first: a pinned Featured guide, then the grid with filters."
+ ],
+ [
+  "impact_events",
+  "Events",
+  "/get-involved/events",
+  "Get involved",
+  null,
+  "ph-calendar-dots",
+  "Date-grouped list with a date badge, host and one-tap RSVP (Luma/Meetup pattern). Format and state filters; online events show in every state. Past events fold away."
+ ],
+ [
+  "event_detail",
+  "Event detail",
+  "/get-involved/events/[id]",
+  "Get involved",
+  null,
+  "ph-calendar-check",
+  "Leads with the four things a family decides on: what, when, where, who it is for. RSVP, add-to-calendar (.ics), host card. Online links are never public."
+ ],
+ [
+  "event_register",
+  "Register for an event",
+  "/get-involved/events/[id]/register",
+  "Get involved",
+  null,
+  "ph-clipboard-text",
+  "The RSVP is a form, not a toggle: name and email always, then whatever the organiser added when they published the event. Required answers block the confirm; everything else is optional by default. Answers land on the leader’s manage page."
+ ],
+ [
+  "recycling",
+  "Recycling",
+  "/get-involved/recycling",
+  "Get involved",
+  null,
+  "ph-recycle",
+  "Waste plastic in, filament out. Organisations publish what their machines can actually take; contributors book a drop-off, declare its condition, and the organisation issues print credit only after it weighs it at the door. Two-kilo minimum so a machine run is worth firing up."
+ ],
+ [
+  "recycle_new",
+  "Book a drop-off",
+  "/get-involved/recycling/drop-off",
+  "Get involved",
+  "parent",
+  "ph-package",
+  "Pick the organisation, say what and how much, then tick every line of the condition declaration. The estimate is honest about yield — about three quarters of what you bring becomes filament."
+ ],
+ [
+  "org_recycling",
+  "Recycling intake",
+  "/dashboard/organisation/recycling",
+  "Organisation",
+  "leader",
+  "ph-scales",
+  "Two halves: what your machines can take, and the queue of booked drop-offs. Credit is minted here, by weighing — never by the contributor."
+ ],
+ [
+  "impact_news",
+  "Stories",
+  "/about/stories",
+  "About",
+  null,
+  "ph-newspaper",
+  "One featured story, then a filterable grid by story type. Every story is attributed to an organisation and a byline."
+ ],
+ [
+  "story_detail",
+  "Story",
+  "/about/stories/[id]",
+  "About",
+  null,
+  "ph-article",
+  "Reading column at 68ch, one pull quote, one link back into the product (guide, profile, org)."
+ ],
+ [
+  "impact_map",
+  "Deliveries map",
+  "/impact/map",
+  "Impact",
+  null,
+  "ph-map-trifold",
+  "Scaffold."
+ ],
+ [
+  "about",
+  "About",
+  "/about",
+  "About",
+  null,
+  "ph-info",
+  "Three pillars: no paid tier, reviewed not just posted, information not devices. The third is a regulatory position."
+ ],
+ [
+  "about_team",
+  "Our team",
+  "/about/team",
+  "About",
+  null,
+  "ph-users-three",
+  "Everyone here does something else for a living, and the bios say so."
+ ],
+ [
+  "contact",
+  "Contact",
+  "/contact",
+  "About",
+  null,
+  "ph-envelope-simple",
+  "Topic chips route the message. Safety reports jump the queue and the page says so."
+ ],
+ [
+  "org_requests",
+  "Requests to your organisation",
+  "/dashboard/organisation/requests",
+  "Organisation",
+  "leader",
+  "ph-tray",
+  "Every ask a family can make of an organisation, in one queue: host a build day, print parts for an event, build a guide nearby. Accept, decline or hand on."
+ ],
+ [
+  "my_events",
+  "My events",
+  "/dashboard/events",
+  "My SPLAT",
+  "parent",
+  "ph-calendar-check",
+  "RSVPs with the part-print status per event. A declined print shows the next step, not just the word."
+ ],
+ [
+  "admin_inbox",
+  "Inbox",
+  "/admin/inbox",
+  "Admin",
+  "admin",
+  "ph-tray",
+  "Contact-form messages by topic. Safety jumps the queue; everything else is oldest first."
+ ],
+ [
+  "admin_builds",
+  "Build requests",
+  "/admin/build-requests",
+  "Admin",
+  "admin",
+  "ph-hammer",
+  "Makers-wanted oversight: unclaimed for two weeks, claimed but silent for ten days. Nudge or reopen."
+ ],
+ [
+  "org_event_manage",
+  "Manage event",
+  "/dashboard/org/events/[id]",
+  "My SPLAT",
+  "leader",
+  "ph-users-three",
+  "Leader side of the help pipeline: accept or decline part-print requests from families, see who is coming."
+ ],
+ [
+  "about_partners",
+  "Partners and supporters",
+  "/about/partners",
+  "About",
+  null,
+  "ph-handshake",
+  "Grouped by role, not dollar tier: delivery partners (live from the org list), funders with what each grant paid for, in-kind partners, one quote, past supporters last."
+ ],
+ [
+  "about_support",
+  "Support SPLAT",
+  "/about/support",
+  "About",
+  null,
+  "ph-heart",
+  "Non-money asks first (skills, parts, organisations, ideas), a workplace build day, then funding. Not DGR yet, so it says so and routes funders to a conversation."
+ ],
+ [
+  "safety",
+  "Safety",
+  "/safety",
+  "Legal",
+  null,
+  "ph-shield-warning",
+  "The only policy page written to be read by a tired parent rather than a lawyer."
+ ],
+ [
+  "privacy",
+  "Privacy policy",
+  "/privacy",
+  "Legal",
+  null,
+  "ph-lock-simple",
+  "Child profiles are readable only by the owning account, enforced at the database rather than in app code."
+ ],
+ [
+  "terms",
+  "Terms of use",
+  "/terms",
+  "Legal",
+  null,
+  "ph-scroll",
+  "Opens by stating the platform is free and always will be."
+ ],
+ [
+  "conduct",
+  "Code of conduct",
+  "/code-of-conduct",
+  "Legal",
+  null,
+  "ph-handshake",
+  "Assumes good faith and short time — most gaps are someone running out of evening."
+ ],
+ [
+  "legal_purpose",
+  "What Connect is (and isn’t)",
+  "/legal/intended-purpose",
+  "Legal",
+  null,
+  "ph-first-aid",
+  "Draws the line between describing an adaptation and making a device claim."
+ ],
+ [
+  "legal_contributor",
+  "Contributor terms",
+  "/legal/contributor-terms",
+  "Legal",
+  null,
+  "ph-file-text",
+  "You keep the copyright; we keep it available so a half-finished build does not lose its instructions."
+ ],
+ [
+  "legal_org",
+  "Organisation leader terms",
+  "/legal/org-leader-terms",
+  "Legal",
+  null,
+  "ph-buildings",
+  "Backing a guide means a competent person read it. That claim is the whole risk."
+ ],
+ [
+  "hub",
+  "My SPLAT",
+  "/dashboard",
+  "My SPLAT",
+  "parent",
+  "ph-squares-four",
+  "One hub, twelve doors, badge counts on anything waiting. Replaces the old sidebar entirely."
+ ],
+ [
+  "tutorials",
+  "My tutorials",
+  "/dashboard/tutorials",
+  "My SPLAT",
+  "contributor",
+  "ph-file-text",
+  "Status is the primary sort: a returned guide should be the first thing you see."
+ ],
+ [
+  "upload",
+  "Add a tutorial",
+  "/upload",
+  "My SPLAT",
+  "contributor",
+  "ph-plus-circle",
+  "Asks for two things only. Everything else waits for the editor."
+ ],
+ [
+  "editor",
+  "Tutorial editor",
+  "/tutorials/[id]/edit",
+  "My SPLAT",
+  "contributor",
+  "ph-pencil-simple-line",
+  "Every field the reader sees has an input here: guide kind (which decides whether a Files tab exists), cover photo, works-with, per-step title, minutes and watch-out note, structured parts with cost, print settings, and the three \"worth a look\" picks. Seven sections, each independently saveable, with a completeness note. Nothing is public until submitted."
+ ],
+ [
+  "toys",
+  "My toys",
+  "/dashboard/toys",
+  "My SPLAT",
+  "parent",
+  "ph-package",
+  "Given-away toys stay visible but dimmed — people want the record."
+ ],
+ [
+  "toy_new",
+  "Add a toy",
+  "/dashboard/toys/new",
+  "My SPLAT",
+  "parent",
+  "ph-plus-circle",
+  "Condition is four plain-language grades (Like new, Good, Well-loved, Needs a fix) — a description of the object, not a score, so it cannot be mistaken for a rating of the giver."
+ ],
+ [
+  "toy_detail",
+  "Toy detail",
+  "/dashboard/toys/[id]",
+  "My SPLAT",
+  "parent",
+  "ph-tag",
+  "Requests are answered inline. Accept/decline never needs a second screen."
+ ],
+ [
+  "exchanges",
+  "My exchanges",
+  "/dashboard/exchanges",
+  "My SPLAT",
+  "parent",
+  "ph-handshake",
+  "\"Waiting on you\" is a first-class state, surfaced as a chip on the row."
+ ],
+ [
+  "thread",
+  "Exchange thread",
+  "/dashboard/exchanges/[id]",
+  "My SPLAT",
+  "parent",
+  "ph-chat-circle",
+  "System events sit centred between messages so the record reads chronologically."
+ ],
+ [
+  "thread_live",
+  "Exchange inbox (live)",
+  "/dashboard/exchanges (inbox)",
+  "My SPLAT",
+  "parent",
+  "ph-chats-circle",
+  "The interactive version: type and send, then confirm the handoff. Both sides must confirm."
+ ],
+ [
+  "my_challenges",
+  "My design challenges",
+  "/dashboard/challenges",
+  "My SPLAT",
+  "parent",
+  "ph-clipboard-text",
+  "A rejected idea keeps the reviewer’s reason attached, visible only to its author."
+ ],
+ [
+  "saved",
+  "Saved",
+  "/dashboard/saved",
+  "My SPLAT",
+  "parent",
+  "ph-bookmark-simple",
+  "Split into what is savable today and what is planned, so the empty categories are honest."
+ ],
+ [
+  "saved_tutorials",
+  "Saved tutorials",
+  "/dashboard/saved/tutorials",
+  "My SPLAT",
+  "parent",
+  "ph-bookmarks",
+  "—"
+ ],
+ [
+  "saved_toys",
+  "Saved toys",
+  "/dashboard/saved/toys",
+  "My SPLAT",
+  "parent",
+  "ph-bookmarks",
+  "—"
+ ],
+ [
+  "saved_challenges",
+  "Saved challenges",
+  "/dashboard/saved/challenges",
+  "My SPLAT",
+  "parent",
+  "ph-bookmarks",
+  "—"
+ ],
+ [
+  "saved_orgs",
+  "Saved organisations",
+  "/dashboard/saved/organisations",
+  "My SPLAT",
+  "parent",
+  "ph-bookmarks",
+  "—"
+ ],
+ [
+  "notifications",
+  "Notifications",
+  "/notifications",
+  "My SPLAT",
+  "parent",
+  "ph-bell",
+  "Unread rows carry a tinted background as well as a dot — colour alone is not a signal."
+ ],
+ [
+  "print_requests",
+  "My print requests",
+  "/dashboard/print-requests",
+  "My SPLAT",
+  "parent",
+  "ph-printer",
+  "Status is the sort. Anything waiting on you — a code to enter, a fit to confirm — rises to the top."
+ ],
+ [
+  "print_job",
+  "Print job",
+  "/dashboard/print-requests/[id]",
+  "My SPLAT",
+  "parent",
+  "ph-cube",
+  "One status rail, one thread. Pickup details appear only at Ready, copied from the printer’s profile the moment they accepted — same rule as toy exchanges."
+ ],
+ [
+  "print_offer",
+  "Print for others",
+  "/dashboard/printers",
+  "My SPLAT",
+  "parent",
+  "ph-printer",
+  "Three tabs: printers, requests, jobs. Declining needs a reason, marking ready needs a photo. Live in the prototype — accept here and the requester’s job page moves."
+ ],
+ [
+  "print_add",
+  "Add a printer",
+  "/dashboard/printers/new",
+  "My SPLAT",
+  "parent",
+  "ph-plus-circle",
+  "Bed size and materials decide which requests you are offered. Availability is a toggle plus a capacity number; either one closes you."
+ ],
+ [
+  "account",
+  "Account",
+  "/dashboard/profile",
+  "My SPLAT",
+  "parent",
+  "ph-user",
+  "Email is frozen; capabilities are shown as chips so a leader can see what they hold."
+ ],
+ [
+  "child",
+  "Child profile",
+  "/dashboard/child/[id]",
+  "My SPLAT",
+  "parent",
+  "ph-baby",
+  "Every field optional, private to the account, and phrased around a bad day rather than a best one."
+ ],
+ [
+  "child_new",
+  "Add child",
+  "/dashboard/child/new",
+  "My SPLAT",
+  "parent",
+  "ph-plus-circle",
+  "—"
+ ],
+ [
+  "org_queue",
+  "Org review queue",
+  "/dashboard/organisation",
+  "Organisation",
+  "leader",
+  "ph-tray",
+  "Blocked until the leader terms are accepted — read access, no approve."
+ ],
+ [
+  "org_profile",
+  "Organisation profile",
+  "/dashboard/organisation/profile",
+  "Organisation",
+  "leader",
+  "ph-buildings",
+  "Every field on the public organisation page has an input here: identity, the About paragraph, which capabilities show as chips, the three doors, the declared rates families are quoted, and how a family reaches you. No review — it publishes on save, so the leader terms are restated at the foot."
+ ],
+ [
+  "org_toys",
+  "Toy inventory",
+  "/dashboard/organisation/toys",
+  "Organisation",
+  "leader",
+  "ph-package",
+  "Needs-cleaning is a status, because it is the one that stalls a handoff."
+ ],
+ [
+  "org_posts",
+  "Events and stories",
+  "/dashboard/organisation/publish",
+  "Organisation",
+  "leader",
+  "ph-megaphone",
+  "What the organisation has published, in two tabs. Publish/unpublish is one click and takes effect on the public page immediately — no review, so the leader terms are restated at the foot."
+ ],
+ [
+  "org_event_new",
+  "Publish an event",
+  "/dashboard/organisation/events/new",
+  "Organisation",
+  "leader",
+  "ph-calendar-plus",
+  "Four required things (name, date+time, where, who for). Online events hide the link until RSVP. Publish goes straight to the public page; Save as draft goes to the list."
+ ],
+ [
+  "org_story_new",
+  "Publish a story",
+  "/dashboard/organisation/stories/new",
+  "Organisation",
+  "leader",
+  "ph-pen-nib",
+  "Type, title, one-sentence summary, body with live word count, byline. Publish is disabled until consent is confirmed for everyone named or pictured."
+ ],
+ [
+  "org_orders",
+  "Print orders",
+  "/dashboard/organisation/orders",
+  "Organisation",
+  "leader",
+  "ph-receipt",
+  "The same three tabs as Print for others, scoped to the organisation’s machines. A request is accepted ONTO a machine: the card fit-checks each bench (material loaded, free slot, bed size) and preselects the best one; a leader can override. The chosen machine is stamped on the job so other leaders know which bench it is on. Pickup point is the org’s and cannot be varied."
+ ],
+ [
+  "admin_content",
+  "Site content",
+  "/admin/content",
+  "Admin",
+  "admin",
+  "ph-note-pencil",
+  "The pages nobody else owns: home hero and headline numbers, the team and partner lists, the Learn course outline, and the four legal documents with their version and effective date. Legal edits can force re-acceptance, so that is a deliberate toggle rather than a side effect."
+ ],
+ [
+  "admin",
+  "Admin dashboard",
+  "/admin",
+  "Admin",
+  "admin",
+  "ph-shield-check",
+  "Five queues, each a number waiting for a person. Nothing else on the page."
+ ],
+ [
+  "admin_review",
+  "Review queue (live)",
+  "/admin/review",
+  "Admin",
+  "admin",
+  "ph-clipboard-text",
+  "Master-detail with a drawer: approve or send back without losing your place in the queue."
+ ],
+ [
+  "admin_review_detail",
+  "Review a tutorial",
+  "/admin/review/[id]",
+  "Admin",
+  "admin",
+  "ph-magnifying-glass",
+  "Section-by-section verdicts plus a checklist. A rejection reason must be specific enough to act on."
+ ],
+ [
+  "admin_reports",
+  "Reports",
+  "/admin/reports",
+  "Admin",
+  "admin",
+  "ph-flag",
+  "Private problem reports. Safety sorts to the top regardless of age. Each has three states and a note back to the reporter; the reported person is never shown who filed it."
+ ],
+ [
+  "admin_ideas",
+  "Ideas queue",
+  "/admin/ideas",
+  "Admin",
+  "admin",
+  "ph-lightbulb",
+  "—"
+ ],
+ [
+  "admin_idea_detail",
+  "Review an idea",
+  "/admin/ideas/[id]",
+  "Admin",
+  "admin",
+  "ph-megaphone",
+  "Publishing turns an idea into a public brief with a thread; rejecting keeps it private to its author."
+ ],
+ [
+  "admin_prints",
+  "Print jobs",
+  "/admin/print-jobs",
+  "Admin",
+  "admin",
+  "ph-printer",
+  "Every job on the platform. Stalled — accepted but not moved in ten days — is a status of its own and sorts to the top."
+ ],
+ [
+  "admin_spot",
+  "Spot-check",
+  "/admin/spot-check",
+  "Admin",
+  "admin",
+  "ph-eye",
+  "Audits what org leaders approved. Repeated bad approvals suspend the organisation."
+ ],
+ [
+  "admin_orgs",
+  "Organisations",
+  "/admin/organizations",
+  "Admin",
+  "admin",
+  "ph-buildings",
+  "Side drawer for leaders and the danger zone. Suspension keeps guides live but blocks new approvals."
+ ],
+ [
+  "admin_contributors",
+  "Accounts",
+  "/admin/contributors",
+  "Admin",
+  "admin",
+  "ph-users-three",
+  "Flagged rows are tinted and sorted up."
+ ],
+ [
+  "login",
+  "Sign in",
+  "/login",
+  "Auth",
+  null,
+  "ph-sign-in",
+  "—"
+ ],
+ [
+  "signup",
+  "Create account",
+  "/signup",
+  "Auth",
+  null,
+  "ph-user-plus",
+  "Explains the terms gate before asking for a password."
+ ],
+ [
+  "signup_sent",
+  "Check your email",
+  "/signup (sent)",
+  "Auth",
+  null,
+  "ph-envelope-open",
+  "—"
+ ],
+ [
+  "confirmed",
+  "Email confirmed",
+  "/auth/confirmed",
+  "Auth",
+  null,
+  "ph-seal-check",
+  "Returns you to whatever you were saving when you were interrupted."
+ ],
+ [
+  "terms_gate",
+  "Contributor terms gate",
+  "/onboarding/contributor-terms",
+  "Auth",
+  null,
+  "ph-scroll",
+  "Scrollable, accepted once, versioned. Blocks first submission, not browsing."
+ ],
+ [
+  "components",
+  "Component sheet",
+  "/design-system",
+  "Prototype",
+  null,
+  "ph-swatches",
+  "The Soft Pop kit: ramp, elevation, the bear mascot in five poses and every component in one place."
+ ],
+ [
+  "states",
+  "Interaction states",
+  "/design-system/states",
+  "Prototype",
+  null,
+  "ph-cursor-click",
+  "Default, hover, focus, active, disabled and loading for each control class."
+ ]
+]

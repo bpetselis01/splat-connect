@@ -64,8 +64,8 @@ const styles = StyleSheet.create({
   panel: {
     position: 'absolute', left: 12, right: 12,
     backgroundColor: theme.colors.background,
-    borderWidth: theme.border.thick, borderColor: theme.colors.ink, borderRadius: theme.radii.lg + 2,
-    padding: 12, gap: 10, ...theme.shadow(6),
+    borderWidth: theme.border.thick, borderColor: theme.colors.ink, borderRadius: theme.radii.card + 2,
+    padding: 12, gap: 10, ...theme.shadow(3),
   },
   tail: {
     position: 'absolute', alignSelf: 'center', bottom: -12, width: 18, height: 18,
@@ -79,20 +79,20 @@ const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   tile: {
     width: '48%', minHeight: 60, gap: 4, padding: 9,
-    backgroundColor: theme.colors.surface, borderWidth: theme.border.thin, borderColor: theme.colors.ink,
-    borderRadius: theme.radii.md, ...theme.shadow(3),
+    backgroundColor: theme.colors.surface, borderWidth: theme.border.hairline, borderColor: theme.colors.ink,
+    borderRadius: theme.radii.field, ...theme.shadow(1),
   },
   tileLabel: { fontFamily: theme.fonts.bold, fontSize: 12, color: theme.colors.ink },
   badge: {
     position: 'absolute', top: 6, right: 6, minWidth: 20, height: 20, paddingHorizontal: 4, borderRadius: 10,
-    borderWidth: theme.border.thin, borderColor: theme.colors.ink, backgroundColor: theme.colors.apricot,
+    borderWidth: theme.border.hairline, borderColor: theme.colors.ink, backgroundColor: theme.colors.apricot,
     alignItems: 'center', justifyContent: 'center',
   },
   badgeText: { fontFamily: theme.fonts.numeral, fontSize: 15, lineHeight: 16, color: theme.colors.ink },
   all: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 10,
-    borderWidth: theme.border.thin, borderStyle: 'dashed', borderColor: theme.colors.ink,
-    borderRadius: theme.radii.md, backgroundColor: theme.colors.accentLight,
+    borderWidth: theme.border.hairline, borderStyle: 'dashed', borderColor: theme.colors.ink,
+    borderRadius: theme.radii.field, backgroundColor: theme.colors.accentLight,
   },
   allLabel: { fontFamily: theme.fonts.bold, fontSize: 13, color: theme.colors.ink },
   allHint: { fontFamily: theme.fonts.regular, fontSize: 11, color: theme.colors.muted },

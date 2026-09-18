@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
   chip: { borderRadius: theme.radii.pill, minHeight: 40, justifyContent: 'center' },
   fill: {
     borderRadius: theme.radii.pill,
-    borderWidth: theme.border.thin,
+    borderWidth: theme.border.hairline,
     paddingVertical: theme.spacing(2),
     paddingHorizontal: theme.spacing(4),
     alignItems: 'center',

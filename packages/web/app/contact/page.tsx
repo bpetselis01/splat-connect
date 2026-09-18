@@ -1,9 +1,14 @@
 import Link from 'next/link'
 import { ORG_FACTS } from '@/lib/org-facts'
+import { ContactForm } from '@/components/contact-form'
+import { getCapabilities } from '@/lib/capabilities'
 
 export const metadata = { title: 'Contact — SPLAT Connect' }
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  // Prefilled when there is a session, and not required either way: somebody
+  // reporting a hazard should not have to make an account first.
+  const caps = await getCapabilities()
   return (
     <div className="max-w-2xl">
       <h1 className="title-article">Contact</h1>
@@ -11,15 +16,24 @@ export default function ContactPage() {
         Email reaches a person. There is no ticketing system and no chatbot.
       </p>
 
-      <p className="mt-6">
-        <a href={`mailto:${ORG_FACTS.contactEmail}`} className="btn btn-primary">
+      <div className="mt-6">
+        <ContactForm
+          defaultName={caps?.profile.name ?? ''}
+          defaultEmail={caps?.profile.email ?? ''}
+        />
+      </div>
+
+      <p className="mt-4 text-sm text-muted">
+        Or email{' '}
+        <a href={`mailto:${ORG_FACTS.contactEmail}`} className="font-semibold text-brand-dark hover:underline">
           {ORG_FACTS.contactEmail}
-        </a>
+        </a>{' '}
+        directly. Both reach the same people.
       </p>
 
       <div className="mt-10 flex flex-col gap-5">
         <div className="card-flat p-5">
-          <h2 className="font-bold text-ink">A safety problem with a guide</h2>
+          <h2 className="card-title">A safety problem with a guide</h2>
           <p className="mt-1 text-sm leading-relaxed text-muted">
             Tell us immediately and we will take the guide down while we check it. Include
             the guide title and what you found. We would much rather pull a guide than
@@ -32,7 +46,7 @@ export default function ContactPage() {
         </div>
 
         <div className="card-flat p-5">
-          <h2 className="font-bold text-ink">Bringing an organisation on board</h2>
+          <h2 className="card-title">Bringing an organisation on board</h2>
           <p className="mt-1 text-sm leading-relaxed text-muted">
             Organisations are set up by us rather than self-registered, so a name on a
             guide means something. Tell us who you are and what you would like to do —{' '}
@@ -47,7 +61,7 @@ export default function ContactPage() {
         </div>
 
         <div className="card-flat p-5">
-          <h2 className="font-bold text-ink">Your account or your data</h2>
+          <h2 className="card-title">Your account or your data</h2>
           <p className="mt-1 text-sm leading-relaxed text-muted">
             To request a copy of everything held against your account, or to have it
             deleted, email us from the address on the account. What we hold is set out in
@@ -60,7 +74,7 @@ export default function ContactPage() {
         </div>
 
         <div className="card-flat p-5">
-          <h2 className="font-bold text-ink">Reporting someone&apos;s behaviour</h2>
+          <h2 className="card-title">Reporting someone&apos;s behaviour</h2>
           <p className="mt-1 text-sm leading-relaxed text-muted">
             Reports go to the SPLAT team, not to the person being reported, and we tell
             you what we decided. See the{' '}

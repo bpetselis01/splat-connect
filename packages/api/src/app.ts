@@ -25,6 +25,10 @@ import toys from './routes/toys.js'
 import toyTransactions from './routes/toy-transactions.js'
 import toyIdeas from './routes/toy-ideas.js'
 import saves from './routes/saves.js'
+import exchangeCosts from './routes/exchange-costs.js'
+import printers from './routes/printers.js'
+import events from './routes/events.js'
+import reports from './routes/reports.js'
 
 const app = new Hono()
 
@@ -42,7 +46,7 @@ app.route('/api/public', publicRoutes)
 const AUTHED = [
   'tutorials', 'upload', 'admin', 'contributors', 'child-profiles', 'toys',
   'toy-transactions', 'agreements', 'organizations', 'collaborators',
-  'notifications', 'ideas', 'saves',
+  'notifications', 'ideas', 'saves', 'exchange-costs', 'printers', 'events', 'reports',
 ] as const
 for (const prefix of AUTHED) {
   app.use(`/api/${prefix}`, authMiddleware)
@@ -68,5 +72,9 @@ app.route('/api/collaborators', collaboratorInvites)
 app.route('/api/notifications', notifications)
 app.route('/api/ideas', toyIdeas)
 app.route('/api/saves', saves)
+app.route('/api/exchange-costs', exchangeCosts)
+app.route('/api/printers', printers)
+app.route('/api/events', events)
+app.route('/api/reports', reports)
 
 export default app

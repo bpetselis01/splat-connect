@@ -18,16 +18,19 @@
  * across any soft <Link> transition and leaves the previous page's section
  * label stuck on screen indefinitely.
  *
- * Uses BoundaryLink, not next/link directly: on a rail-only account page this
- * points back at /dashboard, which is a boundary crossing now that /dashboard
- * no longer nests the rail — a soft transition here would leave the rail on
- * screen with no header, the exact stale-chrome bug BoundaryLink exists to
- * prevent (see its own docstring).
+ * Inside the account section it is a full trail instead — `My SPLAT / My
+ * tutorials / Tutorial editor` — because that is the only way back up since the
+ * navigation rail was retired on 2026-09-17. lib/trail.ts owns that model; this
+ * component only draws it.
+ *
+ * Uses BoundaryLink, not next/link directly: a public crumb points out of
+ * whatever section it renders in, which can be a boundary crossing — the exact
+ * stale-chrome bug BoundaryLink exists to prevent (see its own docstring).
  */
 import { usePathname } from 'next/navigation'
 import { BoundaryLink } from '@/components/boundary-link'
 import { ACCOUNT_NAV, sectionFor } from '@/lib/public-nav'
-import { toneClass } from '@/lib/tone'
+import { trailFor } from '@/lib/trail'
 
 export function Breadcrumb() {
   const pathname = usePathname() ?? ''
@@ -36,17 +39,47 @@ export function Breadcrumb() {
   const section = sectionFor(pathname)
   if (!section) return null
 
-  // The board draws a back-link over all seven public hubs and none over My SPLAT.
-  // A signed-in user's way out of their account root is not the public homepage.
-  // Note: app/layout.tsx also gates this component away from /dashboard today; this
-  // guard keeps the component correct on its own terms so it doesn't depend on that.
-  if (section === ACCOUNT_NAV) return null
+  // The board draws no trail over My SPLAT itself — a signed-in user's way out
+  // of their account root is not the public homepage — and trailFor returns []
+  // there for the same reason.
+  if (section === ACCOUNT_NAV) {
+    const crumbs = trailFor(pathname)
+    if (crumbs.length === 0) return null
+    return (
+      <nav aria-label="Breadcrumb" className="mb-5">
+        <ol className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          {crumbs.map((crumb, i) => (
+            <li key={`${crumb.label}-${i}`} className="flex items-center gap-2">
+              {i > 0 && (
+                <span aria-hidden="true" className="text-muted">
+                  /
+                </span>
+              )}
+              {crumb.href ? (
+                <BoundaryLink
+                  href={crumb.href}
+                  className="eyebrow text-brand-dark transition-colors hover:text-brand-deep"
+                >
+                  {crumb.label}
+                </BoundaryLink>
+              ) : (
+                // The current page. aria-current marks it for a screen reader;
+                // no href, per the WAI-ARIA breadcrumb pattern.
+                <span aria-current="page" className="eyebrow text-muted">
+                  {crumb.label}
+                </span>
+              )}
+            </li>
+          ))}
+        </ol>
+      </nav>
+    )
+  }
 
   // On the hub itself the way up is Home; inside a section it is the hub.
   const onHub = pathname === section.href
   const href = onHub ? '/' : section.href
   const label = onHub ? 'Home' : section.label
-  const tone = toneClass(section.tone)
 
   return (
     <nav aria-label="Breadcrumb" className="mb-5">
@@ -54,7 +87,7 @@ export function Breadcrumb() {
         href={href}
         className="eyebrow inline-flex items-center gap-2 text-brand-dark transition-colors hover:text-brand-deep"
       >
-        <span aria-hidden="true" className={`h-2 w-2 rounded-full ${tone.dot}`} />
+        
         <span aria-hidden="true">←</span>
         {label}
       </BoundaryLink>

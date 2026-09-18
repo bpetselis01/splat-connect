@@ -4,7 +4,8 @@
   "private": true,
   "main": "expo-router/entry",
   "dependencies": {
-    "@expo-google-fonts/jersey-10": "^0.4.1",
+    "@expo-google-fonts/baloo-2": "^0.4.2",
+    "@expo-google-fonts/jetbrains-mono": "^0.4.1",
     "@expo-google-fonts/nunito": "^0.4.2",
     "@expo/ui": "~57.0.15",
     "@expo/vector-icons": "^15.1.1",

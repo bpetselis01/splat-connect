@@ -28,10 +28,10 @@ import type { Profile, TutorialContributor, TutorialCollaboratorInvite } from '@
 export type TeamState = 'primary' | 'collaborator' | 'pending' | 'declined'
 
 const BADGE: Record<TeamState, string> = {
-  primary: 'bg-mint-soft text-mint-deep',
-  collaborator: 'bg-mint-soft text-mint-deep',
-  pending: 'bg-honey-soft text-honey-deep',
-  declined: 'bg-apricot-soft text-apricot-deep',
+  primary: 'bg-mint-soft text-ink',
+  collaborator: 'bg-mint-soft text-ink',
+  pending: 'bg-honey-soft text-ink',
+  declined: 'bg-apricot-soft text-ink',
 }
 
 const WORD: Record<TeamState, string> = {

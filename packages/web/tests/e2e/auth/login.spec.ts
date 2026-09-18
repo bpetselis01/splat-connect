@@ -6,7 +6,8 @@ test('a contributor signs in and lands on the dashboard', async ({ page }) => {
   await acceptTerms(contributor.id)
   await signIn(page, contributor.email, contributor.password)
   await page.waitForURL('**/dashboard')
-  await expect(page.getByRole('heading', { name: 'My SPLAT' })).toBeVisible()
+  // F2 made the h1 the greeting; 'My SPLAT' is the eyebrow above it now.
+  await expect(page.getByRole('heading', { name: /^Welcome back,/ })).toBeVisible()
 })
 
 test('an admin signs in and lands on the admin dashboard', async ({ page }) => {

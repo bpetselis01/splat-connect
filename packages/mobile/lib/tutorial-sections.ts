@@ -34,7 +34,7 @@ export function getMissingFields(tutorial: TutorialWithDetails): Gap[] {
   if (!DIFFICULTIES.includes(tutorial.difficulty))
     missing.push({ section: 'details', label: 'A difficulty' })
   if (!tutorial.tutorial_pdf_url?.trim()) missing.push({ section: 'files', label: 'The guide PDF' })
-  if (!tutorial.toy_photo_url?.trim()) missing.push({ section: 'files', label: 'A photo' })
+  if (tutorial.photo_urls.length === 0) missing.push({ section: 'files', label: 'A photo' })
   if (tutorial.parts.length === 0) missing.push({ section: 'parts', label: 'A part' })
   if (tutorial.tools.length === 0) missing.push({ section: 'tools', label: 'A tool' })
   // A printed part is what an assistive-tech tutorial IS, so it cannot be
@@ -104,7 +104,7 @@ export function sectionSummary(section: SectionId, t: TutorialWithDetails): stri
       return t.tools.length ? count(t.tools.length, 'tool') : 'None yet - at least one'
     case 'files': {
       const pdf = Boolean(t.tutorial_pdf_url?.trim())
-      const photo = Boolean(t.toy_photo_url?.trim())
+      const photo = t.photo_urls.length > 0
       if (pdf && photo) return 'PDF and photo added'
       if (!pdf && !photo) return 'Guide PDF and a photo'
       return pdf ? 'A photo' : 'The guide PDF'

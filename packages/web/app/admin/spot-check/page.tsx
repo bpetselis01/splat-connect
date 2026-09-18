@@ -17,6 +17,7 @@
  * - packages/api/src/routes/admin.ts: GET /api/admin/spot-check
  * - supabase/migrations/007_organizations.sql: the review policy with no self-review conjunct
  */
+import { MagnifyingGlass } from '@phosphor-icons/react/dist/ssr'
 import Link from 'next/link'
 import { apiClient } from '@/lib/api-client'
 import { Badge } from '@/components/badge'
@@ -48,9 +49,9 @@ export default async function SpotCheckPage({
 
       {sample.length === 0 ? (
         <div className="flex flex-col items-center px-6 py-16 text-center">
-          <span aria-hidden="true" className="empty-badge">
-            🔍
-          </span>
+          <span aria-hidden="true" className="empty-badge text-brand-deep">
+  <MagnifyingGlass className="h-8 w-8" />
+</span>
           <p className="mt-4 font-bold text-ink">Nothing to check yet.</p>
           <p className="mt-1 max-w-xs text-sm leading-relaxed text-muted">
             Tutorials appear here once an organisation leader has approved one.
