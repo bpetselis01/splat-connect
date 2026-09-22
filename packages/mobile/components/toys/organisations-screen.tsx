@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.radii.field,
     backgroundColor: theme.colors.accentLight,
     borderWidth: theme.border.hairline,
-    borderColor: theme.colors.ink,
+    borderColor: theme.colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -86,7 +86,7 @@ describe('ChallengesListScreen', () => {
     // Hidden from the a11y tree on purpose (the row's hint carries it), so
     // the query has to opt in — same as learn-hub.test.tsx's node ticks.
     await waitFor(() =>
-      expect(screen.getAllByText("YOU'RE IN", { includeHiddenElements: true })).toHaveLength(1)
+      expect(screen.getAllByText("You're in", { includeHiddenElements: true })).toHaveLength(1)
     )
     expect(
       screen.getByRole('button', { name: 'Joined one' }).props.accessibilityHint
@@ -100,7 +100,7 @@ describe('ChallengesListScreen', () => {
 
     await screen.findByText('A switch a toddler can hit')
     expect(mockGet).not.toHaveBeenCalledWith('/api/ideas/joined')
-    expect(screen.queryByText("YOU'RE IN", { includeHiddenElements: true })).toBeNull()
+    expect(screen.queryByText("You're in", { includeHiddenElements: true })).toBeNull()
   })
 
   it('opens the challenge it is told to', async () => {

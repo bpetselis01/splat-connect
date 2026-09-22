@@ -434,7 +434,7 @@ const styles = StyleSheet.create({
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2) },
   tag: {
     borderWidth: theme.border.hairline,
-    borderColor: theme.colors.ink,
+    borderColor: theme.colors.border,
     borderRadius: theme.radii.field,
     backgroundColor: theme.colors.surface,
     paddingHorizontal: theme.spacing(2),

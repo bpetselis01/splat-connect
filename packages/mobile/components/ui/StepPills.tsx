@@ -102,15 +102,15 @@ const styles = StyleSheet.create({
     gap: 4,
     minHeight: 40,
     borderWidth: theme.border.hairline,
-    borderColor: theme.colors.ink,
+    borderColor: theme.colors.border,
     borderRadius: theme.radii.pill,
     paddingHorizontal: theme.spacing(3),
     backgroundColor: theme.colors.surface,
   },
-  pillActive: { backgroundColor: theme.colors.ink },
+  pillActive: { backgroundColor: theme.colors.primaryDark, borderColor: theme.colors.primaryDark },
   check: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.mint },
   // 7px, per spec — a hazard dot, not a badge.
   dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: theme.colors.apricot },
   label: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.ink },
-  labelActive: { color: theme.colors.background },
+  labelActive: { color: theme.colors.surface },
 })

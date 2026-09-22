@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
     width: 124,
     borderRadius: theme.radii.field,
     borderWidth: theme.border.hairline,
-    borderColor: theme.colors.ink,
+    borderColor: theme.colors.border,
     backgroundColor: theme.colors.surface,
     padding: theme.spacing(2),
     gap: theme.spacing(1),

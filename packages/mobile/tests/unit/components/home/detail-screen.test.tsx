@@ -113,7 +113,7 @@ describe('DetailScreen', () => {
     await screen.findByText('Build a Robot Arm')
 
     expect(screen.getByText('Request this 3D print')).toBeTruthy()
-    expect(screen.getByText('SOON')).toBeTruthy()
+    expect(screen.getByText('Soon')).toBeTruthy()
 
     mockPush.mockClear()
     fireEvent.press(screen.getByText('Request this 3D print'))

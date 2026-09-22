@@ -59,10 +59,10 @@ describe('MyChallengesScreen', () => {
     ])
     render(<MyChallengesScreen />)
 
-    expect(await screen.findByText('PENDING REVIEW')).toBeTruthy()
-    expect(screen.getByText('LOOKING FOR MAKERS')).toBeTruthy()
-    expect(screen.getByText('BEING WRITTEN UP')).toBeTruthy()
-    expect(screen.getByText('NOT TAKEN FORWARD')).toBeTruthy()
+    expect(await screen.findByText('Pending review')).toBeTruthy()
+    expect(screen.getByText('Looking for makers')).toBeTruthy()
+    expect(screen.getByText('Being written up')).toBeTruthy()
+    expect(screen.getByText('Not taken forward')).toBeTruthy()
   })
 
   it("shows a rejected idea's review note, which only its author ever sees", async () => {

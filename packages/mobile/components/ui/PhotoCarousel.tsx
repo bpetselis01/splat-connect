@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
     top: theme.spacing(3),
     backgroundColor: theme.colors.mintSoft,
     borderWidth: theme.border.hairline,
-    borderColor: theme.colors.ink,
+    borderColor: theme.colors.border,
     borderRadius: theme.radii.pill,
     paddingHorizontal: theme.spacing(2.5),
     paddingVertical: theme.spacing(0.5),
@@ -156,6 +156,6 @@ const styles = StyleSheet.create({
     height: DOT,
     borderRadius: DOT / 2,
     borderWidth: theme.border.hairline,
-    borderColor: theme.colors.ink,
+    borderColor: theme.colors.border,
   },
 })

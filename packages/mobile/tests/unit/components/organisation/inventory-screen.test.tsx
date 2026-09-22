@@ -69,7 +69,7 @@ describe('InventoryScreen', () => {
     expect(screen.getByText('Drum')).toBeTruthy()
     expect(screen.getByText('5')).toBeTruthy()
     // The badges hide behind the row's a11y hint, so the query opts in.
-    expect(screen.getByText('DRAFT', { includeHiddenElements: true })).toBeTruthy()
+    expect(screen.getByText('Draft', { includeHiddenElements: true })).toBeTruthy()
     expect(mockGet).toHaveBeenCalledWith('/api/toys/inventory')
   })
 

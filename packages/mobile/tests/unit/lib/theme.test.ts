@@ -14,7 +14,7 @@ function contrast(a: string, b: string) {
 
 describe('Soft Pop theme', () => {
   it('carries the soft scales', () => {
-    expect(theme.border).toEqual({ hairline: 1, thick: 2 })
+    expect(theme.border).toEqual({ hairline: 1 })
     expect(theme.radii).toEqual({ field: 14, panel: 18, card: 24, pill: 999 })
     expect(theme.fonts.display).toBe('Baloo2_800ExtraBold')
     expect(theme.fonts.numeral).toBe('JetBrainsMono_400Regular')

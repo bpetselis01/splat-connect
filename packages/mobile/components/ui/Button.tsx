@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
   base: {
     borderRadius: theme.radii.field,
     borderWidth: theme.border.hairline,
-    borderColor: theme.colors.ink,
+    borderColor: theme.colors.border,
     paddingVertical: theme.spacing(3),
     paddingHorizontal: theme.spacing(5),
     alignItems: 'center',

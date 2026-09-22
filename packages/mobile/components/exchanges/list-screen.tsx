@@ -244,7 +244,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     flexDirection: 'row',
     borderWidth: theme.border.hairline,
-    borderColor: theme.colors.ink,
+    borderColor: theme.colors.border,
     borderRadius: theme.radii.pill,
     backgroundColor: theme.colors.accentLight,
     paddingHorizontal: theme.spacing(3),

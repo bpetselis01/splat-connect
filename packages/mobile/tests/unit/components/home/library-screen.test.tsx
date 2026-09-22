@@ -122,7 +122,7 @@ describe('LibraryScreen', () => {
     // The kind badge is hidden from the accessibility tree (same reason as the
     // difficulty badge: its spoken name would collide with the kind filter
     // chip's), so it must be queried with includeHiddenElements.
-    expect(screen.getAllByText('TOY ADAPTATION', { includeHiddenElements: true }).length).toBe(1)
+    expect(screen.getAllByText('Toy adaptation', { includeHiddenElements: true }).length).toBe(1)
     expect(screen.getAllByLabelText('Save').length).toBe(2)
     // The row's hint carries the kind for screen readers instead.
     expect(screen.getByLabelText('Bubble machine').props.accessibilityHint).toContain('Toy adaptation')

@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: theme.radii.field,
     borderWidth: theme.border.hairline,
-    borderColor: theme.colors.ink,
+    borderColor: theme.colors.border,
     backgroundColor: theme.colors.accentLight,
     alignItems: 'center',
     justifyContent: 'center',

@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: theme.colors.surface,
     borderWidth: theme.border.hairline,
-    borderColor: theme.colors.ink,
+    borderColor: theme.colors.border,
     borderRadius: theme.radii.field,
     padding: theme.spacing(3),
     marginBottom: theme.spacing(3),
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: theme.border.hairline,
-    borderColor: theme.colors.ink,
+    borderColor: theme.colors.border,
     borderRadius: theme.radii.field,
     backgroundColor: theme.colors.surface,
   },

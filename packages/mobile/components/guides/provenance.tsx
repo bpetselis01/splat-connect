@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
     gap: 4,
     alignSelf: 'flex-start',
     borderWidth: theme.border.hairline,
-    borderColor: theme.colors.ink,
+    borderColor: theme.colors.border,
     borderRadius: theme.radii.pill,
     paddingHorizontal: theme.spacing(3),
     paddingVertical: theme.spacing(1),

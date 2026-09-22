@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
     opacity: 0.62,
     borderRadius: theme.radii.field,
     borderWidth: theme.border.hairline,
-    borderColor: theme.colors.ink,
+    borderColor: theme.colors.border,
     backgroundColor: theme.colors.surface,
     padding: theme.spacing(4),
     ...theme.shadow(2),

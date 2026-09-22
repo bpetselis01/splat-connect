@@ -109,8 +109,8 @@ describe('ToyLibraryScreen', () => {
     render(<ToyLibraryScreen />)
     await screen.findByText('Bubble machine')
     // Badge text renders uppercased.
-    expect(screen.getAllByText('4 AVAILABLE', { includeHiddenElements: true }).length).toBe(1)
-    expect(screen.queryByText(/AVAILABLE/, { includeHiddenElements: true })).toBeTruthy()
+    expect(screen.getAllByText('4 available', { includeHiddenElements: true }).length).toBe(1)
+    expect(screen.queryByText(/available/, { includeHiddenElements: true })).toBeTruthy()
   })
 
   it('shows the switch-adapted badge only when the toy is adapted', async () => {
@@ -120,7 +120,7 @@ describe('ToyLibraryScreen', () => {
     ])
     render(<ToyLibraryScreen />)
     await screen.findByText('Bubble machine')
-    expect(screen.getAllByText('SWITCH-ADAPTED', { includeHiddenElements: true }).length).toBe(1)
+    expect(screen.getAllByText('Switch-adapted', { includeHiddenElements: true }).length).toBe(1)
   })
 
   it('filters by condition bucket', async () => {

@@ -78,7 +78,8 @@ describe('ReviewQueueScreen', () => {
     render(<ReviewQueueScreen />)
 
     expect(await screen.findByText('Waiting on you')).toBeTruthy()
-    expect(screen.getByText('Asked to back')).toBeTruthy()
+    // Twice: the fixture's title and its badge now share the sentence-case label.
+    expect(screen.getAllByText('Asked to back').length).toBe(2)
     expect(screen.getByText('Asked to review')).toBeTruthy()
   })
 

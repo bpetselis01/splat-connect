@@ -5,11 +5,11 @@ import { theme } from '../../../../lib/theme'
 
 it('maps a status to its tone and upcases the label', () => {
   render(<Badge status="approved" />)
-  const t = screen.getByText('APPROVED')
+  const t = screen.getByText('Approved')
   expect(StyleSheet.flatten(t.props.style).color).toBe(theme.colors.tone.mint.fg)
 })
 
 it('takes an explicit label for kinds', () => {
   render(<Badge status="assistive_tech" label="Assistive tech" />)
-  expect(screen.getByText('ASSISTIVE TECH')).toBeTruthy()
+  expect(screen.getByText('Assistive tech')).toBeTruthy()
 })

@@ -362,7 +362,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing(2),
     borderRadius: theme.radii.pill,
     borderWidth: theme.border.hairline,
-    borderColor: theme.colors.ink,
+    borderColor: theme.colors.border,
     backgroundColor: theme.colors.apricot,
     alignItems: 'center',
     justifyContent: 'center',

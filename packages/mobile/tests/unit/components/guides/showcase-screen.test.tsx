@@ -57,8 +57,8 @@ describe('ShowcaseScreen', () => {
     expect(screen.queryByText('Toys on their shelf')).toBeNull()
     // Badges are hidden from the accessibility tree, same as library-screen's
     // TutorialRow — the row's hint carries difficulty and kind instead.
-    expect(screen.queryByText('EASY')).toBeNull()
-    expect(screen.getAllByText('EASY', { includeHiddenElements: true }).length).toBe(1)
+    expect(screen.queryByText('Easy')).toBeNull()
+    expect(screen.getAllByText('Easy', { includeHiddenElements: true }).length).toBe(1)
     expect(screen.getByLabelText('Build a Robot Arm').props.accessibilityHint).toContain('Toy adaptation')
   })
 
@@ -72,7 +72,7 @@ describe('ShowcaseScreen', () => {
     expect(screen.getByText('1 guides · 1 toys shared')).toBeTruthy()
     expect(screen.getByText('Toys on their shelf')).toBeTruthy()
     expect(screen.getByText('Bubble machine')).toBeTruthy()
-    expect(screen.getByText('3 AVAILABLE')).toBeTruthy()
+    expect(screen.getByText('3 available')).toBeTruthy()
   })
 
   it('shows an error message when apiClient.get rejects', async () => {

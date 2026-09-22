@@ -67,7 +67,7 @@ export const theme = {
   spacing: (n: number) => n * 4,
   // One hairline. `thick` survives for the few places that need a real edge,
   // but Soft Pop separates with elevation rather than with borders.
-  border: { hairline: 1, thick: 2 },
+  border: { hairline: 1 },
   radii: { field: 14, panel: 18, card: 24, pill: 999 },
   // Four elevations, matching web's --e1..--e4. iOS reads the shadow* fields
   // and Android reads `elevation`; both are given so neither platform falls

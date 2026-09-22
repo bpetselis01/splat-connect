@@ -36,7 +36,7 @@ describe('MyTutorialsListScreen', () => {
 
     expect(await screen.findByText('Bubble machine switch')).toBeTruthy()
     expect(mockGet).toHaveBeenCalledWith('/api/tutorials/mine')
-    expect(screen.getByText('DRAFT')).toBeTruthy()
+    expect(screen.getByText('Draft')).toBeTruthy()
 
     fireEvent.press(screen.getByText('Bubble machine switch'))
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/tutorials/[id]', params: { id: 't1' } })

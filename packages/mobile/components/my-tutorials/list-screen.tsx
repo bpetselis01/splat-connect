@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
   noteBox: {
     marginTop: theme.spacing(2),
     borderWidth: theme.border.hairline,
-    borderColor: theme.colors.ink,
+    borderColor: theme.colors.border,
     borderRadius: theme.radii.field,
     backgroundColor: theme.colors.apricotSoft,
     padding: theme.spacing(3),

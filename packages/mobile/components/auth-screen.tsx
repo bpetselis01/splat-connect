@@ -1,10 +1,10 @@
 // packages/mobile/components/auth-screen.tsx
 //
 // The phone's half of the auth gate, composed to match web's /login and
-// /signup (packages/web/components/auth-shell.tsx). Both platforms already ran
-// the same pixel tokens — 2px ink borders, hard offset shadows, the 6px radius
-// — so what was actually missing was web's composition: the centred wordmark,
-// the segmented switch, and the copy that goes with them.
+// /signup (packages/web/components/auth-shell.tsx). Both platforms run the
+// same Soft Pop tokens, so what was actually missing was web's composition:
+// the centred wordmark, the segmented switch, and the copy that goes with
+// them.
 //
 // Web models the two screens as two routes because /login and /signup each
 // carry ?next= and their own e2e specs. There is no ?next= on the phone, so the
@@ -358,7 +358,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: theme.colors.accentLight,
     borderWidth: theme.border.hairline,
-    borderColor: theme.colors.ink,
+    borderColor: theme.colors.border,
     borderRadius: theme.radii.field,
   },
   logo: { width: 20, height: 20 },
@@ -377,8 +377,8 @@ const styles = StyleSheet.create({
   },
   switchClip: {
     flexDirection: 'row',
-    borderWidth: theme.border.thick,
-    borderColor: theme.colors.ink,
+    borderWidth: theme.border.hairline,
+    borderColor: theme.colors.border,
     borderRadius: theme.radii.field,
     backgroundColor: theme.colors.surface,
     overflow: 'hidden',
