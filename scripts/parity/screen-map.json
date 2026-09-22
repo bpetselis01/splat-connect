@@ -200,8 +200,11 @@
   "name": "Request a print",
   "group": "3D Printing",
   "boardRoute": "/printing/request",
-  "route": "/printing/requests",
-  "role": "parent"
+  "route": "/printing/requests?guide=[id]",
+  "role": "parent",
+  "sampleFrom": "/library",
+  "derivedFrom": "tutorial",
+  "suffix": ""
  },
  {
   "id": "involved",

@@ -180,11 +180,22 @@ async function fingerprintOf(page, url, rootSel) {
         // Nested under a dynamic parent (/toy-library/[id]/request): the link
         // is on the parent's detail page, never on a list, so take the parent's
         // already-resolved route and append.
+        //
+        // `suffix` appends; a `[id]` in the route substitutes the parent's id
+        // instead, which is the only way to reach a form that takes its record
+        // in the query string. /printing/requests without ?guide= is the "every
+        // request starts from a guide" banner, and the harness was comparing
+        // that banner against the board's full request form: no inputs, two
+        // missing sections and a gross height difference, all of them the
+        // harness standing on the wrong page.
         if (!route && s.derivedFrom) {
           const parent = screens.find((x) => x.id === s.derivedFrom) || allScreens.find((x) => x.id === s.derivedFrom)
           if (parent) {
             const base = cache.get(parent.route) || (await resolveDynamic(livePage, parent, cache))
-            if (base) route = base + s.suffix
+            if (base)
+              route = s.route.includes('[id]')
+                ? s.route.replace('[id]', base.split('/').filter(Boolean).pop())
+                : base + s.suffix
           }
         }
         if (!route) {
@@ -232,7 +243,10 @@ async function fingerprintOf(page, url, rootSel) {
       // renders a perfectly valid page, and without this the report blames the
       // design for sections that were never on screen.
       row.finalUrl = new URL(livePage.url()).pathname
-      if (row.finalUrl !== route) {
+      // Path against path: a route that carries its record in the query string
+      // lands on its own pathname, and comparing that against the full asked-for
+      // URL called every such screen a redirect.
+      if (row.finalUrl !== route.split('?')[0]) {
         row.findings.push({
           type: 'redirected',
           severity: 'high',

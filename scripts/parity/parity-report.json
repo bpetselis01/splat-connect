@@ -1,7 +1,54 @@
 {
- "at": "2026-09-22T10:24:11.108Z",
+ "at": "2026-09-22T10:27:33.157Z",
  "live": "http://localhost:3110",
  "screens": [
+  {
+   "id": "print_request_new",
+   "name": "Request a print",
+   "group": "3D Printing",
+   "route": "/printing/requests?guide=b680e1e2-c9c0-49b7-b139-3e5ddee73bdb",
+   "findings": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"who you asked\" has no counterpart",
+     "board": "who you asked",
+     "live": null
+    },
+    {
+     "type": "radius",
+     "severity": "medium",
+     "what": "card radius",
+     "board": "18px",
+     "live": "24px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "2/2 board paragraphs absent",
+     "board": "every part carries its own settings, exactly as the author tested them",
+     "live": null
+    },
+    {
+     "type": "radius",
+     "severity": "low",
+     "what": "input radius",
+     "board": "18px",
+     "live": "14px"
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "none",
+     "live": "set"
+    }
+   ],
+   "role": "parent",
+   "finalUrl": "/printing/requests",
+   "boardHeadings": 7,
+   "liveHeadings": 5
+  },
   {
    "id": "home",
    "name": "Home",
@@ -436,88 +483,6 @@
    "finalUrl": "/printing/basics",
    "boardHeadings": 12,
    "liveHeadings": 6
-  },
-  {
-   "id": "print_request_new",
-   "name": "Request a print",
-   "group": "3D Printing",
-   "route": "/printing/requests",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"which parts?\" has no counterpart",
-     "board": "which parts?",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"who you asked\" has no counterpart",
-     "board": "who you asked",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "page height differs grossly",
-     "board": "1745px",
-     "live": "390px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "card title size",
-     "board": "15px",
-     "live": "22px"
-    },
-    {
-     "type": "shadow",
-     "severity": "medium",
-     "what": "no button on live carries a shadow",
-     "board": "set",
-     "live": "none"
-    },
-    {
-     "type": "radius",
-     "severity": "medium",
-     "what": "card radius",
-     "board": "18px",
-     "live": "24px"
-    },
-    {
-     "type": "missing-section",
-     "severity": "medium",
-     "what": "no inputs on live",
-     "board": 2,
-     "live": 0
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "2/2 board paragraphs absent",
-     "board": "every part carries its own settings, exactly as the author tested them",
-     "live": null
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "none",
-     "live": "set"
-    },
-    {
-     "type": "colour",
-     "severity": "low",
-     "what": "card background",
-     "board": "rgb(255,255,255)",
-     "live": "rgb(255,240,204)"
-    }
-   ],
-   "role": "parent",
-   "finalUrl": "/printing/requests",
-   "boardHeadings": 7,
-   "liveHeadings": 2
   },
   {
    "id": "involved",
@@ -2397,15 +2362,15 @@
   "clean": 68,
   "withFindings": 51,
   "errored": 0,
-  "findings": 147,
+  "findings": 142,
   "byType": {
-   "missing-section": 62,
-   "size": 14,
-   "extra-section": 6,
+   "missing-section": 59,
+   "radius": 5,
    "copy": 29,
-   "colour": 13,
-   "shadow": 11,
-   "radius": 4,
+   "shadow": 10,
+   "size": 13,
+   "extra-section": 6,
+   "colour": 12,
    "font": 6,
    "weight": 2
   }
