@@ -389,7 +389,14 @@ function collectFingerprint(rootSelector) {
   // Only on pages without data: there, the words ARE the design, and the board
   // saying "No paid tier, ever" where live says "Why this exists" is a real
   // finding. Capped so a long article does not dominate the diff.
+  //
+  // Prose inside a card or a repeated row is a RECORD's words, not the page's
+  // — the board's six sample toys against live's fifty real ones. Comparing
+  // those reported "8/8 board paragraphs absent" on every screen that lists
+  // anything, which is data volume, the one thing this report ignores
+  // everywhere else. Same predicate the headings use, for the same reason.
   const paragraphs = pick('p')
+    .filter((p) => !insideCard(p))
     .map((p) => norm(p.innerText))
     .filter((t) => t.length > 25)
     .slice(0, 40)

@@ -1,5 +1,5 @@
 {
- "at": "2026-09-22T07:48:59.864Z",
+ "at": "2026-09-22T10:14:24.221Z",
  "live": "http://localhost:3110",
  "screens": [
   {
@@ -26,15 +26,7 @@
    "name": "Guides library",
    "group": "Public site",
    "route": "/library",
-   "findings": [
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "6/8 board paragraphs absent",
-     "board": "a bedside arm that holds any #mm switch at the right angle.",
-     "live": "step-by-step guides for switch-adapting toys and printing the parts th"
-    }
-   ],
+   "findings": [],
    "role": "guest",
    "finalUrl": "/library",
    "boardHeadings": 8,
@@ -84,8 +76,8 @@
     {
      "type": "copy",
      "severity": "medium",
-     "what": "6/9 board paragraphs absent",
-     "board": "the full build — every step, the parts list and the safety checklist —",
+     "what": "2/2 board paragraphs absent",
+     "board": "up to three things the author points you at next — their own guides, a",
      "live": "tools are a one-off, and most are borrowable."
     }
    ],
@@ -103,9 +95,9 @@
     {
      "type": "copy",
      "severity": "medium",
-     "what": "8/9 board paragraphs absent",
+     "what": "2/3 board paragraphs absent",
      "board": "sydney · from your profile",
-     "live": "families and organisations give these away. request one, agree a picku"
+     "live": "nothing suitable nearby? pick a guide for it, then tap get help with t"
     }
    ],
    "role": "guest",
@@ -117,7 +109,7 @@
    "id": "toy_public",
    "name": "Toy detail",
    "group": "Public site",
-   "route": "/toy-library/34ee795e-74c5-467c-a648-11baa9f58a07",
+   "route": "/toy-library/6867555b-4023-479b-ba9d-ea7cb54cb270",
    "findings": [
     {
      "type": "font",
@@ -157,13 +149,13 @@
     {
      "type": "copy",
      "severity": "medium",
-     "what": "8/8 board paragraphs absent",
+     "what": "2/2 board paragraphs absent",
      "board": "our daughter used this for about a year and has moved on to the train.",
-     "live": "giving it away. a one-way gift. nothing is expected back, and parity p"
+     "live": null
     }
    ],
    "role": "guest",
-   "finalUrl": "/toy-library/34ee795e-74c5-467c-a648-11baa9f58a07",
+   "finalUrl": "/toy-library/6867555b-4023-479b-ba9d-ea7cb54cb270",
    "boardHeadings": 10,
    "liveHeadings": 3
   },
@@ -171,7 +163,7 @@
    "id": "toy_request",
    "name": "Request a toy",
    "group": "Public site",
-   "route": "/toy-library/34ee795e-74c5-467c-a648-11baa9f58a07/request",
+   "route": "/toy-library/6867555b-4023-479b-ba9d-ea7cb54cb270/request",
    "findings": [
     {
      "type": "missing-section",
@@ -211,7 +203,7 @@
     {
      "type": "copy",
      "severity": "medium",
-     "what": "5/5 board paragraphs absent",
+     "what": "2/2 board paragraphs absent",
      "board": "family # is open to either. offer one of your own toys, or just ask an",
      "live": "parity parent is giving this one away. just ask — nothing is expected "
     },
@@ -238,7 +230,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/toy-library/34ee795e-74c5-467c-a648-11baa9f58a07/request",
+   "finalUrl": "/toy-library/6867555b-4023-479b-ba9d-ea7cb54cb270/request",
    "boardHeadings": 4,
    "liveHeadings": 2
   },
@@ -467,9 +459,9 @@
     {
      "type": "copy",
      "severity": "medium",
-     "what": "5/7 board paragraphs absent",
-     "board": "guide d — switch mount, printable",
-     "live": "most assistive parts are small — a switch mount, an interrupter case —"
+     "what": "3/4 board paragraphs absent",
+     "board": "sydney · from your profile",
+     "live": "no printer near you? ask, and someone may print it and post it to you."
     },
     {
      "type": "shadow",
@@ -560,9 +552,9 @@
     {
      "type": "copy",
      "severity": "medium",
-     "what": "5/5 board paragraphs absent",
+     "what": "2/2 board paragraphs absent",
      "board": "every part carries its own settings, exactly as the author tested them",
-     "live": "every request starts from a guide"
+     "live": null
     },
     {
      "type": "shadow",
@@ -786,7 +778,7 @@
     {
      "type": "copy",
      "severity": "medium",
-     "what": "5/5 board paragraphs absent",
+     "what": "2/2 board paragraphs absent",
      "board": "tom beattie is building this for you",
      "live": "waiting for a maker to claim it"
     },
@@ -964,8 +956,8 @@
     {
      "type": "copy",
      "severity": "medium",
-     "what": "10/11 board paragraphs absent",
-     "board": "paediatric ot service newcastle, nsw on splat since # thanked # times",
+     "what": "4/5 board paragraphs absent",
+     "board": "a paediatric occupational therapy service running a switch-adaptation ",
      "live": "backing means one of their leaders read the guide, checked the safety "
     }
    ],
@@ -1060,8 +1052,8 @@
     {
      "type": "copy",
      "severity": "medium",
-     "what": "7/7 board paragraphs absent",
-     "board": "paediatric ot who writes up whatever the thursday switch clinic adapts",
+     "what": "4/4 board paragraphs absent",
+     "board": "i run a switch clinic on thursdays and write up whatever we adapt that",
      "live": null
     },
     {
@@ -1250,6 +1242,13 @@
      "live": "18px"
     },
     {
+     "type": "copy",
+     "severity": "medium",
+     "what": "4/5 board paragraphs absent",
+     "board": "leo is four. he has cerebral palsy and very little grip, and until aug",
+     "live": "a light-up drum, a battery interrupter and one big red switch. what ch"
+    },
+    {
      "type": "colour",
      "severity": "low",
      "what": "card background",
@@ -1334,6 +1333,13 @@
      "live": "38px"
     },
     {
+     "type": "copy",
+     "severity": "medium",
+     "what": "1/1 board paragraphs absent",
+     "board": "eight volunteers. everyone here does something else for a living, and ",
+     "live": "everyone here does something else for a living, and the bios say so. e"
+    },
+    {
      "type": "shadow",
      "severity": "low",
      "what": "card shadow",
@@ -1397,7 +1403,7 @@
      "severity": "medium",
      "what": "h1 wording",
      "board": "requests to northside therapy",
-     "live": "requests to parity org mucdcplkbexi"
+     "live": "requests to parity org muciixac#k"
     },
     {
      "type": "radius",
@@ -1409,7 +1415,7 @@
     {
      "type": "copy",
      "severity": "medium",
-     "what": "5/5 board paragraphs absent",
+     "what": "2/2 board paragraphs absent",
      "board": "everything a family can ask of an organisation, in one place. say no w",
      "live": "everything a family can ask of an organisation, in one place. open eac"
     },
@@ -1442,15 +1448,7 @@
    "name": "Inbox",
    "group": "Admin",
    "route": "/admin/inbox",
-   "findings": [
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "5/7 board paragraphs absent",
-     "board": "bayside ot collective · yesterday",
-     "live": "messages from the contact form. safety reports sit at the top of open "
-    }
-   ],
+   "findings": [],
    "role": "admin",
    "finalUrl": "/admin/inbox",
    "boardHeadings": 1,
@@ -1461,15 +1459,7 @@
    "name": "Build requests",
    "group": "Admin",
    "route": "/admin/build-requests",
-   "findings": [
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "7/8 board paragraphs absent",
-     "board": "guide b — spinning light-up top · family in ashfield",
-     "live": "makers wanted, from the top. anything unclaimed for two weeks, or clai"
-    }
-   ],
+   "findings": [],
    "role": "admin",
    "finalUrl": "/admin/build-requests",
    "boardHeadings": 1,
@@ -1479,7 +1469,7 @@
    "id": "org_event_manage",
    "name": "Manage event",
    "group": "My SPLAT",
-   "route": "/dashboard/org/events/a995408d-7ae5-43f0-a16f-589921460ddb",
+   "route": "/dashboard/org/events/50ab001a-343f-47e5-b09c-64fbd806efc2",
    "findings": [
     {
      "type": "font",
@@ -1503,13 +1493,6 @@
      "live": "28px"
     },
     {
-     "type": "copy",
-     "severity": "medium",
-     "what": "18/19 board paragraphs absent",
-     "board": "families who asked for help with a printable guide and chose \"the host",
-     "live": "build day · tuesday # october #"
-    },
-    {
      "type": "shadow",
      "severity": "low",
      "what": "card shadow",
@@ -1518,7 +1501,7 @@
     }
    ],
    "role": "leader",
-   "finalUrl": "/dashboard/org/events/a995408d-7ae5-43f0-a16f-589921460ddb",
+   "finalUrl": "/dashboard/org/events/50ab001a-343f-47e5-b09c-64fbd806efc2",
    "boardHeadings": 4,
    "liveHeadings": 2
   },
@@ -1656,13 +1639,6 @@
      "what": "card title size",
      "board": "46px",
      "live": "18px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "2/2 board paragraphs absent",
-     "board": "everything that belongs to you — what you have written, what you have ",
-     "live": "everything that belongs to you — what you have written, what you have "
     }
    ],
    "role": "parent",
@@ -1690,7 +1666,7 @@
     {
      "type": "copy",
      "severity": "medium",
-     "what": "5/6 board paragraphs absent",
+     "what": "2/3 board paragraphs absent",
      "board": "already written this up somewhere? start from the pdf. otherwise two t",
      "live": "two things to begin: what the toy is, and one photo — everything else "
     }
@@ -1704,18 +1680,18 @@
    "id": "editor",
    "name": "Tutorial editor",
    "group": "My SPLAT",
-   "route": "/tutorials/5947947a-9d66-451a-8b7a-68164eaf99c8/edit",
+   "route": "/tutorials/d0e9317d-9d2a-419f-8c02-81b2ed02c3c4/edit",
    "findings": [
     {
      "type": "copy",
      "severity": "medium",
-     "what": "4/6 board paragraphs absent",
-     "board": "# of # sections filled in. worth a look is optional — steps and safety",
+     "what": "2/3 board paragraphs absent",
+     "board": "steps and safety are the two a reviewer cannot work without. everythin",
      "live": "where this guide is in its life, and what you can do about it right no"
     }
    ],
    "role": "contributor",
-   "finalUrl": "/tutorials/5947947a-9d66-451a-8b7a-68164eaf99c8/edit",
+   "finalUrl": "/tutorials/d0e9317d-9d2a-419f-8c02-81b2ed02c3c4/edit",
    "boardHeadings": 5,
    "liveHeadings": 5
   },
@@ -1760,7 +1736,7 @@
    "id": "toy_detail",
    "name": "Toy detail",
    "group": "My SPLAT",
-   "route": "/dashboard/toys/34ee795e-74c5-467c-a648-11baa9f58a07",
+   "route": "/dashboard/toys/6867555b-4023-479b-ba9d-ea7cb54cb270",
    "findings": [
     {
      "type": "missing-section",
@@ -1777,13 +1753,6 @@
      "live": "22px"
     },
     {
-     "type": "copy",
-     "severity": "medium",
-     "what": "5/7 board paragraphs absent",
-     "board": "live in the library. edits show to families straight away — there is n",
-     "live": "where this listing is, and what you can do about it right now."
-    },
-    {
      "type": "colour",
      "severity": "low",
      "what": "card background",
@@ -1792,7 +1761,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/toys/34ee795e-74c5-467c-a648-11baa9f58a07",
+   "finalUrl": "/dashboard/toys/6867555b-4023-479b-ba9d-ea7cb54cb270",
    "boardHeadings": 8,
    "liveHeadings": 5
   },
@@ -1808,13 +1777,6 @@
      "what": "h2 \"history\" has no counterpart",
      "board": "history",
      "live": null
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "23/24 board paragraphs absent",
-     "board": "donation with northside therapy collective · # sep",
-     "live": "toys you have asked for, toys people have asked you for, and builds yo"
     }
    ],
    "role": "parent",
@@ -1826,7 +1788,7 @@
    "id": "thread",
    "name": "Exchange thread",
    "group": "My SPLAT",
-   "route": "/dashboard/exchanges/7b4e843d-b28c-4b2e-a3d7-59ac4d1c1d1b",
+   "route": "/dashboard/exchanges/9e32dbdb-57a1-4871-86dc-58c3410b38fa",
    "findings": [
     {
      "type": "missing-section",
@@ -1852,13 +1814,13 @@
     {
      "type": "copy",
      "severity": "medium",
-     "what": "10/10 board paragraphs absent",
+     "what": "6/6 board paragraphs absent",
      "board": "you are receiving this from northside therapy collective",
      "live": "you are receiving this from e#e contributor"
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/exchanges/7b4e843d-b28c-4b2e-a3d7-59ac4d1c1d1b",
+   "finalUrl": "/dashboard/exchanges/9e32dbdb-57a1-4871-86dc-58c3410b38fa",
    "boardHeadings": 4,
    "liveHeadings": 5
   },
@@ -1900,15 +1862,7 @@
    "name": "My design challenges",
    "group": "My SPLAT",
    "route": "/dashboard/challenges",
-   "findings": [
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "6/7 board paragraphs absent",
-     "board": "light box with three brightness steps",
-     "live": "challenges you have joined as a maker, and ideas you have submitted at"
-    }
-   ],
+   "findings": [],
    "role": "parent",
    "finalUrl": "/dashboard/challenges",
    "boardHeadings": 7,
@@ -1993,15 +1947,7 @@
    "name": "My print requests",
    "group": "My SPLAT",
    "route": "/dashboard/print-requests",
-   "findings": [
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "3/4 board paragraphs absent",
-     "board": "# parts · # printers asked · today",
-     "live": "parts you have asked someone to print. anything waiting on you sits at"
-    }
-   ],
+   "findings": [],
    "role": "parent",
    "finalUrl": "/dashboard/print-requests",
    "boardHeadings": 4,
@@ -2011,7 +1957,7 @@
    "id": "print_job",
    "name": "Print job",
    "group": "My SPLAT",
-   "route": "/dashboard/print-requests/2572143c-60f8-48f4-bf24-23b75c810f10",
+   "route": "/dashboard/print-requests/dc04ac3e-01d4-4655-af37-09964c6e00ed",
    "findings": [
     {
      "type": "size",
@@ -2030,9 +1976,9 @@
     {
      "type": "copy",
      "severity": "medium",
-     "what": "6/6 board paragraphs absent",
+     "what": "2/2 board paragraphs absent",
      "board": "switch-mount-body.stl, switch-mount-clamp.stl, cradle-#mm.stl · with o",
-     "live": "splat never handles the money — you settle it directly, and either of "
+     "live": null
     },
     {
      "type": "radius",
@@ -2043,7 +1989,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/print-requests/2572143c-60f8-48f4-bf24-23b75c810f10",
+   "finalUrl": "/dashboard/print-requests/dc04ac3e-01d4-4655-af37-09964c6e00ed",
    "boardHeadings": 3,
    "liveHeadings": 5
   },
@@ -2059,13 +2005,6 @@
      "what": "page height differs grossly",
      "board": "1336px",
      "live": "596px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "14/15 board paragraphs absent",
-     "board": "switch-mount-body.stl, switch-mount-clamp.stl, cradle-#mm.stl",
-     "live": "your printers, requests waiting on you, and what is on the bed."
     },
     {
      "type": "shadow",
@@ -2099,6 +2038,13 @@
      "what": "h3 \"$#\" has no counterpart",
      "board": "$#",
      "live": null
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "3/4 board paragraphs absent",
+     "board": "your pickup point comes from your profile. requesters see the suburb u",
+     "live": "bed size and materials decide which requests you are offered, so a fam"
     },
     {
      "type": "radius",
@@ -2157,7 +2103,7 @@
    "id": "child",
    "name": "Child profile",
    "group": "My SPLAT",
-   "route": "/dashboard/child/f6a618e2-a9f4-4e31-81ea-0deb5a1dbf56",
+   "route": "/dashboard/child/d931425c-8a61-41bf-891f-76654c2297b9",
    "findings": [
     {
      "type": "missing-section",
@@ -2165,13 +2111,6 @@
      "what": "page height differs grossly",
      "board": "1166px",
      "live": "2885px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "2/3 board paragraphs absent",
-     "board": "used to rank guides by whether the switch they call for is one your ch",
-     "live": "every field is optional. we use this only to suggest guides that suit "
     },
     {
      "type": "colour",
@@ -2182,7 +2121,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/child/f6a618e2-a9f4-4e31-81ea-0deb5a1dbf56",
+   "finalUrl": "/dashboard/child/d931425c-8a61-41bf-891f-76654c2297b9",
    "boardHeadings": 4,
    "liveHeadings": 5
   },
@@ -2198,13 +2137,6 @@
      "what": "page height differs grossly",
      "board": "1166px",
      "live": "2825px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "2/3 board paragraphs absent",
-     "board": "used to rank guides by whether the switch they call for is one your ch",
-     "live": "every field is optional. we use this only to suggest guides that suit "
     },
     {
      "type": "colour",
@@ -2242,9 +2174,9 @@
     {
      "type": "copy",
      "severity": "medium",
-     "what": "7/7 board paragraphs absent",
+     "what": "1/1 board paragraphs absent",
      "board": "guides waiting on northside therapy collective. oldest first.",
-     "live": "guides waiting on parity org mucdcplkbexi. oldest first."
+     "live": "guides waiting on parity org muciixac#k. oldest first."
     }
    ],
    "role": "leader",
@@ -2282,8 +2214,8 @@
     {
      "type": "copy",
      "severity": "medium",
-     "what": "8/10 board paragraphs absent",
-     "board": "the four numbers under it are counted, not typed: guides backed, toys ",
+     "what": "5/6 board paragraphs absent",
+     "board": "the suburb is public. a street address is only ever shown to someone y",
      "live": "this is the page a family lands on before they ask you for anything. e"
     },
     {
@@ -2416,13 +2348,6 @@
      "live": "596px"
     },
     {
-     "type": "copy",
-     "severity": "medium",
-     "what": "14/15 board paragraphs absent",
-     "board": "switch-mount-body.stl, switch-mount-clamp.stl, cradle-#mm.stl",
-     "live": "every leader sees this queue. pickup is always the organisation's addr"
-    },
-    {
      "type": "shadow",
      "severity": "low",
      "what": "card shadow",
@@ -2465,7 +2390,7 @@
     {
      "type": "copy",
      "severity": "medium",
-     "what": "4/4 board paragraphs absent",
+     "what": "3/3 board paragraphs absent",
      "board": "the pages with no other owner. guides, toys, events and stories are wr",
      "live": "the pages with no other owner. guides, toys, events and stories are wr"
     },
@@ -2549,7 +2474,7 @@
     {
      "type": "copy",
      "severity": "medium",
-     "what": "7/8 board paragraphs absent",
+     "what": "1/1 board paragraphs absent",
      "board": "sam mitchell · easy · age #–# · # minutes · northside therapy collecti",
      "live": "seed contributor · medium · toy adaptation · # minutes"
     }
@@ -2578,13 +2503,6 @@
      "what": "board has cards, live has none",
      "board": 4,
      "live": 0
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "12/13 board paragraphs absent",
-     "board": "safety concern · guide c — plush dog that barks",
-     "live": "private problem reports from members. safety sits at the top whatever "
     }
    ],
    "role": "admin",
@@ -2607,12 +2525,12 @@
    "id": "admin_idea_detail",
    "name": "Review an idea",
    "group": "Admin",
-   "route": "/admin/ideas/4a415927-a0a9-412d-9ece-73566e647ddb",
+   "route": "/admin/ideas/8f7609e3-58b1-4281-9b5b-932f3bd80dfe",
    "findings": [
     {
      "type": "copy",
      "severity": "medium",
-     "what": "2/3 board paragraphs absent",
+     "what": "2/2 board paragraphs absent",
      "board": "bubble machines are the one toy every child in the group reacts to, an",
      "live": "a light box with three brightness steps."
     },
@@ -2625,7 +2543,7 @@
     }
    ],
    "role": "admin",
-   "finalUrl": "/admin/ideas/4a415927-a0a9-412d-9ece-73566e647ddb",
+   "finalUrl": "/admin/ideas/8f7609e3-58b1-4281-9b5b-932f3bd80dfe",
    "boardHeadings": 3,
    "liveHeadings": 3
   },
@@ -2737,15 +2655,7 @@
    "name": "Contributor terms gate",
    "group": "Auth",
    "route": "/onboarding/contributor-terms",
-   "findings": [
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "6/7 board paragraphs absent",
-     "board": "version # you keep the copyright on everything you write.",
-     "live": "these terms have not been written yet. anything you accept here is not"
-    }
-   ],
+   "findings": [],
    "role": "guest",
    "finalUrl": "/onboarding/contributor-terms",
    "boardHeadings": 8,
@@ -2776,17 +2686,17 @@
  ],
  "summary": {
   "screens": 119,
-  "clean": 57,
-  "withFindings": 62,
+  "clean": 63,
+  "withFindings": 56,
   "errored": 0,
-  "findings": 200,
+  "findings": 188,
   "byType": {
    "radius": 16,
-   "copy": 41,
    "font": 11,
    "missing-section": 62,
    "size": 26,
    "extra-section": 6,
+   "copy": 29,
    "colour": 18,
    "shadow": 18,
    "weight": 2
