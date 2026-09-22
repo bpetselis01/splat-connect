@@ -43,6 +43,12 @@ function collectChrome() {
   const cs = (el, pseudo) => getComputedStyle(el, pseudo)
   const px = (v) => Math.round(parseFloat(v) || 0)
 
+  // A radius larger than any element here is a pill, however it was written.
+  // Tailwind's `rounded-full` computes to 9999px on one side and to Chrome's
+  // clamp, 33554400px, on the other, and the report called that a 33,553,401px
+  // difference on four screens whose buttons are both pills.
+  const rad = (v) => Math.min(px(v), 999)
+
   const links = [...header.querySelectorAll('a, button')].filter((el) => {
     const r = el.getBoundingClientRect()
     if (r.height < 8 || r.width < 8) return false
@@ -66,8 +72,8 @@ function collectChrome() {
     navRadius: modal(
       links.map((el) => {
         // The pill is often drawn on ::before rather than the link itself.
-        const own = px(cs(el).borderTopLeftRadius)
-        const before = px(cs(el, '::before').borderTopLeftRadius)
+        const own = rad(cs(el).borderTopLeftRadius)
+        const before = rad(cs(el, '::before').borderTopLeftRadius)
         return Math.max(own, before)
       })
     ),
@@ -94,6 +100,12 @@ function collectFingerprint(rootSelector) {
       .replace(/\d[\d,.]*/g, '#')
 
   const px = (v) => Math.round(parseFloat(v) || 0)
+
+  // A radius larger than any element here is a pill, however it was written.
+  // Tailwind's `rounded-full` computes to 9999px on one side and to Chrome's
+  // clamp, 33554400px, on the other, and the report called that a 33,553,401px
+  // difference on four screens whose buttons are both pills.
+  const rad = (v) => Math.min(px(v), 999)
 
   // Colours arrive as rgb()/rgba() from both sides; compare as-is but drop a
   // fully-opaque alpha so rgb(1,2,3) and rgba(1,2,3,1) match.
@@ -270,13 +282,21 @@ function collectFingerprint(rootSelector) {
     if (!els || !els.length) return null
     const S = els.map(cs)
     return {
-      radius: modal(S.map((s) => px(s.borderTopLeftRadius))),
+      radius: modal(S.map((s) => rad(s.borderTopLeftRadius))),
       shadow: modal(S.map((s) => (s.boxShadow === 'none' ? 'none' : 'set'))),
       bg: modal(S.map((s) => colour(s.backgroundColor))),
       padY: modal(S.map((s) => px(s.paddingTop))),
       padX: modal(S.map((s) => px(s.paddingLeft))),
       border: modal(S.map((s) => (s.borderTopWidth === '0px' ? 'none' : px(s.borderTopWidth) + 'px'))),
       n: els.length,
+      // Every value, not just the winner: a screen's cards are several
+      // populations, and the comparator needs to ask whether the board's shape
+      // exists on the other side at all. See the card block in compare.js.
+      values: {
+        radius: S.map((s) => rad(s.borderTopLeftRadius)),
+        shadow: S.map((s) => (s.boxShadow === 'none' ? 'none' : 'set')),
+        bg: S.map((s) => colour(s.backgroundColor)),
+      },
     }
   }
 
@@ -436,13 +456,13 @@ function collectFingerprint(rootSelector) {
     // shadow" and a false radius on every such screen.
     hasPrimary: buttons.length > 0,
     sets: {
-      buttonRadius: [...new Set(candidates.map((e) => px(cs(e).borderTopLeftRadius)))].sort(
+      buttonRadius: [...new Set(candidates.map((e) => rad(cs(e).borderTopLeftRadius)))].sort(
         (a, b) => a - b
       ),
       buttonShadow: [
         ...new Set(candidates.map((e) => (cs(e).boxShadow === 'none' ? 'none' : 'set'))),
       ].sort(),
-      inputRadius: [...new Set(inputs.map((e) => px(cs(e).borderTopLeftRadius)))].sort(
+      inputRadius: [...new Set(inputs.map((e) => rad(cs(e).borderTopLeftRadius)))].sort(
         (a, b) => a - b
       ),
       inputBg: [...new Set(inputs.map((e) => colour(cs(e).backgroundColor)))].sort(),

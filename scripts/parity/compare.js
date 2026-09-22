@@ -130,16 +130,23 @@ function compare(board, live, opts = {}) {
       for (const x of xs) c.set(x[key], (c.get(x[key]) || 0) + 1)
       return [...c.entries()].sort((a, b) => b[1] - a[1])[0][0]
     }
+    // Mode against SET, the same way the buttons are compared, and for the
+    // same reason. A screen's cards are not one population: /impact draws four
+    // stat tiles with 44px numbers beside its record cards, and which kind wins
+    // the mode flips with how many records the side happens to hold — six
+    // samples on the board, fifty rows live. That reported "card title 44px vs
+    // 17px" on a screen where both sides draw both sizes, and flipped Baloo
+    // against Nunito in both directions across eleven screens. The question
+    // worth asking is whether live has ANY card title the board's shape.
     const bf = modeOf(bT, 'font')
-    const lf = modeOf(lT, 'font')
-    if (bf !== lf) out.push(f('font', 'high', 'card title font', bf, lf))
+    if (!lT.some((t) => t.font === bf))
+      out.push(f('font', 'high', 'card title font', bf, modeOf(lT, 'font')))
     const bs = modeOf(bT, 'size')
-    const ls = modeOf(lT, 'size')
-    if (Math.abs(bs - ls) > SIZE_TOLERANCE)
-      out.push(f('size', 'medium', 'card title size', bs + 'px', ls + 'px'))
+    if (!lT.some((t) => Math.abs(t.size - bs) <= SIZE_TOLERANCE))
+      out.push(f('size', 'medium', 'card title size', bs + 'px', modeOf(lT, 'size') + 'px'))
     const bw = modeOf(bT, 'weight')
-    const lw = modeOf(lT, 'weight')
-    if (Math.abs(bw - lw) >= 100) out.push(f('weight', 'low', 'card title weight', bw, lw))
+    if (!lT.some((t) => Math.abs(t.weight - bw) < 100))
+      out.push(f('weight', 'low', 'card title weight', bw, modeOf(lT, 'weight')))
   } else if (board.counts.cards > 2 && live.counts.cards === 0) {
     out.push(
       f('missing-section', 'high', 'board lists cards, live shows none', board.counts.cards, 0)
@@ -241,17 +248,33 @@ function compare(board, live, opts = {}) {
   }
 
   // ---- component shape ---------------------------------------------------
-  // Cards only: they are numerous and consistently classified on both sides, so
-  // a modal describes them well. Buttons and inputs are handled by set
-  // comparison above, for the reason given there.
+  // Cards, compared modal-against-population rather than modal-against-modal.
+  // A screen's cards are not one population — a hero panel, a feature tile and
+  // a record card are three shapes, and which one wins the mode depends on how
+  // many records the side happens to hold. Modal-against-modal reported card
+  // radius 18 vs 24 on five screens and 24 vs 18 on three others, in both
+  // directions, for the same two shapes. The answerable question is whether
+  // live draws the board's shape on a fair share of its cards.
+  //
+  // A quarter, not one instance: a single card that happens to match must not
+  // silence the check for the other nineteen.
+  const SHARE = 0.25
+  const share = (vals, pred) =>
+    !vals || !vals.length ? 0 : vals.filter(pred).length / vals.length
   for (const kind of ['card']) {
     const b = board.shapes[kind]
     const l = live.shapes[kind]
     if (!b || !l) continue
-    if (Math.abs(b.radius - l.radius) > SIZE_TOLERANCE)
+    const lv = l.values || { radius: [l.radius], shadow: [l.shadow], bg: [l.bg] }
+    if (
+      b.radius != null &&
+      share(lv.radius, (r) => Math.abs(r - b.radius) <= SIZE_TOLERANCE) < SHARE
+    )
       out.push(f('radius', 'medium', `${kind} radius`, b.radius + 'px', l.radius + 'px'))
-    if (b.shadow !== l.shadow) out.push(f('shadow', 'low', `${kind} shadow`, b.shadow, l.shadow))
-    if (b.bg !== l.bg) out.push(f('colour', 'low', `${kind} background`, b.bg, l.bg))
+    if (b.shadow != null && share(lv.shadow, (x) => x === b.shadow) < SHARE)
+      out.push(f('shadow', 'low', `${kind} shadow`, b.shadow, l.shadow))
+    if (b.bg != null && share(lv.bg, (x) => x === b.bg) < SHARE)
+      out.push(f('colour', 'low', `${kind} background`, b.bg, l.bg))
     // Card padding is deliberately NOT compared. The two sides put it in
     // different places — the board pads an inner wrapper and leaves the card
     // itself at 0, live pads the card — so the comparison reported 0/0 against
