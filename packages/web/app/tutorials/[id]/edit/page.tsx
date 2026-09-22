@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { Suspense } from 'react'
 import { EditFilesSection } from '@/components/edit-files-section'
 import { AddStlForm } from '@/components/add-stl-form'
+import { StlSettingsForm, type StlSettings } from '@/components/stl-settings-form'
 import { EditItemsSection, type ItemInput } from '@/components/edit-items-section'
 import { EditBackingSection } from '@/components/edit-backing-section'
 import { EditDetailsSection } from '@/components/edit-details-section'
@@ -133,7 +134,7 @@ export default async function EditTutorialPage({
     revalidatePath('/dashboard')
   }
 
-  async function saveDetails(patch: { title: string; description: string | null; difficulty: Difficulty; build_minutes: number | null; kind: TutorialKind; maturity: TutorialMaturity; safety_declared?: true; updated_at: string }) {
+  async function saveDetails(patch: { title: string; description: string | null; difficulty: Difficulty; build_minutes: number | null; age_min: number | null; age_max: number | null; kind: TutorialKind; maturity: TutorialMaturity; safety_declared?: true; updated_at: string }) {
     'use server'
     const body: Record<string, unknown> = { ...patch }
     if (tutorial.status === 'approved' || tutorial.status === 'rejected') {
@@ -202,6 +203,12 @@ export default async function EditTutorialPage({
     await apiClient.post(`/api/tutorials/${id}/stl-files`, {
       stl_files: [...current.stl_files, { filename, file_url: fileUrl }],
     })
+    revalidatePath(`/tutorials/${id}/edit`)
+  }
+
+  async function saveStlSettings(fileId: string, settings: StlSettings) {
+    'use server'
+    await apiClient.patch(`/api/tutorials/${id}/stl-files/${fileId}`, settings)
     revalidatePath(`/tutorials/${id}/edit`)
   }
 
@@ -298,20 +305,7 @@ export default async function EditTutorialPage({
       status: stepStatuses.stl,
       content: (
         <div className="panel px-5 pt-5 pb-5">
-          {stlFiles.length > 0 && (
-            <ul className="mb-4 flex flex-col gap-2">
-              {stlFiles.map((f) => (
-                <li key={f.id} className="card-flat px-4 py-3 text-sm">
-                  <a
-                    href={`/files/stl-files/${f.file_url}`}
-                    className="font-semibold text-brand-dark hover:underline"
-                  >
-                    {f.filename}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          )}
+          {stlFiles.length > 0 && <StlSettingsForm files={stlFiles} onSave={saveStlSettings} />}
           <AddStlForm tutorialId={id} onAdd={addStlFileRecord} />
         </div>
       ),

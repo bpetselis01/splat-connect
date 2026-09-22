@@ -36,6 +36,7 @@ import { LiveTransaction } from '@/components/live-transaction'
 import { ToyTransactionThread } from '@/components/toy-transaction-thread'
 import { ChatHead } from '@/components/exchange-chat'
 import { printStages, printStageFacts } from '@/lib/print-stages'
+import { printFilesLine } from '@/lib/print-settings'
 
 function defaultAddress(profile: Profile): PickupAddress | null {
   const { pickup_line1, pickup_suburb, pickup_state, pickup_postcode } = profile
@@ -155,7 +156,7 @@ export default async function PrintJobPage({ params }: { params: Promise<{ id: s
           </h1>
           <p className="mt-1.5 text-[15px] font-semibold text-muted">
             {tx.print_files.length > 0 && (
-              <>{tx.print_files.map((file) => file.filename).join(', ')} · </>
+              <>{printFilesLine(tx.print_files)} · </>
             )}
             with <strong className="text-ink">{otherPartyName}</strong>
           </p>

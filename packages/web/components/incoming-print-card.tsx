@@ -17,14 +17,17 @@ import {
   ChatCircleDots,
   ChatCircleText,
   Check,
+  Clock,
   Cube,
   HourglassHigh,
   HourglassMedium,
   MoonStars,
+  Scales,
 } from '@phosphor-icons/react/dist/ssr'
 import type { PickupAddress, ToyTransactionSummary } from '@splat-connect/types'
 import { browserApiClient } from '@/lib/browser-api-client'
 import { AcceptPickupDialog } from '@/components/accept-pickup-dialog'
+import { filamentLabel, printFilesLine, printTimeLabel } from '@/lib/print-settings'
 
 const REASONS = [
   { label: 'No PETG on hand', Icon: Cube },
@@ -69,6 +72,7 @@ export function IncomingPrintCard({
   // An organisation's machine accepts outright: its pickup address is fixed,
   // and the server reads it from the org record.
   const accept = () => (tx.owner_org_id ? run('accept', {}) : setAcceptOpen(true))
+  const files = tx.print_files ?? []
 
   return (
     <li className="flex flex-col gap-4 rounded-[24px] border border-line bg-surface p-[22px] shadow-[var(--shadow-e2),var(--shadow-hi)]">
@@ -94,8 +98,31 @@ export function IncomingPrintCard({
           <h2 className="font-display text-2xl font-extrabold text-ink">
             {tx.tutorial_title ?? 'A print job'}
           </h2>
+          {files.length > 0 && (
+            <p className="mt-1 font-mono text-[13px] font-semibold text-muted [overflow-wrap:anywhere]">
+              {printFilesLine(files)}
+            </p>
+          )}
         </div>
       </div>
+
+      {/* What the parts add up to, from the guide's own settings (068). */}
+      {files.length > 0 && (
+        <p className="flex flex-wrap gap-2 text-[13px] font-bold text-muted">
+          {[
+            [Clock, printTimeLabel(files)],
+            [Scales, filamentLabel(files)],
+          ].map(([Icon, label]) => (
+            <span
+              key={label as string}
+              className="inline-flex items-center gap-1.5 rounded-full bg-[var(--surface2)] px-[11px] py-1"
+            >
+              <Icon size={14} weight="bold" aria-hidden="true" className="text-brand-dark" />
+              {label as string}
+            </span>
+          ))}
+        </p>
+      )}
 
       {(tx.print_note || tx.requester_suburb) && (
         <div className="flex items-start gap-3.5 rounded-[18px] bg-[var(--b100)] px-4 py-3.5 text-[var(--tink)]">

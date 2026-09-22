@@ -13,10 +13,11 @@
  *
  * Laid out as the board's #print_request_new: numbered panels on the left
  * (parts, preferences, printer, pickup) and a sticky summary with the send
- * button on the right. The board's per-part quantity, print time, grams and
- * settings, its colour and deadline preferences, and its pick-up-to-three
- * printers have no field on the request or the STL row yet, so they are not
- * drawn — a stepper that sends nothing would be a promise the job page breaks.
+ * button on the right. The summary's time and filament tiles sum the STL rows'
+ * own settings (068) over the ticked parts. The board's per-part quantity, its
+ * colour and deadline preferences, and its pick-up-to-three printers have no
+ * field on the request yet, so they are not drawn — a stepper that sends
+ * nothing would be a promise the job page breaks.
  *
  * A full or closed machine is shown and disabled rather than hidden. A list
  * that silently omits the printer somebody was about to choose reads as an
@@ -36,14 +37,15 @@ import {
   RadioButton,
   Circle,
 } from '@phosphor-icons/react/dist/ssr'
-import type { PrinterWithOwner } from '@splat-connect/types'
+import type { PrinterWithOwner, StlFile } from '@splat-connect/types'
 import { browserApiClient } from '@/lib/browser-api-client'
 import { printerAvailability } from '@/lib/printer-availability'
+import { printTimeLabel, filamentLabel } from '@/lib/print-settings'
 
-export interface PrintablePart {
-  id: string
-  filename: string
-}
+export type PrintablePart = Pick<
+  StlFile,
+  'id' | 'filename' | 'print_minutes' | 'filament_grams' | 'material'
+>
 
 const TINTS = ['var(--tmint)', 'var(--b100)', 'var(--tamber)', 'var(--tviolet)', 'var(--tcoral)']
 
@@ -100,6 +102,7 @@ export function RequestPrintForm({
   const [error, setError] = useState<string | null>(null)
 
   const valid = picked.length > 0 && printerId !== '' && agree
+  const ticked = parts.filter((p) => picked.includes(p.id))
 
   function toggle(id: string) {
     setPicked((prev) => (prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]))
@@ -310,6 +313,9 @@ export function RequestPrintForm({
             {[
               [picked.length, 'parts'],
               [printerId ? 1 : 0, 'printers asked'],
+              // "—" where the guide never said: the printer asks in the thread.
+              [printTimeLabel(ticked), 'printing'],
+              [filamentLabel(ticked), 'filament'],
             ].map(([n, label]) => (
               <div key={label} className="rounded-field bg-sunken p-2.5">
                 <p className="font-display text-xl font-extrabold text-ink">{n}</p>

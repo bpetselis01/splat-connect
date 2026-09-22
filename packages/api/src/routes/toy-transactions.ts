@@ -2,6 +2,7 @@ import { chunk } from '../chunk.js'
 import { Hono, type Context } from 'hono'
 import { randomInt } from 'node:crypto'
 import { needsAction, isOwnerSide } from '@splat-connect/types'
+import type { PrintJobFile } from '@splat-connect/types'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import { ledOrgIds, atCapacityToyIds } from '../toy-access.js'
@@ -215,12 +216,21 @@ export async function loadForParty(c: Context<{ Variables: AuthVariables }>): Pr
   return { data }
 }
 
+/** The print_job_files embed as PostgREST returns it: the join row with its STL. */
+type PrintJobFileRow = { quantity: number; stl_files: Omit<PrintJobFile, 'quantity'> | null }
+
+// Flattened here rather than in the client: the embed's shape is a PostgREST
+// detail, and the list, the detail and three pages would each have to know it.
+function flattenPrintFiles(rows: PrintJobFileRow[] | null | undefined): PrintJobFile[] {
+  return (rows ?? []).filter((f) => f.stl_files).map((f) => ({ ...f.stl_files!, quantity: f.quantity }))
+}
+
 toyTransactions.get('/', async (c) => {
   const supabase = createUserClient(c.get('token'))
   const { data, error } = await supabase
     .from('toy_transactions')
     .select(
-      '*, toy:toys!toy_transactions_toy_id_fkey(name, cover_photo_url), offered:toys!toy_transactions_offered_toy_id_fkey(name, cover_photo_url), owner:profiles!toy_transactions_owner_id_fkey(name), requester:profiles!toy_transactions_requester_id_fkey(name), org:organizations!toy_transactions_owner_org_id_fkey(name), tutorial:tutorials(title)'
+      '*, toy:toys!toy_transactions_toy_id_fkey(name, cover_photo_url), offered:toys!toy_transactions_offered_toy_id_fkey(name, cover_photo_url), owner:profiles!toy_transactions_owner_id_fkey(name), requester:profiles!toy_transactions_requester_id_fkey(name), org:organizations!toy_transactions_owner_org_id_fkey(name), tutorial:tutorials(title), print_job_files(quantity, stl_files(id, filename, print_minutes, filament_grams, material))'
     )
     .order('updated_at', { ascending: false })
   if (error) return c.json({ error: error.message }, 500)
@@ -241,6 +251,7 @@ toyTransactions.get('/', async (c) => {
       owner: { name: string } | null
       requester: { name: string } | null
       org: { name: string } | null
+      print_job_files: PrintJobFileRow[] | null
     }
   >
   // Advisory, and fail-open by design: a failed scan must not blank the list.
@@ -283,6 +294,7 @@ toyTransactions.get('/', async (c) => {
       blocked_by_rival_accept:
         r.status === 'requested' && r.toy_id !== null && blockedToyIds.has(r.toy_id),
       last_message: previews.get(r.id) ?? null,
+      print_files: flattenPrintFiles(r.print_job_files),
     }))
   )
 })
@@ -334,7 +346,7 @@ toyTransactions.get('/:id', async (c) => {
   const { data, error } = await supabase
     .from('toy_transactions')
     .select(
-      '*, toy:toys!toy_transactions_toy_id_fkey(name, status), offered:toys!toy_transactions_offered_toy_id_fkey(name, status), owner:profiles!toy_transactions_owner_id_fkey(name), requester:profiles!toy_transactions_requester_id_fkey(name), org:organizations!toy_transactions_owner_org_id_fkey(name), tutorial:tutorials(title), printer:printers(id, name, suburb, state, materials), print_job_files(quantity, stl_files(id, filename))'
+      '*, toy:toys!toy_transactions_toy_id_fkey(name, status), offered:toys!toy_transactions_offered_toy_id_fkey(name, status), owner:profiles!toy_transactions_owner_id_fkey(name), requester:profiles!toy_transactions_requester_id_fkey(name), org:organizations!toy_transactions_owner_org_id_fkey(name), tutorial:tutorials(title), printer:printers(id, name, suburb, state, materials), print_job_files(quantity, stl_files(id, filename, print_minutes, filament_grams, material))'
     )
     .eq('id', c.req.param('id'))
     .maybeSingle()
@@ -360,7 +372,7 @@ toyTransactions.get('/:id', async (c) => {
     org: { name: string } | null
     tutorial: { title: string } | null
     printer: { id: string; name: string; suburb: string | null; state: string | null; materials: string[] } | null
-    print_job_files: Array<{ quantity: number; stl_files: { id: string; filename: string } | null }> | null
+    print_job_files: PrintJobFileRow[] | null
   }
   const admin = createAdminClient()
   const ledOrgs = await ledOrgIds(admin, userId)
@@ -392,11 +404,7 @@ toyTransactions.get('/:id', async (c) => {
     toy_name: row.toy?.name ?? '',
     tutorial_title: row.tutorial?.title ?? null,
     printer: row.printer ?? null,
-    // Flattened here rather than in the client: the embed's shape is a
-    // PostgREST detail, and three pages would each have to know it.
-    print_files: (row.print_job_files ?? [])
-      .filter((f) => f.stl_files)
-      .map((f) => ({ id: f.stl_files!.id, filename: f.stl_files!.filename, quantity: f.quantity })),
+    print_files: flattenPrintFiles(row.print_job_files),
     offered_toy_name: row.offered?.name ?? null,
     // The organisation's name where there is one: a family is dealing with
     // Cerebral Palsy Alliance, not with whichever leader is on shift.
