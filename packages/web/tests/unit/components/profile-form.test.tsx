@@ -51,6 +51,29 @@ describe('ProfileForm', () => {
     expect(screen.queryByText('Saved')).not.toBeInTheDocument()
   })
 
+  // 072: the public profile's About paragraph and featured guide ride the same
+  // PATCH. The select only appears when there is a published guide to pick.
+  it('saves the bio and the featured guide', async () => {
+    patch.mockResolvedValue({ ...PROFILE, bio: 'Thursday switch clinic.', featured_tutorial_id: 't1' })
+    render(<ProfileForm profile={PROFILE} publishedGuides={[{ id: 't1', title: 'Fairy lights' }]} />)
+
+    fireEvent.change(screen.getByLabelText('About you'), { target: { value: 'Thursday switch clinic.' } })
+    fireEvent.change(screen.getByLabelText('Featured guide'), { target: { value: 't1' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    await waitFor(() =>
+      expect(patch).toHaveBeenCalledWith('/api/contributors/me', expect.objectContaining({
+        bio: 'Thursday switch clinic.',
+        featured_tutorial_id: 't1',
+      }))
+    )
+  })
+
+  it('offers no featured pick without a published guide', () => {
+    render(<ProfileForm profile={PROFILE} />)
+    expect(screen.queryByLabelText('Featured guide')).not.toBeInTheDocument()
+  })
+
   it('saves the pickup address fields', async () => {
     patch.mockResolvedValue({ ...PROFILE, pickup_line1: '1 Test St', pickup_suburb: 'Testville', pickup_state: 'VIC', pickup_postcode: '3000' })
     render(<ProfileForm profile={PROFILE} />)

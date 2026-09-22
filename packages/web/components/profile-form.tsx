@@ -1,6 +1,7 @@
 'use client'
 /**
- * Account settings. `name`, pickup address fields, and `public_showcase` are editable: `role` and `email` are frozen by
+ * Account settings. `name`, pickup address fields, `public_showcase`, `bio` and
+ * `featured_tutorial_id` are editable: `role` and `email` are frozen by
  * the profiles_freeze_identity trigger (009), so offering fields for them would
  * promise something the database refuses.
  *
@@ -23,8 +24,20 @@ const FIELD = 'field min-h-[50px] bg-canvas'
 
 /** `badges` renders under the email — the account's role and agreement chips,
     which the page fetches and this form only places. */
-export function ProfileForm({ profile, badges }: { profile: Profile; badges?: ReactNode }) {
+export function ProfileForm({
+  profile,
+  badges,
+  publishedGuides = [],
+}: {
+  profile: Profile
+  badges?: ReactNode
+  /** The caller's approved guides, for the featured pick (072). The API
+   *  refuses any other id, so only offer what it will take. */
+  publishedGuides?: { id: string; title: string }[]
+}) {
   const [name, setName] = useState(profile.name)
+  const [bio, setBio] = useState(profile.bio ?? '')
+  const [featured, setFeatured] = useState(profile.featured_tutorial_id ?? '')
   const [pickupLine1, setPickupLine1] = useState(profile.pickup_line1 || '')
   const [pickupSuburb, setPickupSuburb] = useState(profile.pickup_suburb || '')
   const [pickupState, setPickupState] = useState(profile.pickup_state || '')
@@ -43,6 +56,8 @@ export function ProfileForm({ profile, badges }: { profile: Profile; badges?: Re
       pickup_state: pickupState,
       pickup_postcode: pickupPostcode,
       public_showcase: publicShowcase,
+      bio: bio.trim() || null,
+      featured_tutorial_id: featured || null,
     })
   }
 
@@ -75,6 +90,41 @@ export function ProfileForm({ profile, badges }: { profile: Profile; badges?: Re
         <p className="mt-[7px] text-[13px] text-muted">Frozen. Contact us if you need it changed.</p>
       </div>
       {badges}
+      {/* The public profile's About paragraph and featured guide (072). Shown
+          under the identity fields because that is where the board draws them
+          on /contributors/[id]: right under the name. */}
+      <div className="flex flex-col gap-3 border-t border-line pt-4">
+        <div>
+          <label htmlFor="bio" className="field-label">About you</label>
+          <textarea
+            id="bio"
+            rows={4}
+            maxLength={600}
+            value={bio}
+            onChange={(e) => setBio(e.target.value)}
+            className={`${FIELD} resize-y`}
+            placeholder="What you adapt, and why. Shown on your public profile."
+          />
+          <p className="mt-[7px] text-[13px] text-muted">{bio.length}/600</p>
+        </div>
+        {publishedGuides.length > 0 && (
+          <div>
+            <label htmlFor="featured-guide" className="field-label">Featured guide</label>
+            <select
+              id="featured-guide"
+              value={featured}
+              onChange={(e) => setFeatured(e.target.value)}
+              className={FIELD}
+            >
+              <option value="">None</option>
+              {publishedGuides.map((g) => (
+                <option key={g.id} value={g.id}>{g.title}</option>
+              ))}
+            </select>
+            <p className="mt-[7px] text-[13px] text-muted">The one you would hand a first-timer.</p>
+          </div>
+        )}
+      </div>
       {/* A field group inside the account card, not a page section: the board
           draws Account as one form with no second heading in it, and the <h2>
           that used to sit here read as a sibling of "Child profiles" below.

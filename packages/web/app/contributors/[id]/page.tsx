@@ -2,22 +2,25 @@
  * A contributor's public profile, in the board's shape: a header card with the
  * numbers along its foot, a jump row, and the work underneath.
  *
- * Only what the public contributor endpoint returns is drawn. The board also
- * has a headline and bio, place, "leader at", badges, a builds heatmap, a
- * featured guide and notes from families — none of which the endpoint carries
- * yet. The activity feed is built from the guides and toys already returned.
+ * Only what the public contributor endpoint returns is drawn. 072 brought the
+ * bio, the featured guide, badges (derived, never stored), "On SPLAT since"
+ * and the families line. The board also has a headline, place, "leader at"
+ * and a builds heatmap, which the endpoint still lacks. "From families who
+ * built one" draws a count, not the board's quotes: a thank (066) carries no
+ * words, so the honest line is how many families said thanks. The activity
+ * feed is built from the guides and toys already returned.
  */
 import Image from 'next/image'
 import Link from 'next/link'
 import type { Route } from 'next'
 import { notFound } from 'next/navigation'
-import { BookOpen, CaretRight, Gift, Hammer } from '@phosphor-icons/react/dist/ssr'
+import { BookOpen, CaretRight, Gift, Hammer, Medal } from '@phosphor-icons/react/dist/ssr'
 import { initials } from '@/components/story-bits'
 import { ShelfToyCard } from '@/components/shelf-toy-card'
 import { tintFor } from '@/components/card-photo'
 import { getCapabilities } from '@/lib/capabilities'
 import { safePhotoSrc } from '@/lib/photo-src'
-import { shortDate } from '@/lib/dates'
+import { monthHeading, shortDate } from '@/lib/dates'
 import { formatBuildTime, type ContributorProfile } from '@splat-connect/types'
 
 const DIFFICULTY_LABEL = { easy: 'Easy', medium: 'Medium', hard: 'Hard' } as const
@@ -68,8 +71,15 @@ export default async function ContributorPage({
     })),
   ].sort((a, b) => (a.when < b.when ? 1 : -1))
 
+  const badges = contributor.badges ?? []
+  const thanks = contributor.thanks ?? 0
+  const featured = contributor.featured ?? null
+
   const jumps = [
+    { to: 'ctb-about', label: 'About', show: !!contributor.bio },
+    { to: 'ctb-featured', label: 'Featured', show: !!featured },
     { to: 'ctb-guides', label: 'Guides', show: contributor.tutorials.length > 0 },
+    { to: 'ctb-thanks', label: 'Thanks', show: thanks > 0 },
     { to: 'ctb-toys', label: 'Toys', show: toys.length > 0 },
     { to: 'ctb-activity', label: 'Activity', show: activity.length > 0 },
   ].filter((j) => j.show)
@@ -127,6 +137,11 @@ export default async function ContributorPage({
             <h1 className="font-display text-[clamp(28px,3vw,38px)] font-extrabold leading-[1.1] tracking-[-0.02em] text-ink">
               {contributor.name}
             </h1>
+            {contributor.created_at && (
+              <p className="mt-2 text-[13px] font-bold text-muted">
+                On SPLAT since {monthHeading(contributor.created_at)}
+              </p>
+            )}
           </div>
           <div className="ml-auto flex flex-wrap items-center justify-end gap-2.5 pt-[18px]">
             <Link href={askHref} className="btn btn-primary no-underline">
@@ -170,6 +185,70 @@ export default async function ContributorPage({
       )}
 
       <div className="mt-7 flex min-w-0 flex-col gap-10">
+        {contributor.bio && (
+          <section id="ctb-about">
+            <h2 className={`${H2} mb-3.5`}>About</h2>
+            <p className="m-0 max-w-[62ch] whitespace-pre-line text-[15px] leading-relaxed text-ink">
+              {contributor.bio}
+            </p>
+          </section>
+        )}
+
+        {badges.length > 0 && (
+          <section aria-labelledby="ctb-badges">
+            <h3 id="ctb-badges" className="font-display text-lg font-extrabold text-ink">
+              Badges
+            </h3>
+            <p className="mb-3 mt-1 text-[13px] font-bold text-muted">Earned by doing, not by asking.</p>
+            <ul className="m-0 flex list-none flex-wrap gap-2.5 p-0">
+              {badges.map((b) => (
+                <li
+                  key={b.id}
+                  className="inline-flex items-center gap-1.5 rounded-pill border border-line bg-surface px-3.5 py-2 text-[13px] font-extrabold text-ink"
+                >
+                  <Medal size={16} weight="bold" aria-hidden="true" className="text-[var(--b700)]" />
+                  {b.label}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {featured && (
+          <section id="ctb-featured">
+            <h2 className={`${H2} mb-1`}>Featured</h2>
+            <p className="mb-3.5 mt-0 text-sm font-bold text-muted">
+              The one {first} would hand a first-timer.
+            </p>
+            <Link
+              href={`/tutorials/${featured.id}`}
+              className="card card-link grid overflow-hidden rounded-[var(--radius-inset)] text-ink sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]"
+              style={{ boxShadow: 'var(--shadow-e1)' }}
+            >
+              <span className="relative block min-h-[180px]" style={{ background: tintFor(featured.id) }}>
+                {safePhotoSrc(featured.photo_urls?.[0] ?? null) && (
+                  <Image src={safePhotoSrc(featured.photo_urls?.[0] ?? null)!} alt="" fill className="object-cover" />
+                )}
+              </span>
+              <span className="block p-6">
+                <span className="mb-2.5 flex flex-wrap gap-1.5">
+                  <span className="rounded-pill bg-sunken px-[9px] py-[3px] text-[11px] font-extrabold">
+                    {DIFFICULTY_LABEL[featured.difficulty]}
+                    {featured.build_minutes ? ` · ${formatBuildTime(featured.build_minutes)}` : ''}
+                  </span>
+                </span>
+                <span className="block font-display text-xl font-extrabold leading-[1.2]">{featured.title}</span>
+                {featured.description && (
+                  <span className="mt-2 line-clamp-3 block text-sm leading-relaxed text-muted">
+                    {featured.description}
+                  </span>
+                )}
+                <span className="mt-3.5 block text-sm font-extrabold text-[var(--b700)]">Open the guide →</span>
+              </span>
+            </Link>
+          </section>
+        )}
+
         <section id="ctb-guides">
           <h2 className={`${H2} mb-3.5`}>
             Published guides{' '}
@@ -223,6 +302,16 @@ export default async function ContributorPage({
                 <ShelfToyCard key={t.id} toy={t} />
               ))}
             </div>
+          </section>
+        )}
+
+        {thanks > 0 && (
+          <section id="ctb-thanks">
+            <h2 className={`${H2} mb-1`}>From families who built one</h2>
+            <p className="m-0 text-[15px] leading-relaxed text-muted">
+              {thanks === 1 ? '1 family' : `${thanks} families`} built one of {first}&apos;s guides and
+              said thanks.
+            </p>
           </section>
         )}
 

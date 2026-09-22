@@ -19,7 +19,7 @@ import { requireCapabilities } from '@/lib/require-capabilities'
 import { ProfileForm } from '@/components/profile-form'
 import { SignOutButton } from '@/components/sign-out-button'
 import { Child } from '@/components/icons'
-import type { ChildProfile, UserAgreement } from '@splat-connect/types'
+import type { ChildProfile, Tutorial, UserAgreement } from '@splat-connect/types'
 
 // The board's avatar tints, in its order; a child keeps its tint by position.
 const TINTS = ['var(--b100)', 'var(--tcoral)', 'var(--tmint)', 'var(--tamber)', 'var(--tviolet)']
@@ -30,11 +30,14 @@ export default async function ProfileTabPage() {
   // No .catch() here: an empty array is already the legitimate "no children yet"
   // value, so swallowing a fetch failure into the same empty array would tell a
   // parent their children are gone. Let a failed fetch throw into error.tsx.
-  const [children, agreements] = await Promise.all([
+  const [children, agreements, mine] = await Promise.all([
     apiClient.get<ChildProfile[]>('/api/child-profiles'),
     // Only feeds a chip, so a failure degrades to no chip rather than an error page.
     apiClient.get<UserAgreement[]>('/api/agreements/me').catch(() => [] as UserAgreement[]),
+    // Only feeds the featured-guide pick, which hides when there is nothing to pick.
+    apiClient.get<Tutorial[]>('/api/tutorials/mine').catch(() => [] as Tutorial[]),
   ])
+  const publishedGuides = mine.filter((t) => t.status === 'approved').map((t) => ({ id: t.id, title: t.title }))
   // Newest first from the API, so find() is the version they last accepted.
   const terms = agreements.find((a) => a.agreement_type === 'contributor_terms')
 
@@ -67,7 +70,7 @@ export default async function ProfileTabPage() {
         <h1 className="title-hub">Account</h1>
         <SignOutButton />
       </div>
-      <ProfileForm profile={caps.profile} badges={badges} />
+      <ProfileForm profile={caps.profile} badges={badges} publishedGuides={publishedGuides} />
 
       <div className="mt-10 flex flex-wrap items-end justify-between gap-5 border-t border-line pt-7">
         <div>
