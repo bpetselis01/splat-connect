@@ -24,10 +24,10 @@ describe('ProfileForm', () => {
     patch.mockResolvedValue({ ...PROFILE, name: 'Ada Lovelace' })
     render(<ProfileForm profile={PROFILE} />)
 
-    fireEvent.change(screen.getByLabelText('Full name'), {
+    fireEvent.change(screen.getByLabelText('Display name'), {
       target: { value: 'Ada Lovelace' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
 
     await waitFor(() =>
       expect(patch).toHaveBeenCalledWith('/api/contributors/me', expect.objectContaining({ name: 'Ada Lovelace' }))
@@ -45,7 +45,7 @@ describe('ProfileForm', () => {
     patch.mockRejectedValue(new Error('boom'))
     render(<ProfileForm profile={PROFILE} />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent(/could not save/i)
     expect(screen.queryByText('Saved')).not.toBeInTheDocument()
@@ -67,7 +67,7 @@ describe('ProfileForm', () => {
     fireEvent.change(screen.getByLabelText(/postcode/i), {
       target: { value: '3000' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
 
     await waitFor(() =>
       expect(patch).toHaveBeenCalledWith('/api/contributors/me', expect.objectContaining({

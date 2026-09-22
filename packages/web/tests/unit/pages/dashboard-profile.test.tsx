@@ -52,7 +52,7 @@ describe('ProfileTabPage', () => {
   it('renders the profile form alongside the child profiles section', async () => {
     vi.mocked(apiClient.get).mockResolvedValue([])
     render(await ProfileTabPage())
-    expect(screen.getByLabelText('Full name')).toHaveValue('Lee')
+    expect(screen.getByLabelText('Display name')).toHaveValue('Lee')
     expect(screen.getByRole('heading', { name: 'Child profiles' })).toBeInTheDocument()
   })
 

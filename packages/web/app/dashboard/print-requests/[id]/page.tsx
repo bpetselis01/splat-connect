@@ -15,7 +15,14 @@
 import { notFound, redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import Link from 'next/link'
-import { BookOpen, Printer as PrinterIcon } from '@phosphor-icons/react/dist/ssr'
+import {
+  BookOpen,
+  CheckCircle,
+  HourglassMedium,
+  List,
+  Printer as PrinterIcon,
+  XCircle,
+} from '@phosphor-icons/react/dist/ssr'
 import { requireCapabilities } from '@/lib/require-capabilities'
 import { apiClient } from '@/lib/api-client'
 import { isOwnerSide } from '@splat-connect/types'
@@ -50,7 +57,9 @@ export default async function PrintJobPage({ params }: { params: Promise<{ id: s
   // Anything else opened at this URL belongs on its own page, and sending it
   // there beats rendering print vocabulary over a toy.
   if (tx.type !== 'print') {
-    redirect(tx.type === 'build' ? `/dashboard/exchanges/build/${id}` : `/dashboard/exchanges/${id}`)
+    redirect(
+      tx.type === 'build' ? `/dashboard/exchanges/build/${id}` : `/dashboard/exchanges/${id}`
+    )
   }
 
   async function sendMessage(body: string) {
@@ -100,38 +109,73 @@ export default async function PrintJobPage({ params }: { params: Promise<{ id: s
   const stages = printStages(tx)
   const facts = printStageFacts(tx, viewerIsPrinter)
 
+  const partCount = tx.print_files.reduce((n, file) => n + file.quantity, 0)
+  const initials = (name: string) =>
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((word) => word[0]!.toUpperCase())
+      .join('')
+  // Where this job stands with the one printer it went to — the board's
+  // "Printers asked" card, which a job with a single machine has one row of.
+  const printerAnswer =
+    tx.status === 'requested'
+      ? { label: 'Waiting', tint: 'var(--tamber)', Icon: HourglassMedium }
+      : tx.status === 'rejected'
+        ? { label: 'Declined', tint: 'var(--surface2)', Icon: XCircle }
+        : tx.status === 'withdrawn'
+          ? { label: 'Withdrawn', tint: 'var(--surface2)', Icon: XCircle }
+          : { label: 'Said yes', tint: 'var(--tok)', Icon: CheckCircle }
+
   return (
-    <div>
+    <div className="max-w-[1180px]">
       <LiveTransaction transactionId={id} />
 
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-5">
         <div className="min-w-0">
-          <div className="mt-2 flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Badge status={tx.status} />
-            <Badge status="toy_adaptation" label="Print" />
-            <span className="text-sm text-muted">
-              Sent {new Date(tx.created_at).toLocaleDateString('en-AU')}
-            </span>
+            {/* The way to the guide: the board draws it as a pill beside the
+                status, so the header button is free for the way back. */}
+            {tx.tutorial_id && tx.tutorial_title && (
+              <Link
+                href={`/tutorials/${tx.tutorial_id}`}
+                className="inline-flex items-center gap-1.5 rounded-full bg-[var(--surface2)] px-3 py-1 text-xs font-extrabold uppercase tracking-[0.04em] text-ink no-underline hover:underline"
+              >
+                <BookOpen size={14} weight="fill" aria-hidden="true" />
+                From {tx.tutorial_title}
+              </Link>
+            )}
           </div>
-          <h1 className="mt-1 title-detail">
-            {tx.tutorial_title ? `${tx.tutorial_title} — parts` : 'A print job'}
+          <h1 className="title-hub mt-2">
+            {tx.tutorial_title ?? 'A print job'}
+            {partCount > 0 && ` · ${partCount} part${partCount === 1 ? '' : 's'}`}
           </h1>
-          <p className="mt-1 text-sm text-muted">
-            {viewerIsPrinter
-              ? `${otherPartyName} asked your ${tx.printer?.name ?? 'printer'}`
-              : `Printing on ${otherPartyName}’s ${tx.printer?.name ?? 'printer'}`}
+          <p className="mt-1.5 text-[15px] font-semibold text-muted">
+            {tx.print_files.length > 0 && (
+              <>{tx.print_files.map((file) => file.filename).join(', ')} · </>
+            )}
+            with <strong className="text-ink">{otherPartyName}</strong>
           </p>
+          {tx.printer && (
+            <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-[var(--surface2)] px-2.5 py-1 text-xs font-extrabold text-ink">
+              <PrinterIcon size={14} weight="bold" aria-hidden="true" className="text-brand-dark" />
+              On {tx.printer.name}
+            </p>
+          )}
         </div>
-        {tx.tutorial_id && (
-          <Link href={`/tutorials/${tx.tutorial_id}`} className="btn btn-quiet no-underline">
-            <BookOpen size={18} weight="bold" aria-hidden="true" />
-            Open the guide
-          </Link>
-        )}
+        <Link
+          href={viewerIsPrinter ? '/dashboard/printers' : '/dashboard/print-requests'}
+          className="btn btn-quiet min-h-12 px-[18px] no-underline shadow-none"
+        >
+          <List size={18} aria-hidden="true" />
+          {viewerIsPrinter ? 'Print for others' : 'All print requests'}
+        </Link>
       </div>
 
       {costs && (
-        <div className="mb-6">
+        <div className="mt-[22px]">
           <CostPanel
             lines={costs.lines}
             settlement={costs.settlement}
@@ -146,7 +190,7 @@ export default async function PrintJobPage({ params }: { params: Promise<{ id: s
         </div>
       )}
 
-      <div className="mb-6">
+      <div className="mb-[22px] mt-[22px]">
         <StageRailCard stages={stages} facts={facts} />
       </div>
 
@@ -177,6 +221,32 @@ export default async function PrintJobPage({ params }: { params: Promise<{ id: s
                   <span className="block text-sm text-muted">Open the photo</span>
                 </span>
               </a>
+            )}
+
+            {!viewerIsPrinter && (
+              <div className="flex flex-col gap-3 rounded-[24px] border border-line bg-surface p-[22px] shadow-[var(--shadow-e2),var(--shadow-hi)]">
+                <p className="text-xs font-extrabold uppercase tracking-[0.1em] text-muted">
+                  Printer asked
+                </p>
+                <div className="flex items-center gap-3">
+                  <span
+                    aria-hidden="true"
+                    className="grid h-10 w-10 shrink-0 place-items-center rounded-[14px] bg-[var(--b100)] text-[13px] font-extrabold text-[var(--tink)]"
+                  >
+                    {initials(otherPartyName ?? '')}
+                  </span>
+                  <span className="flex min-w-0 flex-1 flex-col gap-[3px]">
+                    <span className="text-sm font-extrabold text-ink">{otherPartyName}</span>
+                    <span
+                      className="inline-flex items-center gap-1 self-start rounded-full px-[9px] py-[3px] text-xs font-extrabold text-[var(--tink)]"
+                      style={{ background: printerAnswer.tint }}
+                    >
+                      <printerAnswer.Icon size={13} weight="fill" aria-hidden="true" />
+                      {printerAnswer.label}
+                    </span>
+                  </span>
+                </div>
+              </div>
             )}
 
             <div className="card p-0">

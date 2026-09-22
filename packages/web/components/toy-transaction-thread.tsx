@@ -18,6 +18,14 @@
 
 import { useState, type ReactNode } from 'react'
 import Link from 'next/link'
+import {
+  CheckCircle,
+  HourglassMedium,
+  Info,
+  Package,
+  XCircle,
+} from '@phosphor-icons/react/dist/ssr'
+import { safePhotoSrc } from '@/lib/photo-src'
 import { isOwnerSide } from '@splat-connect/types'
 import type { PickupAddress, ToyTransactionDetail } from '@splat-connect/types'
 import { AcceptPickupDialog } from '@/components/accept-pickup-dialog'
@@ -38,6 +46,9 @@ export function ToyTransactionThread({
   onWithdraw,
   onConfirm,
   asideTop,
+  variant,
+  toyPhotoUrl = null,
+  chatHead,
 }: {
   transaction: ToyTransactionDetail
   viewerId: string
@@ -59,7 +70,19 @@ export function ToyTransactionThread({
   /** The tinted next-step card the canonical layout puts first in the sidebar.
    *  A build's is about its extra stage, which only the build page knows. */
   asideTop?: ReactNode
+  /**
+   * 'board' is the Soft Pop exchange and build thread: a 330px aside with the
+   * handover as a tinted card, the toy as a summary card, quiet text links at
+   * the foot, and the chat in its board variant. Opt-in because the print job
+   * page shares this component and has not been moved to it.
+   */
+  variant?: 'board'
+  /** The toy's cover, for the board aside's summary card. */
+  toyPhotoUrl?: string | null
+  /** The board chat's head row: who the conversation is with. */
+  chatHead?: ReactNode
 }) {
+  const board = variant === 'board'
   const [code, setCode] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -104,9 +127,31 @@ export function ToyTransactionThread({
   const alreadyConfirmed = isOwner ? tx.owner_confirmed_at !== null : tx.requester_confirmed_at !== null
   const myCode = isOwner ? tx.owner_code : tx.requester_code
   const showMyCode = tx.status === 'accepted' && (tx.type !== 'donation' || !isOwner)
+  // The same gate the list card's handoff panel uses: a build's handover waits
+  // on the approved working shot, a print's on the parts being ready.
+  const handoverOpen =
+    tx.status === 'accepted' &&
+    (!isBuild || tx.work_approved_at !== null) &&
+    (tx.type !== 'print' || tx.ready_at !== null)
+  // Whether the handover card is asking this viewer for something: a code to
+  // read out, or the other side's code to type in.
+  const myMove = Boolean(showMyCode && myCode) || (canConfirm && !alreadyConfirmed)
+  // Suburb and state only: the full street address is already in the facts
+  // panel under the rail, and printing it twice is what a strict e2e locator
+  // trips on (see the note on the Details card below).
+  const where = [tx.pickup_suburb, tx.pickup_state].filter(Boolean).join(', ')
+  // The requester always receives the listed toy; on a swap they give the toy
+  // they offered, and the owner's side is the mirror of that.
+  const offered = tx.offered_toy_name ?? 'Your toy'
+  const youReceive = isOwner ? (tx.type === 'exchange' ? offered : 'Nothing — it is a donation') : tx.toy_name
+  const youGive = isOwner
+    ? tx.toy_name
+    : tx.type === 'exchange'
+      ? offered
+      : 'Nothing — it is a donation'
 
   return (
-    <div className="exchange-grid">
+    <div className={`exchange-grid${board ? ' exchange-grid--board' : ''}`}>
       <aside className="exchange-side">
         {error && (
           <p role="alert" className="alert alert-danger">
@@ -118,6 +163,7 @@ export function ToyTransactionThread({
             next comes before the supporting panels and the quiet links. */}
         {asideTop}
 
+        {!board && (
         <div className="card flex flex-col gap-3 p-4">
           <div className="flex items-center justify-between gap-2">
             <h2 className="text-base font-bold text-ink">Details</h2>
@@ -155,9 +201,10 @@ export function ToyTransactionThread({
                 found — a strict locator matched two elements. */}
           </dl>
         </div>
+        )}
 
         {tx.status === 'requested' && isOwner && (
-          <div className="card flex flex-col gap-3 p-4">
+          <div className={board ? 'xthread-card flex flex-col gap-3 p-5' : 'card flex flex-col gap-3 p-4'}>
             <h2 className="text-base font-bold text-ink">
               {isBuild
                 ? `${otherPartyName} is asking for a build`
@@ -262,7 +309,92 @@ export function ToyTransactionThread({
             working shot, so its code and its confirm box do not appear before
             then — showing a code for a meeting that cannot be arranged yet is
             the same class of mistake as a dead control. */}
-        {tx.status === 'accepted' &&
+        {board && handoverOpen && (
+          <div
+            className="xthread-next"
+            style={{ background: myMove ? 'var(--tamber)' : 'var(--surface)' }}
+          >
+            <p className="xthread-eyebrow">
+              {myMove ? (
+                <HourglassMedium size={15} weight="fill" aria-hidden="true" />
+              ) : (
+                <CheckCircle size={15} weight="fill" aria-hidden="true" />
+              )}
+              {myMove ? 'Waiting on you' : `Waiting on ${otherPartyName}`}
+            </p>
+            <p className="mb-3.5 font-display text-[19px] font-extrabold leading-snug">
+              {where ? `Handover in ${where}` : 'Agree a time and place in the thread'}
+            </p>
+
+            {showMyCode && myCode && (
+              <div className="rounded-[var(--radius-inset)] border border-line bg-surface p-4 text-ink shadow-[var(--shadow-e1)]">
+                {/* Label and digits stay in one node: the e2e reads this
+                    element's textContent and pulls the code out with /\d{6}/,
+                    so the tiles are spans inside it with nothing between. */}
+                <p className="text-center text-xs font-extrabold uppercase tracking-[0.08em] text-muted">
+                  Your handover code
+                  <span className="xthread-code" aria-label={`Handover code ${myCode.split('').join(' ')}`}>
+                    {myCode.split('').map((ch, i) => (
+                      <span key={i} aria-hidden="true">
+                        {ch}
+                      </span>
+                    ))}
+                  </span>
+                </p>
+                <p className="mt-2.5 text-center text-[13px] leading-normal text-muted">
+                  Read this out to {otherPartyName} at the handover. They type it in and the
+                  exchange closes.
+                </p>
+              </div>
+            )}
+
+            {canConfirm && !alreadyConfirmed && (
+              <div className={`flex flex-col gap-2 ${showMyCode && myCode ? 'mt-3 border-t border-line pt-3' : ''}`}>
+                <label
+                  htmlFor="handoff-code"
+                  className="text-xs font-extrabold uppercase tracking-[0.08em]"
+                >
+                  Enter the other party&apos;s code
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    id="handoff-code"
+                    className="field h-[50px] min-w-0 flex-1 text-center font-display text-xl font-extrabold tracking-[0.22em]"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    placeholder="CODE"
+                    value={code}
+                    onChange={(e) => setCode(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    disabled={busy || !code.trim()}
+                    onClick={() => run(() => onConfirm(code))}
+                    className="btn btn-primary rounded-[var(--radius-field)] px-4 text-sm"
+                    aria-label="Confirm handoff"
+                  >
+                    Confirm
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {canConfirm && alreadyConfirmed && (
+              <p className="text-sm leading-normal">
+                You have confirmed the handoff — waiting on {otherPartyName}.
+              </p>
+            )}
+
+            {showMyCode && myCode && (
+              <p className="mt-3 text-[13px] leading-normal">
+                Only share the code once the toy is actually in your hands — it is what closes
+                the exchange.
+              </p>
+            )}
+          </div>
+        )}
+
+        {!board && tx.status === 'accepted' &&
           (!isBuild || tx.work_approved_at) &&
           (tx.type !== 'print' || tx.ready_at) && (
           <div className="card flex flex-col gap-3 p-4">
@@ -319,7 +451,7 @@ export function ToyTransactionThread({
 
         {/* self-start so it stays a button: stretched to the sidebar's full
             width it reads as another white card. */}
-        {open && (
+        {open && !board && (
           <button
             type="button"
             disabled={busy}
@@ -340,8 +472,19 @@ export function ToyTransactionThread({
             button cannot answer and which nobody should have defaulted for
             them. Declining is not clicking: the toy stays a draft they own. */}
         {tx.status === 'completed' && (
-          <div className="card flex flex-col gap-3 p-4">
-            <p className="font-bold text-ink">Handoff complete.</p>
+          <div
+            className={board ? 'xthread-next flex flex-col gap-3' : 'card flex flex-col gap-3 p-4'}
+            style={board ? { background: 'var(--tok)' } : undefined}
+          >
+            {board && (
+              <p className="xthread-eyebrow -mb-2">
+                <CheckCircle size={15} weight="fill" aria-hidden="true" />
+                Handed over
+              </p>
+            )}
+            <p className={board ? 'font-display text-[19px] font-extrabold' : 'font-bold text-ink'}>
+              Handoff complete.
+            </p>
             {tx.received_toy?.status === 'draft' && (
               <>
                 <p className="text-sm leading-relaxed text-muted">
@@ -364,6 +507,64 @@ export function ToyTransactionThread({
         {tx.status === 'withdrawn' && (
           <p className="card p-4 text-sm text-muted">This request was withdrawn.</p>
         )}
+
+        {/* The toy, what changes hands, and where. A build's aside carries the
+            guide instead, which only the build page knows. */}
+        {board && !isBuild && (
+          <div className="xthread-card overflow-hidden">
+            <div className="flex items-center gap-3.5 px-5 py-[18px]">
+              <span className="grid h-[76px] w-[76px] flex-none place-items-center overflow-hidden rounded-[var(--radius-inset)] bg-sunken text-muted">
+                {safePhotoSrc(toyPhotoUrl) ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={safePhotoSrc(toyPhotoUrl)!} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <Package size={30} weight="duotone" aria-hidden="true" />
+                )}
+              </span>
+              <span className="min-w-0">
+                <span className="block font-display text-[17px] font-extrabold text-ink">
+                  {tx.toy_name}
+                </span>
+                <span className="block text-[13px] font-bold text-muted">
+                  {{ donation: 'Donation', exchange: 'Swap', build: 'Build', print: 'Print' }[tx.type]}{' '}
+                  with {otherPartyName}
+                </span>
+              </span>
+            </div>
+            <dl className="grid grid-cols-[auto_1fr] items-baseline gap-x-3.5 gap-y-2.5 px-5 pb-[18px] text-sm">
+              <dt className="font-bold text-muted">You give</dt>
+              <dd className="font-extrabold text-ink">{youGive}</dd>
+              <dt className="font-bold text-muted">You receive</dt>
+              <dd className="font-extrabold text-ink">{youReceive}</dd>
+              {where && (
+                <>
+                  <dt className="font-bold text-muted">Where</dt>
+                  <dd className="font-extrabold text-ink">{where}</dd>
+                </>
+              )}
+            </dl>
+            {tx.pickup_instructions && (
+              <div className="flex items-start gap-2.5 border-t border-line bg-canvas px-5 py-3.5">
+                <Info size={19} weight="duotone" aria-hidden="true" className="mt-px flex-none text-brand-dark" />
+                <p className="text-[13px] leading-normal text-muted">{tx.pickup_instructions}</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {board && open && (
+          <div className="flex justify-center">
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => run(onWithdraw)}
+              className="inline-flex items-center gap-2 text-[13px] font-bold text-muted underline underline-offset-[3px] hover:text-danger"
+            >
+              <XCircle aria-hidden="true" />
+              Withdraw the request
+            </button>
+          </div>
+        )}
       </aside>
 
       <div className="exchange-conversation">
@@ -375,6 +576,8 @@ export function ToyTransactionThread({
           canSend={open}
           busy={busy}
           onSend={(body) => run(() => onSendMessage(body))}
+          variant={board ? 'board' : undefined}
+          head={chatHead}
         />
       </div>
     </div>

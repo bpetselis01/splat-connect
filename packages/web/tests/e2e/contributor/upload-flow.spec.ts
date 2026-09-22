@@ -23,7 +23,7 @@ test('creating a tutorial hands straight over to the editor', async ({ page }) =
   await page.goto('/upload?kind=toy_adaptation')
   await page.getByLabel('Title').fill(title)
   await page.getByLabel('Difficulty').selectOption('easy')
-  await page.getByRole('button', { name: 'Create' }).click()
+  await page.getByRole('button', { name: /Create draft/ }).click()
 
   // Lands on Files, the first thing the new row still needs.
   await page.waitForURL(/\/tutorials\/[0-9a-f-]{36}\/edit\?step=files$/)
@@ -53,21 +53,16 @@ test('the first question is which kind, and the answer is a link', async ({ page
   await expect(page.getByRole('tab', { name: 'STL Files', exact: true })).toBeDisabled()
 })
 
-test('the later steps are locked until the tutorial exists', async ({ page }) => {
+test('the kind is chosen on the form, and ?kind preselects it', async ({ page }) => {
   const contributor = await createContributor()
   await acceptTerms(contributor.id)
   await signIn(page, contributor.email, contributor.password)
   await page.waitForURL('**/dashboard')
-  await page.goto('/upload?kind=toy_adaptation')
+  await page.goto('/upload?kind=assistive_tech')
 
-  // Listed so the journey reads end to end, but not reachable — each one needs
-  // an id to save against. Exact names throughout: 'Files' would also match the
-  // 'STL Files' pill — which a toy adaptation does not have at all.
-  for (const label of ['Files', 'Parts', 'Tools', 'Recommended', 'Review', 'Team']) {
-    await expect(page.getByRole('tab', { name: label, exact: true })).toBeDisabled()
-  }
-  await expect(page.getByRole('tab', { name: 'STL Files', exact: true })).toHaveCount(0)
-  await expect(page.getByRole('tab', { name: 'Details', exact: true })).toBeEnabled()
+  await expect(page.getByRole('radio', { name: /Assistive tech/ })).toHaveAttribute('aria-checked', 'true')
+  await page.getByRole('radio', { name: /Toy adaptation/ }).click()
+  await expect(page.getByRole('radio', { name: /Toy adaptation/ })).toHaveAttribute('aria-checked', 'true')
 })
 
 test('a contributor without accepted terms never reaches the page', async ({ page }) => {
@@ -93,7 +88,7 @@ test('a contributor builds a tutorial from creation through to pending', async (
   await page.goto('/upload?kind=toy_adaptation')
   await page.getByLabel('Title').fill(title)
   await page.getByLabel('Difficulty').selectOption('easy')
-  await page.getByRole('button', { name: 'Create' }).click()
+  await page.getByRole('button', { name: /Create draft/ }).click()
   await page.waitForURL(/\/tutorials\/[0-9a-f-]{36}\/edit\?step=files$/)
 
   // Each section saves through a server action that revalidates the page, so
@@ -113,9 +108,11 @@ test('a contributor builds a tutorial from creation through to pending', async (
   // Save files goes straight back to disabled and never reports completion.
   await expect(page.getByRole('status')).toContainText('Files saved', { timeout: 30_000 })
 
-  // The safety declaration lives on the Details step and gates submission.
+  // The safety declaration and the build time (066) live on the Details step,
+  // and both gate submission.
   await page.goto(`${editUrl}?step=details`)
   const details = page.getByRole('tabpanel')
+  await details.getByLabel('About how long does it take?').selectOption('45')
   await details.getByRole('checkbox', { name: /checked this design against every point/ }).check()
   await details.getByRole('button', { name: 'Save details' }).click()
   await expect(page.getByRole('status')).toContainText('Details saved')
@@ -132,8 +129,8 @@ test('a contributor builds a tutorial from creation through to pending', async (
   await tools.getByRole('button', { name: 'Add tool' }).click()
   await expect(tools.getByRole('button', { name: /E2E test tool/ })).toBeVisible()
 
-  await page.goto(`${editUrl}?step=review`)
-  const submit = page.getByRole('button', { name: 'Submit for review' })
+  await page.goto(`${editUrl}?step=status`)
+  const submit = page.getByRole('button', { name: 'Submit for review' }).first()
   await expect(submit).toBeEnabled({ timeout: 20_000 })
   await submit.click()
 

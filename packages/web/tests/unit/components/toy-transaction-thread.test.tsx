@@ -463,4 +463,29 @@ describe('ToyTransactionThread for an organisation', () => {
     renderAs(orgTx(), 'requester-1', [])
     expect(screen.getAllByText(/Cerebral Palsy Alliance/).length).toBeGreaterThan(0)
   })
+
+  // Tests: the board variant keeps the e2e's handoff-code contract and says
+  //        what changes hands
+  // How:   an accepted donation seen by the requester; reads the code label's
+  //        own textContent and the aside's You give / You receive rows
+  // Chain: tests/e2e/toy-exchange.spec.ts pulls /\d{6}/ out of the element
+  //        that carries "Your handover code"
+  it('board variant: code tiles sit inside the label node, and the toy card says who gives what', () => {
+    render(
+      <ToyTransactionThread
+        transaction={tx({ status: 'accepted', owner_code: '111111', requester_code: '222222' })}
+        viewerId="requester-1"
+        variant="board"
+        onSendMessage={noop}
+        onAccept={noop}
+        onReject={noop}
+        onWithdraw={noop}
+        onConfirm={noop}
+      />
+    )
+    expect(screen.getByText(/your handover code/i).textContent).toMatch(/222222/)
+    expect(screen.getByText('Waiting on you')).toBeInTheDocument()
+    expect(screen.getByText('Nothing — it is a donation')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /withdraw the request/i })).toBeInTheDocument()
+  })
 })

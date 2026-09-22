@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import ToyListPage from '@/app/dashboard/toys/page'
 import type { Toy, ToyTransactionSummary } from '@splat-connect/types'
@@ -111,36 +111,31 @@ describe('ToyListPage', () => {
     expect(screen.getByRole('link', { name: /Blocks/ })).toHaveAttribute('href', '/dashboard/toys/t2')
   })
 
-  it('badges both statuses, not just draft', async () => {
+  it('wears the board stage words on both statuses', async () => {
     vi.mocked(apiClient.get).mockResolvedValue([
       toy({ id: 't1', name: 'Fire truck', status: 'draft' }),
       toy({ id: 't2', name: 'Blocks', status: 'published' }),
     ])
     render(await ToyListPage())
-    // "Hidden", not "Draft". The row is stored as `draft` exactly like an
-    // unfinished guide, but a toy has nothing to write — the state only means
-    // nobody else can see it yet, and the vocabulary says so.
+    // The board's shared vocabulary: a draft toy is Hidden (only you can see
+    // it), a published one is Live.
     expect(screen.getByRole('link', { name: /Fire truck/ })).toHaveTextContent('Hidden')
-    // Published used to render no badge at all, so the card said nothing about
-    // where the toy had got to.
-    expect(screen.getByRole('link', { name: /Blocks/ })).toHaveTextContent('PUBLISHED')
+    expect(screen.getByRole('link', { name: /Blocks/ })).toHaveTextContent('Live')
   })
 
-  it('colour-codes the status the way tutorials do', async () => {
+  it('counts each stage in the filter track and filters by ?stage', async () => {
     vi.mocked(apiClient.get).mockResolvedValue([
       toy({ id: 't1', name: 'Fire truck', status: 'draft' }),
       toy({ id: 't2', name: 'Blocks', status: 'published' }),
     ])
-    render(await ToyListPage())
-    // The COLOUR is byte-identical to a tutorial draft — only the word differs,
-    // which is why this stayed a label override rather than a second tone map.
-    // Asserted in sentence case: .badge uppercases in CSS, which jsdom does not
-    // apply, so the DOM text is what the label map holds.
-    // Published takes the success tint that approved uses; a draft takes the
-    // neutral one — both the artboard's own status pills, see
-    // app/design-system/states.
-    expect(screen.getByText('Hidden')).toHaveClass('badge', 'bg-sunken', 'text-muted')
-    expect(screen.getByText('PUBLISHED')).toHaveClass('badge', 'bg-success-soft', 'text-ink')
+    render(await ToyListPage({ searchParams: Promise.resolve({ stage: 'live' }) }))
+    const track = screen.getByRole('group', { name: /filter toys by status/i })
+    expect(within(track).getByRole('link', { name: /hidden 1/i })).toHaveAttribute(
+      'href',
+      '/dashboard/toys?stage=hidden'
+    )
+    expect(screen.queryByRole('link', { name: /Fire truck/ })).toBeNull()
+    expect(screen.getByRole('link', { name: /Blocks/ })).toBeInTheDocument()
   })
 
   it('throws rather than rendering an empty list when the fetch fails', async () => {

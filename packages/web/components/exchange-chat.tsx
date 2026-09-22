@@ -9,7 +9,8 @@
  */
 'use client'
 
-import { Fragment, useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react'
+import { CheckCircle, PaperPlaneRight } from '@phosphor-icons/react/dist/ssr'
 import type { ThreadMessage } from '@splat-connect/types'
 
 /*
@@ -81,6 +82,8 @@ export function ExchangeChat({
   canSend,
   busy,
   onSend,
+  variant,
+  head,
 }: {
   messages: ThreadMessage[]
   viewerId: string
@@ -90,7 +93,17 @@ export function ExchangeChat({
   canSend: boolean
   busy: boolean
   onSend: (body: string) => Promise<void>
+  /**
+   * 'board' is the Soft Pop exchange thread, value for value: a head row, a
+   * "Name · time" line over every bubble, round avatars, a rule-line day
+   * marker, and a pill composer with a round send button. Opt-in because the
+   * challenge thread shares this component and draws its own shape.
+   */
+  variant?: 'board'
+  /** The board variant's header row: who this conversation is with. */
+  head?: ReactNode
 }) {
+  const board = variant === 'board'
   const [draft, setDraft] = useState('')
   const logRef = useRef<HTMLDivElement>(null)
 
@@ -111,7 +124,8 @@ export function ExchangeChat({
   const groups = groupMessages(messages)
 
   return (
-    <div className="card chat-panel">
+    <div className={`card chat-panel${board ? ' chat-panel--board' : ''}`}>
+      {head}
       {/*
        * role="log" + aria-live: alignment and bubble colour are the only things
        * separating your messages from theirs on screen, and neither reaches a
@@ -133,6 +147,7 @@ export function ExchangeChat({
                 {daymark}
                 {group.messages.map((m) => (
                   <p key={m.id} className="chat-system">
+                    {board && <CheckCircle weight="fill" aria-hidden="true" className="chat-system__icon" />}
                     {m.body}
                   </p>
                 ))}
@@ -143,6 +158,39 @@ export function ExchangeChat({
           const mine = group.senderId === viewerId
           const name = nameFor(group.senderId)
           const last = group.messages[group.messages.length - 1]
+
+          if (board) {
+            const initials = name
+              .split(/\s+/)
+              .map((w) => w[0])
+              .join('')
+              .slice(0, 2)
+              .toUpperCase()
+            return (
+              <Fragment key={first.id}>
+                {daymark}
+                {group.messages.map((m) => (
+                  <div key={m.id} className={`chat-row${mine ? ' chat-row-mine' : ''}`}>
+                    {!mine && (
+                      <span aria-hidden="true" className="chat-avatar">
+                        {initials}
+                      </span>
+                    )}
+                    <div className="chat-stack">
+                      <span className="sr-only">{mine ? 'You said' : `${name} said`}</span>
+                      <span aria-hidden="true" className="chat-who">
+                        {mine ? 'You' : name} ·{' '}
+                        <time dateTime={m.created_at}>{timeFormat.format(new Date(m.created_at))}</time>
+                      </span>
+                      <p className={`chat-bubble ${mine ? 'chat-bubble-mine' : 'chat-bubble-theirs'}`}>
+                        {m.body}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </Fragment>
+            )
+          }
 
           return (
             <Fragment key={first.id}>
@@ -176,7 +224,37 @@ export function ExchangeChat({
         })}
       </div>
 
-      {canSend && (
+      {canSend && board && (
+        <form
+          className="chat-composer"
+          onSubmit={(e) => {
+            e.preventDefault()
+            void send()
+          }}
+        >
+          <label htmlFor="message" className="sr-only">
+            Message {otherPartyName}
+          </label>
+          <input
+            id="message"
+            className="chat-composer__input"
+            placeholder="Write a message"
+            autoComplete="off"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+          />
+          <button
+            type="submit"
+            aria-label="Send"
+            disabled={busy || !draft.trim()}
+            className="chat-composer__send"
+          >
+            <PaperPlaneRight size={20} weight="fill" aria-hidden="true" />
+          </button>
+        </form>
+      )}
+
+      {canSend && !board && (
         <div className="chat-composer">
           <label htmlFor="message" className="sr-only">
             Message {otherPartyName}
@@ -195,5 +273,39 @@ export function ExchangeChat({
         </div>
       )}
     </div>
+  )
+}
+
+/** The board variant's head row: a round initials avatar, who, and a role pill. */
+export function ChatHead({
+  name,
+  sub,
+  badge,
+}: {
+  name: string
+  sub?: string
+  badge?: ReactNode
+}) {
+  const initials = name
+    .split(/\s+/)
+    .map((w) => w[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase()
+  return (
+    <header className="chat-head">
+      <span
+        aria-hidden="true"
+        className="grid h-10 w-10 flex-none place-items-center rounded-full text-sm font-extrabold"
+        style={{ background: 'var(--tmint)', color: 'var(--tink)' }}
+      >
+        {initials}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block font-display text-base font-extrabold text-ink">{name}</span>
+        {sub && <span className="block text-[13px] font-bold text-muted">{sub}</span>}
+      </span>
+      {badge}
+    </header>
   )
 }

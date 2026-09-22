@@ -15,9 +15,15 @@
 import { useState } from 'react'
 import { useSave } from '@/components/use-save'
 import { browserApiClient } from '@/lib/browser-api-client'
+import type { ReactNode } from 'react'
 import type { Profile } from '@splat-connect/types'
 
-export function ProfileForm({ profile }: { profile: Profile }) {
+// The board's account fields: 50px on --canvas, a step taller than .field.
+const FIELD = 'field min-h-[50px] bg-canvas'
+
+/** `badges` renders under the email — the account's role and agreement chips,
+    which the page fetches and this form only places. */
+export function ProfileForm({ profile, badges }: { profile: Profile; badges?: ReactNode }) {
   const [name, setName] = useState(profile.name)
   const [pickupLine1, setPickupLine1] = useState(profile.pickup_line1 || '')
   const [pickupSuburb, setPickupSuburb] = useState(profile.pickup_suburb || '')
@@ -41,9 +47,12 @@ export function ProfileForm({ profile }: { profile: Profile }) {
   }
 
   return (
-    <form onSubmit={save} className="card flex max-w-sm flex-col gap-4 p-6">
+    <form
+      onSubmit={save}
+      className="flex flex-col gap-5 rounded-[24px] border border-line bg-surface p-7 shadow-e2"
+    >
       <div>
-        <label htmlFor="name" className="field-label">Full name</label>
+        <label htmlFor="name" className="field-label">Display name</label>
         <input
           id="name"
           type="text"
@@ -51,27 +60,32 @@ export function ProfileForm({ profile }: { profile: Profile }) {
           required
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="field"
+          className={FIELD}
         />
       </div>
       <div>
         <label htmlFor="email" className="field-label">Email</label>
-        <input id="email" type="email" readOnly value={profile.email} className="field" />
-        <p className="mt-1.5 text-xs text-muted">
-          Your email is tied to your sign-in and cannot be changed here.
-        </p>
+        <input
+          id="email"
+          type="email"
+          readOnly
+          value={profile.email}
+          className="field min-h-[50px] bg-sunken text-muted"
+        />
+        <p className="mt-[7px] text-[13px] text-muted">Frozen. Contact us if you need it changed.</p>
       </div>
+      {badges}
       <div className="flex flex-col gap-3 border-t border-line pt-4">
         <h2 className="text-sm font-semibold text-ink">Default pickup address</h2>
         <p className="text-xs text-muted">Offered as the default when you accept a donation or exchange request. You can send a different address instead.</p>
         <label htmlFor="pickup-line1" className="field-label">Address line</label>
-        <input id="pickup-line1" className="field" value={pickupLine1} onChange={(e) => setPickupLine1(e.target.value)} />
+        <input id="pickup-line1" className={FIELD} value={pickupLine1} onChange={(e) => setPickupLine1(e.target.value)} />
         <label htmlFor="pickup-suburb" className="field-label">Suburb</label>
-        <input id="pickup-suburb" className="field" value={pickupSuburb} onChange={(e) => setPickupSuburb(e.target.value)} />
+        <input id="pickup-suburb" className={FIELD} value={pickupSuburb} onChange={(e) => setPickupSuburb(e.target.value)} />
         <label htmlFor="pickup-state" className="field-label">State</label>
-        <input id="pickup-state" className="field" value={pickupState} onChange={(e) => setPickupState(e.target.value)} />
+        <input id="pickup-state" className={FIELD} value={pickupState} onChange={(e) => setPickupState(e.target.value)} />
         <label htmlFor="pickup-postcode" className="field-label">Postcode</label>
-        <input id="pickup-postcode" className="field" value={pickupPostcode} onChange={(e) => setPickupPostcode(e.target.value)} />
+        <input id="pickup-postcode" className={FIELD} value={pickupPostcode} onChange={(e) => setPickupPostcode(e.target.value)} />
       </div>
       <div className="flex flex-col gap-1 border-t border-line pt-4">
         <label htmlFor="public-showcase" className="flex items-center gap-2 text-sm">
@@ -87,8 +101,8 @@ export function ProfileForm({ profile }: { profile: Profile }) {
       </div>
       {error && <p role="alert" className="alert alert-danger">{error}</p>}
       {saved && <p className="text-sm font-semibold text-ink">Saved</p>}
-      <button type="submit" disabled={busy} className="btn btn-accent mt-2">
-        {busy ? 'Saving…' : 'Save'}
+      <button type="submit" disabled={busy} className="btn btn-primary self-start">
+        {busy ? 'Saving…' : 'Save changes'}
       </button>
     </form>
   )

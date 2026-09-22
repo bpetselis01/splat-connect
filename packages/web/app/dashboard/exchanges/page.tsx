@@ -1,6 +1,14 @@
 import Link from 'next/link'
 import type { Route } from 'next'
-import { ChatCircle, Gift, ArrowsLeftRight, Hammer as HammerIcon } from '@phosphor-icons/react/dist/ssr'
+import {
+  ArrowBendDownRight,
+  ArrowsLeftRight,
+  BellRinging,
+  ChatCircleDots,
+  Gift,
+  Hammer as HammerIcon,
+  LockSimple,
+} from '@phosphor-icons/react/dist/ssr'
 import { requireCapabilities } from '@/lib/require-capabilities'
 import { apiClient } from '@/lib/api-client'
 import { Badge } from '@/components/badge'
@@ -23,11 +31,10 @@ function TransactionRow({
   ledOrgIds: string[]
 }) {
   /*
-   * The meta line is "kind · counterparty · when", in that order, and one line
-   * only. A leader's personal handoffs and their organisation's arrive in one
-   * list and nothing else tells them apart — which of the two they are
-   * answering as changes who the toy belongs to — so the organisation goes here
-   * rather than on a second line the artboard does not draw.
+   * The meta line is "kind with counterparty · when". A leader's personal
+   * handoffs and their organisation's arrive in one list and nothing else tells
+   * them apart — which of the two they are answering as changes who the toy
+   * belongs to — so the organisation gets the board's own "On behalf of" line.
    */
   const kind = tx.type === 'donation' ? 'Donation' : tx.type === 'build' ? 'Build' : 'Exchange'
   const isBuild = tx.type === 'build'
@@ -38,7 +45,6 @@ function TransactionRow({
   const isOwner = isOwnerSide(tx, viewerId, ledOrgIds)
   const meta = [
     `${kind} with ${tx.other_party_name}`,
-    tx.acting_for_org_name ? `for ${tx.acting_for_org_name}` : null,
     new Date(tx.created_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' }),
   ]
     .filter(Boolean)
@@ -65,6 +71,7 @@ function TransactionRow({
         }
         title={subjectName(tx)}
         meta={meta}
+        sub={tx.acting_for_org_name ? `On behalf of ${tx.acting_for_org_name}` : undefined}
         pill={<Badge status={tx.status} />}
         // Derived from this row's own status and confirmations. A build has a
         // vocabulary of its own — five steps, one of them the working shot —
@@ -72,9 +79,7 @@ function TransactionRow({
         // data. See lib/build-stages.ts and lib/exchange-stages.ts.
         stages={isBuild ? buildStages(tx) : exchangeStages(tx)}
         note={
-          tx.blocked_by_rival_accept
-            ? 'Locked — another request accepted'
-            : tx.last_message
+          tx.last_message
               ? `${
                   tx.last_message.sender_id === viewerId && tx.last_message.kind === 'user'
                     ? 'You: '
@@ -85,7 +90,7 @@ function TransactionRow({
         // Exactly one filled primary, and on a conversation record it is Thread.
         primary={
           <Link href={href} className="btn btn-primary no-underline">
-            <ChatCircle size={18} weight="fill" aria-hidden="true" />
+            <ChatCircleDots size={18} weight="fill" aria-hidden="true" />
             Thread
           </Link>
         }
@@ -98,8 +103,14 @@ function TransactionRow({
          * you to it.
          */
         stageAction={
-          needsAction(tx, viewerId, ledOrgIds) ? (
-            <Link href={href} className="btn btn-quiet no-underline">
+          tx.blocked_by_rival_accept ? (
+            <span className="inline-flex items-center gap-2 text-[13px] font-bold text-muted">
+              <LockSimple weight="fill" aria-hidden="true" />
+              Locked — another request accepted
+            </span>
+          ) : needsAction(tx, viewerId, ledOrgIds) ? (
+            <Link href={href} className="stage-pill gap-2 px-[13px] py-1.5 text-[13px] no-underline" style={{ background: 'var(--tmint)', color: 'var(--tink)' }}>
+              <ArrowBendDownRight weight="fill" aria-hidden="true" />
               {actionLabel(tx, isOwner)}
             </Link>
           ) : undefined
@@ -129,29 +140,44 @@ export default async function ExchangesPage() {
   const ACTIVE: ToyTransactionStatus[] = ['requested', 'accepted']
   const active = transactions.filter((tx) => ACTIVE.includes(tx.status))
   const history = transactions.filter((tx) => !ACTIVE.includes(tx.status))
+  const waiting = active.filter((tx) => needsAction(tx, viewerId, ledOrgIds)).length
 
   return (
-    <div>
+    <div className="max-w-[880px]">
       <MarkNotificationsRead bucket="exchanges" />
 
-      <div className="mb-6">
-        <h1 className="title-hub">My exchanges</h1>
-        <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted">
-          Toys and builds you have asked for, and the ones people have asked you for.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-5">
+        <div className="min-w-0">
+          <h1 className="title-hub">My exchanges</h1>
+          <p className="mt-2 max-w-[62ch] text-[15px] text-muted">
+            Toys you have asked for, toys people have asked you for, and builds you have asked a
+            maker for. Each one is a conversation until the handoff is confirmed by both sides.
+          </p>
+        </div>
+        {waiting > 0 && (
+          <span
+            className="inline-flex items-center gap-2 whitespace-nowrap rounded-pill px-4 py-[9px] text-sm font-extrabold"
+            style={{ background: 'var(--tmint)', color: 'var(--tink)' }}
+          >
+            <BellRinging size={17} weight="fill" aria-hidden="true" />
+            {waiting} waiting on you
+          </span>
+        )}
       </div>
 
       {transactions.length === 0 ? (
-        <div className="flex flex-col items-center px-6 py-12 text-center">
+        <div className="flex flex-col items-center px-6 py-14 text-center">
           <span aria-hidden="true" className="empty-badge text-brand-dark">
             <Handshake className="h-8 w-8" />
           </span>
-          <p className="mt-4 font-bold text-ink">Nothing has been asked for yet.</p>
-          <p className="mt-1 max-w-xs text-sm leading-relaxed text-muted">
-            Ask for a toy from the library, ask a maker for a build, or list one of your own — the
-            conversation starts here.
+          <p className="mt-[18px] text-[17px] font-extrabold text-ink">
+            No donation or exchange requests yet.
           </p>
-          <BoundaryLink href="/toy-library" className="btn btn-primary mt-6">
+          <p className="mt-1.5 max-w-[36ch] text-sm leading-relaxed text-muted">
+            Ask for a toy from the library, list one of yours, or claim a build on Makers wanted —
+            the conversation starts here.
+          </p>
+          <BoundaryLink href="/toy-library" className="btn btn-coral mt-6">
             Browse the toy library
           </BoundaryLink>
         </div>
@@ -159,8 +185,8 @@ export default async function ExchangesPage() {
         <>
           {active.length > 0 && (
             <section>
-              <h2 className="title-section mb-3">Active</h2>
-              <ul className="flex flex-col gap-3">
+              <h2 className="mb-3.5 mt-[30px] font-display text-xl font-extrabold text-ink">Active</h2>
+              <ul className="flex flex-col gap-3.5">
                 {active.map((tx) => (
                   <TransactionRow key={tx.id} tx={tx} viewerId={viewerId} ledOrgIds={ledOrgIds} />
                 ))}
@@ -169,8 +195,8 @@ export default async function ExchangesPage() {
           )}
 
           {history.length > 0 && (
-            <section className={active.length > 0 ? 'mt-10' : undefined}>
-              <h2 className="title-section mb-3">History</h2>
+            <section>
+              <h2 className="mb-3.5 mt-9 font-display text-xl font-extrabold text-ink">History</h2>
               <ul className="flex flex-col gap-3">
                 {history.map((tx) => (
                   <TransactionRow key={tx.id} tx={tx} viewerId={viewerId} ledOrgIds={ledOrgIds} />

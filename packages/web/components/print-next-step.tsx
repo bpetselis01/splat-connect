@@ -65,14 +65,14 @@ export function PrintNextStep({
         ? {
             tone: 'bg-honey-soft',
             Icon: PrinterIcon,
-            kicker: 'Needs you',
+            kicker: 'Waiting on you',
             title: 'Take the job, or decline',
             body: 'Check the parts fit the bed and the material is loaded. Declining needs a reason — the family sees it on their own screen.',
           }
         : {
-            tone: 'bg-honey-soft',
+            tone: 'bg-mint-soft',
             Icon: HourglassMedium,
-            kicker: 'Waiting',
+            kicker: 'Next step',
             title: 'Waiting on the printer',
             body: 'They will take it on or decline with a reason. Nothing to do yet.',
           }
@@ -83,14 +83,14 @@ export function PrintNextStep({
         ? {
             tone: 'bg-honey-soft',
             Icon: Cube,
-            kicker: 'Your job',
+            kicker: 'Waiting on you',
             title: 'Start it when the bed is free',
             body: 'Marking it started tells the family it is under way. Record what the filament cost in the panel above.',
           }
         : {
             tone: 'bg-mint-soft',
             Icon: Cube,
-            kicker: 'Accepted',
+            kicker: 'Next step',
             title: 'They have taken it on',
             body: 'You will hear when it goes on the bed, and again with a photo when it comes off.',
           }
@@ -101,14 +101,14 @@ export function PrintNextStep({
         ? {
             tone: 'bg-honey-soft',
             Icon: Camera,
-            kicker: 'On the bed',
+            kicker: 'Waiting on you',
             title: 'Post a photo when it comes off',
             body: 'The photo is what lets the family know there is something to collect before they travel for it.',
           }
         : {
             tone: 'bg-mint-soft',
             Icon: Cube,
-            kicker: 'Printing',
+            kicker: 'Next step',
             title: 'It is on the bed',
             body: 'You will get a photo when it comes off, and the pickup details with it.',
           }
@@ -118,7 +118,7 @@ export function PrintNextStep({
       return {
         tone: 'bg-honey-soft',
         Icon: CheckCircle,
-        kicker: 'Ready',
+        kicker: 'Waiting on you',
         title: 'Arrange the pickup',
         body: 'Agree a time in the thread. Read your code out when the parts change hands — that is what closes the job.',
       }
@@ -126,9 +126,9 @@ export function PrintNextStep({
 
     if (tx.status === 'completed') {
       return {
-        tone: 'bg-mint-soft',
+        tone: 'bg-[var(--tok)]',
         Icon: CheckCircle,
-        kicker: 'Collected',
+        kicker: 'Done',
         title: 'Both of you confirmed',
         body: 'Closed and kept as a record.',
       }
@@ -152,13 +152,15 @@ export function PrintNextStep({
     viewerIsPrinter && tx.status === 'accepted' && Boolean(tx.printing_started_at) && !tx.ready_at
 
   return (
-    <div className={`card flex flex-col gap-2 p-5 ${card.tone}`}>
-      <p className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-widest text-muted">
+    <div
+      className={`flex flex-col gap-3 rounded-[24px] border border-line p-[22px] shadow-[var(--shadow-e3),var(--shadow-hi)] ${card.tone}`}
+    >
+      <p className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.1em] text-[var(--tink)]">
         <card.Icon size={15} weight="fill" aria-hidden="true" />
         {card.kicker}
       </p>
-      <p className="text-lg font-extrabold text-ink">{card.title}</p>
-      <p className="text-sm leading-relaxed text-ink">{card.body}</p>
+      <p className="font-display text-[19px] font-extrabold text-[var(--tink)]">{card.title}</p>
+      <p className="text-[13px] leading-normal text-[var(--tink)]">{card.body}</p>
 
       {error && (
         <p role="alert" className="text-sm text-danger">

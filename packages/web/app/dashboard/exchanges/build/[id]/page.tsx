@@ -20,7 +20,7 @@
 import { notFound, redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import Link from 'next/link'
-import { BookOpen, Hammer } from '@phosphor-icons/react/dist/ssr'
+import { BookOpen, Hammer, Info } from '@phosphor-icons/react/dist/ssr'
 import { requireCapabilities } from '@/lib/require-capabilities'
 import { apiClient } from '@/lib/api-client'
 import { isOwnerSide } from '@splat-connect/types'
@@ -32,6 +32,7 @@ import { StageRailCard } from '@/components/stage-rail-card'
 import { BuildNextStep } from '@/components/build-next-step'
 import { LiveTransaction } from '@/components/live-transaction'
 import { ToyTransactionThread } from '@/components/toy-transaction-thread'
+import { ChatHead } from '@/components/exchange-chat'
 import { buildStages, buildStageFacts } from '@/lib/build-stages'
 
 function defaultAddress(profile: Profile): PickupAddress | null {
@@ -110,20 +111,23 @@ export default async function BuildDetailPage({ params }: { params: Promise<{ id
     .join(', ')
 
   return (
-    <div>
+    <div className="max-w-[1180px]">
       <LiveTransaction transactionId={id} />
 
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-5">
         <div className="min-w-0">
-          <div className="mt-2 flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Badge status={tx.status} />
             <Badge status="assistive_tech" label="Build" />
-            <span className="text-sm text-muted">
-              Asked {new Date(tx.created_at).toLocaleDateString('en-AU')}
+            <span className="text-[13px] font-bold text-muted">
+              Asked{' '}
+              {new Date(tx.created_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'long' })}
             </span>
           </div>
-          <h1 className="mt-1 title-detail">{tx.tutorial_title ?? 'A build'}</h1>
-          <p className="mt-1 text-sm text-muted">
+          <h1 className="mt-2 font-display text-[clamp(28px,3.2vw,40px)] font-extrabold leading-[1.08] tracking-[-0.02em] text-ink">
+            {tx.tutorial_title ?? 'A build'}
+          </h1>
+          <p className="mt-1.5 text-[15px] font-semibold text-muted">
             {/* Tense follows the record. "Tom is building this for you" over a
                 closed build reads as work still going on. */}
             {tx.status === 'completed'
@@ -135,7 +139,9 @@ export default async function BuildDetailPage({ params }: { params: Promise<{ id
                 : tx.status === 'requested'
                   ? viewerIsMaker
                     ? `${otherPartyName} is asking you to build this`
-                    : `Waiting for ${otherPartyName} to answer`
+                    : otherPartyName
+                      ? `Waiting for ${otherPartyName} to answer`
+                      : 'Waiting for a maker to claim it'
                   : viewerIsMaker
                     ? `You are building this for ${otherPartyName}`
                     : `${otherPartyName} is building this for you`}
@@ -149,23 +155,7 @@ export default async function BuildDetailPage({ params }: { params: Promise<{ id
         )}
       </div>
 
-      {costs && (
-        <div className="mb-6">
-          <CostPanel
-            lines={costs.lines}
-            settlement={costs.settlement}
-            noteByName={otherPartyName}
-            viewerName={caps.profile.name}
-            // The family pays for parts, so they are the ones who owe.
-            viewerOwes={!viewerIsMaker}
-            transactionId={id}
-            viewerId={caps.profile.id}
-            canEdit={canEditCosts}
-          />
-        </div>
-      )}
-
-      <div className="mb-6">
+      <div className="my-[22px]">
         <StageRailCard stages={stages} facts={facts} />
       </div>
 
@@ -179,9 +169,42 @@ export default async function BuildDetailPage({ params }: { params: Promise<{ id
         onReject={reject}
         onWithdraw={withdraw}
         onConfirm={confirm}
+        variant="board"
+        // An open request nobody has claimed has nobody to name yet.
+        chatHead={
+          otherPartyName && <ChatHead
+            name={otherPartyName}
+            sub={viewerIsMaker ? 'Family' : 'Maker'}
+            badge={
+              viewerIsMaker ? undefined : (
+                <span className="stage-pill uppercase tracking-[0.04em]" style={{ background: 'var(--tamber)', color: 'var(--tink)' }}>
+                  <Hammer weight="fill" aria-hidden="true" />
+                  Maker
+                </span>
+              )
+            }
+          />
+        }
         asideTop={
           <>
             <BuildNextStep tx={tx} viewerIsMaker={viewerIsMaker} />
+
+            {/* The board keeps a build's costs in the aside, under the next
+                step: parts are bought as the build goes, so the number sits
+                beside the conversation about them. */}
+            {costs && (
+              <CostPanel
+                lines={costs.lines}
+                settlement={costs.settlement}
+                noteByName={otherPartyName}
+                viewerName={caps.profile.name}
+                // The family pays for parts, so they are the ones who owe.
+                viewerOwes={!viewerIsMaker}
+                transactionId={id}
+                viewerId={caps.profile.id}
+                canEdit={canEditCosts}
+              />
+            )}
 
             {/* The working shot itself, where it can be looked at rather than
                 described. Served through /files because 057's bucket is
@@ -203,37 +226,53 @@ export default async function BuildDetailPage({ params }: { params: Promise<{ id
               </a>
             )}
 
-            {/* Keep the decision visible and hide the evidence: the brief is
-                what the maker decides on, and it sits behind the caret once
-                they have. */}
-            <div className="card p-0">
-              <Disclosure summary="Build details">
-                <dl className="flex flex-col text-sm">
-                  <div className="flex justify-between gap-3 border-b border-line py-1.5">
-                    <dt className="font-bold text-muted">Guide</dt>
-                    <dd className="text-right font-bold text-ink">{tx.tutorial_title ?? '—'}</dd>
-                  </div>
-                  <div className="flex justify-between gap-3 border-b border-line py-1.5">
+            {/* The guide, and the brief behind a caret: keep the decision
+                visible and hide the evidence once it has been read. */}
+            <div className="xthread-card overflow-hidden">
+              <div className="flex items-center gap-3.5 px-5 py-[18px]">
+                <span
+                  aria-hidden="true"
+                  className="grid h-16 w-16 flex-none place-items-center rounded-[var(--radius-inset)]"
+                  style={{ background: 'var(--b100)', color: 'var(--tink)' }}
+                >
+                  <BookOpen size={32} weight="duotone" opacity={0.75} />
+                </span>
+                <span className="min-w-0 font-display text-[17px] font-extrabold text-ink">
+                  {tx.tutorial_title ?? 'A build'}
+                </span>
+              </div>
+              <div className="border-t border-line">
+                <Disclosure summary="Build details">
+                  <dl className="grid grid-cols-[auto_1fr] items-baseline gap-x-3.5 gap-y-2.5 text-sm">
                     <dt className="font-bold text-muted">Maker</dt>
-                    <dd className="text-right font-bold text-ink">
-                      {viewerIsMaker ? 'You' : tx.owner_name}
-                    </dd>
-                  </div>
-                  <div className="flex justify-between gap-3 border-b border-line py-1.5">
+                    <dd className="font-extrabold text-ink">{viewerIsMaker ? 'You' : tx.owner_name}</dd>
                     <dt className="font-bold text-muted">Parts</dt>
-                    <dd className="text-right font-bold text-ink">The family covers them</dd>
-                  </div>
-                  <div className="flex justify-between gap-3 py-1.5">
+                    <dd className="font-extrabold text-ink">The family covers them</dd>
+                    {tx.travel_km !== null && (
+                      <>
+                        <dt className="font-bold text-muted">Travel</dt>
+                        <dd className="font-extrabold text-ink">
+                          Up to {tx.travel_km} km
+                          {tx.requester_suburb ? ` from ${tx.requester_suburb}` : ''}
+                        </dd>
+                      </>
+                    )}
                     <dt className="font-bold text-muted">Pickup</dt>
-                    <dd className="text-right font-bold text-ink">
+                    <dd className="font-extrabold text-ink">
                       {address || 'Agreed after the working shot'}
                     </dd>
-                  </div>
-                </dl>
-                <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-ink">
-                  {tx.build_brief}
-                </p>
-              </Disclosure>
+                  </dl>
+                  {tx.build_brief && (
+                    <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-ink">
+                      {tx.build_brief}
+                    </p>
+                  )}
+                  <p className="mt-3 flex gap-1.5 text-[13px] leading-normal text-muted">
+                    <Info size={16} weight="fill" aria-hidden="true" className="mt-0.5 flex-none text-brand-dark" />
+                    Meet somewhere public. Bring the child&apos;s switch so the fit is checked first.
+                  </p>
+                </Disclosure>
+              </div>
             </div>
           </>
         }

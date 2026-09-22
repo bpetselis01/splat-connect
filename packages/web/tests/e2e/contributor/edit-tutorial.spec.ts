@@ -254,11 +254,11 @@ test('submit-for-review is blocked when required fields are missing', async ({ p
   await page.waitForURL('**/dashboard')
   await page.goto(`/tutorials/${id}/edit`)
 
-  // Submitting lives on the Review step now, not on a bar shown from every step.
-  await page.getByRole('tab', { name: 'Review' }).click()
-  const submitButton = page.getByRole('button', { name: 'Submit for review' })
+  // The editor opens on Status: the header's submit is disabled and the
+  // checklist names what is missing.
+  const submitButton = page.getByRole('button', { name: 'Submit for review' }).first()
   await expect(submitButton).toBeDisabled()
-  await expect(page.locator('.sticky-submit-note')).toContainText('The guide PDF')
+  await expect(page.getByRole('tabpanel')).toContainText('the guide PDF')
   // getMissingFields is unit-tested, but nothing checked that the disabled
   // button actually prevents the status transition.
   const { data } = await adminClient().from('tutorials').select('status').eq('id', id).single()
@@ -278,6 +278,6 @@ test('a rejected tutorial shows the rejection callout', async ({ page }) => {
   await page.waitForURL('**/dashboard')
   await page.goto(`/tutorials/${id}/edit`)
 
-  await expect(page.getByText('This tutorial was rejected')).toBeVisible()
+  await expect(page.getByText('Your reviewer sent this back')).toBeVisible()
   await expect(page.getByText('The photos are too dark to follow.')).toBeVisible()
 })

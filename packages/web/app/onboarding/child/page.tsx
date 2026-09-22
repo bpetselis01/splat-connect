@@ -27,7 +27,8 @@ export default async function ChildWizardPage() {
     .catch(() => [] as ChildProfile[])
 
   return (
-    <div className="mx-auto max-w-4xl">
+    // The board's 860px column less its 32px gutters.
+    <div className="mx-auto max-w-[796px]">
       <ChildWizard child={children[0] ?? null} />
     </div>
   )

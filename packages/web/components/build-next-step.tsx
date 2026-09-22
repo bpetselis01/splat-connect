@@ -63,14 +63,14 @@ export function BuildNextStep({
     if (tx.status === 'requested') {
       return viewerIsMaker
         ? {
-            tone: 'bg-honey-soft',
+            tone: 'var(--tamber)',
             Icon: Hammer,
             kicker: 'Needs you',
             title: 'Take it on, or decline',
             body: 'Read the brief below. Taking it on shares your pickup address and gives you both a handover code.',
           }
         : {
-            tone: 'bg-honey-soft',
+            tone: 'var(--tcoral)',
             Icon: HourglassMedium,
             kicker: 'Waiting',
             title: 'Waiting for an answer',
@@ -81,14 +81,14 @@ export function BuildNextStep({
     if (tx.status === 'accepted' && !tx.working_photo_url) {
       return viewerIsMaker
         ? {
-            tone: 'bg-honey-soft',
+            tone: 'var(--tamber)',
             Icon: Camera,
             kicker: 'Your build',
             title: 'Build it, then post a working shot',
-            body: 'The family approves the photo before anyone travels. Record what the parts cost in the panel above as you buy them.',
+            body: 'The family approves the photo before anyone travels. Record what the parts cost in the panel below as you buy them.',
           }
         : {
-            tone: 'bg-mint-soft',
+            tone: 'var(--tamber)',
             Icon: Hammer,
             kicker: 'Live',
             title: 'They are building it',
@@ -99,14 +99,14 @@ export function BuildNextStep({
     if (tx.status === 'accepted' && !tx.work_approved_at) {
       return viewerIsMaker
         ? {
-            tone: 'bg-mint-soft',
+            tone: 'var(--tamber)',
             Icon: HourglassMedium,
             kicker: 'Waiting',
             title: 'Waiting for them to approve',
             body: 'They check the photo against the guide. If something looks off they can ask for a change here.',
           }
         : {
-            tone: 'bg-honey-soft',
+            tone: 'var(--tcoral)',
             Icon: Camera,
             kicker: 'Needs you',
             title: 'Check the working shot',
@@ -116,7 +116,7 @@ export function BuildNextStep({
 
     if (tx.status === 'accepted') {
       return {
-        tone: 'bg-honey-soft',
+        tone: 'var(--tcoral)',
         Icon: SealCheck,
         kicker: 'Approved',
         title: 'Arrange the handover',
@@ -126,7 +126,7 @@ export function BuildNextStep({
 
     if (tx.status === 'completed') {
       return {
-        tone: 'bg-mint-soft',
+        tone: 'var(--tok)',
         Icon: CheckCircle,
         kicker: 'Handed over',
         title: 'Both of you confirmed',
@@ -135,7 +135,7 @@ export function BuildNextStep({
     }
 
     return {
-      tone: 'bg-sunken',
+      tone: 'var(--surface2)',
       Icon: HourglassMedium,
       kicker: tx.status === 'rejected' ? 'Not taken on' : 'Withdrawn',
       title: tx.status === 'rejected' ? 'This one did not go ahead' : 'This request was withdrawn',
@@ -149,13 +149,14 @@ export function BuildNextStep({
     !viewerIsMaker && tx.status === 'accepted' && Boolean(tx.working_photo_url) && !tx.work_approved_at
 
   return (
-    <div className={`card flex flex-col gap-2 p-5 ${card.tone}`}>
-      <p className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-widest text-muted">
+    // The board's next-step card: its own tint per stage, --e3, 22px in.
+    <div className="xthread-next flex flex-col" style={{ background: card.tone }}>
+      <p className="xthread-eyebrow">
         <card.Icon size={15} weight="fill" aria-hidden="true" />
         {card.kicker}
       </p>
-      <p className="text-lg font-extrabold text-ink">{card.title}</p>
-      <p className="text-sm leading-relaxed text-ink">{card.body}</p>
+      <p className="mb-3 font-display text-[19px] font-extrabold leading-snug">{card.title}</p>
+      <p className="text-sm leading-normal">{card.body}</p>
 
       {error && (
         <p role="alert" className="text-sm text-danger">
@@ -178,7 +179,7 @@ export function BuildNextStep({
           />
           <button
             type="button"
-            className="btn btn-primary mt-2"
+            className="btn btn-primary mt-3.5 w-full"
             disabled={pending}
             onClick={() => fileInput.current?.click()}
           >
@@ -189,7 +190,7 @@ export function BuildNextStep({
       )}
 
       {showApprove && (
-        <button type="button" className="btn btn-primary mt-2" disabled={pending} onClick={approve}>
+        <button type="button" className="btn btn-primary mt-3.5 w-full" disabled={pending} onClick={approve}>
           <CheckCircle size={18} weight="bold" aria-hidden="true" />
           Looks right — arrange the handover
         </button>

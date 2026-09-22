@@ -9,7 +9,14 @@
  * Was a ComingSoon placeholder until 058.
  */
 import Link from 'next/link'
-import { ChatCircle, Printer as PrinterIcon } from '@phosphor-icons/react/dist/ssr'
+import {
+  BookOpen,
+  ChatCircle,
+  Cube,
+  HandPointing,
+  Plus,
+  Printer as PrinterIcon,
+} from '@phosphor-icons/react/dist/ssr'
 import { requireCapabilities } from '@/lib/require-capabilities'
 import { apiClient } from '@/lib/api-client'
 import { Badge } from '@/components/badge'
@@ -35,16 +42,22 @@ export default async function MyPrintRequestsPage() {
   // controls; merging them would put "start the print" next to "collect it".
   const mine = all.filter((tx) => tx.type === 'print' && tx.requester_id === viewerId)
 
+  // One list, not Active and History: the board sorts rather than splits. What
+  // is waiting on you comes first, then anything still moving, then the closed
+  // ones, newest first within each.
   const ACTIVE: ToyTransactionStatus[] = ['requested', 'accepted']
-  const active = mine.filter((tx) => ACTIVE.includes(tx.status))
-  const history = mine.filter((tx) => !ACTIVE.includes(tx.status))
+  const rank = (tx: ToyTransactionSummary) =>
+    needsAction(tx, viewerId, ledOrgIds) ? 0 : ACTIVE.includes(tx.status) ? 1 : 2
+  const sorted = [...mine].sort(
+    (a, b) => rank(a) - rank(b) || b.created_at.localeCompare(a.created_at)
+  )
 
   function Row({ tx }: { tx: ToyTransactionSummary }) {
     const isOwner = isOwnerSide(tx, viewerId, ledOrgIds)
     return (
       <li>
         <RecordCard
-          icon={<PrinterIcon size={22} weight="duotone" />}
+          icon={<Cube size={26} weight="duotone" />}
           tint="var(--tviolet)"
           title={subjectName(tx)}
           meta={`${tx.other_party_name} · ${new Date(tx.created_at).toLocaleDateString('en-AU', {
@@ -65,20 +78,31 @@ export default async function MyPrintRequestsPage() {
           primary={
             <Link
               href={`/dashboard/print-requests/${tx.id}`}
-              className="btn btn-primary no-underline"
+              className="btn btn-primary min-h-12 text-[15px] no-underline"
             >
               <ChatCircle size={18} weight="fill" aria-hidden="true" />
               Thread
             </Link>
           }
+          secondary={
+            tx.tutorial_id ? (
+              <BoundaryLink
+                href={`/tutorials/${tx.tutorial_id}`}
+                className="btn btn-quiet min-h-12 px-4 no-underline shadow-none"
+              >
+                <BookOpen size={18} weight="bold" aria-hidden="true" />
+                Guide
+              </BoundaryLink>
+            ) : undefined
+          }
+          // A marker, not a control: Thread beside it already goes where the
+          // action is taken, and the board draws this as a pill.
           stageAction={
             needsAction(tx, viewerId, ledOrgIds) ? (
-              <Link
-                href={`/dashboard/print-requests/${tx.id}`}
-                className="btn btn-quiet no-underline"
-              >
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--tcoral)] px-3 py-[5px] text-[13px] font-extrabold text-[var(--tink)]">
+                <HandPointing size={16} weight="fill" aria-hidden="true" />
                 {actionLabel(tx, isOwner)}
-              </Link>
+              </span>
             ) : undefined
           }
         />
@@ -87,12 +111,18 @@ export default async function MyPrintRequestsPage() {
   }
 
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="title-hub">My print requests</h1>
-        <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted">
-          Parts you have asked somebody&apos;s printer for, and where each one has got to.
-        </p>
+    <div className="max-w-[960px]">
+      <div className="mb-[26px] flex flex-wrap items-end justify-between gap-5">
+        <div>
+          <h1 className="title-hub">My print requests</h1>
+          <p className="mt-2 max-w-[56ch] text-base text-muted">
+            Parts you have asked someone to print. Anything waiting on you sits at the top.
+          </p>
+        </div>
+        <BoundaryLink href="/printing" className="btn btn-primary px-6 no-underline">
+          <Plus size={16} weight="bold" aria-hidden="true" />
+          New request
+        </BoundaryLink>
       </div>
 
       {mine.length === 0 ? (
@@ -104,34 +134,13 @@ export default async function MyPrintRequestsPage() {
           <p className="mt-1 max-w-xs text-sm leading-relaxed text-muted">
             Find a printer with the material you need and ask for the parts from a guide.
           </p>
-          <BoundaryLink href="/printing/requests" className="btn btn-primary mt-6">
-            Request a print
-          </BoundaryLink>
         </div>
       ) : (
-        <>
-          {active.length > 0 && (
-            <section>
-              <h2 className="title-section mb-3">Active</h2>
-              <ul className="flex flex-col gap-3">
-                {active.map((tx) => (
-                  <Row key={tx.id} tx={tx} />
-                ))}
-              </ul>
-            </section>
-          )}
-
-          {history.length > 0 && (
-            <section className={active.length > 0 ? 'mt-10' : undefined}>
-              <h2 className="title-section mb-3">History</h2>
-              <ul className="flex flex-col gap-3">
-                {history.map((tx) => (
-                  <Row key={tx.id} tx={tx} />
-                ))}
-              </ul>
-            </section>
-          )}
-        </>
+        <ul className="flex flex-col gap-3">
+          {sorted.map((tx) => (
+            <Row key={tx.id} tx={tx} />
+          ))}
+        </ul>
       )}
     </div>
   )

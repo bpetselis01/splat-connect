@@ -6,14 +6,14 @@ import { browserApiClient } from '@/lib/browser-api-client'
 const push = vi.fn()
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }))
 vi.mock('@/lib/browser-api-client', () => ({
-  browserApiClient: { post: vi.fn() },
+  browserApiClient: { post: vi.fn(), postFormData: vi.fn(), get: vi.fn(), patch: vi.fn() },
 }))
 
 const mockPost = vi.mocked(browserApiClient.post)
 
 function fillAndSubmit(title = 'Sensory light box') {
   fireEvent.change(screen.getByLabelText('Title'), { target: { value: title } })
-  fireEvent.click(screen.getByRole('button', { name: 'Create' }))
+  fireEvent.click(screen.getByRole('button', { name: /Create draft/ }))
 }
 
 describe('NewTutorialForm', () => {
@@ -55,11 +55,39 @@ describe('NewTutorialForm', () => {
     )
   })
 
+  it('sends the chosen kind from the radio cards', async () => {
+    render(<NewTutorialForm />)
+    fireEvent.click(screen.getByRole('radio', { name: /Assistive tech/ }))
+    fillAndSubmit()
+
+    await waitFor(() => expect(mockPost).toHaveBeenCalled())
+    expect(mockPost.mock.calls[0][1]).toMatchObject({ kind: 'assistive_tech' })
+  })
+
+  it('uploads a chosen cover once the draft exists, then saves it as the first photo', async () => {
+    vi.mocked(browserApiClient.postFormData).mockResolvedValue({ url: 'https://x/cover.jpg' })
+    vi.mocked(browserApiClient.get).mockResolvedValue({ updated_at: 'T1' })
+    vi.mocked(browserApiClient.patch).mockResolvedValue({})
+    render(<NewTutorialForm kind="toy_adaptation" />)
+    const file = new File(['x'], 'toy.jpg', { type: 'image/jpeg' })
+    globalThis.URL.createObjectURL ??= () => 'blob:x'
+    globalThis.URL.revokeObjectURL ??= () => {}
+    fireEvent.change(screen.getByLabelText('Cover photo'), { target: { files: [file] } })
+    fillAndSubmit()
+
+    await waitFor(() => expect(push).toHaveBeenCalled())
+    const id = (mockPost.mock.calls[0][1] as { id: string }).id
+    expect(browserApiClient.patch).toHaveBeenCalledWith(`/api/tutorials/${id}`, {
+      photo_urls: ['https://x/cover.jpg'],
+      updated_at: 'T1',
+    })
+  })
+
   it('sends the chosen difficulty and an empty description as null', async () => {
     render(<NewTutorialForm kind="toy_adaptation" />)
     fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Kazoo' } })
     fireEvent.change(screen.getByLabelText('Difficulty'), { target: { value: 'hard' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Create' }))
+    fireEvent.click(screen.getByRole('button', { name: /Create draft/ }))
 
     await waitFor(() => expect(mockPost).toHaveBeenCalled())
     expect(mockPost.mock.calls[0][1]).toMatchObject({ difficulty: 'hard', description: null })
@@ -76,6 +104,6 @@ describe('NewTutorialForm', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Could not create this tutorial')
     expect(push).not.toHaveBeenCalled()
-    expect(screen.getByRole('button', { name: 'Create' })).not.toBeDisabled()
+    expect(screen.getByRole('button', { name: /Create draft/ })).not.toBeDisabled()
   })
 })

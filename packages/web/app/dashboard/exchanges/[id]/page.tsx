@@ -10,8 +10,14 @@ import { isOwnerSide } from '@splat-connect/types'
 import { Badge } from '@/components/badge'
 import { CostPanel, type CostLine, type Settlement } from '@/components/cost-panel'
 import { StageRailCard } from '@/components/stage-rail-card'
+import { ChatHead } from '@/components/exchange-chat'
 import { exchangeStages, stageFacts } from '@/lib/exchange-stages'
-import type { PickupAddress, Profile, ToyTransactionDetail } from '@splat-connect/types'
+import type {
+  PickupAddress,
+  Profile,
+  ToyTransactionDetail,
+  ToyTransactionSummary,
+} from '@splat-connect/types'
 
 // A partly-filled profile address is no use as a default — the accept dialog
 // would offer "use my saved address" and then refuse to submit it.
@@ -80,6 +86,14 @@ export default async function ExchangeDetailPage({ params }: { params: Promise<{
     costs = null
   }
 
+  // ponytail: the detail route carries no toy photo, so the aside's summary
+  // card reads it off the list row. One extra list fetch; add
+  // toy_cover_photo_url to GET /api/toy-transactions/:id to drop it.
+  const toyPhotoUrl = await apiClient
+    .get<ToyTransactionSummary[]>('/api/toy-transactions')
+    .then((rows) => rows.find((r) => r.id === id)?.toy_cover_photo_url ?? null)
+    .catch(() => null)
+
   /*
    * Editing is offered only where the write would actually land. A cost line
    * names two profiles and 055's trigger insists both are parties, so an
@@ -104,27 +118,31 @@ export default async function ExchangeDetailPage({ params }: { params: Promise<{
   const facts = stageFacts(tx, ownerSide)
 
   return (
-    <div>
+    <div className="max-w-[1180px]">
       <LiveTransaction transactionId={id} />
       {/* The thread is reachable from a notification as well as the list, so it
           needs a way back that does not assume browser history. */}
       {/* The full-width header: pills, title, one meta line, and the secondary
           action right-aligned away from everything that acts on the record. */}
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-5">
         <div className="min-w-0">
-          <div className="mt-2 flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Badge status={tx.status} />
             <Badge
               status={tx.type === 'donation' ? 'toy_adaptation' : 'assistive_tech'}
               label={tx.type === 'donation' ? 'Donation' : 'Exchange'}
             />
-            <span className="text-sm text-muted">
-              Requested {new Date(tx.created_at).toLocaleDateString('en-AU')}
+            <span className="text-[13px] font-bold text-muted">
+              Requested{' '}
+              {new Date(tx.created_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'long' })}
             </span>
           </div>
-          <h1 className="mt-1 title-detail">{tx.toy_name}</h1>
-          <p className="mt-1 text-sm text-muted">
-            {ownerSide ? 'You are giving this to' : 'You are receiving this from'} {otherPartyName}
+          <h1 className="mt-2 font-display text-[clamp(28px,3.2vw,40px)] font-extrabold leading-[1.08] tracking-[-0.02em] text-ink">
+            {tx.toy_name}
+          </h1>
+          <p className="mt-1.5 text-[15px] font-semibold text-muted">
+            {ownerSide ? 'You are giving this to' : 'You are receiving this from'}{' '}
+            <strong className="text-ink">{otherPartyName}</strong>
           </p>
         </div>
         <Link href={`/toy-library/${tx.toy_id}`} className="btn btn-quiet no-underline">
@@ -134,7 +152,7 @@ export default async function ExchangeDetailPage({ params }: { params: Promise<{
       </div>
 
       {costs && (
-        <div className="mb-6">
+        <div className="mt-[22px]">
           <CostPanel
             lines={costs.lines}
             settlement={costs.settlement}
@@ -148,7 +166,7 @@ export default async function ExchangeDetailPage({ params }: { params: Promise<{
         </div>
       )}
 
-      <div className="mb-6">
+      <div className="my-[22px]">
         <StageRailCard stages={stages} facts={facts} />
       </div>
 
@@ -162,6 +180,9 @@ export default async function ExchangeDetailPage({ params }: { params: Promise<{
         onReject={reject}
         onWithdraw={withdraw}
         onConfirm={confirm}
+        variant="board"
+        toyPhotoUrl={toyPhotoUrl}
+        chatHead={<ChatHead name={otherPartyName} />}
       />
     </div>
   )

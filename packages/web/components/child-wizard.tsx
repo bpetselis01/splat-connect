@@ -27,13 +27,13 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, ArrowRight, Check } from '@phosphor-icons/react/dist/ssr'
+import { ArrowLeft, ArrowRight, CheckCircle, Minus, Plus } from '@phosphor-icons/react/dist/ssr'
 import { browserApiClient } from '@/lib/browser-api-client'
 import { ChildAbilityForm } from '@/components/child-ability-form'
 import { ChildEverydayNeedsForm } from '@/components/child-everyday-needs-form'
 import { ChildCustomizationForm } from '@/components/child-customization-form'
 import { ChildSurveyForm } from '@/components/child-survey-form'
-import { SwitchAdaptedBear } from '@/components/switch-adapted-bear'
+import { SplatMascot, type MascotPose } from '@/components/splat-mascot'
 import type { ChildProfile } from '@splat-connect/types'
 
 /**
@@ -60,29 +60,39 @@ function AboutStep({
     })
   }
 
+  // The board's −/+ stepper: an age is a small whole number, and two big
+  // targets beat a spinner arrow for a parent on a phone.
+  function stepAge(delta: number) {
+    const next = Math.min(21, Math.max(0, (age === '' ? 0 : Number(age)) + delta)).toString()
+    setAge(next)
+    push(name, next)
+  }
+  const stepBtn =
+    'grid h-[52px] w-[52px] flex-none place-items-center rounded-[14px] border border-line bg-surface text-ink active:scale-[.94]'
+
   return (
-    <div className="flex flex-col gap-4">
-      <p className="text-sm leading-relaxed text-muted">
-        A name helps us talk about them naturally. It is never shared.
-      </p>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <label className="block">
-          <span className="mb-1.5 block text-sm font-bold text-ink">
-            First name <span className="font-semibold text-muted">(optional)</span>
-          </span>
-          <input
-            value={name}
-            onChange={(e) => {
-              setName(e.target.value)
-              push(e.target.value, age)
-            }}
-            maxLength={60}
-            placeholder="e.g. Sam"
-            className="field"
-          />
-        </label>
-        <label className="block">
-          <span className="mb-1.5 block text-sm font-bold text-ink">Age</span>
+    <div className="grid gap-4 sm:grid-cols-2">
+      <label className="flex flex-col gap-1.5 text-sm font-extrabold text-ink">
+        <span>
+          First name <span className="block font-semibold text-muted">(optional)</span>
+        </span>
+        <input
+          value={name}
+          onChange={(e) => {
+            setName(e.target.value)
+            push(e.target.value, age)
+          }}
+          maxLength={60}
+          placeholder="e.g. Sam"
+          className="field"
+        />
+      </label>
+      <div className="flex flex-col gap-1.5 text-sm font-extrabold text-ink">
+        <span id="wizard-age">Age</span>
+        <div className="flex items-center gap-2">
+          <button type="button" aria-label="Younger" onClick={() => stepAge(-1)} className={stepBtn}>
+            <Minus size={20} weight="bold" aria-hidden="true" />
+          </button>
           <input
             type="number"
             min={0}
@@ -93,21 +103,32 @@ function AboutStep({
               push(name, e.target.value)
             }}
             aria-label="Age in years"
-            className="field w-28 font-mono tabular-nums"
+            className="field min-w-0 flex-1 text-center font-display text-xl font-extrabold tabular-nums"
           />
-        </label>
+          <button type="button" aria-label="Older" onClick={() => stepAge(1)} className={stepBtn}>
+            <Plus size={20} weight="bold" aria-hidden="true" />
+          </button>
+        </div>
       </div>
     </div>
   )
 }
 
 const STEPS = [
-  { id: 'about', label: 'About', heading: 'Who are we finding toys for?' },
+  {
+    id: 'about',
+    label: 'About',
+    heading: 'Who are we finding toys for?',
+    help: 'A name helps us talk about them naturally. It is never shared.',
+  },
   { id: 'hands', label: 'Hands', heading: 'How do they use their hands?' },
   { id: 'movement', label: 'Movement', heading: 'Do you have their MACS or BFMF?' },
   { id: 'play', label: 'Play', heading: 'What gets in the way of playing?' },
   { id: 'measurements', label: 'Measurements', heading: 'Anything you have measured?' },
 ] as const
+
+/** The mascot's pose per step, as the board poses it. */
+const POSE: MascotPose[] = ['wave', 'think', 'hold', 'party', 'think']
 
 /** What the mascot says on each step. Short, and never about the child. */
 const MASCOT = [
@@ -174,38 +195,57 @@ export function ChildWizard({ child: initial }: { child: ChildProfile | null }) 
   const current = STEPS[step]
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[1fr_16rem]">
-      <div className="min-w-0">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <Link href="/library" className="btn btn-quiet btn-sm">
-            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-            Back to guides
-          </Link>
-          <p className="text-xs text-muted">Saved automatically · nothing is shared</p>
-        </div>
+    <div>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <Link
+          href="/library"
+          className="inline-flex min-h-11 items-center gap-1.5 font-bold text-muted no-underline hover:text-ink"
+        >
+          <ArrowLeft size={16} weight="bold" aria-hidden="true" />
+          Back to guides
+        </Link>
+        <p className="m-0 text-sm font-bold text-muted">Saved automatically · nothing is shared</p>
+      </div>
 
-        <ol aria-label="Progress" className="mt-4 flex list-none flex-wrap gap-2">
-          {STEPS.map((s, i) => (
-            <li key={s.id}>
-              <span
-                aria-current={i === step ? 'step' : undefined}
-                className={`chip ${i === step ? '' : 'opacity-70'}`}
-                data-on={i === step ? 'true' : undefined}
-              >
-                {i < step && <Check className="h-3 w-3" aria-hidden="true" />}
-                {s.label}
-              </span>
-            </li>
-          ))}
-        </ol>
+      {/* The board's segmented rail: a bar per step, green once passed, brand
+          on the current one, with its label underneath. */}
+      <ol aria-label="Progress" className="m-0 mb-7 grid list-none grid-cols-5 gap-2 p-0">
+        {STEPS.map((s, i) => (
+          <li key={s.id} aria-current={i === step ? 'step' : undefined} className="flex flex-col gap-2">
+            <span
+              aria-hidden="true"
+              className="h-2 rounded-pill transition-colors duration-300"
+              style={{
+                background: i < step ? 'var(--ok)' : i === step ? 'var(--b600)' : 'var(--line)',
+              }}
+            />
+            <span
+              className={`flex items-center gap-1.5 text-[13px] font-extrabold ${
+                i <= step ? 'text-ink' : 'text-muted'
+              }`}
+            >
+              {i < step && (
+                <CheckCircle size={16} weight="fill" style={{ color: 'var(--ok)' }} aria-hidden="true" />
+              )}
+              {s.label}
+            </span>
+          </li>
+        ))}
+      </ol>
 
-        <div className="card mt-5 p-6">
-          <p className="eyebrow text-muted">
+      <div className="grid items-start gap-8 lg:grid-cols-[1fr_200px]">
+        <div className="min-w-0 rounded-card border border-line bg-surface p-8 shadow-[var(--shadow-e3),var(--shadow-hi)]">
+          <p className="m-0 text-[13px] font-extrabold uppercase tracking-[0.1em]" style={{ color: 'var(--b700)' }}>
             Step {step + 1} of {STEPS.length}
           </p>
-          <h1 className="mt-1 title-article">{current.heading}</h1>
+          <h1 className="m-0 mb-1.5 mt-2 font-display text-[34px] font-extrabold leading-[1.15] text-ink">
+            {current.heading}
+          </h1>
+          {'help' in current && (
+            <p className="m-0 text-[17px] leading-[1.5] text-muted">{current.help}</p>
+          )}
 
-          <div className="mt-5">
+          <div className="mt-6">
             {/* The editor's own sections, so one table has one set of fields.
                 Each takes the child it has so far and hands back what changed. */}
             {step === 0 && <AboutStep profile={child} onChange={setAbout} />}
@@ -225,17 +265,17 @@ export function ChildWizard({ child: initial }: { child: ChildProfile | null }) 
             </p>
           )}
 
-          <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+          <div className="mt-7 flex flex-wrap items-center justify-between gap-3">
             <button
               type="button"
               onClick={() => setStep(step - 1)}
               disabled={step === 0 || saving}
-              className="btn btn-quiet btn-sm"
+              className="btn btn-quiet"
             >
-              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+              <ArrowLeft size={16} weight="bold" aria-hidden="true" />
               Back
             </button>
-            <div className="flex gap-2">
+            <div className="flex gap-2.5">
               {/* Skip does not save, and that is the difference. A parent who
                   skips has not answered, which is not the same as answering
                   blank — and the guides that come back should not pretend it
@@ -244,25 +284,25 @@ export function ChildWizard({ child: initial }: { child: ChildProfile | null }) 
                 type="button"
                 onClick={() => (step < STEPS.length - 1 ? setStep(step + 1) : router.push('/library'))}
                 disabled={saving}
-                className="btn btn-quiet btn-sm"
+                className="btn border-transparent bg-transparent text-muted shadow-none hover:bg-sunken"
               >
                 Skip
               </button>
-              <button type="button" onClick={advance} disabled={saving} className="btn btn-primary btn-sm">
+              <button type="button" onClick={advance} disabled={saving} className="btn btn-primary">
                 {step === STEPS.length - 1 ? 'Finish' : 'Continue'}
-                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                <ArrowRight size={16} weight="bold" aria-hidden="true" />
               </button>
             </div>
           </div>
         </div>
-      </div>
 
-      <aside className="hidden lg:block">
-        <div className="card flex flex-col items-center gap-3 p-5 text-center">
-          <SwitchAdaptedBear className="h-28 w-28" />
-          <p className="text-sm leading-relaxed text-muted">{MASCOT[step]}</p>
-        </div>
-      </aside>
+        <aside className="hidden flex-col items-center gap-3 text-center lg:flex">
+          <SplatMascot width={150} pose={POSE[step]} />
+          <p className="m-0 rounded-[18px] border border-line bg-surface px-3.5 py-3 text-sm font-semibold leading-[1.45] text-ink shadow-[var(--shadow-e2)]">
+            {MASCOT[step]}
+          </p>
+        </aside>
+      </div>
     </div>
   )
 }

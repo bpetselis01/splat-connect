@@ -16,12 +16,17 @@
  * - app/dashboard/org/events/[id]/page.tsx: the host's side of that queue
  */
 import Link from 'next/link'
-import { CalendarCheck, Printer, Warning } from '@phosphor-icons/react/dist/ssr'
+import {
+  CalendarBlank,
+  CheckCircle,
+  HourglassMedium,
+  XCircle,
+} from '@phosphor-icons/react/dist/ssr'
 import { requireCapabilities } from '@/lib/require-capabilities'
 import { apiClient } from '@/lib/api-client'
 import { dateBadge, formatTimeRange, isPast } from '@/lib/dates'
-import { Badge } from '@/components/badge'
-import { EVENT_KIND_LABEL, type EventKind, type ToyTransactionStatus } from '@splat-connect/types'
+import type { EventKind, ToyTransactionStatus } from '@splat-connect/types'
+import { CantMakeItButton } from './cant-make-it-button'
 
 export const metadata = { title: 'My events — SPLAT Connect' }
 
@@ -51,33 +56,88 @@ type MyEvent = {
   } | null
 }
 
-/** What a family should do next about their parts, in one sentence. */
-function partsLine(request: MyEvent['part_request'], eventId: string) {
+/**
+ * Where a part request with the host is up to, in the board's words: the
+ * host's name, then what they have said. A decline carries the next step
+ * with it — a family told only "declined" has to work out for themselves that
+ * a printer nearby is still an option, and most will not.
+ */
+function partsLine(request: MyEvent['part_request'], org: string) {
   if (!request) return null
   if (request.status === 'accepted') {
-    return {
-      tone: 'ok' as const,
-      text: `The host is printing ${request.part_sets} set${request.part_sets === 1 ? '' : 's'} before the day.`,
-      action: null,
-    }
+    return { bg: 'bg-success-soft', Icon: CheckCircle, text: `${org} is printing your parts`, declined: false }
   }
   if (request.status === 'requested') {
     return {
-      tone: 'pending' as const,
-      text: 'Waiting on the host to say whether they can print these.',
-      action: null,
+      bg: 'bg-honey-soft',
+      Icon: HourglassMedium,
+      text: `${org} has your part list — waiting for them to confirm`,
+      declined: false,
     }
   }
-  // Declined. The reason and the way forward, together — a family told only
-  // "declined" has to work out for themselves that a printer nearby is still
-  // an option, and most will not.
   return {
-    tone: 'bad' as const,
+    bg: 'bg-apricot-soft',
+    Icon: XCircle,
     text: request.decline_reason
-      ? `The host cannot print these — ${request.decline_reason}`
-      : 'The host cannot print these.',
-    action: { href: '/printing' as const, label: 'Find a printer nearby' },
+      ? `${org} cannot print your parts — ${request.decline_reason}`
+      : `${org} cannot print your parts`,
+    declined: true,
   }
+}
+
+function EventRow({ row, past }: { row: MyEvent; past: boolean }) {
+  const badge = dateBadge(row.event.starts_at)
+  const parts = partsLine(row.part_request, row.event.org_name)
+  const where =
+    row.event.format === 'online'
+      ? 'Online'
+      : [row.event.suburb, row.event.state].filter(Boolean).join(', ')
+  return (
+    <article className="card grid grid-cols-[64px_minmax(0,1fr)] items-start gap-4 px-5 py-[18px] sm:grid-cols-[64px_minmax(0,1fr)_auto]">
+      <span
+        aria-hidden="true"
+        className="grid place-items-center rounded-field bg-brand-tint py-2 text-ink"
+      >
+        <span className="text-[10px] font-extrabold uppercase tracking-[.08em]">{badge.month}</span>
+        <span className="font-display text-2xl font-extrabold leading-none">{badge.day}</span>
+      </span>
+
+      <div className="min-w-0">
+        <h3 className="font-display text-lg font-extrabold text-ink">
+          <Link href={`/get-involved/events/${row.event.id}`} className="hover:underline">
+            {row.event.title}
+          </Link>
+          {row.event.cancelled_at && (
+            <span className="badge ml-2 bg-danger-soft align-middle text-ink">Cancelled</span>
+          )}
+        </h3>
+        <p className="mt-[3px] text-sm font-semibold text-muted">
+          {row.event.org_name}
+          {where && ` · ${where}`} ·{' '}
+          {formatTimeRange(row.event.starts_at, row.event.ends_at, row.event.format)}
+        </p>
+        {parts && (
+          <p
+            className={`mt-2.5 inline-flex flex-wrap items-center gap-2 rounded-field px-3 py-2 text-sm font-bold text-ink ${parts.bg}`}
+          >
+            <parts.Icon weight="fill" className="h-4 w-4 shrink-0" aria-hidden="true" />
+            {parts.text}
+            {parts.declined && (
+              <Link href="/printing" className="ml-1 font-extrabold underline">
+                Pick a printer →
+              </Link>
+            )}
+          </p>
+        )}
+      </div>
+
+      {!past && !row.event.cancelled_at && (
+        <div className="col-span-2 sm:col-span-1">
+          <CantMakeItButton eventId={row.event.id} />
+        </div>
+      )}
+    </article>
+  )
 }
 
 export default async function MyEventsPage() {
@@ -88,128 +148,57 @@ export default async function MyEventsPage() {
   const past = rows.filter((r) => isPast(r.event.starts_at, r.event.ends_at))
 
   return (
-    <div>
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+    <div className="max-w-[900px]">
+      <div className="flex flex-wrap items-end justify-between gap-5">
         <div>
           <h1 className="title-hub">My events</h1>
-          <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted">
+          <p className="mt-2 max-w-[58ch] text-[15px] text-muted">
             What you said you are going to, and where any part-print request with the host is
             up to.
           </p>
         </div>
-        <Link href="/get-involved/events" className="btn btn-quiet btn-sm">
+        <Link href="/get-involved/events" className="btn btn-quiet">
           All events
         </Link>
       </div>
 
       {rows.length === 0 ? (
-        <div className="card flex flex-col items-center px-6 py-10 text-center">
-          <span aria-hidden="true" className="empty-badge text-brand-deep">
-            <CalendarCheck className="h-8 w-8" />
-          </span>
-          <p className="mt-4 font-display text-xl font-extrabold text-ink">Nothing booked yet</p>
-          <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted">
-            Build days are the fastest way to get a toy working. Find one, or ask for help on a
-            guide.
-          </p>
-          <Link href="/get-involved/events" className="btn btn-primary btn-sm mt-4">
-            Find a build day
-          </Link>
+        <div className="browse-empty mt-6 p-10">
+          <div>
+            <CalendarBlank
+              weight="duotone"
+              className="mx-auto h-10 w-10 text-muted"
+              aria-hidden="true"
+            />
+            <p className="mb-1 mt-2.5 font-display text-xl font-extrabold text-ink">
+              Nothing booked yet
+            </p>
+            <p className="text-[15px] text-muted">
+              Build days are the fastest way to get a toy working. Find one, or ask for help on a
+              guide.
+            </p>
+          </div>
         </div>
       ) : (
-        <div className="flex flex-col gap-6">
-          {[
-            { label: 'Coming up', list: upcoming },
-            { label: 'Been and gone', list: past },
-          ]
-            .filter((g) => g.list.length > 0)
-            .map((group) => (
-              <section key={group.label}>
-                <h2 className="title-detail mb-3">{group.label}</h2>
-                <div className="flex flex-col gap-3">
-                  {group.list.map((row) => {
-                    const badge = dateBadge(row.event.starts_at)
-                    const parts = partsLine(row.part_request, row.event.id)
-                    const where =
-                      row.event.format === 'online'
-                        ? 'Online'
-                        : [row.event.suburb, row.event.state].filter(Boolean).join(', ')
-                    return (
-                      <article key={row.registration_id} className="card p-4">
-                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                          <span
-                            aria-hidden="true"
-                            className="flex h-[66px] w-[66px] shrink-0 flex-col items-center justify-center rounded-card bg-brand-tint text-brand-deep"
-                          >
-                            <span className="eyebrow leading-none">{badge.weekday}</span>
-                            <span className="font-display text-xl font-extrabold leading-tight">
-                              {badge.day}
-                            </span>
-                            <span className="eyebrow leading-none">{badge.month}</span>
-                          </span>
-
-                          <div className="min-w-0 flex-1">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span className="badge bg-brand-tint text-brand-deep">
-                                {EVENT_KIND_LABEL[row.event.kind]}
-                              </span>
-                              {row.event.cancelled_at && (
-                                <span className="badge bg-danger-soft text-ink">Cancelled</span>
-                              )}
-                            </div>
-                            <h3 className="mt-1.5 font-display text-lg font-extrabold text-ink">
-                              <Link
-                                href={`/get-involved/events/${row.event.id}`}
-                                className="hover:underline"
-                              >
-                                {row.event.title}
-                              </Link>
-                            </h3>
-                            <p className="mt-1 text-sm text-muted">
-                              {formatTimeRange(
-                                row.event.starts_at,
-                                row.event.ends_at,
-                                row.event.format,
-                              )}{' '}
-                              · {where} · {row.event.org_name}
-                            </p>
-                          </div>
-                        </div>
-
-                        {parts && (
-                          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-card bg-sunken px-4 py-3">
-                            <span className="inline-flex items-center gap-2 text-sm font-bold text-ink">
-                              {parts.tone === 'bad' ? (
-                                <Warning className="h-4 w-4 text-danger" aria-hidden="true" />
-                              ) : (
-                                <Printer className="h-4 w-4 text-brand-dark" aria-hidden="true" />
-                              )}
-                              Parts
-                            </span>
-                            <Badge
-                              status={
-                                parts.tone === 'ok'
-                                  ? 'accepted'
-                                  : parts.tone === 'pending'
-                                    ? 'requested'
-                                    : 'rejected'
-                              }
-                            />
-                            <span className="min-w-0 flex-1 text-sm text-muted">{parts.text}</span>
-                            {parts.action && (
-                              <Link href={parts.action.href} className="btn btn-quiet btn-sm">
-                                {parts.action.label}
-                              </Link>
-                            )}
-                          </div>
-                        )}
-                      </article>
-                    )
-                  })}
-                </div>
-              </section>
+        <>
+          <div className="mt-6 grid gap-3">
+            {upcoming.map((row) => (
+              <EventRow key={row.registration_id} row={row} past={false} />
             ))}
-        </div>
+          </div>
+          {/* The board samples only upcoming days; past ones keep their own
+              heading so a finished Sunday never reads as still to come. */}
+          {past.length > 0 && (
+            <section className="mt-8">
+              <h2 className="title-section mb-3">Been and gone</h2>
+              <div className="grid gap-3">
+                {past.map((row) => (
+                  <EventRow key={row.registration_id} row={row} past />
+                ))}
+              </div>
+            </section>
+          )}
+        </>
       )}
     </div>
   )

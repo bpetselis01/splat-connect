@@ -6,7 +6,7 @@ import type { ChildProfile } from '@splat-connect/types'
 
 export default async function EditChildPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const caps = await requireCapabilities()
+  await requireCapabilities()
 
   // Reads the collection rather than one row: the heading labels an unnamed
   // child by its position among its siblings, which a single-row fetch cannot

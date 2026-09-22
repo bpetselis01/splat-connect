@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import EditChildPage from '@/app/dashboard/child/[id]/page'
 import type { ChildProfile } from '@splat-connect/types'
@@ -56,7 +56,8 @@ describe('EditChildPage', () => {
   it('seeds the Ability panel from the requested child', async () => {
     vi.mocked(apiClient.get).mockResolvedValue([child({ id: 'c1', name: 'Emma', age: 7 })])
     render(await EditChildPage({ params: Promise.resolve({ id: 'c1' }) }))
-    fireEvent.click(screen.getByRole('tab', { name: /ability/i }))
+    // The board stacks every section as a card, so Ability is on screen without a tab click.
+    expect(screen.getByRole('region', { name: 'Ability profile' })).toBeInTheDocument()
     expect(screen.getByLabelText('Name (optional)')).toHaveValue('Emma')
     expect(screen.getByLabelText('Age')).toHaveValue(7)
   })

@@ -12,15 +12,17 @@
  * machines". Two copies of three tabs would drift within a round.
  */
 import Link from 'next/link'
-import { ChatCircle, Plus, Printer as PrinterIcon } from '@phosphor-icons/react/dist/ssr'
+import { BookOpen, ChatCircle, Cube, Key, Package, Play, Plus } from '@phosphor-icons/react/dist/ssr'
 import { requireCapabilities } from '@/lib/require-capabilities'
 import { apiClient } from '@/lib/api-client'
 import { Badge } from '@/components/badge'
 import { RecordCard } from '@/components/record-card'
 import { PrinterRow } from '@/components/printer-row'
+import { IncomingPrintCard } from '@/components/incoming-print-card'
+import { SplatMascot } from '@/components/splat-mascot'
 import { ProfileTabs } from '@/components/profile-tabs'
 import { printStages } from '@/lib/print-stages'
-import { needsAction, actionLabel, subjectName } from '@splat-connect/types'
+import { needsAction, subjectName } from '@splat-connect/types'
 import type { PrinterWithOwner, ToyTransactionSummary } from '@splat-connect/types'
 
 export const metadata = { title: 'Print for others — SPLAT Connect' }
@@ -41,59 +43,69 @@ function JobRow({
   viewerId: string
   ledOrgIds: string[]
 }) {
+  // Both of the printer's own moves happen on the job page — marking it ready
+  // needs a photo — so the stage action is a way there, named for the move.
+  const move =
+    tx.status === 'accepted' && needsAction(tx, viewerId, ledOrgIds)
+      ? tx.printing_started_at
+        ? { label: 'Mark ready', Icon: Package }
+        : { label: 'Start printing', Icon: Play }
+      : null
   return (
     <li>
       <RecordCard
-        icon={<PrinterIcon size={22} weight="duotone" />}
+        icon={<Cube size={26} weight="duotone" />}
         tint="var(--tviolet)"
         title={subjectName(tx)}
-        meta={`${tx.other_party_name} · ${new Date(tx.created_at).toLocaleDateString('en-AU', {
-          day: 'numeric',
-          month: 'short',
-        })}`}
+        meta={`for ${tx.other_party_name}`}
         pill={<Badge status={tx.status} />}
         stages={printStages(tx)}
-        note={tx.last_message ? tx.last_message.body : undefined}
+        note={
+          // The code is the printer's half of the handover, and only exists to
+          // be read out once there is something to collect.
+          tx.ready_at && tx.owner_code ? (
+            <span className="flex flex-wrap items-center gap-3 rounded-[18px] bg-[var(--tmint)] px-4 py-3 text-sm font-bold text-[var(--tink)]">
+              <Key size={24} weight="duotone" aria-hidden="true" />
+              Read them this code at handoff
+              <span className="font-mono text-[22px] font-extrabold tracking-[0.12em]">
+                {tx.owner_code}
+              </span>
+            </span>
+          ) : undefined
+        }
         primary={
-          <Link href={`/dashboard/print-requests/${tx.id}`} className="btn btn-primary no-underline">
+          <Link
+            href={`/dashboard/print-requests/${tx.id}`}
+            className="btn btn-primary min-h-12 text-[15px] no-underline"
+          >
             <ChatCircle size={18} weight="fill" aria-hidden="true" />
             Thread
           </Link>
         }
+        secondary={
+          tx.tutorial_id ? (
+            <Link
+              href={`/tutorials/${tx.tutorial_id}`}
+              className="btn btn-quiet min-h-12 px-4 shadow-none no-underline"
+            >
+              <BookOpen size={18} weight="bold" aria-hidden="true" />
+              Guide
+            </Link>
+          ) : undefined
+        }
         stageAction={
-          needsAction(tx, viewerId, ledOrgIds) ? (
-            <Link href={`/dashboard/print-requests/${tx.id}`} className="btn btn-quiet no-underline">
-              {/* isOwner is true on every row here by construction: these are
-                  jobs on the viewer's own machines. */}
-              {actionLabel(tx, true)}
+          move ? (
+            <Link
+              href={`/dashboard/print-requests/${tx.id}`}
+              className="btn min-h-12 border-brand-dark bg-[var(--b50)] text-[15px] text-brand-deep no-underline hover:bg-[var(--b100)]"
+            >
+              <move.Icon size={18} weight="bold" aria-hidden="true" />
+              {move.label}
             </Link>
           ) : undefined
         }
       />
     </li>
-  )
-}
-
-function JobList({
-  rows,
-  empty,
-  viewerId,
-  ledOrgIds,
-}: {
-  rows: ToyTransactionSummary[]
-  empty: string
-  viewerId: string
-  ledOrgIds: string[]
-}) {
-  if (rows.length === 0) {
-    return <p className="py-6 text-sm leading-relaxed text-muted">{empty}</p>
-  }
-  return (
-    <ul className="flex list-none flex-col gap-3">
-      {rows.map((tx) => (
-        <JobRow key={tx.id} tx={tx} viewerId={viewerId} ledOrgIds={ledOrgIds} />
-      ))}
-    </ul>
   )
 }
 
@@ -136,32 +148,48 @@ export async function PrintOfferScreen({
   const onTheBed = jobs.filter((tx) => tx.status === 'accepted')
   const done = jobs.filter((tx) => !['requested', 'accepted'].includes(tx.status))
 
+  const { pickup_line1, pickup_suburb, pickup_state, pickup_postcode } = caps.profile
+  const defaultAddress =
+    pickup_line1 && pickup_suburb && pickup_state && pickup_postcode
+      ? { pickup_line1, pickup_suburb, pickup_state, pickup_postcode }
+      : null
+
+  const dashedEmpty =
+    'rounded-[24px] border border-dashed border-line bg-surface p-[22px] text-center text-[15px] text-muted'
+
   return (
-    <div>
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+    <div className="max-w-[1040px]">
+      <div className="mb-[22px] flex flex-wrap items-end justify-between gap-5">
         <div className="min-w-0">
           <h1 className="title-hub">{title}</h1>
-          <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted">{lead}</p>
+          <p className="mt-2 max-w-[60ch] text-base text-muted">{lead}</p>
         </div>
-        <Link href="/dashboard/printers/new" className="btn btn-primary no-underline">
-          <Plus size={18} weight="bold" aria-hidden="true" />
+        <Link
+          href="/dashboard/printers/new"
+          className="btn btn-quiet min-h-12 shadow-none no-underline"
+        >
+          <Plus size={16} weight="bold" aria-hidden="true" />
           Add a printer
         </Link>
       </div>
 
       <ProfileTabs
+        variant="segmented"
+        label={`${title} sections`}
+        defaultKey="requests"
         tabs={[
           {
             key: 'printers',
-            label: `Printers (${printers.length})`,
+            label: 'My printers',
+            count: printers.length,
             content:
               printers.length === 0 ? (
-                <p className="py-6 text-sm leading-relaxed text-muted">
+                <p className={dashedEmpty}>
                   No printers listed yet. Bed size and materials decide which requests you are
                   offered.
                 </p>
               ) : (
-                <ul className="flex list-none flex-col gap-3">
+                <ul className="flex list-none flex-col gap-4">
                   {printers.map((printer) => (
                     <PrinterRow key={printer.id} printer={printer} />
                   ))}
@@ -170,34 +198,77 @@ export async function PrintOfferScreen({
           },
           {
             key: 'requests',
-            label: `Requests (${waiting.length})`,
-            content: (
-              <JobList
-                rows={waiting}
-                empty="Nothing is waiting on you right now."
-                viewerId={viewerId}
-                ledOrgIds={ledOrgIds}
-              />
-            ),
+            label: 'Requests',
+            count: waiting.length,
+            content:
+              waiting.length === 0 ? (
+                <div className="grid place-items-center rounded-[24px] border border-dashed border-line bg-surface p-12 text-center">
+                  <SplatMascot pose="think" width={96} />
+                  <h3 className="mb-1 mt-3 font-display text-2xl font-extrabold text-ink">
+                    Nothing waiting on you
+                  </h3>
+                  <p className="max-w-[40ch] text-muted">
+                    Requests that fit your bed and materials land here. Stay open and they will
+                    come.
+                  </p>
+                </div>
+              ) : (
+                <ul className="flex list-none flex-col gap-4">
+                  {waiting.map((tx) => (
+                    <IncomingPrintCard key={tx.id} tx={tx} defaultAddress={defaultAddress} />
+                  ))}
+                </ul>
+              ),
           },
           {
             key: 'jobs',
-            label: `Jobs (${onTheBed.length})`,
+            label: 'Jobs',
+            count: onTheBed.length,
             content: (
-              <>
-                <JobList
-                  rows={onTheBed}
-                  empty="Nothing is on the bed."
-                  viewerId={viewerId}
-                  ledOrgIds={ledOrgIds}
-                />
-                {done.length > 0 && (
-                  <section className="mt-10">
-                    <h2 className="title-section mb-3">Finished</h2>
-                    <JobList rows={done} empty="" viewerId={viewerId} ledOrgIds={ledOrgIds} />
-                  </section>
+              <div className="flex flex-col gap-4">
+                {onTheBed.length === 0 ? (
+                  <p className={dashedEmpty}>
+                    Nothing on the bed. Accept a request and it appears here.
+                  </p>
+                ) : (
+                  <ul className="flex list-none flex-col gap-4">
+                    {onTheBed.map((tx) => (
+                      <JobRow key={tx.id} tx={tx} viewerId={viewerId} ledOrgIds={ledOrgIds} />
+                    ))}
+                  </ul>
                 )}
-              </>
+                {done.length > 0 && (
+                  <div>
+                    <h2 className="mb-2.5 text-xs font-extrabold uppercase tracking-[0.1em] text-muted">
+                      History
+                    </h2>
+                    {/* 1px gaps over a --line background: the rows share their
+                        dividers rather than each drawing a border. */}
+                    <ul className="flex list-none flex-col gap-px overflow-hidden rounded-[18px] border border-line bg-[var(--line)]">
+                      {done.map((tx) => (
+                        <li key={tx.id} className="bg-surface">
+                          <Link
+                            href={`/dashboard/print-requests/${tx.id}`}
+                            className="flex items-center gap-3 px-4 py-[13px] text-ink no-underline hover:bg-[var(--surface2)]"
+                          >
+                            <span className="min-w-0 flex-1 truncate text-sm font-bold">
+                              {subjectName(tx)}
+                            </span>
+                            <span className="text-[13px] text-muted">
+                              {tx.other_party_name} ·{' '}
+                              {new Date(tx.updated_at).toLocaleDateString('en-AU', {
+                                day: 'numeric',
+                                month: 'short',
+                              })}
+                            </span>
+                            <Badge status={tx.status} />
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
             ),
           },
         ]}

@@ -5,7 +5,8 @@ import { Stepper, type Finish } from '@/components/stepper'
 import { PanelActions, useSaveOnLeave } from '@/components/panel-actions'
 import type { EditStep, EditStepId } from '@/lib/edit-steps'
 import type { ToyStep } from '@/lib/toy-steps'
-import type { ChildStep } from '@/lib/child-steps'
+import type { Step } from '@/lib/steps'
+type ChildStep = Step<'survey' | 'ability' | 'everyday-needs' | 'customization'>
 
 /**
  * One component, three call-site shapes: a tutorial (a finish bar, a step

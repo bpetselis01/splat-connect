@@ -71,7 +71,7 @@ export function HubGrid({
           key={item.href}
           href={item.href}
           className={`card card-link flex h-full flex-col ${
-            tiles ? 'gap-1.5 p-5' : wide ? 'gap-3 p-7' : 'gap-2 p-5'
+            tiles ? 'p-5' : wide ? 'gap-3 p-7' : 'gap-2 p-5'
           }`}
         >
           {tiles ? (
@@ -83,12 +83,12 @@ export function HubGrid({
               <span
                 aria-hidden="true"
                 className="grid h-11 w-11 place-items-center rounded-[var(--radius-field)]"
-                style={{ background: tileTint, color: 'var(--tink)' }}
+                style={{ background: item.tint ?? tileTint, color: 'var(--tink)' }}
               >
                 <NavIcon name={item.icon} size={24} />
               </span>
               {item.count ? (
-                <span className="rounded-pill bg-apricot px-2.5 py-0.5 text-xs font-extrabold text-ink">
+                <span className="rounded-pill bg-apricot px-[9px] py-0.5 text-xs font-extrabold text-ink">
                   {item.count}
                 </span>
               ) : item.state === 'soon' ? (
@@ -109,10 +109,12 @@ export function HubGrid({
             </span>
           )}
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className={`flex flex-wrap items-center gap-2 ${tiles ? 'mb-1' : ''}`}>
             <h3
               className={
-                wide
+                tiles
+                  ? 'font-display text-lg font-extrabold leading-[1.3] text-ink'
+                  : wide
                   ? 'font-display text-[26px] font-extrabold leading-[1.15] tracking-[-0.015em] text-ink'
                   : 'card-title-grid'
               }
@@ -150,7 +152,11 @@ export function HubGrid({
               anything — which is the failure the spec's own risk note predicted
               and the fallback it named. A comma list is the same information
               with no false affordance, and one element instead of a branch. */}
-          <p className={`text-muted ${wide ? 'text-base leading-[1.55]' : 'text-sm leading-[1.5]'}`}>
+          <p
+            className={`text-muted ${
+              wide ? 'text-base leading-[1.55]' : tiles ? 'text-[13px] leading-[1.5]' : 'text-sm leading-[1.5]'
+            }`}
+          >
             {item.blurb}
           </p>
         </BoundaryLink>

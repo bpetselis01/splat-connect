@@ -37,22 +37,17 @@ describe('NewToyPage', () => {
   it('renders the create form for a signed-in account', async () => {
     signedIn()
     render(await NewToyPage())
-    expect(screen.getByLabelText('Name')).toBeInTheDocument()
+    expect(screen.getByLabelText('What is it?')).toBeInTheDocument()
     // The way back to My toys is the breadcrumb trail, which app/layout.tsx
     // renders above this page rather than the page rendering it itself — see
     // lib/trail.ts and tests/unit/lib/trail.test.ts.
   })
 
-  it('shows the whole wizard up front, on the Details step', async () => {
+  // The board's single card: no locked wizard pills ahead of the toy existing.
+  it('shows the board heading and no wizard', async () => {
     signedIn()
     render(await NewToyPage())
-    expect(screen.getByRole('tab', { name: /Details/ })).toHaveAttribute('aria-selected', 'true')
-  })
-
-  it('locks Photos and Review until the toy exists', async () => {
-    signedIn()
-    render(await NewToyPage())
-    expect(screen.getByRole('tab', { name: /Photos/ })).toBeDisabled()
-    expect(screen.getByRole('tab', { name: /Review/ })).toBeDisabled()
+    expect(screen.getByRole('heading', { name: 'Add a toy' })).toBeInTheDocument()
+    expect(screen.queryByRole('tab')).toBeNull()
   })
 })

@@ -14,9 +14,8 @@
  */
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Check, X, Package } from '@phosphor-icons/react/dist/ssr'
+import { Check, CheckCircle, Cube, XCircle } from '@phosphor-icons/react/dist/ssr'
 import { browserApiClient } from '@/lib/browser-api-client'
-import { Badge } from '@/components/badge'
 import type { ToyTransactionSummary } from '@splat-connect/types'
 
 export function EventPartQueue({ requests }: { requests: ToyTransactionSummary[] }) {
@@ -42,70 +41,83 @@ export function EventPartQueue({ requests }: { requests: ToyTransactionSummary[]
   }
 
   if (requests.length === 0) {
-    return (
-      <p className="card p-5 text-sm text-muted">
-        No part requests yet. They arrive when a family asks for help with a printable guide and
-        picks this event.
-      </p>
-    )
+    return <div className="browse-empty p-9 text-muted">No part requests yet.</div>
   }
 
+  // Open ones first — each has a family waiting on a yes or a no.
+  const rows = [...open, ...settled]
+
   return (
-    <div className="flex flex-col gap-3">
+    <div className="grid gap-2.5">
       {error && (
         <p role="alert" className="alert alert-danger">
           {error}
         </p>
       )}
 
-      {open.map((r) => (
-        <div key={r.id} className="card flex flex-wrap items-center gap-4 p-4">
-          <div className="min-w-0 flex-1">
-            <p className="font-bold text-ink">{r.requester_name ?? 'A family'}</p>
-            <p className="mt-0.5 flex items-center gap-1.5 text-sm text-muted">
-              <Package className="h-4 w-4 shrink-0" aria-hidden="true" />
+      {rows.map((r) => (
+        <div
+          key={r.id}
+          className="card-flat grid grid-cols-1 items-center gap-4 px-5 py-4 shadow-e1 sm:grid-cols-[minmax(0,1fr)_auto]"
+        >
+          <div className="min-w-0">
+            <p className="font-extrabold text-ink">{r.requester_name ?? 'A family'}</p>
+            <p className="mt-[3px] text-sm text-muted">
+              <Cube weight="bold" className="mr-1 inline text-brand-dark" aria-hidden="true" />
               {r.tutorial_title ?? 'Printable parts'} · {r.part_sets} set
               {r.part_sets === 1 ? '' : 's'}
               {r.print_note && ` · “${r.print_note}”`}
+              {r.decline_reason && ` — ${r.decline_reason}`}
             </p>
           </div>
-          <div className="flex shrink-0 gap-2">
-            <button
-              type="button"
-              disabled={busy === r.id}
-              onClick={() => {
-                // A print decline carries a reason by API contract. Asking here
-                // rather than letting the request 400 is the difference between
-                // a prompt and an error.
-                const reason = prompt('Why can you not print these? The family sees this.')
-                if (reason && reason.trim()) act(r.id, 'reject', reason.trim())
-              }}
-              className="btn btn-danger btn-sm"
+          {r.status === 'requested' ? (
+            <span className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={busy === r.id}
+                onClick={() => {
+                  // A print decline carries a reason by API contract. Asking
+                  // here rather than letting the request 400 is the difference
+                  // between a prompt and an error.
+                  const reason = prompt('Why can you not print these? The family sees this.')
+                  if (reason && reason.trim()) act(r.id, 'reject', reason.trim())
+                }}
+                className="btn btn-quiet min-h-11 px-3.5 text-sm"
+              >
+                Can&rsquo;t print these
+              </button>
+              <button
+                type="button"
+                disabled={busy === r.id}
+                onClick={() => act(r.id, 'accept')}
+                className="btn btn-primary min-h-11 px-4 text-sm"
+              >
+                <Check weight="bold" className="h-4 w-4" aria-hidden="true" />
+                We&rsquo;ll print these
+              </button>
+            </span>
+          ) : (
+            <span
+              className={`inline-flex items-center gap-1.5 justify-self-start rounded-full px-3 py-1.5 text-[13px] font-extrabold text-ink ${
+                r.status === 'accepted' || r.status === 'completed'
+                  ? 'bg-success-soft'
+                  : 'bg-sunken'
+              }`}
             >
-              <X className="h-4 w-4" aria-hidden="true" />
-              Can&apos;t print these
-            </button>
-            <button
-              type="button"
-              disabled={busy === r.id}
-              onClick={() => act(r.id, 'accept')}
-              className="btn btn-primary btn-sm"
-            >
-              <Check className="h-4 w-4" aria-hidden="true" />
-              We&apos;ll print these
-            </button>
-          </div>
-        </div>
-      ))}
-
-      {settled.map((r) => (
-        <div key={r.id} className="card flex flex-wrap items-center gap-3 p-4 opacity-80">
-          <Badge status={r.status} />
-          <p className="min-w-0 flex-1 text-sm text-muted">
-            {r.requester_name ?? 'A family'} · {r.tutorial_title ?? 'Printable parts'} ·{' '}
-            {r.part_sets} set{r.part_sets === 1 ? '' : 's'}
-            {r.decline_reason && ` — ${r.decline_reason}`}
-          </p>
+              {r.status === 'accepted' || r.status === 'completed' ? (
+                <CheckCircle weight="fill" aria-hidden="true" />
+              ) : (
+                <XCircle weight="fill" aria-hidden="true" />
+              )}
+              {r.status === 'accepted'
+                ? 'Printing'
+                : r.status === 'completed'
+                  ? 'Printed'
+                  : r.status === 'withdrawn'
+                    ? 'Withdrawn'
+                    : 'Declined'}
+            </span>
+          )}
         </div>
       ))}
     </div>

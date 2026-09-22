@@ -155,7 +155,7 @@ describe('ExchangesPage', () => {
   it('falls back to the empty state with no transactions', async () => {
     vi.mocked(apiClient.get).mockResolvedValue([])
     render(await ExchangesPage())
-    expect(screen.getByText(/nothing has been asked for yet/i)).toBeInTheDocument()
+    expect(screen.getByText(/no donation or exchange requests yet/i)).toBeInTheDocument()
   })
 })
 
@@ -197,7 +197,7 @@ describe('exchanges active/history split', () => {
     render(await ExchangesPage())
     expect(screen.queryByRole('heading', { name: /active/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: /history/i })).not.toBeInTheDocument()
-    expect(screen.getByText(/nothing has been asked for yet/i)).toBeInTheDocument()
+    expect(screen.getByText(/no donation or exchange requests yet/i)).toBeInTheDocument()
   })
 
   it('shows both when both have rows', async () => {

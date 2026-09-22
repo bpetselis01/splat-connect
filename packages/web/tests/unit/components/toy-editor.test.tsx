@@ -53,14 +53,17 @@ describe('ToyEditor', () => {
     vi.mocked(browserApiClient.delete).mockReset()
   })
 
-  it('shows the Details pill first, seeded with the toy', () => {
+  it('opens on Status, with Details one tab away and seeded with the toy', () => {
     render(<ToyEditor toy={toy()} />)
+    expect(screen.getByRole('tab', { name: /Status/ })).toHaveAttribute('aria-selected', 'true')
+    fireEvent.click(screen.getByRole('tab', { name: /Details/ }))
     expect(screen.getByLabelText('Name')).toHaveValue('Fire truck')
   })
 
   it('saves details through PATCH /api/toys/:id and keeps the updated toy in state', async () => {
     vi.mocked(browserApiClient.patch).mockResolvedValue(toy({ name: 'Dump truck' }))
     render(<ToyEditor toy={toy()} />)
+    fireEvent.click(screen.getByRole('tab', { name: /Details/ }))
 
     fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Dump truck' } })
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))
@@ -72,131 +75,54 @@ describe('ToyEditor', () => {
     )
   })
 
-  // Chain: the bar was rendered by ToyReviewPanel until 2026-08-29, so it only
-  //        existed on the Review step and Details and Photos said nothing about how
-  //        far the toy was from publishable. It is the stepper's now — this asserts
-  //        it from Details, without visiting Review at all
-  it('names the missing photo and disables Publish from the very first step', () => {
+  it('names the missing photo and disables listing it', () => {
     render(<ToyEditor toy={toy({ photo_urls: [] })} />)
-
-    expect(screen.getByText('1 thing left')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'A photo' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Publish' })).toBeDisabled()
+    expect(screen.getAllByText(/a photo/i).length).toBeGreaterThan(0)
+    screen
+      .getAllByRole('button', { name: 'List it in the library' })
+      .forEach((b) => expect(b).toBeDisabled())
   })
 
-  it('publishes through PATCH /api/toys/:id/publish and shows Published afterwards', async () => {
+  it('lists through PATCH /api/toys/:id/publish and flips to Live', async () => {
     vi.mocked(browserApiClient.patch).mockResolvedValue(toy({ status: 'published' }))
     render(<ToyEditor toy={toy()} />)
-    fireEvent.click(screen.getByRole('tab', { name: 'Review' }))
+    fireEvent.click(screen.getAllByRole('button', { name: 'List it in the library' })[0])
 
-    fireEvent.click(screen.getByRole('button', { name: 'Publish' }))
-
-    await screen.findByText('Published')
+    expect(await screen.findByText('Families can ask for this')).toBeInTheDocument()
     expect(browserApiClient.patch).toHaveBeenCalledWith('/api/toys/t1/publish', {})
   })
 
-  it('shows an error and stays on the draft when publish fails', async () => {
+  it('shows an error and stays on the draft when listing fails', async () => {
     vi.mocked(browserApiClient.patch).mockRejectedValue(new Error('boom'))
     render(<ToyEditor toy={toy()} />)
-    fireEvent.click(screen.getByRole('tab', { name: 'Review' }))
+    fireEvent.click(screen.getAllByRole('button', { name: 'List it in the library' })[0])
 
-    fireEvent.click(screen.getByRole('button', { name: 'Publish' }))
-
-    expect(await screen.findByRole('alert')).toHaveTextContent('Could not publish')
-    expect(screen.queryByText('Published')).not.toBeInTheDocument()
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not publish this toy')
+    expect(screen.getByText('Only you can see this')).toBeInTheDocument()
   })
 
-  it('saves the offer type when a pill is clicked', async () => {
-    const patchSpy = vi.spyOn(browserApiClient, 'patch').mockResolvedValue({})
-    render(<ToyEditor toy={toy({ status: 'published', offer_type: null })} />)
-    fireEvent.click(screen.getByRole('tab', { name: 'Review' }))
-
-    fireEvent.click(screen.getByRole('button', { name: 'Donation' }))
-
-    expect(patchSpy).toHaveBeenCalledWith(`/api/toys/${toy().id}`, { offer_type: 'donation' })
+  it('saves the offer type when a card is picked', async () => {
+    vi.mocked(browserApiClient.patch).mockResolvedValue(toy({ offer_type: 'exchange' }))
+    render(<ToyEditor toy={toy()} />)
+    fireEvent.click(screen.getByRole('radio', { name: /Swap/ }))
+    await vi.waitFor(() =>
+      expect(browserApiClient.patch).toHaveBeenCalledWith('/api/toys/t1', { offer_type: 'exchange' })
+    )
   })
 
-  it('shows the current offer type as pressed', () => {
-    render(<ToyEditor toy={toy({ status: 'published', offer_type: 'both' })} />)
-    fireEvent.click(screen.getByRole('tab', { name: 'Review' }))
-    expect(screen.getByRole('button', { name: 'Both' })).toHaveAttribute('aria-pressed', 'true')
-    expect(screen.getByRole('button', { name: 'Donation' })).toHaveAttribute('aria-pressed', 'false')
-  })
-
-  it('explains the selected offer type', () => {
-    render(<ToyEditor toy={toy({ offer_type: 'exchange' })} />)
-    fireEvent.click(screen.getByRole('tab', { name: 'Review' }))
-    expect(
-      screen.getByText("You'll swap this toy for another one with the recipient.")
-    ).toBeInTheDocument()
+  it('shows the current offer type as checked, and explains it', () => {
+    render(<ToyEditor toy={toy({ offer_type: 'donation' })} />)
+    expect(screen.getByRole('radio', { name: /Donation/ })).toHaveAttribute('aria-checked', 'true')
+    expect(screen.getAllByText(/keeps this toy for good/).length).toBeGreaterThan(0)
   })
 
   it('prompts for an offer type when none is chosen yet', () => {
     render(<ToyEditor toy={toy({ offer_type: null })} />)
-    fireEvent.click(screen.getByRole('tab', { name: 'Review' }))
-    expect(
-      screen.getByText('Choose how this toy is offered — you can change it later.')
-    ).toBeInTheDocument()
-  })
-
-  it('wraps every step body in a panel, like the edit-tutorial page', () => {
-    const { container } = render(<ToyEditor toy={toy()} />)
-    for (const label of ['Details', 'Photos', 'Review']) {
-      fireEvent.click(screen.getByRole('tab', { name: label }))
-      expect(container.querySelector('[role="tabpanel"] > .panel')).toBeInTheDocument()
-    }
+    expect(screen.getByText(/Choose how this toy is offered/)).toBeInTheDocument()
   })
 
   it('renders a delete button scoped to this toy', () => {
     render(<ToyEditor toy={toy()} />)
-    expect(screen.getByRole('button', { name: 'Delete toy' })).toBeInTheDocument()
-  })
-
-  it('puts Delete toy last in the pill row, styled as a pill rather than a button', () => {
-    const { container } = render(<ToyEditor toy={toy()} />)
-    const row = container.querySelector('.step-pill-row') as HTMLElement
-    const deleteButton = screen.getByRole('button', { name: 'Delete toy' })
-
-    expect(row).toContainElement(deleteButton)
-    expect(deleteButton).toHaveClass('step-pill', 'step-pill-danger')
-    // Excluding the confirm dialog's own buttons: DeleteEntityButton renders
-    // trigger + <dialog> as one fragment, so both land in the trailing slot.
-    const rowButtons = Array.from(row.querySelectorAll('button')).filter((b) => !b.closest('dialog'))
-    expect(rowButtons[rowButtons.length - 1]).toBe(deleteButton)
-  })
-
-  it('shows the cover photo in Review, so the listing is checked by eye', () => {
-    render(<ToyEditor toy={toy()} />)
-    fireEvent.click(screen.getByRole('tab', { name: 'Review' }))
-    expect(screen.getByAltText('Cover photo')).toHaveAttribute(
-      'src',
-      'https://test.supabase.co/storage/v1/object/public/photos/cover.jpg'
-    )
-  })
-
-  // The tagged photo is captioned by what it shows rather than by its position,
-  // and only while the toy still claims to be switch-adapted: untick the box and
-  // it goes back to being the second photo.
-  it('captions the tagged photo in Review only when the toy is switch-adapted', () => {
-    const tagged = {
-      photo_urls: ['https://test.supabase.co/storage/v1/object/public/photos/cover.jpg', 'https://test.supabase.co/storage/v1/object/public/photos/switch.jpg'],
-      switch_photo_url: 'https://test.supabase.co/storage/v1/object/public/photos/switch.jpg',
-    }
-    const { unmount } = render(<ToyEditor toy={toy({ ...tagged, switch_adapted: false })} />)
-    fireEvent.click(screen.getByRole('tab', { name: 'Review' }))
-    expect(screen.queryByAltText('Shows the switch')).not.toBeInTheDocument()
-    expect(screen.getByAltText('Photo 2')).toBeInTheDocument()
-    unmount()
-
-    render(<ToyEditor toy={toy({ ...tagged, switch_adapted: true })} />)
-    fireEvent.click(screen.getByRole('tab', { name: 'Review' }))
-    expect(screen.getByAltText('Shows the switch')).toBeInTheDocument()
-  })
-
-  it('falls back to the placeholder tile in Review when there are no photos', () => {
-    render(<ToyEditor toy={toy({ photo_urls: [] })} />)
-    fireEvent.click(screen.getByRole('tab', { name: 'Review' }))
-    expect(screen.queryByAltText('Cover photo')).not.toBeInTheDocument()
-    expect(screen.getByText('No photo yet')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /delete toy/i })).toBeInTheDocument()
   })
 })

@@ -17,8 +17,12 @@ import Link from 'next/link'
 import { apiClient } from '@/lib/api-client'
 import { requireCapabilities } from '@/lib/require-capabilities'
 import { ProfileForm } from '@/components/profile-form'
+import { SignOutButton } from '@/components/sign-out-button'
 import { Child } from '@/components/icons'
-import type { ChildProfile } from '@splat-connect/types'
+import type { ChildProfile, UserAgreement } from '@splat-connect/types'
+
+// The board's avatar tints, in its order; a child keeps its tint by position.
+const TINTS = ['var(--b100)', 'var(--tcoral)', 'var(--tmint)', 'var(--tamber)', 'var(--tviolet)']
 
 export default async function ProfileTabPage() {
   const caps = await requireCapabilities()
@@ -26,22 +30,54 @@ export default async function ProfileTabPage() {
   // No .catch() here: an empty array is already the legitimate "no children yet"
   // value, so swallowing a fetch failure into the same empty array would tell a
   // parent their children are gone. Let a failed fetch throw into error.tsx.
-  const children = await apiClient.get<ChildProfile[]>('/api/child-profiles')
+  const [children, agreements] = await Promise.all([
+    apiClient.get<ChildProfile[]>('/api/child-profiles'),
+    // Only feeds a chip, so a failure degrades to no chip rather than an error page.
+    apiClient.get<UserAgreement[]>('/api/agreements/me').catch(() => [] as UserAgreement[]),
+  ])
+  // Newest first from the API, so find() is the version they last accepted.
+  const terms = agreements.find((a) => a.agreement_type === 'contributor_terms')
+
+  const badges = (
+    <div className="flex flex-wrap gap-2">
+      <span className="rounded-full bg-[var(--b100)] px-3 py-[5px] text-[13px] font-extrabold text-[var(--b700)]">
+        {caps.isAdmin ? 'Admin' : 'Contributor'}
+      </span>
+      {caps.ledOrgs.map((org) => (
+        <span
+          key={org.id}
+          className="rounded-full bg-[var(--tmint)] px-3 py-[5px] text-[13px] font-extrabold text-[var(--tink)]"
+        >
+          Leader — {org.name}
+        </span>
+      ))}
+      {terms && (
+        <span className="rounded-full bg-[var(--tviolet)] px-3 py-[5px] text-[13px] font-extrabold text-[var(--tink)]">
+          Contributor terms {terms.version} accepted
+        </span>
+      )}
+    </div>
+  )
 
   return (
-    <div>
-      <h1 className="mb-6 title-hub">Account</h1>
-      <ProfileForm profile={caps.profile} />
+    <section className="max-w-[760px]">
+      {/* The board has no sign-out here, but nothing else on the web app offers
+          one, so it stays until the account menu carries it. */}
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <h1 className="title-hub">Account</h1>
+        <SignOutButton />
+      </div>
+      <ProfileForm profile={caps.profile} badges={badges} />
 
-      <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-line pt-8">
+      <div className="mt-10 flex flex-wrap items-end justify-between gap-5 border-t border-line pt-7">
         <div>
-          <h2 className="text-xl font-bold text-ink">Child profiles</h2>
-          <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted">
+          <h2 className="text-2xl font-extrabold text-ink">Child profiles</h2>
+          <p className="mt-2 max-w-[52ch] text-[15px] leading-relaxed text-muted">
             This helps us suggest tutorials that suit your children. Everything is
             optional and only you can see it.
           </p>
         </div>
-        <Link href="/dashboard/child/new" className="btn btn-accent">
+        <Link href="/dashboard/child/new" className="btn btn-coral">
           + Add child
         </Link>
       </div>
@@ -63,31 +99,45 @@ export default async function ProfileTabPage() {
           </Link>
         </div>
       ) : (
-        <ul className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
-          {children.map((child, i) => (
-            <li key={child.id}>
-              <Link
-                href={`/dashboard/child/${child.id}`}
-                className="card card-link flex h-full flex-col overflow-hidden"
-              >
-                {/* No CardPhoto: ChildProfile carries no photo field, and its
-                    null-src fallback is a toy emoji, wrong here. */}
-                <div className="flex flex-1 flex-col gap-1 p-4">
-                  <p className="truncate text-sm font-bold text-ink">
-                    {child.name?.trim() || `Child ${i + 1}`}
-                  </p>
-                  {/* Falls back to a non-breaking space: an empty text node
-                      collapses to 0 height, squishing the card whenever no
-                      taller sibling shares its row. */}
-                  <p className="truncate text-xs leading-relaxed text-muted">
-                    {child.age !== null ? `Age ${child.age}` : ' '}
-                  </p>
-                </div>
-              </Link>
-            </li>
-          ))}
+        <ul className="mt-[22px] grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+          {children.map((child, i) => {
+            const name = child.name?.trim() || `Child ${i + 1}`
+            return (
+              <li key={child.id}>
+                <Link
+                  href={`/dashboard/child/${child.id}`}
+                  className="flex h-full items-center gap-3 rounded-[18px] border border-line bg-surface p-5 text-ink shadow-e1 transition-shadow hover:shadow-e2"
+                >
+                  <span
+                    aria-hidden="true"
+                    className="grid h-11 w-11 flex-none place-items-center rounded-full text-[15px] font-extrabold text-[var(--tink)]"
+                    style={{ background: TINTS[i % TINTS.length] }}
+                  >
+                    {name.charAt(0).toUpperCase()}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block truncate text-base font-extrabold">{name}</span>
+                    {child.age !== null && (
+                      <span className="block text-[13px] text-muted">Age {child.age}</span>
+                    )}
+                  </span>
+                </Link>
+              </li>
+            )
+          })}
+          <li>
+            <Link
+              href="/dashboard/child/new"
+              className="grid h-full min-h-[84px] place-items-center rounded-[18px] border border-dashed border-line p-5 text-center text-[15px] font-extrabold text-muted"
+            >
+              <span>
+                <span aria-hidden="true" className="mb-1.5 block text-[22px] leading-none">+</span>
+                Add another
+              </span>
+            </Link>
+          </li>
         </ul>
       )}
-    </div>
+    </section>
   )
 }

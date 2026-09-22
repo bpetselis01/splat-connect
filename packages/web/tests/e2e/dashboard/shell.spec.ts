@@ -154,14 +154,13 @@ test('a contributor adds two children, edits one, and deletes one', async ({ pag
     // First child, named.
     await page.getByRole('link', { name: 'Add child' }).click()
     await expect(page).toHaveURL('/dashboard/child/new')
-    await page.getByRole('tab', { name: 'Ability' }).click()
     await page.locator('#name').fill('Emma')
     await page.locator('#age').fill('7')
     // The MACS/BFMF selects sit inside the collapsed "Clinical scores
     // (optional)" disclosure; a closed <details> hides them from actionability.
     await page.getByText('Clinical scores (optional)').click()
     await page.locator('#macs_level').selectOption('II')
-    await page.getByRole('button', { name: 'Save' }).click()
+    await page.getByRole('region', { name: 'Basics' }).getByRole('button', { name: 'Save' }).click()
     // Scoped to <main>: "Saved" is also a hub card and a footer link, so an
     // unscoped getByText('Saved') trips strict mode. The confirmation is page
     // content; the others are navigation.
@@ -173,9 +172,8 @@ test('a contributor adds two children, edits one, and deletes one', async ({ pag
 
     // Second child, left unnamed — the list must still tell them apart.
     await page.getByRole('link', { name: 'Add child' }).click()
-    await page.getByRole('tab', { name: 'Ability' }).click()
     await page.locator('#age').fill('4')
-    await page.getByRole('button', { name: 'Save' }).click()
+    await page.getByRole('region', { name: 'Basics' }).getByRole('button', { name: 'Save' }).click()
     // Scoped to <main>: "Saved" is also a hub card and a footer link, so an
     // unscoped getByText('Saved') trips strict mode. The confirmation is page
     // content; the others are navigation.
@@ -184,21 +182,17 @@ test('a contributor adds two children, edits one, and deletes one', async ({ pag
     await expect(page).toHaveURL('/dashboard/profile')
     await expect(page.getByRole('link', { name: /Child 2/ })).toBeVisible()
 
-    // Edit the first child and confirm it persists across a reload. The pill is
-    // selected again after reloading rather than trusting ?step= to survive it —
-    // what matters here is the saved value, not where the stepper reopens.
+    // Edit the first child and confirm it persists across a reload.
     await page.getByRole('link', { name: /Emma/ }).click()
-    await page.getByRole('tab', { name: 'Ability' }).click()
     await expect(page.locator('#age')).toHaveValue('7')
     await expect(page.locator('#macs_level')).toHaveValue('II')
     await page.locator('#age').fill('8')
-    await page.getByRole('button', { name: 'Save' }).click()
+    await page.getByRole('region', { name: 'Basics' }).getByRole('button', { name: 'Save' }).click()
     // Scoped to <main>: "Saved" is also a hub card and a footer link, so an
     // unscoped getByText('Saved') trips strict mode. The confirmation is page
     // content; the others are navigation.
     await expect(page.getByRole('main').getByText('Saved')).toBeVisible()
     await page.reload()
-    await page.getByRole('tab', { name: 'Ability' }).click()
     await expect(page.locator('#age')).toHaveValue('8')
 
     // Delete is opened by a button named after the child, then gated on typing

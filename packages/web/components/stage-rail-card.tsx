@@ -28,13 +28,13 @@ export function StageRailCard({ stages, facts }: { stages: Stage[]; facts: Stage
 
       {/* No --hi on the lower half: the inset highlight reads as the top edge
           of a fresh card, and this half is the bottom of the one above. */}
-      <div className="rounded-b-[var(--radius-card)] border border-t border-dashed border-line bg-surface px-[22px] pb-5 pt-[18px] shadow-[var(--shadow-e2)]">
+      <div className="rounded-b-[var(--radius-card)] border border-t border-dashed border-line bg-canvas px-[22px] pb-5 pt-[18px] shadow-[var(--shadow-e2)]">
         <h3 className="eyebrow text-muted">{facts.title}</h3>
-        <dl className="mt-3 grid gap-3.5 [grid-template-columns:repeat(auto-fit,minmax(200px,1fr))]">
+        <dl className="mt-3 grid gap-x-5 gap-y-3 [grid-template-columns:repeat(auto-fit,minmax(200px,1fr))]">
           {facts.facts.map((fact) => (
             <div key={fact.label} className="min-w-0">
-              <dt className="text-[13px] font-extrabold text-muted">{fact.label}</dt>
-              <dd className="mt-1 text-[15px] font-bold text-ink">{fact.value}</dd>
+              <dt className="text-xs font-extrabold uppercase tracking-[0.06em] text-muted">{fact.label}</dt>
+              <dd className="mt-[3px] text-sm font-bold leading-[1.45] text-ink">{fact.value}</dd>
             </div>
           ))}
         </dl>

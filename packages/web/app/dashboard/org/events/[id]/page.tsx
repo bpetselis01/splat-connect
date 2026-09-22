@@ -6,9 +6,9 @@
  * declined request needs to be told early enough to find a printer instead.
  * Then who is coming, which is reference material for setting out the room.
  *
- * The four numbers at the top are counted in SETS, not requests, wherever sets
- * are the unit — "You said up to 6 sets" is filament, and six requests for one
- * set each and one request for six are the same amount of it.
+ * "You said up to 6 sets" counts SETS, not requests: that line is filament,
+ * and six requests for one set each and one request for six are the same
+ * amount of it.
  *
  * Answers render here and nowhere else. 061's leader-read policy is what admits
  * them, and scripts/check-schema-guards.sh asserts that no anon policy can.
@@ -21,14 +21,18 @@
  */
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { Printer, Users, ArrowSquareOut, PencilSimple } from '@phosphor-icons/react/dist/ssr'
+import {
+  CaretRight,
+  ClipboardText,
+  DownloadSimple,
+  Eye,
+} from '@phosphor-icons/react/dist/ssr'
 import { getCapabilities } from '@/lib/capabilities'
 import { apiClient } from '@/lib/api-client'
 import { longDate } from '@/lib/dates'
 import { formatRelativeTime } from '@/lib/relative-time'
 import { EventPartQueue } from '@/components/event-part-queue'
 import { EventWithdrawActions } from '@/components/event-withdraw-actions'
-import { StatChips } from '@/components/stat-chips'
 import {
   EVENT_KIND_LABEL,
   type OrgEvent,
@@ -67,29 +71,68 @@ export default async function ManageEventPage({ params }: { params: Promise<{ id
     .filter((t) => t.status === 'accepted')
     .reduce((n, t) => n + (t.part_sets ?? 0), 0)
 
-  const prompts = new Map(questions.map((q) => [q.id, q.prompt]))
+  const answerText = (v: string | number | boolean | undefined) =>
+    v === undefined || String(v).trim() === ''
+      ? null
+      : typeof v === 'boolean'
+        ? v
+          ? 'Yes'
+          : 'No'
+        : String(v)
+
+  // The export is built here from rows this page already holds — the leader
+  // policy that admits the answers is the only gate it needs.
+  const csvCell = (v: string) => `"${v.replace(/"/g, '""')}"`
+  const csv = [
+    ['Name', 'Email', 'Registered', ...questions.map((q) => q.prompt)],
+    ...registrations.map((r) => [
+      r.name,
+      r.email,
+      r.created_at,
+      ...questions.map((q) => answerText(r.answers[q.id]) ?? ''),
+    ]),
+  ]
+    .map((row) => row.map(csvCell).join(','))
+    .join('\n')
+
+  const TINTS = ['bg-mint-soft', 'bg-honey-soft', 'bg-violet-soft', 'bg-brand-tint']
+
+  const stats = [
+    { label: 'Going', value: registrations.length, tint: 'bg-mint-soft' },
+    { label: 'Part requests', value: partRequests.length, tint: 'bg-brand-tint' },
+    { label: 'To answer', value: open.length, tint: 'bg-honey-soft' },
+    { label: 'Seats', value: event.capacity ?? 'No limit', tint: 'bg-surface' },
+  ]
 
   return (
-    <div>
-      <div className="flex flex-wrap items-start justify-between gap-4">
+    <div className="max-w-[980px]">
+      <nav
+        aria-label="Event"
+        className="mb-3.5 flex items-center gap-2 text-sm font-bold text-muted"
+      >
+        <Link href="/dashboard/organisation/publish" className="text-muted hover:text-ink">
+          Events and stories
+        </Link>
+        <CaretRight weight="bold" className="h-3 w-3" aria-hidden="true" />
+        <span className="text-ink">{event.title}</span>
+      </nav>
+
+      <div className="flex flex-wrap items-end justify-between gap-5">
         <div>
-          <p className="eyebrow text-muted">
+          <p className="text-[13px] font-extrabold uppercase tracking-[.1em] text-muted">
             {EVENT_KIND_LABEL[event.kind]} · {longDate(event.starts_at)}
           </p>
-          <h1 className="mt-1 title-article">{event.title}</h1>
+          <h1 className="title-hub mt-2">{event.title}</h1>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {event.status === 'published' && (
-            <Link href={`/get-involved/events/${event.id}`} className="btn btn-quiet btn-sm">
-              <ArrowSquareOut className="h-4 w-4" aria-hidden="true" />
-              View public page
-            </Link>
-          )}
-          <Link href="/dashboard/organisation/publish" className="btn btn-quiet btn-sm">
-            <PencilSimple className="h-4 w-4" aria-hidden="true" />
-            Events and stories
+        {event.status === 'published' && (
+          <Link
+            href={`/get-involved/events/${event.id}`}
+            className="btn btn-quiet min-h-11 px-4 text-sm"
+          >
+            <Eye weight="bold" aria-hidden="true" />
+            View public page
           </Link>
-        </div>
+        )}
       </div>
 
       <EventWithdrawActions
@@ -99,26 +142,25 @@ export default async function ManageEventPage({ params }: { params: Promise<{ id
         cancelled={!!event.cancelled_at}
       />
 
-      <StatChips
-        className="mt-6"
-        stats={[
-          { label: 'Going', value: registrations.length },
-          { label: 'Part requests', value: partRequests.length },
-          { label: 'To answer', value: open.length },
-          {
-            label: 'Seats',
-            value: event.capacity === null ? '—' : Math.max(0, event.capacity - registrations.length),
-          },
-        ]}
-      />
+      <dl className="my-6 grid grid-cols-2 gap-3.5 sm:grid-cols-4">
+        {stats.map((s) => (
+          <div key={s.label} className={`card-flat ${s.tint} px-5 py-[18px]`}>
+            <dt className="text-xs font-extrabold uppercase tracking-[.1em] text-muted">
+              {s.label}
+            </dt>
+            <dd className="mt-1.5 font-display text-[28px] font-extrabold tabular-nums text-ink">
+              {s.value}
+            </dd>
+          </div>
+        ))}
+      </dl>
 
       {event.prints_parts && (
-        <section className="mt-8">
-          <h2 className="title-detail flex items-center gap-2">
-            <Printer className="h-5 w-5 text-brand-dark" aria-hidden="true" />
+        <section>
+          <h2 className="mb-1.5 font-display text-2xl font-extrabold text-ink">
             Parts to print before the day
           </h2>
-          <p className="mb-4 mt-1 max-w-prose text-sm leading-relaxed text-muted">
+          <p className="mb-4 max-w-[66ch] text-sm text-muted">
             Families who asked for help with a printable guide and chose “the host prints them”.
             Accept what you can; anyone you decline is told straight away and asked to pick a
             printer nearby instead. You said up to {event.part_sets_max} sets; {acceptedSets}{' '}
@@ -128,33 +170,47 @@ export default async function ManageEventPage({ params }: { params: Promise<{ id
         </section>
       )}
 
-      <section className="mt-10">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="title-detail flex items-center gap-2">
-            <Users className="h-5 w-5 text-brand-dark" aria-hidden="true" />
-            Who is coming
-          </h2>
-          <Link href="/dashboard/organisation/publish" className="btn btn-quiet btn-sm">
-            Edit the form
-          </Link>
+      <section>
+        <div className="mb-1.5 mt-9 flex flex-wrap items-end justify-between gap-3.5">
+          <h2 className="font-display text-2xl font-extrabold text-ink">Who is coming</h2>
+          <span className="flex flex-wrap gap-2">
+            <Link
+              href="/dashboard/organisation/publish"
+              className="btn btn-quiet min-h-11 px-3.5 text-sm"
+            >
+              <ClipboardText weight="bold" aria-hidden="true" />
+              Edit the form
+            </Link>
+            {registrations.length > 0 && (
+              <a
+                href={`data:text/csv;charset=utf-8,${encodeURIComponent(csv)}`}
+                download={`${event.title.replace(/[^\w -]+/g, '').trim() || 'event'} registrations.csv`}
+                className="btn btn-quiet min-h-11 px-3.5 text-sm"
+              >
+                <DownloadSimple weight="bold" aria-hidden="true" />
+                Export CSV
+              </a>
+            )}
+          </span>
         </div>
-        <p className="mb-4 mt-1 text-sm text-muted">
+        <p className="mb-3.5 text-sm text-muted">
           {registrations.length} registered · {questions.length} question
           {questions.length === 1 ? '' : 's'} on your form. Answers are shown to leaders only.
         </p>
 
         {registrations.length === 0 ? (
-          <p className="card p-5 text-sm text-muted">
-            Nobody yet. Registrations appear here the moment somebody taps I&apos;m going.
-          </p>
+          <div className="browse-empty p-9 text-muted">Nobody has registered yet.</div>
         ) : (
-          <div className="flex flex-col gap-3">
-            {registrations.map((r) => (
-              <article key={r.id} className="card p-4">
-                <div className="flex flex-wrap items-center gap-3">
+          <div className="grid gap-2.5">
+            {registrations.map((r, i) => (
+              <article
+                key={r.id}
+                className="card-flat flex flex-col gap-3 px-[18px] py-4 shadow-e1"
+              >
+                <div className="flex flex-wrap items-center gap-2.5">
                   <span
                     aria-hidden="true"
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sunken text-xs font-extrabold text-brand-deep"
+                    className={`grid h-9 w-9 shrink-0 place-items-center rounded-full text-xs font-extrabold text-ink ${TINTS[i % TINTS.length]}`}
                   >
                     {r.name
                       .split(/\s+/)
@@ -162,30 +218,29 @@ export default async function ManageEventPage({ params }: { params: Promise<{ id
                       .map((w) => w[0]?.toUpperCase() ?? '')
                       .join('')}
                   </span>
-                  <span className="font-bold text-ink">{r.name}</span>
-                  <span className="text-xs text-muted">
+                  <span className="font-extrabold text-ink">{r.name}</span>
+                  <span className="text-[13px] font-semibold text-muted">
                     registered {formatRelativeTime(r.created_at)}
                   </span>
                 </div>
 
-                {Object.keys(r.answers).length > 0 && (
-                  <dl className="mt-3 grid gap-3 pl-12 sm:grid-cols-2">
-                    {questions.map((q) =>
-                      r.answers[q.id] === undefined ? null : (
-                        <div key={q.id}>
-                          <dt className="text-xs font-bold text-muted">
-                            {prompts.get(q.id) ?? q.prompt}
+                {questions.length > 0 && (
+                  <dl className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-2.5">
+                    {questions.map((q) => {
+                      const a = answerText(r.answers[q.id])
+                      return (
+                        <div key={q.id} className="min-w-0 rounded-field bg-sunken px-3.5 py-2.5">
+                          <dt className="text-xs font-extrabold uppercase tracking-[.06em] text-muted">
+                            {q.prompt}
                           </dt>
-                          <dd className="mt-0.5 text-sm text-ink">
-                            {typeof r.answers[q.id] === 'boolean'
-                              ? r.answers[q.id]
-                                ? 'Yes'
-                                : 'No'
-                              : String(r.answers[q.id])}
+                          <dd
+                            className={`mt-1 text-[15px] font-semibold leading-[1.45] ${a ? 'text-ink' : 'text-muted'}`}
+                          >
+                            {a ?? '—'}
                           </dd>
                         </div>
-                      ),
-                    )}
+                      )
+                    })}
                   </dl>
                 )}
               </article>
