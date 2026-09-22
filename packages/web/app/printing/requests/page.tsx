@@ -2,19 +2,19 @@
  * Request a print.
  *
  * Starts from a guide — `?guide=<id>` — because the parts come from the guide
- * and never from an upload. Without one this is the printer directory plus the
- * door back to the library, which is honest about where a request begins rather
- * than offering a file picker that would break that rule.
+ * and never from an upload. Without one this is the board's "every request
+ * starts from a guide" banner — the directory itself lives at /printing — which
+ * is honest about where a request begins rather than offering a file picker
+ * that would break that rule.
  *
  * Was a ComingSoon placeholder until 058.
  */
 import Link from 'next/link'
-import { Printer as PrinterIcon } from '@phosphor-icons/react/dist/ssr'
+import { BookOpen, ArrowRight } from '@phosphor-icons/react/dist/ssr'
 import { getCapabilities } from '@/lib/capabilities'
 import { apiClient } from '@/lib/api-client'
 import { BackLink } from '@/components/back-link'
 import { RequestPrintForm, type PrintablePart } from '@/components/request-print-form'
-import { printerAvailability } from '@/lib/printer-availability'
 import type { PrinterWithOwner } from '@splat-connect/types'
 
 export const metadata = { title: 'Request a print — SPLAT Connect' }
@@ -30,9 +30,7 @@ export default async function RequestAPrintPage({
   const caps = await getCapabilities()
 
   const printers = caps
-    ? await apiClient
-        .get<PrinterWithOwner[]>('/api/printers')
-        .catch(() => [] as PrinterWithOwner[])
+    ? await apiClient.get<PrinterWithOwner[]>('/api/printers').catch(() => [] as PrinterWithOwner[])
     : []
 
   // A machine of the viewer's own is not a machine they can send a job to, and
@@ -50,80 +48,83 @@ export default async function RequestAPrintPage({
       .catch(() => null)
   }
 
-  return (
-    <div className="mx-auto max-w-2xl">
-      <BackLink href="/printing" label="3D printing" />
-      <h1 className="mt-2 title-detail">Request a print</h1>
-      <p className="mb-6 mt-2 text-sm leading-relaxed text-muted">
-        Pick the parts of a guide you need and send them to one printer.
+  const header = (
+    <header>
+      <p className="eyebrow text-muted">3D Printing</p>
+      <h1 className="mb-2 mt-1 font-display text-[40px] font-extrabold leading-[1.1] text-ink">
+        Request a print
+      </h1>
+      <p className="max-w-[60ch] text-base leading-[1.55] text-muted">
+        {tutorial ? (
+          <>
+            Everything below comes from <strong className="text-ink">{tutorial.title}</strong>. Tick
+            the parts you need, say what matters, and send one request to the printer you pick.
+          </>
+        ) : (
+          'Pick the parts of a guide you need and send them to one printer.'
+        )}
       </p>
+    </header>
+  )
 
-      {!caps ? (
-        <div className="card flex flex-col items-start gap-3 p-6">
-          <p className="text-sm leading-relaxed text-ink">
-            You need an account to send a request, so the printer knows who they are printing for.
-          </p>
-          <Link href="/signup" className="btn btn-primary no-underline">
-            Create an account
-          </Link>
-        </div>
-      ) : tutorial ? (
+  return (
+    <div className="mx-auto max-w-[1180px]">
+      <BackLink href="/printing" label="3D printing" />
+
+      {caps && tutorial ? (
         <RequestPrintForm
           tutorialId={tutorial.id}
           tutorialTitle={tutorial.title}
           parts={tutorial.stl_files ?? []}
           printers={theirs}
+          header={header}
+          requesterSuburb={
+            [caps.profile.pickup_suburb, caps.profile.pickup_state].filter(Boolean).join(' ') ||
+            null
+          }
         />
       ) : (
-        <div className="flex flex-col gap-6">
-          <div className="card flex flex-col items-start gap-3 p-6">
-            <p className="text-sm leading-relaxed text-ink">
-              Requests start from a guide — open the one you are building and ask for its parts from
-              there.
-            </p>
-            <Link href="/library" className="btn btn-primary no-underline">
-              Browse the guides
-            </Link>
-          </div>
-
-          <section>
-            <h2 className="title-section mb-3">Printers on the platform</h2>
-            <ul className="flex list-none flex-col gap-2">
-              {theirs.length === 0 && (
-                <li className="text-sm leading-relaxed text-muted">
-                  Nobody has listed a printer yet.
-                </li>
-              )}
-              {theirs.map((printer) => {
-                const unavailable = printerAvailability(printer)
-                return (
-                  <li
-                    key={printer.id}
-                    className="flex items-start gap-3 rounded-[var(--radius-inset)] bg-canvas p-4"
-                  >
-                    <span aria-hidden="true" className="empty-badge text-brand-deep">
-                      <PrinterIcon size={22} weight="duotone" />
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block font-bold text-ink">
-                        {printer.name} · {printer.org_name ?? printer.owner_name ?? 'A contributor'}
-                      </span>
-                      <span className="block text-sm text-muted">
-                        {[
-                          printer.materials.join(', '),
-                          `${printer.bed_x}×${printer.bed_y}×${printer.bed_z} mm`,
-                          [printer.suburb, printer.state].filter(Boolean).join(', ') || null,
-                          unavailable,
-                        ]
-                          .filter(Boolean)
-                          .join(' · ')}
-                      </span>
-                    </span>
-                  </li>
-                )
-              })}
-            </ul>
-          </section>
+        <div className="flex flex-col gap-7">
+          {header}
+          {!caps ? (
+            <div className="print-panel items-start">
+              <p className="text-sm leading-relaxed text-ink">
+                You need an account to send a request, so the printer knows who they are printing
+                for.
+              </p>
+              <Link href="/signup" className="btn btn-primary no-underline">
+                Create an account
+              </Link>
+            </div>
+          ) : (
+            // The board's no-guide banner, shared with /printing: the parts
+            // come from a guide, so without one there is nothing to request.
+            <div className="printing-guide-first">
+              <span aria-hidden="true" className="printing-guide-first__icon">
+                <BookOpen size={34} weight="duotone" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="font-display text-[22px] font-extrabold text-ink">
+                  Every request starts from a guide
+                </p>
+                <p className="mt-1.5 max-w-[64ch] text-[15px] leading-[1.55] text-ink">
+                  The printer gets the STL files straight from an approved assistive tech guide —
+                  nothing to upload, nothing to guess. Open a guide and press{' '}
+                  <strong>Request a print</strong> on its Files tab.{' '}
+                  <Link href="/printing" className="font-extrabold underline">
+                    See who is printing →
+                  </Link>
+                </p>
+              </div>
+              <Link
+                href="/library"
+                className="btn btn-lg flex-none bg-ink text-surface no-underline"
+              >
+                Find a guide first
+                <ArrowRight size={18} weight="bold" aria-hidden="true" />
+              </Link>
+            </div>
+          )}
         </div>
       )}
     </div>

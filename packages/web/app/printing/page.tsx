@@ -1,63 +1,170 @@
 /**
- * The 3D Printing pillar hub.
+ * Find a printer — the 3D Printing pillar's front door.
  *
- * This section is mostly unbuilt, but it is one of the three things SPLAT
- * provides — so it gets a real page rather than a placeholder. The e2e suite
- * enforces that: a top-level link may never render "Not built yet", because
- * eleven scaffolds hanging off the top bar teach a visitor the site is empty.
+ * Was a hub of three tiles under a paragraph. The board makes it the browse
+ * shape the Guides and Toy Library screens use: the hero ("You do not need a
+ * printer", with "Own one? Print for a family nearby." as the give side), then
+ * a filter rail beside the printers themselves. The headline is still the
+ * promise the old hub led with — you do not need to own a printer.
  *
- * What makes that honest rather than a dodge is that the useful part of this
- * offer needs no software at all. You do not have to own a printer, and the
- * route to getting a part today — ask a library, a makerspace, a men's shed —
- * already works. The page leads with that, and marks the software as coming.
+ * The directory reads /api/printers, which needs a session, so a guest gets the
+ * board's sign-in gate over a blurred skeleton rather than an empty grid that
+ * would read as "nobody prints here".
+ *
+ * Requests start from a guide (the parts come from its STL files, never an
+ * upload), so this page browses; it does not send. The board's "pick up to
+ * three, first to accept wins" needs a multi-printer request the API does not
+ * take yet — see RequestAPrintPage for the one-printer form that exists.
  */
 import Link from 'next/link'
-import { PUBLIC_NAV } from '@/lib/public-nav'
-import { HubGrid } from '@/components/hub-grid'
+import {
+  Printer as PrinterIcon,
+  Recycle,
+  Plus,
+  BookOpen,
+  ArrowRight,
+  LockSimple,
+} from '@phosphor-icons/react/dist/ssr'
+import type { PrinterWithOwner } from '@splat-connect/types'
+import { getCapabilities } from '@/lib/capabilities'
+import { apiClient } from '@/lib/api-client'
+import { BrowseHero } from '@/components/browse-hero'
+import { SplatMascot } from '@/components/splat-mascot'
+import { PrinterDirectory } from '@/components/printer-directory'
+import { printerAvailability } from '@/lib/printer-availability'
 
 export const metadata = {
   title: '3D Printing — SPLAT Connect',
   description:
-    'Printed switch mounts, cases and battery interrupters — how to get one made, with or without a printer.',
+    'Printed switch mounts, cases and battery interrupters — find someone nearby to print one, or list your own printer.',
 }
 
-export default function PrintingPage() {
-  const printing = PUBLIC_NAV.find((s) => s.href === '/printing')!
+const SKELETON_TINTS = ['var(--tmint)', 'var(--tviolet)', 'var(--tamber)']
+
+export default async function PrintingPage() {
+  const caps = await getCapabilities()
+
+  const printers = caps
+    ? await apiClient.get<PrinterWithOwner[]>('/api/printers').catch(() => [] as PrinterWithOwner[])
+    : []
+
+  // The viewer's own machines are not somewhere they can send a job — the same
+  // filter /printing/requests applies, so the two lists agree.
+  const ledOrgIds = new Set(caps?.ledOrgs.map((org) => org.id) ?? [])
+  const theirs = printers.filter(
+    (p) => p.owner_id !== caps?.profile.id && !(p.owner_org_id && ledOrgIds.has(p.owner_org_id))
+  )
+  const openNow = theirs.filter((p) => printerAvailability(p) === null).length
 
   return (
-    <div>
-      <h1 className="title-article">3D Printing</h1>
-      <p className="mt-3.5 max-w-[64ch] text-lg leading-[1.6] text-muted [text-wrap:pretty]">
-        A lot of what makes a toy usable is not the toy. It is the bracket that holds a
-        switch at the angle a child can actually reach, the case that stops a battery
-        interrupter being pulled apart, the mount that clamps to a wheelchair tray. Those
-        parts are printed, and most of them are small enough to be printed by someone who
-        already owns a printer and would rather use it for this.
-      </p>
+    <div className="flex flex-col gap-6">
+      <BrowseHero
+        eyebrow="3D Printing"
+        title="You do not need a printer"
+        lede="Most assistive parts are small — a switch mount, an interrupter case — and someone nearby already owns a printer they would rather use for this. Pick one; they print it, and you cover the filament."
+        primary={{
+          label: 'Find a printer',
+          href: '#printer-grid',
+          icon: <PrinterIcon size={20} weight="bold" aria-hidden="true" />,
+        }}
+        secondary={{
+          label: 'Recycle plastic for credit',
+          href: '/get-involved/recycling',
+          icon: <Recycle size={20} weight="bold" className="text-brand-dark" aria-hidden="true" />,
+        }}
+        // Only the figure the API can back. The board's "parts printed" and
+        // "days median turnaround" have no public source yet, and a guest
+        // cannot read the printer list at all, so they see no numbers rather
+        // than zeros.
+        stats={caps ? [{ n: openNow, label: 'printers open now' }] : []}
+        aside={{
+          kicker: 'Or give',
+          title: 'Own one? Print for a family nearby.',
+          body: 'List your printer, set when you are open, accept only what suits your bed and filament. Pickup is your fixed point, and the family covers your filament — you are never out of pocket.',
+          cta: {
+            label: 'Add a printer',
+            href: '/dashboard/printers/new',
+            icon: <Plus size={18} weight="bold" aria-hidden="true" />,
+          },
+          art: <SplatMascot width={132} pose="hold" />,
+          tint: 'var(--tviolet)',
+        }}
+      />
 
-      <h2 className="mt-12 font-display text-[26px] font-extrabold text-ink">You do not need a printer</h2>
-      <p className="mb-4 mt-1 max-w-prose text-sm leading-relaxed text-muted">
-        This is the part that already works, today, with no software from us. Ask a
-        library, a makerspace, a men&apos;s shed, a school or a university — many have
-        printers sitting idle and staff who would rather they made something like this
-        than another keyring. Some SPLAT{' '}
-        <Link href="/organizations" className="font-semibold text-brand-dark hover:underline">
-          organisations
-        </Link>{' '}
-        keep printers specifically for assistive parts. Hand over the STL file from a
-        guide and the settings from{' '}
-        <Link href="/printing/basics" className="font-semibold text-brand-dark hover:underline">
-          Printing basics
-        </Link>
-        ; that is everything a printer operator needs.
-      </p>
+      <section id="printer-grid" aria-label="Find a printer" className="scroll-mt-24">
+        {/* The board's no-guide banner: nothing here sends a request, and it
+            says so before anybody looks for the button. */}
+        <div className="printing-guide-first">
+          <span aria-hidden="true" className="printing-guide-first__icon">
+            <BookOpen size={34} weight="duotone" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="font-display text-[22px] font-extrabold text-ink">
+              Every request starts from a guide
+            </p>
+            <p className="mt-1.5 max-w-[64ch] text-[15px] leading-[1.55] text-ink">
+              The printer gets the STL files and the tested settings straight from an approved
+              assistive tech guide — nothing to upload, nothing to guess. Open a guide and press{' '}
+              <strong>Request a print</strong> on its Files tab; come back here only to browse who
+              is printing.
+            </p>
+          </div>
+          <Link href="/library" className="btn btn-lg flex-none bg-ink text-surface no-underline">
+            Find a guide first
+            <ArrowRight size={18} weight="bold" aria-hidden="true" />
+          </Link>
+        </div>
 
-      <h2 className="mt-12 font-display text-[26px] font-extrabold text-ink">In this section</h2>
-      <p className="mb-4 mt-1 max-w-prose text-sm text-muted">
-        Some of this is not built yet. Where it isn&apos;t, you can ask to be told when
-        it is.
-      </p>
-      <HubGrid items={printing.children} tone={printing.tone} />
+        <PrinterDirectory
+          printers={caps ? theirs : null}
+          gate={
+            <div className="printing-gate">
+              <div aria-hidden="true" className="printing-gate__skeleton">
+                {SKELETON_TINTS.map((tint) => (
+                  <div key={tint} className="printing-gate__card">
+                    <span
+                      className="h-[52px] w-[52px] rounded-[18px]"
+                      style={{ background: tint }}
+                    />
+                    <span className="h-[18px] w-[70%] rounded-[14px] bg-line" />
+                    <span className="h-[14px] w-1/2 rounded-[14px] bg-line" />
+                    <span className="mt-auto h-[46px] rounded-pill bg-line" />
+                  </div>
+                ))}
+              </div>
+              <div className="printing-gate__over">
+                <div className="flex max-w-[560px] flex-col items-center gap-4 text-center">
+                  <span
+                    aria-hidden="true"
+                    className="grid h-16 w-16 place-items-center rounded-card bg-brand-tint text-brand-dark shadow-[var(--e2)]"
+                  >
+                    <LockSimple size={34} weight="duotone" />
+                  </span>
+                  <h2 className="font-display text-[30px] font-extrabold leading-[1.12] text-ink">
+                    Sign in to ask for a print
+                  </h2>
+                  <p className="max-w-[46ch] text-base leading-[1.55] text-muted [text-wrap:pretty]">
+                    Printers give their time free and you cover the filament. We ask you to sign in
+                    so the person printing has a name to reply to, and so your suburb — never your
+                    address — can be matched to a pickup point nearby.
+                  </p>
+                  <div className="mt-2 flex flex-wrap justify-center gap-3">
+                    <Link
+                      href={`/login?next=${encodeURIComponent('/printing')}`}
+                      className="btn btn-primary btn-lg no-underline"
+                    >
+                      Sign in to continue
+                    </Link>
+                    <Link href="/signup" className="btn btn-quiet no-underline">
+                      Create a free account
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+        />
+      </section>
     </div>
   )
 }
