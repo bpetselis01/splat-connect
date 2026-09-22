@@ -21,9 +21,18 @@
  * shadows as a card on the homepage; there are simply two of them on a page
  * instead of twenty.
  */
+import { Info } from '@phosphor-icons/react/dist/ssr'
 import { PixelBackdrop } from '@/components/pixel-backdrop'
+import { LegalSiblings } from '@/components/legal-siblings'
 import type { Tone } from '@/lib/tone'
 
+/*
+ * Drawn as the board's one "Policy document" layout, which every legal page
+ * shares: a LEGAL eyebrow, the title, the intro as a lead, the date as a mono
+ * meta line, the one boxed idea as an amber callout, then plain sections and
+ * the row of sibling policies. Style only — the wording lives in each page and
+ * is not this component's to change (docs/REGULATORY-CHANGES.md).
+ */
 export function ProsePage({
   title,
   lastUpdated,
@@ -40,27 +49,28 @@ export function ProsePage({
   children: React.ReactNode
 }) {
   return (
-    <article className="relative max-w-prose">
+    <article className="relative max-w-[760px]">
       {tone && <PixelBackdrop tone={tone} />}
-      <h1 className="title-article">{title}</h1>
-      {lastUpdated && (
-        // A bordered stamp, because it is the one flash of personality a legal
-        // page gets. It used to be tilted; the edge and the hard shadow do that
-        // job now, in the same language as everything else on the site.
-        <p className="stamp mt-3">Last updated {lastUpdated}</p>
-      )}
+      <span className="text-[13px] font-extrabold uppercase tracking-[0.1em] text-muted">Legal</span>
+      <h1 className="mt-2.5 font-display text-[clamp(30px,3.4vw,44px)] font-extrabold leading-[1.08] tracking-[-0.02em] text-ink">
+        {title}
+      </h1>
       {intro && (
-        <p className="mt-4 text-base leading-relaxed text-ink">{intro}</p>
+        <p className="mt-3.5 text-lg leading-[1.6] text-muted [text-wrap:pretty]">{intro}</p>
       )}
-      <div className="mt-8 flex flex-col gap-6 text-sm leading-relaxed text-muted [&_h2]:text-[25px] [&_h2]:font-extrabold [&_h2]:text-ink [&_h3]:text-[21px] [&_h3]:font-extrabold [&_h3]:text-ink [&_li]:mt-1.5 [&_p]:mt-3 [&_strong]:text-ink [&_ul]:list-disc [&_ul]:pl-5">
+      {lastUpdated && (
+        <p className="mt-4 font-mono text-xs font-medium text-muted">Last updated {lastUpdated}</p>
+      )}
+      <div className="mt-[34px] flex flex-col gap-[30px] text-base leading-[1.65] text-ink [&_h2]:mb-2 [&_h2]:font-display [&_h2]:text-[23px] [&_h2]:font-extrabold [&_h2]:text-ink [&_h3]:mt-4 [&_h3]:font-display [&_h3]:text-lg [&_h3]:font-extrabold [&_h3]:text-ink [&_li]:mt-1.5 [&_p+p]:mt-3 [&_ul]:list-disc [&_ul]:pl-5 [&_a]:font-semibold [&_a]:text-[var(--b700)] [&_a:hover]:underline">
         {children}
       </div>
+      <LegalSiblings />
     </article>
   )
 }
 
 /**
- * One idea, given a box.
+ * One idea, given a box — the board's amber callout.
  *
  * The lever on a prose page is editing, not decoration: pull the single sentence
  * a reader most needs out of the wall of text and let it sit on its own. Used
@@ -68,6 +78,9 @@ export function ProsePage({
  */
 export function PullQuote({ children }: { children: React.ReactNode }) {
   return (
-    <p className="pullquote my-2 text-base">{children}</p>
+    <p className="-mt-1 flex items-start gap-2 rounded-[var(--radius-inset)] border border-line bg-[var(--tamber)] px-[22px] py-5 font-bold text-[var(--tink)]">
+      <Info size={18} weight="fill" className="mt-1 shrink-0" aria-hidden="true" />
+      <span>{children}</span>
+    </p>
   )
 }
