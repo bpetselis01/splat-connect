@@ -161,6 +161,47 @@ async function seedChild(db, parentId) {
 }
 
 /**
+ * One of each saveable thing on the parent, plus an idea of their own and a
+ * joined challenge — without them /dashboard/saved/* and /dashboard/challenges
+ * render their empty states and the board's cards are never compared. Picks
+ * existing public rows; nothing here is created except the parent's own rows,
+ * which cascade away with the user.
+ */
+async function seedSavesAndIdeas(db, parentId) {
+  const first = async (table, filter) => {
+    const { data } = await filter(db.from(table).select('id')).limit(1)
+    return data?.[0]?.id ?? null
+  }
+  const picks = {
+    tutorial: await first('tutorials', (q) => q.eq('status', 'approved')),
+    toy: await first('toys', (q) => q.eq('status', 'published').neq('owner_id', parentId)),
+    challenge: await first('toy_ideas', (q) => q.eq('status', 'challenge')),
+    organisation: await first('organizations', (q) => q.eq('status', 'active')),
+  }
+  const rows = Object.entries(picks)
+    .filter(([, id]) => id)
+    .map(([entity_type, entity_id]) => ({ profile_id: parentId, entity_type, entity_id }))
+  if (rows.length) await db.from('saves').insert(rows).then(() => {}, () => {})
+  if (picks.challenge) {
+    await db
+      .from('toy_idea_participants')
+      .insert({ idea_id: picks.challenge, profile_id: parentId })
+      .then(() => {}, () => {})
+  }
+  await db
+    .from('toy_ideas')
+    .insert({
+      author_id: parentId,
+      title: 'Parity fixture idea',
+      summary: 'A light box with three brightness steps.',
+      description: 'Fixture.',
+      intended_use: 'Fixture.',
+      primary_user: 'Fixture.',
+    })
+    .then(() => {}, () => {})
+}
+
+/**
  * Seed what the selected roles need. Returns { screenId: concreteRoute } for
  * screens the scraper cannot reach.
  */
@@ -177,6 +218,7 @@ async function seed(db, users) {
     if (pj) routes.print_job = `/dashboard/print-requests/${pj}`
     const toy = await seedOwnedToy(db, parent.id)
     if (toy) routes.toy_detail = `/dashboard/toys/${toy}`
+    await seedSavesAndIdeas(db, parent.id)
   }
   if (contributor) {
     const t = await seedOwnedTutorial(db, contributor.id)

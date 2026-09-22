@@ -27,6 +27,9 @@ const LIVE = process.env.PARITY_LIVE || 'http://localhost:3110'
 const REPORT = path.join(__dirname, 'parity-report.json')
 const SHOTS = path.join(__dirname, 'shots')
 const VIEWPORT = { width: 1440, height: 960 }
+// --shots saves a board/live screenshot pair per screen. The fingerprint reads
+// type and radii; layout and composition only show up in a picture.
+const PAIRS = path.join(__dirname, 'pairs')
 
 // Regulatory wording is fixed by counsel, not by the board — style these pages,
 // never their words. See docs/REGULATORY-CHANGES.md.
@@ -193,6 +196,10 @@ async function fingerprintOf(page, url, rootSel) {
       }
 
       const board = await fingerprintOf(boardPage, `${ARTBOARD}#${s.id}`, '[data-screen-label]')
+      if (argv.includes('--shots')) {
+        fs.mkdirSync(PAIRS, { recursive: true })
+        await boardPage.screenshot({ path: path.join(PAIRS, `${s.id}.board.png`), fullPage: true })
+      }
       if (!board.headings.length && board.page.height < 100) {
         row.error = 'artboard screen did not render'
         results.push(row)
@@ -235,6 +242,8 @@ async function fingerprintOf(page, url, rootSel) {
         process.stdout.write(`  > ${s.id} redirected -> ${row.finalUrl}\n`)
         continue
       }
+      if (argv.includes('--shots'))
+        await livePage.screenshot({ path: path.join(PAIRS, `${s.id}.live.png`), fullPage: true })
       const live = await livePage.evaluate(collectFingerprint, 'main')
       live.chrome = await livePage.evaluate(collectChrome)
 
