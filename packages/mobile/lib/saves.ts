@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { SAVE_SLUGS, type SavedIds, type SaveSlug } from '@splat-connect/types'
 import { apiClient } from './api-client'
 
-const NONE: SavedIds = { tutorials: [], toys: [], challenges: [] }
+const NONE: SavedIds = { tutorials: [], toys: [], challenges: [], organisations: [] }
 
 export type Saves = {
   savedIds: SavedIds
