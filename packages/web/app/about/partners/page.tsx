@@ -124,6 +124,16 @@ export default async function PartnersPage() {
         </section>
       </div>
 
+      {/* Plain-text names, no logos: the board keeps this so the lists above
+          only ever show who is helping now. Empty for the same reason they are. */}
+      <section className="mt-11">
+        <h2 className="mb-2.5 font-display text-xl font-extrabold text-muted">Past supporters</h2>
+        <p className="max-w-[64ch] text-sm text-muted">
+          None yet. When a grant ends or a partner steps back, the name stays here in plain text
+          so the lists above only show who is helping now.
+        </p>
+      </section>
+
       <div className="card mt-11 grid items-center gap-6 px-[34px] py-[30px] sm:grid-cols-[minmax(0,1fr)_auto]">
         <div>
           <h2 className="mb-1.5 font-display text-2xl font-extrabold text-ink">Become a partner</h2>
