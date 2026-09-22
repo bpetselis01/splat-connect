@@ -1186,15 +1186,20 @@
    * 15px/500.
    *
    * An earlier pass set this to 48px, 0 16px and the CANVAS colour, all read off
-   * a rendered artboard screen. The component states all three, and a field sunk
-   * into canvas was me generalising from one form.
+   * a rendered artboard screen. The component states the first two.
+   *
+   * The colour went back to canvas on 2026-09-22: twenty board screens sink
+   * their fields into canvas and thirteen leave them white, and the reason to
+   * side with the twenty is the one the second comment above gives — a white
+   * field on a white card has only its hairline to be found by. Focus lifts
+   * the active field to white so the one you are typing in stands apart.
    */
   .field {
     display: block;
     width: 100%;
     min-height: 44px;
     padding: 0 14px;
-    background-color: var(--color-surface);
+    background-color: var(--color-canvas);
     color: var(--color-ink);
     border: var(--border-width) solid var(--color-line);
     border-radius: var(--radius-field);
@@ -1224,6 +1229,7 @@
      removes a duplicate rather than the only one. */
   .field:focus {
     outline: none;
+    background-color: var(--color-surface);
     border-color: var(--color-brand);
     box-shadow: 0 0 0 3px rgb(25 152 213 / 0.18);
   }

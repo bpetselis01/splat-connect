@@ -1,7 +1,76 @@
 {
- "at": "2026-09-22T11:46:27.413Z",
+ "at": "2026-09-22T12:04:12.592Z",
  "live": "http://localhost:3110",
  "screens": [
+  {
+   "id": "toy_request",
+   "name": "Request a toy",
+   "group": "Public site",
+   "route": "/toy-library/f6b21932-bdde-45ce-8e9e-6a79d19c55c2/request",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/toy-library/f6b21932-bdde-45ce-8e9e-6a79d19c55c2/request",
+   "boardHeadings": 4,
+   "liveHeadings": 4
+  },
+  {
+   "id": "org_request",
+   "name": "Request an organisation",
+   "group": "Get involved",
+   "route": "/get-involved/organisations/request",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/get-involved/organisations/request",
+   "boardHeadings": 3,
+   "liveHeadings": 3
+  },
+  {
+   "id": "event_register",
+   "name": "Register for an event",
+   "group": "Get involved",
+   "route": "/get-involved/events/af0fe7fd-53ca-4335-bd8b-738ef5297c14/register",
+   "findings": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h3 \"$#\" has no counterpart",
+     "board": "$#",
+     "live": null
+    },
+    {
+     "type": "radius",
+     "severity": "medium",
+     "what": "card radius",
+     "board": "14px",
+     "live": "nullpx"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "3/4 board paragraphs absent",
+     "board": "only the host sees this. reminders come the day before and nothing els",
+     "live": "northside therapy asks a few things so the day is set up for the peopl"
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "none",
+     "live": "set"
+    },
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "card background",
+     "board": "rgb(243,241,237)",
+     "live": "rgb(255,255,255)"
+    }
+   ],
+   "role": "parent",
+   "finalUrl": "/get-involved/events/af0fe7fd-53ca-4335-bd8b-738ef5297c14/register",
+   "boardHeadings": 3,
+   "liveHeadings": 2
+  },
   {
    "id": "home",
    "name": "Home",
@@ -107,25 +176,6 @@
    "finalUrl": "/toy-library/f8cd59ba-f45f-4724-b048-d496196c8dfc",
    "boardHeadings": 10,
    "liveHeadings": 5
-  },
-  {
-   "id": "toy_request",
-   "name": "Request a toy",
-   "group": "Public site",
-   "route": "/toy-library/f8cd59ba-f45f-4724-b048-d496196c8dfc/request",
-   "findings": [
-    {
-     "type": "colour",
-     "severity": "low",
-     "what": "input background",
-     "board": "rgb(250,249,247)",
-     "live": "rgb(255,255,255)"
-    }
-   ],
-   "role": "parent",
-   "finalUrl": "/toy-library/f8cd59ba-f45f-4724-b048-d496196c8dfc/request",
-   "boardHeadings": 4,
-   "liveHeadings": 4
   },
   {
    "id": "wizard",
@@ -427,25 +477,6 @@
    "finalUrl": "/get-involved/organisations",
    "boardHeadings": 7,
    "liveHeadings": 7
-  },
-  {
-   "id": "org_request",
-   "name": "Request an organisation",
-   "group": "Get involved",
-   "route": "/get-involved/organisations/request",
-   "findings": [
-    {
-     "type": "colour",
-     "severity": "low",
-     "what": "input background",
-     "board": "rgb(250,249,247)",
-     "live": "rgb(255,255,255)"
-    }
-   ],
-   "role": "parent",
-   "finalUrl": "/get-involved/organisations/request",
-   "boardHeadings": 3,
-   "liveHeadings": 3
   },
   {
    "id": "inv_idea",
@@ -750,60 +781,6 @@
    "finalUrl": "/get-involved/events/af0fe7fd-53ca-4335-bd8b-738ef5297c14",
    "boardHeadings": 4,
    "liveHeadings": 3
-  },
-  {
-   "id": "event_register",
-   "name": "Register for an event",
-   "group": "Get involved",
-   "route": "/get-involved/events/af0fe7fd-53ca-4335-bd8b-738ef5297c14/register",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h3 \"$#\" has no counterpart",
-     "board": "$#",
-     "live": null
-    },
-    {
-     "type": "radius",
-     "severity": "medium",
-     "what": "card radius",
-     "board": "14px",
-     "live": "nullpx"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "3/4 board paragraphs absent",
-     "board": "only the host sees this. reminders come the day before and nothing els",
-     "live": "northside therapy asks a few things so the day is set up for the peopl"
-    },
-    {
-     "type": "colour",
-     "severity": "low",
-     "what": "input background",
-     "board": "rgb(250,249,247)/rgba(0,0,0,0)",
-     "live": "rgb(255,255,255)"
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "none",
-     "live": "set"
-    },
-    {
-     "type": "colour",
-     "severity": "low",
-     "what": "card background",
-     "board": "rgb(243,241,237)",
-     "live": "rgb(255,255,255)"
-    }
-   ],
-   "role": "parent",
-   "finalUrl": "/get-involved/events/af0fe7fd-53ca-4335-bd8b-738ef5297c14/register",
-   "boardHeadings": 3,
-   "liveHeadings": 2
   },
   {
    "id": "recycling",
@@ -1977,19 +1954,19 @@
  ],
  "summary": {
   "screens": 118,
-  "clean": 81,
-  "withFindings": 37,
+  "clean": 83,
+  "withFindings": 35,
   "errored": 0,
-  "findings": 91,
+  "findings": 88,
   "byType": {
-   "font": 4,
    "missing-section": 37,
-   "size": 7,
-   "copy": 18,
-   "colour": 7,
-   "shadow": 9,
-   "extra-section": 4,
    "radius": 4,
+   "copy": 18,
+   "shadow": 9,
+   "colour": 4,
+   "font": 4,
+   "size": 7,
+   "extra-section": 4,
    "weight": 1
   }
  }
