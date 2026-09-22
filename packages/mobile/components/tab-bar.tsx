@@ -18,6 +18,8 @@ import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
 import { theme } from '../lib/theme'
 
+const HIDDEN = new Set(['explore'])
+
 const ICONS: Record<string, { on: keyof typeof Ionicons.glyphMap; off: keyof typeof Ionicons.glyphMap }> = {
   guides: { on: 'book', off: 'book-outline' },
   'toy-library': { on: 'cube', off: 'cube-outline' },
@@ -48,8 +50,9 @@ type Props = BottomTabBarProps & { badges: Record<string, number> }
 
 export function TabBar({ state, descriptors, navigation, insets, badges }: Props) {
   const items = state.routes
-    // A route with href: null (Explore) keeps its screens but has no button.
-    .filter((route) => (descriptors[route.key].options as { href?: string | null }).href !== null)
+    // Explore keeps its screens but has no button. By name, not by the
+    // layout's href: null — a custom bar is handed every route regardless.
+    .filter((route) => !HIDDEN.has(route.name))
     .map((route) => {
       const focused = state.routes[state.index]?.key === route.key
       const label = descriptors[route.key].options.title ?? route.name

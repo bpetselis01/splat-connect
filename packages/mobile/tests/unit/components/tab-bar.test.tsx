@@ -6,7 +6,7 @@ const titles: Record<string, string> = { guides: 'Guides', 'toy-library': 'Toys'
 const props: any = {
   state: { index: 0, routes, routeNames: routes.map((r) => r.name) },
   descriptors: Object.fromEntries(
-    routes.map((r) => [r.key, { options: { title: titles[r.name], href: r.name === 'explore' ? null : undefined } }])
+    routes.map((r) => [r.key, { options: { title: titles[r.name] } }])
   ),
   navigation: { emit: jest.fn(() => ({ defaultPrevented: false })), navigate: jest.fn() },
   insets: { top: 0, bottom: 0, left: 0, right: 0 },
