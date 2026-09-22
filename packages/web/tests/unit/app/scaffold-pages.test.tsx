@@ -31,11 +31,13 @@ describe('scaffold pages', () => {
   })
 
   it.each(pages)(
-    '%s scaffold page explains the plan and offers to notify under its own key',
+    '%s scaffold page says it is not built, routes onward, and offers to notify under its own key',
     (expectedKey, Page) => {
       render(<Page />)
       expect(screen.getByText(/not built yet/i)).toBeInTheDocument()
-      expect(screen.getByRole('heading', { level: 2, name: /how it will work/i })).toBeInTheDocument()
+      // The plan layout ends on Guides; the board's "Not built yet" layout on
+      // its "In the meantime" links. Either way, not a dead end.
+      expect(screen.getAllByRole('link').length).toBeGreaterThan(0)
       expect(screen.getByLabelText(/email/i).id).toBe(`notify-${expectedKey}`)
     }
   )

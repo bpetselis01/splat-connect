@@ -1,18 +1,14 @@
 import { test, expect } from '@playwright/test'
-import { PUBLIC_NAV, FOOTER_LEGAL } from '../../../lib/public-nav'
+import { FOOTER_COLUMNS } from '../../../components/public-footer'
 
 /**
  * The broadest guard in the suite.
  *
- * The footer is generated from PUBLIC_NAV, so walking every one of its links
- * catches a route that was added to the nav model but never built — which is the
- * most likely way this 43-route site rots.
+ * The footer's columns are a literal list (the board's labels are not the
+ * nav's), so walking every one of its links is what catches a typo'd or
+ * never-built href.
  */
-const ALL_HREFS = [
-  ...PUBLIC_NAV.map((s) => s.href),
-  ...PUBLIC_NAV.flatMap((s) => s.children.map((c) => c.href)),
-  ...FOOTER_LEGAL.map((l) => l.href),
-] as string[]
+const ALL_HREFS = FOOTER_COLUMNS.flatMap((c) => c.rows.map((r) => r.href))
 
 test.describe('fat footer', () => {
   test('renders on a public page with every destination', async ({ page }) => {

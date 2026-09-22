@@ -68,7 +68,11 @@ function toy(overrides: Partial<Toy> = {}): Toy & { organizations: { name: strin
 // The page fetches inventory first, then one pickup per led org.
 function mockFetches(toys: unknown[], pickup: unknown = PICKUP) {
   vi.mocked(apiClient.get).mockImplementation(async (path: string) =>
-    path === '/api/toys/inventory' ? toys : pickup
+    path === '/api/toys/inventory'
+      ? toys
+      : path.startsWith('/api/toy-transactions')
+        ? []
+        : pickup
   )
 }
 

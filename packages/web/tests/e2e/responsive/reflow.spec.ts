@@ -72,14 +72,11 @@ test('@responsive the new-tutorial page fits the viewport', async ({ page }) => 
   await page.goto('/upload')
 
   const width = page.viewportSize()!.width
-  // /upload opens on the kind choice (048); the form is one card-click away.
-  // By href: the footer's "Toy adaptation 101" link shares the card's words.
-  const choice = page.locator('a[href="/upload?kind=toy_adaptation"]')
-  await expectWithinViewport(choice, width)
-  await choice.click()
+  // The kind is a radio card pair on the form itself.
+  await expectWithinViewport(page.getByRole('radio', { name: /Toy adaptation/ }), width)
   await expectWithinViewport(page.getByLabel('Title'), width)
   await expectWithinViewport(page.getByLabel('Difficulty'), width)
-  await expectWithinViewport(page.getByRole('button', { name: 'Create' }), width)
+  await expectWithinViewport(page.getByRole('button', { name: /Create draft/ }), width)
 })
 
 test('@responsive the tutorial detail page stacks to a single column', async ({ page }) => {
@@ -92,7 +89,7 @@ test('@responsive the tutorial detail page stacks to a single column', async ({ 
   await page.goto(`/tutorials/${id}`)
 
   const pdf = page.getByRole('link', { name: 'Download Tutorial PDF' })
-  const parts = page.getByRole('heading', { name: 'Parts needed' })
+  const parts = page.getByRole('cell', { name: 'E2E part' })
   const pdfBox = await pdf.boundingBox()
   const partsBox = await parts.boundingBox()
 

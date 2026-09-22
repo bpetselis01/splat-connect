@@ -1,6 +1,6 @@
 import { ToyLibraryClient } from './toy-library-client'
 import { getSavedIds } from '@/lib/saves'
-import type { ToyWithOwner } from '@splat-connect/types'
+import type { ImpactSummary, ToyWithOwner } from '@splat-connect/types'
 
 export default async function ToyLibraryPage() {
   let toys: ToyWithOwner[] = []
@@ -11,9 +11,22 @@ export default async function ToyLibraryPage() {
     toys = []
   }
 
-  const saved = await getSavedIds()
+  const [saved, delivered] = await Promise.all([
+    getSavedIds(),
+    // The hero's first figure, as the board has it. Unreachable degrades to
+    // null and the hero falls back to a count it can make itself.
+    fetch(`${process.env.API_URL}/api/public/impact`, { cache: 'no-store' })
+      .then((r) => (r.ok ? (r.json() as Promise<ImpactSummary>) : null))
+      .then((i) => i?.totals.toysDelivered ?? null)
+      .catch(() => null),
+  ])
 
   return (
-    <ToyLibraryClient toys={toys} savedIds={saved?.toys ?? []} signedIn={saved !== null} />
+    <ToyLibraryClient
+      toys={toys}
+      delivered={delivered}
+      savedIds={saved?.toys ?? []}
+      signedIn={saved !== null}
+    />
   )
 }

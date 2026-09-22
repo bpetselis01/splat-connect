@@ -59,7 +59,11 @@ describe('ToyTransactionRequest', () => {
 
   it('prompts a signed-out visitor to sign in', () => {
     render(<ToyTransactionRequest toy={toy()} viewerId={null} myToys={[]} />)
-    expect(screen.getByText(/sign in/i)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Sign in to ask for it' })).toHaveAttribute(
+      'href',
+      `/login?next=${encodeURIComponent('/toy-library/toy-1/request?mode=donation')}`
+    )
+    expect(screen.getByRole('link', { name: 'Sign in to offer a swap' })).toBeInTheDocument()
   })
 
   it('shows nothing for the owner viewing their own toy', () => {
@@ -75,14 +79,16 @@ describe('ToyTransactionRequest', () => {
   //        child is what gets a yes" — and a two-button control had nowhere to
   //        put one
   it('links to the request screen rather than posting anything', () => {
+    const expected = {
+      donation: ['/toy-library/toy-1/request?mode=donation'],
+      exchange: ['/toy-library/toy-1/request?mode=exchange'],
+      both: ['/toy-library/toy-1/request?mode=donation', '/toy-library/toy-1/request?mode=exchange'],
+    }
     for (const offer of ['donation', 'exchange', 'both'] as const) {
       const { unmount } = render(
         <ToyTransactionRequest toy={toy({ offer_type: offer })} viewerId="viewer-1" myToys={[]} />
       )
-      expect(screen.getByRole('link', { name: /ask for this toy/i })).toHaveAttribute(
-        'href',
-        '/toy-library/toy-1/request'
-      )
+      expect(screen.getAllByRole('link').map((a) => a.getAttribute('href'))).toEqual(expected[offer])
       unmount()
     }
   })

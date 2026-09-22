@@ -33,11 +33,11 @@ import { createContributor, createPublishedToy, signIn, deleteUser, acceptTerms 
  */
 async function askForToy(page: Page, toyId: string) {
   await page.goto(`/toy-library/${toyId}`)
-  await page.getByRole('link', { name: 'Ask for this toy' }).click()
+  await page.getByRole('link', { name: 'Ask to collect it' }).click()
   await page
     .getByLabel(/Say who it is for/)
     .fill('My daughter is five and presses with a flat palm.')
-  await page.getByRole('button', { name: /^Ask / }).click()
+  await page.getByRole('button', { name: 'Send the request' }).click()
   await expect(page).toHaveURL(/\/dashboard\/exchanges\//)
 }
 
@@ -73,8 +73,8 @@ test.describe('Toy donation and exchange', () => {
       await signIn(page, requester.email, requester.password)
       await page.waitForURL('**/dashboard')
       await page.goto(txUrl)
-      await expect(page.getByText(/your handoff code/i)).toBeVisible()
-      const codeText = await page.getByText(/your handoff code/i).textContent()
+      await expect(page.getByText(/your hand(?:off|over) code/i)).toBeVisible()
+      const codeText = await page.getByText(/your hand(?:off|over) code/i).textContent()
       const requesterCode = codeText?.match(/\d{6}/)?.[0]
       expect(requesterCode).toBeTruthy()
 
@@ -203,7 +203,7 @@ test.describe('Toy donation and exchange', () => {
       // their handoff code all arrive on a page that has sat still since it
       // sent a message.
       await expect(requesterPage.getByText('2 Live St, Testville, VIC, 3000')).toBeVisible()
-      await expect(requesterPage.getByText(/your handoff code/i)).toBeVisible()
+      await expect(requesterPage.getByText(/your hand(?:off|over) code/i)).toBeVisible()
     } finally {
       await requesterContext.close()
       await ownerContext.close()

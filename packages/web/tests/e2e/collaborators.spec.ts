@@ -119,9 +119,8 @@ test('a collaborator is invited, accepts, edits, submits, and both are notified 
       })
       .toBe(renamedTitle)
 
-    // Submitting moved onto its own Review step, off the always-visible bar.
-    await page.getByRole('tab', { name: 'Review' }).click()
-    await page.getByRole('button', { name: 'Submit for review' }).click()
+    // Submitting sits in the editor header (and the Status section).
+    await page.getByRole('button', { name: 'Submit for review' }).first().click()
     await expect
       .poll(async () => {
         const { data } = await adminClient()
@@ -139,7 +138,7 @@ test('a collaborator is invited, accepts, edits, submits, and both are notified 
     await page.goto('/admin/review')
     await page.getByRole('link', { name: new RegExp(renamedTitle) }).click()
     await page.waitForURL(`**/admin/review/${tutorialId}`)
-    await page.getByRole('button', { name: 'Approve — publish to library' }).click()
+    await page.getByRole('button', { name: 'Approve and publish' }).click()
     await page.waitForLoadState('networkidle')
 
     // 6. Both the author and the collaborator see the approval on

@@ -23,8 +23,9 @@ import type { Route } from 'next'
 import {
   ArrowRight,
   BookOpen,
+  BookOpenText,
   Gift,
-  Users,
+  UsersThree,
   MagnifyingGlass,
   Wrench,
   Receipt,
@@ -36,6 +37,7 @@ import { ToyLibraryCard } from '@/components/toy-library-card'
 import { ScrollWorld } from '@/components/scroll-world'
 import { SplatMascot } from '@/components/splat-mascot'
 import { StatChips } from '@/components/stat-chips'
+import { CountUp } from '@/components/count-up'
 import type { Tutorial, ImpactSummary, ToyWithOwner } from '@splat-connect/types'
 
 const EMPTY_TOTALS: ImpactSummary['totals'] = {
@@ -72,7 +74,7 @@ export default async function HomePage() {
   const stats = [
     { icon: BookOpen, value: totals.tutorials, label: 'guides', tint: 'var(--color-brand-soft)' },
     { icon: Gift, value: totals.toysDelivered, label: 'toys delivered', tint: 'var(--color-mint-soft)' },
-    { icon: Users, value: totals.contributors, label: 'contributors', tint: 'var(--color-apricot-soft)' },
+    { icon: UsersThree, value: totals.contributors, label: 'contributors', tint: 'var(--color-apricot-soft)' },
   ]
 
   const doors = [
@@ -133,7 +135,7 @@ export default async function HomePage() {
           </p>
           <div className="hero__actions">
             <Link href="/library" className="btn btn-primary btn-hero no-underline">
-              <BookOpen weight="bold" className="h-5 w-5" aria-hidden="true" />
+              <BookOpenText weight="bold" className="h-5 w-5" aria-hidden="true" />
               Find a guide
             </Link>
             <Link href="/toy-library" className="btn btn-quiet btn-hero no-underline">
@@ -144,7 +146,7 @@ export default async function HomePage() {
           <StatChips
             stats={stats.map(({ icon: Icon, value, label, tint }) => ({
               label,
-              value: value.toLocaleString(),
+              value: <CountUp to={value}>{value.toLocaleString()}</CountUp>,
               icon: <Icon weight="duotone" className="h-[22px] w-[22px]" />,
               tint,
             }))}
@@ -179,17 +181,18 @@ export default async function HomePage() {
         </ul>
       </section>
 
-      <section className="band band--split" aria-label="What things cost">
+      <section className="band band--split band--cost" aria-label="What things cost">
         <div className="cost-card">
           <span aria-hidden="true" className="door__icon" style={{ backgroundColor: 'var(--color-honey-soft)' }}>
             <Receipt weight="duotone" className="h-[30px] w-[30px]" />
           </span>
           <h2 className="door__title">No price tags. Every cost written down.</h2>
           <p className="band__body">
-            Nobody on SPLAT charges for their time, and SPLAT never touches your money. What
-            people do spend — filament, a switch jack, a satchel, a parts kit — is itemised by
-            the person who spent it, with a reason in their own words, and you see the figure
-            before you agree to anything.
+            {/* Cut to the mint card's length so the pair sit level — the board's
+                longer paragraph ran a line over and left this card taller. */}
+            Nobody on SPLAT charges for their time, and SPLAT never touches your money. Every
+            cost — filament, a switch jack, a parts kit — is itemised by whoever spent it, and
+            you see it before you agree.
           </p>
           {/* Arrow leads on the board here — the button reads as "go this way"
               rather than as a label with a decoration after it. */}
@@ -202,7 +205,7 @@ export default async function HomePage() {
           <span aria-hidden="true" className="door__icon" style={{ backgroundColor: 'var(--color-surface)' }}>
             <Recycle weight="duotone" className="h-[30px] w-[30px]" />
           </span>
-          <h3 className="door__title">Bring your failed prints. Leave with credit.</h3>
+          <h2 className="door__title">Bring your failed prints. Leave with credit.</h2>
           <p className="band__body">
             Some organisations here run a shredder and an extruder. Two kilos of clean, sorted
             plastic becomes filament on their machines — and grams of print credit for you,
@@ -230,7 +233,7 @@ export default async function HomePage() {
           <ul className="recent__row">
             {tutorials.slice(0, 2).map((t) => (
               <li key={t.id}>
-                <TutorialCard tutorial={t} />
+                <TutorialCard tutorial={t} compact />
               </li>
             ))}
           </ul>
@@ -246,7 +249,8 @@ export default async function HomePage() {
           <ul className="recent__row">
             {toys.slice(0, 2).map((toy) => (
               <li key={toy.id}>
-                <ToyLibraryCard toy={toy} />
+                {/* The public list is available-only, so the pill is true here. */}
+                <ToyLibraryCard toy={toy} compact available />
               </li>
             ))}
           </ul>

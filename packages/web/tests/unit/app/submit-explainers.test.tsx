@@ -38,9 +38,14 @@ describe('submit explainers', () => {
     expect(screen.getByRole('link', { name: /start a guide/i })).toHaveAttribute('href', '/upload')
   })
 
-  it('tells a signed-out visitor they will need an account', () => {
+  // /upload's middleware handles sign-in and the terms, so the page's other
+  // door is the contributor path rather than a separate sign-up link.
+  it('points at the contributor path', () => {
     render(<SubmitATutorial />)
-    expect(screen.getByRole('link', { name: /create an account/i })).toHaveAttribute('href', '/signup')
+    expect(screen.getByRole('link', { name: /read the contributor path/i })).toHaveAttribute(
+      'href',
+      '/get-involved/contributors'
+    )
   })
 
   it('submit-a-tutorial contains no form', () => {

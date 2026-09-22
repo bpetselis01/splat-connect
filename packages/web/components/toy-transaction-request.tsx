@@ -20,8 +20,9 @@
  * - app/toy-library/[id]/request/page.tsx: where this goes
  */
 import Link from 'next/link'
-import { Gift, ArrowsLeftRight } from '@phosphor-icons/react/dist/ssr'
-import type { Toy, ToyWithOwner } from '@splat-connect/types'
+import type { Route } from 'next'
+import { ArrowsLeftRight, HandHeart, LockSimple } from '@phosphor-icons/react/dist/ssr'
+import { toyHolderName, type Toy, type ToyWithOwner } from '@splat-connect/types'
 
 export function ToyTransactionRequest({
   toy,
@@ -33,48 +34,53 @@ export function ToyTransactionRequest({
   /** Kept in the signature: the copy below says whether a swap is possible. */
   myToys: Toy[]
 }) {
-  if (!viewerId) {
-    return (
-      <p className="text-sm text-muted">
-        <Link href="/login" className="font-semibold text-brand-dark underline">
-          Sign in
-        </Link>{' '}
-        to request this toy.
-      </p>
-    )
-  }
   // Your own toy, or your organisation's. The API refuses either; saying so
   // here is what stops somebody pressing a button that will refuse itself.
-  if (viewerId === toy.owner_id) return null
+  if (viewerId && viewerId === toy.owner_id) return null
   if (!toy.offer_type) {
-    return <p className="text-sm text-muted">Not currently offered for donation or exchange.</p>
+    return <p className="m-0 text-sm text-muted">Not currently offered for donation or exchange.</p>
   }
 
+  const holder = toyHolderName(toy) ?? 'the holder'
   const canDonate = toy.offer_type === 'donation' || toy.offer_type === 'both'
   const canExchange = toy.offer_type === 'exchange' || toy.offer_type === 'both'
 
+  // The board's rail: one button per way this toy can be asked for, the
+  // first filled. Each lands on the request screen with its mode picked; a
+  // signed-out visitor is sent through sign-in to the same place.
+  const actions = [
+    canDonate && { mode: 'donation', label: 'Ask to collect it', guest: 'Sign in to ask for it', Icon: HandHeart },
+    canExchange && { mode: 'exchange', label: 'Offer a swap', guest: 'Sign in to offer a swap', Icon: ArrowsLeftRight },
+  ].filter((a) => a !== false)
+
   return (
-    <div className="card-flat flex flex-col gap-3 p-4">
+    <>
+      {actions.map(({ mode, label, guest, Icon }, i) => {
+        const request = `/toy-library/${toy.id}/request?mode=${mode}`
+        return (
+          <Link
+            key={mode}
+            href={(viewerId ? request : `/login?next=${encodeURIComponent(request)}`) as Route}
+            className={`btn ${i === 0 ? 'btn-primary' : 'btn-quiet'} btn-lg btn-block no-underline`}
+          >
+            {viewerId ? (
+              <Icon size={20} weight="bold" aria-hidden="true" />
+            ) : (
+              <LockSimple size={20} weight="bold" aria-hidden="true" />
+            )}
+            {viewerId ? label : guest}
+          </Link>
+        )
+      })}
       {/* Says what pressing this actually does. It opens a conversation with
           the holder rather than completing anything, which the label alone
           does not make obvious. */}
-      <p className="text-sm leading-relaxed text-muted">
-        {canDonate && canExchange
-          ? 'Ask to collect this toy, or offer one of yours in exchange. Either way it starts a conversation with the holder.'
-          : canDonate
-            ? 'Ask to collect this toy. This starts a conversation with the holder.'
-            : 'Offer one of your toys in exchange. This starts a conversation with the holder.'}
-        {canExchange && myToys.length === 0 && ' You have no listed toys to offer yet.'}
+      <p className="m-0 text-[13px] leading-[1.5] text-muted">
+        {viewerId
+          ? `Given, not sold. This opens a chat with ${holder} in My exchanges — nothing is agreed until you both confirm. They never see your address.`
+          : `Given, not sold. Sign in first so ${holder} knows who is asking — they see your name and your note, never your address.`}
+        {viewerId && canExchange && myToys.length === 0 && ' You have no listed toys to offer yet.'}
       </p>
-
-      <Link href={`/toy-library/${toy.id}/request`} className="btn btn-primary self-start">
-        {canExchange && !canDonate ? (
-          <ArrowsLeftRight className="h-4 w-4" aria-hidden="true" />
-        ) : (
-          <Gift className="h-4 w-4" aria-hidden="true" />
-        )}
-        Ask for this toy
-      </Link>
-    </div>
+    </>
   )
 }

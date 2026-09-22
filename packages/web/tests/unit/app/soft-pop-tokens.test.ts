@@ -92,20 +92,29 @@ describe('soft pop tokens', () => {
   it('zeroes every elevation in high contrast and doubles the border', () => {
     const hc = css.slice(css.indexOf("body[data-mode='hc']"))
     const block = hc.slice(0, hc.indexOf('}'))
-    for (const e of ['--e1', '--e2', '--e3', '--e4', '--glow', '--hi']) {
-      expect(block).toMatch(new RegExp(`\\${e}:\\s*none`))
+    for (const e of ['e1', 'e2', 'e3', 'e4', 'glow', 'hi']) {
+      expect(block).toMatch(new RegExp(`--shadow-${e}:\\s*none`))
     }
-    expect(block).toMatch(/--bw:\s*2px/)
-    expect(block).toMatch(/--line:\s*#000000/)
+    expect(block).toMatch(/--border-width:\s*2px/)
+    expect(block).toMatch(/--color-line:\s*#000000/)
   })
 
-  it('defines a dark mode that redefines the alias layer, not the theme', () => {
+  /*
+   * Why: this used to redefine only the artboard aliases (--canvas, --ink), and
+   * Tailwind utilities do not read those — `bg-surface` is var(--color-surface).
+   * Dark mode turned the header dark and left every page under it white. The
+   * override is scoped to body[data-mode], so light mode is untouched, and the
+   * aliases resolve on the same element and follow.
+   */
+  it('defines a dark mode on the theme tokens the utilities read', () => {
     const dark = css.slice(css.indexOf("body[data-mode='dark']"))
     const block = dark.slice(0, dark.indexOf('}'))
-    expect(block).toMatch(/--canvas:\s*#141a21/)
-    expect(block).toMatch(/--ink:\s*#e7edf2/)
-    // It must not reach back into the @theme layer, or light mode follows it.
-    expect(block).not.toMatch(/--color-/)
+    expect(block).toMatch(/--color-canvas:\s*#141a21/)
+    expect(block).toMatch(/--color-ink:\s*#e7edf2/)
+    expect(block).toMatch(/--color-surface:\s*#1c242e/)
+    // Not the aliases: one of those set here would pin itself and stop
+    // following the token it is meant to mirror.
+    expect(block).not.toMatch(/^\s*--(canvas|surface|ink|line):/m)
   })
 
   /*

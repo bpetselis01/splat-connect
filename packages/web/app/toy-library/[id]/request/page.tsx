@@ -14,7 +14,6 @@
  * - packages/api/src/routes/toy-transactions.ts: POST /, which takes the note
  */
 import { notFound, redirect } from 'next/navigation'
-import Link from 'next/link'
 import { apiClient } from '@/lib/api-client'
 import { getCapabilities } from '@/lib/capabilities'
 import { RequestToyForm } from '@/components/request-toy-form'
@@ -23,8 +22,15 @@ import type { Toy, ToyWithOwner, ToyTransactionSummary } from '@splat-connect/ty
 
 export const metadata = { title: 'Request a toy — SPLAT Connect' }
 
-export default async function RequestToyPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function RequestToyPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ mode?: string }>
+}) {
   const { id } = await params
+  const { mode } = await searchParams
   const caps = await getCapabilities()
   if (!caps) {
     redirect(`/login?next=${encodeURIComponent(`/toy-library/${id}/request`)}`)
@@ -51,24 +57,17 @@ export default async function RequestToyPage({ params }: { params: Promise<{ id:
   const holder = toyHolderName(toy) ?? 'the holder'
 
   return (
-    <div className="mx-auto max-w-2xl">
-      <h1 className="title-article">
+    // The board's 900px column less its 32px gutters.
+    <div className="mx-auto max-w-[836px]">
+      <h1 className="m-0 font-display text-[clamp(30px,3.4vw,42px)] font-extrabold leading-[1.08] tracking-[-0.02em] text-ink">
         Ask {holder} for {toy.name}
       </h1>
-      <p className="mt-2 text-sm leading-relaxed text-muted">
+      <p className="m-0 mt-2.5 max-w-[62ch] text-[17px] text-muted">
         {toy.offer_type === 'both'
           ? `${holder} is open to either. Offer one of your own toys, or just ask and let them decide.`
           : toy.offer_type === 'exchange'
-            ? `${holder} is looking for a swap, so this one asks you to offer a toy back.`
-            : `${holder} is giving this one, so this is a straight ask.`}
-      </p>
-      <p className="mt-1 text-sm">
-        <Link
-          href={`/toy-library/${toy.id}`}
-          className="font-semibold text-brand-dark hover:underline"
-        >
-          Back to {toy.name}
-        </Link>
+            ? `${holder} is only after a swap, so pick one of your own toys to offer.`
+            : `${holder} is giving this one away. Just ask — nothing is expected back.`}
       </p>
 
       <RequestToyForm
@@ -81,6 +80,7 @@ export default async function RequestToyPage({ params }: { params: Promise<{ id:
         // reads off. Null for an account that has never set one, and the
         // sentence loses the place rather than the offer.
         suburb={caps.profile.pickup_suburb ?? null}
+        initialMode={mode === 'donation' || mode === 'exchange' ? mode : undefined}
       />
     </div>
   )

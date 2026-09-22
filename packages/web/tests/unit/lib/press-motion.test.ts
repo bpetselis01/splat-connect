@@ -26,7 +26,9 @@ const css = readFileSync(
 )
 
 /** The families driven by the shared block. */
-const FAMILIES = ['.btn', '.card-link', '.chip', '.step-pill', '.dropzone', '.dock-my-splat', '.save-btn']
+// .save-btn left on 2026-09-18: the board's save control is a heart that grows
+// on hover and shrinks on press, not a button that lifts — see .save-btn.
+const FAMILIES = ['.btn', '.card-link', '.chip', '.step-pill', '.dropzone', '.dock-my-splat']
 
 /**
  * Just the shared block, anchored on the LAST occurrence of the marker — the
@@ -69,7 +71,7 @@ describe('press motion', () => {
   //        sets the same number as motion.pressScale. A press that travels
   //        instead of scaling is Pixel's rule coming back
   it('presses by scaling to 0.96 and dropping the shadow', () => {
-    for (const sel of [':is(.btn, .card-link, .chip, .step-pill, .dropzone, .dock-my-splat, .save-btn):active', '.panel:has(> .panel-summary:active)']) {
+    for (const sel of [':is(.btn, .card-link, .chip, .step-pill, .dropzone, .dock-my-splat):active', '.panel:has(> .panel-summary:active)']) {
       const at = BLOCK.indexOf(sel)
       expect(at, `${sel} not found`).toBeGreaterThan(-1)
       const rule = BLOCK.slice(at, BLOCK.indexOf('}', at))
@@ -96,7 +98,7 @@ describe('press motion', () => {
   //        of it — the primary's hover keeps --b600, and darkening it to --b700
   //        made a hovered button indistinguishable from a sending one
   it('lifts 2px to --e3 on hover, without touching the fill', () => {
-    const at = BLOCK.indexOf(':is(.btn, .card-link, .dropzone, .dock-my-splat, .save-btn):hover')
+    const at = BLOCK.indexOf(':is(.btn, .card-link, .dropzone, .dock-my-splat):hover')
     expect(at).toBeGreaterThan(-1)
     const rule = BLOCK.slice(at, BLOCK.indexOf('}', at))
     expect(rule).toContain('transform: translateY(-2px)')
@@ -124,7 +126,7 @@ describe('press motion', () => {
   //        start jumping at the pointer — the opposite of what an outline
   //        destructive control is for
   it('overrides the lift for destructive, after the shared rule', () => {
-    const shared = BLOCK.indexOf(':is(.btn, .card-link, .dropzone, .dock-my-splat, .save-btn):hover')
+    const shared = BLOCK.indexOf(':is(.btn, .card-link, .dropzone, .dock-my-splat):hover')
     const danger = BLOCK.indexOf('.pixel .btn-danger:hover')
     expect(danger).toBeGreaterThan(shared)
     const rule = BLOCK.slice(danger, BLOCK.indexOf('}', danger))
@@ -186,32 +188,23 @@ describe('press motion', () => {
 
 /**
  * The save island sits over a card as a sibling of the card's anchor, so it
- * does not inherit the card's lift. These pin the two halves of that: the
- * button presses like every other family, and a separate rule moves it when the
- * CARD is hovered.
+ * does not inherit the card's lift. Since 2026-09-18 it is the board's heart —
+ * it grows and shrinks rather than lifting — and the WRAPPER lifts, carrying
+ * card and heart together (the .browse-card block).
  */
 describe('the save island', () => {
-  it('joins the family group, so it presses with everything else', () => {
-    expect(BLOCK).toContain('.save-btn')
+  it('stays out of the shared press family', () => {
+    expect(BLOCK).not.toContain('.save-btn')
   })
 
-  it('lifts with the card through its own rule, not by joining the :is() group', () => {
-    expect(BLOCK).toMatch(/\.pixel \.save-host:hover \.save-btn\s*\{/)
-
-    // A descendant-with-pseudo-class selector folded into the family :is()
-    // would change what the group matches AND hand the whole group this
-    // selector's specificity — the same trap the block's own comment documents
-    // for .panel:has(). Keep it out.
-    expect(BLOCK).not.toMatch(/:is\([^)]*\.save-host/)
-  })
-
-  it('keeps that lift behind a hover-capable media query', () => {
-    const at = BLOCK.indexOf('.pixel .save-host:hover .save-btn')
-    const guard = BLOCK.lastIndexOf('@media (hover: hover)', at)
-    const closes = BLOCK.lastIndexOf('}\n  }', at)
-    // Without the guard a tapped card keeps the island lifted on a phone.
+  it('rides the card by lifting the wrapper, behind a hover-capable query', () => {
+    const at = css.indexOf('.save-host:has(> .browse-card):hover {')
+    expect(at).toBeGreaterThan(-1)
+    const guard = css.lastIndexOf('@media (hover: hover)', at)
     expect(guard).toBeGreaterThan(-1)
-    expect(guard).toBeGreaterThan(closes)
+    // Still inside that query: a two-space brace would be the query closing.
+    expect(css.slice(guard, at)).not.toMatch(/\n  \}\n/)
+    expect(css.slice(at, css.indexOf('}', at))).toContain('translateY(-4px)')
   })
 })
 
@@ -233,7 +226,7 @@ describe('forced states', () => {
 
   it('places them after the press rules, so a forced state beats a live pointer', () => {
     expect(BLOCK.indexOf("[data-state='active']")).toBeGreaterThan(
-      BLOCK.indexOf(':is(.btn, .card-link, .chip, .step-pill, .dropzone, .dock-my-splat, .save-btn):active'),
+      BLOCK.indexOf(':is(.btn, .card-link, .chip, .step-pill, .dropzone, .dock-my-splat):active'),
     )
   })
 })

@@ -35,7 +35,7 @@ describe('contributor terms onboarding', () => {
     render(<ContributorTermsOnboarding />)
 
     fireEvent.click(screen.getByRole('checkbox'))
-    fireEvent.click(screen.getByRole('button', { name: /I accept/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Accept and continue' }))
 
     await waitFor(() => expect(window.location.href).toBe('/my-tutorials'))
   })
@@ -45,7 +45,7 @@ describe('contributor terms onboarding', () => {
     render(<ContributorTermsOnboarding />)
 
     fireEvent.click(screen.getByRole('checkbox'))
-    fireEvent.click(screen.getByRole('button', { name: /I accept/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Accept and continue' }))
 
     await waitFor(() => expect(window.location.href).toBe('/dashboard'))
   })
@@ -55,7 +55,7 @@ describe('contributor terms onboarding', () => {
     render(<ContributorTermsOnboarding />)
 
     fireEvent.click(screen.getByRole('checkbox'))
-    fireEvent.click(screen.getByRole('button', { name: /I accept/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Accept and continue' }))
 
     await waitFor(() => expect(window.location.href).toBe('/dashboard'))
   })
@@ -65,7 +65,7 @@ describe('contributor terms onboarding', () => {
     render(<ContributorTermsOnboarding />)
 
     fireEvent.click(screen.getByRole('checkbox'))
-    fireEvent.click(screen.getByRole('button', { name: /I accept/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Accept and continue' }))
 
     await waitFor(() => expect(window.location.href).toBe('/dashboard'))
   })
@@ -75,7 +75,7 @@ describe('contributor terms onboarding', () => {
     render(<ContributorTermsOnboarding />)
 
     fireEvent.click(screen.getByRole('checkbox'))
-    fireEvent.click(screen.getByRole('button', { name: /I accept/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Accept and continue' }))
 
     await waitFor(() => expect(window.location.href).toBe('/dashboard'))
   })

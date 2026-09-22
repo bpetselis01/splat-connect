@@ -40,60 +40,65 @@ function toy(overrides: Partial<ToyWithOwner> = {}): ToyWithOwner {
   }
 }
 
+const names = () => [...document.querySelectorAll('.browse-card__title')].map((p) => p.textContent)
+
 describe('ToyLibraryClient', () => {
-  it('filters by name, case-insensitive substring', () => {
-    render(
-      <ToyLibraryClient
-        toys={[toy({ id: 't1', name: 'Fire truck' }), toy({ id: 't2', name: 'Blocks' })]}
-        savedIds={[]}
-        signedIn={false}
-      />
-    )
-    fireEvent.change(screen.getByLabelText('Search'), { target: { value: 'fire' } })
-    expect(screen.getByRole('link', { name: /Fire truck/ })).toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: /Blocks/ })).not.toBeInTheDocument()
-  })
-
-  it('filters by condition bucket', () => {
+  // The board's facets. A toy offered either way answers both a gift and a
+  // swap search; "Swap or gift" asks only for the ones open to both.
+  it('filters by how a toy is offered', () => {
     render(
       <ToyLibraryClient
         toys={[
-          toy({ id: 't1', name: 'Good toy', condition: 9 }),
-          toy({ id: 't2', name: 'Fair toy', condition: 5 }),
-          toy({ id: 't3', name: 'Loved toy', condition: 2 }),
+          toy({ id: 't1', name: 'Gift toy', offer_type: 'donation' }),
+          toy({ id: 't2', name: 'Swap toy', offer_type: 'exchange' }),
+          toy({ id: 't3', name: 'Either toy', offer_type: 'both' }),
         ]}
         savedIds={[]}
         signedIn={false}
       />
     )
-    fireEvent.click(screen.getByRole('button', { name: 'Good' }))
-    expect(screen.getByRole('link', { name: /Good toy/ })).toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: /Fair toy/ })).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: /Loved toy/ })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Gift' }))
+    expect(names().sort()).toEqual(['Either toy', 'Gift toy'])
+    fireEvent.click(screen.getByRole('button', { name: 'Swap or gift' }))
+    expect(names()).toEqual(['Either toy'])
   })
 
-  it('toggles the switch-adapted filter independently of condition', () => {
+  it('filters by who is holding it', () => {
     render(
       <ToyLibraryClient
         toys={[
-          toy({ id: 't1', name: 'Adapted toy', switch_adapted: true, condition: 3 }),
-          toy({ id: 't2', name: 'Plain toy', switch_adapted: false, condition: 3 }),
+          toy({ id: 't1', name: 'Family toy' }),
+          toy({ id: 't2', name: 'Org toy', owner_id: null, owner_org_id: 'o1', organizations: { name: 'Hub' }, profiles: null }),
         ]}
         savedIds={[]}
         signedIn={false}
       />
     )
-    fireEvent.click(screen.getByRole('button', { name: 'Switch-adapted only' }))
-    expect(screen.getByRole('link', { name: /Adapted toy/ })).toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: /Plain toy/ })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'An organisation' }))
+    expect(names()).toEqual(['Org toy'])
+  })
 
-    fireEvent.click(screen.getByRole('button', { name: 'Well-loved' }))
-    expect(screen.getByRole('link', { name: /Adapted toy/ })).toBeInTheDocument()
+  it('sorts by condition, best first, and flips', () => {
+    render(
+      <ToyLibraryClient
+        toys={[
+          toy({ id: 't1', name: 'Worn', condition: 3 }),
+          toy({ id: 't2', name: 'Mint', condition: 10 }),
+        ]}
+        savedIds={[]}
+        signedIn={false}
+      />
+    )
+    fireEvent.click(screen.getByRole('button', { name: /Newest first/ }))
+    fireEvent.click(screen.getByRole('option', { name: /Condition/ }))
+    expect(names()).toEqual(['Mint', 'Worn'])
+    fireEvent.click(screen.getByRole('button', { name: 'Switch to needs a fix first' }))
+    expect(names()).toEqual(['Worn', 'Mint'])
   })
 
   it('shows the empty state when nothing matches', () => {
-    render(<ToyLibraryClient toys={[toy({ name: 'Fire truck' })]} savedIds={[]} signedIn={false} />)
-    fireEvent.change(screen.getByLabelText('Search'), { target: { value: 'zzz' } })
-    expect(screen.getByText('Nothing matches all of those yet')).toBeInTheDocument()
+    render(<ToyLibraryClient toys={[toy({ offer_type: 'donation' })]} savedIds={[]} signedIn={false} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Swap only' }))
+    expect(screen.getByText('No toys match all of those')).toBeInTheDocument()
   })
 })

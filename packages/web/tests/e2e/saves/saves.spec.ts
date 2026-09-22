@@ -93,8 +93,7 @@ test.describe('saving things', () => {
       ).toBeVisible()
 
       await page.goto('/dashboard/saved')
-      await expect(page.getByRole('heading', { name: 'Ready now' })).toBeVisible()
-      await expect(page.getByRole('heading', { name: 'Coming soon' })).toBeVisible()
+      await expect(page.getByRole('heading', { name: 'Saved', level: 2 })).toBeVisible()
       await shot(page, 'saved-hub')
 
       await page.getByRole('link', { name: /Tutorials/ }).first().click()
@@ -160,7 +159,7 @@ test.describe('saving things', () => {
       await shot(page, 'my-splat-mobile')
 
       await page.goto('/dashboard/saved')
-      await expect(page.getByRole('heading', { name: 'Ready now' })).toBeVisible()
+      await expect(page.getByRole('heading', { name: 'Saved', level: 2 })).toBeVisible()
       await shot(page, 'saved-hub-mobile')
 
       // The page body must never scroll sideways.
