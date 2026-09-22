@@ -235,7 +235,16 @@ export function OrgProfileForm({ org }: { org: Organization }) {
       </section>
 
       <section className="edit-card">
-        <h2 className="edit-card__title">What you ask families to cover</h2>
+        <div>
+          <h2 className="edit-card__title">What you ask families to cover</h2>
+          {/* The board's own line under this panel. Kept although live has no
+              itemised cost lines to put it beside: it is the money disclaimer,
+              and this is the only screen where a leader states a price. */}
+          <p className="edit-card__lede">
+            SPLAT does not take payments or a cut. This is a written record both of you can see —
+            you settle it between yourselves.
+          </p>
+        </div>
         <label>
           <span className="form-label">What you quote families</span>
           <textarea
