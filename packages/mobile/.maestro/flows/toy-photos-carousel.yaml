@@ -34,7 +34,7 @@ appId: com.splatconnect.mobile
           optional: true
 
 - tapOn:
-    text: "Toy Library"
+    text: "Toys"
 - assertVisible:
     text: "Adapted toys that families and organisations are giving away."
 

@@ -53,14 +53,9 @@ appId: com.splatconnect.mobile
     text: "Done"
 
 - tapOn:
-    text: "Toy Library"
+    text: "Toys"
 - assertVisible:
     text: "Adapted toys that families and organisations are giving away."
-
-- tapOn:
-    text: "Explore"
-- assertVisible:
-    text: "Search everything, plus Learn, Get Involved and About."
 
 # Inbox must render an actual row, not just its header: rows are where
 # relativeTime runs, and the fixture seeds exactly one notification so this
@@ -74,9 +69,11 @@ appId: com.splatconnect.mobile
 - assertVisible:
     text: "Your idea was published as a design challenge"
 
-# iOS surfaces the centre button as its accessibilityLabel ("Open My SPLAT"),
-# not its visible caption — the testID is the same on both platforms.
+# Me is the hub. Its label carries a count while anything is waiting, so the
+# bare word matches nothing on iOS — same shape as Inbox above.
 - tapOn:
-    id: "my-splat-button"
+    text: "Me.*"
 - assertVisible:
-    text: "All of My SPLAT"
+    text: "Add a tutorial"
+- assertVisible:
+    text: "About SPLAT"

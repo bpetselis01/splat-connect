@@ -1,14 +1,9 @@
-// Everything behind MY SPLAT presents modally over the tabs. The tab beneath
-// keeps its own stack and its highlight; Close returns to exactly where you were.
+// Everything behind the Me tab. Pushed over the tabs, not presented: a row on
+// Me slides its screen in and the back chevron returns to Me.
 import { Redirect, Stack } from 'expo-router'
 import { stackScreenOptions } from '../../lib/nav-options'
 import { useAuth } from '../../lib/auth-context'
-import { CloseButton } from '../../components/ui/CloseButton'
 
-// The whole (my) group is already presented as one modal by the root layout
-// (app/_layout.tsx). Pushes inside this stack are ordinary drill-downs — if
-// this inner Stack also carried presentation: 'modal', every push would stack
-// as its own modal and lose its back chevron.
 
 export default function MyLayout() {
   // (my) is a sibling of (tabs) at the root, so the tab layout's gate does not
@@ -20,7 +15,6 @@ export default function MyLayout() {
 
   return (
     <Stack screenOptions={{ ...stackScreenOptions, headerBackTitle: 'Back' }}>
-      <Stack.Screen name="my-splat" options={{ title: 'My SPLAT', headerLeft: () => <CloseButton /> }} />
       <Stack.Screen name="account/index" options={{ title: 'Account' }} />
       <Stack.Screen name="account/ability" options={{ title: 'Ability Profile' }} />
       <Stack.Screen name="account/everyday-needs" options={{ title: 'Everyday Needs' }} />
