@@ -232,9 +232,13 @@ export function PrinterForm({
         <h2 className={CARD_TITLE}>Pickup</h2>
         <div className="flex items-start gap-3 rounded-[18px] bg-[var(--surface2)] px-4 py-3.5">
           <MapPin size={22} weight="fill" aria-hidden="true" className="shrink-0 text-[var(--coral)]" />
+          {/* The board leads on where the suburb below came from — it is
+              prefilled from the profile, and saying so is what makes the
+              "Change it on your account" route obvious. */}
           <p className="text-[13px] leading-normal text-muted">
-            Requesters see the suburb until you accept. The street address is the pickup point,
-            and you give it when you take a job on.
+            Your pickup point comes from your profile. Requesters see the suburb until you
+            accept; the street address is the pickup point, and you give it when you take a
+            job on.
           </p>
         </div>
         <div className="grid gap-3.5 sm:grid-cols-[2fr_1fr]">
