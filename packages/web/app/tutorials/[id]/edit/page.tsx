@@ -417,7 +417,7 @@ export default async function EditTutorialPage({
       meta: `Draft · saved ${formatRelativeTime(tutorial.updated_at)}`,
       head: 'Only you can see this',
       body: 'A draft is invisible to everyone — families, organisations, even us. It stays here as long as you like, and nothing is checked until you ask for it to be.',
-      progress: `${filled} of ${checklist.length} sections filled in. Worth a look is optional.`,
+      progress: `${filled} of ${checklist.length} sections filled in. Worth a look is optional — Steps and Safety are not.`,
       privacyLead: 'Nothing here is public.',
       privacy: 'A draft is visible only to you. Submitting shows it to your reviewer, and nobody else, until it is approved.',
     },
@@ -540,7 +540,7 @@ export default async function EditTutorialPage({
         </div>
         {tutorial.status === 'draft' && (
           <p className="text-[13px] leading-normal text-muted">
-            Submitting sends it to {reviewer} for review.
+            Submitting sends it to {reviewer}. You can carry on editing until they open it.
           </p>
         )}
       </div>
