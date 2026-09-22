@@ -599,7 +599,8 @@
   "group": "My SPLAT",
   "boardRoute": "/dashboard/exchanges (inbox)",
   "route": "/dashboard/exchanges",
-  "role": "parent"
+  "role": "parent",
+  "stateOnly": true
  },
  {
   "id": "my_challenges",
@@ -880,7 +881,8 @@
   "name": "Check your email",
   "group": "Auth",
   "boardRoute": "/signup (sent)",
-  "route": "/signup"
+  "route": "/signup",
+  "stateOnly": true
  },
  {
   "id": "confirmed",

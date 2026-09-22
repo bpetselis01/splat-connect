@@ -33,6 +33,8 @@ const PAIRS = path.join(__dirname, 'pairs')
 
 // Regulatory wording is fixed by counsel, not by the board — style these pages,
 // never their words. See docs/REGULATORY-CHANGES.md.
+// Counsel owns these pages' words AND their sections, so the board is not
+// authoritative for either. Style still is. See docs/REGULATORY-CHANGES.md.
 const NO_COPY = /^\/(legal|privacy|terms|safety|code-of-conduct)/
 
 const argv = process.argv.slice(2)
@@ -247,8 +249,13 @@ async function fingerprintOf(page, url, rootSel) {
       const live = await livePage.evaluate(collectFingerprint, 'main')
       live.chrome = await livePage.evaluate(collectChrome)
 
+      // `stateOnly` marks a board screen that draws a STATE of a live route the
+      // harness cannot get into — /signup (sent) needs a submitted form. Its
+      // sections and words describe that state, so only style is comparable.
+      const contentIsOurs = !NO_COPY.test(route) && !s.stateOnly
       row.findings = compare(board, live, {
-        copy: !NO_COPY.test(route),
+        copy: contentIsOurs,
+        structure: contentIsOurs,
         // On a detail screen the <h1> is the record's own name — the board's
         // "Bubble machine" against a fixture's "E2E reflow detail 1-2". That is
         // the sample data differing, which this report ignores everywhere else,

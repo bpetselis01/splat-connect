@@ -1,5 +1,5 @@
 {
- "at": "2026-09-22T07:30:14.373Z",
+ "at": "2026-09-22T07:48:59.864Z",
  "live": "http://localhost:3110",
  "screens": [
   {
@@ -117,7 +117,7 @@
    "id": "toy_public",
    "name": "Toy detail",
    "group": "Public site",
-   "route": "/toy-library/6ae697ac-c398-41d6-99f1-b7b572e92f08",
+   "route": "/toy-library/34ee795e-74c5-467c-a648-11baa9f58a07",
    "findings": [
     {
      "type": "font",
@@ -163,7 +163,7 @@
     }
    ],
    "role": "guest",
-   "finalUrl": "/toy-library/6ae697ac-c398-41d6-99f1-b7b572e92f08",
+   "finalUrl": "/toy-library/34ee795e-74c5-467c-a648-11baa9f58a07",
    "boardHeadings": 10,
    "liveHeadings": 3
   },
@@ -171,7 +171,7 @@
    "id": "toy_request",
    "name": "Request a toy",
    "group": "Public site",
-   "route": "/toy-library/6ae697ac-c398-41d6-99f1-b7b572e92f08/request",
+   "route": "/toy-library/34ee795e-74c5-467c-a648-11baa9f58a07/request",
    "findings": [
     {
      "type": "missing-section",
@@ -238,7 +238,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/toy-library/6ae697ac-c398-41d6-99f1-b7b572e92f08/request",
+   "finalUrl": "/toy-library/34ee795e-74c5-467c-a648-11baa9f58a07/request",
    "boardHeadings": 4,
    "liveHeadings": 2
   },
@@ -1136,13 +1136,6 @@
      "live": null
     },
     {
-     "type": "shadow",
-     "severity": "medium",
-     "what": "no button on live carries a shadow",
-     "board": "set",
-     "live": "none"
-    },
-    {
      "type": "colour",
      "severity": "low",
      "what": "input background",
@@ -1171,15 +1164,7 @@
    "name": "Book a drop-off",
    "group": "Get involved",
    "route": "/get-involved/recycling/drop-off",
-   "findings": [
-    {
-     "type": "shadow",
-     "severity": "medium",
-     "what": "no button on live carries a shadow",
-     "board": "set",
-     "live": "none"
-    }
-   ],
+   "findings": [],
    "role": "parent",
    "finalUrl": "/get-involved/recycling/drop-off",
    "boardHeadings": 1,
@@ -1412,7 +1397,7 @@
      "severity": "medium",
      "what": "h1 wording",
      "board": "requests to northside therapy",
-     "live": "requests to parity org muccoir#pnk#"
+     "live": "requests to parity org mucdcplkbexi"
     },
     {
      "type": "radius",
@@ -1494,7 +1479,7 @@
    "id": "org_event_manage",
    "name": "Manage event",
    "group": "My SPLAT",
-   "route": "/dashboard/org/events/31164537-07bc-4272-bfc1-64f4c069e20f",
+   "route": "/dashboard/org/events/a995408d-7ae5-43f0-a16f-589921460ddb",
    "findings": [
     {
      "type": "font",
@@ -1533,7 +1518,7 @@
     }
    ],
    "role": "leader",
-   "finalUrl": "/dashboard/org/events/31164537-07bc-4272-bfc1-64f4c069e20f",
+   "finalUrl": "/dashboard/org/events/a995408d-7ae5-43f0-a16f-589921460ddb",
    "boardHeadings": 4,
    "liveHeadings": 2
   },
@@ -1587,15 +1572,7 @@
    "name": "Safety",
    "group": "Legal",
    "route": "/safety",
-   "findings": [
-    {
-     "type": "extra-section",
-     "severity": "medium",
-     "what": "live has 2 extra h2 the board does not draw",
-     "board": null,
-     "live": "small parts | #d-printed parts"
-    }
-   ],
+   "findings": [],
    "role": "guest",
    "finalUrl": "/safety",
    "boardHeadings": 6,
@@ -1606,22 +1583,7 @@
    "name": "Privacy policy",
    "group": "Legal",
    "route": "/privacy",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "page height differs grossly",
-     "board": "1127px",
-     "live": "2938px"
-    },
-    {
-     "type": "extra-section",
-     "severity": "low",
-     "what": "live has 6 extra h2 the board does not draw",
-     "board": null,
-     "live": "what we do not do | public by design | where it is stored"
-    }
-   ],
+   "findings": [],
    "role": "guest",
    "finalUrl": "/privacy",
    "boardHeadings": 6,
@@ -1632,15 +1594,7 @@
    "name": "Terms of use",
    "group": "Legal",
    "route": "/terms",
-   "findings": [
-    {
-     "type": "extra-section",
-     "severity": "medium",
-     "what": "live has 3 extra h2 the board does not draw",
-     "board": null,
-     "live": "not a medical device | adapting a toy voids its warranty | your account"
-    }
-   ],
+   "findings": [],
    "role": "guest",
    "finalUrl": "/terms",
    "boardHeadings": 7,
@@ -1651,15 +1605,7 @@
    "name": "Code of conduct",
    "group": "Legal",
    "route": "/code-of-conduct",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"unacceptable\" has no counterpart",
-     "board": "unacceptable",
-     "live": null
-    }
-   ],
+   "findings": [],
    "role": "guest",
    "finalUrl": "/code-of-conduct",
    "boardHeadings": 6,
@@ -1670,15 +1616,7 @@
    "name": "What Connect is (and isn’t)",
    "group": "Legal",
    "route": "/legal/intended-purpose",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"if you are a clinician\" has no counterpart",
-     "board": "if you are a clinician",
-     "live": null
-    }
-   ],
+   "findings": [],
    "role": "guest",
    "finalUrl": "/legal/intended-purpose",
    "boardHeadings": 6,
@@ -1689,50 +1627,7 @@
    "name": "Contributor terms",
    "group": "Legal",
    "route": "/legal/contributor-terms",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"you wrote it, or you have permission\" has no counterpart",
-     "board": "you wrote it, or you have permission",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"you keep the copyright\" has no counterpart",
-     "board": "you keep the copyright",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"review is not approval of safety\" has no counterpart",
-     "board": "review is not approval of safety",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"no claims about outcomes\" has no counterpart",
-     "board": "no claims about outcomes",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"withdrawal\" has no counterpart",
-     "board": "withdrawal",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "page height differs grossly",
-     "board": "995px",
-     "live": "414px"
-    }
-   ],
+   "findings": [],
    "role": "guest",
    "finalUrl": "/legal/contributor-terms",
    "boardHeadings": 6,
@@ -1743,50 +1638,7 @@
    "name": "Organisation leader terms",
    "group": "Legal",
    "route": "/legal/org-leader-terms",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"what backing means\" has no counterpart",
-     "board": "what backing means",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"who may review\" has no counterpart",
-     "board": "who may review",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"conflicts\" has no counterpart",
-     "board": "conflicts",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"administrators can spot-check\" has no counterpart",
-     "board": "administrators can spot-check",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"suspension\" has no counterpart",
-     "board": "suspension",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "page height differs grossly",
-     "board": "995px",
-     "live": "414px"
-    }
-   ],
+   "findings": [],
    "role": "guest",
    "finalUrl": "/legal/org-leader-terms",
    "boardHeadings": 6,
@@ -1852,7 +1704,7 @@
    "id": "editor",
    "name": "Tutorial editor",
    "group": "My SPLAT",
-   "route": "/tutorials/4de7ecd8-0daf-4ea6-8250-5abb197161c4/edit",
+   "route": "/tutorials/5947947a-9d66-451a-8b7a-68164eaf99c8/edit",
    "findings": [
     {
      "type": "copy",
@@ -1863,7 +1715,7 @@
     }
    ],
    "role": "contributor",
-   "finalUrl": "/tutorials/4de7ecd8-0daf-4ea6-8250-5abb197161c4/edit",
+   "finalUrl": "/tutorials/5947947a-9d66-451a-8b7a-68164eaf99c8/edit",
    "boardHeadings": 5,
    "liveHeadings": 5
   },
@@ -1908,7 +1760,7 @@
    "id": "toy_detail",
    "name": "Toy detail",
    "group": "My SPLAT",
-   "route": "/dashboard/toys/6ae697ac-c398-41d6-99f1-b7b572e92f08",
+   "route": "/dashboard/toys/34ee795e-74c5-467c-a648-11baa9f58a07",
    "findings": [
     {
      "type": "missing-section",
@@ -1940,7 +1792,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/toys/6ae697ac-c398-41d6-99f1-b7b572e92f08",
+   "finalUrl": "/dashboard/toys/34ee795e-74c5-467c-a648-11baa9f58a07",
    "boardHeadings": 8,
    "liveHeadings": 5
   },
@@ -1974,7 +1826,7 @@
    "id": "thread",
    "name": "Exchange thread",
    "group": "My SPLAT",
-   "route": "/dashboard/exchanges/80436e12-1d24-4e28-b4cd-776d2517d470",
+   "route": "/dashboard/exchanges/7b4e843d-b28c-4b2e-a3d7-59ac4d1c1d1b",
    "findings": [
     {
      "type": "missing-section",
@@ -2006,7 +1858,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/exchanges/80436e12-1d24-4e28-b4cd-776d2517d470",
+   "finalUrl": "/dashboard/exchanges/7b4e843d-b28c-4b2e-a3d7-59ac4d1c1d1b",
    "boardHeadings": 4,
    "liveHeadings": 5
   },
@@ -2036,27 +1888,6 @@
      "what": "h1 \"inbox\" size",
      "board": "26px",
      "live": "40px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h1 wording",
-     "board": "inbox",
-     "live": "my exchanges"
-    },
-    {
-     "type": "missing-section",
-     "severity": "medium",
-     "what": "no inputs on live",
-     "board": 1,
-     "live": 0
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "4/4 board paragraphs absent",
-     "board": "you requested toy # and offered toy # — # aug",
-     "live": "toys you have asked for, toys people have asked you for, and builds yo"
     }
    ],
    "role": "parent",
@@ -2180,7 +2011,7 @@
    "id": "print_job",
    "name": "Print job",
    "group": "My SPLAT",
-   "route": "/dashboard/print-requests/3f10c4b1-67a0-40b9-ae31-935b0f179b4f",
+   "route": "/dashboard/print-requests/2572143c-60f8-48f4-bf24-23b75c810f10",
    "findings": [
     {
      "type": "size",
@@ -2212,7 +2043,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/print-requests/3f10c4b1-67a0-40b9-ae31-935b0f179b4f",
+   "finalUrl": "/dashboard/print-requests/2572143c-60f8-48f4-bf24-23b75c810f10",
    "boardHeadings": 3,
    "liveHeadings": 5
   },
@@ -2235,13 +2066,6 @@
      "what": "14/15 board paragraphs absent",
      "board": "switch-mount-body.stl, switch-mount-clamp.stl, cradle-#mm.stl",
      "live": "your printers, requests waiting on you, and what is on the bed."
-    },
-    {
-     "type": "radius",
-     "severity": "low",
-     "what": "button radius range",
-     "board": "999px",
-     "live": "33554400px"
     },
     {
      "type": "shadow",
@@ -2333,7 +2157,7 @@
    "id": "child",
    "name": "Child profile",
    "group": "My SPLAT",
-   "route": "/dashboard/child/35bae018-c374-49a2-8631-5116af75059d",
+   "route": "/dashboard/child/f6a618e2-a9f4-4e31-81ea-0deb5a1dbf56",
    "findings": [
     {
      "type": "missing-section",
@@ -2358,7 +2182,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/child/35bae018-c374-49a2-8631-5116af75059d",
+   "finalUrl": "/dashboard/child/f6a618e2-a9f4-4e31-81ea-0deb5a1dbf56",
    "boardHeadings": 4,
    "liveHeadings": 5
   },
@@ -2420,7 +2244,7 @@
      "severity": "medium",
      "what": "7/7 board paragraphs absent",
      "board": "guides waiting on northside therapy collective. oldest first.",
-     "live": "guides waiting on parity org muccoir#pnk# oldest first."
+     "live": "guides waiting on parity org mucdcplkbexi. oldest first."
     }
    ],
    "role": "leader",
@@ -2597,13 +2421,6 @@
      "what": "14/15 board paragraphs absent",
      "board": "switch-mount-body.stl, switch-mount-clamp.stl, cradle-#mm.stl",
      "live": "every leader sees this queue. pickup is always the organisation's addr"
-    },
-    {
-     "type": "radius",
-     "severity": "low",
-     "what": "button radius range",
-     "board": "999px",
-     "live": "33554400px"
     },
     {
      "type": "shadow",
@@ -2790,7 +2607,7 @@
    "id": "admin_idea_detail",
    "name": "Review an idea",
    "group": "Admin",
-   "route": "/admin/ideas/8d5e95f1-7386-4d4a-8057-8a37e70b71b2",
+   "route": "/admin/ideas/4a415927-a0a9-412d-9ece-73566e647ddb",
    "findings": [
     {
      "type": "copy",
@@ -2808,7 +2625,7 @@
     }
    ],
    "role": "admin",
-   "finalUrl": "/admin/ideas/8d5e95f1-7386-4d4a-8057-8a37e70b71b2",
+   "finalUrl": "/admin/ideas/4a415927-a0a9-412d-9ece-73566e647ddb",
    "boardHeadings": 3,
    "liveHeadings": 3
   },
@@ -2887,22 +2704,7 @@
    "name": "Create account",
    "group": "Auth",
    "route": "/signup",
-   "findings": [
-    {
-     "type": "shadow",
-     "severity": "medium",
-     "what": "no button on live carries a shadow",
-     "board": "set",
-     "live": "none"
-    },
-    {
-     "type": "radius",
-     "severity": "low",
-     "what": "button radius range",
-     "board": "999px",
-     "live": "14px"
-    }
-   ],
+   "findings": [],
    "role": "guest",
    "finalUrl": "/signup",
    "boardHeadings": 2,
@@ -2913,50 +2715,7 @@
    "name": "Check your email",
    "group": "Auth",
    "route": "/signup",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h3 \"splat connect\" has no counterpart",
-     "board": "splat connect",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h3 \"connect\" has no counterpart",
-     "board": "connect",
-     "live": null
-    },
-    {
-     "type": "extra-section",
-     "severity": "medium",
-     "what": "live has an extra h1: \"welcome to splat connect\"",
-     "board": null,
-     "live": "welcome to splat connect"
-    },
-    {
-     "type": "shadow",
-     "severity": "medium",
-     "what": "no button on live carries a shadow",
-     "board": "set",
-     "live": "none"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "2/2 board paragraphs absent",
-     "board": "we've sent a confirmation link to sam.mitchell@example.com. confirm yo",
-     "live": "one account for browsing, saving, requesting toys and — if you make th"
-    },
-    {
-     "type": "radius",
-     "severity": "low",
-     "what": "button radius range",
-     "board": "999px",
-     "live": "14px"
-    }
-   ],
+   "findings": [],
    "role": "guest",
    "finalUrl": "/signup",
    "boardHeadings": 3,
@@ -2980,25 +2739,11 @@
    "route": "/onboarding/contributor-terms",
    "findings": [
     {
-     "type": "shadow",
-     "severity": "medium",
-     "what": "no button on live carries a shadow",
-     "board": "set",
-     "live": "none"
-    },
-    {
      "type": "copy",
      "severity": "medium",
      "what": "6/7 board paragraphs absent",
      "board": "version # you keep the copyright on everything you write.",
      "live": "these terms have not been written yet. anything you accept here is not"
-    },
-    {
-     "type": "radius",
-     "severity": "low",
-     "what": "button radius range",
-     "board": "999px",
-     "live": "0px"
     }
    ],
    "role": "guest",
@@ -3031,19 +2776,19 @@
  ],
  "summary": {
   "screens": 119,
-  "clean": 47,
-  "withFindings": 72,
+  "clean": 57,
+  "withFindings": 62,
   "errored": 0,
-  "findings": 235,
+  "findings": 200,
   "byType": {
-   "radius": 21,
-   "copy": 44,
+   "radius": 16,
+   "copy": 41,
    "font": 11,
-   "missing-section": 80,
+   "missing-section": 62,
    "size": 26,
-   "extra-section": 10,
+   "extra-section": 6,
    "colour": 18,
-   "shadow": 23,
+   "shadow": 18,
    "weight": 2
   }
  }

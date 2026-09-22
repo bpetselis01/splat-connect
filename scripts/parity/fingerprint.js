@@ -422,6 +422,12 @@ function collectFingerprint(rootSelector) {
     // ANY button with the shadow the board gives its primary? That is robust
     // to the two sides ordering, colouring and counting their buttons
     // differently, which they always do.
+    // Whether a PRIMARY (filled) button survived the disabled filter. A form
+    // whose submit is correctly disabled until a box is ticked has buttons —
+    // a password reveal, a skip link — but no primary, and comparing the
+    // board's primary against those reported "no button on live carries a
+    // shadow" and a false radius on every such screen.
+    hasPrimary: buttons.length > 0,
     sets: {
       buttonRadius: [...new Set(candidates.map((e) => px(cs(e).borderTopLeftRadius)))].sort(
         (a, b) => a - b

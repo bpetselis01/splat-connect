@@ -208,9 +208,20 @@ function compare(board, live, opts = {}) {
     // Only when live actually has an enabled button to judge. A screen whose
     // sole control is a disabled submit has an empty set, and "none of your
     // zero buttons has a shadow" is not a finding.
-    if (l.buttonShadow.length && b.buttonShadow.includes('set') && !l.buttonShadow.includes('set'))
+    // Both sides must actually have a primary button. `buttonShadow` is built
+    // over every enabled button, so a form whose submit is correctly disabled
+    // until a box is ticked still has a non-empty set — of a password reveal
+    // and a skip link, neither of which the board's primary should be judged
+    // against.
+    const bothPrimary = board.hasPrimary !== false && live.hasPrimary !== false
+    if (
+      bothPrimary &&
+      l.buttonShadow.length &&
+      b.buttonShadow.includes('set') &&
+      !l.buttonShadow.includes('set')
+    )
       out.push(f('shadow', 'medium', 'no button on live carries a shadow', 'set', 'none'))
-    if (b.buttonRadius.length && l.buttonRadius.length) {
+    if (bothPrimary && b.buttonRadius.length && l.buttonRadius.length) {
       const bMax = Math.max(...b.buttonRadius)
       const lMax = Math.max(...l.buttonRadius)
       if (Math.abs(bMax - lMax) > SIZE_TOLERANCE)
@@ -317,6 +328,13 @@ function compare(board, live, opts = {}) {
   }
 
   out.sort((a, b) => SEV[b.severity] - SEV[a.severity])
+  // Pages whose content is not the board's to dictate — the legal set, whose
+  // wording and sections belong to counsel (docs/REGULATORY-CHANGES.md), and
+  // board screens that draw a STATE the harness cannot load live into, such as
+  // /signup (sent). Style is still compared; presence of sections is not.
+  if (opts.structure === false)
+    return out.filter((x) => x.type !== 'missing-section' && x.type !== 'extra-section')
+
   return out
 }
 
