@@ -55,6 +55,7 @@ import {
   KIND_LABEL,
   MATURITY_LABEL,
   SAFETY_CHECKLIST,
+  formatAgeRange,
   formatBuildTime,
   type BuyLink,
   type TutorialWithDetails,
@@ -314,6 +315,9 @@ export function TutorialView({
               {diff.label}
             </span>
             <span className="pill-tag pill-tag--lg">{KIND_LABEL[tutorial.kind]}</span>
+            {formatAgeRange(tutorial.age_min, tutorial.age_max) && (
+              <span className="pill-tag pill-tag--lg">{formatAgeRange(tutorial.age_min, tutorial.age_max)}</span>
+            )}
             {tutorial.maturity !== 'complete' && (
               <span className="pill-tag pill-tag--lg">{MATURITY_LABEL[tutorial.maturity]}</span>
             )}

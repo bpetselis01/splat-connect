@@ -89,6 +89,29 @@ export function DetailsSection() {
         </View>
         <Text style={styles.hint}>Hands-on time only — printing time isn't included.</Text>
 
+        {/* Web's two number fields (071). The empty string clears the end, so
+            a guide can go back to "any age"; the 0–18 bound is the database's. */}
+        <Text style={styles.label}>Age range</Text>
+        <View style={styles.chipRow}>
+          <TextField
+            accessibilityLabel="Youngest age"
+            placeholder="From"
+            keyboardType="number-pad"
+            value={tutorial.age_min == null ? '' : String(tutorial.age_min)}
+            onChangeText={(text) => save({ age_min: text === '' ? null : Number(text) })}
+            boxStyle={styles.ageBox}
+          />
+          <TextField
+            accessibilityLabel="Oldest age"
+            placeholder="To"
+            keyboardType="number-pad"
+            value={tutorial.age_max == null ? '' : String(tutorial.age_max)}
+            onChangeText={(text) => save({ age_max: text === '' ? null : Number(text) })}
+            boxStyle={styles.ageBox}
+          />
+        </View>
+        <Text style={styles.hint}>In years. Leave both blank if it suits any age.</Text>
+
         <Text style={styles.label}>How far along is it?</Text>
         <View style={styles.chipRow}>
           {MATURITY_OPTIONS.map((o) => (
@@ -121,6 +144,9 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: theme.spacing(2),
     marginBottom: theme.spacing(4),
+  },
+  ageBox: {
+    flex: 1,
   },
   hint: {
     fontFamily: theme.fonts.regular,

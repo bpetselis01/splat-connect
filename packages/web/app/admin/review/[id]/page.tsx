@@ -6,7 +6,7 @@ import { CheckCircle, Clock, WarningCircle, XCircle } from '@phosphor-icons/reac
 import { adminActions } from '@/components/project-actions'
 import { PhotoCarousel } from '@/components/photo-carousel'
 import { Check, X, Download, FileText } from '@/components/icons'
-import { KIND_LABEL, SAFETY_CHECKLIST, type TutorialWithDetails } from '@splat-connect/types'
+import { KIND_LABEL, SAFETY_CHECKLIST, formatAgeRange, type TutorialWithDetails } from '@splat-connect/types'
 
 // `28 August` — the pill's date, in Sydney time like every other date here.
 const dayMonth = (iso: string) =>
@@ -99,6 +99,8 @@ export default async function ReviewTutorialPage({
   const meta = [
     authors.join(', '),
     t.difficulty && cap(t.difficulty),
+    // The board's order: difficulty, then age, then time (071).
+    formatAgeRange(t.age_min, t.age_max),
     t.kind && KIND_LABEL[t.kind],
     t.build_minutes ? `${t.build_minutes} minutes` : null,
     ...backing,

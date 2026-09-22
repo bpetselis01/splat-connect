@@ -17,7 +17,7 @@ export function EditDetailsSection({
   onSave,
 }: {
   tutorial: Tutorial
-  onSave: (patch: { title: string; description: string | null; difficulty: Difficulty; build_minutes: number | null; kind: TutorialKind; maturity: TutorialMaturity; safety_declared?: true; updated_at: string }) => Promise<void>
+  onSave: (patch: { title: string; description: string | null; difficulty: Difficulty; build_minutes: number | null; age_min: number | null; age_max: number | null; kind: TutorialKind; maturity: TutorialMaturity; safety_declared?: true; updated_at: string }) => Promise<void>
 }) {
   const router = useRouter()
   const showToast = useToast()
@@ -34,6 +34,9 @@ export function EditDetailsSection({
         description: (formData.get('description') as string) || null,
         difficulty: formData.get('difficulty') as Difficulty,
         build_minutes: Number(formData.get('build_minutes')) || null,
+        // Not `|| null`: 0 is a real youngest age ("Age 0–3").
+        age_min: formData.get('age_min') === '' ? null : Number(formData.get('age_min')),
+        age_max: formData.get('age_max') === '' ? null : Number(formData.get('age_max')),
         kind: formData.get('kind') as TutorialKind,
         maturity: formData.get('maturity') as TutorialMaturity,
         // Once declared, always declared — the timestamp on the row is the
@@ -125,6 +128,22 @@ export function EditDetailsSection({
           hours and are listed separately.
         </p>
       </div>
+      <fieldset>
+        {/* The board's review line reads "Easy · Age 3–7 · 20 minutes": the
+            author's word on which children the adaptation suits. Two plain
+            number fields; the range (0–18, max ≥ min) is 071's constraint. */}
+        <legend className="field-label">Age range</legend>
+        <div className="flex items-center gap-2">
+          <label htmlFor="edit-age-min" className="sr-only">Youngest age</label>
+          <input id="edit-age-min" name="age_min" type="number" inputMode="numeric" min={0} max={18} defaultValue={tutorial.age_min ?? ''} placeholder="From" className="field" />
+          <span className="text-muted" aria-hidden="true">–</span>
+          <label htmlFor="edit-age-max" className="sr-only">Oldest age</label>
+          <input id="edit-age-max" name="age_max" type="number" inputMode="numeric" min={0} max={18} defaultValue={tutorial.age_max ?? ''} placeholder="To" className="field" />
+        </div>
+        <p className="mt-1 text-xs leading-relaxed text-muted">
+          In years. Leave both blank if it suits any age.
+        </p>
+      </fieldset>
       <div>
         {/* Editable, not just shown: picking the wrong card on /upload should
             cost a select change, not a new tutorial. Changing it redraws the

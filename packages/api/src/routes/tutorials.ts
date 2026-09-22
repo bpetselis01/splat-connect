@@ -157,7 +157,7 @@ tutorials.post('/', async (c) => {
 /** Only these may be set through the generic edit endpoint. Unknown keys are
  *  dropped silently; the protected ones return 403 so a caller learns rather than
  *  wonders. */
-const EDITABLE = ['title', 'description', 'difficulty', 'kind', 'maturity', 'build_minutes', 'tutorial_pdf_url', 'photo_urls', 'status'] as const
+const EDITABLE = ['title', 'description', 'difficulty', 'kind', 'maturity', 'build_minutes', 'age_min', 'age_max', 'tutorial_pdf_url', 'photo_urls', 'status'] as const
 const PROTECTED = ['reviewed_by', 'reviewed_for_org_id', 'reviewed_at', 'rejection_note']
 
 async function hasAcceptedContributorTerms(token: string, userId: string) {
@@ -265,7 +265,9 @@ tutorials.patch('/:id', async (c) => {
     .eq('id', c.req.param('id'))
     .eq('updated_at', body.updated_at)
     .select()
-  if (error) return c.json({ error: error.message }, 500)
+  // 23514 is a check constraint (build_minutes' range, 071's age bounds and
+  // ordering): the caller's values, not the server's fault.
+  if (error) return c.json({ error: error.message }, error.code === '23514' ? 400 : 500)
   if (!data.length) {
     // Zero rows: either RLS refused (not a contributor / trying to set a
     // forbidden status), or someone else saved first. The generic message
