@@ -202,9 +202,13 @@ export default async function EventsPage({
         <div>
           {past.length > 0 && (
             <details className="group">
-              <summary className="flex cursor-pointer list-none items-center gap-2.5 font-display text-[22px] font-extrabold text-ink [&::-webkit-details-marker]:hidden">
+              <summary className="flex cursor-pointer list-none items-center gap-2.5 [&::-webkit-details-marker]:hidden">
                 <CaretDown weight="bold" aria-hidden="true" className="-rotate-90 transition-transform group-open:rotate-0" />
-                Past events <span className="font-sans text-sm font-bold text-muted">({past.length})</span>
+                {/* A heading, not summary text: the board's section is one, and
+                    a reader jumping by heading should land on it. */}
+                <h3 className="font-display text-[22px] font-extrabold text-ink">
+                  Past events <span className="font-sans text-sm font-bold text-muted">({past.length})</span>
+                </h3>
               </summary>
               <div className="mt-3.5 grid gap-2">
                 {past.map((e) => (
