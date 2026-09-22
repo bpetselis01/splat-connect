@@ -319,7 +319,65 @@ select * from (values
    (select count(*) = 0 from pg_policies
       where tablename = 'site_content'
         and cmd in ('INSERT', 'UPDATE', 'DELETE', 'ALL')
-        and coalesce(with_check, qual) not like '%is_admin%'))
+        and coalesce(with_check, qual) not like '%is_admin%')),
+
+  -- 070. Same failure shape as 046: the API selects these columns by name, so a
+  -- ledger that reads as applied with the columns absent makes every printer
+  -- list and add a 500.
+  ('070 printers carries filament_cents_per_g and rate_note',
+   (select count(*) = 2 from information_schema.columns
+      where table_schema = 'public' and table_name = 'printers'
+        and column_name in ('filament_cents_per_g', 'rate_note'))),
+
+  -- 072. Not a security guard; the 046 shape. The bio bound is the only thing
+  -- stopping an account from publishing an unbounded page of text under its
+  -- own name on /contributors/[id], and the featured guide's FK is what
+  -- clears a deleted guide off a profile instead of leaving a dangling id.
+  ('072 profiles.bio is bounded and featured_tutorial_id clears on delete',
+   (select count(*) = 2 from pg_constraint
+      where conrelid = 'public.profiles'::regclass
+        and ((contype = 'c' and pg_get_constraintdef(oid) like '%bio%600%')
+          or (contype = 'f' and confdeltype = 'n'
+              and pg_get_constraintdef(oid) like '%featured_tutorial_id%')))),
+
+  -- 071. Not a security guard; the 046 shape. age_min and age_max are in
+  -- PATCH /api/tutorials/:id's EDITABLE list, so a repair that skipped 071
+  -- makes every Details save that carries them fail with "column does not
+  -- exist" — which the editor shows as a conflict the author cannot resolve.
+  ('071 tutorials carries the age range and its ordering constraint',
+   (select count(*) > 0 from pg_constraint
+      where conrelid = 'public.tutorials'::regclass
+        and conname = 'tutorials_age_range')),
+
+  -- 073. The 046 shape: packages/api/src/routes/toys.ts selects both by name,
+  -- so a ledger that reads as applied with the functions absent makes every
+  -- owner's My Toys a 500. They must also be DEFINER — as invoker, RLS hides
+  -- every row from the counter and the function reads as 0 for everyone.
+  ('073 save_count() and request_count() exist and are security definer',
+   (select count(*) = 2 from pg_proc
+      where pronamespace = 'public'::regnamespace
+        and proname in ('save_count', 'request_count')
+        and prosecdef)),
+
+  -- 068. Not a security guard but the silent shape again: a repair that skips
+  -- 068 leaves every STL row without its print settings, and the only symptom
+  -- is a request form whose two summary tiles read "—" on every guide. The
+  -- range checks are the half a column listing cannot see.
+  ('068 stl_files print settings carry their range checks',
+   (select count(*) = 3 from pg_constraint
+      where conrelid = 'public.stl_files'::regclass
+        and contype = 'c'
+        and conname in ('stl_files_print_minutes_check',
+                        'stl_files_filament_grams_check',
+                        'stl_files_material_check'))),
+
+  -- 069. Not a security guard but the 046 shape: every event select in
+  -- public.ts and organizations.ts names these two columns, so a ledger that
+  -- reads as applied with them absent makes every event page "no such event".
+  ('069 org_events carries cost_cents and cost_note',
+   (select count(*) = 2 from information_schema.columns
+      where table_schema = 'public' and table_name = 'org_events'
+        and column_name in ('cost_cents', 'cost_note')))
 ) as t(guard, ok)
 where not ok;
 EOSQL

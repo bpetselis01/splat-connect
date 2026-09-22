@@ -8,7 +8,7 @@ import { chunk } from '../chunk.js'
 import { createAnonClient, createAdminClient } from '../supabase/client.js'
 import { atCapacityToyIds } from '../toy-access.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
-import { readMinutes } from '@splat-connect/types'
+import { contributorBadges, readMinutes } from '@splat-connect/types'
 import type {
   ImpactSummary,
   ImpactEntity,
@@ -469,7 +469,7 @@ publicRoutes.get('/contributors/:id', async (c) => {
 
   const { data: profile } = await admin
     .from('profiles')
-    .select('id, name, public_showcase')
+    .select('id, name, public_showcase, bio, featured_tutorial_id, created_at')
     .eq('id', id)
     .maybeSingle()
   if (!profile || !profile.public_showcase) return c.json({ error: 'Not found' }, 404)
@@ -481,7 +481,7 @@ publicRoutes.get('/contributors/:id', async (c) => {
   ] = await Promise.all([
     sb
       .from('tutorial_contributors')
-      .select('tutorials!inner(*)')
+      .select('tutorials!inner(*, thanks_count)')
       .eq('profile_id', id)
       .eq('tutorials.status', 'approved'),
     sb.from('toys').select('*').eq('owner_id', id).eq('status', 'published'),
@@ -513,12 +513,35 @@ publicRoutes.get('/contributors/:id', async (c) => {
     return c.json({ error: 'Not found' }, 404)
   }
 
+  // 072. Badges and the families line are derived here, never stored. Accepted
+  // backing on an approved guide is public (007's policy), so the anon client
+  // sees exactly what a visitor may know.
+  const guides = tutorials as ContributorProfile['tutorials']
+  const guideIds = guides.map((t) => t.id)
+  let orgBacked = false
+  if (guideIds.length > 0) {
+    const backed = await Promise.all(
+      chunk(guideIds).map((ids) =>
+        sb.from('tutorial_orgs').select('tutorial_id').eq('status', 'accepted').in('tutorial_id', ids).limit(1)
+      )
+    )
+    orgBacked = backed.some((r) => (r.data?.length ?? 0) > 0)
+  }
+  const thanks = guides.reduce((n, t) => n + (t.thanks_count ?? 0), 0)
+
   const result: ContributorProfile = {
     id: profile.id,
     name: profile.name,
-    tutorials: tutorials as ContributorProfile['tutorials'],
+    tutorials: guides,
     toysShared: (toysShared ?? []) as ContributorProfile['toysShared'],
     toysDelivered: toysDelivered as ContributorProfile['toysDelivered'],
+    bio: profile.bio ?? null,
+    // Re-checked against the approved list: the column can still name a guide
+    // that has since lost approval, and that one is nobody's showcase.
+    featured: guides.find((t) => t.id === profile.featured_tutorial_id) ?? null,
+    thanks,
+    badges: contributorBadges({ guides: guides.length, thanks, orgBacked, since: profile.created_at }),
+    created_at: profile.created_at,
   }
   return c.json(result)
 })
@@ -827,7 +850,7 @@ publicRoutes.post('/notify', async (c) => {
 // select string, and a `+` anywhere in it collapses every column to
 // GenericStringError.
 const EVENT_PUBLIC_COLUMNS =
-  'id, org_id, kind, title, summary, starts_at, ends_at, format, location, suburb, state, audience, description, what_to_bring, tools, capacity, prints_parts, part_sets_max, accessibility_note, photo_urls, status, registrations_closed_at, cancelled_at, created_by, created_at, updated_at'
+  'id, org_id, kind, title, summary, starts_at, ends_at, format, location, suburb, state, audience, description, what_to_bring, tools, capacity, prints_parts, part_sets_max, accessibility_note, cost_cents, cost_note, photo_urls, status, registrations_closed_at, cancelled_at, created_by, created_at, updated_at'
 
 /** Live registrations per event, and whether the viewer is among them. */
 async function goingCounts(eventIds: string[], viewerId: string | null) {

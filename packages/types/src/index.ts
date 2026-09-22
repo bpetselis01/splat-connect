@@ -3,6 +3,12 @@
 // this package is consumed as raw TypeScript, so that is safe.
 export * from './derive-fit-profile'
 export * from './nav-model'
+// Named, not `export *`: the api runs this package through tsx as CommonJS,
+// and Node's CJS export lexer cannot see esbuild's `__reExport` — the two
+// lines above export nothing at runtime there. Named re-exports do.
+export { contributorBadges } from './contributor-badges'
+export type { ContributorBadge, ContributorBadgeInput } from './contributor-badges'
+import type { ContributorBadge } from './contributor-badges'
 
 export type Role = 'admin' | 'contributor'
 
@@ -72,6 +78,11 @@ export interface Toy {
   offer_type: OfferType | null
   created_at: string
   updated_at: string
+  /** PostgREST computed fields (073), the owner's "How it is doing" tiles.
+   *  Present only when a select names them — GET /api/toys does, nothing
+   *  public ever does. */
+  save_count?: number
+  request_count?: number
 }
 
 // GET /api/public/toys and /api/public/toys/:id embed the owner's name.
@@ -265,6 +276,11 @@ export interface Printer {
   accepting: boolean
   capacity: number
   notes: string | null
+  /** Integer cents per gram a family is asked to cover (070). NULL is the
+   *  off state: free, parts only. SPLAT records the figure and never moves it. */
+  filament_cents_per_g: number | null
+  /** The "why these costs" a requester reads word for word. */
+  rate_note: string | null
   created_at: string
   updated_at: string
 }
@@ -380,6 +396,9 @@ export interface ToyTransactionSummary extends ToyTransaction {
   blocked_by_rival_accept: boolean
   /** Newest message in the thread, for the list preview. Null before any exists. */
   last_message: ToyTransactionMessagePreview | null
+  /** The parts a print job asks for (068), for the printer's queue card. Only
+   *  a print carries any; every other kind sends an empty list. */
+  print_files?: PrintJobFile[]
 }
 
 /**
@@ -608,7 +627,7 @@ export interface ToyTransactionDetail extends ToyTransaction {
   /** The machine a print job is on, and where it is. Null on every other kind. */
   printer: Pick<Printer, 'id' | 'name' | 'suburb' | 'state' | 'materials'> | null
   /** The parts a print job asks for (058), flattened out of the join. */
-  print_files: Array<{ id: string; filename: string; quantity: number }>
+  print_files: PrintJobFile[]
   offered_toy_name: string | null
   owner_name: string
   requester_name: string
@@ -823,6 +842,12 @@ export interface OrgEvent {
   prints_parts: boolean
   part_sets_max: number | null
   accessibility_note: string | null
+  /** 069. What the host asks a family to cover, in cents. Null or 0 is free
+   *  and the public pages draw no cost block at all. SPLAT never takes the
+   *  payment; the register form says so before anyone confirms. */
+  cost_cents: number | null
+  /** The breakdown, in the host's own words. ≤500 chars. */
+  cost_note: string | null
   photo_urls: string[]
   status: OrgPublishStatus
   /** Two separate withdrawals. Closing registrations leaves the event on the
@@ -1255,6 +1280,11 @@ export interface Profile {
   pickup_state?: string | null
   pickup_postcode?: string | null
   public_showcase: boolean
+  /** 072: the public profile's About paragraph (≤600 chars) and the one guide
+   *  the contributor would hand a first-timer. Both optional until every
+   *  reader of the row has migrated. */
+  bio?: string | null
+  featured_tutorial_id?: string | null
   created_at: string
 }
 
@@ -1289,6 +1319,15 @@ export function formatBuildTime(minutes: number): string {
   return `${Math.round((minutes / 60) * 10) / 10} h`
 }
 
+/** "Age 3–7" as the board writes it (en dash); null when neither end is set,
+ *  so a meta line can filter it out like any other absent fact. */
+export function formatAgeRange(min: number | null | undefined, max: number | null | undefined): string | null {
+  if (min == null && max == null) return null
+  if (min == null) return `Up to age ${max}`
+  if (max == null) return `Age ${min}+`
+  return min === max ? `Age ${min}` : `Age ${min}–${max}`
+}
+
 export interface Tutorial {
   id: string
   title: string
@@ -1305,6 +1344,12 @@ export interface Tutorial {
   /** Hands-on minutes, printing excluded. Null only on a draft: the API
    *  refuses to submit a guide for review without it (066). */
   build_minutes: number | null
+  /** The ages the guide is written for, whole years 0–18 (071). Both nullable
+   *  — a description, not a submit gate — and optional only so the fixtures
+   *  that predate them need not name them; every row select returns both.
+   *  formatAgeRange() draws them. */
+  age_min?: number | null
+  age_max?: number | null
   /** PostgREST computed fields (066). Present only when a select names them —
    *  the public list and detail routes do. */
   thanks_count?: number
@@ -1358,13 +1403,29 @@ export interface Tool {
   buy_links: BuyLink[]
 }
 
+/** What the printers directory lists (058) and an STL row may name (068). */
+export const STL_MATERIALS = ['PLA', 'PETG', 'TPU', 'ABS'] as const
+export type StlMaterial = (typeof STL_MATERIALS)[number]
+
 export interface StlFile {
   id: string
   tutorial_id: string
   filename: string
   /** Storage object path in `stl-files` (`<tutorial id>/<filename>`), not a URL — served via /files/stl-files/<path>. */
   file_url: string
+  /** Per-copy print settings as the author sliced them (068). Null on rows
+   *  that predate them or where the author left them blank; optional because
+   *  the mobile app's fixtures were built before the columns existed. */
+  print_minutes?: number | null
+  filament_grams?: number | null
+  material?: StlMaterial | null
 }
+
+/** One part on a print job: the STL row with how many copies were asked for. */
+export type PrintJobFile = Pick<
+  StlFile,
+  'id' | 'filename' | 'print_minutes' | 'filament_grams' | 'material'
+> & { quantity: number }
 
 /** One row of tutorial_recommendations with its target embedded. `status`
  *  rides along on the contributor-facing payload so the editor can badge a
@@ -1440,6 +1501,15 @@ export interface ContributorProfile {
   tutorials: Tutorial[]
   toysShared: Toy[]
   toysDelivered: Toy[]
+  /** 072. `featured` is one of `tutorials` (re-checked on read, so a guide
+   *  that lost approval is not featured); `thanks` sums thanks_count over
+   *  them; `badges` is contributorBadges() run server-side. Optional so a
+   *  mobile build against the older endpoint still type-checks. */
+  bio?: string | null
+  featured?: Tutorial | null
+  thanks?: number
+  badges?: ContributorBadge[]
+  created_at?: string
 }
 
 export interface OrgPublicProfile {
