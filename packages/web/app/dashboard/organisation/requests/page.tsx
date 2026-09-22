@@ -109,8 +109,8 @@ export default async function OrgRequestsPage({
     <div className="max-w-[980px]">
       <h1 className="title-hub">Requests to {caps.ledOrgs[0].name}</h1>
       <p className="mb-[22px] mt-2 max-w-[64ch] text-[15px] text-muted">
-        Everything a family can ask of an organisation, in one place. Open each one to accept,
-        decline or hand it on.
+        Everything a family can ask of an organisation, in one place. Say no when you need to: a
+        declined family is told straight away, and nothing is left hanging.
       </p>
 
       <div

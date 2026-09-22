@@ -190,8 +190,8 @@ export function OrgProfileForm({ org }: { org: Organization }) {
         <div>
           <h2 className="edit-card__title">What you do</h2>
           <p className="edit-card__lede">
-            Each one you switch on becomes a chip on your public page. Switch it off and the chip
-            goes — nothing already in progress is affected.
+            Each one you switch on becomes a chip on your profile, and a door families can ask you
+            through. Switch it off and the door closes — nothing already in progress is affected.
           </p>
         </div>
         <ul className="flex flex-col gap-2.5">
