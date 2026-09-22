@@ -14,7 +14,7 @@ const path = require('path')
 const { collectFingerprint, collectChrome } = require('./fingerprint')
 const { compare } = require('./compare')
 const { provision, signIn, cleanup, adminClient } = require('./auth')
-const { seed, dbSample } = require('./seed')
+const { seed, dbSample, unseed } = require('./seed')
 
 const ROOT = path.resolve(__dirname, '../..')
 // Resolved from packages/web: this script lives outside any package, so plain
@@ -302,6 +302,9 @@ async function fingerprintOf(page, url, rootSel, role) {
   }
 
   await browser.close()
+  // Fixture rows that do not cascade with the users go first: some of them
+  // RESTRICT the deletes cleanup() runs.
+  await unseed(adminClient()).catch(() => {})
   if (Object.keys(users).length) await cleanup(users)
 
   const byType = {}
