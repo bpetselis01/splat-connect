@@ -75,17 +75,32 @@ export function ProfileForm({ profile, badges }: { profile: Profile; badges?: Re
         <p className="mt-[7px] text-[13px] text-muted">Frozen. Contact us if you need it changed.</p>
       </div>
       {badges}
+      {/* A field group inside the account card, not a page section: the board
+          draws Account as one form with no second heading in it, and the <h2>
+          that used to sit here read as a sibling of "Child profiles" below.
+          Every input below carries its own <label>, so the group only needs a
+          visual lead-in. */}
       <div className="flex flex-col gap-3 border-t border-line pt-4">
-        <h2 className="text-sm font-semibold text-ink">Default pickup address</h2>
+        <p className="field-label mb-0">Default pickup address</p>
         <p className="text-xs text-muted">Offered as the default when you accept a donation or exchange request. You can send a different address instead.</p>
-        <label htmlFor="pickup-line1" className="field-label">Address line</label>
-        <input id="pickup-line1" className={FIELD} value={pickupLine1} onChange={(e) => setPickupLine1(e.target.value)} />
-        <label htmlFor="pickup-suburb" className="field-label">Suburb</label>
-        <input id="pickup-suburb" className={FIELD} value={pickupSuburb} onChange={(e) => setPickupSuburb(e.target.value)} />
-        <label htmlFor="pickup-state" className="field-label">State</label>
-        <input id="pickup-state" className={FIELD} value={pickupState} onChange={(e) => setPickupState(e.target.value)} />
-        <label htmlFor="pickup-postcode" className="field-label">Postcode</label>
-        <input id="pickup-postcode" className={FIELD} value={pickupPostcode} onChange={(e) => setPickupPostcode(e.target.value)} />
+        <div>
+          <label htmlFor="pickup-line1" className="field-label">Address line</label>
+          <input id="pickup-line1" className={FIELD} value={pickupLine1} onChange={(e) => setPickupLine1(e.target.value)} />
+        </div>
+        <div className="grid gap-3 sm:grid-cols-[2fr_1fr_1fr]">
+          <div>
+            <label htmlFor="pickup-suburb" className="field-label">Suburb</label>
+            <input id="pickup-suburb" className={FIELD} value={pickupSuburb} onChange={(e) => setPickupSuburb(e.target.value)} />
+          </div>
+          <div>
+            <label htmlFor="pickup-state" className="field-label">State</label>
+            <input id="pickup-state" className={FIELD} value={pickupState} onChange={(e) => setPickupState(e.target.value)} />
+          </div>
+          <div>
+            <label htmlFor="pickup-postcode" className="field-label">Postcode</label>
+            <input id="pickup-postcode" className={FIELD} value={pickupPostcode} onChange={(e) => setPickupPostcode(e.target.value)} />
+          </div>
+        </div>
       </div>
       <div className="flex flex-col gap-1 border-t border-line pt-4">
         <label htmlFor="public-showcase" className="flex items-center gap-2 text-sm">
