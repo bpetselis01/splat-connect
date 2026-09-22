@@ -73,7 +73,7 @@ export function ChildCustomizationForm({
             onChange={(e) => setNumber('palm_width_mm', e.target.value)}
             step="any"
             min="0"
-            className="field"
+            className="field min-h-[50px] bg-canvas"
           />
         </div>
 
@@ -86,7 +86,7 @@ export function ChildCustomizationForm({
             onChange={(e) => setNumber('wrist_circ_mm', e.target.value)}
             step="any"
             min="0"
-            className="field"
+            className="field min-h-[50px] bg-canvas"
           />
         </div>
 
@@ -99,7 +99,7 @@ export function ChildCustomizationForm({
             onChange={(e) => setNumber('forearm_length_mm', e.target.value)}
             step="any"
             min="0"
-            className="field"
+            className="field min-h-[50px] bg-canvas"
           />
         </div>
       </div>
@@ -112,7 +112,7 @@ export function ChildCustomizationForm({
             type="text"
             value={form.hand_dominance ?? ''}
             onChange={(e) => set('hand_dominance', e.target.value || null)}
-            className="field"
+            className="field min-h-[50px] bg-canvas"
           />
         </div>
 
@@ -129,22 +129,23 @@ export function ChildCustomizationForm({
         </div>
       </div>
 
-      <div>
-        <span className="field-label">Sensory preferences</span>
-        <div className="flex flex-col gap-1">
+      {/* Pill toggles, as the board draws every multi-choice on this page. */}
+      <fieldset>
+        <legend className="field-label">Sensory preferences</legend>
+        <div className="flex flex-wrap gap-2">
           {SENSORY_PREFERENCES.map((s) => (
-            <label key={s} htmlFor={`sensory-${s}`} className="flex items-center gap-2">
-              <input
-                id={`sensory-${s}`}
-                type="checkbox"
-                checked={form.sensory_preferences.includes(s)}
-                onChange={() => toggleSensory(s)}
-              />
+            <button
+              key={s}
+              type="button"
+              aria-pressed={form.sensory_preferences.includes(s)}
+              onClick={() => toggleSensory(s)}
+              className="chip"
+            >
               {s}
-            </label>
+            </button>
           ))}
         </div>
-      </div>
+      </fieldset>
 
       <PanelActions>
         <button type="submit" disabled={busy} className="btn btn-accent">
