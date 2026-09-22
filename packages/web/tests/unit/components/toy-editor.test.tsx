@@ -121,6 +121,17 @@ describe('ToyEditor', () => {
     expect(screen.getByText(/Choose how this toy is offered/)).toBeInTheDocument()
   })
 
+  it('tells a live toy how it is doing, and a draft nothing', () => {
+    const { unmount } = render(
+      <ToyEditor toy={toy({ status: 'published', request_count: 2, save_count: 12 })} />,
+    )
+    expect(screen.getByText('requests').previousSibling).toHaveTextContent('2')
+    expect(screen.getByText('saves').previousSibling).toHaveTextContent('12')
+    unmount()
+    render(<ToyEditor toy={toy()} />)
+    expect(screen.queryByText('How it is doing')).toBeNull()
+  })
+
   it('renders a delete button scoped to this toy', () => {
     render(<ToyEditor toy={toy()} />)
     expect(screen.getByRole('button', { name: /delete toy/i })).toBeInTheDocument()

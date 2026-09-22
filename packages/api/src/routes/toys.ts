@@ -83,9 +83,11 @@ function missingPublishFields(toy: {
 
 toys.get('/', async (c) => {
   const supabase = createUserClient(c.get('token'))
+  // The two computed fields (073) are the owner's "How it is doing" tiles.
+  // Named here and nowhere else: only the owner is told how a toy is doing.
   const { data, error } = await supabase
     .from('toys')
-    .select('*')
+    .select('*, save_count, request_count')
     .eq('owner_id', c.get('userId'))
     .order('created_at', { ascending: false })
   if (error) return c.json({ error: error.message }, 500)

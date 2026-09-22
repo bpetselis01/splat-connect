@@ -154,6 +154,27 @@ export function ToyEditor({ toy: initialToy }: { toy: Toy }) {
         </p>
       </div>
 
+      {live && (
+        <div>
+          <h3 className="editor-h3">How it is doing</h3>
+          {/* The board draws four tiles; views and nearest asker are not
+              tracked, so only the two the database can answer are here. */}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {[
+              { n: toy.request_count ?? 0, label: 'requests' },
+              { n: toy.save_count ?? 0, label: 'saves' },
+            ].map((t) => (
+              <div key={t.label} className="rounded-inset border border-line bg-canvas p-4">
+                <p className="font-display text-[26px] font-extrabold leading-[1.6] text-brand-deep tabular-nums">
+                  {t.n}
+                </p>
+                <p className="text-[13px] font-bold leading-[1.5] text-muted">{t.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {!live && (
         <EditorChecklist
           title="Before you list it"
