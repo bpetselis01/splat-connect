@@ -16,9 +16,7 @@
  * already here.
  */
 import Link from 'next/link'
-import { Buildings, HandCoins, Wrench } from '@phosphor-icons/react/dist/ssr'
 import { apiClient } from '@/lib/api-client'
-import { ORG_FACTS } from '@/lib/org-facts'
 
 export const metadata = {
   title: 'Partners and supporters — SPLAT Connect',
@@ -28,6 +26,12 @@ export const metadata = {
 
 type Org = { id: string; name: string; suburb?: string | null; state?: string | null }
 
+// The board cycles the org initials tile through these.
+const TINTS = ['var(--tmint)', 'var(--b100)', 'var(--tamber)', 'var(--tviolet)', 'var(--tcoral)', 'var(--tok)']
+
+const H2 = 'font-display text-[26px] font-extrabold text-ink'
+const EMPTY = 'rounded-[var(--radius-inset)] border border-line bg-surface p-4 text-[13px] leading-[1.5] text-muted'
+
 export default async function PartnersPage() {
   const orgs = await apiClient
     .get<Org[]>('/api/public/organizations')
@@ -35,19 +39,18 @@ export default async function PartnersPage() {
 
   return (
     <div>
-      <p className="eyebrow text-muted">About</p>
-      <h1 className="mt-1.5 title-hub">Partners and supporters</h1>
-      <p className="mt-2 max-w-prose text-base leading-relaxed text-muted">
+      <p className="text-[13px] font-extrabold uppercase tracking-[0.1em] text-muted">About</p>
+      <h1 className="mt-2.5 font-display text-[clamp(32px,3.6vw,46px)] font-extrabold leading-[1.08] tracking-[-0.02em] text-ink">
+        Partners and supporters
+      </h1>
+      <p className="mt-3 max-w-[60ch] text-lg leading-[1.6] text-muted [text-wrap:pretty]">
         SPLAT is a small volunteer team. Almost everything on this site reaches a family through
         one of the organisations below.
       </p>
 
       <section className="mt-10">
-        <h2 className="title-detail flex items-center gap-2">
-          <Buildings className="h-5 w-5 text-brand-dark" aria-hidden="true" />
-          Delivery partners
-        </h2>
-        <p className="mb-4 mt-1 max-w-prose text-sm leading-relaxed text-muted">
+        <h2 className={`${H2} mb-1.5`}>Delivery partners</h2>
+        <p className="mb-[18px] max-w-[64ch] text-sm text-muted">
           The therapy centres, schools and community groups that run build days and hand finished
           toys to families. These are live:{' '}
           <Link
@@ -65,23 +68,25 @@ export default async function PartnersPage() {
             on a guide means something.
           </p>
         ) : (
-          <ul className="grid list-none gap-3 sm:grid-cols-2">
-            {orgs.map((o) => (
+          <ul className="grid list-none gap-3.5 [grid-template-columns:repeat(auto-fill,minmax(240px,1fr))]">
+            {orgs.map((o, i) => (
               <li key={o.id}>
                 <Link
                   href={`/organizations/${o.id}/public`}
-                  className="card card-link flex items-center gap-3 p-4"
+                  className="card card-link flex h-full items-center gap-3.5 rounded-[var(--radius-inset)] p-[18px] text-ink"
+                  style={{ boxShadow: 'var(--shadow-e1), var(--shadow-hi)' }}
                 >
                   <span
                     aria-hidden="true"
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-card bg-brand-tint font-display text-sm font-extrabold text-brand-deep"
+                    className="grid h-12 w-12 shrink-0 place-items-center rounded-[var(--radius-field)] text-[15px] font-extrabold text-[var(--tink)]"
+                    style={{ background: TINTS[i % TINTS.length] }}
                   >
                     {o.name.slice(0, 2).toUpperCase()}
                   </span>
                   <span className="min-w-0">
-                    <span className="block truncate font-bold text-ink">{o.name}</span>
-                    <span className="block truncate text-xs text-muted">
-                      {[o.suburb, o.state].filter(Boolean).join(' ') || 'Australia'}
+                    <span className="block font-display text-base font-extrabold">{o.name}</span>
+                    <span className="block text-[13px] font-semibold text-muted">
+                      {[o.suburb, o.state].filter(Boolean).join(', ') || 'Australia'}
                     </span>
                   </span>
                 </Link>
@@ -91,13 +96,16 @@ export default async function PartnersPage() {
         )}
       </section>
 
-      <div className="mt-10 grid gap-6 sm:grid-cols-2">
+      {/* Funders and in-kind stay honestly empty until there are some — the
+          board's rows are placeholder names, and so is its partner quote, which
+          is why there is no quote block here either. */}
+      <div className="mt-11 grid items-start gap-5 sm:grid-cols-2">
         <section>
-          <h2 className="title-detail flex items-center gap-2">
-            <HandCoins className="h-5 w-5 text-brand-dark" aria-hidden="true" />
-            Funders and grants
-          </h2>
-          <p className="card mt-3 p-5 text-sm leading-relaxed text-muted">
+          <h2 className={`${H2} mb-1.5`}>Funders and grants</h2>
+          <p className="mb-[18px] text-sm text-muted">
+            Every grant is listed with what it actually paid for.
+          </p>
+          <p className={EMPTY} style={{ boxShadow: 'var(--shadow-e1)' }}>
             None yet. When there are, every grant will be listed here with what it actually paid
             for — hosting, the guide review programme, printed packs for build days — rather than
             a logo and a thank-you.
@@ -105,31 +113,35 @@ export default async function PartnersPage() {
         </section>
 
         <section>
-          <h2 className="title-detail flex items-center gap-2">
-            <Wrench className="h-5 w-5 text-brand-dark" aria-hidden="true" />
-            In-kind and technical
-          </h2>
-          <p className="card mt-3 p-5 text-sm leading-relaxed text-muted">
+          <h2 className={`${H2} mb-1.5`}>In-kind and technical</h2>
+          <p className="mb-[18px] text-sm text-muted">
+            Printer time, parts, venues and expertise given instead of money.
+          </p>
+          <p className={EMPTY} style={{ boxShadow: 'var(--shadow-e1)' }}>
             None yet. Printer time, parts at cost, a venue for build days, or professional work
             given free would go here, with what it covers and for how long.
           </p>
         </section>
       </div>
 
-      <p className="mt-8 max-w-prose text-sm leading-relaxed text-muted">
-        If you are a foundation, council or business that wants to fund a specific piece of work,{' '}
-        <Link href="/about/support" className="font-semibold text-brand-dark hover:underline">
-          Support SPLAT
-        </Link>{' '}
-        says how that can work, or email{' '}
-        <a
-          href={`mailto:${ORG_FACTS.contactEmail}`}
-          className="font-semibold text-brand-dark hover:underline"
-        >
-          {ORG_FACTS.contactEmail}
-        </a>
-        .
-      </p>
+      <div className="card mt-11 grid items-center gap-6 px-[34px] py-[30px] sm:grid-cols-[minmax(0,1fr)_auto]">
+        <div>
+          <h2 className="mb-1.5 font-display text-2xl font-extrabold text-ink">Become a partner</h2>
+          <p className="m-0 max-w-[60ch] text-[15px] leading-[1.6] text-muted">
+            Organisations register and start publishing straight away. Funders and in-kind
+            partners, tell us what you can offer and we will tell you exactly what it would pay
+            for.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2.5">
+          <Link href="/get-involved/organisations" className="btn btn-primary">
+            Register an organisation
+          </Link>
+          <Link href="/contact" className="btn btn-quiet">
+            Talk about funding
+          </Link>
+        </div>
+      </div>
     </div>
   )
 }

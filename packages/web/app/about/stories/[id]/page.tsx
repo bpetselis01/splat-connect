@@ -14,12 +14,13 @@
  * - packages/api/src/routes/public.ts: GET /public/stories/:id
  * - supabase/migrations/062_stories.sql: the columns this draws
  */
-import { Quotes } from '@phosphor-icons/react/dist/ssr'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { BookOpen, ArrowRight } from '@phosphor-icons/react/dist/ssr'
+import { BookOpen, CaretRight } from '@phosphor-icons/react/dist/ssr'
 import { apiClient } from '@/lib/api-client'
 import { shortDate } from '@/lib/dates'
+import { ShareButton } from '@/components/share-button'
+import { StoryKindPill, StoryPhoto, STORY_KIND_STYLE, initials } from '@/components/story-bits'
 import { STORY_KIND_LABEL, type StoryListItem } from '@splat-connect/types'
 
 type StoryDetail = StoryListItem & {
@@ -44,6 +45,7 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
   const story = await load(id)
   if (!story) notFound()
 
+  const tint = STORY_KIND_STYLE[story.kind].tint
   const meta = [
     story.org?.name,
     story.published_at ? shortDate(story.published_at) : null,
@@ -52,84 +54,111 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
     .filter(Boolean)
     .join(' · ')
 
-  return (
-    <article className="mx-auto max-w-[68ch]">
-      <p className="eyebrow text-muted">{STORY_KIND_LABEL[story.kind]}</p>
-      <h1 className="mt-1.5 title-article">{story.title}</h1>
-      <p className="mt-2 text-lg leading-relaxed text-muted">{story.summary}</p>
+  const byline = (
+    <>
+      <span
+        aria-hidden="true"
+        className="grid h-11 w-11 shrink-0 place-items-center rounded-[var(--radius-field)] text-sm font-extrabold text-[var(--tink)]"
+        style={{ background: tint }}
+      >
+        {initials(story.org?.name ?? 'SPLAT')}
+      </span>
+      <span className="min-w-0">
+        <span className="block text-[15px] font-extrabold text-ink">{story.byline}</span>
+        <span className="block text-[13px] text-muted">{meta}</span>
+      </span>
+    </>
+  )
 
-      <div className="card mt-5 flex items-center gap-3 p-4">
-        <span
-          aria-hidden="true"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-card bg-brand-tint font-display text-sm font-extrabold text-brand-deep"
-        >
-          {(story.org?.name ?? 'SPLAT').slice(0, 2).toUpperCase()}
-        </span>
-        <span className="min-w-0">
-          <span className="block truncate font-bold text-ink">{story.byline}</span>
-          <span className="block truncate text-xs text-muted">{meta}</span>
-        </span>
-        {story.org && (
-          <Link
-            href={`/organizations/${story.org.id}/public`}
-            className="btn btn-quiet btn-sm ml-auto shrink-0"
-          >
-            About them
-          </Link>
-        )}
+  return (
+    <article>
+      <nav
+        aria-label="Breadcrumb"
+        className="mb-[22px] flex items-center gap-2 text-sm font-bold text-muted"
+      >
+        <Link href="/about/stories" className="text-[var(--b700)]">
+          Stories
+        </Link>
+        <CaretRight size={12} weight="bold" aria-hidden="true" />
+        <span>{STORY_KIND_LABEL[story.kind]}</span>
+      </nav>
+
+      <div className="mx-auto max-w-[760px]">
+        <StoryKindPill kind={story.kind} className="!px-3 !py-1 text-xs tracking-[0.06em]" />
+        <h1 className="mt-3.5 font-display text-[clamp(32px,4vw,50px)] font-extrabold leading-[1.08] tracking-[-0.02em] text-ink [text-wrap:balance]">
+          {story.title}
+        </h1>
+        <p className="mt-3.5 text-xl leading-[1.55] text-muted [text-wrap:pretty]">{story.summary}</p>
+
+        {/* The byline is not a credit line. A story about a named child is
+            publishable only because an organisation took responsibility for
+            the consent, and this is where that is visible and clickable. */}
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-y border-line py-4">
+          {story.org ? (
+            <Link href={`/organizations/${story.org.id}/public`} className="flex items-center gap-3">
+              {byline}
+            </Link>
+          ) : (
+            <div className="flex items-center gap-3">{byline}</div>
+          )}
+          <ShareButton title={story.title} copyLink className="min-h-11 px-3.5 text-[13px]" />
+        </div>
+      </div>
+
+      <div
+        className="relative mx-auto mt-7 aspect-[2.2] max-w-[960px] overflow-hidden rounded-card border border-line"
+        style={{ background: tint, boxShadow: 'var(--shadow-e2), var(--shadow-hi)' }}
+      >
+        <StoryPhoto kind={story.kind} photos={story.photo_urls} iconSize={72} />
       </div>
 
       {/* Blank-line separated, the way the publish form asks for it. No
           markdown: a leader writing about their build day should not have to
           learn a syntax, and the one thing they cannot express — a pull quote —
           has a field of its own below. */}
-      <div className="mt-8 flex flex-col gap-4">
+      <div className="mx-auto mt-9 max-w-[680px] text-lg leading-[1.75] text-ink">
         {story.body.split(/\n{2,}/).map((para, i) => (
-          <p key={i} className="text-base leading-relaxed text-ink">
+          <p key={i} className="mb-[22px]">
             {para}
           </p>
         ))}
+
+        {story.pull_quote && (
+          <blockquote
+            className="mb-7 mt-2 rounded-card px-[26px] py-[22px] font-display text-2xl font-extrabold leading-[1.35] text-[var(--tink)]"
+            style={{ background: tint }}
+          >
+            &ldquo;{story.pull_quote}&rdquo;
+            <footer className="mt-2.5 font-sans text-sm font-bold opacity-85">
+              — {story.pull_quote_by}
+            </footer>
+          </blockquote>
+        )}
+
+        {story.link_tutorial && (
+          <Link href={`/tutorials/${story.link_tutorial.id}`} className="btn btn-quiet">
+            <BookOpen size={16} weight="bold" aria-hidden="true" />
+            Read the guide: {story.link_tutorial.title}
+          </Link>
+        )}
       </div>
 
-      {/* A quote glyph and a byline, not a left-border accent bar — §6 of the
-          brief names that rule, and this was the last bar on the site. */}
-      {story.pull_quote && (
-        <blockquote className="mt-8 flex items-start gap-3 rounded-[var(--radius-inset)] bg-sunken p-5">
-          <Quotes size={22} weight="fill" className="mt-1 flex-none text-brand-dark" aria-hidden="true" />
-          <div className="min-w-0">
-            <p className="font-display text-xl font-extrabold leading-snug text-ink">
-              {story.pull_quote}
-            </p>
-            <footer className="mt-1.5 text-xs font-extrabold uppercase tracking-[0.08em] text-muted">
-              {story.pull_quote_by}
-            </footer>
-          </div>
-        </blockquote>
-      )}
-
-      {story.link_tutorial && (
-        <Link
-          href={`/tutorials/${story.link_tutorial.id}`}
-          className="btn btn-primary btn-sm mt-8"
-        >
-          <BookOpen className="h-4 w-4" aria-hidden="true" />
-          Read the guide: {story.link_tutorial.title}
-        </Link>
-      )}
-
       {story.more.length > 0 && (
-        <section className="mt-12">
-          <h2 className="title-detail">More stories</h2>
-          <div className="mt-3 flex flex-col gap-2">
+        <section className="mx-auto mt-14 max-w-[960px]">
+          <h2 className="mb-4 font-display text-2xl font-extrabold text-ink">More stories</h2>
+          <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(260px,1fr))]">
             {story.more.map((other) => (
               <Link
                 key={other.id}
                 href={`/about/stories/${other.id}`}
-                className="card-link card flex flex-col p-4"
+                className="card card-link flex flex-col gap-2 rounded-[var(--radius-inset)] px-[18px] py-4"
+                style={{ boxShadow: 'var(--shadow-e1)' }}
               >
-                <span className="eyebrow text-muted">{STORY_KIND_LABEL[other.kind]}</span>
-                <span className="card-title mt-1">{other.title}</span>
-                <span className="mt-0.5 text-xs text-muted">
+                <StoryKindPill kind={other.kind} className="text-[10.5px]" />
+                <span className="font-display text-[17px] font-extrabold leading-[1.25] text-ink">
+                  {other.title}
+                </span>
+                <span className="text-[13px] text-muted">
                   {other.byline}
                   {other.published_at && ` · ${shortDate(other.published_at)}`}
                 </span>
@@ -138,13 +167,6 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
           </div>
         </section>
       )}
-
-      <p className="mt-10">
-        <Link href="/about/stories" className="text-sm font-semibold text-brand-dark hover:underline">
-          All stories
-          <ArrowRight className="ml-1 inline h-4 w-4" aria-hidden="true" />
-        </Link>
-      </p>
     </article>
   )
 }

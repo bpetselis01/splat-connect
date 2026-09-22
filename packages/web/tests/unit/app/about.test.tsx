@@ -14,15 +14,13 @@ import { TEAM_MEMBERS } from '@/app/about/team/page'
 vi.mock('@/lib/capabilities', () => ({ getCapabilities: async () => null }))
 
 describe('About', () => {
-  it('explains what SPLAT is and why it exists', () => {
+  it('explains what SPLAT is and what it promises', () => {
     render(<AboutPage />)
     expect(screen.getByRole('heading', { level: 1, name: /^about$/i })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /why this exists/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /no paid tier, ever/i })).toBeInTheDocument()
   })
 
   it('routes on to the team and to contact', () => {
-    // The CTA in "Who runs it" and the card in the About hub grid both point
-    // here now, so check every link with this name rather than assuming one.
     render(<AboutPage />)
     for (const link of screen.getAllByRole('link', { name: /our team/i })) {
       expect(link).toHaveAttribute('href', '/about/team')
@@ -82,8 +80,8 @@ describe('About', () => {
   //        safety jumps ahead — but only if there is a form to fill in
   it('offers a form as well as the email address', async () => {
     render(await ContactPage())
-    expect(screen.getByRole('button', { name: /send it/i })).toBeInTheDocument()
-    expect(screen.getByLabelText(/what is it about/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/your email/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /send message/i })).toBeInTheDocument()
+    expect(screen.getByRole("radiogroup", { name: /what is this about/i })).toBeInTheDocument()
+    expect(screen.getByLabelText(/^email$/i)).toBeInTheDocument()
   })
 })
