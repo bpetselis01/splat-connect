@@ -49,7 +49,8 @@ export function MoneyPanel({
         >
           Money you have agreed to
         </h2>
-        <p className="font-mono text-4xl font-bold tabular-nums text-ink">
+        {/* The board sets this one figure in the display face, not the numeral mono. */}
+        <p className="font-display text-[40px] font-extrabold leading-none text-ink">
           {formatCents(totalCents)}
         </p>
         <p className="mt-2 text-sm leading-relaxed text-muted">

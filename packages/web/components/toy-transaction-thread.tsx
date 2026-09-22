@@ -323,12 +323,12 @@ export function ToyTransactionThread({
               {myMove ? 'Waiting on you' : `Waiting on ${otherPartyName}`}
             </p>
             {/* The board's headline is the meeting itself — "Thursday after
-                three, Newcastle clinic" — so the agreed time leads and the
-                place follows it. Without instructions there is no time to
-                lead with and the place stands alone. */}
+                three, Newcastle clinic" — in the giver's own words, which
+                already name the place. Without instructions there is no time
+                to lead with and the suburb stands alone. */}
             <p className="mb-3.5 font-display text-[19px] font-extrabold leading-snug">
               {tx.pickup_instructions
-                ? [tx.pickup_instructions, where].filter(Boolean).join(', ')
+                ? tx.pickup_instructions
                 : where
                   ? `Handover in ${where}`
                   : 'Agree a time and place in the thread'}
