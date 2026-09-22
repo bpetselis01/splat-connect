@@ -9,104 +9,148 @@
  * than in a row above it, which is what lets there be more than four of them
  * without pushing the first card below the fold.
  *
+ * The rail is the board's three facets, one choice each (lib/library-filter.ts
+ * holds the rules), and there is no search box in it: the header's search
+ * submits here as ?q=, which shows as a removable chip like any other filter.
+ *
  * Filtering stays client-side over the whole list. The API returns every
  * published guide in one call and there are hundreds, not millions; a round
  * trip per chip would make the rail feel broken for a saving nobody can
  * measure.
  */
 import { useState } from 'react'
+import type { Route } from 'next'
 import {
   Books,
   HandHeart,
-  Lightning,
   Smiley,
   Sliders,
   MagnifyingGlass,
   NotePencil,
   Gift,
   X,
+  SquaresFour,
+  Wrench,
+  Clock,
+  Dog,
+  CircleHalf,
+  Fire,
+  Timer,
+  HourglassMedium,
+  Cube,
 } from '@phosphor-icons/react/dist/ssr'
 import Link from 'next/link'
 import { TutorialCard } from '@/components/tutorial-card'
 import { BrowseHero } from '@/components/browse-hero'
+import { SortControl } from '@/components/sort-control'
 import { SplatMascot } from '@/components/splat-mascot'
-import { KIND_LABEL, type Tutorial, type Difficulty, type TutorialKind } from '@splat-connect/types'
+import {
+  SORTS,
+  filterGuides,
+  sortGuides,
+  type Filters,
+  type SortDir,
+  type SortKey,
+} from '@/lib/library-filter'
+import type { Tutorial } from '@splat-connect/types'
 
-const DIFFICULTIES: Difficulty[] = ['easy', 'medium', 'hard']
-const KINDS: TutorialKind[] = ['toy_adaptation', 'assistive_tech']
+export type LibraryStats = { guides: number; contributors: number; organisations: number }
 
-/** A facet option: a 44px pill that presses in when it is on. */
-function Facet({
-  on,
-  onClick,
-  children,
-}: {
-  on: boolean
-  onClick: () => void
-  children: React.ReactNode
-}) {
-  return (
-    <button type="button" aria-pressed={on} onClick={onClick} className="chip">
-      {children}
-    </button>
-  )
+type Icon = typeof Dog
+type Facet = {
+  key: keyof Filters
+  label: string
+  Icon: Icon
+  opts: { value: string; label: string; Icon: Icon }[]
 }
+
+// The board's FAC, verbatim in labels and glyphs.
+const FACETS: Facet[] = [
+  {
+    key: 'type',
+    label: 'Guide type',
+    Icon: SquaresFour,
+    opts: [
+      { value: 'toy_adaptation', label: 'Toy adaptation guide', Icon: Dog },
+      { value: 'assistive_tech', label: 'Assistive tech guide', Icon: Wrench },
+    ],
+  },
+  {
+    key: 'skill',
+    label: 'Your skill level',
+    Icon: Wrench,
+    opts: [
+      { value: 'easy', label: 'Easy', Icon: Smiley },
+      { value: 'medium', label: 'Medium', Icon: CircleHalf },
+      { value: 'hard', label: 'Hard', Icon: Fire },
+    ],
+  },
+  {
+    key: 'time',
+    label: 'Time',
+    Icon: Clock,
+    opts: [
+      { value: 'u30', label: 'Under 30 min', Icon: Timer },
+      { value: 'u60', label: 'Under 1 hour', Icon: HourglassMedium },
+      { value: 'print', label: 'Needs printing', Icon: Cube },
+    ],
+  },
+]
 
 export function LibraryClient({
   tutorials,
+  stats,
   savedIds,
   signedIn,
+  initialSearch = '',
 }: {
   tutorials: Tutorial[]
+  stats: LibraryStats | null
   savedIds: string[]
   signedIn: boolean
+  initialSearch?: string
 }) {
   // A Set rather than repeated .includes: this is the busiest page on the site
   // and the lookup runs once per card.
   const saved = new Set(savedIds)
-  const [search, setSearch] = useState('')
-  const [difficulty, setDifficulty] = useState<Difficulty[]>([])
-  const [kinds, setKinds] = useState<TutorialKind[]>([])
+  const [search, setSearch] = useState(initialSearch)
+  const [filters, setFilters] = useState<Filters>({})
+  const [sortKey, setSortKey] = useState<SortKey>('new')
+  const [dir, setDir] = useState<SortDir>('desc')
 
-  function toggle<T>(list: T[], set: (v: T[]) => void, value: T) {
-    set(list.includes(value) ? list.filter((v) => v !== value) : [...list, value])
+  // Tapping the chosen option clears it — one choice per facet, as the board has it.
+  function toggle(key: keyof Filters, value: string) {
+    setFilters((f) => ({ ...f, [key]: f[key] === value ? undefined : value }))
   }
 
-  const filtered = tutorials.filter((t) => {
-    const matchesSearch = t.title.toLowerCase().includes(search.toLowerCase())
-    // An empty facet means "any", not "none" — the board's Clear puts every
-    // facet back to empty and expects the full list, so the two must agree.
-    const matchesDifficulty = difficulty.length === 0 || difficulty.includes(t.difficulty)
-    const matchesKind = kinds.length === 0 || kinds.includes(t.kind)
-    return matchesSearch && matchesDifficulty && matchesKind
-  })
-
-  const backed = tutorials.filter((t) =>
-    (t.tutorial_orgs ?? []).some((b) => b.status === 'accepted')
-  ).length
-  const beginner = tutorials.filter((t) => t.difficulty === 'easy').length
+  const shown = sortGuides(filterGuides(tutorials, filters, search), sortKey, dir)
 
   const active = [
-    ...difficulty.map((d) => ({
-      label: d[0].toUpperCase() + d.slice(1),
-      clear: () => toggle(difficulty, setDifficulty, d),
-    })),
-    ...kinds.map((k) => ({ label: KIND_LABEL[k], clear: () => toggle(kinds, setKinds, k) })),
+    ...FACETS.flatMap((f) =>
+      f.opts
+        .filter((o) => filters[f.key] === o.value)
+        .map((o) => ({ label: o.label, clear: () => toggle(f.key, o.value) }))
+    ),
     ...(search ? [{ label: `“${search}”`, clear: () => setSearch('') }] : []),
   ]
 
   function clearAll() {
-    setDifficulty([])
-    setKinds([])
+    setFilters({})
     setSearch('')
   }
+
+  // The wizard keeps a profile, which needs an account. Signing up first, with
+  // the reason on screen, beats /onboarding/child's bare redirect to /login.
+  const wizardHref = (
+    signedIn ? '/onboarding/child' : '/signup?next=%2Fonboarding%2Fchild&reason=child'
+  ) as Route
 
   return (
     <div className="flex flex-col gap-8">
       <BrowseHero
         eyebrow="Guides"
         title="Adapt a toy in an evening"
-        lede="Step-by-step guides for switch-adapting toys and printing the parts that hold them, each one read by a reviewer before it went public."
+        lede="Step-by-step guides for switch-adapting toys and printing the parts that hold them, each one read by a reviewer before it went public. About $30 of parts and a screwdriver."
         primary={{
           label: 'Browse the guides',
           href: '#guide-grid',
@@ -114,13 +158,19 @@ export function LibraryClient({
         }}
         secondary={{
           label: 'Pick for my child',
-          href: '/learn/choosing-a-toy',
+          href: wizardHref,
           icon: <Smiley size={20} weight="bold" className="text-brand-dark" aria-hidden="true" />,
         }}
+        // From /api/public/tutorials/stats, over the public listing; a failed
+        // fetch falls back to the one number the page can count itself.
         stats={[
-          { n: tutorials.length, label: 'guides published' },
-          { n: beginner, label: 'an evening or less' },
-          { n: backed, label: 'backed by a service' },
+          { n: stats?.guides ?? tutorials.length, label: 'reviewed guides' },
+          ...(stats
+            ? [
+                { n: stats.contributors, label: 'contributors' },
+                { n: stats.organisations, label: 'organisations backing' },
+              ]
+            : []),
         ]}
         aside={{
           kicker: 'Or give',
@@ -131,7 +181,7 @@ export function LibraryClient({
             href: '/get-involved/submit-a-tutorial',
             icon: <NotePencil size={18} weight="bold" aria-hidden="true" />,
           },
-          art: <SplatMascot width={84} />,
+          art: <SplatMascot width={132} pose="think" />,
         }}
       />
 
@@ -148,59 +198,37 @@ export function LibraryClient({
             </button>
           </div>
 
-          <div>
-            <label htmlFor="library-search" className="mb-2.5 block text-sm font-extrabold text-ink">
-              Search
-            </label>
-            <input
-              id="library-search"
-              type="search"
-              placeholder="Toy or guide name…"
-              className="field w-full"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-
-          <fieldset>
-            <legend>
-              <Lightning size={18} weight="duotone" className="text-brand-dark" aria-hidden="true" />
-              How hard
-            </legend>
-            <div className="flex flex-wrap gap-2">
-              {DIFFICULTIES.map((d) => (
-                <Facet
-                  key={d}
-                  on={difficulty.includes(d)}
-                  onClick={() => toggle(difficulty, setDifficulty, d)}
-                >
-                  <span className="capitalize">{d}</span>
-                </Facet>
-              ))}
-            </div>
-          </fieldset>
-
-          <fieldset>
-            <legend>
-              <Books size={18} weight="duotone" className="text-brand-dark" aria-hidden="true" />
-              What kind
-            </legend>
-            <div className="flex flex-wrap gap-2">
-              {KINDS.map((k) => (
-                <Facet key={k} on={kinds.includes(k)} onClick={() => toggle(kinds, setKinds, k)}>
-                  {KIND_LABEL[k]}
-                </Facet>
-              ))}
-            </div>
-          </fieldset>
+          {FACETS.map((f) => (
+            <fieldset key={f.key}>
+              <legend>
+                <f.Icon size={18} weight="duotone" className="text-brand-dark" aria-hidden="true" />
+                {f.label}
+              </legend>
+              <div className="flex flex-wrap gap-2">
+                {f.opts.map((o) => (
+                  <button
+                    key={o.value}
+                    type="button"
+                    aria-pressed={filters[f.key] === o.value}
+                    onClick={() => toggle(f.key, o.value)}
+                    className="chip gap-1.5"
+                  >
+                    <o.Icon size={14} weight="bold" className="text-brand-dark" aria-hidden="true" />
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+          ))}
 
           <p className="browse-note bg-honey-soft">
             <Sliders size={26} weight="duotone" className="flex-none" aria-hidden="true" />
             <span>
-              <strong className="font-extrabold">Not sure what to filter by?</strong> The course
-              walks through what suits your child.{' '}
-              <Link href="/learn" className="font-extrabold underline">
-                Start with Learn →
+              <strong className="font-extrabold">Not sure what to filter by?</strong>{' '}
+              Answer five quick questions about your child and we&apos;ll pick the guides worth your evening.
+              Free account needed to keep the profile.{' '}
+              <Link href={wizardHref} className="font-extrabold underline">
+                Pick for my child →
               </Link>
             </span>
           </p>
@@ -220,23 +248,36 @@ export function LibraryClient({
         <div>
           <div className="browse-head">
             <h2>All guides</h2>
-            <span aria-live="polite" className="text-sm font-bold text-muted">
-              {filtered.length} guide{filtered.length === 1 ? '' : 's'}
-            </span>
+            <div className="flex items-center gap-2.5">
+              <span aria-live="polite" className="text-sm font-bold text-muted">
+                {shown.length} guide{shown.length === 1 ? '' : 's'}
+              </span>
+              <SortControl
+                sorts={SORTS}
+                label="Sort guides by"
+                sortKey={sortKey}
+                dir={dir}
+                onPick={(key) => {
+                  setSortKey(key)
+                  setDir(SORTS.find((s) => s.key === key)!.dir)
+                }}
+                onFlip={() => setDir(dir === 'asc' ? 'desc' : 'asc')}
+              />
+            </div>
           </div>
 
-          {active.length > 0 && (
-            <div className="mb-5 flex min-h-9 flex-wrap gap-2">
-              {active.map((chip) => (
-                <button key={chip.label} type="button" onClick={chip.clear} className="browse-chip">
-                  {chip.label}
-                  <X size={14} weight="bold" className="p-1" aria-label="Remove filter" />
-                </button>
-              ))}
-            </div>
-          )}
+          {/* Always drawn, as on the board: the row holds its 36px when empty
+              so choosing a filter does not shove the grid down. */}
+          <div className="mb-5 flex min-h-9 flex-wrap gap-2">
+            {active.map((chip) => (
+              <button key={chip.label} type="button" onClick={chip.clear} className="browse-chip">
+                {chip.label}
+                <X size={14} weight="bold" className="p-1" aria-label="Remove filter" />
+              </button>
+            ))}
+          </div>
 
-          {filtered.length === 0 ? (
+          {shown.length === 0 ? (
             <div className="browse-empty">
               <span
                 aria-hidden="true"
@@ -266,7 +307,7 @@ export function LibraryClient({
             </div>
           ) : (
             <div className="browse-grid">
-              {filtered.map((t) => (
+              {shown.map((t) => (
                 <TutorialCard
                   key={t.id}
                   tutorial={t}

@@ -9,7 +9,7 @@ import { PanelActions, useSaveOnLeave } from '@/components/panel-actions'
  */
 import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { KIND_LABEL, MATURITY_LABEL, SAFETY_CHECKLIST, type Tutorial, type Difficulty, type TutorialKind, type TutorialMaturity } from '@splat-connect/types'
+import { BUILD_TIME_OPTIONS, KIND_LABEL, MATURITY_LABEL, SAFETY_CHECKLIST, formatBuildTime, type Tutorial, type Difficulty, type TutorialKind, type TutorialMaturity } from '@splat-connect/types'
 import { useToast } from '@/components/toast'
 
 export function EditDetailsSection({
@@ -17,7 +17,7 @@ export function EditDetailsSection({
   onSave,
 }: {
   tutorial: Tutorial
-  onSave: (patch: { title: string; description: string | null; difficulty: Difficulty; kind: TutorialKind; maturity: TutorialMaturity; safety_declared?: true; updated_at: string }) => Promise<void>
+  onSave: (patch: { title: string; description: string | null; difficulty: Difficulty; build_minutes: number | null; kind: TutorialKind; maturity: TutorialMaturity; safety_declared?: true; updated_at: string }) => Promise<void>
 }) {
   const router = useRouter()
   const showToast = useToast()
@@ -33,6 +33,7 @@ export function EditDetailsSection({
         title: formData.get('title') as string,
         description: (formData.get('description') as string) || null,
         difficulty: formData.get('difficulty') as Difficulty,
+        build_minutes: Number(formData.get('build_minutes')) || null,
         kind: formData.get('kind') as TutorialKind,
         maturity: formData.get('maturity') as TutorialMaturity,
         // Once declared, always declared — the timestamp on the row is the
@@ -96,6 +97,33 @@ export function EditDetailsSection({
           <option value="medium">Medium</option>
           <option value="hard">Hard</option>
         </select>
+      </div>
+      <div>
+        {/* Beside Difficulty because both answer "what am I getting into?".
+            The board's editor counts printing in; Byron ruled it out, so the
+            hint says so — a parent filtering "Under 30 min" reads hands-on
+            time, and "Needs printing" is its own chip. */}
+        <label htmlFor="edit-build-minutes" className="field-label">About how long does it take?</label>
+        <select
+          id="edit-build-minutes"
+          key={tutorial.build_minutes ?? ''}
+          name="build_minutes"
+          defaultValue={tutorial.build_minutes ?? ''}
+          className="field"
+        >
+          <option value="" disabled>Choose a time</option>
+          {/* A value from before the list existed stays selectable rather than
+              silently becoming "Choose a time" on the next save. */}
+          {[...new Set([...BUILD_TIME_OPTIONS, ...(tutorial.build_minutes ? [tutorial.build_minutes] : [])])]
+            .sort((a, b) => a - b)
+            .map((m) => (
+              <option key={m} value={m}>{m === 240 ? '4 h or more' : formatBuildTime(m)}</option>
+            ))}
+        </select>
+        <p className="mt-1 text-xs leading-relaxed text-muted">
+          Hands-on time only — printing time isn&apos;t included. Printed parts can take
+          hours and are listed separately.
+        </p>
       </div>
       <div>
         {/* Editable, not just shown: picking the wrong card on /upload should

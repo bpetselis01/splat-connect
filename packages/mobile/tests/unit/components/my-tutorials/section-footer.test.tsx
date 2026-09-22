@@ -32,6 +32,7 @@ const tutorial = (over: Record<string, unknown> = {}) => ({
   difficulty: 'easy',
   status: 'draft',
   safety_declared_at: '2026-09-02T00:00:00Z',
+  build_minutes: 30,
   tutorial_pdf_url: 't1/tutorial.pdf',
   photo_urls: ['https://example.test/p.jpg'],
   toy_photo_url: 'https://example.test/p.jpg',

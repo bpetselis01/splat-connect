@@ -17,6 +17,7 @@ const base = (over: Partial<TutorialWithDetails> = {}): TutorialWithDetails =>
     status: 'draft',
     updated_at: '2026-09-02T00:00:00Z',
     safety_declared_at: '2026-09-02T00:00:00Z',
+    build_minutes: 30,
     tutorial_pdf_url: 'p.pdf',
     photo_urls: ['p.jpg'],
     toy_photo_url: 'p.jpg',
@@ -51,11 +52,13 @@ describe('getMissingFields', () => {
         parts: [],
         tools: [],
         safety_declared_at: null,
+        build_minutes: null,
       })
     )
     expect(gaps).toEqual([
       { section: 'details', label: 'A title' },
       { section: 'details', label: 'A difficulty' },
+      { section: 'details', label: 'A build time' },
       { section: 'files', label: 'The guide PDF' },
       { section: 'files', label: 'A photo' },
       { section: 'parts', label: 'A part' },

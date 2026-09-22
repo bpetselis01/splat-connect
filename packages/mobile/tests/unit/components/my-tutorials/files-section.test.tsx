@@ -73,6 +73,7 @@ beforeEach(() => {
     difficulty: 'easy',
     title: 'T',
     safety_declared_at: null,
+    build_minutes: 30,
     parts: [],
     tools: [],
   }
@@ -142,6 +143,7 @@ it('appends an uploaded STL to the replace-set', async () => {
     difficulty: 'easy',
     title: 'T',
     safety_declared_at: null,
+    build_minutes: 30,
     parts: [],
     tools: [],
   }

@@ -29,6 +29,7 @@ const DETAIL = {
   status: 'approved',
   maturity: 'complete',
   safety_declared_at: null,
+  build_minutes: 30,
   // Object path (049), not a URL — the preview button signs it in-process.
   tutorial_pdf_url: '1/tutorial.pdf',
   photo_urls: [],

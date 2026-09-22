@@ -27,7 +27,9 @@ publicRoutes.get('/tutorials', async (c) => {
     .from('tutorials')
     // Backing rides along with the list so a library card can name its backers.
     // The alternative is a request per card on the busiest page on the site.
-    .select('*, tutorial_orgs(status, organizations(id, name))')
+    // thanks_count and has_stl are 066's computed fields — a count and a flag,
+    // never the rows behind them.
+    .select('*, thanks_count, has_stl, tutorial_orgs(status, organizations(id, name))')
     .eq('status', 'approved')
     // The default public listing carries only finished designs; anything less
     // mature stays reachable by direct link, wearing its maturity badge.
@@ -52,6 +54,33 @@ publicRoutes.get('/tutorials', async (c) => {
   )
 })
 
+/**
+ * The library hero's three numbers, over exactly what the public list shows
+ * (approved + complete) — so they never disagree with the grid beneath them.
+ *
+ * Admin client for the two joins: tutorial_contributors and tutorial_orgs are
+ * not anon-readable, and only counts leave this handler. Registered before
+ * /tutorials/:id, or "stats" would be taken for an id.
+ */
+publicRoutes.get('/tutorials/stats', async (c) => {
+  const admin = createAdminClient()
+  const { data, error } = await admin
+    .from('tutorials')
+    .select('id, tutorial_contributors(profile_id), tutorial_orgs(org_id, status)')
+    .eq('status', 'approved')
+    .eq('maturity', 'complete')
+  if (error) return c.json({ error: error.message }, 500)
+  const rows = (data ?? []) as unknown as Array<{
+    tutorial_contributors: { profile_id: string }[]
+    tutorial_orgs: { org_id: string; status: string }[]
+  }>
+  const people = new Set(rows.flatMap((t) => t.tutorial_contributors.map((p) => p.profile_id)))
+  const orgs = new Set(
+    rows.flatMap((t) => t.tutorial_orgs.filter((b) => b.status === 'accepted').map((b) => b.org_id))
+  )
+  return c.json({ guides: rows.length, contributors: people.size, organisations: orgs.size })
+})
+
 publicRoutes.get('/tutorials/:id', async (c) => {
   const supabase = createAnonClient()
   const { data, error } = await supabase
@@ -63,7 +92,7 @@ publicRoutes.get('/tutorials/:id', async (c) => {
     // points at tutorials twice, and PostgREST refuses an ambiguous embed
     // outright rather than guessing. See the same select in tutorials.ts.
     .select(
-      '*, parts(*), tools(*), stl_files(*), tutorial_contributors(profile_id, role, profiles(name)), ' +
+      '*, thanks_count, parts(*), tools(*), stl_files(*), tutorial_contributors(profile_id, role, profiles(name)), ' +
         'tutorial_orgs(status, organizations(id, name)), ' +
         'tutorial_recommendations!tutorial_id(position, tutorials!recommended_id(id, title, kind, difficulty, toy_photo_url, status, maturity)), ' +
         'reviewer:reviewed_by(name), reviewed_for:reviewed_for_org_id(name)'

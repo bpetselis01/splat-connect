@@ -34,6 +34,7 @@ const mockTutorial: Tutorial = {
   status: 'approved',
     maturity: 'complete',
     safety_declared_at: null,
+    build_minutes: 30,
   description: 'A helpful tutorial',
   tutorial_pdf_url: 'https://example.com/tutorial.pdf',
   photo_urls: ['https://test.supabase.co/storage/v1/object/public/photos/photo.jpg'],
@@ -129,7 +130,10 @@ describe('TutorialCard', () => {
         }}
       />
     )
-    expect(screen.getByText('Backed by Riverside Therapy')).toBeInTheDocument()
+    // The board's pill reads "Backed"; the name rides in its title and in
+    // screen-reader text, so it is still what a parent is told.
+    const pill = screen.getByTitle('Backed by Riverside Therapy')
+    expect(pill).toHaveTextContent('Backed by Riverside Therapy')
   })
 
   // Tests: an unbacked card says nothing about review at all
@@ -140,6 +144,28 @@ describe('TutorialCard', () => {
   it('says nothing about backing when there is none', () => {
     render(<TutorialCard tutorial={{ ...mockTutorial, tutorial_orgs: [] }} />)
     expect(screen.queryByText(/Reviewed by SPLAT/)).not.toBeInTheDocument()
+  })
+
+  // 066 + the mockup Byron picked (option C): printing is a chip, not a suffix
+  // on the time, and it appears only when the guide has STL files.
+  it('marks a guide with STL files as Needs printing, and only that guide', () => {
+    const { rerender } = render(<TutorialCard tutorial={{ ...mockTutorial, has_stl: true }} />)
+    expect(screen.getByText('Needs printing')).toBeInTheDocument()
+    rerender(<TutorialCard tutorial={{ ...mockTutorial, has_stl: false }} />)
+    expect(screen.queryByText('Needs printing')).not.toBeInTheDocument()
+  })
+
+  it('draws the build time and the thanks count in the footer, zero included', () => {
+    render(<TutorialCard tutorial={{ ...mockTutorial, build_minutes: 90, thanks_count: 0 }} />)
+    expect(screen.getByText('1.5 h')).toBeInTheDocument()
+    expect(screen.getByTitle('Times people said thanks for this guide')).toHaveTextContent('0 thanks')
+  })
+
+  // A recommendation's embedded target carries neither; the card must not
+  // invent "0" for a number it was never given.
+  it('draws no thanks count when the row does not carry one', () => {
+    render(<TutorialCard tutorial={mockTutorial} />)
+    expect(screen.queryByTitle('Times people said thanks for this guide')).not.toBeInTheDocument()
   })
 })
 

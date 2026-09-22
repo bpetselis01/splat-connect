@@ -30,6 +30,7 @@ function tutorial(overrides: Partial<TutorialWithDetails> = {}): TutorialWithDet
     status: 'approved',
     maturity: 'complete',
     safety_declared_at: null,
+    build_minutes: 30,
     tutorial_pdf_url: null,
     photo_urls: [],
     toy_photo_url: null,
@@ -53,10 +54,9 @@ describe('TutorialView', () => {
   // is about the kind, not about whether rows happen to exist.
   it('shows 3D-print files only for an assistive-tech tutorial', () => {
     const { unmount } = render(<TutorialView tutorial={tutorial({ stl_files: stl })} signedIn={false} />)
-    expect(screen.queryByText('Files for 3D printing')).toBeNull()
+    expect(screen.queryByText('bracket.stl')).toBeNull()
     unmount()
     render(<TutorialView tutorial={tutorial({ kind: 'assistive_tech', stl_files: stl })} signedIn={false} />)
-    expect(screen.getByText('Files for 3D printing')).toBeInTheDocument()
     expect(screen.getByText('bracket.stl')).toBeInTheDocument()
   })
 
@@ -68,7 +68,7 @@ describe('TutorialView', () => {
   it('lists recommendations as cards in position order', () => {
     render(<TutorialView tutorial={tutorial({ tutorial_recommendations: [rec('a', 1), rec('b', 2), rec('c', 3)] })} signedIn={false} />)
     expect(screen.getByText('Also worth a look')).toBeInTheDocument()
-    const hrefs = screen.getAllByTestId('tutorial-card').map((el) => el.getAttribute('href'))
+    const hrefs = screen.getAllByTestId('rec-card').map((el) => el.getAttribute('href'))
     expect(hrefs).toEqual(['/tutorials/a', '/tutorials/b', '/tutorials/c'])
     expect(screen.queryByText(/Not yet approved/)).toBeNull()
   })
@@ -94,7 +94,7 @@ describe('TutorialView', () => {
     render(<TutorialView tutorial={tutorial(files)} signedIn={false} />)
     const detour = '/signup?next=%2Ftutorials%2Ft1&reason=download'
     expect(screen.getByRole('link', { name: 'Sign in to download' })).toHaveAttribute('href', detour)
-    expect(screen.getByRole('link', { name: 'bracket.stl' })).toHaveAttribute('href', detour)
+    expect(screen.getByRole('link', { name: 'Download bracket.stl' })).toHaveAttribute('href', detour)
     expect(screen.getByRole('link', { name: 'Sign in to download' })).not.toHaveAttribute('target')
   })
 
@@ -105,8 +105,8 @@ describe('TutorialView', () => {
       '/files/tutorial-pdfs/t1/tutorial.pdf'
     )
     expect(screen.getByRole('link', { name: 'Download guide (PDF)' })).toHaveAttribute('target', '_blank')
-    expect(screen.getByRole('link', { name: 'bracket.stl' })).toHaveAttribute('href', '/files/stl-files/t1/bracket.stl')
-    expect(screen.getByRole('link', { name: 'bracket.stl' })).not.toHaveAttribute('target')
+    expect(screen.getByRole('link', { name: 'Download bracket.stl' })).toHaveAttribute('href', '/files/stl-files/t1/bracket.stl')
+    expect(screen.getByRole('link', { name: 'Download bracket.stl' })).not.toHaveAttribute('target')
   })
 
   // Parts sourcing is open in both states: it is someone else's shop, and a
@@ -115,5 +115,32 @@ describe('TutorialView', () => {
     const parts = [{ id: 'p1', tutorial_id: 't1', name: 'Switch', quantity: 1, is_optional: false, buy_links: [{ label: 'Jaycar', url: 'https://shop.test/switch' }] }]
     render(<TutorialView tutorial={tutorial({ parts })} signedIn={false} />)
     expect(screen.getByRole('link', { name: 'Buy Switch from Jaycar' })).toHaveAttribute('href', 'https://shop.test/switch')
+  })
+})
+
+describe('TutorialView tabs', () => {
+  const parts = [{ id: 'p1', tutorial_id: 't1', name: 'Switch', quantity: 1, is_optional: false, buy_links: [] }]
+
+  // Only the sections the data can fill get a tab; the board's Steps and
+  // Community notes have nothing behind them in this schema.
+  it('draws a tab per filled section and keeps the rest in the DOM', () => {
+    render(
+      <TutorialView
+        tutorial={tutorial({ kind: 'assistive_tech', parts, stl_files: stl, safety_declared_at: '2026-08-01T00:00:00Z' })}
+        signedIn
+      />
+    )
+    expect(screen.getAllByRole('tab').map((t) => t.textContent)).toEqual([
+      'Parts & tools',
+      'Files & print settings',
+      'Safety',
+    ])
+    expect(screen.getByText('bracket.stl').closest('[role="tabpanel"]')).toHaveAttribute('hidden')
+  })
+
+  it('draws no strip for a single section', () => {
+    render(<TutorialView tutorial={tutorial({ parts })} signedIn={false} />)
+    expect(screen.queryByRole('tablist')).toBeNull()
+    expect(screen.getByText('Switch')).toBeVisible()
   })
 })

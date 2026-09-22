@@ -23,6 +23,7 @@ const mockDraft = {
     status: 'draft',
     updated_at: 'v1',
     safety_declared_at: null,
+    build_minutes: 30,
     tutorial_pdf_url: null,
     photo_urls: [],
     toy_photo_url: null,

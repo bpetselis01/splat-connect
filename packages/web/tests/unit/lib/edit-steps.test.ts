@@ -12,6 +12,7 @@ function tutorial(overrides: Partial<TutorialWithDetails> = {}): TutorialWithDet
     status: 'draft',
     maturity: 'complete',
     safety_declared_at: '2026-08-01T00:00:00Z',
+    build_minutes: 30,
     photo_urls: ['https://test.supabase.co/storage/v1/object/public/photos/photo.jpg'],
     toy_photo_url: 'https://test.supabase.co/storage/v1/object/public/photos/photo.jpg',
     tutorial_pdf_url: 'https://example.com/tutorial.pdf',

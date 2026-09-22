@@ -13,10 +13,39 @@ import { EditRecommendationsSection } from '@/components/edit-recommendations-se
 import { Stepper } from '@/components/stepper'
 import { CreatedToast } from '@/components/created-toast'
 import { ToastProvider } from '@/components/toast'
-import { TutorialReviewPanel } from '@/components/tutorial-review-panel'
-import { computeStepStatuses, stepsFor, type EditStep } from '@/lib/edit-steps'
+import { computeStepStatuses, stepsFor, type EditStep, type EditStepId } from '@/lib/edit-steps'
+import type { Step } from '@/lib/steps'
+import Link from 'next/link'
+import type { Route } from 'next'
+import {
+  ArrowBendDownRight,
+  ArrowSquareOut,
+  Cube,
+  Eye,
+  FileArrowDown,
+  FlagBanner,
+  FloppyDisk,
+  Info,
+  Nut,
+  PaperPlaneTilt,
+  Plus,
+  SealCheck,
+  ChatTeardropText,
+  UsersThree,
+  Wrench,
+} from '@phosphor-icons/react/dist/ssr'
+import {
+  EditorChecklist,
+  EditorHeader,
+  EditorHistory,
+  StatusCard,
+  SubmitButton,
+  type HistoryRow,
+} from '@/components/editor-status'
+import { TUTORIAL_STAGE } from '@/components/dashboard-tutorial-card'
+import { formatRelativeTime } from '@/lib/relative-time'
+import { TutorialView } from '@/components/tutorial-view'
 import { getMissingFields } from '@/lib/validation'
-import { SaveStatusLine } from '@/components/save-status-line'
 import { DeleteEntityButton } from '@/components/delete-entity-button'
 import type { Tutorial, Part, Tool, StlFile, TutorialWithDetails, Difficulty, TutorialKind, BuyLink, TutorialOrg, Organization , TutorialMaturity } from '@splat-connect/types'
 
@@ -52,10 +81,13 @@ async function patchTutorialFiles(id: string, updates: Record<string, unknown>) 
 
 export default async function EditTutorialPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>
+  searchParams?: Promise<{ preview?: string }>
 }) {
   const { id } = await params
+  const preview = (await searchParams)?.preview === '1'
 
   const { profile } = await requireCapabilities()
 
@@ -101,7 +133,7 @@ export default async function EditTutorialPage({
     revalidatePath('/dashboard')
   }
 
-  async function saveDetails(patch: { title: string; description: string | null; difficulty: Difficulty; kind: TutorialKind; maturity: TutorialMaturity; safety_declared?: true; updated_at: string }) {
+  async function saveDetails(patch: { title: string; description: string | null; difficulty: Difficulty; build_minutes: number | null; kind: TutorialKind; maturity: TutorialMaturity; safety_declared?: true; updated_at: string }) {
     'use server'
     const body: Record<string, unknown> = { ...patch }
     if (tutorial.status === 'approved' || tutorial.status === 'rejected') {
@@ -200,6 +232,8 @@ export default async function EditTutorialPage({
     {
       id: 'details',
       label: 'Details',
+      icon: <Info size={19} weight="duotone" aria-hidden="true" />,
+      hint: 'What the toy is, how hard it is, how long it takes, and the safety declaration.',
       status: stepStatuses.details,
       content: (
         <div className="panel pt-5">
@@ -210,6 +244,8 @@ export default async function EditTutorialPage({
     {
       id: 'files',
       label: 'Files',
+      icon: <FileArrowDown size={19} weight="duotone" aria-hidden="true" />,
+      hint: 'The photos a parent sees first, and the guide PDF itself.',
       status: stepStatuses.files,
       content: (
         <div className="panel pt-5">
@@ -226,6 +262,8 @@ export default async function EditTutorialPage({
     {
       id: 'parts',
       label: 'Parts',
+      icon: <Nut size={19} weight="duotone" aria-hidden="true" />,
+      hint: 'Everything a family has to buy, and where to buy it.',
       status: stepStatuses.parts,
       content: (
         <div className="panel pt-5">
@@ -243,6 +281,8 @@ export default async function EditTutorialPage({
     {
       id: 'tools',
       label: 'Tools',
+      icon: <Wrench size={19} weight="duotone" aria-hidden="true" />,
+      hint: 'What they need on the bench.',
       status: stepStatuses.tools,
       content: (
         <div className="panel pt-5">
@@ -253,6 +293,8 @@ export default async function EditTutorialPage({
     {
       id: 'stl',
       label: 'STL Files',
+      icon: <Cube size={19} weight="duotone" aria-hidden="true" />,
+      hint: 'STL models and anything printable.',
       status: stepStatuses.stl,
       content: (
         <div className="panel px-5 pt-5 pb-5">
@@ -275,30 +317,13 @@ export default async function EditTutorialPage({
       ),
     },
     {
-      id: 'review',
-      label: 'Review',
-      status: stepStatuses.review,
-      content: (
-        <TutorialReviewPanel
-          title={tutorial.title}
-          description={tutorial.description}
-          difficulty={tutorial.difficulty as Difficulty}
-          toyPhotoUrl={tutorial.toy_photo_url}
-          hasPdf={tutorial.tutorial_pdf_url !== null}
-          partCount={parts.length}
-          toolCount={tools.length}
-          stlCount={stlFiles.length}
-          backing={backing}
-        />
-      ),
-    },
-    {
       id: 'recommended',
-      label: 'Recommended',
+      label: 'Worth a look',
+      icon: <ArrowBendDownRight size={19} weight="duotone" aria-hidden="true" />,
+      hint: 'Up to three guides you point a reader at next.',
       status: stepStatuses.recommended,
       content: (
         <div className="panel pt-5">
-          <h2 className="px-5 pb-3 text-sm font-bold text-ink">Recommended tutorials</h2>
           <EditRecommendationsSection
             tutorialId={id}
             recommendations={tutorial.tutorial_recommendations}
@@ -311,6 +336,8 @@ export default async function EditTutorialPage({
     {
       id: 'team',
       label: 'Team',
+      icon: <UsersThree size={19} weight="duotone" aria-hidden="true" />,
+      hint: 'Co-authors, and the organisations backing this guide.',
       status: stepStatuses.team,
       // Beside the walk, not on it: the pill sits at the right end of the
       // rail in its own colour, nothing offers it as Next, and it carries no
@@ -350,42 +377,215 @@ export default async function EditTutorialPage({
       ),
     },
   ]
-  const steps = stepsFor(tutorial.kind).map((stepId) => allSteps.find((s) => s.id === stepId)!)
+  /*
+   * The board's Status section, first in the rail: where the guide is, what is
+   * left, its history, and the one action that moves it on. It replaces the
+   * old Review step and the sticky finish bar — both said the same things.
+   */
+  const stage = TUTORIAL_STAGE[tutorial.status]
+  const orgName = (orgId: string | null) =>
+    organizations.find((o) => o.id === orgId)?.name ?? null
+  const backer = backing.find((b) => b.status === 'accepted')
+  const reviewer =
+    orgName(tutorial.reviewed_for_org_id) ?? (backer && orgName(backer.org_id)) ?? 'SPLAT'
+  const day = (iso: string) =>
+    new Date(iso).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })
+  const fullDay = (iso: string) =>
+    new Date(iso).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })
+
+  const walk = stepsFor(tutorial.kind).filter((s) => s !== 'review' && s !== 'team')
+  const byStep = (step: EditStepId) => missing.filter((m) => m.step === step).map((m) => m.label)
+  const checklist = walk.map((step) => {
+    const gaps = byStep(step)
+    const optional = step === 'recommended'
+    const done = optional ? stepStatuses.recommended === 'done' : gaps.length === 0
+    return {
+      step,
+      label: allSteps.find((s) => s.id === step)!.label,
+      note: done
+        ? 'Done'
+        : optional
+          ? 'Nothing picked yet — optional'
+          : `Still needs ${gaps.map((g) => g.charAt(0).toLowerCase() + g.slice(1)).join(', ')}`,
+      done,
+    }
+  })
+  const filled = checklist.filter((c) => c.done).length
+
+  const COPY: Record<typeof stage, { meta: string; head: string; body: React.ReactNode; progress: string; privacyLead: string; privacy: string }> = {
+    hidden: {
+      meta: `Draft · saved ${formatRelativeTime(tutorial.updated_at)}`,
+      head: 'Only you can see this',
+      body: 'A draft is invisible to everyone — families, organisations, even us. It stays here as long as you like, and nothing is checked until you ask for it to be.',
+      progress: `${filled} of ${checklist.length} sections filled in. Worth a look is optional.`,
+      privacyLead: 'Nothing here is public.',
+      privacy: 'A draft is visible only to you. Submitting shows it to your reviewer, and nobody else, until it is approved.',
+    },
+    waiting: {
+      meta: `With a reviewer since ${day(tutorial.updated_at)}`,
+      head: `${reviewer} is reading it`,
+      body: 'Someone there reads the whole guide, not a summary. You will get a notification either way, and nothing about it is public in the meantime.',
+      progress: `With ${reviewer} since ${day(tutorial.updated_at)}.`,
+      privacyLead: 'Still not public.',
+      privacy: `Only ${reviewer} can open it while it is in review. It does not appear in the library or in search.`,
+    },
+    needsyou: {
+      meta: `Sent back ${day(tutorial.reviewed_at ?? tutorial.updated_at)}`,
+      head: 'Your reviewer sent this back',
+      body: tutorial.rejection_note ?? 'No feedback was provided.',
+      progress: 'The note from your reviewer is on the Status tab. Saving a change sends it back for review.',
+      privacyLead: 'Nobody else saw this.',
+      privacy: 'A guide sent back for changes never became public, and the note is between you and your reviewer.',
+    },
+    live: {
+      meta: `Published ${day(tutorial.reviewed_at ?? tutorial.updated_at)}`,
+      head: 'Families are using this',
+      body: 'It is in the library, in search, and in the PDF anyone can download.',
+      progress: `Live since ${day(tutorial.reviewed_at ?? tutorial.updated_at)}. Saving a change sends it back for review.`,
+      privacyLead: 'This one is public.',
+      privacy: 'Families can read it and download the PDF.',
+    },
+    declined: { meta: '', head: '', body: '', progress: '', privacyLead: '', privacy: '' },
+    gone: { meta: '', head: '', body: '', progress: '', privacyLead: '', privacy: '' },
+  }
+  const copy = COPY[stage]
+
+  const history: HistoryRow[] = [
+    { icon: <Plus weight="bold" />, t: 'Created', d: fullDay(tutorial.created_at) },
+    ...(tutorial.reviewed_at && tutorial.status !== 'pending'
+      ? [
+          {
+            icon:
+              tutorial.status === 'approved' ? <SealCheck weight="bold" /> : <ChatTeardropText weight="bold" />,
+            t: tutorial.status === 'approved' ? 'Approved and published' : `Sent back by ${reviewer}`,
+            d: fullDay(tutorial.reviewed_at),
+          },
+        ]
+      : []),
+    { icon: <FloppyDisk weight="bold" />, t: 'Last saved', d: formatRelativeTime(tutorial.updated_at), now: true },
+  ]
+
+  // Only a published guide has a public page. Anything else previews here, from
+  // the contributor's own read of it, through the same view a reader gets.
+  const previewHref = (
+    tutorial.status === 'approved' ? `/tutorials/${id}` : `/tutorials/${id}/edit?preview=1`
+  ) as Route
+
+  if (preview) {
+    return (
+      <div>
+        <div className="editor-privacy mb-6 mt-0 flex flex-wrap items-center justify-between gap-3">
+          <p>
+            <strong className="text-ink">Previewing as a reader.</strong> This is how the guide
+            reads once it is published. Nobody else can see it yet.
+          </p>
+          <Link href={`/tutorials/${id}/edit` as Route} className="btn btn-quiet btn-sm">
+            Back to the editor
+          </Link>
+        </div>
+        <TutorialView tutorial={tutorial} backing={backing} signedIn />
+      </div>
+    )
+  }
+  const submit =
+    tutorial.status === 'draft' ? (
+      <SubmitButton
+        label="Submit for review"
+        busyLabel="Submitting…"
+        errorMessage="Could not submit this tutorial. Please try again."
+        onSubmit={submitForReview}
+        disabled={missing.length > 0}
+        icon={<PaperPlaneTilt size={16} weight="bold" aria-hidden="true" />}
+      />
+    ) : tutorial.status === 'approved' ? (
+      <Link href={previewHref} className="btn btn-primary">
+        <ArrowSquareOut size={16} weight="bold" aria-hidden="true" />
+        Open the live guide
+      </Link>
+    ) : null
+
+  const statusStep: Step<EditStepId | 'status'> = {
+    id: 'status',
+    label: 'Status',
+    status: 'neutral',
+    icon: <FlagBanner size={19} weight="duotone" aria-hidden="true" />,
+    hint: 'Where this guide is in its life, and what you can do about it right now.',
+    content: (
+      <div className="flex flex-col gap-5">
+        <StatusCard stage={stage} head={copy.head} body={copy.body} />
+        {tutorial.status === 'draft' && (
+          <EditorChecklist
+            title="What is left before you can submit"
+            sub="Everything but Worth a look has to be filled in before a reviewer can read it."
+            rows={checklist}
+          />
+        )}
+        <EditorHistory rows={history} />
+        <div className="flex flex-wrap gap-2.5 border-t border-line pt-[18px]">
+          {submit}
+          <Link href={previewHref} className="btn btn-quiet min-h-[52px]">
+            <Eye size={16} aria-hidden="true" />
+            Preview as a reader
+          </Link>
+          {/* Rendered only on a draft: RLS refuses the delete on every other
+              status, so a control there could never work. */}
+          {tutorial.status === 'draft' && (
+            <DeleteEntityButton
+              endpoint={`/api/tutorials/${id}`}
+              redirectTo="/dashboard/tutorials"
+              label="draft"
+              className="btn btn-danger min-h-[52px]"
+            />
+          )}
+        </div>
+        {tutorial.status === 'draft' && (
+          <p className="text-[13px] leading-normal text-muted">
+            Submitting sends it to {reviewer} for review.
+          </p>
+        )}
+      </div>
+    ),
+  }
+
+  // The board has no Review step — Status says the same thing — and puts Team
+  // last, where the pill row had it off to one side.
+  const steps: Step<EditStepId | 'status'>[] = [
+    statusStep,
+    ...stepsFor(tutorial.kind)
+      .filter((stepId) => stepId !== 'review')
+      .map((stepId) => allSteps.find((s) => s.id === stepId)!),
+  ]
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="truncate title-detail">{tutorial.title}</h1>
-      </div>
-
-      {/* Rendered only on a draft, and absent rather than disabled off one.
-          RLS (001_schema.sql "Contributors can delete own draft tutorials")
-          refuses the delete on every other status, so a control here would be
-          one that cannot work -- and "how do I enable it?" has no answer worth
-          giving. Web had no tutorial delete at all before this, which left an
-          abandoned draft unremovable from the surface it was written on. */}
-      {tutorial.status === 'draft' && (
-        <div className="mb-6">
-          <DeleteEntityButton
-            endpoint={`/api/tutorials/${id}`}
-            redirectTo="/dashboard/tutorials"
-            label="draft"
-          />
-        </div>
-      )}
-
-      {tutorial.status === 'rejected' && (
-        <div className="alert alert-danger mb-3">
-          <p className="mb-1 font-bold">This tutorial was rejected</p>
-          <p className="leading-relaxed">
-            {tutorial.rejection_note ?? 'No feedback was provided.'}
-          </p>
-        </div>
-      )}
+      <EditorHeader
+        stage={stage}
+        stageLabel={stage === 'hidden' ? 'Hidden' : undefined}
+        meta={copy.meta}
+        title={tutorial.title}
+        actions={
+          <>
+            <Link href={previewHref} className="btn btn-quiet min-h-12">
+              <Eye size={16} aria-hidden="true" />
+              Preview
+            </Link>
+            {tutorial.status === 'draft' && (
+              <SubmitButton
+                label="Submit for review"
+                busyLabel="Submitting…"
+                errorMessage="Could not submit this tutorial. Please try again."
+                onSubmit={submitForReview}
+                disabled={missing.length > 0}
+                icon={<PaperPlaneTilt size={16} weight="bold" aria-hidden="true" />}
+                size="md"
+              />
+            )}
+          </>
+        }
+      />
 
       {/* useSearchParams() inside Stepper and CreatedToast requires a Suspense
-          boundary, or `next build` fails to prerender this page — same
-          reasoning as app/onboarding/contributor-terms/page.tsx.
+          boundary, or `next build` fails to prerender this page.
 
           ToastProvider sits here rather than inside the stepper: every panel's
           save announces itself through it, and so does the arrival from
@@ -394,26 +594,13 @@ export default async function EditTutorialPage({
       <Suspense>
         <ToastProvider>
           <CreatedToast />
-          <Stepper
-            steps={steps}
-            label="Tutorial sections"
-            finish={{
-              missing,
-              submitLabel: 'Submit for review',
-              busyLabel: 'Submitting…',
-              errorMessage: 'Could not submit this tutorial. Please try again.',
-              endLabel: 'Review and submit',
-              onSubmit: submitForReview,
-              // Once it has left the contributor's hands there is nothing to
-              // finish, so the bar carries the last-saved line instead.
-              done:
-                tutorial.status === 'draft' ? undefined : (
-                  <SaveStatusLine savedAt={tutorial.updated_at} />
-                ),
-            }}
-          />
+          <Stepper steps={steps} label="Tutorial sections" layout="rail" railFoot={copy.progress} />
         </ToastProvider>
       </Suspense>
+
+      <p className="editor-privacy lg:ml-[258px]">
+        <strong className="text-ink">{copy.privacyLead}</strong> {copy.privacy}
+      </p>
     </div>
   )
 }

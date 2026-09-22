@@ -46,6 +46,7 @@ it('shows the declaration once made and offers no way to unmake it', () => {
   mockDraft.tutorial = {
     id: 't1',
     safety_declared_at: '2026-09-02T00:00:00Z',
+    build_minutes: 30,
     status: 'draft',
     kind: 'toy_adaptation',
     difficulty: 'easy',

@@ -6,7 +6,7 @@
 // with the one the hub is reading.
 import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import type { Difficulty, TutorialKind, TutorialMaturity } from '@splat-connect/types'
-import { KIND_LABEL, MATURITY_LABEL } from '@splat-connect/types'
+import { BUILD_TIME_OPTIONS, KIND_LABEL, MATURITY_LABEL, formatBuildTime } from '@splat-connect/types'
 import { useDraft } from '../../../lib/use-tutorial-draft'
 import { theme } from '../../../lib/theme'
 import { Screen } from '../../ui/Screen'
@@ -73,6 +73,21 @@ export function DetailsSection() {
             />
           ))}
         </View>
+
+        {/* Web's field (edit-details-section.tsx), as chips: the same values,
+            the same "printing isn't included" rule. */}
+        <Text style={styles.label}>About how long does it take?</Text>
+        <View style={styles.chipRow}>
+          {BUILD_TIME_OPTIONS.map((m) => (
+            <Chip
+              key={m}
+              label={m === 240 ? '4 h or more' : formatBuildTime(m)}
+              active={tutorial.build_minutes === m}
+              onPress={() => save({ build_minutes: m })}
+            />
+          ))}
+        </View>
+        <Text style={styles.hint}>Hands-on time only — printing time isn't included.</Text>
 
         <Text style={styles.label}>How far along is it?</Text>
         <View style={styles.chipRow}>

@@ -1154,6 +1154,7 @@ export type NotificationType =
   | 'challenge_left'
   | 'challenge_removed'
   | 'idea_graduated'
+  | 'tutorial_thanked'
 
 /** Which My SPLAT card a notification's badge belongs to. */
 export type NotificationBucket = 'tutorials' | 'exchanges' | 'challenges'
@@ -1188,6 +1189,7 @@ const NOTIFICATION_BUCKET = {
   tutorial_submitted: 'tutorials',
   tutorial_approved: 'tutorials',
   tutorial_rejected: 'tutorials',
+  tutorial_thanked: 'tutorials',
   toy_request: 'exchanges',
   toy_accepted: 'exchanges',
   toy_rejected: 'exchanges',
@@ -1274,6 +1276,19 @@ export const KIND_LABEL: Record<TutorialKind, string> = {
   assistive_tech: 'Assistive tech',
 }
 
+/**
+ * The editor's "About how long does it take?" choices, in minutes. A select
+ * rather than a free number so every stored value formats cleanly. Hands-on
+ * time only — printing is excluded, and the editor says so.
+ */
+export const BUILD_TIME_OPTIONS = [10, 15, 20, 30, 45, 60, 90, 120, 180, 240] as const
+
+/** 20 → "20 min", 60 → "1 h", 90 → "1.5 h", 100 → "1.7 h" — the board's format. */
+export function formatBuildTime(minutes: number): string {
+  if (minutes < 60) return `${minutes} min`
+  return `${Math.round((minutes / 60) * 10) / 10} h`
+}
+
 export interface Tutorial {
   id: string
   title: string
@@ -1287,6 +1302,13 @@ export interface Tutorial {
   safety_declared_at: string | null
   /** Storage object path in `tutorial-pdfs` (`<id>/tutorial.pdf`), not a URL — served via /files/tutorial-pdfs/<path>. Null until uploaded. */
   tutorial_pdf_url: string | null
+  /** Hands-on minutes, printing excluded. Null only on a draft: the API
+   *  refuses to submit a guide for review without it (066). */
+  build_minutes: number | null
+  /** PostgREST computed fields (066). Present only when a select names them —
+   *  the public list and detail routes do. */
+  thanks_count?: number
+  has_stl?: boolean
   /** Up to MAX_PHOTOS, in display order. The first is the cover. */
   photo_urls: string[]
   /** Generated from photo_urls[1] by the database (053). Read-only — a write

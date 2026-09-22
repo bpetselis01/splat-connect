@@ -157,7 +157,7 @@ tutorials.post('/', async (c) => {
 /** Only these may be set through the generic edit endpoint. Unknown keys are
  *  dropped silently; the protected ones return 403 so a caller learns rather than
  *  wonders. */
-const EDITABLE = ['title', 'description', 'difficulty', 'kind', 'maturity', 'tutorial_pdf_url', 'photo_urls', 'status'] as const
+const EDITABLE = ['title', 'description', 'difficulty', 'kind', 'maturity', 'build_minutes', 'tutorial_pdf_url', 'photo_urls', 'status'] as const
 const PROTECTED = ['reviewed_by', 'reviewed_for_org_id', 'reviewed_at', 'rejection_note']
 
 async function hasAcceptedContributorTerms(token: string, userId: string) {
@@ -238,7 +238,7 @@ tutorials.patch('/:id', async (c) => {
     ? (
         await supabase
           .from('tutorials')
-          .select('status, safety_declared_at')
+          .select('status, safety_declared_at, build_minutes')
           .eq('id', c.req.param('id'))
           .maybeSingle()
       ).data
@@ -250,6 +250,13 @@ tutorials.patch('/:id', async (c) => {
   // server-side because the UI gate is only the browser's opinion.
   if (submitting && !current?.safety_declared_at && !update.safety_declared_at) {
     return c.json({ error: 'The safety declaration is required before submitting' }, 400)
+  }
+  // Same shape as the safety gate, for the library's Time facet and sort (066):
+  // a published guide always has a build time. `in update` rather than `??`
+  // because a save that clears the field to null must not count as having it.
+  const buildMinutes = 'build_minutes' in update ? update.build_minutes : current?.build_minutes
+  if (submitting && buildMinutes == null) {
+    return c.json({ error: 'Add how long the build takes before submitting' }, 400)
   }
 
   const { data, error } = await supabase
@@ -280,6 +287,68 @@ tutorials.patch('/:id', async (c) => {
     })
   }
   return c.json(data[0])
+})
+
+/**
+ * Thanks (066): one tap adds one to a guide's public count, once per person.
+ *
+ * The approved check and the own-guide check read through the admin client —
+ * an unapproved guide is invisible to a stranger, and the contributor list is
+ * not theirs to read — but the insert goes through the caller's client, so
+ * RLS's "Thank as yourself" is what stamps whose thank it is.
+ */
+async function thanksContext(id: string, userId: string) {
+  const { data } = await createAdminClient()
+    .from('tutorials')
+    .select('title, status, tutorial_contributors(profile_id)')
+    .eq('id', id)
+    .maybeSingle()
+  if (!data || data.status !== 'approved') return null
+  const credited = (data.tutorial_contributors as { profile_id: string }[]).map((p) => p.profile_id)
+  return { title: data.title as string, credited, own: credited.includes(userId) }
+}
+
+tutorials.get('/:id/thanks', async (c) => {
+  const ctx = await thanksContext(c.req.param('id'), c.get('userId'))
+  if (!ctx) return c.json({ error: 'Not found' }, 404)
+  const { data } = await createUserClient(c.get('token'))
+    .from('tutorial_thanks')
+    .select('tutorial_id')
+    .eq('tutorial_id', c.req.param('id'))
+    .maybeSingle()
+  return c.json({ thanked: !!data, own: ctx.own })
+})
+
+tutorials.post('/:id/thanks', async (c) => {
+  const id = c.req.param('id')
+  const userId = c.get('userId')
+  const ctx = await thanksContext(id, userId)
+  if (!ctx) return c.json({ error: 'Not found' }, 404)
+  if (ctx.own) return c.json({ error: "You can't thank your own guide" }, 403)
+
+  const { error } = await createUserClient(c.get('token'))
+    .from('tutorial_thanks')
+    .insert({ tutorial_id: id, profile_id: userId })
+  if (error?.code === '23505') return c.json({ error: 'You already thanked them' }, 409)
+  if (error) return c.json({ error: error.message }, 500)
+
+  const admin = createAdminClient()
+  // No actor name, on purpose: who thanked which guide is the private half of
+  // this feature (066's RLS), and a notification is the easiest place to leak
+  // it. Logged, never thrown — the thank has already been counted.
+  const { error: notifyError } = await admin.from('notifications').insert(
+    ctx.credited.map((recipient_id) => ({
+      recipient_id,
+      type: 'tutorial_thanked',
+      tutorial_id: id,
+      tutorial_title: ctx.title,
+      actor_name: 'A family',
+    }))
+  )
+  if (notifyError) console.error('[thanks] notify failed:', notifyError.message)
+
+  const { data } = await admin.from('tutorials').select('thanks_count').eq('id', id).single()
+  return c.json({ thanks_count: (data as { thanks_count: number } | null)?.thanks_count ?? 0 }, 201)
 })
 
 tutorials.delete('/:id', async (c) => {

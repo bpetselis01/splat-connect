@@ -33,6 +33,7 @@ export function getMissingFields(tutorial: TutorialWithDetails): Gap[] {
   if (!tutorial.title.trim()) missing.push({ section: 'details', label: 'A title' })
   if (!DIFFICULTIES.includes(tutorial.difficulty))
     missing.push({ section: 'details', label: 'A difficulty' })
+  if (tutorial.build_minutes == null) missing.push({ section: 'details', label: 'A build time' })
   if (!tutorial.tutorial_pdf_url?.trim()) missing.push({ section: 'files', label: 'The guide PDF' })
   if (tutorial.photo_urls.length === 0) missing.push({ section: 'files', label: 'A photo' })
   if (tutorial.parts.length === 0) missing.push({ section: 'parts', label: 'A part' })

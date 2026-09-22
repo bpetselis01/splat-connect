@@ -21,6 +21,7 @@ export function getMissingFields(tutorial: TutorialWithDetails): Gap<EditStepId>
   if (!tutorial.title.trim()) missing.push({ step: 'details', label: 'A title' })
   if (!(['easy', 'medium', 'hard'] as string[]).includes(tutorial.difficulty))
     missing.push({ step: 'details', label: 'A difficulty' })
+  if (tutorial.build_minutes == null) missing.push({ step: 'details', label: 'A build time' })
   if (!tutorial.tutorial_pdf_url?.trim()) missing.push({ step: 'files', label: 'The guide PDF' })
   if (tutorial.photo_urls.length === 0) missing.push({ step: 'files', label: 'A photo' })
   if (tutorial.parts.length === 0) missing.push({ step: 'parts', label: 'A part' })

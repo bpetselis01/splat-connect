@@ -24,6 +24,7 @@ function tutorial(overrides: Partial<Tutorial & { tutorial_orgs?: TutorialOrg[] 
     status: 'approved' as const,
     maturity: 'complete' as const,
     safety_declared_at: null,
+    build_minutes: 30,
     description: null,
     tutorial_pdf_url: null,
     photo_urls: [],
@@ -74,22 +75,19 @@ describe('DashboardTutorialCard', () => {
   it('carries the title, status and review route', () => {
     render(<DashboardTutorialCard tutorial={tutorial()} />)
     expect(screen.getByText('Sensory light box')).toBeInTheDocument()
-    expect(screen.getByText('APPROVED')).toBeInTheDocument()
+    // The board's shared stage word, not the review status's.
+    expect(screen.getByText('Live')).toBeInTheDocument()
     expect(screen.getByText('Reviewed by SPLAT')).toBeInTheDocument()
   })
 
-  it('overlays difficulty on the photo, not in the text block', () => {
-    const { container } = render(<DashboardTutorialCard tutorial={tutorial()} />)
-    const badge = screen.getByText('EASY')
-    // Its wrapper is absolutely positioned over the photo band, so the badge
-    // holds one place down a column of cards.
-    expect(badge.parentElement).toHaveClass('absolute')
-    expect(container.querySelector('.relative')).toContainElement(badge)
+  it('carries difficulty as a pill beside the stage, as the board draws it', () => {
+    render(<DashboardTutorialCard tutorial={tutorial()} />)
+    expect(screen.getByText('Easy')).toHaveClass('stage-pill')
   })
 
-  it('insets the overlaid badge off the photo corner', () => {
-    render(<DashboardTutorialCard tutorial={tutorial()} />)
-    expect(screen.getByText('EASY').parentElement).toHaveClass('left-3', 'top-3')
+  it('calls a draft a draft', () => {
+    render(<DashboardTutorialCard tutorial={tutorial({ status: 'draft' })} />)
+    expect(screen.getByText('Draft')).toBeInTheDocument()
   })
 
   it('shows the rejection note only when the tutorial was rejected', () => {

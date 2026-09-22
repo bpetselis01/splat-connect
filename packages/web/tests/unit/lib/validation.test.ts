@@ -11,6 +11,7 @@ const baseTutorial: TutorialWithDetails = {
   status: 'draft',
   maturity: 'complete',
   safety_declared_at: '2026-08-01T00:00:00Z',
+  build_minutes: 30,
   tutorial_pdf_url: 'https://example.com/tutorial.pdf',
   photo_urls: ['https://test.supabase.co/storage/v1/object/public/photos/photo.jpg'],
   toy_photo_url: 'https://test.supabase.co/storage/v1/object/public/photos/photo.jpg',
@@ -50,6 +51,14 @@ describe('getMissingFields', () => {
         difficulty: 'extreme' as TutorialWithDetails['difficulty'],
       })
     ).toContainEqual({ step: 'details', label: 'A difficulty' })
+  })
+
+  // 066: the library's Time facet and sort need every published guide timed.
+  it('pairs a missing build time with the Details step', () => {
+    expect(getMissingFields({ ...baseTutorial, build_minutes: null })).toContainEqual({
+      step: 'details',
+      label: 'A build time',
+    })
   })
 
   it('pairs a missing guide PDF with the Files step', () => {

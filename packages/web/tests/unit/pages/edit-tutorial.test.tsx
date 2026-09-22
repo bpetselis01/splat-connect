@@ -81,6 +81,7 @@ const baseTutorialWithDetails: TutorialWithDetails = {
   status: 'draft',
   maturity: 'complete',
   safety_declared_at: '2026-08-01T00:00:00Z',
+  build_minutes: 30,
   description: null,
   tutorial_pdf_url: null,
   photo_urls: [],
@@ -164,7 +165,8 @@ describe('EditTutorialPage', () => {
     vi.mocked(apiClient.get)
       .mockResolvedValueOnce({ ...baseTutorialWithDetails, status: 'rejected', rejection_note: 'Needs more parts' })
     render(await EditTutorialPage(pageParams))
-    expect(screen.getByText('This tutorial was rejected')).toBeInTheDocument()
+    // The board's Status section carries the note in its status card.
+    expect(screen.getByText('Your reviewer sent this back')).toBeInTheDocument()
     expect(screen.getByText('Needs more parts')).toBeInTheDocument()
   })
 
@@ -179,7 +181,7 @@ describe('EditTutorialPage', () => {
     vi.mocked(apiClient.get)
       .mockResolvedValueOnce(baseTutorialWithDetails)
     render(await EditTutorialPage(pageParams))
-    expect(screen.queryByText('This tutorial was rejected')).toBeNull()
+    expect(screen.queryByText('Your reviewer sent this back')).toBeNull()
   })
 
   describe('deleting a draft', () => {
@@ -201,21 +203,21 @@ describe('EditTutorialPage', () => {
     )
   })
 
-  // Chain: a tutorial that has been handed over has nothing left to finish, so the
-  //        bar shows when it was last saved instead of a control that would submit
-  //        the same work twice
-  it('tells the finish bar the tutorial has been handed over', async () => {
+  // Chain: a tutorial that has been handed over has nothing left to submit, so
+  //        neither the header nor the Status section offers the button
+  it('offers Submit for review only on a draft', async () => {
     vi.mocked(apiClient.get)
       .mockResolvedValueOnce({ ...baseTutorialWithDetails, status: 'pending' })
-    render(await EditTutorialPage(pageParams))
-    expect(screen.getByTestId('edit-stepper')).toHaveAttribute('data-handed-over', 'yes')
-  })
+    const { unmount } = render(await EditTutorialPage(pageParams))
+    expect(screen.queryByRole('button', { name: /submit for review/i })).toBeNull()
+    unmount()
 
-  it('leaves the finish bar open while the tutorial is still a draft', async () => {
-    vi.mocked(apiClient.get)
-      .mockResolvedValueOnce(baseTutorialWithDetails)
+    vi.mocked(apiClient.get).mockResolvedValueOnce(baseTutorialWithDetails)
     render(await EditTutorialPage(pageParams))
-    expect(screen.getByTestId('edit-stepper')).toHaveAttribute('data-handed-over', 'no')
+    // Header and Status section; disabled while anything is missing.
+    const buttons = screen.getAllByRole('button', { name: /submit for review/i })
+    expect(buttons).toHaveLength(2)
+    buttons.forEach((b) => expect(b).toBeDisabled())
   })
 
   // The one step that depends on kind. Its absence for a toy is the whole
@@ -239,12 +241,9 @@ describe('EditTutorialPage', () => {
       .mockResolvedValueOnce(baseTutorialWithDetails)
     render(await EditTutorialPage(pageParams))
     const stepper = screen.getByTestId('edit-stepper')
-    // Each gap paired with the step that closes it, which is what lets the bar
-    // hand over the fix rather than only name the problem.
-    expect(stepper).toHaveAttribute(
-      'data-missing',
-      'files:The guide PDF|files:A photo|parts:A part|tools:A tool'
-    )
+    // Each gap is named on the Status checklist beside the step that closes it.
+    expect(screen.getByText('Still needs the guide PDF, a photo')).toBeInTheDocument()
+    expect(screen.getByText('Still needs a part')).toBeInTheDocument()
     expect(stepper.querySelector('[data-step="details"]')).toHaveAttribute('data-step-status', 'done')
     expect(stepper.querySelector('[data-step="files"]')).toHaveAttribute('data-step-status', 'attention')
     expect(stepper.querySelector('[data-step="parts"]')).toHaveAttribute('data-step-status', 'attention')
@@ -255,21 +254,14 @@ describe('EditTutorialPage', () => {
     expect(stepper.querySelector('[data-step="team"]')).toHaveAttribute('data-step-status', 'neutral')
   })
 
-  it('adds a Review step, neutral while the tutorial is still a draft', async () => {
+  // The board has no Review step: Status opens the rail and says the same.
+  it('opens on a Status step and has no Review step', async () => {
     vi.mocked(apiClient.get)
       .mockResolvedValueOnce(baseTutorialWithDetails)
     render(await EditTutorialPage(pageParams))
-    expect(
-      screen.getByTestId('edit-stepper').querySelector('[data-step="review"]')
-    ).toHaveAttribute('data-step-status', 'neutral')
-  })
-
-  it('marks the Review step done once the tutorial has been handed over', async () => {
-    vi.mocked(apiClient.get)
-      .mockResolvedValueOnce({ ...baseTutorialWithDetails, status: 'pending' })
-    render(await EditTutorialPage(pageParams))
-    expect(
-      screen.getByTestId('edit-stepper').querySelector('[data-step="review"]')
-    ).toHaveAttribute('data-step-status', 'done')
+    const stepper = screen.getByTestId('edit-stepper')
+    expect(stepper.querySelector('[data-step]')).toHaveAttribute('data-step', 'status')
+    expect(stepper.querySelector('[data-step="review"]')).toBeNull()
+    expect(screen.getByText('Only you can see this')).toBeInTheDocument()
   })
 })
