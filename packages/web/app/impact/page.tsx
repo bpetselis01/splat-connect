@@ -1,18 +1,21 @@
+import Link from 'next/link'
+import type { Route } from 'next'
 import {
+  ArrowRight,
   BookOpen,
   Buildings,
   Gift,
   Handshake,
-  Package,
+  MapTrifold,
+  Newspaper,
   UsersThree,
 } from '@phosphor-icons/react/dist/ssr'
 import { SplatMascot } from '@/components/splat-mascot'
-import Link from 'next/link'
-import type { Route } from 'next'
 import { ImpactCard } from '@/components/impact-card'
-import { HubGrid } from '@/components/hub-grid'
-import { PUBLIC_NAV } from '@/lib/public-nav'
-import type { ImpactSummary } from '@splat-connect/types'
+import { StoryKindPill, StoryPhoto } from '@/components/story-bits'
+import { apiClient } from '@/lib/api-client'
+import { shortDate } from '@/lib/dates'
+import type { Difficulty, ImpactSummary, StoryListItem, Tutorial } from '@splat-connect/types'
 
 // Same shape the empty grid/strip below already render for zero rows, so a
 // fetch failure just looks like "nothing yet" rather than a separate error UI.
@@ -23,8 +26,35 @@ const EMPTY_IMPACT: ImpactSummary = {
   organisations: [],
 }
 
+const DIFFICULTY: Array<{ key: Difficulty; label: string; colour: string }> = [
+  { key: 'easy', label: 'Easy — interrupter only', colour: 'var(--ok)' },
+  { key: 'medium', label: 'Medium — some soldering', colour: 'var(--amber)' },
+  { key: 'hard', label: 'Hard — opening the case', colour: 'var(--coral)' },
+]
+
+const MORE: Array<{ label: string; blurb: string; icon: typeof Buildings; href: Route; soon?: boolean }> = [
+  {
+    label: 'Organisations',
+    blurb: 'The therapy centres, schools and services standing behind the work.',
+    icon: Buildings,
+    href: '/organizations',
+  },
+  {
+    label: 'Deliveries map',
+    blurb: 'Where adapted toys have actually landed.',
+    icon: MapTrifold,
+    href: '/impact/map',
+    soon: true,
+  },
+  {
+    label: 'All stories',
+    blurb: 'Family, maker and organisation stories, filterable by type.',
+    icon: Newspaper,
+    href: '/about/stories',
+  },
+]
+
 export default async function ImpactPage() {
-  const impactSection = PUBLIC_NAV.find((s) => s.href === '/impact')!
   let impact: ImpactSummary = EMPTY_IMPACT
   try {
     const res = await fetch(`${process.env.API_URL}/api/public/impact`, { cache: 'no-store' })
@@ -32,35 +62,43 @@ export default async function ImpactPage() {
   } catch {
     impact = EMPTY_IMPACT
   }
+  // Two more reads for the two board panels the impact summary does not carry:
+  // guides by difficulty, counted off the public list, and the featured story.
+  const [guides, stories] = await Promise.all([
+    apiClient.get<Tutorial[]>('/api/public/tutorials').catch(() => [] as Tutorial[]),
+    apiClient.get<StoryListItem[]>('/api/public/stories').catch(() => [] as StoryListItem[]),
+  ])
+  const story = stories.find((s) => s.featured) ?? stories[0] ?? null
+  const byDifficulty = DIFFICULTY.map((d) => ({
+    ...d,
+    n: guides.filter((g) => g.difficulty === d.key).length,
+  }))
+  const maxDifficulty = Math.max(1, ...byDifficulty.map((d) => d.n))
 
-  const { totals, recent, contributors, organisations } = impact
+  const { totals, contributors, organisations } = impact
   /*
-   * The board draws these big and tinted, and it is right to: the numbers are
-   * the whole point of the screen. §5's "never a 4-tile stat grid" is about
-   * detail and record screens, where a grid of counts pushes the record itself
-   * down the page; here the counts ARE the record.
-   *
-   * Five, not the board's four — this app counts organisations separately from
-   * contributors, and dropping one to fit a row of four would be losing a fact
-   * to a grid.
+   * The board's four, big and tinted: the numbers are the whole point of the
+   * screen. §5's "never a 4-tile stat grid" is about detail and record
+   * screens, where a grid of counts pushes the record itself down the page;
+   * here the counts ARE the record.
    */
   const stats = [
-    { label: 'Guides', count: totals.tutorials, icon: BookOpen, tint: 'var(--b100)' },
-    { label: 'Toys shared', count: totals.toysShared, icon: Package, tint: 'var(--tmint)' },
-    { label: 'Toys delivered', count: totals.toysDelivered, icon: Gift, tint: 'var(--tcoral)' },
-    { label: 'Contributors', count: totals.contributors, icon: UsersThree, tint: 'var(--tviolet)' },
-    { label: 'Organisations', count: totals.organisations, icon: Buildings, tint: 'var(--tamber)' },
+    { id: 'guides', label: 'guides published', count: totals.tutorials, icon: BookOpen, tint: 'var(--b100)' },
+    { id: 'toys-delivered', label: 'toys delivered', count: totals.toysDelivered, icon: Gift, tint: 'var(--tcoral)' },
+    { id: 'contributors', label: 'contributors', count: totals.contributors, icon: UsersThree, tint: 'var(--tmint)' },
+    { id: 'organisations', label: 'organisations backing', count: totals.organisations, icon: Buildings, tint: 'var(--tviolet)' },
   ]
 
   return (
     <div>
       <div className="mb-7 grid grid-cols-1 items-center gap-6 sm:grid-cols-[minmax(0,1fr)_auto]">
         <div className="min-w-0">
-          <p className="eyebrow text-muted">Impact</p>
-          <h1 className="mt-1 title-article">What this community has made, given and delivered</h1>
-          <p className="mt-2 max-w-[60ch] text-[17px] leading-relaxed text-muted">
-            Guides written, toys shared, and deliveries made by the people and organisations
-            behind SPLAT. Guides here are counted once they are approved and public.
+          <span className="text-[13px] font-extrabold uppercase tracking-[0.1em] text-muted">Impact</span>
+          <h1 className="mb-2 mt-1 font-display text-[clamp(32px,3.6vw,44px)] font-extrabold leading-[1.1] text-ink">
+            What this community has made, given and delivered
+          </h1>
+          <p className="m-0 max-w-[60ch] text-[17px] text-muted">
+            Every number here is a real toy, guide or person.
           </p>
         </div>
         <div className="hidden justify-self-end sm:block">
@@ -68,12 +106,12 @@ export default async function ImpactPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(190px,1fr))]">
+      <div className="mb-5 grid grid-cols-2 gap-4 lg:grid-cols-4">
         {stats.map((s) => (
           <div
-            key={s.label}
-            data-testid={`impact-stat-${s.label.toLowerCase().replace(/\s+/g, '-')}`}
-            className="flex flex-col gap-1.5 rounded-card p-[22px] text-ink shadow-[var(--shadow-e2),var(--shadow-hi)]"
+            key={s.id}
+            data-testid={`impact-stat-${s.id}`}
+            className="flex flex-col gap-1.5 rounded-card p-[22px] text-[var(--tink)] shadow-[var(--shadow-e2),var(--shadow-hi)]"
             style={{ background: s.tint }}
           >
             <s.icon size={30} weight="duotone" aria-hidden="true" />
@@ -85,74 +123,113 @@ export default async function ImpactPage() {
         ))}
       </div>
 
-      {recent.length > 0 && (
-        <div className="mt-8">
-          <h2 className="title-detail">Recently active</h2>
-          {/* pr-2/pb-2 are the room the cards' 5px hard shadow needs: a scroll
-              container clips at its padding edge, so with pr-0 the last card in
-              the row lost its shadow flat against the edge at every width. */}
-          <div className="mt-3 flex gap-3 overflow-x-auto pb-2 pr-2">
-            {recent.map((r) => (
-              <Link
-                key={`${r.kind}-${r.id}`}
-                // Cast: /contributors/[id] and /organizations/[id]/public are
-                // built by sibling tasks, so typedRoutes doesn't know them yet.
-                href={
-                  (r.kind === 'person'
-                    ? `/contributors/${r.id}`
-                    : `/organizations/${r.id}/public`) as Route<string>
-                }
-                className="card card-link shrink-0 px-4 py-3"
-              >
-                <p className="max-w-40 truncate text-sm font-bold text-ink">{r.name}</p>
-                <span
-                  className={`badge mt-1 ${
-                    r.kind === 'person' ? 'bg-brand-tint text-brand-deep' : 'bg-mint-soft text-ink'
-                  }`}
-                >
-                  {r.kind === 'person' ? 'Person' : 'Organisation'}
-                </span>
-              </Link>
-            ))}
-          </div>
+      {/* The board's per-month and per-state delivery charts have no data behind
+          them yet — the impact summary carries totals, not dates or places. */}
+      <div className="mt-6 grid gap-5 lg:grid-cols-2">
+        <div className="card px-7 py-[26px]">
+          <h3 className="mb-4 font-display text-xl font-extrabold text-ink">Guides by difficulty</h3>
+          {byDifficulty.map((d) => (
+            <div key={d.key} className="mb-3.5">
+              <div className="mb-1.5 flex justify-between text-sm font-bold text-ink">
+                <span>{d.label}</span>
+                <span className="tabular-nums text-muted">{d.n}</span>
+              </div>
+              <div className="h-3 overflow-hidden rounded-pill bg-sunken">
+                <div
+                  className="h-full rounded-pill"
+                  style={{ width: `${(d.n / maxDifficulty) * 100}%`, background: d.colour }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <h2 className="mb-[18px] mt-11 font-display text-[26px] font-extrabold text-ink">
+        Contributors and organisations
+      </h2>
+      {contributors.length === 0 && organisations.length === 0 ? (
+        <div className="flex flex-col items-center px-6 py-12 text-center">
+          <span aria-hidden="true" className="empty-badge text-brand-deep">
+            <Handshake className="h-8 w-8" />
+          </span>
+          <p className="mt-4 font-bold text-ink">No contributors yet.</p>
+          <p className="mt-1 max-w-xs text-sm leading-relaxed text-muted">
+            Check back soon — this page tracks guides, toys, and deliveries across the
+            community.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {contributors.map((c, i) => (
+            <ImpactCard key={`person-${c.id}`} kind="person" entity={c} index={i} />
+          ))}
+          {organisations.map((o, i) => (
+            <ImpactCard key={`org-${o.id}`} kind="org" entity={o} index={i + 1} />
+          ))}
         </div>
       )}
 
-      <div className="mt-8">
-        <h2 className="title-detail">Contributors and organisations</h2>
-        {contributors.length === 0 && organisations.length === 0 ? (
-          <div className="flex flex-col items-center px-6 py-12 text-center">
-            <span aria-hidden="true" className="empty-badge text-brand-deep">
-  <Handshake className="h-8 w-8" />
-</span>
-            <p className="mt-4 font-bold text-ink">No contributors yet.</p>
-            <p className="mt-1 max-w-xs text-sm leading-relaxed text-muted">
-              Check back soon — this page tracks guides, toys, and deliveries across the
-              community.
-            </p>
-          </div>
-        ) : (
-          <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {contributors.map((c) => (
-              <ImpactCard key={`person-${c.id}`} kind="person" entity={c} />
-            ))}
-            {organisations.map((o) => (
-              <ImpactCard key={`org-${o.id}`} kind="org" entity={o} />
-            ))}
-          </div>
+      <h2 className="mb-1.5 mt-11 font-display text-[26px] font-extrabold text-ink">
+        The story behind the numbers
+      </h2>
+      <p className="mb-[18px] text-sm text-muted">What families and makers actually did with SPLAT.</p>
+      <div
+        className={`grid items-start gap-5 ${story ? 'lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]' : ''}`}
+      >
+        {story && (
+          <Link
+            href={`/about/stories/${story.id}`}
+            aria-label={`Open ${story.title}`}
+            className="card card-link grid overflow-hidden sm:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]"
+          >
+            <span className="relative block min-h-[220px]">
+              <StoryPhoto kind={story.kind} photos={story.photo_urls} />
+            </span>
+            <span className="flex flex-col justify-center gap-2.5 px-[26px] py-6 text-ink">
+              <span className="flex items-center gap-2">
+                <StoryKindPill kind={story.kind} />
+                <span className="text-[13px] font-semibold text-muted">{story.read_minutes} min read</span>
+              </span>
+              <span className="font-display text-[22px] font-extrabold leading-[1.2] tracking-[-0.01em]">
+                {story.title}
+              </span>
+              <span className="text-[15px] leading-[1.55] text-muted">{story.summary}</span>
+              <span className="mt-1 text-[13px] text-muted">
+                <strong className="text-ink">{story.byline}</strong>
+                {story.published_at && ` · ${shortDate(story.published_at)}`}
+              </span>
+              <span className="mt-1.5 inline-flex items-center gap-1 text-sm font-extrabold text-[var(--b600)]">
+                Read the story
+                <ArrowRight size={14} weight="bold" aria-hidden="true" />
+              </span>
+            </span>
+          </Link>
         )}
-      </div>
-
-      {/* The rest of the section. Organisations moved into the nav here because a
-          directory of who stands behind the work is a proof surface, and it had
-          nowhere in the top bar once the two catalogues were split. */}
-      <div className="mt-12">
-        <h2 className="title-detail">More in Impact</h2>
-        <p className="mb-4 mt-1 max-w-prose text-sm text-muted">
-          Some of this is not built yet. Those pages say so, and will take your email if
-          you want to know when they are.
-        </p>
-        <HubGrid items={impactSection.children} tone={impactSection.tone} columns={4} />
+        <div className="grid gap-3">
+          {MORE.map((c) => (
+            <Link
+              key={c.href}
+              href={c.href}
+              className="card card-link grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3.5 rounded-[var(--radius-inset)] px-5 py-4 text-ink"
+              style={{ boxShadow: 'var(--shadow-e1), var(--shadow-hi)' }}
+            >
+              <c.icon size={28} weight="duotone" className="text-[var(--violet)]" aria-hidden="true" />
+              <span className="min-w-0">
+                <span className="flex items-center gap-2 font-display text-[17px] font-extrabold">
+                  {c.label}
+                  {c.soon && (
+                    <span className="rounded-pill border border-line bg-sunken px-2 py-0.5 font-sans text-[10px] font-extrabold tracking-[0.09em] text-muted">
+                      SOON
+                    </span>
+                  )}
+                </span>
+                <span className="block text-[13px] leading-[1.45] text-muted">{c.blurb}</span>
+              </span>
+              <ArrowRight size={18} weight="bold" className="text-muted" aria-hidden="true" />
+            </Link>
+          ))}
+        </div>
       </div>
     </div>
   )
