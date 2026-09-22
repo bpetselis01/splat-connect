@@ -24,7 +24,8 @@ const { chromium } = require(
 )
 const ARTBOARD = 'http://localhost:8899/SPLAT%20Connect%20-%20Web.dc.html'
 const LIVE = process.env.PARITY_LIVE || 'http://localhost:3110'
-const REPORT = path.join(__dirname, 'parity-report.json')
+// PARITY_REPORT lets parallel agents measure without racing each other's merge.
+const REPORT = process.env.PARITY_REPORT || path.join(__dirname, 'parity-report.json')
 const SHOTS = path.join(__dirname, 'shots')
 const VIEWPORT = { width: 1440, height: 960 }
 // --shots saves a board/live screenshot pair per screen. The fingerprint reads

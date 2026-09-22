@@ -295,6 +295,18 @@ const DB_SAMPLES = {
       .single()
     return data ? `/contributors/${data.profile_id}` : null
   },
+  // The form only renders for a guide with STL files; sampling the first
+  // /library link gave it a toy-adaptation guide with none and measured the
+  // "every request starts from a guide" banner instead.
+  print_request_new: async (db) => {
+    const { data } = await db
+      .from('stl_files')
+      .select('tutorial_id, tutorials!inner(status)')
+      .eq('tutorials.status', 'approved')
+      .limit(1)
+      .single()
+    return data ? `/printing/requests?guide=${data.tutorial_id}` : null
+  },
 }
 
 async function dbSample(db, screenId) {
