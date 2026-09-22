@@ -24,7 +24,10 @@ const EMPTY_IMPACT: ImpactSummary = {
   recent: [],
   contributors: [],
   organisations: [],
+  deliveriesByMonth: [],
 }
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
 const DIFFICULTY: Array<{ key: Difficulty; label: string; colour: string }> = [
   { key: 'easy', label: 'Easy — interrupter only', colour: 'var(--ok)' },
@@ -75,7 +78,8 @@ export default async function ImpactPage() {
   }))
   const maxDifficulty = Math.max(1, ...byDifficulty.map((d) => d.n))
 
-  const { totals, contributors, organisations } = impact
+  const { totals, contributors, organisations, deliveriesByMonth } = impact
+  const maxDelivered = Math.max(1, ...deliveriesByMonth.map((m) => m.n))
   /*
    * The board's four, big and tinted: the numbers are the whole point of the
    * screen. §5's "never a 4-tile stat grid" is about detail and record
@@ -123,8 +127,45 @@ export default async function ImpactPage() {
         ))}
       </div>
 
-      {/* The board's per-month and per-state delivery charts have no data behind
-          them yet — the impact summary carries totals, not dates or places. */}
+      {deliveriesByMonth.length > 0 && (
+        <>
+          <h2 className="mb-1.5 mt-10 font-display text-[26px] font-extrabold text-ink">
+            Toys delivered over time
+          </h2>
+          <p className="mb-[18px] text-sm text-muted">Completed handoffs per month, all sources.</p>
+          <div className="card px-7 py-[26px]">
+            <div
+              role="img"
+              aria-label={`Bar chart of toys delivered per month, ${deliveriesByMonth
+                .map((m) => `${MONTHS[Number(m.month.slice(5)) - 1]} ${m.n}`)
+                .join(', ')}`}
+              className="flex h-[220px] items-end gap-3.5"
+            >
+              {deliveriesByMonth.map((m) => (
+                <div
+                  key={m.month}
+                  className="flex h-full flex-1 flex-col items-center justify-end gap-2"
+                >
+                  <span className="font-display text-sm font-extrabold tabular-nums">{m.n}</span>
+                  <span
+                    className="w-full rounded-[14px_12px_4px_4px] shadow-[var(--shadow-hi)]"
+                    style={{
+                      height: `${(m.n / maxDelivered) * 100}%`,
+                      background: 'linear-gradient(180deg,var(--brand),var(--b600))',
+                    }}
+                  />
+                  <span className="font-mono text-[11px] text-muted">
+                    {MONTHS[Number(m.month.slice(5)) - 1]}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* The board's per-state delivery chart has no data behind it yet — the
+          impact summary carries no place for a completed handoff. */}
       <div className="mt-6 grid gap-5 lg:grid-cols-2">
         <div className="card px-7 py-[26px]">
           <h3 className="mb-4 font-display text-xl font-extrabold text-ink">Guides by difficulty</h3>

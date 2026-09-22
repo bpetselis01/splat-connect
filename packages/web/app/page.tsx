@@ -67,6 +67,7 @@ export default async function HomePage() {
       recent: [],
       contributors: [],
       organisations: [],
+      deliveriesByMonth: [],
     }),
   ])
   const { totals } = impact

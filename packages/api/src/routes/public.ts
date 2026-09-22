@@ -371,6 +371,32 @@ publicRoutes.get('/impact', async (c) => {
     .slice(0, 8)
     .map((e) => ({ kind: e.kind, id: e.id, name: nameOf(e.kind, e.id) ?? '', at: e.at }))
 
+  // "Toys delivered over time": the completed handoffs already read above,
+  // bucketed by month. Sydney, not UTC — every date on the site is written in
+  // that zone, and a 9am Sydney delivery on the 1st is the previous month in
+  // UTC. Eight months, the window the board draws.
+  const sydneyMonth = (iso: string) => {
+    const p = new Intl.DateTimeFormat('en-AU', {
+      timeZone: 'Australia/Sydney',
+      year: 'numeric',
+      month: '2-digit',
+    })
+      .formatToParts(new Date(iso))
+      .reduce<Record<string, string>>((acc, x) => ({ ...acc, [x.type]: x.value }), {})
+    return `${p.year}-${p.month}`
+  }
+  const perMonth = new Map<string, number>()
+  for (const tx of (delivered ?? []) as Array<{ updated_at: string }>) {
+    const m = sydneyMonth(tx.updated_at)
+    perMonth.set(m, (perMonth.get(m) ?? 0) + 1)
+  }
+  const now = new Date()
+  const deliveriesByMonth = Array.from({ length: 8 }, (_, i) => {
+    const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - (7 - i), 15))
+    const month = sydneyMonth(d.toISOString())
+    return { month, n: perMonth.get(month) ?? 0 }
+  })
+
   const summary: ImpactSummary = {
     totals: {
       tutorials: (tutorials ?? []).length,
@@ -382,6 +408,7 @@ publicRoutes.get('/impact', async (c) => {
     recent,
     contributors,
     organisations,
+    deliveriesByMonth,
   }
   return c.json(summary)
 })

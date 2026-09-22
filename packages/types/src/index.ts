@@ -1427,6 +1427,11 @@ export interface ImpactSummary {
   recent: ImpactRecent[]
   contributors: ImpactEntity[]
   organisations: ImpactOrgEntity[]
+  /** Completed handoffs per month, oldest first, one entry per month of the
+   *  window whether or not anything was delivered in it. `month` is
+   *  `YYYY-MM` in Australia/Sydney, the zone every date on the site is
+   *  written in. */
+  deliveriesByMonth: Array<{ month: string; n: number }>
 }
 
 export interface ContributorProfile {
