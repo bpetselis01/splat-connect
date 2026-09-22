@@ -122,7 +122,24 @@ async function seedOrgEvent(db, leaderId, orgId) {
     })
     .select('id')
     .single()
-  return error ? null : data.id
+  if (error) return null
+  // And one already over. Without it every seeded event is in the future, so
+  // /get-involved/events never draws the board's "Past events (n)" disclosure
+  // or a second month heading, and both were reported missing on a page that
+  // has the code for them.
+  await db.from('org_events').insert({
+    org_id: orgId,
+    title: 'Parity fixture build day (past)',
+    summary: 'Seeded so the events list has something to fold into Past events.',
+    starts_at: new Date(Date.now() - 45 * 86400000).toISOString(),
+    format: 'in_person',
+    location: 'Parity Hall, 1 Test Street',
+    suburb: 'Newtown',
+    state: 'NSW',
+    status: 'published',
+    created_by: leaderId,
+  })
+  return data.id
 }
 
 /**
@@ -205,6 +222,32 @@ async function seedSavesAndIdeas(db, parentId) {
  * Seed what the selected roles need. Returns { screenId: concreteRoute } for
  * screens the scraper cannot reach.
  */
+/**
+ * One open report, so /admin/reports has a card to draw. member_reports was
+ * empty on the parity database and the queue's honest empty state was being
+ * reported as "board has cards, live has none" — twice. No unique key on the
+ * table, so guard by label rather than let every run add another.
+ */
+async function seedReport(db, parentId) {
+  const { data } = await db
+    .from('member_reports')
+    .select('id')
+    .eq('subject_label', 'Parity fixture guide')
+    .limit(1)
+  if (data?.length) return
+  await db
+    .from('member_reports')
+    .insert({
+      reporter_id: parentId,
+      subject_kind: 'guide',
+      subject_label: 'Parity fixture guide',
+      category: 'wrong_info',
+      body: 'Seeded so the reports queue has one card to measure.',
+      ok_to_contact: true,
+    })
+    .then(() => {}, () => {})
+}
+
 async function seed(db, users) {
   const routes = {}
   const { parent, contributor, leader } = users
@@ -219,6 +262,7 @@ async function seed(db, users) {
     const toy = await seedOwnedToy(db, parent.id)
     if (toy) routes.toy_detail = `/dashboard/toys/${toy}`
     await seedSavesAndIdeas(db, parent.id)
+    await seedReport(db, parent.id)
   }
   if (contributor) {
     const t = await seedOwnedTutorial(db, contributor.id)

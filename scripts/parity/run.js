@@ -112,8 +112,18 @@ async function resolveDynamic(page, entry, cache) {
   return cache.get(key)
 }
 
-async function fingerprintOf(page, url, rootSel) {
+async function fingerprintOf(page, url, rootSel, role) {
   await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 })
+  // The board has a "Viewing as" select with the harness's own five role
+  // names, and several screens draw a different branch per role. Loading it
+  // by hash alone left it on its default, so /get-involved/organisations/
+  // request compared the board's signed-out gate (263px) against live signed
+  // in as a parent, and reported the sign-in prompt as a missing h1.
+  if (role)
+    await page
+      .selectOption('select[aria-label="Viewing as"]', role, { timeout: 3000 })
+      .then(() => page.waitForTimeout(400))
+      .catch(() => {})
   await page.waitForTimeout(700) // let entrance animations settle
   // Playwright serialises the function itself — no string eval needed.
   return page.evaluate(collectFingerprint, rootSel)
@@ -208,7 +218,7 @@ async function fingerprintOf(page, url, rootSel) {
         row.route = route
       }
 
-      const board = await fingerprintOf(boardPage, `${ARTBOARD}#${s.id}`, '[data-screen-label]')
+      const board = await fingerprintOf(boardPage, `${ARTBOARD}#${s.id}`, '[data-screen-label]', role)
       if (argv.includes('--shots')) {
         fs.mkdirSync(PAIRS, { recursive: true })
         await boardPage.screenshot({ path: path.join(PAIRS, `${s.id}.board.png`), fullPage: true })

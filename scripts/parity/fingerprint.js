@@ -157,7 +157,15 @@ function collectFingerprint(rootSelector) {
   // `a` included: a clickable card is a Link, which renders as an anchor, and
   // leaving it out made every listing grid report "board has cards, live has
   // none" while live was showing fifty of them.
-  const cardEls = [...root.querySelectorAll('div,article,li,section,a')].filter((el) => {
+  // `button` and `label` included for the same reason `a` is: the board draws
+  // /about/support's four tinted tiles as buttons where live draws them as
+  // links, and the printing form's part rows as <li> where live uses <label>.
+  // The same tile counted on one side and not the other made the board's card
+  // population two elements against live's six, and the modal comparison then
+  // reported a difference it had created. `form` and `fieldset` for the event
+  // form, whose five panels are a <form>, a <fieldset> and three <label>s and
+  // counted as zero cards.
+  const cardEls = [...root.querySelectorAll('div,article,li,section,a,button,label,form,fieldset')].filter((el) => {
     const st = cs(el)
     const r = parseFloat(st.borderTopLeftRadius) || 0
     if (r < 8) return false
@@ -220,13 +228,17 @@ function collectFingerprint(rootSelector) {
     return false
   }
 
-  const insideCard = (el) => {
+  const inCardOnly = (el) => {
     for (let n = el.parentElement; n; n = n.parentElement) if (cardSet.has(n)) return true
-    return inRepeatedRow(el)
+    return false
   }
+  const insideCard = (el) => inCardOnly(el) || inRepeatedRow(el)
 
   const seenText = new Set()
-  const headings = [...root.querySelectorAll('h1,h2,h3,h4,div,span,p,dt,strong,button,a')]
+  // blockquote included: the board wraps its pull quote in a <span>, live puts
+  // the words straight inside <blockquote>, and the missing tag reported the
+  // quote as a section live does not have while live was rendering it.
+  const headings = [...root.querySelectorAll('h1,h2,h3,h4,div,span,p,dt,strong,button,a,blockquote')]
     .filter(visible)
     .filter(headingLike)
     .map((h) => {
@@ -309,6 +321,13 @@ function collectFingerprint(rootSelector) {
   const pick = (sel) =>
     [...root.querySelectorAll(sel)].filter((el) => visible(el) && !el.closest('header, footer'))
 
+  // Fills that are not a fill: the page showing through.
+  const NEUTRAL_FILL = new Set([
+    'rgba(0,0,0,0)',
+    'transparent',
+    colour(cs(document.body).backgroundColor),
+  ])
+
   /*
    * The title of each card, found by prominence rather than by threshold.
    *
@@ -331,8 +350,21 @@ function collectFingerprint(rootSelector) {
       // cards AS buttons, so excluding everything under a button excluded the
       // entire card and elected a 14px byline as the title on every listing
       // screen.
+      //
+      // And only a control that LOOKS like one: the board wraps every card
+      // title on /about/stories in a bare <button>, live uses a plain <h3>, so
+      // excluding by tag alone dropped the board's real 19px Baloo title and
+      // elected its 16.5px Nunito summary instead — reported as a font AND a
+      // weight finding on a card that matches exactly. A button drawn with a
+      // fill or a border is a call to action; one drawn with neither is text
+      // that happens to be clickable.
       const ctrl = el.closest('button,[role="button"],a[class*="btn"]')
-      if (ctrl && ctrl !== card && card.contains(ctrl)) continue
+      if (ctrl && ctrl !== card && card.contains(ctrl)) {
+        const cst = cs(ctrl)
+        const looksLikeAButton =
+          !NEUTRAL_FILL.has(colour(cst.backgroundColor)) || parseFloat(cst.borderTopWidth) > 0
+        if (looksLikeAButton) continue
+      }
       // No position constraint. "A title sits near the top of its card" is true
       // of a text card and false of a photo card, where the image takes the top
       // two thirds and the title sits under it — requiring the top 60% elected
@@ -342,12 +374,17 @@ function collectFingerprint(rootSelector) {
         .filter((n) => n.nodeType === 3)
         .map((n) => n.textContent.trim())
         .join('')
-      if (own.length < 2) continue
+      // A lone digit is a stat tile's whole title — "5" toys delivered. The
+      // two-character floor was rejecting it on live and passing the board's
+      // "11", so live's mode fell through to a panel heading and the report
+      // said the tiles were 4px small when they were identical.
+      const number = /^\p{N}+$/u.test(own)
+      if (own.length < 2 && !number) continue
       // Must contain actual words. CardPhoto's 🧸 placeholder is set at
       // text-4xl, making it the largest "text" in every photo-less card — so
       // the card title measured 36px/400 on every listing screen and the report
       // blamed the design for an emoji.
-      if (!/[\p{L}\p{N}]{2}/u.test(own)) continue
+      if (!number && !/[\p{L}\p{N}]{2}/u.test(own)) continue
       if (!visible(el)) continue
       const st = cs(el)
       const size = px(st.fontSize)
@@ -415,8 +452,14 @@ function collectFingerprint(rootSelector) {
   // those reported "8/8 board paragraphs absent" on every screen that lists
   // anything, which is data volume, the one thing this report ignores
   // everywhere else. Same predicate the headings use, for the same reason.
+  //
+  // Card membership ONLY, never the repeated-row test: `rowish` keys off a
+  // non-empty className, and the board's prose carries no classes where live's
+  // carries Tailwind. Three sibling <p class="mb-[22px]"> on a story page read
+  // as a three-row list on live and as prose on the board, so live's body copy
+  // was dropped and the board's identical words reported absent.
   const paragraphs = pick('p')
-    .filter((p) => !insideCard(p))
+    .filter((p) => !inCardOnly(p))
     .map((p) => norm(p.innerText))
     .filter((t) => t.length > 25)
     .slice(0, 40)

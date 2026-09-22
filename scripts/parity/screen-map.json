@@ -597,15 +597,6 @@
   "sampleFrom": "/dashboard/exchanges"
  },
  {
-  "id": "thread_live",
-  "name": "Exchange inbox (live)",
-  "group": "My SPLAT",
-  "boardRoute": "/dashboard/exchanges (inbox)",
-  "route": "/dashboard/exchanges",
-  "role": "parent",
-  "stateOnly": true
- },
- {
   "id": "my_challenges",
   "name": "My design challenges",
   "group": "My SPLAT",

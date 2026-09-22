@@ -1,5 +1,5 @@
 {
- "at": "2026-09-22T10:32:48.733Z",
+ "at": "2026-09-22T11:06:36.815Z",
  "live": "http://localhost:3110",
  "screens": [
   {
@@ -40,13 +40,6 @@
     {
      "type": "size",
      "severity": "medium",
-     "what": "card title size",
-     "board": "30px",
-     "live": "15px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
      "what": "h1 \"guide c — plush dog that barks\" size",
      "board": "44px",
      "live": "40px"
@@ -76,15 +69,7 @@
    "name": "Toy library",
    "group": "Public site",
    "route": "/toy-library",
-   "findings": [
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "2/3 board paragraphs absent",
-     "board": "sydney · from your profile",
-     "live": "nothing suitable nearby? pick a guide for it, then tap get help with t"
-    }
-   ],
+   "findings": [],
    "role": "guest",
    "finalUrl": "/toy-library",
    "boardHeadings": 8,
@@ -94,7 +79,7 @@
    "id": "toy_public",
    "name": "Toy detail",
    "group": "Public site",
-   "route": "/toy-library/57fe6d26-e48b-4c0b-884e-cb5c9600c75c",
+   "route": "/toy-library/e4ddd512-65bb-4000-ad4d-67b0c95c908d",
    "findings": [
     {
      "type": "missing-section",
@@ -126,7 +111,7 @@
     }
    ],
    "role": "guest",
-   "finalUrl": "/toy-library/57fe6d26-e48b-4c0b-884e-cb5c9600c75c",
+   "finalUrl": "/toy-library/e4ddd512-65bb-4000-ad4d-67b0c95c908d",
    "boardHeadings": 10,
    "liveHeadings": 3
   },
@@ -134,20 +119,13 @@
    "id": "toy_request",
    "name": "Request a toy",
    "group": "Public site",
-   "route": "/toy-library/57fe6d26-e48b-4c0b-884e-cb5c9600c75c/request",
+   "route": "/toy-library/e4ddd512-65bb-4000-ad4d-67b0c95c908d/request",
    "findings": [
     {
      "type": "missing-section",
      "severity": "high",
-     "what": "h4 \"offer a toy back\" has no counterpart",
-     "board": "offer a toy back",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"just ask\" has no counterpart",
-     "board": "just ask",
+     "what": "h2 \"pick a toy to offer\" has no counterpart",
+     "board": "pick a toy to offer",
      "live": null
     },
     {
@@ -158,16 +136,9 @@
      "live": "812px"
     },
     {
-     "type": "size",
-     "severity": "medium",
-     "what": "card title size",
-     "board": "20px",
-     "live": "17px"
-    },
-    {
      "type": "copy",
      "severity": "medium",
-     "what": "2/2 board paragraphs absent",
+     "what": "4/4 board paragraphs absent",
      "board": "family # is open to either. offer one of your own toys, or just ask an",
      "live": "parity parent is giving this one away. just ask — nothing is expected "
     },
@@ -180,7 +151,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/toy-library/57fe6d26-e48b-4c0b-884e-cb5c9600c75c/request",
+   "finalUrl": "/toy-library/e4ddd512-65bb-4000-ad4d-67b0c95c908d/request",
    "boardHeadings": 4,
    "liveHeadings": 2
   },
@@ -439,37 +410,23 @@
     {
      "type": "missing-section",
      "severity": "high",
-     "what": "h2 \"who you asked\" has no counterpart",
-     "board": "who you asked",
+     "what": "h3 \"# h # min\" has no counterpart",
+     "board": "# h # min",
      "live": null
     },
     {
-     "type": "radius",
-     "severity": "medium",
-     "what": "card radius",
-     "board": "18px",
-     "live": "24px"
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h3 \"# g petg\" has no counterpart",
+     "board": "# g petg",
+     "live": null
     },
     {
      "type": "copy",
      "severity": "medium",
-     "what": "2/2 board paragraphs absent",
+     "what": "2/3 board paragraphs absent",
      "board": "every part carries its own settings, exactly as the author tested them",
-     "live": null
-    },
-    {
-     "type": "radius",
-     "severity": "low",
-     "what": "input radius",
-     "board": "18px",
-     "live": "14px"
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "none",
-     "live": "set"
+     "live": "the printer gives their time and machine. you cover the filament, sett"
     }
    ],
    "role": "parent",
@@ -528,37 +485,16 @@
    "route": "/get-involved/organisations/request",
    "findings": [
     {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "page height differs grossly",
-     "board": "263px",
-     "live": "1018px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h1 \"sign in to request your organisation\" size",
-     "board": "38px",
-     "live": "42px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h1 wording",
-     "board": "sign in to request your organisation",
-     "live": "request to bring your organisation in"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "1/1 board paragraphs absent",
-     "board": "we verify every request against the person asking, so we need an accou",
-     "live": "leadership on splat is granted, not self-started — an administrator ch"
+     "type": "colour",
+     "severity": "low",
+     "what": "input background",
+     "board": "rgb(250,249,247)",
+     "live": "rgb(255,255,255)"
     }
    ],
    "role": "parent",
    "finalUrl": "/get-involved/organisations/request",
-   "boardHeadings": 1,
+   "boardHeadings": 3,
    "liveHeadings": 3
   },
   {
@@ -705,15 +641,7 @@
    "name": "Challenge detail",
    "group": "Get involved",
    "route": "/get-involved/design-challenges/d174b138-36de-4764-8545-a56f8250873b",
-   "findings": [
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "card title size",
-     "board": "26px",
-     "live": "22px"
-    }
-   ],
+   "findings": [],
    "role": "guest",
    "finalUrl": "/get-involved/design-challenges/d174b138-36de-4764-8545-a56f8250873b",
    "boardHeadings": 5,
@@ -724,19 +652,11 @@
    "name": "Community impact",
    "group": "Impact",
    "route": "/impact",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"toys delivered over time\" has no counterpart",
-     "board": "toys delivered over time",
-     "live": null
-    }
-   ],
+   "findings": [],
    "role": "guest",
    "finalUrl": "/impact",
    "boardHeadings": 23,
-   "liveHeadings": 36
+   "liveHeadings": 37
   },
   {
    "id": "orgs",
@@ -795,7 +715,7 @@
      "severity": "medium",
      "what": "card title size",
      "board": "18px",
-     "live": "38px"
+     "live": "30px"
     },
     {
      "type": "copy",
@@ -833,22 +753,8 @@
     {
      "type": "missing-section",
      "severity": "high",
-     "what": "h3 \"fairy lights on a squeeze switch\" has no counterpart",
-     "board": "fairy lights on a squeeze switch",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
      "what": "h2 \"from families who built one\" has no counterpart",
      "board": "from families who built one",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"recent activity\" has no counterpart",
-     "board": "recent activity",
      "live": null
     },
     {
@@ -859,52 +765,17 @@
      "live": null
     },
     {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"nt\" has no counterpart",
-     "board": "nt",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h4 \"northside therapy collective\" has no counterpart",
-     "board": "northside therapy collective",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "page height differs grossly",
-     "board": "2769px",
-     "live": "730px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "card title size",
-     "board": "18px",
-     "live": "38px"
-    },
-    {
      "type": "copy",
      "severity": "medium",
      "what": "4/4 board paragraphs absent",
      "board": "i run a switch clinic on thursdays and write up whatever we adapt that",
      "live": null
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "none",
-     "live": "set"
     }
    ],
    "role": "guest",
    "finalUrl": "/contributors/11111111-1111-1111-1111-111111111111",
    "boardHeadings": 14,
-   "liveHeadings": 3
+   "liveHeadings": 4
   },
   {
    "id": "impact_events",
@@ -965,10 +836,38 @@
      "live": null
     },
     {
+     "type": "radius",
+     "severity": "medium",
+     "what": "card radius",
+     "board": "14px",
+     "live": "18px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "3/4 board paragraphs absent",
+     "board": "only the host sees this. reminders come the day before and nothing els",
+     "live": "northside therapy asks a few things so the day is set up for the peopl"
+    },
+    {
      "type": "colour",
      "severity": "low",
      "what": "input background",
      "board": "rgb(250,249,247)/rgba(0,0,0,0)",
+     "live": "rgb(255,255,255)"
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "none",
+     "live": "set"
+    },
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "card background",
+     "board": "rgb(243,241,237)",
      "live": "rgb(255,255,255)"
     }
    ],
@@ -1023,22 +922,7 @@
    "name": "Stories",
    "group": "About",
    "route": "/about/stories",
-   "findings": [
-    {
-     "type": "font",
-     "severity": "high",
-     "what": "card title font",
-     "board": "Nunito",
-     "live": "Baloo 2"
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "card title weight",
-     "board": 400,
-     "live": 800
-    }
-   ],
+   "findings": [],
    "role": "guest",
    "finalUrl": "/about/stories",
    "boardHeadings": 9,
@@ -1056,13 +940,6 @@
      "what": "h3 \"he looks at us now when he hits it, like: did you see that? every single time.\" has no counterpart",
      "board": "he looks at us now when he hits it, like: did you see that? every single time.",
      "live": null
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "4/5 board paragraphs absent",
-     "board": "leo is four. he has cerebral palsy and very little grip, and until aug",
-     "live": "a light-up drum, a battery interrupter and one big red switch. what ch"
     }
    ],
    "role": "guest",
@@ -1099,11 +976,11 @@
    "route": "/about/team",
    "findings": [
     {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"byron petselis\" has no counterpart",
-     "board": "byron petselis",
-     "live": null
+     "type": "size",
+     "severity": "medium",
+     "what": "card title size",
+     "board": "19px",
+     "live": "38px"
     }
    ],
    "role": "guest",
@@ -1140,7 +1017,7 @@
      "severity": "medium",
      "what": "h1 wording",
      "board": "requests to northside therapy",
-     "live": "requests to parity org mucj#l#f#pmh"
+     "live": "requests to parity org muckct#vwwk#"
     },
     {
      "type": "radius",
@@ -1206,7 +1083,7 @@
    "id": "org_event_manage",
    "name": "Manage event",
    "group": "My SPLAT",
-   "route": "/dashboard/org/events/a5fcdfcc-28b7-4d45-9d49-1bafb7884a50",
+   "route": "/dashboard/org/events/0f39daed-cc82-487f-8133-1198f017340a",
    "findings": [
     {
      "type": "font",
@@ -1238,7 +1115,7 @@
     }
    ],
    "role": "leader",
-   "finalUrl": "/dashboard/org/events/a5fcdfcc-28b7-4d45-9d49-1bafb7884a50",
+   "finalUrl": "/dashboard/org/events/0f39daed-cc82-487f-8133-1198f017340a",
    "boardHeadings": 4,
    "liveHeadings": 2
   },
@@ -1266,15 +1143,7 @@
    "name": "Support SPLAT",
    "group": "About",
    "route": "/about/support",
-   "findings": [
-    {
-     "type": "colour",
-     "severity": "low",
-     "what": "card background",
-     "board": "rgb(255,255,255)",
-     "live": null
-    }
-   ],
+   "findings": [],
    "role": "guest",
    "finalUrl": "/about/support",
    "boardHeadings": 7,
@@ -1362,7 +1231,22 @@
    "name": "My SPLAT",
    "group": "My SPLAT",
    "route": "/dashboard",
-   "findings": [],
+   "findings": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h1 \"$#\" has no counterpart",
+     "board": "$#",
+     "live": null
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "1/1 board paragraphs absent",
+     "board": "still to settle across # exchanges. splat never handles the money — yo",
+     "live": null
+    }
+   ],
    "role": "parent",
    "finalUrl": "/dashboard",
    "boardHeadings": 14,
@@ -1394,18 +1278,10 @@
    "id": "editor",
    "name": "Tutorial editor",
    "group": "My SPLAT",
-   "route": "/tutorials/016e5116-6dfd-45ae-bf05-26824097c7b8/edit",
-   "findings": [
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "2/3 board paragraphs absent",
-     "board": "steps and safety are the two a reviewer cannot work without. everythin",
-     "live": "where this guide is in its life, and what you can do about it right no"
-    }
-   ],
+   "route": "/tutorials/415b6b10-1f64-467f-85d8-7e1f6d557535/edit",
+   "findings": [],
    "role": "contributor",
-   "finalUrl": "/tutorials/016e5116-6dfd-45ae-bf05-26824097c7b8/edit",
+   "finalUrl": "/tutorials/415b6b10-1f64-467f-85d8-7e1f6d557535/edit",
    "boardHeadings": 5,
    "liveHeadings": 5
   },
@@ -1415,13 +1291,6 @@
    "group": "My SPLAT",
    "route": "/dashboard/toys",
    "findings": [
-    {
-     "type": "font",
-     "severity": "high",
-     "what": "card title font",
-     "board": "Nunito",
-     "live": "Baloo 2"
-    },
     {
      "type": "missing-section",
      "severity": "high",
@@ -1450,7 +1319,7 @@
    "id": "toy_detail",
    "name": "Toy detail",
    "group": "My SPLAT",
-   "route": "/dashboard/toys/57fe6d26-e48b-4c0b-884e-cb5c9600c75c",
+   "route": "/dashboard/toys/e4ddd512-65bb-4000-ad4d-67b0c95c908d",
    "findings": [
     {
      "type": "missing-section",
@@ -1464,18 +1333,11 @@
      "severity": "medium",
      "what": "card title size",
      "board": "26px",
-     "live": "22px"
-    },
-    {
-     "type": "colour",
-     "severity": "low",
-     "what": "card background",
-     "board": "rgb(250,249,247)",
-     "live": "rgb(255,240,204)"
+     "live": "16px"
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/toys/57fe6d26-e48b-4c0b-884e-cb5c9600c75c",
+   "finalUrl": "/dashboard/toys/e4ddd512-65bb-4000-ad4d-67b0c95c908d",
    "boardHeadings": 8,
    "liveHeadings": 5
   },
@@ -1502,7 +1364,7 @@
    "id": "thread",
    "name": "Exchange thread",
    "group": "My SPLAT",
-   "route": "/dashboard/exchanges/51e8f305-23c9-4bba-9f92-414f5b6d2e0c",
+   "route": "/dashboard/exchanges/4f80d31d-fbeb-4f6d-b491-e2af62aa8806",
    "findings": [
     {
      "type": "missing-section",
@@ -1527,41 +1389,8 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/exchanges/51e8f305-23c9-4bba-9f92-414f5b6d2e0c",
+   "finalUrl": "/dashboard/exchanges/4f80d31d-fbeb-4f6d-b491-e2af62aa8806",
    "boardHeadings": 4,
-   "liveHeadings": 5
-  },
-  {
-   "id": "thread_live",
-   "name": "Exchange inbox (live)",
-   "group": "My SPLAT",
-   "route": "/dashboard/exchanges",
-   "findings": [
-    {
-     "type": "font",
-     "severity": "high",
-     "what": "card title font",
-     "board": "Nunito",
-     "live": "Baloo 2"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "card title size",
-     "board": "16px",
-     "live": "20px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h1 \"inbox\" size",
-     "board": "26px",
-     "live": "40px"
-    }
-   ],
-   "role": "parent",
-   "finalUrl": "/dashboard/exchanges",
-   "boardHeadings": 2,
    "liveHeadings": 5
   },
   {
@@ -1639,9 +1468,23 @@
     {
      "type": "missing-section",
      "severity": "high",
+     "what": "board lists cards, live shows none",
+     "board": 7,
+     "live": 0
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
      "what": "page height differs grossly",
      "board": "721px",
      "live": "252px"
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "board has cards, live has none",
+     "board": 7,
+     "live": 0
     }
    ],
    "role": "parent",
@@ -1664,8 +1507,15 @@
    "id": "print_job",
    "name": "Print job",
    "group": "My SPLAT",
-   "route": "/dashboard/print-requests/4ac57842-c256-4a70-878d-9487af83a5ca",
+   "route": "/dashboard/print-requests/6dfa52bf-2332-4d9d-8ed2-7f27b8579771",
    "findings": [
+    {
+     "type": "font",
+     "severity": "high",
+     "what": "card title font",
+     "board": "Nunito",
+     "live": "Baloo 2"
+    },
     {
      "type": "extra-section",
      "severity": "medium",
@@ -1686,10 +1536,17 @@
      "what": "input radius",
      "board": "999px",
      "live": "14px"
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "none",
+     "live": "set"
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/print-requests/4ac57842-c256-4a70-878d-9487af83a5ca",
+   "finalUrl": "/dashboard/print-requests/6dfa52bf-2332-4d9d-8ed2-7f27b8579771",
    "boardHeadings": 3,
    "liveHeadings": 5
   },
@@ -1745,6 +1602,13 @@
      "what": "3/4 board paragraphs absent",
      "board": "your pickup point comes from your profile. requesters see the suburb u",
      "live": "bed size and materials decide which requests you are offered, so a fam"
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "none",
+     "live": "set"
     }
    ],
    "role": "parent",
@@ -1757,57 +1621,28 @@
    "name": "Account",
    "group": "My SPLAT",
    "route": "/dashboard/profile",
-   "findings": [
-    {
-     "type": "font",
-     "severity": "high",
-     "what": "card title font",
-     "board": "Baloo 2",
-     "live": "Nunito"
-    },
-    {
-     "type": "extra-section",
-     "severity": "medium",
-     "what": "live has an extra h2: \"default pickup address\"",
-     "board": null,
-     "live": "default pickup address"
-    },
-    {
-     "type": "colour",
-     "severity": "low",
-     "what": "card background",
-     "board": "rgb(253,227,227)",
-     "live": "rgb(255,255,255)"
-    }
-   ],
+   "findings": [],
    "role": "parent",
    "finalUrl": "/dashboard/profile",
    "boardHeadings": 3,
-   "liveHeadings": 3
+   "liveHeadings": 2
   },
   {
    "id": "child",
    "name": "Child profile",
    "group": "My SPLAT",
-   "route": "/dashboard/child/dc4fb964-afbd-4fae-8f34-443244d5e309",
+   "route": "/dashboard/child/17399744-6540-466e-a0bd-bc0de4fd78be",
    "findings": [
     {
      "type": "missing-section",
      "severity": "high",
      "what": "page height differs grossly",
      "board": "1166px",
-     "live": "2885px"
-    },
-    {
-     "type": "colour",
-     "severity": "low",
-     "what": "input background",
-     "board": "rgb(250,249,247)",
-     "live": "rgb(255,255,255)/rgba(0,0,0,0)"
+     "live": "2659px"
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/child/dc4fb964-afbd-4fae-8f34-443244d5e309",
+   "finalUrl": "/dashboard/child/17399744-6540-466e-a0bd-bc0de4fd78be",
    "boardHeadings": 4,
    "liveHeadings": 5
   },
@@ -1822,14 +1657,7 @@
      "severity": "high",
      "what": "page height differs grossly",
      "board": "1166px",
-     "live": "2825px"
-    },
-    {
-     "type": "colour",
-     "severity": "low",
-     "what": "input background",
-     "board": "rgb(250,249,247)",
-     "live": "rgb(255,255,255)/rgba(0,0,0,0)"
+     "live": "2599px"
     }
    ],
    "role": "parent",
@@ -1862,7 +1690,7 @@
      "severity": "medium",
      "what": "1/1 board paragraphs absent",
      "board": "guides waiting on northside therapy collective. oldest first.",
-     "live": "guides waiting on parity org mucj#l#f#pmh. oldest first."
+     "live": "guides waiting on parity org muckct#vwwk# oldest first."
     }
    ],
    "role": "leader",
@@ -1893,7 +1721,7 @@
     {
      "type": "copy",
      "severity": "medium",
-     "what": "5/6 board paragraphs absent",
+     "what": "6/7 board paragraphs absent",
      "board": "the suburb is public. a street address is only ever shown to someone y",
      "live": "this is the page a family lands on before they ask you for anything. e"
     },
@@ -1901,8 +1729,8 @@
      "type": "colour",
      "severity": "low",
      "what": "card background",
-     "board": "rgb(250,249,247)",
-     "live": "rgb(255,255,255)"
+     "board": "rgb(240,249,255)",
+     "live": "rgb(250,249,247)"
     }
    ],
    "role": "leader",
@@ -1967,29 +1795,14 @@
    "role": "leader",
    "finalUrl": "/dashboard/organisation/publish",
    "boardHeadings": 4,
-   "liveHeadings": 2
+   "liveHeadings": 3
   },
   {
    "id": "org_event_new",
    "name": "Publish an event",
    "group": "Organisation",
    "route": "/dashboard/organisation/events/new",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "board lists cards, live shows none",
-     "board": 5,
-     "live": 0
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "board has cards, live has none",
-     "board": 5,
-     "live": 0
-    }
-   ],
+   "findings": [],
    "role": "leader",
    "finalUrl": "/dashboard/organisation/events/new",
    "boardHeadings": 2,
@@ -2013,6 +1826,13 @@
    "route": "/dashboard/organisation/orders",
    "findings": [
     {
+     "type": "font",
+     "severity": "high",
+     "what": "card title font",
+     "board": "Nunito",
+     "live": "Baloo 2"
+    },
+    {
      "type": "missing-section",
      "severity": "high",
      "what": "page height differs grossly",
@@ -2020,11 +1840,25 @@
      "live": "596px"
     },
     {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "set",
-     "live": "none"
+     "type": "size",
+     "severity": "medium",
+     "what": "card title size",
+     "board": "15px",
+     "live": "24px"
+    },
+    {
+     "type": "radius",
+     "severity": "medium",
+     "what": "card radius",
+     "board": "18px",
+     "live": "24px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "5/6 board paragraphs absent",
+     "board": "switch-mount-body.stl, switch-mount-clamp.stl, cradle-#mm.stl",
+     "live": "every leader sees this queue. pickup is always the organisation's addr"
     }
    ],
    "role": "leader",
@@ -2037,26 +1871,11 @@
    "name": "Site content",
    "group": "Admin",
    "route": "/admin/content",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"the scroll story\" has no counterpart",
-     "board": "the scroll story",
-     "live": null
-    },
-    {
-     "type": "colour",
-     "severity": "low",
-     "what": "card background",
-     "board": "rgb(250,249,247)",
-     "live": "rgb(240,249,255)"
-    }
-   ],
+   "findings": [],
    "role": "admin",
    "finalUrl": "/admin/content",
    "boardHeadings": 5,
-   "liveHeadings": 3
+   "liveHeadings": 4
   },
   {
    "id": "admin",
@@ -2133,22 +1952,7 @@
    "name": "Reports",
    "group": "Admin",
    "route": "/admin/reports",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "board lists cards, live shows none",
-     "board": 4,
-     "live": 0
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "board has cards, live has none",
-     "board": 4,
-     "live": 0
-    }
-   ],
+   "findings": [],
    "role": "admin",
    "finalUrl": "/admin/reports",
    "boardHeadings": 1,
@@ -2169,7 +1973,7 @@
    "id": "admin_idea_detail",
    "name": "Review an idea",
    "group": "Admin",
-   "route": "/admin/ideas/77cab104-99c3-40f0-80c1-7c01d39151ac",
+   "route": "/admin/ideas/bb8fe385-9f8c-46bd-8bd6-8cf257a8131e",
    "findings": [
     {
      "type": "copy",
@@ -2180,7 +1984,7 @@
     }
    ],
    "role": "admin",
-   "finalUrl": "/admin/ideas/77cab104-99c3-40f0-80c1-7c01d39151ac",
+   "finalUrl": "/admin/ideas/bb8fe385-9f8c-46bd-8bd6-8cf257a8131e",
    "boardHeadings": 3,
    "liveHeadings": 3
   },
@@ -2252,7 +2056,29 @@
    "name": "Create account",
    "group": "Auth",
    "route": "/signup",
-   "findings": [],
+   "findings": [
+    {
+     "type": "radius",
+     "severity": "medium",
+     "what": "card radius",
+     "board": "18px",
+     "live": "24px"
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "none",
+     "live": "set"
+    },
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "card background",
+     "board": "rgb(240,249,255)",
+     "live": "rgb(255,255,255)"
+    }
+   ],
    "role": "guest",
    "finalUrl": "/signup",
    "boardHeadings": 2,
@@ -2263,7 +2089,22 @@
    "name": "Check your email",
    "group": "Auth",
    "route": "/signup",
-   "findings": [],
+   "findings": [
+    {
+     "type": "font",
+     "severity": "high",
+     "what": "card title font",
+     "board": "Baloo 2",
+     "live": "Nunito"
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "card title size",
+     "board": "25px",
+     "live": "15px"
+    }
+   ],
    "role": "guest",
    "finalUrl": "/signup",
    "boardHeadings": 3,
@@ -2315,21 +2156,21 @@
   }
  ],
  "summary": {
-  "screens": 119,
-  "clean": 69,
-  "withFindings": 50,
+  "screens": 118,
+  "clean": 76,
+  "withFindings": 42,
   "errored": 0,
-  "findings": 136,
+  "findings": 116,
   "byType": {
-   "missing-section": 59,
-   "size": 13,
-   "extra-section": 6,
-   "copy": 23,
-   "colour": 12,
-   "shadow": 10,
-   "radius": 5,
-   "font": 6,
-   "weight": 2
+   "missing-section": 49,
+   "size": 9,
+   "extra-section": 5,
+   "copy": 21,
+   "colour": 9,
+   "shadow": 11,
+   "font": 5,
+   "radius": 6,
+   "weight": 1
   }
  }
 }
