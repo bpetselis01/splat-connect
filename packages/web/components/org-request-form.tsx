@@ -15,7 +15,8 @@
  */
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Buildings } from '@phosphor-icons/react/dist/ssr'
+import Link from 'next/link'
+import { PaperPlaneTilt, ShieldCheck } from '@phosphor-icons/react/dist/ssr'
 import type { OrganizationRequest } from '@splat-connect/types'
 import { Badge } from '@/components/badge'
 import { browserApiClient } from '@/lib/browser-api-client'
@@ -51,7 +52,108 @@ export function OrgRequestForm({ existing }: { existing: OrganizationRequest[] }
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="mt-7 flex flex-col gap-6">
+      {open ? (
+        <div className="flex flex-col items-center gap-3.5 rounded-card border border-line bg-[var(--surface)] px-[34px] py-10 text-center shadow-[var(--e3),var(--hi)]">
+          <span
+            aria-hidden="true"
+            className="grid h-16 w-16 place-items-center rounded-card bg-[var(--tok)] text-[var(--tink)]"
+          >
+            <PaperPlaneTilt weight="duotone" className="text-[32px]" />
+          </span>
+          <h2 className="font-display text-[clamp(26px,3vw,34px)] font-extrabold leading-[1.15] text-ink">
+            Sent for verification
+          </h2>
+          <p className="max-w-[52ch] text-base leading-[1.6] text-muted">
+            An administrator checks every request against what you told us before {open.org_name}{' '}
+            is created and you are appointed its first leader. You will hear back here.
+          </p>
+          <div className="mt-2 flex flex-wrap justify-center gap-2.5">
+            <Link href="/dashboard" className="btn btn-primary px-[22px] text-[15px]">
+              Go to My SPLAT
+            </Link>
+            <Link
+              href="/get-involved/organisations"
+              className="btn min-h-[52px] border-line bg-[var(--surface)] text-ink"
+            >
+              Back to For organisations
+            </Link>
+          </div>
+        </div>
+      ) : (
+        <form
+          className="flex flex-col gap-[22px] rounded-card border border-line bg-[var(--surface)] p-7 shadow-[var(--e2)]"
+          onSubmit={submit}
+        >
+          <div className="flex flex-col gap-4">
+            <h2 className="font-display text-lg font-extrabold text-muted">The organisation</h2>
+            <label>
+              <span className="mb-[7px] block text-sm font-extrabold">Organisation name</span>
+              <input
+                name="org_name"
+                className="field w-full"
+                maxLength={120}
+                placeholder="e.g. Riverina Makerspace"
+              />
+            </label>
+            <label>
+              <span className="mb-[7px] block text-sm font-extrabold">What it does</span>
+              <textarea
+                name="what_they_do"
+                rows={3}
+                maxLength={2000}
+                className="field w-full"
+                placeholder="Who you work with, and what you would hold or print — e.g. a shelf of adapted toys for families we already see, and a 3D printer for switch mounts."
+              />
+            </label>
+          </div>
+
+          <div className="flex flex-col gap-4 border-t border-line pt-1.5">
+            <h2 className="mt-4 font-display text-lg font-extrabold text-muted">You</h2>
+            <label>
+              <span className="mb-[7px] block text-sm font-extrabold">How we can check you work there</span>
+              <textarea
+                name="verification"
+                rows={3}
+                maxLength={1000}
+                className="field w-full"
+                placeholder="Your role, a work email on the organisation's domain, a staff page, a number we can ring."
+              />
+            </label>
+          </div>
+
+          <div className="flex items-start gap-3 rounded-[18px] border border-line bg-[var(--b50)] px-[18px] py-4">
+            <ShieldCheck weight="duotone" aria-hidden="true" className="shrink-0 text-2xl text-[var(--b600)]" />
+            <p className="text-sm leading-[1.55] text-muted">
+              <strong className="text-ink">Why we check:</strong> a leader can back guides and
+              issue recycling credit against real filament rates. Backing a guide means a competent
+              person read it — that claim is the whole risk, so we confirm you are who you say
+              before you can make it.
+            </p>
+          </div>
+
+          {error && (
+            <p role="alert" className="alert alert-danger">
+              {error}
+            </p>
+          )}
+          {sent && (
+            <p role="status" className="alert bg-mint-soft text-ink">
+              Sent. An admin reviews every request before an organisation is created.
+            </p>
+          )}
+
+          <div className="flex flex-wrap items-center gap-3 pt-1.5">
+            <button type="submit" className="btn btn-primary px-[26px]" disabled={pending}>
+              {pending ? 'Sending…' : 'Send for verification'}
+            </button>
+            <p className="text-[13px] text-muted">
+              No fee, no obligation. If we can&apos;t verify it, we will tell you why.
+            </p>
+          </div>
+        </form>
+      )}
+
       {existing.length > 0 && (
         <section>
           <h2 className="title-section mb-3">What you have asked for</h2>
@@ -87,57 +189,6 @@ export function OrgRequestForm({ existing }: { existing: OrganizationRequest[] }
             ))}
           </ul>
         </section>
-      )}
-
-      {open ? (
-        <p className="text-sm leading-relaxed text-muted">
-          An admin is looking at your request for {open.org_name}. You will hear back here.
-        </p>
-      ) : (
-        <form className="card flex flex-col gap-5 p-6" onSubmit={submit}>
-          <label>
-            <span className="field-label">The organisation&apos;s name</span>
-            <input name="org_name" className="field mt-1 w-full" maxLength={120} />
-          </label>
-
-          <label>
-            <span className="field-label">What it does</span>
-            <textarea
-              name="what_they_do"
-              rows={5}
-              maxLength={2000}
-              className="field mt-1 w-full"
-              placeholder="Who you work with, and what you would use SPLAT for."
-            />
-          </label>
-
-          <label>
-            <span className="field-label">How we can check you work there</span>
-            <textarea
-              name="verification"
-              rows={4}
-              maxLength={1000}
-              className="field mt-1 w-full"
-              placeholder="A work email on the organisation's domain, a staff page, a number we can ring."
-            />
-          </label>
-
-          {error && (
-            <p role="alert" className="alert alert-danger">
-              {error}
-            </p>
-          )}
-          {sent && (
-            <p role="status" className="alert bg-mint-soft text-ink">
-              Sent. An admin reviews every request before an organisation is created.
-            </p>
-          )}
-
-          <button type="submit" className="btn btn-primary self-start" disabled={pending}>
-            <Buildings size={18} weight="bold" aria-hidden="true" />
-            Send the request
-          </button>
-        </form>
       )}
     </div>
   )

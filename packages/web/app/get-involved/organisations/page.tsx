@@ -1,60 +1,46 @@
 import Link from 'next/link'
-import { EditorialImage } from '@/components/editorial-image'
-import { StepList } from '@/components/step-list'
+import { getCapabilities } from '@/lib/capabilities'
+import { InvolvedIntro, NumberedSteps, TrackCta } from '@/components/involved-page'
 
 export const metadata = {
   title: 'For organisations — SPLAT Connect',
-  description: 'Back contributors, hold toys for local families, host a build day.',
+  description: 'Hold adapted toys for local families, and be the 3D printing hub parents nearby can send parts to.',
 }
 
-export default function OrganisationsPage() {
-  return (
-    <div className="max-w-3xl">
-      <EditorialImage illustration="organisation" ratio="2/1" />
-      <h1 className="mt-6 title-article">For organisations</h1>
-      <p className="mt-3 max-w-prose text-base leading-relaxed text-muted">
-        What you bring is what a volunteer platform cannot generate on its own:
-        professional judgement, and a physical place families can get to.
-      </p>
+const REQUEST = '/get-involved/organisations/request'
 
-      <StepList
+export default async function OrganisationsPage() {
+  const signed = !!(await getCapabilities())
+  return (
+    <div className="max-w-[860px]">
+      <InvolvedIntro
+        title="For organisations"
+        lead="Hold a shelf of adapted toys for local families, and be the 3D printing hub parents nearby can send parts to. One dashboard for both, with nothing to invoice."
+      />
+      <NumberedSteps
         steps={[
-          {
-            title: 'Ask for your organisation',
-            body: 'Organisations are set up by the SPLAT team rather than self-registered, so that a name on a guide means something. Tell us who you are and what you would like to do.',
-          },
-          {
-            title: 'Back contributors’ work',
-            body: 'Contributors can ask your organisation to review a guide before it is published. One of your leaders reads it and stands behind it, and your name appears on it. This is the strongest signal of quality the library has.',
-          },
-          {
-            title: 'Hold toys for local families',
-            body: 'If you hold stock — five identical sensory toys, say — you can list them from your organisation with a fixed pickup address, rather than a staff member using a personal account and their home address.',
-          },
-          {
-            title: 'Run a build day',
-            body: 'A group of staff, students or volunteers can build a batch of switches and adapted toys in an afternoon, and the output goes to families you already work with.',
-          },
-          {
-            title: 'Be findable',
-            body: 'Your organisation gets a public profile listing what you have backed and what you hold, so a parent reading a badge on a guide can see who is behind it.',
-          },
+          ['Request to bring your organisation in', 'Sign in, tell us who you are and what you hold or print, and how we can check you actually work there. An administrator verifies it and appoints your first leader — leadership is never self-started.'],
+          ['Hold a shelf of toys', 'List the adapted toys your service holds, with quantities. Local families request them through the platform, you agree a pickup, and a handover code closes each one off.'],
+          ['Be the local print hub', 'List your printer once and parents nearby can send you the parts a guide needs. Requests arrive in one queue with the file, quantity and who it is for; you accept, print and mark ready for pickup. Switch mounts are a twenty-minute print, and you set the hours you take jobs.'],
+          ['Manage it from one place', 'Toy requests and print jobs share the same dashboard and the same five words: Needs you, Live, Waiting, Hidden, Declined. Appoint a couple of staff as leaders so it never sits on one person.'],
+          ['Optionally, back guides', 'If a contributor asks, a leader can read a guide and put your name behind it. Useful, but not required to run a shelf or a printer.'],
         ]}
       />
-
-      <div className="mt-10 flex flex-wrap gap-3">
-        {/* The door the page has described since it shipped, which until 060
-            went to a contact form. It now goes to the request an admin reviews. */}
-        <Link href="/get-involved/organisations/request" className="btn btn-primary">
-          Request an organisation
+      <TrackCta
+        title={signed ? 'Request to bring your organisation in' : 'Sign in to request your organisation'}
+        body={
+          signed
+            ? 'Tell us who you are, what you hold or print, and how we can verify you work there. An administrator reviews every request.'
+            : 'You will need an account first — it is how we know who to verify and where to send the decision.'
+        }
+      >
+        <Link
+          href={signed ? REQUEST : `/login?next=${encodeURIComponent(REQUEST)}`}
+          className="btn btn-primary px-[26px]"
+        >
+          {signed ? 'Start the request' : 'Sign in to continue'}
         </Link>
-        <Link href="/contact" className="btn btn-soft">
-          Ask a question first
-        </Link>
-        <Link href="/organizations" className="btn btn-soft">
-          See who is already involved
-        </Link>
-      </div>
+      </TrackCta>
     </div>
   )
 }

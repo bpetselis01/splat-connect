@@ -19,11 +19,19 @@
  */
 import Link from 'next/link'
 import type { Route } from 'next'
-import { CalendarDots, Buildings } from '@phosphor-icons/react/dist/ssr'
+import {
+  ArrowRight,
+  CalendarX,
+  CaretDown,
+  ListBullets,
+  MapPin,
+  Megaphone,
+  Plus,
+  VideoCamera,
+} from '@phosphor-icons/react/dist/ssr'
 import { apiClient } from '@/lib/api-client'
 import { getCapabilities } from '@/lib/capabilities'
-import { EventCard } from '@/components/event-card'
-import { Disclosure } from '@/components/disclosure'
+import { EventCard, PastEventRow } from '@/components/event-card'
 import { monthHeading, monthKey, isPast } from '@/lib/dates'
 import { AU_STATES, type EventListItem } from '@splat-connect/types'
 
@@ -34,9 +42,9 @@ export const metadata = {
 }
 
 const FORMATS = [
-  { value: '', label: 'All' },
-  { value: 'in_person', label: 'In person' },
-  { value: 'online', label: 'Online' },
+  { value: '', label: 'All', icon: ListBullets },
+  { value: 'in_person', label: 'In person', icon: MapPin },
+  { value: 'online', label: 'Online', icon: VideoCamera },
 ] as const
 
 /** Month → the events in it, in date order, with the months in date order. */
@@ -87,109 +95,144 @@ export default async function EventsPage({
     return (q ? `/get-involved/events?${q}` : '/get-involved/events') as Route
   }
 
+  const leads = (caps?.ledOrgs.length ?? 0) > 0
+
   return (
     <div>
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="title-hub">Events</h1>
-          <p className="mt-2 max-w-prose text-base leading-relaxed text-muted">
+      <div className="flex flex-wrap items-end justify-between gap-5">
+        <div className="max-w-[62ch]">
+          <span className="text-[13px] font-extrabold uppercase tracking-[.1em] text-brand">
+            Get involved
+          </span>
+          <h1 className="mt-2.5 font-display text-[clamp(34px,4vw,52px)] font-extrabold leading-[1.05] tracking-[-.02em] text-ink">
+            Events
+          </h1>
+          <p className="mt-3.5 text-lg leading-[1.6] text-muted [text-wrap:pretty]">
             Build days, workshops and open afternoons run by the organisations on SPLAT. No
             ticket price — a few ask you to cover materials, and the amount is on the event
             before you register.
           </p>
         </div>
+        {/* The board also draws "Subscribe to calendar"; there is no feed of
+            all events to subscribe to yet, only a per-event .ics. */}
+        {leads && (
+          <Link href="/dashboard/organisation/events/new" className="btn btn-primary min-h-12 px-5 text-[15px]">
+            <Plus weight="bold" aria-hidden="true" /> Host an event
+          </Link>
+        )}
       </div>
 
       {/* Links, not buttons: a filtered list is a place, and a family who finds
           a Saturday in Brighton should be able to send that page to someone. */}
-      <div className="mt-6 flex flex-wrap items-center gap-4">
-        <div role="tablist" aria-label="Format" className="flex flex-wrap gap-2">
-          {FORMATS.map((f) => (
-            <Link
-              key={f.label}
-              role="tab"
-              // aria-selected, not aria-pressed: role="tab" does not support
-              // the latter, and two conflicting states read worse than one.
-              aria-selected={format === f.value}
-              href={href({ format: f.value })}
-              className="chip"
-              data-on={format === f.value ? 'true' : undefined}
-            >
-              {f.label}
-            </Link>
-          ))}
+      <div className="mb-2 mt-[30px] flex flex-wrap items-center gap-3.5">
+        <div
+          role="tablist"
+          aria-label="Format"
+          className="inline-flex rounded-full border border-line bg-[var(--surface2)] p-1"
+        >
+          {FORMATS.map((f) => {
+            const on = format === f.value
+            return (
+              <Link
+                key={f.label}
+                role="tab"
+                // aria-selected, not aria-pressed: role="tab" does not support
+                // the latter, and two conflicting states read worse than one.
+                aria-selected={on}
+                href={href({ format: f.value })}
+                className={`inline-flex min-h-11 items-center gap-1.5 rounded-full px-4 text-sm font-extrabold ${
+                  on ? 'bg-[var(--surface)] text-ink shadow-[var(--e1)]' : 'text-muted'
+                }`}
+              >
+                <f.icon weight="bold" aria-hidden="true" />
+                {f.label}
+              </Link>
+            )
+          })}
         </div>
 
         <div className="flex flex-wrap gap-2" role="group" aria-label="State">
-          <Link href={href({ state: '' })} className="chip" aria-pressed={state === ''}>
-            Anywhere
-          </Link>
-          {AU_STATES.map((s) => (
-            <Link key={s} href={href({ state: s })} className="chip" aria-pressed={state === s}>
-              {s}
-            </Link>
-          ))}
+          {['', ...AU_STATES].map((s) => {
+            const on = state === s
+            return (
+              <Link
+                key={s || 'any'}
+                href={href({ state: s })}
+                aria-pressed={on}
+                className={`inline-flex min-h-11 items-center rounded-full border-2 px-3.5 text-[13px] font-extrabold text-ink ${
+                  on ? 'border-[var(--b600)] bg-[var(--b100)]' : 'border-line bg-[var(--surface)]'
+                }`}
+              >
+                {s || 'Anywhere'}
+              </Link>
+            )
+          })}
         </div>
       </div>
 
       {upcoming.length === 0 ? (
-        <div className="card mt-8 flex flex-col items-center px-6 py-10 text-center">
-          <span aria-hidden="true" className="empty-badge text-brand-deep">
-            <CalendarDots className="h-8 w-8" />
-          </span>
-          <p className="mt-4 font-display text-xl font-extrabold text-ink">
+        <div className="mt-7 rounded-card border border-dashed border-line bg-[var(--surface)] p-10 text-center">
+          <CalendarX weight="duotone" aria-hidden="true" className="mx-auto text-[40px] text-muted" />
+          <p className="mb-1 mt-2.5 font-display text-xl font-extrabold text-ink">
             Nothing coming up here yet
           </p>
-          <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted">
+          <p className="text-[15px] text-muted">
             {format || state
-              ? 'Try Anywhere, or the All tab — an online workshop is open to everyone wherever it is run from.'
+              ? 'Try another state, or switch to online sessions — anyone can join those.'
               : 'Organisations publish build days straight to this page. Nothing is scheduled right now.'}
           </p>
         </div>
       ) : (
-        <div className="mt-8 flex flex-col gap-8">
-          {byMonth(upcoming).map((group) => (
-            <section key={group.key}>
-              <h2 className="title-detail mb-3">{group.heading}</h2>
-              <div className="flex flex-col gap-3">
-                {group.events.map((e) => (
-                  <EventCard key={e.id} event={e} signedIn={!!caps} hasQuestions={e.has_questions} />
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
-      )}
-
-      {past.length > 0 && (
-        <div className="mt-10">
-          <Disclosure summary={`Past events (${past.length})`}>
-            <div className="flex flex-col gap-3 pt-3">
-              {past.map((e) => (
+        byMonth(upcoming).map((group) => (
+          <section key={group.key}>
+            <h2 className="mb-3.5 mt-[34px] flex items-center gap-3 font-display text-[22px] font-extrabold text-ink">
+              {group.heading}
+              <span aria-hidden="true" className="h-0.5 flex-1 rounded-sm bg-[var(--line)]" />
+            </h2>
+            <div className="grid gap-3">
+              {group.events.map((e) => (
                 <EventCard key={e.id} event={e} signedIn={!!caps} hasQuestions={e.has_questions} />
               ))}
             </div>
-          </Disclosure>
-        </div>
+          </section>
+        ))
       )}
 
-      <aside className="card mt-10 flex flex-col items-start gap-3 p-6 sm:flex-row sm:items-center">
-        <span aria-hidden="true" className="empty-badge shrink-0 text-brand-deep">
-          <Buildings className="h-7 w-7" />
-        </span>
-        <div className="flex-1">
-          <p className="font-display text-lg font-extrabold text-ink">
-            Run a therapy service, school or makerspace?
-          </p>
-          <p className="mt-1 text-sm leading-relaxed text-muted">
-            Organisation leaders publish events straight to this page from their dashboard.
-            Families see them the moment you press publish.
-          </p>
+      <div className="mt-11 grid items-start gap-5 md:grid-cols-2">
+        <div>
+          {past.length > 0 && (
+            <details className="group">
+              <summary className="flex cursor-pointer list-none items-center gap-2.5 font-display text-[22px] font-extrabold text-ink [&::-webkit-details-marker]:hidden">
+                <CaretDown weight="bold" aria-hidden="true" className="-rotate-90 transition-transform group-open:rotate-0" />
+                Past events <span className="font-sans text-sm font-bold text-muted">({past.length})</span>
+              </summary>
+              <div className="mt-3.5 grid gap-2">
+                {past.map((e) => (
+                  <PastEventRow key={e.id} event={e} />
+                ))}
+              </div>
+            </details>
+          )}
         </div>
-        <Link href="/get-involved/organisations/request" className="btn btn-quiet btn-sm shrink-0">
-          Register your organisation
-        </Link>
-      </aside>
+        <aside className="flex items-start gap-4 rounded-card border border-line bg-[var(--tviolet)] p-6 text-[var(--tink)]">
+          <Megaphone weight="duotone" aria-hidden="true" className="shrink-0 text-[32px]" />
+          <div>
+            <p className="font-display text-[19px] font-extrabold">
+              Run a therapy service, school or makerspace?
+            </p>
+            <p className="mb-3 mt-1.5 text-sm leading-[1.5]">
+              Organisation leaders publish events straight to this page from their dashboard.
+              Families see them the moment you press publish.
+            </p>
+            <Link
+              href={leads ? '/dashboard/organisation/events/new' : '/get-involved/organisations/request'}
+              className="btn min-h-11 bg-ink px-4 text-sm text-[var(--surface)]"
+            >
+              {leads ? 'Host an event' : 'Register your organisation'} <ArrowRight weight="bold" aria-hidden="true" />
+            </Link>
+          </div>
+        </aside>
+      </div>
     </div>
   )
 }

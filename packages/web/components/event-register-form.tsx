@@ -19,7 +19,7 @@
  */
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { CalendarCheck } from '@phosphor-icons/react/dist/ssr'
+import { CheckCircle } from '@phosphor-icons/react/dist/ssr'
 import { browserApiClient } from '@/lib/browser-api-client'
 import type { OrgEventQuestion } from '@splat-connect/types'
 
@@ -70,13 +70,22 @@ export function EventRegisterForm({
     }
   }
 
+  const LABEL = 'text-xs font-extrabold uppercase tracking-[.1em] text-muted'
+  const pill = (on: boolean) =>
+    `min-h-11 rounded-full border-2 px-[18px] text-[15px] font-extrabold text-ink ${
+      on ? 'border-[var(--b600)] bg-[var(--b50)]' : 'border-line bg-[var(--surface)]'
+    }`
+
   return (
-    <form onSubmit={submit} className="mt-6 flex flex-col gap-4">
-      <fieldset className="card p-5">
-        <legend className="px-1 font-bold text-ink">Your details</legend>
-        <div className="grid gap-4 sm:grid-cols-2">
+    <form
+      onSubmit={submit}
+      className="mt-[18px] flex flex-col gap-6 rounded-card border border-line bg-[var(--surface)] p-7 shadow-[var(--e2)]"
+    >
+      <fieldset className="flex flex-col gap-3.5">
+        <legend className={`${LABEL} mb-3.5`}>Your details</legend>
+        <div className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(220px,1fr))]">
           <label className="block">
-            <span className="mb-1.5 block text-sm font-bold text-ink">Name</span>
+            <span className="mb-[7px] block text-sm font-extrabold text-ink">Name</span>
             <input
               id="name"
               required
@@ -88,7 +97,7 @@ export function EventRegisterForm({
             />
           </label>
           <label className="block">
-            <span className="mb-1.5 block text-sm font-bold text-ink">Email</span>
+            <span className="mb-[7px] block text-sm font-extrabold text-ink">Email</span>
             <input
               id="email"
               type="email"
@@ -100,30 +109,62 @@ export function EventRegisterForm({
             />
           </label>
         </div>
-        <p className="mt-3 text-xs text-muted">
+        <p className="text-[13px] leading-[1.5] text-muted">
           Only the host sees this. Reminders come the day before and nothing else.
         </p>
       </fieldset>
 
-      {questions.length > 0 && (
-        <fieldset className="card p-5">
-          <legend className="px-1 font-bold text-ink">
+      {questions.length > 0 ? (
+        <fieldset className="flex flex-col gap-[22px] border-t border-line pt-[22px]">
+          <legend className={`${LABEL} float-left mb-[22px] w-full`}>
             {questions.length} question{questions.length === 1 ? '' : 's'} from {orgName}
           </legend>
-          <div className="flex flex-col gap-4">
-            {questions.map((q) => (
-              <div key={q.id}>
-                <label htmlFor={`q-${q.id}`} className="mb-1.5 flex flex-wrap items-center gap-2">
-                  <span className="text-sm font-bold text-ink">{q.prompt}</span>
+          {questions.map((q) => {
+            const picks =
+              q.answer_type === 'choice'
+                ? q.options.map((o) => ({ label: o, value: o as string | boolean }))
+                : q.answer_type === 'boolean'
+                  ? [
+                      { label: 'Yes', value: true },
+                      { label: 'No', value: false },
+                    ]
+                  : null
+            return (
+              <div key={q.id} className="flex flex-col gap-2.5">
+                <label
+                  htmlFor={picks ? undefined : `q-${q.id}`}
+                  id={`q-${q.id}-label`}
+                  className="flex flex-wrap items-baseline gap-2.5"
+                >
+                  <span className="text-base font-extrabold leading-[1.35] text-ink">{q.prompt}</span>
                   {/* Both states are written out. "Required" beside nothing
                       makes the unmarked ones ambiguous, and an optional
                       question left blank is the most common honest answer. */}
-                  <span className={`badge ${q.required ? 'bg-honey-soft text-ink' : 'bg-sunken text-muted'}`}>
+                  <span
+                    className={`text-xs font-extrabold uppercase tracking-[.06em] ${
+                      q.required ? 'text-[var(--coral)]' : 'text-muted'
+                    }`}
+                  >
                     {q.required ? 'Required' : 'Optional'}
                   </span>
                 </label>
 
-                {q.answer_type === 'paragraph' ? (
+                {picks ? (
+                  <div role="radiogroup" aria-labelledby={`q-${q.id}-label`} className="flex flex-wrap gap-2">
+                    {picks.map((o) => (
+                      <button
+                        key={o.label}
+                        type="button"
+                        role="radio"
+                        aria-checked={answers[q.id] === o.value}
+                        onClick={() => set(q.id, o.value)}
+                        className={pill(answers[q.id] === o.value)}
+                      >
+                        {o.label}
+                      </button>
+                    ))}
+                  </div>
+                ) : q.answer_type === 'paragraph' ? (
                   <textarea
                     id={`q-${q.id}`}
                     rows={3}
@@ -140,35 +181,8 @@ export function EventRegisterForm({
                     required={q.required}
                     value={String(answers[q.id] ?? '')}
                     onChange={(e) => set(q.id, e.target.value)}
-                    className="field"
+                    className="field !w-[140px]"
                   />
-                ) : q.answer_type === 'choice' ? (
-                  <select
-                    id={`q-${q.id}`}
-                    required={q.required}
-                    value={String(answers[q.id] ?? '')}
-                    onChange={(e) => set(q.id, e.target.value)}
-                    className="field"
-                  >
-                    <option value="">Choose one</option>
-                    {q.options.map((o) => (
-                      <option key={o} value={o}>
-                        {o}
-                      </option>
-                    ))}
-                  </select>
-                ) : q.answer_type === 'boolean' ? (
-                  <select
-                    id={`q-${q.id}`}
-                    required={q.required}
-                    value={answers[q.id] === undefined ? '' : String(answers[q.id])}
-                    onChange={(e) => set(q.id, e.target.value === 'true')}
-                    className="field"
-                  >
-                    <option value="">Choose one</option>
-                    <option value="true">Yes</option>
-                    <option value="false">No</option>
-                  </select>
                 ) : (
                   <input
                     id={`q-${q.id}`}
@@ -180,9 +194,14 @@ export function EventRegisterForm({
                   />
                 )}
               </div>
-            ))}
-          </div>
+            )
+          })}
         </fieldset>
+      ) : (
+        <p className="flex items-start gap-2 rounded-[18px] bg-[var(--tmint)] px-[18px] py-4 text-[15px] leading-[1.5] text-[var(--tink)]">
+          <CheckCircle weight="bold" aria-hidden="true" className="mt-0.5 shrink-0" />
+          {orgName} asks nothing else — your name and email are enough.
+        </p>
       )}
 
       {error && (
@@ -191,23 +210,23 @@ export function EventRegisterForm({
         </p>
       )}
 
-      <div className="flex flex-wrap items-center gap-3">
-        <button type="submit" disabled={saving || missing.length > 0} className="btn btn-primary">
-          <CalendarCheck className="h-4 w-4" aria-hidden="true" />
+      <div className="flex flex-wrap items-center gap-3 border-t border-line pt-2">
+        <button type="submit" disabled={saving || missing.length > 0} className="btn btn-primary mt-4 px-[26px]">
+          <CheckCircle weight="bold" aria-hidden="true" />
           {saving ? 'Confirming…' : 'Confirm my spot'}
         </button>
-        <a href={`/get-involved/events/${eventId}`} className="btn btn-quiet">
+        <a
+          href={`/get-involved/events/${eventId}`}
+          className="btn mt-4 min-h-[52px] border-line bg-[var(--surface)] text-ink"
+        >
           Back to the event
         </a>
+        <span className="mt-4 max-w-[34ch] text-[13px] leading-[1.45] text-muted">
+          {missing.length > 0
+            ? `${missing.length} required question${missing.length === 1 ? '' : 's'} still to answer.`
+            : 'Free to attend. You can change or cancel any time from My events.'}
+        </span>
       </div>
-      {missing.length > 0 && (
-        <p className="text-sm text-muted">
-          {missing.length} required question{missing.length === 1 ? '' : 's'} still to answer.
-        </p>
-      )}
-      <p className="text-xs text-muted">
-        No ticket price. Change or cancel any time from My events.
-      </p>
     </form>
   )
 }

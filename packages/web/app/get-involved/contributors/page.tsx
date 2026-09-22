@@ -1,67 +1,37 @@
 import Link from 'next/link'
-import { EditorialImage } from '@/components/editorial-image'
-import { StepList } from '@/components/step-list'
+import { getCapabilities } from '@/lib/capabilities'
+import { InvolvedIntro, NumberedSteps, TrackCta } from '@/components/involved-page'
 
 export const metadata = {
   title: 'For contributors — SPLAT Connect',
   description: 'Adapt a toy, write it up, and get an organisation behind it.',
 }
 
-export default function ContributorsPage() {
+export default async function ContributorsPage() {
+  const signed = !!(await getCapabilities())
   return (
-    <div className="max-w-3xl">
-      <EditorialImage illustration="maker" ratio="2/1" />
-      <h1 className="mt-6 title-article">For contributors</h1>
-      <p className="mt-3 max-w-prose text-base leading-relaxed text-muted">
-        A guide you write once gets built many times, by families who would never have
-        worked it out alone.
-      </p>
-
-      <StepList
+    <div className="max-w-[860px]">
+      <InvolvedIntro
+        title="For contributors"
+        lead="Adapt a toy, write it up, and get an organisation behind it. One guide helps every family who owns that toy."
+      />
+      <NumberedSteps
         steps={[
-          {
-            title: 'Create an account',
-            body: 'Free, and takes a minute. You will be asked to accept the contributor terms, which cover licensing and the standard your work is held to.',
-          },
-          {
-            title: 'Adapt a toy',
-            body: 'Pick something with a removable AA, AAA, C or D cell and a single momentary action. Check the Guides library first — if it is already covered, pick something else, or improve the existing guide as a collaborator.',
-          },
-          {
-            title: 'Write it up as you go',
-            body: 'Photograph each step while your hands are dirty, not afterwards from memory. A guide needs a parts list with buy links, the steps in order, and any trap you hit. If you printed something, attach the STL.',
-          },
-          {
-            title: 'Ask an organisation to back it',
-            body: 'Before submitting, you can ask an organisation — a therapy service, a school, a disability service — to review it. Their name on your guide tells a parent that someone competent read it. Browse the directory to find one.',
-          },
-          {
-            title: 'Submit for review',
-            body: 'A SPLAT admin checks it, mostly for safety and completeness. Expect questions. Once approved it is public, credited to you, and it appears on your contributor profile.',
-          },
-          {
-            title: 'Keep going',
-            body: 'Offer a toy you have adapted through the Toy Library, collaborate on someone else’s guide, or volunteer your 3D printer when print requests open.',
-          },
+          ['Adapt something, photographing as you go', 'This is the part people get wrong: nobody can reconstruct the photos afterwards. One photo per action, toy the right way up.'],
+          ['Create an account and accept the contributor terms', 'One screen. It covers who owns your work (you do) and what you may not claim.'],
+          ['Write the guide in the editor', 'Steps, parts, tools, safety notes and files, each its own section. Save as often as you like; nothing is public until you submit.'],
+          ['Ask an organisation to back it', 'Optional but worth it. A parent trusts a guide more when a therapy service has read it. Pick one when you submit.'],
+          ['Answer the review', 'A reviewer will name anything missing. Fix it, resubmit, and it goes public.'],
         ]}
       />
-
-      <div className="mt-10 flex flex-wrap gap-3">
-        <Link href="/signup" className="btn btn-primary">
-          Create an account
+      <TrackCta
+        title={signed ? 'Write your first guide' : 'Create an account to start writing'}
+        body="The editor holds a draft indefinitely. Start with the toy on your bench right now."
+      >
+        <Link href={signed ? '/upload' : '/signup'} className="btn btn-primary px-[26px]">
+          {signed ? 'Start a guide' : 'Create an account'}
         </Link>
-        <Link href="/get-involved/submit-a-tutorial" className="btn btn-soft">
-          What writing a guide involves
-        </Link>
-      </div>
-
-      <p className="mt-6 text-sm text-muted">
-        Not sure you have the skills? You almost certainly do —{' '}
-        <Link href="/learn" className="font-semibold text-brand-dark hover:underline">
-          Learn
-        </Link>{' '}
-        covers everything from which switch to use to how to solder a joint that lasts.
-      </p>
+      </TrackCta>
     </div>
   )
 }

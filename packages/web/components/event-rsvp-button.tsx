@@ -27,6 +27,7 @@ export function EventRsvpButton({
   needsForm,
   name,
   email,
+  size = 'md',
 }: {
   eventId: string
   going: boolean
@@ -35,7 +36,10 @@ export function EventRsvpButton({
   /** The account's own name and email, used for the no-questions fast path. */
   name?: string
   email?: string
+  /** 'md' is the list row's 44px; 'lg' the detail page's 52px, as the board sizes them. */
+  size?: 'md' | 'lg'
 }) {
+  const sz = size === 'lg' ? 'min-h-[52px] px-6' : 'min-h-11 px-[18px] text-sm'
   const router = useRouter()
   const [isGoing, setIsGoing] = useState(going)
   const [error, setError] = useState<string | null>(null)
@@ -66,8 +70,8 @@ export function EventRsvpButton({
 
   if (!signedIn) {
     return (
-      <a href={`/login?next=${next}`} className="btn btn-primary btn-sm">
-        <CalendarCheck className="h-4 w-4" aria-hidden="true" />
+      <a href={`/login?next=${next}`} className={`btn btn-primary ${sz}`}>
+        <CalendarCheck weight="bold" aria-hidden="true" />
         I&apos;m going
       </a>
     )
@@ -75,8 +79,8 @@ export function EventRsvpButton({
 
   if (needsForm && !isGoing) {
     return (
-      <a href={`/get-involved/events/${eventId}/register`} className="btn btn-primary btn-sm">
-        <CalendarCheck className="h-4 w-4" aria-hidden="true" />
+      <a href={`/get-involved/events/${eventId}/register`} className={`btn btn-primary ${sz}`}>
+        <CalendarCheck weight="bold" aria-hidden="true" />
         I&apos;m going
       </a>
     )
@@ -91,12 +95,12 @@ export function EventRsvpButton({
         // aria-pressed, not a label that only changes colour: "I'm going" and
         // "You're going" are one word apart read aloud.
         aria-pressed={isGoing}
-        className={`btn btn-sm ${isGoing ? 'btn-soft' : 'btn-primary'}`}
+        className={`btn ${sz} ${isGoing ? 'btn-soft' : 'btn-primary'}`}
       >
         {isGoing ? (
-          <Check className="h-4 w-4" aria-hidden="true" />
+          <Check weight="bold" aria-hidden="true" />
         ) : (
-          <CalendarCheck className="h-4 w-4" aria-hidden="true" />
+          <CalendarCheck weight="bold" aria-hidden="true" />
         )}
         {isGoing ? "You're going" : "I'm going"}
       </button>

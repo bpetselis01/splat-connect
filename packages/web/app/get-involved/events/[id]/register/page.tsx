@@ -14,7 +14,8 @@
  * - packages/api/src/routes/events.ts: where the answers go
  */
 import { notFound, redirect } from 'next/navigation'
-import { CalendarDots, Clock, MapPin } from '@phosphor-icons/react/dist/ssr'
+import { Clock, MapPin, VideoCamera } from '@phosphor-icons/react/dist/ssr'
+import { KIND_TINT } from '@/components/event-card'
 import { apiClient } from '@/lib/api-client'
 import { getCapabilities } from '@/lib/capabilities'
 import { EventRegisterForm } from '@/components/event-register-form'
@@ -50,40 +51,43 @@ export default async function EventRegisterPage({ params }: { params: Promise<{ 
     event.format === 'online' ? 'Online' : [event.suburb, event.state].filter(Boolean).join(', ')
 
   return (
-    <div className="mx-auto max-w-2xl">
-      <h1 className="title-article">Register for this event</h1>
-      <p className="mt-2 text-sm leading-relaxed text-muted">
+    <div className="max-w-[760px]">
+      <h1 className="font-display text-[clamp(30px,3.4vw,42px)] font-extrabold leading-[1.08] tracking-[-.02em] text-ink">
+        Register for this event
+      </h1>
+      <p className="mt-2.5 max-w-[60ch] text-[17px] text-muted [text-wrap:pretty]">
         {orgName} asks a few things so the day is set up for the people in the room.
       </p>
 
       {/* The event restated, so nobody fills in a form for the wrong Sunday. */}
-      <div className="card mt-5 flex items-center gap-4 p-4">
+      <div className="mt-[22px] flex flex-wrap items-center gap-4 rounded-[18px] border border-line bg-[var(--surface)] px-[18px] py-4 shadow-[var(--e1)]">
         <span
           aria-hidden="true"
-          className="flex h-[60px] w-[60px] shrink-0 flex-col items-center justify-center rounded-card bg-brand-tint text-brand-deep"
+          className="grid w-[54px] shrink-0 place-items-center rounded-[18px] py-2 text-[var(--tink)]"
+          style={{ background: KIND_TINT[event.kind] }}
         >
-          <span className="eyebrow leading-none">{badge.weekday}</span>
-          <span className="font-display text-xl font-extrabold leading-tight">{badge.day}</span>
-          <span className="eyebrow leading-none">{badge.month}</span>
+          <span className="text-[10px] font-extrabold uppercase tracking-[.08em]">{badge.weekday}</span>
+          <span className="font-display text-2xl font-extrabold leading-none">{badge.day}</span>
+          <span className="text-[10px] font-extrabold uppercase">{badge.month}</span>
         </span>
-        <div className="min-w-0">
-          <p className="font-bold text-ink">{event.title}</p>
-          <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-sm text-muted">
-            <span className="inline-flex items-center gap-1">
-              <Clock className="h-3.5 w-3.5" aria-hidden="true" />
-              {formatTimeRange(event.starts_at, event.ends_at, event.format)}
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <MapPin className="h-3.5 w-3.5" aria-hidden="true" />
-              {where}
-            </span>
-          </p>
-          <p className="mt-0.5 text-xs text-muted">
-            <CalendarDots className="mr-1 inline h-3.5 w-3.5" aria-hidden="true" />
+        <span className="min-w-[220px] flex-1">
+          <span className="block font-display text-[19px] font-extrabold leading-[1.2]">{event.title}</span>
+          <span className="mt-1 flex flex-wrap items-center gap-1 text-sm font-semibold text-muted">
+            <Clock weight="bold" aria-hidden="true" />
+            {formatTimeRange(event.starts_at, event.ends_at, event.format)}
+            <span aria-hidden="true">·</span>
+            {event.format === 'online' ? (
+              <VideoCamera weight="bold" aria-hidden="true" />
+            ) : (
+              <MapPin weight="bold" aria-hidden="true" />
+            )}
+            {where}
+          </span>
+          <span className="mt-0.5 block text-sm text-muted">
             Hosted by {orgName} · {event.going_count} going
             {event.seats_left !== null && ` · ${event.seats_left} seats left`}
-          </p>
-        </div>
+          </span>
+        </span>
       </div>
 
       <EventRegisterForm

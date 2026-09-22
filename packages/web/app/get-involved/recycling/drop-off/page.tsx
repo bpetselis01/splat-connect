@@ -35,9 +35,11 @@ export default async function BookDropoffPage({
   const takers = all.filter((o) => (o.recycling_materials ?? []).length > 0)
 
   return (
-    <div className="mx-auto max-w-3xl">
-      <h1 className="title-article">Book a drop-off</h1>
-      <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted">
+    <div className="max-w-[760px]">
+      <h1 className="font-display text-[clamp(30px,3.4vw,42px)] font-extrabold leading-[1.08] tracking-[-.02em] text-ink">
+        Book a drop-off
+      </h1>
+      <p className="mt-2.5 max-w-[60ch] text-[17px] text-muted [text-wrap:pretty]">
         One contaminated bag can ruin a whole extruder run, so the declaration is the real work
         here. The weight you give is a heads-up — they weigh it again at the door, and that is
         the number that becomes credit.
