@@ -46,24 +46,27 @@ export function ChildEverydayNeedsForm({
       <p className="text-sm leading-relaxed text-muted">
         What&apos;s tricky day-to-day, and where your child plays with toys most.
       </p>
-      <div>
-        <span className="field-label">Challenges</span>
-        <div className="flex flex-col gap-1">
+      {/* The board draws every multi-choice on this page as a row of pill
+          toggles that wraps, not a column of native checkboxes — the same
+          control the ability questions next door already use. */}
+      <fieldset>
+        <legend className="field-label">Challenges</legend>
+        <div className="flex flex-wrap gap-2">
           {CHALLENGES.map((c) => (
-            <label key={c} htmlFor={`challenge-${c}`} className="flex items-center gap-2">
-              <input
-                id={`challenge-${c}`}
-                type="checkbox"
-                checked={form.challenges.includes(c)}
-                onChange={() => toggleChallenge(c)}
-              />
+            <button
+              key={c}
+              type="button"
+              aria-pressed={form.challenges.includes(c)}
+              onClick={() => toggleChallenge(c)}
+              className="chip"
+            >
               {c}
-            </label>
+            </button>
           ))}
         </div>
-      </div>
+      </fieldset>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label htmlFor="challenge_other" className="field-label">Other challenges</label>
           <input
@@ -71,7 +74,7 @@ export function ChildEverydayNeedsForm({
             type="text"
             value={form.challenge_other ?? ''}
             onChange={(e) => set('challenge_other', e.target.value || null)}
-            className="field"
+            className="field min-h-[50px] bg-canvas"
           />
         </div>
 
@@ -82,7 +85,7 @@ export function ChildEverydayNeedsForm({
             type="text"
             value={form.grip_type ?? ''}
             onChange={(e) => set('grip_type', e.target.value || null)}
-            className="field"
+            className="field min-h-[50px] bg-canvas"
           />
         </div>
       </div>
@@ -94,7 +97,7 @@ export function ChildEverydayNeedsForm({
           type="text"
           value={form.env_context ?? ''}
           onChange={(e) => set('env_context', e.target.value || null)}
-          className="field"
+          className="field min-h-[50px] bg-canvas"
         />
       </div>
 
@@ -103,7 +106,7 @@ export function ChildEverydayNeedsForm({
           {busy ? 'Saving…' : 'Save'}
         </button>
         {error && <p role="alert" className="alert alert-danger">{error}</p>}
-        {saved && <p className="text-sm font-semibold text-mint-deep">Saved</p>}
+        {saved && <p className="text-sm font-semibold text-ink">Saved</p>}
       </PanelActions>
     </form>
   )

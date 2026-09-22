@@ -43,6 +43,8 @@ function waitingCounts(
   for (const tx of transactions) {
     if (tx.status !== 'requested') continue
     if (!isOwnerSide(tx, viewerId, ledOrgIds)) continue
+    // A build has no toy row (057), so it has no card here to badge.
+    if (!tx.toy_id) continue
     counts.set(tx.toy_id, (counts.get(tx.toy_id) ?? 0) + 1)
   }
   return counts
@@ -340,11 +342,11 @@ const styles = StyleSheet.create({
   goneDate: { fontFamily: theme.fonts.regular, fontSize: 11, color: theme.colors.muted, marginTop: 2 },
   rowWrap: { marginBottom: theme.spacing(3) },
   card: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3), padding: theme.spacing(3) },
-  thumbnail: { width: 56, height: 56, borderRadius: theme.radii.sm, backgroundColor: theme.colors.surfaceSunken },
+  thumbnail: { width: 56, height: 56, borderRadius: theme.radii.field, backgroundColor: theme.colors.surfaceSunken },
   thumbnailPlaceholder: {
     width: 56,
     height: 56,
-    borderRadius: theme.radii.sm,
+    borderRadius: theme.radii.field,
     backgroundColor: theme.colors.accentLight,
     alignItems: 'center',
     justifyContent: 'center',
@@ -359,8 +361,8 @@ const styles = StyleSheet.create({
     height: 28,
     paddingHorizontal: theme.spacing(2),
     borderRadius: theme.radii.pill,
-    borderWidth: theme.border.thin,
-    borderColor: theme.colors.ink,
+    borderWidth: theme.border.hairline,
+    borderColor: theme.colors.border,
     backgroundColor: theme.colors.apricot,
     alignItems: 'center',
     justifyContent: 'center',

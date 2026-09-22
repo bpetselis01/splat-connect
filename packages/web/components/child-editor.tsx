@@ -11,14 +11,12 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import type { Route } from 'next'
 import type { ChildProfile } from '@splat-connect/types'
-import { Stepper } from '@/components/stepper'
 import { ChildSurveyForm } from '@/components/child-survey-form'
 import { ChildAbilityForm } from '@/components/child-ability-form'
 import { ChildEverydayNeedsForm } from '@/components/child-everyday-needs-form'
 import { ChildCustomizationForm } from '@/components/child-customization-form'
 import { DeleteEntityButton } from '@/components/delete-entity-button'
 import { browserApiClient } from '@/lib/browser-api-client'
-import { computeChildStepStatuses } from '@/lib/child-steps'
 import { NotMedicalNote } from '@/components/not-medical-note'
 
 export function ChildEditor({ child: initialChild, label }: { child: ChildProfile | null; label?: string }) {
@@ -36,75 +34,59 @@ export function ChildEditor({ child: initialChild, label }: { child: ChildProfil
     }
   }
 
-  const statuses = computeChildStepStatuses(child)
-  const heading = child?.name?.trim() || label || 'Add child'
+  const heading = child?.name?.trim() || label || 'Add a child'
+
+  // The board draws this as one page of stacked cards, not a stepper: a child
+  // profile is never submitted, so there is no order to walk and nothing to
+  // gate. Each card keeps its own save — the section forms are shared with the
+  // onboarding wizard, and the survey only saves once every question is
+  // answered, so one page-level save would have to know both rules.
+  const sections: { id: string; title: string; body: React.ReactNode }[] = [
+    { id: 'basics', title: 'Basics', body: <ChildAbilityForm profile={child} onSave={saveStep} /> },
+    { id: 'ability', title: 'Ability profile', body: <ChildSurveyForm profile={child} onSave={saveStep} /> },
+    { id: 'everyday-needs', title: 'Everyday needs', body: <ChildEverydayNeedsForm profile={child} onSave={saveStep} /> },
+    { id: 'customization', title: 'Customization', body: <ChildCustomizationForm profile={child} onSave={saveStep} /> },
+  ]
 
   return (
-    <div>
-      <h1 className="mb-2 text-2xl font-bold text-ink">{heading}</h1>
-      <div className="mb-6 flex flex-col gap-1">
+    <section className="max-w-[760px]">
+      <p className="eyebrow text-muted">Private to you</p>
+      <h1 className="title-hub mt-2">{heading}</h1>
+      <p className="mt-2.5 max-w-[56ch] text-base leading-relaxed text-muted">
+        Every field is optional. We use this only to suggest guides that suit your
+        child — it is never shown to another person, contributor or organisation.
+      </p>
+      <div className="mt-3 flex flex-col gap-1">
         <p className="text-xs leading-relaxed text-muted">
-          What you enter here is used only to suggest guides and devices for your
-          child, and is visible only to your account — see the{' '}
-          <Link href="/privacy" className="underline">privacy policy</Link>.
+          See the <Link href="/privacy" className="underline">privacy policy</Link>.
         </p>
         <NotMedicalNote />
       </div>
-      <Stepper
-        label="Child profile sections"
-        steps={[
-          {
-            id: 'survey',
-            label: 'Survey',
-            status: statuses.survey,
-            content: (
-              <div className="panel pt-5">
-                <ChildSurveyForm profile={child} onSave={saveStep} />
-              </div>
-            ),
-          },
-          {
-            id: 'ability',
-            label: 'Ability',
-            status: statuses.ability,
-            content: (
-              <div className="panel pt-5">
-                <ChildAbilityForm profile={child} onSave={saveStep} />
-              </div>
-            ),
-          },
-          {
-            id: 'everyday-needs',
-            label: 'Everyday needs',
-            status: statuses['everyday-needs'],
-            content: (
-              <div className="panel pt-5">
-                <ChildEverydayNeedsForm profile={child} onSave={saveStep} />
-              </div>
-            ),
-          },
-          {
-            id: 'customization',
-            label: 'Customization',
-            status: statuses.customization,
-            content: (
-              <div className="panel pt-5">
-                <ChildCustomizationForm profile={child} onSave={saveStep} />
-              </div>
-            ),
-          },
-        ]}
-        trailing={
-          child && (
-            <DeleteEntityButton
-              endpoint={`/api/child-profiles/${child.id}`}
-              redirectTo={'/dashboard/profile' as Route<string>}
-              label={heading}
-              className="step-pill step-pill-danger"
-            />
-          )
-        }
-      />
-    </div>
+
+      <div className="mt-[26px] flex flex-col gap-4">
+        {sections.map((s) => (
+          <section
+            key={s.id}
+            aria-labelledby={`child-${s.id}`}
+            className="rounded-card border border-line bg-surface px-1.5 pb-1.5 pt-[26px] shadow-e2"
+          >
+            <h2 id={`child-${s.id}`} className="mb-3 px-5 text-xl font-extrabold text-ink">
+              {s.title}
+            </h2>
+            {s.body}
+          </section>
+        ))}
+      </div>
+
+      {child && (
+        <div className="mt-6">
+          <DeleteEntityButton
+            endpoint={`/api/child-profiles/${child.id}`}
+            redirectTo={'/dashboard/profile' as Route<string>}
+            label={heading}
+          />
+        </div>
+      )}
+    </section>
   )
 }

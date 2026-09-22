@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 
 const get = vi.fn()
 vi.mock('@/lib/api-client', () => ({
@@ -22,7 +22,7 @@ const theOrg = {
 
 const tutorial = (status: string) => ({
   id: 't1', title: 'Spoon holder', description: 'A spoon holder', difficulty: 'easy', kind: 'assistive_tech',
-  status, tutorial_pdf_url: null, toy_photo_url: null, rejection_note: null,
+  status, tutorial_pdf_url: null, photo_urls: [], toy_photo_url: null, rejection_note: null,
   created_at: '', reviewed_at: null, reviewed_by: null, reviewed_for_org_id: null,
   reviewer: status === 'approved' ? { name: 'Sam' } : null,
   reviewed_for: status === 'approved' ? { name: 'Riverside' } : null,
@@ -84,7 +84,7 @@ describe('leader project page', () => {
     render(await Page({ params: params() }))
 
     expect(screen.queryByRole('button', { name: /Approve|Reject|Back|Decline/i })).not.toBeInTheDocument()
-    expect(screen.getByText(/approved by Sam/i)).toBeInTheDocument()
+    expect(screen.getByText(/reviewed by Sam for Riverside/i)).toBeInTheDocument()
     expect(screen.getByText(/Only SPLAT can take it down/i)).toBeInTheDocument()
   })
 
@@ -102,10 +102,11 @@ describe('leader project page', () => {
     get.mockImplementation(route({ leads: true, tutorialStatus: 'pending', backing: 'pending' }))
     const { default: Page } = await import('@/app/organizations/[id]/projects/[tutorialId]/page')
     render(await Page({ params: params() }))
-    expect(screen.getByRole('heading', { name: 'Parts needed' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /Parts & tools/ })).toBeInTheDocument()
     expect(screen.getByText('M3 bolt')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Tools needed' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: "Tools you'll need" })).toBeInTheDocument()
     expect(screen.getByText('Hex key')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('tab', { name: /Files & print settings/ }))
     expect(screen.getByRole('link', { name: /mount\.stl/ })).toBeInTheDocument()
   })
 })

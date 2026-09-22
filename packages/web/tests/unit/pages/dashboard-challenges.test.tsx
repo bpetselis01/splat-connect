@@ -59,51 +59,61 @@ function mockLists({ mine = [], joined = [] }: { mine?: ToyIdea[] | Error; joine
 describe('DashboardChallengesPage', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('falls back to the empty state in both sections with nothing submitted or joined', async () => {
+  it('shows the board\'s one empty state with both ways in when nothing is submitted or joined', async () => {
     mockLists({})
     render(await DashboardChallengesPage())
-    expect(screen.getByText(/haven.t submitted an idea yet/i)).toBeInTheDocument()
-    expect(screen.getByText(/haven.t joined a challenge yet/i)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /browse design challenges/i })).toHaveAttribute(
+    expect(screen.getByText('Nothing here yet.')).toBeInTheDocument()
+    expect(screen.getAllByRole('link', { name: /browse design challenges/i })[0]).toHaveAttribute(
       'href',
       '/get-involved/design-challenges'
     )
+    expect(screen.queryByRole('group', { name: /filter challenges/i })).not.toBeInTheDocument()
   })
 
-  it('shows an honest error on "Your ideas" without touching the joined section', async () => {
-    mockLists({ mine: new Error('API GET /api/ideas/mine failed with status 500') })
+  it('shows an honest error for your ideas and still lists what you joined', async () => {
+    mockLists({
+      mine: new Error('API GET /api/ideas/mine failed with status 500'),
+      joined: [idea({ id: 'idea-2', title: 'One-handed jar opener', status: 'challenge' })],
+    })
     render(await DashboardChallengesPage())
     expect(screen.getByText(/could not load your ideas/i)).toBeInTheDocument()
-    expect(screen.queryByText(/haven.t submitted an idea yet/i)).not.toBeInTheDocument()
-    expect(screen.getByText(/haven.t joined a challenge yet/i)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /one-handed jar opener/i })).toBeInTheDocument()
+    // A failed list is not an empty one: no "Nothing here yet."
+    expect(screen.queryByText('Nothing here yet.')).not.toBeInTheDocument()
   })
 
-  it('shows an honest error on "Challenges you joined" without touching the ideas section', async () => {
-    mockLists({ joined: new Error('API GET /api/ideas/joined failed with status 500') })
+  it('shows an honest error for joined challenges and still lists your ideas', async () => {
+    mockLists({ joined: new Error('API GET /api/ideas/joined failed with status 500'), mine: [idea()] })
     render(await DashboardChallengesPage())
     expect(screen.getByText(/could not load your joined challenges/i)).toBeInTheDocument()
-    expect(screen.queryByText(/haven.t joined a challenge yet/i)).not.toBeInTheDocument()
-    expect(screen.getByText(/haven.t submitted an idea yet/i)).toBeInTheDocument()
+    expect(screen.getByText('Big-button remote')).toBeInTheDocument()
+  })
+
+  it('shows one error when both lists fail', async () => {
+    mockLists({ mine: new Error('500'), joined: new Error('500') })
+    render(await DashboardChallengesPage())
+    expect(screen.getByText(/could not load your challenges/i)).toBeInTheDocument()
+    expect(screen.queryByText('Nothing here yet.')).not.toBeInTheDocument()
   })
 
   it('shows the review note on a rejected idea of your own', async () => {
     mockLists({ mine: [idea({ status: 'rejected', review_note: 'Too similar to an existing guide.' })] })
     render(await DashboardChallengesPage())
     expect(screen.getByText('Too similar to an existing guide.')).toBeInTheDocument()
-    expect(screen.getByText('Not taken forward')).toBeInTheDocument()
+    expect(screen.getAllByText('Declined').length).toBeGreaterThan(0)
   })
 
   it('says nothing extra when a rejected idea carries no review note', async () => {
     mockLists({ mine: [idea({ status: 'rejected', review_note: null })] })
-    const { container } = render(await DashboardChallengesPage())
-    expect(container.querySelector('.border-t')).not.toBeInTheDocument()
+    render(await DashboardChallengesPage())
+    expect(screen.queryByText(/why it was not taken forward/i)).not.toBeInTheDocument()
   })
 
   it('does not link your own pending idea out to its public page', async () => {
     mockLists({ mine: [idea({ status: 'pending' })] })
     render(await DashboardChallengesPage())
     expect(screen.queryByRole('link', { name: /big-button remote/i })).not.toBeInTheDocument()
-    expect(screen.getByText('Pending review')).toBeInTheDocument()
+    expect(screen.getByText(/an admin reads every idea/i)).toBeInTheDocument()
   })
 
   it('does not link your own rejected idea out to its public page', async () => {
@@ -117,15 +127,14 @@ describe('DashboardChallengesPage', () => {
     render(await DashboardChallengesPage())
     const link = screen.getByRole('link', { name: /big-button remote/i })
     expect(link).toHaveAttribute('href', '/get-involved/design-challenges/idea-1')
-    expect(screen.getByText('Looking for makers')).toBeInTheDocument()
+    expect(link).toHaveTextContent('View the brief')
   })
 
-  it('links your own graduated idea out to its public page, badged as being written up rather than published', async () => {
+  it('links your own graduated idea out to its public page', async () => {
     mockLists({ mine: [idea({ status: 'graduated' })] })
     render(await DashboardChallengesPage())
     const link = screen.getByRole('link', { name: /big-button remote/i })
     expect(link).toHaveAttribute('href', '/get-involved/design-challenges/idea-1')
-    expect(screen.getByText('Being written up')).toBeInTheDocument()
   })
 
   it('lists a joined challenge, always linked to its public page', async () => {
@@ -133,7 +142,20 @@ describe('DashboardChallengesPage', () => {
     render(await DashboardChallengesPage())
     const link = screen.getByRole('link', { name: /one-handed jar opener/i })
     expect(link).toHaveAttribute('href', '/get-involved/design-challenges/idea-2')
-    expect(screen.getByText('Looking for makers')).toBeInTheDocument()
+    expect(link).toHaveTextContent('Open the thread')
+  })
+
+  it('filters by ?stage and counts each option', async () => {
+    mockLists({
+      mine: [idea({ id: 'a', status: 'pending' }), idea({ id: 'b', title: 'Kazoo', status: 'rejected' })],
+      joined: [idea({ id: 'c', title: 'Jar opener', status: 'challenge' })],
+    })
+    const { unmount } = render(await DashboardChallengesPage())
+    expect(screen.getByRole('link', { name: /mine 2/i })).toHaveAttribute('href', '/dashboard/challenges?stage=mine')
+    unmount()
+    render(await DashboardChallengesPage({ searchParams: Promise.resolve({ stage: 'declined' }) }))
+    expect(screen.getByText('Kazoo')).toBeInTheDocument()
+    expect(screen.queryByText('Jar opener')).not.toBeInTheDocument()
   })
 
   /*
@@ -145,7 +167,7 @@ describe('DashboardChallengesPage', () => {
   it('offers the idea form even when ideas already exist', async () => {
     mockLists({ mine: [idea({ status: 'pending' })] })
     render(await DashboardChallengesPage())
-    expect(screen.getByRole('link', { name: /submit an idea/i })).toHaveAttribute(
+    expect(screen.getAllByRole('link', { name: /submit an idea/i })[0]).toHaveAttribute(
       'href',
       '/get-involved/submit-an-idea'
     )

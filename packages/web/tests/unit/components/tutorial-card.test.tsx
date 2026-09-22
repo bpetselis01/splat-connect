@@ -34,9 +34,11 @@ const mockTutorial: Tutorial = {
   status: 'approved',
     maturity: 'complete',
     safety_declared_at: null,
+    build_minutes: 30,
   description: 'A helpful tutorial',
   tutorial_pdf_url: 'https://example.com/tutorial.pdf',
-  toy_photo_url: 'https://example.com/photo.jpg',
+  photo_urls: ['https://test.supabase.co/storage/v1/object/public/photos/photo.jpg'],
+  toy_photo_url: 'https://test.supabase.co/storage/v1/object/public/photos/photo.jpg',
   rejection_note: null,
   created_at: '2026-01-01T00:00:00Z',
   updated_at: '2026-01-01T00:00:00Z',
@@ -90,13 +92,20 @@ describe('TutorialCard', () => {
     expect(screen.getByText('A helpful tutorial')).toBeInTheDocument()
   })
 
-  // Tests: when toy_photo_url is null, a fallback emoji is shown instead of an image
-  // How:   renders with toy_photo_url: null; checks the fallback emoji character is present
+  // Tests: when toy_photo_url is null, the card's own glyph fills the media band
+  // How:   renders with toy_photo_url: null; checks an inline svg is present and no <img>
   // Chain: cards without an uploaded photo still render correctly in the library →
   //        no broken-image icons appear for tutorials that skipped the photo step
-  it('renders fallback emoji when toy_photo_url is null', () => {
-    render(<TutorialCard tutorial={{ ...mockTutorial, toy_photo_url: null }} />)
-    expect(screen.getByText('🧸')).toBeInTheDocument()
+  //
+  // Was the 🧸 emoji. ContentCard fills an empty media band with the card's icon
+  // at 48px in --b700; an emoji renders in the reader's system font and carries
+  // none of the palette.
+  it('renders the card glyph when toy_photo_url is null', () => {
+    const { container } = render(
+      <TutorialCard tutorial={{ ...mockTutorial, toy_photo_url: null }} />
+    )
+    expect(container.querySelector('img')).toBeNull()
+    expect(container.querySelector('svg')).not.toBeNull()
   })
 
   // Tests: the card names its backers to someone browsing
@@ -121,7 +130,10 @@ describe('TutorialCard', () => {
         }}
       />
     )
-    expect(screen.getByText('Backed by Riverside Therapy')).toBeInTheDocument()
+    // The board's pill reads "Backed"; the name rides in its title and in
+    // screen-reader text, so it is still what a parent is told.
+    const pill = screen.getByTitle('Backed by Riverside Therapy')
+    expect(pill).toHaveTextContent('Backed by Riverside Therapy')
   })
 
   // Tests: an unbacked card says nothing about review at all
@@ -132,6 +144,28 @@ describe('TutorialCard', () => {
   it('says nothing about backing when there is none', () => {
     render(<TutorialCard tutorial={{ ...mockTutorial, tutorial_orgs: [] }} />)
     expect(screen.queryByText(/Reviewed by SPLAT/)).not.toBeInTheDocument()
+  })
+
+  // 066 + the mockup Byron picked (option C): printing is a chip, not a suffix
+  // on the time, and it appears only when the guide has STL files.
+  it('marks a guide with STL files as Needs printing, and only that guide', () => {
+    const { rerender } = render(<TutorialCard tutorial={{ ...mockTutorial, has_stl: true }} />)
+    expect(screen.getByText('Needs printing')).toBeInTheDocument()
+    rerender(<TutorialCard tutorial={{ ...mockTutorial, has_stl: false }} />)
+    expect(screen.queryByText('Needs printing')).not.toBeInTheDocument()
+  })
+
+  it('draws the build time and the thanks count in the footer, zero included', () => {
+    render(<TutorialCard tutorial={{ ...mockTutorial, build_minutes: 90, thanks_count: 0 }} />)
+    expect(screen.getByText('1.5 h')).toBeInTheDocument()
+    expect(screen.getByTitle('Times people said thanks for this guide')).toHaveTextContent('0 thanks')
+  })
+
+  // A recommendation's embedded target carries neither; the card must not
+  // invent "0" for a number it was never given.
+  it('draws no thanks count when the row does not carry one', () => {
+    render(<TutorialCard tutorial={mockTutorial} />)
+    expect(screen.queryByTitle('Times people said thanks for this guide')).not.toBeInTheDocument()
   })
 })
 

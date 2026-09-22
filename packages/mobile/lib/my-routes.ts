@@ -18,4 +18,4 @@ const ROUTES: Record<string, string> = {
   '/admin': '/admin',
 }
 
-export const myRoute = (href: string) => ROUTES[href] ?? '/my-splat'
+export const myRoute = (href: string) => ROUTES[href] ?? '/me'

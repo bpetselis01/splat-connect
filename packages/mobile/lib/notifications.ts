@@ -2,7 +2,7 @@
 // The copy and the routing behind the Inbox.
 //
 // COPY is ported VERBATIM from web's components/notifications-list.tsx — all
-// twenty of them. Two clients narrating the same event differently is how a
+// twenty-one of them. Two clients narrating the same event differently is how a
 // person ends up unsure whether they read about one thing or two, so the
 // wording is not "improved" here; change it on web first.
 //
@@ -21,6 +21,8 @@ export const COPY: Record<NotificationType, (n: Notification) => string> = {
   tutorial_submitted: (n) => `${n.actor_name} submitted "${n.tutorial_title}" for review`,
   tutorial_approved: (n) => `"${n.tutorial_title}" was approved and is now published`,
   tutorial_rejected: (n) => `"${n.tutorial_title}" was rejected`,
+  // Unnamed on purpose: who thanked a guide stays private (066).
+  tutorial_thanked: (n) => `A family said thanks for "${n.tutorial_title}"`,
   toy_request: (n) => `${n.actor_name} requested ${n.toy_name}`,
   toy_accepted: (n) => `${n.actor_name} accepted your request for ${n.toy_name}`,
   toy_rejected: (n) => `${n.actor_name} declined your request for ${n.toy_name}`,
@@ -49,6 +51,8 @@ export function linkFor(n: Notification): string {
   // here. Mobile has no admin review screen at all, so both collapse to the
   // organisation hub, which lists everything waiting on them either way.
   if (n.type === 'backing_requested' || n.type === 'tutorial_submitted') return '/organisation'
+  // Web's thanks branch: the published guide, not the editor.
+  if (n.type === 'tutorial_thanked' && n.tutorial_id) return `/guides/${n.tutorial_id}`
   if (n.tutorial_id) return `/tutorials/${n.tutorial_id}`
   // A rejected idea has no public page — GET /api/public/challenges/:id filters
   // to challenge|graduated and 404s otherwise, whatever RLS would allow — so

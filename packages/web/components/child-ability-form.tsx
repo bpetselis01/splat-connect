@@ -60,7 +60,7 @@ export function ChildAbilityForm({
           type="text"
           value={form.name ?? ''}
           onChange={(e) => set('name', e.target.value === '' ? null : e.target.value)}
-          className="field"
+          className="field min-h-[50px] bg-canvas"
         />
       </div>
 
@@ -71,7 +71,7 @@ export function ChildAbilityForm({
           type="number"
           value={form.age ?? ''}
           onChange={(e) => set('age', e.target.value === '' ? null : Number(e.target.value))}
-          className="field"
+          className="field min-h-[50px] bg-canvas"
         />
       </div>
 
@@ -89,7 +89,7 @@ export function ChildAbilityForm({
             id="macs_level"
             value={form.macs_level ?? ''}
             onChange={(e) => setForm((prev) => ({ ...prev, macs_level: e.target.value || null, macs_source: 'manual' }))}
-            className="field"
+            className="field min-h-[50px] bg-canvas"
           >
             <option value="">Not set</option>
             {MACS_LEVELS.map((l) => (
@@ -104,7 +104,7 @@ export function ChildAbilityForm({
             id="bfmf_score"
             value={form.bfmf_score ?? ''}
             onChange={(e) => setForm((prev) => ({ ...prev, bfmf_score: e.target.value || null, bfmf_source: 'manual' }))}
-            className="field"
+            className="field min-h-[50px] bg-canvas"
           >
             <option value="">Not set</option>
             {BFMF_SCORES.map((s) => (
@@ -122,7 +122,7 @@ export function ChildAbilityForm({
             id="hand_involvement"
             value={form.hand_involvement ?? ''}
             onChange={(e) => set('hand_involvement', (e.target.value || null) as ChildProfile['hand_involvement'])}
-            className="field"
+            className="field min-h-[50px] bg-canvas"
           >
             <option value="">Not set</option>
             <option value="bilateral">Bilateral</option>
@@ -136,7 +136,7 @@ export function ChildAbilityForm({
             id="assist_hand"
             value={form.assist_hand ?? ''}
             onChange={(e) => set('assist_hand', (e.target.value || null) as ChildProfile['assist_hand'])}
-            className="field"
+            className="field min-h-[50px] bg-canvas"
           >
             <option value="">Not set</option>
             <option value="left">Left</option>
@@ -150,7 +150,7 @@ export function ChildAbilityForm({
           {busy ? 'Saving…' : 'Save'}
         </button>
         {error && <p role="alert" className="alert alert-danger">{error}</p>}
-        {saved && <p className="text-sm font-semibold text-mint-deep">Saved</p>}
+        {saved && <p className="text-sm font-semibold text-ink">Saved</p>}
       </PanelActions>
     </form>
   )

@@ -13,6 +13,7 @@
 
 import type { IllustrationKey } from '@/components/editorial-image'
 import type { Tone } from './tone'
+import type { IconName } from '@splat-connect/types'
 
 export type NavState = 'live' | 'soon'
 
@@ -41,6 +42,14 @@ export interface NavItem {
   blurb: string
   /** Unread items behind this card. Omit or 0 for no badge. */
   count?: number
+  /**
+   * The nav model's own icon name, carried through for HubGrid's `tile`
+   * variant. Optional because the public hubs draw artwork instead and have no
+   * icon to give.
+   */
+  icon?: IconName
+  /** The tile variant's icon-square colour, when a card has its own (My SPLAT). */
+  tint?: string
   /** Set on 'soon' items only — the allowlisted key POST /api/public/notify accepts. */
   featureKey?: string
 }
@@ -107,20 +116,21 @@ export const PUBLIC_NAV: NavSection[] = [
     children: [
       {
         href: '/printing/basics',
-        label: 'Printing basics',
+        label: 'Printing basics',        icon: 'printer',
         state: 'live',
         blurb: 'Filament, settings and finishing for printed switch parts.',
       },
       {
         href: '/printing/requests',
-        label: 'Request a print',
-        state: 'soon',
-        featureKey: 'printing',
-        blurb: 'Ask an association with a free printer to make a part for you.',
+        label: 'Request a print',        icon: 'orders',
+        // Live since 058: a print job is a toy transaction with a printer and a
+        // set of the guide's own STL files for a subject.
+        state: 'live',
+        blurb: 'Ask somebody with a free printer for the parts of a guide.',
       },
       {
         href: '/printing/parts',
-        label: 'Printable parts',
+        label: 'Printable parts',        icon: 'box',
         state: 'soon',
         featureKey: 'printing-parts',
         blurb: 'A catalogue of STL files, sized and tested for adaptation work.',
@@ -137,39 +147,41 @@ export const PUBLIC_NAV: NavSection[] = [
     children: [
       {
         href: '/learn/toy-adaptation-101',
-        label: 'Toy adaptation 101',
+        label: 'Toy adaptation 101',        icon: 'book',
         state: 'live',
         blurb: 'What a battery interrupter is, and why it is the whole trick.',
       },
       {
         href: '/learn/switch-types',
-        label: 'Switch types explained',
+        label: 'Switch types explained',        icon: 'switch',
         state: 'live',
         blurb: 'Buttons, levers, proximity and grasp — which suits which child.',
       },
       {
         href: '/learn/choosing-a-toy',
-        label: 'Choosing a toy to adapt',
+        label: 'Choosing a toy to adapt',        icon: 'toy',
         state: 'live',
         blurb: 'What makes a toy easy to adapt, and what makes it impossible.',
       },
       {
         href: '/learn/tools-and-materials',
-        label: 'Tools and materials',
+        label: 'Tools and materials',        icon: 'wrench',
         state: 'live',
         blurb: 'The shopping list, and what you can borrow instead of buying.',
       },
       {
         href: '/learn/safety-and-cleaning',
-        label: 'Safety and cleaning',
+        label: 'Safety and cleaning',        icon: 'shield',
         state: 'live',
         blurb: 'Batteries, small parts, and getting a toy ready to hand over.',
       },
       {
         href: '/learn/ask-an-expert',
-        label: 'Ask an expert',
-        state: 'soon',
-        featureKey: 'ask-an-expert',
+        label: 'Ask an expert',        icon: 'chat',
+        // Live since 2026-09-17. It is a routing page rather than a queue:
+        // there is no private expert queue on SPLAT on purpose, because an
+        // answer in the open helps the next family too.
+        state: 'live',
         blurb: 'Put a question to an occupational therapist or a maker.',
       },
     ],
@@ -184,46 +196,79 @@ export const PUBLIC_NAV: NavSection[] = [
     children: [
       {
         href: '/get-involved/families',
-        label: 'For families',
+        label: 'For families',        icon: 'heart',
         state: 'live',
         blurb: 'Find a guide, gather the parts, adapt the toy you already own.',
       },
       {
         href: '/get-involved/contributors',
-        label: 'For contributors',
+        label: 'For contributors',        icon: 'wrench',
         state: 'live',
         blurb: 'Adapt a toy, write it up, and get an organisation behind it.',
       },
       {
         href: '/get-involved/organisations',
-        label: 'For organisations',
+        label: 'For organisations',        icon: 'building',
         state: 'live',
         blurb: 'Back contributors, hold toys for local families, host a build day.',
       },
       {
+        href: '/get-involved/organisations/request',
+        label: 'Request an organisation',        icon: 'building',
+        // Live since 060. Leadership is granted by an admin and never
+        // self-started; this is where the conversation starts.
+        state: 'live',
+        blurb: 'Ask for your organisation to be set up, and an admin verifies it.',
+      },
+      {
         href: '/get-involved/submit-an-idea',
-        label: 'Submit an idea',
+        label: 'Submit an idea',        icon: 'lightbulb',
         state: 'live',
         blurb: 'Suggest a toy worth adapting, even if you cannot build it.',
       },
       {
         href: '/get-involved/submit-a-tutorial',
-        label: 'Submit a guide',
+        label: 'Submit a guide',        icon: 'file',
         state: 'live',
         blurb: 'What writing up an adaptation involves, start to finish.',
       },
       {
         href: '/get-involved/requests',
-        label: 'Adaptation requests',
-        state: 'soon',
-        featureKey: 'requests',
-        blurb: 'Ask for a toy to be adapted, and let a maker nearby claim it.',
+        label: 'Adaptation requests',        icon: 'inbox',
+        // Live since 057: a build request is an ordinary toy transaction with
+        // a guide for a subject, so the whole thread came with it.
+        state: 'live',
+        blurb: 'Ask a maker to build one of our guides for your child.',
       },
       {
         href: '/get-involved/design-challenges',
-        label: 'Design challenges',
+        label: 'Design challenges',        icon: 'clipboard',
         state: 'live',
         blurb: 'Problems nobody has solved yet, open to anyone.',
+      },
+      {
+        href: '/get-involved/makers-wanted',
+        label: 'Makers wanted',        icon: 'lifebuoy',
+        // Live since 064 made a build request with no maker on it legal — the
+        // shape SUPABASE.md filed when 057 could not express it.
+        state: 'live',
+        blurb: 'Open build requests, waiting for a maker nearby to claim one.',
+      },
+      {
+        href: '/get-involved/recycling',
+        label: 'Recycling',        icon: 'recycle',
+        // Live since 059 built the table and 063 versioned the declaration.
+        state: 'live',
+        blurb: 'Drop clean waste plastic at an organisation, and earn print credit.',
+      },
+      {
+        href: '/get-involved/events',
+        label: 'Events',        icon: 'calendar',
+        // Live since 061. Under Get Involved rather than Impact because an
+        // event is something you turn up to, not something already achieved —
+        // the artboard puts it here for the same reason.
+        state: 'live',
+        blurb: 'Build days, workshops and open afternoons, run by organisations.',
       },
     ],
   },
@@ -237,27 +282,18 @@ export const PUBLIC_NAV: NavSection[] = [
     children: [
       {
         href: '/organizations',
-        label: 'Organisations',
+        label: 'Organisations',        icon: 'building',
         state: 'live',
         blurb: 'The therapy centres, schools and services standing behind the work.',
       },
-      {
-        href: '/impact/news',
-        label: 'News and stories',
-        state: 'soon',
-        featureKey: 'news',
-        blurb: 'What families and makers have done with SPLAT.',
-      },
-      {
-        href: '/impact/events',
-        label: 'Events',
-        state: 'soon',
-        featureKey: 'events',
-        blurb: 'Build days, workshops and where to find us in person.',
-      },
+      // Stories and Events moved out of Impact on 2026-09-17, to About and Get
+      // Involved. The artboard puts them there, and the reason holds: Impact is
+      // what the community has MADE — counts, organisations, a map — and a
+      // story is an account of it, while an event is something you can turn up
+      // to. /impact/news and /impact/events redirect (app/impact/*/page.tsx).
       {
         href: '/impact/map',
-        label: 'Deliveries map',
+        label: 'Deliveries map',        icon: 'map',
         state: 'soon',
         featureKey: 'map',
         blurb: 'Where adapted toys have actually landed.',
@@ -273,29 +309,36 @@ export const PUBLIC_NAV: NavSection[] = [
     blurb: 'Who runs SPLAT, and how to reach us.',
     children: [
       {
+        href: '/about/stories',
+        label: 'Stories',        icon: 'book',
+        state: 'live',
+        blurb: 'What families, makers and organisations have actually done with SPLAT.',
+      },
+      {
         href: '/about/team',
-        label: 'Our team',
+        label: 'Our team',        icon: 'users',
         state: 'live',
         blurb: 'The people behind the platform.',
       },
       {
         href: '/contact',
-        label: 'Contact',
+        label: 'Contact',        icon: 'chat',
         state: 'live',
         blurb: 'Get in touch about a guide, a toy or a partnership.',
       },
       {
         href: '/about/partners',
-        label: 'Partners and supporters',
-        state: 'soon',
-        featureKey: 'partners',
+        label: 'Partners and supporters',        icon: 'handshake',
+        // Live: the delivery-partner half always was — it reads the
+        // organisations directory. The funder half is honestly empty.
+        state: 'live',
         blurb: 'The organisations and funders making this possible.',
       },
       {
         href: '/about/support',
-        label: 'Support SPLAT',
-        state: 'soon',
-        featureKey: 'support',
+        label: 'Support SPLAT',        icon: 'heart',
+        // Live. There was never anything here to wait for.
+        state: 'live',
         blurb: 'Ways to help beyond building a toy.',
       },
     ],
@@ -355,13 +398,13 @@ const ACCOUNT_PATTERNS = [
 
 /** Footer-only. Never in the top bar, never a section. */
 export const FOOTER_LEGAL: NavItem[] = [
-  { href: '/privacy', label: 'Privacy policy', state: 'live', blurb: 'What we collect and why.' },
-  { href: '/terms', label: 'Terms of use', state: 'live', blurb: 'The rules for using the site.' },
-  { href: '/safety', label: 'Safety', state: 'live', blurb: 'Batteries, small parts and supervision.' },
-  { href: '/code-of-conduct', label: 'Code of conduct', state: 'live', blurb: 'How we expect people to treat each other.' },
-  { href: '/legal/intended-purpose', label: 'What Connect is (and isn\u2019t)', state: 'live', blurb: 'Not a medical device, and why that matters.' },
-  { href: '/legal/contributor-terms', label: 'Contributor terms', state: 'live', blurb: 'For anyone submitting a guide.' },
-  { href: '/legal/org-leader-terms', label: 'Organisation leader terms', state: 'live', blurb: 'For anyone leading an organisation.' },
+  { href: '/privacy', label: 'Privacy policy', icon: 'shield', state: 'live', blurb: 'What we collect and why.' },
+  { href: '/terms', label: 'Terms of use', icon: 'scales', state: 'live', blurb: 'The rules for using the site.' },
+  { href: '/safety', label: 'Safety', icon: 'shield', state: 'live', blurb: 'Batteries, small parts and supervision.' },
+  { href: '/code-of-conduct', label: 'Code of conduct', icon: 'scales', state: 'live', blurb: 'How we expect people to treat each other.' },
+  { href: '/legal/intended-purpose', label: 'What Connect is (and isn\u2019t)', icon: 'scales', state: 'live', blurb: 'Not a medical device, and why that matters.' },
+  { href: '/legal/contributor-terms', label: 'Contributor terms', icon: 'scales', state: 'live', blurb: 'For anyone submitting a guide.' },
+  { href: '/legal/org-leader-terms', label: 'Organisation leader terms', icon: 'scales', state: 'live', blurb: 'For anyone leading an organisation.' },
 ]
 
 /** Every allowlisted notify key, derived so the list cannot drift from the nav. */
@@ -387,32 +430,17 @@ export function sectionFor(pathname: string): NavTarget | undefined {
 }
 
 /**
- * Whether this path renders the rail (components/rail.tsx) rather than the
- * header (components/nav.tsx).
+ * Whether navigating from `pathname` to `href` crosses the public/account
+ * boundary, which the root layout renders differently across, and therefore
+ * needs a full page load rather than a soft <Link> transition (see
+ * components/boundary-link.tsx and components/nav.tsx's NavLink for why).
  *
- * True for every account page except the account root itself: `/dashboard`
- * ("My SPLAT") is the one page that keeps the header instead — see
- * docs/superpowers/specs/2026-08-23-my-splat-front-door-design.md. Exported
- * for crossesAccountBoundary below and for app/layout.tsx's shell decision,
- * so the two never drift apart.
- */
-export function nestsRail(pathname: string): boolean {
-  return sectionFor(pathname) === ACCOUNT_NAV && pathname !== ACCOUNT_NAV.href
-}
-
-/**
- * Whether navigating from `pathname` to `href` crosses a boundary the root
- * layout renders differently across, and therefore needs a full page load
- * rather than a soft <Link> transition (see components/boundary-link.tsx and
- * components/nav.tsx's NavLink for why).
- *
- * Two boundaries, not one: crossing between the public site and the account
- * section (as before), or crossing between `/dashboard` and every other
- * account page — since 2026-08-23 those render different chrome (header vs.
- * rail) despite both being "the account section". A link from the My SPLAT
- * hub grid to any of its own cards, or the floating back-to-My-SPLAT dock in
- * the other direction, would otherwise go stale exactly like the original
- * account/public bug.
+ * One boundary, not two. Until 2026-09-17 `/dashboard` and the rest of the
+ * account section rendered different chrome (header vs. rail), so a move
+ * between them counted as a crossing too. The rail is gone — the artboard's
+ * own note on the hub is "replaces the old sidebar entirely" — so every
+ * account page now renders the same header as the public site and only the
+ * public/account crossing is left.
  *
  * `sectionFor` returns undefined for a pathname/href it cannot resolve to any
  * known section (e.g. /contributors/[id], /tutorials/[id] — real public pages,
@@ -420,9 +448,5 @@ export function nestsRail(pathname: string): boolean {
  * section" here, the same as any other public/unclassified page.
  */
 export function crossesAccountBoundary(pathname: string, href: string): boolean {
-  const fromAccount = sectionFor(pathname) === ACCOUNT_NAV
-  const toAccount = sectionFor(href) === ACCOUNT_NAV
-  if (fromAccount !== toAccount) return true
-  if (!fromAccount) return false
-  return nestsRail(pathname) !== nestsRail(href)
+  return (sectionFor(pathname) === ACCOUNT_NAV) !== (sectionFor(href) === ACCOUNT_NAV)
 }

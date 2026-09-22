@@ -7,6 +7,8 @@ import { Hono } from 'hono'
 import { chunk } from '../chunk.js'
 import { createAnonClient, createAdminClient } from '../supabase/client.js'
 import { atCapacityToyIds } from '../toy-access.js'
+import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
+import { contributorBadges, readMinutes } from '@splat-connect/types'
 import type {
   ImpactSummary,
   ImpactEntity,
@@ -25,7 +27,9 @@ publicRoutes.get('/tutorials', async (c) => {
     .from('tutorials')
     // Backing rides along with the list so a library card can name its backers.
     // The alternative is a request per card on the busiest page on the site.
-    .select('*, tutorial_orgs(status, organizations(id, name))')
+    // thanks_count and has_stl are 066's computed fields — a count and a flag,
+    // never the rows behind them.
+    .select('*, thanks_count, has_stl, tutorial_orgs(status, organizations(id, name))')
     .eq('status', 'approved')
     // The default public listing carries only finished designs; anything less
     // mature stays reachable by direct link, wearing its maturity badge.
@@ -50,6 +54,33 @@ publicRoutes.get('/tutorials', async (c) => {
   )
 })
 
+/**
+ * The library hero's three numbers, over exactly what the public list shows
+ * (approved + complete) — so they never disagree with the grid beneath them.
+ *
+ * Admin client for the two joins: tutorial_contributors and tutorial_orgs are
+ * not anon-readable, and only counts leave this handler. Registered before
+ * /tutorials/:id, or "stats" would be taken for an id.
+ */
+publicRoutes.get('/tutorials/stats', async (c) => {
+  const admin = createAdminClient()
+  const { data, error } = await admin
+    .from('tutorials')
+    .select('id, tutorial_contributors(profile_id), tutorial_orgs(org_id, status)')
+    .eq('status', 'approved')
+    .eq('maturity', 'complete')
+  if (error) return c.json({ error: error.message }, 500)
+  const rows = (data ?? []) as unknown as Array<{
+    tutorial_contributors: { profile_id: string }[]
+    tutorial_orgs: { org_id: string; status: string }[]
+  }>
+  const people = new Set(rows.flatMap((t) => t.tutorial_contributors.map((p) => p.profile_id)))
+  const orgs = new Set(
+    rows.flatMap((t) => t.tutorial_orgs.filter((b) => b.status === 'accepted').map((b) => b.org_id))
+  )
+  return c.json({ guides: rows.length, contributors: people.size, organisations: orgs.size })
+})
+
 publicRoutes.get('/tutorials/:id', async (c) => {
   const supabase = createAnonClient()
   const { data, error } = await supabase
@@ -61,7 +92,7 @@ publicRoutes.get('/tutorials/:id', async (c) => {
     // points at tutorials twice, and PostgREST refuses an ambiguous embed
     // outright rather than guessing. See the same select in tutorials.ts.
     .select(
-      '*, parts(*), tools(*), stl_files(*), tutorial_contributors(profile_id, role, profiles(name)), ' +
+      '*, thanks_count, parts(*), tools(*), stl_files(*), tutorial_contributors(profile_id, role, profiles(name)), ' +
         'tutorial_orgs(status, organizations(id, name)), ' +
         'tutorial_recommendations!tutorial_id(position, tutorials!recommended_id(id, title, kind, difficulty, toy_photo_url, status, maturity)), ' +
         'reviewer:reviewed_by(name), reviewed_for:reviewed_for_org_id(name)'
@@ -340,6 +371,32 @@ publicRoutes.get('/impact', async (c) => {
     .slice(0, 8)
     .map((e) => ({ kind: e.kind, id: e.id, name: nameOf(e.kind, e.id) ?? '', at: e.at }))
 
+  // "Toys delivered over time": the completed handoffs already read above,
+  // bucketed by month. Sydney, not UTC — every date on the site is written in
+  // that zone, and a 9am Sydney delivery on the 1st is the previous month in
+  // UTC. Eight months, the window the board draws.
+  const sydneyMonth = (iso: string) => {
+    const p = new Intl.DateTimeFormat('en-AU', {
+      timeZone: 'Australia/Sydney',
+      year: 'numeric',
+      month: '2-digit',
+    })
+      .formatToParts(new Date(iso))
+      .reduce<Record<string, string>>((acc, x) => ({ ...acc, [x.type]: x.value }), {})
+    return `${p.year}-${p.month}`
+  }
+  const perMonth = new Map<string, number>()
+  for (const tx of (delivered ?? []) as Array<{ updated_at: string }>) {
+    const m = sydneyMonth(tx.updated_at)
+    perMonth.set(m, (perMonth.get(m) ?? 0) + 1)
+  }
+  const now = new Date()
+  const deliveriesByMonth = Array.from({ length: 8 }, (_, i) => {
+    const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - (7 - i), 15))
+    const month = sydneyMonth(d.toISOString())
+    return { month, n: perMonth.get(month) ?? 0 }
+  })
+
   const summary: ImpactSummary = {
     totals: {
       tutorials: (tutorials ?? []).length,
@@ -351,6 +408,7 @@ publicRoutes.get('/impact', async (c) => {
     recent,
     contributors,
     organisations,
+    deliveriesByMonth,
   }
   return c.json(summary)
 })
@@ -370,7 +428,12 @@ publicRoutes.get('/organizations', async (c) => {
   const supabase = createAnonClient()
   const { data, error } = await supabase
     .from('organizations')
-    .select('id, name, description, status')
+    // The recycling columns join the list because /get-involved/recycling and
+    // its booking form both filter on "who can take what" — the alternative was
+    // a fetch per organisation to answer a question the directory already knows.
+    // All four are public by design and granted in 059; the street address is
+    // not among them and stays on the pickup columns.
+    .select('id, name, description, status, suburb, state, recycling_materials, recycling_note')
     .order('name')
 
   if (error) {
@@ -406,7 +469,7 @@ publicRoutes.get('/contributors/:id', async (c) => {
 
   const { data: profile } = await admin
     .from('profiles')
-    .select('id, name, public_showcase')
+    .select('id, name, public_showcase, bio, featured_tutorial_id, created_at')
     .eq('id', id)
     .maybeSingle()
   if (!profile || !profile.public_showcase) return c.json({ error: 'Not found' }, 404)
@@ -418,7 +481,7 @@ publicRoutes.get('/contributors/:id', async (c) => {
   ] = await Promise.all([
     sb
       .from('tutorial_contributors')
-      .select('tutorials!inner(*)')
+      .select('tutorials!inner(*, thanks_count)')
       .eq('profile_id', id)
       .eq('tutorials.status', 'approved'),
     sb.from('toys').select('*').eq('owner_id', id).eq('status', 'published'),
@@ -450,12 +513,35 @@ publicRoutes.get('/contributors/:id', async (c) => {
     return c.json({ error: 'Not found' }, 404)
   }
 
+  // 072. Badges and the families line are derived here, never stored. Accepted
+  // backing on an approved guide is public (007's policy), so the anon client
+  // sees exactly what a visitor may know.
+  const guides = tutorials as ContributorProfile['tutorials']
+  const guideIds = guides.map((t) => t.id)
+  let orgBacked = false
+  if (guideIds.length > 0) {
+    const backed = await Promise.all(
+      chunk(guideIds).map((ids) =>
+        sb.from('tutorial_orgs').select('tutorial_id').eq('status', 'accepted').in('tutorial_id', ids).limit(1)
+      )
+    )
+    orgBacked = backed.some((r) => (r.data?.length ?? 0) > 0)
+  }
+  const thanks = guides.reduce((n, t) => n + (t.thanks_count ?? 0), 0)
+
   const result: ContributorProfile = {
     id: profile.id,
     name: profile.name,
-    tutorials: tutorials as ContributorProfile['tutorials'],
+    tutorials: guides,
     toysShared: (toysShared ?? []) as ContributorProfile['toysShared'],
     toysDelivered: toysDelivered as ContributorProfile['toysDelivered'],
+    bio: profile.bio ?? null,
+    // Re-checked against the approved list: the column can still name a guide
+    // that has since lost approval, and that one is nobody's showcase.
+    featured: guides.find((t) => t.id === profile.featured_tutorial_id) ?? null,
+    thanks,
+    badges: contributorBadges({ guides: guides.length, thanks, orgBacked, since: profile.created_at }),
+    created_at: profile.created_at,
   }
   return c.json(result)
 })
@@ -483,6 +569,35 @@ publicRoutes.get('/contributors/:id', async (c) => {
  * yet now returns its empty collections, which is what the page's own "No
  * tutorials yet." and "No toys yet." states were written for.
  */
+/**
+ * A maker who can be asked for a build: their name, and nothing else.
+ *
+ * Deliberately not `/contributors/:id`, which 404s on zero public
+ * contributions — right for a showcase profile, wrong here, because somebody
+ * who has never published a guide can still be asked to build one. The gate is
+ * the same one 057's build endpoint applies: `public_showcase`, which 034 made
+ * opt-OUT, so this is "has not asked to be left alone".
+ *
+ * 404 covers both no such account and opted out, for the same reason the
+ * contributor route gives: distinguishing them would make this an
+ * account-existence oracle.
+ */
+publicRoutes.get('/makers/:id', async (c) => {
+  const admin = createAdminClient()
+  const { data, error } = await admin
+    .from('profiles')
+    .select('id, name, public_showcase')
+    .eq('id', c.req.param('id'))
+    .maybeSingle()
+  if (error) {
+    if (error.code === INVALID_TEXT_REPRESENTATION) return c.json({ error: 'Not found' }, 404)
+    return c.json({ error: error.message }, 500)
+  }
+  const row = data as { id: string; name: string; public_showcase: boolean } | null
+  if (!row || !row.public_showcase) return c.json({ error: 'Not found' }, 404)
+  return c.json({ id: row.id, name: row.name })
+})
+
 publicRoutes.get('/organizations/:id', async (c) => {
   const sb = createAnonClient()
   const admin = createAdminClient()
@@ -490,7 +605,11 @@ publicRoutes.get('/organizations/:id', async (c) => {
 
   const { data: org } = await sb
     .from('organizations')
-    .select('id, name, status')
+    // 059's profile fields. Public by design and granted in that migration —
+    // the street address is NOT among them and stays on the pickup columns.
+    .select(
+      'id, name, status, description, about, suburb, state, capabilities, contact_email, contact_phone, website_url, rate_note, recycling_materials, recycling_note'
+    )
     .eq('id', id)
     .maybeSingle()
   if (!org) return c.json({ error: 'Not found' }, 404)
@@ -519,6 +638,31 @@ publicRoutes.get('/organizations/:id', async (c) => {
       .eq('owner_org_id', id)
       .eq('status', 'completed'),
   ])
+
+  /*
+   * What the organisation has published (059). The anon client reads these, so
+   * the "published rows are public" policy is what admits them and a draft is
+   * never returned here — the leader's own view of their drafts comes through
+   * the authenticated route instead.
+   *
+   * An online event's joining link is stripped: "online links are never
+   * public" is the artboard's rule, and returning it here would publish it to
+   * anyone who opens the profile.
+   */
+  const [{ data: events }, { data: stories }] = await Promise.all([
+    sb
+      .from('org_events')
+      .select('id, org_id, title, summary, starts_at, ends_at, format, location, audience, status')
+      .eq('org_id', id)
+      .eq('status', 'published')
+      .order('starts_at', { ascending: false }),
+    sb
+      .from('org_stories')
+      .select('id, org_id, kind, title, summary, byline, status, created_at')
+      .eq('org_id', id)
+      .eq('status', 'published')
+      .order('created_at', { ascending: false }),
+  ])
   if (backedError || approvedError || toysError || deliveredError) {
     return c.json({ error: 'Failed to load organisation profile' }, 500)
   }
@@ -540,9 +684,12 @@ publicRoutes.get('/organizations/:id', async (c) => {
   }
 
   const result: OrgPublicProfile = {
+    ...org,
     id: org.id,
     name: org.name,
     status: org.status,
+    events: (events ?? []) as OrgPublicProfile['events'],
+    stories: (stories ?? []) as OrgPublicProfile['stories'],
     tutorialsBacked: tutorialsBacked as OrgPublicProfile['tutorialsBacked'],
     tutorialsApproved: (tutorialsApproved ?? []) as OrgPublicProfile['tutorialsApproved'],
     toysShared: (toysShared ?? []) as OrgPublicProfile['toysShared'],
@@ -684,6 +831,309 @@ publicRoutes.post('/notify', async (c) => {
   }
 
   return c.json({ ok: true })
+})
+
+/* ---------------------------------------------------------------- events --
+ *
+ * The public list and one event's detail. Both read through the ANON client,
+ * so 059's "published rows are public" policy is the backstop behind each
+ * query's own status filter.
+ *
+ * Two things never cross this boundary, and both are the artboard's own rules:
+ * an online event's joining link ("online links are never public"), and
+ * anything a registrant answered ("Answers are shown to leaders only"). What
+ * IS public is the shape of the crowd — a count, and the initials on the
+ * detail page's "Who is going" row.
+ */
+
+// One literal, not a concatenation: supabase-js infers the row type from the
+// select string, and a `+` anywhere in it collapses every column to
+// GenericStringError.
+const EVENT_PUBLIC_COLUMNS =
+  'id, org_id, kind, title, summary, starts_at, ends_at, format, location, suburb, state, audience, description, what_to_bring, tools, capacity, prints_parts, part_sets_max, accessibility_note, cost_cents, cost_note, photo_urls, status, registrations_closed_at, cancelled_at, created_by, created_at, updated_at'
+
+/** Live registrations per event, and whether the viewer is among them. */
+async function goingCounts(eventIds: string[], viewerId: string | null) {
+  if (eventIds.length === 0) return { counts: new Map<string, number>(), mine: new Set<string>() }
+  // The admin client, because org_event_registrations is readable only by its
+  // own author or the organisation's leaders — by design. A count is not a
+  // disclosure, so it is computed here rather than made readable to everyone.
+  const admin = createAdminClient()
+  const { data } = await admin
+    .from('org_event_registrations')
+    .select('event_id, user_id')
+    .in('event_id', eventIds)
+    .is('cancelled_at', null)
+
+  const counts = new Map<string, number>()
+  const mine = new Set<string>()
+  for (const r of data ?? []) {
+    const id = r.event_id as string
+    counts.set(id, (counts.get(id) ?? 0) + 1)
+    if (viewerId && r.user_id === viewerId) mine.add(id)
+  }
+  return { counts, mine }
+}
+
+publicRoutes.get('/events', async (c) => {
+  const sb = createAnonClient()
+  const admin = createAdminClient()
+
+  // `viewer` is a plain query parameter, not a session: these routes are
+  // mounted before authMiddleware. It only ever decides whether a card reads
+  // "I'm going" or "You're going", so a forged one reveals nothing — the
+  // answers and the joining link are not in this response at any value of it.
+  const viewer = c.req.query('viewer') ?? null
+
+  let query = sb
+    .from('org_events')
+    .select(EVENT_PUBLIC_COLUMNS)
+    .eq('status', 'published')
+    .is('cancelled_at', null)
+    .order('starts_at', { ascending: true })
+
+  const format = c.req.query('format')
+  if (format === 'in_person' || format === 'online') query = query.eq('format', format)
+
+  // An online event shows under every state filter, which is the artboard's
+  // rule and the reason this is an `or` rather than an equality.
+  const state = c.req.query('state')
+  if (state) query = query.or(`state.eq.${state},format.eq.online`)
+
+  const { data: rows, error } = await query
+  if (error) return c.json({ error: error.message }, 500)
+
+  const events = rows ?? []
+  const eventIds = events.map((e) => e.id as string)
+  const orgIds = [...new Set(events.map((e) => e.org_id as string))]
+  const [{ data: orgs }, { counts, mine }, { data: questionRows }] = await Promise.all([
+    // Resolved through the admin client rather than an embed: embedding
+    // organizations kills the whole query under 033/045's column grants, and
+    // returns empty with no error.
+    admin.from('organizations').select('id, name').in('id', orgIds),
+    goingCounts(eventIds, viewer),
+    // Which events ask something beyond name and email. The card needs this to
+    // decide whether "I'm going" can be one tap or has to open the form — a
+    // tap that silently skipped three required questions would put a family on
+    // a list the host cannot use. Ids only; the questions themselves belong to
+    // the detail route.
+    sb.from('org_event_questions').select('event_id').in('event_id', eventIds),
+  ])
+  const orgName = new Map((orgs ?? []).map((o) => [o.id as string, o.name as string]))
+  const asks = new Set((questionRows ?? []).map((q) => q.event_id as string))
+
+  return c.json(
+    events.map((e) => {
+      const id = e.id as string
+      const going = counts.get(id) ?? 0
+      const capacity = e.capacity as number | null
+      const { online_url: _dropped, ...rest } = e as Record<string, unknown>
+      return {
+        ...rest,
+        org_name: orgName.get(e.org_id as string) ?? '',
+        going_count: going,
+        seats_left: capacity === null ? null : Math.max(0, capacity - going),
+        viewer_going: mine.has(id),
+        has_questions: asks.has(id),
+      }
+    }),
+  )
+})
+
+publicRoutes.get('/events/:id', async (c) => {
+  const sb = createAnonClient()
+  const admin = createAdminClient()
+  const id = c.req.param('id')
+  const viewer = c.req.query('viewer') ?? null
+
+  const { data: event, error } = await sb
+    .from('org_events')
+    .select(EVENT_PUBLIC_COLUMNS)
+    .eq('id', id)
+    .eq('status', 'published')
+    .maybeSingle()
+  if (error && error.code !== INVALID_TEXT_REPRESENTATION) {
+    return c.json({ error: error.message }, 500)
+  }
+  if (!event) return c.json({ error: 'Not found' }, 404)
+
+  const [{ data: org }, { data: questions }, { counts, mine }] = await Promise.all([
+    admin
+      .from('organizations')
+      .select('id, name, description, suburb, state')
+      .eq('id', event.org_id as string)
+      .maybeSingle(),
+    sb
+      .from('org_event_questions')
+      .select('id, event_id, position, prompt, answer_type, required, options')
+      .eq('event_id', id)
+      .order('position'),
+    goingCounts([id], viewer),
+  ])
+
+  // Initials only. The artboard draws two avatars and a count on "Who is
+  // going" — a name would tell anyone who opened the page which families
+  // attend which therapy service.
+  const { data: attendees } = await admin
+    .from('org_event_registrations')
+    .select('name')
+    .eq('event_id', id)
+    .is('cancelled_at', null)
+    .order('created_at')
+    .limit(8)
+
+  const going = counts.get(id) ?? 0
+  const capacity = event.capacity as number | null
+  return c.json({
+    ...event,
+    // Never public, whatever the format. A registrant is given it after they
+    // confirm, through the authenticated route.
+    online_url: null,
+    org: org ?? null,
+    questions: questions ?? [],
+    going_count: going,
+    seats_left: capacity === null ? null : Math.max(0, capacity - going),
+    viewer_going: mine.has(id),
+    attendee_initials: (attendees ?? []).map((a) =>
+      String(a.name)
+        .split(/\s+/)
+        .slice(0, 2)
+        .map((w) => w[0]?.toUpperCase() ?? '')
+        .join(''),
+    ),
+  })
+})
+
+/* --------------------------------------------------------------- stories --
+ *
+ * The public reading surface. The anon client reads these, so 059's "published
+ * rows are public" policy is the backstop behind each query's own status
+ * filter, and a draft is never returned here.
+ *
+ * Read time is computed rather than stored: it is a property of the text, and a
+ * stored copy is one more thing that can drift from the words it describes.
+ */
+
+const STORY_PUBLIC_COLUMNS =
+  'id, org_id, kind, title, summary, body, byline, photo_urls, featured, pull_quote, pull_quote_by, link_tutorial_id, status, published_at, created_at, updated_at'
+
+publicRoutes.get('/stories', async (c) => {
+  const sb = createAnonClient()
+  const admin = createAdminClient()
+
+  const { data: rows, error } = await sb
+    .from('org_stories')
+    .select(STORY_PUBLIC_COLUMNS)
+    .eq('status', 'published')
+    .order('published_at', { ascending: false })
+  if (error) return c.json({ error: error.message }, 500)
+
+  const stories = rows ?? []
+  // Through the admin client rather than an embed: embedding organizations
+  // kills the whole query under 033/045's column grants and returns empty with
+  // no error.
+  const orgIds = [...new Set(stories.map((s) => s.org_id).filter((id): id is string => !!id))]
+  const { data: orgs } = await admin.from('organizations').select('id, name').in('id', orgIds)
+  const orgName = new Map((orgs ?? []).map((o) => [o.id as string, o.name as string]))
+
+  return c.json(
+    stories.map((s) => ({
+      ...s,
+      org_name: s.org_id ? (orgName.get(s.org_id as string) ?? null) : null,
+      read_minutes: readMinutes(String(s.body ?? '')),
+    })),
+  )
+})
+
+publicRoutes.get('/stories/:id', async (c) => {
+  const sb = createAnonClient()
+  const admin = createAdminClient()
+  const id = c.req.param('id')
+
+  const { data: story, error } = await sb
+    .from('org_stories')
+    .select(STORY_PUBLIC_COLUMNS)
+    .eq('id', id)
+    .eq('status', 'published')
+    .maybeSingle()
+  if (error && error.code !== INVALID_TEXT_REPRESENTATION) {
+    return c.json({ error: error.message }, 500)
+  }
+  if (!story) return c.json({ error: 'Not found' }, 404)
+
+  const [{ data: org }, { data: tutorial }, { data: more }] = await Promise.all([
+    story.org_id
+      ? admin.from('organizations').select('id, name').eq('id', story.org_id as string).maybeSingle()
+      : Promise.resolve({ data: null }),
+    story.link_tutorial_id
+      ? // The guide has to still be approved. A story linking to a withdrawn
+        // guide would send a reader to a 404 from a page that reads as current.
+        sb
+          .from('tutorials')
+          .select('id, title, status')
+          .eq('id', story.link_tutorial_id as string)
+          .eq('status', 'approved')
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+    sb
+      .from('org_stories')
+      .select('id, kind, title, byline, published_at')
+      .eq('status', 'published')
+      .neq('id', id)
+      .order('published_at', { ascending: false })
+      .limit(3),
+  ])
+
+  return c.json({
+    ...story,
+    org: org ?? null,
+    link_tutorial: tutorial ? { id: tutorial.id, title: tutorial.title } : null,
+    org_name: (org as { name?: string } | null)?.name ?? null,
+    read_minutes: readMinutes(String(story.body ?? '')),
+    more: more ?? [],
+  })
+})
+
+/* --------------------------------------------------------------- contact --
+ *
+ * The contact form. Unauthenticated on purpose: somebody reporting that a
+ * battery pack gets warm should not have to make an account first, and
+ * requiring one is the difference between hearing about a hazard and not.
+ *
+ * `sender_id` is set only when the caller happens to be signed in, and is
+ * never taken from the body — a client-supplied author would let one account
+ * file a safety report in another's name.
+ */
+
+const CONTACT_TOPICS = new Set(['safety', 'organisation', 'guide', 'other'])
+
+publicRoutes.post('/contact', async (c) => {
+  const body = (await c.req.json().catch(() => null)) as Record<string, unknown> | null
+  if (!body) return c.json({ error: 'Body must be an object' }, 400)
+
+  const topic = typeof body.topic === 'string' ? body.topic : ''
+  if (!CONTACT_TOPICS.has(topic)) return c.json({ error: 'Pick what it is about.' }, 400)
+
+  const name = typeof body.name === 'string' ? body.name.trim() : ''
+  if (!name || name.length > 120) return c.json({ error: 'Tell us who you are.' }, 400)
+
+  const email = typeof body.email === 'string' ? body.email.trim() : ''
+  if (!EMAIL_RE.test(email)) return c.json({ error: 'That email address does not look right.' }, 400)
+
+  const message = typeof body.body === 'string' ? body.body.trim() : ''
+  if (!message || message.length > 4000) {
+    return c.json({ error: 'Say what happened, in 4000 characters or fewer.' }, 400)
+  }
+
+  const { error } = await createAnonClient()
+    .from('contact_messages')
+    .insert({ topic, name, email, body: message })
+  if (error) {
+    console.error('[public/contact] insert failed:', error.message)
+    return c.json({ error: 'That did not send. Try again, or email us directly.' }, 500)
+  }
+
+  return c.json({ ok: true }, 201)
 })
 
 export default publicRoutes

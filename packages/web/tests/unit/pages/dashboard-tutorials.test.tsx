@@ -46,8 +46,10 @@ const baseTutorial: Tutorial = {
   status: 'approved',
   maturity: 'complete',
   safety_declared_at: null,
+  build_minutes: 30,
   description: null,
   tutorial_pdf_url: null,
+  photo_urls: [],
   toy_photo_url: null,
   rejection_note: null,
   created_at: '2026-01-01T00:00:00Z',
@@ -80,26 +82,33 @@ describe('DashboardPage', () => {
     expect(redirect).toHaveBeenCalledWith('/login')
   })
 
-  // Tests: stats section renders Pending, Approved, Rejected labels with correct counts
-  // How:   passes 2 pending + 1 approved + 3 rejected tutorials; checks counts 2, 1, 3
-  // Chain: contributors scan the summary to track how many tutorials are in each state
-  it('renders pending, approved, rejected counts', async () => {
-    vi.mocked(apiClient.get)
-      .mockResolvedValueOnce([
-        { ...baseTutorial, id: '1', status: 'pending' },
-        { ...baseTutorial, id: '2', status: 'pending' },
-        { ...baseTutorial, id: '3', status: 'approved' },
-        { ...baseTutorial, id: '4', status: 'rejected' },
-        { ...baseTutorial, id: '5', status: 'rejected' },
-        { ...baseTutorial, id: '6', status: 'rejected' },
-      ])
-    render(await DashboardPage())
-    const pendingCard = screen.getByText('Pending').closest('div')!
-    const approvedCard = screen.getByText('Approved').closest('div')!
-    const rejectedCard = screen.getByText('Rejected').closest('div')!
-    expect(within(pendingCard).getByText('2')).toBeInTheDocument()
-    expect(within(approvedCard).getByText('1')).toBeInTheDocument()
-    expect(within(rejectedCard).getByText('3')).toBeInTheDocument()
+  // Tests: the board's stage track counts each stage and filters to one
+  // How:   2 pending + 1 approved + 3 rejected; checks the track's counts, then
+  //        asks for ?stage=needsyou and checks only the rejected three render
+  // Chain: the stage filter replaced the old pending/approved/rejected strip
+  it('counts each stage in the filter track and filters by ?stage', async () => {
+    const rows = [
+      { ...baseTutorial, id: '1', status: 'pending' },
+      { ...baseTutorial, id: '2', status: 'pending' },
+      { ...baseTutorial, id: '3', status: 'approved' },
+      { ...baseTutorial, id: '4', status: 'rejected' },
+      { ...baseTutorial, id: '5', status: 'rejected' },
+      { ...baseTutorial, id: '6', status: 'rejected' },
+    ]
+    vi.mocked(apiClient.get).mockResolvedValueOnce(rows)
+    const { unmount } = render(await DashboardPage())
+    const track = screen.getByRole('group', { name: /filter tutorials by stage/i })
+    expect(within(track).getByRole('link', { name: /waiting 2/i })).toHaveAttribute(
+      'href',
+      '/dashboard/tutorials?stage=waiting'
+    )
+    expect(within(track).getByRole('link', { name: /needs you 3/i })).toBeInTheDocument()
+    expect(within(track).getByRole('link', { name: /all 6/i })).toHaveAttribute('aria-current', 'true')
+    unmount()
+
+    vi.mocked(apiClient.get).mockResolvedValueOnce(rows)
+    render(await DashboardPage({ searchParams: Promise.resolve({ stage: 'needsyou' }) }))
+    expect(screen.getAllByTestId('tutorial-row')).toHaveLength(3)
   })
 
   // Tests: the whole card is the link to the editor, with no separate Edit button
@@ -219,26 +228,12 @@ describe('DashboardPage', () => {
     expect(screen.getByText('Riverside Therapy is deciding')).toBeInTheDocument()
   })
 
-  // Tests: the header offers a way into the public library alongside the
-  //        primary "New tutorial" action
-  // Chain: the My SPLAT card names "Browse the library" as behind this tile,
-  //        and the tile itself is text — this button is the only route
-  it('gives My tutorials a way into the public library', async () => {
-    vi.mocked(apiClient.get)
-      .mockResolvedValueOnce([])
-    render(await DashboardPage())
-    expect(screen.getByRole('link', { name: /browse the library/i })).toHaveAttribute(
-      'href',
-      '/library'
-    )
-  })
-
-  // Tests: the primary action stays put once the browse link is added
+  // Tests: the board's one create action on My tutorials
   it('keeps the primary action on My tutorials', async () => {
     vi.mocked(apiClient.get)
       .mockResolvedValueOnce([])
     render(await DashboardPage())
-    expect(screen.getByRole('link', { name: /new tutorial/i })).toHaveAttribute('href', '/upload')
+    expect(screen.getAllByRole('link', { name: /add a tutorial/i })[0]).toHaveAttribute('href', '/upload')
   })
 
   // Tests: the Saved button now ships and leads somewhere real

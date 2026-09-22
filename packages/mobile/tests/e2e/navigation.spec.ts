@@ -23,9 +23,9 @@ test('the tab bar reaches every tab', async ({ page }) => {
 
   for (const [label, path] of [
     ['Guides', '/guides'],
-    ['Toy Library', '/toy-library'],
-    ['Explore', '/explore'],
+    ['Toys', '/toy-library'],
     ['Inbox', '/inbox'],
+    ['Me', '/me'],
   ] as const) {
     await page.getByText(label, { exact: true }).first().click()
     await expect(page).toHaveURL(new RegExp(`${path}$`))

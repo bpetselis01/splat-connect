@@ -1,0 +1,1683 @@
+{
+ "at": "2026-09-22T13:00:18.634Z",
+ "live": "http://localhost:3110",
+ "screens": [
+  {
+   "id": "home",
+   "name": "Home",
+   "group": "Public site",
+   "route": "/",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/",
+   "boardHeadings": 3,
+   "liveHeadings": 19
+  },
+  {
+   "id": "library",
+   "name": "Guides library",
+   "group": "Public site",
+   "route": "/library",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/library",
+   "boardHeadings": 8,
+   "liveHeadings": 72
+  },
+  {
+   "id": "tutorial",
+   "name": "Guide detail",
+   "group": "Public site",
+   "route": "/tutorials/f677bc3d-1399-4c41-bd1b-1cfd43ae50c2",
+   "findings": [
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "h1 \"guide c — plush dog that barks\" size",
+     "board": "44px",
+     "live": "40px"
+    },
+    {
+     "type": "extra-section",
+     "severity": "medium",
+     "what": "live has an extra h3: \"tools you'll need\"",
+     "board": null,
+     "live": "tools you'll need"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "2/2 board paragraphs absent",
+     "board": "up to three things the author points you at next — their own guides, a",
+     "live": "tools are a one-off, and most are borrowable."
+    }
+   ],
+   "role": "guest",
+   "finalUrl": "/tutorials/f677bc3d-1399-4c41-bd1b-1cfd43ae50c2",
+   "boardHeadings": 12,
+   "liveHeadings": 6
+  },
+  {
+   "id": "toys_public",
+   "name": "Toy library",
+   "group": "Public site",
+   "route": "/toy-library",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/toy-library",
+   "boardHeadings": 8,
+   "liveHeadings": 19
+  },
+  {
+   "id": "toy_public",
+   "name": "Toy detail",
+   "group": "Public site",
+   "route": "/toy-library/f8ad9c65-205e-420d-b1e0-0780ce092588",
+   "findings": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"notes from family #\" has no counterpart",
+     "board": "notes from family #",
+     "live": null
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "h1 \"toy # — plush dog that barks\" size",
+     "board": "44px",
+     "live": "40px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "2/2 board paragraphs absent",
+     "board": "our daughter used this for about a year and has moved on to the train.",
+     "live": "more toys in the library right now."
+    }
+   ],
+   "role": "guest",
+   "finalUrl": "/toy-library/f8ad9c65-205e-420d-b1e0-0780ce092588",
+   "boardHeadings": 10,
+   "liveHeadings": 5
+  },
+  {
+   "id": "toy_request",
+   "name": "Request a toy",
+   "group": "Public site",
+   "route": "/toy-library/f8ad9c65-205e-420d-b1e0-0780ce092588/request",
+   "findings": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"pick a toy to offer\" has no counterpart",
+     "board": "pick a toy to offer",
+     "live": null
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "4/4 board paragraphs absent",
+     "board": "family # is open to either. offer one of your own toys, or just ask an",
+     "live": "parity org mucodszfdgkq is giving this one away. just ask — nothing is"
+    }
+   ],
+   "role": "parent",
+   "finalUrl": "/toy-library/f8ad9c65-205e-420d-b1e0-0780ce092588/request",
+   "boardHeadings": 4,
+   "liveHeadings": 2
+  },
+  {
+   "id": "wizard",
+   "name": "Child profile wizard",
+   "group": "My SPLAT",
+   "route": "/onboarding/child",
+   "findings": [
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "input background",
+     "board": "rgb(255,255,255)",
+     "live": "rgb(250,249,247)"
+    }
+   ],
+   "role": "parent",
+   "finalUrl": "/onboarding/child",
+   "boardHeadings": 1,
+   "liveHeadings": 1
+  },
+  {
+   "id": "learn",
+   "name": "Learn · Course home",
+   "group": "Learn",
+   "route": "/learn",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/learn",
+   "boardHeadings": 19,
+   "liveHeadings": 20
+  },
+  {
+   "id": "learn_101",
+   "name": "Toy adaptation 101",
+   "group": "Learn",
+   "route": "/learn/toy-adaptation-101",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/learn/toy-adaptation-101",
+   "boardHeadings": 6,
+   "liveHeadings": 6
+  },
+  {
+   "id": "learn_switch",
+   "name": "Switch types explained",
+   "group": "Learn",
+   "route": "/learn/switch-types",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/learn/switch-types",
+   "boardHeadings": 7,
+   "liveHeadings": 7
+  },
+  {
+   "id": "learn_choose",
+   "name": "Choosing a toy",
+   "group": "Learn",
+   "route": "/learn/choosing-a-toy",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/learn/choosing-a-toy",
+   "boardHeadings": 4,
+   "liveHeadings": 4
+  },
+  {
+   "id": "learn_tools",
+   "name": "Tools and materials",
+   "group": "Learn",
+   "route": "/learn/tools-and-materials",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/learn/tools-and-materials",
+   "boardHeadings": 4,
+   "liveHeadings": 4
+  },
+  {
+   "id": "learn_safety",
+   "name": "Safe handling",
+   "group": "Learn",
+   "route": "/learn/safety-and-cleaning",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/learn/safety-and-cleaning",
+   "boardHeadings": 7,
+   "liveHeadings": 7
+  },
+  {
+   "id": "learn_ask",
+   "name": "Have a question?",
+   "group": "Learn",
+   "route": "/learn/ask-an-expert",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/learn/ask-an-expert",
+   "boardHeadings": 5,
+   "liveHeadings": 5
+  },
+  {
+   "id": "learn_circuit",
+   "name": "How a switch works",
+   "group": "Learn",
+   "route": "/learn/how-a-switch-works",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/learn/how-a-switch-works",
+   "boardHeadings": 6,
+   "liveHeadings": 6
+  },
+  {
+   "id": "learn_q1",
+   "name": "Checkpoint: the basics",
+   "group": "Learn",
+   "route": "/learn/checkpoint-1",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/learn/checkpoint-1",
+   "boardHeadings": 3,
+   "liveHeadings": 3
+  },
+  {
+   "id": "learn_q2",
+   "name": "Checkpoint: the bench",
+   "group": "Learn",
+   "route": "/learn/checkpoint-2",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/learn/checkpoint-2",
+   "boardHeadings": 4,
+   "liveHeadings": 4
+  },
+  {
+   "id": "learn_connector",
+   "name": "Wire a 3.5 mm connector",
+   "group": "Learn",
+   "route": "/learn/wire-a-connector",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/learn/wire-a-connector",
+   "boardHeadings": 17,
+   "liveHeadings": 14
+  },
+  {
+   "id": "learn_q3",
+   "name": "Checkpoint: the connector",
+   "group": "Learn",
+   "route": "/learn/checkpoint-3",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/learn/checkpoint-3",
+   "boardHeadings": 4,
+   "liveHeadings": 4
+  },
+  {
+   "id": "learn_hamster",
+   "name": "Build 1: Hamster Mania",
+   "group": "Learn",
+   "route": "/learn/build-hamster-mania",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/learn/build-hamster-mania",
+   "boardHeadings": 15,
+   "liveHeadings": 12
+  },
+  {
+   "id": "learn_duck",
+   "name": "Build 2: Duck bubble machine",
+   "group": "Learn",
+   "route": "/learn/build-duck-bubbles",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/learn/build-duck-bubbles",
+   "boardHeadings": 15,
+   "liveHeadings": 12
+  },
+  {
+   "id": "learn_rachel",
+   "name": "Build 3: Ms Rachel doll",
+   "group": "Learn",
+   "route": "/learn/build-ms-rachel",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/learn/build-ms-rachel",
+   "boardHeadings": 18,
+   "liveHeadings": 15
+  },
+  {
+   "id": "learn_diyswitch",
+   "name": "Build a 3D-printed switch",
+   "group": "Learn",
+   "route": "/learn/build-a-switch",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/learn/build-a-switch",
+   "boardHeadings": 17,
+   "liveHeadings": 14
+  },
+  {
+   "id": "learn_handover",
+   "name": "Checks, cleaning and handover",
+   "group": "Learn",
+   "route": "/learn/handover",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/learn/handover",
+   "boardHeadings": 12,
+   "liveHeadings": 12
+  },
+  {
+   "id": "learn_q4",
+   "name": "Final checkpoint",
+   "group": "Learn",
+   "route": "/learn/final-checkpoint",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/learn/final-checkpoint",
+   "boardHeadings": 4,
+   "liveHeadings": 4
+  },
+  {
+   "id": "printing",
+   "name": "Find a printer",
+   "group": "3D Printing",
+   "route": "/printing",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/printing",
+   "boardHeadings": 4,
+   "liveHeadings": 6
+  },
+  {
+   "id": "printing_basics",
+   "name": "Printing basics",
+   "group": "3D Printing",
+   "route": "/printing/basics",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/printing/basics",
+   "boardHeadings": 12,
+   "liveHeadings": 6
+  },
+  {
+   "id": "print_request_new",
+   "name": "Request a print",
+   "group": "3D Printing",
+   "route": "/printing/requests?guide=37d5ef80-607b-4954-a84b-9d2d86b3bf87",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/printing/requests",
+   "boardHeadings": 7,
+   "liveHeadings": 7
+  },
+  {
+   "id": "involved",
+   "name": "Get involved",
+   "group": "Get involved",
+   "route": "/get-involved",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/get-involved",
+   "boardHeadings": 8,
+   "liveHeadings": 8
+  },
+  {
+   "id": "inv_families",
+   "name": "For families",
+   "group": "Get involved",
+   "route": "/get-involved/families",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/get-involved/families",
+   "boardHeadings": 7,
+   "liveHeadings": 7
+  },
+  {
+   "id": "inv_contributors",
+   "name": "For contributors",
+   "group": "Get involved",
+   "route": "/get-involved/contributors",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/get-involved/contributors",
+   "boardHeadings": 7,
+   "liveHeadings": 7
+  },
+  {
+   "id": "inv_orgs",
+   "name": "For organisations",
+   "group": "Get involved",
+   "route": "/get-involved/organisations",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/get-involved/organisations",
+   "boardHeadings": 7,
+   "liveHeadings": 7
+  },
+  {
+   "id": "org_request",
+   "name": "Request an organisation",
+   "group": "Get involved",
+   "route": "/get-involved/organisations/request",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/get-involved/organisations/request",
+   "boardHeadings": 3,
+   "liveHeadings": 3
+  },
+  {
+   "id": "inv_idea",
+   "name": "Submit an idea",
+   "group": "Get involved",
+   "route": "/get-involved/submit-an-idea",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/get-involved/submit-an-idea",
+   "boardHeadings": 6,
+   "liveHeadings": 7
+  },
+  {
+   "id": "inv_guide",
+   "name": "Submit a guide",
+   "group": "Get involved",
+   "route": "/get-involved/submit-a-tutorial",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/get-involved/submit-a-tutorial",
+   "boardHeadings": 7,
+   "liveHeadings": 7
+  },
+  {
+   "id": "makers_wanted",
+   "name": "Makers wanted",
+   "group": "Get involved",
+   "route": "/get-involved/makers-wanted",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/get-involved/makers-wanted",
+   "boardHeadings": 6,
+   "liveHeadings": 6
+  },
+  {
+   "id": "mw_new",
+   "name": "Ask for a build",
+   "group": "Get involved",
+   "route": "/get-involved/makers-wanted/new",
+   "findings": [
+    {
+     "type": "shadow",
+     "severity": "medium",
+     "what": "no button on live carries a shadow",
+     "board": "set",
+     "live": "none"
+    }
+   ],
+   "role": "parent",
+   "finalUrl": "/get-involved/makers-wanted/new",
+   "boardHeadings": 1,
+   "liveHeadings": 1
+  },
+  {
+   "id": "build_thread",
+   "name": "Build thread",
+   "group": "My SPLAT",
+   "route": "/dashboard/exchanges/build/081a818a-f95a-4285-9a6a-ab3a8f4fa82b",
+   "findings": [
+    {
+     "type": "extra-section",
+     "severity": "medium",
+     "what": "live has an extra h3: \"the build\"",
+     "board": null,
+     "live": "the build"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "2/2 board paragraphs absent",
+     "board": "tom beattie is building this for you",
+     "live": "seed contributor is building this for you"
+    }
+   ],
+   "role": "parent",
+   "finalUrl": "/dashboard/exchanges/build/081a818a-f95a-4285-9a6a-ab3a8f4fa82b",
+   "boardHeadings": 3,
+   "liveHeadings": 5
+  },
+  {
+   "id": "challenges",
+   "name": "Design challenges",
+   "group": "Get involved",
+   "route": "/get-involved/design-challenges",
+   "findings": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "page height differs grossly",
+     "board": "832px",
+     "live": "2338px"
+    },
+    {
+     "type": "extra-section",
+     "severity": "medium",
+     "what": "live has an extra h2: \"open challenges\"",
+     "board": null,
+     "live": "open challenges"
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "none",
+     "live": "set"
+    },
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "card background",
+     "board": "rgb(255,240,204)",
+     "live": "rgb(255,255,255)"
+    }
+   ],
+   "role": "guest",
+   "finalUrl": "/get-involved/design-challenges",
+   "boardHeadings": 6,
+   "liveHeadings": 15
+  },
+  {
+   "id": "challenge_detail",
+   "name": "Challenge detail",
+   "group": "Get involved",
+   "route": "/get-involved/design-challenges/d174b138-36de-4764-8545-a56f8250873b",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/get-involved/design-challenges/d174b138-36de-4764-8545-a56f8250873b",
+   "boardHeadings": 4,
+   "liveHeadings": 4
+  },
+  {
+   "id": "impact",
+   "name": "Community impact",
+   "group": "Impact",
+   "route": "/impact",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/impact",
+   "boardHeadings": 22,
+   "liveHeadings": 38
+  },
+  {
+   "id": "orgs",
+   "name": "Organisations",
+   "group": "Impact",
+   "route": "/organizations",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/organizations",
+   "boardHeadings": 13,
+   "liveHeadings": 19
+  },
+  {
+   "id": "org_public",
+   "name": "Organisation profile",
+   "group": "Impact",
+   "route": "/organizations/d4cd7578-1a8f-4dcc-aeca-9524906073b1/public",
+   "findings": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"guides they back #\" has no counterpart",
+     "board": "guides they back #",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"toys on their shelf # available\" has no counterpart",
+     "board": "toys on their shelf # available",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"from families\" has no counterpart",
+     "board": "from families",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"leaders\" has no counterpart",
+     "board": "leaders",
+     "live": null
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "4/5 board paragraphs absent",
+     "board": "a paediatric occupational therapy service running a switch-adaptation ",
+     "live": "we run a thursday bench in newtown and back guides for the families we"
+    }
+   ],
+   "role": "guest",
+   "finalUrl": "/organizations/d4cd7578-1a8f-4dcc-aeca-9524906073b1/public",
+   "boardHeadings": 17,
+   "liveHeadings": 8
+  },
+  {
+   "id": "contributor",
+   "name": "Contributor profile",
+   "group": "Impact",
+   "route": "/contributors/11111111-1111-1111-1111-111111111111",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/contributors/11111111-1111-1111-1111-111111111111",
+   "boardHeadings": 12,
+   "liveHeadings": 9
+  },
+  {
+   "id": "impact_events",
+   "name": "Events",
+   "group": "Get involved",
+   "route": "/get-involved/events",
+   "findings": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"november #\" has no counterpart",
+     "board": "november #",
+     "live": null
+    }
+   ],
+   "role": "guest",
+   "finalUrl": "/get-involved/events",
+   "boardHeadings": 12,
+   "liveHeadings": 9
+  },
+  {
+   "id": "event_detail",
+   "name": "Event detail",
+   "group": "Get involved",
+   "route": "/get-involved/events/af0fe7fd-53ca-4335-bd8b-738ef5297c14",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/get-involved/events/af0fe7fd-53ca-4335-bd8b-738ef5297c14",
+   "boardHeadings": 4,
+   "liveHeadings": 4
+  },
+  {
+   "id": "event_register",
+   "name": "Register for an event",
+   "group": "Get involved",
+   "route": "/get-involved/events/af0fe7fd-53ca-4335-bd8b-738ef5297c14/register",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/get-involved/events/af0fe7fd-53ca-4335-bd8b-738ef5297c14/register",
+   "boardHeadings": 3,
+   "liveHeadings": 3
+  },
+  {
+   "id": "recycling",
+   "name": "Recycling",
+   "group": "Get involved",
+   "route": "/get-involved/recycling",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/get-involved/recycling",
+   "boardHeadings": 8,
+   "liveHeadings": 7
+  },
+  {
+   "id": "recycle_new",
+   "name": "Book a drop-off",
+   "group": "Get involved",
+   "route": "/get-involved/recycling/drop-off",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/get-involved/recycling/drop-off",
+   "boardHeadings": 1,
+   "liveHeadings": 1
+  },
+  {
+   "id": "org_recycling",
+   "name": "Recycling intake",
+   "group": "Organisation",
+   "route": "/dashboard/organisation/recycling",
+   "findings": [],
+   "role": "leader",
+   "finalUrl": "/dashboard/organisation/recycling",
+   "boardHeadings": 3,
+   "liveHeadings": 3
+  },
+  {
+   "id": "impact_news",
+   "name": "Stories",
+   "group": "About",
+   "route": "/about/stories",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/about/stories",
+   "boardHeadings": 9,
+   "liveHeadings": 6
+  },
+  {
+   "id": "story_detail",
+   "name": "Story",
+   "group": "About",
+   "route": "/about/stories/2b8a6d88-711a-4d6e-bfb0-8d243d216b07",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/about/stories/2b8a6d88-711a-4d6e-bfb0-8d243d216b07",
+   "boardHeadings": 6,
+   "liveHeadings": 6
+  },
+  {
+   "id": "impact_map",
+   "name": "Deliveries map",
+   "group": "Impact",
+   "route": "/impact/map",
+   "findings": [
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "input background",
+     "board": "rgb(255,255,255)",
+     "live": "rgb(250,249,247)"
+    }
+   ],
+   "role": "guest",
+   "finalUrl": "/impact/map",
+   "boardHeadings": 1,
+   "liveHeadings": 1
+  },
+  {
+   "id": "about",
+   "name": "About",
+   "group": "About",
+   "route": "/about",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/about",
+   "boardHeadings": 9,
+   "liveHeadings": 9
+  },
+  {
+   "id": "about_team",
+   "name": "Our team",
+   "group": "About",
+   "route": "/about/team",
+   "findings": [
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "card title size",
+     "board": "19px",
+     "live": "nullpx"
+    }
+   ],
+   "role": "guest",
+   "finalUrl": "/about/team",
+   "boardHeadings": 10,
+   "liveHeadings": 4
+  },
+  {
+   "id": "contact",
+   "name": "Contact",
+   "group": "About",
+   "route": "/contact",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/contact",
+   "boardHeadings": 1,
+   "liveHeadings": 1
+  },
+  {
+   "id": "org_requests",
+   "name": "Requests to your organisation",
+   "group": "Organisation",
+   "route": "/dashboard/organisation/requests",
+   "findings": [
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "h1 wording",
+     "board": "requests to northside therapy",
+     "live": "requests to parity org mucodszfdgkq"
+    }
+   ],
+   "role": "leader",
+   "finalUrl": "/dashboard/organisation/requests",
+   "boardHeadings": 1,
+   "liveHeadings": 1
+  },
+  {
+   "id": "my_events",
+   "name": "My events",
+   "group": "My SPLAT",
+   "route": "/dashboard/events",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/dashboard/events",
+   "boardHeadings": 2,
+   "liveHeadings": 2
+  },
+  {
+   "id": "admin_inbox",
+   "name": "Inbox",
+   "group": "Admin",
+   "route": "/admin/inbox",
+   "findings": [],
+   "role": "admin",
+   "finalUrl": "/admin/inbox",
+   "boardHeadings": 1,
+   "liveHeadings": 1
+  },
+  {
+   "id": "admin_builds",
+   "name": "Build requests",
+   "group": "Admin",
+   "route": "/admin/build-requests",
+   "findings": [],
+   "role": "admin",
+   "finalUrl": "/admin/build-requests",
+   "boardHeadings": 1,
+   "liveHeadings": 1
+  },
+  {
+   "id": "org_event_manage",
+   "name": "Manage event",
+   "group": "My SPLAT",
+   "route": "/dashboard/org/events/fe356800-3ed5-4420-97fc-867e6b68e6c6",
+   "findings": [],
+   "role": "leader",
+   "finalUrl": "/dashboard/org/events/fe356800-3ed5-4420-97fc-867e6b68e6c6",
+   "boardHeadings": 3,
+   "liveHeadings": 5
+  },
+  {
+   "id": "about_partners",
+   "name": "Partners and supporters",
+   "group": "About",
+   "route": "/about/partners",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/about/partners",
+   "boardHeadings": 6,
+   "liveHeadings": 6
+  },
+  {
+   "id": "about_support",
+   "name": "Support SPLAT",
+   "group": "About",
+   "route": "/about/support",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/about/support",
+   "boardHeadings": 7,
+   "liveHeadings": 7
+  },
+  {
+   "id": "safety",
+   "name": "Safety",
+   "group": "Legal",
+   "route": "/safety",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/safety",
+   "boardHeadings": 6,
+   "liveHeadings": 8
+  },
+  {
+   "id": "privacy",
+   "name": "Privacy policy",
+   "group": "Legal",
+   "route": "/privacy",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/privacy",
+   "boardHeadings": 6,
+   "liveHeadings": 12
+  },
+  {
+   "id": "terms",
+   "name": "Terms of use",
+   "group": "Legal",
+   "route": "/terms",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/terms",
+   "boardHeadings": 7,
+   "liveHeadings": 10
+  },
+  {
+   "id": "conduct",
+   "name": "Code of conduct",
+   "group": "Legal",
+   "route": "/code-of-conduct",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/code-of-conduct",
+   "boardHeadings": 6,
+   "liveHeadings": 5
+  },
+  {
+   "id": "legal_purpose",
+   "name": "What Connect is (and isn’t)",
+   "group": "Legal",
+   "route": "/legal/intended-purpose",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/legal/intended-purpose",
+   "boardHeadings": 6,
+   "liveHeadings": 5
+  },
+  {
+   "id": "legal_contributor",
+   "name": "Contributor terms",
+   "group": "Legal",
+   "route": "/legal/contributor-terms",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/legal/contributor-terms",
+   "boardHeadings": 6,
+   "liveHeadings": 1
+  },
+  {
+   "id": "legal_org",
+   "name": "Organisation leader terms",
+   "group": "Legal",
+   "route": "/legal/org-leader-terms",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/legal/org-leader-terms",
+   "boardHeadings": 6,
+   "liveHeadings": 1
+  },
+  {
+   "id": "hub",
+   "name": "My SPLAT",
+   "group": "My SPLAT",
+   "route": "/dashboard",
+   "findings": [
+    {
+     "type": "extra-section",
+     "severity": "medium",
+     "what": "live has an extra h2: \"money you have agreed to\"",
+     "board": null,
+     "live": "money you have agreed to"
+    }
+   ],
+   "role": "parent",
+   "finalUrl": "/dashboard",
+   "boardHeadings": 14,
+   "liveHeadings": 15
+  },
+  {
+   "id": "tutorials",
+   "name": "My tutorials",
+   "group": "My SPLAT",
+   "route": "/dashboard/tutorials",
+   "findings": [],
+   "role": "contributor",
+   "finalUrl": "/dashboard/tutorials",
+   "boardHeadings": 7,
+   "liveHeadings": 2
+  },
+  {
+   "id": "upload",
+   "name": "Add a tutorial",
+   "group": "My SPLAT",
+   "route": "/upload",
+   "findings": [],
+   "role": "contributor",
+   "finalUrl": "/upload",
+   "boardHeadings": 2,
+   "liveHeadings": 1
+  },
+  {
+   "id": "editor",
+   "name": "Tutorial editor",
+   "group": "My SPLAT",
+   "route": "/tutorials/744481ed-7d60-4851-84c8-22f1db12f07d/edit",
+   "findings": [],
+   "role": "contributor",
+   "finalUrl": "/tutorials/744481ed-7d60-4851-84c8-22f1db12f07d/edit",
+   "boardHeadings": 5,
+   "liveHeadings": 5
+  },
+  {
+   "id": "toys",
+   "name": "My toys",
+   "group": "My SPLAT",
+   "route": "/dashboard/toys",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/dashboard/toys",
+   "boardHeadings": 8,
+   "liveHeadings": 3
+  },
+  {
+   "id": "toy_new",
+   "name": "Add a toy",
+   "group": "My SPLAT",
+   "route": "/dashboard/toys/new",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/dashboard/toys/new",
+   "boardHeadings": 1,
+   "liveHeadings": 1
+  },
+  {
+   "id": "toy_detail",
+   "name": "Toy detail",
+   "group": "My SPLAT",
+   "route": "/dashboard/toys/3b32aa94-4b01-4dd3-ae47-982a0d70e0b5",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/dashboard/toys/3b32aa94-4b01-4dd3-ae47-982a0d70e0b5",
+   "boardHeadings": 7,
+   "liveHeadings": 6
+  },
+  {
+   "id": "exchanges",
+   "name": "My exchanges",
+   "group": "My SPLAT",
+   "route": "/dashboard/exchanges",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/dashboard/exchanges",
+   "boardHeadings": 14,
+   "liveHeadings": 9
+  },
+  {
+   "id": "thread",
+   "name": "Exchange thread",
+   "group": "My SPLAT",
+   "route": "/dashboard/exchanges/65af8788-16a1-491b-85d4-88a8f9e8e7f1",
+   "findings": [
+    {
+     "type": "extra-section",
+     "severity": "medium",
+     "what": "live has an extra h3: \"meeting them\"",
+     "board": null,
+     "live": "meeting them"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "6/6 board paragraphs absent",
+     "board": "you are receiving this from northside therapy collective",
+     "live": "you are receiving this from e#e contributor"
+    }
+   ],
+   "role": "parent",
+   "finalUrl": "/dashboard/exchanges/65af8788-16a1-491b-85d4-88a8f9e8e7f1",
+   "boardHeadings": 4,
+   "liveHeadings": 5
+  },
+  {
+   "id": "my_challenges",
+   "name": "My design challenges",
+   "group": "My SPLAT",
+   "route": "/dashboard/challenges",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/dashboard/challenges",
+   "boardHeadings": 7,
+   "liveHeadings": 3
+  },
+  {
+   "id": "saved",
+   "name": "Saved",
+   "group": "My SPLAT",
+   "route": "/dashboard/saved",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/dashboard/saved",
+   "boardHeadings": 5,
+   "liveHeadings": 5
+  },
+  {
+   "id": "saved_tutorials",
+   "name": "Saved tutorials",
+   "group": "My SPLAT",
+   "route": "/dashboard/saved/tutorials",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/dashboard/saved/tutorials",
+   "boardHeadings": 7,
+   "liveHeadings": 2
+  },
+  {
+   "id": "saved_toys",
+   "name": "Saved toys",
+   "group": "My SPLAT",
+   "route": "/dashboard/saved/toys",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/dashboard/saved/toys",
+   "boardHeadings": 5,
+   "liveHeadings": 2
+  },
+  {
+   "id": "saved_challenges",
+   "name": "Saved challenges",
+   "group": "My SPLAT",
+   "route": "/dashboard/saved/challenges",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/dashboard/saved/challenges",
+   "boardHeadings": 4,
+   "liveHeadings": 2
+  },
+  {
+   "id": "saved_orgs",
+   "name": "Saved organisations",
+   "group": "My SPLAT",
+   "route": "/dashboard/saved/organisations",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/dashboard/saved/organisations",
+   "boardHeadings": 4,
+   "liveHeadings": 2
+  },
+  {
+   "id": "notifications",
+   "name": "Notifications",
+   "group": "My SPLAT",
+   "route": "/notifications",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/notifications",
+   "boardHeadings": 1,
+   "liveHeadings": 1
+  },
+  {
+   "id": "print_requests",
+   "name": "My print requests",
+   "group": "My SPLAT",
+   "route": "/dashboard/print-requests",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/dashboard/print-requests",
+   "boardHeadings": 4,
+   "liveHeadings": 2
+  },
+  {
+   "id": "print_job",
+   "name": "Print job",
+   "group": "My SPLAT",
+   "route": "/dashboard/print-requests/c916fb95-9aee-4556-8541-92f9c33cf63c",
+   "findings": [
+    {
+     "type": "extra-section",
+     "severity": "medium",
+     "what": "live has an extra h3: \"waiting on the printer\"",
+     "board": null,
+     "live": "waiting on the printer"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "2/2 board paragraphs absent",
+     "board": "switch-mount-body.stl, switch-mount-clamp.stl, cradle-#mm.stl · with o",
+     "live": null
+    }
+   ],
+   "role": "parent",
+   "finalUrl": "/dashboard/print-requests/c916fb95-9aee-4556-8541-92f9c33cf63c",
+   "boardHeadings": 3,
+   "liveHeadings": 4
+  },
+  {
+   "id": "print_offer",
+   "name": "Print for others",
+   "group": "My SPLAT",
+   "route": "/dashboard/printers",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/dashboard/printers",
+   "boardHeadings": 4,
+   "liveHeadings": 2
+  },
+  {
+   "id": "print_add",
+   "name": "Add a printer",
+   "group": "My SPLAT",
+   "route": "/dashboard/printers/new",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/dashboard/printers/new",
+   "boardHeadings": 5,
+   "liveHeadings": 5
+  },
+  {
+   "id": "account",
+   "name": "Account",
+   "group": "My SPLAT",
+   "route": "/dashboard/profile",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/dashboard/profile",
+   "boardHeadings": 3,
+   "liveHeadings": 2
+  },
+  {
+   "id": "child",
+   "name": "Child profile",
+   "group": "My SPLAT",
+   "route": "/dashboard/child/48ef5886-c0cf-457a-83ec-1402d2355970",
+   "findings": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "page height differs grossly",
+     "board": "1166px",
+     "live": "2659px"
+    }
+   ],
+   "role": "parent",
+   "finalUrl": "/dashboard/child/48ef5886-c0cf-457a-83ec-1402d2355970",
+   "boardHeadings": 4,
+   "liveHeadings": 5
+  },
+  {
+   "id": "child_new",
+   "name": "Add child",
+   "group": "My SPLAT",
+   "route": "/dashboard/child/new",
+   "findings": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "page height differs grossly",
+     "board": "1166px",
+     "live": "2599px"
+    }
+   ],
+   "role": "parent",
+   "finalUrl": "/dashboard/child/new",
+   "boardHeadings": 4,
+   "liveHeadings": 5
+  },
+  {
+   "id": "org_queue",
+   "name": "Org review queue",
+   "group": "Organisation",
+   "route": "/dashboard/organisation",
+   "findings": [
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "1/1 board paragraphs absent",
+     "board": "guides waiting on northside therapy collective. oldest first.",
+     "live": "guides waiting on parity org mucodszfdgkq. oldest first."
+    }
+   ],
+   "role": "leader",
+   "finalUrl": "/dashboard/organisation",
+   "boardHeadings": 6,
+   "liveHeadings": 3
+  },
+  {
+   "id": "org_profile",
+   "name": "Organisation profile",
+   "group": "Organisation",
+   "route": "/dashboard/organisation/profile",
+   "findings": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"how to work with them\" has no counterpart",
+     "board": "how to work with them",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h3 \"$#\" has no counterpart",
+     "board": "$#",
+     "live": null
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "5/7 board paragraphs absent",
+     "board": "the suburb is public. a street address is only ever shown to someone y",
+     "live": "this is the page a family lands on before they ask you for anything. e"
+    },
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "card background",
+     "board": "rgb(240,249,255)",
+     "live": "rgb(250,249,247)"
+    }
+   ],
+   "role": "leader",
+   "finalUrl": "/dashboard/organisation/profile",
+   "boardHeadings": 7,
+   "liveHeadings": 7
+  },
+  {
+   "id": "org_toys",
+   "name": "Toy inventory",
+   "group": "Organisation",
+   "route": "/dashboard/organisation/toys",
+   "findings": [
+    {
+     "type": "extra-section",
+     "severity": "medium",
+     "what": "live has an extra h2: \"pickup details\"",
+     "board": null,
+     "live": "pickup details"
+    }
+   ],
+   "role": "leader",
+   "finalUrl": "/dashboard/organisation/toys",
+   "boardHeadings": 7,
+   "liveHeadings": 4
+  },
+  {
+   "id": "org_posts",
+   "name": "Events and stories",
+   "group": "Organisation",
+   "route": "/dashboard/organisation/publish",
+   "findings": [],
+   "role": "leader",
+   "finalUrl": "/dashboard/organisation/publish",
+   "boardHeadings": 3,
+   "liveHeadings": 3
+  },
+  {
+   "id": "org_event_new",
+   "name": "Publish an event",
+   "group": "Organisation",
+   "route": "/dashboard/organisation/events/new",
+   "findings": [],
+   "role": "leader",
+   "finalUrl": "/dashboard/organisation/events/new",
+   "boardHeadings": 2,
+   "liveHeadings": 1
+  },
+  {
+   "id": "org_story_new",
+   "name": "Publish a story",
+   "group": "Organisation",
+   "route": "/dashboard/organisation/stories/new",
+   "findings": [],
+   "role": "leader",
+   "finalUrl": "/dashboard/organisation/stories/new",
+   "boardHeadings": 1,
+   "liveHeadings": 1
+  },
+  {
+   "id": "org_orders",
+   "name": "Print orders",
+   "group": "Organisation",
+   "route": "/dashboard/organisation/orders",
+   "findings": [
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "5/6 board paragraphs absent",
+     "board": "switch-mount-body.stl, switch-mount-clamp.stl, cradle-#mm.stl",
+     "live": "every leader sees this queue. pickup is always the organisation's addr"
+    }
+   ],
+   "role": "leader",
+   "finalUrl": "/dashboard/organisation/orders",
+   "boardHeadings": 4,
+   "liveHeadings": 2
+  },
+  {
+   "id": "admin_content",
+   "name": "Site content",
+   "group": "Admin",
+   "route": "/admin/content",
+   "findings": [],
+   "role": "admin",
+   "finalUrl": "/admin/content",
+   "boardHeadings": 4,
+   "liveHeadings": 4
+  },
+  {
+   "id": "admin",
+   "name": "Admin dashboard",
+   "group": "Admin",
+   "route": "/admin",
+   "findings": [],
+   "role": "admin",
+   "finalUrl": "/admin",
+   "boardHeadings": 12,
+   "liveHeadings": 13
+  },
+  {
+   "id": "admin_review",
+   "name": "Review queue (live)",
+   "group": "Admin",
+   "route": "/admin/review",
+   "findings": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"guide g — musical drum\" has no counterpart",
+     "board": "guide g — musical drum",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "medium",
+     "what": "no inputs on live",
+     "board": 1,
+     "live": 0
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "1/1 board paragraphs absent",
+     "board": "contributor # · submitted # days",
+     "live": null
+    }
+   ],
+   "role": "admin",
+   "finalUrl": "/admin/review",
+   "boardHeadings": 2,
+   "liveHeadings": 1
+  },
+  {
+   "id": "admin_review_detail",
+   "name": "Review a tutorial",
+   "group": "Admin",
+   "route": "/admin/review/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+   "findings": [
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "1/1 board paragraphs absent",
+     "board": "sam mitchell · easy · age #–# · # minutes · northside therapy collecti",
+     "live": "seed contributor · medium · age #–# · toy adaptation · # minutes"
+    }
+   ],
+   "role": "admin",
+   "finalUrl": "/admin/review/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+   "boardHeadings": 8,
+   "liveHeadings": 6
+  },
+  {
+   "id": "admin_reports",
+   "name": "Reports",
+   "group": "Admin",
+   "route": "/admin/reports",
+   "findings": [],
+   "role": "admin",
+   "finalUrl": "/admin/reports",
+   "boardHeadings": 1,
+   "liveHeadings": 1
+  },
+  {
+   "id": "admin_ideas",
+   "name": "Ideas queue",
+   "group": "Admin",
+   "route": "/admin/ideas",
+   "findings": [],
+   "role": "admin",
+   "finalUrl": "/admin/ideas",
+   "boardHeadings": 6,
+   "liveHeadings": 11
+  },
+  {
+   "id": "admin_idea_detail",
+   "name": "Review an idea",
+   "group": "Admin",
+   "route": "/admin/ideas/6a9cd7ff-198d-4520-b338-8136bbe64960",
+   "findings": [
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "2/2 board paragraphs absent",
+     "board": "bubble machines are the one toy every child in the group reacts to, an",
+     "live": "a light box with three brightness steps."
+    }
+   ],
+   "role": "admin",
+   "finalUrl": "/admin/ideas/6a9cd7ff-198d-4520-b338-8136bbe64960",
+   "boardHeadings": 3,
+   "liveHeadings": 3
+  },
+  {
+   "id": "admin_prints",
+   "name": "Print jobs",
+   "group": "Admin",
+   "route": "/admin/print-jobs",
+   "findings": [],
+   "role": "admin",
+   "finalUrl": "/admin/print-jobs",
+   "boardHeadings": 1,
+   "liveHeadings": 1
+  },
+  {
+   "id": "admin_spot",
+   "name": "Spot-check",
+   "group": "Admin",
+   "route": "/admin/spot-check",
+   "findings": [],
+   "role": "admin",
+   "finalUrl": "/admin/spot-check",
+   "boardHeadings": 1,
+   "liveHeadings": 1
+  },
+  {
+   "id": "admin_orgs",
+   "name": "Organisations",
+   "group": "Admin",
+   "route": "/admin/organizations",
+   "findings": [],
+   "role": "admin",
+   "finalUrl": "/admin/organizations",
+   "boardHeadings": 1,
+   "liveHeadings": 1
+  },
+  {
+   "id": "admin_contributors",
+   "name": "Accounts",
+   "group": "Admin",
+   "route": "/admin/contributors",
+   "findings": [],
+   "role": "admin",
+   "finalUrl": "/admin/contributors",
+   "boardHeadings": 1,
+   "liveHeadings": 1
+  },
+  {
+   "id": "login",
+   "name": "Sign in",
+   "group": "Auth",
+   "route": "/login",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/login",
+   "boardHeadings": 3,
+   "liveHeadings": 3
+  },
+  {
+   "id": "signup",
+   "name": "Create account",
+   "group": "Auth",
+   "route": "/signup",
+   "findings": [
+    {
+     "type": "radius",
+     "severity": "medium",
+     "what": "card radius",
+     "board": "18px",
+     "live": "24px"
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "none",
+     "live": "set"
+    }
+   ],
+   "role": "guest",
+   "finalUrl": "/signup",
+   "boardHeadings": 2,
+   "liveHeadings": 2
+  },
+  {
+   "id": "signup_sent",
+   "name": "Check your email",
+   "group": "Auth",
+   "route": "/signup",
+   "findings": [
+    {
+     "type": "font",
+     "severity": "high",
+     "what": "card title font",
+     "board": "Baloo 2",
+     "live": "Nunito"
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "card title size",
+     "board": "25px",
+     "live": "15px"
+    }
+   ],
+   "role": "guest",
+   "finalUrl": "/signup",
+   "boardHeadings": 3,
+   "liveHeadings": 2
+  },
+  {
+   "id": "confirmed",
+   "name": "Email confirmed",
+   "group": "Auth",
+   "route": "/auth/confirmed",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/auth/confirmed",
+   "boardHeadings": 3,
+   "liveHeadings": 3
+  },
+  {
+   "id": "terms_gate",
+   "name": "Contributor terms gate",
+   "group": "Auth",
+   "route": "/onboarding/contributor-terms",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/onboarding/contributor-terms",
+   "boardHeadings": 8,
+   "liveHeadings": 3
+  },
+  {
+   "id": "components",
+   "name": "Component sheet",
+   "group": "Prototype",
+   "route": "/design-system",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/design-system",
+   "boardHeadings": 9,
+   "liveHeadings": 9
+  },
+  {
+   "id": "states",
+   "name": "Interaction states",
+   "group": "Prototype",
+   "route": "/design-system/states",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/design-system/states",
+   "boardHeadings": 6,
+   "liveHeadings": 6
+  }
+ ],
+ "summary": {
+  "screens": 118,
+  "clean": 92,
+  "withFindings": 26,
+  "errored": 0,
+  "findings": 48,
+  "byType": {
+   "size": 4,
+   "extra-section": 7,
+   "copy": 14,
+   "missing-section": 14,
+   "colour": 4,
+   "shadow": 3,
+   "radius": 1,
+   "font": 1
+  }
+ }
+}

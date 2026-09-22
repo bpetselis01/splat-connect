@@ -18,12 +18,12 @@ jest.mock('expo-router', () => {
 
 beforeEach(() => {
   jest.clearAllMocks()
-  mockGet.mockResolvedValue({ tutorials: [], toys: [], challenges: [] })
+  mockGet.mockResolvedValue({ tutorials: [], toys: [], challenges: [], organisations: [] })
 })
 
 describe('SavedScreen', () => {
   it('counts each type on its tile', async () => {
-    mockGet.mockResolvedValue({ tutorials: ['t1', 't2'], toys: ['y1'], challenges: [] })
+    mockGet.mockResolvedValue({ tutorials: ['t1', 't2'], toys: ['y1'], challenges: [], organisations: ['o1'] })
     render(<SavedScreen />)
 
     expect(await screen.findByText('Guides')).toBeTruthy()
@@ -31,7 +31,8 @@ describe('SavedScreen', () => {
     expect(screen.getByRole('button', { name: 'Guides' }).props.accessibilityHint).toContain('2 saved')
     expect(screen.getByRole('button', { name: 'Toys' }).props.accessibilityHint).toContain('1 saved')
     expect(screen.getByRole('button', { name: 'Challenges' }).props.accessibilityHint).toContain('Nothing saved')
-    expect(tiles.length).toBeGreaterThanOrEqual(3)
+    expect(screen.getByRole('button', { name: 'Organisations' }).props.accessibilityHint).toContain('1 saved')
+    expect(tiles.length).toBeGreaterThanOrEqual(4)
     expect(mockGet).toHaveBeenCalledWith('/api/saves/ids')
   })
 
@@ -43,6 +44,8 @@ describe('SavedScreen', () => {
     expect(mockPush).toHaveBeenCalledWith('/saved/toys')
     fireEvent.press(screen.getByRole('button', { name: 'Challenges' }))
     expect(mockPush).toHaveBeenCalledWith('/saved/challenges')
+    fireEvent.press(screen.getByRole('button', { name: 'Organisations' }))
+    expect(mockPush).toHaveBeenCalledWith('/saved/organisations')
   })
 
   it('offers a retry when the counts fail, and recovers on it', async () => {
@@ -51,7 +54,7 @@ describe('SavedScreen', () => {
 
     expect(await screen.findByText("Couldn't load what you've saved.")).toBeTruthy()
 
-    mockGet.mockResolvedValue({ tutorials: ['t1'], toys: [], challenges: [] })
+    mockGet.mockResolvedValue({ tutorials: ['t1'], toys: [], challenges: [], organisations: [] })
     fireEvent.press(screen.getByRole('button', { name: 'Try again' }))
     await waitFor(() =>
       expect(screen.getByRole('button', { name: 'Guides' }).props.accessibilityHint).toContain('1 saved')

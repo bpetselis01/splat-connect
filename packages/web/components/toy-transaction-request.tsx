@@ -1,11 +1,28 @@
-'use client'
-
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import type { Route } from 'next'
+/**
+ * The way in to asking for a toy.
+ *
+ * It used to BE the ask: two buttons and a bare select, which posted a
+ * transaction with no note at all. The artboard gives asking its own screen —
+ * how you are asking, what you are offering, and a paragraph about a child —
+ * and that last part is the one the whole exchange turns on: "a line or two
+ * about the child is what gets a yes."
+ *
+ * So this states the offer and hands over. It stays a component rather than
+ * being inlined into the detail page because the "what does pressing this do"
+ * sentence differs by offer_type, and that reasoning belongs next to the
+ * control rather than in a page's JSX.
+ *
+ * No longer a client component: there is nothing to hold. The one piece of
+ * state it had — which toy you were offering — moved to the screen that needs
+ * it.
+ *
+ * Related files:
+ * - app/toy-library/[id]/request/page.tsx: where this goes
+ */
 import Link from 'next/link'
-import { browserApiClient } from '@/lib/browser-api-client'
-import type { Toy, ToyTransaction, ToyWithOwner } from '@splat-connect/types'
+import type { Route } from 'next'
+import { ArrowsLeftRight, HandHeart, LockSimple } from '@phosphor-icons/react/dist/ssr'
+import { toyHolderName, type Toy, type ToyWithOwner } from '@splat-connect/types'
 
 export function ToyTransactionRequest({
   toy,
@@ -14,115 +31,56 @@ export function ToyTransactionRequest({
 }: {
   toy: ToyWithOwner
   viewerId: string | null
+  /** Kept in the signature: the copy below says whether a swap is possible. */
   myToys: Toy[]
 }) {
-  const router = useRouter()
-  const [mode, setMode] = useState<'idle' | 'choosing-exchange'>('idle')
-  const [offeredToyId, setOfferedToyId] = useState('')
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  if (!viewerId) {
-    return (
-      <p className="text-sm text-muted">
-        <Link href="/login" className="font-semibold text-brand-dark underline">
-          Sign in
-        </Link>{' '}
-        to request this toy.
-      </p>
-    )
-  }
-  if (viewerId === toy.owner_id) return null
+  // Your own toy, or your organisation's. The API refuses either; saying so
+  // here is what stops somebody pressing a button that will refuse itself.
+  if (viewerId && viewerId === toy.owner_id) return null
   if (!toy.offer_type) {
-    return <p className="text-sm text-muted">Not currently offered for donation or exchange.</p>
+    return <p className="m-0 text-sm text-muted">Not currently offered for donation or exchange.</p>
   }
 
-  async function start(type: 'donation' | 'exchange', offered_toy_id?: string) {
-    setBusy(true)
-    setError(null)
-    try {
-      const tx = await browserApiClient.post<ToyTransaction>('/api/toy-transactions', {
-        toy_id: toy.id,
-        type,
-        ...(offered_toy_id ? { offered_toy_id } : {}),
-      })
-      router.push(`/dashboard/exchanges/${tx.id}` as Route<string>)
-    } catch {
-      setError('Could not start this request. Please try again.')
-    } finally {
-      setBusy(false)
-    }
-  }
-
+  const holder = toyHolderName(toy) ?? 'the holder'
   const canDonate = toy.offer_type === 'donation' || toy.offer_type === 'both'
   const canExchange = toy.offer_type === 'exchange' || toy.offer_type === 'both'
 
+  // The board's rail: one button per way this toy can be asked for, the
+  // first filled. Each lands on the request screen with its mode picked; a
+  // signed-out visitor is sent through sign-in to the same place.
+  const actions = [
+    canDonate && { mode: 'donation', label: 'Ask to collect it', guest: 'Sign in to ask for it', Icon: HandHeart },
+    canExchange && { mode: 'exchange', label: 'Offer a swap', guest: 'Sign in to offer a swap', Icon: ArrowsLeftRight },
+  ].filter((a) => a !== false)
+
   return (
-    <div className="card-flat flex flex-col gap-3 p-4">
-      {error && (
-        <p role="alert" className="alert alert-danger">
-          {error}
-        </p>
-      )}
-      {/* Says what pressing either button actually does. Both of them open a
-          conversation with the owner rather than completing anything, which the
-          labels alone ("Arrange pickup") do not make obvious. */}
-      <p className="text-sm leading-relaxed text-muted">
-        {canDonate && canExchange
-          ? 'Ask to collect this toy, or offer one of yours in exchange. Either way it starts a conversation with the owner.'
-          : canDonate
-            ? 'Ask to collect this toy. This starts a conversation with the owner.'
-            : 'Offer one of your toys in exchange. This starts a conversation with the owner.'}
+    <>
+      {actions.map(({ mode, label, guest, Icon }, i) => {
+        const request = `/toy-library/${toy.id}/request?mode=${mode}`
+        return (
+          <Link
+            key={mode}
+            href={(viewerId ? request : `/login?next=${encodeURIComponent(request)}`) as Route}
+            className={`btn ${i === 0 ? 'btn-primary' : 'btn-quiet'} btn-lg btn-block no-underline`}
+          >
+            {viewerId ? (
+              <Icon size={20} weight="bold" aria-hidden="true" />
+            ) : (
+              <LockSimple size={20} weight="bold" aria-hidden="true" />
+            )}
+            {viewerId ? label : guest}
+          </Link>
+        )
+      })}
+      {/* Says what pressing this actually does. It opens a conversation with
+          the holder rather than completing anything, which the label alone
+          does not make obvious. */}
+      <p className="m-0 text-[13px] leading-[1.5] text-muted">
+        {viewerId
+          ? `Given, not sold. This opens a chat with ${holder} in My exchanges — nothing is agreed until you both confirm. They never see your address.`
+          : `Given, not sold. Sign in first so ${holder} knows who is asking — they see your name and your note, never your address.`}
+        {viewerId && canExchange && myToys.length === 0 && ' You have no listed toys to offer yet.'}
       </p>
-      {canDonate && (
-        <button type="button" disabled={busy} onClick={() => start('donation')} className="btn btn-accent">
-          Arrange pickup
-        </button>
-      )}
-      {canExchange && mode === 'idle' && (
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => {
-            if (myToys.length === 0) {
-              setError('Add a toy to My Toys before you can offer an exchange.')
-              return
-            }
-            setMode('choosing-exchange')
-          }}
-          className="btn btn-quiet"
-        >
-          Arrange exchange
-        </button>
-      )}
-      {mode === 'choosing-exchange' && (
-        <div className="flex flex-col gap-2">
-          <label htmlFor="offered-toy" className="field-label">
-            Offer one of your toys
-          </label>
-          <select
-            id="offered-toy"
-            className="field"
-            value={offeredToyId}
-            onChange={(e) => setOfferedToyId(e.target.value)}
-          >
-            <option value="">Choose a toy…</option>
-            {myToys.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
-          </select>
-          <button
-            type="button"
-            disabled={busy || !offeredToyId}
-            onClick={() => start('exchange', offeredToyId)}
-            className="btn btn-accent"
-          >
-            {busy ? 'Starting…' : 'Start exchange'}
-          </button>
-        </div>
-      )}
-    </div>
+    </>
   )
 }

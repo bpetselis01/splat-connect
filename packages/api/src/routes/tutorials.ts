@@ -9,6 +9,7 @@ import { Hono } from 'hono'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { pickEditable } from './pick-editable.js'
 import { notifyTutorialSubmitted } from '../review-notifications.js'
+import { removeDroppedPhotos } from '../photo-storage.js'
 import type { AuthVariables } from '../middleware/auth.js'
 
 const tutorials = new Hono<{ Variables: AuthVariables }>()
@@ -136,7 +137,7 @@ tutorials.post('/', async (c) => {
       description: body.description ?? null,
       status: 'draft',
       tutorial_pdf_url: body.tutorial_pdf_url ?? null,
-      toy_photo_url: body.toy_photo_url ?? null,
+      photo_urls: body.photo_urls ?? [],
     })
     .select()
     .single()
@@ -156,7 +157,7 @@ tutorials.post('/', async (c) => {
 /** Only these may be set through the generic edit endpoint. Unknown keys are
  *  dropped silently; the protected ones return 403 so a caller learns rather than
  *  wonders. */
-const EDITABLE = ['title', 'description', 'difficulty', 'kind', 'maturity', 'tutorial_pdf_url', 'toy_photo_url', 'status'] as const
+const EDITABLE = ['title', 'description', 'difficulty', 'kind', 'maturity', 'build_minutes', 'age_min', 'age_max', 'tutorial_pdf_url', 'photo_urls', 'status'] as const
 const PROTECTED = ['reviewed_by', 'reviewed_for_org_id', 'reviewed_at', 'rejection_note']
 
 async function hasAcceptedContributorTerms(token: string, userId: string) {
@@ -211,12 +212,33 @@ tutorials.patch('/:id', async (c) => {
   // pending is one event; a later save that happens to resend status 'pending'
   // (the editor sends the whole form) is not, and notifying on it would have
   // meant a leader's badge climbing every time an author fixed a typo.
+  // Read before the write, and only when photos are part of this save: the
+  // sweep below needs to know which URLs the row held a moment ago.
+  const photosBefore = Array.isArray(body.photo_urls)
+    ? (
+        await supabase
+          .from('tutorials')
+          .select('photo_urls')
+          .eq('id', c.req.param('id'))
+          .maybeSingle()
+      ).data?.photo_urls
+    : null
+
+  // A guide that has a photo keeps one — same transition rule as toys.ts, and
+  // the same reason it is not a check constraint: a draft starts with none.
+  if (Array.isArray(body.photo_urls) && body.photo_urls.length === 0 && (photosBefore?.length ?? 0) > 0) {
+    return c.json(
+      { error: 'Every guide needs at least one photo. Add another before removing this one.' },
+      400
+    )
+  }
+
   const submitting = body.status === 'pending'
   const current = submitting
     ? (
         await supabase
           .from('tutorials')
-          .select('status, safety_declared_at')
+          .select('status, safety_declared_at, build_minutes')
           .eq('id', c.req.param('id'))
           .maybeSingle()
       ).data
@@ -229,6 +251,13 @@ tutorials.patch('/:id', async (c) => {
   if (submitting && !current?.safety_declared_at && !update.safety_declared_at) {
     return c.json({ error: 'The safety declaration is required before submitting' }, 400)
   }
+  // Same shape as the safety gate, for the library's Time facet and sort (066):
+  // a published guide always has a build time. `in update` rather than `??`
+  // because a save that clears the field to null must not count as having it.
+  const buildMinutes = 'build_minutes' in update ? update.build_minutes : current?.build_minutes
+  if (submitting && buildMinutes == null) {
+    return c.json({ error: 'Add how long the build takes before submitting' }, 400)
+  }
 
   const { data, error } = await supabase
     .from('tutorials')
@@ -236,7 +265,9 @@ tutorials.patch('/:id', async (c) => {
     .eq('id', c.req.param('id'))
     .eq('updated_at', body.updated_at)
     .select()
-  if (error) return c.json({ error: error.message }, 500)
+  // 23514 is a check constraint (build_minutes' range, 071's age bounds and
+  // ordering): the caller's values, not the server's fault.
+  if (error) return c.json({ error: error.message }, error.code === '23514' ? 400 : 500)
   if (!data.length) {
     // Zero rows: either RLS refused (not a contributor / trying to set a
     // forbidden status), or someone else saved first. The generic message
@@ -246,6 +277,9 @@ tutorials.patch('/:id', async (c) => {
     // tutorial's own contributor.
     return c.json({ error: 'This was updated by someone else while you were editing.' }, 409)
   }
+  // After the write, not before: a photo's object outlives a save that failed.
+  if (photosBefore) await removeDroppedPhotos('toy-photos', photosBefore, data[0].photo_urls)
+
   // After the update commits, so a failed notify cannot lose a submission.
   if (wasDraft) {
     await notifyTutorialSubmitted({
@@ -255,6 +289,68 @@ tutorials.patch('/:id', async (c) => {
     })
   }
   return c.json(data[0])
+})
+
+/**
+ * Thanks (066): one tap adds one to a guide's public count, once per person.
+ *
+ * The approved check and the own-guide check read through the admin client —
+ * an unapproved guide is invisible to a stranger, and the contributor list is
+ * not theirs to read — but the insert goes through the caller's client, so
+ * RLS's "Thank as yourself" is what stamps whose thank it is.
+ */
+async function thanksContext(id: string, userId: string) {
+  const { data } = await createAdminClient()
+    .from('tutorials')
+    .select('title, status, tutorial_contributors(profile_id)')
+    .eq('id', id)
+    .maybeSingle()
+  if (!data || data.status !== 'approved') return null
+  const credited = (data.tutorial_contributors as { profile_id: string }[]).map((p) => p.profile_id)
+  return { title: data.title as string, credited, own: credited.includes(userId) }
+}
+
+tutorials.get('/:id/thanks', async (c) => {
+  const ctx = await thanksContext(c.req.param('id'), c.get('userId'))
+  if (!ctx) return c.json({ error: 'Not found' }, 404)
+  const { data } = await createUserClient(c.get('token'))
+    .from('tutorial_thanks')
+    .select('tutorial_id')
+    .eq('tutorial_id', c.req.param('id'))
+    .maybeSingle()
+  return c.json({ thanked: !!data, own: ctx.own })
+})
+
+tutorials.post('/:id/thanks', async (c) => {
+  const id = c.req.param('id')
+  const userId = c.get('userId')
+  const ctx = await thanksContext(id, userId)
+  if (!ctx) return c.json({ error: 'Not found' }, 404)
+  if (ctx.own) return c.json({ error: "You can't thank your own guide" }, 403)
+
+  const { error } = await createUserClient(c.get('token'))
+    .from('tutorial_thanks')
+    .insert({ tutorial_id: id, profile_id: userId })
+  if (error?.code === '23505') return c.json({ error: 'You already thanked them' }, 409)
+  if (error) return c.json({ error: error.message }, 500)
+
+  const admin = createAdminClient()
+  // No actor name, on purpose: who thanked which guide is the private half of
+  // this feature (066's RLS), and a notification is the easiest place to leak
+  // it. Logged, never thrown — the thank has already been counted.
+  const { error: notifyError } = await admin.from('notifications').insert(
+    ctx.credited.map((recipient_id) => ({
+      recipient_id,
+      type: 'tutorial_thanked',
+      tutorial_id: id,
+      tutorial_title: ctx.title,
+      actor_name: 'A family',
+    }))
+  )
+  if (notifyError) console.error('[thanks] notify failed:', notifyError.message)
+
+  const { data } = await admin.from('tutorials').select('thanks_count').eq('id', id).single()
+  return c.json({ thanks_count: (data as { thanks_count: number } | null)?.thanks_count ?? 0 }, 201)
 })
 
 tutorials.delete('/:id', async (c) => {

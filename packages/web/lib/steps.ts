@@ -36,6 +36,12 @@ export interface Step<Id extends string> {
    *  row-level action that is not a step at all (Delete toy, Delete child) and
    *  so stays out of the tablist. */
   offWalk?: boolean
+  /** The rail layout's glyph beside the label, and the section card's own
+   *  heading and one-line hint above the content. The pill row ignores all
+   *  three. */
+  icon?: ReactNode
+  heading?: string
+  hint?: string
 }
 
 /**

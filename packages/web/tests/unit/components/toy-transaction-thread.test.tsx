@@ -22,9 +22,29 @@ function tx(overrides: Partial<ToyTransactionDetail> = {}): ToyTransactionDetail
     pickup_state: null,
     pickup_postcode: null,
     pickup_instructions: null,
+    tutorial_id: null,
+    build_brief: null,
+    travel_km: null,
+    urgency: null,
+    child_label: null,
+    requester_suburb: null,
+    family_has_toy: false,
+    working_photo_url: null,
+    work_approved_at: null,
+    printer_id: null,
+    event_id: null,
+    part_sets: null,
+    print_note: null,
+    printing_started_at: null,
+    ready_at: null,
+    ready_photo_url: null,
+    decline_reason: null,
     created_at: '2026-08-01T00:00:00Z',
     updated_at: '2026-08-01T00:00:00Z',
     toy_name: 'Fire truck',
+    tutorial_title: null,
+    printer: null,
+    print_files: [],
     offered_toy_name: null,
     owner_name: 'Sam',
     requester_name: 'Ash',
@@ -442,5 +462,30 @@ describe('ToyTransactionThread for an organisation', () => {
   it('names the organisation as the other party for the family', () => {
     renderAs(orgTx(), 'requester-1', [])
     expect(screen.getAllByText(/Cerebral Palsy Alliance/).length).toBeGreaterThan(0)
+  })
+
+  // Tests: the board variant keeps the e2e's handoff-code contract and says
+  //        what changes hands
+  // How:   an accepted donation seen by the requester; reads the code label's
+  //        own textContent and the aside's You give / You receive rows
+  // Chain: tests/e2e/toy-exchange.spec.ts pulls /\d{6}/ out of the element
+  //        that carries "Your handover code"
+  it('board variant: code tiles sit inside the label node, and the toy card says who gives what', () => {
+    render(
+      <ToyTransactionThread
+        transaction={tx({ status: 'accepted', owner_code: '111111', requester_code: '222222' })}
+        viewerId="requester-1"
+        variant="board"
+        onSendMessage={noop}
+        onAccept={noop}
+        onReject={noop}
+        onWithdraw={noop}
+        onConfirm={noop}
+      />
+    )
+    expect(screen.getByText(/your handover code/i).textContent).toMatch(/222222/)
+    expect(screen.getByText('Waiting on you')).toBeInTheDocument()
+    expect(screen.getByText('Nothing — it is a donation')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /withdraw the request/i })).toBeInTheDocument()
   })
 })

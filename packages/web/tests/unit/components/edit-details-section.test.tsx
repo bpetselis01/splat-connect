@@ -19,7 +19,11 @@ const tutorial: Tutorial = {
   status: 'draft',
   maturity: 'complete',
   safety_declared_at: '2026-08-01T00:00:00Z',
+  build_minutes: 30,
+  age_min: null,
+  age_max: null,
   tutorial_pdf_url: null,
+  photo_urls: [],
   toy_photo_url: null,
   rejection_note: null,
   created_at: '',
@@ -39,6 +43,19 @@ describe('EditDetailsSection', () => {
     fireEvent.click(screen.getByText('Save details'))
     await waitFor(() =>
       expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ kind: 'assistive_tech' }))
+    )
+  })
+
+  // Tests: the age range goes out as numbers, and a blank end as null
+  // Chain: 0 is a real youngest age, so `Number(x) || null` (build_minutes'
+  //        idiom) would have turned "Age 0–3" into "Up to age 3" on every save
+  it('submits the age range, keeping 0 and sending a blank end as null', async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined)
+    render(<EditDetailsSection tutorial={tutorial} onSave={onSave} />)
+    fireEvent.change(screen.getByLabelText('Youngest age'), { target: { value: '0' } })
+    fireEvent.click(screen.getByText('Save details'))
+    await waitFor(() =>
+      expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ age_min: 0, age_max: null }))
     )
   })
 

@@ -44,14 +44,14 @@ test('accepting on first login lands on the dashboard with its real header, not 
   await page.waitForURL(/\/onboarding\/contributor-terms/)
 
   await page.getByRole('checkbox').check()
-  await page.getByRole('button', { name: /I accept/i }).click()
+  await page.getByRole('button', { name: 'Accept and continue' }).click()
 
   await page.waitForURL('**/dashboard')
   // /dashboard has no rail (it keeps the header instead) — the bare
   // onboarding layout has neither, so the header's presence is what proves
   // this landed on the real layout.
   await expect(page.getByRole('banner')).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'My SPLAT', level: 1 })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /^Welcome back,/, level: 1 })).toBeVisible()
 })
 
 test('accepting returns the user to where they were blocked and unblocks editing', async ({ page }) => {
@@ -69,7 +69,7 @@ test('accepting returns the user to where they were blocked and unblocks editing
   await expect(page).toHaveURL(/\/onboarding\/contributor-terms/)
 
   await page.getByRole('checkbox').check()
-  await page.getByRole('button', { name: /I accept/i }).click()
+  await page.getByRole('button', { name: 'Accept and continue' }).click()
 
   await expect(page).toHaveURL(new RegExp(`/tutorials/${tutorialId}/edit`))
 

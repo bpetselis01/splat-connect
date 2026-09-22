@@ -40,14 +40,14 @@ export function Chip({
     backgroundColor: interpolateColor(
       on.value,
       [0, 1],
-      [theme.colors.surface, theme.colors.ink]
+      [theme.colors.surface, theme.colors.primaryDark]
     ),
-    // The border no longer changes with selection — always ink.
-    borderColor: interpolateColor(on.value, [0, 1], [theme.colors.ink, theme.colors.ink]),
+    // The hairline stays; a selected chip is a brand fill, not an ink one.
+    borderColor: interpolateColor(on.value, [0, 1], [theme.colors.border, theme.colors.primaryDark]),
   }))
 
   const text = useAnimatedStyle(() => ({
-    color: interpolateColor(on.value, [0, 1], [theme.colors.ink, theme.colors.background]),
+    color: interpolateColor(on.value, [0, 1], [theme.colors.ink, theme.colors.surface]),
   }))
 
   return (
@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
   chip: { borderRadius: theme.radii.pill, minHeight: 40, justifyContent: 'center' },
   fill: {
     borderRadius: theme.radii.pill,
-    borderWidth: theme.border.thin,
+    borderWidth: theme.border.hairline,
     paddingVertical: theme.spacing(2),
     paddingHorizontal: theme.spacing(4),
     alignItems: 'center',

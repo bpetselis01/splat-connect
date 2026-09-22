@@ -1,109 +1,84 @@
 import Link from 'next/link'
-import { ProsePage } from '@/components/prose-page'
+import { WarningCircle } from '@phosphor-icons/react/dist/ssr'
+import { LearnShell } from '@/components/learn-shell'
+import { KitTable, LessonH2, type KitRow } from '@/components/lesson-kit'
 
 export const metadata = {
   title: 'Tools and materials — SPLAT Connect',
   description: 'The shopping list, and what you can borrow instead of buying.',
 }
 
+// The workshop's own kit list, with its own product shots. Two tables because
+// the costs mean different things: equipment is bought once, consumables are
+// priced per unit and used up.
+const EQUIPMENT: KitRow[] = [
+  { item: 'Soldering station (iron + heat gun)', why: 'Iron joins the wires to the circuit; the heat gun shrinks the insulation over the joint.', shop: 'Jaycar', qty: '1', cost: '$87.95', img: '/learn/img/04.jpeg' },
+  { item: 'Fume extraction fan', why: 'Filters solder fumes. Sit it as close to the work as you can — room ventilation is still needed.', shop: 'Jaycar', qty: '1', cost: '$79.95', img: '/learn/img/05.jpeg' },
+  { item: 'Helping hands', why: 'Clamps that hold the part while you solder, so you are never holding hot metal.', shop: 'Jaycar', qty: '1', cost: '$14.95', img: '/learn/img/06.png' },
+  { item: 'Wire strippers', why: 'Takes the PVC off the wire and leaves the copper strands intact.', shop: 'Jaycar', qty: '1', cost: '$24.95', img: '/learn/img/07.png' },
+  { item: 'Pliers', why: 'Holding parts that get hot, and bending switch legs to 90°.', shop: 'Jaycar', qty: '1', cost: '$16.50', img: '/learn/img/08.png' },
+  { item: 'Screwdriver set', why: 'Opening toys. Size and head shape depend on the toy — triangular heads turn up more than you would think.', shop: 'Bunnings', qty: '1', cost: '$4.95', img: '/learn/img/09.jpeg' },
+  { item: 'Multimeter', why: 'Continuity mode proves a joint works before you close the toy up. The single most useful thing for diagnosing a build that will not go.', shop: 'Jaycar', qty: '1', cost: '$33.95', img: '/learn/img/10.jpeg' },
+  { item: 'Heat-proof mat', why: 'Silicone mat under the work so you do not burn the kitchen table.', shop: 'Jaycar', qty: '1', cost: '$24.95', img: '/learn/img/11.jpeg' },
+]
+
+const CONSUMABLES: KitRow[] = [
+  { item: 'Solder', why: 'Joins wire to circuit board.', shop: 'Jaycar', qty: '15 g', cost: '$4.55', img: '/learn/img/12.jpeg' },
+  { item: 'Heat shrink, 1.5 mm', why: 'Covers small exposed wires and solder points.', shop: 'Jaycar', qty: '1.2 m', cost: '$1.55', img: '/learn/img/13.jpeg' },
+  { item: 'Heat shrink, 2.5 mm', why: 'Covers larger joints — you want one of each size per connector.', shop: 'Jaycar', qty: '1.2 m', cost: '$1.75', img: '/learn/img/13.jpeg' },
+  { item: 'Light-duty speaker cable', why: 'The wire between switch and socket. Toys need about 10 cm; switches need 1–2 m.', shop: 'Jaycar', qty: '1 m', cost: '$0.70', img: '/learn/img/14.jpeg' },
+  { item: '3.5 mm mono socket', why: 'Goes in the toy. This is what a jelly bean switch plugs into.', shop: 'Jaycar', qty: 'each', cost: '$0.95', img: '/learn/img/19.jpeg' },
+  { item: '3.5 mm mono jack', why: 'Goes on the switch. The standard across every accessible interface.', shop: 'Jaycar', qty: 'each', cost: '$1.95', img: '/learn/img/18.jpeg' },
+  { item: 'Flux', why: 'Helps solder flow. Makes a first solder joint much more forgiving.', shop: 'Jaycar', qty: '10 g', cost: '$16.95', img: '/learn/img/15.png', optional: true },
+]
+
 export default function ToolsAndMaterials() {
   return (
-    <ProsePage
-      title="Tools and materials"
-      intro="A first adaptation needs surprisingly little. Here is what actually gets used, separated from what a hobby electronics shop will try to sell you."
-    >
-      <section>
-        <h2>The minimum</h2>
-        <ul>
-          <li>
-            <strong>A small Phillips screwdriver set.</strong> Toy screws are tiny, and
-            often recessed down a narrow shaft. This is the tool you will reach for on
-            every single build.
-          </li>
-          <li>
-            <strong>Wire strippers,</strong> or a sharp pair of side cutters and
-            patience.
-          </li>
-          <li>
-            <strong>Stranded hook-up wire, 22&ndash;24 AWG.</strong> Stranded, not solid:
-            solid core work-hardens and snaps where it flexes.
-          </li>
-          <li>
-            <strong>3.5 mm mono sockets.</strong> Buy ten; they cost very little and you
-            will use them all.
-          </li>
-          <li>
-            <strong>Heat-shrink tubing</strong> in two or three diameters. Insulating
-            tape works but comes unstuck inside a toy that gets shaken.
-          </li>
-        </ul>
-      </section>
-
-      <section>
-        <h2>Soldering, when you get to it</h2>
-        <p>
-          A temperature-controlled iron around 30&ndash;60 W, 60/40 or lead-free rosin-core
-          solder, a brass-wool tip cleaner, and a stand. A cheap fixed-temperature iron
-          will do a first build, but it will also lift pads and melt plastic, so it is a
-          false economy if you plan more than one.
+    <LearnShell slug="tools-and-materials">
+      <div className="mt-[26px] flex items-start gap-3 rounded-[var(--radius-inset)] border border-line bg-[var(--tamber)] px-5 py-4">
+        <WarningCircle size={24} weight="fill" className="flex-none text-[var(--tink)]" aria-hidden="true" />
+        <p className="text-[15px] font-semibold leading-[1.55] text-[var(--tink)]">
+          Prices are indicative and change. Everything here is stocked by Jaycar and Bunnings because
+          they are the easiest to reach — online stores and sales are usually cheaper if you can wait.
+          Read the next lesson on{' '}
+          <Link href="/learn/safety-and-cleaning" className="font-extrabold text-[var(--tink)]!">
+            safe handling
+          </Link>{' '}
+          before you use any of it.
         </p>
-        <p>
-          Helping hands or a small vice are not optional in practice — two hands are
-          already committed to the iron and the solder.
-        </p>
-      </section>
+      </div>
 
-      <section>
-        <h2>Nice to have</h2>
-        <ul>
-          <li>
-            <strong>A multimeter.</strong> Continuity mode alone will save you an hour
-            per build. It answers &ldquo;is this joint actually connected&rdquo; without
-            guessing.
-          </li>
-          <li>
-            <strong>A plastic spudger or guitar pick,</strong> for opening clipped cases
-            without gouging them.
-          </li>
-          <li>
-            <strong>A parts tray with compartments.</strong> Toy screws are different
-            lengths and go back in specific holes.
-          </li>
-          <li>
-            <strong>Cable ties</strong> for strain relief, trimmed flush.
-          </li>
-        </ul>
-      </section>
+      <div className="mt-[26px]">
+        <KitTable
+          rows={EQUIPMENT}
+          head={['Item', 'What it is for', 'Where · qty · cost']}
+          caption={{
+            title: 'Equipment — buy once, adapt anything',
+            sub: 'One-off purchases. Borrow before you buy where you can.',
+          }}
+          total={{ label: 'Full kit, bought new', value: '$288.15' }}
+          photoFit="contain"
+        />
+      </div>
+      <div className="mt-[22px]">
+        <KitTable
+          rows={CONSUMABLES}
+          head={['Material', 'What it is for', 'Where · unit · cost']}
+          caption={{
+            title: 'Consumables — used up as you go',
+            sub: 'Sold by length or weight, so the cost is per unit, not per toy.',
+          }}
+          photoFit="contain"
+        />
+      </div>
 
-      <section>
-        <h2>Battery interrupters</h2>
-        <p>
-          Buy them, or print them. Commercial ones cost a few dollars each and work
-          immediately. Printed ones need a thin conductive contact — copper tape or a
-          trimmed brass shim — and are worth it if you are doing many builds. Sizes are
-          per battery type, so a AA interrupter will not fit a AAA compartment.
-        </p>
-      </section>
-
-      <section>
-        <h2>What to borrow rather than buy</h2>
-        <p>
-          A 3D printer is the big one. Libraries, makerspaces, men&apos;s sheds, schools
-          and universities often have one and are usually delighted to be asked. Some
-          SPLAT <Link href="/organizations">organisations</Link> hold printers for
-          exactly this. You do not need to own a printer to build a printed switch — see
-          <Link href="/printing/basics"> 3D printing basics</Link>.
-        </p>
-      </section>
-
-      <section>
-        <h2>Per-guide parts lists</h2>
-        <p>
-          Every guide in the <Link href="/library">Guides</Link> library lists its own
-          parts with links to buy them, so you do not have to work out quantities. Read
-          the list before you start, not halfway through.
-        </p>
-      </section>
-    </ProsePage>
+      <LessonH2 className="mb-2.5 mt-[38px]">Borrow before you buy</LessonH2>
+      <p className="max-w-[66ch] leading-[1.6] text-ink">
+        A soldering iron used twice a year is a waste of a bench. Libraries, makerspaces, men&apos;s
+        sheds and school tech rooms have them, and most will let you use one with ten minutes of
+        supervision. The same places usually own the 3D printer you need for a switch mount — see{' '}
+        <Link href="/printing">3D Printing</Link>.
+      </p>
+    </LearnShell>
   )
 }

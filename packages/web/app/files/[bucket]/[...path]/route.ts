@@ -26,8 +26,18 @@ import { createServerSupabase } from '@/lib/supabase/server'
 // The allowlist is why this is not a generic storage proxy. STLs are sent as
 // an attachment under their own name; a PDF opens inline, as it always has.
 const GATED = {
-  'tutorial-pdfs': { download: false },
-  'stl-files': { download: true },
+  'tutorial-pdfs': { download: false, folder: 'tutorial' },
+  'stl-files': { download: true, folder: 'tutorial' },
+  // 056. The folder is an exchange, not a tutorial, and its storage policies
+  // are tighter than 049's: signing uses the visitor's own session, so a
+  // non-party cannot mint a URL for somebody else's receipt at all.
+  'exchange-receipts': { download: false, folder: 'exchange' },
+  // 057. Same shape and the same tight policies: the folder is the build's
+  // transaction, and only its two parties can sign a URL for the photo.
+  'build-shots': { download: false, folder: 'exchange' },
+  // 058. Same shape again: the folder is the print job, and only its two
+  // parties can sign a URL for the photo of the finished parts.
+  'print-shots': { download: false, folder: 'exchange' },
 } as const
 
 export async function GET(
@@ -47,9 +57,11 @@ export async function GET(
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) {
-    // path[0] is the tutorial id: every object in these buckets lives under
-    // its tutorial's folder (032).
-    const next = encodeURIComponent(`/tutorials/${path[0]}`)
+    // path[0] is the owning record's id: every object in these buckets lives
+    // under its own folder (032 for tutorials, 056 for exchange receipts).
+    const next = encodeURIComponent(
+      rule.folder === 'tutorial' ? `/tutorials/${path[0]}` : `/dashboard/exchanges/${path[0]}`
+    )
     // no-store: the Location header carries a bearer credential (below, a
     // signed URL) or points at a next-step redirect keyed to this visitor —
     // neither may be served from a shared cache.

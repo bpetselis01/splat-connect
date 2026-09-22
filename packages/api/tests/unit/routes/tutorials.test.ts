@@ -284,9 +284,9 @@ describe('PATCH /:id', () => {
   /** The tutorials table now answers two shapes on a submit: the pre-read of the
    *  current status (select -> eq -> maybeSingle) and the update itself. `was` is
    *  the status the pre-read reports. */
-  function patchable(updated: unknown, was: string | null, declared = '2026-08-01T00:00:00Z') {
+  function patchable(updated: unknown, was: string | null, declared = '2026-08-01T00:00:00Z', minutes: number | null = 30) {
     return {
-      select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: was ? { status: was, safety_declared_at: declared } : null, error: null }) }) }),
+      select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: was ? { status: was, safety_declared_at: declared, build_minutes: minutes } : null, error: null }) }) }),
       update: () => ({ eq: () => ({ eq: () => ({ select: () => ({ data: [updated], error: null }) }) }) }),
     }
   }
@@ -334,6 +334,42 @@ describe('PATCH /:id', () => {
     })
     expect(res.status).toBe(200)
     expect(mockNotifySubmitted).not.toHaveBeenCalled()
+  })
+
+  // Tests: the build-time gate (066) — a guide is not submitted without one
+  // How:   the pre-read reports build_minutes null and the body sends none
+  // Chain: the library's Time facet and sort assume every published guide has a time
+  it('refuses draft -> pending when the guide has no build time', async () => {
+    withTerms(true, patchable({ id: '1' }, 'draft', '2026-08-01T00:00:00Z', null))
+    const res = await makeApp().request('/1', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'pending', updated_at: '2026-01-01T00:00:00Z' }),
+    })
+    expect(res.status).toBe(400)
+    expect(((await res.json()) as any).error).toMatch(/how long/)
+  })
+
+  // Tests: the time can arrive in the same save as the submit
+  it('accepts a build time sent alongside the submit', async () => {
+    withTerms(true, patchable({ id: '1', status: 'pending' }, 'draft', '2026-08-01T00:00:00Z', null))
+    const res = await makeApp().request('/1', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'pending', build_minutes: 45, updated_at: '2026-01-01T00:00:00Z' }),
+    })
+    expect(res.status).toBe(200)
+  })
+
+  // Tests: clearing the time in the submitting save does not slip past the gate
+  it('refuses a submit that clears the build time', async () => {
+    withTerms(true, patchable({ id: '1' }, 'draft'))
+    const res = await makeApp().request('/1', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'pending', build_minutes: null, updated_at: '2026-01-01T00:00:00Z' }),
+    })
+    expect(res.status).toBe(400)
   })
 
   // Tests: the safety gate — a submit with no declaration anywhere is refused
@@ -452,5 +488,81 @@ describe('PATCH /:id guards', () => {
       body: JSON.stringify({ reviewed_by: 'user-1' }),
     })
     expect(res.status).toBe(403)
+  })
+})
+
+describe('thanks', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  /** The admin client answers two tables: the guide (with its credited people)
+   *  and notifications. `thanksCount` is what the post-insert re-read reports. */
+  function adminFor(guide: { status: string; credited: string[] } | null, notify = vi.fn(async () => ({ error: null }))) {
+    mockAdminClient.from.mockImplementation((table: string) =>
+      table === 'notifications'
+        ? { insert: notify }
+        : {
+            select: () => ({
+              eq: () => ({
+                maybeSingle: async () => ({
+                  data: guide && {
+                    title: 'Bubble machine',
+                    status: guide.status,
+                    tutorial_contributors: guide.credited.map((profile_id) => ({ profile_id })),
+                  },
+                }),
+                single: async () => ({ data: { thanks_count: 4 } }),
+              }),
+            }),
+          },
+    )
+    return notify
+  }
+  const post = () => makeApp().request('/t1/thanks', { method: 'POST' })
+
+  // Tests: a thank counts, and every credited contributor hears about it, unnamed
+  it('records the thank and notifies every credited contributor', async () => {
+    const notify = adminFor({ status: 'approved', credited: ['author', 'co-author'] })
+    const insert = vi.fn(async () => ({ error: null }))
+    mockUserClient.from.mockReturnValue({ insert })
+    const res = await post()
+    expect(res.status).toBe(201)
+    expect(await res.json()).toEqual({ thanks_count: 4 })
+    expect(insert).toHaveBeenCalledWith({ tutorial_id: 't1', profile_id: 'user-1' })
+    const rows = (notify.mock.calls[0] as unknown[])[0] as Array<Record<string, string>>
+    expect(rows.map((r) => r.recipient_id)).toEqual(['author', 'co-author'])
+    expect(rows[0]).toMatchObject({ type: 'tutorial_thanked', tutorial_id: 't1', actor_name: 'A family' })
+  })
+
+  // Tests: once per person — the primary key's 23505 becomes the board's message
+  it('answers 409 to a second thank', async () => {
+    adminFor({ status: 'approved', credited: ['author'] })
+    mockUserClient.from.mockReturnValue({ insert: async () => ({ error: { code: '23505', message: 'dup' } }) })
+    const res = await post()
+    expect(res.status).toBe(409)
+    expect(((await res.json()) as any).error).toBe('You already thanked them')
+  })
+
+  // Tests: a contributor cannot inflate their own guide's number
+  it("refuses a thank on the caller's own guide", async () => {
+    adminFor({ status: 'approved', credited: ['user-1'] })
+    const res = await post()
+    expect(res.status).toBe(403)
+    expect(mockUserClient.from).not.toHaveBeenCalled()
+  })
+
+  // Tests: only published guides can be thanked; drafts look like nothing at all
+  it('404s on a guide that is not approved', async () => {
+    adminFor({ status: 'pending', credited: ['author'] })
+    expect((await post()).status).toBe(404)
+  })
+
+  // Tests: GET reports the caller's own state for the detail page's button
+  it('GET reports whether the caller thanked it and whether it is theirs', async () => {
+    adminFor({ status: 'approved', credited: ['author'] })
+    mockUserClient.from.mockReturnValue({
+      select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { tutorial_id: 't1' } }) }) }),
+    })
+    const res = await makeApp().request('/t1/thanks')
+    expect(await res.json()).toEqual({ thanked: true, own: false })
   })
 })

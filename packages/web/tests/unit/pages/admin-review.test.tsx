@@ -37,7 +37,10 @@ describe('admin review queue', () => {
 
     expect(screen.getByText('Backed project')).toBeInTheDocument()
     expect(screen.getByText('Platform project')).toBeInTheDocument()
-    expect(screen.getByText(/Riverside Therapy accepted/)).toBeInTheDocument()
+    // The queue is a table now: who has it is the Backing cell, not a sentence
+    // appended to the row. Still the same thing being asserted — that a
+    // handled item names the organisation holding it.
+    expect(screen.getByText(/Riverside Therapy/)).toBeInTheDocument()
   })
 
   // Tests: a merely pending request does not count as handled

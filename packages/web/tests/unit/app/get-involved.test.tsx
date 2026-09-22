@@ -1,27 +1,50 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import GetInvolvedPage from '@/app/get-involved/page'
 import FamiliesPage from '@/app/get-involved/families/page'
 import ContributorsPage from '@/app/get-involved/contributors/page'
 import OrganisationsPage from '@/app/get-involved/organisations/page'
-import { PUBLIC_NAV } from '@/lib/public-nav'
 
-const section = PUBLIC_NAV.find((s) => s.href === '/get-involved')!
+const { mockGetCapabilities } = vi.hoisted(() => ({ mockGetCapabilities: vi.fn() }))
+vi.mock('@/lib/capabilities', () => ({ getCapabilities: mockGetCapabilities }))
+
+beforeEach(() => mockGetCapabilities.mockResolvedValue(null))
 
 describe('Get Involved hub', () => {
-  it('leads with the three audience tracks', () => {
-    render(<GetInvolvedPage />)
-    expect(screen.getByRole('heading', { name: /which one are you/i })).toBeInTheDocument()
-    for (const label of ['For families', 'For contributors', 'For organisations']) {
-      expect(screen.getByRole('link', { name: new RegExp(label, 'i') })).toBeInTheDocument()
+  it('leads with the three audience tracks, as the board draws them', async () => {
+    render(await GetInvolvedPage())
+    for (const kicker of ['For families', 'For makers', 'For organisations']) {
+      expect(screen.getByText(kicker)).toBeInTheDocument()
     }
+    expect(screen.getByRole('link', { name: /start with a child profile/i })).toHaveAttribute(
+      'href',
+      '/onboarding/child'
+    )
   })
 
-  it('links every child of the section', () => {
-    render(<GetInvolvedPage />)
-    for (const child of section.children) {
-      expect(screen.getAllByRole('link', { name: new RegExp(child.label, 'i') })).toHaveLength(1)
-    }
+  it('sends a signed-out maker to sign up and a signed-in one to the editor', async () => {
+    render(await GetInvolvedPage())
+    expect(screen.getByRole('link', { name: /create an account to start writing/i })).toHaveAttribute(
+      'href',
+      '/signup'
+    )
+    mockGetCapabilities.mockResolvedValue({ profile: { id: 'u1' } })
+    render(await GetInvolvedPage())
+    expect(screen.getByRole('link', { name: /write your first guide/i })).toHaveAttribute('href', '/upload')
+  })
+
+  it('groups the specific things by need and offer', async () => {
+    render(await GetInvolvedPage())
+    expect(screen.getByRole('heading', { name: /if you need something/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /if you have something to offer/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /submit an idea/i })).toHaveAttribute(
+      'href',
+      '/get-involved/submit-an-idea'
+    )
+    expect(screen.getByRole('link', { name: /book a drop-off/i })).toHaveAttribute(
+      'href',
+      '/get-involved/recycling/drop-off'
+    )
   })
 })
 
@@ -30,24 +53,38 @@ describe('audience tracks', () => {
     ['For families', FamiliesPage],
     ['For contributors', ContributorsPage],
     ['For organisations', OrganisationsPage],
-  ] as const)('%s is a numbered walkthrough', (title, Page) => {
-    const { container } = render(<Page />)
+  ] as const)('%s is a numbered walkthrough', async (title, Page) => {
+    const { container } = render(await Page())
     expect(screen.getByRole('heading', { level: 1, name: title })).toBeInTheDocument()
     expect(container.querySelectorAll('ol li').length).toBeGreaterThanOrEqual(3)
   })
 
-  it('sends a family to the Guides library', () => {
-    render(<FamiliesPage />)
-    expect(screen.getByRole('link', { name: /browse the guides/i })).toHaveAttribute('href', '/library')
+  it('sends a family to the Guides library', async () => {
+    render(await FamiliesPage())
+    expect(screen.getByRole('link', { name: /browse guides/i })).toHaveAttribute('href', '/library')
   })
 
-  it('sends a would-be contributor to sign up', () => {
-    render(<ContributorsPage />)
-    expect(screen.getByRole('link', { name: /create an account|sign up/i })).toHaveAttribute('href', '/signup')
+  it('sends a would-be contributor to sign up', async () => {
+    render(await ContributorsPage())
+    expect(screen.getByRole('link', { name: /create an account/i })).toHaveAttribute('href', '/signup')
   })
 
-  it('sends an organisation to contact, because onboarding is manual', () => {
-    render(<OrganisationsPage />)
-    expect(screen.getByRole('link', { name: /get in touch|contact/i })).toHaveAttribute('href', '/contact')
+  /*
+   * Onboarding is still manual — an admin reviews every request and creates
+   * the organisation — and the request is the page's one door. Signed out, it
+   * goes through sign-in first and comes back.
+   */
+  it('sends an organisation to the request an admin reviews', async () => {
+    render(await OrganisationsPage())
+    expect(screen.getByRole('link', { name: /sign in to continue/i })).toHaveAttribute(
+      'href',
+      '/login?next=%2Fget-involved%2Forganisations%2Frequest'
+    )
+    mockGetCapabilities.mockResolvedValue({ profile: { id: 'u1' } })
+    render(await OrganisationsPage())
+    expect(screen.getByRole('link', { name: /start the request/i })).toHaveAttribute(
+      'href',
+      '/get-involved/organisations/request'
+    )
   })
 })

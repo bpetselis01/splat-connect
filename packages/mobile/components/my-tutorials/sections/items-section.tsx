@@ -150,12 +150,12 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: theme.colors.surface,
-    borderWidth: theme.border.thin,
-    borderColor: theme.colors.ink,
-    borderRadius: theme.radii.md,
+    borderWidth: theme.border.hairline,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radii.field,
     padding: theme.spacing(3),
     marginBottom: theme.spacing(3),
-    ...theme.shadow(3),
+    ...theme.shadow(1),
   },
   controls: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3) },
   stepper: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2) },
@@ -164,9 +164,9 @@ const styles = StyleSheet.create({
     height: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: theme.border.thin,
-    borderColor: theme.colors.ink,
-    borderRadius: theme.radii.sm,
+    borderWidth: theme.border.hairline,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radii.field,
     backgroundColor: theme.colors.surface,
   },
   stepperGlyph: {
@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
   blankHint: {
     fontFamily: theme.fonts.regular,
     fontSize: theme.type.caption,
-    color: theme.colors.apricotDeep,
+    color: theme.colors.ink,
     marginTop: theme.spacing(2),
   },
 })

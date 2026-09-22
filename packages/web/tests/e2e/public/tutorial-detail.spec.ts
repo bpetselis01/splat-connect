@@ -10,20 +10,21 @@ test('the detail page renders a tutorial in full', async ({ page }) => {
 
   await expect(page.getByRole('heading', { name: title })).toBeVisible()
   await expect(page.getByText('Created by a Playwright E2E test.')).toBeVisible()
-  await expect(page.getByText(new RegExp(`By\\s+${contributor.name}`))).toBeVisible()
+  await expect(page.getByText(contributor.name)).toBeVisible()
 
   // Signed out: the file links are the gate (049). The download itself is
   // covered in tutorial-downloads.spec.ts.
   const detour = `/signup?next=%2Ftutorials%2F${tutorialId}&reason=download`
   await expect(page.getByRole('link', { name: 'Download Tutorial PDF' })).toHaveAttribute('href', detour)
-  await expect(page.getByRole('link', { name: 'e2e-mount.stl' })).toHaveAttribute('href', detour)
 
-  await expect(page.getByRole('heading', { name: 'Parts needed' })).toBeVisible()
-  await expect(page.getByText(/E2E part\s*×\s*2/)).toBeVisible()
+  // Parts & tools is the first tab; the files sit behind the second.
+  await expect(page.getByRole('cell', { name: 'E2E part' })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Buy E2E part from Jaycar' })).toBeVisible()
-
-  await expect(page.getByRole('heading', { name: 'Tools needed' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: "Tools you'll need" })).toBeVisible()
   await expect(page.getByText('E2E tool')).toBeVisible()
+
+  await page.getByRole('tab', { name: 'Files & print settings' }).click()
+  await expect(page.getByRole('link', { name: 'Download e2e-mount.stl' })).toHaveAttribute('href', detour)
 })
 
 test('an unknown tutorial id renders a 404', async ({ page }) => {
@@ -73,6 +74,6 @@ test('a tutorial with no STL files omits the 3D-print section', async ({ page })
 
   await page.goto(`/tutorials/${id}`)
 
-  await expect(page.getByRole('heading', { name: /Files for 3D printing/ })).toHaveCount(0)
+  await expect(page.getByRole('tab', { name: 'Files & print settings' })).toHaveCount(0)
   await expect(page.getByRole('link', { name: 'Download Tutorial PDF' })).toBeVisible()
 })

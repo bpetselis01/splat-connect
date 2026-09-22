@@ -15,11 +15,11 @@ let outsider: TestUser
 let orgId: string
 let toyId: string
 
-function uploadCover(token: string, id: string) {
+function uploadPhoto(token: string, id: string) {
   const fd = new FormData()
-  fd.append('file', new File(['jpg-bytes'], 'cover.jpg', { type: 'image/jpeg' }))
+  fd.append('file', new File(['jpg-bytes'], 'stock.jpg', { type: 'image/jpeg' }))
   fd.append('toyId', id)
-  return app.request('/api/upload/toy-cover', {
+  return app.request('/api/upload/toy-photo', {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
     body: fd,
@@ -45,15 +45,15 @@ afterAll(async () => {
 })
 
 describe('org toy photos', () => {
-  it('lets a leader upload a cover photo for their org’s stock', async () => {
-    const res = await uploadCover(leader.token, toyId)
+  it('lets a leader upload a photo for their org’s stock', async () => {
+    const res = await uploadPhoto(leader.token, toyId)
     expect(res.status).toBe(200)
     const { url } = (await res.json()) as { url: string }
     expect(url).toContain(toyId)
   })
 
   it('refuses someone who leads no organisation at all', async () => {
-    const res = await uploadCover(outsider.token, toyId)
+    const res = await uploadPhoto(outsider.token, toyId)
     expect(res.status).toBe(404)
   })
 })

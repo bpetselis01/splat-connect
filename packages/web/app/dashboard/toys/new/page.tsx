@@ -1,52 +1,22 @@
-import { BackLink } from '@/components/back-link'
 import { requireCapabilities } from '@/lib/require-capabilities'
 import { NewToyForm } from '@/components/new-toy-form'
-import { Stepper } from '@/components/stepper'
 
+export const metadata = { title: 'Add a toy — SPLAT Connect' }
+
+/** The board's single card; the listing editor carries everything after it. */
 export default async function NewToyPage() {
   const caps = await requireCapabilities()
 
   return (
-    <div>
-      <BackLink href="/dashboard/toys" label="My toys" />
-      <h1 className="mb-2 title-article">Add a toy</h1>
-      <p className="mb-6 max-w-prose text-sm leading-relaxed text-muted">
-        Add the basics now — photos and switch details come next.
+    <div className="max-w-[720px]">
+      <h1 className="title-hub">Add a toy</h1>
+      <p className="mt-2.5 max-w-[60ch] text-[17px] text-muted">
+        Two things to start: what it is, and one photo. Notes and handover can wait for the
+        listing editor.
       </p>
-      {/* Same stepper as the edit page so the journey is visible from the
-          start. Photos and Review stay locked until the toy exists: both need
-          an id to upload against, and the review reads saved fields. */}
-      <Stepper
-        label="Toy sections"
-        steps={[
-          {
-            id: 'details',
-            label: 'Details',
-            status: 'attention',
-            content: (
-              <div className="panel pt-5">
-                <div className="px-5 pb-5">
-                  <NewToyForm ledOrgs={caps.ledOrgs} />
-                </div>
-              </div>
-            ),
-          },
-          {
-            id: 'photos',
-            label: 'Photos',
-            status: 'neutral',
-            disabled: true,
-            content: null,
-          },
-          {
-            id: 'review',
-            label: 'Review',
-            status: 'neutral',
-            disabled: true,
-            content: null,
-          },
-        ]}
-      />
+      <div className="mt-7">
+        <NewToyForm ledOrgs={caps.ledOrgs} />
+      </div>
     </div>
   )
 }

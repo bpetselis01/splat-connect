@@ -21,7 +21,7 @@ jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }) }))
 
 const row = (over: object) => ({
   id: 't1', title: 'Bubble machine', description: null, difficulty: 'easy', kind: 'toy_adaptation',
-  status: 'approved', tutorial_pdf_url: null, toy_photo_url: null, rejection_note: null,
+  status: 'approved', tutorial_pdf_url: null, photo_urls: [], toy_photo_url: null, rejection_note: null,
   created_at: '', updated_at: '', reviewed_at: null, tutorial_orgs: [], ...over,
 })
 
@@ -122,7 +122,7 @@ describe('LibraryScreen', () => {
     // The kind badge is hidden from the accessibility tree (same reason as the
     // difficulty badge: its spoken name would collide with the kind filter
     // chip's), so it must be queried with includeHiddenElements.
-    expect(screen.getAllByText('TOY ADAPTATION', { includeHiddenElements: true }).length).toBe(1)
+    expect(screen.getAllByText('Toy adaptation', { includeHiddenElements: true }).length).toBe(1)
     expect(screen.getAllByLabelText('Save').length).toBe(2)
     // The row's hint carries the kind for screen readers instead.
     expect(screen.getByLabelText('Bubble machine').props.accessibilityHint).toContain('Toy adaptation')

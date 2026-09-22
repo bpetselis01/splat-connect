@@ -16,7 +16,7 @@ function panel(overrides: Partial<Props> = {}) {
     title: 'Sensory light box',
     description: 'A calming light box.',
     difficulty: 'easy',
-    toyPhotoUrl: 'https://example.com/toy.jpg',
+    toyPhotoUrl: 'https://test.supabase.co/storage/v1/object/public/photos/toy.jpg',
     hasPdf: true,
     partCount: 3,
     toolCount: 2,
@@ -52,7 +52,7 @@ describe('TutorialReviewPanel', () => {
 
   it('shows the toy photo', () => {
     const { container } = setup()
-    expect(container.querySelector('img')).toHaveAttribute('src', 'https://example.com/toy.jpg')
+    expect(container.querySelector('img')).toHaveAttribute('src', 'https://test.supabase.co/storage/v1/object/public/photos/toy.jpg')
   })
 
   it('says the pdf is missing rather than staying silent', () => {

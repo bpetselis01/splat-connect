@@ -19,10 +19,8 @@ export function Meter({ value, max = 10, width = 50 }: { value: number; max?: nu
 
 const styles = StyleSheet.create({
   track: {
-    height: 7,
-    borderWidth: theme.border.thin,
-    borderColor: theme.colors.ink,
-    borderRadius: 2,
+    height: 9,
+    borderRadius: theme.radii.pill,
     backgroundColor: theme.colors.surfaceSunken,
     overflow: 'hidden',
   },

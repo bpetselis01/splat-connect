@@ -1,20 +1,14 @@
-import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { Nav } from '@/components/nav'
-import { DrawerProvider, useDrawer } from '@/components/drawer-context'
 import type { Capabilities } from '@/lib/capabilities'
-import { TONES } from '@/lib/tone'
 
-const mockSignOut = vi.fn()
 const pathname = vi.hoisted(() => ({ current: '/' }))
 
 // --- Mock strategy ---
-// Four things are mocked: next/link is replaced with a plain <a> tag so links render in
-// jsdom without Next.js routing infrastructure; usePathname is stubbed via a hoisted ref (so
-// individual tests can vary the current path) because Nav reads it to mark the active section
-// and there is no router mounted here; the Supabase client is replaced so mockSignOut can be
-// inspected; and window.location is stubbed with a writable href so the post-sign-out redirect
-// can be asserted without triggering real navigation.
+// next/link is replaced with a plain <a> tag so links render in jsdom without Next.js routing
+// infrastructure, and usePathname is stubbed via a hoisted ref (so individual tests can vary
+// the current path) because Nav reads it to mark the active section.
 // Wrapped in a vi.fn so the boundary-crossing tests can assert whether a given
 // pill went through next/link at all, not just what its resulting href is.
 const mockLink = vi.fn(
@@ -30,10 +24,6 @@ vi.mock('next/navigation', () => ({
   usePathname: () => pathname.current,
 }))
 
-vi.mock('@/lib/supabase/client', () => ({
-  createClient: () => ({ auth: { signOut: mockSignOut } }),
-}))
-
 const signedIn = {
   profile: { id: 'u1', name: 'Byron Petselis', email: 'b@example.com', role: 'contributor', public_showcase: true, created_at: '' },
   isAdmin: false,
@@ -45,198 +35,158 @@ const signedIn = {
 describe('Nav', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockSignOut.mockResolvedValue({})
-    vi.stubGlobal('location', { href: '' })
     pathname.current = '/'
   })
 
-  // Tests: all six public sections from PUBLIC_NAV are visible to a signed-out visitor
-  // How:   renders <Nav caps={null} />; checks a link for each section label is present
-  // Chain: the top bar now reads its sections from the nav model rather than a hand-maintained
-  //        array, so a signed-out visitor sees exactly the model's six sections
-  it('shows all six public sections to a signed-out visitor', () => {
+  const openMore = () => fireEvent.click(screen.getByRole('button', { name: /More/ }))
+
+  // Tests: the bar carries the board's five tabs and nothing else at rest
+  // How:   renders signed out; checks each tab link, and that Learn is not on the bar
+  // Chain: NAV5 on the artboard — five primary items, everything else behind More
+  it('shows the five primary tabs, with the rest behind More', () => {
     render(<Nav caps={null} />)
-    for (const label of ['Guides', 'Toy Library', 'Learn', 'Get Involved', 'Impact', 'About']) {
+    for (const label of ['Guides', 'Toy Library', '3D Printing', 'Get Involved', 'About']) {
       expect(screen.getByRole('link', { name: label })).toBeInTheDocument()
     }
+    expect(screen.queryByRole('link', { name: /Learn/ })).toBeNull()
   })
 
-  // Tests: the tutorial catalogue is labelled Guides (not the old Library) and still links to
-  //        /library
-  // How:   renders <Nav caps={null} />; checks the Guides link's href, and that no link named
-  //        "Library" remains
-  // Chain: the nav-model rename (Library -> Guides) must reach the top bar; the old label
-  //        should not linger anywhere a screen reader or test would find it
+  // Tests: the tutorial catalogue is labelled Guides and links to /library
   it('labels the tutorial catalogue Guides, not Library', () => {
     render(<Nav caps={null} />)
     expect(screen.getByRole('link', { name: 'Guides' })).toHaveAttribute('href', '/library')
     expect(screen.queryByRole('link', { name: 'Library' })).toBeNull()
   })
 
-  // Tests: the public organisations directory is still reachable for any signed-in account,
-  //        but no longer as its own top-bar link — /organizations is now an Impact child in
-  //        PUBLIC_NAV, reachable via the Impact subnav and the footer
-  // How:   renders <Nav caps={signedIn} />; checks the Impact link is present and that no
-  //        top-bar link named "Organisations" exists
-  // Chain: every signed-in account can still reach the org directory in one extra click via
-  //        Impact → the behaviour survives, only its top-bar location moved
-  it('keeps the organisations directory reachable via Impact, not as its own top-bar link', () => {
-    render(<Nav caps={signedIn} />)
-    expect(screen.getByRole('link', { name: 'Impact' })).toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: 'Organisations' })).toBeNull()
+  // Tests: More opens the board's eight items, each with its blurb
+  // How:   clicks More; checks aria-expanded flips and every item is a link to its route
+  // Chain: live's More was a bare two-item list; the board draws a two-column grid of eight
+  it('opens all eight More items as links', () => {
+    render(<Nav caps={null} />)
+    const more = screen.getByRole('button', { name: /More/ })
+    expect(more).toHaveAttribute('aria-expanded', 'false')
+    openMore()
+    expect(more).toHaveAttribute('aria-expanded', 'true')
+    const expected: [string, string][] = [
+      ['Learn', '/learn'],
+      ['Impact', '/impact'],
+      ['Design challenges', '/get-involved/design-challenges'],
+      ['Organisations', '/organizations'],
+      ['Events', '/get-involved/events'],
+      ['Stories', '/about/stories'],
+      ['Design system', '/design-system'],
+      ['Contact', '/contact'],
+    ]
+    for (const [label, href] of expected) {
+      expect(screen.getByRole('link', { name: new RegExp(`^${label}`) })).toHaveAttribute('href', href)
+    }
+    expect(screen.getByText('Problems nobody has solved yet, open to anyone.')).toBeInTheDocument()
   })
 
-  // Tests: the active section is detected from a nested path via sectionFor, not a hand-rolled
-  //        prefix test
-  // How:   sets pathname to /learn/switch-types; renders <Nav caps={null} />; checks the Learn
-  //        link carries aria-current="page"
-  // Chain: sub-sections must light up their parent section in the top bar so a visitor always
-  //        knows where they are
-  it('marks the section active from a nested path', () => {
+  // Tests: Escape closes More and hands focus back to its button
+  // Chain: a disclosure that traps a keyboard user inside it, or drops focus on the page body
+  //        when it closes, is the failure mode this header must not have
+  it('closes More on Escape and returns focus to the button', () => {
+    render(<Nav caps={null} />)
+    openMore()
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(screen.queryByRole('link', { name: /^Learn/ })).toBeNull()
+    expect(screen.getByRole('button', { name: /More/ })).toHaveFocus()
+  })
+
+  // Tests: a press outside the menu closes it
+  it('closes More on a press outside it', () => {
+    render(<Nav caps={null} />)
+    openMore()
+    fireEvent.pointerDown(document.body)
+    expect(screen.getByRole('button', { name: /More/ })).toHaveAttribute('aria-expanded', 'false')
+  })
+
+  // Tests: a tab section is marked current from a nested path via sectionFor
+  it('marks the tab current from a nested path', () => {
+    pathname.current = '/printing/requests'
+    render(<Nav caps={null} />)
+    expect(screen.getByRole('link', { name: '3D Printing' })).toHaveAttribute('aria-current', 'page')
+  })
+
+  // Tests: a page that lives behind More marks both More and its item
+  // Chain: otherwise a visitor on /learn sees no tab lit and cannot tell where they are
+  it('marks More and the item current for a page behind More', () => {
     pathname.current = '/learn/switch-types'
     render(<Nav caps={null} />)
-    expect(screen.getByRole('link', { name: 'Learn' })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('button', { name: /More/ })).toHaveAttribute('data-current', 'true')
+    openMore()
+    expect(screen.getByRole('link', { name: /^Learn/ })).toHaveAttribute('aria-current', 'page')
   })
 
-  // Tests: /organizations activates Impact even though it shares no prefix with /impact —
-  //        plain prefix matching would miss this, which is exactly why Nav delegates to
-  //        sectionFor instead of writing its own test
-  // How:   sets pathname to /organizations; renders <Nav caps={null} />; checks the Impact
-  //        link carries aria-current="page"
-  // Chain: the organisations directory must read as "inside Impact" to stay legible even
-  //        though its URL was never renamed to match
-  it('marks Impact active on the organisations directory', () => {
-    pathname.current = '/organizations'
+  // Tests: the search box submits to the guides library as ?q=
+  // Chain: a plain GET form works before hydration; library/page.tsx reads q
+  it('submits search to /library as q', () => {
     render(<Nav caps={null} />)
-    expect(screen.getByRole('link', { name: 'Impact' })).toHaveAttribute('aria-current', 'page')
+    const input = screen.getByRole('searchbox', { name: 'Search' })
+    expect(input).toHaveAttribute('name', 'q')
+    expect(input.closest('form')).toHaveAttribute('action', '/library')
   })
 
-  // Tests: the top bar never renders an expandable menu control — the whole point of the
-  //        redesign is a flat, dropdown-free nav
-  // How:   renders <Nav caps={null} />; checks no element in the document carries
-  //        aria-expanded
-  // Chain: hover/disclosure widgets are the accessibility failure mode this design exists to
-  //        avoid on a platform serving people with disabilities
-  it('never renders an expandable menu control', () => {
+  // Tests: the three colour modes and reduce-motion are real toggles
+  // How:   clicks Dark, checks the body attribute, the pressed state and the cookie
+  it('switches colour mode on the body and remembers it', () => {
     render(<Nav caps={null} />)
-    expect(document.querySelector('[aria-expanded]')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Light mode' })).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.click(screen.getByRole('button', { name: 'Dark mode' }))
+    expect(document.body.dataset.mode).toBe('dark')
+    expect(screen.getByRole('button', { name: 'Dark mode' })).toHaveAttribute('aria-pressed', 'true')
+    expect(document.cookie).toMatch(/splat-mode=dark/)
+    fireEvent.click(screen.getByRole('button', { name: 'Light mode' }))
+    expect(document.body.dataset.mode).toBeUndefined()
   })
 
-  // Tests: unauthenticated users see a Sign in link (to /login) and no Sign out button
-  // How:   renders <Nav caps={null} />; checks the Sign in link exists and points at /login,
-  //        and that Sign out is absent
-  // Chain: one account type now serves parents and contributors alike, so the entry point
-  //        can no longer name a single audience ("Contribute") or send a returning user to
-  //        signup — it offers Sign in and lands on /login
-  it('shows a Sign in link (to /login) and no Sign out for unauthenticated users', () => {
+  it('toggles reduced motion on the body', () => {
     render(<Nav caps={null} />)
-    const link = screen.getByRole('link', { name: /sign in/i })
-    expect(link).toBeInTheDocument()
-    expect(link).toHaveAttribute('href', '/login')
-    expect(screen.queryByRole('button', { name: /sign out/i })).toBeNull()
+    const motion = screen.getByRole('button', { name: 'Reduce motion' })
+    fireEvent.click(motion)
+    expect(document.body.dataset.motion).toBe('reduced')
+    expect(motion).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.click(motion)
+    expect(document.body.dataset.motion).toBeUndefined()
   })
 
-  // Tests: authenticated users see a Sign out button and no Sign in link
-  // How:   renders <Nav caps={signedIn} />; checks Sign out button exists and Sign in link is absent
-  // Chain: the nav hides the entry-point link once signed in → the UI reflects the user's
-  //        current authentication state without redundant calls-to-action
-  it('shows Sign out button and no Sign in link for authenticated users', () => {
-    render(<Nav caps={signedIn} />)
-    expect(screen.getByRole('button', { name: /sign out/i })).toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: /sign in/i })).toBeNull()
+  // Tests: the server-rendered mode seeds the toggles
+  it('starts from the mode the server rendered', () => {
+    render(<Nav caps={null} mode="hc" />)
+    expect(screen.getByRole('button', { name: 'High contrast mode' })).toHaveAttribute('aria-pressed', 'true')
   })
 
-  // Tests: clicking Sign out calls Supabase signOut and redirects to / via window.location.href
-  // How:   fireEvent.click on the Sign out button; waitFor checks mockSignOut was called and
-  //        window.location.href === '/'
-  // Chain: the user's Supabase session is ended → they are redirected to the public home page
-  //        and the nav re-renders in the unauthenticated state on next load
-  it('calls signOut and sets window.location.href to / on sign out click', async () => {
-    render(<Nav caps={signedIn} />)
-    fireEvent.click(screen.getByRole('button', { name: /sign out/i }))
-    await waitFor(() => {
-      expect(mockSignOut).toHaveBeenCalled()
-      expect(window.location.href).toBe('/')
-    })
-  })
-
-  // Tests: a signed-in visitor still sees all seven public sections
-  // How:   renders with caps and checks every section label is a link
-  // Chain: this is the regression the whole change exists to prevent — the
-  //        sections must not depend on auth state in any way
-  it('shows every public section to a signed-in visitor', () => {
-    render(<Nav caps={signedIn} />)
-    for (const label of ['Guides', 'Toy Library', '3D Printing', 'Learn', 'Get Involved', 'Impact', 'About']) {
-      expect(screen.getByRole('link', { name: new RegExp(label) })).toBeInTheDocument()
-    }
-  })
-
-  // Tests: the account area has exactly one door, labelled My SPLAT
-  // How:   renders signed in and checks the link and its href
-  // Chain: replaces the old Admin and Dashboard role links; the rail behind it
-  //        carries admin, so a second top-level admin link would be redundant
-  it('offers one account entry point', () => {
-    render(<Nav caps={signedIn} />)
-    const account = screen.getByRole('link', { name: /My SPLAT/ })
-    expect(account).toHaveAttribute('href', '/dashboard')
-    expect(screen.queryByRole('link', { name: 'Admin' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: 'Dashboard' })).not.toBeInTheDocument()
-  })
-
-  // Tests: the unread badge carries the count the rail used to surface
-  // How:   renders with unread.total: 3 and reads the accessible name
-  // Chain: the rail is absent on public routes now, so if the badge did not move
-  //        to the header an unread notification would be invisible site-wide
-  it('badges the account pill with unread notifications', () => {
-    render(<Nav caps={signedIn} />)
-    expect(screen.getByRole('link', { name: /My SPLAT/ })).toHaveAccessibleName(/3 unread/)
-  })
-
-  // Tests: a zero count renders no badge
-  // How:   renders with unread.total: 0
-  // Chain: a badge showing 0 is noise, and trains people to ignore the badge
-  it('shows no badge at zero unread', () => {
-    render(<Nav caps={{ ...signedIn, unread: { tutorials: 0, exchanges: 0, challenges: 0, total: 0 } }} />)
-    expect(screen.getByRole('link', { name: /My SPLAT/ })).not.toHaveAccessibleName(/unread/)
-  })
-
-  // Tests: signed-out still gets a sign-in call to action and no account pill
-  // How:   renders with caps={null}
-  // Chain: the header is one component across both states, so the signed-out
-  //        path has to be asserted from the same component
+  // Tests: signed out gets Sign in (to /login) and no account pill
   it('offers sign in and no account pill when signed out', () => {
     render(<Nav caps={null} />)
-    expect(screen.getByRole('link', { name: 'Sign in' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/login')
     expect(screen.queryByRole('link', { name: /My SPLAT/ })).not.toBeInTheDocument()
   })
 
-  // Tests: the quiet variant keeps every section label readable
-  // How:   renders with quiet and asserts all seven links are still present
-  // Chain: the spec rejects icon-only and hover-revealed nav; "quieter" must
-  //        never become "fewer" or "unlabelled"
-  it('keeps every label in the quiet variant', () => {
-    render(<Nav caps={signedIn} quiet />)
-    for (const label of ['Guides', 'Toy Library', '3D Printing', 'Learn', 'Get Involved', 'Impact', 'About']) {
-      expect(screen.getByRole('link', { name: new RegExp(label) })).toBeInTheDocument()
-    }
+  // Tests: signed in, the bar ends on My SPLAT — no Sign in, and no Sign out
+  // Chain: the board's header has no sign-out; it lives on the Account page now
+  it('ends on My SPLAT when signed in, with no sign in or sign out', () => {
+    render(<Nav caps={signedIn} />)
+    expect(screen.getByRole('link', { name: /My SPLAT/ })).toHaveAttribute('href', '/dashboard')
+    expect(screen.queryByRole('link', { name: /sign in/i })).toBeNull()
+    expect(screen.queryByRole('button', { name: /sign out/i })).toBeNull()
+    expect(screen.queryByRole('link', { name: 'Admin' })).not.toBeInTheDocument()
   })
 
-  // Tests: quiet is a presentation change the bar carries, not a per-link one
-  // How:   asserts the banner element takes the nav-quiet class
-  // Chain: keeping it on one container is what stops the two variants drifting
-  //        into two different sets of markup
-  it('marks the bar quiet rather than restyling each link', () => {
-    const { container } = render(<Nav caps={signedIn} quiet />)
-    expect(container.querySelector('header')).toHaveClass('nav-quiet')
+  // Tests: the unread badge and the initials both ride inside the My SPLAT pill
+  // Chain: the board draws one pill — label, coral count, mint avatar — not three loose parts
+  it('carries the unread count and initials inside My SPLAT', () => {
+    render(<Nav caps={signedIn} />)
+    const account = screen.getByRole('link', { name: /My SPLAT/ })
+    expect(account).toHaveAccessibleName(/3 unread/)
+    expect(account).toContainElement(screen.getByTitle(signedIn.profile.name))
+    expect(screen.getByTitle(signedIn.profile.name)).toHaveTextContent('BP')
   })
 
-  // Tests: public routes keep the loud bar
-  // How:   renders without quiet
-  // Chain: the treatment is scoped to the account section; applying it site-wide
-  //        would flatten the tone system the public site is built on
-  it('leaves the public bar at full weight', () => {
-    const { container } = render(<Nav caps={signedIn} />)
-    expect(container.querySelector('header')).not.toHaveClass('nav-quiet')
+  it('shows no badge at zero unread', () => {
+    render(<Nav caps={{ ...signedIn, unread: { tutorials: 0, exchanges: 0, challenges: 0, total: 0 } }} />)
+    expect(screen.getByRole('link', { name: /My SPLAT/ })).not.toHaveAccessibleName(/unread/)
   })
 
   // Tests: entering the account section via the header forces a full page load,
@@ -281,23 +231,18 @@ describe('Nav', () => {
     expect(mockLink.mock.calls.some((call) => call[0].href === '/')).toBe(false)
   })
 
-  // Tests: the My SPLAT pill also forces a full page load from a rail-only
-  //        account page, not just from a public one — nestsRail makes this a
-  //        crossing too, since /dashboard (unlike a rail page) has no shell.
-  //        The old hand-rolled check (activeSection !== ACCOUNT_NAV) missed
-  //        this: from a rail page the section is already ACCOUNT_NAV, so it
-  //        never flagged the crossing, and a soft transition left the rail on
-  //        screen with no header on /dashboard.
-  // How:   pathname is a rail-only account page; the My SPLAT pill still
-  //        resolves to /dashboard but must not have gone through next/link
-  // Chain: same nestsRail split lib/public-nav.ts's crossesAccountBoundary
-  //        already covers for BoundaryLink; Nav's own pill must agree with it
-  it('renders My SPLAT as a plain anchor from a rail-only account page', () => {
+  // Tests: the My SPLAT pill is a soft transition from any account page
+  // How:   pathname is an account page; the pill resolves to /dashboard and
+  //        must have gone through next/link
+  // Chain: this used to be a plain anchor because /dashboard rendered the
+  //        header while its children rendered the rail. The rail is gone, so
+  //        both ends render the same chrome and a full load buys nothing
+  it('renders My SPLAT as a soft link from another account page', () => {
     pathname.current = '/dashboard/toys'
     render(<Nav caps={signedIn} />)
     const account = screen.getByRole('link', { name: /My SPLAT/ })
     expect(account).toHaveAttribute('href', '/dashboard')
-    expect(mockLink.mock.calls.some((call) => call[0].href === '/dashboard')).toBe(false)
+    expect(mockLink.mock.calls.some((call) => call[0].href === '/dashboard')).toBe(true)
   })
 
   // Tests: clicking My SPLAT while already on /dashboard is a same-page
@@ -322,144 +267,5 @@ describe('Nav', () => {
     const guides = screen.getByRole('link', { name: /Guides/ })
     expect(guides).toHaveAttribute('href', '/library')
     expect(mockLink.mock.calls.some((call) => call[0].href === '/library')).toBe(true)
-  })
-
-  // Tests: the menu button is a real button, operated by click
-  // How:   renders inside a provider, clicks, and asserts the drawer opened
-  // Chain: hover-revealed navigation does not exist on touch and fails WCAG
-  //        1.4.13; the control has to be pressable
-  it('opens the section menu on click', () => {
-    function Probe() {
-      const { isOpen } = useDrawer()
-      return <span data-testid="drawer">{isOpen ? 'open' : 'closed'}</span>
-    }
-    render(
-      <DrawerProvider>
-        <Nav caps={signedIn} showMenu />
-        <Probe />
-      </DrawerProvider>
-    )
-    expect(screen.getByTestId('drawer')).toHaveTextContent('closed')
-    fireEvent.click(screen.getByRole('button', { name: /open navigation/i }))
-    expect(screen.getByTestId('drawer')).toHaveTextContent('open')
-  })
-
-  // Tests: collapsing is a viewport decision, not an auth decision
-  // How:   asserts the seven sections render with and without a session, and
-  //        that the menu button's visibility is governed by a width class
-  // Chain: a header that collapses when you sign in is the original defect in
-  //        miniature — nav must not change by page type or by auth state
-  it('collapses by viewport, identically signed in and out', () => {
-    const out = render(<DrawerProvider><Nav caps={null} showMenu /></DrawerProvider>)
-    expect(out.getByRole('button', { name: /open navigation/i })).toHaveClass('lg:hidden')
-    out.unmount()
-    render(<DrawerProvider><Nav caps={signedIn} showMenu /></DrawerProvider>)
-    expect(screen.getByRole('button', { name: /open navigation/i })).toHaveClass('lg:hidden')
-  })
-
-  // Tests: public routes get no menu button, because there is no drawer there
-  // How:   renders without showMenu
-  // Chain: a trigger that opens nothing is worse than no trigger; the rail exists
-  //        only inside the account section
-  it('shows no menu button outside the account section', () => {
-    render(<DrawerProvider><Nav caps={signedIn} /></DrawerProvider>)
-    expect(screen.queryByRole('button', { name: /open navigation/i })).not.toBeInTheDocument()
-  })
-
-  // Tests: Sign in is pushed to the far edge at every width, like the signed-in cluster
-  // How:   renders with caps={null} and asserts ml-auto survives with no sm: override
-  // Chain: the button carried `ml-auto sm:ml-0`, so at 640px and up the auto margin
-  //        was cancelled and Sign in sat against the end of the tab row instead of
-  //        the right edge — the one place the two auth states disagreed on layout
-  it('pushes Sign in to the right edge at every width', () => {
-    render(<Nav caps={null} />)
-    const link = screen.getByRole('link', { name: 'Sign in' })
-    expect(link).toHaveClass('ml-auto')
-    expect(link.className).not.toMatch(/sm:ml-0/)
-  })
-
-  // Tests: the header carries no border utility, so the .pixel header rule can apply
-  // How:   asserts the banner has neither border-b nor border-line
-  // Chain: `.pixel header` sets the board's 3px ink rule from @layer components, and a
-  //        Tailwind utility beats that layer regardless of specificity. The utility was
-  //        silently pinning every page back to a 1px --color-line hairline; the only
-  //        way to keep the correct rule winning is for the utility to stay absent
-  it('leaves the shelf rule to CSS rather than a border utility', () => {
-    const { container } = render(<Nav caps={null} />)
-    const header = container.querySelector('header')!
-    expect(header.className).not.toMatch(/border-b\b/)
-    expect(header.className).not.toMatch(/border-line/)
-  })
-
-  // Tests: the current section is marked without taking horizontal padding
-  // How:   sets pathname to /library and asserts the active link has no px- class
-  // Chain: the active tab used to take a real `px-3` its six neighbours did not, so
-  //        every tab in the row shifted sideways on navigation. Both the hover and
-  //        current-page pills now draw on .nav-pill::before, which costs no layout
-  it('marks the current section without shifting the row', () => {
-    pathname.current = '/library'
-    render(<Nav caps={null} />)
-    const current = screen.getByRole('link', { name: /Guides/ })
-    expect(current).toHaveAttribute('aria-current', 'page')
-    expect(current.className).not.toMatch(/(^|\s)px-/)
-  })
-
-  // Tests: every tab hands its section's own tone to the CSS as custom properties
-  // How:   asserts Toy Library carries mint's bg/fg pair
-  // Chain: hover and current-page tint per-section from --pill-tint/--pill-ink rather
-  //        than seven copies of the rule. The pair is the same one tone.test.ts checks
-  //        for contrast, so the hover state inherits that guard instead of needing
-  //        its own — if this stops matching TONES, the contrast test stops covering it
-  it('hands each tab its section tone for the hover and current pill', () => {
-    render(<Nav caps={null} />)
-    const toys = screen.getByRole('link', { name: /Toy Library/ })
-    expect(toys.style.getPropertyValue('--pill-tint')).toBe(TONES.mint.hex.bg)
-    expect(toys.style.getPropertyValue('--pill-ink')).toBe(TONES.mint.hex.fg)
-  })
-
-  // Tests: My SPLAT is the one bare label in the bar
-  // How:   asserts the account link renders no decorative dot span
-  // Chain: the board draws the seven section tabs with a tone dot and My SPLAT without
-  //        one — that absence is what separates the account cluster from the sections.
-  //        With a dot it read as an eighth section that had drifted right
-  it('draws the account entry without a section dot', () => {
-    render(<Nav caps={signedIn} />)
-    const account = screen.getByRole('link', { name: /My SPLAT/ })
-    // The dot specifically, not any decorative span — the unread badge is
-    // aria-hidden too and is meant to stay.
-    expect(account.querySelector('span.rounded-full')).toBeNull()
-    expect(screen.getByRole('link', { name: /Guides/ }).querySelector('span.rounded-full')).not.toBeNull()
-  })
-
-  // Tests: My SPLAT is drawn as the solid apricot button on every route, not as
-  //        a .nav-pill that only tints on hover or when current
-  // How:   renders on a public route and on /dashboard itself, asserting the
-  //        class both times
-  // Chain: as a bare label it was the quietest thing in a bar of seven tinted
-  //        section tabs. If it ever regresses to .nav-pill the header still
-  //        renders and every other assertion here still passes, so this is the
-  //        only thing standing between that and shipping
-  it('draws My SPLAT as the accent button everywhere', () => {
-    render(<Nav caps={signedIn} />)
-    expect(screen.getByRole('link', { name: /My SPLAT/ })).toHaveClass('btn-accent')
-    expect(screen.getByRole('link', { name: /My SPLAT/ })).not.toHaveClass('nav-pill')
-    cleanup()
-
-    pathname.current = '/dashboard'
-    render(<Nav caps={signedIn} />)
-    expect(screen.getByRole('link', { name: /My SPLAT/ })).toHaveClass('btn-accent')
-  })
-
-  // Tests: the avatar sits to the LEFT of the My SPLAT button
-  // How:   compares document order of the initials span and the account link
-  // Chain: the avatar used to follow the label; once the label became a solid
-  //        button an avatar on its right read as a chip that had come loose
-  //        from it. Nothing else in this file asserts cluster order
-  it('places the avatar before the My SPLAT button', () => {
-    render(<Nav caps={signedIn} />)
-    const avatar = screen.getByTitle(signedIn.profile.name)
-    const account = screen.getByRole('link', { name: /My SPLAT/ })
-    // Node.DOCUMENT_POSITION_FOLLOWING — the account link comes after the avatar.
-    expect(avatar.compareDocumentPosition(account) & 4).toBeTruthy()
   })
 })

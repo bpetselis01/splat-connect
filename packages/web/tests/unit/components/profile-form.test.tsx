@@ -24,10 +24,10 @@ describe('ProfileForm', () => {
     patch.mockResolvedValue({ ...PROFILE, name: 'Ada Lovelace' })
     render(<ProfileForm profile={PROFILE} />)
 
-    fireEvent.change(screen.getByLabelText('Full name'), {
+    fireEvent.change(screen.getByLabelText('Display name'), {
       target: { value: 'Ada Lovelace' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
 
     await waitFor(() =>
       expect(patch).toHaveBeenCalledWith('/api/contributors/me', expect.objectContaining({ name: 'Ada Lovelace' }))
@@ -45,10 +45,33 @@ describe('ProfileForm', () => {
     patch.mockRejectedValue(new Error('boom'))
     render(<ProfileForm profile={PROFILE} />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent(/could not save/i)
     expect(screen.queryByText('Saved')).not.toBeInTheDocument()
+  })
+
+  // 072: the public profile's About paragraph and featured guide ride the same
+  // PATCH. The select only appears when there is a published guide to pick.
+  it('saves the bio and the featured guide', async () => {
+    patch.mockResolvedValue({ ...PROFILE, bio: 'Thursday switch clinic.', featured_tutorial_id: 't1' })
+    render(<ProfileForm profile={PROFILE} publishedGuides={[{ id: 't1', title: 'Fairy lights' }]} />)
+
+    fireEvent.change(screen.getByLabelText('About you'), { target: { value: 'Thursday switch clinic.' } })
+    fireEvent.change(screen.getByLabelText('Featured guide'), { target: { value: 't1' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    await waitFor(() =>
+      expect(patch).toHaveBeenCalledWith('/api/contributors/me', expect.objectContaining({
+        bio: 'Thursday switch clinic.',
+        featured_tutorial_id: 't1',
+      }))
+    )
+  })
+
+  it('offers no featured pick without a published guide', () => {
+    render(<ProfileForm profile={PROFILE} />)
+    expect(screen.queryByLabelText('Featured guide')).not.toBeInTheDocument()
   })
 
   it('saves the pickup address fields', async () => {
@@ -67,7 +90,7 @@ describe('ProfileForm', () => {
     fireEvent.change(screen.getByLabelText(/postcode/i), {
       target: { value: '3000' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
 
     await waitFor(() =>
       expect(patch).toHaveBeenCalledWith('/api/contributors/me', expect.objectContaining({

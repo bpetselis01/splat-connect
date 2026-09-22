@@ -29,8 +29,10 @@ const DETAIL = {
   status: 'approved',
   maturity: 'complete',
   safety_declared_at: null,
+  build_minutes: 30,
   // Object path (049), not a URL — the preview button signs it in-process.
   tutorial_pdf_url: '1/tutorial.pdf',
+  photo_urls: [],
   toy_photo_url: null,
   rejection_note: null,
   created_at: '',
@@ -111,7 +113,7 @@ describe('DetailScreen', () => {
     await screen.findByText('Build a Robot Arm')
 
     expect(screen.getByText('Request this 3D print')).toBeTruthy()
-    expect(screen.getByText('SOON')).toBeTruthy()
+    expect(screen.getByText('Soon')).toBeTruthy()
 
     mockPush.mockClear()
     fireEvent.press(screen.getByText('Request this 3D print'))

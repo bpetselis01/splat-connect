@@ -12,7 +12,7 @@ test('an admin deletes a contributor account', async ({ page }) => {
   await expect(page.getByText(victim.email)).toBeVisible()
 
   const row = page.getByTestId('contributor-row').filter({ hasText: victim.email })
-  await row.getByRole('button', { name: 'Delete' }).click()
+  await row.getByRole('button', { name: 'Remove' }).click()
   await page.waitForLoadState('networkidle')
 
   await expect(page.getByText(victim.email)).toHaveCount(0)
@@ -29,5 +29,5 @@ test('the contributors list renders name, email and joined date', async ({ page 
   const row = page.getByTestId('contributor-row').filter({ hasText: contributor.email })
   await expect(row).toContainText(contributor.name)
   await expect(row).toContainText(contributor.email)
-  await expect(row).toContainText('Joined')
+  await expect(row).toContainText(/[A-Z][a-z]{2} \d{4}/)
 })

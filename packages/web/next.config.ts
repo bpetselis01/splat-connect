@@ -6,6 +6,15 @@ import path from 'node:path'
 const apiPort = process.env.API_PORT ?? '3101'
 
 const nextConfig: NextConfig = {
+  // Next 16 allows one `next dev` per project directory and refuses the second
+  // outright — it takes its lock inside distDir. That makes the parity stack
+  // (scripts/parity, which runs its own web server against local Supabase on
+  // :3110) mutually exclusive with an ordinary dev server on :3100, so
+  // comparing screens meant killing whatever you were looking at.
+  //
+  // Giving the second server its own distDir lifts the collision. Defaults to
+  // .next, so nothing changes unless NEXT_DIST_DIR is set.
+  distDir: process.env.NEXT_DIST_DIR ?? '.next',
   // Pin the workspace root to the monorepo. Without this, a stray lockfile
   // higher up the tree (e.g. ~/package-lock.json) makes Next infer the wrong
   // root and turbopack mis-resolves the pnpm-stored native CSS binaries.
@@ -45,6 +54,21 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: '*.supabase.co',
+        pathname: '/storage/v1/object/public/**',
+      },
+      // The local Supabase stack, for dev and E2E. Without this every photo on
+      // the local stack falls back to its placeholder, which quietly hides
+      // layout the photos are meant to fill. Keep lib/photo-src.ts in step.
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '54321',
+        pathname: '/storage/v1/object/public/**',
+      },
+      {
+        protocol: 'http',
+        hostname: '127.0.0.1',
+        port: '54321',
         pathname: '/storage/v1/object/public/**',
       },
     ],

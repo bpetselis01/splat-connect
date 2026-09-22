@@ -39,6 +39,7 @@ const tutorial = (over: object) => ({
   kind: 'toy_adaptation',
   status: 'draft',
   tutorial_pdf_url: null,
+  photo_urls: [],
   toy_photo_url: null,
   created_at: '2026-08-01T00:00:00Z',
   updated_at: '2026-08-01T00:00:00Z',
@@ -77,7 +78,8 @@ describe('ReviewQueueScreen', () => {
     render(<ReviewQueueScreen />)
 
     expect(await screen.findByText('Waiting on you')).toBeTruthy()
-    expect(screen.getByText('Asked to back')).toBeTruthy()
+    // Twice: the fixture's title and its badge now share the sentence-case label.
+    expect(screen.getAllByText('Asked to back').length).toBe(2)
     expect(screen.getByText('Asked to review')).toBeTruthy()
   })
 

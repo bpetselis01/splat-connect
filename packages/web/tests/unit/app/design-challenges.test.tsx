@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { PUBLIC_NAV, SCAFFOLD_KEYS } from '@/lib/public-nav'
 
@@ -57,6 +57,9 @@ const idea = (id: string, status: 'challenge' | 'graduated') => ({
 })
 
 describe('design challenges listing page', () => {
+  // The first import pulls in the page's icon set cold, which alone can run
+  // past the default 5s; warm it once so no single test carries that cost.
+  beforeAll(() => import('@/app/get-involved/design-challenges/page'), 30_000)
   beforeEach(() => vi.clearAllMocks())
 
   it('renders a card per challenge, with a maker chip on open ones and a write-up badge on graduated ones', async () => {
@@ -66,7 +69,7 @@ describe('design challenges listing page', () => {
 
     expect(screen.getByText('Idea a')).toBeInTheDocument()
     expect(screen.getByText('Idea b')).toBeInTheDocument()
-    expect(screen.getByText(/looking for makers/i)).toBeInTheDocument()
+    expect(screen.getByText('Open')).toBeInTheDocument()
     expect(screen.getByText('Being written up')).toBeInTheDocument()
   })
 
@@ -76,7 +79,7 @@ describe('design challenges listing page', () => {
     render(await Page())
 
     expect(screen.getByText(/no challenges are open yet/i)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /submit an idea/i })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /^submit an idea$/i })).toHaveAttribute(
       'href',
       '/get-involved/submit-an-idea'
     )

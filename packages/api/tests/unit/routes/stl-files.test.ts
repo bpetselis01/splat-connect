@@ -9,8 +9,9 @@ import type { AuthVariables } from '../../../src/middleware/auth.js'
 // (the fixed shape always wins over a per-test override in Vitest).
 const mockDeleteStl = vi.fn()
 const mockInsertStl = vi.fn()
+const mockUpdateStl = vi.fn()
 const mockFrom = vi.fn((table: string) => {
-  if (table === 'stl_files') return { delete: mockDeleteStl, insert: mockInsertStl }
+  if (table === 'stl_files') return { delete: mockDeleteStl, insert: mockInsertStl, update: mockUpdateStl }
   return {}
 })
 
@@ -93,5 +94,47 @@ describe('DELETE /:id/stl-files', () => {
     mockDeleteStl.mockReturnValue({ eq: vi.fn(() => ({ error: { message: 'delete error' } })) })
     const res = await makeApp().request('/tutorial-1/stl-files', { method: 'DELETE' })
     expect(res.status).toBe(500)
+  })
+})
+
+describe('PATCH /:id/stl-files/:fileId', () => {
+  const chain = (result: { data: unknown; error: unknown }) => ({
+    eq: vi.fn(() => ({ eq: vi.fn(() => ({ select: vi.fn(() => ({ maybeSingle: vi.fn(async () => result) })) })) })),
+  })
+  beforeEach(() => vi.clearAllMocks())
+
+  // Tests: the three settings (068) are written as integers or null, never as whatever was posted
+  // How:   a string minute count and an unlisted material both land as null; grams pass through
+  it('coerces the settings and returns the row', async () => {
+    mockUpdateStl.mockReturnValue(chain({ data: { id: 'f1', filament_grams: 41 }, error: null }))
+    const res = await makeApp().request('/tutorial-1/stl-files/f1', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ print_minutes: '190', filament_grams: 41, material: 'WOOD' }),
+    })
+    expect(res.status).toBe(200)
+    expect(mockUpdateStl).toHaveBeenCalledWith({ print_minutes: null, filament_grams: 41, material: null })
+  })
+
+  // Tests: a value past the column check reads as a 400, not a 500
+  it('turns a check violation into 400', async () => {
+    mockUpdateStl.mockReturnValue(chain({ data: null, error: { code: '23514', message: 'check' } }))
+    const res = await makeApp().request('/tutorial-1/stl-files/f1', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ print_minutes: 9999 }),
+    })
+    expect(res.status).toBe(400)
+  })
+
+  // Tests: a file that is not the caller's (RLS) or not on that guide is a 404
+  it('is 404 when no row matches', async () => {
+    mockUpdateStl.mockReturnValue(chain({ data: null, error: null }))
+    const res = await makeApp().request('/tutorial-1/stl-files/nope', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ material: 'PETG' }),
+    })
+    expect(res.status).toBe(404)
   })
 })

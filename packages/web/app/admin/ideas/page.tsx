@@ -12,11 +12,20 @@
  * - components/badge.tsx: the status → copy/colour map, reused
  *   rather than a third copy of that logic
  */
+import { Lightbulb } from '@phosphor-icons/react/dist/ssr'
 import Link from 'next/link'
 import type { Route } from 'next'
 import { apiClient } from '@/lib/api-client'
-import { Badge, IDEA_LABEL } from '@/components/badge'
-import type { ToyIdea } from '@splat-connect/types'
+import { shortDate } from '@/lib/dates'
+import type { ToyIdea, ToyIdeaStatus } from '@splat-connect/types'
+
+// The board's four words for where an idea stands, on its tints.
+const STATUS: Record<ToyIdeaStatus, { label: string; tint: string }> = {
+  pending: { label: 'Pending', tint: 'var(--tamber)' },
+  challenge: { label: 'Published', tint: 'var(--tok)' },
+  graduated: { label: 'Being written up', tint: 'var(--b100)' },
+  rejected: { label: 'Rejected', tint: 'var(--tbad)' },
+}
 
 type Queued = ToyIdea & { profiles: { name: string } | null }
 
@@ -31,13 +40,22 @@ export default async function AdminIdeasPage() {
     return 0
   })
 
+  const header = (
+    <>
+      <h1 className="title-hub">Design challenges awaiting review</h1>
+      <p className="mt-1.5 mb-6 max-w-[60ch] text-[15px] text-muted">
+        Publish an idea as an open challenge, or reject it with a reason the author can act on.
+      </p>
+    </>
+  )
+
   if (ideas.length === 0) {
     return (
-      <div>
-        <h1 className="mb-4 title-hub">Design challenge queue</h1>
+      <div className="max-w-[960px]">
+        {header}
         <div className="flex flex-col items-center px-6 py-16 text-center">
-          <span aria-hidden="true" className="empty-badge">
-            💡
+          <span aria-hidden="true" className="empty-badge text-brand-deep">
+            <Lightbulb className="h-8 w-8" />
           </span>
           <p className="mt-4 font-bold text-ink">No ideas submitted yet.</p>
           <p className="mt-1 max-w-xs text-sm leading-relaxed text-muted">
@@ -49,29 +67,35 @@ export default async function AdminIdeasPage() {
   }
 
   return (
-    <div>
-      <h1 className="mb-6 title-hub">Design challenge queue</h1>
-      <div className="flex flex-col gap-3">
+    <div className="max-w-[960px]">
+      {header}
+      <ul className="flex list-none flex-col gap-3">
         {ideas.map((idea) => (
-          <Link
-            key={idea.id}
-            href={`/admin/ideas/${idea.id}` as Route<string>}
-            className="card card-link flex items-center justify-between gap-4 p-4"
-          >
-            <div className="flex items-center gap-3">
-              <Badge status={idea.status} label={IDEA_LABEL[idea.status]} />
-              <div>
-                <p className="text-sm font-bold text-ink">{idea.title}</p>
-                <p className="text-xs text-muted">
-                  {idea.profiles?.name ?? 'Someone'} · Submitted{' '}
-                  {new Date(idea.created_at).toLocaleDateString()}
-                </p>
-              </div>
-            </div>
-            <span className="shrink-0 text-sm font-semibold text-brand-dark">Review →</span>
-          </Link>
+          <li key={idea.id}>
+            <Link
+              href={`/admin/ideas/${idea.id}` as Route<string>}
+              className="card card-link rounded-[18px] px-[22px] py-5 text-ink no-underline"
+            >
+              <span className="flex items-start justify-between gap-4">
+                <span className="font-display text-lg font-extrabold">{idea.title}</span>
+                <span
+                  className="admin-tag flex-none px-3"
+                  style={{ background: STATUS[idea.status].tint }}
+                >
+                  {STATUS[idea.status].label}
+                </span>
+              </span>
+              {idea.summary && (
+                <span className="mt-2 block text-sm leading-[1.55] text-muted">{idea.summary}</span>
+              )}
+              <span className="mt-2.5 block text-[13px] font-semibold text-muted">
+                {idea.profiles?.name ?? 'Someone'}
+                {idea.created_at && ` · ${shortDate(idea.created_at)}`}
+              </span>
+            </Link>
+          </li>
         ))}
-      </div>
+      </ul>
     </div>
   )
 }

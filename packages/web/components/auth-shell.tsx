@@ -1,74 +1,95 @@
 import Link from 'next/link'
-import { Logo } from '@/components/icons'
+import type { Route } from 'next'
+import { ShieldCheck, SealCheck, Heart } from '@phosphor-icons/react/dist/ssr'
+import { AuthWordmark } from '@/components/auth-wordmark'
+import { SplatMascot } from '@/components/splat-mascot'
 
 /**
- * The chrome for /login and /signup.
+ * The centred auth stage the board draws for Sign in, Check your email, Email
+ * confirmed and the contributor-terms gate: two drifting blobs behind a 440px
+ * column — the bear waving, the brand lockup, the card, and a one-line
+ * footnote under it.
  *
- * These are the only routes with no header (app/layout.tsx's BARE_PREFIXES —
- * a nav on an auth gate is an escape hatch out of the gate), which left them
- * with no branding and no way home at all: a visitor landing on /login found
- * the word "SPLAT Connect" nowhere on the page. The board replaces the header
- * with exactly two things, and this is them — the wordmark, and a segmented
- * switch between the two screens.
+ * Create account is the one auth screen NOT on this stage: the board gives it
+ * a two-column page of its own (AuthSplit).
  *
- * The switch is two <Link>s rather than one screen with a view flag. The board
- * models it as local state because an artboard has no router; here /login and
- * /signup are real routes carrying ?next= and their own tests, and collapsing
- * them would cost all of that to gain nothing a visitor can see.
+ * These routes carry the site header now, as every board screen does. They
+ * were bare on the argument that a nav on an auth gate is an escape hatch out
+ * of the gate — which is true of the contributor-terms gate, where every link
+ * bounces straight back, and not of a sign-in page anyone may leave.
  */
-export function AuthShell({
-  current,
-  children,
-}: {
-  /** Which tab is filled. Also what the link's aria-current announces. */
-  current: 'login' | 'signup'
-  children: React.ReactNode
-}) {
+export function AuthStage({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex flex-col items-center px-5 pb-14 pt-8 sm:pt-14">
-      <Link href="/" className="mb-[30px] flex items-center gap-2.5">
-        <span
-          aria-hidden="true"
-          className="pixel-avatar grid h-[34px] w-[34px] place-items-center bg-brand-tint text-brand-dark"
-        >
-          <Logo className="h-5 w-5" />
-        </span>
-        <span className="text-[18px] font-black tracking-tight text-ink">SPLAT Connect</span>
-      </Link>
-
-      {/* One border and one shadow around the pair, not one each — the divider
-          between them is a border on the second tab. That is what makes it read
-          as a single switch rather than two adjacent buttons. */}
-      <div className="auth-switch">
-        <Link href="/login" aria-current={current === 'login' ? 'page' : undefined}>
-          Sign in
-        </Link>
-        <Link href="/signup" aria-current={current === 'signup' ? 'page' : undefined}>
-          Create account
-        </Link>
+    <div className="auth-stage">
+      <div aria-hidden="true" className="auth-stage__blobs">
+        <span />
+        <span />
       </div>
-
-      {children}
+      <div className="auth-stage__column">
+        <div className="auth-stage__mascot">
+          <SplatMascot width={78} />
+        </div>
+        <AuthWordmark className="auth-stage__lockup" />
+        <div className="auth-card">{children}</div>
+        <p className="auth-stage__foot">No paid tier. Not a medical device.</p>
+      </div>
     </div>
   )
 }
 
 /**
- * The card both auth screens sit in. Separate from AuthShell because the signup
- * page renders a different one on success ("Check your email") that still needs
- * the same box.
+ * The board's Create account page: the welcome and its three promises on the
+ * left, the form card (children) on the right.
  */
-export function AuthCard({ children }: { children: React.ReactNode }) {
-  // No shadow of its own, so .card's rung-3 rule in globals.css draws it.
-  //
-  // This carried a literal shadow-[6px_6px_0_var(--color-ink)] — the launcher
-  // pillar's depth — on the argument that the card is the only object on the
-  // screen and has no siblings to sit level with. Depth is not what says that:
-  // being alone on the page already does. What the literal actually bought was
-  // a form box shouting louder than the Sign in button inside it, and because
-  // a Tailwind utility beats the stylesheet it was the one surface the
-  // 2026-08-29 hierarchy pass could not reach from CSS.
+export function AuthSplit({ children }: { children: React.ReactNode }) {
   return (
-    <div className="card mt-[22px] w-full max-w-[380px] p-[30px]">{children}</div>
+    <section className="signup">
+      <div className="signup__welcome">
+        <div className="signup__mascot">
+          <SplatMascot width={140} />
+        </div>
+        <h1 className="signup__title">Welcome to SPLAT Connect</h1>
+        <p className="signup__lede">
+          One account for browsing, saving, requesting toys and — if you make things — writing
+          guides. The account is free, always. We never sell data.
+        </p>
+        <ul className="signup__promises">
+          <li>
+            <ShieldCheck weight="fill" aria-hidden="true" style={{ color: 'var(--ok)' }} />
+            Child profiles stay private to you
+          </li>
+          <li>
+            <SealCheck weight="fill" aria-hidden="true" style={{ color: 'var(--ok)' }} />
+            Every guide is reviewed before it&apos;s published
+          </li>
+          <li>
+            <Heart weight="fill" aria-hidden="true" style={{ color: 'var(--coral)' }} />
+            Run by volunteers in Australia
+          </li>
+        </ul>
+      </div>
+      {children}
+    </section>
+  )
+}
+
+/**
+ * The board's segmented switch at the top of the auth form card. Two <Link>s
+ * rather than one screen with a view flag: /login and /signup are real routes
+ * carrying ?next= and their own tests, so the "tabs" navigate — and carry the
+ * query across, so a visitor sent to signup to save something who switches to
+ * Sign in still comes back to it.
+ */
+export function AuthTabs({ current, search = '' }: { current: 'login' | 'signup'; search?: string }) {
+  const query = search ? `?${search}` : ''
+  return (
+    <nav aria-label="Account" className="auth-tabs">
+      <Link href={`/signup${query}` as Route} aria-current={current === 'signup' ? 'page' : undefined}>
+        Create account
+      </Link>
+      <Link href={`/login${query}` as Route} aria-current={current === 'login' ? 'page' : undefined}>
+        Sign in
+      </Link>
+    </nav>
   )
 }

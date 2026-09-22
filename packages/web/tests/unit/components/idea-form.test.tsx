@@ -8,7 +8,7 @@ vi.mock('@/lib/browser-api-client', () => ({ browserApiClient: { post: vi.fn() }
 describe('IdeaForm', () => {
   it('asks for every field the reviewer needs', () => {
     render(<IdeaForm />)
-    for (const label of [/idea name/i, /one sentence/i, /full description/i, /intended use/i, /primary user/i]) {
+    for (const label of [/^title$/i, /^summary$/i, /full description/i, /intended use/i, /primary user/i]) {
       expect(screen.getByLabelText(label)).toBeInTheDocument()
     }
   })

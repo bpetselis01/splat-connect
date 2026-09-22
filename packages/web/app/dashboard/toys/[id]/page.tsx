@@ -1,14 +1,12 @@
-import { BackLink } from '@/components/back-link'
 import { notFound } from 'next/navigation'
 import { apiClient } from '@/lib/api-client'
 import { requireCapabilities } from '@/lib/require-capabilities'
 import { ToyEditor } from '@/components/toy-editor'
-import { ToySummary } from '@/components/toy-summary'
 import type { Toy } from '@splat-connect/types'
 
 export default async function ToyEditPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const caps = await requireCapabilities()
+  await requireCapabilities()
 
   // Reads the collection rather than one row, same reasoning as
   // EditChildPage: RLS scopes it to the caller, so a toy missing from it is
@@ -18,10 +16,8 @@ export default async function ToyEditPage({ params }: { params: Promise<{ id: st
   if (!toy) notFound()
 
   return (
-    <div>
-      <BackLink href="/dashboard/toys" label="My toys" />
-      <h1 className="mb-6 title-detail">{toy.name}</h1>
-      <ToyEditor toy={toy} />
-    </div>
+    // The editor draws its own header: the stage pill and title change the
+    // moment the toy is listed, and only the client side knows when that is.
+    <ToyEditor toy={toy} />
   )
 }

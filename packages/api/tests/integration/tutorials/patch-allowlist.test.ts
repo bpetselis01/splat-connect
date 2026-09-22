@@ -48,6 +48,25 @@ describe('PATCH /api/tutorials/:id', () => {
     expect(((await res.json()) as { title: string }).title).toBe('Renamed')
   })
 
+  // 071: the age range is editable, and its bounds are the database's, read
+  // back as a 400 rather than the 500 the editor would show as a conflict.
+  it('applies the age range and 400s an inverted one', async () => {
+    let { data: current } = await adminClient().from('tutorials').select('updated_at').eq('id', draft).single()
+    const ok = await app.request(`/api/tutorials/${draft}`, authed(author.token, {
+      method: 'PATCH',
+      body: JSON.stringify({ age_min: 3, age_max: 7, updated_at: current!.updated_at }),
+    }))
+    expect(ok.status).toBe(200)
+    expect(await ok.json()).toMatchObject({ age_min: 3, age_max: 7 })
+
+    ;({ data: current } = await adminClient().from('tutorials').select('updated_at').eq('id', draft).single())
+    const bad = await app.request(`/api/tutorials/${draft}`, authed(author.token, {
+      method: 'PATCH',
+      body: JSON.stringify({ age_min: 9, age_max: 7, updated_at: current!.updated_at }),
+    }))
+    expect(bad.status).toBe(400)
+  })
+
   it('drops unknown keys instead of writing them', async () => {
     const { data: current } = await adminClient().from('tutorials').select('updated_at').eq('id', draft).single()
     const res = await app.request(`/api/tutorials/${draft}`, authed(author.token, {

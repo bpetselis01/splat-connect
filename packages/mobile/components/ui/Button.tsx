@@ -13,9 +13,9 @@ import { AnimatedPressable } from './AnimatedPressable'
 type ButtonVariant = 'primary' | 'accent' | 'secondary' | 'ghost' | 'danger'
 
 const VARIANTS: Record<ButtonVariant, { container: ViewStyle; text: TextStyle }> = {
-  primary: { container: { backgroundColor: theme.colors.primary, ...theme.shadow(4) }, text: { color: '#ffffff' } },
-  accent: { container: { backgroundColor: theme.colors.apricot, ...theme.shadow(4) }, text: { color: theme.colors.ink } },
-  secondary: { container: { backgroundColor: theme.colors.surface, ...theme.shadow(3) }, text: { color: theme.colors.ink } },
+  primary: { container: { backgroundColor: theme.colors.primary, ...theme.shadow(2) }, text: { color: '#ffffff' } },
+  accent: { container: { backgroundColor: theme.colors.apricot, ...theme.shadow(2) }, text: { color: theme.colors.ink } },
+  secondary: { container: { backgroundColor: theme.colors.surface, ...theme.shadow(1) }, text: { color: theme.colors.ink } },
   // Ghost is the one flat button: no border, no shadow — a quiet text action.
   ghost: { container: { backgroundColor: 'transparent', borderWidth: 0 }, text: { color: theme.colors.primaryDeep } },
   // Same flat shape as ghost, danger-toned — the delete-this-forever action
@@ -78,9 +78,9 @@ export function Button({
 
 const styles = StyleSheet.create({
   base: {
-    borderRadius: theme.radii.sm,
-    borderWidth: theme.border.thin,
-    borderColor: theme.colors.ink,
+    borderRadius: theme.radii.field,
+    borderWidth: theme.border.hairline,
+    borderColor: theme.colors.border,
     paddingVertical: theme.spacing(3),
     paddingHorizontal: theme.spacing(5),
     alignItems: 'center',

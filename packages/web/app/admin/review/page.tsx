@@ -13,12 +13,32 @@
  * - packages/api/src/routes/admin.ts: GET /api/admin/tutorials, which embeds tutorial_orgs
  * - app/organizations/[id]: where a leader handles the ones marked accepted here
  */
+import {
+  BookOpenText,
+  CheckCircle,
+  Queue,
+  SealCheck,
+  WarningCircle,
+} from '@phosphor-icons/react/dist/ssr'
 import Link from 'next/link'
 import { apiClient } from '@/lib/api-client'
-import { Badge } from '@/components/badge'
-import type { Tutorial, TutorialOrg, Difficulty } from '@splat-connect/types'
+import { tintFor } from '@/components/card-photo'
+import { ReviewTabs } from '@/components/admin-review-tabs'
+import type { Tutorial, TutorialOrg, AdminAccountsResponse, ToyIdea } from '@splat-connect/types'
 
-type Queued = Tutorial & { tutorial_orgs?: TutorialOrg[] }
+type Queued = Tutorial & {
+  tutorial_orgs?: TutorialOrg[]
+  tutorial_contributors?: Array<{ profile_id: string }>
+}
+
+/** `3 hours`, `1 day`, `9 days` — the board's WAITING cell. */
+// Module scope: reading the clock inside the component is impure render.
+function waiting(iso: string, now: number = Date.now()): { text: string; days: number } {
+  const hours = Math.max(0, Math.floor((now - new Date(iso).getTime()) / 36e5))
+  if (hours < 24) return { text: `${hours} hour${hours === 1 ? '' : 's'}`, days: 0 }
+  const days = Math.floor(hours / 24)
+  return { text: `${days} day${days === 1 ? '' : 's'}`, days }
+}
 
 export default async function ReviewListPage({
   searchParams,
@@ -26,7 +46,17 @@ export default async function ReviewListPage({
   searchParams: Promise<{ mine?: string }>
 }) {
   const { mine } = await searchParams
-  const all = await apiClient.get<Queued[]>('/api/admin/tutorials?status=pending')
+  const [all, accounts, ideas] = await Promise.all([
+    apiClient.get<Queued[]>('/api/admin/tutorials?status=pending'),
+    // Names for the CONTRIBUTOR column. Resolved here rather than embedded:
+    // embedding profiles kills the whole query under the 033/045 grants.
+    apiClient
+      .get<AdminAccountsResponse>('/api/admin/contributors')
+      .catch(() => null),
+    apiClient.get<ToyIdea[]>('/api/admin/ideas').catch(() => [] as ToyIdea[]),
+  ])
+  const nameOf = new Map((accounts?.accounts ?? []).map((a) => [a.id, a.name || a.email]))
+  const pendingIdeas = Array.isArray(ideas) ? ideas.filter((i) => i.status === 'pending').length : 0
 
   const acceptedFor = (t: Queued) =>
     (t.tutorial_orgs ?? []).filter((b) => b.status === 'accepted')
@@ -35,13 +65,27 @@ export default async function ReviewListPage({
   const tutorials = hidingHandled ? unhandled : all
   const handledCount = all.length - unhandled.length
 
+  const header = (
+    <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <span className="text-[13px] font-extrabold uppercase tracking-[0.1em] text-muted">
+          Admin
+        </span>
+        <h1 className="mt-1 font-display text-4xl font-extrabold leading-[1.1] text-ink">
+          Review queue
+        </h1>
+      </div>
+      <ReviewTabs current="guides" guides={all.length} ideas={pendingIdeas} />
+    </div>
+  )
+
   if (tutorials.length === 0) {
     return (
       <div>
-        <h1 className="mb-4 title-hub">Tutorial review queue</h1>
+        {header}
         <div className="flex flex-col items-center px-6 py-16 text-center">
-          <span aria-hidden="true" className="empty-badge">
-            ☕
+          <span aria-hidden="true" className="empty-badge text-brand-deep">
+            <CheckCircle className="h-8 w-8" />
           </span>
           <p className="mt-4 font-bold text-ink">
             {hidingHandled && handledCount > 0
@@ -65,48 +109,106 @@ export default async function ReviewListPage({
 
   return (
     <div>
-      <h1 className="mb-2 title-hub">Tutorial review queue</h1>
-      {handledCount > 0 && (
-        <p className="mb-6 text-sm text-muted">
-          {hidingHandled ? (
-            <Link href="/admin/review">
-              Show the {handledCount} an organisation is handling
-            </Link>
-          ) : (
-            <Link href="/admin/review?mine=1">
-              Hide the {handledCount} an organisation is handling
-            </Link>
-          )}
-        </p>
-      )}
-      <div className="flex flex-col gap-3">
-        {tutorials.map((t) => {
-          const accepted = acceptedFor(t)
-          return (
-            <Link
-              key={t.id}
-              href={`/admin/review/${t.id}`}
-              className="card card-link flex items-center justify-between gap-4 p-4"
-            >
-              <div className="flex items-center gap-3">
-                <Badge status={t.difficulty as Difficulty} />
-                <div>
-                  <p className="text-sm font-bold text-ink">{t.title}</p>
-                  <p className="text-xs text-muted">
-                    Submitted {new Date(t.created_at).toLocaleDateString()}
-                  </p>
-                  {accepted.length > 0 && (
-                    <p className="text-xs text-muted">
-                      {accepted.map((b) => b.organizations?.name).filter(Boolean).join(', ')}{' '}
-                      accepted — awaiting their review
-                    </p>
-                  )}
-                </div>
-              </div>
-              <span className="shrink-0 text-sm font-semibold text-brand-dark">Review →</span>
-            </Link>
-          )
-        })}
+      {header}
+      {/*
+        GUIDE | CONTRIBUTOR | BACKING | WAITING | SAFETY, as the board draws
+        it. SAFETY reads the contributor's declaration — the one safety fact a
+        tutorial row carries.
+      */}
+      <div className="admin-table-card">
+        <div className="overflow-x-auto">
+          <table className="admin-table admin-table--caps">
+            <thead>
+              <tr>
+                <th scope="col">Guide</th>
+                <th scope="col">Contributor</th>
+                <th scope="col">Backing</th>
+                <th scope="col">Waiting</th>
+                <th scope="col">Safety</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tutorials.map((t) => {
+                const accepted = acceptedFor(t)
+                const who = (t.tutorial_contributors ?? [])
+                  .map((c) => nameOf.get(c.profile_id))
+                  .filter(Boolean)
+                const wait = waiting(t.created_at)
+                return (
+                  <tr key={t.id} className="transition-colors hover:bg-[var(--surface2)]">
+                    <td>
+                      <Link
+                        href={`/admin/review/${t.id}`}
+                        className="flex items-center gap-3 font-extrabold text-ink no-underline"
+                      >
+                        <span
+                          aria-hidden="true"
+                          className="grid h-10 w-10 flex-none place-items-center rounded-[14px] text-ink"
+                          style={{ background: tintFor(t.id) }}
+                        >
+                          <BookOpenText size={22} weight="duotone" />
+                        </span>
+                        {t.title}
+                      </Link>
+                    </td>
+                    <td className="font-semibold">{who.length ? who.join(', ') : '—'}</td>
+                    <td>
+                      <span
+                        className="admin-tag gap-1 px-2.5 py-[3px]"
+                        style={{ background: accepted.length ? 'var(--tok)' : 'var(--surface2)' }}
+                      >
+                        {accepted.length ? (
+                          <SealCheck size={14} weight="fill" aria-hidden="true" />
+                        ) : (
+                          <Queue size={14} weight="fill" aria-hidden="true" />
+                        )}
+                        {accepted.length
+                          ? accepted.map((b) => b.organizations?.name).filter(Boolean).join(', ')
+                          : 'SPLAT queue'}
+                      </span>
+                    </td>
+                    <td
+                      className="whitespace-nowrap font-bold"
+                      style={{
+                        color: wait.days >= 7 ? 'var(--bad)' : wait.days >= 5 ? 'var(--warn)' : 'var(--ink)',
+                      }}
+                    >
+                      {wait.text}
+                    </td>
+                    <td>
+                      <span
+                        className="inline-flex items-center gap-1 text-sm font-bold"
+                        style={{ color: t.safety_declared_at ? 'var(--ok)' : 'var(--warn)' }}
+                      >
+                        {t.safety_declared_at ? (
+                          <CheckCircle size={16} weight="fill" aria-hidden="true" />
+                        ) : (
+                          <WarningCircle size={16} weight="fill" aria-hidden="true" />
+                        )}
+                        {t.safety_declared_at ? 'Affirmed' : 'Not declared'}
+                      </span>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-2 bg-[var(--surface2)] px-[18px] py-3 text-sm font-bold text-muted">
+          <span>
+            {tutorials.length} of {all.length} pending
+          </span>
+          {/* Delegation removes the obligation to act, not the visibility —
+              hiding the org-handled rows is a deliberate act, off by default. */}
+          {handledCount > 0 &&
+            (hidingHandled ? (
+              <Link href="/admin/review">Show the {handledCount} an organisation is handling</Link>
+            ) : (
+              <Link href="/admin/review?mine=1">
+                Hide the {handledCount} an organisation is handling
+              </Link>
+            ))}
+        </div>
       </div>
     </div>
   )

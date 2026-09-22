@@ -51,7 +51,7 @@ export function TutorialReviewPanel({
   return (
     <div className="panel pt-5">
       <div className="flex flex-col gap-4 px-5 pb-5">
-        <div className="max-w-xs overflow-hidden rounded-lg">
+        <div className="max-w-xs overflow-hidden rounded-field">
           <CardPhoto src={toyPhotoUrl} />
         </div>
 

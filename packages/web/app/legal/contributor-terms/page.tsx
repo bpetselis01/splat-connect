@@ -13,13 +13,13 @@
  * Acceptances recorded against version 'v0-todo' are void and should be discarded
  * when real terms land. No placeholder legal language is to be generated here.
  */
+import { ProsePage } from '@/components/prose-page'
 import { ContributorTermsContent } from '@/components/contributor-terms-content'
 
 export default function ContributorTermsPage() {
   return (
-    <main className="container">
-      <h1>Contributor terms</h1>
+    <ProsePage title="Contributor terms">
       <ContributorTermsContent />
-    </main>
+    </ProsePage>
   )
 }

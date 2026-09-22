@@ -1,18 +1,10 @@
-import { ComingSoon } from '@/components/coming-soon'
+/**
+ * Was an "Events" placeholder. Events live at /get-involved/events since 061 —
+ * an event is something you turn up to rather than something already achieved.
+ * A redirect rather than a deletion, for the same reason as /impact/news.
+ */
+import { permanentRedirect } from 'next/navigation'
 
-export const metadata = { title: 'Events — SPLAT Connect' }
-
-export default function EventsPage() {
-  return (
-    <ComingSoon
-      featureKey="events"
-      label="Events"
-      description="Build days, workshops and wherever else you can find us in person."
-      steps={[
-        'Browse upcoming build days and workshops near you',
-        'Register for one, or ask us to run one at your school or centre',
-        'Toys built on the day go to local families',
-      ]}
-    />
-  )
+export default function ImpactEventsPage() {
+  permanentRedirect('/get-involved/events')
 }

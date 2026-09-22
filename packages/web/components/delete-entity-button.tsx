@@ -85,7 +85,7 @@ export function DeleteEntityButton({
         }}
       >
         <div onClick={(e) => e.stopPropagation()} className="flex flex-col gap-4">
-          <h2 className="text-lg font-bold text-ink">Delete {label}?</h2>
+          <h2 className="title-section">Delete {label}?</h2>
           <p className="text-sm text-muted">
             This permanently deletes this {label} and everything recorded on it. It cannot be
             undone.

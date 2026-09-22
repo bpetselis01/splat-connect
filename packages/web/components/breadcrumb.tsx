@@ -1,63 +1,112 @@
 'use client'
 /**
- * Where you are, on pages that sit inside a section.
+ * The trail back up, drawn the way the board draws it:
  *
- * The site is two levels deep, so this is deliberately not a full trail — a
- * `Home / Learn / Switch types` chain would restate the h1 sitting directly
- * beneath it, and breadcrumbs earn their place at three levels, not two. What a
- * visitor actually needs here is the way back up, so that is all this renders.
+ *     ←  ⊞ My SPLAT  /  📄 My tutorials  /  Tutorial editor
  *
- * Renders nothing on the homepage — a link pointing at the page you are on is
- * noise. On a section hub it points Home, as the board draws it: a hub is a
- * page people land on from search as often as from the nav above it, and the
- * board puts "← Home" over every one of them.
+ * A muted arrow, then each ancestor as a 14px/800 link with its duotone icon —
+ * the nearest in brand, the rest muted — then the page you are on at 13.5px
+ * muted. lib/trail.ts decides which pages get one and what is in it; this
+ * component only draws it. Pages the trail does not model (most public pages,
+ * and every root) render nothing, as on the board.
  *
- * Reads its own pathname via usePathname (same pattern as components/nav.tsx)
- * rather than taking it as a prop from the server layout: the layout only
- * re-reads headers() on a hard page load, so a prop computed there goes stale
- * across any soft <Link> transition and leaves the previous page's section
- * label stuck on screen indefinitely.
+ * Reads its own pathname via usePathname rather than taking it as a prop from
+ * the server layout: the layout only re-reads headers() on a hard page load, so
+ * a prop computed there goes stale across any soft <Link> transition.
  *
- * Uses BoundaryLink, not next/link directly: on a rail-only account page this
- * points back at /dashboard, which is a boundary crossing now that /dashboard
- * no longer nests the rail — a soft transition here would leave the rail on
- * screen with no header, the exact stale-chrome bug BoundaryLink exists to
- * prevent (see its own docstring).
+ * Uses BoundaryLink, not next/link directly: a crumb can point across the
+ * public/account boundary, the stale-chrome bug BoundaryLink exists to prevent.
  */
 import { usePathname } from 'next/navigation'
+import {
+  ArrowLeft,
+  BookmarkSimple,
+  Buildings,
+  CalendarCheck,
+  CalendarDots,
+  ClipboardText,
+  FileText,
+  Folder,
+  Handshake,
+  Lightbulb,
+  Megaphone,
+  Newspaper,
+  Package,
+  Printer,
+  Recycle,
+  ShieldCheck,
+  SquaresFour,
+  Tray,
+  type Icon,
+} from '@phosphor-icons/react'
 import { BoundaryLink } from '@/components/boundary-link'
-import { ACCOUNT_NAV, sectionFor } from '@/lib/public-nav'
-import { toneClass } from '@/lib/tone'
+import { trailFor } from '@/lib/trail'
+
+const ICONS: Record<string, Icon> = {
+  'bookmark-simple': BookmarkSimple,
+  buildings: Buildings,
+  'calendar-check': CalendarCheck,
+  'calendar-dots': CalendarDots,
+  'clipboard-text': ClipboardText,
+  'file-text': FileText,
+  handshake: Handshake,
+  lightbulb: Lightbulb,
+  megaphone: Megaphone,
+  newspaper: Newspaper,
+  package: Package,
+  printer: Printer,
+  recycle: Recycle,
+  'shield-check': ShieldCheck,
+  'squares-four': SquaresFour,
+  tray: Tray,
+}
 
 export function Breadcrumb() {
   const pathname = usePathname() ?? ''
-  if (pathname === '/') return null
+  const crumbs = trailFor(pathname)
+  if (crumbs.length === 0) return null
 
-  const section = sectionFor(pathname)
-  if (!section) return null
-
-  // The board draws a back-link over all seven public hubs and none over My SPLAT.
-  // A signed-in user's way out of their account root is not the public homepage.
-  // Note: app/layout.tsx also gates this component away from /dashboard today; this
-  // guard keeps the component correct on its own terms so it doesn't depend on that.
-  if (section === ACCOUNT_NAV) return null
-
-  // On the hub itself the way up is Home; inside a section it is the hub.
-  const onHub = pathname === section.href
-  const href = onHub ? '/' : section.href
-  const label = onHub ? 'Home' : section.label
-  const tone = toneClass(section.tone)
+  const here = crumbs[crumbs.length - 1]
+  const up = crumbs.slice(0, -1)
 
   return (
-    <nav aria-label="Breadcrumb" className="mb-5">
-      <BoundaryLink
-        href={href}
-        className="eyebrow inline-flex items-center gap-2 text-brand-dark transition-colors hover:text-brand-deep"
-      >
-        <span aria-hidden="true" className={`h-2 w-2 rounded-full ${tone.dot}`} />
-        <span aria-hidden="true">←</span>
-        {label}
-      </BoundaryLink>
+    <nav aria-label="Breadcrumb" className="crumbs">
+      <ArrowLeft weight="bold" aria-hidden="true" className="crumbs__arrow" />
+      <ol className="contents">
+        {up.map((crumb, i) => {
+          const Glyph = ICONS[crumb.icon ?? ''] ?? Folder
+          const nearest = i === up.length - 1
+          const body = (
+            <>
+              <Glyph weight="duotone" aria-hidden="true" className="text-base" />
+              {crumb.label}
+            </>
+          )
+          return (
+            <li key={`${crumb.label}-${i}`} className="contents">
+              {crumb.href ? (
+                <BoundaryLink
+                  href={crumb.href}
+                  className={`crumbs__link${nearest ? ' crumbs__link--near' : ''}`}
+                >
+                  {body}
+                </BoundaryLink>
+              ) : (
+                <span className="crumbs__link">{body}</span>
+              )}
+              <span aria-hidden="true" className="crumbs__sep">
+                /
+              </span>
+            </li>
+          )
+        })}
+        {/* The current page: aria-current, no href, per WAI-ARIA's breadcrumb pattern. */}
+        <li className="contents">
+          <span aria-current="page" className="crumbs__here">
+            {here.label}
+          </span>
+        </li>
+      </ol>
     </nav>
   )
 }

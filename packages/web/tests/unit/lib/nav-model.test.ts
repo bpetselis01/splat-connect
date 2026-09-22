@@ -46,6 +46,7 @@ describe('buildNav', () => {
       'Exchange a toy',
       'Give us a challenge',
       'Print requests',
+      'Out in the world',
       'Organisation',
       'Account',
     ])
@@ -72,24 +73,29 @@ describe('buildNav', () => {
     expect(hrefs(buildNav(caps()))).toContain('/get-involved/submit-an-idea')
   })
 
-  it('marks the two unbuilt rows as soon, and no others', () => {
+  it('marks no row as soon, because every destination is now built', () => {
     const soon = buildNav(caps({ ledOrgs: [org], isAdmin: true }))
       .flatMap((g) => g.rows)
       .filter((r) => r.soon)
       .map((r) => r.href)
     // Toy inventory left this list when the organisation shelf was built.
-    // /printing left when the Browse group was deleted.
-    expect(soon).toEqual([
-      '/dashboard/print-requests',
-      '/dashboard/organisation/orders',
-    ])
+    // /printing left when the Browse group was deleted. The last two — my print
+    // requests and the org's print orders — left with 058.
+    //
+    // The assertion stays rather than being deleted with the last `soon`: the
+    // field is what stops a rail advertising a door that does not open, and a
+    // row added with it set should have to say so here.
+    expect(soon).toEqual([])
   })
 
   // Same total as before Child profiles moved to the Account page: it left
   // and Submit an idea arrived in its place.
-  it('builds thirteen linked rows for a leader-admin', () => {
+  it('builds twenty linked rows for a leader-admin', () => {
     const rows = buildNav(caps({ ledOrgs: [org], isAdmin: true })).flatMap((g) => g.rows)
-    expect(rows).toHaveLength(13)
+    // Fourteen after 058 added Print for others; seventeen after 059 added the
+    // organisation's own three — events and stories, recycling intake, and the
+    // profile editor.
+    expect(rows).toHaveLength(20)
   })
 
   it('includes a Design challenges row for every account', () => {
@@ -141,6 +147,7 @@ describe('buildNav', () => {
       'Exchange a toy',
       'Give us a challenge',
       'Print requests',
+      'Out in the world',
       'Account',
     ])
     const hrefs = groups.flatMap((g) => g.rows.map((r) => r.href))
@@ -150,15 +157,19 @@ describe('buildNav', () => {
     expect(hrefs).not.toContain('/organizations')
   })
 
-  // Tests: every row is an account-owned destination, aside from the one row
-  //        that deliberately crosses out to the public "Submit an idea" page
+  // Tests: every row is an account-owned destination, aside from the two that
+  //        deliberately cross out to a public page
   // How:   asserts each other row href sits under /dashboard, /admin or /notifications
-  // Chain: the rail is now the account section's secondary nav; a row outside it
-  //        would be navigating out of the section it belongs to
-  it('keeps only account destinations, aside from Submit an idea', () => {
+  // Chain: this model is the hub's door list; a row outside the account section
+  //        is navigating out of it, which needs a reason each time. Submit an
+  //        idea has one (the idea form is public), and so does Recycle plastic
+  //        — recycling has no "mine" screen at all, because a drop-off is a
+  //        booking with one organisation
+  it('keeps only account destinations, aside from two named public ones', () => {
+    const outward = ['/get-involved/submit-an-idea', '/get-involved/recycling']
     const rows = buildNav(caps()).flatMap((g) => g.rows)
     for (const row of rows) {
-      if (row.href === '/get-involved/submit-an-idea') continue
+      if (outward.includes(row.href)) continue
       expect(row.href).toMatch(/^\/(dashboard|admin|notifications)/)
     }
   })

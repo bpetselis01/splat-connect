@@ -23,13 +23,18 @@ export function Card({
 
 const styles = StyleSheet.create({
   base: {
-    borderRadius: theme.radii.md,
-    borderWidth: theme.border.thin,
-    borderColor: theme.colors.ink,
-    padding: theme.spacing(4),
+    // A card is the card radius, not the field radius — the sweep off the old
+    // scale mapped every md/sm onto field, which is right for controls and a
+    // rung too tight here.
+    borderRadius: theme.radii.card,
+    borderWidth: theme.border.hairline,
+    // The hairline, not ink. Soft Pop separates a card from the canvas with
+    // elevation; the border is only there to hold the edge in high contrast.
+    borderColor: theme.colors.border,
+    padding: theme.spacing(5),
     backgroundColor: theme.colors.surface,
   },
-  raised: { ...theme.shadow(4) },
-  // Feature cards sit one rung deeper and on the brand tint — the hero box on a screen.
-  feature: { backgroundColor: theme.colors.accentLight, borderWidth: theme.border.thick, ...theme.shadow(5) },
+  raised: { ...theme.shadow(2) },
+  // One rung deeper and on the brand tint — the hero box on a screen.
+  feature: { backgroundColor: theme.colors.accentLight, ...theme.shadow(3) },
 })

@@ -62,6 +62,13 @@ const KIND: Record<
     browseLabel: 'Browse design challenges',
     browse: '/explore/challenges',
   },
+  organisations: {
+    noun: 'organisations',
+    icon: 'business-outline',
+    route: (id) => `/toy-library/organisation/${id}`,
+    browseLabel: 'Browse organisations',
+    browse: '/toy-library/organisations',
+  },
 }
 
 export function SavedListScreen({ slug }: { slug: SaveSlug }) {
@@ -151,7 +158,7 @@ export function SavedListScreen({ slug }: { slug: SaveSlug }) {
           }
         >
           {items.map((item) => {
-            // tutorials/challenges carry title; toys carry name.
+            // tutorials/challenges carry title; toys and organisations carry name.
             const label = item.title ?? item.name ?? ''
             const line = item.summary ?? item.description ?? null
             return (

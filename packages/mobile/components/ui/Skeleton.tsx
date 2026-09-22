@@ -76,6 +76,6 @@ const styles = StyleSheet.create({
     padding: theme.spacing(3),
     marginBottom: theme.spacing(3),
   },
-  thumb: { borderRadius: theme.radii.md },
+  thumb: { borderRadius: theme.radii.field },
   body: { flex: 1, gap: theme.spacing(3), paddingVertical: theme.spacing(2) },
 })

@@ -433,9 +433,9 @@ const styles = StyleSheet.create({
   },
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2) },
   tag: {
-    borderWidth: theme.border.thin,
-    borderColor: theme.colors.ink,
-    borderRadius: theme.radii.sm,
+    borderWidth: theme.border.hairline,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radii.field,
     backgroundColor: theme.colors.surface,
     paddingHorizontal: theme.spacing(2),
     paddingVertical: theme.spacing(1),
@@ -464,7 +464,7 @@ const styles = StyleSheet.create({
   joinedText: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.primaryDeep },
   log: { gap: theme.spacing(2), marginTop: theme.spacing(5) },
   footer: {
-    borderTopWidth: theme.border.thin,
+    borderTopWidth: theme.border.hairline,
     borderTopColor: theme.colors.border,
     paddingTop: theme.spacing(3),
   },

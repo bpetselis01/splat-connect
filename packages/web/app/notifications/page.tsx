@@ -22,6 +22,18 @@ export default async function NotificationsPage() {
     revalidatePath('/notifications')
   }
 
+  // No bulk endpoint exists, so this is one PATCH per unread row.
+  // ponytail: N requests; add a POST /me/read-all if inboxes grow long.
+  async function markAllRead() {
+    'use server'
+    // Re-read rather than close over the page's list: a closure would be
+    // serialised into the form and could be stale by the time it is posted.
+    const rows = await apiClient.get<Notification[]>('/api/notifications/me')
+    const unread = rows.filter((n) => !n.read_at)
+    await Promise.all(unread.map((n) => apiClient.patch(`/api/notifications/${n.id}`, { read: true })))
+    revalidatePath('/notifications')
+  }
+
   async function acceptInvite(inviteId: string) {
     'use server'
     await apiClient.post(`/api/collaborators/invites/${inviteId}/accept`, {})
@@ -35,8 +47,20 @@ export default async function NotificationsPage() {
   }
 
   return (
-    <div>
-      <h1 className="mb-6 title-hub">Notifications</h1>
+    <section className="max-w-[760px]">
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="title-hub">Notifications</h1>
+          <p className="mt-2 text-[15px] text-muted">Everything SPLAT has told you.</p>
+        </div>
+        {notifications.some((n) => !n.read_at) && (
+          <form action={markAllRead}>
+            <button type="submit" className="btn btn-quiet">
+              Mark all read
+            </button>
+          </form>
+        )}
+      </div>
       <NotificationsList
         notifications={notifications}
         pendingInvitesByTutorial={pendingInvitesByTutorial}
@@ -45,6 +69,6 @@ export default async function NotificationsPage() {
         onAcceptInvite={acceptInvite}
         onDeclineInvite={declineInvite}
       />
-    </div>
+    </section>
   )
 }

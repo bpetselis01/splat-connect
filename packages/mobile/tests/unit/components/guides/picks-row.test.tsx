@@ -10,6 +10,7 @@ const pick = (id: string, title: string) => ({
     title,
     kind: 'toy_adaptation' as const,
     difficulty: 'easy' as const,
+    photo_urls: [],
     toy_photo_url: null,
     status: 'approved' as const, maturity: 'complete' as const },
 })

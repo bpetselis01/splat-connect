@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, within } from '@testing-library/react'
 import { ChildEditor } from '@/components/child-editor'
 import type { ChildProfile } from '@splat-connect/types'
 
@@ -51,9 +51,9 @@ describe('ChildEditor', () => {
     vi.mocked(browserApiClient.patch).mockReset()
   })
 
-  it('heads a blank slate "Add child" when there is no name or label', () => {
+  it('heads a blank slate "Add a child" when there is no name or label', () => {
     render(<ChildEditor child={null} />)
-    expect(screen.getByRole('heading', { name: 'Add child' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Add a child' })).toBeInTheDocument()
   })
 
   it('falls back to the passed-in label when the child has no name', () => {
@@ -66,13 +66,13 @@ describe('ChildEditor', () => {
     expect(screen.getByRole('heading', { name: 'Emma' })).toBeInTheDocument()
   })
 
-  it('creates the profile from whichever pill is saved first and swaps the URL to its id', async () => {
+  it('creates the profile from whichever card is saved first and swaps the URL to its id', async () => {
     vi.mocked(browserApiClient.post).mockResolvedValue(child({ id: 'new-id', name: 'Emma' }))
     render(<ChildEditor child={null} />)
 
-    fireEvent.click(screen.getByRole('tab', { name: /ability/i }))
-    fireEvent.change(screen.getByLabelText('Name (optional)'), { target: { value: 'Emma' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    const basics = within(screen.getByRole('region', { name: 'Basics' }))
+    fireEvent.change(basics.getByLabelText('Name (optional)'), { target: { value: 'Emma' } })
+    fireEvent.click(basics.getByRole('button', { name: 'Save' }))
 
     await screen.findByText('Saved')
     expect(browserApiClient.post).toHaveBeenCalledWith(
@@ -86,9 +86,9 @@ describe('ChildEditor', () => {
     vi.mocked(browserApiClient.patch).mockResolvedValue(child({ name: 'Emma 2' }))
     render(<ChildEditor child={child({ id: 'c1' })} />)
 
-    fireEvent.click(screen.getByRole('tab', { name: /ability/i }))
-    fireEvent.change(screen.getByLabelText('Name (optional)'), { target: { value: 'Emma 2' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    const basics = within(screen.getByRole('region', { name: 'Basics' }))
+    fireEvent.change(basics.getByLabelText('Name (optional)'), { target: { value: 'Emma 2' } })
+    fireEvent.click(basics.getByRole('button', { name: 'Save' }))
 
     await screen.findByText('Saved')
     expect(browserApiClient.patch).toHaveBeenCalledWith(
@@ -97,12 +97,20 @@ describe('ChildEditor', () => {
     )
   })
 
-  it('shows no delete pill before the profile is first saved', () => {
+  it('shows no delete button before the profile is first saved', () => {
     render(<ChildEditor child={null} />)
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument()
   })
 
-  it('shows a delete pill scoped to this child once it exists', () => {
+  it('draws every section as its own card, with no stepper', () => {
+    render(<ChildEditor child={null} />)
+    for (const name of ['Basics', 'Ability profile', 'Everyday needs', 'Customization']) {
+      expect(screen.getByRole('region', { name })).toBeInTheDocument()
+    }
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument()
+  })
+
+  it('shows a delete button scoped to this child once it exists', () => {
     render(<ChildEditor child={child({ id: 'c1' })} label="Child 1" />)
     expect(screen.getByRole('button', { name: 'Delete Child 1' })).toBeInTheDocument()
   })

@@ -1,15 +1,16 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
+import { MAX_PHOTOS } from '@splat-connect/types'
 
 let user: TestUser
 let toyId: string
 
-function uploadRequest(path: string, token: string, file: File) {
+function uploadRequest(token: string, file: File, id: string = toyId) {
   const fd = new FormData()
   fd.append('file', file)
-  fd.append('toyId', toyId)
-  return app.request(path, {
+  fd.append('toyId', id)
+  return app.request('/api/upload/toy-photo', {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
     body: fd,
@@ -37,55 +38,46 @@ afterAll(async () => {
 })
 
 describe('toy photo uploads', () => {
-  it('replacing a cover photo deletes the old cover, leaving switch photos untouched', async () => {
-    const switchRes = await uploadRequest(
-      '/api/upload/toy-switch-photo',
-      user.token,
-      new File(['switch-bytes'], 'switch.jpg', { type: 'image/jpeg' })
-    )
-    expect(switchRes.status).toBe(200)
-
+  // Why:   a4359f7c made this route append-only. The route it replaced deleted
+  //        every existing file first, so a toy could only ever hold one photo.
+  // How:   uploads two photos and expects both to survive.
+  it('appends each photo instead of replacing the last one', async () => {
     const first = await uploadRequest(
-      '/api/upload/toy-cover',
       user.token,
-      new File(['jpg-bytes'], 'cover.jpg', { type: 'image/jpeg' })
+      new File(['jpg-bytes'], 'a.jpg', { type: 'image/jpeg' })
+    )
+    const second = await uploadRequest(
+      user.token,
+      new File(['png-bytes'], 'b.png', { type: 'image/png' })
     )
     expect(first.status).toBe(200)
-
-    const second = await uploadRequest(
-      '/api/upload/toy-cover',
-      user.token,
-      new File(['png-bytes'], 'cover.png', { type: 'image/png' })
-    )
     expect(second.status).toBe(200)
 
     const { data: files } = await adminClient().storage.from('toy-photos-library').list(toyId)
-    const covers = files?.filter((f) => f.name.startsWith('cover.')) ?? []
-    expect(covers.length).toBe(1)
-    expect(covers[0].name).toBe('cover.png')
-    expect(files?.some((f) => f.name.startsWith('switch-'))).toBe(true)
+    expect(files?.length).toBe(2)
   })
 
-  it('uploads multiple switch photos as a gallery instead of replacing', async () => {
-    const before = await adminClient().storage.from('toy-photos-library').list(toyId)
-    const beforeCount = before.data?.filter((f) => f.name.startsWith('switch-')).length ?? 0
+  // Why:   the delete the old route performed WAS the cap. Removing it is what
+  //        MAX_PHOTOS is for, and nothing else enforces it on this path.
+  // How:   the guard counts toys.photo_urls, not objects in the bucket — the
+  //        route uploads and the client PATCHes the array afterwards, so a test
+  //        that only uploads can never reach the cap. Seed the array instead.
+  it('refuses the photo past MAX_PHOTOS', async () => {
+    const full = Array.from({ length: MAX_PHOTOS }, (_, i) => `https://example.invalid/${i}.jpg`)
+    const { error: seedError } = await adminClient()
+      .from('toys')
+      .update({ photo_urls: full })
+      .eq('id', toyId)
+    expect(seedError).toBeNull()
 
-    const first = await uploadRequest(
-      '/api/upload/toy-switch-photo',
+    const overflow = await uploadRequest(
       user.token,
-      new File(['a'], 'a.jpg', { type: 'image/jpeg' })
+      new File(['too-many'], 'six.jpg', { type: 'image/jpeg' })
     )
-    const second = await uploadRequest(
-      '/api/upload/toy-switch-photo',
-      user.token,
-      new File(['b'], 'b.jpg', { type: 'image/jpeg' })
-    )
-    expect(first.status).toBe(200)
-    expect(second.status).toBe(200)
+    expect(overflow.status).toBe(400)
+    expect(((await overflow.json()) as { error: string }).error).toContain(String(MAX_PHOTOS))
 
-    const { data: files } = await adminClient().storage.from('toy-photos-library').list(toyId)
-    const afterCount = files?.filter((f) => f.name.startsWith('switch-')).length ?? 0
-    expect(afterCount).toBe(beforeCount + 2)
+    await adminClient().from('toys').update({ photo_urls: [] }).eq('id', toyId)
   })
 
   it('rejects a photo upload for a toy the caller does not own', async () => {
@@ -93,7 +85,7 @@ describe('toy photo uploads', () => {
     const fd = new FormData()
     fd.append('file', new File(['x'], 'cover.jpg', { type: 'image/jpeg' }))
     fd.append('toyId', toyId)
-    const res = await app.request('/api/upload/toy-cover', {
+    const res = await app.request('/api/upload/toy-photo', {
       method: 'POST',
       headers: { Authorization: `Bearer ${other.token}` },
       body: fd,

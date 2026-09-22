@@ -21,7 +21,7 @@ jest.mock('expo-router', () => {
 
 const tutorial = (over: object) => ({
   id: 't1', title: 'Bubble machine switch', description: null, difficulty: 'easy', kind: 'toy_adaptation',
-  status: 'draft', tutorial_pdf_url: null, toy_photo_url: null, rejection_note: null,
+  status: 'draft', tutorial_pdf_url: null, photo_urls: [], toy_photo_url: null, rejection_note: null,
   created_at: '', updated_at: '', reviewed_at: null, reviewed_by: null, reviewed_for_org_id: null, ...over,
 })
 
@@ -36,7 +36,7 @@ describe('MyTutorialsListScreen', () => {
 
     expect(await screen.findByText('Bubble machine switch')).toBeTruthy()
     expect(mockGet).toHaveBeenCalledWith('/api/tutorials/mine')
-    expect(screen.getByText('DRAFT')).toBeTruthy()
+    expect(screen.getByText('Draft')).toBeTruthy()
 
     fireEvent.press(screen.getByText('Bubble machine switch'))
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/tutorials/[id]', params: { id: 't1' } })

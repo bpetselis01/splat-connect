@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
   segmented: {
     flexDirection: 'row',
     backgroundColor: theme.colors.surfaceSunken,
-    borderRadius: theme.radii.md,
+    borderRadius: theme.radii.field,
     padding: 3,
     marginBottom: theme.spacing(4),
   },
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: theme.spacing(2),
     alignItems: 'center',
-    borderRadius: theme.radii.sm,
+    borderRadius: theme.radii.field,
   },
   segmentActive: {
     backgroundColor: theme.colors.surface,

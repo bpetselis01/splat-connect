@@ -7,7 +7,16 @@ import type { ToyTransaction } from '@splat-connect/types'
 
 type Subject = Pick<
   ToyTransaction,
-  'status' | 'type' | 'owner_id' | 'owner_org_id' | 'owner_confirmed_at' | 'requester_confirmed_at'
+  | 'status'
+  | 'type'
+  | 'owner_id'
+  | 'owner_org_id'
+  | 'owner_confirmed_at'
+  | 'requester_confirmed_at'
+  | 'working_photo_url'
+  | 'work_approved_at'
+  | 'printing_started_at'
+  | 'ready_at'
 > & { blocked_by_rival_accept?: boolean }
 
 function tx(overrides: Partial<Subject> = {}): Subject {
@@ -18,6 +27,10 @@ function tx(overrides: Partial<Subject> = {}): Subject {
     owner_org_id: null,
     owner_confirmed_at: null,
     requester_confirmed_at: null,
+    working_photo_url: null,
+    work_approved_at: null,
+    printing_started_at: null,
+    ready_at: null,
     ...overrides,
   }
 }
@@ -96,8 +109,31 @@ describe('needsAction for an organisation', () => {
 })
 
 describe('actionLabel', () => {
+  const label = (over: Partial<Subject> = {}) =>
+    actionLabel(tx(over), false)
+
   it('names the action each state is waiting for', () => {
-    expect(actionLabel({ status: 'requested' })).toMatch(/accept or decline/i)
-    expect(actionLabel({ status: 'accepted' })).toMatch(/confirm the handoff/i)
+    expect(label()).toMatch(/accept or decline/i)
+    expect(label({ status: 'accepted' })).toMatch(/confirm the handoff/i)
+  })
+
+  /*
+   * Why: a build's extra stage alternates sides. Sharing the exchange wording
+   * would tell a maker with no photo posted to confirm a handover that cannot
+   * happen, which is the failure the rail exists to prevent.
+   */
+  it('names the build stage, and the side it is waiting on', () => {
+    const build: Partial<Subject> = { type: 'build', status: 'accepted' }
+    expect(actionLabel(tx(build), true)).toMatch(/post the working shot/i)
+    expect(
+      actionLabel(tx({ ...build, working_photo_url: 'b/1.jpg' }), false)
+    ).toMatch(/approve the working shot/i)
+    expect(
+      actionLabel(
+        tx({ ...build, working_photo_url: 'b/1.jpg', work_approved_at: '2026-09-10T00:00:00Z' }),
+        true
+      )
+    ).toMatch(/confirm the handoff/i)
+    expect(actionLabel(tx({ type: 'build' }), true)).toMatch(/take it on or decline/i)
   })
 })

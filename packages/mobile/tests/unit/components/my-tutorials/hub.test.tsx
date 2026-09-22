@@ -51,7 +51,9 @@ const tutorial = (over: Record<string, unknown> = {}) => ({
   status: 'draft',
   updated_at: 'v1',
   safety_declared_at: null,
+  build_minutes: 30,
   tutorial_pdf_url: null,
+  photo_urls: [],
   toy_photo_url: null,
   parts: [],
   tools: [],
@@ -64,7 +66,9 @@ const tutorial = (over: Record<string, unknown> = {}) => ({
 const complete = (over: Record<string, unknown> = {}) =>
   tutorial({
     safety_declared_at: '2026-09-02',
+    build_minutes: 30,
     tutorial_pdf_url: 'p.pdf',
+    photo_urls: ['p.jpg'],
     toy_photo_url: 'p.jpg',
     parts: [{ name: 'a' }],
     tools: [{ name: 'b' }],

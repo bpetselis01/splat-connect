@@ -12,26 +12,50 @@ function contrast(a: string, b: string) {
   return (x + 0.05) / (y + 0.05)
 }
 
-describe('Pixel theme', () => {
-  it('carries hard-edged tokens', () => {
-    expect(theme.border).toEqual({ thin: 2, thick: 3 })
-    expect(theme.radii).toEqual({ sm: 6, md: 8, lg: 10, pill: 20 })
-    expect(theme.fonts.numeral).toBe('Jersey10_400Regular')
+describe('Soft Pop theme', () => {
+  it('carries the soft scales', () => {
+    expect(theme.border).toEqual({ hairline: 1 })
+    expect(theme.radii).toEqual({ field: 14, panel: 18, card: 24, pill: 999 })
+    expect(theme.fonts.display).toBe('Baloo2_800ExtraBold')
+    expect(theme.fonts.numeral).toBe('JetBrainsMono_400Regular')
   })
 
-  it('shadow(n) is a zero-blur offset of n in ink', () => {
-    expect(theme.shadow(4)).toEqual({
-      shadowColor: theme.colors.ink,
-      shadowOpacity: 1,
-      shadowRadius: 0,
-      shadowOffset: { width: 4, height: 4 },
-      elevation: 4,
+  /*
+   * Why: shadow() changed meaning, not just values. Its argument used to be a
+   * pixel offset (3 = the chip register, 6 = a launcher pillar) and is now an
+   * elevation level 1-4 matching web's --e1..--e4. The two scales overlap, so
+   * every old call site still compiled and would silently have rendered at the
+   * wrong depth — shadow(4) went from a modest control shadow to the deepest
+   * one in the system. Asserting the shape is what pins the new meaning down.
+   */
+  it('shadow(n) is a blurred elevation, matching the web e-scale', () => {
+    expect(theme.shadow(2)).toEqual({
+      shadowColor: '#1c2530',
+      shadowOpacity: 0.08,
+      shadowRadius: 12,
+      shadowOffset: { width: 0, height: 4 },
+      elevation: 3,
     })
+    // Every level is blurred and vertical — no offset ladder survives.
+    for (const level of [1, 2, 3, 4] as const) {
+      const s = theme.shadow(level)
+      expect(s.shadowRadius).toBeGreaterThan(0)
+      expect(s.shadowOffset.width).toBe(0)
+      expect(s.shadowOpacity).toBeLessThan(1)
+    }
   })
 
+  /*
+   * Why: these are the same bg/fg pairs web's badge.tsx uses, and the two token
+   * layers are only one contract as long as both sides move together.
+   */
   it('every badge tone clears 4.5:1', () => {
-    for (const [name, { bg, fg }] of Object.entries(theme.colors.tone)) {
+    for (const [, { bg, fg }] of Object.entries(theme.colors.tone)) {
       expect(contrast(bg, fg)).toBeGreaterThanOrEqual(4.5)
     }
+  })
+
+  it('keeps a success shade that can carry white text', () => {
+    expect(contrast(theme.colors.successDeep, '#ffffff')).toBeGreaterThanOrEqual(4.5)
   })
 })

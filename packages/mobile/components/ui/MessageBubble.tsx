@@ -38,8 +38,8 @@ export function MessageBubble({
         style={[styles.bubble, mine ? styles.bubbleMine : styles.bubbleTheirs]}
       >
         {!mine ? <Text style={styles.bubbleWho}>{senderName}</Text> : null}
-        <Text style={styles.bubbleText}>{message.body}</Text>
-        <Text style={styles.stamp}>{timeOf(message.created_at)}</Text>
+        <Text style={[styles.bubbleText, mine && styles.onBrand]}>{message.body}</Text>
+        <Text style={[styles.stamp, mine && styles.onBrand]}>{timeOf(message.created_at)}</Text>
       </View>
     </View>
   )
@@ -52,10 +52,10 @@ const styles = StyleSheet.create({
     fontSize: theme.type.caption,
     color: theme.colors.muted,
     textAlign: 'center',
-    borderWidth: theme.border.thin,
+    borderWidth: theme.border.hairline,
     borderStyle: 'dashed',
     borderColor: theme.colors.border,
-    borderRadius: theme.radii.sm,
+    borderRadius: theme.radii.field,
     paddingHorizontal: theme.spacing(3),
     paddingVertical: theme.spacing(1),
   },
@@ -63,14 +63,16 @@ const styles = StyleSheet.create({
   bubbleRowMine: { justifyContent: 'flex-end' },
   bubble: {
     maxWidth: '82%',
-    borderWidth: theme.border.thin,
-    borderColor: theme.colors.ink,
-    borderRadius: theme.radii.md,
+    borderWidth: theme.border.hairline,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radii.field,
     paddingHorizontal: theme.spacing(3),
     paddingVertical: theme.spacing(2),
     gap: theme.spacing(1),
   },
-  bubbleMine: { backgroundColor: theme.colors.accentLight },
+  // Yours is the brand fill with white text, theirs is white: the board's pair.
+  bubbleMine: { backgroundColor: theme.colors.primaryDark, borderColor: theme.colors.primaryDark },
+  onBrand: { color: theme.colors.surface },
   bubbleTheirs: { backgroundColor: theme.colors.surface },
   bubbleWho: { fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.primaryDeep },
   bubbleText: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.text, lineHeight: 20 },

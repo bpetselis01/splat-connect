@@ -1,3 +1,4 @@
+import { PuzzlePiece } from '@phosphor-icons/react/dist/ssr'
 import { SaveButton, type SaveProps } from './save-button'
 import { BoundaryLink } from './boundary-link'
 import type { ToyIdea } from '@splat-connect/types'
@@ -20,11 +21,41 @@ import type { ToyIdea } from '@splat-connect/types'
 export function ChallengeCard({
   idea,
   save,
+  tint,
 }: {
   idea: Pick<ToyIdea, 'id' | 'title' | 'summary' | 'status'>
   save?: SaveProps
+  /**
+   * Opt-in: the board's listing card — a 4:3 tinted art band over the text.
+   * The saved-items page keeps the compact row by not passing it.
+   */
+  tint?: string
 }) {
-  const card = (
+  const graduated = idea.status === 'graduated'
+  const card = tint ? (
+    <BoundaryLink
+      href={`/get-involved/design-challenges/${idea.id}`}
+      className="card card-link flex h-full flex-col overflow-hidden p-0"
+      data-testid="challenge-card"
+    >
+      <span
+        aria-hidden="true"
+        className="grid aspect-[4/3] place-items-center"
+        style={{ background: graduated ? 'var(--tok)' : tint }}
+      >
+        <PuzzlePiece weight="duotone" className="text-[76px] text-[var(--tink)] opacity-70" />
+      </span>
+      <span className="flex flex-1 flex-col gap-2 px-5 pb-5 pt-[18px]">
+        <span className="flex items-center gap-2">
+          <span className="rounded-full bg-[var(--tok)] px-2.5 py-[3px] text-[11px] font-extrabold text-[var(--tink)]">
+            {graduated ? 'Being written up' : 'Open'}
+          </span>
+        </span>
+        <h3 className="font-display text-lg font-extrabold leading-[1.2] text-ink">{idea.title}</h3>
+        <span className="line-clamp-3 flex-1 text-sm leading-[1.5] text-muted">{idea.summary}</span>
+      </span>
+    </BoundaryLink>
+  ) : (
     // Same crossing as the other two saved cards — see tutorial-card.tsx. The
     // Route cast goes with next/link; BoundaryLink takes a plain string.
     <BoundaryLink
@@ -33,9 +64,9 @@ export function ChallengeCard({
       data-testid="challenge-card"
     >
       <div className="flex flex-wrap items-center gap-2">
-        <h3 className="font-black text-ink">{idea.title}</h3>
+        <h3 className="card-title">{idea.title}</h3>
         {idea.status === 'graduated' ? (
-          <span className="badge bg-mint-soft text-mint-deep">Being written up</span>
+          <span className="badge bg-mint-soft text-ink">Being written up</span>
         ) : (
           <span className="chip">Looking for makers</span>
         )}

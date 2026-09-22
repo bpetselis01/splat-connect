@@ -64,6 +64,31 @@ const { error: noteError } = await admin
   .insert({ recipient_id: data.user.id, type: 'idea_approved', idea_id: idea.id, actor_name: 'Maestro' })
 if (noteError) throw new Error(`Failed to seed notification: ${noteError.message}`)
 
+// A published toy carrying more than one photo, so the device flow has a
+// carousel to swipe. Seeded rather than relying on whatever the library
+// happens to hold: paging is the platform's, and the only layer that runs it
+// is this one — an assert against live data would pass or fail on someone
+// else's upload. The photo URLs need not resolve; a 404 still mounts an Image,
+// and the flow asserts on the toy's own text, not on pixels.
+//
+// switch_photo_url must be one of photo_urls (053's toys_switch_photo_member),
+// and cover_photo_url is generated, so it is never named here.
+const { error: toyError } = await admin.from('toys').insert({
+  owner_id: data.user.id,
+  name: `Device smoke toy ${Date.now()}`,
+  description: 'Seeded by provision-device-parent for the carousel flow.',
+  condition: 8,
+  switch_adapted: true,
+  photo_urls: [
+    'https://example.invalid/device-smoke-cover.jpg',
+    'https://example.invalid/device-smoke-switch.jpg',
+  ],
+  switch_photo_url: 'https://example.invalid/device-smoke-switch.jpg',
+  offer_type: 'donation',
+  status: 'published',
+})
+if (toyError) throw new Error(`Failed to seed toy: ${toyError.message}`)
+
 // Two lines only, so callers can `eval $(node …)` or append to $GITHUB_ENV.
 console.log(`DEVICE_EMAIL=${email}`)
 console.log(`DEVICE_PASSWORD=${PASSWORD}`)

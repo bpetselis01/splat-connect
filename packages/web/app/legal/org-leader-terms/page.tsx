@@ -15,14 +15,15 @@
  * Acceptances recorded against version 'v0-todo' are void and should be discarded
  * when real terms land. No placeholder legal language is to be generated here.
  */
+import { ProsePage } from '@/components/prose-page'
+
 export default function OrgLeaderTermsPage() {
   return (
-    <main className="container">
-      <h1>Organisation leader terms</h1>
+    <ProsePage title="Organisation leader terms">
       <p className="alert alert-warning">
         These terms have not been written yet. Anything you accept here is not
         binding, and will be replaced.
       </p>
-    </main>
+    </ProsePage>
   )
 }

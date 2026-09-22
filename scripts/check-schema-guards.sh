@@ -82,7 +82,302 @@ select * from (values
        and pg_get_constraintdef(oid) like '%tutorial_submitted%'
       from pg_constraint
      where conname = 'notifications_type_check'
-       and conrelid = 'public.notifications'::regclass))
+       and conrelid = 'public.notifications'::regclass)),
+
+  -- 053. Both photo buckets are public, and until 053 they had no size limit
+  -- and no MIME allowlist — the only bound was /photo deleting every existing
+  -- file before writing, which five-photo uploads removed. Without these the
+  -- buckets accept arbitrary files of arbitrary size at a public URL, so their
+  -- absence is a vulnerability rather than a bug, which is the bar for this
+  -- list. storage.buckets is settings rather than DDL, so a repair that skips
+  -- 053 leaves no other trace at all.
+  ('053 photo buckets carry a size limit and an image-only MIME allowlist',
+   (select count(*) = 2 from storage.buckets
+      where id in ('toy-photos', 'toy-photos-library')
+        and file_size_limit is not null
+        and allowed_mime_types is not null
+        and not (allowed_mime_types && array['text/html', 'image/svg+xml']))),
+
+  -- 055 exchange_costs records what one family owes another. RLS off here does
+  -- not break a feature, it publishes everybody's private financial
+  -- arrangements to every signed-in account — which is the definition this
+  -- file uses for "a guard whose absence is a vulnerability rather than a bug".
+  ('055 exchange_costs has RLS enabled',
+   (select coalesce(bool_and(relrowsecurity), false) from pg_class
+      where relname = 'exchange_costs' and relnamespace = 'public'::regnamespace)),
+
+  -- Four policies, one per verb. A permissive policy set is OR'd together, so
+  -- a fifth that forgot its party check would silently widen all of them.
+  ('055 exchange_costs has exactly its four policies',
+   (select count(*) = 4 from pg_policies
+      where schemaname = 'public' and tablename = 'exchange_costs')),
+
+  -- The trigger enforces what the foreign keys cannot: that payer and payee are
+  -- both parties to THIS exchange. Without it a leader can write a line naming
+  -- two strangers, and the RLS policies would happily allow it.
+  ('055 exchange_costs party trigger is present',
+   (select count(*) > 0 from pg_trigger
+      where tgname = 'exchange_costs_parties_match' and not tgisinternal)),
+
+  ('056 exchange_settlements has RLS enabled',
+   (select coalesce(bool_and(relrowsecurity), false) from pg_class
+      where relname = 'exchange_settlements' and relnamespace = 'public'::regnamespace)),
+
+  -- The one in this file with the worst failure mode. A receipt is often a
+  -- photograph of somebody's bank statement; the bucket being public would
+  -- publish them to anyone who can guess a transaction id, with no error
+  -- anywhere and nothing in the product looking different.
+  ('056 exchange-receipts bucket is private',
+   (select coalesce(bool_and(not public), false) from storage.buckets
+      where id = 'exchange-receipts')),
+
+  -- Four verbs, each gated on being a party. 049 lets any signed-in account
+  -- read a tutorial PDF, which is right for shared work and would be wrong
+  -- here; if these are ever replaced by a signed-in-only policy the count
+  -- stays the same, so the policy bodies are checked too.
+  ('056 exchange-receipts policies all check the exchange party',
+   (select count(*) = 4 from pg_policies
+      where schemaname = 'storage'
+        and policyname like '%exchange receipts%'
+        and coalesce(qual, with_check) like '%is_toy_transaction_party%')),
+
+  -- Same failure mode as the receipts bucket above, one step worse in one
+  -- respect: a working shot is a photograph taken inside somebody's home, and
+  -- a public bucket would publish it to anyone who can guess a transaction id
+  -- with nothing in the product looking different.
+  ('057 build-shots bucket is private',
+   (select coalesce(bool_and(not public), false) from storage.buckets
+      where id = 'build-shots')),
+
+  ('057 build-shots policies all check the exchange party',
+   (select count(*) = 4 from pg_policies
+      where schemaname = 'storage'
+        and policyname like '%build shots%'
+        and coalesce(qual, with_check) like '%is_toy_transaction_party%')),
+
+  -- Not a security guard but the one thing in 057 whose absence is silent: the
+  -- shape constraint is what stops a build carrying a toy_id and a donation
+  -- carrying a build_brief, and every read would then have to guess which of
+  -- the two subjects it is looking at.
+  ('057 toy_transactions_subject constraint is present',
+   (select count(*) > 0 from pg_constraint
+      where conrelid = 'public.toy_transactions'::regclass
+        and conname = 'toy_transactions_subject')),
+
+  -- 058. A printer row is a public offer and readable by design; what must not
+  -- be public is the photo of somebody's finished parts, taken wherever their
+  -- machine lives.
+  ('058 print-shots bucket is private',
+   (select coalesce(bool_and(not public), false) from storage.buckets
+      where id = 'print-shots')),
+
+  ('058 print-shots policies all check the exchange party',
+   (select count(*) = 4 from pg_policies
+      where schemaname = 'storage'
+        and policyname like '%print shots%'
+        and coalesce(qual, with_check) like '%is_toy_transaction_party%')),
+
+  -- The write policy is the one that matters on this table: the select is
+  -- `using (true)` on purpose, so an owner check that went missing would let
+  -- anybody close somebody else's machine or point it at a different bed.
+  ('058 printers has RLS enabled and an owner-gated write policy',
+   (select coalesce(bool_and(relrowsecurity), false) from pg_class
+      where relname = 'printers' and relnamespace = 'public'::regnamespace)
+   and (select count(*) > 0 from pg_policies
+      where tablename = 'printers'
+        and cmd = 'ALL'
+        and coalesce(qual, with_check) like '%is_org_leader%')),
+
+  ('058 print_job_files has RLS enabled',
+   (select coalesce(bool_and(relrowsecurity), false) from pg_class
+      where relname = 'print_job_files' and relnamespace = 'public'::regnamespace)),
+
+  -- 059. Credit is minted by the organisation weighing a drop-off, never by
+  -- the contributor. The insert policy and the update policy are SEPARATE for
+  -- that reason: one combined policy would let a contributor write their own
+  -- `credit_grams`, and nothing in the product would look different.
+  ('059 recycling_dropoffs update is gated on leading the organisation',
+   (select count(*) > 0 from pg_policies
+      where tablename = 'recycling_dropoffs'
+        and cmd = 'UPDATE'
+        and coalesce(qual, with_check) like '%is_org_leader%')),
+
+  ('059 recycling_dropoffs insert does NOT admit a leader write',
+   (select count(*) > 0 from pg_policies
+      where tablename = 'recycling_dropoffs'
+        and cmd = 'INSERT'
+        and coalesce(with_check, qual) not like '%is_org_leader%')),
+
+  -- A story cannot be published without consent for everyone named or
+  -- pictured. A check constraint, not a checkbox: the constraint is what holds
+  -- when somebody writes the row by any other route.
+  ('059 org_stories_published_needs_consent constraint is present',
+   (select count(*) > 0 from pg_constraint
+      where conrelid = 'public.org_stories'::regclass
+        and conname = 'org_stories_published_needs_consent')),
+
+  -- 060. Leadership is granted by an admin and never self-started. A requester
+  -- who could update their own row could set it to approved.
+  ('060 organization_requests update is admin-only',
+   (select count(*) > 0 from pg_policies
+      where tablename = 'organization_requests'
+        and cmd = 'UPDATE'
+        and coalesce(qual, with_check) like '%is_admin%')
+   and (select count(*) = 0 from pg_policies
+      where tablename = 'organization_requests'
+        and cmd = 'UPDATE'
+        and coalesce(qual, with_check) like '%requester_id%')),
+
+  ('060 approve_organization_request() checks is_admin() itself',
+   (select count(*) > 0 from pg_proc
+      where pronamespace = 'public'::regnamespace
+        and proname = 'approve_organization_request'
+        and prosrc like '%is_admin()%')),
+
+  -- 061. A registration carries a name, an email and free-text answers about a
+  -- child's access and sensory needs. The artboard is explicit that "Answers
+  -- are shown to leaders only", so there are exactly two ways to read one: you
+  -- wrote it, or you lead the organisation running the event. A public-read
+  -- policy here would put those answers on the open internet.
+  ('061 org_event_registrations is never readable by anon',
+   (select count(*) = 0 from pg_policies
+      where tablename = 'org_event_registrations'
+        and 'anon' = any(roles))),
+
+  ('061 org_event_registrations read is own-row or org leader',
+   (select count(*) = 0 from pg_policies
+      where tablename = 'org_event_registrations'
+        and cmd in ('SELECT', 'ALL')
+        and coalesce(qual, with_check) not like '%auth.uid()%'
+        and coalesce(qual, with_check) not like '%is_org_leader%')),
+
+  -- The questions are public, and must stay scoped to a published, live event:
+  -- an unscoped read would leak the shape of a draft or cancelled one.
+  ('061 org_event_questions public read is scoped to a published event',
+   (select count(*) > 0 from pg_policies
+      where tablename = 'org_event_questions'
+        and 'anon' = any(roles)
+        and qual like '%published%')),
+
+  -- A print request is done by a printer OR at an event, never both and never
+  -- neither: a row naming both has no single party who can accept it, and the
+  -- accept/decline buttons on two different screens would each half-own it.
+  ('061 toy_transactions_subject requires exactly one print destination',
+   (select count(*) > 0 from pg_constraint
+      where conrelid = 'public.toy_transactions'::regclass
+        and conname = 'toy_transactions_subject'
+        and pg_get_constraintdef(oid) like '%num_nonnulls(printer_id, event_id) = 1%')),
+
+  -- 064. An ownerless transaction is legal for exactly one shape: a build
+  -- request nobody has claimed. Widen it by accident and a donation could be
+  -- written with nobody responsible for handing the toy over, which every
+  -- accept, confirm and handoff check reads as "not my row" and silently
+  -- ignores.
+  ('064 an ownerless transaction is an open build and nothing else',
+   (select count(*) > 0 from pg_constraint
+      where conrelid = 'public.toy_transactions'::regclass
+        and conname = 'toy_transactions_one_owner'
+        and pg_get_constraintdef(oid) like '%type = ''build''%'
+        and pg_get_constraintdef(oid) like '%status = ''requested''%')),
+
+  -- The Makers wanted board is signed-in. A public board of children's first
+  -- names, ages and suburbs is not something to put behind no account at all,
+  -- and the artboard's signed-out screen is an explainer for that reason.
+  ('064 the open-build policy is never granted to anon',
+   (select count(*) = 0 from pg_policies
+      where tablename = 'toy_transactions'
+        and policyname = 'toy_transactions_open_builds_readable'
+        and 'anon' = any(roles))),
+
+  -- 065. A contact message carries a name, an email and, on a safety report,
+  -- what somebody found wrong with a guide their child is using. Anyone may
+  -- SEND one — a person reporting a hazard should not have to make an account
+  -- first — and only an admin may read one.
+  ('065 contact_messages is writable by anyone and readable by admins only',
+   (select count(*) > 0 from pg_policies
+      where tablename = 'contact_messages' and cmd = 'INSERT' and 'anon' = any(roles))
+   and (select count(*) = 0 from pg_policies
+      where tablename = 'contact_messages' and cmd in ('SELECT', 'ALL') and 'anon' = any(roles))),
+
+  -- The person reported is never told who filed it. Every read of a report is
+  -- either the reporter's own row or an admin's — there is no policy that could
+  -- show one to its subject.
+  ('065 member_reports is readable only by its reporter or an admin',
+   (select count(*) = 0 from pg_policies
+      where tablename = 'member_reports'
+        and cmd in ('SELECT', 'ALL')
+        and coalesce(qual, with_check) not like '%auth.uid()%'
+        and coalesce(qual, with_check) not like '%is_admin%')),
+
+  ('065 member_reports is never readable by anon',
+   (select count(*) = 0 from pg_policies
+      where tablename = 'member_reports' and 'anon' = any(roles))),
+
+  -- Site copy is public to read and admin-only to write. A write policy that
+  -- admitted anyone else would let them edit the home page.
+  ('065 site_content is writable by admins only',
+   (select count(*) = 0 from pg_policies
+      where tablename = 'site_content'
+        and cmd in ('INSERT', 'UPDATE', 'DELETE', 'ALL')
+        and coalesce(with_check, qual) not like '%is_admin%')),
+
+  -- 070. Same failure shape as 046: the API selects these columns by name, so a
+  -- ledger that reads as applied with the columns absent makes every printer
+  -- list and add a 500.
+  ('070 printers carries filament_cents_per_g and rate_note',
+   (select count(*) = 2 from information_schema.columns
+      where table_schema = 'public' and table_name = 'printers'
+        and column_name in ('filament_cents_per_g', 'rate_note'))),
+
+  -- 072. Not a security guard; the 046 shape. The bio bound is the only thing
+  -- stopping an account from publishing an unbounded page of text under its
+  -- own name on /contributors/[id], and the featured guide's FK is what
+  -- clears a deleted guide off a profile instead of leaving a dangling id.
+  ('072 profiles.bio is bounded and featured_tutorial_id clears on delete',
+   (select count(*) = 2 from pg_constraint
+      where conrelid = 'public.profiles'::regclass
+        and ((contype = 'c' and pg_get_constraintdef(oid) like '%bio%600%')
+          or (contype = 'f' and confdeltype = 'n'
+              and pg_get_constraintdef(oid) like '%featured_tutorial_id%')))),
+
+  -- 071. Not a security guard; the 046 shape. age_min and age_max are in
+  -- PATCH /api/tutorials/:id's EDITABLE list, so a repair that skipped 071
+  -- makes every Details save that carries them fail with "column does not
+  -- exist" — which the editor shows as a conflict the author cannot resolve.
+  ('071 tutorials carries the age range and its ordering constraint',
+   (select count(*) > 0 from pg_constraint
+      where conrelid = 'public.tutorials'::regclass
+        and conname = 'tutorials_age_range')),
+
+  -- 073. The 046 shape: packages/api/src/routes/toys.ts selects both by name,
+  -- so a ledger that reads as applied with the functions absent makes every
+  -- owner's My Toys a 500. They must also be DEFINER — as invoker, RLS hides
+  -- every row from the counter and the function reads as 0 for everyone.
+  ('073 save_count() and request_count() exist and are security definer',
+   (select count(*) = 2 from pg_proc
+      where pronamespace = 'public'::regnamespace
+        and proname in ('save_count', 'request_count')
+        and prosecdef)),
+
+  -- 068. Not a security guard but the silent shape again: a repair that skips
+  -- 068 leaves every STL row without its print settings, and the only symptom
+  -- is a request form whose two summary tiles read "—" on every guide. The
+  -- range checks are the half a column listing cannot see.
+  ('068 stl_files print settings carry their range checks',
+   (select count(*) = 3 from pg_constraint
+      where conrelid = 'public.stl_files'::regclass
+        and contype = 'c'
+        and conname in ('stl_files_print_minutes_check',
+                        'stl_files_filament_grams_check',
+                        'stl_files_material_check'))),
+
+  -- 069. Not a security guard but the 046 shape: every event select in
+  -- public.ts and organizations.ts names these two columns, so a ledger that
+  -- reads as applied with them absent makes every event page "no such event".
+  ('069 org_events carries cost_cents and cost_note',
+   (select count(*) = 2 from information_schema.columns
+      where table_schema = 'public' and table_name = 'org_events'
+        and column_name in ('cost_cents', 'cost_note')))
 ) as t(guard, ok)
 where not ok;
 EOSQL

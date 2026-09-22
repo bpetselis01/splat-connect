@@ -9,13 +9,16 @@
  * Shared between platforms — a mobile-app signup also lands here, since
  * deep-linking straight back into a mobile app from an email client isn't
  * reliable. The auto-redirect below sends them into a web sign-in flow they
- * may not want; the manual "Sign in now" link exists for web users who don't
+ * may not want; the manual "Continue" link exists for web users who don't
  * want to wait, and doubles as an escape hatch for anyone who'd rather just
  * close the tab.
  */
+import { SealCheck } from '@phosphor-icons/react/dist/ssr'
 import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import type { Route } from 'next'
+import { AuthStage } from '@/components/auth-shell'
 
 const REDIRECT_SECONDS = 3
 
@@ -25,39 +28,42 @@ function EmailConfirmed() {
   // on is the whole of getting someone back to the page they started on.
   const next = useSearchParams().get('next')
   const [secondsLeft, setSecondsLeft] = useState(REDIRECT_SECONDS)
+  // The button and the countdown go to the same place — the button used to
+  // drop ?next=, so not waiting cost you the page you started on.
+  const loginHref = (next ? `/login?next=${encodeURIComponent(next)}` : '/login') as Route
 
   useEffect(() => {
     const interval = setInterval(() => {
       setSecondsLeft((s) => {
         if (s <= 1) {
           clearInterval(interval)
-          router.replace(next ? `/login?next=${encodeURIComponent(next)}` : '/login')
+          router.replace(loginHref)
           return 0
         }
         return s - 1
       })
     }, 1000)
     return () => clearInterval(interval)
-  }, [router, next])
+  }, [router, loginHref])
 
   return (
-    <div className="mx-auto mt-8 max-w-sm sm:mt-16">
-      <div className="card flex flex-col items-center p-6 text-center sm:p-8">
-        <span aria-hidden="true" className="empty-badge">
-          ✅
+    <AuthStage>
+      <div className="flex flex-col items-center text-center">
+        <span aria-hidden="true" className="auth-sent__badge">
+          <SealCheck weight="fill" />
         </span>
-        <h1 className="mt-4 title-article">Email confirmed</h1>
-        <p className="mt-2 text-sm leading-relaxed text-muted">
+        <h1 className="auth-sent__title">Email confirmed</h1>
+        <p className="auth-sent__body">
           Your email has been confirmed. Sign in to your account to continue.
         </p>
+        <Link href={loginHref} className="auth-submit auth-submit--inline">
+          Continue
+        </Link>
         <p className="mt-4 text-xs text-muted" role="status">
           Redirecting you to sign in in {secondsLeft}…
         </p>
-        <Link href="/login" className="btn btn-soft mt-4">
-          Sign in now
-        </Link>
       </div>
-    </div>
+    </AuthStage>
   )
 }
 

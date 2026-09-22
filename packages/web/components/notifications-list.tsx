@@ -7,7 +7,9 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Route } from 'next'
+import type { ComponentType, SVGProps } from 'react'
 import type { Notification, NotificationType } from '@splat-connect/types'
+import { BookOpen, Box, Check, FileText, Handshake, Inbox, Lightbulb, Undo, User } from '@/components/icons'
 
 const COPY: Record<NotificationType, (n: Notification) => string> = {
   collaborator_invited: (n) => `${n.actor_name} invited you to collaborate on "${n.tutorial_title}"`,
@@ -22,6 +24,8 @@ const COPY: Record<NotificationType, (n: Notification) => string> = {
   tutorial_submitted: (n) => `${n.actor_name} submitted "${n.tutorial_title}" for review`,
   tutorial_approved: (n) => `"${n.tutorial_title}" was approved and is now published`,
   tutorial_rejected: (n) => `"${n.tutorial_title}" was rejected`,
+  // Unnamed on purpose: who thanked a guide stays private (066).
+  tutorial_thanked: (n) => `A family said thanks for "${n.tutorial_title}"`,
   toy_request: (n) => `${n.actor_name} requested ${n.toy_name}`,
   toy_accepted: (n) => `${n.actor_name} accepted your request for ${n.toy_name}`,
   toy_rejected: (n) => `${n.actor_name} declined your request for ${n.toy_name}`,
@@ -44,6 +48,32 @@ const COPY: Record<NotificationType, (n: Notification) => string> = {
   idea_graduated: () => 'A challenge you were part of is being written up as a guide, and you are credited on it',
 }
 
+type Glyph = ComponentType<SVGProps<SVGSVGElement>>
+// The board's icon tile: a tint per kind of news, the glyph always in --tink.
+const ICON: Record<NotificationType, [Glyph, string]> = {
+  collaborator_invited: [Handshake, 'var(--tmint)'],
+  collaborator_accepted: [Handshake, 'var(--tmint)'],
+  collaborator_declined: [User, 'var(--b100)'],
+  collaborator_removed: [User, 'var(--b100)'],
+  collaborator_left: [User, 'var(--b100)'],
+  backing_requested: [Inbox, 'var(--b100)'],
+  tutorial_submitted: [Inbox, 'var(--b100)'],
+  tutorial_approved: [Check, 'var(--tok)'],
+  tutorial_rejected: [Undo, 'var(--tbad)'],
+  tutorial_thanked: [BookOpen, 'var(--tamber)'],
+  toy_request: [Box, 'var(--tcoral)'],
+  toy_accepted: [Handshake, 'var(--tmint)'],
+  toy_rejected: [Undo, 'var(--tbad)'],
+  toy_withdrawn: [Box, 'var(--tcoral)'],
+  toy_message: [Box, 'var(--tcoral)'],
+  idea_approved: [Lightbulb, 'var(--tamber)'],
+  idea_rejected: [Undo, 'var(--tbad)'],
+  challenge_joined: [Lightbulb, 'var(--tamber)'],
+  challenge_left: [Lightbulb, 'var(--tamber)'],
+  challenge_removed: [Lightbulb, 'var(--tamber)'],
+  idea_graduated: [FileText, 'var(--tviolet)'],
+}
+
 function linkFor(n: Notification, isAdmin: boolean): string {
   if (n.toy_transaction_id) return `/dashboard/exchanges/${n.toy_transaction_id}`
   // The two review-queue types must be answered BEFORE the tutorial_id branch
@@ -61,6 +91,9 @@ function linkFor(n: Notification, isAdmin: boolean): string {
   if (n.type === 'backing_requested' || n.type === 'tutorial_submitted') {
     return isAdmin && n.tutorial_id ? `/admin/review/${n.tutorial_id}` : '/dashboard/organisation'
   }
+  // A thank is about the published guide, not work to do on it — the public
+  // page, where the count it added is visible, not the editor.
+  if (n.type === 'tutorial_thanked' && n.tutorial_id) return `/tutorials/${n.tutorial_id}`
   if (n.tutorial_id) return `/tutorials/${n.tutorial_id}/edit`
   // A rejected idea has no public page. Not because of RLS — 037 also grants
   // "Authors see their own ideas at any status", so an author's own rejected
@@ -120,41 +153,66 @@ export function NotificationsList({
   }
 
   return (
-    <ul className="flex flex-col gap-2">
+    <ul className="flex flex-col gap-2.5">
       {notifications.map((n) => {
         const inviteId = n.type === 'collaborator_invited' ? pendingInvitesByTutorial[n.tutorial_id!] : undefined
+        const [Glyph, tint] = ICON[n.type] ?? [Inbox, 'var(--b100)']
         return (
-          <li key={n.id} className={`card-flat px-4 py-3 text-sm ${n.read_at ? 'opacity-60' : ''}`}>
-            <button
-              type="button"
-              onClick={() => run(n.id, async () => {
-                await onMarkRead(n.id)
-                router.push(linkFor(n, isAdmin) as Route<string>)
-              })}
-              className="text-left font-medium text-ink hover:underline"
+          // The whole card is the target, as the board draws it; the title
+          // button's ::after stretches over it so the invite buttons can still
+          // sit inside without nesting one button in another.
+          <li
+            key={n.id}
+            className="relative flex items-start gap-3.5 rounded-[18px] border border-line p-[18px] text-ink shadow-e1 transition-shadow hover:shadow-e2"
+            style={{ background: n.read_at ? 'var(--surface)' : 'var(--b50)' }}
+          >
+            <span
+              aria-hidden="true"
+              className="grid h-[42px] w-[42px] flex-none place-items-center rounded-[14px] text-[22px] text-[var(--tink)]"
+              style={{ background: tint }}
             >
-              {COPY[n.type](n)}
-            </button>
-            {inviteId && (
-              <div className="mt-2 flex gap-2">
-                <button
-                  type="button"
-                  disabled={pending !== null}
-                  onClick={() => run(inviteId, () => onAcceptInvite(inviteId))}
-                  className="btn btn-accent btn-sm"
-                >
-                  {pending === inviteId ? 'Accepting…' : 'Accept'}
-                </button>
-                <button
-                  type="button"
-                  disabled={pending !== null}
-                  onClick={() => run(`decline-${inviteId}`, () => onDeclineInvite(inviteId))}
-                  className="btn btn-quiet btn-sm"
-                >
-                  Decline
-                </button>
-              </div>
-            )}
+              <Glyph />
+            </span>
+            <div className="min-w-0 flex-1">
+              <button
+                type="button"
+                onClick={() => run(n.id, async () => {
+                  await onMarkRead(n.id)
+                  router.push(linkFor(n, isAdmin) as Route<string>)
+                })}
+                className="block text-left text-[15px] font-extrabold text-ink after:absolute after:inset-0 after:rounded-[18px] after:content-['']"
+              >
+                {COPY[n.type](n)}
+              </button>
+              {inviteId && (
+                <div className="relative z-10 mt-2 flex gap-2">
+                  <button
+                    type="button"
+                    disabled={pending !== null}
+                    onClick={() => run(inviteId, () => onAcceptInvite(inviteId))}
+                    className="btn btn-accent btn-sm"
+                  >
+                    {pending === inviteId ? 'Accepting…' : 'Accept'}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={pending !== null}
+                    onClick={() => run(`decline-${inviteId}`, () => onDeclineInvite(inviteId))}
+                    className="btn btn-quiet btn-sm"
+                  >
+                    Decline
+                  </button>
+                </div>
+              )}
+            </div>
+            <span className="flex flex-none flex-col items-end gap-1.5">
+              <span className="text-xs font-semibold text-muted">
+                {new Date(n.created_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}
+              </span>
+              {!n.read_at && (
+                <span aria-label="Unread" className="h-[9px] w-[9px] rounded-full bg-[var(--coral)]" />
+              )}
+            </span>
           </li>
         )
       })}

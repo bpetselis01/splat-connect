@@ -14,17 +14,18 @@ const TONE: Record<string, ToneKey> = {
 
 export function Badge({ status, label }: { status: string; label?: string }) {
   const tone = theme.colors.tone[TONE[status] ?? 'sunken']
+  // Sentence case, like the board's "Needs you": a status key becomes words.
+  const raw = label ?? status.replace(/_/g, ' ')
+  const text = raw.charAt(0).toUpperCase() + raw.slice(1)
   return (
     <View style={[styles.badge, { backgroundColor: tone.bg }]}>
-      <Text style={[styles.text, { color: tone.fg }]}>{(label ?? status).toUpperCase()}</Text>
+      <Text style={[styles.text, { color: tone.fg }]}>{text}</Text>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  badge: {
-    borderWidth: theme.border.thin, borderColor: theme.colors.ink, borderRadius: 4,
-    paddingHorizontal: 5, paddingVertical: 1, alignSelf: 'flex-start',
-  },
-  text: { fontFamily: theme.fonts.bold, fontSize: 9, letterSpacing: 0.6 },
+  // A tinted pill in sentence case, no border: the board's status pill.
+  badge: { borderRadius: theme.radii.pill, paddingHorizontal: 8, paddingVertical: 2, alignSelf: 'flex-start' },
+  text: { fontFamily: theme.fonts.black, fontSize: 11 },
 })

@@ -40,8 +40,9 @@ const stock = (over: object) => ({
   description: null,
   condition: 8,
   switch_adapted: false,
+  photo_urls: [],
   cover_photo_url: null,
-  switch_photo_urls: [],
+  switch_photo_url: null,
   status: 'published',
   offer_type: 'donation',
   created_at: '',
@@ -68,7 +69,7 @@ describe('InventoryScreen', () => {
     expect(screen.getByText('Drum')).toBeTruthy()
     expect(screen.getByText('5')).toBeTruthy()
     // The badges hide behind the row's a11y hint, so the query opts in.
-    expect(screen.getByText('DRAFT', { includeHiddenElements: true })).toBeTruthy()
+    expect(screen.getByText('Draft', { includeHiddenElements: true })).toBeTruthy()
     expect(mockGet).toHaveBeenCalledWith('/api/toys/inventory')
   })
 

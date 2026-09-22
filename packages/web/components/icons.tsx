@@ -5,9 +5,8 @@
  *
  * These replace the emoji that were standing in as functional icons across the
  * web app: emoji render differently per OS, and 🧩 specifically is a contested
- * symbol in the disability community and the wrong mark for this audience. Logo
- * is a neutral "connect" glyph — a placeholder for a real brand mark, not a
- * finished identity.
+ * symbol in the disability community and the wrong mark for this audience. The
+ * brand mark is not here — it is BrandMark in components/auth-wordmark.tsx.
  */
 import type { SVGProps, ReactNode } from 'react'
 
@@ -27,17 +26,6 @@ function Icon({ children, ...props }: SVGProps<SVGSVGElement> & { children: Reac
     >
       {children}
     </svg>
-  )
-}
-
-/** Two nodes joined — "Connect". Neutral placeholder brand mark. */
-export function Logo(props: SVGProps<SVGSVGElement>) {
-  return (
-    <Icon {...props}>
-      <circle cx="6" cy="12" r="3" />
-      <circle cx="18" cy="12" r="3" />
-      <line x1="9" y1="12" x2="15" y2="12" />
-    </Icon>
   )
 }
 
@@ -243,6 +231,25 @@ export function Handshake(props: SVGProps<SVGSVGElement>) {
     <Icon {...props}>
       <path d="M3 11l4-3 3 2 4-2 4 3" />
       <path d="M3 11v3l4 3 3-2 3 2 4-3v-3" />
+    </Icon>
+  )
+}
+
+export function Lightbulb(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M9 18h6M10 21h4" />
+      <path d="M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z" />
+    </Icon>
+  )
+}
+
+/** Sent back — a returned guide, a declined request. */
+export function Undo(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M9 14L4 9l5-5" />
+      <path d="M4 9h11a5 5 0 0 1 0 10h-3" />
     </Icon>
   )
 }

@@ -22,7 +22,7 @@ async function requestDonation(ownerToken: string, requesterToken: string, name:
   const toy = (await create.json()) as { id: string }
   await toysReq(`/${toy.id}`, ownerToken, {
     method: 'PATCH',
-    body: JSON.stringify({ cover_photo_url: 'https://example.com/c.jpg', offer_type: 'donation' }),
+    body: JSON.stringify({ photo_urls: ['https://example.com/c.jpg'], offer_type: 'donation' }),
   })
   await toysReq(`/${toy.id}/publish`, ownerToken, { method: 'PATCH' })
   const created = await txReq('/', requesterToken, { method: 'POST', body: JSON.stringify({ toy_id: toy.id, type: 'donation' }) })

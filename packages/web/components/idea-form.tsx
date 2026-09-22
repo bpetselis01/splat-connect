@@ -98,10 +98,10 @@ export function IdeaForm() {
   }
 
   return (
-    <form onSubmit={submit} className="card mt-6 flex flex-col gap-4 p-6">
+    <form onSubmit={submit} className="card mt-[30px] flex flex-col gap-5 p-7">
       <div>
         <label htmlFor="idea-title" className="field-label">
-          Idea name
+          Title
         </label>
         <input
           id="idea-title"
@@ -115,10 +115,14 @@ export function IdeaForm() {
 
       <div>
         <label htmlFor="idea-summary" className="field-label">
-          Summarise it in one sentence
+          Summary
         </label>
+        <p id="idea-summary-hint" className="mb-2 text-[13px] text-muted">
+          One or two sentences. This is what appears on the challenge card.
+        </p>
         <input
           id="idea-summary"
+          aria-describedby="idea-summary-hint"
           type="text"
           required
           value={fields.summary}
@@ -197,9 +201,11 @@ export function IdeaForm() {
         </p>
       )}
 
-      <button type="submit" disabled={busy} className="btn btn-accent self-start">
-        {busy ? 'Submitting…' : 'Submit idea'}
-      </button>
+      <div className="border-t border-line pt-1.5">
+        <button type="submit" disabled={busy} className="btn btn-primary mt-3 px-[26px]">
+          {busy ? 'Submitting…' : 'Submit for review'}
+        </button>
+      </div>
     </form>
   )
 }

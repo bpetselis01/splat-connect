@@ -49,8 +49,16 @@ export function StlSection() {
       // that gap by POSTing the replace-set sub-resource with the existing rows
       // plus the new one; this mirrors that exactly rather than any server-side
       // insert, which does not exist for this route.
+      // The settings ride along (068): the replace-set would otherwise wipe
+      // what the author typed on the web editor.
       const next = [
-        ...files.map((f) => ({ filename: f.filename, file_url: f.file_url })),
+        ...files.map((f) => ({
+          filename: f.filename,
+          file_url: f.file_url,
+          print_minutes: f.print_minutes,
+          filament_grams: f.filament_grams,
+          material: f.material,
+        })),
         { filename: filename ?? asset.name, file_url: url },
       ]
       const inserted = await apiClient.post<StlFile[]>(`/api/tutorials/${id}/stl-files`, {

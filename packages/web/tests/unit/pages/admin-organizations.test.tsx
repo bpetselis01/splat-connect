@@ -34,7 +34,7 @@ describe('admin organisations', () => {
       )
     )
     const { default: Page } = await import('@/app/admin/organizations/page')
-    render(await Page())
+    render(await Page({ searchParams: Promise.resolve({}) }))
 
     const perOrg = get.mock.calls.filter((c) => /^\/api\/organizations\/o\d$/.test(c[0] as string))
     expect(perOrg).toHaveLength(0)
@@ -56,12 +56,14 @@ describe('admin organisations', () => {
       )
     )
     const { default: Page } = await import('@/app/admin/organizations/page')
-    render(await Page())
+    // Both drawers open, so every form on the page renders.
+    render(await Page({ searchParams: Promise.resolve({ manage: 'o1', new: '1' }) }))
 
     expect(screen.getByText(/Leaders \(1\)/)).toBeInTheDocument()
-    // Three times: the leader row, the create-org picker, and the add-leader
-    // picker — each form has its own <select> of eligible leaders.
-    expect(screen.getAllByText('Sam')).toHaveLength(3)
+    // Four times: the table's Leaders cell, the drawer's leader row, the
+    // create-org picker and the add-leader picker — each form has its own
+    // <select> of eligible leaders.
+    expect(screen.getAllByText('Sam')).toHaveLength(4)
   })
 
   // Tests: the id itself is never rendered as visible text anywhere on the page,
@@ -81,7 +83,9 @@ describe('admin organisations', () => {
       )
     )
     const { default: Page } = await import('@/app/admin/organizations/page')
-    const { container } = render(await Page())
+    const { container } = render(
+      await Page({ searchParams: Promise.resolve({ manage: 'o1', new: '1' }) })
+    )
 
     expect(container.textContent).not.toContain('u1')
     expect(container.querySelector('datalist')).toBeNull()

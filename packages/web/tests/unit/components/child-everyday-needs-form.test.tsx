@@ -15,20 +15,20 @@ describe('ChildEverydayNeedsForm', () => {
         onSave={vi.fn()}
       />
     )
-    expect(screen.getByLabelText('Grasping')).toBeChecked()
+    expect(screen.getByRole('button', { name: 'Grasping', pressed: true })).toBeInTheDocument()
     expect(screen.getByLabelText('Grip type')).toHaveValue('Pincer')
   })
 
   it('starts blank when there is no profile yet', () => {
     render(<ChildEverydayNeedsForm profile={null} onSave={vi.fn()} />)
-    expect(screen.getByLabelText('Grasping')).not.toBeChecked()
+    expect(screen.getByRole('button', { name: 'Grasping', pressed: false })).toBeInTheDocument()
   })
 
   it('hands the edited fields to onSave', async () => {
     const onSave = vi.fn().mockResolvedValue(undefined)
     render(<ChildEverydayNeedsForm profile={null} onSave={onSave} />)
 
-    fireEvent.click(screen.getByLabelText('Grasping'))
+    fireEvent.click(screen.getByRole('button', { name: 'Grasping' }))
     fireEvent.change(screen.getByLabelText('Grip type'), { target: { value: 'Pincer' } })
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))
 

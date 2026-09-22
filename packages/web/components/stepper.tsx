@@ -26,6 +26,7 @@ import { useRef, useState, type ReactNode } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import type { Route } from 'next'
 import type { Gap, Step, StepStatus } from '@/lib/steps'
+import { CheckCircle } from '@phosphor-icons/react/dist/ssr'
 import { FinishBar } from '@/components/finish-bar'
 import {
   NextStepProvider,
@@ -57,6 +58,8 @@ export function Stepper<Id extends string>({
   label,
   trailing,
   finish,
+  layout = 'pills',
+  railFoot,
 }: {
   steps: Step<Id>[]
   /** Names the tablist: "Tutorial sections", "Toy sections". */
@@ -70,6 +73,16 @@ export function Stepper<Id extends string>({
    */
   trailing?: ReactNode
   finish?: Finish<Id>
+  /**
+   * 'rail' is the board's editor shell (tutorial and toy editors): a 230px
+   * sticky column of sections on the left, each with its glyph and a check once
+   * done, and the open section in one card on the right under its own heading
+   * and hint. It carries no finish bar — the rail editors put submitting in
+   * their header and in their Status section instead.
+   */
+  layout?: 'pills' | 'rail'
+  /** Under the rail: the board's amber progress note. */
+  railFoot?: ReactNode
 }) {
   const router = useRouter()
   const pathname = usePathname()
@@ -140,6 +153,58 @@ export function Stepper<Id extends string>({
   const after = walk.slice(walk.findIndex((s) => s.id === activeId) + 1)
   const nextStep = after.find((s) => !s.disabled)
 
+  const nextControl =
+    nextStep && !active.offWalk ? (
+      <button type="button" onClick={() => selectStep(nextStep.id)} className="btn btn-quiet btn-sm">
+        {finish && nextStep.id === last.id && finish.missing.length === 0
+          ? `${finish.endLabel} →`
+          : `Next: ${nextStep.label} →`}
+      </button>
+    ) : null
+
+  const panel = (
+    <NextStepProvider value={nextControl}>
+      <StepJumpProvider value={(step) => selectStep(step as Id)}>
+        <SaveOnLeaveProvider value={pendingSave as PendingSave}>{active.content}</SaveOnLeaveProvider>
+      </StepJumpProvider>
+    </NextStepProvider>
+  )
+
+  if (layout === 'rail') {
+    return (
+      <div className="editor-rail">
+        <nav aria-label={label} className="editor-rail__nav">
+          <div role="tablist" aria-label={label} aria-orientation="vertical" className="contents">
+            {steps.map((step) => (
+              <button
+                key={step.id}
+                type="button"
+                role="tab"
+                aria-selected={step.id === activeId}
+                disabled={step.disabled}
+                onClick={() => selectStep(step.id)}
+                className="editor-rail__tab"
+              >
+                {step.icon}
+                <span className="flex-1">{step.label}</span>
+                {step.status === 'done' && (
+                  <CheckCircle weight="fill" size={17} className="text-success" aria-label="done" />
+                )}
+              </button>
+            ))}
+          </div>
+          {trailing && <div className="mt-2">{trailing}</div>}
+          {railFoot && <div className="editor-rail__foot">{railFoot}</div>}
+        </nav>
+        <div role="tabpanel" className="editor-card">
+          <h2 className="editor-card__title">{active.heading ?? active.label}</h2>
+          {active.hint && <p className="editor-card__hint">{active.hint}</p>}
+          {panel}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <>
       <div className="step-pill-row">
@@ -178,29 +243,7 @@ export function Stepper<Id extends string>({
       {/* Next reaches the foot of the open panel through context, because the
           panel's markup belongs to the page rather than to this component. See
           panel-actions.tsx. */}
-      <div role="tabpanel">
-        <NextStepProvider
-          value={
-            nextStep && !active.offWalk ? (
-              <button
-                type="button"
-                onClick={() => selectStep(nextStep.id)}
-                className="btn btn-quiet btn-sm"
-              >
-                {finish && nextStep.id === last.id && finish.missing.length === 0
-                  ? `${finish.endLabel} →`
-                  : `Next: ${nextStep.label} →`}
-              </button>
-            ) : null
-          }
-        >
-          <StepJumpProvider value={(step) => selectStep(step as Id)}>
-            <SaveOnLeaveProvider value={pendingSave as PendingSave}>
-              {active.content}
-            </SaveOnLeaveProvider>
-          </StepJumpProvider>
-        </NextStepProvider>
-      </div>
+      <div role="tabpanel">{panel}</div>
 
       {/* An off-walk step holds nothing that could be missing and nothing that
           submitting would carry, so the bar stays away rather than asking what

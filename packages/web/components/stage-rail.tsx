@@ -1,0 +1,126 @@
+/**
+ * The stepper, and it is navigation rather than decoration.
+ *
+ * Geometry is measured off the artboard's exchanges screen, not transcribed:
+ * 28px circle, 3px bar, 14px/800 label, 13px/400 caption, all inside an inset
+ * at 18px radius on the canvas behind a hairline.
+ *
+ * Two rules from the brief are enforced by the shape of this API rather than by
+ * asking callers to remember them.
+ *
+ * **Every row carries its own captions.** `caption` is required per step, so
+ * there is nowhere to put a shared caption map. The bug that guards against is
+ * real and specific: a global map renders the live record's wording into every
+ * other row, so a list of five exchanges all claim "They said yes". Making the
+ * field per-step means you cannot express that mistake.
+ *
+ * **A record that ended early stops where it stopped.** `stop` exists for
+ * exactly that: earlier steps stay `done`, the step it died at takes `stop`
+ * with the reason as its caption, the ones it never reached say so, and the
+ * final step still closes. Such a record must never show a `now` dot — it is
+ * not in progress, it is over. Derive these from the record's real status
+ * vocabulary; if the data does not store a stage, that is a schema change and
+ * belongs in SUPABASE.md before any of this renders.
+ */
+import { Check, DotOutline, Minus, X } from '@phosphor-icons/react/dist/ssr'
+
+export type StageState = 'done' | 'now' | 'todo' | 'stop'
+
+export interface Stage {
+  /** Stable key — the record's own status token, not the label. */
+  key: string
+  /** The step name. Fixed vocabulary; reuse words, never invent synonyms. */
+  label: string
+  /** This record's own wording for this step. Never shared between rows. */
+  caption: string
+  state: StageState
+}
+
+/** bg / icon colour per state, and the ring the current step wears. */
+const TONE: Record<StageState, { bg: string; fg: string; ring?: string }> = {
+  done: { bg: 'var(--b600)', fg: 'var(--onbrand)' },
+  now: { bg: 'var(--amber)', fg: 'var(--tink)', ring: '0 0 0 4px var(--tamber)' },
+  todo: { bg: 'var(--surface2)', fg: 'var(--muted)' },
+  stop: { bg: 'var(--surface2)', fg: 'var(--muted)' },
+}
+
+const GLYPH: Record<StageState, typeof Check> = {
+  done: Check,
+  now: DotOutline,
+  todo: Minus,
+  stop: X,
+}
+
+export function StageRail({
+  stages,
+  onSelect,
+  label = 'Progress',
+}: {
+  stages: Stage[]
+  /** Steppers move the record. Omit on a read-only view and steps render inert. */
+  onSelect?: (stage: Stage) => void
+  label?: string
+}) {
+  return (
+    <ol
+      aria-label={label}
+      className="grid list-none gap-2.5 rounded-[var(--radius-inset)] border border-line bg-canvas p-4 px-[18px]"
+      style={{ gridTemplateColumns: `repeat(${stages.length}, minmax(0, 1fr))` }}
+    >
+      {stages.map((stage) => {
+        const tone = TONE[stage.state]
+        const Glyph = GLYPH[stage.state]
+        // A step only becomes a control when there is somewhere for it to go.
+        // Read-only rails used to render <button disabled>, which put a dead
+        // control in the accessibility tree for something purely informational
+        // — a screen reader announced four dimmed buttons on every list row —
+        // and collided by accessible name with the page's real actions: the
+        // "Accepted" step and an "Accept" button are two different things.
+        const interactive = Boolean(onSelect)
+        const Step = interactive ? 'button' : 'div'
+        /*
+         * Every step draws a bar, filled only when that step is itself `done`.
+         *
+         * It used to look at the step on the RIGHT, which drew a filled bar
+         * into the Closed step of a record that stopped early — Closed is
+         * `done` on a rejected exchange, so the rail showed progress through a
+         * Handover that never happened. A bar is the journey out of a step, not
+         * the arrival at the next one.
+         *
+         * The last step keeps its bar: the board draws four, and the trailing
+         * one is what makes the four columns read as one rail rather than three
+         * links and an orphan.
+         */
+        const barDone = stage.state === 'done'
+        return (
+          <li key={stage.key} className="min-w-0">
+            <Step
+              {...(interactive
+                ? { type: 'button' as const, onClick: () => onSelect?.(stage) }
+                : {})}
+              aria-current={stage.state === 'now' ? 'step' : undefined}
+              className="-m-2 flex w-full flex-col items-start gap-2 rounded-[var(--radius-field)] bg-transparent p-2 text-left"
+            >
+              <span className="flex w-full items-center gap-2">
+                <span
+                  aria-hidden="true"
+                  className="grid h-7 w-7 shrink-0 place-items-center rounded-full"
+                  style={{ background: tone.bg, color: tone.fg, boxShadow: tone.ring }}
+                >
+                  <Glyph size={15} weight="bold" />
+                </span>
+                <span
+                  aria-hidden="true"
+                  className="h-[3px] min-w-0 flex-1 rounded-full"
+                  style={{ background: barDone ? 'var(--b600)' : 'var(--surface2)' }}
+                />
+              </span>
+              <span className="text-sm font-extrabold text-ink">{stage.label}</span>
+              <span className="text-[13px] font-semibold leading-[1.4] text-muted">{stage.caption}</span>
+            </Step>
+          </li>
+        )
+      })}
+    </ol>
+  )
+}

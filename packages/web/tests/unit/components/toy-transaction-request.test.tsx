@@ -1,12 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-// fireEvent, not user-event: @testing-library/user-event is not a dependency
-// of this package and the no-new-dependencies constraint applies to tests too.
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { ToyTransactionRequest } from '@/components/toy-transaction-request'
-import { browserApiClient } from '@/lib/browser-api-client'
 import type { Toy, ToyWithOwner } from '@splat-connect/types'
 
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }))
+// next/link only. The component stopped being a client component when the ask
+// moved to its own screen — there is no router and no fetch left in it.
+vi.mock('next/link', () => ({
+  default: ({ href, children, ...rest }: { href: string; children: React.ReactNode }) => (
+    <a href={href} {...rest}>
+      {children}
+    </a>
+  ),
+}))
 
 function toy(overrides: Partial<ToyWithOwner> = {}): ToyWithOwner {
   return {
@@ -16,8 +21,9 @@ function toy(overrides: Partial<ToyWithOwner> = {}): ToyWithOwner {
     description: null,
     condition: 7,
     switch_adapted: false,
-    cover_photo_url: 'https://example.com/c.jpg',
-    switch_photo_urls: [],
+    photo_urls: ['https://test.supabase.co/storage/v1/object/public/photos/c.jpg'],
+    cover_photo_url: 'https://test.supabase.co/storage/v1/object/public/photos/c.jpg',
+    switch_photo_url: null,
     status: 'published',
     offer_type: 'both',
     created_at: '2026-08-01T00:00:00Z',
@@ -37,8 +43,9 @@ function myToy(overrides: Partial<Toy> = {}): Toy {
     description: null,
     condition: 8,
     switch_adapted: false,
+    photo_urls: [],
     cover_photo_url: null,
-    switch_photo_urls: [],
+    switch_photo_url: null,
     status: 'published',
     offer_type: null,
     created_at: '2026-08-01T00:00:00Z',
@@ -52,7 +59,11 @@ describe('ToyTransactionRequest', () => {
 
   it('prompts a signed-out visitor to sign in', () => {
     render(<ToyTransactionRequest toy={toy()} viewerId={null} myToys={[]} />)
-    expect(screen.getByText(/sign in/i)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Sign in to ask for it' })).toHaveAttribute(
+      'href',
+      `/login?next=${encodeURIComponent('/toy-library/toy-1/request?mode=donation')}`
+    )
+    expect(screen.getByRole('link', { name: 'Sign in to offer a swap' })).toBeInTheDocument()
   })
 
   it('shows nothing for the owner viewing their own toy', () => {
@@ -60,31 +71,45 @@ describe('ToyTransactionRequest', () => {
     expect(container.textContent).toBe('')
   })
 
-  it('starts a donation request', async () => {
-    const post = vi.spyOn(browserApiClient, 'post').mockResolvedValue({ id: 'tx-1' })
-    render(<ToyTransactionRequest toy={toy({ offer_type: 'donation' })} viewerId="viewer-1" myToys={[]} />)
-
-    fireEvent.click(screen.getByRole('button', { name: /arrange pickup/i }))
-
-    expect(post).toHaveBeenCalledWith('/api/toy-transactions', { toy_id: 'toy-1', type: 'donation' })
+  // Tests: the control is the way IN to asking, not the ask itself
+  // How:   asserts the link and its destination for each offer_type
+  // Chain: it used to post a transaction with no note at all. The artboard
+  //        gives asking its own screen because the paragraph about the child is
+  //        the part the whole exchange turns on — "a line or two about the
+  //        child is what gets a yes" — and a two-button control had nowhere to
+  //        put one
+  it('links to the request screen rather than posting anything', () => {
+    const expected = {
+      donation: ['/toy-library/toy-1/request?mode=donation'],
+      exchange: ['/toy-library/toy-1/request?mode=exchange'],
+      both: ['/toy-library/toy-1/request?mode=donation', '/toy-library/toy-1/request?mode=exchange'],
+    }
+    for (const offer of ['donation', 'exchange', 'both'] as const) {
+      const { unmount } = render(
+        <ToyTransactionRequest toy={toy({ offer_type: offer })} viewerId="viewer-1" myToys={[]} />
+      )
+      expect(screen.getAllByRole('link').map((a) => a.getAttribute('href'))).toEqual(expected[offer])
+      unmount()
+    }
   })
 
-  it('prompts to add a toy before exchanging when My Toys is empty', async () => {
+  // Tests: a swap you cannot make is said out loud before you follow the link
+  // Chain: the old control raised "Add a toy to My Toys" only after a click,
+  //        which is a worse place to learn it
+  it('says so when there is nothing to offer', () => {
     render(<ToyTransactionRequest toy={toy({ offer_type: 'exchange' })} viewerId="viewer-1" myToys={[]} />)
-
-    fireEvent.click(screen.getByRole('button', { name: /arrange exchange/i }))
-
-    expect(screen.getByText(/add a toy/i)).toBeInTheDocument()
+    expect(screen.getByText(/no listed toys to offer/i)).toBeInTheDocument()
   })
 
-  it('starts an exchange with a chosen toy', async () => {
-    const post = vi.spyOn(browserApiClient, 'post').mockResolvedValue({ id: 'tx-1' })
-    render(<ToyTransactionRequest toy={toy({ offer_type: 'exchange' })} viewerId="viewer-1" myToys={[myToy()]} />)
+  it('says nothing about that when there is something to offer', () => {
+    render(
+      <ToyTransactionRequest toy={toy({ offer_type: 'exchange' })} viewerId="viewer-1" myToys={[myToy()]} />
+    )
+    expect(screen.queryByText(/no listed toys to offer/i)).not.toBeInTheDocument()
+  })
 
-    fireEvent.click(screen.getByRole('button', { name: /arrange exchange/i }))
-    fireEvent.change(screen.getByLabelText(/offer one of your toys/i), { target: { value: 'my-toy-1' } })
-    fireEvent.click(screen.getByRole('button', { name: /start exchange/i }))
-
-    expect(post).toHaveBeenCalledWith('/api/toy-transactions', { toy_id: 'toy-1', type: 'exchange', offered_toy_id: 'my-toy-1' })
+  it('shows nothing when the toy is not offered at all', () => {
+    render(<ToyTransactionRequest toy={toy({ offer_type: null })} viewerId="viewer-1" myToys={[]} />)
+    expect(screen.getByText(/not currently offered/i)).toBeInTheDocument()
   })
 })

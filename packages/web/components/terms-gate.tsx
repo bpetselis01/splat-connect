@@ -46,12 +46,17 @@ export function TermsGate({
   requireCheckbox = false,
   mode = 'record',
   content,
+  variant = 'card',
 }: {
   type: AgreementType
   onAccepted: () => void
   requireCheckbox?: boolean
   mode?: 'record' | 'local'
   content?: ReactNode
+  /** 'stage' is the onboarding gate's board layout: already inside an auth
+   *  card, so no card of its own — the text in a scroll box and one
+   *  full-width "Accept and continue". */
+  variant?: 'card' | 'stage'
 }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -73,6 +78,40 @@ export function TermsGate({
     } finally {
       setBusy(false)
     }
+  }
+
+  if (variant === 'stage') {
+    return (
+      <div className="flex flex-col">
+        <div className="terms-scroll">
+          {content ?? (
+            <p>
+              Please read the <Link href={href}>{title}</Link> before continuing.
+            </p>
+          )}
+        </div>
+        {error && <p role="alert" className="alert alert-danger mt-3">{error}</p>}
+        {requireCheckbox && (
+          <label className="mt-[18px] flex cursor-pointer items-start gap-2.5 text-sm">
+            <input
+              type="checkbox"
+              checked={ticked}
+              onChange={(e) => setTicked(e.target.checked)}
+              className="mt-0.5 h-5 w-5 flex-none accent-[var(--b600)]"
+            />
+            I have read and accept the {title}.
+          </label>
+        )}
+        <button
+          type="button"
+          onClick={accept}
+          disabled={busy || (requireCheckbox && !ticked)}
+          className="auth-submit mt-4"
+        >
+          {busy ? 'Recording…' : 'Accept and continue'}
+        </button>
+      </div>
+    )
   }
 
   return (

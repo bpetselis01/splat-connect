@@ -17,8 +17,8 @@ vi.mock('@/lib/api-client', () => ({ apiClient: { get: vi.fn() } }))
 // change to the layout itself.
 vi.mock('next/font/google', () => ({
   Nunito: () => ({ variable: '--font-nunito', className: '' }),
-  IBM_Plex_Mono: () => ({ variable: '--font-plex-mono', className: '' }),
-  Jersey_10: () => ({ variable: '--font-jersey', className: '' }),
+  JetBrains_Mono: () => ({ variable: '--font-jetbrains', className: '' }),
+  Baloo_2: () => ({ variable: '--font-baloo', className: '' }),
 }))
 
 /**
@@ -33,11 +33,16 @@ vi.mock('next/font/google', () => ({
 import { isBare, isAccountRoute } from '@/app/layout'
 
 describe('layout chrome rules', () => {
-  it('treats auth and onboarding routes as bare', () => {
-    expect(isBare('/login')).toBe(true)
-    expect(isBare('/signup')).toBe(true)
+  it('treats the auth callbacks and onboarding gates as bare', () => {
     expect(isBare('/auth/confirmed')).toBe(true)
     expect(isBare('/onboarding/contributor-terms')).toBe(true)
+  })
+
+  // Chain: the board draws the site header on Sign in and Create account. Only
+  //        a gate — where every link bounces back — earns the bare treatment
+  it('gives sign in and create account the site header', () => {
+    expect(isBare('/login')).toBe(false)
+    expect(isBare('/signup')).toBe(false)
   })
 
   it('treats public routes as chromed', () => {

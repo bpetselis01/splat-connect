@@ -21,7 +21,8 @@ import { Route } from 'next'
 import { TermsGate } from '@/components/terms-gate'
 import { ContributorTermsContent } from '@/components/contributor-terms-content'
 import { createClient } from '@/lib/supabase/client'
-import { FileText } from '@/components/icons'
+import { AuthStage } from '@/components/auth-shell'
+import { AGREEMENT_VERSIONS } from '@splat-connect/types'
 
 /**
  * `next` arrives from the query string, so it is attacker-controllable. Only a
@@ -54,49 +55,50 @@ function ContributorTermsForm() {
 
   return (
     <>
-      <div className="mt-6 w-full text-left">
-        <TermsGate
-          type="contributor_terms"
-          requireCheckbox
-          content={<ContributorTermsContent />}
-          // Hard reload, not router.replace: the bare gate's Nav prefetches
-          // /dashboard as soon as it's in viewport, well before terms are
-          // accepted. That prefetch resolves as the middleware's redirect
-          // back to this gate, and Next's client Router Cache serves that
-          // stale redirect straight back on replace(next) — a soft nav never
-          // reaches the server to see the acceptance that was just recorded.
-          // Same reasoning as signOut() above.
-          onAccepted={() => {
-            window.location.href = next
-          }}
-        />
-      </div>
-      <button type="button" onClick={signOut} className="mt-4 text-sm text-muted underline">
-        Sign out
-      </button>
+      <TermsGate
+        type="contributor_terms"
+        variant="stage"
+        requireCheckbox
+        content={<ContributorTermsContent />}
+        // Hard reload, not router.replace: the bare gate's Nav prefetches
+        // /dashboard as soon as it's in viewport, well before terms are
+        // accepted. That prefetch resolves as the middleware's redirect
+        // back to this gate, and Next's client Router Cache serves that
+        // stale redirect straight back on replace(next) — a soft nav never
+        // reaches the server to see the acceptance that was just recorded.
+        // Same reasoning as signOut() above.
+        onAccepted={() => {
+          window.location.href = next
+        }}
+      />
+      {/* Not on the board, which has no way out of this gate; kept, because
+          an account that will not accept has nowhere else to sign out. */}
+      <p className="auth-card__alt">
+        <button type="button" onClick={signOut} className="text-muted underline">
+          Sign out
+        </button>
+      </p>
     </>
   )
 }
 
 // useSearchParams() requires a Suspense boundary, or `next build` fails to
 // prerender this page (it can't statically render something that reads the
-// query string). The icon, heading and lead paragraph stay outside the
+// query string). The eyebrow, heading and version line stay outside the
 // boundary so they render immediately rather than waiting on it.
 export default function ContributorTermsOnboarding() {
   return (
-    <div className="mx-auto mt-8 max-w-lg sm:mt-16">
-      <div className="card flex flex-col items-center p-6 text-center sm:p-8">
-        <span aria-hidden="true" className="empty-badge text-brand-deep">
-          <FileText className="h-8 w-8" />
-        </span>
-        <h1 className="mt-4 title-article">One thing before you continue</h1>
-        <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted">
-          Please review and accept the contributor terms to carry on.
-        </p>
-        <Suspense>
-          <ContributorTermsForm />
-        </Suspense>
-      </div>
-    </div>
+    <AuthStage>
+      <span className="eyebrow text-muted">One step before you start</span>
+      <h1 className="auth-sent__title mt-2">Contributor terms</h1>
+      {/* The version is the recorded one; the board's "you keep the copyright"
+          is a claim about terms that are not written yet, so it is not here. */}
+      <p className="mb-[18px] mt-2 text-sm text-muted">
+        Version {AGREEMENT_VERSIONS.contributor_terms}.
+      </p>
+      <Suspense>
+        <ContributorTermsForm />
+      </Suspense>
+    </AuthStage>
   )
 }

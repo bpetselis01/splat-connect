@@ -62,7 +62,7 @@ export function ChildSurveyForm({
           {busy ? 'Saving…' : 'Save answers'}
         </button>
         {error && <p role="alert" className="alert alert-danger">{error}</p>}
-        {saved && <p className="text-sm font-semibold text-mint-deep">Saved — we&apos;ll use this to suggest guides</p>}
+        {saved && <p className="text-sm font-semibold text-ink">Saved — we&apos;ll use this to suggest guides</p>}
       </PanelActions>
     </div>
   )

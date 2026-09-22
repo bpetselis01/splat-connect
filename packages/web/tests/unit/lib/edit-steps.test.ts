@@ -12,7 +12,9 @@ function tutorial(overrides: Partial<TutorialWithDetails> = {}): TutorialWithDet
     status: 'draft',
     maturity: 'complete',
     safety_declared_at: '2026-08-01T00:00:00Z',
-    toy_photo_url: 'https://example.com/photo.jpg',
+    build_minutes: 30,
+    photo_urls: ['https://test.supabase.co/storage/v1/object/public/photos/photo.jpg'],
+    toy_photo_url: 'https://test.supabase.co/storage/v1/object/public/photos/photo.jpg',
     tutorial_pdf_url: 'https://example.com/tutorial.pdf',
     rejection_note: null,
     created_at: '',
@@ -57,7 +59,7 @@ describe('computeStepStatuses', () => {
   })
 
   it('flags files as attention when either the photo or PDF is missing', () => {
-    const statuses = computeStepStatuses(tutorial({ toy_photo_url: null }), [])
+    const statuses = computeStepStatuses(tutorial({ photo_urls: [] }), [])
     expect(statuses.files).toBe('attention')
   })
 

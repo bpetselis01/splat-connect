@@ -1,73 +1,64 @@
 import Link from 'next/link'
+import { Plus } from '@phosphor-icons/react/dist/ssr'
 import { apiClient } from '@/lib/api-client'
 import { requireCapabilities } from '@/lib/require-capabilities'
-import { DashboardTutorialCard } from '@/components/dashboard-tutorial-card'
+import { DashboardTutorialCard, TUTORIAL_STAGE } from '@/components/dashboard-tutorial-card'
+import { StageFilter, StageNone, STAGE } from '@/components/stage'
 import { BookOpen } from '@/components/icons'
 import { BoundaryLink } from '@/components/boundary-link'
 import { MarkNotificationsRead } from '@/components/mark-notifications-read'
-import type { Tutorial, Profile, TutorialOrg } from '@splat-connect/types'
+import type { Tutorial, TutorialOrg } from '@splat-connect/types'
 
-export default async function DashboardPage() {
+const BASE = '/dashboard/tutorials'
+
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ stage?: string }>
+} = {}) {
   await requireCapabilities()
+  const stage = (await searchParams)?.stage ?? 'all'
 
   const tutorials = await apiClient.get<(Tutorial & { tutorial_orgs?: TutorialOrg[] })[]>(
     '/api/tutorials/mine'
   )
 
-  const pendingCount = tutorials.filter((t) => t.status === 'pending').length
-  const approvedCount = tutorials.filter((t) => t.status === 'approved').length
-  const rejectedCount = tutorials.filter((t) => t.status === 'rejected').length
-
-  const stats = [
-    { label: 'Pending', count: pendingCount, tone: 'text-honey-deep' },
-    { label: 'Approved', count: approvedCount, tone: 'text-mint-deep' },
-    { label: 'Rejected', count: rejectedCount, tone: 'text-apricot-deep' },
+  // The board's stage track, in its order. "Draft" rather than "Hidden" for a
+  // guide: the editor calls it a draft, and so does everything a contributor reads.
+  const count = (id: string) => tutorials.filter((t) => TUTORIAL_STAGE[t.status] === id).length
+  const options = [
+    { id: 'all', label: 'All', n: tutorials.length },
+    { id: 'needsyou', label: STAGE.needsyou.label, n: count('needsyou') },
+    { id: 'live', label: STAGE.live.label, n: count('live') },
+    { id: 'waiting', label: STAGE.waiting.label, n: count('waiting') },
+    { id: 'hidden', label: 'Draft', n: count('hidden') },
   ]
+  const current = options.some((o) => o.id === stage) ? stage : 'all'
+  const shown =
+    current === 'all' ? tutorials : tutorials.filter((t) => TUTORIAL_STAGE[t.status] === current)
 
   return (
     <div>
       <MarkNotificationsRead bucket="tutorials" />
 
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+      <div className="mb-[26px] flex flex-wrap items-end justify-between gap-5">
         <div>
           <h1 className="title-hub">My tutorials</h1>
-          <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted">
-            Your adaptation guides. Each one is reviewed — by an organisation you ask, or by
-            SPLAT — before it reaches the library.
+          <p className="mt-2 max-w-[58ch] text-[15px] text-muted">
+            Guides you have written, at every stage from draft to published.
           </p>
         </div>
-        {/* The My SPLAT card promises three things here. Two of them exist;
-            "Saved tutorials" waits on the saves subsystem, and an absent
-            button beats one that leads nowhere. */}
-        <div className="flex flex-wrap gap-3">
-          <BoundaryLink href="/upload" className="btn btn-accent">
-            + New tutorial
+        <div className="flex flex-wrap gap-2.5">
+          <BoundaryLink href="/upload" className="btn btn-coral">
+            <Plus size={16} weight="bold" aria-hidden="true" />
+            Add a tutorial
           </BoundaryLink>
-          <BoundaryLink href="/library" className="btn btn-quiet">
-            Browse the library
-          </BoundaryLink>
-          {/* The tag on this page's My SPLAT card names "saved tutorials";
-              this is where that tag leads. It skips the saved hub on purpose —
-              the label names a destination, so it lands on the destination. */}
+          {/* Skips the saved hub on purpose — the label names a destination,
+              so it lands on the destination. */}
           <Link href="/dashboard/saved/tutorials" className="btn btn-quiet">
             Saved tutorials
           </Link>
         </div>
-      </div>
-
-      {/* One strip rather than three big-number cards — these counts are a
-          summary of the list below, not the point of the page. */}
-      <div className="card mb-8 grid grid-cols-3 divide-x divide-line">
-        {stats.map((s) => (
-          <div
-            key={s.label}
-            data-testid={`stat-${s.label.toLowerCase()}`}
-            className="px-4 py-5 text-center"
-          >
-            <p className={`text-2xl font-bold ${s.tone}`}>{s.count}</p>
-            <p className="mt-1 text-sm font-semibold text-muted">{s.label}</p>
-          </div>
-        ))}
       </div>
 
       {tutorials.length === 0 ? (
@@ -87,13 +78,27 @@ export default async function DashboardPage() {
           </BoundaryLink>
         </div>
       ) : (
-        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
-          {tutorials.map((t) => (
-            <li key={t.id}>
-              <DashboardTutorialCard tutorial={t} />
-            </li>
-          ))}
-        </ul>
+        <>
+          <div className="mb-[22px]">
+            <StageFilter
+              label="Filter tutorials by stage"
+              basePath={BASE}
+              current={current}
+              options={options}
+            />
+          </div>
+          {shown.length === 0 ? (
+            <StageNone basePath={BASE} note="None of your guides are at that stage right now." />
+          ) : (
+            <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+              {shown.map((t) => (
+                <li key={t.id}>
+                  <DashboardTutorialCard tutorial={t} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
       )}
     </div>
   )

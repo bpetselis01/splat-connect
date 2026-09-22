@@ -1,11 +1,44 @@
+/**
+ * The homepage, rebuilt against the Soft Pop artboard (#home) rather than
+ * patched towards it.
+ *
+ * Five bands, in the board's order:
+ *   1. hero          — badge, "Press it. Watch it go.", two doors, three stats, Splat
+ *   2. scroll-world  — the five-scene flight (components/scroll-world.tsx)
+ *   3. three doors   — a guide / a ready-made toy / I make things
+ *   4. costs         — "No price tags", and the filament-credit block beside it
+ *   5. recent        — guides and toys, real rows from the API
+ *
+ * Numbers are live where the board shows numbers: the stat tiles and the two
+ * door counts read from /api/public/impact and /api/public/tutorials, so the
+ * page never claims 142 guides when there are 7.
+ *
+ * Related files:
+ * - components/scroll-world.tsx: band 2
+ * - components/splat-mascot.tsx: the bear, lifted from the board
+ * - globals.css: .hero-*, .sw-*, .door-* live there
+ */
 import Link from 'next/link'
+import type { Route } from 'next'
+import {
+  ArrowRight,
+  BookOpen,
+  BookOpenText,
+  Gift,
+  UsersThree,
+  MagnifyingGlass,
+  Wrench,
+  Receipt,
+  SealCheck,
+  Recycle,
+} from '@phosphor-icons/react/dist/ssr'
 import { TutorialCard } from '@/components/tutorial-card'
-import { LauncherGrid, type LauncherTile } from '@/components/launcher-grid'
-import { Slot } from '@/components/slot'
-import { HubGrid } from '@/components/hub-grid'
-import { SwitchAdaptedBear } from '@/components/switch-adapted-bear'
-import { PUBLIC_NAV } from '@/lib/public-nav'
-import type { Tutorial, ImpactSummary } from '@splat-connect/types'
+import { ToyLibraryCard } from '@/components/toy-library-card'
+import { ScrollWorld } from '@/components/scroll-world'
+import { SplatMascot } from '@/components/splat-mascot'
+import { StatChips } from '@/components/stat-chips'
+import { CountUp } from '@/components/count-up'
+import type { Tutorial, ImpactSummary, ToyWithOwner } from '@splat-connect/types'
 
 const EMPTY_TOTALS: ImpactSummary['totals'] = {
   tutorials: 0,
@@ -15,8 +48,7 @@ const EMPTY_TOTALS: ImpactSummary['totals'] = {
   organisations: 0,
 }
 
-/** Same connection-failure guard as before: an unreachable API degrades to zeros
-    and an empty row, never a 500. */
+/** An unreachable API degrades to zeros and an empty row, never a 500. */
 async function getJson<T>(path: string, fallback: T): Promise<T> {
   try {
     const res = await fetch(`${process.env.API_URL}${path}`, { cache: 'no-store' })
@@ -26,258 +58,205 @@ async function getJson<T>(path: string, fallback: T): Promise<T> {
   }
 }
 
-const HOW_IT_WORKS = [
-  {
-    title: 'A guide gets written',
-    body: 'A contributor adapts a toy and documents every step, with a parts list anyone can buy from.',
-  },
-  {
-    title: 'An organisation stands behind it',
-    body: 'A therapy service or school reviews the work and puts their name on it, so a parent knows someone competent read it.',
-  },
-  {
-    title: 'A family builds it — or receives one',
-    body: 'Follow the guide with about thirty dollars of parts, or claim a toy someone has already adapted.',
-  },
-]
-
-// Same three tracks packages/web/app/get-involved/page.tsx selects, matched by
-// href rather than position — a nav reorder should not silently swap which
-// three tiles the homepage promotes.
-const TRACKS = [
-  '/get-involved/families',
-  '/get-involved/contributors',
-  '/get-involved/organisations',
-]
-
 export default async function HomePage() {
-  const [tutorials, impact] = await Promise.all([
+  const [tutorials, toys, impact] = await Promise.all([
     getJson<Tutorial[]>('/api/public/tutorials', []),
+    getJson<ToyWithOwner[]>('/api/public/toys', []),
     getJson<ImpactSummary>('/api/public/impact', {
       totals: EMPTY_TOTALS,
       recent: [],
       contributors: [],
       organisations: [],
+      deliveriesByMonth: [],
     }),
   ])
-
-  const featured = tutorials.slice(0, 3)
   const { totals } = impact
 
-  const learn = PUBLIC_NAV.find((s) => s.href === '/learn')!
-  const getInvolved = PUBLIC_NAV.find((s) => s.href === '/get-involved')!
-  const liveArticles = learn.children.filter((c) => c.state === 'live')
+  const stats = [
+    { icon: BookOpen, value: totals.tutorials, label: 'guides', tint: 'var(--color-brand-soft)' },
+    { icon: Gift, value: totals.toysDelivered, label: 'toys delivered', tint: 'var(--color-mint-soft)' },
+    { icon: UsersThree, value: totals.contributors, label: 'contributors', tint: 'var(--color-apricot-soft)' },
+  ]
 
-  // Derived from the nav model rather than hand-listed beside it: a section added
-  // there used to need remembering here too, and the launcher silently fell behind.
-  // Only the short blurbs and the counts are local, because neither belongs in a
-  // route registry.
-  const BLURB: Record<string, string> = {
-    '/library': 'Adaptation guides',
-    '/toy-library': 'Toys being given away',
-    '/printing': 'Printed parts and mounts',
-    '/learn': 'Switches, tools, safety',
-    '/get-involved': 'Make, give, or back',
-    '/impact': 'Toys delivered',
-    '/about': 'Who runs SPLAT',
-  }
-  const COUNT: Record<string, number | undefined> = {
-    '/library': totals.tutorials,
-    '/toy-library': totals.toysShared,
-    '/learn': liveArticles.length,
-    '/impact': totals.toysDelivered,
-  }
-
-  const tiles: LauncherTile[] = PUBLIC_NAV.map((s) => ({
-    ...s,
-    blurb: BLURB[s.href] ?? s.blurb,
-    count: COUNT[s.href],
-  }))
-
-  const tracks = getInvolved.children.filter((c) => TRACKS.includes(c.href))
+  const doors = [
+    {
+      icon: MagnifyingGlass,
+      title: 'I’m looking for a guide',
+      body: 'Filter by what your child can do, not by what they can’t. Every guide is free to read; the parts list and its costs are inside.',
+      cta: `Browse ${tutorials.length} guide${tutorials.length === 1 ? '' : 's'}`,
+      href: '/library' as Route,
+      tint: 'var(--color-brand-soft)',
+    },
+    {
+      icon: Gift,
+      title: 'I’d like a ready-made toy',
+      body: 'Families and organisations give away toys they’ve already adapted. Request one near you.',
+      cta: `See ${toys.length} toy${toys.length === 1 ? '' : 's'} available`,
+      href: '/toy-library' as Route,
+      tint: 'var(--color-apricot-soft)',
+    },
+    {
+      icon: Wrench,
+      title: 'I make things',
+      body: 'Write a guide, print a part, or back a build as an organisation.',
+      cta: 'Get involved',
+      href: '/get-involved' as Route,
+      tint: 'var(--color-violet-soft)',
+      // The board ranks these three: two white cards at full width, then a
+      // quieter sunken one, narrower and without the lift. "I make things" is
+      // the smallest audience of the three and the board says so in the shape.
+      quiet: true,
+    },
+  ]
 
   return (
-    <div>
-      {/*
-        The hero, and the whole direction in one screen: no panel, no band, no
-        box. The content sits directly on the canvas with the section's soft
-        shapes behind it — the same ground the rest of the site stands on, which
-        is what stops the homepage reading as a separate landing page bolted onto
-        a product.
+    <>
+      <section className="hero">
+        {/* Three drifting washes behind the whole hero. Decorative, and the
+            only thing on the page that moves without being scrolled. */}
+        <div aria-hidden="true" className="hero__blobs">
+          <span />
+          <span />
+          <span />
+        </div>
 
-        Two words of the headline lean. One pixel-art mascot you can press. One
-        apricot control with a diagonal ink shadow and a 2px border. That is the
-        entire budget, and holding to it is why the same language survives on
-        a privacy policy.
-      */}
-      {/* pt-[60px]/pb-[68px] are the board's. The negative top margin stays and
-          now earns its keep: with the band tinted it is what runs the fill up
-          flush under the header, instead of leaving a canvas-coloured stripe
-          between the two. */}
-      <section className="pixel-hero relative isolate -mt-8 pb-[68px] pt-[60px] sm:-mt-10">
-        <div className="grid items-center gap-10 lg:grid-cols-[1fr_0.85fr] lg:gap-14">
-          <div className="rise" style={{ '--rise-delay': '0ms' } as React.CSSProperties}>
-            {/* brand-deep, not brand-dark — the board sets the hero eyebrow at
-                #0a4f70, and on the newly tinted band the lighter #0f6f9c no
-                longer clears 4.5:1. */}
-            <p className="eyebrow text-brand-deep">Supporting Play by Adapting Toys</p>
-
-            <h1 className="title-hero mt-3">
-              Press it.
-              <br />
-              <span className="lean">Watch it go.</span>
-            </h1>
-
-            <p className="mt-5 max-w-[42ch] text-base leading-relaxed text-muted">
-              We turn ordinary toys into ones that answer to a single big switch — so every
-              child gets the bit that matters: making something happen.
-            </p>
-
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Link href="/library" className="btn btn-accent px-8 text-base">
-                Browse the guides
-              </Link>
-              <Link href="/toy-library" className="btn btn-quiet px-6">
-                Or borrow a toy
-              </Link>
-            </div>
-
-            {/* Stats as chips rather than a dl: bordered boxes that wrap
-                without collapsing into a column on a phone.
-
-                White, with the colour carried by a dot rather than by the fill.
-                Three tinted chips in a row put three more washes of colour
-                directly beneath a hero that already has a tinted photo slot and
-                an apricot button in it, and the numbers — the only content here
-                — were the palest thing on the row. On white they read first,
-                and the dot still says which pillar each belongs to. */}
-            <ul className="mt-9 flex flex-wrap gap-3">
-              {[
-                { label: 'guides', value: totals.tutorials, dot: 'bg-brand' },
-                { label: 'toys delivered', value: totals.toysDelivered, dot: 'bg-mint' },
-                { label: 'contributors', value: totals.contributors, dot: 'bg-apricot' },
-              ].map((stat) => (
-                <li
-                  key={stat.label}
-                  className="stat-pixel flex items-center gap-2.5 bg-surface px-4 py-2.5 text-ink"
-                >
-                  <span aria-hidden="true" className={`h-2.5 w-2.5 shrink-0 rounded-full ${stat.dot}`} />
-                  <span className="flex flex-col gap-0.5">
-                    <span className="numeral text-[22px]">{stat.value}</span>
-                    <span className="meta opacity-70">{stat.label}</span>
-                  </span>
-                </li>
-              ))}
-            </ul>
+        <div className="hero__copy">
+          <p className="hero__badge">
+            <SealCheck weight="fill" className="h-[18px] w-[18px] text-success" aria-hidden="true" />
+            Free to read, reviewed guides for switch-adapted play
+          </p>
+          <h1 className="hero__title">
+            Press it.
+            <br />
+            Watch it <span className="hero__accent">go.</span>
+          </h1>
+          <p className="hero__lede">
+            We help families turn ordinary toys into ones that answer to one big switch — so
+            every child gets the part that matters: making something happen.
+          </p>
+          <div className="hero__actions">
+            <Link href="/library" className="btn btn-primary btn-hero no-underline">
+              <BookOpenText weight="bold" className="h-5 w-5" aria-hidden="true" />
+              Find a guide
+            </Link>
+            <Link href="/toy-library" className="btn btn-quiet btn-hero no-underline">
+              <Gift weight="bold" className="h-5 w-5 text-apricot" aria-hidden="true" />
+              Borrow a toy
+            </Link>
           </div>
+          <StatChips
+            stats={stats.map(({ icon: Icon, value, label, tint }) => ({
+              label,
+              value: <CountUp to={value}>{value.toLocaleString()}</CountUp>,
+              icon: <Icon weight="duotone" className="h-[22px] w-[22px]" />,
+              tint,
+            }))}
+          />
+        </div>
 
-          {/*
-            The mascot, which is the whole hero's argument made playable: hold
-            the switch, the bear waves and its badge lights up.
-
-            This replaces three placeholders at once — the round photo slot, the
-            animation slot briefed as "switch press → toy lights up", and the
-            spark sticker whose only job was breaking the photo disc's edge. All
-            three were reserving space for this, and a placeholder next to the
-            finished thing it was holding space for is just clutter.
-          */}
-          <div
-            className="rise mx-auto w-full max-w-sm"
-            style={{ '--rise-delay': '120ms' } as React.CSSProperties}
-          >
-            <SwitchAdaptedBear />
-          </div>
+        <div className="hero__mascot">
+          <p className="hero__bubble">Hi! I’m Splat. Let’s find a toy that works for your child.</p>
+          <SplatMascot />
         </div>
       </section>
 
-      {/* Launcher — the whole site, above the fold. */}
-      <div className="mt-12">
-        <h2 className="eyebrow mb-4 text-muted">Jump straight in</h2>
-        <LauncherGrid tiles={tiles} />
-      </div>
+      <ScrollWorld />
 
-      {/* An ordered flow, so the steps are numbered and connected rather than
-          dropped into three interchangeable cards. */}
-      <div className="rise relative mt-16" style={{ '--rise-delay': '0ms' } as React.CSSProperties}>
-        <h2 className="title-article">SPLAT in 30 seconds</h2>
-
-        {/* The three steps are joined by a dashed rule, which is the most
-            literal possible drawing of "and then" — and dashed rather than
-            solid because a solid line between three boxes reads as a table
-            border. A hand-drawn path over the top is the version of this that
-            belongs on a site about play, and it has to sit above the row rather
-            than inside any one step — so it is marked here, over the whole
-            band. */}
-        <Slot
-          kind="overlay"
-          note="Hand-drawn dotted path arcing between the three steps, with a small arrow at each join"
-          className="mt-4 w-full sm:absolute sm:right-0 sm:top-0 sm:mt-0 sm:w-56"
-        />
-
-        <ol className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-3">
-          {HOW_IT_WORKS.map((step, i) => (
-            <li key={step.title} className="relative flex gap-4 sm:block">
-              {i < HOW_IT_WORKS.length - 1 && (
-                <span
-                  aria-hidden="true"
-                  className="absolute left-5 top-14 hidden h-[calc(100%-2rem)] border-l-2 border-dashed border-brand-soft sm:left-14 sm:top-5 sm:block sm:h-0 sm:w-[calc(100%-2.5rem)] sm:border-l-0 sm:border-t-2"
-                />
-              )}
-              <span className="step-pixel relative z-10 grid h-11 w-11 shrink-0 place-items-center text-xl leading-none sm:mb-4">
-                {i + 1}
-              </span>
-              <div>
-                <h3 className="font-bold text-ink">{step.title}</h3>
-                <p className="mt-1 max-w-prose text-sm leading-relaxed text-muted">{step.body}</p>
-              </div>
+      <section className="band band--doors" aria-label="Where to start">
+        <ul className="door-grid">
+          {doors.map(({ icon: Icon, title, body, cta, href, tint, quiet }) => (
+            <li key={title}>
+              <Link href={href} className={`door no-underline${quiet ? ' door--quiet' : ''}`}>
+                <span aria-hidden="true" className="door__icon" style={{ backgroundColor: tint }}>
+                  <Icon weight="duotone" className="h-[30px] w-[30px]" />
+                </span>
+                <span className="door__title">{title}</span>
+                <span className="door__body">{body}</span>
+                <span className="door__cta">
+                  {cta}
+                  <ArrowRight weight="bold" className="h-4 w-4" aria-hidden="true" />
+                </span>
+              </Link>
             </li>
           ))}
-        </ol>
-      </div>
+        </ul>
+      </section>
 
-      <div className="rise mt-16" style={{ '--rise-delay': '60ms' } as React.CSSProperties}>
-        <h2 className="title-article">Where you fit</h2>
-        <p className="mb-4 mt-1 max-w-prose text-sm text-muted">
-          Each of these walks the whole path, start to finish.
-        </p>
-        <HubGrid items={tracks} tone={getInvolved.tone} />
-      </div>
+      <section className="band band--split band--cost" aria-label="What things cost">
+        <div className="cost-card">
+          <span aria-hidden="true" className="door__icon" style={{ backgroundColor: 'var(--color-honey-soft)' }}>
+            <Receipt weight="duotone" className="h-[30px] w-[30px]" />
+          </span>
+          <h2 className="door__title">No price tags. Every cost written down.</h2>
+          <p className="band__body">
+            {/* Cut to the mint card's length so the pair sit level — the board's
+                longer paragraph ran a line over and left this card taller. */}
+            Nobody on SPLAT charges for their time, and SPLAT never touches your money. Every
+            cost — filament, a switch jack, a parts kit — is itemised by whoever spent it, and
+            you see it before you agree.
+          </p>
+          {/* Arrow leads on the board here — the button reads as "go this way"
+              rather than as a label with a decoration after it. */}
+          <Link href="/printing/basics" className="cost-cta cost-cta--light no-underline">
+            <ArrowRight weight="bold" className="h-4 w-4" aria-hidden="true" />
+            See how printing costs work
+          </Link>
+        </div>
+        <div className="cost-card cost-card--mint">
+          <span aria-hidden="true" className="door__icon" style={{ backgroundColor: 'var(--color-surface)' }}>
+            <Recycle weight="duotone" className="h-[30px] w-[30px]" />
+          </span>
+          <h2 className="door__title">Bring your failed prints. Leave with credit.</h2>
+          <p className="band__body">
+            Some organisations here run a shredder and an extruder. Two kilos of clean, sorted
+            plastic becomes filament on their machines — and grams of print credit for you,
+            weighed and issued at the door.
+          </p>
+          <Link href="/get-involved/recycling" className="cost-cta cost-cta--ink no-underline">
+            <Recycle weight="bold" className="h-4 w-4" aria-hidden="true" />
+            See who takes plastic
+          </Link>
+        </div>
+      </section>
 
-      <div className="rise mt-16 grid grid-cols-1 gap-10 lg:grid-cols-2" style={{ '--rise-delay': '120ms' } as React.CSSProperties}>
-        <div>
-          <div className="mb-4 flex items-center justify-between gap-4">
-            <h2 className="title-article">Recent guides</h2>
-            <Link
-              href="/library"
-              className="shrink-0 text-sm font-semibold text-brand-dark hover:underline"
-            >
-              View all →
+      {/* Side by side, two cards each — the board does not give either list the
+          full width, and stacking them made the page end on two long rows of
+          four. */}
+      <section className="band band--split" aria-label="Recently added">
+        <div className="recent">
+          <div className="band__head">
+            <h2 className="title-band">Recent guides</h2>
+            <Link href="/library" className="door__cta no-underline">
+              View all
+              <ArrowRight weight="bold" className="h-4 w-4" aria-hidden="true" />
             </Link>
           </div>
-          {featured.length > 0 ? (
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-              {featured.map((t) => (
-                <TutorialCard key={t.id} tutorial={t} />
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted">No guides published yet.</p>
-          )}
+          <ul className="recent__row">
+            {tutorials.slice(0, 2).map((t) => (
+              <li key={t.id}>
+                <TutorialCard tutorial={t} compact />
+              </li>
+            ))}
+          </ul>
         </div>
-
-        <div>
-          <div className="mb-4 flex items-center justify-between gap-4">
-            <h2 className="title-article">Learn the basics</h2>
-            <Link
-              href="/learn"
-              className="shrink-0 text-sm font-semibold text-brand-dark hover:underline"
-            >
-              View all →
+        <div className="recent">
+          <div className="band__head">
+            <h2 className="title-band">Recent toys</h2>
+            <Link href="/toy-library" className="door__cta no-underline">
+              View all
+              <ArrowRight weight="bold" className="h-4 w-4" aria-hidden="true" />
             </Link>
           </div>
-          <HubGrid items={liveArticles.slice(0, 3)} tone={learn.tone} />
+          <ul className="recent__row">
+            {toys.slice(0, 2).map((toy) => (
+              <li key={toy.id}>
+                {/* The public list is available-only, so the pill is true here. */}
+                <ToyLibraryCard toy={toy} compact available />
+              </li>
+            ))}
+          </ul>
         </div>
-      </div>
-    </div>
+      </section>
+    </>
   )
 }

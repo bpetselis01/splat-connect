@@ -74,10 +74,14 @@ describe('Sticker', () => {
 })
 
 describe('Slot', () => {
-  it('names the kind and states the brief', () => {
+  // One caption, not a kind label above a brief. MediaSlot carries a single
+  // uppercase line and the brief is what belongs in it — the kind is only the
+  // fallback when a caller has nothing more specific to say.
+  it('states the brief, and falls back to the kind without one', () => {
     const { container } = render(<Slot kind="animation" note="Switch press, toy lights up" />)
-    expect(container.textContent).toContain('Animation')
     expect(container.textContent).toContain('Switch press, toy lights up')
+    const bare = render(<Slot kind="animation" note="" />)
+    expect(bare.container.textContent).toContain('Animation')
   })
 
   it('is decoration, like everything else in this family', () => {
@@ -90,23 +94,27 @@ describe('Slot', () => {
 
 describe('Slot tone', () => {
   /*
-   * The board draws a child card's art slot in that section's deep colour —
-   * honey on Learn, apricot on 3D Printing — not in a single brand blue. It
-   * derives the dash from the label colour via border-current rather than
-   * adding a `deepEdge` to ToneSpec, because the two are always the same value
-   * and a second token would be a second thing to keep in step.
+   * The tone now sets the FILL, not the edge.
+   *
+   * These asserted a 2px brand-blue dash that took the section's deep colour via
+   * border-current. That was Pixel's placeholder — loud enough to read as a
+   * feature of the page. MediaSlot is a hairline dash in --line over the tint,
+   * with a muted caption: a note to whoever supplies the photograph, not
+   * decoration. The edge is the same in every section; only the fill moves.
    */
-  it('takes the section colour when given a tone', () => {
+  it('takes the section colour as its fill when given a tone', () => {
     const { container } = render(<Slot kind="art" tone="honey" note="x" />)
-    const slot = container.firstElementChild!
-    expect(slot.className).toContain('text-honey-deep')
-    expect(slot.className).toContain('border-current')
-    expect(slot.className).not.toContain('border-brand')
+    const slot = container.firstElementChild as HTMLElement
+    expect(slot.className).toContain('border-dashed')
+    expect(slot.className).toContain('border-line')
+    expect(slot.style.backgroundColor).not.toBe('')
   })
 
-  it('stays brand blue when given no tone', () => {
+  it('sits on the sunken fill when given no tone', () => {
     const { container } = render(<Slot kind="art" note="x" />)
-    expect(container.firstElementChild!.className).toContain('border-brand')
+    const slot = container.firstElementChild as HTMLElement
+    expect(slot.className).toContain('bg-sunken')
+    expect(slot.style.backgroundColor).toBe('')
   })
 
   /* Placeholders never reach a screen reader or swallow a click. */

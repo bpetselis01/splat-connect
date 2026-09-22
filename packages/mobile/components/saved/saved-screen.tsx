@@ -1,5 +1,5 @@
 // packages/mobile/components/saved/saved-screen.tsx
-// The Saved hub: three count tiles, one per type that can be saved. Mobile's
+// The Saved hub: one count tile per type that can be saved. Mobile's
 // half of web's app/dashboard/saved/page.tsx. There is no "Recently saved"
 // strip: GET /api/saves/:slug already returns each list in save order, newest
 // first, so the lists themselves are the recency view.
@@ -23,9 +23,10 @@ const TILES: { slug: SaveSlug; label: string; icon: React.ComponentProps<typeof 
   { slug: 'tutorials', label: 'Guides', icon: 'book-outline' },
   { slug: 'toys', label: 'Toys', icon: 'cube-outline' },
   { slug: 'challenges', label: 'Challenges', icon: 'bulb-outline' },
+  { slug: 'organisations', label: 'Organisations', icon: 'business-outline' },
 ]
 
-const NONE: SavedIds = { tutorials: [], toys: [], challenges: [] }
+const NONE: SavedIds = { tutorials: [], toys: [], challenges: [], organisations: [] }
 
 export function SavedScreen() {
   const router = useRouter()
@@ -122,9 +123,9 @@ const styles = StyleSheet.create({
   tileIcon: {
     width: 44,
     height: 44,
-    borderRadius: theme.radii.md,
-    borderWidth: theme.border.thin,
-    borderColor: theme.colors.ink,
+    borderRadius: theme.radii.field,
+    borderWidth: theme.border.hairline,
+    borderColor: theme.colors.border,
     backgroundColor: theme.colors.accentLight,
     alignItems: 'center',
     justifyContent: 'center',

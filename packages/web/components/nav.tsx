@@ -1,13 +1,25 @@
 'use client'
+import { useEffect, useId, useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import {
+  CaretDown,
+  MagnifyingGlass,
+  BookOpen,
+  ChartLineUp,
+  Lightbulb,
+  Buildings,
+  CalendarDots,
+  Newspaper,
+  Swatches,
+  ChatCircleDots,
+} from '@phosphor-icons/react/dist/ssr'
 import { BoundaryLink } from '@/components/boundary-link'
-import { createClient } from '@/lib/supabase/client'
-import { Logo, Menu } from '@/components/icons'
-import { useDrawer } from '@/components/drawer-context'
-import { PUBLIC_NAV, ACCOUNT_NAV, sectionFor } from '@/lib/public-nav'
-import { toneClass } from '@/lib/tone'
+import { BrandMark } from '@/components/auth-wordmark'
+import { DisplayToggles } from '@/components/display-toggles'
+import { ACCOUNT_NAV, sectionFor } from '@/lib/public-nav'
 import type { Capabilities } from '@/lib/capabilities'
+import type { Mode, Motion } from '@/lib/display-prefs'
 
 /** Two letters from a display name, for the avatar. Falls back to one. */
 function initials(name: string): string {
@@ -16,209 +28,179 @@ function initials(name: string): string {
   return (parts[0][0] + (parts[1]?.[0] ?? '')).toUpperCase()
 }
 
+/** Five primary tabs, everything else behind More — the board's NAV5. */
+const TABS = [
+  { href: '/library', label: 'Guides' },
+  { href: '/toy-library', label: 'Toy Library' },
+  { href: '/printing', label: '3D Printing' },
+  { href: '/get-involved', label: 'Get Involved' },
+  { href: '/about', label: 'About' },
+]
+
+/** The board's MORE list, in its order, with its blurbs, icons and tints. */
+const MORE = [
+  { href: '/learn', label: 'Learn', blurb: 'Switches, tools, safety — from first switch to safe finish.', Icon: BookOpen, tint: 'var(--tamber)' },
+  { href: '/impact', label: 'Impact', blurb: 'What this community has made, given and delivered.', Icon: ChartLineUp, tint: 'var(--tmint)' },
+  { href: '/get-involved/design-challenges', label: 'Design challenges', blurb: 'Problems nobody has solved yet, open to anyone.', Icon: Lightbulb, tint: 'var(--tviolet)' },
+  { href: '/organizations', label: 'Organisations', blurb: 'Therapy centres, schools and services behind the work.', Icon: Buildings, tint: 'var(--b100)' },
+  { href: '/get-involved/events', label: 'Events', blurb: 'Build days, workshops and where to find us in person.', Icon: CalendarDots, tint: 'var(--tok)' },
+  { href: '/about/stories', label: 'Stories', blurb: 'What families and makers have done with SPLAT.', Icon: Newspaper, tint: 'var(--tcoral)' },
+  { href: '/design-system', label: 'Design system', blurb: 'Soft Pop components and every interaction state.', Icon: Swatches, tint: 'var(--surface2)' },
+  { href: '/contact', label: 'Contact', blurb: 'A guide, a toy or a partnership — get in touch.', Icon: ChatCircleDots, tint: 'var(--surface2)' },
+]
+
+const under = (pathname: string, href: string) => pathname === href || pathname.startsWith(`${href}/`)
+
 interface NavProps {
   /** Null when signed out. Non-null is the whole signed-in test. */
   caps: Capabilities | null
-  /** Inside the account section the bar keeps every label and drops its weight.
-      Wired in Task 6; accepted here so the layout compiles. */
-  quiet?: boolean
-  /** Whether the mobile drawer trigger renders. Only true where the drawer
-      itself exists — inside the account section. */
-  showMenu?: boolean
+  /** Colour mode and motion as the server rendered them, from the cookies. */
+  mode?: Mode
+  motion?: Motion
 }
 
-export function Nav({ caps, quiet = false, showMenu = false }: NavProps) {
-  const supabase = createClient()
+export function Nav({ caps, mode = 'light', motion = 'full' }: NavProps) {
   // Null outside an App Router context (e.g. the unit tests render Nav directly).
   const pathname = usePathname() ?? ''
-  const drawer = useDrawer()
-
-  async function signOut() {
-    await supabase.auth.signOut()
-    // WHY: Same issue as login — router.push() + router.refresh() races mean the nav
-    //      can still show the signed-in state after logout until a hard refresh.
-    // HOW: Hard reload ensures the server renders the layout without the auth cookie.
-    window.location.href = '/'
-  }
-
-  // Public sections come from the nav model so the top bar, the subnav and the
-  // footer cannot disagree about what the site contains.
-  const sections = PUBLIC_NAV
-
   const activeSection = sectionFor(pathname)
+  const [moreOpen, setMoreOpen] = useState(false)
+  const moreRef = useRef<HTMLDivElement>(null)
+  const moreButton = useRef<HTMLButtonElement>(null)
+  const menuId = useId()
+
+  // A disclosure, not an ARIA menu: its contents are ordinary links, which a
+  // menu role would take out of Tab order and demand arrow keys for. Closes on
+  // choosing an item, Escape and any press outside it.
+  useEffect(() => {
+    if (!moreOpen) return
+    const onPointer = (e: PointerEvent) => {
+      if (!moreRef.current?.contains(e.target as Node)) setMoreOpen(false)
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return
+      setMoreOpen(false)
+      moreButton.current?.focus()
+    }
+    document.addEventListener('pointerdown', onPointer)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('pointerdown', onPointer)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [moreOpen])
+
+  // The bar's height, for anything that pins under it (the home page's
+  // scroll-world stage). It wraps to two rows between lg and ~1330px, so a
+  // constant would be wrong across that whole range.
+  const header = useRef<HTMLElement>(null)
+  useEffect(() => {
+    const el = header.current
+    if (!el) return
+    const publish = () =>
+      document.documentElement.style.setProperty('--header-h', `${el.offsetHeight}px`)
+    const watch = new ResizeObserver(publish)
+    watch.observe(el)
+    return () => watch.disconnect()
+  }, [])
+
+  const moreCurrent = MORE.some((m) => under(pathname, m.href))
 
   return (
-    // No `border-b border-line` here. app/globals.css already gives
-    // `.pixel header` the board's 3px ink rule and `.pixel header.nav-quiet`
-    // the hairline the quiet register wants — but both sit in @layer
-    // components, and a Tailwind utility wins over that layer whatever the
-    // specificity says. The utility was silently overriding the correct rule
-    // back to 1px of --color-line on every page.
-    <header className={`sticky top-0 z-30 ${quiet ? 'nav-quiet' : 'bg-surface'}`}>
-      <nav
-        className={`public-shell flex flex-wrap items-center gap-x-[26px] gap-y-2 ${
-          quiet ? 'py-1.5' : 'py-[14px]'
-        }`}
-      >
-        {showMenu && (
-          <button
-            type="button"
-            onClick={drawer.open}
-            aria-label="Open navigation"
-            className="rounded-field p-2 text-ink transition-colors hover:bg-sunken lg:hidden"
-          >
-            <Menu className="h-6 w-6" />
-          </button>
-        )}
-        <BoundaryLink
-          href="/"
-          className="flex shrink-0 items-center gap-2.5 text-[18px] font-black tracking-tight text-ink"
-        >
-          {/* The mark sits on a plain tinted disc — no ring. The wordmark is the
-              only thing in the bar that is not a pill, and it earns that by
-              being the heaviest weight on the page rather than by being drawn. */}
-          <span
-            aria-hidden="true"
-            className="pixel-avatar grid h-[34px] w-[34px] place-items-center bg-brand-tint text-brand-dark"
-          >
-            <Logo className="h-5 w-5" />
+    <header ref={header} className="site-header">
+      <nav aria-label="Main" className="site-nav">
+        <BoundaryLink href="/" aria-label="SPLAT Connect home" className="brand-link">
+          <BrandMark />
+          <span className="brand-word">
+            SPLAT <span>Connect</span>
           </span>
-          SPLAT Connect
         </BoundaryLink>
 
-        {/* On narrow screens the links drop to their own row so the logo and the
-            account control stay together on the first one. On a wide screen
-            they run on directly from the wordmark — the account cluster below
-            takes the `ml-auto` instead. Pushing the sections right as well left
-            nothing between the two groups and forced the whole bar onto a
-            second row at 1440px, at which point a 71px shelf was rendering
-            105px tall. */}
-        {/* gap-x-5 is the board's 20px between tabs; ml-2 is its 8px, which
-            lands on top of the bar's own 26px gap to give the 34px the board
-            puts between the wordmark and "Guides". */}
-        <div className="order-3 ml-2 flex w-full flex-wrap items-center gap-x-5 gap-y-1 sm:order-2 sm:w-auto">
-          {sections.map((s) => {
-            const active = activeSection?.href === s.href
-            const tone = toneClass(s.tone)
-            return (
-              <BoundaryLink
-                key={s.href}
-                href={s.href}
-                aria-current={active ? 'page' : undefined}
-                // No colour on the inactive state: `.nav-pill` already sets
-                // brand-deep, and overriding it with `text-muted` was leaving six
-                // of the seven pills grey on a white shelf.
-                // No horizontal padding, at rest OR active. A pill-shaped hit
-                // area was the last piece of the old rounded-pill nav left
-                // standing, and seven of them at px-3.5 is ~170px the bar does
-                // not have: the row overflowed its shell and wrapped, which is
-                // what made the shelf render 116px tall against the board's
-                // 71px. Hover and current-page both draw their pill on
-                // `.nav-pill::before` instead, which costs no layout at all —
-                // and stops the row shifting sideways as you navigate, which
-                // is what the active `px-3` used to do. The vertical padding
-                // stays — it is what keeps every pill a 40px target, well
-                // clear of the 24px floor.
-                className="nav-pill flex items-center gap-1.5 whitespace-nowrap py-3"
-                // The section's own tone, handed to CSS so hover and
-                // current-page can tint per-section without seven variants of
-                // the rule. Same bg/fg pair tone.test.ts checks for contrast.
-                style={
-                  {
-                    '--pill-tint': tone.hex.bg,
-                    '--pill-ink': tone.hex.fg,
-                  } as React.CSSProperties
-                }
-              >
-                {/* The dot is what makes rank legible: the three pillars carry the
-                    three distinct accents, the supporting sections stay blue. It is
-                    decorative — the label already says which section this is. */}
-                <span
-                  aria-hidden="true"
-                  className={`h-2 w-2 shrink-0 rounded-full ${quiet ? 'bg-line' : tone.dot} ${
-                    active && !quiet ? '' : 'opacity-60'
-                  }`}
-                />
-                {s.label}
-              </BoundaryLink>
-            )
-          })}
+        <div className="nav-tabs">
+          {TABS.map((t) => (
+            <BoundaryLink
+              key={t.href}
+              href={t.href}
+              aria-current={activeSection?.href === t.href ? 'page' : undefined}
+              className="nav-tab"
+            >
+              {t.label}
+            </BoundaryLink>
+          ))}
+
+          <div ref={moreRef} className="nav-more">
+            <button
+              ref={moreButton}
+              type="button"
+              className="nav-tab"
+              aria-expanded={moreOpen}
+              aria-controls={menuId}
+              data-current={moreCurrent || undefined}
+              onClick={() => setMoreOpen((o) => !o)}
+            >
+              More <CaretDown aria-hidden="true" />
+            </button>
+            {moreOpen && (
+              <div id={menuId} className="nav-more__menu">
+                {MORE.map(({ href, label, blurb, Icon, tint }) => (
+                  <BoundaryLink
+                    key={href}
+                    href={href}
+                    aria-current={under(pathname, href) ? 'page' : undefined}
+                    className="nav-more__item"
+                    onClick={() => setMoreOpen(false)}
+                  >
+                    <span aria-hidden="true" className="nav-more__icon" style={{ background: tint }}>
+                      <Icon weight="duotone" />
+                    </span>
+                    <span>
+                      <span className="nav-more__label">{label}</span>
+                      <span className="nav-more__blurb">{blurb}</span>
+                    </span>
+                  </BoundaryLink>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
-        {caps ? (
-          // The account cluster, kept together and pushed to the far edge —
-          // the avatar, "My SPLAT" with its unread count, and the way out, in
-          // that order. They were three loose flex children each doing their
-          // own ordering, which is why sign-out ended up on the pills' row.
-          <div className="order-2 ml-auto flex shrink-0 items-center gap-[14px] sm:order-3">
-            {/* Avatar first, then the door, then the way out. The identity
-                reads before the destination — and with My SPLAT now drawn as a
-                solid button rather than a bare label, an avatar sitting to its
-                right read as a stray chip that had come loose from the button. */}
-            <span
-              aria-hidden="true"
-              title={caps.profile.name}
-              className="pixel-avatar grid h-8 w-8 shrink-0 place-items-center bg-mint text-sm font-black text-mint-deep"
-            >
-              {initials(caps.profile.name)}
-            </span>
+        <div className="nav-tools">
+          {/* A plain GET form: works before hydration, and the library reads
+              ?q= into its own search box. */}
+          <form action="/library" role="search" className="nav-search">
+            <MagnifyingGlass aria-hidden="true" />
+            <input type="search" name="q" placeholder="Search guides, toys, parts" aria-label="Search" />
+          </form>
+
+          <DisplayToggles mode={mode} motion={motion} />
+
+          {caps ? (
             <BoundaryLink
               href={ACCOUNT_NAV.href}
-              // BoundaryLink, not <Link>: `activeSection !== ACCOUNT_NAV`
-              // would miss the split inside the account section itself — from
-              // a rail-only page (still ACCOUNT_NAV) to /dashboard (no rail),
-              // nestsRail differs, so it is a crossing too. That rule lives in
-              // crossesAccountBoundary, which BoundaryLink applies for us.
-              aria-current={activeSection?.href === ACCOUNT_NAV.href ? 'page' : undefined}
-              // The apricot button, not a `.nav-pill`, and not conditional on
-              // where you are. As a bare label it was the quietest thing in a
-              // bar of seven tinted section tabs — the one control a signed-in
-              // person actually needs was the hardest one to find. `.btn-accent`
-              // is the same solid apricot the signed-out "Sign in" uses, so the
-              // far-right corner means "your way in" in both states.
-              //
-              // No --pill-tint/--pill-ink here any more: those feed `.nav-pill`'s
-              // hover and current-page ::before, and the class is gone. Still no
-              // tone dot — see the seven section tabs above for why that absence
-              // is what separates this cluster from them.
-              className="btn btn-accent btn-sm flex shrink-0 items-center gap-1.5 whitespace-nowrap"
+              // BoundaryLink, not <Link>: crossing into or out of the account
+              // section needs a full load — see crossesAccountBoundary.
+              aria-current={pathname === ACCOUNT_NAV.href ? 'page' : undefined}
+              className="nav-account"
             >
               {ACCOUNT_NAV.label}
               {caps.unread.total > 0 && (
                 <>
-                  {/* Ink on apricot, not the apricot-soft/apricot-deep pair the
-                      badge carries elsewhere: that pairing is drawn for a white
-                      shelf and all but disappeared once the button underneath it
-                      became apricot too. */}
-                  <span aria-hidden="true" className="badge bg-ink text-surface">
+                  <span aria-hidden="true" className="nav-account__badge">
                     {caps.unread.total}
                   </span>
                   {/* The number alone is not self-describing to a screen reader. */}
                   <span className="sr-only">{caps.unread.total} unread</span>
                 </>
               )}
+              <span aria-hidden="true" title={caps.profile.name} className="nav-account__avatar">
+                {initials(caps.profile.name)}
+              </span>
             </BoundaryLink>
-            {/* The board draws this one with a solid ink shadow, not the 35%
-                one `.btn-quiet` carries. The class itself stays untouched:
-                that softer shadow is exactly what the board specifies for the
-                hero's "Or borrow a toy", so changing it would fix the header
-                and break the hero. */}
-            <button
-              onClick={signOut}
-              className="btn btn-quiet btn-sm shrink-0 shadow-[3px_3px_0_var(--color-ink)]"
-            >
-              Sign out
-            </button>
-          </div>
-        ) : (
-          // `ml-auto` with no `sm:ml-0`. The signed-out button belongs at the
-          // far right edge, where the signed-in cluster sits — the override
-          // was cancelling it at 640px and up, dropping "Sign in" against the
-          // end of the tab row instead.
-          <Link href="/login" className="btn btn-accent btn-sm order-2 ml-auto shrink-0 sm:order-3">
-            Sign in
-          </Link>
-        )}
+          ) : (
+            <Link href="/login" className="nav-signin">
+              Sign in
+            </Link>
+          )}
+        </div>
       </nav>
     </header>
   )

@@ -105,7 +105,7 @@ test('the difficulty select shows the newly saved value after a save', async ({ 
   await expect(page.locator('#edit-difficulty')).toHaveValue('medium')
 })
 
-test('the toy photo and tutorial PDF can be replaced', async ({ page }) => {
+test('a photo is added to a guide, and the tutorial PDF replaced', async ({ page }) => {
   const contributor = await createContributor()
   await acceptTerms(contributor.id)
   const id = await createTutorial(contributor.id, {
@@ -118,7 +118,13 @@ test('the toy photo and tutorial PDF can be replaced', async ({ page }) => {
   await page.goto(`/tutorials/${id}/edit`)
 
   const files = await openStep(page, /^Files$/)
-  await files.locator('input[name="toy_photo"]').setInputFiles(PHOTO_FIXTURE)
+  // The photo first, and settled before the PDF is picked: adding a photo saves
+  // through a server action that revalidates this page, and the PDF is still
+  // only in the browser's memory until Save files runs.
+  await files.locator('#guide-add-photo').setInputFiles(PHOTO_FIXTURE)
+  // exact: the default is a case-insensitive substring, which also matches the
+  // hint below the tiles ("The first one is the cover") and trips strict mode.
+  await expect(page.getByText('Cover', { exact: true })).toBeVisible({ timeout: 30_000 })
   await files.locator('input[name="tutorial_pdf"]').setInputFiles(PDF_FIXTURE)
   await files.getByRole('button', { name: 'Save files' }).click()
 
@@ -126,12 +132,24 @@ test('the toy photo and tutorial PDF can be replaced', async ({ page }) => {
     .poll(async () => {
       const { data } = await adminClient()
         .from('tutorials')
-        .select('toy_photo_url')
+        .select('photo_urls')
         .eq('id', id)
         .single()
-      return data?.toy_photo_url ?? ''
+      return data?.photo_urls ?? []
     }, { timeout: 30_000 })
-    .not.toContain('placeholder.invalid')
+    // Appended, not replaced: the box is a gallery since 053, so the seeded
+    // placeholder stays at [0] and stays the cover. Polling toy_photo_url —
+    // generated from photo_urls[1] — would therefore never change no matter
+    // how well the save worked, and would report success as failure.
+    //
+    // This is the assertion that proves the save itself ran: the upload
+    // reaches storage on its own, and it is the server action after it that
+    // writes the row. That action was the one throwing "patchFiles is not
+    // defined", which left exactly this array untouched.
+    .toEqual([
+      'https://placeholder.invalid/photo.jpg',
+      expect.stringContaining('/toy-photos/'),
+    ])
 })
 
 test('a part can be added, edited and deleted', async ({ page }) => {
@@ -236,11 +254,11 @@ test('submit-for-review is blocked when required fields are missing', async ({ p
   await page.waitForURL('**/dashboard')
   await page.goto(`/tutorials/${id}/edit`)
 
-  // Submitting lives on the Review step now, not on a bar shown from every step.
-  await page.getByRole('tab', { name: 'Review' }).click()
-  const submitButton = page.getByRole('button', { name: 'Submit for review' })
+  // The editor opens on Status: the header's submit is disabled and the
+  // checklist names what is missing.
+  const submitButton = page.getByRole('button', { name: 'Submit for review' }).first()
   await expect(submitButton).toBeDisabled()
-  await expect(page.locator('.sticky-submit-note')).toContainText('The guide PDF')
+  await expect(page.getByRole('tabpanel')).toContainText('the guide PDF')
   // getMissingFields is unit-tested, but nothing checked that the disabled
   // button actually prevents the status transition.
   const { data } = await adminClient().from('tutorials').select('status').eq('id', id).single()
@@ -260,6 +278,6 @@ test('a rejected tutorial shows the rejection callout', async ({ page }) => {
   await page.waitForURL('**/dashboard')
   await page.goto(`/tutorials/${id}/edit`)
 
-  await expect(page.getByText('This tutorial was rejected')).toBeVisible()
+  await expect(page.getByText('Your reviewer sent this back')).toBeVisible()
   await expect(page.getByText('The photos are too dark to follow.')).toBeVisible()
 })

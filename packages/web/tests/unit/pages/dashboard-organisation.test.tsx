@@ -77,28 +77,30 @@ describe('Organisation tab', () => {
   // organisation's review screen from somewhere in the dashboard.
   it('links a row to the existing review screen', async () => {
     render(await Page())
-    expect(screen.getByRole('link', { name: /Older request/ })).toHaveAttribute(
-      'href',
-      '/organizations/oA/projects/t1'
-    )
+    const links = screen.getAllByRole('link', { name: /Read the guide/ })
+    expect(links[0]).toHaveAttribute('href', '/organizations/oA/projects/t1')
   })
 
   // Guards against re-dropping DifficultyBadge: the row is strictly less
   // informative than app/organizations/[id]/page.tsx without it.
   it('shows each row its difficulty', async () => {
     render(await Page())
-    expect(screen.getByText('EASY')).toBeInTheDocument()
-    expect(screen.getByText('MEDIUM')).toBeInTheDocument()
+    expect(screen.getByText('easy')).toBeInTheDocument()
+    expect(screen.getByText('medium')).toBeInTheDocument()
   })
 
-  // Tests: a queue row responds to the pointer the way an exchange row does
-  // How:   asserts the whole card carries .card-link, the single hook the shared
-  //        press-motion block in globals.css looks for
-  // Chain: the title alone was the link, so the queue had no hover, no press and
-  //        a hit area a fraction of the card it sat in
-  it('makes the whole row the target, like an exchange row', async () => {
+  // The board's row names the next step for each kind of request: backing a
+  // pending ask, reviewing an accepted one. Both land on the project page,
+  // where leaderActions decides what may actually be done.
+  it('names the next step for each kind of request', async () => {
     render(await Page())
-    const row = screen.getByRole('link', { name: /Older request/ })
-    expect(row).toHaveClass('card', 'card-link')
+    expect(screen.getByRole('link', { name: /Back it/ })).toHaveAttribute(
+      'href',
+      '/organizations/oA/projects/t1'
+    )
+    expect(screen.getByRole('link', { name: /Start the review/ })).toHaveAttribute(
+      'href',
+      '/organizations/oB/projects/t2'
+    )
   })
 })

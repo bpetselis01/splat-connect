@@ -265,7 +265,7 @@ export function ChallengeThread({
                   type="button"
                   disabled={busy}
                   onClick={() => removeParticipant(p.profile_id)}
-                  className="text-xs font-semibold text-apricot-deep underline"
+                  className="text-xs font-semibold text-ink underline"
                 >
                   Remove
                 </button>

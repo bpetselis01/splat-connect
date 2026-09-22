@@ -27,7 +27,7 @@ describe('email confirmed page', () => {
 
   it('offers an immediate manual sign-in link as a fallback', () => {
     render(<EmailConfirmedPage />)
-    expect(screen.getByRole('link', { name: /sign in now/i })).toHaveAttribute('href', '/login')
+    expect(screen.getByRole('link', { name: 'Continue' })).toHaveAttribute('href', '/login')
   })
 
   it('redirects to /login once the countdown finishes', () => {

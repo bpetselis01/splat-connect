@@ -49,8 +49,9 @@ const toy = (over: object) => ({
   description: null,
   condition: 8,
   switch_adapted: false,
+  photo_urls: [],
   cover_photo_url: null,
-  switch_photo_urls: [],
+  switch_photo_url: null,
   status: 'draft',
   offer_type: null,
   created_at: '',
@@ -122,9 +123,9 @@ describe('MyToysListScreen', () => {
     })
     render(<MyToysListScreen />)
     expect(await screen.findByText('Bubble machine')).toBeTruthy()
-    expect(screen.getByText('DRAFT', { includeHiddenElements: true })).toBeTruthy()
+    expect(screen.getByText('Draft', { includeHiddenElements: true })).toBeTruthy()
     expect(screen.getByText('8/10 · Not offered yet', { includeHiddenElements: true })).toBeTruthy()
-    expect(screen.getByText('PUBLISHED', { includeHiddenElements: true })).toBeTruthy()
+    expect(screen.getByText('Published', { includeHiddenElements: true })).toBeTruthy()
     expect(screen.getByText('6/10 · Offered as Exchange', { includeHiddenElements: true })).toBeTruthy()
   })
 
@@ -137,7 +138,7 @@ describe('MyToysListScreen', () => {
     })
     render(<MyToysListScreen />)
     await screen.findByText('Bubble machine')
-    expect(screen.getAllByText('SWITCH-ADAPTED', { includeHiddenElements: true })).toHaveLength(1)
+    expect(screen.getAllByText('Switch-adapted', { includeHiddenElements: true })).toHaveLength(1)
   })
 
   it('shows the donation-or-exchange offer line for "both"', async () => {

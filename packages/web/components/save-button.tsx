@@ -24,6 +24,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { SAVE_SLUGS, type SaveSlug } from '@splat-connect/types'
 import { browserApiClient } from '@/lib/browser-api-client'
 import { useToast } from '@/components/toast'
+import { Heart } from '@phosphor-icons/react/dist/ssr'
 
 export type SaveProps = {
   slug: SaveSlug
@@ -38,7 +39,12 @@ export function SaveButton({
   saved,
   signedIn,
   className = '',
-}: SaveProps & { className?: string }) {
+  withLabel = false,
+}: SaveProps & {
+  className?: string
+  /** Draw the word beside the heart — the detail rail's Save, not a card's island. */
+  withLabel?: boolean
+}) {
   const [on, setOn] = useState(saved)
   const router = useRouter()
   const pathname = usePathname()
@@ -81,15 +87,10 @@ export function SaveButton({
       title={on ? 'Saved' : 'Save'}
       className={`save-btn ${on ? 'is-saved' : ''} ${className}`.trim()}
     >
-      <svg viewBox="0 0 12 15" aria-hidden="true" className="h-[15px] w-[12px]">
-        <path
-          d="M1 1h10v13l-5-4-5 4z"
-          fill={on ? 'currentColor' : 'none'}
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinejoin="round"
-        />
-      </svg>
+      {/* A heart, as on every save control the board draws: outline and muted
+          at rest, filled coral once saved. */}
+      <Heart weight={on ? 'fill' : 'regular'} aria-hidden="true" />
+      {withLabel && (on ? 'Saved' : 'Save')}
     </button>
   )
 }

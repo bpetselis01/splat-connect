@@ -1,11 +1,24 @@
 import Link from 'next/link'
+import type { Route } from 'next'
+import {
+  ArrowBendDownRight,
+  ArrowsLeftRight,
+  BellRinging,
+  ChatCircleDots,
+  Gift,
+  Hammer as HammerIcon,
+  LockSimple,
+} from '@phosphor-icons/react/dist/ssr'
 import { requireCapabilities } from '@/lib/require-capabilities'
 import { apiClient } from '@/lib/api-client'
 import { Badge } from '@/components/badge'
 import { Handshake } from '@/components/icons'
+import { RecordCard } from '@/components/record-card'
+import { exchangeStages } from '@/lib/exchange-stages'
+import { buildStages } from '@/lib/build-stages'
 import { BoundaryLink } from '@/components/boundary-link'
 import { MarkNotificationsRead } from '@/components/mark-notifications-read'
-import { needsAction, actionLabel } from '@splat-connect/types'
+import { needsAction, actionLabel, isOwnerSide, subjectName } from '@splat-connect/types'
 import type { ToyTransactionSummary, ToyTransactionStatus } from '@splat-connect/types'
 
 function TransactionRow({
@@ -17,60 +30,92 @@ function TransactionRow({
   viewerId: string
   ledOrgIds: string[]
 }) {
+  /*
+   * The meta line is "kind with counterparty · when". A leader's personal
+   * handoffs and their organisation's arrive in one list and nothing else tells
+   * them apart — which of the two they are answering as changes who the toy
+   * belongs to — so the organisation gets the board's own "On behalf of" line.
+   */
+  const kind = tx.type === 'donation' ? 'Donation' : tx.type === 'build' ? 'Build' : 'Exchange'
+  const isBuild = tx.type === 'build'
+  // A build lives on its own route: same layout, build vocabulary (057).
+  const href = (
+    isBuild ? `/dashboard/exchanges/build/${tx.id}` : `/dashboard/exchanges/${tx.id}`
+  ) as Route
+  const isOwner = isOwnerSide(tx, viewerId, ledOrgIds)
+  const meta = [
+    `${kind} with ${tx.other_party_name}`,
+    new Date(tx.created_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' }),
+  ]
+    .filter(Boolean)
+    .join(' · ')
+
   return (
     <li>
-      <Link
-        href={`/dashboard/exchanges/${tx.id}`}
-        className="card card-link flex flex-col gap-2 p-4"
-      >
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="truncate font-bold text-ink">{tx.toy_name}</p>
-            <p className="truncate text-sm text-muted">
-              {tx.type === 'donation' ? 'Donation' : 'Exchange'} with {tx.other_party_name}
-            </p>
-            {/* A leader's personal handoffs and their organisation's
-                arrive in one list, and nothing else tells them apart —
-                which of the two they are answering as changes who the
-                toy belongs to. */}
-            {tx.acting_for_org_name && (
-              <p className="mt-1 truncate text-xs text-muted">
-                On behalf of {tx.acting_for_org_name}
-              </p>
-            )}
-          </div>
-          <Badge status={tx.status} />
-        </div>
-
-        {/* The one line on this card that is an instruction rather than
-            a fact, so it is the one line that is not muted grey. */}
-        {needsAction(tx, viewerId, ledOrgIds) && (
-          <p className="self-start rounded-field bg-mint-soft px-2.5 py-1 text-sm font-bold text-mint-deep">
-            {actionLabel(tx)}
-          </p>
-        )}
-
-        {tx.blocked_by_rival_accept && (
-          <p className="text-sm text-muted">Locked — another request accepted</p>
-        )}
-
-        {tx.last_message && (
-          <div className="flex items-baseline justify-between gap-3 border-t border-line pt-2">
-            <p className="truncate text-sm text-muted">
-              {tx.last_message.sender_id === viewerId &&
-                tx.last_message.kind === 'user' &&
-                'You: '}
-              {tx.last_message.body}
-            </p>
-            <time
-              dateTime={tx.last_message.created_at}
-              className="shrink-0 text-xs text-muted"
-            >
-              {new Date(tx.last_message.created_at).toLocaleDateString('en-AU')}
-            </time>
-          </div>
-        )}
-      </Link>
+      <RecordCard
+        icon={
+          tx.type === 'donation' ? (
+            <Gift size={22} weight="duotone" />
+          ) : isBuild ? (
+            <HammerIcon size={22} weight="duotone" />
+          ) : (
+            <ArrowsLeftRight size={22} weight="duotone" />
+          )
+        }
+        tint={
+          tx.type === 'donation'
+            ? 'var(--tmint)'
+            : isBuild
+              ? 'var(--tamber)'
+              : 'var(--tviolet)'
+        }
+        title={subjectName(tx)}
+        meta={meta}
+        sub={tx.acting_for_org_name ? `On behalf of ${tx.acting_for_org_name}` : undefined}
+        pill={<Badge status={tx.status} />}
+        // Derived from this row's own status and confirmations. A build has a
+        // vocabulary of its own — five steps, one of them the working shot —
+        // so it gets its own derivation rather than exchange words over build
+        // data. See lib/build-stages.ts and lib/exchange-stages.ts.
+        stages={isBuild ? buildStages(tx) : exchangeStages(tx)}
+        note={
+          tx.last_message
+              ? `${
+                  tx.last_message.sender_id === viewerId && tx.last_message.kind === 'user'
+                    ? 'You: '
+                    : ''
+                }${tx.last_message.body}`
+              : undefined
+        }
+        // Exactly one filled primary, and on a conversation record it is Thread.
+        primary={
+          <Link href={href} className="btn btn-primary no-underline">
+            <ChatCircleDots size={18} weight="fill" aria-hidden="true" />
+            Thread
+          </Link>
+        }
+        /*
+         * The stage-specific action, right-aligned past the spacer. It is a link
+         * to the thread rather than a control that acts from here: accepting or
+         * confirming a handoff is a decision you make with the conversation in
+         * front of you, and the brief's "no dead controls" cuts both ways — a
+         * button that acts without that context is worse than a link that takes
+         * you to it.
+         */
+        stageAction={
+          tx.blocked_by_rival_accept ? (
+            <span className="inline-flex items-center gap-2 text-[13px] font-bold text-muted">
+              <LockSimple weight="fill" aria-hidden="true" />
+              Locked — another request accepted
+            </span>
+          ) : needsAction(tx, viewerId, ledOrgIds) ? (
+            <Link href={href} className="stage-pill gap-2 px-[13px] py-1.5 text-[13px] no-underline" style={{ background: 'var(--tmint)', color: 'var(--tink)' }}>
+              <ArrowBendDownRight weight="fill" aria-hidden="true" />
+              {actionLabel(tx, isOwner)}
+            </Link>
+          ) : undefined
+        }
+      />
     </li>
   )
 }
@@ -95,29 +140,44 @@ export default async function ExchangesPage() {
   const ACTIVE: ToyTransactionStatus[] = ['requested', 'accepted']
   const active = transactions.filter((tx) => ACTIVE.includes(tx.status))
   const history = transactions.filter((tx) => !ACTIVE.includes(tx.status))
+  const waiting = active.filter((tx) => needsAction(tx, viewerId, ledOrgIds)).length
 
   return (
-    <div>
+    <div className="max-w-[880px]">
       <MarkNotificationsRead bucket="exchanges" />
 
-      <div className="mb-6">
-        <h1 className="title-hub">My exchanges</h1>
-        <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted">
-          Toys you have asked for and toys people have asked you for. Each one is a conversation
-          until the handoff is confirmed by both sides.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-5">
+        <div className="min-w-0">
+          <h1 className="title-hub">My exchanges</h1>
+          <p className="mt-2 max-w-[62ch] text-[15px] text-muted">
+            Toys you have asked for, toys people have asked you for, and builds you have asked a
+            maker for. Each one is a conversation until the handoff is confirmed by both sides.
+          </p>
+        </div>
+        {waiting > 0 && (
+          <span
+            className="inline-flex items-center gap-2 whitespace-nowrap rounded-pill px-4 py-[9px] text-sm font-extrabold"
+            style={{ background: 'var(--tmint)', color: 'var(--tink)' }}
+          >
+            <BellRinging size={17} weight="fill" aria-hidden="true" />
+            {waiting} waiting on you
+          </span>
+        )}
       </div>
 
       {transactions.length === 0 ? (
-        <div className="flex flex-col items-center px-6 py-12 text-center">
+        <div className="flex flex-col items-center px-6 py-14 text-center">
           <span aria-hidden="true" className="empty-badge text-brand-dark">
             <Handshake className="h-8 w-8" />
           </span>
-          <p className="mt-4 font-bold text-ink">No donation or exchange requests yet.</p>
-          <p className="mt-1 max-w-xs text-sm leading-relaxed text-muted">
-            Ask for a toy from the library, or list one of yours, and the conversation starts here.
+          <p className="mt-[18px] text-[17px] font-extrabold text-ink">
+            No donation or exchange requests yet.
           </p>
-          <BoundaryLink href="/toy-library" className="btn btn-accent mt-6">
+          <p className="mt-1.5 max-w-[36ch] text-sm leading-relaxed text-muted">
+            Ask for a toy from the library, list one of yours, or claim a build on Makers wanted —
+            the conversation starts here.
+          </p>
+          <BoundaryLink href="/toy-library" className="btn btn-coral mt-6">
             Browse the toy library
           </BoundaryLink>
         </div>
@@ -125,8 +185,8 @@ export default async function ExchangesPage() {
         <>
           {active.length > 0 && (
             <section>
-              <h2 className="mb-3 text-lg font-bold text-ink">Active</h2>
-              <ul className="flex flex-col gap-3">
+              <h2 className="mb-3.5 mt-[30px] font-display text-xl font-extrabold text-ink">Active</h2>
+              <ul className="flex flex-col gap-3.5">
                 {active.map((tx) => (
                   <TransactionRow key={tx.id} tx={tx} viewerId={viewerId} ledOrgIds={ledOrgIds} />
                 ))}
@@ -135,8 +195,8 @@ export default async function ExchangesPage() {
           )}
 
           {history.length > 0 && (
-            <section className={active.length > 0 ? 'mt-10' : undefined}>
-              <h2 className="mb-3 text-lg font-bold text-ink">History</h2>
+            <section>
+              <h2 className="mb-3.5 mt-9 font-display text-xl font-extrabold text-ink">History</h2>
               <ul className="flex flex-col gap-3">
                 {history.map((tx) => (
                   <TransactionRow key={tx.id} tx={tx} viewerId={viewerId} ledOrgIds={ledOrgIds} />

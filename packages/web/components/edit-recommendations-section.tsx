@@ -77,7 +77,7 @@ export function EditRecommendationsSection({
               <span className="font-semibold text-ink">{r.tutorials.title}</span>
               <span className="badge bg-sunken text-brand-deep">{KIND_LABEL[r.tutorials.kind]}</span>
               {r.tutorials.status !== 'approved' && (
-                <span className="badge bg-honey-soft text-honey-deep">
+                <span className="badge bg-honey-soft text-ink">
                   Not yet approved — hidden from the public page
                 </span>
               )}

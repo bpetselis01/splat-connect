@@ -6,7 +6,7 @@
 // with the one the hub is reading.
 import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import type { Difficulty, TutorialKind, TutorialMaturity } from '@splat-connect/types'
-import { KIND_LABEL, MATURITY_LABEL } from '@splat-connect/types'
+import { BUILD_TIME_OPTIONS, KIND_LABEL, MATURITY_LABEL, formatBuildTime } from '@splat-connect/types'
 import { useDraft } from '../../../lib/use-tutorial-draft'
 import { theme } from '../../../lib/theme'
 import { Screen } from '../../ui/Screen'
@@ -74,6 +74,44 @@ export function DetailsSection() {
           ))}
         </View>
 
+        {/* Web's field (edit-details-section.tsx), as chips: the same values,
+            the same "printing isn't included" rule. */}
+        <Text style={styles.label}>About how long does it take?</Text>
+        <View style={styles.chipRow}>
+          {BUILD_TIME_OPTIONS.map((m) => (
+            <Chip
+              key={m}
+              label={m === 240 ? '4 h or more' : formatBuildTime(m)}
+              active={tutorial.build_minutes === m}
+              onPress={() => save({ build_minutes: m })}
+            />
+          ))}
+        </View>
+        <Text style={styles.hint}>Hands-on time only — printing time isn't included.</Text>
+
+        {/* Web's two number fields (071). The empty string clears the end, so
+            a guide can go back to "any age"; the 0–18 bound is the database's. */}
+        <Text style={styles.label}>Age range</Text>
+        <View style={styles.chipRow}>
+          <TextField
+            accessibilityLabel="Youngest age"
+            placeholder="From"
+            keyboardType="number-pad"
+            value={tutorial.age_min == null ? '' : String(tutorial.age_min)}
+            onChangeText={(text) => save({ age_min: text === '' ? null : Number(text) })}
+            boxStyle={styles.ageBox}
+          />
+          <TextField
+            accessibilityLabel="Oldest age"
+            placeholder="To"
+            keyboardType="number-pad"
+            value={tutorial.age_max == null ? '' : String(tutorial.age_max)}
+            onChangeText={(text) => save({ age_max: text === '' ? null : Number(text) })}
+            boxStyle={styles.ageBox}
+          />
+        </View>
+        <Text style={styles.hint}>In years. Leave both blank if it suits any age.</Text>
+
         <Text style={styles.label}>How far along is it?</Text>
         <View style={styles.chipRow}>
           {MATURITY_OPTIONS.map((o) => (
@@ -106,6 +144,9 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: theme.spacing(2),
     marginBottom: theme.spacing(4),
+  },
+  ageBox: {
+    flex: 1,
   },
   hint: {
     fontFamily: theme.fonts.regular,

@@ -47,14 +47,14 @@ describe('BackLink', () => {
     expect(link).toHaveClass('btn-quiet')
   })
 
-  // Tests: a hop that crosses the rail/header split is a full page load
-  // How:   from the rail-only editor to /dashboard/tutorials is same-side, so
-  //        that one stays soft; to /dashboard it crosses, since /dashboard is
-  //        the one account page with no rail
-  // Chain: same stale-chrome class BoundaryLink exists to prevent
-  it('forces a full load only when the destination crosses the chrome split', () => {
+  // Tests: every hop inside the account section stays a soft transition
+  // How:   from the editor to /dashboard and to /dashboard/tutorials
+  // Chain: the rail was the only chrome split inside the account section, and
+  //        it was retired on 2026-09-17 — the header is now identical on both
+  //        ends of these hops, so forcing a full load would only cost a flash
+  it('keeps every account-internal hop soft', () => {
     render(<BackLink href="/dashboard" label="My SPLAT" />)
-    expect(mockLink.mock.calls.some((c) => c[0].href === '/dashboard')).toBe(false)
+    expect(mockLink.mock.calls.some((c) => c[0].href === '/dashboard')).toBe(true)
     cleanup()
 
     render(<BackLink href="/dashboard/tutorials" label="My tutorials" />)

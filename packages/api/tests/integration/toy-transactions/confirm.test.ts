@@ -22,7 +22,7 @@ async function createPublishedToy(token: string, name: string, offerType: 'donat
   const toy = (await create.json()) as { id: string }
   await toysReq(`/${toy.id}`, token, {
     method: 'PATCH',
-    body: JSON.stringify({ cover_photo_url: 'https://example.com/c.jpg', offer_type: offerType }),
+    body: JSON.stringify({ photo_urls: ['https://example.com/c.jpg'], offer_type: offerType }),
   })
   await toysReq(`/${toy.id}/publish`, token, { method: 'PATCH' })
   return toy.id

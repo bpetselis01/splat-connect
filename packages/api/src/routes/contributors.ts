@@ -1,7 +1,8 @@
 /**
  * Contributor profile routes: GET/PATCH /api/contributors/me.
  *
- * `name`, the pickup_* address fields, and `public_showcase` are mutable
+ * `name`, the pickup_* address fields, `public_showcase`, `bio` and
+ * `featured_tutorial_id` are mutable
  * (see EDITABLE below).
  * `role` and `email` are frozen by the profiles_freeze_identity trigger
  * (009) — role was an escalation path, and email mirrors auth.users.
@@ -27,7 +28,11 @@ contributors.get('/me', async (c) => {
 // Whitelist of client-editable columns. role and email are frozen by the
 // profiles_freeze_identity trigger (009) and are ignored here rather than
 // rejected, matching PUT /api/child-profile's handling of parent_id.
-const EDITABLE = ['name', 'pickup_line1', 'pickup_suburb', 'pickup_state', 'pickup_postcode', 'public_showcase'] as const
+const EDITABLE = [
+  'name', 'pickup_line1', 'pickup_suburb', 'pickup_state', 'pickup_postcode', 'public_showcase',
+  // 072: the public profile's About paragraph and featured guide.
+  'bio', 'featured_tutorial_id',
+] as const
 
 contributors.patch('/me', async (c) => {
   const body = await c.req.json().catch(() => null)
@@ -42,6 +47,29 @@ contributors.patch('/me', async (c) => {
   }
 
   const patch = pickEditable(body as Record<string, unknown>, EDITABLE)
+
+  // 072. The bio bound mirrors the check constraint so a long paragraph is a
+  // 400 with words rather than a 500. The featured guide has to be one the
+  // caller is credited on AND approved: a draft or somebody else's guide on a
+  // public profile would be a leak of the one and a lie about the other.
+  if (typeof patch.bio === 'string' && patch.bio.length > 600) {
+    return c.json({ error: 'bio must be 600 characters or fewer' }, 400)
+  }
+  if ('bio' in patch && patch.bio !== null && typeof patch.bio !== 'string') {
+    return c.json({ error: 'bio must be a string' }, 400)
+  }
+  if (typeof patch.featured_tutorial_id === 'string') {
+    const { data: own } = await createUserClient(c.get('token'))
+      .from('tutorial_contributors')
+      .select('tutorial_id, tutorials!inner(status)')
+      .eq('profile_id', c.get('userId'))
+      .eq('tutorial_id', patch.featured_tutorial_id)
+      .eq('tutorials.status', 'approved')
+      .maybeSingle()
+    if (!own) return c.json({ error: 'featured_tutorial_id must be one of your published guides' }, 400)
+  } else if ('featured_tutorial_id' in patch && patch.featured_tutorial_id !== null) {
+    return c.json({ error: 'featured_tutorial_id must be a uuid or null' }, 400)
+  }
 
   // Admin client: pickup_* columns are revoked from `authenticated` at the
   // grant level (028), so RETURNING those columns via a user-scoped client

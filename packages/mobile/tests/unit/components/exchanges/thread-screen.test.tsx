@@ -141,7 +141,7 @@ describe('ExchangeThreadScreen — loading and header', () => {
   it('shows the status badge and the waiting line for the side being waited on', async () => {
     mockGet.mockResolvedValue(detail({ status: 'requested' }))
     await open()
-    expect(screen.getByText('REQUESTED')).toBeTruthy()
+    expect(screen.getByText('Requested')).toBeTruthy()
     expect(screen.getByText('Waiting on you — accept or decline')).toBeTruthy()
   })
 
@@ -232,7 +232,7 @@ describe('ExchangeThreadScreen — requested, owner side', () => {
         pickup_postcode: '3065',
       })
     )
-    expect(await screen.findByText('ACCEPTED')).toBeTruthy()
+    expect(await screen.findByText('Accepted')).toBeTruthy()
   })
 
   it('accepts with an empty body and no address form when an organisation owns the toy', async () => {
@@ -253,7 +253,7 @@ describe('ExchangeThreadScreen — requested, owner side', () => {
     await open()
     fireEvent.press(screen.getByRole('button', { name: 'Decline' }))
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/toy-transactions/tx1/reject', {}))
-    expect(await screen.findByText('REJECTED')).toBeTruthy()
+    expect(await screen.findByText('Rejected')).toBeTruthy()
   })
 
   it('surfaces an accept failure through the error row', async () => {
@@ -304,7 +304,7 @@ describe('ExchangeThreadScreen — requested, requester side', () => {
     expect(screen.queryByRole('button', { name: 'Decline' })).toBeNull()
     fireEvent.press(screen.getByRole('button', { name: 'Withdraw' }))
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/toy-transactions/tx1/withdraw', {}))
-    expect(await screen.findByText('WITHDRAWN')).toBeTruthy()
+    expect(await screen.findByText('Withdrawn')).toBeTruthy()
   })
 })
 
@@ -323,7 +323,7 @@ describe('ExchangeThreadScreen — withdrawing while the transaction is open', (
     await open()
     fireEvent.press(screen.getByRole('button', { name: 'Withdraw' }))
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/toy-transactions/tx1/withdraw', {}))
-    expect(await screen.findByText('WITHDRAWN')).toBeTruthy()
+    expect(await screen.findByText('Withdrawn')).toBeTruthy()
   })
 
   it('stands down while the pickup form is open, where Cancel is the way back', async () => {
@@ -564,14 +564,14 @@ describe('ExchangeThreadScreen — polling', () => {
       await act(async () => {
         fireEvent.press(screen.getByRole('button', { name: 'Decline' }))
       })
-      expect(screen.getByText('REJECTED')).toBeTruthy()
+      expect(screen.getByText('Rejected')).toBeTruthy()
 
       // It answers with the row as it was before the decline. Applying that
       // would put Accept/Decline back for the next ten seconds.
       await act(async () => {
         landStalePoll(detail({}))
       })
-      expect(screen.getByText('REJECTED')).toBeTruthy()
+      expect(screen.getByText('Rejected')).toBeTruthy()
     } finally {
       jest.useRealTimers()
     }

@@ -1,9 +1,7 @@
 /**
- * /dashboard/saved — the menu the rail's Saved row opens.
- *
- * Two labelled groups rather than one flat five, unlike My SPLAT's deliberately
- * flat eight: five at 4-up strands one card, and the split here says something
- * true — three types work, two are drawn so the shape is visible.
+ * /dashboard/saved — one card per saveable type, with how many are kept.
+ * The board's single group of four: organisations went live, so the old
+ * "Coming soon" group had nothing the board draws left in it.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
@@ -21,6 +19,10 @@ const baseCaps = {
 
 vi.mock('@/lib/capabilities', () => ({
   getCapabilities: async () => caps.current,
+}))
+// lib/saves imports api-client, which is server-only under vitest.
+vi.mock('@/lib/saves', () => ({
+  getSavedIds: async () => ({ tutorials: ['a', 'b'], toys: [], challenges: ['c'], organisations: [] }),
 }))
 
 // Real redirect() throws rather than returning; the page's signed-out branch
@@ -53,51 +55,27 @@ describe('SavedHub', () => {
     await expect(SavedHub()).rejects.toThrow('NEXT_REDIRECT')
   })
 
-  it('splits the five types into what works and what is planned', async () => {
+  it('leads each type to its own list', async () => {
     render(await SavedHub())
-    expect(screen.getByRole('heading', { name: 'Ready now' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Coming soon' })).toBeInTheDocument()
+    for (const [name, slug] of [
+      [/Tutorials/, 'tutorials'],
+      [/^\d*\s*Toys/, 'toys'],
+      [/Design challenges/, 'challenges'],
+      [/Organisations/, 'organisations'],
+    ] as const) {
+      expect(screen.getByRole('link', { name })).toHaveAttribute('href', `/dashboard/saved/${slug}`)
+    }
   })
 
-  it('leads each live type to its own list', async () => {
+  it('counts what is kept of each type', async () => {
     render(await SavedHub())
-    expect(screen.getByRole('link', { name: /Tutorials/ })).toHaveAttribute(
-      'href',
-      '/dashboard/saved/tutorials'
-    )
-    expect(screen.getByRole('link', { name: /^Toys/ })).toHaveAttribute(
-      'href',
-      '/dashboard/saved/toys'
-    )
-    expect(screen.getByRole('link', { name: /Design challenges/ })).toHaveAttribute(
-      'href',
-      '/dashboard/saved/challenges'
-    )
+    expect(screen.getByRole('link', { name: /Tutorials/ })).toHaveTextContent('2')
+    expect(screen.getByRole('link', { name: /Design challenges/ })).toHaveTextContent('1')
   })
 
-  /*
-   * The two placeholders are the whole reason this page is a hub rather than a
-   * filtered list: they need somewhere to sit and say "planned" without leading
-   * anywhere empty.
-   */
-  it('marks the two placeholders soon, and gives each its own route', async () => {
-    render(await SavedHub())
-    expect(screen.getAllByText('SOON')).toHaveLength(2)
-    // Distinct hrefs, and real placeholder routes: a card pointing back at the
-    // page you are on reads as broken, and two cards sharing an href collide
-    // on HubGrid's key.
-    expect(screen.getByRole('link', { name: /Organisations/ })).toHaveAttribute(
-      'href',
-      '/dashboard/saved/organisations'
-    )
-    expect(screen.getByRole('link', { name: /Printable parts/ })).toHaveAttribute(
-      'href',
-      '/dashboard/saved/parts'
-    )
-  })
-
-  it('renders five cards in total', async () => {
+  it('renders four cards and no soon placeholders', async () => {
     const { container } = render(await SavedHub())
-    expect(container.querySelectorAll('a.card')).toHaveLength(5)
+    expect(container.querySelectorAll('a.card')).toHaveLength(4)
+    expect(screen.queryByText('SOON')).not.toBeInTheDocument()
   })
 })

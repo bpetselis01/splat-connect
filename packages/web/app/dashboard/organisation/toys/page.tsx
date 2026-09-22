@@ -19,11 +19,12 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { apiClient } from '@/lib/api-client'
 import { getCapabilities } from '@/lib/capabilities'
-import { CardPhoto } from '@/components/card-photo'
-import { Badge } from '@/components/badge'
+import { Package, Plus, Tag, PencilSimple, Gift } from '@phosphor-icons/react/dist/ssr'
 import { OrgPickupForm, type OrgPickup } from '@/components/org-pickup-form'
 import { Shelf } from '@/components/icons'
-import type { Toy } from '@splat-connect/types'
+import { GRADE_ICON } from '@/components/toy-library-card'
+import { gradeOf } from '@/lib/toy-grade'
+import type { Toy, ToyTransactionSummary } from '@splat-connect/types'
 
 type OrgToy = Toy & { organizations: { name: string } | null }
 
@@ -33,8 +34,11 @@ export default async function OrgInventoryPage() {
   // the page is its own control.
   if (!caps || caps.ledOrgs.length === 0) notFound()
 
-  const [toys, pickups] = await Promise.all([
+  const [toys, handoffs, pickups] = await Promise.all([
     apiClient.get<OrgToy[]>('/api/toys/inventory').catch(() => [] as OrgToy[]),
+    apiClient
+      .get<ToyTransactionSummary[]>('/api/toy-transactions?role=owner')
+      .catch(() => [] as ToyTransactionSummary[]),
     Promise.all(
       caps.ledOrgs.map(async (org) => ({
         org,
@@ -47,20 +51,44 @@ export default async function OrgInventoryPage() {
 
   const missingPickup = pickups.filter((p) => !p.pickup?.pickup_line1)
 
+  // Two of the board's four counts. "Out with families" and "Needs cleaning"
+  // describe a lending shelf with returns, which the data does not model: a
+  // handed-over toy changes owner rather than coming back.
+  const ledIds = new Set(caps.ledOrgs.map((o) => o.id))
+  const stats = [
+    {
+      k: 'On the shelf',
+      v: toys.filter((t) => t.status === 'published').reduce((n, t) => n + t.quantity, 0),
+    },
+    {
+      k: 'Delivered all time',
+      v: handoffs.filter(
+        (t) => t.owner_org_id && ledIds.has(t.owner_org_id) && t.toy_id && t.status === 'completed',
+      ).length,
+    },
+  ]
+
   return (
-    <div>
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+    <div className="max-w-[980px]">
+      <div className="dash-head mb-[18px]">
         <div>
           <h1 className="title-hub">Toy inventory</h1>
-          <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted">
-            Stock your organisation offers for donation or exchange. Say how many you hold and
-            families can ask for one; the count drops as each is handed over.
-          </p>
+          <p className="dash-head__lede">What your organisation has on its shelves.</p>
         </div>
-        <Link href="/dashboard/toys/new?for=org" className="btn btn-accent">
-          + Add stock
+        <Link href="/dashboard/toys/new?for=org" className="btn btn-primary min-h-12 text-[15px]">
+          <Plus weight="bold" aria-hidden="true" />
+          Add to inventory
         </Link>
       </div>
+
+      <ul className="count-chips">
+        {stats.map((s) => (
+          <li key={s.k} className="count-chip">
+            <span className="count-chip__value">{s.v}</span>
+            <span className="count-chip__label">{s.k}</span>
+          </li>
+        ))}
+      </ul>
 
       {/* Named before the list, because an organisation without one can accept
           nothing at all — every request would fail at the last step. */}
@@ -86,29 +114,74 @@ export default async function OrgInventoryPage() {
           </Link>
         </div>
       ) : (
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {toys.map((toy) => (
-            <li key={toy.id}>
-              <Link href={`/dashboard/toys/${toy.id}`} className="card card-link overflow-hidden">
-                <CardPhoto src={toy.cover_photo_url} />
-                <div className="p-4">
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="truncate text-sm font-bold text-ink">{toy.name}</p>
-                    <Badge status={toy.status} />
+        <ul className="grid gap-3.5 sm:grid-cols-2">
+          {toys.map((toy) => {
+            const grade = gradeOf(toy.condition)
+            const GradeIcon = GRADE_ICON[grade.key]
+            const [status, tint] =
+              toy.status === 'draft'
+                ? ['Hidden', 'var(--surface2)']
+                : toy.quantity === 0
+                  ? ['Out of stock', 'var(--tamber)']
+                  : ['Available', 'var(--tok)']
+            return (
+              <li key={toy.id}>
+                <article className="row-card h-full gap-[13px] p-[18px]">
+                  <div className="flex items-start gap-[13px]">
+                    <span
+                      aria-hidden="true"
+                      className="grid h-14 w-14 flex-none place-items-center overflow-hidden rounded-2xl bg-sunken text-2xl text-muted"
+                    >
+                      {toy.cover_photo_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={toy.cover_photo_url} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        <Gift weight="duotone" />
+                      )}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <h2 className="row-card__title">{toy.name}</h2>
+                      <p className="mt-1 flex flex-wrap gap-1.5">
+                        <span className="pill-tag" style={{ backgroundColor: grade.tint }}>
+                          <GradeIcon weight="bold" aria-hidden="true" />
+                          {grade.label}
+                        </span>
+                        <span className="pill-tag" style={{ backgroundColor: tint }}>
+                          {status}
+                        </span>
+                      </p>
+                    </div>
                   </div>
-                  <p className="mt-1 text-xs text-muted">{toy.organizations?.name}</p>
-                  <p className="mt-1 text-xs font-bold text-ink">
-                    {toy.quantity === 0 ? 'Out of stock' : `${toy.quantity} in stock`}
+                  <p className="text-[13px] font-bold text-muted">
+                    <Package weight="bold" aria-hidden="true" className="mr-1 inline text-brand-dark" />
+                    {toy.quantity} in stock
+                    {caps.ledOrgs.length > 1 && toy.organizations && <> · {toy.organizations.name}</>}
                   </p>
-                </div>
-              </Link>
-            </li>
-          ))}
+                  <div className="mt-auto flex flex-wrap items-center gap-2">
+                    <Link
+                      href={`/dashboard/toys/${toy.id}`}
+                      className="btn btn-primary min-h-11 px-[18px] text-sm"
+                    >
+                      <PencilSimple weight="bold" aria-hidden="true" />
+                      Edit
+                    </Link>
+                    {/* The public listing only exists once it is published. */}
+                    {toy.status === 'published' && (
+                      <Link href={`/toy-library/${toy.id}`} className="btn btn-quiet px-[15px] text-sm">
+                        <Tag weight="bold" aria-hidden="true" />
+                        Listing
+                      </Link>
+                    )}
+                  </div>
+                </article>
+              </li>
+            )
+          })}
         </ul>
       )}
 
       <section className="mt-10">
-        <h2 className="text-lg font-bold text-ink">Pickup details</h2>
+        <h2 className="title-section">Pickup details</h2>
         <p className="mt-1 max-w-prose text-sm leading-relaxed text-muted">
           Where families collect from. Fixed for every handoff — unlike a person-to-person
           exchange, this is not chosen per request.

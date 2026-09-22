@@ -39,7 +39,7 @@ describe('admin spot-check', () => {
     get.mockResolvedValue([baseTutorial])
     const { default: Page } = await import('@/app/admin/spot-check/page')
     render(await Page({ searchParams: Promise.resolve({}) }))
-    expect(screen.getByText(/unpublish it if it should not be there/i)).toBeInTheDocument()
+    expect(screen.getByText(/Audit a sample/i)).toBeInTheDocument()
   })
 
   it('teaches the interface when the sample is empty', async () => {
