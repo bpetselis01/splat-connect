@@ -35,6 +35,7 @@ import {
 } from '@phosphor-icons/react/dist/ssr'
 import { browserApiClient } from '@/lib/browser-api-client'
 import { ProfileTabs } from '@/components/profile-tabs'
+import { SCENES } from '@/components/scroll-world'
 
 export type ContentRow = { key: string; value: Record<string, unknown>; updated_at: string }
 
@@ -48,6 +49,9 @@ type Hero = {
 
 type NumberSpec = { label: string; live: boolean; pinned: number | null; source: string }
 type Numbers = Record<'guides' | 'organisations' | 'toys', NumberSpec>
+
+/** One beat of the homepage flight: its place, and the line said over it. */
+type SceneRow = { title: string; line: string }
 
 const HERO_FIELDS: Array<{ key: keyof Hero; label: string }> = [
   { key: 'eyebrow', label: 'Eyebrow' },
@@ -71,6 +75,11 @@ const SECTION_P = 'mt-1.5 max-w-[62ch] text-sm leading-normal text-muted'
 const LABEL = 'mb-[7px] block text-sm font-extrabold text-ink'
 const INPUT = 'field h-[50px] bg-canvas'
 
+// The five the homepage is flying through right now — components/scroll-world.
+// Editing one here does not move the page yet; that is the same shape as the
+// hero and the numbers, which also write site_content ahead of a public reader.
+const LIVE_SCENES: SceneRow[] = SCENES.map((s) => ({ title: s.place, line: s.title }))
+
 const EMPTY_HERO: Hero = {
   eyebrow: '',
   headline: '',
@@ -90,6 +99,9 @@ export function SiteContentEditor({ rows }: { rows: ContentRow[] }) {
   const [numbers, setNumbers] = useState<Numbers>(
     (byKey.get('home-numbers') ?? {}) as Numbers
   )
+  const [scenes, setScenes] = useState<SceneRow[]>(
+    ((byKey.get('home-scenes') as { scenes?: SceneRow[] } | undefined)?.scenes ?? LIVE_SCENES)
+  )
   const [saving, setSaving] = useState<string | null>(null)
   const [saved, setSaved] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -104,6 +116,7 @@ export function SiteContentEditor({ rows }: { rows: ContentRow[] }) {
     try {
       await browserApiClient.put('/api/admin/content/home-hero', { value: hero })
       await browserApiClient.put('/api/admin/content/home-numbers', { value: numbers })
+      await browserApiClient.put('/api/admin/content/home-scenes', { value: { scenes } })
       setSaved('home')
       startTransition(() => router.refresh())
     } catch (e) {
@@ -242,6 +255,49 @@ export function SiteContentEditor({ rows }: { rows: ContentRow[] }) {
                               )}
                               {spec.live ? 'Counted live' : 'Pinned by hand'}
                             </button>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  </section>
+
+                  <section className={SECTION}>
+                    <div>
+                      <h2 className={SECTION_H}>The scroll story</h2>
+                      <p className={SECTION_P}>
+                        Five scenes, one per scroll beat. Keep each line to something a person
+                        would actually say out loud.
+                      </p>
+                    </div>
+                    <ul className="flex list-none flex-col gap-2.5">
+                      {scenes.map((sc, i) => {
+                        const set = (patch: Partial<SceneRow>) =>
+                          setScenes(scenes.map((s, j) => (j === i ? { ...s, ...patch } : s)))
+                        return (
+                          <li
+                            key={i}
+                            className="grid grid-cols-[32px_minmax(0,1fr)] items-start gap-3 rounded-[18px] border-[length:var(--bw)] border-line bg-canvas p-3.5"
+                          >
+                            <span
+                              aria-hidden="true"
+                              className="grid h-8 w-8 place-items-center rounded-[14px] bg-[var(--b100)] font-display text-sm font-extrabold text-[var(--b700)]"
+                            >
+                              {i + 1}
+                            </span>
+                            <span className="flex min-w-0 flex-col gap-2">
+                              <input
+                                aria-label={`Scene ${i + 1} title`}
+                                value={sc.title}
+                                onChange={(e) => set({ title: e.target.value })}
+                                className="field h-[42px] bg-surface text-sm font-extrabold"
+                              />
+                              <input
+                                aria-label={`Scene ${i + 1} line`}
+                                value={sc.line}
+                                onChange={(e) => set({ line: e.target.value })}
+                                className="field h-10 bg-surface text-sm font-semibold"
+                              />
+                            </span>
                           </li>
                         )
                       })}
