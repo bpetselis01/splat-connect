@@ -4,8 +4,8 @@
  *
  * Only what the public endpoint returns is drawn. The board also has a cover
  * photo and logo, a "Verified by SPLAT" seal, follow/message/thanks actions,
- * the three "doors", notes from families, named leaders, a street address and
- * opening hours — none of which exist as public data yet, so none are here.
+ * notes from families, named leaders, a street address and opening hours —
+ * none of which exist as public data yet, so none are here.
  */
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
@@ -303,7 +303,17 @@ export default async function OrgPublicProfilePage({
           )}
         </div>
 
-        <aside className="flex flex-col gap-4 lg:sticky lg:top-[100px]">
+        <aside id="org-doors" className="flex flex-col gap-4 lg:sticky lg:top-[100px]">
+          {/* The board's "How to work with them": the doors are one titled
+              group, not three loose rail cards. Its dek counts three doors;
+              an organisation may open one, so only the clause that is true of
+              every door survives. */}
+          {(reach || prints || recycles) && (
+            <div>
+              <h2 className={H2}>How to work with them</h2>
+              <p className="m-0 mt-1.5 text-sm text-muted">None of them need a referral.</p>
+            </div>
+          )}
           {reach && (
             <div className={`${RAIL_CARD} bg-surface`} style={{ boxShadow: 'var(--shadow-e2)' }}>
               <h3 className="m-0 font-display text-lg font-extrabold text-ink">Visit</h3>
