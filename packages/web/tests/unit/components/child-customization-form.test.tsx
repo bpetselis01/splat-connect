@@ -17,7 +17,7 @@ describe('ChildCustomizationForm', () => {
     )
     expect(screen.getByLabelText('Palm width (mm)')).toHaveValue(40)
     expect(screen.getByLabelText('Needs an arm attachment')).toBeChecked()
-    expect(screen.getByLabelText('Soft')).toBeChecked()
+    expect(screen.getByRole('button', { name: 'Soft', pressed: true })).toBeInTheDocument()
   })
 
   it('starts blank when there is no profile yet', () => {
@@ -41,7 +41,7 @@ describe('ChildCustomizationForm', () => {
 
     fireEvent.change(screen.getByLabelText('Palm width (mm)'), { target: { value: '42' } })
     fireEvent.click(screen.getByLabelText('Needs an arm attachment'))
-    fireEvent.click(screen.getByLabelText('Soft'))
+    fireEvent.click(screen.getByRole('button', { name: 'Soft' }))
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))
 
     await screen.findByText('Saved')
