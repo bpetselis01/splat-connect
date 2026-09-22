@@ -27,8 +27,7 @@
  * Source of truth: the artboard's own `stateRows` table, captured in
  * docs/superpowers/specs/2026-09-16-soft-pop-extraction.md §2.
  */
-import Link from 'next/link'
-import { Badge, type BadgeStatus } from '@/components/badge'
+import { STATUS_TONE, type BadgeStatus } from '@/components/badge'
 
 export const metadata = { title: 'Interaction states — SPLAT Connect' }
 
@@ -107,9 +106,17 @@ const ROWS: Row[] = [
 ]
 
 function Control({ item }: { item: Item }) {
-  // The real component, so a tone that drifts in components/badge.tsx drifts
-  // here too — the same reason the buttons below take real class names.
-  if (item.status) return <Badge status={item.status} label={item.text} />
+  // The real tone map, so a tint that drifts in components/badge.tsx drifts
+  // here too. The artboard draws these at button size in sentence case, not
+  // as the 12px uppercase .badge, so the geometry is the row's own.
+  if (item.status)
+    return (
+      <span
+        className={`inline-flex min-h-12 items-center rounded-pill px-[22px] text-[15px] font-extrabold ${STATUS_TONE[item.status]}`}
+      >
+        {item.text}
+      </span>
+    )
 
   return (
     <button
@@ -133,19 +140,12 @@ export default function InteractionStatesPage() {
     <div className="flex flex-col gap-6">
       <div>
         <p className="eyebrow text-muted">Soft Pop</p>
-        <h1 className="mt-1.5 font-display text-4xl font-extrabold tracking-tight text-ink">
+        <h1 className="mt-1.5 font-display text-[clamp(30px,3.4vw,44px)] font-extrabold leading-[1.08] tracking-[-0.02em] text-ink">
           Interaction states
         </h1>
-        <p className="mt-2.5 max-w-[60ch] text-[17px] leading-relaxed text-muted">
+        <p className="mb-2 mt-2.5 max-w-[60ch] text-[17px] text-muted">
           Every state a control can be in, so a developer never has to guess. Hover and focus
           the live examples — they behave exactly as they do in the product.
-        </p>
-        <p className="mt-2 text-sm text-muted">
-          The resting sheet is at{' '}
-          <Link href="/design-system" className="font-bold text-brand-dark underline">
-            /design-system
-          </Link>
-          .
         </p>
       </div>
 
@@ -157,7 +157,9 @@ export default function InteractionStatesPage() {
             <div className="flex flex-wrap items-center gap-3.5">
               {row.items.map((item) => (
                 <div key={item.label} className="flex flex-col items-start gap-2">
-                  <span className="eyebrow text-muted">{item.label}</span>
+                  <span className="font-mono text-[10px] font-medium uppercase tracking-[0.1em] text-muted">
+                    {item.label}
+                  </span>
                   <Control item={item} />
                 </div>
               ))}

@@ -2,447 +2,457 @@
  * The component sheet. A real route in the prototype (/design-system), and the
  * page a developer opens instead of guessing what a control looks like.
  *
- * Ported from `SPLAT Design System - Soft Pop.dc.html` in the artboard project,
- * which is the authoritative sheet — not the design-system project of the same
- * name, which still serves the retired Pixel system. The board's own page is
- * Foundations plus the four patterns everything else is assembled from; the
- * primitive specimens below that are ours, because a developer opening this
- * page wants to see a <select> too and the board never draws one.
+ * Laid out as the board's "Component sheet" draws it — ramp, a buttons matrix,
+ * inputs, selection controls, chips, feedback, skeletons, elevation, the bear —
+ * but every specimen is the product's own class (btn, chip, field, save-btn,
+ * Badge, Alert), so the sheet can only show what the product really renders.
+ * The matrix's hover and focus columns use the same `data-state` forcing as
+ * /design-system/states (see the forced-state block in app/globals.css).
  *
- * Deliberately a server component with no state: every example is a resting
- * render, and the states that need a pointer (hover, focus, active) are the
- * browser's job to show. The prototype has a second screen for those at
- * /design-system/states.
+ * Where the product has no class for something the board draws — a ghost
+ * button, an input's error and success borders, the ink toast — the specimen
+ * carries the board's values inline, and says so beside it.
+ *
+ * A server component with no state: the only interaction is the browser's own.
  */
 import {
-  ArrowBendDownRight,
-  ChatCircleDots,
-  Dog,
-  Drop,
-  HandTap,
-  Tag,
+  CheckCircle,
+  CircleNotch,
+  Heart,
+  Minus,
+  Plus,
+  Trash,
+  WarningCircle,
+  X,
 } from '@phosphor-icons/react/dist/ssr'
-import { RecordCard } from '@/components/record-card'
-import { StageRailCard } from '@/components/stage-rail-card'
-import { CostPanel } from '@/components/cost-panel'
-import { Disclosure } from '@/components/disclosure'
+import type { CSSProperties, ReactNode } from 'react'
 import { Badge } from '@/components/badge'
-import { SplatMascot } from '@/components/splat-mascot'
-import type { Stage } from '@/components/stage-rail'
 import { Alert } from '@/components/alert'
+import { SplatMascot, type MascotPose } from '@/components/splat-mascot'
 
 export const metadata = { title: 'Component sheet — SPLAT Connect' }
 
-const live: Stage[] = [
-  { key: 'requested', label: 'Requested', caption: '28 August', state: 'done' },
-  { key: 'accepted', label: 'Accepted', caption: 'Northside said yes', state: 'done' },
-  { key: 'handover', label: 'Handover', caption: 'Waiting on your code', state: 'now' },
-  { key: 'closed', label: 'Closed', caption: 'Not yet', state: 'todo' },
+/** The eleven brand steps with the hex each token resolves to in light mode. */
+const RAMP: Array<[number, string]> = [
+  [50, '#f0f9ff'],
+  [100, '#dcf0fb'],
+  [200, '#b9e1f7'],
+  [300, '#87cdf0'],
+  [400, '#4fb4e6'],
+  [500, '#1998d5'],
+  [600, '#1179b0'],
+  [700, '#0f5f8c'],
+  [800, '#124f73'],
+  [900, '#14425f'],
+  [950, '#0d2a3f'],
 ]
 
-// The same four steps on a record that stopped. Its captions are its own.
-const stopped: Stage[] = [
-  { key: 'requested', label: 'Requested', caption: '12 July', state: 'done' },
-  { key: 'accepted', label: 'Accepted', caption: 'Declined — toy already promised', state: 'stop' },
-  { key: 'handover', label: 'Handover', caption: 'Never got here', state: 'todo' },
-  { key: 'closed', label: 'Closed', caption: 'Closed 13 July', state: 'done' },
+const COLS = ['Default', 'Hover', 'Focus-visible', 'Loading', 'Disabled']
+
+// The board's fifth pose (sleeping) has no drawing in components/splat-mascot.tsx.
+const POSES: Array<[MascotPose, string, string]> = [
+  ['wave', 'Waving', 'Onboarding, hero, welcome back'],
+  ['think', 'Thinking', 'Empty states, filters, help'],
+  ['party', 'Celebrating', 'Success, profile complete, handoff done'],
+  ['hold', 'Holding a switch', 'Wizard, guide sidebars, "works with"'],
 ]
 
-/** The eleven brand steps, drawn as the board draws them. */
-const RAMP = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950] as const
-const TINTS = ['coral', 'amber', 'violet', 'mint', 'ok', 'bad'] as const
-
-/* The four control heights, each rendered at the weight it is used at: the
-   specimen has to BE the height it names, or the sheet is a list of numbers. */
-const HEIGHTS: Array<{ label: string; h: number; className: string; style?: React.CSSProperties }> = [
-  { label: '36 quiet', h: 36, className: 'text-brand-deep' },
-  {
-    label: '44 secondary',
-    h: 44,
-    className: 'border border-line bg-surface text-ink',
-    style: { boxShadow: 'var(--shadow-e1)' },
-  },
-  {
-    label: '48 standard',
-    h: 48,
-    className: 'border border-line bg-surface text-ink',
-    style: { boxShadow: 'var(--shadow-e1)' },
-  },
-  {
-    label: '52 primary',
-    h: 52,
-    className: 'text-[var(--onbrand)]',
-    style: { background: 'var(--b600)', boxShadow: 'var(--shadow-glow), var(--shadow-hi)' },
-  },
-]
-
-const RADII: Array<[string, string]> = [
-  ['pill', 'var(--radius-pill)'],
-  ['14', 'var(--radius-field)'],
-  ['18', 'var(--radius-inset)'],
-  ['24', 'var(--radius-card)'],
-]
-
-/** The stage action the board draws: a tint pill, not a second button. */
-function StageAction({ children }: { children: React.ReactNode }) {
-  return (
-    <span
-      className="inline-flex items-center gap-2 rounded-pill px-[13px] py-1.5 text-[13px] font-extrabold"
-      style={{ background: 'var(--tmint)', color: 'var(--tink)' }}
-    >
-      <ArrowBendDownRight size={15} weight="fill" aria-hidden="true" />
-      {children}
-    </span>
-  )
+/* No .btn-ghost exists in the product; the board's ghost is transparent with
+   --b700 text, so the row carries it inline. */
+const GHOST: CSSProperties = {
+  background: 'transparent',
+  borderColor: 'transparent',
+  boxShadow: 'none',
+  color: 'var(--b700)',
+  padding: '0 16px',
 }
 
-function Section({ title, blurb, children }: { title: string; blurb?: string; children: React.ReactNode }) {
+function Card({ title, children, className = '' }: { title: string; children: ReactNode; className?: string }) {
   return (
-    <section className="flex flex-col gap-3.5">
-      <h2 className="font-display text-[22px] font-extrabold text-ink">{title}</h2>
-      {blurb ? <p className="max-w-[66ch] text-[15px] text-muted">{blurb}</p> : null}
+    <section className={`card flex flex-col gap-3.5 p-6 ${className}`}>
+      <h2 className="font-display text-2xl font-extrabold text-ink">{title}</h2>
       {children}
     </section>
   )
 }
 
+function Field({ label, children, muted }: { label: string; children: ReactNode; muted?: boolean }) {
+  return (
+    <label className={`flex flex-col gap-1.5 text-sm font-extrabold ${muted ? 'text-muted' : 'text-ink'}`}>
+      {label}
+      {children}
+    </label>
+  )
+}
+
+const Dot = () => <i className="inline-block h-1.5 w-1.5 rounded-full bg-current" />
+
+
+const skeleton = 'rounded-[var(--radius-field)] bg-sunken'
+
 export default function DesignSystemPage() {
   return (
-    <main className="mx-auto flex max-w-[1100px] flex-col gap-[34px] px-7 pb-16 pt-8">
-      <header className="flex flex-wrap items-start justify-between gap-5">
-        <div className="min-w-0">
-          <p className="eyebrow text-muted">Design system · replaces Pixel</p>
-          <h1 className="mt-2 title-hub">SPLAT Connect — Soft Pop</h1>
-          <p className="mt-2 max-w-[60ch] text-[17px] leading-[1.55] text-muted [text-wrap:pretty]">
-            The tokens and the four patterns the whole product is built from, rendering off the
-            updated design-system stylesheet.
-          </p>
-        </div>
-        <span className="flex flex-none items-center gap-3">
-          <span
-            aria-hidden="true"
-            className="grid h-11 w-11 place-items-center rounded-[var(--radius-field)] text-white"
-            style={{
-              background: 'linear-gradient(145deg, var(--brand-400), var(--brand-600))',
-              boxShadow: 'var(--shadow-glow), var(--shadow-hi)',
-            }}
-          >
-            <HandTap size={24} weight="fill" />
-          </span>
-          <span className="font-display text-[22px] font-extrabold leading-none tracking-[-0.01em] text-ink">
-            SPLAT <span className="text-brand-dark">Connect</span>
-          </span>
-        </span>
-      </header>
+    <div className="flex flex-col gap-10">
+      <div>
+        <p className="eyebrow text-muted">Design system · Soft Pop</p>
+        <h1 className="mb-2 mt-1 font-display text-[44px] font-extrabold leading-[1.1] text-ink">
+          Components &amp; states
+        </h1>
+        <p className="m-0 max-w-[70ch] text-[17px] text-muted">
+          Every control at 44px+, a visible 3px ink focus ring (never a glow), state carried by
+          icon + label as well as colour. Switch the colour mode in the nav to audit dark and
+          high-contrast.
+        </p>
+      </div>
 
-      <Section title="Foundations">
-        <div className="flex flex-wrap gap-2.5">
-          {RAMP.map((step) => (
-            <span
-              key={step}
-              className="flex h-14 min-w-0 flex-[1_1_60px] items-end rounded-[var(--radius-field)] px-2 py-1.5 text-[10px] font-extrabold"
-              style={{
-                background: `var(--brand-${step})`,
-                color: step >= 500 ? '#ffffff' : 'var(--ink)',
-              }}
-            >
-              {step}
-            </span>
-          ))}
-        </div>
-
-        <div className="flex flex-wrap gap-2.5">
-          {TINTS.map((name) => (
-            <span
-              key={name}
-              className="min-w-0 flex-[1_1_90px] rounded-[var(--radius-field)] px-3.5 py-3 text-[11px] font-extrabold uppercase tracking-[0.04em]"
-              style={{ background: `var(--t${name})`, color: 'var(--tink)' }}
-            >
-              {name}
-            </span>
-          ))}
-        </div>
-
-        <div className="flex flex-wrap items-end gap-3">
-          {HEIGHTS.map((spec) => (
-            <span
-              key={spec.label}
-              className={`inline-flex items-center rounded-pill px-[18px] text-sm font-extrabold ${spec.className}`}
-              style={{ minHeight: spec.h, ...spec.style }}
-            >
-              {spec.label}
-            </span>
-          ))}
-          <span className="flex-1" />
-          {RADII.map(([label, value]) => (
-            <span
-              key={label}
-              className="grid h-[52px] w-16 place-items-end justify-center border border-line bg-surface pb-[5px] text-[10px] font-extrabold text-muted"
-              style={{ borderRadius: value, boxShadow: 'var(--shadow-e2), var(--shadow-hi)' }}
-            >
-              {label}
-            </span>
-          ))}
-        </div>
-      </Section>
-
-      <Section
-        title="A · RecordCard"
-        blurb="Every repeating record is one of these. Head row, the record's own stage rail, then one filled primary and the stage action on the right."
-      >
-        <RecordCard
-          icon={<Drop size={24} weight="duotone" />}
-          tint="var(--tmint)"
-          title="Bubble machine"
-          meta="Donation · Northside Therapy Collective · requested 28 Aug"
-          pill={<Badge status="pending" label="Waiting on you" />}
-          stages={live}
-          note="Northside: “Any time Saturday works for us.”"
-          primary={
-            <button type="button" className="btn btn-primary">
-              <ChatCircleDots size={18} weight="fill" aria-hidden="true" />
-              Thread
-            </button>
-          }
-          secondary={
-            <button type="button" className="btn btn-quiet">
-              <Tag size={18} weight="bold" aria-hidden="true" />
-              View the listing
-            </button>
-          }
-          stageAction={<StageAction>Send your code</StageAction>}
-        />
-        <RecordCard
-          icon={<Dog size={24} weight="duotone" />}
-          tint="var(--tviolet)"
-          title="Plush dog with a big button"
-          meta="Family covers parts · Westmead Toy Hub · 12 Jul"
-          pill={<Badge status="withdrawn" label="Declined" />}
-          stages={stopped}
-          note="Westmead: “Sorry — this one went out last week.”"
-          primary={
-            <button type="button" className="btn btn-primary">
-              <ChatCircleDots size={18} weight="fill" aria-hidden="true" />
-              Thread
-            </button>
-          }
-          secondary={
-            <button type="button" className="btn btn-quiet">
-              <Tag size={18} weight="bold" aria-hidden="true" />
-              View the listing
-            </button>
-          }
-        />
-      </Section>
-
-      <Section
-        title="B · StageRail, joined to StageFacts"
-        blurb="On a detail page the rail is a full-width card butted onto a facts panel. Four facts, about this stage only."
-      >
-        <StageRailCard
-          stages={live}
-          facts={{
-            title: 'Handover',
-            facts: [
-              { label: 'Your code', value: '4821' },
-              { label: 'Meeting at', value: 'Northside clinic, Chatswood' },
-              { label: 'Agreed', value: 'Sat 6 Sep, 10am' },
-              { label: 'Parts', value: 'Donation — no cost to you' },
-            ],
-          }}
-        />
-      </Section>
-
-      <Section
-        title="C · Disclosure, inside D · CostPanel"
-        blurb="The decision stays visible — the total and the settle state. The evidence collapses."
-      >
-        <CostPanel
-          lines={[
-            {
-              id: 'ds-switch',
-              description: 'Switch + lead',
-              amount_cents: 1800,
-              claiming: true,
-              settled_at: null,
-            },
-            {
-              id: 'ds-postage',
-              description: 'Postage',
-              amount_cents: 650,
-              claiming: true,
-              settled_at: null,
-            },
-          ]}
-          settlement={{
-            note: 'I had the toy already, so it is just the switch and postage.',
-            note_by: 'ds-other',
-            method: 'Bank transfer on handover',
-            receipt_path: null,
-          }}
-          noteByName="Northside Therapy Collective"
-          viewerOwes
-          transactionId="design-system-sheet"
-        />
-      </Section>
-
-      {/* Past here is ours, not the board's: the sheet above is the four
-          patterns, and these are the primitives they are assembled from. Every
-          example is a resting render — the states needing a pointer live at
-          /design-system/states. */}
-      <Section title="Buttons" blurb="One filled primary per view. Everything else is an outline.">
-        <div className="flex flex-wrap items-center gap-3">
-          <button type="button" className="btn btn-primary">Request this toy</button>
-          <button type="button" className="btn btn-quiet">Save</button>
-          <button type="button" className="btn btn-danger">Delete</button>
-          <button type="button" className="btn btn-soft">Maybe later</button>
-          <button type="button" className="btn btn-sm btn-quiet">Skip for now</button>
-          <button type="button" className="btn btn-primary" disabled>Request this toy</button>
-        </div>
-      </Section>
-
-      <Section title="Status pills" blurb="Read-only. The tint carries meaning and the word repeats it.">
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge status="published" />
-          <Badge status="pending" />
-          <Badge status="rejected" />
-          <Badge status="draft" />
-          <Badge status="accepted" />
-        </div>
-      </Section>
-
-      <Section title="Inputs" blurb="44px on --surface, 0 14px, a 14px radius and a hairline.">
-        <div className="grid max-w-xl gap-3">
-          <label className="flex flex-col gap-1.5">
-            <span className="text-sm font-bold text-ink">Toy name</span>
-            <input className="field" defaultValue="Light-up drum" readOnly />
-          </label>
-          <label className="flex flex-col gap-1.5">
-            <span className="text-sm font-bold text-ink">Condition</span>
-            <select className="field" defaultValue="good">
-              <option value="good">Good</option>
-              <option value="like-new">Like new</option>
-            </select>
-          </label>
-          <label className="flex flex-col gap-1.5">
-            <span className="text-sm font-bold text-ink">What needs to change</span>
-            <textarea
-              className="field"
-              rows={3}
-              defaultValue="The button is too stiff for Leo to press."
-              readOnly
+      <div className="grid grid-cols-[repeat(11,minmax(0,1fr))] gap-2">
+        {RAMP.map(([step, hex]) => (
+          <div key={step} className="flex flex-col gap-1.5">
+            <div
+              className="h-14 rounded-[var(--radius-field)]"
+              style={{ background: `var(--brand-${step})`, boxShadow: 'var(--shadow-hi)' }}
             />
-          </label>
-          <label className="flex flex-col gap-1.5">
-            <span className="text-sm font-bold text-ink">Disabled</span>
+            <span className="font-mono text-[11px] font-semibold text-muted">
+              {step}
+              <br />
+              {hex}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      <div>
+        <h2 className="mb-3.5 font-display text-2xl font-extrabold text-ink">Buttons</h2>
+        <div className="card grid grid-cols-[120px_repeat(5,minmax(0,1fr))] items-center gap-3 p-6">
+          <span />
+          {COLS.map((c) => (
+            <span key={c} className="text-xs font-extrabold uppercase tracking-[0.08em] text-muted">
+              {c}
+            </span>
+          ))}
+
+          <span className="text-sm font-extrabold">Primary</span>
+          <button type="button" className="btn btn-primary">Find a guide</button>
+          <button type="button" className="btn btn-primary" data-state="hover">Find a guide</button>
+          <button type="button" className="btn btn-primary" data-state="focus">Find a guide</button>
+          <button type="button" className="btn btn-primary" data-loading="true" aria-busy="true">
+            <span className="inline-flex gap-[3px]" aria-hidden="true"><Dot /><Dot /><Dot /></span>
+            Saving
+          </button>
+          <button type="button" className="btn btn-primary" disabled>Find a guide</button>
+
+          <span className="text-sm font-extrabold">Secondary</span>
+          <button type="button" className="btn btn-quiet">Borrow a toy</button>
+          <button type="button" className="btn btn-quiet" data-state="hover">Borrow a toy</button>
+          <button type="button" className="btn btn-quiet" data-state="focus">Borrow a toy</button>
+          <button type="button" className="btn btn-quiet text-muted" aria-busy="true">
+            <CircleNotch size={16} weight="bold" className="animate-spin" aria-hidden="true" />
+            Loading
+          </button>
+          <button type="button" className="btn btn-quiet" disabled>Borrow a toy</button>
+
+          <span className="text-sm font-extrabold">Ghost</span>
+          <button type="button" className="btn" style={GHOST}>Skip for now</button>
+          <button type="button" className="btn" style={{ ...GHOST, background: 'var(--surface2)' }}>
+            Skip for now
+          </button>
+          <button type="button" className="btn" style={GHOST} data-state="focus">Skip for now</button>
+          <span />
+          <button type="button" className="btn" style={{ ...GHOST, color: 'var(--muted)', opacity: 0.5 }} disabled>
+            Skip for now
+          </button>
+
+          <span className="text-sm font-extrabold">Danger</span>
+          <button type="button" className="btn btn-danger"><Trash size={16} weight="bold" aria-hidden="true" /> Delete</button>
+          <button type="button" className="btn btn-danger" data-state="hover"><Trash size={16} weight="bold" aria-hidden="true" /> Delete</button>
+          <button type="button" className="btn btn-danger" data-state="focus"><Trash size={16} weight="bold" aria-hidden="true" /> Delete</button>
+          <span />
+          <button type="button" className="btn btn-danger" disabled><Trash size={16} weight="bold" aria-hidden="true" /> Delete</button>
+
+          <span className="text-sm font-extrabold">Icon</span>
+          <button type="button" className="save-btn" aria-label="Save"><Heart aria-hidden="true" /></button>
+          {/* .save-btn's hover is a :hover scale with no forcing rule; drawn inline. */}
+          <button
+            type="button"
+            className="save-btn"
+            aria-label="Save"
+            style={{ transform: 'scale(1.08)', boxShadow: 'var(--shadow-e3)', color: 'var(--coral)' }}
+          >
+            <Heart aria-hidden="true" />
+          </button>
+          <button type="button" className="save-btn" aria-label="Save" style={{ outline: '3px solid var(--focus)', outlineOffset: 3 }}>
+            <Heart aria-hidden="true" />
+          </button>
+          <button type="button" className="save-btn is-saved" aria-label="Saved" aria-pressed="true">
+            <Heart weight="fill" aria-hidden="true" />
+          </button>
+          <button type="button" className="save-btn" aria-label="Save" disabled style={{ background: 'var(--surface2)', opacity: 0.5 }}>
+            <Heart aria-hidden="true" />
+          </button>
+        </div>
+      </div>
+
+      <div className="grid gap-5 lg:grid-cols-2">
+        <Card title="Inputs" className="gap-4">
+          <Field label="Default">
+            <input className="field" placeholder="Search by toy name" />
+          </Field>
+          {/* Focus, error and success have no forcing attribute on .field; the
+              board's values, inline. */}
+          <Field label="Focus">
+            <input
+              className="field"
+              defaultValue="Bubble mach"
+              style={{ borderColor: 'var(--brand)', outline: '3px solid var(--focus)', outlineOffset: 2 }}
+            />
+          </Field>
+          <Field label="Error">
+            <input
+              className="field"
+              defaultValue="sam@"
+              aria-invalid="true"
+              aria-describedby="ds-err"
+              style={{ border: '2px solid var(--bad)' }}
+            />
+            <span id="ds-err" className="flex items-center gap-1.5 text-[13px] font-semibold text-danger">
+              <WarningCircle weight="fill" aria-hidden="true" /> That email is missing the part after @
+            </span>
+          </Field>
+          <Field label="Success">
+            <input className="field" defaultValue="sam@example.com" style={{ border: '2px solid var(--ok)' }} />
+            <span className="flex items-center gap-1.5 text-[13px] font-semibold text-success">
+              <CheckCircle weight="fill" aria-hidden="true" /> Looks good
+            </span>
+          </Field>
+          <Field label="Disabled" muted>
             <input className="field" defaultValue="Not editable" disabled />
-          </label>
-        </div>
-      </Section>
+          </Field>
+          <Field label="Select">
+            <select className="field" defaultValue="Easy">
+              <option>Easy</option>
+              <option>Medium</option>
+              <option>Hard</option>
+            </select>
+          </Field>
+        </Card>
 
-      <Section title="Selection controls" blurb="A 44px target around every one, however small it draws.">
-        <div className="flex flex-col gap-3">
-          <label className="flex items-center gap-2.5 text-sm text-ink">
-            <input type="checkbox" defaultChecked readOnly className="h-5 w-5 accent-[var(--color-brand)]" />
-            Switch-adapted
-          </label>
-          <label className="flex items-center gap-2.5 text-sm text-ink">
-            <input type="checkbox" readOnly className="h-5 w-5 accent-[var(--color-brand)]" />
-            Needs a mount
-          </label>
-          <fieldset className="flex flex-col gap-2 border-0 p-0">
-            <legend className="text-sm font-bold text-ink">Offer</legend>
-            <label className="flex items-center gap-2.5 text-sm text-ink">
-              <input type="radio" name="ds-offer" defaultChecked readOnly className="h-5 w-5 accent-[var(--color-brand)]" />
-              Lend it
-            </label>
-            <label className="flex items-center gap-2.5 text-sm text-ink">
-              <input type="radio" name="ds-offer" readOnly className="h-5 w-5 accent-[var(--color-brand)]" />
-              Give it away
-            </label>
-          </fieldset>
-        </div>
-      </Section>
+        <div className="flex flex-col gap-5">
+          <Card title="Selection controls">
+            <div className="flex flex-wrap items-center gap-4 font-bold">
+              <label className="flex items-center gap-2.5">
+                <input type="checkbox" defaultChecked className="h-6 w-6 accent-[var(--b600)]" /> Checked
+              </label>
+              <label className="flex items-center gap-2.5">
+                <input type="checkbox" className="h-6 w-6 accent-[var(--b600)]" /> Unchecked
+              </label>
+              <label className="flex items-center gap-2.5">
+                <input type="radio" name="ds-r" defaultChecked className="h-6 w-6 accent-[var(--b600)]" /> Radio
+              </label>
+              <label className="flex items-center gap-2.5 text-muted">
+                <input type="checkbox" disabled className="h-6 w-6" /> Disabled
+              </label>
+            </div>
+            {/* The product's switch is a chip with role="switch" (see the site
+                content editor), so that is what the sheet shows. */}
+            <div className="flex flex-wrap items-center gap-3">
+              <button type="button" role="switch" aria-checked="true" data-on="true" className="chip">
+                Email me updates · On
+              </button>
+              <button type="button" role="switch" aria-checked="false" className="chip">
+                Off
+              </button>
+            </div>
+            <div>
+              <div className="mb-2 flex justify-between text-sm font-extrabold">
+                <span>Palm width</span>
+                <span className="font-mono">55 mm</span>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <button type="button" aria-label="Decrease" className="grid h-11 w-11 place-items-center rounded-[var(--radius-field)] border border-line bg-surface text-ink">
+                  <Minus weight="bold" aria-hidden="true" />
+                </button>
+                <input
+                  type="range"
+                  min={30}
+                  max={90}
+                  defaultValue={55}
+                  aria-label="Palm width"
+                  className="h-11 flex-1 accent-[var(--b600)]"
+                />
+                <button type="button" aria-label="Increase" className="grid h-11 w-11 place-items-center rounded-[var(--radius-field)] border border-line bg-surface text-ink">
+                  <Plus weight="bold" aria-hidden="true" />
+                </button>
+              </div>
+              <p className="mt-1.5 text-xs text-muted">
+                Stepper buttons are the WCAG 2.5.7 single-pointer alternative to dragging.
+              </p>
+            </div>
+          </Card>
 
-      <Section title="Feedback" blurb="Tint carries the register; the sentence carries the meaning.">
-        <div className="flex max-w-xl flex-col gap-3">
-          <Alert tone="ok">Saved. Northside Therapy Collective has been asked to review it.</Alert>
-          <Alert tone="warn">This guide has no safety notes yet. Add them before you submit.</Alert>
-          <Alert tone="bad">That code did not match. Ask them to read it again.</Alert>
+          <Card title="Chips, badges, status">
+            <div className="flex flex-wrap gap-2">
+              <button type="button" className="chip">Easy</button>
+              <button type="button" className="chip" aria-pressed="true">Under 30 min</button>
+              <button type="button" className="browse-chip">
+                Palm press <X size={14} weight="bold" className="p-1" aria-label="Remove filter" />
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Badge status="approved" label="Approved" />
+              <Badge status="pending" label="Pending review" />
+              <Badge status="rejected" label="Sent back" />
+              <Badge status="draft" label="Draft" />
+              <Badge status="accepted" label="Backed" />
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Badge status="easy" label="Easy" />
+              <Badge status="medium" label="Medium" />
+              <Badge status="hard" label="Hard" />
+              <Badge status="prototype" label="Prototype" />
+            </div>
+          </Card>
         </div>
-      </Section>
+      </div>
 
-      <Section title="Skeletons & progress" blurb="Shapes the size of what is coming, never a spinner.">
-        <div className="flex max-w-xl flex-col gap-4">
-          <div className="card flex flex-col gap-2 p-4">
-            <span className="block h-4 w-2/5 rounded-pill bg-sunken" />
-            <span className="block h-3 w-4/5 rounded-pill bg-sunken" />
-            <span className="block h-3 w-3/5 rounded-pill bg-sunken" />
+      <div className="grid gap-5 lg:grid-cols-3">
+        <Card title="Feedback">
+          <Alert tone="ok">Guide saved to your list.</Alert>
+          <Alert tone="warn">Cords longer than 20cm are a strangulation risk.</Alert>
+          <Alert tone="bad">Upload failed — the file is over 50 MB.</Alert>
+          <Alert tone="info">Only needed for printed grips and mounts.</Alert>
+          {/* The board's toast. components/toast.tsx still draws a fixed green
+              box, so this one is the board's, inline. */}
+          <div
+            className="flex items-center gap-2.5 self-center rounded-pill px-[18px] py-3 text-sm font-bold"
+            style={{ background: 'var(--ink)', color: 'var(--canvas)', boxShadow: 'var(--shadow-e4)' }}
+          >
+            <CheckCircle size={20} weight="fill" style={{ color: 'var(--mint)' }} aria-hidden="true" />
+            Toast · Request sent
+          </div>
+        </Card>
+
+        <Card title="Skeletons & progress">
+          <div className="flex gap-3">
+            <div className={`h-[72px] w-[72px] ${skeleton}`} />
+            <div className="flex flex-1 flex-col gap-2">
+              <div className={`h-4 w-[70%] ${skeleton}`} />
+              <div className={`h-3 w-full ${skeleton}`} />
+              <div className={`h-3 w-[45%] ${skeleton}`} />
+            </div>
           </div>
           <div>
-            <p className="eyebrow text-muted">Course progress</p>
+            <div className="mb-1.5 flex justify-between text-[13px] font-extrabold">
+              <span>Uploading jack-clip-v3.stl</span>
+              <span className="font-mono">64%</span>
+            </div>
             <div
               role="progressbar"
+              aria-valuenow={64}
               aria-valuemin={0}
-              aria-valuemax={16}
-              aria-valuenow={6}
-              aria-label="Course progress"
-              className="mt-2 h-2 w-full overflow-hidden rounded-pill bg-sunken"
+              aria-valuemax={100}
+              aria-label="Upload progress"
+              className="h-2.5 overflow-hidden rounded-pill bg-sunken"
             >
-              <div className="h-full rounded-pill bg-brand-dark" style={{ width: '37.5%' }} />
+              <div className="h-full rounded-pill" style={{ width: '64%', background: 'var(--b600)' }} />
             </div>
           </div>
-        </div>
-      </Section>
+          <div className="flex items-center gap-1.5">
+            {['var(--ok)', 'var(--ok)', 'var(--b600)', 'var(--line)', 'var(--line)'].map((bg, i) => (
+              <span key={i} className="h-2 flex-1 rounded-pill" style={{ background: bg }} />
+            ))}
+            <span className="ml-1.5 text-xs font-extrabold text-muted">Step 3 of 5</span>
+          </div>
+          <div className="flex items-center gap-2">
+            {[
+              ['SM', 'var(--tmint)'],
+              ['F3', 'var(--tviolet)'],
+              ['O1', 'var(--tcoral)'],
+              ['+4', 'var(--surface2)'],
+            ].map(([ini, bg]) => (
+              <span
+                key={ini}
+                className="grid h-10 w-10 place-items-center rounded-full text-[13px] font-extrabold"
+                style={{ background: bg, color: ini === '+4' ? 'var(--muted)' : 'var(--tink)' }}
+              >
+                {ini}
+              </span>
+            ))}
+          </div>
+        </Card>
 
-      {/* The radii live in Foundations above — this is the depth ladder only. */}
-      <Section title="Elevation" blurb="Four steps, and the thing each one is for.">
-        <div className="grid gap-4 sm:grid-cols-4">
-          {[
-            ['e1', 'var(--shadow-e1)', 'Field'],
-            ['e2', 'var(--shadow-e2)', 'Card'],
-            ['e3', 'var(--shadow-e3)', 'Popover'],
-            ['e4', 'var(--shadow-e4)', 'Dialog'],
-          ].map(([name, shadow, use]) => (
-            <div
-              key={name}
-              className="rounded-card border border-line bg-surface p-4"
-              style={{ boxShadow: shadow }}
-            >
-              <p className="numeral text-[20px] text-ink">{name}</p>
-              <p className="text-xs text-muted">{use}</p>
+        <Card title="Elevation & radii">
+          <div className="grid grid-cols-4 gap-3">
+            {[
+              ['e1 · sm', 'var(--shadow-e1)', 'var(--radius-field)'],
+              ['e2 · md', 'var(--shadow-e2)', 'var(--radius-inset)'],
+              ['e3 · lg', 'var(--shadow-e3)', 'var(--radius-inset)'],
+              ['e4 · xl', 'var(--shadow-e4)', 'var(--radius-card)'],
+            ].map(([label, shadow, radius]) => (
+              <div
+                key={label}
+                className="grid h-16 place-items-center bg-surface font-mono text-[11px] font-semibold"
+                style={{ boxShadow: shadow, borderRadius: radius }}
+              >
+                {label}
+              </div>
+            ))}
+          </div>
+          <div
+            className="grid h-16 place-items-center rounded-pill font-mono text-xs font-semibold"
+            style={{ background: 'var(--b600)', color: 'var(--onbrand)', boxShadow: 'var(--shadow-glow), var(--shadow-hi)' }}
+          >
+            brand glow · pill · inner highlight
+          </div>
+          <p className="m-0 text-[13px] leading-[1.5] text-muted">
+            Depth = layered soft shadow + top inner highlight + 1px hairline. High-contrast mode
+            drops shadows and doubles borders.
+          </p>
+        </Card>
+      </div>
+
+      <div>
+        <h2 className="mb-1 font-display text-2xl font-extrabold text-ink">Mascot — &ldquo;Splat&rdquo; the bear</h2>
+        <p className="mb-3.5 max-w-[70ch] text-muted">
+          Periwinkle bear, peach cheeks, slate features. Each pose has a small idle loop; inline
+          SVG, one React component with a pose prop.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {POSES.map(([pose, label, use]) => (
+            <div key={pose} className="card flex flex-col items-center gap-2.5 p-4">
+              <div className="grid w-full place-items-center overflow-hidden rounded-[var(--radius-inset)] bg-sunken py-2">
+                <SplatMascot pose={pose} width={120} />
+              </div>
+              <span className="whitespace-nowrap text-[15px] font-extrabold">{label}</span>
+              <span className="text-center text-xs text-muted">{use}</span>
             </div>
           ))}
         </div>
-      </Section>
-
-      <Section title="Disclosure, on its own" blurb="Keep the decision visible. Hide the evidence.">
-        <div className="rounded-[var(--radius-card)] border border-line bg-surface shadow-e1">
-          <Disclosure summary="Build details">
-            <dl className="grid gap-2 text-sm sm:grid-cols-2">
-              <div>
-                <dt className="text-muted">Parts</dt>
-                <dd className="text-ink">6 × M3 bolt, 1 × 3.5 mm socket</dd>
-              </div>
-              <div>
-                <dt className="text-muted">Printed by</dt>
-                <dd className="text-ink">Northside Therapy Collective</dd>
-              </div>
-            </dl>
-          </Disclosure>
+        <div className="mt-4 grid gap-4 lg:grid-cols-3">
+          <div className="flex items-center gap-4 rounded-card p-[22px]" style={{ background: 'var(--tamber)', color: 'var(--tink)' }}>
+            <SplatMascot pose="hold" width={90} />
+            <div>
+              <p className="m-0 text-[15px] font-extrabold">On a tinted card</p>
+              <p className="m-0 mt-1 text-[13px] leading-[1.5]">The hero &ldquo;contribute&rdquo; card.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4 rounded-card border border-dashed border-line bg-surface p-[22px]">
+            <SplatMascot pose="think" width={90} />
+            <div>
+              <p className="m-0 text-[15px] font-extrabold">Empty state</p>
+              <p className="m-0 mt-1 text-[13px] leading-[1.5] text-muted">Nothing matched those filters.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4 rounded-card p-[22px]" style={{ background: 'var(--b600)', color: 'var(--onbrand)' }}>
+            <SplatMascot pose="wave" width={90} />
+            <div>
+              <p className="m-0 text-[15px] font-extrabold">On brand blue</p>
+              <p className="m-0 mt-1 text-[13px] leading-[1.5] opacity-90">
+                Body stays legible on b600; avoid b300–b400 backgrounds.
+              </p>
+            </div>
+          </div>
         </div>
-      </Section>
-
-      <Section title={'Mascot — "Splat" the bear'} blurb="Used for encouragement and empty states, never for status.">
-        <div className="flex flex-wrap items-center gap-6">
-          <SplatMascot width={120} />
-          <p className="max-w-prose text-sm leading-relaxed text-muted">
-            The bear turns up when a page has nothing to show yet, and when somebody
-            finishes something. It never carries state — a toy is not &ldquo;bear
-            coloured&rdquo;, it is accepted or it is not.
-          </p>
-        </div>
-      </Section>
-    </main>
+      </div>
+    </div>
   )
 }
