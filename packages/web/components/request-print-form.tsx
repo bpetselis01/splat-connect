@@ -30,6 +30,7 @@ import {
   CheckSquare,
   Square,
   Cube,
+  Info,
   MapPinLine,
   PaperPlaneTilt,
   RadioButton,
@@ -181,6 +182,14 @@ export function RequestPrintForm({
               )
             })}
           </ul>
+          <p className="flex items-start gap-2 text-[13px] leading-[1.5] text-muted">
+            <Info size={16} weight="fill" className="mt-0.5 flex-none text-brand-dark" aria-hidden="true" />
+            <span>
+              Every part carries its own settings, exactly as the author tested them, and they
+              travel with the request. The printer can tell you in chat if their setup needs
+              something different.
+            </span>
+          </p>
         </section>
 
         <section className="print-panel gap-4">
