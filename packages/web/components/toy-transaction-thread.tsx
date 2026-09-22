@@ -517,8 +517,9 @@ export function ToyTransactionThread({
         )}
 
         {/* The toy, what changes hands, and where. A build's aside carries the
-            guide instead, which only the build page knows. */}
-        {board && !isBuild && (
+            guide instead, and a print job's the parts and the printer — both
+            only their own page knows, and neither has a toy to summarise. */}
+        {board && !isBuild && tx.type !== 'print' && (
           <div className="xthread-card overflow-hidden">
             <div className="flex items-center gap-3.5 px-5 py-[18px]">
               <span className="grid h-[76px] w-[76px] flex-none place-items-center overflow-hidden rounded-[var(--radius-inset)] bg-sunken text-muted">

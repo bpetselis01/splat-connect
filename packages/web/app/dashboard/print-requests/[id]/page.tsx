@@ -34,6 +34,7 @@ import { StageRailCard } from '@/components/stage-rail-card'
 import { PrintNextStep } from '@/components/print-next-step'
 import { LiveTransaction } from '@/components/live-transaction'
 import { ToyTransactionThread } from '@/components/toy-transaction-thread'
+import { ChatHead } from '@/components/exchange-chat'
 import { printStages, printStageFacts } from '@/lib/print-stages'
 
 function defaultAddress(profile: Profile): PickupAddress | null {
@@ -186,6 +187,8 @@ export default async function PrintJobPage({ params }: { params: Promise<{ id: s
             transactionId={id}
             viewerId={caps.profile.id}
             canEdit={canEditCosts}
+            heading="What this print costs you"
+            intro={`${otherPartyName} gives the time and the machine free. These are their standard rates, in their own words.`}
           />
         </div>
       )}
@@ -204,6 +207,13 @@ export default async function PrintJobPage({ params }: { params: Promise<{ id: s
         onReject={reject}
         onWithdraw={withdraw}
         onConfirm={confirm}
+        variant="board"
+        chatHead={
+          <ChatHead
+            name={otherPartyName}
+            sub={viewerIsPrinter ? 'Only you and the family can read this' : 'Only you and the printer can read this'}
+          />
+        }
         asideTop={
           <>
             <PrintNextStep tx={tx} viewerIsPrinter={viewerIsPrinter} />

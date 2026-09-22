@@ -136,6 +136,11 @@ export function CostPanel({
   viewerId,
   /** A party to an exchange that can still change. Omit for a read-only view. */
   canEdit = false,
+  /** The board words this kind of handover: "What this print costs you", and
+   *  who gives what free. Read by the side that pays; the giver's heading
+   *  stays "What you asked back". */
+  heading,
+  intro,
 }: {
   lines: CostLine[]
   settlement: Settlement | null
@@ -147,6 +152,8 @@ export function CostPanel({
   transactionId: string
   viewerId?: string
   canEdit?: boolean
+  heading?: string
+  intro?: string
 }) {
   const [rows, setRows] = useState(lines)
   const [terms, setTerms] = useState<Settlement>(
@@ -251,11 +258,11 @@ export function CostPanel({
       <div className="flex flex-wrap items-start justify-between gap-[14px] p-[18px_20px] pb-[13px]">
         <div className="min-w-0">
           <h2 id="cost-heading" className="text-xs font-extrabold uppercase tracking-widest text-muted">
-            {viewerOwes ? 'What the handover costs you' : 'What you asked back'}
+            {viewerOwes ? (heading ?? 'What the handover costs you') : 'What you asked back'}
           </h2>
           <p className="mt-1 max-w-prose text-sm leading-relaxed text-muted">
-            SPLAT never handles the money — you settle it directly, and either of you can mark it
-            done.
+            {(viewerOwes && intro) ||
+              'SPLAT never handles the money — you settle it directly, and either of you can mark it done.'}
           </p>
         </div>
         <p

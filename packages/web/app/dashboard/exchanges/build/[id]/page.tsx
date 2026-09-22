@@ -203,6 +203,8 @@ export default async function BuildDetailPage({ params }: { params: Promise<{ id
                 transactionId={id}
                 viewerId={caps.profile.id}
                 canEdit={canEditCosts}
+                heading="What this build costs you"
+                intro={`${otherPartyName} gives the time and the tools free — these are the parts they bought.`}
               />
             )}
 
