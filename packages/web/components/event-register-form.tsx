@@ -21,7 +21,8 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { CheckCircle } from '@phosphor-icons/react/dist/ssr'
 import { browserApiClient } from '@/lib/browser-api-client'
-import type { OrgEventQuestion } from '@splat-connect/types'
+import { EventCostPanel } from '@/components/event-cost-panel'
+import { formatCents, type OrgEventQuestion } from '@splat-connect/types'
 
 type Answers = Record<string, string | boolean>
 
@@ -31,17 +32,28 @@ export function EventRegisterForm({
   questions,
   defaultName,
   defaultEmail,
+  costCents = null,
+  costNote = null,
 }: {
   eventId: string
   orgName: string
   questions: OrgEventQuestion[]
   defaultName: string
   defaultEmail: string
+  /** 069. Null or 0 draws no cost block and asks no acknowledgement. */
+  costCents?: number | null
+  costNote?: string | null
 }) {
   const router = useRouter()
   const [name, setName] = useState(defaultName)
   const [email, setEmail] = useState(defaultEmail)
   const [answers, setAnswers] = useState<Answers>({})
+  // The money line is a consent line: SPLAT never takes the payment, and the
+  // box says the person knows they owe the host directly. The server refuses a
+  // costed registration without it (packages/api/src/routes/events.ts).
+  const [acknowledged, setAcknowledged] = useState(false)
+  const cost = costCents && costCents > 0 ? costCents : null
+  const costStr = cost ? formatCents(cost) : null
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
@@ -61,7 +73,12 @@ export function EventRegisterForm({
     setError(null)
     setSaving(true)
     try {
-      await browserApiClient.post(`/api/events/${eventId}/registrations`, { name, email, answers })
+      await browserApiClient.post(`/api/events/${eventId}/registrations`, {
+        name,
+        email,
+        answers,
+        ...(cost ? { cost_acknowledged: acknowledged } : {}),
+      })
       router.push(`/get-involved/events/${eventId}`)
       router.refresh()
     } catch (err) {
@@ -204,6 +221,24 @@ export function EventRegisterForm({
         </p>
       )}
 
+      {cost && (
+        <div className="flex flex-col gap-3 border-t border-line pt-[22px]">
+          <EventCostPanel orgName={orgName} costCents={cost} costNote={costNote} />
+          <label className="flex items-start gap-3 rounded-[14px] bg-[var(--surface2)] px-4 py-3 text-sm leading-[1.5] text-ink">
+            <input
+              type="checkbox"
+              checked={acknowledged}
+              onChange={(e) => setAcknowledged(e.target.checked)}
+              className="mt-1 h-[18px] w-[18px] shrink-0 accent-[var(--b600)]"
+            />
+            <span>
+              I have read the {costStr} {orgName} asks towards materials, and I understand SPLAT
+              does not take the payment — I settle it with them directly.
+            </span>
+          </label>
+        </div>
+      )}
+
       {error && (
         <p role="alert" className="alert alert-danger">
           {error}
@@ -211,9 +246,13 @@ export function EventRegisterForm({
       )}
 
       <div className="flex flex-wrap items-center gap-3 border-t border-line pt-2">
-        <button type="submit" disabled={saving || missing.length > 0} className="btn btn-primary mt-4 px-[26px]">
+        <button
+          type="submit"
+          disabled={saving || missing.length > 0 || (!!cost && !acknowledged)}
+          className="btn btn-primary mt-4 px-[26px]"
+        >
           <CheckCircle weight="bold" aria-hidden="true" />
-          {saving ? 'Confirming…' : 'Confirm my spot'}
+          {saving ? 'Confirming…' : costStr ? `Confirm my spot · ${costStr}` : 'Confirm my spot'}
         </button>
         <a
           href={`/get-involved/events/${eventId}`}
@@ -224,7 +263,9 @@ export function EventRegisterForm({
         <span className="mt-4 max-w-[34ch] text-[13px] leading-[1.45] text-muted">
           {missing.length > 0
             ? `${missing.length} required question${missing.length === 1 ? '' : 's'} still to answer.`
-            : 'Free to attend. You can change or cancel any time from My events.'}
+            : costStr
+              ? `No ticket price — the ${costStr} is materials, paid to ${orgName} on the day. Change or cancel any time from My events.`
+              : 'Free to attend. You can change or cancel any time from My events.'}
         </span>
       </div>
     </form>

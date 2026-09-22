@@ -177,7 +177,7 @@ events.post('/:id/registrations', async (c) => {
   const admin = createAdminClient()
   const { data: event, error: eventError } = await admin
     .from('org_events')
-    .select('id, status, cancelled_at, registrations_closed_at, capacity, starts_at')
+    .select('id, status, cancelled_at, registrations_closed_at, capacity, starts_at, cost_cents')
     .eq('id', eventId)
     .maybeSingle()
   if (eventError) {
@@ -188,6 +188,13 @@ events.post('/:id/registrations', async (c) => {
   if (event.cancelled_at) return c.json({ error: 'This event has been cancelled.' }, 409)
   if (event.registrations_closed_at) {
     return c.json({ error: 'The host has closed registrations for this one.' }, 409)
+  }
+  // 069. A costed event is confirmed only with the register form's box ticked.
+  // SPLAT does not take the payment and the person owes the host directly, so
+  // the server holds the line the checkbox draws: this page is public and its
+  // confirm button is not the only way to reach this route.
+  if ((event.cost_cents ?? 0) > 0 && body.cost_acknowledged !== true) {
+    return c.json({ error: 'Tick the box to say you have read what this event costs.' }, 400)
   }
 
   const { data: questions } = await admin

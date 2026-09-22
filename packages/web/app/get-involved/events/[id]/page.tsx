@@ -40,10 +40,16 @@ import { apiClient } from '@/lib/api-client'
 import { getCapabilities } from '@/lib/capabilities'
 import { safePhotoSrc } from '@/lib/photo-src'
 import { EventRsvpButton } from '@/components/event-rsvp-button'
+import { EventCostPanel } from '@/components/event-cost-panel'
 import { KIND_TINT } from '@/components/event-card'
 import { ShareButton } from '@/components/share-button'
 import { longDate, formatTimeRange, dateBadge, isPast } from '@/lib/dates'
-import { EVENT_KIND_LABEL, type EventListItem, type OrgEventQuestion } from '@splat-connect/types'
+import {
+  EVENT_KIND_LABEL,
+  formatCents,
+  type EventListItem,
+  type OrgEventQuestion,
+} from '@splat-connect/types'
 
 type EventDetail = EventListItem & {
   org: { id: string; name: string; description: string | null; suburb: string | null; state: string | null } | null
@@ -81,6 +87,9 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
   const where = online ? 'Online' : [event.suburb, event.state].filter(Boolean).join(' ')
   const tint = KIND_TINT[event.kind]
   const cover = safePhotoSrc(event.photo_urls[0] ?? null)
+  // 069. The where line and the cost panel agree: a costed event never says
+  // "Free to attend" beside a figure.
+  const costLine = event.cost_cents ? `${formatCents(event.cost_cents)} towards materials` : 'Free to attend'
   const faceTints = ['var(--tcoral)', 'var(--tmint)', 'var(--tamber)', 'var(--tviolet)']
   const going = `${event.going_count} going${event.seats_left !== null ? ` · ${event.seats_left} seats left` : ''}`
   const LABEL = 'text-xs font-extrabold uppercase tracking-[.1em] text-muted'
@@ -197,7 +206,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
                 <span className="block text-sm text-muted">
                   {online
                     ? 'The joining link is sent to you once you say you are coming.'
-                    : `${where} · Free to attend`}
+                    : `${where} · ${costLine}`}
                 </span>
               </span>
             </div>
@@ -250,6 +259,13 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
               </>
             )}
           </div>
+
+          <EventCostPanel
+            orgName={event.org?.name ?? 'The host'}
+            costCents={event.cost_cents}
+            costNote={event.cost_note}
+            className="mt-4"
+          />
 
           <div className="mt-[34px] flex max-w-[66ch] flex-col gap-[26px]">
             {event.description && (

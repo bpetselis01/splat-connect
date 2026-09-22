@@ -38,6 +38,7 @@ import {
   Drop,
   Fire,
   Hammer,
+  HandCoins,
   Hash,
   Lightning,
   ListChecks,
@@ -59,6 +60,7 @@ import {
 } from '@phosphor-icons/react/dist/ssr'
 import type { Icon } from '@phosphor-icons/react'
 import { browserApiClient } from '@/lib/browser-api-client'
+import { dollarsToCents } from '@/components/cost-panel'
 import {
   EVENT_KINDS,
   EVENT_KIND_LABEL,
@@ -192,6 +194,12 @@ export function EventForm({
   )
   const [tools, setTools] = useState<string[]>(event?.tools ?? [])
   const [accessibility, setAccessibility] = useState(event?.accessibility_note ?? '')
+  const [costDollars, setCostDollars] = useState(
+    event?.cost_cents ? (event.cost_cents / 100).toFixed(2) : '',
+  )
+  const [costNote, setCostNote] = useState(event?.cost_note ?? '')
+  // Blank is free; anything else has to read as dollars before it can be sent.
+  const costCents = costDollars.trim() === '' ? 0 : dollarsToCents(costDollars)
   const [questions, setQuestions] = useState<DraftQuestion[]>(
     initialQuestions.map((q) => ({
       id: q.id,
@@ -229,6 +237,7 @@ export function EventForm({
   if (format === 'in_person' && !suburb.trim()) missing.push('a suburb')
   if (format === 'online' && !onlineUrl.trim()) missing.push('a joining link')
   if (!audience.trim()) missing.push('who it is for')
+  if (costCents === null) missing.push('a cost written as dollars, like 12 or 12.50')
 
   async function save(status: 'draft' | 'published') {
     setError(null)
@@ -258,6 +267,8 @@ export function EventForm({
         prints_parts: printsParts,
         part_sets_max: printsParts ? Number(partSetsMax) : null,
         accessibility_note: accessibility.trim(),
+        cost_cents: costCents ?? 0,
+        cost_note: costNote.trim(),
         status,
       }
 
@@ -536,6 +547,41 @@ export function EventForm({
           className="field"
         />
       </label>
+
+      <fieldset className="form-well">
+        <legend className="sr-only">What it costs a family to come</legend>
+        <p aria-hidden="true" className="form-well__kicker">
+          <HandCoins weight="bold" aria-hidden="true" className="mr-1 inline align-[-2px]" />
+          What it costs a family to come{' '}
+          <span>— leave it empty and the event shows as free to attend</span>
+        </p>
+        <div className="grid gap-3 sm:grid-cols-[minmax(0,160px)_minmax(0,1fr)]">
+          <label className="block">
+            <span className="form-label mb-1.5 text-[13px] text-muted">Amount, in dollars</span>
+            <input
+              inputMode="decimal"
+              value={costDollars}
+              onChange={(e) => setCostDollars(e.target.value)}
+              placeholder="0.00"
+              className="field"
+            />
+          </label>
+          <label className="block">
+            <span className="form-label mb-1.5 text-[13px] text-muted">Breakdown, in your words</span>
+            <input
+              value={costNote}
+              onChange={(e) => setCostNote(e.target.value)}
+              maxLength={500}
+              placeholder="e.g. kits are bought in bulk and passed on at cost — $12 is what one bench uses."
+              className="field"
+            />
+          </label>
+        </div>
+        <p className="text-[13px] leading-normal text-muted">
+          SPLAT never takes the payment. Families read the figure before they confirm and settle it
+          with you directly.
+        </p>
+      </fieldset>
 
       <fieldset className="form-well">
         <legend className="sr-only">Registration form</legend>

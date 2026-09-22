@@ -96,6 +96,8 @@ export default async function EventRegisterPage({ params }: { params: Promise<{ 
         questions={event.questions}
         defaultName={caps.profile.name ?? ''}
         defaultEmail={caps.profile.email ?? ''}
+        costCents={event.cost_cents}
+        costNote={event.cost_note}
       />
     </div>
   )

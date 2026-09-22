@@ -239,7 +239,7 @@ organizations.patch('/:id/profile', async (c) => {
 // select string, and a `+` anywhere in it collapses every column to
 // GenericStringError.
 const EVENT_COLUMNS =
-  'id, org_id, kind, title, summary, starts_at, ends_at, format, location, suburb, state, online_url, audience, description, what_to_bring, tools, capacity, prints_parts, part_sets_max, accessibility_note, photo_urls, status, registrations_closed_at, cancelled_at, created_by, created_at, updated_at'
+  'id, org_id, kind, title, summary, starts_at, ends_at, format, location, suburb, state, online_url, audience, description, what_to_bring, tools, capacity, prints_parts, part_sets_max, accessibility_note, cost_cents, cost_note, photo_urls, status, registrations_closed_at, cancelled_at, created_by, created_at, updated_at'
 // One literal, not a concatenation — same reason as EVENT_COLUMNS above.
 const STORY_COLUMNS =
   'id, org_id, kind, title, summary, body, byline, consent_confirmed, photo_urls, featured, pull_quote, pull_quote_by, link_tutorial_id, status, published_at, created_by, created_at, updated_at'
@@ -268,6 +268,8 @@ function eventShape(
       prints_parts: boolean
       part_sets_max: number | null
       accessibility_note: string | null
+      cost_cents: number | null
+      cost_note: string | null
     } {
   const kind = typeof body.kind === 'string' && body.kind in EVENT_KINDS ? body.kind : 'build_day'
 
@@ -314,7 +316,25 @@ function eventShape(
     prints_parts: prints,
     part_sets_max: prints ? partSetsMax : null,
     accessibility_note: text('accessibility_note', 500),
+    ...costShape(body),
   }
+}
+
+/**
+ * The 069 columns. Separate from eventShape because the manage screen sets
+ * them on their own, after publishing, without resending the whole event.
+ *
+ * Integer cents from the wire, never dollars: the form converts before it
+ * sends (components/cost-panel.tsx's dollarsToCents), so a fractional cent
+ * here is a bug rather than a rounding question. 0 and blank both mean free,
+ * and a free event keeps no note.
+ */
+function costShape(body: Record<string, unknown>): { cost_cents: number | null; cost_note: string | null } {
+  const raw = body.cost_cents
+  const n = raw === null || raw === undefined || raw === '' ? 0 : Number(raw)
+  const cents = Number.isInteger(n) && n > 0 ? n : null
+  const note = typeof body.cost_note === 'string' ? body.cost_note.trim().slice(0, 500) : ''
+  return { cost_cents: cents, cost_note: cents && note ? note : null }
 }
 
 organizations.get('/:id/events', async (c) => {
@@ -398,6 +418,9 @@ organizations.patch('/:orgId/events/:id', async (c) => {
   if ('cancelled' in body) {
     patch.cancelled_at = body.cancelled ? new Date().toISOString() : null
   }
+  // The manage screen's cost panel, on its own. The full edit below reads the
+  // same two keys through eventShape.
+  if ('cost_cents' in body || 'cost_note' in body) Object.assign(patch, costShape(body))
 
   // A full edit only when the body carries a title, so a one-field call like
   // { cancelled: true } cannot blank every other column by omission.

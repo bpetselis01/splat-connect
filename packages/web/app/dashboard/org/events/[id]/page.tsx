@@ -33,6 +33,7 @@ import { longDate } from '@/lib/dates'
 import { formatRelativeTime } from '@/lib/relative-time'
 import { EventPartQueue } from '@/components/event-part-queue'
 import { EventWithdrawActions } from '@/components/event-withdraw-actions'
+import { EventCostEditor } from '@/components/event-cost-editor'
 import {
   EVENT_KIND_LABEL,
   type OrgEvent,
@@ -140,6 +141,13 @@ export default async function ManageEventPage({ params }: { params: Promise<{ id
         eventId={event.id}
         registrationsClosed={!!event.registrations_closed_at}
         cancelled={!!event.cancelled_at}
+      />
+
+      <EventCostEditor
+        orgId={org.id}
+        eventId={event.id}
+        costCents={event.cost_cents}
+        costNote={event.cost_note}
       />
 
       <dl className="my-6 grid grid-cols-2 gap-3.5 sm:grid-cols-4">
