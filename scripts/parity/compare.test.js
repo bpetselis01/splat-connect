@@ -21,7 +21,7 @@ const shape = { radius: 18, shadow: 'none', bg: 'rgb(255,255,255)' }
 const fp = (headings, extra = {}) => ({
   headings,
   cardTitles: [],
-  counts: { cards: 0, buttons: 0, inputs: 0, images: 0, tables: 0, lists: 0 },
+  counts: { cards: 0, buttons: 0, inputs: 0, images: 0, tables: 0, lists: 0, rows: 0 },
   shapes: { card: shape, button: shape, input: shape },
   sets: { buttonRadius: [], buttonShadow: [], inputRadius: [], inputBg: [] },
   paragraphs: [],
@@ -66,3 +66,17 @@ const types = (out, t) => out.filter((x) => x.type === t)
 }
 
 console.log('compare: 4 checks passed')
+
+// A table page's height tracks its row count the way a card page's tracks
+// its cards: five queued guides on the board against the queue's hundreds is
+// data volume, not a missing section. /admin/review reported 1258px against
+// 12242px with rows the only thing that differed.
+{
+  const counts = (rows) => ({ cards: 0, buttons: 0, inputs: 0, images: 0, tables: 1, lists: 0, rows })
+  const board = fp([h(1, 'review queue')], { counts: counts(5), page: { ...fp([]).page, height: 1258 } })
+  const live = fp([h(1, 'review queue')], { counts: counts(180), page: { ...fp([]).page, height: 12242 } })
+  assert.deepStrictEqual(types(compare(board, live), 'missing-section'), [], 'row volume read as missing section')
+  // Same row count, same height gap: still a real finding.
+  const short = fp([h(1, 'review queue')], { counts: counts(5), page: { ...fp([]).page, height: 12242 } })
+  assert.strictEqual(types(compare(board, short), 'missing-section').length, 1, 'real height gap lost')
+}

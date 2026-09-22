@@ -125,10 +125,12 @@ function compare(board, live, opts = {}) {
   const bT = (board.cardTitles || []).filter((t) => t.size >= TITLE_MIN)
   const lT = (live.cardTitles || []).filter((t) => t.size >= TITLE_MIN)
   if (bT.length && lT.length) {
+    // Null on a dead heat, for the reason fingerprint.js's modal() gives.
     const modeOf = (xs, key) => {
       const c = new Map()
       for (const x of xs) c.set(x[key], (c.get(x[key]) || 0) + 1)
-      return [...c.entries()].sort((a, b) => b[1] - a[1])[0][0]
+      const top = [...c.entries()].sort((a, b) => b[1] - a[1])
+      return top.length > 1 && top[0][1] === top[1][1] ? null : top[0][0]
     }
     // Mode against SET, the same way the buttons are compared, and for the
     // same reason. A screen's cards are not one population: /impact draws four
@@ -139,13 +141,13 @@ function compare(board, live, opts = {}) {
     // against Nunito in both directions across eleven screens. The question
     // worth asking is whether live has ANY card title the board's shape.
     const bf = modeOf(bT, 'font')
-    if (!lT.some((t) => t.font === bf))
+    if (bf != null && !lT.some((t) => t.font === bf))
       out.push(f('font', 'high', 'card title font', bf, modeOf(lT, 'font')))
     const bs = modeOf(bT, 'size')
-    if (!lT.some((t) => Math.abs(t.size - bs) <= SIZE_TOLERANCE))
+    if (bs != null && !lT.some((t) => Math.abs(t.size - bs) <= SIZE_TOLERANCE))
       out.push(f('size', 'medium', 'card title size', bs + 'px', modeOf(lT, 'size') + 'px'))
     const bw = modeOf(bT, 'weight')
-    if (!lT.some((t) => Math.abs(t.weight - bw) < 100))
+    if (bw != null && !lT.some((t) => Math.abs(t.weight - bw) < 100))
       out.push(f('weight', 'low', 'card title weight', bw, modeOf(lT, 'weight')))
   } else if (board.counts.cards > 2 && live.counts.cards === 0) {
     out.push(
@@ -313,9 +315,12 @@ function compare(board, live, opts = {}) {
   // board draws six sample guides and live renders the four hundred in the
   // database, so /library is legitimately 31,000px against the board's 1,005.
   // That is data volume, which this report ignores everywhere else.
-  const bc = board.counts.cards
-  const lc = live.counts.cards
-  const volumeSkew = bc > 2 && lc > 2 && Math.max(bc, lc) / Math.min(bc, lc) > 2
+  // A table page has no cards; its records are body rows, and the same skew
+  // applies — the board's five queued guides against the queue's hundreds.
+  const skew = (b, l) => b > 2 && l > 2 && Math.max(b, l) / Math.min(b, l) > 2
+  const volumeSkew =
+    skew(board.counts.cards, live.counts.cards) ||
+    skew(board.counts.rows || 0, live.counts.rows || 0)
   if (bh > 200 && lh > 200 && !volumeSkew) {
     const ratio = Math.min(bh, lh) / Math.max(bh, lh)
     if (ratio < HEIGHT_RATIO)

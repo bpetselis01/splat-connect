@@ -131,6 +131,21 @@ function collectFingerprint(rootSelector) {
   const HEADING_MIN_SIZE = 17
   const HEADING_MIN_WEIGHT = 600
 
+  const ownText = (el) =>
+    [...el.childNodes]
+      .filter((n) => n.nodeType === 3)
+      .map((n) => n.textContent.trim())
+      .join('')
+  // A blockquote's words are its own text; its <footer> attribution is not.
+  // Live nests the attribution inside the blockquote where the board sets it
+  // beside a leaf <span>, so reading innerText pushed the live quote past the
+  // 90-char heading cap and reported the pull quote as missing while both
+  // sides rendered it at the same size and weight.
+  // Quote marks are not words: the board's blockquote owns only its opening and
+  // closing marks around the <span>, and those two characters read as a heading.
+  const headingText = (el) =>
+    el.tagName === 'BLOCKQUOTE' ? ownText(el).replace(/[“”"]/g, '') : el.innerText || ''
+
   const headingLike = (el) => {
     const s = cs(el)
     // A semantic heading is a heading at any size. Live sets its section-door
@@ -141,14 +156,19 @@ function collectFingerprint(rootSelector) {
     const semantic = /^H[1-6]$/.test(el.tagName)
     if (!semantic && px(s.fontSize) < HEADING_MIN_SIZE) return false
     if (!semantic && +s.fontWeight < HEADING_MIN_WEIGHT) return false
-    const t = (el.innerText || '').trim()
+    // Inside a semantic heading is part of that heading. The board interpolates
+    // a record name as a <span> in its h1 ("Requests to <span>Northside
+    // Therapy</span>"), and the span read as a second h1 with no counterpart.
+    if (!semantic && el.parentElement && el.parentElement.closest('h1,h2,h3,h4,h5,h6')) return false
+    const t = headingText(el).trim()
     if (t.length < 2 || t.length > 90) return false
+    // A bare count is a number, not a section. Whether one read as a heading
+    // depended on its digits: the board's "12" passed the own-text length
+    // test below and live's "0" did not, so every count chip reported an h4
+    // "#" the live side lacked.
+    if (/^\d+$/.test(t)) return false
     // Own text only: a bold wrapper should not masquerade as its own heading.
-    const ownText = [...el.childNodes]
-      .filter((n) => n.nodeType === 3)
-      .map((n) => n.textContent.trim())
-      .join('')
-    return ownText.length > 1 || /^H[1-6]$/.test(el.tagName)
+    return ownText(el).length > 1 || /^H[1-6]$/.test(el.tagName)
   }
 
   // Cards are detected before headings because a heading needs to know whether
@@ -251,7 +271,7 @@ function collectFingerprint(rootSelector) {
           ? +h.tagName[1]
           : size >= 40 ? 1 : size >= 26 ? 2 : size >= 20 ? 3 : 4,
         tag: h.tagName,
-        text: norm(h.innerText).slice(0, 80),
+        text: norm(headingText(h)).slice(0, 80),
         font: s.fontFamily.split(',')[0].replace(/["']/g, '').trim(),
         size,
         weight: +s.fontWeight,
@@ -282,8 +302,16 @@ function collectFingerprint(rootSelector) {
   const modal = (values) => {
     const counts = new Map()
     for (const v of values) counts.set(v, (counts.get(v) || 0) + 1)
-    let best = null, n = 0
-    for (const [v, c] of counts) if (c > n) { best = v; n = c }
+    let best = null, n = 0, tied = false
+    for (const [v, c] of counts) {
+      if (c > n) { best = v; n = c; tied = false }
+      else if (c === n) tied = true
+    }
+    // A dead heat is not a mode. Which value "won" was document order, which
+    // differs between the sides: the board's two machine tiles against its two
+    // request cards elected the tiles' 18px/Nunito on /organisation/orders
+    // and reported live's request card as the wrong font, size and radius.
+    if (tied) return null
     // A "most common" value that only a third of instances share is describing
     // a mixed population, not the design. Report nothing rather than a number
     // that looks authoritative and is not.
@@ -475,6 +503,10 @@ function collectFingerprint(rootSelector) {
       inputs: inputs.length,
       images: pick('img').length,
       tables: pick('table').length,
+      // Body rows are records the way cards are: the board draws six sample
+      // accounts where live lists nine hundred. compare() reads this for the
+      // same volume-skew test it runs on cards.
+      rows: pick('tbody tr').length,
       lists: pick('ul,ol').length,
     },
     shapes: {
