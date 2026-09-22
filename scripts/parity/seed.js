@@ -160,7 +160,9 @@ async function seedOwnedToy(db, parentId) {
       condition: 8,
       photo_urls: [],
       status: 'published',
-      offer_type: 'donation',
+      // 'both' so /toy-library/[id]/request draws its swap picker, the state
+      // the board shows; a donation-only toy hides half the page by design.
+      offer_type: 'both',
     })
     .select('id')
     .single()
@@ -306,6 +308,18 @@ const DB_SAMPLES = {
       .limit(1)
       .single()
     return data ? `/printing/requests?guide=${data.tutorial_id}` : null
+  },
+  // The first link on /organizations is the emptiest fixture org, so five of
+  // the profile's sections are data-gated away; pick one with a rate note.
+  org_public: async (db) => {
+    const { data } = await db
+      .from('organizations')
+      .select('id')
+      .eq('status', 'active')
+      .not('rate_note', 'is', null)
+      .limit(1)
+      .single()
+    return data ? `/organizations/${data.id}/public` : null
   },
 }
 

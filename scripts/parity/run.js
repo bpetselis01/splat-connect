@@ -184,10 +184,12 @@ async function fingerprintOf(page, url, rootSel, role) {
     try {
       let route = s.route
       if (s.sampleFrom) {
+        // An explicit DB sample beats scraping: the first link on a list is
+        // whichever fixture sorts first, and that is usually the emptiest.
         route =
           seeded[s.id] ||
-          (await resolveDynamic(livePage, s, cache)) ||
-          (await dbSample(adminClient(), s.id))
+          (await dbSample(adminClient(), s.id)) ||
+          (await resolveDynamic(livePage, s, cache))
         // Nested under a dynamic parent (/toy-library/[id]/request): the link
         // is on the parent's detail page, never on a list, so take the parent's
         // already-resolved route and append.
