@@ -26,7 +26,7 @@ import type { AuthVariables } from '../middleware/auth.js'
 const printers = new Hono<{ Variables: AuthVariables }>()
 
 const SELECT =
-  'id, owner_id, owner_org_id, name, materials, bed_x, bed_y, bed_z, suburb, state, accepting, capacity, notes, created_at, updated_at'
+  'id, owner_id, owner_org_id, name, materials, bed_x, bed_y, bed_z, suburb, state, accepting, capacity, notes, filament_cents_per_g, rate_note, created_at, updated_at'
 
 type Row = {
   id: string
@@ -42,6 +42,8 @@ type Row = {
   accepting: boolean
   capacity: number
   notes: string | null
+  filament_cents_per_g: number | null
+  rate_note: string | null
   created_at: string
   updated_at: string
 }
@@ -140,6 +142,19 @@ function invalid(body: Record<string, unknown>, partial: boolean): string | null
   if (has('notes') && body.notes !== null) {
     if (typeof body.notes !== 'string' || body.notes.length > 500) {
       return 'Notes are 500 characters or fewer.'
+    }
+  }
+  // 070. Integer cents, never a float: a rounding error in a rate is a real
+  // amount a family is asked for. Null is the toggle's off state.
+  if (has('filament_cents_per_g') && body.filament_cents_per_g !== null) {
+    const rate = body.filament_cents_per_g
+    if (typeof rate !== 'number' || !Number.isInteger(rate) || rate < 0 || rate > 100_000) {
+      return 'Filament cost is whole cents per gram, up to $1000.'
+    }
+  }
+  if (has('rate_note') && body.rate_note !== null) {
+    if (typeof body.rate_note !== 'string' || body.rate_note.length > 500) {
+      return 'The cost note is 500 characters or fewer.'
     }
   }
   return null
@@ -294,6 +309,10 @@ printers.post('/', async (c) => {
       accepting: body.accepting !== false,
       capacity: typeof body.capacity === 'number' ? body.capacity : 1,
       notes: typeof body.notes === 'string' && body.notes.trim() ? body.notes.trim() : null,
+      filament_cents_per_g:
+        typeof body.filament_cents_per_g === 'number' ? body.filament_cents_per_g : null,
+      rate_note:
+        typeof body.rate_note === 'string' && body.rate_note.trim() ? body.rate_note.trim() : null,
     })
     .select(SELECT)
     .maybeSingle()
@@ -306,7 +325,7 @@ printers.post('/', async (c) => {
 /**
  * PATCH /api/printers/:id
  *
- * Availability, capacity, materials, bed, notes. Ownership is deliberately not
+ * Availability, capacity, materials, bed, notes, rates. Ownership is deliberately not
  * changeable: moving a machine between a person and an organisation would move
  * the pickup address of every open job on it out from under its requesters.
  */
@@ -321,10 +340,12 @@ printers.patch('/:id', async (c) => {
   if (problem) return c.json({ error: problem }, 400)
 
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() }
-  for (const field of ['name', 'materials', 'bed_x', 'bed_y', 'bed_z', 'accepting', 'capacity'] as const) {
+  for (const field of [
+    'name', 'materials', 'bed_x', 'bed_y', 'bed_z', 'accepting', 'capacity', 'filament_cents_per_g',
+  ] as const) {
     if (Object.hasOwn(body, field)) patch[field] = body[field]
   }
-  for (const field of ['suburb', 'state', 'notes'] as const) {
+  for (const field of ['suburb', 'state', 'notes', 'rate_note'] as const) {
     if (Object.hasOwn(body, field)) {
       patch[field] = typeof body[field] === 'string' && (body[field] as string).trim()
         ? (body[field] as string).trim()

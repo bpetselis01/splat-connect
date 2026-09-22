@@ -113,6 +113,30 @@ describe('listing a printer', () => {
     printerId = printer.id
   })
 
+  it('records a standard rate in whole cents, and refuses a fractional one (070)', async () => {
+    const set = await app.request(
+      `/api/printers/${printerId}`,
+      json(owner.token, 'PATCH', { filament_cents_per_g: 12, rate_note: 'PLA at spool cost.' })
+    )
+    expect(set.status).toBe(200)
+    const printer = (await set.json()) as { filament_cents_per_g: number | null; rate_note: string | null }
+    expect(printer.filament_cents_per_g).toBe(12)
+    expect(printer.rate_note).toBe('PLA at spool cost.')
+
+    const fraction = await app.request(
+      `/api/printers/${printerId}`,
+      json(owner.token, 'PATCH', { filament_cents_per_g: 12.5 })
+    )
+    expect(fraction.status).toBe(400)
+
+    // Null is the toggle's off state, and clears the rate.
+    const off = await app.request(
+      `/api/printers/${printerId}`,
+      json(owner.token, 'PATCH', { filament_cents_per_g: null })
+    )
+    expect(((await off.json()) as { filament_cents_per_g: number | null }).filament_cents_per_g).toBeNull()
+  })
+
   it('refuses a bed size that is not whole millimetres, and an unknown material', async () => {
     const bed = await app.request(
       '/api/printers',

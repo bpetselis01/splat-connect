@@ -17,6 +17,8 @@ const base: PrinterWithOwner = {
   accepting: true,
   capacity: 2,
   notes: null,
+  filament_cents_per_g: null,
+  rate_note: null,
   created_at: '',
   updated_at: '',
   owner_name: 'Sam Printer',

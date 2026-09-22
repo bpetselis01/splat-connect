@@ -31,6 +31,7 @@ import {
   MagnifyingGlass,
 } from '@phosphor-icons/react/dist/ssr'
 import type { PrinterWithOwner } from '@splat-connect/types'
+import { filamentRate } from '@/lib/filament-rate'
 
 type Filters = {
   avail?: 'open' | 'noq' | 'any'
@@ -312,6 +313,11 @@ function PrinterCard({ printer: p, tint }: { printer: PrinterWithOwner; tint: st
       <p className="text-[13px] text-muted">
         <PrinterIcon className="mr-1 inline" aria-hidden="true" />
         {p.name} · bed {p.bed_x} × {p.bed_y} × {p.bed_z} mm
+      </p>
+      {/* The figure a family sees before they ask (070). SPLAT records it and
+          never moves it. */}
+      <p className="text-[13px] font-bold text-ink">
+        {p.filament_cents_per_g === null ? 'Free · parts only' : `About ${filamentRate(p.filament_cents_per_g)} filament, settled between you`}
       </p>
 
       {!open && (

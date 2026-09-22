@@ -24,6 +24,7 @@ import {
 } from '@phosphor-icons/react/dist/ssr'
 import type { PrinterWithOwner } from '@splat-connect/types'
 import { browserApiClient } from '@/lib/browser-api-client'
+import { filamentRate } from '@/lib/filament-rate'
 
 export function PrinterRow({ printer }: { printer: PrinterWithOwner }) {
   const router = useRouter()
@@ -106,6 +107,10 @@ export function PrinterRow({ printer }: { printer: PrinterWithOwner }) {
               />
               {printer.open_jobs} of {capacity} in use
             </dd>
+          </div>
+          <div>
+            <dt className="text-xs font-extrabold uppercase tracking-[0.1em] text-muted">Filament</dt>
+            <dd className="mt-[3px] font-bold text-ink">{filamentRate(printer.filament_cents_per_g)}</dd>
           </div>
         </dl>
 

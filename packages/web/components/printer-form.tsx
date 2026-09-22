@@ -11,17 +11,20 @@
  * the capacity is the honest one. Either closes you, and the form says so
  * rather than leaving somebody to discover it.
  *
- * Laid out as the board's three cards. Its "Make and model", "Colours on hand"
- * and filament-cost switch have no column on `printers` yet, so they are not
- * drawn rather than drawn and discarded.
+ * Laid out as the board's cards. Its "Make and model" and "Colours on hand"
+ * have no column on `printers` yet, so they are not drawn rather than drawn
+ * and discarded. The filament-cost switch is 070's `filament_cents_per_g`: off
+ * is null, which the card reads as free, parts only. SPLAT never handles the
+ * money — the rates card says so in the board's words.
  */
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Check, CheckCircle, MapPin, PauseCircle } from '@phosphor-icons/react/dist/ssr'
-import { PRINT_MATERIALS } from '@splat-connect/types'
+import { Check, CheckCircle, Info, MapPin, PauseCircle } from '@phosphor-icons/react/dist/ssr'
+import { PRINT_MATERIALS, formatCents } from '@splat-connect/types'
 import type { Organization } from '@splat-connect/types'
 import { browserApiClient } from '@/lib/browser-api-client'
+import { dollarsToCents } from '@/components/cost-panel'
 
 const CARD =
   'flex flex-col gap-4 rounded-[24px] border border-line bg-surface p-[22px] shadow-[var(--shadow-e2),var(--shadow-hi)]'
@@ -50,6 +53,8 @@ export function PrinterForm({
   const [ownerOrgId, setOwnerOrgId] = useState('')
   const [accepting, setAccepting] = useState(true)
   const [capacity, setCapacity] = useState(1)
+  const [showCost, setShowCost] = useState(false)
+  const [rate, setRate] = useState('')
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 
@@ -58,6 +63,14 @@ export function PrinterForm({
     const form = new FormData(e.currentTarget)
     const name = String(form.get('name') ?? '').trim()
     if (!name || materials.length === 0) return
+
+    // Parsed from text, never multiplied: cost-panel.tsx explains the cent
+    // that `12.10 * 100` loses.
+    const cents = showCost ? dollarsToCents(rate) : null
+    if (showCost && cents === null) {
+      setError('Filament cost is dollars per gram, like 0.12.')
+      return
+    }
 
     setError(null)
     startTransition(async () => {
@@ -73,6 +86,8 @@ export function PrinterForm({
           capacity,
           accepting,
           notes: String(form.get('notes') ?? '').trim(),
+          filament_cents_per_g: cents,
+          rate_note: String(form.get('rate_note') ?? '').trim(),
           ...(ownerOrgId ? { owner_org_id: ownerOrgId } : {}),
         })
         router.push('/dashboard/printers')
@@ -229,7 +244,7 @@ export function PrinterForm({
       </section>
 
       <section className={CARD}>
-        <h2 className={CARD_TITLE}>Pickup</h2>
+        <h2 className={CARD_TITLE}>Pickup and cost</h2>
         <div className="flex items-start gap-3 rounded-[18px] bg-[var(--surface2)] px-4 py-3.5">
           <MapPin size={22} weight="fill" aria-hidden="true" className="shrink-0 text-[var(--coral)]" />
           {/* The board leads on where the suburb below came from — it is
@@ -260,6 +275,98 @@ export function PrinterForm({
             maxLength={500}
           />
         </label>
+
+        <div className="flex flex-wrap items-center gap-4 rounded-[18px] border border-line px-4 py-3.5">
+          <button
+            type="button"
+            role="switch"
+            aria-checked={showCost}
+            aria-labelledby="cost-switch-label"
+            onClick={() => setShowCost((on) => !on)}
+            className={`relative h-7 w-12 shrink-0 rounded-full transition-colors focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)] ${
+              showCost ? 'bg-brand' : 'bg-[var(--line)]'
+            }`}
+          >
+            <span
+              aria-hidden="true"
+              className={`absolute top-[3px] h-[22px] w-[22px] rounded-full bg-surface shadow-[var(--shadow-e1)] transition-transform ${
+                showCost ? 'translate-x-[23px]' : 'translate-x-[3px]'
+              }`}
+            />
+          </button>
+          <div className="min-w-0 flex-1">
+            <p id="cost-switch-label" className="text-sm font-extrabold text-ink">
+              Show your filament cost
+            </p>
+            <p className="mt-0.5 text-[13px] leading-normal text-muted">
+              You give the time and the machine; the family covers what it is printed from.
+              This shows “about $3 filament” on your card so they know the figure before they
+              ask, cash at pickup.
+            </p>
+          </div>
+          {showCost && (
+            <label className="flex items-center gap-2 text-sm font-extrabold text-ink">
+              $
+              <input
+                name="rate"
+                inputMode="decimal"
+                aria-label="Dollars per gram"
+                className="field field-sm w-[88px] font-mono tabular-nums"
+                placeholder="0.12"
+                value={rate}
+                onChange={(e) => setRate(e.target.value)}
+              />
+              / g
+            </label>
+          )}
+        </div>
+      </section>
+
+      <section className={CARD}>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="min-w-0 max-w-[48ch]">
+            <p className="text-xs font-extrabold uppercase tracking-[0.1em] text-muted">
+              Your standard rates
+            </p>
+            <p className="mt-1.5 text-[13px] leading-normal text-muted">
+              What a family is asked to cover, shown on your card before they request. Your time
+              and your machine stay free.
+            </p>
+          </div>
+          {/* The board's shape: a label over the bare figure. Off is $0.00
+              under "Asking back", which is literally what is asked. */}
+          <div
+            className="rounded-[14px] bg-[var(--tamber)] px-4 py-2.5 text-right text-[var(--tink)]"
+            aria-live="polite"
+          >
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.1em]">Asking back</p>
+            <h3 className="font-display text-[22px] font-extrabold">
+              {formatCents(showCost ? dollarsToCents(rate) ?? 0 : 0)}
+            </h3>
+            <p className="text-[11px] font-bold">
+              {showCost ? 'per gram of filament' : 'free — parts only'}
+            </p>
+          </div>
+        </div>
+        <label className={LABEL}>
+          Why these costs
+          <textarea
+            name="rate_note"
+            className="field rounded-[18px] font-semibold"
+            rows={2}
+            maxLength={500}
+            placeholder="e.g. Filament is the only thing I ask back, at what the spool cost me."
+          />
+          <span className="text-[13px] font-normal text-muted">
+            Whoever you are asking to pay reads this word for word. Name the material and the
+            rate — a number with no reason gets declined.
+          </span>
+        </label>
+        <p className="flex items-start gap-2 rounded-[14px] bg-[var(--surface2)] px-3.5 py-2.5 text-[13px] leading-normal text-muted">
+          <Info size={16} weight="bold" aria-hidden="true" className="mt-0.5 shrink-0" />
+          SPLAT does not take payments or a cut. This is a written record both of you can see —
+          you settle it between yourselves.
+        </p>
       </section>
 
       {error && (
