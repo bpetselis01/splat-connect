@@ -193,7 +193,7 @@ export function RequestPrintForm({
               A note for the printer <span className="font-semibold text-muted">(optional)</span>
             </span>
             <textarea
-              className="field w-full font-semibold"
+              className="field w-full rounded-[var(--radius-inset)] font-semibold"
               rows={3}
               maxLength={1000}
               value={note}
@@ -206,7 +206,7 @@ export function RequestPrintForm({
         <section className="print-panel">
           <div>
             <Eyebrow>3 · Printers</Eyebrow>
-            <h2 className="print-panel__title">Who you are asking</h2>
+            <h2 className="print-panel__title">Who you asked</h2>
           </div>
           {printers.length === 0 ? (
             <p className="rounded-[var(--radius-inset)] bg-sunken p-[18px] text-center text-sm text-muted">
