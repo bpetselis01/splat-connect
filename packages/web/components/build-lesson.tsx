@@ -8,7 +8,7 @@
  * them would have meant inventing the parts of a procedure nobody had performed.
  *
  * A server component. There is nothing interactive in a procedure: the checkbox
- * a reader might want against each step is the lesson's own "Mark as done" in
+ * a reader might want against each step is the lesson's own "Done" button in
  * the shell, and per-step ticks on a nine-step page are a lot of state for
  * something read once.
  *
@@ -17,8 +17,9 @@
  * - components/learn-shell.tsx: the outline and the next-lesson control
  */
 import Image from 'next/image'
-import { Lightbulb, Check } from '@phosphor-icons/react/dist/ssr'
-import { Alert } from '@/components/alert'
+import Link from 'next/link'
+import { Lightbulb, Warning, Wrench, Copyright, Confetti } from '@phosphor-icons/react/dist/ssr'
+import { KitTable, LessonH2, PhotoSlot } from '@/components/lesson-kit'
 
 export type BuildStep = {
   title: string
@@ -26,6 +27,8 @@ export type BuildStep = {
   tip?: string
   warn?: string
   imgs?: Array<{ src: string; alt: string }>
+  /** A photo the workshop has not taken yet: what it will show. */
+  slotPh?: string
 }
 
 export type BuildMaterial = {
@@ -42,6 +45,8 @@ export type BuildLesson = {
   heroAlt?: string
   /** A placeholder where the artboard had a photo slot rather than a photo. */
   slotPh?: string
+  /** Attribution for a build adapted from somebody else's published guide. */
+  credit?: string
   facts: Array<{ k: string; v: string }>
   note?: string
   materials: BuildMaterial[]
@@ -51,175 +56,148 @@ export type BuildLesson = {
   doneBody: string
 }
 
-export function BuildLesson({ lesson, title }: { lesson: BuildLesson; title: string }) {
+/** The body of a build lesson. The shell above it owns the title and lede. */
+export function BuildLesson({ lesson }: { lesson: BuildLesson }) {
   return (
     <div>
-      <h1 className="mt-1.5 title-article">{title}</h1>
-
-      <dl className="mt-4 flex flex-wrap gap-2">
-        {lesson.facts.map((f) => (
-          <div key={f.k} className="rounded-pill bg-sunken px-3 py-1.5">
-            <dt className="inline text-xs font-bold text-muted">{f.k}: </dt>
-            <dd className="inline text-xs font-bold text-ink">{f.v}</dd>
-          </div>
-        ))}
-      </dl>
-
       {lesson.hero ? (
-        <div className="relative mt-5 aspect-[3/2] w-full overflow-hidden rounded-card bg-sunken">
+        <div className="relative mt-[30px] aspect-[2/1] w-full overflow-hidden rounded-card border border-line bg-sunken shadow-[var(--e2)]">
           <Image
             src={lesson.hero}
             alt={lesson.heroAlt ?? ''}
             fill
-            sizes="(min-width: 1024px) 48rem, 100vw"
+            sizes="(min-width: 1024px) 880px, 100vw"
             className="object-cover"
             priority
           />
         </div>
       ) : (
         lesson.slotPh && (
-          // The one lesson whose hero the workshop never photographed. Saying
-          // what the picture WOULD be is more use than a grey rectangle.
-          <p className="mt-5 rounded-card border border-dashed border-line bg-sunken px-5 py-8 text-center text-sm text-muted">
-            {lesson.slotPh}
-          </p>
+          <PhotoSlot
+            label={lesson.slotPh}
+            className="mt-[30px] aspect-[2/1] w-full rounded-card border border-line shadow-[var(--e2)]"
+          />
         )
       )}
 
-      {lesson.note && (
-        <Alert tone="warn" icon={<Lightbulb weight="fill" size={18} />} className="mt-5">
-          {lesson.note}
-        </Alert>
+      {lesson.credit && (
+        <p className="mt-3.5 text-[13px] font-semibold leading-normal text-muted">
+          <Copyright weight="bold" className="mr-1.5 inline align-[-2px]" aria-hidden="true" />
+          {lesson.credit}
+        </p>
       )}
+
+      <dl className="mt-7 grid gap-3.5 sm:grid-cols-3">
+        {lesson.facts.map((f) => (
+          <div
+            key={f.k}
+            className="min-w-0 rounded-[var(--radius-inset)] border border-line bg-surface px-[18px] py-4 shadow-[var(--e1)]"
+          >
+            <dt className="text-xs font-extrabold uppercase tracking-[0.08em] text-muted">{f.k}</dt>
+            <dd className="mt-1 font-display text-lg font-extrabold leading-[1.2] text-ink">{f.v}</dd>
+          </div>
+        ))}
+      </dl>
 
       {/*
         One section, not two. The board puts the shopping list and the bench
         list under a single "You will need", with the tools as an h3 inside it —
-        a builder reads them together, and splitting them into sibling h2s made
-        the page claim two topics where the design has one.
+        a builder reads them together.
       */}
-      <section className="mt-10">
-        <h2 className="title-detail">You will need</h2>
-        {/*
-          A table, because this is tabular data and the board draws it as one:
-          PART | WHAT IT IS | WHERE · QTY · COST. Live had it as a list of
-          cards, which reads fine down a phone and stops a builder comparing
-          two rows — the thing you actually do with a shopping list. It also
-          gives a screen reader column headers it did not have.
+      <section>
+        <LessonH2 className="mb-2.5 mt-9">You will need</LessonH2>
+        <p className="mb-3.5 text-[15px] text-muted">
+          On top of the general equipment and consumables from{' '}
+          <Link href="/learn/tools-and-materials">Unit 2</Link>.
+        </p>
+        <KitTable rows={lesson.materials} head={['Part', 'What it is', 'Where · qty · cost']} />
 
-          The photo stays inside the first cell rather than taking a fourth
-          column, so the shape still matches the board's three.
-        */}
-        <div className="mt-3 overflow-x-auto">
-          <table className="w-full border-collapse text-left">
-            <thead>
-              <tr className="border-b border-line">
-                <th scope="col" className="eyebrow pb-2 pr-3 text-muted">Part</th>
-                <th scope="col" className="eyebrow pb-2 pr-3 text-muted">What it is</th>
-                <th scope="col" className="eyebrow whitespace-nowrap pb-2 text-right text-muted">
-                  Where · Qty · Cost
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {lesson.materials.map((m) => (
-                <tr key={m.item} className="border-b border-line align-top last:border-0">
-                  <td className="py-3 pr-3">
-                    <span className="flex items-center gap-3">
-                      {m.img && (
-                        <span className="relative hidden h-12 w-12 shrink-0 overflow-hidden rounded-field bg-sunken sm:block">
-                          <Image src={m.img} alt="" fill sizes="48px" className="object-cover" />
-                        </span>
-                      )}
-                      <span className="font-bold text-ink">{m.item}</span>
-                    </span>
-                  </td>
-                  <td className="py-3 pr-3 text-sm leading-relaxed text-muted">{m.why}</td>
-                  <td className="py-3 text-right">
-                    <span className="block font-mono text-sm font-bold tabular-nums text-ink">
-                      {m.cost}
-                    </span>
-                    <span className="block text-xs text-muted">
-                      {m.qty} · {m.shop}
-                    </span>
-                  </td>
-                </tr>
+        {lesson.tools.length > 0 && (
+          <>
+            <h3 className="mb-2.5 mt-[22px] font-display text-[19px] font-extrabold text-ink">
+              Tools for this build
+            </h3>
+            <ul className="flex list-none flex-wrap gap-2 p-0">
+              {lesson.tools.map((t) => (
+                <li key={t} className="course-meta px-3.5 py-[9px] text-sm">
+                  <Wrench weight="bold" className="text-apricot" aria-hidden="true" />
+                  {t}
+                </li>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </ul>
+          </>
+        )}
 
-        <h3 className="mt-8 text-[19px] font-extrabold text-ink">Tools for this build</h3>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {lesson.tools.map((t) => (
-            <span key={t} className="badge bg-sunken text-brand-deep">
-              {t}
-            </span>
-          ))}
-        </div>
+        {lesson.note && (
+          <p className="mt-[22px] rounded-[var(--radius-inset)] border border-line bg-[var(--tamber)] px-[22px] py-[18px] font-bold leading-[1.55] text-[var(--tink)]">
+            <Lightbulb weight="fill" className="mr-2 inline align-[-2px]" aria-hidden="true" />
+            {lesson.note}
+          </p>
+        )}
       </section>
 
-      <section className="mt-10">
-        <h2 className="title-detail">Step by step</h2>
-        <ol className="mt-4 flex list-none flex-col gap-8">
+      <section>
+        <LessonH2 className="mb-1.5 mt-10">Step by step</LessonH2>
+        <p className="mb-[18px] text-[15px] text-muted">
+          Batteries out, glasses on, fan running. Read the whole step before you start it.
+        </p>
+        <ol className="flex list-none flex-col gap-4 p-0">
           {lesson.steps.map((step, i) => (
-            <li key={step.title}>
-              <div className="flex items-start gap-3">
-                <span
-                  aria-hidden="true"
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-dark font-display text-sm font-extrabold text-white"
-                >
-                  {i + 1}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <h3 className="title-section">{step.title}</h3>
-                  <p className="mt-1 max-w-prose text-base leading-relaxed text-ink">{step.body}</p>
+            <li
+              key={step.title}
+              className="grid grid-cols-[52px_minmax(0,1fr)] gap-4 rounded-card border border-line bg-surface px-6 pb-6 pt-[22px] shadow-[var(--e2),var(--hi)]"
+            >
+              <span
+                aria-hidden="true"
+                className="grid h-11 w-11 place-items-center rounded-full bg-brand-dark font-display text-lg font-extrabold text-white shadow-[var(--glow)]"
+              >
+                {i + 1}
+              </span>
+              <div className="min-w-0">
+                <h3 className="my-2 font-display text-[21px] font-extrabold leading-[1.2] text-ink">{step.title}</h3>
+                <p className="leading-[1.6] text-ink [text-wrap:pretty]">{step.body}</p>
 
-                  {step.warn && (
-                    <Alert tone="bad" className="mt-3">
-                      {step.warn}
-                    </Alert>
-                  )}
-                  {step.tip && (
-                    <p className="mt-3 flex items-start gap-2 rounded-card bg-sunken px-4 py-3 text-sm leading-relaxed text-muted">
-                      <Lightbulb className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-                      {step.tip}
-                    </p>
-                  )}
+                {step.tip && (
+                  <p className="mt-3 rounded-[var(--radius-field)] border border-line bg-brand-50 px-4 py-3 text-[15px] leading-normal text-ink">
+                    <strong className="text-brand-deep">Tip.</strong> {step.tip}
+                  </p>
+                )}
+                {step.warn && (
+                  <p className="mt-3 rounded-[var(--radius-field)] border border-line bg-[var(--tbad)] px-4 py-3 text-[15px] font-bold leading-normal text-[var(--tink)]">
+                    <Warning weight="fill" className="mr-1.5 inline align-[-2px] text-danger" aria-hidden="true" />
+                    {step.warn}
+                  </p>
+                )}
 
-                  {step.imgs && step.imgs.length > 0 && (
-                    <div
-                      className={`mt-4 grid gap-3 ${step.imgs.length > 1 ? 'sm:grid-cols-2' : ''}`}
-                    >
-                      {step.imgs.map((img) => (
-                        <figure key={img.src}>
-                          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-card bg-sunken">
-                            <Image
-                              src={img.src}
-                              alt={img.alt}
-                              fill
-                              sizes="(min-width: 640px) 24rem, 100vw"
-                              className="object-cover"
-                            />
-                          </div>
-                        </figure>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                {step.imgs && step.imgs.length > 0 && (
+                  <div className="mt-4 grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3">
+                    {step.imgs.map((img) => (
+                      <div
+                        key={img.src}
+                        className="relative aspect-[4/3] w-full overflow-hidden rounded-[var(--radius-inset)] border border-line bg-sunken"
+                      >
+                        <Image src={img.src} alt={img.alt} fill sizes="(min-width: 1024px) 360px, 100vw" className="object-cover" />
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {step.slotPh && (
+                  <PhotoSlot
+                    label={step.slotPh}
+                    className="mt-4 aspect-[16/7] w-full rounded-[var(--radius-inset)] border border-line"
+                  />
+                )}
               </div>
             </li>
           ))}
         </ol>
       </section>
 
-      <div className="card mt-10 flex items-start gap-4 p-6">
-        <span aria-hidden="true" className="empty-badge shrink-0 text-brand-deep">
-          <Check className="h-7 w-7" />
-        </span>
+      <div className="mt-7 flex items-center gap-4 rounded-card border border-line bg-[var(--tok)] px-[26px] py-6">
+        <Confetti size={40} weight="fill" className="flex-none text-success" aria-hidden="true" />
         <div>
-          <p className="font-display text-xl font-extrabold text-ink">{lesson.doneTitle}</p>
-          <p className="mt-1 max-w-prose text-sm leading-relaxed text-muted">{lesson.doneBody}</p>
+          <h3 className="mb-1 font-display text-[21px] font-extrabold text-[var(--tink)]">{lesson.doneTitle}</h3>
+          <p className="leading-[1.55] text-[var(--tink)]">{lesson.doneBody}</p>
         </div>
       </div>
     </div>

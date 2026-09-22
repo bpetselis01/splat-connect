@@ -22,7 +22,7 @@ import {
   NotePencil,
 } from '@phosphor-icons/react/dist/ssr'
 import { LearnShell } from '@/components/learn-shell'
-import { NotMedicalNote } from '@/components/not-medical-note'
+import { LessonH2 } from '@/components/lesson-kit'
 
 export const metadata = {
   title: 'Checks, cleaning and handover — SPLAT Connect',
@@ -87,71 +87,56 @@ const CLEANING = [
 export default function Page() {
   return (
     <LearnShell slug="handover">
-      <h1 className="mt-1.5 title-article">Checks, cleaning and handover</h1>
+      <LessonH2 className="mb-2.5 mt-[34px]">Before it goes to a child</LessonH2>
+      <p className="mb-4 max-w-[66ch] leading-[1.6] text-ink">
+        Five checks, every toy, every time. They take three minutes and they are what separates an
+        adapted toy from a hazard with a socket in it.
+      </p>
+      <ul className="flex list-none flex-col gap-3 p-0">
+        {CHECKS.map((c) => (
+          <li
+            key={c.title}
+            className="grid grid-cols-[44px_minmax(0,1fr)] items-start gap-3.5 rounded-[var(--radius-inset)] border border-line bg-surface px-5 py-4 shadow-[var(--e1)]"
+          >
+            <c.icon size={30} weight="duotone" className="text-brand-dark" aria-hidden="true" />
+            <div>
+              <h3 className="mb-1 mt-0.5 font-display text-lg font-extrabold text-ink">{c.title}</h3>
+              <p className="text-[15px] leading-[1.55] text-ink">{c.body}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
 
-      <section className="mt-6">
-        <h2 className="title-detail">Before it goes to a child</h2>
-        <p className="mt-2 max-w-prose text-base leading-relaxed text-ink">
-          Five checks, every toy, every time. They take three minutes and they are what separates
-          an adapted toy from a hazard with a socket in it.
-        </p>
-        <ul className="mt-4 grid list-none gap-3 sm:grid-cols-2">
-          {CHECKS.map((c) => (
-            <li key={c.title} className="card flex items-start gap-3 p-5">
-              <span
-                aria-hidden="true"
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-card bg-danger-soft text-danger"
-              >
-                <c.icon className="h-5 w-5" />
-              </span>
-              <span>
-                <span className="card-title block">{c.title}</span>
-                <span className="block text-sm leading-relaxed text-muted">{c.body}</span>
-              </span>
-            </li>
-          ))}
-        </ul>
-      </section>
+      <LessonH2 className="mb-2.5 mt-[34px]">Cleaning between families</LessonH2>
+      <p className="mb-3 leading-[1.6] text-ink">
+        Toys in the <Link href="/toy-library">toy library</Link> move between households, so cleaning
+        is part of the handover, not an afterthought.
+      </p>
+      <ul className="mt-[18px] grid list-none gap-4 p-0 sm:grid-cols-3">
+        {CLEANING.map((c) => (
+          <li
+            key={c.title}
+            className="rounded-[var(--radius-inset)] border border-line bg-surface p-5 shadow-[var(--e1)]"
+          >
+            <c.icon size={30} weight="duotone" className="text-mint" aria-hidden="true" />
+            <h3 className="mb-1.5 mt-2.5 font-display text-[17px] font-extrabold text-ink">{c.title}</h3>
+            <p className="text-sm leading-normal text-muted">{c.body}</p>
+          </li>
+        ))}
+      </ul>
 
-      <section className="mt-10">
-        <h2 className="title-detail">Cleaning between families</h2>
-        <p className="mt-2 max-w-prose text-base leading-relaxed text-ink">
-          Toys in the{' '}
-          <Link href="/toy-library" className="font-semibold text-brand-dark hover:underline">
-            toy library
-          </Link>{' '}
-          move between households, so cleaning is part of the handover, not an afterthought.
-        </p>
-        <ul className="mt-4 flex list-none flex-col gap-3">
-          {CLEANING.map((c) => (
-            <li key={c.title} className="card flex items-start gap-3 p-5">
-              <span
-                aria-hidden="true"
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-card bg-sunken text-brand-deep"
-              >
-                <c.icon className="h-5 w-5" />
-              </span>
-              <span>
-                <span className="card-title block">{c.title}</span>
-                <span className="block text-sm leading-relaxed text-muted">{c.body}</span>
-              </span>
-            </li>
-          ))}
-        </ul>
-      </section>
+      <LessonH2 className="mb-2.5 mt-[34px]">Show the family, not just the toy</LessonH2>
+      <p className="max-w-[66ch] leading-[1.6] text-ink">
+        Plug the switch in with them watching. Show where the socket is, that the original button
+        still works, and how to get the batteries out. Leave the handover note tucked in the battery
+        door. A toy nobody knows how to use goes back in the cupboard within a week.
+      </p>
 
-      <section className="mt-10">
-        <h2 className="title-detail">Show the family, not just the toy</h2>
-        <p className="mt-2 max-w-prose text-base leading-relaxed text-ink">
-          Plug the switch in with them watching. Show where the socket is, that the original button
-          still works, and how to get the batteries out. Leave the handover note tucked in the
-          battery door. A toy nobody knows how to use goes back in the cupboard within a week.
-        </p>
-      </section>
-
-      <div className="mt-8">
-        <NotMedicalNote />
-      </div>
+      <p className="mt-[30px] rounded-[var(--radius-inset)] border border-line bg-sunken px-[22px] py-5 text-[15px] leading-[1.55] text-muted">
+        SPLAT Connect publishes information, not medical devices. Read{' '}
+        <Link href="/legal/intended-purpose">what Connect is (and isn&apos;t)</Link> before adapting
+        anything a therapist has prescribed.
+      </p>
     </LearnShell>
   )
 }

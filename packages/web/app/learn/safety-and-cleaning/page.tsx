@@ -1,94 +1,96 @@
 import Link from 'next/link'
-import { ProsePage } from '@/components/prose-page'
+import { Warning, Eyeglasses, Sneaker, User, Scissors, Fire, Wind } from '@phosphor-icons/react/dist/ssr'
 import { LearnShell } from '@/components/learn-shell'
+import { LessonH2 } from '@/components/lesson-kit'
 
 export const metadata = {
-  title: 'Safety and cleaning — SPLAT Connect',
-  description: 'Batteries, small parts, and getting a toy ready to hand over.',
+  title: 'Safe handling — SPLAT Connect',
+  description: 'Hot irons, lead solder, and small batteries. None of it is dangerous if you follow six habits.',
 }
+
+const PPE = [
+  { label: 'Safety glasses', icon: Eyeglasses },
+  { label: 'Enclosed shoes', icon: Sneaker },
+  { label: 'Long hair tied up', icon: User },
+]
+
+const TOOLS = [
+  {
+    title: 'Wire cutters, strippers and pliers',
+    icon: Scissors,
+    rules: [
+      'Hold the tool by its insulated grips, never by the jaws.',
+      'Cut away from your body and keep your fingers clear of the cutting area.',
+    ],
+  },
+  {
+    title: 'Soldering irons',
+    icon: Fire,
+    rules: [
+      'Turn the extraction fan on and work in front of it, so you are not breathing the fumes.',
+      'The iron goes back in its stand every time you put it down — the tip stays dangerously hot.',
+      'Hold components with pliers or helping hands, never your fingers. Small metal parts conduct heat through in seconds.',
+      'Wash your hands afterwards. Most solder still contains lead.',
+    ],
+  },
+  {
+    title: 'Heat guns',
+    icon: Wind,
+    rules: [
+      'Shrink the tubing with short passes rather than holding it in one spot.',
+      'Point it away from the toy body — thin plastic deforms long before the heat shrink does.',
+    ],
+  },
+]
 
 export default function SafetyAndCleaning() {
   return (
     <LearnShell slug="safety-and-cleaning">
-      <ProsePage
-      title="Safe handling"
-      intro="This article is the practical companion to the site's formal safety page. Read both before your first handover."
-    >
-      <section>
-        <h2>The three that actually hurt children</h2>
-        <ul>
-          <li>
-            <strong>Button and coin cells.</strong> Swallowed, they burn through tissue
-            within hours. The compartment must close with a screw, and that screw must be
-            in and tight. If it does not screw shut, do not adapt the toy.
-          </li>
-          <li>
-            <strong>Loose small parts.</strong> Screws, springs, trimmed wire ends and
-            printed fragments. Work over a tray, count screws out and back in, and shake
-            the finished toy hard next to your ear.
-          </li>
-          <li>
-            <strong>Mains power.</strong> Never. Battery toys only.
-          </li>
-        </ul>
-      </section>
+      <p className="mt-[30px] rounded-[var(--radius-inset)] border border-line bg-[var(--tbad)] px-[22px] py-5 font-bold leading-[1.55] text-[var(--tink)]">
+        <Warning weight="fill" className="mr-2 inline align-[-2px] text-danger" aria-hidden="true" />
+        Button cells are the one non-negotiable. A swallowed coin cell burns through tissue in hours.
+        If a toy takes them and the compartment is not screwed shut, it does not leave your house.
+      </p>
 
-      <section>
-        <h2>Making a joint that survives a child</h2>
-        <p>
-          The failure mode is always the same: someone pulls the switch lead and the wire
-          tears out of the toy, leaving bare copper inside a rattling plastic shell. Two
-          habits prevent it. Insulate every joint with heat-shrink rather than tape, and
-          strain-relieve the cable where it exits the case — a cable tie or a knot inside
-          the shell, so a pull is taken by the case and not by the solder.
-        </p>
-      </section>
-
-      <section>
-        <h2>Cleaning an adapted toy</h2>
-        <p>
-          Assume the toy will go in a mouth. Wipe hard surfaces with warm soapy water or
-          an alcohol wipe, and let them dry fully before the batteries go back. Never
-          submerge an adapted toy, and never put printed parts in a dishwasher — PLA
-          deforms well below dishwasher temperature.
-        </p>
-        <p>
-          Fabric toys are harder. If the electronics are in a removable pod, wash the
-          fabric and keep the pod out. If they are sewn in, tell the family it is
-          surface-clean only, because they will otherwise find out the expensive way.
-        </p>
-      </section>
-
-      <section>
-        <h2>Printed parts specifically</h2>
-        <p>
-          Sand or file every edge a hand will touch — layer lines are sharper than they
-          look. Print at an infill high enough that a part cannot snap into shards; the
-          guide will state a figure. Printed plastic is porous and not food safe, so
-          anything a child mouths regularly should be a smooth commercial part rather
-          than a printed one.
-        </p>
-      </section>
-
-      <section>
-        <h2>The handover checklist</h2>
-        <ul>
-          <li>Shake it. Listen for anything loose.</li>
-          <li>Check every screw, battery compartment first.</li>
-          <li>Pull the switch lead firmly. Nothing should move at the toy end.</li>
-          <li>Test it with the actual switch the child will use.</li>
-          <li>Wipe it down.</li>
-          <li>
-            Say what you changed, and how to clean it. A parent needs to know there is a
-            modified battery compartment in there.
+      <LessonH2 className="mb-2.5 mt-[34px]">Wear this every time</LessonH2>
+      <p className="mb-4 max-w-[66ch] leading-[1.55] text-ink">Whether it is a five-minute job or an afternoon.</p>
+      <ul className="flex list-none flex-wrap gap-2.5 p-0">
+        {PPE.map((p) => (
+          <li key={p.label} className="course-meta gap-2.5 px-4 py-[11px] text-[14.5px]">
+            <p.icon size={22} weight="duotone" className="text-brand-dark" aria-hidden="true" />
+            {p.label}
           </li>
-        </ul>
-        <p>
-          The full formal guidance, including what to do if you find a problem with a
-          published guide, is on the <Link href="/safety">safety page</Link>.
-        </p>
-      </section>
-      </ProsePage>
+        ))}
+      </ul>
+
+      <LessonH2 className="mb-2.5 mt-[34px]">Handling the tools</LessonH2>
+      <div className="flex flex-col gap-3.5">
+        {TOOLS.map((g) => (
+          <div key={g.title} className="rounded-card border border-line bg-surface px-[22px] py-5 shadow-[var(--e1)]">
+            <h3 className="mb-2.5 flex items-center gap-2.5 font-display text-lg font-extrabold text-ink">
+              <g.icon size={26} weight="duotone" className="text-brand-dark" aria-hidden="true" />
+              {g.title}
+            </h3>
+            <ul className="flex list-disc flex-col gap-2 pl-5 leading-[1.55] text-ink">
+              {g.rules.map((r) => (
+                <li key={r}>{r}</li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+
+      <LessonH2 className="mb-2.5 mt-[34px]">Batteries out first</LessonH2>
+      <p className="max-w-[66ch] leading-[1.6] text-ink">
+        Every build in this course starts the same way: remove the batteries before a screwdriver
+        touches the toy. A motor that starts while the case is open, or a solder bridge across a live
+        cell, is how a cheap toy becomes an expensive lesson.
+      </p>
+      {/* Not on the board. The route to the formal guidance stays reachable from the lesson. */}
+      <p className="mt-4 max-w-[66ch] leading-[1.6] text-ink">
+        The full formal guidance, including what to do if you find a problem with a published
+        guide, is on the <Link href="/safety">safety page</Link>.
+      </p>
     </LearnShell>
   )
 }

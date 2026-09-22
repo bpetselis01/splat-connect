@@ -51,21 +51,20 @@ export default function LearnPage() {
     <div>
       <LearnHome />
 
-      <section className="mt-12">
-        <h2 className="title-detail">Alongside the course</h2>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+      <section>
+        <h2 className="mb-3.5 mt-7 font-display text-[26px] font-extrabold text-ink">Keep at hand</h2>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {REFS.map((r) => (
-            <Link key={r.href} href={r.href} className="card card-link flex items-start gap-3 p-5">
-              <span
-                aria-hidden="true"
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-card bg-sunken text-brand-deep"
-              >
-                <r.icon className="h-5 w-5" />
+            <Link
+              key={r.href}
+              href={r.href}
+              className="card card-link min-w-0 px-5 pb-5 pt-[18px] text-ink no-underline"
+            >
+              <span className="mb-2 flex items-center gap-2.5">
+                <r.icon size={26} weight="duotone" className="text-brand-dark" aria-hidden="true" />
+                <span className="font-display text-[17px] font-extrabold">{r.label}</span>
               </span>
-              <span>
-                <span className="card-title block">{r.label}</span>
-                <span className="block text-sm leading-relaxed text-muted">{r.blurb}</span>
-              </span>
+              <span className="block text-sm leading-normal text-muted">{r.blurb}</span>
             </Link>
           ))}
         </div>

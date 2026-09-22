@@ -17,10 +17,9 @@ export const metadata = {
 
 export default function Page() {
   return (
-    <LearnShell slug={SLUG}>
+    <LearnShell slug={SLUG} questions={content.quizzes[SLUG].length}>
       <LearnCheckpoint
         slug={SLUG}
-        title="Final checkpoint"
         questions={content.quizzes[SLUG] as Question[]}
         final
       />

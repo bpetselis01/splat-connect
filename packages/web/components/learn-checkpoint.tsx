@@ -16,7 +16,8 @@
  * Answers are kept per device alongside lesson progress, so coming back to a
  * finished checkpoint shows what was answered rather than a blank form.
  */
-import { Check, X, ArrowCounterClockwise } from '@phosphor-icons/react/dist/ssr'
+import { Circle, CheckCircle, XCircle } from '@phosphor-icons/react/dist/ssr'
+import { SplatMascot } from '@/components/splat-mascot'
 import { useLearnProgress } from '@/lib/learn-progress'
 
 export type Question = {
@@ -29,12 +30,10 @@ export type Question = {
 
 export function LearnCheckpoint({
   slug,
-  title,
   questions,
   final,
 }: {
   slug: string
-  title: string
   questions: Question[]
   /** The last checkpoint says something different when it is finished. */
   final?: boolean
@@ -55,28 +54,27 @@ export function LearnCheckpoint({
 
   return (
     <div>
-      <h1 className="mt-1.5 title-article">{title}</h1>
-      <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted">
-        {questions.length} question{questions.length === 1 ? '' : 's'}. Wrong answers explain
-        themselves — that is the point of them. Nothing is locked behind this.
-      </p>
-
-      <ol className="mt-6 flex list-none flex-col gap-6">
+      <ol className="mt-[30px] flex list-none flex-col gap-4 p-0">
         {questions.map((q, i) => {
           const chosen = given[i]
           const shown = ready && chosen !== undefined
+          const right = chosen === q.a
           return (
-            <li key={q.q} className="card p-5">
-              <p className="eyebrow text-muted">
+            <li
+              key={q.q}
+              className="rounded-card border border-line bg-surface px-[26px] py-6 shadow-[var(--e2),var(--hi)]"
+            >
+              <p className="text-xs font-extrabold uppercase leading-6 tracking-[0.1em] text-muted">
                 Question {i + 1} of {questions.length}
               </p>
-              <p className="mt-1 font-bold text-ink">{q.q}</p>
+              <h3 className="mb-4 mt-1.5 font-display text-[22px] font-extrabold leading-[1.25] text-ink [text-wrap:pretty]">
+                {q.q}
+              </h3>
 
-              <div
-                role="radiogroup"
-                aria-label={q.q}
-                className="mt-3 flex flex-col gap-2"
-              >
+              {/* Answered once, then held: the board locks a question on the
+                  first pick so the explanation below it is about the answer
+                  somebody actually gave. "Clear my answers" is the way back. */}
+              <div role="group" aria-label={q.q} className="flex flex-col gap-2.5">
                 {q.opts.map((opt, oi) => {
                   const isChosen = chosen === oi
                   const isRight = oi === q.a
@@ -85,36 +83,51 @@ export function LearnCheckpoint({
                   const tone = !shown
                     ? 'border-line bg-surface'
                     : isRight
-                      ? 'border-success bg-success-soft'
+                      ? 'border-success bg-[var(--tok)]'
                       : isChosen
-                        ? 'border-danger bg-danger-soft'
-                        : 'border-line bg-surface opacity-70'
+                        ? 'border-danger bg-[var(--tbad)]'
+                        : 'border-line bg-surface'
+                  const Icon = !shown ? Circle : isRight ? CheckCircle : isChosen ? XCircle : Circle
+                  const iconTone = !shown
+                    ? 'text-line'
+                    : isRight
+                      ? 'text-success'
+                      : isChosen
+                        ? 'text-danger'
+                        : 'text-line'
                   return (
-                    <label
+                    <button
                       key={opt}
-                      className={`flex cursor-pointer items-start gap-3 rounded-card border p-3 text-sm ${tone}`}
+                      type="button"
+                      aria-pressed={isChosen}
+                      disabled={shown}
+                      onClick={() => pick(i, oi)}
+                      className={`flex min-h-[52px] items-center gap-3 rounded-[var(--radius-inset)] border-2 px-4 py-3 text-left text-[15.5px] font-bold text-ink transition-transform enabled:cursor-pointer enabled:hover:translate-x-[3px] disabled:cursor-default ${tone}`}
                     >
-                      <input
-                        type="radio"
-                        name={`${slug}-${i}`}
-                        checked={isChosen}
-                        onChange={() => pick(i, oi)}
-                        className="mt-0.5"
+                      <Icon
+                        size={22}
+                        weight={!shown || (!isRight && !isChosen) ? 'regular' : 'fill'}
+                        className={`flex-none ${iconTone}`}
+                        aria-hidden="true"
                       />
-                      <span className="flex-1 text-ink">{opt}</span>
-                      {shown && isRight && (
-                        <Check className="h-4 w-4 shrink-0 text-success" aria-label="Correct" />
-                      )}
-                      {shown && isChosen && !isRight && (
-                        <X className="h-4 w-4 shrink-0 text-danger" aria-label="Not this one" />
-                      )}
-                    </label>
+                      {opt}
+                    </button>
                   )
                 })}
               </div>
 
               {shown && (
-                <p className="mt-3 rounded-card bg-sunken px-4 py-3 text-sm leading-relaxed text-ink">
+                <p
+                  className={`mt-4 rounded-[var(--radius-inset)] px-[18px] py-3.5 text-[15px] leading-[1.55] text-[var(--tink)] ${
+                    right ? 'bg-[var(--tok)]' : 'bg-[var(--tbad)]'
+                  }`}
+                >
+                  {right ? (
+                    <CheckCircle size={18} weight="fill" className="mr-2 inline align-[-3px]" aria-hidden="true" />
+                  ) : (
+                    <XCircle size={18} weight="fill" className="mr-2 inline align-[-3px]" aria-hidden="true" />
+                  )}
+                  {right ? 'Correct. ' : 'Not quite. '}
                   {q.why}
                 </p>
               )}
@@ -124,32 +137,42 @@ export function LearnCheckpoint({
       </ol>
 
       {ready && allAnswered && (
-        <div className="card mt-8 p-6">
-          <p className="eyebrow text-muted">{final ? 'Course complete' : 'Checkpoint done'}</p>
-          <p className="mt-1 font-display text-2xl font-extrabold text-ink">
-            {final
-              ? perfect
-                ? 'You know this. Go build.'
-                : 'You finished the course.'
-              : perfect
-                ? `All ${questions.length} right.`
-                : `${score} of ${questions.length} right.`}
-          </p>
-          <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted">
-            {final
-              ? 'Everything from here is practice. The Guides have step-by-step instructions for dozens of toys, and Makers wanted has families waiting for exactly what you can now make.'
-              : perfect
-                ? 'Nothing to revise. On to the next unit.'
-                : 'Read the explanations above — each one is the sentence you would want to remember at the bench. Nothing is locked; carry on when you are ready.'}
-          </p>
-          <button
-            type="button"
-            onClick={() => resetQuiz(slug)}
-            className="btn btn-quiet btn-sm mt-4"
-          >
-            <ArrowCounterClockwise className="h-4 w-4" aria-hidden="true" />
-            Try again
-          </button>
+        <div
+          className={`mt-6 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-5 rounded-card border border-line px-7 py-[26px] text-[var(--tink)] shadow-[var(--e3),var(--hi)] ${
+            perfect ? 'bg-[var(--tok)]' : 'bg-[var(--tamber)]'
+          }`}
+        >
+          <div>
+            <p className="text-xs font-extrabold uppercase leading-6 tracking-[0.1em] opacity-75">
+              {final ? 'Course complete' : 'Checkpoint done'}
+            </p>
+            <h3 className="my-1.5 font-display text-[26px] font-extrabold leading-[1.15]">
+              {final
+                ? perfect
+                  ? 'You know this. Go build.'
+                  : 'You finished the course.'
+                : perfect
+                  ? `All ${questions.length} right.`
+                  : `${score} of ${questions.length} right.`}
+            </h3>
+            <p className="max-w-[56ch] text-base leading-[1.55]">
+              {final
+                ? 'Everything from here is practice. The Guides have step-by-step instructions for dozens of toys, and Makers Wanted has families waiting for exactly what you can now make.'
+                : perfect
+                  ? 'Nothing to revise. On to the next unit.'
+                  : 'Read the explanations above — each one is the sentence you would want to remember at the bench. Nothing is locked; carry on when you are ready.'}
+            </p>
+            <button
+              type="button"
+              onClick={() => resetQuiz(slug)}
+              className="mt-3 inline-flex min-h-11 cursor-pointer items-center text-sm font-extrabold text-[var(--tink)] underline"
+            >
+              Clear my answers and try again
+            </button>
+          </div>
+          <div className="flex-none">
+            <SplatMascot width={110} pose={perfect ? 'party' : 'think'} />
+          </div>
         </div>
       )}
     </div>

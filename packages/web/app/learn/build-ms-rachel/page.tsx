@@ -22,7 +22,6 @@ export default function Page() {
     <LearnShell slug={SLUG}>
       <BuildLesson
         lesson={content.builds[SLUG] as unknown as Lesson}
-        title="Build 3 · Ms Rachel Speak & Sing"
       />
     </LearnShell>
   )

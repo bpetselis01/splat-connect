@@ -18,11 +18,14 @@ import {
   SealCheck,
   Check,
   Circle,
+  CheckCircle,
   Stack,
   Clock,
   HandHeart,
   ListNumbers,
   Play,
+  PlugsConnected,
+  ShoppingCart,
 } from '@phosphor-icons/react/dist/ssr'
 import { SplatMascot } from '@/components/splat-mascot'
 import { useLearnProgress } from '@/lib/learn-progress'
@@ -34,6 +37,39 @@ const KIND_ICON: Record<LessonKind, typeof BookOpen> = {
   quiz: SealCheck,
 }
 const KIND_LABEL: Record<LessonKind, string> = { read: 'Read', build: 'Build', quiz: 'Checkpoint' }
+// Each kind keeps one colour everywhere it appears: the legend, and every row.
+const KIND_COLOR: Record<LessonKind, string> = {
+  read: 'var(--b600)',
+  build: 'var(--coral)',
+  quiz: 'var(--mint)',
+}
+
+const OUTCOMES = [
+  {
+    icon: PlugsConnected,
+    t: 'Explain the trick',
+    d: 'Say in one sentence why an external switch works, and which of the two routes a given toy needs.',
+    tint: 'var(--tamber)',
+  },
+  {
+    icon: ShoppingCart,
+    t: 'Buy the right toy',
+    d: 'Walk a shop aisle and pick a toy that will adapt in twenty minutes, not one that fights you.',
+    tint: 'var(--b100)',
+  },
+  {
+    icon: Wrench,
+    t: 'Solder a connector',
+    d: 'Wire a 3.5 mm jack or socket cleanly, insulate it, and prove it works with a multimeter.',
+    tint: 'var(--tmint)',
+  },
+  {
+    icon: HandHeart,
+    t: 'Hand over safely',
+    d: 'Run the five checks, clean it, and show a family how to use what you made.',
+    tint: 'var(--tok)',
+  },
+]
 
 export function LearnHome() {
   const { ready, done } = useLearnProgress()
@@ -65,10 +101,10 @@ export function LearnHome() {
               Switch adapting toys, from first switch to handover.
             </h1>
             <p className="mt-4 max-w-[54ch] text-lg leading-[1.6] text-muted [text-wrap:pretty]">
-              A course in six units, from what a switch actually does to three toys adapted step by
-              step and a switch you print yourself. No experience needed, and nothing here assumes
-              you own a soldering iron yet. For instructions on one particular toy, head to the{' '}
-              <Link href="/library" className="font-bold text-brand-dark hover:underline">
+              Six short units. You will learn what a switch does, set up a bench without wasting
+              money, master the one soldering job every adaptation needs, then adapt three real toys
+              and build a switch of your own. For instructions on one particular toy, head to the{' '}
+              <Link href="/library" className="text-brand-deep hover:underline">
                 Guides
               </Link>
               .
@@ -79,7 +115,7 @@ export function LearnHome() {
                 { icon: Stack, label: `${UNITS.length} units` },
                 { icon: BookOpen, label: `${LESSONS.length} lessons` },
                 { icon: Clock, label: `About ${COURSE_HOURS} hours` },
-                { icon: HandHeart, label: 'Free · no experience needed' },
+                { icon: HandHeart, label: 'Free to attend · no experience needed' },
               ].map((m) => (
                 <li key={m.label} className="course-meta">
                   <m.icon size={16} weight="bold" className="text-brand-dark" aria-hidden="true" />
@@ -91,10 +127,14 @@ export function LearnHome() {
             <div className="mt-6 flex flex-wrap gap-3">
               <Link
                 href={`/learn/${(next ?? LESSONS[0]).slug}` as Route}
-                className="btn btn-primary no-underline"
+                className="btn btn-primary btn-lg no-underline"
               >
                 <Play size={18} weight="bold" aria-hidden="true" />
-                {finished === 0 ? 'Start the course' : next ? 'Continue' : 'Review the course'}
+                {finished === 0
+                  ? 'Start the course'
+                  : next
+                    ? `Continue: ${next.title}`
+                    : 'Review the course'}
               </Link>
               <a href="#course-outline" className="btn btn-quiet btn-lg no-underline">
                 <ListNumbers size={19} weight="bold" className="text-apricot" aria-hidden="true" />
@@ -147,91 +187,175 @@ export function LearnHome() {
                   {ready ? finished : 0} of {LESSONS.length} lessons
                 </span>
                 <span className="mt-1 block text-sm leading-[1.45] text-muted">
-                  {ready && next && finished > 0
-                    ? `Next: ${next.title}`
-                    : 'Saved on this device.'}
+                  {/* Not the board's "Sign in to keep it across devices": progress
+                      is per device whether or not somebody is signed in (see
+                      lib/learn-progress.ts), so that would be a promise. */}
+                  Saved on this device.
                 </span>
               </div>
             </div>
 
             <div className="flex items-center gap-3 border-t border-line pt-3.5">
               <div className="flex-none">
-                <SplatMascot width={64} />
+                <SplatMascot width={72} pose={next ? 'think' : 'party'} />
               </div>
               <p className="learn-hero__bubble">
                 {finished === 0
-                  ? 'Unit 1 is four short reads. You can do it tonight.'
+                  ? 'Unit 1 is four short reads. Start there.'
                   : next
-                    ? 'Pick up where you left off — it remembers.'
-                    : 'All sixteen done. Go and adapt something.'}
+                    ? `Next up: ${next.title}.`
+                    : 'You finished. Go find a guide for a toy you own.'}
               </p>
             </div>
           </div>
         </div>
       </div>
 
-      <h2 id="course-outline" className="mb-3.5 mt-11 scroll-mt-24 font-display text-[26px] font-extrabold text-ink">
-        The six units
+      <h2 className="mb-3.5 mt-11 font-display text-[26px] font-extrabold text-ink">
+        What you will be able to do
       </h2>
+      <ul className="grid list-none gap-4 p-0 sm:grid-cols-2 lg:grid-cols-4">
+        {OUTCOMES.map((o) => (
+          <li
+            key={o.t}
+            className="min-w-0 rounded-card border border-line px-5 pb-[22px] pt-5 text-[var(--tink)]"
+            style={{ background: o.tint }}
+          >
+            <o.icon size={32} weight="duotone" aria-hidden="true" />
+            <h3 className="mb-1.5 mt-3 font-display text-lg font-extrabold leading-[1.2]">{o.t}</h3>
+            <p className="text-sm leading-normal opacity-85">{o.d}</p>
+          </li>
+        ))}
+      </ul>
 
-      <div className="flex flex-col gap-6">
-        {UNITS.map((u) => {
-          const unitDone = u.lessons.filter((l) => done[l.slug]).length
+      <div
+        id="course-outline"
+        className="mb-[18px] mt-12 flex scroll-mt-24 flex-wrap items-end justify-between gap-4"
+      >
+        <div>
+          <h2 className="font-display text-[26px] font-extrabold text-ink">The course, unit by unit</h2>
+          <p className="mt-1 text-sm text-muted">
+            In order is best. Nothing is locked — skip ahead if you already know it.
+          </p>
+        </div>
+        <span className="inline-flex items-center gap-3.5 text-[13px] font-bold text-muted">
+          {(['read', 'build', 'quiz'] as const).map((k) => {
+            const Icon = KIND_ICON[k]
+            return (
+              <span key={k} className="inline-flex items-center gap-1.5">
+                <Icon weight="bold" style={{ color: KIND_COLOR[k] }} aria-hidden="true" />
+                {KIND_LABEL[k]}
+              </span>
+            )
+          })}
+        </span>
+      </div>
+
+      {/* A path, not a stack of cards: each unit hangs off a numbered node,
+          and the line between nodes turns green as units are finished. */}
+      <ol className="flex list-none flex-col p-0">
+        {UNITS.map((u, i) => {
+          const unitDone = ready ? u.lessons.filter((l) => done[l.slug]).length : 0
+          const status =
+            unitDone === u.lessons.length
+              ? 'done'
+              : unitDone > 0 || u.lessons.some((l) => l.slug === next?.slug)
+                ? 'current'
+                : 'todo'
+          const mins = u.lessons.reduce((n, l) => n + l.minutes, 0)
           return (
-            <section key={u.n} className="card p-6">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="eyebrow text-muted">Unit {u.n}</p>
-                  <h2 className="mt-0.5 font-display text-xl font-extrabold text-ink">{u.title}</h2>
-                  <p className="mt-1 max-w-prose text-sm leading-relaxed text-muted">{u.blurb}</p>
-                </div>
-                <span className="badge shrink-0 bg-sunken text-muted">
-                  {ready && unitDone === u.lessons.length
-                    ? 'Complete'
-                    : ready && unitDone > 0
-                      ? `${unitDone} of ${u.lessons.length} done`
-                      : 'Not started'}
+            <li key={u.n} className="grid grid-cols-[56px_minmax(0,1fr)] gap-4">
+              <div className="flex flex-col items-center">
+                <span
+                  aria-hidden="true"
+                  className="grid h-12 w-12 flex-none place-items-center rounded-full border border-line font-display text-[19px] font-extrabold shadow-[var(--e1)]"
+                  style={{
+                    background:
+                      status === 'done' ? 'var(--ok)' : status === 'current' ? 'var(--b600)' : 'var(--surface)',
+                    color: status === 'todo' ? 'var(--muted)' : 'var(--onbrand)',
+                  }}
+                >
+                  {status === 'done' ? <Check size={22} weight="bold" /> : u.n}
                 </span>
+                {i < UNITS.length - 1 && (
+                  <span
+                    aria-hidden="true"
+                    className="my-1.5 w-1 flex-1 rounded-sm"
+                    style={{ background: status === 'done' ? 'var(--ok)' : 'var(--line)' }}
+                  />
+                )}
               </div>
 
-              <ul className="mt-4 flex list-none flex-col gap-1">
-                {u.lessons.map((l) => {
-                  const Icon = KIND_ICON[l.kind]
-                  const isNext = next?.slug === l.slug
-                  return (
-                    <li key={l.slug}>
-                      <Link
-                        href={`/learn/${l.slug}` as Route}
-                        className={`flex items-start gap-3 rounded-card px-3 py-2.5 transition-colors hover:bg-sunken ${
-                          isNext ? 'bg-brand-tint' : ''
-                        }`}
-                      >
-                        {ready && done[l.slug] ? (
-                          <Check className="mt-0.5 h-5 w-5 shrink-0 text-success" aria-label="Done" />
-                        ) : (
-                          <Circle className="mt-0.5 h-5 w-5 shrink-0 text-line" aria-hidden="true" />
-                        )}
-                        <span className="min-w-0 flex-1">
-                          <span className="flex flex-wrap items-center gap-2">
-                            <span className="font-bold text-ink">{l.title}</span>
-                            <span className="inline-flex items-center gap-1 text-xs text-muted">
-                              <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+              <section className="mb-[22px] overflow-hidden rounded-card border border-line bg-surface shadow-[var(--e2),var(--hi)]">
+                <div
+                  className="flex items-start justify-between gap-4 px-[22px] pb-4 pt-5 text-[var(--tink)]"
+                  style={{ background: u.tint }}
+                >
+                  <div className="min-w-0">
+                    <p className="text-xs font-extrabold uppercase leading-6 tracking-[0.1em] opacity-75">
+                      Unit {u.n} · {u.lessons.length} {u.lessons.length === 1 ? 'lesson' : 'lessons'} · {mins} min
+                    </p>
+                    <h3 className="my-1 font-display text-[23px] font-extrabold leading-[1.15]">{u.title}</h3>
+                    <p className="max-w-[60ch] text-[15px] leading-normal opacity-85">{u.blurb}</p>
+                  </div>
+                  <span
+                    className="flex-none rounded-pill px-3 py-1.5 text-xs font-extrabold shadow-[var(--e1)]"
+                    style={{
+                      background: status === 'done' ? 'var(--ok)' : 'var(--surface)',
+                      color: status === 'done' ? 'var(--onbrand)' : 'var(--ink)',
+                    }}
+                  >
+                    {status === 'done'
+                      ? 'Complete'
+                      : status === 'current'
+                        ? `${unitDone} of ${u.lessons.length} done`
+                        : 'Not started'}
+                  </span>
+                </div>
+
+                <ul className="flex list-none flex-col p-0">
+                  {u.lessons.map((l) => {
+                    const Icon = KIND_ICON[l.kind]
+                    const isNext = next?.slug === l.slug
+                    return (
+                      <li key={l.slug}>
+                        <Link
+                          href={`/learn/${l.slug}` as Route}
+                          className={`grid min-h-14 grid-cols-[32px_minmax(0,1fr)_auto_28px] items-center gap-3.5 border-t border-line px-[22px] py-[13px] text-ink no-underline transition-colors hover:bg-sunken ${
+                            isNext ? 'bg-brand-50' : ''
+                          }`}
+                        >
+                          <Icon size={20} weight="bold" style={{ color: KIND_COLOR[l.kind] }} aria-hidden="true" />
+                          <span className="min-w-0">
+                            <span className="block text-base font-extrabold">{l.title}</span>
+                            <span className="mt-px block text-[13px] text-muted">
                               {KIND_LABEL[l.kind]} · {l.minutes} min
                             </span>
                           </span>
-                          <span className="mt-0.5 block text-sm leading-relaxed text-muted">
-                            {l.blurb}
-                          </span>
-                        </span>
-                      </Link>
-                    </li>
-                  )
-                })}
-              </ul>
-            </section>
+                          {/* No placeholder when absent, as on the board: the
+                              status ring then takes the auto column and sits
+                              one track in from the edge on every row but the
+                              next one. */}
+                          {isNext && (
+                            <span className="rounded-pill bg-brand-dark px-2.5 py-1 text-[11px] font-extrabold tracking-[0.06em] text-white">
+                              UP NEXT
+                            </span>
+                          )}
+                          {ready && done[l.slug] ? (
+                            <CheckCircle size={24} weight="fill" className="justify-self-end text-success" aria-label="Done" />
+                          ) : (
+                            <Circle size={24} className="justify-self-end text-line" aria-hidden="true" />
+                          )}
+                        </Link>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </section>
+            </li>
           )
         })}
-      </div>
+      </ol>
     </div>
   )
 }

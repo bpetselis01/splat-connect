@@ -1,18 +1,6 @@
-/**
- * How a switch works.
- *
- * Two diagrams carry the whole lesson, and they are inline SVG rather than
- * images: a circuit with two states is exactly the thing a picture of a
- * photograph cannot show, and a reader on a slow connection should not wait for
- * a JPEG of a rectangle and two lines.
- *
- * The diagrams are decorative — every one has a caption under it saying what it
- * shows, and the paragraphs say it again in words. Somebody using a screen
- * reader gets the lesson, not a list of unlabelled shapes.
- */
-import Link from 'next/link'
+import Image from 'next/image'
 import { LearnShell } from '@/components/learn-shell'
-import { Alert } from '@/components/alert'
+import { LessonH2 } from '@/components/lesson-kit'
 
 export const metadata = {
   title: 'How a switch works — SPLAT Connect',
@@ -20,118 +8,109 @@ export const metadata = {
     'A button is a gap in a circuit. An adapted toy just gives that gap a second way to close.',
 }
 
-/** One loop, with the gap open or closed. */
-function CircuitDiagram({ closed, second }: { closed: boolean; second?: boolean }) {
+// The workshop's own diagrams. Width and height are the files' intrinsic size,
+// so next/image reserves the right box before they load.
+function Diagram({
+  src,
+  alt,
+  caption,
+  maxWidth,
+  width,
+  height,
+}: {
+  src: string
+  alt: string
+  caption: string
+  maxWidth: number
+  width: number
+  height: number
+}) {
   return (
-    <svg
-      viewBox="0 0 220 120"
-      aria-hidden="true"
-      className="h-auto w-full max-w-sm"
-      fill="none"
-      strokeWidth={3}
-      strokeLinecap="round"
-    >
-      {/* The loop */}
-      <path
-        d="M30 30 H110 M130 30 H190 V90 H30 V30"
-        className="stroke-ink"
+    <figure className="rounded-card border border-line bg-surface px-6 pb-4 pt-[22px] shadow-[var(--e2)]">
+      <Image
+        src={src}
+        alt={alt}
+        width={width}
+        height={height}
+        className="mx-auto block h-auto w-full"
+        style={{ maxWidth }}
       />
-      {/* The original button: a gap, bridged when pressed */}
-      {closed ? (
-        <path d="M110 30 H130" className="stroke-ink" />
-      ) : (
-        <path d="M110 30 l14 -12" className="stroke-ink" />
-      )}
-      {/* The toy, as a lamp */}
-      <circle
-        cx="190"
-        cy="60"
-        r="11"
-        className={closed ? 'fill-honey-soft stroke-ink' : 'fill-surface stroke-ink'}
-      />
-      {second && (
-        <>
-          {/* The added switch, in parallel across the same gap */}
-          <path d="M110 30 V8 H130 V30" className="stroke-brand-dark" strokeDasharray="5 4" />
-          <circle cx="120" cy="8" r="6" className="fill-brand-tint stroke-brand-dark" />
-        </>
-      )}
-    </svg>
+      <figcaption className="mt-2.5 text-center text-sm font-semibold text-muted">{caption}</figcaption>
+    </figure>
   )
 }
 
-export default function Page() {
+const CONNECTORS = [
+  {
+    img: '/learn/img/18.jpeg',
+    alt: 'A 3.5 mm mono jack plug',
+    title: 'Jack — goes on the switch',
+    body: 'The plug. Two contacts: tip and sleeve. Every commercial accessible switch — jelly bean, buddy button, the lot — ends in one of these.',
+  },
+  {
+    img: '/learn/img/19.jpeg',
+    alt: 'A 3.5 mm mono socket',
+    title: 'Socket — goes in the toy',
+    body: "The hole. Its two pins are what you solder across the toy's button. Any switch a family already owns will plug straight in.",
+  },
+]
+
+export default function HowASwitchWorks() {
   return (
     <LearnShell slug="how-a-switch-works">
-      <h1 className="mt-1.5 title-article">How a switch works</h1>
+      <LessonH2>A button is a gap</LessonH2>
+      <p className="mb-[18px] leading-[1.6] text-ink">
+        Electrically, a button is nothing more than a break in a loop of wire. While it is not
+        pressed, the loop is open and nothing flows. Press it and the two sides touch, the loop
+        closes, and the toy turns on. Let go and the gap comes back.
+      </p>
+      <Diagram
+        src="/learn/img/02.png"
+        alt="Two circuit diagrams: an open switch with the lamp off, and a closed switch with the lamp lit"
+        caption="Left: switch open, toy off. Right: switch closed, toy on."
+        maxWidth={560}
+        width={1216}
+        height={396}
+      />
 
-      <section className="mt-6">
-        <h2 className="title-detail">A button is a gap</h2>
-        <p className="mt-2 max-w-prose text-base leading-relaxed text-ink">
-          Electrically, a button is nothing more than a break in a loop of wire. While it is not
-          pressed, the loop is open and nothing flows. Press it and the two sides touch, the loop
-          closes, and the toy turns on. Let go and the gap comes back.
-        </p>
-        <div className="mt-5 flex flex-wrap gap-6">
-          <figure>
-            <CircuitDiagram closed={false} />
-            <figcaption className="mt-1 text-sm text-muted">Switch open, toy off.</figcaption>
-          </figure>
-          <figure>
-            <CircuitDiagram closed />
-            <figcaption className="mt-1 text-sm text-muted">Switch closed, toy on.</figcaption>
-          </figure>
-        </div>
-      </section>
+      <LessonH2>Two buttons, one job</LessonH2>
+      <p className="mb-[18px] leading-[1.6] text-ink">
+        An adapted toy adds a second switch <strong>in parallel</strong> with the first — its two
+        wires join the two sides of the original button. Now either switch can close the loop. The
+        toy&apos;s own button keeps working for siblings, and the big external switch works for the
+        child. Nothing about the toy&apos;s electronics changes; you have just given the gap a
+        second way to close.
+      </p>
+      <Diagram
+        src="/learn/img/03.png"
+        alt="Two circuit diagrams showing an external switch wired in parallel with the toy's own switch"
+        caption="The external switch sits beside the original. Either one turns the toy on."
+        maxWidth={620}
+        width={1191}
+        height={499}
+      />
 
-      <section className="mt-10">
-        <h2 className="title-detail">Two buttons, one job</h2>
-        <p className="mt-2 max-w-prose text-base leading-relaxed text-ink">
-          An adapted toy adds a second switch <em>in parallel</em> with the first — its two wires
-          join the two sides of the original button. Now either switch can close the loop. The
-          toy&apos;s own button keeps working for siblings, and the big external switch works for
-          the child. Nothing about the toy&apos;s electronics changes; you have just given the gap
-          a second way to close.
-        </p>
-        <figure className="mt-5">
-          <CircuitDiagram closed={false} second />
-          <figcaption className="mt-1 text-sm text-muted">
-            The external switch sits beside the original. Either one turns the toy on.
-          </figcaption>
-        </figure>
-      </section>
-
-      <section className="mt-10">
-        <h2 className="title-detail">Jack, socket, and why 3.5 mm</h2>
-        <div className="mt-3 grid gap-4 sm:grid-cols-2">
-          <div className="card p-5">
-            <p className="font-bold text-ink">Jack — goes on the switch</p>
-            <p className="mt-1 text-sm leading-relaxed text-muted">
-              The plug. Two contacts: tip and sleeve. Every commercial accessible switch — jelly
-              bean, buddy button, the lot — ends in one of these.
-            </p>
+      <LessonH2>Jack, socket, and why 3.5&nbsp;mm</LessonH2>
+      <div className="grid gap-4 sm:grid-cols-2">
+        {CONNECTORS.map((c) => (
+          <div
+            key={c.title}
+            className="overflow-hidden rounded-card border border-line bg-surface shadow-[var(--e1)]"
+          >
+            <div className="relative aspect-video w-full bg-sunken">
+              <Image src={c.img} alt={c.alt} fill sizes="(min-width: 1024px) 432px, 100vw" className="object-cover" />
+            </div>
+            <div className="px-[18px] pb-[18px] pt-4">
+              <h3 className="mb-1 font-display text-lg font-extrabold text-ink">{c.title}</h3>
+              <p className="text-[15px] leading-normal text-muted">{c.body}</p>
+            </div>
           </div>
-          <div className="card p-5">
-            <p className="font-bold text-ink">Socket — goes in the toy</p>
-            <p className="mt-1 text-sm leading-relaxed text-muted">
-              The hole. Its two pins are what you solder across the toy&apos;s button. Any switch a
-              family already owns will plug straight in.
-            </p>
-          </div>
-        </div>
-        <Alert tone="warn" className="mt-6">
-          <strong className="font-bold">Mono, not stereo.</strong> A stereo plug has three contacts
-          and will sometimes work by luck. Buy mono every time so the child&apos;s switch behaves
-          the same in every toy you adapt.
-        </Alert>
-        <p className="mt-4 text-sm text-muted">
-          Wiring one is the next practical step —{' '}
-          <Link href="/learn/wire-a-connector" className="font-semibold text-brand-dark hover:underline">
-            Unit 3 does it in nine steps
-          </Link>
-          .
-        </p>
-      </section>
+        ))}
+      </div>
+      <p className="mt-[22px] rounded-[var(--radius-inset)] border border-line bg-brand-50 px-[22px] py-5 leading-[1.55] text-ink">
+        <strong>Mono, not stereo.</strong> A stereo plug has three contacts and will sometimes work by
+        luck. Buy mono every time so the child&apos;s switch behaves the same in every toy you adapt.
+      </p>
     </LearnShell>
   )
 }

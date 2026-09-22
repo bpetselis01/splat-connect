@@ -21,10 +21,11 @@ describe('Learn course home', () => {
     }
   })
 
+  // Units are h3s under "The course, unit by unit", as the board nests them.
   it('lays the six units out in order', () => {
     render(<LearnPage />)
     const headings = screen
-      .getAllByRole('heading', { level: 2 })
+      .getAllByRole('heading', { level: 3 })
       .map((h) => h.textContent)
     for (const unit of UNITS) {
       expect(headings).toContain(unit.title)

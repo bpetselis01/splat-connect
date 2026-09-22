@@ -22,7 +22,6 @@ export default function Page() {
     <LearnShell slug={SLUG}>
       <BuildLesson
         lesson={content.builds[SLUG] as unknown as Lesson}
-        title="Build a 3D-printed switch"
       />
     </LearnShell>
   )
