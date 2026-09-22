@@ -10,9 +10,9 @@
  * this form asks for both numbers rather than computing one from the other.
  *
  * The yield is the leader's to apply. About three quarters of what comes in
- * becomes filament, and "about" is not a number to put in a ledger — so the
- * form shows the typical figure as a hint beside a field somebody types
- * themselves.
+ * becomes filament, and "about" is not a number to put in a ledger — so where
+ * the board computes the credit from the weight, this row keeps a second box
+ * somebody types themselves, with the typical figure as a hint beside it.
  */
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
@@ -23,13 +23,51 @@ import { browserApiClient } from '@/lib/browser-api-client'
 
 const kg = (grams: number) => `${(grams / 1000).toFixed(1)} kg`
 
-function WeighIn({
+const TINTS = ['bg-honey-soft', 'bg-violet-soft', 'bg-mint-soft', 'bg-brand-tint']
+
+const initials = (name: string) =>
+  name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? '')
+    .join('')
+
+/** The board's inline kg box: mono, 46px, on the canvas. */
+function KgInput({
+  label,
+  value,
+  onChange,
+}: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+}) {
+  return (
+    <label className="inline-flex flex-none items-center gap-2 text-sm font-extrabold text-ink">
+      {label}
+      <input
+        className="h-[46px] w-[88px] rounded-field border-(length:--border-width) border-line bg-canvas px-3 font-mono text-[15px] font-bold tabular-nums text-ink"
+        inputMode="decimal"
+        placeholder="0.0"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
+      kg
+    </label>
+  )
+}
+
+function BookedRow({
   orgId,
   dropoff,
+  name,
+  tint,
   onDone,
 }: {
   orgId: string
   dropoff: RecyclingDropoff
+  name: string
+  tint: string
   onDone: () => void
 }) {
   const [weighed, setWeighed] = useState('')
@@ -65,58 +103,51 @@ function WeighIn({
   }
 
   return (
-    <div className="mt-3 flex flex-col gap-3 rounded-[var(--radius-inset)] bg-canvas p-4">
-      <div className="flex flex-wrap items-end gap-3">
-        <label className="w-32">
-          <span className="block text-[13px] font-bold text-muted">Weighed, kg</span>
-          <input
-            className="field mt-1 w-full font-mono tabular-nums"
-            inputMode="decimal"
-            value={weighed}
-            onChange={(e) => setWeighed(e.target.value)}
-          />
-        </label>
-        <label className="w-32">
-          <span className="block text-[13px] font-bold text-muted">Credit, kg</span>
-          <input
-            className="field mt-1 w-full font-mono tabular-nums"
-            inputMode="decimal"
-            value={credit}
-            onChange={(e) => setCredit(e.target.value)}
-          />
-        </label>
-        <p className="text-[13px] leading-relaxed text-muted">
-          About three quarters of what comes in becomes filament — but the number on the record is
-          the one you decide.
-        </p>
-      </div>
-
-      {error && (
-        <p role="alert" className="text-sm text-danger">
-          {error}
-        </p>
-      )}
-
-      <div className="flex gap-2">
+    <li className="card-flat flex flex-wrap items-center gap-4 px-5 py-4 shadow-e1">
+      <span
+        aria-hidden="true"
+        className={`grid h-[42px] w-[42px] flex-none place-items-center rounded-full text-[13px] font-extrabold text-ink ${tint}`}
+      >
+        {initials(name)}
+      </span>
+      <span className="min-w-0 flex-[1_1_180px]">
+        <span className="block font-extrabold text-ink">{name}</span>
+        <span className="block text-sm font-semibold text-muted">
+          {kg(dropoff.estimated_grams)} declared · {dropoff.material} · Booked{' '}
+          {new Date(dropoff.created_at).toLocaleDateString('en-AU')}
+        </span>
+        {dropoff.note && <span className="mt-1 block text-sm text-muted">{dropoff.note}</span>}
+      </span>
+      <KgInput label="Actual" value={weighed} onChange={setWeighed} />
+      <KgInput label="Credit" value={credit} onChange={setCredit} />
+      <span className="flex-[1_1_150px] text-[13px] font-bold text-muted">
+        About three quarters becomes filament — the credit is the number you decide.
+      </span>
+      <span className="flex flex-none gap-2">
         <button
           type="button"
-          className="btn btn-primary"
-          disabled={pending || !valid || weighed === '' || credit === ''}
-          onClick={() => decide('received')}
-        >
-          <Scales size={18} weight="bold" aria-hidden="true" />
-          Record it
-        </button>
-        <button
-          type="button"
-          className="btn btn-quiet"
+          className="btn btn-quiet min-h-11 px-3.5 text-sm text-danger hover:bg-apricot-soft hover:text-ink"
           disabled={pending}
           onClick={() => decide('declined')}
         >
-          Turn it away
+          Contaminated
         </button>
-      </div>
-    </div>
+        <button
+          type="button"
+          className="btn btn-primary min-h-11 px-4 text-sm"
+          disabled={pending || !valid || weighed === '' || credit === ''}
+          onClick={() => decide('received')}
+        >
+          <Scales weight="bold" aria-hidden="true" />
+          Weigh and credit
+        </button>
+      </span>
+      {error && (
+        <p role="alert" className="w-full text-sm text-danger">
+          {error}
+        </p>
+      )}
+    </li>
   )
 }
 
@@ -132,81 +163,35 @@ export function RecyclingIntake({
   names: Record<string, string>
 }) {
   const router = useRouter()
-  const [open, setOpen] = useState<string | null>(null)
 
   const booked = dropoffs.filter((d) => d.status === 'booked')
   const settled = dropoffs.filter((d) => d.status !== 'booked')
-
-  function Row({ dropoff }: { dropoff: RecyclingDropoff }) {
-    return (
-      <li className="card flex flex-col gap-2 p-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="min-w-0 flex-1">
-            <span className="block font-bold text-ink">
-              {dropoff.material} · about {kg(dropoff.estimated_grams)}
-            </span>
-            <span className="block text-sm text-muted">
-              {names[dropoff.contributor_id] ?? 'A contributor'} ·{' '}
-              {new Date(dropoff.created_at).toLocaleDateString('en-AU')}
-              {dropoff.status === 'received' &&
-                dropoff.weighed_grams !== null &&
-                dropoff.credit_grams !== null &&
-                ` · weighed ${kg(dropoff.weighed_grams)}, credited ${kg(dropoff.credit_grams)}`}
-            </span>
-          </span>
-          <Badge
-            status={
-              dropoff.status === 'received'
-                ? 'completed'
-                : dropoff.status === 'declined'
-                  ? 'rejected'
-                  : 'requested'
-            }
-            label={
-              dropoff.status === 'received'
-                ? 'RECEIVED'
-                : dropoff.status === 'declined'
-                  ? 'TURNED AWAY'
-                  : 'BOOKED'
-            }
-          />
-          {dropoff.status === 'booked' && (
-            <button
-              type="button"
-              className="btn btn-sm btn-quiet"
-              onClick={() => setOpen(open === dropoff.id ? null : dropoff.id)}
-            >
-              {open === dropoff.id ? 'Close' : 'Weigh it in'}
-            </button>
-          )}
-        </div>
-
-        {dropoff.note && <p className="text-sm leading-relaxed text-muted">{dropoff.note}</p>}
-
-        {open === dropoff.id && (
-          <WeighIn
-            orgId={orgId}
-            dropoff={dropoff}
-            onDone={() => {
-              setOpen(null)
-              router.refresh()
-            }}
-          />
-        )}
-      </li>
-    )
-  }
+  const nameOf = (d: RecyclingDropoff) => names[d.contributor_id] ?? 'A contributor'
 
   return (
-    <div className="flex flex-col gap-8">
+    <>
       <section>
-        <h2 className="title-section mb-3">Booked in ({booked.length})</h2>
+        <h2 className="mb-1.5 mt-8 font-display text-2xl font-extrabold text-ink">
+          Booked in{' '}
+          <span className="font-sans text-[15px] font-bold text-muted">({booked.length})</span>
+        </h2>
+        <p className="mb-4 max-w-[66ch] text-sm text-muted">
+          Weigh it on your scale, enter the real number, and the credit is issued against that. If
+          it turns up contaminated, refuse it.
+        </p>
         {booked.length === 0 ? (
-          <p className="text-sm leading-relaxed text-muted">Nothing booked in right now.</p>
+          <div className="browse-empty p-9 text-muted">Nothing booked in right now.</div>
         ) : (
-          <ul className="flex list-none flex-col gap-3">
-            {booked.map((dropoff) => (
-              <Row key={dropoff.id} dropoff={dropoff} />
+          <ul className="grid list-none gap-2.5">
+            {booked.map((dropoff, i) => (
+              <BookedRow
+                key={dropoff.id}
+                orgId={orgId}
+                dropoff={dropoff}
+                name={nameOf(dropoff)}
+                tint={TINTS[i % TINTS.length]}
+                onDone={() => router.refresh()}
+              />
             ))}
           </ul>
         )}
@@ -214,14 +199,38 @@ export function RecyclingIntake({
 
       {settled.length > 0 && (
         <section>
-          <h2 className="title-section mb-3">Weighed in</h2>
-          <ul className="flex list-none flex-col gap-3">
-            {settled.map((dropoff) => (
-              <Row key={dropoff.id} dropoff={dropoff} />
+          <h2 className="mb-4 mt-8 font-display text-2xl font-extrabold text-ink">Weighed in</h2>
+          <ul className="grid list-none gap-2.5">
+            {settled.map((dropoff, i) => (
+              <li
+                key={dropoff.id}
+                className="card-flat flex flex-wrap items-center gap-4 px-5 py-4 shadow-e1"
+              >
+                <span
+                  aria-hidden="true"
+                  className={`grid h-[42px] w-[42px] flex-none place-items-center rounded-full text-[13px] font-extrabold text-ink ${TINTS[i % TINTS.length]}`}
+                >
+                  {initials(nameOf(dropoff))}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-extrabold text-ink">{nameOf(dropoff)}</span>
+                  <span className="block text-sm font-semibold text-muted">
+                    {kg(dropoff.estimated_grams)} declared · {dropoff.material}
+                    {dropoff.status === 'received' &&
+                      dropoff.weighed_grams !== null &&
+                      dropoff.credit_grams !== null &&
+                      ` · weighed ${kg(dropoff.weighed_grams)}, credited ${kg(dropoff.credit_grams)}`}
+                  </span>
+                </span>
+                <Badge
+                  status={dropoff.status === 'received' ? 'completed' : 'rejected'}
+                  label={dropoff.status === 'received' ? 'RECEIVED' : 'TURNED AWAY'}
+                />
+              </li>
             ))}
           </ul>
         </section>
       )}
-    </div>
+    </>
   )
 }

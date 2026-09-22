@@ -25,7 +25,39 @@
  */
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { CaretUp, CaretDown, Trash, Plus, Info } from '@phosphor-icons/react/dist/ssr'
+import {
+  ArrowDown,
+  ArrowUp,
+  Asterisk,
+  Baby,
+  Car,
+  ChalkboardTeacher,
+  CircleDashed,
+  Cube,
+  DoorOpen,
+  Drop,
+  Fire,
+  Hammer,
+  Hash,
+  Lightning,
+  ListChecks,
+  MapPin,
+  Megaphone,
+  Printer,
+  PuzzlePiece,
+  Screwdriver,
+  TextAa,
+  TextAlignLeft,
+  ToggleLeft,
+  Trash,
+  User,
+  Users,
+  VideoCamera,
+  Wheelchair,
+  Wrench,
+  X,
+} from '@phosphor-icons/react/dist/ssr'
+import type { Icon } from '@phosphor-icons/react'
 import { browserApiClient } from '@/lib/browser-api-client'
 import {
   EVENT_KINDS,
@@ -54,9 +86,10 @@ type DraftQuestion = {
  * Every extra question loses people, so the fastest way to keep a form short is
  * to make the useful ones free rather than to warn against the rest.
  */
-const COMMON_ASKS: Array<{ label: string; q: DraftQuestion }> = [
+const COMMON_ASKS: Array<{ label: string; icon: Icon; q: DraftQuestion }> = [
   {
     label: 'Head count',
+    icon: Users,
     q: {
       prompt: 'How many people are coming, including you?',
       answer_type: 'number',
@@ -66,10 +99,12 @@ const COMMON_ASKS: Array<{ label: string; q: DraftQuestion }> = [
   },
   {
     label: 'Toy they bring',
+    icon: PuzzlePiece,
     q: { prompt: 'What toy are you bringing?', answer_type: 'short', required: true, options: [] },
   },
   {
     label: 'Access needs',
+    icon: Wheelchair,
     q: {
       prompt: 'Anything we should know about access, sensory or support needs?',
       answer_type: 'paragraph',
@@ -79,10 +114,12 @@ const COMMON_ASKS: Array<{ label: string; q: DraftQuestion }> = [
   },
   {
     label: 'Child’s age',
+    icon: Baby,
     q: { prompt: 'How old is your child?', answer_type: 'number', required: false, options: [] },
   },
   {
     label: 'Soldering',
+    icon: Fire,
     q: {
       prompt: 'Have you soldered before?',
       answer_type: 'boolean',
@@ -92,16 +129,43 @@ const COMMON_ASKS: Array<{ label: string; q: DraftQuestion }> = [
   },
   {
     label: 'Parking',
+    icon: Car,
     q: { prompt: 'Will you need a parking space?', answer_type: 'boolean', required: false, options: [] },
   },
 ]
 
+// The board's glyphs for the kinds, the bench tools and the answer types.
+const KIND_ICON: Record<EventKind, Icon> = {
+  build_day: Hammer,
+  workshop: ChalkboardTeacher,
+  open_day: DoorOpen,
+  print_day: Printer,
+}
+const TOOL_ICON: Record<string, Icon> = {
+  'Soldering irons': Fire,
+  Drill: Screwdriver,
+  'Hot glue': Drop,
+  Multimeter: Lightning,
+  Screwdrivers: Wrench,
+  '3D printer on site': Cube,
+}
+const ANSWER_ICON: Record<AnswerType, Icon> = {
+  short: TextAa,
+  paragraph: TextAlignLeft,
+  number: Hash,
+  choice: ListChecks,
+  boolean: ToggleLeft,
+}
+
 export function EventForm({
   orgId,
+  orgName,
   event,
   questions: initialQuestions = [],
 }: {
   orgId: string
+  /** Shown beside the buttons: whose name this goes out under. */
+  orgName: string
   /** Absent when publishing a new one. */
   event?: OrgEvent
   questions?: OrgEventQuestion[]
@@ -224,9 +288,9 @@ export function EventForm({
   }
 
   return (
-    <form onSubmit={(e) => e.preventDefault()} className="mt-6 flex flex-col gap-5">
+    <form onSubmit={(e) => e.preventDefault()} className="form-card">
       <label className="block">
-        <span className="mb-1.5 block text-sm font-bold text-ink">Event name</span>
+        <span className="form-label">Event name</span>
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -237,66 +301,72 @@ export function EventForm({
       </label>
 
       <fieldset>
-        <legend className="mb-1.5 text-sm font-bold text-ink">What kind of event?</legend>
-        <div role="radiogroup" aria-label="Event kind" className="grid gap-2 sm:grid-cols-2">
-          {(Object.keys(EVENT_KINDS) as EventKind[]).map((k) => (
-            <label
-              key={k}
-              className={`flex cursor-pointer items-start gap-3 rounded-card border p-3 ${
-                kind === k ? 'border-brand bg-brand-tint' : 'border-line bg-surface'
-              }`}
-            >
-              <input
-                type="radio"
-                name="kind"
-                checked={kind === k}
-                onChange={() => setKind(k)}
-                className="mt-1"
-              />
-              <span>
-                <span className="block font-bold text-ink">{EVENT_KIND_LABEL[k]}</span>
-                <span className="block text-xs text-muted">{EVENT_KINDS[k]}</span>
-              </span>
-            </label>
-          ))}
+        <legend className="form-label mb-2">What kind of event?</legend>
+        <div role="radiogroup" aria-label="Event kind" className="grid gap-3 sm:grid-cols-2">
+          {(Object.keys(EVENT_KINDS) as EventKind[]).map((k) => {
+            const KindIcon = KIND_ICON[k]
+            return (
+              <label key={k} className="choice-card">
+                <input
+                  type="radio"
+                  name="kind"
+                  checked={kind === k}
+                  onChange={() => setKind(k)}
+                  className="sr-only"
+                />
+                <KindIcon weight="duotone" aria-hidden="true" className="choice-card__icon" />
+                <span>
+                  <span className="choice-card__label">{EVENT_KIND_LABEL[k]}</span>
+                  <span className="choice-card__sub">{EVENT_KINDS[k]}</span>
+                </span>
+              </label>
+            )
+          })}
         </div>
       </fieldset>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)]">
         <label className="block">
-          <span className="mb-1.5 block text-sm font-bold text-ink">Date</span>
+          <span className="form-label">Date</span>
           <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="field" />
         </label>
         <label className="block">
-          <span className="mb-1.5 block text-sm font-bold text-ink">Starts</span>
+          <span className="form-label">Starts</span>
           <input type="time" value={starts} onChange={(e) => setStarts(e.target.value)} className="field" />
         </label>
         <label className="block">
-          <span className="mb-1.5 block text-sm font-bold text-ink">Ends</span>
+          <span className="form-label">Ends</span>
           <input type="time" value={ends} onChange={(e) => setEnds(e.target.value)} className="field" />
         </label>
       </div>
 
-      <fieldset>
-        <legend className="mb-1.5 text-sm font-bold text-ink">Where</legend>
-        <div role="radiogroup" aria-label="Format" className="flex flex-wrap gap-2">
-          {(['in_person', 'online'] as const).map((f) => (
-            <label
+      <div>
+        <span className="form-label mb-2">Where</span>
+        <div role="radiogroup" aria-label="Format" className="seg">
+          {(
+            [
+              ['in_person', 'In person', MapPin],
+              ['online', 'Online', VideoCamera],
+            ] as const
+          ).map(([f, label, FormatIcon]) => (
+            <button
               key={f}
-              className={`flex cursor-pointer items-center gap-2 rounded-pill border px-4 py-2 text-sm font-bold ${
-                format === f ? 'border-brand bg-brand-tint text-brand-deep' : 'border-line bg-surface text-ink'
-              }`}
+              type="button"
+              role="radio"
+              aria-checked={format === f}
+              onClick={() => setFormat(f)}
+              className="px-4"
             >
-              <input type="radio" name="format" checked={format === f} onChange={() => setFormat(f)} />
-              {f === 'in_person' ? 'In person' : 'Online'}
-            </label>
+              <FormatIcon weight="bold" aria-hidden="true" />
+              {label}
+            </button>
           ))}
         </div>
 
         {format === 'in_person' ? (
-          <div className="mt-3 grid gap-4 sm:grid-cols-[2fr_1fr_auto]">
+          <div className="mt-3 grid gap-3 sm:grid-cols-[minmax(0,2fr)_minmax(0,1.2fr)_minmax(0,.8fr)]">
             <label className="block">
-              <span className="mb-1.5 block text-sm font-bold text-ink">Venue and street</span>
+              <span className="form-label mb-1.5 text-[13px] text-muted">Venue and street</span>
               <input
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
@@ -305,7 +375,7 @@ export function EventForm({
               />
             </label>
             <label className="block">
-              <span className="mb-1.5 block text-sm font-bold text-ink">Suburb</span>
+              <span className="form-label mb-1.5 text-[13px] text-muted">Suburb</span>
               <input
                 value={suburb}
                 onChange={(e) => setSuburb(e.target.value)}
@@ -314,7 +384,7 @@ export function EventForm({
               />
             </label>
             <label className="block">
-              <span className="mb-1.5 block text-sm font-bold text-ink">State</span>
+              <span className="form-label mb-1.5 text-[13px] text-muted">State</span>
               <select value={state} onChange={(e) => setState(e.target.value)} className="field">
                 {AU_STATES.map((s) => (
                   <option key={s} value={s}>
@@ -325,25 +395,29 @@ export function EventForm({
             </label>
           </div>
         ) : (
-          <label className="mt-3 block">
-            <span className="mb-1.5 block text-sm font-bold text-ink">Joining link</span>
-            <input
-              value={onlineUrl}
-              onChange={(e) => setOnlineUrl(e.target.value)}
-              placeholder="https://…"
-              className="field"
-            />
+          <>
             {/* The rule, where the decision is made. A leader pasting a Zoom
                 link should be told here that it is not going on the page. */}
-            <span className="mt-1.5 block text-xs text-muted">
-              Hidden until somebody says they are coming. It is never on the public page.
-            </span>
-          </label>
+            <p className="mt-3 rounded-[14px] bg-sunken px-4 py-3 text-sm leading-normal text-muted">
+              <VideoCamera weight="bold" aria-hidden="true" className="mr-1 inline align-[-2px]" />
+              The meeting link is not shown publicly. It is hidden until somebody says they are
+              coming.
+            </p>
+            <label className="mt-3 block">
+              <span className="form-label mb-1.5 text-[13px] text-muted">Meeting link</span>
+              <input
+                value={onlineUrl}
+                onChange={(e) => setOnlineUrl(e.target.value)}
+                placeholder="https://meet…"
+                className="field"
+              />
+            </label>
+          </>
         )}
-      </fieldset>
+      </div>
 
       <label className="block">
-        <span className="mb-1.5 block text-sm font-bold text-ink">Who is it for?</span>
+        <span className="form-label">Who is it for?</span>
         <input
           value={audience}
           onChange={(e) => setAudience(e.target.value)}
@@ -353,22 +427,10 @@ export function EventForm({
         />
       </label>
 
-      <label className="block">
-        <span className="mb-1.5 block text-sm font-bold text-ink">
-          About this event <span className="font-semibold text-muted">(optional)</span>
-        </span>
-        <textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          rows={4}
-          className="field"
-        />
-      </label>
-
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <label className="block">
-          <span className="mb-1.5 block text-sm font-bold text-ink">
-            What to bring <span className="font-semibold text-muted">(optional)</span>
+          <span className="form-label">
+            What to bring <span>(optional)</span>
           </span>
           <input
             value={whatToBring}
@@ -378,85 +440,93 @@ export function EventForm({
           />
         </label>
         <label className="block">
-          <span className="mb-1.5 block text-sm font-bold text-ink">Seats (blank = no limit)</span>
+          <span className="form-label">
+            Seats <span>(blank = no limit)</span>
+          </span>
           <input
             type="number"
             min={1}
             value={capacity}
             onChange={(e) => setCapacity(e.target.value)}
+            placeholder="16"
             className="field"
           />
         </label>
       </div>
 
-      <fieldset className="card p-5">
-        <legend className="px-1 font-bold text-ink">On the day</legend>
-        <p className="mb-3 text-xs text-muted">
-          Families see this when they ask for help with a guide.
+      <fieldset className="form-well">
+        <legend className="sr-only">On the day</legend>
+        <p aria-hidden="true" className="form-well__kicker">
+          On the day <span>— families see this when they ask for help with a guide</span>
         </p>
 
-        <p className="mb-1.5 text-sm font-bold text-ink">Can you print parts before the day?</p>
-        <div className="flex flex-wrap items-center gap-3">
-          {[true, false].map((yes) => (
-            <label
-              key={String(yes)}
-              className={`flex cursor-pointer items-center gap-2 rounded-pill border px-4 py-2 text-sm font-bold ${
-                printsParts === yes
-                  ? 'border-brand bg-brand-tint text-brand-deep'
-                  : 'border-line bg-surface text-ink'
-              }`}
-            >
-              <input
-                type="radio"
-                name="prints"
-                checked={printsParts === yes}
-                onChange={() => setPrintsParts(yes)}
-              />
-              {yes ? 'Yes, on request' : 'No'}
-            </label>
-          ))}
-          {printsParts && (
-            <label className="flex items-center gap-2 text-sm text-muted">
-              Up to
-              <input
-                type="number"
-                min={1}
-                max={100}
-                aria-label="Up to part sets"
-                value={partSetsMax}
-                onChange={(e) => setPartSetsMax(e.target.value)}
-                className="field w-20"
-              />
-              part sets
-            </label>
-          )}
-        </div>
-        {printsParts && (
-          <p className="mt-2 text-xs leading-relaxed text-muted">
-            Families who ask for help with a printable guide can choose “the host prints them”.
-            Each request lands on this event for you to accept or decline.
+        <div>
+          <span className="form-label mb-2">Can you print parts before the day?</span>
+          <div className="flex flex-wrap items-center gap-2">
+            {[true, false].map((yes) => {
+              const OptIcon = yes ? Printer : X
+              return (
+                <label key={String(yes)} className="toggle-pill px-4 text-sm">
+                  <input
+                    type="radio"
+                    name="prints"
+                    checked={printsParts === yes}
+                    onChange={() => setPrintsParts(yes)}
+                    className="sr-only"
+                  />
+                  <OptIcon weight="bold" aria-hidden="true" />
+                  {yes ? 'Yes, on request' : 'No'}
+                </label>
+              )
+            })}
+            {printsParts && (
+              <label className="ml-1.5 flex items-center gap-2 text-sm font-bold text-ink">
+                Up to
+                <input
+                  type="number"
+                  min={1}
+                  max={100}
+                  aria-label="Up to part sets"
+                  value={partSetsMax}
+                  onChange={(e) => setPartSetsMax(e.target.value)}
+                  className="field min-h-[42px] w-[70px]"
+                />
+                part sets
+              </label>
+            )}
+          </div>
+          <p className="mt-2 text-[13px] leading-normal text-muted">
+            {printsParts
+              ? 'Families who ask for help with a printable guide can choose “the host prints them”. Each request lands on this event for you to accept or decline.'
+              : 'Families will be asked to pick a printer themselves before the day.'}
           </p>
-        )}
+        </div>
 
-        <p className="mb-1.5 mt-4 text-sm font-bold text-ink">Tools on the bench</p>
-        <div className="flex flex-wrap gap-2">
-          {EVENT_TOOLS.map((tool) => (
-            <button
-              key={tool}
-              type="button"
-              onClick={() => toggleTool(tool)}
-              aria-pressed={tools.includes(tool)}
-              className="chip"
-            >
-              {tool}
-            </button>
-          ))}
+        <div>
+          <span className="form-label mb-2">Tools on the bench</span>
+          <div className="flex flex-wrap gap-2">
+            {EVENT_TOOLS.map((tool) => {
+              const ToolIcon = TOOL_ICON[tool]
+              return (
+                <button
+                  key={tool}
+                  type="button"
+                  onClick={() => toggleTool(tool)}
+                  aria-pressed={tools.includes(tool)}
+                  className="toggle-pill text-[13.5px] font-bold"
+                >
+                  {ToolIcon && <ToolIcon weight="bold" aria-hidden="true" />}
+                  {tool}
+                </button>
+              )
+            })}
+          </div>
         </div>
       </fieldset>
 
       <label className="block">
-        <span className="mb-1.5 block text-sm font-bold text-ink">
-          Access notes <span className="font-semibold text-muted">(optional)</span>
+        <span className="form-label">
+          Access notes <span>(optional)</span>
         </span>
         <input
           value={accessibility}
@@ -467,27 +537,38 @@ export function EventForm({
         />
       </label>
 
-      <fieldset className="card p-5">
-        <legend className="px-1 font-bold text-ink">Registration form</legend>
-        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-          <p className="text-xs text-muted">What people answer when they tap I&apos;m going.</p>
-          <span className="badge bg-sunken text-muted">
+      <fieldset className="form-well">
+        <legend className="sr-only">Registration form</legend>
+        <div className="flex flex-wrap items-baseline justify-between gap-3">
+          <p aria-hidden="true" className="form-well__kicker">
+            Registration form <span>— what people answer when they tap I&apos;m going</span>
+          </p>
+          <span className="text-[13px] font-bold text-muted">
             {questions.length} question{questions.length === 1 ? '' : 's'}
           </span>
         </div>
-        <p className="mb-4 flex items-start gap-2 text-xs leading-relaxed text-muted">
-          <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+        <p className="rounded-[14px] bg-surface px-3.5 py-2.5 text-[13px] leading-normal text-muted">
+          <User weight="bold" aria-hidden="true" className="mr-1 inline align-[-2px] text-ink" />
           Name and email are always asked. Add only what changes how you run the day — every
           extra question loses people.
         </p>
 
-        <div className="flex flex-col gap-3">
+        {questions.length === 0 && (
+          <p className="rounded-[18px] border-[length:var(--bw)] border-dashed border-line bg-surface p-5 text-center text-sm text-muted">
+            No questions yet — people give their name and email and that is it.
+          </p>
+        )}
+
+        <div className="grid gap-2.5">
           {questions.map((q, i) => (
-            <div key={q.id ?? `new-${i}`} className="rounded-card border border-line p-3">
-              <div className="flex items-start gap-2">
+            <div
+              key={q.id ?? `new-${i}`}
+              className="flex flex-col gap-2.5 rounded-[18px] border-[length:var(--bw)] border-line bg-surface p-3.5"
+            >
+              <div className="flex items-center gap-2.5">
                 <span
                   aria-hidden="true"
-                  className="mt-2 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-sunken font-mono text-xs font-bold text-brand-deep"
+                  className="grid h-7 w-7 flex-none place-items-center rounded-[14px] bg-sunken text-xs font-extrabold text-muted"
                 >
                   {i + 1}
                 </span>
@@ -496,46 +577,46 @@ export function EventForm({
                   value={q.prompt}
                   onChange={(e) => patchQuestion(i, { prompt: e.target.value })}
                   placeholder="Ask one thing, plainly"
-                  className="field flex-1"
+                  className="field min-h-[46px] min-w-0 flex-1 font-semibold"
                 />
-                <div className="flex shrink-0 gap-1">
+                <span className="flex flex-none gap-1">
                   <button
                     type="button"
                     onClick={() => move(i, -1)}
                     disabled={i === 0}
                     aria-label={`Move "${q.prompt || 'question'}" up`}
-                    className="btn btn-quiet btn-sm"
+                    className="grid h-[38px] w-[38px] place-items-center rounded-[14px] border-[length:var(--bw)] border-line bg-surface text-muted hover:bg-sunken hover:text-ink disabled:opacity-50"
                   >
-                    <CaretUp className="h-4 w-4" aria-hidden="true" />
+                    <ArrowUp weight="bold" aria-hidden="true" />
                   </button>
                   <button
                     type="button"
                     onClick={() => move(i, 1)}
                     disabled={i === questions.length - 1}
                     aria-label={`Move "${q.prompt || 'question'}" down`}
-                    className="btn btn-quiet btn-sm"
+                    className="grid h-[38px] w-[38px] place-items-center rounded-[14px] border-[length:var(--bw)] border-line bg-surface text-muted hover:bg-sunken hover:text-ink disabled:opacity-50"
                   >
-                    <CaretDown className="h-4 w-4" aria-hidden="true" />
+                    <ArrowDown weight="bold" aria-hidden="true" />
                   </button>
                   <button
                     type="button"
                     onClick={() => setQuestions((prev) => prev.filter((_, j) => j !== i))}
                     aria-label={`Remove "${q.prompt || 'question'}"`}
-                    className="btn btn-danger btn-sm"
+                    className="grid h-[38px] w-[38px] place-items-center rounded-[14px] border-[length:var(--bw)] border-line bg-surface text-[var(--coral)] hover:bg-[var(--tcoral)] hover:text-[var(--tink)]"
                   >
-                    <Trash className="h-4 w-4" aria-hidden="true" />
+                    <Trash weight="bold" aria-hidden="true" />
                   </button>
-                </div>
+                </span>
               </div>
 
-              <div className="mt-2 flex flex-wrap items-center gap-2 pl-8">
+              <div className="flex flex-wrap items-center gap-2 pl-[38px]">
                 <select
                   aria-label="Answer type"
                   value={q.answer_type}
                   onChange={(e) =>
                     patchQuestion(i, { answer_type: e.target.value as AnswerType })
                   }
-                  className="field w-auto"
+                  className="field min-h-10 w-auto text-[13.5px] font-bold"
                 >
                   {(Object.keys(ANSWER_TYPES) as AnswerType[]).map((t) => (
                     <option key={t} value={t}>
@@ -547,8 +628,13 @@ export function EventForm({
                   type="button"
                   onClick={() => patchQuestion(i, { required: !q.required })}
                   aria-pressed={q.required}
-                  className="chip"
+                  className="toggle-pill"
                 >
+                  {q.required ? (
+                    <Asterisk weight="bold" aria-hidden="true" />
+                  ) : (
+                    <CircleDashed weight="bold" aria-hidden="true" />
+                  )}
                   {q.required ? 'Required' : 'Optional'}
                 </button>
                 {q.answer_type === 'choice' && (
@@ -563,8 +649,8 @@ export function EventForm({
                           .filter(Boolean),
                       })
                     }
-                    placeholder="Options, comma separated"
-                    className="field flex-1"
+                    placeholder="Options, separated by commas"
+                    className="field min-h-10 min-w-[200px] flex-1"
                   />
                 )}
               </div>
@@ -572,41 +658,58 @@ export function EventForm({
           ))}
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <span className="text-xs font-bold text-muted">Add</span>
-          {(Object.keys(ANSWER_TYPES) as AnswerType[]).map((t) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() =>
-                setQuestions((prev) => [
-                  ...prev,
-                  { prompt: '', answer_type: t, required: false, options: t === 'choice' ? ['Yes'] : [] },
-                ])
-              }
-              className="btn btn-quiet btn-sm"
-            >
-              <Plus className="h-3.5 w-3.5" aria-hidden="true" />
-              {ANSWER_TYPES[t]}
-            </button>
-          ))}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-extrabold uppercase tracking-[0.08em] text-muted">Add</span>
+          {(Object.keys(ANSWER_TYPES) as AnswerType[]).map((t) => {
+            const TypeIcon = ANSWER_ICON[t]
+            return (
+              <button
+                key={t}
+                type="button"
+                onClick={() =>
+                  setQuestions((prev) => [
+                    ...prev,
+                    { prompt: '', answer_type: t, required: false, options: t === 'choice' ? ['Yes'] : [] },
+                  ])
+                }
+                className="inline-flex min-h-[38px] items-center gap-1.5 rounded-pill border-[length:var(--bw)] border-line bg-surface px-[13px] text-[13px] font-extrabold text-ink hover:border-[var(--b600)] hover:bg-[var(--b100)]"
+              >
+                <TypeIcon weight="bold" aria-hidden="true" />
+                {ANSWER_TYPES[t]}
+              </button>
+            )
+          })}
         </div>
 
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <span className="text-xs font-bold text-muted">Common asks</span>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-extrabold uppercase tracking-[0.08em] text-muted">
+            Common asks
+          </span>
           {COMMON_ASKS.map((ask) => (
             <button
               key={ask.label}
               type="button"
+              title={ask.q.prompt}
               onClick={() => setQuestions((prev) => [...prev, { ...ask.q }])}
-              className="btn btn-quiet btn-sm"
+              className="inline-flex min-h-[38px] items-center gap-1.5 rounded-pill border-[length:var(--bw)] border-dashed border-line bg-surface px-[13px] text-[13px] font-bold text-muted hover:border-solid hover:border-[var(--b600)] hover:text-ink"
             >
-              <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+              <ask.icon weight="bold" aria-hidden="true" />
               {ask.label}
             </button>
           ))}
         </div>
       </fieldset>
+
+      <label className="block">
+        <span className="form-label">About the event</span>
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          rows={5}
+          placeholder="What happens, who will be there, and what people leave with."
+          className="field"
+        />
+      </label>
 
       {error && (
         <p role="alert" className="alert alert-danger">
@@ -614,26 +717,30 @@ export function EventForm({
         </p>
       )}
 
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="form-foot">
         <button
           type="button"
           onClick={() => save('published')}
           disabled={saving !== null || missing.length > 0}
-          className="btn btn-primary"
+          className="btn btn-primary px-[26px]"
         >
-          {saving === 'published' ? 'Publishing…' : 'Publish'}
+          <Megaphone weight="bold" aria-hidden="true" />
+          {saving === 'published' ? 'Publishing…' : 'Publish to Events'}
         </button>
         <button
           type="button"
           onClick={() => save('draft')}
           disabled={saving !== null}
-          className="btn btn-quiet"
+          className="btn btn-quiet min-h-[52px]"
         >
           {saving === 'draft' ? 'Saving…' : 'Save as draft'}
         </button>
+        <span className="text-[13px] text-muted">
+          Published as <strong className="text-ink">{orgName}</strong>
+        </span>
       </div>
       {missing.length > 0 && (
-        <p className="text-sm text-muted">
+        <p className="-mt-3 text-sm text-muted">
           Still needs {missing.join(', ')} before it can be published. Save it as a draft
           meanwhile.
         </p>

@@ -18,7 +18,8 @@
  */
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { PenNib } from '@phosphor-icons/react/dist/ssr'
+import { Buildings, Check, Heart, Megaphone, Newspaper, Wrench } from '@phosphor-icons/react/dist/ssr'
+import type { Icon } from '@phosphor-icons/react'
 import { browserApiClient } from '@/lib/browser-api-client'
 import {
   STORY_KINDS,
@@ -27,6 +28,13 @@ import {
   type StoryKind,
   type OrgStory,
 } from '@splat-connect/types'
+
+const KIND_ICON: Record<StoryKind, Icon> = {
+  family: Heart,
+  maker: Wrench,
+  org_update: Buildings,
+  announcement: Megaphone,
+}
 
 export function StoryForm({ orgId, orgName }: { orgId: string; orgName: string }) {
   const router = useRouter()
@@ -73,40 +81,42 @@ export function StoryForm({ orgId, orgName }: { orgId: string; orgName: string }
 
   const ready = title.trim() && summary.trim() && body.trim() && byline.trim()
 
+  const canPublish =
+    saving === null && !!ready && consent && !(pullQuote.trim() && !pullQuoteBy.trim())
+
   return (
-    <form onSubmit={(e) => e.preventDefault()} className="mt-6 flex flex-col gap-5">
+    <form onSubmit={(e) => e.preventDefault()} className="form-card">
       <fieldset>
-        <legend className="mb-1.5 text-sm font-bold text-ink">What kind of story?</legend>
-        <div role="radiogroup" aria-label="Story type" className="grid gap-2 sm:grid-cols-2">
+        <legend className="form-label mb-2">What kind of story?</legend>
+        <div role="radiogroup" aria-label="Story type" className="grid gap-3 sm:grid-cols-2">
           {(Object.keys(STORY_KINDS) as StoryKind[])
             // An announcement speaks for SPLAT and has no organisation behind
             // it — 062 makes it admin-only, so it is not on a leader's form.
             .filter((k) => k !== 'announcement')
-            .map((k) => (
-              <label
-                key={k}
-                className={`flex cursor-pointer items-start gap-3 rounded-card border p-3 ${
-                  kind === k ? 'border-brand bg-brand-tint' : 'border-line bg-surface'
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="kind"
-                  checked={kind === k}
-                  onChange={() => setKind(k)}
-                  className="mt-1"
-                />
-                <span>
-                  <span className="block font-bold text-ink">{STORY_KIND_LABEL[k]}</span>
-                  <span className="block text-xs text-muted">{STORY_KINDS[k]}</span>
-                </span>
-              </label>
-            ))}
+            .map((k) => {
+              const KindIcon = KIND_ICON[k]
+              return (
+                <label key={k} className="choice-card">
+                  <input
+                    type="radio"
+                    name="kind"
+                    checked={kind === k}
+                    onChange={() => setKind(k)}
+                    className="sr-only"
+                  />
+                  <KindIcon weight="duotone" aria-hidden="true" className="choice-card__icon" />
+                  <span>
+                    <span className="choice-card__label">{STORY_KIND_LABEL[k]}</span>
+                    <span className="choice-card__sub">{STORY_KINDS[k]}</span>
+                  </span>
+                </label>
+              )
+            })}
         </div>
       </fieldset>
 
       <label className="block">
-        <span className="mb-1.5 block text-sm font-bold text-ink">Title</span>
+        <span className="form-label">Title</span>
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -117,7 +127,7 @@ export function StoryForm({ orgId, orgName }: { orgId: string; orgName: string }
       </label>
 
       <label className="block">
-        <span className="mb-1.5 block text-sm font-bold text-ink">One-sentence summary</span>
+        <span className="form-label">One-sentence summary</span>
         <input
           value={summary}
           onChange={(e) => setSummary(e.target.value)}
@@ -128,23 +138,25 @@ export function StoryForm({ orgId, orgName }: { orgId: string; orgName: string }
       </label>
 
       <label className="block">
-        <span className="mb-1.5 block text-sm font-bold text-ink">The story</span>
+        <span className="form-label">The story</span>
         <textarea
           value={body}
           onChange={(e) => setBody(e.target.value)}
-          rows={12}
+          rows={10}
           maxLength={20000}
           aria-describedby="word-count"
           placeholder="Blank line between paragraphs. Around 300–600 words reads well."
-          className="field"
+          className="field leading-[1.6]"
         />
-        <span id="word-count" className="mt-1.5 block text-xs text-muted">
+        <span id="word-count" className="mt-1.5 block text-right text-[13px] text-muted">
           {words} words · about {readMinutes(body)} min read
         </span>
       </label>
 
       <label className="block">
-        <span className="mb-1.5 block text-sm font-bold text-ink">Byline (who wrote it)</span>
+        <span className="form-label">
+          Byline <span>(who wrote it)</span>
+        </span>
         <input
           value={byline}
           onChange={(e) => setByline(e.target.value)}
@@ -154,16 +166,14 @@ export function StoryForm({ orgId, orgName }: { orgId: string; orgName: string }
         />
       </label>
 
-      <fieldset className="card p-5">
-        <legend className="px-1 font-bold text-ink">
-          Pull quote <span className="font-semibold text-muted">(optional)</span>
-        </legend>
-        <p className="mb-3 text-xs text-muted">
-          One line from the story, set large. The best ones are the family&apos;s own words.
+      <fieldset className="form-well">
+        <legend className="sr-only">Pull quote (optional)</legend>
+        <p aria-hidden="true" className="form-well__kicker">
+          Pull quote <span>— optional. One line from the story, set large. The best ones are the family&apos;s own words.</span>
         </p>
-        <div className="grid gap-4 sm:grid-cols-[2fr_1fr]">
+        <div className="grid gap-3 sm:grid-cols-[2fr_1fr]">
           <label className="block">
-            <span className="mb-1.5 block text-sm font-bold text-ink">The quote</span>
+            <span className="form-label">The quote</span>
             <input
               value={pullQuote}
               onChange={(e) => setPullQuote(e.target.value)}
@@ -172,7 +182,7 @@ export function StoryForm({ orgId, orgName }: { orgId: string; orgName: string }
             />
           </label>
           <label className="block">
-            <span className="mb-1.5 block text-sm font-bold text-ink">Who said it</span>
+            <span className="form-label">Who said it</span>
             <input
               value={pullQuoteBy}
               onChange={(e) => setPullQuoteBy(e.target.value)}
@@ -185,25 +195,37 @@ export function StoryForm({ orgId, orgName }: { orgId: string; orgName: string }
         {pullQuote.trim() && !pullQuoteBy.trim() && (
           // 062 refuses this in the database. Said here in a sentence, where
           // the decision is being made.
-          <p className="mt-2 text-sm text-muted">
+          <p className="text-sm text-muted">
             A quote needs someone to have said it — unattributed, it reads as
             SPLAT&apos;s voice put in a family&apos;s mouth.
           </p>
         )}
       </fieldset>
 
-      <label className="card flex cursor-pointer items-start gap-3 p-5">
+      <label
+        className={`flex cursor-pointer items-start gap-3.5 rounded-[18px] border-2 px-[18px] py-4 has-[:focus-visible]:outline has-[:focus-visible]:outline-[3px] has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-[var(--focus)] ${
+          consent ? 'border-[var(--b600)] bg-[var(--b50)]' : 'border-line bg-surface'
+        }`}
+      >
         <input
           type="checkbox"
           checked={consent}
           onChange={(e) => setConsent(e.target.checked)}
-          className="mt-1"
+          className="sr-only"
         />
+        <span
+          aria-hidden="true"
+          className={`grid h-[26px] w-[26px] flex-none place-items-center rounded-[14px] border-2 text-[var(--onbrand)] ${
+            consent ? 'border-[var(--b600)] bg-[var(--b600)]' : 'border-line bg-surface'
+          }`}
+        >
+          <Check weight="bold" />
+        </span>
         <span>
-          <span className="block font-bold text-ink">
+          <span className="block text-[15px] font-extrabold text-ink">
             Everyone named or pictured has agreed to appear
           </span>
-          <span className="block text-sm leading-relaxed text-muted">
+          <span className="mt-0.5 block text-[13px] leading-[1.45] text-muted">
             For a child, that means a parent or guardian said yes in writing. First names only
             unless they asked otherwise.
           </span>
@@ -216,30 +238,30 @@ export function StoryForm({ orgId, orgName }: { orgId: string; orgName: string }
         </p>
       )}
 
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="form-foot">
         <button
           type="button"
           onClick={() => save('published')}
-          disabled={saving !== null || !ready || !consent || (!!pullQuote.trim() && !pullQuoteBy.trim())}
-          className="btn btn-primary"
+          disabled={!canPublish}
+          className="btn btn-primary px-[26px]"
         >
-          <PenNib className="h-4 w-4" aria-hidden="true" />
+          <Newspaper weight="bold" aria-hidden="true" />
           {saving === 'published' ? 'Publishing…' : 'Publish to Stories'}
         </button>
         <button
           type="button"
           onClick={() => save('draft')}
           disabled={saving !== null}
-          className="btn btn-quiet"
+          className="btn btn-quiet min-h-[52px]"
         >
           {saving === 'draft' ? 'Saving…' : 'Save as draft'}
         </button>
-        <span className="text-sm text-muted">
-          Published as <strong className="font-bold text-ink">{orgName}</strong>
+        <span className="text-[13px] text-muted">
+          Published as <strong className="text-ink">{orgName}</strong>
         </span>
       </div>
       {!consent && ready && (
-        <p className="text-sm text-muted">
+        <p className="-mt-3 text-sm text-muted">
           Publishing is held until consent is confirmed. Save it as a draft meanwhile.
         </p>
       )}

@@ -2,12 +2,12 @@
  * Recycling intake — what your machines can take, and the queue of booked
  * drop-offs.
  *
- * The first half is the profile editor's: 059 puts `recycling_materials` and
- * `recycling_note` on the organisation, because they are properties of the
- * organisation rather than of any one drop-off. This page shows them and links
- * there rather than carrying a second copy of the same two fields.
+ * The queue comes first, as the board has it: somebody is at the door. Then
+ * what the machines take — 059 puts `recycling_materials` and
+ * `recycling_note` on the organisation, and the board edits them here as well
+ * as on the profile (see what-you-take.tsx).
  *
- * The second half is the queue. Credit is minted here, by weighing, and never
+ * Credit is minted in the queue, by weighing, and never
  * by the contributor — enforced by 059's split policies rather than by this
  * screen.
  */
@@ -15,7 +15,9 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getCapabilities } from '@/lib/capabilities'
 import { apiClient } from '@/lib/api-client'
+import { CaretRight } from '@phosphor-icons/react/dist/ssr'
 import { RecyclingIntake } from '@/components/recycling-intake'
+import { WhatYouTake } from './what-you-take'
 import type { Organization, RecyclingDropoff } from '@splat-connect/types'
 
 export const metadata = { title: 'Recycling intake — SPLAT Connect' }
@@ -47,35 +49,40 @@ export default async function OrgRecyclingPage() {
     })
   )
 
-  const takes = org.recycling_materials ?? []
-
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="title-hub">Recycling intake</h1>
-        <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted">
-          Waste plastic in, filament out — weighed at your door, never before.
-        </p>
-      </div>
-
-      <section className="card mb-8 flex flex-col gap-2 p-5">
-        <h2 className="text-base font-bold text-ink">What your machines can take</h2>
-        {takes.length === 0 ? (
-          <p className="text-sm leading-relaxed text-muted">
-            Nothing listed, so nobody can book a drop-off with you yet.
-          </p>
-        ) : (
-          <p className="text-sm leading-relaxed text-ink">{takes.join(', ')}</p>
-        )}
-        {org.recycling_note && (
-          <p className="text-sm leading-relaxed text-muted">{org.recycling_note}</p>
-        )}
-        <Link href="/dashboard/organisation/profile" className="btn btn-quiet self-start no-underline">
-          Change what you take
+    <div className="max-w-[980px]">
+      <nav
+        aria-label="Recycling"
+        className="mb-3.5 flex items-center gap-2 text-sm font-bold text-muted"
+      >
+        <Link href="/get-involved/recycling" className="text-brand-deep hover:underline">
+          Recycling
         </Link>
-      </section>
+        <CaretRight weight="bold" className="h-3 w-3" aria-hidden="true" />
+        <span>Your intake</span>
+      </nav>
+      <h1 className="title-hub">Recycling intake</h1>
+      <p className="mt-2.5 max-w-[64ch] text-[17px] text-muted">
+        Publish what your machines take, then weigh what turns up. Credit is issued here and
+        nowhere else.
+      </p>
 
       <RecyclingIntake orgId={orgId} dropoffs={dropoffs} names={names} />
+
+      <section>
+        <h2 className="mb-1.5 mt-[38px] font-display text-2xl font-extrabold text-ink">
+          What you can take
+        </h2>
+        <p className="mb-4 max-w-[66ch] text-sm text-muted">
+          Contributors see this before they pack a box. Be specific — every unlisted item is one
+          somebody has to pick out by hand.
+        </p>
+        <WhatYouTake
+          orgId={orgId}
+          materials={org.recycling_materials ?? []}
+          note={org.recycling_note ?? null}
+        />
+      </section>
     </div>
   )
 }

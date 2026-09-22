@@ -22,13 +22,12 @@ export default async function OrgProfilePage() {
   const org = await apiClient.get<Organization>(`/api/organizations/${caps.ledOrgs[0].id}`)
 
   return (
-    <div className="mx-auto max-w-2xl">
-      <div className="mb-6">
-        <h1 className="title-hub">Organisation profile</h1>
-        <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted">
-          What a family reads before they decide whether to ask you for anything.
-        </p>
-      </div>
+    <div className="max-w-[860px]">
+      <h1 className="title-hub">Organisation profile</h1>
+      <p className="dash-head__lede dash-head__lede--lg max-w-[62ch]">
+        This is the page a family lands on before they ask you for anything. Everything on it is
+        set here, and it publishes the moment you save.
+      </p>
 
       <OrgProfileForm org={org} />
     </div>

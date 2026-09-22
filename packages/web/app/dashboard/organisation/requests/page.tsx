@@ -20,7 +20,7 @@
  */
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { Tray, Gift, Hammer, Printer } from '@phosphor-icons/react/dist/ssr'
+import { Gift, Hammer, Cube, BookOpenText } from '@phosphor-icons/react/dist/ssr'
 import { getCapabilities } from '@/lib/capabilities'
 import { apiClient } from '@/lib/api-client'
 import { Badge } from '@/components/badge'
@@ -29,16 +29,49 @@ import { subjectName, type ToyTransactionSummary } from '@splat-connect/types'
 
 export const metadata = { title: 'Requests to your organisation — SPLAT Connect' }
 
-const SHAPE = {
-  donation: { icon: Gift, label: 'Wants a toy' },
-  exchange: { icon: Gift, label: 'Offers a swap' },
-  build: { icon: Hammer, label: 'Wants one built' },
-  print: { icon: Printer, label: 'Wants parts printed' },
-} as const
+/*
+ * The board's segmented tabs, one per shape. Its own three are "Host a build
+ * day", "Print for an event" and "Builds nearby"; the first and last have no
+ * record behind them yet, so the tabs are the three shapes toy_transactions
+ * actually carries, in the board's form.
+ */
+const TABS = [
+  {
+    key: 'toys',
+    label: 'Lend a toy',
+    icon: Gift,
+    types: ['donation', 'exchange'],
+    lead: 'Families asking for a toy on your shelf, or offering one in swap. Accepting asks where they collect it.',
+    empty: 'No toy requests right now.',
+  },
+  {
+    key: 'parts',
+    label: 'Print parts',
+    icon: Cube,
+    types: ['print'],
+    lead: 'Families asking your printers for parts. Accepting checks the bed and the material first.',
+    empty: 'No part requests yet.',
+  },
+  {
+    key: 'builds',
+    label: 'Build a guide',
+    icon: Hammer,
+    types: ['build'],
+    lead: 'Families asking your organisation to build a guide for them. It then runs through your exchanges.',
+    empty: 'No build requests right now.',
+  },
+] as const
 
-export default async function OrgRequestsPage() {
+type TabKey = (typeof TABS)[number]['key']
+
+export default async function OrgRequestsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>
+}) {
   const caps = await getCapabilities()
   if (!caps || caps.ledOrgs.length === 0) notFound()
+  const { tab } = await searchParams
 
   const all = await apiClient
     .get<ToyTransactionSummary[]>('/api/toy-transactions?role=owner')
@@ -46,92 +79,130 @@ export default async function OrgRequestsPage() {
 
   // The organisation's, not the leader's own. A leader who also gives toys
   // personally has both in that list, and only one of them is this queue.
+  // Finished records leave the queue; they live on in the exchanges list.
   const ledIds = new Set(caps.ledOrgs.map((o) => o.id))
-  const mine = all.filter((t) => t.owner_org_id && ledIds.has(t.owner_org_id))
-  const open = mine.filter((t) => t.status === 'requested')
-  const running = mine.filter((t) => t.status === 'accepted')
+  const mine = all.filter(
+    (t) =>
+      t.owner_org_id &&
+      ledIds.has(t.owner_org_id) &&
+      (t.status === 'requested' || t.status === 'accepted'),
+  )
+
+  const rowsFor = (key: TabKey) => {
+    const types: readonly string[] = TABS.find((t) => t.key === key)!.types
+    // Waiting on you first, then what is under way.
+    return mine
+      .filter((t) => types.includes(t.type))
+      .sort((a, b) => (a.status === b.status ? 0 : a.status === 'requested' ? -1 : 1))
+  }
+  const pending = (key: TabKey) => rowsFor(key).filter((t) => t.status === 'requested').length
+
+  // An explicit ?tab wins; otherwise open on whatever is waiting.
+  const current =
+    TABS.find((t) => t.key === tab) ??
+    TABS.find((t) => pending(t.key) > 0) ??
+    TABS.find((t) => rowsFor(t.key).length > 0) ??
+    TABS[0]
+  const rows = rowsFor(current.key)
 
   return (
-    <div>
-      <h1 className="title-hub">Requests to your organisation</h1>
-      <p className="mb-6 mt-2 max-w-prose text-sm leading-relaxed text-muted">
-        Every ask a family can make of {caps.ledOrgs[0].name}, in one queue: a toy off your
-        shelf, a guide built nearby, parts printed before a build day. Open each one to accept,
+    <div className="max-w-[980px]">
+      <h1 className="title-hub">Requests to {caps.ledOrgs[0].name}</h1>
+      <p className="mb-[22px] mt-2 max-w-[64ch] text-[15px] text-muted">
+        Everything a family can ask of an organisation, in one place. Open each one to accept,
         decline or hand it on.
       </p>
 
-      {mine.length === 0 ? (
-        <div className="card flex flex-col items-center px-6 py-10 text-center">
-          <span aria-hidden="true" className="empty-badge text-brand-deep">
-            <Tray className="h-8 w-8" />
-          </span>
-          <p className="mt-4 font-display text-xl font-extrabold text-ink">Nothing waiting</p>
-          <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted">
-            Requests land here when a family asks for something you have said you can do — see
-            your{' '}
+      <div
+        role="tablist"
+        aria-label="Kind of request"
+        className="mb-[18px] inline-flex max-w-full flex-wrap rounded-full border-(length:--border-width) border-line bg-sunken p-1"
+      >
+        {TABS.map((t) => {
+          const on = t.key === current.key
+          const n = pending(t.key)
+          return (
             <Link
-              href="/dashboard/organisation/profile"
-              className="font-semibold text-brand-dark hover:underline"
+              key={t.key}
+              role="tab"
+              aria-selected={on}
+              href={`?tab=${t.key}`}
+              scroll={false}
+              className={`inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-sm font-extrabold ${
+                on ? 'bg-surface text-ink shadow-e1' : 'text-muted hover:text-ink'
+              }`}
             >
-              organisation profile
-            </Link>{' '}
-            for what you are currently offering.
-          </p>
-        </div>
+              <t.icon weight="bold" aria-hidden="true" />
+              {t.label}
+              {n > 0 && (
+                <span className="rounded-full bg-apricot px-2 py-px text-xs text-[#1c2530]">
+                  {n}
+                </span>
+              )}
+            </Link>
+          )
+        })}
+      </div>
+
+      <p className="mb-3 text-sm text-muted">{current.lead}</p>
+
+      {rows.length === 0 ? (
+        <div className="browse-empty p-9 text-muted">{current.empty}</div>
       ) : (
-        <div className="flex flex-col gap-8">
-          {[
-            { label: 'Waiting on you', list: open },
-            { label: 'Under way', list: running },
-          ]
-            .filter((g) => g.list.length > 0)
-            .map((group) => (
-              <section key={group.label}>
-                <h2 className="title-detail mb-3">
-                  {group.label} ({group.list.length})
-                </h2>
-                <ul className="flex list-none flex-col gap-3">
-                  {group.list.map((t) => {
-                    const shape = SHAPE[t.type]
-                    // A build and a print both live under /build/ or
-                    // /print-requests/ on the leader's side; a toy handoff is an
-                    // ordinary exchange thread.
-                    const href =
-                      t.type === 'build'
-                        ? (`/dashboard/exchanges/build/${t.id}` as const)
-                        : t.type === 'print'
-                          ? (`/dashboard/print-requests/${t.id}` as const)
-                          : (`/dashboard/exchanges/${t.id}` as const)
-                    return (
-                      <li key={t.id}>
-                        <Link href={href} className="card card-link flex items-center gap-4 p-4">
-                          <span
-                            aria-hidden="true"
-                            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-card bg-sunken text-brand-deep"
-                          >
-                            <shape.icon className="h-5 w-5" />
-                          </span>
-                          <span className="min-w-0 flex-1">
-                            <span className="block font-bold text-ink">{subjectName(t)}</span>
-                            <span className="block text-xs text-muted">
-                              {shape.label} · {t.requester_name ?? 'A family'} ·{' '}
-                              {formatRelativeTime(t.created_at)}
-                            </span>
-                            {t.last_message && (
-                              <span className="mt-1 block truncate text-sm text-muted">
-                                “{t.last_message.body}”
-                              </span>
-                            )}
-                          </span>
-                          <Badge status={t.status} />
-                        </Link>
-                      </li>
-                    )
-                  })}
-                </ul>
-              </section>
-            ))}
-        </div>
+        <ul className="grid list-none gap-2.5">
+          {rows.map((t) => {
+            // A build and a print both live under /build/ or /print-requests/
+            // on the leader's side; a toy handoff is an ordinary exchange
+            // thread. Answering happens there: accepting a toy needs a pickup
+            // address, a print a bed check, a decline a reason — a button here
+            // that skipped them would be the fast path to a wrong answer.
+            const href =
+              t.type === 'build'
+                ? (`/dashboard/exchanges/build/${t.id}` as const)
+                : t.type === 'print'
+                  ? (`/dashboard/print-requests/${t.id}` as const)
+                  : (`/dashboard/exchanges/${t.id}` as const)
+            const note = t.last_message?.kind === 'user' ? t.last_message.body : null
+            return (
+              <li
+                key={t.id}
+                className="card-flat grid grid-cols-1 items-center gap-4 px-5 py-4 shadow-e1 sm:grid-cols-[minmax(0,1fr)_auto]"
+              >
+                <div className="min-w-0">
+                  <p className="font-extrabold text-ink">
+                    {t.requester_name ?? 'A family'}{' '}
+                    <span className="font-semibold text-muted">
+                      · {formatRelativeTime(t.created_at)}
+                    </span>
+                  </p>
+                  <p className="mt-[3px] truncate text-sm text-muted">
+                    <BookOpenText
+                      weight="bold"
+                      className="mr-1 inline text-brand-dark"
+                      aria-hidden="true"
+                    />
+                    {subjectName(t)}
+                    {note && ` · “${note}”`}
+                  </p>
+                </div>
+                <span className="flex flex-wrap items-center gap-2">
+                  {t.status === 'requested' ? (
+                    <Link href={href} className="btn btn-primary min-h-11 px-4 text-sm">
+                      Open the request
+                    </Link>
+                  ) : (
+                    <>
+                      <Badge status={t.status} />
+                      <Link href={href} className="btn btn-quiet min-h-11 px-3.5 text-sm">
+                        Open the thread
+                      </Link>
+                    </>
+                  )}
+                </span>
+              </li>
+            )
+          })}
+        </ul>
       )}
     </div>
   )
