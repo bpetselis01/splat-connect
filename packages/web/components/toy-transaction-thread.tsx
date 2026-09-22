@@ -322,8 +322,16 @@ export function ToyTransactionThread({
               )}
               {myMove ? 'Waiting on you' : `Waiting on ${otherPartyName}`}
             </p>
+            {/* The board's headline is the meeting itself — "Thursday after
+                three, Newcastle clinic" — so the agreed time leads and the
+                place follows it. Without instructions there is no time to
+                lead with and the place stands alone. */}
             <p className="mb-3.5 font-display text-[19px] font-extrabold leading-snug">
-              {where ? `Handover in ${where}` : 'Agree a time and place in the thread'}
+              {tx.pickup_instructions
+                ? [tx.pickup_instructions, where].filter(Boolean).join(', ')
+                : where
+                  ? `Handover in ${where}`
+                  : 'Agree a time and place in the thread'}
             </p>
 
             {showMyCode && myCode && (
@@ -543,12 +551,24 @@ export function ToyTransactionThread({
                 </>
               )}
             </dl>
-            {tx.pickup_instructions && (
-              <div className="flex items-start gap-2.5 border-t border-line bg-canvas px-5 py-3.5">
-                <Info size={19} weight="duotone" aria-hidden="true" className="mt-px flex-none text-brand-dark" />
-                <p className="text-[13px] leading-normal text-muted">{tx.pickup_instructions}</p>
-              </div>
-            )}
+            {/* The board's footnote on this card is a standing reminder about
+                where to meet, not the record's own words — the build thread
+                already carries its equivalent. The agreed instructions sit
+                above it when there are any. */}
+            <div className="flex items-start gap-2.5 border-t border-line bg-canvas px-5 py-3.5">
+              <Info size={19} weight="duotone" aria-hidden="true" className="mt-px flex-none text-brand-dark" />
+              <span className="min-w-0">
+                {tx.pickup_instructions && (
+                  <p className="mb-1.5 text-[13px] leading-normal text-ink">
+                    {tx.pickup_instructions}
+                  </p>
+                )}
+                <p className="text-[13px] leading-normal text-muted">
+                  Meet somewhere public, not at a home address. Bring the child if you can — the
+                  fit matters more than the photo.
+                </p>
+              </span>
+            </div>
           </div>
         )}
 
