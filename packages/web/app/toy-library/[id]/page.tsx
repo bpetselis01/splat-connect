@@ -103,7 +103,13 @@ export default async function ToyLibraryDetailPage({
   const sameHolder = listed.filter((t) =>
     toy.owner_org_id ? t.owner_org_id === toy.owner_org_id : t.owner_id === toy.owner_id
   )
-  const others = sameHolder.filter((t) => t.id !== toy.id).slice(0, 3)
+  // The board's "Also worth a look" is what else the holder has listed. A
+  // holder with one toy would leave the section blank, so the rest of the
+  // library stands in — the page always has somewhere to go next.
+  const holderOthers = sameHolder.filter((t) => t.id !== toy.id)
+  const others = (holderOthers.length > 0 ? holderOthers : listed.filter((t) => t.id !== toy.id)).slice(0, 3)
+  const othersNote =
+    holderOthers.length > 0 && holder ? `What else ${holder} has listed.` : 'More toys in the library right now.'
 
   return (
     <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
@@ -129,9 +135,6 @@ export default async function ToyLibraryDetailPage({
             </Chip>
           </div>
           <h1 className="title-article">{toy.name}</h1>
-          {toy.description && (
-            <p className="mt-3 max-w-[60ch] text-lg leading-[1.55] text-muted">{toy.description}</p>
-          )}
           <p className="mt-5 flex flex-wrap items-center gap-2.5 text-sm">
             {holder && (
               <span className="inline-flex items-center gap-2 font-bold text-ink">
@@ -158,15 +161,27 @@ export default async function ToyLibraryDetailPage({
           alt={toy.name}
         />
 
-        {others.length > 0 && holder && (
+        {/* The one field the holder writes is their note about the toy, and the
+            board gives it a heading in their name rather than a lede under
+            the title. */}
+        {toy.description && (
+          <section aria-labelledby="toy-notes-h" className="flex flex-col gap-3 border-t border-line pt-[26px]">
+            <h2 id="toy-notes-h" className="m-0 font-display text-[26px] font-extrabold text-ink">
+              Notes from {holder ?? 'the holder'}
+            </h2>
+            <p className="m-0 max-w-[62ch] whitespace-pre-line text-base leading-[1.6] text-ink">
+              {toy.description}
+            </p>
+          </section>
+        )}
+
+        {others.length > 0 && (
           <section aria-labelledby="toy-rec-h" className="flex flex-col gap-4 border-t border-line pt-[26px]">
             <div>
               <h2 id="toy-rec-h" className="m-0 font-display text-[26px] font-extrabold text-ink">
                 Also worth a look
               </h2>
-              <p className="m-0 mt-1.5 max-w-[58ch] text-[15px] leading-[1.5] text-muted">
-                What else {holder} has listed.
-              </p>
+              <p className="m-0 mt-1.5 max-w-[58ch] text-[15px] leading-[1.5] text-muted">{othersNote}</p>
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               {others.map((t) => (
