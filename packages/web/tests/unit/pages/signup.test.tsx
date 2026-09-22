@@ -31,8 +31,10 @@ describe('signup copy', () => {
 
   it('offers to create an account', () => {
     render(<SignupPage />)
-    expect(screen.getByRole('heading', { name: 'Create your account' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Create account' })).toBeInTheDocument()
+    // The board's heading and button, and its "Create account" tab.
+    expect(screen.getByRole('heading', { name: 'Welcome to SPLAT Connect' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Create my account' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Create account' })).toHaveAttribute('aria-current', 'page')
   })
 
   // The download detour says why the visitor is here, the way the save one

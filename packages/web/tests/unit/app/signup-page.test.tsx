@@ -15,15 +15,15 @@ vi.mock('@/lib/supabase/client', () => ({
   createClient: () => ({ auth: { signUp: (...a: unknown[]) => signUp(...a) } }),
 }))
 
-function fillForm({ confirm = 'secret1' }: { confirm?: string } = {}) {
-  fireEvent.change(screen.getByLabelText(/full name/i), { target: { value: 'Ada' } })
+function fillForm() {
+  fireEvent.change(screen.getByLabelText(/your name/i), { target: { value: 'Ada' } })
   fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'a@b.co' } })
   fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: 'secret1' } })
-  fireEvent.change(screen.getByLabelText(/confirm password/i), { target: { value: confirm } })
+  fireEvent.change(screen.getByLabelText(/confirm password/i), { target: { value: 'secret1' } })
 }
 
 function acceptTermsViaDialog() {
-  fireEvent.click(screen.getByRole('button', { name: /read and accept/i }))
+  fireEvent.click(screen.getByRole('button', { name: /contributor terms/i }))
   fireEvent.click(screen.getByRole('checkbox'))
   fireEvent.click(screen.getByRole('button', { name: /^I accept/i }))
 }
@@ -38,22 +38,22 @@ describe('signup page', () => {
     render(<SignupPage />)
     fillForm()
 
-    expect(screen.getByRole('button', { name: /create account/i })).toBeDisabled()
+    expect(screen.getByRole('button', { name: /create my account/i })).toBeDisabled()
 
     acceptTermsViaDialog()
-    expect(screen.getByRole('button', { name: /create account/i })).toBeEnabled()
+    expect(screen.getByRole('button', { name: /create my account/i })).toBeEnabled()
   })
 
   it('rejecting the terms dialog leaves submit disabled and the row unfilled', () => {
     render(<SignupPage />)
     fillForm()
 
-    fireEvent.click(screen.getByRole('button', { name: /read and accept/i }))
+    fireEvent.click(screen.getByRole('button', { name: /contributor terms/i }))
     fireEvent.click(screen.getByRole('checkbox'))
     fireEvent.click(screen.getByRole('button', { name: /reject/i }))
 
-    expect(screen.getByRole('button', { name: /create account/i })).toBeDisabled()
-    expect(screen.getByRole('button', { name: /read and accept/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /create my account/i })).toBeDisabled()
+    expect(screen.getByRole('button', { name: /contributor terms/i })).toBeInTheDocument()
   })
 
   it('typed fields survive opening and closing the terms dialog', () => {
@@ -61,18 +61,34 @@ describe('signup page', () => {
     fillForm()
     acceptTermsViaDialog()
 
-    expect(screen.getByLabelText(/full name/i)).toHaveValue('Ada')
+    expect(screen.getByLabelText(/your name/i)).toHaveValue('Ada')
     expect(screen.getByLabelText(/email/i)).toHaveValue('a@b.co')
   })
 
-  it('blocks submission when the passwords do not match', () => {
+  // Chain: the show toggle reveals both fields, so the two can be compared
+  it('shows and hides both password fields together', () => {
     render(<SignupPage />)
-    fillForm({ confirm: 'different' })
+    const field = screen.getByLabelText(/^password$/i)
+    const confirm = screen.getByLabelText(/confirm password/i)
+    expect(field).toHaveAttribute('type', 'password')
+    expect(confirm).toHaveAttribute('type', 'password')
+    fireEvent.click(screen.getByRole('button', { name: 'Show password' }))
+    expect(field).toHaveAttribute('type', 'text')
+    expect(confirm).toHaveAttribute('type', 'text')
+    fireEvent.click(screen.getByRole('button', { name: 'Hide password' }))
+    expect(field).toHaveAttribute('type', 'password')
+  })
+
+  // Chain: a typo in a password nobody can see locks the account's owner out
+  //        at the first sign-in, so a mismatch stops the signup
+  it('refuses to sign up when the passwords do not match', () => {
+    render(<SignupPage />)
+    fillForm()
+    fireEvent.change(screen.getByLabelText(/confirm password/i), { target: { value: 'secret2' } })
     acceptTermsViaDialog()
+    fireEvent.click(screen.getByRole('button', { name: /create my account/i }))
 
-    fireEvent.click(screen.getByRole('button', { name: /create account/i }))
-
-    expect(screen.getByRole('alert')).toHaveTextContent(/passwords do not match/i)
+    expect(screen.getByRole('alert')).toHaveTextContent("Passwords don't match.")
     expect(signUp).not.toHaveBeenCalled()
   })
 
@@ -80,7 +96,7 @@ describe('signup page', () => {
     render(<SignupPage />)
     fillForm()
     acceptTermsViaDialog()
-    fireEvent.click(screen.getByRole('button', { name: /create account/i }))
+    fireEvent.click(screen.getByRole('button', { name: /create my account/i }))
 
     await waitFor(() =>
       expect(screen.getByRole('heading', { name: /check your email/i })).toBeInTheDocument()
@@ -92,7 +108,7 @@ describe('signup page', () => {
     render(<SignupPage />)
     fillForm()
     acceptTermsViaDialog()
-    fireEvent.click(screen.getByRole('button', { name: /create account/i }))
+    fireEvent.click(screen.getByRole('button', { name: /create my account/i }))
 
     await waitFor(() =>
       expect(screen.getByRole('heading', { name: /check your email/i })).toBeInTheDocument()

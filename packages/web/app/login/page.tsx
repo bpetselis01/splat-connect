@@ -1,16 +1,20 @@
 'use client'
 import { Suspense, useState } from 'react'
-import Link from 'next/link'
+import { Eye, EyeSlash } from '@phosphor-icons/react/dist/ssr'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { sanitiseNextPath } from '@/lib/safe-next-path'
-import { AuthShell, AuthCard } from '@/components/auth-shell'
+import Link from 'next/link'
+import type { Route } from 'next'
+import { AuthStage } from '@/components/auth-shell'
 
 function LoginForm() {
   const supabase = createClient()
-  const next = useSearchParams().get('next')
+  const params = useSearchParams()
+  const next = params.get('next')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -50,54 +54,69 @@ function LoginForm() {
     }
   }
 
+  const query = params.toString()
+
+  // The board's centred stage, not Create account's two-column page: signing
+  // in is one card with a way across to signup under it. ?next= rides along
+  // on that link, so someone sent here to save something who has no account
+  // yet still comes back to it.
   return (
-    <AuthShell current="login">
-      <AuthCard>
-        <h1 className="mb-5 text-[22px] font-extrabold text-ink">Sign in</h1>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div>
-            <label htmlFor="email" className="field-label">Email</label>
-            <input
-              id="email"
-              type="email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="field"
-            />
-          </div>
-          <div>
-            <label htmlFor="password" className="field-label">Password</label>
+    <AuthStage>
+      <h1 className="auth-card__title">Sign in</h1>
+      <p className="auth-card__lede">
+        One account for everything — browse, contribute, and manage your child&apos;s profile.
+      </p>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <div>
+          <label htmlFor="email" className="auth-label">Email</label>
+          <input
+            id="email"
+            type="email"
+            autoComplete="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="auth-input auth-input--sunk"
+          />
+        </div>
+        <div>
+          <label htmlFor="password" className="auth-label">Password</label>
+          <div className="auth-password">
             <input
               id="password"
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               autoComplete="current-password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="field"
+              className="auth-input auth-input--sunk"
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              aria-pressed={showPassword}
+            >
+              {showPassword ? <EyeSlash aria-hidden="true" /> : <Eye aria-hidden="true" />}
+            </button>
           </div>
-          {error && (
-            <p role="alert" className="alert alert-danger">
-              {error}
-            </p>
-          )}
-          <button type="submit" disabled={loading} className="btn btn-accent btn-block mt-2">
-            {loading ? 'Signing in…' : 'Sign in'}
-          </button>
-        </form>
-        {/* Inside the card, as the board has it — it was floating below on the
-            canvas, which left the card ending on a button with no way out. */}
-        <p className="mt-4 text-center text-[13px] text-muted">
-          New here?{' '}
-          <Link href="/signup" className="font-bold text-brand-deep hover:underline">
-            Create an account
-          </Link>
-        </p>
-      </AuthCard>
-    </AuthShell>
+        </div>
+        {error && (
+          <p role="alert" className="alert alert-danger">
+            {error}
+          </p>
+        )}
+        <button type="submit" disabled={loading} className="auth-submit">
+          {loading ? 'Signing in…' : 'Sign in'}
+        </button>
+      </form>
+      <p className="auth-card__alt">
+        No account yet?{' '}
+        <Link href={`/signup${query ? `?${query}` : ''}` as Route} className="auth-card__link">
+          Create one
+        </Link>
+      </p>
+    </AuthStage>
   )
 }
 
