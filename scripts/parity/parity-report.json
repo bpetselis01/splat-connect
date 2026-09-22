@@ -1,5 +1,5 @@
 {
- "at": "2026-09-18T15:18:25.410Z",
+ "at": "2026-09-22T07:22:14.053Z",
  "live": "http://localhost:3110",
  "screens": [
   {
@@ -117,7 +117,7 @@
    "id": "toy_public",
    "name": "Toy detail",
    "group": "Public site",
-   "route": "/toy-library/8df36f84-8919-472a-b964-04425822f352",
+   "route": "/toy-library/e7f84765-1b84-43d5-b1de-025e38398b1c",
    "findings": [
     {
      "type": "font",
@@ -163,7 +163,7 @@
     }
    ],
    "role": "guest",
-   "finalUrl": "/toy-library/8df36f84-8919-472a-b964-04425822f352",
+   "finalUrl": "/toy-library/e7f84765-1b84-43d5-b1de-025e38398b1c",
    "boardHeadings": 10,
    "liveHeadings": 3
   },
@@ -171,7 +171,7 @@
    "id": "toy_request",
    "name": "Request a toy",
    "group": "Public site",
-   "route": "/toy-library/8df36f84-8919-472a-b964-04425822f352/request",
+   "route": "/toy-library/e7f84765-1b84-43d5-b1de-025e38398b1c/request",
    "findings": [
     {
      "type": "missing-section",
@@ -238,7 +238,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/toy-library/8df36f84-8919-472a-b964-04425822f352/request",
+   "finalUrl": "/toy-library/e7f84765-1b84-43d5-b1de-025e38398b1c/request",
    "boardHeadings": 4,
    "liveHeadings": 2
   },
@@ -313,29 +313,7 @@
    "name": "Safe handling",
    "group": "Learn",
    "route": "/learn/safety-and-cleaning",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"wear this every time\" has no counterpart",
-     "board": "wear this every time",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"handling the tools\" has no counterpart",
-     "board": "handling the tools",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"batteries out first\" has no counterpart",
-     "board": "batteries out first",
-     "live": null
-    }
-   ],
+   "findings": [],
    "role": "guest",
    "finalUrl": "/learn/safety-and-cleaning",
    "boardHeadings": 7,
@@ -357,29 +335,7 @@
    "name": "How a switch works",
    "group": "Learn",
    "route": "/learn/how-a-switch-works",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"a button is a gap\" has no counterpart",
-     "board": "a button is a gap",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"two buttons, one job\" has no counterpart",
-     "board": "two buttons, one job",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"jack, socket, and why # mm\" has no counterpart",
-     "board": "jack, socket, and why # mm",
-     "live": null
-    }
-   ],
+   "findings": [],
    "role": "guest",
    "finalUrl": "/learn/how-a-switch-works",
    "boardHeadings": 6,
@@ -478,29 +434,7 @@
    "name": "Checks, cleaning and handover",
    "group": "Learn",
    "route": "/learn/handover",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"before it goes to a child\" has no counterpart",
-     "board": "before it goes to a child",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"cleaning between families\" has no counterpart",
-     "board": "cleaning between families",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"show the family, not just the toy\" has no counterpart",
-     "board": "show the family, not just the toy",
-     "live": null
-    }
-   ],
+   "findings": [],
    "role": "guest",
    "finalUrl": "/learn/handover",
    "boardHeadings": 12,
@@ -669,13 +603,6 @@
      "what": "card title size",
      "board": "26px",
      "live": "16px"
-    },
-    {
-     "type": "extra-section",
-     "severity": "medium",
-     "what": "live has 2 extra h3 the board does not draw",
-     "board": null,
-     "live": "if you need something | if you have something to offer"
     },
     {
      "type": "radius",
@@ -953,13 +880,6 @@
      "severity": "high",
      "what": "h2 \"toys delivered over time\" has no counterpart",
      "board": "toys delivered over time",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h3 \"leo’s drum, six weeks on\" has no counterpart",
-     "board": "leo’s drum, six weeks on",
      "live": null
     },
     {
@@ -1492,7 +1412,7 @@
      "severity": "medium",
      "what": "h1 wording",
      "board": "requests to northside therapy",
-     "live": "requests to parity org mu#k#cdln#"
+     "live": "requests to parity org mucceg#jqx#"
     },
     {
      "type": "radius",
@@ -1574,7 +1494,7 @@
    "id": "org_event_manage",
    "name": "Manage event",
    "group": "My SPLAT",
-   "route": "/dashboard/org/events/8934af9c-80b4-41fe-8c90-a21c82915455",
+   "route": "/dashboard/org/events/0178fc57-203f-4a84-87d2-282d57dd4800",
    "findings": [
     {
      "type": "font",
@@ -1601,8 +1521,8 @@
      "type": "copy",
      "severity": "medium",
      "what": "18/19 board paragraphs absent",
-     "board": "families who asked for help with a printable guide and chose “the host",
-     "live": "build day · saturday # october #"
+     "board": "families who asked for help with a printable guide and chose \"the host",
+     "live": "build day · tuesday # october #"
     },
     {
      "type": "shadow",
@@ -1613,7 +1533,7 @@
     }
    ],
    "role": "leader",
-   "finalUrl": "/dashboard/org/events/8934af9c-80b4-41fe-8c90-a21c82915455",
+   "finalUrl": "/dashboard/org/events/0178fc57-203f-4a84-87d2-282d57dd4800",
    "boardHeadings": 4,
    "liveHeadings": 2
   },
@@ -1932,7 +1852,7 @@
    "id": "editor",
    "name": "Tutorial editor",
    "group": "My SPLAT",
-   "route": "/tutorials/6b6ef5d6-af43-4a1a-8987-af4f392b2b4b/edit",
+   "route": "/tutorials/0d9965e5-4052-4733-944b-49b63c4aaf13/edit",
    "findings": [
     {
      "type": "copy",
@@ -1943,7 +1863,7 @@
     }
    ],
    "role": "contributor",
-   "finalUrl": "/tutorials/6b6ef5d6-af43-4a1a-8987-af4f392b2b4b/edit",
+   "finalUrl": "/tutorials/0d9965e5-4052-4733-944b-49b63c4aaf13/edit",
    "boardHeadings": 5,
    "liveHeadings": 5
   },
@@ -1988,7 +1908,7 @@
    "id": "toy_detail",
    "name": "Toy detail",
    "group": "My SPLAT",
-   "route": "/dashboard/toys/8df36f84-8919-472a-b964-04425822f352",
+   "route": "/dashboard/toys/e7f84765-1b84-43d5-b1de-025e38398b1c",
    "findings": [
     {
      "type": "missing-section",
@@ -2020,7 +1940,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/toys/8df36f84-8919-472a-b964-04425822f352",
+   "finalUrl": "/dashboard/toys/e7f84765-1b84-43d5-b1de-025e38398b1c",
    "boardHeadings": 8,
    "liveHeadings": 5
   },
@@ -2054,15 +1974,8 @@
    "id": "thread",
    "name": "Exchange thread",
    "group": "My SPLAT",
-   "route": "/dashboard/exchanges/44853928-b176-4484-b3a9-01905a52ed2c",
+   "route": "/dashboard/exchanges/d8024d03-d130-42de-bf2d-bb8ef707990c",
    "findings": [
-    {
-     "type": "font",
-     "severity": "high",
-     "what": "h3 \"$#\" font",
-     "board": "Baloo 2",
-     "live": "Nunito"
-    },
     {
      "type": "missing-section",
      "severity": "high",
@@ -2078,17 +1991,10 @@
      "live": "22px"
     },
     {
-     "type": "size",
+     "type": "extra-section",
      "severity": "medium",
-     "what": "h3 \"$#\" size",
-     "board": "22px",
-     "live": "12px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h3 wording",
-     "board": "$#",
+     "what": "live has an extra h3: \"meeting them\"",
+     "board": null,
      "live": "meeting them"
     },
     {
@@ -2097,17 +2003,10 @@
      "what": "10/10 board paragraphs absent",
      "board": "you are receiving this from northside therapy collective",
      "live": "you are receiving this from e#e contributor"
-    },
-    {
-     "type": "colour",
-     "severity": "low",
-     "what": "h3 \"$#\" colour",
-     "board": "rgb(28,37,48)",
-     "live": "rgb(90,102,117)"
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/exchanges/44853928-b176-4484-b3a9-01905a52ed2c",
+   "finalUrl": "/dashboard/exchanges/d8024d03-d130-42de-bf2d-bb8ef707990c",
    "boardHeadings": 4,
    "liveHeadings": 5
   },
@@ -2281,15 +2180,8 @@
    "id": "print_job",
    "name": "Print job",
    "group": "My SPLAT",
-   "route": "/dashboard/print-requests/f6ea563a-7cf3-4331-a6d6-52c507759dc0",
+   "route": "/dashboard/print-requests/cb2480ad-418b-4546-97bb-66c56b1b4fc0",
    "findings": [
-    {
-     "type": "font",
-     "severity": "high",
-     "what": "h3 \"$#\" font",
-     "board": "Baloo 2",
-     "live": "Nunito"
-    },
     {
      "type": "size",
      "severity": "medium",
@@ -2298,17 +2190,10 @@
      "live": "22px"
     },
     {
-     "type": "size",
+     "type": "extra-section",
      "severity": "medium",
-     "what": "h3 \"$#\" size",
-     "board": "22px",
-     "live": "12px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h3 wording",
-     "board": "$#",
+     "what": "live has an extra h3: \"waiting on the printer\"",
+     "board": null,
      "live": "waiting on the printer"
     },
     {
@@ -2319,13 +2204,6 @@
      "live": "splat never handles the money — you settle it directly, and either of "
     },
     {
-     "type": "colour",
-     "severity": "low",
-     "what": "h3 \"$#\" colour",
-     "board": "rgb(28,37,48)",
-     "live": "rgb(90,102,117)"
-    },
-    {
      "type": "radius",
      "severity": "low",
      "what": "input radius",
@@ -2334,7 +2212,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/print-requests/f6ea563a-7cf3-4331-a6d6-52c507759dc0",
+   "finalUrl": "/dashboard/print-requests/cb2480ad-418b-4546-97bb-66c56b1b4fc0",
    "boardHeadings": 3,
    "liveHeadings": 5
   },
@@ -2455,7 +2333,7 @@
    "id": "child",
    "name": "Child profile",
    "group": "My SPLAT",
-   "route": "/dashboard/child/5269d1f8-3403-4b77-b374-3903b6b3b9ed",
+   "route": "/dashboard/child/4e6f4e19-8c04-4b1a-a07d-544459d1dc77",
    "findings": [
     {
      "type": "missing-section",
@@ -2480,7 +2358,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/child/5269d1f8-3403-4b77-b374-3903b6b3b9ed",
+   "finalUrl": "/dashboard/child/4e6f4e19-8c04-4b1a-a07d-544459d1dc77",
    "boardHeadings": 4,
    "liveHeadings": 5
   },
@@ -2542,7 +2420,7 @@
      "severity": "medium",
      "what": "7/7 board paragraphs absent",
      "board": "guides waiting on northside therapy collective. oldest first.",
-     "live": "guides waiting on parity org mu#k#cdln# oldest first."
+     "live": "guides waiting on parity org mucceg#jqx# oldest first."
     }
    ],
    "role": "leader",
@@ -2556,13 +2434,6 @@
    "group": "Organisation",
    "route": "/dashboard/organisation/profile",
    "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"identity\" has no counterpart",
-     "board": "identity",
-     "live": null
-    },
     {
      "type": "missing-section",
      "severity": "high",
@@ -2725,7 +2596,7 @@
      "severity": "medium",
      "what": "14/15 board paragraphs absent",
      "board": "switch-mount-body.stl, switch-mount-clamp.stl, cradle-#mm.stl",
-     "live": "every leader sees this queue. pickup is always the organisation’s addr"
+     "live": "every leader sees this queue. pickup is always the organisation's addr"
     },
     {
      "type": "radius",
@@ -2919,7 +2790,7 @@
    "id": "admin_idea_detail",
    "name": "Review an idea",
    "group": "Admin",
-   "route": "/admin/ideas/23d24ae5-75c0-4dc3-901b-9df8a3869db7",
+   "route": "/admin/ideas/f2ab46f1-40ef-4b44-9090-ec9421cdf049",
    "findings": [
     {
      "type": "copy",
@@ -2937,7 +2808,7 @@
     }
    ],
    "role": "admin",
-   "finalUrl": "/admin/ideas/23d24ae5-75c0-4dc3-901b-9df8a3869db7",
+   "finalUrl": "/admin/ideas/f2ab46f1-40ef-4b44-9090-ec9421cdf049",
    "boardHeadings": 3,
    "liveHeadings": 3
   },
@@ -3170,22 +3041,7 @@
    "name": "Component sheet",
    "group": "Prototype",
    "route": "/design-system",
-   "findings": [
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h2 wording",
-     "board": "mascot — \"splat\" the bear",
-     "live": "mascot — “splat” the bear"
-    },
-    {
-     "type": "extra-section",
-     "severity": "medium",
-     "what": "live has an extra h2: \"feedback\"",
-     "board": null,
-     "live": "feedback"
-    }
-   ],
+   "findings": [],
    "role": "guest",
    "finalUrl": "/design-system",
    "boardHeadings": 9,
@@ -3205,18 +3061,18 @@
  ],
  "summary": {
   "screens": 119,
-  "clean": 41,
-  "withFindings": 78,
+  "clean": 45,
+  "withFindings": 74,
   "errored": 0,
-  "findings": 259,
+  "findings": 239,
   "byType": {
    "radius": 24,
-   "copy": 47,
-   "font": 13,
-   "missing-section": 92,
-   "size": 28,
+   "copy": 44,
+   "font": 11,
+   "missing-section": 81,
+   "size": 26,
    "extra-section": 10,
-   "colour": 20,
+   "colour": 18,
    "shadow": 23,
    "weight": 2
   }

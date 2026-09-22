@@ -84,6 +84,12 @@ function collectFingerprint(rootSelector) {
       .replace(/\s+/g, ' ')
       .trim()
       .toLowerCase()
+      // Typographic punctuation is a rendering decision, not a design one. The
+      // board writes Mascot — "Splat" the bear with straight quotes and live
+      // renders the same words with curly ones; without this fold that is a
+      // `copy` finding whose only fix would be to make live's typography worse.
+      .replace(/[\u2018\u2019\u201a\u201b]/g, "'")
+      .replace(/[\u201c\u201d\u201e\u201f]/g, '"')
       // Numbers are data: "12 guides" and "148 guides" are the same design.
       .replace(/\d[\d,.]*/g, '#')
 

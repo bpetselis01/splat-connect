@@ -24,8 +24,17 @@ function f(type, severity, what, board, live, extra) {
  * Falling back to ordinal-within-level keeps a heading matched when the copy
  * was deliberately changed, so a copy edit reports as one `copy` finding rather
  * than a spurious missing+extra pair.
+ *
+ * `boardAll`/`liveAll` include the headings `inCard` filtered out of the two
+ * chrome lists, and exist because that flag is not symmetric. The same section
+ * heading is inCard on one side and not on the other whenever one side happens
+ * to wrap it in a card — live's lesson pages do, the board's do not. Matching
+ * only chrome-to-chrome reported all three of /learn/safe-handling's sections
+ * as missing while they were on screen, and the board's own card-wrapped
+ * "Feedback" as an extra live section. Text carries across the boundary; only
+ * the record-title comparison depends on the flag.
  */
-function matchHeadings(board, live) {
+function matchHeadings(board, live, liveAll, boardAll) {
   const pairs = []
   const usedLive = new Set()
   const liveByText = new Map()
@@ -39,6 +48,22 @@ function matchHeadings(board, live) {
       usedLive.add(i)
       pairs.push([b, live[i]])
     } else pairs.push([b, null])
+  }
+
+  // Same text, wrapped in a card on the live side only. A counterpart, and
+  // compared on how it is set — but never on wording, which is equal by
+  // construction here.
+  const usedCross = new Set()
+  for (const pair of pairs) {
+    if (pair[1]) continue
+    const j = (liveAll || []).findIndex(
+      (h, i) => h.inCard && h.text === pair[0].text && !usedCross.has(i)
+    )
+    if (j !== -1) {
+      usedCross.add(j)
+      pair[1] = liveAll[j]
+      pair[2] = 'card'
+    }
   }
 
   // Second pass: ordinal-within-level for board headings still unmatched.
@@ -56,7 +81,10 @@ function matchHeadings(board, live) {
     }
   }
 
-  const extras = live.filter((_, i) => !usedLive.has(i))
+  // The mirror of the cross-card pass: a live chrome heading whose words are on
+  // the board too, inside one of the board's cards, is not an extra section.
+  const boardText = new Set((boardAll || board).map((h) => h.text))
+  const extras = live.filter((h, i) => !usedLive.has(i) && !boardText.has(h.text))
   return { pairs, extras }
 }
 
@@ -75,7 +103,12 @@ function compare(board, live, opts = {}) {
   const chrome = (hs) => hs.filter((h) => !h.inCard)
   const records = (hs) => hs.filter((h) => h.inCard)
 
-  const { pairs, extras } = matchHeadings(chrome(board.headings), chrome(live.headings))
+  const { pairs, extras } = matchHeadings(
+    chrome(board.headings),
+    chrome(live.headings),
+    live.headings,
+    board.headings
+  )
 
   // Card titles, measured structurally (see titleOf in fingerprint.js) so that
   // "live sets these too small to read as titles" surfaces as a size finding
