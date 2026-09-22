@@ -334,8 +334,24 @@ function compare(board, live, opts = {}) {
 
   // ---- copy --------------------------------------------------------------
   if (allowCopy && board.paragraphs.length) {
-    const liveSet = new Set(live.paragraphs)
-    const missing = board.paragraphs.filter((p) => !liveSet.has(p))
+    // Word overlap, not string equality. The board's "Review and remove
+    // accounts. 57 total, 4 flagged." against live's "Review and remove
+    // accounts. 57 total." is the same sentence with a count live does not
+    // hold, and exact matching called it 1/1 board paragraphs absent. Three
+    // quarters of the words shared is the same paragraph; anything less is
+    // copy the page does not carry.
+    const words = (t) => new Set(t.split(/\W+/).filter(Boolean))
+    const liveWords = live.paragraphs.map(words)
+    const same = (p) => {
+      const b = words(p)
+      if (!b.size) return true
+      return liveWords.some((l) => {
+        let hit = 0
+        for (const w of b) if (l.has(w)) hit++
+        return hit / b.size >= 0.75
+      })
+    }
+    const missing = board.paragraphs.filter((p) => !same(p))
     // Only report when MOST of the board's prose is absent: a page whose copy
     // partly matches is being edited, not missing.
     if (missing.length && missing.length / board.paragraphs.length > 0.6)

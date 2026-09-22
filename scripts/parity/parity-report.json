@@ -1,54 +1,7 @@
 {
- "at": "2026-09-22T10:27:33.157Z",
+ "at": "2026-09-22T10:32:48.733Z",
  "live": "http://localhost:3110",
  "screens": [
-  {
-   "id": "print_request_new",
-   "name": "Request a print",
-   "group": "3D Printing",
-   "route": "/printing/requests?guide=b680e1e2-c9c0-49b7-b139-3e5ddee73bdb",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"who you asked\" has no counterpart",
-     "board": "who you asked",
-     "live": null
-    },
-    {
-     "type": "radius",
-     "severity": "medium",
-     "what": "card radius",
-     "board": "18px",
-     "live": "24px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "2/2 board paragraphs absent",
-     "board": "every part carries its own settings, exactly as the author tested them",
-     "live": null
-    },
-    {
-     "type": "radius",
-     "severity": "low",
-     "what": "input radius",
-     "board": "18px",
-     "live": "14px"
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "none",
-     "live": "set"
-    }
-   ],
-   "role": "parent",
-   "finalUrl": "/printing/requests",
-   "boardHeadings": 7,
-   "liveHeadings": 5
-  },
   {
    "id": "home",
    "name": "Home",
@@ -141,7 +94,7 @@
    "id": "toy_public",
    "name": "Toy detail",
    "group": "Public site",
-   "route": "/toy-library/3fe2caaf-a495-4a90-83b7-543f41db986d",
+   "route": "/toy-library/57fe6d26-e48b-4c0b-884e-cb5c9600c75c",
    "findings": [
     {
      "type": "missing-section",
@@ -173,7 +126,7 @@
     }
    ],
    "role": "guest",
-   "finalUrl": "/toy-library/3fe2caaf-a495-4a90-83b7-543f41db986d",
+   "finalUrl": "/toy-library/57fe6d26-e48b-4c0b-884e-cb5c9600c75c",
    "boardHeadings": 10,
    "liveHeadings": 3
   },
@@ -181,7 +134,7 @@
    "id": "toy_request",
    "name": "Request a toy",
    "group": "Public site",
-   "route": "/toy-library/3fe2caaf-a495-4a90-83b7-543f41db986d/request",
+   "route": "/toy-library/57fe6d26-e48b-4c0b-884e-cb5c9600c75c/request",
    "findings": [
     {
      "type": "missing-section",
@@ -227,7 +180,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/toy-library/3fe2caaf-a495-4a90-83b7-543f41db986d/request",
+   "finalUrl": "/toy-library/57fe6d26-e48b-4c0b-884e-cb5c9600c75c/request",
    "boardHeadings": 4,
    "liveHeadings": 2
   },
@@ -447,13 +400,6 @@
    "route": "/printing",
    "findings": [
     {
-     "type": "copy",
-     "severity": "medium",
-     "what": "3/4 board paragraphs absent",
-     "board": "sydney · from your profile",
-     "live": "no printer near you? ask, and someone may print it and post it to you."
-    },
-    {
      "type": "shadow",
      "severity": "low",
      "what": "card shadow",
@@ -483,6 +429,53 @@
    "finalUrl": "/printing/basics",
    "boardHeadings": 12,
    "liveHeadings": 6
+  },
+  {
+   "id": "print_request_new",
+   "name": "Request a print",
+   "group": "3D Printing",
+   "route": "/printing/requests?guide=b680e1e2-c9c0-49b7-b139-3e5ddee73bdb",
+   "findings": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"who you asked\" has no counterpart",
+     "board": "who you asked",
+     "live": null
+    },
+    {
+     "type": "radius",
+     "severity": "medium",
+     "what": "card radius",
+     "board": "18px",
+     "live": "24px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "2/2 board paragraphs absent",
+     "board": "every part carries its own settings, exactly as the author tested them",
+     "live": null
+    },
+    {
+     "type": "radius",
+     "severity": "low",
+     "what": "input radius",
+     "board": "18px",
+     "live": "14px"
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "none",
+     "live": "set"
+    }
+   ],
+   "role": "parent",
+   "finalUrl": "/printing/requests",
+   "boardHeadings": 7,
+   "liveHeadings": 5
   },
   {
    "id": "involved",
@@ -738,13 +731,6 @@
      "what": "h2 \"toys delivered over time\" has no counterpart",
      "board": "toys delivered over time",
      "live": null
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "2/3 board paragraphs absent",
-     "board": "every number here is a real toy, guide or person. updated nightly.",
-     "live": "every number here is a real toy, guide or person."
     }
    ],
    "role": "guest",
@@ -761,7 +747,7 @@
    "role": "guest",
    "finalUrl": "/organizations",
    "boardHeadings": 13,
-   "liveHeadings": 18
+   "liveHeadings": 19
   },
   {
    "id": "org_public",
@@ -1118,13 +1104,6 @@
      "what": "h2 \"byron petselis\" has no counterpart",
      "board": "byron petselis",
      "live": null
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "1/1 board paragraphs absent",
-     "board": "eight volunteers. everyone here does something else for a living, and ",
-     "live": "everyone here does something else for a living, and the bios say so. e"
     }
    ],
    "role": "guest",
@@ -1161,7 +1140,7 @@
      "severity": "medium",
      "what": "h1 wording",
      "board": "requests to northside therapy",
-     "live": "requests to parity org muciwjs#bx#w"
+     "live": "requests to parity org mucj#l#f#pmh"
     },
     {
      "type": "radius",
@@ -1227,7 +1206,7 @@
    "id": "org_event_manage",
    "name": "Manage event",
    "group": "My SPLAT",
-   "route": "/dashboard/org/events/6c4c81e8-c2d6-4d69-83da-54fd6d541e92",
+   "route": "/dashboard/org/events/a5fcdfcc-28b7-4d45-9d49-1bafb7884a50",
    "findings": [
     {
      "type": "font",
@@ -1259,7 +1238,7 @@
     }
    ],
    "role": "leader",
-   "finalUrl": "/dashboard/org/events/6c4c81e8-c2d6-4d69-83da-54fd6d541e92",
+   "finalUrl": "/dashboard/org/events/a5fcdfcc-28b7-4d45-9d49-1bafb7884a50",
    "boardHeadings": 4,
    "liveHeadings": 2
   },
@@ -1405,15 +1384,7 @@
    "name": "Add a tutorial",
    "group": "My SPLAT",
    "route": "/upload",
-   "findings": [
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "2/3 board paragraphs absent",
-     "board": "already written this up somewhere? start from the pdf. otherwise two t",
-     "live": "two things to begin: what the toy is, and one photo — everything else "
-    }
-   ],
+   "findings": [],
    "role": "contributor",
    "finalUrl": "/upload",
    "boardHeadings": 2,
@@ -1423,7 +1394,7 @@
    "id": "editor",
    "name": "Tutorial editor",
    "group": "My SPLAT",
-   "route": "/tutorials/7fcc7be9-7080-4bce-b85b-8a7432562e8a/edit",
+   "route": "/tutorials/016e5116-6dfd-45ae-bf05-26824097c7b8/edit",
    "findings": [
     {
      "type": "copy",
@@ -1434,7 +1405,7 @@
     }
    ],
    "role": "contributor",
-   "finalUrl": "/tutorials/7fcc7be9-7080-4bce-b85b-8a7432562e8a/edit",
+   "finalUrl": "/tutorials/016e5116-6dfd-45ae-bf05-26824097c7b8/edit",
    "boardHeadings": 5,
    "liveHeadings": 5
   },
@@ -1479,7 +1450,7 @@
    "id": "toy_detail",
    "name": "Toy detail",
    "group": "My SPLAT",
-   "route": "/dashboard/toys/3fe2caaf-a495-4a90-83b7-543f41db986d",
+   "route": "/dashboard/toys/57fe6d26-e48b-4c0b-884e-cb5c9600c75c",
    "findings": [
     {
      "type": "missing-section",
@@ -1504,7 +1475,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/toys/3fe2caaf-a495-4a90-83b7-543f41db986d",
+   "finalUrl": "/dashboard/toys/57fe6d26-e48b-4c0b-884e-cb5c9600c75c",
    "boardHeadings": 8,
    "liveHeadings": 5
   },
@@ -1531,7 +1502,7 @@
    "id": "thread",
    "name": "Exchange thread",
    "group": "My SPLAT",
-   "route": "/dashboard/exchanges/02019074-0f2e-4d95-a994-ebc96e71d1db",
+   "route": "/dashboard/exchanges/51e8f305-23c9-4bba-9f92-414f5b6d2e0c",
    "findings": [
     {
      "type": "missing-section",
@@ -1556,7 +1527,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/exchanges/02019074-0f2e-4d95-a994-ebc96e71d1db",
+   "finalUrl": "/dashboard/exchanges/51e8f305-23c9-4bba-9f92-414f5b6d2e0c",
    "boardHeadings": 4,
    "liveHeadings": 5
   },
@@ -1693,7 +1664,7 @@
    "id": "print_job",
    "name": "Print job",
    "group": "My SPLAT",
-   "route": "/dashboard/print-requests/c7137f80-42f8-4143-be31-e57227fdd890",
+   "route": "/dashboard/print-requests/4ac57842-c256-4a70-878d-9487af83a5ca",
    "findings": [
     {
      "type": "extra-section",
@@ -1718,7 +1689,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/print-requests/c7137f80-42f8-4143-be31-e57227fdd890",
+   "finalUrl": "/dashboard/print-requests/4ac57842-c256-4a70-878d-9487af83a5ca",
    "boardHeadings": 3,
    "liveHeadings": 5
   },
@@ -1818,7 +1789,7 @@
    "id": "child",
    "name": "Child profile",
    "group": "My SPLAT",
-   "route": "/dashboard/child/9337c5e0-2d45-4cbe-bbfc-529cf2e7b85f",
+   "route": "/dashboard/child/dc4fb964-afbd-4fae-8f34-443244d5e309",
    "findings": [
     {
      "type": "missing-section",
@@ -1836,7 +1807,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/child/9337c5e0-2d45-4cbe-bbfc-529cf2e7b85f",
+   "finalUrl": "/dashboard/child/dc4fb964-afbd-4fae-8f34-443244d5e309",
    "boardHeadings": 4,
    "liveHeadings": 5
   },
@@ -1891,7 +1862,7 @@
      "severity": "medium",
      "what": "1/1 board paragraphs absent",
      "board": "guides waiting on northside therapy collective. oldest first.",
-     "live": "guides waiting on parity org muciwjs#bx#w. oldest first."
+     "live": "guides waiting on parity org mucj#l#f#pmh. oldest first."
     }
    ],
    "role": "leader",
@@ -2075,13 +2046,6 @@
      "live": null
     },
     {
-     "type": "copy",
-     "severity": "medium",
-     "what": "3/3 board paragraphs absent",
-     "board": "the pages with no other owner. guides, toys, events and stories are wr",
-     "live": "the pages with no other owner. guides, toys, events and stories are wr"
-    },
-    {
      "type": "colour",
      "severity": "low",
      "what": "card background",
@@ -2205,7 +2169,7 @@
    "id": "admin_idea_detail",
    "name": "Review an idea",
    "group": "Admin",
-   "route": "/admin/ideas/fdacb6c4-a358-40ca-8538-2c992d152643",
+   "route": "/admin/ideas/77cab104-99c3-40f0-80c1-7c01d39151ac",
    "findings": [
     {
      "type": "copy",
@@ -2216,7 +2180,7 @@
     }
    ],
    "role": "admin",
-   "finalUrl": "/admin/ideas/fdacb6c4-a358-40ca-8538-2c992d152643",
+   "finalUrl": "/admin/ideas/77cab104-99c3-40f0-80c1-7c01d39151ac",
    "boardHeadings": 3,
    "liveHeadings": 3
   },
@@ -2264,14 +2228,7 @@
      "severity": "high",
      "what": "page height differs grossly",
      "board": "753px",
-     "live": "62994px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "1/1 board paragraphs absent",
-     "board": "review and remove accounts. # total, # flagged.",
-     "live": "review and remove accounts. # total."
+     "live": "63195px"
     }
    ],
    "role": "admin",
@@ -2359,18 +2316,18 @@
  ],
  "summary": {
   "screens": 119,
-  "clean": 68,
-  "withFindings": 51,
+  "clean": 69,
+  "withFindings": 50,
   "errored": 0,
-  "findings": 142,
+  "findings": 136,
   "byType": {
    "missing-section": 59,
-   "radius": 5,
-   "copy": 29,
-   "shadow": 10,
    "size": 13,
    "extra-section": 6,
+   "copy": 23,
    "colour": 12,
+   "shadow": 10,
+   "radius": 5,
    "font": 6,
    "weight": 2
   }
