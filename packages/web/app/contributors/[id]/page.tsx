@@ -4,19 +4,20 @@
  *
  * Only what the public contributor endpoint returns is drawn. The board also
  * has a headline and bio, place, "leader at", badges, a builds heatmap, a
- * featured guide, notes from families and an activity feed — none of which
- * the endpoint carries yet.
+ * featured guide and notes from families — none of which the endpoint carries
+ * yet. The activity feed is built from the guides and toys already returned.
  */
 import Image from 'next/image'
 import Link from 'next/link'
 import type { Route } from 'next'
 import { notFound } from 'next/navigation'
-import { CaretRight, Hammer } from '@phosphor-icons/react/dist/ssr'
+import { BookOpen, CaretRight, Gift, Hammer } from '@phosphor-icons/react/dist/ssr'
 import { initials } from '@/components/story-bits'
 import { ShelfToyCard } from '@/components/shelf-toy-card'
 import { tintFor } from '@/components/card-photo'
 import { getCapabilities } from '@/lib/capabilities'
 import { safePhotoSrc } from '@/lib/photo-src'
+import { shortDate } from '@/lib/dates'
 import { formatBuildTime, type ContributorProfile } from '@splat-connect/types'
 
 const DIFFICULTY_LABEL = { easy: 'Easy', medium: 'Medium', hard: 'Hard' } as const
@@ -44,9 +45,33 @@ export default async function ContributorPage({
     { n: contributor.toysShared.length, label: 'toys shared', id: 'toys-shared' },
     { n: contributor.toysDelivered.length, label: 'toys delivered', id: 'toys-delivered' },
   ]
+  // The board's "Recent activity", newest first, off the two collections this
+  // page already holds. A delivered toy has no date here — the handoff's own
+  // timestamp stays on toy_transactions, which the endpoint does not return —
+  // so a delivery is not a feed entry.
+  const activity = [
+    ...contributor.tutorials.map((t) => ({
+      key: `t-${t.id}`,
+      icon: BookOpen,
+      tint: 'var(--b100)',
+      t: `Published a guide — ${t.title}`,
+      when: t.reviewed_at ?? t.created_at,
+      href: `/tutorials/${t.id}` as Route,
+    })),
+    ...contributor.toysShared.map((t) => ({
+      key: `y-${t.id}`,
+      icon: Gift,
+      tint: 'var(--tmint)',
+      t: `Put a toy on the shelf — ${t.name}`,
+      when: t.created_at,
+      href: `/toy-library/${t.id}` as Route,
+    })),
+  ].sort((a, b) => (a.when < b.when ? 1 : -1))
+
   const jumps = [
     { to: 'ctb-guides', label: 'Guides', show: contributor.tutorials.length > 0 },
     { to: 'ctb-toys', label: 'Toys', show: toys.length > 0 },
+    { to: 'ctb-activity', label: 'Activity', show: activity.length > 0 },
   ].filter((j) => j.show)
 
   // The only way to ask one person for a build. 057 gates that on the maker
@@ -195,6 +220,34 @@ export default async function ContributorPage({
                 <ShelfToyCard key={t.id} toy={t} />
               ))}
             </div>
+          </section>
+        )}
+
+        {activity.length > 0 && (
+          <section id="ctb-activity">
+            <h2 className={`${H2} mb-3.5`}>Recent activity</h2>
+            <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
+              {activity.map((f) => (
+                <li key={f.key}>
+                  <Link
+                    href={f.href}
+                    className="flex items-center gap-3.5 rounded-[var(--radius-inset)] border border-line bg-surface px-4 py-3.5 text-ink"
+                  >
+                    <span
+                      aria-hidden="true"
+                      className="grid h-9 w-9 shrink-0 place-items-center rounded-[var(--radius-field)] text-[var(--tink)]"
+                      style={{ background: f.tint }}
+                    >
+                      <f.icon size={18} weight="bold" />
+                    </span>
+                    <span className="flex-1 text-sm font-semibold">{f.t}</span>
+                    <span className="whitespace-nowrap text-[13px] font-bold text-muted">
+                      {shortDate(f.when)}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </section>
         )}
       </div>
