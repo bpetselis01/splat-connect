@@ -280,7 +280,14 @@ function collectFingerprint(rootSelector) {
     }
   }
 
-  const pick = (sel) => [...root.querySelectorAll(sel)].filter(visible)
+  // Site chrome is measured by collectChrome, never here. Live is rooted at
+  // <main> and so has none of it; the board's screen root does contain the
+  // artboard's own header — its pill search field, the "viewing as" select,
+  // the design-notes button. Without this filter that pill landed in the
+  // board's input set and /login reported `input radius board=999px
+  // live=14px` for two screens whose inputs are both 14px rounded rects.
+  const pick = (sel) =>
+    [...root.querySelectorAll(sel)].filter((el) => visible(el) && !el.closest('header, footer'))
 
   /*
    * The title of each card, found by prominence rather than by threshold.
