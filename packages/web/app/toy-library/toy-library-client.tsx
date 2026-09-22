@@ -11,6 +11,7 @@
  * layer of indirection over it.
  */
 import { useState } from 'react'
+import type { Route } from 'next'
 import Link from 'next/link'
 import {
   ArrowsLeftRight,
@@ -20,6 +21,7 @@ import {
   Hammer,
   HandHeart,
   HouseLine,
+  Sliders,
   Smiley,
   UsersThree,
   X,
@@ -120,6 +122,13 @@ export function ToyLibraryClient({
     setFilters({})
   }
 
+  // The wizard keeps a profile, which needs an account. Same detour /library
+  // takes, for the same reason: signing up first, with the reason on screen,
+  // beats /onboarding/child's bare redirect to /login.
+  const wizardHref = (
+    signedIn ? '/onboarding/child' : '/signup?next=%2Fonboarding%2Fchild&reason=child'
+  ) as Route
+
   return (
     <div className="flex flex-col gap-8">
       <BrowseHero
@@ -194,6 +203,17 @@ export function ToyLibraryClient({
             </fieldset>
           ))}
 
+          <p className="browse-note bg-honey-soft">
+            <Sliders size={26} weight="duotone" className="flex-none" aria-hidden="true" />
+            <span>
+              <strong className="font-extrabold">Not sure what to filter by?</strong>{' '}
+              Answer five quick questions about your child and we&apos;ll show only the toys that
+              suit how they play. Free account needed to keep the profile.{' '}
+              <Link href={wizardHref} className="font-extrabold underline">
+                Pick for my child →
+              </Link>
+            </span>
+          </p>
           <p className="browse-note bg-mint-soft">
             <HandHeart size={26} weight="duotone" className="flex-none" aria-hidden="true" />
             <span>
