@@ -15,7 +15,15 @@ import { useState } from 'react'
 
 type State = 'idle' | 'sending' | 'done' | 'error'
 
-export function NotifyForm({ featureKey }: { featureKey: string }) {
+export function NotifyForm({
+  featureKey,
+  pill = false,
+}: {
+  featureKey: string
+  /** The board's "Not built yet" form: one pill row, no visible label, and a
+   *  line underneath promising one email. Opt-in for ComingSoon's board layout. */
+  pill?: boolean
+}) {
   const [email, setEmail] = useState('')
   const [state, setState] = useState<State>('idle')
 
@@ -50,6 +58,42 @@ export function NotifyForm({ featureKey }: { featureKey: string }) {
     } catch {
       setState('error')
     }
+  }
+
+  if (pill) {
+    return (
+      <>
+        <form onSubmit={submit} className="mx-auto mt-8 flex max-w-[460px] flex-col gap-2.5 sm:flex-row">
+          <input
+            id={`notify-${featureKey}`}
+            type="email"
+            required
+            aria-label="Email address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+            className="field h-[52px] min-w-0 flex-1 rounded-pill px-[18px] text-base"
+            style={{ boxShadow: 'var(--shadow-e1)' }}
+          />
+          <button
+            type="submit"
+            className="btn btn-primary min-h-[52px] shrink-0 px-6 text-base"
+            disabled={state === 'sending'}
+          >
+            {state === 'sending' ? 'Sending…' : 'Tell me when'}
+          </button>
+        </form>
+        {state === 'error' ? (
+          <p role="alert" className="mt-3 text-[13px] font-semibold text-danger">
+            That didn&apos;t send. Try again in a moment.
+          </p>
+        ) : (
+          <p className="mt-3 text-[13px] text-muted">
+            One email when this page goes live. Nothing else, ever.
+          </p>
+        )}
+      </>
+    )
   }
 
   return (

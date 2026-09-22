@@ -34,6 +34,8 @@ export type Unit = {
   n: number
   title: string
   blurb: string
+  /** The unit's tint on the board: its header band, and its row in an outline. */
+  tint: string
   lessons: Lesson[]
 }
 
@@ -43,6 +45,7 @@ export const UNITS: Unit[] = [
     title: 'Start here',
     blurb:
       'What adapting a toy actually is, how a switch works, which switch suits which child, and which toys to buy.',
+    tint: 'var(--tamber)',
     lessons: [
       {
         slug: 'toy-adaptation-101',
@@ -90,6 +93,7 @@ export const UNITS: Unit[] = [
     n: 2,
     title: 'Set up your bench',
     blurb: 'What to buy once, what to borrow, and how to use it without hurting yourself.',
+    tint: 'var(--b100)',
     lessons: [
       {
         slug: 'tools-and-materials',
@@ -124,6 +128,7 @@ export const UNITS: Unit[] = [
     title: 'The one skill: a 3.5 mm connector',
     blurb:
       'Every adaptation ends in the same connector. Learn to wire one and you have learned the soldering for the whole course.',
+    tint: 'var(--tmint)',
     lessons: [
       {
         slug: 'wire-a-connector',
@@ -147,6 +152,7 @@ export const UNITS: Unit[] = [
     title: 'Adapt your first toys',
     blurb:
       'Three real toys, photographed step by step. Two go inside the case; one is a plush with a splice.',
+    tint: 'var(--tcoral)',
     lessons: [
       {
         slug: 'build-hamster-mania',
@@ -178,6 +184,7 @@ export const UNITS: Unit[] = [
     n: 5,
     title: 'Make your own switch',
     blurb: 'A 3D-printed button switch with an adjustable feel, for a few dollars in parts.',
+    tint: 'var(--tviolet)',
     lessons: [
       {
         slug: 'build-a-switch',
@@ -193,6 +200,7 @@ export const UNITS: Unit[] = [
     n: 6,
     title: 'Hand it over',
     blurb: 'Safety checks, cleaning, and showing a family how to use what you made.',
+    tint: 'var(--tok)',
     lessons: [
       {
         slug: 'handover',

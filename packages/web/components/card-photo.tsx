@@ -21,25 +21,42 @@ import type { Icon as PhosphorIcon } from '@phosphor-icons/react'
 
 import { safePhotoSrc } from '@/lib/photo-src'
 
+/** The board tints each card differently — blue, amber, coral, violet, mint —
+ *  rather than giving a whole grid one colour. With no per-item colour in the
+ *  data, the id picks one, so a card keeps its tint across visits. */
+const TINTS = ['var(--b100)', 'var(--tamber)', 'var(--tcoral)', 'var(--tviolet)', 'var(--tmint)']
+
+export function tintFor(id: string): string {
+  let sum = 0
+  for (let i = 0; i < id.length; i++) sum += id.charCodeAt(i)
+  return TINTS[sum % TINTS.length]
+}
+
 export function CardPhoto({
   src,
   icon: Glyph = Package,
   tint = 'var(--color-brand-soft)',
+  iconSize = 64,
+  children,
 }: {
   src: string | null
   /** The card's own glyph, drawn when there is no photo. */
   icon?: PhosphorIcon
   tint?: string
+  /** 72 on a browse grid, 64 in the home page's two-up rows — the board's. */
+  iconSize?: number
+  /** Overlaid on the band, e.g. a toy's availability pill. */
+  children?: React.ReactNode
 }) {
   const safe = safePhotoSrc(src)
   if (!safe) {
     return (
       <div
-        aria-hidden="true"
-        className="grid aspect-[4/3] place-items-center"
+        className="relative grid aspect-[4/3] place-items-center"
         style={{ backgroundColor: tint, color: 'var(--tink)' }}
       >
-        <Glyph weight="duotone" size={64} opacity={0.7} />
+        <Glyph weight="duotone" size={iconSize} opacity={0.7} aria-hidden="true" />
+        {children}
       </div>
     )
   }
@@ -47,6 +64,7 @@ export function CardPhoto({
   return (
     <div className="relative aspect-[4/3] w-full bg-sunken">
       <Image src={safe} alt="" fill className="object-cover" />
+      {children}
     </div>
   )
 }

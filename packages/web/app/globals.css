@@ -215,72 +215,81 @@
     color: var(--color-ink);
   }
 
-  /* Dark and high contrast are the artboard's, and the brief never mentions
-     either — the header draws three live toggles for them, and board wins over
-     spec. Both redefine the alias layer only, so every component that reads a
-     token follows automatically.
+  /* Dark and high contrast are the artboard's, switched from the header's
+     three toggles (components/display-toggles.tsx) and stamped on <body> by
+     the root layout from a cookie, so the first paint is already right.
 
-     Note what high contrast does: every elevation becomes `none` and --bw
-     doubles. Depth is carried by borders there. A component that separates from
-     its background with a shadow and no border disappears in this mode, so test
-     it rather than assuming the tokens cover you. */
+     They redefine the --color-* / --shadow-* tokens, not the artboard aliases.
+     Tailwind utilities read the tokens (`bg-surface` is var(--color-surface)),
+     so a mode that only touched the aliases turned the header dark and left
+     every page under it white. The aliases above resolve on this same element
+     and follow for free. --onbrand is the one value with no token behind it.
+
+     High contrast sets every elevation to `none` and doubles the border width,
+     so depth there is carried by borders. A component that separates from its
+     background by shadow alone disappears in that mode. */
   body[data-mode='dark'] {
-    --canvas: #141a21;
-    --surface: #1c242e;
-    --surface2: #243040;
-    --ink: #e7edf2;
-    --muted: #a3afbc;
-    --line: rgba(231, 237, 242, 0.12);
-    --brand: #4fb4e6;
-    --b600: #4fb4e6;
-    --b700: #87cdf0;
-    --b100: #124f73;
-    --b50: #0d2a3f;
+    color-scheme: dark;
+    --color-canvas: #141a21;
+    --color-surface: #1c242e;
+    --color-sunken: #243040;
+    --color-surface-quiet: #243040;
+    --color-ink: #e7edf2;
+    --color-muted: #a3afbc;
+    --color-line: rgba(231, 237, 242, 0.12);
+    --color-brand: #4fb4e6;
+    --color-brand-dark: #4fb4e6;
+    --color-brand-deep: #87cdf0;
+    --color-brand-tint: #124f73;
+    --color-brand-soft: #124f73;
+    --color-brand-50: #0d2a3f;
+    --color-apricot-soft: #4a2a1c;
+    --color-mint-soft: #123d3a;
+    --color-honey-soft: #4a3810;
+    --color-violet-soft: #2e2650;
+    --color-success-soft: #173f2e;
+    --color-danger-soft: #4a1f1f;
+    --shadow-e1: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-e2: 0 4px 12px rgba(0, 0, 0, 0.35);
+    --shadow-e3: 0 12px 28px rgba(0, 0, 0, 0.4);
+    --shadow-e4: 0 24px 48px rgba(0, 0, 0, 0.5);
+    --shadow-glow: 0 8px 20px rgba(79, 180, 230, 0.25);
+    --shadow-hi: inset 0 1px 0 rgba(255, 255, 255, 0.08);
     --onbrand: #0d2a3f;
-    --focus: #e7edf2;
-    --tcoral: #4a2a1c;
-    --tmint: #123d3a;
-    --tamber: #4a3810;
-    --tviolet: #2e2650;
-    --tok: #173f2e;
-    --tbad: #4a1f1f;
-    --tink: #e7edf2;
-    --e1: 0 1px 2px rgba(0, 0, 0, 0.3);
-    --e2: 0 4px 12px rgba(0, 0, 0, 0.35);
-    --e3: 0 12px 28px rgba(0, 0, 0, 0.4);
-    --e4: 0 24px 48px rgba(0, 0, 0, 0.5);
-    --glow: 0 8px 20px rgba(79, 180, 230, 0.25);
-    --hi: inset 0 1px 0 rgba(255, 255, 255, 0.08);
   }
 
   body[data-mode='hc'] {
-    --canvas: #ffffff;
-    --surface: #ffffff;
-    --surface2: #f2f2f2;
-    --ink: #000000;
-    --muted: #2b3440;
-    --line: #000000;
-    --bw: 2px;
-    --brand: #0f5f8c;
-    --b600: #0f5f8c;
-    --b700: #0d2a3f;
-    --b100: #e6f2fb;
-    --b50: #ffffff;
-    --onbrand: #ffffff;
-    --focus: #000000;
-    --tink: #000000;
-    --e1: none;
-    --e2: none;
-    --e3: none;
-    --e4: none;
-    --glow: none;
-    --hi: none;
+    --color-canvas: #ffffff;
+    --color-surface: #ffffff;
+    --color-sunken: #f2f2f2;
+    --color-surface-quiet: #f2f2f2;
+    --color-ink: #000000;
+    --color-muted: #2b3440;
+    --color-line: #000000;
+    --border-width: 2px;
+    --color-brand: #0f5f8c;
+    --color-brand-dark: #0f5f8c;
+    --color-brand-deep: #0d2a3f;
+    --color-brand-tint: #e6f2fb;
+    --color-brand-soft: #e6f2fb;
+    --color-brand-50: #ffffff;
+    --shadow-e1: none;
+    --shadow-e2: none;
+    --shadow-e3: none;
+    --shadow-e4: none;
+    --shadow-glow: none;
+    --shadow-hi: none;
   }
 
-  body[data-mode='dark'],
-  body[data-mode='hc'] {
-    background-color: var(--canvas);
-    color: var(--ink);
+  /* The header's reduce-motion toggle, for someone whose OS setting does not
+     say so. Collapsed rather than removed, like the media-query rules: an
+     animation with `both` fill still has to land on its last frame. */
+  body[data-motion='reduced'] *,
+  body[data-motion='reduced'] *::before,
+  body[data-motion='reduced'] *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
   }
 
   /* The carousel sets `transition: transform var(--spring-photo)` inline, where
@@ -849,95 +858,6 @@
     }
   }
 
-  /*
-   * The public top bar sits flush on the white shelf — no pill background at
-   * rest, just a dot and a tracked micro-label, same convention as .eyebrow
-   * and .meta. Scoped to .pixel so the signed-in rail is untouched.
-   */
-  .pixel .nav-pill {
-    position: relative;
-    /* The ::before pill sits at z-index:-1 so it paints behind the label.
-       `isolate` keeps that negative layer inside the link, so it can only ever
-       go behind the label — never behind the shelf's own white background,
-       which is what it would fall through to otherwise. The hover state gets
-       this for free from its transform; the current-page state, which has no
-       transform, does not. */
-    isolation: isolate;
-    color: var(--color-ink);
-    /*
-     * Nunito 15px/700, sentence case. This was --font-mono at 12px, uppercase,
-     * letter-spaced — a monospace shouty nav, which is Pixel's voice and not
-     * Soft Pop's. The board sets every tab in the body face at 15px/700 and
-     * writes them "Guides", not "GUIDES".
-     *
-     * This is the header, so it is on every page, and it is the first thing
-     * anyone sees. It survived the whole Soft Pop pass because the parity
-     * harness roots the live side at <main> and never looked above it.
-     */
-    font-family: var(--font-sans);
-    font-size: 0.9375rem;
-    font-weight: 700;
-    letter-spacing: 0;
-    transition: transform 0.16s var(--ease-spring), color 0.14s linear;
-  }
-
-  /*
-   * The pill is drawn *behind* the label, not around it.
-   *
-   * The obvious implementation gives the pill real padding, and that is the
-   * trap: seven tabs at px-2.5 is ~140px against the ~144px of slack this bar
-   * has at 1440, so the row overflows the shell, wraps, and renders the shelf
-   * half again as tall. A pseudo-element with negative inline inset costs
-   * exactly zero layout, so the pill can be as wide as it needs to be.
-   *
-   * It also fixes a real bug: the current-page tab used to take a genuine
-   * `px-3` that its neighbours did not, so every tab in the row shifted
-   * sideways as you navigated. Both states live here now, and nothing moves.
-   *
-   * Vertical inset is positive — the link keeps its full 40px touch target
-   * (see the py-3 note in components/nav.tsx) while the drawn pill stays the
-   * 32px the bar has room for.
-   */
-  .pixel .nav-pill::before {
-    content: '';
-    position: absolute;
-    inset: 4px -10px;
-    z-index: -1;
-    /* 999px. The board draws these as pills; --radius-field is the input
-       token and gave them a squared-off 14px. */
-    border-radius: var(--radius-pill);
-    border: var(--border-width) solid transparent;
-    transition: background-color 0.14s linear, border-color 0.14s linear,
-      box-shadow 0.16s var(--ease-spring);
-  }
-
-  /*
-   * The bar sits ON the page, not above it: canvas at 88% with a 14px blur
-   * behind it, and a hairline underneath.
-   *
-   * It was opaque white with a full-strength INK rule under it — the Pixel
-   * "shelf" the nav pills sat on. That dark line across the top of every screen
-   * is the single loudest thing Pixel left behind, and the board draws neither
-   * half of it.
-   */
-  .pixel header {
-    background-color: color-mix(in srgb, var(--color-canvas) 88%, transparent);
-    backdrop-filter: blur(14px);
-    border-bottom-width: var(--border-width);
-    border-bottom-color: var(--color-line);
-  }
-
-  .pixel header.nav-quiet {
-    border-bottom-width: 1px;
-    border-bottom-color: var(--color-line);
-  }
-
-  /* The logo mark and the initials avatar — the bar's two icon-in-a-shape
-     moments, bordered like everything else instead of a bare tinted disc. */
-  .pixel .pixel-avatar {
-    border-radius: var(--radius-field);
-    border: var(--border-width) solid var(--color-line);
-  }
 
 
   /*
@@ -1038,99 +958,6 @@
    * quantity.
    */
   
-  /*
-   * Hover lifts the tab up-left onto a hard ink shadow; pressing it drops the
-   * tab into that shadow. It is the same two-part motion the board gives its
-   * buttons, so the bar borrows a vocabulary the page already speaks rather
-   * than inventing a third one — and lift-versus-drop is what makes "I am
-   * over this" impossible to confuse with "I clicked this".
-   *
-   * It replaces a rotate(-2deg) swing that had no press state at all: hover
-   * and click looked identical.
-   *
-   * The tint and the text colour come from the section's own tone, passed in
-   * as --pill-tint/--pill-ink by components/nav.tsx. That pairing is exactly
-   * the bg/fg pair tests/unit/lib/tone.test.ts already checks for contrast, so
-   * the hover state is covered by the existing guard rather than needing a
-   * new one.
-   */
-  .pixel .nav-pill:hover {
-    color: var(--pill-ink, var(--color-brand-deep));
-    transform: translate(-2px, -2px);
-  }
-
-  .pixel .nav-pill:hover::before {
-    background-color: var(--pill-tint, var(--color-brand-tint));
-    border-color: var(--color-ink);
-    box-shadow: var(--shadow-e1);
-  }
-
-  .pixel .nav-pill:active {
-    transform: translate(1px, 1px);
-  }
-
-  .pixel .nav-pill:active::before {
-    box-shadow: 0 0 0 var(--color-ink);
-  }
-
-  /* Reduced motion keeps the colour change — losing the cue entirely would
-     leave a hover with no feedback — and drops only the travel. */
-  @media (prefers-reduced-motion: reduce) {
-    .pixel .nav-pill:hover,
-    .pixel .nav-pill:active {
-      transform: none;
-    }
-  }
-
-  /* The section you are in sits proud of the shelf rather than merely tinted. */
-  .pixel .nav-pill[aria-current='page'] {
-    color: var(--pill-ink, var(--color-brand-deep));
-  }
-
-  .pixel .nav-pill[aria-current='page']::before {
-    background-color: var(--pill-tint, var(--color-brand-tint));
-    border-color: var(--color-ink);
-    box-shadow: var(--shadow-e1);
-  }
-
-  /* The quiet bar. Everything here is weight, nothing is presence: no label is
-     removed, resized past legibility, or hidden behind a hover. The rail below
-     is brand-deep at full saturation and wins the contrast comparison on its
-     own once the bar stops competing. */
-  .pixel .nav-quiet {
-    background-color: var(--color-surface-quiet);
-  }
-
-  .pixel .nav-quiet .nav-pill {
-    color: var(--color-muted);
-  }
-
-  /* The quiet bar opts out of the pill entirely — border and shadow included,
-     since both now live on ::before rather than on the link itself. */
-  .pixel .nav-quiet .nav-pill::before,
-  .pixel .nav-quiet .nav-pill:hover::before,
-  .pixel .nav-quiet .nav-pill[aria-current='page']::before {
-    background-color: transparent;
-    border-color: transparent;
-    box-shadow: none;
-  }
-
-  /* Hover restores full contrast, so a receding control never reads as
-     disabled. */
-  .pixel .nav-quiet .nav-pill:hover {
-    color: var(--color-brand-deep);
-    /* No lift and no press: a bar that is deliberately receding should not
-       also be the most playful thing on the page. */
-    transform: none;
-  }
-
-  .pixel .nav-quiet .nav-pill:hover::before {
-    background-color: var(--color-sunken);
-  }
-
-  .pixel .nav-quiet .nav-pill:active {
-    transform: none;
-  }
 
   /*
    * The public shell's measure, in one place.
@@ -1149,10 +976,14 @@
    */
   .public-shell {
     /*
-     * 1280px with 32px gutters, which is what every screen in the board sets
-     * on its own outermost section: `max-width:1280px;margin:0 auto;padding:…
-     * 32px`. Screens that want to be narrower than that — a form, a wizard, a
-     * lesson — say so themselves, exactly as the board does.
+     * 1216px of content, which is what every screen in the board gets from
+     * its own outermost section: `max-width:1280px;margin:0 auto;padding:…
+     * 32px` — under the board's `box-sizing: border-box`, so the 1280 includes
+     * both gutters. Measured on ten screens and the footer at 1440: content at
+     * x=112, 1216 wide, every time. This rule said 1280 until 2026-09-18 and
+     * put every page 64px wider and 32px further left than the board. Screens
+     * that want to be narrower — a form, a wizard, a lesson — say so
+     * themselves, exactly as the board does.
      *
      * It was `min(80%, 110rem)`, a proportional column, which at a 1280px
      * viewport gave 1024px of content against the board's 1216. Every screen
@@ -1165,7 +996,7 @@
      * width difference changes every line break on every screen, and half a
      * design system cannot be reconciled with the other half by eye.
      */
-    width: min(100% - 4rem, 1280px);
+    width: min(100% - 4rem, 1216px);
     margin-inline: auto;
   }
 
@@ -1192,21 +1023,39 @@
    * vocabulary; the board draws no save control anywhere, so this is a
    * derivation from it rather than something it sanctions.
    */
+  /* The board's heart: a 44px white disc on --e2, muted at rest and coral once
+     saved. It grows on hover and shrinks on press rather than lifting — it is
+     a toggle sitting on a card, not a button standing on the page, so it is
+     deliberately outside the shared press-motion family. */
   .save-btn {
     display: grid;
     place-items: center;
-    width: 34px;
-    height: 34px;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: var(--radius-pill);
     background-color: var(--color-surface);
-    color: var(--color-ink);
-    border: var(--border-width) solid var(--color-line);
-    border-radius: var(--radius-field);
-    box-shadow: var(--shadow-e1);
+    box-shadow: var(--shadow-e2);
+    color: var(--color-muted);
+    font-size: 22px;
     cursor: pointer;
+    transition: transform 0.2s;
   }
 
   .save-btn.is-saved {
-    background-color: var(--color-apricot);
+    color: var(--color-apricot);
+  }
+
+  .save-btn:hover {
+    transform: scale(1.08);
+  }
+
+  .save-btn:active {
+    transform: scale(0.9);
+  }
+
+  .save-btn:focus-visible {
+    outline: 3px solid var(--focus);
   }
 
   /* The launcher's three pillars, and nothing else. They stand one step further
@@ -1397,53 +1246,6 @@
    * the filled tab's ink background meet the outer border cleanly at the
    * rounded corners.
    */
-  /*
-   * The sign-in / create-account pair, as TabSwitch.
-   *
-   * From design-system-update/components/navigation/TabSwitch.jsx: a pill track
-   * in --surface2 with 4px of padding, each tab 44px on a pill, and the selected
-   * one lifted onto --surface with --e1. 800 14px in the body face.
-   *
-   * It was a hairline box of mono 12px uppercase tabs with the current one
-   * filled solid ink — Pixel's segmented control. The selected tab reads as
-   * raised here rather than as inverted, which is how every other selected
-   * control in the system behaves.
-   */
-  .auth-switch {
-    display: inline-flex;
-    gap: 4px;
-    padding: 4px;
-    border-radius: var(--radius-pill);
-    background-color: var(--color-sunken);
-  }
-
-  .auth-switch a {
-    display: inline-flex;
-    align-items: center;
-    min-height: 44px;
-    padding: 0 16px;
-    border-radius: var(--radius-pill);
-    background-color: transparent;
-    color: var(--color-muted);
-    font-family: var(--font-sans);
-    font-size: 14px;
-    font-weight: 800;
-    text-decoration: none;
-    transition:
-      background-color 140ms var(--ease-out-quart),
-      color 140ms var(--ease-out-quart);
-  }
-
-  .auth-switch a[aria-current='page'] {
-    background-color: var(--color-surface);
-    color: var(--color-ink);
-    box-shadow: var(--shadow-e1);
-  }
-
-  .auth-switch a:not([aria-current='page']):hover {
-    color: var(--color-ink);
-    text-decoration: none;
-  }
 
   /* 36px — the quiet step. 38px was not on the scale at all, and §4 is explicit
      that there are four control heights and nothing interactive below 44px
@@ -2421,61 +2223,6 @@
     font-size: 30px;
     line-height: 1;
   }
-
-  /* --- Reference list (public tutorial page) ----------------------------
-   *
-   * Three sections on --surface, told apart by a 4px rule in their own tone
-   * along the top edge, not by a full-bleed tint. Soft Pop spends tint on
-   * small objects — a 48px tile, a status pill — and pays for it with contrast;
-   * three saturated panels stacked down a column outshouted the photograph
-   * above them and the one filled action beside them.
-   */
-  .ref-section {
-    position: relative;
-    overflow: hidden;
-    padding: 20px 22px;
-    border-radius: var(--radius-inset);
-    border: var(--border-width) solid var(--color-line);
-    background-color: var(--color-surface);
-    box-shadow: var(--shadow-e1);
-  }
-
-  .ref-section::before {
-    content: '';
-    position: absolute;
-    inset: 0 0 auto;
-    height: 4px;
-    background-color: var(--tone, var(--color-brand));
-  }
-
-  .ref-section h2 {
-    font-family: var(--font-display);
-    font-size: 1.125rem;
-    font-weight: 800;
-    color: var(--color-ink);
-  }
-
-  .ref-section--parts {
-    --tone: var(--color-brand);
-  }
-
-  .ref-section--tools {
-    --tone: var(--color-honey);
-  }
-
-  .ref-section--files {
-    --tone: var(--color-mint);
-  }
-
-  .ref-row {
-    display: block;
-    padding: 0.75rem 0;
-    border-bottom: 1px solid var(--color-line);
-  }
-
-  .ref-row:last-child {
-    border-bottom: none;
-  }
 }
 
 /*
@@ -2483,6 +2230,10 @@
  * state change these transitions exist for.
  */
 @media (prefers-reduced-motion: reduce) {
+  .door:hover,
+  .door:active,
+  .cost-cta:hover,
+  .cost-cta:active,
   .card-link,
   .card-link:hover,
   .card-link:active,
@@ -2624,7 +2375,7 @@
    * scores (0,3,0), so grouping it here would drag the whole rule to (0,3,0)
    * and outrank every per-variant rule at (0,2,0). Keep these apart.
    */
-  .pixel :is(.btn, .card-link, .chip, .step-pill, .dropzone, .dock-my-splat, .save-btn) {
+  .pixel :is(.btn, .card-link, .chip, .step-pill, .dropzone, .dock-my-splat) {
     transition:
       transform 0.16s var(--ease-out-quart),
       box-shadow 0.16s var(--ease-out-quart),
@@ -2645,7 +2396,7 @@
    * until something else is tapped.
    */
   @media (hover: hover) {
-    .pixel :is(.btn, .card-link, .dropzone, .dock-my-splat, .save-btn):hover:not(:disabled):not([aria-disabled='true']) {
+    .pixel :is(.btn, .card-link, .dropzone, .dock-my-splat):hover:not(:disabled):not([aria-disabled='true']) {
       transform: translateY(-2px);
       box-shadow: var(--shadow-e3);
     }
@@ -2667,18 +2418,9 @@
       box-shadow: var(--shadow-e2);
     }
 
-    /*
-     * The island is a SIBLING of the card's anchor, so it does not inherit the
-     * card's lift — without this the card slides up and out from under its own
-     * control while the button stays put.
-     */
-    .pixel .save-host:hover .save-btn {
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-e3);
-    }
   }
 
-  .pixel :is(.btn, .card-link, .chip, .step-pill, .dropzone, .dock-my-splat, .save-btn):active:not(:disabled):not([aria-disabled='true']) {
+  .pixel :is(.btn, .card-link, .chip, .step-pill, .dropzone, .dock-my-splat):active:not(:disabled):not([aria-disabled='true']) {
     transform: scale(0.96);
     box-shadow: none;
   }
@@ -2726,7 +2468,7 @@
    * it has to win against a real pointer, since a state being forced does not
    * stop the mouse from also being over the control.
    * --------------------------------------------------------------------- */
-  .pixel :is(.btn, .card-link, .dropzone, .dock-my-splat, .save-btn)[data-state='hover'] {
+  .pixel :is(.btn, .card-link, .dropzone, .dock-my-splat)[data-state='hover'] {
     transform: translateY(-2px);
     box-shadow: var(--shadow-e3);
   }
@@ -2737,7 +2479,7 @@
     background-color: var(--color-danger-soft);
   }
 
-  .pixel :is(.btn, .card-link, .chip, .step-pill, .dropzone, .dock-my-splat, .save-btn)[data-state='active'] {
+  .pixel :is(.btn, .card-link, .chip, .step-pill, .dropzone, .dock-my-splat)[data-state='active'] {
     transform: scale(0.96);
     box-shadow: none;
   }
@@ -2766,8 +2508,8 @@
    * this setting exists to serve than a shadow that changes size.
    */
   @media (prefers-reduced-motion: reduce) {
-    .pixel :is(.btn, .card-link, .chip, .step-pill, .dropzone, .dock-my-splat, .save-btn):hover,
-    .pixel :is(.btn, .card-link, .chip, .step-pill, .dropzone, .dock-my-splat, .save-btn):active,
+    .pixel :is(.btn, .card-link, .chip, .step-pill, .dropzone, .dock-my-splat):hover,
+    .pixel :is(.btn, .card-link, .chip, .step-pill, .dropzone, .dock-my-splat):active,
     .pixel .panel:has(> .panel-summary:hover),
     .pixel .panel:has(> .panel-summary:active) {
       transform: none;
@@ -2964,7 +2706,7 @@
   .stat-chip {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     padding: 12px 18px 12px 12px;
     border-radius: var(--radius-inset);
     border: var(--border-width) solid var(--color-line);
@@ -3131,30 +2873,33 @@
   /* ---- the scroll-world ---- */
   /* Full-bleed and NOT padded back in. The board's stage spans the viewport,
      which is what puts the kicker and the dot rail at the window's edges
-     rather than at the text column's — inside the padding the rail landed on
-     top of the scene headline. The scenes centre themselves; see
-     .sw-scene__inner's own width. */
+     rather than at the text column's. 1020vh is the board's: five scenes at
+     about two screens each. */
   .sw-spacer {
     position: relative;
+    height: 1020vh;
     margin-inline: calc(50% - 50vw);
   }
 
+  /* Pinned under the header. --header-h is published by components/nav.tsx;
+     below lg the header scrolls away, so the stage takes the whole screen. */
   .sw-stage {
     position: sticky;
-    top: 70px;
-    display: grid;
-    align-items: center;
-    height: calc(100vh - 70px);
+    top: 0;
+    height: 100vh;
     overflow: hidden;
     perspective: 1200px;
-    /* A pool of brand tint rising from below the stage. It is what stops the
-       flight reading as five cards on the same flat canvas as the bands. */
+    /* A pool of brand tint rising from below the stage. */
     background: radial-gradient(ellipse at 50% 120%, var(--b100), transparent 60%);
   }
 
-  /* Top-left of the stage, with the flight's own progress under it — the board
-     tells you how far through you are, which is what makes a 1020vh section
-     feel finite rather than broken. */
+  @media (min-width: 1024px) {
+    .sw-stage {
+      top: var(--header-h, 73px);
+      height: calc(100vh - var(--header-h, 73px));
+    }
+  }
+
   .sw-kicker {
     position: absolute;
     top: 28px;
@@ -3163,7 +2908,13 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
-    margin: 0;
+  }
+
+  .sw-kicker__label {
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
     color: var(--color-muted);
   }
 
@@ -3177,38 +2928,43 @@
 
   .sw-progress > span {
     display: block;
+    width: 0;
     height: 100%;
     border-radius: var(--radius-pill);
     background-color: var(--color-brand-dark);
   }
 
-  /* Every scene occupies the same cell, so they cross-fade in place. */
+  /* Every scene fills the stage and centres itself; they are stacked, and the
+     script decides which one is in front. Only the first shows before it runs. */
   .sw-scene {
-    grid-area: 1 / 1;
-    transition:
-      opacity 0.18s linear,
-      transform 0.18s linear;
-    will-change: opacity, transform;
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    opacity: 0;
+    will-change: transform, opacity;
+  }
+
+  .sw-scene:first-of-type {
+    opacity: 1;
   }
 
   .sw-scene__inner {
     display: grid;
     width: min(1040px, 86vw);
-    margin: 0 auto;
     grid-template-columns: minmax(0, 1fr);
-    gap: 32px;
+    gap: 24px;
     align-items: center;
   }
 
   @media (min-width: 900px) {
     .sw-scene__inner {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: 1fr 1fr;
       gap: 40px;
     }
   }
 
-  /* A 4:3 card, tinted per scene, at the top of the elevation ladder. It was a
-     padded box with the art floating inside it; the board's art IS the card. */
+  /* A 4:3 card, tinted per scene — the art IS the card. */
   .sw-scene__art {
     position: relative;
     aspect-ratio: 4 / 3;
@@ -3220,16 +2976,8 @@
     place-items: stretch;
   }
 
-  /* The small white disc on the art, bottom-left — the board puts the scene's
-     own icon there so a still frame still says which step it is. */
-  /* 48px with --e2, not the 44/--e1 a .btn-quiet gets elsewhere: this one is
-     the only control on a full-bleed stage. */
-  .sw-scene__cta {
-    min-height: 48px;
-    padding-inline: 20px;
-    box-shadow: var(--shadow-e2);
-  }
-
+  /* The scene's own icon on a white tile, bottom-left of the art, so a still
+     frame still says which step it is. */
   .sw-scene__badge {
     position: absolute;
     left: 24px;
@@ -3242,19 +2990,14 @@
     background-color: var(--color-surface);
     box-shadow: var(--shadow-e2);
     color: var(--color-brand-dark);
-  }
-
-  .sw-scene__copy {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
+    font-size: 30px;
+    pointer-events: none;
   }
 
   .sw-scene__place {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     margin: 0;
     font-size: 13px;
     font-weight: 800;
@@ -3271,38 +3014,77 @@
     border-radius: var(--radius-pill);
     background-color: var(--color-brand-dark);
     font-size: 13px;
-    font-weight: 800;
     letter-spacing: 0;
     color: var(--onbrand);
   }
 
   .sw-scene__title {
-    margin: 0;
+    margin: 14px 0 0;
     font-family: var(--font-display);
-    font-size: clamp(1.875rem, 3.2vw, 2.75rem);
+    font-size: clamp(30px, 3.2vw, 44px);
     font-weight: 800;
     line-height: 1.1;
     letter-spacing: -0.015em;
     color: var(--color-ink);
+    /* The board's h2 wraps greedily; the global heading rule balances, which
+       broke "the toy / that" a word early. */
+    text-wrap: wrap;
   }
 
   .sw-scene__body {
     max-width: 40ch;
-    margin: 0;
+    margin: 14px 0 0;
     font-size: 18px;
     line-height: 1.55;
     color: var(--color-muted);
   }
 
-  /* Five 8px dots at the right edge, the current one in brand. */
+  .sw-scene__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 22px;
+    min-height: 48px;
+    padding: 0 20px;
+    border-radius: var(--radius-pill);
+    border: var(--border-width) solid var(--color-line);
+    background-color: var(--color-surface);
+    box-shadow: var(--shadow-e2);
+    color: var(--color-ink);
+    font-size: 15px;
+    font-weight: 800;
+    text-decoration: none;
+    transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s;
+  }
+
+  .sw-scene__cta:hover {
+    color: var(--color-ink);
+    text-decoration: none;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-e3);
+  }
+
+  .sw-scene__cta:active {
+    transform: scale(0.96);
+  }
+
+  .sw-scene__cta:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 3px;
+  }
+
+  /* Five dots at the right edge; the current one stretches to a 28px brand
+     pill. The rest are ink at 22% rather than the board's --line, which is a
+     hairline meant to recede and made five dots nobody could see. */
   .sw-rail {
     position: absolute;
     right: 32px;
-    z-index: 30;
     top: 50%;
+    z-index: 30;
     transform: translateY(-50%);
     display: flex;
     flex-direction: column;
+    align-items: flex-end;
     gap: 8px;
     margin: 0;
     padding: 0;
@@ -3313,27 +3095,30 @@
     width: 8px;
     height: 8px;
     border-radius: var(--radius-pill);
-    background-color: var(--color-line);
+    background-color: color-mix(in srgb, var(--color-ink) 22%, transparent);
     transition: all 0.3s;
   }
 
   .sw-rail li.is-active {
+    width: 28px;
     background-color: var(--color-brand-dark);
-    transform: scale(1.35);
   }
 
-  /* Reduced motion: five ordinary blocks, no stage, no spacer. */
-  .sw-static {
-    display: flex;
-    flex-direction: column;
-    gap: 56px;
-    padding: 48px 0;
-  }
+  /* On a phone the two columns stack and the copy runs long; the dot rail
+     would sit on top of it, and the kicker on top of the art. */
+  @media (max-width: 639px) {
+    .sw-rail {
+      display: none;
+    }
 
-  /* Off the stage there is no viewport-wide box to centre in, so the scene
-     drops its stage width and fills the column it is in. */
-  .sw-static .sw-scene__inner {
-    width: auto;
+    .sw-kicker {
+      left: 16px;
+      top: 16px;
+    }
+
+    .sw-scene__body {
+      font-size: 16px;
+    }
   }
 
   /* ---- bands below the flight ---- */
@@ -3425,7 +3210,7 @@
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 10px;
+    gap: 12px;
     height: 100%;
     padding: 24px;
     border-radius: var(--radius-card);
@@ -3455,20 +3240,12 @@
     align-items: center;
     gap: 6px;
     margin-top: auto;
-    padding-top: 8px;
     font-size: 15px;
     font-weight: 800;
     color: var(--color-brand-deep);
   }
 }
 
-@layer components {
-  /* --color-line is a hairline meant to recede, which made five dots nobody
-     could see. The active one is handled above. */
-  .sw-rail li {
-    background-color: color-mix(in srgb, var(--color-ink) 22%, transparent);
-  }
-}
 
 @layer components {
   /*
@@ -3525,19 +3302,48 @@
     font-size: 26px;
     font-weight: 800;
     line-height: 1.15;
-    letter-spacing: -0.015em;
     color: var(--color-ink);
   }
 
+  /*
+   * The board's door interaction: a 4px lift onto a deeper shadow over 0.25s,
+   * and a press to 98%. Each door is a whole-card link, so the card itself is
+   * the control and has to answer to the pointer the way a button would.
+   */
   .door {
     padding: 28px;
+    color: var(--color-ink);
+    transition:
+      transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1),
+      box-shadow 0.25s;
   }
 
-  /* The board ranks the three: two white cards, then a quieter sunken one with
-     no lift, narrower than its neighbours. */
+  .door:hover {
+    color: var(--color-ink);
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-e3);
+  }
+
+  .door:active {
+    transform: scale(0.98);
+  }
+
+  .door:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 3px;
+  }
+
+  /* The board ranks the three: two white cards, then a quieter sunken one,
+     narrower than its neighbours, that lifts onto only --e2 and fades no
+     shadow in (its transition is transform alone). */
   .door--quiet {
     background-color: var(--color-sunken);
     box-shadow: none;
+    transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .door--quiet:hover {
+    box-shadow: var(--shadow-e2);
   }
 
   /* The narrow door gets the smaller title and body too — it is the smallest
@@ -3588,11 +3394,26 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    /* Pinned to the card's foot, so the two buttons sit level whatever the
+       paragraphs above them do. */
+    margin-top: auto;
     min-height: 52px;
-    padding-inline: 24px;
+    padding-inline: 22px;
     border-radius: var(--radius-pill);
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 800;
+    transition:
+      transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
+      background-color 0.2s;
+  }
+
+  .cost-cta:hover {
+    transform: translateY(-2px);
+  }
+
+  .cost-cta:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 3px;
   }
 
   /* The board's is a bordered surface pill. Without the hairline it is white
@@ -3600,6 +3421,11 @@
   .cost-cta--light {
     border: var(--border-width) solid var(--color-line);
     background-color: var(--color-surface);
+    color: var(--color-ink);
+  }
+
+  .cost-cta--light:hover {
+    background-color: var(--color-sunken);
     color: var(--color-ink);
   }
 
@@ -3611,6 +3437,22 @@
     color: var(--color-surface);
   }
 
+  .cost-cta--ink:hover {
+    color: var(--color-surface);
+  }
+
+  .cost-cta--ink:active {
+    transform: scale(0.97);
+  }
+
+  /* The two cost cards: 20px apart and stretched to one height, as the
+     board's auto-fit grid draws them. .band--split's 40px and top alignment
+     are right for the recent-guides pair below and wrong here. */
+  .band--cost {
+    gap: 20px;
+    align-items: stretch;
+  }
+
   .recent {
     display: flex;
     flex-direction: column;
@@ -3620,76 +3462,13 @@
   .recent__row {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16px;
+    gap: 20px;
     margin: 0;
     padding: 0;
     list-style: none;
   }
 }
 
-@layer components {
-  /*
-   * The bar's More disclosure. Six tabs and a More is the board's shape; seven
-   * equal tabs was live's.
-   */
-  .nav-more {
-    position: relative;
-  }
-
-  .nav-more__summary {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    min-height: 44px;
-    padding-inline: 14px;
-    cursor: pointer;
-    list-style: none;
-  }
-
-  /* Both spellings: Chrome uses ::marker on a flex summary, older WebKit uses
-     ::-webkit-details-marker, and leaving either in place drew a ▶ beside the
-     label and pushed the caret onto a second line. */
-  .nav-more__summary::-webkit-details-marker {
-    display: none;
-  }
-
-  .nav-more__summary::marker {
-    content: '';
-  }
-
-  .nav-more__menu {
-    position: absolute;
-    top: calc(100% + 6px);
-    left: 0;
-    z-index: 40;
-    display: flex;
-    flex-direction: column;
-    min-width: 11rem;
-    padding: 6px;
-    border-radius: var(--radius-inset);
-    border: var(--border-width) solid var(--color-line);
-    background-color: var(--color-surface);
-    box-shadow: var(--shadow-e3);
-  }
-
-  .nav-more__item {
-    padding: 9px 12px;
-    border-radius: var(--radius-field);
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--color-ink);
-    text-decoration: none;
-  }
-
-  .nav-more__item:hover {
-    background-color: var(--color-sunken);
-    text-decoration: none;
-  }
-
-  .nav-more__item[aria-current='page'] {
-    color: var(--color-brand-deep);
-  }
-}
 
 /*
  * The browse hero. Ported from the board's #library and #toys screens, which
@@ -3895,6 +3674,103 @@
     font-weight: 800;
     line-height: 1.1;
     color: var(--color-ink);
+  }
+
+  /* The board's sort pair: a 44px pill that opens the field menu, and a 44px
+     disc that flips direction. Values are the board's #library inline styles. */
+  .sort-control {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .sort-control__trigger,
+  .sort-control__flip {
+    min-height: 44px;
+    border-radius: var(--radius-pill);
+    border: var(--bw) solid var(--line);
+    background: var(--surface);
+    box-shadow: var(--e1);
+    cursor: pointer;
+  }
+
+  .sort-control__trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 14px;
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--color-ink);
+  }
+
+  .sort-control__flip {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    color: var(--b700);
+    transition: transform 0.15s;
+  }
+
+  .sort-control__trigger:hover,
+  .sort-control__flip:hover {
+    border-color: var(--brand);
+  }
+
+  .sort-control__flip:hover {
+    background: var(--b50);
+  }
+
+  .sort-control__flip:active {
+    transform: scale(0.92);
+  }
+
+  .sort-control__trigger:focus-visible,
+  .sort-control__flip:focus-visible,
+  .sort-control__option:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  .sort-control__menu {
+    position: absolute;
+    top: 52px;
+    right: 0;
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 250px;
+    padding: 6px;
+    border-radius: var(--radius-inset);
+    border: var(--bw) solid var(--line);
+    background: var(--surface);
+    box-shadow: var(--e3);
+    animation: pixel-rise 0.18s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  .sort-control__option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 44px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: var(--radius-field);
+    background: transparent;
+    color: var(--color-ink);
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .sort-control__option:hover {
+    background: var(--surface2);
+  }
+
+  .sort-control__option[aria-selected='true'] {
+    background: var(--b50);
   }
 
   .browse-grid {
@@ -4143,5 +4019,2572 @@
   /* The bear bobs here the way he does on the homepage. */
   .dash-hero .splat-mascot {
     animation: bob 4s ease-in-out infinite;
+  }
+}
+
+/*
+ * The site header — the board's "UNIFIED CHROME", value for value.
+ *
+ * One bar for every page, signed in or out; the account section's quieter
+ * variant went with the rail it was drawn beside. Canvas at 88% under a 14px
+ * blur, a hairline, and a 1400px row that wraps rather than overflows.
+ *
+ * Sticky from lg up only. Below that the row wraps to three or four lines,
+ * and a header that tall pinned to a phone screen is most of the screen.
+ */
+@layer components {
+  .site-header {
+    position: relative;
+    z-index: 40;
+    background-color: color-mix(in srgb, var(--color-canvas) 88%, transparent);
+    backdrop-filter: blur(14px);
+    border-bottom: var(--border-width) solid var(--color-line);
+  }
+
+  @media (min-width: 1024px) {
+    .site-header {
+      position: sticky;
+      top: 0;
+    }
+  }
+
+  .site-nav {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 12px 28px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
+  @media (max-width: 639px) {
+    .site-nav {
+      padding-inline: 16px;
+    }
+  }
+
+  .site-header a,
+  .site-header a:hover {
+    text-decoration: none;
+  }
+
+  .site-header :is(a, button, input, select):focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  .brand-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 8px;
+    border-radius: var(--radius-field);
+    color: var(--color-ink);
+  }
+
+  .brand-tile {
+    width: 36px;
+    height: 36px;
+    flex: none;
+    border-radius: var(--radius-field);
+    background: linear-gradient(145deg, #4fb4e6, #1179b0);
+    box-shadow: var(--shadow-glow), var(--shadow-hi);
+    display: grid;
+    place-items: center;
+    color: #fff;
+    font-size: 20px;
+  }
+
+  .brand-word {
+    font: 800 20px/1 var(--font-display);
+    letter-spacing: -0.01em;
+    color: var(--color-ink);
+    white-space: nowrap;
+  }
+
+  .brand-word > span {
+    color: var(--color-brand-dark);
+  }
+
+  .nav-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px;
+    margin-left: 12px;
+  }
+
+  @media (max-width: 639px) {
+    .nav-tabs {
+      margin-left: 0;
+    }
+  }
+
+  .nav-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-height: 44px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--color-ink);
+    font: 700 15px var(--font-sans);
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  .nav-tab:hover,
+  .nav-tab[aria-expanded='true'],
+  .nav-tab[data-current] {
+    background: var(--color-sunken);
+  }
+
+  .nav-tab[aria-current='page'] {
+    background: var(--color-brand-tint);
+  }
+
+  .nav-more {
+    position: relative;
+  }
+
+  .nav-more__menu {
+    position: absolute;
+    top: 52px;
+    right: 0;
+    z-index: 50;
+    width: 520px;
+    max-width: calc(100vw - 40px);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    padding: 16px;
+    border: var(--border-width) solid var(--color-line);
+    border-radius: var(--radius-inset);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-e4);
+    animation: pixel-rise 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  /* On a phone More lands wherever the tab row wraps it, so a menu anchored
+     to the button opens off one edge or the other. Fixed instead, inset from
+     the header's own edges: the header's backdrop-filter makes it the
+     containing block for a fixed child, so left/right resolve against the bar,
+     and top: auto keeps the menu at its place in the flow, under the button. */
+  @media (max-width: 639px) {
+    .nav-more__menu {
+      position: fixed;
+      top: auto;
+      left: 16px;
+      right: 16px;
+      width: auto;
+      max-width: none;
+      margin-top: 8px;
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .nav-more__item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px;
+    border-radius: var(--radius-field);
+    color: var(--color-ink);
+  }
+
+  .nav-more__item:hover {
+    background: var(--color-sunken);
+  }
+
+  .nav-more__item[aria-current='page'] {
+    background: var(--color-brand-50);
+  }
+
+  .site-header a.nav-more__item:focus-visible {
+    outline-offset: -3px;
+  }
+
+  .nav-more__icon {
+    width: 40px;
+    height: 40px;
+    flex: none;
+    border-radius: var(--radius-field);
+    display: grid;
+    place-items: center;
+    color: var(--tink);
+    font-size: 22px;
+  }
+
+  .nav-more__label {
+    display: block;
+    font-weight: 800;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  .nav-more__blurb {
+    display: block;
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--color-muted);
+  }
+
+  .nav-tools {
+    margin-left: auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .nav-search {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .nav-search > svg {
+    position: absolute;
+    left: 14px;
+    color: var(--color-muted);
+    font-size: 18px;
+    pointer-events: none;
+  }
+
+  .nav-search input {
+    height: 44px;
+    width: 212px;
+    padding: 0 14px 0 40px;
+    border-radius: var(--radius-pill);
+    border: var(--border-width) solid var(--color-line);
+    background: var(--color-surface);
+    color: var(--color-ink);
+    font: 500 15px var(--font-sans);
+    box-shadow: var(--shadow-e1);
+  }
+
+  .nav-search input:focus-visible {
+    border-color: var(--color-brand);
+  }
+
+  .mode-group {
+    display: flex;
+    gap: 2px;
+    padding: 3px;
+    border-radius: var(--radius-pill);
+    background: var(--color-sunken);
+  }
+
+  .mode-group button {
+    width: 38px;
+    height: 38px;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--color-ink);
+    display: grid;
+    place-items: center;
+    font-size: 18px;
+    cursor: pointer;
+  }
+
+  .mode-group button[aria-pressed='true'] {
+    background: var(--color-surface);
+    box-shadow: var(--shadow-e1);
+  }
+
+  .motion-toggle {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-pill);
+    border: var(--border-width) solid var(--color-line);
+    background: var(--color-surface);
+    color: var(--color-ink);
+    display: grid;
+    place-items: center;
+    font-size: 19px;
+    box-shadow: var(--shadow-e1);
+    cursor: pointer;
+  }
+
+  .motion-toggle[aria-pressed='true'] {
+    background: var(--color-honey-soft);
+  }
+
+  .nav-signin {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 20px;
+    border-radius: var(--radius-pill);
+    background: var(--color-brand-dark);
+    color: var(--onbrand);
+    font: 800 15px var(--font-sans);
+    box-shadow: var(--shadow-glow), var(--shadow-hi);
+    transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .nav-signin:hover {
+    color: var(--onbrand);
+    transform: translateY(-2px);
+  }
+
+  .nav-signin:active {
+    transform: scale(0.96);
+  }
+
+  .nav-account {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    padding: 0 6px 0 16px;
+    border-radius: var(--radius-pill);
+    border: var(--border-width) solid var(--color-line);
+    background: var(--color-surface);
+    color: var(--color-ink);
+    font: 800 15px var(--font-sans);
+    white-space: nowrap;
+    box-shadow: var(--shadow-e1);
+    transition: box-shadow 0.2s;
+  }
+
+  .nav-account:hover {
+    color: var(--color-ink);
+    box-shadow: var(--shadow-e2);
+  }
+
+  .nav-account__badge {
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+    background: var(--color-apricot);
+    color: #1c2530;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .nav-account__avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-pill);
+    background: var(--color-mint-soft);
+    color: var(--tink);
+    display: grid;
+    place-items: center;
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nav-signin:hover,
+    .nav-signin:active {
+      transform: none;
+    }
+  }
+}
+
+/*
+ * The reduced flight. Reduced motion — the OS setting or the header's toggle —
+ * turns the scroll-world into five plain stacked blocks: no spacer, no pinned
+ * stage, no progress read-out, every scene visible. components/scroll-world.tsx
+ * strips its inline styles to match. Outside a layer so it outranks the
+ * layered rules above whatever their order.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .sw-spacer {
+    height: auto;
+  }
+  .sw-stage {
+    position: static;
+    height: auto;
+    overflow: visible;
+    perspective: none;
+    display: flex;
+    flex-direction: column;
+    gap: 56px;
+    padding: 48px 0;
+  }
+  .sw-kicker {
+    position: static;
+    padding-inline: 32px;
+  }
+  .sw-scene {
+    position: static;
+    opacity: 1;
+  }
+  .sw-kicker__hint, .sw-progress, .sw-rail {
+    display: none;
+  }
+}
+
+body[data-motion='reduced'] .sw-spacer {
+  height: auto;
+}
+
+body[data-motion='reduced'] .sw-stage {
+  position: static;
+  height: auto;
+  overflow: visible;
+  perspective: none;
+  display: flex;
+  flex-direction: column;
+  gap: 56px;
+  padding: 48px 0;
+}
+
+body[data-motion='reduced'] .sw-kicker {
+  position: static;
+  padding-inline: 32px;
+}
+
+body[data-motion='reduced'] .sw-scene {
+  position: static;
+  opacity: 1;
+}
+
+body[data-motion='reduced'] :is(.sw-kicker__hint, .sw-progress, .sw-rail) {
+  display: none;
+}
+
+/*
+ * The browse card — a guide or a toy on the home page's recent rows, the
+ * library grids, saved lists and profiles. The board draws one card for all of
+ * them ("the same decorated cards as /tutorials") at two densities; --compact
+ * is the home page's.
+ *
+ * Its own class rather than .card/.card-link: the board's browse card lifts
+ * 4px over .25s and has no press, where the shared press family lifts 2px and
+ * presses to .96. Folding it into that family would put the family's numbers
+ * on it.
+ */
+@layer components {
+  .browse-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    border-radius: var(--radius-inset);
+    border: var(--border-width) solid var(--color-line);
+    background-color: var(--color-surface);
+    box-shadow: var(--shadow-e2), var(--shadow-hi);
+    color: var(--color-ink);
+    text-decoration: none;
+    transition:
+      transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1),
+      box-shadow 0.25s;
+  }
+
+  .browse-card:hover {
+    color: var(--color-ink);
+    text-decoration: none;
+  }
+
+  .browse-card:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 3px;
+  }
+
+  /*
+   * The lift. With a save island the card and its heart are siblings, so the
+   * wrapper lifts and carries both — lifting the anchor alone slid the card out
+   * from under its own heart. Behind hover: hover, or a tapped card stays
+   * lifted on a phone.
+   */
+  @media (hover: hover) {
+    .browse-card:hover,
+    .save-host:hover > .browse-card {
+      box-shadow: var(--shadow-e3), var(--shadow-hi);
+    }
+
+    .browse-card:hover {
+      transform: translateY(-4px);
+    }
+
+    .save-host:has(> .browse-card) {
+      transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .save-host:has(> .browse-card):hover {
+      transform: translateY(-4px);
+    }
+
+    .save-host:hover > .browse-card:hover {
+      transform: none;
+    }
+
+    .browse-card:hover .browse-card__title {
+      color: var(--color-brand-deep);
+    }
+  }
+
+  .browse-card__body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px 16px 18px;
+  }
+
+  .browse-card--compact .browse-card__body {
+    padding: 14px 16px 16px;
+  }
+
+  .browse-card__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  /* The board's tag pill: 12px/800 on a tint, ink text, an optional glyph. */
+  .pill-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: var(--radius-pill);
+    background-color: var(--color-sunken);
+    color: var(--tink);
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.6;
+    white-space: nowrap;
+  }
+
+  .pill-tag--foot {
+    gap: 6px;
+    padding: 3px 9px;
+  }
+
+  .browse-card__avail {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    padding: 4px 10px;
+    box-shadow: var(--shadow-e1);
+  }
+
+  .browse-card__title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 800;
+    line-height: 1.3;
+    color: var(--color-ink);
+    transition: color 0.2s;
+  }
+
+  .browse-card--compact .browse-card__title {
+    font-size: 17px;
+  }
+
+  .browse-card__blurb {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.45;
+    color: var(--color-muted);
+  }
+
+  .browse-card__foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: auto;
+    padding-top: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--color-muted);
+  }
+
+  /* The board's left half of the footer: time and thanks, wrapping before the
+     Backed pill does. */
+  .browse-card__stats {
+    display: flex;
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 12px;
+    min-width: 0;
+  }
+
+  .browse-card__stats > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+  }
+
+  .browse-card--compact .browse-card__foot {
+    padding-top: 0;
+  }
+
+  .browse-card__holder {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .browse-card__avatar {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    border-radius: var(--radius-pill);
+    background-color: var(--color-violet-soft);
+    color: var(--tink);
+    font-size: 10px;
+    font-weight: 800;
+  }
+
+  /* The full toy card's "See this toy". A span, not a button: the whole card
+     is already the link, and a control inside a link is invalid HTML. */
+  .browse-card__cta {
+    display: grid;
+    place-items: center;
+    min-height: 48px;
+    border-radius: var(--radius-pill);
+    background-color: var(--color-brand-dark);
+    box-shadow: var(--shadow-glow);
+    color: var(--onbrand);
+    font-size: 15px;
+    font-weight: 800;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .browse-card:hover,
+    .save-host:has(> .browse-card):hover,
+    .save-btn:hover,
+    .save-btn:active {
+      transform: none;
+    }
+  }
+}
+
+/*
+ * The auth screens, from the board's #login, #signup and #signup_sent.
+ *
+ * Two layouts. Check your email sits on a centred stage: two blobs, a 440px
+ * column — bear, brand lockup, card, footnote. Create account and Sign in
+ * share a two-column page: the welcome and its three promises on the left,
+ * the form card and its tabs on the right. Both sit inside the site chrome,
+ * as every board screen does.
+ */
+@layer components {
+  .auth-stage {
+    position: relative;
+    display: grid;
+    place-items: center;
+    /* The board's own value: the stage is a viewport tall below the header,
+       so the card sits in the middle of the screen, not above it. */
+    min-height: 100vh;
+    padding: 40px 20px;
+  }
+
+  /* Full-bleed, like the hero's: the board sizes these in vw off the window. */
+  .auth-stage__blobs {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(50% - 50vw);
+    width: 100vw;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .auth-stage__blobs > span {
+    position: absolute;
+    display: block;
+    border-radius: 50%;
+    animation: blob 20s ease-in-out infinite;
+  }
+
+  .auth-stage__blobs > span:nth-child(1) {
+    left: -14%;
+    top: -18%;
+    width: 52vw;
+    height: 52vw;
+    background: radial-gradient(circle at 40% 40%, var(--b100), transparent 65%);
+    opacity: 0.9;
+  }
+
+  .auth-stage__blobs > span:nth-child(2) {
+    right: -12%;
+    bottom: -16%;
+    width: 44vw;
+    height: 44vw;
+    background: radial-gradient(circle at 50% 50%, var(--tcoral), transparent 65%);
+    animation-duration: 26s;
+    animation-direction: reverse;
+    opacity: 0.8;
+  }
+
+  .auth-stage__column {
+    position: relative;
+    width: 100%;
+    max-width: 440px;
+    animation: pixel-rise 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  .auth-stage__mascot,
+  .signup__mascot {
+    width: max-content;
+    animation: bob 4s ease-in-out infinite;
+  }
+
+  .auth-stage__mascot {
+    margin: 0 auto 6px;
+  }
+
+  .auth-stage__lockup {
+    margin-bottom: 24px;
+  }
+
+  .auth-stage__foot {
+    margin: 20px 0 0;
+    text-align: center;
+    font-size: 12px;
+    color: var(--color-muted);
+  }
+
+  .auth-card,
+  .signup__form {
+    padding: 32px;
+    border-radius: var(--radius-card);
+    border: var(--border-width) solid var(--color-line);
+    background-color: var(--color-surface);
+    box-shadow: var(--shadow-e4), var(--shadow-hi);
+  }
+
+  .auth-card__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 26px;
+    font-weight: 800;
+    line-height: 1.2;
+  }
+
+  .auth-card__lede {
+    margin: 6px 0 22px;
+    font-size: 14px;
+    color: var(--color-muted);
+  }
+
+  .auth-card__alt {
+    margin: 16px 0 0;
+    text-align: center;
+    font-size: 13px;
+    color: var(--color-muted);
+  }
+
+  .auth-card__link {
+    font-weight: 800;
+    color: var(--color-brand-deep);
+    text-decoration: underline;
+  }
+
+  .auth-label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--color-ink);
+  }
+
+  .auth-label--lg {
+    font-size: 14px;
+  }
+
+  /* Sign in's fields sit on the canvas colour, sunk into the white card;
+     Create account's are white on white with a hairline and 52px tall. */
+  .auth-input {
+    width: 100%;
+    height: 48px;
+    padding: 0 15px;
+    border-radius: var(--radius-field);
+    border: var(--border-width) solid var(--color-line);
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+    font: 500 15px var(--font-sans);
+  }
+
+  .auth-input--sunk {
+    background-color: var(--color-canvas);
+  }
+
+  .auth-input--lg {
+    height: auto;
+    min-height: 52px;
+    padding: 0 16px;
+    font: 600 16px var(--font-sans);
+  }
+
+  .auth-input:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+    border-color: var(--color-brand);
+  }
+
+  .auth-submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 52px;
+    margin-top: 4px;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background-color: var(--color-brand-dark);
+    box-shadow: var(--shadow-glow), var(--shadow-hi);
+    color: var(--onbrand);
+    font: 800 16px var(--font-sans);
+    cursor: pointer;
+    text-decoration: none;
+    transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .auth-submit:hover:not(:disabled) {
+    color: var(--onbrand);
+    text-decoration: none;
+    transform: translateY(-2px);
+  }
+
+  .auth-submit:active:not(:disabled) {
+    transform: scale(0.96);
+  }
+
+  .auth-submit:disabled {
+    opacity: 0.5;
+    box-shadow: none;
+    cursor: not-allowed;
+  }
+
+  .auth-submit:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 3px;
+  }
+
+  .auth-submit--lg {
+    min-height: 56px;
+    margin-top: 0;
+    font-size: 17px;
+  }
+
+  .auth-submit--inline {
+    min-height: 48px;
+    margin-top: 24px;
+    padding: 0 24px;
+    font-size: 15px;
+  }
+
+  .auth-sent__badge {
+    display: grid;
+    place-items: center;
+    width: 74px;
+    height: 74px;
+    border-radius: var(--radius-card);
+    background-color: var(--color-success-soft);
+    color: var(--ok);
+    font-size: 38px;
+    animation: pop 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  .auth-sent__title {
+    margin: 18px 0 0;
+    font-family: var(--font-display);
+    font-size: 25px;
+    font-weight: 800;
+  }
+
+  .auth-sent__body {
+    margin: 10px 0 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--color-muted);
+  }
+
+  .auth-sent__body strong {
+    color: var(--color-ink);
+  }
+
+  /* The board's tablist: a pill track in --surface2, the current tab raised
+     onto --surface. Links, because the two screens are two routes. */
+  .auth-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    border-radius: var(--radius-pill);
+    background-color: var(--color-sunken);
+  }
+
+  .auth-tabs a {
+    display: grid;
+    flex: 1;
+    place-items: center;
+    min-height: 44px;
+    border-radius: var(--radius-pill);
+    color: var(--color-muted);
+    font: 800 15px var(--font-sans);
+    text-decoration: none;
+  }
+
+  .auth-tabs a[aria-current='page'] {
+    background-color: var(--color-surface);
+    box-shadow: var(--shadow-e1);
+    color: var(--color-ink);
+  }
+
+  .auth-tabs a:not([aria-current='page']):hover {
+    color: var(--color-ink);
+    text-decoration: none;
+  }
+
+  .auth-tabs a:focus-visible {
+    outline: 3px solid var(--focus);
+  }
+
+  /* ---- Create account ---- */
+  .signup {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 40px;
+    align-items: center;
+    max-width: 1036px;
+    margin: 0 auto;
+    padding-top: 16px;
+  }
+
+  @media (min-width: 900px) {
+    .signup {
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      min-height: calc(100vh - 160px);
+    }
+  }
+
+  .signup__welcome {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .signup__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 44px;
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.015em;
+    /* Greedy, as the board breaks it — the global heading rule balances. */
+    text-wrap: wrap;
+  }
+
+  .signup__lede {
+    max-width: 44ch;
+    margin: 0;
+    font-size: 18px;
+    line-height: 1.55;
+    color: var(--color-muted);
+  }
+
+  .signup__promises {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-weight: 700;
+  }
+
+  .signup__promises li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .signup__promises svg {
+    flex: none;
+    font-size: 24px;
+  }
+
+  .signup__form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .auth-password {
+    position: relative;
+    display: flex;
+  }
+
+  .auth-password .auth-input {
+    padding-right: 52px;
+  }
+
+  .auth-password button {
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: var(--radius-field);
+    background: transparent;
+    color: var(--color-muted);
+    font-size: 20px;
+    cursor: pointer;
+  }
+
+  .auth-password button:focus-visible {
+    outline: 3px solid var(--focus);
+  }
+
+  .auth-hint {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 6px 0 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-muted);
+  }
+
+  .auth-hint--ok {
+    color: var(--color-success-deep);
+  }
+
+  /* The terms row: the board's 24px checkbox and its sentence. A button that
+     opens the terms rather than an <input>, because they must be read first. */
+  .signup__terms {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--color-ink);
+    text-align: left;
+    font: 600 14px/1.45 var(--font-sans);
+    cursor: pointer;
+  }
+
+  .signup__terms:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 3px;
+  }
+
+  .signup__tick {
+    flex: none;
+    width: 24px;
+    height: 24px;
+    margin: 1px 0 0;
+    accent-color: var(--color-brand-dark);
+    pointer-events: none;
+  }
+
+  /* ---- Contributor-terms gate (terms_gate): the board's scroll box, the
+     terms read in place inside the auth card. ---- */
+  .terms-scroll {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-height: 280px;
+    overflow: auto;
+    padding: 18px;
+    border-radius: var(--radius-inset);
+    border: var(--border-width) solid var(--color-line);
+    background-color: var(--color-canvas);
+  }
+
+  @media (max-width: 639px) {
+    .signup__title {
+      font-size: 34px;
+    }
+
+    .auth-card,
+    .signup__form {
+      padding: 24px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .auth-stage__blobs > span,
+    .auth-stage__mascot,
+    .signup__mascot {
+      animation: none;
+    }
+
+    .auth-submit:hover:not(:disabled),
+    .auth-submit:active:not(:disabled) {
+      transform: none;
+    }
+  }
+
+  .brand-tile--lg {
+    width: 40px;
+    height: 40px;
+    font-size: 22px;
+  }
+}
+
+/*
+ * Site footer — the board's <footer>: a hairline over the surface, a brand
+ * block at 1.5fr beside five link columns at 2.6fr, and a copyright line
+ * spanning both under a second hairline. Padding 48px, gap 44px, headings
+ * 13px/800 caps in muted, links 15px/600 in ink.
+ */
+@layer components {
+  .site-footer {
+    margin-top: 2rem;
+    border-top: var(--bw) solid var(--line);
+    background: var(--surface);
+  }
+  .site-footer__grid {
+    display: grid;
+    grid-template-columns: 1.5fr 2.6fr;
+    gap: 44px;
+    align-items: start;
+    padding-block: 48px;
+  }
+  .site-footer__blurb {
+    margin: 12px 0 0;
+    max-width: 34ch;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.55;
+  }
+  .site-footer__promise {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: var(--radius-pill);
+    color: var(--tink);
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .site-footer__cols {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+    gap: 28px;
+  }
+  .site-footer__heading {
+    margin: 0 0 12px;
+    color: var(--muted);
+    font: 800 13px var(--font-sans);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .site-footer__link {
+    color: var(--ink);
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .site-footer__link:hover {
+    color: var(--b700);
+    text-decoration: underline;
+  }
+  .site-footer__legal {
+    grid-column: 1 / -1;
+    margin: 12px 0 0;
+    padding-top: 20px;
+    border-top: var(--bw) solid var(--line);
+    color: var(--muted);
+    font-size: 13px;
+  }
+  @media (max-width: 767px) {
+    .site-footer__grid {
+      grid-template-columns: 1fr;
+      gap: 32px;
+    }
+  }
+}
+
+/* ---- Get involved screens (/get-involved/*) ---------------------------- */
+/* The bear's other poses, named as the board names them. Inline animation
+   strings in components/splat-mascot.tsx refer to these. */
+@keyframes bcheer { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(14deg); } }
+@keyframes bhop { 0%, 100% { transform: translateY(0) scaleY(1); } 30% { transform: translateY(-5px) scaleY(1.03); } 60% { transform: translateY(0) scaleY(0.97); } }
+@keyframes btwinkle { 0%, 100% { opacity: 0.2; transform: scale(0.6); } 50% { opacity: 1; transform: scale(1.15); } }
+@keyframes btap { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1.5px); } }
+@keyframes bq { 0%, 100% { transform: translateY(0) rotate(-6deg); } 50% { transform: translateY(-3px) rotate(6deg); } }
+@keyframes bpress { 0%, 80%, 100% { transform: scaleY(1); } 88% { transform: scaleY(0.86); } }
+@media (prefers-reduced-motion: reduce) {
+  .splat-mascot *,
+  .bob {
+    animation: none !important;
+  }
+}
+.bob {
+  animation: bob 4s ease-in-out infinite;
+}
+
+/* ---- My SPLAT screens: stage filter + stage pill (components/stage.tsx) - */
+/* The board's segmented stage track on My tutorials, My toys and Design
+   challenges. The board slides a white thumb behind the chosen option; these
+   are links, so the chosen one simply wears the thumb. */
+@layer components {
+  .seg-track {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 4px;
+    max-width: 100%;
+    overflow: auto;
+    border-radius: var(--radius-pill);
+    background: var(--surface2);
+    border: var(--bw) solid var(--line);
+  }
+  .seg-track__div {
+    flex: none;
+    width: 1px;
+    height: 20px;
+    margin: 0 6px;
+    background: var(--line);
+  }
+  .seg-track__opt {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 36px;
+    padding: 0 14px;
+    border-radius: var(--radius-pill);
+    white-space: nowrap;
+    font: 800 14px var(--font-sans);
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .seg-track__opt:hover,
+  .seg-track__opt[aria-current] {
+    color: var(--ink);
+  }
+  .seg-track__opt[aria-current] {
+    background: var(--surface);
+    box-shadow: var(--e1);
+  }
+  .seg-track__opt:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+  }
+  .seg-track__n {
+    font-size: 12px;
+    font-weight: 800;
+    opacity: 0.55;
+  }
+  /* The board's "add one" action on My tutorials and My toys: coral, not the
+     blue primary — the page's own create button, set apart from the saves and
+     library links beside it. */
+  .btn-coral {
+    background-color: var(--coral);
+    color: #1c2530;
+    border-color: transparent;
+    box-shadow: var(--e3), var(--hi);
+  }
+  /* Add a tutorial (/upload): the board's one form card. */
+  .upload-card {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 28px;
+    border-radius: var(--radius-card);
+    background: var(--surface);
+    border: var(--bw) solid var(--line);
+    box-shadow: var(--e2);
+  }
+  .upload-card__label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--ink);
+  }
+  .upload-card__field {
+    min-height: 50px;
+    border-radius: var(--radius-field);
+    background-color: var(--canvas);
+    font-size: 16px;
+  }
+  .kind-card {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 14px 16px;
+    border-radius: var(--radius-inset);
+    border: 2px solid var(--line);
+    background: var(--canvas);
+    color: var(--ink);
+    text-align: left;
+    cursor: pointer;
+  }
+  .kind-card[aria-checked='true'] {
+    border-color: var(--b600);
+    background: var(--b50);
+  }
+  .kind-card:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+  }
+  .upload-cover {
+    display: grid;
+    place-items: center;
+    height: 200px;
+    overflow: hidden;
+    border-radius: var(--radius-inset);
+    border: var(--bw) dashed var(--line);
+    cursor: pointer;
+  }
+  .upload-cover:hover {
+    border-color: var(--brand);
+  }
+  .upload-cover--brand {
+    height: 190px;
+    border-color: var(--brand);
+    background: var(--b50);
+  }
+  .stage-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: var(--radius-pill);
+    font-size: 12px;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+}
+
+/* ---- Organisation dashboard screens (/dashboard/organisation/*) --------- */
+/* Values are the board's own inline styles for #org_queue, #org_toys,
+   #org_posts, #org_profile and the two publish forms, lifted into classes
+   because each one repeats across four or more of those screens. */
+@layer components {
+  .dash-head {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 20px;
+    margin-bottom: 22px;
+  }
+  .dash-head__lede {
+    margin: 8px 0 0;
+    max-width: 60ch;
+    font-size: 15px;
+    color: var(--muted);
+  }
+  /* The form screens' lede is a size up, the way the board sets it. */
+  .dash-head__lede--lg {
+    margin-top: 10px;
+    font-size: 17px;
+    line-height: 1.55;
+  }
+
+  /* Not .stat-chip: that is the homepage's tall tile. This is the small
+     number-and-word pill the dashboards set over a list. */
+  .count-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0 0 22px;
+    padding: 0;
+    list-style: none;
+  }
+  .count-chip {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 7px;
+    padding: 8px 14px;
+    border-radius: var(--radius-pill);
+    border: var(--bw) solid var(--line);
+    background: var(--surface);
+    box-shadow: var(--e1);
+  }
+  .count-chip__value {
+    font: 800 18px var(--font-display);
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+  }
+  .count-chip__label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+  }
+
+  /* The tinted square that leads a row. The caller sets the tint. */
+  .tint-tile {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-inset);
+    color: var(--tink);
+    font-size: 26px;
+  }
+
+  .row-card {
+    display: flex;
+    flex-direction: column;
+    gap: 13px;
+    padding: 18px 20px;
+    border-radius: var(--radius-card);
+    border: var(--bw) solid var(--line);
+    background: var(--surface);
+    box-shadow: var(--e2), var(--hi);
+  }
+  .row-card__title {
+    margin: 0;
+    font: 800 18px var(--font-display);
+    color: var(--ink);
+  }
+  .row-card__meta {
+    margin: 3px 0 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+  }
+
+  /* A pill track in --surface2 with the current option raised onto
+     --surface. Tabs on #org_posts, the format switch on the event form. */
+  .seg {
+    display: inline-flex;
+    padding: 4px;
+    border-radius: var(--radius-pill);
+    border: var(--bw) solid var(--line);
+    background: var(--surface2);
+  }
+  .seg > button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0 18px;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--muted);
+    font: 800 14px var(--font-sans);
+    cursor: pointer;
+  }
+  .seg > button[aria-selected='true'],
+  .seg > button[aria-checked='true'] {
+    background: var(--surface);
+    color: var(--ink);
+    box-shadow: var(--e1);
+  }
+  .seg > button:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+  }
+  .seg__count {
+    padding: 1px 8px;
+    border-radius: var(--radius-pill);
+    background: var(--surface);
+    font-size: 12px;
+  }
+
+  /* A radio drawn as a card: icon, label, one line under it. */
+  .choice-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 2px solid var(--line);
+    border-radius: var(--radius-inset);
+    background: var(--surface);
+    color: var(--ink);
+    text-align: left;
+    cursor: pointer;
+  }
+  .choice-card[aria-checked='true'],
+  .choice-card:has(input:checked) {
+    border-color: var(--b600);
+    background: var(--b100);
+  }
+  .choice-card:has(input:focus-visible),
+  .toggle-pill:has(input:focus-visible),
+  .choice-card:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+  }
+  .choice-card__icon {
+    flex: none;
+    font-size: 26px;
+    color: var(--b600);
+  }
+  .choice-card__label {
+    display: block;
+    font: 800 15px var(--font-sans);
+  }
+  .choice-card__sub {
+    display: block;
+    margin-top: 2px;
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--muted);
+  }
+
+  /* An on/off pill: a line border off, blue border on a --b100 fill on. */
+  .toggle-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    padding: 0 14px;
+    border: var(--bw) solid var(--line);
+    border-radius: var(--radius-pill);
+    background: var(--surface);
+    color: var(--ink);
+    font: 800 13px var(--font-sans);
+    cursor: pointer;
+  }
+  .toggle-pill[aria-pressed='true'],
+  .toggle-pill[aria-checked='true'],
+  .toggle-pill:has(input:checked) {
+    border-color: var(--b600);
+    background: var(--b100);
+  }
+
+  .form-card {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    margin-top: 28px;
+    padding: 28px;
+    border-radius: var(--radius-card);
+    border: var(--bw) solid var(--line);
+    background: var(--surface);
+    box-shadow: var(--e2);
+  }
+  /* The grey well inside a form that groups an optional block. */
+  .form-well {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 18px 20px;
+    border-radius: var(--radius-inset);
+    background: var(--surface2);
+  }
+  .form-well__kicker {
+    margin: 0;
+    font: 800 12px var(--font-sans);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .form-well__kicker span {
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+  .form-label {
+    display: block;
+    margin-bottom: 7px;
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--ink);
+  }
+  .form-label span {
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .form-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    padding-top: 6px;
+    border-top: var(--bw) solid var(--line);
+  }
+  .form-trail {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--muted);
+  }
+  .form-trail a {
+    color: var(--b700);
+  }
+
+  /* The board's form screens sink their inputs into --canvas at 50px, a step
+     taller than the site-wide .field; scoped here rather than changed there. */
+  .form-card .field:not(.field-sm),
+  .edit-card .field:not(.field-sm) {
+    min-height: 50px;
+    background-color: var(--canvas);
+  }
+  .form-card textarea.field,
+  .edit-card textarea.field {
+    padding: 14px 16px;
+    font-size: 16px;
+  }
+
+  /* #org_profile's section card. */
+  .edit-card {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 22px;
+    border-radius: var(--radius-card);
+    border: var(--bw) solid var(--line);
+    background: var(--surface);
+    box-shadow: var(--e2), var(--hi);
+  }
+  .edit-card__title {
+    margin: 0;
+    font: 800 22px var(--font-display);
+    color: var(--ink);
+  }
+  .edit-card__lede {
+    margin: 6px 0 0;
+    max-width: 62ch;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--muted);
+  }
+}
+
+/*
+ * 3D Printing — /printing, /printing/basics and /printing/requests (board
+ * #printing, #printing_basics, #print_request_new). Values are the board's
+ * inline styles; the browse rail and grid come from the .browse-* block.
+ */
+@layer components {
+  /* "Every request starts from a guide" — the board's no-guide banner. */
+  .printing-guide-first {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding: 24px 26px;
+    border-radius: var(--radius-card);
+    border: var(--bw) solid var(--line);
+    background: var(--tamber);
+    box-shadow: var(--e3), var(--hi);
+    color: var(--tink);
+  }
+
+  .printing-guide-first__icon {
+    display: grid;
+    flex: none;
+    width: 64px;
+    height: 64px;
+    place-items: center;
+    border-radius: var(--radius-inset);
+    background: var(--surface);
+    box-shadow: var(--e1);
+  }
+
+  /* The guest gate: three blurred cards under a sign-in panel, stacked in one
+     grid cell so the panel sits over the skeleton without absolute sizing. */
+  .printing-gate {
+    display: grid;
+    overflow: hidden;
+    border-radius: var(--radius-card);
+    border: var(--bw) solid var(--line);
+    background: var(--surface);
+    box-shadow: var(--e2), var(--hi);
+  }
+
+  .printing-gate__skeleton {
+    grid-area: 1 / 1;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+    padding: 24px;
+    filter: blur(7px);
+    opacity: 0.45;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .printing-gate__card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    height: 280px;
+    padding: 18px;
+    border-radius: var(--radius-card);
+    background: var(--surface2);
+  }
+
+  .printing-gate__over {
+    grid-area: 1 / 1;
+    position: relative;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    padding: 32px;
+    background: linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--surface) 45%, transparent),
+      color-mix(in srgb, var(--surface) 92%, transparent)
+    );
+  }
+
+  .printer-card {
+    position: relative;
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 12px;
+    padding: 18px;
+    border-radius: var(--radius-card);
+    border: 2px solid var(--line);
+    background: var(--surface);
+    box-shadow: var(--e2), var(--hi);
+  }
+
+  .printer-card__ini {
+    display: grid;
+    flex: none;
+    width: 52px;
+    height: 52px;
+    place-items: center;
+    border-radius: var(--radius-inset);
+    color: var(--tink);
+    font-size: 16px;
+    font-weight: 800;
+  }
+
+  .printer-card__pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: var(--radius-pill);
+    color: var(--tink);
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  /* One numbered request section — the board's four white panels. */
+  .print-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 22px;
+    border-radius: var(--radius-card);
+    border: var(--bw) solid var(--line);
+    background: var(--surface);
+    box-shadow: var(--e2), var(--hi);
+  }
+
+  .print-panel__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--color-ink);
+  }
+
+  .print-part {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 14px;
+    border-radius: var(--radius-inset);
+    border: var(--bw) solid var(--line);
+    background: var(--surface);
+    transition: all 0.2s;
+  }
+
+  .print-part[data-on='true'] {
+    border-color: var(--brand);
+    background: var(--b50);
+  }
+
+  .print-part[data-on='false'] {
+    opacity: 0.6;
+  }
+}
+
+/*
+ * ---- Admin queues (the /admin screens) -------------------------------------
+ *
+ * The board draws every admin queue from the same five parts: a flat row, a
+ * status pill, a 44px control, a segmented tab track and a table in a card.
+ * One set of names for all thirteen screens, so they cannot drift apart the
+ * way the old per-page Tailwind strings did.
+ */
+@layer components {
+  .admin-row {
+    padding: 16px 20px;
+    border-radius: var(--radius-inset);
+    background: var(--surface);
+    border: var(--bw) solid var(--line);
+    box-shadow: var(--e1);
+  }
+
+  .admin-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 11px;
+    border-radius: var(--radius-pill);
+    color: var(--tink);
+    font: 800 12px/1.3 var(--font-sans);
+    white-space: nowrap;
+  }
+
+  /* The admin rows' control: 44px, 800/14. Declared after .btn-primary so a
+     primary at this size is not pulled back to 52px. */
+  .btn-md {
+    min-height: 44px;
+    padding: 0 16px;
+    font-size: 14px;
+  }
+
+  /* Approve / publish: the board's --ok fill. */
+  .btn-ok {
+    background-color: var(--color-success-deep);
+    color: #fff;
+    box-shadow: var(--e2), var(--hi);
+  }
+
+  /* The board's tab track: --surface2 pill, the current tab raised onto
+     --surface. Works for buttons (aria-selected) and links (aria-current). */
+  .seg-tabs {
+    display: inline-flex;
+    gap: 4px;
+    max-width: 100%;
+    padding: 4px;
+    overflow-x: auto;
+    border-radius: var(--radius-pill);
+    background: var(--surface2);
+  }
+
+  .seg-tabs > * {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--ink);
+    font: 800 14px var(--font-sans);
+    white-space: nowrap;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .seg-tabs > [aria-selected='true'],
+  .seg-tabs > [aria-current='page'] {
+    background: var(--surface);
+    box-shadow: var(--e1);
+  }
+
+  .seg-tabs > :focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  .admin-table-card {
+    overflow: hidden;
+    border: var(--bw) solid var(--line);
+    border-radius: var(--radius-card);
+    background: var(--surface);
+    box-shadow: var(--e2);
+  }
+
+  .admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 15px;
+    text-align: left;
+  }
+
+  .admin-table thead tr {
+    background: var(--surface2);
+  }
+
+  .admin-table th {
+    padding: 14px 16px;
+    font-weight: 800;
+  }
+
+  .admin-table td {
+    padding: 13px 16px;
+  }
+
+  .admin-table th:first-child,
+  .admin-table td:first-child {
+    padding-left: 22px;
+  }
+
+  .admin-table th:last-child,
+  .admin-table td:last-child {
+    padding-right: 22px;
+  }
+
+  .admin-table tbody tr {
+    border-top: var(--bw) solid var(--line);
+  }
+
+  /* The queue tables (review, print jobs) set their header as an eyebrow. */
+  .admin-table--caps thead th {
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* The decision card on the two review screens. */
+  .admin-panel {
+    padding: 24px;
+    border-radius: var(--radius-card);
+    background: var(--surface);
+    border: var(--bw) solid var(--line);
+    box-shadow: var(--e3), var(--hi);
+  }
+
+  .admin-kicker {
+    margin: 0 0 14px;
+    font: 800 12px var(--font-sans);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+}
+
+/* --- Guide detail (/tutorials/[id], components/tutorial-view.tsx) -----------
+ * The board's #tutorial: 13px header chips, overlapping initials in the byline,
+ * a pill tab strip over the reference sections, the parts table, tool and file
+ * rows, the rail's secondary action row and the short recommendation cards.
+ */
+@layer components {
+  .pill-tag--lg {
+    padding: 4px 12px;
+    font-size: 13px;
+  }
+
+  .byline-avatar {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    margin-left: -9px;
+    border-radius: var(--radius-pill);
+    border: 2px solid var(--surface);
+    background: var(--tviolet);
+    color: var(--tink);
+    font-size: 11px;
+    font-weight: 800;
+  }
+
+  .section-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 4px;
+    width: max-content;
+    max-width: 100%;
+    border-radius: var(--radius-pill);
+    background: var(--surface2);
+  }
+
+  .section-tabs__tab {
+    min-height: 44px;
+    padding: 0 18px;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--ink);
+    font: 800 15px var(--font-sans);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .section-tabs__tab[aria-selected='true'] {
+    background: var(--surface);
+    box-shadow: var(--e1);
+  }
+
+  .section-tabs__tab:focus-visible {
+    outline: 3px solid var(--focus);
+  }
+
+  .guide-table {
+    overflow: hidden;
+    border-radius: var(--radius-inset);
+    border: var(--bw) solid var(--line);
+    background: var(--surface);
+    box-shadow: var(--e2);
+  }
+
+  .guide-table table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 15px;
+  }
+
+  .guide-table th {
+    padding: 14px 18px;
+    background: var(--surface2);
+    color: var(--muted);
+    font-size: 13px;
+    text-align: left;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .guide-table td {
+    padding: 14px 18px;
+    border-top: var(--bw) solid var(--line);
+  }
+
+  .guide-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 18px;
+    border-radius: var(--radius-inset);
+    border: var(--bw) solid var(--line);
+    background: var(--surface);
+    box-shadow: var(--e1);
+  }
+
+  .guide-row--file {
+    gap: 14px;
+    padding: 16px;
+    box-shadow: var(--e2);
+  }
+
+  .guide-row__tile {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-field);
+    background: var(--surface2);
+    color: var(--b600);
+  }
+
+  .guide-row--file .guide-row__tile {
+    width: 52px;
+    height: 52px;
+    border-radius: var(--radius-inset);
+  }
+
+  /* Save / Share / Thanks share the row equally, at the board's 48px. */
+  .rail-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .rail-actions > * {
+    flex: 1;
+    min-height: 48px;
+  }
+
+  /* The save island, drawn as the row's outlined button rather than a disc. */
+  .rail-actions .save-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: auto;
+    border: var(--bw) solid var(--line);
+    box-shadow: none;
+    color: var(--ink);
+    font: 800 15px var(--font-sans);
+  }
+
+  .rail-actions .save-btn.is-saved svg {
+    color: var(--color-apricot);
+  }
+
+  .rec-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    border-radius: var(--radius-card);
+    border: var(--bw) solid var(--line);
+    background: var(--surface);
+    box-shadow: var(--e2), var(--hi);
+    color: inherit;
+    text-decoration: none;
+    transition:
+      transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1),
+      box-shadow 0.25s;
+  }
+
+  .rec-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--e3);
+  }
+
+  .rec-card:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 3px;
+  }
+
+  .rec-card__band {
+    display: grid;
+    place-items: center;
+    height: 98px;
+    color: var(--tink);
+  }
+
+  .rec-card__band svg {
+    opacity: 0.75;
+  }
+
+  .rec-card__body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 6px;
+    padding: 14px 16px 16px;
+  }
+}
+
+/* ---- My design challenges + Saved (/dashboard/challenges, /dashboard/saved) */
+@layer components {
+  /* The board's role chip over a challenge card's art band: Joined / Your idea. */
+  .ch-role {
+    position: absolute;
+    left: 12px;
+    top: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 11px;
+    border-radius: var(--radius-pill);
+    background: var(--surface);
+    color: var(--ink);
+    font: 800 11px var(--font-sans);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    box-shadow: var(--e1);
+  }
+}
+
+/* ---- My SPLAT screens: exchange / build thread (/dashboard/exchanges/*) -- */
+/* The board's thread card (components/exchange-chat.tsx variant="board") and
+   the aside beside it (components/toy-transaction-thread.tsx). Scoped to the
+   modifier so the challenge thread, which shares the chat, keeps its shape. */
+@layer components {
+  .chat-panel--board {
+    height: auto;
+    border-radius: var(--radius-card);
+    box-shadow: var(--e2), var(--hi);
+  }
+  .chat-panel--board .chat-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 22px;
+    border-bottom: var(--bw) solid var(--line);
+    background: var(--canvas);
+  }
+  .chat-panel--board .chat-log {
+    padding: 20px 22px;
+    gap: 16px;
+    min-height: 440px;
+    max-height: min(560px, 64vh);
+    background: var(--surface);
+  }
+  .chat-panel--board .chat-daymark {
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 4px 0;
+    padding: 0;
+    background: none;
+    border-radius: 0;
+    font: 800 12px var(--font-sans);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .chat-panel--board .chat-daymark::before,
+  .chat-panel--board .chat-daymark::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--line);
+  }
+  .chat-panel--board .chat-system {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    padding: 7px 16px;
+    border-radius: var(--radius-pill);
+    background: var(--canvas);
+    border: var(--bw) solid var(--line);
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .chat-system__icon {
+    flex: none;
+    font-size: 15px;
+    color: var(--b600);
+  }
+  .chat-panel--board .chat-row {
+    gap: 12px;
+    margin: 0;
+    max-width: 82%;
+  }
+  .chat-panel--board .chat-row-mine {
+    align-self: flex-end;
+    flex-direction: row;
+  }
+  .chat-panel--board .chat-avatar {
+    width: 34px;
+    height: 34px;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: var(--tmint);
+    color: var(--tink);
+    font: 800 12px var(--font-sans);
+  }
+  .chat-panel--board .chat-stack {
+    gap: 6px;
+    max-width: none;
+    min-width: 0;
+  }
+  .chat-panel--board .chat-who {
+    padding: 0;
+    font-size: 12px;
+    font-weight: 800;
+  }
+  .chat-panel--board .chat-bubble {
+    padding: 13px 17px;
+    font-size: 15px;
+    line-height: 1.55;
+    box-shadow: none;
+    text-wrap: pretty;
+  }
+  .chat-panel--board .chat-bubble-theirs {
+    /* The tail is a third of the corner: the board's 6px. */
+    border-radius: var(--radius-inset) var(--radius-inset) var(--radius-inset)
+      calc(var(--radius-inset) / 3);
+    background: var(--canvas);
+  }
+  .chat-panel--board .chat-bubble-mine {
+    border: 0;
+    border-radius: var(--radius-inset) var(--radius-inset) calc(var(--radius-inset) / 3)
+      var(--radius-inset);
+    background: var(--b600);
+    box-shadow: var(--glow);
+  }
+  .chat-panel--board .chat-composer {
+    gap: 10px;
+    align-items: center;
+    padding: 16px 22px;
+    border-top: var(--bw) solid var(--line);
+    background: var(--canvas);
+  }
+  .chat-composer__input {
+    flex: 1;
+    min-width: 0;
+    height: 52px;
+    padding: 0 18px;
+    border-radius: var(--radius-pill);
+    border: var(--bw) solid var(--line);
+    background: var(--surface);
+    color: var(--ink);
+    font: 500 16px var(--font-sans);
+    box-shadow: var(--e1);
+  }
+  .chat-composer__input:focus-visible,
+  .chat-composer__send:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+  }
+  .chat-composer__send {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    border-radius: var(--radius-pill);
+    border: 0;
+    background: var(--b600);
+    color: var(--onbrand);
+    box-shadow: var(--glow), var(--hi);
+    cursor: pointer;
+  }
+  .chat-composer__send:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  /* The aside: 330px beside the conversation, per the board. */
+  @media (min-width: 900px) {
+    .exchange-grid--board {
+      grid-template-columns: minmax(0, 1fr) 330px;
+      gap: 24px;
+    }
+  }
+  .xthread-card {
+    border-radius: var(--radius-card);
+    border: var(--bw) solid var(--line);
+    background: var(--surface);
+    box-shadow: var(--e2);
+  }
+  .xthread-next {
+    padding: 22px;
+    border-radius: var(--radius-card);
+    border: var(--bw) solid var(--line);
+    box-shadow: var(--e3), var(--hi);
+    color: var(--tink);
+  }
+  .xthread-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 6px;
+    font: 800 12px var(--font-sans);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .xthread-code {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    margin-top: 10px;
+  }
+  .xthread-code > span {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 48px;
+    border-radius: var(--radius-field);
+    background: var(--b50);
+    border: var(--bw) solid var(--b100);
+    color: var(--b700);
+    font: 800 24px var(--font-display);
+  }
+}
+
+/* ---- My SPLAT screens: the editor shell (tutorial + toy editors) -------- */
+/* The board's editor: a 230px sticky section rail and the open section in one
+   card under its heading. components/stepper.tsx layout="rail". Unlayered on
+   purpose: the sections inside keep their old `.panel pt-5` wrappers, and a
+   utility's padding would outrank a layered rule flattening them. */
+.editor-rail {
+  display: grid;
+  gap: 28px;
+  margin-top: 26px;
+  align-items: start;
+}
+@media (min-width: 1024px) {
+  .editor-rail {
+    grid-template-columns: 230px minmax(0, 1fr);
+  }
+  .editor-rail__nav {
+    position: sticky;
+    top: 96px;
+  }
+}
+.editor-rail__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.editor-rail__tab {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--radius-field);
+  background: transparent;
+  color: var(--ink);
+  font: 700 14px var(--font-sans);
+  text-align: left;
+  cursor: pointer;
+}
+.editor-rail__tab:hover {
+  background: var(--surface2);
+}
+.editor-rail__tab[aria-selected='true'] {
+  background: var(--b100);
+  color: var(--b700);
+}
+.editor-rail__tab:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+.editor-rail__tab:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.editor-rail__foot {
+  margin-top: 14px;
+  padding: 16px;
+  border-radius: var(--radius-inset);
+  background: var(--tamber);
+  border: var(--bw) solid var(--line);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--tink);
+}
+.editor-card {
+  min-width: 0;
+  padding: 26px;
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  border: var(--bw) solid var(--line);
+  box-shadow: var(--e2);
+}
+.editor-card__title {
+  margin: 0 0 4px;
+  font: 800 22px/1.2 var(--font-display);
+  color: var(--ink);
+}
+.editor-card__hint {
+  margin: 0 0 22px;
+  font-size: 14px;
+  color: var(--muted);
+}
+/* The sections were drawn as free-standing panels with 20px insets; inside the
+   card they give up their frame and their inset lines up with the card's. */
+.editor-card .panel {
+  margin: 0 -20px;
+  padding-top: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+.editor-card .panel + .panel {
+  margin-top: 16px;
+}
+.editor-card .panel > h2:first-child {
+  font-size: 16px;
+}
+/* The header above the rail: stage pill, meta line, title, actions. */
+.editor-head__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  color: var(--tink);
+  font: 800 12px var(--font-sans);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.editor-head__title {
+  margin: 8px 0 0;
+  font: 800 clamp(28px, 3.2vw, 40px) / 1.08 var(--font-display);
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+/* The Status section's parts. */
+.editor-status {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 22px;
+  border-radius: var(--radius-card);
+  border: var(--bw) solid var(--line);
+  color: var(--tink);
+}
+.editor-status__glyph {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-inset);
+  background: var(--surface);
+  box-shadow: var(--e1);
+}
+.editor-check {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 16px;
+  border-radius: var(--radius-field);
+  background: var(--canvas);
+  border: var(--bw) solid var(--line);
+}
+.editor-h3 {
+  margin: 0 0 4px;
+  font: 800 18px var(--font-display);
+  color: var(--ink);
+}
+.editor-privacy {
+  margin-top: 20px;
+  padding: 20px 22px;
+  border-radius: var(--radius-inset);
+  background: var(--b50);
+  border: var(--bw) solid var(--line);
+  font-size: 14px;
+  color: var(--muted);
+}
+
+/*
+ * Breadcrumb trail — the board's <nav aria-label="Breadcrumb">: 8px gaps, a
+ * 15px muted arrow, 14px/800 crumbs (the nearest in --b700, the rest muted),
+ * "/" in --line, the current page 13.5px/700 muted. 20px under it.
+ */
+@layer components {
+  .crumbs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .crumbs__arrow {
+    flex: none;
+    color: var(--muted);
+    font-size: 15px;
+  }
+  .crumbs__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 36px;
+    padding: 0 4px;
+    border-radius: var(--radius-field);
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 800;
+    text-decoration: none;
+  }
+  .crumbs__link--near {
+    color: var(--b700);
+  }
+  a.crumbs__link:hover {
+    text-decoration: underline;
+  }
+  .crumbs__sep {
+    color: var(--line);
+    font-weight: 800;
+  }
+  .crumbs__here {
+    color: var(--muted);
+    font-size: 13.5px;
+    font-weight: 700;
   }
 }

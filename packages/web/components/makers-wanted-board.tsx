@@ -24,7 +24,17 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Hammer, MapPin, Clock, Package, User } from '@phosphor-icons/react/dist/ssr'
+import {
+  Baby,
+  BookOpen,
+  CalendarBlank,
+  Car,
+  Hammer,
+  HandWaving,
+  HourglassMedium,
+  MapPin,
+  Package,
+} from '@phosphor-icons/react/dist/ssr'
 import { browserApiClient } from '@/lib/browser-api-client'
 import { formatRelativeTime } from '@/lib/relative-time'
 
@@ -44,13 +54,25 @@ export type OpenBuild = {
 
 const RANGES = [5, 10, 25, 0] as const
 
+const DIFF: Record<string, { label: string; tint: string }> = {
+  easy: { label: 'Easy', tint: 'var(--tmint)' },
+  medium: { label: 'Medium', tint: 'var(--tamber)' },
+  hard: { label: 'Hard', tint: 'var(--tcoral)' },
+}
+
 export function MakersWantedBoard({ builds }: { builds: OpenBuild[] }) {
   const router = useRouter()
   const [range, setRange] = useState<number>(0)
+  // The board's four tabs are Needs a maker / Live / Handed over / Your
+  // requests. This feed only carries unclaimed requests, so only the two it
+  // can fill are drawn.
+  const [tab, setTab] = useState<'open' | 'mine'>('open')
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const shown = range === 0 ? builds : builds.filter((b) => (b.travel_km ?? 0) >= range)
+  const inTab = builds.filter((b) => (tab === 'mine' ? b.mine : !b.mine))
+  const shown = range === 0 ? inTab : inTab.filter((b) => (b.travel_km ?? 0) >= range)
+  const count = (t: 'open' | 'mine') => builds.filter((b) => (t === 'mine' ? b.mine : !b.mine)).length
 
   async function claim(id: string) {
     setError(null)
@@ -69,120 +91,178 @@ export function MakersWantedBoard({ builds }: { builds: OpenBuild[] }) {
 
   return (
     <div>
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-sm font-bold text-muted">Families who can travel</span>
-        {RANGES.map((km) => (
-          <button
-            key={km}
-            type="button"
-            onClick={() => setRange(km)}
-            aria-pressed={range === km}
-            className="chip"
-          >
-            {km === 0 ? 'Any distance' : `${km} km or more`}
-          </button>
-        ))}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
+        <div role="tablist" aria-label="Filter build requests" className="flex gap-1 rounded-full bg-[var(--surface2)] p-1">
+          {(
+            [
+              ['open', 'Needs a maker', 'var(--tmint)'],
+              ['mine', 'Your requests', 'var(--tcoral)'],
+            ] as const
+          ).map(([k, label, nBg]) => {
+            const n = count(k)
+            return (
+              <button
+                key={k}
+                type="button"
+                role="tab"
+                aria-selected={tab === k}
+                onClick={() => setTab(k)}
+                className={`inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-sm font-extrabold text-ink ${
+                  tab === k ? 'bg-[var(--surface)] shadow-[var(--e1)]' : ''
+                }`}
+              >
+                {label}
+                {n > 0 && (
+                  <span className="h-5 min-w-5 rounded-full px-1.5 text-center text-xs font-extrabold leading-5 text-[var(--tink)]" style={{ background: nBg }}>
+                    {n}
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-[13px] font-bold text-muted">Families who can travel</span>
+          {RANGES.map((km) => (
+            <button
+              key={km}
+              type="button"
+              onClick={() => setRange(km)}
+              aria-pressed={range === km}
+              className={`min-h-9 rounded-full border px-3 text-[13px] font-bold text-ink hover:border-brand ${
+                range === km ? 'border-[var(--b600)] bg-[var(--b100)]' : 'border-line bg-[var(--surface)]'
+              }`}
+            >
+              {km === 0 ? 'Any distance' : `${km} km or more`}
+            </button>
+          ))}
+        </div>
       </div>
 
       {error && (
-        <p role="alert" className="alert alert-danger mt-4">
+        <p role="alert" className="alert alert-danger mb-4">
           {error}
         </p>
       )}
 
       {shown.length === 0 ? (
-        <p className="card mt-6 p-6 text-sm leading-relaxed text-muted">
-          {builds.length === 0
-            ? 'Nothing waiting on a maker right now. Requests land here the moment a family posts one.'
-            : 'No family in that range at the moment. Try Any distance.'}
-        </p>
+        <div className="grid place-items-center rounded-card border border-dashed border-line bg-[var(--surface)] p-12 text-center">
+          <h3 className="mb-1 mt-3 font-display text-2xl font-extrabold text-ink">
+            {tab === 'mine' ? 'You have not asked for a build yet' : 'Nothing at that stage'}
+          </h3>
+          <p className="max-w-[38ch] text-muted">
+            {tab === 'mine'
+              ? 'Pick the guide your child needs and ask for a build. It lands here and in My exchanges.'
+              : builds.length === 0
+                ? 'Nothing waiting on a maker right now. Requests land here the moment a family posts one.'
+                : 'No family in that range at the moment. Try Any distance.'}
+          </p>
+        </div>
       ) : (
-        <ul className="mt-6 flex list-none flex-col gap-3">
-          {shown.map((b) => (
-            <li key={b.id}>
-              <article className="card p-5">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="badge bg-honey-soft text-ink">
-                    <Hammer className="h-3.5 w-3.5" aria-hidden="true" />
-                    Needs a maker
-                  </span>
-                  <span className="text-xs text-muted">
-                    {b.requester_suburb} · {formatRelativeTime(b.created_at)}
-                  </span>
-                </div>
-
-                <h3 className="mt-2 font-display text-lg font-extrabold text-ink">
-                  {b.tutorial ? (
-                    <Link href={`/tutorials/${b.tutorial.id}`} className="hover:underline">
-                      {b.tutorial.title}
-                    </Link>
-                  ) : (
-                    // A guide can be withdrawn after somebody asks for it. The
-                    // request stays — the family still wants the thing — but
-                    // there is nothing to link to.
-                    'A guide that is no longer published'
-                  )}
-                </h3>
-
-                <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
-                  {b.tutorial?.difficulty && (
-                    <span className="badge bg-sunken text-muted">{b.tutorial.difficulty}</span>
-                  )}
-                  {b.family_has_toy && (
-                    <span className="inline-flex items-center gap-1">
-                      <Package className="h-3.5 w-3.5" aria-hidden="true" />
-                      Family has the toy
-                    </span>
-                  )}
-                </p>
-
-                {b.build_brief && (
-                  <p className="mt-3 text-sm leading-relaxed text-ink">
-                    <strong className="font-bold">Family in {b.requester_suburb}:</strong>{' '}
-                    “{b.build_brief}”
-                  </p>
-                )}
-
-                <p className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted">
-                  {b.child_label && (
-                    <span className="inline-flex items-center gap-1">
-                      <User className="h-3.5 w-3.5" aria-hidden="true" />
-                      {b.child_label}
-                    </span>
-                  )}
-                  {b.travel_km !== null && (
-                    <span className="inline-flex items-center gap-1">
-                      <MapPin className="h-3.5 w-3.5" aria-hidden="true" />
-                      Can travel {b.travel_km} km
-                    </span>
-                  )}
-                  {b.urgency && (
-                    <span className="inline-flex items-center gap-1">
-                      <Clock className="h-3.5 w-3.5" aria-hidden="true" />
-                      {b.urgency}
-                    </span>
-                  )}
-                </p>
-
-                <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                  <span className="text-sm text-muted">
-                    {b.mine ? 'This is your request' : 'Nobody has claimed this yet'}
-                  </span>
-                  {!b.mine && (
-                    <button
-                      type="button"
-                      disabled={busy === b.id}
-                      onClick={() => claim(b.id)}
-                      className="btn btn-primary btn-sm"
+        <ul className="m-0 grid list-none gap-4 p-0 md:grid-cols-2">
+          {shown.map((b) => {
+            const diff = b.tutorial?.difficulty ? DIFF[b.tutorial.difficulty] : undefined
+            return (
+              <li key={b.id}>
+                <article className="card flex h-full flex-col gap-3 p-5">
+                  <div className="flex flex-wrap items-center justify-between gap-2.5">
+                    <span
+                      className="inline-flex items-center gap-1.5 rounded-full px-[11px] py-1 text-xs font-extrabold text-[var(--tink)]"
+                      style={{ background: b.mine ? 'var(--tcoral)' : 'var(--tmint)' }}
                     >
-                      <Hammer className="h-4 w-4" aria-hidden="true" />
-                      {busy === b.id ? 'Claiming…' : "I'll build this"}
-                    </button>
+                      {b.mine ? (
+                        <HourglassMedium weight="fill" aria-hidden="true" />
+                      ) : (
+                        <HandWaving weight="fill" aria-hidden="true" />
+                      )}
+                      {b.mine ? 'Waiting for a maker' : 'Needs a maker'}
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-[13px] font-bold text-muted">
+                      <MapPin aria-hidden="true" /> {b.requester_suburb} · {formatRelativeTime(b.created_at)}
+                    </span>
+                  </div>
+
+                  <div className="flex items-start gap-3.5">
+                    <span
+                      aria-hidden="true"
+                      className="grid h-16 w-16 shrink-0 place-items-center rounded-[18px]"
+                      style={{ background: diff?.tint ?? 'var(--b100)' }}
+                    >
+                      <BookOpen weight="duotone" className="text-[32px] text-[var(--tink)] opacity-75" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-lg font-extrabold leading-[1.3] text-ink">
+                        {b.tutorial ? (
+                          <Link href={`/tutorials/${b.tutorial.id}`} className="hover:text-[var(--b700)]">
+                            {b.tutorial.title}
+                          </Link>
+                        ) : (
+                          // A guide can be withdrawn after somebody asks for it. The
+                          // request stays — the family still wants the thing — but
+                          // there is nothing to link to.
+                          'A guide that is no longer published'
+                        )}
+                      </h3>
+                      <div className="mt-1.5 flex flex-wrap gap-1.5 text-xs font-extrabold">
+                        {diff && (
+                          <span className="rounded-full px-2.5 py-[3px] text-[var(--tink)]" style={{ background: diff.tint }}>
+                            {diff.label}
+                          </span>
+                        )}
+                        {b.family_has_toy && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-[var(--tamber)] px-2.5 py-[3px] text-[var(--tink)]">
+                            <Package weight="fill" aria-hidden="true" /> Family has the toy
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {b.build_brief && (
+                    <p className="rounded-[14px] bg-[var(--surface2)] px-3.5 py-3 text-sm leading-[1.5] text-muted">
+                      <span className="font-extrabold text-ink">Family in {b.requester_suburb}:</span>{' '}
+                      “{b.build_brief}”
+                    </p>
                   )}
-                </div>
-              </article>
-            </li>
-          ))}
+
+                  <div className="flex flex-wrap gap-3.5 text-[13px] font-bold text-muted">
+                    {b.child_label && (
+                      <span className="inline-flex items-center gap-1">
+                        <Baby aria-hidden="true" /> {b.child_label}
+                      </span>
+                    )}
+                    {b.travel_km !== null && (
+                      <span className="inline-flex items-center gap-1">
+                        <Car aria-hidden="true" /> Can travel {b.travel_km} km
+                      </span>
+                    )}
+                    {b.urgency && (
+                      <span className="inline-flex items-center gap-1">
+                        <CalendarBlank aria-hidden="true" /> {b.urgency}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="mt-auto flex flex-wrap items-center justify-between gap-2.5 border-t border-line pt-2.5">
+                    <span className="text-[13px] font-bold text-muted">
+                      {b.mine ? 'This is your request' : 'Nobody has claimed this yet'}
+                    </span>
+                    {!b.mine && (
+                      <button
+                        type="button"
+                        disabled={busy === b.id}
+                        onClick={() => claim(b.id)}
+                        className="btn btn-primary min-h-11 px-[18px] text-sm"
+                      >
+                        <Hammer weight="bold" aria-hidden="true" />
+                        {busy === b.id ? 'Claiming…' : "I'll build this"}
+                      </button>
+                    )}
+                  </div>
+                </article>
+              </li>
+            )
+          })}
         </ul>
       )}
     </div>

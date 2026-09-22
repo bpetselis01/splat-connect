@@ -69,14 +69,18 @@ export function BrowseHero({
             </Link>
           )}
         </div>
-        <dl className="browse-hero__stats">
-          {stats.map((s) => (
-            <div key={s.label} className="min-w-0">
-              <dd className="browse-hero__stat-n">{s.n}</dd>
-              <dt className="mt-1.5 text-[13px] font-bold text-muted">{s.label}</dt>
-            </div>
-          ))}
-        </dl>
+        {/* No figures, no rule: an empty ruled row reads as numbers that
+            failed to load. /printing has none to show a guest. */}
+        {stats.length > 0 && (
+          <dl className="browse-hero__stats">
+            {stats.map((s) => (
+              <div key={s.label} className="min-w-0">
+                <dd className="browse-hero__stat-n">{s.n}</dd>
+                <dt className="mt-1.5 text-[13px] font-bold text-muted">{s.label}</dt>
+              </div>
+            ))}
+          </dl>
+        )}
       </div>
 
       <aside

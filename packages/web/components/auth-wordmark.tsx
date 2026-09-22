@@ -1,5 +1,19 @@
 import Link from 'next/link'
-import { Logo } from '@/components/icons'
+import { HandTap } from '@phosphor-icons/react/dist/ssr'
+
+/**
+ * The board's brand mark: a 36px gradient tile with a white hand-tap glyph
+ * under the brand glow. Shared by the header and every signed-out screen so
+ * the two can never draw different logos again.
+ */
+export function BrandMark({ large = false }: { large?: boolean }) {
+  return (
+    // 40px on the auth screens' lockup, 36px in the header — both the board's.
+    <span aria-hidden="true" className={`brand-tile${large ? ' brand-tile--lg' : ''}`}>
+      <HandTap weight="fill" />
+    </span>
+  )
+}
 
 /**
  * The wordmark the board puts at the top of every signed-out screen.
@@ -14,13 +28,8 @@ import { Logo } from '@/components/icons'
  */
 export function AuthWordmark({ className = '' }: { className?: string }) {
   return (
-    <Link href="/" className={`flex items-center gap-2.5 ${className}`.trim()}>
-      <span
-        aria-hidden="true"
-        className="pixel-avatar grid h-[34px] w-[34px] place-items-center bg-brand-tint text-brand-dark"
-      >
-        <Logo className="h-5 w-5" />
-      </span>
+    <Link href="/" className={`flex items-center justify-center gap-2.5 ${className}`.trim()}>
+      <BrandMark large />
       {/* "SPLAT" stays as this element's own text rather than going into a
           third span, so the wordmark reads as one label with a coloured second
           word — which is how the board marks it up, and what a screen reader

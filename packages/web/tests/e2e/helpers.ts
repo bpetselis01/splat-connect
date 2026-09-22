@@ -137,6 +137,8 @@ export async function createTutorial(
     kind: 'toy_adaptation' | 'assistive_tech'
     /** true adds one optional part and one optional tool alongside the required pair. */
     withOptionalExtras: boolean
+    /** Hands-on minutes (066). Defaults to 30, since a submitted guide must have one. */
+    buildMinutes: number | null
   }> = {}
 ) {
   const admin = adminClient()
@@ -152,6 +154,7 @@ export async function createTutorial(
     // Fixtures model tutorials whose author already affirmed the safety
     // checklist — the declaration flow itself is upload-flow.spec's job.
     safety_declared_at: new Date().toISOString(),
+    build_minutes: overrides.buildMinutes === undefined ? 30 : overrides.buildMinutes,
     tutorial_pdf_url:
       overrides.withPdf === false ? null : `${id}/tutorial.pdf`,
     // Not toy_photo_url: 053 made it generated from photo_urls[1], and an

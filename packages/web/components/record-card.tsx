@@ -31,6 +31,7 @@ export function RecordCard({
   tint = 'var(--b100)',
   title,
   meta,
+  sub,
   pill,
   stages,
   onStageSelect,
@@ -46,6 +47,8 @@ export function RecordCard({
   title: ReactNode
   /** One line: parts · counterparty · when. Not two, and never a paragraph. */
   meta: ReactNode
+  /** An optional quieter line under the meta, e.g. "On behalf of <org>". */
+  sub?: ReactNode
   /** Status pill, right-aligned. Use <Badge/>, which already knows the tones. */
   pill?: ReactNode
   /** Omit entirely on a record with no process — do not render an empty rail. */
@@ -59,34 +62,33 @@ export function RecordCard({
   /** Right-aligned, past the spacer: the action this stage affords. */
   stageAction?: ReactNode
 }) {
-  // 22px, and deliberately not one of the four radii: §5 of the brief gives
-  // RecordCard its own. --e2 is paired with --hi, the inset highlight that keeps
-  // a card from reading as a flat rectangle on the canvas.
+  // The board's 24px card radius and 18px tile, value for value. --e2 is paired
+  // with --hi, the inset highlight that keeps a card from reading as a flat
+  // rectangle on the canvas.
   return (
     <article
-      className="flex flex-col gap-3.5 rounded-[22px] border border-line bg-surface p-5"
+      className="flex flex-col gap-3.5 rounded-[var(--radius-card)] border border-line bg-surface p-5"
       style={{ boxShadow: 'var(--shadow-e2), var(--shadow-hi)' }}
     >
       <div className="flex items-start gap-3.5">
         <span
           aria-hidden="true"
-          className="grid h-12 w-12 shrink-0 place-items-center rounded-[var(--radius-field)]"
-          // --b700 on the tile, not --tink: the duotone glyph is brand-deep on
-          // its own tint, which is what gives the tile its colour.
-          style={{ background: tint, color: 'var(--color-brand-deep)' }}
+          className="grid h-12 w-12 shrink-0 place-items-center rounded-[var(--radius-inset)]"
+          style={{ background: tint, color: 'var(--tink)' }}
         >
           {icon}
         </span>
         <div className="min-w-0 flex-1">
           <h3 className="font-display text-xl font-extrabold tracking-[-0.01em] text-ink">{title}</h3>
-          <p className="mt-1 truncate text-sm font-semibold text-muted">{meta}</p>
+          <p className="mt-[3px] truncate text-sm font-semibold text-muted">{meta}</p>
+          {sub ? <p className="mt-[3px] text-[13px] text-muted">{sub}</p> : null}
         </div>
         {pill ? <div className="shrink-0">{pill}</div> : null}
       </div>
 
       {stages?.length ? <StageRail stages={stages} onSelect={onStageSelect} /> : null}
 
-      {note ? <p className="truncate text-sm font-semibold text-muted">{note}</p> : null}
+      {note ? <p className="truncate text-sm text-muted">{note}</p> : null}
 
       {primary || secondary || stageAction ? (
         <div className="flex flex-wrap items-center gap-2">

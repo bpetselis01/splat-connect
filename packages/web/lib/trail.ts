@@ -20,15 +20,18 @@
  * names (docs/superpowers/specs/2026-09-17-artboard-screen-table.json), so the
  * trail and the picker cannot drift.
  *
- * Only the account section is modelled. Public pages keep the single "← Section"
- * eyebrow they already had (components/breadcrumb.tsx) — the rail never covered
- * them, so nothing about them changed.
+ * Public pages are modelled only where the board draws a trail: five child
+ * pages (an organisation request, an event, its registration, a recycling
+ * drop-off, a story). Every other public page has none — the header already
+ * says where you are.
  */
 import { ACCOUNT_NAV } from '@/lib/public-nav'
 
-export type Crumb = { label: string; href?: string }
+/** `icon` names the board's duotone glyph for a crumb; components/breadcrumb.tsx draws it. */
+export type Crumb = { label: string; href?: string; icon?: string }
 
-type Screen = { label: string; parent?: string }
+/** A screen with no `parent` is a root: its own trail is empty. */
+type Screen = { label: string; parent?: string; icon?: string }
 
 /**
  * Keys are route patterns: a `[x]` segment matches any single segment. Order
@@ -38,26 +41,26 @@ type Screen = { label: string; parent?: string }
  * `parent` is omitted only on the hub itself, which is where every trail ends.
  */
 const SCREENS: Record<string, Screen> = {
-  [ACCOUNT_NAV.href]: { label: ACCOUNT_NAV.label },
+  [ACCOUNT_NAV.href]: { label: ACCOUNT_NAV.label, icon: 'squares-four' },
 
   // Guides
-  '/dashboard/tutorials': { label: 'My tutorials', parent: '/dashboard' },
+  '/dashboard/tutorials': { label: 'My tutorials', parent: '/dashboard', icon: 'file-text' },
   '/upload': { label: 'Add a tutorial', parent: '/dashboard/tutorials' },
   '/tutorials/[x]/edit': { label: 'Tutorial editor', parent: '/dashboard/tutorials' },
 
   // Toys
-  '/dashboard/toys': { label: 'My toys', parent: '/dashboard' },
+  '/dashboard/toys': { label: 'My toys', parent: '/dashboard', icon: 'package' },
   '/dashboard/toys/new': { label: 'Add a toy', parent: '/dashboard/toys' },
   '/dashboard/toys/[x]': { label: 'Toy detail', parent: '/dashboard/toys' },
 
   // Exchanges
-  '/dashboard/exchanges': { label: 'My exchanges', parent: '/dashboard' },
+  '/dashboard/exchanges': { label: 'My exchanges', parent: '/dashboard', icon: 'handshake' },
   '/dashboard/exchanges/[x]': { label: 'Exchange thread', parent: '/dashboard/exchanges' },
-  '/dashboard/exchanges/build/[x]': { label: 'Build thread', parent: '/dashboard/exchanges' },
+  '/dashboard/exchanges/build/[x]': { label: 'Build thread', parent: '/dashboard' },
 
   // Challenges, saves, notifications
   '/dashboard/challenges': { label: 'My design challenges', parent: '/dashboard' },
-  '/dashboard/saved': { label: 'Saved', parent: '/dashboard' },
+  '/dashboard/saved': { label: 'Saved', parent: '/dashboard', icon: 'bookmark-simple' },
   '/dashboard/saved/[x]': { label: 'Saved', parent: '/dashboard/saved' },
   '/dashboard/saved/tutorials': { label: 'Saved tutorials', parent: '/dashboard/saved' },
   '/dashboard/saved/toys': { label: 'Saved toys', parent: '/dashboard/saved' },
@@ -67,27 +70,31 @@ const SCREENS: Record<string, Screen> = {
   '/notifications': { label: 'Notifications', parent: '/dashboard' },
 
   // Printing
-  '/dashboard/print-requests': { label: 'My print requests', parent: '/dashboard' },
+  '/dashboard/print-requests': { label: 'My print requests', parent: '/dashboard', icon: 'printer' },
   '/dashboard/print-requests/[x]': { label: 'Print job', parent: '/dashboard/print-requests' },
-  '/dashboard/printers': { label: 'Print for others', parent: '/dashboard' },
+  '/dashboard/printers': { label: 'Print for others', parent: '/dashboard', icon: 'printer' },
   '/dashboard/printers/new': { label: 'Add a printer', parent: '/dashboard/printers' },
 
   // Events
   '/dashboard/events': { label: 'My events', parent: '/dashboard' },
-  '/dashboard/org/events/[x]': { label: 'Manage event', parent: '/dashboard/events' },
+  '/dashboard/org/events/[x]': { label: 'Manage event', parent: '/dashboard' },
 
   // Account and children
   '/dashboard/profile': { label: 'Account', parent: '/dashboard' },
-  '/dashboard/child/new': { label: 'Add child', parent: '/dashboard/profile' },
-  '/dashboard/child/[x]': { label: 'Child profile', parent: '/dashboard/profile' },
+  '/dashboard/child/new': { label: 'Add child', parent: '/dashboard' },
+  '/dashboard/child/[x]': { label: 'Child profile', parent: '/dashboard' },
 
   // Organisation. The leader review screens live under /organizations in the
   // URL but belong to the org queue in the trail — sectionFor already resolves
   // them to the account section for the same reason.
-  '/dashboard/organisation': { label: 'Org review queue', parent: '/dashboard' },
+  '/dashboard/organisation': { label: 'Org review queue', parent: '/dashboard', icon: 'tray' },
   '/dashboard/organisation/profile': { label: 'Organisation profile', parent: '/dashboard/organisation' },
   '/dashboard/organisation/toys': { label: 'Toy inventory', parent: '/dashboard/organisation' },
-  '/dashboard/organisation/publish': { label: 'Events and stories', parent: '/dashboard/organisation' },
+  '/dashboard/organisation/publish': {
+    label: 'Events and stories',
+    parent: '/dashboard/organisation',
+    icon: 'megaphone',
+  },
   '/dashboard/organisation/events/new': { label: 'Publish an event', parent: '/dashboard/organisation/publish' },
   '/dashboard/organisation/stories/new': { label: 'Publish a story', parent: '/dashboard/organisation/publish' },
   '/dashboard/organisation/orders': { label: 'Print orders', parent: '/dashboard/organisation' },
@@ -96,12 +103,12 @@ const SCREENS: Record<string, Screen> = {
   '/organizations/[x]': { label: 'Organisation', parent: '/dashboard/organisation' },
   '/organizations/[x]/projects/[x]': { label: 'Guide review', parent: '/dashboard/organisation' },
 
-  // Admin
-  '/admin': { label: 'Admin dashboard', parent: '/dashboard' },
+  // Admin is its own root on the board: no "My SPLAT /" above it.
+  '/admin': { label: 'Admin dashboard', icon: 'shield-check' },
   '/admin/inbox': { label: 'Inbox', parent: '/admin' },
-  '/admin/review': { label: 'Review queue', parent: '/admin' },
+  '/admin/review': { label: 'Review queue', parent: '/admin', icon: 'clipboard-text' },
   '/admin/review/[x]': { label: 'Review a tutorial', parent: '/admin/review' },
-  '/admin/ideas': { label: 'Ideas queue', parent: '/admin' },
+  '/admin/ideas': { label: 'Ideas queue', parent: '/admin', icon: 'lightbulb' },
   '/admin/ideas/[x]': { label: 'Review an idea', parent: '/admin/ideas' },
   '/admin/build-requests': { label: 'Build requests', parent: '/admin' },
   '/admin/print-jobs': { label: 'Print jobs', parent: '/admin' },
@@ -111,6 +118,27 @@ const SCREENS: Record<string, Screen> = {
   '/admin/organizations': { label: 'Organisations', parent: '/admin' },
   '/admin/organization-requests': { label: 'Organisation requests', parent: '/admin' },
   '/admin/contributors': { label: 'Accounts', parent: '/admin' },
+
+  // Public — only the five child pages the board draws a trail over.
+  '/get-involved/organisations': { label: 'For organisations', icon: 'buildings' },
+  '/get-involved/organisations/request': {
+    label: 'Request an organisation',
+    parent: '/get-involved/organisations',
+  },
+  '/get-involved/events': { label: 'Events', icon: 'calendar-dots' },
+  '/get-involved/events/[x]': {
+    label: 'Event detail',
+    parent: '/get-involved/events',
+    icon: 'calendar-check',
+  },
+  '/get-involved/events/[x]/register': {
+    label: 'Register for an event',
+    parent: '/get-involved/events/[x]',
+  },
+  '/get-involved/recycling': { label: 'Recycling', icon: 'recycle' },
+  '/get-involved/recycling/drop-off': { label: 'Book a drop-off', parent: '/get-involved/recycling' },
+  '/about/stories': { label: 'Stories', icon: 'newspaper' },
+  '/about/stories/[x]': { label: 'Story', parent: '/about/stories' },
 }
 
 const PATTERNS = Object.keys(SCREENS).map((pattern) => ({
@@ -142,27 +170,35 @@ function match(pathname: string): string | undefined {
 
 /**
  * The trail for `pathname`, root first, or an empty array for a pathname this
- * does not model — including every public page and the hub itself, which has
- * nothing above it to point at.
+ * does not model — and for a root (the hub, /admin, a public parent), which
+ * has nothing above it to point at.
  */
 export function trailFor(pathname: string): Crumb[] {
   const start = match(pathname)
-  if (!start || start === ACCOUNT_NAV.href) return []
+  if (!start || !SCREENS[start].parent) return []
+  const parts = pathname.split('/').filter(Boolean)
 
   const crumbs: Crumb[] = []
   // The page itself carries no href: it is where you already are.
   crumbs.push({ label: SCREENS[start].label })
 
   const seen = new Set<string>([start])
-  let parent = SCREENS[start].parent
+  let parent: string | undefined = SCREENS[start].parent
   while (parent && SCREENS[parent] && !seen.has(parent)) {
     seen.add(parent)
-    // The parent's own href is its pattern, which is only usable as a link when
-    // it has no dynamic segment — a trail cannot invent an id. A parametrised
-    // ancestor renders as plain text instead of a dead link.
+    // A parametrised ancestor takes its id from the same position in the
+    // pathname — /get-involved/events/abc/register links up to
+    // /get-involved/events/abc. Where the positions do not line up (a review
+    // screen under /organizations whose parent is the org queue) there is no
+    // [x] to fill, so this only ever fills ids the URL actually carries.
+    const segs = parent
+      .split('/')
+      .filter(Boolean)
+      .map((seg, i) => (seg === '[x]' ? parts[i] : seg))
     crumbs.unshift({
       label: SCREENS[parent].label,
-      href: parent.includes('[x]') ? undefined : parent,
+      href: segs.every(Boolean) ? '/' + segs.join('/') : undefined,
+      icon: SCREENS[parent].icon,
     })
     parent = SCREENS[parent].parent
   }

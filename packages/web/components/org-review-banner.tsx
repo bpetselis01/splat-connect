@@ -16,12 +16,50 @@
  */
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { WarningCircle } from '@phosphor-icons/react/dist/ssr'
 import { TermsGate } from '@/components/terms-gate'
 
-export function OrgReviewBanner() {
+/**
+ * `strip` is the dashboard queue's one-line form from the board: the sentence
+ * and a "Read and accept" button that opens the same TermsGate, so there is
+ * still exactly one acceptance control.
+ */
+export function OrgReviewBanner({ variant = 'block' }: { variant?: 'block' | 'strip' }) {
   const [accepted, setAccepted] = useState(false)
+  const [open, setOpen] = useState(false)
   const router = useRouter()
   if (accepted) return null
+
+  const gate = (
+    <TermsGate
+      type="org_leader_terms"
+      onAccepted={() => {
+        setAccepted(true)
+        router.refresh()
+      }}
+    />
+  )
+
+  if (variant === 'strip') {
+    return (
+      <div className="mb-[18px] flex flex-wrap items-center gap-3.5 rounded-[18px] border-[length:var(--bw)] border-line bg-[var(--tamber)] px-5 py-[18px]">
+        <WarningCircle weight="duotone" aria-hidden="true" className="shrink-0 text-[26px] text-[var(--tink)]" />
+        <p className="min-w-60 flex-1 text-sm font-bold leading-normal text-[var(--tink)]">
+          You have not accepted the leader terms. You can read the queue, but not approve anything.
+        </p>
+        {!open && (
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="btn min-h-11 shrink-0 bg-ink px-[18px] text-sm text-surface"
+          >
+            Read and accept
+          </button>
+        )}
+        {open && <div className="basis-full">{gate}</div>}
+      </div>
+    )
+  }
 
   return (
     <div className="alert alert-warning">
@@ -32,13 +70,7 @@ export function OrgReviewBanner() {
         on the platform&apos;s behalf, and the fact that you can read
         members&apos; unpublished drafts.
       </p>
-      <TermsGate
-        type="org_leader_terms"
-        onAccepted={() => {
-          setAccepted(true)
-          router.refresh()
-        }}
-      />
+      {gate}
     </div>
   )
 }

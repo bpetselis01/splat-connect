@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { Nunito, JetBrains_Mono, Baloo_2 } from 'next/font/google'
-import { headers } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 import './globals.css'
 import { Nav } from '@/components/nav'
 import { getCapabilities } from '@/lib/capabilities'
@@ -9,6 +9,7 @@ import { Breadcrumb } from '@/components/breadcrumb'
 import { PixelBackdrop } from '@/components/pixel-backdrop'
 import { BackToMySplatDock } from '@/components/back-to-my-splat-dock'
 import { sectionFor, ACCOUNT_NAV } from '@/lib/public-nav'
+import { MODE_COOKIE, MOTION_COOKIE, parseMode, parseMotion } from '@/lib/display-prefs'
 
 // Nunito carries UI text, labels, buttons and card titles. It is still the
 // mobile app's family (packages/mobile/lib/theme.ts), which is what keeps the
@@ -60,9 +61,11 @@ export const metadata: Metadata = {
     'Open-source tutorials for switch-adapting toys for children with disabilities',
 }
 
-/** Routes that must never show the shell. A rail on the contributor-terms
-    gate is an escape hatch out of a gate — every link bounces straight back. */
-const BARE_PREFIXES = ['/login', '/signup', '/auth', '/onboarding']
+/** Routes that must never show the shell. A nav on the contributor-terms
+    gate is an escape hatch out of a gate — every link bounces straight back.
+    /login and /signup left this list on 2026-09-18: the board draws the site
+    header on both, and a sign-in page is somewhere anyone may leave. */
+const BARE_PREFIXES = ['/auth', '/onboarding']
 
 /** Exported for tests: the layout is async and reads headers(), so the rule is
     verified here rather than by rendering the whole tree. */
@@ -71,7 +74,7 @@ export function isBare(pathname: string): boolean {
 }
 
 /** Exported for tests, exactly as isBare is: whether this route is inside the
-    account section, and therefore takes the header's quiet variant. */
+    account section — the breadcrumb is withheld there from a signed-out visitor. */
 export function isAccountRoute(pathname: string): boolean {
   return !isBare(pathname) && sectionFor(pathname) === ACCOUNT_NAV
 }
@@ -88,6 +91,15 @@ export default async function RootLayout({
   // The whole public surface gets its section's shapes behind it. Doing this in
   // the layout rather than per page is why it costs nothing to add a page.
   const tone = sectionFor(pathname)?.tone ?? 'brand'
+  // The header's display toggles, applied here so the first paint is already
+  // in the chosen mode. Light and full motion are the absence of an attribute.
+  const jar = await cookies()
+  const mode = parseMode(jar.get(MODE_COOKIE)?.value)
+  const motion = parseMotion(jar.get(MOTION_COOKIE)?.value)
+  const bodyModes = {
+    'data-mode': mode === 'light' ? undefined : mode,
+    'data-motion': motion === 'reduced' ? motion : undefined,
+  }
 
   if (bare) {
     // Same scaffolding as the non-bare branch below, minus the three pieces
@@ -99,7 +111,7 @@ export default async function RootLayout({
     // branch, caught in the final review round.
     return (
       <html lang="en" className={`${nunito.variable} ${jetbrainsMono.variable} ${baloo.variable}`}>
-        <body className="min-h-screen font-sans antialiased">
+        <body className="min-h-screen font-sans antialiased" {...bodyModes}>
           <div className="pixel">
             <a
               href="#main"
@@ -128,7 +140,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en" className={`${nunito.variable} ${jetbrainsMono.variable} ${baloo.variable}`}>
-      <body className="min-h-screen font-sans antialiased">
+      <body className="min-h-screen font-sans antialiased" {...bodyModes}>
         <div className="pixel">
           {/* WCAG 2.4.1 — one skip link for the whole app, since there is now
               exactly one path to <main>. */}
@@ -138,10 +150,7 @@ export default async function RootLayout({
           >
             Skip to main content
           </a>
-          {/* quiet tracks account-section membership (isAccountRoute): the
-              header renders in its quiet register across My SPLAT and every
-              page under it. */}
-          <Nav caps={caps} quiet={account} />
+          <Nav caps={caps} mode={mode} motion={motion} />
           <div className="relative overflow-x-clip">
             <PixelBackdrop tone={tone} />
             <main id="main" tabIndex={-1} className="public-shell relative py-8 sm:py-10">

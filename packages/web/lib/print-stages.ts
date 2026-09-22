@@ -36,7 +36,7 @@ export function printStages(tx: Row): Stage[] {
   const ended = shortDate(tx.updated_at)
   const asked: Stage = {
     key: 'asked',
-    label: 'Asked',
+    label: 'Requested',
     caption: `Sent ${shortDate(tx.created_at)}`,
     state: 'done',
   }

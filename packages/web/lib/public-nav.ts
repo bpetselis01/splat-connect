@@ -48,6 +48,8 @@ export interface NavItem {
    * icon to give.
    */
   icon?: IconName
+  /** The tile variant's icon-square colour, when a card has its own (My SPLAT). */
+  tint?: string
   /** Set on 'soon' items only — the allowlisted key POST /api/public/notify accepts. */
   featureKey?: string
 }
