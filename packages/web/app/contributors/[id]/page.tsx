@@ -115,7 +115,10 @@ export default async function ContributorPage({
         <div className="flex flex-wrap items-start gap-x-6 gap-y-[22px] px-8 pb-[26px]">
           <span
             aria-hidden="true"
-            className="-mt-[52px] grid h-[120px] w-[120px] shrink-0 place-items-center rounded-full border-4 border-surface font-display text-4xl font-extrabold text-[var(--tink)]"
+            // relative: the cover above is positioned for its dot pattern, so
+            // without this it paints over the half of the portrait that
+            // overlaps it and the initials come out clipped.
+            className="relative -mt-[52px] grid h-[120px] w-[120px] shrink-0 place-items-center rounded-full border-4 border-surface font-display text-4xl font-extrabold text-[var(--tink)]"
             style={{ background: tint, boxShadow: 'var(--shadow-e3)' }}
           >
             {initials(contributor.name)}
