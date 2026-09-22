@@ -39,8 +39,9 @@ import Link from 'next/link'
 import type { Route } from 'next'
 import { apiClient } from '@/lib/api-client'
 import { isApiError } from '@/lib/api-core'
-import { Badge, IDEA_LABEL } from '@/components/badge'
-import { Check, X } from '@/components/icons'
+import { CheckCircle, Clock, Megaphone, XCircle, PencilLine } from '@phosphor-icons/react/dist/ssr'
+import { X } from '@/components/icons'
+import { shortDate } from '@/lib/dates'
 import type { ToyIdea, ContactPref } from '@splat-connect/types'
 
 type Admin = ToyIdea & { profiles: { name: string } | null }
@@ -106,130 +107,158 @@ export default async function AdminIdeaPage({ params }: { params: Promise<{ id: 
   const idea = all!.find((i) => i.id === id)
   if (!idea) notFound()
 
+  const pill =
+    idea.status === 'pending'
+      ? { tint: 'var(--tamber)', icon: Clock, text: 'Pending' }
+      : idea.status === 'challenge'
+        ? { tint: 'var(--tok)', icon: CheckCircle, text: 'Published as a challenge' }
+        : idea.status === 'graduated'
+          ? { tint: 'var(--b100)', icon: PencilLine, text: 'Being written up' }
+          : { tint: 'var(--tbad)', icon: XCircle, text: 'Rejected' }
+  const by = idea.profiles?.name ?? 'Someone'
+
   return (
-    <div className="max-w-2xl">
-      <div className="mb-2 flex flex-wrap items-center gap-3">
-        <h1 className="title-detail">{idea.title}</h1>
-        <Badge status={idea.status} label={IDEA_LABEL[idea.status]} />
+    <div className="grid max-w-[1140px] grid-cols-1 items-start gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="min-w-0">
+        <span
+          className="inline-flex items-center gap-2 rounded-full px-3 py-[5px] text-[13px] font-extrabold text-ink"
+          style={{ background: pill.tint }}
+        >
+          <pill.icon size={16} weight="fill" aria-hidden="true" />
+          {pill.text} · submitted by {by}
+          {idea.created_at && ` on ${shortDate(idea.created_at)}`}
+        </span>
+        <h1 className="title-hub mt-3">{idea.title}</h1>
+        <p className="mt-3 max-w-[58ch] text-lg text-muted">{idea.summary}</p>
+
+        <h2 className="mt-7 mb-2 font-display text-[22px] font-extrabold text-ink">Why it matters</h2>
+        <p className="max-w-[62ch] text-ink">{idea.description}</p>
+
+        <h2 className="mt-7 mb-3 font-display text-[22px] font-extrabold text-ink">Details given</h2>
+        <dl className="grid max-w-[520px] grid-cols-[auto_1fr] gap-x-5 gap-y-2.5 text-[15px]">
+          <dt className="font-semibold text-muted">Intended use</dt>
+          <dd className="font-extrabold text-ink">{idea.intended_use}</dd>
+          <dt className="font-semibold text-muted">Who it&apos;s for</dt>
+          <dd className="font-extrabold text-ink">{idea.primary_user}</dd>
+          {idea.contact_prefs.length > 0 && (
+            <>
+              <dt className="font-semibold text-muted">Happy to be contacted for</dt>
+              <dd className="flex flex-wrap gap-x-3 font-extrabold text-ink">
+                {idea.contact_prefs.map((pref) => (
+                  <span key={pref}>{CONTACT_PREF_LABELS[pref]}</span>
+                ))}
+              </dd>
+            </>
+          )}
+        </dl>
       </div>
-      <p className="mb-6 text-sm text-muted">
-        Submitted by <strong className="text-ink">{idea.profiles?.name ?? 'Someone'}</strong> on{' '}
-        {new Date(idea.created_at).toLocaleDateString()}
-      </p>
 
-      <p className="mb-6 text-base font-semibold leading-relaxed text-ink">{idea.summary}</p>
+      <aside className="flex flex-col gap-4 lg:sticky lg:top-6">
+        <div className="admin-panel">
+          <p className="admin-kicker">Decision</p>
 
-      <dl className="mb-6 flex flex-col gap-4 text-sm">
-        <div>
-          <dt className="font-semibold text-ink">Description</dt>
-          <dd className="mt-1 leading-relaxed text-muted">{idea.description}</dd>
-        </div>
-        <div>
-          <dt className="font-semibold text-ink">Intended use</dt>
-          <dd className="mt-1 leading-relaxed text-muted">{idea.intended_use}</dd>
-        </div>
-        <div>
-          <dt className="font-semibold text-ink">Who it&apos;s for</dt>
-          <dd className="mt-1 leading-relaxed text-muted">{idea.primary_user}</dd>
-        </div>
-      </dl>
-
-      {idea.contact_prefs.length > 0 && (
-        <div className="mb-6">
-          <p className="field-label">Happy to be contacted for</p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {idea.contact_prefs.map((pref) => (
-              <span key={pref} className="chip">
-                {CONTACT_PREF_LABELS[pref]}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {idea.status === 'graduated' && idea.tutorial_id && (
-        <p className="alert mb-6">
-          Graduated —{' '}
-          <Link
-            href={`/admin/review/${idea.tutorial_id}` as Route<string>}
-            className="font-semibold underline"
-          >
-            view the draft guide
-          </Link>
-          .
-        </p>
-      )}
-
-      {/* IMPORTANT 6 — the documented worst case: the status claim in
-          POST .../graduate succeeded but the tutorial insert or link-back
-          failed partway. Detection only, no repair action here; see the
-          route's own doc comment for how this state is fixed by hand. */}
-      {idea.status === 'graduated' && !idea.tutorial_id && (
-        <p className="alert alert-danger mb-6">
-          Graduation did not complete — this challenge is marked graduated,
-          but no draft guide was created. It needs manual repair.
-        </p>
-      )}
-
-      {idea.status === 'rejected' && (
-        <p className="alert alert-danger mb-6">
-          Rejected{idea.review_note ? `: ${idea.review_note}` : '.'}
-        </p>
-      )}
-
-      <div className="flex flex-col gap-4 border-t border-line pt-6">
-        {idea.status === 'pending' && (
-          <>
-            <form action={publishAsChallenge.bind(null, idea.id)}>
-              <button
-                type="submit"
-                className="btn btn-block bg-success-deep text-white shadow-e2 hover:brightness-90"
+          {idea.status === 'graduated' && idea.tutorial_id && (
+            <p className="alert">
+              Graduated —{' '}
+              <Link
+                href={`/admin/review/${idea.tutorial_id}` as Route<string>}
+                className="font-semibold underline"
               >
-                <Check /> Publish as challenge
-              </button>
-            </form>
+                view the draft guide
+              </Link>
+              .
+            </p>
+          )}
 
-            <form action={rejectIdea} className="flex flex-col gap-2">
-              <input type="hidden" name="id" value={idea.id} />
-              <label htmlFor="reject-note" className="field-label">
-                Why isn&apos;t this going forward?
-              </label>
-              <textarea id="reject-note" name="note" rows={3} required className="field" />
-              <button type="submit" className="btn btn-danger btn-block">
-                <X /> Reject
-              </button>
-            </form>
-          </>
-        )}
+          {/* IMPORTANT 6 — the documented worst case: the status claim in
+              POST .../graduate succeeded but the tutorial insert or link-back
+              failed partway. Detection only, no repair action here; see the
+              route's own doc comment for how this state is fixed by hand. */}
+          {idea.status === 'graduated' && !idea.tutorial_id && (
+            <p className="alert alert-danger">
+              Graduation did not complete — this challenge is marked graduated, but no draft
+              guide was created. It needs manual repair.
+            </p>
+          )}
 
-        {idea.status === 'challenge' && (
-          <>
-            <form action={graduateIdea.bind(null, idea.id)}>
-              <p className="mb-2 max-w-prose text-sm leading-relaxed text-muted">
-                Graduating starts a draft guide from this brief and copies every
-                participant across as a contributor. It only happens once.
-              </p>
-              <button
-                type="submit"
-                className="btn btn-block bg-success-deep text-white shadow-e2 hover:brightness-90"
-              >
-                Graduate to draft guide
-              </button>
-            </form>
+          {idea.status === 'rejected' && (
+            <p className="alert alert-danger">
+              Rejected{idea.review_note ? `: ${idea.review_note}` : '.'}
+            </p>
+          )}
 
-            <form action={rejectIdea} className="flex flex-col gap-2">
-              <input type="hidden" name="id" value={idea.id} />
-              <label htmlFor="unpublish-note" className="field-label">
-                Why is this being withdrawn?
-              </label>
-              <textarea id="unpublish-note" name="note" rows={3} required className="field" />
-              <button type="submit" className="btn btn-danger btn-block">
-                <X /> Unpublish
-              </button>
-            </form>
-          </>
-        )}
-      </div>
+          {idea.status === 'pending' && (
+            <div className="flex flex-col gap-3">
+              <form action={publishAsChallenge.bind(null, idea.id)}>
+                <button type="submit" className="btn btn-primary btn-ok btn-block">
+                  <Megaphone size={18} weight="bold" aria-hidden="true" /> Publish as a challenge
+                </button>
+              </form>
+
+              <form action={rejectIdea} className="mt-1 flex flex-col gap-3">
+                <input type="hidden" name="id" value={idea.id} />
+                <label htmlFor="reject-note" className="block">
+                  <span className="mb-[7px] block text-sm font-extrabold text-ink">
+                    Reason for rejecting
+                  </span>
+                  <textarea
+                    id="reject-note"
+                    name="note"
+                    rows={4}
+                    required
+                    placeholder="Only the author sees this."
+                    className="field bg-canvas"
+                  />
+                </label>
+                <button type="submit" className="btn btn-danger btn-block">
+                  <X /> Reject
+                </button>
+              </form>
+            </div>
+          )}
+
+          {idea.status === 'challenge' && (
+            <div className="flex flex-col gap-3">
+              <form action={graduateIdea.bind(null, idea.id)}>
+                <p className="mb-3 text-sm leading-relaxed text-muted">
+                  Graduating starts a draft guide from this brief and copies every participant
+                  across as a contributor. It only happens once.
+                </p>
+                <button type="submit" className="btn btn-primary btn-ok btn-block">
+                  Graduate to draft guide
+                </button>
+              </form>
+
+              <form action={rejectIdea} className="mt-1 flex flex-col gap-3">
+                <input type="hidden" name="id" value={idea.id} />
+                <label htmlFor="unpublish-note" className="block">
+                  <span className="mb-[7px] block text-sm font-extrabold text-ink">
+                    Why is this being withdrawn?
+                  </span>
+                  <textarea
+                    id="unpublish-note"
+                    name="note"
+                    rows={3}
+                    required
+                    placeholder="Only the author sees this."
+                    className="field bg-canvas"
+                  />
+                </label>
+                <button type="submit" className="btn btn-danger btn-block">
+                  <X /> Unpublish
+                </button>
+              </form>
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-[18px] border-[length:var(--bw)] border-line bg-[var(--b50)] px-[22px] py-5">
+          <p className="text-sm leading-[1.55] text-muted">
+            A published challenge gets a public brief and a thread. A rejected idea stays visible
+            to its author, with your reason, and nowhere else.
+          </p>
+        </div>
+      </aside>
     </div>
   )
 }

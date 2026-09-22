@@ -12,9 +12,9 @@ export default async function AdminReportsPage() {
     .catch(() => [] as MemberReport[])
 
   return (
-    <div>
+    <div className="max-w-[1000px]">
       <h1 className="title-hub">Reports</h1>
-      <p className="mb-6 mt-2 max-w-prose text-sm leading-relaxed text-muted">
+      <p className="mt-1.5 mb-[22px] max-w-[62ch] text-base text-muted">
         Private problem reports from members. Safety sits at the top whatever its age. The person
         reported is never told who filed it.
       </p>

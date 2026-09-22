@@ -54,7 +54,7 @@ describe('admin design-challenge detail page', () => {
     const { default: Page } = await import('@/app/admin/ideas/[id]/page')
     render(await Page({ params: params() }))
 
-    expect(screen.getByLabelText(/isn.t this going forward/i)).toBeRequired()
+    expect(screen.getByLabelText(/Reason for rejecting/i)).toBeRequired()
   })
 
   // Tests: the actual guard behind the reject path — rejectNoteFrom, which

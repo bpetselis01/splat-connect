@@ -13,7 +13,13 @@
  */
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Warning, Buildings, BookOpen, ChatCircle, Check } from '@phosphor-icons/react/dist/ssr'
+import {
+  WarningCircle,
+  Buildings,
+  BookOpenText,
+  ChatCircleDots,
+  ArrowBendUpLeft,
+} from '@phosphor-icons/react/dist/ssr'
 import { browserApiClient } from '@/lib/browser-api-client'
 import { formatRelativeTime } from '@/lib/relative-time'
 
@@ -27,11 +33,12 @@ export type ContactMessage = {
   created_at: string
 }
 
+// The board's topic tints.
 const TOPIC = {
-  safety: { label: 'Safety report', icon: Warning, tone: 'bg-danger-soft text-ink' },
-  organisation: { label: 'My organisation', icon: Buildings, tone: 'bg-brand-tint text-brand-deep' },
-  guide: { label: 'A guide', icon: BookOpen, tone: 'bg-honey-soft text-ink' },
-  other: { label: 'Something else', icon: ChatCircle, tone: 'bg-sunken text-muted' },
+  safety: { label: 'Safety report', icon: WarningCircle, tint: 'var(--tcoral)' },
+  organisation: { label: 'My organisation', icon: Buildings, tint: 'var(--tviolet)' },
+  guide: { label: 'A guide', icon: BookOpenText, tint: 'var(--b100)' },
+  other: { label: 'Something else', icon: ChatCircleDots, tint: 'var(--surface2)' },
 } as const
 
 const TABS = ['open', 'replied', 'closed'] as const
@@ -60,7 +67,7 @@ export function AdminInbox({ messages }: { messages: ContactMessage[] }) {
 
   return (
     <div>
-      <div role="tablist" aria-label="Message status" className="flex flex-wrap gap-2">
+      <div role="tablist" aria-label="Message status" className="seg-tabs mb-[18px]">
         {TABS.map((t) => (
           <button
             key={t}
@@ -70,44 +77,50 @@ export function AdminInbox({ messages }: { messages: ContactMessage[] }) {
             // latter, and two conflicting states read worse than one.
             aria-selected={tab === t}
             onClick={() => setTab(t)}
-            className="chip"
-            data-on={tab === t ? 'true' : undefined}
           >
-            {t[0].toUpperCase() + t.slice(1)} {messages.filter((m) => m.status === t).length}
+            {t[0].toUpperCase() + t.slice(1)}{' '}
+            <span className="opacity-60">{messages.filter((m) => m.status === t).length}</span>
           </button>
         ))}
       </div>
 
       {error && (
-        <p role="alert" className="alert alert-danger mt-4">
+        <p role="alert" className="alert alert-danger mb-4">
           {error}
         </p>
       )}
 
       {shown.length === 0 ? (
-        <p className="card mt-6 p-6 text-sm text-muted">Nothing {tab}.</p>
+        <p className="rounded-card border-[length:var(--bw)] border-dashed border-line bg-surface p-9 text-center text-muted">
+          Nothing here.
+        </p>
       ) : (
-        <ul className="mt-6 flex list-none flex-col gap-3">
+        <ul className="grid list-none gap-2.5">
           {shown.map((m) => {
             const topic = TOPIC[m.topic]
+            const urgent = m.topic === 'safety' && m.status === 'open'
             return (
-              <li key={m.id} className="card flex flex-col gap-3 p-5 sm:flex-row sm:items-start">
-                <span className={`badge shrink-0 ${topic.tone}`}>
-                  <topic.icon className="h-3.5 w-3.5" aria-hidden="true" />
+              <li
+                key={m.id}
+                className="admin-row flex flex-col gap-4 sm:grid sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-start"
+                style={urgent ? { borderColor: 'var(--coral)' } : undefined}
+              >
+                <span className="admin-tag self-start py-[5px]" style={{ background: topic.tint }}>
+                  <topic.icon size={14} weight="bold" aria-hidden="true" />
                   {topic.label}
                 </span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-bold text-ink">
+                <div className="min-w-0">
+                  <p className="text-[15px] font-extrabold text-ink">
                     {m.name}{' '}
                     <span className="font-semibold text-muted">
                       · {formatRelativeTime(m.created_at)}
                     </span>
                   </p>
-                  <p className="mt-1 text-sm leading-relaxed text-ink">{m.body}</p>
+                  <p className="mt-1 text-sm leading-normal text-ink">{m.body}</p>
                   {/* The reply route. A mailto rather than a form, because that
                       is what the contact page promises and a half-ticketing
                       system would be a worse version of both. */}
-                  <p className="mt-2">
+                  <p className="mt-1.5">
                     <a
                       href={`mailto:${m.email}?subject=${encodeURIComponent('Re: your message to SPLAT Connect')}`}
                       className="text-sm font-semibold text-brand-dark hover:underline"
@@ -117,14 +130,14 @@ export function AdminInbox({ messages }: { messages: ContactMessage[] }) {
                   </p>
                 </div>
                 <div className="flex shrink-0 gap-2">
-                  {m.status !== 'replied' && (
+                  {m.status === 'open' && (
                     <button
                       type="button"
                       disabled={busy === m.id}
                       onClick={() => setStatus(m.id, 'replied')}
-                      className="btn btn-quiet btn-sm"
+                      className="btn btn-primary btn-md"
                     >
-                      <Check className="h-4 w-4" aria-hidden="true" />
+                      <ArrowBendUpLeft size={16} weight="bold" aria-hidden="true" />
                       Replied
                     </button>
                   )}
@@ -133,7 +146,7 @@ export function AdminInbox({ messages }: { messages: ContactMessage[] }) {
                       type="button"
                       disabled={busy === m.id}
                       onClick={() => setStatus(m.id, 'closed')}
-                      className="btn btn-quiet btn-sm"
+                      className="btn btn-quiet btn-md"
                     >
                       Close
                     </button>
@@ -142,7 +155,7 @@ export function AdminInbox({ messages }: { messages: ContactMessage[] }) {
                       type="button"
                       disabled={busy === m.id}
                       onClick={() => setStatus(m.id, 'open')}
-                      className="btn btn-quiet btn-sm"
+                      className="btn btn-quiet btn-md"
                     >
                       Reopen
                     </button>

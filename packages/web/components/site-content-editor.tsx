@@ -24,7 +24,15 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { FloppyDisk, Warning } from '@phosphor-icons/react/dist/ssr'
+import {
+  Check,
+  GraduationCap,
+  House,
+  Lightning,
+  PencilSimple,
+  Scroll,
+  UsersThree,
+} from '@phosphor-icons/react/dist/ssr'
 import { browserApiClient } from '@/lib/browser-api-client'
 import { ProfileTabs } from '@/components/profile-tabs'
 
@@ -56,42 +64,19 @@ const LEGAL = [
   { href: '/legal/org-leader-terms', label: 'Organisation leader terms' },
 ] as const
 
+// The board's section card and its heading, shared by every tab.
+const SECTION = 'flex flex-col gap-3.5 rounded-card border-[length:var(--bw)] border-line bg-surface p-[22px] shadow-[var(--shadow-e2),var(--shadow-hi)]'
+const SECTION_H = 'm-0 font-display text-[22px] font-extrabold text-ink'
+const SECTION_P = 'mt-1.5 max-w-[62ch] text-sm leading-normal text-muted'
+const LABEL = 'mb-[7px] block text-sm font-extrabold text-ink'
+const INPUT = 'field h-[50px] bg-canvas'
+
 const EMPTY_HERO: Hero = {
   eyebrow: '',
   headline: '',
   subhead: '',
   primary_label: '',
   secondary_label: '',
-}
-
-/**
- * Module scope, not inside the editor.
- *
- * A component declared inside a render is a new type on every pass, so React
- * unmounts and remounts its whole subtree — which on a form means a text field
- * losing focus mid-word. Same rule as components/printer-row.tsx's JobRow
- * (react-hooks/static-components).
- */
-function SaveButton({
-  label,
-  saving,
-  saved,
-  onSave,
-}: {
-  label: string
-  saving: boolean
-  saved: boolean
-  onSave: () => void
-}) {
-  return (
-    <div className="mt-4 flex items-center gap-3">
-      <button type="button" onClick={onSave} disabled={saving} className="btn btn-primary btn-sm">
-        <FloppyDisk className="h-4 w-4" aria-hidden="true" />
-        {saving ? 'Saving…' : `Save ${label}`}
-      </button>
-      {saved && <span className="text-sm font-semibold text-muted">Saved</span>}
-    </div>
-  )
 }
 
 export function SiteContentEditor({ rows }: { rows: ContentRow[] }) {
@@ -110,13 +95,16 @@ export function SiteContentEditor({ rows }: { rows: ContentRow[] }) {
   const [error, setError] = useState<string | null>(null)
   const [, startTransition] = useTransition()
 
-  async function save(key: string, value: unknown) {
+  // The board's one "Save changes" saves the section you are in — on the
+  // home tab, that is both rows.
+  async function saveHome() {
     setError(null)
     setSaved(null)
-    setSaving(key)
+    setSaving('home')
     try {
-      await browserApiClient.put(`/api/admin/content/${key}`, { value })
-      setSaved(key)
+      await browserApiClient.put('/api/admin/content/home-hero', { value: hero })
+      await browserApiClient.put('/api/admin/content/home-numbers', { value: numbers })
+      setSaved('home')
       startTransition(() => router.refresh())
     } catch (e) {
       setError(e instanceof Error ? e.message : 'That did not save. Try once more.')
@@ -124,6 +112,27 @@ export function SiteContentEditor({ rows }: { rows: ContentRow[] }) {
       setSaving(null)
     }
   }
+
+  const heroField = (key: keyof Hero, label: string) => (
+    <label key={key} className="block">
+      <span className={LABEL}>{label}</span>
+      {key === 'subhead' ? (
+        <textarea
+          value={hero[key]}
+          onChange={(e) => setHero({ ...hero, [key]: e.target.value })}
+          rows={2}
+          className="field bg-canvas leading-[1.55]"
+        />
+      ) : (
+        <input
+          value={hero[key]}
+          onChange={(e) => setHero({ ...hero, [key]: e.target.value })}
+          className={INPUT}
+        />
+      )}
+    </label>
+  )
+  const label = (key: keyof Hero) => HERO_FIELDS.find((f) => f.key === key)!.label
 
   return (
     <div>
@@ -133,180 +142,210 @@ export function SiteContentEditor({ rows }: { rows: ContentRow[] }) {
         </p>
       )}
 
-      <ProfileTabs
-        tabs={[
-          {
-            key: 'home',
-            label: 'Home page',
-            content: (
-              <div className="flex flex-col gap-6">
-                <section className="card p-5">
-                  <h2 className="font-display text-xl font-extrabold text-ink">The opening</h2>
-                  <div className="mt-3 flex flex-col gap-4">
-                    {HERO_FIELDS.map((f) => (
-                      <label key={f.key} className="block">
-                        <span className="mb-1.5 block text-sm font-bold text-ink">{f.label}</span>
-                        {f.key === 'subhead' ? (
-                          <textarea
-                            value={hero[f.key]}
-                            onChange={(e) => setHero({ ...hero, [f.key]: e.target.value })}
-                            rows={3}
-                            className="field"
-                          />
-                        ) : (
-                          <input
-                            value={hero[f.key]}
-                            onChange={(e) => setHero({ ...hero, [f.key]: e.target.value })}
-                            className="field"
-                          />
-                        )}
-                      </label>
-                    ))}
-                  </div>
-                  <SaveButton
-                    label="the opening"
-                    saving={saving === 'home-hero'}
-                    saved={saved === 'home-hero'}
-                    onSave={() => save('home-hero', hero)}
-                  />
-                </section>
+      <div className="mt-6">
+        <ProfileTabs
+          variant="segmented"
+          label="Content sections"
+          tabs={[
+            {
+              key: 'home',
+              label: 'Home page',
+              icon: <House size={18} weight="duotone" aria-hidden="true" />,
+              content: (
+                <div className="flex flex-col gap-5">
+                  <section className={`${SECTION} gap-4`}>
+                    <h2 className={SECTION_H}>The opening</h2>
+                    <div className="grid gap-3 sm:grid-cols-[200px_minmax(0,1fr)]">
+                      {heroField('eyebrow', label('eyebrow'))}
+                      {heroField('headline', label('headline'))}
+                    </div>
+                    {heroField('subhead', label('subhead'))}
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {heroField('primary_label', label('primary_label'))}
+                      {heroField('secondary_label', label('secondary_label'))}
+                    </div>
+                  </section>
 
-                <section className="card p-5">
-                  <h2 className="font-display text-xl font-extrabold text-ink">The three numbers</h2>
-                  <p className="mt-1 text-sm leading-relaxed text-muted">
-                    Counted live by default. Pin one only if the live count is wrong or
-                    embarrassing, and say so in the source line — a pinned number is a claim
-                    someone has to stand behind.
-                  </p>
-                  <ul className="mt-3 flex list-none flex-col gap-3">
-                    {(Object.keys(numbers) as Array<keyof Numbers>).map((k) => {
-                      const spec = numbers[k]
-                      if (!spec) return null
-                      return (
-                        <li
-                          key={k}
-                          className="flex flex-wrap items-center gap-3 rounded-card border border-line p-3"
-                        >
-                          <span className="min-w-0 flex-1">
-                            <span className="block font-bold text-ink">{spec.label}</span>
-                            <input
-                              aria-label={`${spec.label} source`}
-                              value={spec.source}
-                              onChange={(e) =>
-                                setNumbers({ ...numbers, [k]: { ...spec, source: e.target.value } })
-                              }
-                              className="field mt-1 text-xs"
-                            />
-                          </span>
-                          {!spec.live && (
-                            <input
-                              type="number"
-                              aria-label={`${spec.label} value`}
-                              value={spec.pinned ?? ''}
-                              onChange={(e) =>
-                                setNumbers({
-                                  ...numbers,
-                                  [k]: {
-                                    ...spec,
-                                    pinned: e.target.value === '' ? null : Number(e.target.value),
-                                  },
-                                })
-                              }
-                              className="field w-24 font-mono tabular-nums"
-                            />
-                          )}
-                          <button
-                            type="button"
-                            role="switch"
-                            aria-checked={spec.live}
-                            onClick={() =>
-                              setNumbers({ ...numbers, [k]: { ...spec, live: !spec.live } })
-                            }
-                            // aria-checked, not aria-pressed: role="switch"
-                            // does not support the latter, and two conflicting
-                            // states is worse than one.
-                            className="chip"
-                            data-on={spec.live ? 'true' : undefined}
+                  <section className={SECTION}>
+                    <div>
+                      <h2 className={SECTION_H}>The three numbers</h2>
+                      <p className={SECTION_P}>
+                        Counted live by default. Pin one only if the live count is wrong or
+                        embarrassing, and say so in the source line — a pinned number is a claim
+                        someone has to stand behind.
+                      </p>
+                    </div>
+                    <ul className="flex list-none flex-col gap-2.5">
+                      {(Object.keys(numbers) as Array<keyof Numbers>).map((k) => {
+                        const spec = numbers[k]
+                        if (!spec) return null
+                        return (
+                          <li
+                            key={k}
+                            className="flex flex-wrap items-center gap-3 rounded-[18px] border-2 px-4 py-3.5"
+                            style={{
+                              borderColor: spec.live ? 'var(--b600)' : 'var(--line)',
+                              background: spec.live ? 'var(--b50)' : 'var(--canvas)',
+                            }}
                           >
-                            {spec.live ? 'Counted live' : 'Pinned by hand'}
-                          </button>
-                        </li>
-                      )
-                    })}
-                  </ul>
-                  <SaveButton
-                    label="the numbers"
-                    saving={saving === 'home-numbers'}
-                    saved={saved === 'home-numbers'}
-                    onSave={() => save('home-numbers', numbers)}
-                  />
+                            <span className="flex min-w-0 flex-[1_1_180px] flex-col gap-[3px]">
+                              <span className="text-[15px] font-extrabold text-ink">{spec.label}</span>
+                              {/* The source line is only the admin's to write once
+                                  the number is theirs; a counted one says where
+                                  it is counted from. */}
+                              {spec.live ? (
+                                <span className="text-[13px] text-muted">{spec.source}</span>
+                              ) : (
+                                <input
+                                  aria-label={`${spec.label} source`}
+                                  value={spec.source}
+                                  onChange={(e) =>
+                                    setNumbers({ ...numbers, [k]: { ...spec, source: e.target.value } })
+                                  }
+                                  className="field min-h-9 bg-surface text-[13px]"
+                                />
+                              )}
+                            </span>
+                            {!spec.live && (
+                              <input
+                                type="number"
+                                aria-label={`${spec.label} value`}
+                                value={spec.pinned ?? ''}
+                                onChange={(e) =>
+                                  setNumbers({
+                                    ...numbers,
+                                    [k]: {
+                                      ...spec,
+                                      pinned: e.target.value === '' ? null : Number(e.target.value),
+                                    },
+                                  })
+                                }
+                                className="field w-[100px] flex-none text-center text-[17px]"
+                              />
+                            )}
+                            <button
+                              type="button"
+                              role="switch"
+                              aria-checked={spec.live}
+                              onClick={() =>
+                                setNumbers({ ...numbers, [k]: { ...spec, live: !spec.live } })
+                              }
+                              // aria-checked, not aria-pressed: role="switch"
+                              // does not support the latter, and two conflicting
+                              // states is worse than one.
+                              className="btn btn-quiet btn-md flex-none text-[13px] shadow-none"
+                            >
+                              {spec.live ? (
+                                <Lightning size={16} weight="bold" aria-hidden="true" className="text-[var(--b600)]" />
+                              ) : (
+                                <PencilSimple size={16} weight="bold" aria-hidden="true" className="text-[var(--b600)]" />
+                              )}
+                              {spec.live ? 'Counted live' : 'Pinned by hand'}
+                            </button>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  </section>
+
+                  <div className="flex flex-wrap items-center gap-3 rounded-[18px] border-[length:var(--bw)] border-line bg-[var(--b50)] px-5 py-[18px]">
+                    <button
+                      type="button"
+                      onClick={saveHome}
+                      disabled={saving === 'home'}
+                      className="btn btn-primary px-[26px]"
+                    >
+                      <Check size={18} weight="bold" aria-hidden="true" />
+                      {saving === 'home' ? 'Saving…' : 'Save changes'}
+                    </button>
+                    <p className="min-w-[240px] flex-1 text-[13px] leading-normal text-muted">
+                      {saved === 'home' ? (
+                        <strong className="text-ink">Saved. </strong>
+                      ) : null}
+                      Saves the section you are in. Public pages pick it up straight away — there
+                      is no second approver above an administrator, which is why every edit here
+                      is logged against your account.
+                    </p>
+                  </div>
+                </div>
+              ),
+            },
+            {
+              key: 'about',
+              label: 'About pages',
+              icon: <UsersThree size={18} weight="duotone" aria-hidden="true" />,
+              content: (
+                <section className={SECTION}>
+                  <h2 className={SECTION_H}>Our team, partners and supporters</h2>
+                  <p className="text-sm leading-relaxed text-muted">
+                    The team and partner lists are the next section to move here. They are
+                    file-owned for now —{' '}
+                    <Link href="/about/team" className="font-semibold text-brand-dark hover:underline">
+                      Our team
+                    </Link>{' '}
+                    and{' '}
+                    <Link
+                      href="/about/partners"
+                      className="font-semibold text-brand-dark hover:underline"
+                    >
+                      Partners
+                    </Link>{' '}
+                    — and this tab exists so that is visible rather than assumed.
+                  </p>
                 </section>
-              </div>
-            ),
-          },
-          {
-            key: 'about',
-            label: 'About pages',
-            content: (
-              <p className="card p-5 text-sm leading-relaxed text-muted">
-                The team and partner lists are the next section to move here. They are file-owned
-                for now —{' '}
-                <Link href="/about/team" className="font-semibold text-brand-dark hover:underline">
-                  Our team
-                </Link>{' '}
-                and{' '}
-                <Link
-                  href="/about/partners"
-                  className="font-semibold text-brand-dark hover:underline"
-                >
-                  Partners
-                </Link>{' '}
-                — and this tab exists so that is visible rather than assumed.
-              </p>
-            ),
-          },
-          {
-            key: 'learn',
-            label: 'Learn course',
-            content: (
-              <p className="card p-5 text-sm leading-relaxed text-muted">
-                The course outline lives in <code>lib/learn-course.ts</code>, which is what both
-                the{' '}
-                <Link href="/learn" className="font-semibold text-brand-dark hover:underline">
-                  course home
-                </Link>{' '}
-                and every lesson&apos;s sidebar read. The ORDER is content and belongs here
-                eventually; the nineteen lesson bodies are prose, diagrams and checkpoints, and an
-                editor for those would be a worse text editor than a file.
-              </p>
-            ),
-          },
-          {
-            key: 'legal',
-            label: 'Legal',
-            content: (
-              <div className="card p-5">
-                <p className="flex items-start gap-2 text-sm leading-relaxed text-muted">
-                  <Warning className="mt-0.5 h-4 w-4 shrink-0 text-danger" aria-hidden="true" />
-                  The four documents stay in files. Editing one can force every contributor to
-                  accept it again, which is a deliberate act with a version behind it — not
-                  something to hang off a textarea that autosaves.
-                </p>
-                <ul className="mt-4 flex list-none flex-col gap-2">
+              ),
+            },
+            {
+              key: 'learn',
+              label: 'Learn course',
+              icon: <GraduationCap size={18} weight="duotone" aria-hidden="true" />,
+              content: (
+                <section className={SECTION}>
+                  <h2 className={SECTION_H}>The course</h2>
+                  <p className="text-sm leading-relaxed text-muted">
+                    The course outline lives in <code>lib/learn-course.ts</code>, which is what
+                    both the{' '}
+                    <Link href="/learn" className="font-semibold text-brand-dark hover:underline">
+                      course home
+                    </Link>{' '}
+                    and every lesson&apos;s sidebar read. The ORDER is content and belongs here
+                    eventually; the nineteen lesson bodies are prose, diagrams and checkpoints, and
+                    an editor for those would be a worse text editor than a file.
+                  </p>
+                </section>
+              ),
+            },
+            {
+              key: 'legal',
+              label: 'Legal',
+              icon: <Scroll size={18} weight="duotone" aria-hidden="true" />,
+              content: (
+                <div className="flex flex-col gap-5">
+                  <div className="flex items-start gap-3.5 rounded-card border-[length:var(--bw)] border-line bg-[var(--tamber)] px-5 py-[18px]">
+                    <Scroll size={28} weight="duotone" aria-hidden="true" className="flex-none text-ink" />
+                    <p className="text-sm leading-[1.55] text-ink">
+                      The four documents stay in files. Editing one can force every contributor to
+                      accept it again, which is a deliberate act with a version behind it — not
+                      something to hang off a textarea that autosaves.
+                    </p>
+                  </div>
                   {LEGAL.map((doc) => (
-                    <li key={doc.href} className="flex items-center justify-between gap-3">
-                      <span className="font-bold text-ink">{doc.label}</span>
-                      <Link href={doc.href} className="btn btn-quiet btn-sm">
+                    <section key={doc.href} className={SECTION}>
+                      <div className="flex flex-wrap items-baseline justify-between gap-3">
+                        <h2 className="m-0 font-display text-xl font-extrabold text-ink">{doc.label}</h2>
+                        <span className="font-mono text-[12.5px] font-semibold text-muted">{doc.href}</span>
+                      </div>
+                      <Link href={doc.href} className="btn btn-quiet btn-md self-start">
                         Read it
                       </Link>
-                    </li>
+                    </section>
                   ))}
-                </ul>
-              </div>
-            ),
-          },
-        ]}
-      />
+                </div>
+              ),
+            },
+          ]}
+        />
+      </div>
     </div>
   )
 }

@@ -15,11 +15,11 @@ export default async function AdminContentPage() {
     .catch(() => [] as ContentRow[])
 
   return (
-    <div>
+    <div className="max-w-[1000px]">
       <h1 className="title-hub">Site content</h1>
-      <p className="mb-6 mt-2 max-w-prose text-sm leading-relaxed text-muted">
+      <p className="mt-2.5 max-w-[62ch] text-[17px] leading-[1.55] text-muted">
         The pages with no other owner. Guides, toys, events and stories are written by the people
-        who made them — these are ours.
+        who made them — these four are ours.
       </p>
       <SiteContentEditor rows={rows} />
     </div>

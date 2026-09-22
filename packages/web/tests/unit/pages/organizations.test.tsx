@@ -48,6 +48,9 @@ describe('organisations directory', () => {
     fetchMock.mockResolvedValue(jsonResponse([org('o1', 'Riverside', 'active')]))
     const { default: Page } = await import('@/app/organizations/page')
     render(await Page())
-    expect(screen.getByRole('link')).toHaveAttribute('href', '/organizations/o1/public')
+    expect(screen.getByRole('link', { name: /riverside/i })).toHaveAttribute(
+      'href',
+      '/organizations/o1/public'
+    )
   })
 })

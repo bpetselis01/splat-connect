@@ -32,7 +32,7 @@ test('an admin approves a pending tutorial and it appears in the public library'
   await page.getByRole('link', { name: new RegExp(title) }).click()
   await page.waitForURL(`**/admin/review/${tutorialId}`)
 
-  await page.getByRole('button', { name: 'Approve — publish to library' }).click()
+  await page.getByRole('button', { name: 'Approve and publish' }).click()
   await expectStatus(tutorialId, 'approved')
 
   await page.goto('/library')
@@ -52,7 +52,7 @@ test('an admin rejects a pending tutorial with a note visible to the contributor
   await page.waitForLoadState('networkidle')
 
   await page.locator('textarea[name="note"]').fill('Needs clearer photos.')
-  await page.getByRole('button', { name: 'Reject' }).click()
+  await page.getByRole('button', { name: 'Send back to the author' }).click()
   await expectStatus(tutorialId, 'rejected')
 
   await signIn(page, contributor.email, contributor.password)
@@ -95,11 +95,10 @@ test('the review detail page renders parts, tools, STL files and the PDF link', 
     'href',
     `/files/tutorial-pdfs/${id}/tutorial.pdf`
   )
-  await expect(page.getByRole('heading', { name: 'Parts needed' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Tools needed' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Files for 3D printing' })).toBeVisible()
-  await expect(page.getByText(/E2E part\s*×\s*2/)).toBeVisible()
-  await expect(page.getByRole('link', { name: 'e2e-mount.stl' })).toHaveAttribute(
+  await expect(page.getByRole('cell', { name: 'E2E part' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: "Tools you'll need" })).toBeVisible()
+  await page.getByRole('tab', { name: 'Files & print settings' }).click()
+  await expect(page.getByRole('link', { name: 'Download e2e-mount.stl' })).toHaveAttribute(
     'href',
     `/files/stl-files/${id}/e2e-mount.stl`
   )
@@ -146,7 +145,7 @@ test('rejecting without a note shows the contributor the fallback text', async (
   await page.goto(`/admin/review/${id}`)
   await page.waitForLoadState('networkidle')
 
-  await page.getByRole('button', { name: 'Reject' }).click()
+  await page.getByRole('button', { name: 'Send back to the author' }).click()
   await expectStatus(id, 'rejected')
 
   await signIn(page, contributor.email, contributor.password)
