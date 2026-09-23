@@ -5,7 +5,7 @@
  */
 import { Hono, type Context } from 'hono'
 import { MAX_PHOTOS } from '@splat-connect/types'
-import { createUserClient } from '../supabase/client.js'
+import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import { ledOrgIds, ownedByCaller } from '../toy-access.js'
 import type { AuthVariables } from '../middleware/auth.js'
@@ -164,6 +164,57 @@ function photoRoute(
     return c.json({ url: urlData.publicUrl })
   }
 }
+
+/**
+ * An organisation's logo or cover photo (076), written straight onto the row.
+ *
+ * SERVICE-ROLE for both the object and the column, after an explicit
+ * leadership check: the toy-photos bucket's storage policy scopes writes to a
+ * tutorial's contributors, and no organizations policy lets a leader update the
+ * row at all — the profile PATCH is service-role for the same reason. The
+ * object lives under orgs/<orgId>/ so it can never collide with a tutorial's
+ * folder, which is named by a tutorial id.
+ *
+ * The old picture is left in the bucket. ponytail: orphaned objects, one per
+ * replacement; sweep orgs/<id>/ against the row if storage ever matters.
+ */
+upload.post('/org-image', async (c) => {
+  const formData = await c.req.formData()
+  const file = formData.get('file') as File | null
+  const orgId = formData.get('orgId') as string | null
+  const slot = formData.get('slot')
+  if (!file || !orgId || (slot !== 'logo' && slot !== 'cover')) {
+    return c.json({ error: 'file, orgId and slot (logo or cover) are required' }, 400)
+  }
+  if (!PHOTO_MIME.includes(file.type)) {
+    return c.json({ error: 'Photos need to be a JPEG, PNG, WebP, AVIF or HEIC image.' }, 400)
+  }
+  if (file.size > PHOTO_MAX_BYTES) {
+    const mb = (file.size / 1024 / 1024).toFixed(1)
+    return c.json({ error: `That photo is ${mb} MB — photos need to be under 10 MB.` }, 400)
+  }
+
+  const admin = createAdminClient()
+  // 404 for a non-leader, as the org routes answer: a 403 would confirm the org.
+  if (!(await ledOrgIds(admin, c.get('userId'))).includes(orgId)) return c.json({ error: 'Not found' }, 404)
+
+  const ext = file.name.split('.').pop() ?? 'jpg'
+  const { data, error } = await admin.storage
+    .from('toy-photos')
+    .upload(`orgs/${orgId}/${slot}-${crypto.randomUUID()}.${ext}`, file, {
+      upsert: false,
+      contentType: file.type,
+    })
+  if (error) return c.json({ error: error.message }, 500)
+
+  const url = admin.storage.from('toy-photos').getPublicUrl(data.path).data.publicUrl
+  const { error: rowError } = await admin
+    .from('organizations')
+    .update({ [`${slot}_url`]: url, updated_at: new Date().toISOString() })
+    .eq('id', orgId)
+  if (rowError) return c.json({ error: rowError.message }, 500)
+  return c.json({ url })
+})
 
 upload.post('/photo', photoRoute('toy-photos', 'tutorialId', 'tutorials', checkTutorialContributor))
 // 080: a guide step's photo. Same bucket and checks as /photo, kept out of the

@@ -48,7 +48,7 @@ export const getCapabilities = cache(async (): Promise<Capabilities | null> => {
     apiClient.get<Organization[]>('/api/organizations/mine').catch(() => [] as Organization[]),
     apiClient
       .get<UnreadCounts>('/api/notifications/me/unread-counts')
-      .catch(() => ({ tutorials: 0, exchanges: 0, challenges: 0, total: 0 }) as UnreadCounts),
+      .catch(() => ({ tutorials: 0, exchanges: 0, challenges: 0, organisations: 0, total: 0 }) as UnreadCounts),
     apiClient
       .get<{ count: number }>('/api/toy-transactions/action-count')
       .then((r) => r.count)

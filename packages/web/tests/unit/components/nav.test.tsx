@@ -28,7 +28,7 @@ const signedIn = {
   profile: { id: 'u1', name: 'Byron Petselis', email: 'b@example.com', role: 'contributor', public_showcase: true, created_at: '' },
   isAdmin: false,
   ledOrgs: [],
-  unread: { tutorials: 1, exchanges: 1, challenges: 1, total: 3 },
+  unread: { tutorials: 1, exchanges: 1, challenges: 1, organisations: 0, total: 3 },
   exchangeActions: 0,
 } as unknown as Capabilities
 
@@ -185,7 +185,7 @@ describe('Nav', () => {
   })
 
   it('shows no badge at zero unread', () => {
-    render(<Nav caps={{ ...signedIn, unread: { tutorials: 0, exchanges: 0, challenges: 0, total: 0 } }} />)
+    render(<Nav caps={{ ...signedIn, unread: { tutorials: 0, exchanges: 0, challenges: 0, organisations: 0, total: 0 } }} />)
     expect(screen.getByRole('link', { name: /My SPLAT/ })).not.toHaveAccessibleName(/unread/)
   })
 

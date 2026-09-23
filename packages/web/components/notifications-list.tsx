@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation'
 import type { Route } from 'next'
 import type { ComponentType, SVGProps } from 'react'
 import type { Notification, NotificationType } from '@splat-connect/types'
-import { BookOpen, Box, Check, FileText, Handshake, Inbox, Lightbulb, Undo, User } from '@/components/icons'
+import { BookOpen, Box, Building, Check, FileText, Handshake, Inbox, Lightbulb, Undo, User } from '@/components/icons'
 
 const COPY: Record<NotificationType, (n: Notification) => string> = {
   collaborator_invited: (n) => `${n.actor_name} invited you to collaborate on "${n.tutorial_title}"`,
@@ -50,6 +50,16 @@ const COPY: Record<NotificationType, (n: Notification) => string> = {
   build_approved: (n) => `${n.actor_name} approved the working shot for ${n.toy_name}`,
   print_started: (n) => `${n.actor_name} started printing ${n.toy_name}`,
   print_ready: (n) => `${n.actor_name} finished printing ${n.toy_name}`,
+  // 077. For the two publish types the event or story title rides in
+  // tutorial_title; for a message, the organisation's name does.
+  org_event_published: (n) => `${n.actor_name} published an event: ${n.tutorial_title}`,
+  org_story_published: (n) => `${n.actor_name} published a story: ${n.tutorial_title}`,
+  org_message: (n) =>
+    n.actor_name === n.tutorial_title
+      ? `${n.actor_name} replied to your message`
+      : `${n.actor_name} messaged ${n.tutorial_title}`,
+  // The byline the family typed, or "A family" when they gave none.
+  org_thanked: (n) => `${n.actor_name} said thanks to your organisation`,
 }
 
 // A type the database allows but this build has no line for — a newer API,
@@ -85,6 +95,10 @@ const ICON: Record<NotificationType, [Glyph, string]> = {
   build_approved: [Check, 'var(--tok)'],
   print_started: [Box, 'var(--tcoral)'],
   print_ready: [Check, 'var(--tok)'],
+  org_event_published: [Building, 'var(--b100)'],
+  org_story_published: [FileText, 'var(--tcoral)'],
+  org_message: [Inbox, 'var(--tmint)'],
+  org_thanked: [Handshake, 'var(--tamber)'],
 }
 
 function linkFor(n: Notification, isAdmin: boolean): string {
@@ -97,6 +111,12 @@ function linkFor(n: Notification, isAdmin: boolean): string {
     return `/dashboard/print-requests/${n.toy_transaction_id}`
   }
   if (n.toy_transaction_id) return `/dashboard/exchanges/${n.toy_transaction_id}`
+  // 077's subjects. A conversation opens by its own id for either side; a
+  // thanks goes to the leader's editor, where notes can be hidden.
+  if (n.org_conversation_id) return `/dashboard/messages/${n.org_conversation_id}`
+  if (n.org_event_id) return `/get-involved/events/${n.org_event_id}`
+  if (n.org_story_id) return `/about/stories/${n.org_story_id}`
+  if (n.type === 'org_thanked') return '/dashboard/organisation/profile#thanks'
   // The two review-queue types must be answered BEFORE the tutorial_id branch
   // below: their recipient is a reviewer, not a contributor, and
   // /tutorials/:id/edit is the author's editor — a leader following it lands on

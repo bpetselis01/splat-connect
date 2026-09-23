@@ -698,6 +698,9 @@ publicRoutes.get('/organizations/:id', async (c) => {
     (r) => r.tutorials
   )
 
+  const extras = await orgProfileExtras(id, tutorialsBacked as Array<{ id: string }>)
+  if (!extras) return c.json({ error: 'Failed to load organisation profile' }, 500)
+
   const deliveredToyIds = [...new Set((deliveredTx ?? []).map((tx) => tx.toy_id))]
   let toysDelivered: unknown[] = []
   if (deliveredToyIds.length > 0) {
@@ -721,9 +724,138 @@ publicRoutes.get('/organizations/:id', async (c) => {
     tutorialsApproved: (tutorialsApproved ?? []) as OrgPublicProfile['tutorialsApproved'],
     toysShared: (toysShared ?? []) as OrgPublicProfile['toysShared'],
     toysDelivered: toysDelivered as OrgPublicProfile['toysDelivered'],
+    ...extras,
+    counts: { ...extras.counts, guidesBacked: tutorialsBacked.length, toysDelivered: toysDelivered.length },
   }
   return c.json(result)
 })
+
+/**
+ * Everything 076 and 077 added to the public profile.
+ *
+ * All of it through the ADMIN client with named columns, and that is the
+ * point to check when this changes. 076 added its organizations columns without
+ * extending 059's anon/authenticated grant, so the anon client cannot read
+ * them; they are public by design, so the projection here is what keeps the
+ * pickup columns out, exactly as the hand-written select above does. The
+ * thanks and conversations tables are private under RLS, so their public
+ * halves — shown notes, counts — are chosen here, row by row.
+ */
+async function orgProfileExtras(id: string, backed: Array<{ id: string }>) {
+  const admin = createAdminClient()
+  const [org, doors, rates, printers, thanks, quotes, leaders, done] = await Promise.all([
+    admin
+      .from('organizations')
+      .select(
+        'kind, logo_url, cover_url, verified_at, visit_hours, service_area, payment_methods, created_at, org_thanks_count, org_follower_count'
+      )
+      .eq('id', id)
+      .single(),
+    admin.from('org_doors').select('id, org_id, position, title, body, target').eq('org_id', id).order('position'),
+    admin
+      .from('org_rate_lines')
+      .select('id, org_id, position, description, amount_cents, claiming')
+      .eq('org_id', id)
+      .order('position'),
+    admin
+      .from('printers')
+      .select('id, name, materials, filament_cents_per_g')
+      .eq('owner_org_id', id)
+      .eq('accepting', true),
+    // Shown and not hidden: the author ticked "show this on their page" and no
+    // leader took it down. Byline only — never a name read off a profile.
+    admin
+      .from('org_thanks')
+      .select('note, byline, created_at')
+      .eq('org_id', id)
+      .eq('show_note', true)
+      .is('hidden_at', null)
+      .not('note', 'is', null)
+      .order('created_at', { ascending: false })
+      .limit(6),
+    admin
+      .from('org_stories')
+      .select('pull_quote, pull_quote_by, published_at')
+      .eq('org_id', id)
+      .eq('status', 'published')
+      .eq('kind', 'family')
+      .not('pull_quote', 'is', null)
+      .order('published_at', { ascending: false })
+      .limit(6),
+    admin.from('org_leaders').select('user_id').eq('org_id', id),
+    // Completed handoffs this org gave, for parts printed and families helped.
+    admin
+      .from('toy_transactions')
+      .select('type, requester_id, part_sets')
+      .eq('owner_org_id', id)
+      .eq('status', 'completed'),
+  ])
+  const failed = [org, doors, rates, printers, thanks, quotes, leaders, done].find((r) => r.error)
+  if (failed) {
+    console.error('[public/organizations/:id] extras failed:', failed.error?.message)
+    return null
+  }
+
+  // Leaders agreed to the org-leader terms, which say their names go on the
+  // guides they back. Name and that count, nothing else.
+  const leaderIds = (leaders.data ?? []).map((l) => l.user_id as string)
+  const backedIds = backed.map((t) => t.id)
+  const [{ data: people }, { data: responded }] = await Promise.all([
+    leaderIds.length
+      ? admin.from('profiles').select('id, name').in('id', leaderIds)
+      : Promise.resolve({ data: [] as Array<{ id: string; name: string }> }),
+    leaderIds.length && backedIds.length
+      ? admin
+          .from('tutorial_orgs')
+          .select('responded_by')
+          .eq('org_id', id)
+          .eq('status', 'accepted')
+          .in('tutorial_id', backedIds)
+      : Promise.resolve({ data: [] as Array<{ responded_by: string | null }> }),
+  ])
+  const backedBy = (userId: string) => (responded ?? []).filter((r) => r.responded_by === userId).length
+
+  const row = org.data as Record<string, unknown>
+  const completed = (done.data ?? []) as Array<{ type: string; requester_id: string; part_sets: number | null }>
+
+  return {
+    kind: row.kind as string | null,
+    logo_url: row.logo_url as string | null,
+    cover_url: row.cover_url as string | null,
+    verified_at: row.verified_at as string | null,
+    visit_hours: row.visit_hours as string | null,
+    service_area: row.service_area as string | null,
+    payment_methods: row.payment_methods as OrgPublicProfile['payment_methods'],
+    created_at: row.created_at as string,
+    thanks_count: row.org_thanks_count as number,
+    follower_count: row.org_follower_count as number,
+    doors: (doors.data ?? []) as OrgPublicProfile['doors'],
+    rate_lines: (rates.data ?? []) as OrgPublicProfile['rate_lines'],
+    printers: (printers.data ?? []) as OrgPublicProfile['printers'],
+    fromFamilies: [
+      ...(thanks.data ?? []).map((t) => ({
+        quote: t.note as string,
+        by: (t.byline as string | null) ?? 'A family',
+        source: 'thanks' as const,
+        at: t.created_at as string,
+      })),
+      ...(quotes.data ?? []).map((q) => ({
+        quote: q.pull_quote as string,
+        by: q.pull_quote_by as string,
+        source: 'story' as const,
+        at: q.published_at as string,
+      })),
+    ].sort((a, b) => (a.at < b.at ? 1 : -1)),
+    leaders: (people ?? [])
+      .map((p) => ({ name: p.name as string, guides_backed: backedBy(p.id as string) }))
+      .sort((a, b) => b.guides_backed - a.guides_backed),
+    counts: {
+      // A print job counts its part sets, one when it did not say.
+      partsPrinted: completed.filter((t) => t.type === 'print').reduce((n, t) => n + (t.part_sets ?? 1), 0),
+      familiesHelped: new Set(completed.map((t) => t.requester_id)).size,
+    },
+  }
+}
 
 /**
  * Published design challenges for the anonymous listing page.

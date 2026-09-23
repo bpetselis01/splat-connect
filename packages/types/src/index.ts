@@ -987,6 +987,9 @@ export interface Organization {
   /** Public counts (077), PostgREST computed fields. */
   org_thanks_count?: number
   org_follower_count?: number
+  /** GET /api/organizations/:id only, for the profile editor. */
+  doors?: OrgDoor[]
+  rate_lines?: OrgRateLine[]
 }
 
 /** "What you are" — the editor's suggestions; free text is allowed (076). */
@@ -1487,9 +1490,13 @@ export type NotificationType =
   | 'build_approved'
   | 'print_started'
   | 'print_ready'
+  | 'org_event_published'
+  | 'org_story_published'
+  | 'org_message'
+  | 'org_thanked'
 
 /** Which My SPLAT card a notification's badge belongs to. */
-export type NotificationBucket = 'tutorials' | 'exchanges' | 'challenges'
+export type NotificationBucket = 'tutorials' | 'exchanges' | 'challenges' | 'organisations'
 
 /**
  * Notification type → the hub card that counts it.
@@ -1510,6 +1517,13 @@ export type NotificationBucket = 'tutorials' | 'exchanges' | 'challenges'
  * Note there is no 'toys' bucket. Every toy_* type is an event on a
  * transaction, not on a toy, so they all belong to My exchanges — a toy
  * sitting on a shelf generates nothing.
+ *
+ * 077's four: org_message is a conversation with an organisation, the same
+ * kind of thing as toy_message, so it counts on My exchanges. The other three
+ * are news about an organisation rather than a thing you are doing with one —
+ * a followed org published, or a family thanked yours — and none of the three
+ * existing cards is about that, so they get their own 'organisations' bucket.
+ * It has no hub card: it counts toward the inbox total and is a section there.
  */
 const NOTIFICATION_BUCKET = {
   collaborator_invited: 'tutorials',
@@ -1537,6 +1551,10 @@ const NOTIFICATION_BUCKET = {
   challenge_joined: 'challenges',
   challenge_left: 'challenges',
   challenge_removed: 'challenges',
+  org_message: 'exchanges',
+  org_event_published: 'organisations',
+  org_story_published: 'organisations',
+  org_thanked: 'organisations',
 } satisfies Record<NotificationType, NotificationBucket>
 
 /** Every notification type, for iteration at runtime — the union alone is compile-time only. */
@@ -1556,6 +1574,7 @@ export interface UnreadCounts {
   tutorials: number
   exchanges: number
   challenges: number
+  organisations: number
   total: number
 }
 
@@ -1871,6 +1890,52 @@ export interface OrgPublicProfile {
   stories?: Array<
     Pick<OrgStory, 'id' | 'org_id' | 'kind' | 'title' | 'summary' | 'byline' | 'status' | 'created_at'>
   >
+  /** 076's public columns. Read by the API with named columns — see
+   *  ORG_PROFILE_COLUMNS in routes/organizations.ts for why not the anon grant. */
+  kind?: string | null
+  logo_url?: string | null
+  cover_url?: string | null
+  verified_at?: string | null
+  visit_hours?: string | null
+  service_area?: string | null
+  payment_methods?: PaymentMethod[]
+  created_at?: string
+  doors?: OrgDoor[]
+  rate_lines?: OrgRateLine[]
+  /** Accepting printers the organisation owns, for the "They print" card. */
+  printers?: Array<{ id: string; name: string; materials: string[]; filament_cents_per_g: number | null }>
+  /** 077's counts. */
+  thanks_count?: number
+  follower_count?: number
+  /** The four stat tiles. Counted from what happened, never typed. */
+  counts?: { guidesBacked: number; toysDelivered: number; partsPrinted: number; familiesHelped: number }
+  /** "From families": shown, unhidden thanks notes and the pull quotes of the
+   *  org's published family stories, newest first. */
+  fromFamilies?: Array<{ quote: string; by: string; source: 'thanks' | 'story'; at: string }>
+  /** Name and the guides each leader backed. Nothing else about them. */
+  leaders?: Array<{ name: string; guides_backed: number }>
+}
+
+/** GET /api/organizations/:id/me — where the caller stands with one org. */
+export interface OrgRelationship {
+  leads: boolean
+  following: boolean
+  thanks: Pick<OrgThanks, 'note' | 'byline' | 'show_note' | 'created_at'> | null
+  conversation_id: string | null
+}
+
+/** A leader's list of their organisation's conversations. */
+export interface OrgConversationSummary extends OrgConversation {
+  person_name: string
+  last_message: Pick<OrgMessage, 'body' | 'sender_id' | 'created_at'> | null
+}
+
+/** One conversation, from either side. `from_org` marks a leader's message. */
+export interface OrgThread {
+  conversation: OrgConversation
+  org_name: string
+  person_name: string
+  messages: Array<OrgMessage & { sender_name: string; from_org: boolean }>
 }
 
 /**

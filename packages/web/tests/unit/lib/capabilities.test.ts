@@ -49,7 +49,7 @@ describe('getCapabilities', () => {
     route({
       '/api/contributors/me': PROFILE,
       '/api/organizations/mine': [],
-      '/api/notifications/me/unread-counts': { tutorials: 0, exchanges: 0, challenges: 0, total: 0 },
+      '/api/notifications/me/unread-counts': { tutorials: 0, exchanges: 0, challenges: 0, organisations: 0, total: 0 },
       '/api/toy-transactions/action-count': { count: 0 },
     })
     await subject()
@@ -69,7 +69,7 @@ describe('getCapabilities', () => {
     route({
       '/api/contributors/me': PROFILE,
       '/api/organizations/mine': [],
-      '/api/notifications/me/unread-counts': { tutorials: 0, exchanges: 0, challenges: 0, total: 0 },
+      '/api/notifications/me/unread-counts': { tutorials: 0, exchanges: 0, challenges: 0, organisations: 0, total: 0 },
       '/api/toy-transactions/action-count': { count: 3 },
     })
     expect((await subject())?.exchangeActions).toBe(3)
@@ -83,7 +83,7 @@ describe('getCapabilities', () => {
     route({
       '/api/contributors/me': PROFILE,
       '/api/organizations/mine': [],
-      '/api/notifications/me/unread-counts': { tutorials: 0, exchanges: 0, challenges: 0, total: 0 },
+      '/api/notifications/me/unread-counts': { tutorials: 0, exchanges: 0, challenges: 0, organisations: 0, total: 0 },
       '/api/toy-transactions/action-count': new Error('boom'),
     })
     const caps = await subject()
@@ -99,7 +99,7 @@ describe('getCapabilities', () => {
     route({
       '/api/contributors/me': PROFILE,
       '/api/organizations/mine': [{ id: 'o1', name: 'Splat', status: 'active' }],
-      '/api/notifications/me/unread-counts': { tutorials: 0, exchanges: 0, challenges: 0, total: 0 },
+      '/api/notifications/me/unread-counts': { tutorials: 0, exchanges: 0, challenges: 0, organisations: 0, total: 0 },
       '/api/toy-transactions/action-count': { count: 0 },
     })
     expect((await subject())?.ledOrgs).toHaveLength(1)
@@ -113,7 +113,7 @@ describe('getCapabilities', () => {
     route({
       '/api/contributors/me': { ...PROFILE, role: 'admin' },
       '/api/organizations/mine': [],
-      '/api/notifications/me/unread-counts': { tutorials: 0, exchanges: 0, challenges: 0, total: 0 },
+      '/api/notifications/me/unread-counts': { tutorials: 0, exchanges: 0, challenges: 0, organisations: 0, total: 0 },
       '/api/toy-transactions/action-count': { count: 0 },
     })
     expect((await subject())?.isAdmin).toBe(true)
@@ -127,7 +127,7 @@ describe('getCapabilities', () => {
     route({
       '/api/contributors/me': PROFILE,
       '/api/organizations/mine': new Error('boom'),
-      '/api/notifications/me/unread-counts': { tutorials: 0, exchanges: 0, challenges: 0, total: 0 },
+      '/api/notifications/me/unread-counts': { tutorials: 0, exchanges: 0, challenges: 0, organisations: 0, total: 0 },
       '/api/toy-transactions/action-count': { count: 0 },
     })
     const caps = await subject()

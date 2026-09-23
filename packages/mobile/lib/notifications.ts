@@ -2,7 +2,7 @@
 // The copy and the routing behind the Inbox.
 //
 // COPY is ported VERBATIM from web's components/notifications-list.tsx — all
-// twenty-five of them. Two clients narrating the same event differently is how a
+// twenty-nine of them. Two clients narrating the same event differently is how a
 // person ends up unsure whether they read about one thing or two, so the
 // wording is not "improved" here; change it on web first.
 //
@@ -39,6 +39,15 @@ export const COPY: Record<NotificationType, (n: Notification) => string> = {
   build_approved: (n) => `${n.actor_name} approved the working shot for ${n.toy_name}`,
   print_started: (n) => `${n.actor_name} started printing ${n.toy_name}`,
   print_ready: (n) => `${n.actor_name} finished printing ${n.toy_name}`,
+  // 077. For the two publish types the event or story title rides in
+  // tutorial_title; for a message, the organisation's name does.
+  org_event_published: (n) => `${n.actor_name} published an event: ${n.tutorial_title}`,
+  org_story_published: (n) => `${n.actor_name} published a story: ${n.tutorial_title}`,
+  org_message: (n) =>
+    n.actor_name === n.tutorial_title
+      ? `${n.actor_name} replied to your message`
+      : `${n.actor_name} messaged ${n.tutorial_title}`,
+  org_thanked: (n) => `${n.actor_name} said thanks to your organisation`,
 }
 
 /** Web's copyFor: a type this build has no line for renders, rather than throwing. */
@@ -57,6 +66,14 @@ export function linkFor(n: Notification): string {
     return `/exchanges/build/${n.toy_transaction_id}`
   }
   if (n.toy_transaction_id) return `/exchanges/${n.toy_transaction_id}`
+  // 077. A conversation opens by its own id, for either side. A thanks goes
+  // to the organisation hub — mobile has no profile editor to hide notes in.
+  // A followed org's new event or story: mobile has no screen for either, so
+  // /news reads which organisation it belongs to and opens that profile.
+  if (n.org_conversation_id) return `/messages/${n.org_conversation_id}`
+  if (n.type === 'org_thanked') return '/organisation'
+  if (n.org_event_id) return `/news/event/${n.org_event_id}`
+  if (n.org_story_id) return `/news/story/${n.org_story_id}`
   // Answered BEFORE the tutorial_id branch, exactly as on web: the recipient
   // of these two is a reviewer, not the author, and /tutorials/:id is the
   // author's editor — a leader sent there lands on a screen they cannot save.

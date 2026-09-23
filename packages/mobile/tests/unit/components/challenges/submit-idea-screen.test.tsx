@@ -27,7 +27,7 @@ const signedIn = {
     profile: { id: 'viewer1', name: 'Viewer', role: 'contributor' },
     isAdmin: false,
     ledOrgs: [],
-    unread: { tutorials: 0, exchanges: 0, challenges: 0, total: 0 },
+    unread: { tutorials: 0, exchanges: 0, challenges: 0, organisations: 0, total: 0 },
     exchangeActions: 0,
   },
   loading: false,

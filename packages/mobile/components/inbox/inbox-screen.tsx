@@ -29,6 +29,8 @@ const BUCKETS: { key: NotificationBucket; title: string }[] = [
   { key: 'exchanges', title: 'Exchanges' },
   { key: 'tutorials', title: 'Tutorials' },
   { key: 'challenges', title: 'Challenges' },
+  // 077: organisations you follow publishing, and thanks to yours.
+  { key: 'organisations', title: 'Organisations' },
 ]
 
 function Row({

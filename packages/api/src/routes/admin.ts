@@ -181,9 +181,12 @@ admin.post('/organizations', async (c) => {
 })
 
 admin.patch('/organizations/:id', async (c) => {
-  const body = await c.req.json<{ status?: string; name?: string; description?: string }>()
+  const body = await c.req.json<{ status?: string; name?: string; description?: string; verified?: unknown }>()
   if (body.status !== undefined && body.status !== 'active' && body.status !== 'suspended') {
     return c.json({ error: "status must be 'active' or 'suspended'" }, 400)
+  }
+  if (body.verified !== undefined && typeof body.verified !== 'boolean') {
+    return c.json({ error: 'verified must be true or false' }, 400)
   }
 
   const supabase = createUserClient(c.get('token'))
@@ -193,6 +196,9 @@ admin.patch('/organizations/:id', async (c) => {
       ...(body.status !== undefined ? { status: body.status } : {}),
       ...(body.name !== undefined ? { name: body.name } : {}),
       ...(body.description !== undefined ? { description: body.description } : {}),
+      // 076's "Verified by SPLAT". This route is the only writer: the leaders'
+      // profile PATCH allowlists its fields and this is not among them.
+      ...(body.verified !== undefined ? { verified_at: body.verified ? new Date().toISOString() : null } : {}),
       updated_at: new Date().toISOString(),
     })
     .eq('id', c.req.param('id'))

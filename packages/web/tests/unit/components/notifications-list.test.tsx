@@ -238,4 +238,25 @@ describe('NotificationsList', () => {
       expect(mockPush).not.toHaveBeenCalledWith('/tutorials/t9/edit')
     })
   })
+
+  // 077: the four organisation types, each routed by its own subject column.
+  it.each([
+    ['org_event_published', { org_event_id: 'e1', actor_name: 'Northbank', tutorial_title: 'Build day' }, 'Northbank published an event: Build day', '/get-involved/events/e1'],
+    ['org_story_published', { org_story_id: 's1', actor_name: 'Northbank', tutorial_title: 'Arlo' }, 'Northbank published a story: Arlo', '/about/stories/s1'],
+    ['org_message', { org_conversation_id: 'c1', actor_name: 'Priya', tutorial_title: 'Northbank' }, 'Priya messaged Northbank', '/dashboard/messages/c1'],
+    ['org_message', { org_conversation_id: 'c1', actor_name: 'Northbank', tutorial_title: 'Northbank' }, 'Northbank replied to your message', '/dashboard/messages/c1'],
+    ['org_thanked', { org_id: 'o1', actor_name: 'Sam' }, 'Sam said thanks to your organisation', '/dashboard/organisation/profile#thanks'],
+  ] as const)('renders %s and routes it by its subject', async (type, fields, copy, href) => {
+    render(
+      <NotificationsList
+        notifications={[baseNotif({ type, tutorial_id: null, tutorial_title: null, ...fields })]}
+        pendingInvitesByTutorial={{}}
+        onMarkRead={vi.fn().mockResolvedValue(undefined)}
+        onAcceptInvite={vi.fn()}
+        onDeclineInvite={vi.fn()}
+      />
+    )
+    fireEvent.click(screen.getByText(copy))
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith(href))
+  })
 })

@@ -7,7 +7,7 @@ jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }))
 jest.mock('../../../lib/capabilities', () => ({
   useCapabilities: () => ({ caps: {
     profile: { name: 'Byron P', role: 'contributor' }, isAdmin: false, ledOrgs: [{ id: 'o', name: 'Alpha' }],
-    unread: { tutorials: 0, exchanges: 0, challenges: 0, total: 5 }, exchangeActions: 3,
+    unread: { tutorials: 0, exchanges: 0, challenges: 0, organisations: 0, total: 5 }, exchangeActions: 3,
   }, loading: false, refresh: jest.fn() }),
 }))
 

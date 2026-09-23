@@ -68,6 +68,18 @@ describe('linkFor', () => {
     }
   })
 
+  it('reads and routes the four organisation types (077)', () => {
+    expect(COPY.org_message(notification({ type: 'org_message', actor_name: 'Priya', tutorial_title: 'Northbank' })))
+      .toBe('Priya messaged Northbank')
+    expect(COPY.org_message(notification({ type: 'org_message', actor_name: 'Northbank', tutorial_title: 'Northbank' })))
+      .toBe('Northbank replied to your message')
+    expect(linkFor(notification({ type: 'org_message', org_conversation_id: 'c1' }))).toBe('/messages/c1')
+    expect(notificationBucket('org_message')).toBe('exchanges')
+    expect(linkFor(notification({ type: 'org_thanked', org_id: 'o1' }))).toBe('/organisation')
+    expect(notificationBucket('org_thanked')).toBe('organisations')
+    expect(linkFor(notification({ type: 'org_event_published', org_event_id: 'e1' }))).toBe('/news/event/e1')
+  })
+
   it('sends other tutorial news to that guide', () => {
     expect(linkFor(notification({ type: 'tutorial_approved', tutorial_id: 't9' }))).toBe('/tutorials/t9')
   })
@@ -93,8 +105,13 @@ describe('linkFor', () => {
       const n = notification({
         type,
         tutorial_id: bucket === 'tutorials' ? 't1' : null,
-        toy_transaction_id: bucket === 'exchanges' ? 'tx1' : null,
+        toy_transaction_id: bucket === 'exchanges' && type !== 'org_message' ? 'tx1' : null,
         idea_id: bucket === 'challenges' ? 'i1' : null,
+        // 077's four each carry their own subject.
+        org_conversation_id: type === 'org_message' ? 'c1' : null,
+        org_event_id: type === 'org_event_published' ? 'e1' : null,
+        org_story_id: type === 'org_story_published' ? 's1' : null,
+        org_id: type === 'org_thanked' ? 'o1' : null,
       })
       expect(linkFor(n)).not.toBe('/inbox')
     }

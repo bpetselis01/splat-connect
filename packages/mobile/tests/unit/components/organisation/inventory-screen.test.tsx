@@ -24,7 +24,7 @@ const leader = (orgs: { id: string; name: string }[]) => ({
     profile: { id: 'leader1', name: 'Lee', role: 'contributor' },
     isAdmin: false,
     ledOrgs: orgs,
-    unread: { tutorials: 0, exchanges: 0, challenges: 0, total: 0 },
+    unread: { tutorials: 0, exchanges: 0, challenges: 0, organisations: 0, total: 0 },
     exchangeActions: 0,
   },
   loading: false,
