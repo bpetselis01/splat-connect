@@ -21,6 +21,7 @@ import { Chip } from '../ui/Chip'
 import { Button } from '../ui/Button'
 import { TextField } from '../ui/TextField'
 import { SkeletonRow } from '../ui/Skeleton'
+import { ListSection } from '../list/list-kit'
 
 const FIELDS = [
   ['name', 'Organisation name', 120],
@@ -109,16 +110,16 @@ export function OrgProfileEditScreen() {
             keyboardType={key === 'contact_email' ? 'email-address' : key === 'contact_phone' ? 'phone-pad' : key === 'website_url' ? 'url' : 'default'}
           />
         ))}
-        <Text style={styles.label}>State</Text>
+        <ListSection style={styles.group}>State</ListSection>
         <View style={styles.chips} accessibilityRole="radiogroup">
           {AU_STATES.map((s) => (
             <Chip key={s} role="radio" label={s} active={form.state === s} onPress={() => setForm({ ...form, state: s })} />
           ))}
         </View>
         {note ? <Text style={[styles.note, { color: note.ok ? theme.colors.success : theme.colors.danger }]}>{note.text}</Text> : null}
-        <Button label="Save and publish" onPress={() => void save()} loading={saving} />
+        <Button label="Save and publish" onPress={() => void save()} loading={saving} style={styles.primary} />
 
-        <Text style={styles.section}>Thanks from families</Text>
+        <ListSection style={styles.group}>Thanks from families</ListSection>
         <Text style={styles.lede}>
           {thanks.length} {thanks.length === 1 ? 'family has' : 'families have'} said thanks. A note shows on your page only
           if its author said it could; hide one and it comes off the page, but still counts.
@@ -145,11 +146,12 @@ export function OrgProfileEditScreen() {
 const styles = StyleSheet.create({
   content: { gap: theme.spacing(3), paddingBottom: theme.spacing(10) },
   lede: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.muted, lineHeight: 21 },
-  label: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.text },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2) },
   note: { fontFamily: theme.fonts.semiBold, fontSize: theme.type.caption },
-  section: { fontFamily: theme.fonts.display, fontSize: theme.type.heading, color: theme.colors.text, marginTop: theme.spacing(4) },
-  thanks: { padding: theme.spacing(3), gap: theme.spacing(1) },
+  group: { marginTop: theme.spacing(3), marginBottom: 0 },
+  // The board's full-width pill save.
+  primary: { borderRadius: theme.radii.pill, minHeight: 52, borderWidth: 0 },
+  thanks: { padding: 15, gap: theme.spacing(1), borderRadius: theme.radii.panel, ...theme.shadow(1) },
   quote: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.text },
   meta: { fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.muted },
 })

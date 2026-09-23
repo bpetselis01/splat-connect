@@ -37,6 +37,7 @@ import { Button } from '../ui/Button'
 import { TextField } from '../ui/TextField'
 import { DateTimeField } from '../ui/DateTimeField'
 import { SkeletonRow } from '../ui/Skeleton'
+import { ListSection } from '../list/list-kit'
 
 type DraftQuestion = { prompt: string; answer_type: AnswerType; required: boolean; options: string[] }
 
@@ -180,7 +181,7 @@ export function EventFormScreen() {
 
         <TextField label="Event name" value={title} onChangeText={setTitle} maxLength={160} placeholder="Switch-adaptation build day" />
 
-        <Text style={styles.label}>What kind of event?</Text>
+        <ListSection style={styles.group}>What kind of event?</ListSection>
         <View style={styles.chips} accessibilityRole="radiogroup">
           {(Object.keys(EVENT_KINDS) as EventKind[]).map((k) => (
             <Chip key={k} role="radio" label={EVENT_KIND_LABEL[k]} active={kind === k} onPress={() => setKind(k)} />
@@ -193,7 +194,7 @@ export function EventFormScreen() {
         <DateTimeField label="Starts" mode="time" value={starts} onChange={setStarts} placeholder="10:00" openOn={hourToday(10)} />
         <DateTimeField label="Ends" mode="time" value={ends} onChange={setEnds} placeholder="14:00" openOn={hourToday(14)} />
 
-        <Text style={styles.label}>Where</Text>
+        <ListSection style={styles.group}>Where</ListSection>
         <View style={styles.chips} accessibilityRole="radiogroup">
           <Chip role="radio" label="In person" active={format === 'in_person'} onPress={() => setFormat('in_person')} />
           <Chip role="radio" label="Online" active={format === 'online'} onPress={() => setFormat('online')} />
@@ -226,7 +227,7 @@ export function EventFormScreen() {
         <TextField label="Seats (blank = no limit)" value={capacity} onChangeText={setCapacity} placeholder="16" keyboardType="number-pad" />
 
         <View style={styles.well}>
-          <Text style={styles.label}>On the day</Text>
+          <ListSection style={styles.group}>On the day</ListSection>
           <Text style={styles.help}>Families see this when they ask for help with a guide.</Text>
           <Text style={styles.label}>Can you print parts before the day?</Text>
           <View style={styles.chips} accessibilityRole="radiogroup">
@@ -263,7 +264,7 @@ export function EventFormScreen() {
         />
 
         <View style={styles.well}>
-          <Text style={styles.label}>What it costs a family to come</Text>
+          <ListSection style={styles.group}>What it costs a family to come</ListSection>
           <Text style={styles.help}>Leave it empty and the event shows as free to attend.</Text>
           <TextField label="Amount, in dollars" value={costDollars} onChangeText={setCostDollars} placeholder="0.00" keyboardType="decimal-pad" />
           <TextField
@@ -277,9 +278,9 @@ export function EventFormScreen() {
         </View>
 
         <View style={styles.well}>
-          <Text style={styles.label}>
-            Registration form · {questions.length} question{questions.length === 1 ? '' : 's'}
-          </Text>
+          <ListSection style={styles.group}>
+            {`Registration form · ${questions.length} question${questions.length === 1 ? '' : 's'}`}
+          </ListSection>
           <Text style={styles.help}>
             What people answer when they tap I'm going. Name and email are always asked. Add only what changes how you run
             the day — every extra question loses people.
@@ -363,8 +364,8 @@ export function EventFormScreen() {
         />
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
-        <Button label="Publish to Events" onPress={() => void save('published')} disabled={saving !== null || missing.length > 0} loading={saving === 'published'} />
-        <Button label="Save as draft" variant="secondary" onPress={() => void save('draft')} disabled={saving !== null} loading={saving === 'draft'} />
+        <Button label="Publish to Events" onPress={() => void save('published')} disabled={saving !== null || missing.length > 0} loading={saving === 'published'} style={styles.primary} />
+        <Button label="Save as draft" variant="secondary" onPress={() => void save('draft')} disabled={saving !== null} loading={saving === 'draft'} style={styles.primary} />
         <Text style={styles.help}>
           Published as {org.name}.
           {missing.length > 0 ? ` Still needs ${missing.join(', ')} before it can be published. Save it as a draft meanwhile.` : ''}
@@ -379,6 +380,9 @@ const styles = StyleSheet.create({
   lede: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.muted, lineHeight: 21 },
   label: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.text },
   kicker: { fontFamily: theme.fonts.black, fontSize: 11, letterSpacing: 0.8, textTransform: 'uppercase', color: theme.colors.muted },
+  group: { marginBottom: 0 },
+  // The board's full-width pill buttons.
+  primary: { borderRadius: theme.radii.pill, minHeight: 52 },
   help: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted, lineHeight: 19 },
   note: {
     fontFamily: theme.fonts.regular,

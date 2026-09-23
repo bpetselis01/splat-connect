@@ -22,6 +22,7 @@ import { Chip } from '../ui/Chip'
 import { Button } from '../ui/Button'
 import { TextField } from '../ui/TextField'
 import { SkeletonRow } from '../ui/Skeleton'
+import { ListSection } from '../list/list-kit'
 
 // An announcement speaks for SPLAT and is admin-only (062): not on a leader's form.
 const KINDS = (Object.keys(STORY_KINDS) as StoryKind[]).filter((k) => k !== 'announcement')
@@ -87,7 +88,7 @@ export function StoryFormScreen() {
           own words.
         </Text>
 
-        <Text style={styles.label}>What kind of story?</Text>
+        <ListSection style={styles.group}>What kind of story?</ListSection>
         <View style={styles.chips} accessibilityRole="radiogroup">
           {KINDS.map((k) => (
             <Chip key={k} role="radio" label={STORY_KIND_LABEL[k]} active={kind === k} onPress={() => setKind(k)} />
@@ -118,7 +119,7 @@ export function StoryFormScreen() {
         <TextField label="Byline (who wrote it)" value={by} onChangeText={setByline} maxLength={120} />
 
         <View style={styles.well}>
-          <Text style={styles.label}>Pull quote — optional</Text>
+          <ListSection style={styles.group}>Pull quote — optional</ListSection>
           <Text style={styles.help}>One line from the story, set large. The best ones are the family's own words.</Text>
           <TextField label="The quote" value={pullQuote} onChangeText={setPullQuote} maxLength={400} />
           <TextField label="Who said it" value={pullQuoteBy} onChangeText={setPullQuoteBy} maxLength={120} placeholder="Hannah, Leo’s mum" />
@@ -146,8 +147,8 @@ export function StoryFormScreen() {
         </Pressable>
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
-        <Button label="Publish to Stories" onPress={() => void save('published')} disabled={!canPublish} loading={saving === 'published'} />
-        <Button label="Save as draft" variant="secondary" onPress={() => void save('draft')} disabled={saving !== null} loading={saving === 'draft'} />
+        <Button label="Publish to Stories" onPress={() => void save('published')} disabled={!canPublish} loading={saving === 'published'} style={styles.primary} />
+        <Button label="Save as draft" variant="secondary" onPress={() => void save('draft')} disabled={saving !== null} loading={saving === 'draft'} style={styles.primary} />
         <Text style={styles.help}>
           Published as {org.name}.{!consent && ready ? ' Publishing is held until consent is confirmed — save it as a draft meanwhile.' : ''}
         </Text>
@@ -160,6 +161,9 @@ const styles = StyleSheet.create({
   content: { gap: theme.spacing(3), paddingBottom: theme.spacing(10) },
   lede: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.muted, lineHeight: 21 },
   label: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.text },
+  group: { marginBottom: 0 },
+  // The board's full-width pill buttons.
+  primary: { borderRadius: theme.radii.pill, minHeight: 52 },
   help: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted, lineHeight: 19 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2) },
   body: { minHeight: 180, textAlignVertical: 'top' },

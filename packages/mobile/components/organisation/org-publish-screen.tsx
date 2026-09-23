@@ -17,7 +17,7 @@ import { theme } from '../../lib/theme'
 import { Screen } from '../ui/Screen'
 import { Card } from '../ui/Card'
 import { Chip } from '../ui/Chip'
-import { Badge } from '../ui/Badge'
+import { ListIntro, Pill } from '../list/list-kit'
 import { Button } from '../ui/Button'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
@@ -99,7 +99,7 @@ export function OrgPublishScreen() {
   return (
     <Screen>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={styles.lede}>Published items are live on {org.name}'s public page right now.</Text>
+        <ListIntro lead={`Published items are live on ${org.name}'s public page right now.`} />
         <View style={styles.actions}>
           <Button label="New event" onPress={() => router.push('/organisation/events/new')} style={styles.grow} />
           <Button label="New story" variant="secondary" onPress={() => router.push('/organisation/stories/new')} style={styles.grow} />
@@ -122,12 +122,15 @@ export function OrgPublishScreen() {
         ) : (
           rows.map((r) => (
             <Card key={r.id} style={styles.row}>
-              <View style={styles.top}>
-                <Text style={styles.title}>{r.title}</Text>
-                {/* Web's tints: draft amber, past grey, published green. */}
-                <Badge status={r.shown === 'Draft' ? 'pending' : r.shown === 'Past' ? 'draft' : 'published'} label={r.shown} />
-              </View>
+              <Text style={styles.title}>{r.title}</Text>
               <Text style={styles.meta}>{r.meta}</Text>
+              {/* Web's tints: draft amber, past grey, published green. */}
+              <Pill
+                label={r.shown}
+                bg={r.shown === 'Draft' ? theme.colors.honeySoft : r.shown === 'Past' ? theme.colors.surfaceSunken : theme.colors.mintSoft}
+                fg={r.shown === 'Past' ? theme.colors.muted : theme.colors.ink}
+                icon={r.shown === 'Draft' ? 'create-outline' : r.shown === 'Past' ? 'time-outline' : 'radio-outline'}
+              />
               <View style={styles.actions}>
                 <Button
                   label={r.status === 'published' ? 'Unpublish' : 'Publish'}
@@ -156,15 +159,14 @@ export function OrgPublishScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { gap: theme.spacing(2), paddingBottom: theme.spacing(8) },
-  lede: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.muted, lineHeight: 21, marginBottom: theme.spacing(1) },
-  tabs: { flexDirection: 'row', gap: theme.spacing(2), marginBottom: theme.spacing(2) },
+  content: { gap: theme.spacing(3), paddingBottom: theme.spacing(8) },
+  tabs: { flexDirection: 'row', gap: theme.spacing(2), marginBottom: theme.spacing(1) },
   error: { fontFamily: theme.fonts.semiBold, fontSize: theme.type.caption, color: theme.colors.danger },
-  row: { padding: theme.spacing(4), gap: theme.spacing(2) },
-  top: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: theme.spacing(2) },
-  title: { fontFamily: theme.fonts.display, fontSize: theme.type.body, color: theme.colors.text, flex: 1 },
-  meta: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted },
-  actions: { flexDirection: 'row', justifyContent: 'space-between', gap: theme.spacing(2) },
-  grow: { flex: 1 },
+  // The board's list row, with the row's own actions under its pill.
+  row: { padding: 15, gap: 2, borderRadius: theme.radii.panel, ...theme.shadow(1) },
+  title: { fontFamily: theme.fonts.black, fontSize: 15, lineHeight: 20, color: theme.colors.ink },
+  meta: { fontFamily: theme.fonts.regular, fontSize: 12.5, lineHeight: 18, color: theme.colors.muted, marginBottom: 5 },
+  actions: { flexDirection: 'row', justifyContent: 'space-between', gap: theme.spacing(2), marginTop: theme.spacing(2) },
+  grow: { flex: 1, borderRadius: theme.radii.pill },
   foot: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted, lineHeight: 19, marginTop: theme.spacing(3) },
 })

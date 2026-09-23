@@ -17,12 +17,11 @@ import { apiClient } from '../../lib/api-client'
 import { useCapabilities } from '../../lib/capabilities'
 import { theme } from '../../lib/theme'
 import { Screen } from '../ui/Screen'
-import { Card } from '../ui/Card'
 import { Chip } from '../ui/Chip'
 import { Badge } from '../ui/Badge'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
-import { AnimatedPressable } from '../ui/AnimatedPressable'
+import { ListRow, RowThumb, StagePill } from '../list/list-kit'
 
 const TABS = [
   { key: 'toys', label: 'Lend a toy', types: ['donation', 'exchange'], empty: 'No toy requests right now.' },
@@ -110,23 +109,15 @@ export function OrgRequestsScreen() {
           rows.map((t) => {
             const note = t.last_message?.kind === 'user' ? t.last_message.body : null
             return (
-              <AnimatedPressable
+              <ListRow
                 key={t.id}
+                title={t.requester_name ?? 'A family'}
+                meta={`${subjectName(t)}${note ? ` · “${note}”` : ''}`}
+                thumb={<RowThumb photo={t.toy_cover_photo_url} glyph={t.type === 'build' ? 'construct-outline' : t.type === 'print' ? 'print-outline' : 'cube-outline'} />}
+                pill={t.status === 'requested' ? <StagePill stage="needsyou" /> : <Badge status={t.status} />}
                 onPress={() => router.push(threadRoute(t) as never)}
-                accessibilityRole="button"
                 accessibilityLabel={`${t.requester_name ?? 'A family'}, ${subjectName(t)}`}
-              >
-                <Card style={styles.row}>
-                  <View style={styles.top}>
-                    <Text style={styles.name}>{t.requester_name ?? 'A family'}</Text>
-                    {t.status === 'requested' ? <Badge status="requested" label="Needs you" /> : <Badge status={t.status} />}
-                  </View>
-                  <Text style={styles.meta} numberOfLines={2}>
-                    {subjectName(t)}
-                    {note ? ` · “${note}”` : ''}
-                  </Text>
-                </Card>
-              </AnimatedPressable>
+              />
             )
           })
         )}
@@ -136,11 +127,7 @@ export function OrgRequestsScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { gap: theme.spacing(2), paddingBottom: theme.spacing(8) },
+  content: { gap: theme.spacing(3), paddingBottom: theme.spacing(8) },
   lede: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.muted, lineHeight: 21, marginBottom: theme.spacing(1) },
-  tabs: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2), marginBottom: theme.spacing(2) },
-  row: { padding: theme.spacing(3), gap: theme.spacing(1) },
-  top: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: theme.spacing(2) },
-  name: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.text, flexShrink: 1 },
-  meta: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted },
+  tabs: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2), marginBottom: theme.spacing(1) },
 })

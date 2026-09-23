@@ -145,7 +145,8 @@ describe('ReviewQueueScreen', () => {
     render(<ReviewQueueScreen />)
 
     await screen.findByText('For Riverside')
-    expect(screen.getByText('Riverside Therapy')).toBeTruthy()
+    // The row's meta line leads with the org: "Riverside Therapy · Easy · 1 Aug".
+    expect(screen.getByText(/^Riverside Therapy · Easy · /)).toBeTruthy()
   })
 
   it('explains itself to someone who leads no organisation', async () => {
