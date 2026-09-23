@@ -53,7 +53,7 @@ async function partyPage(
 /** Request the toy as a donation and return the thread's transaction id. */
 async function requestPickup(page: Page, toyId: string): Promise<string> {
   await page.goto(`/toy-library/${toyId}`)
-  await page.getByRole('button', { name: 'Arrange pickup', exact: true }).click()
+  await page.getByRole('button', { name: 'Ask to collect it', exact: true }).click()
   await page.waitForURL(/\/exchanges\/[0-9a-f-]{36}/)
   return page.url().split('/exchanges/')[1]
 }

@@ -1,5 +1,5 @@
 // packages/mobile/components/toys/request-block.tsx
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { View, Text, Image, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import type { Toy, ToyTransaction, ToyWithOwner } from '@splat-connect/types'
@@ -8,7 +8,6 @@ import { theme } from '../../lib/theme'
 import { ErrorRow } from '../auth-screen'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
 import { Button } from '../ui/Button'
-import { Card } from '../ui/Card'
 import { Meter } from '../ui/Meter'
 
 function ExchangeRow({ toy, selected, onPress }: { toy: Toy; selected: boolean; onPress: () => void }) {
@@ -51,8 +50,11 @@ export function RequestBlock({
   myToysLoaded,
   myToysError,
   onStarted,
+  aside,
 }: {
   toy: ToyWithOwner
+  /** Drawn beside "Ask to collect it" — the board's save button. */
+  aside?: ReactNode
   myToys: Toy[]
   /** False until the caller's own toys have loaded (or failed) — see below. */
   myToysLoaded: boolean
@@ -92,20 +94,13 @@ export function RequestBlock({
   }
 
   return (
-    <Card style={styles.card}>
+    <View style={styles.card}>
       <ErrorRow message={error} />
-      {/* Says what pressing either button actually does — same reasoning as
-          web's comment above this line: neither button completes anything,
-          it only opens a conversation with the owner. */}
-      <Text style={styles.explainer}>
-        {canDonate && canExchange
-          ? 'Ask to collect this toy, or offer one of yours in exchange. Either way it starts a conversation with the owner.'
-          : canDonate
-            ? 'Ask to collect this toy. This starts a conversation with the owner.'
-            : 'Offer one of your toys in exchange. This starts a conversation with the owner.'}
-      </Text>
       {canDonate && (
-        <Button label="Arrange pickup" variant="accent" disabled={busy} onPress={() => start('donation')} />
+        <View style={styles.primaryRow}>
+          <Button label="Ask to collect it" disabled={busy} onPress={() => start('donation')} style={styles.primary} />
+          {aside}
+        </View>
       )}
       {canExchange && mode === 'idle' && (
         <Button
@@ -143,18 +138,31 @@ export function RequestBlock({
           />
         </View>
       )}
-    </Card>
+      {/* Says what pressing either button actually does — same reasoning as
+          web's comment above this line: neither button completes anything,
+          it only opens a conversation with the owner. Under the buttons, as
+          the board's disclaimer line. */}
+      <Text style={styles.explainer}>
+        {canDonate && canExchange
+          ? 'Ask to collect this toy, or offer one of yours in exchange. Either way it starts a conversation with the owner.'
+          : canDonate
+            ? 'Ask to collect this toy. This starts a conversation with the owner.'
+            : 'Offer one of your toys in exchange. This starts a conversation with the owner.'}
+      </Text>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
   muted: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.muted },
   card: { gap: theme.spacing(3) },
+  primaryRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2) },
+  primary: { flex: 1 },
   explainer: {
     fontFamily: theme.fonts.regular,
-    fontSize: theme.type.label,
+    fontSize: theme.type.caption,
     color: theme.colors.muted,
-    lineHeight: 21,
+    lineHeight: 19,
   },
   chooser: { gap: theme.spacing(2) },
   radioGroup: { gap: theme.spacing(2) },

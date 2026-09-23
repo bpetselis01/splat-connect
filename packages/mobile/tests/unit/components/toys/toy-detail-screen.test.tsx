@@ -161,19 +161,41 @@ describe('ToyDetailScreen', () => {
     expect(mockPush).toHaveBeenCalledWith('/toy-library/organisation/org1')
   })
 
-  it('shows the condition meter score and the switch-adapted fact', async () => {
+  it('shows the offer, condition and switch-adapted pills', async () => {
     mockEndpoints({ detail: Promise.resolve(toy({ condition: 7, switch_adapted: true })) })
     render(<ToyDetailScreen id="toy1" />)
     await screen.findByText('Bubble machine')
-    expect(screen.getByText('7 / 10')).toBeTruthy()
-    expect(screen.getByText('Yes · 3.5mm jack')).toBeTruthy()
+    expect(screen.getByText('Gift — nothing comes back')).toBeTruthy()
+    expect(screen.getByText('Condition 7 / 10')).toBeTruthy()
+    expect(screen.getByText('Switch-adapted')).toBeTruthy()
+    expect(screen.getByText('Notes from the holder')).toBeTruthy()
   })
 
-  it('shows "No" for switch-adapted when the toy is not adapted', async () => {
+  it('draws no switch-adapted pill when the toy is not adapted', async () => {
     mockEndpoints({ detail: Promise.resolve(toy({ switch_adapted: false })) })
     render(<ToyDetailScreen id="toy1" />)
     await screen.findByText('Bubble machine')
-    expect(screen.getByText('No')).toBeTruthy()
+    expect(screen.queryByText('Switch-adapted')).toBeNull()
+  })
+
+  it('thanks an organisation holder, and offers no thanks to a person', async () => {
+    mockEndpoints({
+      detail: Promise.resolve(
+        toy({ owner_id: null, owner_org_id: 'org1', profiles: null, organizations: { name: 'TAD Australia' } })
+      ),
+    })
+    mockPost.mockResolvedValue({})
+    render(<ToyDetailScreen id="toy1" />)
+    fireEvent.press(await screen.findByRole('button', { name: 'Thank TAD Australia' }))
+    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/organizations/org1/thanks', {}))
+    expect(await screen.findByRole('button', { name: 'Thanked TAD Australia' })).toBeTruthy()
+  })
+
+  it('offers no thanks when a person holds the toy', async () => {
+    render(<ToyDetailScreen id="toy1" />)
+    await screen.findByText('Bubble machine')
+    expect(screen.queryByRole('button', { name: /^Thank/ })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Report a problem' })).toBeTruthy()
   })
 
   it('hides the request block for the toy owner', async () => {
@@ -181,7 +203,7 @@ describe('ToyDetailScreen', () => {
     mockEndpoints({ detail: Promise.resolve(toy({ owner_id: 'owner1' })) })
     render(<ToyDetailScreen id="toy1" />)
     await screen.findByText('Bubble machine')
-    expect(screen.queryByRole('button', { name: 'Arrange pickup' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Ask to collect it' })).toBeNull()
     expect(mockGet).not.toHaveBeenCalledWith('/api/toys')
   })
 
@@ -192,7 +214,7 @@ describe('ToyDetailScreen', () => {
     })
     render(<ToyDetailScreen id="toy1" />)
     await screen.findByText('Bubble machine')
-    expect(screen.queryByRole('button', { name: 'Arrange pickup' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Ask to collect it' })).toBeNull()
     expect(mockGet).not.toHaveBeenCalledWith('/api/toys')
   })
 
@@ -266,7 +288,7 @@ describe('ToyDetailScreen', () => {
     render(<ToyDetailScreen id="toy1" />)
     await screen.findByText('Bubble machine')
 
-    fireEvent.press(screen.getByRole('button', { name: 'Arrange pickup' }))
+    fireEvent.press(screen.getByRole('button', { name: 'Ask to collect it' }))
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/exchanges/tx1'))
     expect(mockPost).toHaveBeenCalledWith('/api/toy-transactions', { toy_id: 'toy1', type: 'donation' })
   })

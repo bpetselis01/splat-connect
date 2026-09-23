@@ -108,15 +108,15 @@ test("the request block offers only what the toy's offer_type allows", async ({ 
 
   await page.goto(`/toy-library/${donation}`)
   await expect(page.getByText(`Held by ${holder}`)).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Arrange pickup', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Ask to collect it', exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Arrange exchange', exact: true })).toHaveCount(0)
 
   await page.goto(`/toy-library/${exchange}`)
   await expect(page.getByRole('button', { name: 'Arrange exchange', exact: true })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Arrange pickup', exact: true })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Ask to collect it', exact: true })).toHaveCount(0)
 
   await page.goto(`/toy-library/${both}`)
-  await expect(page.getByRole('button', { name: 'Arrange pickup', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Ask to collect it', exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Arrange exchange', exact: true })).toBeVisible()
 })
 
@@ -131,6 +131,6 @@ test('a listed toy that is not being offered says so instead of asking', async (
   await page.goto(`/toy-library/${id}`)
 
   await expect(page.getByText('Not currently offered for donation or exchange.')).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Arrange pickup', exact: true })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Ask to collect it', exact: true })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Arrange exchange', exact: true })).toHaveCount(0)
 })

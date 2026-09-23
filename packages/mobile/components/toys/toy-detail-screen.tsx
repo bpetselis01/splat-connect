@@ -3,17 +3,43 @@ import { useEffect, useState } from 'react'
 import { View, Text, Image, ScrollView, Pressable, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import { toyFacts, type Toy, type ToyDetail } from '@splat-connect/types'
+import { toyFacts, type OfferType, type Toy, type ToyDetail } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { useSaves } from '../../lib/saves'
 import { useCapabilities } from '../../lib/capabilities'
-import { Meter } from '../ui/Meter'
+import { Button } from '../ui/Button'
 import { SaveButton } from '../ui/SaveButton'
 import { Skeleton } from '../ui/Skeleton'
 import { PhotoCarousel } from '../ui/PhotoCarousel'
 import { EmptyState } from '../ui/EmptyState'
+import { ReportProblem } from '../reports/report-problem'
 import { RequestBlock } from './request-block'
+
+const OFFER_LABEL: Record<OfferType, string> = {
+  donation: 'Gift — nothing comes back',
+  exchange: 'Swap — one of yours for it',
+  both: 'Gift or swap',
+}
+
+/** A read-only fact pill, the board's tinted chip with an optional glyph. */
+function Pill({
+  label,
+  icon,
+  tone,
+}: {
+  label: string
+  icon?: keyof typeof Ionicons.glyphMap
+  tone: 'mint' | 'brand'
+}) {
+  const t = theme.colors.tone[tone]
+  return (
+    <View style={[styles.pill, { backgroundColor: t.bg }]}>
+      {icon ? <Ionicons name={icon} size={13} color={t.fg} /> : null}
+      <Text style={[styles.pillText, { color: t.fg }]}>{label}</Text>
+    </View>
+  )
+}
 
 export function ToyDetailScreen({ id }: { id: string }) {
   const router = useRouter()
@@ -25,6 +51,8 @@ export function ToyDetailScreen({ id }: { id: string }) {
   const [myToys, setMyToys] = useState<Toy[]>([])
   const [myToysLoaded, setMyToysLoaded] = useState(false)
   const [myToysError, setMyToysError] = useState<string | null>(null)
+  const [thanked, setThanked] = useState(false)
+  const [thanking, setThanking] = useState(false)
 
   useEffect(() => {
     let ignore = false
@@ -96,17 +124,38 @@ export function ToyDetailScreen({ id }: { id: string }) {
 
   const orgName = toy.organizations?.name ?? null
   const personName = toy.profiles?.name ?? null
+  const canAsk = !!caps && !isOwner
+  // The save sits beside "Ask to collect it" when there is one, as on the
+  // board; otherwise it stays by the title.
+  const saveBesideAsk = canAsk && (toy.offer_type === 'donation' || toy.offer_type === 'both')
+  const save = <SaveButton slug="toys" id={toy.id} saves={saves} />
+
+  async function thankOrg() {
+    setThanking(true)
+    try {
+      await apiClient.post(`/api/organizations/${toy!.owner_org_id}/thanks`, {})
+      setThanked(true)
+    } catch (err) {
+      // 409: they already have — the same end state.
+      if (err instanceof Error && /status 409/.test(err.message)) setThanked(true)
+    } finally {
+      setThanking(false)
+    }
+  }
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <PhotoCarousel
-        urls={toy.photo_urls}
-        switchUrl={toy.switch_adapted ? toy.switch_photo_url : null}
-      />
+      <View style={styles.hero}>
+        <PhotoCarousel
+          urls={toy.photo_urls}
+          height={240}
+          switchUrl={toy.switch_adapted ? toy.switch_photo_url : null}
+        />
+      </View>
 
       <View style={styles.titleRow}>
         <Text style={styles.title}>{toy.name}</Text>
-        <SaveButton slug="toys" id={toy.id} saves={saves} />
+        {saveBesideAsk ? null : save}
       </View>
 
       {orgName ? (
@@ -127,21 +176,18 @@ export function ToyDetailScreen({ id }: { id: string }) {
         <Text style={styles.holder}>{`Held by ${personName}`}</Text>
       ) : null}
 
-      <View style={styles.factRow}>
-        <View style={styles.factTile}>
-          <Text style={styles.factLabel}>Condition</Text>
-          <View style={styles.factValueRow}>
-            <Meter value={toy.condition} />
-            <Text style={styles.factValue}>{`${toy.condition} / 10`}</Text>
-          </View>
-        </View>
-        <View style={styles.factTile}>
-          <Text style={styles.factLabel}>Switch-adapted</Text>
-          <Text style={styles.factValue}>{toy.switch_adapted ? 'Yes · 3.5mm jack' : 'No'}</Text>
-        </View>
+      <View style={styles.pillRow}>
+        {toy.offer_type ? <Pill icon="gift-outline" label={OFFER_LABEL[toy.offer_type]} tone="mint" /> : null}
+        <Pill icon="checkmark-circle-outline" label={`Condition ${toy.condition} / 10`} tone="mint" />
+        {toy.switch_adapted ? <Pill label="Switch-adapted" tone="brand" /> : null}
       </View>
 
-      {toy.description ? <Text style={styles.description}>{toy.description}</Text> : null}
+      {toy.description ? (
+        <View style={styles.notes}>
+          <Text style={styles.notesTitle}>Notes from the holder</Text>
+          <Text style={styles.description}>{toy.description}</Text>
+        </View>
+      ) : null}
 
       {/* 075's facts, in the holder's words — the board's grid under the notes. */}
       {toyFacts(toy).length > 0 ? (
@@ -173,22 +219,64 @@ export function ToyDetailScreen({ id }: { id: string }) {
         </Pressable>
       ) : null}
 
-      {caps && !isOwner ? (
+      {canAsk ? (
         <RequestBlock
           toy={toy}
           myToys={myToys}
           myToysLoaded={myToysLoaded}
           myToysError={myToysError}
           onStarted={(txId) => router.push(`/exchanges/${txId}`)}
+          aside={saveBesideAsk ? save : undefined}
         />
       ) : null}
+
+      <View style={styles.footerRow}>
+        {/* Only an organisation can be thanked (077); a person holder has no
+            thanks route yet, so there is nothing to offer for one. */}
+        {canAsk && toy.owner_org_id && orgName ? (
+          <Button
+            label={thanked ? `Thanked ${orgName}` : `Thank ${orgName}`}
+            variant="secondary"
+            disabled={thanked}
+            loading={thanking}
+            onPress={() => void thankOrg()}
+            style={styles.thank}
+          />
+        ) : (
+          <View />
+        )}
+        <ReportProblem subjectKind="toy" subjectId={toy.id} subjectLabel={toy.name} />
+      </View>
     </ScrollView>
   )
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
-  content: { padding: theme.spacing(4), paddingBottom: theme.spacing(10), gap: theme.spacing(4) },
+  content: { paddingHorizontal: theme.spacing(4), paddingBottom: theme.spacing(10), gap: theme.spacing(4) },
+  hero: { marginHorizontal: -theme.spacing(4), marginBottom: -theme.spacing(1) },
+  pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2) },
+  pill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    borderRadius: theme.radii.pill,
+    paddingHorizontal: theme.spacing(2.5),
+    paddingVertical: theme.spacing(1),
+  },
+  pillText: { fontFamily: theme.fonts.black, fontSize: 12 },
+  notes: {
+    borderRadius: theme.radii.panel,
+    borderWidth: theme.border.hairline,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surface,
+    padding: theme.spacing(4),
+    gap: theme.spacing(2),
+    ...theme.shadow(1),
+  },
+  notesTitle: { fontFamily: theme.fonts.display, fontSize: theme.type.body, color: theme.colors.ink },
+  footerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: theme.spacing(2) },
+  thank: { paddingVertical: theme.spacing(2), paddingHorizontal: theme.spacing(4), minHeight: 40 },
   loading: {
     flex: 1,
     backgroundColor: theme.colors.background,
@@ -196,44 +284,12 @@ const styles = StyleSheet.create({
     gap: theme.spacing(3),
   },
   loadingPhoto: { borderRadius: theme.radii.card, marginBottom: theme.spacing(2) },
-  photoStripContent: { gap: theme.spacing(3), paddingRight: 6, paddingBottom: 8, paddingLeft: 2, paddingTop: 2 },
-  photo: {
-    width: 220,
-    height: 180,
-    borderRadius: theme.radii.card,
-    borderWidth: theme.border.hairline,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.surfaceSunken,
-    ...theme.shadow(2),
-  },
-  photoPlaceholder: {
-    width: 220,
-    height: 180,
-    borderRadius: theme.radii.card,
-    borderWidth: theme.border.hairline,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.accentLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...theme.shadow(2),
-  },
   titleRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: theme.spacing(3) },
-  title: { flex: 1, fontFamily: theme.fonts.bold, fontSize: theme.type.title, color: theme.colors.text, lineHeight: 30 },
+  title: { flex: 1, fontFamily: theme.fonts.display, fontSize: theme.type.title, color: theme.colors.text, lineHeight: 32 },
   holderRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2) },
   holder: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.muted },
   holderLink: { fontFamily: theme.fonts.bold, color: theme.colors.primaryDeep, textDecorationLine: 'underline' },
   holderQty: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.muted },
-  factRow: { flexDirection: 'row', gap: theme.spacing(3) },
-  factTile: {
-    flex: 1,
-    borderWidth: theme.border.hairline,
-    borderColor: theme.colors.border,
-    borderRadius: theme.radii.field,
-    backgroundColor: theme.colors.surface,
-    padding: theme.spacing(3),
-    gap: theme.spacing(1),
-    ...theme.shadow(1),
-  },
   factLabel: {
     fontFamily: theme.fonts.bold,
     fontSize: 11,
@@ -241,7 +297,6 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     color: theme.colors.muted,
   },
-  factValueRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2) },
   factValue: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.text },
   factGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(3) },
   // Two across, the gap taken out of the width rather than left to overflow.
@@ -276,5 +331,5 @@ const styles = StyleSheet.create({
   builtFromText: { flex: 1, gap: theme.spacing(0.5) },
   builtFromTitle: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.ink },
   builtFromNote: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.ink },
-  description: { fontFamily: theme.fonts.regular, fontSize: theme.type.body, color: theme.colors.muted, lineHeight: 23 },
+  description: { fontFamily: theme.fonts.regular, fontSize: theme.type.body, color: theme.colors.text, lineHeight: 23 },
 })
