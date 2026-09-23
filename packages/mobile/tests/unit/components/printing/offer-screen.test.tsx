@@ -101,3 +101,11 @@ it('declines with a reason', async () => {
     expect(mockPost).toHaveBeenCalledWith('/api/toy-transactions/j1/reject', { reason: 'Too big for my bed' })
   )
 })
+
+it("scoped to an organisation, shows only that organisation's machines and jobs", async () => {
+  render(<PrintForOthersScreen orgId="elsewhere" />)
+  // Every fixture machine belongs to 'org', so the job on 'Ender PLA' is not
+  // this organisation's to answer.
+  await waitFor(() => expect(mockGet).toHaveBeenCalledWith('/api/printers/mine'))
+  expect(screen.queryByText('Also asked 1 other. Settings from the guide: PETG.')).toBeNull()
+})

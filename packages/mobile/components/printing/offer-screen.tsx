@@ -55,7 +55,12 @@ const PICKUP_FIELDS = [
   { key: 'pickup_postcode', label: 'Postcode' },
 ] as const
 
-export function PrintForOthersScreen() {
+/**
+ * `orgId` scopes the screen to one organisation's machines — the board's Print
+ * orders ("Print for others, scoped to the organisation"). Without it, every
+ * machine the caller can answer for.
+ */
+export function PrintForOthersScreen({ orgId }: { orgId?: string } = {}) {
   const router = useRouter()
   const { caps } = useCapabilities()
   const [tab, setTab] = useState<Tab>('requests')
@@ -67,10 +72,11 @@ export function PrintForOthersScreen() {
 
   const load = useCallback(async () => {
     try {
-      const [mine, all] = await Promise.all([
+      const [every, all] = await Promise.all([
         apiClient.get<PrinterWithOwner[]>('/api/printers/mine'),
         apiClient.get<ToyTransactionSummary[]>('/api/toy-transactions'),
       ])
+      const mine = orgId ? every.filter((p) => p.owner_org_id === orgId) : every
       const ids = new Set(mine.map((p) => p.id))
       // Jobs ON these machines — never ones this account asked for, which live
       // on My print requests with different controls entirely.
@@ -82,7 +88,7 @@ export function PrintForOthersScreen() {
       console.error('[PrintForOthersScreen] load failed:', err)
       setLoadFailed(true)
     }
-  }, [])
+  }, [orgId])
 
   useFocusEffect(
     useCallback(() => {
