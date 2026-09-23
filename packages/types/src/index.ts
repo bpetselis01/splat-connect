@@ -147,6 +147,32 @@ export type ToyWithOwner = Toy & {
   organizations: { name: string } | null
 }
 
+/** GET /api/public/toys/:id: the row plus the approved guide it was built
+ *  from (null when unlinked or the guide is not approved) and how many toys
+ *  the holder has handed over. */
+export type ToyDetail = ToyWithOwner & {
+  guide: { id: string; title: string } | null
+  holder_given: number
+}
+
+/** The board's facts grid, in its order, skipping the ones not filled in. */
+export function toyFacts(
+  toy: Pick<Toy, 'age_min' | 'age_max' | 'batteries' | 'switch_fitting' | 'volume'>
+): { k: string; v: string }[] {
+  const { age_min: min, age_max: max } = toy
+  const ages =
+    min != null && max != null ? (min === max ? `${min}` : `${min}–${max}`)
+    : min != null ? `${min}+`
+    : max != null ? `Up to ${max}`
+    : null
+  return [
+    { k: 'Ages it suits', v: ages },
+    { k: 'Batteries', v: toy.batteries },
+    { k: 'Switch fitting', v: toy.switch_fitting },
+    { k: 'Volume', v: toy.volume },
+  ].filter((f): f is { k: string; v: string } => !!f.v)
+}
+
 /** Who a browsing visitor is being offered this toy by. */
 export function toyHolderName(toy: Pick<ToyWithOwner, 'profiles' | 'organizations'>): string | null {
   return toy.organizations?.name ?? toy.profiles?.name ?? null

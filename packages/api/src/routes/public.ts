@@ -158,7 +158,30 @@ publicRoutes.get('/toys/:id', async (c) => {
   if (unavailable === null) return c.json({ error: 'Failed to load toys' }, 500)
   const hidden = new Set(unavailable)
   if (hidden.has(data.id)) return c.json({ error: 'Not found' }, 404)
-  return c.json(data)
+
+  // 075's "Built from" card: the guide only while it is approved, which the
+  // anon client's RLS enforces as well as the filter. A separate read, not an
+  // embed — an embed that RLS refuses can take the whole row with it.
+  // The holder's "N toys given" is completed handovers they gave; that table
+  // has no anon policy, so the admin client counts, and returns only a count.
+  const giver = data.owner_org_id ? 'owner_org_id' : 'owner_id'
+  const [guide, given] = await Promise.all([
+    data.tutorial_id
+      ? supabase
+          .from('tutorials')
+          .select('id, title')
+          .eq('id', data.tutorial_id)
+          .eq('status', 'approved')
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+    createAdminClient()
+      .from('toy_transactions')
+      .select('id', { count: 'exact', head: true })
+      .eq(giver, data.owner_org_id ?? data.owner_id)
+      .eq('status', 'completed')
+      .not('toy_id', 'is', null),
+  ])
+  return c.json({ ...data, guide: guide.data ?? null, holder_given: given.count ?? 0 })
 })
 
 /**

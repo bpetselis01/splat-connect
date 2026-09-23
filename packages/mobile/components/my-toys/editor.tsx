@@ -85,6 +85,15 @@ export function Editor({ id }: { id: string }) {
   const [description, setDescription] = useState('')
   const [condition, setCondition] = useState(5)
   const [switchAdapted, setSwitchAdapted] = useState(false)
+  // 075's facts, as typed. Ages stay strings until save so a cleared box is
+  // "no answer" rather than 0.
+  const [ageMin, setAgeMin] = useState('')
+  const [ageMax, setAgeMax] = useState('')
+  const [batteries, setBatteries] = useState('')
+  const [switchFitting, setSwitchFitting] = useState('')
+  const [volume, setVolume] = useState('')
+  const [guideId, setGuideId] = useState<string | null>(null)
+  const [guides, setGuides] = useState<{ id: string; title: string }[]>([])
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
 
@@ -120,6 +129,12 @@ export function Editor({ id }: { id: string }) {
         setDescription(found.description ?? '')
         setCondition(found.condition)
         setSwitchAdapted(found.switch_adapted)
+        setAgeMin(found.age_min == null ? '' : String(found.age_min))
+        setAgeMax(found.age_max == null ? '' : String(found.age_max))
+        setBatteries(found.batteries ?? '')
+        setSwitchFitting(found.switch_fitting ?? '')
+        setVolume(found.volume ?? '')
+        setGuideId(found.tutorial_id ?? null)
         setTransactions(tx)
       })
       .catch((err) => {
@@ -129,6 +144,14 @@ export function Editor({ id }: { id: string }) {
       .finally(() => {
         if (!ignore) setLoading(false)
       })
+    // "Built from a guide?" picks from the approved guides — the public list.
+    // Its own fetch: a failure empties the picker, never the editor.
+    apiClient
+      .get<{ id: string; title: string }[]>('/api/public/tutorials')
+      .then((all) => {
+        if (!ignore) setGuides(all.map((g) => ({ id: g.id, title: g.title })))
+      })
+      .catch(() => {})
     return () => {
       ignore = true
     }
@@ -190,6 +213,12 @@ export function Editor({ id }: { id: string }) {
         description: description.trim() ? description : null,
         condition,
         switch_adapted: switchAdapted,
+        age_min: ageMin.trim() ? Number(ageMin) : null,
+        age_max: ageMax.trim() ? Number(ageMax) : null,
+        batteries: batteries.trim() || null,
+        switch_fitting: switchFitting.trim() || null,
+        volume: volume.trim() || null,
+        tutorial_id: guideId,
       })
       setToy((prev) => (prev ? { ...prev, ...updated } : updated))
     } catch (err) {
@@ -437,6 +466,33 @@ export function Editor({ id }: { id: string }) {
               />
             </View>
 
+            <Text style={styles.label}>Ages it suits</Text>
+            <View style={styles.pairRow}>
+              <View style={styles.pairCell}>
+                <TextField placeholder="From age" accessibilityLabel="From age" value={ageMin} onChangeText={setAgeMin} keyboardType="number-pad" maxLength={2} />
+              </View>
+              <View style={styles.pairCell}>
+                <TextField placeholder="To age" accessibilityLabel="To age" value={ageMax} onChangeText={setAgeMax} keyboardType="number-pad" maxLength={2} />
+              </View>
+            </View>
+            <TextField label="Batteries" placeholder="e.g. 2 × AA, included" value={batteries} onChangeText={setBatteries} maxLength={60} />
+            <TextField label="Switch fitting" placeholder="e.g. 3.5 mm mono socket" value={switchFitting} onChangeText={setSwitchFitting} maxLength={60} />
+            <TextField label="Volume" placeholder="e.g. Loud, half-taped" value={volume} onChangeText={setVolume} maxLength={40} />
+
+            <Text style={styles.label}>Built from a guide? (optional)</Text>
+            <Text style={styles.photoHint}>Linked, so a family can see how it was made — and make their own.</Text>
+            <View accessibilityRole="radiogroup" style={styles.chipRow}>
+              <Chip role="radio" label="No guide" active={guideId === null} onPress={() => setGuideId(null)} />
+              {/* A linked guide that has left the library keeps its chip, so a
+                  save does not silently unlink it. */}
+              {guideId && !guides.some((g) => g.id === guideId) ? (
+                <Chip role="radio" label="A guide no longer in the library" active onPress={() => {}} />
+              ) : null}
+              {guides.map((g) => (
+                <Chip key={g.id} role="radio" label={g.title} active={guideId === g.id} onPress={() => setGuideId(g.id)} />
+              ))}
+            </View>
+
             <ErrorRow message={saveError} />
             <Button label="Save details" onPress={handleSaveDetails} loading={saving} />
           </View>
@@ -631,6 +687,8 @@ const styles = StyleSheet.create({
   footer: { borderTopWidth: theme.border.hairline, borderTopColor: theme.colors.border, paddingTop: theme.spacing(3) },
 
   detailsForm: { paddingBottom: theme.spacing(6) },
+  pairRow: { flexDirection: 'row', gap: theme.spacing(3) },
+  pairCell: { flex: 1 },
 
   photosForm: { paddingBottom: theme.spacing(6) },
   photoHint: {

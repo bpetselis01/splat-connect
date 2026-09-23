@@ -111,6 +111,20 @@ beforeEach(() => {
 })
 
 describe('ToyDetailScreen', () => {
+  it('shows the facts and opens the guide it was built from', async () => {
+    mockEndpoints({
+      detail: Promise.resolve(
+        toy({ age_min: 2, age_max: 6, batteries: '2 × AA', guide: { id: 'g1', title: 'Bubble Blower' }, holder_given: 0 })
+      ),
+    })
+    render(<ToyDetailScreen id="toy1" />)
+    expect(await screen.findByText('2–6')).toBeTruthy()
+    expect(screen.getByText('Batteries')).toBeTruthy()
+    expect(screen.queryByText('Volume')).toBeNull()
+    fireEvent.press(screen.getByLabelText('Built from Bubble Blower. Open the guide'))
+    expect(mockPush).toHaveBeenCalledWith('/guides/g1')
+  })
+
   it('renders the toy fetched from the public detail endpoint', async () => {
     render(<ToyDetailScreen id="toy1" />)
     expect(await screen.findByText('Bubble machine')).toBeTruthy()

@@ -1,9 +1,9 @@
 // packages/mobile/components/toys/toy-detail-screen.tsx
 import { useEffect, useState } from 'react'
-import { View, Text, Image, ScrollView, StyleSheet } from 'react-native'
+import { View, Text, Image, ScrollView, Pressable, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import type { Toy, ToyWithOwner } from '@splat-connect/types'
+import { toyFacts, type Toy, type ToyDetail } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { useSaves } from '../../lib/saves'
@@ -19,7 +19,7 @@ export function ToyDetailScreen({ id }: { id: string }) {
   const router = useRouter()
   const saves = useSaves()
   const { caps } = useCapabilities()
-  const [toy, setToy] = useState<ToyWithOwner | null>(null)
+  const [toy, setToy] = useState<ToyDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
   const [myToys, setMyToys] = useState<Toy[]>([])
@@ -29,7 +29,7 @@ export function ToyDetailScreen({ id }: { id: string }) {
   useEffect(() => {
     let ignore = false
     apiClient
-      .get<ToyWithOwner>(`/api/public/toys/${id}`)
+      .get<ToyDetail>(`/api/public/toys/${id}`)
       .then((data) => {
         if (!ignore) setToy(data)
       })
@@ -143,6 +143,36 @@ export function ToyDetailScreen({ id }: { id: string }) {
 
       {toy.description ? <Text style={styles.description}>{toy.description}</Text> : null}
 
+      {/* 075's facts, in the holder's words — the board's grid under the notes. */}
+      {toyFacts(toy).length > 0 ? (
+        <View style={styles.factGrid}>
+          {toyFacts(toy).map((f) => (
+            <View key={f.k} style={styles.factCell}>
+              <Text style={styles.factLabel}>{f.k}</Text>
+              <Text style={styles.factValue}>{f.v}</Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
+
+      {toy.guide ? (
+        <Pressable
+          onPress={() => router.push(`/guides/${toy.guide!.id}`)}
+          accessibilityRole="link"
+          accessibilityLabel={`Built from ${toy.guide.title}. Open the guide`}
+          style={styles.builtFrom}
+        >
+          <View style={styles.builtFromIcon}>
+            <Ionicons name="book-outline" size={24} color={theme.colors.primaryDeep} />
+          </View>
+          <View style={styles.builtFromText}>
+            <Text style={styles.builtFromTitle}>{`Built from ${toy.guide.title}`}</Text>
+            <Text style={styles.builtFromNote}>Worth reading even if you take this one.</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={theme.colors.ink} />
+        </Pressable>
+      ) : null}
+
       {caps && !isOwner ? (
         <RequestBlock
           toy={toy}
@@ -213,5 +243,38 @@ const styles = StyleSheet.create({
   },
   factValueRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2) },
   factValue: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.text },
+  factGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(3) },
+  // Two across, the gap taken out of the width rather than left to overflow.
+  factCell: {
+    width: '47%',
+    flexGrow: 1,
+    borderWidth: theme.border.hairline,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radii.field,
+    backgroundColor: theme.colors.surface,
+    padding: theme.spacing(3),
+    gap: theme.spacing(1),
+  },
+  builtFrom: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing(3),
+    borderWidth: theme.border.hairline,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radii.card,
+    backgroundColor: theme.colors.accentLight,
+    padding: theme.spacing(4),
+  },
+  builtFromIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: theme.radii.field,
+    backgroundColor: theme.colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  builtFromText: { flex: 1, gap: theme.spacing(0.5) },
+  builtFromTitle: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.ink },
+  builtFromNote: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.ink },
   description: { fontFamily: theme.fonts.regular, fontSize: theme.type.body, color: theme.colors.muted, lineHeight: 23 },
 })

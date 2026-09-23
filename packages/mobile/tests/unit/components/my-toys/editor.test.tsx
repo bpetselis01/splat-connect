@@ -117,6 +117,7 @@ function mockGetRouting(toys: object[], transactions: object[] = []) {
   mockGet.mockImplementation((path: string) => {
     if (path === '/api/toys') return Promise.resolve(toys)
     if (path === '/api/toy-transactions') return Promise.resolve(transactions)
+    if (path === '/api/public/tutorials') return Promise.resolve([{ id: 'g1', title: 'Bubble Blower', status: 'approved' }])
     return Promise.reject(new Error(`unexpected GET ${path}`))
   })
 }
@@ -162,7 +163,34 @@ describe('Editor', () => {
         description: null,
         condition: 9,
         switch_adapted: true,
+        age_min: null,
+        age_max: null,
+        batteries: null,
+        switch_fitting: null,
+        volume: null,
+        tutorial_id: null,
       })
+    )
+  })
+
+  it('saves the facts and the guide it was built from', async () => {
+    mockGetRouting([toy({ volume: 'Loud' })])
+    mockPatch.mockResolvedValue(toy({}))
+    render(<Editor id="toy1" />)
+
+    await screen.findByPlaceholderText('Name')
+    fireEvent.changeText(screen.getByLabelText('From age'), '2')
+    fireEvent.changeText(screen.getByLabelText('To age'), '6')
+    fireEvent.changeText(screen.getByPlaceholderText('e.g. 2 × AA, included'), ' 2 × AA ')
+    fireEvent.changeText(screen.getByPlaceholderText('e.g. Loud, half-taped'), '')
+    fireEvent.press(await screen.findByLabelText('Bubble Blower'))
+    fireEvent.press(screen.getByLabelText('Save details'))
+
+    await waitFor(() =>
+      expect(mockPatch).toHaveBeenCalledWith(
+        '/api/toys/toy1',
+        expect.objectContaining({ age_min: 2, age_max: 6, batteries: '2 × AA', volume: null, tutorial_id: 'g1' })
+      )
     )
   })
 
