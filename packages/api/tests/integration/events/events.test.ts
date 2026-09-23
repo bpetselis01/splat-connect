@@ -386,3 +386,59 @@ describe('the question form', () => {
     expect(res.status).toBe(404)
   })
 })
+
+describe('publishing a new event', () => {
+  // The publish form sends everything in one POST. Until this test, POST kept
+  // only title, time, format, venue and audience, so a published in-person
+  // event failed 061's suburb-and-state check, and a draft lost its tools,
+  // seats and cost with no error.
+  it('keeps the whole form, place included, and publishes an in-person event', async () => {
+    const res = await app.request(
+      `/api/organizations/${orgId}/events`,
+      json(leader.token, 'POST', {
+        title: 'Posted build day',
+        kind: 'workshop',
+        starts_at: soon(),
+        format: 'in_person',
+        location: '14 Corella St',
+        suburb: 'Crows Nest',
+        state: 'NSW',
+        audience: 'Families',
+        tools: ['Drill'],
+        capacity: 12,
+        prints_parts: true,
+        part_sets_max: 4,
+        cost_cents: 1250,
+        status: 'published',
+      })
+    )
+    expect(res.status).toBe(201)
+    const event = (await res.json()) as Record<string, unknown>
+    expect(event).toMatchObject({
+      status: 'published',
+      kind: 'workshop',
+      suburb: 'Crows Nest',
+      state: 'NSW',
+      tools: ['Drill'],
+      capacity: 12,
+      prints_parts: true,
+      part_sets_max: 4,
+      cost_cents: 1250,
+    })
+  })
+
+  it('refuses a state that is not one, in a sentence', async () => {
+    const res = await app.request(
+      `/api/organizations/${orgId}/events`,
+      json(leader.token, 'POST', {
+        title: 'Nowhere day',
+        starts_at: soon(),
+        location: 'Somewhere',
+        suburb: 'Nowhere',
+        state: 'ZZ',
+        status: 'draft',
+      })
+    )
+    expect(res.status).toBe(400)
+  })
+})

@@ -899,9 +899,20 @@ organizations.post('/:id/events', async (c) => {
   if (format === 'in_person' && !location) return c.json({ error: 'Say where it is.' }, 400)
   if (format === 'online' && !onlineUrl) return c.json({ error: 'Give the joining link.' }, 400)
 
+  // The rest of the form — place, kind, bench, seats, cost — read the same way
+  // the PATCH below reads it. Without this a published in-person event failed
+  // 061's suburb-and-state check and a draft dropped everything past "who for".
+  const shape = eventShape(body, format)
+  if ('error' in shape) return c.json({ error: shape.error }, 400)
+  const status = body.status === 'published' ? 'published' : 'draft'
+  if (status === 'published' && format === 'in_person' && (!shape.suburb || !shape.state)) {
+    return c.json({ error: 'A published event needs a suburb and a state.' }, 400)
+  }
+
   const { data, error } = await supabase
     .from('org_events')
     .insert({
+      ...shape,
       org_id: orgId,
       title,
       summary: typeof body.summary === 'string' && body.summary.trim() ? body.summary.trim() : null,
@@ -912,7 +923,7 @@ organizations.post('/:id/events', async (c) => {
       online_url: format === 'online' ? onlineUrl : null,
       audience:
         typeof body.audience === 'string' && body.audience.trim() ? body.audience.trim() : null,
-      status: body.status === 'published' ? 'published' : 'draft',
+      status,
       created_by: c.get('userId'),
     })
     .select(EVENT_COLUMNS)
