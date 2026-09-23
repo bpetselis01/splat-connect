@@ -220,6 +220,12 @@ async function phaseA(P) {
     rate_note: 'Filament at cost, about 6c a gram. Student time is free.',
     recycling_materials: ['PLA', 'PETG'],
     recycling_note: 'Clean offcuts and failed prints only. No supports mixed with other plastics.',
+    // 076: the board's identity line, Visit card and how they like to be paid.
+    kind: 'University makerspace',
+    visit_hours: 'Wednesdays, 5–8 pm',
+    service_area: 'Newcastle and the Hunter',
+    payment_methods: ['cash', 'payid'],
+    verified_at: days(-50),
   })
   const mensShed = await insert('organizations', {
     name: "Coorparoo Community Men's Shed",
@@ -687,6 +693,30 @@ async function phaseA(P) {
   await drop({ org_id: mensShed, contributor_id: tom.id, material: 'PLA', estimated_grams: 300, status: 'declined', decided_by: hamish.id, note: 'Mixed with supports.' })
   await drop({ org_id: mensShed, contributor_id: priya.id, material: 'PLA', estimated_grams: 200, status: 'cancelled' })
   log('4 recycling drop-offs')
+
+  // Northbank's profile (076) and its three buttons (077). Written directly:
+  // the API routes are exercised by the integration suite, and these rows are
+  // what the public page draws.
+  await put('org_doors', [
+    { org_id: northbank, position: 1, title: 'Borrow or take a toy', body: 'Adapted toys on the shelf right now. Request one and collect it on a Wednesday.', target: 'toy_library' },
+    { org_id: northbank, position: 2, title: 'Have a part printed', body: 'Open any guide’s Files tab and choose Northbank. About a week; you cover the filament.', target: 'print' },
+    { org_id: northbank, position: 3, title: 'Ask us anything', body: 'Not sure what your child needs? Write to the club and a student will answer.', target: 'message' },
+  ])
+  await put('org_rate_lines', [
+    { org_id: northbank, position: 1, description: 'PLA filament, per small part', amount_cents: 200, claiming: true },
+    { org_id: northbank, position: 2, description: 'Student time and machine wear', amount_cents: 1500, claiming: false },
+  ])
+  await put('org_follows', [{ org_id: northbank, profile_id: dan.id }])
+  await put('org_thanks', [
+    { org_id: northbank, profile_id: priya.id, note: 'The students printed Arlo’s switch in a week and showed us how to fit it.', byline: 'Priya, Merewether', show_note: true, created_at: days(-7) },
+    { org_id: northbank, profile_id: tom.id, note: 'Ruby’s penguins came back working and she has not stopped racing them.', byline: 'Tom', show_note: true, created_at: days(-3) },
+  ])
+  const convo = await insert('org_conversations', { org_id: northbank, profile_id: priya.id, created_at: days(-5), updated_at: days(-4) })
+  await put('org_messages', [
+    { conversation_id: convo, sender_id: priya.id, body: 'Hi! Could we come on Wednesday to try the page-turner prototype with Arlo?', created_at: days(-5) },
+    { conversation_id: convo, sender_id: sarah.id, body: 'Of course — any time after 5. Bring his switch and we will fit it on the spot.', created_at: days(-4) },
+  ])
+  log('Northbank profile: 3 doors, 2 rate lines, 1 follower, 2 thanks, 1 conversation')
 
   // Challenges
   const I = {
