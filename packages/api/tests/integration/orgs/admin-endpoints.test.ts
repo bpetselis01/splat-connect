@@ -161,7 +161,7 @@ describe('the admin queue and spot-check', () => {
     await adminClient().from('tutorials').update({ reviewed_by: admin.id }).eq('id', mine)
     await adminClient().from('tutorials').update({ reviewed_by: leader.id }).eq('id', theirs)
 
-    const res = await app.request('/api/admin/spot-check', authed(admin.token))
+    const res = await app.request('/api/admin/spot-check?limit=1000', authed(admin.token))
     const ids = ((await res.json()) as Array<{ id: string }>).map((t) => t.id)
     expect(ids).toContain(theirs)
     expect(ids).not.toContain(mine)
