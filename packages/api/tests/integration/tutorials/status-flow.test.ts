@@ -47,7 +47,7 @@ describe('tutorial status flow', () => {
     const { data: current } = await adminClient().from('tutorials').select('updated_at').eq('id', tutorialId).single()
     const res = await app.request(
       `/api/tutorials/${tutorialId}`,
-      authed(owner.token, { method: 'PATCH', body: JSON.stringify({ status: 'pending', safety_declared: true, updated_at: current!.updated_at }) })
+      authed(owner.token, { method: 'PATCH', body: JSON.stringify({ status: 'pending', safety_declared: true, build_minutes: 30, updated_at: current!.updated_at }) })
     )
     expect(res.status).toBe(200)
     const body = (await res.json()) as {
