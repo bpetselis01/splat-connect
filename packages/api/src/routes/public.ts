@@ -489,7 +489,9 @@ publicRoutes.get('/contributors/:id', async (c) => {
       .from('toy_transactions')
       .select('toy_id, owner_id, updated_at')
       .eq('owner_id', id)
-      .eq('status', 'completed'),
+      .eq('status', 'completed')
+      // A completed build or print job has no toy; .in('id', [null]) 500s the page.
+      .not('toy_id', 'is', null),
   ])
   if (tutorialsError || toysError || deliveredError) {
     return c.json({ error: 'Failed to load contributor profile' }, 500)
@@ -636,7 +638,8 @@ publicRoutes.get('/organizations/:id', async (c) => {
       .from('toy_transactions')
       .select('toy_id, owner_org_id, updated_at')
       .eq('owner_org_id', id)
-      .eq('status', 'completed'),
+      .eq('status', 'completed')
+      .not('toy_id', 'is', null),
   ])
 
   /*
