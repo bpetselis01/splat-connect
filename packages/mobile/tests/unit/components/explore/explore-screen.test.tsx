@@ -37,7 +37,7 @@ describe('ExploreScreen', () => {
     expect(mockGet).toHaveBeenCalledWith('/api/public/organizations')
   })
 
-  it('renders the three doors with the Learn progress chip, and routes on press', async () => {
+  it("renders the board's seven doors with the Learn progress chip, and routes on press", async () => {
     render(<ExploreScreen />)
     await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(3))
     expect(screen.getByText(`2/${LEARN_ARTICLES.length}`)).toBeTruthy()
@@ -45,8 +45,18 @@ describe('ExploreScreen', () => {
     fireEvent.press(screen.getByLabelText('Learn'))
     expect(mockPush).toHaveBeenCalledWith('/explore/learn')
 
-    fireEvent.press(screen.getByLabelText('Get Involved'))
+    fireEvent.press(screen.getByLabelText('Design challenges'))
     expect(mockPush).toHaveBeenCalledWith('/explore/challenges')
+
+    // Every destination the old tinted doors had is still a door.
+    fireEvent.press(screen.getByLabelText('Makers wanted'))
+    expect(mockPush).toHaveBeenCalledWith('/explore/makers-wanted')
+    fireEvent.press(screen.getByLabelText('Organisations'))
+    expect(mockPush).toHaveBeenCalledWith('/toy-library/organisations')
+    fireEvent.press(screen.getByLabelText('3D printing'))
+    expect(mockPush).toHaveBeenCalledWith('/printing')
+    fireEvent.press(screen.getByLabelText('Recycle plastic'))
+    expect(mockPush).toHaveBeenCalledWith('/explore/recycling')
 
     fireEvent.press(screen.getByLabelText('About SPLAT'))
     expect(mockPush).toHaveBeenCalledWith('/explore/about')
@@ -71,7 +81,8 @@ describe('ExploreScreen', () => {
     expect(screen.queryByText('Bubble machine guide')).toBeNull()
     expect(screen.queryByText('TAD Australia')).toBeNull()
     expect(screen.queryByText('Guides')).toBeNull()
-    expect(screen.queryByText('Organisations')).toBeNull()
+    // "Organisations" is also a door now, so the eyebrow is the one extra.
+    expect(screen.getAllByText('Organisations')).toHaveLength(1)
   })
 
   it('routes a search result to its detail screen on press', async () => {

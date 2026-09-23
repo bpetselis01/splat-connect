@@ -14,7 +14,7 @@ test('the three doors are there, with the learn path not yet started', async ({ 
   await page.goto('/explore')
 
   await expect(page.getByText('Learn', { exact: true })).toBeVisible()
-  await expect(page.getByText('Get Involved', { exact: true })).toBeVisible()
+  await expect(page.getByText('Design challenges', { exact: true })).toBeVisible()
   await expect(page.getByText('About SPLAT', { exact: true })).toBeVisible()
   await expect(page.getByText('0/6', { exact: true })).toBeVisible()
 })
