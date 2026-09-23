@@ -694,8 +694,11 @@ async function phaseA(P) {
     active: await insert('toy_ideas', { author_id: priya.id, status: 'challenge', title: 'A page turner for picture books', summary: 'Turn a board-book page with one switch press.', description: 'Bedtime stories where Arlo turns the page himself. Board books first; paperbacks would be a bonus.', intended_use: 'Bedtime reading', primary_user: 'Arlo, 6' }),
     rejected: await insert('toy_ideas', { author_id: tom.id, status: 'rejected', review_note: 'This one needs mains power inside the toy, which we cannot publish safely.', title: 'Adapted ride-on car', summary: 'Switch control for a 12V ride-on.', description: 'Replace the pedal with a switch.', intended_use: 'Backyard', primary_user: 'Ruby, 8' }),
     graduated: await insert('toy_ideas', { author_id: priya.id, status: 'graduated', tutorial_id: G.penguin, title: 'Switch start for the racing penguins', summary: 'Let Zara start the penguin race.', description: 'The penguin toy has a tiny slide switch. A battery interrupter might do it.', intended_use: 'Play with her brother', primary_user: 'Zara, 3' }),
+    // Questions (078): answered in the thread, never graduated.
+    tomQuestion: await insert('toy_ideas', { author_id: tom.id, status: 'challenge', kind: 'question', title: 'Can holding a switch down for a minute damage the toy?', summary: 'Ruby holds the button and the bubble motor gets warm. Normal, or a problem?', description: 'Ruby holds the switch down for a minute at a time. The motor housing gets warm. Is that normal for an adapted toy, or is the interrupter doing something it should not?', intended_use: 'Bubble machine at home', primary_user: 'Ruby, 8' }),
+    priyaQuestion: await insert('toy_ideas', { author_id: priya.id, status: 'challenge', kind: 'question', title: 'Best glue for a plush toy that gets washed?', summary: 'Hot glue lets go after two washes. What do the clinics use?', description: 'We adapted a plush dog with a big button and it needs washing weekly. Hot glue on the jack housing lets go after two washes.', intended_use: 'Cuddly toy, washed weekly', primary_user: 'Arlo, 6' }),
   }
-  log('4 challenges')
+  log('4 challenges, 2 questions')
 
   // Admin queues
   await insert('contact_messages', { topic: 'safety', name: 'Priya Nair', email: CAST.priya.email, sender_id: priya.id, status: 'open', body: 'The bubble machine guide says 4 AA but ours got warm near the jack after twenty minutes. Is that normal?' })
@@ -832,7 +835,12 @@ async function phaseB(P, S) {
   await api(mei, 'POST', `/ideas/${I.active}/messages`, { body: 'A servo arm with a foam pad might work. I can print a test rig this week.' })
   await api(tom, 'POST', `/ideas/${I.active}/messages`, { body: 'Ruby would use this too. Happy to test.' })
   await api(priya, 'DELETE', `/ideas/${I.active}/participants/${dan.id}`)
-  log('challenge thread')
+  // Tom's question is answered — Mei's reply, marked by Tom. Priya's is open.
+  await api(mei, 'POST', `/ideas/${I.tomQuestion}/join`)
+  const meiAnswer = await api(mei, 'POST', `/ideas/${I.tomQuestion}/messages`, { body: 'Normal. A battery interrupter closes the same circuit the button did, so the motor runs as it would if Ruby held the original button. Warm is fine; hot to touch, or a smell, is not.' })
+  await api(tom, 'POST', `/ideas/${I.tomQuestion}/messages`, { body: 'That settles it, thank you.' })
+  await api(tom, 'POST', `/ideas/${I.tomQuestion}/answer`, { message_id: meiAnswer.id })
+  log('challenge threads')
 
   return X
 }

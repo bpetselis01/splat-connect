@@ -250,7 +250,7 @@ admin.get('/ideas', async (c) => {
     // future private column from leaking here by default the way it did on
     // the public detail endpoint.
     .select(
-      'id, author_id, title, summary, description, intended_use, primary_user, contact_prefs, status, review_note, tutorial_id, created_at, updated_at, profiles!toy_ideas_author_id_fkey(name)'
+      'id, author_id, title, summary, description, intended_use, primary_user, contact_prefs, status, review_note, tutorial_id, kind, answer_message_id, answered_at, created_at, updated_at, profiles!toy_ideas_author_id_fkey(name)'
     )
     .order('created_at', { ascending: false })
 
@@ -355,9 +355,12 @@ admin.post('/ideas/:id/graduate', async (c) => {
   const id = c.req.param('id')
 
   const { data: exists, error: existsError } = await client
-    .from('toy_ideas').select('id').eq('id', id).maybeSingle()
+    .from('toy_ideas').select('id, kind').eq('id', id).maybeSingle()
   if (existsError) return c.json({ error: existsError.message }, 500)
   if (!exists) return c.json({ error: 'Not found' }, 404)
+  // A question is resolved by an answer, never a guide (078's check says the
+  // same of the rows; this is the readable refusal in front of it).
+  if (exists.kind === 'question') return c.json({ error: 'A question cannot graduate' }, 409)
 
   // Claim the graduation atomically. A read-then-act guard lets two concurrent
   // calls both pass, both mint a tutorial, and both attach contributors — an

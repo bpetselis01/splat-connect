@@ -843,7 +843,36 @@ export interface ToyIdeaMessage {
   created_at: string
 }
 
-export interface ToyIdeaDetail extends ToyIdea {
+/** Counts GET /api/public/challenges and /challenges/:id attach (078). The
+ *  thread stays private; the numbers are public. */
+export interface ChallengeCounts {
+  /** Current participants — removed ones are not counted. */
+  maker_count: number
+  /** Replies from anyone but the author. What a question's card counts. */
+  answer_count: number
+}
+
+/** One card on the public design-challenges list. */
+export type PublicChallenge = Pick<
+  ToyIdea,
+  'id' | 'title' | 'summary' | 'contact_prefs' | 'status' | 'kind' | 'answered_at' | 'created_at'
+> &
+  ChallengeCounts
+
+/**
+ * The board's filter chips over the public list, shared by web and mobile so
+ * the two never disagree about what "Build challenges" means: the open ones —
+ * graduated ones have their own chip.
+ */
+export const CHALLENGE_FILTERS: { id: string; label: string; keep: (c: PublicChallenge) => boolean }[] = [
+  { id: 'all', label: 'All', keep: () => true },
+  { id: 'build', label: 'Build challenges', keep: (c) => c.kind !== 'question' && c.status !== 'graduated' },
+  { id: 'questions', label: 'Questions', keep: (c) => c.kind === 'question' },
+  { id: 'makers', label: 'Has makers', keep: (c) => c.maker_count > 0 },
+  { id: 'graduated', label: 'Graduated', keep: (c) => c.status === 'graduated' },
+]
+
+export interface ToyIdeaDetail extends ToyIdea, Partial<ChallengeCounts> {
   author_name: string | null
   participants: ToyIdeaParticipant[]
   /** Absent for viewers who may not read the thread. */

@@ -7,7 +7,7 @@
 import { useState } from 'react'
 import { View, Text, ScrollView, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native'
 import { useRouter } from 'expo-router'
-import { CONTACT_PREFS, type ContactPref, type ToyIdea } from '@splat-connect/types'
+import { CONTACT_PREFS, type ContactPref, type ToyIdea, type ToyIdeaKind } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { useCapabilities } from '../../lib/capabilities'
@@ -18,6 +18,12 @@ import { Button } from '../ui/Button'
 import { TextField } from '../ui/TextField'
 import { EmptyState } from '../ui/EmptyState'
 import { ErrorRow } from '../auth-screen'
+
+// Web's idea-form.tsx tiles, same words (078).
+const KINDS: { kind: ToyIdeaKind; label: string }[] = [
+  { kind: 'challenge', label: 'A toy worth adapting' },
+  { kind: 'question', label: 'A question for the community' },
+]
 
 const CONTACT_PREF_LABELS: Record<ContactPref, string> = {
   clarification: 'Clarification',
@@ -75,6 +81,7 @@ export function SubmitIdeaScreen() {
   const { caps } = useCapabilities()
   const [draft, setDraft] = useState<Draft>(EMPTY)
   const [prefs, setPrefs] = useState<ContactPref[]>([])
+  const [kind, setKind] = useState<ToyIdeaKind>('challenge')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [sent, setSent] = useState(false)
@@ -98,7 +105,7 @@ export function SubmitIdeaScreen() {
     setBusy(true)
     setError(null)
     try {
-      await apiClient.post<ToyIdea>('/api/ideas', { ...trimmed, contact_prefs: prefs })
+      await apiClient.post<ToyIdea>('/api/ideas', { ...trimmed, kind, contact_prefs: prefs })
       setSent(true)
     } catch (err) {
       // The draft stays: a 400 for a field the server would not take must not
@@ -154,6 +161,18 @@ export function SubmitIdeaScreen() {
 
           {caps ? (
             <View style={styles.form}>
+              <Text style={styles.legend}>What are you sharing?</Text>
+              <View accessibilityRole="radiogroup" style={styles.prefRow}>
+                {KINDS.map((k) => (
+                  <Chip key={k.kind} role="radio" label={k.label} active={kind === k.kind} onPress={() => setKind(k.kind)} />
+                ))}
+              </View>
+              <Text style={styles.scopeHint}>
+                {kind === 'question'
+                  ? 'No build needed. People answer in the thread, and you mark the answer that helped.'
+                  : 'Becomes a build challenge makers can pick up.'}
+              </Text>
+
               {FIELDS.map((field) => (
                 <TextField
                   key={field.key}

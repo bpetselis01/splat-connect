@@ -84,6 +84,8 @@ export function ExchangeChat({
   onSend,
   variant,
   head,
+  highlightId,
+  afterMessage,
 }: {
   messages: ThreadMessage[]
   viewerId: string
@@ -102,6 +104,12 @@ export function ExchangeChat({
   variant?: 'board'
   /** The board variant's header row: who this conversation is with. */
   head?: ReactNode
+  /** A question's marked answer (078), drawn in the answered tint. Default
+   *  variant only — the challenge thread is its one user. */
+  highlightId?: string | null
+  /** A control under one message, e.g. the asker's "Mark as the answer".
+   *  Default variant only, for the same reason. */
+  afterMessage?: (m: ThreadMessage) => ReactNode
 }) {
   const board = variant === 'board'
   const [draft, setDraft] = useState('')
@@ -210,9 +218,16 @@ export function ExchangeChat({
                     </span>
                   )}
                   {group.messages.map((m) => (
-                    <p key={m.id} className={`chat-bubble ${mine ? 'chat-bubble-mine' : 'chat-bubble-theirs'}`}>
-                      {m.body}
-                    </p>
+                    <Fragment key={m.id}>
+                      <p
+                        className={`chat-bubble ${mine ? 'chat-bubble-mine' : 'chat-bubble-theirs'}`}
+                        style={m.id === highlightId ? { background: 'var(--tok)', color: 'var(--tink)' } : undefined}
+                      >
+                        {m.id === highlightId && <span className="sr-only">The answer: </span>}
+                        {m.body}
+                      </p>
+                      {afterMessage?.(m)}
+                    </Fragment>
                   ))}
                   <time className="chat-stamp" dateTime={last.created_at}>
                     {timeFormat.format(new Date(last.created_at))}

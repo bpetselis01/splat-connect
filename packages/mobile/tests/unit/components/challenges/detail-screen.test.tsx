@@ -347,4 +347,41 @@ describe('ChallengeDetailScreen', () => {
       expect(await screen.findByLabelText('Someone said: I tried a proximity switch.')).toBeTruthy()
     })
   })
+
+  // 078: a question is answered in its thread; the asker marks the reply.
+  describe('a question', () => {
+    const reply = message({ id: 'r1', sender_id: 'p1', body: 'A zip pocket.' })
+
+    it('lets the asker mark a reply as the answer, and reloads the brief', async () => {
+      mockUseCapabilities.mockReturnValue(viewer('author1'))
+      let brief: object = detail({ kind: 'question', participants: [{ profile_id: 'p1', name: 'Mei' }] })
+      mockGet.mockImplementation((path: string) => {
+        if (path === '/api/public/challenges/c1') return Promise.resolve(brief)
+        if (path === '/api/ideas/c1/messages') return Promise.resolve([reply, message({ id: 'm2', body: 'Thanks' })])
+        return Promise.reject(new Error(`unexpected GET ${path}`))
+      })
+      mockPost.mockImplementation(() => {
+        brief = { ...(brief as object), answer_message_id: 'r1' }
+        return Promise.resolve({})
+      })
+      render(<ChallengeDetailScreen id="c1" />)
+
+      // One reply is someone else's; the asker's own "Thanks" is not offered.
+      const mark = await screen.findAllByRole('button', { name: 'Mark as the answer' })
+      expect(mark).toHaveLength(1)
+      fireEvent.press(mark[0])
+
+      await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/ideas/c1/answer', { message_id: 'r1' }))
+      expect(await screen.findByText('The answer · marked by the asker')).toBeTruthy()
+      expect(screen.getByText('Answered')).toBeTruthy()
+    })
+
+    it('shows the mark but no control to someone else', async () => {
+      respond(joinedDetail({ kind: 'question', answer_message_id: 'r1' }), [reply])
+      render(<ChallengeDetailScreen id="c1" />)
+      expect(await screen.findByText('The answer · marked by the asker')).toBeTruthy()
+      expect(screen.queryByRole('button', { name: 'Mark as the answer' })).toBeNull()
+      expect(screen.queryByRole('button', { name: 'Unmark' })).toBeNull()
+    })
+  })
 })

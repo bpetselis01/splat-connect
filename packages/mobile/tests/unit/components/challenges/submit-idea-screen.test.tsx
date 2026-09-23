@@ -65,9 +65,21 @@ describe('SubmitIdeaScreen', () => {
         description: 'She swipes rather than presses.',
         intended_use: 'A bubble machine in therapy.',
         primary_user: 'A three-year-old with low tone.',
+        kind: 'challenge',
         contact_prefs: ['co_design'],
       })
     )
+  })
+
+  // 078: a question is filed as one, so an admin can never graduate it.
+  it('files a question when that choice is picked', async () => {
+    render(<SubmitIdeaScreen />)
+    fillEverything()
+    fireEvent.press(screen.getByRole('radio', { name: 'A question for the community' }))
+    fireEvent.press(screen.getByRole('button', { name: 'Submit idea' }))
+
+    await waitFor(() => expect(mockPost).toHaveBeenCalled())
+    expect(mockPost.mock.calls[0][1]).toMatchObject({ kind: 'question' })
   })
 
   it('sends no contact prefs when none are picked', async () => {

@@ -111,6 +111,10 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
   const isAuthor = viewerId !== null && challenge?.author_id === viewerId
   const joined = viewerId !== null && !!challenge?.participants.some((p) => p.profile_id === viewerId)
   const open = challenge?.status === 'challenge'
+  // A question (078): answered in its thread, and the asker marks the reply
+  // that helped. Never graduates, so "Solved" never applies to it.
+  const question = challenge?.kind === 'question'
+  const answerId = challenge?.answer_message_id ?? null
   // The GET returns an empty array to a non-participant rather than a 403
   // (RLS, see the route's own comment), so "no messages" and "not allowed"
   // look identical on the wire — the gate has to be decided here, from the
@@ -190,6 +194,21 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
     }
   }
 
+  // POST /api/ideas/:id/answer — the API holds it to the asker and to
+  // questions; null clears. Refetches the brief, which carries the mark.
+  async function markAnswer(messageId: string | null) {
+    setBusy(true)
+    setActionError(null)
+    try {
+      await apiClient.post(`/api/ideas/${id}/answer`, { message_id: messageId })
+      setReloadKey((k) => k + 1)
+    } catch {
+      setActionError('Could not mark the answer. Please try again.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   function confirmLeave() {
     Alert.alert('Leave this challenge?', 'You will stop taking part in its conversation.', [
       { text: 'Cancel', style: 'cancel' },
@@ -243,7 +262,14 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
         </View>
 
         <View style={styles.badgeRow}>
-          <Badge status={challenge.status} label={open ? 'Open challenge' : 'Solved'} />
+          {question ? (
+            <Badge
+              status={answerId ? 'approved' : 'challenge'}
+              label={answerId ? 'Answered' : 'Open question'}
+            />
+          ) : (
+            <Badge status={challenge.status} label={open ? 'Open challenge' : 'Solved'} />
+          )}
         </View>
 
         <Text style={styles.summary}>{challenge.summary}</Text>
@@ -320,7 +346,7 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
               Join this challenge to read and take part in the conversation.
             </Text>
             <Button
-              label="Join this challenge"
+              label={question ? 'Join to answer' : 'Join this challenge'}
               variant="accent"
               loading={busy}
               onPress={() => void join()}
@@ -338,14 +364,51 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
             {messages.length === 0 ? (
               <Text style={styles.quiet}>No messages yet. Say what you are trying.</Text>
             ) : (
-              messages.map((m) => (
-                <MessageBubble
-                  key={m.id}
-                  message={m}
-                  mine={m.sender_id === viewerId && m.kind === 'user'}
-                  senderName={nameFor(m.sender_id)}
-                />
-              ))
+              messages.map((m) => {
+                const bubble = (
+                  <MessageBubble
+                    key={m.id}
+                    message={m}
+                    mine={m.sender_id === viewerId && m.kind === 'user'}
+                    senderName={nameFor(m.sender_id)}
+                  />
+                )
+                if (!question) return bubble
+                if (m.id === answerId) {
+                  return (
+                    <View key={m.id} style={styles.answer}>
+                      <Text style={styles.answerLabel}>The answer · marked by the asker</Text>
+                      {bubble}
+                      {isAuthor ? (
+                        <Button
+                          label="Unmark"
+                          variant="secondary"
+                          disabled={busy}
+                          onPress={() => void markAnswer(null)}
+                          style={styles.markButton}
+                        />
+                      ) : null}
+                    </View>
+                  )
+                }
+                // Only the asker marks, and never their own message — the
+                // API refuses both; this just does not offer them.
+                if (isAuthor && m.kind === 'user' && m.sender_id !== challenge.author_id) {
+                  return (
+                    <View key={m.id}>
+                      {bubble}
+                      <Button
+                        label="Mark as the answer"
+                        variant="secondary"
+                        disabled={busy}
+                        onPress={() => void markAnswer(m.id)}
+                        style={styles.markButton}
+                      />
+                    </View>
+                  )
+                }
+                return bubble
+              })
             )}
           </View>
         ) : null}
@@ -463,6 +526,20 @@ const styles = StyleSheet.create({
   },
   joinedText: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.primaryDeep },
   log: { gap: theme.spacing(2), marginTop: theme.spacing(5) },
+  answer: {
+    backgroundColor: theme.colors.tone.mint.bg,
+    borderRadius: theme.radii.field,
+    padding: theme.spacing(2),
+    gap: theme.spacing(1),
+  },
+  answerLabel: {
+    fontFamily: theme.fonts.bold,
+    fontSize: theme.type.caption,
+    color: theme.colors.tone.mint.fg,
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  markButton: { alignSelf: 'flex-start', paddingVertical: theme.spacing(1), paddingHorizontal: theme.spacing(3) },
   footer: {
     borderTopWidth: theme.border.hairline,
     borderTopColor: theme.colors.border,

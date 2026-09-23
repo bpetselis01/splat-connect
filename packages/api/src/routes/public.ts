@@ -734,15 +734,42 @@ publicRoutes.get('/organizations/:id', async (c) => {
  * free-text description of a specific disabled child's needs, unreviewed.
  */
 publicRoutes.get('/challenges', async (c) => {
-  const { data, error } = await createAdminClient()
+  const admin = createAdminClient()
+  const { data, error } = await admin
     .from('toy_ideas')
-    .select('id, title, summary, contact_prefs, status, created_at')
+    .select('id, author_id, title, summary, contact_prefs, status, kind, answered_at, created_at')
     .in('status', ['challenge', 'graduated'])
     .order('created_at', { ascending: false })
 
   if (error) return c.json({ error: error.message }, 500)
-  return c.json(data ?? [])
+  const ideas = data ?? []
+  const counts = await challengeCounts(ideas)
+  // author_id was read to count answers only; the card has no use for it.
+  return c.json(ideas.map(({ author_id: _author, ...idea }) => ({ ...idea, ...counts.get(idea.id)! })))
 })
+
+/**
+ * The two numbers a challenge card carries: makers who joined (current
+ * participants), and answers — replies from anyone but the asker. Counts, not
+ * rows: the thread itself stays private (the brief recruits; the conversation
+ * does not), and a number discloses nothing a reader could not see by joining.
+ */
+async function challengeCounts(ideas: { id: string; author_id: string }[]) {
+  const out = new Map(ideas.map((i) => [i.id, { maker_count: 0, answer_count: 0 }]))
+  const ids = ideas.map((i) => i.id)
+  if (ids.length === 0) return out
+  const author = new Map(ideas.map((i) => [i.id, i.author_id]))
+  const admin = createAdminClient()
+  const [{ data: joins }, { data: replies }] = await Promise.all([
+    admin.from('toy_idea_participants').select('idea_id').in('idea_id', ids).is('removed_at', null),
+    admin.from('toy_idea_messages').select('idea_id, sender_id').in('idea_id', ids).eq('kind', 'user'),
+  ])
+  for (const j of joins ?? []) out.get(j.idea_id as string)!.maker_count++
+  for (const r of replies ?? []) {
+    if (r.sender_id !== author.get(r.idea_id as string)) out.get(r.idea_id as string)!.answer_count++
+  }
+  return out
+}
 
 /**
  * A single challenge's public brief. Participants are joined with their
@@ -762,7 +789,7 @@ publicRoutes.get('/challenges/:id', async (c) => {
   const { data: idea, error } = await admin
     .from('toy_ideas')
     .select(
-      'id, author_id, title, summary, description, intended_use, primary_user, contact_prefs, status, tutorial_id, created_at, updated_at, profiles!toy_ideas_author_id_fkey(name)'
+      'id, author_id, title, summary, description, intended_use, primary_user, contact_prefs, status, tutorial_id, kind, answer_message_id, answered_at, created_at, updated_at, profiles!toy_ideas_author_id_fkey(name)'
     )
     .eq('id', c.req.param('id'))
     .in('status', ['challenge', 'graduated'])
@@ -788,9 +815,11 @@ publicRoutes.get('/challenges/:id', async (c) => {
   if (participantsError) return c.json({ error: participantsError.message }, 500)
 
   const { profiles, ...rest } = idea as Record<string, any>
+  const counts = await challengeCounts([idea])
   // Messages are deliberately absent: the brief recruits, the conversation is private.
   return c.json({
     ...rest,
+    ...counts.get(idea.id),
     author_name: profiles?.name ?? null,
     participants: (participants ?? []).map((p: any) => ({
       idea_id: p.idea_id, profile_id: p.profile_id, joined_at: p.joined_at,
