@@ -67,6 +67,24 @@ describe('PATCH /api/tutorials/:id', () => {
     expect(bad.status).toBe(400)
   })
 
+  // 080: what the switch asks of a child; the check constraints answer 400.
+  it('applies the switch tags and 400s an unknown one', async () => {
+    let { data: current } = await adminClient().from('tutorials').select('updated_at').eq('id', draft).single()
+    const ok = await app.request(`/api/tutorials/${draft}`, authed(author.token, {
+      method: 'PATCH',
+      body: JSON.stringify({ switch_target: 'large', switch_force: 'light', switch_hold: 'moment', updated_at: current!.updated_at }),
+    }))
+    expect(ok.status).toBe(200)
+    expect(await ok.json()).toMatchObject({ switch_target: 'large', switch_force: 'light', switch_hold: 'moment' })
+
+    ;({ data: current } = await adminClient().from('tutorials').select('updated_at').eq('id', draft).single())
+    const bad = await app.request(`/api/tutorials/${draft}`, authed(author.token, {
+      method: 'PATCH',
+      body: JSON.stringify({ switch_force: 'enormous', updated_at: current!.updated_at }),
+    }))
+    expect(bad.status).toBe(400)
+  })
+
   it('drops unknown keys instead of writing them', async () => {
     const { data: current } = await adminClient().from('tutorials').select('updated_at').eq('id', draft).single()
     const res = await app.request(`/api/tutorials/${draft}`, authed(author.token, {

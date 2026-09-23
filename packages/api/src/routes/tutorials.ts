@@ -71,13 +71,14 @@ tutorials.get('/:id', async (c) => {
     // badges the ones a parent cannot see yet, and this route is the only one
     // that tells it which those are. The public route strips them instead.
     .select(
-      '*, parts(*), tools(*), stl_files(*), tutorial_contributors(*, profiles(id, name, role, created_at)), \
+      '*, parts(*), tools(*), stl_files(*), steps:tutorial_steps(*), tutorial_contributors(*, profiles(id, name, role, created_at)), \
 tutorial_collaborator_invites(*, profiles:invited_profile_id(id, name, role, created_at)), \
 tutorial_recommendations!tutorial_id(position, recommended_id, tutorials!recommended_id(id, title, kind, difficulty, toy_photo_url, status, maturity)), \
 reviewer:reviewed_by(name), reviewed_for:reviewed_for_org_id(name)'
     )
     .eq('id', c.req.param('id'))
     .order('position', { referencedTable: 'tutorial_recommendations', ascending: true })
+    .order('position', { referencedTable: 'steps', ascending: true })
     .single()
   if (error) return c.json({ error: error.message }, 404)
 
@@ -157,7 +158,7 @@ tutorials.post('/', async (c) => {
 /** Only these may be set through the generic edit endpoint. Unknown keys are
  *  dropped silently; the protected ones return 403 so a caller learns rather than
  *  wonders. */
-const EDITABLE = ['title', 'description', 'difficulty', 'kind', 'maturity', 'build_minutes', 'age_min', 'age_max', 'tutorial_pdf_url', 'photo_urls', 'status'] as const
+const EDITABLE = ['title', 'description', 'difficulty', 'kind', 'maturity', 'build_minutes', 'age_min', 'age_max', 'switch_target', 'switch_force', 'switch_hold', 'tutorial_pdf_url', 'photo_urls', 'status'] as const
 const PROTECTED = ['reviewed_by', 'reviewed_for_org_id', 'reviewed_at', 'rejection_note']
 
 async function hasAcceptedContributorTerms(token: string, userId: string) {
@@ -351,6 +352,83 @@ tutorials.post('/:id/thanks', async (c) => {
 
   const { data } = await admin.from('tutorials').select('thanks_count').eq('id', id).single()
   return c.json({ thanks_count: (data as { thanks_count: number } | null)?.thanks_count ?? 0 }, 201)
+})
+
+/**
+ * Steps (080): the whole list, replaced in order. The editor and the PDF import
+ * both hold the full list, so one PUT is simpler than per-step CRUD.
+ *
+ * New rows go in before the old ones are deleted: the table has no unique
+ * position, so the two coexist for a moment, and an insert that fails (RLS
+ * refusing a non-contributor, a bad value) leaves the old steps untouched.
+ */
+const MAX_STEPS = 60
+type StepInput = { title?: string | null; body: string; photo_url?: string | null }
+
+// A step's photo must live in this guide's own folder: the old URLs are later
+// fed to an admin-client delete, so a URL pointing at another guide's object
+// must never get into the table.
+const ownPhoto = (url: string, id: string) => url.includes(`/object/public/toy-photos/${id}/`)
+
+function stepsError(steps: unknown, id: string): string | null {
+  if (!Array.isArray(steps)) return 'steps must be an array'
+  if (steps.length > MAX_STEPS) return `A guide can have up to ${MAX_STEPS} steps`
+  for (const [i, s] of (steps as StepInput[]).entries()) {
+    const n = i + 1
+    if (!s || typeof s.body !== 'string' || !s.body.trim()) return `Step ${n} needs some instructions`
+    if (s.body.trim().length > 2000) return `Step ${n} is over 2000 characters`
+    if (s.title != null && (typeof s.title !== 'string' || s.title.trim().length > 120))
+      return `Step ${n}'s title is over 120 characters`
+    if (s.photo_url != null && (typeof s.photo_url !== 'string' || !ownPhoto(s.photo_url, id)))
+      return `Step ${n}'s photo was not uploaded to this guide`
+  }
+  return null
+}
+
+tutorials.put('/:id/steps', async (c) => {
+  const id = c.req.param('id')
+  const { steps } = await c.req.json<{ steps: unknown }>()
+  const invalid = stepsError(steps, id)
+  if (invalid) return c.json({ error: invalid }, 400)
+
+  const supabase = createUserClient(c.get('token'))
+  const { data: before, error: readError } = await supabase
+    .from('tutorial_steps')
+    .select('id, photo_url')
+    .eq('tutorial_id', id)
+  if (readError) return c.json({ error: readError.message }, 500)
+
+  const rows = (steps as StepInput[]).map((s, i) => ({
+    tutorial_id: id,
+    position: i + 1,
+    title: s.title?.trim() || null,
+    body: s.body.trim(),
+    photo_url: s.photo_url || null,
+  }))
+  let saved: unknown[] = []
+  if (rows.length) {
+    const { data, error } = await supabase.from('tutorial_steps').insert(rows).select()
+    // 42501 = RLS refused the insert: not a contributor to this guide.
+    if (error) return c.json({ error: error.message }, error.code === '42501' ? 403 : 400)
+    saved = data
+  } else {
+    // Clearing every step inserts nothing, so the contributor check RLS does
+    // on the insert has to be asked for here.
+    const { data: own } = await supabase.rpc('is_tutorial_contributor', { p_tutorial_id: id })
+    if (!own && c.get('role') !== 'admin') return c.json({ error: 'Not found' }, 404)
+  }
+
+  const oldIds = (before ?? []).map((s) => s.id)
+  if (oldIds.length) {
+    const { error } = await supabase.from('tutorial_steps').delete().in('id', oldIds)
+    if (error) return c.json({ error: error.message }, 500)
+  }
+  await removeDroppedPhotos(
+    'toy-photos',
+    (before ?? []).map((s) => s.photo_url).filter((u): u is string => !!u),
+    rows.map((r) => r.photo_url).filter((u): u is string => !!u)
+  )
+  return c.json((saved as { position: number }[]).sort((a, b) => a.position - b.position))
 })
 
 tutorials.delete('/:id', async (c) => {
