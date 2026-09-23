@@ -1,7 +1,7 @@
 import { useLocalSearchParams } from 'expo-router'
-import { ShowcaseScreen } from '../../../../components/guides/showcase-screen'
+import { OrgProfileScreen } from '../../../../components/organisation/org-profile-screen'
 
-export default function OrganisationShowcaseRoute() {
+export default function OrganisationProfileRoute() {
   const { id } = useLocalSearchParams<{ id: string }>()
-  return <ShowcaseScreen kind="org" id={id} />
+  return <OrgProfileScreen id={id} />
 }
