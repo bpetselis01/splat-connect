@@ -19,6 +19,17 @@ import { Section } from '../ui/Section'
 import { Skeleton } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
+import { ReportProblem } from '../reports/report-problem'
+
+const SWITCH_TARGET_LABEL = { large: 'Big button', small: 'Small button' } as const
+const HERO_HEIGHT = 240
+
+/** The lead sentence the board shows under the title; the rest reads below. */
+export function splitLead(text: string): { lead: string; rest: string } {
+  const m = /^[\s\S]*?[.!?](\s+|$)/.exec(text)
+  if (!m) return { lead: text, rest: '' }
+  return { lead: m[0].trim(), rest: text.slice(m[0].length).trim() }
+}
 
 type TutorialDetail = Tutorial & {
   parts: Part[]
@@ -53,6 +64,10 @@ export function DetailScreen({ id }: { id: string }) {
   const [tutorial, setTutorial] = useState<TutorialDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
+  // Thanks (066): once per person, never on your own guide. Unknown until the
+  // GET lands, and a failed GET hides the button rather than guessing.
+  const [thanks, setThanks] = useState<{ thanked: boolean; own: boolean } | null>(null)
+  const [thanking, setThanking] = useState(false)
 
   useEffect(() => {
     apiClient
@@ -60,7 +75,24 @@ export function DetailScreen({ id }: { id: string }) {
       .then(setTutorial)
       .catch(() => setError(true))
       .finally(() => setLoading(false))
+    apiClient
+      .get<{ thanked: boolean; own: boolean }>(`/api/tutorials/${id}/thanks`)
+      .then((t) => setThanks({ thanked: !!t?.thanked, own: !!t?.own }))
+      .catch(() => {})
   }, [id])
+
+  async function sayThanks() {
+    setThanking(true)
+    try {
+      await apiClient.post(`/api/tutorials/${id}/thanks`, {})
+      setThanks({ thanked: true, own: false })
+    } catch (err) {
+      // 409 is "already thanked" — the button's end state either way.
+      if (err instanceof Error && /status 409/.test(err.message)) setThanks({ thanked: true, own: false })
+    } finally {
+      setThanking(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -109,17 +141,26 @@ export function DetailScreen({ id }: { id: string }) {
   // children. Anything else — no tags, no answers, a mismatch — says nothing.
   const fit = fitLine(tutorial, children)
   const steps = tutorial.steps ?? []
+  const { lead, rest } = splitLead(tutorial.description ?? '')
 
   const primary = tutorial.tutorial_contributors.find((c) => c.role === 'primary') ?? tutorial.tutorial_contributors[0]
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <PhotoCarousel urls={tutorial.photo_urls} emptyIcon="color-wand-outline" />
-
-      <View style={styles.titleRow}>
-        <Text style={styles.title}>{tutorial.title}</Text>
-        <SaveButton slug="tutorials" id={tutorial.id} saves={saves} />
+      {/* Bleeds to the screen's edges and up under the header, as the board's hero does. */}
+      <View style={styles.hero}>
+        <PhotoCarousel urls={tutorial.photo_urls} height={HERO_HEIGHT} emptyIcon="color-wand-outline" />
+        {/* ponytail: a count, not "1/5" — PhotoCarousel (components/ui) does not
+            report its page yet; switch to an index once it has onIndexChange. */}
+        {tutorial.photo_urls.length > 0 ? (
+          <View style={styles.heroCount} pointerEvents="none">
+            <Text style={styles.heroCountText} numberOfLines={1}>
+              {`${tutorial.photo_urls.length} photo${tutorial.photo_urls.length === 1 ? '' : 's'} · ${tutorial.title}`}
+            </Text>
+          </View>
+        ) : null}
       </View>
+
       {/*
         Plain, visible badges rather than library-screen's a11y-hidden wrapper:
         that hiding exists there because the whole row is one accessible
@@ -131,12 +172,27 @@ export function DetailScreen({ id }: { id: string }) {
       */}
       <View style={styles.badgeRow}>
         <Badge status={tutorial.difficulty} />
+        {tutorial.build_minutes ? <Badge status="draft" label={`${tutorial.build_minutes} min`} /> : null}
+        {tutorial.switch_target ? (
+          <Badge status="accepted" label={SWITCH_TARGET_LABEL[tutorial.switch_target]} />
+        ) : null}
         <Badge status={tutorial.kind} label={KIND_LABEL[tutorial.kind]} />
         {tutorial.maturity !== 'complete' ? (
           <Badge status={tutorial.maturity} label={MATURITY_LABEL[tutorial.maturity]} />
         ) : null}
       </View>
-      {tutorial.description ? <Text style={styles.description}>{tutorial.description}</Text> : null}
+      <View style={styles.titleRow}>
+        <Text style={styles.title}>{tutorial.title}</Text>
+        <SaveButton slug="tutorials" id={tutorial.id} saves={saves} />
+      </View>
+      {lead ? <Text style={styles.lead}>{lead}</Text> : null}
+
+      <Provenance
+        contributors={tutorial.tutorial_contributors}
+        orgs={tutorial.tutorial_orgs}
+        onPerson={(pid) => router.push(`/guides/contributor/${pid}`)}
+        onOrg={(oid) => router.push(`/guides/organisation/${oid}`)}
+      />
 
       {/* Above everything that follows: a parent should know it suits their
           child before reading a single step. */}
@@ -147,12 +203,21 @@ export function DetailScreen({ id }: { id: string }) {
         </View>
       ) : null}
 
-      <Provenance
-        contributors={tutorial.tutorial_contributors}
-        orgs={tutorial.tutorial_orgs}
-        onPerson={(pid) => router.push(`/guides/contributor/${pid}`)}
-        onOrg={(oid) => router.push(`/guides/organisation/${oid}`)}
-      />
+      <View style={styles.actions}>
+        <Button label="Download PDF" onPress={openPreview} style={styles.primaryAction} />
+        {thanks && !thanks.own ? (
+          <Button
+            label={thanks.thanked ? 'Thanked' : 'Thanks'}
+            variant="secondary"
+            disabled={thanks.thanked}
+            loading={thanking}
+            onPress={() => void sayThanks()}
+          />
+        ) : null}
+      </View>
+      <View style={styles.reportRow}>
+        <ReportProblem subjectKind="guide" subjectId={tutorial.id} subjectLabel={tutorial.title} />
+      </View>
 
       {steps.length > 0 ? (
         <Section title="Steps" hint="One action at a time. The PDF has the same guide to print.">
@@ -174,6 +239,12 @@ export function DetailScreen({ id }: { id: string }) {
               </View>
             </View>
           ))}
+        </Section>
+      ) : null}
+
+      {rest ? (
+        <Section title="About this guide">
+          <Text style={styles.description}>{rest}</Text>
         </Section>
       ) : null}
 
@@ -204,8 +275,6 @@ export function DetailScreen({ id }: { id: string }) {
           <Text style={styles.listItem}>No tools listed.</Text>
         )}
       </Section>
-
-      <Button label="Preview Tutorial" onPress={openPreview} />
 
       {/* The way into printing. Keyed on the guide having STL files rather than
           on its kind: a print request's parts ARE those files, so a guide
@@ -243,7 +312,31 @@ export function DetailScreen({ id }: { id: string }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
-  content: { padding: theme.spacing(4), paddingBottom: theme.spacing(10) },
+  content: { paddingHorizontal: theme.spacing(4), paddingBottom: theme.spacing(10) },
+  hero: { marginHorizontal: -theme.spacing(4), marginBottom: theme.spacing(2) },
+  heroCount: {
+    position: 'absolute',
+    left: theme.spacing(3),
+    top: HERO_HEIGHT - 40,
+    maxWidth: '80%',
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radii.pill,
+    paddingHorizontal: theme.spacing(3),
+    paddingVertical: theme.spacing(1),
+    ...theme.shadow(1),
+  },
+  heroCountText: { fontFamily: theme.fonts.black, fontSize: 12, color: theme.colors.ink },
+  lead: {
+    fontFamily: theme.fonts.regular,
+    fontSize: theme.type.body,
+    color: theme.colors.muted,
+    lineHeight: 23,
+    marginTop: theme.spacing(2),
+    marginBottom: theme.spacing(4),
+  },
+  actions: { flexDirection: 'row', gap: theme.spacing(2), marginTop: theme.spacing(4) },
+  primaryAction: { flex: 1 },
+  reportRow: { alignItems: 'flex-end', marginBottom: theme.spacing(2) },
   loading: {
     flex: 1,
     backgroundColor: theme.colors.background,
@@ -275,12 +368,12 @@ const styles = StyleSheet.create({
   },
   title: {
     flex: 1,
-    fontFamily: theme.fonts.bold,
+    fontFamily: theme.fonts.display,
     fontSize: theme.type.title,
     color: theme.colors.text,
-    lineHeight: 30,
+    lineHeight: 32,
   },
-  badgeRow: { flexDirection: 'row', gap: theme.spacing(2), marginTop: theme.spacing(2) },
+  badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2), marginBottom: theme.spacing(2) },
   printCard: {
     marginTop: theme.spacing(5),
     borderRadius: theme.radii.field,
@@ -301,10 +394,8 @@ const styles = StyleSheet.create({
   description: {
     fontFamily: theme.fonts.regular,
     fontSize: theme.type.body,
-    color: theme.colors.muted,
+    color: theme.colors.text,
     lineHeight: 23,
-    marginTop: theme.spacing(3),
-    marginBottom: theme.spacing(6),
   },
   fit: {
     flexDirection: 'row',
@@ -315,7 +406,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.mintSoft,
     borderWidth: theme.border.hairline,
     borderColor: theme.colors.border,
-    marginBottom: theme.spacing(4),
+    marginTop: theme.spacing(3),
   },
   fitText: { flex: 1, fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.ink },
   step: { flexDirection: 'row', gap: theme.spacing(3), paddingVertical: theme.spacing(2) },

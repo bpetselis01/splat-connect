@@ -27,7 +27,9 @@ export type ProvenanceOrg = {
 }
 
 /**
- * Byline + backing chip for the guide detail screen.
+ * The contributor card on the guide detail screen: who wrote it, and who
+ * stands behind it. The whole card opens the primary contributor; the backing
+ * line opens the organisation.
  *
  * "Reviewed by SPLAT" is the fixed, literal copy for the no-backer case —
  * same fixed copy as web's backing-state.tsx and mobile's own library-screen
@@ -52,63 +54,78 @@ export function Provenance({
   // Already filtered to accepted-only by the public route; filtered again here
   // for the same belt-and-braces reason library-screen's backing() does it.
   const backer = orgs.find((o) => o.status === 'accepted')
+  if (!primary) return null
+  const initials = primary.profiles.name
+    .split(/\s+/)
+    .map((w) => w.charAt(0))
+    .join('')
+    .slice(0, 2)
+    .toUpperCase()
 
   return (
-    <View style={styles.wrap}>
-      {primary ? (
-        <Text style={styles.byline}>
-          By{' '}
-          <Text onPress={() => onPerson(primary.profile_id)} accessibilityRole="link" style={styles.name}>
-            {primary.profiles.name}
-          </Text>
+    <Pressable
+      onPress={() => onPerson(primary.profile_id)}
+      accessibilityRole="button"
+      accessibilityHint="Opens their profile"
+      style={styles.card}
+    >
+      <View style={styles.avatar}>
+        <Text style={styles.initials}>{initials}</Text>
+      </View>
+      <View style={styles.body}>
+        <Text style={styles.name} numberOfLines={1}>
+          <Text>{primary.profiles.name}</Text>
           {others.length === 1 && (
             <Text>
               {' and '}
-              <Text onPress={() => onPerson(others[0].profile_id)} accessibilityRole="link" style={styles.name}>
+              <Text onPress={() => onPerson(others[0].profile_id)} accessibilityRole="link">
                 {others[0].profiles.name}
               </Text>
             </Text>
           )}
           {others.length > 1 && <Text style={styles.count}>{' + '}{others.length}</Text>}
         </Text>
-      ) : null}
-
-      {backer ? (
-        <Pressable
-          onPress={() => onOrg(backer.organizations.id)}
-          accessibilityRole="button"
-          style={[styles.chip, { backgroundColor: theme.colors.tone.mint.bg }]}
-        >
-          <Ionicons name="checkmark" size={14} color={theme.colors.tone.mint.fg} />
-          <Text style={[styles.chipText, { color: theme.colors.tone.mint.fg }]}>
+        {backer ? (
+          <Text
+            onPress={() => onOrg(backer.organizations.id)}
+            accessibilityRole="link"
+            style={[styles.backing, styles.backingLink]}
+          >
             Backed by {backer.organizations.name}
           </Text>
-        </Pressable>
-      ) : (
-        <View style={[styles.chip, { backgroundColor: theme.colors.tone.sunken.bg }]}>
-          <Ionicons name="checkmark" size={14} color={theme.colors.tone.sunken.fg} />
-          <Text style={[styles.chipText, { color: theme.colors.tone.sunken.fg }]}>Reviewed by SPLAT</Text>
-        </View>
-      )}
-    </View>
+        ) : (
+          <Text style={styles.backing}>Reviewed by SPLAT</Text>
+        )}
+      </View>
+      <Ionicons name="chevron-forward" size={18} color={theme.colors.muted} />
+    </Pressable>
   )
 }
 
 const styles = StyleSheet.create({
-  wrap: { marginTop: theme.spacing(3), gap: theme.spacing(2) },
-  byline: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.muted },
-  name: { fontFamily: theme.fonts.bold, color: theme.colors.primaryDeep, textDecorationLine: 'underline' },
-  count: { fontFamily: theme.fonts.bold, color: theme.colors.primaryDeep },
-  chip: {
+  card: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    alignSelf: 'flex-start',
+    gap: theme.spacing(3),
+    padding: theme.spacing(3),
+    borderRadius: theme.radii.panel,
     borderWidth: theme.border.hairline,
     borderColor: theme.colors.border,
-    borderRadius: theme.radii.pill,
-    paddingHorizontal: theme.spacing(3),
-    paddingVertical: theme.spacing(1),
+    backgroundColor: theme.colors.surface,
+    ...theme.shadow(1),
   },
-  chipText: { fontFamily: theme.fonts.bold, fontSize: theme.type.caption },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: theme.colors.accentLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  initials: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.primaryDeep },
+  body: { flex: 1, gap: 2 },
+  name: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.ink },
+  count: { color: theme.colors.primaryDeep },
+  backing: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted },
+  backingLink: { color: theme.colors.primaryDeep },
 })

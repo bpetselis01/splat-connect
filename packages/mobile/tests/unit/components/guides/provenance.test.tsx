@@ -15,7 +15,6 @@ it('orders the byline primary-first and truncates at two names', () => {
       onOrg={jest.fn()}
     />
   )
-  expect(screen.getByText(/^By/)).toBeTruthy()
   fireEvent.press(screen.getByText('Sam T.'))
   expect(onPerson).toHaveBeenCalledWith('Sam T.')
   expect(screen.getByText('+ 2')).toBeTruthy()

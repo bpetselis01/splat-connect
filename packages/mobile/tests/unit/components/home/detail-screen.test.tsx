@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
-import { DetailScreen } from '../../../../components/home/detail-screen'
+import { DetailScreen, splitLead } from '../../../../components/home/detail-screen'
 import { apiClient } from '../../../../lib/api-client'
 
 // Ionicons loads its font asynchronously and setStates after the test ends;
@@ -86,7 +86,7 @@ describe('DetailScreen', () => {
     render(<DetailScreen id="1" />)
     await screen.findByText('Build a Robot Arm')
 
-    fireEvent.press(screen.getByText('Preview Tutorial'))
+    fireEvent.press(screen.getByText('Download PDF'))
 
     await waitFor(() => expect(mockPush).toHaveBeenCalled())
     expect(mockCreateSignedUrl).toHaveBeenCalledWith('1/tutorial.pdf', 60)
@@ -101,7 +101,7 @@ describe('DetailScreen', () => {
     render(<DetailScreen id="1" />)
     await screen.findByText('Build a Robot Arm')
 
-    fireEvent.press(screen.getByText('Preview Tutorial'))
+    fireEvent.press(screen.getByText('Download PDF'))
 
     await waitFor(() => expect(mockPush).toHaveBeenCalled())
     expect(mockPush).toHaveBeenCalledWith({
@@ -163,5 +163,43 @@ describe('DetailScreen steps and fit', () => {
     render(<DetailScreen id="1" />)
     await screen.findByText('Open it')
     expect(screen.queryByTestId('fit-callout')).toBeNull()
+  })
+})
+
+describe('splitLead', () => {
+  it('takes the first sentence as the lead and leaves the rest for below', () => {
+    expect(splitLead('A drum. It lights up! Easy.')).toEqual({ lead: 'A drum.', rest: 'It lights up! Easy.' })
+  })
+  it('keeps a single sentence, or one with no stop, whole', () => {
+    expect(splitLead('Just one.')).toEqual({ lead: 'Just one.', rest: '' })
+    expect(splitLead('no stop at all')).toEqual({ lead: 'no stop at all', rest: '' })
+  })
+})
+
+describe('DetailScreen thanks', () => {
+  function withThanks(thanks: unknown) {
+    ;(apiClient.get as jest.Mock).mockImplementation((p: string) =>
+      p === '/api/tutorials/1/thanks'
+        ? Promise.resolve(thanks)
+        : p === '/api/saves/ids'
+          ? Promise.resolve(NO_SAVES)
+          : p === '/api/child-profiles'
+            ? Promise.resolve([])
+            : Promise.resolve(DETAIL)
+    )
+  }
+
+  it('offers Thanks to someone who has not thanked yet', async () => {
+    withThanks({ thanked: false, own: false })
+    render(<DetailScreen id="1" />)
+    expect(await screen.findByRole('button', { name: 'Thanks' })).toBeTruthy()
+  })
+
+  it('never offers it on your own guide', async () => {
+    withThanks({ thanked: false, own: true })
+    render(<DetailScreen id="1" />)
+    await screen.findByText('Build a Robot Arm')
+    await waitFor(() => expect(apiClient.get).toHaveBeenCalledWith('/api/tutorials/1/thanks'))
+    expect(screen.queryByRole('button', { name: 'Thanks' })).toBeNull()
   })
 })

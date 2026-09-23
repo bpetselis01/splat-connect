@@ -23,14 +23,14 @@ test('tapping a tutorial navigates to its detail screen', async ({ page }) => {
   await expect(page.getByText('E2E tool')).toBeVisible()
 })
 
-test('tapping Preview Tutorial navigates to the preview screen', async ({ page }) => {
+test('tapping Download PDF navigates to the preview screen', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const title = uniqueTitle('E2E Mobile Preview')
   await createTutorial(contributor.id, { title, status: 'approved' })
 
   await page.goto('/guides')
   await page.getByText(title).click()
-  await page.getByText('Preview Tutorial').click()
+  await page.getByText('Download PDF').click()
 
   await expect(page.getByText('Open in Browser')).toBeVisible()
 })
@@ -83,7 +83,7 @@ test('the preview screen explains when a tutorial has no PDF', async ({ page }) 
 
   await page.goto('/guides')
   await page.getByText(title).click()
-  await page.getByText('Preview Tutorial').click()
+  await page.getByText('Download PDF').click()
 
   await expect(page.getByText('No PDF is available for this tutorial yet.')).toBeVisible()
   await expect(page.getByText('Open in Browser')).toHaveCount(0)
