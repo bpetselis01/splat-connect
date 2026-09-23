@@ -27,7 +27,7 @@ function caps(over: Partial<Capabilities> = {}): Capabilities {
     profile,
     isAdmin: false,
     ledOrgs: [],
-    unread: { tutorials: 0, exchanges: 0, challenges: 0, total: 0 },
+    unread: { tutorials: 0, exchanges: 0, challenges: 0, organisations: 0, total: 0 },
     exchangeActions: 0,
     ...over,
   }
@@ -90,12 +90,12 @@ describe('buildNav', () => {
 
   // Same total as before Child profiles moved to the Account page: it left
   // and Submit an idea arrived in its place.
-  it('builds twenty linked rows for a leader-admin', () => {
+  it('builds twenty-one linked rows for a leader-admin', () => {
     const rows = buildNav(caps({ ledOrgs: [org], isAdmin: true })).flatMap((g) => g.rows)
     // Fourteen after 058 added Print for others; seventeen after 059 added the
     // organisation's own three — events and stories, recycling intake, and the
-    // profile editor.
-    expect(rows).toHaveLength(20)
+    // profile editor; twenty-one after 077 added the organisation's messages.
+    expect(rows).toHaveLength(21)
   })
 
   it('includes a Design challenges row for every account', () => {
@@ -116,7 +116,7 @@ describe('buildNav', () => {
   })
 
   it('carries the unread count when there are unread notifications', () => {
-    const row = buildNav(caps({ unread: { tutorials: 1, exchanges: 1, challenges: 1, total: 3 } }))
+    const row = buildNav(caps({ unread: { tutorials: 1, exchanges: 1, challenges: 1, organisations: 0, total: 3 } }))
       .flatMap((g) => g.rows)
       .find((r) => r.href === '/notifications')
     expect(row?.count).toBe(3)

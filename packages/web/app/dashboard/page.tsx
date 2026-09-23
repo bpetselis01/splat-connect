@@ -127,6 +127,7 @@ export default async function DashboardHub() {
     '/dashboard/organisation/recycling':
       'Weigh the plastic that turns up, issue the credit, and publish what your machines can take.',
     '/dashboard/organisation/profile': 'Everything a family reads about you.',
+    '/dashboard/organisation/messages': 'Families writing to your organisation. Any leader can answer.',
     '/dashboard/profile': 'Your name, email, children and terms.',
     '/dashboard/saved': 'Tutorials, toys, challenges and organisations you have kept.',
     '/notifications': 'Everything SPLAT has told you.',

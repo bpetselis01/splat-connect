@@ -9,7 +9,8 @@ import { notFound } from 'next/navigation'
 import { getCapabilities } from '@/lib/capabilities'
 import { apiClient } from '@/lib/api-client'
 import { OrgProfileForm } from '@/components/org-profile-form'
-import type { Organization } from '@splat-connect/types'
+import { OrgThanksNotes } from '@/components/org-thanks-notes'
+import type { Organization, OrgThanks } from '@splat-connect/types'
 
 export const metadata = { title: 'Organisation profile — SPLAT Connect' }
 
@@ -19,7 +20,11 @@ export default async function OrgProfilePage() {
   // the page is its own control (lib/org-access.ts states the same rule).
   if (!caps || caps.ledOrgs.length === 0) notFound()
 
-  const org = await apiClient.get<Organization>(`/api/organizations/${caps.ledOrgs[0].id}`)
+  const orgId = caps.ledOrgs[0].id
+  const [org, thanks] = await Promise.all([
+    apiClient.get<Organization>(`/api/organizations/${orgId}`),
+    apiClient.get<OrgThanks[]>(`/api/organizations/${orgId}/thanks`).catch(() => [] as OrgThanks[]),
+  ])
 
   return (
     <div className="max-w-[860px]">
@@ -30,6 +35,9 @@ export default async function OrgProfilePage() {
       </p>
 
       <OrgProfileForm org={org} />
+      <div className="mt-5">
+        <OrgThanksNotes orgId={org.id} thanks={thanks} />
+      </div>
     </div>
   )
 }

@@ -169,6 +169,9 @@ export function buildNav(caps: Capabilities): NavGroup[] {
         { href: '/dashboard/organisation/publish', label: 'Events and stories', icon: 'clipboard' },
         { href: '/dashboard/organisation/recycling', label: 'Recycling intake', icon: 'box' },
         { href: '/dashboard/organisation/profile', label: 'Organisation profile', icon: 'shield' },
+        // 077. Families write to the organisation, not to a leader, so every
+        // leader shares this one inbox.
+        { href: '/dashboard/organisation/messages', label: 'Messages', icon: 'chat' },
       ],
     })
   }
