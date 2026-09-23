@@ -14,7 +14,7 @@ import type { ToyTransactionStatus } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { Screen } from '../ui/Screen'
-import { Card } from '../ui/Card'
+import { ListIntro, ListRow, ListSection, StagePill } from '../list/list-kit'
 import { Button } from '../ui/Button'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
@@ -41,11 +41,12 @@ const isPast = (starts: string, ends: string | null) =>
 
 function partsLine(r: MyEvent['part_request'], org: string) {
   if (!r) return null
-  if (r.status === 'accepted') return { tone: theme.colors.tone.mint, text: `${org} is printing your parts`, declined: false }
+  if (r.status === 'accepted') return { stage: 'live' as const, pill: 'Printing', text: `${org} is printing your parts`, declined: false }
   if (r.status === 'requested')
-    return { tone: theme.colors.tone.honey, text: `${org} has your part list — waiting for them to confirm`, declined: false }
+    return { stage: 'waiting' as const, pill: 'Parts pending', text: `${org} has your part list — waiting for them to confirm`, declined: false }
   return {
-    tone: theme.colors.tone.apricot,
+    stage: 'needsyou' as const,
+    pill: 'Parts declined',
     text: r.decline_reason ? `${org} cannot print your parts — ${r.decline_reason}` : `${org} cannot print your parts`,
     declined: true,
   }
@@ -90,46 +91,52 @@ export function MyEventsScreen() {
     const start = new Date(r.event.starts_at)
     const parts = partsLine(r.part_request, r.event.org_name)
     const where = r.event.format === 'online' ? 'Online' : [r.event.suburb, r.event.state].filter(Boolean).join(', ')
+    const cancelled = !!r.event.cancelled_at
+    const canLeave = !isOver && !cancelled
     return (
-      <Card key={r.registration_id} style={styles.row}>
-        <View style={styles.top}>
-          <View style={styles.date} accessible={false}>
-            <Text style={styles.month}>{start.toLocaleDateString('en-AU', { month: 'short' })}</Text>
-            <Text style={styles.day}>{start.getDate()}</Text>
-          </View>
-          <View style={styles.body}>
-            <Text style={styles.title}>
-              {r.event.title}
-              {r.event.cancelled_at ? ' · Cancelled' : ''}
-            </Text>
-            <Text style={styles.meta}>
-              {r.event.org_name}
-              {where ? ` · ${where}` : ''} ·{' '}
-              {start.toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}
-            </Text>
-          </View>
-        </View>
-        {parts ? (
-          <View style={[styles.parts, { backgroundColor: parts.tone.bg }]}>
-            <Text style={styles.partsText}>{parts.text}</Text>
-            {parts.declined ? (
-              <Button label="Pick a printer" variant="ghost" onPress={() => router.push('/printing')} />
+      <View key={r.registration_id} style={styles.item}>
+        <ListRow
+          thumb={
+            <View style={styles.date} accessible={false}>
+              <Text style={styles.month}>{start.toLocaleDateString('en-AU', { month: 'short' })}</Text>
+              <Text style={styles.day}>{start.getDate()}</Text>
+            </View>
+          }
+          title={r.event.title}
+          meta={[
+            `${r.event.org_name}${where ? ` · ${where}` : ''} · ${start.toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}`,
+            parts?.text,
+          ]
+            .filter(Boolean)
+            .join('\n')}
+          metaLines={4}
+          pill={
+            cancelled ? (
+              <StagePill stage="hidden" label="Cancelled" />
+            ) : parts ? (
+              <StagePill stage={parts.stage} label={parts.pill} />
+            ) : null
+          }
+          dim={isOver}
+        />
+        {parts?.declined || canLeave ? (
+          <View style={styles.actions}>
+            {parts?.declined ? (
+              <Button label="Pick a printer" variant="ghost" onPress={() => router.push('/printing')} style={styles.action} />
+            ) : null}
+            {canLeave ? (
+              <Button label="Can't make it" variant="ghost" onPress={() => void cantMakeIt(r.event.id)} style={styles.action} />
             ) : null}
           </View>
         ) : null}
-        {!isOver && !r.event.cancelled_at ? (
-          <Button label="Can't make it" variant="secondary" onPress={() => void cantMakeIt(r.event.id)} />
-        ) : null}
-      </Card>
+      </View>
     )
   }
 
   return (
     <Screen>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={styles.lede}>
-          What you said you are going to, and where any part-print request with the host is up to.
-        </Text>
+        <ListIntro lead="What you said you are going to, and where any part-print request with the host is up to." />
         {error ? <Text style={styles.error}>{error}</Text> : null}
         {rows.length === 0 ? (
           <EmptyState
@@ -140,7 +147,7 @@ export function MyEventsScreen() {
         ) : (
           <>
             {upcoming.map((r) => row(r, false))}
-            {past.length > 0 ? <Text style={styles.section}>Been and gone</Text> : null}
+            {past.length > 0 ? <ListSection style={styles.section}>Been and gone</ListSection> : null}
             {past.map((r) => row(r, true))}
           </>
         )}
@@ -150,18 +157,14 @@ export function MyEventsScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { gap: theme.spacing(3), paddingBottom: theme.spacing(8) },
-  lede: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.muted, lineHeight: 21, marginBottom: theme.spacing(1) },
-  error: { fontFamily: theme.fonts.semiBold, fontSize: theme.type.caption, color: theme.colors.danger },
-  section: { fontFamily: theme.fonts.display, fontSize: theme.type.heading, color: theme.colors.text, marginTop: theme.spacing(3) },
-  row: { padding: theme.spacing(4), gap: theme.spacing(3) },
-  top: { flexDirection: 'row', gap: theme.spacing(3), alignItems: 'flex-start' },
-  date: { width: 56, alignItems: 'center', paddingVertical: theme.spacing(2), borderRadius: theme.radii.field, backgroundColor: theme.colors.tone.brand.bg },
+  content: { paddingBottom: theme.spacing(8) },
+  error: { fontFamily: theme.fonts.semiBold, fontSize: theme.type.caption, color: theme.colors.danger, marginBottom: theme.spacing(3) },
+  section: { marginTop: theme.spacing(3) },
+  item: { marginBottom: theme.spacing(3) },
+  // The row's photo slot, as a calendar leaf.
+  date: { width: 52, height: 52, alignItems: 'center', justifyContent: 'center', borderRadius: theme.radii.field, backgroundColor: theme.colors.tone.brand.bg },
   month: { fontFamily: theme.fonts.black, fontSize: 10, letterSpacing: 0.8, textTransform: 'uppercase', color: theme.colors.ink },
-  day: { fontFamily: theme.fonts.display, fontSize: 24, lineHeight: 26, color: theme.colors.ink },
-  body: { flex: 1, gap: theme.spacing(1) },
-  title: { fontFamily: theme.fonts.display, fontSize: theme.type.body, color: theme.colors.text },
-  meta: { fontFamily: theme.fonts.semiBold, fontSize: theme.type.caption, color: theme.colors.muted },
-  parts: { borderRadius: theme.radii.field, padding: theme.spacing(3), gap: theme.spacing(1) },
-  partsText: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.ink },
+  day: { fontFamily: theme.fonts.display, fontSize: 22, lineHeight: 24, color: theme.colors.ink },
+  actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: theme.spacing(1), marginTop: theme.spacing(1) },
+  action: { minHeight: 44, paddingHorizontal: theme.spacing(3) },
 })

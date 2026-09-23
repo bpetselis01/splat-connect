@@ -101,7 +101,7 @@ describe('ExchangesListScreen', () => {
     ])
     render(<ExchangesListScreen />)
     await screen.findByText('Bubble machine')
-    expect(screen.getByText('Waiting on you — accept or decline')).toBeTruthy()
+    expect(screen.getByText(/Waiting\ on\ you\ —\ accept\ or\ decline/)).toBeTruthy()
   })
 
   it('marks an accepted donation needing the owner\'s confirmation with the confirm label', async () => {
@@ -117,7 +117,7 @@ describe('ExchangesListScreen', () => {
     ])
     render(<ExchangesListScreen />)
     await screen.findByText('Bubble machine')
-    expect(screen.getByText('Waiting on you — confirm the handoff')).toBeTruthy()
+    expect(screen.getByText(/Waiting\ on\ you\ —\ confirm\ the\ handoff/)).toBeTruthy()
   })
 
   it('does not mark a requested transaction the viewer is only the requester on', async () => {
@@ -126,7 +126,7 @@ describe('ExchangesListScreen', () => {
     ])
     render(<ExchangesListScreen />)
     await screen.findByText('Bubble machine')
-    expect(screen.queryByText('Waiting on you — accept or decline')).toBeNull()
+    expect(screen.queryByText(/Waiting\ on\ you\ —\ accept\ or\ decline/)).toBeNull()
   })
 
   it('marks an org-owned request needing action when the viewer leads that organisation', async () => {
@@ -136,7 +136,7 @@ describe('ExchangesListScreen', () => {
     ])
     render(<ExchangesListScreen />)
     await screen.findByText('Bubble machine')
-    expect(screen.getByText('Waiting on you — accept or decline')).toBeTruthy()
+    expect(screen.getByText(/Waiting\ on\ you\ —\ accept\ or\ decline/)).toBeTruthy()
   })
 
   it('names the counterparty from the requester\'s name on the owner side, and shows the exchange toy', async () => {
@@ -151,7 +151,7 @@ describe('ExchangesListScreen', () => {
     ])
     render(<ExchangesListScreen />)
     expect(await screen.findByText('Bubble machine ⇄ Fidget cube')).toBeTruthy()
-    expect(screen.getByText('Exchange with Jamie')).toBeTruthy()
+    expect(screen.getByText(/Exchange\ with\ Jamie/)).toBeTruthy()
   })
 
   it('names the counterparty from the owner or org name on the requester side', async () => {
@@ -160,7 +160,7 @@ describe('ExchangesListScreen', () => {
     ])
     render(<ExchangesListScreen />)
     await screen.findByText('Bubble machine')
-    expect(screen.getByText('Donation with TAD Australia')).toBeTruthy()
+    expect(screen.getByText(/Donation\ with\ TAD\ Australia/)).toBeTruthy()
   })
 
   it('shows "On behalf of" the organisation when the viewer is acting as an org leader, and omits it otherwise', async () => {
@@ -170,7 +170,7 @@ describe('ExchangesListScreen', () => {
     ])
     render(<ExchangesListScreen />)
     await screen.findByText('Bubble machine')
-    expect(screen.getByText('On behalf of TAD Australia')).toBeTruthy()
+    expect(screen.getByText(/On\ behalf\ of\ TAD\ Australia/)).toBeTruthy()
     expect(screen.queryAllByText(/On behalf of/)).toHaveLength(1)
   })
 
@@ -178,31 +178,39 @@ describe('ExchangesListScreen', () => {
     mockGet.mockResolvedValue([tx({ id: 'tx1', blocked_by_rival_accept: true })])
     render(<ExchangesListScreen />)
     await screen.findByText('Bubble machine')
-    expect(screen.getByText('Locked — another request accepted')).toBeTruthy()
+    expect(screen.getByText(/Locked\ —\ another\ request\ accepted/)).toBeTruthy()
   })
 
   it('shows a muted one-line preview of the last message when present', async () => {
     mockGet.mockResolvedValue([
       tx({
         id: 'tx1',
+        // Requester side, so nothing is waiting on the viewer: the preview
+        // takes the meta line's last slot only when no action claims it.
+        owner_id: 'someoneElse',
+        requester_id: 'viewer1',
         last_message: { body: 'See you Saturday!', sender_id: 'r1', kind: 'user', created_at: '2026-01-01' },
       }),
     ])
     render(<ExchangesListScreen />)
     await screen.findByText('Bubble machine')
-    expect(screen.getByText('See you Saturday!')).toBeTruthy()
+    expect(screen.getByText(/See\ you\ Saturday!/)).toBeTruthy()
   })
 
   it('prefixes the preview with "You:" when the viewer sent the last message', async () => {
     mockGet.mockResolvedValue([
       tx({
         id: 'tx1',
+        // Requester side, so nothing is waiting on the viewer: the preview
+        // takes the meta line's last slot only when no action claims it.
+        owner_id: 'someoneElse',
+        requester_id: 'viewer1',
         last_message: { body: 'See you Saturday!', sender_id: 'viewer1', kind: 'user', created_at: '2026-01-01' },
       }),
     ])
     render(<ExchangesListScreen />)
     await screen.findByText('Bubble machine')
-    expect(screen.getByText('You: See you Saturday!')).toBeTruthy()
+    expect(screen.getByText(/You:\ See\ you\ Saturday!/)).toBeTruthy()
   })
 
   it('filters to the toy named in the ?toy= param, and shows a header chip naming it', async () => {

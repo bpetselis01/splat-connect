@@ -9,10 +9,10 @@ import { theme } from '../../lib/theme'
 import { useCapabilities } from '../../lib/capabilities'
 import { threadHref } from '../../lib/builds'
 import { Screen } from '../ui/Screen'
-import { Card } from '../ui/Card'
 import { Badge } from '../ui/Badge'
 import { Button } from '../ui/Button'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
+import { ListRow, ListSection, RowThumb } from '../list/list-kit'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 
@@ -36,59 +36,31 @@ function TransactionRow({
   const typeLabel = tx.type === 'donation' ? 'Donation' : tx.type === 'build' ? 'Build' : 'Exchange'
   // A build's subject is the guide; toy_name is empty on one.
   const subject = subjectName(tx)
+  // The board's one meta line: who it is with, which hat the viewer wears (a
+  // leader's own toys and their organisation's arrive in one list), then the
+  // one thing worth knowing next — the action, the lock, or the last word.
+  const lastMessage = tx.last_message
+    ? `${tx.last_message.sender_id === viewerId && tx.last_message.kind === 'user' ? 'You: ' : ''}${tx.last_message.body}`
+    : null
+  const meta = [
+    // An open build nobody has claimed has nobody to name yet.
+    tx.other_party_name ? `${typeLabel} with ${tx.other_party_name}` : `${typeLabel} · waiting for a maker`,
+    tx.acting_for_org_name ? `On behalf of ${tx.acting_for_org_name}` : null,
+    acting ? actionLabel(tx) : tx.blocked_by_rival_accept ? 'Locked — another request accepted' : lastMessage,
+  ]
+    .filter(Boolean)
+    .join(' · ')
   return (
-    <AnimatedPressable
+    <ListRow
       onPress={onPress}
-      accessibilityRole="button"
       accessibilityLabel={`${subject} with ${tx.other_party_name}`}
       accessibilityHint={`Status ${tx.status}.${acting ? ` ${actionLabel(tx)}.` : ''} Opens the exchange thread.`}
-      pressScale={0.985}
-    >
-      <Card style={styles.card}>
-        <View style={styles.cardHeader}>
-          <View style={styles.titleBlock}>
-            <Text style={styles.toyName} numberOfLines={1}>
-              {subject}
-              {tx.offered_toy_name ? ` ⇄ ${tx.offered_toy_name}` : ''}
-            </Text>
-            <Text style={styles.metaLine} numberOfLines={1}>
-              {/* An open build nobody has claimed has nobody to name yet. */}
-              {tx.other_party_name ? `${typeLabel} with ${tx.other_party_name}` : `${typeLabel} · waiting for a maker`}
-            </Text>
-            {/* A leader's own toys and their organisation's arrive in one
-                list, and nothing else tells them apart — which hat they are
-                answering as changes whose toy this is. Same cue as web's
-                dashboard/exchanges/page.tsx TransactionRow. */}
-            {tx.acting_for_org_name ? (
-              <Text style={styles.orgLine} numberOfLines={1}>
-                On behalf of {tx.acting_for_org_name}
-              </Text>
-            ) : null}
-          </View>
-          <Badge status={tx.status} />
-        </View>
-
-        {/* The one line on this card that is an instruction rather than a
-            fact, so it is the one line the eye lands on — same treatment as
-            web's mint note, apricot here to match the rest of the app. */}
-        {acting ? (
-          <View style={styles.actionBox}>
-            <Text style={styles.actionText}>{actionLabel(tx)}</Text>
-          </View>
-        ) : null}
-
-        {tx.blocked_by_rival_accept ? (
-          <Text style={styles.mutedLine}>Locked — another request accepted</Text>
-        ) : null}
-
-        {tx.last_message ? (
-          <Text style={styles.lastMessage} numberOfLines={1}>
-            {tx.last_message.sender_id === viewerId && tx.last_message.kind === 'user' ? 'You: ' : ''}
-            {tx.last_message.body}
-          </Text>
-        ) : null}
-      </Card>
-    </AnimatedPressable>
+      thumb={<RowThumb photo={tx.toy_cover_photo_url} glyph="swap-horizontal-outline" />}
+      title={`${subject}${tx.offered_toy_name ? ` ⇄ ${tx.offered_toy_name}` : ''}`}
+      meta={meta}
+      metaLines={3}
+      pill={<Badge status={tx.status} />}
+    />
   )
 }
 
@@ -189,7 +161,8 @@ export function ExchangesListScreen() {
           </AnimatedPressable>
         ) : (
           <Text style={styles.subtitle}>
-            Toys you have asked for and toys people have asked you for.
+            Toys you have asked for, toys people have asked you for, and builds you have asked a
+            maker for. Each one is a conversation until the handoff is confirmed.
           </Text>
         )}
       </View>
@@ -225,12 +198,12 @@ export function ExchangesListScreen() {
           keyExtractor={(t) => t.id}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
-          ListHeaderComponent={active.length > 0 ? <Text style={styles.sectionHeader}>Active</Text> : null}
+          ListHeaderComponent={active.length > 0 ? <ListSection>Active</ListSection> : null}
           renderItem={({ item }) => renderRow(item)}
           ListFooterComponent={
             history.length > 0 ? (
               <View style={styles.historySection}>
-                <Text style={styles.sectionHeader}>History</Text>
+                <ListSection>History</ListSection>
                 {history.map(renderRow)}
               </View>
             ) : null
@@ -243,7 +216,7 @@ export function ExchangesListScreen() {
 
 const styles = StyleSheet.create({
   topRow: { marginBottom: theme.spacing(4) },
-  subtitle: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.muted, lineHeight: 20 },
+  subtitle: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.muted, lineHeight: 21 },
   chip: {
     alignSelf: 'flex-start',
     flexDirection: 'row',
@@ -257,30 +230,6 @@ const styles = StyleSheet.create({
   chipText: { fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.primaryDeep },
   retry: { marginTop: theme.spacing(5), alignSelf: 'center', paddingHorizontal: theme.spacing(8) },
   listContent: { paddingBottom: theme.spacing(6) },
-  sectionHeader: { fontFamily: theme.fonts.bold, fontSize: theme.type.heading, color: theme.colors.text, marginBottom: theme.spacing(3) },
   historySection: { marginTop: theme.spacing(6) },
   rowWrap: { marginBottom: theme.spacing(3) },
-  card: { padding: theme.spacing(3), gap: theme.spacing(2) },
-  cardHeader: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: theme.spacing(2) },
-  titleBlock: { flex: 1, gap: theme.spacing(1) },
-  toyName: { fontFamily: theme.fonts.bold, color: theme.colors.text, fontSize: theme.type.label },
-  metaLine: { fontFamily: theme.fonts.regular, color: theme.colors.muted, fontSize: theme.type.caption },
-  orgLine: { fontFamily: theme.fonts.regular, color: theme.colors.muted, fontSize: theme.type.caption, marginTop: theme.spacing(1) },
-  actionBox: {
-    alignSelf: 'flex-start',
-    borderRadius: theme.radii.field,
-    backgroundColor: theme.colors.apricotSoft,
-    paddingHorizontal: theme.spacing(3),
-    paddingVertical: theme.spacing(1),
-  },
-  actionText: { fontFamily: theme.fonts.bold, color: theme.colors.ink, fontSize: theme.type.caption },
-  mutedLine: { fontFamily: theme.fonts.regular, color: theme.colors.muted, fontSize: theme.type.caption },
-  lastMessage: {
-    fontFamily: theme.fonts.regular,
-    color: theme.colors.muted,
-    fontSize: theme.type.caption,
-    borderTopWidth: theme.border.hairline,
-    borderTopColor: theme.colors.border,
-    paddingTop: theme.spacing(2),
-  },
 })

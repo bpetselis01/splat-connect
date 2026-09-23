@@ -6,7 +6,7 @@
 //
 // The native header carries the type's name (app/(my)/_layout.tsx).
 import { useCallback, useEffect, useState } from 'react'
-import { View, Text, ScrollView, RefreshControl, StyleSheet } from 'react-native'
+import { View, ScrollView, RefreshControl, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import type { SaveSlug } from '@splat-connect/types'
@@ -14,12 +14,11 @@ import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { useSaves } from '../../lib/saves'
 import { Screen } from '../ui/Screen'
-import { Card } from '../ui/Card'
 import { Button } from '../ui/Button'
 import { EmptyState } from '../ui/EmptyState'
 import { SkeletonRow } from '../ui/Skeleton'
 import { SaveButton } from '../ui/SaveButton'
-import { AnimatedPressable } from '../ui/AnimatedPressable'
+import { ListIntro, ListRow, RowThumb } from '../list/list-kit'
 
 /** The wire shape is per-slug; these are the fields the rows read. */
 type SavedEntity = {
@@ -35,6 +34,7 @@ const KIND: Record<
   SaveSlug,
   {
     noun: string
+    lead: string
     icon: React.ComponentProps<typeof Ionicons>['name']
     route: (id: string) => string
     browseLabel: string
@@ -43,6 +43,7 @@ const KIND: Record<
 > = {
   tutorials: {
     noun: 'guides',
+    lead: 'Guides you kept to build later.',
     icon: 'book-outline',
     route: (id) => `/guides/${id}`,
     browseLabel: 'Browse the guides',
@@ -50,6 +51,7 @@ const KIND: Record<
   },
   toys: {
     noun: 'toys',
+    lead: 'Toys you are considering asking for.',
     icon: 'cube-outline',
     route: (id) => `/toy-library/${id}`,
     browseLabel: 'Browse the toy library',
@@ -57,6 +59,7 @@ const KIND: Record<
   },
   challenges: {
     noun: 'challenges',
+    lead: 'Challenges to come back to.',
     icon: 'bulb-outline',
     route: (id) => `/explore/challenges/${id}`,
     browseLabel: 'Browse design challenges',
@@ -64,6 +67,7 @@ const KIND: Record<
   },
   organisations: {
     noun: 'organisations',
+    lead: 'Organisations you want to find again.',
     icon: 'business-outline',
     route: (id) => `/toy-library/organisation/${id}`,
     browseLabel: 'Browse organisations',
@@ -157,6 +161,7 @@ export function SavedListScreen({ slug }: { slug: SaveSlug }) {
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.ink} />
           }
         >
+          <ListIntro lead={kind.lead} />
           {items.map((item) => {
             // tutorials/challenges carry title; toys and organisations carry name.
             const label = item.title ?? item.name ?? ''
@@ -165,28 +170,16 @@ export function SavedListScreen({ slug }: { slug: SaveSlug }) {
               // The bookmark is a sibling of the pressable, never a child —
               // the same rule as every other saveable row.
               <View key={item.id} style={styles.saveHost}>
-                <AnimatedPressable
+                <ListRow
                   onPress={() => router.push(kind.route(item.id))}
-                  accessibilityRole="button"
                   accessibilityLabel={label}
-                  pressScale={0.985}
-                  style={styles.rowPress}
-                >
-                  <Card style={styles.card}>
-                    <View style={styles.cardBody}>
-                      <Text style={styles.cardTitle} numberOfLines={2}>
-                        {label}
-                      </Text>
-                      {line ? (
-                        <Text style={styles.cardLine} numberOfLines={2}>
-                          {line}
-                        </Text>
-                      ) : null}
-                    </View>
-                    <Ionicons name="chevron-forward" size={18} color={theme.colors.primary} />
-                  </Card>
-                </AnimatedPressable>
-                <View style={styles.saveButtonWrap}>
+                  thumb={<RowThumb glyph={kind.icon} />}
+                  title={label}
+                  meta={line}
+                  // Room for the island, which sits over the row beside the chevron.
+                  trailing={<View style={styles.islandRoom} />}
+                />
+                <View style={styles.saveButtonWrap} pointerEvents="box-none">
                   <SaveButton slug={slug} id={item.id} saves={saves} />
                 </View>
               </View>
@@ -202,17 +195,7 @@ const styles = StyleSheet.create({
   listContent: { paddingBottom: theme.spacing(6) },
   retry: { marginTop: theme.spacing(5), alignSelf: 'center', paddingHorizontal: theme.spacing(6) },
   saveHost: { position: 'relative', marginBottom: theme.spacing(3) },
-  saveButtonWrap: { position: 'absolute', top: 2, right: 2 },
-  rowPress: {},
-  // paddingRight keeps a two-line title from running under the 40px island.
-  card: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3), padding: theme.spacing(3) },
-  cardBody: { flex: 1, paddingRight: 40 },
-  cardTitle: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.text, lineHeight: 22 },
-  cardLine: {
-    fontFamily: theme.fonts.regular,
-    fontSize: theme.type.caption,
-    color: theme.colors.muted,
-    lineHeight: 18,
-    marginTop: theme.spacing(1),
-  },
+  islandRoom: { width: 32 },
+  // Centred beside the chevron: 15 padding + 18 chevron + 13 gap from the edge.
+  saveButtonWrap: { position: 'absolute', top: 0, bottom: 0, right: 40, justifyContent: 'center' },
 })
