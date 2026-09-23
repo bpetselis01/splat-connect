@@ -108,7 +108,8 @@ it('counts what is ready and what is left', () => {
   mockDraft.tutorial = tutorial({ safety_declared_at: '2026-09-02', parts: [{ name: 'a' }] })
   render(<TutorialHub id="t1" />)
   // details + steps (optional, so never a gap) + safety + parts, of seven
-  expect(screen.getByText('4 of 7 ready')).toBeTruthy()
+  expect(screen.getByText('4 of 7 sections complete')).toBeTruthy()
+  expect(screen.getByRole('progressbar').props.accessibilityValue).toEqual({ min: 0, max: 7, now: 4 })
   expect(screen.getByText('4 things still needed')).toBeTruthy()
 })
 
@@ -210,4 +211,21 @@ it('shows a load failure rather than an empty hub', () => {
   mockDraft.loadError = true
   render(<TutorialHub id="t1" />)
   expect(screen.getByText("Couldn't load this guide.")).toBeTruthy()
+})
+
+it('checks a complete section, marks empty steps as optional, and fills the bar to match', () => {
+  mockDraft.tutorial = complete({ kind: 'toy_adaptation' })
+  render(<TutorialHub id="t1" />)
+  expect(screen.getByTestId('hub-done-details')).toBeTruthy()
+  expect(screen.queryByTestId('hub-done-steps')).toBeNull()
+  expect(screen.getByText('Empty')).toBeTruthy()
+  // Steps are optional, so an empty list does not hold the bar back.
+  expect(screen.getByText('6 of 6 sections complete')).toBeTruthy()
+  expect(screen.getByTestId('hub-progress-fill')).toHaveStyle({ width: '100%' })
+})
+
+it('previews the guide as a reader from beside Submit', () => {
+  render(<TutorialHub id="t1" />)
+  fireEvent.press(screen.getByTestId('hub-preview'))
+  expect(mockPush).toHaveBeenCalledWith({ pathname: '/guides/[id]', params: { id: 't1' } })
 })

@@ -164,6 +164,7 @@ export function StepsSection() {
             testID="steps-add"
             label="+ Add a step"
             variant="ghost"
+            style={styles.add}
             onPress={() => commit([...rows, { title: null, body: '', photo_url: null }])}
           />
         ) : null}
@@ -181,25 +182,35 @@ const styles = StyleSheet.create({
     color: theme.colors.muted,
     marginBottom: theme.spacing(3),
   },
+  // The board's section card: panel radius, one elevation, 14px in.
   card: {
     backgroundColor: theme.colors.surface,
     borderWidth: theme.border.hairline,
     borderColor: theme.colors.border,
-    borderRadius: theme.radii.field,
-    padding: theme.spacing(3),
+    borderRadius: theme.radii.panel,
+    padding: 14,
     marginBottom: theme.spacing(3),
     ...theme.shadow(1),
   },
   head: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3), marginBottom: theme.spacing(2) },
   num: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 30,
+    height: 30,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: theme.colors.accentLight,
   },
-  numText: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.ink },
+  numText: { fontFamily: theme.fonts.display, fontSize: 13, color: theme.colors.primaryDeep },
+  // The board's dashed full-width "+ Add" under a section's cards.
+  add: {
+    borderStyle: 'dashed',
+    borderWidth: theme.border.hairline * 1.5,
+    borderColor: theme.colors.muted,
+    borderRadius: theme.radii.pill,
+    minHeight: 50,
+  },
+
   remove: { marginLeft: 'auto' },
   photoRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: theme.spacing(2) },
   thumb: { width: 72, height: 54, borderRadius: theme.radii.field },

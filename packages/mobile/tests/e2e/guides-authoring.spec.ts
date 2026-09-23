@@ -135,7 +135,7 @@ test('a new account writes a guide end to end and submits it for review', async 
   await expect(page.getByTestId('hub-row-files')).toContainText('PDF and photo added')
 
   // --- Submit, from the hub ----------------------------------------------
-  await expect(page.getByText('5 of 5 ready')).toBeVisible()
+  await expect(page.getByText('6 of 6 sections complete')).toBeVisible()
   const submit = page.getByTestId('hub-submit')
   await expect(submit).toBeEnabled()
   await submit.click()
@@ -145,6 +145,6 @@ test('a new account writes a guide end to end and submits it for review', async 
   // --- My tutorials --------------------------------------------------------
   await page.goto('/tutorials')
   await expect(page.getByText(title)).toBeVisible()
-  // Badge uppercases the status string itself.
-  await expect(page.getByText('PENDING')).toBeVisible()
+  // The row wears the stage word; the stage filter above says it too, hence the scope.
+  await expect(page.getByRole('button', { name: title })).toContainText('Waiting')
 })
