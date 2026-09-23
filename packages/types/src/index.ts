@@ -38,9 +38,53 @@ export interface ChildProfile {
   forearm_length_mm: number | null
   hand_dominance: string | null
   sensory_preferences: string[]
+  /** The board's four switch questions and the room it is used in (079).
+   *  The fields above are no longer asked; they stay until a decision drops them. */
+  working_hand: WorkingHand | null
+  press_force: PressForce | null
+  aim: Aim | null
+  hold: Hold | null
+  everyday_needs: EverydayNeed[]
   created_at: string
   updated_at: string
 }
+
+// 079 — the child profile's questions, in the board's order and words.
+export const WORKING_HAND = [
+  { value: 'left', label: 'Left' },
+  { value: 'right', label: 'Right' },
+  { value: 'either', label: 'Either' },
+  { value: 'not_sure', label: 'Not sure' },
+] as const
+export const PRESS_FORCE = [
+  { value: 'very_light', label: 'Very light' },
+  { value: 'light', label: 'Light' },
+  { value: 'moderate', label: 'Moderate' },
+  { value: 'full', label: 'Full' },
+] as const
+export const AIM = [
+  { value: 'small', label: 'Yes, small' },
+  { value: 'large', label: 'Yes, large' },
+  { value: 'not_reliably', label: 'Not reliably' },
+] as const
+export const HOLD = [
+  { value: 'moment', label: 'A moment' },
+  { value: 'second', label: 'A second' },
+  { value: 'as_long', label: 'As long as needed' },
+] as const
+export const EVERYDAY_NEEDS = [
+  { value: 'quiet', label: 'Quiet toys only' },
+  { value: 'no_flashing', label: 'No flashing lights' },
+  { value: 'wipeable', label: 'Wipeable' },
+  { value: 'wheelchair_tray', label: 'Wheelchair tray' },
+  { value: 'shared_siblings', label: 'Shared with siblings' },
+  { value: 'travels_bag', label: 'Travels in a bag' },
+] as const
+export type WorkingHand = (typeof WORKING_HAND)[number]['value']
+export type PressForce = (typeof PRESS_FORCE)[number]['value']
+export type Aim = (typeof AIM)[number]['value']
+export type Hold = (typeof HOLD)[number]['value']
+export type EverydayNeed = (typeof EVERYDAY_NEEDS)[number]['value']
 
 export type OfferType = 'donation' | 'exchange' | 'both'
 
@@ -76,6 +120,14 @@ export interface Toy {
   cover_photo_url: string | null
   status: 'draft' | 'published'
   offer_type: OfferType | null
+  /** The four facts under the holder's notes, in their words (075). */
+  age_min?: number | null
+  age_max?: number | null
+  batteries?: string | null
+  switch_fitting?: string | null
+  volume?: string | null
+  /** "Built from Guide C" (075). SET NULL if the guide goes. */
+  tutorial_id?: string | null
   created_at: string
   updated_at: string
   /** PostgREST computed fields (073), the owner's "How it is doing" tiles.
@@ -707,9 +759,17 @@ export interface ToyIdea {
   status: ToyIdeaStatus
   review_note: string | null
   tutorial_id: string | null
+  /** A build challenge, or a question answered in its thread (078). A question
+   *  never graduates. */
+  kind?: ToyIdeaKind
+  /** The reply the author marked as the answer, and when (078). */
+  answer_message_id?: string | null
+  answered_at?: string | null
   created_at: string
   updated_at: string
 }
+
+export type ToyIdeaKind = 'challenge' | 'question'
 
 export interface ToyIdeaParticipant {
   idea_id: string
@@ -818,6 +878,95 @@ export interface Organization {
   rate_note?: string | null
   recycling_materials?: string[]
   recycling_note?: string | null
+  /** 076. "What you are", the two pictures, the Visit card and how they like
+   *  to be paid back. `verified_at` is written by an admin only. */
+  kind?: string | null
+  logo_url?: string | null
+  cover_url?: string | null
+  verified_at?: string | null
+  visit_hours?: string | null
+  service_area?: string | null
+  payment_methods?: PaymentMethod[]
+  /** Public counts (077), PostgREST computed fields. */
+  org_thanks_count?: number
+  org_follower_count?: number
+}
+
+/** "What you are" — the editor's suggestions; free text is allowed (076). */
+export const ORG_KINDS = [
+  'Paediatric OT service',
+  'Therapy practice',
+  'School or special school',
+  'University makerspace',
+  "Men's Shed or community workshop",
+  'Library or council maker lab',
+  'Charity or disability service',
+] as const
+
+export type PaymentMethod = 'cash' | 'bank_transfer' | 'payid' | 'any'
+export const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
+  { value: 'cash', label: 'Cash on the day' },
+  { value: 'bank_transfer', label: 'Bank transfer' },
+  { value: 'payid', label: 'PayID' },
+  { value: 'any', label: 'Whatever suits them' },
+]
+
+/** "How to work with them" (076): up to six numbered doors. */
+export type OrgDoorTarget = 'toy_library' | 'events' | 'dropoff' | 'print' | 'build' | 'message'
+export const ORG_DOOR_TARGETS: { value: OrgDoorTarget; label: string }[] = [
+  { value: 'toy_library', label: 'Toy library' },
+  { value: 'events', label: 'Your events' },
+  { value: 'dropoff', label: 'Book a plastic drop-off' },
+  { value: 'print', label: 'Ask them to print' },
+  { value: 'build', label: 'Ask for a build' },
+  { value: 'message', label: 'Message them' },
+]
+export interface OrgDoor {
+  id: string
+  org_id: string
+  position: number
+  title: string
+  body: string | null
+  target: OrgDoorTarget
+}
+
+/** "What you ask families to cover" (076) — the breakdown under the rate note. */
+export interface OrgRateLine {
+  id: string
+  org_id: string
+  position: number
+  description: string
+  amount_cents: number
+  claiming: boolean
+}
+
+/** 077. One per person per organisation; the note shows publicly only when
+ *  its author ticked show_note and no leader hid it. */
+export interface OrgThanks {
+  org_id: string
+  profile_id: string
+  note: string | null
+  byline: string | null
+  show_note: boolean
+  hidden_at: string | null
+  created_at: string
+}
+
+/** 077. Message: one conversation per person per organisation, readable by
+ *  that person and every leader of the org. */
+export interface OrgConversation {
+  id: string
+  org_id: string
+  profile_id: string
+  created_at: string
+  updated_at: string
+}
+export interface OrgMessage {
+  id: string
+  conversation_id: string
+  sender_id: string
+  body: string
+  created_at: string
 }
 
 /** What an organisation does, shown as chips. Presentational, so it lives here
@@ -1322,6 +1471,13 @@ export interface Notification {
   toy_transaction_id?: string | null
   toy_name?: string | null
   idea_id?: string | null
+  /** 077's subjects: a thanks (org_id), a followed org publishing (org_event_id
+   *  or org_story_id — the title rides in tutorial_title), a message
+   *  (org_conversation_id). Exactly one subject is set on any row. */
+  org_id?: string | null
+  org_event_id?: string | null
+  org_story_id?: string | null
+  org_conversation_id?: string | null
   actor_name: string
   read_at: string | null
   created_at: string
