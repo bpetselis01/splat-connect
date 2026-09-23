@@ -7,6 +7,14 @@ export type { ContributorBadge, ContributorBadgeInput } from './contributor-badg
 export { buildCalendar } from './ics'
 export type { CalendarEvent } from './ics'
 import type { ContributorBadge } from './contributor-badges'
+export { createGuideFromPdfDraft, printSettingsNote } from './pdf-import'
+export type {
+  PdfImportDraft,
+  PdfImportConfidence,
+  PdfImportPrintSettings,
+  PdfDraftApi,
+  PdfDraftResult,
+} from './pdf-import'
 
 export type Role = 'admin' | 'contributor'
 
