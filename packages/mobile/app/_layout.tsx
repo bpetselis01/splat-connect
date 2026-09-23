@@ -35,6 +35,7 @@ export default function RootLayout() {
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="(my)" />
+          <Stack.Screen name="printing" />
         </Stack>
         {showIntro ? <IntroVideo onFinish={() => setShowIntro(false)} /> : null}
       </AuthProvider>

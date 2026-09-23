@@ -12,6 +12,7 @@ const ROUTES: Record<string, string> = {
   // drop-offs are one screen.
   '/get-involved/recycling': '/explore/recycling',
   '/dashboard/print-requests': '/print-requests',
+  '/dashboard/printers': '/print-for-others',
   '/dashboard/organisation': '/organisation',
   '/dashboard/organisation/toys': '/organisation/toys',
   '/dashboard/organisation/orders': '/organisation/orders',

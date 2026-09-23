@@ -14,6 +14,9 @@ export type UploadPath =
   // A build's working shot. The transaction id is in the path, so this one
   // is called with idField null and sends the file alone.
   | `/api/toy-transactions/${string}/working-shot`
+  // The printer's "ready" photo. The route answers with the job row rather
+  // than an UploadResult, and ignores the id field this helper appends.
+  | `/api/toy-transactions/${string}/print-ready`
 
 export interface UploadResult {
   url: string

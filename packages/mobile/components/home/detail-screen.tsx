@@ -17,6 +17,7 @@ import { Button } from '../ui/Button'
 import { Section } from '../ui/Section'
 import { Skeleton } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
+import { AnimatedPressable } from '../ui/AnimatedPressable'
 
 type TutorialDetail = Tutorial & {
   parts: Part[]
@@ -166,14 +167,27 @@ export function DetailScreen({ id }: { id: string }) {
 
       <Button label="Preview Tutorial" onPress={openPreview} />
 
-      {tutorial.kind === 'assistive_tech' ? (
-        <View style={styles.printCard}>
+      {/* The way into printing. Keyed on the guide having STL files rather than
+          on its kind: a print request's parts ARE those files, so a guide
+          without any has nothing to ask for, whatever kind it is. */}
+      {tutorial.stl_files.length > 0 ? (
+        <AnimatedPressable
+          onPress={() => router.push({ pathname: '/printing', params: { guide: tutorial.id } })}
+          accessibilityRole="button"
+          accessibilityLabel="Ask someone to print"
+          accessibilityHint="Pick up to three printers nearby"
+          pressScale={0.985}
+          style={styles.printCard}
+        >
           <View style={styles.printHeader}>
-            <Text style={styles.printTitle}>Request this 3D print</Text>
-            <Badge status="pending" label="Soon" />
+            <Text style={styles.printTitle}>Ask someone to print</Text>
+            <Ionicons name="chevron-forward" size={16} color={theme.colors.primary} />
           </View>
-          <Text style={styles.printHint}>Ask a contributor or organisation with a printer</Text>
-        </View>
+          <Text style={styles.printHint}>
+            {tutorial.stl_files.length} printable part{tutorial.stl_files.length === 1 ? '' : 's'} · pick up to three
+            printers nearby
+          </Text>
+        </AnimatedPressable>
       ) : null}
 
       {tutorial.tutorial_recommendations.length > 0 ? (
@@ -229,7 +243,6 @@ const styles = StyleSheet.create({
   badgeRow: { flexDirection: 'row', gap: theme.spacing(2), marginTop: theme.spacing(2) },
   printCard: {
     marginTop: theme.spacing(5),
-    opacity: 0.62,
     borderRadius: theme.radii.field,
     borderWidth: theme.border.hairline,
     borderColor: theme.colors.border,

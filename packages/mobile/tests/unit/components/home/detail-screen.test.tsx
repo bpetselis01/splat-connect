@@ -107,23 +107,25 @@ describe('DetailScreen', () => {
     })
   })
 
-  it('shows the 3D-print placeholder, unpressable, for an assistive-tech guide', async () => {
-    mockEndpoints({ detail: Promise.resolve({ ...DETAIL, kind: 'assistive_tech' }) })
+  it('opens Find a printer for this guide when it has printable parts', async () => {
+    mockEndpoints({
+      detail: Promise.resolve({
+        ...DETAIL,
+        stl_files: [{ id: 's1', tutorial_id: '1', filename: 'mount.stl', file_url: '1/mount.stl' }],
+      }),
+    })
     render(<DetailScreen id="1" />)
     await screen.findByText('Build a Robot Arm')
-
-    expect(screen.getByText('Request this 3D print')).toBeTruthy()
-    expect(screen.getByText('Soon')).toBeTruthy()
 
     mockPush.mockClear()
-    fireEvent.press(screen.getByText('Request this 3D print'))
-    expect(mockPush).not.toHaveBeenCalled()
+    fireEvent.press(screen.getByLabelText('Ask someone to print'))
+    expect(mockPush).toHaveBeenCalledWith({ pathname: '/printing', params: { guide: '1' } })
   })
 
-  it('has no 3D-print placeholder for a toy-adaptation guide', async () => {
+  it('offers no print for a guide with nothing to print', async () => {
     render(<DetailScreen id="1" />)
     await screen.findByText('Build a Robot Arm')
 
-    expect(screen.queryByText('Request this 3D print')).toBeNull()
+    expect(screen.queryByLabelText('Ask someone to print')).toBeNull()
   })
 })

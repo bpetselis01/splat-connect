@@ -222,6 +222,13 @@ export function ExploreScreen() {
           onPress={() => router.push('/explore/makers-wanted')}
         />
         <DoorCard
+          title="Find a printer"
+          blurb="Someone nearby prints the parts · you cover the filament"
+          tint={theme.colors.violetSoft}
+          icon="print-outline"
+          onPress={() => router.push('/printing')}
+        />
+        <DoorCard
           title="About SPLAT"
           blurb="Who we are · Partners · Contact · Safety"
           tint={theme.colors.surfaceSunken}

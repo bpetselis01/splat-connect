@@ -26,8 +26,11 @@ it('renders every buildNav group as rows, routes them through the map, and ends 
 it('draws a row with no mobile screen as SOON and never sends it back to Me', () => {
   render(<MeTab />)
   mockPush.mockClear()
-  // /dashboard/printers has no screen under app/(my) — see my-routes.test.
-  fireEvent.press(screen.getByLabelText('Print for others'))
+  // /dashboard/events has no screen under app/(my) — see my-routes.test.
+  fireEvent.press(screen.getByLabelText('My events'))
   expect(mockPush).not.toHaveBeenCalled()
+  // Print for others was the example here until it got its screen.
+  fireEvent.press(screen.getByLabelText('Print for others'))
+  expect(mockPush).toHaveBeenCalledWith('/print-for-others')
   expect(screen.getAllByText('SOON').length).toBeGreaterThan(0)
 })
