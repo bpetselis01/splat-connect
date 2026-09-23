@@ -23,27 +23,27 @@ const ORGS = [
   { id: 'none', name: 'Takes Nothing', status: 'active', suburb: null, state: null, recycling_materials: [], recycling_note: null },
   { id: 'susp', name: 'Suspended Space', status: 'suspended', suburb: null, state: null, recycling_materials: ['PLA'], recycling_note: null },
 ]
-const DROPS = [
+// GET /recycling/mine is already only the caller's rows (RLS + the filter).
+const MINE = [
   { id: 'mine', org_id: 'north', contributor_id: 'me', material: 'PETG', estimated_grams: 3000, status: 'received', weighed_grams: 3200, credit_grams: 2400, created_at: '2026-08-12T00:00:00Z' },
-  { id: 'theirs', org_id: 'north', contributor_id: 'someone', material: 'PLA', estimated_grams: 9000, status: 'booked', weighed_grams: null, credit_grams: null, created_at: '2026-09-01T00:00:00Z' },
+  { id: 'waiting', org_id: 'north', contributor_id: 'me', material: 'PLA', estimated_grams: 2000, status: 'booked', weighed_grams: null, credit_grams: null, created_at: '2026-09-01T00:00:00Z' },
 ]
 
 beforeEach(() => {
   jest.clearAllMocks()
   mockGet.mockImplementation((path: string) =>
-    Promise.resolve(path === '/api/public/organizations' ? ORGS : path === '/api/organizations/north/recycling' ? DROPS : [])
+    Promise.resolve(path === '/api/public/organizations' ? ORGS : path === '/api/organizations/recycling/mine' ? MINE : [])
   )
   mockPost.mockResolvedValue({})
 })
 
-it('lists only active organisations that take plastic, and only your own drop-offs', async () => {
+it('lists only active organisations that take plastic, and your drop-offs', async () => {
   render(<RecyclingScreen />)
   expect(await screen.findByText('Northside Therapy')).toBeTruthy()
   expect(screen.queryByText('Takes Nothing')).toBeNull()
   expect(screen.queryByText('Suspended Space')).toBeNull()
   expect(screen.getByText('3.2 kg PETG')).toBeTruthy()
   expect(screen.getByText('+2400 g')).toBeTruthy()
-  expect(screen.queryByText('9.0 kg PLA')).toBeNull()
   expect(screen.getByText('2,400 g of print credit issued')).toBeTruthy()
 })
 
@@ -72,4 +72,14 @@ it('books only after two kilos and all seven lines, sending the declaration vers
     })
   )
   expect(await screen.findByText('Booked — Northside Therapy expects about 2.5 kg.')).toBeTruthy()
+})
+
+it('cancels a booking that is still waiting, and only that one', async () => {
+  mockPost.mockResolvedValue({ status: 'cancelled' })
+  render(<RecyclingScreen />)
+  fireEvent.press(await screen.findByLabelText('Cancel the PLA drop-off'))
+  await waitFor(() =>
+    expect(mockPost).toHaveBeenCalledWith('/api/organizations/north/recycling/waiting/cancel', {})
+  )
+  expect(screen.queryByLabelText('Cancel the PETG drop-off')).toBeNull()
 })

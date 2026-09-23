@@ -55,20 +55,10 @@ export function IntakeScreen() {
         apiClient.get<Organization>(`/api/organizations/${orgId}`),
         apiClient.get<RecyclingDropoff[]>(`/api/organizations/${orgId}/recycling`),
       ])
-      // Who is at the door. The phone cannot read another profile, so this is
-      // the public maker lookup web's page uses; someone who opted out of the
-      // showcase 404s and stays "A contributor".
+      // Who is at the door: the API names each contributor for the org's
+      // leaders, public profile or not.
       const found: Record<string, string> = {}
-      await Promise.all(
-        [...new Set(d.map((x) => x.contributor_id))].map((id) =>
-          apiClient
-            .get<{ name: string }>(`/api/public/makers/${id}`)
-            .then((p) => {
-              found[id] = p.name
-            })
-            .catch(() => {})
-        )
-      )
+      for (const x of d) if (x.contributor_name) found[x.contributor_id] = x.contributor_name
       setOrg(o)
       setDrops(d)
       setNames(found)

@@ -140,6 +140,26 @@ describe('asking several printers', () => {
   })
 })
 
+describe('the family withdrawing', () => {
+  it('withdraws the whole request, and the list says how many were asked', async () => {
+    const admin = adminClient()
+    // Free a and b from the earlier accepted job so they can be asked again.
+    await admin.from('toy_transactions').update({ status: 'completed' }).eq('tutorial_id', tutorialId).eq('status', 'accepted')
+    const res = await ask([printers.a, printers.b])
+    const { transactions } = (await res.json()) as { transactions: Array<{ id: string }> }
+
+    const list = (await (
+      await app.request('/api/toy-transactions', json(b.token, 'GET'))
+    ).json()) as Array<{ id: string; print_group_size: number | null }>
+    expect(list.find((t) => t.id === transactions[1].id)!.print_group_size).toBe(2)
+
+    const out = await app.request(`/api/toy-transactions/${transactions[0].id}/withdraw`, json(family.token, 'POST', {}))
+    expect(out.status).toBe(200)
+    const { data } = await admin.from('toy_transactions').select('status').in('id', transactions.map((t) => t.id))
+    expect(data!.map((r) => r.status)).toEqual(['withdrawn', 'withdrawn'])
+  })
+})
+
 describe('an organisation choosing its machine', () => {
   it('stamps the bench the leader accepts on, and refuses one that is not theirs', async () => {
     const res = await ask([printers.org1])

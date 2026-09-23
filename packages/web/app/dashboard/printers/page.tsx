@@ -25,7 +25,6 @@ import { printStages } from '@/lib/print-stages'
 import { collapsePrintGroups, needsAction, subjectName } from '@splat-connect/types'
 import type {
   PrinterWithOwner,
-  ToyTransactionDetail,
   ToyTransactionSummary,
 } from '@splat-connect/types'
 
@@ -151,25 +150,7 @@ export async function PrintOfferScreen({
   // One card per request: an organisation asked on two of its machines (074)
   // answers once, choosing the bench on accept.
   const waitingRows = collapsePrintGroups(jobs.filter((tx) => tx.status === 'requested'))
-  // How many printers each request went to is only on the job itself — this
-  // account cannot see the other printers' rows.
-  // ponytail: one detail read per grouped waiting job; move print_group_size
-  // onto GET /api/toy-transactions if a queue ever holds more than a handful.
-  const waiting = await Promise.all(
-    waitingRows.map(async (tx) =>
-      tx.print_group_id
-        ? {
-            ...tx,
-            print_group_size:
-              (
-                await apiClient
-                  .get<ToyTransactionDetail>(`/api/toy-transactions/${tx.id}`)
-                  .catch(() => null)
-              )?.print_group_size ?? tx.print_group_size,
-          }
-        : tx
-    )
-  )
+  const waiting = waitingRows
   const onTheBed = jobs.filter((tx) => tx.status === 'accepted')
   const done = jobs.filter((tx) => !['requested', 'accepted'].includes(tx.status))
 

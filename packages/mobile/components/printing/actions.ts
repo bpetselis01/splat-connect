@@ -35,19 +35,9 @@ export async function markReady(id: string): Promise<ToyTransaction | null> {
 }
 
 /**
- * Withdraw the whole request, not the one job on screen. A family that asked
- * three printers and withdraws means all three; the API withdraws one row at a
- * time, so every still-open job in the group is withdrawn here.
+ * Withdraw the whole request, not the one job on screen: the API withdraws the
+ * rest of the group when the family withdraws any job in it (074).
  */
 export async function withdrawRequest(tx: Pick<ToyTransaction, 'id' | 'print_group_id'>): Promise<void> {
-  const siblings = tx.print_group_id
-    ? (await apiClient.get<ToyTransaction[]>('/api/toy-transactions')).filter(
-        (t) =>
-          t.print_group_id === tx.print_group_id &&
-          t.id !== tx.id &&
-          (t.status === 'requested' || t.status === 'accepted')
-      )
-    : []
   await apiClient.post(`/api/toy-transactions/${tx.id}/withdraw`, {})
-  await Promise.all(siblings.map((t) => apiClient.post(`/api/toy-transactions/${t.id}/withdraw`, {})))
 }

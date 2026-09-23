@@ -355,7 +355,10 @@ export function collapsePrintGroups<
     seen.add(r.print_group_id)
     const members = groups.get(r.print_group_id)!
     const lead = [...members].sort((x, y) => (rank[x.status] ?? 9) - (rank[y.status] ?? 9))[0]
-    out.push({ ...lead, print_group_size: members.length })
+    // The API's count (the whole group) beats this caller's rows, which for a
+    // printer are only its own.
+    const told = (lead as { print_group_size?: number | null }).print_group_size ?? 0
+    out.push({ ...lead, print_group_size: Math.max(told, members.length) })
   }
   return out
 }
@@ -421,6 +424,9 @@ export interface PickupAddress {
 // or is withdrawn.
 export interface ToyTransactionSummary extends ToyTransaction {
   toy_name: string
+  /** How many printers the request went to, counted across the whole group
+   *  (074). Null on everything that is not a print job. */
+  print_group_size?: number | null
   /** The guide being built, on a build (057). Null on a donation or exchange. */
   tutorial_title: string | null
   /** Null when the toy has none. Readable by both parties for good: 025's
@@ -1112,6 +1118,10 @@ export interface RecyclingDropoff {
   decided_by: string | null
   created_at: string
   updated_at: string
+  /** The organisation's name, on GET /organizations/recycling/mine only. */
+  org_name?: string | null
+  /** Who brought it — returned to that organisation's leaders only. */
+  contributor_name?: string | null
 }
 
 export type OrgRequestStatus = 'pending' | 'approved' | 'declined'

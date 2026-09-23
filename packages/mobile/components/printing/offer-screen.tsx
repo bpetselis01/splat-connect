@@ -18,7 +18,7 @@ import { useCallback, useState } from 'react'
 import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import type { PickupAddress, PrinterWithOwner, ToyTransaction, ToyTransactionDetail, ToyTransactionSummary } from '@splat-connect/types'
+import type { PickupAddress, PrinterWithOwner, ToyTransaction, ToyTransactionSummary } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { useCapabilities } from '../../lib/capabilities'
 import { theme } from '../../lib/theme'
@@ -61,9 +61,6 @@ export function PrintForOthersScreen() {
   const [tab, setTab] = useState<Tab>('requests')
   const [printers, setPrinters] = useState<PrinterWithOwner[] | null>(null)
   const [jobs, setJobs] = useState<ToyTransactionSummary[]>([])
-  // How many printers each waiting request went to. The list rows do not
-  // carry it; each job's detail does.
-  const [groupSizes, setGroupSizes] = useState<Record<string, number>>({})
   const [loadFailed, setLoadFailed] = useState(false)
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -81,11 +78,6 @@ export function PrintForOthersScreen() {
       setPrinters(mine)
       setJobs(onMine)
       setLoadFailed(false)
-      const waiting = onMine.filter((t) => t.status === 'requested' && t.print_group_id)
-      const details = await Promise.all(
-        waiting.map((t) => apiClient.get<ToyTransactionDetail>(`/api/toy-transactions/${t.id}`).catch(() => null))
-      )
-      setGroupSizes(Object.fromEntries(details.filter(Boolean).map((d) => [d!.id, d!.print_group_size ?? 1])))
     } catch (err) {
       console.error('[PrintForOthersScreen] load failed:', err)
       setLoadFailed(true)
@@ -179,7 +171,7 @@ export function PrintForOthersScreen() {
               <IncomingCard
                 key={tx.id}
                 tx={tx}
-                groupSize={groupSizes[tx.id] ?? 1}
+                groupSize={tx.print_group_size ?? 1}
                 machines={tx.owner_org_id ? printers.filter((p) => p.owner_org_id === tx.owner_org_id) : []}
                 jobPrinter={tx.printer_id ? byId.get(tx.printer_id) ?? null : null}
                 savedAddress={savedAddress}

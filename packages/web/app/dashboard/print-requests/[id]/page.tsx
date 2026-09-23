@@ -86,22 +86,11 @@ export default async function PrintJobPage({ params }: { params: Promise<{ id: s
     await apiClient.post(`/api/toy-transactions/${id}/reject`, { reason })
     revalidatePath(`/dashboard/print-requests/${id}`)
   }
-  // A request sent to several printers is withdrawn from all of them: the API
-  // withdraws one job per call, so the family's other open jobs in the same
-  // group (074) go too, or a printer could still accept a request nobody wants.
-  const groupId = tx.print_group_id
+  // Withdrawing one job of a grouped request withdraws the whole request (the
+  // API sweeps the other printers' jobs, 074).
   async function withdraw() {
     'use server'
     await apiClient.post(`/api/toy-transactions/${id}/withdraw`, {})
-    if (groupId) {
-      const all = await apiClient.get<ToyTransactionSummary[]>('/api/toy-transactions')
-      const rest = all.filter(
-        (t) => t.print_group_id === groupId && t.id !== id && t.status === 'requested'
-      )
-      await Promise.all(
-        rest.map((t) => apiClient.post(`/api/toy-transactions/${t.id}/withdraw`, {}))
-      )
-    }
     revalidatePath(`/dashboard/print-requests/${id}`)
   }
   async function confirm(code: string) {

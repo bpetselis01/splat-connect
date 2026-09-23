@@ -742,6 +742,23 @@ organizations.delete('/:orgId/stories/:id', async (c) => {
 const DROPOFF_COLUMNS =
   'id, org_id, contributor_id, material, estimated_grams, condition_declared, declaration_version, photo_url, note, status, weighed_grams, credit_grams, decided_by, created_at, updated_at'
 
+/**
+ * GET /api/organizations/recycling/mine — the caller's own drop-offs, at every
+ * organisation, newest first. RLS already limits a contributor to their own
+ * rows; this is the one read that does not start from an organisation.
+ */
+organizations.get('/recycling/mine', async (c) => {
+  const { data, error } = await createUserClient(c.get('token'))
+    .from('recycling_dropoffs')
+    .select(`${DROPOFF_COLUMNS}, organizations(name)`)
+    .eq('contributor_id', c.get('userId'))
+    .order('created_at', { ascending: false })
+  if (error) return c.json({ error: error.message }, 500)
+  return c.json(
+    (data ?? []).map(({ organizations: org, ...row }: any) => ({ ...row, org_name: org?.name ?? null }))
+  )
+})
+
 organizations.get('/:id/recycling', async (c) => {
   const supabase = createUserClient(c.get('token'))
   const { data, error } = await supabase
@@ -750,7 +767,45 @@ organizations.get('/:id/recycling', async (c) => {
     .eq('org_id', c.req.param('id'))
     .order('created_at', { ascending: false })
   if (error) return c.json({ error: error.message }, 500)
-  return c.json(data ?? [])
+  const rows = data ?? []
+  // A leader receiving plastic at the door needs to know whose it is, whether
+  // or not that person shows a public profile. Names only, and only to leaders.
+  const admin = createAdminClient()
+  if (!rows.length || !(await ledOrgIds(admin, c.get('userId'))).includes(c.req.param('id'))) {
+    return c.json(rows)
+  }
+  const { data: people } = await admin
+    .from('profiles')
+    .select('id, name')
+    .in('id', [...new Set(rows.map((r) => r.contributor_id))])
+  const name = new Map((people ?? []).map((p) => [p.id, p.name]))
+  return c.json(rows.map((r) => ({ ...r, contributor_name: name.get(r.contributor_id) ?? null })))
+})
+
+/**
+ * POST /api/organizations/:orgId/recycling/:id/cancel — the contributor calls
+ * off a booking that has not been received. Kept as a row with status
+ * 'cancelled' rather than deleted, so the organisation's list still shows it.
+ */
+organizations.post('/:orgId/recycling/:id/cancel', async (c) => {
+  const admin = createAdminClient()
+  const { data: row } = await admin
+    .from('recycling_dropoffs')
+    .select('id, contributor_id, status, org_id')
+    .eq('id', c.req.param('id'))
+    .eq('org_id', c.req.param('orgId'))
+    .maybeSingle()
+  if (!row || row.contributor_id !== c.get('userId')) return c.json({ error: 'Not found' }, 404)
+  if (row.status !== 'booked') return c.json({ error: 'Only a booking that is still waiting can be cancelled' }, 409)
+  const { data, error } = await admin
+    .from('recycling_dropoffs')
+    .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+    .eq('id', row.id)
+    .eq('status', 'booked')
+    .select(DROPOFF_COLUMNS)
+    .single()
+  if (error) return c.json({ error: error.message }, 500)
+  return c.json(data)
 })
 
 organizations.post('/:id/recycling', async (c) => {

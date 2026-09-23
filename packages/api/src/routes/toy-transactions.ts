@@ -302,6 +302,14 @@ toyTransactions.get('/', async (c) => {
     supabase,
     rows.map((r) => r.id)
   )
+  // How many printers each request went to (074), counted across the whole
+  // group — the caller may be one printer and not see the others' rows.
+  const groupIds = [...new Set(rows.map((r) => r.print_group_id as string | null).filter((g): g is string => !!g))]
+  const groupSize = new Map<string, number>()
+  if (groupIds.length) {
+    const { data: members } = await admin.from('toy_transactions').select('print_group_id').in('print_group_id', groupIds)
+    for (const m of members ?? []) groupSize.set(m.print_group_id, (groupSize.get(m.print_group_id) ?? 0) + 1)
+  }
   return c.json(
     rows.map((r) => ({
       ...sanitizeCodes(r, userId, ledOrgs),
@@ -329,6 +337,7 @@ toyTransactions.get('/', async (c) => {
         r.status === 'requested' && r.toy_id !== null && blockedToyIds.has(r.toy_id),
       last_message: previews.get(r.id) ?? null,
       print_files: flattenPrintFiles(r.print_job_files),
+      print_group_size: r.print_group_id ? groupSize.get(r.print_group_id as string) ?? 1 : null,
     }))
   )
 })
@@ -852,6 +861,33 @@ toyTransactions.post('/:id/withdraw', async (c) => {
     kind: 'system',
     body: 'Request withdrawn.',
   })
+
+  // A family withdrawing a request sent to several printers withdraws it from
+  // all of them (074) — they asked once, so they withdraw once.
+  if (tx.type === 'print' && tx.print_group_id && userId === tx.requester_id) {
+    const { data: siblings } = await admin
+      .from('toy_transactions')
+      .update({ status: 'withdrawn', updated_at: now })
+      .eq('print_group_id', tx.print_group_id)
+      .neq('id', tx.id)
+      .in('status', ['requested', 'accepted'])
+      .select('id, owner_id, owner_org_id, tutorial_id, type, toy_id')
+    const familyName = await profileName(admin, userId, 'The family')
+    for (const sib of siblings ?? []) {
+      await admin.from('toy_transaction_messages').insert({
+        transaction_id: sib.id,
+        sender_id: userId,
+        kind: 'system',
+        body: 'Request withdrawn.',
+      })
+      await notifyOwnerSide(admin, sib as any, {
+        type: 'toy_withdrawn',
+        toy_transaction_id: sib.id,
+        toy_name: await subjectName(admin, sib as any),
+        actor_name: familyName,
+      })
+    }
+  }
 
   const { data: actor } = await admin.from('profiles').select('name').eq('id', userId).single()
   const payload = {

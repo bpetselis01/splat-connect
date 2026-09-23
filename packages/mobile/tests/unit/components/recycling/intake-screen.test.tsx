@@ -27,6 +27,7 @@ const drop = (over: object) => ({
   id: 'd1',
   org_id: 'org1',
   contributor_id: 'tom',
+  contributor_name: 'Tom Beattie',
   material: 'PLA',
   estimated_grams: 2600,
   condition_declared: true,
@@ -46,7 +47,6 @@ function route(drops: object[]) {
   mockGet.mockImplementation((path: string) => {
     if (path === '/api/organizations/org1') return Promise.resolve({ id: 'org1', name: 'N', recycling_materials: ['PLA'], recycling_note: null })
     if (path === '/api/organizations/org1/recycling') return Promise.resolve(drops)
-    if (path === '/api/public/makers/tom') return Promise.resolve({ name: 'Tom Beattie' })
     return Promise.reject(new Error('API GET failed with status 404: Not found'))
   })
 }
@@ -95,7 +95,7 @@ it('turns one away without sending any grams', async () => {
 })
 
 it('settled drop-offs get a pill and no actions', async () => {
-  route([drop({ id: 'd2', status: 'received', weighed_grams: 3200, credit_grams: 2400 }), drop({ id: 'd3', contributor_id: 'anon', status: 'declined' })])
+  route([drop({ id: 'd2', status: 'received', weighed_grams: 3200, credit_grams: 2400 }), drop({ id: 'd3', contributor_id: 'anon', contributor_name: null, status: 'declined' })])
   render(<IntakeScreen />)
   expect(await screen.findByText('Credited')).toBeTruthy()
   expect(screen.getByText('Turned away')).toBeTruthy()

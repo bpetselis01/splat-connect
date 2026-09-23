@@ -68,8 +68,9 @@ beforeEach(() => {
         machine('Bambu P1S', { bed_x: 256 }),
         machine('Prusa full', { open_jobs: 2 }),
       ])
-    if (path === '/api/toy-transactions') return Promise.resolve([REQUEST])
-    return Promise.resolve({ ...REQUEST, print_group_size: 2 })
+    // The list carries the whole group's size (074) — no per-job detail read.
+    if (path === '/api/toy-transactions') return Promise.resolve([{ ...REQUEST, print_group_size: 2 }])
+    return Promise.reject(new Error('unexpected GET ' + path))
   })
 })
 

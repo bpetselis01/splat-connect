@@ -86,26 +86,12 @@ export function RecyclingScreen() {
   const load = useCallback(async () => {
     if (!me) return
     try {
-      const all = await apiClient.get<TakerOrg[]>('/api/public/organizations')
-      // ponytail: one read per organisation — there is no cross-organisation
-      // "my drop-offs" endpoint (web draws no such panel for the same reason).
-      // Every org, not only current takers, so a drop at one that has since
-      // stopped taking plastic still shows. Add GET /recycling/mine when the
-      // directory outgrows a handful of requests.
-      const per = await Promise.all(
-        all.map((o) =>
-          apiClient.get<RecyclingDropoff[]>(`/api/organizations/${o.id}/recycling`).catch(() => [])
-        )
-      )
+      const [all, mine] = await Promise.all([
+        apiClient.get<TakerOrg[]>('/api/public/organizations'),
+        apiClient.get<RecyclingDropoff[]>('/api/organizations/recycling/mine'),
+      ])
       setOrgs(all)
-      // A leader's read of their own org returns everybody's rows (RLS admits
-      // both), so "yours" is filtered here rather than assumed.
-      setDrops(
-        per
-          .flat()
-          .filter((d) => d.contributor_id === me)
-          .sort((a, b) => b.created_at.localeCompare(a.created_at))
-      )
+      setDrops(mine)
       setLoadError(false)
     } catch (err) {
       console.error('[RecyclingScreen] load failed:', err)
@@ -114,6 +100,19 @@ export function RecyclingScreen() {
       setLoading(false)
     }
   }, [me])
+
+  async function cancel(d: RecyclingDropoff) {
+    try {
+      const fresh = await apiClient.post<RecyclingDropoff>(
+        `/api/organizations/${d.org_id}/recycling/${d.id}/cancel`,
+        {}
+      )
+      setDrops((cur) => cur.map((x) => (x.id === d.id ? { ...x, ...fresh } : x)))
+    } catch (err) {
+      console.error('[RecyclingScreen] cancel failed:', err)
+      load()
+    }
+  }
 
   useFocusEffect(
     useCallback(() => {
@@ -209,6 +208,16 @@ export function RecyclingScreen() {
                     </Text>
                   </View>
                   <Badge status={DROPOFF_PILL[d.status].badge} label={DROPOFF_PILL[d.status].label} />
+                  {d.status === 'booked' ? (
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={`Cancel the ${d.material} drop-off`}
+                      onPress={() => cancel(d)}
+                      hitSlop={8}
+                    >
+                      <Text style={styles.cancel}>Cancel</Text>
+                    </Pressable>
+                  ) : null}
                   <Text style={styles.grams}>
                     {d.status === 'received' && d.credit_grams !== null ? `+${d.credit_grams} g` : '—'}
                   </Text>
@@ -437,6 +446,7 @@ function BookDropoff({
 }
 
 const styles = StyleSheet.create({
+  cancel: { fontFamily: theme.fonts.bold, fontSize: 13, color: theme.colors.primary, marginLeft: 8 },
   content: { gap: theme.spacing(3), paddingBottom: theme.spacing(10) },
   flex: { flex: 1, minWidth: 0 },
   center: { alignItems: 'center', gap: theme.spacing(2) },
