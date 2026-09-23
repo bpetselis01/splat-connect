@@ -4,6 +4,8 @@ import {
   Eye,
   EyeSlash,
   CheckCircle,
+  House,
+  Wrench,
 } from '@phosphor-icons/react/dist/ssr'
 import { Suspense, useState } from 'react'
 import Link from 'next/link'
@@ -11,7 +13,14 @@ import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { ContributorTermsDialog } from '@/components/contributor-terms-dialog'
 import { AuthSplit, AuthStage, AuthTabs } from '@/components/auth-shell'
-import { AGREEMENT_VERSIONS } from '@splat-connect/types'
+import { AGREEMENT_VERSIONS, type SignupIntent } from '@splat-connect/types'
+
+/** The board's "I'm mostly here to…" tiles. Where each one lands is the login
+ *  page's business — see INTENT_LANDING there. */
+const INTENTS: { value: SignupIntent; label: string; Icon: typeof House }[] = [
+  { value: 'family', label: 'Find toys for my child', Icon: House },
+  { value: 'maker', label: 'Make and share guides', Icon: Wrench },
+]
 
 /** Supabase's own floor (supabase/config.toml). */
 const MIN_PASSWORD = 6
@@ -31,6 +40,9 @@ function SignupForm() {
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
   const [acceptedTerms, setAcceptedTerms] = useState(false)
+  // Optional, and unpicked by default: a guess would send a maker to a child
+  // profile they do not have.
+  const [intent, setIntent] = useState<SignupIntent | null>(null)
   const [termsDialogOpen, setTermsDialogOpen] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
@@ -55,6 +67,8 @@ function SignupForm() {
         data: {
           name,
           contributor_terms_version: AGREEMENT_VERSIONS.contributor_terms,
+          // Read by the first sign-in to choose a landing (pendingIntent).
+          ...(intent ? { intent } : {}),
         },
         // Carry the destination through the email round trip. Without it the
         // chain ends at /login with no idea where the visitor started, which
@@ -123,6 +137,36 @@ function SignupForm() {
             You need an account to download tutorial files. Create one and we&apos;ll take you back.
           </p>
         )}
+
+        <fieldset className="auth-field">
+          <legend className="auth-label">I&apos;m mostly here to…</legend>
+          <div className="grid grid-cols-2 gap-2.5">
+            {INTENTS.map(({ value, label, Icon }) => {
+              const on = intent === value
+              return (
+                <label
+                  key={value}
+                  className="flex min-h-[64px] cursor-pointer items-center gap-2.5 rounded-[14px] border-2 px-3 text-sm font-extrabold text-ink has-[:focus-visible]:outline has-[:focus-visible]:outline-[3px] has-[:focus-visible]:outline-[var(--focus)]"
+                  style={{
+                    borderColor: on ? 'var(--b600)' : 'var(--line)',
+                    background: on ? 'var(--b50)' : 'var(--surface)',
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="intent"
+                    value={value}
+                    checked={on}
+                    onChange={() => setIntent(value)}
+                    className="accent-[var(--b600)]"
+                  />
+                  <Icon weight="duotone" aria-hidden="true" className="shrink-0 text-xl text-[var(--b600)]" />
+                  {label}
+                </label>
+              )
+            })}
+          </div>
+        </fieldset>
 
         <div className="auth-field">
           <label htmlFor="name" className="auth-label auth-label--lg">Your name</label>

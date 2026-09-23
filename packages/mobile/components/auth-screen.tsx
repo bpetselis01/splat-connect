@@ -29,6 +29,14 @@ import { Button } from './ui/Button'
 import { Screen } from './ui/Screen'
 import { Card } from './ui/Card'
 import { TextField } from './ui/TextField'
+import { Chip } from './ui/Chip'
+import type { SignupIntent } from '@splat-connect/types'
+
+// Web's signup tiles, same words. Unpicked by default, as there.
+const INTENTS: { value: SignupIntent; label: string }[] = [
+  { value: 'family', label: 'Find toys for my child' },
+  { value: 'maker', label: 'Make and share guides' },
+]
 
 // Same base URL + pattern as the "Open Web Dashboard" link on the signed-in
 // profile screen (Linking.openURL against EXPO_PUBLIC_WEB_URL). The terms
@@ -163,6 +171,7 @@ export function AuthScreen() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [acceptedTerms, setAcceptedTerms] = useState(false)
+  const [intent, setIntent] = useState<SignupIntent | undefined>(undefined)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -191,7 +200,7 @@ export function AuthScreen() {
         }
         return
       }
-      const res = await signUp(email, password, name)
+      const res = await signUp(email, password, name, intent)
       if (res.error) {
         setError(res.error)
         return
@@ -253,6 +262,17 @@ export function AuthScreen() {
         <Text style={styles.subhead}>
           One account for everything — browse, contribute, and manage your child&apos;s profile.
         </Text>
+      ) : null}
+
+      {isSignUp ? (
+        <View style={styles.intent}>
+          <Text style={styles.intentLabel}>I&apos;m mostly here to…</Text>
+          <View accessibilityRole="radiogroup" style={styles.intentRow}>
+            {INTENTS.map((i) => (
+              <Chip key={i.value} role="radio" label={i.label} active={intent === i.value} onPress={() => setIntent(i.value)} />
+            ))}
+          </View>
+        </View>
       ) : null}
 
       {isSignUp ? (
@@ -423,6 +443,14 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     marginBottom: theme.spacing(4),
   },
+  intent: { marginBottom: theme.spacing(4) },
+  intentLabel: {
+    fontFamily: theme.fonts.bold,
+    fontSize: theme.type.caption,
+    color: theme.colors.ink,
+    marginBottom: theme.spacing(2),
+  },
+  intentRow: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2) },
   subhead: {
     fontFamily: theme.fonts.regular,
     fontSize: theme.type.caption,

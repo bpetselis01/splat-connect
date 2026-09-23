@@ -792,6 +792,23 @@ export interface ToyTransactionDetail extends ToyTransaction {
   messages: ToyTransactionMessage[]
 }
 
+/**
+ * What someone said at sign-up they are mostly here to do — the board's two
+ * tiles. Kept in auth user_metadata (`intent`), not a column: it decides one
+ * landing, once, and nothing else reads it.
+ */
+export type SignupIntent = 'family' | 'maker'
+
+/**
+ * The intent still waiting to decide a landing, or null. The first sign-in
+ * that acts on it writes `intent_landed: true` back to the metadata, so it
+ * lands someone once rather than on every sign-in.
+ */
+export function pendingIntent(meta: Record<string, unknown> | null | undefined): SignupIntent | null {
+  if (!meta || meta.intent_landed === true) return null
+  return meta.intent === 'family' || meta.intent === 'maker' ? meta.intent : null
+}
+
 export type ToyIdeaStatus = 'pending' | 'challenge' | 'rejected' | 'graduated'
 
 /** How involved the author wants to be if their idea becomes a challenge. */
