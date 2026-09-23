@@ -174,9 +174,15 @@ export function RateLinesEditor({ lines, onChange }: { lines: RateDraft[]; onCha
     <div className="flex flex-col gap-2.5">
       <div className="flex items-center justify-between gap-3">
         <span className="form-label m-0">Breakdown</span>
-        <span className="rounded-[14px] bg-[var(--tamber)] px-3.5 py-1.5 text-right text-[var(--tink)]">
-          <span className="block text-[11px] font-extrabold uppercase tracking-wide">Asking back</span>
-          <span className="block font-display text-lg font-extrabold tabular-nums">{formatCents(total)}</span>
+        {/* The board's CostPanel total: amber while something is claimed,
+            mint once nothing is. */}
+        <span
+          className={`rounded-[14px] px-3.5 py-2 text-right text-[var(--tink)] ${total > 0 ? 'bg-[var(--tamber)]' : 'bg-[var(--tmint)]'}`}
+        >
+          <span className="block text-[10.5px] font-extrabold uppercase tracking-[0.08em]">
+            {total > 0 ? 'Asking back' : 'Nothing asked back'}
+          </span>
+          <span className="block font-display text-[22px] leading-[1.1] font-extrabold tabular-nums">{formatCents(total)}</span>
         </span>
       </div>
       <ul className="m-0 flex list-none flex-col gap-2 p-0">

@@ -146,7 +146,7 @@ function SignupForm() {
               return (
                 <label
                   key={value}
-                  className="flex min-h-[64px] cursor-pointer items-center gap-2.5 rounded-[14px] border-2 px-3 text-sm font-extrabold text-ink has-[:focus-visible]:outline has-[:focus-visible]:outline-[3px] has-[:focus-visible]:outline-[var(--focus)]"
+                  className="flex min-h-[64px] cursor-pointer items-center gap-2.5 rounded-[var(--radius-inset)] border-2 px-3 text-sm font-extrabold text-ink has-[:focus-visible]:outline has-[:focus-visible]:outline-[3px] has-[:focus-visible]:outline-[var(--focus)]"
                   style={{
                     borderColor: on ? 'var(--b600)' : 'var(--line)',
                     background: on ? 'var(--b50)' : 'var(--surface)',
