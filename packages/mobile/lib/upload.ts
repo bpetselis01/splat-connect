@@ -11,6 +11,9 @@ export type UploadPath =
   | '/api/upload/pdf'
   | '/api/upload/stl'
   | '/api/upload/toy-photo'
+  // A build's working shot. The transaction id is in the path, so this one
+  // is called with idField null and sends the file alone.
+  | `/api/toy-transactions/${string}/working-shot`
 
 export interface UploadResult {
   url: string
@@ -27,7 +30,7 @@ export async function uploadFile(
   path: UploadPath,
   id: string,
   file: { uri: string; name: string; mimeType?: string },
-  idField: 'tutorialId' | 'toyId' = 'tutorialId'
+  idField: 'tutorialId' | 'toyId' | null = 'tutorialId'
 ): Promise<UploadResult> {
   const token = await getToken()
 
@@ -52,7 +55,7 @@ export async function uploadFile(
       type: file.mimeType ?? 'application/octet-stream',
     } as unknown as Blob)
   }
-  formData.append(idField, id)
+  if (idField) formData.append(idField, id)
 
   const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL}${path}`, {
     method: 'POST',

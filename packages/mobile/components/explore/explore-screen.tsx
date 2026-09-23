@@ -215,6 +215,13 @@ export function ExploreScreen() {
           onPress={() => router.push('/explore/recycling')}
         />
         <DoorCard
+          title="Makers wanted"
+          blurb="Families who found the guide but cannot build it. Claim one."
+          tint={theme.colors.mintSoft}
+          icon="hammer-outline"
+          onPress={() => router.push('/explore/makers-wanted')}
+        />
+        <DoorCard
           title="About SPLAT"
           blurb="Who we are · Partners · Contact · Safety"
           tint={theme.colors.surfaceSunken}

@@ -3,10 +3,11 @@ import { useCallback, useEffect, useState } from 'react'
 import { View, Text, FlatList, RefreshControl, StyleSheet } from 'react-native'
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router'
 import type { ToyTransactionSummary, ToyTransactionStatus } from '@splat-connect/types'
-import { needsAction, actionLabel } from '@splat-connect/types'
+import { needsAction, actionLabel, subjectName } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { useCapabilities } from '../../lib/capabilities'
+import { threadHref } from '../../lib/builds'
 import { Screen } from '../ui/Screen'
 import { Card } from '../ui/Card'
 import { Badge } from '../ui/Badge'
@@ -32,12 +33,14 @@ function TransactionRow({
   onPress: () => void
 }) {
   const acting = needsAction(tx, viewerId, ledOrgIds)
-  const typeLabel = tx.type === 'donation' ? 'Donation' : 'Exchange'
+  const typeLabel = tx.type === 'donation' ? 'Donation' : tx.type === 'build' ? 'Build' : 'Exchange'
+  // A build's subject is the guide; toy_name is empty on one.
+  const subject = subjectName(tx)
   return (
     <AnimatedPressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`${tx.toy_name} with ${tx.other_party_name}`}
+      accessibilityLabel={`${subject} with ${tx.other_party_name}`}
       accessibilityHint={`Status ${tx.status}.${acting ? ` ${actionLabel(tx)}.` : ''} Opens the exchange thread.`}
       pressScale={0.985}
     >
@@ -45,11 +48,12 @@ function TransactionRow({
         <View style={styles.cardHeader}>
           <View style={styles.titleBlock}>
             <Text style={styles.toyName} numberOfLines={1}>
-              {tx.toy_name}
+              {subject}
               {tx.offered_toy_name ? ` ⇄ ${tx.offered_toy_name}` : ''}
             </Text>
             <Text style={styles.metaLine} numberOfLines={1}>
-              {typeLabel} with {tx.other_party_name}
+              {/* An open build nobody has claimed has nobody to name yet. */}
+              {tx.other_party_name ? `${typeLabel} with ${tx.other_party_name}` : `${typeLabel} · waiting for a maker`}
             </Text>
             {/* A leader's own toys and their organisation's arrive in one
                 list, and nothing else tells them apart — which hat they are
@@ -153,7 +157,7 @@ export function ExchangesListScreen() {
   const active = filtered.filter((t) => ACTIVE.includes(t.status))
   const history = filtered.filter((t) => !ACTIVE.includes(t.status))
 
-  const goToThread = (id: string) => router.push(`/exchanges/${id}`)
+  const goToThread = (tx: ToyTransactionSummary) => router.push(threadHref(tx))
   // undefined clears a param under React Navigation's setParams (which expo
   // Router's router.setParams delegates straight to) rather than merely
   // stringifying to "undefined" — verified against
@@ -162,7 +166,7 @@ export function ExchangesListScreen() {
 
   const renderRow = (item: ToyTransactionSummary) => (
     <View key={item.id} style={styles.rowWrap}>
-      <TransactionRow tx={item} viewerId={viewerId} ledOrgIds={ledOrgIds} onPress={() => goToThread(item.id)} />
+      <TransactionRow tx={item} viewerId={viewerId} ledOrgIds={ledOrgIds} onPress={() => goToThread(item)} />
     </View>
   )
 

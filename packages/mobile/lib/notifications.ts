@@ -50,6 +50,12 @@ export const copyFor = (n: Notification): string =>
  * for these routes; every branch below is web's branch, in web's order.
  */
 export function linkFor(n: Notification): string {
+  // A build has its own thread. Only these two types say so on the row; any
+  // other notice about a build (toy_accepted on a claim, toy_message) opens the
+  // exchange thread, which hands a build straight on — same as web.
+  if (n.toy_transaction_id && (n.type === 'build_shot_posted' || n.type === 'build_approved')) {
+    return `/exchanges/build/${n.toy_transaction_id}`
+  }
   if (n.toy_transaction_id) return `/exchanges/${n.toy_transaction_id}`
   // Answered BEFORE the tutorial_id branch, exactly as on web: the recipient
   // of these two is a reviewer, not the author, and /tutorials/:id is the

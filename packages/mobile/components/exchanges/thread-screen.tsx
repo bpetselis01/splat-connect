@@ -24,6 +24,7 @@ import { isOwnerSide, needsAction, actionLabel } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { useCapabilities } from '../../lib/capabilities'
+import { threadHref } from '../../lib/builds'
 import { Screen } from '../ui/Screen'
 import { Card } from '../ui/Card'
 import { Badge } from '../ui/Badge'
@@ -53,7 +54,7 @@ type PickupDraft = Record<(typeof PICKUP_FIELDS)[number]['key'], string>
  * apology instead would hide the only sentence that tells someone what to do.
  * 5xx keeps the fallback: a raw Postgres error is not copy.
  */
-function apiMessage(err: unknown, fallback: string): string {
+export function apiMessage(err: unknown, fallback: string): string {
   const match = /failed with status 4\d\d: (.+)$/.exec(err instanceof Error ? err.message : '')
   return match ? match[1] : fallback
 }
@@ -79,6 +80,12 @@ export function ExchangeThreadScreen({ id }: { id: string }) {
     try {
       const fresh = await apiClient.get<ToyTransactionDetail>(`/api/toy-transactions/${id}`)
       if (generation.current !== at) return
+      // A build has its own thread (rail, working shot); a notification or
+      // link that only knew the transaction id lands here first.
+      if (fresh.type === 'build') {
+        router.replace(threadHref(fresh))
+        return
+      }
       setTx(fresh)
       // Only the stale-data warning is cleared. A poll landing a second after
       // someone mistyped their code must not wipe "Incorrect code" out from
@@ -91,7 +98,7 @@ export function ExchangeThreadScreen({ id }: { id: string }) {
     } finally {
       setLoading(false)
     }
-  }, [id])
+  }, [id, router])
 
   // Poll while focused. The web thread's live messaging was shipped
   // thread-only and this mirrors it — no realtime subscription on mobile in

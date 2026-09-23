@@ -30,11 +30,12 @@ jest.mock('../../../../lib/api-client', () => ({
 // exchanges/list-screen.test.tsx. The cleanup return is preserved, so the
 // interval teardown is exercised too.
 const mockPush = jest.fn()
+const mockReplace = jest.fn()
 jest.mock('expo-router', () => {
   const { useEffect } = jest.requireActual('react')
   return {
     useFocusEffect: (effect: () => void) => useEffect(effect, []),
-    useRouter: () => ({ push: mockPush }),
+    useRouter: () => ({ push: mockPush, replace: mockReplace }),
   }
 })
 
@@ -124,6 +125,12 @@ describe('ExchangeThreadScreen — loading and header', () => {
     await open()
     expect(mockGet).toHaveBeenCalledWith('/api/toy-transactions/tx1')
     expect(screen.getByText('Bubble machine → You collect')).toBeTruthy()
+  })
+
+  it('hands a build on to the build thread rather than drawing it as a toy', async () => {
+    mockGet.mockResolvedValue(detail({ type: 'build', toy_id: null, toy_name: '' }))
+    render(<ExchangeThreadScreen id="tx1" />)
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/exchanges/build/tx1'))
   })
 
   it('names the requester as the collector when the viewer is the owner', async () => {

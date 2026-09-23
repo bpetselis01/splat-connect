@@ -53,6 +53,14 @@ describe('linkFor', () => {
     expect(linkFor(notification({ type: 'toy_message', toy_transaction_id: 'tx1' }))).toBe('/exchanges/tx1')
   })
 
+  it('sends the two build-stage types straight to the build thread', () => {
+    expect(linkFor(notification({ type: 'build_shot_posted', toy_transaction_id: 'tx1' }))).toBe('/exchanges/build/tx1')
+    expect(linkFor(notification({ type: 'build_approved', toy_transaction_id: 'tx1' }))).toBe('/exchanges/build/tx1')
+    // Any other notice about a build cannot tell from the row; the exchange
+    // thread forwards it (see thread-screen.test).
+    expect(linkFor(notification({ type: 'toy_accepted', toy_transaction_id: 'tx1' }))).toBe('/exchanges/tx1')
+  })
+
   it('sends both review-queue types to the organisation hub, ahead of the editor', () => {
     // Both carry a tutorial_id; the editor branch below must not claim them.
     for (const type of ['backing_requested', 'tutorial_submitted'] as const) {

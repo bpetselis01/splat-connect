@@ -1,6 +1,7 @@
 // packages/mobile/app/(tabs)/explore/_layout.tsx
 import { Stack } from 'expo-router'
 import { stackScreenOptions } from '../../../lib/nav-options'
+import { CloseButton } from '../../../components/ui/CloseButton'
 
 export default function ExploreStackLayout() {
   return (
@@ -21,6 +22,19 @@ export default function ExploreStackLayout() {
       <Stack.Screen name="challenges/[id]" options={{ title: 'Challenge' }} />
       <Stack.Screen name="challenges/new" options={{ title: 'Submit an idea' }} />
       <Stack.Screen name="recycling" options={{ title: 'Recycling' }} />
+      <Stack.Screen name="makers-wanted/index" options={{ title: 'Makers wanted' }} />
+      {/* A one-shot form, so a sheet over the board rather than a push — the
+          same formSheet treatment as guides/new, for the same reasons. */}
+      <Stack.Screen
+        name="makers-wanted/new"
+        options={{
+          title: 'Ask for a build',
+          presentation: 'formSheet',
+          sheetGrabberVisible: true,
+          sheetAllowedDetents: [1.0],
+          headerLeft: () => <CloseButton />,
+        }}
+      />
       <Stack.Screen name="about" options={{ title: 'About SPLAT' }} />
     </Stack>
   )
