@@ -532,11 +532,14 @@ async function phaseA(P) {
     parent_id: priya.id, name: 'Arlo', age: 6, macs_level: 'III', macs_source: 'manual', bfmf_score: '3', bfmf_source: 'manual',
     hand_involvement: 'unilateral', assist_hand: 'left', challenges: ['Grasping', 'Fine motor', 'Fatigue'], grip_type: 'Palmar',
     env_context: 'Home', palm_width_mm: 58, wrist_circ_mm: 120, hand_dominance: 'Right', sensory_preferences: ['Soft', 'Lightweight'],
+    // 079 — the board's questions, the only ones the app asks now.
+    working_hand: 'right', press_force: 'light', aim: 'large', hold: 'second', everyday_needs: ['quiet', 'wipeable'],
   })
-  await insert('child_profiles', { parent_id: priya.id, name: 'Zara', age: 3, macs_source: 'estimated', bfmf_source: 'estimated', challenges: ['Coordination'] })
+  await insert('child_profiles', { parent_id: priya.id, name: 'Zara', age: 3, macs_source: 'estimated', bfmf_source: 'estimated', challenges: ['Coordination'], working_hand: 'not_sure' })
   await insert('child_profiles', {
     parent_id: tom.id, name: 'Ruby', age: 8, macs_level: 'II', macs_source: 'manual', hand_involvement: 'bilateral',
     challenges: ['Strength', 'Holding'], grip_type: 'Cylindrical', env_context: 'School', hand_dominance: 'Left', sensory_preferences: ['Textured'],
+    working_hand: 'left', press_force: 'moderate', aim: 'small', hold: 'as_long', everyday_needs: ['shared_siblings'],
   })
   log('3 children', arlo)
 
