@@ -36,7 +36,8 @@ describe('MyTutorialsListScreen', () => {
 
     expect(await screen.findByText('Bubble machine switch')).toBeTruthy()
     expect(mockGet).toHaveBeenCalledWith('/api/tutorials/mine')
-    expect(screen.getByText('Draft')).toBeTruthy()
+    // Once as the filter's "Draft" option, once as the row's pill.
+    expect(screen.getAllByText('Draft')).toHaveLength(2)
 
     fireEvent.press(screen.getByText('Bubble machine switch'))
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/tutorials/[id]', params: { id: 't1' } })
@@ -52,12 +53,34 @@ describe('MyTutorialsListScreen', () => {
     expect(screen.getByText('Needs a clearer photo.')).toBeTruthy()
   })
 
-  it('links to Add a guide, and shows the web-editing footnote', async () => {
+  it('counts each stage in the filter, and narrows to the one picked', async () => {
+    mockGet.mockResolvedValue([
+      tutorial({ id: 't1', title: 'Drum', status: 'approved' }),
+      tutorial({ id: 't2', title: 'Fan', status: 'rejected' }),
+      tutorial({ id: 't3', title: 'Cushion', status: 'pending' }),
+      tutorial({ id: 't4', title: 'Bubbles', status: 'draft' }),
+      tutorial({ id: 't5', title: 'Car', status: 'approved' }),
+    ])
+    render(<MyTutorialsListScreen />)
+    await screen.findByText('Drum')
+    expect(screen.getByLabelText('All, 5')).toBeTruthy()
+    expect(screen.getByLabelText('Needs you, 1')).toBeTruthy()
+    expect(screen.getByLabelText('Live, 2')).toBeTruthy()
+    expect(screen.getByLabelText('Waiting, 1')).toBeTruthy()
+    expect(screen.getByLabelText('Draft, 1')).toBeTruthy()
+
+    fireEvent.press(screen.getByLabelText('Live, 2'))
+    expect(screen.getByText('Drum')).toBeTruthy()
+    expect(screen.getByText('Car')).toBeTruthy()
+    expect(screen.queryByText('Fan')).toBeNull()
+  })
+
+  it('links to Add a tutorial, and shows the web-editing footnote', async () => {
     mockGet.mockResolvedValue([tutorial({ id: 't1', title: 'Bubble machine switch' })])
     render(<MyTutorialsListScreen />)
 
     expect(await screen.findByText('Bubble machine switch')).toBeTruthy()
-    fireEvent.press(screen.getByLabelText('+ Add a guide'))
+    fireEvent.press(screen.getByLabelText('+ Add a tutorial'))
     expect(mockPush).toHaveBeenCalledWith('/guides/new')
     expect(screen.getByText('Collaborators and recommendations are edited on the web for now.')).toBeTruthy()
   })

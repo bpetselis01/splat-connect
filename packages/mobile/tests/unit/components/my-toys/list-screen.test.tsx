@@ -114,7 +114,7 @@ describe('MyToysListScreen', () => {
     expect(mockGet).toHaveBeenCalledWith('/api/toy-transactions')
   })
 
-  it('shows the status badge, the meter line with condition and offer, for each status', async () => {
+  it('shows the stage pill and the meta line with condition and offer, for each status', async () => {
     mockEndpoints({
       toys: Promise.resolve([
         toy({ id: 't1', name: 'Bubble machine', status: 'draft', condition: 8, offer_type: null }),
@@ -123,9 +123,10 @@ describe('MyToysListScreen', () => {
     })
     render(<MyToysListScreen />)
     expect(await screen.findByText('Bubble machine')).toBeTruthy()
-    expect(screen.getByText('Draft', { includeHiddenElements: true })).toBeTruthy()
+    // Once in the stage filter, once on the row.
+    expect(screen.getAllByText('Hidden', { includeHiddenElements: true })).toHaveLength(2)
     expect(screen.getByText('8/10 · Not offered yet', { includeHiddenElements: true })).toBeTruthy()
-    expect(screen.getByText('Published', { includeHiddenElements: true })).toBeTruthy()
+    expect(screen.getAllByText('Live', { includeHiddenElements: true })).toHaveLength(2)
     expect(screen.getByText('6/10 · Offered as Exchange', { includeHiddenElements: true })).toBeTruthy()
   })
 
@@ -170,7 +171,8 @@ describe('MyToysListScreen', () => {
     // ride in the row's accessibilityHint (by item's own accessibilityLabel,
     // Bubble machine) to reach a screen reader at all.
     expect(screen.getByLabelText('Bubble machine').props.accessibilityHint).toContain('2 requests waiting.')
-    expect(screen.getByText('2')).toBeTruthy()
+    expect(screen.getByText('8/10 · Not offered yet · 2 requests waiting', { includeHiddenElements: true })).toBeTruthy()
+    expect(screen.getAllByText('Needs you', { includeHiddenElements: true })).toHaveLength(2)
     // Toy t2 has no owner-side requested transactions, so its hint carries
     // no waiting count.
     expect(screen.getByLabelText('Switch puzzle').props.accessibilityHint).not.toMatch(/request.*waiting/)
@@ -187,6 +189,39 @@ describe('MyToysListScreen', () => {
     render(<MyToysListScreen />)
     await screen.findByText('Bubble machine')
     expect(screen.getByLabelText('Bubble machine').props.accessibilityHint).toContain('1 request waiting.')
+  })
+
+  it('counts each stage in the filter and narrows the list to the one picked', async () => {
+    mockEndpoints({
+      toys: Promise.resolve([
+        toy({ id: 't1', name: 'Bubble machine', status: 'published' }),
+        toy({ id: 't2', name: 'Switch puzzle', status: 'published' }),
+        toy({ id: 't3', name: 'Fairy jar', status: 'draft' }),
+      ]),
+      transactions: Promise.resolve([tx({ id: 'tx1', toy_id: 't1', status: 'requested' })]),
+    })
+    render(<MyToysListScreen />)
+    await screen.findByText('Bubble machine')
+    // Someone asked for t1, so it is the owner's move whatever its status.
+    expect(screen.getByLabelText('All, 3')).toBeTruthy()
+    expect(screen.getByLabelText('Needs you, 1')).toBeTruthy()
+    expect(screen.getByLabelText('Live, 1')).toBeTruthy()
+    expect(screen.getByLabelText('Hidden, 1')).toBeTruthy()
+
+    fireEvent.press(screen.getByLabelText('Live, 1'))
+    expect(screen.getByText('Switch puzzle')).toBeTruthy()
+    expect(screen.queryByText('Bubble machine')).toBeNull()
+    expect(screen.queryByText('Fairy jar')).toBeNull()
+  })
+
+  it('offers the way back when a stage has nothing in it', async () => {
+    mockEndpoints({ toys: Promise.resolve([toy({ id: 't1', name: 'Bubble machine', status: 'draft' })]) })
+    render(<MyToysListScreen />)
+    await screen.findByText('Bubble machine')
+    fireEvent.press(screen.getByLabelText('Live, 0'))
+    expect(screen.getByText('Nothing at that stage.')).toBeTruthy()
+    fireEvent.press(screen.getByText('Show everything'))
+    expect(screen.getByText('Bubble machine')).toBeTruthy()
   })
 
   it('pushes to the toy on tapping an active row', async () => {
@@ -232,7 +267,7 @@ describe('MyToysListScreen', () => {
       expect(screen.getByText('Fire truck')).toBeTruthy()
       // Hidden from the a11y tree on purpose — the row's hint reads it out —
       // so the query opts in, same as the toy library's meter line.
-      expect(screen.getByText('Donated to Priya', { includeHiddenElements: true })).toBeTruthy()
+      expect(screen.getByText(/^Donated to Priya · /, { includeHiddenElements: true })).toBeTruthy()
     })
 
     it('names what a swap was traded for', async () => {
@@ -243,7 +278,7 @@ describe('MyToysListScreen', () => {
       })
       render(<MyToysListScreen />)
       expect(
-        await screen.findByText('Swapped with Priya for Spinning top', { includeHiddenElements: true })
+        await screen.findByText(/^Swapped with Priya for Spinning top · /, { includeHiddenElements: true })
       ).toBeTruthy()
     })
 
