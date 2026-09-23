@@ -8,6 +8,12 @@
  * The decision still reads the same endpoints the print job page does, and
  * "Open the request" is there for anything a chip cannot say — the job page
  * takes a free-text decline reason.
+ *
+ * A request can go to up to three printers (074), so the card says how many
+ * others were asked, and a race lost to one of them reads as the API's own
+ * sentence rather than "check your connection". An organisation with more than
+ * one machine picks the bench on accept, fit-checked against the guide's parts
+ * and preselected to the best one — the board's "Accept on <printer>".
  */
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
@@ -21,11 +27,16 @@ import {
   Cube,
   HourglassHigh,
   HourglassMedium,
+  Lightning,
   MoonStars,
+  Palette,
+  Printer as PrinterIcon,
   Scales,
 } from '@phosphor-icons/react/dist/ssr'
-import type { PickupAddress, ToyTransactionSummary } from '@splat-connect/types'
+import type { PickupAddress, PrinterWithOwner, ToyTransactionSummary } from '@splat-connect/types'
 import { browserApiClient } from '@/lib/browser-api-client'
+import { apiErrorDetail, isApiError } from '@/lib/api-core'
+import { othersAskedLabel, rankMachines } from '@/lib/print-groups'
 import { AcceptPickupDialog } from '@/components/accept-pickup-dialog'
 import { filamentLabel, printFilesLine, printTimeLabel } from '@/lib/print-settings'
 
@@ -46,16 +57,25 @@ function askedAgo(iso: string): string {
 export function IncomingPrintCard({
   tx,
   defaultAddress,
+  machines = [],
 }: {
-  tx: ToyTransactionSummary
+  /** `print_group_size` when the page looked it up: how many printers were asked. */
+  tx: ToyTransactionSummary & { print_group_size?: number | null }
   /** The viewer's saved pickup address, seeded into the accept dialog. */
   defaultAddress: PickupAddress | null
+  /** An organisation's machines. With more than one, accept asks which. */
+  machines?: PrinterWithOwner[]
 }) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [acceptOpen, setAcceptOpen] = useState(false)
   const [declineOpen, setDeclineOpen] = useState(false)
+  const files = tx.print_files ?? []
+  const ranked = tx.owner_org_id && machines.length > 1 ? rankMachines(machines, files) : []
+  const [benchId, setBenchId] = useState(ranked[0]?.printer.id ?? null)
+  const bench = ranked.find((m) => m.printer.id === benchId) ?? null
+  const others = othersAskedLabel(tx.print_group_size)
 
   function run(path: string, body: object) {
     setError(null)
@@ -63,16 +83,23 @@ export function IncomingPrintCard({
       try {
         await browserApiClient.post(`/api/toy-transactions/${tx.id}/${path}`, body)
         router.refresh()
-      } catch {
-        setError('That did not go through. Check your connection and try again.')
+      } catch (err) {
+        // A 409 is a sentence meant for the person: another printer took it,
+        // or the chosen machine filled up. Anything else is the connection.
+        setError(
+          (isApiError(err) && err.status === 409 && apiErrorDetail(err)) ||
+            'That did not go through. Check your connection and try again.'
+        )
       }
     })
   }
 
   // An organisation's machine accepts outright: its pickup address is fixed,
   // and the server reads it from the org record.
-  const accept = () => (tx.owner_org_id ? run('accept', {}) : setAcceptOpen(true))
-  const files = tx.print_files ?? []
+  const accept = () =>
+    tx.owner_org_id
+      ? run('accept', bench ? { printer_id: bench.printer.id } : {})
+      : setAcceptOpen(true)
 
   return (
     <li className="flex flex-col gap-4 rounded-[24px] border border-line bg-surface p-[22px] shadow-[var(--shadow-e2),var(--shadow-hi)]">
@@ -89,6 +116,17 @@ export function IncomingPrintCard({
               <HourglassMedium size={14} weight="fill" aria-hidden="true" />
               {askedAgo(tx.created_at)}
             </span>
+            {tx.print_colour && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-[var(--surface2)] px-3 py-1 text-[13px] font-extrabold text-ink">
+                <Palette size={14} weight="bold" aria-hidden="true" />
+                {tx.print_colour}
+              </span>
+            )}
+            {tx.print_delivery === 'post' && (
+              <span className="rounded-full bg-[var(--surface2)] px-3 py-1 text-[13px] font-extrabold text-ink">
+                Posted
+              </span>
+            )}
             {tx.part_sets ? (
               <span className="rounded-full bg-[var(--surface2)] px-3 py-1 text-[13px] font-extrabold text-ink">
                 {tx.part_sets} set{tx.part_sets === 1 ? '' : 's'}
@@ -145,6 +183,60 @@ export function IncomingPrintCard({
         </div>
       )}
 
+      {others && (
+        <p className="flex items-center gap-2 text-sm font-bold text-muted">
+          <Lightning size={18} weight="fill" aria-hidden="true" className="flex-none text-honey" />
+          {others}
+        </p>
+      )}
+
+      {ranked.length > 0 && (
+        <div className="flex flex-col gap-2.5">
+          <p className="text-xs font-extrabold uppercase tracking-[0.1em] text-muted">Print on</p>
+          <div
+            role="radiogroup"
+            aria-label="Which printer takes this job"
+            className="grid gap-2.5 sm:grid-cols-2"
+          >
+            {ranked.map(({ printer, ok, why }) => {
+              const on = printer.id === benchId
+              return (
+                <button
+                  key={printer.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={on}
+                  onClick={() => setBenchId(printer.id)}
+                  className={`flex items-start gap-3 rounded-[18px] border-2 p-3.5 text-left ${
+                    on ? 'border-brand bg-[var(--b100)]' : 'border-line bg-surface'
+                  }`}
+                >
+                  <PrinterIcon size={24} weight="duotone" aria-hidden="true" className="flex-none text-brand-dark" />
+                  <span className="flex min-w-0 flex-col gap-1">
+                    <span className="text-[15px] font-extrabold text-ink">{printer.name}</span>
+                    <span className="text-[13px] text-muted">
+                      {printer.materials.join(' · ')} · {printer.open_jobs} of {printer.capacity}{' '}
+                      used
+                    </span>
+                    <span
+                      className="self-start rounded-full px-[9px] py-[3px] text-xs font-extrabold text-[var(--tink)]"
+                      style={{ background: ok ? 'var(--tok)' : 'var(--tamber)' }}
+                    >
+                      {ok ? 'Fits' : `Needs a change · ${why.join(' · ')}`}
+                    </span>
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+          <p className="text-[13px] text-muted">
+            {bench?.ok
+              ? 'Job lands in this machine’s queue. Other leaders see which bench it is on.'
+              : 'This machine is missing something the guide asks for — swap filament or wait for the slot before starting.'}
+          </p>
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center gap-2.5">
         <button
           type="button"
@@ -153,7 +245,7 @@ export function IncomingPrintCard({
           onClick={accept}
         >
           <Check size={18} weight="bold" aria-hidden="true" />
-          Accept
+          {bench ? `${bench.ok ? 'Accept' : 'Accept anyway'} on ${bench.printer.name}` : 'Accept'}
         </button>
         <button
           type="button"

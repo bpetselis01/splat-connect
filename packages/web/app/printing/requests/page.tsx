@@ -58,10 +58,10 @@ export default async function RequestAPrintPage({
         {tutorial ? (
           <>
             Everything below comes from <strong className="text-ink">{tutorial.title}</strong>. Tick
-            the parts you need, say what matters, and send one request to the printer you pick.
+            the parts you need, say what matters, and send one request to up to three printers.
           </>
         ) : (
-          'Pick the parts of a guide you need and send them to one printer.'
+          'Pick the parts of a guide you need and send them to up to three printers.'
         )}
       </p>
     </header>

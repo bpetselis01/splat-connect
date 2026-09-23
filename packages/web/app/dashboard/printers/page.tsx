@@ -22,8 +22,12 @@ import { IncomingPrintCard } from '@/components/incoming-print-card'
 import { SplatMascot } from '@/components/splat-mascot'
 import { ProfileTabs } from '@/components/profile-tabs'
 import { printStages } from '@/lib/print-stages'
-import { needsAction, subjectName } from '@splat-connect/types'
-import type { PrinterWithOwner, ToyTransactionSummary } from '@splat-connect/types'
+import { collapsePrintGroups, needsAction, subjectName } from '@splat-connect/types'
+import type {
+  PrinterWithOwner,
+  ToyTransactionDetail,
+  ToyTransactionSummary,
+} from '@splat-connect/types'
 
 export const metadata = { title: 'Print for others — SPLAT Connect' }
 
@@ -144,7 +148,28 @@ export async function PrintOfferScreen({
   const jobs = allJobs.filter(
     (tx) => tx.type === 'print' && tx.printer_id !== null && printerIds.has(tx.printer_id)
   )
-  const waiting = jobs.filter((tx) => tx.status === 'requested')
+  // One card per request: an organisation asked on two of its machines (074)
+  // answers once, choosing the bench on accept.
+  const waitingRows = collapsePrintGroups(jobs.filter((tx) => tx.status === 'requested'))
+  // How many printers each request went to is only on the job itself — this
+  // account cannot see the other printers' rows.
+  // ponytail: one detail read per grouped waiting job; move print_group_size
+  // onto GET /api/toy-transactions if a queue ever holds more than a handful.
+  const waiting = await Promise.all(
+    waitingRows.map(async (tx) =>
+      tx.print_group_id
+        ? {
+            ...tx,
+            print_group_size:
+              (
+                await apiClient
+                  .get<ToyTransactionDetail>(`/api/toy-transactions/${tx.id}`)
+                  .catch(() => null)
+              )?.print_group_size ?? tx.print_group_size,
+          }
+        : tx
+    )
+  )
   const onTheBed = jobs.filter((tx) => tx.status === 'accepted')
   const done = jobs.filter((tx) => !['requested', 'accepted'].includes(tx.status))
 
@@ -215,7 +240,12 @@ export async function PrintOfferScreen({
               ) : (
                 <ul className="flex list-none flex-col gap-4">
                   {waiting.map((tx) => (
-                    <IncomingPrintCard key={tx.id} tx={tx} defaultAddress={defaultAddress} />
+                    <IncomingPrintCard
+                      key={tx.id}
+                      tx={tx}
+                      defaultAddress={defaultAddress}
+                      machines={orgId ? printers : undefined}
+                    />
                   ))}
                 </ul>
               ),

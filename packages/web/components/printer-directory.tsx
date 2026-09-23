@@ -10,8 +10,9 @@
  * not return, and a facet that filters on nothing is worse than no facet.
  *
  * Browsing only. A request is sent from a guide (/printing/requests?guide=…),
- * so the cards carry no Pick button — the board's pick-up-to-three tray needs
- * a multi-printer request the API does not accept yet.
+ * so the cards carry no Pick button — the pick-up-to-three choice is made on
+ * that form, where the guide is known, not in a tray here that would have to
+ * carry picks through a guide and back.
  */
 import { useState } from 'react'
 import Link from 'next/link'
@@ -185,7 +186,7 @@ export function PrinterDirectory({
           <div>
             <h2>Printers near you</h2>
             <p className="mt-1 text-[15px] text-muted">
-              Open a guide to send one of them its parts. They print it; you cover the filament.
+              Open a guide to ask up to three of them. The first to accept takes the job; the others step back automatically.
             </p>
           </div>
           {printers && (

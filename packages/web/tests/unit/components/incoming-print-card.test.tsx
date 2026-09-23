@@ -1,7 +1,8 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { IncomingPrintCard } from '@/components/incoming-print-card'
-import type { ToyTransactionSummary } from '@splat-connect/types'
+import { browserApiClient } from '@/lib/browser-api-client'
+import type { PrinterWithOwner, ToyTransactionSummary } from '@splat-connect/types'
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn() }) }))
 vi.mock('next/link', () => ({
@@ -40,5 +41,50 @@ describe('IncomingPrintCard', () => {
     render(<IncomingPrintCard tx={{ ...tx, print_files: [] }} defaultAddress={null} />)
     expect(screen.queryByText(/\.stl/)).toBeNull()
     expect(screen.queryByText(/min$/)).toBeNull()
+  })
+})
+
+// Tests: a request sent to several printers (074) — the "others asked" line, the
+//        organisation's machine picker preselecting the bench that fits, and a
+//        lost race reading as the API's sentence.
+describe('IncomingPrintCard, grouped requests', () => {
+  const machine = (id: string, name: string, over: Partial<PrinterWithOwner> = {}) =>
+    ({ id, name, owner_org_id: 'o1', materials: ['PETG'], accepting: true, capacity: 2, open_jobs: 0, ...over }) as PrinterWithOwner
+  const orgTx = { ...tx, owner_org_id: 'o1', print_group_id: 'g1', print_group_size: 3 }
+
+  it('says how many others were asked', () => {
+    render(<IncomingPrintCard tx={orgTx} defaultAddress={null} />)
+    expect(screen.getByText('2 other printers were asked — first to accept wins')).toBeTruthy()
+  })
+
+  it('preselects the machine that fits and accepts onto the one chosen', async () => {
+    const post = vi.mocked(browserApiClient.post).mockResolvedValue({})
+    const machines = [machine('x1c', 'Bambu X1C', { materials: ['PLA'] }), machine('mk4', 'Prusa MK4')]
+    render(<IncomingPrintCard tx={orgTx} defaultAddress={null} machines={machines} />)
+    expect(screen.getByRole('radio', { name: /Prusa MK4/ }).getAttribute('aria-checked')).toBe('true')
+    fireEvent.click(screen.getByRole('radio', { name: /Bambu X1C/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Accept anyway on Bambu X1C' }))
+    await waitFor(() =>
+      expect(post).toHaveBeenCalledWith('/api/toy-transactions/tx-1/accept', { printer_id: 'x1c' })
+    )
+  })
+
+  it('draws no picker for a single machine', () => {
+    render(<IncomingPrintCard tx={orgTx} defaultAddress={null} machines={[machine('mk4', 'Prusa MK4')]} />)
+    expect(screen.queryByRole('radiogroup')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Accept' })).toBeTruthy()
+  })
+
+  it('shows the already-taken sentence when another printer won', async () => {
+    const err = Object.assign(
+      new Error(
+        'API POST /api/toy-transactions/tx-1/accept failed with status 409: Another printer has already taken this job.'
+      ),
+      { status: 409 }
+    )
+    vi.mocked(browserApiClient.post).mockRejectedValue(err)
+    render(<IncomingPrintCard tx={orgTx} defaultAddress={null} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Accept' }))
+    expect(await screen.findByText('Another printer has already taken this job.')).toBeTruthy()
   })
 })

@@ -20,6 +20,11 @@ export function isApiError(err: unknown): err is ApiError {
   return err instanceof Error && typeof (err as { status?: unknown }).status === 'number'
 }
 
+/** The API's own `error` sentence out of a thrown request, when it sent one. */
+export function apiErrorDetail(err: unknown): string | null {
+  return err instanceof Error ? (/failed with status \d+: (.+)$/.exec(err.message)?.[1] ?? null) : null
+}
+
 export function makeApiClient(deps: {
   getToken: () => Promise<string | null>
   // Lazy so the server client re-reads process.env per request (tests set it
