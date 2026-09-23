@@ -4,12 +4,12 @@
  * organisation has published, with publish / unpublish / remove on each row;
  * each takes effect on the public page at once, with no review.
  *
- * Writing a new event or story stays on web: the event form's registration-
- * question editor is the bulk of that screen and not a phone-sized job.
+ * New ones are written on their own screens (organisation/events/new and
+ * stories/new), linked from the top of the list.
  */
 import { useCallback, useState } from 'react'
 import { View, Text, ScrollView, StyleSheet, Alert } from 'react-native'
-import { useFocusEffect } from 'expo-router'
+import { useFocusEffect, useRouter } from 'expo-router'
 import { EVENT_KIND_LABEL, STORY_KIND_LABEL, type OrgEvent, type OrgStory } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { useCapabilities } from '../../lib/capabilities'
@@ -30,6 +30,7 @@ const isPast = (starts: string, ends: string | null) =>
 const shortDate = (iso: string) => new Date(iso).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })
 
 export function OrgPublishScreen() {
+  const router = useRouter()
   const { caps } = useCapabilities()
   const org = caps?.ledOrgs[0]
   const [data, setData] = useState<{ events: OrgEvent[]; stories: OrgStory[] } | null>(null)
@@ -98,7 +99,11 @@ export function OrgPublishScreen() {
   return (
     <Screen>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={styles.lede}>Published items are live on {org.name}'s public page right now. New ones are written on the web.</Text>
+        <Text style={styles.lede}>Published items are live on {org.name}'s public page right now.</Text>
+        <View style={styles.actions}>
+          <Button label="New event" onPress={() => router.push('/organisation/events/new')} style={styles.grow} />
+          <Button label="New story" variant="secondary" onPress={() => router.push('/organisation/stories/new')} style={styles.grow} />
+        </View>
         <View style={styles.tabs} accessibilityRole="radiogroup">
           <Chip role="radio" label={`Events · ${data.events.length}`} active={tab === 'events'} onPress={() => setTab('events')} />
           <Chip role="radio" label={`Stories · ${data.stories.length}`} active={tab === 'stories'} onPress={() => setTab('stories')} />
@@ -108,7 +113,11 @@ export function OrgPublishScreen() {
           <EmptyState
             icon={tab === 'events' ? 'calendar-outline' : 'newspaper-outline'}
             title={tab === 'events' ? 'No events yet' : 'No stories yet'}
-            hint="Publish one from Events and stories on the web; it shows up here to manage."
+            hint={
+              tab === 'events'
+                ? 'A build day or open afternoon is the fastest way to meet the families near you.'
+                : 'One thing that happened, told plainly. It takes ten minutes.'
+            }
           />
         ) : (
           rows.map((r) => (
@@ -156,5 +165,6 @@ const styles = StyleSheet.create({
   title: { fontFamily: theme.fonts.display, fontSize: theme.type.body, color: theme.colors.text, flex: 1 },
   meta: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted },
   actions: { flexDirection: 'row', justifyContent: 'space-between', gap: theme.spacing(2) },
+  grow: { flex: 1 },
   foot: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted, lineHeight: 19, marginTop: theme.spacing(3) },
 })
