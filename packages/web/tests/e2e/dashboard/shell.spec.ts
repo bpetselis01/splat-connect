@@ -75,9 +75,10 @@ test('a leader sees the Organisation group, and the queue merges across two orga
     await expect(page).toHaveURL('/dashboard/organisation')
 
     // Both requests show in the single merged queue — no organisation picker
-    // anywhere on the page to switch between them.
-    await expect(page.getByRole('link', { name: titleA })).toBeVisible()
-    await expect(page.getByRole('link', { name: titleB })).toBeVisible()
+    // anywhere on the page to switch between them. Since the Sep 22 board pass
+    // a row's title is its heading; the row's buttons are the links.
+    await expect(page.getByRole('heading', { name: titleA })).toBeVisible()
+    await expect(page.getByRole('heading', { name: titleB })).toBeVisible()
     await expect(page.getByRole('combobox')).toHaveCount(0)
   } finally {
     await deleteOrg(orgA)
@@ -111,7 +112,12 @@ test('a leader reaches the existing review screen from the tab and approves a tu
     await expect(page).toHaveURL('/dashboard/organisation')
 
     // The row links to the existing per-project review screen, not a new one.
-    await page.getByRole('link', { name: title }).click()
+    // Its title is a heading; "Read the guide" is the row's first way in.
+    await page
+      .getByRole('listitem')
+      .filter({ has: page.getByRole('heading', { name: title }) })
+      .getByRole('link', { name: 'Read the guide' })
+      .click()
     await expect(page).toHaveURL(`/organizations/${orgId}/projects/${tutorialId}`)
     await expect(page.getByRole('heading', { name: title })).toBeVisible()
 
@@ -148,8 +154,16 @@ test('a contributor adds two children, edits one, and deletes one', async ({ pag
     // reached by navigating rather than by a redirect.
     //
     // The way back up is the breadcrumb trail (lib/trail.ts), which is what
-    // replaced both the rail and the per-page back control.
+    // replaced both the rail and the per-page back control. Since the Sep 22
+    // parity pass a child's trail is the board's "My SPLAT / Child profile",
+    // so the list is one crumb up and then the hub's Account card.
     const main = page.getByRole('main')
+    const backToAccount = async () => {
+      await page.getByRole('navigation', { name: 'Breadcrumb' }).getByRole('link', { name: 'My SPLAT' }).click()
+      await expect(page).toHaveURL('/dashboard')
+      await hub.getByRole('link', { name: /Account/ }).click()
+      await expect(page).toHaveURL('/dashboard/profile')
+    }
 
     // First child, named, with one switch question answered.
     await page.getByRole('link', { name: 'Add child' }).click()
@@ -161,8 +175,7 @@ test('a contributor adds two children, edits one, and deletes one', async ({ pag
     // Scoped to <main>: "Saved" is also a hub card and a footer link.
     await expect(main.getByText('Saved', { exact: true })).toBeVisible()
     await expect(page).toHaveURL(/\/dashboard\/child\/[0-9a-f-]{36}/)
-    await page.getByRole('navigation', { name: 'Breadcrumb' }).getByRole('link', { name: 'Account' }).click()
-    await expect(page).toHaveURL('/dashboard/profile')
+    await backToAccount()
     await expect(page.getByRole('link', { name: /Emma/ })).toBeVisible()
 
     // Second child, left unnamed — the list must still tell them apart.
@@ -170,8 +183,7 @@ test('a contributor adds two children, edits one, and deletes one', async ({ pag
     await page.getByLabel('Age').fill('4')
     await page.getByRole('button', { name: 'Create profile' }).click()
     await expect(main.getByText('Saved', { exact: true })).toBeVisible()
-    await page.getByRole('navigation', { name: 'Breadcrumb' }).getByRole('link', { name: 'Account' }).click()
-    await expect(page).toHaveURL('/dashboard/profile')
+    await backToAccount()
     await expect(page.getByRole('link', { name: /Child 2/ })).toBeVisible()
 
     // Edit the first child and confirm it persists across a reload.
