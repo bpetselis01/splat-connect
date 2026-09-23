@@ -46,6 +46,10 @@ export default function MyLayout() {
       <Stack.Screen name="organisation/orders" options={{ title: 'Print orders' }} />
       <Stack.Screen name="organisation/recycling" options={{ title: 'Recycling intake' }} />
       <Stack.Screen name="organisation/messages" options={{ title: 'Messages' }} />
+      <Stack.Screen name="organisation/requests" options={{ title: 'Requests to you' }} />
+      <Stack.Screen name="organisation/publish" options={{ title: 'Events and stories' }} />
+      <Stack.Screen name="organisation/profile" options={{ title: 'Organisation profile' }} />
+      <Stack.Screen name="events" options={{ title: 'My events' }} />
       {/* 077: a conversation with an organisation, from either side. */}
       <Stack.Screen name="messages/[cid]" options={{ title: 'Conversation' }} />
       <Stack.Screen name="messages/org/[orgId]" options={{ title: 'Message' }} />

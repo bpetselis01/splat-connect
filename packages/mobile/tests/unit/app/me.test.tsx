@@ -23,14 +23,14 @@ it('renders every buildNav group as rows, routes them through the map, and ends 
   expect(mockPush).toHaveBeenCalledWith('/explore/learn')
 })
 
-it('draws a row with no mobile screen as SOON and never sends it back to Me', () => {
+it('sends every row to its own screen, so none is drawn as SOON', () => {
   render(<MeTab />)
   mockPush.mockClear()
-  // /dashboard/events has no screen under app/(my) — see my-routes.test.
+  // My events was the SOON example until it got its screen; now no hub row
+  // falls back, and my-routes.test fails the day one does.
   fireEvent.press(screen.getByLabelText('My events'))
-  expect(mockPush).not.toHaveBeenCalled()
-  // Print for others was the example here until it got its screen.
+  expect(mockPush).toHaveBeenCalledWith('/events')
   fireEvent.press(screen.getByLabelText('Print for others'))
   expect(mockPush).toHaveBeenCalledWith('/print-for-others')
-  expect(screen.getAllByText('SOON').length).toBeGreaterThan(0)
+  expect(screen.queryAllByText('SOON')).toHaveLength(0)
 })
