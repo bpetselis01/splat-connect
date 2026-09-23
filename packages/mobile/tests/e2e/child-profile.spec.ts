@@ -41,6 +41,5 @@ test('the wizard skips to the guides without creating a profile', async ({ page 
   await expect(page).toHaveURL(/\/guides/)
 
   await page.goto('/account')
-  await page.getByText('Child Profile').click()
   await expect(page.getByText(/No child profiles yet/)).toBeVisible()
 })

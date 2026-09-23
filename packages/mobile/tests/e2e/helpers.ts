@@ -233,20 +233,13 @@ export async function signUpNewAccount(page: Page, email: string) {
 }
 
 /**
- * Open Account on its Child Profile segment. Account is a (my) modal route,
- * reachable from any tab, so going straight to the URL is the same thing the
- * MY SPLAT popover does — with none of the popover's animation to wait on.
- */
-/**
- * From /account, land inside ONE child's profile page. The segment lists every
- * child now; a fresh account has none, so this creates the first through the
- * same + Add child a parent would use and waits for its editor.
+ * From /account, land inside ONE child's profile page. Account lists every
+ * child; a fresh account has none, so this creates the first through the
+ * same + Add a child a parent would use and waits for its editor.
  */
 export async function openChildProfile(page: Page) {
   await page.goto('/account')
-  // Account is the default segment on first visit.
-  await page.getByText('Child Profile').click()
-  await page.getByRole('button', { name: '+ Add child' }).click()
+  await page.getByRole('button', { name: '+ Add a child' }).click()
   await expect(page.getByText('Delete profile')).toBeVisible()
 }
 

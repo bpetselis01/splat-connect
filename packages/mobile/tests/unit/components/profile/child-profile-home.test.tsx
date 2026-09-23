@@ -87,7 +87,7 @@ describe('ChildProfileHome', () => {
     mockPost.mockResolvedValue(child({ id: 'fresh' }))
     render(<ChildProfileHome />)
 
-    fireEvent.press(await screen.findByRole('button', { name: '+ Add child' }))
+    fireEvent.press(await screen.findByRole('button', { name: '+ Add a child' }))
 
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/child-profiles', {}))
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/account/child/[id]', params: { id: 'fresh' } })

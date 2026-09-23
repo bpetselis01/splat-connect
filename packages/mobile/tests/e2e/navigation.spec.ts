@@ -7,15 +7,15 @@ test('a signed-out visitor is sent to sign-in from any tab', async ({ page }) =>
   await expect(page.getByTestId('auth-tab-signin')).toBeVisible()
 })
 
-test('the selected profile segment persists across a re-visit', async ({ page }) => {
+test('Account shows the child profiles and the profile detail on one page', async ({ page }) => {
   await signUpNewAccount(page, uniqueSignupEmail())
   await openChildProfile(page)
-  // Re-opening Account should not silently reset the segment back to Account.
 
   await page.goto('/account')
 
-  // The child segment's own furniture is the proof the segment persisted.
-  await expect(page.getByRole('button', { name: '+ Add child' })).toBeVisible()
+  // No segments any more: the child list and the account detail sit together.
+  await expect(page.getByRole('button', { name: '+ Add a child' })).toBeVisible()
+  await expect(page.getByText('Open Web Dashboard')).toBeVisible()
 })
 
 test('the tab bar reaches every tab', async ({ page }) => {

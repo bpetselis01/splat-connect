@@ -54,10 +54,10 @@ describe('ProfileScreen', () => {
       hasContributorTerms: true,
     })
     render(<ProfileScreen />)
-    expect(screen.getByText('Signed in as parent@example.com')).toBeTruthy()
+    expect(screen.getByText('parent@example.com')).toBeTruthy()
   })
 
-  it('shows the account segment by default, with no role label', () => {
+  it('shows the identity card with initials, and no role label', () => {
     ;(useAuth as jest.Mock).mockReturnValue({
       session: { user: { email: 'contributor@example.com' } },
       profile: { id: '2', name: 'Cory', email: 'contributor@example.com', role: 'contributor', created_at: '' },
@@ -67,10 +67,12 @@ describe('ProfileScreen', () => {
     })
     render(<ProfileScreen />)
     expect(screen.getByText('Open Web Dashboard')).toBeTruthy()
+    expect(screen.getByText('Cory')).toBeTruthy()
+    expect(screen.getByText('C', { includeHiddenElements: true })).toBeTruthy()
     expect(screen.queryByText('Contributor')).toBeNull()
   })
 
-  it('switches to the child profile segment on tap', () => {
+  it('shows the child profiles and the profile detail on one page', () => {
     ;(useAuth as jest.Mock).mockReturnValue({
       session: { user: { email: 'contributor@example.com' } },
       profile: { id: '2', name: 'Cory', email: 'contributor@example.com', role: 'contributor', created_at: '' },
@@ -80,15 +82,13 @@ describe('ProfileScreen', () => {
     })
     render(<ProfileScreen />)
 
-    fireEvent.press(screen.getByText('Child Profile'))
-
-    // The segment now hosts the child list, whose own header line proves the
-    // switch; the sub-screens moved behind each child's editor.
-    expect(screen.getByText('+ Add child')).toBeTruthy()
-    expect(screen.queryByText('Open Web Dashboard')).toBeNull()
+    expect(screen.getByText('Child profiles')).toBeTruthy()
+    expect(screen.getByText('+ Add a child')).toBeTruthy()
+    expect(screen.getByText('Profile detail')).toBeTruthy()
+    expect(screen.getByText('Open Web Dashboard')).toBeTruthy()
   })
 
-  it('reaches the child profile segment even when contributor terms are unaccepted', () => {
+  it('keeps the child profiles reachable while the terms gate holds the detail', () => {
     ;(useAuth as jest.Mock).mockReturnValue({
       session: { user: { email: 'contributor@example.com' } },
       profile: { id: '2', name: 'Cory', email: 'contributor@example.com', role: 'contributor', created_at: '' },
@@ -99,10 +99,9 @@ describe('ProfileScreen', () => {
     })
     render(<ProfileScreen />)
 
-    fireEvent.press(screen.getByText('Child Profile'))
-
-    expect(screen.getByText('+ Add child')).toBeTruthy()
-    expect(screen.queryByText('Before you continue')).toBeNull()
+    expect(screen.getByText('+ Add a child')).toBeTruthy()
+    expect(screen.getByText('Before you continue')).toBeTruthy()
+    expect(screen.queryByText('Open Web Dashboard')).toBeNull()
   })
 
   it('blocks the profile view when contributor terms are unaccepted', () => {
@@ -134,7 +133,7 @@ describe('ProfileScreen', () => {
     render(<ProfileScreen />)
 
     expect(screen.queryByText('Before you continue')).toBeNull()
-    expect(screen.getByText('Signed in as parent@example.com')).toBeTruthy()
+    expect(screen.getByText('parent@example.com')).toBeTruthy()
   })
 
   it('lets the user sign out from the catch-up gate', () => {
@@ -184,7 +183,7 @@ describe('ProfileScreen', () => {
     render(<ProfileScreen />)
 
     expect(screen.queryByText('Before you continue')).toBeNull()
-    expect(screen.getByText('Signed in as parent@example.com')).toBeTruthy()
+    expect(screen.getByText('parent@example.com')).toBeTruthy()
   })
 
   describe('the account panel additions', () => {
