@@ -14,6 +14,7 @@ import { EditCollaboratorsSection } from '@/components/edit-collaborators-sectio
 import { EditRecommendationsSection } from '@/components/edit-recommendations-section'
 import { Stepper } from '@/components/stepper'
 import { CreatedToast } from '@/components/created-toast'
+import { PdfImportBanner } from '@/components/pdf-import-banner'
 import { ToastProvider } from '@/components/toast'
 import { computeStepStatuses, stepsFor, type EditStep, type EditStepId } from '@/lib/edit-steps'
 import type { Step } from '@/lib/steps'
@@ -611,6 +612,7 @@ export default async function EditTutorialPage({
       <Suspense>
         <ToastProvider>
           <CreatedToast />
+          <PdfImportBanner />
           <Stepper steps={steps} label="Tutorial sections" layout="rail" railFoot={copy.progress} />
         </ToastProvider>
       </Suspense>
