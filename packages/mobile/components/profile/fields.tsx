@@ -1,94 +1,53 @@
+// The child profile's two kinds of question, shared by the one-page form
+// (child-editor-home.tsx) and the onboarding wizard (child-wizard.tsx).
 // Selectable pills use the shared ui/Chip, not a local copy — a hand-rolled
 // pill here is how the profile screens drifted from the library filter's styling.
-import { ScrollView, View, Text, StyleSheet } from 'react-native'
+import { View, Text, StyleSheet } from 'react-native'
+import { EVERYDAY_NEEDS, type EverydayNeed } from '@splat-connect/types'
 import { theme } from '../../lib/theme'
 import { Chip } from '../ui/Chip'
-import { TextField } from '../ui/TextField'
 
-type Option = { label: string; value: string }
-
-/** The scrolling shell every profile form shares: tinted canvas, padded content, lead-in copy. */
-export function FormScreen({ intro, children }: { intro: string; children: React.ReactNode }) {
-  return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.screenContent}>
-      <Text style={styles.intro}>{intro}</Text>
-      {children}
-    </ScrollView>
-  )
-}
-
-export function Dropdown({ label, value, options, onChange }: {
-  label: string
+/** One single-choice question. Pressing the chosen chip again clears it. */
+export function ChoiceChips({ label, options, value, onChange }: {
+  /** Omit when the screen's heading already asks the question. */
+  label?: string
+  options: readonly { value: string; label: string }[]
   value: string | null
-  options: Option[]
-  onChange: (v: string) => void
+  onChange: (v: string | null) => void
 }) {
   return (
     <View style={styles.field}>
-      <Text style={styles.label}>{label}</Text>
+      {label ? <Text style={styles.label}>{label}</Text> : null}
       <View style={styles.pillRow}>
         {options.map((o) => (
-          <Chip key={o.value} label={o.label} active={o.value === value} onPress={() => onChange(o.value)} />
+          <Chip
+            key={o.value}
+            label={o.label}
+            active={o.value === value}
+            onPress={() => onChange(o.value === value ? null : o.value)}
+          />
         ))}
       </View>
     </View>
   )
 }
 
-export function ChipGroup({ label, values, options, max, onChange }: {
-  label: string
-  values: string[]
-  options: Option[]
-  max?: number
-  onChange: (v: string[]) => void
-}) {
-  function toggle(v: string) {
-    if (values.includes(v)) {
-      onChange(values.filter((x) => x !== v))
-      return
-    }
-    if (max != null && values.length >= max) return // enforce the cap
-    onChange([...values, v])
-  }
+/** The everyday needs, any number of them. */
+export function NeedsChips({ value, onChange }: { value: EverydayNeed[]; onChange: (v: EverydayNeed[]) => void }) {
   return (
-    <View style={styles.field}>
-      <Text style={styles.label}>{label}{max != null ? ` (max ${max})` : ''}</Text>
-      <View style={styles.pillRow}>
-        {options.map((o) => (
-          <Chip key={o.value} label={o.label} active={values.includes(o.value)} onPress={() => toggle(o.value)} />
-        ))}
-      </View>
+    <View style={[styles.field, styles.pillRow]}>
+      {EVERYDAY_NEEDS.map((o) => {
+        const on = value.includes(o.value)
+        return (
+          <Chip
+            key={o.value}
+            label={o.label}
+            active={on}
+            onPress={() => onChange(on ? value.filter((v) => v !== o.value) : [...value, o.value])}
+          />
+        )
+      })}
     </View>
-  )
-}
-
-export function NumberField({ label, value, unit, guidance, onChange }: {
-  label: string
-  value: number | null
-  unit?: string
-  guidance?: string
-  onChange: (v: number | null) => void
-}) {
-  function handle(text: string) {
-    if (text.trim() === '') {
-      onChange(null)
-      return
-    }
-    const n = Number(text)
-    if (Number.isNaN(n)) return // ignore non-numeric keystrokes
-    onChange(n)
-  }
-  return (
-    <TextField
-      label={`${label}${unit ? ` (${unit})` : ''}`}
-      hint={guidance}
-      // The placeholder stays the bare label: the test suite locates these
-      // inputs by placeholder, and the unit belongs in the visible label.
-      placeholder={label}
-      keyboardType="numeric"
-      defaultValue={value != null ? String(value) : ''}
-      onChangeText={handle}
-    />
   )
 }
 
@@ -101,13 +60,4 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing(2),
   },
   pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2) },
-  screen: { flex: 1, backgroundColor: theme.colors.background },
-  screenContent: { padding: theme.spacing(4), paddingBottom: theme.spacing(10) },
-  intro: {
-    fontFamily: theme.fonts.regular,
-    fontSize: theme.type.label,
-    color: theme.colors.muted,
-    lineHeight: 21,
-    marginBottom: theme.spacing(5),
-  },
 })

@@ -63,13 +63,13 @@ beforeEach(() => {
 describe('ChildProfileHome', () => {
   it('lists each child with its one-line summary, falling back per the spec', async () => {
     mockGet.mockResolvedValue([
-      child({ id: 'cp1', name: 'Maya', age: 5 }),
+      child({ id: 'cp1', name: 'Maya', age: 5, working_hand: 'right', press_force: 'light' }),
       child({ id: 'cp2', name: null }),
     ])
     render(<ChildProfileHome />)
 
     expect(await screen.findByText('Maya')).toBeTruthy()
-    expect(screen.getByText('Age 5')).toBeTruthy()
+    expect(screen.getByText('Age 5 · Right hand · Light press')).toBeTruthy()
     // Unnamed children take their position; a blank profile says so plainly.
     expect(screen.getByText('Child 2')).toBeTruthy()
     expect(screen.getByText('Not set yet')).toBeTruthy()
@@ -104,5 +104,7 @@ describe('ChildProfileHome', () => {
   it('invites the first profile when there are none', async () => {
     render(<ChildProfileHome />)
     expect(await screen.findByText(/No child profiles yet/)).toBeTruthy()
+    fireEvent.press(screen.getByRole('button', { name: 'Answer a few quick questions' }))
+    expect(mockPush).toHaveBeenCalledWith('/child')
   })
 })

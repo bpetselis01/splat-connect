@@ -5,24 +5,19 @@
 //
 // Was a single-child editor; now the list web's profile page keeps — one row
 // per child, "+ Add child", each row into that child's own editor. The row's
-// second line is the one-line ability summary the spec asks for, or "Not set
-// yet" when the profile is still blank.
+// second line is childSummary from @splat-connect/types ("Age 6 · Right hand ·
+// Light press"), the same line web's account page shows, or "Not set yet".
 import { useCallback, useEffect, useState } from 'react'
 import { View, Text, StyleSheet, ActivityIndicator, Linking } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import type { ChildProfile } from '@splat-connect/types'
+import { childSummary as summaryOf, type ChildProfile } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { Card } from '../ui/Card'
 import { Button } from '../ui/Button'
 import { ErrorRow } from '../auth-screen'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
-
-/** "Age 5", or 'Not set yet' when the profile is still blank. */
-function summaryOf(child: ChildProfile): string {
-  return child.age !== null ? `Age ${child.age}` : 'Not set yet'
-}
 
 export function ChildProfileHome() {
   const router = useRouter()
@@ -101,10 +96,19 @@ export function ChildProfileHome() {
       {loading ? <ActivityIndicator color={theme.colors.primary} /> : null}
 
       {!loading && !error && children.length === 0 ? (
-        <Text style={styles.empty}>
-          No child profiles yet. A profile can hold age, hand use and grip details — all
-          optional, all private to you.
-        </Text>
+        <>
+          <Text style={styles.empty}>
+            No child profiles yet. A profile can hold an age, how they press a switch and what
+            matters in the room — all optional, all private to you.
+          </Text>
+          {/* The wizard: the same questions one at a time, for a first run. */}
+          <Button
+            label="Answer a few quick questions"
+            variant="secondary"
+            onPress={() => router.push('/child')}
+            style={styles.addChild}
+          />
+        </>
       ) : null}
 
       {children.map((child, i) => (
@@ -147,6 +151,7 @@ const styles = StyleSheet.create({
   introLink: { textDecorationLine: 'underline' },
   addChild: { alignSelf: 'flex-start', paddingVertical: theme.spacing(2), paddingHorizontal: theme.spacing(4) },
   empty: {
+    marginBottom: theme.spacing(3),
     fontFamily: theme.fonts.regular,
     fontSize: theme.type.label,
     color: theme.colors.muted,

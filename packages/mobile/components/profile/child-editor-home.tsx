@@ -1,62 +1,26 @@
 // packages/mobile/components/profile/child-editor-home.tsx
-// One child's editor home: name and age, the step-pill row over the three
-// step screens, and Delete profile. The spec's shape — "rows → child editor
-// with the existing three steps, wrapped in the step-pill row; gap dot on an
-// unset step; Delete profile".
+// One child's profile as one page, the same questions web's
+// components/child-editor.tsx asks: Basics (name, age), the four switch
+// questions, and the everyday needs of the room. Every answer autosaves through
+// useChildProfile, the mobile pattern, with a "Saved" line to confirm it.
 //
-// A step is 'done' when its anchor fields hold values, 'attention' otherwise —
-// the same reading web's stepper gives a tutorial's sections. Nothing here is
-// required, so 'attention' is a gap dot, not an error.
-import { View, Text, Alert, StyleSheet } from 'react-native'
-import { NotMedicalNote } from '../ui/NotMedicalNote'
+// The older ability / everyday-needs / customisation sheets (MACS, BFMF, grip,
+// measurements…) are gone: those columns stay in the database but nothing asks
+// for them now (APP 3 minimisation). These are plain-language preferences for
+// ranking guides, never a clinical assessment — see docs/REGULATORY-CHANGES.md.
+import { ScrollView, View, Text, Alert, Linking, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
-import type { ChildProfile } from '@splat-connect/types'
+import { CHILD_QUESTIONS } from '@splat-connect/types'
+import { NotMedicalNote } from '../ui/NotMedicalNote'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { useChildProfile } from '../../lib/use-child-profile'
-import { Card } from '../ui/Card'
 import { Button } from '../ui/Button'
 import { TextField } from '../ui/TextField'
-import { StepPills, type StepPillItem } from '../ui/StepPills'
+import { Section } from '../ui/Section'
 import { Skeleton } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
-import { AnimatedPressable } from '../ui/AnimatedPressable'
-import { Ionicons } from '@expo/vector-icons'
-
-const STEPS: {
-  id: string
-  label: string
-  path: string
-  hint: string
-  icon: keyof typeof Ionicons.glyphMap
-  /** The fields whose presence marks the step done. */
-  done: (p: ChildProfile) => boolean
-}[] = [
-  {
-    id: 'ability',
-    label: 'Ability',
-    path: '/account/ability',
-    hint: 'Hand use, and any clinical scores from your therapist',
-    icon: 'accessibility-outline',
-    done: (p) => !!(p.macs_level || p.bfmf_score || p.hand_involvement),
-  },
-  {
-    id: 'everyday-needs',
-    label: 'Everyday needs',
-    path: '/account/everyday-needs',
-    hint: 'Challenges, grip type and where it gets used',
-    icon: 'today-outline',
-    done: (p) => p.challenges.length > 0 || !!p.grip_type || !!p.env_context,
-  },
-  {
-    id: 'customization',
-    label: 'Customisation',
-    path: '/account/customization',
-    hint: 'Measurements that size the 3D-printed parts',
-    icon: 'resize-outline',
-    done: (p) => p.palm_width_mm !== null || p.wrist_circ_mm !== null || !!p.hand_dominance,
-  },
-]
+import { ChoiceChips, NeedsChips } from './fields'
 
 export function ChildEditorHome({ childId }: { childId: string }) {
   const router = useRouter()
@@ -82,12 +46,6 @@ export function ChildEditorHome({ childId }: { childId: string }) {
     )
   }
 
-  const pills: StepPillItem[] = STEPS.map((s) => ({
-    id: s.id,
-    label: s.label,
-    status: s.done(profile) ? 'done' : 'attention',
-  }))
-
   function confirmDelete() {
     Alert.alert('Delete this profile?', 'Everything on it is removed. This cannot be undone.', [
       { text: 'Cancel', style: 'cancel' },
@@ -107,84 +65,89 @@ export function ChildEditorHome({ childId }: { childId: string }) {
     ])
   }
 
-  const openStep = (path: string) => router.push({ pathname: path, params: { child: childId } })
-
   return (
-    <View style={styles.screen}>
-      <TextField
-        label="Name"
-        accessibilityLabel="Child's name"
-        placeholder="Optional"
-        defaultValue={profile.name ?? ''}
-        onChangeText={(v) => save({ name: v.trim() || null })}
-      />
-      <TextField
-        label="Age"
-        accessibilityLabel="Child's age"
-        placeholder="Optional"
-        keyboardType="numeric"
-        defaultValue={profile.age != null ? String(profile.age) : ''}
-        onChangeText={(v) => {
-          if (v.trim() !== '' && !Number.isNaN(Number(v))) save({ age: Number(v) })
-        }}
-      />
+    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+      <Text style={styles.eyebrow}>PRIVATE TO YOU</Text>
+      <Text style={styles.intro}>
+        Every field is optional. We use this only to suggest guides that suit your child — it is
+        never shown to another person, contributor or organisation. See the{' '}
+        <Text style={styles.link} onPress={() => Linking.openURL(`${process.env.EXPO_PUBLIC_WEB_URL}/privacy`)}>
+          privacy policy
+        </Text>
+        .
+      </Text>
+
+      <Section title="Basics">
+        <TextField
+          label="Name or nickname"
+          accessibilityLabel="Child's name"
+          placeholder="Optional"
+          defaultValue={profile.name ?? ''}
+          onChangeText={(v) => save({ name: v.trim() || null })}
+        />
+        <TextField
+          label="Age"
+          accessibilityLabel="Child's age"
+          placeholder="Optional"
+          keyboardType="numeric"
+          defaultValue={profile.age != null ? String(profile.age) : ''}
+          onChangeText={(v) => {
+            if (v.trim() === '') save({ age: null })
+            else if (!Number.isNaN(Number(v))) save({ age: Number(v) })
+          }}
+        />
+      </Section>
+
+      <Section
+        title="Ability profile"
+        hint="Used to rank guides by whether the switch they call for is one your child can operate."
+      >
+        {CHILD_QUESTIONS.map((q) => (
+          <ChoiceChips
+            key={q.field}
+            label={q.prompt}
+            options={q.options}
+            value={profile[q.field]}
+            onChange={(v) => save({ [q.field]: v })}
+          />
+        ))}
+      </Section>
+
+      <Section title="Everyday needs" hint="What matters in the room, rather than in the hand.">
+        <NeedsChips value={profile.everyday_needs ?? []} onChange={(v) => save({ everyday_needs: v })} />
+      </Section>
+
       {saveState === 'saved' ? <Text style={styles.saved}>Saved</Text> : null}
-
-      <StepPills
-        steps={pills}
-        active=""
-        onSelect={(id) => {
-          const step = STEPS.find((s) => s.id === id)
-          if (step) openStep(step.path)
-        }}
-      />
-
-      {STEPS.map((step) => (
-        <AnimatedPressable
-          key={step.id}
-          onPress={() => openStep(step.path)}
-          accessibilityRole="button"
-          accessibilityLabel={step.label}
-          accessibilityHint={step.hint}
-          pressScale={0.985}
-          style={styles.rowPress}
-        >
-          <Card style={styles.row}>
-            <Ionicons name={step.icon} size={20} color={theme.colors.primaryDeep} />
-            <View style={styles.rowBody}>
-              <Text style={styles.rowLabel}>{step.label}</Text>
-              <Text style={styles.rowHint}>{step.hint}</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={theme.colors.primary} />
-          </Card>
-        </AnimatedPressable>
-      ))}
-
       <NotMedicalNote />
 
       <Button label="Delete profile" variant="danger" onPress={confirmDelete} style={styles.delete} />
-    </View>
+    </ScrollView>
   )
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: theme.colors.background, padding: theme.spacing(4) },
+  screen: { flex: 1, backgroundColor: theme.colors.background },
+  content: { padding: theme.spacing(4), paddingBottom: theme.spacing(10) },
   loading: { flex: 1, backgroundColor: theme.colors.background, padding: theme.spacing(4), gap: theme.spacing(3) },
+  eyebrow: {
+    fontFamily: theme.fonts.bold,
+    fontSize: theme.type.caption,
+    letterSpacing: 1.2,
+    color: theme.colors.muted,
+    marginBottom: theme.spacing(2),
+  },
+  intro: {
+    fontFamily: theme.fonts.regular,
+    fontSize: theme.type.label,
+    color: theme.colors.muted,
+    lineHeight: 21,
+    marginBottom: theme.spacing(5),
+  },
+  link: { textDecorationLine: 'underline' },
   saved: {
     fontFamily: theme.fonts.regular,
     fontSize: theme.type.caption,
     color: theme.colors.muted,
-    marginBottom: theme.spacing(2),
-  },
-  rowPress: { marginTop: theme.spacing(3) },
-  row: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3), padding: theme.spacing(3) },
-  rowBody: { flex: 1 },
-  rowLabel: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.text },
-  rowHint: {
-    fontFamily: theme.fonts.regular,
-    fontSize: theme.type.caption,
-    color: theme.colors.muted,
-    marginTop: 2,
   },
   delete: { marginTop: theme.spacing(6), alignSelf: 'center' },
 })

@@ -238,7 +238,7 @@ export async function signUpNewAccount(page: Page, email: string) {
  * MY SPLAT popover does — with none of the popover's animation to wait on.
  */
 /**
- * From /account, land inside ONE child's editor home. The segment lists every
+ * From /account, land inside ONE child's profile page. The segment lists every
  * child now; a fresh account has none, so this creates the first through the
  * same + Add child a parent would use and waits for its editor.
  */
@@ -258,20 +258,8 @@ export async function signIn(page: Page, email: string, password: string) {
   await page.getByTestId('auth-submit').click()
 }
 
-/** From a fresh sign-in, reach one of the three step screens of a new child. */
-export async function openSubScreen(page: Page, label: 'Ability Profile' | 'Everyday Needs' | 'Customization Metrics') {
-  await openChildProfile(page)
-  // The editor home's rows carry the short step names.
-  const row: Record<typeof label, string> = {
-    'Ability Profile': 'Ability',
-    'Everyday Needs': 'Everyday needs',
-    'Customization Metrics': 'Customisation',
-  }
-  await page.getByRole('button', { name: row[label], exact: true }).click()
-}
-
 /**
- * Tap a Dropdown/ChipGroup option and wait for its optimistic selection to
+ * Tap a ChoiceChips/NeedsChips option and wait for its optimistic selection to
  * commit before returning. Back-to-back programmatic taps can otherwise outrun
  * React's re-render — feeding a stale value to the next tap, or (for a tap that
  * reveals a conditional field) racing that field's mount/unmount.

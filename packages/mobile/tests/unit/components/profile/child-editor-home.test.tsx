@@ -58,27 +58,44 @@ beforeEach(() => {
 })
 
 describe('ChildEditorHome', () => {
-  it('opens each step scoped to this child', async () => {
+  it('asks the board questions on one page, and none of the retired ones', async () => {
     render(<ChildEditorHome childId="cp1" />)
-
-    fireEvent.press(await screen.findByRole('button', { name: 'Ability' }))
-    expect(mockPush).toHaveBeenCalledWith({ pathname: '/account/ability', params: { child: 'cp1' } })
-    fireEvent.press(screen.getByRole('button', { name: 'Everyday needs' }))
-    expect(mockPush).toHaveBeenCalledWith({
-      pathname: '/account/everyday-needs',
-      params: { child: 'cp1' },
-    })
+    expect(await screen.findByText('Which hand does most of the work?')).toBeTruthy()
+    for (const q of ['How much force can they apply?', 'Can they aim at a target?', 'How long can they hold a press?', 'Everyday needs']) {
+      expect(screen.getByText(q)).toBeTruthy()
+    }
+    expect(screen.getByText(/never shown to another person/)).toBeTruthy()
+    expect(screen.getByText('privacy policy')).toBeTruthy()
+    expect(screen.getByText(/not a medical/)).toBeTruthy()
+    expect(screen.queryByText(/MACS|BFMF|Grip|Palm width|Customi[sz]ation/)).toBeNull()
   })
 
-  it('marks a filled step done and an empty one with the gap dot', async () => {
-    mockGet.mockResolvedValue([child({ macs_level: 'II' })])
+  it('shows the stored answers as selected', async () => {
+    mockGet.mockResolvedValue([child({ working_hand: 'left', everyday_needs: ['wipeable'] })])
     render(<ChildEditorHome childId="cp1" />)
+    expect(await screen.findByRole('button', { name: 'Left', selected: true })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Wipeable', selected: true })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Quiet toys only', selected: false })).toBeTruthy()
+  })
 
-    // StepPills renders one tab per step; status carries via the pill's a11y.
-    const ability = await screen.findByRole('tab', { name: 'Ability' })
-    const needs = screen.getByRole('tab', { name: 'Everyday needs' })
-    expect(ability).toBeTruthy()
-    expect(needs).toBeTruthy()
+  it('saves only the field a chip changed, against this child', async () => {
+    mockPatch.mockResolvedValue({})
+    jest.useFakeTimers()
+    try {
+      render(<ChildEditorHome childId="cp1" />)
+      fireEvent.press(await screen.findByRole('button', { name: 'Moderate' }))
+      fireEvent.press(screen.getByRole('button', { name: 'Quiet toys only' }))
+      await waitFor(() => {})
+      jest.advanceTimersByTime(300)
+      await waitFor(() =>
+        expect(mockPatch).toHaveBeenCalledWith('/api/child-profiles/cp1', {
+          press_force: 'moderate',
+          everyday_needs: ['quiet'],
+        })
+      )
+    } finally {
+      jest.useRealTimers()
+    }
   })
 
   it('confirms before deleting, then deletes and goes back', async () => {
