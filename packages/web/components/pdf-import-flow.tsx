@@ -12,26 +12,10 @@ import type { Route } from 'next'
 import { ArrowRight, CheckCircle, FilePdf, MinusCircle } from '@phosphor-icons/react/dist/ssr'
 import { browserApiClient } from '@/lib/browser-api-client'
 import { apiErrorDetail } from '@/lib/api-core'
-import { createGuideFromPdfDraft, printSettingsNote, KIND_LABEL } from '@splat-connect/types'
+import { createGuideFromPdfDraft, pdfDraftChecklist, KIND_LABEL } from '@splat-connect/types'
 import type { PdfImportDraft, TutorialKind } from '@splat-connect/types'
 
 const MAX_BYTES = 20 * 1024 * 1024
-
-/** The checklist rows: what the draft will carry into the editor. */
-export function foundSections(draft: PdfImportDraft): { label: string; found: string | null }[] {
-  const count = (n: number, one: string, many: string) => (n ? `${n} ${n === 1 ? one : many}` : null)
-  return [
-    { label: 'Description', found: draft.summary ? 'First paragraph' : null },
-    { label: 'Parts', found: count(draft.parts.length, 'part', 'parts') },
-    { label: 'Tools', found: count(draft.tools.length, 'tool', 'tools') },
-    { label: 'Steps', found: count(draft.steps.length, 'step', 'steps') },
-    {
-      label: 'Print settings',
-      found: printSettingsNote(draft.print_settings) ? 'Added to the description as a note' : null,
-    },
-    { label: 'Build time', found: draft.build_minutes ? `${draft.build_minutes} min` : null },
-  ]
-}
 
 /** Where the editor opens, with what the banner needs to say. */
 export function editorUrl(id: string, r: { failed: string[]; stepsUnavailable: boolean }): string {
@@ -138,7 +122,7 @@ export function PdfImportFlow() {
     )
   }
 
-  const sections = foundSections(draft)
+  const sections = pdfDraftChecklist(draft)
   return (
     <div className="upload-card">
       <div>

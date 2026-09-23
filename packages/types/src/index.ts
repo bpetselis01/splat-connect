@@ -7,7 +7,7 @@ export type { ContributorBadge, ContributorBadgeInput } from './contributor-badg
 export { buildCalendar } from './ics'
 export type { CalendarEvent } from './ics'
 import type { ContributorBadge } from './contributor-badges'
-export { createGuideFromPdfDraft, printSettingsNote } from './pdf-import'
+export { createGuideFromPdfDraft, pdfDraftChecklist, printSettingsNote } from './pdf-import'
 export type {
   PdfImportDraft,
   PdfImportConfidence,

@@ -52,6 +52,19 @@ export function printSettingsNote(p: PdfImportPrintSettings): string | null {
   return bits.length ? `Print settings from the PDF: ${bits.join(', ')}.` : null
 }
 
+/** The review checklist both apps show: what the draft will carry into the editor. */
+export function pdfDraftChecklist(draft: PdfImportDraft): { label: string; found: string | null }[] {
+  const count = (n: number, one: string, many: string) => (n ? `${n} ${n === 1 ? one : many}` : null)
+  return [
+    { label: 'Description', found: draft.summary ? 'First paragraph' : null },
+    { label: 'Parts', found: count(draft.parts.length, 'part', 'parts') },
+    { label: 'Tools', found: count(draft.tools.length, 'tool', 'tools') },
+    { label: 'Steps', found: count(draft.steps.length, 'step', 'steps') },
+    { label: 'Print settings', found: printSettingsNote(draft.print_settings) ? 'Added to the description as a note' : null },
+    { label: 'Build time', found: draft.build_minutes ? `${draft.build_minutes} min` : null },
+  ]
+}
+
 /** The calls the sequence needs; both apps' clients already have this shape. */
 export interface PdfDraftApi {
   get<T>(path: string): Promise<T>
