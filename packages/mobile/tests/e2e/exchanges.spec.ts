@@ -90,7 +90,7 @@ test('a donation runs from request to handoff, and the toy changes hands', async
     // donation protocol.
     const codes = await handoffCodes(txId)
     await expect(requesterPage.getByText(codes.requester_code)).toBeVisible()
-    await expect(ownerPage.getByText('Your handoff code:')).toHaveCount(0)
+    await expect(ownerPage.getByText('Your handoff code', { exact: true })).toHaveCount(0)
 
     await ownerPage.getByLabel('Enter their code').fill(codes.requester_code)
     await ownerPage.getByRole('button', { name: 'Confirm handoff', exact: true }).click()
