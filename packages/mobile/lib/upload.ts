@@ -19,6 +19,9 @@ export type UploadPath =
   // The printer's "ready" photo. The route answers with the job row rather
   // than an UploadResult, and ignores the id field this helper appends.
   | `/api/toy-transactions/${string}/print-ready`
+  // "Start from a PDF": answers with a PdfImportDraft, not an UploadResult,
+  // and takes no id field.
+  | '/api/tutorials/import-pdf'
 
 export interface UploadResult {
   url: string
@@ -31,12 +34,12 @@ export interface UploadResult {
  * routes, 'toyId' for the two toy-library ones. Defaulted so every existing
  * P2 call site (photo/pdf/stl) is unchanged.
  */
-export async function uploadFile(
+export async function uploadFile<T = UploadResult>(
   path: UploadPath,
   id: string,
   file: { uri: string; name: string; mimeType?: string },
   idField: 'tutorialId' | 'toyId' | null = 'tutorialId'
-): Promise<UploadResult> {
+): Promise<T> {
   const token = await getToken()
 
   const formData = new FormData()
@@ -79,5 +82,5 @@ export async function uploadFile(
     throw new Error(`Upload to ${path} failed with status ${res.status}${detail}`)
   }
 
-  return (await res.json()) as UploadResult
+  return (await res.json()) as T
 }

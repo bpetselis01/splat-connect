@@ -26,11 +26,22 @@ import { Button } from '../ui/Button'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 
-export function TutorialHub({ id, justCreated }: { id: string; justCreated?: boolean }) {
+/** Set when the draft came from "Start from a PDF" (app/(tabs)/guides/new.tsx). */
+export interface FromPdf {
+  /** The steps endpoint answered 404, so the PDF's steps were not saved. */
+  stepsLater: boolean
+  /** Sections createGuideFromPdfDraft could not save. */
+  missed: string[]
+}
+
+export function TutorialHub({ id, justCreated, fromPdf }: { id: string; justCreated?: boolean; fromPdf?: FromPdf }) {
   const router = useRouter()
   const { tutorial, loading, loadError, saveNow } = useDraft()
   const [menuOpen, setMenuOpen] = useState(false)
   const [noteDismissed, setNoteDismissed] = useState(false)
+  // Unlike the arrival note this one stays until dismissed: it asks the author
+  // to check every section, which is exactly the trip that would clear the other.
+  const [pdfNoteDismissed, setPdfNoteDismissed] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
   // The note is for the moment of arrival, not for the whole session. It keys
@@ -160,7 +171,27 @@ export function TutorialHub({ id, justCreated }: { id: string; justCreated?: boo
         </View>
       ) : null}
 
-      {justCreated && !noteDismissed ? (
+      {fromPdf && !pdfNoteDismissed ? (
+        <View testID="hub-pdf-note" style={styles.note}>
+          <View style={styles.noteText}>
+            <Text style={styles.noteTitle}>Filled in from your PDF</Text>
+            <Text style={styles.noteBody}>
+              Check every section before you submit — it is a best guess from the PDF&apos;s text, and
+              photos inside the PDF were not copied.
+              {fromPdf.stepsLater ? ' The steps could not be saved yet; add them in Steps.' : ''}
+              {fromPdf.missed.length ? ` Could not save: ${fromPdf.missed.join(', ')}.` : ''}
+            </Text>
+          </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Dismiss"
+            onPress={() => setPdfNoteDismissed(true)}
+            hitSlop={8}
+          >
+            <Ionicons name="close" size={18} color={theme.colors.ink} />
+          </Pressable>
+        </View>
+      ) : justCreated && !noteDismissed ? (
         <View testID="hub-created-note" style={styles.note}>
           <View style={styles.noteText}>
             <Text style={styles.noteTitle}>Draft saved</Text>

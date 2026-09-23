@@ -179,6 +179,17 @@ it('reassures a contributor once, only just after creation', () => {
   expect(screen.queryByTestId('hub-created-note')).toBeNull()
 })
 
+it('asks a PDF-started draft to be checked, and says which steps were not saved', () => {
+  render(<TutorialHub id="t1" fromPdf={{ stepsLater: true, missed: ['parts'] }} />)
+  expect(screen.getByText('Filled in from your PDF')).toBeTruthy()
+  expect(screen.getByText(/Check every section before you submit/)).toBeTruthy()
+  expect(screen.getByText(/The steps could not be saved yet/)).toBeTruthy()
+  expect(screen.getByText(/Could not save: parts/)).toBeTruthy()
+  expect(screen.queryByTestId('hub-created-note')).toBeNull()
+  fireEvent.press(screen.getByLabelText('Dismiss'))
+  expect(screen.queryByTestId('hub-pdf-note')).toBeNull()
+})
+
 // The spec's "More" section: read-only facts, below the checklist. Not in the
 // menu, which holds actions.
 it('lists the three things that are edited on the web', () => {
