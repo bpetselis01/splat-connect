@@ -97,7 +97,7 @@ test('the same inbox is reachable behind MY SPLAT, without the tab header', asyn
   await page.goto('/notifications')
 
   await expect(page.getByText('Robin joined your design challenge')).toBeVisible()
-  // The native modal header carries the title there, so the screen's own
-  // subtitle — the tab's header — must not also be on the page.
-  await expect(page.getByText('Everything waiting on you, newest first.')).toBeHidden()
+  // The native header says "Notifications" there, so the tab's own "Inbox"
+  // title must not also be on the page.
+  await expect(page.getByText('Inbox', { exact: true })).toBeHidden()
 })
