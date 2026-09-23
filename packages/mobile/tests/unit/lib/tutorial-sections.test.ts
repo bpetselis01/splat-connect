@@ -104,6 +104,9 @@ describe('sectionSummary', () => {
       'No STL yet'
     )
     expect(sectionSummary('safety', base({ safety_declared_at: null }))).toBe('Not declared yet')
+    expect(sectionSummary('details', base({ build_minutes: null }))).toBe(
+      'Toy adaptation - Easy - no build time yet'
+    )
   })
 
   it('describes what is there once a section is complete', () => {

@@ -74,7 +74,12 @@ test('a new account writes a guide end to end and submits it for review', async 
   let saved = patched()
   await page.getByLabel('Description').fill('Written by a Playwright E2E test.')
   expect((await saved).status()).toBe(200)
+  // A build time is required to submit (066), and until it is set the row says so.
+  saved = patched()
+  await page.getByRole('button', { name: '30 min', exact: true }).click()
+  expect((await saved).status()).toBe(200)
   await backToHub()
+  await expect(page.getByTestId('hub-row-details')).not.toContainText('no build time yet')
 
   // --- Safety ------------------------------------------------------------
   // Its own screen now, and its own gate: nothing submits without it.

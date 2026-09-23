@@ -95,8 +95,12 @@ const count = (n: number, noun: string) => `${n} ${noun}${n === 1 ? '' : 's'}`
  */
 export function sectionSummary(section: SectionId, t: TutorialWithDetails): string {
   switch (section) {
-    case 'details':
-      return `${KIND_LABEL[t.kind]} - ${DIFFICULTY_LABEL[t.difficulty] ?? 'No difficulty'}`
+    case 'details': {
+      const base = `${KIND_LABEL[t.kind]} - ${DIFFICULTY_LABEL[t.difficulty] ?? 'No difficulty'}`
+      // The one details gap the row's other words cannot show (066): without
+      // it the hub says "1 thing still needed" and every row reads finished.
+      return t.build_minutes == null ? `${base} - no build time yet` : base
+    }
     case 'safety':
       return t.safety_declared_at ? 'Declared' : 'Not declared yet'
     case 'parts':

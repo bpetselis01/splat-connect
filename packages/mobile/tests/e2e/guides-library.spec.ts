@@ -13,7 +13,7 @@ test('the library lists a tutorial with its difficulty badge', async ({ page }) 
   // assert "Easy" and pass on the difficulty filter chip above the list, not
   // the badge; the chips now live in the sheet, so only badges are left —
   // dozens of them across other workers' rows, hence scoping to this row.
-  await expect(page.getByRole('button', { name: title }).getByText('EASY', { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: title }).getByText('Easy', { exact: true })).toBeVisible()
 })
 
 test('search narrows the list and clearing it restores the tutorial', async ({ page }) => {

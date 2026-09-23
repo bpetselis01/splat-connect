@@ -18,7 +18,7 @@ test('tapping a tutorial navigates to its detail screen', async ({ page }) => {
   // used to render left it title-case and uppercased it in CSS. The only
   // "Easy" left on the page is the difficulty filter chip on the library
   // screen behind, which is hidden — so the old assertion could not pass.
-  await expect(page.getByText('EASY', { exact: true }).last()).toBeVisible()
+  await expect(page.getByText('Easy', { exact: true }).last()).toBeVisible()
   await expect(page.getByText('E2E part × 2')).toBeVisible()
   await expect(page.getByText('E2E tool')).toBeVisible()
 })
