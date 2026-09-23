@@ -181,27 +181,43 @@ describe('child profiles collection', () => {
     expect(patch.status).toBe(400)
   })
 
-  it('round-trips array-typed columns through the EDITABLE whitelist', async () => {
+  it('round-trips the board questions and de-duplicates everyday needs', async () => {
     const created = await app.request('/api/child-profiles', authed(parent.token, {
       method: 'POST',
-      body: JSON.stringify({ name: 'Arrays', challenges: ['Grasping'], sensory_preferences: ['Loud noises'] }),
+      body: JSON.stringify({
+        name: 'Board', working_hand: 'right', press_force: 'light', aim: 'large', hold: 'second',
+        everyday_needs: ['quiet', 'wipeable', 'quiet'],
+      }),
     }))
     expect(created.status).toBe(201)
-    const createdRow = (await created.json()) as { id: string; challenges: string[]; sensory_preferences: string[] }
-    expect(createdRow.challenges).toEqual(['Grasping'])
-    expect(createdRow.sensory_preferences).toEqual(['Loud noises'])
+    const row = (await created.json()) as Record<string, unknown> & { id: string }
+    expect(row).toMatchObject({ working_hand: 'right', press_force: 'light', aim: 'large', hold: 'second', everyday_needs: ['quiet', 'wipeable'] })
 
-    const patch = await app.request(`/api/child-profiles/${createdRow.id}`, authed(parent.token, {
+    // Clearing an answer is a null, and needs can be emptied.
+    const patch = await app.request(`/api/child-profiles/${row.id}`, authed(parent.token, {
       method: 'PATCH',
-      body: JSON.stringify({ challenges: ['Grasping', 'Pinching'], sensory_preferences: [] }),
+      body: JSON.stringify({ working_hand: 'not_sure', aim: null, everyday_needs: [] }),
     }))
     expect(patch.status).toBe(200)
-    const patched = (await patch.json()) as { challenges: string[]; sensory_preferences: string[] }
-    expect(patched.challenges).toEqual(['Grasping', 'Pinching'])
-    expect(patched.sensory_preferences).toEqual([])
+    expect(await patch.json()).toMatchObject({ working_hand: 'not_sure', press_force: 'light', aim: null, everyday_needs: [] })
+  })
 
-    const list = await app.request('/api/child-profiles', authed(parent.token))
-    const rows = (await list.json()) as { id: string; challenges: string[] }[]
-    expect(rows.find((r) => r.id === createdRow.id)?.challenges).toEqual(['Grasping', 'Pinching'])
+  it('400s on a value outside a question\'s vocabulary', async () => {
+    for (const body of [{ working_hand: 'both' }, { press_force: 3 }, { hold: 'forever' }, { everyday_needs: ['loud'] }, { everyday_needs: 'quiet' }]) {
+      const res = await app.request('/api/child-profiles', authed(parent.token, { method: 'POST', body: JSON.stringify(body) }))
+      expect(res.status, JSON.stringify(body)).toBe(400)
+    }
+  })
+
+  it('no longer accepts the retired ability and needs fields', async () => {
+    const res = await app.request('/api/child-profiles', authed(parent.token, {
+      method: 'POST',
+      body: JSON.stringify({ name: 'Minimal', macs_level: 'II', challenges: ['Grasping'], palm_width_mm: 60 }),
+    }))
+    expect(res.status).toBe(201)
+    const row = (await res.json()) as { macs_level: string | null; challenges: string[]; palm_width_mm: number | null }
+    expect(row.macs_level).toBeNull()
+    expect(row.challenges).toEqual([])
+    expect(row.palm_width_mm).toBeNull()
   })
 })
