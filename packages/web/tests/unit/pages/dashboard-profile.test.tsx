@@ -90,6 +90,17 @@ describe('ProfileTabPage', () => {
     expect(screen.getByRole('link', { name: /Child 2/ })).toHaveAttribute('href', '/dashboard/child/c2')
   })
 
+  it('summarises each child from the board questions, never a score', async () => {
+    vi.mocked(apiClient.get).mockResolvedValue([
+      child({ id: 'c1', name: 'Arlo', age: 6, working_hand: 'right', press_force: 'light', macs_level: 'II' }),
+      child({ id: 'c2' }),
+    ])
+    render(await ProfileTabPage())
+    expect(screen.getByText('Age 6 · Right hand · Light press')).toBeInTheDocument()
+    expect(screen.getByText('Not set yet')).toBeInTheDocument()
+    expect(screen.queryByText(/\bII\b/)).not.toBeInTheDocument()
+  })
+
   // Chain: swallowing a failed fetch into an empty list would tell a parent
   //        their children are gone. The page must fail loudly instead.
   it('throws rather than rendering an empty list when the fetch fails', async () => {

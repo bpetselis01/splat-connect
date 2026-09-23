@@ -1,7 +1,3 @@
-// The internal fit-profile derivation behind both mobile's ability-screen.tsx
-// quiz and the web child-survey-form.tsx quiz. Runtime values, not just types —
-// this package is consumed as raw TypeScript, so that is safe.
-export * from './derive-fit-profile'
 export * from './nav-model'
 // Named, not `export *`: the api runs this package through tsx as CommonJS,
 // and Node's CJS export lexer cannot see esbuild's `__reExport` — the two
@@ -85,6 +81,33 @@ export type PressForce = (typeof PRESS_FORCE)[number]['value']
 export type Aim = (typeof AIM)[number]['value']
 export type Hold = (typeof HOLD)[number]['value']
 export type EverydayNeed = (typeof EVERYDAY_NEEDS)[number]['value']
+
+/** The board's four switch questions, in its order and words — one list for
+ *  web's form and wizard and mobile's, so the four cannot drift apart. */
+export const CHILD_QUESTIONS = [
+  { field: 'working_hand', prompt: 'Which hand does most of the work?', options: WORKING_HAND },
+  { field: 'press_force', prompt: 'How much force can they apply?', options: PRESS_FORCE },
+  { field: 'aim', prompt: 'Can they aim at a target?', options: AIM },
+  { field: 'hold', prompt: 'How long can they hold a press?', options: HOLD },
+] as const
+export type ChildQuestionField = (typeof CHILD_QUESTIONS)[number]['field']
+
+/** Everything a child profile form writes. The retired columns are not in it. */
+export type ChildAnswers = Pick<ChildProfile, 'name' | 'age' | ChildQuestionField | 'everyday_needs'>
+
+const labelOf = (vocab: readonly { value: string; label: string }[], v: string | null) =>
+  vocab.find((o) => o.value === v)?.label
+
+/**
+ * One line for a child's list row: "Age 6 · Right hand · Light press", or
+ * "Not set yet". Plain words from the form, never a score.
+ */
+export function childSummary(c: Pick<ChildProfile, 'age' | ChildQuestionField>): string {
+  const hand = c.working_hand && c.working_hand !== 'not_sure' ? `${labelOf(WORKING_HAND, c.working_hand)} hand` : null
+  const force = c.press_force ? `${labelOf(PRESS_FORCE, c.press_force)} press` : null
+  const parts = [c.age !== null ? `Age ${c.age}` : null, hand, force].filter(Boolean)
+  return parts.length ? parts.join(' · ') : 'Not set yet'
+}
 
 export type OfferType = 'donation' | 'exchange' | 'both'
 

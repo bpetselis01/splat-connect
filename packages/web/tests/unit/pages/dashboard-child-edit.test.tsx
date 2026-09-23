@@ -58,13 +58,13 @@ const child = (over: Partial<ChildProfile>): ChildProfile => ({
 describe('EditChildPage', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('seeds the Ability panel from the requested child', async () => {
-    vi.mocked(apiClient.get).mockResolvedValue([child({ id: 'c1', name: 'Emma', age: 7 })])
+  it('seeds the form from the requested child', async () => {
+    vi.mocked(apiClient.get).mockResolvedValue([child({ id: 'c1', name: 'Emma', age: 7, hold: 'second' })])
     render(await EditChildPage({ params: Promise.resolve({ id: 'c1' }) }))
-    // The board stacks every section as a card, so Ability is on screen without a tab click.
     expect(screen.getByRole('region', { name: 'Ability profile' })).toBeInTheDocument()
-    expect(screen.getByLabelText('Name (optional)')).toHaveValue('Emma')
+    expect(screen.getByLabelText('Name or nickname')).toHaveValue('Emma')
     expect(screen.getByLabelText('Age')).toHaveValue(7)
+    expect(screen.getByRole('button', { name: 'A second' })).toHaveAttribute('aria-pressed', 'true')
   })
 
   // Chain: the heading has to agree with the list, and the list numbers unnamed

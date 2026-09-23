@@ -19,7 +19,7 @@ import { requireCapabilities } from '@/lib/require-capabilities'
 import { ProfileForm } from '@/components/profile-form'
 import { SignOutButton } from '@/components/sign-out-button'
 import { Child } from '@/components/icons'
-import type { ChildProfile, Tutorial, UserAgreement } from '@splat-connect/types'
+import { childSummary, type ChildProfile, type Tutorial, type UserAgreement } from '@splat-connect/types'
 
 // The board's avatar tints, in its order; a child keeps its tint by position.
 const TINTS = ['var(--b100)', 'var(--tcoral)', 'var(--tmint)', 'var(--tamber)', 'var(--tviolet)']
@@ -120,9 +120,7 @@ export default async function ProfileTabPage() {
                   </span>
                   <span className="min-w-0">
                     <span className="block truncate text-base font-extrabold">{name}</span>
-                    {child.age !== null && (
-                      <span className="block text-[13px] text-muted">Age {child.age}</span>
-                    )}
+                    <span className="block text-[13px] text-muted">{childSummary(child)}</span>
                   </span>
                 </Link>
               </li>
