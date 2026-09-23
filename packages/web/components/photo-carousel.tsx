@@ -52,6 +52,7 @@ export function PhotoCarousel({
   if (urls.length === 0) {
     return (
       <div
+        data-testid="photo-placeholder"
         className={`grid ${className} w-full place-items-center rounded-card bg-sunken text-muted shadow-e2`}
       >
         <Package weight="duotone" size={48} aria-hidden="true" />

@@ -13,12 +13,13 @@ test('the detail page renders a tutorial in full', async ({ page }) => {
   await expect(page.getByText(contributor.name)).toBeVisible()
 
   // Signed out: the file links are the gate (049). The download itself is
-  // covered in tutorial-downloads.spec.ts.
+  // covered in tutorial-downloads.spec.ts. The rail's PDF button says what it
+  // costs to a signed-out reader since 1909fb6a.
   const detour = `/signup?next=%2Ftutorials%2F${tutorialId}&reason=download`
-  await expect(page.getByRole('link', { name: 'Download Tutorial PDF' })).toHaveAttribute('href', detour)
+  await expect(page.getByRole('link', { name: 'Sign in to download' })).toHaveAttribute('href', detour)
 
   // Parts & tools is the first tab; the files sit behind the second.
-  await expect(page.getByRole('cell', { name: 'E2E part' })).toBeVisible()
+  await expect(page.getByRole('cell', { name: 'E2E part', exact: true })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Buy E2E part from Jaycar' })).toBeVisible()
   await expect(page.getByRole('heading', { name: "Tools you'll need" })).toBeVisible()
   await expect(page.getByText('E2E tool')).toBeVisible()
@@ -34,15 +35,19 @@ test('an unknown tutorial id renders a 404', async ({ page }) => {
 
 test('a tutorial with no photo shows the placeholder', async ({ page }) => {
   const contributor = await createContributor()
+  const title = uniqueTitle('E2E Detail No Photo')
   const id = await createTutorial(contributor.id, {
-    title: uniqueTitle('E2E Detail No Photo'),
+    title,
     status: 'approved',
     toyPhotoUrl: null,
   })
 
   await page.goto(`/tutorials/${id}`)
 
-  await expect(page.getByText('🧸')).toBeVisible()
+  // The 🧸 became a decorative duotone glyph in 30251713, so the box is found
+  // by test id; the photo it stands in for must be absent.
+  await expect(page.getByTestId('photo-placeholder')).toBeVisible()
+  await expect(page.getByRole('img', { name: title })).toHaveCount(0)
 })
 
 test('optional parts and tools are badged and buy links open in a new tab', async ({ page }) => {
@@ -75,5 +80,5 @@ test('a tutorial with no STL files omits the 3D-print section', async ({ page })
   await page.goto(`/tutorials/${id}`)
 
   await expect(page.getByRole('tab', { name: 'Files & print settings' })).toHaveCount(0)
-  await expect(page.getByRole('link', { name: 'Download Tutorial PDF' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Sign in to download' })).toBeVisible()
 })
