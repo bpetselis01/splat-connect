@@ -298,6 +298,10 @@ async function phaseA(P) {
       age_min: t.age[0],
       age_max: t.age[1],
       safety_declared_at: t.status === 'draft' ? null : days(-40),
+      // 080: what the switch asks of a child, for "Suits <child>".
+      switch_target: t.switch?.target ?? null,
+      switch_force: t.switch?.force ?? null,
+      switch_hold: t.switch?.hold ?? null,
     })
     G[key] = id
     const photos = []
@@ -321,6 +325,8 @@ async function phaseA(P) {
         material: s.material ?? null,
       })
     }
+    for (const [i, st] of (t.steps || []).entries())
+      await insert('tutorial_steps', { tutorial_id: id, position: i + 1, title: st.title, body: st.body })
     for (const p of t.parts || []) await insert('parts', { tutorial_id: id, ...p })
     for (const tool of t.tools || []) await insert('tools', { tutorial_id: id, ...tool })
     for (const [pid, role] of t.contributors)
@@ -360,6 +366,26 @@ async function phaseA(P) {
       { name: 'Heat-shrink tubing', quantity: 1, is_optional: true },
     ],
     tools: solderingTools,
+    // The Maker Guide's sixteen assembly steps, grouped into four (080).
+    steps: [
+      {
+        title: 'Prepare the prints and the switch',
+        body: 'Remove the support material from the button cap with needle-nosed pliers. Flush-cut the leads off one side of the tactile switch, straighten the remaining two so they stick straight out, and trim the plastic mounting lugs off the bottom so the switch sits flat.',
+      },
+      {
+        title: 'Strip the cable and wrap the leads',
+        body: 'If the mono cable has a plug on both ends, cut it in half. Strip about 2 cm of the outer jacket, then about 1.5 cm from each inner wire, keeping the two wires apart. Wrap one wire around each switch lead (either way round) and bend the cable so it sits between the leads. The wires must not touch each other.',
+      },
+      {
+        title: 'Solder, then test before gluing',
+        body: 'Hold the switch and cable in the switch jig and solder each wire to its lead. Test it with a switch tester, a continuity tester or a switch-adapted toy you know works: it should turn on only while the switch is pressed, every time. If it is always on, look for touching wires or a solder bridge.',
+      },
+      {
+        title: 'Glue it into the base and fit the top',
+        body: 'Put a small drop of hot glue in the square recess of the button base and press the switch in flat and level. Fill the recess around the cable with glue to seal it, no higher than the top edge. Slide the button top on, push the pin all the way in, and flush-cut it level with the base.',
+      },
+    ],
+    switch: { target: 'large', force: 'very_light', hold: 'moment' },
     contributors: [[mei.id, 'primary']],
     reviewed: { by: sarah.id, org: northbank },
   })
@@ -386,6 +412,7 @@ async function phaseA(P) {
       { name: '3.5 mm mono cable', quantity: 1, buy_links: [shop('Jaycar', '3.5mm mono cable')] },
     ],
     tools: solderingTools,
+    switch: { target: 'large', force: 'light', hold: 'moment' },
     contributors: [[mei.id, 'primary']],
     reviewed: { by: sarah.id, org: northbank },
   })
