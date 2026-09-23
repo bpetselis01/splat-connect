@@ -763,7 +763,8 @@ async function phaseB(P, S) {
   const ltsFiles = await stl(G.lts)
   const lpsFiles = await stl(G.lps)
   const bookFiles = await stl(G.book)
-  X.printRequested = await newTx(priya, '/toy-transactions/print', { printer_id: printers.mei, tutorial_id: G.lts, stl_file_ids: ltsFiles, note: 'Blue if you have it, please.' })
+  // One request to two printers (074): waiting on both, first to accept takes it.
+  X.printRequested = await newTx(priya, '/toy-transactions/print', { printer_ids: [printers.mei, printers.northbank], tutorial_id: G.lts, stl_file_ids: ltsFiles, colour: 'Blue', delivery: 'collect', note: 'For the classroom switch — any shade of blue is fine.' })
   X.printStalled = await newTx(tom, '/toy-transactions/print', { printer_id: printers.mei, tutorial_id: G.lts, stl_file_ids: ltsFiles })
   await api(mei, 'POST', `/toy-transactions/${X.printStalled}/accept`, pickup('mei'))
   await api(mei, 'POST', `/toy-transactions/${X.printStalled}/print-started`)
