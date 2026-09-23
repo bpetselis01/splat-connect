@@ -33,8 +33,18 @@ test.describe('fat footer', () => {
     await expect(page.locator('footer').getByRole('link', { name: 'Privacy policy' })).toBeVisible()
   })
 
-  test('is absent on the auth pages, which are deliberately bare', async ({ page }) => {
-    await page.goto('/login')
+  // /login and /signup left the bare list on 2026-09-18 (app/layout.tsx,
+  // BARE_PREFIXES; landed in 105d3b5d): the board draws the full site chrome on
+  // both. The gates under /auth and /onboarding stay bare.
+  test('is absent on the gate pages, which are deliberately bare', async ({ page }) => {
+    await page.goto('/auth/confirmed')
+    await expect(page.getByRole('main')).toBeVisible()
     await expect(page.locator('footer')).toHaveCount(0)
+    await expect(page.getByRole('banner')).toHaveCount(0)
+  })
+
+  test('renders on the sign-in page, which the board draws with the site chrome', async ({ page }) => {
+    await page.goto('/login')
+    await expect(page.locator('footer').getByRole('link', { name: 'Privacy policy' })).toBeVisible()
   })
 })

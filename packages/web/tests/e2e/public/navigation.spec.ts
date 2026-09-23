@@ -21,6 +21,14 @@ const TOP_LEVEL = [
   { href: '/about', label: 'About' },
 ]
 
+/*
+ * Since the board's NAV5 (859eee42, 2026-09-22) five of the seven are tabs and
+ * Learn and Impact sit behind a More disclosure, beside the board's other
+ * secondary destinations.
+ */
+const TABS = ['/library', '/toy-library', '/printing', '/get-involved', '/about']
+const BEHIND_MORE = TOP_LEVEL.filter((s) => !TABS.includes(s.href))
+
 test.describe('public navigation', () => {
   test('every top-level link resolves and none is a placeholder', async ({ page }) => {
     for (const section of TOP_LEVEL) {
@@ -39,13 +47,30 @@ test.describe('public navigation', () => {
     }
   })
 
-  test('the top bar carries all seven sections and no expandable menu', async ({ page }) => {
+  test('the top bar carries five sections as tabs and the other two behind More', async ({ page }) => {
     await page.goto('/')
     const header = page.locator('header')
-    for (const section of TOP_LEVEL) {
-      await expect(header.getByRole('link', { name: section.label, exact: true })).toBeVisible()
+    for (const section of TOP_LEVEL.filter((s) => TABS.includes(s.href))) {
+      await expect(header.getByRole('link', { name: section.label, exact: true })).toHaveAttribute(
+        'href',
+        section.href
+      )
     }
-    await expect(page.locator('[aria-expanded]')).toHaveCount(0)
+    // One disclosure, and only one: More. Its links are hidden until it opens.
+    await expect(page.locator('[aria-expanded]')).toHaveCount(1)
+    const more = header.getByRole('button', { name: 'More' })
+    await expect(more).toHaveAttribute('aria-expanded', 'false')
+    for (const section of BEHIND_MORE) {
+      await expect(header.getByRole('link', { name: section.label, exact: true })).toHaveCount(0)
+    }
+    await more.click()
+    await expect(more).toHaveAttribute('aria-expanded', 'true')
+    for (const section of BEHIND_MORE) {
+      await expect(header.getByRole('link', { name: new RegExp(`^${section.label}\\b`) })).toHaveAttribute(
+        'href',
+        section.href
+      )
+    }
   })
 
   test('a section page carries one navigation bar, not two', async ({ page }) => {
@@ -67,9 +92,20 @@ test.describe('public navigation', () => {
   test('the top bar marks which section you are in', async ({ page }) => {
     // This is what makes the subnav unnecessary rather than merely absent: the
     // sticky top bar is the wayfinding, and it is one click back to the hub.
+    // A tab section: its tab is the current page.
+    await page.goto('/printing/basics')
+    const tab = page.locator('header').locator('[aria-current="page"]')
+    await expect(tab).toHaveText('3D Printing')
+    await expect(tab).toHaveAttribute('href', '/printing')
+
+    // A section behind More (859eee42): the More button is marked, and inside
+    // it the section's own link is the current page.
     await page.goto('/learn/switch-types')
+    const more = page.locator('header').getByRole('button', { name: 'More' })
+    await expect(more).toHaveAttribute('data-current', 'true')
+    await more.click()
     const current = page.locator('header').locator('[aria-current="page"]')
-    await expect(current).toHaveText('Learn')
+    await expect(current).toHaveText(/^Learn/)
     await expect(current).toHaveAttribute('href', '/learn')
   })
 
@@ -91,8 +127,11 @@ test.describe('public navigation', () => {
     await expect(page.getByRole('link', { name: /guides/i }).first()).toBeVisible()
   })
 
-  test('the homepage launcher reaches all six sections', async ({ page }) => {
+  test('the homepage reaches all seven sections', async ({ page }) => {
+    // The launcher grid went with the Soft Pop rebuild of / (a23f5dad); the
+    // header is what reaches every section now, two of them through More.
     await page.goto('/')
+    await page.locator('header').getByRole('button', { name: 'More' }).click()
     for (const section of TOP_LEVEL) {
       await expect(page.locator(`a[href="${section.href}"]`).first()).toBeVisible()
     }
@@ -119,15 +158,24 @@ test.describe('public navigation', () => {
     // duration to 0.01ms, which lands every section on its final frame at once —
     // and is the state this test actually cares about, since it is the path a
     // visitor who cannot run the animation gets.
+    //
+    // Since the Soft Pop rebuild of / (a23f5dad) the animated content is the
+    // scroll-world's five scenes, which the flight fades and marks inert as
+    // they leave the stage. Under reduced motion every one must be readable.
     await page.emulateMedia({ reducedMotion: 'reduce' })
     await page.goto('/')
 
-    const sections = page.locator('.rise')
-    expect(await sections.count()).toBeGreaterThan(0)
+    const scenes = page.getByRole('region', { name: 'How SPLAT works, as a journey' }).locator('article')
+    await expect(scenes).toHaveCount(5)
 
-    const hidden = await sections.evaluateAll(
-      (els) => els.filter((e) => getComputedStyle(e).opacity === '0').length
-    )
-    expect(hidden).toBe(0)
+    // Polled: the server render marks scenes 2-5 inert until the script takes
+    // over, so the first sample can land before hydration.
+    await expect
+      .poll(() =>
+        scenes.evaluateAll(
+          (els) => els.filter((e) => getComputedStyle(e).opacity === '0' || e.hasAttribute('inert')).length
+        )
+      )
+      .toBe(0)
   })
 })
