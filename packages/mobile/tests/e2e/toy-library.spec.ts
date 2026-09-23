@@ -34,10 +34,11 @@ test('a card carries its holder, its condition and its switch-adapted badge', as
   await page.getByPlaceholder('Search by toy name').fill(name)
   await expect(page.getByText(name)).toBeVisible()
 
-  await expect(page.getByText(`7/10 · Held by ${holder}`)).toBeVisible()
-  // Badge uppercases the string itself rather than leaning on textTransform,
-  // so the text node really does read SWITCH-ADAPTED.
-  await expect(page.getByText('Switch-adapted', { exact: true })).toBeVisible()
+  // Condition in words (7 is "Good"), then who holds it.
+  const card = page.getByRole('button', { name })
+  await expect(card.getByText('Good', { exact: true })).toBeVisible()
+  await expect(card.getByText(holder, { exact: true })).toBeVisible()
+  await expect(card.getByText('Switch-adapted', { exact: true })).toBeVisible()
 })
 
 test('the condition buckets keep only the toys that fall in them', async ({ page }) => {
