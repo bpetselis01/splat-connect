@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { suitsChild, switchSummary } from '@splat-connect/types'
+import { fitLine, suitsChild, switchSummary } from '@splat-connect/types'
 
 describe('suitsChild', () => {
   const light = { switch_target: 'large', switch_force: 'light', switch_hold: 'moment' } as const
@@ -19,5 +19,19 @@ describe('suitsChild', () => {
   it('reads the tags back in the board’s words', () => {
     expect(switchSummary(light)).toBe('big button, light press, short hold')
     expect(switchSummary({})).toBeNull()
+  })
+})
+
+describe('fitLine', () => {
+  const guide = { switch_target: 'large', switch_force: 'light', switch_hold: 'moment' } as const
+  const ollie = { name: 'Ollie', press_force: 'light', hold: 'second', aim: 'large' } as const
+  it('names the first child it suits, in the board’s words', () => {
+    const sia = { ...ollie, name: 'Sia', press_force: 'very_light' } as const
+    expect(fitLine(guide, [sia, ollie])).toBe('Suits Ollie — big button, light press, short hold')
+  })
+  it('says nothing when it suits no child, or cannot tell', () => {
+    expect(fitLine(guide, [])).toBeNull()
+    expect(fitLine(guide, [{ ...ollie, press_force: 'very_light' }])).toBeNull()
+    expect(fitLine({}, [ollie])).toBeNull()
   })
 })

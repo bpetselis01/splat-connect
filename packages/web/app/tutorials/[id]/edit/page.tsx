@@ -9,6 +9,7 @@ import { StlSettingsForm, type StlSettings } from '@/components/stl-settings-for
 import { EditItemsSection, type ItemInput } from '@/components/edit-items-section'
 import { EditBackingSection } from '@/components/edit-backing-section'
 import { EditDetailsSection } from '@/components/edit-details-section'
+import { EditStepsSection, type StepInput } from '@/components/edit-steps-section'
 import { EditCollaboratorsSection } from '@/components/edit-collaborators-section'
 import { EditRecommendationsSection } from '@/components/edit-recommendations-section'
 import { Stepper } from '@/components/stepper'
@@ -27,6 +28,7 @@ import {
   FlagBanner,
   FloppyDisk,
   Info,
+  ListNumbers,
   Nut,
   PaperPlaneTilt,
   Plus,
@@ -48,7 +50,7 @@ import { formatRelativeTime } from '@/lib/relative-time'
 import { TutorialView } from '@/components/tutorial-view'
 import { getMissingFields } from '@/lib/validation'
 import { DeleteEntityButton } from '@/components/delete-entity-button'
-import type { Tutorial, Part, Tool, StlFile, TutorialWithDetails, Difficulty, TutorialKind, BuyLink, TutorialOrg, Organization , TutorialMaturity } from '@splat-connect/types'
+import type { Tutorial, Part, Tool, StlFile, TutorialWithDetails, Difficulty, TutorialKind, BuyLink, TutorialOrg, Organization, TutorialMaturity, TutorialStep, PressForce, Hold } from '@splat-connect/types'
 
 /**
  * The body both file-saving actions share. A plain function at module scope,
@@ -134,7 +136,7 @@ export default async function EditTutorialPage({
     revalidatePath('/dashboard')
   }
 
-  async function saveDetails(patch: { title: string; description: string | null; difficulty: Difficulty; build_minutes: number | null; age_min: number | null; age_max: number | null; kind: TutorialKind; maturity: TutorialMaturity; safety_declared?: true; updated_at: string }) {
+  async function saveDetails(patch: { title: string; description: string | null; difficulty: Difficulty; build_minutes: number | null; age_min: number | null; age_max: number | null; kind: TutorialKind; maturity: TutorialMaturity; switch_target: 'large' | 'small' | null; switch_force: PressForce | null; switch_hold: Hold | null; safety_declared?: true; updated_at: string }) {
     'use server'
     const body: Record<string, unknown> = { ...patch }
     if (tutorial.status === 'approved' || tutorial.status === 'rejected') {
@@ -187,6 +189,12 @@ export default async function EditTutorialPage({
     'use server'
     const parts = newParts.map((p) => ({ ...p, quantity: p.quantity ?? 1 }))
     await apiClient.post(`/api/tutorials/${id}/parts`, { parts })
+    revalidatePath(`/tutorials/${id}/edit`)
+  }
+
+  async function saveSteps(steps: StepInput[]) {
+    'use server'
+    await apiClient.put(`/api/tutorials/${id}/steps`, { steps })
     revalidatePath(`/tutorials/${id}/edit`)
   }
 
@@ -245,6 +253,18 @@ export default async function EditTutorialPage({
       content: (
         <div className="panel pt-5">
           <EditDetailsSection tutorial={tutorial!} onSave={saveDetails} />
+        </div>
+      ),
+    },
+    {
+      id: 'steps',
+      label: 'Steps',
+      icon: <ListNumbers size={19} weight="duotone" aria-hidden="true" />,
+      hint: 'One photo and one instruction per action, in order. Optional — the PDF still carries the guide.',
+      status: stepStatuses.steps,
+      content: (
+        <div className="panel pt-5">
+          <EditStepsSection tutorialId={id} steps={tutorial.steps ?? []} onSave={saveSteps} />
         </div>
       ),
     },
@@ -391,15 +411,18 @@ export default async function EditTutorialPage({
   const byStep = (step: EditStepId) => missing.filter((m) => m.step === step).map((m) => m.label)
   const checklist = walk.map((step) => {
     const gaps = byStep(step)
-    const optional = step === 'recommended'
-    const done = optional ? stepStatuses.recommended === 'done' : gaps.length === 0
+    // Steps are optional too (080): guides written before them have none.
+    const optional = step === 'recommended' || step === 'steps'
+    const done = optional ? stepStatuses[step] === 'done' : gaps.length === 0
     return {
       step,
       label: allSteps.find((s) => s.id === step)!.label,
       note: done
         ? 'Done'
         : optional
-          ? 'Nothing picked yet — optional'
+          ? step === 'steps'
+            ? 'No steps yet — optional'
+            : 'Nothing picked yet — optional'
           : `Still needs ${gaps.map((g) => g.charAt(0).toLowerCase() + g.slice(1)).join(', ')}`,
       done,
     }
@@ -411,7 +434,7 @@ export default async function EditTutorialPage({
       meta: `Draft · saved ${formatRelativeTime(tutorial.updated_at)}`,
       head: 'Only you can see this',
       body: 'A draft is invisible to everyone — families, organisations, even us. It stays here as long as you like, and nothing is checked until you ask for it to be.',
-      progress: `${filled} of ${checklist.length} sections filled in. Worth a look is optional — Steps and Safety are not.`,
+      progress: `${filled} of ${checklist.length} sections filled in. Steps and Worth a look are optional — Safety is not.`,
       privacyLead: 'Nothing here is public.',
       privacy: 'A draft is visible only to you. Submitting shows it to your reviewer, and nobody else, until it is approved.',
     },
@@ -510,7 +533,7 @@ export default async function EditTutorialPage({
         {tutorial.status === 'draft' && (
           <EditorChecklist
             title="What is left before you can submit"
-            sub="Everything but Worth a look has to be filled in before a reviewer can read it."
+            sub="Everything but Steps and Worth a look has to be filled in before a reviewer can read it."
             rows={checklist}
           />
         )}

@@ -9,21 +9,38 @@ import { PanelActions, useSaveOnLeave } from '@/components/panel-actions'
  */
 import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { BUILD_TIME_OPTIONS, KIND_LABEL, MATURITY_LABEL, SAFETY_CHECKLIST, formatBuildTime, type Tutorial, type Difficulty, type TutorialKind, type TutorialMaturity } from '@splat-connect/types'
+import { BUILD_TIME_OPTIONS, SWITCH_TARGET_LABEL, SWITCH_FORCE_LABEL, SWITCH_HOLD_LABEL, type PressForce, type Hold, KIND_LABEL, MATURITY_LABEL, SAFETY_CHECKLIST, formatBuildTime, type Tutorial, type Difficulty, type TutorialKind, type TutorialMaturity } from '@splat-connect/types'
 import { useToast } from '@/components/toast'
+
+type SwitchTarget = 'large' | 'small'
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
+/** 080's three tags, in the board's order, labelled in the fit line's own words. */
+const SWITCH_ROWS = [
+  { name: 'switch_target', legend: 'Target', labels: SWITCH_TARGET_LABEL },
+  { name: 'switch_force', legend: 'Press', labels: SWITCH_FORCE_LABEL },
+  { name: 'switch_hold', legend: 'Hold', labels: SWITCH_HOLD_LABEL },
+] as const
+type SwitchName = (typeof SWITCH_ROWS)[number]['name']
 
 export function EditDetailsSection({
   tutorial,
   onSave,
 }: {
   tutorial: Tutorial
-  onSave: (patch: { title: string; description: string | null; difficulty: Difficulty; build_minutes: number | null; age_min: number | null; age_max: number | null; kind: TutorialKind; maturity: TutorialMaturity; safety_declared?: true; updated_at: string }) => Promise<void>
+  onSave: (patch: { title: string; description: string | null; difficulty: Difficulty; build_minutes: number | null; age_min: number | null; age_max: number | null; kind: TutorialKind; maturity: TutorialMaturity; switch_target: SwitchTarget | null; switch_force: PressForce | null; switch_hold: Hold | null; safety_declared?: true; updated_at: string }) => Promise<void>
 }) {
   const router = useRouter()
   const showToast = useToast()
   const [pending, setPending] = useState(false)
   const [conflict, setConflict] = useState(false)
   const [dirty, setDirty] = useState(false)
+  // Chips are buttons, which fire no form change, so the tags are state and
+  // ride into the FormData on hidden inputs. Tapping the chosen one clears it.
+  const [tags, setTags] = useState<Record<SwitchName, string>>({
+    switch_target: tutorial.switch_target ?? '',
+    switch_force: tutorial.switch_force ?? '',
+    switch_hold: tutorial.switch_hold ?? '',
+  })
 
   async function handleSubmit(formData: FormData) {
     setPending(true)
@@ -39,6 +56,9 @@ export function EditDetailsSection({
         age_max: formData.get('age_max') === '' ? null : Number(formData.get('age_max')),
         kind: formData.get('kind') as TutorialKind,
         maturity: formData.get('maturity') as TutorialMaturity,
+        switch_target: (formData.get('switch_target') as SwitchTarget) || null,
+        switch_force: (formData.get('switch_force') as PressForce) || null,
+        switch_hold: (formData.get('switch_hold') as Hold) || null,
         // Once declared, always declared — the timestamp on the row is the
         // record; the checkbox only exists until then.
         ...(formData.get('safety_declared') === 'on' ? { safety_declared: true as const } : {}),
@@ -168,6 +188,38 @@ export function EditDetailsSection({
           wears its stage as a badge.
         </p>
       </div>
+      <fieldset>
+        {/* The board's "Suits Ollie — big button, light press, short hold":
+            what this guide's switch asks of a child, in the child profile's
+            own words so the two compare directly. All optional — an untagged
+            guide simply never claims to suit anyone. */}
+        <legend className="field-label">What the switch asks</legend>
+        <div className="flex flex-col gap-2.5">
+          {SWITCH_ROWS.map((row) => (
+            <div key={row.name} role="group" aria-label={row.legend} className="flex flex-wrap items-center gap-2">
+              <span className="w-14 text-sm font-bold text-muted">{row.legend}</span>
+              <input type="hidden" name={row.name} value={tags[row.name]} />
+              {Object.entries(row.labels).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  aria-pressed={tags[row.name] === value}
+                  onClick={() => {
+                    setTags((t) => ({ ...t, [row.name]: t[row.name] === value ? '' : value }))
+                    setDirty(true)
+                  }}
+                  className="chip"
+                >
+                  {cap(label)}
+                </button>
+              ))}
+            </div>
+          ))}
+        </div>
+        <p className="mt-1 text-xs leading-relaxed text-muted">
+          A parent whose child can manage all of these sees &ldquo;Suits &lt;their child&gt;&rdquo;.
+        </p>
+      </fieldset>
       <fieldset>
         <legend className="field-label">Safety declaration</legend>
         {tutorial.safety_declared_at ? (

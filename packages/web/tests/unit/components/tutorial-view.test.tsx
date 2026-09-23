@@ -60,6 +60,23 @@ describe('TutorialView', () => {
     expect(screen.getByText('bracket.stl')).toBeInTheDocument()
   })
 
+  // 080: numbered steps first, and the fit line above the tabs only when given.
+  it('numbers the steps in a Steps tab and draws the fit callout only when there is one', () => {
+    const steps = [
+      { id: 'a', tutorial_id: 't1', position: 1, title: 'Open it', body: 'Unscrew the lid.', photo_url: null },
+      { id: 'b', tutorial_id: 't1', position: 2, title: null, body: 'Fit the interrupter.', photo_url: null },
+    ]
+    const { unmount } = render(
+      <TutorialView tutorial={tutorial({ steps })} signedIn fit="Suits Ollie — big button, light press, short hold" />
+    )
+    expect(screen.getByText('Open it')).toBeInTheDocument()
+    expect(screen.getByText('Fit the interrupter.')).toBeInTheDocument()
+    expect(screen.getByTestId('fit-callout')).toHaveTextContent('Suits Ollie — big button, light press, short hold')
+    unmount()
+    render(<TutorialView tutorial={tutorial({ steps })} signedIn />)
+    expect(screen.queryByTestId('fit-callout')).toBeNull()
+  })
+
   it('names the kind in the header', () => {
     render(<TutorialView tutorial={tutorial({ kind: 'assistive_tech' })} signedIn={false} />)
     expect(screen.getByText('Assistive tech')).toBeInTheDocument()

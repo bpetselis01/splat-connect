@@ -1726,6 +1726,9 @@ export interface TutorialWithDetails extends Tutorial {
    *  said no. An accepted invite's person also holds a tutorial_contributors
    *  row above; components/team-state.tsx drops the duplicate. */
   tutorial_collaborator_invites?: (TutorialCollaboratorInvite & { profiles: Profile })[]
+  /** 080. Both detail routes embed them, ordered by position. Optional so the
+   *  fixtures that predate steps need not name them. */
+  steps?: TutorialStep[]
 }
 
 // UploadDraft lived here: the in-progress state of the six-step upload wizard,
@@ -1919,4 +1922,19 @@ export function switchSummary(guide: Pick<Tutorial, 'switch_target' | 'switch_fo
     guide.switch_hold ? SWITCH_HOLD_LABEL[guide.switch_hold] : null,
   ].filter(Boolean)
   return parts.length ? parts.join(', ') : null
+}
+
+/**
+ * The board's fit line, "Suits Ollie — big button, light press, short hold",
+ * for the first of a parent's children the guide suits. Null when none do or
+ * nothing can be compared — the caller then says nothing at all.
+ */
+export function fitLine(
+  guide: Pick<Tutorial, 'switch_target' | 'switch_force' | 'switch_hold'>,
+  children: Pick<ChildProfile, 'name' | 'press_force' | 'hold' | 'aim'>[]
+): string | null {
+  const child = children.find((c) => suitsChild(guide, c) === true)
+  if (!child) return null
+  const summary = switchSummary(guide)
+  return `Suits ${child.name?.trim() || 'your child'}${summary ? ` — ${summary}` : ''}`
 }

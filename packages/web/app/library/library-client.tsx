@@ -38,6 +38,8 @@ import {
   Timer,
   HourglassMedium,
   Cube,
+  CheckCircle,
+  HandTap,
 } from '@phosphor-icons/react/dist/ssr'
 import Link from 'next/link'
 import { TutorialCard } from '@/components/tutorial-card'
@@ -103,12 +105,15 @@ export function LibraryClient({
   savedIds,
   signedIn,
   initialSearch = '',
+  suits = null,
 }: {
   tutorials: Tutorial[]
   stats: LibraryStats | null
   savedIds: string[]
   signedIn: boolean
   initialSearch?: string
+  /** The guides that suit one of the parent's children (080), or null to say nothing. */
+  suits?: { ids: string[]; name: string } | null
 }) {
   // A Set rather than repeated .includes: this is the busiest page on the site
   // and the lookup runs once per card.
@@ -117,13 +122,18 @@ export function LibraryClient({
   const [filters, setFilters] = useState<Filters>({})
   const [sortKey, setSortKey] = useState<SortKey>('new')
   const [dir, setDir] = useState<SortDir>('desc')
+  const [suitsOnly, setSuitsOnly] = useState(false)
+  const suitsSet = new Set(suits?.ids ?? [])
+  const suitsLabel = suits ? `Suits ${suits.name}` : ''
 
   // Tapping the chosen option clears it — one choice per facet, as the board has it.
   function toggle(key: keyof Filters, value: string) {
     setFilters((f) => ({ ...f, [key]: f[key] === value ? undefined : value }))
   }
 
-  const shown = sortGuides(filterGuides(tutorials, filters, search), sortKey, dir)
+  const shown = sortGuides(filterGuides(tutorials, filters, search), sortKey, dir).filter(
+    (t) => !suitsOnly || suitsSet.has(t.id)
+  )
 
   const active = [
     ...FACETS.flatMap((f) =>
@@ -132,11 +142,13 @@ export function LibraryClient({
         .map((o) => ({ label: o.label, clear: () => toggle(f.key, o.value) }))
     ),
     ...(search ? [{ label: `“${search}”`, clear: () => setSearch('') }] : []),
+    ...(suitsOnly ? [{ label: suitsLabel, clear: () => setSuitsOnly(false) }] : []),
   ]
 
   function clearAll() {
     setFilters({})
     setSearch('')
+    setSuitsOnly(false)
   }
 
   // The wizard keeps a profile, which needs an account. Signing up first, with
@@ -198,6 +210,27 @@ export function LibraryClient({
             </button>
           </div>
 
+          {suits && (
+            <fieldset>
+              <legend>
+                <HandTap size={18} weight="duotone" className="text-brand-dark" aria-hidden="true" />
+                For your child
+              </legend>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  aria-pressed={suitsOnly}
+                  onClick={() => setSuitsOnly(!suitsOnly)}
+                  className="chip gap-1.5"
+                >
+                  <CheckCircle size={14} weight="bold" className="text-brand-dark" aria-hidden="true" />
+                  {suitsLabel}
+                  <span className="text-muted">· {suits.ids.length}</span>
+                </button>
+              </div>
+            </fieldset>
+          )}
+
           {FACETS.map((f) => (
             <fieldset key={f.key}>
               <legend>
@@ -247,7 +280,7 @@ export function LibraryClient({
 
         <div>
           <div className="browse-head">
-            <h2>All guides</h2>
+            <h2>{suitsOnly && active.length === 1 ? suitsLabel : 'All guides'}</h2>
             <div className="flex items-center gap-2.5">
               <span aria-live="polite" className="text-sm font-bold text-muted">
                 {shown.length} guide{shown.length === 1 ? '' : 's'}
