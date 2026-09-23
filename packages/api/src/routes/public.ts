@@ -186,6 +186,25 @@ publicRoutes.get('/toys/:id', async (c) => {
 })
 
 /**
+ * The home page's editable copy (065's site_content), as the admin editor
+ * saved it. Raw values, null for a section never saved: the page checks each
+ * field and falls back to its own copy, so a half-filled row cannot blank it.
+ */
+publicRoutes.get('/content/home', async (c) => {
+  const { data, error } = await createAnonClient()
+    .from('site_content')
+    .select('key, value')
+    .in('key', ['home-hero', 'home-numbers', 'home-scenes'])
+  if (error) return c.json({ error: error.message }, 500)
+  const byKey = new Map((data ?? []).map((r) => [r.key, r.value]))
+  return c.json({
+    hero: byKey.get('home-hero') ?? null,
+    numbers: byKey.get('home-numbers') ?? null,
+    scenes: byKey.get('home-scenes') ?? null,
+  })
+})
+
+/**
  * Public impact aggregate for the contribution showcase.
  *
  * Ruling B: toy_transactions has no anon SELECT policy, so "delivered" handoffs
