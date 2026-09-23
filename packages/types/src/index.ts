@@ -1295,6 +1295,21 @@ export interface StoryListItem extends OrgStory {
 }
 
 /**
+ * Dollars as typed into a text field, as integer cents.
+ *
+ * Returns null for anything that is not a plain amount. Never parseFloat into
+ * cents by multiplying — `12.10 * 100` is 1209.9999999999998, and a cent lost
+ * to binary floating point in a number two families agreed between them is an
+ * argument rather than a display bug.
+ */
+export function dollarsToCents(input: string): number | null {
+  const match = /^\s*\$?\s*(\d{1,9})(?:\.(\d{1,2}))?\s*$/.exec(input)
+  if (!match) return null
+  const cents = (match[2] ?? '').padEnd(2, '0')
+  return Number(match[1]) * 100 + Number(cents)
+}
+
+/**
  * Reading time in whole minutes, at 200 words a minute, never less than one.
  *
  * Two callers — the public card and the publish form's live counter — so it is
