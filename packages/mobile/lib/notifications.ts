@@ -2,7 +2,7 @@
 // The copy and the routing behind the Inbox.
 //
 // COPY is ported VERBATIM from web's components/notifications-list.tsx — all
-// twenty-one of them. Two clients narrating the same event differently is how a
+// twenty-five of them. Two clients narrating the same event differently is how a
 // person ends up unsure whether they read about one thing or two, so the
 // wording is not "improved" here; change it on web first.
 //
@@ -35,7 +35,15 @@ export const COPY: Record<NotificationType, (n: Notification) => string> = {
   challenge_removed: (n) => `${n.actor_name} removed you from a design challenge`,
   idea_graduated: () =>
     'A challenge you were part of is being written up as a guide, and you are credited on it',
+  build_shot_posted: (n) => `${n.actor_name} posted a photo of ${n.toy_name} working`,
+  build_approved: (n) => `${n.actor_name} approved the working shot for ${n.toy_name}`,
+  print_started: (n) => `${n.actor_name} started printing ${n.toy_name}`,
+  print_ready: (n) => `${n.actor_name} finished printing ${n.toy_name}`,
 }
+
+/** Web's copyFor: a type this build has no line for renders, rather than throwing. */
+export const copyFor = (n: Notification): string =>
+  COPY[n.type]?.(n) ?? `${n.actor_name} updated something you're part of`
 
 /**
  * Where a notification lands on mobile. Web's linkFor with its hrefs swapped

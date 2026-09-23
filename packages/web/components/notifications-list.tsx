@@ -46,7 +46,16 @@ const COPY: Record<NotificationType, (n: Notification) => string> = {
   // challenge-card.tsx's "Being written up" and badge.tsx
   // exactly; must never claim more than those two do.
   idea_graduated: () => 'A challenge you were part of is being written up as a guide, and you are credited on it',
+  build_shot_posted: (n) => `${n.actor_name} posted a photo of ${n.toy_name} working`,
+  build_approved: (n) => `${n.actor_name} approved the working shot for ${n.toy_name}`,
+  print_started: (n) => `${n.actor_name} started printing ${n.toy_name}`,
+  print_ready: (n) => `${n.actor_name} finished printing ${n.toy_name}`,
 }
+
+// A type the database allows but this build has no line for — a newer API,
+// or a type added without copy — must still render. COPY[n.type](n) with no
+// fallback took the whole inbox down when the four build/print types landed.
+const copyFor = (n: Notification) => COPY[n.type]?.(n) ?? `${n.actor_name} updated something you're part of`
 
 type Glyph = ComponentType<SVGProps<SVGSVGElement>>
 // The board's icon tile: a tint per kind of news, the glyph always in --tink.
@@ -72,9 +81,21 @@ const ICON: Record<NotificationType, [Glyph, string]> = {
   challenge_left: [Lightbulb, 'var(--tamber)'],
   challenge_removed: [Lightbulb, 'var(--tamber)'],
   idea_graduated: [FileText, 'var(--tviolet)'],
+  build_shot_posted: [Box, 'var(--tcoral)'],
+  build_approved: [Check, 'var(--tok)'],
+  print_started: [Box, 'var(--tcoral)'],
+  print_ready: [Check, 'var(--tok)'],
 }
 
 function linkFor(n: Notification, isAdmin: boolean): string {
+  // Builds and print jobs have their own detail screens; the exchange thread
+  // is only for toys.
+  if (n.toy_transaction_id && (n.type === 'build_shot_posted' || n.type === 'build_approved')) {
+    return `/dashboard/exchanges/build/${n.toy_transaction_id}`
+  }
+  if (n.toy_transaction_id && (n.type === 'print_started' || n.type === 'print_ready')) {
+    return `/dashboard/print-requests/${n.toy_transaction_id}`
+  }
   if (n.toy_transaction_id) return `/dashboard/exchanges/${n.toy_transaction_id}`
   // The two review-queue types must be answered BEFORE the tutorial_id branch
   // below: their recipient is a reviewer, not a contributor, and
@@ -182,7 +203,7 @@ export function NotificationsList({
                 })}
                 className="block text-left text-[15px] font-extrabold text-ink after:absolute after:inset-0 after:rounded-[18px] after:content-['']"
               >
-                {COPY[n.type](n)}
+                {copyFor(n)}
               </button>
               {inviteId && (
                 <div className="relative z-10 mt-2 flex gap-2">

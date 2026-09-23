@@ -1180,6 +1180,10 @@ export type NotificationType =
   | 'challenge_removed'
   | 'idea_graduated'
   | 'tutorial_thanked'
+  | 'build_shot_posted'
+  | 'build_approved'
+  | 'print_started'
+  | 'print_ready'
 
 /** Which My SPLAT card a notification's badge belongs to. */
 export type NotificationBucket = 'tutorials' | 'exchanges' | 'challenges'
@@ -1220,6 +1224,10 @@ const NOTIFICATION_BUCKET = {
   toy_rejected: 'exchanges',
   toy_withdrawn: 'exchanges',
   toy_message: 'exchanges',
+  build_shot_posted: 'exchanges',
+  build_approved: 'exchanges',
+  print_started: 'exchanges',
+  print_ready: 'exchanges',
   idea_approved: 'challenges',
   idea_rejected: 'challenges',
   idea_graduated: 'challenges',

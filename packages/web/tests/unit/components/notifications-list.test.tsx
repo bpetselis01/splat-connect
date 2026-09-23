@@ -92,6 +92,38 @@ describe('NotificationsList', () => {
   // COPY map above, but not this ternary — an inverted condition or a
   // typo'd route string would ship silently without a test that clicks
   // through and checks where each row actually goes.
+  it('renders a type it has no copy for instead of throwing', () => {
+    render(
+      <NotificationsList
+        notifications={[baseNotif({ type: 'some_future_type' as Notification['type'], actor_name: 'Mei' })]}
+        pendingInvitesByTutorial={{}}
+        onMarkRead={vi.fn()}
+        onAcceptInvite={vi.fn()}
+        onDeclineInvite={vi.fn()}
+      />
+    )
+    expect(screen.getByText("Mei updated something you're part of")).toBeTruthy()
+  })
+
+  it.each([
+    ['build_shot_posted', 'Mei posted a photo of Light Touch Switch working', '/dashboard/exchanges/build/tx-1'],
+    ['build_approved', 'Mei approved the working shot for Light Touch Switch', '/dashboard/exchanges/build/tx-1'],
+    ['print_started', 'Mei started printing Light Touch Switch', '/dashboard/print-requests/tx-1'],
+    ['print_ready', 'Mei finished printing Light Touch Switch', '/dashboard/print-requests/tx-1'],
+  ] as const)('renders %s and routes it to its own detail screen', async (type, copy, href) => {
+    render(
+      <NotificationsList
+        notifications={[baseNotif({ type, actor_name: 'Mei', tutorial_id: null, tutorial_title: null, toy_transaction_id: 'tx-1', toy_name: 'Light Touch Switch' })]}
+        pendingInvitesByTutorial={{}}
+        onMarkRead={vi.fn().mockResolvedValue(undefined)}
+        onAcceptInvite={vi.fn()}
+        onDeclineInvite={vi.fn()}
+      />
+    )
+    fireEvent.click(screen.getByText(copy))
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith(href))
+  })
+
   describe('linkFor', () => {
     it('routes a toy_transaction_id row to its exchange thread', async () => {
       render(

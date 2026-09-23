@@ -14,7 +14,7 @@ import type { Notification, NotificationBucket, TutorialCollaboratorInvite } fro
 import { notificationBucket } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
-import { COPY, linkFor, relativeTime } from '../../lib/notifications'
+import { copyFor, linkFor, relativeTime } from '../../lib/notifications'
 import { Screen } from '../ui/Screen'
 import { Card } from '../ui/Card'
 import { Button } from '../ui/Button'
@@ -51,7 +51,7 @@ function Row({
       <AnimatedPressable
         onPress={onOpen}
         accessibilityRole="button"
-        accessibilityLabel={COPY[n.type](n)}
+        accessibilityLabel={copyFor(n)}
         accessibilityHint={unread ? 'Unread. Opens it and marks it read.' : 'Opens it.'}
         pressScale={0.99}
         style={styles.rowPress}
@@ -60,7 +60,7 @@ function Row({
             a screen reader through the hint above, so it is decorative here. */}
         <View style={[styles.dot, unread ? styles.dotUnread : styles.dotRead]} />
         <View style={styles.rowBody}>
-          <Text style={[styles.rowText, unread && styles.rowTextUnread]}>{COPY[n.type](n)}</Text>
+          <Text style={[styles.rowText, unread && styles.rowTextUnread]}>{copyFor(n)}</Text>
           <Text style={styles.stamp}>{relativeTime(n.created_at)}</Text>
         </View>
         <Ionicons name="chevron-forward" size={16} color={theme.colors.primary} />

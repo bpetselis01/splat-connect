@@ -13,7 +13,7 @@ describe('notificationBucket', () => {
    * compile error; this makes a *wrong* value a test failure.
    */
   it('gives every notification type a bucket', () => {
-    expect(NOTIFICATION_TYPES.length).toBe(21)
+    expect(NOTIFICATION_TYPES.length).toBe(25)
     for (const type of NOTIFICATION_TYPES) {
       expect(['tutorials', 'exchanges', 'challenges']).toContain(notificationBucket(type))
     }
@@ -32,8 +32,12 @@ describe('notificationBucket', () => {
   /* Every toy_* type is a transaction event, so My toys gets no badge and
      My exchanges gets all five. See the spec — do not invent a toy
      notification to fill that card. */
-  it('buckets all five toy events to exchanges, none to toys', () => {
+  it('buckets the toy, build and print events to exchanges, none to toys', () => {
     expect(typesInBucket('exchanges').sort()).toEqual([
+      'build_approved',
+      'build_shot_posted',
+      'print_ready',
+      'print_started',
       'toy_accepted',
       'toy_message',
       'toy_rejected',

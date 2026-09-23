@@ -1,7 +1,7 @@
 // packages/mobile/tests/unit/lib/notifications.test.ts
 import { NOTIFICATION_TYPES, notificationBucket } from '@splat-connect/types'
 import type { Notification, NotificationType } from '@splat-connect/types'
-import { COPY, linkFor, relativeTime } from '../../../lib/notifications'
+import { COPY, copyFor, linkFor, relativeTime } from '../../../lib/notifications'
 
 const notification = (over: Partial<Notification>): Notification => ({
   id: 'n1',
@@ -19,6 +19,11 @@ const notification = (over: Partial<Notification>): Notification => ({
 })
 
 describe('COPY', () => {
+  it('falls back for a type it has no line for, rather than throwing', () => {
+    expect(copyFor(notification({ type: 'some_future_type' as NotificationType }))).toBe("Sam updated something you're part of")
+    expect(copyFor(notification({ type: 'print_ready', toy_name: 'Light Touch Switch' }))).toBe('Sam finished printing Light Touch Switch')
+  })
+
   it('has a line for every notification type there is', () => {
     // The guard against a twenty-first type landing as a blank row.
     for (const type of NOTIFICATION_TYPES) {
