@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { FOOTER_COLUMNS } from '../../../components/public-footer'
+import { FOOTER_COLUMNS } from '../../../lib/public-nav'
 
 /**
  * The broadest guard in the suite.
