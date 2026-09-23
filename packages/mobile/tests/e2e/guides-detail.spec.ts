@@ -129,33 +129,9 @@ test('an unbacked guide shows the fixed Reviewed by SPLAT chip instead', async (
   await expect(page.getByText('Reviewed by SPLAT')).toBeVisible()
 })
 
-test('an assistive-tech guide shows the 3D-print placeholder', async ({ page }) => {
-  const contributor = await signInAsNewContributor(page)
-  const id = await createTutorial(contributor.id, {
-    title: uniqueTitle('E2E Mobile Printable'),
-    status: 'approved',
-    kind: 'assistive_tech',
-  })
-
-  await page.goto(`/guides/${id}`)
-
-  await expect(page.getByText('Request this 3D print')).toBeVisible()
-  // Badge uppercases the string itself, so the text node reads SOON.
-  await expect(page.getByText('SOON')).toBeVisible()
-})
-
-test('a toy adaptation has no 3D-print placeholder', async ({ page }) => {
-  const contributor = await signInAsNewContributor(page)
-  const id = await createTutorial(contributor.id, {
-    title: uniqueTitle('E2E Mobile Not Printable'),
-    status: 'approved',
-  })
-
-  await page.goto(`/guides/${id}`)
-
-  await expect(page.getByText('Parts')).toBeVisible()
-  await expect(page.getByText('Request this 3D print')).toHaveCount(0)
-})
+// The 3D-print placeholder these two tests covered was replaced by the real
+// "Find a printer" flow (5ada3f92); when that button shows is unit-tested in
+// tests/unit/components/home/detail-screen.test.tsx.
 
 test("the creator's picks row lists a recommendation and opens it", async ({ page }) => {
   const contributor = await signInAsNewContributor(page)

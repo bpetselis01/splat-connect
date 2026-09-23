@@ -81,7 +81,7 @@ test('the inventory shows org stock with its quantity', async ({ page }) => {
 
   await page.goto('/organisation/toys')
   await expect(page.getByText(name)).toBeVisible()
-  await expect(page.getByText('5', { exact: true })).toBeVisible()
+  await expect(page.getByText(/^5 in stock/)).toBeVisible()
 })
 
 test('a non-leader is told whose screen this is', async ({ page }) => {
