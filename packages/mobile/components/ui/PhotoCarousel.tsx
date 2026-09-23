@@ -6,6 +6,7 @@ import Animated, {
   useSharedValue,
   interpolate,
   Extrapolation,
+  runOnJS,
   type SharedValue,
 } from 'react-native-reanimated'
 import { Ionicons } from '@expo/vector-icons'
@@ -32,12 +33,15 @@ export function PhotoCarousel({
   switchUrl,
   height = 220,
   emptyIcon = 'cube-outline',
+  onIndexChange,
 }: {
   urls: string[]
   /** Which photo shows the accessibility switch, flagged as it comes past. */
   switchUrl?: string | null
   height?: number
   emptyIcon?: keyof typeof Ionicons.glyphMap
+  /** The photo now in view, once per change — for a "2/5" beside the carousel. */
+  onIndexChange?: (index: number) => void
 }) {
   const { width: screenWidth } = useWindowDimensions()
   // Measured rather than assumed: this sits inside padded screens as well as
@@ -45,10 +49,21 @@ export function PhotoCarousel({
   // a fraction of a photo every time.
   const [width, setWidth] = useState(screenWidth)
   const x = useSharedValue(0)
+  const page = useSharedValue(0)
 
-  const onScroll = useAnimatedScrollHandler((e) => {
-    x.value = e.contentOffset.x
-  })
+  // From the scroll handler rather than onMomentumScrollEnd, which
+  // react-native-web never fires.
+  const onScroll = useAnimatedScrollHandler(
+    (e) => {
+      x.value = e.contentOffset.x
+      const now = Math.round(e.contentOffset.x / width)
+      if (now !== page.value) {
+        page.value = now
+        if (onIndexChange) runOnJS(onIndexChange)(now)
+      }
+    },
+    [width, onIndexChange]
+  )
 
   if (urls.length === 0) {
     return (

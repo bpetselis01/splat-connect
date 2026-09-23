@@ -64,6 +64,7 @@ export function DetailScreen({ id }: { id: string }) {
   const [tutorial, setTutorial] = useState<TutorialDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
+  const [photo, setPhoto] = useState(0)
   // Thanks (066): once per person, never on your own guide. Unknown until the
   // GET lands, and a failed GET hides the button rather than guessing.
   const [thanks, setThanks] = useState<{ thanked: boolean; own: boolean } | null>(null)
@@ -149,13 +150,16 @@ export function DetailScreen({ id }: { id: string }) {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {/* Bleeds to the screen's edges and up under the header, as the board's hero does. */}
       <View style={styles.hero}>
-        <PhotoCarousel urls={tutorial.photo_urls} height={HERO_HEIGHT} emptyIcon="color-wand-outline" />
-        {/* ponytail: a count, not "1/5" — PhotoCarousel (components/ui) does not
-            report its page yet; switch to an index once it has onIndexChange. */}
+        <PhotoCarousel
+          urls={tutorial.photo_urls}
+          height={HERO_HEIGHT}
+          emptyIcon="color-wand-outline"
+          onIndexChange={setPhoto}
+        />
         {tutorial.photo_urls.length > 0 ? (
           <View style={styles.heroCount} pointerEvents="none">
             <Text style={styles.heroCountText} numberOfLines={1}>
-              {`${tutorial.photo_urls.length} photo${tutorial.photo_urls.length === 1 ? '' : 's'} · ${tutorial.title}`}
+              {`${Math.min(photo, tutorial.photo_urls.length - 1) + 1}/${tutorial.photo_urls.length} · ${tutorial.title}`}
             </Text>
           </View>
         ) : null}

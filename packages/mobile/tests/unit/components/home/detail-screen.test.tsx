@@ -76,6 +76,12 @@ describe('DetailScreen', () => {
     expect(screen.getByText('Screwdriver')).toBeTruthy()
   })
 
+  it('counts the hero photos from the first, as the board does', async () => {
+    mockEndpoints({ detail: Promise.resolve({ ...DETAIL, photo_urls: ['https://x.test/a.jpg', 'https://x.test/b.jpg'] }) })
+    render(<DetailScreen id="1" />)
+    expect(await screen.findByText('1/2 · Build a Robot Arm')).toBeTruthy()
+  })
+
   it('shows an error message when apiClient.get rejects', async () => {
     mockEndpoints({ detail: Promise.reject(new Error('API GET failed with status 500')) })
     render(<DetailScreen id="1" />)
