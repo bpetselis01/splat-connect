@@ -3,6 +3,11 @@ import { render, screen } from '@testing-library/react'
 
 const get = vi.fn()
 vi.mock('@/lib/api-client', () => ({ apiClient: { get: (...a: unknown[]) => get(...a) } }))
+// The row link is a client island (it opens the pane); the pane's buttons are
+// server actions. Neither runs here — they only have to import.
+const push = vi.fn()
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }))
+vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
 
 const org = (id: string, name: string) => ({
   id, name, description: null, status: 'active' as const,
@@ -67,5 +72,35 @@ describe('admin review queue', () => {
     render(await Page({ searchParams: Promise.resolve({}) }))
 
     expect(screen.queryByText(/Hide the/)).not.toBeInTheDocument()
+  })
+
+  // Tests: ?selected= opens the side pane for that row, and the row link still
+  //        points at the full review page
+  // How:   selects t2; the detail fetch answers with a guide missing its PDF and
+  //        with a co-author invite still pending
+  // Chain: the pane is a progressive enhancement — without JS the row must
+  //        still reach /admin/review/[id]; with it, the marks come from data
+  it('opens the side pane for the selected row, marks computed from the guide', async () => {
+    get.mockImplementation(async (path: string) =>
+      path === '/api/tutorials/t2'
+        ? {
+            ...unhandled, kind: 'toy_adaptation', photo_urls: ['a.jpg'], safety_declared_at: '2026-07-01T00:00:00Z',
+            parts: [{ id: 'p', name: 'Jack', quantity: 1 }], tools: [], stl_files: [],
+            tutorial_pdf_url: null, tutorial_contributors: [],
+            tutorial_collaborator_invites: [{ id: 'i', status: 'pending' }],
+          }
+        : path.startsWith('/api/admin/tutorials')
+          ? [handled, unhandled]
+          : []
+    )
+    const { default: Page } = await import('@/app/admin/review/page')
+    render(await Page({ searchParams: Promise.resolve({ selected: 't2' }) }))
+
+    const pane = screen.getByRole('complementary', { name: /reviewing platform project/i })
+    expect(pane).toHaveTextContent('No guide PDF')
+    expect(pane).toHaveTextContent('Co-authors not confirmed')
+    expect(pane).toHaveTextContent('At least one photo')
+    expect(screen.getByRole('link', { name: /open full preview/i })).toHaveAttribute('href', '/admin/review/t2')
+    expect(screen.getAllByRole('link', { name: 'Platform project' })[0]).toHaveAttribute('href', '/admin/review/t2')
   })
 })

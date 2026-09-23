@@ -1,6 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { apiClient } from '@/lib/api-client'
+import { approveTutorial, rejectTutorial } from '../actions'
 import type { ReactNode } from 'react'
 import { CheckCircle, Clock, WarningCircle, XCircle } from '@phosphor-icons/react/dist/ssr'
 import { adminActions } from '@/components/project-actions'
@@ -17,28 +18,6 @@ const dayMonth = (iso: string) =>
 type Reviewed = TutorialWithDetails & {
   reviewer?: { name: string } | null
   reviewed_for?: { name: string } | null
-}
-
-async function approveTutorial(id: string) {
-  'use server'
-  await apiClient.patch(`/api/admin/tutorials/${id}/status`, { status: 'approved' })
-  revalidatePath('/admin')
-  revalidatePath('/admin/review')
-  revalidatePath(`/admin/review/${id}`)
-  revalidatePath('/library')
-}
-
-async function rejectTutorial(formData: FormData) {
-  'use server'
-  const id = formData.get('id') as string
-  const note = formData.get('note') as string
-  await apiClient.patch(`/api/admin/tutorials/${id}/status`, {
-    status: 'rejected',
-    rejection_note: note || null,
-  })
-  revalidatePath('/admin')
-  revalidatePath('/admin/review')
-  revalidatePath(`/admin/review/${id}`)
 }
 
 /**
