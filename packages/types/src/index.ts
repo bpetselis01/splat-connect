@@ -4,6 +4,8 @@ export * from './nav-model'
 // lines above export nothing at runtime there. Named re-exports do.
 export { contributorBadges } from './contributor-badges'
 export type { ContributorBadge, ContributorBadgeInput } from './contributor-badges'
+export { buildCalendar } from './ics'
+export type { CalendarEvent } from './ics'
 import type { ContributorBadge } from './contributor-badges'
 
 export type Role = 'admin' | 'contributor'

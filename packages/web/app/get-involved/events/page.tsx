@@ -21,6 +21,7 @@ import Link from 'next/link'
 import type { Route } from 'next'
 import {
   ArrowRight,
+  CalendarPlus,
   CalendarX,
   CaretDown,
   ListBullets,
@@ -96,6 +97,11 @@ export default async function EventsPage({
   }
 
   const leads = (caps?.ledOrgs.length ?? 0) > 0
+  // The API's feed of every published event. webcal:// hands it to the
+  // calendar app as a subscription rather than a one-off download; the plain
+  // http(s) link is for the apps that only take a pasted URL.
+  const feed = `${process.env.NEXT_PUBLIC_API_URL}/api/public/events.ics`
+  const webcal = feed.replace(/^https?:/, 'webcal:')
 
   return (
     <div>
@@ -113,13 +119,24 @@ export default async function EventsPage({
             before you register.
           </p>
         </div>
-        {/* The board also draws "Subscribe to calendar"; there is no feed of
-            all events to subscribe to yet, only a per-event .ics. */}
-        {leads && (
-          <Link href="/dashboard/organisation/events/new" className="btn btn-primary min-h-12 px-5 text-[15px]">
-            <Plus weight="bold" aria-hidden="true" /> Host an event
-          </Link>
-        )}
+        <div className="flex flex-col items-end gap-1.5">
+          <div className="flex flex-wrap gap-2.5">
+            <a
+              href={webcal}
+              className="btn min-h-12 border-line bg-[var(--surface)] px-5 text-[15px] text-ink shadow-[var(--e1)]"
+            >
+              <CalendarPlus weight="bold" aria-hidden="true" /> Subscribe to calendar
+            </a>
+            {leads && (
+              <Link href="/dashboard/organisation/events/new" className="btn btn-primary min-h-12 px-5 text-[15px]">
+                <Plus weight="bold" aria-hidden="true" /> Host an event
+              </Link>
+            )}
+          </div>
+          <a href={feed} className="text-[13px] font-bold text-muted underline">
+            Or copy the feed link
+          </a>
+        </div>
       </div>
 
       {/* Links, not buttons: a filtered list is a place, and a family who finds

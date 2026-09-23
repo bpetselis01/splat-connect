@@ -17,21 +17,7 @@
  * breadcrumb trail's route table for a thing that has no breadcrumb.
  */
 import { apiClient } from '@/lib/api-client'
-import type { EventListItem } from '@splat-connect/types'
-
-/** RFC 5545 wants UTC as YYYYMMDDTHHMMSSZ, with no punctuation. */
-function stamp(iso: string): string {
-  return new Date(iso).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
-}
-
-/**
- * Escapes a value for an .ics line. Commas, semicolons and backslashes are
- * structural in this format, and a venue like "Northside Therapy, 14 Corella
- * St" silently truncates the address without this.
- */
-function esc(value: string): string {
-  return value.replace(/([\\;,])/g, '\\$1').replace(/\n/g, '\\n')
-}
+import { buildCalendar, type EventListItem } from '@splat-connect/types'
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -40,36 +26,23 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     return new Response('Not found', { status: 404 })
   }
 
-  const where =
-    event.format === 'online'
-      ? 'Online'
-      : [event.location, event.suburb, event.state].filter(Boolean).join(', ')
+  // Escaping, folding, CRLF and the two-hour default end all live in the
+  // shared builder, which the API's subscribable feed uses too.
+  const body = buildCalendar([
+    {
+      uid: `${event.id}@splat-connect`,
+      starts_at: event.starts_at,
+      ends_at: event.ends_at,
+      summary: event.title,
+      location:
+        event.format === 'online'
+          ? 'Online'
+          : [event.location, event.suburb, event.state].filter(Boolean).join(', '),
+      description: event.summary ?? event.description ?? '',
+    },
+  ])
 
-  // An event with no end time gets two hours, which is the shortest thing that
-  // is not a lie: a zero-length calendar entry renders as a point and vanishes
-  // in a week view.
-  const end = event.ends_at ?? new Date(new Date(event.starts_at).getTime() + 2 * 60 * 60 * 1000).toISOString()
-
-  const lines = [
-    'BEGIN:VCALENDAR',
-    'VERSION:2.0',
-    'PRODID:-//SPLAT Connect//Events//EN',
-    'CALSCALE:GREGORIAN',
-    'BEGIN:VEVENT',
-    `UID:${event.id}@splat-connect`,
-    `DTSTAMP:${stamp(new Date().toISOString())}`,
-    `DTSTART:${stamp(event.starts_at)}`,
-    `DTEND:${stamp(end)}`,
-    `SUMMARY:${esc(event.title)}`,
-    `LOCATION:${esc(where)}`,
-    `DESCRIPTION:${esc(event.summary ?? event.description ?? '')}`,
-    'END:VEVENT',
-    'END:VCALENDAR',
-  ]
-
-  // CRLF, not LF. RFC 5545 requires it and some calendar clients reject the
-  // file outright without it.
-  return new Response(`${lines.join('\r\n')}\r\n`, {
+  return new Response(body, {
     headers: {
       'Content-Type': 'text/calendar; charset=utf-8',
       'Content-Disposition': `attachment; filename="${event.id}.ics"`,

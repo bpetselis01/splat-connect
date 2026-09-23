@@ -157,6 +157,21 @@ describe('the public event surface', () => {
     expect(vic.map((r) => r.id)).toContain(onlineEventId)
     expect(vic.map((r) => r.id)).not.toContain(eventId)
   })
+
+  // The subscribable feed builds its own response too, so the joining-link
+  // rule is checked here as well.
+  it('serves every published event as a calendar feed, host named, joining link absent', async () => {
+    const res = await app.request('/api/public/events.ics')
+    expect(res.status).toBe(200)
+    expect(res.headers.get('Content-Type')).toMatch(/^text\/calendar/)
+    const ics = (await res.text()).replace(/\r\n /g, '')
+    expect(ics).toContain(`UID:${eventId}@splat-connect`)
+    expect(ics).toContain(`UID:${onlineEventId}@splat-connect`)
+    expect(ics).toContain('LOCATION:A hall\\, 1 Test St\\, Crows Nest\\, NSW')
+    expect(ics).toMatch(new RegExp(`URL:\\S+/get-involved/events/${onlineEventId}`))
+    expect(ics).toContain('DESCRIPTION:Hosted by Events Org')
+    expect(ics).not.toContain('secret.invalid')
+  })
 })
 
 describe('registering', () => {

@@ -8,7 +8,7 @@ import { chunk } from '../chunk.js'
 import { createAnonClient, createAdminClient } from '../supabase/client.js'
 import { atCapacityToyIds } from '../toy-access.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
-import { contributorBadges, readMinutes } from '@splat-connect/types'
+import { buildCalendar, contributorBadges, readMinutes } from '@splat-connect/types'
 import type {
   ImpactSummary,
   ImpactEntity,
@@ -994,6 +994,60 @@ publicRoutes.get('/events', async (c) => {
       }
     }),
   )
+})
+
+/**
+ * Every published, not-cancelled event as one subscribable calendar — the
+ * board's "Subscribe to calendar". A calendar app polls this, so it answers
+ * with the whole list rather than a page of it.
+ *
+ * The same public columns as the list, so the same two things never cross:
+ * an online event's joining link (its URL here is the event PAGE, where a
+ * registrant is given the link), and anything a registrant answered.
+ *
+ * Links point at the web app: CORS_ORIGIN is its origin, the same value
+ * app.ts trusts, with the same local default.
+ */
+publicRoutes.get('/events.ics', async (c) => {
+  const web = process.env.CORS_ORIGIN ?? `http://localhost:${process.env.PORT ?? '3100'}`
+  const { data: rows, error } = await createAnonClient()
+    .from('org_events')
+    .select(EVENT_PUBLIC_COLUMNS)
+    .eq('status', 'published')
+    .is('cancelled_at', null)
+    .order('starts_at', { ascending: true })
+  if (error) return c.json({ error: error.message }, 500)
+
+  const events = rows ?? []
+  // Names through the admin client, never an embed — see GET /events.
+  const { data: orgs } = await createAdminClient()
+    .from('organizations')
+    .select('id, name')
+    .in('id', [...new Set(events.map((e) => e.org_id as string))])
+  const orgName = new Map((orgs ?? []).map((o) => [o.id as string, o.name as string]))
+
+  const body = buildCalendar(
+    events.map((e) => {
+      const page = `${web}/get-involved/events/${e.id}`
+      const online = e.format === 'online'
+      return {
+        uid: `${e.id}@splat-connect`,
+        starts_at: e.starts_at as string,
+        ends_at: e.ends_at as string | null,
+        summary: e.title as string,
+        location: online ? 'Online' : [e.location, e.suburb, e.state].filter(Boolean).join(', '),
+        url: page,
+        description: [
+          `Hosted by ${orgName.get(e.org_id as string) ?? 'an organisation on SPLAT'}.`,
+          (e.summary as string | null) ?? '',
+          page,
+        ].filter(Boolean).join('\n\n'),
+      }
+    }),
+    { name: 'SPLAT Connect events' },
+  )
+
+  return c.body(body, 200, { 'Content-Type': 'text/calendar; charset=utf-8' })
 })
 
 publicRoutes.get('/events/:id', async (c) => {
