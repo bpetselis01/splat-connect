@@ -1,6 +1,6 @@
 import { chunk } from '../chunk.js'
 import { Hono, type Context } from 'hono'
-import { randomInt } from 'node:crypto'
+import { randomInt, randomUUID } from 'node:crypto'
 import { needsAction, isOwnerSide } from '@splat-connect/types'
 import type { PrintJobFile } from '@splat-connect/types'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
@@ -87,6 +87,40 @@ async function notifyOwnerSide(
   await admin
     .from('notifications')
     .insert(recipients.map((recipient_id) => ({ ...payload, recipient_id })))
+}
+
+/**
+ * The other printers a request went to (074). Once one accepts, the rest are
+ * withdrawn for the family — "so nobody prints it twice" — each with a line in
+ * its own thread and a notification to whoever was going to print it.
+ */
+async function withdrawPrintSiblings(
+  admin: ReturnType<typeof createAdminClient>,
+  tx: { id: string; print_group_id: string; requester_id: string; tutorial_id: string | null }
+) {
+  const { data: siblings } = await admin
+    .from('toy_transactions')
+    .update({ status: 'withdrawn', updated_at: new Date().toISOString() })
+    .eq('print_group_id', tx.print_group_id)
+    .neq('id', tx.id)
+    .eq('status', 'requested')
+    .select('id, owner_id, owner_org_id, tutorial_id, type, toy_id')
+  if (!siblings?.length) return
+  const requesterName = await profileName(admin, tx.requester_id, 'The family')
+  for (const sib of siblings) {
+    await admin.from('toy_transaction_messages').insert({
+      transaction_id: sib.id,
+      sender_id: tx.requester_id,
+      kind: 'system',
+      body: 'Another printer took this job, so it was withdrawn here. Nothing to do.',
+    })
+    await notifyOwnerSide(admin, sib, {
+      type: 'toy_withdrawn',
+      toy_transaction_id: sib.id,
+      toy_name: await subjectName(admin, sib as any),
+      actor_name: requesterName,
+    })
+  }
 }
 
 type MessagePreview = { body: string; sender_id: string; kind: string; created_at: string }
@@ -399,8 +433,20 @@ toyTransactions.get('/:id', async (c) => {
           ? { id: row.offered_toy_id, name: row.offered.name, status: row.offered.status }
           : null
 
+  // How many printers the request went to (074) — "Asked 2 printers" on the
+  // family's side, "Also asked 1 other" on the printer's.
+  const printGroupSize = row.print_group_id
+    ? (
+        await admin
+          .from('toy_transactions')
+          .select('id', { count: 'exact', head: true })
+          .eq('print_group_id', row.print_group_id)
+      ).count ?? 1
+    : null
+
   return c.json({
     ...sanitizeCodes(row, userId, ledOrgs),
+    print_group_size: printGroupSize,
     toy_name: row.toy?.name ?? '',
     tutorial_title: row.tutorial?.title ?? null,
     printer: row.printer ?? null,
@@ -628,6 +674,32 @@ toyTransactions.post('/:id/accept', async (c) => {
     return c.json({ error: 'Pickup address is required to accept' }, 400)
   }
 
+  // An organisation with several printers picks which one takes the job, and
+  // the choice is stamped on it (the board's "Accept on Bambu P1S"). Only a
+  // machine of the same organisation that is open and has room.
+  const bench = typeof body?.printer_id === 'string' ? body.printer_id : null
+  if (bench && tx.type === 'print' && tx.owner_org_id && bench !== tx.printer_id) {
+    const { data: machine } = await admin
+      .from('printers')
+      .select('id, owner_org_id, accepting, capacity')
+      .eq('id', bench)
+      .maybeSingle()
+    if (!machine || machine.owner_org_id !== tx.owner_org_id) return c.json({ error: 'Not found' }, 404)
+    if (!machine.accepting) return c.json({ error: 'That printer is not taking new jobs' }, 409)
+    const { count: busy } = await admin
+      .from('toy_transactions')
+      .select('id', { count: 'exact', head: true })
+      .eq('printer_id', machine.id)
+      .eq('status', 'accepted')
+    if ((busy ?? 0) >= machine.capacity) return c.json({ error: 'That printer is full right now' }, 409)
+    const { error: benchError } = await admin
+      .from('toy_transactions')
+      .update({ printer_id: machine.id })
+      .eq('id', tx.id)
+      .eq('status', 'requested')
+    if (benchError) return c.json({ error: benchError.message }, 500)
+  }
+
   // The atomic take. Two leaders pressing Accept in the same moment would both
   // pass a read-then-write capacity check and commit a sixth bear the org does
   // not have; this holds a row lock across the count and the write. See 033.
@@ -640,6 +712,17 @@ toyTransactions.post('/:id/accept', async (c) => {
     p_pickup_state: pickup?.pickup_state ?? null,
     p_pickup_postcode: pickup?.pickup_postcode ?? null,
   })
+  // 074's one-taker index: another printer in the same request got there first.
+  // The winner's sibling sweep may not have reached this row yet, so the loser
+  // withdraws its own job rather than leave it open on a request already taken.
+  if (error?.code === '23505') {
+    await admin
+      .from('toy_transactions')
+      .update({ status: 'withdrawn', updated_at: new Date().toISOString() })
+      .eq('id', tx.id)
+      .eq('status', 'requested')
+    return c.json({ error: 'Another printer has already taken this job.' }, 409)
+  }
   if (error) return c.json({ error: error.message }, 500)
 
   const outcome = (result as { outcome: string }).outcome
@@ -676,6 +759,8 @@ toyTransactions.post('/:id/accept', async (c) => {
     toy_name: await subjectName(admin, tx as any),
     actor_name: await ownerSideName(admin, tx as any, 'The owner'),
   })
+
+  if (tx.type === 'print' && tx.print_group_id) await withdrawPrintSiblings(admin, tx as any)
 
   // Rival requests are deliberately left open here. An accepted handoff can
   // still fall through — if it is withdrawn, the giving side should be able to
@@ -1419,41 +1504,60 @@ toyTransactions.post('/print', async (c) => {
 
   const note = typeof body.note === 'string' ? body.note.trim() : ''
   if (note.length > 1000) return c.json({ error: 'The note is longer than 1000 characters.' }, 400)
+  const colour = typeof body.colour === 'string' && body.colour.trim() ? body.colour.trim() : null
+  if (colour && colour.length > 30) return c.json({ error: 'Name the colour in 30 characters or fewer.' }, 400)
+  const delivery = body.delivery ?? null
+  if (delivery !== null && delivery !== 'collect' && delivery !== 'post') {
+    return c.json({ error: 'Choose collect or post.' }, 400)
+  }
 
   const fileIds = Array.isArray(body.stl_file_ids) ? body.stl_file_ids : []
   if (fileIds.length === 0 || !fileIds.every((id: unknown) => typeof id === 'string')) {
     return c.json({ error: 'Tick at least one part to print.' }, 400)
   }
 
-  const { data: printer, error: printerError } = await admin
+  // Up to three printers (074). `printer_id` is the single-printer form every
+  // client sent before, and still means a group of one.
+  const printerIds: unknown[] = Array.isArray(body.printer_ids)
+    ? [...new Set(body.printer_ids)]
+    : body.printer_id !== undefined
+      ? [body.printer_id]
+      : []
+  if (printerIds.length === 0 || printerIds.length > 3 || !printerIds.every((id) => typeof id === 'string')) {
+    return c.json({ error: 'Pick between one and three printers.' }, 400)
+  }
+
+  const { data: printers, error: printerError } = await admin
     .from('printers')
-    .select('id, owner_id, owner_org_id, accepting, capacity')
-    .eq('id', body.printer_id)
-    .maybeSingle()
+    .select('id, name, owner_id, owner_org_id, accepting, capacity')
+    .in('id', printerIds as string[])
   if (printerError) {
     if (printerError.code === INVALID_TEXT_REPRESENTATION) return c.json({ error: 'Not found' }, 404)
     return c.json({ error: printerError.message }, 500)
   }
-  if (!printer) return c.json({ error: 'Not found' }, 404)
+  if ((printers ?? []).length !== printerIds.length) return c.json({ error: 'Not found' }, 404)
 
-  if (printer.owner_id === userId) {
-    return c.json({ error: 'You cannot send a job to your own printer' }, 400)
-  }
-  if (printer.owner_org_id && (await ledOrgIds(admin, userId)).includes(printer.owner_org_id)) {
-    return c.json({ error: "You cannot send a job to your own organisation's printer" }, 400)
-  }
-
-  // Either closes the machine, and both are checked: the toggle is the
-  // deliberate act and the capacity is the honest one. A machine at capacity
-  // that still reads "accepting" would take a job it cannot start.
-  if (!printer.accepting) return c.json({ error: 'That printer is not taking new jobs' }, 409)
-  const { count: openJobs } = await admin
-    .from('toy_transactions')
-    .select('id', { count: 'exact', head: true })
-    .eq('printer_id', printer.id)
-    .eq('status', 'accepted')
-  if ((openJobs ?? 0) >= printer.capacity) {
-    return c.json({ error: 'That printer is full right now' }, 409)
+  const ledOrgs = await ledOrgIds(admin, userId)
+  for (const printer of printers!) {
+    const which = printers!.length > 1 ? ` (${printer.name})` : ''
+    if (printer.owner_id === userId) {
+      return c.json({ error: `You cannot send a job to your own printer${which}` }, 400)
+    }
+    if (printer.owner_org_id && ledOrgs.includes(printer.owner_org_id)) {
+      return c.json({ error: `You cannot send a job to your own organisation's printer${which}` }, 400)
+    }
+    // Either closes the machine, and both are checked: the toggle is the
+    // deliberate act and the capacity is the honest one. A machine at capacity
+    // that still reads "accepting" would take a job it cannot start.
+    if (!printer.accepting) return c.json({ error: `That printer is not taking new jobs${which}` }, 409)
+    const { count: openJobs } = await admin
+      .from('toy_transactions')
+      .select('id', { count: 'exact', head: true })
+      .eq('printer_id', printer.id)
+      .eq('status', 'accepted')
+    if ((openJobs ?? 0) >= printer.capacity) {
+      return c.json({ error: `That printer is full right now${which}` }, 409)
+    }
   }
 
   // Every file must belong to the guide named. Without this a request could
@@ -1480,58 +1584,77 @@ toyTransactions.post('/print', async (c) => {
     .from('toy_transactions')
     .select('id')
     .eq('requester_id', userId)
-    .eq('printer_id', printer.id)
+    .in('printer_id', printerIds as string[])
     .eq('tutorial_id', tutorial.id)
     .in('status', ['requested', 'accepted'])
-    .maybeSingle()
+    .limit(1)
   if (existingError) return c.json({ error: existingError.message }, 500)
-  if (existing) return c.json({ error: 'You already have an open job on that printer for this guide' }, 409)
+  if ((existing ?? []).length) {
+    return c.json({ error: 'You already have an open job on one of those printers for this guide' }, 409)
+  }
 
-  const { data: tx, error: insertError } = await admin
-    .from('toy_transactions')
-    .insert({
-      toy_id: null,
-      offered_toy_id: null,
-      tutorial_id: tutorial.id,
-      printer_id: printer.id,
-      print_note: note || null,
-      type: 'print',
-      status: 'requested',
-      requester_id: userId,
-      owner_id: printer.owner_id,
-      owner_org_id: printer.owner_org_id,
-    })
-    .select()
-    .single()
-  if (insertError) return c.json({ error: insertError.message }, 500)
-
-  const { error: linkError } = await admin.from('print_job_files').insert(
-    rows.map((f) => ({ transaction_id: tx.id, stl_file_id: f.id }))
-  )
-  // The files ARE the request. A job with none is a job nobody can fill, so it
-  // is rolled back rather than left as a row that looks fine and is not.
-  if (linkError) {
-    await admin.from('toy_transactions').delete().eq('id', tx.id)
-    return c.json({ error: linkError.message }, 500)
+  const groupId = randomUUID()
+  const created: Array<Record<string, any>> = []
+  const rollback = () =>
+    created.length ? admin.from('toy_transactions').delete().in('id', created.map((t) => t.id)) : null
+  for (const printer of printers!) {
+    const { data: tx, error: insertError } = await admin
+      .from('toy_transactions')
+      .insert({
+        toy_id: null,
+        offered_toy_id: null,
+        tutorial_id: tutorial.id,
+        printer_id: printer.id,
+        print_note: note || null,
+        print_colour: colour,
+        print_delivery: delivery,
+        print_group_id: groupId,
+        type: 'print',
+        status: 'requested',
+        requester_id: userId,
+        owner_id: printer.owner_id,
+        owner_org_id: printer.owner_org_id,
+      })
+      .select()
+      .single()
+    if (insertError) {
+      await rollback()
+      return c.json({ error: insertError.message }, 500)
+    }
+    created.push(tx)
+    const { error: linkError } = await admin
+      .from('print_job_files')
+      .insert(rows.map((f) => ({ transaction_id: tx.id, stl_file_id: f.id })))
+    // The files ARE the request. A job with none is a job nobody can fill, so
+    // the whole request is rolled back rather than left half-sent.
+    if (linkError) {
+      await rollback()
+      return c.json({ error: linkError.message }, 500)
+    }
   }
 
   const { data: requesterProfile } = await admin.from('profiles').select('name').eq('id', userId).single()
+  const parts = `${rows.length} part${rows.length === 1 ? '' : 's'}`
+  for (const tx of created) {
+    await admin.from('toy_transaction_messages').insert({
+      transaction_id: tx.id,
+      sender_id: userId,
+      kind: 'system',
+      body:
+        created.length > 1
+          ? `Asked ${created.length} printers for ${parts} from this guide. The first to accept takes it.`
+          : `Asked for ${parts} from this guide.`,
+    })
+    await notifyOwnerSide(admin, tx as any, {
+      type: 'toy_request',
+      toy_transaction_id: tx.id,
+      toy_name: tutorial.title,
+      actor_name: requesterProfile?.name ?? 'A contributor',
+    })
+  }
 
-  await admin.from('toy_transaction_messages').insert({
-    transaction_id: tx.id,
-    sender_id: userId,
-    kind: 'system',
-    body: `Asked for ${rows.length} part${rows.length === 1 ? '' : 's'} from this guide.`,
-  })
-
-  await notifyOwnerSide(admin, tx, {
-    type: 'toy_request',
-    toy_transaction_id: tx.id,
-    toy_name: tutorial.title,
-    actor_name: requesterProfile?.name ?? 'A contributor',
-  })
-
-  return c.json(tx, 201)
+  // The first job answers for the request; `transactions` lists all of them.
+  return c.json({ ...created[0], transactions: created }, 201)
 })
 
 /**

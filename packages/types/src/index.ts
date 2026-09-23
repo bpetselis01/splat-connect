@@ -235,6 +235,14 @@ export interface ToyTransaction {
   /** What the requester said about the print. The printer sees this and their
    *  suburb, and nothing else about them. */
   print_note: string | null
+  /** The request this job was sent as part of (074). A family can ask up to
+   *  three printers at once; every job in the group shares this id, the first
+   *  to accept takes it and the rest are withdrawn. */
+  print_group_id: string | null
+  /** The colour asked for — "Any colour", Black… Free text, ≤30 chars (074). */
+  print_colour: string | null
+  /** 'collect' or 'post' (074). Null on jobs sent before it existed. */
+  print_delivery: PrintDelivery | null
   printing_started_at: string | null
   /** Ready to collect. Never set without `ready_photo_url` — the constraint is
    *  in 058, and the point is that nobody travels for a part on somebody's
@@ -294,6 +302,13 @@ export interface PrinterWithOwner extends Printer {
 
 /** The materials a printer can declare. Presentational, so it lives here
  *  rather than in a check constraint (037's rule about `contact_prefs`). */
+export type PrintDelivery = 'collect' | 'post'
+/** The colours the request form offers (074). Stored as free text, so a
+ *  printer's own filament can be named in a note without a schema change. */
+export const PRINT_COLOURS = ['Any colour', 'Black', 'White', 'Blue'] as const
+/** A family may ask this many printers at once (074). */
+export const MAX_PRINTERS_PER_REQUEST = 3
+
 export const PRINT_MATERIALS = ['PLA', 'PETG', 'ABS', 'TPU', 'ASA', 'Nylon'] as const
 export type PrintMaterial = (typeof PRINT_MATERIALS)[number]
 
@@ -314,6 +329,35 @@ export function printStep(
   if (!tx.printing_started_at) return 'accepted'
   if (!tx.ready_at) return 'printing'
   return 'ready'
+}
+
+/**
+ * A family's view of their print requests: one row per request, not one per
+ * printer asked (074). The row kept is the one that matters — the job that was
+ * taken, else one still waiting, else however it ended — and it carries how
+ * many printers the request went to. Rows without a group pass through.
+ */
+export function collapsePrintGroups<
+  T extends Pick<ToyTransaction, 'print_group_id' | 'status'>,
+>(rows: T[]): Array<T & { print_group_size: number }> {
+  const rank: Record<string, number> = { accepted: 0, completed: 0, requested: 1, rejected: 2, withdrawn: 3 }
+  const groups = new Map<string, T[]>()
+  for (const r of rows) if (r.print_group_id) groups.set(r.print_group_id, [...(groups.get(r.print_group_id) ?? []), r])
+  const out: Array<T & { print_group_size: number }> = []
+  const seen = new Set<string>()
+  // Each group takes the place of its first member, so the caller's order holds.
+  for (const r of rows) {
+    if (!r.print_group_id) {
+      out.push({ ...r, print_group_size: 1 })
+      continue
+    }
+    if (seen.has(r.print_group_id)) continue
+    seen.add(r.print_group_id)
+    const members = groups.get(r.print_group_id)!
+    const lead = [...members].sort((x, y) => (rank[x.status] ?? 9) - (rank[y.status] ?? 9))[0]
+    out.push({ ...lead, print_group_size: members.length })
+  }
+  return out
 }
 
 /**
@@ -628,6 +672,9 @@ export interface ToyTransactionDetail extends ToyTransaction {
   printer: Pick<Printer, 'id' | 'name' | 'suburb' | 'state' | 'materials'> | null
   /** The parts a print job asks for (058), flattened out of the join. */
   print_files: PrintJobFile[]
+  /** How many printers the request went to, this one included (074). Null
+   *  on everything that is not a print job. */
+  print_group_size: number | null
   offered_toy_name: string | null
   owner_name: string
   requester_name: string

@@ -16,7 +16,7 @@ const tx = {
   owner_org_id: null,
   created_at: new Date().toISOString(),
   tutorial_title: 'Switch mount, printable',
-  print_note: null,
+  print_note: null, print_group_id: null, print_colour: null, print_delivery: null,
   requester_suburb: null,
   part_sets: null,
   blocked_by_rival_accept: false,
