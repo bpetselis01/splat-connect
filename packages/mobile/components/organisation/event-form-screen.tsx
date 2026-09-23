@@ -7,10 +7,9 @@
  * registration questions are edited here and sent whole after the event saves,
  * the same PUT web makes.
  *
- * Date and times are typed (2026-10-18, 10:00) rather than picked: mobile has no
- * native date picker installed, and adding one means an iOS prebuild.
- * ponytail: typed date/time; swap for @react-native-community/datetimepicker
- * when the next native module lands anyway.
+ * Date and times come from the system picker (ui/DateTimeField), which fills
+ * the same strings a typed field would — 2026-10-18, 10:00 — so localDate below
+ * checks one shape on every platform, web's typed fallback included.
  *
  * Both buttons return to Events and stories — mobile has no public event page.
  */
@@ -36,6 +35,7 @@ import { Screen } from '../ui/Screen'
 import { Chip } from '../ui/Chip'
 import { Button } from '../ui/Button'
 import { TextField } from '../ui/TextField'
+import { DateTimeField } from '../ui/DateTimeField'
 import { SkeletonRow } from '../ui/Skeleton'
 
 type DraftQuestion = { prompt: string; answer_type: AnswerType; required: boolean; options: string[] }
@@ -60,6 +60,9 @@ export function localDate(date: string, time: string): Date | null {
   // Rejects 2026-02-31 and 25:00, which Date would quietly roll over.
   return at.getMonth() === +d[2] - 1 && at.getHours() === +t[1] && +t[2] < 60 ? at : null
 }
+
+/** A round hour today, where an empty time picker opens. */
+const hourToday = (hour: number) => new Date(new Date().setHours(hour, 0, 0, 0))
 
 export function EventFormScreen() {
   const router = useRouter()
@@ -185,15 +188,10 @@ export function EventFormScreen() {
         </View>
         <Text style={styles.help}>{EVENT_KINDS[kind]}</Text>
 
-        <TextField label="Date" value={date} onChangeText={setDate} placeholder="2026-10-18" keyboardType="numbers-and-punctuation" maxLength={10} />
-        <View style={styles.pair}>
-          <View style={styles.half}>
-            <TextField label="Starts" value={starts} onChangeText={setStarts} placeholder="10:00" keyboardType="numbers-and-punctuation" maxLength={5} />
-          </View>
-          <View style={styles.half}>
-            <TextField label="Ends" value={ends} onChangeText={setEnds} placeholder="14:00" keyboardType="numbers-and-punctuation" maxLength={5} />
-          </View>
-        </View>
+        <DateTimeField label="Date" mode="date" value={date} onChange={setDate} placeholder="2026-10-18" minimumDate={new Date()} />
+        {/* One per row: the iOS time wheel is wider than half the screen. */}
+        <DateTimeField label="Starts" mode="time" value={starts} onChange={setStarts} placeholder="10:00" openOn={hourToday(10)} />
+        <DateTimeField label="Ends" mode="time" value={ends} onChange={setEnds} placeholder="14:00" openOn={hourToday(14)} />
 
         <Text style={styles.label}>Where</Text>
         <View style={styles.chips} accessibilityRole="radiogroup">
@@ -392,8 +390,6 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.tone.sunken.bg,
   },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2) },
-  pair: { flexDirection: 'row', gap: theme.spacing(3) },
-  half: { flex: 1 },
   well: { gap: theme.spacing(2), padding: theme.spacing(3), borderRadius: theme.radii.panel, backgroundColor: theme.colors.tone.sunken.bg },
   question: { gap: theme.spacing(2), padding: theme.spacing(3), borderRadius: theme.radii.panel, backgroundColor: theme.colors.surface },
   qActions: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
