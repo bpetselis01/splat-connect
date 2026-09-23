@@ -60,7 +60,7 @@ describe('challengeStats', () => {
   it('stops counting days once it is solved or answered', () => {
     expect(challengeStats(brief({ status: 'graduated' }), now)).toHaveLength(2)
     expect(challengeStats(brief({ kind: 'question', answered_at: '2026-08-10T00:00:00Z' }), now)).toEqual([
-      { n: 0, label: 'makers' },
+      { n: 0, label: 'people in' },
       { n: 0, label: 'answers' },
     ])
   })

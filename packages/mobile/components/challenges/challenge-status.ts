@@ -34,7 +34,9 @@ export function challengeStats(c: ToyIdeaDetail, now: Date): { n: number; label:
   const question = c.kind === 'question'
   const tile = (n: number, one: string, many: string) => ({ n, label: n === 1 ? one : many })
   const stats = [
-    tile(c.maker_count ?? c.participants.length, 'maker', 'makers'),
+    question
+      ? tile(c.maker_count ?? c.participants.length, 'person in', 'people in')
+      : tile(c.maker_count ?? c.participants.length, 'maker', 'makers'),
     question ? tile(c.answer_count ?? 0, 'answer', 'answers') : tile(c.answer_count ?? 0, 'post', 'posts'),
   ]
   if (c.status === 'challenge' && !(question && c.answered_at)) {
