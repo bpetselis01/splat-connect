@@ -20,6 +20,7 @@ export default function ExploreStackLayout() {
           than repeating a long challenge name in a narrow bar. */}
       <Stack.Screen name="challenges/[id]" options={{ title: 'Challenge' }} />
       <Stack.Screen name="challenges/new" options={{ title: 'Submit an idea' }} />
+      <Stack.Screen name="recycling" options={{ title: 'Recycling' }} />
       <Stack.Screen name="about" options={{ title: 'About SPLAT' }} />
     </Stack>
   )

@@ -44,6 +44,7 @@ export default function MyLayout() {
       <Stack.Screen name="organisation/[tutorialId]" options={{ title: 'Review' }} />
       <Stack.Screen name="organisation/toys" options={{ title: 'Toy inventory' }} />
       <Stack.Screen name="organisation/orders" options={{ title: 'Print orders' }} />
+      <Stack.Screen name="organisation/recycling" options={{ title: 'Recycling intake' }} />
       <Stack.Screen name="admin" options={{ title: 'Admin' }} />
     </Stack>
   )

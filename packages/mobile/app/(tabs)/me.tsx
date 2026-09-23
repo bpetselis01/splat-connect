@@ -46,8 +46,8 @@ export default function MeTab() {
             <View key={group.heading} style={styles.group}>
               <Text style={styles.eyebrow}>{group.heading}</Text>
               {group.rows.map((row) => {
-                // A web row with no mobile screen yet (printers, events,
-                // recycling) is SOON here, not a tap that lands back on Me.
+                // A web row with no mobile screen yet (printers, events) is
+                // SOON here, not a tap that lands back on Me.
                 const to = myRoute(row.href)
                 const soon = row.soon || to === '/me'
                 return <Row key={row.href} label={row.label} count={row.count} soon={soon} onPress={soon ? () => {} : go(to)} />

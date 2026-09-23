@@ -208,6 +208,13 @@ export function ExploreScreen() {
           onPress={() => router.push('/explore/challenges')}
         />
         <DoorCard
+          title="Recycling"
+          blurb="Book a plastic drop-off · Earn print credit"
+          tint={theme.colors.accentLight}
+          icon="leaf-outline"
+          onPress={() => router.push('/explore/recycling')}
+        />
+        <DoorCard
           title="About SPLAT"
           blurb="Who we are · Partners · Contact · Safety"
           tint={theme.colors.surfaceSunken}
