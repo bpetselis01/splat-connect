@@ -31,10 +31,12 @@ test('reading an article ticks it off and advances the Continue card', async ({ 
   // contains this one, so a substring match resolves to both.
   await page.getByRole('button', { name: '1. Toy adaptation 101', exact: true }).click()
   await page.waitForURL(/\/explore\/learn\/toy-adaptation-101$/)
-  await page.getByRole('button', { name: 'Mark as read' }).click()
+  // The footer's only action is the next article; reaching it marks this one read.
+  await page.getByRole('button', { name: 'Next: Switch types explained' }).click()
+  await page.waitForURL(/\/explore\/learn\/switch-types$/)
 
   // Back on the hub, the card has moved on and the count has gone up.
-  await page.waitForURL(/\/explore\/learn$/)
+  await page.goto('/explore/learn')
   await expect(page.getByText('2 · Switch types explained')).toBeVisible()
   await expect(page.getByText('1 of 6 read', { exact: false })).toBeVisible()
 

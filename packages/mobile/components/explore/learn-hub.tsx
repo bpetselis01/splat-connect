@@ -6,7 +6,7 @@ import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { theme } from '../../lib/theme'
 import { useLearnProgress } from '../../lib/learn'
-import { LEARN_ARTICLES } from '../../lib/learn-content'
+import { LEARN_ARTICLES, type LearnArticle } from '../../lib/learn-content'
 import { Screen } from '../ui/Screen'
 import { Card } from '../ui/Card'
 import { Meter } from '../ui/Meter'
@@ -16,15 +16,35 @@ function openWebPage(path: string) {
   Linking.openURL(`${process.env.EXPO_PUBLIC_WEB_URL}${path}`)
 }
 
+const START_HERE = 3
+
+/** The board's order: the first three numbered as the path in, the rest below. */
+export function learnSections(articles: LearnArticle[]) {
+  return { start: articles.slice(0, START_HERE), deeper: articles.slice(START_HERE) }
+}
+
+// No "SOON" rows: every article and Ask an expert are built. A row for an
+// unbuilt page would be the one place to add it.
+const DEEPER_ICON: Record<string, keyof typeof Ionicons.glyphMap> = {
+  'tools-and-materials': 'construct-outline',
+  'safety-and-cleaning': 'shield-checkmark-outline',
+  'printing-basics': 'print-outline',
+}
+
 export function LearnHub() {
   const router = useRouter()
   const { read, next, count } = useLearnProgress()
   const total = LEARN_ARTICLES.length
   const nextPosition = next ? LEARN_ARTICLES.findIndex((a) => a.slug === next.slug) + 1 : 0
+  const { start, deeper } = learnSections(LEARN_ARTICLES)
 
   return (
     <Screen>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        <Text style={styles.intro}>
+          How switch adaptation works, from first switch to safe finish. For instructions on one toy, use Guides.
+        </Text>
+
         {next ? (
           <AnimatedPressable
             onPress={() => router.push(`/explore/learn/${next.slug}`)}
@@ -47,74 +67,121 @@ export function LearnHub() {
           <Text style={styles.allRead}>All six read.</Text>
         )}
 
-        <View style={styles.path}>
-          {LEARN_ARTICLES.map((article, i) => {
-            const position = i + 1
-            const isRead = read.has(article.slug)
-            const isCurrent = next?.slug === article.slug
-            const isLast = i === LEARN_ARTICLES.length - 1
-
-            return (
-              <AnimatedPressable
-                key={article.slug}
-                onPress={() => router.push(`/explore/learn/${article.slug}`)}
-                accessibilityRole="button"
-                accessibilityLabel={`${position}. ${article.title}`}
-                accessibilityHint={isRead ? 'Read' : `${article.minutes} min`}
-                pressScale={0.99}
-                style={styles.pathItem}
-              >
-                <View style={styles.nodeColumn}>
-                  <View style={[styles.node, isRead && styles.nodeRead, isCurrent && styles.nodeCurrent]}>
-                    {/*
-                      The numeral/tick is decorative — the row's own
-                      accessibilityLabel already carries the position and
-                      title, so a screen reader repeating "1" or "check mark"
-                      ahead of it would say less than the label says on its
-                      own. Same hidden-glyph convention as StepPills.
-                    */}
-                    <View
-                      accessibilityElementsHidden
-                      importantForAccessibility="no-hide-descendants"
-                      aria-hidden
-                      testID={`learn-node-${isRead ? 'check' : 'numeral'}-${article.slug}`}
-                    >
-                      <Text style={[styles.nodeText, isRead && styles.nodeTextRead]}>
-                        {isRead ? '✓' : String(position)}
-                      </Text>
-                    </View>
-                  </View>
-                  {!isLast ? <View style={styles.connector} /> : null}
-                </View>
-                <Card style={styles.pathCard}>
-                  <Text style={styles.pathTitle}>{article.title}</Text>
-                  <Text style={styles.pathIntro} numberOfLines={2}>
-                    {article.intro}
-                  </Text>
-                  <Text style={styles.pathCaption}>{isRead ? 'Read' : `${article.minutes} min`}</Text>
-                </Card>
-              </AnimatedPressable>
-            )
-          })}
+        <Text style={styles.sectionLabel}>Start here</Text>
+        <View style={styles.list}>
+          {start.map((article, i) => (
+            <LearnRow
+              key={article.slug}
+              article={article}
+              label={`${i + 1}. ${article.title}`}
+              read={read.has(article.slug)}
+              tile={String(i + 1)}
+              onPress={() => router.push(`/explore/learn/${article.slug}`)}
+            />
+          ))}
         </View>
 
-        <AnimatedPressable
-          onPress={() => openWebPage('/learn/ask-an-expert')}
-          accessibilityRole="link"
-          accessibilityLabel="Ask an expert"
-          pressScale={0.99}
-          style={styles.askRow}
-        >
-          <Text style={styles.askLabel}>Ask an expert</Text>
-          <Ionicons name="chevron-forward" size={18} color={theme.colors.primary} />
-        </AnimatedPressable>
+        <Text style={styles.sectionLabel}>Going deeper</Text>
+        <View style={styles.list}>
+          {deeper.map((article) => (
+            <LearnRow
+              key={article.slug}
+              article={article}
+              label={article.title}
+              read={read.has(article.slug)}
+              icon={DEEPER_ICON[article.slug] ?? 'book-outline'}
+              onPress={() => router.push(`/explore/learn/${article.slug}`)}
+            />
+          ))}
+          <AnimatedPressable
+            onPress={() => openWebPage('/learn/ask-an-expert')}
+            accessibilityRole="link"
+            accessibilityLabel="Ask an expert"
+            pressScale={0.985}
+            style={styles.row}
+          >
+            <View style={[styles.tile, styles.tileIcon]}>
+              <Ionicons name="chatbubbles-outline" size={20} color={theme.colors.ink} />
+            </View>
+            <View style={styles.rowText}>
+              <Text style={styles.rowTitle}>Ask an expert</Text>
+              <Text style={styles.rowIntro}>Put a question to an OT or a maker.</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={theme.colors.muted} />
+          </AnimatedPressable>
+        </View>
       </ScrollView>
     </Screen>
   )
 }
 
+/** One Learn row: a numbered tile in Start here, an icon tile below it, a tick once read. */
+function LearnRow({
+  article,
+  label,
+  read,
+  tile,
+  icon,
+  onPress,
+}: {
+  article: LearnArticle
+  label: string
+  read: boolean
+  tile?: string
+  icon?: keyof typeof Ionicons.glyphMap
+  onPress: () => void
+}) {
+  return (
+    <AnimatedPressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityHint={read ? 'Read' : `${article.minutes} min`}
+      pressScale={0.985}
+      style={styles.row}
+    >
+      <View style={[styles.tile, read ? styles.tileRead : tile ? styles.tileNumber : styles.tileIcon]}>
+        {/*
+          The numeral/tick is decorative — the row's own accessibilityLabel
+          already carries the position and title, so a screen reader repeating
+          "1" or "check mark" ahead of it would say less than the label says on
+          its own. Same hidden-glyph convention as StepPills.
+        */}
+        <View
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          aria-hidden
+          testID={`learn-node-${read ? 'check' : tile ? 'numeral' : 'icon'}-${article.slug}`}
+        >
+          {read ? (
+            <Text style={styles.tileText}>✓</Text>
+          ) : tile ? (
+            <Text style={styles.tileText}>{tile}</Text>
+          ) : (
+            <Ionicons name={icon ?? 'book-outline'} size={20} color={theme.colors.ink} />
+          )}
+        </View>
+      </View>
+      <View style={styles.rowText}>
+        <Text style={styles.rowTitle}>{article.title}</Text>
+        <Text style={styles.rowIntro} numberOfLines={2}>
+          {article.intro}
+        </Text>
+      </View>
+      <Ionicons name="chevron-forward" size={18} color={theme.colors.muted} />
+    </AnimatedPressable>
+  )
+}
+
 const styles = StyleSheet.create({
   content: { paddingBottom: theme.spacing(6) },
+  intro: {
+    fontFamily: theme.fonts.regular,
+    fontSize: theme.type.label,
+    color: theme.colors.muted,
+    lineHeight: 21,
+    marginBottom: theme.spacing(4),
+  },
   continuePress: { marginBottom: theme.spacing(5) },
   continueCard: { gap: theme.spacing(2) },
   eyebrow: {
@@ -124,7 +191,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.6,
     textTransform: 'uppercase',
   },
-  continueTitle: { fontFamily: theme.fonts.bold, fontSize: theme.type.heading, color: theme.colors.text },
+  continueTitle: { fontFamily: theme.fonts.display, fontSize: theme.type.heading, color: theme.colors.text },
   continueCaption: {
     fontFamily: theme.fonts.regular,
     fontSize: theme.type.caption,
@@ -138,58 +205,32 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: theme.spacing(5),
   },
-  path: { marginBottom: theme.spacing(5) },
-  // padding, not margin: the connector below is flex:1 inside nodeColumn, which
-  // stretches to the row's own box. With the gap as a MARGIN the row's box ends
-  // at the title, so the line stopped one gap short of the next node and the
-  // path read as six dashes rather than one path. As padding, the gap is inside
-  // the row and the connector spans it.
-  pathItem: { flexDirection: 'row', gap: theme.spacing(3), paddingBottom: theme.spacing(4) },
-  nodeColumn: { alignItems: 'center', width: 28 },
-  node: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    borderWidth: theme.border.hairline,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  nodeRead: { backgroundColor: theme.colors.mint },
-  nodeCurrent: { backgroundColor: theme.colors.apricot, ...theme.shadow(1) },
-  nodeText: { fontFamily: theme.fonts.numeral, fontSize: 17, color: theme.colors.ink, lineHeight: 20 },
-  nodeTextRead: { color: theme.colors.ink },
-  // Stretches to the row's full height (the tallest sibling, the body card)
-  // so it visually runs down to the next node — it stops short of the next
-  // circle by the row's own marginBottom gap, which is accepted.
-  connector: { width: 2, flex: 1, backgroundColor: theme.colors.ink, marginVertical: theme.spacing(1) },
-  pathCard: { flex: 1 },
-  pathTitle: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.text },
-  pathIntro: {
-    fontFamily: theme.fonts.regular,
-    fontSize: theme.type.caption,
+  sectionLabel: {
+    fontFamily: theme.fonts.black,
+    fontSize: 12,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
     color: theme.colors.muted,
-    marginTop: theme.spacing(1),
-    lineHeight: 18,
+    marginBottom: theme.spacing(2),
   },
-  pathCaption: {
-    fontFamily: theme.fonts.regular,
-    fontSize: theme.type.caption,
-    color: theme.colors.primaryDeep,
-    marginTop: theme.spacing(1),
-  },
-  askRow: {
+  list: { gap: theme.spacing(3), marginBottom: theme.spacing(5) },
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: theme.spacing(3),
+    padding: theme.spacing(4),
+    borderRadius: theme.radii.panel,
     borderWidth: theme.border.hairline,
     borderColor: theme.colors.border,
-    borderRadius: theme.radii.field,
     backgroundColor: theme.colors.surface,
-    paddingVertical: theme.spacing(3),
-    paddingHorizontal: theme.spacing(4),
     ...theme.shadow(1),
   },
-  askLabel: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.text },
+  tile: { width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  tileNumber: { backgroundColor: theme.colors.honeySoft },
+  tileIcon: { backgroundColor: theme.colors.surfaceSunken },
+  tileRead: { backgroundColor: theme.colors.mintSoft },
+  tileText: { fontFamily: theme.fonts.display, fontSize: 15, color: theme.colors.ink },
+  rowText: { flex: 1, gap: 2 },
+  rowTitle: { fontFamily: theme.fonts.black, fontSize: 15, color: theme.colors.text },
+  rowIntro: { fontFamily: theme.fonts.regular, fontSize: 12.5, color: theme.colors.muted, lineHeight: 18 },
 })
