@@ -76,13 +76,14 @@ describe('getMissingFields', () => {
 })
 
 describe('sectionsFor', () => {
-  it('gives a toy adaptation five sections and no STL', () => {
-    expect(sectionsFor('toy_adaptation')).toEqual(['details', 'safety', 'parts', 'tools', 'files'])
+  it('gives a toy adaptation six sections and no STL', () => {
+    expect(sectionsFor('toy_adaptation')).toEqual(['details', 'steps', 'safety', 'parts', 'tools', 'files'])
   })
 
   it('adds STL for assistive tech', () => {
     expect(sectionsFor('assistive_tech')).toEqual([
       'details',
+      'steps',
       'safety',
       'parts',
       'tools',
@@ -117,12 +118,20 @@ describe('sectionSummary', () => {
     ).toBe('2 tools')
     expect(sectionSummary('files', base())).toBe('PDF and photo added')
   })
+
+  // 080: optional, so the empty line is an invitation rather than a gap.
+  it('counts steps, and says nothing is there yet without calling it missing', () => {
+    expect(sectionSummary('steps', base())).toBe('0 steps - nothing yet')
+    expect(sectionSummary('steps', base({ steps: [{ id: 's' }, { id: 't' }] as never }))).toBe('2 steps')
+    expect(getMissingFields(base()).some((g) => g.section === 'steps')).toBe(false)
+  })
 })
 
 describe('SECTION_LABEL', () => {
   it('labels every section', () => {
     expect(SECTION_LABEL).toEqual({
       details: 'Details',
+      steps: 'Steps',
       safety: 'Safety',
       parts: 'Parts',
       tools: 'Tools',

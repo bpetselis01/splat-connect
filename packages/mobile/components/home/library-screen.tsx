@@ -5,10 +5,11 @@ import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import type { Tutorial, TutorialOrg, TutorialKind, Difficulty } from '@splat-connect/types'
-import { KIND_LABEL } from '@splat-connect/types'
+import { KIND_LABEL, fitLine } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { useSaves, type Saves } from '../../lib/saves'
+import { useMyChildren } from '../../lib/my-children'
 import { ScreenHeader } from '../ui/ScreenHeader'
 import { Chip } from '../ui/Chip'
 import { Card } from '../ui/Card'
@@ -125,6 +126,10 @@ export function LibraryScreen() {
   const [search, setSearch] = useState('')
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null)
   const [kind, setKind] = useState<TutorialKind | null>(null)
+  // The board's "Suits Ollie" (080): the guides that suit one of the parent's
+  // children. Never shown when none do — the screen then says nothing.
+  const children = useMyChildren()
+  const [suitsOnly, setSuitsOnly] = useState(false)
   // Bumping this re-runs the fetch — the retry button's and pull-to-refresh's
   // shared handle.
   const [reloadKey, setReloadKey] = useState(0)
@@ -166,11 +171,15 @@ export function LibraryScreen() {
   // client-side match is complete — it just has to look past the title. Matching
   // the description too stops "search" from silently missing tutorials whose
   // relevant words live in the blurb rather than the name.
+  const suits = new Set(tutorials.filter((t) => fitLine(t, children)).map((t) => t.id))
+  const named = children.filter((c) => c.name?.trim())
+  const suitsLabel = `Suits ${children.length === 1 && named.length === 1 ? named[0].name!.trim() : 'your child'}`
+
   const q = search.trim().toLowerCase()
   const visible = tutorials.filter((t) => {
     const matchesQuery =
       !q || t.title.toLowerCase().includes(q) || (t.description?.toLowerCase().includes(q) ?? false)
-    return matchesQuery && (!kind || t.kind === kind)
+    return matchesQuery && (!kind || t.kind === kind) && (!suitsOnly || suits.has(t.id))
   })
 
   // One always-mounted list: header, search and filters live inside it as
@@ -242,8 +251,18 @@ export function LibraryScreen() {
               </FilterSheet>
             </View>
 
+            {!loading && !error && suits.size > 0 ? (
+              <View style={styles.suitsRow}>
+                <Chip
+                  label={`${suitsLabel} · ${suits.size}`}
+                  active={suitsOnly}
+                  onPress={() => setSuitsOnly((v) => !v)}
+                />
+              </View>
+            ) : null}
             {!loading && !error ? (
               <Text style={styles.countLine}>
+                {suitsOnly ? `${suitsLabel} — ` : ''}
                 {visible.length} guide{visible.length === 1 ? '' : 's'}
               </Text>
             ) : null}
@@ -310,6 +329,7 @@ export function LibraryScreen() {
 }
 
 const styles = StyleSheet.create({
+  suitsRow: { flexDirection: 'row', marginBottom: theme.spacing(2) },
   headerRow: { flexDirection: 'row', alignItems: 'flex-start', gap: theme.spacing(2) },
   headerTitle: { flex: 1 },
   menuSpacer: { width: 48 },

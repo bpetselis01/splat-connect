@@ -107,8 +107,8 @@ it('opens a section when its row is tapped', () => {
 it('counts what is ready and what is left', () => {
   mockDraft.tutorial = tutorial({ safety_declared_at: '2026-09-02', parts: [{ name: 'a' }] })
   render(<TutorialHub id="t1" />)
-  // details + safety + parts done, of six sections
-  expect(screen.getByText('3 of 6 ready')).toBeTruthy()
+  // details + steps (optional, so never a gap) + safety + parts, of seven
+  expect(screen.getByText('4 of 7 ready')).toBeTruthy()
   expect(screen.getByText('4 things still needed')).toBeTruthy()
 })
 

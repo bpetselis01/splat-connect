@@ -10,7 +10,9 @@
 import type { Difficulty, TutorialKind, TutorialWithDetails } from '@splat-connect/types'
 import { KIND_LABEL } from '@splat-connect/types'
 
-export type SectionId = 'details' | 'safety' | 'parts' | 'tools' | 'files' | 'stl'
+// 'steps' (080) is optional: no gap ever names it, so it never blocks submit
+// and Next never lands on it — a contributor opens it from the hub.
+export type SectionId = 'details' | 'steps' | 'safety' | 'parts' | 'tools' | 'files' | 'stl'
 
 export interface Gap {
   section: SectionId
@@ -19,6 +21,7 @@ export interface Gap {
 
 export const SECTION_LABEL: Record<SectionId, string> = {
   details: 'Details',
+  steps: 'Steps',
   safety: 'Safety',
   parts: 'Parts',
   tools: 'Tools',
@@ -50,7 +53,7 @@ export function getMissingFields(tutorial: TutorialWithDetails): Gap[] {
 
 /** The rows this tutorial's kind shows, in hub order. */
 export function sectionsFor(kind: TutorialKind): SectionId[] {
-  const base: SectionId[] = ['details', 'safety', 'parts', 'tools', 'files']
+  const base: SectionId[] = ['details', 'steps', 'safety', 'parts', 'tools', 'files']
   return kind === 'assistive_tech' ? [...base, 'stl'] : base
 }
 
@@ -100,6 +103,10 @@ export function sectionSummary(section: SectionId, t: TutorialWithDetails): stri
       // The one details gap the row's other words cannot show (066): without
       // it the hub says "1 thing still needed" and every row reads finished.
       return t.build_minutes == null ? `${base} - no build time yet` : base
+    }
+    case 'steps': {
+      const n = t.steps?.length ?? 0
+      return n ? count(n, 'step') : '0 steps - nothing yet'
     }
     case 'safety':
       return t.safety_declared_at ? 'Declared' : 'Not declared yet'

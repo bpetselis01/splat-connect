@@ -54,8 +54,11 @@ const DETAIL = {
 function mockEndpoints({
   detail = Promise.resolve(DETAIL),
   saves = Promise.resolve(NO_SAVES),
-}: { detail?: Promise<unknown>; saves?: Promise<unknown> } = {}) {
-  ;(apiClient.get as jest.Mock).mockImplementation((p: string) => (p === '/api/saves/ids' ? saves : detail))
+  children = Promise.resolve([]),
+}: { detail?: Promise<unknown>; saves?: Promise<unknown>; children?: Promise<unknown> } = {}) {
+  ;(apiClient.get as jest.Mock).mockImplementation((p: string) =>
+    p === '/api/saves/ids' ? saves : p === '/api/child-profiles' ? children : detail
+  )
 }
 
 describe('DetailScreen', () => {
@@ -127,5 +130,38 @@ describe('DetailScreen', () => {
     await screen.findByText('Build a Robot Arm')
 
     expect(screen.queryByLabelText('Ask someone to print')).toBeNull()
+  })
+})
+
+// 080: numbered steps, and the fit callout only when the guide suits a child.
+describe('DetailScreen steps and fit', () => {
+  const tagged = {
+    ...DETAIL,
+    switch_target: 'large',
+    switch_force: 'light',
+    switch_hold: 'moment',
+    steps: [
+      { id: 's1', tutorial_id: '1', position: 1, title: 'Open it', body: 'Unscrew the lid.', photo_url: null },
+      { id: 's2', tutorial_id: '1', position: 2, title: null, body: 'Fit the interrupter.', photo_url: null },
+    ],
+  }
+  const ollie = { name: 'Ollie', press_force: 'light', hold: 'second', aim: 'large' }
+
+  it('numbers the steps and says it suits the child', async () => {
+    mockEndpoints({ detail: Promise.resolve(tagged), children: Promise.resolve([ollie]) })
+    render(<DetailScreen id="1" />)
+    expect(await screen.findByText('Open it')).toBeTruthy()
+    expect(screen.getByText('Fit the interrupter.')).toBeTruthy()
+    expect(await screen.findByText('Suits Ollie — big button, light press, short hold')).toBeTruthy()
+  })
+
+  it('says nothing when the guide does not suit the child', async () => {
+    mockEndpoints({
+      detail: Promise.resolve(tagged),
+      children: Promise.resolve([{ ...ollie, press_force: 'very_light' }]),
+    })
+    render(<DetailScreen id="1" />)
+    await screen.findByText('Open it')
+    expect(screen.queryByTestId('fit-callout')).toBeNull()
   })
 })

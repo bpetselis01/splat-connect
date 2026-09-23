@@ -8,6 +8,8 @@ import { getToken } from './api-client'
 
 export type UploadPath =
   | '/api/upload/photo'
+  // 080: a guide step's photo; kept out of the five-photo gallery.
+  | '/api/upload/step-photo'
   | '/api/upload/pdf'
   | '/api/upload/stl'
   | '/api/upload/toy-photo'

@@ -35,8 +35,11 @@ const NO_SAVES = { tutorials: [], toys: [], challenges: [] }
 function mockEndpoints({
   tutorials = Promise.resolve([]),
   saves = Promise.resolve(NO_SAVES),
-}: { tutorials?: Promise<unknown>; saves?: Promise<unknown> } = {}) {
-  mockGet.mockImplementation((p: string) => (p === '/api/saves/ids' ? saves : tutorials))
+  children = Promise.resolve([]),
+}: { tutorials?: Promise<unknown>; saves?: Promise<unknown>; children?: Promise<unknown> } = {}) {
+  mockGet.mockImplementation((p: string) =>
+    p === '/api/saves/ids' ? saves : p === '/api/child-profiles' ? children : tutorials
+  )
 }
 
 beforeEach(() => {
@@ -141,5 +144,30 @@ describe('LibraryScreen', () => {
     fireEvent.press(screen.getByLabelText('Assistive tech'))
     expect(screen.queryByText('Bubble machine')).toBeNull()
     expect(screen.getByText('Head switch arm')).toBeTruthy()
+  })
+})
+
+// 080: the board's "Suits Ollie" — a chip that narrows the list to the guides
+// that suit one of the parent's children, drawn only when some do.
+describe('Suits <child>', () => {
+  const tagged = row({ id: 't9', title: 'Light touch switch', switch_force: 'very_light', switch_hold: 'moment' })
+  const firm = row({ id: 't8', title: 'Firm lever', switch_force: 'full' })
+
+  it('filters to the guides that suit the child', async () => {
+    mockEndpoints({
+      tutorials: Promise.resolve([tagged, firm]),
+      children: Promise.resolve([{ name: 'Ollie', press_force: 'light', hold: 'second', aim: null }]),
+    })
+    render(<LibraryScreen />)
+    fireEvent.press(await screen.findByLabelText('Suits Ollie · 1'))
+    await waitFor(() => expect(screen.queryByText('Firm lever')).toBeNull())
+    expect(screen.getByText('Light touch switch')).toBeTruthy()
+  })
+
+  it('says nothing without a child', async () => {
+    mockEndpoints({ tutorials: Promise.resolve([tagged]) })
+    render(<LibraryScreen />)
+    await screen.findByText('Light touch switch')
+    expect(screen.queryByText(/Suits/)).toBeNull()
   })
 })

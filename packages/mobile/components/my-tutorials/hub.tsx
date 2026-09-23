@@ -188,7 +188,9 @@ export function TutorialHub({ id, justCreated }: { id: string; justCreated?: boo
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.rows}>
         {sections.map((section) => {
-          const done = !incomplete.has(section)
+          const done = section === 'steps' ? (tutorial.steps?.length ?? 0) > 0 : !incomplete.has(section)
+          // Steps are optional (080): an empty list is an invitation, not a gap.
+          const optionalEmpty = section === 'steps' && !done
           return (
             <Pressable
               key={section}
@@ -198,9 +200,9 @@ export function TutorialHub({ id, justCreated }: { id: string; justCreated?: boo
               onPress={() => router.push(`/tutorials/${id}/${section}`)}
               style={[styles.row, done && styles.rowDone]}
             >
-              <View style={[styles.mark, done ? styles.markDone : styles.markTodo]}>
+              <View style={[styles.mark, done ? styles.markDone : optionalEmpty ? styles.markOptional : styles.markTodo]}>
                 <Ionicons
-                  name={done ? 'checkmark' : 'alert'}
+                  name={done ? 'checkmark' : optionalEmpty ? 'add' : 'alert'}
                   size={14}
                   color={done ? theme.colors.ink : theme.colors.ink}
                 />
@@ -361,6 +363,7 @@ const styles = StyleSheet.create({
   },
   markDone: { backgroundColor: theme.colors.mint },
   markTodo: { backgroundColor: theme.colors.apricotSoft },
+  markOptional: { backgroundColor: theme.colors.surfaceSunken },
   rowText: { flex: 1 },
   rowTitle: { fontFamily: theme.fonts.bold, fontSize: theme.type.body, color: theme.colors.ink },
   rowSummary: {

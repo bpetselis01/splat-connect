@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react'
 import { View, Text, ScrollView, StyleSheet, Image } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import type { Tutorial, Part, Tool, StlFile, Recommendation } from '@splat-connect/types'
-import { KIND_LABEL, MATURITY_LABEL } from '@splat-connect/types'
+import type { Tutorial, Part, Tool, StlFile, Recommendation, TutorialStep } from '@splat-connect/types'
+import { KIND_LABEL, MATURITY_LABEL, fitLine } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { supabase } from '../../lib/supabase'
 import { useSaves } from '../../lib/saves'
+import { useMyChildren } from '../../lib/my-children'
 import { theme } from '../../lib/theme'
 import { Provenance, type ProvenanceContributor, type ProvenanceOrg } from '../guides/provenance'
 import { PicksRow } from '../guides/picks-row'
@@ -26,6 +27,7 @@ type TutorialDetail = Tutorial & {
   tutorial_contributors: ProvenanceContributor[]
   tutorial_orgs: ProvenanceOrg[]
   tutorial_recommendations: Recommendation[]
+  steps?: TutorialStep[]
 }
 
 /**
@@ -47,6 +49,7 @@ function ListRow({ icon, label }: { icon: keyof typeof Ionicons.glyphMap; label:
 export function DetailScreen({ id }: { id: string }) {
   const router = useRouter()
   const saves = useSaves()
+  const children = useMyChildren()
   const [tutorial, setTutorial] = useState<TutorialDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
@@ -102,6 +105,11 @@ export function DetailScreen({ id }: { id: string }) {
     })
   }
 
+  // The board's fit callout: only when the guide suits one of the parent's
+  // children. Anything else — no tags, no answers, a mismatch — says nothing.
+  const fit = fitLine(tutorial, children)
+  const steps = tutorial.steps ?? []
+
   const primary = tutorial.tutorial_contributors.find((c) => c.role === 'primary') ?? tutorial.tutorial_contributors[0]
 
   return (
@@ -130,12 +138,44 @@ export function DetailScreen({ id }: { id: string }) {
       </View>
       {tutorial.description ? <Text style={styles.description}>{tutorial.description}</Text> : null}
 
+      {/* Above everything that follows: a parent should know it suits their
+          child before reading a single step. */}
+      {fit ? (
+        <View testID="fit-callout" style={styles.fit}>
+          <Ionicons name="checkmark-circle" size={18} color={theme.colors.success} />
+          <Text style={styles.fitText}>{fit}</Text>
+        </View>
+      ) : null}
+
       <Provenance
         contributors={tutorial.tutorial_contributors}
         orgs={tutorial.tutorial_orgs}
         onPerson={(pid) => router.push(`/guides/contributor/${pid}`)}
         onOrg={(oid) => router.push(`/guides/organisation/${oid}`)}
       />
+
+      {steps.length > 0 ? (
+        <Section title="Steps" hint="One action at a time. The PDF has the same guide to print.">
+          {steps.map((st) => (
+            <View key={st.id} testID={`guide-step-${st.position}`} style={styles.step}>
+              <View style={styles.stepNum}>
+                <Text style={styles.stepNumText}>{st.position}</Text>
+              </View>
+              <View style={styles.stepText}>
+                {st.title ? <Text style={styles.stepTitle}>{st.title}</Text> : null}
+                <Text style={styles.stepBody}>{st.body}</Text>
+                {st.photo_url ? (
+                  <Image
+                    source={{ uri: st.photo_url }}
+                    style={styles.stepPhoto}
+                    accessibilityLabel={st.title ? `Step ${st.position}: ${st.title}` : `Step ${st.position}`}
+                  />
+                ) : null}
+              </View>
+            </View>
+          ))}
+        </Section>
+      ) : null}
 
       <Section title="Parts" hint="What you'll need to buy or salvage.">
         {tutorial.parts.length ? (
@@ -265,6 +305,38 @@ const styles = StyleSheet.create({
     lineHeight: 23,
     marginTop: theme.spacing(3),
     marginBottom: theme.spacing(6),
+  },
+  fit: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing(2),
+    padding: theme.spacing(3),
+    borderRadius: theme.radii.field,
+    backgroundColor: theme.colors.mintSoft,
+    borderWidth: theme.border.hairline,
+    borderColor: theme.colors.border,
+    marginBottom: theme.spacing(4),
+  },
+  fitText: { flex: 1, fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.ink },
+  step: { flexDirection: 'row', gap: theme.spacing(3), paddingVertical: theme.spacing(2) },
+  stepNum: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.accentLight,
+  },
+  stepNumText: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.ink },
+  stepText: { flex: 1, gap: theme.spacing(1) },
+  stepTitle: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.ink },
+  stepBody: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.text, lineHeight: 21 },
+  stepPhoto: {
+    width: '100%',
+    aspectRatio: 4 / 3,
+    borderRadius: theme.radii.field,
+    marginTop: theme.spacing(1),
+    backgroundColor: theme.colors.surfaceSunken,
   },
   listRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3) },
   listItem: {
