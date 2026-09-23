@@ -272,11 +272,12 @@ toyTransactions.get('/', async (c) => {
   const userId = c.get('userId')
   const admin = createAdminClient()
   const ledOrgs = await ledOrgIds(admin, userId)
-  const rows = (data ?? []) as unknown as Array<
+  const rows = ((data ?? []) as unknown as Array<
     Record<string, unknown> & {
       id: string
       toy_id: string | null
       status: string
+      requester_id: string
       owner_id: string | null
       owner_org_id: string | null
       toy: { name: string; cover_photo_url: string | null } | null
@@ -287,7 +288,13 @@ toyTransactions.get('/', async (c) => {
       org: { name: string } | null
       print_job_files: PrintJobFileRow[] | null
     }
-  >
+  >).filter(
+    // The caller's own records only. RLS also lets a maker read every open
+    // build request so they can claim it (064), and returning those here put a
+    // stranger's request — name and id included, which GET /open-builds
+    // deliberately withholds — on every maker's exchange list and inbox.
+    (r) => r.requester_id === userId || r.owner_id === userId || (!!r.owner_org_id && ledOrgs.includes(r.owner_org_id))
+  )
   // Advisory, and fail-open by design: a failed scan must not blank the list.
   const blockedToyIds =
     (await atCapacityToyIds(

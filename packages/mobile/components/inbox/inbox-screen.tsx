@@ -27,7 +27,6 @@ import { notificationBucket, subjectName } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { threadHref } from '../../lib/builds'
-import { useCapabilities } from '../../lib/capabilities'
 import { copyFor, linkFor, relativeTime } from '../../lib/notifications'
 import { Screen } from '../ui/Screen'
 import { Button } from '../ui/Button'
@@ -80,17 +79,6 @@ function sentByViewer(tx: ToyTransactionSummary, senderId: string): boolean {
   const viewerGives = tx.requester_name !== null && tx.requester_name === tx.other_party_name
   if (!viewerGives) return senderId === tx.requester_id
   return tx.owner_id ? senderId === tx.owner_id : senderId !== tx.requester_id
-}
-
-/**
- * /api/toy-transactions also returns every open build on the Makers wanted
- * board — RLS lets any maker read one so they can claim it. Those are not the
- * viewer's conversations: an unclaimed build (no owner side yet) is theirs only
- * when they asked for it. Until the viewer is known, none is shown.
- */
-function isParty(tx: ToyTransactionSummary, viewerId: string | undefined): boolean {
-  const unclaimed = tx.owner_id === null && tx.owner_org_id === null
-  return !unclaimed || tx.requester_id === viewerId
 }
 
 function InboxCard({
@@ -154,7 +142,6 @@ export function InboxScreen({
   initialSegment?: InboxSegment
 }) {
   const router = useRouter()
-  const viewerId = useCapabilities().caps?.profile.id
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [transactions, setTransactions] = useState<ToyTransactionSummary[]>([])
   const [invites, setInvites] = useState<TutorialCollaboratorInvite[]>([])
@@ -215,7 +202,8 @@ export function InboxScreen({
       unreadByTx.set(n.toy_transaction_id, [...(unreadByTx.get(n.toy_transaction_id) ?? []), n])
     }
   }
-  const mine = transactions.filter((t) => isParty(t, viewerId))
+  // The API returns only the viewer's own records (never others' open builds).
+  const mine = transactions
   const txIds = new Set(mine.map((t) => t.id))
   // An exchange notification whose transaction is not in the list — the list
   // failed, or the row is one the viewer can no longer see — is still news.

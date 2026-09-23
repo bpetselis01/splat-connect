@@ -16,11 +16,6 @@ jest.mock('../../../../lib/api-client', () => ({
   },
 }))
 
-// The viewer's id, for telling their own open build from another family's.
-jest.mock('../../../../lib/capabilities', () => ({
-  useCapabilities: () => ({ caps: { profile: { id: 'viewer1' } }, loading: false, refresh: jest.fn() }),
-}))
-
 const mockPush = jest.fn()
 jest.mock('expo-router', () => {
   const { useEffect } = jest.requireActual('react')
@@ -153,22 +148,6 @@ describe('InboxScreen', () => {
     // A build opens its own thread.
     fireEvent.press(screen.getByLabelText('Bubble machine with Eastwood School'))
     expect(mockPush).toHaveBeenCalledWith('/exchanges/build/tx2')
-  })
-
-  it("leaves out somebody else's open build, which the exchanges list also returns", async () => {
-    respond(
-      [],
-      [],
-      [
-        // Posted to Makers wanted by another family; nobody has claimed it.
-        tx({ id: 'tx8', type: 'build', tutorial_title: 'Their guide', owner_id: null, requester_id: 'fam', other_party_name: '', requester_name: null }),
-        // The viewer's own open build: still theirs.
-        tx({ id: 'tx9', type: 'build', tutorial_title: 'My guide', owner_id: null, other_party_name: '', requester_name: 'Viewer' }),
-      ]
-    )
-    render(<InboxScreen />)
-    expect(await screen.findByLabelText('My guide with My guide')).toBeTruthy()
-    expect(screen.queryByText('Their guide')).toBeNull()
   })
 
   it('opens on Notifications when there are no exchanges, and where it is told to', async () => {
