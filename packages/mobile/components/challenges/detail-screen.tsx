@@ -22,8 +22,11 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
 } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
+import { challengeHistory, challengePill, challengeStats, shortDate } from './challenge-status'
 import type { ToyIdeaDetail, ToyIdeaMessage, ContactPref } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
@@ -49,6 +52,15 @@ const CONTACT_PREF_LABELS: Record<ContactPref, string> = {
   co_design: 'Co-design',
   user_testing: 'User testing',
 }
+
+type Tab = 'status' | 'brief' | 'constraints' | 'makers'
+// The conversation lives under Makers: it is the makers' thread.
+const TABS: { id: Tab; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+  { id: 'status', label: 'Status', icon: 'pulse-outline' },
+  { id: 'brief', label: 'Brief', icon: 'document-text-outline' },
+  { id: 'constraints', label: 'Constraints', icon: 'alert-circle-outline' },
+  { id: 'makers', label: 'Makers', icon: 'people-outline' },
+]
 
 function Field({ label, value }: { label: string; value: string }) {
   return (
@@ -87,6 +99,7 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
   // participants list is the server's answer to "am I in", and a system
   // message lands beside it that Task 5's thread will want anyway.
   const [reloadKey, setReloadKey] = useState(0)
+  const [tab, setTab] = useState<Tab>('status')
 
   useEffect(() => {
     let ignore = false
@@ -244,6 +257,21 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
     return challenge.participants.find((p) => p.profile_id === senderId)?.name ?? 'Someone'
   }
 
+  const pill = challengePill(challenge)
+  const stats = challengeStats(challenge, new Date())
+  const history = challengeHistory(challenge)
+  const makers = challenge.maker_count ?? challenge.participants.length
+  const headline =
+    challenge.status === 'graduated'
+      ? { title: 'Solved — it became a guide', body: 'The write-up went through review and is in Guides now.' }
+      : question
+        ? answerId
+          ? { title: 'Answered', body: 'The asker marked the reply that helped. The thread stays open to read.' }
+          : { title: 'Open, waiting for an answer', body: 'Anyone who joins can answer in the thread.' }
+        : makers > 0
+          ? { title: 'Open, and makers are on it', body: 'Anyone can read the brief; makers who join can post in the thread.' }
+          : { title: 'Open, waiting for a maker', body: 'Anyone can read the brief; the first maker to join starts the thread.' }
+
   return (
     // `padding` shrinks Screen's flex:1 child by the keyboard's height on iOS,
     // lifting the composer above it; Android resizes at the OS level already.
@@ -254,69 +282,52 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
         ref={logRef}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
-        onContentSizeChange={() => canRead && logRef.current?.scrollToEnd({ animated: false })}
+        onContentSizeChange={() => canRead && tab === 'makers' && logRef.current?.scrollToEnd({ animated: false })}
       >
-        <View style={styles.titleRow}>
-          <Text style={styles.title}>{challenge.title}</Text>
+        <View style={styles.statusLine}>
+          <Badge status={pill.status} label={pill.label} />
+          <Text style={styles.meta}>
+            {`Published ${shortDate(challenge.created_at)} · ${challenge.author_name ?? 'anonymous'}`}
+          </Text>
+        </View>
+        <Text style={styles.title}>{challenge.title}</Text>
+
+        {/*
+          The one control, above everything, as on the board. The gate copy is
+          web's challenge-thread.tsx verbatim, so the two clients say the same
+          thing to the same reader.
+        */}
+        <View style={styles.actionRow}>
+          <View style={styles.actionMain}>
+            {viewerId === null ? (
+              <Text style={styles.quiet}>Sign in to see the conversation and join this challenge.</Text>
+            ) : joined ? (
+              <View style={styles.joinedRow}>
+                <Text style={styles.joinedText}>✓ You joined</Text>
+                <Button label="Leave" variant="danger" disabled={busy} onPress={confirmLeave} />
+              </View>
+            ) : isAuthor ? (
+              // The author is never a participant row (038's insert policy refuses
+              // it), so they get neither control — the thread is theirs by
+              // authorship, not by joining.
+              <Text style={styles.quiet}>This is your challenge.</Text>
+            ) : open ? (
+              <Button
+                label={question ? 'Join to answer' : 'Join this challenge'}
+                loading={busy}
+                onPress={() => void join()}
+              />
+            ) : (
+              <Text style={styles.quiet}>
+                This challenge has moved on to write-up, so joining is no longer open.
+              </Text>
+            )}
+          </View>
           <SaveButton slug="challenges" id={challenge.id} saves={saves} />
         </View>
-
-        <View style={styles.badgeRow}>
-          {question ? (
-            <Badge
-              status={answerId ? 'approved' : 'challenge'}
-              label={answerId ? 'Answered' : 'Open question'}
-            />
-          ) : (
-            <Badge status={challenge.status} label={open ? 'Open challenge' : 'Solved'} />
-          )}
-        </View>
-
-        <Text style={styles.summary}>{challenge.summary}</Text>
-        {challenge.author_name ? (
-          <Text style={styles.byline}>{`Posted by ${challenge.author_name}`}</Text>
+        {viewerId !== null && !joined && !isAuthor && open ? (
+          <Text style={styles.gateHint}>Join this challenge to read and take part in the conversation.</Text>
         ) : null}
-
-        {/* The list shape has no tutorial_id, so this is the only place the
-            guide a solved challenge became can be linked from. */}
-        {challenge.tutorial_id ? (
-          <Button
-            label="Read the guide"
-            variant="secondary"
-            onPress={() => router.push(`/guides/${challenge.tutorial_id}`)}
-            style={styles.guideButton}
-          />
-        ) : null}
-
-        <Card style={styles.brief}>
-          <Field label="The problem" value={challenge.description} />
-          <Field label="Intended use" value={challenge.intended_use} />
-          <Field label="Who it's for" value={challenge.primary_user} />
-        </Card>
-
-        {challenge.contact_prefs.length > 0 ? (
-          <View style={styles.block}>
-            <Text style={styles.blockTitle}>The author is happy to help with</Text>
-            <View style={styles.tagRow}>
-              {challenge.contact_prefs.map((pref) => (
-                <Tag key={pref} label={CONTACT_PREF_LABELS[pref]} />
-              ))}
-            </View>
-          </View>
-        ) : null}
-
-        <View style={styles.block}>
-          <Text style={styles.blockTitle}>Participants</Text>
-          {challenge.participants.length === 0 ? (
-            <Text style={styles.quiet}>Nobody has joined yet.</Text>
-          ) : (
-            <View style={styles.tagRow}>
-              {challenge.participants.map((p) => (
-                <Tag key={p.profile_id} label={p.name ?? 'Someone'} />
-              ))}
-            </View>
-          )}
-        </View>
 
         {actionError ? (
           <Text accessibilityRole="alert" style={styles.error}>
@@ -324,42 +335,107 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
           </Text>
         ) : null}
 
-        {/*
-          The gate copy is web's challenge-thread.tsx verbatim, so the two
-          clients say the same thing to the same reader.
-        */}
-        {viewerId === null ? (
-          <Text style={styles.quiet}>Sign in to see the conversation and join this challenge.</Text>
-        ) : joined ? (
-          <View style={styles.joinedRow}>
-            <Text style={styles.joinedText}>✓ You joined</Text>
-            <Button label="Leave" variant="danger" disabled={busy} onPress={confirmLeave} />
-          </View>
-        ) : isAuthor ? (
-          // The author is never a participant row (038's insert policy refuses
-          // it), so they get neither control — the thread below is theirs by
-          // authorship, not by joining.
-          <Text style={styles.quiet}>This is your challenge.</Text>
-        ) : open ? (
-          <View style={styles.gate}>
-            <Text style={styles.quiet}>
-              Join this challenge to read and take part in the conversation.
-            </Text>
-            <Button
-              label={question ? 'Join to answer' : 'Join this challenge'}
-              variant="accent"
-              loading={busy}
-              onPress={() => void join()}
-              style={styles.joinButton}
-            />
-          </View>
-        ) : (
-          <Text style={styles.quiet}>
-            This challenge has moved on to write-up, so joining is no longer open.
-          </Text>
-        )}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          accessibilityRole="tablist"
+          style={styles.tabsScroll}
+          contentContainerStyle={styles.tabs}
+        >
+          {TABS.map((t) => (
+            <Pressable
+              key={t.id}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: tab === t.id }}
+              onPress={() => setTab(t.id)}
+              style={[styles.tab, tab === t.id && styles.tabOn]}
+            >
+              <Ionicons name={t.icon} size={15} color={theme.colors.ink} />
+              <Text style={styles.tabText}>{t.label}</Text>
+            </Pressable>
+          ))}
+        </ScrollView>
 
-        {canRead ? (
+        {tab === 'status' ? (
+          <Card style={styles.panel}>
+            <View style={styles.headline}>
+              <Text style={styles.headlineTitle}>{headline.title}</Text>
+              <Text style={styles.quiet}>{headline.body}</Text>
+            </View>
+            <View style={styles.stats}>
+              {stats.map((s) => (
+                <View key={s.label} style={styles.stat}>
+                  <Text style={styles.statN}>{s.n}</Text>
+                  <Text style={styles.statLabel}>{s.label}</Text>
+                </View>
+              ))}
+            </View>
+            {/* The list shape has no tutorial_id, so this is the only place the
+                guide a solved challenge became can be linked from. */}
+            {challenge.tutorial_id ? (
+              <Button
+                label="Read the guide"
+                variant="secondary"
+                onPress={() => router.push(`/guides/${challenge.tutorial_id}`)}
+              />
+            ) : null}
+            <Text style={styles.panelTitle}>History</Text>
+            <View accessibilityRole="list">
+              {history.map((e, i) => (
+                <View key={e.title} style={styles.event}>
+                  <View style={styles.eventRail}>
+                    <View style={styles.eventDot} />
+                    {i < history.length - 1 ? <View style={styles.eventLine} /> : null}
+                  </View>
+                  <View style={styles.eventText}>
+                    <Text style={styles.eventTitle}>{e.title}</Text>
+                    {e.date ? <Text style={styles.eventDate}>{e.date}</Text> : null}
+                  </View>
+                </View>
+              ))}
+            </View>
+          </Card>
+        ) : null}
+
+        {tab === 'brief' ? (
+          <Card style={styles.panel}>
+            <Text style={styles.summary}>{challenge.summary}</Text>
+            <Field label="The problem" value={challenge.description} />
+          </Card>
+        ) : null}
+
+        {tab === 'constraints' ? (
+          <Card style={styles.panel}>
+            <Field label="Intended use" value={challenge.intended_use} />
+            <Field label="Who it's for" value={challenge.primary_user} />
+          </Card>
+        ) : null}
+
+        {tab === 'makers' ? (
+          <Card style={styles.panel}>
+            {challenge.participants.length === 0 ? (
+              <Text style={styles.quiet}>Nobody has joined yet.</Text>
+            ) : (
+              <View style={styles.tagRow}>
+                {challenge.participants.map((p) => (
+                  <Tag key={p.profile_id} label={p.name ?? 'Someone'} />
+                ))}
+              </View>
+            )}
+            {challenge.contact_prefs.length > 0 ? (
+              <View>
+                <Text style={styles.blockTitle}>The author is happy to help with</Text>
+                <View style={styles.tagRow}>
+                  {challenge.contact_prefs.map((pref) => (
+                    <Tag key={pref} label={CONTACT_PREF_LABELS[pref]} />
+                  ))}
+                </View>
+              </View>
+            ) : null}
+          </Card>
+        ) : null}
+
+        {tab === 'makers' && canRead ? (
           <View accessibilityRole="list" accessibilityLabel="Conversation" style={styles.log}>
             {messages.length === 0 ? (
               <Text style={styles.quiet}>No messages yet. Say what you are trying.</Text>
@@ -414,7 +490,7 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
         ) : null}
       </ScrollView>
 
-      {canRead ? (
+      {canRead && tab === 'makers' ? (
         <View style={styles.footer}>
           <View style={styles.composer}>
             {/* TextField owns its own outer wrapper, so the flex that makes the
@@ -447,31 +523,68 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   screen: { flex: 1, backgroundColor: theme.colors.background },
   loading: { flex: 1, backgroundColor: theme.colors.background, padding: theme.spacing(4), gap: theme.spacing(3) },
-  content: { paddingBottom: theme.spacing(6) },
-  titleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: theme.spacing(2) },
+  content: { paddingBottom: theme.spacing(6), gap: theme.spacing(3) },
+  statusLine: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2) },
+  meta: { flex: 1, fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.muted },
   title: {
-    flex: 1,
-    fontFamily: theme.fonts.bold,
+    fontFamily: theme.fonts.display,
     fontSize: theme.type.title,
     color: theme.colors.text,
-    lineHeight: 30,
+    lineHeight: 29,
   },
-  badgeRow: { flexDirection: 'row', marginTop: theme.spacing(2) },
+  actionRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2) },
+  actionMain: { flex: 1 },
+  gateHint: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted },
+  tabsScroll: { flexGrow: 0 },
+  tabs: {
+    gap: theme.spacing(1),
+    padding: theme.spacing(1),
+    borderRadius: theme.radii.pill,
+    backgroundColor: theme.colors.surfaceSunken,
+  },
+  tab: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    minHeight: 36,
+    paddingHorizontal: theme.spacing(3),
+    borderRadius: theme.radii.pill,
+  },
+  tabOn: { backgroundColor: theme.colors.surface, ...theme.shadow(1) },
+  tabText: { fontFamily: theme.fonts.black, fontSize: 12.5, color: theme.colors.ink },
+  panel: { gap: theme.spacing(3), padding: theme.spacing(4) },
+  panelTitle: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.ink },
+  headline: {
+    gap: theme.spacing(1),
+    padding: theme.spacing(4),
+    borderRadius: theme.radii.panel,
+    backgroundColor: theme.colors.mintSoft,
+  },
+  headlineTitle: { fontFamily: theme.fonts.display, fontSize: theme.type.body, color: theme.colors.ink },
+  stats: { flexDirection: 'row', gap: theme.spacing(2) },
+  stat: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: theme.spacing(3),
+    borderRadius: theme.radii.field,
+    backgroundColor: theme.colors.surfaceSunken,
+    gap: 2,
+  },
+  statN: { fontFamily: theme.fonts.display, fontSize: theme.type.heading, color: theme.colors.ink },
+  statLabel: { fontFamily: theme.fonts.bold, fontSize: 11, color: theme.colors.muted },
+  event: { flexDirection: 'row', gap: theme.spacing(3) },
+  eventRail: { alignItems: 'center', width: 16 },
+  eventDot: { width: 12, height: 12, borderRadius: 6, marginTop: 4, backgroundColor: theme.colors.accentLight },
+  eventLine: { width: 2, flex: 1, backgroundColor: theme.colors.border },
+  eventText: { flex: 1, paddingBottom: theme.spacing(3) },
+  eventTitle: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.ink },
+  eventDate: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted },
   summary: {
     fontFamily: theme.fonts.semiBold,
     fontSize: theme.type.label,
     color: theme.colors.text,
     lineHeight: 22,
-    marginTop: theme.spacing(3),
   },
-  byline: {
-    fontFamily: theme.fonts.regular,
-    fontSize: theme.type.caption,
-    color: theme.colors.muted,
-    marginTop: theme.spacing(1),
-  },
-  guideButton: { alignSelf: 'flex-start', marginTop: theme.spacing(3) },
-  brief: { marginTop: theme.spacing(4), gap: theme.spacing(3) },
   field: {},
   fieldLabel: {
     fontFamily: theme.fonts.bold,
@@ -487,7 +600,6 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     lineHeight: 21,
   },
-  block: { marginTop: theme.spacing(5) },
   blockTitle: {
     fontFamily: theme.fonts.bold,
     fontSize: theme.type.label,
@@ -498,9 +610,9 @@ const styles = StyleSheet.create({
   tag: {
     borderWidth: theme.border.hairline,
     borderColor: theme.colors.border,
-    borderRadius: theme.radii.field,
+    borderRadius: theme.radii.pill,
     backgroundColor: theme.colors.surface,
-    paddingHorizontal: theme.spacing(2),
+    paddingHorizontal: theme.spacing(3),
     paddingVertical: theme.spacing(1),
   },
   tagText: { fontFamily: theme.fonts.semiBold, fontSize: theme.type.caption, color: theme.colors.text },
@@ -514,18 +626,14 @@ const styles = StyleSheet.create({
     fontFamily: theme.fonts.regular,
     fontSize: theme.type.caption,
     color: theme.colors.danger,
-    marginTop: theme.spacing(4),
   },
-  gate: { marginTop: theme.spacing(5) },
-  joinButton: { alignSelf: 'flex-start', marginTop: theme.spacing(3) },
   joinedRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: theme.spacing(5),
   },
   joinedText: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.primaryDeep },
-  log: { gap: theme.spacing(2), marginTop: theme.spacing(5) },
+  log: { gap: theme.spacing(2) },
   answer: {
     backgroundColor: theme.colors.tone.mint.bg,
     borderRadius: theme.radii.field,

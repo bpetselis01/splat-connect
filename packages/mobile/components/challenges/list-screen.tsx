@@ -4,7 +4,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
+import { challengeCounts, challengePill } from './challenge-status'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import { CHALLENGE_FILTERS, type PublicChallenge, type ToyIdea } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
@@ -38,9 +38,7 @@ function ChallengeCardRow({
 }) {
   // "Maker and post counts are the signal that a challenge is alive" — a
   // question counts answers instead (078).
-  const question = row.kind === 'question'
-  const n = question ? row.answer_count : row.maker_count
-  const meta = `${question ? 'Question' : 'Build challenge'} · ${n} ${question ? 'answer' : 'maker'}${n === 1 ? '' : 's'}`
+  const pill = challengePill(row)
   return (
     <AnimatedPressable
       onPress={onPress}
@@ -51,35 +49,23 @@ function ChallengeCardRow({
       style={styles.rowPress}
     >
       <Card style={styles.card}>
-        <View style={styles.cardBody}>
-          <Text style={styles.cardTitle} numberOfLines={2}>
-            {row.title}
-          </Text>
-          <Text style={styles.cardSummary} numberOfLines={2}>
-            {row.summary}
-          </Text>
-          <Text style={styles.cardMeta}>{meta}</Text>
-          {question ? (
-            <View style={styles.badgeRow}>
-              <Badge
-                status={row.answered_at ? 'approved' : 'challenge'}
-                label={row.answered_at ? 'Answered' : 'Open question'}
-              />
-            </View>
-          ) : null}
+        <View style={styles.metaRow}>
+          <Badge status={pill.status} label={pill.label} />
+          <Text style={styles.cardMeta}>{challengeCounts(row)}</Text>
           {/* Hidden from the a11y tree: the row's own hint above already
               says "You're in", so leaving this visible double-announces it. */}
           {joined ? (
-            <View
-              style={styles.badgeRow}
-              accessibilityElementsHidden
-              importantForAccessibility="no-hide-descendants"
-            >
+            <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
               <Badge status="challenge" label="You're in" />
             </View>
           ) : null}
         </View>
-        <Ionicons name="chevron-forward" size={18} color={theme.colors.primary} />
+        <Text style={styles.cardTitle} numberOfLines={2}>
+          {row.title}
+        </Text>
+        <Text style={styles.cardSummary} numberOfLines={2}>
+          {row.summary}
+        </Text>
       </Card>
     </AnimatedPressable>
   )
@@ -258,27 +244,10 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing(2),
   },
   rowPress: { marginBottom: theme.spacing(3) },
-  card: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3), padding: theme.spacing(3) },
-  cardBody: { flex: 1 },
-  cardTitle: {
-    fontFamily: theme.fonts.bold,
-    fontSize: theme.type.label,
-    color: theme.colors.text,
-    lineHeight: 22,
-  },
-  cardSummary: {
-    fontFamily: theme.fonts.regular,
-    fontSize: theme.type.caption,
-    color: theme.colors.muted,
-    lineHeight: 18,
-    marginTop: theme.spacing(1),
-  },
-  badgeRow: { flexDirection: 'row', marginTop: theme.spacing(2) },
-  cardMeta: {
-    fontFamily: theme.fonts.bold,
-    fontSize: theme.type.caption,
-    color: theme.colors.muted,
-    marginTop: theme.spacing(1),
-  },
+  card: { gap: theme.spacing(1.5), padding: theme.spacing(4) },
+  metaRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: theme.spacing(2) },
+  cardMeta: { fontFamily: theme.fonts.semiBold, fontSize: theme.type.caption, color: theme.colors.muted },
+  cardTitle: { fontFamily: theme.fonts.display, fontSize: 17, color: theme.colors.text, lineHeight: 22 },
+  cardSummary: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted, lineHeight: 19 },
   filterRow: { gap: theme.spacing(2), paddingBottom: theme.spacing(4) },
 })

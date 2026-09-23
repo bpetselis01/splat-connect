@@ -56,7 +56,8 @@ test('joining unlocks the thread, and a message posted there comes back', async 
   await page.getByRole('button', { name: 'Join this challenge' }).click()
   await expect(page.getByText('✓ You joined')).toBeVisible()
 
-  // The API writes a system line for the join; the thread reads it back.
+  // The API writes a system line for the join; the thread, under Makers, reads it back.
+  await page.getByRole('tab', { name: 'Makers' }).click()
   await expect(page.getByText('joined this challenge', { exact: false })).toBeVisible()
 
   const message = uniqueTitle('Trying a proximity switch')
@@ -113,5 +114,6 @@ test('My challenges reaches the public brief, across the modal boundary', async 
   await page.getByRole('button', { name: joinable }).click()
   await expect(page).toHaveURL(new RegExp(`/explore/challenges/${id}$`))
   // Landed on the real brief, not an empty shell.
+  await page.getByRole('tab', { name: 'Brief' }).click()
   await expect(page.getByText('THE PROBLEM')).toBeVisible()
 })

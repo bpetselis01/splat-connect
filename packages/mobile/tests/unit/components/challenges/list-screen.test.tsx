@@ -148,9 +148,10 @@ describe('ChallengesListScreen', () => {
     ])
     render(<ChallengesListScreen />)
 
-    expect(await screen.findByText('Build challenge · 2 makers')).toBeTruthy()
-    expect(screen.getByText('Question · 1 answer')).toBeTruthy()
+    expect(await screen.findByText('2 makers · 0 posts')).toBeTruthy()
+    expect(screen.getByText('1 answer')).toBeTruthy()
     expect(screen.getByText('Answered')).toBeTruthy()
+    expect(screen.getByText('Live')).toBeTruthy()
 
     fireEvent.press(screen.getByRole('button', { name: 'Questions' }))
     await waitFor(() => expect(screen.queryByText('A lever switch')).toBeNull())
