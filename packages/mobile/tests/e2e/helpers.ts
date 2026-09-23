@@ -43,9 +43,9 @@ export function uniqueTitle(prefix: string) {
  * about the list behind it should be asserted with the sheet away.
  */
 export async function pickFilter(page: Page, chip: string) {
-  await page.getByRole('button', { name: /^Filters/ }).click()
+  // The chips sit on the screen in a scrolling row (no sheet since the
+  // 2026-09-23 board pass); Playwright scrolls a clipped one into view.
   await page.getByRole('button', { name: chip, exact: true }).click()
-  await page.getByRole('button', { name: 'Done' }).click()
 }
 
 export async function createContributor() {

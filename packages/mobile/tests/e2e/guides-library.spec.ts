@@ -9,10 +9,8 @@ test('the library lists a tutorial with its difficulty badge', async ({ page }) 
   await page.goto('/guides')
 
   await expect(page.getByText(title)).toBeVisible()
-  // EASY, not "Easy": Badge.tsx uppercases the string itself. This used to
-  // assert "Easy" and pass on the difficulty filter chip above the list, not
-  // the badge; the chips now live in the sheet, so only badges are left —
-  // dozens of them across other workers' rows, hence scoping to this row.
+  // Scoped to this row: the Easy filter chip above the list carries the same
+  // word, and so do dozens of other workers' rows.
   await expect(page.getByRole('button', { name: title }).getByText('Easy', { exact: true })).toBeVisible()
 })
 
@@ -88,7 +86,7 @@ test('the skeleton renders while the tutorial request is in flight', async ({ pa
   await expect(page.getByTestId('skeleton-row').first()).toBeVisible()
 })
 
-test('the kind chips narrow the list to one kind, and tapping again clears them', async ({ page }) => {
+test('the guide-type switch narrows the list to one kind, and All clears it', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const toy = uniqueTitle('E2E Mobile Kind Toy')
   const tech = uniqueTitle('E2E Mobile Kind Tech')
@@ -98,16 +96,16 @@ test('the kind chips narrow the list to one kind, and tapping again clears them'
   await page.goto('/guides')
   await expect(page.getByText(toy)).toBeVisible()
 
-  await pickFilter(page, 'Assistive tech')
+  await page.getByRole('tab', { name: 'Assistive tech' }).click()
   await expect(page.getByText(tech)).toBeVisible()
   await expect(page.getByText(toy)).toHaveCount(0)
 
-  // The kind chips are a toggle, not a radio set — the same chip clears itself.
-  await pickFilter(page, 'Assistive tech')
+  // One type at a time, as on the board: All is the way back.
+  await page.getByRole('tab', { name: 'All' }).click()
   await expect(page.getByText(toy)).toBeVisible()
 })
 
-test('a backed guide names its organisation on the card', async ({ page }) => {
+test('a backed guide carries a Backed pill on the card, and an unbacked one does not', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const title = uniqueTitle('E2E Mobile Backed')
   const org = uniqueTitle('E2E Backing Org')
@@ -120,14 +118,14 @@ test('a backed guide names its organisation on the card', async ({ page }) => {
 
   await page.goto('/guides')
 
-  await expect(page.getByText(title)).toBeVisible()
-  await expect(page.getByText(`Backed by ${org}`)).toBeVisible()
+  await page.getByPlaceholder('Search by toy name').fill(title)
+  await expect(page.getByRole('button', { name: title }).getByText('Backed', { exact: true })).toBeVisible()
 
-  // "Reviewed by SPLAT" is the default path, not an absence, so it gets the
-  // same billing as a name — narrowed to the unbacked card to prove it.
+  // The unbacked card has no pill; its row still tells a screen reader who
+  // reviewed it.
   await page.getByPlaceholder('Search by toy name').fill(plain)
-  await expect(page.getByText('Reviewed by SPLAT')).toBeVisible()
-  await expect(page.getByText(`Backed by ${org}`)).toHaveCount(0)
+  await expect(page.getByRole('button', { name: plain })).toBeVisible()
+  await expect(page.getByRole('button', { name: plain }).getByText('Backed', { exact: true })).toHaveCount(0)
 })
 
 test('tapping Save on a card flips the bookmark and the flip survives a reload', async ({ page }) => {
