@@ -1,27 +1,36 @@
-// Embedded as the "Child Profile" segment of the merged Account screen
-// (components/profile-screen.tsx) — it owns none of the screen chrome
-// (header, account identity, sign out) since that segment shares a screen
-// with the "Account" segment, which already provides all of it.
+// The CHILD PROFILES group of the Account screen (components/profile-screen.tsx),
+// under the identity card — it owns none of the screen chrome (header, account
+// identity, sign out), which that screen already provides.
 //
 // Was a single-child editor; now the list web's profile page keeps — one row
-// per child, "+ Add child", each row into that child's own editor. The row's
-// second line is the one-line ability summary the spec asks for, or "Not set
-// yet" when the profile is still blank.
+// per child, "+ Add a child", each row into that child's own editor. The row's
+// second line is childSummary from @splat-connect/types ("Age 6 · Right hand ·
+// Light press"), the same line web's account page shows, or "Not set yet".
 import { useCallback, useEffect, useState } from 'react'
 import { View, Text, StyleSheet, ActivityIndicator, Linking } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
-import type { ChildProfile } from '@splat-connect/types'
+import { childSummary as summaryOf, type ChildProfile } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
-import { Card } from '../ui/Card'
 import { Button } from '../ui/Button'
 import { ErrorRow } from '../auth-screen'
-import { AnimatedPressable } from '../ui/AnimatedPressable'
+import { ListRow } from '../list/list-kit'
 
-/** "Age 5", or 'Not set yet' when the profile is still blank. */
-function summaryOf(child: ChildProfile): string {
-  return child.age !== null ? `Age ${child.age}` : 'Not set yet'
+// The board's avatar tints, cycled so neighbouring children never match.
+const TINTS = [
+  theme.colors.mintSoft,
+  theme.colors.honeySoft,
+  theme.colors.apricotSoft,
+  theme.colors.violetSoft,
+  theme.colors.accentLight,
+]
+
+function Initial({ name, i }: { name: string; i: number }) {
+  return (
+    <View style={[styles.avatar, { backgroundColor: TINTS[i % TINTS.length] }]}>
+      <Text style={styles.avatarText}>{name.trim()[0]?.toUpperCase() ?? '?'}</Text>
+    </View>
+  )
 }
 
 export function ChildProfileHome() {
@@ -82,93 +91,86 @@ export function ChildProfileHome() {
 
   return (
     <View>
-      <View style={styles.headerRow}>
-        <Text style={styles.intro}>
-          This helps us suggest guides that suit your children. Everything is optional and only
-          you can see it — see the{' '}
-          <Text
-            style={styles.introLink}
-            onPress={() => Linking.openURL(`${process.env.EXPO_PUBLIC_WEB_URL}/privacy`)}
-          >
-            privacy policy
-          </Text>
-          .
+      <Text style={styles.intro}>
+        This helps us suggest guides that suit your children. Everything is optional and only
+        you can see it — see the{' '}
+        <Text
+          style={styles.introLink}
+          onPress={() => Linking.openURL(`${process.env.EXPO_PUBLIC_WEB_URL}/privacy`)}
+        >
+          privacy policy
         </Text>
-        <Button label="+ Add child" variant="accent" loading={busy} onPress={() => void addChild()} style={styles.addChild} />
-      </View>
+        .
+      </Text>
 
       <ErrorRow message={error} />
       {loading ? <ActivityIndicator color={theme.colors.primary} /> : null}
 
       {!loading && !error && children.length === 0 ? (
         <Text style={styles.empty}>
-          No child profiles yet. A profile can hold age, hand use and grip details — all
-          optional, all private to you.
+          No child profiles yet. A profile can hold an age, how they press a switch and what
+          matters in the room — all optional, all private to you.
         </Text>
       ) : null}
 
-      {children.map((child, i) => (
-        <AnimatedPressable
-          key={child.id}
-          onPress={() => router.push({ pathname: '/account/child/[id]', params: { id: child.id } })}
-          accessibilityRole="button"
-          accessibilityLabel={child.name?.trim() || `Child ${i + 1}`}
-          accessibilityHint={`${summaryOf(child)}. Opens the profile.`}
-          pressScale={0.985}
-          style={styles.rowPress}
-        >
-          <Card style={styles.row}>
-            <View style={styles.rowIcon}>
-              <Ionicons name="happy-outline" size={22} color={theme.colors.primary} />
-            </View>
-            <View style={styles.rowBody}>
-              <Text style={styles.rowLabel}>{child.name?.trim() || `Child ${i + 1}`}</Text>
-              <Text style={styles.rowHint} numberOfLines={1}>
-                {summaryOf(child)}
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={theme.colors.primary} />
-          </Card>
-        </AnimatedPressable>
-      ))}
+      <View style={styles.list}>
+        {children.map((child, i) => {
+          const name = child.name?.trim() || `Child ${i + 1}`
+          return (
+            <ListRow
+              key={child.id}
+              title={name}
+              meta={summaryOf(child)}
+              metaLines={1}
+              thumb={<Initial name={name} i={i} />}
+              onPress={() => router.push({ pathname: '/account/child/[id]', params: { id: child.id } })}
+              accessibilityHint={`${summaryOf(child)}. Opens the profile.`}
+            />
+          )
+        })}
+
+        <Button label="+ Add a child" variant="ghost" loading={busy} onPress={() => void addChild()} style={styles.add} />
+        {!loading && !error && children.length === 0 ? (
+          // The wizard: the same questions one at a time, for a first run.
+          <Button
+            label="Answer a few quick questions"
+            variant="secondary"
+            onPress={() => router.push('/child')}
+            style={styles.wizard}
+          />
+        ) : null}
+      </View>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  headerRow: { marginBottom: theme.spacing(3) },
   intro: {
     fontFamily: theme.fonts.regular,
     fontSize: theme.type.caption,
     color: theme.colors.muted,
     lineHeight: 19,
+    marginHorizontal: 2,
     marginBottom: theme.spacing(3),
   },
   introLink: { textDecorationLine: 'underline' },
-  addChild: { alignSelf: 'flex-start', paddingVertical: theme.spacing(2), paddingHorizontal: theme.spacing(4) },
   empty: {
+    marginBottom: theme.spacing(3),
     fontFamily: theme.fonts.regular,
     fontSize: theme.type.label,
     color: theme.colors.muted,
     lineHeight: 21,
-    marginTop: theme.spacing(2),
   },
-  rowPress: { marginBottom: theme.spacing(3) },
-  row: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(4) },
-  rowIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: theme.radii.field,
-    backgroundColor: theme.colors.accentLight,
-    alignItems: 'center',
-    justifyContent: 'center',
+  list: { gap: 9 },
+  avatar: { width: 38, height: 38, borderRadius: theme.radii.pill, alignItems: 'center', justifyContent: 'center' },
+  avatarText: { fontFamily: theme.fonts.black, fontSize: 14, color: theme.colors.ink },
+  // The board's dashed "+ Add a child", the full width of the list.
+  add: {
+    borderStyle: 'dashed',
+    borderWidth: theme.border.hairline * 1.5,
+    borderColor: theme.colors.muted,
+    borderRadius: theme.radii.field + 2,
+    minHeight: 52,
   },
-  rowBody: { flex: 1 },
-  rowLabel: { fontFamily: theme.fonts.bold, fontSize: theme.type.body, color: theme.colors.text },
-  rowHint: {
-    fontFamily: theme.fonts.regular,
-    fontSize: theme.type.caption,
-    color: theme.colors.muted,
-    marginTop: theme.spacing(1),
-  },
+  wizard: { borderRadius: theme.radii.pill },
 })

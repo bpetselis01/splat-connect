@@ -107,8 +107,9 @@ it('opens a section when its row is tapped', () => {
 it('counts what is ready and what is left', () => {
   mockDraft.tutorial = tutorial({ safety_declared_at: '2026-09-02', parts: [{ name: 'a' }] })
   render(<TutorialHub id="t1" />)
-  // details + safety + parts done, of six sections
-  expect(screen.getByText('3 of 6 ready')).toBeTruthy()
+  // details + steps (optional, so never a gap) + safety + parts, of seven
+  expect(screen.getByText('4 of 7 sections complete')).toBeTruthy()
+  expect(screen.getByRole('progressbar').props.accessibilityValue).toEqual({ min: 0, max: 7, now: 4 })
   expect(screen.getByText('4 things still needed')).toBeTruthy()
 })
 
@@ -179,6 +180,17 @@ it('reassures a contributor once, only just after creation', () => {
   expect(screen.queryByTestId('hub-created-note')).toBeNull()
 })
 
+it('asks a PDF-started draft to be checked, and says which steps were not saved', () => {
+  render(<TutorialHub id="t1" fromPdf={{ stepsLater: true, missed: ['parts'] }} />)
+  expect(screen.getByText('Filled in from your PDF')).toBeTruthy()
+  expect(screen.getByText(/Check every section before you submit/)).toBeTruthy()
+  expect(screen.getByText(/The steps could not be saved yet/)).toBeTruthy()
+  expect(screen.getByText(/Could not save: parts/)).toBeTruthy()
+  expect(screen.queryByTestId('hub-created-note')).toBeNull()
+  fireEvent.press(screen.getByLabelText('Dismiss'))
+  expect(screen.queryByTestId('hub-pdf-note')).toBeNull()
+})
+
 // The spec's "More" section: read-only facts, below the checklist. Not in the
 // menu, which holds actions.
 it('lists the three things that are edited on the web', () => {
@@ -199,4 +211,21 @@ it('shows a load failure rather than an empty hub', () => {
   mockDraft.loadError = true
   render(<TutorialHub id="t1" />)
   expect(screen.getByText("Couldn't load this guide.")).toBeTruthy()
+})
+
+it('checks a complete section, marks empty steps as optional, and fills the bar to match', () => {
+  mockDraft.tutorial = complete({ kind: 'toy_adaptation' })
+  render(<TutorialHub id="t1" />)
+  expect(screen.getByTestId('hub-done-details')).toBeTruthy()
+  expect(screen.queryByTestId('hub-done-steps')).toBeNull()
+  expect(screen.getByText('Empty')).toBeTruthy()
+  // Steps are optional, so an empty list does not hold the bar back.
+  expect(screen.getByText('6 of 6 sections complete')).toBeTruthy()
+  expect(screen.getByTestId('hub-progress-fill')).toHaveStyle({ width: '100%' })
+})
+
+it('previews the guide as a reader from beside Submit', () => {
+  render(<TutorialHub id="t1" />)
+  fireEvent.press(screen.getByTestId('hub-preview'))
+  expect(mockPush).toHaveBeenCalledWith({ pathname: '/guides/[id]', params: { id: 't1' } })
 })

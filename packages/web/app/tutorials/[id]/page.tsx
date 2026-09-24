@@ -6,8 +6,9 @@ import { SaveButton } from '@/components/save-button'
 import { ThanksButton } from '@/components/thanks-button'
 import { apiClient } from '@/lib/api-client'
 import { getSavedIds } from '@/lib/saves'
+import { getMyChildren } from '@/lib/my-children'
 import { TutorialView } from '@/components/tutorial-view'
-import type { TutorialWithDetails, TutorialOrg } from '@splat-connect/types'
+import { fitLine, type TutorialWithDetails, type TutorialOrg } from '@splat-connect/types'
 
 export default async function TutorialPage({
   params,
@@ -37,6 +38,7 @@ export default async function TutorialPage({
           .catch(() => ({ thanked: false, own: false }))
 
   const signedIn = saved !== null
+  const fit = signedIn ? fitLine(tutorial, await getMyChildren()) : null
 
   return (
     <>
@@ -50,6 +52,7 @@ export default async function TutorialPage({
       <TutorialView
         tutorial={tutorial}
         signedIn={signedIn}
+        fit={fit}
         actions={
           /* The board gives a guest Share alone: saving and thanking both need
              an account, and the rail already says so under the button. */

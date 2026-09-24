@@ -26,7 +26,7 @@ test('invalid credentials show an error and stay on the form', async ({ page }) 
   await signIn(page, email, 'wrong-password')
 
   await expect(page.getByText(/Invalid login credentials/i)).toBeVisible()
-  await expect(page.getByText(`Signed in as ${email}`)).toHaveCount(0)
+  await expect(page.getByText(email, { exact: true })).toHaveCount(0)
 })
 
 test('signing up with an already-registered email shows an error', async ({ page }) => {
@@ -64,7 +64,8 @@ test('the contributor account view offers the web dashboard and sign out', async
   await expect(page).toHaveURL(/\/guides$/)
   await page.goto('/account')
 
-  await expect(page.getByText(`Signed in as ${email}`)).toBeVisible()
+  // The identity card names the account by its email.
+  await expect(page.getByText(email, { exact: true })).toBeVisible()
   await expect(page.getByText('Open Web Dashboard')).toBeVisible()
   await expect(page.getByText('Sign Out')).toBeVisible()
 })

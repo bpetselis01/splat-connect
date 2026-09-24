@@ -19,7 +19,7 @@ import Link from 'next/link'
 import type { Route } from 'next'
 import Image from 'next/image'
 import { Clock, MapPin, VideoCamera, Image as ImageIcon } from '@phosphor-icons/react/dist/ssr'
-import { dateBadge, formatTimeRange } from '@/lib/dates'
+import { dateBadge, formatTimeRange } from '@splat-connect/types'
 import { safePhotoSrc } from '@/lib/photo-src'
 import { EventRsvpButton } from '@/components/event-rsvp-button'
 import { EVENT_KIND_LABEL, type EventKind, type EventListItem } from '@splat-connect/types'
@@ -33,7 +33,7 @@ export const KIND_TINT: Record<EventKind, string> = {
 }
 
 /** Where an event is, in the fewest words that still place it. */
-export function eventWhere(event: EventListItem): string {
+function eventWhere(event: EventListItem): string {
   // Falls back to the venue line, then to nothing at all rather than a bare
   // map pin. 061 made suburb and state required on a published in-person
   // event, but NOT VALID — rows written under 059 predate both columns and

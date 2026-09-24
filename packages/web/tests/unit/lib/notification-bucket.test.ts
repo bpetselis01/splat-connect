@@ -13,9 +13,9 @@ describe('notificationBucket', () => {
    * compile error; this makes a *wrong* value a test failure.
    */
   it('gives every notification type a bucket', () => {
-    expect(NOTIFICATION_TYPES.length).toBe(21)
+    expect(NOTIFICATION_TYPES.length).toBe(29)
     for (const type of NOTIFICATION_TYPES) {
-      expect(['tutorials', 'exchanges', 'challenges']).toContain(notificationBucket(type))
+      expect(['tutorials', 'exchanges', 'challenges', 'organisations']).toContain(notificationBucket(type))
     }
   })
 
@@ -32,13 +32,29 @@ describe('notificationBucket', () => {
   /* Every toy_* type is a transaction event, so My toys gets no badge and
      My exchanges gets all five. See the spec — do not invent a toy
      notification to fill that card. */
-  it('buckets all five toy events to exchanges, none to toys', () => {
+  it('buckets the toy, build and print events to exchanges, none to toys', () => {
     expect(typesInBucket('exchanges').sort()).toEqual([
+      'build_approved',
+      'build_shot_posted',
+      'org_message',
+      'print_ready',
+      'print_started',
       'toy_accepted',
       'toy_message',
       'toy_rejected',
       'toy_request',
       'toy_withdrawn',
+    ])
+  })
+
+  /* A message to or from an organisation is a conversation, like toy_message;
+     a followed org publishing, or your org being thanked, is news about an
+     organisation and counts nowhere else. */
+  it('buckets organisation news to organisations', () => {
+    expect(typesInBucket('organisations').sort()).toEqual([
+      'org_event_published',
+      'org_story_published',
+      'org_thanked',
     ])
   })
 

@@ -18,10 +18,15 @@
  * the rail's primary button, as the board does, and a reviewer has nothing to
  * save.
  *
- * The board's guide has a Steps tab and a Community notes tab. Neither exists
- * in this schema — the steps live in the PDF — so the tabs drawn here are the
- * ones the data can fill: Parts & tools, Files (assistive tech only) and
- * Safety (once the author has affirmed the checklist).
+ * The board's guide has a Steps tab and a Community notes tab. Steps exist
+ * since 080 (alongside the PDF, which stays the printable download), so the
+ * tabs are the ones the data can fill: Steps (when the guide has any), Parts &
+ * tools, Files (assistive tech only) and Safety (once the author has affirmed
+ * the checklist). Community notes has no table.
+ *
+ * `fit` is the board's "Suits Ollie — big button, light press, short hold",
+ * worked out by the caller (suitsChild) and drawn above the tabs: a parent
+ * should know it suits their child before reading a single step.
  *
  * Related files:
  * - app/tutorials/[id]/page.tsx: the public page this was lifted from
@@ -30,19 +35,21 @@
  * - app/files/[bucket]/[...path]/route.ts: where the file links go
  */
 import type { ReactNode } from 'react'
+import Image from 'next/image'
+import { safePhotoSrc } from '@/lib/photo-src'
 import { NotMedicalNote } from '@/components/not-medical-note'
 import { PhotoCarousel } from '@/components/photo-carousel'
 import { SectionTabs } from '@/components/section-tabs'
 import { DIFFICULTY } from '@/components/tutorial-card'
 import { tintFor } from '@/components/card-photo'
 import { BoundaryLink } from '@/components/boundary-link'
-import { FileText } from '@/components/icons'
 import Link from 'next/link'
 import {
   ArrowSquareOut,
   CheckCircle,
   Cube,
   DownloadSimple,
+  FileText,
   HandHeart,
   HandTap,
   Lifebuoy,
@@ -62,7 +69,7 @@ import {
   type TutorialOrg,
 } from '@splat-connect/types'
 import { agoInWords } from '@/lib/relative-time'
-import { longDate } from '@/lib/dates'
+import { initials, longDate } from '@splat-connect/types'
 
 type Viewable = TutorialWithDetails & {
   tutorial_orgs?: TutorialOrg[]
@@ -73,15 +80,6 @@ type Viewable = TutorialWithDetails & {
 /** "A, B and C" — the board's byline joins names the way a person would. */
 function listNames(names: string[]): string {
   return names.length <= 1 ? (names[0] ?? '') : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`
-}
-
-function initials(name: string): string {
-  return name
-    .split(/\s+/)
-    .map((w) => w[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase()
 }
 
 function BuyLinks({ item, links }: { item: string; links: BuyLink[] }) {
@@ -109,6 +107,7 @@ export function TutorialView({
   backing,
   actions,
   signedIn,
+  fit,
 }: {
   tutorial: Viewable
   /** The leader page fetches backing separately; everyone else has it embedded. */
@@ -121,6 +120,8 @@ export function TutorialView({
    * are three callers.
    */
   signedIn: boolean
+  /** "Suits Ollie — big button, …", or nothing. Never an assessment of the child. */
+  fit?: string | null
 }) {
   const contributors = tutorial.tutorial_contributors ?? []
   const primaryContributor = contributors.find((c) => c.role === 'primary')
@@ -149,6 +150,7 @@ export function TutorialView({
     .filter((name): name is string => Boolean(name))
 
   const diff = DIFFICULTY[tutorial.difficulty]
+  const steps = tutorial.steps ?? []
 
   /*
    * The three figures at the top of the rail. The board's are time / parts
@@ -161,7 +163,7 @@ export function TutorialView({
       ? ([['time', formatBuildTime(tutorial.build_minutes)]] as Array<[string, string]>)
       : []),
     ['parts', tutorial.parts.length],
-    ['tools', tutorial.tools.length],
+    steps.length > 0 ? ['steps', steps.length] : ['tools', tutorial.tools.length],
   ]
 
   // The board's review line names who checked it and when. The person is named
@@ -295,7 +297,38 @@ export function TutorialView({
     </ul>
   )
 
+  const stepList = (
+    <ol className="m-0 flex list-none flex-col gap-4 p-0">
+      {steps.map((st) => (
+        <li key={st.id} className="flex gap-4 rounded-[var(--radius-inset)] border border-line bg-surface p-[18px] shadow-e2">
+          <span
+            aria-hidden="true"
+            className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-brand-tint font-display text-lg font-extrabold text-ink"
+          >
+            {st.position}
+          </span>
+          <div className="flex min-w-0 flex-1 flex-col gap-2">
+            {st.title && <h3 className="m-0 text-[17px] font-extrabold leading-[1.3] text-ink">{st.title}</h3>}
+            <p className="m-0 whitespace-pre-line text-[15px] leading-[1.55] text-ink">{st.body}</p>
+            {st.photo_url && safePhotoSrc(st.photo_url) && (
+              <div className="relative mt-1 aspect-[4/3] w-full max-w-[460px] overflow-hidden rounded-[var(--radius-inset)] bg-sunken">
+                <Image
+                  src={safePhotoSrc(st.photo_url)!}
+                  alt={st.title ? `Step ${st.position}: ${st.title}` : `Step ${st.position}`}
+                  fill
+                  sizes="(min-width: 1024px) 460px, 100vw"
+                  className="object-cover"
+                />
+              </div>
+            )}
+          </div>
+        </li>
+      ))}
+    </ol>
+  )
+
   const tabs = [
+    ...(steps.length > 0 ? [{ key: 'steps', label: 'Steps', content: stepList }] : []),
     ...(tutorial.parts.length + tutorial.tools.length > 0
       ? [{ key: 'parts', label: 'Parts & tools', content: partsAndTools }]
       : []),
@@ -357,6 +390,16 @@ export function TutorialView({
         </header>
 
         <PhotoCarousel urls={tutorial.photo_urls} alt={tutorial.title} />
+
+        {fit && (
+          <p
+            data-testid="fit-callout"
+            className="m-0 flex items-center gap-2 rounded-[var(--radius-inset)] border border-line bg-mint-soft px-4 py-3.5 text-[15px] font-bold text-ink"
+          >
+            <CheckCircle size={20} weight="fill" className="flex-none text-success" aria-hidden="true" />
+            {fit}
+          </p>
+        )}
 
         <SectionTabs label="Guide sections" tabs={tabs} />
 
@@ -428,7 +471,7 @@ export function TutorialView({
               {...newTab}
               className="btn btn-primary btn-block no-underline"
             >
-              <FileText />
+              <FileText weight="bold" aria-hidden="true" />
               {signedIn ? 'Download guide (PDF)' : 'Sign in to download'}
             </a>
           )}

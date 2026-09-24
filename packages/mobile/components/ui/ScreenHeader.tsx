@@ -34,10 +34,11 @@ const styles = StyleSheet.create({
   logo: { width: 34, height: 34 },
   title: {
     flex: 1,
-    fontFamily: theme.fonts.black,
+    // Baloo, as every board heading is.
+    fontFamily: theme.fonts.display,
     fontSize: theme.type.title,
+    lineHeight: 30,
     color: theme.colors.text,
-    letterSpacing: -0.4,
   },
   subtitle: {
     fontFamily: theme.fonts.regular,

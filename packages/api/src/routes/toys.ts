@@ -42,7 +42,65 @@ const EDITABLE = [
   'photo_urls',
   'switch_photo_url',
   'offer_type',
+  'age_min',
+  'age_max',
+  'batteries',
+  'switch_fitting',
+  'volume',
+  'tutorial_id',
 ] as const
+
+const FACT_TEXT = { batteries: 60, switch_fitting: 60, volume: 40 } as const
+
+/**
+ * 075's facts, checked and normalised at the trust boundary so a bad value is a
+ * 400 with words, not a check-constraint 500. Blank text means "clear it" (the
+ * column refuses an empty string). The age order is checked against the row's
+ * current values, because a PATCH may send only one end. Mutates `body`.
+ */
+async function checkFacts(
+  supabase: ReturnType<typeof createUserClient>,
+  body: Record<string, unknown>,
+  current: { age_min: number | null; age_max: number | null } = { age_min: null, age_max: null }
+): Promise<string | null> {
+  for (const key of ['age_min', 'age_max'] as const) {
+    if (!(key in body)) continue
+    const v = body[key] === '' ? null : body[key]
+    if (v !== null && (typeof v !== 'number' || !Number.isInteger(v) || v < 0 || v > 18)) {
+      return 'Ages must be whole years from 0 to 18'
+    }
+    body[key] = v
+  }
+  const min = 'age_min' in body ? (body.age_min as number | null) : current.age_min
+  const max = 'age_max' in body ? (body.age_max as number | null) : current.age_max
+  if (min !== null && max !== null && max < min) return 'The oldest age cannot be below the youngest'
+
+  for (const [key, limit] of Object.entries(FACT_TEXT)) {
+    if (!(key in body)) continue
+    const v = body[key]
+    if (v === null) continue
+    if (typeof v !== 'string') return `${key} must be text`
+    const t = v.trim()
+    if (t.length > limit) return `Keep ${key.replace('_', ' ')} to ${limit} characters`
+    body[key] = t || null
+  }
+
+  if ('tutorial_id' in body && body.tutorial_id !== null && body.tutorial_id !== '') {
+    if (typeof body.tutorial_id !== 'string') return 'That guide was not found'
+    // Only an approved guide can be linked: a listing must not point families
+    // at a draft nobody has reviewed. A malformed id errors here, same answer.
+    const { data } = await supabase
+      .from('tutorials')
+      .select('id')
+      .eq('id', body.tutorial_id)
+      .eq('status', 'approved')
+      .maybeSingle()
+    if (!data) return 'Link a guide that is published in the library'
+  } else if ('tutorial_id' in body) {
+    body.tutorial_id = null
+  }
+  return null
+}
 
 // quantity is deliberately NOT in EDITABLE. It is meaningful only for an
 // organisation's stock, and 033's toys_person_single_unit constraint would
@@ -126,6 +184,10 @@ toys.post('/', async (c) => {
   const quantity = orgId ? readQuantity(body.quantity) : 1
   if (quantity === null) return c.json({ error: 'Quantity must be a whole number, 1 or more' }, 400)
 
+  const factError = await checkFacts(supabase, body)
+  if (factError) return c.json({ error: factError }, 400)
+  const facts = pickEditable(body, ['age_min', 'age_max', 'batteries', 'switch_fitting', 'volume', 'tutorial_id'])
+
   const { data, error } = await supabase
     .from('toys')
     .insert({
@@ -136,6 +198,7 @@ toys.post('/', async (c) => {
       owner_org_id: orgId,
       quantity,
       status: 'draft',
+      ...facts,
     })
     .select()
     .single()
@@ -152,7 +215,7 @@ toys.patch('/:id', async (c) => {
   // person's toy has no stock to top up, and 033 would reject the write anyway.
   const { data: existing, error: readError } = await supabase
     .from('toys')
-    .select('owner_org_id, photo_urls')
+    .select('owner_org_id, photo_urls, age_min, age_max')
     .eq('id', c.req.param('id'))
     .or(ownedByCaller(c.get('userId'), orgIds))
     .maybeSingle()
@@ -161,6 +224,9 @@ toys.patch('/:id', async (c) => {
     return c.json({ error: readError.message }, 500)
   }
   if (!existing) return c.json({ error: 'Not found' }, 404)
+
+  const factError = await checkFacts(supabase, body, existing)
+  if (factError) return c.json({ error: factError }, 400)
 
   const isOrgToy = Boolean(existing.owner_org_id)
   if (isOrgToy && body.quantity !== undefined && readQuantity(body.quantity) === null) {

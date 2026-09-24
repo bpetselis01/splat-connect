@@ -50,7 +50,7 @@ function tx(overrides: Partial<ToyTransactionSummary> = {}): ToyTransactionSumma
     printer_id: null,
     event_id: null,
     part_sets: null,
-    print_note: null,
+    print_note: null, print_group_id: null, print_colour: null, print_delivery: null,
     printing_started_at: null,
     ready_at: null,
     ready_photo_url: null,

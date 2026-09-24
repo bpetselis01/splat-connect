@@ -38,21 +38,6 @@ test('creating a tutorial hands straight over to the editor', async ({ page }) =
   expect(data?.kind).toBe('toy_adaptation')
 })
 
-test('the first question is which kind, and the answer is a link', async ({ page }) => {
-  const contributor = await createContributor()
-  await acceptTerms(contributor.id)
-  await signIn(page, contributor.email, contributor.password)
-  await page.waitForURL('**/dashboard')
-  await page.goto('/upload')
-
-  await expect(page.getByLabel('Title')).toHaveCount(0)
-  await page.getByRole('link', { name: /Assistive tech/ }).click()
-  await page.waitForURL(/\/upload\?kind=assistive_tech$/)
-  await expect(page.getByLabel('Title')).toBeVisible()
-  // The one pill a toy adaptation never gets.
-  await expect(page.getByRole('tab', { name: 'STL Files', exact: true })).toBeDisabled()
-})
-
 test('the kind is chosen on the form, and ?kind preselects it', async ({ page }) => {
   const contributor = await createContributor()
   await acceptTerms(contributor.id)
@@ -148,5 +133,6 @@ test('a contributor builds a tutorial from creation through to pending', async (
   await page.goto('/dashboard/tutorials')
   const card = page.getByTestId('tutorial-row').filter({ hasText: title })
   await expect(card).toBeVisible()
-  await expect(card.getByText('PENDING', { exact: true })).toBeVisible()
+  // The board's stage word for pending (ac7791e2).
+  await expect(card.getByText('Waiting', { exact: true })).toBeVisible()
 })

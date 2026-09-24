@@ -14,7 +14,7 @@ const baseCaps: Capabilities = {
   },
   isAdmin: false,
   ledOrgs: [],
-  unread: { tutorials: 0, exchanges: 0, challenges: 0, total: 0 },
+  unread: { tutorials: 0, exchanges: 0, challenges: 0, organisations: 0, total: 0 },
   exchangeActions: 0,
 }
 
@@ -144,7 +144,7 @@ describe('DashboardHub', () => {
   it('badges the unread count without eating the description', async () => {
     caps.current = {
       ...baseCaps,
-      unread: { tutorials: 2, exchanges: 3, challenges: 0, total: 5 },
+      unread: { tutorials: 2, exchanges: 3, challenges: 0, organisations: 0, total: 5 },
     }
     render(await DashboardHub())
     const card = screen.getByRole('link', { name: /My exchanges/ })
@@ -164,7 +164,7 @@ describe('DashboardHub', () => {
   it('gives My toys no badge', async () => {
     caps.current = {
       ...baseCaps,
-      unread: { tutorials: 2, exchanges: 3, challenges: 0, total: 5 },
+      unread: { tutorials: 2, exchanges: 3, challenges: 0, organisations: 0, total: 5 },
     }
     render(await DashboardHub())
     expect(

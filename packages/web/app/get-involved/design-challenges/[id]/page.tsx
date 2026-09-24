@@ -38,6 +38,7 @@ import {
   Target,
   UsersThree,
   CheckCircle,
+  ChatsCircle,
 } from '@phosphor-icons/react/dist/ssr'
 import { SaveButton } from '@/components/save-button'
 import { STAGE } from '@/components/stage'
@@ -46,6 +47,7 @@ import { getCapabilities } from '@/lib/capabilities'
 import { ChallengeThread } from '@/components/challenge-thread'
 import type { ToyIdeaDetail, ContactPref } from '@splat-connect/types'
 import { daysSince } from '@/lib/relative-time'
+import { initials } from '@splat-connect/types'
 
 const CONTACT_PREF_LABELS: Record<ContactPref, string> = {
   clarification: 'Clarification',
@@ -73,13 +75,6 @@ const TINTS = ['var(--tcoral)', 'var(--tmint)', 'var(--tamber)', 'var(--tviolet)
 
 const date = (iso: string) =>
   new Date(iso).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })
-const initials = (name: string | null | undefined) =>
-  (name ?? '?')
-    .split(/\s+/)
-    .map((w) => w[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase()
 
 export default async function ChallengeDetailPage({
   params,
@@ -97,11 +92,20 @@ export default async function ChallengeDetailPage({
   const caps = await getCapabilities()
   const saved = await getSavedIds()
 
-  const tab: TabId = TABS.some((t) => t.id === rawTab) ? (rawTab as TabId) : 'status'
-  const current = TABS.find((t) => t.id === tab)!
   const base = `/get-involved/design-challenges/${challenge.id}`
   const graduated = challenge.status === 'graduated'
-  const stage = STAGE[graduated ? 'waiting' : 'live']
+  // A question (078) wears its answered state in place of the lifecycle word,
+  // as the board's question page does. It never graduates, so it has no
+  // Outcome to show.
+  const question = challenge.kind === 'question'
+  const answered = question && !!challenge.answer_message_id
+  const stage = question
+    ? answered
+      ? { label: 'Answered', tint: 'var(--tok)', fg: 'var(--tink)', Icon: CheckCircle }
+      : { label: 'Open question', tint: 'var(--tviolet)', fg: 'var(--tink)', Icon: ChatsCircle }
+    : STAGE[graduated ? 'waiting' : 'live']
+  const tabs = question ? TABS.filter((t) => t.id !== 'outcome') : TABS
+  const answers = challenge.answer_count ?? 0
   const viewerId = caps?.profile.id ?? null
   const joined =
     viewerId !== null &&
@@ -117,7 +121,12 @@ export default async function ChallengeDetailPage({
       : []),
     ...(graduated ? [{ icon: NotePencil, t: 'A maker started the write-up', d: date(challenge.updated_at) }] : []),
   ]
+  if (answered && challenge.answered_at) {
+    history.push({ icon: CheckCircle, t: 'The asker marked an answer', d: date(challenge.answered_at) })
+  }
   const outcomeAt = graduated ? 2 : 1
+  const tab: TabId = tabs.some((t) => t.id === rawTab) ? (rawTab as TabId) : 'status'
+  const current = tabs.find((t) => t.id === tab)!
 
   return (
     <div>
@@ -161,7 +170,7 @@ export default async function ChallengeDetailPage({
               className="btn btn-primary min-h-12 px-[22px] text-[15px]"
               scroll={false}
             >
-              <HandHeart weight="bold" aria-hidden="true" /> Join this challenge
+              <HandHeart weight="bold" aria-hidden="true" /> {question ? 'Join to answer' : 'Join this challenge'}
             </Link>
           )}
         </div>
@@ -169,7 +178,7 @@ export default async function ChallengeDetailPage({
 
       <div className="mt-[26px] grid items-start gap-7 md:grid-cols-[230px_1fr]">
         <nav aria-label="Challenge sections" className="flex flex-col gap-1 md:sticky md:top-6">
-          {TABS.map((t) => {
+          {tabs.map((t) => {
             const on = t.id === tab
             const badge = t.id === 'makers' && makers.length > 0 ? makers.length : null
             return (
@@ -195,8 +204,17 @@ export default async function ChallengeDetailPage({
           <dl className="mt-3.5 grid grid-cols-[auto_1fr] items-baseline gap-x-3 gap-y-2 rounded-[18px] border border-line bg-[var(--surface)] p-4 text-[13px] shadow-[var(--e1)]">
             <dt className="font-bold text-muted">Stage</dt>
             <dd className="m-0 font-extrabold">{stage.label}</dd>
-            <dt className="font-bold text-muted">Makers</dt>
-            <dd className="m-0 font-extrabold">{makers.length} joined</dd>
+            {question ? (
+              <>
+                <dt className="font-bold text-muted">Answers</dt>
+                <dd className="m-0 font-extrabold">{answers}</dd>
+              </>
+            ) : (
+              <>
+                <dt className="font-bold text-muted">Makers</dt>
+                <dd className="m-0 font-extrabold">{makers.length} joined</dd>
+              </>
+            )}
             <dt className="font-bold text-muted">Author</dt>
             <dd className="m-0 font-extrabold">{challenge.author_name ?? 'Anonymous'}</dd>
           </dl>
@@ -220,19 +238,31 @@ export default async function ChallengeDetailPage({
                 </span>
                 <div className="min-w-0 flex-1" style={{ color: stage.fg }}>
                   <p className="font-display text-[22px] font-extrabold">
-                    {graduated ? 'Somebody solved it' : 'Open, and makers are on it'}
+                    {question
+                      ? answered
+                        ? 'Answered'
+                        : 'Open, and waiting for an answer'
+                      : graduated
+                        ? 'Somebody solved it'
+                        : 'Open, and makers are on it'}
                   </p>
                   <p className="mt-1.5 max-w-[62ch] text-[15px] leading-[1.6] [text-wrap:pretty]">
-                    {graduated
-                      ? 'A maker is turning the solution into a guide. The brief stays up, with the guide linked from it once it is approved, so the thread that got there is not lost.'
-                      : 'Anyone can read the brief; makers who join can post in the thread. Nothing here is assigned — people take on the parts they can do.'}
+                    {question
+                      ? answered
+                        ? 'The person who asked marked one reply as the answer. It is highlighted in the thread; the rest of the conversation stays with it.'
+                        : 'No build needed. Anyone who joins can answer in the thread, and the person who asked marks the one that helped.'
+                      : graduated
+                        ? 'A maker is turning the solution into a guide. The brief stays up, with the guide linked from it once it is approved, so the thread that got there is not lost.'
+                        : 'Anyone can read the brief; makers who join can post in the thread. Nothing here is assigned — people take on the parts they can do.'}
                   </p>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-2.5">
                 {[
-                  [makers.length, makers.length === 1 ? 'maker' : 'makers'],
+                  question
+                    ? [answers, answers === 1 ? 'answer' : 'answers']
+                    : [makers.length, makers.length === 1 ? 'maker' : 'makers'],
                   [daysOpen, daysOpen === 1 ? 'day open' : 'days open'],
                 ].map(([n, label]) => (
                   <div key={label} className="rounded-[18px] border border-line bg-[var(--canvas)] px-3.5 py-4 text-center">
@@ -321,7 +351,7 @@ export default async function ChallengeDetailPage({
                         className="grid h-[42px] w-[42px] shrink-0 place-items-center rounded-full text-sm font-extrabold text-[var(--tink)]"
                         style={{ background: TINTS[i % TINTS.length] }}
                       >
-                        {initials(m.name)}
+                        {initials(m.name, '?')}
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block text-[15px] font-extrabold">{m.name ?? 'Someone'}</span>
@@ -352,6 +382,8 @@ export default async function ChallengeDetailPage({
               authorId={challenge.author_id}
               authorName={challenge.author_name}
               participants={challenge.participants}
+              question={question}
+              answerMessageId={challenge.answer_message_id ?? null}
             />
           )}
 

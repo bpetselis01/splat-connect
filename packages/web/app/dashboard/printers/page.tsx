@@ -22,8 +22,11 @@ import { IncomingPrintCard } from '@/components/incoming-print-card'
 import { SplatMascot } from '@/components/splat-mascot'
 import { ProfileTabs } from '@/components/profile-tabs'
 import { printStages } from '@/lib/print-stages'
-import { needsAction, subjectName } from '@splat-connect/types'
-import type { PrinterWithOwner, ToyTransactionSummary } from '@splat-connect/types'
+import { collapsePrintGroups, needsAction, pickupAddress, subjectName } from '@splat-connect/types'
+import type {
+  PrinterWithOwner,
+  ToyTransactionSummary,
+} from '@splat-connect/types'
 
 export const metadata = { title: 'Print for others — SPLAT Connect' }
 
@@ -144,15 +147,14 @@ export async function PrintOfferScreen({
   const jobs = allJobs.filter(
     (tx) => tx.type === 'print' && tx.printer_id !== null && printerIds.has(tx.printer_id)
   )
-  const waiting = jobs.filter((tx) => tx.status === 'requested')
+  // One card per request: an organisation asked on two of its machines (074)
+  // answers once, choosing the bench on accept.
+  const waitingRows = collapsePrintGroups(jobs.filter((tx) => tx.status === 'requested'))
+  const waiting = waitingRows
   const onTheBed = jobs.filter((tx) => tx.status === 'accepted')
   const done = jobs.filter((tx) => !['requested', 'accepted'].includes(tx.status))
 
-  const { pickup_line1, pickup_suburb, pickup_state, pickup_postcode } = caps.profile
-  const defaultAddress =
-    pickup_line1 && pickup_suburb && pickup_state && pickup_postcode
-      ? { pickup_line1, pickup_suburb, pickup_state, pickup_postcode }
-      : null
+  const defaultAddress = pickupAddress(caps.profile)
 
   const dashedEmpty =
     'rounded-[24px] border border-dashed border-line bg-surface p-[22px] text-center text-[15px] text-muted'
@@ -215,7 +217,12 @@ export async function PrintOfferScreen({
               ) : (
                 <ul className="flex list-none flex-col gap-4">
                   {waiting.map((tx) => (
-                    <IncomingPrintCard key={tx.id} tx={tx} defaultAddress={defaultAddress} />
+                    <IncomingPrintCard
+                      key={tx.id}
+                      tx={tx}
+                      defaultAddress={defaultAddress}
+                      machines={orgId ? printers : undefined}
+                    />
                   ))}
                 </ul>
               ),

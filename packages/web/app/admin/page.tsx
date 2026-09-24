@@ -16,7 +16,7 @@ import {
 import type { Icon } from '@phosphor-icons/react'
 import Link from 'next/link'
 import { apiClient } from '@/lib/api-client'
-import { shortDate } from '@/lib/dates'
+import { shortDate } from '@splat-connect/types'
 import type {
   Tutorial,
   AdminAccountsResponse,

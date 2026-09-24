@@ -32,9 +32,17 @@ import {
   Wrench,
 } from '@phosphor-icons/react/dist/ssr'
 import type { Icon } from '@phosphor-icons/react'
-import { AU_STATES, ORG_CAPABILITIES, PRINT_MATERIALS } from '@splat-connect/types'
+import { AU_STATES, ORG_CAPABILITIES, ORG_KINDS, PAYMENT_METHODS, PRINT_MATERIALS } from '@splat-connect/types'
 import type { Organization, OrgCapability } from '@splat-connect/types'
 import { browserApiClient } from '@/lib/browser-api-client'
+import {
+  DoorsEditor,
+  OrgImagePicker,
+  RateLinesEditor,
+  readLists,
+  type DoorDraft,
+  type RateDraft,
+} from '@/components/org-profile-parts'
 
 // What each capability promises a family, in the board's words where the board
 // has a row for it. "Builds adaptations" has no board row; its line says only
@@ -64,6 +72,24 @@ export function OrgProfileForm({ org }: { org: Organization }) {
   const router = useRouter()
   const [capabilities, setCapabilities] = useState<string[]>(org.capabilities ?? [])
   const [materials, setMaterials] = useState<string[]>(org.recycling_materials ?? [])
+  const [logo, setLogo] = useState<string | null>(org.logo_url ?? null)
+  const [cover, setCover] = useState<string | null>(org.cover_url ?? null)
+  // "What you are": one of the suggestions, or anything else typed in.
+  const knownKind = !org.kind || (ORG_KINDS as readonly string[]).includes(org.kind)
+  const [kindChoice, setKindChoice] = useState(knownKind ? (org.kind ?? '') : 'other')
+  const [kindOther, setKindOther] = useState(knownKind ? '' : (org.kind ?? ''))
+  const [doors, setDoors] = useState<DoorDraft[]>(
+    (org.doors ?? []).map((d) => ({ key: d.id, title: d.title, body: d.body ?? '', target: d.target }))
+  )
+  const [lines, setLines] = useState<RateDraft[]>(
+    (org.rate_lines ?? []).map((l) => ({
+      key: l.id,
+      description: l.description,
+      amount: (l.amount_cents / 100).toFixed(2),
+      claiming: l.claiming,
+    }))
+  )
+  const [payments, setPayments] = useState<string[]>(org.payment_methods ?? [])
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
@@ -77,9 +103,24 @@ export function OrgProfileForm({ org }: { org: Organization }) {
     const form = new FormData(e.currentTarget)
     setError(null)
     setSaved(false)
+    const lists = readLists(doors, lines, String(form.get('rate_note') ?? ''))
+    if ('error' in lists) {
+      setError(lists.error)
+      return
+    }
     startTransition(async () => {
       try {
+        // Three writes, profile first. The doors and lines are their own tables,
+        // each replaced wholesale, so a failure part-way leaves each list either
+        // as it was or as sent — never half of one.
         await browserApiClient.patch(`/api/organizations/${org.id}/profile`, {
+          kind: (kindChoice === 'other' ? kindOther : kindChoice).trim(),
+          visit_hours: String(form.get('visit_hours') ?? ''),
+          service_area: String(form.get('service_area') ?? ''),
+          payment_methods: payments,
+          // A picture is written by its upload; saving can only take one down.
+          ...(org.logo_url && !logo ? { logo_url: null } : {}),
+          ...(org.cover_url && !cover ? { cover_url: null } : {}),
           name: String(form.get('name') ?? '').trim(),
           description: String(form.get('description') ?? ''),
           about: String(form.get('about') ?? ''),
@@ -93,6 +134,10 @@ export function OrgProfileForm({ org }: { org: Organization }) {
           capabilities,
           recycling_materials: materials,
         })
+        await Promise.all([
+          browserApiClient.put(`/api/organizations/${org.id}/doors`, { doors: lists.doors }),
+          browserApiClient.put(`/api/organizations/${org.id}/rate-lines`, { lines: lists.lines }),
+        ])
         setSaved(true)
         router.refresh()
       } catch (err) {
@@ -113,11 +158,37 @@ export function OrgProfileForm({ org }: { org: Organization }) {
     <form className="mt-7 flex flex-col gap-5" onSubmit={submit}>
       <section className="edit-card">
         <h2 className="edit-card__title">Identity</h2>
+        <div className="grid gap-3 sm:grid-cols-[116px_minmax(0,1fr)]">
+          <div>
+            <span className="form-label">Logo</span>
+            <OrgImagePicker orgId={org.id} slot="logo" url={logo} onChange={setLogo} />
+          </div>
+          <div>
+            <span className="form-label">Cover photo</span>
+            <OrgImagePicker orgId={org.id} slot="cover" url={cover} onChange={setCover} />
+          </div>
+        </div>
         <label>
           <span className="form-label">Organisation name</span>
           <input name="name" defaultValue={org.name} className="field" maxLength={120} />
         </label>
-        <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_92px_110px]">
+        <div className="grid gap-3 sm:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_92px_110px]">
+          <label>
+            <span className="form-label">What you are</span>
+            <select
+              value={kindChoice}
+              onChange={(e) => setKindChoice(e.target.value)}
+              className="field px-2.5 font-bold"
+            >
+              <option value="">—</option>
+              {ORG_KINDS.map((k) => (
+                <option key={k} value={k}>
+                  {k}
+                </option>
+              ))}
+              <option value="other">Something else…</option>
+            </select>
+          </label>
           <label>
             <span className="form-label">Suburb</span>
             <input name="suburb" defaultValue={org.suburb ?? ''} className="field" maxLength={80} />
@@ -144,6 +215,18 @@ export function OrgProfileForm({ org }: { org: Organization }) {
             />
           </label>
         </div>
+        {kindChoice === 'other' && (
+          <label>
+            <span className="form-label">What you are, in your words</span>
+            <input
+              value={kindOther}
+              onChange={(e) => setKindOther(e.target.value)}
+              className="field"
+              maxLength={60}
+              placeholder="Rehab engineering clinic"
+            />
+          </label>
+        )}
         <label>
           <span className="form-label">One line, for the badge on a guide</span>
           <input
@@ -180,8 +263,8 @@ export function OrgProfileForm({ org }: { org: Organization }) {
           <ChartBar weight="duotone" aria-hidden="true" className="flex-none text-[22px] text-[var(--b600)]" />
           <p className="text-sm leading-normal text-muted">
             <strong className="text-ink">The four numbers under it are counted, not typed:</strong>{' '}
-            guides backed, guides reviewed, toys on the shelf and toys delivered all come from what
-            has actually happened here.
+            guides backed, toys delivered, parts printed and families helped all come from what has
+            actually happened here.
           </p>
         </div>
       </section>
@@ -236,6 +319,17 @@ export function OrgProfileForm({ org }: { org: Organization }) {
 
       <section className="edit-card">
         <div>
+          <h2 className="edit-card__title">How to work with them</h2>
+          <p className="edit-card__lede">
+            The numbered cards halfway down your page, up to six. Say each one the way you would say
+            it to a parent on the phone.
+          </p>
+        </div>
+        <DoorsEditor doors={doors} onChange={setDoors} />
+      </section>
+
+      <section className="edit-card">
+        <div>
           <h2 className="edit-card__title">What you ask families to cover</h2>
           {/* The board's own line under this panel. Kept although live has no
               itemised cost lines to put it beside: it is the money disclaimer,
@@ -245,17 +339,39 @@ export function OrgProfileForm({ org }: { org: Organization }) {
             you settle it between yourselves.
           </p>
         </div>
+        <RateLinesEditor lines={lines} onChange={setLines} />
         <label>
-          <span className="form-label">What you quote families</span>
+          <span className="form-label">
+            Why these costs <span>{lines.length > 0 ? '— required' : '(optional)'}</span>
+          </span>
           <textarea
             name="rate_note"
             defaultValue={org.rate_note ?? ''}
             rows={3}
             maxLength={500}
             className="field"
-            placeholder="Parts at cost, no charge for labour."
+            placeholder="Filament is the only thing we ask back, at what the spool cost us."
           />
+          <span className="mt-2 block text-[13px] text-muted">
+            Whoever you are asking to pay reads this word for word. Name the material and the rate.
+          </span>
         </label>
+        <fieldset className="m-0 border-0 p-0">
+          <legend className="form-label">How you would like to be paid back</legend>
+          <div className="flex flex-wrap gap-2">
+            {PAYMENT_METHODS.map((m) => (
+              <label key={m.value} className="toggle-pill">
+                <input
+                  type="checkbox"
+                  checked={payments.includes(m.value)}
+                  onChange={() => toggle(payments, setPayments, m.value)}
+                  className="sr-only"
+                />
+                {m.label}
+              </label>
+            ))}
+          </div>
+        </fieldset>
       </section>
 
       <section className="edit-card">
@@ -329,6 +445,32 @@ export function OrgProfileForm({ org }: { org: Organization }) {
             placeholder="https://"
           />
         </label>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label>
+            <span className="form-label">
+              When families can visit <span>(optional)</span>
+            </span>
+            <input
+              name="visit_hours"
+              defaultValue={org.visit_hours ?? ''}
+              className="field"
+              maxLength={120}
+              placeholder="Switch clinic Thursdays, 1–5 pm"
+            />
+          </label>
+          <label>
+            <span className="form-label">
+              Area you cover <span>(optional)</span>
+            </span>
+            <input
+              name="service_area"
+              defaultValue={org.service_area ?? ''}
+              className="field"
+              maxLength={120}
+              placeholder="Hunter region and Central Coast"
+            />
+          </label>
+        </div>
       </section>
 
       {error && (

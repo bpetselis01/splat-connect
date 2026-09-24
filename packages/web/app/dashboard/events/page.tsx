@@ -24,7 +24,7 @@ import {
 } from '@phosphor-icons/react/dist/ssr'
 import { requireCapabilities } from '@/lib/require-capabilities'
 import { apiClient } from '@/lib/api-client'
-import { dateBadge, formatTimeRange, isPast } from '@/lib/dates'
+import { dateBadge, formatTimeRange, isPast } from '@splat-connect/types'
 import type { EventKind, ToyTransactionStatus } from '@splat-connect/types'
 import { CantMakeItButton } from './cant-make-it-button'
 

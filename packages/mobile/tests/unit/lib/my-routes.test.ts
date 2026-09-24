@@ -3,7 +3,7 @@ import { myRoute } from '../../../lib/my-routes'
 
 const caps: any = {
   profile: { name: 'B', role: 'admin' }, isAdmin: true, ledOrgs: [{ id: 'o', name: 'A' }],
-  unread: { tutorials: 0, exchanges: 0, challenges: 0, total: 0 }, exchangeActions: 0,
+  unread: { tutorials: 0, exchanges: 0, challenges: 0, organisations: 0, total: 0 }, exchangeActions: 0,
 }
 
 it('maps every href the Me tab can emit to a mobile route, and nothing to the web', () => {
@@ -18,5 +18,7 @@ it('maps every href the Me tab can emit to a mobile route, and nothing to the we
 
 it('sends the one public row to Explore and unknown hrefs to the hub', () => {
   expect(myRoute('/get-involved/submit-an-idea')).toBe('/explore/challenges/new')
+  expect(myRoute('/get-involved/recycling')).toBe('/explore/recycling')
+  expect(myRoute('/dashboard/organisation/recycling')).toBe('/organisation/recycling')
   expect(myRoute('/nowhere')).toBe('/me')
 })

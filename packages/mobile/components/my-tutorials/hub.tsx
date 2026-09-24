@@ -7,30 +7,63 @@
 // prose — so the one screen that knew what was wrong could not take you to
 // where it was fixed. Here every gap getMissingFields reports is a row you can
 // tap, and Submit sits under the count that gates it.
-import { useCallback, useState } from 'react'
-import { View, Text, ScrollView, Pressable, Alert, StyleSheet } from 'react-native'
+import { useCallback, useState, type ComponentProps } from 'react'
+import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { apiClient } from '../../lib/api-client'
+import { confirmDestructive } from '../../lib/confirm'
 import { useDraft } from '../../lib/use-tutorial-draft'
 import {
   getMissingFields,
   sectionsFor,
   sectionSummary,
   SECTION_LABEL,
+  type SectionId,
 } from '../../lib/tutorial-sections'
+import { relativeTime } from '../../lib/notifications'
 import { theme } from '../../lib/theme'
 import { Screen } from '../ui/Screen'
-import { Badge } from '../ui/Badge'
 import { Button } from '../ui/Button'
+import { ListSection, Pill, StagePill } from '../list/list-kit'
+import { TUTORIAL_STAGE } from '../list/stage'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 
-export function TutorialHub({ id, justCreated }: { id: string; justCreated?: boolean }) {
+const SECTION_ICON: Record<SectionId, ComponentProps<typeof Ionicons>['name']> = {
+  details: 'document-text-outline',
+  steps: 'list-outline',
+  safety: 'shield-checkmark-outline',
+  parts: 'hardware-chip-outline',
+  tools: 'construct-outline',
+  files: 'folder-open-outline',
+  stl: 'cube-outline',
+}
+
+const STATUS_WORD = { draft: 'Draft', pending: 'Submitted', approved: 'Approved', rejected: 'Returned' } as const
+
+/** "saved 2 minutes ago" — nothing when the timestamp does not parse. */
+function savedAgo(iso: string | null | undefined): string {
+  if (!iso || Number.isNaN(Date.parse(iso))) return ''
+  return ` · saved ${relativeTime(iso)}`
+}
+
+/** Set when the draft came from "Start from a PDF" (app/(tabs)/guides/new.tsx). */
+export interface FromPdf {
+  /** The steps endpoint answered 404, so the PDF's steps were not saved. */
+  stepsLater: boolean
+  /** Sections createGuideFromPdfDraft could not save. */
+  missed: string[]
+}
+
+export function TutorialHub({ id, justCreated, fromPdf }: { id: string; justCreated?: boolean; fromPdf?: FromPdf }) {
   const router = useRouter()
-  const { tutorial, loading, loadError, saveNow } = useDraft()
+  const { tutorial, loading, loadError, saveNow, saveState } = useDraft()
   const [menuOpen, setMenuOpen] = useState(false)
   const [noteDismissed, setNoteDismissed] = useState(false)
+  // Unlike the arrival note this one stays until dismissed: it asks the author
+  // to check every section, which is exactly the trip that would clear the other.
+  const [pdfNoteDismissed, setPdfNoteDismissed] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
   // The note is for the moment of arrival, not for the whole session. It keys
@@ -82,39 +115,51 @@ export function TutorialHub({ id, justCreated }: { id: string; justCreated?: boo
 
   function handleDelete() {
     setMenuOpen(false)
-    Alert.alert('Delete this draft?', 'This cannot be undone.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await apiClient.delete(`/api/tutorials/${id}`)
-            router.replace('/tutorials')
-          } catch (err) {
-            console.error('[TutorialHub] delete failed:', err)
-          }
-        },
-      },
-    ])
+    confirmDestructive('Delete this draft?', 'This cannot be undone.', 'Delete', async () => {
+      try {
+        await apiClient.delete(`/api/tutorials/${id}`)
+        router.replace('/tutorials')
+      } catch (err) {
+        console.error('[TutorialHub] delete failed:', err)
+      }
+    })
   }
 
   return (
     <Screen>
-      <View style={styles.headerRow}>
-        <Text numberOfLines={1} style={styles.title}>
-          {tutorial.title || 'Untitled guide'}
-        </Text>
-        <Pressable
-          testID="hub-menu-trigger"
-          accessibilityRole="button"
-          accessibilityLabel="More actions"
-          onPress={() => setMenuOpen((o) => !o)}
-          style={styles.kebab}
-          hitSlop={8}
+      <View style={styles.headCard}>
+        <View style={styles.headTop}>
+          <StagePill stage={TUTORIAL_STAGE[tutorial.status]} />
+          <Text style={styles.headState} numberOfLines={1}>
+            {saveState === 'saving' ? `${STATUS_WORD[tutorial.status]} · saving` : `${STATUS_WORD[tutorial.status]}${savedAgo(tutorial.updated_at)}`}
+          </Text>
+        </View>
+        <View style={styles.titleRow}>
+          <Text numberOfLines={2} style={styles.title}>
+            {tutorial.title || 'Untitled guide'}
+          </Text>
+            <Pressable
+              testID="hub-menu-trigger"
+              accessibilityRole="button"
+              accessibilityLabel="More actions"
+              onPress={() => setMenuOpen((o) => !o)}
+              style={styles.kebab}
+              hitSlop={8}
+            >
+              <Ionicons name="ellipsis-horizontal" size={18} color={theme.colors.ink} />
+            </Pressable>
+        </View>
+        <View
+          style={styles.bar}
+          accessible
+          accessibilityRole="progressbar"
+          accessibilityValue={{ min: 0, max: sections.length, now: ready }}
         >
-          <Ionicons name="ellipsis-horizontal" size={18} color={theme.colors.ink} />
-        </Pressable>
+          <View testID="hub-progress-fill" style={[styles.barFill, { width: `${(ready / sections.length) * 100}%` }]} />
+        </View>
+        <Text style={styles.progressText}>
+          {ready} of {sections.length} sections complete
+        </Text>
       </View>
 
       {menuOpen ? (
@@ -160,7 +205,27 @@ export function TutorialHub({ id, justCreated }: { id: string; justCreated?: boo
         </View>
       ) : null}
 
-      {justCreated && !noteDismissed ? (
+      {fromPdf && !pdfNoteDismissed ? (
+        <View testID="hub-pdf-note" style={styles.note}>
+          <View style={styles.noteText}>
+            <Text style={styles.noteTitle}>Filled in from your PDF</Text>
+            <Text style={styles.noteBody}>
+              Check every section before you submit — it is a best guess from the PDF&apos;s text, and
+              photos inside the PDF were not copied.
+              {fromPdf.stepsLater ? ' The steps could not be saved yet; add them in Steps.' : ''}
+              {fromPdf.missed.length ? ` Could not save: ${fromPdf.missed.join(', ')}.` : ''}
+            </Text>
+          </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Dismiss"
+            onPress={() => setPdfNoteDismissed(true)}
+            hitSlop={8}
+          >
+            <Ionicons name="close" size={18} color={theme.colors.ink} />
+          </Pressable>
+        </View>
+      ) : justCreated && !noteDismissed ? (
         <View testID="hub-created-note" style={styles.note}>
           <View style={styles.noteText}>
             <Text style={styles.noteTitle}>Draft saved</Text>
@@ -179,16 +244,11 @@ export function TutorialHub({ id, justCreated }: { id: string; justCreated?: boo
         </View>
       ) : null}
 
-      <View style={styles.statusRow}>
-        <Badge status={tutorial.status} />
-        <Text style={styles.progressText}>
-          {ready} of {sections.length} ready
-        </Text>
-      </View>
-
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.rows}>
         {sections.map((section) => {
-          const done = !incomplete.has(section)
+          const done = section === 'steps' ? (tutorial.steps?.length ?? 0) > 0 : !incomplete.has(section)
+          // Steps are optional (080): an empty list is an invitation, not a gap.
+          const optionalEmpty = section === 'steps' && !done
           return (
             <Pressable
               key={section}
@@ -196,19 +256,20 @@ export function TutorialHub({ id, justCreated }: { id: string; justCreated?: boo
               accessibilityRole="button"
               accessibilityLabel={`${SECTION_LABEL[section]}. ${sectionSummary(section, tutorial)}`}
               onPress={() => router.push(`/tutorials/${id}/${section}`)}
-              style={[styles.row, done && styles.rowDone]}
+              style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
             >
-              <View style={[styles.mark, done ? styles.markDone : styles.markTodo]}>
-                <Ionicons
-                  name={done ? 'checkmark' : 'alert'}
-                  size={14}
-                  color={done ? theme.colors.ink : theme.colors.ink}
-                />
+              <View style={styles.rowIcon}>
+                <Ionicons name={SECTION_ICON[section]} size={20} color={theme.colors.primaryDeep} />
               </View>
               <View style={styles.rowText}>
                 <Text style={styles.rowTitle}>{SECTION_LABEL[section]}</Text>
                 <Text style={styles.rowSummary}>{sectionSummary(section, tutorial)}</Text>
               </View>
+              {done ? (
+                <Ionicons testID={`hub-done-${section}`} name="checkmark-circle" size={22} color={theme.colors.success} />
+              ) : optionalEmpty ? (
+                <Pill label="Empty" bg={theme.colors.honeySoft} />
+              ) : null}
               <Ionicons name="chevron-forward" size={18} color={theme.colors.muted} />
             </Pressable>
           )
@@ -218,7 +279,7 @@ export function TutorialHub({ id, justCreated }: { id: string; justCreated?: boo
             rather than in the menu. Backing is a second fetch on web and is not
             one here: "ask on the web" is the whole of what mobile can say about
             it, and a request would be a round trip to say so. */}
-        <Text style={styles.moreHeading}>More</Text>
+        <ListSection style={styles.moreHeading}>More</ListSection>
         <View style={styles.moreRow}>
           <Text style={styles.moreLabel}>Backed by</Text>
           <Text style={styles.moreValue}>Ask on the web</Text>
@@ -239,14 +300,27 @@ export function TutorialHub({ id, justCreated }: { id: string; justCreated?: boo
       </ScrollView>
 
       <View style={styles.footer}>
-        <Button
-          testID="hub-submit"
-          label="Submit for review"
-          variant="accent"
-          onPress={handleSubmit}
-          disabled={missing.length > 0 || !isDraft}
-          loading={submitting}
-        />
+        <View style={styles.footerButtons}>
+          {/* The reader's view of your own guide, before you ask anyone to
+              review it — the same route the menu's entry opens. */}
+          <Button
+            testID="hub-preview"
+            label="Preview"
+            variant="secondary"
+            onPress={() => router.push({ pathname: '/guides/[id]', params: { id } })}
+            style={styles.footerButton}
+          />
+          <Button
+            testID="hub-submit"
+            label="Submit"
+            accessibilityLabel="Submit for review"
+            variant="primary"
+            onPress={handleSubmit}
+            disabled={missing.length > 0 || !isDraft}
+            loading={submitting}
+            style={styles.footerButton}
+          />
+        </View>
         <Text style={styles.footnote}>
           {tutorial.status === 'pending'
             ? 'Submitted - waiting for review'
@@ -262,19 +336,76 @@ export function TutorialHub({ id, justCreated }: { id: string; justCreated?: boo
 }
 
 const styles = StyleSheet.create({
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing(2),
-    marginBottom: theme.spacing(3),
+  // The board's header card: stage and save state, the title, the bar.
+  headCard: {
+    padding: theme.spacing(4),
+    borderRadius: theme.radii.panel,
+    borderWidth: theme.border.hairline,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surface,
+    marginBottom: theme.spacing(4),
+    ...theme.shadow(2),
   },
-  title: {
+  headTop: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2) },
+  headState: {
     flex: 1,
     fontFamily: theme.fonts.black,
-    fontSize: theme.type.title,
-    color: theme.colors.ink,
-    letterSpacing: -0.4,
+    fontSize: 12,
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    color: theme.colors.muted,
   },
+  titleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: theme.spacing(2), marginTop: theme.spacing(2) },
+  title: {
+    flex: 1,
+    fontFamily: theme.fonts.display,
+    fontSize: theme.type.heading,
+    lineHeight: 24,
+    color: theme.colors.ink,
+  },
+  bar: {
+    height: 8,
+    marginTop: theme.spacing(3),
+    borderRadius: theme.radii.pill,
+    backgroundColor: theme.colors.surfaceSunken,
+    overflow: 'hidden',
+  },
+  barFill: { height: '100%', borderRadius: theme.radii.pill, backgroundColor: theme.colors.success },
+  progressText: {
+    fontFamily: theme.fonts.semiBold,
+    fontSize: 12.5,
+    color: theme.colors.muted,
+    marginTop: 7,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing(3),
+    minHeight: 56,
+    paddingHorizontal: 14,
+    paddingVertical: theme.spacing(2),
+    backgroundColor: theme.colors.surface,
+    borderWidth: theme.border.hairline,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radii.field + 2,
+    ...theme.shadow(1),
+  },
+  rowPressed: { transform: [{ scale: 0.98 }] },
+  rowIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: theme.radii.field - 2,
+    backgroundColor: theme.colors.accentLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rowTitle: { fontFamily: theme.fonts.black, fontSize: 15, color: theme.colors.ink },
+  moreHeading: { marginTop: theme.spacing(5) },
+  footer: { paddingTop: theme.spacing(3), paddingBottom: theme.spacing(2) },
+  footerButtons: { flexDirection: 'row', gap: theme.spacing(3) },
+  footerButton: { flex: 1, borderRadius: theme.radii.pill, minHeight: 50 },
+
+
   kebab: {
     width: 34,
     height: 34,
@@ -326,57 +457,18 @@ const styles = StyleSheet.create({
     color: theme.colors.ink,
     lineHeight: 18,
   },
-  statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing(2),
-    marginBottom: theme.spacing(3),
-  },
-  progressText: {
-    fontFamily: theme.fonts.bold,
-    fontSize: theme.type.caption,
-    color: theme.colors.muted,
-  },
+
+
   rows: { gap: theme.spacing(2), paddingBottom: theme.spacing(4) },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing(3),
-    backgroundColor: theme.colors.surface,
-    borderWidth: theme.border.hairline,
-    borderColor: theme.colors.border,
-    borderRadius: theme.radii.field,
-    padding: theme.spacing(3),
-    ...theme.shadow(1),
-  },
-  rowDone: { backgroundColor: theme.colors.mintSoft },
-  mark: {
-    width: 28,
-    height: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: theme.border.hairline,
-    borderColor: theme.colors.border,
-    borderRadius: theme.radii.field,
-  },
-  markDone: { backgroundColor: theme.colors.mint },
-  markTodo: { backgroundColor: theme.colors.apricotSoft },
+
+
   rowText: { flex: 1 },
-  rowTitle: { fontFamily: theme.fonts.bold, fontSize: theme.type.body, color: theme.colors.ink },
   rowSummary: {
     fontFamily: theme.fonts.regular,
     fontSize: theme.type.caption,
     color: theme.colors.muted,
   },
-  moreHeading: {
-    fontFamily: theme.fonts.bold,
-    fontSize: theme.type.caption,
-    color: theme.colors.muted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-    marginTop: theme.spacing(5),
-    marginBottom: theme.spacing(2),
-  },
+
   moreRow: { marginBottom: theme.spacing(3) },
   moreLabel: {
     fontFamily: theme.fonts.bold,
@@ -388,7 +480,6 @@ const styles = StyleSheet.create({
     fontSize: theme.type.caption,
     color: theme.colors.muted,
   },
-  footer: { paddingTop: theme.spacing(3), paddingBottom: theme.spacing(2) },
   footnote: {
     fontFamily: theme.fonts.regular,
     fontSize: theme.type.caption,

@@ -15,12 +15,11 @@ import Link from 'next/link'
 import type { Route } from 'next'
 import { notFound } from 'next/navigation'
 import { BookOpen, CaretRight, Gift, Hammer, Medal } from '@phosphor-icons/react/dist/ssr'
-import { initials } from '@/components/story-bits'
 import { ShelfToyCard } from '@/components/shelf-toy-card'
 import { tintFor } from '@/components/card-photo'
 import { getCapabilities } from '@/lib/capabilities'
 import { safePhotoSrc } from '@/lib/photo-src'
-import { monthHeading, shortDate } from '@/lib/dates'
+import { initials, monthHeading, shortDate } from '@splat-connect/types'
 import { formatBuildTime, type ContributorProfile } from '@splat-connect/types'
 
 const DIFFICULTY_LABEL = { easy: 'Easy', medium: 'Medium', hard: 'Hard' } as const

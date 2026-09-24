@@ -45,6 +45,11 @@ const child = (over: object) => ({
   forearm_length_mm: null,
   hand_dominance: null,
   sensory_preferences: [],
+  working_hand: null,
+  press_force: null,
+  aim: null,
+  hold: null,
+  everyday_needs: [],
   created_at: '',
   updated_at: '',
   ...over,
@@ -58,13 +63,13 @@ beforeEach(() => {
 describe('ChildProfileHome', () => {
   it('lists each child with its one-line summary, falling back per the spec', async () => {
     mockGet.mockResolvedValue([
-      child({ id: 'cp1', name: 'Maya', age: 5 }),
+      child({ id: 'cp1', name: 'Maya', age: 5, working_hand: 'right', press_force: 'light' }),
       child({ id: 'cp2', name: null }),
     ])
     render(<ChildProfileHome />)
 
     expect(await screen.findByText('Maya')).toBeTruthy()
-    expect(screen.getByText('Age 5')).toBeTruthy()
+    expect(screen.getByText('Age 5 · Right hand · Light press')).toBeTruthy()
     // Unnamed children take their position; a blank profile says so plainly.
     expect(screen.getByText('Child 2')).toBeTruthy()
     expect(screen.getByText('Not set yet')).toBeTruthy()
@@ -82,7 +87,7 @@ describe('ChildProfileHome', () => {
     mockPost.mockResolvedValue(child({ id: 'fresh' }))
     render(<ChildProfileHome />)
 
-    fireEvent.press(await screen.findByRole('button', { name: '+ Add child' }))
+    fireEvent.press(await screen.findByRole('button', { name: '+ Add a child' }))
 
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/child-profiles', {}))
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/account/child/[id]', params: { id: 'fresh' } })
@@ -99,5 +104,7 @@ describe('ChildProfileHome', () => {
   it('invites the first profile when there are none', async () => {
     render(<ChildProfileHome />)
     expect(await screen.findByText(/No child profiles yet/)).toBeTruthy()
+    fireEvent.press(screen.getByRole('button', { name: 'Answer a few quick questions' }))
+    expect(mockPush).toHaveBeenCalledWith('/child')
   })
 })

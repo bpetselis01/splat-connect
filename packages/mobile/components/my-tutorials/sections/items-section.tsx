@@ -122,6 +122,7 @@ export function ItemsSection({ noun }: { noun: 'parts' | 'tools' }) {
           testID="items-add"
           label={`+ Add a ${singular.toLowerCase()}`}
           variant="ghost"
+          style={styles.add}
           onPress={() =>
             commit([
               ...rows,
@@ -148,14 +149,23 @@ const styles = StyleSheet.create({
     color: theme.colors.muted,
     marginBottom: theme.spacing(3),
   },
+  // The board's section card: panel radius, one elevation, 14px in.
   card: {
     backgroundColor: theme.colors.surface,
     borderWidth: theme.border.hairline,
     borderColor: theme.colors.border,
-    borderRadius: theme.radii.field,
-    padding: theme.spacing(3),
+    borderRadius: theme.radii.panel,
+    padding: 14,
     marginBottom: theme.spacing(3),
     ...theme.shadow(1),
+  },
+  // The board's dashed full-width "+ Add" under a section's cards.
+  add: {
+    borderStyle: 'dashed',
+    borderWidth: theme.border.hairline * 1.5,
+    borderColor: theme.colors.muted,
+    borderRadius: theme.radii.pill,
+    minHeight: 50,
   },
   controls: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3) },
   stepper: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2) },

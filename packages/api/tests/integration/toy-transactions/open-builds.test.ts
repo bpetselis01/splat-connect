@@ -148,6 +148,23 @@ describe('the board', () => {
     ).json()) as Array<{ tutorial_id: string; mine: boolean }>
     expect(rows.find((r) => r.tutorial_id === tutorialId)!.mine).toBe(true)
   })
+
+  // RLS lets a maker read an open request so they can claim it, and the list
+  // route used to return everything RLS allowed — so the family's name and id,
+  // which the board above deliberately withholds, sat on every maker's
+  // exchange list as if the request were theirs.
+  it('keeps the open request off a maker\'s own exchange list, and on the family\'s', async () => {
+    const theirs = (await (
+      await app.request('/api/toy-transactions', authed(makerA.token))
+    ).json()) as Array<{ tutorial_id: string | null; requester_id: string }>
+    expect(theirs.some((r) => r.requester_id === family.id)).toBe(false)
+    expect(JSON.stringify(theirs)).not.toContain(family.id)
+
+    const mine = (await (
+      await app.request('/api/toy-transactions', authed(family.token))
+    ).json()) as Array<{ tutorial_id: string | null }>
+    expect(mine.some((r) => r.tutorial_id === tutorialId)).toBe(true)
+  })
 })
 
 describe('claiming', () => {

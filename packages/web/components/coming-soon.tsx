@@ -17,7 +17,7 @@
 import Link from 'next/link'
 import type { Route } from 'next'
 import type { Icon as PhosphorIcon } from '@phosphor-icons/react'
-import { BookOpen } from '@/components/icons'
+import { BookOpen } from '@phosphor-icons/react/dist/ssr'
 import { NotifyForm } from '@/components/notify-form'
 
 export function ComingSoon({
@@ -49,7 +49,7 @@ export function ComingSoon({
           className="mx-auto grid h-[88px] w-[88px] place-items-center rounded-card bg-[var(--tviolet)] text-[var(--tink)]"
           style={{ boxShadow: 'var(--shadow-e2)' }}
         >
-          {Glyph ? <Glyph size={44} weight="duotone" /> : <BookOpen className="h-11 w-11" />}
+          {Glyph ? <Glyph size={44} weight="duotone" /> : <BookOpen className="h-11 w-11" weight="bold" aria-hidden="true" />}
         </span>
         <span className="mt-[22px] inline-block rounded-pill border border-line bg-sunken px-3.5 py-1.5 text-[13px] font-extrabold uppercase tracking-[0.1em] text-muted">
           Not built yet
@@ -82,7 +82,7 @@ export function ComingSoon({
     <div className="mx-auto max-w-2xl">
       <div className="card flex flex-col items-center px-6 py-10 text-center">
         <span aria-hidden="true" className="empty-badge text-brand-deep">
-          <BookOpen className="h-8 w-8" />
+          <BookOpen className="h-8 w-8" weight="bold" aria-hidden="true" />
         </span>
         <h1 className="mt-4 text-2xl font-bold text-ink">{label}</h1>
         <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted">

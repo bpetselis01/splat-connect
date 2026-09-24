@@ -3,9 +3,7 @@
  *
  * It was a `panel` holding a four-row <dl> — Name / Condition / Description /
  * Switch-adapted — which is a form's review step, not the page a stranger reads
- * to decide whether to ask for a child's toy. ToySummary still draws that <dl>,
- * and still should: it is exactly right for the owner checking their own
- * listing, which is its other caller.
+ * to decide whether to ask for a child's toy.
  *
  * The board's shape is the same one the tutorial detail uses, and for the same
  * reason: the facts belong to the whole page, the photographs take the wide
@@ -31,7 +29,9 @@ import { getCapabilities } from '@/lib/capabilities'
 import { apiClient } from '@/lib/api-client'
 import { gradeOf } from '@/lib/toy-grade'
 import { agoInWords } from '@/lib/relative-time'
-import { toyHolderName, type OfferType, type Toy, type ToyWithOwner } from '@splat-connect/types'
+import { ToyFacts, ToySignInGate } from '@/components/toy-facts'
+import { ReportLink } from '@/components/report-link'
+import { toyHolderName, type OfferType, type Toy, type ToyDetail, type ToyWithOwner, initials } from '@splat-connect/types'
 
 /** The board's three offers: the chip's word and tint, and the rail's sentence. */
 const OFFER: Record<OfferType, { label: string; tint: string; Icon: typeof Gift; note: (holder: string) => string }> = {
@@ -64,15 +64,6 @@ function Chip({ tint, icon, children }: { tint: string; icon: ReactNode; childre
   )
 }
 
-function initials(name: string): string {
-  return name
-    .split(/\s+/)
-    .map((w) => w[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase()
-}
-
 export default async function ToyLibraryDetailPage({
   params,
 }: {
@@ -82,7 +73,7 @@ export default async function ToyLibraryDetailPage({
   const res = await fetch(`${process.env.API_URL}/api/public/toys/${id}`, { cache: 'no-store' })
   if (!res.ok) notFound()
 
-  const toy = (await res.json()) as ToyWithOwner
+  const toy = (await res.json()) as ToyDetail
 
   const caps = await getCapabilities()
   const [rawMyToys, listed, saved] = await Promise.all([
@@ -96,6 +87,8 @@ export default async function ToyLibraryDetailPage({
     getSavedIds(),
   ])
   const myToys = rawMyToys.filter((t) => t.status === 'published')
+  const isHolder =
+    !!caps && (caps.profile.id === toy.owner_id || caps.ledOrgs.some((o) => o.id === toy.owner_org_id))
 
   const holder = toyHolderName(toy)
   const grade = gradeOf(toy.condition)
@@ -175,6 +168,13 @@ export default async function ToyLibraryDetailPage({
           </section>
         )}
 
+        <ToyFacts toy={toy} />
+
+        {/* The board's guest gate. Nothing behind it is withheld yet — the
+            box, safety and handover sections have no columns — so it says
+            what signing in is for rather than blurring stand-in text. */}
+        {!caps && <ToySignInGate toyId={toy.id} />}
+
         {others.length > 0 && (
           <section aria-labelledby="toy-rec-h" className="flex flex-col gap-4 border-t border-line pt-[26px]">
             <div>
@@ -248,11 +248,23 @@ export default async function ToyLibraryDetailPage({
             <div className="min-w-0 flex-1">
               <p className="m-0 text-[15px] font-extrabold text-ink">{holder}</p>
               <p className="m-0 mt-0.5 text-[13px] text-muted">
+                {`${toy.holder_given} toy${toy.holder_given === 1 ? '' : 's'} given · `}
                 {sameHolder.length > 0 &&
                   `${sameHolder.length} toy${sameHolder.length === 1 ? '' : 's'} listed · `}
                 {toy.owner_org_id ? 'an organisation' : 'a family'}
               </p>
             </div>
+          </div>
+        )}
+        {!isHolder && (
+          <div className="flex justify-end px-1.5">
+            <ReportLink
+              subjectKind="toy"
+              subjectId={toy.id}
+              subjectLabel={toy.name}
+              who={holder}
+              signedIn={!!caps}
+            />
           </div>
         )}
       </aside>

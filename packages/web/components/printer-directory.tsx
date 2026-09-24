@@ -10,8 +10,9 @@
  * not return, and a facet that filters on nothing is worse than no facet.
  *
  * Browsing only. A request is sent from a guide (/printing/requests?guide=…),
- * so the cards carry no Pick button — the board's pick-up-to-three tray needs
- * a multi-printer request the API does not accept yet.
+ * so the cards carry no Pick button — the pick-up-to-three choice is made on
+ * that form, where the guide is known, not in a tray here that would have to
+ * carry picks through a guide and back.
  */
 import { useState } from 'react'
 import Link from 'next/link'
@@ -32,6 +33,7 @@ import {
 } from '@phosphor-icons/react/dist/ssr'
 import type { PrinterWithOwner } from '@splat-connect/types'
 import { filamentRate } from '@/lib/filament-rate'
+import { initials } from '@splat-connect/types'
 
 type Filters = {
   avail?: 'open' | 'noq' | 'any'
@@ -74,18 +76,9 @@ const FACETS = [
 // The board's card tints, rotated so a row of three never repeats one.
 const TINTS = ['var(--tmint)', 'var(--b100)', 'var(--tamber)', 'var(--tviolet)', 'var(--tcoral)']
 
-function initials(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0]!.toUpperCase())
-    .join('')
-}
-
 const isOpen = (p: PrinterWithOwner) => p.accepting && p.open_jobs < p.capacity
 
-export function matches(p: PrinterWithOwner, f: Filters) {
+function matches(p: PrinterWithOwner, f: Filters) {
   if (f.avail === 'open' && !isOpen(p)) return false
   if (f.avail === 'noq' && !(isOpen(p) && p.open_jobs === 0)) return false
   if (f.mat && !p.materials.includes(f.mat)) return false
@@ -185,7 +178,7 @@ export function PrinterDirectory({
           <div>
             <h2>Printers near you</h2>
             <p className="mt-1 text-[15px] text-muted">
-              Open a guide to send one of them its parts. They print it; you cover the filament.
+              Open a guide to ask up to three of them. The first to accept takes the job; the others step back automatically.
             </p>
           </div>
           {printers && (

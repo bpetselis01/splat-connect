@@ -3,10 +3,9 @@
  * The five-photo carousel, shown wherever a toy or a guide is read rather than
  * edited: the public toy page and the guide view.
  *
- * Drag-follows-finger, then settles on the nearest photo with a spring
- * (--spring-photo). No carousel library: the whole behaviour is a rail with a
- * transform on it, and the one piece of real logic — where a release lands —
- * is four lines and is the thing worth testing.
+ * A native scroll-snap rail: the browser does the swipe, the momentum and the
+ * settle, and the counter and dots just read where it came to rest. No
+ * carousel library and no pointer maths.
  *
  * One photo renders as one photo. A gallery's dots, counter and drag are all
  * answers to "which of these am I looking at", and with a single image there
@@ -24,11 +23,6 @@ import { CaretLeft, CaretRight, Package } from '@phosphor-icons/react/dist/ssr'
 
 import { safePhotoSrc } from '@/lib/photo-src'
 
-/** A release past this much of the frame commits to the next photo. */
-const COMMIT_FRACTION = 1 / 3
-/** Past an end there is nothing to reveal, so the rail resists rather than moves. */
-const RUBBER_BAND = 0.32
-
 export function PhotoCarousel({
   urls,
   switchUrl,
@@ -42,16 +36,12 @@ export function PhotoCarousel({
   className?: string
 }) {
   const [index, setIndex] = useState(0)
-  const [dragX, setDragX] = useState(0)
-  // State rather than a ref: the rail's transition is switched off while the
-  // finger is down, and that is read during render.
-  const [dragging, setDragging] = useState(false)
-  const startX = useRef(0)
-  const frame = useRef<HTMLDivElement>(null)
+  const rail = useRef<HTMLDivElement>(null)
 
   if (urls.length === 0) {
     return (
       <div
+        data-testid="photo-placeholder"
         className={`grid ${className} w-full place-items-center rounded-card bg-sunken text-muted shadow-e2`}
       >
         <Package weight="duotone" size={48} aria-hidden="true" />
@@ -72,64 +62,33 @@ export function PhotoCarousel({
     )
   }
 
-  const width = () => frame.current?.clientWidth ?? 1
-
+  // No behaviour here: the rail's motion-safe:scroll-smooth decides, so reduced
+  // motion jumps.
   function goTo(next: number) {
-    setIndex(Math.max(0, Math.min(urls.length - 1, next)))
-    setDragX(0)
-  }
-
-  function onPointerDown(e: React.PointerEvent) {
-    setDragging(true)
-    startX.current = e.clientX
-    e.currentTarget.setPointerCapture(e.pointerId)
-  }
-
-  function onPointerMove(e: React.PointerEvent) {
-    if (!dragging) return
-    const dx = e.clientX - startX.current
-    // At either end the rail gives, but only a little: the resistance is what
-    // says "nothing that way" without a message saying it.
-    const atEnd = (index === 0 && dx > 0) || (index === urls.length - 1 && dx < 0)
-    setDragX(atEnd ? dx * RUBBER_BAND : dx)
-  }
-
-  function onPointerUp() {
-    if (!dragging) return
-    setDragging(false)
-    const committed = Math.abs(dragX) > width() * COMMIT_FRACTION
-    goTo(committed ? index - Math.sign(dragX) : index)
+    const el = rail.current
+    if (el) el.scrollTo({ left: Math.max(0, Math.min(urls.length - 1, next)) * el.clientWidth })
   }
 
   return (
     <div className="flex flex-col gap-3">
       <div
-        ref={frame}
         role="group"
         aria-roledescription="carousel"
         aria-label={alt}
         tabIndex={0}
-        className={`relative ${className} w-full touch-pan-y overflow-hidden rounded-card bg-sunken shadow-e2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand`}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
+        className={`relative ${className} w-full overflow-hidden rounded-card bg-sunken shadow-e2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand`}
         onKeyDown={(e) => {
           if (e.key === 'ArrowRight') goTo(index + 1)
           if (e.key === 'ArrowLeft') goTo(index - 1)
         }}
       >
         <div
-          className="flex h-full"
-          style={{
-            transform: `translate3d(calc(${-index * 100}% + ${dragX}px), 0, 0)`,
-            // No transition while the finger is down — the rail is following it,
-            // not animating towards it.
-            transition: dragging ? 'none' : 'transform var(--spring-photo)',
-          }}
+          ref={rail}
+          onScroll={(e) => setIndex(Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth))}
+          className="flex h-full snap-x snap-mandatory overflow-x-auto [scrollbar-width:none] motion-safe:scroll-smooth [&::-webkit-scrollbar]:hidden"
         >
           {urls.map((url, i) => (
-            <div key={url} className="relative h-full w-full shrink-0">
+            <div key={url} className="relative h-full w-full shrink-0 snap-center">
               <Image
                 src={safePhotoSrc(url) ?? '/illustrations/adapted-toy.svg'}
                 alt={urls.length > 1 ? `${alt} — photo ${i + 1} of ${urls.length}` : alt}

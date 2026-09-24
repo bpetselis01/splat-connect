@@ -12,7 +12,7 @@ const mockFrom = vi.fn()
 const mockAdminFrom = vi.fn()
 function defaultAdminFrom(table: string) {
   if (table === 'profiles') {
-    return { select: () => ({ eq: () => ({ single: () => Promise.resolve({ data: { name: 'Jamie' }, error: null }) }) }) }
+    return { select: () => ({ eq: () => ({ maybeSingle: () => Promise.resolve({ data: { name: 'Jamie' }, error: null }) }) }) }
   }
   return { insert: () => Promise.resolve({ data: null, error: null }) }
 }
@@ -104,8 +104,22 @@ describe('POST /ideas', () => {
 
     expect(res.status).toBe(201)
     expect(insert).toHaveBeenCalledWith(
-      expect.objectContaining({ author_id: 'user-1', status: 'pending' })
+      expect.objectContaining({ author_id: 'user-1', status: 'pending', kind: 'challenge' })
     )
+  })
+
+  // Tests: kind is 'challenge' or 'question' (078) and nothing else
+  // How:   posts an unknown kind; then a question, and checks the insert payload
+  // Chain: a typo defaulting to 'challenge' would file a question as something
+  //        an admin can graduate into a guide
+  it('rejects an unknown kind and stores a question as one', async () => {
+    expect((await post({ ...VALID, kind: 'poll' })).status).toBe(400)
+
+    const single = vi.fn().mockResolvedValue({ data: { id: 'idea-1' }, error: null })
+    const insert = vi.fn().mockReturnValue({ select: () => ({ single }) })
+    mockFrom.mockReturnValue({ insert })
+    expect((await post({ ...VALID, kind: 'question' })).status).toBe(201)
+    expect(insert).toHaveBeenCalledWith(expect.objectContaining({ kind: 'question' }))
   })
 })
 
@@ -301,7 +315,7 @@ describe('DELETE /ideas/:id/participants/:profileId', () => {
         return {
           select: () => ({
             eq: (_col: string, id: string) => ({
-              single: () =>
+              maybeSingle: () =>
                 Promise.resolve({
                   data: { name: id === 'user-1' ? 'Alex the author' : 'Riley the removed' },
                   error: null,
@@ -669,7 +683,7 @@ describe('GET /ideas/joined', () => {
     // whole-branch review: a participant is never entitled to review_note,
     // which the author's own private rejection reasoning.
     expect(select).toHaveBeenCalledWith(
-      'toy_ideas!inner(id, author_id, title, summary, description, intended_use, primary_user, contact_prefs, status, tutorial_id, created_at, updated_at)'
+      'toy_ideas!inner(id, author_id, title, summary, description, intended_use, primary_user, contact_prefs, status, tutorial_id, kind, answer_message_id, answered_at, created_at, updated_at)'
     )
     expect(select.mock.calls[0][0]).not.toContain('review_note')
     expect(eq).toHaveBeenCalledWith('profile_id', 'user-1')

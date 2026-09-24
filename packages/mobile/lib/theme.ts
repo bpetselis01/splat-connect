@@ -18,6 +18,9 @@ export const theme = {
     surface: '#ffffff',
     surfaceSunken: '#f3f1ed',
     accentLight: '#dcf0fb',
+    // The board's --b50: the tint an unread inbox row and a selected menu
+    // option sit on — one step lighter than accentLight.
+    accentFaint: '#f0f9ff',
     text: '#1c2530',
     ink: '#1c2530',
     muted: '#5a6675',
@@ -34,6 +37,8 @@ export const theme = {
     // Carries white text, where #2f9e6b reaches only 3.37:1. Mirrors web's
     // --color-success-deep for the same reason.
     successDeep: '#237e51',
+    // The board's --tok: Easy, Backed and "Like new" pills.
+    successSoft: '#dff3ea',
     danger: '#e05252',
     dangerSoft: '#fde3e3',
     // Badge tones — the same bg/fg pairs as web's badge.tsx. tone.test guards

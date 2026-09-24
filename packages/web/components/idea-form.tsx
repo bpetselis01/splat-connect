@@ -16,9 +16,10 @@
  * always readable.
  */
 import { useState, type FormEvent } from 'react'
+import { ChatsCircle, Lightbulb } from '@phosphor-icons/react/dist/ssr'
 import { useRouter } from 'next/navigation'
 import { browserApiClient } from '@/lib/browser-api-client'
-import { CONTACT_PREFS, type ContactPref, type ToyIdea } from '@splat-connect/types'
+import { CONTACT_PREFS, type ContactPref, type ToyIdea, type ToyIdeaKind } from '@splat-connect/types'
 
 const CONTACT_PREF_LABELS: Record<ContactPref, string> = {
   clarification: 'Clarification',
@@ -26,7 +27,19 @@ const CONTACT_PREF_LABELS: Record<ContactPref, string> = {
   user_testing: 'User testing',
 }
 
+/** The board's two tiles (078): what the idea becomes once an admin opens it. */
+const KINDS: { kind: ToyIdeaKind; label: string; sub: string; Icon: typeof Lightbulb }[] = [
+  { kind: 'challenge', label: 'A toy worth adapting', sub: 'Becomes a build challenge makers can pick up.', Icon: Lightbulb },
+  {
+    kind: 'question',
+    label: 'A question for the community',
+    sub: 'No build needed. Makers and OTs answer in the thread; you mark the answer that helped.',
+    Icon: ChatsCircle,
+  },
+]
+
 type Fields = {
+  kind: ToyIdeaKind
   title: string
   summary: string
   description: string
@@ -36,6 +49,7 @@ type Fields = {
 }
 
 const EMPTY_FIELDS: Fields = {
+  kind: 'challenge',
   title: '',
   summary: '',
   description: '',
@@ -88,6 +102,7 @@ export function IdeaForm() {
     try {
       await browserApiClient.post<ToyIdea>('/api/ideas', {
         ...trimmed,
+        kind: fields.kind,
         contact_prefs: fields.contact_prefs,
       })
       router.push('/dashboard/challenges')
@@ -99,9 +114,42 @@ export function IdeaForm() {
 
   return (
     <form onSubmit={submit} className="card mt-[30px] flex flex-col gap-5 p-7">
+      <fieldset>
+        <legend className="field-label">What are you sharing?</legend>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {KINDS.map(({ kind, label, sub, Icon }) => {
+            const on = fields.kind === kind
+            return (
+              <label
+                key={kind}
+                className="flex cursor-pointer items-start gap-3 rounded-[18px] border-2 p-4 has-[:focus-visible]:outline has-[:focus-visible]:outline-[3px] has-[:focus-visible]:outline-[var(--focus)]"
+                style={{
+                  borderColor: on ? 'var(--b600)' : 'var(--line)',
+                  background: on ? 'var(--b50)' : 'var(--surface)',
+                }}
+              >
+                <input
+                  type="radio"
+                  name="idea-kind"
+                  value={kind}
+                  checked={on}
+                  onChange={() => set('kind', kind)}
+                  className="sr-only"
+                />
+                <Icon weight="duotone" aria-hidden="true" className="shrink-0 text-2xl text-[var(--b600)]" />
+                <span>
+                  <span className="block text-[15px] font-extrabold text-ink">{label}</span>
+                  <span className="mt-0.5 block text-[13px] leading-[1.5] text-muted">{sub}</span>
+                </span>
+              </label>
+            )
+          })}
+        </div>
+      </fieldset>
+
       <div>
         <label htmlFor="idea-title" className="field-label">
-          Title
+          {fields.kind === 'question' ? 'Your question' : 'Title'}
         </label>
         <input
           id="idea-title"

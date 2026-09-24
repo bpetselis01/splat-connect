@@ -1,14 +1,25 @@
-// The internal fit-profile derivation behind both mobile's ability-screen.tsx
-// quiz and the web child-survey-form.tsx quiz. Runtime values, not just types —
-// this package is consumed as raw TypeScript, so that is safe.
-export * from './derive-fit-profile'
 export * from './nav-model'
 // Named, not `export *`: the api runs this package through tsx as CommonJS,
 // and Node's CJS export lexer cannot see esbuild's `__reExport` — the two
 // lines above export nothing at runtime there. Named re-exports do.
 export { contributorBadges } from './contributor-badges'
 export type { ContributorBadge, ContributorBadgeInput } from './contributor-badges'
+export { buildCalendar } from './ics'
+export type { CalendarEvent } from './ics'
 import type { ContributorBadge } from './contributor-badges'
+export { createGuideFromPdfDraft, pdfDraftChecklist } from './pdf-import'
+export type {
+  PdfImportDraft,
+  PdfImportConfidence,
+  PdfImportPrintSettings,
+  PdfDraftApi,
+  PdfDraftResult,
+} from './pdf-import'
+export { isApiError, apiErrorDetail, apiMessage, makeApiClient } from './api-core'
+export type { ApiError } from './api-core'
+export { dateBadge, shortDate, monthHeading, monthKey, longDate, formatTimeRange, isPast } from './dates'
+export { getMissingToyFields, computeToyStepStatuses } from './toy-steps'
+export type { ToyStepId } from './toy-steps'
 
 export type Role = 'admin' | 'contributor'
 
@@ -38,8 +49,79 @@ export interface ChildProfile {
   forearm_length_mm: number | null
   hand_dominance: string | null
   sensory_preferences: string[]
+  /** The board's four switch questions and the room it is used in (079).
+   *  The fields above are no longer asked; they stay until a decision drops them. */
+  working_hand: WorkingHand | null
+  press_force: PressForce | null
+  aim: Aim | null
+  hold: Hold | null
+  everyday_needs: EverydayNeed[]
   created_at: string
   updated_at: string
+}
+
+// 079 — the child profile's questions, in the board's order and words.
+export const WORKING_HAND = [
+  { value: 'left', label: 'Left' },
+  { value: 'right', label: 'Right' },
+  { value: 'either', label: 'Either' },
+  { value: 'not_sure', label: 'Not sure' },
+] as const
+export const PRESS_FORCE = [
+  { value: 'very_light', label: 'Very light' },
+  { value: 'light', label: 'Light' },
+  { value: 'moderate', label: 'Moderate' },
+  { value: 'full', label: 'Full' },
+] as const
+export const AIM = [
+  { value: 'small', label: 'Yes, small' },
+  { value: 'large', label: 'Yes, large' },
+  { value: 'not_reliably', label: 'Not reliably' },
+] as const
+export const HOLD = [
+  { value: 'moment', label: 'A moment' },
+  { value: 'second', label: 'A second' },
+  { value: 'as_long', label: 'As long as needed' },
+] as const
+export const EVERYDAY_NEEDS = [
+  { value: 'quiet', label: 'Quiet toys only' },
+  { value: 'no_flashing', label: 'No flashing lights' },
+  { value: 'wipeable', label: 'Wipeable' },
+  { value: 'wheelchair_tray', label: 'Wheelchair tray' },
+  { value: 'shared_siblings', label: 'Shared with siblings' },
+  { value: 'travels_bag', label: 'Travels in a bag' },
+] as const
+export type WorkingHand = (typeof WORKING_HAND)[number]['value']
+export type PressForce = (typeof PRESS_FORCE)[number]['value']
+export type Aim = (typeof AIM)[number]['value']
+export type Hold = (typeof HOLD)[number]['value']
+export type EverydayNeed = (typeof EVERYDAY_NEEDS)[number]['value']
+
+/** The board's four switch questions, in its order and words — one list for
+ *  web's form and wizard and mobile's, so the four cannot drift apart. */
+export const CHILD_QUESTIONS = [
+  { field: 'working_hand', prompt: 'Which hand does most of the work?', options: WORKING_HAND },
+  { field: 'press_force', prompt: 'How much force can they apply?', options: PRESS_FORCE },
+  { field: 'aim', prompt: 'Can they aim at a target?', options: AIM },
+  { field: 'hold', prompt: 'How long can they hold a press?', options: HOLD },
+] as const
+export type ChildQuestionField = (typeof CHILD_QUESTIONS)[number]['field']
+
+/** Everything a child profile form writes. The retired columns are not in it. */
+export type ChildAnswers = Pick<ChildProfile, 'name' | 'age' | ChildQuestionField | 'everyday_needs'>
+
+const labelOf = (vocab: readonly { value: string; label: string }[], v: string | null) =>
+  vocab.find((o) => o.value === v)?.label
+
+/**
+ * One line for a child's list row: "Age 6 · Right hand · Light press", or
+ * "Not set yet". Plain words from the form, never a score.
+ */
+export function childSummary(c: Pick<ChildProfile, 'age' | ChildQuestionField>): string {
+  const hand = c.working_hand && c.working_hand !== 'not_sure' ? `${labelOf(WORKING_HAND, c.working_hand)} hand` : null
+  const force = c.press_force ? `${labelOf(PRESS_FORCE, c.press_force)} press` : null
+  const parts = [c.age !== null ? `Age ${c.age}` : null, hand, force].filter(Boolean)
+  return parts.length ? parts.join(' · ') : 'Not set yet'
 }
 
 export type OfferType = 'donation' | 'exchange' | 'both'
@@ -76,6 +158,14 @@ export interface Toy {
   cover_photo_url: string | null
   status: 'draft' | 'published'
   offer_type: OfferType | null
+  /** The four facts under the holder's notes, in their words (075). */
+  age_min?: number | null
+  age_max?: number | null
+  batteries?: string | null
+  switch_fitting?: string | null
+  volume?: string | null
+  /** "Built from Guide C" (075). SET NULL if the guide goes. */
+  tutorial_id?: string | null
   created_at: string
   updated_at: string
   /** PostgREST computed fields (073), the owner's "How it is doing" tiles.
@@ -93,6 +183,32 @@ export interface Toy {
 export type ToyWithOwner = Toy & {
   profiles: { name: string } | null
   organizations: { name: string } | null
+}
+
+/** GET /api/public/toys/:id: the row plus the approved guide it was built
+ *  from (null when unlinked or the guide is not approved) and how many toys
+ *  the holder has handed over. */
+export type ToyDetail = ToyWithOwner & {
+  guide: { id: string; title: string } | null
+  holder_given: number
+}
+
+/** The board's facts grid, in its order, skipping the ones not filled in. */
+export function toyFacts(
+  toy: Pick<Toy, 'age_min' | 'age_max' | 'batteries' | 'switch_fitting' | 'volume'>
+): { k: string; v: string }[] {
+  const { age_min: min, age_max: max } = toy
+  const ages =
+    min != null && max != null ? (min === max ? `${min}` : `${min}–${max}`)
+    : min != null ? `${min}+`
+    : max != null ? `Up to ${max}`
+    : null
+  return [
+    { k: 'Ages it suits', v: ages },
+    { k: 'Batteries', v: toy.batteries },
+    { k: 'Switch fitting', v: toy.switch_fitting },
+    { k: 'Volume', v: toy.volume },
+  ].filter((f): f is { k: string; v: string } => !!f.v)
 }
 
 /** Who a browsing visitor is being offered this toy by. */
@@ -148,9 +264,23 @@ export interface ExchangeCost {
   updated_at: string
 }
 
+/** Up to two letters for an avatar: "Sam Mitchell" → "SM". `fallback` when there is no name. */
+export function initials(name: string | null | undefined, fallback = ''): string {
+  const words = (name ?? '').trim().split(/\s+/).filter(Boolean)
+  return words.slice(0, 2).map((w) => w[0]!.toUpperCase()).join('') || fallback
+}
+
+/** A first name, never a full one — what a thanks is signed with. */
+export function firstName(name: string | null | undefined): string {
+  return (name ?? '').trim().split(/\s+/)[0] ?? ''
+}
+
+/** `1 part`, `3 parts`. */
+export const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
+
 /** Cents to the string the panel shows. Money formatting in exactly one place. */
-export function formatCents(cents: number, currency = 'AUD', locale = 'en-AU'): string {
-  return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(cents / 100)
+export function formatCents(cents: number): string {
+  return new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' }).format(cents / 100)
 }
 
 /**
@@ -235,6 +365,14 @@ export interface ToyTransaction {
   /** What the requester said about the print. The printer sees this and their
    *  suburb, and nothing else about them. */
   print_note: string | null
+  /** The request this job was sent as part of (074). A family can ask up to
+   *  three printers at once; every job in the group shares this id, the first
+   *  to accept takes it and the rest are withdrawn. */
+  print_group_id: string | null
+  /** The colour asked for — "Any colour", Black… Free text, ≤30 chars (074). */
+  print_colour: string | null
+  /** 'collect' or 'post' (074). Null on jobs sent before it existed. */
+  print_delivery: PrintDelivery | null
   printing_started_at: string | null
   /** Ready to collect. Never set without `ready_photo_url` — the constraint is
    *  in 058, and the point is that nobody travels for a part on somebody's
@@ -294,6 +432,13 @@ export interface PrinterWithOwner extends Printer {
 
 /** The materials a printer can declare. Presentational, so it lives here
  *  rather than in a check constraint (037's rule about `contact_prefs`). */
+export type PrintDelivery = 'collect' | 'post'
+/** The colours the request form offers (074). Stored as free text, so a
+ *  printer's own filament can be named in a note without a schema change. */
+export const PRINT_COLOURS = ['Any colour', 'Black', 'White', 'Blue'] as const
+/** A family may ask this many printers at once (074). */
+export const MAX_PRINTERS_PER_REQUEST = 3
+
 export const PRINT_MATERIALS = ['PLA', 'PETG', 'ABS', 'TPU', 'ASA', 'Nylon'] as const
 export type PrintMaterial = (typeof PRINT_MATERIALS)[number]
 
@@ -314,6 +459,38 @@ export function printStep(
   if (!tx.printing_started_at) return 'accepted'
   if (!tx.ready_at) return 'printing'
   return 'ready'
+}
+
+/**
+ * A family's view of their print requests: one row per request, not one per
+ * printer asked (074). The row kept is the one that matters — the job that was
+ * taken, else one still waiting, else however it ended — and it carries how
+ * many printers the request went to. Rows without a group pass through.
+ */
+export function collapsePrintGroups<
+  T extends Pick<ToyTransaction, 'print_group_id' | 'status'>,
+>(rows: T[]): Array<T & { print_group_size: number }> {
+  const rank: Record<string, number> = { accepted: 0, completed: 0, requested: 1, rejected: 2, withdrawn: 3 }
+  const groups = new Map<string, T[]>()
+  for (const r of rows) if (r.print_group_id) groups.set(r.print_group_id, [...(groups.get(r.print_group_id) ?? []), r])
+  const out: Array<T & { print_group_size: number }> = []
+  const seen = new Set<string>()
+  // Each group takes the place of its first member, so the caller's order holds.
+  for (const r of rows) {
+    if (!r.print_group_id) {
+      out.push({ ...r, print_group_size: 1 })
+      continue
+    }
+    if (seen.has(r.print_group_id)) continue
+    seen.add(r.print_group_id)
+    const members = groups.get(r.print_group_id)!
+    const lead = [...members].sort((x, y) => (rank[x.status] ?? 9) - (rank[y.status] ?? 9))[0]
+    // The API's count (the whole group) beats this caller's rows, which for a
+    // printer are only its own.
+    const told = (lead as { print_group_size?: number | null }).print_group_size ?? 0
+    out.push({ ...lead, print_group_size: Math.max(told, members.length) })
+  }
+  return out
 }
 
 /**
@@ -371,12 +548,26 @@ export interface PickupAddress {
   pickup_postcode: string
 }
 
+/**
+ * A profile's saved address as an accept default, or null. A partly-filled one
+ * is no use — the accept dialog would offer "use my saved address" and then
+ * refuse to submit it.
+ */
+export function pickupAddress(profile: Partial<Record<keyof PickupAddress, string | null>>): PickupAddress | null {
+  const { pickup_line1, pickup_suburb, pickup_state, pickup_postcode } = profile
+  if (!pickup_line1 || !pickup_suburb || !pickup_state || !pickup_postcode) return null
+  return { pickup_line1, pickup_suburb, pickup_state, pickup_postcode }
+}
+
 // `blocked_by_rival_accept` is computed per read, not stored: true when this
 // request is still open but a sibling request on the same toy is already
 // accepted, so the owner cannot accept this one until that handoff completes
 // or is withdrawn.
 export interface ToyTransactionSummary extends ToyTransaction {
   toy_name: string
+  /** How many printers the request went to, counted across the whole group
+   *  (074). Null on everything that is not a print job. */
+  print_group_size?: number | null
   /** The guide being built, on a build (057). Null on a donation or exchange. */
   tutorial_title: string | null
   /** Null when the toy has none. Readable by both parties for good: 025's
@@ -628,12 +819,32 @@ export interface ToyTransactionDetail extends ToyTransaction {
   printer: Pick<Printer, 'id' | 'name' | 'suburb' | 'state' | 'materials'> | null
   /** The parts a print job asks for (058), flattened out of the join. */
   print_files: PrintJobFile[]
+  /** How many printers the request went to, this one included (074). Null
+   *  on everything that is not a print job. */
+  print_group_size: number | null
   offered_toy_name: string | null
   owner_name: string
   requester_name: string
   blocked_by_rival_accept: boolean
   received_toy: ReceivedToy | null
   messages: ToyTransactionMessage[]
+}
+
+/**
+ * What someone said at sign-up they are mostly here to do — the board's two
+ * tiles. Kept in auth user_metadata (`intent`), not a column: it decides one
+ * landing, once, and nothing else reads it.
+ */
+export type SignupIntent = 'family' | 'maker'
+
+/**
+ * The intent still waiting to decide a landing, or null. The first sign-in
+ * that acts on it writes `intent_landed: true` back to the metadata, so it
+ * lands someone once rather than on every sign-in.
+ */
+export function pendingIntent(meta: Record<string, unknown> | null | undefined): SignupIntent | null {
+  if (!meta || meta.intent_landed === true) return null
+  return meta.intent === 'family' || meta.intent === 'maker' ? meta.intent : null
 }
 
 export type ToyIdeaStatus = 'pending' | 'challenge' | 'rejected' | 'graduated'
@@ -654,9 +865,17 @@ export interface ToyIdea {
   status: ToyIdeaStatus
   review_note: string | null
   tutorial_id: string | null
+  /** A build challenge, or a question answered in its thread (078). A question
+   *  never graduates. */
+  kind?: ToyIdeaKind
+  /** The reply the author marked as the answer, and when (078). */
+  answer_message_id?: string | null
+  answered_at?: string | null
   created_at: string
   updated_at: string
 }
+
+export type ToyIdeaKind = 'challenge' | 'question'
 
 export interface ToyIdeaParticipant {
   idea_id: string
@@ -681,7 +900,36 @@ export interface ToyIdeaMessage {
   created_at: string
 }
 
-export interface ToyIdeaDetail extends ToyIdea {
+/** Counts GET /api/public/challenges and /challenges/:id attach (078). The
+ *  thread stays private; the numbers are public. */
+export interface ChallengeCounts {
+  /** Current participants — removed ones are not counted. */
+  maker_count: number
+  /** Replies from anyone but the author. What a question's card counts. */
+  answer_count: number
+}
+
+/** One card on the public design-challenges list. */
+export type PublicChallenge = Pick<
+  ToyIdea,
+  'id' | 'title' | 'summary' | 'contact_prefs' | 'status' | 'kind' | 'answered_at' | 'created_at'
+> &
+  ChallengeCounts
+
+/**
+ * The board's filter chips over the public list, shared by web and mobile so
+ * the two never disagree about what "Build challenges" means: the open ones —
+ * graduated ones have their own chip.
+ */
+export const CHALLENGE_FILTERS: { id: string; label: string; keep: (c: PublicChallenge) => boolean }[] = [
+  { id: 'all', label: 'All', keep: () => true },
+  { id: 'build', label: 'Build challenges', keep: (c) => c.kind !== 'question' && c.status !== 'graduated' },
+  { id: 'questions', label: 'Questions', keep: (c) => c.kind === 'question' },
+  { id: 'makers', label: 'Has makers', keep: (c) => c.maker_count > 0 },
+  { id: 'graduated', label: 'Graduated', keep: (c) => c.status === 'graduated' },
+]
+
+export interface ToyIdeaDetail extends ToyIdea, Partial<ChallengeCounts> {
   author_name: string | null
   participants: ToyIdeaParticipant[]
   /** Absent for viewers who may not read the thread. */
@@ -765,6 +1013,98 @@ export interface Organization {
   rate_note?: string | null
   recycling_materials?: string[]
   recycling_note?: string | null
+  /** 076. "What you are", the two pictures, the Visit card and how they like
+   *  to be paid back. `verified_at` is written by an admin only. */
+  kind?: string | null
+  logo_url?: string | null
+  cover_url?: string | null
+  verified_at?: string | null
+  visit_hours?: string | null
+  service_area?: string | null
+  payment_methods?: PaymentMethod[]
+  /** Public counts (077), PostgREST computed fields. */
+  org_thanks_count?: number
+  org_follower_count?: number
+  /** GET /api/organizations/:id only, for the profile editor. */
+  doors?: OrgDoor[]
+  rate_lines?: OrgRateLine[]
+}
+
+/** "What you are" — the editor's suggestions; free text is allowed (076). */
+export const ORG_KINDS = [
+  'Paediatric OT service',
+  'Therapy practice',
+  'School or special school',
+  'University makerspace',
+  "Men's Shed or community workshop",
+  'Library or council maker lab',
+  'Charity or disability service',
+] as const
+
+export type PaymentMethod = 'cash' | 'bank_transfer' | 'payid' | 'any'
+export const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
+  { value: 'cash', label: 'Cash on the day' },
+  { value: 'bank_transfer', label: 'Bank transfer' },
+  { value: 'payid', label: 'PayID' },
+  { value: 'any', label: 'Whatever suits them' },
+]
+
+/** "How to work with them" (076): up to six numbered doors. */
+export type OrgDoorTarget = 'toy_library' | 'events' | 'dropoff' | 'print' | 'build' | 'message'
+export const ORG_DOOR_TARGETS: { value: OrgDoorTarget; label: string }[] = [
+  { value: 'toy_library', label: 'Toy library' },
+  { value: 'events', label: 'Your events' },
+  { value: 'dropoff', label: 'Book a plastic drop-off' },
+  { value: 'print', label: 'Ask them to print' },
+  { value: 'build', label: 'Ask for a build' },
+  { value: 'message', label: 'Message them' },
+]
+export interface OrgDoor {
+  id: string
+  org_id: string
+  position: number
+  title: string
+  body: string | null
+  target: OrgDoorTarget
+}
+
+/** "What you ask families to cover" (076) — the breakdown under the rate note. */
+export interface OrgRateLine {
+  id: string
+  org_id: string
+  position: number
+  description: string
+  amount_cents: number
+  claiming: boolean
+}
+
+/** 077. One per person per organisation; the note shows publicly only when
+ *  its author ticked show_note and no leader hid it. */
+export interface OrgThanks {
+  org_id: string
+  profile_id: string
+  note: string | null
+  byline: string | null
+  show_note: boolean
+  hidden_at: string | null
+  created_at: string
+}
+
+/** 077. Message: one conversation per person per organisation, readable by
+ *  that person and every leader of the org. */
+export interface OrgConversation {
+  id: string
+  org_id: string
+  profile_id: string
+  created_at: string
+  updated_at: string
+}
+export interface OrgMessage {
+  id: string
+  conversation_id: string
+  sender_id: string
+  body: string
+  created_at: string
 }
 
 /** What an organisation does, shown as chips. Presentational, so it lives here
@@ -985,6 +1325,21 @@ export interface StoryListItem extends OrgStory {
 }
 
 /**
+ * Dollars as typed into a text field, as integer cents.
+ *
+ * Returns null for anything that is not a plain amount. Never parseFloat into
+ * cents by multiplying — `12.10 * 100` is 1209.9999999999998, and a cent lost
+ * to binary floating point in a number two families agreed between them is an
+ * argument rather than a display bug.
+ */
+export function dollarsToCents(input: string): number | null {
+  const match = /^\s*\$?\s*(\d{1,9})(?:\.(\d{1,2}))?\s*$/.exec(input)
+  if (!match) return null
+  const cents = (match[2] ?? '').padEnd(2, '0')
+  return Number(match[1]) * 100 + Number(cents)
+}
+
+/**
  * Reading time in whole minutes, at 200 words a minute, never less than one.
  *
  * Two callers — the public card and the publish form's live counter — so it is
@@ -1023,6 +1378,14 @@ export const RECYCLING_DECLARATION = [
 
 /** Two kilos, so a machine run is worth firing up. Named once, enforced twice. */
 export const MIN_DROPOFF_GRAMS = 2000
+
+/** Kilograms as typed, in whole grams. Null for anything that is not a weight.
+ *  No floats, so 2.1 is 2100. */
+export function kgToGrams(input: string): number | null {
+  const match = /^\s*(\d{1,4})(?:\.(\d{1,3}))?\s*$/.exec(input)
+  if (!match) return null
+  return Number(match[1]) * 1000 + Number((match[2] ?? '').padEnd(3, '0'))
+}
 
 /**
  * What a drop-off is worth as filament, roughly.
@@ -1065,6 +1428,10 @@ export interface RecyclingDropoff {
   decided_by: string | null
   created_at: string
   updated_at: string
+  /** The organisation's name, on GET /organizations/recycling/mine only. */
+  org_name?: string | null
+  /** Who brought it — returned to that organisation's leaders only. */
+  contributor_name?: string | null
 }
 
 export type OrgRequestStatus = 'pending' | 'approved' | 'declined'
@@ -1180,9 +1547,17 @@ export type NotificationType =
   | 'challenge_removed'
   | 'idea_graduated'
   | 'tutorial_thanked'
+  | 'build_shot_posted'
+  | 'build_approved'
+  | 'print_started'
+  | 'print_ready'
+  | 'org_event_published'
+  | 'org_story_published'
+  | 'org_message'
+  | 'org_thanked'
 
 /** Which My SPLAT card a notification's badge belongs to. */
-export type NotificationBucket = 'tutorials' | 'exchanges' | 'challenges'
+export type NotificationBucket = 'tutorials' | 'exchanges' | 'challenges' | 'organisations'
 
 /**
  * Notification type → the hub card that counts it.
@@ -1203,6 +1578,13 @@ export type NotificationBucket = 'tutorials' | 'exchanges' | 'challenges'
  * Note there is no 'toys' bucket. Every toy_* type is an event on a
  * transaction, not on a toy, so they all belong to My exchanges — a toy
  * sitting on a shelf generates nothing.
+ *
+ * 077's four: org_message is a conversation with an organisation, the same
+ * kind of thing as toy_message, so it counts on My exchanges. The other three
+ * are news about an organisation rather than a thing you are doing with one —
+ * a followed org published, or a family thanked yours — and none of the three
+ * existing cards is about that, so they get their own 'organisations' bucket.
+ * It has no hub card: it counts toward the inbox total and is a section there.
  */
 const NOTIFICATION_BUCKET = {
   collaborator_invited: 'tutorials',
@@ -1220,12 +1602,20 @@ const NOTIFICATION_BUCKET = {
   toy_rejected: 'exchanges',
   toy_withdrawn: 'exchanges',
   toy_message: 'exchanges',
+  build_shot_posted: 'exchanges',
+  build_approved: 'exchanges',
+  print_started: 'exchanges',
+  print_ready: 'exchanges',
   idea_approved: 'challenges',
   idea_rejected: 'challenges',
   idea_graduated: 'challenges',
   challenge_joined: 'challenges',
   challenge_left: 'challenges',
   challenge_removed: 'challenges',
+  org_message: 'exchanges',
+  org_event_published: 'organisations',
+  org_story_published: 'organisations',
+  org_thanked: 'organisations',
 } satisfies Record<NotificationType, NotificationBucket>
 
 /** Every notification type, for iteration at runtime — the union alone is compile-time only. */
@@ -1234,6 +1624,67 @@ export const NOTIFICATION_TYPES = Object.keys(NOTIFICATION_BUCKET) as Notificati
 export function notificationBucket(type: NotificationType): NotificationBucket {
   return NOTIFICATION_BUCKET[type]
 }
+
+/**
+ * What each notification says, for web's inbox and mobile's. One table so the
+ * two clients never narrate the same event differently — that is how a person
+ * ends up unsure whether they read about one thing or two.
+ */
+export const COPY: Record<NotificationType, (n: Notification) => string> = {
+  collaborator_invited: (n) => `${n.actor_name} invited you to collaborate on "${n.tutorial_title}"`,
+  collaborator_accepted: (n) => `${n.actor_name} accepted your invite to "${n.tutorial_title}"`,
+  collaborator_declined: (n) => `${n.actor_name} declined your invite to "${n.tutorial_title}"`,
+  collaborator_removed: (n) => `${n.actor_name} removed you from "${n.tutorial_title}"`,
+  collaborator_left: (n) => `${n.actor_name} left "${n.tutorial_title}"`,
+  // The two review-queue types. Both name the actor and the project, because
+  // unlike every other type above the recipient did not start this and has no
+  // context for it — a leader may be looking at a title they have never seen.
+  backing_requested: (n) => `${n.actor_name} asked your organisation to back "${n.tutorial_title}"`,
+  tutorial_submitted: (n) => `${n.actor_name} submitted "${n.tutorial_title}" for review`,
+  tutorial_approved: (n) => `"${n.tutorial_title}" was approved and is now published`,
+  tutorial_rejected: (n) => `"${n.tutorial_title}" was rejected`,
+  // Unnamed on purpose: who thanked a guide stays private (066).
+  tutorial_thanked: (n) => `A family said thanks for "${n.tutorial_title}"`,
+  toy_request: (n) => `${n.actor_name} requested ${n.toy_name}`,
+  toy_accepted: (n) => `${n.actor_name} accepted your request for ${n.toy_name}`,
+  toy_rejected: (n) => `${n.actor_name} declined your request for ${n.toy_name}`,
+  toy_withdrawn: (n) => `${n.actor_name} withdrew their request for ${n.toy_name}`,
+  toy_message: (n) => `${n.actor_name} sent a message about ${n.toy_name}`,
+  idea_approved: () => 'Your idea was published as a design challenge',
+  idea_rejected: () => 'Your idea was reviewed and not taken forward',
+  challenge_joined: (n) => `${n.actor_name} joined your design challenge`,
+  challenge_left: (n) => `${n.actor_name} left your design challenge`,
+  challenge_removed: (n) => `${n.actor_name} removed you from a design challenge`,
+  // Two audiences read this since admin.ts's graduate handler notifies the
+  // author (tutorial_contributors role 'primary') and every current
+  // participant (role 'collaborator') alike — the wording must be true for
+  // both without naming a role either could contradict, and it isn't the
+  // author's idea from a participant's side either. Also honest about what
+  // graduation actually did: a tutorial row now exists with status 'draft'
+  // (admin.ts:375), not solved, not in review, not published. Matches
+  // challenge-card.tsx's "Being written up" and badge.tsx
+  // exactly; must never claim more than those two do.
+  idea_graduated: () => 'A challenge you were part of is being written up as a guide, and you are credited on it',
+  build_shot_posted: (n) => `${n.actor_name} posted a photo of ${n.toy_name} working`,
+  build_approved: (n) => `${n.actor_name} approved the working shot for ${n.toy_name}`,
+  print_started: (n) => `${n.actor_name} started printing ${n.toy_name}`,
+  print_ready: (n) => `${n.actor_name} finished printing ${n.toy_name}`,
+  // 077. For the two publish types the event or story title rides in
+  // tutorial_title; for a message, the organisation's name does.
+  org_event_published: (n) => `${n.actor_name} published an event: ${n.tutorial_title}`,
+  org_story_published: (n) => `${n.actor_name} published a story: ${n.tutorial_title}`,
+  org_message: (n) =>
+    n.actor_name === n.tutorial_title
+      ? `${n.actor_name} replied to your message`
+      : `${n.actor_name} messaged ${n.tutorial_title}`,
+  // The byline the family typed, or "A family" when they gave none.
+  org_thanked: (n) => `${n.actor_name} said thanks to your organisation`,
+}
+
+// A type the database allows but this build has no line for — a newer API,
+// or a type added without copy — must still render. COPY[n.type](n) with no
+// fallback took the whole inbox down when the four build/print types landed.
+export const copyFor = (n: Notification): string => COPY[n.type]?.(n) ?? `${n.actor_name} updated something you're part of`
 
 /** The types in one bucket, for a grouped update. */
 export function typesInBucket(bucket: NotificationBucket): NotificationType[] {
@@ -1245,6 +1696,7 @@ export interface UnreadCounts {
   tutorials: number
   exchanges: number
   challenges: number
+  organisations: number
   total: number
 }
 
@@ -1257,6 +1709,13 @@ export interface Notification {
   toy_transaction_id?: string | null
   toy_name?: string | null
   idea_id?: string | null
+  /** 077's subjects: a thanks (org_id), a followed org publishing (org_event_id
+   *  or org_story_id — the title rides in tutorial_title), a message
+   *  (org_conversation_id). Exactly one subject is set on any row. */
+  org_id?: string | null
+  org_event_id?: string | null
+  org_story_id?: string | null
+  org_conversation_id?: string | null
   actor_name: string
   read_at: string | null
   created_at: string
@@ -1350,6 +1809,11 @@ export interface Tutorial {
    *  formatAgeRange() draws them. */
   age_min?: number | null
   age_max?: number | null
+  /** What the guide's switch asks of a child (080), in the child profile's
+   *  own words so the two compare directly. All optional. */
+  switch_target?: 'large' | 'small' | null
+  switch_force?: PressForce | null
+  switch_hold?: Hold | null
   /** PostgREST computed fields (066). Present only when a select names them —
    *  the public list and detail routes do. */
   thanks_count?: number
@@ -1451,6 +1915,9 @@ export interface TutorialWithDetails extends Tutorial {
    *  said no. An accepted invite's person also holds a tutorial_contributors
    *  row above; components/team-state.tsx drops the duplicate. */
   tutorial_collaborator_invites?: (TutorialCollaboratorInvite & { profiles: Profile })[]
+  /** 080. Both detail routes embed them, ordered by position. Optional so the
+   *  fixtures that predate steps need not name them. */
+  steps?: TutorialStep[]
 }
 
 // UploadDraft lived here: the in-progress state of the six-step upload wizard,
@@ -1545,6 +2012,52 @@ export interface OrgPublicProfile {
   stories?: Array<
     Pick<OrgStory, 'id' | 'org_id' | 'kind' | 'title' | 'summary' | 'byline' | 'status' | 'created_at'>
   >
+  /** 076's public columns. Read by the API with named columns — see
+   *  ORG_PROFILE_COLUMNS in routes/organizations.ts for why not the anon grant. */
+  kind?: string | null
+  logo_url?: string | null
+  cover_url?: string | null
+  verified_at?: string | null
+  visit_hours?: string | null
+  service_area?: string | null
+  payment_methods?: PaymentMethod[]
+  created_at?: string
+  doors?: OrgDoor[]
+  rate_lines?: OrgRateLine[]
+  /** Accepting printers the organisation owns, for the "They print" card. */
+  printers?: Array<{ id: string; name: string; materials: string[]; filament_cents_per_g: number | null }>
+  /** 077's counts. */
+  thanks_count?: number
+  follower_count?: number
+  /** The four stat tiles. Counted from what happened, never typed. */
+  counts?: { guidesBacked: number; toysDelivered: number; partsPrinted: number; familiesHelped: number }
+  /** "From families": shown, unhidden thanks notes and the pull quotes of the
+   *  org's published family stories, newest first. */
+  fromFamilies?: Array<{ quote: string; by: string; source: 'thanks' | 'story'; at: string }>
+  /** Name and the guides each leader backed. Nothing else about them. */
+  leaders?: Array<{ name: string; guides_backed: number }>
+}
+
+/** GET /api/organizations/:id/me — where the caller stands with one org. */
+export interface OrgRelationship {
+  leads: boolean
+  following: boolean
+  thanks: Pick<OrgThanks, 'note' | 'byline' | 'show_note' | 'created_at'> | null
+  conversation_id: string | null
+}
+
+/** A leader's list of their organisation's conversations. */
+export interface OrgConversationSummary extends OrgConversation {
+  person_name: string
+  last_message: Pick<OrgMessage, 'body' | 'sender_id' | 'created_at'> | null
+}
+
+/** One conversation, from either side. `from_org` marks a leader's message. */
+export interface OrgThread {
+  conversation: OrgConversation
+  org_name: string
+  person_name: string
+  messages: Array<OrgMessage & { sender_name: string; from_org: boolean }>
 }
 
 /**
@@ -1587,3 +2100,76 @@ export type SaveSlug = keyof typeof SAVE_SLUGS
 
 /** GET /api/saves/ids — every saved id the caller has, grouped by slug. */
 export type SavedIds = Record<SaveSlug, string[]>
+
+/** 080. One numbered step of a guide, alongside the PDF. */
+export interface TutorialStep {
+  id: string
+  tutorial_id: string
+  position: number
+  title: string | null
+  body: string
+  photo_url: string | null
+}
+
+/** The switch tags' labels, as the board writes "big button, light press, short hold". */
+export const SWITCH_TARGET_LABEL: Record<'large' | 'small', string> = { large: 'big button', small: 'small target' }
+export const SWITCH_FORCE_LABEL: Record<PressForce, string> = {
+  very_light: 'very light press',
+  light: 'light press',
+  moderate: 'moderate press',
+  full: 'firm press',
+}
+export const SWITCH_HOLD_LABEL: Record<Hold, string> = { moment: 'short hold', second: 'one-second hold', as_long: 'long hold' }
+
+const FORCE_ORDER: PressForce[] = ['very_light', 'light', 'moderate', 'full']
+const HOLD_ORDER: Hold[] = ['moment', 'second', 'as_long']
+
+/**
+ * Does a guide's switch suit a child (080)? A suggestion about a toy, never an
+ * assessment of the child: true when every tag the guide has is within what
+ * the profile says the child can do, null when there is nothing to compare
+ * (no tags, or none of the matching answers) — the caller then says nothing.
+ *
+ * - force: the switch needs at most the force the child can apply
+ * - hold: the switch needs a press no longer than the child can hold
+ * - target: a small target needs a child who can aim at a small one; a big
+ *   button suits anyone who can aim at all ("not reliably" suits neither)
+ */
+export function suitsChild(
+  guide: Pick<Tutorial, 'switch_target' | 'switch_force' | 'switch_hold'>,
+  child: Pick<ChildProfile, 'press_force' | 'hold' | 'aim'>
+): boolean | null {
+  const checks: boolean[] = []
+  if (guide.switch_force && child.press_force)
+    checks.push(FORCE_ORDER.indexOf(guide.switch_force) <= FORCE_ORDER.indexOf(child.press_force))
+  if (guide.switch_hold && child.hold)
+    checks.push(HOLD_ORDER.indexOf(guide.switch_hold) <= HOLD_ORDER.indexOf(child.hold))
+  if (guide.switch_target && child.aim)
+    checks.push(child.aim === 'small' || (child.aim === 'large' && guide.switch_target === 'large'))
+  return checks.length ? checks.every(Boolean) : null
+}
+
+/** "big button, light press, short hold" — the fit line's words, in the board's order. */
+export function switchSummary(guide: Pick<Tutorial, 'switch_target' | 'switch_force' | 'switch_hold'>): string | null {
+  const parts = [
+    guide.switch_target ? SWITCH_TARGET_LABEL[guide.switch_target] : null,
+    guide.switch_force ? SWITCH_FORCE_LABEL[guide.switch_force] : null,
+    guide.switch_hold ? SWITCH_HOLD_LABEL[guide.switch_hold] : null,
+  ].filter(Boolean)
+  return parts.length ? parts.join(', ') : null
+}
+
+/**
+ * The board's fit line, "Suits Ollie — big button, light press, short hold",
+ * for the first of a parent's children the guide suits. Null when none do or
+ * nothing can be compared — the caller then says nothing at all.
+ */
+export function fitLine(
+  guide: Pick<Tutorial, 'switch_target' | 'switch_force' | 'switch_hold'>,
+  children: Pick<ChildProfile, 'name' | 'press_force' | 'hold' | 'aim'>[]
+): string | null {
+  const child = children.find((c) => suitsChild(guide, c) === true)
+  if (!child) return null
+  const summary = switchSummary(guide)
+  return `Suits ${child.name?.trim() || 'your child'}${summary ? ` — ${summary}` : ''}`
+}

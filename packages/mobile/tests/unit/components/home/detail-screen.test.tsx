@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
-import { DetailScreen } from '../../../../components/home/detail-screen'
+import { DetailScreen, splitLead } from '../../../../components/home/detail-screen'
 import { apiClient } from '../../../../lib/api-client'
 
 // Ionicons loads its font asynchronously and setStates after the test ends;
@@ -54,8 +54,11 @@ const DETAIL = {
 function mockEndpoints({
   detail = Promise.resolve(DETAIL),
   saves = Promise.resolve(NO_SAVES),
-}: { detail?: Promise<unknown>; saves?: Promise<unknown> } = {}) {
-  ;(apiClient.get as jest.Mock).mockImplementation((p: string) => (p === '/api/saves/ids' ? saves : detail))
+  children = Promise.resolve([]),
+}: { detail?: Promise<unknown>; saves?: Promise<unknown>; children?: Promise<unknown> } = {}) {
+  ;(apiClient.get as jest.Mock).mockImplementation((p: string) =>
+    p === '/api/saves/ids' ? saves : p === '/api/child-profiles' ? children : detail
+  )
 }
 
 describe('DetailScreen', () => {
@@ -73,6 +76,12 @@ describe('DetailScreen', () => {
     expect(screen.getByText('Screwdriver')).toBeTruthy()
   })
 
+  it('counts the hero photos from the first, as the board does', async () => {
+    mockEndpoints({ detail: Promise.resolve({ ...DETAIL, photo_urls: ['https://x.test/a.jpg', 'https://x.test/b.jpg'] }) })
+    render(<DetailScreen id="1" />)
+    expect(await screen.findByText('1/2 · Build a Robot Arm')).toBeTruthy()
+  })
+
   it('shows an error message when apiClient.get rejects', async () => {
     mockEndpoints({ detail: Promise.reject(new Error('API GET failed with status 500')) })
     render(<DetailScreen id="1" />)
@@ -83,7 +92,7 @@ describe('DetailScreen', () => {
     render(<DetailScreen id="1" />)
     await screen.findByText('Build a Robot Arm')
 
-    fireEvent.press(screen.getByText('Preview Tutorial'))
+    fireEvent.press(screen.getByText('Download PDF'))
 
     await waitFor(() => expect(mockPush).toHaveBeenCalled())
     expect(mockCreateSignedUrl).toHaveBeenCalledWith('1/tutorial.pdf', 60)
@@ -98,7 +107,7 @@ describe('DetailScreen', () => {
     render(<DetailScreen id="1" />)
     await screen.findByText('Build a Robot Arm')
 
-    fireEvent.press(screen.getByText('Preview Tutorial'))
+    fireEvent.press(screen.getByText('Download PDF'))
 
     await waitFor(() => expect(mockPush).toHaveBeenCalled())
     expect(mockPush).toHaveBeenCalledWith({
@@ -107,23 +116,96 @@ describe('DetailScreen', () => {
     })
   })
 
-  it('shows the 3D-print placeholder, unpressable, for an assistive-tech guide', async () => {
-    mockEndpoints({ detail: Promise.resolve({ ...DETAIL, kind: 'assistive_tech' }) })
+  it('opens Find a printer for this guide when it has printable parts', async () => {
+    mockEndpoints({
+      detail: Promise.resolve({
+        ...DETAIL,
+        stl_files: [{ id: 's1', tutorial_id: '1', filename: 'mount.stl', file_url: '1/mount.stl' }],
+      }),
+    })
     render(<DetailScreen id="1" />)
     await screen.findByText('Build a Robot Arm')
-
-    expect(screen.getByText('Request this 3D print')).toBeTruthy()
-    expect(screen.getByText('Soon')).toBeTruthy()
 
     mockPush.mockClear()
-    fireEvent.press(screen.getByText('Request this 3D print'))
-    expect(mockPush).not.toHaveBeenCalled()
+    fireEvent.press(screen.getByLabelText('Ask someone to print'))
+    expect(mockPush).toHaveBeenCalledWith({ pathname: '/printing', params: { guide: '1' } })
   })
 
-  it('has no 3D-print placeholder for a toy-adaptation guide', async () => {
+  it('offers no print for a guide with nothing to print', async () => {
     render(<DetailScreen id="1" />)
     await screen.findByText('Build a Robot Arm')
 
-    expect(screen.queryByText('Request this 3D print')).toBeNull()
+    expect(screen.queryByLabelText('Ask someone to print')).toBeNull()
+  })
+})
+
+// 080: numbered steps, and the fit callout only when the guide suits a child.
+describe('DetailScreen steps and fit', () => {
+  const tagged = {
+    ...DETAIL,
+    switch_target: 'large',
+    switch_force: 'light',
+    switch_hold: 'moment',
+    steps: [
+      { id: 's1', tutorial_id: '1', position: 1, title: 'Open it', body: 'Unscrew the lid.', photo_url: null },
+      { id: 's2', tutorial_id: '1', position: 2, title: null, body: 'Fit the interrupter.', photo_url: null },
+    ],
+  }
+  const ollie = { name: 'Ollie', press_force: 'light', hold: 'second', aim: 'large' }
+
+  it('numbers the steps and says it suits the child', async () => {
+    mockEndpoints({ detail: Promise.resolve(tagged), children: Promise.resolve([ollie]) })
+    render(<DetailScreen id="1" />)
+    expect(await screen.findByText('Open it')).toBeTruthy()
+    expect(screen.getByText('Fit the interrupter.')).toBeTruthy()
+    expect(await screen.findByText('Suits Ollie — big button, light press, short hold')).toBeTruthy()
+  })
+
+  it('says nothing when the guide does not suit the child', async () => {
+    mockEndpoints({
+      detail: Promise.resolve(tagged),
+      children: Promise.resolve([{ ...ollie, press_force: 'very_light' }]),
+    })
+    render(<DetailScreen id="1" />)
+    await screen.findByText('Open it')
+    expect(screen.queryByTestId('fit-callout')).toBeNull()
+  })
+})
+
+describe('splitLead', () => {
+  it('takes the first sentence as the lead and leaves the rest for below', () => {
+    expect(splitLead('A drum. It lights up! Easy.')).toEqual({ lead: 'A drum.', rest: 'It lights up! Easy.' })
+  })
+  it('keeps a single sentence, or one with no stop, whole', () => {
+    expect(splitLead('Just one.')).toEqual({ lead: 'Just one.', rest: '' })
+    expect(splitLead('no stop at all')).toEqual({ lead: 'no stop at all', rest: '' })
+  })
+})
+
+describe('DetailScreen thanks', () => {
+  function withThanks(thanks: unknown) {
+    ;(apiClient.get as jest.Mock).mockImplementation((p: string) =>
+      p === '/api/tutorials/1/thanks'
+        ? Promise.resolve(thanks)
+        : p === '/api/saves/ids'
+          ? Promise.resolve(NO_SAVES)
+          : p === '/api/child-profiles'
+            ? Promise.resolve([])
+            : Promise.resolve(DETAIL)
+    )
+  }
+
+  it('offers Thanks to someone who has not thanked yet', async () => {
+    withThanks({ thanked: false, own: false })
+    render(<DetailScreen id="1" />)
+    expect(await screen.findByRole('button', { name: 'Thanks' })).toBeTruthy()
+  })
+
+  it('never offers it on your own guide', async () => {
+    withThanks({ thanked: false, own: true })
+    render(<DetailScreen id="1" />)
+    await screen.findByText('Build a Robot Arm')
+    await waitFor(() => expect(apiClient.get).toHaveBeenCalledWith('/api/tutorials/1/thanks'))
+    expect(screen.queryByRole('button', { name: 'Thanks' })).toBeNull()
   })
 })

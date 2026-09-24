@@ -19,14 +19,19 @@ import {
   BookOpen,
   CheckCircle,
   HourglassMedium,
+  Lightning,
   List,
   Printer as PrinterIcon,
   XCircle,
 } from '@phosphor-icons/react/dist/ssr'
 import { requireCapabilities } from '@/lib/require-capabilities'
 import { apiClient } from '@/lib/api-client'
-import { isOwnerSide } from '@splat-connect/types'
-import type { PickupAddress, Profile, ToyTransactionDetail } from '@splat-connect/types'
+import { initials, isOwnerSide, pickupAddress } from '@splat-connect/types'
+import type {
+  PickupAddress,
+  ToyTransactionDetail,
+  ToyTransactionSummary,
+} from '@splat-connect/types'
 import { Badge } from '@/components/badge'
 import { Disclosure } from '@/components/disclosure'
 import { CostPanel, type CostLine, type Settlement } from '@/components/cost-panel'
@@ -37,12 +42,7 @@ import { ToyTransactionThread } from '@/components/toy-transaction-thread'
 import { ChatHead } from '@/components/exchange-chat'
 import { printStages, printStageFacts } from '@/lib/print-stages'
 import { printFilesLine } from '@/lib/print-settings'
-
-function defaultAddress(profile: Profile): PickupAddress | null {
-  const { pickup_line1, pickup_suburb, pickup_state, pickup_postcode } = profile
-  if (!pickup_line1 || !pickup_suburb || !pickup_state || !pickup_postcode) return null
-  return { pickup_line1, pickup_suburb, pickup_state, pickup_postcode }
-}
+import { askedPrintersLabel, othersAskedLabel } from '@/lib/print-groups'
 
 export default async function PrintJobPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -79,6 +79,8 @@ export default async function PrintJobPage({ params }: { params: Promise<{ id: s
     await apiClient.post(`/api/toy-transactions/${id}/reject`, { reason })
     revalidatePath(`/dashboard/print-requests/${id}`)
   }
+  // Withdrawing one job of a grouped request withdraws the whole request (the
+  // API sweeps the other printers' jobs, 074).
   async function withdraw() {
     'use server'
     await apiClient.post(`/api/toy-transactions/${id}/withdraw`, {})
@@ -112,13 +114,6 @@ export default async function PrintJobPage({ params }: { params: Promise<{ id: s
   const facts = printStageFacts(tx, viewerIsPrinter)
 
   const partCount = tx.print_files.reduce((n, file) => n + file.quantity, 0)
-  const initials = (name: string) =>
-    name
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((word) => word[0]!.toUpperCase())
-      .join('')
   // Where this job stands with the one printer it went to — the board's
   // "Printers asked" card, which a job with a single machine has one row of.
   const printerAnswer =
@@ -129,6 +124,9 @@ export default async function PrintJobPage({ params }: { params: Promise<{ id: s
         : tx.status === 'withdrawn'
           ? { label: 'Withdrawn', tint: 'var(--surface2)', Icon: XCircle }
           : { label: 'Said yes', tint: 'var(--tok)', Icon: CheckCircle }
+  const waitingOnGroup = tx.status === 'requested' && (tx.print_group_size ?? 1) > 1
+  const deliveryLabel =
+    tx.print_delivery === 'post' ? 'Posted' : tx.print_delivery === 'collect' ? 'Collect' : null
 
   return (
     <div className="max-w-[1180px]">
@@ -202,7 +200,7 @@ export default async function PrintJobPage({ params }: { params: Promise<{ id: s
         transaction={tx}
         viewerId={caps.profile.id}
         ledOrgIds={ledOrgIds}
-        viewerDefaultAddress={defaultAddress(caps.profile)}
+        viewerDefaultAddress={pickupAddress(caps.profile)}
         onSendMessage={sendMessage}
         onAccept={accept}
         onReject={reject}
@@ -218,6 +216,15 @@ export default async function PrintJobPage({ params }: { params: Promise<{ id: s
         asideTop={
           <>
             <PrintNextStep tx={tx} viewerIsPrinter={viewerIsPrinter} />
+
+            {waitingOnGroup && (
+              <p className="flex items-start gap-2.5 rounded-[18px] bg-[var(--tamber)] px-4 py-3.5 text-sm font-bold leading-[1.5] text-[var(--tink)]">
+                <Lightning size={20} weight="fill" aria-hidden="true" className="mt-px flex-none" />
+                {viewerIsPrinter
+                  ? `${othersAskedLabel(tx.print_group_size)}.`
+                  : `${askedPrintersLabel(tx.print_group_size)}. The first to accept takes it; you will get a notification.`}
+              </p>
+            )}
 
             {tx.ready_photo_url && (
               <a
@@ -275,6 +282,18 @@ export default async function PrintJobPage({ params }: { params: Promise<{ id: s
                       {tx.printer?.materials.join(', ') || 'Not recorded'}
                     </dd>
                   </div>
+                  {tx.print_colour && (
+                    <div className="flex justify-between gap-3 border-b border-line py-1.5">
+                      <dt className="font-bold text-muted">Colour</dt>
+                      <dd className="text-right font-bold text-ink">{tx.print_colour}</dd>
+                    </div>
+                  )}
+                  {deliveryLabel && (
+                    <div className="flex justify-between gap-3 border-b border-line py-1.5">
+                      <dt className="font-bold text-muted">Delivery</dt>
+                      <dd className="text-right font-bold text-ink">{deliveryLabel}</dd>
+                    </div>
+                  )}
                   <div className="flex justify-between gap-3 py-1.5">
                     <dt className="font-bold text-muted">Where</dt>
                     <dd className="text-right font-bold text-ink">

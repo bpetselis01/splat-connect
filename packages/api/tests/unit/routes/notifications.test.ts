@@ -56,6 +56,7 @@ describe('GET /me/unread-counts', () => {
       tutorials: 2,
       exchanges: 2,
       challenges: 1,
+      organisations: 0,
       total: 5,
     })
   })
@@ -66,7 +67,7 @@ describe('GET /me/unread-counts', () => {
     })
 
     const res = await makeApp().request('/me/unread-counts')
-    expect(await res.json()).toEqual({ tutorials: 0, exchanges: 0, challenges: 0, total: 0 })
+    expect(await res.json()).toEqual({ tutorials: 0, exchanges: 0, challenges: 0, organisations: 0, total: 0 })
   })
 
   it('500s rather than reporting a falsely empty inbox', async () => {

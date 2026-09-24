@@ -14,7 +14,7 @@
  * - supabase/migrations/007_organizations.sql: the admin-only write policies
  * - app/org/[orgId]: where a leader appointed here ends up
  */
-import { Buildings, Plus, X } from '@phosphor-icons/react/dist/ssr'
+import { Buildings, Plus, SealCheck, X } from '@phosphor-icons/react/dist/ssr'
 import Link from 'next/link'
 import type { Route } from 'next'
 import type { ReactNode } from 'react'
@@ -42,6 +42,16 @@ async function setStatus(formData: FormData) {
   const id = formData.get('id') as string
   await apiClient.patch(`/api/admin/organizations/${id}`, {
     status: formData.get('status'),
+  })
+  revalidatePath('/admin/organizations')
+}
+
+// 076's "Verified by SPLAT". The admin route is its only writer.
+async function setVerified(formData: FormData) {
+  'use server'
+  const id = formData.get('id') as string
+  await apiClient.patch(`/api/admin/organizations/${id}`, {
+    verified: formData.get('verified') === 'true',
   })
   revalidatePath('/admin/organizations')
 }
@@ -201,7 +211,12 @@ export default async function AdminOrganizationsPage({
                             {initials(org.name)}
                           </span>
                           <span>
-                            <span className="block font-extrabold">{org.name}</span>
+                            <span className="flex items-center gap-1.5 font-extrabold">
+                              {org.name}
+                              {org.verified_at && (
+                                <SealCheck weight="fill" className="text-[var(--b600)]" aria-label="Verified by SPLAT" />
+                              )}
+                            </span>
                             {(org.suburb || org.state) && (
                               <span className="block text-xs text-muted">
                                 {[org.suburb, org.state].filter(Boolean).join(', ')}
@@ -344,6 +359,23 @@ export default async function AdminOrganizationsPage({
                     Appoint
                   </button>
                 </form>
+
+                <h3 className="mb-2.5 font-display text-lg font-extrabold text-ink">Verified by SPLAT</h3>
+                <div className="mb-7 rounded-[18px] border-[length:var(--bw)] border-line bg-canvas px-5 py-[18px]">
+                  <p className="mb-3 text-sm leading-[1.55] text-ink">
+                    {managed.verified_at
+                      ? `Verified ${new Date(managed.verified_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}. The seal shows on their public page.`
+                      : 'Not verified. Verify once you have checked they are who they say they are; the seal shows on their public page.'}
+                  </p>
+                  <form action={setVerified}>
+                    <input type="hidden" name="id" value={managed.id} />
+                    <input type="hidden" name="verified" value={managed.verified_at ? 'false' : 'true'} />
+                    <button type="submit" className={managed.verified_at ? 'btn btn-quiet btn-md' : 'btn btn-primary btn-md'}>
+                      <SealCheck weight="fill" aria-hidden="true" />
+                      {managed.verified_at ? 'Unverify' : 'Verify'}
+                    </button>
+                  </form>
+                </div>
 
                 <h3 className="mb-2.5 font-display text-lg font-extrabold text-ink">Danger zone</h3>
                 <div className="rounded-[18px] border-[length:var(--bw)] border-line bg-[var(--tbad)] px-5 py-[18px]">

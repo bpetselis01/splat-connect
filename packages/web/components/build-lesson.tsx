@@ -21,7 +21,7 @@ import Link from 'next/link'
 import { Lightbulb, Warning, Wrench, Copyright, Confetti } from '@phosphor-icons/react/dist/ssr'
 import { KitTable, LessonH2, PhotoSlot } from '@/components/lesson-kit'
 
-export type BuildStep = {
+type BuildStep = {
   title: string
   body: string
   tip?: string
@@ -31,7 +31,7 @@ export type BuildStep = {
   slotPh?: string
 }
 
-export type BuildMaterial = {
+type BuildMaterial = {
   item: string
   why: string
   shop: string

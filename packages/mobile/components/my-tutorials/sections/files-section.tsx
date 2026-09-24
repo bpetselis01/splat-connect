@@ -279,10 +279,13 @@ export function FilesSection() {
 
 const styles = StyleSheet.create({
   body: { flex: 1 },
+  // The board's uppercase group label, as list-kit's ListSection draws it.
   heading: {
-    fontFamily: theme.fonts.bold,
-    fontSize: theme.type.label,
-    color: theme.colors.text,
+    fontFamily: theme.fonts.black,
+    fontSize: 12,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    color: theme.colors.muted,
     marginBottom: theme.spacing(2),
   },
   photoBroken: {

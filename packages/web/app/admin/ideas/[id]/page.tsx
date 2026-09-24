@@ -38,10 +38,9 @@ import { revalidatePath } from 'next/cache'
 import Link from 'next/link'
 import type { Route } from 'next'
 import { apiClient } from '@/lib/api-client'
-import { isApiError } from '@/lib/api-core'
-import { CheckCircle, Clock, Megaphone, XCircle, PencilLine } from '@phosphor-icons/react/dist/ssr'
-import { X } from '@/components/icons'
-import { shortDate } from '@/lib/dates'
+import { isApiError } from '@splat-connect/types'
+import { CheckCircle, Clock, Megaphone, XCircle, PencilLine, X } from '@phosphor-icons/react/dist/ssr'
+import { shortDate } from '@splat-connect/types'
 import type { ToyIdea, ContactPref } from '@splat-connect/types'
 
 type Admin = ToyIdea & { profiles: { name: string } | null }
@@ -211,7 +210,7 @@ export default async function AdminIdeaPage({ params }: { params: Promise<{ id: 
                   />
                 </label>
                 <button type="submit" className="btn btn-danger btn-block">
-                  <X /> Reject
+                  <X weight="bold" aria-hidden="true" /> Reject
                 </button>
               </form>
             </div>
@@ -219,15 +218,23 @@ export default async function AdminIdeaPage({ params }: { params: Promise<{ id: 
 
           {idea.status === 'challenge' && (
             <div className="flex flex-col gap-3">
-              <form action={graduateIdea.bind(null, idea.id)}>
-                <p className="mb-3 text-sm leading-relaxed text-muted">
-                  Graduating starts a draft guide from this brief and copies every participant
-                  across as a contributor. It only happens once.
+              {/* A question (078) is answered, never graduated — the API 409s it. */}
+              {idea.kind === 'question' ? (
+                <p className="text-sm leading-relaxed text-muted">
+                  This is a question. It is resolved when the asker marks an answer, so it has no
+                  guide to graduate into.
                 </p>
-                <button type="submit" className="btn btn-primary btn-ok btn-block">
-                  Graduate to draft guide
-                </button>
-              </form>
+              ) : (
+                <form action={graduateIdea.bind(null, idea.id)}>
+                  <p className="mb-3 text-sm leading-relaxed text-muted">
+                    Graduating starts a draft guide from this brief and copies every participant
+                    across as a contributor. It only happens once.
+                  </p>
+                  <button type="submit" className="btn btn-primary btn-ok btn-block">
+                    Graduate to draft guide
+                  </button>
+                </form>
+              )}
 
               <form action={rejectIdea} className="mt-1 flex flex-col gap-3">
                 <input type="hidden" name="id" value={idea.id} />
@@ -245,7 +252,7 @@ export default async function AdminIdeaPage({ params }: { params: Promise<{ id: 
                   />
                 </label>
                 <button type="submit" className="btn btn-danger btn-block">
-                  <X /> Unpublish
+                  <X weight="bold" aria-hidden="true" /> Unpublish
                 </button>
               </form>
             </div>

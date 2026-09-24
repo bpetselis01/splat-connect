@@ -34,7 +34,6 @@ import {
 import { CardPhoto, tintFor } from '@/components/card-photo'
 import { SaveButton } from '@/components/save-button'
 import { gradeOf } from '@/lib/toy-grade'
-import type { OrgCardOrg } from '@/components/org-card'
 
 /** Title and the way out, per slug. The empty state is the only copy that
     differs between the three lists. */
@@ -120,7 +119,7 @@ function shown(slug: SaveSlug, item: { id: string }): Shown {
     }
   }
   if (slug === 'organisations') {
-    const o = item as OrgCardOrg & { suburb?: string | null; state?: string | null }
+    const o = item as { id: string; name: string; description: string | null; suburb?: string | null; state?: string | null }
     return {
       href: `/organizations/${o.id}/public`,
       title: o.name,

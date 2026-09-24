@@ -1,6 +1,7 @@
 import { LibraryClient, type LibraryStats } from './library-client'
 import { getSavedIds } from '@/lib/saves'
-import type { Tutorial } from '@splat-connect/types'
+import { getMyChildren } from '@/lib/my-children'
+import { fitLine, type Tutorial } from '@splat-connect/types'
 
 /** A failed fetch is an empty answer, never a 500 — see the guard below. */
 async function get<T>(path: string, fallback: T): Promise<T> {
@@ -31,8 +32,16 @@ export default async function LibraryPage({
     getSavedIds(),
   ])
 
+  // The board's "Suits Ollie": which guides suit one of the signed-in parent's
+  // children (080). Worked out here so the child profiles never reach the client.
+  const children = saved ? await getMyChildren() : []
+  const suitsIds = tutorials.filter((t) => fitLine(t, children)).map((t) => t.id)
+  const named = children.filter((c) => c.name?.trim())
+  const suitsName = children.length === 1 && named.length === 1 ? named[0].name!.trim() : 'your child'
+
   return (
     <LibraryClient
+      suits={suitsIds.length ? { ids: suitsIds, name: suitsName } : null}
       tutorials={tutorials}
       stats={stats}
       savedIds={saved?.tutorials ?? []}

@@ -6,6 +6,9 @@
  * anything waiting on you rises to the top. "Waiting on you" here means the
  * pickup, because every other step of a print job is the printer's.
  *
+ * A request sent to several printers (074) is one row, not three: the job that
+ * was taken leads it, and while nobody has, it says how many were asked.
+ *
  * Was a ComingSoon placeholder until 058.
  */
 import Link from 'next/link'
@@ -23,7 +26,14 @@ import { Badge } from '@/components/badge'
 import { RecordCard } from '@/components/record-card'
 import { BoundaryLink } from '@/components/boundary-link'
 import { printStages } from '@/lib/print-stages'
-import { needsAction, actionLabel, isOwnerSide, subjectName } from '@splat-connect/types'
+import { askedPrintersLabel } from '@/lib/print-groups'
+import {
+  needsAction,
+  actionLabel,
+  isOwnerSide,
+  subjectName,
+  collapsePrintGroups,
+} from '@splat-connect/types'
 import type { ToyTransactionSummary, ToyTransactionStatus } from '@splat-connect/types'
 
 export const metadata = { title: 'My print requests — SPLAT Connect' }
@@ -40,27 +50,33 @@ export default async function MyPrintRequestsPage() {
   // Jobs this account ASKED for. The other side — jobs on machines they own —
   // is /dashboard/printers, which is a different screen with different
   // controls; merging them would put "start the print" next to "collect it".
-  const mine = all.filter((tx) => tx.type === 'print' && tx.requester_id === viewerId)
+  const mine = collapsePrintGroups(
+    all.filter((tx) => tx.type === 'print' && tx.requester_id === viewerId)
+  )
+  type Request = (typeof mine)[number]
 
   // One list, not Active and History: the board sorts rather than splits. What
   // is waiting on you comes first, then anything still moving, then the closed
   // ones, newest first within each.
   const ACTIVE: ToyTransactionStatus[] = ['requested', 'accepted']
-  const rank = (tx: ToyTransactionSummary) =>
+  const rank = (tx: Request) =>
     needsAction(tx, viewerId, ledOrgIds) ? 0 : ACTIVE.includes(tx.status) ? 1 : 2
   const sorted = [...mine].sort(
     (a, b) => rank(a) - rank(b) || b.created_at.localeCompare(a.created_at)
   )
 
-  function Row({ tx }: { tx: ToyTransactionSummary }) {
+  function Row({ tx }: { tx: Request }) {
     const isOwner = isOwnerSide(tx, viewerId, ledOrgIds)
+    // While it waits, the one printer's name would be a third of the truth.
+    const who =
+      (tx.status === 'requested' && askedPrintersLabel(tx.print_group_size)) || tx.other_party_name
     return (
       <li>
         <RecordCard
           icon={<Cube size={26} weight="duotone" />}
           tint="var(--tviolet)"
           title={subjectName(tx)}
-          meta={`${tx.other_party_name} · ${new Date(tx.created_at).toLocaleDateString('en-AU', {
+          meta={`${who} · ${new Date(tx.created_at).toLocaleDateString('en-AU', {
             day: 'numeric',
             month: 'short',
           })}`}

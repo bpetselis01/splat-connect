@@ -37,7 +37,8 @@ import type { IconProps } from '@phosphor-icons/react'
 import { EVENT_KIND_LABEL, STORY_KIND_LABEL } from '@splat-connect/types'
 import type { EventKind, OrgEvent, OrgStory, StoryKind } from '@splat-connect/types'
 import { browserApiClient } from '@/lib/browser-api-client'
-import { formatTimeRange, isPast, shortDate } from '@/lib/dates'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { formatTimeRange, isPast, shortDate } from '@splat-connect/types'
 
 // The board's tints, by what the row is.
 const KIND_TINT: Record<EventKind, string> = {
@@ -232,25 +233,21 @@ export function OrgPublishing({
         </p>
       )}
 
-      <div role="tablist" aria-label="Kind" className="seg mb-4">
-        {(
-          [
-            ['events', 'Events', CalendarDots, events.length],
-            ['stories', 'Stories', Newspaper, stories.length],
-          ] as const
-        ).map(([key, label, TabIcon, n]) => (
-          <button
-            key={key}
-            type="button"
-            role="tab"
-            aria-selected={tab === key}
-            onClick={() => setTab(key)}
-          >
-            <TabIcon weight="bold" aria-hidden="true" />
-            {label} <span className="seg__count">{n}</span>
-          </button>
-        ))}
-      </div>
+      <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
+        <TabsList aria-label="Kind" className="seg mb-4">
+          {(
+            [
+              ['events', 'Events', CalendarDots, events.length],
+              ['stories', 'Stories', Newspaper, stories.length],
+            ] as const
+          ).map(([key, label, TabIcon, n]) => (
+            <TabsTrigger key={key} value={key}>
+              <TabIcon weight="bold" aria-hidden="true" />
+              {label} <span className="seg__count">{n}</span>
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
 
       {rows.length === 0 ? (
         <div className="rounded-3xl border-[length:var(--bw)] border-dashed border-line bg-surface p-11 text-center">

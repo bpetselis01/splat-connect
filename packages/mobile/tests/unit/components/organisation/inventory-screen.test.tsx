@@ -24,7 +24,7 @@ const leader = (orgs: { id: string; name: string }[]) => ({
     profile: { id: 'leader1', name: 'Lee', role: 'contributor' },
     isAdmin: false,
     ledOrgs: orgs,
-    unread: { tutorials: 0, exchanges: 0, challenges: 0, total: 0 },
+    unread: { tutorials: 0, exchanges: 0, challenges: 0, organisations: 0, total: 0 },
     exchangeActions: 0,
   },
   loading: false,
@@ -67,9 +67,12 @@ describe('InventoryScreen', () => {
 
     expect(await screen.findByText('Bear')).toBeTruthy()
     expect(screen.getByText('Drum')).toBeTruthy()
-    expect(screen.getByText('5')).toBeTruthy()
-    // The badges hide behind the row's a11y hint, so the query opts in.
-    expect(screen.getByText('Draft', { includeHiddenElements: true })).toBeTruthy()
+    expect(screen.getByText(/^5 in stock · Condition/)).toBeTruthy()
+    // The board's shelf words: published is Available, anything else a Draft.
+    expect(screen.getByText('Available')).toBeTruthy()
+    expect(screen.getByText('Draft')).toBeTruthy()
+    // The lead counts listings and units.
+    expect(screen.getByText('2 listings, 6 units on the shelf.')).toBeTruthy()
     expect(mockGet).toHaveBeenCalledWith('/api/toys/inventory')
   })
 
@@ -98,10 +101,10 @@ describe('InventoryScreen', () => {
     expect(mockPush).toHaveBeenCalledWith('/toys/toy9')
   })
 
-  it('offers Add stock, which lands on the add-toy screen', async () => {
+  it('offers Add to inventory, which lands on the add-toy screen in org mode', async () => {
     render(<InventoryScreen />)
-    fireEvent.press(await screen.findByRole('button', { name: '+ Add stock' }))
-    expect(mockPush).toHaveBeenCalledWith('/toys/new')
+    fireEvent.press(await screen.findByRole('button', { name: '+ Add to inventory' }))
+    expect(mockPush).toHaveBeenCalledWith(expect.stringMatching(/^\/toys\/new\?org=.+/))
   })
 
   it('explains an empty shelf rather than apologising for it', async () => {

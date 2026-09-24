@@ -26,23 +26,28 @@ test('@responsive the hero heading does not overflow', async ({ page }) => {
   await expectWithinViewport(heading, page.viewportSize()!.width)
 })
 
-test('@responsive the library grid renders two columns at phone width', async ({ page }) => {
+// Since 4ad89618 the grid is the board's `repeat(auto-fill, minmax(240px, 1fr))`,
+// which at phone width fits one card per row, not two. The library's own
+// search box went at the same time; the header search arrives as ?q=.
+test('@responsive the library grid renders one column at phone width', async ({ page }) => {
   const contributor = await createContributor()
   const marker = uniqueTitle('E2E Reflow Grid')
   await createTutorial(contributor.id, { title: `${marker} A`, status: 'approved' })
   await createTutorial(contributor.id, { title: `${marker} B`, status: 'approved' })
 
-  await page.goto('/library')
-  await page.getByPlaceholder('Search by toy name…').fill(marker)
+  await page.goto(`/library?q=${encodeURIComponent(marker)}`)
 
   const cards = page.getByTestId('tutorial-card')
   await expect(cards).toHaveCount(2)
 
-  // Two columns: the pair shares a row, so their vertical offsets match.
+  // One column: the pair shares a left edge and the second sits below the first.
   const first = await cards.nth(0).boundingBox()
   const second = await cards.nth(1).boundingBox()
-  expect(Math.abs(first!.y - second!.y)).toBeLessThan(4)
-  expect(second!.x).toBeGreaterThan(first!.x)
+  expect(Math.abs(first!.x - second!.x)).toBeLessThan(4)
+  expect(second!.y).toBeGreaterThanOrEqual(first!.y + first!.height)
+  const width = page.viewportSize()!.width
+  await expectWithinViewport(cards.nth(0), width)
+  await expectWithinViewport(cards.nth(1), width)
 })
 
 test('@responsive a dashboard row keeps its controls inside the viewport', async ({ page }) => {
@@ -59,9 +64,11 @@ test('@responsive a dashboard row keeps its controls inside the viewport', async
   await page.goto('/dashboard/tutorials')
 
   const width = page.viewportSize()!.width
-  // The card is the link; the Edit button it replaced no longer exists.
-  await expectWithinViewport(page.getByTestId('tutorial-row').first(), width)
-  await expectWithinViewport(page.getByText('REJECTED', { exact: true }), width)
+  // The card is the link; the Edit button it replaced no longer exists. A
+  // returned guide wears the "Needs you" stage pill since ac7791e2.
+  const row = page.getByTestId('tutorial-row').first()
+  await expectWithinViewport(row, width)
+  await expectWithinViewport(row.getByText('Needs you', { exact: true }), width)
 })
 
 test('@responsive the new-tutorial page fits the viewport', async ({ page }) => {
@@ -88,12 +95,18 @@ test('@responsive the tutorial detail page stacks to a single column', async ({ 
 
   await page.goto(`/tutorials/${id}`)
 
-  const pdf = page.getByRole('link', { name: 'Download Tutorial PDF' })
-  const parts = page.getByRole('cell', { name: 'E2E part' })
-  const pdfBox = await pdf.boundingBox()
-  const partsBox = await parts.boundingBox()
+  // Since 1909fb6a the page is content + a 360px rail from lg up; below that
+  // the rail (stats, the PDF button) stacks under the content column.
+  const pdf = page.getByRole('link', { name: 'Sign in to download' })
+  const content = page.getByRole('tabpanel', { name: 'Parts & tools' })
+  const rail = page.getByRole('complementary').filter({ has: pdf })
+  const contentBox = await content.boundingBox()
+  const railBox = await rail.boundingBox()
 
-  // Stacked, not side by side: the parts heading sits below the PDF button.
-  expect(partsBox!.y).toBeGreaterThan(pdfBox!.y)
-  await expectWithinViewport(pdf, page.viewportSize()!.width)
+  // Stacked, not side by side: same left edge, rail below the content.
+  expect(Math.abs(railBox!.x - contentBox!.x)).toBeLessThan(4)
+  expect(railBox!.y).toBeGreaterThanOrEqual(contentBox!.y + contentBox!.height)
+  const width = page.viewportSize()!.width
+  await expectWithinViewport(content, width)
+  await expectWithinViewport(pdf, width)
 })

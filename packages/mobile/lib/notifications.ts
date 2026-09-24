@@ -1,48 +1,30 @@
 // packages/mobile/lib/notifications.ts
 // The copy and the routing behind the Inbox.
 //
-// COPY is ported VERBATIM from web's components/notifications-list.tsx — all
-// twenty-one of them. Two clients narrating the same event differently is how a
-// person ends up unsure whether they read about one thing or two, so the
-// wording is not "improved" here; change it on web first.
-//
-// The type → bucket map is NOT ported: @splat-connect/types already exports
-// notificationBucket() and the API groups by the same function, so a mobile
-// copy would be the third and would drift first.
-import type { Notification, NotificationType } from '@splat-connect/types'
-
-export const COPY: Record<NotificationType, (n: Notification) => string> = {
-  collaborator_invited: (n) => `${n.actor_name} invited you to collaborate on "${n.tutorial_title}"`,
-  collaborator_accepted: (n) => `${n.actor_name} accepted your invite to "${n.tutorial_title}"`,
-  collaborator_declined: (n) => `${n.actor_name} declined your invite to "${n.tutorial_title}"`,
-  collaborator_removed: (n) => `${n.actor_name} removed you from "${n.tutorial_title}"`,
-  collaborator_left: (n) => `${n.actor_name} left "${n.tutorial_title}"`,
-  backing_requested: (n) => `${n.actor_name} asked your organisation to back "${n.tutorial_title}"`,
-  tutorial_submitted: (n) => `${n.actor_name} submitted "${n.tutorial_title}" for review`,
-  tutorial_approved: (n) => `"${n.tutorial_title}" was approved and is now published`,
-  tutorial_rejected: (n) => `"${n.tutorial_title}" was rejected`,
-  // Unnamed on purpose: who thanked a guide stays private (066).
-  tutorial_thanked: (n) => `A family said thanks for "${n.tutorial_title}"`,
-  toy_request: (n) => `${n.actor_name} requested ${n.toy_name}`,
-  toy_accepted: (n) => `${n.actor_name} accepted your request for ${n.toy_name}`,
-  toy_rejected: (n) => `${n.actor_name} declined your request for ${n.toy_name}`,
-  toy_withdrawn: (n) => `${n.actor_name} withdrew their request for ${n.toy_name}`,
-  toy_message: (n) => `${n.actor_name} sent a message about ${n.toy_name}`,
-  idea_approved: () => 'Your idea was published as a design challenge',
-  idea_rejected: () => 'Your idea was reviewed and not taken forward',
-  challenge_joined: (n) => `${n.actor_name} joined your design challenge`,
-  challenge_left: (n) => `${n.actor_name} left your design challenge`,
-  challenge_removed: (n) => `${n.actor_name} removed you from a design challenge`,
-  idea_graduated: () =>
-    'A challenge you were part of is being written up as a guide, and you are credited on it',
-}
+// The copy itself (COPY, copyFor) and the type → bucket map live in
+// @splat-connect/types, shared with web and the API.
+import type { Notification } from '@splat-connect/types'
 
 /**
  * Where a notification lands on mobile. Web's linkFor with its hrefs swapped
  * for these routes; every branch below is web's branch, in web's order.
  */
 export function linkFor(n: Notification): string {
+  // A build has its own thread. Only these two types say so on the row; any
+  // other notice about a build (toy_accepted on a claim, toy_message) opens the
+  // exchange thread, which hands a build straight on — same as web.
+  if (n.toy_transaction_id && (n.type === 'build_shot_posted' || n.type === 'build_approved')) {
+    return `/exchanges/build/${n.toy_transaction_id}`
+  }
   if (n.toy_transaction_id) return `/exchanges/${n.toy_transaction_id}`
+  // 077. A conversation opens by its own id, for either side. A thanks goes
+  // to the organisation hub — mobile has no profile editor to hide notes in.
+  // A followed org's new event or story: mobile has no screen for either, so
+  // /news reads which organisation it belongs to and opens that profile.
+  if (n.org_conversation_id) return `/messages/${n.org_conversation_id}`
+  if (n.type === 'org_thanked') return '/organisation'
+  if (n.org_event_id) return `/news/event/${n.org_event_id}`
+  if (n.org_story_id) return `/news/story/${n.org_story_id}`
   // Answered BEFORE the tutorial_id branch, exactly as on web: the recipient
   // of these two is a reviewer, not the author, and /tutorials/:id is the
   // author's editor — a leader sent there lands on a screen they cannot save.

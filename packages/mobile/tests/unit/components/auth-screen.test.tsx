@@ -88,7 +88,8 @@ describe('AuthScreen', () => {
     fillSignUp()
     fireEvent.press(screen.getByTestId('accept-contributor-terms'))
     fireEvent.press(submit('Create account'))
-    await waitFor(() => expect(signUp).toHaveBeenCalledWith('p@b.com', 'pw123456', 'Pat'))
+    // No tile picked: no intent, never a guessed one.
+    await waitFor(() => expect(signUp).toHaveBeenCalledWith('p@b.com', 'pw123456', 'Pat', undefined))
   })
 
   it('shows an error and does not submit when passwords do not match', async () => {
@@ -193,6 +194,18 @@ describe('AuthScreen', () => {
     expect(submit('Create account')).toBeEnabled()
     fireEvent.press(submit('Create account'))
 
-    await waitFor(() => expect(signUp).toHaveBeenCalledWith('a@b.com', 'secret1', 'Ada'))
+    await waitFor(() => expect(signUp).toHaveBeenCalledWith('a@b.com', 'secret1', 'Ada', undefined))
+  })
+
+  it('sends the picked sign-up intent', async () => {
+    const signUp = jest.fn().mockResolvedValue({ error: null })
+    ;(useAuth as jest.Mock).mockReturnValue({ session: null, signIn: jest.fn(), signUp, signOut: jest.fn() })
+    render(<AuthScreen />)
+    goToSignUp()
+    fireEvent.press(screen.getByRole('radio', { name: 'Find toys for my child' }))
+    fillSignUp()
+    fireEvent.press(screen.getByTestId('accept-contributor-terms'))
+    fireEvent.press(submit('Create account'))
+    await waitFor(() => expect(signUp).toHaveBeenCalledWith('p@b.com', 'pw123456', 'Pat', 'family'))
   })
 })

@@ -5,7 +5,12 @@
 // and donation vs exchange — because the wrong answer on any one of them puts
 // two people in a room reciting a code that cannot match.
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
-import { ExchangeThreadScreen } from '../../../../components/exchanges/thread-screen'
+import {
+  ExchangeThreadScreen,
+  costSummary,
+  stageRail,
+  waitingOn,
+} from '../../../../components/exchanges/thread-screen'
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
 
@@ -30,11 +35,12 @@ jest.mock('../../../../lib/api-client', () => ({
 // exchanges/list-screen.test.tsx. The cleanup return is preserved, so the
 // interval teardown is exercised too.
 const mockPush = jest.fn()
+const mockReplace = jest.fn()
 jest.mock('expo-router', () => {
   const { useEffect } = jest.requireActual('react')
   return {
     useFocusEffect: (effect: () => void) => useEffect(effect, []),
-    useRouter: () => ({ push: mockPush }),
+    useRouter: () => ({ push: mockPush, replace: mockReplace }),
   }
 })
 
@@ -49,7 +55,7 @@ function caps(over: object, profileOver: object = {}) {
       profile: { id: 'viewer1', name: 'Viewer', role: 'contributor', ...profileOver },
       isAdmin: false,
       ledOrgs: [],
-      unread: { tutorials: 0, exchanges: 0, challenges: 0, total: 0 },
+      unread: { tutorials: 0, exchanges: 0, challenges: 0, organisations: 0, total: 0 },
       exchangeActions: 0,
       ...over,
     },
@@ -99,6 +105,9 @@ const message = (over: object) => ({
   ...over,
 })
 
+/** Polls of the transaction itself — the one-off cost-panel GET is not a poll. */
+const txGets = () => mockGet.mock.calls.filter(([p]) => p === '/api/toy-transactions/tx1').length
+
 /** Renders and waits for the first GET to settle. */
 async function open() {
   render(<ExchangeThreadScreen id="tx1" />)
@@ -124,6 +133,12 @@ describe('ExchangeThreadScreen — loading and header', () => {
     await open()
     expect(mockGet).toHaveBeenCalledWith('/api/toy-transactions/tx1')
     expect(screen.getByText('Bubble machine → You collect')).toBeTruthy()
+  })
+
+  it('hands a build on to the build thread rather than drawing it as a toy', async () => {
+    mockGet.mockResolvedValue(detail({ type: 'build', toy_id: null, toy_name: '' }))
+    render(<ExchangeThreadScreen id="tx1" />)
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/exchanges/build/tx1'))
   })
 
   it('names the requester as the collector when the viewer is the owner', async () => {
@@ -352,7 +367,7 @@ describe('ExchangeThreadScreen — accepted exchange, both sides confirm', () =>
     await open()
     expect(screen.getByText('12 Rose St, Fitzroy, VIC, 3065')).toBeTruthy()
     expect(screen.getByText(/Your handoff code/)).toBeTruthy()
-    expect(screen.getByText('123456')).toBeTruthy()
+    expect(screen.getByLabelText('1 2 3 4 5 6')).toBeTruthy()
   })
 
   it('shows the requester their own code too — an exchange is mutual', async () => {
@@ -360,7 +375,7 @@ describe('ExchangeThreadScreen — accepted exchange, both sides confirm', () =>
       accepted({ owner_id: 'owner1', requester_id: 'viewer1', owner_code: null, requester_code: '654321' })
     )
     await open()
-    expect(screen.getByText('654321')).toBeTruthy()
+    expect(screen.getByLabelText('6 5 4 3 2 1')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Confirm handoff' })).toBeTruthy()
   })
 
@@ -424,7 +439,7 @@ describe('ExchangeThreadScreen — accepted donation, one-way', () => {
     )
     await open()
     expect(screen.getByText(/Your handoff code/)).toBeTruthy()
-    expect(screen.getByText('654321')).toBeTruthy()
+    expect(screen.getByLabelText('6 5 4 3 2 1')).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Confirm handoff' })).toBeNull()
     expect(screen.queryByLabelText('Enter their code')).toBeNull()
   })
@@ -527,18 +542,18 @@ describe('ExchangeThreadScreen — polling', () => {
     try {
       const view = render(<ExchangeThreadScreen id="tx1" />)
       await act(async () => {})
-      expect(mockGet).toHaveBeenCalledTimes(1)
+      expect(txGets()).toBe(1)
 
       await act(async () => {
         jest.advanceTimersByTime(10_000)
       })
-      expect(mockGet).toHaveBeenCalledTimes(2)
+      expect(txGets()).toBe(2)
 
       view.unmount()
       await act(async () => {
         jest.advanceTimersByTime(30_000)
       })
-      expect(mockGet).toHaveBeenCalledTimes(2)
+      expect(txGets()).toBe(2)
     } finally {
       jest.useRealTimers()
     }
@@ -601,5 +616,73 @@ describe('ExchangeThreadScreen — polling', () => {
     } finally {
       jest.useRealTimers()
     }
+  })
+})
+
+describe('stageRail', () => {
+  it('walks Requested → Handover → Closed, never parking on Accepted', () => {
+    expect(stageRail({ status: 'requested', owner_code: null })).toEqual(['current', 'todo', 'todo', 'todo'])
+    expect(stageRail({ status: 'accepted', owner_code: '1' })).toEqual(['done', 'done', 'current', 'todo'])
+    expect(stageRail({ status: 'completed', owner_code: '1' })).toEqual(['done', 'done', 'done', 'done'])
+  })
+  it('closes an early exit, keeping Accepted only if it got that far', () => {
+    expect(stageRail({ status: 'rejected', owner_code: null })).toEqual(['done', 'todo', 'todo', 'done'])
+    expect(stageRail({ status: 'withdrawn', owner_code: '1' })).toEqual(['done', 'done', 'todo', 'done'])
+  })
+})
+
+describe('waitingOn', () => {
+  const tx = (over: object) => detail(over) as unknown as Parameters<typeof waitingOn>[0]
+  it('is the viewer when the action is theirs', () => {
+    expect(waitingOn(tx({}), 'viewer1', [])).toEqual({ who: 'you', label: 'Waiting on you — accept or decline' })
+  })
+  it('is the other side when the ball is in their court', () => {
+    expect(waitingOn(tx({ owner_id: 'owner1', requester_id: 'viewer1' }), 'viewer1', [])).toEqual({
+      who: 'them',
+      label: 'Waiting on Ash',
+    })
+  })
+  it('is locked when a rival request holds the toy', () => {
+    expect(waitingOn(tx({ blocked_by_rival_accept: true }), 'viewer1', [])?.who).toBe('locked')
+  })
+  it('is nobody once the exchange has closed', () => {
+    expect(waitingOn(tx({ status: 'completed' }), 'viewer1', [])).toBeNull()
+  })
+})
+
+describe('costSummary', () => {
+  const line = (over: object) => ({
+    id: 'c',
+    description: 'Postage',
+    amount_cents: 1060,
+    claiming: true,
+    payer_id: 'viewer1',
+    payee_id: 'owner1',
+    ...over,
+  })
+  it('counts only claimed lines, by which side the viewer is on', () => {
+    const lines = [line({}), line({ id: 'd', claiming: false, amount_cents: 500 }), line({ id: 'e', payer_id: 'owner1', payee_id: 'viewer1', amount_cents: 200 })]
+    expect(costSummary(lines, 'viewer1')).toEqual({ youPay: 1060, youGet: 200 })
+  })
+})
+
+describe('ExchangeThreadScreen — the cost panel', () => {
+  it('shows what the viewer pays back when there are cost lines', async () => {
+    mockGet.mockImplementation((p: string) =>
+      Promise.resolve(
+        p === '/api/exchange-costs/tx1'
+          ? { lines: [{ id: 'c1', description: 'Postage', amount_cents: 1060, claiming: true, payer_id: 'viewer1', payee_id: 'owner1' }], settlement: { method: 'Bank transfer' } }
+          : detail({ owner_id: 'owner1', requester_id: 'viewer1' })
+      )
+    )
+    await open()
+    expect(await screen.findByText('You pay back')).toBeTruthy()
+    expect(screen.getByText('Bank transfer')).toBeTruthy()
+    expect(screen.getByText('Postage')).toBeTruthy()
+  })
+
+  it('draws no cost card without lines', async () => {
+    await open()
+    expect(screen.queryByText('What the handover costs you')).toBeNull()
   })
 })

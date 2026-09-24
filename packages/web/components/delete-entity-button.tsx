@@ -20,6 +20,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Route } from 'next'
 import { browserApiClient } from '@/lib/browser-api-client'
+import { isBackdropClick } from '@/lib/backdrop-click'
 
 export function DeleteEntityButton({
   endpoint,
@@ -81,10 +82,10 @@ export function DeleteEntityButton({
         className="dialog-panel"
         onCancel={() => cancel()}
         onClick={(e) => {
-          if (e.target === ref.current) cancel()
+          if (isBackdropClick(e)) cancel()
         }}
       >
-        <div onClick={(e) => e.stopPropagation()} className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4">
           <h2 className="title-section">Delete {label}?</h2>
           <p className="text-sm text-muted">
             This permanently deletes this {label} and everything recorded on it. It cannot be

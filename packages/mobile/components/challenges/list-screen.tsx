@@ -4,9 +4,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
+import { challengeCounts, challengePill } from './challenge-status'
 import Animated, { FadeInDown } from 'react-native-reanimated'
-import type { ToyIdea } from '@splat-connect/types'
+import { CHALLENGE_FILTERS, type PublicChallenge, type ToyIdea } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { useCapabilities } from '../../lib/capabilities'
@@ -17,14 +17,15 @@ import { Button } from '../ui/Button'
 import { EmptyState } from '../ui/EmptyState'
 import { SkeletonRow } from '../ui/Skeleton'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
+import { Chip } from '../ui/Chip'
 
 /**
  * GET /api/public/challenges selects exactly these columns — not a whole
- * ToyIdea. Narrowed rather than cast to ToyIdea so nothing here can reach for
- * a field (description, tutorial_id) that never arrives; the detail route is
- * where the rest of the brief lives.
+ * ToyIdea — plus the maker and answer counts (078). Typed as the shared
+ * PublicChallenge so nothing here can reach for a field (description,
+ * tutorial_id) that never arrives; the detail route has the rest.
  */
-type ChallengeRow = Pick<ToyIdea, 'id' | 'title' | 'summary' | 'status' | 'created_at'>
+type ChallengeRow = PublicChallenge
 
 function ChallengeCardRow({
   row,
@@ -35,6 +36,9 @@ function ChallengeCardRow({
   joined: boolean
   onPress: () => void
 }) {
+  // "Maker and post counts are the signal that a challenge is alive" — a
+  // question counts answers instead (078).
+  const pill = challengePill(row)
   return (
     <AnimatedPressable
       onPress={onPress}
@@ -45,26 +49,23 @@ function ChallengeCardRow({
       style={styles.rowPress}
     >
       <Card style={styles.card}>
-        <View style={styles.cardBody}>
-          <Text style={styles.cardTitle} numberOfLines={2}>
-            {row.title}
-          </Text>
-          <Text style={styles.cardSummary} numberOfLines={2}>
-            {row.summary}
-          </Text>
+        <View style={styles.metaRow}>
+          <Badge status={pill.status} label={pill.label} />
+          <Text style={styles.cardMeta}>{challengeCounts(row)}</Text>
           {/* Hidden from the a11y tree: the row's own hint above already
               says "You're in", so leaving this visible double-announces it. */}
           {joined ? (
-            <View
-              style={styles.badgeRow}
-              accessibilityElementsHidden
-              importantForAccessibility="no-hide-descendants"
-            >
+            <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
               <Badge status="challenge" label="You're in" />
             </View>
           ) : null}
         </View>
-        <Ionicons name="chevron-forward" size={18} color={theme.colors.primary} />
+        <Text style={styles.cardTitle} numberOfLines={2}>
+          {row.title}
+        </Text>
+        <Text style={styles.cardSummary} numberOfLines={2}>
+          {row.summary}
+        </Text>
       </Card>
     </AnimatedPressable>
   )
@@ -81,6 +82,8 @@ export function ChallengesListScreen() {
   // Bumping this re-runs the fetch — the retry button's handle, same as
   // toy-library-screen's reloadKey.
   const [reloadKey, setReloadKey] = useState(0)
+  const [filterId, setFilterId] = useState('all')
+  const filter = CHALLENGE_FILTERS.find((f) => f.id === filterId) ?? CHALLENGE_FILTERS[0]
 
   useEffect(() => {
     let ignore = false
@@ -124,10 +127,11 @@ export function ChallengesListScreen() {
     }, [])
   )
 
-  const open = challenges.filter((c) => c.status === 'challenge')
+  const shown = challenges.filter(filter.keep)
+  const open = shown.filter((c) => c.status === 'challenge')
   // The list shape carries no tutorial_id, so a solved row lands on its own
   // brief — which does carry it, and links on to the guide from there.
-  const solved = challenges.filter((c) => c.status === 'graduated')
+  const solved = shown.filter((c) => c.status === 'graduated')
 
   const goTo = (id: string) => router.push(`/explore/challenges/${id}`)
   const submitIdea = () => router.push('/explore/challenges/new')
@@ -173,6 +177,19 @@ export function ChallengesListScreen() {
           </EmptyState>
         ) : (
           <View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.filterRow}
+              accessibilityLabel="Filter challenges"
+            >
+              {CHALLENGE_FILTERS.map((f) => (
+                <Chip key={f.id} label={f.label} active={f.id === filter.id} onPress={() => setFilterId(f.id)} />
+              ))}
+            </ScrollView>
+            {shown.length === 0 ? (
+              <Text style={styles.intro}>Nothing under {filter.label.toLowerCase()} yet.</Text>
+            ) : null}
             {open.length ? (
               <View style={styles.group}>
                 <Text style={styles.groupTitle}>Open challenges</Text>
@@ -227,20 +244,10 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing(2),
   },
   rowPress: { marginBottom: theme.spacing(3) },
-  card: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3), padding: theme.spacing(3) },
-  cardBody: { flex: 1 },
-  cardTitle: {
-    fontFamily: theme.fonts.bold,
-    fontSize: theme.type.label,
-    color: theme.colors.text,
-    lineHeight: 22,
-  },
-  cardSummary: {
-    fontFamily: theme.fonts.regular,
-    fontSize: theme.type.caption,
-    color: theme.colors.muted,
-    lineHeight: 18,
-    marginTop: theme.spacing(1),
-  },
-  badgeRow: { flexDirection: 'row', marginTop: theme.spacing(2) },
+  card: { gap: theme.spacing(1.5), padding: theme.spacing(4) },
+  metaRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: theme.spacing(2) },
+  cardMeta: { fontFamily: theme.fonts.semiBold, fontSize: theme.type.caption, color: theme.colors.muted },
+  cardTitle: { fontFamily: theme.fonts.display, fontSize: 17, color: theme.colors.text, lineHeight: 22 },
+  cardSummary: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted, lineHeight: 19 },
+  filterRow: { gap: theme.spacing(2), paddingBottom: theme.spacing(4) },
 })

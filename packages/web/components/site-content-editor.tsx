@@ -76,8 +76,8 @@ const LABEL = 'mb-[7px] block text-sm font-extrabold text-ink'
 const INPUT = 'field h-[50px] bg-canvas'
 
 // The five the homepage is flying through right now — components/scroll-world.
-// Editing one here does not move the page yet; that is the same shape as the
-// hero and the numbers, which also write site_content ahead of a public reader.
+// The page reads all three rows through lib/home-content, where a blank field
+// keeps the copy the page ships with.
 const LIVE_SCENES: SceneRow[] = SCENES.map((s) => ({ title: s.place, line: s.title }))
 
 const EMPTY_HERO: Hero = {

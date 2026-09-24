@@ -1,13 +1,16 @@
 import { Hono } from 'hono'
-import { CONTACT_PREFS, type ContactPref } from '@splat-connect/types'
+import { CONTACT_PREFS, type ContactPref, type ToyIdeaKind } from '@splat-connect/types'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
 import type { AuthVariables } from '../middleware/auth.js'
+import { profileName } from '../profile-name.js'
 
 const toyIdeas = new Hono<{ Variables: AuthVariables }>()
 
 const RLS_VIOLATION = '42501'
 
 type Client = ReturnType<typeof createUserClient>
+
+const IDEA_KINDS: ToyIdeaKind[] = ['challenge', 'question']
 
 const NARRATIVE_FIELDS = [
   'title', 'summary', 'description', 'intended_use', 'primary_user',
@@ -33,6 +36,13 @@ function readIdeaBody(body: unknown): Record<string, unknown> | null {
   if (!Array.isArray(prefs)) return null
   if (!prefs.every((p) => CONTACT_PREFS.includes(p as ContactPref))) return null
   out.contact_prefs = prefs
+
+  // A build challenge unless the author says it is a question (078). Anything
+  // else is refused rather than defaulted: a typo must not file a question as
+  // something an admin can graduate.
+  const kind = source.kind ?? 'challenge'
+  if (!IDEA_KINDS.includes(kind as ToyIdeaKind)) return null
+  out.kind = kind
 
   return out
 }
@@ -85,7 +95,7 @@ toyIdeas.get('/joined', async (c) => {
     // so unlike GET /api/admin/ideas or the author's own /mine, there is no
     // reader here who is ever entitled to this column.
     .select(
-      'toy_ideas!inner(id, author_id, title, summary, description, intended_use, primary_user, contact_prefs, status, tutorial_id, created_at, updated_at)'
+      'toy_ideas!inner(id, author_id, title, summary, description, intended_use, primary_user, contact_prefs, status, tutorial_id, kind, answer_message_id, answered_at, created_at, updated_at)'
     )
     .eq('profile_id', c.get('userId'))
     // A removed row must not keep showing the caller a challenge they were
@@ -125,11 +135,7 @@ async function loadIdea(client: Client, id: string) {
   return client.from('toy_ideas').select('author_id, title, status').eq('id', id).single()
 }
 
-async function actorName(userId: string): Promise<string> {
-  const { data } = await createAdminClient()
-    .from('profiles').select('name').eq('id', userId).single()
-  return (data?.name as string) ?? 'Someone'
-}
+const actorName = (userId: string) => profileName(createAdminClient(), userId, 'Someone')
 
 toyIdeas.post('/:id/join', async (c) => {
   const id = c.req.param('id')
@@ -229,6 +235,60 @@ toyIdeas.post('/:id/messages', async (c) => {
   if (error?.code === RLS_VIOLATION) return c.json({ error: 'You are not part of this challenge' }, 403)
   if (error) return c.json({ error: error.message }, 500)
   return c.json(data, 201)
+})
+
+/**
+ * The author of a question marks one reply as its answer, or clears it with
+ * `{ message_id: null }`. Body: { message_id: string | null }.
+ *
+ * Author-only and question-only, checked here rather than by RLS: 037 lets an
+ * author update their idea only while it is pending, and a question is
+ * answered after it opens — so the write goes through the admin client once
+ * this route has decided the caller may make it. The reply must be a user
+ * message on this idea from someone other than the author; an asker cannot
+ * answer their own question.
+ */
+toyIdeas.post('/:id/answer', async (c) => {
+  const id = c.req.param('id')
+  const parsed = await c.req.json().catch(() => null)
+  const messageId = parsed?.message_id
+  if (messageId !== null && typeof messageId !== 'string') {
+    return c.json({ error: 'message_id must be a reply id or null' }, 400)
+  }
+
+  const { data: idea } = await createUserClient(c.get('token'))
+    .from('toy_ideas').select('author_id, kind, status').eq('id', id).maybeSingle()
+  if (!idea) return c.json({ error: 'Question not found' }, 404)
+  if (idea.author_id !== c.get('userId')) {
+    return c.json({ error: 'Only the person who asked can mark the answer' }, 403)
+  }
+  if (idea.kind !== 'question') return c.json({ error: 'Only a question has an answer' }, 409)
+  if (idea.status !== 'challenge') return c.json({ error: 'This question is not open' }, 409)
+
+  const admin = createAdminClient()
+  if (messageId !== null) {
+    const { data: reply } = await admin
+      .from('toy_idea_messages')
+      .select('id')
+      .eq('id', messageId)
+      .eq('idea_id', id)
+      .eq('kind', 'user')
+      .neq('sender_id', idea.author_id)
+      .maybeSingle()
+    if (!reply) return c.json({ error: 'That reply is not on this question' }, 404)
+  }
+
+  const { data, error } = await admin
+    .from('toy_ideas')
+    .update({
+      answer_message_id: messageId,
+      answered_at: messageId === null ? null : new Date().toISOString(),
+    })
+    .eq('id', id)
+    .select('id, answer_message_id, answered_at')
+    .single()
+  if (error) return c.json({ error: error.message }, 500)
+  return c.json(data)
 })
 
 /**

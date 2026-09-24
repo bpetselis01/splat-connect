@@ -34,10 +34,11 @@ test('a card carries its holder, its condition and its switch-adapted badge', as
   await page.getByPlaceholder('Search by toy name').fill(name)
   await expect(page.getByText(name)).toBeVisible()
 
-  await expect(page.getByText(`7/10 · Held by ${holder}`)).toBeVisible()
-  // Badge uppercases the string itself rather than leaning on textTransform,
-  // so the text node really does read SWITCH-ADAPTED.
-  await expect(page.getByText('SWITCH-ADAPTED', { exact: true })).toBeVisible()
+  // Condition in words (7 is "Good"), then who holds it.
+  const card = page.getByRole('button', { name })
+  await expect(card.getByText('Good', { exact: true })).toBeVisible()
+  await expect(card.getByText(holder, { exact: true })).toBeVisible()
+  await expect(card.getByText('Switch-adapted', { exact: true })).toBeVisible()
 })
 
 test('the condition buckets keep only the toys that fall in them', async ({ page }) => {
@@ -107,15 +108,15 @@ test("the request block offers only what the toy's offer_type allows", async ({ 
 
   await page.goto(`/toy-library/${donation}`)
   await expect(page.getByText(`Held by ${holder}`)).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Arrange pickup', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Ask to collect it', exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Arrange exchange', exact: true })).toHaveCount(0)
 
   await page.goto(`/toy-library/${exchange}`)
   await expect(page.getByRole('button', { name: 'Arrange exchange', exact: true })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Arrange pickup', exact: true })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Ask to collect it', exact: true })).toHaveCount(0)
 
   await page.goto(`/toy-library/${both}`)
-  await expect(page.getByRole('button', { name: 'Arrange pickup', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Ask to collect it', exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Arrange exchange', exact: true })).toBeVisible()
 })
 
@@ -130,6 +131,6 @@ test('a listed toy that is not being offered says so instead of asking', async (
   await page.goto(`/toy-library/${id}`)
 
   await expect(page.getByText('Not currently offered for donation or exchange.')).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Arrange pickup', exact: true })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Ask to collect it', exact: true })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Arrange exchange', exact: true })).toHaveCount(0)
 })

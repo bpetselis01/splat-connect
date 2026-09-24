@@ -1,49 +1,33 @@
 // packages/mobile/components/my-tutorials/list-screen.tsx
 import { useCallback, useEffect, useState } from 'react'
-import { View, Text, FlatList, RefreshControl, StyleSheet, Image } from 'react-native'
+import { View, Text, FlatList, RefreshControl, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
 import type { Tutorial } from '@splat-connect/types'
 import { KIND_LABEL } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { Screen } from '../ui/Screen'
-import { Card } from '../ui/Card'
-import { Badge } from '../ui/Badge'
 import { Button } from '../ui/Button'
-import { AnimatedPressable } from '../ui/AnimatedPressable'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
+import { ListIntro, ListRow, RowThumb, StageFilter, StageNone, StagePill } from '../list/list-kit'
+import { stageOptions, TUTORIAL_STAGE, type StageOption } from '../list/stage'
+
+const stageOf = (t: Tutorial) => TUTORIAL_STAGE[t.status]
 
 function TutorialRow({ item, onPress }: { item: Tutorial; onPress: () => void }) {
   return (
     <View style={styles.rowWrap}>
-      <AnimatedPressable
+      <ListRow
+        title={item.title}
+        meta={`${KIND_LABEL[item.kind]} · ${item.difficulty}`}
+        thumb={<RowThumb photo={item.toy_photo_url} glyph="color-wand-outline" />}
+        // "Draft" rather than "Hidden" for a guide, as web does: the editor
+        // calls it a draft, and so does everything a contributor reads.
+        pill={<StagePill stage={stageOf(item)} label={item.status === 'draft' ? 'Draft' : undefined} />}
         onPress={onPress}
-        accessibilityRole="button"
-        accessibilityLabel={item.title}
         accessibilityHint={`${item.difficulty} difficulty. ${KIND_LABEL[item.kind]}. Status ${item.status}. Opens the editor.`}
-        pressScale={0.985}
-      >
-        <Card style={styles.card}>
-          {item.toy_photo_url ? (
-            <Image source={{ uri: item.toy_photo_url }} style={styles.thumbnail} />
-          ) : (
-            <View style={styles.thumbnailPlaceholder}>
-              <Ionicons name="color-wand-outline" size={18} color={theme.colors.primary} />
-            </View>
-          )}
-          <View style={styles.cardBody}>
-            <Text style={styles.cardTitle} numberOfLines={2}>
-              {item.title}
-            </Text>
-            <Text style={styles.metaLine}>
-              {KIND_LABEL[item.kind]} · {item.difficulty}
-            </Text>
-          </View>
-          <Badge status={item.status} />
-        </Card>
-      </AnimatedPressable>
+      />
       {/* Rejected rows show why right under the row — a contributor should
           not have to open the editor to learn what needs fixing. */}
       {item.status === 'rejected' && item.rejection_note ? (
@@ -64,6 +48,7 @@ export function MyTutorialsListScreen() {
   // library-screen's reloadKey.
   const [reloadKey, setReloadKey] = useState(0)
   const [refreshing, setRefreshing] = useState(false)
+  const [stage, setStage] = useState<StageOption['id']>('all')
 
   const onRefresh = () => {
     setRefreshing(true)
@@ -113,17 +98,11 @@ export function MyTutorialsListScreen() {
         the My SPLAT hub. Repeating the title in-screen would just be a
         second "My tutorials" stacked over the first.
       */}
-      <View style={styles.headerRow}>
-        <Text style={styles.subtitle}>
-          Guides you wrote or collaborate on, and where each one is in review.
-        </Text>
-        <Button
-          label="+ Add a guide"
-          variant="accent"
-          onPress={() => router.push('/guides/new')}
-          style={styles.addGuide}
-        />
-      </View>
+      <ListIntro
+        lead="Guides you have written, at every stage from draft to published."
+        cta="+ Add a tutorial"
+        onCta={() => router.push('/guides/new')}
+      />
 
       {loading ? (
         <View>
@@ -146,7 +125,7 @@ export function MyTutorialsListScreen() {
           hint="Start your first one — a title is all it takes to begin a draft."
         >
           <Button
-            label="+ Add a guide"
+            label="+ Add a tutorial"
             variant="accent"
             onPress={() => router.push('/guides/new')}
             style={styles.retry}
@@ -157,10 +136,19 @@ export function MyTutorialsListScreen() {
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.ink} />
           }
-          data={tutorials}
+          data={stage === 'all' ? tutorials : tutorials.filter((t) => stageOf(t) === stage)}
           keyExtractor={(t) => t.id}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
+          ListHeaderComponent={
+            <StageFilter
+              label="Filter tutorials by stage"
+              options={stageOptions(tutorials, stageOf, ['needsyou', 'live', 'waiting', 'hidden'], { hidden: 'Draft' })}
+              current={stage}
+              onPick={setStage}
+            />
+          }
+          ListEmptyComponent={<StageNone onClear={() => setStage('all')} />}
           renderItem={({ item }) => (
             <TutorialRow
               item={item}
@@ -177,35 +165,11 @@ export function MyTutorialsListScreen() {
 }
 
 const styles = StyleSheet.create({
-  headerRow: { flexDirection: 'row', alignItems: 'flex-start', gap: theme.spacing(2), marginBottom: theme.spacing(4) },
-  subtitle: {
-    flex: 1,
-    fontFamily: theme.fonts.regular,
-    fontSize: theme.type.label,
-    color: theme.colors.muted,
-    lineHeight: 20,
-  },
-  addGuide: { paddingVertical: theme.spacing(2), paddingHorizontal: theme.spacing(3) },
   retry: { marginTop: theme.spacing(5), alignSelf: 'center', paddingHorizontal: theme.spacing(8) },
   listContent: { paddingBottom: theme.spacing(6) },
   rowWrap: { marginBottom: theme.spacing(3) },
-  card: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3), padding: theme.spacing(3) },
-  thumbnail: { width: 44, height: 44, borderRadius: theme.radii.field, backgroundColor: theme.colors.surfaceSunken },
-  thumbnailPlaceholder: {
-    width: 44,
-    height: 44,
-    borderRadius: theme.radii.field,
-    backgroundColor: theme.colors.accentLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cardBody: { flex: 1, gap: theme.spacing(1) },
-  cardTitle: { fontFamily: theme.fonts.bold, color: theme.colors.text, fontSize: theme.type.label },
-  metaLine: { fontFamily: theme.fonts.regular, color: theme.colors.muted, fontSize: theme.type.caption },
   noteBox: {
     marginTop: theme.spacing(2),
-    borderWidth: theme.border.hairline,
-    borderColor: theme.colors.border,
     borderRadius: theme.radii.field,
     backgroundColor: theme.colors.apricotSoft,
     padding: theme.spacing(3),

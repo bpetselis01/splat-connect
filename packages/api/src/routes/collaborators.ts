@@ -18,6 +18,7 @@
 import { Hono } from 'hono'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
 import type { AuthVariables } from '../middleware/auth.js'
+import { profileName } from '../profile-name.js'
 
 const collaborators = new Hono<{ Variables: AuthVariables }>()
 
@@ -66,7 +67,7 @@ collaborators.post('/:id/collaborators/invite', async (c) => {
     return c.json({ error: error.message }, 500)
   }
 
-  const { data: inviter } = await admin.from('profiles').select('name').eq('id', c.get('userId')).single()
+  const inviterName = await profileName(admin, c.get('userId'), 'A contributor')
   // Denormalized like actor_name: the invitee isn't a contributor yet, so
   // they have no RLS read access to join the tutorial's title live.
   const { data: tutorial } = await admin.from('tutorials').select('title').eq('id', c.req.param('id')).single()
@@ -75,7 +76,7 @@ collaborators.post('/:id/collaborators/invite', async (c) => {
     type: 'collaborator_invited',
     tutorial_id: c.req.param('id'),
     tutorial_title: tutorial?.title ?? 'a tutorial',
-    actor_name: inviter?.name ?? 'A contributor',
+    actor_name: inviterName,
   })
   // A failed notification shouldn't fail the invite itself, but a silent
   // failure here is invisible without a log line.
@@ -116,7 +117,7 @@ collaborators.delete('/:id/collaborators/:profileId', async (c) => {
   if (!data.length) return c.json({ error: 'cannot remove this collaborator' }, 403)
 
   const admin = createAdminClient()
-  const { data: actor } = await admin.from('profiles').select('name').eq('id', actingId).single()
+  const actorName = await profileName(admin, actingId, selfLeave ? 'A collaborator' : 'The primary contributor')
   // A just-removed (or just-left) collaborator loses their tutorial_contributors
   // row in the same request, so they'd have no RLS read access to the
   // tutorial by the time this notification is read — denormalize the title.
@@ -130,7 +131,7 @@ collaborators.delete('/:id/collaborators/:profileId', async (c) => {
         type: 'collaborator_left',
         tutorial_id: tutorialId,
         tutorial_title: tutorial?.title ?? 'a tutorial',
-        actor_name: actor?.name ?? 'A collaborator',
+        actor_name: actorName,
       })
       if (notifyError) console.error('[collaborators.leave] notification insert failed:', notifyError.message)
     }
@@ -141,7 +142,7 @@ collaborators.delete('/:id/collaborators/:profileId', async (c) => {
       type: 'collaborator_removed',
       tutorial_id: tutorialId,
       tutorial_title: tutorial?.title ?? 'a tutorial',
-      actor_name: actor?.name ?? 'The primary contributor',
+      actor_name: actorName,
     })
     if (notifyError) console.error('[collaborators.remove] notification insert failed:', notifyError.message)
   }

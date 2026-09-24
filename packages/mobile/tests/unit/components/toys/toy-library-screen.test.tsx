@@ -74,7 +74,7 @@ describe('ToyLibraryScreen', () => {
     expect(screen.getByText('Switch car')).toBeTruthy()
   })
 
-  it('shows the holder line for a person-held toy and an org-held toy', async () => {
+  it('shows the condition grade and the holder for a person-held toy and an org-held toy', async () => {
     mockGet.mockResolvedValue([
       toy({ id: 't1', name: 'Bubble machine', condition: 8, profiles: { name: 'Jamie' }, organizations: null }),
       toy({
@@ -90,8 +90,13 @@ describe('ToyLibraryScreen', () => {
     ])
     render(<ToyLibraryScreen />)
     await screen.findByText('Bubble machine')
-    expect(screen.getByText('8/10 · Held by Jamie', { includeHiddenElements: true })).toBeTruthy()
-    expect(screen.getByText('5/10 · Held by TAD Australia', { includeHiddenElements: true })).toBeTruthy()
+    // Words, never a score: 8 is "Good", 5 is "Well-loved".
+    expect(screen.getByText('Good', { includeHiddenElements: true })).toBeTruthy()
+    expect(screen.getByText('Well-loved', { includeHiddenElements: true })).toBeTruthy()
+    expect(screen.getByText('Jamie')).toBeTruthy()
+    expect(screen.getByText('TAD Australia')).toBeTruthy()
+    // The number survives for a screen reader, in the row's hint.
+    expect(screen.getByLabelText('Bubble machine').props.accessibilityHint).toContain('condition 8 of 10')
   })
 
   it('shows the quantity badge only on the org-owned row', async () => {
@@ -108,9 +113,9 @@ describe('ToyLibraryScreen', () => {
     ])
     render(<ToyLibraryScreen />)
     await screen.findByText('Bubble machine')
-    // Badge text renders uppercased.
     expect(screen.getAllByText('4 available', { includeHiddenElements: true }).length).toBe(1)
-    expect(screen.queryByText(/available/, { includeHiddenElements: true })).toBeTruthy()
+    // A person's toy is one unit, so it just says Available.
+    expect(screen.getAllByText('Available', { includeHiddenElements: true }).length).toBeGreaterThan(1)
   })
 
   it('shows the switch-adapted badge only when the toy is adapted', async () => {
@@ -120,7 +125,8 @@ describe('ToyLibraryScreen', () => {
     ])
     render(<ToyLibraryScreen />)
     await screen.findByText('Bubble machine')
-    expect(screen.getAllByText('Switch-adapted', { includeHiddenElements: true }).length).toBe(1)
+    // One pill, plus the filter chip of the same name.
+    expect(screen.getAllByText('Switch-adapted', { includeHiddenElements: true }).length).toBe(2)
   })
 
   it('filters by condition bucket', async () => {
@@ -130,7 +136,6 @@ describe('ToyLibraryScreen', () => {
     ])
     render(<ToyLibraryScreen />)
     await screen.findByText('Good toy')
-    fireEvent.press(screen.getByRole('button', { name: 'Filters' }))
     fireEvent.press(screen.getByRole('button', { name: 'Well-loved (1–3)' }))
     expect(screen.queryByText('Good toy')).toBeNull()
     expect(screen.getByText('Worn toy')).toBeTruthy()
@@ -143,7 +148,6 @@ describe('ToyLibraryScreen', () => {
     ])
     render(<ToyLibraryScreen />)
     await screen.findByText('Plain toy')
-    fireEvent.press(screen.getByRole('button', { name: 'Filters' }))
     fireEvent.press(screen.getByRole('button', { name: 'Switch-adapted' }))
     expect(screen.queryByText('Plain toy')).toBeNull()
     expect(screen.getByText('Adapted toy')).toBeTruthy()
@@ -172,8 +176,23 @@ describe('ToyLibraryScreen', () => {
     fireEvent.press(screen.getByLabelText('Toy actions'))
     fireEvent.press(screen.getByLabelText('Give a toy'))
     expect(mockPush).toHaveBeenCalledWith('/toys/new')
-    fireEvent.press(screen.getByLabelText('Organisations'))
+    fireEvent.press(screen.getByRole('tab', { name: 'Organisations' }))
     expect(mockPush).toHaveBeenCalledWith('/toy-library/organisations')
+  })
+
+  it('filters to available toys and orders by newest', async () => {
+    mockGet.mockResolvedValue([
+      toy({ id: 't1', name: 'Older toy', created_at: '2026-01-01T00:00:00Z' }),
+      toy({ id: 't2', name: 'Newer toy', created_at: '2026-06-01T00:00:00Z' }),
+      toy({ id: 't3', name: 'Gone toy', owner_id: null, owner_org_id: 'o1', quantity: 0, organizations: { name: 'TAD' } }),
+    ])
+    render(<ToyLibraryScreen />)
+    await screen.findByText('Older toy')
+    fireEvent.press(screen.getByRole('button', { name: 'Available' }))
+    expect(screen.queryByText('Gone toy')).toBeNull()
+    expect(screen.getByText('Matching toys')).toBeTruthy()
+    fireEvent.press(screen.getByRole('button', { name: 'Newest' }))
+    expect(screen.getAllByText(/^(Older|Newer) toy$/).map((t) => t.props.children)).toEqual(['Newer toy', 'Older toy'])
   })
 
   it('shows an error message when apiClient.get rejects, and retries', async () => {

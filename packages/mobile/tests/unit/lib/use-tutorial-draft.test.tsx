@@ -5,11 +5,13 @@ import { TutorialDraftProvider, useDraft, type TutorialDraft } from '../../../li
 const mockGet = jest.fn()
 const mockPost = jest.fn()
 const mockPatch = jest.fn()
+const mockPut = jest.fn()
 jest.mock('../../../lib/api-client', () => ({
   apiClient: {
     get: (...a: unknown[]) => mockGet(...a),
     post: (...a: unknown[]) => mockPost(...a),
     patch: (...a: unknown[]) => mockPatch(...a),
+    put: (...a: unknown[]) => mockPut(...a),
     delete: jest.fn(),
   },
 }))
@@ -181,6 +183,27 @@ it('posts tools without a quantity', async () => {
   expect(mockPost).toHaveBeenCalledWith('/api/tutorials/t1/tools', {
     tools: [{ name: 'Screwdriver', is_optional: true, buy_links: [] }],
   })
+})
+
+// 080: the whole list, in order, leaving blank-bodied rows out like blank names.
+it('puts the steps, skipping a step with no instructions', async () => {
+  mount()
+  await waitFor(() => expect(draft.tutorial).toBeTruthy())
+  const saved = [{ id: 's1', tutorial_id: 't1', position: 1, title: 'Open', body: 'Unscrew it', photo_url: null }]
+  mockPut.mockResolvedValue(saved)
+
+  await act(async () => {
+    draft.replaceSteps([
+      { title: ' Open ', body: 'Unscrew it', photo_url: null },
+      { title: null, body: '  ', photo_url: null },
+    ])
+    jest.advanceTimersByTime(250)
+  })
+
+  expect(mockPut).toHaveBeenCalledWith('/api/tutorials/t1/steps', {
+    steps: [{ title: 'Open', body: 'Unscrew it', photo_url: null }],
+  })
+  expect(draft.tutorial?.steps).toEqual(saved)
 })
 
 it('flush sends a pending save immediately', async () => {

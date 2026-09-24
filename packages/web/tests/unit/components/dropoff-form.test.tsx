@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { kgToGrams } from '@/components/dropoff-form'
+import { kgToGrams } from '@splat-connect/types'
 import { estimatedCreditGrams, MIN_DROPOFF_GRAMS, RECYCLING_DECLARATION } from '@splat-connect/types'
 
 /**

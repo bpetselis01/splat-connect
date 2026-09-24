@@ -43,9 +43,9 @@ export function uniqueTitle(prefix: string) {
  * about the list behind it should be asserted with the sheet away.
  */
 export async function pickFilter(page: Page, chip: string) {
-  await page.getByRole('button', { name: /^Filters/ }).click()
+  // The chips sit on the screen in a scrolling row (no sheet since the
+  // 2026-09-23 board pass); Playwright scrolls a clipped one into view.
   await page.getByRole('button', { name: chip, exact: true }).click()
-  await page.getByRole('button', { name: 'Done' }).click()
 }
 
 export async function createContributor() {
@@ -75,7 +75,7 @@ export async function signInAsNewContributor(page: Page) {
 }
 
 /** Record contributor-terms acceptance for a service-role-provisioned user. */
-export async function acceptTerms(userId: string) {
+async function acceptTerms(userId: string) {
   const { error } = await adminClient()
     .from('user_agreements')
     .insert({ user_id: userId, agreement_type: 'contributor_terms', version: 'v0-todo' })
@@ -192,7 +192,7 @@ export async function createTutorial(
 }
 
 /** Best-effort teardown. No assertion may depend on this having run. */
-export async function deleteUser(id: string) {
+async function deleteUser(id: string) {
   await adminClient().auth.admin.deleteUser(id)
 }
 
@@ -233,20 +233,13 @@ export async function signUpNewAccount(page: Page, email: string) {
 }
 
 /**
- * Open Account on its Child Profile segment. Account is a (my) modal route,
- * reachable from any tab, so going straight to the URL is the same thing the
- * MY SPLAT popover does — with none of the popover's animation to wait on.
- */
-/**
- * From /account, land inside ONE child's editor home. The segment lists every
- * child now; a fresh account has none, so this creates the first through the
- * same + Add child a parent would use and waits for its editor.
+ * From /account, land inside ONE child's profile page. Account lists every
+ * child; a fresh account has none, so this creates the first through the
+ * same + Add a child a parent would use and waits for its editor.
  */
 export async function openChildProfile(page: Page) {
   await page.goto('/account')
-  // Account is the default segment on first visit.
-  await page.getByText('Child Profile').click()
-  await page.getByRole('button', { name: '+ Add child' }).click()
+  await page.getByRole('button', { name: '+ Add a child' }).click()
   await expect(page.getByText('Delete profile')).toBeVisible()
 }
 
@@ -258,20 +251,8 @@ export async function signIn(page: Page, email: string, password: string) {
   await page.getByTestId('auth-submit').click()
 }
 
-/** From a fresh sign-in, reach one of the three step screens of a new child. */
-export async function openSubScreen(page: Page, label: 'Ability Profile' | 'Everyday Needs' | 'Customization Metrics') {
-  await openChildProfile(page)
-  // The editor home's rows carry the short step names.
-  const row: Record<typeof label, string> = {
-    'Ability Profile': 'Ability',
-    'Everyday Needs': 'Everyday needs',
-    'Customization Metrics': 'Customisation',
-  }
-  await page.getByRole('button', { name: row[label], exact: true }).click()
-}
-
 /**
- * Tap a Dropdown/ChipGroup option and wait for its optimistic selection to
+ * Tap a ChoiceChips/NeedsChips option and wait for its optimistic selection to
  * commit before returning. Back-to-back programmatic taps can otherwise outrun
  * React's re-render — feeding a stale value to the next tap, or (for a tap that
  * reveals a conditional field) racing that field's mount/unmount.

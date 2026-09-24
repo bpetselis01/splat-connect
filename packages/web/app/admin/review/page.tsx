@@ -9,6 +9,9 @@
  * bottleneck went away, which was the point of the whole feature. It defaults to
  * off: seeing everything is the safe default, and hiding is a deliberate act.
  *
+ * Selecting a row opens the side pane (?selected=<id>) on the same page; the
+ * row is still a link to the full review page, so nothing depends on it.
+ *
  * Related files:
  * - packages/api/src/routes/admin.ts: GET /api/admin/tutorials, which embeds tutorial_orgs
  * - app/organizations/[id]: where a leader handles the ones marked accepted here
@@ -24,7 +27,15 @@ import Link from 'next/link'
 import { apiClient } from '@/lib/api-client'
 import { tintFor } from '@/components/card-photo'
 import { ReviewTabs } from '@/components/admin-review-tabs'
-import type { Tutorial, TutorialOrg, AdminAccountsResponse, ToyIdea } from '@splat-connect/types'
+import { AdminReviewPane } from '@/components/admin-review-pane'
+import { ReviewRowLink } from '@/components/admin-review-row-link'
+import type {
+  Tutorial,
+  TutorialOrg,
+  TutorialWithDetails,
+  AdminAccountsResponse,
+  ToyIdea,
+} from '@splat-connect/types'
 
 type Queued = Tutorial & {
   tutorial_orgs?: TutorialOrg[]
@@ -43,9 +54,9 @@ function waiting(iso: string, now: number = Date.now()): { text: string; days: n
 export default async function ReviewListPage({
   searchParams,
 }: {
-  searchParams: Promise<{ mine?: string }>
+  searchParams: Promise<{ mine?: string; selected?: string }>
 }) {
-  const { mine } = await searchParams
+  const { mine, selected } = await searchParams
   const [all, accounts, ideas] = await Promise.all([
     apiClient.get<Queued[]>('/api/admin/tutorials?status=pending'),
     // Names for the CONTRIBUTOR column. Resolved here rather than embedded:
@@ -64,6 +75,17 @@ export default async function ReviewListPage({
   const unhandled = all.filter((t) => acceptedFor(t).length === 0)
   const tutorials = hidingHandled ? unhandled : all
   const handledCount = all.length - unhandled.length
+
+  // The pane, only for a row that is on screen: once a guide is approved or
+  // sent back it leaves the pending list and the pane closes with it.
+  const base = hidingHandled ? '/admin/review?mine=1' : '/admin/review'
+  const paneHref = (id: string) => `${base}${hidingHandled ? '&' : '?'}selected=${id}`
+  const picked = tutorials.find((t) => t.id === selected) ?? null
+  const detail = picked
+    ? await apiClient.get<TutorialWithDetails>(`/api/tutorials/${picked.id}`).catch(() => null)
+    : null
+  const namesOf = (t: Queued) =>
+    (t.tutorial_contributors ?? []).map((c) => nameOf.get(c.profile_id)).filter(Boolean)
 
   const header = (
     <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
@@ -110,6 +132,7 @@ export default async function ReviewListPage({
   return (
     <div>
       {header}
+      <div className={detail ? 'grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]' : ''}>
       {/*
         GUIDE | CONTRIBUTOR | BACKING | WAITING | SAFETY, as the board draws
         it. SAFETY reads the contributor's declaration — the one safety fact a
@@ -130,15 +153,19 @@ export default async function ReviewListPage({
             <tbody>
               {tutorials.map((t) => {
                 const accepted = acceptedFor(t)
-                const who = (t.tutorial_contributors ?? [])
-                  .map((c) => nameOf.get(c.profile_id))
-                  .filter(Boolean)
+                const who = namesOf(t)
                 const wait = waiting(t.created_at)
+                const on = t.id === picked?.id
                 return (
-                  <tr key={t.id} className="transition-colors hover:bg-[var(--surface2)]">
+                  <tr
+                    key={t.id}
+                    className="transition-colors hover:bg-[var(--surface2)]"
+                    style={on ? { background: 'var(--b50)' } : undefined}
+                  >
                     <td>
-                      <Link
+                      <ReviewRowLink
                         href={`/admin/review/${t.id}`}
+                        paneHref={paneHref(t.id)}
                         className="flex items-center gap-3 font-extrabold text-ink no-underline"
                       >
                         <span
@@ -149,7 +176,7 @@ export default async function ReviewListPage({
                           <BookOpenText size={22} weight="duotone" />
                         </span>
                         {t.title}
-                      </Link>
+                      </ReviewRowLink>
                     </td>
                     <td className="font-semibold">{who.length ? who.join(', ') : '—'}</td>
                     <td>
@@ -209,6 +236,15 @@ export default async function ReviewListPage({
               </Link>
             ))}
         </div>
+      </div>
+      {detail && picked && (
+        <AdminReviewPane
+          tutorial={detail}
+          contributor={namesOf(picked).join(', ') || 'Unknown contributor'}
+          submitted={waiting(picked.created_at).text}
+          closeHref={base}
+        />
+      )}
       </div>
     </div>
   )

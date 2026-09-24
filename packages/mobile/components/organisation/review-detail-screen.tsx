@@ -13,49 +13,44 @@
 import { useCallback, useRef, useState } from 'react'
 import { View, Text, Image, ScrollView, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
 import type { TutorialWithDetails, TutorialOrg } from '@splat-connect/types'
-import { leaderActions } from '@splat-connect/types'
+import { apiMessage, leaderActions } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { supabase } from '../../lib/supabase'
 import { theme } from '../../lib/theme'
 import { useCapabilities } from '../../lib/capabilities'
 import { Screen } from '../ui/Screen'
-import { Card } from '../ui/Card'
 import { Badge } from '../ui/Badge'
 import { Button } from '../ui/Button'
 import { TextField } from '../ui/TextField'
 import { Skeleton } from '../ui/Skeleton'
-import { AnimatedPressable } from '../ui/AnimatedPressable'
+import { ListRow, ListSection, Pill } from '../list/list-kit'
 import { EmptyState } from '../ui/EmptyState'
 import { ErrorRow } from '../auth-screen'
 
 type Detail = TutorialWithDetails
 
-/** Same helper, same reasoning, as exchanges/thread-screen.tsx: the API's 4xx
- *  bodies are written for humans; 5xx keeps the fallback. */
-function apiMessage(err: unknown, fallback: string): string {
-  const match = /failed with status 4\d\d: (.+)$/.exec(err instanceof Error ? err.message : '')
-  return match ? match[1] : fallback
-}
+const OK = <Pill label="OK" bg={theme.colors.mintSoft} icon="checkmark" />
+const FLAG = <Pill label="Flag" bg={theme.colors.honeySoft} icon="flag-outline" />
 
-function CheckRow({ label, onPress }: { label: string; onPress?: () => void }) {
-  const body = (
-    <View style={styles.checkRow}>
-      <Ionicons
-        name={onPress ? 'open-outline' : 'checkmark-circle-outline'}
-        size={18}
-        color={theme.colors.primaryDeep}
-      />
-      <Text style={styles.checkLabel}>{label}</Text>
-      {onPress ? <Ionicons name="chevron-forward" size={16} color={theme.colors.primary} /> : null}
-    </View>
-  )
-  if (!onPress) return body
+/** One section of the brief, the board's org_review row: what it holds, OK or Flag. */
+function CheckRow({
+  title,
+  meta,
+  ok,
+  onPress,
+  label,
+}: {
+  title: string
+  meta: string
+  ok: boolean
+  onPress?: () => void
+  label?: string
+}) {
   return (
-    <AnimatedPressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} pressScale={0.99}>
-      {body}
-    </AnimatedPressable>
+    <View style={styles.checkRow}>
+      <ListRow title={title} meta={meta} pill={ok ? OK : FLAG} onPress={onPress} accessibilityLabel={label} />
+    </View>
   )
 }
 
@@ -189,24 +184,34 @@ export function ReviewDetailScreen({ tutorialId }: { tutorialId: string }) {
         <Text style={styles.description}>{tutorial.description}</Text>
 
         <View style={styles.checks}>
-          <Text style={styles.groupTitle}>Check</Text>
-          <Card style={styles.checkCard}>
-            {tutorial.tutorial_pdf_url ? (
-              <CheckRow label="Open the tutorial PDF" onPress={() => void openPdf()} />
-            ) : (
-              <CheckRow label="No PDF attached yet" />
-            )}
-            <CheckRow label={`${partCount} part${partCount === 1 ? '' : 's'} · ${toolCount} tool${toolCount === 1 ? '' : 's'}`} />
-            {tutorial.kind === 'assistive_tech' ? (
-              <CheckRow
-                label={
-                  (tutorial.stl_files?.length ?? 0) > 0
-                    ? `${tutorial.stl_files!.length} STL file${tutorial.stl_files!.length === 1 ? '' : 's'}`
-                    : 'No STL yet — assistive tech needs one'
-                }
-              />
-            ) : null}
-          </Card>
+          <ListSection>Check</ListSection>
+          {tutorial.tutorial_pdf_url ? (
+            <CheckRow
+              title="Tutorial PDF"
+              meta="Open the tutorial PDF"
+              label="Open the tutorial PDF"
+              ok
+              onPress={() => void openPdf()}
+            />
+          ) : (
+            <CheckRow title="Tutorial PDF" meta="No PDF attached yet" ok={false} />
+          )}
+          <CheckRow
+            title="Parts and tools"
+            meta={`${partCount} part${partCount === 1 ? '' : 's'} · ${toolCount} tool${toolCount === 1 ? '' : 's'}`}
+            ok={partCount > 0 && toolCount > 0}
+          />
+          {tutorial.kind === 'assistive_tech' ? (
+            <CheckRow
+              title="3D print files"
+              meta={
+                (tutorial.stl_files?.length ?? 0) > 0
+                  ? `${tutorial.stl_files!.length} STL file${tutorial.stl_files!.length === 1 ? '' : 's'}`
+                  : 'No STL yet — assistive tech needs one'
+              }
+              ok={(tutorial.stl_files?.length ?? 0) > 0}
+            />
+          ) : null}
         </View>
 
         <ErrorRow message={error} />
@@ -281,11 +286,11 @@ const styles = StyleSheet.create({
   photo: {
     width: '100%',
     height: 180,
-    borderRadius: theme.radii.field,
+    borderRadius: theme.radii.panel,
     backgroundColor: theme.colors.surfaceSunken,
     marginBottom: theme.spacing(3),
   },
-  title: { fontFamily: theme.fonts.bold, fontSize: theme.type.title, color: theme.colors.text, lineHeight: 30 },
+  title: { fontFamily: theme.fonts.display, fontSize: 22, color: theme.colors.ink, lineHeight: 28 },
   badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2), marginTop: theme.spacing(2) },
   byline: {
     fontFamily: theme.fonts.semiBold,
@@ -293,29 +298,16 @@ const styles = StyleSheet.create({
     color: theme.colors.primaryDeep,
     marginTop: theme.spacing(2),
   },
+  // The board's lead line: the brief, muted, above the section rows.
   description: {
     fontFamily: theme.fonts.regular,
     fontSize: theme.type.label,
-    color: theme.colors.text,
+    color: theme.colors.muted,
     lineHeight: 21,
     marginTop: theme.spacing(3),
   },
   checks: { marginTop: theme.spacing(5) },
-  groupTitle: {
-    fontFamily: theme.fonts.bold,
-    fontSize: theme.type.heading,
-    color: theme.colors.text,
-    marginBottom: theme.spacing(2),
-  },
-  checkCard: { padding: theme.spacing(2), gap: theme.spacing(1) },
-  checkRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing(2),
-    paddingVertical: theme.spacing(2),
-    paddingHorizontal: theme.spacing(2),
-  },
-  checkLabel: { flex: 1, fontFamily: theme.fonts.semiBold, fontSize: theme.type.label, color: theme.colors.text },
+  checkRow: { marginBottom: theme.spacing(2) },
   actions: { marginTop: theme.spacing(5) },
   actionHint: {
     fontFamily: theme.fonts.regular,
@@ -326,5 +318,5 @@ const styles = StyleSheet.create({
   },
   noteInput: { minHeight: 72, textAlignVertical: 'top' },
   buttonRow: { flexDirection: 'row', gap: theme.spacing(2), marginTop: theme.spacing(2) },
-  rowButton: { flex: 1 },
+  rowButton: { flex: 1, borderRadius: theme.radii.pill },
 })

@@ -28,7 +28,7 @@ const signedIn = {
   profile: { id: 'u1', name: 'Byron Petselis', email: 'b@example.com', role: 'contributor', public_showcase: true, created_at: '' },
   isAdmin: false,
   ledOrgs: [],
-  unread: { tutorials: 1, exchanges: 1, challenges: 1, total: 3 },
+  unread: { tutorials: 1, exchanges: 1, challenges: 1, organisations: 0, total: 3 },
   exchangeActions: 0,
 } as unknown as Capabilities
 
@@ -38,8 +38,6 @@ describe('Nav', () => {
     pathname.current = '/'
   })
 
-  const openMore = () => fireEvent.click(screen.getByRole('button', { name: /More/ }))
-
   // Tests: the bar carries the board's five tabs and nothing else at rest
   // How:   renders signed out; checks each tab link, and that Learn is not on the bar
   // Chain: NAV5 on the artboard — five primary items, everything else behind More
@@ -48,7 +46,7 @@ describe('Nav', () => {
     for (const label of ['Guides', 'Toy Library', '3D Printing', 'Get Involved', 'About']) {
       expect(screen.getByRole('link', { name: label })).toBeInTheDocument()
     }
-    expect(screen.queryByRole('link', { name: /Learn/ })).toBeNull()
+    expect(screen.getByRole('link', { name: /^Learn/ }).closest('[popover]')).not.toBeNull()
   })
 
   // Tests: the tutorial catalogue is labelled Guides and links to /library
@@ -58,15 +56,14 @@ describe('Nav', () => {
     expect(screen.queryByRole('link', { name: 'Library' })).toBeNull()
   })
 
-  // Tests: More opens the board's eight items, each with its blurb
-  // How:   clicks More; checks aria-expanded flips and every item is a link to its route
+  // Tests: More holds the board's eight items, each with its blurb
+  // How:   checks More targets a popover and every item in it is a link to its route
+  //        (opening, Escape and a press outside are the browser's; jsdom has no popover)
   // Chain: live's More was a bare two-item list; the board draws a two-column grid of eight
-  it('opens all eight More items as links', () => {
+  it('holds all eight More items as links in its popover', () => {
     render(<Nav caps={null} />)
     const more = screen.getByRole('button', { name: /More/ })
-    expect(more).toHaveAttribute('aria-expanded', 'false')
-    openMore()
-    expect(more).toHaveAttribute('aria-expanded', 'true')
+    expect(document.getElementById(more.getAttribute('popovertarget')!)).toHaveAttribute('popover', 'auto')
     const expected: [string, string][] = [
       ['Learn', '/learn'],
       ['Impact', '/impact'],
@@ -83,25 +80,6 @@ describe('Nav', () => {
     expect(screen.getByText('Problems nobody has solved yet, open to anyone.')).toBeInTheDocument()
   })
 
-  // Tests: Escape closes More and hands focus back to its button
-  // Chain: a disclosure that traps a keyboard user inside it, or drops focus on the page body
-  //        when it closes, is the failure mode this header must not have
-  it('closes More on Escape and returns focus to the button', () => {
-    render(<Nav caps={null} />)
-    openMore()
-    fireEvent.keyDown(document, { key: 'Escape' })
-    expect(screen.queryByRole('link', { name: /^Learn/ })).toBeNull()
-    expect(screen.getByRole('button', { name: /More/ })).toHaveFocus()
-  })
-
-  // Tests: a press outside the menu closes it
-  it('closes More on a press outside it', () => {
-    render(<Nav caps={null} />)
-    openMore()
-    fireEvent.pointerDown(document.body)
-    expect(screen.getByRole('button', { name: /More/ })).toHaveAttribute('aria-expanded', 'false')
-  })
-
   // Tests: a tab section is marked current from a nested path via sectionFor
   it('marks the tab current from a nested path', () => {
     pathname.current = '/printing/requests'
@@ -115,7 +93,6 @@ describe('Nav', () => {
     pathname.current = '/learn/switch-types'
     render(<Nav caps={null} />)
     expect(screen.getByRole('button', { name: /More/ })).toHaveAttribute('data-current', 'true')
-    openMore()
     expect(screen.getByRole('link', { name: /^Learn/ })).toHaveAttribute('aria-current', 'page')
   })
 
@@ -185,7 +162,7 @@ describe('Nav', () => {
   })
 
   it('shows no badge at zero unread', () => {
-    render(<Nav caps={{ ...signedIn, unread: { tutorials: 0, exchanges: 0, challenges: 0, total: 0 } }} />)
+    render(<Nav caps={{ ...signedIn, unread: { tutorials: 0, exchanges: 0, challenges: 0, organisations: 0, total: 0 } }} />)
     expect(screen.getByRole('link', { name: /My SPLAT/ })).not.toHaveAccessibleName(/unread/)
   })
 

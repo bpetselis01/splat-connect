@@ -1,11 +1,13 @@
 /**
- * An organisation's public profile, in the board's shape: a header card, a
- * jump row, a main column of what they do and a rail of how to reach them.
+ * An organisation's public profile, in the board's shape: a header card with
+ * the cover, logo and the three buttons, a jump row, a main column of what they
+ * do and a rail of how to reach them.
  *
- * Only what the public endpoint returns is drawn. The board also has a cover
- * photo and logo, a "Verified by SPLAT" seal, follow/message/thanks actions,
- * notes from families, named leaders, a street address and opening hours —
- * none of which exist as public data yet, so none are here.
+ * Only what the public endpoint returns is drawn, and every number on it is
+ * counted from what happened — the four stat tiles, "Thanked N times", each
+ * leader's guides — never typed by the organisation. The Visit card names the
+ * suburb only: the street address is private (033) and reaches a family only
+ * once a leader accepts them.
  */
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
@@ -15,29 +17,58 @@ import {
   Buildings,
   CalendarDots,
   CaretRight,
+  ChatCircleText,
   Check,
+  Clock,
   EnvelopeSimple,
   Flag,
+  Gift,
   Globe,
+  HandHeart,
   MapPin,
+  NavigationArrow,
   Newspaper,
   Phone,
   Printer,
+  Quotes,
   Recycle,
+  SealCheck,
+  Wrench,
 } from '@phosphor-icons/react/dist/ssr'
-import { initials } from '@/components/story-bits'
+import type { Icon } from '@phosphor-icons/react'
 import { ShelfToyCard } from '@/components/shelf-toy-card'
 import { tintFor } from '@/components/card-photo'
+import { OrgActions } from '@/components/org-actions'
 import { safePhotoSrc } from '@/lib/photo-src'
-import { shortDate } from '@/lib/dates'
+import { firstName, initials, shortDate } from '@splat-connect/types'
 import { getCapabilities } from '@/lib/capabilities'
-import { formatBuildTime, type OrgPublicProfile, type Tutorial } from '@splat-connect/types'
+import { apiClient } from '@/lib/api-client'
+import { doorLink } from '@/lib/org-profile'
+import {
+  formatBuildTime,
+  formatCents,
+  PAYMENT_METHODS,
+  type OrgDoorTarget,
+  type OrgPublicProfile,
+  type OrgRelationship,
+  type Tutorial,
+} from '@splat-connect/types'
 
 const CHIP_TINTS = ['var(--tok)', 'var(--b100)', 'var(--tamber)', 'var(--tcoral)', 'var(--tviolet)', 'var(--tmint)']
+const QUOTE_TINTS = ['var(--tmint)', 'var(--tamber)', 'var(--tviolet)', 'var(--b100)']
 const DIFFICULTY_LABEL = { easy: 'Easy', medium: 'Medium', hard: 'Hard' } as const
+const DOOR_ICON: Record<OrgDoorTarget, [Icon, string]> = {
+  toy_library: [Gift, 'var(--tmint)'],
+  events: [CalendarDots, 'var(--b100)'],
+  dropoff: [Recycle, 'var(--tok)'],
+  print: [Printer, 'var(--tamber)'],
+  build: [Wrench, 'var(--tcoral)'],
+  message: [ChatCircleText, 'var(--tviolet)'],
+}
 
 const H2 = 'font-display text-2xl font-extrabold text-ink'
 const RAIL_CARD = 'flex flex-col gap-3 rounded-card border border-line p-[22px]'
+const TILE = 'rounded-[var(--radius-inset)] border border-line bg-surface'
 
 export default async function OrgPublicProfilePage({
   params,
@@ -51,7 +82,11 @@ export default async function OrgPublicProfilePage({
   if (!res.ok) notFound()
 
   const org = (await res.json()) as OrgPublicProfile
-  const signedIn = !!(await getCapabilities())
+  const caps = await getCapabilities()
+  const signedIn = !!caps
+  const me = caps
+    ? await apiClient.get<OrgRelationship>(`/api/organizations/${id}/me`).catch(() => null)
+    : null
 
   // Backed and reviewed are one list on the board: guides with this
   // organisation's name on them.
@@ -61,9 +96,17 @@ export default async function OrgPublicProfilePage({
   ]
   const place = [org.suburb, org.state].filter(Boolean).join(', ')
   const capabilities = org.capabilities ?? []
+  const doors = org.doors ?? []
+  const rateLines = org.rate_lines ?? []
+  const printers = org.printers ?? []
+  const quotes = org.fromFamilies ?? []
+  const leaders = org.leaders ?? []
   const recycles = (org.recycling_materials ?? []).length > 0
-  const prints = !!org.rate_note || capabilities.includes('Has a printer')
-  const reach = org.website_url || org.contact_email || org.contact_phone || place
+  const prints = printers.length > 0 || rateLines.length > 0 || !!org.rate_note || capabilities.includes('Has a printer')
+  const reach = org.website_url || org.contact_email || org.contact_phone || place || org.visit_hours
+  const since = org.created_at ? new Date(org.created_at).getFullYear() : null
+  const materials = [...new Set(printers.flatMap((p) => p.materials))]
+  const payments = PAYMENT_METHODS.filter((m) => org.payment_methods?.includes(m.value)).map((m) => m.label)
 
   // Stories and events, newest first, as the board's "Recent activity" feed.
   const activity = [
@@ -87,17 +130,23 @@ export default async function OrgPublicProfilePage({
 
   const jumps = [
     { to: 'org-about', label: 'About', show: true },
+    { to: 'org-work', label: 'Work with them', show: doors.length > 0 },
     { to: 'org-guides', label: 'Guides', show: guides.length > 0 },
     { to: 'org-toys', label: 'Toys', show: org.toysShared.length > 0 },
+    { to: 'org-leaders', label: 'Leaders', show: leaders.length > 0 },
     { to: 'org-activity', label: 'Activity', show: activity.length > 0 },
   ].filter((j) => j.show)
 
+  const counts = org.counts
   const stats = [
-    { n: org.tutorialsBacked.length, label: 'guides backed' },
-    { n: org.tutorialsApproved.length, label: 'guides reviewed' },
-    { n: org.toysShared.length, label: 'toys on the shelf' },
-    { n: org.toysDelivered.length, label: 'toys delivered' },
+    { n: counts?.guidesBacked ?? org.tutorialsBacked.length, label: 'guides backed' },
+    { n: counts?.toysDelivered ?? org.toysDelivered.length, label: 'toys delivered' },
+    { n: counts?.partsPrinted ?? 0, label: 'parts printed' },
+    { n: counts?.familiesHelped ?? 0, label: 'families helped' },
   ]
+
+  const cover = safePhotoSrc(org.cover_url ?? null)
+  const logo = safePhotoSrc(org.logo_url ?? null)
 
   return (
     <div>
@@ -116,38 +165,67 @@ export default async function OrgPublicProfilePage({
         className="overflow-hidden rounded-card border border-line bg-surface"
         style={{ boxShadow: 'var(--shadow-e3)' }}
       >
-        <div aria-hidden="true" className="h-[220px] bg-[var(--tmint)]" />
+        <div className="relative h-[220px] bg-[var(--tmint)]">
+          {cover && <Image src={cover} alt="" fill priority className="object-cover" />}
+        </div>
         <div className="flex flex-wrap items-start gap-x-6 gap-y-[22px] px-8 pb-7">
           <span
-            aria-hidden="true"
-            className="-mt-12 grid h-28 w-28 shrink-0 place-items-center rounded-card border-4 border-surface bg-surface font-display text-4xl font-extrabold text-[var(--tink)]"
+            className="relative -mt-12 grid h-28 w-28 shrink-0 place-items-center overflow-hidden rounded-card border-4 border-surface bg-surface font-display text-4xl font-extrabold text-[var(--tink)]"
             style={{ boxShadow: 'var(--shadow-e3)' }}
           >
-            {initials(org.name)}
+            {logo ? (
+              <Image src={logo} alt={`${org.name} logo`} fill className="object-cover" />
+            ) : (
+              <span aria-hidden="true">{initials(org.name)}</span>
+            )}
           </span>
           <div className="min-w-0 flex-[1_1_340px] pt-[18px]">
-            <div className="flex flex-wrap items-center gap-2.5">
-              <h1 className="font-display text-[clamp(28px,3vw,38px)] font-extrabold leading-[1.1] tracking-[-0.02em] text-ink">
-                {org.name}
-              </h1>
-              {org.status === 'suspended' && (
-                <span className="badge bg-sunken text-muted">SUSPENDED</span>
-              )}
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <h1 className="font-display text-[clamp(28px,3vw,38px)] font-extrabold leading-[1.1] tracking-[-0.02em] text-ink">
+                  {org.name}
+                </h1>
+                {org.status === 'suspended' && (
+                  <span className="badge bg-sunken text-muted">SUSPENDED</span>
+                )}
+              </div>
+              <OrgActions
+                orgId={org.id}
+                orgName={org.name}
+                me={me}
+                firstName={firstName(caps?.profile.name)}
+              />
             </div>
-            {(org.description || place) && (
-              <p className="mt-2 flex flex-wrap items-center gap-3.5 text-sm font-semibold text-muted">
-                {org.description && (
-                  <span>
-                    <Buildings size={14} weight="bold" className="mr-1 inline text-[var(--b600)]" aria-hidden="true" />
-                    {org.description}
-                  </span>
-                )}
-                {place && (
-                  <span>
-                    <MapPin size={14} weight="bold" className="mr-1 inline text-[var(--b600)]" aria-hidden="true" />
-                    {place}
-                  </span>
-                )}
+            {org.verified_at && (
+              <p className="mt-2 inline-flex items-center gap-1.5 rounded-pill bg-[var(--tok)] px-3 py-1 text-[13px] font-extrabold text-[var(--tink)]">
+                <SealCheck size={14} weight="fill" aria-hidden="true" />
+                Verified by SPLAT
+              </p>
+            )}
+            <p className="mt-2 flex flex-wrap items-center gap-x-3.5 gap-y-1 text-sm font-semibold text-muted">
+              {(org.kind || org.description) && (
+                <span>
+                  <Buildings size={14} weight="bold" className="mr-1 inline text-[var(--b600)]" aria-hidden="true" />
+                  {org.kind ?? org.description}
+                </span>
+              )}
+              {place && (
+                <span>
+                  <MapPin size={14} weight="bold" className="mr-1 inline text-[var(--b600)]" aria-hidden="true" />
+                  {place}
+                </span>
+              )}
+              {since && (
+                <span>
+                  <CalendarDots size={14} weight="bold" className="mr-1 inline text-[var(--b600)]" aria-hidden="true" />
+                  On SPLAT since {since}
+                </span>
+              )}
+            </p>
+            {(org.thanks_count ?? 0) > 0 && (
+              <p className="mt-1.5 flex items-center gap-1.5 text-sm font-bold text-muted">
+                <HandHeart size={15} weight="fill" className="text-apricot" aria-hidden="true" />
+                Thanked {org.thanks_count} {org.thanks_count === 1 ? 'time' : 'times'}
               </p>
             )}
             {/* 059's capability chips. Every one has an input on the editor at
@@ -200,11 +278,7 @@ export default async function OrgPublicProfilePage({
             )}
             <div className="mt-[22px] grid grid-cols-2 gap-3 sm:grid-cols-4">
               {stats.map((k) => (
-                <div
-                  key={k.label}
-                  className="rounded-[var(--radius-inset)] border border-line bg-surface px-[18px] py-4"
-                  style={{ boxShadow: 'var(--shadow-e1)' }}
-                >
+                <div key={k.label} className={`${TILE} px-[18px] py-4`} style={{ boxShadow: 'var(--shadow-e1)' }}>
                   <p className="m-0 font-display text-[30px] font-extrabold leading-none tracking-[-0.02em] tabular-nums text-ink">
                     {k.n}
                   </p>
@@ -213,6 +287,37 @@ export default async function OrgPublicProfilePage({
               ))}
             </div>
           </section>
+
+          {doors.length > 0 && (
+            <section id="org-work">
+              <h2 className={H2}>How to work with them</h2>
+              <p className="m-0 mb-3.5 mt-1.5 text-sm text-muted">
+                {doors.length === 1 ? 'One door.' : `${doors.length} doors.`} None of them need a referral.
+              </p>
+              <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
+                {doors.map((d) => {
+                  const [DoorIcon, tint] = DOOR_ICON[d.target]
+                  const link = doorLink(d.target, org.id)
+                  return (
+                    <div key={d.id} className={`${TILE} flex flex-col gap-2 p-[18px]`} style={{ boxShadow: 'var(--shadow-e1)' }}>
+                      <span
+                        aria-hidden="true"
+                        className="grid h-10 w-10 place-items-center rounded-[var(--radius-field)] text-[var(--tink)]"
+                        style={{ background: tint }}
+                      >
+                        <DoorIcon size={20} weight="bold" />
+                      </span>
+                      <h3 className="m-0 text-base font-extrabold text-ink">{d.title}</h3>
+                      {d.body && <p className="m-0 flex-1 text-[13px] leading-[1.5] text-muted">{d.body}</p>}
+                      <a href={link.href} className="text-sm font-extrabold text-[var(--b700)] hover:underline">
+                        {link.label} <span aria-hidden="true">→</span>
+                      </a>
+                    </div>
+                  )
+                })}
+              </div>
+            </section>
+          )}
 
           {guides.length > 0 && (
             <section id="org-guides">
@@ -231,7 +336,7 @@ export default async function OrgPublicProfilePage({
                     <Link
                       key={g.id}
                       href={`/tutorials/${g.id}`}
-                      className="flex gap-3.5 rounded-[var(--radius-inset)] border border-line bg-surface p-3.5 text-ink hover:shadow-[var(--shadow-e2)]"
+                      className={`${TILE} flex gap-3.5 p-3.5 text-ink hover:shadow-[var(--shadow-e2)]`}
                       style={{ boxShadow: 'var(--shadow-e1)' }}
                     >
                       <span
@@ -274,6 +379,61 @@ export default async function OrgPublicProfilePage({
             </section>
           )}
 
+          {quotes.length > 0 && (
+            <section id="org-families">
+              <h2 className={H2}>From families</h2>
+              <p className="m-0 mb-3.5 mt-1.5 text-sm text-muted">
+                Thanks left for them, and lines from the stories they published. Signed the way
+                each family chose.
+              </p>
+              <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
+                {quotes.map((q, i) => (
+                  <figure
+                    key={`${q.source}-${q.at}-${i}`}
+                    className="m-0 flex flex-col gap-3 rounded-card p-[18px] text-[var(--tink)]"
+                    style={{ background: QUOTE_TINTS[i % QUOTE_TINTS.length] }}
+                  >
+                    <Quotes size={22} weight="fill" aria-hidden="true" />
+                    <blockquote className="m-0 flex-1 text-sm leading-[1.5]">{q.quote}</blockquote>
+                    <figcaption className="text-[13px] font-extrabold">{q.by}</figcaption>
+                  </figure>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {leaders.length > 0 && (
+            <section id="org-leaders">
+              <h2 className={H2}>Leaders</h2>
+              {/* Names only, and the guides each backed: leaders agreed to the
+                  organisation leader terms, which say their names go on the
+                  guides they back. Nothing else about them is public. */}
+              <p className="m-0 mb-3.5 mt-1.5 text-sm text-muted">
+                The people whose names go on the guides. Each has agreed to the organisation
+                leader terms.
+              </p>
+              <ul className="m-0 grid list-none gap-3.5 p-0 sm:grid-cols-2 lg:grid-cols-3">
+                {leaders.map((l, i) => (
+                  <li key={`${l.name}-${i}`} className={`${TILE} flex items-center gap-3 p-[18px]`}>
+                    <span
+                      aria-hidden="true"
+                      className="grid h-11 w-11 flex-none place-items-center rounded-full text-sm font-extrabold text-[var(--tink)]"
+                      style={{ background: CHIP_TINTS[i % CHIP_TINTS.length] }}
+                    >
+                      {initials(l.name)}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-[15px] font-extrabold text-ink">{l.name}</span>
+                      <span className="block text-[13px] text-muted">
+                        {l.guides_backed} {l.guides_backed === 1 ? 'guide' : 'guides'} backed
+                      </span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
           {activity.length > 0 && (
             <section id="org-activity">
               <h2 className={`${H2} mb-3.5`}>Recent activity</h2>
@@ -303,17 +463,7 @@ export default async function OrgPublicProfilePage({
           )}
         </div>
 
-        <aside id="org-doors" className="flex flex-col gap-4 lg:sticky lg:top-[100px]">
-          {/* The board's "How to work with them": the doors are one titled
-              group, not three loose rail cards. Its dek counts three doors;
-              an organisation may open one, so only the clause that is true of
-              every door survives. */}
-          {(reach || prints || recycles) && (
-            <div>
-              <h2 className={H2}>How to work with them</h2>
-              <p className="m-0 mt-1.5 text-sm text-muted">None of them need a referral.</p>
-            </div>
-          )}
+        <aside className="flex flex-col gap-4 lg:sticky lg:top-[100px]">
           {reach && (
             <div className={`${RAIL_CARD} bg-surface`} style={{ boxShadow: 'var(--shadow-e2)' }}>
               <h3 className="m-0 font-display text-lg font-extrabold text-ink">Visit</h3>
@@ -324,6 +474,22 @@ export default async function OrgPublicProfilePage({
                       <MapPin size={18} weight="bold" aria-hidden="true" />
                     </dt>
                     <dd className="m-0 font-bold leading-[1.45] text-ink">{place}</dd>
+                  </>
+                )}
+                {org.visit_hours && (
+                  <>
+                    <dt aria-label="When" className="text-[var(--b600)]">
+                      <Clock size={18} weight="bold" aria-hidden="true" />
+                    </dt>
+                    <dd className="m-0 font-bold leading-[1.45] text-ink">{org.visit_hours}</dd>
+                  </>
+                )}
+                {org.service_area && (
+                  <>
+                    <dt aria-label="Area they cover" className="text-[var(--b600)]">
+                      <NavigationArrow size={18} weight="bold" aria-hidden="true" />
+                    </dt>
+                    <dd className="m-0 font-bold leading-[1.45] text-ink">{org.service_area}</dd>
                   </>
                 )}
                 {org.website_url && (
@@ -359,6 +525,9 @@ export default async function OrgPublicProfilePage({
                   </>
                 )}
               </dl>
+              <p className="m-0 text-[13px] text-muted">
+                The street address comes once they accept you. Messages go to all their leaders.
+              </p>
             </div>
           )}
 
@@ -370,11 +539,40 @@ export default async function OrgPublicProfilePage({
                   They print — you cover the filament
                 </h3>
               </div>
-              {org.rate_note && (
+              {(printers.length > 0 || rateLines.length > 0) && (
                 <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-3.5 gap-y-1.5 text-[13px]">
-                  <dt className="font-semibold opacity-80">Filament</dt>
-                  <dd className="m-0 font-extrabold">{org.rate_note}</dd>
+                  {printers.length > 0 && (
+                    <>
+                      <dt className="font-semibold opacity-80">Machines</dt>
+                      <dd className="m-0 font-extrabold">{printers.map((p) => p.name).join(' · ')}</dd>
+                    </>
+                  )}
+                  {materials.length > 0 && (
+                    <>
+                      <dt className="font-semibold opacity-80">Materials</dt>
+                      <dd className="m-0 font-extrabold">{materials.join(' · ')}</dd>
+                    </>
+                  )}
+                  {rateLines.map((l) => (
+                    <div key={l.id} className="contents">
+                      <dt className="font-semibold opacity-80">{l.description}</dt>
+                      <dd className="m-0 font-extrabold">
+                        {l.claiming ? formatCents(l.amount_cents) : `${formatCents(l.amount_cents)} — they cover it`}
+                      </dd>
+                    </div>
+                  ))}
+                  {payments.length > 0 && (
+                    <>
+                      <dt className="font-semibold opacity-80">Paid back by</dt>
+                      <dd className="m-0 font-extrabold">{payments.join(' · ')}</dd>
+                    </>
+                  )}
                 </dl>
+              )}
+              {org.rate_note && (
+                <blockquote className="m-0 rounded-[var(--radius-field)] bg-surface px-4 py-3 text-[13px] leading-[1.5] text-ink">
+                  &ldquo;{org.rate_note}&rdquo;
+                </blockquote>
               )}
               <p className="m-0 text-[13px] leading-[1.5]">
                 Pick any guide, open its Files tab and choose {org.name} as your printer.

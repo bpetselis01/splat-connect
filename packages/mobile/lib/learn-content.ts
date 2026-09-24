@@ -3,7 +3,9 @@ export type LearnArticle = {
   title: string
   intro: string
   minutes: number
-  sections: { heading: string; paragraphs: string[] }[]
+  /** `callout` is the one line people get wrong, lifted out of that section's
+   *  own paragraphs so the reader draws it as a callout — never new copy. */
+  sections: { heading: string; paragraphs: string[]; callout?: string }[]
 }
 
 // Transcribed from the web Learn articles. Web is prose/JSX (Next.js pages);
@@ -32,8 +34,9 @@ export const LEARN_ARTICLES: LearnArticle[] = [
         paragraphs: [
           'Here is the whole idea. A battery-powered toy is a circuit, and that circuit runs through the battery compartment. If you break the circuit at one battery contact and route those two ends out to a switch, the toy only runs while the switch is held.',
           'A battery interrupter is a thin disc of insulating material with a metal contact on one face and a wire from each side. It slips between a battery and the spring contact in the compartment. No soldering inside the toy, no opening the case, and completely reversible — pull it out and the toy is exactly as it was.',
-          'The two wires end in a 3.5 mm mono socket, which is the standard connector across assistive switches. Use it, and the toy will work with switches a family may already own.',
         ],
+        callout:
+          'The two wires end in a 3.5 mm mono socket, which is the standard connector across assistive switches. Use it, and the toy will work with switches a family may already own.',
       },
       {
         heading: 'When an interrupter is not enough',
@@ -78,8 +81,9 @@ export const LEARN_ARTICLES: LearnArticle[] = [
         heading: 'Button switches',
         paragraphs: [
           'A large flat disc, typically 65–125 mm across, that clicks when pressed anywhere on its surface. This is the default for good reason: a big target tolerates imprecise aim, the click gives feedback, and it can be mounted flat on a tray or angled on a stand.',
-          'Watch the activation force. A stiff button that needs a deliberate shove will exhaust a child with low tone within minutes.',
         ],
+        callout:
+          'Watch the activation force. A stiff button that needs a deliberate shove will exhaust a child with low tone within minutes.',
       },
       {
         heading: 'Lever switches',
@@ -135,12 +139,13 @@ export const LEARN_ARTICLES: LearnArticle[] = [
       {
         heading: 'Signs a toy will fight you',
         paragraphs: [
-          'Mains power, or a plug-in adapter. Do not adapt these, at all. See the safety page.',
           'A sealed or soldered-in battery, including rechargeable toys with a USB port. Nothing to interrupt.',
           'A button cell held in by a clip rather than a screw. Serious hazard, and not worth the risk. If the compartment does not screw shut, pick a different toy.',
           'Menus, modes, or a startup sequence. A toy that needs three presses to get going will frustrate a child using one switch.',
           'Latching behaviour — one press on, one press off. Adaptable, but it needs a latching interface rather than a plain switch.',
         ],
+        callout:
+          'Mains power, or a plug-in adapter. Do not adapt these, at all. See the safety page.',
       },
       {
         heading: 'Match the toy to the child, not to your skills',
@@ -180,8 +185,9 @@ export const LEARN_ARTICLES: LearnArticle[] = [
         heading: 'Soldering, when you get to it',
         paragraphs: [
           'A temperature-controlled iron around 30–60 W, 60/40 or lead-free rosin-core solder, a brass-wool tip cleaner, and a stand. A cheap fixed-temperature iron will do a first build, but it will also lift pads and melt plastic, so it is a false economy if you plan more than one.',
-          'Helping hands or a small vice are not optional in practice — two hands are already committed to the iron and the solder.',
         ],
+        callout:
+          'Helping hands or a small vice are not optional in practice — two hands are already committed to the iron and the solder.',
       },
       {
         heading: 'Nice to have',
@@ -227,8 +233,9 @@ export const LEARN_ARTICLES: LearnArticle[] = [
         paragraphs: [
           'Button and coin cells. Swallowed, they burn through tissue within hours. The compartment must close with a screw, and that screw must be in and tight. If it does not screw shut, do not adapt the toy.',
           'Loose small parts. Screws, springs, trimmed wire ends and printed fragments. Work over a tray, count screws out and back in, and shake the finished toy hard next to your ear.',
-          'Mains power. Never. Battery toys only.',
         ],
+        callout:
+          'Mains power. Never. Battery toys only.',
       },
       {
         heading: 'Making a joint that survives a child',
@@ -293,9 +300,10 @@ export const LEARN_ARTICLES: LearnArticle[] = [
         paragraphs: [
           'Layer height 0.2 mm. The default, and fine for everything here. Go finer only for a part with fine detail.',
           'Infill 30–40% for structural parts, and three or more perimeters. Strength in printed parts comes more from perimeters than from infill.',
-          'Print orientation decides strength. Layers separate under load more readily than they break. Lay a lever flat so the stress runs along the layers, not across them.',
           'Supports only where the guide says. Every support leaves a surface you then have to clean up.',
         ],
+        callout:
+          'Print orientation decides strength. Layers separate under load more readily than they break. Lay a lever flat so the stress runs along the layers, not across them.',
       },
       {
         heading: 'Finishing',

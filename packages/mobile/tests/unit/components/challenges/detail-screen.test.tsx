@@ -45,7 +45,7 @@ const viewer = (id: string) => ({
     profile: { id, name: 'Viewer', role: 'contributor' },
     isAdmin: false,
     ledOrgs: [],
-    unread: { tutorials: 0, exchanges: 0, challenges: 0, total: 0 },
+    unread: { tutorials: 0, exchanges: 0, challenges: 0, organisations: 0, total: 0 },
     exchangeActions: 0,
   },
   loading: false,
@@ -93,6 +93,12 @@ function respond(brief: object, messages: unknown[] = []) {
 const joinedDetail = (over: object = {}) =>
   detail({ participants: [{ profile_id: 'viewer1', name: 'Viewer' }], ...over })
 
+
+/** The conversation lives under the Makers tab. */
+async function openMakers() {
+  fireEvent.press(await screen.findByRole('tab', { name: 'Makers' }))
+}
+
 beforeEach(() => {
   jest.clearAllMocks()
   mockUseCapabilities.mockReturnValue(viewer('viewer1'))
@@ -105,11 +111,14 @@ describe('ChallengeDetailScreen', () => {
     render(<ChallengeDetailScreen id="c1" />)
 
     expect(await screen.findByText('A switch a toddler can hit')).toBeTruthy()
+    expect(screen.getByText(/· Priya$/)).toBeTruthy()
+    fireEvent.press(screen.getByRole('tab', { name: 'Brief' }))
     expect(screen.getByText('Every switch we have needs more force than she can manage.')).toBeTruthy()
-    expect(screen.getByText('Posted by Priya')).toBeTruthy()
     expect(screen.getByText('She swipes rather than presses, so a button never latches.')).toBeTruthy()
+    fireEvent.press(screen.getByRole('tab', { name: 'Constraints' }))
     expect(screen.getByText('Turning on a bubble machine during therapy.')).toBeTruthy()
     expect(screen.getByText('A three-year-old with low muscle tone.')).toBeTruthy()
+    fireEvent.press(screen.getByRole('tab', { name: 'Makers' }))
     expect(screen.getByText('Clarification')).toBeTruthy()
     expect(screen.getByText('Sam')).toBeTruthy()
     expect(mockGet).toHaveBeenCalledWith('/api/public/challenges/c1')
@@ -259,6 +268,7 @@ describe('ChallengeDetailScreen', () => {
         message({ id: 'm3', kind: 'system', sender_id: 'viewer1', body: 'Viewer joined this challenge' }),
       ])
       render(<ChallengeDetailScreen id="c1" />)
+      await openMakers()
 
       expect(await screen.findByLabelText('Priya said: Has anyone tried a lever?')).toBeTruthy()
       expect(screen.getByLabelText('You said: Printing one tonight.')).toBeTruthy()
@@ -270,6 +280,7 @@ describe('ChallengeDetailScreen', () => {
       mockUseCapabilities.mockReturnValue(viewer('author1'))
       respond(detail(), [message({ sender_id: 'author1', body: 'Thanks for looking.' })])
       render(<ChallengeDetailScreen id="c1" />)
+      await openMakers()
 
       expect(await screen.findByLabelText('You said: Thanks for looking.')).toBeTruthy()
     })
@@ -278,6 +289,7 @@ describe('ChallengeDetailScreen', () => {
       respond(joinedDetail(), [])
       mockPost.mockResolvedValue(message({ id: 'm9', sender_id: 'viewer1', body: 'On it.' }))
       render(<ChallengeDetailScreen id="c1" />)
+      await openMakers()
 
       const composer = await screen.findByLabelText('Message this challenge')
       fireEvent.changeText(composer, '  On it.  ')
@@ -292,6 +304,7 @@ describe('ChallengeDetailScreen', () => {
     it('refuses to send an empty message', async () => {
       respond(joinedDetail(), [])
       render(<ChallengeDetailScreen id="c1" />)
+      await openMakers()
 
       const send = await screen.findByRole('button', { name: 'Send' })
       fireEvent.changeText(screen.getByLabelText('Message this challenge'), '   ')
@@ -304,6 +317,7 @@ describe('ChallengeDetailScreen', () => {
       respond(joinedDetail(), [])
       mockPost.mockRejectedValue(new Error('offline'))
       render(<ChallengeDetailScreen id="c1" />)
+      await openMakers()
 
       fireEvent.changeText(await screen.findByLabelText('Message this challenge'), 'Kept')
       fireEvent.press(screen.getByRole('button', { name: 'Send' }))
@@ -341,10 +355,50 @@ describe('ChallengeDetailScreen', () => {
     it('attributes a message from someone who has since left to nobody in particular', async () => {
       respond(joinedDetail(), [message({ sender_id: 'gone1', body: 'I tried a proximity switch.' })])
       render(<ChallengeDetailScreen id="c1" />)
+      await openMakers()
 
       // Their participant row is gone, so the brief carries no name for them —
       // the message stays, unattributed, rather than being dropped.
       expect(await screen.findByLabelText('Someone said: I tried a proximity switch.')).toBeTruthy()
+    })
+  })
+
+  // 078: a question is answered in its thread; the asker marks the reply.
+  describe('a question', () => {
+    const reply = message({ id: 'r1', sender_id: 'p1', body: 'A zip pocket.' })
+
+    it('lets the asker mark a reply as the answer, and reloads the brief', async () => {
+      mockUseCapabilities.mockReturnValue(viewer('author1'))
+      let brief: object = detail({ kind: 'question', participants: [{ profile_id: 'p1', name: 'Mei' }] })
+      mockGet.mockImplementation((path: string) => {
+        if (path === '/api/public/challenges/c1') return Promise.resolve(brief)
+        if (path === '/api/ideas/c1/messages') return Promise.resolve([reply, message({ id: 'm2', body: 'Thanks' })])
+        return Promise.reject(new Error(`unexpected GET ${path}`))
+      })
+      mockPost.mockImplementation(() => {
+        brief = { ...(brief as object), answer_message_id: 'r1' }
+        return Promise.resolve({})
+      })
+      render(<ChallengeDetailScreen id="c1" />)
+      await openMakers()
+
+      // One reply is someone else's; the asker's own "Thanks" is not offered.
+      const mark = await screen.findAllByRole('button', { name: 'Mark as the answer' })
+      expect(mark).toHaveLength(1)
+      fireEvent.press(mark[0])
+
+      await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/ideas/c1/answer', { message_id: 'r1' }))
+      expect(await screen.findByText('The answer · marked by the asker')).toBeTruthy()
+      expect(screen.getByText('Answered')).toBeTruthy()
+    })
+
+    it('shows the mark but no control to someone else', async () => {
+      respond(joinedDetail({ kind: 'question', answer_message_id: 'r1' }), [reply])
+      render(<ChallengeDetailScreen id="c1" />)
+      await openMakers()
+      expect(await screen.findByText('The answer · marked by the asker')).toBeTruthy()
+      expect(screen.queryByRole('button', { name: 'Mark as the answer' })).toBeNull()
+      expect(screen.queryByRole('button', { name: 'Unmark' })).toBeNull()
     })
   })
 })

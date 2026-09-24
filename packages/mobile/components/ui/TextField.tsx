@@ -33,6 +33,7 @@ export function TextField({
   icon,
   boxStyle,
   boxTestID,
+  search = false,
   style,
   ...input
 }: TextInputProps & {
@@ -44,19 +45,26 @@ export function TextField({
   boxStyle?: StyleProp<ViewStyle>
   /** testID for the bordered box, not the inner TextInput. */
   boxTestID?: string
+  /**
+   * The board's search pill: a hairline edge at rest rather than ink, and no
+   * form-field margin under it. A search box is not a form question — it sits
+   * in a toolbar, where an ink ring would be the loudest thing on the screen.
+   */
+  search?: boolean
 }) {
   const focus = useSharedValue(0)
+  const rest = search ? theme.colors.border : theme.colors.ink
 
   const ring = useAnimatedStyle(() => ({
     borderColor: interpolateColor(
       focus.value,
       [0, 1],
-      [theme.colors.ink, theme.colors.primary]
+      [rest, theme.colors.primary]
     ),
   }))
 
   return (
-    <View style={styles.field}>
+    <View style={search ? null : styles.field}>
       {label ? <Text style={styles.label}>{label}</Text> : null}
       {hint ? <Text style={styles.hint}>{hint}</Text> : null}
       <Animated.View

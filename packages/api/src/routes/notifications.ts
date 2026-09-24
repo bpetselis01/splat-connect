@@ -59,7 +59,7 @@ notifications.get('/me/unread-counts', async (c) => {
     .is('read_at', null)
   if (error) return c.json({ error: error.message }, 500)
 
-  const counts: UnreadCounts = { tutorials: 0, exchanges: 0, challenges: 0, total: 0 }
+  const counts: UnreadCounts = { tutorials: 0, exchanges: 0, challenges: 0, organisations: 0, total: 0 }
   for (const row of (data ?? []) as { type: NotificationType }[]) {
     // The DB constraint (043_idea_graduated_notification.sql) and the
     // NotificationType union are pinned to the same 18 values today, so this
@@ -81,10 +81,10 @@ notifications.get('/me/unread-counts', async (c) => {
  */
 notifications.post('/me/read', async (c) => {
   const body = await c.req.json<{ bucket?: string }>().catch(() => ({ bucket: undefined }))
-  const allowed: NotificationBucket[] = ['tutorials', 'exchanges', 'challenges']
+  const allowed: NotificationBucket[] = ['tutorials', 'exchanges', 'challenges', 'organisations']
   const bucket = allowed.find((b) => b === body.bucket)
   if (!bucket) {
-    return c.json({ error: 'bucket must be tutorials, exchanges or challenges' }, 400)
+    return c.json({ error: 'bucket must be tutorials, exchanges, challenges or organisations' }, 400)
   }
 
   const supabase = createUserClient(c.get('token'))

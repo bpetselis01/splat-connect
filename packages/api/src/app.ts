@@ -7,6 +7,7 @@ import { cors } from 'hono/cors'
 import { authMiddleware } from './middleware/auth.js'
 import publicRoutes from './routes/public.js'
 import tutorials from './routes/tutorials.js'
+import pdfImport from './routes/pdf-import.js'
 import upload from './routes/upload.js'
 import parts from './routes/parts.js'
 import tools from './routes/tools.js'
@@ -53,6 +54,7 @@ for (const prefix of AUTHED) {
   app.use(`/api/${prefix}/*`, authMiddleware)
 }
 
+app.route('/api/tutorials', pdfImport)
 app.route('/api/tutorials', tutorials)
 app.route('/api/upload', upload)
 app.route('/api/tutorials', parts)

@@ -10,23 +10,24 @@
 //
 // Title comes from the native header (app/(my)/_layout.tsx: "Review queue").
 import { useCallback, useEffect, useState } from 'react'
-import { View, Text, ScrollView, StyleSheet } from 'react-native'
+import { View, ScrollView, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
 import type { Tutorial, TutorialOrg } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { useCapabilities } from '../../lib/capabilities'
 import { Screen } from '../ui/Screen'
-import { Card } from '../ui/Card'
-import { Badge } from '../ui/Badge'
 import { Button } from '../ui/Button'
 import { EmptyState } from '../ui/EmptyState'
 import { SkeletonRow } from '../ui/Skeleton'
-import { AnimatedPressable } from '../ui/AnimatedPressable'
+import { ListIntro, ListRow, ListSection, Pill, RowThumb, StagePill } from '../list/list-kit'
+import { TUTORIAL_STAGE } from '../list/stage'
 
 type Backed = Tutorial & { tutorial_orgs?: TutorialOrg[] }
 type QueueRow = { tutorial: Backed; row: TutorialOrg; orgName: string }
+
+const DIFFICULTY: Record<string, string> = { easy: 'Easy', medium: 'Medium', hard: 'Hard' }
+const day = (iso: string) => new Date(iso).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })
 
 function Row({
   item,
@@ -38,32 +39,30 @@ function Row({
   showOrg: boolean
   onPress: () => void
 }) {
+  const asked = item.row.status === 'pending'
+  const meta = [showOrg ? item.orgName : null, DIFFICULTY[item.tutorial.difficulty], day(item.tutorial.created_at)]
+    .filter(Boolean)
+    .join(' · ')
   return (
-    <AnimatedPressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={item.tutorial.title}
-      accessibilityHint={
-        item.row.status === 'pending' ? 'Asked to back this guide. Opens it.' : 'Opens the review.'
-      }
-      pressScale={0.985}
-      style={styles.rowPress}
-    >
-      <Card style={styles.card}>
-        <View style={styles.cardBody}>
-          <Text style={styles.cardTitle} numberOfLines={2}>
-            {item.tutorial.title}
-          </Text>
-          <View style={styles.badgeRow}>
-            <Badge status={item.row.status} label={item.row.status === 'pending' ? 'Asked to back' : 'Review'} />
-            <Badge status={item.tutorial.difficulty} />
-            <Badge status={item.tutorial.kind} />
-          </View>
-          {showOrg ? <Text style={styles.orgLine}>{item.orgName}</Text> : null}
-        </View>
-        <Ionicons name="chevron-forward" size={18} color={theme.colors.primary} />
-      </Card>
-    </AnimatedPressable>
+    <View style={styles.rowPress}>
+      <ListRow
+        title={item.tutorial.title}
+        meta={meta}
+        thumb={<RowThumb photo={item.tutorial.toy_photo_url} glyph="book-outline" />}
+        pill={
+          asked ? (
+            <Pill label="Asked to back" bg={theme.colors.honeySoft} icon="hand-left-outline" />
+          ) : item.tutorial.status === 'pending' ? (
+            <Pill label="Ready to review" bg={theme.colors.accentLight} icon="eye-outline" />
+          ) : (
+            // Backed and settled: where the guide itself stands now.
+            <StagePill stage={TUTORIAL_STAGE[item.tutorial.status]} />
+          )
+        }
+        onPress={onPress}
+        accessibilityHint={asked ? 'Asked to back this guide. Opens it.' : 'Opens the review.'}
+      />
+    </View>
   )
 }
 
@@ -157,6 +156,9 @@ export function ReviewQueueScreen() {
   return (
     <Screen>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        <ListIntro
+          lead={`Guides waiting for ${ledOrgs.length === 1 ? ledOrgs[0].name : 'your organisations'}. Oldest first.`}
+        />
         {loading ? (
           <View>
             <SkeletonRow />
@@ -176,7 +178,7 @@ export function ReviewQueueScreen() {
           <View>
             {waiting.length > 0 ? (
               <View style={styles.group}>
-                <Text style={styles.groupTitle}>Waiting on you</Text>
+                <ListSection>Waiting on you</ListSection>
                 {waiting.map((item) => (
                   <Row key={item.row.id} item={item} showOrg={showOrg} onPress={() => open(item.tutorial.id)} />
                 ))}
@@ -184,7 +186,7 @@ export function ReviewQueueScreen() {
             ) : null}
             {backed.length > 0 ? (
               <View style={styles.group}>
-                <Text style={styles.groupTitle}>Backed</Text>
+                <ListSection>Backed</ListSection>
                 {backed.map((item) => (
                   <Row key={item.row.id} item={item} showOrg={showOrg} onPress={() => open(item.tutorial.id)} />
                 ))}
@@ -201,21 +203,5 @@ const styles = StyleSheet.create({
   content: { paddingBottom: theme.spacing(6) },
   retry: { marginTop: theme.spacing(5), alignSelf: 'center', paddingHorizontal: theme.spacing(8) },
   group: { marginBottom: theme.spacing(4) },
-  groupTitle: {
-    fontFamily: theme.fonts.bold,
-    fontSize: theme.type.heading,
-    color: theme.colors.text,
-    marginBottom: theme.spacing(2),
-  },
   rowPress: { marginBottom: theme.spacing(3) },
-  card: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3), padding: theme.spacing(3) },
-  cardBody: { flex: 1 },
-  cardTitle: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.text, lineHeight: 22 },
-  badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2), marginTop: theme.spacing(2) },
-  orgLine: {
-    fontFamily: theme.fonts.semiBold,
-    fontSize: theme.type.caption,
-    color: theme.colors.primaryDeep,
-    marginTop: theme.spacing(2),
-  },
 })

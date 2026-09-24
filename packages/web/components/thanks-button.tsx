@@ -12,7 +12,7 @@ import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { HandHeart } from '@phosphor-icons/react/dist/ssr'
 import { browserApiClient } from '@/lib/browser-api-client'
-import { isApiError } from '@/lib/api-core'
+import { isApiError } from '@splat-connect/types'
 import { useToast } from '@/components/toast'
 
 export function ThanksButton({

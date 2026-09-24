@@ -27,7 +27,7 @@ const signedIn = {
     profile: { id: 'viewer1', name: 'Viewer', role: 'contributor' },
     isAdmin: false,
     ledOrgs: [],
-    unread: { tutorials: 0, exchanges: 0, challenges: 0, total: 0 },
+    unread: { tutorials: 0, exchanges: 0, challenges: 0, organisations: 0, total: 0 },
     exchangeActions: 0,
   },
   loading: false,
@@ -41,6 +41,10 @@ const row = (over: object) => ({
   summary: 'Every switch we have needs more force than she can manage.',
   contact_prefs: [],
   status: 'challenge',
+  kind: 'challenge',
+  answered_at: null,
+  maker_count: 0,
+  answer_count: 0,
   created_at: '2026-08-01T00:00:00Z',
   ...over,
 })
@@ -133,5 +137,24 @@ describe('ChallengesListScreen', () => {
   it('teaches what a challenge is when none are open', async () => {
     render(<ChallengesListScreen />)
     expect(await screen.findByText('No challenges are open yet.')).toBeTruthy()
+  })
+
+  // 078: questions sit in the same list with their own pill and count, and the
+  // board's filter chips narrow it.
+  it('draws a question with its answered state and filters to questions', async () => {
+    respond([
+      row({ id: 'c1', title: 'A lever switch', maker_count: 2 }),
+      row({ id: 'q1', title: 'Best glue?', kind: 'question', answered_at: '2026-09-01', answer_count: 1 }),
+    ])
+    render(<ChallengesListScreen />)
+
+    expect(await screen.findByText('2 makers · 0 posts')).toBeTruthy()
+    expect(screen.getByText('1 answer')).toBeTruthy()
+    expect(screen.getByText('Answered')).toBeTruthy()
+    expect(screen.getByText('Live')).toBeTruthy()
+
+    fireEvent.press(screen.getByRole('button', { name: 'Questions' }))
+    await waitFor(() => expect(screen.queryByText('A lever switch')).toBeNull())
+    expect(screen.getByText('Best glue?')).toBeTruthy()
   })
 })

@@ -6,7 +6,15 @@
 // with the one the hub is reading.
 import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import type { Difficulty, TutorialKind, TutorialMaturity } from '@splat-connect/types'
-import { BUILD_TIME_OPTIONS, KIND_LABEL, MATURITY_LABEL, formatBuildTime } from '@splat-connect/types'
+import {
+  BUILD_TIME_OPTIONS,
+  KIND_LABEL,
+  MATURITY_LABEL,
+  SWITCH_FORCE_LABEL,
+  SWITCH_HOLD_LABEL,
+  SWITCH_TARGET_LABEL,
+  formatBuildTime,
+} from '@splat-connect/types'
 import { useDraft } from '../../../lib/use-tutorial-draft'
 import { theme } from '../../../lib/theme'
 import { Screen } from '../../ui/Screen'
@@ -28,6 +36,15 @@ const MATURITY_OPTIONS = (Object.keys(MATURITY_LABEL) as TutorialMaturity[]).map
   label: MATURITY_LABEL[m],
   value: m,
 }))
+
+// 080: what the switch asks of a child, in the fit line's own words. Tapping the
+// chosen chip clears it — every tag is optional.
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
+const SWITCH_ROWS = [
+  { field: 'switch_target', label: 'Target', labels: SWITCH_TARGET_LABEL },
+  { field: 'switch_force', label: 'Press', labels: SWITCH_FORCE_LABEL },
+  { field: 'switch_hold', label: 'Hold', labels: SWITCH_HOLD_LABEL },
+] as const
 
 export function DetailsSection() {
   const { tutorial, save, saveError } = useDraft()
@@ -124,6 +141,23 @@ export function DetailsSection() {
           ))}
         </View>
         <Text style={styles.hint}>Only complete guides appear in the public library listing.</Text>
+
+        <Text style={styles.label}>What the switch asks</Text>
+        {SWITCH_ROWS.map((row) => (
+          <View key={row.field} style={styles.chipRow} accessibilityLabel={row.label}>
+            {Object.entries(row.labels).map(([value, label]) => (
+              <Chip
+                key={value}
+                label={cap(label)}
+                active={tutorial[row.field] === value}
+                onPress={() => save({ [row.field]: tutorial[row.field] === value ? null : value })}
+              />
+            ))}
+          </View>
+        ))}
+        <Text style={styles.hint}>
+          A parent whose child can manage all of these sees "Suits" their child on the guide.
+        </Text>
 
         <ErrorRow message={saveError} />
       </ScrollView>

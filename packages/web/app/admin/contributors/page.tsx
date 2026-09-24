@@ -5,6 +5,7 @@ import { apiClient } from '@/lib/api-client'
 import { revalidatePath } from 'next/cache'
 import { tintFor } from '@/components/card-photo'
 import type { AdminAccountsResponse, Organization, OrgLeader } from '@splat-connect/types'
+import { initials } from '@splat-connect/types'
 
 async function deleteContributor(id: string) {
   'use server'
@@ -14,14 +15,6 @@ async function deleteContributor(id: string) {
 }
 
 type Cap = 'all' | 'contributors' | 'leaders'
-
-const initials = (name: string) =>
-  name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0].toUpperCase())
-    .join('') || '?'
 
 // `Mar 2025` — the board's JOINED cell.
 const joined = (iso: string) =>
@@ -159,7 +152,7 @@ export default async function ContributorsPage({
                           className="grid h-10 w-10 flex-none place-items-center rounded-full text-sm font-extrabold text-ink"
                           style={{ background: tintFor(p.id) }}
                         >
-                          {initials(p.name || p.email)}
+                          {initials(p.name || p.email, '?')}
                         </span>
                         <span className="min-w-0">
                           <span className="block font-extrabold">{p.name}</span>

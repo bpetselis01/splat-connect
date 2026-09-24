@@ -65,6 +65,30 @@ describe('MyChallengesScreen', () => {
     expect(screen.getByText('Not taken forward')).toBeTruthy()
   })
 
+  it('counts each stage on the filter, once per idea, and narrows both lists to it', async () => {
+    respond(
+      [
+        idea({ id: 'i1', title: 'Pending one', status: 'pending' }),
+        idea({ id: 'i2', title: 'Published one', status: 'challenge' }),
+        idea({ id: 'i4', title: 'Declined one', status: 'rejected' }),
+      ],
+      // Graduated reads as Waiting; i2 is both yours and joined and counts once.
+      [idea({ id: 'i3', title: 'Written up', status: 'graduated' }), idea({ id: 'i2', title: 'Published one', status: 'challenge' })]
+    )
+    render(<MyChallengesScreen />)
+
+    expect(await screen.findByLabelText('All, 4')).toBeTruthy()
+    expect(screen.getByLabelText('Live, 1')).toBeTruthy()
+    expect(screen.getByLabelText('Waiting, 2')).toBeTruthy()
+    expect(screen.getByLabelText('Declined, 1')).toBeTruthy()
+
+    fireEvent.press(screen.getByLabelText('Waiting, 2'))
+    expect(screen.getByText('Pending one')).toBeTruthy()
+    expect(screen.getByText('Written up')).toBeTruthy()
+    expect(screen.queryByText('Declined one')).toBeNull()
+    expect(screen.queryByText('Published one')).toBeNull()
+  })
+
   it("shows a rejected idea's review note, which only its author ever sees", async () => {
     respond([idea({ status: 'rejected', review_note: 'Too close to an existing guide.' })])
     render(<MyChallengesScreen />)

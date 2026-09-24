@@ -5,7 +5,7 @@
  * stage track (components/stage.tsx).
  *
  * Two independent lists, two independent failure states: apiClient.get
- * throws on a non-OK response (lib/api-core.ts) rather than degrading, and
+ * throws on a non-OK response (types' api-core.ts) rather than degrading, and
  * one endpoint being flaky must not blank the other list or read as
  * "you have submitted/joined nothing" to someone who has.
  *

@@ -6,24 +6,23 @@
 //
 // Title comes from the native header (app/(my)/_layout.tsx).
 import { useCallback, useEffect, useState } from 'react'
-import { View, Text, StyleSheet } from 'react-native'
+import { View, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import type { SavedIds, SaveSlug } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { Screen } from '../ui/Screen'
-import { Card } from '../ui/Card'
 import { Button } from '../ui/Button'
 import { EmptyState } from '../ui/EmptyState'
 import { SkeletonRow } from '../ui/Skeleton'
-import { AnimatedPressable } from '../ui/AnimatedPressable'
+import { ListIntro, ListRow, RowThumb } from '../list/list-kit'
 
-const TILES: { slug: SaveSlug; label: string; icon: React.ComponentProps<typeof Ionicons>['name'] }[] = [
-  { slug: 'tutorials', label: 'Guides', icon: 'book-outline' },
-  { slug: 'toys', label: 'Toys', icon: 'cube-outline' },
-  { slug: 'challenges', label: 'Challenges', icon: 'bulb-outline' },
-  { slug: 'organisations', label: 'Organisations', icon: 'business-outline' },
+const TILES: { slug: SaveSlug; label: string; noun: [string, string]; icon: React.ComponentProps<typeof Ionicons>['name'] }[] = [
+  { slug: 'tutorials', label: 'Guides', noun: ['guide', 'guides'], icon: 'book-outline' },
+  { slug: 'toys', label: 'Toys', noun: ['toy', 'toys'], icon: 'cube-outline' },
+  { slug: 'challenges', label: 'Challenges', noun: ['challenge', 'challenges'], icon: 'bulb-outline' },
+  { slug: 'organisations', label: 'Organisations', noun: ['organisation', 'organisations'], icon: 'business-outline' },
 ]
 
 const NONE: SavedIds = { tutorials: [], toys: [], challenges: [], organisations: [] }
@@ -86,28 +85,20 @@ export function SavedScreen() {
         </EmptyState>
       ) : (
         <View>
-          {TILES.map(({ slug, label, icon }) => {
+          <ListIntro lead="Everything you kept to come back to, grouped by the kind of thing it is." />
+          {TILES.map(({ slug, label, noun, icon }) => {
             const count = ids[slug].length
             return (
-              <AnimatedPressable
-                key={slug}
-                onPress={() => router.push(`/saved/${slug}`)}
-                accessibilityRole="button"
-                accessibilityLabel={label}
-                accessibilityHint={count ? `${count} saved. Opens the list.` : 'Nothing saved yet. Opens the list.'}
-                pressScale={0.985}
-                style={styles.tilePress}
-              >
-                <Card style={styles.tile}>
-                  <View style={styles.tileIcon}>
-                    <Ionicons name={icon} size={22} color={theme.colors.primaryDeep} />
-                  </View>
-                  <Text style={styles.tileLabel}>{label}</Text>
-                  {/* Jersey-10 numeral, the same treatment as the hub's counts. */}
-                  <Text style={styles.tileCount}>{count}</Text>
-                  <Ionicons name="chevron-forward" size={18} color={theme.colors.primary} />
-                </Card>
-              </AnimatedPressable>
+              <View key={slug} style={styles.rowWrap}>
+                <ListRow
+                  onPress={() => router.push(`/saved/${slug}`)}
+                  accessibilityLabel={label}
+                  accessibilityHint={count ? `${count} saved. Opens the list.` : 'Nothing saved yet. Opens the list.'}
+                  thumb={<RowThumb glyph={icon} />}
+                  title={label}
+                  meta={count ? `${count} ${count === 1 ? noun[0] : noun[1]} you kept` : 'Nothing saved yet'}
+                />
+              </View>
             )
           })}
         </View>
@@ -118,23 +109,5 @@ export function SavedScreen() {
 
 const styles = StyleSheet.create({
   retry: { marginTop: theme.spacing(5), alignSelf: 'center', paddingHorizontal: theme.spacing(8) },
-  tilePress: { marginBottom: theme.spacing(3) },
-  tile: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3), padding: theme.spacing(3) },
-  tileIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: theme.radii.field,
-    borderWidth: theme.border.hairline,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.accentLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  tileLabel: { flex: 1, fontFamily: theme.fonts.bold, fontSize: theme.type.heading, color: theme.colors.text },
-  tileCount: {
-    fontFamily: theme.fonts.numeral,
-    fontSize: 22,
-    color: theme.colors.primaryDeep,
-    marginRight: theme.spacing(1),
-  },
+  rowWrap: { marginBottom: theme.spacing(3) },
 })

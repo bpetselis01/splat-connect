@@ -19,9 +19,8 @@ test('a child appears on the family list with its summary line', async ({ page }
   await page.getByLabel("Child's age").fill('5')
   await page.waitForTimeout(1000)
 
-  // Back on the segment, the list names the child and its summary.
+  // Back on Account, the list names the child and its summary.
   await page.goto('/account')
-  await page.getByText('Child Profile').click()
   await expect(page.getByRole('button', { name: 'Maya' })).toBeVisible()
   await expect(page.getByText('Age 5')).toBeVisible()
 })

@@ -18,19 +18,19 @@ test('tapping a tutorial navigates to its detail screen', async ({ page }) => {
   // used to render left it title-case and uppercased it in CSS. The only
   // "Easy" left on the page is the difficulty filter chip on the library
   // screen behind, which is hidden — so the old assertion could not pass.
-  await expect(page.getByText('EASY', { exact: true }).last()).toBeVisible()
+  await expect(page.getByText('Easy', { exact: true }).last()).toBeVisible()
   await expect(page.getByText('E2E part × 2')).toBeVisible()
   await expect(page.getByText('E2E tool')).toBeVisible()
 })
 
-test('tapping Preview Tutorial navigates to the preview screen', async ({ page }) => {
+test('tapping Download PDF navigates to the preview screen', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const title = uniqueTitle('E2E Mobile Preview')
   await createTutorial(contributor.id, { title, status: 'approved' })
 
   await page.goto('/guides')
   await page.getByText(title).click()
-  await page.getByText('Preview Tutorial').click()
+  await page.getByText('Download PDF').click()
 
   await expect(page.getByText('Open in Browser')).toBeVisible()
 })
@@ -83,7 +83,7 @@ test('the preview screen explains when a tutorial has no PDF', async ({ page }) 
 
   await page.goto('/guides')
   await page.getByText(title).click()
-  await page.getByText('Preview Tutorial').click()
+  await page.getByText('Download PDF').click()
 
   await expect(page.getByText('No PDF is available for this tutorial yet.')).toBeVisible()
   await expect(page.getByText('Open in Browser')).toHaveCount(0)
@@ -129,33 +129,9 @@ test('an unbacked guide shows the fixed Reviewed by SPLAT chip instead', async (
   await expect(page.getByText('Reviewed by SPLAT')).toBeVisible()
 })
 
-test('an assistive-tech guide shows the 3D-print placeholder', async ({ page }) => {
-  const contributor = await signInAsNewContributor(page)
-  const id = await createTutorial(contributor.id, {
-    title: uniqueTitle('E2E Mobile Printable'),
-    status: 'approved',
-    kind: 'assistive_tech',
-  })
-
-  await page.goto(`/guides/${id}`)
-
-  await expect(page.getByText('Request this 3D print')).toBeVisible()
-  // Badge uppercases the string itself, so the text node reads SOON.
-  await expect(page.getByText('SOON')).toBeVisible()
-})
-
-test('a toy adaptation has no 3D-print placeholder', async ({ page }) => {
-  const contributor = await signInAsNewContributor(page)
-  const id = await createTutorial(contributor.id, {
-    title: uniqueTitle('E2E Mobile Not Printable'),
-    status: 'approved',
-  })
-
-  await page.goto(`/guides/${id}`)
-
-  await expect(page.getByText('Parts')).toBeVisible()
-  await expect(page.getByText('Request this 3D print')).toHaveCount(0)
-})
+// The 3D-print placeholder these two tests covered was replaced by the real
+// "Find a printer" flow (5ada3f92); when that button shows is unit-tested in
+// tests/unit/components/home/detail-screen.test.tsx.
 
 test("the creator's picks row lists a recommendation and opens it", async ({ page }) => {
   const contributor = await signInAsNewContributor(page)

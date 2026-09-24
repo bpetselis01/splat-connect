@@ -41,6 +41,11 @@ const child = (over: Partial<ChildProfile>): ChildProfile => ({
   forearm_length_mm: null,
   hand_dominance: null,
   sensory_preferences: [],
+  working_hand: null,
+  press_force: null,
+  aim: null,
+  hold: null,
+  everyday_needs: [],
   created_at: '2026-01-01T00:00:00Z',
   updated_at: '2026-01-01T00:00:00Z',
   ...over,
@@ -83,6 +88,17 @@ describe('ProfileTabPage', () => {
     render(await ProfileTabPage())
     expect(screen.getByRole('link', { name: /Emma/ })).toHaveAttribute('href', '/dashboard/child/c1')
     expect(screen.getByRole('link', { name: /Child 2/ })).toHaveAttribute('href', '/dashboard/child/c2')
+  })
+
+  it('summarises each child from the board questions, never a score', async () => {
+    vi.mocked(apiClient.get).mockResolvedValue([
+      child({ id: 'c1', name: 'Arlo', age: 6, working_hand: 'right', press_force: 'light', macs_level: 'II' }),
+      child({ id: 'c2' }),
+    ])
+    render(await ProfileTabPage())
+    expect(screen.getByText('Age 6 · Right hand · Light press')).toBeInTheDocument()
+    expect(screen.getByText('Not set yet')).toBeInTheDocument()
+    expect(screen.queryByText(/\bII\b/)).not.toBeInTheDocument()
   })
 
   // Chain: swallowing a failed fetch into an empty list would tell a parent

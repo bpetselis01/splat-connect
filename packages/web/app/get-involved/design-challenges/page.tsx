@@ -33,19 +33,22 @@ import {
   TintNote,
 } from '@/components/involved-page'
 import { getSavedIds } from '@/lib/saves'
-import type { ToyIdea } from '@splat-connect/types'
+import type { Route } from 'next'
+import { CHALLENGE_FILTERS as FILTERS, type PublicChallenge } from '@splat-connect/types'
 
 export const metadata = {
   title: 'Design challenges — SPLAT Connect',
   description: 'Problems nobody has solved yet, open to anyone.',
 }
 
-type Challenge = Pick<ToyIdea, 'id' | 'title' | 'summary' | 'status'>
-
 // The board cycles its cards through the five tints in listing order.
 const TINTS = ['var(--b100)', 'var(--tmint)', 'var(--tamber)', 'var(--tviolet)', 'var(--tcoral)']
 
-export default async function DesignChallengesPage() {
+export default async function DesignChallengesPage({
+  searchParams,
+}: { searchParams?: Promise<{ filter?: string }> } = {}) {
+  const { filter: rawFilter } = (await searchParams) ?? {}
+  const filter = FILTERS.find((f) => f.id === rawFilter) ?? FILTERS[0]
   // null means signed out — the island still renders, it just routes to
   // /signup instead of saving. Sets rather than .includes: the lookup runs
   // once per card.
@@ -53,7 +56,7 @@ export default async function DesignChallengesPage() {
   const signedIn = saved !== null
   const savedChallenges = new Set(saved?.challenges ?? [])
 
-  let challenges: Challenge[] = []
+  let challenges: PublicChallenge[] = []
   // Two distinct failure shapes: a non-OK response and a network/parse throw.
   // Both count as "could not load" rather than "nothing published" — telling
   // a visitor there are no challenges when the API is actually down is the
@@ -66,6 +69,8 @@ export default async function DesignChallengesPage() {
   } catch {
     failed = true
   }
+
+  const shown = challenges.filter(filter.keep)
 
   const list = failed ? (
     <div className="card mt-4 flex flex-col items-center px-6 py-16 text-center">
@@ -92,21 +97,44 @@ export default async function DesignChallengesPage() {
       </Link>
     </div>
   ) : (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {challenges.map((idea, i) => (
-        <ChallengeCard
-          key={idea.id}
-          idea={idea}
-          tint={TINTS[i % TINTS.length]}
-          save={{
-            slug: 'challenges',
-            id: idea.id,
-            saved: savedChallenges.has(idea.id),
-            signedIn,
-          }}
-        />
-      ))}
-    </div>
+    <>
+      <nav aria-label="Filter challenges" className="mb-5 flex flex-wrap gap-2">
+        {FILTERS.map((f) => {
+          const on = f.id === filter.id
+          return (
+            <Link
+              key={f.id}
+              href={`/get-involved/design-challenges${f.id === 'all' ? '' : `?filter=${f.id}`}` as Route}
+              className="chip"
+              data-on={on}
+              aria-current={on ? 'page' : undefined}
+              scroll={false}
+            >
+              {f.label}
+            </Link>
+          )
+        })}
+      </nav>
+      {shown.length === 0 ? (
+        <p className="text-[15px] text-muted">Nothing under {filter.label.toLowerCase()} yet.</p>
+      ) : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {shown.map((idea, i) => (
+            <ChallengeCard
+              key={idea.id}
+              idea={idea}
+              tint={TINTS[i % TINTS.length]}
+              save={{
+                slug: 'challenges',
+                id: idea.id,
+                saved: savedChallenges.has(idea.id),
+                signedIn,
+              }}
+            />
+          ))}
+        </div>
+      )}
+    </>
   )
 
   if (!signedIn) {

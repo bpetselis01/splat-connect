@@ -1,60 +1,61 @@
 import { test, expect } from '@playwright/test'
 import { createContributor, createTutorial, uniqueTitle } from '../helpers'
 
-test('the home page renders the hero and the three SPLAT-in-30-seconds steps', async ({ page }) => {
-  const contributor = await createContributor()
-  const title = uniqueTitle('E2E Home Featured')
-  await createTutorial(contributor.id, { title, status: 'approved' })
-
+/*
+ * The page these three tests describe was rebuilt from the Soft Pop artboard
+ * on 2026-09-17 (a23f5dad): "SPLAT in 30 seconds" became the five-scene
+ * scroll-world, the seven-tile launcher became three doors, and the hero's
+ * "Browse the guides" became "Find a guide". Learn and Impact are reached from
+ * the header's More menu instead (tests/e2e/public/navigation.spec.ts).
+ */
+test('the home page renders the hero and the five-scene journey', async ({ page }) => {
+  // Reduced motion stacks the five scenes as plain blocks; in full motion all
+  // but the one on stage are inert, and so out of the accessibility tree.
+  await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/')
 
-  await expect(page.getByRole('heading', { name: 'Press it. Watch it go.' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'SPLAT in 30 seconds' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'A guide gets written' })).toBeVisible()
-  await expect(
-    page.getByRole('heading', { name: 'An organisation stands behind it' })
-  ).toBeVisible()
-  await expect(
-    page.getByRole('heading', { name: 'A family builds it — or receives one' })
-  ).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Press it. Watch it go.', level: 1 })).toBeVisible()
+  const journey = page.getByRole('region', { name: 'How SPLAT works, as a journey' })
+  const scenes = [
+    'A child finds the toy that won’t play back.',
+    'A maker adapts it and writes every step down.',
+    'Someone nearby prints the parts that hold it all together.',
+    'A therapy service reviews it and puts their name on it.',
+    'The toy comes home — built, or borrowed.',
+  ]
+  for (const name of scenes) {
+    await expect(journey.getByRole('heading', { name, level: 2 })).toBeVisible()
+  }
+  await expect(journey.getByRole('article')).toHaveCount(scenes.length)
 })
 
-test('the launcher grid surfaces all seven sections with their blurbs', async ({ page }) => {
+test('the three doors each lead somewhere real', async ({ page }) => {
   await page.goto('/')
 
-  // Scoped to the "Jump straight in" section: the header and footer repeat
-  // several of these same labels ("Guides", "Learn", "About"), so an
-  // unscoped text lookup would hit a Playwright strict-mode violation.
-  const launcher = page.getByRole('heading', { name: 'Jump straight in' }).locator('..')
+  // Scoped to the doors band: the header and the recent rows link to the same
+  // hubs, so an unscoped lookup would hit a strict-mode violation.
+  const doors = page.getByRole('region', { name: 'Where to start' })
   const tiles = [
-    { href: '/library', label: 'Guides', blurb: 'Adaptation guides' },
-    { href: '/toy-library', label: 'Toy Library', blurb: 'Toys being given away' },
-    { href: '/printing', label: '3D Printing', blurb: 'Printed parts and mounts' },
-    { href: '/learn', label: 'Learn', blurb: 'Switches, tools, safety' },
-    { href: '/get-involved', label: 'Get Involved', blurb: 'Make, give, or back' },
-    { href: '/impact', label: 'Impact', blurb: 'Toys delivered' },
-    { href: '/about', label: 'About', blurb: 'Who runs SPLAT' },
+    { href: '/library', title: 'I’m looking for a guide' },
+    { href: '/toy-library', title: 'I’d like a ready-made toy' },
+    { href: '/get-involved', title: 'I make things' },
   ]
   for (const tile of tiles) {
-    const link = launcher.locator(`a[href="${tile.href}"]`)
-    await expect(link.getByText(tile.label, { exact: true })).toBeVisible()
-    await expect(link.getByText(tile.blurb, { exact: true })).toBeVisible()
+    await expect(doors.locator(`a[href="${tile.href}"]`).getByText(tile.title, { exact: true })).toBeVisible()
   }
 
-  // Count, not just presence. The previous version listed six sections and
-  // asserted each was reachable, so when 3D Printing was promoted to a pillar
-  // the launcher grew a tile and no test noticed. A section added to
-  // PUBLIC_NAV and forgotten here now fails.
-  await expect(launcher.locator('a[href]')).toHaveCount(tiles.length)
+  // Count, not just presence: a door added or dropped without this list
+  // changing fails here.
+  await expect(doors.getByRole('link')).toHaveCount(tiles.length)
 })
 
 test('the hero call to action reaches the guides library', async ({ page }) => {
   await page.goto('/')
 
-  await page.getByRole('link', { name: 'Browse the guides' }).click()
+  await page.getByRole('link', { name: 'Find a guide' }).click()
 
   await expect(page).toHaveURL(/\/library$/)
-  await expect(page.getByRole('heading', { name: 'Toy Adaptation Library' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Adapt a toy in an evening', level: 1 })).toBeVisible()
 })
 
 test('the recent-guides section links through to the library', async ({ page }) => {

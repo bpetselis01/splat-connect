@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
-import { AGREEMENT_VERSIONS, type Profile, type UserAgreement } from '@splat-connect/types'
+import { AGREEMENT_VERSIONS, type Profile, type SignupIntent, type UserAgreement } from '@splat-connect/types'
 import { supabase } from './supabase'
 import { apiClient } from './api-client'
 
@@ -14,7 +14,7 @@ type AuthContextValue = {
   // flashes for every already-accepted user on every launch.
   hasContributorTerms: boolean | null
   signIn: (email: string, password: string) => Promise<{ error: string | null }>
-  signUp: (email: string, password: string, name: string) => Promise<{ error: string | null }>
+  signUp: (email: string, password: string, name: string, intent?: SignupIntent) => Promise<{ error: string | null }>
   signOut: () => Promise<void>
   acceptContributorTerms: () => Promise<{ error: string | null }>
 }
@@ -69,12 +69,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error?.message ?? null }
   }
 
-  async function signUp(email: string, password: string, name: string) {
+  async function signUp(email: string, password: string, name: string, intent?: SignupIntent) {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { name, contributor_terms_version: AGREEMENT_VERSIONS.contributor_terms },
+        // intent: the sign-up tile, read once by (auth)/_layout.tsx to land
+        // the first sign-in (pendingIntent). Web's signup stores the same key.
+        data: { name, contributor_terms_version: AGREEMENT_VERSIONS.contributor_terms, ...(intent ? { intent } : {}) },
         emailRedirectTo: `${process.env.EXPO_PUBLIC_WEB_URL}/auth/confirmed`,
       },
     })

@@ -12,6 +12,7 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import type { PickupAddress } from '@splat-connect/types'
+import { isBackdropClick } from '@/lib/backdrop-click'
 
 const FIELDS: Array<{ key: keyof PickupAddress; label: string }> = [
   { key: 'pickup_line1', label: 'Street address' },
@@ -67,10 +68,10 @@ export function AcceptPickupDialog({
       className="dialog-panel"
       onCancel={onCancel}
       onClick={(e) => {
-        if (e.target === ref.current) onCancel()
+        if (isBackdropClick(e)) onCancel()
       }}
     >
-      <div onClick={(e) => e.stopPropagation()} className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4">
         <h2 className="title-section">Where should they collect it?</h2>
         <p className="text-sm text-muted">
           This is shared with the other party once you accept, so they know where to meet you.

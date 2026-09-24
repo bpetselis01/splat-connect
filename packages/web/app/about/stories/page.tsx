@@ -28,9 +28,9 @@ import {
   Wrench,
 } from '@phosphor-icons/react/dist/ssr'
 import { apiClient } from '@/lib/api-client'
-import { shortDate } from '@/lib/dates'
+import { initials, shortDate } from '@splat-connect/types'
 import { getCapabilities } from '@/lib/capabilities'
-import { StoryKindPill, StoryPhoto, STORY_KIND_STYLE, initials } from '@/components/story-bits'
+import { StoryKindPill, StoryPhoto, STORY_KIND_STYLE } from '@/components/story-bits'
 import { type StoryKind, type StoryListItem } from '@splat-connect/types'
 
 export const metadata = {

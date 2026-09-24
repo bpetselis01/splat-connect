@@ -5,7 +5,9 @@ import type { SaveSlug } from '@splat-connect/types'
 import { theme } from '../../lib/theme'
 import type { Saves } from '../../lib/saves'
 
-export function SaveButton({ slug, id, saves, size = 20 }: { slug: SaveSlug; id: string; saves: Saves; size?: number }) {
+// A heart, as on web's save-button.tsx and the board: outline muted, filled
+// apricot once saved.
+export function SaveButton({ slug, id, saves, size = 22 }: { slug: SaveSlug; id: string; saves: Saves; size?: number }) {
   const on = saves.isSaved(slug, id)
   return (
     <Pressable
@@ -23,9 +25,9 @@ export function SaveButton({ slug, id, saves, size = 20 }: { slug: SaveSlug; id:
       hitSlop={10}
       style={styles.button}
     >
-      <Ionicons name={on ? 'bookmark' : 'bookmark-outline'} size={size} color={on ? theme.colors.apricot : theme.colors.ink} />
+      <Ionicons name={on ? 'heart' : 'heart-outline'} size={size} color={on ? theme.colors.apricot : theme.colors.muted} />
     </Pressable>
   )
 }
 
-const styles = StyleSheet.create({ button: { minWidth: 40, minHeight: 40, alignItems: 'center', justifyContent: 'center' } })
+const styles = StyleSheet.create({ button: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' } })

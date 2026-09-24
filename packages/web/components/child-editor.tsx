@@ -1,52 +1,161 @@
 'use client'
 /**
- * The only client component that talks to the child-profiles API. Unlike
- * ToyEditor, no step is locked: every child-profile field is a plain column
- * with no upload/id dependency, so whichever pill is saved first creates the
- * profile and the URL silently swaps from /dashboard/child/new to
- * /dashboard/child/{id}.
+ * The child profile as the board draws it: one page, three cards, one save.
+ *
+ * Basics (name, age), the four switch questions, and the everyday needs of the
+ * room. Every field is optional, and nothing else is asked — the older MACS,
+ * BFMF, grip and measurement columns stay in the table but no form writes them
+ * (APP 3 minimisation). These are plain-language preferences for ranking
+ * guides, never a clinical assessment; see docs/REGULATORY-CHANGES.md.
+ *
+ * Saving the first time creates the profile and the URL swaps from
+ * /dashboard/child/new to /dashboard/child/{id}.
+ *
+ * Related files:
+ * - components/child-wizard.tsx: the same questions, one at a time, for a first run
  */
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import type { Route } from 'next'
-import type { ChildProfile } from '@splat-connect/types'
-import { ChildSurveyForm } from '@/components/child-survey-form'
-import { ChildAbilityForm } from '@/components/child-ability-form'
-import { ChildEverydayNeedsForm } from '@/components/child-everyday-needs-form'
-import { ChildCustomizationForm } from '@/components/child-customization-form'
+import {
+  CHILD_QUESTIONS,
+  EVERYDAY_NEEDS,
+  type ChildAnswers,
+  type ChildProfile,
+  type EverydayNeed,
+} from '@splat-connect/types'
 import { DeleteEntityButton } from '@/components/delete-entity-button'
 import { browserApiClient } from '@/lib/browser-api-client'
 import { NotMedicalNote } from '@/components/not-medical-note'
 
+/** What a form holds before it is sent: the answers, age still as typed. */
+export function answersOf(child: ChildProfile | null): ChildAnswers {
+  return {
+    name: child?.name ?? null,
+    age: child?.age ?? null,
+    working_hand: child?.working_hand ?? null,
+    press_force: child?.press_force ?? null,
+    aim: child?.aim ?? null,
+    hold: child?.hold ?? null,
+    everyday_needs: child?.everyday_needs ?? [],
+  }
+}
+
+/** One single-choice question as a row of chips. Pressing the chosen chip again clears it. */
+export function ChoiceChips({
+  legend,
+  options,
+  value,
+  onChange,
+  hideLegend = false,
+}: {
+  legend: string
+  options: readonly { value: string; label: string }[]
+  value: string | null
+  onChange: (v: string | null) => void
+  hideLegend?: boolean
+}) {
+  return (
+    <fieldset className="m-0 border-0 p-0">
+      <legend className={hideLegend ? 'sr-only' : 'field-label'}>{legend}</legend>
+      <div className="flex flex-wrap gap-2">
+        {options.map((o) => (
+          <button
+            key={o.value}
+            type="button"
+            aria-pressed={value === o.value}
+            onClick={() => onChange(value === o.value ? null : o.value)}
+            className="chip"
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+    </fieldset>
+  )
+}
+
+/** The everyday needs, any number of them. */
+export function NeedsChips({
+  value,
+  onChange,
+}: {
+  value: EverydayNeed[]
+  onChange: (v: EverydayNeed[]) => void
+}) {
+  return (
+    <div role="group" aria-label="Everyday needs" className="flex flex-wrap gap-2">
+      {EVERYDAY_NEEDS.map((o) => {
+        const on = value.includes(o.value)
+        return (
+          <button
+            key={o.value}
+            type="button"
+            aria-pressed={on}
+            onClick={() => onChange(on ? value.filter((v) => v !== o.value) : [...value, o.value])}
+            className="chip"
+          >
+            {o.label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+function Card({ id, title, lead, children }: { id: string; title: string; lead?: string; children: React.ReactNode }) {
+  return (
+    <section aria-labelledby={`child-${id}`} className="rounded-card border border-line bg-surface p-5 shadow-e2">
+      <h2 id={`child-${id}`} className="text-xl font-extrabold text-ink">
+        {title}
+      </h2>
+      {lead && <p className="mt-1 text-sm leading-relaxed text-muted">{lead}</p>}
+      <div className="mt-4 flex flex-col gap-4">{children}</div>
+    </section>
+  )
+}
+
 export function ChildEditor({ child: initialChild, label }: { child: ChildProfile | null; label?: string }) {
   const router = useRouter()
   const [child, setChild] = useState<ChildProfile | null>(initialChild)
+  const [form, setForm] = useState<ChildAnswers>(() => answersOf(initialChild))
+  const [age, setAge] = useState(initialChild?.age?.toString() ?? '')
+  const [busy, setBusy] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  async function saveStep(fields: Partial<ChildProfile>) {
-    if (!child) {
-      const created = await browserApiClient.post<ChildProfile>('/api/child-profiles', fields)
-      setChild(created)
-      router.replace(`/dashboard/child/${created.id}` as Route<string>)
-    } else {
-      const updated = await browserApiClient.patch<ChildProfile>(`/api/child-profiles/${child.id}`, fields)
-      setChild(updated)
+  const set = (patch: Partial<ChildAnswers>) => {
+    setSaved(false)
+    setForm((f) => ({ ...f, ...patch }))
+  }
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault()
+    setBusy(true)
+    setError(null)
+    const body: ChildAnswers = {
+      ...form,
+      name: form.name?.trim() || null,
+      age: age.trim() === '' ? null : Number(age),
+    }
+    try {
+      if (!child) {
+        const created = await browserApiClient.post<ChildProfile>('/api/child-profiles', body)
+        setChild(created)
+        router.replace(`/dashboard/child/${created.id}` as Route<string>)
+      } else {
+        setChild(await browserApiClient.patch<ChildProfile>(`/api/child-profiles/${child.id}`, body))
+      }
+      setSaved(true)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'That did not save. Try once more.')
+    } finally {
+      setBusy(false)
     }
   }
 
   const heading = child?.name?.trim() || label || 'Add a child'
-
-  // The board draws this as one page of stacked cards, not a stepper: a child
-  // profile is never submitted, so there is no order to walk and nothing to
-  // gate. Each card keeps its own save — the section forms are shared with the
-  // onboarding wizard, and the survey only saves once every question is
-  // answered, so one page-level save would have to know both rules.
-  const sections: { id: string; title: string; body: React.ReactNode }[] = [
-    { id: 'basics', title: 'Basics', body: <ChildAbilityForm profile={child} onSave={saveStep} /> },
-    { id: 'ability', title: 'Ability profile', body: <ChildSurveyForm profile={child} onSave={saveStep} /> },
-    { id: 'everyday-needs', title: 'Everyday needs', body: <ChildEverydayNeedsForm profile={child} onSave={saveStep} /> },
-    { id: 'customization', title: 'Customization', body: <ChildCustomizationForm profile={child} onSave={saveStep} /> },
-  ]
 
   return (
     <section className="max-w-[760px]">
@@ -63,20 +172,70 @@ export function ChildEditor({ child: initialChild, label }: { child: ChildProfil
         <NotMedicalNote />
       </div>
 
-      <div className="mt-[26px] flex flex-col gap-4">
-        {sections.map((s) => (
-          <section
-            key={s.id}
-            aria-labelledby={`child-${s.id}`}
-            className="rounded-card border border-line bg-surface px-1.5 pb-1.5 pt-[26px] shadow-e2"
-          >
-            <h2 id={`child-${s.id}`} className="mb-3 px-5 text-xl font-extrabold text-ink">
-              {s.title}
-            </h2>
-            {s.body}
-          </section>
-        ))}
-      </div>
+      <form onSubmit={save} className="mt-[26px] flex flex-col gap-4">
+        <Card id="basics" title="Basics">
+          <div className="grid gap-4 sm:grid-cols-[1fr_200px]">
+            <label className="flex flex-col">
+              <span className="field-label">Name or nickname</span>
+              <input
+                value={form.name ?? ''}
+                onChange={(e) => set({ name: e.target.value })}
+                maxLength={60}
+                className="field"
+              />
+            </label>
+            <label className="flex flex-col">
+              <span className="field-label">Age</span>
+              <input
+                type="number"
+                min={0}
+                max={21}
+                value={age}
+                onChange={(e) => {
+                  setSaved(false)
+                  setAge(e.target.value)
+                }}
+                className="field"
+              />
+            </label>
+          </div>
+        </Card>
+
+        <Card
+          id="ability"
+          title="Ability profile"
+          lead="Used to rank guides by whether the switch they call for is one your child can operate."
+        >
+          {CHILD_QUESTIONS.map((q) => (
+            <ChoiceChips
+              key={q.field}
+              legend={q.prompt}
+              options={q.options}
+              value={form[q.field]}
+              onChange={(v) => set({ [q.field]: v } as Partial<ChildAnswers>)}
+            />
+          ))}
+        </Card>
+
+        <Card id="everyday-needs" title="Everyday needs" lead="What matters in the room, rather than in the hand.">
+          <NeedsChips value={form.everyday_needs} onChange={(v) => set({ everyday_needs: v })} />
+        </Card>
+
+        {error && (
+          <p role="alert" className="alert alert-danger">
+            {error}
+          </p>
+        )}
+        <div className="flex flex-wrap items-center gap-3">
+          <button type="submit" disabled={busy} className="btn btn-primary">
+            {busy ? 'Saving…' : child ? 'Save changes' : 'Create profile'}
+          </button>
+          <Link href={'/dashboard/profile' as Route<string>} className="btn btn-quiet">
+            Cancel
+          </Link>
+          {saved && <p className="m-0 text-sm font-semibold text-ink">Saved</p>}
+        </div>
+      </form>
 
       {child && (
         <div className="mt-6">

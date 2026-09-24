@@ -38,7 +38,14 @@ export default defineConfig({
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: [
     {
-      command: 'pnpm --filter @splat-connect/api dev',
+      // Binaries directly, never through pnpm: pnpm runs a package script in
+      // its own process group, so Playwright's teardown (SIGKILL to the group
+      // it launched) orphaned the real server, which kept Playwright's stdout
+      // pipe open, and CI hung after the last test until the 6h job limit.
+      // No `watch`: nothing edits the API mid-run.
+      command:
+        './node_modules/.bin/tsx --env-file-if-exists=../../.env.local --env-file-if-exists=.env.local src/index.ts',
+      cwd: '../api',
       url: `http://localhost:${API_PORT}/api/public/tutorials`,
       timeout: 120_000,
       reuseExistingServer: !process.env.CI,
@@ -62,7 +69,8 @@ export default defineConfig({
       // cache with the OLD value frozen in, so the app silently calls a stale
       // API URL while the rest of the bundle looks correct. Costs a cold
       // transform each run; a wrong-backend E2E run costs far more.
-      command: `pnpm exec expo export -p web --clear && pnpm exec serve -s dist -l ${WEB_PORT}`,
+      // Binaries directly, not via pnpm exec, for the process-group reason above.
+      command: `./node_modules/.bin/expo export -p web --clear && ./node_modules/.bin/serve -s dist -l ${WEB_PORT}`,
       url: WEB_URL,
       timeout: 300_000,
       reuseExistingServer: !process.env.CI,

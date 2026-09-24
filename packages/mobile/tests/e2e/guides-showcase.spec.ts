@@ -40,7 +40,8 @@ test('the organisation page lists the guides it backs', async ({ page }) => {
 
   await page.goto(`/guides/organisation/${data.id}`)
 
-  await expect(page.getByText(org)).toBeVisible()
+  // A heading: the page also has "Say thanks to <org>" (077).
+  await expect(page.getByRole('heading', { name: org })).toBeVisible()
   await expect(page.getByText('Guides they back')).toBeVisible()
   await expect(page.getByText(title)).toBeVisible()
 

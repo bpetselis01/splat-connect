@@ -123,4 +123,24 @@ describe('signup page', () => {
       })
     )
   })
+
+  // The board's "I'm mostly here to…" — stored in metadata, never guessed.
+  it('stores the picked intent in signUp() metadata', async () => {
+    render(<SignupPage />)
+    fireEvent.click(screen.getByLabelText(/make and share guides/i))
+    fillForm()
+    acceptTermsViaDialog()
+    fireEvent.click(screen.getByRole('button', { name: /create my account/i }))
+    await waitFor(() => expect(signUp).toHaveBeenCalled())
+    expect(signUp.mock.calls[0][0].options.data.intent).toBe('maker')
+  })
+
+  it('sends no intent when no tile is picked', async () => {
+    render(<SignupPage />)
+    fillForm()
+    acceptTermsViaDialog()
+    fireEvent.click(screen.getByRole('button', { name: /create my account/i }))
+    await waitFor(() => expect(signUp).toHaveBeenCalled())
+    expect(signUp.mock.calls[0][0].options.data).not.toHaveProperty('intent')
+  })
 })

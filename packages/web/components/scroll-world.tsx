@@ -35,6 +35,7 @@ import Link from 'next/link'
 import type { Route } from 'next'
 import { ArrowRight, HouseLine, Wrench, Cube, SealCheck, Gift } from '@phosphor-icons/react/dist/ssr'
 import { Slot } from '@/components/slot'
+import { homeScenes } from '@/lib/home-content'
 
 export interface Scene {
   place: string
@@ -132,7 +133,9 @@ function isReduced() {
   )
 }
 
-export function ScrollWorld() {
+/** `copy` is the Site content editor's home-scenes row: each scene's place and line. */
+export function ScrollWorld({ copy }: { copy?: unknown }) {
+  const world = homeScenes(SCENES, copy)
   const spacer = useRef<HTMLElement>(null)
   const stage = useRef<HTMLDivElement>(null)
   const bar = useRef<HTMLSpanElement>(null)
@@ -233,9 +236,10 @@ export function ScrollWorld() {
           </span>
         </div>
 
-        {SCENES.map(({ place, title, body, cta, href, art, Icon, tint }, i) => (
+        {world.map(({ place, title, body, cta, href, art, Icon, tint }, i) => (
           <article
-            key={place}
+            // By position: an edited place can repeat another's.
+            key={i}
             ref={(node) => {
               scenes.current[i] = node
             }}
@@ -272,9 +276,9 @@ export function ScrollWorld() {
         ))}
 
         <ol className="sw-rail" aria-hidden="true">
-          {SCENES.map((scene, i) => (
+          {world.map((scene, i) => (
             <li
-              key={scene.place}
+              key={i}
               ref={(node) => {
                 dots.current[i] = node
               }}

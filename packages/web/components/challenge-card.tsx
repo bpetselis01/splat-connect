@@ -1,7 +1,7 @@
-import { PuzzlePiece } from '@phosphor-icons/react/dist/ssr'
+import { ChatCircle, ChatsCircle, PuzzlePiece } from '@phosphor-icons/react/dist/ssr'
 import { SaveButton, type SaveProps } from './save-button'
 import { BoundaryLink } from './boundary-link'
-import type { ToyIdea } from '@splat-connect/types'
+import type { PublicChallenge, ToyIdea } from '@splat-connect/types'
 
 /**
  * GET /api/public/challenges (packages/api/src/routes/public.ts) selects an
@@ -17,13 +17,19 @@ import type { ToyIdea } from '@splat-connect/types'
  *
  * Links to the `[id]` detail page (Task 14), which renders the full brief
  * and the join/thread flow this card only teases.
+ *
+ * A question (078) draws as the board's question card: chat bubbles for art,
+ * "Answered" or "Open question" for its pill, and answers counted instead of
+ * makers. The counts arrive only from the public list, so a card rendered from
+ * anywhere else simply has no count line.
  */
 export function ChallengeCard({
   idea,
   save,
   tint,
 }: {
-  idea: Pick<ToyIdea, 'id' | 'title' | 'summary' | 'status'>
+  idea: Pick<ToyIdea, 'id' | 'title' | 'summary' | 'status'> &
+    Partial<Pick<PublicChallenge, 'kind' | 'answered_at' | 'maker_count' | 'answer_count'>>
   save?: SaveProps
   /**
    * Opt-in: the board's listing card — a 4:3 tinted art band over the text.
@@ -32,6 +38,15 @@ export function ChallengeCard({
   tint?: string
 }) {
   const graduated = idea.status === 'graduated'
+  const question = idea.kind === 'question'
+  const pill = question
+    ? idea.answered_at
+      ? { label: 'Answered', bg: 'var(--tok)' }
+      : { label: 'Open question', bg: 'var(--tviolet)' }
+    : { label: graduated ? 'Being written up' : 'Open', bg: 'var(--tok)' }
+  const count = question ? idea.answer_count : idea.maker_count
+  const noun = question ? 'answer' : 'maker'
+  const Art = question ? ChatsCircle : PuzzlePiece
   const card = tint ? (
     <BoundaryLink
       href={`/get-involved/design-challenges/${idea.id}`}
@@ -41,18 +56,30 @@ export function ChallengeCard({
       <span
         aria-hidden="true"
         className="grid aspect-[4/3] place-items-center"
-        style={{ background: graduated ? 'var(--tok)' : tint }}
+        style={{ background: graduated ? 'var(--tok)' : question ? 'var(--tviolet)' : tint }}
       >
-        <PuzzlePiece weight="duotone" className="text-[76px] text-[var(--tink)] opacity-70" />
+        <Art weight="duotone" className="text-[76px] text-[var(--tink)] opacity-70" />
       </span>
       <span className="flex flex-1 flex-col gap-2 px-5 pb-5 pt-[18px]">
         <span className="flex items-center gap-2">
-          <span className="rounded-full bg-[var(--tok)] px-2.5 py-[3px] text-[11px] font-extrabold text-[var(--tink)]">
-            {graduated ? 'Being written up' : 'Open'}
+          <span
+            className="rounded-full px-2.5 py-[3px] text-[11px] font-extrabold text-[var(--tink)]"
+            style={{ background: pill.bg }}
+          >
+            {pill.label}
+          </span>
+          <span className="text-[11px] font-extrabold uppercase tracking-[.08em] text-muted">
+            {question ? 'Question' : 'Build challenge'}
           </span>
         </span>
         <h3 className="font-display text-lg font-extrabold leading-[1.2] text-ink">{idea.title}</h3>
         <span className="line-clamp-3 flex-1 text-sm leading-[1.5] text-muted">{idea.summary}</span>
+        {count !== undefined && (
+          <span className="mt-1 flex items-center gap-1.5 border-t border-line pt-3 text-[13px] font-bold text-muted">
+            <ChatCircle weight="fill" aria-hidden="true" />
+            {count} {count === 1 ? noun : `${noun}s`}
+          </span>
+        )}
       </span>
     </BoundaryLink>
   ) : (
@@ -68,7 +95,7 @@ export function ChallengeCard({
         {idea.status === 'graduated' ? (
           <span className="badge bg-mint-soft text-ink">Being written up</span>
         ) : (
-          <span className="chip">Looking for makers</span>
+          <span className="chip">{question ? pill.label : 'Looking for makers'}</span>
         )}
       </div>
       <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-muted">{idea.summary}</p>

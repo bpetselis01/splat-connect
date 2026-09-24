@@ -1,7 +1,7 @@
 // packages/mobile/tests/unit/components/explore/learn-hub.test.tsx
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { Linking } from 'react-native'
-import { LearnHub } from '../../../../components/explore/learn-hub'
+import { LearnHub, learnSections } from '../../../../components/explore/learn-hub'
 import { LEARN_ARTICLES } from '../../../../lib/learn-content'
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
@@ -82,6 +82,20 @@ describe('LearnHub', () => {
     render(<LearnHub />)
     expect(screen.queryByText(/CONTINUE/)).toBeNull()
     expect(screen.getByText('All six read.')).toBeTruthy()
+  })
+
+  it('numbers the first three under Start here and lists the rest, unnumbered, under Going deeper', () => {
+    mockUseLearnProgress.mockReturnValue({ read: new Set(), markRead: jest.fn(), next: LEARN_ARTICLES[0], count: 0 })
+    const { start, deeper } = learnSections(LEARN_ARTICLES)
+    expect(start.map((a) => a.slug)).toEqual(['toy-adaptation-101', 'switch-types', 'choosing-a-toy'])
+    expect(deeper.map((a) => a.slug)).toEqual(['tools-and-materials', 'safety-and-cleaning', 'printing-basics'])
+
+    render(<LearnHub />)
+    expect(screen.getByText('Start here')).toBeTruthy()
+    expect(screen.getByText('Going deeper')).toBeTruthy()
+    expect(screen.getByRole('button', { name: '1. Toy adaptation 101' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Tools and materials' })).toBeTruthy()
+    expect(screen.getByTestId('learn-node-icon-tools-and-materials', { includeHiddenElements: true })).toBeTruthy()
   })
 
   it('opens the web Ask an expert page', () => {

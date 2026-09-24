@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import type { ReactNode } from 'react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 export interface ProfileTab {
   key: string
@@ -36,21 +37,17 @@ export function ProfileTabs({
 
   if (variant === 'segmented') {
     return (
-      <div>
-        <div
-          role="tablist"
+      <Tabs value={active?.key} onValueChange={setActiveKey}>
+        <TabsList
           aria-label={label}
           className="flex w-max max-w-full gap-1 overflow-x-auto rounded-full bg-[var(--surface2)] p-1"
         >
           {tabs.map((tab) => {
             const on = tab.key === active?.key
             return (
-              <button
+              <TabsTrigger
                 key={tab.key}
-                type="button"
-                role="tab"
-                aria-selected={on}
-                onClick={() => setActiveKey(tab.key)}
+                value={tab.key}
                 className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full px-[18px] text-[15px] font-extrabold text-ink transition-all ${
                   on ? 'bg-surface shadow-[var(--shadow-e1)]' : 'bg-transparent'
                 }`}
@@ -62,46 +59,48 @@ export function ProfileTabs({
                     {tab.count}
                   </span>
                 ) : null}
-              </button>
+              </TabsTrigger>
             )
           })}
-        </div>
-        <div key={active?.key} className="mt-[22px]">
-          {active?.content}
-        </div>
-      </div>
+        </TabsList>
+        {tabs.map((tab) => (
+          <TabsContent key={tab.key} value={tab.key} className="mt-[22px]">
+            {tab.content}
+          </TabsContent>
+        ))}
+      </Tabs>
     )
   }
 
   return (
-    <div className="mt-6">
+    <Tabs value={active?.key} onValueChange={setActiveKey} className="mt-6">
       {/* pr-1.5 is the room the buttons' 4px hard shadow needs — a scroll
           container clips at its padding edge, and with pr-0 the last tab lost
           its shadow flat against that edge. pb-1 (4px) already cleared it. */}
-      <div role="tablist" className="flex gap-2 overflow-x-auto pb-1 pr-1.5">
+      <TabsList aria-label={label} className="flex gap-2 overflow-x-auto pb-1 pr-1.5">
         {tabs.map((tab) => (
-          <button
+          <TabsTrigger
             key={tab.key}
-            type="button"
-            role="tab"
-            aria-selected={tab.key === active?.key}
-            onClick={() => setActiveKey(tab.key)}
+            value={tab.key}
             className={`btn btn-sm shrink-0 ${
               tab.key === active?.key ? 'btn-primary' : 'btn-quiet'
             }`}
           >
             {tab.label}
-          </button>
+          </TabsTrigger>
         ))}
-      </div>
-      {/* Keyed on the tab, so React remounts rather than reconciling one tab's
-          tree onto the next. Without it a controlled input in one tab could
-          land on the DOM node of an uncontrolled one in another — which is
-          exactly the warning the events/stories editor started throwing when
-          its two forms sat at the same position in their trees. */}
-      <div key={active?.key} className="mt-4">
-        {active?.content}
-      </div>
-    </div>
+      </TabsList>
+      {/* One panel per tab, and Radix mounts only the active one, so React
+          remounts rather than reconciling one tab's tree onto the next.
+          Without that a controlled input in one tab could land on the DOM node
+          of an uncontrolled one in another — which is exactly the warning the
+          events/stories editor started throwing when its two forms sat at the
+          same position in their trees. */}
+      {tabs.map((tab) => (
+        <TabsContent key={tab.key} value={tab.key} className="mt-4">
+          {tab.content}
+        </TabsContent>
+      ))}
+    </Tabs>
   )
 }

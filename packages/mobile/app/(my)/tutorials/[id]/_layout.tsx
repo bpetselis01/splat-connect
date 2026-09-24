@@ -3,13 +3,11 @@
 // One provider for the whole editor stack, so a section's save is already
 // reflected on the hub when you go back — no refetch on focus, and no second
 // copy of the draft to fall out of step with the first.
-import { Pressable } from 'react-native'
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
 import { TutorialDraftProvider } from '../../../../lib/use-tutorial-draft'
 import { stackScreenOptions } from '../../../../lib/nav-options'
 import { SaveChip } from '../../../../components/my-tutorials/sections/save-chip'
-import { theme } from '../../../../lib/theme'
+import { BackButton } from '../../../../components/ui/BackButton'
 
 /**
  * The hub's back control, and the reason it is declared rather than inherited.
@@ -24,14 +22,10 @@ import { theme } from '../../../../lib/theme'
 function HubBackButton() {
   const router = useRouter()
   return (
-    <Pressable
+    <BackButton
+      label="My tutorials"
       onPress={() => (router.canGoBack() ? router.back() : router.replace('/tutorials'))}
-      accessibilityRole="button"
-      accessibilityLabel="My tutorials"
-      hitSlop={8}
-    >
-      <Ionicons name="chevron-back" size={26} color={theme.colors.primary} />
-    </Pressable>
+    />
   )
 }
 
@@ -56,6 +50,7 @@ export default function TutorialEditorLayout() {
           options={{ title: 'Edit guide', headerLeft: () => <HubBackButton /> }}
         />
         <Stack.Screen name="details" options={{ title: 'Details' }} />
+        <Stack.Screen name="steps" options={{ title: 'Steps' }} />
         <Stack.Screen name="safety" options={{ title: 'Safety' }} />
         <Stack.Screen name="parts" options={{ title: 'Parts' }} />
         <Stack.Screen name="tools" options={{ title: 'Tools' }} />

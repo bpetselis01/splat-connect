@@ -12,7 +12,7 @@ import {
 } from '@phosphor-icons/react/dist/ssr'
 import { CardPhoto, tintFor } from './card-photo'
 import { gradeOf, type GradeKey } from '@/lib/toy-grade'
-import { toyHolderName, type OfferType, type ToyWithOwner } from '@splat-connect/types'
+import { toyHolderName, type OfferType, type ToyWithOwner, initials } from '@splat-connect/types'
 
 /** The board's offer pill, in its words. */
 export const OFFER: Record<OfferType, { label: string; Icon: typeof Gift }> = {
@@ -26,12 +26,6 @@ export const GRADE_ICON: Record<GradeKey, typeof Gift> = {
   good: CheckCircle,
   'well-loved': Heart,
   'needs-fix': Wrench,
-}
-
-/** Two letters from a holder's name, for the footer avatar. */
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean)
-  return (parts[0]?.[0] ?? '?') + (parts[1]?.[0] ?? '')
 }
 
 /**
@@ -109,7 +103,7 @@ export function ToyLibraryCard({
           {holder ? (
             <span className="browse-card__holder">
               <span aria-hidden="true" className="browse-card__avatar">
-                {initials(holder).toUpperCase()}
+                {initials(holder, '?')}
               </span>
               <span className="truncate">
                 <span className="sr-only">Held by </span>

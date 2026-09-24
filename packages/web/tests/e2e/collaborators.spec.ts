@@ -105,7 +105,8 @@ test('a collaborator is invited, accepts, edits, submits, and both are notified 
 
     // 4. As the collaborator, edit the title and submit for review.
     const renamedTitle = `${title} renamed`
-    await page.goto(`/tutorials/${tutorialId}/edit`)
+    // The editor opens on Status (a1535727); the title lives on Details.
+    await page.goto(`/tutorials/${tutorialId}/edit?step=details`)
     await page.locator('#edit-title').fill(renamedTitle)
     await page.getByRole('button', { name: 'Save details' }).click()
     await expect
@@ -132,14 +133,27 @@ test('a collaborator is invited, accepts, edits, submits, and both are notified 
       })
       .toBe('pending')
 
-    // 5. The admin approves it.
+    // 5. The admin approves it, from the queue's side pane (39672abf).
     await signIn(page, admin.email, admin.password)
     await page.waitForURL('**/admin')
     await page.goto('/admin/review')
-    await page.getByRole('link', { name: new RegExp(renamedTitle) }).click()
-    await page.waitForURL(`**/admin/review/${tutorialId}`)
-    await page.getByRole('button', { name: 'Approve and publish' }).click()
     await page.waitForLoadState('networkidle')
+    await page.getByRole('link', { name: new RegExp(renamedTitle) }).click()
+    await page.waitForURL(`**/admin/review?selected=${tutorialId}`)
+    await page
+      .getByRole('complementary', { name: `Reviewing ${renamedTitle}` })
+      .getByRole('button', { name: 'Approve', exact: true })
+      .click()
+    await expect
+      .poll(async () => {
+        const { data } = await adminClient()
+          .from('tutorials')
+          .select('status')
+          .eq('id', tutorialId)
+          .single()
+        return data?.status
+      })
+      .toBe('approved')
 
     // 6. Both the author and the collaborator see the approval on
     //    /notifications, with the unread badge on the hub counting it — read

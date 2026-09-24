@@ -9,50 +9,41 @@
 //
 // Title comes from the native header (app/(my)/_layout.tsx: "Toy inventory").
 import { useCallback, useEffect, useState } from 'react'
-import { View, Text, ScrollView, StyleSheet } from 'react-native'
+import { View, ScrollView, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
 import type { ToyWithOwner } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { useCapabilities } from '../../lib/capabilities'
 import { Screen } from '../ui/Screen'
-import { Card } from '../ui/Card'
-import { Badge } from '../ui/Badge'
 import { Button } from '../ui/Button'
 import { EmptyState } from '../ui/EmptyState'
 import { SkeletonRow } from '../ui/Skeleton'
-import { AnimatedPressable } from '../ui/AnimatedPressable'
+import { ListIntro, ListRow, ListSection, Pill, RowThumb } from '../list/list-kit'
 
 function StockRow({ toy, onPress }: { toy: ToyWithOwner; onPress: () => void }) {
+  // The board's shelf words: nothing left is Out, a published listing is
+  // Available, anything else is still the leader's draft.
+  const pill =
+    toy.quantity === 0 ? (
+      <Pill label="Out" bg={theme.colors.honeySoft} icon="arrow-redo-outline" />
+    ) : toy.status === 'published' ? (
+      <Pill label="Available" bg={theme.colors.mintSoft} icon="checkmark-circle-outline" />
+    ) : (
+      <Pill label="Draft" bg={theme.colors.surfaceSunken} fg={theme.colors.muted} icon="eye-off-outline" />
+    )
   return (
-    <AnimatedPressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={toy.name}
-      accessibilityHint={`${toy.quantity} in stock. Opens the toy.`}
-      pressScale={0.985}
-      style={styles.rowPress}
-    >
-      <Card style={styles.card}>
-        <Text style={styles.quantity}>{toy.quantity}</Text>
-        <View style={styles.cardBody}>
-          <Text style={styles.cardTitle} numberOfLines={1}>
-            {toy.name}
-          </Text>
-          {/* Announced by the hint above; decorative here. */}
-          <View
-            style={styles.badgeRow}
-            accessibilityElementsHidden
-            importantForAccessibility="no-hide-descendants"
-          >
-            <Badge status={toy.status} />
-            {toy.switch_adapted ? <Badge status="switch_adapted" label="Switch-adapted" /> : null}
-          </View>
-        </View>
-        <Ionicons name="chevron-forward" size={18} color={theme.colors.primary} />
-      </Card>
-    </AnimatedPressable>
+    <View style={styles.rowPress}>
+      <ListRow
+        title={toy.name}
+        meta={`${toy.quantity} in stock · Condition ${toy.condition}/10${toy.switch_adapted ? ' · Switch-adapted' : ''}`}
+        thumb={<RowThumb photo={toy.cover_photo_url} />}
+        pill={pill}
+        onPress={onPress}
+        accessibilityHint={`${toy.quantity} in stock. Opens the toy.`}
+        titleLines={1}
+      />
+    </View>
   )
 }
 
@@ -130,19 +121,20 @@ export function InventoryScreen() {
           .filter((g) => g.toys.length > 0)
       : [{ name: null as string | null, toys }]
 
+  const units = toys.reduce((n, t) => n + t.quantity, 0)
   const openToy = (id: string) => router.push(`/toys/${id}`)
 
   return (
     <Screen>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-        {/* The API's POST /api/toys takes owner_org_id + quantity, but the
-            add-toy screen has no org mode yet — this lands on the personal
-            form. Ledgered as the follow-up rather than a form invented here. */}
-        <Button
-          label="+ Add stock"
-          variant="accent"
-          onPress={() => router.push('/toys/new')}
-          style={styles.addStock}
+        <ListIntro
+          lead={
+            loading || error
+              ? undefined
+              : `${toys.length} listing${toys.length === 1 ? '' : 's'}, ${units} unit${units === 1 ? '' : 's'} on the shelf.`
+          }
+          cta="+ Add to inventory"
+          onCta={() => router.push(`/toys/new?org=${ledOrgs[0]?.id ?? ''}`)}
         />
 
         {loading ? (
@@ -163,7 +155,7 @@ export function InventoryScreen() {
         ) : (
           groups.map((group) => (
             <View key={group.name ?? 'all'} style={styles.group}>
-              {group.name ? <Text style={styles.groupTitle}>{group.name}</Text> : null}
+              {group.name ? <ListSection>{group.name}</ListSection> : null}
               {group.toys.map((toy) => (
                 <StockRow key={toy.id} toy={toy} onPress={() => openToy(toy.id)} />
               ))}
@@ -177,25 +169,7 @@ export function InventoryScreen() {
 
 const styles = StyleSheet.create({
   content: { paddingBottom: theme.spacing(6) },
-  addStock: { alignSelf: 'flex-start', marginBottom: theme.spacing(4), paddingVertical: theme.spacing(2), paddingHorizontal: theme.spacing(4) },
   retry: { marginTop: theme.spacing(5), alignSelf: 'center', paddingHorizontal: theme.spacing(8) },
   group: { marginBottom: theme.spacing(4) },
-  groupTitle: {
-    fontFamily: theme.fonts.bold,
-    fontSize: theme.type.heading,
-    color: theme.colors.text,
-    marginBottom: theme.spacing(2),
-  },
   rowPress: { marginBottom: theme.spacing(3) },
-  card: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3), padding: theme.spacing(3) },
-  quantity: {
-    fontFamily: theme.fonts.numeral,
-    fontSize: 26,
-    color: theme.colors.primaryDeep,
-    minWidth: 32,
-    textAlign: 'center',
-  },
-  cardBody: { flex: 1 },
-  cardTitle: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.text },
-  badgeRow: { flexDirection: 'row', gap: theme.spacing(2), marginTop: theme.spacing(2) },
 })

@@ -23,8 +23,8 @@ import Link from 'next/link'
 import { BookOpen, Hammer, Info } from '@phosphor-icons/react/dist/ssr'
 import { requireCapabilities } from '@/lib/require-capabilities'
 import { apiClient } from '@/lib/api-client'
-import { isOwnerSide } from '@splat-connect/types'
-import type { PickupAddress, Profile, ToyTransactionDetail } from '@splat-connect/types'
+import { isOwnerSide, pickupAddress } from '@splat-connect/types'
+import type { PickupAddress, ToyTransactionDetail } from '@splat-connect/types'
 import { Badge } from '@/components/badge'
 import { Disclosure } from '@/components/disclosure'
 import { CostPanel, type CostLine, type Settlement } from '@/components/cost-panel'
@@ -34,12 +34,6 @@ import { LiveTransaction } from '@/components/live-transaction'
 import { ToyTransactionThread } from '@/components/toy-transaction-thread'
 import { ChatHead } from '@/components/exchange-chat'
 import { buildStages, buildStageFacts } from '@/lib/build-stages'
-
-function defaultAddress(profile: Profile): PickupAddress | null {
-  const { pickup_line1, pickup_suburb, pickup_state, pickup_postcode } = profile
-  if (!pickup_line1 || !pickup_suburb || !pickup_state || !pickup_postcode) return null
-  return { pickup_line1, pickup_suburb, pickup_state, pickup_postcode }
-}
 
 export default async function BuildDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -163,7 +157,7 @@ export default async function BuildDetailPage({ params }: { params: Promise<{ id
         transaction={tx}
         viewerId={caps.profile.id}
         ledOrgIds={ledOrgIds}
-        viewerDefaultAddress={defaultAddress(caps.profile)}
+        viewerDefaultAddress={pickupAddress(caps.profile)}
         onSendMessage={sendMessage}
         onAccept={accept}
         onReject={reject}

@@ -29,7 +29,7 @@ import { isOrgLeader } from '@/lib/org-access'
 import { OrgReviewBanner } from '@/components/org-review-banner'
 import { Badge } from '@/components/badge'
 import { BackingBadge } from '@/components/backing-state'
-import { BookOpen, Inbox } from '@/components/icons'
+import { BookOpen, Tray } from '@phosphor-icons/react/dist/ssr'
 import type { Tutorial, TutorialOrg, UserAgreement, Organization, OrgLeader } from '@splat-connect/types'
 
 type Backed = Tutorial & { tutorial_orgs?: TutorialOrg[] }
@@ -110,7 +110,7 @@ export default async function OrganizationPage({
         {backed.length === 0 ? (
           <div className="flex flex-col items-center px-6 py-12 text-center">
             <span aria-hidden="true" className="empty-badge text-brand-dark">
-              <BookOpen className="h-8 w-8" />
+              <BookOpen className="h-8 w-8" weight="bold" aria-hidden="true" />
             </span>
             <p className="mt-4 font-bold text-ink">Nothing backed yet.</p>
             <p className="mt-1 max-w-xs text-sm leading-relaxed text-muted">
@@ -148,7 +148,7 @@ export default async function OrganizationPage({
         {waiting.length === 0 ? (
           <div className="flex flex-col items-center px-6 py-12 text-center">
             <span aria-hidden="true" className="empty-badge text-brand-dark">
-              <Inbox className="h-8 w-8" />
+              <Tray className="h-8 w-8" weight="bold" aria-hidden="true" />
             </span>
             <p className="mt-4 font-bold text-ink">Nothing waiting.</p>
             <p className="mt-1 max-w-xs text-sm leading-relaxed text-muted">

@@ -68,7 +68,9 @@ test('a project is backed by an organisation and published by its leader', async
     // 6. It is public, with the badge and the approver — what a parent sees.
     await page.goto(`/tutorials/${tutorialId}`)
     await expect(page.getByText(new RegExp(`Backed by ${orgName}`))).toBeVisible()
-    await expect(page.getByText(/Approved by /)).toBeVisible()
+    // The review line replaced the approver badge (a1535727) and still names
+    // the person and the organisation they approved for.
+    await expect(page.getByText(new RegExp(`reviewed by .+ for ${orgName}`, 'i'))).toBeVisible()
 
     // 7. And it reaches the admin's spot-check, because the admin did not approve it.
     await signIn(page, admin.email, admin.password)

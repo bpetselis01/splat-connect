@@ -28,6 +28,7 @@ packages/web/.last-run.json
 # silently swallowed app/dashboard/exchanges/build/[id] — a page that was
 # written, worked, and would never have been committed.
 !packages/web/app/**/build/
+!packages/mobile/app/**/build/
 
 # misc
 .DS_Store

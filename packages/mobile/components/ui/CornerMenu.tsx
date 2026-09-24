@@ -1,5 +1,6 @@
-// Pinned corner action menu: a hamburger in the top-right that fans its items
-// downward. Replaces the header CTA buttons on Guides and Toy Library, which
+// Pinned corner action menu: the board's ink grid disc in the bottom-right,
+// fanning its items upward. (A hamburger top-right until 2026-09-23, when the
+// tab headings took the mascot and that corner.) Replaces the header CTA buttons on Guides and Toy Library, which
 // scrolled away with the header — this stays reachable from anywhere in the
 // list.
 //
@@ -11,7 +12,6 @@
 import { useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import Animated, {
   FadeIn,
@@ -36,7 +36,6 @@ export type CornerMenuItem = {
 
 export function CornerMenu({ label, items }: { label: string; items: CornerMenuItem[] }) {
   const router = useRouter()
-  const insets = useSafeAreaInsets()
   const [open, setOpen] = useState(false)
   // Cross-fade, not rotation. The old 135° spin worked because a plus turned
   // 135° IS an ×; three stacked lines turned 135° are three stacked lines on a
@@ -74,25 +73,10 @@ export function CornerMenu({ label, items }: { label: string; items: CornerMenuI
           />
         </Animated.View>
       ) : null}
-      {/* Screen pads for the notch, but absolute positioning ignores padding,
-          so the zone re-applies the same inset itself. */}
-      <View style={[styles.zone, { top: insets.top + theme.spacing(4) }]} pointerEvents="box-none">
-        <AnimatedPressable
-          onPress={toggle}
-          accessibilityRole="button"
-          accessibilityLabel={label}
-          accessibilityState={{ expanded: open }}
-          style={styles.trigger}
-        >
-          <Animated.View style={menuIcon}>
-            <Ionicons name="menu" size={26} color={theme.colors.ink} />
-          </Animated.View>
-          {/* Absolute so the two glyphs share one box and neither shifts the
-              other while they cross. */}
-          <Animated.View style={[styles.triggerIcon, closeIcon]}>
-            <Ionicons name="close" size={26} color={theme.colors.ink} />
-          </Animated.View>
-        </AnimatedPressable>
+      {/* The board's grid disc, bottom-right above the tab bar: reachable
+          by a thumb from anywhere in the list, and clear of the mascot the
+          tab heading now carries top-right. The menu fans upward from it. */}
+      <View style={styles.zone} pointerEvents="box-none">
         {open ? (
           <View accessibilityViewIsModal onAccessibilityEscape={toggle} style={styles.menu}>
             {items.map((item, i) => (
@@ -123,6 +107,22 @@ export function CornerMenu({ label, items }: { label: string; items: CornerMenuI
             ))}
           </View>
         ) : null}
+        <AnimatedPressable
+          onPress={toggle}
+          accessibilityRole="button"
+          accessibilityLabel={label}
+          accessibilityState={{ expanded: open }}
+          style={styles.trigger}
+        >
+          <Animated.View style={menuIcon}>
+            <Ionicons name="grid-outline" size={20} color={theme.colors.surface} />
+          </Animated.View>
+          {/* Absolute so the two glyphs share one box and neither shifts the
+              other while they cross. */}
+          <Animated.View style={[styles.triggerIcon, closeIcon]}>
+            <Ionicons name="close" size={22} color={theme.colors.surface} />
+          </Animated.View>
+        </AnimatedPressable>
       </View>
     </View>
   )
@@ -140,6 +140,7 @@ const styles = StyleSheet.create({
   zone: {
     position: 'absolute',
     right: theme.spacing(4),
+    bottom: theme.spacing(4),
     alignItems: 'flex-end',
     gap: theme.spacing(2),
   },
@@ -147,13 +148,11 @@ const styles = StyleSheet.create({
   trigger: {
     width: 48,
     height: 48,
-    borderRadius: theme.radii.card,
-    borderWidth: theme.border.hairline,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.apricot,
+    borderRadius: theme.radii.pill,
+    backgroundColor: theme.colors.ink,
     alignItems: 'center',
     justifyContent: 'center',
-    ...theme.shadow(2),
+    ...theme.shadow(3),
   },
   menu: { alignItems: 'flex-end', gap: theme.spacing(2) },
   item: {

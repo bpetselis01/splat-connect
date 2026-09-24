@@ -1,6 +1,10 @@
 // packages/mobile/components/explore/article-screen.tsx
+// The board's article: one idea per heading, a callout for the thing people get
+// wrong, and the next article as the only footer action. Reaching the footer is
+// finishing the article, so the footer marks it read.
 import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { Stack, useRouter } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
 import { theme } from '../../lib/theme'
 import { useLearnProgress } from '../../lib/learn'
 import { LEARN_ARTICLES } from '../../lib/learn-content'
@@ -10,8 +14,9 @@ import { EmptyState } from '../ui/EmptyState'
 
 export function ArticleScreen({ slug }: { slug: string }) {
   const router = useRouter()
-  const { read, markRead } = useLearnProgress()
-  const article = LEARN_ARTICLES.find((a) => a.slug === slug)
+  const { markRead } = useLearnProgress()
+  const index = LEARN_ARTICLES.findIndex((a) => a.slug === slug)
+  const article = LEARN_ARTICLES[index]
 
   if (!article) {
     return (
@@ -21,7 +26,7 @@ export function ArticleScreen({ slug }: { slug: string }) {
     )
   }
 
-  const isRead = read.has(slug)
+  const next = LEARN_ARTICLES[index + 1] ?? null
 
   return (
     <Screen>
@@ -29,6 +34,7 @@ export function ArticleScreen({ slug }: { slug: string }) {
           with the real title once the article is known. */}
       <Stack.Screen options={{ title: article.title }} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        <Text style={styles.eyebrow}>{`Learn · ${index + 1} of ${LEARN_ARTICLES.length}`}</Text>
         <Text style={styles.title}>{article.title}</Text>
         <Text style={styles.intro}>{article.intro}</Text>
 
@@ -40,21 +46,24 @@ export function ArticleScreen({ slug }: { slug: string }) {
                 {paragraph}
               </Text>
             ))}
+            {section.callout ? (
+              <View testID="article-callout" style={styles.callout}>
+                <Ionicons name="warning-outline" size={18} color={theme.colors.ink} />
+                <Text style={styles.calloutText}>{section.callout}</Text>
+              </View>
+            ) : null}
           </View>
         ))}
 
-        {isRead ? (
-          <Text style={styles.readState}>✓ Read</Text>
-        ) : (
-          <Button
-            label="Mark as read"
-            onPress={() => {
-              markRead(slug)
-              router.back()
-            }}
-            style={styles.markButton}
-          />
-        )}
+        <Button
+          label={next ? `Next: ${next.title}` : 'Back to Learn'}
+          onPress={() => {
+            markRead(slug)
+            if (next) router.replace(`/explore/learn/${next.slug}`)
+            else router.back()
+          }}
+          style={styles.next}
+        />
       </ScrollView>
     </Screen>
   )
@@ -62,18 +71,26 @@ export function ArticleScreen({ slug }: { slug: string }) {
 
 const styles = StyleSheet.create({
   content: { paddingBottom: theme.spacing(8) },
-  title: { fontFamily: theme.fonts.bold, fontSize: theme.type.title, color: theme.colors.text, lineHeight: 30 },
+  eyebrow: {
+    fontFamily: theme.fonts.black,
+    fontSize: 12,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: theme.colors.primaryDeep,
+    marginBottom: theme.spacing(1),
+  },
+  title: { fontFamily: theme.fonts.display, fontSize: theme.type.title, color: theme.colors.text, lineHeight: 30 },
   intro: {
     fontFamily: theme.fonts.regular,
-    fontSize: theme.type.label,
+    fontSize: theme.type.body,
     color: theme.colors.muted,
-    lineHeight: 22,
+    lineHeight: 23,
     marginTop: theme.spacing(2),
     marginBottom: theme.spacing(5),
   },
   section: { marginBottom: theme.spacing(5) },
   heading: {
-    fontFamily: theme.fonts.bold,
+    fontFamily: theme.fonts.display,
     fontSize: theme.type.heading,
     color: theme.colors.text,
     marginBottom: theme.spacing(2),
@@ -85,12 +102,19 @@ const styles = StyleSheet.create({
     lineHeight: 26,
     marginBottom: theme.spacing(3),
   },
-  markButton: { marginTop: theme.spacing(2) },
-  readState: {
+  callout: {
+    flexDirection: 'row',
+    gap: theme.spacing(2),
+    padding: theme.spacing(4),
+    borderRadius: theme.radii.panel,
+    backgroundColor: theme.colors.honeySoft,
+  },
+  calloutText: {
+    flex: 1,
     fontFamily: theme.fonts.bold,
     fontSize: theme.type.label,
     color: theme.colors.ink,
-    textAlign: 'center',
-    marginTop: theme.spacing(2),
+    lineHeight: 21,
   },
+  next: { marginTop: theme.spacing(2) },
 })

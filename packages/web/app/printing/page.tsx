@@ -13,8 +13,8 @@
  *
  * Requests start from a guide (the parts come from its STL files, never an
  * upload), so this page browses; it does not send. The board's "pick up to
- * three, first to accept wins" needs a multi-printer request the API does not
- * take yet — see RequestAPrintPage for the one-printer form that exists.
+ * three, first to accept wins" happens on RequestAPrintPage, which is the one
+ * place that knows which guide the parts come from.
  */
 import Link from 'next/link'
 import {
@@ -61,7 +61,7 @@ export default async function PrintingPage() {
       <BrowseHero
         eyebrow="3D Printing"
         title="You do not need a printer"
-        lede="Most assistive parts are small — a switch mount, an interrupter case — and someone nearby already owns a printer they would rather use for this. Pick one; they print it, and you cover the filament."
+        lede="Most assistive parts are small — a switch mount, an interrupter case — and someone nearby already owns a printer they would rather use for this. Pick up to three; the first to accept prints it, and you cover the filament."
         primary={{
           label: 'Find a printer',
           href: '#printer-grid',

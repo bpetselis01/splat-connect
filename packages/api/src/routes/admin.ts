@@ -181,9 +181,12 @@ admin.post('/organizations', async (c) => {
 })
 
 admin.patch('/organizations/:id', async (c) => {
-  const body = await c.req.json<{ status?: string; name?: string; description?: string }>()
+  const body = await c.req.json<{ status?: string; name?: string; description?: string; verified?: unknown }>()
   if (body.status !== undefined && body.status !== 'active' && body.status !== 'suspended') {
     return c.json({ error: "status must be 'active' or 'suspended'" }, 400)
+  }
+  if (body.verified !== undefined && typeof body.verified !== 'boolean') {
+    return c.json({ error: 'verified must be true or false' }, 400)
   }
 
   const supabase = createUserClient(c.get('token'))
@@ -193,6 +196,9 @@ admin.patch('/organizations/:id', async (c) => {
       ...(body.status !== undefined ? { status: body.status } : {}),
       ...(body.name !== undefined ? { name: body.name } : {}),
       ...(body.description !== undefined ? { description: body.description } : {}),
+      // 076's "Verified by SPLAT". This route is the only writer: the leaders'
+      // profile PATCH allowlists its fields and this is not among them.
+      ...(body.verified !== undefined ? { verified_at: body.verified ? new Date().toISOString() : null } : {}),
       updated_at: new Date().toISOString(),
     })
     .eq('id', c.req.param('id'))
@@ -250,7 +256,7 @@ admin.get('/ideas', async (c) => {
     // future private column from leaking here by default the way it did on
     // the public detail endpoint.
     .select(
-      'id, author_id, title, summary, description, intended_use, primary_user, contact_prefs, status, review_note, tutorial_id, created_at, updated_at, profiles!toy_ideas_author_id_fkey(name)'
+      'id, author_id, title, summary, description, intended_use, primary_user, contact_prefs, status, review_note, tutorial_id, kind, answer_message_id, answered_at, created_at, updated_at, profiles!toy_ideas_author_id_fkey(name)'
     )
     .order('created_at', { ascending: false })
 
@@ -355,9 +361,12 @@ admin.post('/ideas/:id/graduate', async (c) => {
   const id = c.req.param('id')
 
   const { data: exists, error: existsError } = await client
-    .from('toy_ideas').select('id').eq('id', id).maybeSingle()
+    .from('toy_ideas').select('id, kind').eq('id', id).maybeSingle()
   if (existsError) return c.json({ error: existsError.message }, 500)
   if (!exists) return c.json({ error: 'Not found' }, 404)
+  // A question is resolved by an answer, never a guide (078's check says the
+  // same of the rows; this is the readable refusal in front of it).
+  if (exists.kind === 'question') return c.json({ error: 'A question cannot graduate' }, 409)
 
   // Claim the graduation atomically. A read-then-act guard lets two concurrent
   // calls both pass, both mint a tutorial, and both attach contributors — an
