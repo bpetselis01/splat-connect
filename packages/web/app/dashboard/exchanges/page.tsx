@@ -8,11 +8,11 @@ import {
   Gift,
   Hammer as HammerIcon,
   LockSimple,
+  Handshake,
 } from '@phosphor-icons/react/dist/ssr'
 import { requireCapabilities } from '@/lib/require-capabilities'
 import { apiClient } from '@/lib/api-client'
 import { Badge } from '@/components/badge'
-import { Handshake } from '@/components/icons'
 import { RecordCard } from '@/components/record-card'
 import { exchangeStages } from '@/lib/exchange-stages'
 import { buildStages } from '@/lib/build-stages'
@@ -168,7 +168,7 @@ export default async function ExchangesPage() {
       {transactions.length === 0 ? (
         <div className="flex flex-col items-center px-6 py-14 text-center">
           <span aria-hidden="true" className="empty-badge text-brand-dark">
-            <Handshake className="h-8 w-8" />
+            <Handshake className="h-8 w-8" weight="bold" aria-hidden="true" />
           </span>
           <p className="mt-[18px] text-[17px] font-extrabold text-ink">
             No donation or exchange requests yet.

@@ -1,7 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import { ToySummary } from '@/components/toy-summary'
-import { ToyPhotoGrid } from '@/components/toy-photo-viewer'
 import type { Toy } from '@splat-connect/types'
 
 vi.mock('next/image', () => ({
@@ -32,26 +31,26 @@ function toy(overrides: Partial<Toy> = {}): Toy {
 
 describe('ToySummary', () => {
   // The photos slot is deliberately not exercised here beyond being filled:
-  // ToyPhotoGrid has its own tests, and the point of the slot is that this
-  // component no longer decides how photos are shown.
+  // the point of the slot is that this component no longer decides how photos
+  // are shown.
 
   it('falls back to an em dash when there is no description', () => {
-    render(<ToySummary toy={toy({ description: null })} photos={<ToyPhotoGrid urls={[]} />} />)
+    render(<ToySummary toy={toy({ description: null })} photos={null} />)
     const dd = screen.getByText('Name').closest('dl')!.querySelectorAll('dd')[2]
     expect(dd).toHaveTextContent('—')
   })
 
   it('shows the description when present', () => {
-    render(<ToySummary toy={toy({ description: 'Squeaky but loved' })} photos={<ToyPhotoGrid urls={[]} />} />)
+    render(<ToySummary toy={toy({ description: 'Squeaky but loved' })} photos={null} />)
     expect(screen.getByText('Squeaky but loved')).toBeInTheDocument()
   })
 
   it('shows the switch-adapted Yes/No text', () => {
-    const { unmount } = render(<ToySummary toy={toy({ switch_adapted: false })} photos={<ToyPhotoGrid urls={[]} />} />)
+    const { unmount } = render(<ToySummary toy={toy({ switch_adapted: false })} photos={null} />)
     expect(screen.getByText('No')).toBeInTheDocument()
     unmount()
 
-    render(<ToySummary toy={toy({ switch_adapted: true })} photos={<ToyPhotoGrid urls={[]} />} />)
+    render(<ToySummary toy={toy({ switch_adapted: true })} photos={null} />)
     expect(screen.getByText('Yes')).toBeInTheDocument()
   })
 })

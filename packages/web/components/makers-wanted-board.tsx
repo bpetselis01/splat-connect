@@ -36,6 +36,7 @@ import {
   Package,
 } from '@phosphor-icons/react/dist/ssr'
 import { browserApiClient } from '@/lib/browser-api-client'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { formatRelativeTime } from '@/lib/relative-time'
 
 export type OpenBuild = {
@@ -92,35 +93,34 @@ export function MakersWantedBoard({ builds }: { builds: OpenBuild[] }) {
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
-        <div role="tablist" aria-label="Filter build requests" className="flex gap-1 rounded-full bg-[var(--surface2)] p-1">
-          {(
-            [
-              ['open', 'Needs a maker', 'var(--tmint)'],
-              ['mine', 'Your requests', 'var(--tcoral)'],
-            ] as const
-          ).map(([k, label, nBg]) => {
-            const n = count(k)
-            return (
-              <button
-                key={k}
-                type="button"
-                role="tab"
-                aria-selected={tab === k}
-                onClick={() => setTab(k)}
-                className={`inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-sm font-extrabold text-ink ${
-                  tab === k ? 'bg-[var(--surface)] shadow-[var(--e1)]' : ''
-                }`}
-              >
-                {label}
-                {n > 0 && (
-                  <span className="h-5 min-w-5 rounded-full px-1.5 text-center text-xs font-extrabold leading-5 text-[var(--tink)]" style={{ background: nBg }}>
-                    {n}
-                  </span>
-                )}
-              </button>
-            )
-          })}
-        </div>
+        <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
+          <TabsList aria-label="Filter build requests" className="flex gap-1 rounded-full bg-[var(--surface2)] p-1">
+            {(
+              [
+                ['open', 'Needs a maker', 'var(--tmint)'],
+                ['mine', 'Your requests', 'var(--tcoral)'],
+              ] as const
+            ).map(([k, label, nBg]) => {
+              const n = count(k)
+              return (
+                <TabsTrigger
+                  key={k}
+                  value={k}
+                  className={`inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-sm font-extrabold text-ink ${
+                    tab === k ? 'bg-[var(--surface)] shadow-[var(--e1)]' : ''
+                  }`}
+                >
+                  {label}
+                  {n > 0 && (
+                    <span className="h-5 min-w-5 rounded-full px-1.5 text-center text-xs font-extrabold leading-5 text-[var(--tink)]" style={{ background: nBg }}>
+                      {n}
+                    </span>
+                  )}
+                </TabsTrigger>
+              )
+            })}
+          </TabsList>
+        </Tabs>
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="text-[13px] font-bold text-muted">Families who can travel</span>
           {RANGES.map((km) => (

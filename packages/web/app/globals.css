@@ -126,15 +126,6 @@
   /* Overshoots and settles. The site is about switches; its controls should
      feel like one is being pressed rather than merely recoloured. */
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-  /* A damped oscillator sampled into linear() — duration included, so it is
-     used whole: `transition: transform var(--spring-photo)`.
-     --ease-spring above stays right for a control that snaps back on its own;
-     this one is for a rail released mid-drag, where the settle after the
-     overshoot is most of what you feel. A cubic-bezier cannot describe that
-     tail: it has one hump and then stops. Only the photo carousel wants it. */
-  --spring-photo: 0.58s
-    linear(0, 0.041, 0.138, 0.26, 0.39, 0.514, 0.624, 0.719, 0.797, 0.859, 0.907, 0.943, 0.969,
-      0.986, 0.998, 1.005, 1.009, 1.011, 1.011, 1.01, 1.009, 1.008, 1.006, 1.005, 1.004, 1.003, 1);
 
   --font-sans: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
   /* Numerics, with tabular-nums at the call site. Replaces IBM Plex Mono. */
@@ -143,6 +134,35 @@
      one is not numerals-only and not opt-in per page. */
   --font-display: var(--font-baloo), var(--font-sans);
 }
+
+/* shadcn/ui's colour names (components.json, components/ui), pointed at the
+   Soft Pop tokens. `inline`, so a utility emits var(--color-surface) itself and
+   resolves on the element — that is what lets body[data-mode='dark'|'hc'] below
+   reach it, where shadcn's own :root/.dark pair would not. shadcn's `muted` is
+   a background and Soft Pop's --color-muted is text, so bg-muted is not
+   mapped: a shadcn component that uses it needs a class swap. */
+@theme inline {
+  --color-background: var(--color-canvas);
+  --color-foreground: var(--color-ink);
+  --color-card: var(--color-surface);
+  --color-card-foreground: var(--color-ink);
+  --color-popover: var(--color-surface);
+  --color-popover-foreground: var(--color-ink);
+  --color-primary: var(--color-brand);
+  --color-primary-foreground: var(--onbrand);
+  --color-secondary: var(--color-sunken);
+  --color-secondary-foreground: var(--color-ink);
+  --color-muted-foreground: var(--color-muted);
+  --color-accent: var(--color-brand-50);
+  --color-accent-foreground: var(--color-ink);
+  --color-destructive: var(--color-danger);
+  --color-border: var(--color-line);
+  --color-input: var(--color-line);
+  --color-ring: var(--color-brand);
+}
+
+/* shadcn's `dark:` variant, keyed to the header's mode toggle, not a .dark class. */
+@custom-variant dark (&:where(body[data-mode="dark"], body[data-mode="dark"] *));
 @layer base {
   /* The artboard's own token names, aliased onto the @theme values above.
      Prototype markup is written against these — var(--surface), var(--e2),
@@ -292,15 +312,6 @@
     transition-duration: 0.01ms !important;
   }
 
-  /* The carousel sets `transition: transform var(--spring-photo)` inline, where
-     a rule cannot outrank it — so the token itself is what gets collapsed.
-     Redefined rather than removed: the rail must still arrive at the photo it
-     was released towards, just without travelling there. */
-  @media (prefers-reduced-motion: reduce) {
-    :root {
-      --spring-photo: 1ms linear;
-    }
-  }
 
   /*
    * The display face, and the reason the app never looked like the board.
@@ -3685,7 +3696,7 @@
   /* The board's sort pair: a 44px pill that opens the field menu, and a 44px
      disc that flips direction. Values are the board's #library inline styles. */
   .sort-control {
-    position: relative;
+    anchor-name: --sort-control;
     display: flex;
     align-items: center;
     gap: 6px;
@@ -3739,12 +3750,18 @@
     outline-offset: 2px;
   }
 
+  /* A popover, so it sits in the top layer and is placed by anchor rather than
+     by a positioned parent. `inset: auto` and `margin: 0` undo the UA popover
+     centring; display lives on :popover-open because an author display beats
+     the UA's display: none for a closed popover. */
   .sort-control__menu {
-    position: absolute;
-    top: 52px;
-    right: 0;
-    z-index: 40;
-    display: flex;
+    position-anchor: --sort-control;
+    inset: auto;
+    top: calc(anchor(top) + 52px);
+    right: anchor(right);
+    margin: 0;
+    overflow: visible;
+    color: inherit;
     flex-direction: column;
     gap: 2px;
     min-width: 250px;
@@ -3754,6 +3771,10 @@
     background: var(--surface);
     box-shadow: var(--e3);
     animation: pixel-rise 0.18s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  .sort-control__menu:popover-open {
+    display: flex;
   }
 
   .sort-control__option {
@@ -3775,7 +3796,7 @@
     background: var(--surface2);
   }
 
-  .sort-control__option[aria-selected='true'] {
+  .sort-control__option[aria-pressed='true'] {
     background: var(--b50);
   }
 
@@ -4144,7 +4165,7 @@
   }
 
   .nav-tab:hover,
-  .nav-tab[aria-expanded='true'],
+  .nav-more:has(:popover-open) .nav-tab,
   .nav-tab[data-current] {
     background: var(--color-sunken);
   }
@@ -4154,17 +4175,21 @@
   }
 
   .nav-more {
-    position: relative;
+    anchor-name: --nav-more;
   }
 
+  /* A popover in the top layer, placed by anchor — see .sort-control__menu
+     for why inset, margin and display are spelled out. */
   .nav-more__menu {
-    position: absolute;
-    top: 52px;
-    right: 0;
-    z-index: 50;
+    position-anchor: --nav-more;
+    inset: auto;
+    top: calc(anchor(top) + 52px);
+    right: anchor(right);
+    margin: 0;
+    overflow: visible;
+    color: inherit;
     width: 520px;
     max-width: calc(100vw - 40px);
-    display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 6px;
     padding: 16px;
@@ -4175,20 +4200,20 @@
     animation: pixel-rise 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
+  .nav-more__menu:popover-open {
+    display: grid;
+  }
+
   /* On a phone More lands wherever the tab row wraps it, so a menu anchored
-     to the button opens off one edge or the other. Fixed instead, inset from
-     the header's own edges: the header's backdrop-filter makes it the
-     containing block for a fixed child, so left/right resolve against the bar,
-     and top: auto keeps the menu at its place in the flow, under the button. */
+     to the button's edge opens off one side or the other. Inset from the
+     viewport's edges instead, and only the top follows the button. */
   @media (max-width: 639px) {
     .nav-more__menu {
-      position: fixed;
-      top: auto;
+      top: calc(anchor(bottom) + 8px);
       left: 16px;
       right: 16px;
       width: auto;
       max-width: none;
-      margin-top: 8px;
       grid-template-columns: 1fr;
     }
   }

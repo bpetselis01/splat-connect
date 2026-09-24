@@ -61,7 +61,7 @@ test('sort by build time, then flip it', async ({ page }) => {
 
   await page.goto(`/library?q=${encodeURIComponent(marker)}`)
   await page.getByRole('button', { name: 'Newest first' }).click()
-  await page.getByRole('option', { name: /Build time/ }).click()
+  await page.getByRole('button', { name: /Build time/ }).click()
   const titles = page.getByTestId('tutorial-card').locator('.browse-card__title')
   await expect(titles).toHaveText([`${marker} short`, `${marker} long`])
 

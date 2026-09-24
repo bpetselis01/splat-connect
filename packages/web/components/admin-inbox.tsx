@@ -21,6 +21,7 @@ import {
   ArrowBendUpLeft,
 } from '@phosphor-icons/react/dist/ssr'
 import { browserApiClient } from '@/lib/browser-api-client'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { formatRelativeTime } from '@/lib/relative-time'
 
 export type ContactMessage = {
@@ -67,22 +68,16 @@ export function AdminInbox({ messages }: { messages: ContactMessage[] }) {
 
   return (
     <div>
-      <div role="tablist" aria-label="Message status" className="seg-tabs mb-[18px]">
-        {TABS.map((t) => (
-          <button
-            key={t}
-            type="button"
-            role="tab"
-            // aria-selected, not aria-pressed: role="tab" does not support the
-            // latter, and two conflicting states read worse than one.
-            aria-selected={tab === t}
-            onClick={() => setTab(t)}
-          >
-            {t[0].toUpperCase() + t.slice(1)}{' '}
-            <span className="opacity-60">{messages.filter((m) => m.status === t).length}</span>
-          </button>
-        ))}
-      </div>
+      <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
+        <TabsList aria-label="Message status" className="seg-tabs mb-[18px]">
+          {TABS.map((t) => (
+            <TabsTrigger key={t} value={t}>
+              {t[0].toUpperCase() + t.slice(1)}{' '}
+              <span className="opacity-60">{messages.filter((m) => m.status === t).length}</span>
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
 
       {error && (
         <p role="alert" className="alert alert-danger mb-4">

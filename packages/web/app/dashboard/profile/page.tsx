@@ -18,7 +18,7 @@ import { apiClient } from '@/lib/api-client'
 import { requireCapabilities } from '@/lib/require-capabilities'
 import { ProfileForm } from '@/components/profile-form'
 import { SignOutButton } from '@/components/sign-out-button'
-import { Child } from '@/components/icons'
+import { PersonSimple } from '@phosphor-icons/react/dist/ssr'
 import { childSummary, type ChildProfile, type Tutorial, type UserAgreement } from '@splat-connect/types'
 
 // The board's avatar tints, in its order; a child keeps its tint by position.
@@ -88,7 +88,7 @@ export default async function ProfileTabPage() {
       {children.length === 0 ? (
         <div className="mt-6 flex flex-col items-center px-6 py-12 text-center">
           <span aria-hidden="true" className="empty-badge text-brand-dark">
-            <Child className="h-8 w-8" />
+            <PersonSimple className="h-8 w-8" weight="bold" aria-hidden="true" />
           </span>
           <p className="mt-4 font-bold text-ink">
             You haven&apos;t added any child profiles yet.

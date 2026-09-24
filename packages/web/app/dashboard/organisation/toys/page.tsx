@@ -19,9 +19,8 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { apiClient } from '@/lib/api-client'
 import { getCapabilities } from '@/lib/capabilities'
-import { Package, Plus, Tag, PencilSimple, Gift } from '@phosphor-icons/react/dist/ssr'
+import { Archive, Package, Plus, Tag, PencilSimple, Gift } from '@phosphor-icons/react/dist/ssr'
 import { OrgPickupForm, type OrgPickup } from '@/components/org-pickup-form'
-import { Shelf } from '@/components/icons'
 import { GRADE_ICON } from '@/components/toy-library-card'
 import { gradeOf } from '@/lib/toy-grade'
 import type { Toy, ToyTransactionSummary } from '@splat-connect/types'
@@ -103,7 +102,7 @@ export default async function OrgInventoryPage() {
       {toys.length === 0 ? (
         <div className="flex flex-col items-center px-6 py-12 text-center">
           <span aria-hidden="true" className="empty-badge text-brand-dark">
-            <Shelf className="h-8 w-8" />
+            <Archive className="h-8 w-8" weight="bold" aria-hidden="true" />
           </span>
           <p className="mt-4 font-bold text-ink">No stock listed yet.</p>
           <p className="mt-1 max-w-xs text-sm leading-relaxed text-muted">
