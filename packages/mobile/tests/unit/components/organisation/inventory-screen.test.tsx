@@ -101,10 +101,10 @@ describe('InventoryScreen', () => {
     expect(mockPush).toHaveBeenCalledWith('/toys/toy9')
   })
 
-  it('offers Add to inventory, which lands on the add-toy screen', async () => {
+  it('offers Add to inventory, which lands on the add-toy screen in org mode', async () => {
     render(<InventoryScreen />)
     fireEvent.press(await screen.findByRole('button', { name: '+ Add to inventory' }))
-    expect(mockPush).toHaveBeenCalledWith('/toys/new')
+    expect(mockPush).toHaveBeenCalledWith(expect.stringMatching(/^\/toys\/new\?org=.+/))
   })
 
   it('explains an empty shelf rather than apologising for it', async () => {

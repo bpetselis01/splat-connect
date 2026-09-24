@@ -5,7 +5,16 @@ import NewToyRoute from '../../../app/(my)/toys/new'
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
 
 const mockReplace = jest.fn()
-jest.mock('expo-router', () => ({ useRouter: () => ({ replace: mockReplace }) }))
+let mockParams: { org?: string } = {}
+jest.mock('expo-router', () => ({
+  useRouter: () => ({ replace: mockReplace }),
+  useLocalSearchParams: () => mockParams,
+}))
+
+let mockLedOrgs: { id: string; name: string }[] = []
+jest.mock('../../../lib/capabilities', () => ({
+  useCapabilities: () => ({ caps: { ledOrgs: mockLedOrgs } }),
+}))
 
 const mockPost = jest.fn()
 jest.mock('../../../lib/api-client', () => ({
@@ -21,6 +30,8 @@ jest.mock('../../../lib/auth-context', () => ({ useAuth: jest.fn() }))
 
 beforeEach(() => {
   jest.clearAllMocks()
+  mockParams = {}
+  mockLedOrgs = []
 })
 
 describe('NewToyRoute', () => {
@@ -67,5 +78,42 @@ describe('NewToyRoute', () => {
     fireEvent.press(screen.getByLabelText('Create'))
     expect(await screen.findByText('Could not create this toy. Please try again.')).toBeTruthy()
     expect(mockReplace).not.toHaveBeenCalled()
+  })
+
+  it('asks no owner question of someone who leads no organisation', () => {
+    render(<NewToyRoute />)
+    expect(screen.queryByText('Who holds this toy')).toBeNull()
+  })
+
+  it('arrives from inventory holding the org, and posts owner and quantity', async () => {
+    mockLedOrgs = [{ id: 'org1', name: 'Toy Shed' }]
+    mockParams = { org: 'org1' }
+    mockPost.mockResolvedValue({ id: 'toy1' })
+    render(<NewToyRoute />)
+    fireEvent.changeText(screen.getByPlaceholderText('Name'), 'Bubble machine')
+    fireEvent.changeText(screen.getByLabelText('How many do you hold'), '5')
+    fireEvent.press(screen.getByLabelText('Create'))
+    await waitFor(() =>
+      expect(mockPost).toHaveBeenCalledWith('/api/toys', {
+        name: 'Bubble machine',
+        condition: 5,
+        owner_org_id: 'org1',
+        quantity: 5,
+      })
+    )
+  })
+
+  it('lets a leader switch back to a personal toy, which carries no stock', async () => {
+    mockLedOrgs = [{ id: 'org1', name: 'Toy Shed' }]
+    mockParams = { org: 'org1' }
+    mockPost.mockResolvedValue({ id: 'toy1' })
+    render(<NewToyRoute />)
+    fireEvent.press(screen.getByLabelText('Me'))
+    expect(screen.queryByLabelText('How many do you hold')).toBeNull()
+    fireEvent.changeText(screen.getByPlaceholderText('Name'), 'Bubble machine')
+    fireEvent.press(screen.getByLabelText('Create'))
+    await waitFor(() =>
+      expect(mockPost).toHaveBeenCalledWith('/api/toys', { name: 'Bubble machine', condition: 5 })
+    )
   })
 })

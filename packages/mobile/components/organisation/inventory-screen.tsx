@@ -127,9 +127,6 @@ export function InventoryScreen() {
   return (
     <Screen>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-        {/* The API's POST /api/toys takes owner_org_id + quantity, but the
-            add-toy screen has no org mode yet — this lands on the personal
-            form. Ledgered as the follow-up rather than a form invented here. */}
         <ListIntro
           lead={
             loading || error
@@ -137,7 +134,7 @@ export function InventoryScreen() {
               : `${toys.length} listing${toys.length === 1 ? '' : 's'}, ${units} unit${units === 1 ? '' : 's'} on the shelf.`
           }
           cta="+ Add to inventory"
-          onCta={() => router.push('/toys/new')}
+          onCta={() => router.push(`/toys/new?org=${ledOrgs[0]?.id ?? ''}`)}
         />
 
         {loading ? (
