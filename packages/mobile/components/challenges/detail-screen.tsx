@@ -17,7 +17,6 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   View,
   Text,
-  Alert,
   ScrollView,
   StyleSheet,
   KeyboardAvoidingView,
@@ -29,6 +28,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { challengeHistory, challengePill, challengeStats, shortDate } from './challenge-status'
 import type { ToyIdeaDetail, ToyIdeaMessage, ContactPref } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
+import { confirmDestructive } from '../../lib/confirm'
 import { theme } from '../../lib/theme'
 import { useSaves } from '../../lib/saves'
 import { useCapabilities } from '../../lib/capabilities'
@@ -216,10 +216,7 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
   }
 
   function confirmLeave() {
-    Alert.alert('Leave this challenge?', 'You will stop taking part in its conversation.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Leave', style: 'destructive', onPress: () => void leave() },
-    ])
+    confirmDestructive('Leave this challenge?', 'You will stop taking part in its conversation.', 'Leave', () => void leave())
   }
 
   if (loading) {

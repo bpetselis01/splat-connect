@@ -8,10 +8,11 @@
 // where it was fixed. Here every gap getMissingFields reports is a row you can
 // tap, and Submit sits under the count that gates it.
 import { useCallback, useState, type ComponentProps } from 'react'
-import { View, Text, ScrollView, Pressable, Alert, StyleSheet } from 'react-native'
+import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { apiClient } from '../../lib/api-client'
+import { confirmDestructive } from '../../lib/confirm'
 import { useDraft } from '../../lib/use-tutorial-draft'
 import {
   getMissingFields,
@@ -114,21 +115,14 @@ export function TutorialHub({ id, justCreated, fromPdf }: { id: string; justCrea
 
   function handleDelete() {
     setMenuOpen(false)
-    Alert.alert('Delete this draft?', 'This cannot be undone.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await apiClient.delete(`/api/tutorials/${id}`)
-            router.replace('/tutorials')
-          } catch (err) {
-            console.error('[TutorialHub] delete failed:', err)
-          }
-        },
-      },
-    ])
+    confirmDestructive('Delete this draft?', 'This cannot be undone.', 'Delete', async () => {
+      try {
+        await apiClient.delete(`/api/tutorials/${id}`)
+        router.replace('/tutorials')
+      } catch (err) {
+        console.error('[TutorialHub] delete failed:', err)
+      }
+    })
   }
 
   return (

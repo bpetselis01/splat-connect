@@ -1,12 +1,13 @@
 // packages/mobile/components/my-toys/editor.tsx
 import { useEffect, useState } from 'react'
-import { View, Text, ScrollView, Alert, Image, Pressable, Switch, StyleSheet } from 'react-native'
+import { View, Text, ScrollView, Image, Pressable, Switch, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import * as ImagePicker from 'expo-image-picker'
 import type { OfferType, Toy, ToyTransactionSummary } from '@splat-connect/types'
 import { computeToyStepStatuses, getMissingToyFields, isOwnerSide, MAX_PHOTOS, type ToyStepId } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
+import { confirmDestructive, notify } from '../../lib/confirm'
 import { uploadFile } from '../../lib/upload'
 import { theme } from '../../lib/theme'
 import { useCapabilities } from '../../lib/capabilities'
@@ -354,22 +355,15 @@ export function Editor({ id }: { id: string }) {
   }
 
   function handleDelete() {
-    Alert.alert('Delete this toy?', 'This cannot be undone.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await apiClient.delete(`/api/toys/${id}`)
-            router.back()
-          } catch (err) {
-            console.error('[Editor] delete failed:', err)
-            Alert.alert('Could not delete this toy', 'Please try again.')
-          }
-        },
-      },
-    ])
+    confirmDestructive('Delete this toy?', 'This cannot be undone.', 'Delete', async () => {
+      try {
+        await apiClient.delete(`/api/toys/${id}`)
+        router.back()
+      } catch (err) {
+        console.error('[Editor] delete failed:', err)
+        notify('Could not delete this toy', 'Please try again.')
+      }
+    })
   }
 
   return (

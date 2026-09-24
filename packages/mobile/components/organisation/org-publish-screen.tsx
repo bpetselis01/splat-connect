@@ -8,10 +8,11 @@
  * stories/new), linked from the top of the list.
  */
 import { useCallback, useState } from 'react'
-import { View, Text, ScrollView, StyleSheet, Alert } from 'react-native'
+import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { EVENT_KIND_LABEL, isPast, STORY_KIND_LABEL, type OrgEvent, type OrgStory } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
+import { confirmDestructive } from '../../lib/confirm'
 import { useCapabilities } from '../../lib/capabilities'
 import { theme } from '../../lib/theme'
 import { Screen } from '../ui/Screen'
@@ -89,10 +90,13 @@ export function OrgPublishScreen() {
         }))
 
   const remove = (r: Row) =>
-    Alert.alert(`Remove ${r.title}?`, 'It comes off the public page and cannot be brought back.', [
-      { text: 'Keep it', style: 'cancel' },
-      { text: 'Remove', style: 'destructive', onPress: () => void run(() => apiClient.delete(`/api/organizations/${org.id}/${tab}/${r.id}`)) },
-    ])
+    confirmDestructive(
+      `Remove ${r.title}?`,
+      'It comes off the public page and cannot be brought back.',
+      'Remove',
+      () => void run(() => apiClient.delete(`/api/organizations/${org.id}/${tab}/${r.id}`)),
+      'Keep it',
+    )
 
   return (
     <Screen>

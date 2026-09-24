@@ -8,11 +8,12 @@
 // measurements…) are gone: those columns stay in the database but nothing asks
 // for them now (APP 3 minimisation). These are plain-language preferences for
 // ranking guides, never a clinical assessment — see docs/REGULATORY-CHANGES.md.
-import { ScrollView, View, Text, Alert, Linking, StyleSheet } from 'react-native'
+import { ScrollView, View, Text, Linking, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { CHILD_QUESTIONS } from '@splat-connect/types'
 import { NotMedicalNote } from '../ui/NotMedicalNote'
 import { apiClient } from '../../lib/api-client'
+import { confirmDestructive, notify } from '../../lib/confirm'
 import { theme } from '../../lib/theme'
 import { useChildProfile } from '../../lib/use-child-profile'
 import { Button } from '../ui/Button'
@@ -47,22 +48,15 @@ export function ChildEditorHome({ childId }: { childId: string }) {
   }
 
   function confirmDelete() {
-    Alert.alert('Delete this profile?', 'Everything on it is removed. This cannot be undone.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: () => {
-          apiClient
-            .delete(`/api/child-profiles/${childId}`)
-            .then(() => router.back())
-            .catch((err) => {
-              console.error('[ChildEditorHome] delete failed:', err)
-              Alert.alert('Could not delete this profile', 'Please try again.')
-            })
-        },
-      },
-    ])
+    confirmDestructive('Delete this profile?', 'Everything on it is removed. This cannot be undone.', 'Delete', () => {
+      apiClient
+        .delete(`/api/child-profiles/${childId}`)
+        .then(() => router.back())
+        .catch((err) => {
+          console.error('[ChildEditorHome] delete failed:', err)
+          notify('Could not delete this profile', 'Please try again.')
+        })
+    })
   }
 
   return (
