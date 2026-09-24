@@ -58,7 +58,9 @@ const SOURCE = {
   },
   challenges: {
     table: 'toy_ideas',
-    select: '*',
+    // GET /public/challenges' columns, never '*': review_note is an admin's
+    // private rejection reasoning, and a saved list is no wider than its page.
+    select: 'id, title, summary, contact_prefs, status, kind, answered_at, created_at',
     filter: (q: EntityQuery) => q.eq('status', 'challenge'),
   },
   organisations: {
