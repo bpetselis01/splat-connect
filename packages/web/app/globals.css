@@ -3753,13 +3753,16 @@
   /* A popover, so it sits in the top layer and is placed by anchor rather than
      by a positioned parent. `inset: auto` and `margin: 0` undo the UA popover
      centring; display lives on :popover-open because an author display beats
-     the UA's display: none for a closed popover. */
+     the UA's display: none for a closed popover. A top-layer popover is fixed,
+     so a menu that runs off the bottom cannot be scrolled to: flip-block opens
+     it above the trigger instead when the trigger sits low in the viewport. */
   .sort-control__menu {
     position-anchor: --sort-control;
     inset: auto;
-    top: calc(anchor(top) + 52px);
+    top: anchor(bottom);
     right: anchor(right);
-    margin: 0;
+    margin: 8px 0 0;
+    position-try-fallbacks: flip-block;
     overflow: visible;
     color: inherit;
     flex-direction: column;
