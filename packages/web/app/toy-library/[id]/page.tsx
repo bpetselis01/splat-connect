@@ -3,9 +3,7 @@
  *
  * It was a `panel` holding a four-row <dl> — Name / Condition / Description /
  * Switch-adapted — which is a form's review step, not the page a stranger reads
- * to decide whether to ask for a child's toy. ToySummary still draws that <dl>,
- * and still should: it is exactly right for the owner checking their own
- * listing, which is its other caller.
+ * to decide whether to ask for a child's toy.
  *
  * The board's shape is the same one the tutorial detail uses, and for the same
  * reason: the facts belong to the whole page, the photographs take the wide
