@@ -14,7 +14,7 @@ import { SplatMascot } from '@/components/splat-mascot'
 import { ImpactCard } from '@/components/impact-card'
 import { StoryKindPill, StoryPhoto } from '@/components/story-bits'
 import { apiClient } from '@/lib/api-client'
-import { shortDate } from '@/lib/dates'
+import { shortDate } from '@splat-connect/types'
 import type { Difficulty, ImpactSummary, StoryListItem, Tutorial } from '@splat-connect/types'
 
 // Same shape the empty grid/strip below already render for zero rows, so a

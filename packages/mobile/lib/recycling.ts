@@ -4,7 +4,7 @@
 // components/recycling-intake.tsx) — a client that disagrees with either books
 // a drop the server refuses or offers a button that 400s.
 import type { DropoffStatus, Organization, RecyclingDropoff } from '@splat-connect/types'
-import { MIN_DROPOFF_GRAMS, RECYCLING_DECLARATION } from '@splat-connect/types'
+import { kgToGrams, MIN_DROPOFF_GRAMS, RECYCLING_DECLARATION } from '@splat-connect/types'
 
 export type TakerOrg = Pick<Organization, 'id' | 'name' | 'status' | 'suburb' | 'state'> & {
   recycling_materials?: string[]
@@ -21,29 +21,6 @@ export type TakerOrg = Pick<Organization, 'id' | 'name' | 'status' | 'suburb' | 
 export function takers<T extends TakerOrg>(orgs: T[]): T[] {
   return orgs.filter((o) => (o.recycling_materials ?? []).length > 0 && o.status !== 'suspended')
 }
-
-/** Kilograms as typed, in whole grams. Null for anything that is not a weight.
- *  The same parser as web's dropoff-form.tsx — no floats, so 2.1 is 2100. */
-export function kgToGrams(input: string): number | null {
-  const match = /^\s*(\d{1,4})(?:\.(\d{1,3}))?\s*$/.exec(input)
-  if (!match) return null
-  return Number(match[1]) * 1000 + Number((match[2] ?? '').padEnd(3, '0'))
-}
-
-/** The API's 4xx bodies are written for people ("Drop-offs start at two
- *  kilos."); a 5xx is a Postgres error and gets the fallback. Same rule as
- *  exchanges/thread-screen.tsx. */
-export function apiMessage(err: unknown, fallback: string): string {
-  const match = /failed with status 4\d\d: (.+)$/.exec(err instanceof Error ? err.message : '')
-  return match ? match[1] : fallback
-}
-
-export const initials = (name: string) =>
-  name
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase() ?? '')
-    .join('')
 
 /** Grams as the board prints kilos: one decimal. */
 export const kg = (grams: number) => `${(grams / 1000).toFixed(1)} kg`

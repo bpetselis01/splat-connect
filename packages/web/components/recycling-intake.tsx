@@ -20,17 +20,11 @@ import { Scales } from '@phosphor-icons/react/dist/ssr'
 import type { RecyclingDropoff } from '@splat-connect/types'
 import { Badge } from '@/components/badge'
 import { browserApiClient } from '@/lib/browser-api-client'
+import { initials } from '@splat-connect/types'
 
 const kg = (grams: number) => `${(grams / 1000).toFixed(1)} kg`
 
 const TINTS = ['bg-honey-soft', 'bg-violet-soft', 'bg-mint-soft', 'bg-brand-tint']
-
-const initials = (name: string) =>
-  name
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase() ?? '')
-    .join('')
 
 /** The board's inline kg box: mono, 46px, on the canvas. */
 function KgInput({

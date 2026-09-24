@@ -1,58 +1,9 @@
 // packages/mobile/lib/notifications.ts
 // The copy and the routing behind the Inbox.
 //
-// COPY is ported VERBATIM from web's components/notifications-list.tsx — all
-// twenty-nine of them. Two clients narrating the same event differently is how a
-// person ends up unsure whether they read about one thing or two, so the
-// wording is not "improved" here; change it on web first.
-//
-// The type → bucket map is NOT ported: @splat-connect/types already exports
-// notificationBucket() and the API groups by the same function, so a mobile
-// copy would be the third and would drift first.
-import type { Notification, NotificationType } from '@splat-connect/types'
-
-export const COPY: Record<NotificationType, (n: Notification) => string> = {
-  collaborator_invited: (n) => `${n.actor_name} invited you to collaborate on "${n.tutorial_title}"`,
-  collaborator_accepted: (n) => `${n.actor_name} accepted your invite to "${n.tutorial_title}"`,
-  collaborator_declined: (n) => `${n.actor_name} declined your invite to "${n.tutorial_title}"`,
-  collaborator_removed: (n) => `${n.actor_name} removed you from "${n.tutorial_title}"`,
-  collaborator_left: (n) => `${n.actor_name} left "${n.tutorial_title}"`,
-  backing_requested: (n) => `${n.actor_name} asked your organisation to back "${n.tutorial_title}"`,
-  tutorial_submitted: (n) => `${n.actor_name} submitted "${n.tutorial_title}" for review`,
-  tutorial_approved: (n) => `"${n.tutorial_title}" was approved and is now published`,
-  tutorial_rejected: (n) => `"${n.tutorial_title}" was rejected`,
-  // Unnamed on purpose: who thanked a guide stays private (066).
-  tutorial_thanked: (n) => `A family said thanks for "${n.tutorial_title}"`,
-  toy_request: (n) => `${n.actor_name} requested ${n.toy_name}`,
-  toy_accepted: (n) => `${n.actor_name} accepted your request for ${n.toy_name}`,
-  toy_rejected: (n) => `${n.actor_name} declined your request for ${n.toy_name}`,
-  toy_withdrawn: (n) => `${n.actor_name} withdrew their request for ${n.toy_name}`,
-  toy_message: (n) => `${n.actor_name} sent a message about ${n.toy_name}`,
-  idea_approved: () => 'Your idea was published as a design challenge',
-  idea_rejected: () => 'Your idea was reviewed and not taken forward',
-  challenge_joined: (n) => `${n.actor_name} joined your design challenge`,
-  challenge_left: (n) => `${n.actor_name} left your design challenge`,
-  challenge_removed: (n) => `${n.actor_name} removed you from a design challenge`,
-  idea_graduated: () =>
-    'A challenge you were part of is being written up as a guide, and you are credited on it',
-  build_shot_posted: (n) => `${n.actor_name} posted a photo of ${n.toy_name} working`,
-  build_approved: (n) => `${n.actor_name} approved the working shot for ${n.toy_name}`,
-  print_started: (n) => `${n.actor_name} started printing ${n.toy_name}`,
-  print_ready: (n) => `${n.actor_name} finished printing ${n.toy_name}`,
-  // 077. For the two publish types the event or story title rides in
-  // tutorial_title; for a message, the organisation's name does.
-  org_event_published: (n) => `${n.actor_name} published an event: ${n.tutorial_title}`,
-  org_story_published: (n) => `${n.actor_name} published a story: ${n.tutorial_title}`,
-  org_message: (n) =>
-    n.actor_name === n.tutorial_title
-      ? `${n.actor_name} replied to your message`
-      : `${n.actor_name} messaged ${n.tutorial_title}`,
-  org_thanked: (n) => `${n.actor_name} said thanks to your organisation`,
-}
-
-/** Web's copyFor: a type this build has no line for renders, rather than throwing. */
-export const copyFor = (n: Notification): string =>
-  COPY[n.type]?.(n) ?? `${n.actor_name} updated something you're part of`
+// The copy itself (COPY, copyFor) and the type → bucket map live in
+// @splat-connect/types, shared with web and the API.
+import type { Notification } from '@splat-connect/types'
 
 /**
  * Where a notification lands on mobile. Web's linkFor with its hrefs swapped

@@ -29,7 +29,7 @@ import {
 } from '@phosphor-icons/react/dist/ssr'
 import { getCapabilities } from '@/lib/capabilities'
 import { apiClient } from '@/lib/api-client'
-import { longDate } from '@/lib/dates'
+import { longDate } from '@splat-connect/types'
 import { formatRelativeTime } from '@/lib/relative-time'
 import { EventPartQueue } from '@/components/event-part-queue'
 import { EventWithdrawActions } from '@/components/event-withdraw-actions'

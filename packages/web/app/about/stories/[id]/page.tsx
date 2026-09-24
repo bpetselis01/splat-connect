@@ -18,9 +18,9 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { BookOpen, CaretRight } from '@phosphor-icons/react/dist/ssr'
 import { apiClient } from '@/lib/api-client'
-import { shortDate } from '@/lib/dates'
+import { initials, shortDate } from '@splat-connect/types'
 import { ShareButton } from '@/components/share-button'
-import { StoryKindPill, StoryPhoto, STORY_KIND_STYLE, initials } from '@/components/story-bits'
+import { StoryKindPill, StoryPhoto, STORY_KIND_STYLE } from '@/components/story-bits'
 import { STORY_KIND_LABEL, type StoryListItem } from '@splat-connect/types'
 
 type StoryDetail = StoryListItem & {

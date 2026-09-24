@@ -28,7 +28,7 @@ import type {
   ToyTransactionDetail,
   ToyTransactionMessage,
 } from '@splat-connect/types'
-import { isOwnerSide, needsAction, actionLabel, formatCents } from '@splat-connect/types'
+import { isOwnerSide, needsAction, actionLabel, formatCents, apiMessage } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { useCapabilities } from '../../lib/capabilities'
@@ -55,19 +55,7 @@ const PICKUP_FIELDS = [
 
 type PickupDraft = Record<(typeof PICKUP_FIELDS)[number]['key'], string>
 
-/**
- * The API writes its 4xx bodies for humans — "Incorrect code", "Your
- * organisation needs a pickup address before you can accept requests" — and
- * api-client folds them into the thrown Error's message. Showing a generic
- * apology instead would hide the only sentence that tells someone what to do.
- * 5xx keeps the fallback: a raw Postgres error is not copy.
- */
-export function apiMessage(err: unknown, fallback: string): string {
-  const match = /failed with status 4\d\d: (.+)$/.exec(err instanceof Error ? err.message : '')
-  return match ? match[1] : fallback
-}
-
-export const STAGES = ['Requested', 'Accepted', 'Handover', 'Closed'] as const
+const STAGES = ['Requested', 'Accepted', 'Handover', 'Closed'] as const
 export type StageState = 'done' | 'current' | 'todo'
 
 /**

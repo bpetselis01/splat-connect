@@ -14,7 +14,7 @@ import { useCallback, useRef, useState } from 'react'
 import { View, Text, Image, ScrollView, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
 import type { TutorialWithDetails, TutorialOrg } from '@splat-connect/types'
-import { leaderActions } from '@splat-connect/types'
+import { apiMessage, leaderActions } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { supabase } from '../../lib/supabase'
 import { theme } from '../../lib/theme'
@@ -29,13 +29,6 @@ import { EmptyState } from '../ui/EmptyState'
 import { ErrorRow } from '../auth-screen'
 
 type Detail = TutorialWithDetails
-
-/** Same helper, same reasoning, as exchanges/thread-screen.tsx: the API's 4xx
- *  bodies are written for humans; 5xx keeps the fallback. */
-function apiMessage(err: unknown, fallback: string): string {
-  const match = /failed with status 4\d\d: (.+)$/.exec(err instanceof Error ? err.message : '')
-  return match ? match[1] : fallback
-}
 
 const OK = <Pill label="OK" bg={theme.colors.mintSoft} icon="checkmark" />
 const FLAG = <Pill label="Flag" bg={theme.colors.honeySoft} icon="flag-outline" />

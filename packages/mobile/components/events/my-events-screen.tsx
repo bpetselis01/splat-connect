@@ -10,7 +10,7 @@
 import { useCallback, useState } from 'react'
 import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
-import type { ToyTransactionStatus } from '@splat-connect/types'
+import { isPast, type ToyTransactionStatus } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { Screen } from '../ui/Screen'
@@ -34,10 +34,6 @@ type MyEvent = {
   }
   part_request: { status: ToyTransactionStatus; decline_reason: string | null } | null
 }
-
-// Same rule as web's lib/dates isPast: over once it has ended, or its day has.
-const isPast = (starts: string, ends: string | null) =>
-  new Date(ends ?? new Date(starts).setHours(23, 59, 59, 999)).getTime() < Date.now()
 
 function partsLine(r: MyEvent['part_request'], org: string) {
   if (!r) return null

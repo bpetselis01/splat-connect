@@ -12,7 +12,7 @@ const mockFrom = vi.fn()
 const mockAdminFrom = vi.fn()
 function defaultAdminFrom(table: string) {
   if (table === 'profiles') {
-    return { select: () => ({ eq: () => ({ single: () => Promise.resolve({ data: { name: 'Jamie' }, error: null }) }) }) }
+    return { select: () => ({ eq: () => ({ maybeSingle: () => Promise.resolve({ data: { name: 'Jamie' }, error: null }) }) }) }
   }
   return { insert: () => Promise.resolve({ data: null, error: null }) }
 }
@@ -315,7 +315,7 @@ describe('DELETE /ideas/:id/participants/:profileId', () => {
         return {
           select: () => ({
             eq: (_col: string, id: string) => ({
-              single: () =>
+              maybeSingle: () =>
                 Promise.resolve({
                   data: { name: id === 'user-1' ? 'Alex the author' : 'Riley the removed' },
                   error: null,

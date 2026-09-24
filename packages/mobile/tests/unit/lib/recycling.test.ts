@@ -1,4 +1,4 @@
-import { RECYCLING_DECLARATION } from '@splat-connect/types'
+import { kgToGrams, RECYCLING_DECLARATION } from '@splat-connect/types'
 import {
   DROPOFF_PILL,
   badges,
@@ -6,7 +6,6 @@ import {
   canDecide,
   diverted,
   intakeProblem,
-  kgToGrams,
   takers,
 } from '../../../lib/recycling'
 

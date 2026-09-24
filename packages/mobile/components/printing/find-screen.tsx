@@ -18,18 +18,16 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import type { PrinterWithOwner, StlFile, Tutorial } from '@splat-connect/types'
-import { MAX_PRINTERS_PER_REQUEST } from '@splat-connect/types'
+import { initials, MAX_PRINTERS_PER_REQUEST, plural } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { useCapabilities } from '../../lib/capabilities'
 import { theme } from '../../lib/theme'
 import {
   availability,
-  initials,
   isOpen,
   partMaterials,
   partsMeta,
   pickButtonLabel,
-  plural,
   togglePick,
 } from '../../lib/printing'
 import { Screen } from '../ui/Screen'

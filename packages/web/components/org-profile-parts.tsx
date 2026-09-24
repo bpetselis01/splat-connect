@@ -11,7 +11,7 @@ import Image from 'next/image'
 import { HandCoins, ImageSquare, Plus, Trash } from '@phosphor-icons/react/dist/ssr'
 import { ORG_DOOR_TARGETS, formatCents, type OrgDoorTarget } from '@splat-connect/types'
 import { browserApiClient } from '@/lib/browser-api-client'
-import { apiErrorDetail } from '@/lib/api-core'
+import { apiErrorDetail } from '@splat-connect/types'
 import { safePhotoSrc } from '@/lib/photo-src'
 import { dollarsToCents } from '@/components/cost-panel'
 import { askingBackCents } from '@/lib/org-profile'
@@ -19,7 +19,7 @@ import { askingBackCents } from '@/lib/org-profile'
 export type DoorDraft = { key: string; title: string; body: string; target: OrgDoorTarget }
 export type RateDraft = { key: string; description: string; amount: string; claiming: boolean }
 
-export const MAX_DOORS = 6
+const MAX_DOORS = 6
 
 /** A picture for the org, uploaded on pick. `slot` names the column it fills. */
 export function OrgImagePicker({

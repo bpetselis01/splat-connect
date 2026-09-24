@@ -17,7 +17,7 @@ export interface Grade {
 }
 
 /** Best first, so the first match is the grade. */
-export const GRADES: Grade[] = [
+const GRADES: Grade[] = [
   { key: 'like-new', label: 'Like new', min: 9, tint: 'var(--tok)' },
   { key: 'good', label: 'Good', min: 7, tint: 'var(--tmint)' },
   { key: 'well-loved', label: 'Well-loved', min: 5, tint: 'var(--tamber)' },

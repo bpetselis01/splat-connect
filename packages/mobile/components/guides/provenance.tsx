@@ -1,6 +1,7 @@
 // packages/mobile/components/guides/provenance.tsx
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
+import { initials } from '@splat-connect/types'
 import { theme } from '../../lib/theme'
 
 // Narrower than @splat-connect/types' TutorialContributor/TutorialOrg: this is
@@ -55,12 +56,6 @@ export function Provenance({
   // for the same belt-and-braces reason library-screen's backing() does it.
   const backer = orgs.find((o) => o.status === 'accepted')
   if (!primary) return null
-  const initials = primary.profiles.name
-    .split(/\s+/)
-    .map((w) => w.charAt(0))
-    .join('')
-    .slice(0, 2)
-    .toUpperCase()
 
   return (
     <Pressable
@@ -70,7 +65,7 @@ export function Provenance({
       style={styles.card}
     >
       <View style={styles.avatar}>
-        <Text style={styles.initials}>{initials}</Text>
+        <Text style={styles.initials}>{initials(primary.profiles.name)}</Text>
       </View>
       <View style={styles.body}>
         <Text style={styles.name} numberOfLines={1}>

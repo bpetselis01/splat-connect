@@ -5,8 +5,9 @@
 // first name unless they type something else.
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { OrgProfileScreen } from '../../../../components/organisation/org-profile-screen'
-import { doorRoute, firstName, sinceYear } from '../../../../lib/org-profile'
+import { doorRoute, sinceYear } from '../../../../lib/org-profile'
 import { useAuth } from '../../../../lib/auth-context'
+import { firstName } from '@splat-connect/types'
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
 jest.mock('../../../../lib/auth-context', () => ({ useAuth: jest.fn() }))

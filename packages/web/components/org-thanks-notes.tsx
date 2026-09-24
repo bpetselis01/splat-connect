@@ -12,7 +12,7 @@ import { useState } from 'react'
 import { Eye, EyeSlash } from '@phosphor-icons/react/dist/ssr'
 import type { OrgThanks } from '@splat-connect/types'
 import { browserApiClient } from '@/lib/browser-api-client'
-import { shortDate } from '@/lib/dates'
+import { shortDate } from '@splat-connect/types'
 
 export function OrgThanksNotes({ orgId, thanks: initial }: { orgId: string; thanks: OrgThanks[] }) {
   const [thanks, setThanks] = useState(initial)

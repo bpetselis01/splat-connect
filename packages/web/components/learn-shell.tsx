@@ -37,7 +37,7 @@ import {
 import { useLearnProgress } from '@/lib/learn-progress'
 import { UNITS, LESSONS, lessonBySlug, unitOf, nextAfter, type LessonKind } from '@/lib/learn-course'
 
-export const KIND_ICON: Record<LessonKind, typeof BookOpen> = {
+const KIND_ICON: Record<LessonKind, typeof BookOpen> = {
   read: BookOpen,
   build: Wrench,
   quiz: SealCheck,

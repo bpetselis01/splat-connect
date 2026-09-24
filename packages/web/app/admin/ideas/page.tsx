@@ -16,7 +16,7 @@ import { Lightbulb } from '@phosphor-icons/react/dist/ssr'
 import Link from 'next/link'
 import type { Route } from 'next'
 import { apiClient } from '@/lib/api-client'
-import { shortDate } from '@/lib/dates'
+import { shortDate } from '@splat-connect/types'
 import type { ToyIdea, ToyIdeaStatus } from '@splat-connect/types'
 
 // The board's four words for where an idea stands, on its tints.

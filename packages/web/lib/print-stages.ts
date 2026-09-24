@@ -15,6 +15,7 @@
  */
 import type { Stage } from '@/components/stage-rail'
 import type { ToyTransaction, ToyTransactionDetail } from '@splat-connect/types'
+import { shortDate } from '@splat-connect/types'
 
 type Row = Pick<
   ToyTransaction,
@@ -27,10 +28,6 @@ type Row = Pick<
   | 'created_at'
   | 'updated_at'
 >
-
-function shortDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })
-}
 
 export function printStages(tx: Row): Stage[] {
   const ended = shortDate(tx.updated_at)

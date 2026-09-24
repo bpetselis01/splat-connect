@@ -24,7 +24,7 @@
  */
 import { Check, DotOutline, Minus, X } from '@phosphor-icons/react/dist/ssr'
 
-export type StageState = 'done' | 'now' | 'todo' | 'stop'
+type StageState = 'done' | 'now' | 'todo' | 'stop'
 
 export interface Stage {
   /** Stable key — the record's own status token, not the label. */

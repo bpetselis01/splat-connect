@@ -42,7 +42,7 @@ describe('getCapabilities', () => {
   //        getUser() inside the API on every cold load. /api/child-profile was fetched to
   //        derive an isParent nobody branched on; app/dashboard/child fetches the row
   //        itself because it needs the body. Nothing may be added back without a reader.
-  //        action-count has one: the My exchanges badge in lib/nav-model.ts. unread-counts
+  //        action-count has one: the My exchanges badge in types' nav-model.ts. unread-counts
   //        has one too: the My SPLAT hub's badges in app/dashboard/page.tsx. The three
   //        secondary fetches run in parallel, so the cost is one round of latency, not four.
   it('fetches only the profile, the led organisations, and the two counts', async () => {
@@ -63,7 +63,7 @@ describe('getCapabilities', () => {
 
   // Tests: the exchange action count reaches the caller, for the rail badge
   // How:   the endpoint resolves to 3; checks exchangeActions is 3
-  // Chain: lib/nav-model.ts puts this on the My exchanges row, and the same needsAction
+  // Chain: types' nav-model.ts puts this on the My exchanges row, and the same needsAction
   //        predicate marks the matching cards — the number must agree with them
   it('reports the exchange action count', async () => {
     route({

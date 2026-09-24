@@ -17,12 +17,12 @@ import { useCallback, useEffect, useState } from 'react'
 import { View, Text, ScrollView, StyleSheet, Image } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import { PAYMENT_METHODS, formatCents } from '@splat-connect/types'
+import { PAYMENT_METHODS, formatCents, apiMessage, firstName } from '@splat-connect/types'
 import type { OrgDoorTarget, OrgPublicProfile, OrgRelationship, Tutorial } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { useAuth } from '../../lib/auth-context'
 import { useCapabilities } from '../../lib/capabilities'
-import { doorRoute, firstName, sinceYear } from '../../lib/org-profile'
+import { doorRoute, sinceYear } from '../../lib/org-profile'
 import { theme } from '../../lib/theme'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
 import { Card } from '../ui/Card'
@@ -31,7 +31,6 @@ import { Chip } from '../ui/Chip'
 import { TextField } from '../ui/TextField'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
-import { apiMessage } from '../exchanges/thread-screen'
 import { ErrorRow } from '../auth-screen'
 
 type IconName = React.ComponentProps<typeof Ionicons>['name']
@@ -349,7 +348,7 @@ function Fact({ k, v }: { k: string; v: string }) {
  * The three buttons, and the thanks form they open. The form is inline rather
  * than a sheet: three fields, one tick, and it closes for good once sent.
  */
-export function OrgButtons({
+function OrgButtons({
   orgId,
   orgName,
   me,

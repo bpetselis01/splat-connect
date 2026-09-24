@@ -23,11 +23,11 @@ import type {
   ToyTransactionSummary,
   TutorialCollaboratorInvite,
 } from '@splat-connect/types'
-import { notificationBucket, subjectName } from '@splat-connect/types'
+import { copyFor, notificationBucket, subjectName } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { threadHref } from '../../lib/builds'
-import { copyFor, linkFor, relativeTime } from '../../lib/notifications'
+import { linkFor, relativeTime } from '../../lib/notifications'
 import { Screen } from '../ui/Screen'
 import { Button } from '../ui/Button'
 import { ScreenHeader } from '../ui/ScreenHeader'

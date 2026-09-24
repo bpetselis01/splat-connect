@@ -11,14 +11,14 @@ import { useRouter } from 'next/navigation'
 import type { Route } from 'next'
 import { ArrowRight, CheckCircle, FilePdf, MinusCircle } from '@phosphor-icons/react/dist/ssr'
 import { browserApiClient } from '@/lib/browser-api-client'
-import { apiErrorDetail } from '@/lib/api-core'
+import { apiErrorDetail } from '@splat-connect/types'
 import { createGuideFromPdfDraft, pdfDraftChecklist, KIND_LABEL } from '@splat-connect/types'
 import type { PdfImportDraft, TutorialKind } from '@splat-connect/types'
 
 const MAX_BYTES = 20 * 1024 * 1024
 
 /** Where the editor opens, with what the banner needs to say. */
-export function editorUrl(id: string, r: { failed: string[]; stepsUnavailable: boolean }): string {
+function editorUrl(id: string, r: { failed: string[]; stepsUnavailable: boolean }): string {
   const q = new URLSearchParams({ step: 'files', created: '1', from: 'pdf' })
   if (r.stepsUnavailable) q.set('steps', 'later')
   if (r.failed.length) q.set('missed', r.failed.join(','))

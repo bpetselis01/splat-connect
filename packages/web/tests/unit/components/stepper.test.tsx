@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import { Stepper, type Finish } from '@/components/stepper'
 import { PanelActions, useSaveOnLeave } from '@/components/panel-actions'
 import type { EditStep, EditStepId } from '@/lib/edit-steps'
-import type { ToyStep } from '@/lib/toy-steps'
+import type { ToyStepId } from '@splat-connect/types'
 import type { Step } from '@/lib/steps'
 type ChildStep = Step<'survey' | 'ability' | 'everyday-needs' | 'customization'>
 
@@ -344,7 +344,7 @@ describe('Stepper: the toy editor', () => {
     searchParamsValue = ''
   })
 
-  function makeSteps(content: { details: ReactNode; photos: ReactNode; review: ReactNode }): ToyStep[] {
+  function makeSteps(content: { details: ReactNode; photos: ReactNode; review: ReactNode }): Step<ToyStepId>[] {
     return [
       { id: 'details', label: 'Details', status: 'done', content: content.details },
       { id: 'photos', label: 'Photos', status: 'attention', content: content.photos },

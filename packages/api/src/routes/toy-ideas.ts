@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { CONTACT_PREFS, type ContactPref, type ToyIdeaKind } from '@splat-connect/types'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
 import type { AuthVariables } from '../middleware/auth.js'
+import { profileName } from '../profile-name.js'
 
 const toyIdeas = new Hono<{ Variables: AuthVariables }>()
 
@@ -134,11 +135,7 @@ async function loadIdea(client: Client, id: string) {
   return client.from('toy_ideas').select('author_id, title, status').eq('id', id).single()
 }
 
-async function actorName(userId: string): Promise<string> {
-  const { data } = await createAdminClient()
-    .from('profiles').select('name').eq('id', userId).single()
-  return (data?.name as string) ?? 'Someone'
-}
+const actorName = (userId: string) => profileName(createAdminClient(), userId, 'Someone')
 
 toyIdeas.post('/:id/join', async (c) => {
   const id = c.req.param('id')

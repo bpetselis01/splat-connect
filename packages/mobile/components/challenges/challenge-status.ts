@@ -46,7 +46,7 @@ export function challengeStats(c: ToyIdeaDetail, now: Date): { n: number; label:
   return stats
 }
 
-export const longDate = (iso: string) =>
+const longDate = (iso: string) =>
   new Date(iso).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })
 export const shortDate = (iso: string) => new Date(iso).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })
 

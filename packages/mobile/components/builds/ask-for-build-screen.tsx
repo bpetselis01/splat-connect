@@ -17,7 +17,7 @@ import { View, Text, ScrollView, Pressable, StyleSheet, KeyboardAvoidingView, Pl
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import type { Tutorial } from '@splat-connect/types'
-import { formatBuildTime } from '@splat-connect/types'
+import { apiMessage, formatBuildTime } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { useCapabilities } from '../../lib/capabilities'
@@ -26,7 +26,6 @@ import { Chip } from '../ui/Chip'
 import { Button } from '../ui/Button'
 import { TextField } from '../ui/TextField'
 import { ErrorRow } from '../auth-screen'
-import { apiMessage } from '../exchanges/thread-screen'
 
 // The board's four ranges; the Makers wanted filter reads the same scale.
 const RANGES = [5, 10, 15, 25]

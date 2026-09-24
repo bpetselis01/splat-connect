@@ -5,8 +5,9 @@
  * three-line date badge, a month heading, a long date, a time range, a short
  * `8 Sep` — and they have to agree, or the same build day reads as two.
  *
- * Was lib/event-dates.ts until stories needed the short form too. Nothing here
- * is event-specific: a story's publication date and a build day's start are the
+ * Was web's lib/event-dates.ts until stories needed the short form too, then
+ * web's lib/dates.ts until mobile needed isPast. Nothing here is
+ * event-specific: a story's publication date and a build day's start are the
  * same problem.
  *
  * Australia/Sydney throughout, and deliberately fixed rather than read off the

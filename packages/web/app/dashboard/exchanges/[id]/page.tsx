@@ -6,7 +6,7 @@ import { LiveTransaction } from '@/components/live-transaction'
 import { ToyTransactionThread } from '@/components/toy-transaction-thread'
 import Link from 'next/link'
 import { Tag } from '@phosphor-icons/react/dist/ssr'
-import { isOwnerSide } from '@splat-connect/types'
+import { isOwnerSide, pickupAddress } from '@splat-connect/types'
 import { Badge } from '@/components/badge'
 import { CostPanel, type CostLine, type Settlement } from '@/components/cost-panel'
 import { StageRailCard } from '@/components/stage-rail-card'
@@ -14,18 +14,9 @@ import { ChatHead } from '@/components/exchange-chat'
 import { exchangeStages, stageFacts } from '@/lib/exchange-stages'
 import type {
   PickupAddress,
-  Profile,
   ToyTransactionDetail,
   ToyTransactionSummary,
 } from '@splat-connect/types'
-
-// A partly-filled profile address is no use as a default — the accept dialog
-// would offer "use my saved address" and then refuse to submit it.
-function defaultAddress(profile: Profile): PickupAddress | null {
-  const { pickup_line1, pickup_suburb, pickup_state, pickup_postcode } = profile
-  if (!pickup_line1 || !pickup_suburb || !pickup_state || !pickup_postcode) return null
-  return { pickup_line1, pickup_suburb, pickup_state, pickup_postcode }
-}
 
 export default async function ExchangeDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -174,7 +165,7 @@ export default async function ExchangeDetailPage({ params }: { params: Promise<{
         transaction={tx}
         viewerId={caps.profile.id}
         ledOrgIds={ledOrgIds}
-        viewerDefaultAddress={defaultAddress(caps.profile)}
+        viewerDefaultAddress={pickupAddress(caps.profile)}
         onSendMessage={sendMessage}
         onAccept={accept}
         onReject={reject}

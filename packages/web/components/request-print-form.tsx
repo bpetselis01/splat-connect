@@ -38,10 +38,10 @@ import {
   Palette,
   PaperPlaneTilt,
 } from '@phosphor-icons/react/dist/ssr'
-import { MAX_PRINTERS_PER_REQUEST, PRINT_COLOURS } from '@splat-connect/types'
+import { initials, MAX_PRINTERS_PER_REQUEST, PRINT_COLOURS } from '@splat-connect/types'
 import type { PrinterWithOwner, StlFile } from '@splat-connect/types'
 import { browserApiClient } from '@/lib/browser-api-client'
-import { apiErrorDetail } from '@/lib/api-core'
+import { apiErrorDetail } from '@splat-connect/types'
 import { pickSummary, togglePrinterPick } from '@/lib/print-groups'
 import { printerAvailability } from '@/lib/printer-availability'
 import { printTimeLabel, filamentLabel } from '@/lib/print-settings'
@@ -64,15 +64,6 @@ const NEXT_STEPS = [
     'A photo of the parts before you travel, then a six-digit code each way.',
   ],
 ]
-
-function initials(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0]!.toUpperCase())
-    .join('')
-}
 
 function Eyebrow({ children }: { children: ReactNode }) {
   return <p className="eyebrow text-muted">{children}</p>

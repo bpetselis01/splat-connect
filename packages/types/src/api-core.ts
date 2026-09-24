@@ -1,9 +1,10 @@
 /**
- * Shared request core for the two API clients. Deliberately has neither
- * 'server-only' nor 'use client': api-client.ts (server) and
- * browser-api-client.ts (browser) declare their own boundary and differ only
- * in how they obtain the token and base URL. Before this existed the two
- * copies drifted — the server one lost the error-detail and empty-body fixes.
+ * Shared request core for every API client: web's api-client.ts (server) and
+ * browser-api-client.ts (browser), and mobile's lib/api-client.ts. Deliberately
+ * has neither 'server-only' nor 'use client' — each client declares its own
+ * boundary and differs only in how it obtains the token and base URL. Before
+ * this existed the copies drifted — web's server one lost the error-detail and
+ * empty-body fixes, and mobile's never had `status`.
  */
 
 /**
@@ -25,13 +26,26 @@ export function apiErrorDetail(err: unknown): string | null {
   return err instanceof Error ? (/failed with status \d+: (.+)$/.exec(err.message)?.[1] ?? null) : null
 }
 
+/**
+ * The API writes its 4xx bodies for humans — "Incorrect code", "Your
+ * organisation needs a pickup address before you can accept requests" — so
+ * show that sentence rather than a generic apology. 5xx keeps the fallback: a
+ * raw Postgres error is not copy.
+ */
+export function apiMessage(err: unknown, fallback: string): string {
+  const match = /failed with status 4\d\d: (.+)$/.exec(err instanceof Error ? err.message : '')
+  return match ? match[1] : fallback
+}
+
 export function makeApiClient(deps: {
   getToken: () => Promise<string | null>
   // Lazy so the server client re-reads process.env per request (tests set it
   // late) and the browser client keeps its literal NEXT_PUBLIC_* read inlined
   // at its own call site by Next's build.
   baseUrl: () => string
-  cache?: RequestCache
+  // Not RequestCache: that type is DOM-only, and the API's Node tsc compiles
+  // this package too. 'no-store' is the only value any client passes.
+  cache?: 'no-store'
 }) {
   // WHY: Error messages from the API were being lost — you'd see "failed with
   //      status 400" but not the reason why.

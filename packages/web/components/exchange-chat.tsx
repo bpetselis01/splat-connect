@@ -12,6 +12,7 @@
 import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react'
 import { CheckCircle, PaperPlaneRight } from '@phosphor-icons/react/dist/ssr'
 import type { ThreadMessage } from '@splat-connect/types'
+import { initials } from '@splat-connect/types'
 
 /*
  * ponytail: locale and timezone are pinned rather than read from the browser.
@@ -168,12 +169,6 @@ export function ExchangeChat({
           const last = group.messages[group.messages.length - 1]
 
           if (board) {
-            const initials = name
-              .split(/\s+/)
-              .map((w) => w[0])
-              .join('')
-              .slice(0, 2)
-              .toUpperCase()
             return (
               <Fragment key={first.id}>
                 {daymark}
@@ -181,7 +176,7 @@ export function ExchangeChat({
                   <div key={m.id} className={`chat-row${mine ? ' chat-row-mine' : ''}`}>
                     {!mine && (
                       <span aria-hidden="true" className="chat-avatar">
-                        {initials}
+                        {initials(name)}
                       </span>
                     )}
                     <div className="chat-stack">
@@ -301,12 +296,6 @@ export function ChatHead({
   sub?: string
   badge?: ReactNode
 }) {
-  const initials = name
-    .split(/\s+/)
-    .map((w) => w[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase()
   return (
     <header className="chat-head">
       <span
@@ -314,7 +303,7 @@ export function ChatHead({
         className="grid h-10 w-10 flex-none place-items-center rounded-full text-sm font-extrabold"
         style={{ background: 'var(--tmint)', color: 'var(--tink)' }}
       >
-        {initials}
+        {initials(name)}
       </span>
       <span className="min-w-0 flex-1">
         <span className="block font-display text-base font-extrabold text-ink">{name}</span>

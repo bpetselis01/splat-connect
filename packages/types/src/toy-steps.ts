@@ -1,8 +1,11 @@
-import type { Toy, OfferType } from '@splat-connect/types'
-import type { Gap, Step, StepStatus } from '@/lib/steps'
+// Shared by web's toy-editor.tsx and mobile's my-toys/editor.tsx, so the two
+// editors flag the same gaps. The return shapes match web's lib/steps.ts
+// Gap/StepStatus structurally; that module holds ReactNode, so it stays in web.
+import type { Toy, OfferType } from './index'
 
 export type ToyStepId = 'details' | 'photos' | 'review'
-export type ToyStep = Step<ToyStepId>
+type Gap = { step: ToyStepId; label: string }
+type StepStatus = 'done' | 'attention' | 'neutral'
 
 /**
  * Every gap still open, each paired with the step that closes it and the words
@@ -17,8 +20,8 @@ export function getMissingToyFields(toy: {
   switch_adapted: boolean
   switch_photo_url: string | null
   offer_type: OfferType | null
-}): Gap<ToyStepId>[] {
-  const missing: Gap<ToyStepId>[] = []
+}): Gap[] {
+  const missing: Gap[] = []
   if (toy.photo_urls.length === 0) missing.push({ step: 'photos', label: 'A photo' })
   if (toy.switch_adapted && !toy.switch_photo_url)
     missing.push({ step: 'photos', label: 'A photo showing the switch' })

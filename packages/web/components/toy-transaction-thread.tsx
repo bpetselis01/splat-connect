@@ -32,7 +32,7 @@ import { AcceptPickupDialog } from '@/components/accept-pickup-dialog'
 import { ExchangeChat } from '@/components/exchange-chat'
 import { Badge } from '@/components/badge'
 
-export const BLOCKED_ACCEPT_HINT =
+const BLOCKED_ACCEPT_HINT =
   'You need to either complete the current transaction or withdraw from it.'
 
 export function ToyTransactionThread({

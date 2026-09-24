@@ -3,6 +3,7 @@ import { useState, useEffect, type ComponentProps } from 'react'
 import { View, Text, ScrollView, StyleSheet, Linking } from 'react-native'
 import { useRouter } from 'expo-router'
 import type { UserAgreement } from '@splat-connect/types'
+import { initials } from '@splat-connect/types'
 import { useAuth } from '../lib/auth-context'
 import { apiClient } from '../lib/api-client'
 import { theme } from '../lib/theme'
@@ -21,11 +22,8 @@ function acceptedDate(iso: string): string {
 }
 
 /** "Sam Mitchell" → "SM"; an email when there is no name yet. */
-function initialsOf(name: string | null | undefined, email: string | undefined): string {
-  const words = (name ?? '').trim().split(/\s+/).filter(Boolean)
-  if (words.length) return words.slice(0, 2).map((w) => w[0]!.toUpperCase()).join('')
-  return (email ?? '?')[0]!.toUpperCase()
-}
+const initialsOf = (name: string | null | undefined, email: string | undefined) =>
+  initials(name) || (email ?? '?')[0]!.toUpperCase()
 
 function RowIcon({ name }: { name: ComponentProps<typeof Ionicons>['name'] }) {
   return <Ionicons name={name} size={21} color={theme.colors.primaryDark} />

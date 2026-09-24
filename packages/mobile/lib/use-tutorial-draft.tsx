@@ -19,7 +19,7 @@ import { apiClient } from './api-client'
 // GET /api/tutorials/:id embeds this join (reviewer/reviewed_for name); it is
 // only on that one contributor-facing route, not on the shared type — see
 // packages/api/src/routes/tutorials.ts.
-export type EditorTutorial = TutorialWithDetails & { reviewed_for?: { name: string } | null }
+type EditorTutorial = TutorialWithDetails & { reviewed_for?: { name: string } | null }
 
 /** One editable row of the parts/tools replace-set. `quantity` is only ever
  *  read for parts — tools leave it undefined and the stepper never renders. */
@@ -63,7 +63,7 @@ export interface TutorialDraft {
   reload: () => void
 }
 
-export function useTutorialDraft(id: string): TutorialDraft {
+function useTutorialDraft(id: string): TutorialDraft {
   const [tutorial, setTutorial] = useState<EditorTutorial | null>(null)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)

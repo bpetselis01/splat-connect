@@ -35,7 +35,8 @@ HTMLDialogElement.prototype.close = function (this: HTMLDialogElement) {
 
 const { OrgActions } = await import('@/components/org-actions')
 const { readLists } = await import('@/components/org-profile-parts')
-const { askingBackCents, doorLink, firstName } = await import('@/lib/org-profile')
+const { askingBackCents, doorLink } = await import('@/lib/org-profile')
+const { firstName } = await import('@splat-connect/types')
 
 const me = (over: Partial<OrgRelationship> = {}): OrgRelationship => ({
   leads: false,

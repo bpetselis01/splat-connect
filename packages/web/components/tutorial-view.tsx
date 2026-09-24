@@ -43,13 +43,13 @@ import { SectionTabs } from '@/components/section-tabs'
 import { DIFFICULTY } from '@/components/tutorial-card'
 import { tintFor } from '@/components/card-photo'
 import { BoundaryLink } from '@/components/boundary-link'
-import { FileText } from '@/components/icons'
 import Link from 'next/link'
 import {
   ArrowSquareOut,
   CheckCircle,
   Cube,
   DownloadSimple,
+  FileText,
   HandHeart,
   HandTap,
   Lifebuoy,
@@ -69,7 +69,7 @@ import {
   type TutorialOrg,
 } from '@splat-connect/types'
 import { agoInWords } from '@/lib/relative-time'
-import { longDate } from '@/lib/dates'
+import { initials, longDate } from '@splat-connect/types'
 
 type Viewable = TutorialWithDetails & {
   tutorial_orgs?: TutorialOrg[]
@@ -80,15 +80,6 @@ type Viewable = TutorialWithDetails & {
 /** "A, B and C" — the board's byline joins names the way a person would. */
 function listNames(names: string[]): string {
   return names.length <= 1 ? (names[0] ?? '') : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`
-}
-
-function initials(name: string): string {
-  return name
-    .split(/\s+/)
-    .map((w) => w[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase()
 }
 
 function BuyLinks({ item, links }: { item: string; links: BuyLink[] }) {
@@ -480,7 +471,7 @@ export function TutorialView({
               {...newTab}
               className="btn btn-primary btn-block no-underline"
             >
-              <FileText />
+              <FileText weight="bold" aria-hidden="true" />
               {signedIn ? 'Download guide (PDF)' : 'Sign in to download'}
             </a>
           )}

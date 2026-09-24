@@ -10,9 +10,7 @@
  * dimensions) it is left out rather than faked.
  */
 import type { PrinterWithOwner, PrintJobFile, ToyTransaction } from '@splat-connect/types'
-import { MAX_PRINTERS_PER_REQUEST, printStep } from '@splat-connect/types'
-
-export const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
+import { MAX_PRINTERS_PER_REQUEST, plural, printStep } from '@splat-connect/types'
 
 /** Taking jobs and has a free slot. Either alone closes the machine (058). */
 export const isOpen = (p: Pick<PrinterWithOwner, 'accepting' | 'open_jobs' | 'capacity'>) =>
@@ -159,19 +157,4 @@ export function bestMachine(printers: PrinterWithOwner[], materials: string[]): 
     const [x, y] = [score(a), score(b)]
     return y[0] - x[0] || y[1] - x[1] || y[2] - x[2]
   })[0]
-}
-
-export function initials(name: string): string {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0]!.toUpperCase())
-    .join('')
-}
-
-/** The API folds its 4xx sentences into the thrown message; 5xx keeps the fallback. */
-export function apiMessage(err: unknown, fallback: string): string {
-  const match = /failed with status 4\d\d: (.+)$/.exec(err instanceof Error ? err.message : '')
-  return match ? match[1] : fallback
 }

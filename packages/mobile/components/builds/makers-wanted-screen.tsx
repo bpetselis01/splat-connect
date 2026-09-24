@@ -32,7 +32,7 @@ import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
 import { ErrorRow } from '../auth-screen'
-import { apiMessage } from '../exchanges/thread-screen'
+import { apiMessage } from '@splat-connect/types'
 
 /** GET /api/toy-transactions/open-builds, one row. No requester name — by design. */
 export type OpenBuild = {

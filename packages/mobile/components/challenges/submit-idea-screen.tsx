@@ -7,7 +7,7 @@
 import { useState } from 'react'
 import { View, Text, ScrollView, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native'
 import { useRouter } from 'expo-router'
-import { CONTACT_PREFS, type ContactPref, type ToyIdea, type ToyIdeaKind } from '@splat-connect/types'
+import { apiMessage, CONTACT_PREFS, type ContactPref, type ToyIdea, type ToyIdeaKind } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { useCapabilities } from '../../lib/capabilities'
@@ -64,16 +64,6 @@ const EMPTY: Draft = {
   description: '',
   intended_use: '',
   primary_user: '',
-}
-
-/**
- * The API writes its 4xx bodies for humans and api-client folds them into the
- * thrown Error's message; 5xx keeps the fallback. Same helper, same reasoning,
- * as exchanges/thread-screen.tsx.
- */
-function apiMessage(err: unknown, fallback: string): string {
-  const match = /failed with status 4\d\d: (.+)$/.exec(err instanceof Error ? err.message : '')
-  return match ? match[1] : fallback
 }
 
 export function SubmitIdeaScreen() {

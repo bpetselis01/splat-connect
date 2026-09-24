@@ -14,12 +14,28 @@ import { STAGE, type StageKey, type StageOption } from './stage'
 
 type IconName = ComponentProps<typeof Ionicons>['name']
 
-/** A tinted pill with an optional icon — the board's status pill. */
-export function Pill({ label, bg, fg = theme.colors.ink, icon }: { label: string; bg: string; fg?: string; icon?: IconName }) {
+/**
+ * A tinted pill with an optional icon — the board's status pill. 'large' is a
+ * toy page's fact pill; 'outline' a challenge page's name tag.
+ */
+export function Pill({
+  label,
+  bg,
+  fg = theme.colors.ink,
+  icon,
+  variant,
+}: {
+  label: string
+  bg: string
+  fg?: string
+  icon?: IconName
+  variant?: 'large' | 'outline'
+}) {
+  const v = variant && PILL_VARIANT[variant]
   return (
-    <View style={[styles.pill, { backgroundColor: bg }]}>
-      {icon ? <Ionicons name={icon} size={11} color={fg} /> : null}
-      <Text style={[styles.pillText, { color: fg }]}>{label}</Text>
+    <View style={[styles.pill, v?.box, { backgroundColor: bg }]}>
+      {icon ? <Ionicons name={icon} size={variant === 'large' ? 13 : 11} color={fg} /> : null}
+      <Text style={[styles.pillText, v?.text, { color: fg }]}>{label}</Text>
     </View>
   )
 }
@@ -184,6 +200,15 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   pillText: { fontFamily: theme.fonts.black, fontSize: 11, letterSpacing: 0.3 },
+  pillLarge: { paddingHorizontal: theme.spacing(2.5), paddingVertical: theme.spacing(1) },
+  pillLargeText: { fontSize: 12, letterSpacing: 0 },
+  pillOutline: {
+    borderWidth: theme.border.hairline,
+    borderColor: theme.colors.border,
+    paddingHorizontal: theme.spacing(3),
+    paddingVertical: theme.spacing(1),
+  },
+  pillOutlineText: { fontFamily: theme.fonts.semiBold, fontSize: theme.type.caption, letterSpacing: 0 },
   intro: { marginBottom: theme.spacing(4), gap: theme.spacing(4) },
   lead: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.muted, lineHeight: 21 },
   cta: { borderRadius: theme.radii.pill, minHeight: 50, borderWidth: 0 },
@@ -242,3 +267,8 @@ const styles = StyleSheet.create({
   meta: { fontFamily: theme.fonts.regular, fontSize: 12.5, lineHeight: 18, color: theme.colors.muted, marginTop: 2 },
   pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 7 },
 })
+
+const PILL_VARIANT = {
+  large: { box: styles.pillLarge, text: styles.pillLargeText },
+  outline: { box: styles.pillOutline, text: styles.pillOutlineText },
+}

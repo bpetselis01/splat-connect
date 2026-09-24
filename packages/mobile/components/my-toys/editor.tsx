@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import * as ImagePicker from 'expo-image-picker'
 import type { OfferType, Toy, ToyTransactionSummary } from '@splat-connect/types'
-import { isOwnerSide, MAX_PHOTOS } from '@splat-connect/types'
+import { computeToyStepStatuses, getMissingToyFields, isOwnerSide, MAX_PHOTOS, type ToyStepId } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { uploadFile } from '../../lib/upload'
 import { theme } from '../../lib/theme'
@@ -15,50 +15,10 @@ import { ScreenHeader } from '../ui/ScreenHeader'
 import { TextField } from '../ui/TextField'
 import { Chip } from '../ui/Chip'
 import { Button } from '../ui/Button'
-import { StepPills, type StepPillItem, type StepPillStatus } from '../ui/StepPills'
+import { StepPills, type StepPillItem } from '../ui/StepPills'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { ErrorRow } from '../auth-screen'
-
-type ToyStepId = 'details' | 'photos' | 'review'
-
-interface Gap {
-  step: ToyStepId
-  label: string
-}
-
-/**
- * Ported verbatim from web's lib/toy-steps.ts getMissingToyFields — same
- * porting rule as the tutorial editor's getMissingFields (P2's bring-along
- * comment). A change there is the reminder to bring this copy along. The only
- * change here is the return type name (Gap, not Gap<ToyStepId>) — this file
- * has no generic Gap/Step/StepStatus module to import from, so it keeps its
- * own local shape, the same way the tutorial editor does.
- */
-function getMissingToyFields(toy: {
-  photo_urls: string[]
-  switch_adapted: boolean
-  switch_photo_url: string | null
-  offer_type: OfferType | null
-}): Gap[] {
-  const missing: Gap[] = []
-  if (toy.photo_urls.length === 0) missing.push({ step: 'photos', label: 'A photo' })
-  if (toy.switch_adapted && !toy.switch_photo_url)
-    missing.push({ step: 'photos', label: 'A photo showing the switch' })
-  if (!toy.offer_type) missing.push({ step: 'review', label: 'How it is offered' })
-  return missing
-}
-
-/** Ported verbatim from web's lib/toy-steps.ts computeToyStepStatuses. */
-function computeToyStepStatuses(toy: Toy): Record<ToyStepId, StepPillStatus> {
-  const photosMissing =
-    toy.photo_urls.length === 0 || (toy.switch_adapted && !toy.switch_photo_url)
-  return {
-    details: 'done',
-    photos: photosMissing ? 'attention' : 'done',
-    review: toy.status === 'published' ? 'done' : 'neutral',
-  }
-}
 
 /** Mirrors 053's file_size_limit on the photo buckets. */
 const MAX_PHOTO_BYTES = 10 * 1024 * 1024

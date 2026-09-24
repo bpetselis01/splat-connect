@@ -15,6 +15,7 @@ import { PhotoCarousel } from '../ui/PhotoCarousel'
 import { EmptyState } from '../ui/EmptyState'
 import { ReportProblem } from '../reports/report-problem'
 import { RequestBlock } from './request-block'
+import { Pill } from '../list/list-kit'
 
 const OFFER_LABEL: Record<OfferType, string> = {
   donation: 'Gift — nothing comes back',
@@ -23,24 +24,6 @@ const OFFER_LABEL: Record<OfferType, string> = {
 }
 
 /** A read-only fact pill, the board's tinted chip with an optional glyph. */
-function Pill({
-  label,
-  icon,
-  tone,
-}: {
-  label: string
-  icon?: keyof typeof Ionicons.glyphMap
-  tone: 'mint' | 'brand'
-}) {
-  const t = theme.colors.tone[tone]
-  return (
-    <View style={[styles.pill, { backgroundColor: t.bg }]}>
-      {icon ? <Ionicons name={icon} size={13} color={t.fg} /> : null}
-      <Text style={[styles.pillText, { color: t.fg }]}>{label}</Text>
-    </View>
-  )
-}
-
 export function ToyDetailScreen({ id }: { id: string }) {
   const router = useRouter()
   const saves = useSaves()
@@ -177,9 +160,9 @@ export function ToyDetailScreen({ id }: { id: string }) {
       ) : null}
 
       <View style={styles.pillRow}>
-        {toy.offer_type ? <Pill icon="gift-outline" label={OFFER_LABEL[toy.offer_type]} tone="mint" /> : null}
-        <Pill icon="checkmark-circle-outline" label={`Condition ${toy.condition} / 10`} tone="mint" />
-        {toy.switch_adapted ? <Pill label="Switch-adapted" tone="brand" /> : null}
+        {toy.offer_type ? <Pill variant="large" icon="gift-outline" label={OFFER_LABEL[toy.offer_type]} bg={theme.colors.tone.mint.bg} fg={theme.colors.tone.mint.fg} /> : null}
+        <Pill variant="large" icon="checkmark-circle-outline" label={`Condition ${toy.condition} / 10`} bg={theme.colors.tone.mint.bg} fg={theme.colors.tone.mint.fg} />
+        {toy.switch_adapted ? <Pill variant="large" label="Switch-adapted" bg={theme.colors.tone.brand.bg} fg={theme.colors.tone.brand.fg} /> : null}
       </View>
 
       {toy.description ? (
@@ -256,15 +239,6 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: theme.spacing(4), paddingBottom: theme.spacing(10), gap: theme.spacing(4) },
   hero: { marginHorizontal: -theme.spacing(4), marginBottom: -theme.spacing(1) },
   pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2) },
-  pill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    borderRadius: theme.radii.pill,
-    paddingHorizontal: theme.spacing(2.5),
-    paddingVertical: theme.spacing(1),
-  },
-  pillText: { fontFamily: theme.fonts.black, fontSize: 12 },
   notes: {
     borderRadius: theme.radii.panel,
     borderWidth: theme.border.hairline,

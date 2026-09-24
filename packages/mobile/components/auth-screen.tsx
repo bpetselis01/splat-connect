@@ -30,6 +30,7 @@ import { Screen } from './ui/Screen'
 import { Card } from './ui/Card'
 import { TextField } from './ui/TextField'
 import { Chip } from './ui/Chip'
+import { Segmented } from './ui/Segmented'
 import type { SignupIntent } from '@splat-connect/types'
 
 // Web's signup tiles, same words. Unpicked by default, as there.
@@ -41,7 +42,7 @@ const INTENTS: { value: SignupIntent; label: string }[] = [
 // Same base URL + pattern as the "Open Web Dashboard" link on the signed-in
 // profile screen (Linking.openURL against EXPO_PUBLIC_WEB_URL). The terms
 // document itself lives on web only.
-export function openContributorTerms() {
+function openContributorTerms() {
   Linking.openURL(`${process.env.EXPO_PUBLIC_WEB_URL}/legal/contributor-terms`)
 }
 
@@ -119,50 +120,6 @@ function Wordmark() {
   )
 }
 
-/**
- * Web's `.auth-switch`: one border and one shadow around the pair, with the
- * divider drawn as a border on the second tab, so it reads as a single control
- * rather than two adjacent buttons.
- *
- * The tabs are `flex: 1` inside a stretched row rather than hugging their text.
- * Web can let them hug because a desktop viewport always has room; a 320pt
- * phone does not, and "Create account" set in uppercase with tracking is wide
- * enough to clip. Equal halves of whatever width the phone gives always fit.
- *
- * Two nested views because iOS drops a shadow on a view that also clips its
- * children: the outer one carries the shadow, the inner one the clip.
- */
-function AuthSwitch({ current, onSelect }: {
-  current: 'signin' | 'signup'
-  onSelect: (mode: 'signin' | 'signup') => void
-}) {
-  return (
-    <View style={styles.switchShadow}>
-      <View style={styles.switchClip}>
-        {(['signin', 'signup'] as const).map((tab, i) => {
-          const selected = current === tab
-          return (
-            <Pressable
-              key={tab}
-              testID={`auth-tab-${tab}`}
-              onPress={() => onSelect(tab)}
-              accessibilityRole="tab"
-              accessibilityState={{ selected }}
-              style={[styles.tab, i > 0 && styles.tabDivider, selected && styles.tabOn]}
-            >
-              {/* Uppercased in style, not in the string, so a screen reader is
-                  handed "Sign in" rather than something it may spell out. */}
-              <Text numberOfLines={1} style={[styles.tabText, selected && styles.tabTextOn]}>
-                {tab === 'signin' ? 'Sign in' : 'Create account'}
-              </Text>
-            </Pressable>
-          )
-        })}
-      </View>
-    </View>
-  )
-}
-
 export function AuthScreen() {
   const { signIn, signUp } = useAuth()
   const [mode, setMode] = useState<'signin' | 'signup' | 'check-email'>('signin')
@@ -227,7 +184,16 @@ export function AuthScreen() {
               380px card cap: without it the card spans a tablet edge to edge. */}
           <View style={styles.column}>
             <Wordmark />
-            <AuthSwitch current={isSignUp ? 'signup' : 'signin'} onSelect={select} />
+            <Segmented
+              variant="boxed"
+              label="Sign in or create an account"
+              value={isSignUp ? 'signup' : 'signin'}
+              onChange={select}
+              options={[
+                { value: 'signin', label: 'Sign in', testID: 'auth-tab-signin' },
+                { value: 'signup', label: 'Create account', testID: 'auth-tab-signup' },
+              ]}
+            />
             {body}
           </View>
         </ScrollView>
@@ -388,41 +354,6 @@ const styles = StyleSheet.create({
     color: theme.colors.ink,
     letterSpacing: -0.4,
   },
-
-  switchShadow: {
-    alignSelf: 'stretch',
-    borderRadius: theme.radii.field,
-    marginBottom: theme.spacing(5),
-    ...theme.shadow(2),
-  },
-  switchClip: {
-    flexDirection: 'row',
-    borderWidth: theme.border.hairline,
-    borderColor: theme.colors.border,
-    borderRadius: theme.radii.field,
-    backgroundColor: theme.colors.surface,
-    overflow: 'hidden',
-  },
-  tab: {
-    flex: 1,
-    minHeight: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: theme.spacing(2),
-  },
-  tabDivider: { borderLeftWidth: theme.border.hairline, borderLeftColor: theme.colors.ink },
-  tabOn: { backgroundColor: theme.colors.ink },
-  tabText: {
-    fontFamily: theme.fonts.black,
-    fontSize: 12,
-    // Web sets these labels in IBM Plex Mono. The phone loads Nunito and
-    // Jersey 10 only, and a fourth family for two words is not worth the
-    // bundle; Nunito Black uppercase at web's 0.05em tracking is the match.
-    letterSpacing: 0.6,
-    textTransform: 'uppercase',
-    color: theme.colors.ink,
-  },
-  tabTextOn: { color: '#ffffff' },
 
   card: { padding: theme.spacing(6) },
   panel: { alignItems: 'center', padding: theme.spacing(6) },

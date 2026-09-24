@@ -19,12 +19,12 @@ import { Ionicons } from '@expo/vector-icons'
 import { apiClient } from '../../lib/api-client'
 import { useCapabilities } from '../../lib/capabilities'
 import { theme } from '../../lib/theme'
-import { apiMessage } from '../../lib/printing'
 import { Screen } from '../ui/Screen'
 import { Button } from '../ui/Button'
 import { Chip } from '../ui/Chip'
 import { TextField } from '../ui/TextField'
 import { ErrorRow } from '../auth-screen'
+import { apiMessage } from '@splat-connect/types'
 
 // The board's four. PRINT_MATERIALS has six; ASA and Nylon are rare enough on
 // a home machine that offering them here would crowd the two that matter.

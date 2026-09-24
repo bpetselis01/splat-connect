@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, afterEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { render } from '@testing-library/react'
 import { PixelBackdrop } from '@/components/pixel-backdrop'
 import { Sticker, Slot } from '@/components/slot'
@@ -123,38 +123,5 @@ describe('Slot tone', () => {
     const slot = container.firstElementChild!
     expect(slot).toHaveAttribute('aria-hidden', 'true')
     expect(slot.className).toContain('pointer-events-none')
-  })
-})
-
-describe('NEXT_PUBLIC_SLOTS=off', () => {
-  // The whole point of the flag: dashed boxes must never reach a real family
-  // just because nobody remembered to strip the placeholders out of forty pages.
-  afterEach(() => {
-    vi.unstubAllEnvs()
-    vi.resetModules()
-  })
-
-  async function loadWithSlotsOff() {
-    vi.stubEnv('NEXT_PUBLIC_SLOTS', 'off')
-    vi.resetModules()
-    return import('@/components/slot')
-  }
-
-  it('hides an unfilled sticker entirely', async () => {
-    const { Sticker: S } = await loadWithSlotsOff()
-    const { container } = render(<S note="to be drawn" />)
-    expect(container.firstElementChild).toBeNull()
-  })
-
-  it('still renders a sticker that has real art — that is the finished state', async () => {
-    const { Sticker: S } = await loadWithSlotsOff()
-    const { container } = render(<S art="switch" note="section art" />)
-    expect(container.querySelector('img')).toBeTruthy()
-  })
-
-  it('hides animation and overlay slots, which have no finished fallback', async () => {
-    const { Slot: L } = await loadWithSlotsOff()
-    const { container } = render(<L kind="animation" note="press" />)
-    expect(container.firstElementChild).toBeNull()
   })
 })

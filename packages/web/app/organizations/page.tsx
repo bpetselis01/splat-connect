@@ -17,21 +17,11 @@ import { Buildings, MagnifyingGlass, Recycle, SquaresFour } from '@phosphor-icon
 import Link from 'next/link'
 import type { Route } from 'next'
 import type { Organization } from '@splat-connect/types'
+import { initials } from '@splat-connect/types'
 
 /** The board cycles its directory bands through the tint set rather than
  *  giving every organisation the same blue. */
 const BAND_TINTS = ['var(--b100)', 'var(--tmint)', 'var(--tamber)', 'var(--tviolet)', 'var(--tcoral)']
-
-/** Two letters, the way the board's avatars and its directory bands both do it. */
-function initials(name: string): string {
-  return name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((w) => w[0])
-    .join('')
-    .toUpperCase()
-}
 
 export default async function OrganizationsPage({
   searchParams,

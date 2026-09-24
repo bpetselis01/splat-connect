@@ -41,7 +41,7 @@ export type MachineFit = { printer: PrinterWithOwner; ok: boolean; why: string[]
  * material the guide's parts name, it is taking jobs, and it has a free slot.
  * Bed size is not checked — an STL row stores no dimensions to check it with.
  */
-export function machineFit(printer: PrinterWithOwner, files: PrintJobFile[]): MachineFit {
+function machineFit(printer: PrinterWithOwner, files: PrintJobFile[]): MachineFit {
   const why: string[] = []
   const needed = [...new Set(files.map((f) => f.material).filter((m): m is NonNullable<typeof m> => !!m))]
   const missing = needed.filter((m) => !printer.materials.includes(m))

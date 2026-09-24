@@ -16,7 +16,7 @@ import { useRouter } from 'next/navigation'
 import type { OrgThread } from '@splat-connect/types'
 import { ExchangeChat, ChatHead } from '@/components/exchange-chat'
 import { browserApiClient } from '@/lib/browser-api-client'
-import { apiErrorDetail } from '@/lib/api-core'
+import { apiErrorDetail } from '@splat-connect/types'
 
 export function OrgThreadView({
   thread,

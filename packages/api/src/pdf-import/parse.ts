@@ -154,7 +154,7 @@ export function dropNoise(cells: Cell[], pageCount: number, keepNumbers = false)
 }
 
 /** The size most of the text is set in, weighted by length. */
-export function bodySize(cells: Cell[]): number {
+function bodySize(cells: Cell[]): number {
   const weight = new Map<number, number>()
   for (const c of cells) {
     const s = Math.round(c.size * 2) / 2
@@ -169,7 +169,7 @@ export function bodySize(cells: Cell[]): number {
 // ---------------------------------------------------------------- sections
 
 /** Heading text -> section. Order matters: "Required Tools and Supplies" is tools. */
-export function headingSection(text: string): Section {
+function headingSection(text: string): Section {
   const t = text.toLowerCase()
   if (/^(table of )?contents$/.test(t)) return 'contents'
   if (/3d[- ]?print|print(ing)? (settings|summary|guide)|slicer/.test(t)) return 'print'
@@ -187,7 +187,7 @@ const LABEL =
 const STEP_LINE = /^step\s*0*(\d{1,2})\b\s*[:.)\-–]?\s*(.*)$/i
 const MARKER = /^0?(\d{1,2})[.)]$/
 
-export function tagSections(cells: Cell[], body: number): Tagged[] {
+function tagSections(cells: Cell[], body: number): Tagged[] {
   let section: Section = 'other'
   // A label shares its line with nothing; "Components" in a table header row is not a heading.
   const alone = (c: Cell) => !cells.some((o) => o !== c && o.page === c.page && sameRow(o, c))
@@ -232,7 +232,7 @@ interface ListItem {
  * lines that wrap. When any entry is marked, unmarked stray cells (table
  * headers, notes columns) are dropped rather than read as entries.
  */
-export function readList(cells: Cell[]): { text: string; qty?: number }[] {
+function readList(cells: Cell[]): { text: string; qty?: number }[] {
   const marked = (t: string) => BULLET.test(t) || NUMBERED.test(t) || QTY_LEAD.test(t) || ID_CELL.test(t)
   const anyMarked = cells.some((c) => marked(c.text))
   const items: ListItem[] = []
@@ -328,7 +328,7 @@ function sectionRuns(tagged: Tagged[], section: Section): Cell[][] {
 // ---------------------------------------------------------------- paragraphs
 
 /** Joins lines into paragraph text: wrapped lines with a space, bigger gaps and page breaks as blank lines. */
-export function joinLines(cells: Cell[]): string {
+function joinLines(cells: Cell[]): string {
   let out = ''
   let prev: Cell | null = null
   for (const c of cells) {
@@ -341,7 +341,7 @@ export function joinLines(cells: Cell[]): string {
 }
 
 /** Lines stacked in one column (same left edge, line spacing apart) — a paragraph, however many columns the page has. */
-export function blocks(cells: Cell[]): Cell[][] {
+function blocks(cells: Cell[]): Cell[][] {
   const out: Cell[][] = []
   for (const c of cells) {
     const open = out.find((b) => {

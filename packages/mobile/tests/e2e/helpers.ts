@@ -75,7 +75,7 @@ export async function signInAsNewContributor(page: Page) {
 }
 
 /** Record contributor-terms acceptance for a service-role-provisioned user. */
-export async function acceptTerms(userId: string) {
+async function acceptTerms(userId: string) {
   const { error } = await adminClient()
     .from('user_agreements')
     .insert({ user_id: userId, agreement_type: 'contributor_terms', version: 'v0-todo' })
@@ -192,7 +192,7 @@ export async function createTutorial(
 }
 
 /** Best-effort teardown. No assertion may depend on this having run. */
-export async function deleteUser(id: string) {
+async function deleteUser(id: string) {
   await adminClient().auth.admin.deleteUser(id)
 }
 

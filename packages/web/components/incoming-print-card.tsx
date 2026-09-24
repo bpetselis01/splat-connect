@@ -35,7 +35,7 @@ import {
 } from '@phosphor-icons/react/dist/ssr'
 import type { PickupAddress, PrinterWithOwner, ToyTransactionSummary } from '@splat-connect/types'
 import { browserApiClient } from '@/lib/browser-api-client'
-import { apiErrorDetail, isApiError } from '@/lib/api-core'
+import { apiErrorDetail, isApiError } from '@splat-connect/types'
 import { othersAskedLabel, rankMachines } from '@/lib/print-groups'
 import { AcceptPickupDialog } from '@/components/accept-pickup-dialog'
 import { filamentLabel, printFilesLine, printTimeLabel } from '@/lib/print-settings'

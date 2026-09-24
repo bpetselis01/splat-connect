@@ -10,7 +10,7 @@
 import { useCallback, useState } from 'react'
 import { View, Text, ScrollView, StyleSheet, Alert } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
-import { EVENT_KIND_LABEL, STORY_KIND_LABEL, type OrgEvent, type OrgStory } from '@splat-connect/types'
+import { EVENT_KIND_LABEL, isPast, STORY_KIND_LABEL, type OrgEvent, type OrgStory } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { useCapabilities } from '../../lib/capabilities'
 import { theme } from '../../lib/theme'
@@ -25,8 +25,6 @@ import { EmptyState } from '../ui/EmptyState'
 type Kind = 'events' | 'stories'
 type Row = { id: string; title: string; meta: string; status: 'draft' | 'published'; shown: string }
 
-const isPast = (starts: string, ends: string | null) =>
-  new Date(ends ?? new Date(starts).setHours(23, 59, 59, 999)).getTime() < Date.now()
 const shortDate = (iso: string) => new Date(iso).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })
 
 export function OrgPublishScreen() {

@@ -41,6 +41,7 @@ import { EmptyState } from '../ui/EmptyState'
 import { SaveButton } from '../ui/SaveButton'
 import { TextField } from '../ui/TextField'
 import { MessageBubble } from '../ui/MessageBubble'
+import { Pill } from '../list/list-kit'
 
 // Same cadence as the exchange thread. Web runs this conversation on a
 // realtime subscription; mobile polls, the Phase-3 ruling repeated.
@@ -72,14 +73,6 @@ function Field({ label, value }: { label: string; value: string }) {
 }
 
 /** A static pill. Chip is a toggle — these are read-only facts, not filters. */
-function Tag({ label }: { label: string }) {
-  return (
-    <View style={styles.tag}>
-      <Text style={styles.tagText}>{label}</Text>
-    </View>
-  )
-}
-
 export function ChallengeDetailScreen({ id }: { id: string }) {
   const router = useRouter()
   const saves = useSaves()
@@ -418,7 +411,7 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
             ) : (
               <View style={styles.tagRow}>
                 {challenge.participants.map((p) => (
-                  <Tag key={p.profile_id} label={p.name ?? 'Someone'} />
+                  <Pill key={p.profile_id} variant="outline" label={p.name ?? 'Someone'} bg={theme.colors.surface} fg={theme.colors.text} />
                 ))}
               </View>
             )}
@@ -427,7 +420,7 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
                 <Text style={styles.blockTitle}>The author is happy to help with</Text>
                 <View style={styles.tagRow}>
                   {challenge.contact_prefs.map((pref) => (
-                    <Tag key={pref} label={CONTACT_PREF_LABELS[pref]} />
+                    <Pill key={pref} variant="outline" label={CONTACT_PREF_LABELS[pref]} bg={theme.colors.surface} fg={theme.colors.text} />
                   ))}
                 </View>
               </View>
@@ -607,15 +600,6 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing(2),
   },
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2) },
-  tag: {
-    borderWidth: theme.border.hairline,
-    borderColor: theme.colors.border,
-    borderRadius: theme.radii.pill,
-    backgroundColor: theme.colors.surface,
-    paddingHorizontal: theme.spacing(3),
-    paddingVertical: theme.spacing(1),
-  },
-  tagText: { fontFamily: theme.fonts.semiBold, fontSize: theme.type.caption, color: theme.colors.text },
   quiet: {
     fontFamily: theme.fonts.regular,
     fontSize: theme.type.label,

@@ -50,7 +50,7 @@ function matchesCondition(condition: number, bucket: ConditionBucket | null): bo
  * The board's condition grade: a description of the toy in words, never a
  * score. Same cut points as the board's GRADE().
  */
-export function conditionGrade(c: number): { label: string; icon: IconName; bg: string } {
+function conditionGrade(c: number): { label: string; icon: IconName; bg: string } {
   if (c >= 9) return { label: 'Like new', icon: 'sparkles-outline', bg: theme.colors.successSoft }
   if (c >= 7) return { label: 'Good', icon: 'checkmark-circle-outline', bg: theme.colors.mintSoft }
   if (c >= 5) return { label: 'Well-loved', icon: 'heart-outline', bg: theme.colors.honeySoft }

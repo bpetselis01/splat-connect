@@ -10,22 +10,22 @@
  * somewhere other than what it names.
  *
  * Related files:
- * - lib/nav-model.ts: the destination list, shared with the rail
+ * - @splat-connect/types nav-model.ts: the destination list, shared with the rail
  * - components/hub-grid.tsx: the grid, shared with every public hub
  */
 import { requireCapabilities } from '@/lib/require-capabilities'
-import { buildNav } from '@/lib/nav-model'
+import { buildNav } from '@splat-connect/types'
 import { HubGrid } from '@/components/hub-grid'
 import { ACCOUNT_NAV } from '@/lib/public-nav'
 import type { NavItem } from '@/lib/public-nav'
-import type { IconName } from '@/lib/nav-model'
+import type { IconName } from '@splat-connect/types'
 import Link from 'next/link'
 import type { Route } from 'next'
 import { Handshake, Tray } from '@phosphor-icons/react/dist/ssr'
 import { apiClient } from '@/lib/api-client'
 import { MoneyPanel, type OutstandingLine } from '@/components/money-panel'
 import { SplatMascot } from '@/components/splat-mascot'
-import { isPast } from '@/lib/dates'
+import { isPast } from '@splat-connect/types'
 import type { OpenBuild } from '@/components/makers-wanted-board'
 import type {
   PrinterWithOwner,

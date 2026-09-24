@@ -42,6 +42,7 @@ import {
   DECLARATION_VERSION,
   MIN_DROPOFF_GRAMS,
   estimatedCreditGrams,
+  kgToGrams,
 } from '@splat-connect/types'
 
 // The board's glyph for each declaration line, in RECYCLING_DECLARATION's order.
@@ -55,14 +56,6 @@ export type DropoffOrg = {
   state: string | null
   recycling_materials: string[]
   recycling_note: string | null
-}
-
-/** Kilograms as typed, in whole grams. Null for anything that is not a weight. */
-export function kgToGrams(input: string): number | null {
-  const match = /^\s*(\d{1,4})(?:\.(\d{1,3}))?\s*$/.exec(input)
-  if (!match) return null
-  const fraction = (match[2] ?? '').padEnd(3, '0')
-  return Number(match[1]) * 1000 + Number(fraction)
 }
 
 export function DropoffForm({ orgs, initialOrgId }: { orgs: DropoffOrg[]; initialOrgId?: string }) {

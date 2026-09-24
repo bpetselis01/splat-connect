@@ -9,7 +9,7 @@ import { ChatCircleText } from '@phosphor-icons/react/dist/ssr'
 import type { OrgConversationSummary } from '@splat-connect/types'
 import { getCapabilities } from '@/lib/capabilities'
 import { apiClient } from '@/lib/api-client'
-import { shortDate } from '@/lib/dates'
+import { shortDate } from '@splat-connect/types'
 import { BackLink } from '@/components/back-link'
 
 export const metadata = { title: 'Messages — SPLAT Connect' }

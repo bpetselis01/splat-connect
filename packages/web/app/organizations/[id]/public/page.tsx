@@ -36,15 +36,14 @@ import {
   Wrench,
 } from '@phosphor-icons/react/dist/ssr'
 import type { Icon } from '@phosphor-icons/react'
-import { initials } from '@/components/story-bits'
 import { ShelfToyCard } from '@/components/shelf-toy-card'
 import { tintFor } from '@/components/card-photo'
 import { OrgActions } from '@/components/org-actions'
 import { safePhotoSrc } from '@/lib/photo-src'
-import { shortDate } from '@/lib/dates'
+import { firstName, initials, shortDate } from '@splat-connect/types'
 import { getCapabilities } from '@/lib/capabilities'
 import { apiClient } from '@/lib/api-client'
-import { doorLink, firstName } from '@/lib/org-profile'
+import { doorLink } from '@/lib/org-profile'
 import {
   formatBuildTime,
   formatCents,

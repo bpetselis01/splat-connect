@@ -33,7 +33,7 @@ import {
 import { apiClient } from '@/lib/api-client'
 import { getCapabilities } from '@/lib/capabilities'
 import { EventCard, PastEventRow } from '@/components/event-card'
-import { monthHeading, monthKey, isPast } from '@/lib/dates'
+import { monthHeading, monthKey, isPast } from '@splat-connect/types'
 import { AU_STATES, type EventListItem } from '@splat-connect/types'
 
 export const metadata = {
@@ -142,20 +142,15 @@ export default async function EventsPage({
       {/* Links, not buttons: a filtered list is a place, and a family who finds
           a Saturday in Brighton should be able to send that page to someone. */}
       <div className="mb-2 mt-[30px] flex flex-wrap items-center gap-3.5">
-        <div
-          role="tablist"
-          aria-label="Format"
-          className="inline-flex rounded-full border border-line bg-[var(--surface2)] p-1"
-        >
+        <nav aria-label="Format" className="inline-flex rounded-full border border-line bg-[var(--surface2)] p-1">
           {FORMATS.map((f) => {
             const on = format === f.value
             return (
               <Link
                 key={f.label}
-                role="tab"
-                // aria-selected, not aria-pressed: role="tab" does not support
-                // the latter, and two conflicting states read worse than one.
-                aria-selected={on}
+                // Links to filtered pages are a nav, not a tablist: no arrow
+                // keys, and the current one is the page you are on.
+                aria-current={on ? 'page' : undefined}
                 href={href({ format: f.value })}
                 className={`inline-flex min-h-11 items-center gap-1.5 rounded-full px-4 text-sm font-extrabold ${
                   on ? 'bg-[var(--surface)] text-ink shadow-[var(--e1)]' : 'text-muted'
@@ -166,7 +161,7 @@ export default async function EventsPage({
               </Link>
             )
           })}
-        </div>
+        </nav>
 
         <div className="flex flex-wrap gap-2" role="group" aria-label="State">
           {['', ...AU_STATES].map((s) => {

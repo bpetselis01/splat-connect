@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
@@ -20,13 +20,7 @@ import { DisplayToggles } from '@/components/display-toggles'
 import { ACCOUNT_NAV, sectionFor } from '@/lib/public-nav'
 import type { Capabilities } from '@/lib/capabilities'
 import type { Mode, Motion } from '@/lib/display-prefs'
-
-/** Two letters from a display name, for the avatar. Falls back to one. */
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean)
-  if (parts.length === 0) return '?'
-  return (parts[0][0] + (parts[1]?.[0] ?? '')).toUpperCase()
-}
+import { initials } from '@splat-connect/types'
 
 /** Five primary tabs, everything else behind More — the board's NAV5. */
 const TABS = [
@@ -63,31 +57,13 @@ export function Nav({ caps, mode = 'light', motion = 'full' }: NavProps) {
   // Null outside an App Router context (e.g. the unit tests render Nav directly).
   const pathname = usePathname() ?? ''
   const activeSection = sectionFor(pathname)
-  const [moreOpen, setMoreOpen] = useState(false)
-  const moreRef = useRef<HTMLDivElement>(null)
-  const moreButton = useRef<HTMLButtonElement>(null)
+  const menu = useRef<HTMLDivElement>(null)
   const menuId = useId()
-
   // A disclosure, not an ARIA menu: its contents are ordinary links, which a
-  // menu role would take out of Tab order and demand arrow keys for. Closes on
-  // choosing an item, Escape and any press outside it.
-  useEffect(() => {
-    if (!moreOpen) return
-    const onPointer = (e: PointerEvent) => {
-      if (!moreRef.current?.contains(e.target as Node)) setMoreOpen(false)
-    }
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return
-      setMoreOpen(false)
-      moreButton.current?.focus()
-    }
-    document.addEventListener('pointerdown', onPointer)
-    document.addEventListener('keydown', onKey)
-    return () => {
-      document.removeEventListener('pointerdown', onPointer)
-      document.removeEventListener('keydown', onKey)
-    }
-  }, [moreOpen])
+  // menu role would take out of Tab order and demand arrow keys for. A native
+  // popover, so Escape, a press outside, focus return and aria-expanded are the
+  // browser's; choosing an item closes it here, since a client-side navigation
+  // leaves the header mounted.
 
   // The bar's height, for anything that pins under it (the home page's
   // scroll-world stage). It wraps to two rows between lg and ~1330px, so a
@@ -127,39 +103,29 @@ export function Nav({ caps, mode = 'light', motion = 'full' }: NavProps) {
             </BoundaryLink>
           ))}
 
-          <div ref={moreRef} className="nav-more">
-            <button
-              ref={moreButton}
-              type="button"
-              className="nav-tab"
-              aria-expanded={moreOpen}
-              aria-controls={menuId}
-              data-current={moreCurrent || undefined}
-              onClick={() => setMoreOpen((o) => !o)}
-            >
+          <div className="nav-more">
+            <button type="button" className="nav-tab" popoverTarget={menuId} data-current={moreCurrent || undefined}>
               More <CaretDown aria-hidden="true" />
             </button>
-            {moreOpen && (
-              <div id={menuId} className="nav-more__menu">
-                {MORE.map(({ href, label, blurb, Icon, tint }) => (
-                  <BoundaryLink
-                    key={href}
-                    href={href}
-                    aria-current={under(pathname, href) ? 'page' : undefined}
-                    className="nav-more__item"
-                    onClick={() => setMoreOpen(false)}
-                  >
-                    <span aria-hidden="true" className="nav-more__icon" style={{ background: tint }}>
-                      <Icon weight="duotone" />
-                    </span>
-                    <span>
-                      <span className="nav-more__label">{label}</span>
-                      <span className="nav-more__blurb">{blurb}</span>
-                    </span>
-                  </BoundaryLink>
-                ))}
-              </div>
-            )}
+            <div ref={menu} id={menuId} popover="auto" className="nav-more__menu">
+              {MORE.map(({ href, label, blurb, Icon, tint }) => (
+                <BoundaryLink
+                  key={href}
+                  href={href}
+                  aria-current={under(pathname, href) ? 'page' : undefined}
+                  className="nav-more__item"
+                  onClick={() => menu.current?.hidePopover()}
+                >
+                  <span aria-hidden="true" className="nav-more__icon" style={{ background: tint }}>
+                    <Icon weight="duotone" />
+                  </span>
+                  <span>
+                    <span className="nav-more__label">{label}</span>
+                    <span className="nav-more__blurb">{blurb}</span>
+                  </span>
+                </BoundaryLink>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -192,7 +158,7 @@ export function Nav({ caps, mode = 'light', motion = 'full' }: NavProps) {
                 </>
               )}
               <span aria-hidden="true" title={caps.profile.name} className="nav-account__avatar">
-                {initials(caps.profile.name)}
+                {initials(caps.profile.name, '?')}
               </span>
             </BoundaryLink>
           ) : (

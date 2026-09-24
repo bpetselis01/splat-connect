@@ -33,7 +33,7 @@ import { gradeOf } from '@/lib/toy-grade'
 import { agoInWords } from '@/lib/relative-time'
 import { ToyFacts, ToySignInGate } from '@/components/toy-facts'
 import { ReportLink } from '@/components/report-link'
-import { toyHolderName, type OfferType, type Toy, type ToyDetail, type ToyWithOwner } from '@splat-connect/types'
+import { toyHolderName, type OfferType, type Toy, type ToyDetail, type ToyWithOwner, initials } from '@splat-connect/types'
 
 /** The board's three offers: the chip's word and tint, and the rail's sentence. */
 const OFFER: Record<OfferType, { label: string; tint: string; Icon: typeof Gift; note: (holder: string) => string }> = {
@@ -64,15 +64,6 @@ function Chip({ tint, icon, children }: { tint: string; icon: ReactNode; childre
       {children}
     </span>
   )
-}
-
-function initials(name: string): string {
-  return name
-    .split(/\s+/)
-    .map((w) => w[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase()
 }
 
 export default async function ToyLibraryDetailPage({

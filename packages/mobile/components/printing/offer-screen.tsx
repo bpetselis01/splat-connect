@@ -23,7 +23,6 @@ import { apiClient } from '../../lib/api-client'
 import { useCapabilities } from '../../lib/capabilities'
 import { theme } from '../../lib/theme'
 import {
-  apiMessage,
   bestMachine,
   jobState,
   JOB_LABEL,
@@ -32,7 +31,6 @@ import {
   othersLabel,
   partMaterials,
   partsMeta,
-  plural,
 } from '../../lib/printing'
 import { markReady, startPrint } from './actions'
 import { Screen } from '../ui/Screen'
@@ -43,6 +41,7 @@ import { TextField } from '../ui/TextField'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { ErrorRow } from '../auth-screen'
+import { apiMessage, pickupAddress, plural } from '@splat-connect/types'
 
 type Tab = 'requests' | 'jobs' | 'printers'
 
@@ -133,11 +132,7 @@ export function PrintForOthersScreen({ orgId }: { orgId?: string } = {}) {
   const onTheBed = jobs.filter((t) => t.status === 'accepted')
   const done = jobs.filter((t) => t.status !== 'requested' && t.status !== 'accepted')
   const byId = new Map(printers.map((p) => [p.id, p]))
-  const { pickup_line1, pickup_suburb, pickup_state, pickup_postcode } = caps.profile
-  const savedAddress: PickupAddress | null =
-    pickup_line1 && pickup_suburb && pickup_state && pickup_postcode
-      ? { pickup_line1, pickup_suburb, pickup_state, pickup_postcode }
-      : null
+  const savedAddress = pickupAddress(caps.profile)
 
   const TABS: Array<[Tab, string, number]> = [
     ['requests', 'Requests', waiting.length],

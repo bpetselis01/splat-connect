@@ -37,7 +37,7 @@ export function heroHeadline(headline: string): { lines: string[]; accent: strin
   return { lines, accent: space < 0 ? last : last.slice(space + 1) }
 }
 
-export const HOME_NUMBER_KEYS = ['guides', 'organisations', 'toys'] as const
+const HOME_NUMBER_KEYS = ['guides', 'organisations', 'toys'] as const
 export type HomeNumberKey = (typeof HOME_NUMBER_KEYS)[number]
 
 const NUMBER_LABELS: Record<HomeNumberKey, string> = {

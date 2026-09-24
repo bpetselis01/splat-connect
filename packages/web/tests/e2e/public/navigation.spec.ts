@@ -57,14 +57,12 @@ test.describe('public navigation', () => {
       )
     }
     // One disclosure, and only one: More. Its links are hidden until it opens.
-    await expect(page.locator('[aria-expanded]')).toHaveCount(1)
+    await expect(page.locator('[popovertarget]')).toHaveCount(1)
     const more = header.getByRole('button', { name: 'More' })
-    await expect(more).toHaveAttribute('aria-expanded', 'false')
     for (const section of BEHIND_MORE) {
       await expect(header.getByRole('link', { name: section.label, exact: true })).toHaveCount(0)
     }
     await more.click()
-    await expect(more).toHaveAttribute('aria-expanded', 'true')
     for (const section of BEHIND_MORE) {
       await expect(header.getByRole('link', { name: new RegExp(`^${section.label}\\b`) })).toHaveAttribute(
         'href',

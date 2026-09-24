@@ -25,11 +25,6 @@ export function doorRoute(target: OrgDoorTarget, orgId: string): string | null {
   }
 }
 
-/** A thanks is signed with a first name unless they type something else. */
-export function firstName(name: string | null | undefined): string {
-  return (name ?? '').trim().split(/\s+/)[0] ?? ''
-}
-
 /** "On SPLAT since 2024", from the row's own created_at. */
 export function sinceYear(createdAt: string | null | undefined): number | null {
   const year = createdAt ? new Date(createdAt).getFullYear() : NaN

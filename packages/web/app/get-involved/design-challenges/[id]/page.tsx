@@ -47,6 +47,7 @@ import { getCapabilities } from '@/lib/capabilities'
 import { ChallengeThread } from '@/components/challenge-thread'
 import type { ToyIdeaDetail, ContactPref } from '@splat-connect/types'
 import { daysSince } from '@/lib/relative-time'
+import { initials } from '@splat-connect/types'
 
 const CONTACT_PREF_LABELS: Record<ContactPref, string> = {
   clarification: 'Clarification',
@@ -74,13 +75,6 @@ const TINTS = ['var(--tcoral)', 'var(--tmint)', 'var(--tamber)', 'var(--tviolet)
 
 const date = (iso: string) =>
   new Date(iso).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })
-const initials = (name: string | null | undefined) =>
-  (name ?? '?')
-    .split(/\s+/)
-    .map((w) => w[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase()
 
 export default async function ChallengeDetailPage({
   params,
@@ -357,7 +351,7 @@ export default async function ChallengeDetailPage({
                         className="grid h-[42px] w-[42px] shrink-0 place-items-center rounded-full text-sm font-extrabold text-[var(--tink)]"
                         style={{ background: TINTS[i % TINTS.length] }}
                       >
-                        {initials(m.name)}
+                        {initials(m.name, '?')}
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block text-[15px] font-extrabold">{m.name ?? 'Someone'}</span>

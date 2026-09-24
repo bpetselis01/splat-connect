@@ -7,67 +7,22 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Route } from 'next'
-import type { ComponentType, SVGProps } from 'react'
 import type { Notification, NotificationType } from '@splat-connect/types'
-import { BookOpen, Box, Building, Check, FileText, Handshake, Inbox, Lightbulb, Undo, User } from '@/components/icons'
+import { copyFor } from '@splat-connect/types'
+import {
+  ArrowCounterClockwise as Undo,
+  BookOpen,
+  Buildings as Building,
+  Check,
+  FileText,
+  Handshake,
+  Lightbulb,
+  Package as Box,
+  Tray as Inbox,
+  User,
+} from '@phosphor-icons/react/dist/ssr'
+import type { Icon as Glyph } from '@phosphor-icons/react'
 
-const COPY: Record<NotificationType, (n: Notification) => string> = {
-  collaborator_invited: (n) => `${n.actor_name} invited you to collaborate on "${n.tutorial_title}"`,
-  collaborator_accepted: (n) => `${n.actor_name} accepted your invite to "${n.tutorial_title}"`,
-  collaborator_declined: (n) => `${n.actor_name} declined your invite to "${n.tutorial_title}"`,
-  collaborator_removed: (n) => `${n.actor_name} removed you from "${n.tutorial_title}"`,
-  collaborator_left: (n) => `${n.actor_name} left "${n.tutorial_title}"`,
-  // The two review-queue types. Both name the actor and the project, because
-  // unlike every other type above the recipient did not start this and has no
-  // context for it — a leader may be looking at a title they have never seen.
-  backing_requested: (n) => `${n.actor_name} asked your organisation to back "${n.tutorial_title}"`,
-  tutorial_submitted: (n) => `${n.actor_name} submitted "${n.tutorial_title}" for review`,
-  tutorial_approved: (n) => `"${n.tutorial_title}" was approved and is now published`,
-  tutorial_rejected: (n) => `"${n.tutorial_title}" was rejected`,
-  // Unnamed on purpose: who thanked a guide stays private (066).
-  tutorial_thanked: (n) => `A family said thanks for "${n.tutorial_title}"`,
-  toy_request: (n) => `${n.actor_name} requested ${n.toy_name}`,
-  toy_accepted: (n) => `${n.actor_name} accepted your request for ${n.toy_name}`,
-  toy_rejected: (n) => `${n.actor_name} declined your request for ${n.toy_name}`,
-  toy_withdrawn: (n) => `${n.actor_name} withdrew their request for ${n.toy_name}`,
-  toy_message: (n) => `${n.actor_name} sent a message about ${n.toy_name}`,
-  idea_approved: () => 'Your idea was published as a design challenge',
-  idea_rejected: () => 'Your idea was reviewed and not taken forward',
-  challenge_joined: (n) => `${n.actor_name} joined your design challenge`,
-  challenge_left: (n) => `${n.actor_name} left your design challenge`,
-  challenge_removed: (n) => `${n.actor_name} removed you from a design challenge`,
-  // Two audiences read this since admin.ts's graduate handler notifies the
-  // author (tutorial_contributors role 'primary') and every current
-  // participant (role 'collaborator') alike — the wording must be true for
-  // both without naming a role either could contradict, and it isn't the
-  // author's idea from a participant's side either. Also honest about what
-  // graduation actually did: a tutorial row now exists with status 'draft'
-  // (admin.ts:375), not solved, not in review, not published. Matches
-  // challenge-card.tsx's "Being written up" and badge.tsx
-  // exactly; must never claim more than those two do.
-  idea_graduated: () => 'A challenge you were part of is being written up as a guide, and you are credited on it',
-  build_shot_posted: (n) => `${n.actor_name} posted a photo of ${n.toy_name} working`,
-  build_approved: (n) => `${n.actor_name} approved the working shot for ${n.toy_name}`,
-  print_started: (n) => `${n.actor_name} started printing ${n.toy_name}`,
-  print_ready: (n) => `${n.actor_name} finished printing ${n.toy_name}`,
-  // 077. For the two publish types the event or story title rides in
-  // tutorial_title; for a message, the organisation's name does.
-  org_event_published: (n) => `${n.actor_name} published an event: ${n.tutorial_title}`,
-  org_story_published: (n) => `${n.actor_name} published a story: ${n.tutorial_title}`,
-  org_message: (n) =>
-    n.actor_name === n.tutorial_title
-      ? `${n.actor_name} replied to your message`
-      : `${n.actor_name} messaged ${n.tutorial_title}`,
-  // The byline the family typed, or "A family" when they gave none.
-  org_thanked: (n) => `${n.actor_name} said thanks to your organisation`,
-}
-
-// A type the database allows but this build has no line for — a newer API,
-// or a type added without copy — must still render. COPY[n.type](n) with no
-// fallback took the whole inbox down when the four build/print types landed.
-const copyFor = (n: Notification) => COPY[n.type]?.(n) ?? `${n.actor_name} updated something you're part of`
-
-type Glyph = ComponentType<SVGProps<SVGSVGElement>>
 // The board's icon tile: a tint per kind of news, the glyph always in --tink.
 const ICON: Record<NotificationType, [Glyph, string]> = {
   collaborator_invited: [Handshake, 'var(--tmint)'],
@@ -212,7 +167,7 @@ export function NotificationsList({
               className="grid h-[42px] w-[42px] flex-none place-items-center rounded-[14px] text-[22px] text-[var(--tink)]"
               style={{ background: tint }}
             >
-              <Glyph />
+              <Glyph weight="bold" />
             </span>
             <div className="min-w-0 flex-1">
               <button

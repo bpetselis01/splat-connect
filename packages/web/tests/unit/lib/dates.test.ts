@@ -7,7 +7,7 @@ import {
   longDate,
   formatTimeRange,
   isPast,
-} from '@/lib/dates'
+} from '@splat-connect/types'
 
 // 20 September 2026 is a Sunday. 10am–2pm Sydney is 00:00–04:00 UTC, which is
 // deliberately the awkward case: a naive local render on a machine set to UTC

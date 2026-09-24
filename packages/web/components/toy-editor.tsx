@@ -39,7 +39,7 @@ import {
 } from '@/components/editor-status'
 import { browserApiClient } from '@/lib/browser-api-client'
 import { formatRelativeTime } from '@/lib/relative-time'
-import { computeToyStepStatuses, getMissingToyFields } from '@/lib/toy-steps'
+import { computeToyStepStatuses, getMissingToyFields } from '@splat-connect/types'
 
 const OFFERS: { value: OfferType; label: string; sub: string; tint: string; Icon: typeof Gift }[] = [
   { value: 'donation', label: 'Donation', sub: 'They keep it for good', tint: 'var(--tmint)', Icon: Gift },

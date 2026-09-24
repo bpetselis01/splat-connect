@@ -19,15 +19,6 @@
  * a screen reader never meets an unbuilt asset, and `pointer-events-none` so a
  * sticker pinned over a card can never swallow the click or the focus ring
  * belonging to the link underneath it.
- *
- * Set NEXT_PUBLIC_SLOTS=off to hide every unfilled Sticker and Slot without
- * touching a page. Placeholders that cannot be switched off are how dashed boxes
- * end up in front of real families, so the off switch ships with the first
- * placeholder rather than after the incident. Two things the flag deliberately
- * does not reach: a sticker that has real art in it, because that is the
- * finished state rather than a placeholder, and `EditorialImage`, which already
- * owns its own unfilled treatment and falls back to a brand illustration rather
- * than to nothing.
  */
 import Image from 'next/image'
 import type { IllustrationKey } from '@/components/editorial-image'
@@ -42,9 +33,6 @@ const KIND_LABEL: Record<SlotKind, string> = {
   animation: 'Animation',
   art: 'Artwork',
 }
-
-/** Unfilled slots are visible by default: the point of them is to be seen. */
-export const SLOTS_VISIBLE = process.env.NEXT_PUBLIC_SLOTS !== 'off'
 
 /**
  * A small decorative chip: a disc pinned to a corner of something else.
@@ -71,8 +59,6 @@ export function Sticker({
   /** Positioning is the caller's job — this component never places itself. */
   className?: string
 }) {
-  if (!art && !SLOTS_VISIBLE) return null
-
   // Empty slots are brand-blue and dashed on every section, deliberately not
   // tinted to the tone they sit in. A placeholder's first job is to be legible
   // as a placeholder, and one that camouflages itself into each section is a
@@ -115,9 +101,8 @@ export function Sticker({
  * A rectangular region held for an animation or an overlay.
  *
  * Unlike a sticker this has no finished state to fall back on — an animation
- * either exists or it does not — so it renders only while slots are visible and
- * disappears cleanly when they are switched off. Callers therefore have to
- * position it absolutely over content that stands on its own without it.
+ * either exists or it does not. Callers position it absolutely over content
+ * that stands on its own without it.
  */
 export function Slot({
   kind,
@@ -137,8 +122,6 @@ export function Slot({
   note: string
   className?: string
 }) {
-  if (!SLOTS_VISIBLE) return null
-
   // border-current rather than a `deepEdge` entry on ToneSpec: the dash and the
   // label are always the same colour on the board, and a second token would be
   // a second thing to keep in step with the first.

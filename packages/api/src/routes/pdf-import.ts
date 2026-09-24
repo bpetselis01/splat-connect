@@ -9,7 +9,7 @@ import { bodyLimit } from 'hono/body-limit'
 import { importPdf } from '../pdf-import/extract.js'
 import type { AuthVariables } from '../middleware/auth.js'
 
-export const MAX_PDF_BYTES = 20 * 1024 * 1024
+const MAX_PDF_BYTES = 20 * 1024 * 1024
 
 const pdfImport = new Hono<{ Variables: AuthVariables }>()
 

@@ -40,7 +40,7 @@ export interface PdfImportDraft {
 }
 
 /** "Print settings from the PDF: 0.2 mm layers, 20% infill, …" — null when none were found. */
-export function printSettingsNote(p: PdfImportPrintSettings): string | null {
+function printSettingsNote(p: PdfImportPrintSettings): string | null {
   const bits = [
     p.layer_height_mm != null ? `${p.layer_height_mm} mm layers` : null,
     p.infill_percent != null ? `${p.infill_percent}% infill` : null,

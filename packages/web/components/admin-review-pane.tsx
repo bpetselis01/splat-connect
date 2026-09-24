@@ -14,17 +14,15 @@ import type { Route } from 'next'
 import { CheckCircle, WarningCircle, X, XCircle } from '@phosphor-icons/react/dist/ssr'
 import { PhotoCarousel } from '@/components/photo-carousel'
 import { approveTutorial, rejectTutorial } from '@/app/admin/review/actions'
-import { SAFETY_CHECKLIST, type TutorialWithDetails } from '@splat-connect/types'
+import { plural, SAFETY_CHECKLIST, type TutorialWithDetails } from '@splat-connect/types'
 
-export type Mark = 'ok' | 'warn' | 'bad'
+type Mark = 'ok' | 'warn' | 'bad'
 export type Check = { mark: Mark; label: string; detail: string }
 
 type Reviewable = Pick<
   TutorialWithDetails,
   'kind' | 'photo_urls' | 'parts' | 'tutorial_pdf_url' | 'stl_files' | 'tutorial_collaborator_invites'
 >
-
-const plural = (n: number, one: string) => `${n} ${one}${n === 1 ? '' : 's'}`
 
 /** The COMPLETENESS list, from real data only. */
 export function completeness(t: Reviewable): Check[] {

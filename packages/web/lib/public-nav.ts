@@ -6,7 +6,7 @@
  * pass took the public surface from 10 routes to 43; declaring any of that twice
  * guarantees drift.
  *
- * Deliberately a sibling of lib/nav-model.ts (the signed-in rail) rather than an
+ * Deliberately a sibling of types' nav-model.ts (the signed-in rail) rather than an
  * extension of it: the two navigations serve different people, share no items,
  * and merging them would mean one module branching on auth state.
  */
@@ -15,7 +15,7 @@ import type { IllustrationKey } from '@/components/editorial-image'
 import type { Tone } from './tone'
 import type { IconName } from '@splat-connect/types'
 
-export type NavState = 'live' | 'soon'
+type NavState = 'live' | 'soon'
 
 export interface NavItem {
   /**
@@ -366,7 +366,7 @@ export const ACCOUNT_NAV = {
 /** The account prefixes that belong to ACCOUNT_NAV. Admin is reached through a
     rail row under Account, so it is inside the account section, not beside it.
     /notifications is a top-level route rather than a /dashboard child, but it
-    is a rail row too (see lib/nav-model.ts) — omitting it here silently drops
+    is a rail row too (see types' nav-model.ts) — omitting it here silently drops
     the rail and the quiet header on that one page. /upload is the same story:
     it is the first screen of the authoring journey that continues in the
     tutorial editor, and it was rendering the header while the editor it hands

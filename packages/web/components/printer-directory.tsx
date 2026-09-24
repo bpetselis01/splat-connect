@@ -33,6 +33,7 @@ import {
 } from '@phosphor-icons/react/dist/ssr'
 import type { PrinterWithOwner } from '@splat-connect/types'
 import { filamentRate } from '@/lib/filament-rate'
+import { initials } from '@splat-connect/types'
 
 type Filters = {
   avail?: 'open' | 'noq' | 'any'
@@ -75,18 +76,9 @@ const FACETS = [
 // The board's card tints, rotated so a row of three never repeats one.
 const TINTS = ['var(--tmint)', 'var(--b100)', 'var(--tamber)', 'var(--tviolet)', 'var(--tcoral)']
 
-function initials(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0]!.toUpperCase())
-    .join('')
-}
-
 const isOpen = (p: PrinterWithOwner) => p.accepting && p.open_jobs < p.capacity
 
-export function matches(p: PrinterWithOwner, f: Filters) {
+function matches(p: PrinterWithOwner, f: Filters) {
   if (f.avail === 'open' && !isOpen(p)) return false
   if (f.avail === 'noq' && !(isOpen(p) && p.open_jobs === 0)) return false
   if (f.mat && !p.materials.includes(f.mat)) return false

@@ -25,19 +25,19 @@ import {
   MIN_DROPOFF_GRAMS,
   RECYCLING_DECLARATION,
   estimatedCreditGrams,
+  apiMessage,
+  initials,
+  kgToGrams,
 } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { useCapabilities } from '../../lib/capabilities'
 import { theme } from '../../lib/theme'
 import {
   DROPOFF_PILL,
-  apiMessage,
   badges,
   bookingProblem,
   diverted,
-  initials,
   kg,
-  kgToGrams,
   takers,
   type TakerOrg,
 } from '../../lib/recycling'

@@ -7,7 +7,7 @@ export type { ContributorBadge, ContributorBadgeInput } from './contributor-badg
 export { buildCalendar } from './ics'
 export type { CalendarEvent } from './ics'
 import type { ContributorBadge } from './contributor-badges'
-export { createGuideFromPdfDraft, pdfDraftChecklist, printSettingsNote } from './pdf-import'
+export { createGuideFromPdfDraft, pdfDraftChecklist } from './pdf-import'
 export type {
   PdfImportDraft,
   PdfImportConfidence,
@@ -15,6 +15,11 @@ export type {
   PdfDraftApi,
   PdfDraftResult,
 } from './pdf-import'
+export { isApiError, apiErrorDetail, apiMessage, makeApiClient } from './api-core'
+export type { ApiError } from './api-core'
+export { dateBadge, shortDate, monthHeading, monthKey, longDate, formatTimeRange, isPast } from './dates'
+export { getMissingToyFields, computeToyStepStatuses } from './toy-steps'
+export type { ToyStepId } from './toy-steps'
 
 export type Role = 'admin' | 'contributor'
 
@@ -259,9 +264,23 @@ export interface ExchangeCost {
   updated_at: string
 }
 
+/** Up to two letters for an avatar: "Sam Mitchell" → "SM". `fallback` when there is no name. */
+export function initials(name: string | null | undefined, fallback = ''): string {
+  const words = (name ?? '').trim().split(/\s+/).filter(Boolean)
+  return words.slice(0, 2).map((w) => w[0]!.toUpperCase()).join('') || fallback
+}
+
+/** A first name, never a full one — what a thanks is signed with. */
+export function firstName(name: string | null | undefined): string {
+  return (name ?? '').trim().split(/\s+/)[0] ?? ''
+}
+
+/** `1 part`, `3 parts`. */
+export const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
+
 /** Cents to the string the panel shows. Money formatting in exactly one place. */
-export function formatCents(cents: number, currency = 'AUD', locale = 'en-AU'): string {
-  return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(cents / 100)
+export function formatCents(cents: number): string {
+  return new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' }).format(cents / 100)
 }
 
 /**
@@ -527,6 +546,17 @@ export interface PickupAddress {
   pickup_suburb: string
   pickup_state: string
   pickup_postcode: string
+}
+
+/**
+ * A profile's saved address as an accept default, or null. A partly-filled one
+ * is no use — the accept dialog would offer "use my saved address" and then
+ * refuse to submit it.
+ */
+export function pickupAddress(profile: Partial<Record<keyof PickupAddress, string | null>>): PickupAddress | null {
+  const { pickup_line1, pickup_suburb, pickup_state, pickup_postcode } = profile
+  if (!pickup_line1 || !pickup_suburb || !pickup_state || !pickup_postcode) return null
+  return { pickup_line1, pickup_suburb, pickup_state, pickup_postcode }
 }
 
 // `blocked_by_rival_accept` is computed per read, not stored: true when this
@@ -1349,6 +1379,14 @@ export const RECYCLING_DECLARATION = [
 /** Two kilos, so a machine run is worth firing up. Named once, enforced twice. */
 export const MIN_DROPOFF_GRAMS = 2000
 
+/** Kilograms as typed, in whole grams. Null for anything that is not a weight.
+ *  No floats, so 2.1 is 2100. */
+export function kgToGrams(input: string): number | null {
+  const match = /^\s*(\d{1,4})(?:\.(\d{1,3}))?\s*$/.exec(input)
+  if (!match) return null
+  return Number(match[1]) * 1000 + Number((match[2] ?? '').padEnd(3, '0'))
+}
+
 /**
  * What a drop-off is worth as filament, roughly.
  *
@@ -1586,6 +1624,67 @@ export const NOTIFICATION_TYPES = Object.keys(NOTIFICATION_BUCKET) as Notificati
 export function notificationBucket(type: NotificationType): NotificationBucket {
   return NOTIFICATION_BUCKET[type]
 }
+
+/**
+ * What each notification says, for web's inbox and mobile's. One table so the
+ * two clients never narrate the same event differently — that is how a person
+ * ends up unsure whether they read about one thing or two.
+ */
+export const COPY: Record<NotificationType, (n: Notification) => string> = {
+  collaborator_invited: (n) => `${n.actor_name} invited you to collaborate on "${n.tutorial_title}"`,
+  collaborator_accepted: (n) => `${n.actor_name} accepted your invite to "${n.tutorial_title}"`,
+  collaborator_declined: (n) => `${n.actor_name} declined your invite to "${n.tutorial_title}"`,
+  collaborator_removed: (n) => `${n.actor_name} removed you from "${n.tutorial_title}"`,
+  collaborator_left: (n) => `${n.actor_name} left "${n.tutorial_title}"`,
+  // The two review-queue types. Both name the actor and the project, because
+  // unlike every other type above the recipient did not start this and has no
+  // context for it — a leader may be looking at a title they have never seen.
+  backing_requested: (n) => `${n.actor_name} asked your organisation to back "${n.tutorial_title}"`,
+  tutorial_submitted: (n) => `${n.actor_name} submitted "${n.tutorial_title}" for review`,
+  tutorial_approved: (n) => `"${n.tutorial_title}" was approved and is now published`,
+  tutorial_rejected: (n) => `"${n.tutorial_title}" was rejected`,
+  // Unnamed on purpose: who thanked a guide stays private (066).
+  tutorial_thanked: (n) => `A family said thanks for "${n.tutorial_title}"`,
+  toy_request: (n) => `${n.actor_name} requested ${n.toy_name}`,
+  toy_accepted: (n) => `${n.actor_name} accepted your request for ${n.toy_name}`,
+  toy_rejected: (n) => `${n.actor_name} declined your request for ${n.toy_name}`,
+  toy_withdrawn: (n) => `${n.actor_name} withdrew their request for ${n.toy_name}`,
+  toy_message: (n) => `${n.actor_name} sent a message about ${n.toy_name}`,
+  idea_approved: () => 'Your idea was published as a design challenge',
+  idea_rejected: () => 'Your idea was reviewed and not taken forward',
+  challenge_joined: (n) => `${n.actor_name} joined your design challenge`,
+  challenge_left: (n) => `${n.actor_name} left your design challenge`,
+  challenge_removed: (n) => `${n.actor_name} removed you from a design challenge`,
+  // Two audiences read this since admin.ts's graduate handler notifies the
+  // author (tutorial_contributors role 'primary') and every current
+  // participant (role 'collaborator') alike — the wording must be true for
+  // both without naming a role either could contradict, and it isn't the
+  // author's idea from a participant's side either. Also honest about what
+  // graduation actually did: a tutorial row now exists with status 'draft'
+  // (admin.ts:375), not solved, not in review, not published. Matches
+  // challenge-card.tsx's "Being written up" and badge.tsx
+  // exactly; must never claim more than those two do.
+  idea_graduated: () => 'A challenge you were part of is being written up as a guide, and you are credited on it',
+  build_shot_posted: (n) => `${n.actor_name} posted a photo of ${n.toy_name} working`,
+  build_approved: (n) => `${n.actor_name} approved the working shot for ${n.toy_name}`,
+  print_started: (n) => `${n.actor_name} started printing ${n.toy_name}`,
+  print_ready: (n) => `${n.actor_name} finished printing ${n.toy_name}`,
+  // 077. For the two publish types the event or story title rides in
+  // tutorial_title; for a message, the organisation's name does.
+  org_event_published: (n) => `${n.actor_name} published an event: ${n.tutorial_title}`,
+  org_story_published: (n) => `${n.actor_name} published a story: ${n.tutorial_title}`,
+  org_message: (n) =>
+    n.actor_name === n.tutorial_title
+      ? `${n.actor_name} replied to your message`
+      : `${n.actor_name} messaged ${n.tutorial_title}`,
+  // The byline the family typed, or "A family" when they gave none.
+  org_thanked: (n) => `${n.actor_name} said thanks to your organisation`,
+}
+
+// A type the database allows but this build has no line for — a newer API,
+// or a type added without copy — must still render. COPY[n.type](n) with no
+// fallback took the whole inbox down when the four build/print types landed.
+export const copyFor = (n: Notification): string => COPY[n.type]?.(n) ?? `${n.actor_name} updated something you're part of`
 
 /** The types in one bucket, for a grouped update. */
 export function typesInBucket(bucket: NotificationBucket): NotificationType[] {

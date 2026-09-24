@@ -26,10 +26,9 @@ import {
 } from '@phosphor-icons/react/dist/ssr'
 import { requireCapabilities } from '@/lib/require-capabilities'
 import { apiClient } from '@/lib/api-client'
-import { isOwnerSide } from '@splat-connect/types'
+import { initials, isOwnerSide, pickupAddress } from '@splat-connect/types'
 import type {
   PickupAddress,
-  Profile,
   ToyTransactionDetail,
   ToyTransactionSummary,
 } from '@splat-connect/types'
@@ -44,12 +43,6 @@ import { ChatHead } from '@/components/exchange-chat'
 import { printStages, printStageFacts } from '@/lib/print-stages'
 import { printFilesLine } from '@/lib/print-settings'
 import { askedPrintersLabel, othersAskedLabel } from '@/lib/print-groups'
-
-function defaultAddress(profile: Profile): PickupAddress | null {
-  const { pickup_line1, pickup_suburb, pickup_state, pickup_postcode } = profile
-  if (!pickup_line1 || !pickup_suburb || !pickup_state || !pickup_postcode) return null
-  return { pickup_line1, pickup_suburb, pickup_state, pickup_postcode }
-}
 
 export default async function PrintJobPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -121,13 +114,6 @@ export default async function PrintJobPage({ params }: { params: Promise<{ id: s
   const facts = printStageFacts(tx, viewerIsPrinter)
 
   const partCount = tx.print_files.reduce((n, file) => n + file.quantity, 0)
-  const initials = (name: string) =>
-    name
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((word) => word[0]!.toUpperCase())
-      .join('')
   // Where this job stands with the one printer it went to — the board's
   // "Printers asked" card, which a job with a single machine has one row of.
   const printerAnswer =
@@ -214,7 +200,7 @@ export default async function PrintJobPage({ params }: { params: Promise<{ id: s
         transaction={tx}
         viewerId={caps.profile.id}
         ledOrgIds={ledOrgIds}
-        viewerDefaultAddress={defaultAddress(caps.profile)}
+        viewerDefaultAddress={pickupAddress(caps.profile)}
         onSendMessage={sendMessage}
         onAccept={accept}
         onReject={reject}

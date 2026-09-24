@@ -22,7 +22,7 @@ import { IncomingPrintCard } from '@/components/incoming-print-card'
 import { SplatMascot } from '@/components/splat-mascot'
 import { ProfileTabs } from '@/components/profile-tabs'
 import { printStages } from '@/lib/print-stages'
-import { collapsePrintGroups, needsAction, subjectName } from '@splat-connect/types'
+import { collapsePrintGroups, needsAction, pickupAddress, subjectName } from '@splat-connect/types'
 import type {
   PrinterWithOwner,
   ToyTransactionSummary,
@@ -154,11 +154,7 @@ export async function PrintOfferScreen({
   const onTheBed = jobs.filter((tx) => tx.status === 'accepted')
   const done = jobs.filter((tx) => !['requested', 'accepted'].includes(tx.status))
 
-  const { pickup_line1, pickup_suburb, pickup_state, pickup_postcode } = caps.profile
-  const defaultAddress =
-    pickup_line1 && pickup_suburb && pickup_state && pickup_postcode
-      ? { pickup_line1, pickup_suburb, pickup_state, pickup_postcode }
-      : null
+  const defaultAddress = pickupAddress(caps.profile)
 
   const dashedEmpty =
     'rounded-[24px] border border-dashed border-line bg-surface p-[22px] text-center text-[15px] text-muted'

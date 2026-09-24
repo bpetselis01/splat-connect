@@ -30,8 +30,3 @@ export function doorLink(target: OrgDoorTarget, orgId: string): { href: string; 
 export function askingBackCents(lines: Pick<OrgRateLine, 'amount_cents' | 'claiming'>[]): number {
   return lines.filter((l) => l.claiming).reduce((sum, l) => sum + l.amount_cents, 0)
 }
-
-/** The byline a thanks is prefilled with: a first name, never a full one. */
-export function firstName(name: string | null | undefined): string {
-  return (name ?? '').trim().split(/\s+/)[0] ?? ''
-}

@@ -43,7 +43,7 @@ import { EventRsvpButton } from '@/components/event-rsvp-button'
 import { EventCostPanel } from '@/components/event-cost-panel'
 import { KIND_TINT } from '@/components/event-card'
 import { ShareButton } from '@/components/share-button'
-import { longDate, formatTimeRange, dateBadge, isPast } from '@/lib/dates'
+import { longDate, formatTimeRange, dateBadge, isPast } from '@splat-connect/types'
 import {
   EVENT_KIND_LABEL,
   formatCents,

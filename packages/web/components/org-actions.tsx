@@ -22,7 +22,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { BellRinging, BellSimple, ChatCircleText, HandHeart, PencilSimple } from '@phosphor-icons/react/dist/ssr'
 import type { OrgRelationship } from '@splat-connect/types'
 import { browserApiClient } from '@/lib/browser-api-client'
-import { apiErrorDetail, isApiError } from '@/lib/api-core'
+import { apiErrorDetail, isApiError } from '@splat-connect/types'
 import { useToast } from '@/components/toast'
 
 export function OrgActions({

@@ -235,7 +235,7 @@ type LoadResult =
   | { status: 404 }
   | { status: 500; message: string }
 
-export async function loadForParty(c: Context<{ Variables: AuthVariables }>): Promise<LoadResult> {
+async function loadForParty(c: Context<{ Variables: AuthVariables }>): Promise<LoadResult> {
   const supabase = createUserClient(c.get('token'))
   const { data, error } = await supabase
     .from('toy_transactions')
@@ -574,7 +574,7 @@ toyTransactions.post('/', async (c) => {
     .single()
   if (insertError) return c.json({ error: insertError.message }, 500)
 
-  const { data: requesterProfile } = await admin.from('profiles').select('name').eq('id', userId).single()
+  const requesterName = await profileName(admin, userId, 'A contributor')
   const { data: toyRow } = await admin.from('toys').select('name').eq('id', toy.id).single()
 
   await admin.from('toy_transaction_messages').insert({
@@ -607,7 +607,7 @@ toyTransactions.post('/', async (c) => {
     type: 'toy_request',
     toy_transaction_id: tx.id,
     toy_name: toyRow?.name ?? 'a toy',
-    actor_name: requesterProfile?.name ?? 'A contributor',
+    actor_name: requesterName,
   })
 
   return c.json(tx, 201)
@@ -649,12 +649,11 @@ toyTransactions.post('/:id/messages', async (c) => {
   if (tx) {
     const userId = c.get('userId')
     const ledOrgs = await ledOrgIds(admin, userId)
-    const { data: sender } = await admin.from('profiles').select('name').eq('id', userId).single()
     const payload = {
       type: 'toy_message',
       toy_transaction_id: c.req.param('id'),
       toy_name: await subjectName(admin, tx as any),
-      actor_name: sender?.name ?? 'A contributor',
+      actor_name: await profileName(admin, userId, 'A contributor'),
     }
     // A leader posting notifies the family; the family posting notifies every
     // leader, so whoever picks the thread up next has it in their inbox.
@@ -896,14 +895,13 @@ toyTransactions.post('/:id/withdraw', async (c) => {
     }
   }
 
-  const { data: actor } = await admin.from('profiles').select('name').eq('id', userId).single()
   const payload = {
     type: 'toy_withdrawn',
     toy_transaction_id: tx.id,
     toy_name: await subjectName(admin, tx as any),
     actor_name: fromOwnerSide
       ? await ownerSideName(admin, tx as any, 'The other party')
-      : actor?.name ?? 'The other party',
+      : await profileName(admin, userId, 'The other party'),
   }
   if (fromOwnerSide) {
     await admin.from('notifications').insert({ ...payload, recipient_id: tx.requester_id })
@@ -1303,7 +1301,7 @@ toyTransactions.post('/build', async (c) => {
     .single()
   if (insertError) return c.json({ error: insertError.message }, 500)
 
-  const { data: requesterProfile } = await admin.from('profiles').select('name').eq('id', userId).single()
+  const requesterName = await profileName(admin, userId, 'A contributor')
 
   await admin.from('toy_transaction_messages').insert({
     transaction_id: tx.id,
@@ -1320,7 +1318,7 @@ toyTransactions.post('/build', async (c) => {
       type: 'toy_request',
       toy_transaction_id: tx.id,
       toy_name: tutorial.title,
-      actor_name: requesterProfile?.name ?? 'A contributor',
+      actor_name: requesterName,
     })
   }
 
@@ -1381,8 +1379,8 @@ toyTransactions.post('/:id/claim', async (c) => {
   if (claimError) return c.json({ error: claimError.message }, 500)
   if (!claimed) return c.json({ error: 'Somebody has already claimed this one.' }, 409)
 
-  const [{ data: maker }, { data: tutorial }] = await Promise.all([
-    admin.from('profiles').select('name').eq('id', userId).maybeSingle(),
+  const [makerName, { data: tutorial }] = await Promise.all([
+    profileName(admin, userId, 'A maker'),
     admin.from('tutorials').select('title').eq('id', tx.tutorial_id as string).maybeSingle(),
   ])
 
@@ -1390,7 +1388,7 @@ toyTransactions.post('/:id/claim', async (c) => {
     transaction_id: tx.id,
     sender_id: userId,
     kind: 'system',
-    body: `${maker?.name ?? 'A maker'} claimed this build.`,
+    body: `${makerName} claimed this build.`,
   })
 
   await admin.from('notifications').insert({
@@ -1398,7 +1396,7 @@ toyTransactions.post('/:id/claim', async (c) => {
     type: 'toy_accepted',
     toy_transaction_id: tx.id,
     toy_name: tutorial?.title ?? 'your build request',
-    actor_name: maker?.name ?? 'A maker',
+    actor_name: makerName,
   })
 
   return c.json(sanitizeCodes(claimed, userId, []))
@@ -1517,9 +1515,7 @@ toyTransactions.post('/:id/approve-work', async (c) => {
     type: 'build_approved',
     toy_transaction_id: tx.id,
     toy_name: await subjectName(admin, tx as any),
-    actor_name: (
-      await admin.from('profiles').select('name').eq('id', userId).single()
-    ).data?.name ?? 'The family',
+    actor_name: await profileName(admin, userId, 'The family'),
   })
 
   return c.json(sanitizeCodes(updated, userId, ledOrgs))
@@ -1676,7 +1672,7 @@ toyTransactions.post('/print', async (c) => {
     }
   }
 
-  const { data: requesterProfile } = await admin.from('profiles').select('name').eq('id', userId).single()
+  const requesterName = await profileName(admin, userId, 'A contributor')
   const parts = `${rows.length} part${rows.length === 1 ? '' : 's'}`
   for (const tx of created) {
     await admin.from('toy_transaction_messages').insert({
@@ -1692,7 +1688,7 @@ toyTransactions.post('/print', async (c) => {
       type: 'toy_request',
       toy_transaction_id: tx.id,
       toy_name: tutorial.title,
-      actor_name: requesterProfile?.name ?? 'A contributor',
+      actor_name: requesterName,
     })
   }
 
@@ -1831,7 +1827,7 @@ toyTransactions.post('/print-at-event', async (c) => {
     return c.json({ error: linkError.message }, 500)
   }
 
-  const { data: requesterProfile } = await admin.from('profiles').select('name').eq('id', userId).single()
+  const requesterName = await profileName(admin, userId, 'A contributor')
 
   await admin.from('toy_transaction_messages').insert({
     transaction_id: tx.id,
@@ -1844,7 +1840,7 @@ toyTransactions.post('/print-at-event', async (c) => {
     type: 'toy_request',
     toy_transaction_id: tx.id,
     toy_name: tutorial.title,
-    actor_name: requesterProfile?.name ?? 'A contributor',
+    actor_name: requesterName,
   })
 
   return c.json(tx, 201)

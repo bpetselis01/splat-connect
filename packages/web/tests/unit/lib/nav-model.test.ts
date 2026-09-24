@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildNav } from '@/lib/nav-model'
+import { buildNav } from '@splat-connect/types'
 import type { Capabilities } from '@/lib/capabilities'
 import type { Profile, Organization } from '@splat-connect/types'
 

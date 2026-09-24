@@ -1,7 +1,7 @@
 // packages/mobile/tests/unit/lib/notifications.test.ts
-import { NOTIFICATION_TYPES, notificationBucket } from '@splat-connect/types'
+import { COPY, copyFor, NOTIFICATION_TYPES, notificationBucket } from '@splat-connect/types'
 import type { Notification, NotificationType } from '@splat-connect/types'
-import { COPY, copyFor, linkFor, relativeTime } from '../../../lib/notifications'
+import { linkFor, relativeTime } from '../../../lib/notifications'
 
 const notification = (over: Partial<Notification>): Notification => ({
   id: 'n1',

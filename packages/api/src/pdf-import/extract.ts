@@ -10,7 +10,7 @@ import { parseGuide, type TextItem } from './parse.js'
 /** Past this the draft would be too long to review anyway. */
 const MAX_PAGES = 60
 
-export async function readPdfItems(data: Uint8Array): Promise<{ items: TextItem[]; pageCount: number; truncated: boolean }> {
+async function readPdfItems(data: Uint8Array): Promise<{ items: TextItem[]; pageCount: number; truncated: boolean }> {
   // verbosity 0: pdf.js otherwise logs font warnings ("TT: undefined function") for ordinary files.
   const pdf = await getDocumentProxy(data, { verbosity: 0 })
   try {
