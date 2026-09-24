@@ -85,9 +85,16 @@ describe('DeleteEntityButton', () => {
 
   it('a backdrop click closes without deleting', () => {
     const dialog = openDialog()
-    fireEvent.click(dialog)
+    fireEvent.click(dialog, { clientX: -1, clientY: -1 })
     expect(dialog).not.toHaveAttribute('open')
     expect(browserApiClient.delete).not.toHaveBeenCalled()
+  })
+
+  // jsdom lays everything out at 0×0, so (0, 0) is on the dialog's own box — its padding.
+  it('a click in the dialog padding does not close it', () => {
+    const dialog = openDialog()
+    fireEvent.click(dialog, { clientX: 0, clientY: 0 })
+    expect(dialog).toHaveAttribute('open')
   })
 
   it('a click inside the dialog body does not close it', () => {

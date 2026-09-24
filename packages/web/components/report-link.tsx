@@ -20,6 +20,7 @@ import {
   WarningCircle,
 } from '@phosphor-icons/react/dist/ssr'
 import { browserApiClient } from '@/lib/browser-api-client'
+import { isBackdropClick } from '@/lib/backdrop-click'
 
 /** The board's six reasons, keyed by the API's categories. */
 const REASONS = [
@@ -116,7 +117,7 @@ export function ReportLink({
         className="dialog-panel w-[min(560px,100%)]"
         onCancel={() => setOpen(false)}
         onClick={(e) => {
-          if (e.target === ref.current) setOpen(false)
+          if (isBackdropClick(e)) setOpen(false)
         }}
       >
         <div className="flex flex-col gap-4">

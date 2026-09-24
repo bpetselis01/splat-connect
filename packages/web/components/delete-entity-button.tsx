@@ -20,6 +20,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Route } from 'next'
 import { browserApiClient } from '@/lib/browser-api-client'
+import { isBackdropClick } from '@/lib/backdrop-click'
 
 export function DeleteEntityButton({
   endpoint,
@@ -81,7 +82,7 @@ export function DeleteEntityButton({
         className="dialog-panel"
         onCancel={() => cancel()}
         onClick={(e) => {
-          if (e.target === ref.current) cancel()
+          if (isBackdropClick(e)) cancel()
         }}
       >
         <div className="flex flex-col gap-4">

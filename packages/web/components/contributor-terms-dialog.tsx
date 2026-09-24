@@ -13,6 +13,7 @@
 import { useEffect, useRef } from 'react'
 import { TermsGate } from './terms-gate'
 import { ContributorTermsContent } from './contributor-terms-content'
+import { isBackdropClick } from '@/lib/backdrop-click'
 
 export function ContributorTermsDialog({
   open,
@@ -38,13 +39,11 @@ export function ContributorTermsDialog({
       className="dialog-panel"
       onCancel={() => onClose()}
       onClick={(e) => {
-        // A click whose target is the dialog element itself missed its
-        // content — for a modal <dialog> that includes clicks on its
-        // ::backdrop, which the platform attributes to this element. Deliberately not wired to the native `close` event: this
+        // Deliberately not wired to the native `close` event: this
         // component also closes itself (via the effect above) after Accept,
         // and `close` fires for that too — wiring onClose there would call
         // both onClose and onAccepted for the same accept action.
-        if (e.target === ref.current) onClose()
+        if (isBackdropClick(e)) onClose()
       }}
     >
       <TermsGate
