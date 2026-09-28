@@ -5277,6 +5277,13 @@ body[data-motion='reduced'] :is(.sw-kicker__hint, .sw-progress, .sw-rail) {
     border-top: var(--bw) solid var(--line);
     background: var(--surface);
   }
+  /* The signed-in dock floats bottom-right; on a phone it would sit on the
+     copyright line for good. Room for it under the last line. */
+  @media (max-width: 639px) {
+    .site-footer {
+      padding-bottom: 72px;
+    }
+  }
   .site-footer__grid {
     display: grid;
     grid-template-columns: 1.5fr 2.6fr;
