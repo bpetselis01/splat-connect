@@ -147,7 +147,9 @@ export function OrgPublishing({
             <span aria-hidden="true" className="tint-tile text-2xl" style={{ backgroundColor: tint }}>
               <Icon weight="duotone" />
             </span>
-            <div className="min-w-0 flex-1">
+            {/* On a phone the badge wraps below rather than squeezing the
+                title and meta into a one-word column. */}
+            <div className="min-w-0 flex-1 max-sm:min-w-[12rem]">
               <h2 className="row-card__title">{title}</h2>
               <p className="row-card__meta">{meta}</p>
             </div>
