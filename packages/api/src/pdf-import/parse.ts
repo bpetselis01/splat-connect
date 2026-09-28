@@ -290,7 +290,7 @@ function readList(cells: Cell[]): { text: string; qty?: number }[] {
       owner.lastY = c.y
       continue
     }
-    if (onPrevRow) continue // another column of the same table row
+    if (onPrevRow && anyMarked) continue // another column of the same table row
     if (!anyMarked) start(c, c.text)
   }
   return items.filter((i) => i.text).map((i) => ({ text: i.text.trim(), qty: i.qty }))
@@ -332,7 +332,8 @@ function sectionRuns(tagged: Tagged[], section: Section): Cell[][] {
     if (c.heading) {
       run = c.section === section ? [] : null
       if (run) runs.push(run)
-    } else if (run && !c.marker) run.push(c)
+    } else if (STEP_LINE.test(c.text)) run = null // a list ends where the steps begin
+    else if (run && !c.marker) run.push(c)
   }
   return runs
 }
