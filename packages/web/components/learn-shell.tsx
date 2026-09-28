@@ -69,7 +69,9 @@ export function LearnShell({
 
   return (
     <div className="grid gap-8 lg:grid-cols-[minmax(0,284px)_minmax(0,880px)]">
-      <aside className="flex flex-col gap-3.5 pr-0.5 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:self-start lg:overflow-auto">
+      {/* Below lg the aside dissolves into the grid so the outline can follow
+          the lesson: a phone reader lands on the lesson, not 16 outline rows. */}
+      <aside className="flex flex-col gap-3.5 pr-0.5 max-lg:contents lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:self-start lg:overflow-auto">
         <Link
           href="/learn"
           className="inline-flex min-h-11 items-center gap-2 self-start text-sm font-extrabold text-brand-deep no-underline"
@@ -78,7 +80,7 @@ export function LearnShell({
           Course home
         </Link>
 
-        <div className="rounded-[var(--radius-inset)] border border-line bg-surface px-[18px] py-4 shadow-[var(--e1)]">
+        <div className="rounded-[var(--radius-inset)] border border-line bg-surface px-[18px] py-4 shadow-[var(--e1)] max-lg:order-last">
           <div className="flex items-baseline justify-between gap-2">
             <span className="font-display text-[15px] font-extrabold text-ink">Switch adapting toys</span>
             {/* Suppressed until storage has been read: rendering "0/16" and then
@@ -102,7 +104,7 @@ export function LearnShell({
           </div>
         </div>
 
-        <nav aria-label="Course outline" className="flex flex-col gap-3">
+        <nav aria-label="Course outline" className="flex flex-col gap-3 max-lg:order-last">
           {UNITS.map((u) => {
             const current = unit?.n === u.n
             return (
