@@ -14,7 +14,8 @@ const path = require('path')
 const { collectFingerprint, collectChrome } = require('./fingerprint')
 const { compare } = require('./compare')
 const { provision, signIn, cleanup, adminClient } = require('./auth')
-const { seed, dbSample, unseed } = require('./seed')
+const { seed, unseed } = require('./seed')
+const { resolveRoute } = require('./routes')
 
 const ROOT = path.resolve(__dirname, '../..')
 // Resolved from packages/web: this script lives outside any package, so plain
@@ -60,57 +61,6 @@ function loadMap() {
     return all.filter((s) => bad.has(s.id))
   }
   return all
-}
-
-/**
- * Dynamic routes need a real record id. Scrape one off a list page rather than
- * querying the database: a scraped link is by construction a page the app
- * itself considers reachable and populated.
- *
- * Matched against the ROUTE TEMPLATE, not against the list page's own path.
- * Deriving the pattern from the list URL assumed the two share a prefix, and
- * across this app they frequently do not — guides are listed at /library but
- * detailed at /tutorials/[id], and /organizations lists links to
- * /organizations/[id]/public, two segments down. Nine screens went unmeasured
- * on that assumption.
- */
-async function resolveDynamic(page, entry, cache) {
-  const key = entry.route
-  if (!cache.has(key)) {
-    let found = null
-    try {
-      await page.goto(LIVE + entry.sampleFrom, {
-        waitUntil: 'domcontentloaded',
-        timeout: 30000,
-      })
-      await page.waitForTimeout(600)
-      const pattern =
-        '^' +
-        entry.route
-          .split('/')
-          .map((seg) =>
-            /^\[.+\]$/.test(seg) ? '[^/]+' : seg.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-          )
-          .join('/') +
-        '$'
-      found = await page.evaluate((pat) => {
-        const re = new RegExp(pat)
-        // "new", "create" and friends are forms, not records. /dashboard/toys
-        // links to /dashboard/toys/new, and scraping that made the harness
-        // compare the board's toy DETAIL screen against live's add-a-toy form.
-        const RESERVED = new Set(['new', 'create', 'add', 'edit', 'request'])
-        return (
-          [...document.querySelectorAll('a[href]')]
-            .map((x) => new URL(x.href, location.origin).pathname)
-            .find((p) => re.test(p) && !RESERVED.has(p.split('/').pop())) || null
-        )
-      }, pattern)
-    } catch {
-      /* falls through to null */
-    }
-    cache.set(key, found)
-  }
-  return cache.get(key)
 }
 
 async function fingerprintOf(page, url, rootSel, role) {
@@ -184,33 +134,15 @@ async function fingerprintOf(page, url, rootSel, role) {
     try {
       let route = s.route
       if (s.sampleFrom) {
-        // An explicit DB sample beats scraping: the first link on a list is
-        // whichever fixture sorts first, and that is usually the emptiest.
-        route =
-          seeded[s.id] ||
-          (await dbSample(adminClient(), s.id)) ||
-          (await resolveDynamic(livePage, s, cache))
-        // Nested under a dynamic parent (/toy-library/[id]/request): the link
-        // is on the parent's detail page, never on a list, so take the parent's
-        // already-resolved route and append.
-        //
-        // `suffix` appends; a `[id]` in the route substitutes the parent's id
-        // instead, which is the only way to reach a form that takes its record
-        // in the query string. /printing/requests without ?guide= is the "every
-        // request starts from a guide" banner, and the harness was comparing
-        // that banner against the board's full request form: no inputs, two
-        // missing sections and a gross height difference, all of them the
-        // harness standing on the wrong page.
-        if (!route && s.derivedFrom) {
-          const parent = screens.find((x) => x.id === s.derivedFrom) || allScreens.find((x) => x.id === s.derivedFrom)
-          if (parent) {
-            const base = cache.get(parent.route) || (await resolveDynamic(livePage, parent, cache))
-            if (base)
-              route = s.route.includes('[id]')
-                ? s.route.replace('[id]', base.split('/').filter(Boolean).pop())
-                : base + s.suffix
-          }
-        }
+        route = await resolveRoute(s, {
+          page: livePage,
+          live: LIVE,
+          seeded,
+          cache,
+          screens,
+          allScreens,
+          db: adminClient(),
+        })
         if (!route) {
           row.error = `no ${s.route} link on ${s.sampleFrom}`
           row.skipped = true
