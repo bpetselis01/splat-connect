@@ -66,24 +66,26 @@ export function KitTable({
   return (
     <div className="overflow-hidden rounded-card border border-line bg-surface shadow-[var(--e2)]">
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-[15px]">
+        {/* Below sm each row stacks into a card (part, then what it is, then
+            where) rather than scrolling its third column out of view. */}
+        <table className="w-full border-collapse text-[15px] max-sm:block">
           {caption && (
-            <caption className="border-b border-line px-[22px] py-[18px] text-left">
+            <caption className="border-b border-line px-[22px] py-[18px] text-left max-sm:block max-sm:px-4">
               <span className="block font-display text-[19px] font-extrabold text-ink">{caption.title}</span>
               <span className="mt-[3px] block text-sm font-semibold text-muted">{caption.sub}</span>
             </caption>
           )}
-          <thead>
+          <thead className="max-sm:sr-only">
             <tr className="bg-sunken text-left text-xs uppercase tracking-[0.06em] text-muted">
               <th scope="col" className="px-[22px] py-3">{head[0]}</th>
               <th scope="col" className="px-4 py-[13px]">{head[1]}</th>
               <th scope="col" className="px-[22px] py-3 text-right">{head[2]}</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="max-sm:block">
             {rows.map((k) => (
-              <tr key={k.item} className="border-t border-line">
-                <td className="px-[22px] py-[13px]">
+              <tr key={k.item} className="border-t border-line max-sm:block max-sm:py-2 max-sm:first:border-t-0">
+                <td className="px-[22px] py-[13px] max-sm:block max-sm:px-4 max-sm:pb-1.5 max-sm:pt-2">
                   <span className="flex items-center gap-3">
                     {k.img ? (
                       <span
@@ -118,8 +120,8 @@ export function KitTable({
                     </span>
                   </span>
                 </td>
-                <td className="px-4 py-[13px] text-sm leading-normal text-muted">{k.why}</td>
-                <td className="whitespace-nowrap px-[22px] py-[13px] text-right">
+                <td className="px-4 py-[13px] text-sm leading-normal text-muted max-sm:block max-sm:py-1">{k.why}</td>
+                <td className="whitespace-nowrap px-[22px] py-[13px] text-right max-sm:block max-sm:whitespace-normal max-sm:px-4 max-sm:pb-2 max-sm:pt-1 max-sm:text-left">
                   <span className="block text-sm font-bold text-ink">{k.shop}</span>
                   <span className="mt-[3px] block font-mono text-[13.5px] font-bold text-muted">
                     {k.qty} · {k.cost}
@@ -129,8 +131,8 @@ export function KitTable({
             ))}
           </tbody>
           {total && (
-            <tfoot>
-              <tr className="bg-brand-tint text-[var(--tink)]">
+            <tfoot className="max-sm:block">
+              <tr className="bg-brand-tint text-[var(--tink)] max-sm:flex max-sm:justify-between max-sm:gap-3">
                 <td colSpan={2} className="px-[22px] py-3.5 font-extrabold">{total.label}</td>
                 <td className="px-[22px] py-3.5 text-right font-mono text-sm font-extrabold">{total.value}</td>
               </tr>
