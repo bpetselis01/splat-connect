@@ -15,6 +15,8 @@
  * - components/challenge-card.tsx: one row of the grid below
  * - app/get-involved/submit-an-idea/page.tsx: where the empty state points
  */
+import { paginate } from '@/lib/paginate'
+import { Pager } from '@/components/pager'
 import {
   ChatsCircle,
   NotePencil,
@@ -46,8 +48,8 @@ const TINTS = ['var(--b100)', 'var(--tmint)', 'var(--tamber)', 'var(--tviolet)',
 
 export default async function DesignChallengesPage({
   searchParams,
-}: { searchParams?: Promise<{ filter?: string }> } = {}) {
-  const { filter: rawFilter } = (await searchParams) ?? {}
+}: { searchParams?: Promise<{ filter?: string; page?: string }> } = {}) {
+  const { filter: rawFilter, page: pageParam } = (await searchParams) ?? {}
   const filter = FILTERS.find((f) => f.id === rawFilter) ?? FILTERS[0]
   // null means signed out — the island still renders, it just routes to
   // /signup instead of saving. Sets rather than .includes: the lookup runs
@@ -71,6 +73,7 @@ export default async function DesignChallengesPage({
   }
 
   const shown = challenges.filter(filter.keep)
+  const { items: pageShown, page, pages } = paginate(shown, pageParam, 24)
 
   const list = failed ? (
     <div className="card mt-4 flex flex-col items-center px-6 py-16 text-center">
@@ -119,7 +122,7 @@ export default async function DesignChallengesPage({
         <p className="text-[15px] text-muted">Nothing under {filter.label.toLowerCase()} yet.</p>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {shown.map((idea, i) => (
+          {pageShown.map((idea, i) => (
             <ChallengeCard
               key={idea.id}
               idea={idea}
@@ -134,6 +137,7 @@ export default async function DesignChallengesPage({
           ))}
         </div>
       )}
+      <Pager page={page} pages={pages} params={{ filter: rawFilter }} />
     </>
   )
 
