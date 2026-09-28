@@ -42,6 +42,9 @@ describe('splitQuantity', () => {
     ['Hex nut - Qty: 6', 'Hex nut', 6],
     ['130 size DC motor', '130 size DC motor', 1],
     ['3D printed base', '3D printed base', 1],
+    // A holder's cell count is not how many holders (Rumble Plate's BOM row 8).
+    ['2x AAA Battery Holder (and 2 AAA batteries)', '2x AAA Battery Holder (and 2 AAA batteries)', 1],
+    ['2x AA battery', 'AA battery', 2],
   ])('%s', (text, name, quantity) => {
     expect(splitQuantity(text)).toEqual({ name, quantity })
   })

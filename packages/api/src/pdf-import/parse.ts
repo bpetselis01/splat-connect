@@ -298,6 +298,9 @@ function readList(cells: Cell[]): { text: string; qty?: number }[] {
 
 /** "2x Mono jack" -> 2, "Mono jack"; "Screw ×4" -> 4, "Screw"; "Qty 2 Nut" -> 2, "Nut". */
 export function splitQuantity(text: string): { name: string; quantity: number } {
+  // "2x AAA Battery Holder" is one holder that takes two cells (Rumble Plate's BOM).
+  if (/^\d+\s*[x×]\s*(AAA?|C|D|9V|CR\d{4}|18650)\b.*\b(holder|pack|box|case|clip|enclosure)\b/i.test(text))
+    return { name: cleanName(text), quantity: 1 }
   const patterns: [RegExp, number, number][] = [
     [/^(\d+)\s*[x×]\s*(.+)$/i, 1, 2],
     [/^[x×]\s*(\d+)\s+(.+)$/i, 1, 2],
