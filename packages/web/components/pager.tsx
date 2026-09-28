@@ -4,16 +4,19 @@ import type { Route } from 'next'
 /**
  * Previous / Page n of m / Next for a list cut by lib/paginate.ts. Keeps the
  * page's other query params (filters, search) on both links. Renders nothing
- * for a single page.
+ * for a single page. `anchor` sends both links back to a list that sits
+ * part-way down its page, rather than to the top.
  */
 export function Pager({
   page,
   pages,
   params = {},
+  anchor,
 }: {
   page: number
   pages: number
   params?: Record<string, string | undefined>
+  anchor?: string
 }) {
   if (pages <= 1) return null
   const href = (p: number) => {
@@ -21,7 +24,7 @@ export function Pager({
     for (const [k, v] of Object.entries(params)) if (v && k !== 'page') q.set(k, v)
     if (p > 1) q.set('page', String(p))
     const s = q.toString()
-    return (s ? `?${s}` : '?') as Route
+    return `${s ? `?${s}` : '?'}${anchor ? `#${anchor}` : ''}` as Route
   }
   return (
     <nav aria-label="Pages" className="mt-8 flex items-center justify-between gap-3">

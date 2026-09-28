@@ -14,6 +14,8 @@ import { SplatMascot } from '@/components/splat-mascot'
 import { ImpactCard } from '@/components/impact-card'
 import { StoryKindPill, StoryPhoto } from '@/components/story-bits'
 import { apiClient } from '@/lib/api-client'
+import { paginate } from '@/lib/paginate'
+import { Pager } from '@/components/pager'
 import { shortDate } from '@splat-connect/types'
 import type { Difficulty, ImpactSummary, StoryListItem, Tutorial } from '@splat-connect/types'
 
@@ -57,7 +59,10 @@ const MORE: Array<{ label: string; blurb: string; icon: typeof Buildings; href: 
   },
 ]
 
-export default async function ImpactPage() {
+export default async function ImpactPage({
+  searchParams,
+}: { searchParams?: Promise<{ page?: string }> } = {}) {
+  const { page: pageParam } = (await searchParams) ?? {}
   let impact: ImpactSummary = EMPTY_IMPACT
   try {
     const res = await fetch(`${process.env.API_URL}/api/public/impact`, { cache: 'no-store' })
@@ -79,6 +84,19 @@ export default async function ImpactPage() {
   const maxDifficulty = Math.max(1, ...byDifficulty.map((d) => d.n))
 
   const { totals, contributors, organisations, deliveriesByMonth } = impact
+  // One grid, people then organisations, paged together.
+  const {
+    items: people,
+    page,
+    pages,
+  } = paginate(
+    [
+      ...contributors.map((entity, i) => ({ kind: 'person' as const, entity, index: i })),
+      ...organisations.map((entity, i) => ({ kind: 'org' as const, entity, index: i + 1 })),
+    ],
+    pageParam,
+    24
+  )
   const maxDelivered = Math.max(1, ...deliveriesByMonth.map((m) => m.n))
   /*
    * The board's four, big and tinted: the numbers are the whole point of the
@@ -186,7 +204,10 @@ export default async function ImpactPage() {
         </div>
       </div>
 
-      <h2 className="mb-[18px] mt-11 font-display text-[26px] font-extrabold text-ink">
+      <h2
+        id="people"
+        className="mb-[18px] mt-11 scroll-mt-24 font-display text-[26px] font-extrabold text-ink"
+      >
         Contributors and organisations
       </h2>
       {contributors.length === 0 && organisations.length === 0 ? (
@@ -202,14 +223,16 @@ export default async function ImpactPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {contributors.map((c, i) => (
-            <ImpactCard key={`person-${c.id}`} kind="person" entity={c} index={i} />
-          ))}
-          {organisations.map((o, i) => (
-            <ImpactCard key={`org-${o.id}`} kind="org" entity={o} index={i + 1} />
-          ))}
+          {people.map((p) =>
+            p.kind === 'person' ? (
+              <ImpactCard key={`person-${p.entity.id}`} kind="person" entity={p.entity} index={p.index} />
+            ) : (
+              <ImpactCard key={`org-${p.entity.id}`} kind="org" entity={p.entity} index={p.index} />
+            )
+          )}
         </div>
       )}
+      <Pager page={page} pages={pages} anchor="people" />
 
       <h2 className="mb-1.5 mt-11 font-display text-[26px] font-extrabold text-ink">
         The story behind the numbers

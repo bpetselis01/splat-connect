@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { createContributor, createTutorial, createPublishedToy, deleteUser, uniqueTitle } from './helpers'
+import { createContributor, createTutorial, createPublishedToy, deleteUser, uniqueTitle, pageUntilVisible } from './helpers'
 
 /**
  * The public showcase journey: /impact (no login) links to a contributor's
@@ -31,6 +31,7 @@ test.describe('Impact wall and contributor profile', () => {
       // The contributor's own card — matched by its profile link, since the
       // display name ("E2E Contributor") is shared by every fixture contributor.
       const card = page.locator(`[data-testid="impact-card"][href="/contributors/${contributor.id}"]`)
+      await pageUntilVisible(page, card)
       await expect(card).toBeVisible()
       await expect(card).toContainText(contributor.name)
 
