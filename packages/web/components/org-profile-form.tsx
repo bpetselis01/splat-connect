@@ -288,7 +288,7 @@ export function OrgProfileForm({ org }: { org: Organization }) {
                   role="switch"
                   aria-checked={on}
                   onClick={() => toggle(capabilities, setCapabilities, capability)}
-                  className={`flex w-full items-center gap-3.5 rounded-[18px] border-2 px-4 py-3.5 text-left text-ink transition-colors hover:border-brand focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)] ${
+                  className={`flex w-full items-center gap-3.5 rounded-[18px] border-2 px-4 py-3.5 text-left max-sm:flex-wrap max-sm:gap-y-2 text-ink transition-colors hover:border-brand focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)] ${
                     on ? 'border-[var(--b600)] bg-[var(--b50)]' : 'border-line bg-[var(--canvas)]'
                   }`}
                 >
@@ -298,12 +298,14 @@ export function OrgProfileForm({ org }: { org: Organization }) {
                   >
                     <CapIcon weight="duotone" />
                   </span>
-                  <span className="flex min-w-0 flex-1 flex-col gap-[3px]">
+                  {/* On a phone the badge wraps under the text, lined up with
+                      it, instead of squeezing it into a one-word column. */}
+                  <span className="flex min-w-0 flex-1 flex-col gap-[3px] max-sm:min-w-[9rem]">
                     <span className="text-base font-extrabold">{capability}</span>
                     <span className="text-[13px] leading-[1.45] text-muted">{sub}</span>
                   </span>
                   <span
-                    className={`badge flex-none px-3 py-[5px] ${
+                    className={`badge flex-none px-3 py-[5px] max-sm:ml-[58px] ${
                       on ? 'bg-[var(--tok)] text-[var(--tink)]' : 'bg-sunken text-muted'
                     }`}
                   >
