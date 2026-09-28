@@ -61,8 +61,12 @@ case "${1:-up}" in
       detach "$LOG_DIR/artboard.log" python3 -m http.server $ARTBOARD_PORT)
 
     echo "API :$API_PORT"
+    # CORS_ORIGIN: the API defaults it to its own PORT, which here is the API's
+    # port, not the web's — so every call the browser makes (a PDF import, an
+    # upload) failed CORS while the server-rendered pages looked fine.
     (cd "$ROOT" && SUPABASE_URL="$SUPABASE_URL" SUPABASE_ANON_KEY="$ANON_KEY" \
       SUPABASE_SERVICE_ROLE_KEY="$SERVICE_KEY" API_PORT=$API_PORT PORT=$API_PORT \
+      CORS_ORIGIN="http://localhost:$WEB_PORT" \
       detach "$LOG_DIR/api.log" pnpm --filter @splat-connect/api dev)
 
     # Its own distDir: Next 16 permits one `next dev` per project directory and
