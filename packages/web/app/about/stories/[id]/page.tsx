@@ -16,12 +16,12 @@
  */
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { BookOpen, CaretRight } from '@phosphor-icons/react/dist/ssr'
+import { BookOpen } from '@phosphor-icons/react/dist/ssr'
+import type { StoryListItem } from '@splat-connect/types'
 import { apiClient } from '@/lib/api-client'
 import { initials, shortDate } from '@splat-connect/types'
 import { ShareButton } from '@/components/share-button'
 import { StoryKindPill, StoryPhoto, STORY_KIND_STYLE } from '@/components/story-bits'
-import { STORY_KIND_LABEL, type StoryListItem } from '@splat-connect/types'
 
 type StoryDetail = StoryListItem & {
   org: { id: string; name: string } | null
@@ -72,17 +72,6 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
 
   return (
     <article>
-      <nav
-        aria-label="Breadcrumb"
-        className="mb-[22px] flex items-center gap-2 text-sm font-bold text-muted"
-      >
-        <Link href="/about/stories" className="text-[var(--b700)] max-sm:-my-2.5 max-sm:py-2.5">
-          Stories
-        </Link>
-        <CaretRight size={12} weight="bold" aria-hidden="true" />
-        <span>{STORY_KIND_LABEL[story.kind]}</span>
-      </nav>
-
       <div className="mx-auto max-w-[760px]">
         <StoryKindPill kind={story.kind} className="!px-3 !py-1 text-xs tracking-[0.06em]" />
         <h1 className="mt-3.5 font-display text-[clamp(32px,4vw,50px)] font-extrabold leading-[1.08] tracking-[-0.02em] text-ink [text-wrap:balance]">
