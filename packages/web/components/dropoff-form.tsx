@@ -126,7 +126,7 @@ export function DropoffForm({ orgs, initialOrgId }: { orgs: DropoffOrg[]; initia
       onSubmit={submit}
       className="mt-[26px] flex flex-col gap-6 rounded-card border border-line bg-[var(--surface)] p-7 shadow-[var(--e2)]"
     >
-      <fieldset>
+      <fieldset className="min-w-0">
         <legend className="mb-[9px] flex w-full items-center justify-between gap-2.5">
           <span className={LABEL}>Who are you taking it to?</span>
           <span className="text-[13px] font-bold text-muted">
