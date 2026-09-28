@@ -83,9 +83,12 @@ async function resolveRoute(s, ctx) {
       screens.find((x) => x.id === s.derivedFrom) || allScreens.find((x) => x.id === s.derivedFrom)
     if (parent) {
       const base = cache.get(parent.route) || (await resolveDynamic(page, live, parent, cache))
+      // The parent's id sits where its template has [id] — not always last:
+      // /organizations/[id]/public ends in "public".
+      const at = parent.route.split('/').findIndex((seg) => /^\[.+\]$/.test(seg))
       if (base)
         route = s.route.includes('[id]')
-          ? s.route.replace('[id]', base.split('/').filter(Boolean).pop())
+          ? s.route.replace('[id]', base.split('/')[at])
           : base + s.suffix
     }
   }
