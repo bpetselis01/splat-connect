@@ -7,9 +7,8 @@
 import { Hono } from 'hono'
 import { bodyLimit } from 'hono/body-limit'
 import { importPdf } from '../pdf-import/extract.js'
+import { PDF_IMPORT_MAX_BYTES as MAX_PDF_BYTES, PDF_IMPORT_MAX_LABEL } from '@splat-connect/types'
 import type { AuthVariables } from '../middleware/auth.js'
-
-const MAX_PDF_BYTES = 20 * 1024 * 1024
 
 const pdfImport = new Hono<{ Variables: AuthVariables }>()
 
@@ -18,13 +17,13 @@ pdfImport.post(
   // Checked on the stream, before the multipart body is buffered. The slack is the multipart framing.
   bodyLimit({
     maxSize: MAX_PDF_BYTES + 64 * 1024,
-    onError: (c) => c.json({ error: 'That PDF is over 20 MB.' }, 413),
+    onError: (c) => c.json({ error: `That PDF is over ${PDF_IMPORT_MAX_LABEL}.` }, 413),
   }),
   async (c) => {
     const form = await c.req.formData().catch(() => null)
     const file = form?.get('file')
     if (!(file instanceof File)) return c.json({ error: 'Attach the PDF as `file`.' }, 400)
-    if (file.size > MAX_PDF_BYTES) return c.json({ error: 'That PDF is over 20 MB.' }, 413)
+    if (file.size > MAX_PDF_BYTES) return c.json({ error: `That PDF is over ${PDF_IMPORT_MAX_LABEL}.` }, 413)
 
     const bytes = new Uint8Array(await file.arrayBuffer())
     // The bytes decide, not the declared type: phones often send application/octet-stream.

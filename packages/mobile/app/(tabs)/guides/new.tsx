@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router'
 import { randomUUID } from 'expo-crypto'
 import * as DocumentPicker from 'expo-document-picker'
 import type { Difficulty, PdfImportDraft, TutorialKind } from '@splat-connect/types'
-import { KIND_LABEL, createGuideFromPdfDraft, pdfDraftChecklist } from '@splat-connect/types'
+import { KIND_LABEL, createGuideFromPdfDraft, pdfDraftChecklist, PDF_IMPORT_MAX_BYTES, PDF_IMPORT_MAX_LABEL } from '@splat-connect/types'
 import { apiClient } from '../../../lib/api-client'
 import { uploadFile } from '../../../lib/upload'
 import { useAuth } from '../../../lib/auth-context'
@@ -27,8 +27,6 @@ const DIFFICULTY_OPTIONS: { label: string; value: Difficulty }[] = [
   { label: 'Medium', value: 'medium' },
   { label: 'Hard', value: 'hard' },
 ]
-
-const MAX_PDF_BYTES = 20 * 1024 * 1024
 
 type PdfAsset = { uri: string; name: string; mimeType?: string }
 
@@ -58,8 +56,8 @@ export default function NewGuideRoute() {
     const result = await DocumentPicker.getDocumentAsync({ type: 'application/pdf' })
     if (result.canceled || !result.assets?.[0]) return
     const asset = result.assets[0]
-    if (asset.size != null && asset.size > MAX_PDF_BYTES) {
-      setError('That PDF is over 20 MB.')
+    if (asset.size != null && asset.size > PDF_IMPORT_MAX_BYTES) {
+      setError(`That PDF is over ${PDF_IMPORT_MAX_LABEL}.`)
       return
     }
     const file = { uri: asset.uri, name: asset.name, mimeType: asset.mimeType ?? 'application/pdf' }
@@ -164,7 +162,7 @@ export default function NewGuideRoute() {
           <Text style={styles.termsCopy}>
             We read your guide&apos;s PDF and fill in what we can — title, parts, tools, steps and
             print settings. It is a best guess from the text, and photos inside the PDF are not
-            copied. Up to 20 MB.
+            copied. Up to {PDF_IMPORT_MAX_LABEL}.
           </Text>
           <ErrorRow message={error} />
           <Button label="Choose PDF" variant="accent" onPress={choosePdf} loading={reading} />

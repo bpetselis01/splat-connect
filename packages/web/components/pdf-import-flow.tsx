@@ -12,10 +12,9 @@ import type { Route } from 'next'
 import { ArrowRight, CheckCircle, FilePdf, MinusCircle } from '@phosphor-icons/react/dist/ssr'
 import { browserApiClient } from '@/lib/browser-api-client'
 import { apiErrorDetail } from '@splat-connect/types'
-import { createGuideFromPdfDraft, pdfDraftChecklist, KIND_LABEL } from '@splat-connect/types'
+import { createGuideFromPdfDraft, pdfDraftChecklist, KIND_LABEL, PDF_IMPORT_MAX_BYTES, PDF_IMPORT_MAX_LABEL } from '@splat-connect/types'
 import type { PdfImportDraft, TutorialKind } from '@splat-connect/types'
 
-const MAX_BYTES = 20 * 1024 * 1024
 
 /** Where the editor opens, with what the banner needs to say. */
 function editorUrl(id: string, r: { failed: string[]; stepsUnavailable: boolean }): string {
@@ -37,7 +36,7 @@ export function PdfImportFlow() {
   async function read(picked: File) {
     setError(null)
     if (picked.type && picked.type !== 'application/pdf') return setError('Choose a PDF file.')
-    if (picked.size > MAX_BYTES) return setError('That PDF is over 20 MB.')
+    if (picked.size > PDF_IMPORT_MAX_BYTES) return setError(`That PDF is over ${PDF_IMPORT_MAX_LABEL}.`)
     setFile(picked)
     setBusy('reading')
     try {
@@ -110,7 +109,7 @@ export function PdfImportFlow() {
           <p className="mt-2 text-[13px] text-muted">
             We read the PDF&apos;s text and fill in what we can — title, parts, tools, steps and print
             settings. It is a best guess from the text, not a finished guide, and photos inside the PDF
-            are not copied. Up to 20 MB.
+            are not copied. Up to {PDF_IMPORT_MAX_LABEL}.
           </p>
         </div>
         {error && (

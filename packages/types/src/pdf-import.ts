@@ -7,6 +7,15 @@ import type { Difficulty, TutorialKind } from './index'
 
 export type PdfImportConfidence = 'high' | 'medium' | 'low' | 'none'
 
+/**
+ * The largest PDF "Start from a PDF" reads — the storage bucket's own 50 MB
+ * cap, so any guide PDF the site accepts as an upload can also be imported.
+ * It was 20 MB, and a 34 MB photo-heavy guide already on the site was refused.
+ * Only the text is read, so the size is almost all images and costs little.
+ */
+export const PDF_IMPORT_MAX_BYTES = 50 * 1024 * 1024
+export const PDF_IMPORT_MAX_LABEL = '50 MB'
+
 export interface PdfImportPrintSettings {
   layer_height_mm?: number
   infill_percent?: number

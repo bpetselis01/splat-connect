@@ -4,7 +4,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
 import { acceptTerms } from '../../helpers/orgs.js'
-import { createGuideFromPdfDraft, type PdfDraftApi, type PdfImportDraft } from '@splat-connect/types'
+import { createGuideFromPdfDraft, PDF_IMPORT_MAX_BYTES, type PdfDraftApi, type PdfImportDraft } from '@splat-connect/types'
 
 let user: TestUser
 const created: string[] = []
@@ -91,10 +91,18 @@ describe('POST /api/tutorials/import-pdf', () => {
     expect((await post(null)).status).toBe(400)
   })
 
-  it('refuses anything over 20 MB', async () => {
-    const big = new Uint8Array(20 * 1024 * 1024 + 200 * 1024)
+  it("refuses anything over the storage bucket's 50 MB", async () => {
+    const big = new Uint8Array(PDF_IMPORT_MAX_BYTES + 200 * 1024)
     big.set(new TextEncoder().encode('%PDF-'))
     expect((await post(new File([big], 'big.pdf', { type: 'application/pdf' }))).status).toBe(413)
+  })
+
+  // A 34 MB photo-heavy guide was already on the site and the old 20 MB cap
+  // refused it. Past the size check, junk bytes are a read failure, not a 413.
+  it('reads a PDF between the old 20 MB cap and 50 MB', async () => {
+    const mid = new Uint8Array(25 * 1024 * 1024)
+    mid.set(new TextEncoder().encode('%PDF-'))
+    expect((await post(new File([mid], 'mid.pdf', { type: 'application/pdf' }))).status).toBe(422)
   })
 
   it('turns into a real draft through the ordinary routes: PDF stored once, parts, tools and steps saved', async () => {
