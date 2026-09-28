@@ -153,7 +153,7 @@ export function ProfileForm({
         </div>
       </div>
       <div className="flex flex-col gap-1 border-t border-line pt-4">
-        <label htmlFor="public-showcase" className="flex items-center gap-2 text-sm">
+        <label htmlFor="public-showcase" className="flex items-center gap-2 text-sm max-sm:min-h-11">
           <input
             id="public-showcase"
             type="checkbox"
