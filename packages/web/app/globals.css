@@ -3143,6 +3143,13 @@
     .sw-scene__body {
       font-size: 16px;
     }
+
+    /* A flatter card, so the longest scene (the printer's) fits a phone's
+       screen: at 4:3 its CTA fell off the bottom and its art ran under the
+       kicker. */
+    .sw-scene__art {
+      aspect-ratio: 2 / 1;
+    }
   }
 
   /* ---- bands below the flight ---- */
