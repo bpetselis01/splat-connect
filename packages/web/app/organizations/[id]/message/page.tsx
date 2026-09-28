@@ -34,7 +34,7 @@ export default async function MessageOrgPage({ params }: { params: Promise<{ id:
   return (
     <div className="mx-auto max-w-[760px]">
       <nav aria-label="Breadcrumb" className="mb-[18px] flex items-center gap-2 text-sm font-bold text-muted">
-        <Link href={`/organizations/${id}/public`} className="text-[var(--b700)]">
+        <Link href={`/organizations/${id}/public`} className="text-[var(--b700)] max-sm:inline-flex max-sm:min-h-10 max-sm:items-center">
           {org.name}
         </Link>
         <CaretRight size={12} weight="bold" aria-hidden="true" />
