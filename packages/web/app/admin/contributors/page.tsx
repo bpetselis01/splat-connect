@@ -2,6 +2,8 @@ import { MagnifyingGlass, UsersThree } from '@phosphor-icons/react/dist/ssr'
 import Link from 'next/link'
 import type { Route } from 'next'
 import { apiClient } from '@/lib/api-client'
+import { paginate } from '@/lib/paginate'
+import { Pager } from '@/components/pager'
 import { revalidatePath } from 'next/cache'
 import { tintFor } from '@/components/card-photo'
 import type { AdminAccountsResponse, Organization, OrgLeader } from '@splat-connect/types'
@@ -25,9 +27,9 @@ const joined = (iso: string) =>
 export default async function ContributorsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ cap?: string; q?: string }>
+  searchParams: Promise<{ cap?: string; q?: string; page?: string }>
 }) {
-  const { cap: capParam, q = '' } = await searchParams
+  const { cap: capParam, q = '', page: pageParam } = await searchParams
   const [{ accounts: all, total }, orgs] = await Promise.all([
     apiClient.get<AdminAccountsResponse>('/api/admin/contributors'),
     // Leadership is the one capability the data knows. It rides on the
@@ -70,6 +72,7 @@ export default async function ContributorsPage({
       (cap === 'all' || (cap === 'leaders') === leaders.has(p.id)) &&
       (!needle || `${p.name} ${p.email}`.toLowerCase().includes(needle))
   )
+  const { items: pageRows, page, pages } = paginate(shown, pageParam, 50)
   const href = (c: Cap) => {
     const params = new URLSearchParams()
     if (c !== 'all') params.set('cap', c)
@@ -141,7 +144,7 @@ export default async function ContributorsPage({
               </tr>
             </thead>
             <tbody>
-              {shown.map((p) => {
+              {pageRows.map((p) => {
                 const leader = leaders.has(p.id)
                 return (
                   <tr key={p.id} data-testid="contributor-row">
@@ -188,6 +191,7 @@ export default async function ContributorsPage({
           </p>
         )}
       </div>
+      <Pager page={page} pages={pages} params={{ cap: capParam, q }} />
     </div>
   )
 }
