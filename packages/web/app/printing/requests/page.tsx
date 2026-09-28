@@ -103,7 +103,7 @@ export default async function RequestAPrintPage({
               <span aria-hidden="true" className="printing-guide-first__icon">
                 <BookOpen size={34} weight="duotone" />
               </span>
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 flex-1 max-sm:basis-full">
                 <p className="font-display text-[22px] font-extrabold text-ink">
                   Every request starts from a guide
                 </p>

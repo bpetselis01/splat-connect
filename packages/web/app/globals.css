@@ -5859,6 +5859,14 @@ body[data-motion='reduced'] :is(.sw-kicker__hint, .sw-progress, .sw-rail) {
     color: var(--tink);
   }
 
+  /* On a phone the copy takes a row of its own (max-sm:basis-full on it);
+     this just trims the padding to match. */
+  @media (max-width: 639px) {
+    .printing-guide-first {
+      padding: 20px;
+    }
+  }
+
   .printing-guide-first__icon {
     display: grid;
     flex: none;
