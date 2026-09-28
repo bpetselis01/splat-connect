@@ -323,6 +323,21 @@ describe('parseGuide', () => {
     ])
   })
 
+  // Light Touch Switch: the T01-T07 table and the assembly section's bullet
+  // list name the same tools in slightly different words.
+  it('lists a tool once when the guide names it twice in different words', () => {
+    const items = [
+      ...column(1, [['Tools', 16], '• Wire cutters / strippers', '• 3D printed switch jig', '• Soldering iron']),
+      ...column(2, [['Tools Required', 16], '• Wire cutter / stripper', '• Switch jig (optional)', '• Hot glue gun']),
+    ]
+    expect(parseGuide(items, 2).tools.map((x) => x.name)).toEqual([
+      'Wire cutters / strippers',
+      '3D printed switch jig',
+      'Soldering iron',
+      'Hot glue gun',
+    ])
+  })
+
   it('says so when the PDF has no text layer', () => {
     const d = parseGuide([], 3)
     expect(d.title).toBeNull()

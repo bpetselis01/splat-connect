@@ -320,10 +320,27 @@ const PHOTO_NOTE = /\s*\((?:not (?:shown|pictured|included in (?:the )?(?:photo|
 const cleanName = (s: string) =>
   s.replace(PHOTO_NOTE, '').replace(/\s+/g, ' ').replace(/[:;,]\s*$/, '').trim().slice(0, 200)
 
-function dedupe<T extends { name: string }>(list: T[]): T[] {
+/**
+ * A tool named twice in one guide — Makers Making Change repeats its T01-T07
+ * table as a bullet list in the assembly section, worded a little differently:
+ * "Wire cutters / strippers" and "Wire cutter / stripper", "3D printed switch
+ * jig" and "Switch jig (optional)". Notes in brackets, a leading "3D printed"
+ * and plural endings do not make a different tool.
+ */
+const toolKey = (name: string) =>
+  name
+    .toLowerCase()
+    .replace(/\([^)]*\)/g, ' ')
+    .replace(/^\s*3d[- ]?printed\s+/, '')
+    .split(/[^\p{L}\p{N}]+/u)
+    .filter(Boolean)
+    .map((w) => w.replace(/(?<=\p{L}{3})e?s$/u, ''))
+    .join(' ')
+
+function dedupe<T extends { name: string }>(list: T[], key = (name: string) => name.toLowerCase()): T[] {
   const seen = new Set<string>()
   return list.filter((p) => {
-    const k = p.name.toLowerCase()
+    const k = key(p.name)
     if (p.name.length < 2 || !/\p{L}/u.test(p.name) || LABEL.test(p.name) || seen.has(k)) return false
     seen.add(k)
     return true
@@ -664,7 +681,10 @@ export function parseGuide(items: TextItem[], pageCount: number): PdfImportDraft
   // Parts and tools.
   const partsRuns = sectionRuns(tagged, 'parts')
   const parts = dedupe(partsRuns.flatMap(readList).map((it) => (it.qty ? { name: cleanName(splitQuantity(it.text).name), quantity: it.qty } : splitQuantity(it.text))))
-  const tools = dedupe(sectionRuns(tagged, 'tools').flatMap(readList).map((it) => ({ name: splitQuantity(it.text).name })))
+  const tools = dedupe(
+    sectionRuns(tagged, 'tools').flatMap(readList).map((it) => ({ name: splitQuantity(it.text).name })),
+    toolKey
+  )
   if (!parts.length) warnings.push(hasHeading('parts') ? 'Found a parts heading but could not read the list under it (it may be a picture).' : 'No parts list found.')
   if (!tools.length) warnings.push(hasHeading('tools') ? 'Found a tools heading but could not read the list under it.' : 'No tools list found.')
 
