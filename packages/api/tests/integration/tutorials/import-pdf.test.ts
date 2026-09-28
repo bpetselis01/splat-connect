@@ -125,8 +125,10 @@ describe('POST /api/tutorials/import-pdf', () => {
     expect(result).toEqual({ failed: [], stepsUnavailable: false })
 
     const admin = adminClient()
-    const { data: row } = await admin.from('tutorials').select('title, kind, tutorial_pdf_url').eq('id', id).single()
-    expect(row).toEqual({ title: 'Low Profile Switch', kind: 'assistive_tech', tutorial_pdf_url: `${id}/tutorial.pdf` })
+    const { data: row } = await admin.from('tutorials').select('title, kind, tutorial_pdf_url, description').eq('id', id).single()
+    expect(row).toMatchObject({ title: 'Low Profile Switch', kind: 'assistive_tech', tutorial_pdf_url: `${id}/tutorial.pdf` })
+    // CC BY-SA travels with the work: the guide has no summary, so the credit is the whole description.
+    expect(row!.description).toMatch(/^Credit: © 2022 by Neil Squire \/ Makers Making Change · This work is licensed under the CC BY SA 4\.0/)
     const { count: parts } = await admin.from('parts').select('id', { count: 'exact', head: true }).eq('tutorial_id', id)
     const { count: tools } = await admin.from('tools').select('id', { count: 'exact', head: true }).eq('tutorial_id', id)
     const { data: steps } = await admin.from('tutorial_steps').select('position, body').eq('tutorial_id', id).order('position')

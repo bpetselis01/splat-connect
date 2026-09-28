@@ -78,6 +78,7 @@ export function pdfDraftChecklist(draft: PdfImportDraft): { label: string; found
     { label: 'Steps', found: count(draft.steps.length, 'step', 'steps') },
     { label: 'Print settings', found: printSettingsNote(draft.print_settings) ? 'Added to the description as a note' : null },
     { label: 'Build time', found: draft.build_minutes ? `${draft.build_minutes} min` : null },
+    { label: 'Credit and licence', found: draft.attribution ? 'Added to the description' : null },
   ]
 }
 
@@ -117,7 +118,8 @@ export async function createGuideFromPdfDraft(
   uploadPdf: (tutorialId: string) => Promise<string>
 ): Promise<PdfDraftResult> {
   const note = printSettingsNote(draft.print_settings)
-  const description = [draft.summary, note].filter(Boolean).join('\n\n') || null
+  const credit = draft.attribution ? `Credit: ${draft.attribution}` : null
+  const description = [draft.summary, note, credit].filter(Boolean).join('\n\n') || null
 
   await api.post('/api/tutorials', {
     id,
