@@ -230,9 +230,11 @@ export default async function ReviewListPage({
               hiding the org-handled rows is a deliberate act, off by default. */}
           {handledCount > 0 &&
             (hidingHandled ? (
-              <Link href="/admin/review">Show the {handledCount} an organisation is handling</Link>
+              <Link href="/admin/review" className="max-sm:inline-block max-sm:py-2.5">
+                Show the {handledCount} an organisation is handling
+              </Link>
             ) : (
-              <Link href="/admin/review?mine=1">
+              <Link href="/admin/review?mine=1" className="max-sm:inline-block max-sm:py-2.5">
                 Hide the {handledCount} an organisation is handling
               </Link>
             ))}
