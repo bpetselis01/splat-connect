@@ -40,7 +40,7 @@ export function MoneyPanel({
   return (
     <section
       aria-labelledby="money-heading"
-      className="mt-10 grid gap-8 rounded-[var(--radius-card)] border border-line bg-surface p-6 shadow-e2 lg:grid-cols-[minmax(0,320px)_1fr]"
+      className="mt-10 grid gap-8 rounded-[var(--radius-card)] border border-line bg-surface p-6 shadow-e2 grid-cols-1 lg:grid-cols-[minmax(0,320px)_1fr]"
     >
       <div>
         <h2
