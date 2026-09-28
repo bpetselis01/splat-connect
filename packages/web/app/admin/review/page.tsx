@@ -25,6 +25,8 @@ import {
 } from '@phosphor-icons/react/dist/ssr'
 import Link from 'next/link'
 import { apiClient } from '@/lib/api-client'
+import { paginate } from '@/lib/paginate'
+import { Pager } from '@/components/pager'
 import { tintFor } from '@/components/card-photo'
 import { ReviewTabs } from '@/components/admin-review-tabs'
 import { AdminReviewPane } from '@/components/admin-review-pane'
@@ -54,9 +56,9 @@ function waiting(iso: string, now: number = Date.now()): { text: string; days: n
 export default async function ReviewListPage({
   searchParams,
 }: {
-  searchParams: Promise<{ mine?: string; selected?: string }>
+  searchParams: Promise<{ mine?: string; selected?: string; page?: string }>
 }) {
-  const { mine, selected } = await searchParams
+  const { mine, selected, page: pageParam } = await searchParams
   const [all, accounts, ideas] = await Promise.all([
     apiClient.get<Queued[]>('/api/admin/tutorials?status=pending'),
     // Names for the CONTRIBUTOR column. Resolved here rather than embedded:
@@ -78,8 +80,14 @@ export default async function ReviewListPage({
 
   // The pane, only for a row that is on screen: once a guide is approved or
   // sent back it leaves the pending list and the pane closes with it.
-  const base = hidingHandled ? '/admin/review?mine=1' : '/admin/review'
-  const paneHref = (id: string) => `${base}${hidingHandled ? '&' : '?'}selected=${id}`
+  // The page rides along on the pane's links, so opening a row keeps it.
+  const { items: pageRows, page, pages } = paginate(tutorials, pageParam, 50)
+  const baseQuery = new URLSearchParams()
+  if (hidingHandled) baseQuery.set('mine', '1')
+  if (page > 1) baseQuery.set('page', String(page))
+  const qs = baseQuery.toString()
+  const base = qs ? `/admin/review?${qs}` : '/admin/review'
+  const paneHref = (id: string) => `${base}${qs ? '&' : '?'}selected=${id}`
   const picked = tutorials.find((t) => t.id === selected) ?? null
   const detail = picked
     ? await apiClient.get<TutorialWithDetails>(`/api/tutorials/${picked.id}`).catch(() => null)
@@ -151,7 +159,7 @@ export default async function ReviewListPage({
               </tr>
             </thead>
             <tbody>
-              {tutorials.map((t) => {
+              {pageRows.map((t) => {
                 const accepted = acceptedFor(t)
                 const who = namesOf(t)
                 const wait = waiting(t.created_at)
@@ -240,6 +248,7 @@ export default async function ReviewListPage({
             ))}
         </div>
       </div>
+      <Pager page={page} pages={pages} params={{ mine: hidingHandled ? '1' : undefined }} />
       {detail && picked && (
         <AdminReviewPane
           tutorial={detail}

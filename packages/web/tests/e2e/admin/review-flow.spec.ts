@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { signIn, createContributor, createAdmin, createTutorial, uniqueTitle, acceptTerms, adminClient } from '../helpers'
+import { signIn, createContributor, createAdmin, createTutorial, uniqueTitle, acceptTerms, adminClient, pageUntilVisible } from '../helpers'
 
 /**
  * Wait for the review action to land in the database, not for the network to
@@ -28,13 +28,16 @@ test('an admin approves a pending tutorial and it appears in the public library'
   await signIn(page, admin.email, admin.password)
   await page.waitForURL('**/admin')
 
-  await page.goto('/admin/review')
+  // The queue is oldest first and paged; a page past the end clamps to the
+  // last, which is where a guide submitted seconds ago sits.
+  await page.goto('/admin/review?page=9999')
   // A plain click opens the side pane on the queue (39672abf); the row is still
   // a link to the full page, which is what a click before hydration follows —
   // so let the page settle first.
   await page.waitForLoadState('networkidle')
+  await pageUntilVisible(page, page.getByRole('link', { name: new RegExp(title) }))
   await page.getByRole('link', { name: new RegExp(title) }).click()
-  await page.waitForURL(`**/admin/review?selected=${tutorialId}`)
+  await page.waitForURL(new RegExp(`/admin/review\\?(page=\\d+&)?selected=${tutorialId}$`))
 
   const pane = page.getByRole('complementary', { name: `Reviewing ${title}` })
   await pane.getByRole('button', { name: 'Approve', exact: true }).click()
@@ -78,11 +81,12 @@ test('the review queue lists a pending tutorial with how long it has waited', as
 
   await signIn(page, admin.email, admin.password)
   await page.waitForURL('**/admin')
-  await page.goto('/admin/review')
+  await page.goto('/admin/review?page=9999')
 
   // The queue is the board's table since ac0e9ff7: the submitted date became
   // its WAITING cell, an age ("0 hours", "3 days") rather than a date.
   const row = page.getByRole('row', { name: new RegExp(title) })
+  await pageUntilVisible(page, row)
   await expect(row.getByRole('link', { name: title })).toBeVisible()
   await expect(row.getByRole('cell', { name: /^\d+ (hour|day)s?$/ })).toBeVisible()
 })

@@ -1,4 +1,4 @@
-import { type Page } from '@playwright/test'
+import { type Locator, type Page } from '@playwright/test'
 import { createClient } from '@supabase/supabase-js'
 
 // Local Supabase — well-known, non-secret dev keys (same as playwright.config.ts).
@@ -316,4 +316,21 @@ export async function signIn(page: Page, email: string, password: string) {
   // but /login" rather than a fixed destination, because a contributor who
   // has not accepted terms lands on /onboarding, not /dashboard.
   await page.waitForURL((url) => !url.pathname.startsWith('/login'))
+}
+
+/**
+ * Follow a paged list's Next link until `target` is on the page. Long lists
+ * are paged (components/pager.tsx), and a fixture made seconds ago sits
+ * wherever the list's order puts it — last, on the oldest-first review queue.
+ */
+export async function pageUntilVisible(page: Page, target: Locator) {
+  const next = page.getByRole('navigation', { name: 'Pages' }).getByRole('link', { name: /Next/ })
+  for (;;) {
+    if (await target.count()) return
+    const href = (await next.count()) ? await next.getAttribute('href') : null
+    if (!href) return
+    // A load rather than a click: a local database holds hundreds of pages of
+    // old fixtures, and clicking waits out animations and the sticky header.
+    await page.goto(new URL(href, page.url()).toString())
+  }
 }

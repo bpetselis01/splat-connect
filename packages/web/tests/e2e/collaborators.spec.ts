@@ -8,6 +8,7 @@ import {
   signIn,
   uniqueTitle,
   adminClient,
+  pageUntilVisible,
 } from './helpers'
 
 /**
@@ -136,10 +137,13 @@ test('a collaborator is invited, accepts, edits, submits, and both are notified 
     // 5. The admin approves it, from the queue's side pane (39672abf).
     await signIn(page, admin.email, admin.password)
     await page.waitForURL('**/admin')
-    await page.goto('/admin/review')
+    // The queue is oldest first and paged; a page past the end clamps to the
+    // last, which is where a guide submitted seconds ago sits.
+    await page.goto('/admin/review?page=9999')
     await page.waitForLoadState('networkidle')
+    await pageUntilVisible(page, page.getByRole('link', { name: new RegExp(renamedTitle) }))
     await page.getByRole('link', { name: new RegExp(renamedTitle) }).click()
-    await page.waitForURL(`**/admin/review?selected=${tutorialId}`)
+    await page.waitForURL(new RegExp(`/admin/review\\?(page=\\d+&)?selected=${tutorialId}$`))
     await page
       .getByRole('complementary', { name: `Reviewing ${renamedTitle}` })
       .getByRole('button', { name: 'Approve', exact: true })
