@@ -42,6 +42,12 @@ describe('Low Profile Switch assembly guide', async () => {
     expect(draft.steps[15].body).toMatch(/can rotate freely without friction\.$/)
   })
 
+  it('keeps the credit and licence the noise filter drops, for the description', () => {
+    expect(draft.attribution).toBe(
+      '© 2022 by Neil Squire / Makers Making Change · This work is licensed under the CC BY SA 4.0 License: http://creativecommons.org/licenses/by-sa/4.0 · Files available at https://makersmakingchange.com/project/low-profile-switch/'
+    )
+  })
+
   it('guesses assistive tech from a switch in the title, and says photos are not copied', () => {
     expect(draft.kind).toBe('assistive_tech')
     expect(draft.warnings).toContain('Photos and diagrams inside the PDF are not copied — add them to the guide yourself.')

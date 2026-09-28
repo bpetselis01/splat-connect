@@ -39,6 +39,13 @@ export interface PdfImportDraft {
   tools: { name: string }[]
   steps: { title?: string; body: string }[]
   print_settings: PdfImportPrintSettings
+  /**
+   * The guide's credit and licence ("© 2022 by Neil Squire … CC BY SA 4.0 …
+   * Files available at …"), or null. CC BY-SA requires it to travel with the
+   * work, so it goes into the description. Optional: a draft read before this
+   * existed has none.
+   */
+  attribution?: string | null
   /** What could not be read, in words the author sees. */
   warnings: string[]
   confidence: Record<

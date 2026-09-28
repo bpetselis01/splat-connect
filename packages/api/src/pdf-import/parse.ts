@@ -113,6 +113,28 @@ function cleanText(s: string): string {
     .trim()
 }
 
+/**
+ * The credit and licence lines dropNoise throws away as boilerplate, kept
+ * once each. A template's unfilled placeholder ("© 2021 by <Author>.", "Files
+ * available at <Replace with MMC Library Link>") drops its sentence; the
+ * licence sentence beside it stays.
+ */
+const CREDIT = /©|\bcopyright\b|licen[cs]ed under|creativecommons\.org|files available at/i
+export function readAttribution(cells: Cell[]): string | null {
+  const seen = new Set<string>()
+  for (const c of cells) {
+    if (!CREDIT.test(c.text)) continue
+    for (const sentence of c.text.split(/(?<=\.)\s+(?=[A-Z©])/)) {
+      const s = sentence.trim()
+      if (!s || s.includes('<') || !CREDIT.test(s)) continue
+      seen.add(s.replace(/\.$/, ''))
+    }
+  }
+  // Some guides end each line with a full stop and some do not; a separator reads the same either way.
+  const text = [...seen].join(' · ')
+  return text ? text.slice(0, 400) : null
+}
+
 function readingOrder(a: Cell, b: Cell) {
   if (a.page !== b.page) return a.page - b.page
   if (!sameRow(a, b)) return b.y - a.y
@@ -758,6 +780,7 @@ export function parseGuide(items: TextItem[], pageCount: number): PdfImportDraft
     tools,
     steps,
     print_settings,
+    attribution: readAttribution(allCells),
     warnings,
     confidence: {
       title: titleConfidence,

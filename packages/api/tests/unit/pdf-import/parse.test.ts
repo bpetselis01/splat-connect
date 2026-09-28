@@ -10,6 +10,7 @@ import {
   readPrintSettings,
   toCells,
   dropNoise,
+  readAttribution,
   type TextItem,
 } from '../../../src/pdf-import/parse.js'
 
@@ -336,6 +337,16 @@ describe('parseGuide', () => {
       'Soldering iron',
       'Hot glue gun',
     ])
+  })
+
+  // Rumble Plate and the Penguin are unfilled Makers Making Change templates.
+  it('keeps a licence line but drops an unfilled template placeholder', () => {
+    const cells = toCells([
+      t(1, 72, 60, '© 2021 by <Author>. This work is licensed under the CC BY SA 4.0 License: http://creativecommons.org/licenses/by-sa/4.0', 8),
+      t(1, 72, 48, 'Files available at <Replace with MMC Library Link>', 8),
+    ])
+    expect(readAttribution(cells)).toBe('This work is licensed under the CC BY SA 4.0 License: http://creativecommons.org/licenses/by-sa/4.0')
+    expect(readAttribution(toCells([t(1, 72, 60, 'Assembly', 8)]))).toBeNull()
   })
 
   it('says so when the PDF has no text layer', () => {
