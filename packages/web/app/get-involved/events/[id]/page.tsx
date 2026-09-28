@@ -99,7 +99,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
       <div className="grid items-start gap-9 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)]">
         <div className="flex flex-col gap-4 lg:sticky lg:top-6">
           <div
-            className="relative grid aspect-square place-items-center overflow-hidden rounded-card border border-line shadow-[var(--e2),var(--hi)]"
+            className="relative grid aspect-square max-lg:aspect-[16/9] place-items-center overflow-hidden rounded-card border border-line shadow-[var(--e2),var(--hi)]"
             style={{ background: tint }}
           >
             {cover ? (
