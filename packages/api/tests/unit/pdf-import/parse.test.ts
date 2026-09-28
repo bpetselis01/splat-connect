@@ -153,6 +153,13 @@ describe('readPrintSettings', () => {
     ])
     expect(readPrintSettings(cells)).toEqual({ infill_percent: 20, supports: true, layer_height_mm: 0.2 })
   })
+
+  // One Handed Book Holder's specifications table: the object weighs 7 g, which
+  // is not how much filament it takes.
+  it("does not read an object's Weight as filament grams", () => {
+    const cells = toCells([t(1, 300, 400, 'Weight'), t(1, 305, 380, '7')])
+    expect(readPrintSettings(cells).filament_grams).toBeUndefined()
+  })
 })
 
 describe('toCells / dropNoise', () => {

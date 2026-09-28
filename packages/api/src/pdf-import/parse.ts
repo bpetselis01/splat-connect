@@ -537,7 +537,8 @@ export function readPrintSettings(cells: Cell[]): PdfImportPrintSettings {
   if (plausible.length) out.print_minutes = Math.max(...plausible)
 
   const grams = [
-    ...tableValues(cells, /total mass|\bmass\b|filament|weight/i, (s) => NUM.test(s)).map(Number),
+    // Not "weight": a user guide's specifications table gives the object's weight, not the filament's.
+    ...tableValues(cells, /total mass|\bmass\b|filament/i, (s) => NUM.test(s)).map(Number),
   ]
   const freeGrams = /filament[^0-9\n]{0,15}(\d+(?:\.\d+)?)\s*g\b|(\d+(?:\.\d+)?)\s*g(?:rams)? of filament/i.exec(text)
   if (!grams.length && freeGrams) grams.push(Number(freeGrams[1] ?? freeGrams[2]))
