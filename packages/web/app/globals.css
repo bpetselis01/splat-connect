@@ -2557,6 +2557,13 @@
     padding: 72px 0 56px;
   }
 
+  /* On a phone the 72 left a blank first screen above the badge. */
+  @media (max-width: 639px) {
+    .hero {
+      padding-top: 32px;
+    }
+  }
+
   @media (min-width: 900px) {
     .hero {
       grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
