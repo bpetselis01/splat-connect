@@ -45,7 +45,9 @@ export default async function TutorialPage({
       {/* The board's trail. The layout's shared Breadcrumb draws nothing on a
           guide (it is not inside a nav section), so the page carries its own. */}
       <nav aria-label="Breadcrumb" className="mb-5 flex items-center gap-2 text-sm font-bold text-muted">
-        <Link href="/library">Guides</Link>
+        <Link href="/library" className="max-sm:inline-flex max-sm:min-h-10 max-sm:items-center">
+          Guides
+        </Link>
         <CaretRight aria-hidden="true" />
         <span aria-current="page" className="text-ink">{tutorial.title}</span>
       </nav>
