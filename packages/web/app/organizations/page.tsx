@@ -13,6 +13,8 @@
  * - app/organizations/[id]/page.tsx: one organisation, plus its leader's workspace
  * - components/edit-backing-section.tsx: where a contributor acts on this
  */
+import { paginate } from '@/lib/paginate'
+import { Pager } from '@/components/pager'
 import { Buildings, MagnifyingGlass, Recycle, SquaresFour } from '@phosphor-icons/react/dist/ssr'
 import Link from 'next/link'
 import type { Route } from 'next'
@@ -26,9 +28,9 @@ const BAND_TINTS = ['var(--b100)', 'var(--tmint)', 'var(--tamber)', 'var(--tviol
 export default async function OrganizationsPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ q?: string; f?: string }>
+  searchParams?: Promise<{ q?: string; f?: string; page?: string }>
 } = {}) {
-  const { q = '', f = '' } = (await searchParams) ?? {}
+  const { q = '', f = '', page: pageParam } = (await searchParams) ?? {}
   let orgs: Organization[] = []
   try {
     const res = await fetch(`${process.env.API_URL}/api/public/organizations`, {
@@ -66,6 +68,7 @@ export default async function OrganizationsPage({
       (!needle || o.name.toLowerCase().includes(needle)) &&
       (f !== 'plastic' || (o.recycling_materials?.length ?? 0) > 0)
   )
+  const { items: pageShown, page, pages } = paginate(shown, pageParam, 24)
   const filterHref = (value: string) => {
     const p = new URLSearchParams()
     if (q) p.set('q', q)
@@ -129,7 +132,7 @@ export default async function OrganizationsPage({
         </p>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {shown.map((org, i) => {
+          {pageShown.map((org, i) => {
             const place = [org.suburb, org.state].filter(Boolean).join(', ')
             return (
               <Link
@@ -171,6 +174,7 @@ export default async function OrganizationsPage({
           })}
         </div>
       )}
+      <Pager page={page} pages={pages} params={{ q, f }} />
     </div>
   )
 }
