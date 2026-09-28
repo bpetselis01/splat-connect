@@ -5778,27 +5778,6 @@ body[data-motion='reduced'] :is(.sw-kicker__hint, .sw-progress, .sw-rail) {
     padding-top: 6px;
     border-top: var(--bw) solid var(--line);
   }
-  .form-trail {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 14px;
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--muted);
-  }
-  .form-trail a {
-    color: var(--b700);
-  }
-  /* A 44px tap target on a phone; the negative margin keeps the row's height. */
-  @media (max-width: 639px) {
-    .form-trail a {
-      display: inline-flex;
-      align-items: center;
-      min-height: 44px;
-      margin-block: -12px;
-    }
-  }
 
   /* The board's form screens sink their inputs into --canvas at 50px, a step
      taller than the site-wide .field; scoped here rather than changed there. */
