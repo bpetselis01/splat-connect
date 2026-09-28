@@ -133,7 +133,7 @@ export default async function EventsPage({
               </Link>
             )}
           </div>
-          <a href={feed} className="text-[13px] font-bold text-muted underline">
+          <a href={feed} className="text-[13px] font-bold text-muted underline max-sm:py-2.5">
             Or copy the feed link
           </a>
         </div>
