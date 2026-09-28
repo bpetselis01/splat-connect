@@ -264,11 +264,11 @@ export function LearnHome() {
                 : 'todo'
           const mins = u.lessons.reduce((n, l) => n + l.minutes, 0)
           return (
-            <li key={u.n} className="grid grid-cols-[56px_minmax(0,1fr)] gap-4">
+            <li key={u.n} className="grid grid-cols-[56px_minmax(0,1fr)] gap-4 max-sm:grid-cols-[36px_minmax(0,1fr)] max-sm:gap-2.5">
               <div className="flex flex-col items-center">
                 <span
                   aria-hidden="true"
-                  className="grid h-12 w-12 flex-none place-items-center rounded-full border border-line font-display text-[19px] font-extrabold shadow-[var(--e1)]"
+                  className="grid h-12 w-12 flex-none place-items-center rounded-full border border-line font-display text-[19px] max-sm:h-9 max-sm:w-9 max-sm:text-base font-extrabold shadow-[var(--e1)]"
                   style={{
                     background:
                       status === 'done' ? 'var(--ok)' : status === 'current' ? 'var(--b600)' : 'var(--surface)',
@@ -288,7 +288,7 @@ export function LearnHome() {
 
               <section className="mb-[22px] overflow-hidden rounded-card border border-line bg-surface shadow-[var(--e2),var(--hi)]">
                 <div
-                  className="flex items-start justify-between gap-4 px-[22px] pb-4 pt-5 text-[var(--tink)]"
+                  className="flex items-start justify-between gap-4 px-[22px] pb-4 pt-5 text-[var(--tink)] max-sm:flex-col-reverse max-sm:gap-2 max-sm:px-4"
                   style={{ background: u.tint }}
                 >
                   <div className="min-w-0">
@@ -321,7 +321,7 @@ export function LearnHome() {
                       <li key={l.slug}>
                         <Link
                           href={`/learn/${l.slug}` as Route}
-                          className={`grid min-h-14 grid-cols-[32px_minmax(0,1fr)_auto_28px] items-center gap-3.5 border-t border-line px-[22px] py-[13px] text-ink no-underline transition-colors hover:bg-sunken ${
+                          className={`grid min-h-14 grid-cols-[32px_minmax(0,1fr)_auto_28px] items-center gap-3.5 border-t border-line px-[22px] py-[13px] max-sm:grid-cols-[20px_minmax(0,1fr)_auto_24px] max-sm:gap-2.5 max-sm:px-4 text-ink no-underline transition-colors hover:bg-sunken ${
                             isNext ? 'bg-brand-50' : ''
                           }`}
                         >
