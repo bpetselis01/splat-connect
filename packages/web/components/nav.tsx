@@ -1,9 +1,11 @@
 'use client'
-import { useEffect, useId, useRef } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   CaretDown,
+  List,
+  X,
   MagnifyingGlass,
   BookOpen,
   ChartLineUp,
@@ -81,9 +83,23 @@ export function Nav({ caps, mode = 'light', motion = 'full' }: NavProps) {
 
   const moreCurrent = MORE.some((m) => under(pathname, m.href))
 
+  // On a phone the tabs, search and display toggles fold behind one button —
+  // unfolded they wrap to four rows, most of the first screen. CSS alone
+  // decides whether the fold applies; this only holds whether it is open.
+  // A client-side navigation keeps the header mounted, so a new path closes it.
+  const [open, setOpen] = useState(false)
+  const panelId = useId()
+  useEffect(() => setOpen(false), [pathname])
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [open])
+
   return (
     <header ref={header} className="site-header">
-      <nav aria-label="Main" className="site-nav">
+      <nav aria-label="Main" className="site-nav" data-open={open || undefined}>
         <BoundaryLink href="/" aria-label="SPLAT Connect home" className="brand-link">
           <BrandMark />
           <span className="brand-word">
@@ -91,7 +107,18 @@ export function Nav({ caps, mode = 'light', motion = 'full' }: NavProps) {
           </span>
         </BoundaryLink>
 
-        <div className="nav-tabs">
+        <button
+          type="button"
+          className="nav-menu-toggle"
+          aria-expanded={open}
+          aria-controls={panelId}
+          onClick={() => setOpen((o) => !o)}
+        >
+          {open ? <X aria-hidden="true" /> : <List aria-hidden="true" />}
+          <span className="sr-only">Menu</span>
+        </button>
+
+        <div id={panelId} className="nav-tabs">
           {TABS.map((t) => (
             <BoundaryLink
               key={t.href}
@@ -147,7 +174,7 @@ export function Nav({ caps, mode = 'light', motion = 'full' }: NavProps) {
               aria-current={pathname === ACCOUNT_NAV.href ? 'page' : undefined}
               className="nav-account"
             >
-              {ACCOUNT_NAV.label}
+              <span className="nav-account__label">{ACCOUNT_NAV.label}</span>
               {caps.unread.total > 0 && (
                 <>
                   <span aria-hidden="true" className="nav-account__badge">

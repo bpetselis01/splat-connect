@@ -161,6 +161,23 @@ describe('Nav', () => {
     expect(screen.getByTitle(signedIn.profile.name)).toHaveTextContent('BP')
   })
 
+  // Tests: the phone fold opens and closes, and Escape closes it
+  // How:   clicks Menu; reads aria-expanded and the nav's data-open, which is
+  //        what the max-width:639px CSS keys the fold on
+  // Chain: unfolded, the header is four rows (~275px) of a 390px-wide phone
+  it('folds the nav behind a Menu toggle that Escape closes', () => {
+    render(<Nav caps={null} />)
+    const toggle = screen.getByRole('button', { name: 'Menu' })
+    const nav = screen.getByRole('navigation', { name: 'Main' })
+    expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    fireEvent.click(toggle)
+    expect(toggle).toHaveAttribute('aria-expanded', 'true')
+    expect(nav).toHaveAttribute('data-open', 'true')
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    expect(nav).not.toHaveAttribute('data-open')
+  })
+
   it('shows no badge at zero unread', () => {
     render(<Nav caps={{ ...signedIn, unread: { tutorials: 0, exchanges: 0, challenges: 0, organisations: 0, total: 0 } }} />)
     expect(screen.getByRole('link', { name: /My SPLAT/ })).not.toHaveAccessibleName(/unread/)

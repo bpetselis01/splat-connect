@@ -4419,6 +4419,98 @@
       transform: none;
     }
   }
+
+  /* The phone fold. Unfolded, the bar wraps to four rows — brand, tabs,
+     search and toggles, account — about 275px before any content. Folded it is
+     one row: brand, account, Menu. .nav-tools steps out of the way
+     (display: contents) so its children can be ordered around the tabs. */
+  .nav-menu-toggle {
+    display: none;
+  }
+
+  @media (max-width: 639px) {
+    .brand-link {
+      margin-right: auto;
+      padding-inline: 0;
+    }
+
+    .nav-tools {
+      display: contents;
+    }
+
+    .nav-account,
+    .nav-signin {
+      order: 1;
+    }
+
+    .nav-menu-toggle {
+      order: 2;
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      border: var(--border-width) solid var(--color-line);
+      border-radius: var(--radius-pill);
+      background: var(--color-surface);
+      color: var(--color-ink);
+      box-shadow: var(--shadow-e1);
+      cursor: pointer;
+    }
+
+    .nav-menu-toggle > svg {
+      font-size: 22px;
+    }
+
+    /* The label stays for screen readers; the badge and initials say it. */
+    .nav-account__label {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+
+    .nav-account {
+      padding-left: 6px;
+      gap: 6px;
+    }
+
+    .site-nav:not([data-open]) :is(.nav-tabs, .nav-search, .mode-group, .motion-toggle) {
+      display: none;
+    }
+
+    .site-nav[data-open] .nav-search {
+      order: 3;
+      flex-basis: 100%;
+    }
+
+    .site-nav[data-open] .nav-search input {
+      width: 100%;
+      font-size: 16px;
+    }
+
+    .site-nav[data-open] .nav-tabs {
+      order: 4;
+      flex-basis: 100%;
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .site-nav[data-open] .nav-tab {
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    .site-nav[data-open] .mode-group,
+    .site-nav[data-open] .motion-toggle {
+      order: 5;
+    }
+
+    .site-nav[data-open] .mode-group {
+      margin-right: auto;
+    }
+  }
 }
 
 /*
