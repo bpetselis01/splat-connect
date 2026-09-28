@@ -230,7 +230,7 @@ export default async function AdminOrganizationsPage({
                           {state.label}
                         </span>
                       </td>
-                      <td className="text-muted">
+                      <td className="text-muted" data-label="Leaders">
                         {names.length === 0
                           ? '—'
                           : names.length > 2

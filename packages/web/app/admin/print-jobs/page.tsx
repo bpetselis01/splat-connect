@@ -153,10 +153,10 @@ export default async function AdminPrintJobsPage({
                           </span>
                         )}
                       </td>
-                      <td className="text-muted">
+                      <td className="text-muted" data-label="Requester">
                         {(j.requester_id && nameOf.get(j.requester_id)) ?? '—'}
                       </td>
-                      <td>
+                      <td data-label="Printer">
                         {/* An event-hosted job has no printer: 061 made a build
                             day a valid destination for one. */}
                         {j.printer_name ?? (j.event_id ? 'Printed at a build day' : 'No printer')}
@@ -166,7 +166,7 @@ export default async function AdminPrintJobsPage({
                           {st.label}
                         </span>
                       </td>
-                      <td className="whitespace-nowrap font-mono text-[13px] text-muted">
+                      <td className="whitespace-nowrap font-mono text-[13px] text-muted" data-label="Age">
                         {j.idle_days === 0 ? 'Today' : `${j.idle_days} day${j.idle_days === 1 ? '' : 's'}`}
                       </td>
                       <td className="text-right">

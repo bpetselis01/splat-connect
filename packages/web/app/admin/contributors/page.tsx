@@ -168,7 +168,7 @@ export default async function ContributorsPage({
                         {leader ? 'Leader' : 'Contributor'}
                       </span>
                     </td>
-                    <td className="whitespace-nowrap text-muted">{joined(p.created_at)}</td>
+                    <td className="whitespace-nowrap text-muted" data-label="Joined">{joined(p.created_at)}</td>
                     <td className="text-right">
                       <form action={deleteContributor.bind(null, p.id)}>
                         <button type="submit" className="btn btn-danger btn-sm font-bold shadow-none">

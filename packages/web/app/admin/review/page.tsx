@@ -178,8 +178,8 @@ export default async function ReviewListPage({
                         {t.title}
                       </ReviewRowLink>
                     </td>
-                    <td className="font-semibold">{who.length ? who.join(', ') : '—'}</td>
-                    <td>
+                    <td className="font-semibold" data-label="Contributor">{who.length ? who.join(', ') : '—'}</td>
+                    <td data-label="Backing">
                       <span
                         className="admin-tag gap-1 px-2.5 py-[3px]"
                         style={{ background: accepted.length ? 'var(--tok)' : 'var(--surface2)' }}
@@ -195,6 +195,7 @@ export default async function ReviewListPage({
                       </span>
                     </td>
                     <td
+                      data-label="Waiting"
                       className="whitespace-nowrap font-bold"
                       style={{
                         color: wait.days >= 7 ? 'var(--bad)' : wait.days >= 5 ? 'var(--warn)' : 'var(--ink)',
@@ -202,7 +203,7 @@ export default async function ReviewListPage({
                     >
                       {wait.text}
                     </td>
-                    <td>
+                    <td data-label="Safety">
                       <span
                         className="inline-flex items-center gap-1 text-sm font-bold"
                         style={{ color: t.safety_declared_at ? 'var(--ok)' : 'var(--warn)' }}

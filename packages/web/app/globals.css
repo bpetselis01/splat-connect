@@ -6081,6 +6081,52 @@ body[data-motion='reduced'] :is(.sw-kicker__hint, .sw-progress, .sw-rail) {
     color: var(--muted);
   }
 
+  /* On a phone each row becomes a card: the first cell takes the full width,
+     the rest flow under it, and a cell whose value needs its column name
+     carries it as data-label. The header stays for screen readers. */
+  @media (max-width: 639px) {
+    .admin-table,
+    .admin-table tbody {
+      display: block;
+    }
+    .admin-table thead {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+    .admin-table tbody tr {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px 16px;
+      padding: 14px 18px;
+    }
+    .admin-table td,
+    .admin-table td:first-child,
+    .admin-table td:last-child {
+      display: block;
+      padding: 0;
+    }
+    .admin-table td:first-child {
+      flex-basis: 100%;
+    }
+    .admin-table td:last-child:not([data-label]) {
+      margin-left: auto;
+    }
+    .admin-table td[data-label]::before {
+      content: attr(data-label);
+      margin-right: 6px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+  }
+
   /* The decision card on the two review screens. */
   .admin-panel {
     padding: 24px;
