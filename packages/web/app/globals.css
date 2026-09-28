@@ -6594,6 +6594,16 @@ body[data-motion='reduced'] :is(.sw-kicker__hint, .sw-progress, .sw-rail) {
   flex-direction: column;
   gap: 4px;
 }
+/* A phone stacks the rail above the card; as a column its nine rows pushed the
+   open section a screen down, so there the tabs wrap as chips instead. */
+@media (max-width: 639px) {
+  .editor-rail__nav {
+    flex-flow: row wrap;
+  }
+  .editor-rail__nav > div:not(.contents) {
+    flex-basis: 100%;
+  }
+}
 .editor-rail__tab {
   display: flex;
   align-items: center;
