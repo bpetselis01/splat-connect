@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, within, fireEvent } from '@testing-library/react'
 import type { ReactElement } from 'react'
 import Adaptation101 from '@/app/learn/toy-adaptation-101/page'
 import SwitchTypes from '@/app/learn/switch-types/page'
@@ -72,5 +72,22 @@ describe('long-form articles', () => {
     render(<SafetyAndCleaning />)
     expect(body().getByText(/button cells are the one non-negotiable/i)).toBeInTheDocument()
     expect(body().getByRole('link', { name: 'safety page' })).toHaveAttribute('href', '/safety')
+  })
+})
+
+// Tests: below lg the outline follows the lesson; All lessons brings it to the top
+// How:   toggles the button and reads the outline's order class, which is the
+//        whole mechanism — the aside is display:contents below lg
+// Chain: a phone reader otherwise had no way to another lesson at the top
+describe('the lesson outline on a phone', () => {
+  it('moves to the top when All lessons is pressed', () => {
+    render(<Adaptation101 />)
+    const outline = screen.getByRole('navigation', { name: 'Course outline' })
+    const toggle = screen.getByRole('button', { name: 'All lessons' })
+    expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    expect(outline.className).toContain('max-lg:order-last')
+    fireEvent.click(toggle)
+    expect(screen.getByRole('button', { name: 'Hide lessons' })).toHaveAttribute('aria-expanded', 'true')
+    expect(outline.className).not.toContain('max-lg:order-last')
   })
 })

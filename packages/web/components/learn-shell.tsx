@@ -22,6 +22,7 @@
  * - lib/learn-course.ts: the outline
  * - lib/learn-progress.ts: where "done" is kept, and why it is per-device
  */
+import { useState } from 'react'
 import Link from 'next/link'
 import type { Route } from 'next'
 import {
@@ -66,19 +67,34 @@ export function LearnShell({
     questions !== undefined && (!ready || Object.keys(answers[slug] ?? {}).length < questions)
 
   const KindIcon = lesson ? KIND_ICON[lesson.kind] : BookOpen
+  // Below lg the outline follows the lesson; this brings it back to the top
+  // for a reader who wants to jump elsewhere. Each lesson is its own page, so
+  // it starts closed on every one.
+  const [outlineOpen, setOutlineOpen] = useState(false)
 
   return (
     <div className="grid gap-8 lg:grid-cols-[minmax(0,284px)_minmax(0,880px)]">
       {/* Below lg the aside dissolves into the grid so the outline can follow
           the lesson: a phone reader lands on the lesson, not 16 outline rows. */}
       <aside className="flex flex-col gap-3.5 pr-0.5 max-lg:contents lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:self-start lg:overflow-auto">
-        <Link
-          href="/learn"
-          className="inline-flex min-h-11 items-center gap-2 self-start text-sm font-extrabold text-brand-deep no-underline"
-        >
-          <ArrowLeft weight="bold" aria-hidden="true" />
-          Course home
-        </Link>
+        <div className="flex items-center justify-between gap-3 lg:contents">
+          <Link
+            href="/learn"
+            className="inline-flex min-h-11 items-center gap-2 self-start text-sm font-extrabold text-brand-deep no-underline"
+          >
+            <ArrowLeft weight="bold" aria-hidden="true" />
+            Course home
+          </Link>
+          <button
+            type="button"
+            aria-expanded={outlineOpen}
+            aria-controls="course-outline"
+            onClick={() => setOutlineOpen((o) => !o)}
+            className="btn btn-quiet btn-sm lg:hidden"
+          >
+            {outlineOpen ? 'Hide lessons' : 'All lessons'}
+          </button>
+        </div>
 
         <div className="rounded-[var(--radius-inset)] border border-line bg-surface px-[18px] py-4 shadow-[var(--e1)] max-lg:order-last">
           <div className="flex items-baseline justify-between gap-2">
@@ -104,7 +120,11 @@ export function LearnShell({
           </div>
         </div>
 
-        <nav aria-label="Course outline" className="flex flex-col gap-3 max-lg:order-last">
+        <nav
+          id="course-outline"
+          aria-label="Course outline"
+          className={`flex flex-col gap-3 ${outlineOpen ? '' : 'max-lg:order-last'}`}
+        >
           {UNITS.map((u) => {
             const current = unit?.n === u.n
             return (
