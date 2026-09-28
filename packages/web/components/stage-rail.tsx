@@ -64,7 +64,10 @@ export function StageRail({
   return (
     <ol
       aria-label={label}
-      className="grid list-none gap-2.5 rounded-[var(--radius-inset)] border border-line bg-canvas p-4 px-[18px]"
+      // Below sm the columns are too narrow for their labels ("Requested"
+      // ran into "Accepted"), so the rail stands up: one step per row, the
+      // circle beside its label and caption, no bars.
+      className="grid list-none gap-2.5 rounded-[var(--radius-inset)] border border-line bg-canvas p-4 px-[18px] max-sm:!grid-cols-1"
       style={{ gridTemplateColumns: `repeat(${stages.length}, minmax(0, 1fr))` }}
     >
       {stages.map((stage) => {
@@ -99,9 +102,9 @@ export function StageRail({
                 ? { type: 'button' as const, onClick: () => onSelect?.(stage) }
                 : {})}
               aria-current={stage.state === 'now' ? 'step' : undefined}
-              className="-m-2 flex w-full flex-col items-start gap-2 rounded-[var(--radius-field)] bg-transparent p-2 text-left"
+              className="-m-2 flex w-full flex-col items-start gap-2 rounded-[var(--radius-field)] bg-transparent p-2 text-left max-sm:grid max-sm:grid-cols-[auto_minmax(0,1fr)] max-sm:gap-x-3 max-sm:gap-y-0.5"
             >
-              <span className="flex w-full items-center gap-2">
+              <span className="flex w-full items-center gap-2 max-sm:row-span-2 max-sm:w-auto">
                 <span
                   aria-hidden="true"
                   className="grid h-7 w-7 shrink-0 place-items-center rounded-full"
@@ -111,7 +114,7 @@ export function StageRail({
                 </span>
                 <span
                   aria-hidden="true"
-                  className="h-[3px] min-w-0 flex-1 rounded-full"
+                  className="h-[3px] min-w-0 flex-1 rounded-full max-sm:hidden"
                   style={{ background: barDone ? 'var(--b600)' : 'var(--surface2)' }}
                 />
               </span>
