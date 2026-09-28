@@ -6394,6 +6394,12 @@ body[data-motion='reduced'] :is(.sw-kicker__hint, .sw-progress, .sw-rail) {
     max-height: min(560px, 64vh);
     background: var(--surface);
   }
+  /* On a phone an empty thread was a screen of blank card above the composer. */
+  @media (max-width: 639px) {
+    .chat-panel--board .chat-log {
+      min-height: 200px;
+    }
+  }
   .chat-panel--board .chat-daymark {
     align-self: stretch;
     display: flex;
