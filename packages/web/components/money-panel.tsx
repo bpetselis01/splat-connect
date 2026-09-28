@@ -79,7 +79,10 @@ export function MoneyPanel({
                   {line.toy_transactions?.toys?.name ?? 'This exchange'}
                 </span>
               </span>
-              <Badge status="pending" label="To settle" />
+              {/* A phone needs the room for the line's name; the heading already says "to settle". */}
+              <span className="contents max-sm:hidden">
+                <Badge status="pending" label="To settle" />
+              </span>
               <span className="font-mono font-bold tabular-nums text-ink">
                 {formatCents(line.amount_cents)}
               </span>
