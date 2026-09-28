@@ -33,6 +33,8 @@ function column(page: number, lines: (string | [string, number])[], top = 700, x
 
 describe('splitQuantity', () => {
   it.each([
+    // A note about the PDF's photo is not part of the name (Bubble Blower).
+    ['AA batteries (Not shown in picture)', 'AA batteries', 1],
     ['2x Mono jack', 'Mono jack', 2],
     ['2 x Mono jack', 'Mono jack', 2],
     ['×3 M3 screws', 'M3 screws', 3],

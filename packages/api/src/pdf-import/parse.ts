@@ -315,7 +315,10 @@ export function splitQuantity(text: string): { name: string; quantity: number } 
   return { name: cleanName(text), quantity: 1 }
 }
 
-const cleanName = (s: string) => s.replace(/\s+/g, ' ').replace(/[:;,]\s*$/, '').trim().slice(0, 200)
+// "AA batteries (Not shown in picture)" — a note about the PDF's photo, not part of the name.
+const PHOTO_NOTE = /\s*\((?:not (?:shown|pictured|included in (?:the )?(?:photo|picture))|see (?:photo|picture|image))[^)]*\)/gi
+const cleanName = (s: string) =>
+  s.replace(PHOTO_NOTE, '').replace(/\s+/g, ' ').replace(/[:;,]\s*$/, '').trim().slice(0, 200)
 
 function dedupe<T extends { name: string }>(list: T[]): T[] {
   const seen = new Set<string>()
