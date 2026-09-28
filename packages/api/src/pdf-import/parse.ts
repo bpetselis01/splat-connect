@@ -359,7 +359,9 @@ function blocks(cells: Cell[]): Cell[][] {
   for (const c of cells) {
     const open = out.find((b) => {
       const l = b[b.length - 1]
-      return l.page === c.page && Math.abs(l.x - c.x) <= 20 && l.y - c.y > 0 && l.y - c.y <= c.size * 1.7
+      // Same left edge, or — for a centred caption — the same middle.
+      const aligned = Math.abs(l.x - c.x) <= 20 || Math.abs((l.x + l.x2) / 2 - (c.x + c.x2) / 2) <= 20
+      return l.page === c.page && aligned && l.y - c.y > 0 && l.y - c.y <= c.size * 1.7
     })
     if (open) open.push(c)
     else out.push([c])
@@ -376,19 +378,34 @@ interface StepDraft {
 }
 
 /** "Step 3: Solder the leads" lines, each followed by its text up to the next step or heading. */
-function explicitSteps(tagged: Tagged[]): StepDraft[] {
+function explicitSteps(tagged: Tagged[], slides = false): StepDraft[] {
   const steps: { n: number; title: string; cells: Cell[] }[] = []
   let cur: (typeof steps)[number] | null = null
+  // A slide deck is one step per slide, and a callout can sit above the slide's
+  // "Step 8:" line; read in order it would join step 7. On a slide, text above
+  // the page's step line waits for it. (A document's step can run on across a
+  // page break, so there the top of a page still continues the step before.)
+  const stepPages = new Set(tagged.filter((c) => STEP_LINE.test(c.text)).map((c) => c.page))
+  let waiting: Cell[] = []
+  let page = 0
   for (const c of tagged) {
     if (c.section === 'contents') continue
+    if (c.page !== page) {
+      page = c.page
+      waiting = []
+      if (slides && stepPages.has(page)) cur = null
+    }
     const m = STEP_LINE.exec(c.text)
     if (m) {
-      cur = { n: Number(m[1]), title: m[2].trim(), cells: [] }
+      cur = { n: Number(m[1]), title: m[2].trim(), cells: waiting }
+      waiting = []
       steps.push(cur)
     } else if (c.heading || c.marker) {
       cur = null
     } else if (cur) {
       cur.cells.push(c)
+    } else if (slides && stepPages.has(c.page)) {
+      waiting.push(c)
     }
   }
   const byNumber = new Map<number, StepDraft>()
@@ -400,7 +417,7 @@ function explicitSteps(tagged: Tagged[]): StepDraft[] {
       title = cells[0].text.slice(0, -1).trim()
       cells = cells.slice(1)
     }
-    const step = { n: s.n, title, body: joinLines(cells) }
+    const step = { n: s.n, title, body: blocks(cells).map(joinLines).join('\n\n') }
     const had = byNumber.get(s.n)
     if (!had || step.body.length > had.body.length) byNumber.set(s.n, step)
   }
@@ -645,7 +662,8 @@ export function parseGuide(items: TextItem[], pageCount: number): PdfImportDraft
   if (!tools.length) warnings.push(hasHeading('tools') ? 'Found a tools heading but could not read the list under it.' : 'No tools list found.')
 
   // Steps: explicit "Step N" first, then big numbers beside photos, then the steps section's list.
-  let raw = explicitSteps(tagged)
+  // Body text this big is a slide deck (the Fat Moose bear workshop is 40pt); a document is 9-12pt.
+  let raw = explicitSteps(tagged, body >= 20)
   let stepsConfidence: PdfImportConfidence = 'high'
   if (raw.length < 2) {
     const marked = markerSteps(tagged, body)

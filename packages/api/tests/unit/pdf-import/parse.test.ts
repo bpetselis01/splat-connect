@@ -277,6 +277,40 @@ describe('parseGuide', () => {
     expect(d.warnings).toContain('Step 1 was longer than 2000 characters and was cut short.')
   })
 
+  // The Fat Moose bear workshop (33.7 MB, live on the site): a slide deck with
+  // body text at 40-49pt, a 150pt two-line title, a 79pt "Equipment" slide of
+  // labels in a grid, and "Step N:" set big with a small callout above it on
+  // the slide. Read as a document it came out titled "Switch", with no tools
+  // and callouts woven into the wrong steps.
+  it('reads a slide deck: title, an equipment grid, and one step per slide', () => {
+    const body = (page: number, y: number, str: string, size = 44) => t(page, 120, y, str, size)
+    const items = [
+      t(1, 100, 900, 'Switch', 150),
+      t(1, 100, 740, 'Adapted Toy', 150),
+      body(1, 500, 'Workshop 1 is about rewiring a toy so a child can press one big switch.', 46),
+      body(1, 440, 'You will need about an hour and the equipment on the next slide.', 41),
+      t(2, 100, 900, 'Equipment', 79),
+      t(2, 100, 600, 'Wire Stripper', 44),
+      t(2, 700, 600, 'Teddy bear', 44),
+      t(2, 1300, 600, 'Electrical Tape', 44),
+      t(2, 100, 300, 'Needle & Thread', 44),
+      t(3, 100, 900, 'Step 1:', 142),
+      t(3, 100, 740, 'Find the two white wires and cut.', 142),
+      body(3, 400, 'Cut as close to the button as possible'),
+      body(4, 900, 'Ensure the hole made in the arm is closed'),
+      t(4, 100, 600, 'Step 2:', 142),
+      t(4, 100, 440, 'Sew the hole together.', 142),
+    ]
+    const d = parseGuide(items, 4)
+    expect(d.title).toBe('Switch Adapted Toy')
+    expect(d.kind).toBe('toy_adaptation')
+    expect(d.tools.map((x) => x.name)).toEqual(['Wire Stripper', 'Teddy bear', 'Electrical Tape', 'Needle & Thread'])
+    expect(d.steps.map((x) => x.body)).toEqual([
+      'Find the two white wires and cut.\n\nCut as close to the button as possible',
+      'Ensure the hole made in the arm is closed\n\nSew the hole together.',
+    ])
+  })
+
   it('says so when the PDF has no text layer', () => {
     const d = parseGuide([], 3)
     expect(d.title).toBeNull()
