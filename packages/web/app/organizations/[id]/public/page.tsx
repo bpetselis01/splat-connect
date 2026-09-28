@@ -154,7 +154,7 @@ export default async function OrgPublicProfilePage({
         aria-label="Breadcrumb"
         className="mb-[18px] flex items-center gap-2 text-sm font-bold text-muted"
       >
-        <Link href="/organizations" className="text-[var(--b700)]">
+        <Link href="/organizations" className="text-[var(--b700)] max-sm:-my-2.5 max-sm:py-2.5">
           Organisations
         </Link>
         <CaretRight size={12} weight="bold" aria-hidden="true" />

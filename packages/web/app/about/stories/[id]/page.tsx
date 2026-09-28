@@ -76,7 +76,7 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
         aria-label="Breadcrumb"
         className="mb-[22px] flex items-center gap-2 text-sm font-bold text-muted"
       >
-        <Link href="/about/stories" className="text-[var(--b700)]">
+        <Link href="/about/stories" className="text-[var(--b700)] max-sm:-my-2.5 max-sm:py-2.5">
           Stories
         </Link>
         <CaretRight size={12} weight="bold" aria-hidden="true" />
