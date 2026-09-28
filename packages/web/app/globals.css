@@ -3204,6 +3204,13 @@
     gap: 16px;
   }
 
+  /* "View all" is the band's only way on; a 23px line is hard to hit. */
+  @media (max-width: 639px) {
+    .band__head .door__cta {
+      min-height: 44px;
+    }
+  }
+
   .band__body {
     max-width: 36rem;
     margin: 12px 0 20px;
