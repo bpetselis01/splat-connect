@@ -160,9 +160,15 @@ function bodySize(cells: Cell[]): number {
     const s = Math.round(c.size * 2) / 2
     weight.set(s, (weight.get(s) ?? 0) + c.text.length)
   }
-  let best = 11
+  // Slide decks set body text in many near sizes (40, 41, 44, 46, 49 pt); pick the heaviest
+  // band (±12%), then the heaviest single size inside it.
+  const band = (s: number) => [...weight].filter(([o]) => Math.abs(o - s) <= s * 0.12).reduce((n, [, w]) => n + w, 0)
+  let center = 11
   let most = -1
-  for (const [s, w] of weight) if (w > most) [best, most] = [s, w]
+  for (const [s] of weight) if (band(s) > most) [center, most] = [s, band(s)]
+  let best = center
+  most = -1
+  for (const [s, w] of weight) if (Math.abs(s - center) <= center * 0.12 && w > most) [best, most] = [s, w]
   return best
 }
 
@@ -192,16 +198,22 @@ function tagSections(cells: Cell[], body: number): Tagged[] {
   // A label shares its line with nothing; "Components" in a table header row is not a heading.
   const alone = (c: Cell) => !cells.some((o) => o !== c && o.page === c.page && sameRow(o, c))
   let page = 0
+  // A "Step 3:" line set big, on a slide: the lines under it in its size are its text, not headings.
+  let step: Cell | null = null
   return cells.map((c) => {
     // A table of contents ends with its page; its dotted rows are already gone.
     if (c.page !== page && section === 'contents') section = 'other'
+    if (c.page !== page) step = null
     page = c.page
+    if (STEP_LINE.test(c.text)) step = c
+    const continuesStep = !!step && step !== c && Math.abs(step.size - c.size) <= 1
     const marker = MARKER.test(c.text) && c.size >= body * 1.8
     const heading =
       !marker &&
       !STEP_LINE.test(c.text) &&
+      !continuesStep &&
       /\p{L}{3}/u.test(c.text) &&
-      ((c.size >= body + 1.5 && c.text.length <= 80) || (LABEL.test(c.text) && alone(c)))
+      ((c.size >= (body >= 20 ? body * 1.25 : body + 1.5) && c.text.length <= 80) || (LABEL.test(c.text) && alone(c)))
     if (heading) section = headingSection(c.text)
     return { ...c, section, heading, marker }
   })
