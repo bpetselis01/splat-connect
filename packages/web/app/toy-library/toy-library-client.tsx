@@ -12,6 +12,7 @@
  */
 import { useState } from 'react'
 import { BrowseFilters } from '@/components/browse-filters'
+import { useShowMore, ShowMoreButton } from '@/components/show-more'
 import type { Route } from 'next'
 import Link from 'next/link'
 import {
@@ -109,6 +110,8 @@ export function ToyLibraryClient({
         ? sign * (a.condition - b.condition)
         : sign * a.created_at.localeCompare(b.created_at)
     )
+
+  const { limit, more } = useShowMore(JSON.stringify([filters, sortKey, dir]))
 
   const adapted = toys.filter((t) => t.switch_adapted).length
   const fromOrgs = toys.filter((t) => t.owner_org_id).length
@@ -275,7 +278,7 @@ export function ToyLibraryClient({
             </div>
           ) : (
             <div className="browse-grid">
-              {filtered.map((t) => (
+              {filtered.slice(0, limit).map((t) => (
                 <ToyLibraryCard
                   key={t.id}
                   toy={t}
@@ -286,6 +289,12 @@ export function ToyLibraryClient({
               ))}
             </div>
           )}
+          <ShowMoreButton
+            shown={Math.min(limit, filtered.length)}
+            total={filtered.length}
+            noun="toys"
+            onMore={more}
+          />
         </div>
       </div>
     </div>
