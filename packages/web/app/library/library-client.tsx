@@ -20,6 +20,7 @@
  */
 import { useState } from 'react'
 import { BrowseFilters } from '@/components/browse-filters'
+import { useShowMore, ShowMoreButton } from '@/components/show-more'
 import type { Route } from 'next'
 import {
   Books,
@@ -135,6 +136,7 @@ export function LibraryClient({
   const shown = sortGuides(filterGuides(tutorials, filters, search), sortKey, dir).filter(
     (t) => !suitsOnly || suitsSet.has(t.id)
   )
+  const { limit, more } = useShowMore(JSON.stringify([filters, search, sortKey, dir, suitsOnly]))
 
   const active = [
     ...FACETS.flatMap((f) =>
@@ -331,7 +333,7 @@ export function LibraryClient({
             </div>
           ) : (
             <div className="browse-grid">
-              {shown.map((t) => (
+              {shown.slice(0, limit).map((t) => (
                 <TutorialCard
                   key={t.id}
                   tutorial={t}
@@ -340,6 +342,12 @@ export function LibraryClient({
               ))}
             </div>
           )}
+          <ShowMoreButton
+            shown={Math.min(limit, shown.length)}
+            total={shown.length}
+            noun="guides"
+            onMore={more}
+          />
         </div>
       </div>
     </div>
