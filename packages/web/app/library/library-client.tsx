@@ -19,6 +19,7 @@
  * measure.
  */
 import { useState } from 'react'
+import { BrowseFilters } from '@/components/browse-filters'
 import type { Route } from 'next'
 import {
   Books,
@@ -198,17 +199,7 @@ export function LibraryClient({
       />
 
       <div id="guide-grid" className="browse-layout scroll-mt-24">
-        <aside aria-label="Filters" className="browse-filters">
-          <div className="flex items-center justify-between">
-            <h2 className="font-display text-xl font-extrabold text-ink">Filters</h2>
-            <button
-              type="button"
-              onClick={clearAll}
-              className="min-h-9 text-sm font-bold text-brand-deep"
-            >
-              Clear
-            </button>
-          </div>
+        <BrowseFilters onClear={clearAll}>
 
           {suits && (
             <fieldset>
@@ -276,7 +267,7 @@ export function LibraryClient({
               </Link>
             </span>
           </p>
-        </aside>
+        </BrowseFilters>
 
         <div>
           <div className="browse-head">

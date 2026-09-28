@@ -11,6 +11,7 @@
  * layer of indirection over it.
  */
 import { useState } from 'react'
+import { BrowseFilters } from '@/components/browse-filters'
 import type { Route } from 'next'
 import Link from 'next/link'
 import {
@@ -168,17 +169,7 @@ export function ToyLibraryClient({
       />
 
       <div id="toy-grid" className="browse-layout scroll-mt-24">
-        <aside aria-label="Filters" className="browse-filters">
-          <div className="flex items-center justify-between">
-            <h2 className="font-display text-xl font-extrabold text-ink">Filters</h2>
-            <button
-              type="button"
-              onClick={clearAll}
-              className="min-h-9 text-sm font-bold text-brand-deep"
-            >
-              Clear
-            </button>
-          </div>
+        <BrowseFilters onClear={clearAll}>
 
           {FACETS.map((f) => (
             <fieldset key={f.key}>
@@ -225,7 +216,7 @@ export function ToyLibraryClient({
               </Link>
             </span>
           </p>
-        </aside>
+        </BrowseFilters>
 
         <div>
           <div className="browse-head">

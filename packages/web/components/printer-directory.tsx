@@ -15,6 +15,7 @@
  * carry picks through a guide and back.
  */
 import { useState } from 'react'
+import { BrowseFilters } from '@/components/browse-filters'
 import Link from 'next/link'
 import {
   CheckCircle,
@@ -111,17 +112,7 @@ export function PrinterDirectory({
 
   return (
     <div className="browse-layout">
-      <aside aria-label="Filters" className="browse-filters">
-        <div className="flex items-center justify-between">
-          <h2 className="font-display text-xl font-extrabold text-ink">Filters</h2>
-          <button
-            type="button"
-            onClick={() => setFilters({})}
-            className="min-h-9 text-sm font-bold text-brand-deep"
-          >
-            Clear
-          </button>
-        </div>
+      <BrowseFilters onClear={() => setFilters({})}>
 
         {FACETS.map((facet) => (
           <fieldset key={facet.key}>
@@ -171,7 +162,7 @@ export function PrinterDirectory({
             </Link>
           </span>
         </p>
-      </aside>
+      </BrowseFilters>
 
       <div className="min-w-0">
         <div className="browse-head">
