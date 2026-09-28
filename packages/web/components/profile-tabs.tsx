@@ -40,7 +40,10 @@ export function ProfileTabs({
       <Tabs value={active?.key} onValueChange={setActiveKey}>
         <TabsList
           aria-label={label}
-          className="flex w-max max-w-full gap-1 overflow-x-auto rounded-full bg-[var(--surface2)] p-1"
+          // On a phone the track spans the column and the tabs share it, so
+          // the last one is not clipped off the edge; it still scrolls if the
+          // labels outgrow it.
+          className="flex w-max max-w-full gap-1 overflow-x-auto rounded-full bg-[var(--surface2)] p-1 max-sm:w-full"
         >
           {tabs.map((tab) => {
             const on = tab.key === active?.key
@@ -48,7 +51,7 @@ export function ProfileTabs({
               <TabsTrigger
                 key={tab.key}
                 value={tab.key}
-                className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full px-[18px] text-[15px] font-extrabold text-ink transition-all ${
+                className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full px-[18px] text-[15px] font-extrabold text-ink transition-all max-sm:flex-auto max-sm:justify-center max-sm:gap-1.5 max-sm:whitespace-nowrap max-sm:px-2.5 max-sm:text-sm ${
                   on ? 'bg-surface shadow-[var(--shadow-e1)]' : 'bg-transparent'
                 }`}
               >
