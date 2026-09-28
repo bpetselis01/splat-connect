@@ -179,7 +179,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
                 className="grid h-12 w-12 shrink-0 place-items-center rounded-[14px] border border-line bg-[var(--surface)]"
               >
                 <span className="grid place-items-center">
-                  <span className="text-[9px] font-extrabold uppercase text-[var(--coral)]">{badge.month}</span>
+                  <span className="text-[9px] font-extrabold uppercase max-sm:text-[10px] text-[var(--coral)]">{badge.month}</span>
                   <span className="font-display text-lg font-extrabold leading-none">{badge.day}</span>
                 </span>
               </span>
