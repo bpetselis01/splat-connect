@@ -119,7 +119,9 @@ export default async function OrganisationTabPage() {
                     <span aria-hidden="true" className="tint-tile" style={{ backgroundColor: tint }}>
                       <StateIcon weight="duotone" />
                     </span>
-                    <div className="min-w-0 flex-1">
+                    {/* On a phone the badge wraps below rather than
+                        squeezing the title into a one-word column. */}
+                    <div className="min-w-0 flex-1 max-sm:min-w-[12rem]">
                       <h2 className="row-card__title text-[19px]">{tutorial.title}</h2>
                       <p className="row-card__meta text-sm">
                         {caps.ledOrgs.length > 1 && (
