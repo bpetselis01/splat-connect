@@ -6714,3 +6714,16 @@ body[data-motion='reduced'] :is(.sw-kicker__hint, .sw-progress, .sw-rail) {
     font-weight: 700;
   }
 }
+
+/*
+ * iOS Safari zooms the whole page when a field under 16px takes focus, and
+ * does not zoom back out. Most of this site's fields are set at 14-15px, so on
+ * a phone every search box and form did it. Unlayered, so it outranks the
+ * layered component and utility rules that set those sizes; max() so a field
+ * already set larger keeps its size.
+ */
+@media (max-width: 639px) {
+  :is(input:not([type='checkbox'], [type='radio'], [type='range'], [type='file'], [type='color']), select, textarea) {
+    font-size: max(16px, 1em);
+  }
+}
