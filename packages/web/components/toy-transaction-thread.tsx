@@ -579,7 +579,7 @@ export function ToyTransactionThread({
               type="button"
               disabled={busy}
               onClick={() => run(onWithdraw)}
-              className="inline-flex items-center gap-2 text-[13px] font-bold text-muted underline underline-offset-[3px] hover:text-danger"
+              className="inline-flex items-center gap-2 text-[13px] font-bold text-muted underline underline-offset-[3px] hover:text-danger max-sm:min-h-11 max-sm:px-3"
             >
               <XCircle aria-hidden="true" />
               Withdraw the request
