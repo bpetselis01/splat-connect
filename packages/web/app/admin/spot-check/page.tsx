@@ -93,7 +93,7 @@ export default async function SpotCheckPage({
                     <BookOpenText size={26} weight="duotone" />
                   )}
                 </span>
-                <span className="min-w-0 flex-1">
+                <span className="min-w-0 flex-1 max-sm:basis-[calc(100%-72px)]">
                   <Link
                     href={`/admin/review/${t.id}`}
                     className="block text-base font-extrabold text-ink no-underline hover:underline"
