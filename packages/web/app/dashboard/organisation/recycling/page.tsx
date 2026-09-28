@@ -55,7 +55,7 @@ export default async function OrgRecyclingPage() {
         aria-label="Recycling"
         className="mb-3.5 flex items-center gap-2 text-sm font-bold text-muted"
       >
-        <Link href="/get-involved/recycling" className="text-brand-deep hover:underline">
+        <Link href="/get-involved/recycling" className="text-brand-deep hover:underline max-sm:-my-3 max-sm:inline-flex max-sm:min-h-11 max-sm:items-center">
           Recycling
         </Link>
         <CaretRight weight="bold" className="h-3 w-3" aria-hidden="true" />
