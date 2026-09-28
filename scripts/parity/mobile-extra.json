@@ -1,0 +1,44 @@
+[
+ {
+  "id": "x_org_message",
+  "name": "Message an organisation",
+  "group": "Extra",
+  "route": "/organizations/[id]/message",
+  "sampleFrom": "/organizations",
+  "derivedFrom": "org_public",
+  "role": "parent"
+ },
+ {
+  "id": "x_get_requests",
+  "name": "Requests board",
+  "group": "Extra",
+  "route": "/get-involved/requests"
+ },
+ {
+  "id": "x_print_parts",
+  "name": "Printable parts",
+  "group": "Extra",
+  "route": "/printing/parts"
+ },
+ {
+  "id": "x_saved_parts",
+  "name": "Saved parts",
+  "group": "Extra",
+  "route": "/dashboard/saved/parts",
+  "role": "parent"
+ },
+ {
+  "id": "x_org_messages",
+  "name": "Organisation messages",
+  "group": "Extra",
+  "route": "/dashboard/organisation/messages",
+  "role": "leader"
+ },
+ {
+  "id": "x_admin_org_requests",
+  "name": "Organisation requests",
+  "group": "Extra",
+  "route": "/admin/organization-requests",
+  "role": "admin"
+ }
+]

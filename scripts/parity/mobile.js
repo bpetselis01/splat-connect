@@ -35,7 +35,10 @@ const flag = (n) => {
   const i = argv.indexOf(n)
   return i === -1 ? null : argv[i + 1]
 }
-const allScreens = JSON.parse(fs.readFileSync(path.join(__dirname, 'screen-map.json'), 'utf8'))
+// The board's screens, plus live pages the board never drew.
+const allScreens = ['screen-map.json', 'mobile-extra.json'].flatMap((f) =>
+  JSON.parse(fs.readFileSync(path.join(__dirname, f), 'utf8'))
+)
 
 function loadMap() {
   const ids = flag('--id')
