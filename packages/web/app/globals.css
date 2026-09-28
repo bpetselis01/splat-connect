@@ -3646,6 +3646,21 @@
     }
   }
 
+  /* The phone fold — components/browse-filters.tsx. */
+  .browse-filters__toggle {
+    display: none;
+  }
+
+  @media (max-width: 639px) {
+    .browse-filters__toggle {
+      display: inline-flex;
+    }
+
+    .browse-filters:not([data-open]) > :not(:first-child) {
+      display: none;
+    }
+  }
+
   .browse-filters fieldset {
     margin: 0;
     padding: 0;

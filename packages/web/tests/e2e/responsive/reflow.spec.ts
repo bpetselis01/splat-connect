@@ -110,3 +110,24 @@ test('@responsive the tutorial detail page stacks to a single column', async ({ 
   await expectWithinViewport(content, width)
   await expectWithinViewport(pdf, width)
 })
+
+// Unfolded, the header wrapped to four rows and the library's filter rail ran
+// 600px before the first guide. Both fold below 640px; each opens on tap.
+test('@responsive the header and the filter rail fold on a phone', async ({ page }) => {
+  await page.goto('/library')
+
+  const nav = page.getByRole('navigation', { name: 'Main' })
+  const guides = nav.getByRole('link', { name: 'Guides' })
+  await expect(guides).toBeHidden()
+  const header = await page.locator('.site-header').boundingBox()
+  expect(header!.height).toBeLessThan(100)
+  await nav.getByRole('button', { name: 'Menu' }).click()
+  await expect(guides).toBeVisible()
+  await expect(page.getByRole('searchbox', { name: 'Search' })).toBeVisible()
+
+  const filters = page.getByRole('complementary', { name: 'Filters' })
+  const easy = filters.getByRole('button', { name: 'Easy' })
+  await expect(easy).toBeHidden()
+  await filters.getByRole('button', { name: 'Show filters' }).click()
+  await expect(easy).toBeVisible()
+})
