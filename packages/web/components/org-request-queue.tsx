@@ -56,7 +56,7 @@ export function OrgRequestQueue({ requests }: { requests: QueuedRequest[] }) {
           <span aria-hidden="true" className="empty-badge text-brand-deep">
             <Buildings size={22} weight="duotone" />
           </span>
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1 max-sm:basis-[calc(100%-84px)]">
             <p className="font-bold text-ink">{request.org_name}</p>
             <p className="text-sm text-muted">
               {request.requester?.name ?? 'A contributor'}
