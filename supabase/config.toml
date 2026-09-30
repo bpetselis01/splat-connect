@@ -19,6 +19,21 @@ email_sent = 1000
 [auth.email]
 enable_confirmations = true
 
+# 6-digit codes for the mobile app (docs/superpowers/specs/2026-09-30-mobile-sign-in-design.md).
+# Each template carries the code AND the link, so web's link flow is unchanged.
+# The hosted project is configured by pasting the same files into the dashboard.
+[auth.email.template.confirmation]
+subject = "Your SPLAT Connect code"
+content_path = "./supabase/templates/confirmation.html"
+
+[auth.email.template.magic_link]
+subject = "Your SPLAT Connect sign-in code"
+content_path = "./supabase/templates/magic_link.html"
+
+[auth.email.template.recovery]
+subject = "Reset your SPLAT Connect password"
+content_path = "./supabase/templates/recovery.html"
+
 # Off because the Logflare backend writes a row per request into the same
 # database volume, and nothing prunes it: three days of local development and
 # E2E runs left 910k rows across two _analytics.log_events_* tables, 1.1GB of a
