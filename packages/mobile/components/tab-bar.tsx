@@ -49,6 +49,12 @@ function SpringIcon({ focused, children }: { focused: boolean; children: ReactNo
 type Props = BottomTabBarProps & { badges: Record<string, number> }
 
 export function TabBar({ state, descriptors, navigation, insets, badges }: Props) {
+  // The board draws the bar on the four tab roots only: a screen pushed on a
+  // tab's stack, and Explore (reached from Me), go without it.
+  const current = state.routes[state.index]
+  const depth = (current?.state as { index?: number } | undefined)?.index ?? 0
+  if (!current || HIDDEN.has(current.name) || depth > 0) return null
+
   const items = state.routes
     // Explore keeps its screens but has no button. By name, not by the
     // layout's href: null — a custom bar is handed every route regardless.

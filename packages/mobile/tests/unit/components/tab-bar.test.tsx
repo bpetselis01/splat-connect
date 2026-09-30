@@ -27,3 +27,24 @@ it('navigates on a tap and marks the current tab selected', () => {
   fireEvent.press(screen.getByLabelText('Me'))
   expect(props.navigation.navigate).toHaveBeenCalledWith('me')
 })
+
+// The board draws the tab bar on the four tab roots only: a screen pushed on
+// a tab's stack, and Explore (reached from Me), go without it.
+it('hides on a pushed screen and on Explore, and shows on a tab root', () => {
+  const at = (index: number, nested?: number) => ({
+    ...props,
+    state: {
+      ...props.state,
+      index,
+      routes: routes.map((r, i) => (i === index && nested !== undefined ? { ...r, state: { index: nested } } : r)),
+    },
+  })
+  render(<TabBar {...at(1, 1)} badges={{}} />)
+  expect(screen.queryByText('Toys')).toBeNull()
+  screen.unmount()
+  render(<TabBar {...at(2, 0)} badges={{}} />)
+  expect(screen.queryByText('Guides')).toBeNull()
+  screen.unmount()
+  render(<TabBar {...at(1, 0)} badges={{}} />)
+  expect(screen.getByText('Toys')).toBeTruthy()
+})
