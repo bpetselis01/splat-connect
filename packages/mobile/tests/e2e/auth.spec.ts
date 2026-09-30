@@ -112,3 +112,12 @@ test('the account view says how you sign in, and signs out to Welcome', async ({
   await page.getByText('Sign Out').click()
   await expect(page).toHaveURL(/\/welcome$/)
 })
+
+test('a sign-in provider that is not switched on opens Not built yet', async ({ page }) => {
+  await page.goto('/sign-in')
+  await page.getByTestId('google-sign-in').click()
+  await expect(page.getByText('Not built yet')).toBeVisible()
+  await expect(page.getByText('Continue with Google').last()).toBeVisible()
+  await page.getByTestId('not-built-back').click()
+  await expect(page.getByText('Welcome back')).toBeVisible()
+})

@@ -8,6 +8,7 @@ import SignIn from '../../../app/(auth)/sign-in'
 import Verify from '../../../app/(auth)/verify'
 import ForgotPassword from '../../../app/(auth)/forgot-password'
 import TermsGate from '../../../app/terms'
+import NotBuilt from '../../../app/not-built'
 
 const mockPush = jest.fn()
 const mockReplace = jest.fn()
@@ -161,9 +162,11 @@ describe('Sign in', () => {
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/forgot-password', params: { email: 'sam@example.com' } })
   })
 
-  it('hides the Google button when this build has no client id', () => {
+  it('sends Google to the Not built yet screen while this build has no client id', () => {
     render(<SignIn />)
-    expect(screen.queryByTestId('google-sign-in')).toBeNull()
+    fireEvent.press(screen.getByTestId('google-sign-in'))
+    expect(mockPush).toHaveBeenCalledWith({ pathname: '/not-built', params: { feature: 'google-sign-in' } })
+    expect(mockAuth.signInWithGoogle).not.toHaveBeenCalled()
   })
 })
 
@@ -223,5 +226,22 @@ describe('Terms gate', () => {
     mockAuth.hasContributorTerms = true
     render(<TermsGate />)
     expect(mockRedirect).toHaveBeenCalledWith('/guides')
+  })
+})
+
+describe('Not built yet', () => {
+  it('names the pending feature and goes back', () => {
+    mockParams = { feature: 'apple-sign-in' }
+    render(<NotBuilt />)
+    expect(screen.getByText('Not built yet')).toBeTruthy()
+    expect(screen.getByText('Sign in with Apple')).toBeTruthy()
+    fireEvent.press(screen.getByTestId('not-built-back'))
+    expect(mockBack).toHaveBeenCalled()
+  })
+
+  it('falls back to a generic line for an unknown feature', () => {
+    mockParams = { feature: 'nope' }
+    render(<NotBuilt />)
+    expect(screen.getByText("This part of SPLAT Connect isn't ready yet.")).toBeTruthy()
   })
 })

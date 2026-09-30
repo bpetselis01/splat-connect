@@ -22,7 +22,9 @@ import { theme } from '../../lib/theme'
 import { BackButton } from '../ui/BackButton'
 import { Screen } from '../ui/Screen'
 import { TextField } from '../ui/TextField'
+import { useRouter } from 'expo-router'
 import { AppleButton, appleAvailable, googleAvailable } from '../../lib/social-auth'
+import type { PendingFeatureId } from '../../lib/pending-features'
 import type { AuthProblem } from '../../lib/auth-errors'
 
 const CONTROL = 52
@@ -75,9 +77,16 @@ export function Lede({ children, center }: { children: React.ReactNode; center?:
   return <Text style={[styles.lede, center && styles.center]}>{children}</Text>
 }
 
-/** Apple (iOS only) above Google, same height, then the "or" rule. Renders
- *  nothing when neither provider is configured for this build. */
+/** Apple (iOS only) above Google, same height, then the "or" rule.
+ *
+ *  Both are always drawn. A provider this build is not configured for opens
+ *  the "Not built yet" screen instead of signing in (lib/pending-features.ts).
+ *  PENDING(apple-sign-in): once live, appleAvailable() is true and the native
+ *  AppleButton renders; the placeholder below is only for the pending state —
+ *  the HIG forbids a hand-drawn Apple button for a real sign-in.
+ *  PENDING(google-sign-in): same for Google, via googleAvailable(). */
 export function SocialButtons({ onApple, onGoogle }: { onApple: () => void; onGoogle: () => void }) {
+  const router = useRouter()
   const [apple, setApple] = useState(false)
   const google = googleAvailable()
   useEffect(() => {
@@ -87,22 +96,36 @@ export function SocialButtons({ onApple, onGoogle }: { onApple: () => void; onGo
       live = false
     }
   }, [])
-  if (!apple && !google) return null
+  const notBuilt = (feature: PendingFeatureId) => () => router.push({ pathname: '/not-built', params: { feature } })
+
   return (
     <View style={styles.social}>
-      {apple ? <AppleButton onPress={onApple} height={CONTROL} /> : null}
-      {google ? (
-        <Pressable
-          testID="google-sign-in"
-          accessibilityRole="button"
-          accessibilityLabel="Continue with Google"
-          onPress={onGoogle}
-          style={({ pressed }) => [styles.google, pressed && styles.pressed]}
-        >
-          <Image source={require('../../assets/google-g.png')} style={styles.gLogo} />
-          <Text style={styles.googleText}>Continue with Google</Text>
-        </Pressable>
+      {Platform.OS === 'ios' ? (
+        apple ? (
+          <AppleButton onPress={onApple} height={CONTROL} />
+        ) : (
+          <Pressable
+            testID="apple-sign-in"
+            accessibilityRole="button"
+            accessibilityLabel="Continue with Apple"
+            onPress={notBuilt('apple-sign-in')}
+            style={({ pressed }) => [styles.applePlaceholder, pressed && styles.pressed]}
+          >
+            <Ionicons name="logo-apple" size={20} color="#ffffff" />
+            <Text style={styles.appleText}>Continue with Apple</Text>
+          </Pressable>
+        )
       ) : null}
+      <Pressable
+        testID="google-sign-in"
+        accessibilityRole="button"
+        accessibilityLabel="Continue with Google"
+        onPress={google ? onGoogle : notBuilt('google-sign-in')}
+        style={({ pressed }) => [styles.google, pressed && styles.pressed]}
+      >
+        <Image source={require('../../assets/google-g.png')} style={styles.gLogo} />
+        <Text style={styles.googleText}>Continue with Google</Text>
+      </Pressable>
       <View style={styles.or} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
         <View style={styles.rule} />
         <Text style={styles.orText}>or use your email</Text>
@@ -295,6 +318,16 @@ const styles = StyleSheet.create({
   },
   pressed: { transform: [{ scale: theme.motion.pressScale }] },
   gLogo: { width: 20, height: 20 },
+  applePlaceholder: {
+    height: CONTROL,
+    borderRadius: theme.radii.pill,
+    backgroundColor: '#000000',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing(2),
+  },
+  appleText: { fontFamily: theme.fonts.black, fontSize: 16, color: '#ffffff' },
   googleText: { fontFamily: theme.fonts.black, fontSize: 16, color: theme.colors.ink },
   or: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2.5), marginVertical: theme.spacing(1) },
   rule: { flex: 1, height: 1, backgroundColor: theme.colors.border },
