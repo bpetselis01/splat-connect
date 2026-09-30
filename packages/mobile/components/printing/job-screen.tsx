@@ -14,7 +14,7 @@
  * printer's side" row is a prototype shortcut, not a feature.
  */
 import { useCallback, useRef, useState } from 'react'
-import { View, Text, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Image } from 'react-native'
+import { View, Text, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Image, Pressable } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import type { Printer, ToyTransaction, ToyTransactionDetail, ToyTransactionMessage } from '@splat-connect/types'
@@ -256,13 +256,23 @@ export function PrintJobScreen({ id }: { id: string }) {
                   style={styles.composerInput}
                 />
               </View>
-              <Button label="Send" disabled={busy || !draft.trim()} onPress={send} style={styles.send} />
+              {/* The board's round paper-plane button. */}
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Send"
+                accessibilityState={{ disabled: busy || !draft.trim() }}
+                disabled={busy || !draft.trim()}
+                onPress={send}
+                style={[styles.send, (busy || !draft.trim()) && styles.sendOff]}
+              >
+                <Ionicons name="paper-plane" size={20} color={theme.colors.surface} />
+              </Pressable>
             </View>
           ) : null}
           {live && !isPrinter ? (
             <Button
               label="Withdraw request"
-              variant="ghost"
+              variant="secondary"
               disabled={busy}
               onPress={async () => {
                 if (await run(() => withdrawRequest(tx))) load()
@@ -491,5 +501,13 @@ const styles = StyleSheet.create({
   },
   composer: { flexDirection: 'row', alignItems: 'flex-start', gap: theme.spacing(2) },
   composerInput: { maxHeight: 96 },
-  send: { paddingHorizontal: theme.spacing(4) },
+  send: {
+    width: 48,
+    height: 48,
+    borderRadius: theme.radii.pill,
+    backgroundColor: theme.colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sendOff: { opacity: 0.5 },
 })
