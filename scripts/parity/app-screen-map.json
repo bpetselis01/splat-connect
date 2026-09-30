@@ -4,7 +4,8 @@
   "name": "Guides",
   "group": "tabs",
   "boardRoute": "(tabs)/guides",
-  "route": "/guides"
+  "route": "/guides",
+  "role": "parent"
  },
  {
   "id": "guide_detail",
@@ -12,7 +13,8 @@
   "group": "push",
   "boardRoute": "guides/[id]",
   "route": "/guides/[id]",
-  "idFrom": "tutorial"
+  "idFrom": "tutorial",
+  "role": "parent"
  },
  {
   "id": "guide_preview",
@@ -37,7 +39,8 @@
   "group": "push",
   "boardRoute": "guides/contributor/[id]",
   "route": "/guides/contributor/[id]",
-  "idFrom": "contributor"
+  "idFrom": "contributor",
+  "role": "parent"
  },
  {
   "id": "guide_org",
@@ -46,14 +49,16 @@
   "boardRoute": "guides/organisation/[id]",
   "route": "/guides/organisation/[id]",
   "idFrom": "org_public",
-  "seedRole": "leader"
+  "seedRole": "leader",
+  "role": "parent"
  },
  {
   "id": "print_find",
   "name": "Find a printer",
   "group": "push",
   "boardRoute": "printing",
-  "route": "/printing"
+  "route": "/printing",
+  "role": "parent"
  },
  {
   "id": "print_request",
@@ -77,21 +82,24 @@
   "name": "Printing basics",
   "group": "push",
   "boardRoute": "printing/basics",
-  "route": "/printing/basics"
+  "route": "/printing/basics",
+  "role": "parent"
  },
  {
   "id": "loading",
   "name": "Loading state",
   "group": "tabs",
   "boardRoute": "guides (loading)",
-  "route": "/guides"
+  "route": "/guides",
+  "role": "parent"
  },
  {
   "id": "toy_library",
   "name": "Toy library",
   "group": "tabs",
   "boardRoute": "(tabs)/toy-library",
-  "route": "/toy-library"
+  "route": "/toy-library",
+  "role": "parent"
  },
  {
   "id": "lib_toy",
@@ -100,14 +108,16 @@
   "boardRoute": "toy-library/[id]",
   "route": "/toy-library/[id]",
   "idFrom": "toy_public",
-  "seedRole": "parent"
+  "seedRole": "parent",
+  "role": "parent"
  },
  {
   "id": "org_list",
   "name": "Organisations",
   "group": "push",
   "boardRoute": "toy-library/organisations",
-  "route": "/toy-library/organisations"
+  "route": "/toy-library/organisations",
+  "role": "parent"
  },
  {
   "id": "lib_org",
@@ -116,35 +126,40 @@
   "boardRoute": "toy-library/organisation/[id]",
   "route": "/toy-library/organisation/[id]",
   "idFrom": "org_public",
-  "seedRole": "leader"
+  "seedRole": "leader",
+  "role": "parent"
  },
  {
   "id": "explore",
   "name": "Explore",
   "group": "push",
   "boardRoute": "(tabs)/explore",
-  "route": "/explore"
+  "route": "/explore",
+  "role": "parent"
  },
  {
   "id": "learn_list",
   "name": "Learn",
   "group": "push",
   "boardRoute": "explore/learn",
-  "route": "/explore/learn"
+  "route": "/explore/learn",
+  "role": "parent"
  },
  {
   "id": "article",
   "name": "Learn article",
   "group": "push",
   "boardRoute": "explore/learn/[slug]",
-  "route": "/explore/learn/toy-adaptation-101"
+  "route": "/explore/learn/toy-adaptation-101",
+  "role": "parent"
  },
  {
   "id": "challenges",
   "name": "Challenges",
   "group": "push",
   "boardRoute": "explore/challenges",
-  "route": "/explore/challenges"
+  "route": "/explore/challenges",
+  "role": "parent"
  },
  {
   "id": "challenge_detail",
@@ -152,7 +167,9 @@
   "group": "push",
   "boardRoute": "explore/challenges/[id]",
   "route": "/explore/challenges/[id]",
-  "idFrom": "challenge_detail"
+  "idFrom": "challenge_detail",
+  "role": "parent",
+  "sampleFrom": "/explore/challenges"
  },
  {
   "id": "challenge_new",
@@ -167,7 +184,8 @@
   "name": "Makers wanted",
   "group": "push",
   "boardRoute": "explore/makers-wanted",
-  "route": "/explore/makers-wanted"
+  "route": "/explore/makers-wanted",
+  "role": "parent"
  },
  {
   "id": "mw_new",
@@ -191,7 +209,8 @@
   "name": "Recycling",
   "group": "push",
   "boardRoute": "explore/recycling",
-  "route": "/explore/recycling"
+  "route": "/explore/recycling",
+  "role": "parent"
  },
  {
   "id": "org_recycling",
@@ -206,7 +225,8 @@
   "name": "About",
   "group": "push",
   "boardRoute": "explore/about",
-  "route": "/explore/about"
+  "route": "/explore/about",
+  "role": "parent"
  },
  {
   "id": "inbox",

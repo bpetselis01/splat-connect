@@ -1,0 +1,251 @@
+{
+ "at": "2026-09-30T13:33:04.666Z",
+ "live": "http://localhost:3112",
+ "screens": [
+  {
+   "id": "guides",
+   "name": "Guides",
+   "group": "tabs",
+   "route": "/guides",
+   "findings": [
+    {
+     "type": "font",
+     "severity": "high",
+     "what": "card title font",
+     "board": "Nunito",
+     "live": "Nunito_800ExtraBold"
+    },
+    {
+     "type": "font",
+     "severity": "high",
+     "what": "h1 \"guide library\" font",
+     "board": "Baloo 2",
+     "live": "Baloo2_800ExtraBold"
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"suits ollie\" has no counterpart",
+     "board": "suits ollie",
+     "live": null
+    },
+    {
+     "type": "font",
+     "severity": "high",
+     "what": "body font",
+     "board": "Nunito",
+     "live": "Times"
+    },
+    {
+     "type": "colour",
+     "severity": "high",
+     "what": "canvas",
+     "board": "rgb(232,230,225)",
+     "live": "rgba(0,0,0,0)"
+    },
+    {
+     "type": "weight",
+     "severity": "low",
+     "what": "card title weight",
+     "board": 800,
+     "live": 400
+    },
+    {
+     "type": "weight",
+     "severity": "low",
+     "what": "h1 \"guide library\" weight",
+     "board": 800,
+     "live": 400
+    },
+    {
+     "type": "radius",
+     "severity": "low",
+     "what": "input radius",
+     "board": "999px",
+     "live": "0px"
+    },
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "input background",
+     "board": "rgb(255,255,255)",
+     "live": "rgba(0,0,0,0)"
+    }
+   ],
+   "role": "parent",
+   "finalUrl": "/guides",
+   "explained": [],
+   "boardHeadings": 8,
+   "liveHeadings": 2
+  },
+  {
+   "id": "guide_detail",
+   "name": "Guide detail",
+   "group": "push",
+   "route": "/guides/f677bc3d-1399-4c41-bd1b-1cfd43ae50c2",
+   "findings": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"switch-adapted light-up drum\" has no counterpart",
+     "board": "switch-adapted light-up drum",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h3 \"steps\" has no counterpart",
+     "board": "steps",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h3 \"community notes #\" has no counterpart",
+     "board": "community notes #",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h3 \"parts\" has no counterpart",
+     "board": "parts",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h3 \"tools you'll need\" has no counterpart",
+     "board": "tools you'll need",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h3 \"also worth a look\" has no counterpart",
+     "board": "also worth a look",
+     "live": null
+    },
+    {
+     "type": "font",
+     "severity": "high",
+     "what": "body font",
+     "board": "Nunito",
+     "live": "Times"
+    },
+    {
+     "type": "colour",
+     "severity": "high",
+     "what": "canvas",
+     "board": "rgb(232,230,225)",
+     "live": "rgba(0,0,0,0)"
+    },
+    {
+     "type": "radius",
+     "severity": "medium",
+     "what": "card radius",
+     "board": "18px",
+     "live": "24px"
+    },
+    {
+     "type": "missing-section",
+     "severity": "medium",
+     "what": "no inputs on live",
+     "board": 2,
+     "live": 0
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "5/5 board paragraphs absent",
+     "board": "a $# toy drum that lights up when it sounds. one interrupter, no solde",
+     "live": null
+    },
+    {
+     "type": "radius",
+     "severity": "low",
+     "what": "button radius range",
+     "board": "999px",
+     "live": "18px"
+    }
+   ],
+   "role": "parent",
+   "finalUrl": "/guides/f677bc3d-1399-4c41-bd1b-1cfd43ae50c2",
+   "explained": [],
+   "boardHeadings": 6,
+   "liveHeadings": 1
+  },
+  {
+   "id": "my_splat",
+   "name": "Me",
+   "group": "tabs",
+   "route": "/me",
+   "findings": [
+    {
+     "type": "font",
+     "severity": "high",
+     "what": "card title font",
+     "board": "Baloo 2",
+     "live": "Baloo2_800ExtraBold"
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"$#\" has no counterpart",
+     "board": "$#",
+     "live": null
+    },
+    {
+     "type": "font",
+     "severity": "high",
+     "what": "body font",
+     "board": "Nunito",
+     "live": "Times"
+    },
+    {
+     "type": "colour",
+     "severity": "high",
+     "what": "canvas",
+     "board": "rgb(232,230,225)",
+     "live": "rgba(0,0,0,0)"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "1/1 board paragraphs absent",
+     "board": "still to settle across # exchanges. splat never handles the money — yo",
+     "live": null
+    },
+    {
+     "type": "weight",
+     "severity": "low",
+     "what": "card title weight",
+     "board": 800,
+     "live": 400
+    }
+   ],
+   "role": "parent",
+   "finalUrl": "/me",
+   "explained": [],
+   "boardHeadings": 2,
+   "liveHeadings": 0
+  }
+ ],
+ "summary": {
+  "screens": 3,
+  "clean": 0,
+  "withFindings": 3,
+  "errored": 0,
+  "skipped": 0,
+  "findings": 27,
+  "explained": 0,
+  "byType": {
+   "font": 6,
+   "missing-section": 9,
+   "colour": 4,
+   "weight": 3,
+   "radius": 3,
+   "copy": 2
+  }
+ }
+}

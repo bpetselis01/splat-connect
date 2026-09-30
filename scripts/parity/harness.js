@@ -137,6 +137,14 @@ async function runParity(target) {
     const livePage = pageByRole[role] || pageByRole.guest
     row.role = role
     try {
+      // A board screen with no single live screen, and the reason why.
+      if (s.skip) {
+        row.skipped = true
+        row.error = `skipped: ${s.skip}`
+        results.push(row)
+        process.stdout.write(`  ~ ${s.id} (skipped)\n`)
+        continue
+      }
       // A target's resolver returns the route itself for a static screen.
       const route = await target.resolve(s, {
         page: livePage,
@@ -260,7 +268,8 @@ async function runParity(target) {
       screens: results.length,
       clean: results.filter((r) => !r.findings.length && !r.error).length,
       withFindings: results.filter((r) => r.findings.length).length,
-      errored: results.filter((r) => r.error).length,
+      errored: results.filter((r) => r.error && !r.skipped).length,
+      skipped: results.filter((r) => r.skipped).length,
       findings: results.reduce((n, r) => n + r.findings.length, 0),
       explained: results.reduce((n, r) => n + (r.explained?.length || 0), 0),
       byType,
@@ -277,7 +286,8 @@ async function runParity(target) {
       screens: all.length,
       clean: all.filter((r) => !r.findings.length && !r.error).length,
       withFindings: all.filter((r) => r.findings.length).length,
-      errored: all.filter((r) => r.error).length,
+      errored: all.filter((r) => r.error && !r.skipped).length,
+      skipped: all.filter((r) => r.skipped).length,
       findings: all.reduce((n, r) => n + r.findings.length, 0),
       explained: all.reduce((n, r) => n + (r.explained?.length || 0), 0),
       byType: all.reduce((acc, r) => {

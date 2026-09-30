@@ -192,13 +192,18 @@ async function signInApp(context, appOrigin, user) {
   }
 }
 
-/** The app plays an intro over everything on each cold start; skip it. */
+/**
+ * The app plays an intro over everything on each cold start, and on the web
+ * export every page.goto is one. Wait for it to mount, then skip it: an
+ * isVisible() check does not wait, so it looked before hydration and every
+ * screen was measured under the intro.
+ */
 async function dismissIntro(page) {
   const skip = page.getByLabel('Skip intro')
-  if (await skip.isVisible({ timeout: 3000 }).catch(() => false)) {
-    await skip.click()
-    await skip.waitFor({ state: 'hidden', timeout: 10000 }).catch(() => {})
-  }
+  const shown = await skip.waitFor({ state: 'visible', timeout: 5000 }).then(() => true, () => false)
+  if (!shown) return
+  await skip.click().catch(() => {})
+  await skip.waitFor({ state: 'hidden', timeout: 10000 }).catch(() => {})
 }
 
 module.exports = { provision, signIn, signInApp, dismissIntro, cleanup, adminClient: admin }
