@@ -114,6 +114,7 @@ export function ChildEditorHome({ childId }: { childId: string }) {
       {saveState === 'saved' ? <Text style={styles.saved}>Saved</Text> : null}
       <NotMedicalNote />
 
+      {/* PENDING(child-switch-sound): "Switch they already use" and "Sound tolerance" questions — no column for the switch. */}
       <Button label="Delete profile" variant="danger" onPress={confirmDelete} style={styles.delete} />
     </ScrollView>
   )

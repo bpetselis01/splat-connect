@@ -25,6 +25,7 @@ import { Chip } from '../ui/Chip'
 import { TextField } from '../ui/TextField'
 import { ErrorRow } from '../ui/ErrorRow'
 import { apiMessage } from '@splat-connect/types'
+import { PendingRow } from '../ui/pending'
 
 // The board's four. PRINT_MATERIALS has six; ASA and Nylon are rare enough on
 // a home machine that offering them here would crowd the two that matter.
@@ -178,6 +179,7 @@ export function AddPrinterScreen() {
             chose.
           </Text>
         </View>
+        <PendingRow pending="add-printer-rates" label="Your standard rates" icon="pricetag-outline" />
       </ScrollView>
 
       <View style={styles.footer}>

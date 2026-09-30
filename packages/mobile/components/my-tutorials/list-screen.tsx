@@ -20,6 +20,8 @@ function TutorialRow({ item, onPress }: { item: Tutorial; onPress: () => void })
     <View style={styles.rowWrap}>
       <ListRow
         title={item.title}
+        // PENDING(my-tutorials-meta): backing org, "4 of 6 sections done", "With Northside since…".
+        // PENDING(my-tutorials-views): a view count — no views column.
         meta={`${KIND_LABEL[item.kind]} · ${item.difficulty}`}
         thumb={<RowThumb photo={item.toy_photo_url} glyph="color-wand-outline" />}
         // "Draft" rather than "Hidden" for a guide, as web does: the editor

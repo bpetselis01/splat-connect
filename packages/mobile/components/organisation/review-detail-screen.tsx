@@ -185,6 +185,7 @@ export function ReviewDetailScreen({ tutorialId }: { tutorialId: string }) {
 
         <View style={styles.checks}>
           <ListSection>Check</ListSection>
+          {/* PENDING(review-checklist): Summary, Steps ("6 steps, all photographed") and Safety notes with OK/Flag, and "five of six complete". */}
           {tutorial.tutorial_pdf_url ? (
             <CheckRow
               title="Tutorial PDF"

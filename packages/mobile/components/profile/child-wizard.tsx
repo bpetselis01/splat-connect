@@ -18,6 +18,7 @@ import { Button } from '../ui/Button'
 import { TextField } from '../ui/TextField'
 import { ChoiceChips, NeedsChips } from './fields'
 
+// PENDING(wizard-steps): the board asks About, Hands, Movement, "What does your child enjoy?" and Measurements.
 const STEPS: { heading: string; line: string; fields: (keyof ChildAnswers)[] }[] = [
   { heading: 'Who are we finding toys for?', line: 'Hi! A few quick questions. Skip any you like.', fields: ['name', 'age'] },
   ...CHILD_QUESTIONS.map((q, i) => ({
@@ -51,6 +52,7 @@ export function ChildWizard() {
 
   function next() {
     if (step < STEPS.length - 1) setStep(step + 1)
+    // PENDING(wizard-mascot-done): the mascot on each step and a "profile is ready — N guides, M toys" screen before Guides.
     else router.replace('/guides')
   }
 

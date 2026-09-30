@@ -20,6 +20,7 @@ import { StepPills, type StepPillItem } from '../ui/StepPills'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { ErrorRow } from '../ui/ErrorRow'
+import { PendingButton } from '../ui/pending'
 
 /** Mirrors 053's file_size_limit on the photo buckets. */
 const MAX_PHOTO_BYTES = 10 * 1024 * 1024
@@ -154,6 +155,7 @@ export function Editor({ id }: { id: string }) {
     status: statuses[step],
   }))
 
+  // PENDING(my-toy-inline-requests): list each request inline (who, their note, Accept) instead of a count.
   // Owner-side requests still open on this toy — the same isOwnerSide check
   // list-screen.tsx's waitingCounts uses, so a leader's org toy counts too.
   const offersWaiting = caps
@@ -615,6 +617,7 @@ export function Editor({ id }: { id: string }) {
       </ScrollView>
 
       <View style={styles.footer}>
+        <PendingButton pending="toy-pause-unavailable" label="Mark unavailable" variant="ghost" />
         <Button label="Delete toy" variant="danger" onPress={handleDelete} />
       </View>
     </Screen>

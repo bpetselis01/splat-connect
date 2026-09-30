@@ -14,6 +14,7 @@ import { theme } from '../../lib/theme'
 import { Screen } from '../../components/ui/Screen'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { Mascot } from '../../components/ui/TabHero'
+import { PendingRow } from '../../components/ui/pending'
 
 type Glyph = React.ComponentProps<typeof Ionicons>['name']
 
@@ -108,6 +109,8 @@ function Row({
  * total, the sentence that SPLAT never handles it, and the first three lines.
  * Read-only; settling happens on the exchange, where the context is.
  */
+// PENDING(money-panel-detail): each line names the item and the person, marks
+// Settled or To settle, and an "All settled" state — unsettled lines only today.
 function MoneyPanel({ money, onOpen }: { money: Outstanding; onOpen: (transactionId: string) => void }) {
   if (money.lines.length === 0) return null
   const n = money.exchange_count
@@ -204,6 +207,7 @@ export default function MeTab() {
                     key={row.href}
                     label={row.label}
                     icon={GLYPH[row.icon] ?? 'ellipse-outline'}
+                    // PENDING(me-count-badges): counts for My tutorials, challenges, makers wanted, print requests, review queue, intake and print orders.
                     count={row.count}
                     soon={row.soon || to === '/me'}
                     onPress={go(to)}
@@ -212,6 +216,8 @@ export default function MeTab() {
               })}
             </View>
           ))}
+          {/* PENDING(me-rows-structure): the board lists Makers wanted under "Give us a challenge" and Recycling under Explore. */}
+          <PendingRow pending="me-rows-structure" label="Makers wanted" icon="hammer-outline" />
           <View style={styles.group}>
             <Text style={styles.eyebrow}>Explore</Text>
             {EXPLORE.map((row) => (

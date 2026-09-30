@@ -37,7 +37,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 - Platforms: mobile, web, api
 - Needs: A product decision (see question), then the build it implies.
-- In code: `packages/mobile/components/home/detail-screen.tsx:260`
+- In code: `packages/mobile/components/home/detail-screen.tsx:260`, `packages/mobile/components/my-tutorials/sections/items-section.tsx:25`
 
 ### `tool-notes` — Tool notes
 
@@ -45,7 +45,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 - Platforms: mobile, api
 - Needs: A product decision (see question), then the build it implies.
-- In code: `packages/mobile/components/home/detail-screen.tsx:276`
+- In code: `packages/mobile/components/home/detail-screen.tsx:276`, `packages/mobile/components/my-tutorials/sections/items-section.tsx:26`
 
 ### `guide-draft-preview` — Draft preview
 
@@ -157,7 +157,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 - Platforms: mobile
 - Needs: A product decision (see question), then the build it implies.
-- In code: _none yet_
+- In code: `packages/mobile/app/(tabs)/me.tsx:219`, `packages/mobile/app/(tabs)/me.tsx:220`
 
 ### `my-tutorials-views` — Views
 
@@ -165,7 +165,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 - Platforms: mobile, api
 - Needs: A product decision (see question), then the build it implies.
-- In code: _none yet_
+- In code: `packages/mobile/components/my-tutorials/list-screen.tsx:24`
 
 ### `editor-safety-notes` — Safety notes
 
@@ -173,7 +173,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 - Platforms: mobile, api
 - Needs: A product decision (see question), then the build it implies.
-- In code: _none yet_
+- In code: `packages/mobile/components/my-tutorials/sections/safety-section.tsx:55`
 
 ### `toy-pause-unavailable` — Mark unavailable
 
@@ -181,7 +181,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 - Platforms: mobile, api
 - Needs: A product decision (see question), then the build it implies.
-- In code: _none yet_
+- In code: `packages/mobile/components/my-toys/editor.tsx:620`
 
 ### `toy-holder-picks` — Also worth a look
 
@@ -197,7 +197,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 - Platforms: mobile, api
 - Needs: A product decision (see question), then the build it implies.
-- In code: _none yet_
+- In code: `packages/mobile/components/profile-screen.tsx:103`
 
 ### `child-switch-sound` — Switch and sound
 
@@ -205,7 +205,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 - Platforms: mobile, api
 - Needs: A product decision (see question), then the build it implies.
-- In code: _none yet_
+- In code: `packages/mobile/components/profile/child-editor-home.tsx:117`
 
 ### `wizard-steps` — More profile questions
 
@@ -213,7 +213,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 - Platforms: mobile, api
 - Needs: A product decision (see question), then the build it implies.
-- In code: _none yet_
+- In code: `packages/mobile/components/profile/child-wizard.tsx:21`
 
 ### `inventory-states` — Toy states
 
@@ -221,7 +221,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 - Platforms: mobile, api
 - Needs: A product decision (see question), then the build it implies.
-- In code: _none yet_
+- In code: `packages/mobile/components/organisation/inventory-screen.tsx:50`
 
 ### `print-estimates` — Print time and weight
 
@@ -358,7 +358,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 - Platforms: web, mobile
 - Needs: Saved printable parts list and tile [ui,api]
-- In code: `packages/web/app/dashboard/saved/parts/page.tsx:18`
+- In code: `packages/mobile/components/saved/saved-screen.tsx:105`, `packages/web/app/dashboard/saved/parts/page.tsx:18`
 
 ### `impact-map` — Deliveries map
 
@@ -592,73 +592,73 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 - Platforms: mobile, api
 - Needs: Counts on My tutorials, challenges, makers, print, review, intake, orders [ui,api]
-- In code: _none yet_
+- In code: `packages/mobile/app/(tabs)/me.tsx:210`
 
 ### `money-panel-detail` — Money details
 
 - Platforms: mobile
 - Needs: Item + person per line, Settled/To settle, All settled [ui]
-- In code: _none yet_
+- In code: `packages/mobile/app/(tabs)/me.tsx:112`
 
 ### `my-tutorials-meta` — Guide progress
 
 - Platforms: mobile
 - Needs: Backing org, "4 of 6 sections", "With … since" [ui]
-- In code: _none yet_
+- In code: `packages/mobile/components/my-tutorials/list-screen.tsx:23`
 
 ### `editor-backing` — Backing
 
 - Platforms: mobile
 - Needs: Backing field in the phone editor [ui,api]
-- In code: _none yet_
+- In code: `packages/mobile/components/my-tutorials/hub.tsx:284`
 
 ### `editor-part-buy-links` — Buy links
 
 - Platforms: mobile
 - Needs: Edit a part's buy links on the phone [ui]
-- In code: _none yet_
+- In code: `packages/mobile/components/my-tutorials/sections/items-section.tsx:90`
 
 ### `my-toy-inline-requests` — Requests on this toy
 
 - Platforms: mobile
 - Needs: Requests listed inline with Accept on Toy detail (mine) [ui]
-- In code: _none yet_
+- In code: `packages/mobile/components/my-toys/editor.tsx:158`
 
 ### `my-challenges-meta` — Challenge details
 
 - Platforms: mobile, api
 - Needs: Date, maker and post counts [ui,api]
-- In code: _none yet_
+- In code: `packages/mobile/components/challenges/my-screen.tsx:53`
 
 ### `saved-list-meta` — Saved details
 
 - Platforms: mobile, api
 - Needs: Difficulty · time · author and thumbnail [ui,api]
-- In code: _none yet_
+- In code: `packages/mobile/components/saved/saved-list-screen.tsx:168`
 
 ### `add-printer-rates` — Your standard rates
 
 - Platforms: mobile
 - Needs: "Your standard rates" panel (API accepts it) [ui]
-- In code: _none yet_
+- In code: `packages/mobile/components/printing/add-printer-screen.tsx:182`
 
 ### `review-checklist` — Section checklist
 
 - Platforms: mobile
 - Needs: Summary/Steps/Safety OK/Flag rows and "five of six" [ui]
-- In code: _none yet_
+- In code: `packages/mobile/components/organisation/review-detail-screen.tsx:188`
 
 ### `admin-counts` — Admin counts
 
 - Platforms: mobile, api
 - Needs: Count cards and Reports card on Admin [ui,api]
-- In code: _none yet_
+- In code: `packages/mobile/app/(my)/admin.tsx:19`
 
 ### `wizard-mascot-done` — Profile ready
 
 - Platforms: mobile, api
 - Needs: Mascot per step and "profile is ready" match screen [ui,api]
-- In code: _none yet_
+- In code: `packages/mobile/components/profile/child-wizard.tsx:55`
 
 ### `web-toy-family-notes` — Notes from the family
 

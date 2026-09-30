@@ -165,6 +165,7 @@ export function SavedListScreen({ slug }: { slug: SaveSlug }) {
           {items.map((item) => {
             // tutorials/challenges carry title; toys and organisations carry name.
             const label = item.title ?? item.name ?? ''
+            // PENDING(saved-list-meta): "difficulty · time · author" and a thumbnail — the API returns no author name.
             const line = item.summary ?? item.description ?? null
             return (
               // The bookmark is a sibling of the pressable, never a child —

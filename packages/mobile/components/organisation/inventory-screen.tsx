@@ -47,6 +47,8 @@ function StockRow({ toy, onPress }: { toy: ToyWithOwner; onPress: () => void }) 
   )
 }
 
+// PENDING(inventory-states): "Needs clean" and "Retired" states, who holds an
+// Out toy, and "N on shelf, N out, N need cleaning" as the lead.
 export function InventoryScreen() {
   const router = useRouter()
   const { caps, loading: capsLoading } = useCapabilities()

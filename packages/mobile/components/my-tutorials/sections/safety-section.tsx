@@ -11,6 +11,7 @@ import { theme } from '../../../lib/theme'
 import { Screen } from '../../ui/Screen'
 import { ErrorRow } from '../../ui/ErrorRow'
 import { SectionFooter } from '../section-footer'
+import { PendingButton } from '../../ui/pending'
 
 export function SafetySection() {
   const { tutorial, save, saveError } = useDraft()
@@ -51,6 +52,7 @@ export function SafetySection() {
           </Pressable>
         )}
 
+        <PendingButton pending="editor-safety-notes" label="Add a safety note" variant="ghost" />
         <ErrorRow message={saveError} />
       </ScrollView>
       <SectionFooter section="safety" />

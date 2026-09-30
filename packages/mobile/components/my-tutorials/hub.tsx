@@ -29,6 +29,7 @@ import { ListSection, Pill, StagePill } from '../list/list-kit'
 import { TUTORIAL_STAGE } from '../list/stage'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
+import { PendingRow } from '../ui/pending'
 
 const SECTION_ICON: Record<SectionId, ComponentProps<typeof Ionicons>['name']> = {
   details: 'document-text-outline',
@@ -280,10 +281,7 @@ export function TutorialHub({ id, justCreated, fromPdf }: { id: string; justCrea
             one here: "ask on the web" is the whole of what mobile can say about
             it, and a request would be a round trip to say so. */}
         <ListSection style={styles.moreHeading}>More</ListSection>
-        <View style={styles.moreRow}>
-          <Text style={styles.moreLabel}>Backed by</Text>
-          <Text style={styles.moreValue}>Ask on the web</Text>
-        </View>
+        <PendingRow pending="editor-backing" label="Backing" icon="ribbon-outline" />
         <View style={styles.moreRow}>
           <Text style={styles.moreLabel}>Collaborators</Text>
           <Text style={styles.moreValue}>

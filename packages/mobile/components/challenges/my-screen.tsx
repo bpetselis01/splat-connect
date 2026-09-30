@@ -50,6 +50,7 @@ function IdeaRow({ idea, onOpen }: { idea: ToyIdea; onOpen: () => void }) {
   // review_note is the point of the rejected state — an admin's reason for
   // declining, never shown publicly, only to the author here. Absent only
   // when an admin rejected without one, and then the summary stands.
+  // PENDING(my-challenges-meta): joined/submitted date, maker and post counts — /api/ideas/mine selects no counts.
   const meta = idea.status === 'rejected' && idea.review_note ? idea.review_note : idea.summary
 
   return (

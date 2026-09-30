@@ -18,9 +18,12 @@ import { TextField } from '../../ui/TextField'
 import { Button } from '../../ui/Button'
 import { ErrorRow } from '../../ui/ErrorRow'
 import { SectionFooter } from '../section-footer'
+import { PendingButton } from '../../ui/pending'
 
 const NOUN_LABEL = { parts: 'Part', tools: 'Tool' } as const
 
+// PENDING(part-prices): a price or note per part, and a total on the hub.
+// PENDING(tool-notes): a note per tool ("Borrow from a library").
 export function ItemsSection({ noun }: { noun: 'parts' | 'tools' }) {
   const { tutorial, replaceItems, saveError } = useDraft()
   const withQuantity = noun === 'parts'
@@ -84,6 +87,7 @@ export function ItemsSection({ noun }: { noun: 'parts' | 'tools' }) {
                   </Pressable>
                 </View>
               ) : null}
+              {noun === 'parts' ? <PendingButton pending="editor-part-buy-links" label="Buy links" variant="ghost" /> : null}
               <Pressable
                 testID={`item-optional-${i}`}
                 accessibilityRole="checkbox"

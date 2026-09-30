@@ -16,6 +16,8 @@ const ROWS: { label: string; path: string; icon: React.ComponentProps<typeof Ion
   { label: 'Ideas', path: '/admin/ideas', icon: 'bulb-outline' },
 ]
 
+// PENDING(admin-counts): count cards and a "Reports from members" card — the
+// count endpoints exist; one counts call would feed them.
 export default function MyAdmin() {
   return (
     <View style={styles.screen}>
