@@ -24,6 +24,12 @@ describe('AuthLayout', () => {
     expect(mockRedirect).toHaveBeenCalledWith('/guides')
   })
 
+  it('holds the redirect while a reset is saving its new password', () => {
+    mockUseAuth.mockReturnValue({ loading: false, session: { user: {} }, resetting: true })
+    render(<AuthLayout />)
+    expect(mockRedirect).not.toHaveBeenCalled()
+  })
+
   it('shows the stack when signed out', () => {
     mockUseAuth.mockReturnValue({ loading: false, session: null })
     render(<AuthLayout />)

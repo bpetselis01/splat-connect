@@ -24,6 +24,9 @@ type AuthContextValue = {
   hasContributorTerms: boolean | null
   /** Apple's full name from a first sign-in, for the terms gate's name field. */
   pendingName: string | null
+  /** True while a password reset is between verifying its code (which signs
+   *  you in) and saving the new password — (auth)/_layout holds its redirect. */
+  resetting: boolean
   signIn: (email: string, password: string) => Promise<AuthResult>
   signUp: (email: string, password: string, name: string) => Promise<AuthResult>
   verifyCode: (email: string, token: string, type: 'signup' | 'email') => Promise<AuthResult>
@@ -46,6 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [hasContributorTerms, setHasContributorTerms] = useState<boolean | null>(null)
   const [pendingName, setPendingName] = useState<string | null>(null)
+  const [resetting, setResetting] = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -135,10 +139,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function resetPassword(email: string, token: string, password: string) {
-    const verified = await supabase.auth.verifyOtp({ email, token, type: 'recovery' })
-    if (verified.error) return result(verified.error)
-    const { error } = await supabase.auth.updateUser({ password })
-    return result(error)
+    setResetting(true)
+    try {
+      const verified = await supabase.auth.verifyOtp({ email, token, type: 'recovery' })
+      if (verified.error) return result(verified.error)
+      const { error } = await supabase.auth.updateUser({ password })
+      return result(error)
+    } finally {
+      setResetting(false)
+    }
   }
 
   async function withIdToken(provider: 'apple' | 'google', got: SocialResult<string>): Promise<AuthResult> {
@@ -193,7 +202,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <AuthContext.Provider
       value={{
-        session, profile, loading, hasContributorTerms, pendingName,
+        session, profile, loading, hasContributorTerms, pendingName, resetting,
         signIn, signUp, verifyCode, resendSignupCode, sendSignInCode, sendPasswordReset, resetPassword,
         signInWithApple, signInWithGoogle, setProfileName, signOut, acceptContributorTerms,
       }}
