@@ -433,7 +433,25 @@ async function seedOwnedTutorial(db, contributorId) {
   const { error: cErr } = await db
     .from('tutorial_contributors')
     .insert({ tutorial_id: data.id, profile_id: contributorId, role: 'primary' })
-  return cErr ? null : data.id
+  if (cErr) return null
+  // The board's editor sections each hold rows; empty ones draw no fields.
+  // All cascade with the guide.
+  await swallow(
+    db.from('tutorial_steps').insert({
+      tutorial_id: data.id,
+      position: 1,
+      body: 'Open the base and find the two wires running to the pump motor.',
+    })
+  )
+  await swallow(
+    db.from('parts').insert(
+      ['Relay module, 5 V', 'Timer board (555 or similar)', 'Big button switch'].map((name) => ({ tutorial_id: data.id, name }))
+    )
+  )
+  await swallow(
+    db.from('tools').insert(['Soldering iron', 'Wire strippers'].map((name) => ({ tutorial_id: data.id, name })))
+  )
+  return data.id
 }
 
 /** An event on the leader's organisation — /dashboard/org/events/[id]. */
@@ -707,7 +725,7 @@ async function seed(db, users) {
     const queued = await seedOrgQueue(db, leader.id, leader.orgId)
     // The app's org review screen, keyed by its app screen id: the leader's
     // queue is pressables, and no web screen shows this record.
-    if (queued) routes.org_review = `/organisation/${queued}`
+    if (queued) routes['app:org_review'] = `/organisation/${queued}`
     await seedOrgRequests(db, family, leader.orgId)
     await seedPrinterWithJobs(db, { owner_org_id: leader.orgId }, family)
     await seedDropoffs(db, leader.orgId, family)
