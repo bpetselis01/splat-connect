@@ -51,5 +51,6 @@ runParity({
   },
   resolve: resolveAppRoute,
   // Screens scroll inside their own container; the root is always 844 tall.
-  compareOpts: () => ({ height: false }),
+  // A record's title is its h2 on the mobile board.
+  compareOpts: () => ({ height: false, recordTitleLevel: 2 }),
 })

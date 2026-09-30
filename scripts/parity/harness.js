@@ -240,7 +240,7 @@ async function runParity(target) {
       const contentIsOurs = !NO_COPY.test(route) && !s.stateOnly
       row.findings = compare(board, live, {
         // A record's prose is its own data, like its title below.
-        copy: contentIsOurs && !(s.sampleFrom || s.derivedFrom),
+        copy: contentIsOurs && !(s.sampleFrom || s.derivedFrom || s.idFrom),
         // The state's cards are not on the page the harness can reach: /signup
         // before sending is role tiles, the sent state one .auth-card.
         shapes: !s.stateOnly,
@@ -249,7 +249,7 @@ async function runParity(target) {
         // "Bubble machine" against a fixture's "E2E reflow detail 1-2". That is
         // the sample data differing, which this report ignores everywhere else,
         // so the title is compared for how it is SET but not for what it says.
-        recordTitleH1: !!(s.sampleFrom || s.derivedFrom),
+        recordTitleH1: !!(s.sampleFrom || s.derivedFrom || s.idFrom),
         ...target.compareOpts(s),
       })
       Object.assign(row, explain(row.findings, s.explained))

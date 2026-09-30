@@ -117,3 +117,12 @@ console.log('compare: 4 checks passed')
   assert.ok(compare(board, live).some((x) => x.what === 'page height differs grossly'), 'height check lost')
   assert.ok(!compare(board, live, { height: false }).some((x) => /page height/.test(x.what)), 'height: false ignored')
 }
+
+// The mobile board's record title is an h2: compared for how it is set, never
+// for what it says, like a desktop record's h1.
+{
+  const board = fp([h(2, 'bubble machine')])
+  const live = fp([h(2, 'parity swap toy')])
+  assert.ok(compare(board, live, { recordTitleH1: true }).some((x) => x.type === 'copy'), 'h2 title wording lost by default')
+  assert.deepStrictEqual(compare(board, live, { recordTitleH1: true, recordTitleLevel: 2 }).filter((x) => x.type === 'copy'), [], 'recordTitleLevel ignored')
+}
