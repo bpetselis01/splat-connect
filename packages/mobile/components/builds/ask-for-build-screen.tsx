@@ -70,7 +70,9 @@ export function AskForBuildScreen() {
 
   const picked = tutorials.find((t) => t.id === tutorialId)
   const q = query.trim().toLowerCase()
-  const results = q ? tutorials.filter((t) => t.title.toLowerCase().includes(q)) : tutorials
+  // A handful until they search: every published guide as a row was a
+  // thousand rows in a form meant to be filled in quickly.
+  const results = q ? tutorials.filter((t) => t.title.toLowerCase().includes(q)) : tutorials.slice(0, 8)
 
   async function submit() {
     // Said in the order the form asks, one at a time — the board's toasts.
@@ -105,6 +107,9 @@ export function AskForBuildScreen() {
     // zero height and the sheet opened blank. The ScrollView insets itself.
     <Screen>
       <ScrollView
+        // Fill the sheet: in an iOS formSheet the ScrollView otherwise sized to
+        // its first child and clipped the rest of the form.
+        style={styles.fill}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
@@ -239,6 +244,7 @@ function GuideRow({ t, on, onPress, action }: { t: Tutorial; on: boolean; onPres
 }
 
 const styles = StyleSheet.create({
+  fill: { flex: 1 },
   content: { paddingBottom: theme.spacing(8), gap: theme.spacing(4) },
   intro: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.muted, lineHeight: 21 },
   label: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.text, marginBottom: theme.spacing(2) },
