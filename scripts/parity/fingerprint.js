@@ -156,6 +156,11 @@ function collectFingerprint(rootSelector) {
     const semantic = /^H[1-6]$/.test(el.tagName)
     if (!semantic && px(s.fontSize) < HEADING_MIN_SIZE) return false
     if (!semantic && +s.fontWeight < HEADING_MIN_WEIGHT) return false
+    // An eyebrow is a label, whatever its tag. Live marks its small uppercase
+    // eyebrows up as h2/h3 ("Money you have agreed to", "Meeting them") where
+    // the board sets the same words in a 12px <p>, and every one read as an
+    // extra section. Dropped on both sides alike.
+    if (semantic && s.textTransform === 'uppercase' && px(s.fontSize) < HEADING_MIN_SIZE) return false
     // Inside a semantic heading is part of that heading. The board interpolates
     // a record name as a <span> in its h1 ("Requests to <span>Northside
     // Therapy</span>"), and the span read as a second h1 with no counterpart.
@@ -457,7 +462,15 @@ function collectFingerprint(rootSelector) {
     const m = /rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)/.exec(c)
     return m ? 0.2126 * +m[1] + 0.7152 * +m[2] + 0.0722 * +m[3] : 255
   }
-  const filled = candidates.filter((el) => !NEUTRAL.has(colour(cs(el).backgroundColor)))
+  // A selected chip is a toggle, not an action: with the real submit disabled
+  // until a box is ticked, the "Any colour" chip was elected primary and its
+  // flat fill reported the board's button shadow as missing.
+  const filled = candidates.filter(
+    (el) =>
+      !el.hasAttribute('aria-pressed') &&
+      el.getAttribute('role') !== 'radio' &&
+      !NEUTRAL.has(colour(cs(el).backgroundColor))
+  )
   const darkest = filled.length
     ? filled.reduce((a, b) => (lum(cs(a).backgroundColor) <= lum(cs(b).backgroundColor) ? a : b))
     : null
