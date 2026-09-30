@@ -82,7 +82,10 @@ async function resolveRoute(s, ctx) {
     const parent =
       screens.find((x) => x.id === s.derivedFrom) || allScreens.find((x) => x.id === s.derivedFrom)
     if (parent) {
-      const base = cache.get(parent.route) || (await resolveDynamic(page, live, parent, cache))
+      const base =
+        seeded[parent.id] ||
+        cache.get(parent.route) ||
+        (await resolveDynamic(page, live, parent, cache))
       // The parent's id sits where its template has [id] — not always last:
       // /organizations/[id]/public ends in "public".
       const at = parent.route.split('/').findIndex((seg) => /^\[.+\]$/.test(seg))

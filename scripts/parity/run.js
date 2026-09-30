@@ -90,7 +90,9 @@ async function fingerprintOf(page, url, rootSel, role) {
 
   // One signed-in context per role the selected screens actually need, so a
   // run of only public screens costs no account provisioning.
-  const needed = [...new Set(screens.map((s) => s.role).filter(Boolean))]
+  // `seedRole`: a screen whose record another role's fixtures create (the
+  // leader's org, event), so a partial run of it still seeds that record.
+  const needed = [...new Set(screens.flatMap((s) => [s.role, s.seedRole]).filter(Boolean))]
   let users = {}
   const ctxByRole = { guest: await browser.newContext({ viewport: VIEWPORT }) }
   if (needed.length) {
@@ -215,6 +217,9 @@ async function fingerprintOf(page, url, rootSel, role) {
       row.findings = compare(board, live, {
         // A record's prose is its own data, like its title below.
         copy: contentIsOurs && !(s.sampleFrom || s.derivedFrom),
+        // The state's cards are not on the page the harness can reach: /signup
+        // before sending is role tiles, the sent state one .auth-card.
+        shapes: !s.stateOnly,
         structure: contentIsOurs,
         // On a detail screen the <h1> is the record's own name — the board's
         // "Bubble machine" against a fixture's "E2E reflow detail 1-2". That is

@@ -263,19 +263,25 @@ function compare(board, live, opts = {}) {
   const SHARE = 0.25
   const share = (vals, pred) =>
     !vals || !vals.length ? 0 : vals.filter(pred).length / vals.length
-  for (const kind of ['card']) {
+  // Unless the board has only a card or two: then its card is one component
+  // (the challenges page's amber note), not a population, and the question is
+  // whether live draws it at all. A matching note among 24 challenge cards
+  // failed the quarter.
+  const few = (board.counts?.cards ?? Infinity) <= 2
+  const short = (s) => (few ? s === 0 : s < SHARE)
+  for (const kind of opts.shapes === false ? [] : ['card']) {
     const b = board.shapes[kind]
     const l = live.shapes[kind]
     if (!b || !l) continue
     const lv = l.values || { radius: [l.radius], shadow: [l.shadow], bg: [l.bg] }
     if (
       b.radius != null &&
-      share(lv.radius, (r) => Math.abs(r - b.radius) <= SIZE_TOLERANCE) < SHARE
+      short(share(lv.radius, (r) => Math.abs(r - b.radius) <= SIZE_TOLERANCE))
     )
       out.push(f('radius', 'medium', `${kind} radius`, b.radius + 'px', l.radius + 'px'))
-    if (b.shadow != null && share(lv.shadow, (x) => x === b.shadow) < SHARE)
+    if (b.shadow != null && short(share(lv.shadow, (x) => x === b.shadow)))
       out.push(f('shadow', 'low', `${kind} shadow`, b.shadow, l.shadow))
-    if (b.bg != null && share(lv.bg, (x) => x === b.bg) < SHARE)
+    if (b.bg != null && short(share(lv.bg, (x) => x === b.bg)))
       out.push(f('colour', 'low', `${kind} background`, b.bg, l.bg))
     // Card padding is deliberately NOT compared. The two sides put it in
     // different places — the board pads an inner wrapper and leaves the card

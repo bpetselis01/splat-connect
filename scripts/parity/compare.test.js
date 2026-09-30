@@ -94,3 +94,17 @@ console.log('compare: 4 checks passed')
   assert.strictEqual(out.explained[0].why, 'intended')
   assert.deepStrictEqual(explain([f('shadow', 'card shadow')]).findings.length, 1, 'no rules must change nothing')
 }
+
+// A board with one card asks whether live draws it, not whether a quarter of
+// live's cards look like it.
+{
+  const note = { radius: 18, shadow: 'none', bg: 'rgb(255,240,204)' }
+  const white = { radius: 18, shadow: 'set', bg: 'rgb(255,255,255)' }
+  const cards = (n, values) => ({ card: { ...values[0], values: { radius: values.map((v) => v.radius), shadow: values.map((v) => v.shadow), bg: values.map((v) => v.bg) } }, button: shape, input: shape })
+  const counts = (n) => ({ cards: n, buttons: 0, inputs: 0, images: 0, tables: 0, lists: 0, rows: 0 })
+  const board = fp([], { counts: counts(1), shapes: { card: note, button: shape, input: shape } })
+  const live = fp([], { counts: counts(25), shapes: cards(25, [note, ...Array(24).fill(white)]) })
+  assert.deepStrictEqual(compare(board, live).filter((x) => /card/.test(x.what)), [], 'lone board card read as a population')
+  const none = fp([], { counts: counts(24), shapes: cards(24, Array(24).fill(white)) })
+  assert.ok(compare(board, none).some((x) => x.what === 'card background'), 'missing lone card not reported')
+}
