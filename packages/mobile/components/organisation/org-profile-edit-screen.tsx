@@ -22,6 +22,7 @@ import { Button } from '../ui/Button'
 import { TextField } from '../ui/TextField'
 import { SkeletonRow } from '../ui/Skeleton'
 import { ListSection } from '../list/list-kit'
+import { OrgLeadersSection } from './org-leaders-section'
 
 const FIELDS = [
   ['name', 'Organisation name', 120],
@@ -39,7 +40,7 @@ const FIELDS = [
 type Field = (typeof FIELDS)[number][0] | 'state'
 
 export function OrgProfileEditScreen() {
-  const { caps } = useCapabilities()
+  const { caps, refresh } = useCapabilities()
   const orgId = caps?.ledOrgs[0]?.id
   const [form, setForm] = useState<Record<Field, string> | null>(null)
   const [thanks, setThanks] = useState<OrgThanks[]>([])
@@ -118,6 +119,8 @@ export function OrgProfileEditScreen() {
         </View>
         {note ? <Text style={[styles.note, { color: note.ok ? theme.colors.success : theme.colors.danger }]}>{note.text}</Text> : null}
         <Button label="Save and publish" onPress={() => void save()} loading={saving} style={styles.primary} />
+
+        <OrgLeadersSection orgId={orgId!} onSteppedDown={() => void refresh()} />
 
         <ListSection style={styles.group}>Thanks from families</ListSection>
         <Text style={styles.lede}>
