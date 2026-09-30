@@ -1,7 +1,8 @@
 'use client'
 /**
- * Who leads the organisation, adding a co-leader by the email their SPLAT
- * account uses, and stepping down (never the last leader — the API refuses).
+ * Who leads the organisation, inviting a co-leader by the email their SPLAT
+ * account uses (they accept on their Account page), and stepping down —
+ * never the last leader; the API refuses.
  * The account-deletion blocker sends a sole leader here.
  */
 import { useCallback, useEffect, useState } from 'react'
@@ -9,15 +10,23 @@ import { apiMessage } from '@splat-connect/types'
 import { browserApiClient } from '@/lib/browser-api-client'
 
 type Leader = { user_id: string; name: string; email: string; you: boolean }
+type Invite = { id: string; name: string; email: string }
 
 export function OrgLeaders({ orgId }: { orgId: string }) {
   const [leaders, setLeaders] = useState<Leader[]>([])
+  const [invites, setInvites] = useState<Invite[]>([])
   const [email, setEmail] = useState('')
   const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null)
   const [busy, setBusy] = useState(false)
 
   const load = useCallback(() => {
-    browserApiClient.get<Leader[]>(`/api/organizations/${orgId}/leaders`).then(setLeaders).catch(() => setLeaders([]))
+    browserApiClient
+      .get<{ leaders: Leader[]; invites: Invite[] }>(`/api/organizations/${orgId}/leaders`)
+      .then((r) => {
+        setLeaders(r.leaders)
+        setInvites(r.invites)
+      })
+      .catch(() => setLeaders([]))
   }, [orgId])
   useEffect(load, [load])
 
@@ -28,13 +37,18 @@ export function OrgLeaders({ orgId }: { orgId: string }) {
     try {
       await browserApiClient.post(`/api/organizations/${orgId}/leaders`, { email })
       setEmail('')
-      setNote({ ok: true, text: 'Added. They lead the organisation now.' })
+      setNote({ ok: true, text: 'Invited. They become a leader once they accept on their Account page.' })
       load()
     } catch (err) {
       setNote({ ok: false, text: apiMessage(err, 'Could not add them. Try again.') })
     } finally {
       setBusy(false)
     }
+  }
+
+  async function cancel(id: string) {
+    await browserApiClient.delete(`/api/organizations/${orgId}/leaders/invites/${id}`).catch(() => {})
+    load()
   }
 
   async function stepDown() {
@@ -57,10 +71,17 @@ export function OrgLeaders({ orgId }: { orgId: string }) {
             <span className="ml-2 text-muted">{l.email}</span>
           </li>
         ))}
+        {invites.map((i) => (
+          <li key={i.id} className="flex flex-wrap items-center gap-3 text-[15px]">
+            <span className="font-extrabold text-ink">{i.name || i.email}</span>
+            <span className="text-muted">invited</span>
+            <button type="button" onClick={() => cancel(i.id)} className="btn btn-quiet btn-sm">Cancel invitation</button>
+          </li>
+        ))}
       </ul>
       <form onSubmit={add} className="mt-5 flex flex-wrap items-end gap-3">
         <div className="flex min-w-[240px] flex-1 flex-col gap-1.5">
-          <label htmlFor="leader-email" className="auth-label">Add a leader</label>
+          <label htmlFor="leader-email" className="auth-label">Invite a leader</label>
           <input
             id="leader-email"
             type="email"
@@ -70,7 +91,7 @@ export function OrgLeaders({ orgId }: { orgId: string }) {
             className="auth-input"
           />
         </div>
-        <button type="submit" disabled={!email.trim() || busy} className="btn btn-accent">Add leader</button>
+        <button type="submit" disabled={!email.trim() || busy} className="btn btn-accent">Send invitation</button>
       </form>
       {note && (
         <p role={note.ok ? 'status' : 'alert'} className={`mt-3 text-sm font-semibold ${note.ok ? 'text-[var(--color-success-deep)]' : 'text-[var(--color-danger)]'}`}>

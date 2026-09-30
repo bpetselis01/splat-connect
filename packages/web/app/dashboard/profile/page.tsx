@@ -18,6 +18,7 @@ import { apiClient } from '@/lib/api-client'
 import { requireCapabilities } from '@/lib/require-capabilities'
 import { ProfileForm } from '@/components/profile-form'
 import { SignOutButton } from '@/components/sign-out-button'
+import { OrgInvites } from '@/components/org-invites'
 import { PersonSimple } from '@phosphor-icons/react/dist/ssr'
 import { childSummary, type ChildProfile, type Tutorial, type UserAgreement } from '@splat-connect/types'
 
@@ -70,6 +71,7 @@ export default async function ProfileTabPage() {
         <h1 className="title-hub">Account</h1>
         <SignOutButton />
       </div>
+      <OrgInvites />
       <ProfileForm profile={caps.profile} badges={badges} publishedGuides={publishedGuides} />
 
       <div className="mt-10 flex flex-wrap items-end justify-between gap-5 border-t border-line pt-7">

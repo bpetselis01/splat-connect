@@ -13,15 +13,15 @@ const me = { user_id: 'u1', name: 'Sam', email: 'sam@example.com', you: true }
 beforeEach(() => vi.clearAllMocks())
 
 describe('OrgLeaders', () => {
-  it('lists leaders, hides Step down for a sole leader, and adds by email', async () => {
-    get.mockResolvedValue([me])
+  it('lists leaders, hides Step down for a sole leader, and invites by email', async () => {
+    get.mockResolvedValue({ leaders: [me], invites: [] })
     post.mockResolvedValue({ ok: true })
     render(<OrgLeaders orgId="o1" />)
     expect(await screen.findByText('Sam (you)')).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Step down as leader' })).toBeNull()
-    fireEvent.change(screen.getByLabelText('Add a leader'), { target: { value: 'priya@example.com' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Add leader' }))
+    fireEvent.change(screen.getByLabelText('Invite a leader'), { target: { value: 'priya@example.com' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Send invitation' }))
     await waitFor(() => expect(post).toHaveBeenCalledWith('/api/organizations/o1/leaders', { email: 'priya@example.com' }))
-    expect(await screen.findByText('Added. They lead the organisation now.')).toBeTruthy()
+    expect(await screen.findByText('Invited. They become a leader once they accept on their Account page.')).toBeTruthy()
   })
 })

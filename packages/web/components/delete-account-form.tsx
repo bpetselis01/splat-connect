@@ -66,7 +66,7 @@ export function DeleteAccountForm({ preview, email }: { preview: DeletionPreview
     return (
       <div className="flex flex-col gap-4">
         <p role="alert" className="alert alert-danger">
-          You&apos;re the only leader of {preview.soleLedOrgs.map((o) => o.name).join(', ')}. Add another
+          You&apos;re the only leader of {preview.soleLedOrgs.map((o) => o.name).join(', ')}. Invite another
           leader first, so the organisation can still answer families.
         </p>
         <Link href="/dashboard/organisation/profile#leaders" className="btn btn-accent self-start">Manage leaders</Link>
