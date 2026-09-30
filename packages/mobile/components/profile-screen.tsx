@@ -138,6 +138,8 @@ export function ProfileScreen() {
               onPress={() => router.push('/explore/about')}
             />
             <Button label="Sign Out" onPress={() => signOut()} variant="ghost" />
+            {/* Apple 5.1.1(v): deletion in the app, easy to find in account settings. */}
+            <Button label="Delete account" variant="danger" onPress={() => router.push('/account/delete')} />
           </View>
       </ScrollView>
     </Screen>

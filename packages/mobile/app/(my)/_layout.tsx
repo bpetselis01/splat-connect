@@ -16,6 +16,8 @@ export default function MyLayout() {
     <Stack screenOptions={{ ...stackScreenOptions, headerBackTitle: 'Back' }}>
       <Stack.Screen name="account/index" options={{ title: 'Account' }} />
       <Stack.Screen name="account/child/[id]" options={{ title: 'Child profile' }} />
+      {/* Draws its own back disc and headings, like the sign-in screens it shares parts with. */}
+      <Stack.Screen name="account/delete" options={{ headerShown: false }} />
       {/* Every screen is named here: an undeclared one takes its route name as the
           header title, so /toys would say "toys/index" over the top of it. */}
       <Stack.Screen name="tutorials/index" options={{ title: 'My tutorials' }} />
