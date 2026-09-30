@@ -5,7 +5,15 @@
   "group": "tabs",
   "boardRoute": "(tabs)/guides",
   "route": "/guides",
-  "role": "parent"
+  "role": "parent",
+  "explained": [
+   {
+    "type": "missing-section",
+    "match": "suits ollie",
+    "why": "fixture",
+    "reason": "The board's child Ollie fits a guide, so a Suits Ollie heading draws; the parity child has no name or fit answers."
+   }
+  ]
  },
  {
   "id": "guide_detail",
@@ -14,7 +22,21 @@
   "boardRoute": "guides/[id]",
   "route": "/guides/[id]",
   "idFrom": "tutorial",
-  "role": "parent"
+  "role": "parent",
+  "explained": [
+   {
+    "type": "missing-section",
+    "match": "community notes",
+    "why": "pending",
+    "pending": "guide-community-notes"
+   },
+   {
+    "type": "missing-section",
+    "match": "no inputs on live",
+    "why": "pending",
+    "pending": "guide-community-notes"
+   }
+  ]
  },
  {
   "id": "guide_preview",
@@ -23,7 +45,21 @@
   "boardRoute": "guides/[id]/preview",
   "route": "/guides/[id]/preview",
   "idFrom": "tutorial",
-  "role": "contributor"
+  "role": "contributor",
+  "explained": [
+   {
+    "type": "missing-section",
+    "match": "board lists cards",
+    "why": "intended",
+    "reason": "Decided 2026-09-30 (guide-draft-preview): Preview opens the reader view; the editor hub is the summary."
+   },
+   {
+    "type": "missing-section",
+    "match": "board has cards",
+    "why": "intended",
+    "reason": "Decided 2026-09-30 (guide-draft-preview): Preview opens the reader view; the editor hub is the summary."
+   }
+  ]
  },
  {
   "id": "guide_new",
@@ -31,7 +67,27 @@
   "group": "push",
   "boardRoute": "guides/new",
   "route": "/guides/new",
-  "role": "parent"
+  "role": "parent",
+  "explained": [
+   {
+    "type": "missing-section",
+    "match": "board lists cards",
+    "why": "pending",
+    "pending": "new-guide-fields"
+   },
+   {
+    "type": "missing-section",
+    "match": "board has cards",
+    "why": "pending",
+    "pending": "new-guide-fields"
+   },
+   {
+    "type": "copy",
+    "match": "board paragraphs absent",
+    "why": "pending",
+    "pending": "new-guide-fields"
+   }
+  ]
  },
  {
   "id": "contributor",
@@ -59,7 +115,15 @@
   "boardRoute": "printing",
   "route": "/printing?guide=[id]",
   "role": "parent",
-  "idFrom": "print_request_new"
+  "idFrom": "print_request_new",
+  "explained": [
+   {
+    "type": "font",
+    "match": "card title font",
+    "why": "harness",
+    "reason": "The board's first card text is its aria-hidden initials disc; the printer names match (Nunito 15 on both)."
+   }
+  ]
  },
  {
   "id": "print_request",
@@ -76,7 +140,15 @@
   "boardRoute": "printing/jobs/[id]",
   "route": "/printing/jobs/[id]",
   "idFrom": "print_job",
-  "role": "parent"
+  "role": "parent",
+  "explained": [
+   {
+    "type": "shadow",
+    "match": "card shadow",
+    "why": "harness",
+    "reason": "The board nests its cards (a bordered box inside the card), so its leaf cards are inner boxes without shadow; the app's are the outer cards. Counting every card fixes it here and breaks nine web screens."
+   }
+  ]
  },
  {
   "id": "print_basics",
@@ -101,7 +173,15 @@
   "group": "tabs",
   "boardRoute": "(tabs)/toy-library",
   "route": "/toy-library",
-  "role": "parent"
+  "role": "parent",
+  "explained": [
+   {
+    "type": "missing-section",
+    "match": "nearest first",
+    "why": "pending",
+    "pending": "locations-and-distance"
+   }
+  ]
  },
  {
   "id": "lib_toy",
@@ -111,7 +191,21 @@
   "route": "/toy-library/[id]",
   "idFrom": "toy_public",
   "seedRole": "parent",
-  "role": "parent"
+  "role": "parent",
+  "explained": [
+   {
+    "type": "missing-section",
+    "match": "also worth a look",
+    "why": "pending",
+    "pending": "toy-holder-picks"
+   },
+   {
+    "type": "font",
+    "match": "card title font",
+    "why": "harness",
+    "reason": "The board's only card is Notes from the holder (a Nunito label); the app's card is the same panel plus its pickup tiles, whose titles are Baloo."
+   }
+  ]
  },
  {
   "id": "org_list",
@@ -119,7 +213,15 @@
   "group": "push",
   "boardRoute": "toy-library/organisations",
   "route": "/toy-library/organisations",
-  "role": "parent"
+  "role": "parent",
+  "explained": [
+   {
+    "type": "copy",
+    "match": "board paragraphs absent",
+    "why": "pending",
+    "pending": "organisations-list-meta"
+   }
+  ]
  },
  {
   "id": "lib_org",
@@ -153,7 +255,27 @@
   "group": "push",
   "boardRoute": "explore/learn/[slug]",
   "route": "/explore/learn/toy-adaptation-101",
-  "role": "parent"
+  "role": "parent",
+  "explained": [
+   {
+    "type": "missing-section",
+    "match": "the whole trick",
+    "why": "intended",
+    "reason": "The app ships the six real Learn articles; the board has short sample ones."
+   },
+   {
+    "type": "missing-section",
+    "match": "you are not modifying",
+    "why": "intended",
+    "reason": "The app ships the six real Learn articles; the board has short sample ones."
+   },
+   {
+    "type": "copy",
+    "match": "board paragraphs absent",
+    "why": "intended",
+    "reason": "Real article copy against the board's sample."
+   }
+  ]
  },
  {
   "id": "challenges",
@@ -170,7 +292,27 @@
   "boardRoute": "explore/challenges/[id]",
   "route": "/explore/challenges/[id]",
   "idFrom": "challenge_detail",
-  "role": "parent"
+  "role": "parent",
+  "explained": [
+   {
+    "type": "radius",
+    "match": "card radius",
+    "why": "harness",
+    "reason": "The board nests its cards (a bordered box inside the card), so its leaf cards are inner boxes without shadow; the app's are the outer cards. Counting every card fixes it here and breaks nine web screens. The 16px leaf is the status box, which the app draws at 16 in the same tint inside its card."
+   },
+   {
+    "type": "shadow",
+    "match": "card shadow",
+    "why": "harness",
+    "reason": "The board nests its cards (a bordered box inside the card), so its leaf cards are inner boxes without shadow; the app's are the outer cards. Counting every card fixes it here and breaks nine web screens."
+   },
+   {
+    "type": "colour",
+    "match": "card background",
+    "why": "harness",
+    "reason": "The board nests its cards (a bordered box inside the card), so its leaf cards are inner boxes without shadow; the app's are the outer cards. Counting every card fixes it here and breaks nine web screens."
+   }
+  ]
  },
  {
   "id": "challenge_new",
@@ -178,7 +320,27 @@
   "group": "push",
   "boardRoute": "explore/challenges/new",
   "route": "/explore/challenges/new",
-  "role": "parent"
+  "role": "parent",
+  "explained": [
+   {
+    "type": "radius",
+    "match": "card radius",
+    "why": "intended",
+    "reason": "The white card is What we can't take on: families learn up front what SPLAT won't build (mains, load-bearing, swallowable, medical), as on web."
+   },
+   {
+    "type": "shadow",
+    "match": "card shadow",
+    "why": "intended",
+    "reason": "The What we can't take on card, as on web."
+   },
+   {
+    "type": "colour",
+    "match": "card background",
+    "why": "intended",
+    "reason": "The What we can't take on card, as on web."
+   }
+  ]
  },
  {
   "id": "makers_wanted",
@@ -203,7 +365,15 @@
   "boardRoute": "(my)/exchanges/build/[id]",
   "route": "/exchanges/build/[id]",
   "idFrom": "build_thread",
-  "role": "parent"
+  "role": "parent",
+  "explained": [
+   {
+    "type": "shadow",
+    "match": "card shadow",
+    "why": "harness",
+    "reason": "The board nests its cards (a bordered box inside the card), so its leaf cards are inner boxes without shadow; the app's are the outer cards. Counting every card fixes it here and breaks nine web screens."
+   }
+  ]
  },
  {
   "id": "recycling",
@@ -211,7 +381,15 @@
   "group": "push",
   "boardRoute": "explore/recycling",
   "route": "/explore/recycling",
-  "role": "parent"
+  "role": "parent",
+  "explained": [
+   {
+    "type": "copy",
+    "match": "h1 wording",
+    "why": "harness",
+    "reason": "The board sets the 44px number and its kg unit in separate elements, so its h1 reads '#'; the app's reads '# kg'. Both are 44px Baloo."
+   }
+  ]
  },
  {
   "id": "org_recycling",
@@ -227,7 +405,15 @@
   "group": "push",
   "boardRoute": "explore/about",
   "route": "/explore/about",
-  "role": "parent"
+  "role": "parent",
+  "explained": [
+   {
+    "type": "copy",
+    "match": "board paragraphs absent",
+    "why": "pending",
+    "pending": "about-content-mobile"
+   }
+  ]
  },
  {
   "id": "inbox",
@@ -244,7 +430,21 @@
   "boardRoute": "(my)/exchanges/[id]",
   "route": "/exchanges/[id]",
   "idFrom": "thread",
-  "role": "parent"
+  "role": "parent",
+  "explained": [
+   {
+    "type": "shadow",
+    "match": "card shadow",
+    "why": "harness",
+    "reason": "The board nests its cards (a bordered box inside the card), so its leaf cards are inner boxes without shadow; the app's are the outer cards. Counting every card fixes it here and breaks nine web screens."
+   },
+   {
+    "type": "missing-section",
+    "match": "thursday after three",
+    "why": "harness",
+    "reason": "The board nests its cards (a bordered box inside the card), so its leaf cards are inner boxes without shadow; the app's are the outer cards. Counting every card fixes it here and breaks nine web screens. The pickup line is in the app's leaf card, so it is compared as a card title, not a heading."
+   }
+  ]
  },
  {
   "id": "my_splat",
@@ -279,7 +479,15 @@
   "boardRoute": "tutorials/[id]/details",
   "route": "/tutorials/[id]/details",
   "idFrom": "editor",
-  "role": "contributor"
+  "role": "contributor",
+  "explained": [
+   {
+    "type": "colour",
+    "match": "input background",
+    "why": "intended",
+    "reason": "The board fills a field with canvas only inside its white section card; the app's section fields sit on the page and take the surface, as the board's other 26 inputs do."
+   }
+  ]
  },
  {
   "id": "ed_steps",
@@ -288,7 +496,15 @@
   "boardRoute": "tutorials/[id]/steps",
   "route": "/tutorials/[id]/steps",
   "idFrom": "editor",
-  "role": "contributor"
+  "role": "contributor",
+  "explained": [
+   {
+    "type": "colour",
+    "match": "input background",
+    "why": "intended",
+    "reason": "The board fills a field with canvas only inside its white section card; the app's fields sit on the page and take the surface."
+   }
+  ]
  },
  {
   "id": "ed_parts",
@@ -297,7 +513,15 @@
   "boardRoute": "tutorials/[id]/parts",
   "route": "/tutorials/[id]/parts",
   "idFrom": "editor",
-  "role": "contributor"
+  "role": "contributor",
+  "explained": [
+   {
+    "type": "colour",
+    "match": "input background",
+    "why": "intended",
+    "reason": "The board fills a field with canvas only inside its white section card; the app's fields sit on the page and take the surface."
+   }
+  ]
  },
  {
   "id": "ed_tools",
@@ -306,7 +530,15 @@
   "boardRoute": "tutorials/[id]/tools",
   "route": "/tutorials/[id]/tools",
   "idFrom": "editor",
-  "role": "contributor"
+  "role": "contributor",
+  "explained": [
+   {
+    "type": "colour",
+    "match": "input background",
+    "why": "intended",
+    "reason": "The board fills a field with canvas only inside its white section card; the app's fields sit on the page and take the surface."
+   }
+  ]
  },
  {
   "id": "ed_safety",
@@ -315,7 +547,15 @@
   "boardRoute": "tutorials/[id]/safety",
   "route": "/tutorials/[id]/safety",
   "idFrom": "editor",
-  "role": "contributor"
+  "role": "contributor",
+  "explained": [
+   {
+    "type": "missing-section",
+    "match": "no inputs on live",
+    "why": "pending",
+    "pending": "editor-safety-notes"
+   }
+  ]
  },
  {
   "id": "ed_stl",
@@ -324,7 +564,15 @@
   "boardRoute": "tutorials/[id]/stl",
   "route": "/tutorials/[id]/stl",
   "idFrom": "editor",
-  "role": "contributor"
+  "role": "contributor",
+  "explained": [
+   {
+    "type": "missing-section",
+    "match": "stl files",
+    "why": "intended",
+    "reason": "The board draws STL upload as Not built yet; the app has built it (3D print files), so a maker attaches printable parts from the phone."
+   }
+  ]
  },
  {
   "id": "my_toys",
@@ -340,7 +588,27 @@
   "group": "push",
   "boardRoute": "(my)/toys/new",
   "route": "/toys/new",
-  "role": "parent"
+  "role": "parent",
+  "explained": [
+   {
+    "type": "missing-section",
+    "match": "board lists cards",
+    "why": "intended",
+    "reason": "Create first, then edit: a family saves a toy in two taps (name, condition) and adds photos and notes in the editor."
+   },
+   {
+    "type": "missing-section",
+    "match": "board has cards",
+    "why": "intended",
+    "reason": "Create first, then edit: a family saves a toy in two taps and adds the rest in the editor."
+   },
+   {
+    "type": "copy",
+    "match": "board paragraphs absent",
+    "why": "intended",
+    "reason": "The lead says what this first step asks for: a name and a condition."
+   }
+  ]
  },
  {
   "id": "toy_detail",
@@ -349,7 +617,21 @@
   "boardRoute": "(my)/toys/[id]",
   "route": "/toys/[id]",
   "idFrom": "toy_detail",
-  "role": "parent"
+  "role": "parent",
+  "explained": [
+   {
+    "type": "missing-section",
+    "match": "board lists cards",
+    "why": "pending",
+    "pending": "my-toy-inline-requests"
+   },
+   {
+    "type": "missing-section",
+    "match": "board has cards",
+    "why": "pending",
+    "pending": "my-toy-inline-requests"
+   }
+  ]
  },
  {
   "id": "exchanges",
@@ -413,7 +695,27 @@
   "group": "push",
   "boardRoute": "(my)/print-for-others/add",
   "route": "/print-for-others/add",
-  "role": "parent"
+  "role": "parent",
+  "explained": [
+   {
+    "type": "missing-section",
+    "match": "$#",
+    "why": "pending",
+    "pending": "add-printer-rates"
+   },
+   {
+    "type": "radius",
+    "match": "card radius",
+    "why": "pending",
+    "pending": "add-printer-rates"
+   },
+   {
+    "type": "colour",
+    "match": "card background",
+    "why": "pending",
+    "pending": "add-printer-rates"
+   }
+  ]
  },
  {
   "id": "account",
@@ -473,7 +775,15 @@
   "group": "push",
   "boardRoute": "organisation/[tutorialId]",
   "route": "/organisation/[tutorialId]",
-  "role": "leader"
+  "role": "leader",
+  "explained": [
+   {
+    "type": "copy",
+    "match": "board paragraphs absent",
+    "why": "pending",
+    "pending": "review-checklist"
+   }
+  ]
  },
  {
   "id": "org_toys",
@@ -481,7 +791,15 @@
   "group": "push",
   "boardRoute": "organisation/toys",
   "route": "/organisation/toys",
-  "role": "leader"
+  "role": "leader",
+  "explained": [
+   {
+    "type": "copy",
+    "match": "board paragraphs absent",
+    "why": "intended",
+    "reason": "Decided 2026-09-30: no lending, so no 'out with families' or 'need cleaning'; the lead counts listings and units."
+   }
+  ]
  },
  {
   "id": "org_orders",
@@ -489,7 +807,15 @@
   "group": "push",
   "boardRoute": "organisation/orders",
   "route": "/organisation/orders",
-  "role": "leader"
+  "role": "leader",
+  "explained": [
+   {
+    "type": "copy",
+    "match": "board paragraphs absent",
+    "why": "fixture",
+    "reason": "The board's sample files and its 'other printers asked' group; the card draws each when the data has them."
+   }
+  ]
  },
  {
   "id": "admin",
@@ -497,7 +823,27 @@
   "group": "push",
   "boardRoute": "(my)/admin",
   "route": "/admin",
-  "role": "admin"
+  "role": "admin",
+  "explained": [
+   {
+    "type": "missing-section",
+    "match": "board lists cards",
+    "why": "pending",
+    "pending": "admin-counts"
+   },
+   {
+    "type": "missing-section",
+    "match": "board has cards",
+    "why": "pending",
+    "pending": "admin-counts"
+   },
+   {
+    "type": "copy",
+    "match": "board paragraphs absent",
+    "why": "intended",
+    "reason": "Phones link out to the web admin: review tables do not fit a phone (admin.tsx)."
+   }
+  ]
  },
  {
   "id": "wizard",
@@ -505,13 +851,35 @@
   "group": "push",
   "boardRoute": "(onboarding)/child",
   "route": "/child",
-  "role": "parent"
+  "role": "parent",
+  "explained": [
+   {
+    "type": "copy",
+    "match": "board paragraphs absent",
+    "why": "pending",
+    "pending": "wizard-mascot-done"
+   }
+  ]
  },
  {
   "id": "sign_in",
   "name": "Sign in",
   "group": "bare",
   "boardRoute": "(auth)/sign-in",
-  "route": "/sign-in"
+  "route": "/sign-in",
+  "explained": [
+   {
+    "type": "missing-section",
+    "match": "splat connect",
+    "why": "intended",
+    "reason": "The sign-in spec (2026-09-30-mobile-sign-in-design) sets back, bear and Welcome back in place of the wordmark."
+   },
+   {
+    "type": "copy",
+    "match": "board paragraphs absent",
+    "why": "intended",
+    "reason": "The sign-in spec gives the auth screens the foot line No paid tier. Not a medical device."
+   }
+  ]
  }
 ]

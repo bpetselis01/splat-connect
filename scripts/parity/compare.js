@@ -395,7 +395,8 @@ function compare(board, live, opts = {}) {
  * Move the findings a screen expects into `explained`. Each rule in a screen's
  * `explained` list (screen-map.json) names a finding type, a substring of its
  * `what`, and why it is not drift: `intended` (live has it on purpose),
- * `fixture` (the board's sample data against ours) or `pending` (a registry
+ * `fixture` (the board's sample data against ours), `harness` (a known limit
+ * of this measurement, named in the reason) or `pending` (a registry
  * id in packages/types/src/pending.ts, still unbuilt). A rule that matches
  * nothing is itself a finding, so an exemption cannot outlive its cause.
  */

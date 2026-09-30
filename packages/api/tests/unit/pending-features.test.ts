@@ -49,7 +49,7 @@ describe('pending work stays in step', () => {
     const bad = rules.filter((r) =>
       r.why === 'pending'
         ? !r.pending || !isPendingId(r.pending) || (PENDING[r.pending] as PendingItem).shipped
-        : !['intended', 'fixture'].includes(r.why) || !r.reason,
+        : !['intended', 'fixture', 'harness'].includes(r.why) || !r.reason,
     )
     expect(bad).toEqual([])
   })
