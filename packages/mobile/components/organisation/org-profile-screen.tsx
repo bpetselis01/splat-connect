@@ -451,6 +451,7 @@ function OrgButtons({
         variant="secondary"
         disabled={thanked}
         onPress={() => (signedIn ? setAsking(true) : router.push('/sign-in'))}
+        style={styles.thanks}
       />
       {asking && !thanked ? (
         <Card style={styles.thanksForm}>
@@ -477,12 +478,16 @@ const styles = StyleSheet.create({
   content: { padding: theme.spacing(4), paddingBottom: theme.spacing(10) },
   flex: { flex: 1 },
   retry: { marginTop: theme.spacing(5), alignSelf: 'center', paddingHorizontal: theme.spacing(8) },
+  // Edge to edge, as the board's cover runs: out past the content padding.
   cover: {
-    height: 140,
-    borderRadius: theme.radii.card,
+    height: 150,
+    marginTop: -theme.spacing(4),
+    marginHorizontal: -theme.spacing(4),
     backgroundColor: theme.colors.mintSoft,
     overflow: 'hidden',
   },
+  // A centred pill, not a full-width bar.
+  thanks: { alignSelf: 'center', paddingHorizontal: theme.spacing(6) },
   logo: {
     width: 76,
     height: 76,
@@ -529,8 +534,9 @@ const styles = StyleSheet.create({
   thanksForm: { gap: theme.spacing(3), padding: theme.spacing(3) },
   leads: { gap: theme.spacing(1), marginVertical: theme.spacing(4) },
   body: { fontFamily: theme.fonts.regular, fontSize: theme.type.body, color: theme.colors.text, lineHeight: 24 },
-  stats: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2), marginTop: theme.spacing(4), marginBottom: theme.spacing(6) },
-  stat: { width: '48%', padding: theme.spacing(3), borderRadius: theme.radii.field },
+  // One row of four, as on the board.
+  stats: { flexDirection: 'row', gap: theme.spacing(2), marginTop: theme.spacing(4), marginBottom: theme.spacing(6) },
+  stat: { flex: 1, alignItems: 'center', padding: theme.spacing(3), borderRadius: theme.radii.field },
   // The board's stat: Baloo 2 800 20px, tabular.
   statN: { fontFamily: theme.fonts.display, fontSize: 20, fontVariant: ['tabular-nums'], color: theme.colors.text },
   statLabel: { fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.muted, marginTop: theme.spacing(1) },
