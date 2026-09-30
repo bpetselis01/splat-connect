@@ -274,7 +274,7 @@ export function DetailScreen({ id }: { id: string }) {
 
       {/* PENDING(guide-tools-checklist): "I have it" per tool and "X of Y already yours", saved on the device, plus a link to Tools and materials on Learn. */}
       {/* PENDING(tool-notes): why each tool, and Buy once / Borrow / Substitute. */}
-      <Section title="Tools" hint="What you'll need on the bench.">
+      <Section title="Tools you'll need" hint="What you'll need on the bench.">
         {tutorial.tools.length ? (
           tutorial.tools.map((item) => (
             <ListRow
