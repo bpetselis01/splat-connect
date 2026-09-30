@@ -19,6 +19,7 @@ import { Button } from '../../ui/Button'
 import { ErrorRow } from '../../ui/ErrorRow'
 import { SectionFooter } from '../section-footer'
 import { PendingButton } from '../../ui/pending'
+import { DraftGate } from './draft-gate'
 
 const NOUN_LABEL = { parts: 'Part', tools: 'Tool' } as const
 
@@ -28,13 +29,9 @@ const NOUN_LABEL = { parts: 'Part', tools: 'Tool' } as const
 // and tool-notes ("and what can be borrowed").
 const LEAD = { parts: 'Everything a family has to buy.', tools: 'What they need on the bench.' }
 
-// Rows are copied into local state when the editor mounts, so it mounts only
-// once the draft has arrived: opened cold (a deep link, a reload on web) it
-// would otherwise start empty for good, and the replace-set save would then
-// delete what was there.
+// The editor mounts once the draft has arrived (see DraftGate).
 export function ItemsSection({ noun }: { noun: 'parts' | 'tools' }) {
-  const { tutorial } = useDraft()
-  return tutorial ? <ItemsEditor noun={noun} /> : null
+  return <DraftGate>{() => <ItemsEditor noun={noun} />}</DraftGate>
 }
 
 function ItemsEditor({ noun }: { noun: 'parts' | 'tools' }) {

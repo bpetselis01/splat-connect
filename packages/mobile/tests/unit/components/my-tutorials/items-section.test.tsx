@@ -121,3 +121,15 @@ it('offers an empty state when there is nothing yet', () => {
   render(<ItemsSection noun="tools" />)
   expect(screen.getByText('No tools yet.')).toBeTruthy()
 })
+
+// A draft that failed to load showed an empty screen under the header, with
+// no way to try again: the hub's message and a retry instead.
+it('says the guide did not load, and retries, when the draft fails', () => {
+  mockDraft.tutorial = null as unknown as Record<string, unknown>
+  mockDraft.loadError = true
+  render(<ItemsSection noun="parts" />)
+  expect(screen.getByText("Couldn't load this guide.")).toBeTruthy()
+  fireEvent.press(screen.getByRole('button', { name: 'Try again' }))
+  expect(mockDraft.reload).toHaveBeenCalled()
+  mockDraft.loadError = false
+})
