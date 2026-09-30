@@ -15,7 +15,8 @@ import { ScreenHeader } from '../../../components/ui/ScreenHeader'
 import { TextField } from '../../../components/ui/TextField'
 import { Chip } from '../../../components/ui/Chip'
 import { Button } from '../../../components/ui/Button'
-import { TermsCheckbox, ErrorRow } from '../../../components/auth-screen'
+import { ErrorRow } from '../../../components/ui/ErrorRow'
+import { TermsCheckbox } from '../../../components/auth/parts'
 
 const KIND_OPTIONS: { label: string; value: TutorialKind }[] = [
   { label: KIND_LABEL.toy_adaptation, value: 'toy_adaptation' },
