@@ -5,6 +5,11 @@ import { CloseButton } from '../../../components/ui/CloseButton'
 import { BackButton } from '../../../components/ui/BackButton'
 import { HeaderAddButton } from '../../../components/ui/HeaderAddButton'
 
+// A deep link or notification straight to a pushed screen still lands with
+// the list under it: without this the stack held that one screen, so there
+// was no back button and the tab bar showed as if it were a tab root.
+export const unstable_settings = { initialRouteName: 'index' }
+
 /** Explore has no tab of its own — it is reached from Me — so its root still
  *  gets the board's back button, and one with nothing behind it goes to Me. */
 function ExploreBack() {
