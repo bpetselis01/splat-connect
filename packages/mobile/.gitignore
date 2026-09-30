@@ -49,3 +49,4 @@ yarn-error.*
 /ios
 /android
 dist-parity/
+.maestro/parity/_run-*.yaml

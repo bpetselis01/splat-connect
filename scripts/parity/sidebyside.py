@@ -22,6 +22,8 @@ ap.add_argument('--dir', default=os.path.join(HERE, 'pairs'))
 ap.add_argument('--live-suffix', default='live')
 ap.add_argument('--out', default=None)
 ap.add_argument('--scale', type=float, default=0.5)
+# A 3x simulator screenshot beside a 1x board shot: resize live to the board's width.
+ap.add_argument('--match-width', action='store_true')
 args = ap.parse_args()
 PAIRS = args.dir
 OUT = args.out or os.path.join(PAIRS, 'sbs')
@@ -40,6 +42,8 @@ for sid in ids:
     if not (os.path.exists(b_path) and os.path.exists(l_path)):
         continue
     b, l = Image.open(b_path).convert('RGB'), Image.open(l_path).convert('RGB')
+    if args.match_width and l.width != b.width:
+        l = l.resize((b.width, round(l.height * b.width / l.width)))
     n = min(MAX_SLICES, -(-max(b.height, l.height) // SLICE))
     w = int(max(b.width, l.width) * SCALE)
     for i in range(n):
