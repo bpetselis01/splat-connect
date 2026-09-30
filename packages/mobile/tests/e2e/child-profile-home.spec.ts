@@ -25,11 +25,11 @@ test('a child appears on the family list with its summary line', async ({ page }
   await expect(page.getByText('Age 5')).toBeVisible()
 })
 
-test('signing out returns to the login form', async ({ page }) => {
+test('signing out returns to Welcome', async ({ page }) => {
   await signUpNewAccount(page, uniqueSignupEmail())
   // Sign Out lives on the Account segment, which is the one a fresh account opens on.
   await page.goto('/account')
   await page.getByText('Sign Out').click()
-  await expect(page.getByTestId('auth-tab-signin')).toBeVisible()
-  await expect(page.getByTestId('auth-tab-signup')).toBeVisible()
+  await expect(page).toHaveURL(/\/welcome$/)
+  await expect(page.getByTestId('welcome-sign-in')).toBeVisible()
 })

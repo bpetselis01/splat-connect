@@ -1,98 +1,114 @@
 import { test, expect } from '@playwright/test'
-import { createContributor, signIn, signUpNewAccount, uniqueSignupEmail, adminClient } from './helpers'
+import {
+  adminClient,
+  createContributor,
+  enterEmailedCode,
+  latestCode,
+  signIn,
+  signUpNewAccount,
+  uniqueSignupEmail,
+} from './helpers'
 
-test('a contributor signs in and lands on Guides', async ({ page }) => {
+// The sign-in flow of docs/superpowers/specs/2026-09-30-mobile-sign-in-design.md,
+// against local Supabase. Codes are read out of Mailpit, not faked.
+
+test('a contributor signs in with a password and lands on Guides', async ({ page }) => {
   const { email, password } = await createContributor()
   await signIn(page, email, password)
-
   await expect(page).toHaveURL(/\/guides$/)
 })
 
-test('mismatched passwords are rejected before any request is sent', async ({ page }) => {
-  await page.goto('/sign-in')
-  await page.getByTestId('auth-tab-signup').click()
-  await page.getByLabel('Full name', { exact: true }).fill('E2E Mismatch')
-  await page.getByLabel('Email', { exact: true }).fill(uniqueSignupEmail())
-  await page.getByLabel('Password', { exact: true }).fill('Test1234!')
-  await page.getByLabel('Confirm password', { exact: true }).fill('Different1234!')
-  await page.getByTestId('accept-contributor-terms').click()
-  await page.getByTestId('auth-submit').click()
-
-  await expect(page.getByText('Passwords do not match.')).toBeVisible()
+test('Welcome opens both doors', async ({ page }) => {
+  await page.goto('/welcome')
+  await page.getByTestId('welcome-get-started').click()
+  await expect(page.getByText('Create your account')).toBeVisible()
+  await page.getByText('Sign in', { exact: true }).click()
+  await expect(page.getByText('Welcome back')).toBeVisible()
 })
 
-test('invalid credentials show an error and stay on the form', async ({ page }) => {
+test('a wrong password keeps the email and says so', async ({ page }) => {
   const { email } = await createContributor()
   await signIn(page, email, 'wrong-password')
-
-  await expect(page.getByText(/Invalid login credentials/i)).toBeVisible()
-  await expect(page.getByText(email, { exact: true })).toHaveCount(0)
+  await expect(page.getByText("That email and password don't match.")).toBeVisible()
+  await expect(page.getByLabel('Email', { exact: true })).toHaveValue(email)
 })
 
-test('signing up with an already-registered email shows an error', async ({ page }) => {
-  const { email } = await createContributor()
+test('a new email + password account is confirmed by its code and lands on Guides', async ({ page }) => {
+  await signUpNewAccount(page, uniqueSignupEmail())
+})
 
-  await page.goto('/sign-in')
-  await page.getByTestId('auth-tab-signup').click()
-  await page.getByLabel('Full name', { exact: true }).fill('E2E Duplicate')
+test('signing up with a registered email offers to sign in instead', async ({ page }) => {
+  const { email } = await createContributor()
+  await page.goto('/create-account')
+  await page.getByLabel('Your name', { exact: true }).fill('E2E Duplicate')
   await page.getByLabel('Email', { exact: true }).fill(email)
   await page.getByLabel('Password', { exact: true }).fill('Test1234!')
-  await page.getByLabel('Confirm password', { exact: true }).fill('Test1234!')
   await page.getByTestId('accept-contributor-terms').click()
   await page.getByTestId('auth-submit').click()
 
-  await expect(page.getByText('Customization Metrics')).toHaveCount(0)
+  await expect(page.getByText('That email already has an account.')).toBeVisible()
+  await page.getByText(`Sign in as ${email}`).click()
+  await expect(page.getByLabel('Email', { exact: true })).toHaveValue(email)
 })
 
-test('the signed-out screen toggles between sign in and sign up', async ({ page }) => {
+test('an emailed code signs an existing account in', async ({ page }) => {
+  const { email } = await createContributor()
   await page.goto('/sign-in')
-
-  await expect(page.getByLabel('Confirm password', { exact: true })).toHaveCount(0)
-  await page.getByTestId('auth-tab-signup').click()
-  await expect(page.getByText('Create your account')).toBeVisible()
-  await expect(page.getByLabel('Confirm password', { exact: true })).toBeVisible()
-
-  await page.getByText('Already have an account? Sign in').click()
-  await expect(page.getByLabel('Confirm password', { exact: true })).toHaveCount(0)
+  await page.getByLabel('Email', { exact: true }).fill(email)
+  const sent = Date.now() - 1000
+  await page.getByTestId('email-code').click()
+  await enterEmailedCode(page, email, sent)
+  await expect(page).toHaveURL(/\/guides$/)
 })
 
-test('the contributor account view offers the web dashboard and sign out', async ({ page }) => {
+test('an emailed code never creates an account', async ({ page }) => {
+  await page.goto('/sign-in')
+  await page.getByLabel('Email', { exact: true }).fill(uniqueSignupEmail())
+  await page.getByTestId('email-code').click()
+  await expect(page.getByText('No account uses that email.')).toBeVisible()
+})
+
+test('forgot password resets it in the app, and the new one works', async ({ page }) => {
+  const { email } = await createContributor()
+  await page.goto('/sign-in')
+  await page.getByLabel('Email', { exact: true }).fill(email)
+  await page.getByTestId('forgot-password').click()
+  const sent = Date.now() - 1000
+  // By name, not testID: on web the stack keeps Sign in mounted underneath,
+  // so its auth-submit is still in the DOM.
+  await page.getByRole('button', { name: 'Send code' }).click()
+
+  await expect(page.getByText('Choose a new password')).toBeVisible()
+  await page.getByTestId('code-input').last().fill(await latestCode(email, sent))
+  await page.getByLabel('New password', { exact: true }).fill('Brand-new-9')
+  await page.getByRole('button', { name: 'Save and sign in' }).click()
+  await expect(page).toHaveURL(/\/guides$/)
+
+  const { error } = await adminClient().auth.signInWithPassword({ email, password: 'Brand-new-9' })
+  expect(error).toBeNull()
+})
+
+test('an account that never accepted the terms meets the gate first', async ({ page }) => {
+  const email = uniqueSignupEmail()
+  const { error } = await adminClient().auth.admin.createUser({ email, password: 'Test1234!', email_confirm: true })
+  expect(error).toBeNull()
+  await signIn(page, email, 'Test1234!')
+
+  await expect(page).toHaveURL(/\/terms$/)
+  await page.getByLabel('Your name', { exact: true }).fill('Gate Tester')
+  await page.getByTestId('accept-contributor-terms').click()
+  await page.getByTestId('accept-terms').click()
+  await expect(page).toHaveURL(/\/guides$/)
+})
+
+test('the account view says how you sign in, and signs out to Welcome', async ({ page }) => {
   const { email, password } = await createContributor()
   await signIn(page, email, password)
-  // Wait for the landing: /account is gated too, so navigating before the
-  // session lands bounces straight back to the sign-in screen.
   await expect(page).toHaveURL(/\/guides$/)
   await page.goto('/account')
 
-  // The identity card names the account by its email.
   await expect(page.getByText(email, { exact: true })).toBeVisible()
-  await expect(page.getByText('Open Web Dashboard')).toBeVisible()
-  await expect(page.getByText('Sign Out')).toBeVisible()
-})
-
-test('a new signup lands on Guides', async ({ page }) => {
-  const email = uniqueSignupEmail()
-  await page.goto('/sign-in')
-  await page.getByTestId('auth-tab-signup').click()
-  await page.getByLabel('Full name', { exact: true }).fill('E2E Contributor')
-  await page.getByLabel('Email', { exact: true }).fill(email)
-  await page.getByLabel('Password', { exact: true }).fill('Test1234!')
-  await page.getByLabel('Confirm password', { exact: true }).fill('Test1234!')
-  await page.getByTestId('accept-contributor-terms').click()
-
-  const [signupResponse] = await Promise.all([
-    page.waitForResponse(
-      (res) => res.url().includes('/auth/v1/signup') && res.request().method() === 'POST'
-    ),
-    page.getByTestId('auth-submit').click(),
-  ])
-  const body = await signupResponse.json()
-  await adminClient().auth.admin.updateUserById(body.user?.id ?? body.id, { email_confirm: true })
-
-  await page.getByText('Back to sign in').click()
-  await page.getByLabel('Email', { exact: true }).fill(email)
-  await page.getByLabel('Password', { exact: true }).fill('Test1234!')
-  await page.getByTestId('auth-submit').click()
-
-  await expect(page).toHaveURL(/\/guides$/)
+  await expect(page.getByText('Signed in with email')).toBeVisible()
+  await page.getByText('Sign Out').click()
+  await expect(page).toHaveURL(/\/welcome$/)
 })

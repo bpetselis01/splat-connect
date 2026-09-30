@@ -1,10 +1,10 @@
 import { test, expect } from '@playwright/test'
 import { signUpNewAccount, uniqueSignupEmail, openChildProfile } from './helpers'
 
-test('a signed-out visitor is sent to sign-in from any tab', async ({ page }) => {
+test('a signed-out visitor is sent to Welcome from any tab', async ({ page }) => {
   await page.goto('/guides')
-  await expect(page).toHaveURL(/\/sign-in$/)
-  await expect(page.getByTestId('auth-tab-signin')).toBeVisible()
+  await expect(page).toHaveURL(/\/welcome$/)
+  await expect(page.getByTestId('welcome-sign-in')).toBeVisible()
 })
 
 test('Account shows the child profiles and the profile detail on one page', async ({ page }) => {

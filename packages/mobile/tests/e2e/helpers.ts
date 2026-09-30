@@ -207,29 +207,42 @@ async function deleteUser(id: string) {
  * for it with openChildProfile().
  */
 export async function signUpNewAccount(page: Page, email: string) {
-  await page.goto('/sign-in')
-  await page.getByTestId('auth-tab-signup').click()
-  await page.getByLabel('Full name', { exact: true }).fill('E2E Contributor')
+  await page.goto('/create-account')
+  await page.getByLabel('Your name', { exact: true }).fill('E2E Contributor')
   await page.getByLabel('Email', { exact: true }).fill(email)
   await page.getByLabel('Password', { exact: true }).fill(PASSWORD)
-  await page.getByLabel('Confirm password', { exact: true }).fill(PASSWORD)
   await page.getByTestId('accept-contributor-terms').click()
-
-  const [signupResponse] = await Promise.all([
-    page.waitForResponse(
-      (res) => res.url().includes('/auth/v1/signup') && res.request().method() === 'POST'
-    ),
-    page.getByTestId('auth-submit').click(),
-  ])
-  const body = await signupResponse.json()
-  const userId = body.user?.id ?? body.id
-  await adminClient().auth.admin.updateUserById(userId, { email_confirm: true })
-
-  await page.getByText('Back to sign in').click()
-  await page.getByLabel('Email', { exact: true }).fill(email)
-  await page.getByLabel('Password', { exact: true }).fill(PASSWORD)
   await page.getByTestId('auth-submit').click()
+  await enterEmailedCode(page, email)
   await expect(page).toHaveURL(/\/guides$/)
+}
+
+// Local Supabase's mail catcher. The e2e reads the real 6-digit code out of
+// the email rather than confirming through the admin API, so the template and
+// the code screen are both under test.
+const MAILPIT = 'http://127.0.0.1:54324'
+
+/** The newest 6-digit code emailed to `email`, polled until it arrives. When
+ *  `after` is given, only a message sent after that moment counts. */
+export async function latestCode(email: string, after = 0): Promise<string> {
+  for (let i = 0; i < 40; i++) {
+    const res = await fetch(`${MAILPIT}/api/v1/search?query=${encodeURIComponent(`to:"${email}"`)}`)
+    const { messages } = (await res.json()) as { messages: { ID: string; Created: string }[] }
+    const fresh = messages.find((m) => Date.parse(m.Created) >= after)
+    if (fresh) {
+      const msg = (await (await fetch(`${MAILPIT}/api/v1/message/${fresh.ID}`)).json()) as { Text: string }
+      const code = msg.Text.match(/\b(\d{6})\b/)?.[1]
+      if (code) return code
+    }
+    await new Promise((r) => setTimeout(r, 250))
+  }
+  throw new Error(`No code emailed to ${email}`)
+}
+
+/** On the code screen: waits for it, then types the emailed code. */
+export async function enterEmailedCode(page: Page, email: string, after = 0) {
+  await expect(page.getByText('Check your email')).toBeVisible()
+  await page.getByTestId('code-input').fill(await latestCode(email, after))
 }
 
 /**
