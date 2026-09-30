@@ -252,7 +252,9 @@ async function runParity(target) {
         recordTitleH1: !!(s.sampleFrom || s.derivedFrom || s.idFrom),
         ...target.compareOpts(s),
       })
-      Object.assign(row, explain(row.findings, s.explained))
+      // Picture rules belong to the picture pass (app-shots.js --record), which
+      // this run never produces findings for; applied here they all went stale.
+      Object.assign(row, explain(row.findings, (s.explained || []).filter((r) => r.type !== 'picture')))
       if (s.stall) await livePage.unroute(s.stall)
       row.boardHeadings = board.headings.length
       row.liveHeadings = live.headings.length
