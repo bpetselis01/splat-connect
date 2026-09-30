@@ -108,14 +108,15 @@ export function ChildWizard() {
         <NeedsChips value={draft.everyday_needs} onChange={(v) => set({ everyday_needs: v })} />
       )}
 
-      <Text style={styles.private}>Saved automatically · nothing is shared</Text>
       <View style={styles.actions}>
-        <Button label="Back" variant="ghost" disabled={step === 0} onPress={() => setStep(step - 1)} />
+        <Button label="Back" variant="secondary" disabled={step === 0} onPress={() => setStep(step - 1)} />
         <View style={styles.actionsRight}>
           <Button label="Skip" variant="ghost" onPress={next} />
           <Button label={step === STEPS.length - 1 ? 'Finish' : 'Continue'} onPress={saveAndNext} />
         </View>
       </View>
+      {/* Under the buttons, centred, as on the board. */}
+      <Text style={styles.private}>Saved automatically · nothing is shared</Text>
     </ScrollView>
   )
 }
@@ -147,7 +148,7 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     marginBottom: theme.spacing(5),
   },
-  private: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted, marginTop: theme.spacing(2) },
+  private: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted, marginTop: theme.spacing(3), textAlign: 'center' },
   actions: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: theme.spacing(5) },
   actionsRight: { flexDirection: 'row', gap: theme.spacing(2) },
 })
