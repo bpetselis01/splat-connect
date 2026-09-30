@@ -458,10 +458,27 @@ async function seedOrgEvent(db, leaderId, orgId) {
       // check constraint alongside the flag.
       prints_parts: true,
       part_sets_max: 10,
+      // The board's event detail and register draw each of these; the page
+      // hides a section with nothing in it, and a bare event measured as
+      // four missing sections and a third of the height.
+      description: 'A morning of adapting toys together. Bring a toy, leave with it switch-ready.',
+      audience: 'Families, therapists and makers',
+      what_to_bring: 'A battery toy you want adapted',
+      accessibility_note: 'Step-free entry and a quiet room.',
+      cost_cents: 1500,
+      cost_note: 'Covers the switch parts. Free if that is hard this month.',
     })
     .select('id')
     .single()
   if (error) return null
+  // The register form asks the host's questions.
+  await swallow(
+    db.from('org_event_questions').insert([
+      { event_id: data.id, position: 1, prompt: 'Which toy are you bringing?', answer_type: 'short', required: true },
+      { event_id: data.id, position: 2, prompt: 'Anything we should know about access?', answer_type: 'paragraph' },
+      { event_id: data.id, position: 3, prompt: 'How many in your group?', answer_type: 'number' },
+    ])
+  )
   // And one already over. Without it every seeded event is in the future, so
   // /get-involved/events never draws the board's "Past events (n)" disclosure
   // or a second month heading, and both were reported missing on a page that
@@ -477,6 +494,63 @@ async function seedOrgEvent(db, leaderId, orgId) {
     state: 'NSW',
     status: 'published',
     created_by: leaderId,
+  })
+  return data.id
+}
+
+/**
+ * The leader org's public profile as the board draws it — doors, a guide it
+ * backs, a family's thanks. Each section hides when empty, so a bare org
+ * measured as four missing sections. All cascade with the organisation.
+ */
+async function seedOrgPublic(db, orgId, familyId) {
+  if (!orgId) return
+  await swallow(
+    db.from('org_doors').insert([
+      { org_id: orgId, position: 1, title: 'Borrow a toy', body: 'Off the shelf, back when you are done.', target: 'toy_library' },
+      { org_id: orgId, position: 2, title: 'Come to a build day', body: 'Monthly, free, bring a toy.', target: 'events' },
+      { org_id: orgId, position: 3, title: 'Get a part printed', body: 'Our printer takes requests.', target: 'print' },
+    ])
+  )
+  const tutorial_id = await approvedGuide(db)
+  if (tutorial_id)
+    await swallow(db.from('tutorial_orgs').insert({ tutorial_id, org_id: orgId, status: 'accepted' }))
+  if (familyId)
+    await swallow(
+      db.from('org_thanks').insert({
+        org_id: orgId,
+        profile_id: familyId,
+        note: 'They adapted three toys for Leo in one morning.',
+        byline: 'A family in Newtown',
+        show_note: true,
+      })
+    )
+}
+
+/**
+ * A toy someone else offers to give or swap — /toy-library/[id] and its
+ * request form. The first library link was the org's donation-only shelf toy,
+ * which correctly hides "Pick a toy to offer"; the parent's own toy fills it.
+ */
+async function seedSwapToy(db, parentId) {
+  const owner = await someoneElse(db, parentId)
+  if (!owner) return null
+  const { data } = await db
+    .from('toys')
+    .insert({
+      owner_id: owner,
+      name: 'Parity swap toy',
+      condition: 8,
+      photo_urls: [],
+      status: 'published',
+      offer_type: 'both',
+    })
+    .select('id')
+    .single()
+  if (!data) return null
+  undo.push(async (d) => {
+    await d.from('toy_transactions').delete().eq('toy_id', data.id)
+    await d.from('toys').delete().eq('id', data.id)
   })
   return data.id
 }
@@ -610,6 +684,8 @@ async function seed(db, users) {
     if (pj) routes.print_job = `/dashboard/print-requests/${pj}`
     const toy = await seedOwnedToy(db, parent.id)
     if (toy) routes.toy_detail = `/dashboard/toys/${toy}`
+    const swap = await seedSwapToy(db, parent.id)
+    if (swap) routes.toy_public = `/toy-library/${swap}`
     await seedSavesAndIdeas(db, parent.id)
     await seedReport(db, parent.id)
     await seedPrinterWithJobs(db, { owner_id: parent.id }, await someoneElse(db, parent.id))
@@ -622,12 +698,15 @@ async function seed(db, users) {
     const ev = await seedOrgEvent(db, leader.id, leader.orgId)
     if (ev) {
       routes.org_event_manage = `/dashboard/org/events/${ev}`
+      routes.event_detail = `/get-involved/events/${ev}`
       await seedEventParts(db, ev, leader.orgId, family)
     }
     await seedOrgQueue(db, leader.id, leader.orgId)
     await seedOrgRequests(db, family, leader.orgId)
     await seedPrinterWithJobs(db, { owner_org_id: leader.orgId }, family)
     await seedDropoffs(db, leader.orgId, family)
+    await seedOrgPublic(db, leader.orgId, family)
+    routes.org_public = `/organizations/${leader.orgId}/public`
   }
   return routes
 }
