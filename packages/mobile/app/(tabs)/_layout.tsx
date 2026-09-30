@@ -1,14 +1,14 @@
 import { View } from 'react-native'
 import { Redirect, Tabs } from 'expo-router'
 import { TabBar } from '../../components/tab-bar'
-import { useAuth } from '../../lib/auth-context'
+import { useAuthGate } from '../../lib/use-auth-gate'
 import { useCapabilities } from '../../lib/capabilities'
 
 export default function TabsLayout() {
-  const { session, loading } = useAuth()
+  const gate = useAuthGate()
   const { caps } = useCapabilities()
-  if (loading) return null
-  if (!session) return <Redirect href="/sign-in" />
+  if (gate === 'loading') return null
+  if (gate !== 'ok') return <Redirect href={gate} />
 
   const badges = { inbox: caps?.unread.total ?? 0, me: caps?.exchangeActions ?? 0 }
   return (

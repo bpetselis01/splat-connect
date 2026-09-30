@@ -2,16 +2,15 @@
 // Me slides its screen in and the back chevron returns to Me.
 import { Redirect, Stack } from 'expo-router'
 import { stackScreenOptions } from '../../lib/nav-options'
-import { useAuth } from '../../lib/auth-context'
+import { useAuthGate } from '../../lib/use-auth-gate'
 
 
 export default function MyLayout() {
-  // (my) is a sibling of (tabs) at the root, so the tab layout's gate does not
-  // cover it — every one of these screens is its own deep link, and /account
-  // reads session!.user. Same three lines, same reason.
-  const { session, loading } = useAuth()
-  if (loading) return null
-  if (!session) return <Redirect href="/sign-in" />
+  // (my), (tabs), (onboarding) and printing are root siblings and each screen is
+  // its own deep link, so every one of them runs the gate.
+  const gate = useAuthGate()
+  if (gate === 'loading') return null
+  if (gate !== 'ok') return <Redirect href={gate} />
 
   return (
     <Stack screenOptions={{ ...stackScreenOptions, headerBackTitle: 'Back' }}>
