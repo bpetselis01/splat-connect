@@ -179,6 +179,11 @@ async function runParity(target) {
         continue
       }
 
+      // `stall`: a request pattern held open, so a loading state stays up to be
+      // measured (the board's Loading screen is the skeleton).
+      // Nothing held open by an earlier screen, even one that threw.
+      await livePage.unrouteAll({ behavior: 'ignoreErrors' }).catch(() => {})
+      if (s.stall) await livePage.route(s.stall, () => {})
       const resp = await livePage.goto(LIVE + route, {
         waitUntil: 'domcontentloaded',
         timeout: 45000,
@@ -198,7 +203,7 @@ async function runParity(target) {
         continue
       }
       await livePage.waitForTimeout(700)
-      await target.prepare(livePage)
+      await target.prepare(livePage, s)
       // Where we actually ended up. A redirect to /login or an onboarding gate
       // renders a perfectly valid page, and without this the report blames the
       // design for sections that were never on screen.
@@ -248,6 +253,7 @@ async function runParity(target) {
         ...target.compareOpts(s),
       })
       Object.assign(row, explain(row.findings, s.explained))
+      if (s.stall) await livePage.unroute(s.stall)
       row.boardHeadings = board.headings.length
       row.liveHeadings = live.headings.length
       results.push(row)

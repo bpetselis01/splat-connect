@@ -57,8 +57,9 @@
   "name": "Find a printer",
   "group": "push",
   "boardRoute": "printing",
-  "route": "/printing",
-  "role": "parent"
+  "route": "/printing?guide=[id]",
+  "role": "parent",
+  "idFrom": "print_request_new"
  },
  {
   "id": "print_request",
@@ -91,7 +92,8 @@
   "group": "tabs",
   "boardRoute": "guides (loading)",
   "route": "/guides",
-  "role": "parent"
+  "role": "parent",
+  "stall": "**/api/public/tutorials**"
  },
  {
   "id": "toy_library",

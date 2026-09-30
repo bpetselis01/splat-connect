@@ -32,7 +32,17 @@ runParity({
   // The parity API's CORS admits the web origin only (packages/api/src/app.ts).
   launchArgs: ['--disable-web-security'],
   signIn: signInApp,
-  prepare: dismissIntro,
+  // Skip the intro, then wait out any loading skeleton, unless the row holds
+  // its request open to measure that skeleton.
+  prepare: async (page, s) => {
+    await dismissIntro(page)
+    if (s.stall) return
+    await page
+      .locator('[data-testid="skeleton-row"], [data-testid$="-skeleton"]')
+      .first()
+      .waitFor({ state: 'detached', timeout: 8000 })
+      .catch(() => {})
+  },
   resolve: resolveAppRoute,
   // Screens scroll inside their own container; the root is always 844 tall.
   compareOpts: () => ({ height: false }),
