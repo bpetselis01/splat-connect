@@ -47,5 +47,6 @@ describe('DeleteAccountForm', () => {
     render(<DeleteAccountForm preview={{ ...preview, soleLedOrgs: [{ id: 'o', name: 'Northbank' }] }} email="s@e.com" />)
     expect(screen.getByRole('alert').textContent).toContain('only leader of Northbank')
     expect(screen.queryByLabelText('Type DELETE to continue')).toBeNull()
+    expect(screen.getByRole('link', { name: 'Manage leaders' }).getAttribute('href')).toBe('/dashboard/organisation/profile#leaders')
   })
 })

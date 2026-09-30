@@ -2,7 +2,8 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react-nativ
 import { DeleteAccountScreen, openSummary } from '../../../../components/account/delete-account-screen'
 
 const mockBack = jest.fn()
-jest.mock('expo-router', () => ({ useRouter: () => ({ back: mockBack, push: jest.fn() }) }))
+const mockPush = jest.fn()
+jest.mock('expo-router', () => ({ useRouter: () => ({ back: mockBack, push: mockPush }) }))
 jest.mock('../../../../lib/social-auth', () => ({
   appleAvailable: () => Promise.resolve(false),
   googleAvailable: () => false,
@@ -72,6 +73,8 @@ describe('DeleteAccountScreen', () => {
     render(<DeleteAccountScreen />)
     expect(await screen.findByText(/only leader of Northbank Toy Library/)).toBeTruthy()
     expect(screen.queryByTestId('delete-send-code')).toBeNull()
+    fireEvent.press(screen.getByTestId('manage-leaders'))
+    expect(mockPush).toHaveBeenCalledWith('/organisation/profile')
   })
 
   it('keeps the account and says so when the code is wrong', async () => {

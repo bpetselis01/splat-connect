@@ -5,7 +5,7 @@
 // DELETE /api/me → "Your account is deleted". The code step is what makes the
 // session fresh enough for the API to accept the deletion.
 import { useEffect, useState } from 'react'
-import { Linking, Platform, Pressable, StyleSheet, Text, View } from 'react-native'
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../../lib/auth-context'
@@ -171,14 +171,10 @@ export function DeleteAccountScreen() {
         <AuthError
           error={{
             kind: 'other',
-            message: `You're the only leader of ${names}. Ask SPLAT to add another leader first, so the organisation can still answer families.`,
+            message: `You're the only leader of ${names}. Add another leader first, so the organisation can still answer families.`,
           }}
         />
-        <Button
-          label="Contact SPLAT"
-          style={pill}
-          onPress={() => Linking.openURL(`${process.env.EXPO_PUBLIC_WEB_URL}/contact`)}
-        />
+        <Button testID="manage-leaders" label="Manage leaders" style={pill} onPress={() => router.push('/organisation/profile')} />
       </AuthStage>
     )
   }
