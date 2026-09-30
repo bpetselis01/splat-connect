@@ -133,9 +133,9 @@ export function SubmitIdeaScreen() {
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Screen>
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+          {/* The board's words, and web's (submit-an-idea/page.tsx). */}
           <Text style={styles.intro}>
-            You do not have to be able to build something to be the person who thought of it.
-            Parents and therapists spot the need long before a maker does.
+            Suggest a toy worth adapting, even if you cannot build it. An admin reads every idea.
           </Text>
 
           <Card style={styles.scope}>
