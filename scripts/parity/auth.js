@@ -170,4 +170,35 @@ async function cleanup(users) {
   }
 }
 
-module.exports = { provision, signIn, cleanup, adminClient: admin }
+/**
+ * Sign in to the mobile app's web export through its real /sign-in form, as
+ * packages/mobile/tests/e2e/helpers.ts signIn does. The session lives in the
+ * app's storage, which only the app's own sign-in writes correctly.
+ */
+async function signInApp(context, appOrigin, user) {
+  const page = await context.newPage()
+  try {
+    await page.goto(`${appOrigin}/sign-in`, { waitUntil: 'domcontentloaded' })
+    await dismissIntro(page)
+    await page.getByLabel('Email', { exact: true }).fill(user.email)
+    await page.getByLabel('Password', { exact: true }).fill(user.password)
+    await page.getByTestId('auth-submit').click()
+    await page.waitForURL((url) => !new URL(url).pathname.startsWith('/sign-in'), { timeout: 30000 })
+    return { ok: true }
+  } catch (err) {
+    return { ok: false, reason: String(err.message || err).slice(0, 160) }
+  } finally {
+    await page.close()
+  }
+}
+
+/** The app plays an intro over everything on each cold start; skip it. */
+async function dismissIntro(page) {
+  const skip = page.getByLabel('Skip intro')
+  if (await skip.isVisible({ timeout: 3000 }).catch(() => false)) {
+    await skip.click()
+    await skip.waitFor({ state: 'hidden', timeout: 10000 }).catch(() => {})
+  }
+}
+
+module.exports = { provision, signIn, signInApp, dismissIntro, cleanup, adminClient: admin }

@@ -17,6 +17,7 @@ mkdir -p "$LOG_DIR"
 API_PORT=3111
 WEB_PORT=3110
 ARTBOARD_PORT=8899
+APP_PORT=3112
 
 SUPABASE_URL='http://localhost:54321'
 ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0'
@@ -50,11 +51,11 @@ wait_for() {
 
 case "${1:-up}" in
   down)
-    for p in $API_PORT $WEB_PORT $ARTBOARD_PORT; do free_port "$p"; done
+    for p in $API_PORT $WEB_PORT $ARTBOARD_PORT $APP_PORT; do free_port "$p"; done
     ;;
   up)
     echo "Freeing ports..."
-    for p in $API_PORT $WEB_PORT $ARTBOARD_PORT; do free_port "$p"; done
+    for p in $API_PORT $WEB_PORT $ARTBOARD_PORT $APP_PORT; do free_port "$p"; done
 
     echo "Artboard (static) :$ARTBOARD_PORT"
     (cd "$ROOT/Splat Connect frontend overhaul" && \
@@ -81,9 +82,18 @@ case "${1:-up}" in
       PORT=$WEB_PORT \
       detach "$LOG_DIR/web.log" pnpm --filter @splat-connect/web dev)
 
+    # The mobile app's web export, measured by app.js. An export, not the dev
+    # server: nothing here is edited mid-run, and HMR must not intervene.
+    echo "App :$APP_PORT"
+    (cd "$ROOT/packages/mobile" && \
+      EXPO_PUBLIC_SUPABASE_URL="$SUPABASE_URL" EXPO_PUBLIC_SUPABASE_ANON_KEY="$ANON_KEY" \
+      EXPO_PUBLIC_API_URL="http://localhost:$API_PORT" \
+      detach "$LOG_DIR/app.log" sh -c "./node_modules/.bin/expo export -p web --output-dir dist-parity --clear && ./node_modules/.bin/serve -s dist-parity -l $APP_PORT")
+
     wait_for "http://localhost:$ARTBOARD_PORT/support.js" "artboard" 15
     wait_for "http://localhost:$API_PORT/api/public/tutorials" "api" 60
     wait_for "http://localhost:$WEB_PORT/about" "web" 90
+    wait_for "http://localhost:$APP_PORT/" "app" 150
     ;;
   *) echo "usage: stack.sh [up|down]"; exit 1 ;;
 esac
