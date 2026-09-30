@@ -25,6 +25,12 @@ describe('pending work stays in step', () => {
     const left = entries.filter(([id, i]) => i.shipped && refs.has(id)).map(([id]) => id)
     expect(left).toEqual([])
   })
+  // Line numbers would make the checklist stale on any unrelated edit above a
+  // marker, and CI would go red for a change that touched no pending work.
+  it('references name files, never line numbers', () => {
+    const all = [...refs.values()].flat()
+    expect(all.filter((r) => /:\d+$/.test(r))).toEqual([])
+  })
   it('docs/PENDING.md is up to date', () => {
     expect(() => execFileSync('node', ['scripts/pending.mjs', '--check'], { cwd: root, stdio: 'pipe' })).not.toThrow()
   })

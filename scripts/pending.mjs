@@ -29,12 +29,18 @@ export function references() {
   } catch (e) {
     if (e.status !== 1) throw e // 1 = no matches
   }
-  const refs = new Map()
+  // File paths only, never line numbers: a line number would make the
+  // checklist stale on any unrelated edit above a marker.
+  const counts = new Map()
   for (const line of out.trim().split('\n').filter(Boolean)) {
-    const [file, lineNo, match] = line.split(':')
+    const [file, , match] = line.split(':')
     const id = match.replace(/^PENDING\(|\)$|^pending="|"$/g, '')
-    if (!refs.has(id)) refs.set(id, [])
-    refs.get(id).push(`${file}:${lineNo}`)
+    if (!counts.has(id)) counts.set(id, new Map())
+    counts.get(id).set(file, (counts.get(id).get(file) ?? 0) + 1)
+  }
+  const refs = new Map()
+  for (const [id, files] of counts) {
+    refs.set(id, [...files].map(([file, n]) => (n > 1 ? `${file} (×${n})` : file)))
   }
   return refs
 }
