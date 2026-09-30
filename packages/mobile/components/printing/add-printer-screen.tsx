@@ -174,12 +174,13 @@ export function AddPrinterScreen() {
               <Option key={title} title={title} sub={sub} icon={icon} on={pickup === i} onPress={() => setPickup(i)} />
             ))}
           </View>
-          <Text style={styles.meta}>
-            Your street address is never shown. Requesters see a suburb until you accept, then whatever pickup you
-            chose.
-          </Text>
         </View>
         <PendingRow pending="add-printer-rates" label="Your standard rates" icon="pricetag-outline" />
+        {/* Under the rates, as the board closes the form. */}
+        <Text style={styles.meta}>
+          Your street address is never shown. Requesters see a suburb until you accept, then whatever pickup you
+          chose.
+        </Text>
       </ScrollView>
 
       <View style={styles.footer}>
