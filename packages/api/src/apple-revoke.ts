@@ -25,6 +25,8 @@ export function clientSecret(teamId: string, keyId: string, privateKey: string, 
   return `${head}.${body}.${b64(sig)}`
 }
 
+// PENDING(apple-revoke): returns false until APPLE_TEAM_ID / APPLE_KEY_ID /
+// APPLE_PRIVATE_KEY / APPLE_CLIENT_ID are set on the API (wizard stage 12).
 export async function revokeApple(authorizationCode: string): Promise<boolean> {
   const { APPLE_TEAM_ID, APPLE_KEY_ID, APPLE_PRIVATE_KEY, APPLE_CLIENT_ID } = process.env
   if (!APPLE_TEAM_ID || !APPLE_KEY_ID || !APPLE_PRIVATE_KEY || !APPLE_CLIENT_ID) return false

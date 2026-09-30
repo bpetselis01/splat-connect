@@ -19,6 +19,8 @@ import {
   pill,
 } from '../../components/auth/parts'
 
+// PENDING(android-one-tap): on Android, try the saved-account sign-in from
+// lib/social-auth.tsx in an effect on mount; say nothing if it finds none.
 export default function SignInScreen() {
   const router = useRouter()
   const params = useLocalSearchParams<{ email?: string }>()

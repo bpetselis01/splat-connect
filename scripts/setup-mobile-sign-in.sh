@@ -184,6 +184,10 @@ finish() {
 # Replace the example below. Set TOTAL_STAGES to match the stages you write.
 # ──────────────────────────────────────────────────────────────────────────
 
+# PENDING(apple-sign-in) PENDING(google-sign-in) PENDING(apple-revoke) PENDING(email-delivery):
+# this wizard is how each of those is finished; the checklist is
+# docs/superpowers/plans/2026-09-30-sign-in-remaining-work.md.
+#
 # Setup for docs/superpowers/specs/2026-09-30-mobile-sign-in-design.md
 # ("Setup only Byron can do"). Run from the repo root:
 #   bash scripts/setup-mobile-sign-in.sh

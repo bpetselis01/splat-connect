@@ -10,7 +10,11 @@
 import type { ConfigContext, ExpoConfig } from 'expo/config'
 
 export default ({ config }: ConfigContext): ExpoConfig => {
+  // PENDING(apple-sign-in): set EXPO_PUBLIC_APPLE_SIGN_IN=1 once the App ID has the
+  // capability (paid team), then `npx expo prebuild --clean` and rebuild.
   const apple = process.env.EXPO_PUBLIC_APPLE_SIGN_IN === '1'
+  // PENDING(google-sign-in): EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID (+ _WEB_CLIENT_ID in .env.local)
+  // from Google Cloud, then prebuild and rebuild.
   const googleIos = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID
   const plugins = [...(config.plugins ?? [])]
   if (apple) plugins.push('expo-apple-authentication')

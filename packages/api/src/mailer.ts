@@ -4,6 +4,8 @@
  * rather than throwing, because every caller sends after the real work is done
  * and must not report that work as failed over a missing email.
  */
+// PENDING(email-delivery): off until RESEND_API_KEY and MAIL_FROM are set on
+// the API (wizard: Resend stage).
 export async function sendEmail(to: string, subject: string, text: string): Promise<boolean> {
   const { RESEND_API_KEY, MAIL_FROM } = process.env
   if (!RESEND_API_KEY || !MAIL_FROM) return false

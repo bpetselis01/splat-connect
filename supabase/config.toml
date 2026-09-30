@@ -54,3 +54,12 @@ enabled = false
 # No supabase/functions/ directory — nothing to serve.
 [edge_runtime]
 enabled = false
+
+# PENDING(apple-sign-in): for local testing of native Apple sign-in add
+#   [auth.external.apple] enabled = true, client_id = "com.splatconnect.mobile"
+# PENDING(google-sign-in): and
+#   [auth.external.google] enabled = true, client_id = "<web client id>",
+#   skip_nonce_check = true   (iOS Google tokens carry a nonce the app cannot supply)
+# The hosted project is switched on in the dashboard (scripts/setup-mobile-sign-in.sh).
+# PENDING(email-delivery): the hosted project also needs custom SMTP (Resend);
+# the built-in sender reaches only the project team, 2 emails an hour.

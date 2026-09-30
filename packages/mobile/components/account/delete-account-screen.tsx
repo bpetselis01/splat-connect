@@ -238,6 +238,9 @@ export function DeleteAccountScreen() {
         loading={busy}
         onPress={sendCode}
       />
+      {/* PENDING(apple-revoke): shows only for accounts signed in with Apple, which
+          cannot exist until apple-sign-in ships. The code it returns is revoked
+          by the API once its Apple key is configured (packages/api/src/apple-revoke.ts). */}
       {apple && Platform.OS === 'ios' && typed.trim() === 'DELETE' ? (
         <AppleButton onPress={withApple} height={52} />
       ) : null}

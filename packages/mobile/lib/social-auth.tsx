@@ -22,10 +22,13 @@ const appleOn = Platform.OS === 'ios' && process.env.EXPO_PUBLIC_APPLE_SIGN_IN =
 const apple = () => require('expo-apple-authentication') as typeof AppleModule
 const google = () => require('@react-native-google-signin/google-signin') as typeof GoogleModule
 
+// PENDING(apple-sign-in): false until EXPO_PUBLIC_APPLE_SIGN_IN=1 — the sign-in
+// buttons open the Not built yet screen meanwhile (components/auth/parts.tsx).
 export async function appleAvailable(): Promise<boolean> {
   return appleOn && apple().isAvailableAsync()
 }
 
+// PENDING(google-sign-in): false until the Google client ids are in .env.local.
 export function googleAvailable(): boolean {
   return Boolean(webClientId) && (Platform.OS !== 'ios' || Boolean(iosClientId))
 }
@@ -69,6 +72,10 @@ export async function googleIdToken(): Promise<SocialResult<string>> {
   }
 }
 
+// PENDING(android-one-tap): add a silent sign-in here — GoogleSignin.hasPreviousSignIn()
+// then signInSilently(), returning the idToken like googleIdToken() — for Sign in
+// to call on arrival (artifact step 3: "Credential Manager offers a saved
+// account in one tap").
 export async function googleSignOut(): Promise<void> {
   if (!configured) return
   try {
