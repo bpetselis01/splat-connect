@@ -1,5 +1,5 @@
 {
- "at": "2026-09-30T14:11:12.147Z",
+ "at": "2026-09-30T15:12:52.447Z",
  "live": "http://localhost:3112",
  "screens": [
   {
@@ -7,170 +7,21 @@
    "name": "Guides",
    "group": "tabs",
    "route": "/guides",
-   "findings": [
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/guides",
+   "explained": [
     {
      "type": "missing-section",
      "severity": "high",
      "what": "h2 \"suits ollie\" has no counterpart",
      "board": "suits ollie",
-     "live": null
+     "live": null,
+     "why": "fixture",
+     "reason": "The board's child Ollie fits a guide, so a Suits Ollie heading draws; the parity child has no name or fit answers."
     }
    ],
-   "role": "parent",
-   "finalUrl": "/guides",
-   "explained": [],
    "boardHeadings": 8,
-   "liveHeadings": 2
-  },
-  {
-   "id": "lib_toy",
-   "name": "Toy detail",
-   "group": "push",
-   "route": "/toy-library/66c1ac2b-119d-4688-9670-f6e7de3126db",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"bubble machine\" has no counterpart",
-     "board": "bubble machine",
-     "live": null
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"also worth a look\" size",
-     "board": "18px",
-     "live": "24px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h3 wording",
-     "board": "also worth a look",
-     "live": "parity swap toy"
-    },
-    {
-     "type": "radius",
-     "severity": "medium",
-     "what": "card radius",
-     "board": "20px",
-     "live": "999px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "3/3 board paragraphs absent",
-     "board": "northside therapy collective · newcastle, nsw",
-     "live": "ask to collect this toy, or offer one of yours in exchange. either way"
-    },
-    {
-     "type": "radius",
-     "severity": "low",
-     "what": "button radius range",
-     "board": "999px",
-     "live": "14px"
-    },
-    {
-     "type": "colour",
-     "severity": "low",
-     "what": "card background",
-     "board": "rgb(255,255,255)",
-     "live": "rgba(255,255,255,0.92)"
-    }
-   ],
-   "role": "parent",
-   "finalUrl": "/toy-library/66c1ac2b-119d-4688-9670-f6e7de3126db",
-   "explained": [],
-   "boardHeadings": 3,
-   "liveHeadings": 2
-  },
-  {
-   "id": "challenge_detail",
-   "name": "Challenge",
-   "group": "push",
-   "route": "/explore/challenges/541682c9-ea71-4084-a8b3-cb90702715db",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"a bubble machine any child can start\" has no counterpart",
-     "board": "a bubble machine any child can start",
-     "live": null
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"status\" size",
-     "board": "18px",
-     "live": "24px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h3 wording",
-     "board": "status",
-     "live": "e#e mysplat challenge #-#"
-    },
-    {
-     "type": "radius",
-     "severity": "medium",
-     "what": "card radius",
-     "board": "16px",
-     "live": "nullpx"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "1/1 board paragraphs absent",
-     "board": "where this idea is, and what happens next.",
-     "live": "published # sept · e#e contributor"
-    },
-    {
-     "type": "radius",
-     "severity": "low",
-     "what": "button radius range",
-     "board": "999px",
-     "live": "14px"
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "none",
-     "live": "set"
-    },
-    {
-     "type": "colour",
-     "severity": "low",
-     "what": "card background",
-     "board": "rgb(223,243,234)",
-     "live": null
-    }
-   ],
-   "role": "parent",
-   "finalUrl": "/explore/challenges/541682c9-ea71-4084-a8b3-cb90702715db",
-   "explained": [],
-   "boardHeadings": 3,
-   "liveHeadings": 2
-  },
-  {
-   "id": "org_review",
-   "name": "Review a guide",
-   "group": "push",
-   "route": "/organisation/b019164b-c9ff-4bdb-a2c5-3ce3911a594b",
-   "findings": [
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "1/1 board paragraphs absent",
-     "board": "vibrating cushion with a lever — sam mitchell, easy, # minutes. six se",
-     "live": "parity guide submitted for review"
-    }
-   ],
-   "role": "leader",
-   "finalUrl": "/organisation/b019164b-c9ff-4bdb-a2c5-3ce3911a594b",
-   "explained": [],
-   "boardHeadings": 0,
    "liveHeadings": 2
   },
   {
@@ -178,163 +29,100 @@
    "name": "Guide detail",
    "group": "push",
    "route": "/guides/f677bc3d-1399-4c41-bd1b-1cfd43ae50c2",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"switch-adapted light-up drum\" has no counterpart",
-     "board": "switch-adapted light-up drum",
-     "live": null
-    },
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/guides/f677bc3d-1399-4c41-bd1b-1cfd43ae50c2",
+   "explained": [
     {
      "type": "missing-section",
      "severity": "high",
      "what": "h3 \"community notes #\" has no counterpart",
      "board": "community notes #",
-     "live": null
-    },
-    {
-     "type": "font",
-     "severity": "high",
-     "what": "h3 \"parts\" font",
-     "board": "Baloo 2",
-     "live": "Nunito"
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h3 \"tools you'll need\" has no counterpart",
-     "board": "tools you'll need",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h3 \"also worth a look\" has no counterpart",
-     "board": "also worth a look",
-     "live": null
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"steps\" size",
-     "board": "18px",
-     "live": "24px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h3 wording",
-     "board": "steps",
-     "live": "e#e mobile picker #-#"
-    },
-    {
-     "type": "radius",
-     "severity": "medium",
-     "what": "card radius",
-     "board": "18px",
-     "live": "24px"
+     "live": null,
+     "why": "pending",
+     "pending": "guide-community-notes"
     },
     {
      "type": "missing-section",
      "severity": "medium",
      "what": "no inputs on live",
      "board": 2,
-     "live": 0
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "5/5 board paragraphs absent",
-     "board": "a $# toy drum that lights up when it sounds. one interrupter, no solde",
-     "live": "created by a playwright e#e test."
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "h3 \"parts\" weight",
-     "board": 800,
-     "live": 700
-    },
-    {
-     "type": "radius",
-     "severity": "low",
-     "what": "button radius range",
-     "board": "999px",
-     "live": "18px"
+     "live": 0,
+     "why": "pending",
+     "pending": "guide-community-notes"
     }
    ],
-   "role": "parent",
-   "finalUrl": "/guides/f677bc3d-1399-4c41-bd1b-1cfd43ae50c2",
-   "explained": [],
    "boardHeadings": 6,
-   "liveHeadings": 4
+   "liveHeadings": 5
   },
   {
    "id": "guide_preview",
    "name": "Guide preview",
    "group": "push",
    "route": "/guides/f677bc3d-1399-4c41-bd1b-1cfd43ae50c2/preview",
-   "findings": [
-    {
-     "type": "radius",
-     "severity": "medium",
-     "what": "card radius",
-     "board": "20px",
-     "live": "999px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "1/1 board paragraphs absent",
-     "board": "this is what a parent sees. nothing is public until you submit and a r",
-     "live": "no pdf is available for this tutorial yet."
-    },
-    {
-     "type": "colour",
-     "severity": "low",
-     "what": "card background",
-     "board": "rgb(255,255,255)",
-     "live": "rgba(255,255,255,0.92)"
-    }
-   ],
+   "findings": [],
    "role": "contributor",
    "finalUrl": "/guides/f677bc3d-1399-4c41-bd1b-1cfd43ae50c2/preview",
-   "explained": [],
+   "explained": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "board lists cards, live shows none",
+     "board": 4,
+     "live": 0,
+     "why": "intended",
+     "reason": "Decided 2026-09-30 (guide-draft-preview): Preview opens the reader view; the editor hub is the summary."
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "board has cards, live has none",
+     "board": 4,
+     "live": 0,
+     "why": "intended",
+     "reason": "Decided 2026-09-30 (guide-draft-preview): Preview opens the reader view; the editor hub is the summary."
+    }
+   ],
    "boardHeadings": 0,
-   "liveHeadings": 2
+   "liveHeadings": 1
   },
   {
    "id": "guide_new",
    "name": "New guide",
    "group": "push",
    "route": "/guides/new",
-   "findings": [
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/guides/new",
+   "explained": [
     {
-     "type": "radius",
-     "severity": "medium",
-     "what": "card radius",
-     "board": "20px",
-     "live": "999px"
+     "type": "missing-section",
+     "severity": "high",
+     "what": "board lists cards, live shows none",
+     "board": 5,
+     "live": 0,
+     "why": "pending",
+     "pending": "new-guide-fields"
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "board has cards, live has none",
+     "board": 5,
+     "live": 0,
+     "why": "pending",
+     "pending": "new-guide-fields"
     },
     {
      "type": "copy",
      "severity": "medium",
      "what": "1/1 board paragraphs absent",
      "board": "two things to start: what the toy is, and one photo. the rest can wait",
-     "live": "give it a title to start a draft — everything else comes next."
-    },
-    {
-     "type": "colour",
-     "severity": "low",
-     "what": "card background",
-     "board": "rgb(255,255,255)",
-     "live": "rgba(255,255,255,0.92)"
+     "live": "give it a title to start a draft — everything else comes next.",
+     "why": "pending",
+     "pending": "new-guide-fields"
     }
    ],
-   "role": "parent",
-   "finalUrl": "/guides/new",
-   "explained": [],
    "boardHeadings": 0,
    "liveHeadings": 1
   },
@@ -343,198 +131,21 @@
    "name": "Contributor",
    "group": "push",
    "route": "/guides/contributor/11111111-1111-1111-1111-111111111111",
-   "findings": [
-    {
-     "type": "font",
-     "severity": "high",
-     "what": "card title font",
-     "board": "Baloo 2",
-     "live": "Nunito"
-    },
-    {
-     "type": "font",
-     "severity": "high",
-     "what": "h3 \"published guides\" font",
-     "board": "Baloo 2",
-     "live": "Nunito"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "card title size",
-     "board": "22px",
-     "live": "19px"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"published guides\" size",
-     "board": "18px",
-     "live": "24px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h3 wording",
-     "board": "published guides",
-     "live": "seed contributor"
-    },
-    {
-     "type": "radius",
-     "severity": "medium",
-     "what": "card radius",
-     "board": "18px",
-     "live": "nullpx"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "1/1 board paragraphs absent",
-     "board": "i run a switch clinic on thursdays and write up whatever we adapt that",
-     "live": null
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "card title weight",
-     "board": 800,
-     "live": 700
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "h3 \"published guides\" weight",
-     "board": 800,
-     "live": 700
-    }
-   ],
+   "findings": [],
    "role": "parent",
    "finalUrl": "/guides/contributor/11111111-1111-1111-1111-111111111111",
    "explained": [],
    "boardHeadings": 3,
-   "liveHeadings": 4
+   "liveHeadings": 3
   },
   {
    "id": "guide_org",
    "name": "Organisation",
    "group": "push",
-   "route": "/guides/organisation/f29ea68d-c55c-4d47-90c9-575a79a58969",
-   "findings": [
-    {
-     "type": "font",
-     "severity": "high",
-     "what": "card title font",
-     "board": "Baloo 2",
-     "live": "JetBrains Mono"
-    },
-    {
-     "type": "font",
-     "severity": "high",
-     "what": "h3 \"what they charge, and what they take\" font",
-     "board": "Baloo 2",
-     "live": "Nunito"
-    },
-    {
-     "type": "font",
-     "severity": "high",
-     "what": "h3 \"how to work with them\" font",
-     "board": "Baloo 2",
-     "live": "Nunito"
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h3 \"guides they back #\" has no counterpart",
-     "board": "guides they back #",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h3 \"toys on their shelf #\" has no counterpart",
-     "board": "toys on their shelf #",
-     "live": null
-    },
-    {
-     "type": "font",
-     "severity": "high",
-     "what": "h3 \"leaders\" font",
-     "board": "Baloo 2",
-     "live": "Nunito"
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h3 \"visit\" has no counterpart",
-     "board": "visit",
-     "live": null
-    },
-    {
-     "type": "font",
-     "severity": "high",
-     "what": "h3 \"recent activity\" font",
-     "board": "Baloo 2",
-     "live": "Nunito"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "card title size",
-     "board": "20px",
-     "live": "24px"
-    },
-    {
-     "type": "radius",
-     "severity": "medium",
-     "what": "card radius",
-     "board": "18px",
-     "live": "24px"
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "card title weight",
-     "board": 800,
-     "live": 400
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "h3 \"what they charge, and what they take\" weight",
-     "board": 800,
-     "live": 700
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "h3 \"how to work with them\" weight",
-     "board": 800,
-     "live": 700
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "h3 \"leaders\" weight",
-     "board": 800,
-     "live": 700
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "h3 \"recent activity\" weight",
-     "board": 800,
-     "live": 700
-    },
-    {
-     "type": "radius",
-     "severity": "low",
-     "what": "button radius range",
-     "board": "999px",
-     "live": "14px"
-    }
-   ],
+   "route": "/guides/organisation/9f50325e-edc8-43b3-91b4-3541bf97a205",
+   "findings": [],
    "role": "parent",
-   "finalUrl": "/guides/organisation/f29ea68d-c55c-4d47-90c9-575a79a58969",
+   "finalUrl": "/guides/organisation/9f50325e-edc8-43b3-91b4-3541bf97a205",
    "explained": [],
    "boardHeadings": 8,
    "liveHeadings": 9
@@ -543,146 +154,64 @@
    "id": "print_find",
    "name": "Find a printer",
    "group": "push",
-   "route": "/printing",
-   "findings": [
+   "route": "/printing?guide=37d5ef80-607b-4954-a84b-9d2d86b3bf87",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/printing",
+   "explained": [
     {
      "type": "font",
      "severity": "high",
      "what": "card title font",
      "board": "Baloo 2",
-     "live": "Nunito"
-    },
-    {
-     "type": "radius",
-     "severity": "medium",
-     "what": "card radius",
-     "board": "20px",
-     "live": "24px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "1/1 board paragraphs absent",
-     "board": "pick up to three printers. the first to accept takes the job and the r",
-     "live": null
+     "live": "Nunito",
+     "why": "harness",
+     "reason": "The board's first card text is its aria-hidden initials disc; the printer names match (Nunito 15 on both)."
     }
    ],
-   "role": "parent",
-   "finalUrl": "/printing",
-   "explained": [],
    "boardHeadings": 0,
-   "liveHeadings": 1
+   "liveHeadings": 0
   },
   {
    "id": "print_request",
    "name": "Request a print",
    "group": "modal",
-   "route": "/printing/request",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "board lists cards, live shows none",
-     "board": 4,
-     "live": 0
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "board has cards, live has none",
-     "board": 4,
-     "live": 0
-    },
-    {
-     "type": "missing-section",
-     "severity": "medium",
-     "what": "no inputs on live",
-     "board": 2,
-     "live": 0
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "1/1 board paragraphs absent",
-     "board": "# of # parts · about # h # · ~# g petg",
-     "live": "check your connection and try again."
-    }
-   ],
+   "route": "/printing/request?guide=37d5ef80-607b-4954-a84b-9d2d86b3bf87&printers=5f204de8-6dd9-4105-a078-89a505de25bf,0464c1cd-a520-43a5-beea-4eaacfffaeda",
+   "findings": [],
    "role": "parent",
    "finalUrl": "/printing/request",
    "explained": [],
    "boardHeadings": 0,
-   "liveHeadings": 2
+   "liveHeadings": 0
   },
   {
    "id": "print_job",
    "name": "Print job",
    "group": "push",
-   "route": "/printing/jobs/2acfd824-27ca-4bee-b392-3a93e0a42bae",
-   "findings": [
+   "route": "/printing/jobs/8ec5b7b2-042a-4568-ac39-d7e2846f9a3e",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/printing/jobs/8ec5b7b2-042a-4568-ac39-d7e2846f9a3e",
+   "explained": [
     {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"switch mount, printable\" has no counterpart",
-     "board": "switch mount, printable",
-     "live": null
-    },
-    {
-     "type": "extra-section",
-     "severity": "medium",
-     "what": "live has an extra h3: \"e#e detail no photo #-#\"",
-     "board": null,
-     "live": "e#e detail no photo #-#"
-    },
-    {
-     "type": "radius",
-     "severity": "medium",
-     "what": "card radius",
-     "board": "20px",
-     "live": "24px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "2/2 board paragraphs absent",
-     "board": "# of # parts · asked today",
-     "live": null
-    },
-    {
-     "type": "radius",
+     "type": "shadow",
      "severity": "low",
-     "what": "input radius",
-     "board": "999px",
-     "live": "14px"
+     "what": "card shadow",
+     "board": "none",
+     "live": "set",
+     "why": "harness",
+     "reason": "The board nests its cards (a bordered box inside the card), so its leaf cards are inner boxes without shadow; the app's are the outer cards. Counting every card fixes it here and breaks nine web screens."
     }
    ],
-   "role": "parent",
-   "finalUrl": "/printing/jobs/2acfd824-27ca-4bee-b392-3a93e0a42bae",
-   "explained": [],
    "boardHeadings": 2,
-   "liveHeadings": 2
+   "liveHeadings": 1
   },
   {
    "id": "print_basics",
    "name": "Printing basics",
    "group": "push",
    "route": "/printing/basics",
-   "findings": [
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h2 \"printing basics\" size",
-     "board": "25px",
-     "live": "19px"
-    },
-    {
-     "type": "radius",
-     "severity": "low",
-     "what": "button radius range",
-     "board": "999px",
-     "live": "14px"
-    }
-   ],
+   "findings": [],
    "role": "parent",
    "finalUrl": "/printing/basics",
    "explained": [],
@@ -694,189 +223,96 @@
    "name": "Loading state",
    "group": "tabs",
    "route": "/guides",
-   "findings": [
-    {
-     "type": "radius",
-     "severity": "medium",
-     "what": "card radius",
-     "board": "22px",
-     "live": "18px"
-    }
-   ],
+   "findings": [],
    "role": "parent",
    "finalUrl": "/guides",
    "explained": [],
    "boardHeadings": 0,
-   "liveHeadings": 2
+   "liveHeadings": 1
   },
   {
    "id": "toy_library",
    "name": "Toy library",
    "group": "tabs",
    "route": "/toy-library",
-   "findings": [
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/toy-library",
+   "explained": [
     {
      "type": "missing-section",
      "severity": "high",
      "what": "h2 \"nearest first\" has no counterpart",
      "board": "nearest first",
-     "live": null
+     "live": null,
+     "why": "pending",
+     "pending": "locations-and-distance"
     }
    ],
-   "role": "parent",
-   "finalUrl": "/toy-library",
-   "explained": [],
    "boardHeadings": 8,
    "liveHeadings": 2
+  },
+  {
+   "id": "lib_toy",
+   "name": "Toy detail",
+   "group": "push",
+   "route": "/toy-library/9e8d5830-a636-4bbc-ba3f-4a20af082124",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/toy-library/9e8d5830-a636-4bbc-ba3f-4a20af082124",
+   "explained": [
+    {
+     "type": "font",
+     "severity": "high",
+     "what": "card title font",
+     "board": "Nunito",
+     "live": "Baloo 2",
+     "why": "harness",
+     "reason": "The board's only card is Notes from the holder (a Nunito label); the app's card is the same panel plus its pickup tiles, whose titles are Baloo."
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h3 \"also worth a look\" has no counterpart",
+     "board": "also worth a look",
+     "live": null,
+     "why": "pending",
+     "pending": "toy-holder-picks"
+    }
+   ],
+   "boardHeadings": 3,
+   "liveHeadings": 1
   },
   {
    "id": "org_list",
    "name": "Organisations",
    "group": "push",
    "route": "/toy-library/organisations",
-   "findings": [
-    {
-     "type": "radius",
-     "severity": "medium",
-     "what": "card radius",
-     "board": "20px",
-     "live": "24px"
-    },
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/toy-library/organisations",
+   "explained": [
     {
      "type": "copy",
      "severity": "medium",
      "what": "1/1 board paragraphs absent",
      "board": "# organisations standing behind the work.",
-     "live": null
+     "live": null,
+     "why": "pending",
+     "pending": "organisations-list-meta"
     }
    ],
-   "role": "parent",
-   "finalUrl": "/toy-library/organisations",
-   "explained": [],
    "boardHeadings": 0,
-   "liveHeadings": 1
+   "liveHeadings": 0
   },
   {
    "id": "lib_org",
    "name": "Organisation",
    "group": "push",
-   "route": "/toy-library/organisation/f29ea68d-c55c-4d47-90c9-575a79a58969",
-   "findings": [
-    {
-     "type": "font",
-     "severity": "high",
-     "what": "card title font",
-     "board": "Baloo 2",
-     "live": "JetBrains Mono"
-    },
-    {
-     "type": "font",
-     "severity": "high",
-     "what": "h3 \"what they charge, and what they take\" font",
-     "board": "Baloo 2",
-     "live": "Nunito"
-    },
-    {
-     "type": "font",
-     "severity": "high",
-     "what": "h3 \"how to work with them\" font",
-     "board": "Baloo 2",
-     "live": "Nunito"
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h3 \"guides they back #\" has no counterpart",
-     "board": "guides they back #",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h3 \"toys on their shelf #\" has no counterpart",
-     "board": "toys on their shelf #",
-     "live": null
-    },
-    {
-     "type": "font",
-     "severity": "high",
-     "what": "h3 \"leaders\" font",
-     "board": "Baloo 2",
-     "live": "Nunito"
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h3 \"visit\" has no counterpart",
-     "board": "visit",
-     "live": null
-    },
-    {
-     "type": "font",
-     "severity": "high",
-     "what": "h3 \"recent activity\" font",
-     "board": "Baloo 2",
-     "live": "Nunito"
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "card title size",
-     "board": "20px",
-     "live": "24px"
-    },
-    {
-     "type": "radius",
-     "severity": "medium",
-     "what": "card radius",
-     "board": "18px",
-     "live": "24px"
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "card title weight",
-     "board": 800,
-     "live": 400
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "h3 \"what they charge, and what they take\" weight",
-     "board": 800,
-     "live": 700
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "h3 \"how to work with them\" weight",
-     "board": 800,
-     "live": 700
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "h3 \"leaders\" weight",
-     "board": 800,
-     "live": 700
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "h3 \"recent activity\" weight",
-     "board": 800,
-     "live": 700
-    },
-    {
-     "type": "radius",
-     "severity": "low",
-     "what": "button radius range",
-     "board": "999px",
-     "live": "14px"
-    }
-   ],
+   "route": "/toy-library/organisation/9f50325e-edc8-43b3-91b4-3541bf97a205",
+   "findings": [],
    "role": "parent",
-   "finalUrl": "/toy-library/organisation/f29ea68d-c55c-4d47-90c9-575a79a58969",
+   "finalUrl": "/toy-library/organisation/9f50325e-edc8-43b3-91b4-3541bf97a205",
    "explained": [],
    "boardHeadings": 8,
    "liveHeadings": 9
@@ -891,7 +327,7 @@
    "finalUrl": "/explore",
    "explained": [],
    "boardHeadings": 7,
-   "liveHeadings": 8
+   "liveHeadings": 7
   },
   {
    "id": "learn_list",
@@ -903,60 +339,45 @@
    "finalUrl": "/explore/learn",
    "explained": [],
    "boardHeadings": 0,
-   "liveHeadings": 2
+   "liveHeadings": 1
   },
   {
    "id": "article",
    "name": "Learn article",
    "group": "push",
    "route": "/explore/learn/toy-adaptation-101",
-   "findings": [
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/explore/learn/toy-adaptation-101",
+   "explained": [
     {
      "type": "missing-section",
      "severity": "high",
      "what": "h3 \"the whole trick in one paragraph\" has no counterpart",
      "board": "the whole trick in one paragraph",
-     "live": null
+     "live": null,
+     "why": "intended",
+     "reason": "The app ships the six real Learn articles; the board has short sample ones."
     },
     {
      "type": "missing-section",
      "severity": "high",
      "what": "h3 \"you are not modifying the toy\" has no counterpart",
      "board": "you are not modifying the toy",
-     "live": null
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h2 \"toy adaptation #\" size",
-     "board": "25px",
-     "live": "19px"
+     "live": null,
+     "why": "intended",
+     "reason": "The app ships the six real Learn articles; the board has short sample ones."
     },
     {
      "type": "copy",
      "severity": "medium",
      "what": "3/3 board paragraphs absent",
      "board": "what a battery interrupter is, and why it is the whole trick.",
-     "live": "almost every adapted toy on this site works the same way, and the tric"
-    },
-    {
-     "type": "radius",
-     "severity": "low",
-     "what": "button radius range",
-     "board": "999px",
-     "live": "14px"
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "none",
-     "live": "set"
+     "live": "almost every adapted toy on this site works the same way, and the tric",
+     "why": "intended",
+     "reason": "Real article copy against the board's sample."
     }
    ],
-   "role": "parent",
-   "finalUrl": "/explore/learn/toy-adaptation-101",
-   "explained": [],
    "boardHeadings": 3,
    "liveHeadings": 6
   },
@@ -965,74 +386,104 @@
    "name": "Challenges",
    "group": "push",
    "route": "/explore/challenges",
-   "findings": [
-    {
-     "type": "extra-section",
-     "severity": "medium",
-     "what": "live has 2 extra h4 the board does not draw",
-     "board": null,
-     "live": "open challenges | solved · became guides"
-    },
-    {
-     "type": "radius",
-     "severity": "medium",
-     "what": "card radius",
-     "board": "20px",
-     "live": "24px"
-    }
-   ],
+   "findings": [],
    "role": "parent",
    "finalUrl": "/explore/challenges",
    "explained": [],
    "boardHeadings": 5,
-   "liveHeadings": 11
+   "liveHeadings": 8
+  },
+  {
+   "id": "challenge_detail",
+   "name": "Challenge",
+   "group": "push",
+   "route": "/explore/challenges/541682c9-ea71-4084-a8b3-cb90702715db",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/explore/challenges/541682c9-ea71-4084-a8b3-cb90702715db",
+   "explained": [
+    {
+     "type": "radius",
+     "severity": "medium",
+     "what": "card radius",
+     "board": "16px",
+     "live": "20px",
+     "why": "harness",
+     "reason": "The board nests its cards (a bordered box inside the card), so its leaf cards are inner boxes without shadow; the app's are the outer cards. Counting every card fixes it here and breaks nine web screens. The 16px leaf is the status box, which the app draws at 16 in the same tint inside its card."
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "none",
+     "live": "set",
+     "why": "harness",
+     "reason": "The board nests its cards (a bordered box inside the card), so its leaf cards are inner boxes without shadow; the app's are the outer cards. Counting every card fixes it here and breaks nine web screens."
+    },
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "card background",
+     "board": "rgb(223,243,234)",
+     "live": "rgb(255,255,255)",
+     "why": "harness",
+     "reason": "The board nests its cards (a bordered box inside the card), so its leaf cards are inner boxes without shadow; the app's are the outer cards. Counting every card fixes it here and breaks nine web screens."
+    }
+   ],
+   "boardHeadings": 3,
+   "liveHeadings": 2
   },
   {
    "id": "challenge_new",
    "name": "Submit an idea",
    "group": "push",
    "route": "/explore/challenges/new",
-   "findings": [
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/explore/challenges/new",
+   "explained": [
     {
-     "type": "copy",
+     "type": "radius",
      "severity": "medium",
-     "what": "1/1 board paragraphs absent",
-     "board": "suggest a toy worth adapting, even if you cannot build it. an admin re",
-     "live": "you do not have to be able to build something to be the person who tho"
+     "what": "card radius",
+     "board": "16px",
+     "live": "20px",
+     "why": "intended",
+     "reason": "The white card is What we can't take on: families learn up front what SPLAT won't build (mains, load-bearing, swallowable, medical), as on web."
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "none",
+     "live": "set",
+     "why": "intended",
+     "reason": "The What we can't take on card, as on web."
     },
     {
      "type": "colour",
      "severity": "low",
      "what": "card background",
      "board": "rgba(0,0,0,0)",
-     "live": "rgb(255,255,255)"
+     "live": "rgb(255,255,255)",
+     "why": "intended",
+     "reason": "The What we can't take on card, as on web."
     }
    ],
-   "role": "parent",
-   "finalUrl": "/explore/challenges/new",
-   "explained": [],
    "boardHeadings": 0,
-   "liveHeadings": 1
+   "liveHeadings": 0
   },
   {
    "id": "makers_wanted",
    "name": "Makers wanted",
    "group": "push",
    "route": "/explore/makers-wanted",
-   "findings": [
-    {
-     "type": "radius",
-     "severity": "medium",
-     "what": "card radius",
-     "board": "20px",
-     "live": "nullpx"
-    }
-   ],
+   "findings": [],
    "role": "parent",
    "finalUrl": "/explore/makers-wanted",
    "explained": [],
    "boardHeadings": 0,
-   "liveHeadings": 1
+   "liveHeadings": 0
   },
   {
    "id": "mw_new",
@@ -1044,115 +495,85 @@
    "finalUrl": "/explore/makers-wanted/new",
    "explained": [],
    "boardHeadings": 0,
-   "liveHeadings": 1
+   "liveHeadings": 0
   },
   {
    "id": "build_thread",
    "name": "Build thread",
    "group": "push",
-   "route": "/exchanges/build/77b60089-e9be-4c88-892f-a5b1b724c07c",
-   "findings": [
+   "route": "/exchanges/build/2b7336d6-4078-49f5-ac76-d6c6719c997d",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/exchanges/build/2b7336d6-4078-49f5-ac76-d6c6719c997d",
+   "explained": [
     {
-     "type": "radius",
+     "type": "shadow",
      "severity": "low",
-     "what": "button radius range",
-     "board": "999px",
-     "live": "14px"
-    },
-    {
-     "type": "radius",
-     "severity": "low",
-     "what": "input radius",
-     "board": "999px",
-     "live": "14px"
+     "what": "card shadow",
+     "board": "none",
+     "live": "set",
+     "why": "harness",
+     "reason": "The board nests its cards (a bordered box inside the card), so its leaf cards are inner boxes without shadow; the app's are the outer cards. Counting every card fixes it here and breaks nine web screens."
     }
    ],
-   "role": "parent",
-   "finalUrl": "/exchanges/build/77b60089-e9be-4c88-892f-a5b1b724c07c",
-   "explained": [],
    "boardHeadings": 2,
-   "liveHeadings": 2
+   "liveHeadings": 1
   },
   {
    "id": "recycling",
    "name": "Recycling",
    "group": "push",
    "route": "/explore/recycling",
-   "findings": [
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h1 \"#\" size",
-     "board": "44px",
-     "live": "19px"
-    },
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/explore/recycling",
+   "explained": [
     {
      "type": "copy",
      "severity": "medium",
      "what": "h1 wording",
      "board": "#",
-     "live": "recycling"
-    },
-    {
-     "type": "extra-section",
-     "severity": "medium",
-     "what": "live has an extra h1: \"# kg\"",
-     "board": null,
-     "live": "# kg"
+     "live": "# kg",
+     "why": "harness",
+     "reason": "The board sets the 44px number and its kg unit in separate elements, so its h1 reads '#'; the app's reads '# kg'. Both are 44px Baloo."
     }
    ],
-   "role": "parent",
-   "finalUrl": "/explore/recycling",
-   "explained": [],
    "boardHeadings": 2,
-   "liveHeadings": 3
+   "liveHeadings": 2
   },
   {
    "id": "org_recycling",
    "name": "Recycling intake",
    "group": "push",
    "route": "/organisation/recycling",
-   "findings": [
-    {
-     "type": "radius",
-     "severity": "medium",
-     "what": "card radius",
-     "board": "20px",
-     "live": "24px"
-    }
-   ],
+   "findings": [],
    "role": "leader",
    "finalUrl": "/organisation/recycling",
    "explained": [],
    "boardHeadings": 0,
-   "liveHeadings": 1
+   "liveHeadings": 0
   },
   {
    "id": "about",
    "name": "About",
    "group": "push",
    "route": "/explore/about",
-   "findings": [
-    {
-     "type": "radius",
-     "severity": "medium",
-     "what": "card radius",
-     "board": "20px",
-     "live": "24px"
-    },
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/explore/about",
+   "explained": [
     {
      "type": "copy",
      "severity": "medium",
      "what": "1/1 board paragraphs absent",
      "board": "splat stands for supporting play by adapting toys. we make toy adaptat",
-     "live": null
+     "live": null,
+     "why": "pending",
+     "pending": "about-content-mobile"
     }
    ],
-   "role": "parent",
-   "finalUrl": "/explore/about",
-   "explained": [],
    "boardHeadings": 0,
-   "liveHeadings": 3
+   "liveHeadings": 2
   },
   {
    "id": "inbox",
@@ -1170,69 +591,44 @@
    "id": "exchange",
    "name": "Exchange thread",
    "group": "push",
-   "route": "/exchanges/fd938aba-9f30-4017-aeca-130825948c94",
-   "findings": [
+   "route": "/exchanges/53f31f8b-3ffb-4519-ac3d-2891208edb24",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/exchanges/53f31f8b-3ffb-4519-ac3d-2891208edb24",
+   "explained": [
     {
      "type": "missing-section",
      "severity": "high",
-     "what": "h4 \"thursday after three, newcastle clinic\" has no counterpart",
+     "what": "h3 \"thursday after three, newcastle clinic\" has no counterpart",
      "board": "thursday after three, newcastle clinic",
-     "live": null
-    },
-    {
-     "type": "radius",
-     "severity": "medium",
-     "what": "card radius",
-     "board": "18px",
-     "live": "24px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "4/4 board paragraphs absent",
-     "board": "thursday after three, newcastle clinic",
-     "live": null
-    },
-    {
-     "type": "radius",
-     "severity": "low",
-     "what": "input radius",
-     "board": "999px",
-     "live": "14px"
+     "live": null,
+     "why": "harness",
+     "reason": "The board nests its cards (a bordered box inside the card), so its leaf cards are inner boxes without shadow; the app's are the outer cards. Counting every card fixes it here and breaks nine web screens. The pickup line is in the app's leaf card, so it is compared as a card title, not a heading."
     },
     {
      "type": "shadow",
      "severity": "low",
      "what": "card shadow",
      "board": "none",
-     "live": "set"
+     "live": "set",
+     "why": "harness",
+     "reason": "The board nests its cards (a bordered box inside the card), so its leaf cards are inner boxes without shadow; the app's are the outer cards. Counting every card fixes it here and breaks nine web screens."
     }
    ],
-   "role": "parent",
-   "finalUrl": "/exchanges/fd938aba-9f30-4017-aeca-130825948c94",
-   "explained": [],
    "boardHeadings": 2,
-   "liveHeadings": 2
+   "liveHeadings": 1
   },
   {
    "id": "my_splat",
    "name": "Me",
    "group": "tabs",
    "route": "/me",
-   "findings": [
-    {
-     "type": "extra-section",
-     "severity": "medium",
-     "what": "live has an extra h3: \"my splat\"",
-     "board": null,
-     "live": "my splat"
-    }
-   ],
+   "findings": [],
    "role": "parent",
    "finalUrl": "/me",
    "explained": [],
    "boardHeadings": 2,
-   "liveHeadings": 3
+   "liveHeadings": 2
   },
   {
    "id": "my_tutorials",
@@ -1244,230 +640,151 @@
    "finalUrl": "/tutorials",
    "explained": [],
    "boardHeadings": 0,
-   "liveHeadings": 1
+   "liveHeadings": 0
   },
   {
    "id": "editor",
    "name": "Editor hub",
    "group": "push",
-   "route": "/tutorials/d12a63ff-06d0-4102-b22b-3f80a3f797b5",
+   "route": "/tutorials/17f511df-75e0-4608-a944-d581e2964aaa",
    "findings": [],
    "role": "contributor",
-   "finalUrl": "/tutorials/d12a63ff-06d0-4102-b22b-3f80a3f797b5",
+   "finalUrl": "/tutorials/17f511df-75e0-4608-a944-d581e2964aaa",
    "explained": [],
    "boardHeadings": 1,
-   "liveHeadings": 2
+   "liveHeadings": 1
   },
   {
    "id": "ed_details",
    "name": "Editor · details",
    "group": "push",
-   "route": "/tutorials/d12a63ff-06d0-4102-b22b-3f80a3f797b5/details",
-   "findings": [
-    {
-     "type": "radius",
-     "severity": "medium",
-     "what": "card radius",
-     "board": "18px",
-     "live": "14px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "1/1 board paragraphs absent",
-     "board": "what the toy is, who it suits, and who is backing the guide.",
-     "live": "about how long does it take?"
-    },
-    {
-     "type": "weight",
-     "severity": "low",
-     "what": "card title weight",
-     "board": 500,
-     "live": 400
-    },
+   "route": "/tutorials/17f511df-75e0-4608-a944-d581e2964aaa/details",
+   "findings": [],
+   "role": "contributor",
+   "finalUrl": "/tutorials/17f511df-75e0-4608-a944-d581e2964aaa/details",
+   "explained": [
     {
      "type": "colour",
      "severity": "low",
      "what": "input background",
      "board": "rgb(250,249,247)",
-     "live": "rgb(255,255,255)"
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "set",
-     "live": "none"
+     "live": "rgb(255,255,255)",
+     "why": "intended",
+     "reason": "The board fills a field with canvas only inside its white section card; the app's section fields sit on the page and take the surface, as the board's other 26 inputs do."
     }
    ],
-   "role": "contributor",
-   "finalUrl": "/tutorials/d12a63ff-06d0-4102-b22b-3f80a3f797b5/details",
-   "explained": [],
    "boardHeadings": 0,
-   "liveHeadings": 1
+   "liveHeadings": 0
   },
   {
    "id": "ed_steps",
    "name": "Editor · steps",
    "group": "push",
-   "route": "/tutorials/d12a63ff-06d0-4102-b22b-3f80a3f797b5/steps",
-   "findings": [
+   "route": "/tutorials/17f511df-75e0-4608-a944-d581e2964aaa/steps",
+   "findings": [],
+   "role": "contributor",
+   "finalUrl": "/tutorials/17f511df-75e0-4608-a944-d581e2964aaa/steps",
+   "explained": [
     {
-     "type": "missing-section",
-     "severity": "medium",
-     "what": "no inputs on live",
-     "board": 1,
-     "live": 0
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "1/1 board paragraphs absent",
-     "board": "one photo and one instruction per action. this section is empty.",
-     "live": "one photo and one instruction per action. optional — the pdf still car"
+     "type": "colour",
+     "severity": "low",
+     "what": "input background",
+     "board": "rgb(250,249,247)",
+     "live": "rgb(255,255,255)",
+     "why": "intended",
+     "reason": "The board fills a field with canvas only inside its white section card; the app's fields sit on the page and take the surface."
     }
    ],
-   "role": "contributor",
-   "finalUrl": "/tutorials/d12a63ff-06d0-4102-b22b-3f80a3f797b5/steps",
-   "explained": [],
    "boardHeadings": 0,
-   "liveHeadings": 1
+   "liveHeadings": 0
   },
   {
    "id": "ed_parts",
    "name": "Editor · parts",
    "group": "push",
-   "route": "/tutorials/d12a63ff-06d0-4102-b22b-3f80a3f797b5/parts",
-   "findings": [
+   "route": "/tutorials/17f511df-75e0-4608-a944-d581e2964aaa/parts",
+   "findings": [],
+   "role": "contributor",
+   "finalUrl": "/tutorials/17f511df-75e0-4608-a944-d581e2964aaa/parts",
+   "explained": [
     {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "board lists cards, live shows none",
-     "board": 3,
-     "live": 0
-    },
-    {
-     "type": "font",
-     "severity": "high",
-     "what": "body font",
-     "board": "Nunito",
-     "live": "Times New Roman"
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "board has cards, live has none",
-     "board": 3,
-     "live": 0
-    },
-    {
-     "type": "missing-section",
-     "severity": "medium",
-     "what": "no inputs on live",
-     "board": 3,
-     "live": 0
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "1/1 board paragraphs absent",
-     "board": "everything a family has to buy, with a rough price.",
-     "live": null
+     "type": "colour",
+     "severity": "low",
+     "what": "input background",
+     "board": "rgb(250,249,247)",
+     "live": "rgb(255,255,255)",
+     "why": "intended",
+     "reason": "The board fills a field with canvas only inside its white section card; the app's fields sit on the page and take the surface."
     }
    ],
-   "role": "contributor",
-   "finalUrl": "/tutorials/d12a63ff-06d0-4102-b22b-3f80a3f797b5/parts",
-   "explained": [],
    "boardHeadings": 0,
-   "liveHeadings": 1
+   "liveHeadings": 0
   },
   {
    "id": "ed_tools",
    "name": "Editor · tools",
    "group": "push",
-   "route": "/tutorials/d12a63ff-06d0-4102-b22b-3f80a3f797b5/tools",
-   "findings": [
+   "route": "/tutorials/17f511df-75e0-4608-a944-d581e2964aaa/tools",
+   "findings": [],
+   "role": "contributor",
+   "finalUrl": "/tutorials/17f511df-75e0-4608-a944-d581e2964aaa/tools",
+   "explained": [
     {
-     "type": "font",
-     "severity": "high",
-     "what": "body font",
-     "board": "Nunito",
-     "live": "Times New Roman"
-    },
-    {
-     "type": "missing-section",
-     "severity": "medium",
-     "what": "no inputs on live",
-     "board": 2,
-     "live": 0
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "1/1 board paragraphs absent",
-     "board": "what they need on the bench, and what can be borrowed.",
-     "live": null
+     "type": "colour",
+     "severity": "low",
+     "what": "input background",
+     "board": "rgb(250,249,247)",
+     "live": "rgb(255,255,255)",
+     "why": "intended",
+     "reason": "The board fills a field with canvas only inside its white section card; the app's fields sit on the page and take the surface."
     }
    ],
-   "role": "contributor",
-   "finalUrl": "/tutorials/d12a63ff-06d0-4102-b22b-3f80a3f797b5/tools",
-   "explained": [],
    "boardHeadings": 0,
-   "liveHeadings": 1
+   "liveHeadings": 0
   },
   {
    "id": "ed_safety",
    "name": "Editor · safety",
    "group": "push",
-   "route": "/tutorials/d12a63ff-06d0-4102-b22b-3f80a3f797b5/safety",
-   "findings": [
+   "route": "/tutorials/17f511df-75e0-4608-a944-d581e2964aaa/safety",
+   "findings": [],
+   "role": "contributor",
+   "finalUrl": "/tutorials/17f511df-75e0-4608-a944-d581e2964aaa/safety",
+   "explained": [
     {
      "type": "missing-section",
      "severity": "medium",
      "what": "no inputs on live",
      "board": 2,
-     "live": 0
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "1/1 board paragraphs absent",
-     "board": "anything that could hurt a child, stated plainly.",
-     "live": "• any button or coin cell sits behind a compartment that needs a tool "
+     "live": 0,
+     "why": "pending",
+     "pending": "editor-safety-notes"
     }
    ],
-   "role": "contributor",
-   "finalUrl": "/tutorials/d12a63ff-06d0-4102-b22b-3f80a3f797b5/safety",
-   "explained": [],
    "boardHeadings": 0,
-   "liveHeadings": 1
+   "liveHeadings": 0
   },
   {
    "id": "ed_stl",
    "name": "Editor · STL",
    "group": "push",
-   "route": "/tutorials/d12a63ff-06d0-4102-b22b-3f80a3f797b5/stl",
-   "findings": [
+   "route": "/tutorials/17f511df-75e0-4608-a944-d581e2964aaa/stl",
+   "findings": [],
+   "role": "contributor",
+   "finalUrl": "/tutorials/17f511df-75e0-4608-a944-d581e2964aaa/stl",
+   "explained": [
     {
      "type": "missing-section",
      "severity": "high",
      "what": "h2 \"stl files\" has no counterpart",
      "board": "stl files",
-     "live": null
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "1/1 board paragraphs absent",
-     "board": "uploading printable models from the phone is coming — use the web edit",
-     "live": null
+     "live": null,
+     "why": "intended",
+     "reason": "The board draws STL upload as Not built yet; the app has built it (3D print files), so a maker attaches printable parts from the phone."
     }
    ],
-   "role": "contributor",
-   "finalUrl": "/tutorials/d12a63ff-06d0-4102-b22b-3f80a3f797b5/stl",
-   "explained": [],
    "boardHeadings": 1,
-   "liveHeadings": 1
+   "liveHeadings": 0
   },
   {
    "id": "my_toys",
@@ -1479,39 +796,45 @@
    "finalUrl": "/toys",
    "explained": [],
    "boardHeadings": 0,
-   "liveHeadings": 1
+   "liveHeadings": 0
   },
   {
    "id": "toy_new",
    "name": "Add a toy",
    "group": "push",
    "route": "/toys/new",
-   "findings": [
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/toys/new",
+   "explained": [
     {
      "type": "missing-section",
      "severity": "high",
      "what": "board lists cards, live shows none",
      "board": 6,
-     "live": 0
+     "live": 0,
+     "why": "intended",
+     "reason": "Create first, then edit: a family saves a toy in two taps (name, condition) and adds photos and notes in the editor."
     },
     {
      "type": "missing-section",
      "severity": "high",
      "what": "board has cards, live has none",
      "board": 6,
-     "live": 0
+     "live": 0,
+     "why": "intended",
+     "reason": "Create first, then edit: a family saves a toy in two taps and adds the rest in the editor."
     },
     {
      "type": "copy",
      "severity": "medium",
      "what": "1/1 board paragraphs absent",
      "board": "one adapted item you hold — its condition, a photo, and whether it is ",
-     "live": "give it a name and a condition — everything else comes next."
+     "live": "give it a name and a condition — everything else comes next.",
+     "why": "intended",
+     "reason": "The lead says what this first step asks for: a name and a condition."
     }
    ],
-   "role": "parent",
-   "finalUrl": "/toys/new",
-   "explained": [],
    "boardHeadings": 0,
    "liveHeadings": 1
   },
@@ -1519,35 +842,32 @@
    "id": "toy_detail",
    "name": "Toy detail",
    "group": "push",
-   "route": "/toys/9fb80208-0b88-47fa-83d7-338899bb2295",
-   "findings": [
+   "route": "/toys/892ed74f-9e6d-40e7-ab66-61decf882947",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/toys/892ed74f-9e6d-40e7-ab66-61decf882947",
+   "explained": [
     {
-     "type": "radius",
-     "severity": "medium",
-     "what": "card radius",
-     "board": "20px",
-     "live": "14px"
+     "type": "missing-section",
+     "severity": "high",
+     "what": "board lists cards, live shows none",
+     "board": 4,
+     "live": 0,
+     "why": "pending",
+     "pending": "my-toy-inline-requests"
     },
     {
-     "type": "copy",
-     "severity": "medium",
-     "what": "1/1 board paragraphs absent",
-     "board": "light-up drum — listed # june, good condition, switch-adapted. two fam",
-     "live": "built from a guide? (optional)"
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "set",
-     "live": "none"
+     "type": "missing-section",
+     "severity": "high",
+     "what": "board has cards, live has none",
+     "board": 4,
+     "live": 0,
+     "why": "pending",
+     "pending": "my-toy-inline-requests"
     }
    ],
-   "role": "parent",
-   "finalUrl": "/toys/9fb80208-0b88-47fa-83d7-338899bb2295",
-   "explained": [],
    "boardHeadings": 0,
-   "liveHeadings": 2
+   "liveHeadings": 1
   },
   {
    "id": "exchanges",
@@ -1559,7 +879,7 @@
    "finalUrl": "/exchanges",
    "explained": [],
    "boardHeadings": 0,
-   "liveHeadings": 1
+   "liveHeadings": 0
   },
   {
    "id": "my_challenges",
@@ -1571,7 +891,7 @@
    "finalUrl": "/challenges",
    "explained": [],
    "boardHeadings": 0,
-   "liveHeadings": 1
+   "liveHeadings": 0
   },
   {
    "id": "saved",
@@ -1583,7 +903,7 @@
    "finalUrl": "/saved",
    "explained": [],
    "boardHeadings": 0,
-   "liveHeadings": 1
+   "liveHeadings": 0
   },
   {
    "id": "saved_slug",
@@ -1595,7 +915,7 @@
    "finalUrl": "/saved/tutorials",
    "explained": [],
    "boardHeadings": 0,
-   "liveHeadings": 1
+   "liveHeadings": 0
   },
   {
    "id": "notifications",
@@ -1607,88 +927,71 @@
    "finalUrl": "/notifications",
    "explained": [],
    "boardHeadings": 0,
-   "liveHeadings": 1
+   "liveHeadings": 0
   },
   {
    "id": "print_requests",
    "name": "Print requests",
    "group": "push",
    "route": "/print-requests",
-   "findings": [
-    {
-     "type": "radius",
-     "severity": "medium",
-     "what": "card radius",
-     "board": "20px",
-     "live": "24px"
-    }
-   ],
+   "findings": [],
    "role": "parent",
    "finalUrl": "/print-requests",
    "explained": [],
    "boardHeadings": 0,
-   "liveHeadings": 1
+   "liveHeadings": 0
   },
   {
    "id": "print_offer",
    "name": "Print for others",
    "group": "push",
    "route": "/print-for-others",
-   "findings": [
-    {
-     "type": "radius",
-     "severity": "medium",
-     "what": "card radius",
-     "board": "20px",
-     "live": "24px"
-    },
-    {
-     "type": "radius",
-     "severity": "low",
-     "what": "button radius range",
-     "board": "999px",
-     "live": "14px"
-    }
-   ],
+   "findings": [],
    "role": "parent",
    "finalUrl": "/print-for-others",
    "explained": [],
    "boardHeadings": 0,
-   "liveHeadings": 1
+   "liveHeadings": 0
   },
   {
    "id": "print_add",
    "name": "Add a printer",
    "group": "push",
    "route": "/print-for-others/add",
-   "findings": [
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/print-for-others/add",
+   "explained": [
     {
      "type": "missing-section",
      "severity": "high",
-     "what": "h3 \"$#\" has no counterpart",
+     "what": "h2 \"$#\" has no counterpart",
      "board": "$#",
-     "live": null
+     "live": null,
+     "why": "pending",
+     "pending": "add-printer-rates"
     },
     {
      "type": "radius",
      "severity": "medium",
      "what": "card radius",
      "board": "14px",
-     "live": "18px"
+     "live": "18px",
+     "why": "pending",
+     "pending": "add-printer-rates"
     },
     {
      "type": "colour",
      "severity": "low",
      "what": "card background",
      "board": "rgb(243,241,237)",
-     "live": "rgb(255,255,255)"
+     "live": "rgb(255,255,255)",
+     "why": "pending",
+     "pending": "add-printer-rates"
     }
    ],
-   "role": "parent",
-   "finalUrl": "/print-for-others/add",
-   "explained": [],
    "boardHeadings": 1,
-   "liveHeadings": 1
+   "liveHeadings": 0
   },
   {
    "id": "account",
@@ -1700,31 +1003,31 @@
    "finalUrl": "/account",
    "explained": [],
    "boardHeadings": 2,
-   "liveHeadings": 3
+   "liveHeadings": 2
   },
   {
    "id": "ability",
    "name": "Ability profile",
    "group": "push",
-   "route": "/account/child/26bc19a5-bed7-4208-9b7f-5165ef4da65d",
+   "route": "/account/child/ea79aef9-a670-4f80-b022-506947478966",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/account/child/26bc19a5-bed7-4208-9b7f-5165ef4da65d",
+   "finalUrl": "/account/child/ea79aef9-a670-4f80-b022-506947478966",
    "explained": [],
    "boardHeadings": 0,
-   "liveHeadings": 4
+   "liveHeadings": 3
   },
   {
    "id": "needs",
    "name": "Everyday needs",
    "group": "push",
-   "route": "/account/child/26bc19a5-bed7-4208-9b7f-5165ef4da65d",
+   "route": "/account/child/ea79aef9-a670-4f80-b022-506947478966",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/account/child/26bc19a5-bed7-4208-9b7f-5165ef4da65d",
+   "finalUrl": "/account/child/ea79aef9-a670-4f80-b022-506947478966",
    "explained": [],
    "boardHeadings": 0,
-   "liveHeadings": 4
+   "liveHeadings": 3
   },
   {
    "id": "customization",
@@ -1740,21 +1043,13 @@
    "id": "child",
    "name": "Child profile",
    "group": "push",
-   "route": "/account/child/26bc19a5-bed7-4208-9b7f-5165ef4da65d",
-   "findings": [
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "2/3 board paragraphs absent",
-     "board": "ollie, age # everything here is optional and private to you — never sh",
-     "live": "every field is optional. we use this only to suggest guides that suit "
-    }
-   ],
+   "route": "/account/child/ea79aef9-a670-4f80-b022-506947478966",
+   "findings": [],
    "role": "parent",
-   "finalUrl": "/account/child/26bc19a5-bed7-4208-9b7f-5165ef4da65d",
+   "finalUrl": "/account/child/ea79aef9-a670-4f80-b022-506947478966",
    "explained": [],
    "boardHeadings": 0,
-   "liveHeadings": 4
+   "liveHeadings": 3
   },
   {
    "id": "org_queue",
@@ -1766,6 +1061,28 @@
    "finalUrl": "/organisation",
    "explained": [],
    "boardHeadings": 0,
+   "liveHeadings": 0
+  },
+  {
+   "id": "org_review",
+   "name": "Review a guide",
+   "group": "push",
+   "route": "/organisation/8b3174a0-d419-46b1-9255-04d245a1be91",
+   "findings": [],
+   "role": "leader",
+   "finalUrl": "/organisation/8b3174a0-d419-46b1-9255-04d245a1be91",
+   "explained": [
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "1/1 board paragraphs absent",
+     "board": "vibrating cushion with a lever — sam mitchell, easy, # minutes. six se",
+     "live": "parity guide submitted for review",
+     "why": "pending",
+     "pending": "review-checklist"
+    }
+   ],
+   "boardHeadings": 0,
    "liveHeadings": 1
   },
   {
@@ -1773,176 +1090,147 @@
    "name": "Toy inventory",
    "group": "push",
    "route": "/organisation/toys",
-   "findings": [
+   "findings": [],
+   "role": "leader",
+   "finalUrl": "/organisation/toys",
+   "explained": [
     {
      "type": "copy",
      "severity": "medium",
      "what": "1/1 board paragraphs absent",
      "board": "# on the shelf, # out with families, # need cleaning.",
-     "live": "# listing, # units on the shelf."
+     "live": "# listing, # units on the shelf.",
+     "why": "intended",
+     "reason": "Decided 2026-09-30: no lending, so no 'out with families' or 'need cleaning'; the lead counts listings and units."
     }
    ],
-   "role": "leader",
-   "finalUrl": "/organisation/toys",
-   "explained": [],
    "boardHeadings": 0,
-   "liveHeadings": 1
+   "liveHeadings": 0
   },
   {
    "id": "org_orders",
    "name": "Print orders",
    "group": "push",
    "route": "/organisation/orders",
-   "findings": [
-    {
-     "type": "radius",
-     "severity": "medium",
-     "what": "card radius",
-     "board": "16px",
-     "live": "24px"
-    },
+   "findings": [],
+   "role": "leader",
+   "finalUrl": "/organisation/orders",
+   "explained": [
     {
      "type": "copy",
      "severity": "medium",
-     "what": "4/4 board paragraphs absent",
+     "what": "3/4 board paragraphs absent",
      "board": "# of # parts · # h # · ~# g petg",
-     "live": null
-    },
-    {
-     "type": "radius",
-     "severity": "low",
-     "what": "button radius range",
-     "board": "999px",
-     "live": "14px"
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "none",
-     "live": "set"
+     "live": "# part · about # h # · ~# g petg",
+     "why": "fixture",
+     "reason": "The board's sample files and its 'other printers asked' group; the card draws each when the data has them."
     }
    ],
-   "role": "leader",
-   "finalUrl": "/organisation/orders",
-   "explained": [],
    "boardHeadings": 0,
-   "liveHeadings": 1
+   "liveHeadings": 0
   },
   {
    "id": "admin",
    "name": "Admin",
    "group": "push",
    "route": "/admin",
-   "findings": [
+   "findings": [],
+   "role": "admin",
+   "finalUrl": "/admin",
+   "explained": [
     {
      "type": "missing-section",
      "severity": "high",
      "what": "board lists cards, live shows none",
      "board": 6,
-     "live": 0
+     "live": 0,
+     "why": "pending",
+     "pending": "admin-counts"
     },
     {
      "type": "missing-section",
      "severity": "high",
      "what": "board has cards, live has none",
      "board": 6,
-     "live": 0
+     "live": 0,
+     "why": "pending",
+     "pending": "admin-counts"
     },
     {
      "type": "copy",
      "severity": "medium",
      "what": "1/1 board paragraphs absent",
      "board": "the review queues and the report inbox. anything with a number is wait",
-     "live": "review tables don't fit a phone. these open on the web, signed in."
+     "live": "review tables don't fit a phone. these open on the web, signed in.",
+     "why": "intended",
+     "reason": "Phones link out to the web admin: review tables do not fit a phone (admin.tsx)."
     }
    ],
-   "role": "admin",
-   "finalUrl": "/admin",
-   "explained": [],
    "boardHeadings": 0,
-   "liveHeadings": 1
+   "liveHeadings": 0
   },
   {
    "id": "wizard",
    "name": "Child profile wizard",
    "group": "push",
    "route": "/child",
-   "findings": [
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/child",
+   "explained": [
     {
      "type": "copy",
      "severity": "medium",
      "what": "2/2 board paragraphs absent",
      "board": "a name helps us talk about them naturally. it is never shared.",
-     "live": "hi! a few quick questions. skip any you like."
-    },
-    {
-     "type": "radius",
-     "severity": "low",
-     "what": "button radius range",
-     "board": "999px",
-     "live": "14px"
+     "live": "hi! a few quick questions. skip any you like.",
+     "why": "pending",
+     "pending": "wizard-mascot-done"
     }
    ],
-   "role": "parent",
-   "finalUrl": "/child",
-   "explained": [],
    "boardHeadings": 1,
-   "liveHeadings": 2
+   "liveHeadings": 1
   },
   {
    "id": "sign_in",
    "name": "Sign in",
    "group": "bare",
    "route": "/sign-in",
-   "findings": [
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/sign-in",
+   "explained": [
     {
-     "type": "size",
-     "severity": "medium",
-     "what": "h1 \"splat connect\" size",
-     "board": "22px",
-     "live": "26px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h1 wording",
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h1 \"splat connect\" has no counterpart",
      "board": "splat connect",
-     "live": "welcome back"
+     "live": null,
+     "why": "intended",
+     "reason": "The sign-in spec (2026-09-30-mobile-sign-in-design) sets back, bear and Welcome back in place of the wordmark."
     },
     {
      "type": "copy",
      "severity": "medium",
      "what": "1/1 board paragraphs absent",
      "board": "free to read, reviewed guides for switch-adapted play.",
-     "live": "no paid tier. not a medical device."
+     "live": "no paid tier. not a medical device.",
+     "why": "intended",
+     "reason": "The sign-in spec gives the auth screens the foot line No paid tier. Not a medical device."
     }
    ],
-   "role": "guest",
-   "finalUrl": "/sign-in",
-   "explained": [],
    "boardHeadings": 1,
    "liveHeadings": 1
   }
  ],
  "summary": {
   "screens": 61,
-  "clean": 16,
-  "withFindings": 44,
+  "clean": 60,
+  "withFindings": 0,
   "errored": 0,
   "skipped": 1,
-  "findings": 164,
-  "explained": 0,
-  "byType": {
-   "missing-section": 34,
-   "size": 11,
-   "copy": 35,
-   "radius": 37,
-   "colour": 7,
-   "shadow": 6,
-   "font": 16,
-   "weight": 14,
-   "extra-section": 4
-  }
+  "findings": 0,
+  "explained": 51,
+  "byType": {}
  }
 }
