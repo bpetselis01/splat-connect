@@ -77,6 +77,11 @@ declare
   gone_guides uuid[];
 begin
   if uid = ghost then raise exception 'placeholder_account'; end if;
+  -- Lock every organisation they lead first, so a co-leader stepping down
+  -- (084's step_down_as_leader takes the same lock) cannot slip between this
+  -- check and the delete and leave the organisation with no leader.
+  perform 1 from organizations
+  where id in (select org_id from org_leaders where user_id = uid) for update;
   if jsonb_array_length(account_deletion_preview(uid)->'soleLedOrgs') > 0 then
     raise exception 'sole_leader';
   end if;
