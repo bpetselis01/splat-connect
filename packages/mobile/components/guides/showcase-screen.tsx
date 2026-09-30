@@ -39,7 +39,7 @@ function GuideCard({ tutorial, onPress }: { tutorial: Tutorial; onPress: () => v
           <Image source={{ uri: tutorial.toy_photo_url }} style={styles.thumbnail} />
         ) : (
           <View style={styles.thumbnailPlaceholder}>
-            <Ionicons name="color-wand-outline" size={30} color={theme.colors.primary} />
+            <Ionicons name="color-wand-outline" size={22} color={theme.colors.primary} />
           </View>
         )}
         <View style={styles.cardBody}>
@@ -156,7 +156,7 @@ export function ShowcaseScreen({ kind, id }: { kind: ShowcaseKind; id: string })
         </View>
       </Card>
       {kind === 'person' ? (
-        <View style={styles.section}>
+        <View style={[styles.section, styles.actions]}>
           <PendingButton pending="thank-people" label={`Say thanks to ${firstName}`} />
           <PendingButton pending="report-problem-mobile" label="Report a problem" variant="ghost" />
         </View>
@@ -212,20 +212,30 @@ const styles = StyleSheet.create({
   name: { fontFamily: theme.fonts.display, fontSize: 22, color: theme.colors.text },
   meta: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.muted, marginTop: theme.spacing(1) },
   section: { marginBottom: theme.spacing(6) },
+  // Say thanks and Report a problem share one row, as on the board.
+  actions: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3) },
   sectionTitle: { fontFamily: theme.fonts.display, fontSize: 18, color: theme.colors.text, marginBottom: theme.spacing(3) },
   rowPress: { marginBottom: theme.spacing(3) },
-  card: { flexDirection: 'row', gap: theme.spacing(4), padding: theme.spacing(3), borderRadius: theme.radii.panel },
-  thumbnail: { width: 104, height: 104, borderRadius: theme.radii.field, backgroundColor: theme.colors.surfaceSunken },
+  // The board's list row: a 50px tile, a 14px title, 18px corners.
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing(3),
+    paddingVertical: theme.spacing(3),
+    paddingHorizontal: 14,
+    borderRadius: theme.radii.panel,
+  },
+  thumbnail: { width: 50, height: 50, borderRadius: theme.radii.field, backgroundColor: theme.colors.surfaceSunken },
   thumbnailPlaceholder: {
-    width: 104,
-    height: 104,
+    width: 50,
+    height: 50,
     borderRadius: theme.radii.field,
     backgroundColor: theme.colors.accentLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
   cardBody: { flex: 1, justifyContent: 'center', gap: theme.spacing(2) },
-  cardTitle: { fontFamily: theme.fonts.bold, color: theme.colors.text, fontSize: theme.type.heading, lineHeight: 24 },
+  cardTitle: { fontFamily: theme.fonts.black, color: theme.colors.text, fontSize: 14, lineHeight: 19 },
   badgeRow: { flexDirection: 'row', gap: theme.spacing(2) },
   toyRow: {
     flexDirection: 'row',
