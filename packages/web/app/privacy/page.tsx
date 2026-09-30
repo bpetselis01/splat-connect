@@ -85,19 +85,23 @@ export default function PrivacyPage() {
       </section>
 
       <section>
-        {/* TODO(splat): these periods are commitments, not yet automation — there is
-            no scheduled deletion job. Build one, or document the manual process,
-            before relying on this section. */}
+        {/* TODO(splat): the pickup-address period is a commitment, not yet
+            automation — no scheduled job clears it. Account deletion itself is
+            immediate (083_account_deletion.sql). */}
         <h2>How long we keep things</h2>
         <ul>
-          <li>Child profiles: while your account is open, then 12 months after you close it, then deleted.</li>
-          <li>Your account: while it&apos;s open, then 12 months.</li>
-          <li>Pickup addresses: 12 months after the exchange is completed.</li>
+          <li>Your account and child profiles: while your account is open. Deleting your account removes them straight away.</li>
+          <li>Pickup addresses: 12 months after the exchange is completed, or straight away if you delete your account.</li>
           <li>
-            Published guides and toys: indefinitely, because others rely on them. Your
-            display name stays credited unless you ask us to remove it.
+            Published guides: indefinitely, because families rely on them. When you delete
+            your account they are credited to &ldquo;A former contributor&rdquo;, unless you
+            choose to keep your name.
           </li>
-          <li>Records we&apos;re required by law to keep: 7 years.</li>
+          <li>
+            Other members&apos; records of exchanges and messages with you: kept for them,
+            shown as &ldquo;Deleted member&rdquo; once your account is gone.
+          </li>
+          <li>Records we&apos;re required by law to keep, such as exchange costs: 7 years, without your name.</li>
         </ul>
       </section>
 
@@ -148,13 +152,13 @@ export default function PrivacyPage() {
         <h2>Getting a copy, fixing it, or complaining</h2>
         <p>
           You can delete a child profile, a toy, or a draft guide yourself at any time
-          from your dashboard. To get a copy of what we hold about you or your child,
-          to correct it, or to delete the account entirely,{' '}
-          <Link href="/contact">contact us</Link>. We&apos;ll respond within 30 days
-          and we don&apos;t charge. Deleting an
-          account removes your child profiles, your unpublished work and your pickup
-          addresses. Published guides that other people have contributed to remain,
-          with your name removed unless you ask otherwise.
+          from your dashboard, and you can delete your whole account yourself too: in
+          the app under Account, or on the web (see{' '}
+          <Link href="/delete-account">how to delete your account</Link>). It takes
+          effect straight away and removes your profile, child profiles, drafts, saved
+          items, photos and pickup address. To get a copy of what we hold about you or
+          your child, or to correct it, <Link href="/contact">contact us</Link>.
+          We&apos;ll respond within 30 days and we don&apos;t charge.
         </p>
         <p>
           If you&apos;re unhappy with how we&apos;ve handled your information, tell us
