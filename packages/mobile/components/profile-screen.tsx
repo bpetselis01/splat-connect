@@ -12,7 +12,6 @@ import { Screen } from './ui/Screen'
 import { Card } from './ui/Card'
 import { TextField } from './ui/TextField'
 import { ChildProfileHome } from './profile/child-profile-home'
-import { TermsCheckbox, ErrorRow } from './auth-screen'
 import { ListRow, ListSection } from './list/list-kit'
 import { Ionicons } from '@expo/vector-icons'
 
@@ -31,9 +30,7 @@ function RowIcon({ name }: { name: ComponentProps<typeof Ionicons>['name'] }) {
 
 export function ProfileScreen() {
   const router = useRouter()
-  const { session, profile, signOut, hasContributorTerms, acceptContributorTerms } = useAuth()
-  const [gateTicked, setGateTicked] = useState(false)
-  const [gateError, setGateError] = useState<string | null>(null)
+  const { session, profile, signOut } = useAuth()
   // The display name is the one profile field editable here. Committed on end
   // of editing rather than per keystroke — a name is typed once, not streamed.
   const [nameState, setNameState] = useState<'idle' | 'saving' | 'saved' | 'failed'>('idle')
@@ -93,41 +90,7 @@ export function ProfileScreen() {
         <ChildProfileHome />
 
         <ListSection style={styles.sectionGap}>Profile detail</ListSection>
-        {/* Catch-up gate for accounts created before terms were part of signup.
-            Strict `=== false`: hasContributorTerms is null until the
-            /api/agreements/me fetch resolves. Treating null as "unaccepted"
-            flashed this gate for every already-accepted user on every app
-            launch, for as long as that fetch was in flight. The child
-            profiles above stay reachable either way. */}
-        {hasContributorTerms === false ? (
-          <Card>
-            <Text style={styles.heading}>Before you continue</Text>
-            <Text style={styles.checkEmailText}>
-              Your account was created before we asked contributors to accept terms.
-              These terms have not been written yet, and anything you accept now is not
-              binding.
-            </Text>
-            <TermsCheckbox
-              testID="gate-accept-checkbox"
-              checked={gateTicked}
-              onPress={() => setGateTicked((v) => !v)}
-            />
-            <ErrorRow message={gateError} />
-            <Button
-              label="Accept and continue"
-              disabled={!gateTicked}
-              onPress={async () => {
-                const res = await acceptContributorTerms()
-                setGateError(res.error)
-              }}
-            />
-            {/* Escape hatch: if acceptance keeps failing (offline, API down), the user
-                is stuck on this screen with no other nav — they must still be able to
-                sign out or switch accounts. */}
-            <Button label="Sign Out" onPress={() => signOut()} variant="ghost" />
-          </Card>
-        ) : (
-          <View style={styles.detail}>
+        <View style={styles.detail}>
             <View style={styles.nameCard}>
               <TextField
                 label="Display name"
@@ -166,7 +129,6 @@ export function ProfileScreen() {
             />
             <Button label="Sign Out" onPress={() => signOut()} variant="ghost" />
           </View>
-        )}
       </ScrollView>
     </Screen>
   )
