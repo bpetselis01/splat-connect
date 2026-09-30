@@ -9,7 +9,7 @@
 // for them now (APP 3 minimisation). These are plain-language preferences for
 // ranking guides, never a clinical assessment — see docs/REGULATORY-CHANGES.md.
 import { ScrollView, View, Text, Linking, StyleSheet } from 'react-native'
-import { useRouter } from 'expo-router'
+import { Stack, useRouter } from 'expo-router'
 import { CHILD_QUESTIONS } from '@splat-connect/types'
 import { NotMedicalNote } from '../ui/NotMedicalNote'
 import { apiClient } from '../../lib/api-client'
@@ -61,6 +61,8 @@ export function ChildEditorHome({ childId }: { childId: string }) {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+      {/* The header names the child, as on the board. */}
+      <Stack.Screen options={{ title: profile.name || 'Child profile' }} />
       <Text style={styles.eyebrow}>PRIVATE TO YOU</Text>
       <Text style={styles.intro}>
         Every field is optional. We use this only to suggest guides that suit your child — it is

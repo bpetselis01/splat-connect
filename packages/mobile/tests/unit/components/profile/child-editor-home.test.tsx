@@ -19,7 +19,10 @@ jest.mock('../../../../lib/api-client', () => ({
 
 const mockPush = jest.fn()
 const mockBack = jest.fn()
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, back: mockBack }) }))
+jest.mock('expo-router', () => ({
+  useRouter: () => ({ push: mockPush, back: mockBack }),
+  Stack: { Screen: () => null },
+}))
 
 const child = (over: object = {}) => ({
   id: 'cp1',
