@@ -201,7 +201,7 @@ copy() { # copy FILE: put a template on the clipboard when pbcopy exists
   else note "open $1 and copy its contents"; fi
 }
 
-TOTAL_STAGES=10
+TOTAL_STAGES=12
 
 banner "SPLAT mobile sign-in setup"
 
@@ -302,6 +302,35 @@ step "Client Secret: the Web client's secret from stage 6."
 step "Authorized Client IDs: $EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,$EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID"
 step "Skip nonce checks: ON (iOS Google tokens carry a nonce the app cannot supply). Save."
 pause
+
+stage "Supabase: apply account deletion (migration 083)"
+say "083 adds the Deleted member placeholder and delete_account(); in-app deletion needs it."
+note "Needs a working CLI login: run 'supabase login' first if 'supabase projects list' says Unauthorized."
+if confirm "Push pending migrations to the hosted project ($REF) now?"; then
+  supabase db push
+  step "Then check the guards: SUPABASE_PROJECT_REF=$REF bash scripts/check-schema-guards.sh"
+  pause
+else
+  SKIPPED+=("supabase db push (applies 083_account_deletion.sql), then scripts/check-schema-guards.sh")
+fi
+
+stage "Apple: key that revokes Sign in with Apple on account deletion"
+if [[ "$APPLE" == 1 ]]; then
+  open_url "https://developer.apple.com/account/resources/authkeys/add"
+  step "Name: SPLAT sign-in revoke. Tick 'Sign In with Apple' → Configure → primary App ID $BUNDLE."
+  step "Register, then Download the .p8 file (Apple lets you download it once)."
+  ask APPLE_KEY_ID "Key ID (10 characters, shown on the key page):"
+  ask P8 "Path to the downloaded .p8 file:"
+  API_ENV=packages/api/.env.local
+  ENV_FILE=$API_ENV write_env APPLE_TEAM_ID 847BXN928Z
+  ENV_FILE=$API_ENV write_env APPLE_CLIENT_ID "$BUNDLE"
+  ENV_FILE=$API_ENV write_env APPLE_KEY_ID "$APPLE_KEY_ID"
+  ENV_FILE=$API_ENV write_env APPLE_PRIVATE_KEY "\"$(awk 'BEGIN{ORS="\\n"} {print}' "${P8/#\~/$HOME}")\""
+  note "Set the same four values on the hosted API when it is deployed."
+else
+  SKIPPED+=("Apple revoke key: only needed once Sign in with Apple is on")
+fi
+SKIPPED+=("Google Play Console → App content → Data deletion: <web URL>/delete-account")
 
 stage "Build the phone app with both providers"
 write_env EXPO_PUBLIC_APPLE_SIGN_IN "$APPLE"
