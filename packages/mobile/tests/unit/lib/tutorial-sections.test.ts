@@ -77,16 +77,16 @@ describe('getMissingFields', () => {
 
 describe('sectionsFor', () => {
   it('gives a toy adaptation six sections and no STL', () => {
-    expect(sectionsFor('toy_adaptation')).toEqual(['details', 'steps', 'safety', 'parts', 'tools', 'files'])
+    expect(sectionsFor('toy_adaptation')).toEqual(['details', 'steps', 'parts', 'tools', 'safety', 'files'])
   })
 
   it('adds STL for assistive tech', () => {
     expect(sectionsFor('assistive_tech')).toEqual([
       'details',
       'steps',
-      'safety',
       'parts',
       'tools',
+      'safety',
       'files',
       'stl',
     ])

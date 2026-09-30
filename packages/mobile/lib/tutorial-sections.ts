@@ -53,7 +53,9 @@ export function getMissingFields(tutorial: TutorialWithDetails): Gap[] {
 
 /** The rows this tutorial's kind shows, in hub order. */
 export function sectionsFor(kind: TutorialKind): SectionId[] {
-  const base: SectionId[] = ['details', 'steps', 'safety', 'parts', 'tools', 'files']
+  // The board's order: what it is, how to build it, what to buy, what to use,
+  // what could hurt, then the files.
+  const base: SectionId[] = ['details', 'steps', 'parts', 'tools', 'safety', 'files']
   return kind === 'assistive_tech' ? [...base, 'stl'] : base
 }
 
