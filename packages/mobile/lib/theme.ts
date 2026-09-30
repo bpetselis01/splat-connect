@@ -40,6 +40,9 @@ export const theme = {
     // The board's --tok: Easy, Backed and "Like new" pills.
     successSoft: '#dff3ea',
     danger: '#e05252',
+    // Carries white text (the delete-account button), where #e05252 reaches
+    // only 3.82:1. Same move as successDeep.
+    dangerDeep: '#b83a3a',
     dangerSoft: '#fde3e3',
     // Badge tones — the same bg/fg pairs as web's badge.tsx. tone.test guards
     // contrast. Soft Pop inks every tint rather than using a per-hue deep
