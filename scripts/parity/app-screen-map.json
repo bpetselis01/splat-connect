@@ -86,6 +86,12 @@
     "match": "board paragraphs absent",
     "why": "pending",
     "pending": "new-guide-fields"
+   },
+   {
+    "type": "picture",
+    "match": "form sheet",
+    "why": "intended",
+    "reason": "Add a guide opens as a sheet you pull back down (guides/_layout.tsx): a one-shot form over the library, not a push."
    }
   ]
  },
@@ -165,7 +171,15 @@
   "boardRoute": "guides (loading)",
   "route": "/guides",
   "role": "parent",
-  "stall": "**/api/public/tutorials**"
+  "stall": "**/api/public/tutorials**",
+  "explained": [
+   {
+    "type": "picture",
+    "match": "loaded Guides list",
+    "why": "harness",
+    "reason": "The stall that holds Loading's request open is a Playwright route; the simulator's request is not held, so the shot is the loaded list. The web export measures the skeleton."
+   }
+  ]
  },
  {
   "id": "toy_library",
@@ -180,6 +194,12 @@
     "match": "nearest first",
     "why": "pending",
     "pending": "locations-and-distance"
+   },
+   {
+    "type": "picture",
+    "match": "search field",
+    "why": "pending",
+    "pending": "mobile-extra-affordances"
    }
   ]
  },
@@ -283,7 +303,15 @@
   "group": "push",
   "boardRoute": "explore/challenges",
   "route": "/explore/challenges",
-  "role": "parent"
+  "role": "parent",
+  "explained": [
+   {
+    "type": "picture",
+    "match": "filter chips",
+    "why": "pending",
+    "pending": "mobile-extra-affordances"
+   }
+  ]
  },
  {
   "id": "challenge_detail",
@@ -348,7 +376,15 @@
   "group": "push",
   "boardRoute": "explore/makers-wanted",
   "route": "/explore/makers-wanted",
-  "role": "parent"
+  "role": "parent",
+  "explained": [
+   {
+    "type": "picture",
+    "match": "status control",
+    "why": "pending",
+    "pending": "makers-live-done-tabs"
+   }
+  ]
  },
  {
   "id": "mw_new",
@@ -470,7 +506,15 @@
   "boardRoute": "(my)/tutorials/[id]",
   "route": "/tutorials/[id]",
   "idFrom": "editor",
-  "role": "contributor"
+  "role": "contributor",
+  "explained": [
+   {
+    "type": "picture",
+    "match": "menu",
+    "why": "intended",
+    "reason": "The hub's menu is the author's way out of a guide reached by router.replace from Add a guide, which leaves nothing behind it (hub.tsx)."
+   }
+  ]
  },
  {
   "id": "ed_details",
@@ -486,6 +530,12 @@
     "match": "input background",
     "why": "intended",
     "reason": "The board fills a field with canvas only inside its white section card; the app's section fields sit on the page and take the surface, as the board's other 26 inputs do."
+   },
+   {
+    "type": "picture",
+    "match": "footer",
+    "why": "intended",
+    "reason": "Every editor section ends with Checklist and Next, so an author moves on without going back to the hub (section-footer.tsx)."
    }
   ]
  },
@@ -503,6 +553,12 @@
     "match": "input background",
     "why": "intended",
     "reason": "The board fills a field with canvas only inside its white section card; the app's fields sit on the page and take the surface."
+   },
+   {
+    "type": "picture",
+    "match": "footer",
+    "why": "intended",
+    "reason": "Every editor section ends with Checklist and Next, so an author moves on without going back to the hub (section-footer.tsx)."
    }
   ]
  },
@@ -520,6 +576,12 @@
     "match": "input background",
     "why": "intended",
     "reason": "The board fills a field with canvas only inside its white section card; the app's fields sit on the page and take the surface."
+   },
+   {
+    "type": "picture",
+    "match": "footer",
+    "why": "intended",
+    "reason": "Every editor section ends with Checklist and Next, so an author moves on without going back to the hub (section-footer.tsx)."
    }
   ]
  },
@@ -537,6 +599,12 @@
     "match": "input background",
     "why": "intended",
     "reason": "The board fills a field with canvas only inside its white section card; the app's fields sit on the page and take the surface."
+   },
+   {
+    "type": "picture",
+    "match": "footer",
+    "why": "intended",
+    "reason": "Every editor section ends with Checklist and Next, so an author moves on without going back to the hub (section-footer.tsx)."
    }
   ]
  },
@@ -630,6 +698,12 @@
     "match": "board has cards",
     "why": "pending",
     "pending": "my-toy-inline-requests"
+   },
+   {
+    "type": "picture",
+    "match": "editor",
+    "why": "pending",
+    "pending": "my-toy-summary"
    }
   ]
  },
@@ -655,7 +729,15 @@
   "group": "push",
   "boardRoute": "(my)/saved",
   "route": "/saved",
-  "role": "parent"
+  "role": "parent",
+  "explained": [
+   {
+    "type": "picture",
+    "match": "Printable parts",
+    "why": "pending",
+    "pending": "saved-parts"
+   }
+  ]
  },
  {
   "id": "saved_slug",
@@ -671,7 +753,15 @@
   "group": "push",
   "boardRoute": "(my)/notifications",
   "route": "/notifications",
-  "role": "parent"
+  "role": "parent",
+  "explained": [
+   {
+    "type": "picture",
+    "match": "segmented switch",
+    "why": "intended",
+    "reason": "Exchanges and notifications share one inbox on the board (mobile-design-notes); the screen reuses the inbox with its switch."
+   }
+  ]
  },
  {
   "id": "print_requests",
@@ -714,6 +804,12 @@
     "match": "card background",
     "why": "pending",
     "pending": "add-printer-rates"
+   },
+   {
+    "type": "picture",
+    "match": "sticky footer",
+    "why": "intended",
+    "reason": "On a long form the primary action stays in reach as a sticky footer."
    }
   ]
  },
@@ -858,6 +954,12 @@
     "match": "board paragraphs absent",
     "why": "pending",
     "pending": "wizard-mascot-done"
+   },
+   {
+    "type": "picture",
+    "match": "extra Skip",
+    "why": "intended",
+    "reason": "Every wizard question is optional; Skip moves on without saving an answer."
    }
   ]
  },

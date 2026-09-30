@@ -1,7 +1,474 @@
 {
- "at": "2026-09-30T15:12:52.447Z",
+ "at": "2026-09-30T18:20:58.897Z",
  "live": "http://localhost:3112",
  "screens": [
+  {
+   "id": "guide_new",
+   "name": "New guide",
+   "group": "push",
+   "route": "/guides/new",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/guides/new",
+   "explained": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "board lists cards, live shows none",
+     "board": 5,
+     "live": 0,
+     "why": "pending",
+     "pending": "new-guide-fields"
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "board has cards, live has none",
+     "board": 5,
+     "live": 0,
+     "why": "pending",
+     "pending": "new-guide-fields"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "1/1 board paragraphs absent",
+     "board": "two things to start: what the toy is, and one photo. the rest can wait",
+     "live": "give it a title to start a draft — everything else comes next.",
+     "why": "pending",
+     "pending": "new-guide-fields"
+    },
+    {
+     "type": "picture",
+     "severity": "medium",
+     "what": "New guide is presented as a full-height form sheet with a grabber, an X and the title 'Add a guide'; the board pushes it",
+     "board": "push screen: back arrow, nav title 'New guide'",
+     "live": "formSheet with grabber, close X, title 'Add a guide'",
+     "why": "intended",
+     "reason": "Add a guide opens as a sheet you pull back down (guides/_layout.tsx): a one-shot form over the library, not a push."
+    }
+   ],
+   "boardHeadings": 0,
+   "liveHeadings": 0
+  },
+  {
+   "id": "loading",
+   "name": "Loading state",
+   "group": "tabs",
+   "route": "/guides",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/guides",
+   "explained": [
+    {
+     "type": "picture",
+     "severity": "medium",
+     "what": "The iOS shot shows the loaded Guides list, not the skeleton state",
+     "board": "three skeleton cards under the tab bar",
+     "live": "fully loaded guide library",
+     "why": "harness",
+     "reason": "The stall that holds Loading's request open is a Playwright route; the simulator's request is not held, so the shot is the loaded list. The web export measures the skeleton."
+    }
+   ],
+   "boardHeadings": 0,
+   "liveHeadings": 1
+  },
+  {
+   "id": "toy_library",
+   "name": "Toy library",
+   "group": "tabs",
+   "route": "/toy-library",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/toy-library",
+   "explained": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"nearest first\" has no counterpart",
+     "board": "nearest first",
+     "live": null,
+     "why": "pending",
+     "pending": "locations-and-distance"
+    },
+    {
+     "type": "picture",
+     "severity": "medium",
+     "what": "Extra search field between the Toys/Organisations toggle and the chips",
+     "board": "no search; chips follow the toggle",
+     "live": "'Search by toy name' field",
+     "why": "pending",
+     "pending": "mobile-extra-affordances"
+    }
+   ],
+   "boardHeadings": 8,
+   "liveHeadings": 2
+  },
+  {
+   "id": "challenges",
+   "name": "Challenges",
+   "group": "push",
+   "route": "/explore/challenges",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/explore/challenges",
+   "explained": [
+    {
+     "type": "picture",
+     "severity": "medium",
+     "what": "A row of filter chips (All, Build challenges, Questions, Has...) sits between the intro and the list",
+     "board": "The intro runs straight into the challenge cards",
+     "live": "A horizontally scrolling chip row, taken from web's shared CHALLENGE_FILTERS",
+     "why": "pending",
+     "pending": "mobile-extra-affordances"
+    }
+   ],
+   "boardHeadings": 5,
+   "liveHeadings": 8
+  },
+  {
+   "id": "makers_wanted",
+   "name": "Makers wanted",
+   "group": "push",
+   "route": "/explore/makers-wanted",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/explore/makers-wanted",
+   "explained": [
+    {
+     "type": "picture",
+     "severity": "medium",
+     "what": "The status control has 2 segments, and Live and Done are loose chips on a row below it",
+     "board": "One 4-segment control: Needs a maker, Live, Done, Yours",
+     "live": "A 2-segment control (Needs a maker, Yours), then Live and Done chips on their own row",
+     "why": "pending",
+     "pending": "makers-live-done-tabs"
+    }
+   ],
+   "boardHeadings": 0,
+   "liveHeadings": 0
+  },
+  {
+   "id": "editor",
+   "name": "Editor hub",
+   "group": "push",
+   "route": "/tutorials/27cd0dcc-d4ce-4f24-9322-b53d0de26503",
+   "findings": [],
+   "role": "contributor",
+   "finalUrl": "/tutorials/27cd0dcc-d4ce-4f24-9322-b53d0de26503",
+   "explained": [
+    {
+     "type": "picture",
+     "severity": "medium",
+     "what": "The status card has a round ⋯ menu button next to the title",
+     "board": "Status card with a pill, title and progress bar, and no menu",
+     "live": "A ⋯ button in the card opens My tutorials / Preview as a reader / Delete draft",
+     "why": "intended",
+     "reason": "The hub's menu is the author's way out of a guide reached by router.replace from Add a guide, which leaves nothing behind it (hub.tsx)."
+    }
+   ],
+   "boardHeadings": 1,
+   "liveHeadings": 1
+  },
+  {
+   "id": "ed_details",
+   "name": "Editor · details",
+   "group": "push",
+   "route": "/tutorials/27cd0dcc-d4ce-4f24-9322-b53d0de26503/details",
+   "findings": [],
+   "role": "contributor",
+   "finalUrl": "/tutorials/27cd0dcc-d4ce-4f24-9322-b53d0de26503/details",
+   "explained": [
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "input background",
+     "board": "rgb(250,249,247)",
+     "live": "rgb(255,255,255)",
+     "why": "intended",
+     "reason": "The board fills a field with canvas only inside its white section card; the app's section fields sit on the page and take the surface, as the board's other 26 inputs do."
+    },
+    {
+     "type": "picture",
+     "severity": "medium",
+     "what": "A sticky Checklist / Next footer the board does not draw",
+     "board": "The form ends with '+ Add a field' and has no footer",
+     "live": "A pinned footer with a Checklist button and a 'Next: Safety' button",
+     "why": "intended",
+     "reason": "Every editor section ends with Checklist and Next, so an author moves on without going back to the hub (section-footer.tsx)."
+    }
+   ],
+   "boardHeadings": 0,
+   "liveHeadings": 0
+  },
+  {
+   "id": "ed_steps",
+   "name": "Editor · steps",
+   "group": "push",
+   "route": "/tutorials/27cd0dcc-d4ce-4f24-9322-b53d0de26503/steps",
+   "findings": [],
+   "role": "contributor",
+   "finalUrl": "/tutorials/27cd0dcc-d4ce-4f24-9322-b53d0de26503/steps",
+   "explained": [
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "input background",
+     "board": "rgb(250,249,247)",
+     "live": "rgb(255,255,255)",
+     "why": "intended",
+     "reason": "The board fills a field with canvas only inside its white section card; the app's fields sit on the page and take the surface."
+    },
+    {
+     "type": "picture",
+     "severity": "medium",
+     "what": "A sticky Checklist / Next footer the board does not draw",
+     "board": "The list ends with '+ Add a step' and has no footer",
+     "live": "A pinned footer with a Checklist button and a 'Next: Safety' button",
+     "why": "intended",
+     "reason": "Every editor section ends with Checklist and Next, so an author moves on without going back to the hub (section-footer.tsx)."
+    }
+   ],
+   "boardHeadings": 0,
+   "liveHeadings": 0
+  },
+  {
+   "id": "ed_parts",
+   "name": "Editor · parts",
+   "group": "push",
+   "route": "/tutorials/27cd0dcc-d4ce-4f24-9322-b53d0de26503/parts",
+   "findings": [],
+   "role": "contributor",
+   "finalUrl": "/tutorials/27cd0dcc-d4ce-4f24-9322-b53d0de26503/parts",
+   "explained": [
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "input background",
+     "board": "rgb(250,249,247)",
+     "live": "rgb(255,255,255)",
+     "why": "intended",
+     "reason": "The board fills a field with canvas only inside its white section card; the app's fields sit on the page and take the surface."
+    },
+    {
+     "type": "picture",
+     "severity": "medium",
+     "what": "A sticky Checklist / Next footer the board does not draw",
+     "board": "The list ends with '+ Add a part' and has no footer",
+     "live": "A pinned footer with a Checklist button and a 'Next: Files' button",
+     "why": "intended",
+     "reason": "Every editor section ends with Checklist and Next, so an author moves on without going back to the hub (section-footer.tsx)."
+    }
+   ],
+   "boardHeadings": 0,
+   "liveHeadings": 0
+  },
+  {
+   "id": "ed_tools",
+   "name": "Editor · tools",
+   "group": "push",
+   "route": "/tutorials/27cd0dcc-d4ce-4f24-9322-b53d0de26503/tools",
+   "findings": [],
+   "role": "contributor",
+   "finalUrl": "/tutorials/27cd0dcc-d4ce-4f24-9322-b53d0de26503/tools",
+   "explained": [
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "input background",
+     "board": "rgb(250,249,247)",
+     "live": "rgb(255,255,255)",
+     "why": "intended",
+     "reason": "The board fills a field with canvas only inside its white section card; the app's fields sit on the page and take the surface."
+    },
+    {
+     "type": "picture",
+     "severity": "medium",
+     "what": "A sticky Checklist / Next footer the board does not draw",
+     "board": "The list ends with '+ Add a tool' and has no footer",
+     "live": "A pinned footer with a Checklist button and a 'Next: Files' button",
+     "why": "intended",
+     "reason": "Every editor section ends with Checklist and Next, so an author moves on without going back to the hub (section-footer.tsx)."
+    }
+   ],
+   "boardHeadings": 0,
+   "liveHeadings": 0
+  },
+  {
+   "id": "toy_detail",
+   "name": "Toy detail",
+   "group": "push",
+   "route": "/toys/3c980a90-9924-43fc-a5e4-65026b7f9675",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/toys/3c980a90-9924-43fc-a5e4-65026b7f9675",
+   "explained": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "board lists cards, live shows none",
+     "board": 4,
+     "live": 0,
+     "why": "pending",
+     "pending": "my-toy-inline-requests"
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "board has cards, live has none",
+     "board": 4,
+     "live": 0,
+     "why": "pending",
+     "pending": "my-toy-inline-requests"
+    },
+    {
+     "type": "picture",
+     "severity": "medium",
+     "what": "Toy detail opens straight into the full editor (Details/Photos/Review stepper, form fields) instead of a summary screen",
+     "board": "Lead line about the toy, request cards, then an 'Edit listing' row and a 'Mark unavailable' row; editing is one tap further",
+     "live": "Toy name heading, step pills, Name/Description/Condition/Switch/Ages/Batteries fields, pinned footer with Mark unavailable and Delete toy",
+     "why": "pending",
+     "pending": "my-toy-summary"
+    }
+   ],
+   "boardHeadings": 0,
+   "liveHeadings": 1
+  },
+  {
+   "id": "saved",
+   "name": "Saved",
+   "group": "push",
+   "route": "/saved",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/saved",
+   "explained": [
+    {
+     "type": "picture",
+     "severity": "medium",
+     "what": "Printable parts is a short inline row with no meta line and no 'Soon' pill, unlike the cards above it",
+     "board": "Full card: 'Printable parts', 'Not savable yet', grey 'Soon' pill, chevron",
+     "live": "Slim row: cube glyph inline with the title, chevron, no meta, no pill",
+     "why": "pending",
+     "pending": "saved-parts"
+    }
+   ],
+   "boardHeadings": 0,
+   "liveHeadings": 0
+  },
+  {
+   "id": "notifications",
+   "name": "Notifications",
+   "group": "push",
+   "route": "/notifications",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/notifications",
+   "explained": [
+    {
+     "type": "picture",
+     "severity": "medium",
+     "what": "Exchanges / Notifications segmented switch and a 'Tutorials' group label above the rows",
+     "board": "Plain list of notification cards, no switch, no group label",
+     "live": "Segmented Exchanges|Notifications control, 'TUTORIALS' label, icon-tile cards",
+     "why": "intended",
+     "reason": "Exchanges and notifications share one inbox on the board (mobile-design-notes); the screen reuses the inbox with its switch."
+    }
+   ],
+   "boardHeadings": 0,
+   "liveHeadings": 0
+  },
+  {
+   "id": "print_add",
+   "name": "Add a printer",
+   "group": "push",
+   "route": "/print-for-others/add",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/print-for-others/add",
+   "explained": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"$#\" has no counterpart",
+     "board": "$#",
+     "live": null,
+     "why": "pending",
+     "pending": "add-printer-rates"
+    },
+    {
+     "type": "radius",
+     "severity": "medium",
+     "what": "card radius",
+     "board": "14px",
+     "live": "18px",
+     "why": "pending",
+     "pending": "add-printer-rates"
+    },
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "card background",
+     "board": "rgb(243,241,237)",
+     "live": "rgb(255,255,255)",
+     "why": "pending",
+     "pending": "add-printer-rates"
+    },
+    {
+     "type": "picture",
+     "severity": "medium",
+     "what": "Add printer is a sticky footer button, not the last block of the form",
+     "board": "button as the last block",
+     "live": "sticky footer",
+     "why": "intended",
+     "reason": "On a long form the primary action stays in reach as a sticky footer."
+    }
+   ],
+   "boardHeadings": 1,
+   "liveHeadings": 0
+  },
+  {
+   "id": "customization",
+   "name": "Customization",
+   "group": "push",
+   "route": "/account/customization",
+   "findings": [],
+   "role": "parent",
+   "skipped": true,
+   "error": "skipped: Pending customization-metrics: decided 2026-09-30 to ask these per print request, so no account screen will exist.",
+   "explained": []
+  },
+  {
+   "id": "wizard",
+   "name": "Child profile wizard",
+   "group": "push",
+   "route": "/child",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/child",
+   "explained": [
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "2/2 board paragraphs absent",
+     "board": "a name helps us talk about them naturally. it is never shared.",
+     "live": "hi! a few quick questions. skip any you like.",
+     "why": "pending",
+     "pending": "wizard-mascot-done"
+    },
+    {
+     "type": "picture",
+     "severity": "medium",
+     "what": "an extra Skip button beside Continue",
+     "board": "Back and Continue",
+     "live": "Back, Skip, Continue",
+     "why": "intended",
+     "reason": "Every wizard question is optional; Skip moves on without saving an answer."
+    }
+   ],
+   "boardHeadings": 1,
+   "liveHeadings": 1
+  },
   {
    "id": "guides",
    "name": "Guides",
@@ -87,46 +554,6 @@
    "liveHeadings": 1
   },
   {
-   "id": "guide_new",
-   "name": "New guide",
-   "group": "push",
-   "route": "/guides/new",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/guides/new",
-   "explained": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "board lists cards, live shows none",
-     "board": 5,
-     "live": 0,
-     "why": "pending",
-     "pending": "new-guide-fields"
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "board has cards, live has none",
-     "board": 5,
-     "live": 0,
-     "why": "pending",
-     "pending": "new-guide-fields"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "1/1 board paragraphs absent",
-     "board": "two things to start: what the toy is, and one photo. the rest can wait",
-     "live": "give it a title to start a draft — everything else comes next.",
-     "why": "pending",
-     "pending": "new-guide-fields"
-    }
-   ],
-   "boardHeadings": 0,
-   "liveHeadings": 1
-  },
-  {
    "id": "contributor",
    "name": "Contributor",
    "group": "push",
@@ -136,16 +563,16 @@
    "finalUrl": "/guides/contributor/11111111-1111-1111-1111-111111111111",
    "explained": [],
    "boardHeadings": 3,
-   "liveHeadings": 3
+   "liveHeadings": 2
   },
   {
    "id": "guide_org",
    "name": "Organisation",
    "group": "push",
-   "route": "/guides/organisation/9f50325e-edc8-43b3-91b4-3541bf97a205",
+   "route": "/guides/organisation/84076c2c-b608-41a8-8301-eb75ab9b64e4",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/guides/organisation/9f50325e-edc8-43b3-91b4-3541bf97a205",
+   "finalUrl": "/guides/organisation/84076c2c-b608-41a8-8301-eb75ab9b64e4",
    "explained": [],
    "boardHeadings": 8,
    "liveHeadings": 9
@@ -176,7 +603,7 @@
    "id": "print_request",
    "name": "Request a print",
    "group": "modal",
-   "route": "/printing/request?guide=37d5ef80-607b-4954-a84b-9d2d86b3bf87&printers=5f204de8-6dd9-4105-a078-89a505de25bf,0464c1cd-a520-43a5-beea-4eaacfffaeda",
+   "route": "/printing/request?guide=37d5ef80-607b-4954-a84b-9d2d86b3bf87&printers=e064d368-1a93-4e17-b9c6-23414ddc9ec3,f304d7c3-e8d3-4b2d-8906-2b3a5b481fbf",
    "findings": [],
    "role": "parent",
    "finalUrl": "/printing/request",
@@ -188,10 +615,10 @@
    "id": "print_job",
    "name": "Print job",
    "group": "push",
-   "route": "/printing/jobs/8ec5b7b2-042a-4568-ac39-d7e2846f9a3e",
+   "route": "/printing/jobs/723d0423-f0d1-45f8-92a6-95237c77cf27",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/printing/jobs/8ec5b7b2-042a-4568-ac39-d7e2846f9a3e",
+   "finalUrl": "/printing/jobs/723d0423-f0d1-45f8-92a6-95237c77cf27",
    "explained": [
     {
      "type": "shadow",
@@ -219,47 +646,13 @@
    "liveHeadings": 5
   },
   {
-   "id": "loading",
-   "name": "Loading state",
-   "group": "tabs",
-   "route": "/guides",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/guides",
-   "explained": [],
-   "boardHeadings": 0,
-   "liveHeadings": 1
-  },
-  {
-   "id": "toy_library",
-   "name": "Toy library",
-   "group": "tabs",
-   "route": "/toy-library",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/toy-library",
-   "explained": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"nearest first\" has no counterpart",
-     "board": "nearest first",
-     "live": null,
-     "why": "pending",
-     "pending": "locations-and-distance"
-    }
-   ],
-   "boardHeadings": 8,
-   "liveHeadings": 2
-  },
-  {
    "id": "lib_toy",
    "name": "Toy detail",
    "group": "push",
-   "route": "/toy-library/9e8d5830-a636-4bbc-ba3f-4a20af082124",
+   "route": "/toy-library/76eddd48-dd72-40b1-bb2b-cc39b30d98fe",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/toy-library/9e8d5830-a636-4bbc-ba3f-4a20af082124",
+   "finalUrl": "/toy-library/76eddd48-dd72-40b1-bb2b-cc39b30d98fe",
    "explained": [
     {
      "type": "font",
@@ -309,10 +702,10 @@
    "id": "lib_org",
    "name": "Organisation",
    "group": "push",
-   "route": "/toy-library/organisation/9f50325e-edc8-43b3-91b4-3541bf97a205",
+   "route": "/toy-library/organisation/84076c2c-b608-41a8-8301-eb75ab9b64e4",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/toy-library/organisation/9f50325e-edc8-43b3-91b4-3541bf97a205",
+   "finalUrl": "/toy-library/organisation/84076c2c-b608-41a8-8301-eb75ab9b64e4",
    "explained": [],
    "boardHeadings": 8,
    "liveHeadings": 9
@@ -380,18 +773,6 @@
    ],
    "boardHeadings": 3,
    "liveHeadings": 6
-  },
-  {
-   "id": "challenges",
-   "name": "Challenges",
-   "group": "push",
-   "route": "/explore/challenges",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/explore/challenges",
-   "explained": [],
-   "boardHeadings": 5,
-   "liveHeadings": 8
   },
   {
    "id": "challenge_detail",
@@ -474,18 +855,6 @@
    "liveHeadings": 0
   },
   {
-   "id": "makers_wanted",
-   "name": "Makers wanted",
-   "group": "push",
-   "route": "/explore/makers-wanted",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/explore/makers-wanted",
-   "explained": [],
-   "boardHeadings": 0,
-   "liveHeadings": 0
-  },
-  {
    "id": "mw_new",
    "name": "Ask for a build",
    "group": "modal",
@@ -501,10 +870,10 @@
    "id": "build_thread",
    "name": "Build thread",
    "group": "push",
-   "route": "/exchanges/build/2b7336d6-4078-49f5-ac76-d6c6719c997d",
+   "route": "/exchanges/build/cdbb3968-8818-46f1-80da-a57ab22dc1b2",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/exchanges/build/2b7336d6-4078-49f5-ac76-d6c6719c997d",
+   "finalUrl": "/exchanges/build/cdbb3968-8818-46f1-80da-a57ab22dc1b2",
    "explained": [
     {
      "type": "shadow",
@@ -591,10 +960,10 @@
    "id": "exchange",
    "name": "Exchange thread",
    "group": "push",
-   "route": "/exchanges/53f31f8b-3ffb-4519-ac3d-2891208edb24",
+   "route": "/exchanges/74790199-7bea-4df7-a830-e7a3c2a8e680",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/exchanges/53f31f8b-3ffb-4519-ac3d-2891208edb24",
+   "finalUrl": "/exchanges/74790199-7bea-4df7-a830-e7a3c2a8e680",
    "explained": [
     {
      "type": "missing-section",
@@ -643,113 +1012,13 @@
    "liveHeadings": 0
   },
   {
-   "id": "editor",
-   "name": "Editor hub",
-   "group": "push",
-   "route": "/tutorials/17f511df-75e0-4608-a944-d581e2964aaa",
-   "findings": [],
-   "role": "contributor",
-   "finalUrl": "/tutorials/17f511df-75e0-4608-a944-d581e2964aaa",
-   "explained": [],
-   "boardHeadings": 1,
-   "liveHeadings": 1
-  },
-  {
-   "id": "ed_details",
-   "name": "Editor · details",
-   "group": "push",
-   "route": "/tutorials/17f511df-75e0-4608-a944-d581e2964aaa/details",
-   "findings": [],
-   "role": "contributor",
-   "finalUrl": "/tutorials/17f511df-75e0-4608-a944-d581e2964aaa/details",
-   "explained": [
-    {
-     "type": "colour",
-     "severity": "low",
-     "what": "input background",
-     "board": "rgb(250,249,247)",
-     "live": "rgb(255,255,255)",
-     "why": "intended",
-     "reason": "The board fills a field with canvas only inside its white section card; the app's section fields sit on the page and take the surface, as the board's other 26 inputs do."
-    }
-   ],
-   "boardHeadings": 0,
-   "liveHeadings": 0
-  },
-  {
-   "id": "ed_steps",
-   "name": "Editor · steps",
-   "group": "push",
-   "route": "/tutorials/17f511df-75e0-4608-a944-d581e2964aaa/steps",
-   "findings": [],
-   "role": "contributor",
-   "finalUrl": "/tutorials/17f511df-75e0-4608-a944-d581e2964aaa/steps",
-   "explained": [
-    {
-     "type": "colour",
-     "severity": "low",
-     "what": "input background",
-     "board": "rgb(250,249,247)",
-     "live": "rgb(255,255,255)",
-     "why": "intended",
-     "reason": "The board fills a field with canvas only inside its white section card; the app's fields sit on the page and take the surface."
-    }
-   ],
-   "boardHeadings": 0,
-   "liveHeadings": 0
-  },
-  {
-   "id": "ed_parts",
-   "name": "Editor · parts",
-   "group": "push",
-   "route": "/tutorials/17f511df-75e0-4608-a944-d581e2964aaa/parts",
-   "findings": [],
-   "role": "contributor",
-   "finalUrl": "/tutorials/17f511df-75e0-4608-a944-d581e2964aaa/parts",
-   "explained": [
-    {
-     "type": "colour",
-     "severity": "low",
-     "what": "input background",
-     "board": "rgb(250,249,247)",
-     "live": "rgb(255,255,255)",
-     "why": "intended",
-     "reason": "The board fills a field with canvas only inside its white section card; the app's fields sit on the page and take the surface."
-    }
-   ],
-   "boardHeadings": 0,
-   "liveHeadings": 0
-  },
-  {
-   "id": "ed_tools",
-   "name": "Editor · tools",
-   "group": "push",
-   "route": "/tutorials/17f511df-75e0-4608-a944-d581e2964aaa/tools",
-   "findings": [],
-   "role": "contributor",
-   "finalUrl": "/tutorials/17f511df-75e0-4608-a944-d581e2964aaa/tools",
-   "explained": [
-    {
-     "type": "colour",
-     "severity": "low",
-     "what": "input background",
-     "board": "rgb(250,249,247)",
-     "live": "rgb(255,255,255)",
-     "why": "intended",
-     "reason": "The board fills a field with canvas only inside its white section card; the app's fields sit on the page and take the surface."
-    }
-   ],
-   "boardHeadings": 0,
-   "liveHeadings": 0
-  },
-  {
    "id": "ed_safety",
    "name": "Editor · safety",
    "group": "push",
-   "route": "/tutorials/17f511df-75e0-4608-a944-d581e2964aaa/safety",
+   "route": "/tutorials/a21cd9a9-da86-49e5-8734-57d83aa0fb3e/safety",
    "findings": [],
    "role": "contributor",
-   "finalUrl": "/tutorials/17f511df-75e0-4608-a944-d581e2964aaa/safety",
+   "finalUrl": "/tutorials/a21cd9a9-da86-49e5-8734-57d83aa0fb3e/safety",
    "explained": [
     {
      "type": "missing-section",
@@ -768,10 +1037,10 @@
    "id": "ed_stl",
    "name": "Editor · STL",
    "group": "push",
-   "route": "/tutorials/17f511df-75e0-4608-a944-d581e2964aaa/stl",
+   "route": "/tutorials/a21cd9a9-da86-49e5-8734-57d83aa0fb3e/stl",
    "findings": [],
    "role": "contributor",
-   "finalUrl": "/tutorials/17f511df-75e0-4608-a944-d581e2964aaa/stl",
+   "finalUrl": "/tutorials/a21cd9a9-da86-49e5-8734-57d83aa0fb3e/stl",
    "explained": [
     {
      "type": "missing-section",
@@ -836,38 +1105,7 @@
     }
    ],
    "boardHeadings": 0,
-   "liveHeadings": 1
-  },
-  {
-   "id": "toy_detail",
-   "name": "Toy detail",
-   "group": "push",
-   "route": "/toys/892ed74f-9e6d-40e7-ab66-61decf882947",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/toys/892ed74f-9e6d-40e7-ab66-61decf882947",
-   "explained": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "board lists cards, live shows none",
-     "board": 4,
-     "live": 0,
-     "why": "pending",
-     "pending": "my-toy-inline-requests"
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "board has cards, live has none",
-     "board": 4,
-     "live": 0,
-     "why": "pending",
-     "pending": "my-toy-inline-requests"
-    }
-   ],
-   "boardHeadings": 0,
-   "liveHeadings": 1
+   "liveHeadings": 0
   },
   {
    "id": "exchanges",
@@ -894,18 +1132,6 @@
    "liveHeadings": 0
   },
   {
-   "id": "saved",
-   "name": "Saved",
-   "group": "push",
-   "route": "/saved",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/saved",
-   "explained": [],
-   "boardHeadings": 0,
-   "liveHeadings": 0
-  },
-  {
    "id": "saved_slug",
    "name": "Saved list",
    "group": "push",
@@ -913,18 +1139,6 @@
    "findings": [],
    "role": "parent",
    "finalUrl": "/saved/tutorials",
-   "explained": [],
-   "boardHeadings": 0,
-   "liveHeadings": 0
-  },
-  {
-   "id": "notifications",
-   "name": "Notifications",
-   "group": "push",
-   "route": "/notifications",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/notifications",
    "explained": [],
    "boardHeadings": 0,
    "liveHeadings": 0
@@ -954,46 +1168,6 @@
    "liveHeadings": 0
   },
   {
-   "id": "print_add",
-   "name": "Add a printer",
-   "group": "push",
-   "route": "/print-for-others/add",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/print-for-others/add",
-   "explained": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"$#\" has no counterpart",
-     "board": "$#",
-     "live": null,
-     "why": "pending",
-     "pending": "add-printer-rates"
-    },
-    {
-     "type": "radius",
-     "severity": "medium",
-     "what": "card radius",
-     "board": "14px",
-     "live": "18px",
-     "why": "pending",
-     "pending": "add-printer-rates"
-    },
-    {
-     "type": "colour",
-     "severity": "low",
-     "what": "card background",
-     "board": "rgb(243,241,237)",
-     "live": "rgb(255,255,255)",
-     "why": "pending",
-     "pending": "add-printer-rates"
-    }
-   ],
-   "boardHeadings": 1,
-   "liveHeadings": 0
-  },
-  {
    "id": "account",
    "name": "Account",
    "group": "push",
@@ -1009,10 +1183,10 @@
    "id": "ability",
    "name": "Ability profile",
    "group": "push",
-   "route": "/account/child/ea79aef9-a670-4f80-b022-506947478966",
+   "route": "/account/child/16f085ac-8744-43df-8834-f647e2f4fe54",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/account/child/ea79aef9-a670-4f80-b022-506947478966",
+   "finalUrl": "/account/child/16f085ac-8744-43df-8834-f647e2f4fe54",
    "explained": [],
    "boardHeadings": 0,
    "liveHeadings": 3
@@ -1021,32 +1195,22 @@
    "id": "needs",
    "name": "Everyday needs",
    "group": "push",
-   "route": "/account/child/ea79aef9-a670-4f80-b022-506947478966",
+   "route": "/account/child/16f085ac-8744-43df-8834-f647e2f4fe54",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/account/child/ea79aef9-a670-4f80-b022-506947478966",
+   "finalUrl": "/account/child/16f085ac-8744-43df-8834-f647e2f4fe54",
    "explained": [],
    "boardHeadings": 0,
    "liveHeadings": 3
   },
   {
-   "id": "customization",
-   "name": "Customization",
-   "group": "push",
-   "route": "/account/customization",
-   "findings": [],
-   "role": "parent",
-   "skipped": true,
-   "error": "skipped: Pending customization-metrics: decided 2026-09-30 to ask these per print request, so no account screen will exist."
-  },
-  {
    "id": "child",
    "name": "Child profile",
    "group": "push",
-   "route": "/account/child/ea79aef9-a670-4f80-b022-506947478966",
+   "route": "/account/child/16f085ac-8744-43df-8834-f647e2f4fe54",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/account/child/ea79aef9-a670-4f80-b022-506947478966",
+   "finalUrl": "/account/child/16f085ac-8744-43df-8834-f647e2f4fe54",
    "explained": [],
    "boardHeadings": 0,
    "liveHeadings": 3
@@ -1067,10 +1231,10 @@
    "id": "org_review",
    "name": "Review a guide",
    "group": "push",
-   "route": "/organisation/8b3174a0-d419-46b1-9255-04d245a1be91",
+   "route": "/organisation/c423b057-4f10-4e47-afa5-a00a4b88ee65",
    "findings": [],
    "role": "leader",
-   "finalUrl": "/organisation/8b3174a0-d419-46b1-9255-04d245a1be91",
+   "finalUrl": "/organisation/c423b057-4f10-4e47-afa5-a00a4b88ee65",
    "explained": [
     {
      "type": "copy",
@@ -1170,28 +1334,6 @@
    "liveHeadings": 0
   },
   {
-   "id": "wizard",
-   "name": "Child profile wizard",
-   "group": "push",
-   "route": "/child",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/child",
-   "explained": [
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "2/2 board paragraphs absent",
-     "board": "a name helps us talk about them naturally. it is never shared.",
-     "live": "hi! a few quick questions. skip any you like.",
-     "why": "pending",
-     "pending": "wizard-mascot-done"
-    }
-   ],
-   "boardHeadings": 1,
-   "liveHeadings": 1
-  },
-  {
    "id": "sign_in",
    "name": "Sign in",
    "group": "bare",
@@ -1230,7 +1372,8 @@
   "errored": 0,
   "skipped": 1,
   "findings": 0,
-  "explained": 51,
-  "byType": {}
+  "explained": 66,
+  "byType": {},
+  "picture": 0
  }
 }
