@@ -23,7 +23,7 @@ import {
  * two branches are covered at unit level instead, with the Alert spied.
  */
 
-test('the board separates open challenges from the ones that became guides', async ({ page }) => {
+test('the board lists open challenges and the ones that became guides', async ({ page }) => {
   await signInAsNewContributor(page)
   const author = await createContributor()
   const open = uniqueTitle('E2E Open Challenge')
@@ -33,8 +33,6 @@ test('the board separates open challenges from the ones that became guides', asy
 
   await page.goto('/explore/challenges')
 
-  await expect(page.getByText('Open challenges')).toBeVisible()
-  await expect(page.getByText('Solved · became guides')).toBeVisible()
   await expect(page.getByRole('button', { name: open })).toBeVisible()
   await expect(page.getByRole('button', { name: solved })).toBeVisible()
 })

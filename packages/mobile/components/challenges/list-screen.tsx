@@ -190,33 +190,16 @@ export function ChallengesListScreen() {
             {shown.length === 0 ? (
               <Text style={styles.intro}>Nothing under {filter.label.toLowerCase()} yet.</Text>
             ) : null}
-            {open.length ? (
-              <View style={styles.group}>
-                <Text style={styles.groupTitle}>Open challenges</Text>
-                {open.map((row, i) => (
-                  <Animated.View
-                    key={row.id}
-                    entering={FadeInDown.delay(Math.min(i, 7) * theme.motion.stagger).duration(theme.motion.base)}
-                  >
-                    <ChallengeCardRow row={row} joined={joinedIds.has(row.id)} onPress={() => goTo(row.id)} />
-                  </Animated.View>
-                ))}
-              </View>
-            ) : null}
-
-            {solved.length ? (
-              <View style={styles.group}>
-                <Text style={styles.groupTitle}>Solved · became guides</Text>
-                {solved.map((row) => (
-                  <ChallengeCardRow
-                    key={row.id}
-                    row={row}
-                    joined={joinedIds.has(row.id)}
-                    onPress={() => goTo(row.id)}
-                  />
-                ))}
-              </View>
-            ) : null}
+            {/* One list, open first: the board splits them only by each row's
+                status pill, never under two headings. */}
+            {[...open, ...solved].map((row, i) => (
+              <Animated.View
+                key={row.id}
+                entering={FadeInDown.delay(Math.min(i, 7) * theme.motion.stagger).duration(theme.motion.base)}
+              >
+                <ChallengeCardRow row={row} joined={joinedIds.has(row.id)} onPress={() => goTo(row.id)} />
+              </Animated.View>
+            ))}
           </View>
         )}
       </ScrollView>
@@ -236,13 +219,6 @@ const styles = StyleSheet.create({
   },
   submitPill: { alignSelf: 'flex-start', paddingVertical: theme.spacing(2), paddingHorizontal: theme.spacing(4) },
   retry: { marginTop: theme.spacing(5), alignSelf: 'center', paddingHorizontal: theme.spacing(8) },
-  group: { marginBottom: theme.spacing(4) },
-  groupTitle: {
-    fontFamily: theme.fonts.bold,
-    fontSize: theme.type.heading,
-    color: theme.colors.text,
-    marginBottom: theme.spacing(2),
-  },
   rowPress: { marginBottom: theme.spacing(3) },
   card: { gap: theme.spacing(1.5), padding: theme.spacing(4) },
   metaRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: theme.spacing(2) },

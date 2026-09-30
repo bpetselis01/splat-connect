@@ -362,7 +362,7 @@ export async function createChallenge(
   overrides: Partial<{
     title: string
     summary: string
-    /** 'graduated' puts it under "Solved · became guides" instead. */
+    /** 'graduated' lists it after the open ones, with a Solved pill. */
     status: 'challenge' | 'graduated' | 'pending' | 'rejected'
     contact_prefs: ('clarification' | 'co_design' | 'user_testing')[]
   }> = {}

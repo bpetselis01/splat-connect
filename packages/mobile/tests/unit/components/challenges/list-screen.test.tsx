@@ -65,7 +65,7 @@ beforeEach(() => {
 })
 
 describe('ChallengesListScreen', () => {
-  it('splits open challenges from the ones that became guides', async () => {
+  it('lists open challenges and the ones that became guides together, open first', async () => {
     respond([
       row({ id: 'c1', title: 'A switch a toddler can hit', status: 'challenge' }),
       row({ id: 'c2', title: 'A one-handed board game', status: 'graduated' }),
@@ -74,8 +74,7 @@ describe('ChallengesListScreen', () => {
 
     expect(await screen.findByText('A switch a toddler can hit')).toBeTruthy()
     expect(screen.getByText('A one-handed board game')).toBeTruthy()
-    expect(screen.getByText('Open challenges')).toBeTruthy()
-    expect(screen.getByText('Solved · became guides')).toBeTruthy()
+    expect(screen.queryByText('Open challenges')).toBeNull()
     expect(mockGet).toHaveBeenCalledWith('/api/public/challenges')
   })
 
