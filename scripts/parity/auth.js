@@ -93,6 +93,11 @@ async function provision(roles) {
           name: 'Northside Therapy Collective',
           status: 'active',
           capabilities: ['Backs guides', 'Holds toys', 'Takes recycling', 'Has a printer'],
+          // The profile's Visit card draws only with a place or hours.
+          suburb: 'Newcastle',
+          state: 'NSW',
+          visit_hours: 'Switch clinic Thursdays 1–5 pm',
+          service_area: 'Hunter region and Central Coast',
         })
         .select('id')
         .single()

@@ -580,6 +580,8 @@ async function seedSwapToy(db, parentId) {
     .insert({
       owner_id: owner,
       name: 'Parity swap toy',
+      // The board's "Notes from the holder" card draws only with notes.
+      description: 'Interrupter fitted, fluid tank clean, four-second burst. Bring your own switch.',
       condition: 8,
       photo_urls: [],
       status: 'published',
@@ -762,6 +764,23 @@ async function seed(db, users) {
  * unmeasured forever. (That it is orphaned is worth knowing on its own.)
  */
 const DB_SAMPLES = {
+  // The app's print request is a modal fed by its route: a guide whose files
+  // carry estimates, and the printers the family picked (up to three).
+  'app:print_request': async (db) => {
+    const { data: stl } = await db
+      .from('stl_files')
+      .select('tutorial_id, tutorials!inner(status)')
+      .eq('tutorials.status', 'approved')
+      .not('print_minutes', 'is', null)
+      .not('filament_grams', 'is', null)
+      .not('material', 'is', null)
+      .limit(1)
+      .single()
+    const { data: printers } = await db.from('printers').select('id').limit(2)
+    return stl && printers?.length
+      ? `/printing/request?guide=${stl.tutorial_id}&printers=${printers.map((p) => p.id).join(',')}`
+      : null
+  },
   // The app's challenge list is pressables, not links, so nothing scrapes it.
   challenge_detail: async (db) => {
     const { data } = await db
@@ -837,17 +856,34 @@ const DB_SAMPLES = {
       .eq('host.status', 'approved')
       .eq('rec.status', 'approved')
       .limit(1)
-    if (has?.[0]) return `/tutorials/${has[0].tutorial_id}`
-    const { data: guides } = await db.from('tutorials').select('id').eq('status', 'approved').limit(3)
-    if (!guides || guides.length < 2) return null
-    const [host, ...recs] = guides
-    const { error } = await db
-      .from('tutorial_recommendations')
-      .insert(recs.map((r, i) => ({ tutorial_id: host.id, recommended_id: r.id, position: i + 1 })))
-    if (error) return null
-    undo.push((d) => d.from('tutorial_recommendations').delete().eq('tutorial_id', host.id))
-    return `/tutorials/${host.id}`
+    let hostId = has?.[0]?.tutorial_id
+    if (!hostId) {
+      const { data: guides } = await db.from('tutorials').select('id').eq('status', 'approved').limit(3)
+      if (!guides || guides.length < 2) return null
+      const [host, ...recs] = guides
+      const { error } = await db
+        .from('tutorial_recommendations')
+        .insert(recs.map((r, i) => ({ tutorial_id: host.id, recommended_id: r.id, position: i + 1 })))
+      if (error) return null
+      undo.push((d) => d.from('tutorial_recommendations').delete().eq('tutorial_id', host.id))
+      hostId = host.id
+    }
+    // And steps, lent the same way: no approved guide has any, and a stepless
+    // sample left Steps unmeasured and paired its heading with the title.
+    const { count } = await db.from('tutorial_steps').select('id', { count: 'exact', head: true }).eq('tutorial_id', hostId)
+    if (!count) {
+      const { data: lent } = await db
+        .from('tutorial_steps')
+        .insert([
+          { tutorial_id: hostId, position: 1, body: 'Open the base and find the two wires running to the motor.' },
+          { tutorial_id: hostId, position: 2, body: 'Solder the interrupter across them and close the base.' },
+        ])
+        .select('id')
+      if (lent?.length) undo.push((d) => d.from('tutorial_steps').delete().in('id', lent.map((x) => x.id)))
+    }
+    return `/tutorials/${hostId}`
   },
+
 }
 
 async function dbSample(db, screenId) {
