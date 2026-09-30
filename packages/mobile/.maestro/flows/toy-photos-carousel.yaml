@@ -25,10 +25,13 @@ appId: com.splatconnect.mobile
       - tapOn:
           id: "email-input"
       - inputText: ${DEVICE_EMAIL}
+      - tapOn: "Welcome back"  # the keyboard covers the password field
       - tapOn:
           id: "password-input"
       - inputText: ${DEVICE_PASSWORD}
-      - hideKeyboard
+      # hideKeyboard fails on the iOS 26 simulator; a tap outside a field
+      # dismisses it on device and simulator alike (ScrollView default).
+      - tapOn: "Welcome back"
       - tapOn:
           id: "auth-submit"
       - tapOn:
@@ -38,7 +41,7 @@ appId: com.splatconnect.mobile
 - tapOn:
     text: "Toys"
 - assertVisible:
-    text: "Adapted toys that families and organisations are giving away."
+    text: "Toy library"
 
 - tapOn:
     text: "Device smoke toy.*"
