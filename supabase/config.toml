@@ -5,6 +5,8 @@
 project_id = "splat-connect"
 
 [auth]
+# PENDING(site-url): the HOSTED project's Site URL is still http://localhost:3000,
+# so links in live emails point at localhost. Set it in the dashboard.
 site_url = "http://127.0.0.1:3000"
 # 3100 is the E2E web server; the wildcards let Playwright land on any path.
 additional_redirect_urls = ["https://127.0.0.1:3000", "http://localhost:3100/**", "http://127.0.0.1:3100/**"]

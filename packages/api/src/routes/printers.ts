@@ -168,6 +168,8 @@ function invalid(body: Record<string, unknown>, partial: boolean): string | null
  * a job is better served by seeing a full machine marked full than by a list
  * that silently omits it and looks empty.
  */
+// PENDING(printer-stats): jobs done, median turnaround, first-time fit and colours per printer.
+// PENDING(locations-and-distance): distance from the asker needs a stored location, not a suburb.
 printers.get('/', async (c) => {
   const supabase = createUserClient(c.get('token'))
   const { data, error } = await supabase

@@ -64,6 +64,7 @@ function Chip({ tint, icon, children }: { tint: string; icon: ReactNode; childre
   )
 }
 
+// PENDING(web-toy-family-notes): the board's "Notes from the family" section — the family's own words about how the toy was used.
 export default async function ToyLibraryDetailPage({
   params,
 }: {

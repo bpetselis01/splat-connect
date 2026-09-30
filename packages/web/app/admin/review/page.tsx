@@ -53,6 +53,7 @@ function waiting(iso: string, now: number = Date.now()): { text: string; days: n
   return { text: `${days} day${days === 1 ? '' : 's'}`, days }
 }
 
+// PENDING(web-admin-review-list): the board's search input above the list.
 export default async function ReviewListPage({
   searchParams,
 }: {

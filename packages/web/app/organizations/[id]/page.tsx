@@ -36,6 +36,7 @@ type Backed = Tutorial & { tutorial_orgs?: TutorialOrg[] }
 
 type OrgWithLeaders = Organization & { org_leaders?: OrgLeader[] }
 
+// PENDING(org-visit-map): a map and the street address, once there is a maps provider.
 export default async function OrganizationPage({
   params,
 }: {

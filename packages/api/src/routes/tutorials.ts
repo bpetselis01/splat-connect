@@ -53,6 +53,8 @@ tutorials.get('/mine', async (c) => {
   return c.json(data)
 })
 
+// PENDING(print-settings): layer height, infill, material and print time per guide need columns.
+// PENDING(part-prices): a price per part, for the detail's totals and a build's cost.
 tutorials.get('/:id', async (c) => {
   const supabase = createUserClient(c.get('token'))
   const { data, error } = await supabase

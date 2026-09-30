@@ -38,6 +38,7 @@ import {
 import { browserApiClient } from '@/lib/browser-api-client'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { formatRelativeTime } from '@/lib/relative-time'
+import { PendingButton } from '@/components/pending-button'
 
 export type OpenBuild = {
   id: string
@@ -247,6 +248,9 @@ export function MakersWantedBoard({ builds }: { builds: OpenBuild[] }) {
                     <span className="text-[13px] font-bold text-muted">
                       {b.mine ? 'This is your request' : 'Nobody has claimed this yet'}
                     </span>
+                    {!b.mine && (
+                      <PendingButton pending="makers-ask-first" label="Ask first" className="btn btn-quiet min-h-11 px-[18px] text-sm" />
+                    )}
                     {!b.mine && (
                       <button
                         type="button"

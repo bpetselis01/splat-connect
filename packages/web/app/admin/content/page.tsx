@@ -9,6 +9,8 @@ import { SiteContentEditor, type ContentRow } from '@/components/site-content-ed
 
 export const metadata = { title: 'Site content — SPLAT Connect' }
 
+// PENDING(site-content-learn-legal-editing): Learn and Legal stay read-only here —
+// editing a legal document can force every contributor to accept it again.
 export default async function AdminContentPage() {
   const rows = await apiClient
     .get<ContentRow[]>('/api/admin/content')

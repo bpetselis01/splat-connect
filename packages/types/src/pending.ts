@@ -525,6 +525,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "\"Pick a toy to offer\" on a swap request [ui,api]",
+    shipped: true,
   },
   'web-org-public-sections': {
     title: "More about this organisation",
@@ -532,6 +533,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "How to work with them, guides they back, shelf, from families [ui,api]",
+    shipped: true,
   },
   'web-event-detail': {
     title: "About this event",
@@ -539,6 +541,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "\"About this event\" and cost on event detail and register [ui,api]",
+    shipped: true,
   },
   'web-events-by-month': {
     title: "Events by month",
@@ -546,13 +549,14 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Events grouped by month [ui]",
+    shipped: true,
   },
   'web-admin-review-list': {
     title: "Review list details",
     blurb: "Search and more detail in the review list are coming.",
     kind: "build",
     platforms: ["web"],
-    needs: "Review list rows and search input [ui]",
+    needs: "A search input on the review list (rows already name the contributor) [ui]",
   },
   'makers-ask-first': {
     title: "Ask first",
@@ -777,6 +781,7 @@ export const PENDING = {
     platforms: ["web", "api"],
     needs: "A product decision (see question), then the build it implies.",
     question: "Print time and grams per guide on a print request?",
+    shipped: true,
   },
 } satisfies Record<string, PendingItem>
 
