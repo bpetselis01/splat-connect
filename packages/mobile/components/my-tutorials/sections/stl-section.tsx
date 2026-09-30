@@ -18,7 +18,16 @@ import { ErrorRow } from '../../ui/ErrorRow'
 import { SectionFooter } from '../section-footer'
 import { PickerNote } from './picker-note'
 
+// Rows are copied into local state when the editor mounts, so it mounts only
+// once the draft has arrived: opened cold (a deep link, a reload on web) it
+// would otherwise start empty for good, and the replace-set save would then
+// delete what was there.
 export function StlSection() {
+  const { tutorial } = useDraft()
+  return tutorial ? <StlEditor /> : null
+}
+
+function StlEditor() {
   const { tutorial, saveError } = useDraft()
   const [uploading, setUploading] = useState(false)
   const [localError, setLocalError] = useState<string | null>(null)

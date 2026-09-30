@@ -41,6 +41,18 @@ beforeEach(() => {
   }
 })
 
+// Opened cold (a deep link, a reload on web) the section mounts before the
+// draft arrives. Seeding rows at mount left them empty for good, and since the
+// list saves as a replace-set, adding one part then deleted the rest.
+it('shows the parts once a draft that was still loading arrives', () => {
+  const loaded = mockDraft.tutorial
+  mockDraft.tutorial = null as unknown as Record<string, unknown>
+  const view = render(<ItemsSection noun="parts" />)
+  mockDraft.tutorial = loaded
+  view.rerender(<ItemsSection noun="parts" />)
+  expect(screen.getByLabelText('Part 1 name').props.value).toBe('Switch')
+})
+
 it('seeds its rows from the tutorial', () => {
   render(<ItemsSection noun="parts" />)
   expect(screen.getByLabelText('Part 1 name').props.value).toBe('Switch')

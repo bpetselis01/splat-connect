@@ -22,7 +22,16 @@ import { SectionFooter } from '../section-footer'
 
 const MAX_STEPS = 60
 
+// Rows are copied into local state when the editor mounts, so it mounts only
+// once the draft has arrived: opened cold (a deep link, a reload on web) it
+// would otherwise start empty for good, and the replace-set save would then
+// delete what was there.
 export function StepsSection() {
+  const { tutorial } = useDraft()
+  return tutorial ? <StepsEditor /> : null
+}
+
+function StepsEditor() {
   const { tutorial, replaceSteps, saveError } = useDraft()
   const [rows, setRows] = useState<StepRow[]>(() =>
     (tutorial?.steps ?? []).map((s) => ({ title: s.title, body: s.body, photo_url: s.photo_url }))
