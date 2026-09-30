@@ -274,6 +274,10 @@ async function seedPrinterWithJobs(db, owner, requesterId) {
     .from('stl_files')
     .select('id, tutorial_id, tutorials!inner(status)')
     .eq('tutorials.status', 'approved')
+    // Files with estimates: the job card prints "3 h 10 · ~42 g PETG" off them.
+    .not('print_minutes', 'is', null)
+    .not('filament_grams', 'is', null)
+    .not('material', 'is', null)
     .limit(20)
   const tutorial_id = stls?.[0]?.tutorial_id || (await approvedGuide(db))
   if (!tutorial_id || !requesterId) return
@@ -296,6 +300,21 @@ async function seedPrinterWithJobs(db, owner, requesterId) {
     await d.from('toy_transactions').delete().eq('printer_id', printer.id)
     await d.from('printers').delete().eq('id', printer.id)
   })
+  // An organisation with two machines: the offer screen draws its machine
+  // picker only when there is a choice. Cascades with the organisation.
+  if (owner.owner_org_id)
+    await swallow(
+      db.from('printers').insert({
+        ...owner,
+        name: 'Parity fixture printer 2',
+        materials: ['PLA', 'TPU'],
+        bed_x: 256,
+        bed_y: 256,
+        bed_z: 256,
+        suburb: 'Newtown',
+        state: 'NSW',
+      })
+    )
   const job = (status, print_note) => ({
     ...owner,
     printer_id: printer.id,
