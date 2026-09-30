@@ -168,8 +168,7 @@
   "boardRoute": "explore/challenges/[id]",
   "route": "/explore/challenges/[id]",
   "idFrom": "challenge_detail",
-  "role": "parent",
-  "sampleFrom": "/explore/challenges"
+  "role": "parent"
  },
  {
   "id": "challenge_new",
@@ -471,8 +470,7 @@
   "group": "push",
   "boardRoute": "organisation/[tutorialId]",
   "route": "/organisation/[tutorialId]",
-  "role": "leader",
-  "sampleFrom": "/organisation"
+  "role": "leader"
  },
  {
   "id": "org_toys",

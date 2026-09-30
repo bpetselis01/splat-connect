@@ -1,7 +1,96 @@
 {
- "at": "2026-09-30T14:09:31.255Z",
+ "at": "2026-09-30T14:10:28.648Z",
  "live": "http://localhost:3112",
  "screens": [
+  {
+   "id": "challenge_detail",
+   "name": "Challenge",
+   "group": "push",
+   "route": "/explore/challenges/541682c9-ea71-4084-a8b3-cb90702715db",
+   "findings": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"a bubble machine any child can start\" has no counterpart",
+     "board": "a bubble machine any child can start",
+     "live": null
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "h3 \"status\" size",
+     "board": "18px",
+     "live": "24px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "h3 wording",
+     "board": "status",
+     "live": "e#e mysplat challenge #-#"
+    },
+    {
+     "type": "radius",
+     "severity": "medium",
+     "what": "card radius",
+     "board": "16px",
+     "live": "nullpx"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "1/1 board paragraphs absent",
+     "board": "where this idea is, and what happens next.",
+     "live": "published # sept · e#e contributor"
+    },
+    {
+     "type": "radius",
+     "severity": "low",
+     "what": "button radius range",
+     "board": "999px",
+     "live": "14px"
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "none",
+     "live": "set"
+    },
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "card background",
+     "board": "rgb(223,243,234)",
+     "live": null
+    }
+   ],
+   "role": "parent",
+   "finalUrl": "/explore/challenges/541682c9-ea71-4084-a8b3-cb90702715db",
+   "explained": [],
+   "boardHeadings": 3,
+   "liveHeadings": 2
+  },
+  {
+   "id": "org_review",
+   "name": "Review a guide",
+   "group": "push",
+   "route": "/organisation/b019164b-c9ff-4bdb-a2c5-3ce3911a594b",
+   "findings": [
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "1/1 board paragraphs absent",
+     "board": "vibrating cushion with a lever — sam mitchell, easy, # minutes. six se",
+     "live": "parity guide submitted for review"
+    }
+   ],
+   "role": "leader",
+   "finalUrl": "/organisation/b019164b-c9ff-4bdb-a2c5-3ce3911a594b",
+   "explained": [],
+   "boardHeadings": 0,
+   "liveHeadings": 2
+  },
   {
    "id": "guides",
    "name": "Guides",
@@ -899,16 +988,6 @@
    "liveHeadings": 11
   },
   {
-   "id": "challenge_detail",
-   "name": "Challenge",
-   "group": "push",
-   "route": "/explore/challenges/[id]",
-   "findings": [],
-   "role": "parent",
-   "error": "no record for /explore/challenges/[id] (no link on /explore/challenges)",
-   "skipped": true
-  },
-  {
    "id": "challenge_new",
    "name": "Submit an idea",
    "group": "push",
@@ -1690,16 +1769,6 @@
    "liveHeadings": 1
   },
   {
-   "id": "org_review",
-   "name": "Review a guide",
-   "group": "push",
-   "route": "/organisation/[tutorialId]",
-   "findings": [],
-   "role": "leader",
-   "error": "no record for /organisation/[tutorialId] (no link on /organisation)",
-   "skipped": true
-  },
-  {
    "id": "org_toys",
    "name": "Toy inventory",
    "group": "push",
@@ -1859,21 +1928,21 @@
  "summary": {
   "screens": 61,
   "clean": 16,
-  "withFindings": 42,
+  "withFindings": 44,
   "errored": 0,
-  "skipped": 3,
-  "findings": 155,
+  "skipped": 1,
+  "findings": 164,
   "explained": 0,
   "byType": {
-   "missing-section": 33,
+   "missing-section": 34,
+   "size": 11,
+   "copy": 35,
+   "radius": 37,
+   "shadow": 6,
+   "colour": 7,
    "font": 16,
-   "size": 10,
-   "copy": 32,
-   "radius": 35,
    "weight": 14,
-   "colour": 6,
-   "extra-section": 4,
-   "shadow": 5
+   "extra-section": 4
   }
  }
 }

@@ -193,7 +193,8 @@ async function seedBuild(db, parentId) {
  * cascade, so they are undone.
  */
 async function seedOrgQueue(db, leaderId, orgId) {
-  if (!orgId) return
+  if (!orgId) return null
+  let submitted = null
   const guides = [
     { title: 'Parity guide asking to be backed', status: 'draft', backing: 'pending' },
     { title: 'Parity guide submitted for review', status: 'pending', backing: 'accepted' },
@@ -210,7 +211,9 @@ async function seedOrgQueue(db, leaderId, orgId) {
       db.from('tutorial_contributors').insert({ tutorial_id: t.id, profile_id: leaderId, role: 'primary' })
     )
     await swallow(db.from('tutorial_orgs').insert({ tutorial_id: t.id, org_id: orgId, status: g.backing }))
+    if (g.status === 'pending') submitted = t.id
   }
+  return submitted
 }
 
 /**
@@ -701,7 +704,10 @@ async function seed(db, users) {
       routes.event_detail = `/get-involved/events/${ev}`
       await seedEventParts(db, ev, leader.orgId, family)
     }
-    await seedOrgQueue(db, leader.id, leader.orgId)
+    const queued = await seedOrgQueue(db, leader.id, leader.orgId)
+    // The app's org review screen, keyed by its app screen id: the leader's
+    // queue is pressables, and no web screen shows this record.
+    if (queued) routes.org_review = `/organisation/${queued}`
     await seedOrgRequests(db, family, leader.orgId)
     await seedPrinterWithJobs(db, { owner_org_id: leader.orgId }, family)
     await seedDropoffs(db, leader.orgId, family)
@@ -719,6 +725,17 @@ async function seed(db, users) {
  * unmeasured forever. (That it is orphaned is worth knowing on its own.)
  */
 const DB_SAMPLES = {
+  // The app's challenge list is pressables, not links, so nothing scrapes it.
+  challenge_detail: async (db) => {
+    const { data } = await db
+      .from('toy_ideas')
+      .select('id')
+      .eq('status', 'challenge')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
+    return data ? `/get-involved/design-challenges/${data.id}` : null
+  },
   // The board draws the queue with a guide selected and its pane open.
   admin_review: async (db) => {
     const { data } = await db

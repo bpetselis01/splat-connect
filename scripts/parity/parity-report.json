@@ -1,7 +1,19 @@
 {
- "at": "2026-09-30T14:04:58.748Z",
+ "at": "2026-09-30T14:10:32.310Z",
  "live": "http://localhost:3110",
  "screens": [
+  {
+   "id": "challenge_detail",
+   "name": "Challenge detail",
+   "group": "Get involved",
+   "route": "/get-involved/design-challenges/541682c9-ea71-4084-a8b3-cb90702715db",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/get-involved/design-challenges/541682c9-ea71-4084-a8b3-cb90702715db",
+   "explained": [],
+   "boardHeadings": 4,
+   "liveHeadings": 4
+  },
   {
    "id": "home",
    "name": "Home",
@@ -536,18 +548,6 @@
    ],
    "boardHeadings": 6,
    "liveHeadings": 15
-  },
-  {
-   "id": "challenge_detail",
-   "name": "Challenge detail",
-   "group": "Get involved",
-   "route": "/get-involved/design-challenges/541682c9-ea71-4084-a8b3-cb90702715db",
-   "findings": [],
-   "role": "guest",
-   "finalUrl": "/get-involved/design-challenges/541682c9-ea71-4084-a8b3-cb90702715db",
-   "explained": [],
-   "boardHeadings": 4,
-   "liveHeadings": 4
   },
   {
    "id": "impact",

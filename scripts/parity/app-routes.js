@@ -16,6 +16,8 @@ function withId(route, webRoute) {
 /** ctx: { page, live, seeded, cache, db } as harness.js passes it. */
 async function resolveAppRoute(s, ctx) {
   if (!/\[/.test(s.route)) return s.route
+  // A route the seed made for this app screen itself.
+  if (ctx.seeded[s.id]) return ctx.seeded[s.id]
   const fromWeb = s.idFrom && withId(s.route, ctx.seeded[s.idFrom] || (await dbSample(ctx.db, s.idFrom)))
   if (fromWeb) return fromWeb
   // Scraping the app's own list needs a browser page; the picture pass has none.
