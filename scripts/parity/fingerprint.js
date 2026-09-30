@@ -213,6 +213,9 @@ function collectFingerprint(arg) {
   // counted as zero cards.
   const cardEls = [...root.querySelectorAll('div,article,li,section,a,button,label,form,fieldset')].filter((el) => {
     if (excluded(el)) return false
+    // A text field's own bordered wrapper is a field, not a card: a multi-line
+    // React Native TextInput is a card-sized bordered view around a textarea.
+    if ([...el.children].some((c) => /^(INPUT|TEXTAREA|SELECT)$/.test(c.tagName))) return false
     const st = cs(el)
     const r = parseFloat(st.borderTopLeftRadius) || 0
     if (r < 8) return false
@@ -567,9 +570,10 @@ function collectFingerprint(arg) {
   function bodyFontOf() {
     const declared = fontOf(cs(document.body))
     if (!/^(Times|Times New Roman|serif)$/.test(declared)) return declared
-    const fonts = [...root.querySelectorAll('p,span,div')]
-      .filter((el) => visible(el) && ownText(el).length > 20)
-      .map((el) => fontOf(cs(el)))
+    const texts = [...root.querySelectorAll('p,span,div')].filter((el) => visible(el) && ownText(el).length > 1)
+    // Prose where there is some; an empty editor section has only "No parts yet."
+    const prose = texts.filter((el) => ownText(el).length > 20)
+    const fonts = (prose.length ? prose : texts).map((el) => fontOf(cs(el)))
     return fonts.length ? modal(fonts) : declared
   }
 

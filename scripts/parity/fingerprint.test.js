@@ -62,8 +62,21 @@ const { chromium } = require(
   assert.ok(f2.paragraphs.some((t) => t.startsWith('pick up to three printers')), 'RN prose not collected')
   assert.strictEqual(f2.shapes.input.radius, 14, 'field radius taken from the bare input')
   assert.strictEqual(f2.shapes.input.bg, 'rgb(255,255,255)', 'field fill taken from the bare input')
+
+  // An empty editor section: only short text, and a multi-line field whose
+  // bordered wrapper is as tall as a card.
+  await page.setContent(`
+    <body style="font-family:Times"><div id="root">
+      <div dir="auto" style="font-family:Nunito_400Regular;font-size:15px">No parts yet.</div>
+      <div style="border:1.5px solid rgb(220,220,220);border-radius:14px;background:white;height:90px;width:300px">
+        <textarea style="border:0;background:transparent;width:280px;height:80px">Describe the toy</textarea>
+      </div>
+    </div></body>`)
+  const f3 = await page.evaluate(collectFingerprint, { root: '#root' })
+  assert.strictEqual(f3.page.bodyFont, 'Nunito', 'short text ignored for the body font')
+  assert.strictEqual(f3.counts.cards, 0, 'a field wrapper counted as a card')
   await browser.close()
-  console.log('fingerprint: 11 checks passed')
+  console.log('fingerprint: 13 checks passed')
 })().catch((e) => {
   console.error(e.message)
   process.exit(1)
