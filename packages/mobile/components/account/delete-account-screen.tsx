@@ -73,6 +73,7 @@ export function DeleteAccountScreen() {
   const [error, setError] = useState<AuthProblem | null>(null)
   const [busy, setBusy] = useState(false)
   const [apple, setApple] = useState(false)
+  const [emailed, setEmailed] = useState(false)
 
   useEffect(() => {
     apiClient
@@ -84,7 +85,12 @@ export function DeleteAccountScreen() {
 
   async function remove(appleAuthorizationCode?: string) {
     try {
-      await apiClient.delete('/api/me', { confirm: 'DELETE', keepCredit: keepName, appleAuthorizationCode })
+      const res = await apiClient.delete<{ emailed?: boolean }>('/api/me', {
+        confirm: 'DELETE',
+        keepCredit: keepName,
+        appleAuthorizationCode,
+      })
+      setEmailed(Boolean(res?.emailed))
       setStep('done')
     } catch {
       setError({ kind: 'other', message: 'Your account was not deleted. Try again in a moment.' })
@@ -133,6 +139,7 @@ export function DeleteAccountScreen() {
         </View>
         <Heading center>Your account is deleted</Heading>
         <Lede center>Everything listed is gone now. Guides you published stay up for the families using them.</Lede>
+        {emailed ? <Lede center>We emailed a confirmation to {email}.</Lede> : null}
         <Button testID="deleted-done" label="Done" style={pill} onPress={() => void signOut()} />
       </AuthStage>
     )

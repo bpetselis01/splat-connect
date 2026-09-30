@@ -26,7 +26,7 @@ describe('DeleteAccountForm', () => {
   it('asks for DELETE, then the code, then deletes with the keep-name choice', async () => {
     signInWithOtp.mockResolvedValue({ error: null })
     verifyOtp.mockResolvedValue({ error: null })
-    del.mockResolvedValue(undefined)
+    del.mockResolvedValue({ emailed: true })
     render(<DeleteAccountForm preview={preview} email="sam@example.com" />)
 
     expect(screen.getByText('1 build in progress')).toBeTruthy()
@@ -40,6 +40,7 @@ describe('DeleteAccountForm', () => {
     fireEvent.change(await screen.findByLabelText('6-digit code'), { target: { value: '123456' } })
     fireEvent.click(screen.getByRole('button', { name: 'Delete my account' }))
     expect(await screen.findByText('Your account is deleted')).toBeTruthy()
+    expect(screen.getByText('We emailed a confirmation to sam@example.com.')).toBeTruthy()
     expect(del).toHaveBeenCalledWith('/api/me', { confirm: 'DELETE', keepCredit: true })
   })
 

@@ -8,6 +8,7 @@ import type { AuthVariables } from '../middleware/auth.js'
 import { createAdminClient } from '../supabase/client.js'
 import { deleteAccount } from '../account-deletion.js'
 import { revokeApple } from '../apple-revoke.js'
+import { sendEmail } from '../mailer.js'
 
 const me = new Hono<{ Variables: AuthVariables }>()
 
@@ -44,6 +45,8 @@ me.delete('/', async (c) => {
   }
 
   const admin = createAdminClient()
+  // Read before the row is gone: the confirmation goes to this address.
+  const { data: who } = await admin.from('profiles').select('email').eq('id', c.get('userId')).single()
   const out = await deleteAccount(admin, c.get('userId'), body.keepCredit === true)
   if (out.error === 'sole_leader') {
     const { data } = await admin.rpc('account_deletion_preview', { uid: c.get('userId') })
@@ -52,7 +55,22 @@ me.delete('/', async (c) => {
   if (out.error) return c.json({ error: out.error }, 500)
 
   if (typeof body.appleAuthorizationCode === 'string') await revokeApple(body.appleAuthorizationCode)
-  return c.body(null, 204)
+  const emailed = who?.email
+    ? await sendEmail(
+        who.email,
+        'Your SPLAT Connect account is deleted',
+        [
+          'Your SPLAT Connect account was deleted just now, as you asked.',
+          '',
+          'Gone: your profile, email and sign-in, child profiles, drafts, saved items, photos and pickup address.',
+          'Kept without your name: published guides, and other members\' records of exchanges and messages with you.',
+          '',
+          "If you didn't do this, reply to this email straight away.",
+        ].join('\n')
+      )
+    : false
+  // `emailed` lets the done screen say "we emailed a confirmation" only when it's true.
+  return c.json({ emailed })
 })
 
 export default me

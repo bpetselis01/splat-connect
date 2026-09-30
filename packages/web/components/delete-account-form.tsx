@@ -60,6 +60,7 @@ export function DeleteAccountForm({ preview, email }: { preview: DeletionPreview
   const [code, setCode] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [emailed, setEmailed] = useState(false)
 
   if (preview.soleLedOrgs.length) {
     return (
@@ -93,7 +94,8 @@ export function DeleteAccountForm({ preview, email }: { preview: DeletionPreview
       return setError("That code didn't work. Check the latest email, or send a new one.")
     }
     try {
-      await browserApiClient.delete('/api/me', { confirm: 'DELETE', keepCredit: keepName })
+      const res = await browserApiClient.delete<{ emailed?: boolean }>('/api/me', { confirm: 'DELETE', keepCredit: keepName })
+      setEmailed(Boolean(res?.emailed))
       setStep('done')
     } catch {
       setError('Your account was not deleted. Try again in a moment.')
@@ -112,6 +114,7 @@ export function DeleteAccountForm({ preview, email }: { preview: DeletionPreview
       <div className="flex flex-col items-start gap-4">
         <h2 className="text-2xl font-extrabold text-ink">Your account is deleted</h2>
         <p className="text-muted">Everything listed is gone now. Guides you published stay up for the families using them.</p>
+        {emailed && <p className="text-muted">We emailed a confirmation to {email}.</p>}
         <button type="button" onClick={finish} className="auth-submit px-8" data-testid="deleted-done">Done</button>
       </div>
     )

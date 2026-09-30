@@ -94,16 +94,19 @@ Mobile `(my)/account/delete`, web `/dashboard/profile/delete`: the preview
 (open now / deleted now / stays without your name), the keep-name checkbox,
 the DELETE field, "Email me a code" → six-box code → deleted → "Your account
 is deleted" → Done signs out. iOS accounts signed in with Apple also get
-"Continue with Apple instead". Sole leader: an alert and "Manage leaders";
-nothing else is enabled. Account screens gain a **Delete account** row under
+"Continue with Apple instead". Sole leader: an alert and "Manage leaders", which opens the organisation
+profile's new Leaders section (add a co-leader by email, step down). Account screens gain a **Delete account** row under
 Sign Out.
 
 Public web `/delete-account` (Google Play's required URL): what is deleted,
 what is kept, the three steps, "Sign in to delete".
 
-**Deviation from the mockup:** no confirmation email. The API has no mail
-sender, and the on-screen confirmation is what Apple asks for. Revisit with
-custom SMTP (Spec A's release checklist).
+**Confirmation email** goes out through Resend (`src/mailer.ts`, plain
+fetch) once `RESEND_API_KEY` and `MAIL_FROM` are set; `DELETE /api/me` returns
+`{ emailed }` and the done screen only claims an email when it is true. The
+same Resend account is the custom SMTP Supabase needs anyway: the built-in
+sender is rate-limited and delivers to team addresses only, and Apple's
+private relay needs a registered sending domain.
 
 ## Privacy page
 
@@ -125,5 +128,4 @@ exchange cost records are kept for 7 years under "Deleted member".
 
 ## Out of scope
 
-Data export, delayed/undoable deletion, Apple server-to-server notifications,
-confirmation email.
+Data export, delayed/undoable deletion, Apple server-to-server notifications.

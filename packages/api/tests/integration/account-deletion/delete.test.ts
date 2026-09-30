@@ -95,7 +95,8 @@ describe('DELETE /api/me', () => {
 
   it('deletes the person and keeps what other people rely on', async () => {
     const res = await app.request('/api/me', del(leaving.token, { confirm: 'DELETE', keepCredit: true }))
-    expect(res.status).toBe(204)
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({ emailed: false }) // no RESEND_API_KEY locally
     const admin = adminClient()
 
     // Gone.
@@ -141,8 +142,8 @@ describe('two co-authors leaving one guide', () => {
       { tutorial_id: guide, profile_id: b.id },
     ])
 
-    expect((await app.request('/api/me', del(a.token, { confirm: 'DELETE', keepCredit: true }))).status).toBe(204)
-    expect((await app.request('/api/me', del(b.token, { confirm: 'DELETE', keepCredit: false }))).status).toBe(204)
+    expect((await app.request('/api/me', del(a.token, { confirm: 'DELETE', keepCredit: true }))).status).toBe(200)
+    expect((await app.request('/api/me', del(b.token, { confirm: 'DELETE', keepCredit: false }))).status).toBe(200)
 
     const { data } = await admin.from('tutorial_contributors').select('profile_id, former_names, former_count').eq('tutorial_id', guide)
     expect(data).toEqual([{ profile_id: GHOST, former_names: ['Ana Kept'], former_count: 2 }])
