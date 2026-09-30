@@ -4,9 +4,6 @@ import { theme } from '../../lib/theme'
 import { Button } from '../ui/Button'
 import { EmptyState } from '../ui/EmptyState'
 
-// PENDING(guide-draft-preview): the board's preview is an author's draft summary
-// (title, then Steps / Parts / Safety with Empty or OK), opened from the editor;
-// this route shows the PDF, which detail, the files section and org review use.
 export function PreviewScreen({ pdfUrl }: { pdfUrl: string | null }) {
   if (!pdfUrl) {
     return (
