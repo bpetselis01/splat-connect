@@ -57,11 +57,12 @@ const CONTACT_PREF_LABELS: Record<ContactPref, string> = {
 
 type Tab = 'status' | 'brief' | 'constraints' | 'makers'
 // The conversation lives under Makers: it is the makers' thread.
-const TABS: { id: Tab; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-  { id: 'status', label: 'Status', icon: 'pulse-outline' },
-  { id: 'brief', label: 'Brief', icon: 'document-text-outline' },
-  { id: 'constraints', label: 'Constraints', icon: 'alert-circle-outline' },
-  { id: 'makers', label: 'Makers', icon: 'people-outline' },
+// title and hint: the board's heading and muted line over each tab.
+const TABS: { id: Tab; label: string; icon: keyof typeof Ionicons.glyphMap; title: string; hint: string }[] = [
+  { id: 'status', label: 'Status', icon: 'pulse-outline', title: 'Status', hint: 'Where this idea is, and what happens next.' },
+  { id: 'brief', label: 'Brief', icon: 'document-text-outline', title: 'The brief', hint: 'What is being asked for, and why nothing off the shelf does it.' },
+  { id: 'constraints', label: 'Constraints', icon: 'alert-circle-outline', title: 'Constraints', hint: 'What makes this harder than it looks.' },
+  { id: 'makers', label: 'Makers', icon: 'people-outline', title: 'Makers', hint: 'Everyone working on this. Makers can post.' },
 ]
 
 function Field({ label, value }: { label: string; value: string }) {
@@ -364,6 +365,15 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
           ))}
         </ScrollView>
 
+        {TABS.filter((t) => t.id === tab).map((t) => (
+          <View key={t.id} style={styles.tabHead}>
+            <Text style={styles.tabTitle} accessibilityRole="header">
+              {t.title}
+            </Text>
+            <Text style={styles.tabHint}>{t.hint}</Text>
+          </View>
+        ))}
+
         {tab === 'status' ? (
           <Card style={styles.panel}>
             <View style={styles.headline}>
@@ -565,11 +575,15 @@ const styles = StyleSheet.create({
   tabText: { fontFamily: theme.fonts.black, fontSize: 12.5, color: theme.colors.ink },
   panel: { gap: theme.spacing(3), padding: theme.spacing(4) },
   panelTitle: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.ink },
+  tabHead: { gap: theme.spacing(1), marginBottom: theme.spacing(3) },
+  tabTitle: { fontFamily: theme.fonts.display, fontSize: 18, color: theme.colors.text },
+  tabHint: { fontFamily: theme.fonts.regular, fontSize: 13, color: theme.colors.muted },
+  // The board's live-status box: 16px, the success tint.
   headline: {
     gap: theme.spacing(1),
     padding: theme.spacing(4),
-    borderRadius: theme.radii.panel,
-    backgroundColor: theme.colors.mintSoft,
+    borderRadius: 16,
+    backgroundColor: theme.colors.successSoft,
   },
   headlineTitle: { fontFamily: theme.fonts.display, fontSize: theme.type.body, color: theme.colors.ink },
   stats: { flexDirection: 'row', gap: theme.spacing(2) },
