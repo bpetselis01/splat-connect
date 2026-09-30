@@ -19,7 +19,7 @@ import { Button } from '../ui/Button'
 import { StepPills, type StepPillItem } from '../ui/StepPills'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
-import { ErrorRow } from '../auth-screen'
+import { ErrorRow } from '../ui/ErrorRow'
 
 /** Mirrors 053's file_size_limit on the photo buckets. */
 const MAX_PHOTO_BYTES = 10 * 1024 * 1024

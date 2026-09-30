@@ -23,7 +23,7 @@ import { Screen } from '../ui/Screen'
 import { Button } from '../ui/Button'
 import { Chip } from '../ui/Chip'
 import { TextField } from '../ui/TextField'
-import { ErrorRow } from '../auth-screen'
+import { ErrorRow } from '../ui/ErrorRow'
 import { apiMessage } from '@splat-connect/types'
 
 // The board's four. PRINT_MATERIALS has six; ASA and Nylon are rare enough on

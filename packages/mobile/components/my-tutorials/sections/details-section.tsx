@@ -20,7 +20,7 @@ import { theme } from '../../../lib/theme'
 import { Screen } from '../../ui/Screen'
 import { TextField } from '../../ui/TextField'
 import { Chip } from '../../ui/Chip'
-import { ErrorRow } from '../../auth-screen'
+import { ErrorRow } from '../../ui/ErrorRow'
 import { SectionFooter } from '../section-footer'
 
 const KIND_OPTIONS: { label: string; value: TutorialKind }[] = [

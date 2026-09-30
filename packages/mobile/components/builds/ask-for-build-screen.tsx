@@ -25,7 +25,7 @@ import { Screen } from '../ui/Screen'
 import { Chip } from '../ui/Chip'
 import { Button } from '../ui/Button'
 import { TextField } from '../ui/TextField'
-import { ErrorRow } from '../auth-screen'
+import { ErrorRow } from '../ui/ErrorRow'
 
 // The board's four ranges; the Makers wanted filter reads the same scale.
 const RANGES = [5, 10, 15, 25]

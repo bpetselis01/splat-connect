@@ -13,7 +13,7 @@ import { childSummary as summaryOf, type ChildProfile } from '@splat-connect/typ
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { Button } from '../ui/Button'
-import { ErrorRow } from '../auth-screen'
+import { ErrorRow } from '../ui/ErrorRow'
 import { ListRow } from '../list/list-kit'
 
 // The board's avatar tints, cycled so neighbouring children never match.

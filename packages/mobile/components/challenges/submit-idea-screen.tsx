@@ -17,7 +17,7 @@ import { Chip } from '../ui/Chip'
 import { Button } from '../ui/Button'
 import { TextField } from '../ui/TextField'
 import { EmptyState } from '../ui/EmptyState'
-import { ErrorRow } from '../auth-screen'
+import { ErrorRow } from '../ui/ErrorRow'
 
 // Web's idea-form.tsx tiles, same words (078).
 const KINDS: { kind: ToyIdeaKind; label: string }[] = [

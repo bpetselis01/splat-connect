@@ -40,7 +40,7 @@ import { Button } from '../ui/Button'
 import { TextField } from '../ui/TextField'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
-import { ErrorRow } from '../auth-screen'
+import { ErrorRow } from '../ui/ErrorRow'
 import { apiMessage, pickupAddress, plural } from '@splat-connect/types'
 
 type Tab = 'requests' | 'jobs' | 'printers'

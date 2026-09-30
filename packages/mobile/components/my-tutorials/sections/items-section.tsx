@@ -16,7 +16,7 @@ import { theme } from '../../../lib/theme'
 import { Screen } from '../../ui/Screen'
 import { TextField } from '../../ui/TextField'
 import { Button } from '../../ui/Button'
-import { ErrorRow } from '../../auth-screen'
+import { ErrorRow } from '../../ui/ErrorRow'
 import { SectionFooter } from '../section-footer'
 
 const NOUN_LABEL = { parts: 'Part', tools: 'Tool' } as const

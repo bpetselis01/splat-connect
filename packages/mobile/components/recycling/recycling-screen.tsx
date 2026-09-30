@@ -48,7 +48,7 @@ import { Button } from '../ui/Button'
 import { Chip } from '../ui/Chip'
 import { TextField } from '../ui/TextField'
 import { SkeletonRow } from '../ui/Skeleton'
-import { ErrorRow } from '../auth-screen'
+import { ErrorRow } from '../ui/ErrorRow'
 
 type Ion = React.ComponentProps<typeof Ionicons>['name']
 // The board's glyph for each declaration line, in RECYCLING_DECLARATION's order.

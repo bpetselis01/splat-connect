@@ -31,7 +31,7 @@ import { Button } from '../ui/Button'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
-import { ErrorRow } from '../auth-screen'
+import { ErrorRow } from '../ui/ErrorRow'
 import { apiMessage } from '@splat-connect/types'
 
 /** GET /api/toy-transactions/open-builds, one row. No requester name — by design. */

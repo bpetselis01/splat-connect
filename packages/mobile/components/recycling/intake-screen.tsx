@@ -34,7 +34,7 @@ import { Chip } from '../ui/Chip'
 import { TextField } from '../ui/TextField'
 import { EmptyState } from '../ui/EmptyState'
 import { SkeletonRow } from '../ui/Skeleton'
-import { ErrorRow } from '../auth-screen'
+import { ErrorRow } from '../ui/ErrorRow'
 
 const TINTS = [theme.colors.honeySoft, theme.colors.violetSoft, theme.colors.mintSoft, theme.colors.accentLight]
 const date = (iso: string) => new Date(iso).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })

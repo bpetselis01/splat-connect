@@ -24,7 +24,7 @@ import { TextField } from '../ui/TextField'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { MessageBubble } from '../ui/MessageBubble'
-import { ErrorRow } from '../auth-screen'
+import { ErrorRow } from '../ui/ErrorRow'
 import { apiMessage } from '@splat-connect/types'
 
 export function OrgConversationScreen(props: { orgId: string; orgName?: string } | { cid: string }) {

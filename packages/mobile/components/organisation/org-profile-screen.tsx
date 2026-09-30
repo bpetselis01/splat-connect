@@ -31,7 +31,7 @@ import { Chip } from '../ui/Chip'
 import { TextField } from '../ui/TextField'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
-import { ErrorRow } from '../auth-screen'
+import { ErrorRow } from '../ui/ErrorRow'
 
 type IconName = React.ComponentProps<typeof Ionicons>['name']
 

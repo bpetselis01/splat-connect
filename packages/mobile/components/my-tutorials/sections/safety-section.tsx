@@ -9,7 +9,7 @@ import { SAFETY_CHECKLIST } from '@splat-connect/types'
 import { useDraft } from '../../../lib/use-tutorial-draft'
 import { theme } from '../../../lib/theme'
 import { Screen } from '../../ui/Screen'
-import { ErrorRow } from '../../auth-screen'
+import { ErrorRow } from '../../ui/ErrorRow'
 import { SectionFooter } from '../section-footer'
 
 export function SafetySection() {

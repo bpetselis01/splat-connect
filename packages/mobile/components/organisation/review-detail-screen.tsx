@@ -26,7 +26,7 @@ import { TextField } from '../ui/TextField'
 import { Skeleton } from '../ui/Skeleton'
 import { ListRow, ListSection, Pill } from '../list/list-kit'
 import { EmptyState } from '../ui/EmptyState'
-import { ErrorRow } from '../auth-screen'
+import { ErrorRow } from '../ui/ErrorRow'
 
 type Detail = TutorialWithDetails
 

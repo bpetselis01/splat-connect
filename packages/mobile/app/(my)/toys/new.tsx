@@ -10,7 +10,7 @@ import { ScreenHeader } from '../../../components/ui/ScreenHeader'
 import { TextField } from '../../../components/ui/TextField'
 import { Chip } from '../../../components/ui/Chip'
 import { Button } from '../../../components/ui/Button'
-import { ErrorRow } from '../../../components/auth-screen'
+import { ErrorRow } from '../../../components/ui/ErrorRow'
 
 // The mockup drew a slider for condition; chips avoid pulling in a slider
 // dependency for one field, at the cost of a wider row than a track would
