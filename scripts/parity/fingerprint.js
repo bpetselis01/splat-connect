@@ -87,6 +87,21 @@ function collectFingerprint(arg) {
   const { root: rootSelector, exclude } = typeof arg === 'string' ? { root: arg } : arg
   const root = document.querySelector(rootSelector) || document.body
   const excluded = (el) => !!exclude && !!el.closest(exclude)
+
+  // Family and weight as a reader sees them. expo-google-fonts registers each
+  // weight as its own family (Baloo2_800ExtraBold) at CSS weight 400, so on
+  // React Native web every heading read as "Baloo2_800ExtraBold, 400" against
+  // the board's "Baloo 2, 800" and none passed the heading weight test.
+  const FAMILY = { Baloo2: 'Baloo 2', JetBrainsMono: 'JetBrains Mono' }
+  const rawFamily = (st) => st.fontFamily.split(',')[0].replace(/["']/g, '').trim()
+  const fontOf = (st) => {
+    const m = /^(.+?)_(\d{3})[A-Za-z]*$/.exec(rawFamily(st))
+    return m ? FAMILY[m[1]] || m[1] : rawFamily(st)
+  }
+  const weightOf = (st) => {
+    const m = /_(\d{3})[A-Za-z]*$/.exec(rawFamily(st))
+    return m ? +m[1] : +st.fontWeight
+  }
   const cs = (el) => getComputedStyle(el)
 
   const norm = (s) =>
@@ -161,7 +176,7 @@ function collectFingerprint(arg) {
     // React Native web renders every heading as a <div role="heading">.
     const semantic = /^H[1-6]$/.test(el.tagName) || el.getAttribute('role') === 'heading'
     if (!semantic && px(s.fontSize) < HEADING_MIN_SIZE) return false
-    if (!semantic && +s.fontWeight < HEADING_MIN_WEIGHT) return false
+    if (!semantic && weightOf(s) < HEADING_MIN_WEIGHT) return false
     // An eyebrow is a label, whatever its tag. Live marks its small uppercase
     // eyebrows up as h2/h3 ("Money you have agreed to", "Meeting them") where
     // the board sets the same words in a 12px <p>, and every one read as an
@@ -286,9 +301,9 @@ function collectFingerprint(arg) {
             : size >= 40 ? 1 : size >= 26 ? 2 : size >= 20 ? 3 : 4,
         tag: h.tagName,
         text: norm(headingText(h)).slice(0, 80),
-        font: s.fontFamily.split(',')[0].replace(/["']/g, '').trim(),
+        font: fontOf(s),
         size,
-        weight: +s.fontWeight,
+        weight: weightOf(s),
         colour: colour(s.color),
         // A heading inside a card is the title of a RECORD — "Bubble machine",
         // "Weighted lap snake". The board shows six samples and live shows
@@ -431,7 +446,7 @@ function collectFingerprint(arg) {
       const st = cs(el)
       const size = px(st.fontSize)
       if (!best || size > best.size) {
-        best = { size, weight: +st.fontWeight, font: st.fontFamily.split(',')[0].replace(/["']/g, '').trim() }
+        best = { size, weight: weightOf(st), font: fontOf(st) }
       }
     }
     return best
@@ -516,6 +531,33 @@ function collectFingerprint(arg) {
 
   const cardTitles = cardEls.map(titleOf).filter(Boolean)
 
+  // The screen's own background: the root or its nearest opaque ancestor, else
+  // (React Native web, where body and #root are transparent) the first view
+  // inside the root that spans it.
+  function canvasOf() {
+    const opaque = (el) => { const c = colour(cs(el).backgroundColor); return c !== 'rgba(0,0,0,0)' && c !== 'transparent' ? c : null }
+    for (let el = root; el; el = el.parentElement) if (opaque(el)) return opaque(el)
+    // The deepest such view: React Navigation paints its own #f2f2f2
+    // container under every screen, and the screen's background sits on top.
+    const r = root.getBoundingClientRect()
+    let found = null
+    for (const el of root.querySelectorAll('div')) {
+      const b = el.getBoundingClientRect()
+      if (b.width >= r.width * 0.95 && b.height >= Math.min(r.height, innerHeight) * 0.6 && opaque(el)) found = opaque(el)
+    }
+    return found || colour(cs(document.body).backgroundColor)
+  }
+  // The font the words are set in, not the one body declares: React Native web
+  // never sets body's, which then reads as the browser default.
+  function bodyFontOf() {
+    const declared = fontOf(cs(document.body))
+    if (!/^(Times|Times New Roman|serif)$/.test(declared)) return declared
+    const fonts = [...root.querySelectorAll('p,span,div')]
+      .filter((el) => visible(el) && ownText(el).length > 20)
+      .map((el) => fontOf(cs(el)))
+    return fonts.length ? modal(fonts) : declared
+  }
+
   return {
     headings,
     cardTitles,
@@ -567,9 +609,9 @@ function collectFingerprint(arg) {
     paragraphs,
     page: {
       height: Math.round(root.getBoundingClientRect().height),
-      canvas: colour(cs(document.body).backgroundColor),
+      canvas: canvasOf(),
       ink: colour(cs(document.body).color),
-      bodyFont: cs(document.body).fontFamily.split(',')[0].replace(/["']/g, '').trim(),
+      bodyFont: bodyFontOf(),
     },
   }
 }
