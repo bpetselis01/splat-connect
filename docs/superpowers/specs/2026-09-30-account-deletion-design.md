@@ -44,8 +44,9 @@ role only. Order matters and is the order below.
    owner.
 4. **Guides**: a tutorial where the user is the only contributor, not
    `approved`, and no build references it → deleted (id returned for Storage).
-   Otherwise their credit row is repointed with `former_name` set when
-   `keep_credit` (dropped if the placeholder is already credited there).
+   Otherwise their credit moves to the placeholder: `former_count` counts the
+   departed co-authors and `former_names` holds those who kept their name —
+   one row per guide, folded together when a second co-author leaves.
 5. **Toys**: with any transaction → repointed and set `draft` (off the
    library); without → deleted (id returned for Storage).
 6. **Printers**: with any job → repointed, `accepting = false`; without → deleted.
@@ -83,8 +84,9 @@ shows and the sole-led organisations.
 - The admin `DELETE /api/admin/contributors/:id` runs the same function
   (`keep_credit = false`) instead of the bare `deleteUser` that could fail or
   destroy other members' history.
-- Guide detail (`tutorials.ts`, `public.ts`) shows a placeholder credit as
-  `former_name` or "A former contributor".
+- Guide detail (`tutorials.ts`, `public.ts`) renders a placeholder credit
+  from those two columns: "A former contributor", "Sam", "Sam and 1 former
+  contributor".
 
 ## Screens
 

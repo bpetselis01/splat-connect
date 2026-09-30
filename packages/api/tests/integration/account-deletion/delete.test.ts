@@ -115,8 +115,8 @@ describe('DELETE /api/me', () => {
     expect(toy).toEqual({ owner_id: GHOST, status: 'draft' })
     const { data: msg } = await admin.from('toy_idea_messages').select('sender_id').eq('id', ids.msg).single()
     expect(msg!.sender_id).toBe(GHOST)
-    const { data: credit } = await admin.from('tutorial_contributors').select('profile_id, former_name').eq('tutorial_id', ids.published).single()
-    expect(credit).toEqual({ profile_id: GHOST, former_name: 'Sam Leaving' })
+    const { data: credit } = await admin.from('tutorial_contributors').select('profile_id, former_names, former_count').eq('tutorial_id', ids.published).single()
+    expect(credit).toEqual({ profile_id: GHOST, former_names: ['Sam Leaving'], former_count: 1 })
 
     // The public guide shows the name they chose to keep.
     const pub = await app.request(`/api/public/tutorials/${ids.published}`)
@@ -127,5 +127,29 @@ describe('DELETE /api/me', () => {
   it('leaves an account that can no longer sign in', async () => {
     const { data } = await adminClient().auth.admin.getUserById(leaving.id)
     expect(data.user).toBeNull()
+  })
+})
+
+describe('two co-authors leaving one guide', () => {
+  it('keeps both in one credit: the name kept, the other counted', async () => {
+    const [a, b] = await Promise.all([createTestUser(), createTestUser()])
+    const admin = adminClient()
+    await admin.from('profiles').update({ name: 'Ana Kept' }).eq('id', a.id)
+    const guide = (await admin.from('tutorials').insert({ title: 'Two authors', difficulty: 'easy', status: 'approved' }).select('id').single()).data!.id
+    await admin.from('tutorial_contributors').insert([
+      { tutorial_id: guide, profile_id: a.id },
+      { tutorial_id: guide, profile_id: b.id },
+    ])
+
+    expect((await app.request('/api/me', del(a.token, { confirm: 'DELETE', keepCredit: true }))).status).toBe(204)
+    expect((await app.request('/api/me', del(b.token, { confirm: 'DELETE', keepCredit: false }))).status).toBe(204)
+
+    const { data } = await admin.from('tutorial_contributors').select('profile_id, former_names, former_count').eq('tutorial_id', guide)
+    expect(data).toEqual([{ profile_id: GHOST, former_names: ['Ana Kept'], former_count: 2 }])
+    const pub = (await (await app.request(`/api/public/tutorials/${guide}`)).json()) as {
+      tutorial_contributors: { profiles: { name: string } }[]
+    }
+    expect(pub.tutorial_contributors[0]!.profiles.name).toBe('Ana Kept and 1 former contributor')
+    await admin.from('tutorials').delete().eq('id', guide)
   })
 })

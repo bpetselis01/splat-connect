@@ -93,7 +93,7 @@ publicRoutes.get('/tutorials/:id', async (c) => {
     // points at tutorials twice, and PostgREST refuses an ambiguous embed
     // outright rather than guessing. See the same select in tutorials.ts.
     .select(
-      '*, thanks_count, parts(*), tools(*), stl_files(*), steps:tutorial_steps(*), tutorial_contributors(profile_id, role, former_name, profiles(name)), ' +
+      '*, thanks_count, parts(*), tools(*), stl_files(*), steps:tutorial_steps(*), tutorial_contributors(profile_id, role, former_names, former_count, profiles(name)), ' +
         'tutorial_orgs(status, organizations(id, name)), ' +
         'tutorial_recommendations!tutorial_id(position, tutorials!recommended_id(id, title, kind, difficulty, toy_photo_url, status, maturity)), ' +
         'reviewer:reviewed_by(name), reviewed_for:reviewed_for_org_id(name)'
@@ -115,7 +115,7 @@ publicRoutes.get('/tutorials/:id', async (c) => {
   // cannot open. Dropping the row is the whole design — there is no "not yet
   // approved" page to send them to.
   const tutorial = data as unknown as Record<string, unknown> & {
-    tutorial_contributors?: Array<{ profile_id: string; former_name: string | null; profiles: { name: string } | null }>
+    tutorial_contributors?: Array<{ profile_id: string; former_names: string[]; former_count: number; profiles: { name: string } | null }>
     tutorial_orgs?: Array<{ status: string }>
     tutorial_recommendations?: Array<{ tutorials: { status: string } | null }>
   }

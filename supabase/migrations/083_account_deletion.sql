@@ -28,9 +28,13 @@ insert into auth.users (
 update public.profiles set name = 'Deleted member', public_showcase = false
 where id = '00000000-0000-4000-8000-00000000dead';
 
--- The name a guide keeps when its author ticked "Keep my name". Null means
--- the credit reads "A former contributor".
-alter table public.tutorial_contributors add column if not exists former_name text;
+-- A guide's placeholder credit stands for every departed co-author:
+-- former_count of them, of whom former_names ticked "Keep my name". One row,
+-- because (tutorial_id, profile_id) is the key and they all share the
+-- placeholder's id. The API renders it as "Sam and 1 former contributor".
+alter table public.tutorial_contributors
+  add column if not exists former_names text[] not null default '{}',
+  add column if not exists former_count integer not null default 0;
 
 -- ── What the delete screen shows ────────────────────────────
 create or replace function public.account_deletion_preview(uid uuid)
@@ -108,11 +112,20 @@ begin
   )
   select coalesce(array_agg(id), '{}') into gone_guides from del;
 
+  -- Where the placeholder is already credited (an earlier co-author left),
+  -- fold this person into that row; elsewhere their row becomes it.
+  update tutorial_contributors g
+  set former_count = g.former_count + 1,
+      former_names = g.former_names || case when keep_credit and nullif(who, '') is not null then array[who] else '{}' end
+  from tutorial_contributors mine
+  where mine.profile_id = uid and g.tutorial_id = mine.tutorial_id and g.profile_id = ghost;
   delete from tutorial_contributors tc
   where tc.profile_id = uid
     and exists (select 1 from tutorial_contributors g where g.tutorial_id = tc.tutorial_id and g.profile_id = ghost);
   update tutorial_contributors
-  set profile_id = ghost, former_name = case when keep_credit then nullif(who, '') end
+  set profile_id = ghost,
+      former_count = 1,
+      former_names = case when keep_credit and nullif(who, '') is not null then array[who] else '{}' end
   where profile_id = uid;
 
   -- 4. Toys: history keeps the toy (off the library); no history, it goes.
