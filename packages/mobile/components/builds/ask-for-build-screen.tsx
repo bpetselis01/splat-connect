@@ -21,7 +21,6 @@ import { apiMessage, formatBuildTime } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { useCapabilities } from '../../lib/capabilities'
-import { Screen } from '../ui/Screen'
 import { Chip } from '../ui/Chip'
 import { Button } from '../ui/Button'
 import { TextField } from '../ui/TextField'
@@ -103,118 +102,116 @@ export function AskForBuildScreen() {
   }
 
   return (
-    // No flex:1 KeyboardAvoidingView: inside an iOS formSheet it laid out at
-    // zero height and the sheet opened blank. The ScrollView insets itself.
-    <Screen>
-      <ScrollView
-        // Fill the sheet: in an iOS formSheet the ScrollView otherwise sized to
-        // its first child and clipped the rest of the form.
-        style={styles.fill}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.content}
-        keyboardShouldPersistTaps="handled"
-        automaticallyAdjustKeyboardInsets
+    // The ScrollView is the sheet's direct child, with no Screen or
+    // KeyboardAvoidingView around it: react-native-screens sizes an iOS
+    // formSheet's ScrollView only when it is, and nested it was a 70px frame
+    // that clipped everything under the intro. It insets itself for the keyboard.
+    <ScrollView
+      style={styles.sheet}
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={styles.content}
+      keyboardShouldPersistTaps="handled"
+      automaticallyAdjustKeyboardInsets
+    >
+      <Text style={styles.intro}>
+        No fee to ask, and you cover the parts. Makers within your travel range see it; the first
+        to claim opens a thread in My exchanges.
+      </Text>
+
+      <View>
+        <Text style={styles.label}>Which guide?</Text>
+        {picked ? (
+          <GuideRow t={picked} on onPress={() => setTutorialId('')} action="Change" />
+        ) : (
+          <>
+            <TextField
+              icon="search"
+              accessibilityLabel="Search guides"
+              placeholder="Search by toy, switch or guide name"
+              value={query}
+              onChangeText={setQuery}
+            />
+            <View accessibilityRole="radiogroup" style={styles.guides}>
+              {results.map((t) => (
+                <GuideRow key={t.id} t={t} on={false} onPress={() => setTutorialId(t.id)} />
+              ))}
+              {tutorials.length > 0 && results.length === 0 ? (
+                <Text style={styles.hint}>No published guide matches that. If it does not exist yet, submit an idea instead.</Text>
+              ) : null}
+            </View>
+          </>
+        )}
+      </View>
+
+      <TextField
+        label="Who is it for?"
+        placeholder="e.g. Leo, 3 — 100 mm button switch"
+        maxLength={60}
+        value={childLabel}
+        onChangeText={setChildLabel}
+        hint="The maker sees this and your suburb, never your address."
+      />
+      <TextField
+        label="Your suburb"
+        placeholder="Newtown"
+        maxLength={80}
+        value={suburb}
+        onChangeText={setSuburb}
+        hint="The suburb only — it goes on the card."
+      />
+      <TextField
+        label="A note to the maker"
+        placeholder="Why this toy, the switch you have, what makes handover easy"
+        maxLength={2000}
+        multiline
+        value={brief}
+        onChangeText={setBrief}
+        style={styles.note}
+      />
+
+      <View>
+        <Text style={styles.label}>How far can you travel?</Text>
+        <View accessibilityRole="radiogroup" style={styles.chips}>
+          {RANGES.map((km) => (
+            <Chip key={km} role="radio" label={`${km} km`} active={travelKm === km} onPress={() => setTravelKm(km)} />
+          ))}
+        </View>
+      </View>
+
+      <View>
+        <Text style={styles.label}>How soon?</Text>
+        <View accessibilityRole="radiogroup" style={styles.chips}>
+          {URGENCIES.map((u) => (
+            <Chip key={u} role="radio" label={u} active={urgency === u} onPress={() => setUrgency(u)} />
+          ))}
+        </View>
+      </View>
+
+      <Pressable
+        onPress={() => setCovers((v) => !v)}
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked: covers }}
+        style={[styles.covers, covers && styles.coversOn]}
       >
-        <Text style={styles.intro}>
-          No fee to ask, and you cover the parts. Makers within your travel range see it; the first
-          to claim opens a thread in My exchanges.
-        </Text>
-
-        <View>
-          <Text style={styles.label}>Which guide?</Text>
-          {picked ? (
-            <GuideRow t={picked} on onPress={() => setTutorialId('')} action="Change" />
-          ) : (
-            <>
-              <TextField
-                icon="search"
-                accessibilityLabel="Search guides"
-                placeholder="Search by toy, switch or guide name"
-                value={query}
-                onChangeText={setQuery}
-              />
-              <View accessibilityRole="radiogroup" style={styles.guides}>
-                {results.map((t) => (
-                  <GuideRow key={t.id} t={t} on={false} onPress={() => setTutorialId(t.id)} />
-                ))}
-                {tutorials.length > 0 && results.length === 0 ? (
-                  <Text style={styles.hint}>No published guide matches that. If it does not exist yet, submit an idea instead.</Text>
-                ) : null}
-              </View>
-            </>
-          )}
-        </View>
-
-        <TextField
-          label="Who is it for?"
-          placeholder="e.g. Leo, 3 — 100 mm button switch"
-          maxLength={60}
-          value={childLabel}
-          onChangeText={setChildLabel}
-          hint="The maker sees this and your suburb, never your address."
+        <Ionicons
+          name={covers ? 'checkbox' : 'square-outline'}
+          size={24}
+          color={covers ? theme.colors.successDeep : theme.colors.muted}
         />
-        <TextField
-          label="Your suburb"
-          placeholder="Newtown"
-          maxLength={80}
-          value={suburb}
-          onChangeText={setSuburb}
-          hint="The suburb only — it goes on the card."
-        />
-        <TextField
-          label="A note to the maker"
-          placeholder="Why this toy, the switch you have, what makes handover easy"
-          maxLength={2000}
-          multiline
-          value={brief}
-          onChangeText={setBrief}
-          style={styles.note}
-        />
-
-        <View>
-          <Text style={styles.label}>How far can you travel?</Text>
-          <View accessibilityRole="radiogroup" style={styles.chips}>
-            {RANGES.map((km) => (
-              <Chip key={km} role="radio" label={`${km} km`} active={travelKm === km} onPress={() => setTravelKm(km)} />
-            ))}
-          </View>
+        <View style={styles.coversBody}>
+          <Text style={styles.coversTitle}>You cover the parts</Text>
+          <Text style={styles.coversText}>
+            The maker never pays for your build — settle the receipt in the thread. SPLAT never
+            handles money. Tick this before you post.
+          </Text>
         </View>
+      </Pressable>
 
-        <View>
-          <Text style={styles.label}>How soon?</Text>
-          <View accessibilityRole="radiogroup" style={styles.chips}>
-            {URGENCIES.map((u) => (
-              <Chip key={u} role="radio" label={u} active={urgency === u} onPress={() => setUrgency(u)} />
-            ))}
-          </View>
-        </View>
+      <ErrorRow message={error} />
 
-        <Pressable
-          onPress={() => setCovers((v) => !v)}
-          accessibilityRole="checkbox"
-          accessibilityState={{ checked: covers }}
-          style={[styles.covers, covers && styles.coversOn]}
-        >
-          <Ionicons
-            name={covers ? 'checkbox' : 'square-outline'}
-            size={24}
-            color={covers ? theme.colors.successDeep : theme.colors.muted}
-          />
-          <View style={styles.coversBody}>
-            <Text style={styles.coversTitle}>You cover the parts</Text>
-            <Text style={styles.coversText}>
-              The maker never pays for your build — settle the receipt in the thread. SPLAT never
-              handles money. Tick this before you post.
-            </Text>
-          </View>
-        </Pressable>
-
-        <ErrorRow message={error} />
-
-        <Button label={busy ? 'Posting…' : 'Post to Makers wanted'} disabled={busy} onPress={submit} />
-        <Text style={styles.footnote}>You can withdraw it any time before a maker claims it.</Text>
-      </ScrollView>
-    </Screen>
+      <Button label={busy ? 'Posting…' : 'Post to Makers wanted'} disabled={busy} onPress={submit} />
+      <Text style={styles.footnote}>You can withdraw it any time before a maker claims it.</Text>
+    </ScrollView>
   )
 }
 
@@ -244,8 +241,8 @@ function GuideRow({ t, on, onPress, action }: { t: Tutorial; on: boolean; onPres
 }
 
 const styles = StyleSheet.create({
-  fill: { flex: 1 },
-  content: { paddingBottom: theme.spacing(8), gap: theme.spacing(4) },
+  sheet: { flex: 1, backgroundColor: theme.colors.background },
+  content: { padding: theme.spacing(4), paddingBottom: theme.spacing(8), gap: theme.spacing(4) },
   intro: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.muted, lineHeight: 21 },
   label: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.text, marginBottom: theme.spacing(2) },
   hint: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted, lineHeight: 18 },
