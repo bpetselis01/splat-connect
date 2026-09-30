@@ -72,7 +72,7 @@ export function NotifyForm({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
-            className="field h-[52px] min-w-0 flex-1 rounded-pill px-[18px] text-base"
+            className="field h-[52px] min-w-0 flex-1 rounded-pill bg-surface px-[18px] text-base"
             style={{ boxShadow: 'var(--shadow-e1)' }}
           />
           <button
