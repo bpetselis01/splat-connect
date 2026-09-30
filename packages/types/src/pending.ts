@@ -768,12 +768,20 @@ export const PENDING = {
   },
   'mobile-extra-affordances': {
     title: "Search and Continue",
-    blurb: "Search on Explore and Toys, and a Continue card on Learn, are not on the board.",
+    blurb: "Search on Explore and Toys, a Continue card on Learn and challenge filters are not on the mobile board.",
     kind: "decision",
     platforms: ["mobile"],
     board: "Explore, Toy library, Learn",
     needs: "A product decision (see question), then keep or remove.",
-    question: "Keep the app's search on Explore and Toys and its Continue card on Learn, which the board does not draw?",
+    question: "Keep the app's search on Explore and Toys, its Continue card on Learn and web's filter chips on Design challenges, none of which the mobile board draws?",
+  },
+  'my-toy-summary': {
+    title: "Your toy",
+    blurb: "A summary of your toy before you edit it is coming.",
+    kind: "build",
+    platforms: ["mobile"],
+    board: "Mobile My toys → toy",
+    needs: "A summary screen for a listed toy (lead, Edit listing, Mark unavailable) in front of the editor.",
   },
   'print-answer-by': {
     title: "Answer by",

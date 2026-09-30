@@ -176,6 +176,7 @@ export function ChallengesListScreen() {
           </EmptyState>
         ) : (
           <View>
+            {/* PENDING(mobile-extra-affordances): web's challenge filters, which the mobile board does not draw. */}
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
