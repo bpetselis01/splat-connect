@@ -40,7 +40,7 @@ export default function RootLayout() {
           {/* No swipe back: the terms gate is where every route sends an
               account that has not accepted, so there is nothing behind it. */}
           <Stack.Screen name="terms" options={{ gestureEnabled: false }} />
-          {/* lib/pending-features.ts: what a drawn-but-not-switched-on button opens. */}
+          {/* What a pending control opens (packages/types/src/pending.ts). */}
           <Stack.Screen name="not-built" />
         </Stack>
         {showIntro ? <IntroVideo onFinish={() => setShowIntro(false)} /> : null}

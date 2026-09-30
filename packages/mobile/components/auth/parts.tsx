@@ -24,7 +24,7 @@ import { Screen } from '../ui/Screen'
 import { TextField } from '../ui/TextField'
 import { useRouter } from 'expo-router'
 import { AppleButton, appleAvailable, googleAvailable } from '../../lib/social-auth'
-import type { PendingFeatureId } from '../../lib/pending-features'
+import type { PendingId } from '@splat-connect/types'
 import type { AuthProblem } from '../../lib/auth-errors'
 
 const CONTROL = 52
@@ -80,7 +80,7 @@ export function Lede({ children, center }: { children: React.ReactNode; center?:
 /** Apple (iOS only) above Google, same height, then the "or" rule.
  *
  *  Both are always drawn. A provider this build is not configured for opens
- *  the "Not built yet" screen instead of signing in (lib/pending-features.ts).
+ *  the "Not built yet" screen instead of signing in (packages/types/src/pending.ts).
  *  PENDING(apple-sign-in): once live, appleAvailable() is true and the native
  *  AppleButton renders; the placeholder below is only for the pending state —
  *  the HIG forbids a hand-drawn Apple button for a real sign-in.
@@ -96,7 +96,7 @@ export function SocialButtons({ onApple, onGoogle }: { onApple: () => void; onGo
       live = false
     }
   }, [])
-  const notBuilt = (feature: PendingFeatureId) => () => router.push({ pathname: '/not-built', params: { feature } })
+  const notBuilt = (feature: PendingId) => () => router.push({ pathname: '/not-built', params: { feature } })
 
   return (
     <View style={styles.social}>
