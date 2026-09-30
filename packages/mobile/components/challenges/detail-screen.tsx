@@ -75,6 +75,19 @@ function Field({ label, value }: { label: string; value: string }) {
 }
 
 /** A static pill. Chip is a toggle — these are read-only facts, not filters. */
+// The board's heading and hint, inside the tab's own card.
+function TabHead({ id }: { id: Tab }) {
+  const t = TABS.find((x) => x.id === id)!
+  return (
+    <View style={styles.tabHead}>
+      <Text style={styles.tabTitle} accessibilityRole="header">
+        {t.title}
+      </Text>
+      <Text style={styles.tabHint}>{t.hint}</Text>
+    </View>
+  )
+}
+
 export function ChallengeDetailScreen({ id }: { id: string }) {
   const router = useRouter()
   const saves = useSaves()
@@ -365,17 +378,9 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
           ))}
         </ScrollView>
 
-        {TABS.filter((t) => t.id === tab).map((t) => (
-          <View key={t.id} style={styles.tabHead}>
-            <Text style={styles.tabTitle} accessibilityRole="header">
-              {t.title}
-            </Text>
-            <Text style={styles.tabHint}>{t.hint}</Text>
-          </View>
-        ))}
-
         {tab === 'status' ? (
           <Card style={styles.panel}>
+            <TabHead id="status" />
             <View style={styles.headline}>
               <Text style={styles.headlineTitle}>{headline.title}</Text>
               <Text style={styles.quiet}>{headline.body}</Text>
@@ -417,6 +422,7 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
 
         {tab === 'brief' ? (
           <Card style={styles.panel}>
+            <TabHead id="brief" />
             {/* PENDING(challenge-brief-photo): a hero photo and a "What a solution has to do" box. */}
             <Text style={styles.summary}>{challenge.summary}</Text>
             <Field label="The problem" value={challenge.description} />
@@ -425,6 +431,7 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
 
         {tab === 'constraints' ? (
           <Card style={styles.panel}>
+            <TabHead id="constraints" />
             {/* PENDING(challenge-constraints): named constraints (label + note) in place of these two fields. */}
             <Field label="Intended use" value={challenge.intended_use} />
             <Field label="Who it's for" value={challenge.primary_user} />
@@ -433,6 +440,7 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
 
         {tab === 'makers' ? (
           <Card style={styles.panel}>
+            <TabHead id="makers" />
             {challenge.participants.length === 0 ? (
               <Text style={styles.quiet}>Nobody has joined yet.</Text>
             ) : (
@@ -575,7 +583,7 @@ const styles = StyleSheet.create({
   tabText: { fontFamily: theme.fonts.black, fontSize: 12.5, color: theme.colors.ink },
   panel: { gap: theme.spacing(3), padding: theme.spacing(4) },
   panelTitle: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.ink },
-  tabHead: { gap: theme.spacing(1), marginBottom: theme.spacing(3) },
+  tabHead: { gap: theme.spacing(1) },
   tabTitle: { fontFamily: theme.fonts.display, fontSize: 18, color: theme.colors.text },
   tabHint: { fontFamily: theme.fonts.regular, fontSize: 13, color: theme.colors.muted },
   // The board's live-status box: 16px, the success tint.
