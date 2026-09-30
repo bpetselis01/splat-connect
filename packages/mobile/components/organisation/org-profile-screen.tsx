@@ -243,7 +243,7 @@ export function OrgProfileScreen({ id }: { id: string }) {
 
       {/* PENDING(org-profile-rows): photo, meta and "backed by <leader>" on guide rows; photo, offer and grade on shelf toys; "See all" links; leader initials and role. */}
       {guides.length > 0 ? (
-        <Section title={`Guides they back · ${guides.length}`} hint="Backing means a leader read it, checked the safety list and built it once. Their name is on it.">
+        <Section title={<>Guides they back <Text style={styles.count}>{guides.length}</Text></>} hint="Backing means a leader read it, checked the safety list and built it once. Their name is on it.">
           {guides.map((g) => (
             <AnimatedPressable
               key={g.id}
@@ -260,7 +260,7 @@ export function OrgProfileScreen({ id }: { id: string }) {
       ) : null}
 
       {org.toysShared.length > 0 ? (
-        <Section title={`Toys on their shelf · ${org.toysShared.length}`}>
+        <Section title={<>Toys on their shelf <Text style={styles.count}>{org.toysShared.length} available</Text></>}>
           {org.toysShared.map((t) => (
             <AnimatedPressable
               key={t.id}
@@ -330,7 +330,7 @@ export function OrgProfileScreen({ id }: { id: string }) {
   )
 }
 
-function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
+function Section({ title, hint, children }: { title: React.ReactNode; hint?: string; children: React.ReactNode }) {
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle} accessibilityRole="header">{title}</Text>
@@ -530,11 +530,14 @@ const styles = StyleSheet.create({
   leads: { gap: theme.spacing(1), marginVertical: theme.spacing(4) },
   body: { fontFamily: theme.fonts.regular, fontSize: theme.type.body, color: theme.colors.text, lineHeight: 24 },
   stats: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2), marginTop: theme.spacing(4), marginBottom: theme.spacing(6) },
-  stat: { width: '48%', padding: theme.spacing(3) },
-  statN: { fontFamily: theme.fonts.numeral, fontSize: theme.type.title, color: theme.colors.text },
+  stat: { width: '48%', padding: theme.spacing(3), borderRadius: theme.radii.field },
+  // The board's stat: Baloo 2 800 20px, tabular.
+  statN: { fontFamily: theme.fonts.display, fontSize: 20, fontVariant: ['tabular-nums'], color: theme.colors.text },
   statLabel: { fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.muted, marginTop: theme.spacing(1) },
   section: { marginBottom: theme.spacing(6) },
-  sectionTitle: { fontFamily: theme.fonts.bold, fontSize: theme.type.heading, color: theme.colors.text },
+  sectionTitle: { fontFamily: theme.fonts.display, fontSize: 18, color: theme.colors.text },
+  // A section's count, muted beside its title, as the board sets it.
+  count: { fontFamily: theme.fonts.semiBold, fontSize: 13, color: theme.colors.muted },
   hint: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted, marginTop: theme.spacing(1), lineHeight: 19 },
   sectionBody: { gap: theme.spacing(2), marginTop: theme.spacing(3) },
   panel: { borderRadius: theme.radii.panel, padding: theme.spacing(4), gap: theme.spacing(2) },
@@ -545,8 +548,8 @@ const styles = StyleSheet.create({
   fact: { flexDirection: 'row', gap: theme.spacing(3) },
   factK: { fontFamily: theme.fonts.semiBold, fontSize: theme.type.caption, color: theme.colors.muted, width: 96 },
   factV: { flex: 1, fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.ink },
-  door: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3), padding: theme.spacing(3) },
-  row: { padding: theme.spacing(3), gap: theme.spacing(1) },
+  door: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3), padding: theme.spacing(3), borderRadius: theme.radii.panel },
+  row: { padding: theme.spacing(3), gap: theme.spacing(1), borderRadius: theme.radii.panel },
   rowTitle: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.text },
   rowMeta: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted, lineHeight: 19 },
   visit: { gap: theme.spacing(2), padding: theme.spacing(3) },
