@@ -28,6 +28,13 @@ function RowIcon({ name }: { name: ComponentProps<typeof Ionicons>['name'] }) {
   return <Ionicons name={name} size={21} color={theme.colors.primaryDark} />
 }
 
+const PROVIDER: Record<string, string> = { apple: 'Apple', google: 'Google', email: 'email' }
+
+export function signedInWith(providers: unknown): string {
+  const names = (Array.isArray(providers) ? providers : ['email']).map((p) => PROVIDER[p] ?? p)
+  return `Signed in with ${names.join(' and ')}`
+}
+
 export function ProfileScreen() {
   const router = useRouter()
   const { session, profile, signOut } = useAuth()
@@ -108,6 +115,9 @@ export function ProfileScreen() {
                       : ' '}
               </Text>
               <Text style={styles.frozenHint}>Your email can&apos;t be changed here.</Text>
+              {/* HIG: say how this account signs in, so an Apple user knows
+                  why there is no password to change. */}
+              <Text style={styles.frozenHint}>{signedInWith(session?.user.app_metadata?.providers)}</Text>
               {terms ? (
                 <Text style={styles.termsRow}>
                   {`Contributor terms · accepted ${terms.version} · ${acceptedDate(terms.accepted_at)}`}

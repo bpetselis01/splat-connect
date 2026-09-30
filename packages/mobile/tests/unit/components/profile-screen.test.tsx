@@ -88,6 +88,19 @@ describe('ProfileScreen', () => {
     expect(screen.getByText('Open Web Dashboard')).toBeTruthy()
   })
 
+  // The terms gate moved to app/terms.tsx (use-auth-gate), so Me no longer
+  // carries one. What it gained is the HIG's "how you sign in" line.
+  it('says how the account signs in', () => {
+    ;(useAuth as jest.Mock).mockReturnValue({
+      session: { user: { email: 'parent@example.com', app_metadata: { providers: ['email', 'google'] } } },
+      profile: { id: '2', name: 'Cory', email: 'parent@example.com', role: 'contributor', created_at: '' },
+      signOut: jest.fn(),
+    })
+    render(<ProfileScreen />)
+
+    expect(screen.getByText('Signed in with email and Google')).toBeTruthy()
+  })
+
   describe('the account panel additions', () => {
     it('saves a display-name change when editing ends', async () => {
       mockUseAuth.mockReturnValue(auth({}))
