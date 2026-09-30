@@ -179,7 +179,8 @@ export function MakersWantedScreen() {
         </View>
         {/* PENDING(locations-and-distance): "Within 5/10/25 km of you" and km per row need stored locations. */}
         <View style={styles.ranges}>
-          <Text style={styles.rangeLabel}>Families who can travel</Text>
+          {/* The board's one word, so the chips fit on one row. */}
+          <Text style={styles.rangeLabel}>Within</Text>
           {RANGES.map((km) => (
             <Chip
               key={km}
