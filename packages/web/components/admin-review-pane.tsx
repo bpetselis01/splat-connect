@@ -188,7 +188,7 @@ export function AdminReviewPane({
         </div>
       </form>
 
-      <Link href={`/admin/review/${t.id}` as Route} className="text-center text-sm font-extrabold text-brand-dark">
+      <Link href={`/admin/review/${t.id}` as Route} className="text-center text-sm font-extrabold text-brand-dark max-sm:flex max-sm:min-h-11 max-sm:items-center max-sm:justify-center">
         Open full preview →
       </Link>
     </aside>

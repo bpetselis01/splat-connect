@@ -309,7 +309,7 @@ export default async function OrgPublicProfilePage({
                       </span>
                       <h3 className="m-0 text-base font-extrabold text-ink">{d.title}</h3>
                       {d.body && <p className="m-0 flex-1 text-[13px] leading-[1.5] text-muted">{d.body}</p>}
-                      <a href={link.href} className="text-sm font-extrabold text-[var(--b700)] hover:underline">
+                      <a href={link.href} className="text-sm font-extrabold text-[var(--b700)] hover:underline max-sm:-my-3 max-sm:inline-flex max-sm:min-h-11 max-sm:items-center">
                         {link.label} <span aria-hidden="true">→</span>
                       </a>
                     </div>
