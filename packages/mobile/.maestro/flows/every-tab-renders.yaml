@@ -19,8 +19,10 @@ appId: com.splatconnect.mobile
 - runFlow:
     when:
       visible:
-        id: "auth-tab-signin"
+        id: "welcome-sign-in"
     commands:
+      - tapOn:
+          id: "welcome-sign-in"
       - tapOn:
           id: "email-input"
       - inputText: ${DEVICE_EMAIL}
