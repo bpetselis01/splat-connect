@@ -81,8 +81,12 @@ function collectChrome() {
 }
 
 /** Serialised into the page by run.js. Must be self-contained. */
-function collectFingerprint(rootSelector) {
+function collectFingerprint(arg) {
+  // A selector, or { root, exclude }: the app's tab bar and stack header are
+  // chrome the board draws in its phone frame, outside the screen compared.
+  const { root: rootSelector, exclude } = typeof arg === 'string' ? { root: arg } : arg
   const root = document.querySelector(rootSelector) || document.body
+  const excluded = (el) => !!exclude && !!el.closest(exclude)
   const cs = (el) => getComputedStyle(el)
 
   const norm = (s) =>
@@ -112,6 +116,7 @@ function collectFingerprint(rootSelector) {
   const colour = (v) => (v || '').replace(/,\s*1\)$/, ')').replace(/\s+/g, '')
 
   const visible = (el) => {
+    if (excluded(el)) return false
     const r = el.getBoundingClientRect()
     if (r.width < 2 || r.height < 2) return false
     const s = cs(el)
@@ -153,7 +158,8 @@ function collectFingerprint(rootSelector) {
     // dropped them from the live side and the matcher then reported four
     // present-and-correct sections as missing. The size difference is real, but
     // it is a `size` finding — not a missing section.
-    const semantic = /^H[1-6]$/.test(el.tagName)
+    // React Native web renders every heading as a <div role="heading">.
+    const semantic = /^H[1-6]$/.test(el.tagName) || el.getAttribute('role') === 'heading'
     if (!semantic && px(s.fontSize) < HEADING_MIN_SIZE) return false
     if (!semantic && +s.fontWeight < HEADING_MIN_WEIGHT) return false
     // An eyebrow is a label, whatever its tag. Live marks its small uppercase
@@ -173,7 +179,7 @@ function collectFingerprint(rootSelector) {
     // "#" the live side lacked.
     if (/^\d+$/.test(t)) return false
     // Own text only: a bold wrapper should not masquerade as its own heading.
-    return ownText(el).length > 1 || /^H[1-6]$/.test(el.tagName)
+    return ownText(el).length > 1 || semantic
   }
 
   // Cards are detected before headings because a heading needs to know whether
@@ -191,6 +197,7 @@ function collectFingerprint(rootSelector) {
   // form, whose five panels are a <form>, a <fieldset> and three <label>s and
   // counted as zero cards.
   const cardEls = [...root.querySelectorAll('div,article,li,section,a,button,label,form,fieldset')].filter((el) => {
+    if (excluded(el)) return false
     const st = cs(el)
     const r = parseFloat(st.borderTopLeftRadius) || 0
     if (r < 8) return false
@@ -274,7 +281,9 @@ function collectFingerprint(rootSelector) {
         // two sides are comparable at all.
         level: /^H([1-6])$/.test(h.tagName)
           ? +h.tagName[1]
-          : size >= 40 ? 1 : size >= 26 ? 2 : size >= 20 ? 3 : 4,
+          : h.getAttribute('role') === 'heading'
+            ? +(h.getAttribute('aria-level') || 2)
+            : size >= 40 ? 1 : size >= 26 ? 2 : size >= 20 ? 3 : 4,
         tag: h.tagName,
         text: norm(headingText(h)).slice(0, 80),
         font: s.fontFamily.split(',')[0].replace(/["']/g, '').trim(),

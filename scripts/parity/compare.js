@@ -327,7 +327,9 @@ function compare(board, live, opts = {}) {
   const volumeSkew =
     skew(board.counts.cards, live.counts.cards) ||
     skew(board.counts.rows || 0, live.counts.rows || 0)
-  if (bh > 200 && lh > 200 && !volumeSkew) {
+  // opts.height false: a React Native web screen scrolls inside its own
+  // container, so its root is the viewport's height whatever it holds.
+  if (opts.height !== false && bh > 200 && lh > 200 && !volumeSkew) {
     const ratio = Math.min(bh, lh) / Math.max(bh, lh)
     if (ratio < HEIGHT_RATIO)
       out.push(f('missing-section', 'high', 'page height differs grossly', bh + 'px', lh + 'px'))

@@ -108,3 +108,12 @@ console.log('compare: 4 checks passed')
   const none = fp([], { counts: counts(24), shapes: cards(24, Array(24).fill(white)) })
   assert.ok(compare(board, none).some((x) => x.what === 'card background'), 'missing lone card not reported')
 }
+
+// A React Native web screen scrolls inside its own container, so its root is
+// the viewport's height whatever the content; height is not comparable there.
+{
+  const board = fp([h(1, 'guides')], { page: { ...fp([]).page, height: 2400 } })
+  const live = fp([h(1, 'guides')], { page: { ...fp([]).page, height: 844 } })
+  assert.ok(compare(board, live).some((x) => x.what === 'page height differs grossly'), 'height check lost')
+  assert.ok(!compare(board, live, { height: false }).some((x) => /page height/.test(x.what)), 'height: false ignored')
+}
