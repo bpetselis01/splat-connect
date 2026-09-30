@@ -118,6 +118,60 @@ async function leadsOrg(c: Context<{ Variables: AuthVariables }>, orgId: string)
   return Boolean(data)
 }
 
+/**
+ * Leaders managing their own leadership. Until 2026-09-30 only an admin could
+ * add or remove one, which left a sole leader no way to hand over before
+ * deleting their account (Spec B). A leader may add a co-leader by the email
+ * their SPLAT account uses, and may step down — never the last one out, since
+ * an organisation with no leader cannot answer anyone. Service-role writes:
+ * 007's policy admits admins only, so authority is checked here.
+ */
+organizations.get('/:id/leaders', async (c) => {
+  const orgId = c.req.param('id')
+  if (!(await leadsOrg(c, orgId))) return c.json({ error: 'Not found' }, 404)
+  const { data, error } = await createAdminClient()
+    .from('org_leaders')
+    .select('user_id, created_at, profiles(name, email)')
+    .eq('org_id', orgId)
+    .order('created_at')
+  if (error) return c.json({ error: error.message }, 500)
+  return c.json(
+    (data ?? []).map((l) => {
+      const p = l.profiles as unknown as { name: string; email: string } | null
+      return { user_id: l.user_id, name: p?.name ?? '', email: p?.email ?? '', you: l.user_id === c.get('userId') }
+    })
+  )
+})
+
+organizations.post('/:id/leaders', async (c) => {
+  const orgId = c.req.param('id')
+  if (!(await leadsOrg(c, orgId))) return c.json({ error: 'Not found' }, 404)
+  const body = (await c.req.json().catch(() => null)) as { email?: unknown } | null
+  const email = typeof body?.email === 'string' ? body.email.trim().toLowerCase() : ''
+  if (!email) return c.json({ error: 'Add the email their SPLAT account uses.' }, 400)
+
+  const admin = createAdminClient()
+  const { data: person } = await admin.from('profiles').select('id, role').ilike('email', email).maybeSingle()
+  if (!person) return c.json({ error: 'No SPLAT account uses that email. Ask them to sign up first.' }, 404)
+  if (person.role !== 'contributor' && person.role !== 'admin') {
+    return c.json({ error: 'That account cannot lead an organisation.' }, 400)
+  }
+  const { error } = await admin.from('org_leaders').insert({ org_id: orgId, user_id: person.id })
+  if (error && error.code !== '23505') return c.json({ error: error.message }, 500)
+  return c.json({ ok: true }, 201)
+})
+
+organizations.delete('/:id/leaders/me', async (c) => {
+  const orgId = c.req.param('id')
+  if (!(await leadsOrg(c, orgId))) return c.json({ error: 'Not found' }, 404)
+  const admin = createAdminClient()
+  const { count } = await admin.from('org_leaders').select('id', { count: 'exact', head: true }).eq('org_id', orgId)
+  if ((count ?? 0) <= 1) return c.json({ error: 'Add another leader before you step down.' }, 409)
+  const { error } = await admin.from('org_leaders').delete().eq('org_id', orgId).eq('user_id', c.get('userId'))
+  if (error) return c.json({ error: error.message }, 500)
+  return c.body(null, 204)
+})
+
 const PICKUP_COLUMNS =
   'pickup_line1, pickup_suburb, pickup_state, pickup_postcode, pickup_instructions'
 
