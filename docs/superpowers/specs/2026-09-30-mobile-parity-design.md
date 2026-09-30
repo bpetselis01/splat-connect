@@ -32,7 +32,7 @@ One row per board screen, same fields and meanings as `screen-map.json`:
 ```json
 { "id": "guide_detail", "name": "Guide detail", "boardRoute": "guides/[id]",
   "route": "/guides/[id]", "sampleFrom": "/guides", "role": "parent",
-  "seedRole": "leader", "derivedFrom": "…", "suffix": "…", "stateOnly": true,
+  "seedRole": "leader", "idFrom": "tutorial", "derivedFrom": "…", "suffix": "…", "stateOnly": true,
   "skip": "reason", "explained": [ … ] }
 ```
 
@@ -64,20 +64,23 @@ shared. Mobile needs become options on them:
   and stack header (selectors fixed in the runner).
 - `role="heading"` counts as semantic, like `<h1>`–`<h6>`. React Native text is
   otherwise `<div>`s, found by the existing size and weight rule on both sides.
-- Sign-in: the mobile web build keeps the Supabase session in localStorage, so
-  `auth.js` gains a way to write the session there instead of the
-  `@supabase/ssr` cookie.
-- Seeds: `seed()` returns routes by screen id. App routes differ from web
-  routes, so the seed returns record ids and each runner builds its own paths.
+- Sign-in: `auth.js` gains `signInApp()`, which signs in through the app's
+  real `/sign-in` form, as the mobile e2e helpers do. That is more robust than
+  writing a session into localStorage by hand.
+- Seeds: `seed()` keeps returning web routes by web screen id. An app row
+  names the web screen whose record it reuses (`idFrom`), and the runner puts
+  that route's record id into its own `[id]`, so `seed.js` needs no refactor.
+- The loop in `run.js` moves into `harness.js` as `runParity(target)`, so both
+  runners share it; `run.js` and `app.js` only describe their target.
 
 ### Stack
 
 `stack.sh up` adds the Expo web export (`expo export -p web` then
 `serve -s dist`) on its own port, 3112, beside web :3110, API :3111 and the
 artboard :8899. It uses an export, not the dev server, so HMR never interferes.
-The API's `CORS_ORIGIN` must admit :3112. If it takes only one origin, the
-runner's Chromium is launched with `--disable-web-security`, as the demo build
-already needs.
+The API's `CORS_ORIGIN` takes a single origin (`app.ts`), and the parity API
+already names web's, so the app runner's Chromium is launched with
+`--disable-web-security`, as the demo build already needs.
 
 ### Picture pass — `scripts/parity/app-shots.sh`
 
@@ -118,4 +121,4 @@ already needs.
 - The drift test covers `app-screen-map.json` exemptions.
 - Every mobile fix keeps green: mobile unit, mobile e2e (Playwright), the
   Maestro flows, and web parity at 118/118. Web and mobile e2e never run at
-  once, and web e2e never runs while the parity stack is up (shared `.next`).
+  once, and web e2e never runs while the parity stack is up (its first attempt beside the stack failed in `next build`; the cause is unproven, since parity's dev server uses `.next-parity`).
