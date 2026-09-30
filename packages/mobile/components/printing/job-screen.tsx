@@ -251,6 +251,8 @@ export function PrintJobScreen({ id }: { id: string }) {
                   value={draft}
                   onChangeText={setDraft}
                   multiline
+                  // A pill, as the board's composer is; multiline so it wraps.
+                  boxStyle={{ borderRadius: theme.radii.pill }}
                   style={styles.composerInput}
                 />
               </View>
