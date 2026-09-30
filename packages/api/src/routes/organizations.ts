@@ -26,6 +26,7 @@ import {
   PAYMENT_METHODS,
 } from '@splat-connect/types'
 import type { AuthVariables } from '../middleware/auth.js'
+import { sendEmail } from '../mailer.js'
 
 const organizations = new Hono<{ Variables: AuthVariables }>()
 
@@ -121,26 +122,73 @@ async function leadsOrg(c: Context<{ Variables: AuthVariables }>, orgId: string)
 /**
  * Leaders managing their own leadership. Until 2026-09-30 only an admin could
  * add or remove one, which left a sole leader no way to hand over before
- * deleting their account (Spec B). A leader may add a co-leader by the email
- * their SPLAT account uses, and may step down — never the last one out, since
- * an organisation with no leader cannot answer anyone. Service-role writes:
- * 007's policy admits admins only, so authority is checked here.
+ * deleting their account (Spec B).
+ *
+ * Adding is an invitation (084): leaders are public on the organisation's
+ * page, so nobody becomes one without accepting. The invitee is found by the
+ * exact email their account uses — never a pattern match, which would let
+ * `%@gmail.com` pick a stranger. Stepping down goes through
+ * step_down_as_leader(), which locks the organisation so two leaders leaving at
+ * once cannot leave it with none. Service-role throughout: 007's policies
+ * admit admins only, so authority is checked here.
  */
-organizations.get('/:id/leaders', async (c) => {
-  const orgId = c.req.param('id')
-  if (!(await leadsOrg(c, orgId))) return c.json({ error: 'Not found' }, 404)
+organizations.get('/invites/mine', async (c) => {
   const { data, error } = await createAdminClient()
-    .from('org_leaders')
-    .select('user_id, created_at, profiles(name, email)')
-    .eq('org_id', orgId)
+    .from('org_leader_invites')
+    .select('id, org_id, created_at, organizations(name)')
+    .eq('invited_profile_id', c.get('userId'))
     .order('created_at')
   if (error) return c.json({ error: error.message }, 500)
   return c.json(
-    (data ?? []).map((l) => {
-      const p = l.profiles as unknown as { name: string; email: string } | null
-      return { user_id: l.user_id, name: p?.name ?? '', email: p?.email ?? '', you: l.user_id === c.get('userId') }
-    })
+    (data ?? []).map((i) => ({
+      id: i.id,
+      org_id: i.org_id,
+      org_name: (i.organizations as unknown as { name: string } | null)?.name ?? '',
+    }))
   )
+})
+
+async function myInvite(c: Context<{ Variables: AuthVariables }>) {
+  const { data } = await createAdminClient()
+    .from('org_leader_invites')
+    .select('id, org_id')
+    .eq('id', c.req.param('inviteId'))
+    .eq('invited_profile_id', c.get('userId'))
+    .maybeSingle()
+  return data
+}
+
+organizations.post('/invites/:inviteId/accept', async (c) => {
+  const invite = await myInvite(c)
+  if (!invite) return c.json({ error: 'Not found' }, 404)
+  const admin = createAdminClient()
+  const { error } = await admin.from('org_leaders').insert({ org_id: invite.org_id, user_id: c.get('userId') })
+  if (error && error.code !== '23505') return c.json({ error: error.message }, 500)
+  await admin.from('org_leader_invites').delete().eq('id', invite.id)
+  return c.json({ org_id: invite.org_id })
+})
+
+organizations.delete('/invites/:inviteId', async (c) => {
+  const invite = await myInvite(c)
+  if (!invite) return c.json({ error: 'Not found' }, 404)
+  await createAdminClient().from('org_leader_invites').delete().eq('id', invite.id)
+  return c.body(null, 204)
+})
+
+organizations.get('/:id/leaders', async (c) => {
+  const orgId = c.req.param('id')
+  if (!(await leadsOrg(c, orgId))) return c.json({ error: 'Not found' }, 404)
+  const admin = createAdminClient()
+  const [leaders, invites] = await Promise.all([
+    admin.from('org_leaders').select('user_id, created_at, profiles(name, email)').eq('org_id', orgId).order('created_at'),
+    admin.from('org_leader_invites').select('id, profiles:invited_profile_id(name, email)').eq('org_id', orgId).order('created_at'),
+  ])
+  if (leaders.error) return c.json({ error: leaders.error.message }, 500)
+  const person = (p: unknown) => (p as { name: string; email: string } | null) ?? { name: '', email: '' }
+  return c.json({
+    leaders: (leaders.data ?? []).map((l) => ({ user_id: l.user_id, ...person(l.profiles), you: l.user_id === c.get('userId') })),
+    invites: (invites.data ?? []).map((i) => ({ id: i.id, ...person(i.profiles) })),
+  })
 })
 
 organizations.post('/:id/leaders', async (c) => {
@@ -151,24 +199,43 @@ organizations.post('/:id/leaders', async (c) => {
   if (!email) return c.json({ error: 'Add the email their SPLAT account uses.' }, 400)
 
   const admin = createAdminClient()
-  const { data: person } = await admin.from('profiles').select('id, role').ilike('email', email).maybeSingle()
+  const { data: person } = await admin.from('profiles').select('id, role, email').eq('email', email).maybeSingle()
   if (!person) return c.json({ error: 'No SPLAT account uses that email. Ask them to sign up first.' }, 404)
   if (person.role !== 'contributor' && person.role !== 'admin') {
     return c.json({ error: 'That account cannot lead an organisation.' }, 400)
   }
-  const { error } = await admin.from('org_leaders').insert({ org_id: orgId, user_id: person.id })
+  const { data: already } = await admin.from('org_leaders').select('id').eq('org_id', orgId).eq('user_id', person.id).maybeSingle()
+  if (already) return c.json({ error: 'They already lead this organisation.' }, 409)
+
+  const { error } = await admin
+    .from('org_leader_invites')
+    .insert({ org_id: orgId, invited_profile_id: person.id, invited_by: c.get('userId') })
   if (error && error.code !== '23505') return c.json({ error: error.message }, 500)
+
+  const { data: org } = await admin.from('organizations').select('name').eq('id', orgId).single()
+  await sendEmail(
+    person.email,
+    `You're invited to lead ${org?.name ?? 'an organisation'} on SPLAT Connect`,
+    `${org?.name ?? 'An organisation'} has invited you to be one of its leaders.\n\nOpen SPLAT Connect and go to Account to accept or decline.`
+  )
   return c.json({ ok: true }, 201)
 })
 
-organizations.delete('/:id/leaders/me', async (c) => {
+organizations.delete('/:id/leaders/invites/:inviteId', async (c) => {
   const orgId = c.req.param('id')
   if (!(await leadsOrg(c, orgId))) return c.json({ error: 'Not found' }, 404)
-  const admin = createAdminClient()
-  const { count } = await admin.from('org_leaders').select('id', { count: 'exact', head: true }).eq('org_id', orgId)
-  if ((count ?? 0) <= 1) return c.json({ error: 'Add another leader before you step down.' }, 409)
-  const { error } = await admin.from('org_leaders').delete().eq('org_id', orgId).eq('user_id', c.get('userId'))
+  await createAdminClient().from('org_leader_invites').delete().eq('id', c.req.param('inviteId')).eq('org_id', orgId)
+  return c.body(null, 204)
+})
+
+organizations.delete('/:id/leaders/me', async (c) => {
+  const { data, error } = await createAdminClient().rpc('step_down_as_leader', {
+    org: c.req.param('id'),
+    uid: c.get('userId'),
+  })
   if (error) return c.json({ error: error.message }, 500)
+  if (data === 'not_leader') return c.json({ error: 'Not found' }, 404)
+  if (data === 'last_leader') return c.json({ error: 'Add another leader before you step down.' }, 409)
   return c.body(null, 204)
 })
 
