@@ -78,7 +78,8 @@ export function Button({
 
 const styles = StyleSheet.create({
   base: {
-    borderRadius: theme.radii.field,
+    // A pill, like every button on the board (Soft Pop radius.pill).
+    borderRadius: theme.radii.pill,
     borderWidth: theme.border.hairline,
     borderColor: theme.colors.border,
     paddingVertical: theme.spacing(3),
