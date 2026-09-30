@@ -46,6 +46,7 @@ import { EmptyState } from '../ui/EmptyState'
 import { MessageBubble } from '../ui/MessageBubble'
 import { ErrorRow } from '../ui/ErrorRow'
 import { apiMessage } from '@splat-connect/types'
+import { PendingButton } from '../ui/pending'
 
 const POLL_MS = 10_000
 const LOAD_ERROR = "Couldn't load this build."
@@ -432,6 +433,8 @@ export function BuildThreadScreen({ id }: { id: string }) {
               />
             ))}
           </View>
+          {/* PENDING(build-thread-cost-panel): the maker lists parts, the family sees them — exchange-costs exists. */}
+          <PendingButton pending="report-problem-mobile" label="Report a problem" variant="ghost" />
         </ScrollView>
 
         <View style={styles.footer}>

@@ -13,7 +13,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 - Platforms: mobile, web
 - Needs: A product decision (see question), then the build it implies.
-- In code: _none yet_
+- In code: `packages/mobile/components/builds/makers-wanted-screen.tsx:329`
 
 ### `site-content-learn-legal-editing` — Edit Learn and Legal
 
@@ -61,7 +61,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 - Platforms: mobile, api
 - Needs: A product decision (see question), then the build it implies.
-- In code: `packages/mobile/components/guides/showcase-screen.tsx:160`, `packages/mobile/components/printing/job-screen.tsx:414`, `packages/mobile/components/toys/toy-detail-screen.tsx:223`
+- In code: `packages/mobile/components/exchanges/thread-screen.tsx:582`, `packages/mobile/components/guides/showcase-screen.tsx:160`, `packages/mobile/components/printing/job-screen.tsx:414`, `packages/mobile/components/toys/toy-detail-screen.tsx:223`
 
 ### `locations-and-distance` — Near you
 
@@ -69,7 +69,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 - Platforms: mobile, web, api
 - Needs: A product decision (see question), then the build it implies.
-- In code: `packages/mobile/components/printing/find-screen.tsx:137`, `packages/mobile/components/toys/toy-library-screen.tsx:196`
+- In code: `packages/mobile/components/builds/makers-wanted-screen.tsx:180`, `packages/mobile/components/printing/find-screen.tsx:137`, `packages/mobile/components/toys/toy-library-screen.tsx:196`
 
 ### `printer-verified` — Verified printers
 
@@ -93,7 +93,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 - Platforms: mobile, api
 - Needs: A product decision (see question), then the build it implies.
-- In code: `packages/mobile/components/printing/request-screen.tsx:208`
+- In code: `packages/mobile/components/printing/request-screen.tsx:208`, `packages/mobile/components/recycling/recycling-screen.tsx:177`
 
 ### `recycling-intake-credit-rule` — Credit from weight
 
@@ -101,7 +101,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 - Platforms: mobile
 - Needs: A product decision (see question), then the build it implies.
-- In code: _none yet_
+- In code: `packages/mobile/components/recycling/intake-screen.tsx:42`
 
 ### `challenge-constraints` — Constraints
 
@@ -109,7 +109,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 - Platforms: mobile, api
 - Needs: A product decision (see question), then the build it implies.
-- In code: _none yet_
+- In code: `packages/mobile/components/challenges/detail-screen.tsx:416`
 
 ### `challenge-writeup-stage` — Being written up
 
@@ -117,7 +117,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 - Platforms: mobile, api
 - Needs: A product decision (see question), then the build it implies.
-- In code: _none yet_
+- In code: `packages/mobile/components/challenges/detail-screen.tsx:257`
 
 ### `challenge-saves-stat` — Saves
 
@@ -125,7 +125,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 - Platforms: mobile, api
 - Needs: A product decision (see question), then the build it implies.
-- In code: _none yet_
+- In code: `packages/mobile/components/challenges/detail-screen.tsx:258`
 
 ### `idea-required-fields` — Shorter idea form
 
@@ -133,7 +133,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 - Platforms: mobile, api
 - Needs: A product decision (see question), then the build it implies.
-- In code: _none yet_
+- In code: `packages/mobile/components/challenges/submit-idea-screen.tsx:91`
 
 ### `build-request-options` — Request options
 
@@ -141,7 +141,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 - Platforms: mobile, api
 - Needs: A product decision (see question), then the build it implies.
-- In code: _none yet_
+- In code: `packages/mobile/components/builds/ask-for-build-screen.tsx:33`
 
 ### `learn-ask-an-expert-mobile` — Ask an expert
 
@@ -149,7 +149,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 - Platforms: mobile
 - Needs: A product decision (see question), then the build it implies.
-- In code: _none yet_
+- In code: `packages/mobile/components/explore/learn-hub.tsx:96`
 
 ### `me-rows-structure` — Makers wanted
 
@@ -319,7 +319,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 - Platforms: mobile
 - Needs: Board's About lead and rows (No paid tier, Reviewed, Our team, Contact times)
-- In code: _none yet_
+- In code: `packages/mobile/components/explore/about-screen.tsx:35`
 
 ### `contributor-role-line` — What they do
 
@@ -331,7 +331,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 - Platforms: mobile
 - Needs: Hero image per Learn article
-- In code: _none yet_
+- In code: `packages/mobile/components/explore/article-screen.tsx:31`
 
 ### `printing-basics-hero` — Printing basics picture
 
@@ -436,7 +436,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 - Platforms: mobile
 - Needs: Report on contributor, organisation, print job, build thread, exchange thread [ui]
-- In code: `packages/mobile/components/guides/showcase-screen.tsx:161`, `packages/mobile/components/organisation/org-profile-screen.tsx:328`, `packages/mobile/components/printing/job-screen.tsx:415`
+- In code: `packages/mobile/components/builds/build-thread-screen.tsx:437`, `packages/mobile/components/exchanges/thread-screen.tsx:584`, `packages/mobile/components/guides/showcase-screen.tsx:161`, `packages/mobile/components/organisation/org-profile-screen.tsx:328`, `packages/mobile/components/printing/job-screen.tsx:415`
 
 ### `org-profile-rows` — More on each row
 
@@ -448,7 +448,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 - Platforms: mobile, web, api
 - Needs: Machines, forms, min/max, turnaround, you get, hours, door; max check [ui,api,db]
-- In code: `packages/mobile/components/organisation/org-profile-screen.tsx:210`
+- In code: `packages/mobile/components/organisation/org-profile-screen.tsx:210`, `packages/mobile/components/recycling/intake-screen.tsx:166`, `packages/mobile/components/recycling/recycling-screen.tsx:248`
 
 ### `printer-stats` — Printer track record
 
@@ -502,91 +502,91 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 - Platforms: mobile
 - Needs: "This community so far" stats (API has them) [ui]
-- In code: _none yet_
+- In code: `packages/mobile/components/explore/explore-screen.tsx:86`
 
 ### `challenge-outcome-tab` — Outcome
 
 - Platforms: mobile
 - Needs: Outcome tab, four steps [ui]
-- In code: _none yet_
+- In code: `packages/mobile/components/challenges/detail-screen.tsx:353`
 
 ### `challenge-thread-tab` — Thread
 
 - Platforms: mobile
 - Needs: Separate Thread tab and tab count badges [ui]
-- In code: _none yet_
+- In code: `packages/mobile/components/challenges/detail-screen.tsx:352`
 
 ### `challenge-brief-photo` — Brief photo
 
 - Platforms: mobile, api
 - Needs: Hero photo and "What a solution has to do" [ui,api,db]
-- In code: _none yet_
+- In code: `packages/mobile/components/challenges/detail-screen.tsx:408`
 
 ### `challenge-maker-meta` — Maker details
 
 - Platforms: mobile, api
 - Needs: Role, joined date, "You" marker on maker rows [ui,api]
-- In code: _none yet_
+- In code: `packages/mobile/components/challenges/detail-screen.tsx:428`
 
 ### `challenge-author-states` — Your idea
 
 - Platforms: mobile, api
 - Needs: Author's pending/rejected view, withdraw, resubmit [ui,api]
-- In code: _none yet_
+- In code: `packages/mobile/components/challenges/detail-screen.tsx:101`
 
 ### `idea-anonymous` — Post anonymously
 
 - Platforms: mobile, api
 - Needs: "Post anonymously" [ui,api,db]
-- In code: _none yet_
+- In code: `packages/mobile/components/challenges/submit-idea-screen.tsx:193`
 
 ### `idea-photo` — Add a photo
 
 - Platforms: mobile, api
 - Needs: Photo on Submit an idea [ui,api,db]
-- In code: _none yet_
+- In code: `packages/mobile/components/challenges/submit-idea-screen.tsx:192`
 
 ### `makers-live-done-tabs` — Live and Done
 
 - Platforms: mobile, api
 - Needs: Live and Done tabs on Makers wanted [ui,api]
-- In code: _none yet_
+- In code: `packages/mobile/components/builds/makers-wanted-screen.tsx:175`
 
 ### `makers-row-meta` — Build time and cost
 
 - Platforms: mobile, api
 - Needs: Build time and cost on Makers wanted rows [ui,api]
-- In code: _none yet_
+- In code: `packages/mobile/components/builds/makers-wanted-screen.tsx:314`
 
 ### `build-thread-cost-panel` — Parts cost
 
 - Platforms: mobile
 - Needs: Parts cost panel (exchange-costs exists) [ui]
-- In code: _none yet_
+- In code: `packages/mobile/components/builds/build-thread-screen.tsx:436`
 
 ### `handover-code-actions` — New code
 
 - Platforms: mobile, api
 - Needs: Copy and New code on the handover card [ui,api]
-- In code: _none yet_
+- In code: `packages/mobile/components/exchanges/thread-screen.tsx:432`
 
 ### `exchange-toy-photo` — Toy photo
 
 - Platforms: mobile, api
 - Needs: Toy photo in the exchange header [ui,api]
-- In code: _none yet_
+- In code: `packages/mobile/components/exchanges/thread-screen.tsx:324`
 
 ### `notification-second-line` — Notification details
 
 - Platforms: mobile, api
 - Needs: Notification body line (e.g. return reason) [ui,api]
-- In code: _none yet_
+- In code: `packages/mobile/components/inbox/inbox-screen.tsx:289`
 
 ### `recycling-photo-upload` — Photo of the plastic
 
 - Platforms: mobile, api
 - Needs: Photo of sorted plastic (column exists) [ui,api]
-- In code: _none yet_
+- In code: `packages/mobile/components/recycling/recycling-screen.tsx:442`
 
 ### `me-count-badges` — Counts on My SPLAT
 

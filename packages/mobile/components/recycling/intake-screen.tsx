@@ -39,6 +39,7 @@ import { ErrorRow } from '../ui/ErrorRow'
 const TINTS = [theme.colors.honeySoft, theme.colors.violetSoft, theme.colors.mintSoft, theme.colors.accentLight]
 const date = (iso: string) => new Date(iso).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })
 
+// PENDING(recycling-intake-credit-rule): the board works the credit out from the weight; this screen asks for both, as web does.
 export function IntakeScreen() {
   const { caps, loading: capsLoading } = useCapabilities()
   const orgId = caps?.ledOrgs[0]?.id
@@ -162,6 +163,7 @@ export function IntakeScreen() {
               </>
             ) : null}
 
+            {/* PENDING(org-recycling-details): Machines, Forms, Min, Max, Turnaround, They get back, Hours and Door — no columns yet. */}
             <Text style={styles.eyebrow}>What you can take</Text>
             <Text style={styles.sub}>
               Contributors see this before they pack a box. Every unlisted item is one somebody

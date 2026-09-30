@@ -32,6 +32,9 @@ function LinkRow({ label, hint, path }: { label: string; hint?: string; path: st
   )
 }
 
+// PENDING(about-content-mobile): the board's lead ("SPLAT stands for Supporting
+// Play by Adapting Toys…") and rows — No paid tier, Reviewed not just posted,
+// Information not devices, Our team, Contact times.
 export function AboutScreen() {
   return (
     <Screen>

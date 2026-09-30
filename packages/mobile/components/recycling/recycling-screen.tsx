@@ -49,6 +49,7 @@ import { Chip } from '../ui/Chip'
 import { TextField } from '../ui/TextField'
 import { SkeletonRow } from '../ui/Skeleton'
 import { ErrorRow } from '../ui/ErrorRow'
+import { PendingButton } from '../ui/pending'
 
 type Ion = React.ComponentProps<typeof Ionicons>['name']
 // The board's glyph for each declaration line, in RECYCLING_DECLARATION's order.
@@ -173,6 +174,7 @@ export function RecyclingScreen() {
               </Text>
               {/* "Issued", not the board's "unspent": nothing records spending
                   credit yet, so a remaining balance would be a guess. */}
+              {/* PENDING(recycling-credit-spending): "unspent" rather than "issued" once credit can be spent. */}
               <Text style={styles.heroSub}>
                 {total.credit.toLocaleString('en-AU')} g of print credit issued
               </Text>
@@ -243,6 +245,7 @@ export function RecyclingScreen() {
                       {place(o) ? <Text style={styles.meta}>{place(o)}</Text> : null}
                     </View>
                   </View>
+                  {/* PENDING(org-recycling-details): machines, max per drop, turnaround, hours, door and "You get". */}
                   <Fact term="Takes" value={(o.recycling_materials ?? []).join(', ')} />
                   <Fact term="Per drop" value={`From ${MIN_DROPOFF_GRAMS / 1000} kg`} />
                   <Fact term="You get" value="Print credit" />
@@ -436,6 +439,7 @@ function BookDropoff({
         </View>
 
         <ErrorRow message={error} />
+        <PendingButton pending="recycling-photo-upload" label="Add a photo of the sorted plastic" variant="ghost" />
         <Button label="Book the drop-off" onPress={submit} disabled={!!problem} loading={busy} />
         <Text style={[styles.help, styles.centerText]}>
           {problem ?? 'Booking tells them to expect you. No credit exists until they weigh it.'}

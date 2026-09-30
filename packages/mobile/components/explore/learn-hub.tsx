@@ -93,6 +93,7 @@ export function LearnHub() {
               onPress={() => router.push(`/explore/learn/${article.slug}`)}
             />
           ))}
+          {/* PENDING(learn-ask-an-expert-mobile): the board draws this as a Soon row; it links to the live web page today. */}
           <AnimatedPressable
             onPress={() => openWebPage('/learn/ask-an-expert')}
             accessibilityRole="link"

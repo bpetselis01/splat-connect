@@ -12,7 +12,11 @@ jest.mock('../../../../lib/api-client', () => ({
 }))
 jest.mock('expo-router', () => {
   const { useEffect } = jest.requireActual('react')
-  return { useFocusEffect: (effect: () => void) => useEffect(effect, []) }
+  return {
+    useFocusEffect: (effect: () => void) => useEffect(effect, []),
+    // The booking form's pending photo button (PENDING(recycling-photo-upload)) navigates.
+    useRouter: () => ({ push: jest.fn() }),
+  }
 })
 jest.mock('../../../../lib/capabilities', () => ({
   useCapabilities: () => ({ caps: { profile: { id: 'me' }, ledOrgs: [] }, loading: false, refresh: jest.fn() }),

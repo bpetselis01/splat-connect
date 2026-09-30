@@ -42,6 +42,7 @@ import { SaveButton } from '../ui/SaveButton'
 import { TextField } from '../ui/TextField'
 import { MessageBubble } from '../ui/MessageBubble'
 import { Pill } from '../list/list-kit'
+import { pendingHref } from '../ui/pending'
 
 // Same cadence as the exchange thread. Web runs this conversation on a
 // realtime subscription; mobile polls, the Phase-3 ruling repeated.
@@ -97,6 +98,8 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
   useEffect(() => {
     let ignore = false
     apiClient
+      // PENDING(challenge-author-states): the author's own pending or rejected idea
+      // (withdraw, rejection note, "Submit a revised idea") — this endpoint 404s those.
       .get<ToyIdeaDetail>(`/api/public/challenges/${id}`)
       .then((data) => {
         if (!ignore) setChallenge(data)
@@ -251,6 +254,8 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
   const stats = challengeStats(challenge, new Date())
   const history = challengeHistory(challenge)
   const makers = challenge.maker_count ?? challenge.participants.length
+  // PENDING(challenge-writeup-stage): on the board "graduated" means being written up, with who and a follow link.
+  // PENDING(challenge-saves-stat): a public Saves tile among the stats.
   const headline =
     challenge.status === 'graduated'
       ? { title: 'Solved — it became a guide', body: 'The write-up went through review and is in Guides now.' }
@@ -344,6 +349,17 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
               <Text style={styles.tabText}>{t.label}</Text>
             </Pressable>
           ))}
+          {/* PENDING(challenge-thread-tab): a Thread tab of its own, and count badges on the tabs. */}
+          {/* PENDING(challenge-outcome-tab): Outcome — approved, makers working, written up, guide published. */}
+          {([
+            ['challenge-thread-tab', 'Thread', 'chatbubbles-outline'],
+            ['challenge-outcome-tab', 'Outcome', 'flag-outline'],
+          ] as const).map(([pid, label, icon]) => (
+            <Pressable key={pid} accessibilityRole="tab" onPress={() => router.push(pendingHref(pid))} style={styles.tab}>
+              <Ionicons name={icon} size={15} color={theme.colors.ink} />
+              <Text style={styles.tabText}>{label}</Text>
+            </Pressable>
+          ))}
         </ScrollView>
 
         {tab === 'status' ? (
@@ -389,6 +405,7 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
 
         {tab === 'brief' ? (
           <Card style={styles.panel}>
+            {/* PENDING(challenge-brief-photo): a hero photo and a "What a solution has to do" box. */}
             <Text style={styles.summary}>{challenge.summary}</Text>
             <Field label="The problem" value={challenge.description} />
           </Card>
@@ -396,6 +413,7 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
 
         {tab === 'constraints' ? (
           <Card style={styles.panel}>
+            {/* PENDING(challenge-constraints): named constraints (label + note) in place of these two fields. */}
             <Field label="Intended use" value={challenge.intended_use} />
             <Field label="Who it's for" value={challenge.primary_user} />
           </Card>
@@ -407,6 +425,7 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
               <Text style={styles.quiet}>Nobody has joined yet.</Text>
             ) : (
               <View style={styles.tagRow}>
+                {/* PENDING(challenge-maker-meta): role, joined date and a "You" marker on each maker. */}
                 {challenge.participants.map((p) => (
                   <Pill key={p.profile_id} variant="outline" label={p.name ?? 'Someone'} bg={theme.colors.surface} fg={theme.colors.text} />
                 ))}

@@ -33,6 +33,7 @@ import { EmptyState } from '../ui/EmptyState'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
 import { ErrorRow } from '../ui/ErrorRow'
 import { apiMessage } from '@splat-connect/types'
+import { PendingButton, pendingHref } from '../ui/pending'
 
 /** GET /api/toy-transactions/open-builds, one row. No requester name — by design. */
 export type OpenBuild = {
@@ -171,6 +172,12 @@ export function MakersWantedScreen() {
           })}
         </View>
 
+        {/* PENDING(makers-live-done-tabs): Live and Done — /open-builds returns unclaimed requests only. */}
+        <View style={styles.ranges}>
+          <Chip label="Live" active={false} onPress={() => router.push(pendingHref('makers-live-done-tabs'))} />
+          <Chip label="Done" active={false} onPress={() => router.push(pendingHref('makers-live-done-tabs'))} />
+        </View>
+        {/* PENDING(locations-and-distance): "Within 5/10/25 km of you" and km per row need stored locations. */}
         <View style={styles.ranges}>
           <Text style={styles.rangeLabel}>Families who can travel</Text>
           {RANGES.map((km) => (
@@ -304,6 +311,7 @@ function BuildCard({
         </Text>
       ) : null}
 
+      {/* PENDING(makers-row-meta): the guide's build time and ~cost — /open-builds returns title and difficulty only. */}
       <View style={styles.facts}>
         {b.child_label ? <Fact icon="happy-outline" text={b.child_label} /> : null}
         {b.travel_km !== null ? <Fact icon="car-outline" text={`${b.travel_km} km`} /> : null}
@@ -317,12 +325,15 @@ function BuildCard({
         {b.mine ? (
           <Button label="Track" variant="secondary" onPress={onTrack} style={styles.footButton} />
         ) : (
-          <Button
-            label={busy ? 'Claiming…' : "I'll build this"}
-            disabled={busy}
-            onPress={onClaim}
-            style={styles.footButton}
-          />
+          <>
+            <PendingButton pending="makers-ask-first" label="Ask first" variant="ghost" style={styles.footButton} />
+            <Button
+              label={busy ? 'Claiming…' : "I'll build this"}
+              disabled={busy}
+              onPress={onClaim}
+              style={styles.footButton}
+            />
+          </>
         )}
       </View>
     </Card>

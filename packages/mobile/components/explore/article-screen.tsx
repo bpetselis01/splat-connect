@@ -28,6 +28,7 @@ export function ArticleScreen({ slug }: { slug: string }) {
 
   const next = LEARN_ARTICLES[index + 1] ?? null
 
+  // PENDING(learn-article-hero): a hero image above the first heading — articles store none.
   return (
     <Screen>
       {/* The layout registers a static "Guide" fallback; this overrides it

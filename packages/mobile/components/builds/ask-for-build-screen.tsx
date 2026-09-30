@@ -30,6 +30,8 @@ import { ErrorRow } from '../ui/ErrorRow'
 // The board's four ranges; the Makers wanted filter reads the same scale.
 const RANGES = [5, 10, 15, 25]
 // Web's list (ask-openly-form.tsx), so a request reads the same on both boards.
+// PENDING(build-request-options): the board's options are No rush / This month /
+// Before holidays, and its note to the maker is optional (build_brief is required today).
 const URGENCIES = ['No rush', 'Before school holidays', 'Within a month', 'As soon as someone can']
 
 const DIFF_LABEL = { easy: 'Easy', medium: 'Medium', hard: 'Hard' } as const

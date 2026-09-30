@@ -42,6 +42,7 @@ import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { MessageBubble } from '../ui/MessageBubble'
 import { ErrorRow } from '../ui/ErrorRow'
+import { PendingButton } from '../ui/pending'
 
 const POLL_MS = 10_000
 const LOAD_ERROR = "Couldn't load this exchange."
@@ -320,6 +321,7 @@ export function ExchangeThreadScreen({ id }: { id: string }) {
           }}
         >
           <Card style={styles.headerCard}>
+            {/* PENDING(exchange-toy-photo): the toy's photo here — the detail has no photo field. */}
             <View style={styles.toyTile}>
               <Ionicons name="cube-outline" size={22} color={theme.colors.muted} />
             </View>
@@ -427,6 +429,7 @@ export function ExchangeThreadScreen({ id }: { id: string }) {
                     ))}
                   </View>
                   <Text style={styles.codeHint}>Read this to {otherPartyName} at pickup.</Text>
+                  <PendingButton pending="handover-code-actions" label="New code" variant="ghost" />
                 </View>
               ) : null}
 
@@ -575,6 +578,10 @@ export function ExchangeThreadScreen({ id }: { id: string }) {
               />
             ))}
           </View>
+          {tx.status === 'completed' ? (
+            <PendingButton pending="thank-people" label={`Say thanks to ${otherPartyName}`} />
+          ) : null}
+          <PendingButton pending="report-problem-mobile" label="Report a problem" variant="ghost" />
         </ScrollView>
 
         <View style={styles.footer}>

@@ -83,6 +83,9 @@ function DoorCard({
   )
 }
 
+// PENDING(explore-community-stats): the board's "This community so far" stats
+// (guides, toys delivered, contributors, organisations) — GET /api/public/impact
+// already returns them.
 export function ExploreScreen() {
   const router = useRouter()
   const { count } = useLearnProgress()

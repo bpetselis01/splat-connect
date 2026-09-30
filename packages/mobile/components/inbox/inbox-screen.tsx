@@ -286,6 +286,7 @@ export function InboxScreen({
     )
   }
 
+  // PENDING(notification-second-line): a body line under the title (e.g. the return reason) — Notification has no body field.
   function noteCard(n: Notification) {
     const tile = TYPE_TILE[n.type] ?? BUCKET_TILE[notificationBucket(n.type)]
     const inviteId =

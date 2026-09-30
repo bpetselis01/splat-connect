@@ -18,6 +18,7 @@ import { Button } from '../ui/Button'
 import { TextField } from '../ui/TextField'
 import { EmptyState } from '../ui/EmptyState'
 import { ErrorRow } from '../ui/ErrorRow'
+import { PendingButton, PendingRow } from '../ui/pending'
 
 // Web's idea-form.tsx tiles, same words (078).
 const KINDS: { kind: ToyIdeaKind; label: string }[] = [
@@ -87,6 +88,7 @@ export function SubmitIdeaScreen() {
     const trimmed = Object.fromEntries(
       FIELDS.map((f) => [f.key, draft[f.key].trim()])
     ) as Draft
+    // PENDING(idea-required-fields): the board requires only title and summary.
     if (Object.values(trimmed).some((v) => !v)) {
       setError('All fields are required')
       return
@@ -186,6 +188,9 @@ export function SubmitIdeaScreen() {
                   />
                 ))}
               </View>
+
+              <PendingButton pending="idea-photo" label="Add a photo" variant="ghost" />
+              <PendingRow pending="idea-anonymous" label="Post anonymously" icon="eye-off-outline" />
 
               <ErrorRow message={error} />
 
