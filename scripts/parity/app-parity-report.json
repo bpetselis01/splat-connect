@@ -1,7 +1,89 @@
 {
- "at": "2026-09-30T14:10:28.648Z",
+ "at": "2026-09-30T14:11:12.147Z",
  "live": "http://localhost:3112",
  "screens": [
+  {
+   "id": "guides",
+   "name": "Guides",
+   "group": "tabs",
+   "route": "/guides",
+   "findings": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"suits ollie\" has no counterpart",
+     "board": "suits ollie",
+     "live": null
+    }
+   ],
+   "role": "parent",
+   "finalUrl": "/guides",
+   "explained": [],
+   "boardHeadings": 8,
+   "liveHeadings": 2
+  },
+  {
+   "id": "lib_toy",
+   "name": "Toy detail",
+   "group": "push",
+   "route": "/toy-library/66c1ac2b-119d-4688-9670-f6e7de3126db",
+   "findings": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"bubble machine\" has no counterpart",
+     "board": "bubble machine",
+     "live": null
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "h3 \"also worth a look\" size",
+     "board": "18px",
+     "live": "24px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "h3 wording",
+     "board": "also worth a look",
+     "live": "parity swap toy"
+    },
+    {
+     "type": "radius",
+     "severity": "medium",
+     "what": "card radius",
+     "board": "20px",
+     "live": "999px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "3/3 board paragraphs absent",
+     "board": "northside therapy collective · newcastle, nsw",
+     "live": "ask to collect this toy, or offer one of yours in exchange. either way"
+    },
+    {
+     "type": "radius",
+     "severity": "low",
+     "what": "button radius range",
+     "board": "999px",
+     "live": "14px"
+    },
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "card background",
+     "board": "rgb(255,255,255)",
+     "live": "rgba(255,255,255,0.92)"
+    }
+   ],
+   "role": "parent",
+   "finalUrl": "/toy-library/66c1ac2b-119d-4688-9670-f6e7de3126db",
+   "explained": [],
+   "boardHeadings": 3,
+   "liveHeadings": 2
+  },
   {
    "id": "challenge_detail",
    "name": "Challenge",
@@ -89,26 +171,6 @@
    "finalUrl": "/organisation/b019164b-c9ff-4bdb-a2c5-3ce3911a594b",
    "explained": [],
    "boardHeadings": 0,
-   "liveHeadings": 2
-  },
-  {
-   "id": "guides",
-   "name": "Guides",
-   "group": "tabs",
-   "route": "/guides",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"suits ollie\" has no counterpart",
-     "board": "suits ollie",
-     "live": null
-    }
-   ],
-   "role": "parent",
-   "finalUrl": "/guides",
-   "explained": [],
-   "boardHeadings": 8,
    "liveHeadings": 2
   },
   {
@@ -665,68 +727,6 @@
    "finalUrl": "/toy-library",
    "explained": [],
    "boardHeadings": 8,
-   "liveHeadings": 2
-  },
-  {
-   "id": "lib_toy",
-   "name": "Toy detail",
-   "group": "push",
-   "route": "/toy-library/6ae262e6-5166-4316-97bf-3601e7403759",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"bubble machine\" has no counterpart",
-     "board": "bubble machine",
-     "live": null
-    },
-    {
-     "type": "size",
-     "severity": "medium",
-     "what": "h3 \"also worth a look\" size",
-     "board": "18px",
-     "live": "24px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h3 wording",
-     "board": "also worth a look",
-     "live": "parity swap toy"
-    },
-    {
-     "type": "radius",
-     "severity": "medium",
-     "what": "card radius",
-     "board": "20px",
-     "live": "999px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "3/3 board paragraphs absent",
-     "board": "northside therapy collective · newcastle, nsw",
-     "live": "ask to collect this toy, or offer one of yours in exchange. either way"
-    },
-    {
-     "type": "radius",
-     "severity": "low",
-     "what": "button radius range",
-     "board": "999px",
-     "live": "14px"
-    },
-    {
-     "type": "colour",
-     "severity": "low",
-     "what": "card background",
-     "board": "rgb(255,255,255)",
-     "live": "rgba(255,255,255,0.92)"
-    }
-   ],
-   "role": "parent",
-   "finalUrl": "/toy-library/6ae262e6-5166-4316-97bf-3601e7403759",
-   "explained": [],
-   "boardHeadings": 3,
    "liveHeadings": 2
   },
   {
@@ -1938,8 +1938,8 @@
    "size": 11,
    "copy": 35,
    "radius": 37,
-   "shadow": 6,
    "colour": 7,
+   "shadow": 6,
    "font": 16,
    "weight": 14,
    "extra-section": 4

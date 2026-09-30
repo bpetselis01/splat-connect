@@ -21,6 +21,7 @@ runParity({
   board: 'http://localhost:8899/SPLAT%20Connect%20-%20Mobile.dc.html',
   live: process.env.PARITY_APP || 'http://localhost:3112',
   pairsDir: path.join(__dirname, 'pairs', 'app'),
+  boardShot: '[data-screen-label]',
   boardViewport: { width: 1440, height: 960 },
   liveViewport: { width: 390, height: 844 },
   // The tab bar and the stack header are chrome the board draws in its frame.

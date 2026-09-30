@@ -167,7 +167,10 @@ async function runParity(target) {
       const board = await fingerprintOf(boardPage, `${target.board}#${s.id}`, '[data-screen-label]', role)
       if (argv.includes('--shots')) {
         fs.mkdirSync(PAIRS, { recursive: true })
-        await boardPage.screenshot({ path: path.join(PAIRS, `${s.id}.board.png`), fullPage: true })
+        // The app target shoots the board's screen alone, not the whole artboard page.
+        const shot = path.join(PAIRS, `${s.id}.board.png`)
+        if (target.boardShot) await boardPage.locator(target.boardShot).first().screenshot({ path: shot })
+        else await boardPage.screenshot({ path: shot, fullPage: true })
       }
       if (!board.headings.length && board.page.height < 100) {
         row.error = 'artboard screen did not render'
