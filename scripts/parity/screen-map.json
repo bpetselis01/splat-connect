@@ -26,12 +26,6 @@
     "match": "h1",
     "why": "intended",
     "reason": "The page-title token is clamp(28px,3.2vw,40px), 40px at this width; the board's 44px is hand-drawn off-token."
-   },
-   {
-    "type": "extra-section",
-    "match": "tools you'll need",
-    "why": "intended",
-    "reason": "Guests can read parts and tools before signing up; only downloads need an account (049)."
    }
   ]
  },
@@ -55,12 +49,6 @@
     "match": "h1",
     "why": "intended",
     "reason": "The page-title token is clamp(28px,3.2vw,40px), 40px at this width; the board's 44px is hand-drawn off-token."
-   },
-   {
-    "type": "missing-section",
-    "match": "notes from family",
-    "why": "pending",
-    "pending": "web-toy-family-notes"
    }
   ],
   "seedRole": "parent"

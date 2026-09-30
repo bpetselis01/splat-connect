@@ -517,7 +517,8 @@ export const PENDING = {
     blurb: "Notes from the family that used this toy are coming.",
     kind: "build",
     platforms: ["web"],
-    needs: "\"Notes from the family\" on a public toy [ui,api]",
+    needs: "Built: the toy page draws Notes from {holder} from the toy's description (found by web parity, 2026-10-01).",
+    shipped: true,
   },
   'web-toy-offer-a-toy': {
     title: "Offer a toy",

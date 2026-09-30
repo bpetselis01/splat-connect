@@ -1,135 +1,7 @@
 {
- "at": "2026-09-30T14:31:14.063Z",
+ "at": "2026-09-30T14:38:14.777Z",
  "live": "http://localhost:3110",
  "screens": [
-  {
-   "id": "toy_request",
-   "name": "Request a toy",
-   "group": "Public site",
-   "route": "/toy-library/b4c18f9e-538f-4539-b033-55ae480b400b/request",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/toy-library/b4c18f9e-538f-4539-b033-55ae480b400b/request",
-   "explained": [],
-   "boardHeadings": 4,
-   "liveHeadings": 4
-  },
-  {
-   "id": "print_request_new",
-   "name": "Request a print",
-   "group": "3D Printing",
-   "route": "/printing/requests?guide=37d5ef80-607b-4954-a84b-9d2d86b3bf87",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/printing/requests",
-   "explained": [],
-   "boardHeadings": 7,
-   "liveHeadings": 7
-  },
-  {
-   "id": "recycle_new",
-   "name": "Book a drop-off",
-   "group": "Get involved",
-   "route": "/get-involved/recycling/drop-off",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/get-involved/recycling/drop-off",
-   "explained": [],
-   "boardHeadings": 1,
-   "liveHeadings": 1
-  },
-  {
-   "id": "org_event_new",
-   "name": "Publish an event",
-   "group": "Organisation",
-   "route": "/dashboard/organisation/events/new",
-   "findings": [],
-   "role": "leader",
-   "finalUrl": "/dashboard/organisation/events/new",
-   "explained": [],
-   "boardHeadings": 2,
-   "liveHeadings": 1
-  },
-  {
-   "id": "org_story_new",
-   "name": "Publish a story",
-   "group": "Organisation",
-   "route": "/dashboard/organisation/stories/new",
-   "findings": [],
-   "role": "leader",
-   "finalUrl": "/dashboard/organisation/stories/new",
-   "explained": [],
-   "boardHeadings": 1,
-   "liveHeadings": 1
-  },
-  {
-   "id": "signup_sent",
-   "name": "Check your email",
-   "group": "Auth",
-   "route": "/signup",
-   "findings": [],
-   "role": "guest",
-   "finalUrl": "/signup",
-   "explained": [],
-   "boardHeadings": 3,
-   "liveHeadings": 2
-  },
-  {
-   "id": "upload",
-   "name": "Add a tutorial",
-   "group": "My SPLAT",
-   "route": "/upload",
-   "findings": [],
-   "role": "contributor",
-   "finalUrl": "/upload",
-   "explained": [],
-   "boardHeadings": 2,
-   "liveHeadings": 1
-  },
-  {
-   "id": "org_profile",
-   "name": "Organisation profile",
-   "group": "Organisation",
-   "route": "/dashboard/organisation/profile",
-   "findings": [],
-   "role": "leader",
-   "finalUrl": "/dashboard/organisation/profile",
-   "explained": [
-    {
-     "type": "extra-section",
-     "severity": "medium",
-     "what": "live has an extra h2: \"thanks from families\"",
-     "board": null,
-     "live": "thanks from families",
-     "why": "intended",
-     "reason": "Where a leader hides a family's thanks note from the public profile (077); the board draws the notes but not their moderation."
-    }
-   ],
-   "boardHeadings": 7,
-   "liveHeadings": 11
-  },
-  {
-   "id": "org_orders",
-   "name": "Print orders",
-   "group": "Organisation",
-   "route": "/dashboard/organisation/orders",
-   "findings": [],
-   "role": "leader",
-   "finalUrl": "/dashboard/organisation/orders",
-   "explained": [
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "4/6 board paragraphs absent",
-     "board": "switch-mount-body.stl, switch-mount-clamp.stl, cradle-#mm.stl",
-     "live": "every leader sees this queue. pickup is always the organisation's addr",
-     "why": "fixture",
-     "reason": "The board's sample files, its 'other printers asked' group and a second bench; the card draws each when the data has them."
-    }
-   ],
-   "boardHeadings": 4,
-   "liveHeadings": 2
-  },
   {
    "id": "home",
    "name": "Home",
@@ -171,19 +43,10 @@
      "live": "40px",
      "why": "intended",
      "reason": "The page-title token is clamp(28px,3.2vw,40px), 40px at this width; the board's 44px is hand-drawn off-token."
-    },
-    {
-     "type": "extra-section",
-     "severity": "medium",
-     "what": "live has an extra h3: \"tools you'll need\"",
-     "board": null,
-     "live": "tools you'll need",
-     "why": "intended",
-     "reason": "Guests can read parts and tools before signing up; only downloads need an account (049)."
     }
    ],
    "boardHeadings": 12,
-   "liveHeadings": 6
+   "liveHeadings": 5
   },
   {
    "id": "toys_public",
@@ -201,20 +64,11 @@
    "id": "toy_public",
    "name": "Toy detail",
    "group": "Public site",
-   "route": "/toy-library/98172e33-3b37-45b0-9249-abdacb149cae",
+   "route": "/toy-library/f79920e1-7ef0-4c1b-85ba-8023759034f4",
    "findings": [],
    "role": "guest",
-   "finalUrl": "/toy-library/98172e33-3b37-45b0-9249-abdacb149cae",
+   "finalUrl": "/toy-library/f79920e1-7ef0-4c1b-85ba-8023759034f4",
    "explained": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"notes from family #\" has no counterpart",
-     "board": "notes from family #",
-     "live": null,
-     "why": "pending",
-     "pending": "web-toy-family-notes"
-    },
     {
      "type": "size",
      "severity": "medium",
@@ -226,7 +80,19 @@
     }
    ],
    "boardHeadings": 10,
-   "liveHeadings": 5
+   "liveHeadings": 6
+  },
+  {
+   "id": "toy_request",
+   "name": "Request a toy",
+   "group": "Public site",
+   "route": "/toy-library/f79920e1-7ef0-4c1b-85ba-8023759034f4/request",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/toy-library/f79920e1-7ef0-4c1b-85ba-8023759034f4/request",
+   "explained": [],
+   "boardHeadings": 4,
+   "liveHeadings": 4
   },
   {
    "id": "wizard",
@@ -491,6 +357,18 @@
    "liveHeadings": 6
   },
   {
+   "id": "print_request_new",
+   "name": "Request a print",
+   "group": "3D Printing",
+   "route": "/printing/requests?guide=37d5ef80-607b-4954-a84b-9d2d86b3bf87",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/printing/requests",
+   "explained": [],
+   "boardHeadings": 7,
+   "liveHeadings": 7
+  },
+  {
    "id": "involved",
    "name": "Get involved",
    "group": "Get involved",
@@ -602,10 +480,10 @@
    "id": "build_thread",
    "name": "Build thread",
    "group": "My SPLAT",
-   "route": "/dashboard/exchanges/build/a049d43f-12e7-45db-ae38-e0116e1a0f40",
+   "route": "/dashboard/exchanges/build/e85f4ed0-bb39-40db-bc9a-b8f53ca8a519",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/dashboard/exchanges/build/a049d43f-12e7-45db-ae38-e0116e1a0f40",
+   "finalUrl": "/dashboard/exchanges/build/e85f4ed0-bb39-40db-bc9a-b8f53ca8a519",
    "explained": [],
    "boardHeadings": 3,
    "liveHeadings": 3
@@ -681,13 +559,13 @@
    "id": "org_public",
    "name": "Organisation profile",
    "group": "Impact",
-   "route": "/organizations/4bda8ae2-5993-442b-b2c7-897cd8894ea3/public",
+   "route": "/organizations/b6d42b39-39b7-47b9-be46-236570df9f4b/public",
    "findings": [],
    "role": "guest",
-   "finalUrl": "/organizations/4bda8ae2-5993-442b-b2c7-897cd8894ea3/public",
+   "finalUrl": "/organizations/b6d42b39-39b7-47b9-be46-236570df9f4b/public",
    "explained": [],
    "boardHeadings": 17,
-   "liveHeadings": 13
+   "liveHeadings": 14
   },
   {
    "id": "contributor",
@@ -736,10 +614,10 @@
    "id": "event_detail",
    "name": "Event detail",
    "group": "Get involved",
-   "route": "/get-involved/events/6bfa590c-02fd-4590-8203-03242f8ff7f8",
+   "route": "/get-involved/events/69fd36ae-b8d6-4bbb-b2d8-4cc880798586",
    "findings": [],
    "role": "guest",
-   "finalUrl": "/get-involved/events/6bfa590c-02fd-4590-8203-03242f8ff7f8",
+   "finalUrl": "/get-involved/events/69fd36ae-b8d6-4bbb-b2d8-4cc880798586",
    "explained": [],
    "boardHeadings": 4,
    "liveHeadings": 4
@@ -748,10 +626,10 @@
    "id": "event_register",
    "name": "Register for an event",
    "group": "Get involved",
-   "route": "/get-involved/events/6bfa590c-02fd-4590-8203-03242f8ff7f8/register",
+   "route": "/get-involved/events/69fd36ae-b8d6-4bbb-b2d8-4cc880798586/register",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/get-involved/events/6bfa590c-02fd-4590-8203-03242f8ff7f8/register",
+   "finalUrl": "/get-involved/events/69fd36ae-b8d6-4bbb-b2d8-4cc880798586/register",
    "explained": [],
    "boardHeadings": 3,
    "liveHeadings": 3
@@ -767,6 +645,18 @@
    "explained": [],
    "boardHeadings": 8,
    "liveHeadings": 7
+  },
+  {
+   "id": "recycle_new",
+   "name": "Book a drop-off",
+   "group": "Get involved",
+   "route": "/get-involved/recycling/drop-off",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/get-involved/recycling/drop-off",
+   "explained": [],
+   "boardHeadings": 1,
+   "liveHeadings": 1
   },
   {
    "id": "org_recycling",
@@ -924,10 +814,10 @@
    "id": "org_event_manage",
    "name": "Manage event",
    "group": "My SPLAT",
-   "route": "/dashboard/org/events/6bfa590c-02fd-4590-8203-03242f8ff7f8",
+   "route": "/dashboard/org/events/69fd36ae-b8d6-4bbb-b2d8-4cc880798586",
    "findings": [],
    "role": "leader",
-   "finalUrl": "/dashboard/org/events/6bfa590c-02fd-4590-8203-03242f8ff7f8",
+   "finalUrl": "/dashboard/org/events/69fd36ae-b8d6-4bbb-b2d8-4cc880798586",
    "explained": [],
    "boardHeadings": 3,
    "liveHeadings": 4
@@ -1065,13 +955,25 @@
    "liveHeadings": 2
   },
   {
+   "id": "upload",
+   "name": "Add a tutorial",
+   "group": "My SPLAT",
+   "route": "/upload",
+   "findings": [],
+   "role": "contributor",
+   "finalUrl": "/upload",
+   "explained": [],
+   "boardHeadings": 2,
+   "liveHeadings": 1
+  },
+  {
    "id": "editor",
    "name": "Tutorial editor",
    "group": "My SPLAT",
-   "route": "/tutorials/f1eaf2ca-a4cd-467e-803a-99f2f7cd05de/edit",
+   "route": "/tutorials/90384166-5e30-4d96-b171-f00861d66dc8/edit",
    "findings": [],
    "role": "contributor",
-   "finalUrl": "/tutorials/f1eaf2ca-a4cd-467e-803a-99f2f7cd05de/edit",
+   "finalUrl": "/tutorials/90384166-5e30-4d96-b171-f00861d66dc8/edit",
    "explained": [],
    "boardHeadings": 5,
    "liveHeadings": 5
@@ -1104,10 +1006,10 @@
    "id": "toy_detail",
    "name": "Toy detail",
    "group": "My SPLAT",
-   "route": "/dashboard/toys/678217e3-a60d-40d7-9140-200ec6a51258",
+   "route": "/dashboard/toys/b672a920-ebe8-445c-90dc-af47b705a8b6",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/dashboard/toys/678217e3-a60d-40d7-9140-200ec6a51258",
+   "finalUrl": "/dashboard/toys/b672a920-ebe8-445c-90dc-af47b705a8b6",
    "explained": [],
    "boardHeadings": 7,
    "liveHeadings": 6
@@ -1128,10 +1030,10 @@
    "id": "thread",
    "name": "Exchange thread",
    "group": "My SPLAT",
-   "route": "/dashboard/exchanges/fdbe286d-0db8-41a5-bec3-1845ac89b50c",
+   "route": "/dashboard/exchanges/1adc13ae-6203-46b7-99d6-23f7157148ef",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/dashboard/exchanges/fdbe286d-0db8-41a5-bec3-1845ac89b50c",
+   "finalUrl": "/dashboard/exchanges/1adc13ae-6203-46b7-99d6-23f7157148ef",
    "explained": [],
    "boardHeadings": 4,
    "liveHeadings": 3
@@ -1236,10 +1138,10 @@
    "id": "print_job",
    "name": "Print job",
    "group": "My SPLAT",
-   "route": "/dashboard/print-requests/b9d20d21-e3b9-41f4-b334-c57a5c1614d3",
+   "route": "/dashboard/print-requests/da6a3f9c-d4cf-46d1-af55-6ae7c00dfd09",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/dashboard/print-requests/b9d20d21-e3b9-41f4-b334-c57a5c1614d3",
+   "finalUrl": "/dashboard/print-requests/da6a3f9c-d4cf-46d1-af55-6ae7c00dfd09",
    "explained": [],
    "boardHeadings": 3,
    "liveHeadings": 3
@@ -1284,10 +1186,10 @@
    "id": "child",
    "name": "Child profile",
    "group": "My SPLAT",
-   "route": "/dashboard/child/2985a756-38ba-4fbe-8486-0f443e6b72f7",
+   "route": "/dashboard/child/eb0d44e9-e24c-4379-8514-30480d8dce8a",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/dashboard/child/2985a756-38ba-4fbe-8486-0f443e6b72f7",
+   "finalUrl": "/dashboard/child/eb0d44e9-e24c-4379-8514-30480d8dce8a",
    "explained": [],
    "boardHeadings": 4,
    "liveHeadings": 4
@@ -1315,6 +1217,28 @@
    "explained": [],
    "boardHeadings": 6,
    "liveHeadings": 3
+  },
+  {
+   "id": "org_profile",
+   "name": "Organisation profile",
+   "group": "Organisation",
+   "route": "/dashboard/organisation/profile",
+   "findings": [],
+   "role": "leader",
+   "finalUrl": "/dashboard/organisation/profile",
+   "explained": [
+    {
+     "type": "extra-section",
+     "severity": "medium",
+     "what": "live has an extra h2: \"thanks from families\"",
+     "board": null,
+     "live": "thanks from families",
+     "why": "intended",
+     "reason": "Where a leader hides a family's thanks note from the public profile (077); the board draws the notes but not their moderation."
+    }
+   ],
+   "boardHeadings": 7,
+   "liveHeadings": 11
   },
   {
    "id": "org_toys",
@@ -1349,6 +1273,52 @@
    "explained": [],
    "boardHeadings": 3,
    "liveHeadings": 3
+  },
+  {
+   "id": "org_event_new",
+   "name": "Publish an event",
+   "group": "Organisation",
+   "route": "/dashboard/organisation/events/new",
+   "findings": [],
+   "role": "leader",
+   "finalUrl": "/dashboard/organisation/events/new",
+   "explained": [],
+   "boardHeadings": 2,
+   "liveHeadings": 1
+  },
+  {
+   "id": "org_story_new",
+   "name": "Publish a story",
+   "group": "Organisation",
+   "route": "/dashboard/organisation/stories/new",
+   "findings": [],
+   "role": "leader",
+   "finalUrl": "/dashboard/organisation/stories/new",
+   "explained": [],
+   "boardHeadings": 1,
+   "liveHeadings": 1
+  },
+  {
+   "id": "org_orders",
+   "name": "Print orders",
+   "group": "Organisation",
+   "route": "/dashboard/organisation/orders",
+   "findings": [],
+   "role": "leader",
+   "finalUrl": "/dashboard/organisation/orders",
+   "explained": [
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "4/6 board paragraphs absent",
+     "board": "switch-mount-body.stl, switch-mount-clamp.stl, cradle-#mm.stl",
+     "live": "every leader sees this queue. pickup is always the organisation's addr",
+     "why": "fixture",
+     "reason": "The board's sample files, its 'other printers asked' group and a second bench; the card draws each when the data has them."
+    }
+   ],
+   "boardHeadings": 4,
+   "liveHeadings": 2
   },
   {
    "id": "admin_content",
@@ -1436,10 +1406,10 @@
    "id": "admin_idea_detail",
    "name": "Review an idea",
    "group": "Admin",
-   "route": "/admin/ideas/552be435-7223-4f80-ade6-cf29867d2fec",
+   "route": "/admin/ideas/5f4113f0-1e66-4871-b505-2163e798779b",
    "findings": [],
    "role": "admin",
-   "finalUrl": "/admin/ideas/552be435-7223-4f80-ade6-cf29867d2fec",
+   "finalUrl": "/admin/ideas/5f4113f0-1e66-4871-b505-2163e798779b",
    "explained": [],
    "boardHeadings": 3,
    "liveHeadings": 3
@@ -1517,6 +1487,18 @@
    "liveHeadings": 2
   },
   {
+   "id": "signup_sent",
+   "name": "Check your email",
+   "group": "Auth",
+   "route": "/signup",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/signup",
+   "explained": [],
+   "boardHeadings": 3,
+   "liveHeadings": 2
+  },
+  {
    "id": "confirmed",
    "name": "Email confirmed",
    "group": "Auth",
@@ -1572,7 +1554,7 @@
   "errored": 0,
   "skipped": 0,
   "findings": 0,
-  "explained": 15,
+  "explained": 13,
   "byType": {}
  }
 }
