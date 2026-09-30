@@ -43,8 +43,10 @@ test('the organisation page lists the guides it backs', async ({ page }) => {
   // A heading: the page also has "Say thanks to <org>" (077).
   await expect(page.getByRole('heading', { name: org })).toBeVisible()
   await expect(page.getByText('Guides they back')).toBeVisible()
-  await expect(page.getByText(title)).toBeVisible()
+  // The list stays mounted (hidden) under a deep-linked screen, so the title
+  // matches twice on web: the visible one is the one on this screen.
+  await expect(page.getByText(title).filter({ visible: true })).toBeVisible()
 
-  await page.getByText(title).click()
+  await page.getByText(title).filter({ visible: true }).click()
   await expect(page).toHaveURL(new RegExp(`/guides/${id}$`))
 })

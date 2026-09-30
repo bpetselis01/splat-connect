@@ -152,7 +152,9 @@ test("the creator's picks row lists a recommendation and opens it", async ({ pag
   await page.goto(`/guides/${id}`)
 
   await expect(page.getByText('Also worth a look')).toBeVisible()
-  await page.getByText(pickTitle).click()
+  // The list stays mounted (hidden) under a deep-linked screen, so the title
+  // matches twice on web: the visible one is the one on this screen.
+  await page.getByText(pickTitle).filter({ visible: true }).click()
 
   await expect(page).toHaveURL(new RegExp(`/guides/${pickId}$`))
 })
