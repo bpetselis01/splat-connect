@@ -8,7 +8,9 @@ export async function appleAvailable() {
 export function googleAvailable() {
   return false
 }
-export async function appleCredential(): Promise<SocialResult<{ idToken: string; fullName: string | null }>> {
+export async function appleCredential(): Promise<
+  SocialResult<{ idToken: string; fullName: string | null; authorizationCode: string | null }>
+> {
   return { failed: 'Not available on web.' }
 }
 export async function googleIdToken(): Promise<SocialResult<string>> {

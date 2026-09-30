@@ -30,7 +30,9 @@ export function googleAvailable(): boolean {
   return Boolean(webClientId) && (Platform.OS !== 'ios' || Boolean(iosClientId))
 }
 
-export async function appleCredential(): Promise<SocialResult<{ idToken: string; fullName: string | null }>> {
+export async function appleCredential(): Promise<
+  SocialResult<{ idToken: string; fullName: string | null; authorizationCode: string | null }>
+> {
   const A = apple()
   try {
     const cred = await A.signInAsync({
@@ -39,7 +41,8 @@ export async function appleCredential(): Promise<SocialResult<{ idToken: string;
     if (!cred.identityToken) return { failed: 'Apple returned no identity token.' }
     // Apple sends the name on the first sign-in only.
     const fullName = [cred.fullName?.givenName, cred.fullName?.familyName].filter(Boolean).join(' ') || null
-    return { ok: { idToken: cred.identityToken, fullName } }
+    // authorizationCode: what account deletion hands the API to revoke the grant.
+    return { ok: { idToken: cred.identityToken, fullName, authorizationCode: cred.authorizationCode } }
   } catch (e) {
     if ((e as { code?: string }).code === 'ERR_REQUEST_CANCELED') return { cancelled: true }
     return { failed: (e as Error).message }

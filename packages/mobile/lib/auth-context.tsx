@@ -35,6 +35,9 @@ type AuthContextValue = {
   sendPasswordReset: (email: string) => Promise<AuthResult>
   resetPassword: (email: string, token: string, password: string) => Promise<AuthResult>
   signInWithApple: () => Promise<AuthResult>
+  /** Apple's sheet again, for account deletion: a fresh sign-in plus the
+   *  authorization code the API revokes the grant with. */
+  reauthWithApple: () => Promise<AuthResult & { authorizationCode?: string }>
   signInWithGoogle: () => Promise<AuthResult>
   setProfileName: (name: string) => Promise<AuthResult>
   signOut: () => Promise<void>
@@ -167,6 +170,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return withIdToken('apple', 'ok' in got ? { ok: got.ok.idToken } : got)
   }
 
+  async function reauthWithApple() {
+    const got = await appleCredential()
+    const res = await withIdToken('apple', 'ok' in got ? { ok: got.ok.idToken } : got)
+    return 'ok' in got && !res.problem ? { ...res, authorizationCode: got.ok.authorizationCode ?? undefined } : res
+  }
+
   async function signInWithGoogle() {
     return withIdToken('google', await googleIdToken())
   }
@@ -204,7 +213,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         session, profile, loading, hasContributorTerms, pendingName, resetting,
         signIn, signUp, verifyCode, resendSignupCode, sendSignInCode, sendPasswordReset, resetPassword,
-        signInWithApple, signInWithGoogle, setProfileName, signOut, acceptContributorTerms,
+        signInWithApple, reauthWithApple, signInWithGoogle, setProfileName, signOut, acceptContributorTerms,
       }}
     >
       {children}
