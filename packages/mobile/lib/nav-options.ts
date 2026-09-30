@@ -18,6 +18,7 @@ export const stackScreenOptions = {
   headerStyle: { backgroundColor: theme.colors.background },
   headerShadowVisible: true,
   headerTintColor: theme.colors.ink,
+  // PENDING(ios-header-title-align): honoured on Android only; iOS centres it.
   headerTitleAlign: 'left' as const,
   headerTitleStyle: {
     fontFamily: theme.fonts.display,

@@ -45,6 +45,7 @@ export function LearnHub() {
           How switch adaptation works, from first switch to safe finish. For instructions on one toy, use Guides.
         </Text>
 
+        {/* PENDING(mobile-extra-affordances): a Continue card the board does not draw. */}
         {next ? (
           <AnimatedPressable
             onPress={() => router.push(`/explore/learn/${next.slug}`)}

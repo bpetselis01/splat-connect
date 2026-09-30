@@ -162,6 +162,7 @@ export function ToyLibraryScreen() {
               }}
             />
 
+            {/* PENDING(mobile-extra-affordances): a search the board does not draw. */}
             <TextField
               icon="search"
               placeholder="Search by toy name"
