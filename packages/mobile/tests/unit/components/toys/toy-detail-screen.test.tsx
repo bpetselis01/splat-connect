@@ -191,10 +191,13 @@ describe('ToyDetailScreen', () => {
     expect(await screen.findByRole('button', { name: 'Thanked TAD Australia' })).toBeTruthy()
   })
 
-  it('offers no thanks when a person holds the toy', async () => {
+  // A person holder can't be thanked yet (only organisations can, 077); the
+  // board draws the button, so it opens Not built yet (thank-people).
+  it('sends thanks for a person holder to Not built yet', async () => {
     render(<ToyDetailScreen id="toy1" />)
     await screen.findByText('Bubble machine')
-    expect(screen.queryByRole('button', { name: /^Thank/ })).toBeNull()
+    fireEvent.press(screen.getByRole('button', { name: /^Thank/ }))
+    expect(mockPush).toHaveBeenCalledWith({ pathname: '/not-built', params: { feature: 'thank-people' } })
     expect(screen.getByRole('button', { name: 'Report a problem' })).toBeTruthy()
   })
 

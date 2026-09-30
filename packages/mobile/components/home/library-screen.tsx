@@ -27,6 +27,7 @@ import { CornerMenu } from '../ui/CornerMenu'
 import { Segmented } from '../ui/Segmented'
 import { TabHero } from '../ui/TabHero'
 import { RowCard, MetaItem } from '../ui/RowCard'
+import { PendingButton } from '../ui/pending'
 
 type IconName = React.ComponentProps<typeof Ionicons>['name']
 
@@ -153,6 +154,7 @@ export function LibraryScreen() {
   const sort = SORTS.find((s) => s.key === sortKey)!
   const visible = tutorials
     .filter((t) => {
+      // PENDING(guides-search-parts): match the parts a guide uses too — they are not in the list payload.
       const matchesQuery =
         !q || t.title.toLowerCase().includes(q) || (t.description?.toLowerCase().includes(q) ?? false)
       return (
@@ -307,6 +309,7 @@ export function LibraryScreen() {
         }
         ListEmptyComponent={
           loading ? (
+            // PENDING(guides-loading-caption): a "Loading guides…" caption above the skeletons.
             <View>
               <SkeletonRow />
               <SkeletonRow />
@@ -334,7 +337,9 @@ export function LibraryScreen() {
                   ? `Nothing matches "${search}". Try a different word, or clear the search.`
                   : 'Try removing a filter — new guides are added as contributors share them.'
               }
-            />
+            >
+              {filtered ? <PendingButton pending="clear-filters-empty" label="Clear filters" style={styles.retry} /> : null}
+            </EmptyState>
           )
         }
         renderItem={({ item, index }) => {

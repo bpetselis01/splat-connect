@@ -354,6 +354,7 @@ function IncomingCard({
           <Text style={styles.meta}>
             {[plural(files.reduce((n, f) => n + f.quantity, 0), 'part'), partsMeta(files)].filter(Boolean).join(' · ')}
           </Text>
+          {/* PENDING(print-settings): the guide's settings here ("0.2 mm · 25 %"). */}
           <Text style={styles.meta}>
             From {tx.requester_suburb ? `a family in ${tx.requester_suburb}` : 'a family'} ·{' '}
             {tx.print_delivery === 'post' ? 'wants it posted' : 'will collect'}

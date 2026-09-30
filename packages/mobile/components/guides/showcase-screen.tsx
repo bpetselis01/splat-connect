@@ -13,6 +13,7 @@ import { Badge } from '../ui/Badge'
 import { Button } from '../ui/Button'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
+import { PendingButton } from '../ui/pending'
 
 type ShowcaseKind = 'person' | 'org'
 type ShowcaseProfile = ContributorProfile | OrgPublicProfile
@@ -147,11 +148,19 @@ export function ShowcaseScreen({ kind, id }: { kind: ShowcaseKind; id: string })
         </View>
         <View style={styles.headerBody}>
           <Text style={styles.name}>{profile.name}</Text>
+          {/* PENDING(contributor-role-line): the role line ("Occupational therapist") and an organisation chip — no occupation column. */}
           <Text style={styles.meta}>
             {guides.length} guides · {profile.toysShared.length} toys shared
           </Text>
+          {/* PENDING(contributor-profile-details): bio, "Joined", toys delivered and thanks — the API already returns them. */}
         </View>
       </View>
+      {kind === 'person' ? (
+        <View style={styles.section}>
+          <PendingButton pending="thank-people" label={`Say thanks to ${firstName}`} />
+          <PendingButton pending="report-problem-mobile" label="Report a problem" variant="ghost" />
+        </View>
+      ) : null}
 
       {guides.length > 0 ? (
         <View style={styles.section}>

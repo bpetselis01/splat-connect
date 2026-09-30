@@ -16,6 +16,7 @@ import { EmptyState } from '../ui/EmptyState'
 import { ReportProblem } from '../reports/report-problem'
 import { RequestBlock } from './request-block'
 import { Pill } from '../list/list-kit'
+import { PendingButton } from '../ui/pending'
 
 const OFFER_LABEL: Record<OfferType, string> = {
   donation: 'Gift — nothing comes back',
@@ -158,9 +159,11 @@ export function ToyDetailScreen({ id }: { id: string }) {
       ) : personName ? (
         <Text style={styles.holder}>{`Held by ${personName}`}</Text>
       ) : null}
+      {/* PENDING(toy-holder-location): the holder's suburb and state under the title. */}
 
       <View style={styles.pillRow}>
         {toy.offer_type ? <Pill variant="large" icon="gift-outline" label={OFFER_LABEL[toy.offer_type]} bg={theme.colors.tone.mint.bg} fg={theme.colors.tone.mint.fg} /> : null}
+        {/* PENDING(toy-condition-words): "Good condition", not "Condition 7 / 10". */}
         <Pill variant="large" icon="checkmark-circle-outline" label={`Condition ${toy.condition} / 10`} bg={theme.colors.tone.mint.bg} fg={theme.colors.tone.mint.fg} />
         {toy.switch_adapted ? <Pill variant="large" label="Switch-adapted" bg={theme.colors.tone.brand.bg} fg={theme.colors.tone.brand.fg} /> : null}
       </View>
@@ -214,9 +217,11 @@ export function ToyDetailScreen({ id }: { id: string }) {
       ) : null}
 
       <View style={styles.footerRow}>
-        {/* Only an organisation can be thanked (077); a person holder has no
-            thanks route yet, so there is nothing to offer for one. */}
-        {canAsk && toy.owner_org_id && orgName ? (
+        {/* Only an organisation can be thanked (077); a person holder opens
+            Not built yet until people can be thanked. */}
+        {canAsk && !toy.owner_org_id && personName ? (
+          <PendingButton pending="thank-people" label={`Thank ${personName}`} style={styles.thank} />
+        ) : canAsk && toy.owner_org_id && orgName ? (
           <Button
             label={thanked ? `Thanked ${orgName}` : `Thank ${orgName}`}
             variant="secondary"
@@ -230,6 +235,7 @@ export function ToyDetailScreen({ id }: { id: string }) {
         )}
         <ReportProblem subjectKind="toy" subjectId={toy.id} subjectLabel={toy.name} />
       </View>
+      {/* PENDING(toy-holder-picks): "Also worth a look" — the holder's other picks. */}
     </ScrollView>
   )
 }

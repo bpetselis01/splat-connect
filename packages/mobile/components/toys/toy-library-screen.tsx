@@ -28,6 +28,7 @@ import { Segmented } from '../ui/Segmented'
 import { TabHero } from '../ui/TabHero'
 import { RowCard, MetaItem } from '../ui/RowCard'
 import { useCapabilities } from '../../lib/capabilities'
+import { PendingButton, pendingHref } from '../ui/pending'
 
 type IconName = React.ComponentProps<typeof Ionicons>['name']
 
@@ -192,6 +193,8 @@ export function ToyLibraryScreen() {
                 onPress={() => setSwitchAdaptedOnly((v) => !v)}
               />
               <Chip variant="filter" icon="time-outline" label="Newest" active={newest} onPress={() => setNewest((v) => !v)} />
+              {/* PENDING(locations-and-distance): the board's location chip and nearest-first order. */}
+              <Chip variant="filter" icon="navigate-outline" label="Nearest first" active={false} onPress={() => router.push(pendingHref('locations-and-distance'))} />
               {CONDITIONS.map((c) => (
                 <Chip
                   key={c.value}
@@ -235,7 +238,9 @@ export function ToyLibraryScreen() {
                   ? `Nothing matches "${search}". Try a different word, or clear the search.`
                   : 'Try removing a filter — new toys are added as they are shared.'
               }
-            />
+            >
+              {filtered ? <PendingButton pending="clear-filters-empty" label="Clear filters" style={styles.retry} /> : null}
+            </EmptyState>
           )
         }
         renderItem={({ item, index }) => {

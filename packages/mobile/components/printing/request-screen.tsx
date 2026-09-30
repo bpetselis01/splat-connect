@@ -26,6 +26,7 @@ import { TextField } from '../ui/TextField'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { ErrorRow } from '../ui/ErrorRow'
+import { PendingRow } from '../ui/pending'
 
 type Guide = Tutorial & { stl_files: StlFile[] }
 
@@ -146,6 +147,7 @@ export function RequestPrintScreen({ guideId, printerIds }: { guideId: string; p
                       'Settings from the guide'}
                   </Text>
                 </View>
+                {/* PENDING(print-part-quantity): a quantity per part — fixed at one today. */}
                 <Text style={styles.meta}>×1</Text>
               </Pressable>
             )
@@ -194,6 +196,7 @@ export function RequestPrintScreen({ guideId, printerIds }: { guideId: string; p
           style={styles.note}
         />
 
+        {/* PENDING(print-settings): name the actual settings here ("0.2 mm · 25 % · PETG"). */}
         <View style={styles.info}>
           <Ionicons name="information-circle" size={18} color={theme.colors.ink} />
           <Text style={[styles.meta, styles.flex, styles.infoText]}>
@@ -202,6 +205,8 @@ export function RequestPrintScreen({ guideId, printerIds }: { guideId: string; p
           </Text>
         </View>
 
+        <PendingRow pending="recycling-credit-spending" label="Use my recycling credit" icon="leaf-outline" />
+        {/* PENDING(print-cost-estimate): "about $X at the printer's declared rate" in the line below. */}
         <Pressable
           accessibilityRole="checkbox"
           accessibilityState={{ checked: agree }}

@@ -32,6 +32,7 @@ import { TextField } from '../ui/TextField'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { ErrorRow } from '../ui/ErrorRow'
+import { PendingButton } from '../ui/pending'
 
 type IconName = React.ComponentProps<typeof Ionicons>['name']
 
@@ -188,6 +189,7 @@ export function OrgProfileScreen({ id }: { id: string }) {
           {prints ? (
             <View style={[styles.panel, { backgroundColor: theme.colors.honeySoft }]}>
               <Text style={styles.panelTitle}>They print — you cover the filament</Text>
+              {/* PENDING(printer-stats): Turnaround (median days) and Fit ("29 of 30 first time"); "Ask them to print" should preselect this org. */}
               {printers.length > 0 ? <Fact k="Machines" v={printers.map((p) => p.name).join(' · ')} /> : null}
               {materials.length > 0 ? <Fact k="Materials" v={materials.join(' · ')} /> : null}
               {rateLines.map((l) => (
@@ -205,6 +207,7 @@ export function OrgProfileScreen({ id }: { id: string }) {
           {recycles ? (
             <View style={[styles.panel, { backgroundColor: theme.colors.mintSoft }]}>
               <Text style={styles.panelTitle}>They take waste plastic</Text>
+              {/* PENDING(org-recycling-details): Form, min/max per drop, turnaround, "You get" and hours — only polymers and a note are stored. */}
               <Fact k="Polymers" v={(org.recycling_materials ?? []).join(' · ')} />
               {org.recycling_note ? <Text style={styles.panelBody}>{org.recycling_note}</Text> : null}
               <Button label="Book a drop-off" variant="secondary" onPress={() => router.push('/explore/recycling')} />
@@ -238,6 +241,7 @@ export function OrgProfileScreen({ id }: { id: string }) {
         </Section>
       ) : null}
 
+      {/* PENDING(org-profile-rows): photo, meta and "backed by <leader>" on guide rows; photo, offer and grade on shelf toys; "See all" links; leader initials and role. */}
       {guides.length > 0 ? (
         <Section title={`Guides they back · ${guides.length}`} hint="Backing means a leader read it, checked the safety list and built it once. Their name is on it.">
           {guides.map((g) => (
@@ -299,6 +303,7 @@ export function OrgProfileScreen({ id }: { id: string }) {
 
       {place || org.visit_hours || org.service_area || org.website_url ? (
         <Section title="Visit">
+          {/* PENDING(org-visit-map): a map and the street address with access notes — shown only once accepted today, and no maps provider yet. */}
           <Card style={styles.visit}>
             {place ? <Fact k="Where" v={place} /> : null}
             {org.visit_hours ? <Fact k="When" v={org.visit_hours} /> : null}
@@ -320,7 +325,7 @@ export function OrgProfileScreen({ id }: { id: string }) {
         </Section>
       ) : null}
 
-      <Text style={styles.report}>Something wrong here? Report a problem from SPLAT’s contact page. Goes to SPLAT only.</Text>
+      <PendingButton pending="report-problem-mobile" label="Report a problem" variant="ghost" />
     </ScrollView>
   )
 }
@@ -545,5 +550,4 @@ const styles = StyleSheet.create({
   rowTitle: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.text },
   rowMeta: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted, lineHeight: 19 },
   visit: { gap: theme.spacing(2), padding: theme.spacing(3) },
-  report: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted, textAlign: 'center' },
 })

@@ -20,6 +20,7 @@ import { Skeleton } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
 import { ReportProblem } from '../reports/report-problem'
+import { PendingButton, PendingRow } from '../ui/pending'
 
 const SWITCH_TARGET_LABEL = { large: 'Big button', small: 'Small button' } as const
 const HERO_HEIGHT = 240
@@ -150,6 +151,7 @@ export function DetailScreen({ id }: { id: string }) {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {/* Bleeds to the screen's edges and up under the header, as the board's hero does. */}
       <View style={styles.hero}>
+        {/* PENDING(guide-photo-captions): captions per photo and a thumbnail strip — photo_urls holds no labels. */}
         <PhotoCarousel
           urls={tutorial.photo_urls}
           height={HERO_HEIGHT}
@@ -225,6 +227,7 @@ export function DetailScreen({ id }: { id: string }) {
 
       {steps.length > 0 ? (
         <Section title="Steps" hint="One action at a time. The PDF has the same guide to print.">
+          <PendingButton pending="guide-step-tracking" label="Track my progress" variant="ghost" />
           {steps.map((st) => (
             <View key={st.id} testID={`guide-step-${st.position}`} style={styles.step}>
               <View style={styles.stepNum}>
@@ -243,6 +246,8 @@ export function DetailScreen({ id }: { id: string }) {
               </View>
             </View>
           ))}
+          <PendingButton pending="guide-build-done" label="Mark this build done" />
+          <PendingButton pending="guide-community-notes" label="Add a note" variant="ghost" />
         </Section>
       ) : null}
 
@@ -252,6 +257,7 @@ export function DetailScreen({ id }: { id: string }) {
         </Section>
       ) : null}
 
+      {/* PENDING(part-prices): a cost per line and a Total under the parts. */}
       <Section title="Parts" hint="What you'll need to buy or salvage.">
         {tutorial.parts.length ? (
           tutorial.parts.map((item) => (
@@ -266,6 +272,8 @@ export function DetailScreen({ id }: { id: string }) {
         )}
       </Section>
 
+      {/* PENDING(guide-tools-checklist): "I have it" per tool and "X of Y already yours", saved on the device, plus a link to Tools and materials on Learn. */}
+      {/* PENDING(tool-notes): why each tool, and Buy once / Borrow / Substitute. */}
       <Section title="Tools" hint="What you'll need on the bench.">
         {tutorial.tools.length ? (
           tutorial.tools.map((item) => (
@@ -283,6 +291,7 @@ export function DetailScreen({ id }: { id: string }) {
       {/* The way into printing. Keyed on the guide having STL files rather than
           on its kind: a print request's parts ARE those files, so a guide
           without any has nothing to ask for, whatever kind it is. */}
+      {/* PENDING(print-settings): a Files & print settings section — layer height, infill, material, print time. */}
       {tutorial.stl_files.length > 0 ? (
         <AnimatedPressable
           onPress={() => router.push({ pathname: '/printing', params: { guide: tutorial.id } })}
@@ -302,6 +311,8 @@ export function DetailScreen({ id }: { id: string }) {
           </Text>
         </AnimatedPressable>
       ) : null}
+
+      <PendingRow pending="guide-ask-a-maker" label="Can't build it? Ask a maker nearby" icon="hand-left-outline" />
 
       {tutorial.tutorial_recommendations.length > 0 ? (
         <PicksRow

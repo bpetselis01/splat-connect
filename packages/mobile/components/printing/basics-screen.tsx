@@ -30,11 +30,14 @@ const SECTIONS = [
   },
 ]
 
+// PENDING(bed-fit-filter): the board's Bed size copy says the list only shows
+// printers whose bed fits; that needs part dimensions stored per guide.
 export function PrintingBasicsScreen() {
   const router = useRouter()
   return (
     <Screen>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        {/* PENDING(printing-basics-hero): the board's hero photo above the title. */}
         <Text style={styles.eyebrow}>3D Printing</Text>
         <Text style={styles.title}>Printing basics</Text>
         <Text style={styles.lede}>

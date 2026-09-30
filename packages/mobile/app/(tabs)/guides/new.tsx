@@ -152,6 +152,7 @@ export default function NewGuideRoute() {
   return (
     <Screen>
       <ScreenHeader title="Add a guide" subtitle="Give it a title to start a draft — everything else comes next." />
+      {/* PENDING(new-guide-fields): Cover photo, Switch type and Age range here — PATCH /api/tutorials/:id already accepts all three. */}
 
       <View accessibilityRole="radiogroup" style={styles.chipRow}>
         <Chip role="radio" label="Start blank" active={start === 'blank'} onPress={() => setStart('blank')} />

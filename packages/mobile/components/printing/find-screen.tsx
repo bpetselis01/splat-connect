@@ -38,6 +38,7 @@ import { Chip } from '../ui/Chip'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
+import { pendingHref } from '../ui/pending'
 
 type Guide = Tutorial & { stl_files: StlFile[] }
 
@@ -133,6 +134,10 @@ export function FindPrinterScreen({ guideId }: { guideId?: string }) {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
           <Chip label="Open now" active={openOnly} onPress={() => setOpenOnly((v) => !v)} />
           <Chip label={`Has ${material}`} active={hasMaterial} onPress={() => setHasMaterial((v) => !v)} />
+          {/* PENDING(locations-and-distance) */}
+          <Chip label="Within 10 km" active={false} onPress={() => router.push(pendingHref('locations-and-distance'))} />
+          {/* PENDING(printer-verified) */}
+          <Chip label="Verified" active={false} onPress={() => router.push(pendingHref('printer-verified'))} />
         </ScrollView>
 
         <Text style={styles.eyebrow}>{plural(shown.length, 'printer')}</Text>
@@ -175,6 +180,7 @@ export function FindPrinterScreen({ guideId }: { guideId?: string }) {
                         .join(' · ')}
                     </Text>
                   </View>
+                  {/* PENDING(printer-stats): "N jobs · median N days" under the name. */}
                   <Badge status={avail.tone} label={avail.label} />
                 </View>
                 <View style={styles.tags}>

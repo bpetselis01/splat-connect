@@ -32,6 +32,7 @@ function OrgRow({ item, onPress }: { item: OrgRow; onPress: () => void }) {
         <View style={styles.avatar}>
           <Text style={styles.avatarInitial}>{item.name.charAt(0).toUpperCase()}</Text>
         </View>
+        {/* PENDING(organisations-list-meta): "Newcastle, NSW · 18 backed · 7 toys", Verified/Printer badges and a logo — the list endpoint selects none of these. */}
         <Text style={styles.name} numberOfLines={2}>
           {item.name}
         </Text>

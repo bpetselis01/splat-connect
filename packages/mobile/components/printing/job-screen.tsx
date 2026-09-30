@@ -34,6 +34,7 @@ import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { MessageBubble } from '../ui/MessageBubble'
 import { ErrorRow } from '../ui/ErrorRow'
+import { PendingButton } from '../ui/pending'
 
 const POLL_MS = 10_000
 const LOAD_ERROR = "Couldn't load this print job."
@@ -331,6 +332,8 @@ function StateCard({
       <Card style={styles.block}>
         <Text style={styles.strong}>{isPrinter ? tx.requester_name : tx.owner_name}</Text>
         {machine ? <Text style={styles.meta}>{machine}</Text> : null}
+        {/* PENDING(printer-stats): the printer's jobs and median days on this card. */}
+        {!isPrinter ? <PendingButton pending="message-printer" label="Message" variant="ghost" /> : null}
         <Text style={styles.body}>
           {isPrinter
             ? printing
@@ -407,6 +410,9 @@ function StateCard({
       <Card style={[styles.block, styles.mint]}>
         <Text style={styles.strong}>Collected</Text>
         <Text style={[styles.body, styles.ink]}>Both of you confirmed. Closed and kept as a record.</Text>
+        <PendingButton pending="print-fit-feedback" label="Did it fit?" />
+        <PendingButton pending="thank-people" label="Say thanks to the printer" variant="ghost" />
+        <PendingButton pending="report-problem-mobile" label="Report a problem" variant="ghost" />
       </Card>
     )
   }
