@@ -453,6 +453,8 @@ export function TutorialView({
         * The rail. The board puts the decision here and the evidence on the
         * left: how much it takes, the one filled action, and — because this is
         * the page somebody opens when they are stuck — a way to ask a person.
+        * PENDING(guide-works-with): the board's "The toy you start with" and
+        * "Works with" cards; guides store neither.
         */}
       <aside className="flex flex-col gap-4 lg:sticky lg:top-24">
         <div className="flex flex-col gap-3.5 rounded-card border border-line bg-surface p-[22px] shadow-[var(--shadow-e3),var(--shadow-hi)]">

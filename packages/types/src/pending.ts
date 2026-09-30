@@ -717,7 +717,7 @@ export const PENDING = {
     title: "Also worth a look",
     blurb: "The holder's other picks are coming.",
     kind: "build",
-    platforms: ["mobile", "api"],
+    platforms: ["mobile", "web", "api"],
     needs: "Decided 2026-09-30: the holder chooses the mode and can change it later: hand-picked (up to 3, like guide recommendations in 048) or automatic (e.g. their most recently published).",
   },
   'customization-metrics': {
@@ -747,6 +747,14 @@ export const PENDING = {
     kind: "build",
     platforms: ["mobile", "api"],
     needs: "Decided 2026-09-30: no lending (toys are given, exchanged, built or printed only), so no Out or Needs clean. Add Retired (retired_at) for broken or worn-out org toys.",
+  },
+  'guide-works-with': {
+    title: "Works with",
+    blurb: "Which toy a guide starts from and the switches it works with are coming.",
+    kind: "build",
+    platforms: ["web", "api"],
+    board: "Web guide detail rail; editor About",
+    needs: "Guide fields for the starting toy (name, brand), the switches it works with and an optional note for people who'd rather not build; editor inputs and two rail cards.",
   },
   'print-answer-by': {
     title: "Answer by",
