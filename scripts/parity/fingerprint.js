@@ -215,7 +215,10 @@ function collectFingerprint(arg) {
     if (excluded(el)) return false
     // A text field's own bordered wrapper is a field, not a card: a multi-line
     // React Native TextInput is a card-sized bordered view around a textarea.
-    if ([...el.children].some((c) => /^(INPUT|TEXTAREA|SELECT)$/.test(c.tagName))) return false
+    // Text fields only: a bordered tile wrapping a checkbox or radio is a card.
+    const textField = (c) =>
+      c.tagName === 'TEXTAREA' || (c.tagName === 'INPUT' && !/^(checkbox|radio|hidden|file|submit|button)$/.test(c.type))
+    if ([...el.children].some(textField)) return false
     const st = cs(el)
     const r = parseFloat(st.borderTopLeftRadius) || 0
     if (r < 8) return false
@@ -297,10 +300,13 @@ function collectFingerprint(arg) {
       return {
         // Semantic level where there is one, else inferred from scale so the
         // two sides are comparable at all.
-        level: /^H([1-6])$/.test(h.tagName)
-          ? +h.tagName[1]
-          : h.getAttribute('role') === 'heading'
-            ? +(h.getAttribute('aria-level') || 2)
+        // A role="heading" carries its level in aria-level. React Native web
+        // renders every header-role Text as <h1 role="heading"> with none, so
+        // its tag says nothing and its size decides, as for unsemantic text.
+        level: h.getAttribute('role') === 'heading' && h.hasAttribute('aria-level')
+          ? +h.getAttribute('aria-level')
+          : /^H([1-6])$/.test(h.tagName) && h.getAttribute('role') !== 'heading'
+            ? +h.tagName[1]
             : size >= 40 ? 1 : size >= 26 ? 2 : size >= 20 ? 3 : 4,
         tag: h.tagName,
         text: norm(headingText(h)).slice(0, 80),

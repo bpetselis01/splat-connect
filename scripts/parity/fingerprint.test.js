@@ -75,8 +75,17 @@ const { chromium } = require(
   const f3 = await page.evaluate(collectFingerprint, { root: '#root' })
   assert.strictEqual(f3.page.bodyFont, 'Nunito', 'short text ignored for the body font')
   assert.strictEqual(f3.counts.cards, 0, 'a field wrapper counted as a card')
+
+  // React Native web renders every header-role Text as <h1 role="heading">
+  // with no aria-level; its level is its size, like unsemantic text.
+  await page.setContent(`
+    <div id="root">
+      <h1 role="heading" dir="auto" style="font-family:Baloo2_800ExtraBold;font-size:18px">Parts</h1>
+    </div>`)
+  const f4 = await page.evaluate(collectFingerprint, { root: '#root' })
+  assert.strictEqual(f4.headings[0].level, 4, 'RN header role read as h1')
   await browser.close()
-  console.log('fingerprint: 13 checks passed')
+  console.log('fingerprint: 14 checks passed')
 })().catch((e) => {
   console.error(e.message)
   process.exit(1)
