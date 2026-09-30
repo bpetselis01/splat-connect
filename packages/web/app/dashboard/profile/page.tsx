@@ -139,6 +139,15 @@ export default async function ProfileTabPage() {
           </li>
         </ul>
       )}
+
+      {/* Apple 5.1.1(v) / Google Play: deletion is self-serve and easy to find. */}
+      <div className="mt-12 border-t border-line pt-7">
+        <h2 className="text-xl font-extrabold text-ink">Delete your account</h2>
+        <p className="mt-2 max-w-[52ch] text-[15px] leading-relaxed text-muted">
+          Removes your profile, child profiles and everything private to you. Published guides stay up without your name.
+        </p>
+        <Link href="/dashboard/profile/delete" className="btn btn-danger mt-4">Delete account</Link>
+      </div>
     </section>
   )
 }
