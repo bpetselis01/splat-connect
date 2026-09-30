@@ -1,6 +1,6 @@
 // packages/mobile/components/ui/Chip.tsx
 import { useEffect } from 'react'
-import { StyleSheet } from 'react-native'
+import { StyleSheet, View } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import Animated, {
   interpolateColor,
@@ -17,6 +17,7 @@ export function Chip({
   onPress,
   role = 'button',
   icon,
+  swatch,
   variant = 'solid',
 }: {
   label: string
@@ -39,6 +40,8 @@ export function Chip({
    * a row of several on at once still reads as quiet.
    */
   variant?: 'solid' | 'filter'
+  /** A colour dot before the label: the board's print colour chips. */
+  swatch?: string
 }) {
   const filter = variant === 'filter'
   const offBg = theme.colors.surface
@@ -78,6 +81,7 @@ export function Chip({
     >
       <Animated.View style={[styles.fill, filter && styles.filterFill, fill]}>
         {icon ? <Ionicons name={icon} size={15} color={theme.colors.primaryDark} /> : null}
+        {swatch ? <View style={[styles.swatch, { backgroundColor: swatch }]} /> : null}
         <Animated.Text style={[styles.text, text]}>{label}</Animated.Text>
       </Animated.View>
     </AnimatedPressable>
@@ -101,4 +105,11 @@ const styles = StyleSheet.create({
   filterChip: { minHeight: 44 },
   filterFill: { minHeight: 44, ...theme.shadow(1) },
   text: { fontFamily: theme.fonts.bold, fontSize: theme.type.label },
+  swatch: {
+    width: 10,
+    height: 10,
+    borderRadius: theme.radii.pill,
+    borderWidth: theme.border.hairline,
+    borderColor: theme.colors.border,
+  },
 })

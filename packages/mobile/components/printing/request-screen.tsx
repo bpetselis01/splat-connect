@@ -39,6 +39,13 @@ function Eyebrow({ children }: { children: string }) {
   return <Text style={styles.eyebrow}>{children}</Text>
 }
 
+// The board's colour chips each carry their colour; Any colour a palette.
+const SWATCH: Record<string, string | undefined> = {
+  Black: theme.colors.ink,
+  White: theme.colors.surface,
+  Blue: theme.colors.primary,
+}
+
 export function RequestPrintScreen({ guideId, printerIds }: { guideId: string; printerIds: string[] }) {
   const router = useRouter()
   const [guide, setGuide] = useState<Guide | null>(null)
@@ -161,7 +168,16 @@ export function RequestPrintScreen({ guideId, printerIds }: { guideId: string; p
           <Eyebrow>Colour</Eyebrow>
           <View accessibilityRole="radiogroup" style={styles.row}>
             {PRINT_COLOURS.map((c) => (
-              <Chip key={c} label={c} role="radio" active={colour === c} onPress={() => setColour(c)} />
+              <Chip
+                key={c}
+                label={c}
+                role="radio"
+                active={colour === c}
+                onPress={() => setColour(c)}
+                variant="filter"
+                icon={SWATCH[c] ? undefined : 'color-palette-outline'}
+                swatch={SWATCH[c]}
+              />
             ))}
           </View>
         </View>
