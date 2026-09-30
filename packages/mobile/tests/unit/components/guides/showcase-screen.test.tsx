@@ -51,7 +51,7 @@ describe('ShowcaseScreen', () => {
     render(<ShowcaseScreen kind="person" id="c1" />)
     expect(await screen.findByText('Sam Taylor')).toBeTruthy()
     expect(mockGet).toHaveBeenCalledWith('/api/public/contributors/c1')
-    expect(screen.getByText('Guides by Sam')).toBeTruthy()
+    expect(screen.getByText('Published guides')).toBeTruthy()
     expect(screen.getByText('Build a Robot Arm')).toBeTruthy()
     expect(screen.getByText('1 guides · 0 toys shared')).toBeTruthy()
     expect(screen.queryByText('Toys on their shelf')).toBeNull()

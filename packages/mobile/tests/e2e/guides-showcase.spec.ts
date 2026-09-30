@@ -16,7 +16,7 @@ test("the contributor page lists that contributor's guides and opens one", async
   await page.goto(`/guides/contributor/${contributor.id}`)
 
   await expect(page.getByText(author)).toBeVisible()
-  await expect(page.getByText(`Guides by ${author.split(' ')[0]}`)).toBeVisible()
+  await expect(page.getByText('Published guides')).toBeVisible()
   await expect(page.getByText(title)).toBeVisible()
 
   await page.getByText(title).click()

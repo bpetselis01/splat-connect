@@ -142,7 +142,7 @@ export function ShowcaseScreen({ kind, id }: { kind: ShowcaseKind; id: string })
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.header}>
+      <Card style={styles.header}>
         <View style={[styles.avatar, kind === 'org' && styles.avatarSquare]}>
           <Text style={styles.avatarInitial}>{profile.name.charAt(0).toUpperCase()}</Text>
         </View>
@@ -154,7 +154,7 @@ export function ShowcaseScreen({ kind, id }: { kind: ShowcaseKind; id: string })
           </Text>
           {/* PENDING(contributor-profile-details): bio, "Joined", toys delivered and thanks — the API already returns them. */}
         </View>
-      </View>
+      </Card>
       {kind === 'person' ? (
         <View style={styles.section}>
           <PendingButton pending="thank-people" label={`Say thanks to ${firstName}`} />
@@ -164,7 +164,9 @@ export function ShowcaseScreen({ kind, id }: { kind: ShowcaseKind; id: string })
 
       {guides.length > 0 ? (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{kind === 'person' ? `Guides by ${firstName}` : 'Guides they back'}</Text>
+          <Text style={styles.sectionTitle} accessibilityRole="header">
+            {kind === 'person' ? 'Published guides' : 'Guides they back'}
+          </Text>
           {guides.map((t) => (
             <GuideCard
               key={t.id}
@@ -190,7 +192,8 @@ export function ShowcaseScreen({ kind, id }: { kind: ShowcaseKind; id: string })
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   content: { padding: theme.spacing(4), paddingBottom: theme.spacing(10) },
-  header: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(4), marginBottom: theme.spacing(6) },
+  // The board's profile header card is 22px, the one radius it keeps for it.
+  header: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(4), marginBottom: theme.spacing(6), borderRadius: 22 },
   avatar: {
     width: 64,
     height: 64,
@@ -206,12 +209,12 @@ const styles = StyleSheet.create({
   avatarSquare: { borderRadius: theme.radii.field },
   avatarInitial: { fontFamily: theme.fonts.bold, fontSize: theme.type.title, color: theme.colors.primaryDeep },
   headerBody: { flex: 1 },
-  name: { fontFamily: theme.fonts.bold, fontSize: theme.type.title, color: theme.colors.text },
+  name: { fontFamily: theme.fonts.display, fontSize: 22, color: theme.colors.text },
   meta: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.muted, marginTop: theme.spacing(1) },
   section: { marginBottom: theme.spacing(6) },
-  sectionTitle: { fontFamily: theme.fonts.bold, fontSize: theme.type.heading, color: theme.colors.text, marginBottom: theme.spacing(3) },
+  sectionTitle: { fontFamily: theme.fonts.display, fontSize: 18, color: theme.colors.text, marginBottom: theme.spacing(3) },
   rowPress: { marginBottom: theme.spacing(3) },
-  card: { flexDirection: 'row', gap: theme.spacing(4), padding: theme.spacing(3) },
+  card: { flexDirection: 'row', gap: theme.spacing(4), padding: theme.spacing(3), borderRadius: theme.radii.panel },
   thumbnail: { width: 104, height: 104, borderRadius: theme.radii.field, backgroundColor: theme.colors.surfaceSunken },
   thumbnailPlaceholder: {
     width: 104,
