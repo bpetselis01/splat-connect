@@ -382,4 +382,31 @@ function compare(board, live, opts = {}) {
   return out
 }
 
-module.exports = { compare, matchHeadings }
+/**
+ * Move the findings a screen expects into `explained`. Each rule in a screen's
+ * `explained` list (screen-map.json) names a finding type, a substring of its
+ * `what`, and why it is not drift: `intended` (live has it on purpose),
+ * `fixture` (the board's sample data against ours) or `pending` (a registry
+ * id in packages/types/src/pending.ts, still unbuilt). A rule that matches
+ * nothing is itself a finding, so an exemption cannot outlive its cause.
+ */
+function explain(findings, rules = []) {
+  const used = new Set()
+  const out = { findings: [], explained: [] }
+  for (const f of findings) {
+    const i = rules.findIndex((r) => r.type === f.type && f.what.includes(r.match))
+    if (i === -1) out.findings.push(f)
+    else {
+      used.add(i)
+      const { why, reason, pending } = rules[i]
+      out.explained.push({ ...f, why, reason, ...(pending && { pending }) })
+    }
+  }
+  rules.forEach((r, i) => {
+    if (!used.has(i))
+      out.findings.push({ type: 'stale-exemption', severity: 'medium', what: `${r.type} "${r.match}" no longer occurs`, board: null, live: null })
+  })
+  return out
+}
+
+module.exports = { compare, matchHeadings, explain }

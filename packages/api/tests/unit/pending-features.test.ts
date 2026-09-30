@@ -2,6 +2,7 @@
 // and docs/PENDING.md must agree. See the registry's header.
 import { describe, it, expect } from 'vitest'
 import { execFileSync } from 'node:child_process'
+import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { PENDING, isPendingId, type PendingItem } from '@splat-connect/types'
@@ -33,5 +34,21 @@ describe('pending work stays in step', () => {
   })
   it('docs/PENDING.md is up to date', () => {
     expect(() => execFileSync('node', ['scripts/pending.mjs', '--check'], { cwd: root, stdio: 'pipe' })).not.toThrow()
+  })
+  // A parity exemption for unbuilt work lasts only while the work is open:
+  // shipping the item turns this red until the exemption goes, and the
+  // harness then measures the built feature.
+  it('parity exemptions name open items and say why', () => {
+    const map = JSON.parse(readFileSync(path.join(root, 'scripts/parity/screen-map.json'), 'utf8')) as {
+      id: string
+      explained?: { why: string; reason?: string; pending?: string }[]
+    }[]
+    const rules = map.flatMap((s) => (s.explained ?? []).map((r) => ({ screen: s.id, ...r })))
+    const bad = rules.filter((r) =>
+      r.why === 'pending'
+        ? !r.pending || !isPendingId(r.pending) || (PENDING[r.pending] as PendingItem).shipped
+        : !['intended', 'fixture'].includes(r.why) || !r.reason,
+    )
+    expect(bad).toEqual([])
   })
 })

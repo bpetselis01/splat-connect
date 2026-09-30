@@ -12,7 +12,7 @@
 const fs = require('fs')
 const path = require('path')
 const { collectFingerprint, collectChrome } = require('./fingerprint')
-const { compare } = require('./compare')
+const { compare, explain } = require('./compare')
 const { provision, signIn, cleanup, adminClient } = require('./auth')
 const { seed, unseed } = require('./seed')
 const { resolveRoute } = require('./routes')
@@ -221,6 +221,7 @@ async function fingerprintOf(page, url, rootSel, role) {
         // so the title is compared for how it is SET but not for what it says.
         recordTitleH1: !!(s.sampleFrom || s.derivedFrom),
       })
+      Object.assign(row, explain(row.findings, s.explained))
       row.boardHeadings = board.headings.length
       row.liveHeadings = live.headings.length
       results.push(row)
@@ -252,6 +253,7 @@ async function fingerprintOf(page, url, rootSel, role) {
       withFindings: results.filter((r) => r.findings.length).length,
       errored: results.filter((r) => r.error).length,
       findings: results.reduce((n, r) => n + r.findings.length, 0),
+      explained: results.reduce((n, r) => n + (r.explained?.length || 0), 0),
       byType,
     },
   }
@@ -268,6 +270,7 @@ async function fingerprintOf(page, url, rootSel, role) {
       withFindings: all.filter((r) => r.findings.length).length,
       errored: all.filter((r) => r.error).length,
       findings: all.reduce((n, r) => n + r.findings.length, 0),
+      explained: all.reduce((n, r) => n + (r.explained?.length || 0), 0),
       byType: all.reduce((acc, r) => {
         for (const f of r.findings) acc[f.type] = (acc[f.type] || 0) + 1
         return acc

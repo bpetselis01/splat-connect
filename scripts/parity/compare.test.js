@@ -5,7 +5,7 @@
  * pinned down here rather than by re-running 119 screens through a browser.
  */
 const assert = require('node:assert')
-const { compare } = require('./compare')
+const { compare, explain } = require('./compare')
 
 const h = (level, text, extra = {}) => ({
   level,
@@ -79,4 +79,18 @@ console.log('compare: 4 checks passed')
   // Same row count, same height gap: still a real finding.
   const short = fp([h(1, 'review queue')], { counts: counts(5), page: { ...fp([]).page, height: 12242 } })
   assert.strictEqual(types(compare(board, short), 'missing-section').length, 1, 'real height gap lost')
+}
+
+// An explained finding leaves the count but stays in the report; a rule whose
+// finding is gone becomes a finding itself.
+{
+  const f = (type, what) => ({ type, severity: 'medium', what, board: null, live: null })
+  const rules = [
+    { type: 'extra-section', match: 'pickup details', why: 'intended', reason: 'where to collect' },
+    { type: 'copy', match: 'wording', why: 'fixture', reason: 'sample org name' },
+  ]
+  const out = explain([f('extra-section', 'live has an extra h2: "pickup details"'), f('shadow', 'card shadow')], rules)
+  assert.deepStrictEqual(out.findings.map((x) => x.type), ['shadow', 'stale-exemption'])
+  assert.strictEqual(out.explained[0].why, 'intended')
+  assert.deepStrictEqual(explain([f('shadow', 'card shadow')]).findings.length, 1, 'no rules must change nothing')
 }
