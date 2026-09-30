@@ -80,6 +80,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       console.error('docs/PENDING.md is stale — run: node scripts/pending.mjs')
       process.exit(1)
     }
+    console.log('docs/PENDING.md is up to date')
   } else {
     writeFileSync(OUT, next)
     console.log(`wrote docs/PENDING.md (${Object.keys(PENDING).length} items)`)
