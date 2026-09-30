@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { PENDING, isPendingId } from '@splat-connect/types'
+import { PENDING, isPendingId, type PendingItem } from '@splat-connect/types'
 
-const entries = Object.entries(PENDING)
+const entries = Object.entries(PENDING) as [string, PendingItem][]
 
 describe('pending registry', () => {
   it('holds the 104 items of the spec appendix', () => {
