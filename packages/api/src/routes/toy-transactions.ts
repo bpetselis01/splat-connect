@@ -191,7 +191,7 @@ toyTransactions.get('/open-builds', async (c) => {
  * sites, all of which did `.eq('id', tx.toy_id).single()` and would now throw
  * on a null id.
  */
-async function subjectName(
+export async function subjectName(
   admin: ReturnType<typeof createAdminClient>,
   tx: { type: string; toy_id: string | null; tutorial_id: string | null }
 ): Promise<string> {
