@@ -2,9 +2,15 @@
  * The picture pass: every mapped screen on the iOS simulator, beside the
  * board. It sees what the web export cannot: safe areas (react-native-web
  * reports insets.top = 0), native sheets and native fonts. Run from
- * packages/web, with the parity stack up, the app installed on the booted
- * simulator, Metro serving it against the parity API, and board shots from
- * `app.js --shots`.
+ * packages/web, with the parity stack up, board shots from `app.js --shots`,
+ * and a RELEASE build on the booted simulator with the local stack baked in:
+ *
+ *   EXPO_NO_DOTENV=1 EXPO_PUBLIC_SUPABASE_URL=http://localhost:54321 \
+ *   EXPO_PUBLIC_SUPABASE_ANON_KEY=<local anon> EXPO_PUBLIC_API_URL=http://localhost:3111 \
+ *     npx expo run:ios --configuration Release --no-bundler --device <udid>
+ *
+ * A dev client reads packages/mobile/.env.local at runtime, which names the
+ * hosted project; the pass refuses to run against one.
  *
  *   node ../../scripts/parity/app-shots.js [--id a,b]       # shoot and stitch
  *   node ../../scripts/parity/app-shots.js --record f.json  # merge judged findings
@@ -18,7 +24,7 @@ const { execFileSync } = require('child_process')
 const { provision, cleanup, adminClient } = require('./auth')
 const { seed, unseed } = require('./seed')
 const { resolveAppRoute } = require('./app-routes')
-const { explain } = require('./compare')
+const { mergePictures, bundleIsLocal } = require('./pictures')
 
 const ROOT = path.resolve(__dirname, '../..')
 const MAP = JSON.parse(fs.readFileSync(path.join(__dirname, 'app-screen-map.json'), 'utf8'))
@@ -35,15 +41,13 @@ const flag = (n) => (argv.includes(n) ? argv[argv.indexOf(n) + 1] : null)
 function record(file) {
   const judged = JSON.parse(fs.readFileSync(file, 'utf8'))
   const report = JSON.parse(fs.readFileSync(REPORT, 'utf8'))
-  for (const row of report.screens) {
-    const mine = judged
-      .filter((j) => j.id === row.id)
-      .map((j) => ({ type: 'picture', severity: 'medium', what: j.what, board: j.board, live: j.live }))
-    const rules = (MAP.find((s) => s.id === row.id)?.explained || []).filter((r) => r.type === 'picture')
-    const { findings, explained } = explain(mine, rules)
-    row.findings = [...row.findings.filter((f) => f.type !== 'picture' && f.type !== 'stale-exemption'), ...findings]
-    row.explained = [...(row.explained || []).filter((f) => f.type !== 'picture'), ...explained]
-  }
+  report.screens = report.screens.map((row) =>
+    mergePictures(
+      row,
+      judged.filter((j) => j.id === row.id),
+      (MAP.find((s) => s.id === row.id)?.explained || []).filter((r) => r.type === 'picture')
+    )
+  )
   const all = report.screens
   Object.assign(report.summary, {
     findings: all.reduce((n, r) => n + r.findings.length, 0),
@@ -56,7 +60,25 @@ function record(file) {
   console.log(JSON.stringify(report.summary, null, 1))
 }
 
+/** The installed app's embedded bundle, or null for a dev client. */
+function installedBundle() {
+  try {
+    const app = execFileSync('xcrun', ['simctl', 'get_app_container', 'booted', 'com.splatconnect.mobile', 'app'])
+      .toString()
+      .trim()
+    return fs.readFileSync(path.join(app, 'main.jsbundle'))
+  } catch {
+    return null
+  }
+}
+
 async function shoot() {
+  // Before any account exists: signing in from a dev client, or a build
+  // pointed elsewhere, sends parity credentials to the hosted project.
+  if (!bundleIsLocal(installedBundle())) {
+    console.error('The simulator app is not a Release build against the local stack; see the header of this file.')
+    process.exit(1)
+  }
   const ids = flag('--id')?.split(',')
   const screens = MAP.filter((s) => !s.skip && (!ids || ids.includes(s.id)))
   const roles = [...new Set(screens.flatMap((s) => [s.role, s.seedRole]).filter(Boolean))]
