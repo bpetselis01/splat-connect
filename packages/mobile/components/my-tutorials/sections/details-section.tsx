@@ -53,6 +53,8 @@ export function DetailsSection() {
   return (
     <Screen>
       <ScrollView showsVerticalScrollIndicator={false} automaticallyAdjustKeyboardInsets>
+        {/* PENDING(editor-backing): the board adds "and who is backing it". */}
+        <Text style={styles.lead}>What the toy is and who it suits.</Text>
         <TextField
           label="Title"
           accessibilityLabel="Title"
@@ -167,6 +169,14 @@ export function DetailsSection() {
 }
 
 const styles = StyleSheet.create({
+  // The board opens each section with what it is for.
+  lead: {
+    fontFamily: theme.fonts.regular,
+    fontSize: theme.type.label,
+    color: theme.colors.muted,
+    lineHeight: 20,
+    marginBottom: theme.spacing(3),
+  },
   label: {
     fontFamily: theme.fonts.bold,
     fontSize: theme.type.label,

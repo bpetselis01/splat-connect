@@ -24,6 +24,10 @@ const NOUN_LABEL = { parts: 'Part', tools: 'Tool' } as const
 
 // PENDING(part-prices): a price or note per part, and a total on the hub.
 // PENDING(tool-notes): a note per tool ("Borrow from a library").
+// The board's leads, less what waits on part-prices ("with a rough price")
+// and tool-notes ("and what can be borrowed").
+const LEAD = { parts: 'Everything a family has to buy.', tools: 'What they need on the bench.' }
+
 export function ItemsSection({ noun }: { noun: 'parts' | 'tools' }) {
   const { tutorial, replaceItems, saveError } = useDraft()
   const withQuantity = noun === 'parts'
@@ -51,6 +55,7 @@ export function ItemsSection({ noun }: { noun: 'parts' | 'tools' }) {
   return (
     <Screen>
       <ScrollView showsVerticalScrollIndicator={false} automaticallyAdjustKeyboardInsets>
+        <Text style={styles.lead}>{LEAD[noun]}</Text>
         {rows.length === 0 ? <Text style={styles.empty}>No {noun} yet.</Text> : null}
 
         {rows.map((row, i) => (
@@ -147,6 +152,14 @@ export function ItemsSection({ noun }: { noun: 'parts' | 'tools' }) {
 }
 
 const styles = StyleSheet.create({
+  // The board opens each section with what it is for.
+  lead: {
+    fontFamily: theme.fonts.regular,
+    fontSize: theme.type.label,
+    color: theme.colors.muted,
+    lineHeight: 20,
+    marginBottom: theme.spacing(3),
+  },
   empty: {
     fontFamily: theme.fonts.regular,
     fontSize: theme.type.label,

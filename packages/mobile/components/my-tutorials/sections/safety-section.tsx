@@ -22,6 +22,7 @@ export function SafetySection() {
   return (
     <Screen>
       <ScrollView showsVerticalScrollIndicator={false}>
+        <Text style={styles.lead}>Anything that could hurt a child, stated plainly.</Text>
         {SAFETY_CHECKLIST.map((item) => (
           <Text key={item} style={styles.item}>
             {'•'} {item}
@@ -61,6 +62,14 @@ export function SafetySection() {
 }
 
 const styles = StyleSheet.create({
+  // The board opens each section with what it is for.
+  lead: {
+    fontFamily: theme.fonts.regular,
+    fontSize: theme.type.label,
+    color: theme.colors.muted,
+    lineHeight: 20,
+    marginBottom: theme.spacing(3),
+  },
   item: {
     fontFamily: theme.fonts.regular,
     fontSize: theme.type.label,

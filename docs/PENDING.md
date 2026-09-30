@@ -383,7 +383,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 - Platforms: mobile
 - Needs: Backing field in the phone editor [ui,api]
-- In code: `packages/mobile/components/my-tutorials/hub.tsx`
+- In code: `packages/mobile/components/my-tutorials/hub.tsx`, `packages/mobile/components/my-tutorials/sections/details-section.tsx`
 
 ### `editor-part-buy-links` — Buy links
 
