@@ -1,5 +1,5 @@
 {
- "at": "2026-09-24T06:54:52.016Z",
+ "at": "2026-09-30T05:08:37.983Z",
  "live": "http://localhost:3110",
  "screens": [
   {
@@ -22,7 +22,7 @@
    "role": "guest",
    "finalUrl": "/library",
    "boardHeadings": 8,
-   "liveHeadings": 81
+   "liveHeadings": 27
   },
   {
    "id": "tutorial",
@@ -66,13 +66,13 @@
    "role": "guest",
    "finalUrl": "/toy-library",
    "boardHeadings": 8,
-   "liveHeadings": 19
+   "liveHeadings": 15
   },
   {
    "id": "toy_public",
    "name": "Toy detail",
    "group": "Public site",
-   "route": "/toy-library/1150179a-7ec8-471e-815d-25bdb129f82d",
+   "route": "/toy-library/570702ad-8325-4a3c-bdb2-0a34b1ee1520",
    "findings": [
     {
      "type": "missing-section",
@@ -97,15 +97,15 @@
     }
    ],
    "role": "guest",
-   "finalUrl": "/toy-library/1150179a-7ec8-471e-815d-25bdb129f82d",
+   "finalUrl": "/toy-library/570702ad-8325-4a3c-bdb2-0a34b1ee1520",
    "boardHeadings": 10,
-   "liveHeadings": 8
+   "liveHeadings": 7
   },
   {
    "id": "toy_request",
    "name": "Request a toy",
    "group": "Public site",
-   "route": "/toy-library/1150179a-7ec8-471e-815d-25bdb129f82d/request",
+   "route": "/toy-library/570702ad-8325-4a3c-bdb2-0a34b1ee1520/request",
    "findings": [
     {
      "type": "missing-section",
@@ -119,11 +119,11 @@
      "severity": "medium",
      "what": "4/4 board paragraphs absent",
      "board": "family # is open to either. offer one of your own toys, or just ask an",
-     "live": "parity org muf#zhkvpys is giving this one away. just ask — nothing is "
+     "live": "parity org munn#l#ngnnz is giving this one away. just ask — nothing is"
     }
    ],
    "role": "parent",
-   "finalUrl": "/toy-library/1150179a-7ec8-471e-815d-25bdb129f82d/request",
+   "finalUrl": "/toy-library/570702ad-8325-4a3c-bdb2-0a34b1ee1520/request",
    "boardHeadings": 4,
    "liveHeadings": 2
   },
@@ -510,7 +510,7 @@
    "id": "build_thread",
    "name": "Build thread",
    "group": "My SPLAT",
-   "route": "/dashboard/exchanges/build/c28b8358-74d3-4e35-8caf-4241711bd33d",
+   "route": "/dashboard/exchanges/build/b06a6d5e-494e-40b9-9c7e-9e4b56a3febd",
    "findings": [
     {
      "type": "extra-section",
@@ -528,7 +528,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/exchanges/build/c28b8358-74d3-4e35-8caf-4241711bd33d",
+   "finalUrl": "/dashboard/exchanges/build/b06a6d5e-494e-40b9-9c7e-9e4b56a3febd",
    "boardHeadings": 3,
    "liveHeadings": 5
   },
@@ -543,7 +543,7 @@
      "severity": "high",
      "what": "page height differs grossly",
      "board": "832px",
-     "live": "7015px"
+     "live": "5100px"
     },
     {
      "type": "extra-section",
@@ -576,10 +576,10 @@
    "id": "challenge_detail",
    "name": "Challenge detail",
    "group": "Get involved",
-   "route": "/get-involved/design-challenges/a546c003-d4a9-44e5-82f4-719286e79c7b",
+   "route": "/get-involved/design-challenges/310cc6b8-f86a-46de-aaf4-c7784ddf8e72",
    "findings": [],
    "role": "guest",
-   "finalUrl": "/get-involved/design-challenges/a546c003-d4a9-44e5-82f4-719286e79c7b",
+   "finalUrl": "/get-involved/design-challenges/310cc6b8-f86a-46de-aaf4-c7784ddf8e72",
    "boardHeadings": 4,
    "liveHeadings": 4
   },
@@ -592,7 +592,7 @@
    "role": "guest",
    "finalUrl": "/impact",
    "boardHeadings": 22,
-   "liveHeadings": 38
+   "liveHeadings": 13
   },
   {
    "id": "orgs",
@@ -603,7 +603,7 @@
    "role": "guest",
    "finalUrl": "/organizations",
    "boardHeadings": 13,
-   "liveHeadings": 19
+   "liveHeadings": 7
   },
   {
    "id": "org_public",
@@ -672,6 +672,13 @@
     {
      "type": "missing-section",
      "severity": "high",
+     "what": "h2 \"september #\" has no counterpart",
+     "board": "september #",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
      "what": "h2 \"november #\" has no counterpart",
      "board": "november #",
      "live": null
@@ -680,29 +687,101 @@
    "role": "guest",
    "finalUrl": "/get-involved/events",
    "boardHeadings": 12,
-   "liveHeadings": 9
+   "liveHeadings": 7
   },
   {
    "id": "event_detail",
    "name": "Event detail",
    "group": "Get involved",
-   "route": "/get-involved/events/af0fe7fd-53ca-4335-bd8b-738ef5297c14",
-   "findings": [],
+   "route": "/get-involved/events/f38fea71-6d7a-4056-8c75-17a355b0ec40",
+   "findings": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h3 \"$#\" has no counterpart",
+     "board": "$#",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"about this event\" has no counterpart",
+     "board": "about this event",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "page height differs grossly",
+     "board": "1699px",
+     "live": "700px"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "6/6 board paragraphs absent",
+     "board": "northside therapy runs the day free. these are the materials they ask ",
+     "live": null
+    }
+   ],
    "role": "guest",
-   "finalUrl": "/get-involved/events/af0fe7fd-53ca-4335-bd8b-738ef5297c14",
+   "finalUrl": "/get-involved/events/f38fea71-6d7a-4056-8c75-17a355b0ec40",
    "boardHeadings": 4,
-   "liveHeadings": 4
+   "liveHeadings": 2
   },
   {
    "id": "event_register",
    "name": "Register for an event",
    "group": "Get involved",
-   "route": "/get-involved/events/af0fe7fd-53ca-4335-bd8b-738ef5297c14/register",
-   "findings": [],
+   "route": "/get-involved/events/f38fea71-6d7a-4056-8c75-17a355b0ec40/register",
+   "findings": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h3 \"$#\" has no counterpart",
+     "board": "$#",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "page height differs grossly",
+     "board": "1762px",
+     "live": "758px"
+    },
+    {
+     "type": "radius",
+     "severity": "medium",
+     "what": "card radius",
+     "board": "14px",
+     "live": "nullpx"
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "3/4 board paragraphs absent",
+     "board": "only the host sees this. reminders come the day before and nothing els",
+     "live": "parity org mu#j#p#mwpyw asks a few things so the day is set up for the"
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "none",
+     "live": "set"
+    },
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "card background",
+     "board": "rgb(243,241,237)",
+     "live": "rgb(255,255,255)"
+    }
+   ],
    "role": "parent",
-   "finalUrl": "/get-involved/events/af0fe7fd-53ca-4335-bd8b-738ef5297c14/register",
+   "finalUrl": "/get-involved/events/f38fea71-6d7a-4056-8c75-17a355b0ec40/register",
    "boardHeadings": 3,
-   "liveHeadings": 3
+   "liveHeadings": 2
   },
   {
    "id": "recycling",
@@ -830,7 +909,7 @@
      "severity": "medium",
      "what": "h1 wording",
      "board": "requests to northside therapy",
-     "live": "requests to parity org muf#zhkvpys"
+     "live": "requests to parity org munn#l#ngnnz"
     }
    ],
    "role": "leader",
@@ -875,10 +954,10 @@
    "id": "org_event_manage",
    "name": "Manage event",
    "group": "My SPLAT",
-   "route": "/dashboard/org/events/78bbdbcf-3f71-4798-a52e-53d55f71d603",
+   "route": "/dashboard/org/events/60bcf8d8-511b-4ac8-9bfd-42e0a7479a9f",
    "findings": [],
    "role": "leader",
-   "finalUrl": "/dashboard/org/events/78bbdbcf-3f71-4798-a52e-53d55f71d603",
+   "finalUrl": "/dashboard/org/events/60bcf8d8-511b-4ac8-9bfd-42e0a7479a9f",
    "boardHeadings": 3,
    "liveHeadings": 5
   },
@@ -1026,10 +1105,10 @@
    "id": "editor",
    "name": "Tutorial editor",
    "group": "My SPLAT",
-   "route": "/tutorials/2b190d24-15c4-43a6-a8ae-d2137fd29f19/edit",
+   "route": "/tutorials/7cec42ea-8f3b-4314-876c-c242bd638c27/edit",
    "findings": [],
    "role": "contributor",
-   "finalUrl": "/tutorials/2b190d24-15c4-43a6-a8ae-d2137fd29f19/edit",
+   "finalUrl": "/tutorials/7cec42ea-8f3b-4314-876c-c242bd638c27/edit",
    "boardHeadings": 5,
    "liveHeadings": 5
   },
@@ -1059,10 +1138,10 @@
    "id": "toy_detail",
    "name": "Toy detail",
    "group": "My SPLAT",
-   "route": "/dashboard/toys/88a476ec-1dca-45e9-90a1-1f323bfc42e3",
+   "route": "/dashboard/toys/c746919b-2f24-425d-8e24-e0fc74137846",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/dashboard/toys/88a476ec-1dca-45e9-90a1-1f323bfc42e3",
+   "finalUrl": "/dashboard/toys/c746919b-2f24-425d-8e24-e0fc74137846",
    "boardHeadings": 7,
    "liveHeadings": 6
   },
@@ -1081,7 +1160,7 @@
    "id": "thread",
    "name": "Exchange thread",
    "group": "My SPLAT",
-   "route": "/dashboard/exchanges/3a66bd1b-efa4-4b07-adec-b4e521873329",
+   "route": "/dashboard/exchanges/b2851651-09c7-46ab-968d-d24fd7d4e1ac",
    "findings": [
     {
      "type": "extra-section",
@@ -1099,7 +1178,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/exchanges/3a66bd1b-efa4-4b07-adec-b4e521873329",
+   "finalUrl": "/dashboard/exchanges/b2851651-09c7-46ab-968d-d24fd7d4e1ac",
    "boardHeadings": 4,
    "liveHeadings": 5
   },
@@ -1195,7 +1274,7 @@
    "id": "print_job",
    "name": "Print job",
    "group": "My SPLAT",
-   "route": "/dashboard/print-requests/9baef054-0435-4481-b6be-1613c725ca35",
+   "route": "/dashboard/print-requests/905b80ab-fbe1-41ed-8ac6-4e7b57ac80c8",
    "findings": [
     {
      "type": "extra-section",
@@ -1213,7 +1292,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/dashboard/print-requests/9baef054-0435-4481-b6be-1613c725ca35",
+   "finalUrl": "/dashboard/print-requests/905b80ab-fbe1-41ed-8ac6-4e7b57ac80c8",
    "boardHeadings": 3,
    "liveHeadings": 4
   },
@@ -1248,16 +1327,16 @@
    "role": "parent",
    "finalUrl": "/dashboard/profile",
    "boardHeadings": 3,
-   "liveHeadings": 2
+   "liveHeadings": 3
   },
   {
    "id": "child",
    "name": "Child profile",
    "group": "My SPLAT",
-   "route": "/dashboard/child/33812531-5e45-4b47-8a6a-0b983a8f88e0",
+   "route": "/dashboard/child/53f726fb-c0d1-47e3-8188-5ef4609a2458",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/dashboard/child/33812531-5e45-4b47-8a6a-0b983a8f88e0",
+   "finalUrl": "/dashboard/child/53f726fb-c0d1-47e3-8188-5ef4609a2458",
    "boardHeadings": 4,
    "liveHeadings": 4
   },
@@ -1283,7 +1362,7 @@
      "severity": "medium",
      "what": "1/1 board paragraphs absent",
      "board": "guides waiting on northside therapy collective. oldest first.",
-     "live": "guides waiting on parity org muf#zhkvpys. oldest first."
+     "live": "guides waiting on parity org munn#l#ngnnz. oldest first."
     }
    ],
    "role": "leader",
@@ -1302,13 +1381,13 @@
      "severity": "low",
      "what": "card background",
      "board": "rgb(240,249,255)",
-     "live": "rgb(250,249,247)"
+     "live": null
     }
    ],
    "role": "leader",
    "finalUrl": "/dashboard/organisation/profile",
    "boardHeadings": 7,
-   "liveHeadings": 10
+   "liveHeadings": 11
   },
   {
    "id": "org_toys",
@@ -1481,7 +1560,7 @@
    "id": "admin_idea_detail",
    "name": "Review an idea",
    "group": "Admin",
-   "route": "/admin/ideas/bf086517-6073-4b1b-b23e-3e011600002a",
+   "route": "/admin/ideas/ed1f5c0d-f7be-4f34-abe6-c9566802c9a9",
    "findings": [
     {
      "type": "copy",
@@ -1492,7 +1571,7 @@
     }
    ],
    "role": "admin",
-   "finalUrl": "/admin/ideas/bf086517-6073-4b1b-b23e-3e011600002a",
+   "finalUrl": "/admin/ideas/ed1f5c0d-f7be-4f34-abe6-c9566802c9a9",
    "boardHeadings": 3,
    "liveHeadings": 3
   },
@@ -1635,18 +1714,18 @@
  ],
  "summary": {
   "screens": 118,
-  "clean": 94,
-  "withFindings": 24,
+  "clean": 92,
+  "withFindings": 26,
   "errored": 0,
-  "findings": 44,
+  "findings": 55,
   "byType": {
    "size": 3,
    "extra-section": 7,
-   "copy": 13,
-   "missing-section": 12,
-   "colour": 4,
-   "shadow": 4,
-   "radius": 1
+   "copy": 15,
+   "missing-section": 18,
+   "colour": 5,
+   "shadow": 5,
+   "radius": 2
   }
  }
 }
