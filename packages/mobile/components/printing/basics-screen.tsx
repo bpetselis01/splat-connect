@@ -39,7 +39,9 @@ export function PrintingBasicsScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         {/* PENDING(printing-basics-hero): the board's hero photo above the title. */}
         <Text style={styles.eyebrow}>3D Printing</Text>
-        <Text style={styles.title}>Printing basics</Text>
+        <Text style={styles.title} accessibilityRole="header">
+          Printing basics
+        </Text>
         <Text style={styles.lede}>
           Enough to ask for a print with confidence. You do not need a printer, or to understand one.
         </Text>
@@ -75,7 +77,7 @@ const styles = StyleSheet.create({
     // eyebrow colour everywhere else in the app.
     color: theme.colors.muted,
   },
-  title: { fontFamily: theme.fonts.display, fontSize: 28, color: theme.colors.text },
+  title: { fontFamily: theme.fonts.display, fontSize: 25, color: theme.colors.text },
   lede: { fontFamily: theme.fonts.regular, fontSize: theme.type.body, color: theme.colors.muted, lineHeight: 23 },
   section: { gap: theme.spacing(2), marginTop: theme.spacing(2) },
   heading: { fontFamily: theme.fonts.display, fontSize: theme.type.heading, color: theme.colors.text },
