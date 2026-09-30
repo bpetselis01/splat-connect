@@ -10,6 +10,7 @@ import { getCapabilities } from '@/lib/capabilities'
 import { apiClient } from '@/lib/api-client'
 import { OrgProfileForm } from '@/components/org-profile-form'
 import { OrgThanksNotes } from '@/components/org-thanks-notes'
+import { OrgLeaders } from '@/components/org-leaders'
 import type { Organization, OrgThanks } from '@splat-connect/types'
 
 export const metadata = { title: 'Organisation profile — SPLAT Connect' }
@@ -38,6 +39,7 @@ export default async function OrgProfilePage() {
       <div className="mt-5">
         <OrgThanksNotes orgId={org.id} thanks={thanks} />
       </div>
+      <OrgLeaders orgId={org.id} />
     </div>
   )
 }
