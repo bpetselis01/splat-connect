@@ -6,6 +6,7 @@
  * must set ownership itself.
  */
 import { Hono } from 'hono'
+import { nameFormerContributors } from '../former-contributor.js'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { pickEditable } from './pick-editable.js'
 import { notifyTutorialSubmitted } from '../review-notifications.js'
@@ -99,6 +100,8 @@ reviewer:reviewed_by(name), reviewed_for:reviewed_for_org_id(name)'
     const byId = new Map((targets ?? []).map((t) => [t.id, t]))
     for (const r of recs) if (r.tutorials === null) r.tutorials = byId.get(r.recommended_id) ?? null
   }
+
+  nameFormerContributors(data.tutorial_contributors)
 
   if (c.get('role') === 'admin' && data.tutorial_contributors?.length) {
     const admin = createAdminClient()

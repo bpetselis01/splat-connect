@@ -4,6 +4,7 @@
  * backstop behind each query's own explicit filter.
  */
 import { Hono } from 'hono'
+import { nameFormerContributors } from '../former-contributor.js'
 import { chunk } from '../chunk.js'
 import { createAnonClient, createAdminClient } from '../supabase/client.js'
 import { atCapacityToyIds } from '../toy-access.js'
@@ -92,7 +93,7 @@ publicRoutes.get('/tutorials/:id', async (c) => {
     // points at tutorials twice, and PostgREST refuses an ambiguous embed
     // outright rather than guessing. See the same select in tutorials.ts.
     .select(
-      '*, thanks_count, parts(*), tools(*), stl_files(*), steps:tutorial_steps(*), tutorial_contributors(profile_id, role, profiles(name)), ' +
+      '*, thanks_count, parts(*), tools(*), stl_files(*), steps:tutorial_steps(*), tutorial_contributors(profile_id, role, former_name, profiles(name)), ' +
         'tutorial_orgs(status, organizations(id, name)), ' +
         'tutorial_recommendations!tutorial_id(position, tutorials!recommended_id(id, title, kind, difficulty, toy_photo_url, status, maturity)), ' +
         'reviewer:reviewed_by(name), reviewed_for:reviewed_for_org_id(name)'
@@ -114,11 +115,13 @@ publicRoutes.get('/tutorials/:id', async (c) => {
   // cannot open. Dropping the row is the whole design — there is no "not yet
   // approved" page to send them to.
   const tutorial = data as unknown as Record<string, unknown> & {
+    tutorial_contributors?: Array<{ profile_id: string; former_name: string | null; profiles: { name: string } | null }>
     tutorial_orgs?: Array<{ status: string }>
     tutorial_recommendations?: Array<{ tutorials: { status: string } | null }>
   }
   return c.json({
     ...tutorial,
+    tutorial_contributors: nameFormerContributors(tutorial.tutorial_contributors),
     tutorial_orgs: (tutorial.tutorial_orgs ?? []).filter((b) => b.status === 'accepted'),
     tutorial_recommendations: (tutorial.tutorial_recommendations ?? []).filter(
       (r) => r.tutorials?.status === 'approved'
