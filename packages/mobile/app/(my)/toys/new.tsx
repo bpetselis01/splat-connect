@@ -6,7 +6,6 @@ import { apiClient } from '../../../lib/api-client'
 import { useCapabilities } from '../../../lib/capabilities'
 import { theme } from '../../../lib/theme'
 import { Screen } from '../../../components/ui/Screen'
-import { ScreenHeader } from '../../../components/ui/ScreenHeader'
 import { TextField } from '../../../components/ui/TextField'
 import { Chip } from '../../../components/ui/Chip'
 import { Button } from '../../../components/ui/Button'
@@ -53,7 +52,8 @@ export default function NewToyRoute() {
 
   return (
     <Screen>
-      <ScreenHeader title="Add a toy" subtitle="Give it a name and a condition — everything else comes next." />
+      {/* The native header says Add a toy; this is its lead. */}
+      <Text style={styles.intro}>Give it a name and a condition — everything else comes next.</Text>
 
       <TextField label="Name" placeholder="Name" value={name} onChangeText={setName} />
 
@@ -104,6 +104,13 @@ export default function NewToyRoute() {
 }
 
 const styles = StyleSheet.create({
+  intro: {
+    fontFamily: theme.fonts.regular,
+    fontSize: theme.type.body,
+    color: theme.colors.muted,
+    lineHeight: 22,
+    marginBottom: theme.spacing(4),
+  },
   label: {
     fontFamily: theme.fonts.bold,
     fontSize: theme.type.label,
