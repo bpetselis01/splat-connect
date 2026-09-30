@@ -76,7 +76,9 @@ export const theme = {
   // One hairline. `thick` survives for the few places that need a real edge,
   // but Soft Pop separates with elevation rather than with borders.
   border: { hairline: 1 },
-  radii: { field: 14, panel: 18, card: 24, pill: 999 },
+  // card is 20 here, 24 on web: the mobile board draws its cards at 20
+  // (tokens radius.lg), the desktop board at 24.
+  radii: { field: 14, panel: 18, card: 20, pill: 999 },
   // Four elevations, matching web's --e1..--e4. iOS reads the shadow* fields
   // and Android reads `elevation`; both are given so neither platform falls
   // flat. There is no offset ladder any more — depth is blur and spread.
