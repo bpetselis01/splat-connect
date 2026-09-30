@@ -3,22 +3,23 @@ import { Hono } from 'hono'
 import type { AuthVariables } from '../../../src/middleware/auth.js'
 
 const mockAdminFrom = vi.fn()
-const mockDeleteUser = vi.fn()
+const mockDeleteAccount = vi.fn()
 
 // --- Mock strategy ---
-// Replaces the Supabase admin client with two controlled fakes: mockAdminFrom for all
-// database table operations (tutorials, profiles), and mockDeleteUser for Supabase Auth's
-// admin.deleteUser call. makeApp() injects role directly so tests can switch between
+// Replaces the Supabase admin client with controlled fakes: mockAdminFrom for all
+// database table operations (tutorials, profiles). The account deletion itself
+// (083's delete_account, via account-deletion.ts) is mocked at its module. makeApp() injects role directly so tests can switch between
 // 'contributor' and 'admin' without running real authentication.
 vi.mock('../../../src/supabase/client.js', () => ({
   createAdminClient: () => ({
     from: mockAdminFrom,
-    auth: { admin: { deleteUser: mockDeleteUser } },
   }),
   // The contributor-account routes go through the user client; no case here
   // reaches one, this only keeps the module mock complete.
   createUserClient: () => ({ from: mockAdminFrom }),
 }))
+
+vi.mock('../../../src/account-deletion.js', () => ({ deleteAccount: mockDeleteAccount }))
 
 const { default: admin } = await import('../../../src/routes/admin.js')
 
@@ -170,15 +171,18 @@ describe('GET /contributors', () => {
 describe('DELETE /contributors/:id', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  // Tests: DELETE /contributors/:id is a general admin moderation tool that removes any
-  //        contributor account, calling Supabase Auth's deleteUser and returning 204
-  // How:   mockDeleteUser resolves with { error: null }; verifies it was called with the correct user ID
-  // Chain: the user is removed from Supabase Auth entirely → they can no longer log in or make
-  //        authenticated API requests, effectively revoking all access to the platform
-  it('deletes user and returns 204', async () => {
-    mockDeleteUser.mockResolvedValue({ error: null })
+  // Tests: the admin's delete runs the same 083 deletion a person runs on
+  //        themselves, never keeping their name on guides.
+  it('deletes the account through delete_account and returns 204', async () => {
+    mockDeleteAccount.mockResolvedValue({ result: { cancelled: [], toyIds: [], tutorialIds: [] } })
     const res = await makeApp('admin').request('/contributors/c-1', { method: 'DELETE' })
     expect(res.status).toBe(204)
-    expect(mockDeleteUser).toHaveBeenCalledWith('c-1')
+    expect(mockDeleteAccount).toHaveBeenCalledWith(expect.anything(), 'c-1', false)
+  })
+
+  it('refuses a sole organisation leader with 409', async () => {
+    mockDeleteAccount.mockResolvedValue({ error: 'sole_leader' })
+    const res = await makeApp('admin').request('/contributors/c-1', { method: 'DELETE' })
+    expect(res.status).toBe(409)
   })
 })

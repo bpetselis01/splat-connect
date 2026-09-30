@@ -5,6 +5,7 @@
  */
 import { Hono } from 'hono'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
+import { deleteAccount } from '../account-deletion.js'
 import { ORG_COLUMNS } from './organizations.js'
 import { systemMessage } from './toy-ideas.js'
 import type { AuthVariables } from '../middleware/auth.js'
@@ -106,10 +107,12 @@ admin.get('/contributors', async (c) => {
   return c.json({ accounts: data ?? [], total: count ?? 0 })
 })
 
+// The same 083 deletion a person runs on themselves: a bare deleteUser failed
+// outright for some accounts and cascaded away other members' exchanges.
 admin.delete('/contributors/:id', async (c) => {
-  const supabase = createAdminClient()
-  const { error } = await supabase.auth.admin.deleteUser(c.req.param('id'))
-  if (error) return c.json({ error: error.message }, 500)
+  const out = await deleteAccount(createAdminClient(), c.req.param('id'), false)
+  if (out.error === 'sole_leader') return c.json({ error: 'Hand over their organisation first.' }, 409)
+  if (out.error) return c.json({ error: out.error }, 500)
   return c.body(null, 204)
 })
 
