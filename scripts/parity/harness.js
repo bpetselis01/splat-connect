@@ -220,7 +220,13 @@ async function runParity(target) {
       }
       if (argv.includes('--shots'))
         await livePage.screenshot({ path: path.join(PAIRS, `${s.id}.live.png`), fullPage: true })
-      const live = await livePage.evaluate(collectFingerprint, target.liveScope)
+      // A screen can exclude more chrome of its own (a tab root's ScreenHeader,
+      // which the board draws in its nav bar, outside the screen).
+      const scope =
+        s.liveExclude && typeof target.liveScope === 'object'
+          ? { ...target.liveScope, exclude: `${target.liveScope.exclude}, ${s.liveExclude}` }
+          : target.liveScope
+      const live = await livePage.evaluate(collectFingerprint, scope)
       live.chrome = await livePage.evaluate(collectChrome)
 
       // `stateOnly` marks a board screen that draws a STATE of a live route the

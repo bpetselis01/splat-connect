@@ -12,7 +12,7 @@ export function ScreenHeader({
   showLogo?: boolean
 }) {
   return (
-    <View style={styles.wrap}>
+    <View testID="screen-header" style={styles.wrap}>
       <View style={styles.row}>
         {showLogo ? (
           <Image

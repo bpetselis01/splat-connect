@@ -96,7 +96,7 @@ export function TabBar({ state, descriptors, navigation, insets, badges }: Props
   // where there is one, 14px off the edge where there is not.
   return (
     <View style={[styles.shelf, { paddingBottom: Math.max(insets.bottom, 14) }]}>
-      <View style={styles.bar}>{items}</View>
+      <View testID="tab-bar" style={styles.bar}>{items}</View>
     </View>
   )
 }

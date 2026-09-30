@@ -250,7 +250,8 @@
   "group": "tabs",
   "boardRoute": "(my)/my-splat",
   "route": "/me",
-  "role": "parent"
+  "role": "parent",
+  "liveExclude": "[data-testid=\"screen-header\"]"
  },
  {
   "id": "my_tutorials",
