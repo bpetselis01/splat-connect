@@ -385,15 +385,17 @@ function IncomingCard({
                 onPress={() => setMachineId(m.id)}
                 style={[styles.machine, on && styles.machineOn, f.blocked && styles.dim]}
               >
+                <Ionicons name="print-outline" size={20} color={theme.colors.primaryDark} />
                 <View style={styles.flex}>
                   <Text style={styles.strong}>{m.name}</Text>
                   <Text style={styles.meta}>
                     {m.materials.join(' · ')} · {m.open_jobs} of {m.capacity} used
                   </Text>
-                  <View style={styles.row}>
+                  {/* The badge on its own line, the reason under it, as on the board. */}
+                  <View style={styles.badgeLine}>
                     <Badge status={f.ok ? 'completed' : 'requested'} label={f.ok ? 'Fits' : 'Needs a change'} />
-                    <Text style={styles.meta}>{f.why}</Text>
                   </View>
+                  <Text style={styles.meta}>{f.why}</Text>
                 </View>
               </Pressable>
             )
@@ -505,7 +507,11 @@ const styles = StyleSheet.create({
     color: theme.colors.muted,
   },
   machines: { gap: theme.spacing(2) },
+  badgeLine: { flexDirection: 'row', marginTop: theme.spacing(1) },
   machine: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: theme.spacing(3),
     padding: theme.spacing(3),
     borderRadius: theme.radii.panel,
     borderWidth: theme.border.hairline,
