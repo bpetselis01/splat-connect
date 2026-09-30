@@ -597,6 +597,9 @@ export function ExchangeThreadScreen({ id }: { id: string }) {
                   placeholder={`Message ${otherPartyName}…`}
                   value={draft}
                   onChangeText={setDraft}
+                  // A pill, as the board's composer is; still multiline, so a
+                  // long message wraps instead of scrolling out of sight.
+                  boxStyle={{ borderRadius: theme.radii.pill }}
                   multiline
                   style={styles.composerInput}
                 />
@@ -636,7 +639,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing(8),
   },
   scrollContent: { paddingBottom: theme.spacing(4), gap: theme.spacing(3) },
+  // The board's thread cards are all 18px.
   headerCard: {
+    borderRadius: theme.radii.panel,
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing(3),
@@ -661,7 +666,7 @@ const styles = StyleSheet.create({
     fontSize: theme.type.caption,
     color: theme.colors.muted,
   },
-  block: { gap: theme.spacing(2), padding: theme.spacing(4) },
+  block: { gap: theme.spacing(2), padding: theme.spacing(4), borderRadius: theme.radii.panel },
   blockTitle: {
     fontFamily: theme.fonts.bold,
     fontSize: theme.type.label,
@@ -726,7 +731,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: theme.spacing(2),
   },
-  railCard: { padding: theme.spacing(3) },
+  railCard: { padding: theme.spacing(3), borderRadius: theme.radii.panel },
   rail: { flexDirection: 'row' },
   stage: { flex: 1 },
   stageInner: { gap: theme.spacing(1.5) },
