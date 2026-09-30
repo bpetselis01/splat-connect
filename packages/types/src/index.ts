@@ -985,6 +985,7 @@ export type AgreementType = 'contributor_terms' | 'org_leader_terms'
 // non-binding: the real terms have not been written (they need a lawyer — see
 // the spec's §6). Any acceptance recorded at this version is void and its rows
 // should be discarded when real terms land.
+// PENDING(terms-version): contributor_terms is still 'v0-todo' until the final terms ship.
 export const AGREEMENT_VERSIONS: Record<AgreementType, string> = {
   contributor_terms: 'v0-todo',
   org_leader_terms: 'v0-todo',

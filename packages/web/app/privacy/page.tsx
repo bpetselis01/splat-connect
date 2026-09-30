@@ -114,7 +114,7 @@ export default function PrivacyPage() {
           were to ask for them.
         </p>
         <p>
-          {/* TODO(splat): confirm the hosted Supabase project's region and name it
+          {/* PENDING(privacy-data-region): confirm the hosted Supabase project's region and name it
               here. Australian residency is strongly preferred for this data. */}
           If any of your information is stored or handled outside Australia we&apos;ll
           name the country here, and we take reasonable steps to make sure it&apos;s

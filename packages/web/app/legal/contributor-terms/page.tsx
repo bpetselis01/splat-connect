@@ -1,7 +1,8 @@
 /**
  * Contributor Terms — CONTENT PENDING
  *
- * TODO: real terms, written by a lawyer. Must cover jurisdiction-specific
+ * PENDING(contributor-terms-legal): real terms, written by a lawyer; a starting
+ * draft is in the board's POLICY table (SPLAT Connect - Web.dc.html). Must cover jurisdiction-specific
  * liability and TGA / medical-device considerations for assistive equipment used
  * by disabled children.
  *

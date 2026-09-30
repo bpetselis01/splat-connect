@@ -269,43 +269,43 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 - Platforms: web, mobile
 - Needs: Lawyer-reviewed terms (board has draft copy)
-- In code: _none yet_
+- In code: `packages/web/app/legal/contributor-terms/page.tsx:4`
 
 ### `org-leader-terms-legal` — Organisation leader terms
 
 - Platforms: web
 - Needs: Lawyer-reviewed terms
-- In code: _none yet_
+- In code: `packages/web/app/legal/org-leader-terms/page.tsx:4`
 
 ### `intended-purpose-review` — Intended purpose
 
 - Platforms: web
 - Needs: Legal review of /legal/intended-purpose
-- In code: _none yet_
+- In code: `packages/web/app/legal/intended-purpose/page.tsx:4`
 
 ### `terms-version` — Terms version
 
 - Platforms: web, mobile, api
 - Needs: AGREEMENT_VERSIONS still v0-todo
-- In code: _none yet_
+- In code: `packages/types/src/index.ts:988`
 
 ### `team-page` — Our team
 
 - Platforms: web
 - Needs: Names, roles, bios on /about/team
-- In code: _none yet_
+- In code: `packages/web/app/about/team/page.tsx:20`
 
 ### `org-facts` — About the organisation
 
 - Platforms: web
 - Needs: Legal name, based in, founded, contact email (lib/org-facts.ts)
-- In code: _none yet_
+- In code: `packages/web/lib/org-facts.ts:4`
 
 ### `privacy-data-region` — Where data is stored
 
 - Platforms: web
 - Needs: Hosted Supabase region on the privacy page
-- In code: _none yet_
+- In code: `packages/web/app/privacy/page.tsx:117`
 
 ### `about-content-mobile` — About SPLAT
 

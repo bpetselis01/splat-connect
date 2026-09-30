@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { ProsePage, PullQuote } from '@/components/prose-page'
 
-// TODO(splat): legal review — this page states Connect's intended purpose for
+// PENDING(intended-purpose-review): legal review — this page states Connect's intended purpose for
 // the Therapeutic Goods Act 1989 (Cth) intended-purpose test. Do not edit the
 // substance without legal review.
 export const metadata = { title: 'What SPLAT Connect is (and isn’t) — SPLAT Connect' }

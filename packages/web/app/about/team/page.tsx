@@ -17,6 +17,7 @@ export const TEAM_MEMBERS: Array<{
   day?: string
   photo: string | null
 }> = [
+  // PENDING(team-page): real names, roles and bios — the placeholders below stay until then.
   {
     name: 'TODO: full name',
     role: 'TODO: role',

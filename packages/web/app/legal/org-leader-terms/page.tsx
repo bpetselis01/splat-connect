@@ -1,7 +1,7 @@
 /**
  * Organisation Leader Terms — CONTENT PENDING
  *
- * TODO: real terms, written by a lawyer. Must cover jurisdiction-specific
+ * PENDING(org-leader-terms-legal): real terms, written by a lawyer. Must cover jurisdiction-specific
  * liability and TGA / medical-device considerations for assistive equipment used
  * by disabled children.
  *
