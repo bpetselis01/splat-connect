@@ -24,6 +24,9 @@ export default function GuidesStackLayout() {
         options={{
           title: 'Add a guide',
           presentation: 'formSheet',
+          // An opaque header, so the form starts below it: on iOS the sheet's
+          // header floated over the top of the content.
+          headerTransparent: false,
           sheetGrabberVisible: true,
           // One detent, full height: this is a form, not a peek — a half-height
           // rest position would put Create draft under the fold.

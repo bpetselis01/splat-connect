@@ -42,6 +42,9 @@ export default function ExploreStackLayout() {
         options={{
           title: 'Ask for a build',
           presentation: 'formSheet',
+          // An opaque header, so the form starts below it: on iOS the sheet's
+          // header floated over the top of the content.
+          headerTransparent: false,
           sheetGrabberVisible: true,
           sheetAllowedDetents: [1.0],
           headerLeft: () => <CloseButton />,

@@ -11,7 +11,6 @@ import { uploadFile } from '../../../lib/upload'
 import { useAuth } from '../../../lib/auth-context'
 import { theme } from '../../../lib/theme'
 import { Screen } from '../../../components/ui/Screen'
-import { ScreenHeader } from '../../../components/ui/ScreenHeader'
 import { TextField } from '../../../components/ui/TextField'
 import { Chip } from '../../../components/ui/Chip'
 import { Button } from '../../../components/ui/Button'
@@ -151,7 +150,8 @@ export default function NewGuideRoute() {
 
   return (
     <Screen>
-      <ScreenHeader title="Add a guide" subtitle="Give it a title to start a draft — everything else comes next." />
+      {/* The sheet's own header says Add a guide; this is its lead. */}
+      <Text style={styles.intro}>Give it a title to start a draft — everything else comes next.</Text>
       {/* PENDING(new-guide-fields): Cover photo, Switch type and Age range here — PATCH /api/tutorials/:id already accepts all three. */}
 
       <View accessibilityRole="radiogroup" style={styles.chipRow}>
@@ -245,6 +245,13 @@ export default function NewGuideRoute() {
 }
 
 const styles = StyleSheet.create({
+  intro: {
+    fontFamily: theme.fonts.regular,
+    fontSize: theme.type.body,
+    color: theme.colors.muted,
+    lineHeight: 22,
+    marginBottom: theme.spacing(4),
+  },
   label: {
     fontFamily: theme.fonts.bold,
     fontSize: theme.type.label,
