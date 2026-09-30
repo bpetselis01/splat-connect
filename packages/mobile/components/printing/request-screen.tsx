@@ -266,7 +266,8 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
     backgroundColor: theme.colors.surface,
   },
-  partOn: { borderColor: theme.colors.primaryDark, backgroundColor: theme.colors.accentLight },
+  // The board's selected tile: the faintest blue (b50).
+  partOn: { borderColor: theme.colors.primaryDark, backgroundColor: theme.colors.accentFaint },
   agreeOn: { borderColor: theme.colors.success, backgroundColor: theme.colors.mintSoft },
   option: {
     flex: 1,
