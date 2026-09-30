@@ -52,8 +52,9 @@ export type OpenBuild = {
 
 type Tab = 'open' | 'mine'
 
-// 0 is "Any distance". Web's ranges, so a family and a maker read one scale.
-const RANGES = [0, 5, 10, 25] as const
+// 0 is "Anywhere", last as on the board. Web's ranges, so a family and a
+// maker read one scale.
+const RANGES = [5, 10, 25, 0] as const
 
 const DIFF_LABEL: Record<Difficulty, string> = { easy: 'Easy', medium: 'Medium', hard: 'Hard' }
 
@@ -184,7 +185,7 @@ export function MakersWantedScreen() {
           {RANGES.map((km) => (
             <Chip
               key={km}
-              label={km === 0 ? 'Any distance' : `${km} km+`}
+              label={km === 0 ? 'Anywhere' : `${km} km+`}
               active={range === km}
               onPress={() => setRange(km)}
             />
