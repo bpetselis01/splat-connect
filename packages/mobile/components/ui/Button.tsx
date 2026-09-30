@@ -89,5 +89,6 @@ const styles = StyleSheet.create({
     minHeight: 48,
   },
   disabled: { opacity: 0.5 },
-  text: { fontFamily: theme.fonts.black, fontSize: theme.type.body },
+  // Centred when a long label wraps, not left-aligned.
+  text: { fontFamily: theme.fonts.black, fontSize: theme.type.body, textAlign: 'center' },
 })
