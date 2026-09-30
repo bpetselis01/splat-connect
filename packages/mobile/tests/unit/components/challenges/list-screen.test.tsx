@@ -114,7 +114,7 @@ describe('ChallengesListScreen', () => {
     expect(mockPush).toHaveBeenCalledWith('/explore/challenges/c9')
   })
 
-  it('sends the pill to Submit an idea', async () => {
+  it("sends the empty state's button to Submit an idea", async () => {
     render(<ChallengesListScreen />)
     fireEvent.press(await screen.findByRole('button', { name: '+ Submit an idea' }))
     expect(mockPush).toHaveBeenCalledWith('/explore/challenges/new')

@@ -3,6 +3,7 @@ import { Stack, useRouter } from 'expo-router'
 import { stackScreenOptions } from '../../../lib/nav-options'
 import { CloseButton } from '../../../components/ui/CloseButton'
 import { BackButton } from '../../../components/ui/BackButton'
+import { HeaderAddButton } from '../../../components/ui/HeaderAddButton'
 
 /** Explore has no tab of its own — it is reached from Me — so its root still
  *  gets the board's back button, and one with nothing behind it goes to Me. */
@@ -21,7 +22,13 @@ export default function ExploreStackLayout() {
       {/* Overridden per-article by article-screen.tsx's own <Stack.Screen>
           once the slug resolves; this is the fallback for an unknown one. */}
       <Stack.Screen name="learn/[slug]" options={{ title: 'Guide' }} />
-      <Stack.Screen name="challenges/index" options={{ title: 'Design challenges' }} />
+      <Stack.Screen
+        name="challenges/index"
+        options={{
+          title: 'Design challenges',
+          headerRight: () => <HeaderAddButton label="Submit an idea" href="/explore/challenges/new" />,
+        }}
+      />
       {/* The brief carries its own title, so the header stays generic rather
           than repeating a long challenge name in a narrow bar. */}
       <Stack.Screen name="challenges/[id]" options={{ title: 'Challenge' }} />

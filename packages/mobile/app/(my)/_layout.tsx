@@ -3,6 +3,7 @@
 import { Redirect, Stack } from 'expo-router'
 import { stackScreenOptions } from '../../lib/nav-options'
 import { useAuthGate } from '../../lib/use-auth-gate'
+import { HeaderAddButton } from '../../components/ui/HeaderAddButton'
 
 
 export default function MyLayout() {
@@ -20,7 +21,13 @@ export default function MyLayout() {
       <Stack.Screen name="account/delete" options={{ headerShown: false }} />
       {/* Every screen is named here: an undeclared one takes its route name as the
           header title, so /toys would say "toys/index" over the top of it. */}
-      <Stack.Screen name="tutorials/index" options={{ title: 'My tutorials' }} />
+      <Stack.Screen
+        name="tutorials/index"
+        options={{
+          title: 'My tutorials',
+          headerRight: () => <HeaderAddButton label="Add a tutorial" href="/guides/new" />,
+        }}
+      />
       {/* The editor is its own nested stack now (tutorials/[id]/_layout.tsx),
           which draws the headers for the hub and its six sections. Leaving this
           one shown would put a second header over the top of them. */}

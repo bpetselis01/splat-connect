@@ -143,7 +143,6 @@ export function ChallengesListScreen() {
           <Text style={styles.intro}>
             Problems nobody has solved yet — open to anyone, contributor or not.
           </Text>
-          <Button label="+ Submit an idea" variant="accent" onPress={submitIdea} style={styles.submitPill} />
         </View>
 
         {loading ? (
@@ -217,7 +216,6 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     marginBottom: theme.spacing(3),
   },
-  submitPill: { alignSelf: 'flex-start', paddingVertical: theme.spacing(2), paddingHorizontal: theme.spacing(4) },
   retry: { marginTop: theme.spacing(5), alignSelf: 'center', paddingHorizontal: theme.spacing(8) },
   rowPress: { marginBottom: theme.spacing(3) },
   card: { gap: theme.spacing(1.5), padding: theme.spacing(4) },
