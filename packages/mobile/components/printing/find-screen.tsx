@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
   dim: { opacity: 0.55 },
   printerTop: { flexDirection: 'row', alignItems: 'flex-start', gap: theme.spacing(3) },
   ini: { width: 46, height: 46, borderRadius: theme.radii.pill, alignItems: 'center', justifyContent: 'center' },
-  iniText: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.ink },
+  iniText: { fontFamily: theme.fonts.display, fontSize: theme.type.label, color: theme.colors.ink },
   printerName: { fontFamily: theme.fonts.black, fontSize: theme.type.body, color: theme.colors.text },
   meta: {
     fontFamily: theme.fonts.regular,
