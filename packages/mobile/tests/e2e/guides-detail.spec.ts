@@ -151,7 +151,7 @@ test("the creator's picks row lists a recommendation and opens it", async ({ pag
 
   await page.goto(`/guides/${id}`)
 
-  await expect(page.getByText(/ALSO WORTH A LOOK/)).toBeVisible()
+  await expect(page.getByText('Also worth a look')).toBeVisible()
   await page.getByText(pickTitle).click()
 
   await expect(page).toHaveURL(new RegExp(`/guides/${pickId}$`))
