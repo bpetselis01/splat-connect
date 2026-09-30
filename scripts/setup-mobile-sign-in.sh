@@ -201,7 +201,7 @@ copy() { # copy FILE: put a template on the clipboard when pbcopy exists
   else note "open $1 and copy its contents"; fi
 }
 
-TOTAL_STAGES=12
+TOTAL_STAGES=13
 
 banner "SPLAT mobile sign-in setup"
 
@@ -241,11 +241,27 @@ else
   note "Apple stays off: the app will show Google and email only."
 fi
 
+stage "Resend: email for codes, resets and deletion confirmations"
+say "Supabase's built-in sender is rate-limited and only delivers to your project team,"
+say "so real members never get their codes until custom SMTP is on. One Resend account"
+say "covers that, the API's deletion confirmation, and Apple's private relay."
+open_url "https://resend.com/domains"
+step "Add and verify your sending domain (Resend shows the SPF/DKIM DNS records to add)."
+step "API Keys → Create API key (Sending access)."
+ask_secret RESEND_API_KEY "Paste the Resend API key (re_…):"
+ask MAIL_FROM "Sender, e.g. SPLAT Connect <hello@yourdomain>:"
+ENV_FILE=packages/api/.env.local write_env RESEND_API_KEY "$RESEND_API_KEY"
+ENV_FILE=packages/api/.env.local write_env MAIL_FROM "\"$MAIL_FROM\""
+open_url "$SB/auth/smtp"
+step "Enable custom SMTP: host smtp.resend.com, port 465, username resend,"
+step "password = the same API key, sender = the address above. Save."
+pause
+
 stage "Apple: email relay for Hide My Email users"
 say "Apple forwards mail to private relay addresses only from domains you register."
 warn "Supabase's built-in sender (mail.app.supabase.io) cannot be registered. This needs custom SMTP"
 warn "(Supabase → Auth → SMTP settings) on a domain you own, with SPF and DKIM."
-if [[ "$APPLE" == 1 ]] && confirm "Is custom SMTP on your own domain already set up in Supabase?"; then
+if [[ "$APPLE" == 1 ]] && confirm "Did the Resend step finish (domain verified, SMTP saved)?"; then
   open_url "https://developer.apple.com/account/resources/services/configure"
   step "Sign in with Apple for Email Communication → Configure → add the sending domain and address."
   step "Apple checks SPF; it shows a green tick when it passes."

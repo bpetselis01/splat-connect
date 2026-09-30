@@ -391,7 +391,19 @@ select * from (values
   -- 083. Every repointed row references this profile; without it the
   -- deletion fails on its first foreign key.
   ('083 Deleted member placeholder profile',
-   (select count(*) = 1 from public.profiles where id = '00000000-0000-4000-8000-00000000dead'))
+   (select count(*) = 1 from public.profiles where id = '00000000-0000-4000-8000-00000000dead')),
+
+  -- 084. step_down_as_leader() takes any org and user id; callable by a
+  -- client, anyone could remove any leader.
+  ('084 step_down_as_leader() is service-role only',
+   (select count(*) = 1 from pg_proc p
+      where p.proname = 'step_down_as_leader' and p.pronamespace = 'public'::regnamespace
+        and not has_function_privilege('authenticated', p.oid, 'execute')
+        and not has_function_privilege('anon', p.oid, 'execute'))),
+
+  -- 084. Invites carry who invited whom; with RLS off, the anon key reads them all.
+  ('084 org_leader_invites has RLS on',
+   (select relrowsecurity from pg_class where oid = 'public.org_leader_invites'::regclass))
 ) as t(guard, ok)
 where not ok;
 EOSQL
