@@ -19,30 +19,30 @@ beforeEach(() => jest.clearAllMocks())
 
 describe('OrgLeadersSection', () => {
   it('hides Step down while you are the only leader', async () => {
-    mockGet.mockResolvedValue([me])
+    mockGet.mockResolvedValue({ leaders: [me], invites: [] })
     render(<OrgLeadersSection orgId="o1" />)
     expect(await screen.findByText('Sam (you)')).toBeTruthy()
     expect(screen.queryByText('Step down as leader')).toBeNull()
   })
 
-  it('adds a co-leader by email and shows the API refusal in words', async () => {
-    mockGet.mockResolvedValue([me])
+  it('invites a co-leader by email and shows the API refusal in words', async () => {
+    mockGet.mockResolvedValue({ leaders: [me], invites: [] })
     mockPost.mockRejectedValueOnce(new Error('API POST /x failed with status 404: No SPLAT account uses that email. Ask them to sign up first.'))
     render(<OrgLeadersSection orgId="o1" />)
-    fireEvent.changeText(await screen.findByLabelText('Add a leader'), 'who@example.com')
-    fireEvent.press(screen.getByText('Add leader'))
+    fireEvent.changeText(await screen.findByLabelText('Invite a leader'), 'who@example.com')
+    fireEvent.press(screen.getByText('Send invitation'))
     expect(await screen.findByText('No SPLAT account uses that email. Ask them to sign up first.')).toBeTruthy()
 
     mockPost.mockResolvedValueOnce({ ok: true })
-    mockGet.mockResolvedValue([me, priya])
-    fireEvent.changeText(screen.getByLabelText('Add a leader'), 'priya@example.com')
-    fireEvent.press(screen.getByText('Add leader'))
-    expect(await screen.findByText('Priya')).toBeTruthy()
+    mockGet.mockResolvedValue({ leaders: [me], invites: [{ id: 'i1', name: 'Priya', email: 'priya@example.com' }] })
+    fireEvent.changeText(screen.getByLabelText('Invite a leader'), 'priya@example.com')
+    fireEvent.press(screen.getByText('Send invitation'))
+    expect(await screen.findByText('Priya · invited')).toBeTruthy()
     expect(mockPost).toHaveBeenLastCalledWith('/api/organizations/o1/leaders', { email: 'priya@example.com' })
   })
 
   it('steps down once someone else leads', async () => {
-    mockGet.mockResolvedValue([me, priya])
+    mockGet.mockResolvedValue({ leaders: [me, priya], invites: [] })
     mockDelete.mockResolvedValue(undefined)
     const onSteppedDown = jest.fn()
     render(<OrgLeadersSection orgId="o1" onSteppedDown={onSteppedDown} />)

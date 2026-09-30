@@ -1,7 +1,7 @@
 // packages/mobile/components/organisation/org-leaders-section.tsx
 //
-// Who leads the organisation, adding a co-leader by the email their SPLAT
-// account uses, and stepping down. The API refuses the last leader stepping
+// Who leads the organisation, inviting a co-leader by the email their SPLAT
+// account uses (they accept on their Account screen), and stepping down. The API refuses the last leader stepping
 // down, so the button only shows once someone else leads too. This is where
 // the account-deletion blocker ("you're the only leader") sends people.
 import { useCallback, useEffect, useState } from 'react'
@@ -14,15 +14,23 @@ import { TextField } from '../ui/TextField'
 import { ListSection } from '../list/list-kit'
 
 export type OrgLeader = { user_id: string; name: string; email: string; you: boolean }
+type Invite = { id: string; name: string; email: string }
 
 export function OrgLeadersSection({ orgId, onSteppedDown }: { orgId: string; onSteppedDown?: () => void }) {
   const [leaders, setLeaders] = useState<OrgLeader[]>([])
+  const [invites, setInvites] = useState<Invite[]>([])
   const [email, setEmail] = useState('')
   const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null)
   const [busy, setBusy] = useState(false)
 
   const load = useCallback(() => {
-    apiClient.get<OrgLeader[]>(`/api/organizations/${orgId}/leaders`).then(setLeaders).catch(() => setLeaders([]))
+    apiClient
+      .get<{ leaders: OrgLeader[]; invites: Invite[] }>(`/api/organizations/${orgId}/leaders`)
+      .then((r) => {
+        setLeaders(r.leaders)
+        setInvites(r.invites)
+      })
+      .catch(() => setLeaders([]))
   }, [orgId])
   useEffect(load, [load])
 
@@ -32,13 +40,18 @@ export function OrgLeadersSection({ orgId, onSteppedDown }: { orgId: string; onS
     try {
       await apiClient.post(`/api/organizations/${orgId}/leaders`, { email })
       setEmail('')
-      setNote({ ok: true, text: 'Added. They lead the organisation now.' })
+      setNote({ ok: true, text: 'Invited. They become a leader once they accept on their Account screen.' })
       load()
     } catch (e) {
       setNote({ ok: false, text: apiMessage(e, 'Could not add them. Try again.') })
     } finally {
       setBusy(false)
     }
+  }
+
+  async function cancel(id: string) {
+    await apiClient.delete(`/api/organizations/${orgId}/leaders/invites/${id}`).catch(() => {})
+    load()
   }
 
   async function stepDown() {
@@ -60,10 +73,16 @@ export function OrgLeadersSection({ orgId, onSteppedDown }: { orgId: string; onS
           <Text style={styles.meta}>{l.email}</Text>
         </View>
       ))}
+      {invites.map((i) => (
+        <View key={i.id} style={styles.row}>
+          <Text style={styles.name}>{i.name || i.email} · invited</Text>
+          <Button label="Cancel invitation" variant="ghost" onPress={() => void cancel(i.id)} />
+        </View>
+      ))}
       <TextField
         testID="leader-email"
-        label="Add a leader"
-        accessibilityLabel="Add a leader"
+        label="Invite a leader"
+        accessibilityLabel="Invite a leader"
         hint="The email their SPLAT account uses."
         autoCapitalize="none"
         autoCorrect={false}
@@ -72,7 +91,7 @@ export function OrgLeadersSection({ orgId, onSteppedDown }: { orgId: string; onS
         onChangeText={setEmail}
       />
       {note ? <Text style={[styles.note, { color: note.ok ? theme.colors.successDeep : theme.colors.danger }]}>{note.text}</Text> : null}
-      <Button label="Add leader" variant="secondary" onPress={() => void add()} loading={busy} disabled={!email.trim()} />
+      <Button label="Send invitation" variant="secondary" onPress={() => void add()} loading={busy} disabled={!email.trim()} />
       {leaders.length > 1 ? <Button label="Step down as leader" variant="danger" onPress={() => void stepDown()} /> : null}
     </View>
   )

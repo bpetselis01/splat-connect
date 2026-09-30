@@ -178,7 +178,7 @@ export function DeleteAccountScreen() {
         <AuthError
           error={{
             kind: 'other',
-            message: `You're the only leader of ${names}. Add another leader first, so the organisation can still answer families.`,
+            message: `You're the only leader of ${names}. Invite another leader first, so the organisation can still answer families.`,
           }}
         />
         <Button testID="manage-leaders" label="Manage leaders" style={pill} onPress={() => router.push('/organisation/profile')} />

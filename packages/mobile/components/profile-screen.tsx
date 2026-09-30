@@ -14,6 +14,7 @@ import { TextField } from './ui/TextField'
 import { ChildProfileHome } from './profile/child-profile-home'
 import { ListRow, ListSection } from './list/list-kit'
 import { Ionicons } from '@expo/vector-icons'
+import { OrgInvites } from './organisation/org-invites'
 
 /** "12 Aug 2026" — the terms row's date. */
 function acceptedDate(iso: string): string {
@@ -93,6 +94,7 @@ export function ProfileScreen() {
           </View>
         </View>
 
+        <OrgInvites />
         <ListSection>Child profiles</ListSection>
         <ChildProfileHome />
 
