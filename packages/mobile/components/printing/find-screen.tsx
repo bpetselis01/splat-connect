@@ -132,10 +132,10 @@ export function FindPrinterScreen({ guideId }: { guideId?: string }) {
         ) : null}
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-          <Chip label="Open now" active={openOnly} onPress={() => setOpenOnly((v) => !v)} />
-          <Chip label={`Has ${material}`} active={hasMaterial} onPress={() => setHasMaterial((v) => !v)} />
+          <Chip label="Open now" icon="flash-outline" active={openOnly} onPress={() => setOpenOnly((v) => !v)} />
+          <Chip label={`Has ${material}`} icon="cube-outline" active={hasMaterial} onPress={() => setHasMaterial((v) => !v)} />
           {/* PENDING(locations-and-distance) */}
-          <Chip label="Within 10 km" active={false} onPress={() => router.push(pendingHref('locations-and-distance'))} />
+          <Chip label="Within 10 km" icon="location-outline" active={false} onPress={() => router.push(pendingHref('locations-and-distance'))} />
           {/* PENDING(printer-verified) */}
           <Chip label="Verified" active={false} onPress={() => router.push(pendingHref('printer-verified'))} />
         </ScrollView>
