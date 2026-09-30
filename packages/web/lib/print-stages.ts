@@ -40,10 +40,11 @@ export function printStages(tx: Row): Stage[] {
   const reachedHandover = Boolean(tx.owner_confirmed_at || tx.requester_confirmed_at)
 
   switch (tx.status) {
+    // Asking is the stage in progress until a printer answers, as the board draws it.
     case 'requested':
       return [
-        asked,
-        { key: 'accepted', label: 'Accepted', caption: 'Waiting on the printer', state: 'now' },
+        { ...asked, state: 'now' },
+        { key: 'accepted', label: 'Accepted', caption: 'Waiting on the printer', state: 'todo' },
         { key: 'printing', label: 'Printing', caption: 'Once they take it on', state: 'todo' },
         { key: 'ready', label: 'Ready', caption: 'They post a photo', state: 'todo' },
         { key: 'collected', label: 'Collected', caption: 'Once you both confirm', state: 'todo' },
@@ -181,7 +182,9 @@ export function printStageFacts(
 
   if (tx.status === 'requested') {
     return {
-      title: 'Waiting on the printer',
+      // PENDING(print-answer-by): the board's "Answer by — 7 days from today";
+      // nothing expires an unanswered request yet.
+      title: viewerIsPrinter ? 'What they asked for' : 'What you asked for',
       facts: [
         { label: 'Parts', value: partsLine },
         { label: 'Printer', value: tx.printer?.name ?? 'Not recorded' },

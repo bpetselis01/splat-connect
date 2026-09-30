@@ -748,6 +748,14 @@ export const PENDING = {
     platforms: ["mobile", "api"],
     needs: "Decided 2026-09-30: no lending (toys are given, exchanged, built or printed only), so no Out or Needs clean. Add Retired (retired_at) for broken or worn-out org toys.",
   },
+  'print-answer-by': {
+    title: "Answer by",
+    blurb: "Printers who don't answer a request dropping off after 7 days is coming.",
+    kind: "build",
+    platforms: ["web", "mobile", "api"],
+    board: "Web print job — What you asked for",
+    needs: "An expiry on unanswered print requests (7 days), shown as Answer by on the job.",
+  },
   'print-estimates': {
     title: "Print time and weight",
     blurb: "Estimated print time and filament weight are coming.",
