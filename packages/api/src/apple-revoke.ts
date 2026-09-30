@@ -16,7 +16,7 @@ import { createPrivateKey, sign } from 'node:crypto'
 const APPLE = 'https://appleid.apple.com'
 const b64 = (v: string | Buffer) => Buffer.from(v).toString('base64url')
 
-function clientSecret(teamId: string, keyId: string, privateKey: string, clientId: string) {
+export function clientSecret(teamId: string, keyId: string, privateKey: string, clientId: string) {
   const now = Math.floor(Date.now() / 1000)
   const head = b64(JSON.stringify({ alg: 'ES256', kid: keyId }))
   const body = b64(JSON.stringify({ iss: teamId, iat: now, exp: now + 300, aud: APPLE, sub: clientId }))
