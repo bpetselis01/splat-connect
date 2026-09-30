@@ -39,10 +39,12 @@ describe('pending work stays in step', () => {
   // shipping the item turns this red until the exemption goes, and the
   // harness then measures the built feature.
   it('parity exemptions name open items and say why', () => {
-    const map = JSON.parse(readFileSync(path.join(root, 'scripts/parity/screen-map.json'), 'utf8')) as {
-      id: string
-      explained?: { why: string; reason?: string; pending?: string }[]
-    }[]
+    const read = (f: string) =>
+      JSON.parse(readFileSync(path.join(root, 'scripts/parity', f), 'utf8')) as {
+        id: string
+        explained?: { why: string; reason?: string; pending?: string }[]
+      }[]
+    const map = [...read('screen-map.json'), ...read('app-screen-map.json')]
     const rules = map.flatMap((s) => (s.explained ?? []).map((r) => ({ screen: s.id, ...r })))
     const bad = rules.filter((r) =>
       r.why === 'pending'

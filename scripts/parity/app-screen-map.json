@@ -1,0 +1,496 @@
+[
+ {
+  "id": "guides",
+  "name": "Guides",
+  "group": "tabs",
+  "boardRoute": "(tabs)/guides",
+  "route": "/guides"
+ },
+ {
+  "id": "guide_detail",
+  "name": "Guide detail",
+  "group": "push",
+  "boardRoute": "guides/[id]",
+  "route": "/guides/[id]",
+  "idFrom": "tutorial"
+ },
+ {
+  "id": "guide_preview",
+  "name": "Guide preview",
+  "group": "push",
+  "boardRoute": "guides/[id]/preview",
+  "route": "/guides/[id]/preview",
+  "idFrom": "tutorial",
+  "role": "contributor"
+ },
+ {
+  "id": "guide_new",
+  "name": "New guide",
+  "group": "push",
+  "boardRoute": "guides/new",
+  "route": "/guides/new",
+  "role": "parent"
+ },
+ {
+  "id": "contributor",
+  "name": "Contributor",
+  "group": "push",
+  "boardRoute": "guides/contributor/[id]",
+  "route": "/guides/contributor/[id]",
+  "idFrom": "contributor"
+ },
+ {
+  "id": "guide_org",
+  "name": "Organisation",
+  "group": "push",
+  "boardRoute": "guides/organisation/[id]",
+  "route": "/guides/organisation/[id]",
+  "idFrom": "org_public",
+  "seedRole": "leader"
+ },
+ {
+  "id": "print_find",
+  "name": "Find a printer",
+  "group": "push",
+  "boardRoute": "printing",
+  "route": "/printing"
+ },
+ {
+  "id": "print_request",
+  "name": "Request a print",
+  "group": "modal",
+  "boardRoute": "printing/request",
+  "route": "/printing/request",
+  "role": "parent"
+ },
+ {
+  "id": "print_job",
+  "name": "Print job",
+  "group": "push",
+  "boardRoute": "printing/jobs/[id]",
+  "route": "/printing/jobs/[id]",
+  "idFrom": "print_job",
+  "role": "parent"
+ },
+ {
+  "id": "print_basics",
+  "name": "Printing basics",
+  "group": "push",
+  "boardRoute": "printing/basics",
+  "route": "/printing/basics"
+ },
+ {
+  "id": "loading",
+  "name": "Loading state",
+  "group": "tabs",
+  "boardRoute": "guides (loading)",
+  "route": "/guides"
+ },
+ {
+  "id": "toy_library",
+  "name": "Toy library",
+  "group": "tabs",
+  "boardRoute": "(tabs)/toy-library",
+  "route": "/toy-library"
+ },
+ {
+  "id": "lib_toy",
+  "name": "Toy detail",
+  "group": "push",
+  "boardRoute": "toy-library/[id]",
+  "route": "/toy-library/[id]",
+  "idFrom": "toy_public",
+  "seedRole": "parent"
+ },
+ {
+  "id": "org_list",
+  "name": "Organisations",
+  "group": "push",
+  "boardRoute": "toy-library/organisations",
+  "route": "/toy-library/organisations"
+ },
+ {
+  "id": "lib_org",
+  "name": "Organisation",
+  "group": "push",
+  "boardRoute": "toy-library/organisation/[id]",
+  "route": "/toy-library/organisation/[id]",
+  "idFrom": "org_public",
+  "seedRole": "leader"
+ },
+ {
+  "id": "explore",
+  "name": "Explore",
+  "group": "push",
+  "boardRoute": "(tabs)/explore",
+  "route": "/explore"
+ },
+ {
+  "id": "learn_list",
+  "name": "Learn",
+  "group": "push",
+  "boardRoute": "explore/learn",
+  "route": "/explore/learn"
+ },
+ {
+  "id": "article",
+  "name": "Learn article",
+  "group": "push",
+  "boardRoute": "explore/learn/[slug]",
+  "route": "/explore/learn/toy-adaptation-101"
+ },
+ {
+  "id": "challenges",
+  "name": "Challenges",
+  "group": "push",
+  "boardRoute": "explore/challenges",
+  "route": "/explore/challenges"
+ },
+ {
+  "id": "challenge_detail",
+  "name": "Challenge",
+  "group": "push",
+  "boardRoute": "explore/challenges/[id]",
+  "route": "/explore/challenges/[id]",
+  "idFrom": "challenge_detail"
+ },
+ {
+  "id": "challenge_new",
+  "name": "Submit an idea",
+  "group": "push",
+  "boardRoute": "explore/challenges/new",
+  "route": "/explore/challenges/new",
+  "role": "parent"
+ },
+ {
+  "id": "makers_wanted",
+  "name": "Makers wanted",
+  "group": "push",
+  "boardRoute": "explore/makers-wanted",
+  "route": "/explore/makers-wanted"
+ },
+ {
+  "id": "mw_new",
+  "name": "Ask for a build",
+  "group": "modal",
+  "boardRoute": "explore/makers-wanted/new",
+  "route": "/explore/makers-wanted/new",
+  "role": "parent"
+ },
+ {
+  "id": "build_thread",
+  "name": "Build thread",
+  "group": "push",
+  "boardRoute": "(my)/exchanges/build/[id]",
+  "route": "/exchanges/build/[id]",
+  "idFrom": "build_thread",
+  "role": "parent"
+ },
+ {
+  "id": "recycling",
+  "name": "Recycling",
+  "group": "push",
+  "boardRoute": "explore/recycling",
+  "route": "/explore/recycling"
+ },
+ {
+  "id": "org_recycling",
+  "name": "Recycling intake",
+  "group": "push",
+  "boardRoute": "(org)/recycling",
+  "route": "/organisation/recycling",
+  "role": "leader"
+ },
+ {
+  "id": "about",
+  "name": "About",
+  "group": "push",
+  "boardRoute": "explore/about",
+  "route": "/explore/about"
+ },
+ {
+  "id": "inbox",
+  "name": "Inbox",
+  "group": "tabs",
+  "boardRoute": "(tabs)/inbox",
+  "route": "/inbox",
+  "role": "parent"
+ },
+ {
+  "id": "exchange",
+  "name": "Exchange thread",
+  "group": "push",
+  "boardRoute": "(my)/exchanges/[id]",
+  "route": "/exchanges/[id]",
+  "idFrom": "thread",
+  "role": "parent"
+ },
+ {
+  "id": "my_splat",
+  "name": "Me",
+  "group": "tabs",
+  "boardRoute": "(my)/my-splat",
+  "route": "/me",
+  "role": "parent"
+ },
+ {
+  "id": "my_tutorials",
+  "name": "My tutorials",
+  "group": "push",
+  "boardRoute": "(my)/tutorials",
+  "route": "/tutorials",
+  "role": "contributor"
+ },
+ {
+  "id": "editor",
+  "name": "Editor hub",
+  "group": "push",
+  "boardRoute": "(my)/tutorials/[id]",
+  "route": "/tutorials/[id]",
+  "idFrom": "editor",
+  "role": "contributor"
+ },
+ {
+  "id": "ed_details",
+  "name": "Editor \u00b7 details",
+  "group": "push",
+  "boardRoute": "tutorials/[id]/details",
+  "route": "/tutorials/[id]/details",
+  "idFrom": "editor",
+  "role": "contributor"
+ },
+ {
+  "id": "ed_steps",
+  "name": "Editor \u00b7 steps",
+  "group": "push",
+  "boardRoute": "tutorials/[id]/steps",
+  "route": "/tutorials/[id]/steps",
+  "idFrom": "editor",
+  "role": "contributor"
+ },
+ {
+  "id": "ed_parts",
+  "name": "Editor \u00b7 parts",
+  "group": "push",
+  "boardRoute": "tutorials/[id]/parts",
+  "route": "/tutorials/[id]/parts",
+  "idFrom": "editor",
+  "role": "contributor"
+ },
+ {
+  "id": "ed_tools",
+  "name": "Editor \u00b7 tools",
+  "group": "push",
+  "boardRoute": "tutorials/[id]/tools",
+  "route": "/tutorials/[id]/tools",
+  "idFrom": "editor",
+  "role": "contributor"
+ },
+ {
+  "id": "ed_safety",
+  "name": "Editor \u00b7 safety",
+  "group": "push",
+  "boardRoute": "tutorials/[id]/safety",
+  "route": "/tutorials/[id]/safety",
+  "idFrom": "editor",
+  "role": "contributor"
+ },
+ {
+  "id": "ed_stl",
+  "name": "Editor \u00b7 STL",
+  "group": "push",
+  "boardRoute": "tutorials/[id]/stl",
+  "route": "/tutorials/[id]/stl",
+  "idFrom": "editor",
+  "role": "contributor"
+ },
+ {
+  "id": "my_toys",
+  "name": "My toys",
+  "group": "push",
+  "boardRoute": "(my)/toys",
+  "route": "/toys",
+  "role": "parent"
+ },
+ {
+  "id": "toy_new",
+  "name": "Add a toy",
+  "group": "push",
+  "boardRoute": "(my)/toys/new",
+  "route": "/toys/new",
+  "role": "parent"
+ },
+ {
+  "id": "toy_detail",
+  "name": "Toy detail",
+  "group": "push",
+  "boardRoute": "(my)/toys/[id]",
+  "route": "/toys/[id]",
+  "idFrom": "toy_detail",
+  "role": "parent"
+ },
+ {
+  "id": "exchanges",
+  "name": "My exchanges",
+  "group": "push",
+  "boardRoute": "(my)/exchanges",
+  "route": "/exchanges",
+  "role": "parent"
+ },
+ {
+  "id": "my_challenges",
+  "name": "My challenges",
+  "group": "push",
+  "boardRoute": "(my)/challenges",
+  "route": "/challenges",
+  "role": "parent"
+ },
+ {
+  "id": "saved",
+  "name": "Saved",
+  "group": "push",
+  "boardRoute": "(my)/saved",
+  "route": "/saved",
+  "role": "parent"
+ },
+ {
+  "id": "saved_slug",
+  "name": "Saved list",
+  "group": "push",
+  "boardRoute": "(my)/saved/[slug]",
+  "route": "/saved/tutorials",
+  "role": "parent"
+ },
+ {
+  "id": "notifications",
+  "name": "Notifications",
+  "group": "push",
+  "boardRoute": "(my)/notifications",
+  "route": "/notifications",
+  "role": "parent"
+ },
+ {
+  "id": "print_requests",
+  "name": "Print requests",
+  "group": "push",
+  "boardRoute": "(my)/print-requests",
+  "route": "/print-requests",
+  "role": "parent"
+ },
+ {
+  "id": "print_offer",
+  "name": "Print for others",
+  "group": "push",
+  "boardRoute": "(my)/print-for-others",
+  "route": "/print-for-others",
+  "role": "parent"
+ },
+ {
+  "id": "print_add",
+  "name": "Add a printer",
+  "group": "push",
+  "boardRoute": "(my)/print-for-others/add",
+  "route": "/print-for-others/add",
+  "role": "parent"
+ },
+ {
+  "id": "account",
+  "name": "Account",
+  "group": "push",
+  "boardRoute": "(my)/account",
+  "route": "/account",
+  "role": "parent"
+ },
+ {
+  "id": "ability",
+  "name": "Ability profile",
+  "group": "push",
+  "boardRoute": "account/ability",
+  "route": "/account/child/[id]",
+  "idFrom": "child",
+  "role": "parent"
+ },
+ {
+  "id": "needs",
+  "name": "Everyday needs",
+  "group": "push",
+  "boardRoute": "account/everyday-needs",
+  "route": "/account/child/[id]",
+  "idFrom": "child",
+  "role": "parent"
+ },
+ {
+  "id": "customization",
+  "name": "Customization",
+  "group": "push",
+  "boardRoute": "account/customization",
+  "route": "/account/customization",
+  "skip": "Pending customization-metrics: decided 2026-09-30 to ask these per print request, so no account screen will exist.",
+  "role": "parent"
+ },
+ {
+  "id": "child",
+  "name": "Child profile",
+  "group": "push",
+  "boardRoute": "account/child/[id]",
+  "route": "/account/child/[id]",
+  "idFrom": "child",
+  "role": "parent"
+ },
+ {
+  "id": "org_queue",
+  "name": "Review queue",
+  "group": "push",
+  "boardRoute": "(my)/organisation",
+  "route": "/organisation",
+  "role": "leader"
+ },
+ {
+  "id": "org_review",
+  "name": "Review a guide",
+  "group": "push",
+  "boardRoute": "organisation/[tutorialId]",
+  "route": "/organisation/[tutorialId]",
+  "role": "leader",
+  "sampleFrom": "/organisation"
+ },
+ {
+  "id": "org_toys",
+  "name": "Toy inventory",
+  "group": "push",
+  "boardRoute": "organisation/toys",
+  "route": "/organisation/toys",
+  "role": "leader"
+ },
+ {
+  "id": "org_orders",
+  "name": "Print orders",
+  "group": "push",
+  "boardRoute": "organisation/orders",
+  "route": "/organisation/orders",
+  "role": "leader"
+ },
+ {
+  "id": "admin",
+  "name": "Admin",
+  "group": "push",
+  "boardRoute": "(my)/admin",
+  "route": "/admin",
+  "role": "admin"
+ },
+ {
+  "id": "wizard",
+  "name": "Child profile wizard",
+  "group": "push",
+  "boardRoute": "(onboarding)/child",
+  "route": "/child",
+  "role": "parent"
+ },
+ {
+  "id": "sign_in",
+  "name": "Sign in",
+  "group": "bare",
+  "boardRoute": "(auth)/sign-in",
+  "route": "/sign-in"
+ }
+]
