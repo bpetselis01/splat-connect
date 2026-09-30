@@ -505,7 +505,19 @@ function collectFingerprint(arg) {
         (el) => colour(cs(el).backgroundColor) === colour(cs(darkest).backgroundColor)
       )
     : []
-  const inputs = pick('input,select,textarea')
+  // The field a reader sees. A React Native TextInput is a bare <input> (no
+  // border, no fill, radius 0) inside the view that draws the field, and every
+  // app input read as "radius 0, transparent".
+  const fieldBox = (el) => {
+    const bare = (x) => {
+      const st = cs(x)
+      return !(parseFloat(st.borderTopWidth) > 0) && /rgba\(0,\s*0,\s*0,\s*0\)|transparent/.test(st.backgroundColor)
+    }
+    if (!bare(el)) return el
+    for (let x = el.parentElement, i = 0; x && i < 3; x = x.parentElement, i++) if (!bare(x)) return x
+    return el
+  }
+  const inputs = pick('input,select,textarea').map(fieldBox)
 
   // ---- prose copy ---------------------------------------------------------
   // Only on pages without data: there, the words ARE the design, and the board
@@ -523,7 +535,10 @@ function collectFingerprint(arg) {
   // carries Tailwind. Three sibling <p class="mb-[22px]"> on a story page read
   // as a three-row list on live and as prose on the board, so live's body copy
   // was dropped and the board's identical words reported absent.
-  const paragraphs = pick('p')
+  // React Native web sets prose in <div dir="auto">, never <p>; only the
+  // innermost such element, so a paragraph is not counted twice.
+  const paragraphs = pick('p, div[dir="auto"]')
+    .filter((p) => p.tagName === 'P' || !p.querySelector('div[dir="auto"]'))
     .filter((p) => !inCardOnly(p))
     .map((p) => norm(p.innerText))
     .filter((t) => t.length > 25)

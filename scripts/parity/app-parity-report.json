@@ -1,5 +1,5 @@
 {
- "at": "2026-09-30T13:59:08.757Z",
+ "at": "2026-09-30T14:09:31.255Z",
  "live": "http://localhost:3112",
  "screens": [
   {
@@ -14,20 +14,6 @@
      "what": "h2 \"suits ollie\" has no counterpart",
      "board": "suits ollie",
      "live": null
-    },
-    {
-     "type": "radius",
-     "severity": "low",
-     "what": "input radius",
-     "board": "999px",
-     "live": "0px"
-    },
-    {
-     "type": "colour",
-     "severity": "low",
-     "what": "input background",
-     "board": "rgb(255,255,255)",
-     "live": "rgba(0,0,0,0)"
     }
    ],
    "role": "parent",
@@ -110,7 +96,7 @@
      "severity": "medium",
      "what": "5/5 board paragraphs absent",
      "board": "a $# toy drum that lights up when it sounds. one interrupter, no solde",
-     "live": null
+     "live": "created by a playwright e#e test."
     },
     {
      "type": "weight",
@@ -151,7 +137,7 @@
      "severity": "medium",
      "what": "1/1 board paragraphs absent",
      "board": "this is what a parent sees. nothing is public until you submit and a r",
-     "live": null
+     "live": "no pdf is available for this tutorial yet."
     },
     {
      "type": "colour",
@@ -185,7 +171,7 @@
      "severity": "medium",
      "what": "1/1 board paragraphs absent",
      "board": "two things to start: what the toy is, and one photo. the rest can wait",
-     "live": null
+     "live": "give it a title to start a draft — everything else comes next."
     },
     {
      "type": "colour",
@@ -281,7 +267,7 @@
    "id": "guide_org",
    "name": "Organisation",
    "group": "push",
-   "route": "/guides/organisation/2b7585ee-65c6-44ea-80c1-4902a23f3844",
+   "route": "/guides/organisation/f29ea68d-c55c-4d47-90c9-575a79a58969",
    "findings": [
     {
      "type": "font",
@@ -354,13 +340,6 @@
      "live": "24px"
     },
     {
-     "type": "copy",
-     "severity": "medium",
-     "what": "11/11 board paragraphs absent",
-     "board": "paediatric ot service · newcastle, nsw · on splat since #",
-     "live": null
-    },
-    {
      "type": "weight",
      "severity": "low",
      "what": "card title weight",
@@ -404,7 +383,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/guides/organisation/2b7585ee-65c6-44ea-80c1-4902a23f3844",
+   "finalUrl": "/guides/organisation/f29ea68d-c55c-4d47-90c9-575a79a58969",
    "explained": [],
    "boardHeadings": 8,
    "liveHeadings": 9
@@ -475,7 +454,7 @@
      "severity": "medium",
      "what": "1/1 board paragraphs absent",
      "board": "# of # parts · about # h # · ~# g petg",
-     "live": null
+     "live": "check your connection and try again."
     }
    ],
    "role": "parent",
@@ -488,7 +467,7 @@
    "id": "print_job",
    "name": "Print job",
    "group": "push",
-   "route": "/printing/jobs/8f2337a3-3436-497f-a28e-a3540fd5c58b",
+   "route": "/printing/jobs/2acfd824-27ca-4bee-b392-3a93e0a42bae",
    "findings": [
     {
      "type": "missing-section",
@@ -523,18 +502,11 @@
      "severity": "low",
      "what": "input radius",
      "board": "999px",
-     "live": "0px"
-    },
-    {
-     "type": "colour",
-     "severity": "low",
-     "what": "input background",
-     "board": "rgb(255,255,255)",
-     "live": "rgba(0,0,0,0)"
+     "live": "14px"
     }
    ],
    "role": "parent",
-   "finalUrl": "/printing/jobs/8f2337a3-3436-497f-a28e-a3540fd5c58b",
+   "finalUrl": "/printing/jobs/2acfd824-27ca-4bee-b392-3a93e0a42bae",
    "explained": [],
    "boardHeadings": 2,
    "liveHeadings": 2
@@ -551,13 +523,6 @@
      "what": "h2 \"printing basics\" size",
      "board": "25px",
      "live": "19px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "5/5 board paragraphs absent",
-     "board": "enough to ask for a print with confidence. you do not need a printer, ",
-     "live": null
     },
     {
      "type": "radius",
@@ -605,13 +570,6 @@
      "what": "h2 \"nearest first\" has no counterpart",
      "board": "nearest first",
      "live": null
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "1/1 board paragraphs absent",
-     "board": "given by families near you",
-     "live": null
     }
    ],
    "role": "parent",
@@ -624,7 +582,7 @@
    "id": "lib_toy",
    "name": "Toy detail",
    "group": "push",
-   "route": "/toy-library/24685ec5-3a04-4eb4-9905-1b49eeaac449",
+   "route": "/toy-library/6ae262e6-5166-4316-97bf-3601e7403759",
    "findings": [
     {
      "type": "missing-section",
@@ -659,7 +617,7 @@
      "severity": "medium",
      "what": "3/3 board paragraphs absent",
      "board": "northside therapy collective · newcastle, nsw",
-     "live": null
+     "live": "ask to collect this toy, or offer one of yours in exchange. either way"
     },
     {
      "type": "radius",
@@ -677,7 +635,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/toy-library/24685ec5-3a04-4eb4-9905-1b49eeaac449",
+   "finalUrl": "/toy-library/6ae262e6-5166-4316-97bf-3601e7403759",
    "explained": [],
    "boardHeadings": 3,
    "liveHeadings": 2
@@ -713,7 +671,7 @@
    "id": "lib_org",
    "name": "Organisation",
    "group": "push",
-   "route": "/toy-library/organisation/2b7585ee-65c6-44ea-80c1-4902a23f3844",
+   "route": "/toy-library/organisation/f29ea68d-c55c-4d47-90c9-575a79a58969",
    "findings": [
     {
      "type": "font",
@@ -786,13 +744,6 @@
      "live": "24px"
     },
     {
-     "type": "copy",
-     "severity": "medium",
-     "what": "11/11 board paragraphs absent",
-     "board": "paediatric ot service · newcastle, nsw · on splat since #",
-     "live": null
-    },
-    {
      "type": "weight",
      "severity": "low",
      "what": "card title weight",
@@ -836,7 +787,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/toy-library/organisation/2b7585ee-65c6-44ea-80c1-4902a23f3844",
+   "finalUrl": "/toy-library/organisation/f29ea68d-c55c-4d47-90c9-575a79a58969",
    "explained": [],
    "boardHeadings": 8,
    "liveHeadings": 9
@@ -858,15 +809,7 @@
    "name": "Learn",
    "group": "push",
    "route": "/explore/learn",
-   "findings": [
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "1/1 board paragraphs absent",
-     "board": "how switch adaptation works, from first switch to safe finish. for ins",
-     "live": null
-    }
-   ],
+   "findings": [],
    "role": "parent",
    "finalUrl": "/explore/learn",
    "explained": [],
@@ -905,7 +848,7 @@
      "severity": "medium",
      "what": "3/3 board paragraphs absent",
      "board": "what a battery interrupter is, and why it is the whole trick.",
-     "live": null
+     "live": "almost every adapted toy on this site works the same way, and the tric"
     },
     {
      "type": "radius",
@@ -947,13 +890,6 @@
      "what": "card radius",
      "board": "20px",
      "live": "24px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "1/1 board paragraphs absent",
-     "board": "problems nobody has solved yet, open to anyone.",
-     "live": null
     }
    ],
    "role": "parent",
@@ -983,14 +919,7 @@
      "severity": "medium",
      "what": "1/1 board paragraphs absent",
      "board": "suggest a toy worth adapting, even if you cannot build it. an admin re",
-     "live": null
-    },
-    {
-     "type": "radius",
-     "severity": "low",
-     "what": "input radius",
-     "board": "14px",
-     "live": "0px"
+     "live": "you do not have to be able to build something to be the person who tho"
     },
     {
      "type": "colour",
@@ -1018,13 +947,6 @@
      "what": "card radius",
      "board": "20px",
      "live": "nullpx"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "1/1 board paragraphs absent",
-     "board": "families who found the right guide but cannot build it. claim one, bui",
-     "live": null
     }
    ],
    "role": "parent",
@@ -1038,22 +960,7 @@
    "name": "Ask for a build",
    "group": "modal",
    "route": "/explore/makers-wanted/new",
-   "findings": [
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "2/2 board paragraphs absent",
-     "board": "no fee to ask, and you cover the parts. makers within your travel rang",
-     "live": null
-    },
-    {
-     "type": "radius",
-     "severity": "low",
-     "what": "input radius",
-     "board": "14px",
-     "live": "0px"
-    }
-   ],
+   "findings": [],
    "role": "parent",
    "finalUrl": "/explore/makers-wanted/new",
    "explained": [],
@@ -1064,15 +971,8 @@
    "id": "build_thread",
    "name": "Build thread",
    "group": "push",
-   "route": "/exchanges/build/34a6b559-dbd6-4db5-b9d7-64242b3a9605",
+   "route": "/exchanges/build/77b60089-e9be-4c88-892f-a5b1b724c07c",
    "findings": [
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "2/2 board paragraphs absent",
-     "board": "tom beattie claimed the build",
-     "live": null
-    },
     {
      "type": "radius",
      "severity": "low",
@@ -1085,18 +985,11 @@
      "severity": "low",
      "what": "input radius",
      "board": "999px",
-     "live": "0px"
-    },
-    {
-     "type": "colour",
-     "severity": "low",
-     "what": "input background",
-     "board": "rgb(255,255,255)",
-     "live": "rgba(0,0,0,0)"
+     "live": "14px"
     }
    ],
    "role": "parent",
-   "finalUrl": "/exchanges/build/34a6b559-dbd6-4db5-b9d7-64242b3a9605",
+   "finalUrl": "/exchanges/build/77b60089-e9be-4c88-892f-a5b1b724c07c",
    "explained": [],
    "boardHeadings": 2,
    "liveHeadings": 2
@@ -1127,13 +1020,6 @@
      "what": "live has an extra h1: \"# kg\"",
      "board": null,
      "live": "# kg"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "3/3 board paragraphs absent",
-     "board": "failed prints and offcuts are the raw material for the next switch mou",
-     "live": null
     }
    ],
    "role": "parent",
@@ -1154,13 +1040,6 @@
      "what": "card radius",
      "board": "20px",
      "live": "24px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "2/2 board paragraphs absent",
-     "board": "weigh what turns up and the credit is issued against that number. a co",
-     "live": null
     }
    ],
    "role": "leader",
@@ -1212,7 +1091,7 @@
    "id": "exchange",
    "name": "Exchange thread",
    "group": "push",
-   "route": "/exchanges/e195d401-b8b9-4245-bca3-7312d952ab55",
+   "route": "/exchanges/fd938aba-9f30-4017-aeca-130825948c94",
    "findings": [
     {
      "type": "missing-section",
@@ -1240,14 +1119,7 @@
      "severity": "low",
      "what": "input radius",
      "board": "999px",
-     "live": "0px"
-    },
-    {
-     "type": "colour",
-     "severity": "low",
-     "what": "input background",
-     "board": "rgb(255,255,255)",
-     "live": "rgba(0,0,0,0)"
+     "live": "14px"
     },
     {
      "type": "shadow",
@@ -1258,7 +1130,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/exchanges/e195d401-b8b9-4245-bca3-7312d952ab55",
+   "finalUrl": "/exchanges/fd938aba-9f30-4017-aeca-130825948c94",
    "explained": [],
    "boardHeadings": 2,
    "liveHeadings": 2
@@ -1275,13 +1147,6 @@
      "what": "live has an extra h3: \"my splat\"",
      "board": null,
      "live": "my splat"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "1/1 board paragraphs absent",
-     "board": "still to settle across # exchanges. splat never handles the money — yo",
-     "live": null
     }
    ],
    "role": "parent",
@@ -1295,15 +1160,7 @@
    "name": "My tutorials",
    "group": "push",
    "route": "/tutorials",
-   "findings": [
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "1/1 board paragraphs absent",
-     "board": "guides you have written, at every stage from draft to published.",
-     "live": null
-    }
-   ],
+   "findings": [],
    "role": "contributor",
    "finalUrl": "/tutorials",
    "explained": [],
@@ -1314,10 +1171,10 @@
    "id": "editor",
    "name": "Editor hub",
    "group": "push",
-   "route": "/tutorials/4d452fd9-f47c-44ba-830f-b952f1517912",
+   "route": "/tutorials/d12a63ff-06d0-4102-b22b-3f80a3f797b5",
    "findings": [],
    "role": "contributor",
-   "finalUrl": "/tutorials/4d452fd9-f47c-44ba-830f-b952f1517912",
+   "finalUrl": "/tutorials/d12a63ff-06d0-4102-b22b-3f80a3f797b5",
    "explained": [],
    "boardHeadings": 1,
    "liveHeadings": 2
@@ -1326,7 +1183,7 @@
    "id": "ed_details",
    "name": "Editor · details",
    "group": "push",
-   "route": "/tutorials/4d452fd9-f47c-44ba-830f-b952f1517912/details",
+   "route": "/tutorials/d12a63ff-06d0-4102-b22b-3f80a3f797b5/details",
    "findings": [
     {
      "type": "radius",
@@ -1340,7 +1197,7 @@
      "severity": "medium",
      "what": "1/1 board paragraphs absent",
      "board": "what the toy is, who it suits, and who is backing the guide.",
-     "live": null
+     "live": "about how long does it take?"
     },
     {
      "type": "weight",
@@ -1350,18 +1207,11 @@
      "live": 400
     },
     {
-     "type": "radius",
-     "severity": "low",
-     "what": "input radius",
-     "board": "13px",
-     "live": "0px"
-    },
-    {
      "type": "colour",
      "severity": "low",
      "what": "input background",
      "board": "rgb(250,249,247)",
-     "live": "rgba(0,0,0,0)"
+     "live": "rgb(255,255,255)"
     },
     {
      "type": "shadow",
@@ -1372,7 +1222,7 @@
     }
    ],
    "role": "contributor",
-   "finalUrl": "/tutorials/4d452fd9-f47c-44ba-830f-b952f1517912/details",
+   "finalUrl": "/tutorials/d12a63ff-06d0-4102-b22b-3f80a3f797b5/details",
    "explained": [],
    "boardHeadings": 0,
    "liveHeadings": 1
@@ -1381,7 +1231,7 @@
    "id": "ed_steps",
    "name": "Editor · steps",
    "group": "push",
-   "route": "/tutorials/4d452fd9-f47c-44ba-830f-b952f1517912/steps",
+   "route": "/tutorials/d12a63ff-06d0-4102-b22b-3f80a3f797b5/steps",
    "findings": [
     {
      "type": "missing-section",
@@ -1395,11 +1245,11 @@
      "severity": "medium",
      "what": "1/1 board paragraphs absent",
      "board": "one photo and one instruction per action. this section is empty.",
-     "live": null
+     "live": "one photo and one instruction per action. optional — the pdf still car"
     }
    ],
    "role": "contributor",
-   "finalUrl": "/tutorials/4d452fd9-f47c-44ba-830f-b952f1517912/steps",
+   "finalUrl": "/tutorials/d12a63ff-06d0-4102-b22b-3f80a3f797b5/steps",
    "explained": [],
    "boardHeadings": 0,
    "liveHeadings": 1
@@ -1408,7 +1258,7 @@
    "id": "ed_parts",
    "name": "Editor · parts",
    "group": "push",
-   "route": "/tutorials/4d452fd9-f47c-44ba-830f-b952f1517912/parts",
+   "route": "/tutorials/d12a63ff-06d0-4102-b22b-3f80a3f797b5/parts",
    "findings": [
     {
      "type": "missing-section",
@@ -1422,7 +1272,7 @@
      "severity": "high",
      "what": "body font",
      "board": "Nunito",
-     "live": "Times"
+     "live": "Times New Roman"
     },
     {
      "type": "missing-section",
@@ -1447,7 +1297,7 @@
     }
    ],
    "role": "contributor",
-   "finalUrl": "/tutorials/4d452fd9-f47c-44ba-830f-b952f1517912/parts",
+   "finalUrl": "/tutorials/d12a63ff-06d0-4102-b22b-3f80a3f797b5/parts",
    "explained": [],
    "boardHeadings": 0,
    "liveHeadings": 1
@@ -1456,14 +1306,14 @@
    "id": "ed_tools",
    "name": "Editor · tools",
    "group": "push",
-   "route": "/tutorials/4d452fd9-f47c-44ba-830f-b952f1517912/tools",
+   "route": "/tutorials/d12a63ff-06d0-4102-b22b-3f80a3f797b5/tools",
    "findings": [
     {
      "type": "font",
      "severity": "high",
      "what": "body font",
      "board": "Nunito",
-     "live": "Times"
+     "live": "Times New Roman"
     },
     {
      "type": "missing-section",
@@ -1481,7 +1331,7 @@
     }
    ],
    "role": "contributor",
-   "finalUrl": "/tutorials/4d452fd9-f47c-44ba-830f-b952f1517912/tools",
+   "finalUrl": "/tutorials/d12a63ff-06d0-4102-b22b-3f80a3f797b5/tools",
    "explained": [],
    "boardHeadings": 0,
    "liveHeadings": 1
@@ -1490,7 +1340,7 @@
    "id": "ed_safety",
    "name": "Editor · safety",
    "group": "push",
-   "route": "/tutorials/4d452fd9-f47c-44ba-830f-b952f1517912/safety",
+   "route": "/tutorials/d12a63ff-06d0-4102-b22b-3f80a3f797b5/safety",
    "findings": [
     {
      "type": "missing-section",
@@ -1504,11 +1354,11 @@
      "severity": "medium",
      "what": "1/1 board paragraphs absent",
      "board": "anything that could hurt a child, stated plainly.",
-     "live": null
+     "live": "• any button or coin cell sits behind a compartment that needs a tool "
     }
    ],
    "role": "contributor",
-   "finalUrl": "/tutorials/4d452fd9-f47c-44ba-830f-b952f1517912/safety",
+   "finalUrl": "/tutorials/d12a63ff-06d0-4102-b22b-3f80a3f797b5/safety",
    "explained": [],
    "boardHeadings": 0,
    "liveHeadings": 1
@@ -1517,7 +1367,7 @@
    "id": "ed_stl",
    "name": "Editor · STL",
    "group": "push",
-   "route": "/tutorials/4d452fd9-f47c-44ba-830f-b952f1517912/stl",
+   "route": "/tutorials/d12a63ff-06d0-4102-b22b-3f80a3f797b5/stl",
    "findings": [
     {
      "type": "missing-section",
@@ -1535,7 +1385,7 @@
     }
    ],
    "role": "contributor",
-   "finalUrl": "/tutorials/4d452fd9-f47c-44ba-830f-b952f1517912/stl",
+   "finalUrl": "/tutorials/d12a63ff-06d0-4102-b22b-3f80a3f797b5/stl",
    "explained": [],
    "boardHeadings": 1,
    "liveHeadings": 1
@@ -1545,15 +1395,7 @@
    "name": "My toys",
    "group": "push",
    "route": "/toys",
-   "findings": [
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "1/1 board paragraphs absent",
-     "board": "the adapted toys you hold, ready to offer for exchange.",
-     "live": null
-    }
-   ],
+   "findings": [],
    "role": "parent",
    "finalUrl": "/toys",
    "explained": [],
@@ -1585,7 +1427,7 @@
      "severity": "medium",
      "what": "1/1 board paragraphs absent",
      "board": "one adapted item you hold — its condition, a photo, and whether it is ",
-     "live": null
+     "live": "give it a name and a condition — everything else comes next."
     }
    ],
    "role": "parent",
@@ -1598,7 +1440,7 @@
    "id": "toy_detail",
    "name": "Toy detail",
    "group": "push",
-   "route": "/toys/f06ebdb4-2683-4834-9c2d-1f9116e7d1ab",
+   "route": "/toys/9fb80208-0b88-47fa-83d7-338899bb2295",
    "findings": [
     {
      "type": "radius",
@@ -1612,7 +1454,7 @@
      "severity": "medium",
      "what": "1/1 board paragraphs absent",
      "board": "light-up drum — listed # june, good condition, switch-adapted. two fam",
-     "live": null
+     "live": "built from a guide? (optional)"
     },
     {
      "type": "shadow",
@@ -1623,7 +1465,7 @@
     }
    ],
    "role": "parent",
-   "finalUrl": "/toys/f06ebdb4-2683-4834-9c2d-1f9116e7d1ab",
+   "finalUrl": "/toys/9fb80208-0b88-47fa-83d7-338899bb2295",
    "explained": [],
    "boardHeadings": 0,
    "liveHeadings": 2
@@ -1633,15 +1475,7 @@
    "name": "My exchanges",
    "group": "push",
    "route": "/exchanges",
-   "findings": [
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "1/1 board paragraphs absent",
-     "board": "toys you have asked for, toys people have asked you for, and builds yo",
-     "live": null
-    }
-   ],
+   "findings": [],
    "role": "parent",
    "finalUrl": "/exchanges",
    "explained": [],
@@ -1653,15 +1487,7 @@
    "name": "My challenges",
    "group": "push",
    "route": "/challenges",
-   "findings": [
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "1/1 board paragraphs absent",
-     "board": "challenges you have joined as a maker, and ideas you have submitted at",
-     "live": null
-    }
-   ],
+   "findings": [],
    "role": "parent",
    "finalUrl": "/challenges",
    "explained": [],
@@ -1673,15 +1499,7 @@
    "name": "Saved",
    "group": "push",
    "route": "/saved",
-   "findings": [
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "1/1 board paragraphs absent",
-     "board": "everything you kept to come back to, grouped by the kind of thing it i",
-     "live": null
-    }
-   ],
+   "findings": [],
    "role": "parent",
    "finalUrl": "/saved",
    "explained": [],
@@ -1693,15 +1511,7 @@
    "name": "Saved list",
    "group": "push",
    "route": "/saved/tutorials",
-   "findings": [
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "1/1 board paragraphs absent",
-     "board": "guides you kept to build later.",
-     "live": null
-    }
-   ],
+   "findings": [],
    "role": "parent",
    "finalUrl": "/saved/tutorials",
    "explained": [],
@@ -1732,13 +1542,6 @@
      "what": "card radius",
      "board": "20px",
      "live": "24px"
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "1/1 board paragraphs absent",
-     "board": "parts you have asked someone to print. tap one to see where it is.",
-     "live": null
     }
    ],
    "role": "parent",
@@ -1795,20 +1598,6 @@
      "live": "18px"
     },
     {
-     "type": "copy",
-     "severity": "medium",
-     "what": "4/4 board paragraphs absent",
-     "board": "four things. requests are matched on material and bed size, so those t",
-     "live": null
-    },
-    {
-     "type": "radius",
-     "severity": "low",
-     "what": "input radius",
-     "board": "16px",
-     "live": "0px"
-    },
-    {
      "type": "colour",
      "severity": "low",
      "what": "card background",
@@ -1838,18 +1627,10 @@
    "id": "ability",
    "name": "Ability profile",
    "group": "push",
-   "route": "/account/child/72e2f583-bed5-42bf-8ba3-4ae85f69bcb4",
-   "findings": [
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "5/5 board paragraphs absent",
-     "board": "used to rank guides by whether the switch they call for is one your ch",
-     "live": null
-    }
-   ],
+   "route": "/account/child/26bc19a5-bed7-4208-9b7f-5165ef4da65d",
+   "findings": [],
    "role": "parent",
-   "finalUrl": "/account/child/72e2f583-bed5-42bf-8ba3-4ae85f69bcb4",
+   "finalUrl": "/account/child/26bc19a5-bed7-4208-9b7f-5165ef4da65d",
    "explained": [],
    "boardHeadings": 0,
    "liveHeadings": 4
@@ -1858,18 +1639,10 @@
    "id": "needs",
    "name": "Everyday needs",
    "group": "push",
-   "route": "/account/child/72e2f583-bed5-42bf-8ba3-4ae85f69bcb4",
-   "findings": [
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "2/2 board paragraphs absent",
-     "board": "what matters in the room, rather than in the hand.",
-     "live": null
-    }
-   ],
+   "route": "/account/child/26bc19a5-bed7-4208-9b7f-5165ef4da65d",
+   "findings": [],
    "role": "parent",
-   "finalUrl": "/account/child/72e2f583-bed5-42bf-8ba3-4ae85f69bcb4",
+   "finalUrl": "/account/child/26bc19a5-bed7-4208-9b7f-5165ef4da65d",
    "explained": [],
    "boardHeadings": 0,
    "liveHeadings": 4
@@ -1888,18 +1661,18 @@
    "id": "child",
    "name": "Child profile",
    "group": "push",
-   "route": "/account/child/72e2f583-bed5-42bf-8ba3-4ae85f69bcb4",
+   "route": "/account/child/26bc19a5-bed7-4208-9b7f-5165ef4da65d",
    "findings": [
     {
      "type": "copy",
      "severity": "medium",
-     "what": "3/3 board paragraphs absent",
+     "what": "2/3 board paragraphs absent",
      "board": "ollie, age # everything here is optional and private to you — never sh",
-     "live": null
+     "live": "every field is optional. we use this only to suggest guides that suit "
     }
    ],
    "role": "parent",
-   "finalUrl": "/account/child/72e2f583-bed5-42bf-8ba3-4ae85f69bcb4",
+   "finalUrl": "/account/child/26bc19a5-bed7-4208-9b7f-5165ef4da65d",
    "explained": [],
    "boardHeadings": 0,
    "liveHeadings": 4
@@ -1909,15 +1682,7 @@
    "name": "Review queue",
    "group": "push",
    "route": "/organisation",
-   "findings": [
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "1/1 board paragraphs absent",
-     "board": "guides waiting for northside therapy collective. oldest first.",
-     "live": null
-    }
-   ],
+   "findings": [],
    "role": "leader",
    "finalUrl": "/organisation",
    "explained": [],
@@ -1945,7 +1710,7 @@
      "severity": "medium",
      "what": "1/1 board paragraphs absent",
      "board": "# on the shelf, # out with families, # need cleaning.",
-     "live": null
+     "live": "# listing, # units on the shelf."
     }
    ],
    "role": "leader",
@@ -2020,7 +1785,7 @@
      "severity": "medium",
      "what": "1/1 board paragraphs absent",
      "board": "the review queues and the report inbox. anything with a number is wait",
-     "live": null
+     "live": "review tables don't fit a phone. these open on the web, signed in."
     }
    ],
    "role": "admin",
@@ -2040,7 +1805,7 @@
      "severity": "medium",
      "what": "2/2 board paragraphs absent",
      "board": "a name helps us talk about them naturally. it is never shared.",
-     "live": null
+     "live": "hi! a few quick questions. skip any you like."
     },
     {
      "type": "radius",
@@ -2048,20 +1813,6 @@
      "what": "button radius range",
      "board": "999px",
      "live": "14px"
-    },
-    {
-     "type": "radius",
-     "severity": "low",
-     "what": "input radius",
-     "board": "15px",
-     "live": "0px"
-    },
-    {
-     "type": "colour",
-     "severity": "low",
-     "what": "input background",
-     "board": "rgb(255,255,255)",
-     "live": "rgba(0,0,0,0)"
     }
    ],
    "role": "parent",
@@ -2095,21 +1846,7 @@
      "severity": "medium",
      "what": "1/1 board paragraphs absent",
      "board": "free to read, reviewed guides for switch-adapted play.",
-     "live": null
-    },
-    {
-     "type": "radius",
-     "severity": "low",
-     "what": "input radius",
-     "board": "15px",
-     "live": "0px"
-    },
-    {
-     "type": "colour",
-     "severity": "low",
-     "what": "input background",
-     "board": "rgb(255,255,255)",
-     "live": "rgba(0,0,0,0)"
+     "live": "no paid tier. not a medical device."
     }
    ],
    "role": "guest",
@@ -2121,20 +1858,20 @@
  ],
  "summary": {
   "screens": 61,
-  "clean": 5,
-  "withFindings": 53,
+  "clean": 16,
+  "withFindings": 42,
   "errored": 0,
   "skipped": 3,
-  "findings": 191,
+  "findings": 155,
   "explained": 0,
   "byType": {
    "missing-section": 33,
-   "radius": 42,
-   "colour": 12,
    "font": 16,
    "size": 10,
-   "copy": 55,
+   "copy": 32,
+   "radius": 35,
    "weight": 14,
+   "colour": 6,
    "extra-section": 4,
    "shadow": 5
   }

@@ -48,8 +48,22 @@ const { chromium } = require(
   assert.strictEqual(title.weight, 800, 'weight not read from the family name')
   assert.strictEqual(rn.page.canvas, 'rgb(250,249,247)', 'canvas not taken from the screen')
   assert.strictEqual(rn.page.bodyFont, 'Nunito', 'body font not taken from the text')
+
+  // React Native web: prose is <div dir="auto">, and a TextInput is a bare
+  // <input> inside the view that draws the field.
+  await page.setContent(`
+    <div id="root">
+      <div dir="auto" style="font-family:Nunito_400Regular;font-size:15px">Pick up to three printers. The first to accept takes the job.</div>
+      <div style="border:1.5px solid rgb(220,220,220);border-radius:14px;background:rgb(255,255,255);padding:0 12px">
+        <input style="border:0;border-radius:0;background:transparent;height:44px" placeholder="Search">
+      </div>
+    </div>`)
+  const f2 = await page.evaluate(collectFingerprint, { root: '#root' })
+  assert.ok(f2.paragraphs.some((t) => t.startsWith('pick up to three printers')), 'RN prose not collected')
+  assert.strictEqual(f2.shapes.input.radius, 14, 'field radius taken from the bare input')
+  assert.strictEqual(f2.shapes.input.bg, 'rgb(255,255,255)', 'field fill taken from the bare input')
   await browser.close()
-  console.log('fingerprint: 8 checks passed')
+  console.log('fingerprint: 11 checks passed')
 })().catch((e) => {
   console.error(e.message)
   process.exit(1)
