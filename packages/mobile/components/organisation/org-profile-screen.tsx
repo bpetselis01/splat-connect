@@ -260,7 +260,7 @@ export function OrgProfileScreen({ id }: { id: string }) {
       ) : null}
 
       {org.toysShared.length > 0 ? (
-        <Section title={<>Toys on their shelf <Text style={styles.count}>{org.toysShared.length} available</Text></>}>
+        <Section title={<>Toys on their shelf <Text style={styles.count}>{org.toysShared.length}</Text></>}>
           {org.toysShared.map((t) => (
             <AnimatedPressable
               key={t.id}
