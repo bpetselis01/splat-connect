@@ -93,7 +93,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 - Platforms: mobile, api
 - Needs: A product decision (see question), then the build it implies.
-- In code: `packages/mobile/components/printing/request-screen.tsx:208`, `packages/mobile/components/recycling/recycling-screen.tsx:177`
+- In code: `packages/mobile/components/printing/request-screen.tsx:208`, `packages/mobile/components/recycling/recycling-screen.tsx:181`
 
 ### `recycling-intake-credit-rule` — Credit from weight
 
@@ -440,7 +440,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 - Platforms: mobile, web, api
 - Needs: Machines, forms, min/max, turnaround, you get, hours, door; max check [ui,api,db]
-- In code: `packages/api/src/routes/organizations.ts:1436`, `packages/mobile/components/organisation/org-profile-screen.tsx:210`, `packages/mobile/components/recycling/intake-screen.tsx:166`, `packages/mobile/components/recycling/recycling-screen.tsx:248`
+- In code: `packages/api/src/routes/organizations.ts:1436`, `packages/mobile/components/organisation/org-profile-screen.tsx:210`, `packages/mobile/components/recycling/intake-screen.tsx:166`, `packages/mobile/components/recycling/recycling-screen.tsx:252`
 
 ### `printer-stats` — Printer track record
 
@@ -578,7 +578,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 - Platforms: mobile, api
 - Needs: Photo of sorted plastic (column exists) [ui,api]
-- In code: `packages/mobile/components/recycling/recycling-screen.tsx:442`
+- In code: `packages/mobile/components/recycling/recycling-screen.tsx:446`
 
 ### `me-count-badges` — Counts on My SPLAT
 

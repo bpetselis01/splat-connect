@@ -85,7 +85,11 @@ export function RecyclingScreen() {
   const [booked, setBooked] = useState<string | null>(null)
 
   const load = useCallback(async () => {
-    if (!me) return
+    // Signed out there is nothing to fetch — say so rather than spin forever.
+    if (!me) {
+      setLoading(false)
+      return
+    }
     try {
       const [all, mine] = await Promise.all([
         apiClient.get<TakerOrg[]>('/api/public/organizations'),
@@ -156,7 +160,7 @@ export function RecyclingScreen() {
         ) : null}
 
         {loading ? (
-          <View>
+          <View testID="recycling-skeleton">
             <SkeletonRow />
             <SkeletonRow />
           </View>

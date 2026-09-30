@@ -186,7 +186,7 @@ finish() {
 
 # PENDING(apple-sign-in) PENDING(google-sign-in) PENDING(apple-revoke) PENDING(email-delivery):
 # this wizard is how each of those is finished; the checklist is
-# docs/superpowers/plans/2026-09-30-sign-in-remaining-work.md.
+# docs/PENDING.md.
 #
 # Setup for docs/superpowers/specs/2026-09-30-mobile-sign-in-design.md
 # ("Setup only Byron can do"). Run from the repo root:

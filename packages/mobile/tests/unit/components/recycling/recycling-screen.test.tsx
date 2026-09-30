@@ -18,8 +18,9 @@ jest.mock('expo-router', () => {
     useRouter: () => ({ push: jest.fn() }),
   }
 })
+let mockCaps: { profile: { id: string }; ledOrgs: never[] } | null = { profile: { id: 'me' }, ledOrgs: [] }
 jest.mock('../../../../lib/capabilities', () => ({
-  useCapabilities: () => ({ caps: { profile: { id: 'me' }, ledOrgs: [] }, loading: false, refresh: jest.fn() }),
+  useCapabilities: () => ({ caps: mockCaps, loading: false, refresh: jest.fn() }),
 }))
 
 const ORGS = [
@@ -35,6 +36,7 @@ const MINE = [
 
 beforeEach(() => {
   jest.clearAllMocks()
+  mockCaps = { profile: { id: 'me' }, ledOrgs: [] }
   mockGet.mockImplementation((path: string) =>
     Promise.resolve(path === '/api/public/organizations' ? ORGS : path === '/api/organizations/recycling/mine' ? MINE : [])
   )
@@ -86,4 +88,11 @@ it('cancels a booking that is still waiting, and only that one', async () => {
     expect(mockPost).toHaveBeenCalledWith('/api/organizations/north/recycling/waiting/cancel', {})
   )
   expect(screen.queryByLabelText('Cancel the PETG drop-off')).toBeNull()
+})
+
+// Signed out there is nothing to load; the skeleton must not spin forever.
+it('stops loading when signed out', async () => {
+  mockCaps = null
+  render(<RecyclingScreen />)
+  await waitFor(() => expect(screen.queryByTestId('recycling-skeleton')).toBeNull())
 })
