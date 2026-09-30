@@ -61,6 +61,9 @@ async function seedExchange(db, parentId) {
       pickup_state: 'NSW',
       pickup_postcode: '2300',
       pickup_instructions: 'Thursday after three, Newcastle clinic',
+      // The board's thread is at the handover, codes issued.
+      requester_code: '482913',
+      owner_code: '173650',
     })
     .select('id')
     .single()
@@ -163,6 +166,8 @@ async function seedBuild(db, parentId) {
       build_brief: 'A 100 mm button, standard 3.5 mm. Whenever suits.',
       child_label: 'Leo, 3',
       requester_suburb: 'Glebe',
+      // The board's build has a working shot up; the page only links the path.
+      working_photo_url: 'parity/shot.jpg',
     })
     .select('id')
     .single()
@@ -260,7 +265,14 @@ async function seedOrgRequests(db, familyId, orgId) {
  * each job. printer_id RESTRICTs, so jobs and printer are undone in that order.
  */
 async function seedPrinterWithJobs(db, owner, requesterId) {
-  const tutorial_id = await approvedGuide(db)
+  // A guide with STL files: the job card lists the files it asks for, and a
+  // guide without any drew a card with no files line against the board's.
+  const { data: stls } = await db
+    .from('stl_files')
+    .select('id, tutorial_id, tutorials!inner(status)')
+    .eq('tutorials.status', 'approved')
+    .limit(20)
+  const tutorial_id = stls?.[0]?.tutorial_id || (await approvedGuide(db))
   if (!tutorial_id || !requesterId) return
   const { data: printer } = await db
     .from('printers')
@@ -292,15 +304,24 @@ async function seedPrinterWithJobs(db, owner, requesterId) {
     requester_suburb: 'Ashfield',
     ...(status === 'accepted' ? { printing_started_at: new Date().toISOString() } : {}),
   })
-  await swallow(
-    // Three waiting, the board's count, and one on the bed.
-    db.from('toy_transactions').insert([
+  // Three waiting, the board's count, and one on the bed.
+  const { data: jobs } = await db
+    .from('toy_transactions')
+    .insert([
       job('requested', 'For a cot rail — the round one, about 25 mm across.'),
       job('requested', 'Our old one snapped at the hinge. Same size is fine.'),
       job('requested', 'For a client trial on Thursday. Two sizes if you can manage it.'),
       job('accepted', null),
     ])
-  )
+    .select('id')
+  // Cascades with the job.
+  const files = (stls || []).filter((f) => f.tutorial_id === tutorial_id)
+  if (jobs?.length && files.length)
+    await swallow(
+      db.from('print_job_files').insert(
+        jobs.flatMap((j) => files.map((f) => ({ transaction_id: j.id, stl_file_id: f.id })))
+      )
+    )
 }
 
 /**
@@ -364,12 +385,13 @@ async function seedPrintRequest(db, parentId) {
   if (!printer) return null
   // toy_transactions_subject requires a print to name the guide its parts come
   // from — "parts come from the guide, never uploaded" enforced in the schema.
-  const { data: tut } = await db
-    .from('tutorials')
-    .select('id')
-    .eq('status', 'approved')
-    .limit(1)
-    .maybeSingle()
+  // A guide with STL files, so the job names the parts it asks for.
+  const { data: stls } = await db
+    .from('stl_files')
+    .select('id, tutorial_id, tutorials!inner(status)')
+    .eq('tutorials.status', 'approved')
+    .limit(20)
+  const tut = stls?.[0] ? { id: stls[0].tutorial_id } : null
   if (!tut) return null
   const { data, error } = await db
     .from('toy_transactions')
@@ -383,7 +405,13 @@ async function seedPrintRequest(db, parentId) {
     })
     .select('id')
     .single()
-  return error ? null : data.id
+  if (error) return null
+  await swallow(
+    db.from('print_job_files').insert(
+      stls.filter((f) => f.tutorial_id === tut.id).map((f) => ({ transaction_id: data.id, stl_file_id: f.id }))
+    )
+  )
+  return data.id
 }
 
 /** A tutorial the contributor owns — /tutorials/[id]/edit. */
@@ -612,6 +640,16 @@ async function seed(db, users) {
  * unmeasured forever. (That it is orphaned is worth knowing on its own.)
  */
 const DB_SAMPLES = {
+  // The board draws the queue with a guide selected and its pane open.
+  admin_review: async (db) => {
+    const { data } = await db
+      .from('tutorials')
+      .select('id')
+      .eq('status', 'pending')
+      .limit(1)
+      .single()
+    return data ? `/admin/review?selected=${data.id}` : null
+  },
   // The endpoint 404s on zero public contributions, so a showcased profile is
   // not enough — it has to be one that actually has an approved guide.
   contributor: async (db) => {
@@ -632,6 +670,10 @@ const DB_SAMPLES = {
       .from('stl_files')
       .select('tutorial_id, tutorials!inner(status)')
       .eq('tutorials.status', 'approved')
+      // The summary tiles read "3 h 10 min" and "40 g PETG" off the files.
+      .not('print_minutes', 'is', null)
+      .not('filament_grams', 'is', null)
+      .not('material', 'is', null)
       .limit(1)
       .single()
     return data ? `/printing/requests?guide=${data.tutorial_id}` : null

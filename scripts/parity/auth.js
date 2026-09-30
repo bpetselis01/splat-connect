@@ -85,7 +85,15 @@ async function provision(roles) {
     if (role === 'leader') {
       const { data, error } = await db
         .from('organizations')
-        .insert({ name: `Parity Org ${stamp()}`, status: 'active' })
+        // The board's sample org, by name and by what it offers: org headings
+        // and the queue lede quote the name, and the profile's service rows
+        // are tinted only when switched on. organizations.name is not unique,
+        // and cleanup deletes by id.
+        .insert({
+          name: 'Northside Therapy Collective',
+          status: 'active',
+          capabilities: ['Backs guides', 'Holds toys', 'Takes recycling', 'Has a printer'],
+        })
         .select('id')
         .single()
       if (error) throw new Error(`org: ${error.message}`)

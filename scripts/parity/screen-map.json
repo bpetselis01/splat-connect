@@ -423,7 +423,15 @@
   "group": "Organisation",
   "boardRoute": "/dashboard/organisation/requests",
   "route": "/dashboard/organisation/requests",
-  "role": "leader"
+  "role": "leader",
+  "explained": [
+   {
+    "type": "copy",
+    "match": "h1 wording",
+    "why": "fixture",
+    "reason": "The board shortens its sample org's name in the heading; live prints the org's full name."
+   }
+  ]
  },
  {
   "id": "my_events",
@@ -732,7 +740,15 @@
   "group": "Organisation",
   "boardRoute": "/dashboard/organisation/toys",
   "route": "/dashboard/organisation/toys",
-  "role": "leader"
+  "role": "leader",
+  "explained": [
+   {
+    "type": "extra-section",
+    "match": "pickup details",
+    "why": "intended",
+    "reason": "The org's pickup address; no toy request can be accepted without one, and the banner above says so."
+   }
+  ]
  },
  {
   "id": "org_posts",
@@ -764,7 +780,15 @@
   "group": "Organisation",
   "boardRoute": "/dashboard/organisation/orders",
   "route": "/dashboard/organisation/orders",
-  "role": "leader"
+  "role": "leader",
+  "explained": [
+   {
+    "type": "copy",
+    "match": "board paragraphs absent",
+    "why": "fixture",
+    "reason": "The board's sample files, its 'other printers asked' group and a second bench; the card draws each when the data has them."
+   }
+  ]
  },
  {
   "id": "admin_content",
@@ -788,7 +812,8 @@
   "group": "Admin",
   "boardRoute": "/admin/review",
   "route": "/admin/review",
-  "role": "admin"
+  "role": "admin",
+  "sampleFrom": "/admin/review"
  },
  {
   "id": "admin_review_detail",

@@ -213,7 +213,8 @@ async function fingerprintOf(page, url, rootSel, role) {
       // sections and words describe that state, so only style is comparable.
       const contentIsOurs = !NO_COPY.test(route) && !s.stateOnly
       row.findings = compare(board, live, {
-        copy: contentIsOurs,
+        // A record's prose is its own data, like its title below.
+        copy: contentIsOurs && !(s.sampleFrom || s.derivedFrom),
         structure: contentIsOurs,
         // On a detail screen the <h1> is the record's own name — the board's
         // "Bubble machine" against a fixture's "E2E reflow detail 1-2". That is
