@@ -181,7 +181,7 @@ cover the new routes.
   by email + password, which bypasses the code; credentials go in App Store
   Connect and Play Console.
 
-## Setup only Byron can do (wizard provided)
+## Setup only Byron can do — `bash scripts/setup-mobile-sign-in.sh`
 
 1. Apple Developer: enable Sign in with Apple on `com.splatconnect.mobile`;
    register the email sending domain (SPF/DKIM) with the private relay service
@@ -190,7 +190,7 @@ cover the new routes.
    debug and release keys), Web (for Supabase); brand verification for the
    consent screen.
 3. Supabase hosted: enable Apple (bundle id as client id) and Google (web client
-   id, skip-nonce off); paste the three templates.
+   id, "Skip nonce checks" on — iOS Google tokens carry a nonce the app cannot supply); paste the three templates.
 4. `.env` values above; `npx expo prebuild --clean`; rebuild on device.
 
 ## Release checklist (not built here)
