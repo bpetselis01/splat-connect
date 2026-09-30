@@ -75,6 +75,12 @@ const KIND: Record<
   },
 }
 
+/** The header's name for a saved list: Saved guides, Saved toys… */
+export function savedTitle(slug: string | undefined) {
+  const noun = slug ? KIND[slug as keyof typeof KIND]?.noun : undefined
+  return noun ? `Saved ${noun}` : 'Saved'
+}
+
 export function SavedListScreen({ slug }: { slug: SaveSlug }) {
   const router = useRouter()
   const saves = useSaves()

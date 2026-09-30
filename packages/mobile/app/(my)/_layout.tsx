@@ -4,6 +4,7 @@ import { Redirect, Stack } from 'expo-router'
 import { stackScreenOptions } from '../../lib/nav-options'
 import { useAuthGate } from '../../lib/use-auth-gate'
 import { HeaderAddButton } from '../../components/ui/HeaderAddButton'
+import { savedTitle } from '../../components/saved/saved-list-screen'
 
 
 export default function MyLayout() {
@@ -43,7 +44,10 @@ export default function MyLayout() {
       {/* One route, three titles would need the param at layout level; the
           generic word covers all three lists and the back chevron says where
           you are anyway. */}
-      <Stack.Screen name="saved/[slug]" options={{ title: 'Saved' }} />
+      <Stack.Screen
+        name="saved/[slug]"
+        options={({ route }) => ({ title: savedTitle((route.params as { slug?: string } | undefined)?.slug) })}
+      />
       <Stack.Screen name="notifications" options={{ title: 'Notifications' }} />
       <Stack.Screen name="print-requests" options={{ title: 'My print requests' }} />
       <Stack.Screen name="print-for-others/index" options={{ title: 'Print for others' }} />
