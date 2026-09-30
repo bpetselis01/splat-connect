@@ -377,7 +377,21 @@ select * from (values
   ('069 org_events carries cost_cents and cost_note',
    (select count(*) = 2 from information_schema.columns
       where table_schema = 'public' and table_name = 'org_events'
-        and column_name in ('cost_cents', 'cost_note')))
+        and column_name in ('cost_cents', 'cost_note'))),
+
+  -- 083. delete_account() is SECURITY DEFINER and takes any user id: callable
+  -- by a signed-in client, it would delete any account. Only the API (service
+  -- role) may run it, after checking who is asking.
+  ('083 delete_account() exists and is service-role only',
+   (select count(*) = 1 from pg_proc p
+      where p.proname = 'delete_account' and p.pronamespace = 'public'::regnamespace
+        and not has_function_privilege('authenticated', p.oid, 'execute')
+        and not has_function_privilege('anon', p.oid, 'execute'))),
+
+  -- 083. Every repointed row references this profile; without it the
+  -- deletion fails on its first foreign key.
+  ('083 Deleted member placeholder profile',
+   (select count(*) = 1 from public.profiles where id = '00000000-0000-4000-8000-00000000dead'))
 ) as t(guard, ok)
 where not ok;
 EOSQL
