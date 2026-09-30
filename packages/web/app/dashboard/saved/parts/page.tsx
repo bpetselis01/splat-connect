@@ -15,6 +15,7 @@ export const metadata = {
 export default function SavedPartsPage() {
   return (
     <ComingSoon
+      pending="saved-parts"
       label="Saved parts"
       description="Printable parts you want to make or ask someone to print for you."
       steps={[

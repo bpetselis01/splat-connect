@@ -17,19 +17,24 @@
 import Link from 'next/link'
 import type { Route } from 'next'
 import type { Icon as PhosphorIcon } from '@phosphor-icons/react'
+import { PENDING, type PendingId } from '@splat-connect/types'
 import { BookOpen } from '@phosphor-icons/react/dist/ssr'
 import { NotifyForm } from '@/components/notify-form'
 
 export function ComingSoon({
-  label,
-  description,
+  pending,
+  label: givenLabel,
+  description: givenDescription,
   steps,
   featureKey,
   alternatives,
   icon: Glyph,
 }: {
-  label: string
-  description: string
+  /** The registry item this page stands for (packages/types/src/pending.ts).
+   *  Its title and blurb fill in whatever label/description the page omits. */
+  pending?: PendingId
+  label?: string
+  description?: string
   steps: string[]
   /** When set, the page offers to notify. Omit for a plain placeholder. */
   featureKey?: string
@@ -41,6 +46,9 @@ export function ComingSoon({
   alternatives?: Array<{ label: string; href: Route }>
   icon?: PhosphorIcon
 }) {
+  const label = givenLabel ?? (pending ? PENDING[pending].title : 'Not built yet')
+  const description = givenDescription ?? (pending ? PENDING[pending].blurb : '')
+
   if (alternatives) {
     return (
       <div className="mx-auto max-w-[640px] py-14 text-center">

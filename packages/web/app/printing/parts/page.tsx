@@ -5,6 +5,7 @@ export const metadata = { title: 'Printable parts — SPLAT Connect' }
 export default function PrintingPartsPage() {
   return (
     <ComingSoon
+      pending="printing-parts"
       featureKey="printing-parts"
       label="Printable parts"
       description="A catalogue of STL files for switch mounts, cases and interrupter housings — each one sized and print-tested rather than guessed at."

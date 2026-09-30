@@ -6,6 +6,7 @@ export const metadata = { title: 'Deliveries map — SPLAT Connect' }
 export default function MapPage() {
   return (
     <ComingSoon
+      pending="impact-map"
       featureKey="map"
       label="Deliveries map"
       description="Where adapted toys have actually landed."
