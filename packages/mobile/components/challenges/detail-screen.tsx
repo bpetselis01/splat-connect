@@ -285,7 +285,9 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
             {`Published ${shortDate(challenge.created_at)} · ${challenge.author_name ?? 'anonymous'}`}
           </Text>
         </View>
-        <Text style={styles.title}>{challenge.title}</Text>
+        <Text style={styles.title} accessibilityRole="header">
+          {challenge.title}
+        </Text>
 
         {/*
           The one control, above everything, as on the board. The gate copy is

@@ -138,7 +138,9 @@ export function ToyDetailScreen({ id }: { id: string }) {
       </View>
 
       <View style={styles.titleRow}>
-        <Text style={styles.title}>{toy.name}</Text>
+        <Text style={styles.title} accessibilityRole="header">
+          {toy.name}
+        </Text>
         {saveBesideAsk ? null : save}
       </View>
 
