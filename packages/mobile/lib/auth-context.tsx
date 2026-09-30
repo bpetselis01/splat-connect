@@ -75,11 +75,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let ignore = false
     Promise.all([
       apiClient.get<Profile>('/api/contributors/me').catch(() => null),
-      apiClient.get<UserAgreement[]>('/api/agreements/me').catch(() => [] as UserAgreement[]),
+      // A failed fetch is "unknown" (null), not "not accepted": the terms gate
+      // guards every signed-in route, and a network blip must not send an
+      // accepted account to it.
+      apiClient.get<UserAgreement[]>('/api/agreements/me').catch(() => null),
     ]).then(([p, rows]) => {
       if (ignore) return
       setProfile(p)
-      setHasContributorTerms(rows.some((r) => r.agreement_type === 'contributor_terms'))
+      setHasContributorTerms(rows ? rows.some((r) => r.agreement_type === 'contributor_terms') : null)
     })
     return () => { ignore = true }
   }, [session?.user?.id])

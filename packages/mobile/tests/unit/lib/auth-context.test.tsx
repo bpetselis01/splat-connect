@@ -214,6 +214,16 @@ describe('useAuth', () => {
     expect(result.current.profile?.name).toBe('Sam')
   })
 
+  it('treats a failed agreements fetch as unknown, not unaccepted', async () => {
+    mockGetSession.mockResolvedValue({ data: { session: { access_token: 't', user: { id: 'u1' } } } })
+    mockApiGet.mockImplementation((path: string) =>
+      path === '/api/agreements/me' ? Promise.reject(new Error('offline')) : Promise.resolve({ id: 'u1', name: 'Ada' })
+    )
+    const { result } = renderHook(() => useAuth(), { wrapper })
+    await waitFor(() => expect(result.current.profile).not.toBeNull())
+    expect(result.current.hasContributorTerms).toBeNull()
+  })
+
   // Tests: an active session triggers a profile fetch that carries the role
   it('loads the profile (with role) when a session exists', async () => {
     mockGetSession.mockResolvedValue({ data: { session: { access_token: 't', user: { id: 'u1' } } } })
