@@ -62,6 +62,13 @@ async function shoot() {
   const roles = [...new Set(screens.flatMap((s) => [s.role, s.seedRole]).filter(Boolean))]
   const users = roles.length ? await provision(roles) : {}
   const db = adminClient()
+  // Killed mid-run (a stopped task, Ctrl-C), the finally below never runs and
+  // the fixtures outlive it: tidy up on the signal too.
+  const tidy = async () => {
+    await unseed(db).catch(() => {})
+    if (Object.keys(users).length) await cleanup(users)
+  }
+  for (const sig of ['SIGINT', 'SIGTERM']) process.once(sig, () => tidy().finally(() => process.exit(1)))
   fs.mkdirSync(OUT, { recursive: true })
   try {
     const seeded = roles.length ? await seed(db, users) : {}
@@ -77,6 +84,9 @@ async function shoot() {
         const route = await resolveAppRoute(s, { seeded, db, cache: new Map() })
         if (!route) continue
         steps.push(
+          // A fresh launch per screen: a sheet one screen opens (About) stayed
+          // on top of every screen shot after it. The Keychain keeps the session.
+          '- runFlow: ../subflows/launch.yaml',
           `- openLink: "splatconnect:/${route}"`,
           // iOS asks before a deep link opens the app.
           '- runFlow: confirm-open.yaml',
@@ -104,8 +114,7 @@ async function shoot() {
       }
     }
   } finally {
-    await unseed(db).catch(() => {})
-    if (Object.keys(users).length) await cleanup(users)
+    await tidy()
   }
   execFileSync(
     'python3',
