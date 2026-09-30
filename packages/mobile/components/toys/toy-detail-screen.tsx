@@ -112,7 +112,7 @@ export function ToyDetailScreen({ id }: { id: string }) {
   // The save sits beside "Ask to collect it" when there is one, as on the
   // board; otherwise it stays by the title.
   const saveBesideAsk = canAsk && (toy.offer_type === 'donation' || toy.offer_type === 'both')
-  const save = <SaveButton slug="toys" id={toy.id} saves={saves} />
+  const save = <SaveButton slug="toys" id={toy.id} saves={saves} circled />
 
   async function thankOrg() {
     setThanking(true)

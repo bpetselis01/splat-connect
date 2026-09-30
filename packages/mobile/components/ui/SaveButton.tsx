@@ -7,7 +7,21 @@ import type { Saves } from '../../lib/saves'
 
 // A heart, as on web's save-button.tsx and the board: outline muted, filled
 // apricot once saved.
-export function SaveButton({ slug, id, saves, size = 22 }: { slug: SaveSlug; id: string; saves: Saves; size?: number }) {
+// circled: the round bordered button a detail screen puts beside its title or
+// action, as on the board; list cards keep the bare heart.
+export function SaveButton({
+  slug,
+  id,
+  saves,
+  size = 22,
+  circled = false,
+}: {
+  slug: SaveSlug
+  id: string
+  saves: Saves
+  size?: number
+  circled?: boolean
+}) {
   const on = saves.isSaved(slug, id)
   return (
     <Pressable
@@ -23,11 +37,21 @@ export function SaveButton({ slug, id, saves, size = 22 }: { slug: SaveSlug; id:
       accessibilityRole="button"
       accessibilityLabel={on ? 'Saved' : 'Save'}
       hitSlop={10}
-      style={styles.button}
+      style={[styles.button, circled && styles.circle]}
     >
       <Ionicons name={on ? 'heart' : 'heart-outline'} size={size} color={on ? theme.colors.apricot : theme.colors.muted} />
     </Pressable>
   )
 }
 
-const styles = StyleSheet.create({ button: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' } })
+const styles = StyleSheet.create({
+  button: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
+  circle: {
+    width: 50,
+    height: 50,
+    borderRadius: theme.radii.pill,
+    borderWidth: theme.border.hairline,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surface,
+  },
+})

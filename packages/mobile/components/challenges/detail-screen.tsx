@@ -321,7 +321,7 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
               </Text>
             )}
           </View>
-          <SaveButton slug="challenges" id={challenge.id} saves={saves} />
+          <SaveButton slug="challenges" id={challenge.id} saves={saves} circled />
         </View>
         {viewerId !== null && !joined && !isAuthor && open ? (
           <Text style={styles.gateHint}>Join this challenge to read and take part in the conversation.</Text>
