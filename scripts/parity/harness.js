@@ -164,7 +164,7 @@ async function runParity(target) {
       }
       row.route = route
 
-      const board = await fingerprintOf(boardPage, `${target.board}#${s.id}`, '[data-screen-label]', role)
+      const board = await fingerprintOf(boardPage, `${target.board}#${s.id}`, target.boardScope || '[data-screen-label]', role)
       if (argv.includes('--shots')) {
         fs.mkdirSync(PAIRS, { recursive: true })
         // The app target shoots the board's screen alone, not the whole artboard page.

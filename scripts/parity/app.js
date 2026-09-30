@@ -22,13 +22,19 @@ runParity({
   live: process.env.PARITY_APP || 'http://localhost:3112',
   pairsDir: path.join(__dirname, 'pairs', 'app'),
   boardShot: '[data-screen-label]',
+  boardScope: { root: '[data-screen-label]', levelSteps: [40, 20, 17] },
   boardViewport: { width: 1440, height: 960 },
   liveViewport: { width: 390, height: 844 },
   // Chrome the board draws in its frame: the floating tab bar, and the stack
   // header's title (React Navigation's is the only heading with aria-level;
   // React Native's own header role renders as a bare <h1 role="heading">).
   // By test id, not role="tablist", which in-content segmented tabs share.
-  liveScope: { root: '#root', exclude: '[data-testid="tab-bar"], header, [role="banner"], [role="heading"][aria-level="1"]' },
+  // levelSteps: the mobile board's scale, h2 at 20-25px and section h3s at 18.
+  liveScope: {
+    root: '#root',
+    exclude: '[data-testid="tab-bar"], header, [role="banner"], [role="heading"][aria-level="1"]',
+    levelSteps: [40, 20, 17],
+  },
   // The parity API's CORS admits the web origin only (packages/api/src/app.ts).
   launchArgs: ['--disable-web-security'],
   signIn: signInApp,

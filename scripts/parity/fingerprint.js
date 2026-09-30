@@ -84,7 +84,9 @@ function collectChrome() {
 function collectFingerprint(arg) {
   // A selector, or { root, exclude }: the app's tab bar and stack header are
   // chrome the board draws in its phone frame, outside the screen compared.
-  const { root: rootSelector, exclude } = typeof arg === 'string' ? { root: arg } : arg
+  // levelSteps: the sizes at which an inferred heading is h1, h2, h3 (else h4).
+  // The desktop default; the mobile board sets its h2s at 20-25px.
+  const { root: rootSelector, exclude, levelSteps = [40, 26, 20] } = typeof arg === 'string' ? { root: arg } : arg
   const root = document.querySelector(rootSelector) || document.body
   const excluded = (el) => !!exclude && !!el.closest(exclude)
 
@@ -307,7 +309,7 @@ function collectFingerprint(arg) {
           ? +h.getAttribute('aria-level')
           : /^H([1-6])$/.test(h.tagName) && h.getAttribute('role') !== 'heading'
             ? +h.tagName[1]
-            : size >= 40 ? 1 : size >= 26 ? 2 : size >= 20 ? 3 : 4,
+            : size >= levelSteps[0] ? 1 : size >= levelSteps[1] ? 2 : size >= levelSteps[2] ? 3 : 4,
         tag: h.tagName,
         text: norm(headingText(h)).slice(0, 80),
         font: fontOf(s),

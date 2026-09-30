@@ -84,8 +84,16 @@ const { chromium } = require(
     </div>`)
   const f4 = await page.evaluate(collectFingerprint, { root: '#root' })
   assert.strictEqual(f4.headings[0].level, 4, 'RN header role read as h1')
+  // The mobile board's type scale: h2 is 20-25px, section h3s 18px.
+  await page.setContent(`
+    <div id="root">
+      <h1 role="heading" dir="auto" style="font-family:Baloo2_800ExtraBold;font-size:24px">Bubble machine</h1>
+      <h1 role="heading" dir="auto" style="font-family:Baloo2_800ExtraBold;font-size:18px">Parts</h1>
+    </div>`)
+  const f5 = await page.evaluate(collectFingerprint, { root: '#root', levelSteps: [40, 20, 17] })
+  assert.deepStrictEqual(f5.headings.map((x) => x.level), [2, 3], 'mobile level steps ignored')
   await browser.close()
-  console.log('fingerprint: 14 checks passed')
+  console.log('fingerprint: 15 checks passed')
 })().catch((e) => {
   console.error(e.message)
   process.exit(1)
