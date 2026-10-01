@@ -2,7 +2,8 @@
  * Live and Done: claimed and handed-over builds from the board, with the
  * maker named and the family no more identified than on the open row. A
  * build asked of a named maker never appears. A Done row says only what was
- * built, by whom and when (F19).
+ * built, by whom and when (F19); so does a Live row to anyone but its two
+ * parties (F19b).
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
@@ -17,6 +18,9 @@ const MAKER = `Tom ${Date.now()}`
 const board = async (u: TestUser, q: string) =>
   app.request(`/api/toy-transactions/builds-board?${q}`, { headers: { Authorization: `Bearer ${u.token}` } })
 type Row = {
+  travel_km: number | null
+  urgency: string | null
+  family_has_toy: boolean
   id: string
   maker_name: string
   mine: boolean
@@ -53,7 +57,7 @@ beforeAll(async () => {
     requester_code: '222222',
   }
   const rows = await db.from('toy_transactions').insert([
-    { ...base, status: 'accepted', travel_km: 10, requester_suburb: 'Newtown', child_label: 'Leo, 3' },
+    { ...base, status: 'accepted', travel_km: 10, requester_suburb: 'Newtown', child_label: 'Leo, 3', build_brief: 'Live note', urgency: 'No rush' },
     { ...base, status: 'completed', travel_km: 5, requester_suburb: 'Enmore', child_label: 'Mia, 5', build_brief: 'Her chair' },
     // Asked of this maker by name: private to the two of them.
     { ...base, status: 'accepted', build_brief: 'Just for you' },
@@ -74,17 +78,24 @@ describe('GET /api/toy-transactions/builds-board', () => {
     const text = await res.text()
     const rows = (JSON.parse(text) as Row[]).filter((r) => r.maker_name === MAKER)
     expect(rows).toHaveLength(1)
-    expect(rows[0]).toMatchObject({ mine: false, party: false, km: null })
+    expect(rows[0]).toMatchObject({
+      mine: false, party: false, km: null,
+      child_label: null, requester_suburb: null, build_brief: null, travel_km: null, urgency: null, family_has_toy: false,
+    })
     expect(rows[0].requester_id).toBeUndefined()
     expect(text).not.toContain(family.id)
     expect(text).not.toContain('Just for you')
+    expect(text).not.toContain('Leo, 3')
+    expect(text).not.toContain('Newtown')
+    expect(text).not.toContain('Live note')
   })
 
-  it('marks the maker and the family as parties to their own build', async () => {
+  it('marks the maker and the family as parties, who still see their own build', async () => {
     const forMaker = ((await (await board(maker, 'tab=live')).json()) as Row[]).find((r) => r.maker_name === MAKER)
     const forFamily = ((await (await board(family, 'tab=live')).json()) as Row[]).find((r) => r.maker_name === MAKER)
-    expect(forMaker).toMatchObject({ party: true, mine: false })
-    expect(forFamily).toMatchObject({ party: true, mine: true })
+    const own = { child_label: 'Leo, 3', requester_suburb: 'Newtown', build_brief: 'Live note' }
+    expect(forMaker).toMatchObject({ party: true, mine: false, ...own })
+    expect(forFamily).toMatchObject({ party: true, mine: true, ...own })
   })
 
   it('lists a handed-over board build under Done with the guide, maker and date only', async () => {

@@ -232,10 +232,10 @@ const BOARD_PAGE = 20
  * this route is the filter. Never requester_id; the maker is named, since the
  * board says who is building it. km is always null: no postcode is read here.
  *
- * A Done row says only what was built, by whom and when (updated_at is the
- * hand-over): 064 hid the child, suburb and note once a build was claimed, and
- * a finished build has no reason to show them again. A Live row keeps the
- * open card's columns.
+ * A row says only what is being built, by whom and when (on Done, updated_at
+ * is the hand-over): 064 hid the child, suburb and note once a build was
+ * claimed. Only on Live, the build's two parties still get them, as their own
+ * row's RLS already lets them read.
  *
  * ponytail: "came from the board" is read off travel_km, which only the open
  * form sends (POST /build requires it there; ask-for-build-form never sends
@@ -264,20 +264,22 @@ toyTransactions.get('/builds-board', async (c) => {
   if ('error' in found) return c.json({ error: found.error.message }, 500)
 
   const userId = c.get('userId')
-  const done = tab === 'done'
   return c.json(
     await Promise.all(
-      rows.map(async ({ requester_id, owner_id, owner_org_id, ...rest }) => ({
-        ...rest,
-        ...(done
-          ? { build_brief: null, travel_km: null, urgency: null, child_label: null, requester_suburb: null, family_has_toy: false }
-          : {}),
-        km: null,
-        tutorial: found.guides.get(rest.tutorial_id as string) ?? null,
-        maker_name: await ownerSideName(admin, { owner_id, owner_org_id }, 'A maker'),
-        mine: requester_id === userId,
-        party: requester_id === userId || owner_id === userId,
-      }))
+      rows.map(async ({ requester_id, owner_id, owner_org_id, ...rest }) => {
+        const party = requester_id === userId || owner_id === userId
+        return {
+          ...rest,
+          ...(tab === 'done' || !party
+            ? { build_brief: null, travel_km: null, urgency: null, child_label: null, requester_suburb: null, family_has_toy: false }
+            : {}),
+          km: null,
+          tutorial: found.guides.get(rest.tutorial_id as string) ?? null,
+          maker_name: await ownerSideName(admin, { owner_id, owner_org_id }, 'A maker'),
+          mine: requester_id === userId,
+          party,
+        }
+      })
     )
   )
 })
