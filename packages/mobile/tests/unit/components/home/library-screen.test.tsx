@@ -216,6 +216,20 @@ describe('LibraryScreen', () => {
     expect(screen.getByText('Build a Robot Arm')).toBeTruthy()
     expect(screen.getByText('Advanced Gearbox')).toBeTruthy()
   })
+
+  it('matches a guide by the parts it uses', async () => {
+    mockEndpoints({
+      tutorials: Promise.resolve([
+        row({ id: '1', title: 'Bubble machine', parts: [{ name: 'Jelly Bean switch' }] }),
+        row({ id: '2', title: 'Robot arm', parts: [{ name: 'Servo' }] }),
+      ]),
+    })
+    render(<LibraryScreen />)
+    await screen.findByText('Bubble machine')
+    fireEvent.changeText(screen.getByPlaceholderText('Search by toy name'), 'jelly')
+    expect(screen.getByText('Bubble machine')).toBeTruthy()
+    expect(screen.queryByText('Robot arm')).toBeNull()
+  })
 })
 
 // 080: the board's "Suits Ollie" — a chip that narrows the list to the guides

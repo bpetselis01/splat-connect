@@ -67,8 +67,8 @@ const TINTS = [
   theme.colors.apricotSoft,
 ]
 
-/** The public list embeds only accepted backings on each row. */
-type ListedTutorial = Tutorial & { tutorial_orgs?: TutorialOrg[] }
+/** The public list embeds only accepted backings on each row, and each guide's part names. */
+type ListedTutorial = Tutorial & { tutorial_orgs?: TutorialOrg[]; parts?: { name: string }[] }
 
 function backer(t: ListedTutorial): string | null {
   const accepted = (t.tutorial_orgs ?? []).find((o) => o.status === 'accepted')
@@ -162,9 +162,11 @@ export function LibraryScreen() {
   const sort = SORTS.find((s) => s.key === sortKey)!
   const visible = tutorials
     .filter((t) => {
-      // PENDING(guides-search-parts): match the parts a guide uses too — they are not in the list payload.
       const matchesQuery =
-        !q || t.title.toLowerCase().includes(q) || (t.description?.toLowerCase().includes(q) ?? false)
+        !q ||
+        t.title.toLowerCase().includes(q) ||
+        (t.description?.toLowerCase().includes(q) ?? false) ||
+        (t.parts ?? []).some((p) => p.name.toLowerCase().includes(q))
       return (
         matchesQuery &&
         (kind === 'all' || t.kind === kind) &&

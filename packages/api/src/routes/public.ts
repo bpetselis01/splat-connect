@@ -30,7 +30,7 @@ publicRoutes.get('/tutorials', async (c) => {
     // The alternative is a request per card on the busiest page on the site.
     // thanks_count and has_stl are 066's computed fields — a count and a flag,
     // never the rows behind them.
-    .select('*, thanks_count, has_stl, tutorial_orgs(status, organizations(id, name))')
+    .select('*, thanks_count, has_stl, parts(name), tutorial_orgs(status, organizations(id, name))')
     .eq('status', 'approved')
     // The default public listing carries only finished designs; anything less
     // mature stays reachable by direct link, wearing its maturity badge.

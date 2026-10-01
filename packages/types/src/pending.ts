@@ -178,6 +178,7 @@ export const PENDING = {
     needs: "\"Clear filters\" on Guides and Toy library empty states [ui]",
   },
   'guides-search-parts': {
+    shipped: true,
     title: "Search by part",
     blurb: "Searching guides by the parts they use is coming.",
     kind: "build",
