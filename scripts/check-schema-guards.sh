@@ -439,7 +439,17 @@ select * from (values
         and ((p.proname = 'print_job_stats'
               and not has_function_privilege('authenticated', p.oid, 'execute')
               and not has_function_privilege('anon', p.oid, 'execute'))
-          or p.proname = 'printer_stats')))
+          or p.proname = 'printer_stats'))),
+
+  -- 098. Test prints decide who is Verified; with RLS off, any key could pass its own.
+  ('098 printer_test_prints has RLS on',
+   (select relrowsecurity from pg_class where oid = 'public.printer_test_prints'::regclass)),
+
+  -- 098. Invoker RLS hides every test print and job, so verified() reads false
+  -- for everyone; printers.ts selects it by name, so absent every list 500s.
+  ('098 verified(printers) is definer',
+   (select count(*) = 1 from pg_proc p
+      where p.pronamespace = 'public'::regnamespace and p.prosecdef and p.proname = 'verified'))
 ) as t(guard, ok)
 where not ok;
 EOSQL

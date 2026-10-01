@@ -21,6 +21,9 @@ export type UploadPath =
   // The printer's "ready" photo. The route answers with the job row rather
   // than an UploadResult, and ignores the id field this helper appends.
   | `/api/toy-transactions/${string}/print-ready`
+  // 098: a printer's SPLAT test print. The printer id is in the path; sent
+  // with idField null, and answers with the test-print row.
+  | `/api/printers/${string}/test-prints`
   // "Start from a PDF": answers with a PdfImportDraft, not an UploadResult,
   // and takes no id field.
   | '/api/tutorials/import-pdf'

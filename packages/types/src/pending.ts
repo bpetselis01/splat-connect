@@ -649,6 +649,7 @@ export const PENDING = {
     needs: "Decided 2026-09-30: postcode centre points (ABS data, CC BY) with a SQL distance in rounded km; postcode on printers and build requests; sort and filter in the four list APIs. No address or point is stored.",
   },
   'printer-verified': {
+    shipped: true,
     title: "Verified printers",
     blurb: "Verified printers are coming.",
     kind: "build",

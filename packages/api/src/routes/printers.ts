@@ -20,14 +20,15 @@ import { Hono } from 'hono'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import { ledOrgIds } from '../toy-access.js'
+import { PHOTO_MIME, PHOTO_MAX_BYTES } from './upload.js'
 import { PRINT_MATERIALS } from '@splat-connect/types'
-import type { PrinterStats } from '@splat-connect/types'
+import type { PrinterStats, TestPrint } from '@splat-connect/types'
 import type { AuthVariables } from '../middleware/auth.js'
 
 const printers = new Hono<{ Variables: AuthVariables }>()
 
 const SELECT =
-  'id, owner_id, owner_org_id, name, materials, bed_x, bed_y, bed_z, suburb, state, accepting, capacity, notes, filament_cents_per_g, rate_note, created_at, updated_at, printer_stats'
+  'id, owner_id, owner_org_id, name, materials, bed_x, bed_y, bed_z, suburb, state, accepting, capacity, notes, filament_cents_per_g, rate_note, created_at, updated_at, printer_stats, verified'
 
 type Row = {
   id: string
@@ -48,6 +49,7 @@ type Row = {
   created_at: string
   updated_at: string
   printer_stats: PrinterStats
+  verified: boolean
 }
 
 /**
@@ -108,6 +110,27 @@ async function ownerNames(
       ((orgs.data ?? []) as Array<{ id: string; name: string }>).map((o) => [o.id, o.name])
     ),
   }
+}
+
+/**
+ * The latest test print per machine (098), for the owner's Get verified line.
+ * Never the photo: the owner already has it, and the path is the API's.
+ */
+async function latestTestPrints(
+  admin: ReturnType<typeof createAdminClient>,
+  printerIds: string[]
+): Promise<Map<string, TestPrint>> {
+  const latest = new Map<string, TestPrint>()
+  if (printerIds.length === 0) return latest
+  const { data } = await admin
+    .from('printer_test_prints')
+    .select('printer_id, verdict, note, submitted_at')
+    .in('printer_id', printerIds)
+    .order('submitted_at', { ascending: false })
+  for (const t of (data ?? []) as Array<TestPrint & { printer_id: string }>) {
+    if (!latest.has(t.printer_id)) latest.set(t.printer_id, { verdict: t.verdict, note: t.note, submitted_at: t.submitted_at })
+  }
+  return latest
 }
 
 /** null when the body is a valid printer, otherwise the reason it is not. */
@@ -222,12 +245,16 @@ printers.get('/mine', async (c) => {
   if (error) return c.json({ error: error.message }, 500)
 
   const rows = (data ?? []) as unknown as Row[]
-  const [counts, names] = await Promise.all([
+  const [counts, names, latest] = await Promise.all([
     openJobCounts(
       admin,
       rows.map((r) => r.id)
     ),
     ownerNames(admin, rows),
+    latestTestPrints(
+      admin,
+      rows.map((r) => r.id)
+    ),
   ])
   return c.json(
     rows.map((r) => ({
@@ -235,6 +262,7 @@ printers.get('/mine', async (c) => {
       owner_name: r.owner_id ? names.people.get(r.owner_id) ?? null : null,
       org_name: r.owner_org_id ? names.orgs.get(r.owner_org_id) ?? null : null,
       open_jobs: counts.get(r.id) ?? 0,
+      test_print: latest.get(r.id) ?? null,
     }))
   )
 })
@@ -264,6 +292,64 @@ printers.get('/:id', async (c) => {
     org_name: row.owner_org_id ? names.orgs.get(row.owner_org_id) ?? null : null,
     open_jobs: counts.get(row.id) ?? 0,
   })
+})
+
+/**
+ * POST /api/printers/:id/test-prints
+ *
+ * The owner's photo of the SPLAT test print (098), for an admin to pass or
+ * fail. One waiting at a time. Written with the service role: the table has
+ * no policy, and this is the one door an owner has to it.
+ */
+printers.post('/:id/test-prints', async (c) => {
+  const userId = c.get('userId')
+  const admin = createAdminClient()
+  const { data: printer, error } = await admin
+    .from('printers')
+    .select('id, owner_id, owner_org_id')
+    .eq('id', c.req.param('id'))
+    .maybeSingle()
+  if (error && error.code !== INVALID_TEXT_REPRESENTATION) return c.json({ error: error.message }, 500)
+  const mine =
+    !!printer &&
+    (printer.owner_id === userId ||
+      (!!printer.owner_org_id && (await ledOrgIds(admin, userId)).includes(printer.owner_org_id)))
+  if (!mine) return c.json({ error: 'No such printer of yours.' }, 404)
+
+  const { data: waiting } = await admin
+    .from('printer_test_prints')
+    .select('id')
+    .eq('printer_id', printer.id)
+    .is('verdict', null)
+    .limit(1)
+  if (waiting?.length) return c.json({ error: 'Your last test print is still waiting for a look.' }, 409)
+
+  const form = await c.req.formData().catch(() => null)
+  const file = form?.get('file')
+  if (!(file instanceof File)) return c.json({ error: 'A photo of the SPLAT test print is required' }, 400)
+  if (!PHOTO_MIME.includes(file.type)) return c.json({ error: 'Photos need to be a JPEG, PNG, WebP, AVIF or HEIC image.' }, 400)
+  if (file.size > PHOTO_MAX_BYTES) return c.json({ error: 'Photos need to be under 10 MB.' }, 400)
+
+  // Nothing in the path comes from the client: 098's CHECK pins it to this
+  // printer's folder, a uuid, and the checked MIME type's extension.
+  const ext = file.type === 'image/jpeg' ? 'jpg' : file.type.slice('image/'.length)
+  const path = `${printer.id}/${crypto.randomUUID()}.${ext}`
+  const bucket = admin.storage.from('printer-test-prints')
+  const { error: uploadError } = await bucket.upload(path, file, { upsert: false })
+  if (uploadError) return c.json({ error: uploadError.message }, 500)
+
+  const { data: row, error: insertError } = await admin
+    .from('printer_test_prints')
+    .insert({ printer_id: printer.id, photo_path: path })
+    .select('id, printer_id, verdict, note, submitted_at')
+    .single()
+  if (insertError) {
+    await bucket.remove([path])
+    // 098's one-waiting index: a second post raced past the check above.
+    if (insertError.code === '23505') return c.json({ error: 'Your last test print is still waiting for a look.' }, 409)
+    return c.json({ error: insertError.message }, 500)
+  }
+  return c.json(row, 201)
 })
 
 /**

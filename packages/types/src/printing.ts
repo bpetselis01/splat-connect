@@ -148,3 +148,17 @@ export interface CataloguePage {
   pages: number
   total: number
 }
+
+/** Completed print jobs a printer needs, beside a passed test print, to be verified (098). */
+export const VERIFIED_MIN_JOBS = 3
+
+/** The latest test print on one of the caller's machines (GET /api/printers/mine). */
+export interface TestPrint {
+  verdict: 'pass' | 'fail' | null
+  note: string | null
+  submitted_at: string
+}
+
+/** Waiting / Passed / Failed — the owner's status line. */
+export const testPrintLabel = (t: TestPrint) =>
+  t.verdict === 'pass' ? 'Passed' : t.verdict === 'fail' ? 'Failed' : 'Waiting'

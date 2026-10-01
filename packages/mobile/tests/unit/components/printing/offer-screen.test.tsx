@@ -10,6 +10,12 @@ jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
 jest.mock('../../../../lib/auth-context', () => ({ useAuth: jest.fn() }))
 jest.mock('expo-image-picker', () => ({}))
 
+const mockSubmit = jest.fn()
+jest.mock('../../../../components/printing/actions', () => ({
+  ...jest.requireActual('../../../../components/printing/actions'),
+  submitTestPrint: (...a: unknown[]) => mockSubmit(...a),
+}))
+
 const mockGet = jest.fn()
 const mockPost = jest.fn()
 jest.mock('../../../../lib/api-client', () => ({
@@ -148,4 +154,22 @@ it('shows the printer the family’s customization answers', async () => {
   )
   render(<PrintForOthersScreen />)
   expect(await screen.findByText('Reach from seated: 20–40 cm')).toBeTruthy()
+})
+
+it('offers Get verified on a printer, and shows a failed test print’s note', async () => {
+  mockSubmit.mockResolvedValue({})
+  mockGet.mockImplementation((path: string) =>
+    Promise.resolve(
+      path === '/api/printers/mine'
+        ? [machine('Bambu P1S', { test_print: { verdict: 'fail', note: 'Stringing on the arch.', submitted_at: '' } }), machine('Prusa', { test_print: { verdict: null, note: null, submitted_at: '' } })]
+        : []
+    )
+  )
+  render(<PrintForOthersScreen />)
+  fireEvent.press(await screen.findByText('My printers'))
+  expect(screen.getByText('Failed')).toBeTruthy()
+  expect(screen.getByText('“Stringing on the arch.”')).toBeTruthy()
+  expect(screen.getByText('Waiting')).toBeTruthy()
+  fireEvent.press(screen.getByText('Get verified'))
+  await waitFor(() => expect(mockSubmit).toHaveBeenCalledWith('Bambu P1S'))
 })

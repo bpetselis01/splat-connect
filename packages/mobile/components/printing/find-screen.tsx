@@ -9,9 +9,9 @@
  * nothing to send yet, and the screen says where to start instead of offering
  * a Pick that leads nowhere.
  *
- * The board's "Within 10 km" and "Verified" filters are not drawn: a printer row
- * stores a suburb, not a location, and has no verified flag. A filter that
- * filters on nothing is worse than no filter.
+ * The board's "Within 10 km" filter is not drawn: a printer row stores a
+ * suburb, not a location. A filter that filters on nothing is worse than no
+ * filter.
  */
 import { useEffect, useState } from 'react'
 import { View, Text, ScrollView, StyleSheet } from 'react-native'
@@ -53,6 +53,7 @@ export function FindPrinterScreen({ guideId }: { guideId?: string }) {
   const [picks, setPicks] = useState<string[]>([])
   const [openOnly, setOpenOnly] = useState(false)
   const [hasMaterial, setHasMaterial] = useState(false)
+  const [verifiedOnly, setVerifiedOnly] = useState(false)
 
   useEffect(() => {
     Promise.all([
@@ -99,6 +100,7 @@ export function FindPrinterScreen({ guideId }: { guideId?: string }) {
     (p) =>
       (!openOnly || isOpen(p)) &&
       (!hasMaterial || p.materials.includes(material)) &&
+      (!verifiedOnly || !!p.verified) &&
       bedFits(p, guide?.stl_files ?? [])
   )
   const canPick = !!guide && guide.stl_files.length > 0
@@ -144,8 +146,7 @@ export function FindPrinterScreen({ guideId }: { guideId?: string }) {
           <Chip label={`Has ${material}`} icon="cube-outline" active={hasMaterial} onPress={() => setHasMaterial((v) => !v)} />
           {/* PENDING(locations-and-distance) */}
           <Chip label="Within 10 km" icon="location-outline" active={false} onPress={() => router.push(pendingHref('locations-and-distance'))} />
-          {/* PENDING(printer-verified) */}
-          <Chip label="Verified" active={false} onPress={() => router.push(pendingHref('printer-verified'))} />
+          <Chip label="Verified" icon="shield-checkmark-outline" active={verifiedOnly} onPress={() => setVerifiedOnly((v) => !v)} />
         </ScrollView>
 
         <Text style={styles.eyebrow}>{plural(shown.length, 'printer')}</Text>
@@ -163,6 +164,7 @@ export function FindPrinterScreen({ guideId }: { guideId?: string }) {
                 onPress={() => {
                   setOpenOnly(false)
                   setHasMaterial(false)
+                  setVerifiedOnly(false)
                 }}
                 style={styles.clear}
               />
@@ -181,7 +183,13 @@ export function FindPrinterScreen({ guideId }: { guideId?: string }) {
                     <Text style={styles.iniText}>{initials(who)}</Text>
                   </View>
                   <View style={styles.flex}>
-                    <Text style={styles.printerName}>{who}</Text>
+                    <View style={styles.nameRow}>
+                      <Text style={styles.printerName}>{who}</Text>
+                      {p.verified ? (
+                        // Ionicons has no seal-check; the shield is its nearest.
+                        <Ionicons name="shield-checkmark" size={16} color={theme.colors.success} accessibilityLabel="Verified" />
+                      ) : null}
+                    </View>
                     <Text style={styles.meta}>
                       {[p.owner_org_id ? 'Organisation' : 'Contributor', [p.suburb, p.state].filter(Boolean).join(' ') || null, p.name, statsLine(p.printer_stats)]
                         .filter(Boolean)
@@ -271,6 +279,7 @@ const styles = StyleSheet.create({
   printerTop: { flexDirection: 'row', alignItems: 'flex-start', gap: theme.spacing(3) },
   ini: { width: 46, height: 46, borderRadius: theme.radii.pill, alignItems: 'center', justifyContent: 'center' },
   iniText: { fontFamily: theme.fonts.display, fontSize: theme.type.label, color: theme.colors.ink },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
   printerName: { fontFamily: theme.fonts.black, fontSize: theme.type.body, color: theme.colors.text },
   meta: {
     fontFamily: theme.fonts.regular,

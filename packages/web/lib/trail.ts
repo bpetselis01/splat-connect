@@ -114,6 +114,7 @@ const SCREENS: Record<string, Screen> = {
   '/admin/ideas/[x]': { label: 'Review an idea', parent: '/admin/ideas' },
   '/admin/build-requests': { label: 'Build requests', parent: '/admin' },
   '/admin/print-jobs': { label: 'Print jobs', parent: '/admin' },
+  '/admin/test-prints': { label: 'Test prints', parent: '/admin' },
   '/admin/reports': { label: 'Reports', parent: '/admin' },
   '/admin/content': { label: 'Site content', parent: '/admin' },
   '/admin/spot-check': { label: 'Spot-check', parent: '/admin' },

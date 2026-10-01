@@ -44,11 +44,12 @@ export default async function AdminPage() {
   // The 065 queues, all degrading to empty for the same reason as the
   // organisation requests above: an admin who came here to answer a safety
   // report does not care that one count is missing.
-  const [inbox, memberReports, buildRequests, printJobs] = await Promise.all([
+  const [inbox, memberReports, buildRequests, printJobs, testPrints] = await Promise.all([
     apiClient.get<Counted>('/api/admin/inbox').catch(() => [] as Counted),
     apiClient.get<Counted>('/api/admin/member-reports').catch(() => [] as Counted),
     apiClient.get<Counted>('/api/admin/build-requests').catch(() => [] as Counted),
     apiClient.get<Counted>('/api/admin/print-jobs').catch(() => [] as Counted),
+    apiClient.get<Counted>('/api/admin/test-prints').catch(() => [] as Counted),
   ])
 
   const pendingTutorials = tutorials.length
@@ -112,6 +113,14 @@ export default async function AdminPage() {
       tint: 'var(--tviolet)',
       numColor: stalledPrints ? 'var(--warn)' : undefined,
       hint: 'Accepted but not moved in ten days',
+    },
+    {
+      label: 'Test prints',
+      count: testPrints.filter((t) => t.verdict === null).length,
+      href: '/admin/test-prints' as const,
+      icon: Printer,
+      tint: 'var(--tmint)',
+      hint: 'Pass or fail a printer’s SPLAT test print',
     },
     {
       label: 'Build requests needing a nudge',

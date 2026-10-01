@@ -41,3 +41,23 @@ export async function markReady(id: string): Promise<ToyTransaction | null> {
 export async function withdrawRequest(tx: Pick<ToyTransaction, 'id' | 'print_group_id'>): Promise<void> {
   await apiClient.post(`/api/toy-transactions/${tx.id}/withdraw`, {})
 }
+
+/**
+ * The owner's photo of the SPLAT test print (098), for an admin to pass or
+ * fail. Null when they back out of the picker.
+ */
+export async function submitTestPrint(printerId: string): Promise<unknown> {
+  const permission = await ImagePicker.requestMediaLibraryPermissionsAsync()
+  if (!permission.granted) {
+    throw new Error('failed with status 400: Photo library access is needed to post the photo.')
+  }
+  const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.7, mediaTypes: ['images'] })
+  if (result.canceled || !result.assets?.length) return null
+  const asset = result.assets[0]!
+  return uploadFile(
+    `/api/printers/${printerId}/test-prints`,
+    printerId,
+    { uri: asset.uri, name: asset.fileName ?? 'test-print.jpg', mimeType: asset.mimeType ?? 'image/jpeg' },
+    null
+  )
+}

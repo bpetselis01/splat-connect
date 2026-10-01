@@ -108,3 +108,16 @@ it('says no printer matches, not nobody listed, when the only printer is too sma
   expect(await screen.findByText('No printer matches')).toBeTruthy()
   expect(screen.queryByText('Nobody has listed a printer yet')).toBeNull()
 })
+
+it('filters to verified printers and marks them', async () => {
+  mockGet.mockImplementation((path: string) =>
+    Promise.resolve(path === '/api/printers' ? [printer('a', { verified: true }), printer('b')] : GUIDE)
+  )
+  render(<FindPrinterScreen guideId="g1" />)
+  await screen.findByText('Maker B')
+  // The seal, not the chip: Ionicons is mocked to a host element, so its props are queryable.
+  expect(screen.UNSAFE_getAllByProps({ name: 'shield-checkmark', accessibilityLabel: 'Verified' })).toHaveLength(1)
+  fireEvent.press(screen.getByText('Verified'))
+  expect(screen.queryByText('Maker B')).toBeNull()
+  expect(screen.getByText('Maker A')).toBeTruthy()
+})

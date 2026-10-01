@@ -16,7 +16,7 @@ type Ctx = Context<{ Variables: AuthVariables }>
 type UserClient = ReturnType<typeof createUserClient>
 
 /** Mirrors 054's allowed_mime_types on both photo buckets. */
-const PHOTO_MIME = [
+export const PHOTO_MIME = [
   'image/jpeg',
   'image/png',
   'image/webp',
@@ -25,7 +25,7 @@ const PHOTO_MIME = [
   'image/heif',
 ]
 /** Mirrors 053's file_size_limit on both photo buckets. */
-const PHOTO_MAX_BYTES = 10 * 1024 * 1024
+export const PHOTO_MAX_BYTES = 10 * 1024 * 1024
 
 /** Reads the one shape every upload posts. Returns the 400 instead on a bad body. */
 async function readUpload(c: Ctx, idField: 'tutorialId' | 'toyId') {

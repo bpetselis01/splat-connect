@@ -32,7 +32,7 @@ import {
   partMaterials,
   partsMeta,
 } from '../../lib/printing'
-import { markReady, startPrint } from './actions'
+import { markReady, startPrint, submitTestPrint } from './actions'
 import { Screen } from '../ui/Screen'
 import { Card } from '../ui/Card'
 import { Badge } from '../ui/Badge'
@@ -41,7 +41,7 @@ import { TextField } from '../ui/TextField'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { ErrorRow } from '../ui/ErrorRow'
-import { apiMessage, fitNotesLines, machineStatsLines, pickupAddress, plural, printSettingsLine } from '@splat-connect/types'
+import { apiMessage, fitNotesLines, machineStatsLines, pickupAddress, plural, printSettingsLine, testPrintLabel } from '@splat-connect/types'
 
 type Tab = 'requests' | 'jobs' | 'printers'
 
@@ -279,6 +279,25 @@ export function PrintForOthersScreen({ orgId }: { orgId?: string } = {}) {
                     <Badge status={p.accepting ? 'completed' : 'withdrawn'} label={p.accepting ? 'Open' : 'Paused'} />
                   </View>
                   <Text style={styles.meta}>Materials: {p.materials.join(', ')}</Text>
+                  {p.verified ? (
+                    <View style={styles.row}>
+                      <Ionicons name="shield-checkmark" size={16} color={theme.colors.success} accessibilityLabel="Verified" />
+                      <Text style={styles.strong}>Verified</Text>
+                    </View>
+                  ) : (
+                    <>
+                      {p.test_print ? <Text style={styles.strong}>{testPrintLabel(p.test_print)}</Text> : null}
+                      {p.test_print?.note ? <Text style={styles.meta}>“{p.test_print.note}”</Text> : null}
+                      {!p.test_print || p.test_print.verdict === 'fail' ? (
+                        <Button
+                          label="Get verified"
+                          variant="secondary"
+                          loading={busy === `verify-${p.id}`}
+                          onPress={() => act(`verify-${p.id}`, () => submitTestPrint(p.id))}
+                        />
+                      ) : null}
+                    </>
+                  )}
                   {p.notes ? <Text style={styles.meta}>{p.notes}</Text> : null}
                   <Button
                     label={p.accepting ? 'Pause' : 'Open to requests'}

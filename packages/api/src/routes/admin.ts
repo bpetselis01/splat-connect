@@ -6,6 +6,7 @@
 import { Hono } from 'hono'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { deleteAccount } from '../account-deletion.js'
+import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import { ORG_COLUMNS } from './organizations.js'
 import { systemMessage } from './toy-ideas.js'
 import type { AuthVariables } from '../middleware/auth.js'
@@ -867,6 +868,79 @@ admin.get('/print-jobs', async (c) => {
   })
   out.sort((a, b) => Number(b.stalled) - Number(a.stalled))
   return c.json(out)
+})
+
+/**
+ * GET /api/admin/test-prints
+ *
+ * The verification queue (098): every submitted test print, waiting first,
+ * with a signed photo and whose machine it is. The stored path never leaves
+ * the API. Names via the admin client.
+ */
+admin.get('/test-prints', async (c) => {
+  const supabase = createAdminClient()
+  const { data, error } = await supabase
+    .from('printer_test_prints')
+    .select('id, printer_id, photo_path, submitted_at, verdict, note')
+    .order('submitted_at', { ascending: false })
+  if (error) return c.json({ error: error.message }, 500)
+  const rows = data ?? []
+  if (rows.length === 0) return c.json([])
+
+  const { data: machines } = await supabase
+    .from('printers')
+    .select('id, name, owner_id, owner_org_id')
+    .in('id', [...new Set(rows.map((r) => r.printer_id as string))])
+  const machine = new Map((machines ?? []).map((m) => [m.id as string, m]))
+  const personIds = (machines ?? []).map((m) => m.owner_id).filter((id): id is string => !!id)
+  const orgIds = (machines ?? []).map((m) => m.owner_org_id).filter((id): id is string => !!id)
+  const [{ data: people }, { data: orgs }, { data: signed }] = await Promise.all([
+    personIds.length ? supabase.from('profiles').select('id, name').in('id', personIds) : Promise.resolve({ data: [] }),
+    orgIds.length ? supabase.from('organizations').select('id, name').in('id', orgIds) : Promise.resolve({ data: [] }),
+    supabase.storage.from('printer-test-prints').createSignedUrls(rows.map((r) => r.photo_path as string), 600),
+  ])
+  const nameOf = new Map(
+    [...(people ?? []), ...(orgs ?? [])].map((x) => [(x as { id: string }).id, (x as { name: string }).name])
+  )
+  const photoOf = new Map((signed ?? []).map((s) => [s.path, s.signedUrl]))
+
+  const out = rows.map((r) => {
+    const m = machine.get(r.printer_id as string)
+    return {
+      id: r.id,
+      printer_id: r.printer_id,
+      printer_name: m?.name ?? null,
+      owner_name: m ? (nameOf.get((m.owner_org_id ?? m.owner_id) as string) ?? null) : null,
+      photo: photoOf.get(r.photo_path as string) || null,
+      submitted_at: r.submitted_at,
+      verdict: r.verdict,
+      note: r.note,
+    }
+  })
+  out.sort((a, b) => Number(a.verdict !== null) - Number(b.verdict !== null))
+  return c.json(out)
+})
+
+/**
+ * PATCH /api/admin/test-prints/:id
+ *
+ * Pass or fail, with a note the owner reads. Half of Verified; the other half
+ * is the printer's completed jobs, which nobody sets.
+ */
+admin.patch('/test-prints/:id', async (c) => {
+  const body = (await c.req.json().catch(() => ({}))) as { verdict?: unknown; note?: unknown }
+  if (body.verdict !== 'pass' && body.verdict !== 'fail') return c.json({ error: 'A test print passes or fails.' }, 400)
+  const note = typeof body.note === 'string' ? body.note.trim() : ''
+  if (note.length > 500) return c.json({ error: 'The note is 500 characters or fewer.' }, 400)
+  const { data, error } = await createAdminClient()
+    .from('printer_test_prints')
+    .update({ verdict: body.verdict, note: note || null, reviewed_by: c.get('userId'), reviewed_at: new Date().toISOString() })
+    .eq('id', c.req.param('id'))
+    .select('id, verdict, note')
+    .maybeSingle()
+  if (error && error.code !== INVALID_TEXT_REPRESENTATION) return c.json({ error: error.message }, 500)
+  if (!data) return c.json({ error: 'No such test print' }, 404)
+  return c.json(data)
 })
 
 /**

@@ -22,10 +22,10 @@ export { isApiError, apiErrorDetail, apiMessage, makeApiClient } from './api-cor
 export type { ApiError } from './api-core'
 export { dateBadge, shortDate, monthHeading, monthKey, longDate, formatTimeRange, isPast } from './dates'
 import { printRequestExpired } from './printing'
-import type { PrinterStats, PrintFitNotes } from './printing'
+import type { PrinterStats, PrintFitNotes, TestPrint } from './printing'
 // Named, not only the `export *` below: the API runs under tsx, which loads
 // this package as CommonJS, and Node cannot see names behind `export *` there.
-export { printCostCents, costRange, PRINT_ANSWER_DAYS, answerBy, printRequestExpired, PRINT_FIT_QUESTIONS, fitNotesProblem, fitNotesLines, bedFits } from './printing'
+export { printCostCents, costRange, PRINT_ANSWER_DAYS, answerBy, printRequestExpired, PRINT_FIT_QUESTIONS, fitNotesProblem, fitNotesLines, bedFits, VERIFIED_MIN_JOBS, testPrintLabel } from './printing'
 export { getMissingToyFields, computeToyStepStatuses } from './toy-steps'
 export type { ToyStepId } from './toy-steps'
 
@@ -444,6 +444,10 @@ export interface PrinterWithOwner extends Printer {
   open_jobs: number
   /** 095. Optional: fixtures predate it. */
   printer_stats?: PrinterStats
+  /** 098. */
+  verified?: boolean
+  /** 098, on /api/printers/mine only. */
+  test_print?: TestPrint | null
 }
 
 /** The materials a printer can declare. Presentational, so it lives here
