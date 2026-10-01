@@ -68,7 +68,7 @@ describe('NewToyRoute', () => {
     render(<NewToyRoute />)
     fireEvent.changeText(screen.getByPlaceholderText('Name'), 'Bubble machine')
     fireEvent.press(screen.getByLabelText('Create'))
-    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/toys/toy1'))
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/toys/toy1/edit'))
   })
 
   it('shows an error and stays put when the create fails', async () => {

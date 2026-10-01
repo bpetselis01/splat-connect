@@ -42,7 +42,7 @@ export default function NewToyRoute() {
         condition,
         ...(orgId ? { owner_org_id: orgId, quantity: Number(quantity) } : {}),
       })
-      router.replace(`/toys/${data.id}`)
+      router.replace(`/toys/${data.id}/edit`)
     } catch {
       setError('Could not create this toy. Please try again.')
     } finally {

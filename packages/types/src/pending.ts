@@ -847,6 +847,7 @@ export const PENDING = {
     shipped: true,
   },
   'my-toy-summary': {
+    shipped: true,
     title: "Your toy",
     blurb: "A summary of your toy before you edit it is coming.",
     kind: "build",

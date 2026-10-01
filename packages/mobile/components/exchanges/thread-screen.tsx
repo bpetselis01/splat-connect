@@ -597,7 +597,7 @@ export function ExchangeThreadScreen({ id }: { id: string }) {
               <Button
                 label="Add to toy library"
                 variant="accent"
-                onPress={() => router.push(`/toys/${receivedToy.id}`)}
+                onPress={() => router.push(`/toys/${receivedToy.id}/edit`)}
               />
             </Card>
           ) : null}

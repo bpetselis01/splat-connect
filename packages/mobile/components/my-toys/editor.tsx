@@ -7,6 +7,7 @@ import * as ImagePicker from 'expo-image-picker'
 import type { OfferType, Toy, ToyTransactionSummary } from '@splat-connect/types'
 import { computeToyStepStatuses, getMissingToyFields, isOwnerSide, MAX_PHOTOS, type ToyStepId } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
+import { loadOwnedToy } from '../../lib/my-toy'
 import { confirmDestructive, notify } from '../../lib/confirm'
 import { uploadFile } from '../../lib/upload'
 import { theme } from '../../lib/theme'
@@ -76,12 +77,12 @@ export function Editor({ id }: { id: string }) {
     setLoading(true)
     setLoadError(false)
     Promise.all([
-      apiClient.get<Toy[]>('/api/toys'),
+      loadOwnedToy(id),
       apiClient.get<ToyTransactionSummary[]>('/api/toy-transactions'),
     ])
-      .then(([toys, tx]) => {
+      .then(([owned, tx]) => {
         if (ignore) return
-        const found = toys.find((t) => t.id === id) ?? null
+        const found = owned?.toy ?? null
         if (!found) {
           setLoadError(true)
           return
@@ -145,6 +146,9 @@ export function Editor({ id }: { id: string }) {
   // function boundary — same reason the tutorial editor captures
   // loadedUpdatedAt/currentPdfPath ahead of its own closures.
   const currentPhotoUrls = toy.photo_urls
+  // Where Delete lands: the list this toy came from. The summary behind the
+  // editor would only say the toy is gone.
+  const shelfHref = toy.owner_org_id ? '/organisation/toys' : '/toys'
   const currentSwitchPhotoUrl = toy.switch_photo_url
 
   const missing = getMissingToyFields(toy)
@@ -360,7 +364,7 @@ export function Editor({ id }: { id: string }) {
     confirmDestructive('Delete this toy?', 'This cannot be undone.', 'Delete', async () => {
       try {
         await apiClient.delete(`/api/toys/${id}`)
-        router.back()
+        router.dismissTo(shelfHref)
       } catch (err) {
         console.error('[Editor] delete failed:', err)
         notify('Could not delete this toy', 'Please try again.')

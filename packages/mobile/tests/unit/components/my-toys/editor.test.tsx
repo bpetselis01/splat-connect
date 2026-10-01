@@ -6,8 +6,9 @@ import { Editor } from '../../../../components/my-toys/editor'
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
 
 const mockBack = jest.fn()
+const mockDismissTo = jest.fn()
 const mockPush = jest.fn()
-jest.mock('expo-router', () => ({ useRouter: () => ({ back: mockBack, push: mockPush }) }))
+jest.mock('expo-router', () => ({ useRouter: () => ({ back: mockBack, push: mockPush, dismissTo: mockDismissTo }) }))
 
 // The editor pulls ErrorRow in from components/auth-screen, which imports
 // useAuth from lib/auth-context — and that module's real implementation
@@ -118,6 +119,7 @@ function mockGetRouting(toys: object[], transactions: object[] = []) {
     if (path === '/api/toys') return Promise.resolve(toys)
     if (path === '/api/toy-transactions') return Promise.resolve(transactions)
     if (path === '/api/public/tutorials') return Promise.resolve([{ id: 'g1', title: 'Bubble Blower', status: 'approved' }])
+    if (path === '/api/toys/inventory') return Promise.resolve([])
     return Promise.reject(new Error(`unexpected GET ${path}`))
   })
 }
@@ -509,7 +511,7 @@ describe('Editor', () => {
 
       expect(alertSpy).toHaveBeenCalled()
       await waitFor(() => expect(mockDelete).toHaveBeenCalledWith('/api/toys/toy1'))
-      expect(mockBack).toHaveBeenCalled()
+      expect(mockDismissTo).toHaveBeenCalledWith('/toys')
     })
 
     it('surfaces a failed delete instead of silently staying put', async () => {
@@ -525,7 +527,7 @@ describe('Editor', () => {
 
       await waitFor(() => expect(mockDelete).toHaveBeenCalledWith('/api/toys/toy1'))
       await waitFor(() => expect(alertSpy).toHaveBeenCalledWith('Could not delete this toy', 'Please try again.'))
-      expect(mockBack).not.toHaveBeenCalled()
+      expect(mockDismissTo).not.toHaveBeenCalled()
     })
 
     it('leaves the toy alone when the delete alert is cancelled', async () => {
@@ -537,7 +539,7 @@ describe('Editor', () => {
       fireEvent.press(screen.getByLabelText('Delete toy'))
 
       expect(mockDelete).not.toHaveBeenCalled()
-      expect(mockBack).not.toHaveBeenCalled()
+      expect(mockDismissTo).not.toHaveBeenCalled()
     })
   })
 })

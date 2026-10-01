@@ -500,7 +500,7 @@ describe('ExchangeThreadScreen — settled transactions are read-only', () => {
     ).toBeTruthy()
 
     fireEvent.press(screen.getByRole('button', { name: 'Add to toy library' }))
-    expect(mockPush).toHaveBeenCalledWith('/toys/received1')
+    expect(mockPush).toHaveBeenCalledWith('/toys/received1/edit')
   })
 
   it('shows the plain settled state when there is no still-draft received toy', async () => {
