@@ -6,9 +6,10 @@ import { useEffect, useState } from 'react'
 import { ScrollView, View, Text, Pressable, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import { buildNav, formatCents, type IconName as NavIcon } from '@splat-connect/types'
+import { buildNav, formatCents, type IconName as NavIcon, type MoneyMine, type MoneyThread, type ToyTransactionType } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { useCapabilities } from '../../lib/capabilities'
+import { threadHref } from '../../lib/builds'
 import { myRoute } from '../../lib/my-routes'
 import { theme } from '../../lib/theme'
 import { Screen } from '../../components/ui/Screen'
@@ -62,17 +63,19 @@ const EXPLORE: { label: string; href: string; icon: Glyph }[] = [
   { label: 'Everything in Explore', href: '/explore', icon: 'compass-outline' },
 ]
 
-/** GET /api/exchange-costs/outstanding — web's dashboard money panel. */
-type Outstanding = {
-  lines: {
-    id: string
-    transaction_id: string
-    description: string
-    amount_cents: number
-    toy_transactions: { id: string; type: string; toys: { name: string } | null } | null
-  }[]
-  total_cents: number
-  exchange_count: number
+/** The board's icon per kind of thread. */
+const MONEY_ICON: Record<ToyTransactionType, Glyph> = {
+  donation: 'cube-outline',
+  exchange: 'cube-outline',
+  build: 'hammer-outline',
+  print: 'print-outline',
+}
+
+/** Who, in the board's words: "Tom Beattie — build thread", "Contributor 2 — print job". */
+function moneyWho(t: MoneyThread): string {
+  if (t.type === 'build') return `${t.other_name} — build thread`
+  if (t.type === 'print') return `${t.other_name} — print job`
+  return t.other_name
 }
 
 function Row({
@@ -109,43 +112,42 @@ function Row({
  * total, the sentence that SPLAT never handles it, and the first three lines.
  * Read-only; settling happens on the exchange, where the context is.
  */
-// PENDING(money-panel-detail): each line names the item and the person, marks
-// Settled or To settle, and an "All settled" state — unsettled lines only today.
-function MoneyPanel({ money, onOpen }: { money: Outstanding; onOpen: (transactionId: string) => void }) {
-  if (money.lines.length === 0) return null
-  const n = money.exchange_count
+function MoneyPanel({ money, onOpen }: { money: MoneyMine; onOpen: (t: MoneyThread) => void }) {
+  if (money.threads.length === 0) return null
+  const n = money.unsettled_count
   return (
     <View style={styles.money}>
       <View>
         <Text style={styles.eyebrow}>Money you have agreed to</Text>
-        <Text style={styles.moneyTotal}>{formatCents(money.total_cents)}</Text>
+        <Text style={styles.moneyTotal}>{formatCents(money.owed_cents)}</Text>
         <Text style={styles.moneySub}>
-          Still to settle across {n} {n === 1 ? 'exchange' : 'exchanges'}. SPLAT never handles the money — you pay
-          each person directly.
+          {n
+            ? `Still to settle across ${n} ${n === 1 ? 'exchange' : 'exchanges'}. SPLAT never handles the money — you pay each person directly.`
+            : 'All settled — nothing outstanding.'}
         </Text>
       </View>
-      {money.lines.slice(0, 3).map((line) => (
+      {money.threads.slice(0, 3).map((t) => (
         <Pressable
-          key={line.id}
-          onPress={() => onOpen(line.transaction_id)}
+          key={t.transaction_id}
+          onPress={() => onOpen(t)}
           accessibilityRole="button"
-          accessibilityLabel={`${line.description}, ${formatCents(line.amount_cents)} to settle`}
+          accessibilityLabel={`${t.what}, ${moneyWho(t)}, ${formatCents(t.amount_cents)}, ${t.settled ? 'settled' : 'to settle'}`}
           style={({ pressed }) => [styles.moneyLine, pressed && styles.pressed]}
         >
           <View style={styles.moneyWhat}>
-            <Ionicons name="cash-outline" size={22} color={theme.colors.primaryDark} />
+            <Ionicons name={MONEY_ICON[t.type]} size={22} color={theme.colors.primaryDark} />
             <View style={styles.flex}>
               <Text style={styles.moneyLineTitle} numberOfLines={1}>
-                {line.description}
+                {t.what}
               </Text>
               <Text style={styles.moneyLineWho} numberOfLines={1}>
-                {line.toy_transactions?.toys?.name ?? 'This exchange'}
+                {moneyWho(t)}
               </Text>
             </View>
           </View>
           <View style={styles.moneyAmountRow}>
-            <Text style={styles.settle}>TO SETTLE</Text>
-            <Text style={styles.amount}>{formatCents(line.amount_cents)}</Text>
+            <Text style={[styles.settle, t.settled && styles.settled]}>{t.settled ? 'Settled' : 'To settle'}</Text>
+            <Text style={styles.amount}>{formatCents(t.amount_cents)}</Text>
           </View>
         </Pressable>
       ))}
@@ -156,7 +158,7 @@ function MoneyPanel({ money, onOpen }: { money: Outstanding; onOpen: (transactio
 export default function MeTab() {
   const { caps } = useCapabilities()
   const router = useRouter()
-  const [money, setMoney] = useState<Outstanding | null>(null)
+  const [money, setMoney] = useState<MoneyMine | null>(null)
   const [builds, setBuilds] = useState(0)
   const go = (href: string) => () => router.push(href as never)
 
@@ -165,7 +167,7 @@ export default function MeTab() {
     // Degrades to absent, as on web: a failed money fetch must not cost
     // somebody the rest of this tab.
     apiClient
-      .get<Outstanding>('/api/exchange-costs/outstanding')
+      .get<MoneyMine>('/api/exchange-costs/mine')
       .then((m) => {
         if (!ignore) setMoney(m)
       })
@@ -202,7 +204,7 @@ export default function MeTab() {
               {builds > 0 ? <Text style={styles.meta}>{`${builds} builds logged`}</Text> : null}
             </View>
           </View>
-          {money ? <MoneyPanel money={money} onOpen={(id) => router.push(`/exchanges/${id}` as never)} /> : null}
+          {money ? <MoneyPanel money={money} onOpen={(t) => router.push(threadHref({ id: t.transaction_id, type: t.type }) as never)} /> : null}
           {buildNav(caps).map((group) => (
             <View key={group.heading} style={styles.group}>
               <Text style={styles.eyebrow}>{group.heading}</Text>
@@ -292,6 +294,7 @@ const styles = StyleSheet.create({
   settle: {
     fontFamily: theme.fonts.black,
     fontSize: 10.5,
+    textTransform: 'uppercase',
     color: theme.colors.ink,
     backgroundColor: theme.colors.honeySoft,
     borderRadius: theme.radii.pill,
@@ -299,6 +302,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     overflow: 'hidden',
   },
+  settled: { backgroundColor: theme.colors.successSoft },
   amount: { fontFamily: theme.fonts.numeral, fontSize: 14, color: theme.colors.ink, fontVariant: ['tabular-nums'] },
   group: { gap: 9 },
   row: {

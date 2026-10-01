@@ -14,15 +14,15 @@ jest.mock('../../../lib/capabilities', () => ({
   }, loading: false, refresh: jest.fn() }),
 }))
 
-const line = (id: string, description: string, amount_cents: number, toy: string | null = 'Bubble machine') => ({
-  id, transaction_id: `tx-${id}`, description, amount_cents,
-  toy_transactions: { id: `tx-${id}`, type: 'exchange', toys: toy ? { name: toy } : null },
+const thread = (over: object = {}) => ({
+  transaction_id: 'tx-a', type: 'exchange', other_name: 'Northside Therapy Collective', what: 'Postage on the handover',
+  amount_cents: 1060, you_pay: true, settled: false, ...over,
 })
 
 beforeEach(() => {
   jest.clearAllMocks()
   mockGet.mockImplementation((p: string) =>
-    Promise.resolve(p === '/api/me/builds' ? { builds: 3 } : { lines: [], total_cents: 0, exchange_count: 0 })
+    Promise.resolve(p === '/api/me/builds' ? { builds: 3 } : { threads: [], owed_cents: 0, unsettled_count: 0 })
   )
 })
 
@@ -64,36 +64,45 @@ it('sends every row to its own screen, so none is drawn as SOON', () => {
 })
 
 describe('Money you have agreed to', () => {
-  it('shows the total, the exchange count and at most three lines, each opening its exchange', async () => {
+  it('names what each thread is for and who it is with, and opens it', async () => {
     mockGet.mockResolvedValue({
-      lines: [
-        line('a', 'Filament for your switch mount', 500),
-        line('b', 'Parts for the bubble machine', 890),
-        line('c', 'Postage on the handover', 1060, null),
-        line('d', 'A fourth cost', 100),
+      threads: [
+        thread({ transaction_id: 'tx-p', type: 'print', other_name: 'Contributor 2', what: 'Filament for your switch mount', amount_cents: 500 }),
+        thread({ transaction_id: 'tx-b', type: 'build', other_name: 'Tom Beattie', what: 'Parts for the bubble machine', amount_cents: 890, settled: true }),
+        thread(),
+        thread({ transaction_id: 'tx-d', what: 'A fourth thread' }),
       ],
-      total_cents: 2550,
-      exchange_count: 3,
+      owed_cents: 1560,
+      unsettled_count: 2,
     })
     render(<MeTab />)
-    expect(await screen.findByText('$25.50')).toBeTruthy()
-    expect(mockGet).toHaveBeenCalledWith('/api/exchange-costs/outstanding')
-    expect(screen.getByText(/Still to settle across 3 exchanges\./)).toBeTruthy()
-    expect(screen.getAllByText('TO SETTLE')).toHaveLength(3)
-    expect(screen.queryByText('A fourth cost')).toBeNull()
-    // A line with no toy still says what it belongs to.
-    expect(screen.getByText('This exchange')).toBeTruthy()
-    fireEvent.press(screen.getByLabelText('Parts for the bubble machine, $8.90 to settle'))
-    expect(mockPush).toHaveBeenCalledWith('/exchanges/tx-b')
+    expect(await screen.findByText('$15.60')).toBeTruthy()
+    expect(mockGet).toHaveBeenCalledWith('/api/exchange-costs/mine')
+    expect(screen.getByText(/Still to settle across 2 exchanges\./)).toBeTruthy()
+    expect(screen.getByText('Contributor 2 — print job')).toBeTruthy()
+    expect(screen.getByText('Tom Beattie — build thread')).toBeTruthy()
+    expect(screen.getByText('Northside Therapy Collective')).toBeTruthy()
+    expect(screen.getByText('Settled')).toBeTruthy()
+    expect(screen.getAllByText('To settle')).toHaveLength(2)
+    expect(screen.queryByText('A fourth thread')).toBeNull()
+    fireEvent.press(screen.getByText('Parts for the bubble machine'))
+    expect(mockPush).toHaveBeenCalledWith('/exchanges/build/tx-b')
   })
 
   it('says "exchange" for one, not "exchanges"', async () => {
-    mockGet.mockResolvedValue({ lines: [line('a', 'Postage', 300)], total_cents: 300, exchange_count: 1 })
+    mockGet.mockResolvedValue({ threads: [thread()], owed_cents: 1060, unsettled_count: 1 })
     render(<MeTab />)
     expect(await screen.findByText(/Still to settle across 1 exchange\./)).toBeTruthy()
   })
 
-  it('draws nothing when nothing is owed, or when the fetch fails', async () => {
+  it('says all settled once nothing is left', async () => {
+    mockGet.mockResolvedValue({ threads: [thread({ settled: true })], owed_cents: 0, unsettled_count: 0 })
+    render(<MeTab />)
+    expect(await screen.findByText('All settled — nothing outstanding.')).toBeTruthy()
+    expect(screen.getByText('$0.00')).toBeTruthy()
+  })
+
+  it('draws nothing when there is no money, or when the fetch fails', async () => {
     const { unmount } = render(<MeTab />)
     await waitFor(() => expect(mockGet).toHaveBeenCalled())
     expect(screen.queryByText('Money you have agreed to')).toBeNull()
@@ -103,7 +112,6 @@ describe('Money you have agreed to', () => {
     render(<MeTab />)
     await waitFor(() => expect(mockGet).toHaveBeenCalled())
     expect(screen.queryByText('Money you have agreed to')).toBeNull()
-    // The rest of the tab is still there.
     expect(screen.getByLabelText('My toys')).toBeTruthy()
   })
 })

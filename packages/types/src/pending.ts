@@ -492,6 +492,7 @@ export const PENDING = {
     needs: "Counts on My tutorials, challenges, makers, print, review, intake, orders [ui,api]",
   },
   'money-panel-detail': {
+    shipped: true,
     title: "Money details",
     blurb: "Who you owe, for what, and what is settled is coming.",
     kind: "build",

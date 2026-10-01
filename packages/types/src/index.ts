@@ -31,6 +31,8 @@ import type { PrinterStats, PrintFitNotes, TestPrint } from './printing'
 // Named, not only the `export *` below: the API runs under tsx, which loads
 // this package as CommonJS, and Node cannot see names behind `export *` there.
 export { printCostCents, costRange, PRINT_ANSWER_DAYS, answerBy, printRequestExpired, PRINT_FIT_QUESTIONS, fitNotesProblem, fitNotesLines, bedFits, VERIFIED_MIN_JOBS, testPrintLabel, statsLine, machineStatsLines, orgPrintFacts } from './printing'
+export { costSummary } from './cost-summary'
+export type { CostLine, CostSummary } from './cost-summary'
 export { getMissingToyFields, computeToyStepStatuses } from './toy-steps'
 export type { ToyStepId } from './toy-steps'
 
@@ -291,6 +293,33 @@ export interface ExchangeCost {
   created_by: string
   created_at: string
   updated_at: string
+}
+
+/**
+ * GET /api/exchange-costs/mine (the Me tab's money panel): one row per thread
+ * with money on it, either direction, settled or not. A thread whose lines are
+ * all covered is $0 to everyone and is not a row.
+ */
+export interface MoneyThread {
+  transaction_id: string
+  type: ToyTransactionType
+  /** The person on the other side of the lines — never the caller. */
+  other_name: string
+  /** What the lines are for, in the words they were written in. */
+  what: string
+  /** Claimed lines only: what the caller pays back, or else what they are paid. */
+  amount_cents: number
+  you_pay: boolean
+  /** Every claimed line marked settled. */
+  settled: boolean
+}
+
+export interface MoneyMine {
+  threads: MoneyThread[]
+  /** Claimed, unsettled lines the caller pays: the panel's figure. */
+  owed_cents: number
+  /** Threads not settled yet: "Still to settle across {n} exchanges". */
+  unsettled_count: number
 }
 
 /** Up to two letters for an avatar: "Sam Mitchell" → "SM". `fallback` when there is no name. */
