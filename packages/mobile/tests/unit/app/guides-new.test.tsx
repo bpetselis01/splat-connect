@@ -27,6 +27,12 @@ jest.mock('../../../lib/upload', () => ({ uploadFile: (...a: unknown[]) => mockU
 const mockPick = jest.fn()
 jest.mock('expo-document-picker', () => ({ getDocumentAsync: (...a: unknown[]) => mockPick(...a) }))
 
+const mockLibrary = jest.fn()
+jest.mock('expo-image-picker', () => ({
+  requestMediaLibraryPermissionsAsync: jest.fn().mockResolvedValue({ granted: true }),
+  launchImageLibraryAsync: (...a: unknown[]) => mockLibrary(...a),
+}))
+
 jest.mock('../../../lib/auth-context', () => ({ useAuth: jest.fn() }))
 
 const mockAccept = jest.fn()
@@ -126,6 +132,46 @@ describe('NewGuideRoute', () => {
       // untouched draft.
       params: { id: 'uuid-1', justCreated: '1' },
     })
+  })
+
+  it('sends the cover, switch type and age range once the draft exists', async () => {
+    mockPost.mockResolvedValue({ id: 'uuid-1' })
+    mockGet.mockResolvedValue({ updated_at: 'v1' })
+    mockPatch.mockResolvedValue({})
+    mockUpload.mockResolvedValue({ url: 'https://x.test/toy-photos/uuid-1/cover.jpg' })
+    mockLibrary.mockResolvedValue({ canceled: false, assets: [{ uri: 'file:///cover.jpg', fileName: 'cover.jpg', mimeType: 'image/jpeg' }] })
+    render(<NewGuideRoute />)
+    fireEvent.changeText(screen.getByPlaceholderText('Title'), 'Light-up drum')
+    fireEvent.press(screen.getByLabelText('Add a cover photo'))
+    await screen.findByText('Cover photo chosen')
+    fireEvent.press(screen.getByText('Big button'))
+    fireEvent.changeText(screen.getByLabelText('Youngest age'), '3')
+    fireEvent.changeText(screen.getByLabelText('Oldest age'), '7')
+    fireEvent.press(screen.getByLabelText('Create draft'))
+    await waitFor(() =>
+      expect(mockPatch).toHaveBeenCalledWith('/api/tutorials/uuid-1', {
+        updated_at: 'v1',
+        photo_urls: ['https://x.test/toy-photos/uuid-1/cover.jpg'],
+        switch_target: 'large',
+        age_min: 3,
+        age_max: 7,
+      })
+    )
+    expect(mockUpload).toHaveBeenCalledWith('/api/upload/photo', 'uuid-1', { uri: 'file:///cover.jpg', name: 'cover.jpg', mimeType: 'image/jpeg' })
+    expect(mockReplace).toHaveBeenCalled()
+  })
+
+  it('still opens the editor when the extras fail to save', async () => {
+    mockPost.mockResolvedValue({ id: 'uuid-1' })
+    mockGet.mockRejectedValue(new Error('API GET failed with status 500'))
+    const logged = jest.spyOn(console, 'error').mockImplementation(() => {})
+    render(<NewGuideRoute />)
+    fireEvent.changeText(screen.getByPlaceholderText('Title'), 'Light-up drum')
+    fireEvent.press(screen.getByText('Big button'))
+    fireEvent.press(screen.getByLabelText('Create draft'))
+    await waitFor(() => expect(mockReplace).toHaveBeenCalled())
+    expect(logged).toHaveBeenCalled()
+    logged.mockRestore()
   })
 
   it('shows a generic error on a non-403 failure, without revealing the terms gate', async () => {

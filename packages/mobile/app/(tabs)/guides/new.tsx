@@ -1,11 +1,12 @@
 // packages/mobile/app/(tabs)/guides/new.tsx
 import { useState } from 'react'
-import { View, Text, StyleSheet } from 'react-native'
+import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { randomUUID } from 'expo-crypto'
 import * as DocumentPicker from 'expo-document-picker'
+import * as ImagePicker from 'expo-image-picker'
 import type { Difficulty, PdfImportDraft, TutorialKind } from '@splat-connect/types'
-import { KIND_LABEL, createGuideFromPdfDraft, pdfDraftChecklist, PDF_IMPORT_MAX_BYTES, PDF_IMPORT_MAX_LABEL } from '@splat-connect/types'
+import { KIND_LABEL, SWITCH_TARGET_LABEL, createGuideFromPdfDraft, pdfDraftChecklist, PDF_IMPORT_MAX_BYTES, PDF_IMPORT_MAX_LABEL } from '@splat-connect/types'
 import { apiClient } from '../../../lib/api-client'
 import { uploadFile } from '../../../lib/upload'
 import { useAuth } from '../../../lib/auth-context'
@@ -36,6 +37,10 @@ export default function NewGuideRoute() {
   const [title, setTitle] = useState('')
   const [kind, setKind] = useState<TutorialKind>('toy_adaptation')
   const [difficulty, setDifficulty] = useState<Difficulty>('easy')
+  const [cover, setCover] = useState<{ uri: string; name: string; mimeType: string } | null>(null)
+  const [switchTarget, setSwitchTarget] = useState<'large' | 'small' | null>(null)
+  const [ageMin, setAgeMin] = useState('')
+  const [ageMax, setAgeMax] = useState('')
   const [needsTerms, setNeedsTerms] = useState(false)
   const [accepted, setAccepted] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -78,6 +83,31 @@ export default function NewGuideRoute() {
     }
   }
 
+  async function chooseCover() {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync()
+    if (!permission.granted) return setError('Photo library access is needed to choose a photo.')
+    const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.7, mediaTypes: ['images'] })
+    const asset = result.canceled ? null : result.assets?.[0]
+    if (asset) setCover({ uri: asset.uri, name: asset.fileName ?? 'photo.jpg', mimeType: asset.mimeType ?? 'image/jpeg' })
+  }
+
+  // After the draft exists and its author is linked: the photo route checks
+  // tutorial_contributors. Best effort — the editor has every one of these.
+  async function applyExtras(id: string) {
+    const fields: Record<string, unknown> = {}
+    if (switchTarget) fields.switch_target = switchTarget
+    if (ageMin !== '') fields.age_min = Number(ageMin)
+    if (ageMax !== '') fields.age_max = Number(ageMax)
+    if (!cover && !Object.keys(fields).length) return
+    try {
+      const { updated_at } = await apiClient.get<{ updated_at: string }>(`/api/tutorials/${id}`)
+      const photo = cover ? (await uploadFile('/api/upload/photo', id, cover)).url : null
+      await apiClient.patch(`/api/tutorials/${id}`, { updated_at, ...(photo ? { photo_urls: [photo] } : {}), ...fields })
+    } catch (err) {
+      console.error('[NewGuideRoute] extras not saved:', err)
+    }
+  }
+
   async function createDraft(id: string) {
     if (start === 'pdf' && pdfDraft && pdf) {
       // Creates the guide, stores the PDF as its PDF, and fills parts, tools
@@ -88,6 +118,7 @@ export default function NewGuideRoute() {
         { ...pdfDraft, title, kind, difficulty },
         async (tutorialId) => (await uploadFile('/api/upload/pdf', tutorialId, pdf)).url
       )
+      await applyExtras(id)
       router.replace({
         pathname: '/tutorials/[id]',
         params: {
@@ -107,6 +138,7 @@ export default function NewGuideRoute() {
     // that table, and the editor this line redirects into 404s on its own
     // GET. Retry-safe on the API side (23505 -> 200), same as the create.
     await apiClient.post(`/api/contributors/me/tutorials/${id}`, {})
+    await applyExtras(id)
     router.replace({ pathname: '/tutorials/[id]', params: { id, justCreated: '1' } })
   }
 
@@ -151,8 +183,7 @@ export default function NewGuideRoute() {
   return (
     <Screen>
       {/* The sheet's own header says Add a guide; this is its lead. */}
-      <Text style={styles.intro}>Give it a title to start a draft — everything else comes next.</Text>
-      {/* PENDING(new-guide-fields): Cover photo, Switch type and Age range here — PATCH /api/tutorials/:id already accepts all three. */}
+      <Text style={styles.intro}>Two things to start: what the toy is, and one photo. The rest can wait for the editor.</Text>
 
       <View accessibilityRole="radiogroup" style={styles.chipRow}>
         <Chip role="radio" label="Start blank" active={start === 'blank'} onPress={() => setStart('blank')} />
@@ -189,6 +220,11 @@ export default function NewGuideRoute() {
 
         <TextField label="Title" placeholder="Title" value={title} onChangeText={setTitle} />
 
+        <Text style={styles.label}>Cover photo</Text>
+        <Pressable accessibilityRole="button" accessibilityLabel="Add a cover photo" onPress={() => void chooseCover()} style={styles.cover}>
+          <Text style={styles.termsCopy}>{cover ? 'Cover photo chosen' : 'Tap to add — the finished toy, plain background'}</Text>
+        </Pressable>
+
         <Text style={styles.label}>Kind</Text>
         <View style={styles.chipRow}>
           {KIND_OPTIONS.map((o) => (
@@ -206,6 +242,24 @@ export default function NewGuideRoute() {
               onPress={() => setDifficulty(o.value)}
             />
           ))}
+        </View>
+
+        <Text style={styles.label}>Switch type</Text>
+        <View style={styles.chipRow}>
+          {(Object.keys(SWITCH_TARGET_LABEL) as ('large' | 'small')[]).map((v) => (
+            <Chip
+              key={v}
+              label={SWITCH_TARGET_LABEL[v].charAt(0).toUpperCase() + SWITCH_TARGET_LABEL[v].slice(1)}
+              active={switchTarget === v}
+              onPress={() => setSwitchTarget((cur) => (cur === v ? null : v))}
+            />
+          ))}
+        </View>
+
+        <Text style={styles.label}>Age range</Text>
+        <View style={styles.chipRow}>
+          <TextField accessibilityLabel="Youngest age" placeholder="From" keyboardType="number-pad" value={ageMin} onChangeText={setAgeMin} boxStyle={styles.ageBox} />
+          <TextField accessibilityLabel="Oldest age" placeholder="To" keyboardType="number-pad" value={ageMax} onChangeText={setAgeMax} boxStyle={styles.ageBox} />
         </View>
 
         {needsTerms ? (
@@ -259,6 +313,15 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing(2),
   },
   chipRow: { flexDirection: 'row', gap: theme.spacing(2), marginBottom: theme.spacing(4) },
+  cover: {
+    padding: theme.spacing(4),
+    borderRadius: theme.radii.field,
+    borderWidth: theme.border.hairline,
+    borderStyle: 'dashed',
+    borderColor: theme.colors.border,
+    marginBottom: theme.spacing(4),
+  },
+  ageBox: { flex: 1 },
   termsGate: { marginTop: theme.spacing(2) },
   found: { marginBottom: theme.spacing(4) },
   warning: {

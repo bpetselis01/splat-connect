@@ -70,24 +70,6 @@
   "role": "parent",
   "explained": [
    {
-    "type": "missing-section",
-    "match": "board lists cards",
-    "why": "pending",
-    "pending": "new-guide-fields"
-   },
-   {
-    "type": "missing-section",
-    "match": "board has cards",
-    "why": "pending",
-    "pending": "new-guide-fields"
-   },
-   {
-    "type": "copy",
-    "match": "board paragraphs absent",
-    "why": "pending",
-    "pending": "new-guide-fields"
-   },
-   {
     "type": "picture",
     "match": "form sheet",
     "why": "intended",

@@ -236,6 +236,7 @@ export const PENDING = {
     needs: "Captions and thumbnail strip [ui,db]",
   },
   'new-guide-fields': {
+    shipped: true,
     title: "More guide details",
     blurb: "Cover photo, switch type and age range at creation are coming. Add them in the editor for now.",
     kind: "build",
