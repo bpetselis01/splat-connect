@@ -38,6 +38,7 @@ import {
   SubmitButton,
 } from '@/components/editor-status'
 import { browserApiClient } from '@/lib/browser-api-client'
+import { ToyPicksEditor } from '@/components/toy-picks-editor'
 import { formatRelativeTime } from '@/lib/relative-time'
 import { computeToyStepStatuses, getMissingToyFields } from '@splat-connect/types'
 
@@ -61,10 +62,13 @@ const fullDay = (iso: string) =>
 export function ToyEditor({
   toy: initialToy,
   guides = [],
+  ownToys = [],
 }: {
   toy: Toy
   /** Approved guides, for the Details step's "Built from a guide?". */
   guides?: { id: string; title: string }[]
+  /** The holder's other toys, for Also worth a look. */
+  ownToys?: Toy[]
 }) {
   const [toy, setToy] = useState<Toy>(initialToy)
 
@@ -189,6 +193,10 @@ export function ToyEditor({
             ))}
           </div>
         </div>
+      )}
+
+      {live && (
+        <ToyPicksEditor toy={toy} ownToys={ownToys} guides={guides} onSaved={(t) => setToy((prev) => ({ ...prev, ...t }))} />
       )}
 
       {!live && (

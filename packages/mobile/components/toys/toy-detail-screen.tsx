@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { View, Text, Image, ScrollView, Pressable, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import { gradeOf, toyFacts, type OfferType, type Toy, type ToyDetail } from '@splat-connect/types'
+import { gradeOf, PICK_KIND_LABEL, toyFacts, toyHolderName, type OfferType, type Toy, type ToyDetail } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { useSaves } from '../../lib/saves'
@@ -238,7 +238,32 @@ export function ToyDetailScreen({ id }: { id: string }) {
         )}
         <ReportProblem subjectKind="toy" subjectId={toy.id} subjectLabel={toy.name} />
       </View>
-      {/* PENDING(toy-holder-picks): "Also worth a look" — the holder's other picks. */}
+      {(toy.picks ?? []).length > 0 ? (
+        <View style={styles.picks}>
+          <Text style={styles.picksTitle} accessibilityRole="header">
+            Also worth a look
+          </Text>
+          <Text style={styles.holder}>
+            {`Picked by ${toyHolderName(toy) ?? 'the holder'} — what else they have listed, and the guides behind it.`}
+          </Text>
+          {(toy.picks ?? []).map((p) => (
+            <Pressable
+              key={`${p.kind}:${p.id}`}
+              onPress={() => router.push(p.kind === 'toy' ? `/toy-library/${p.id}` : `/guides/${p.id}`)}
+              accessibilityRole="link"
+              accessibilityLabel={`${PICK_KIND_LABEL[p.kind]}: ${p.title}`}
+              style={styles.pick}
+            >
+              <View style={styles.builtFromText}>
+                <Text style={styles.factLabel}>{PICK_KIND_LABEL[p.kind]}</Text>
+                <Text style={styles.builtFromTitle}>{p.title}</Text>
+                {p.meta ? <Text style={styles.builtFromNote}>{p.meta}</Text> : null}
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={theme.colors.ink} />
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
     </ScrollView>
   )
 }
@@ -315,4 +340,16 @@ const styles = StyleSheet.create({
   builtFromTitle: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.ink },
   builtFromNote: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.ink },
   description: { fontFamily: theme.fonts.regular, fontSize: theme.type.body, color: theme.colors.text, lineHeight: 23 },
+  picks: { gap: theme.spacing(3) },
+  picksTitle: { fontFamily: theme.fonts.display, fontSize: 18, color: theme.colors.ink },
+  pick: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing(3),
+    borderWidth: theme.border.hairline,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radii.card,
+    backgroundColor: theme.colors.surface,
+    padding: theme.spacing(3),
+  },
 })

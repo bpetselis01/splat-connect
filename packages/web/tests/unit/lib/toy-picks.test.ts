@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { autoPicks, PICK_KIND_LABEL } from '@splat-connect/types'
+import { autoPicks, initialPicks, MAX_PICKS, pickOptions, PICK_KIND_LABEL, samePick } from '@splat-connect/types'
 
 const row = (id: string, created_at: string, owner_id: string | null = 'p1', owner_org_id: string | null = null) => ({ id, created_at, owner_id, owner_org_id })
 
@@ -17,5 +17,35 @@ describe('autoPicks', () => {
   })
   it("names each kind in the board's words", () => {
     expect(PICK_KIND_LABEL).toEqual({ toy: 'Toy in the library', toy_adaptation: 'Toy adaptation guide', assistive_tech: 'Assistive tech guide' })
+  })
+})
+
+describe('the picks editors', () => {
+  it('allows three', () => {
+    expect(MAX_PICKS).toBe(3)
+  })
+  it('matches a pick by its kind and id', () => {
+    expect(samePick({ entity_type: 'toy', entity_id: 'a' }, { entity_type: 'toy', entity_id: 'a' })).toBe(true)
+    expect(samePick({ entity_type: 'toy', entity_id: 'a' }, { entity_type: 'tutorial', entity_id: 'a' })).toBe(false)
+  })
+  it('starts from the saved picks in position order', () => {
+    const toy_picks = [
+      { position: 2, entity_type: 'toy' as const, entity_id: 't2' },
+      { position: 1, entity_type: 'tutorial' as const, entity_id: 'g1' },
+    ]
+    expect(initialPicks({ toy_picks })).toEqual([{ entity_type: 'tutorial', entity_id: 'g1' }, { entity_type: 'toy', entity_id: 't2' }])
+    expect(initialPicks({})).toEqual([])
+  })
+  it("offers the holder's other listed, unretired toys, then the guides", () => {
+    const own = [
+      { id: 't1', name: 'Itself', status: 'published' as const },
+      { id: 't2', name: 'Robot', status: 'published' as const },
+      { id: 't3', name: 'Draft', status: 'draft' as const },
+      { id: 't4', name: 'Broken', status: 'published' as const, retired_at: '2026-09-01' },
+    ]
+    expect(pickOptions({ id: 't1' }, own, [{ id: 'g1', title: 'Switch mount' }])).toEqual([
+      { pick: { entity_type: 'toy', entity_id: 't2' }, label: 'Robot' },
+      { pick: { entity_type: 'tutorial', entity_id: 'g1' }, label: 'Switch mount' },
+    ])
   })
 })

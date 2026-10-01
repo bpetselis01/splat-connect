@@ -25,6 +25,10 @@ export default async function ToyEditPage({ params }: { params: Promise<{ id: st
   return (
     // The editor draws its own header: the stage pill and title change the
     // moment the toy is listed, and only the client side knows when that is.
-    <ToyEditor toy={toy} guides={guides.map((g) => ({ id: g.id, title: g.title }))} />
+    <ToyEditor
+      toy={toy}
+      guides={guides.map((g) => ({ id: g.id, title: g.title }))}
+      ownToys={toys.filter((t) => t.id !== id)}
+    />
   )
 }

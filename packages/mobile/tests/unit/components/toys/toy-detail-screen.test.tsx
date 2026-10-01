@@ -332,4 +332,24 @@ describe('ToyDetailScreen', () => {
     expect(await screen.findByText('Not taking requests right now')).toBeTruthy()
     expect(screen.queryByText('Ask to collect it')).toBeNull()
   })
+
+  it("shows the holder's picks and opens each one", async () => {
+    mockEndpoints({
+      detail: Promise.resolve(
+        toy({
+          picks: [
+            { kind: 'toy', id: 't9', title: 'Light-up drum', photo_url: null, meta: 'Good' },
+            { kind: 'toy_adaptation', id: 'g1', title: 'Bubble machine, four-second burst', photo_url: null, meta: null },
+          ],
+        })
+      ),
+    })
+    render(<ToyDetailScreen id="toy1" />)
+    expect(await screen.findByText('Picked by Jamie — what else they have listed, and the guides behind it.')).toBeTruthy()
+    expect(screen.getByText('Toy adaptation guide')).toBeTruthy()
+    fireEvent.press(screen.getByText('Light-up drum'))
+    expect(mockPush).toHaveBeenCalledWith('/toy-library/t9')
+    fireEvent.press(screen.getByText('Bubble machine, four-second burst'))
+    expect(mockPush).toHaveBeenCalledWith('/guides/g1')
+  })
 })

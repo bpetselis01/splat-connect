@@ -33,3 +33,29 @@ export function autoPicks<T extends { id: string; created_at: string; owner_id: 
     .sort((a, b) => b.created_at.localeCompare(a.created_at))
     .slice(0, 3)
 }
+
+/** The most a holder can hand-pick; 102's position check (1–3) backs it. */
+export const MAX_PICKS = 3
+
+export const samePick = (a: ToyPickInput, b: ToyPickInput) => a.entity_type === b.entity_type && a.entity_id === b.entity_id
+
+/** What the editors start from: the saved picks, in position order. */
+export function initialPicks(toy: { toy_picks?: ({ position: number } & ToyPickInput)[] }): ToyPickInput[] {
+  return [...(toy.toy_picks ?? [])]
+    .sort((a, b) => a.position - b.position)
+    .map(({ entity_type, entity_id }) => ({ entity_type, entity_id }))
+}
+
+/** What a holder can pick: their other listed, unretired toys, then the published guides. */
+export function pickOptions(
+  toy: { id: string },
+  ownToys: readonly { id: string; name: string; status: string; retired_at?: string | null }[],
+  guides: readonly { id: string; title: string }[]
+): { pick: ToyPickInput; label: string }[] {
+  return [
+    ...ownToys
+      .filter((t) => t.id !== toy.id && t.status === 'published' && !t.retired_at)
+      .map((t) => ({ pick: { entity_type: 'toy' as const, entity_id: t.id }, label: t.name })),
+    ...guides.map((g) => ({ pick: { entity_type: 'tutorial' as const, entity_id: g.id }, label: g.title })),
+  ]
+}

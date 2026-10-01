@@ -21,6 +21,7 @@ import { StepPills, type StepPillItem } from '../ui/StepPills'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { ErrorRow } from '../ui/ErrorRow'
+import { PicksEditor } from './picks-editor'
 
 /** Mirrors 053's file_size_limit on the photo buckets. */
 const MAX_PHOTO_BYTES = 10 * 1024 * 1024
@@ -38,6 +39,7 @@ export function Editor({ id }: { id: string }) {
   const router = useRouter()
   const { caps } = useCapabilities()
   const [toy, setToy] = useState<Toy | null>(null)
+  const [shelf, setShelf] = useState<Toy[]>([])
   const [transactions, setTransactions] = useState<ToyTransactionSummary[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
@@ -87,6 +89,7 @@ export function Editor({ id }: { id: string }) {
           return
         }
         setToy(found)
+        setShelf(owned!.shelf)
         setName(found.name)
         setDescription(found.description ?? '')
         setCondition(found.condition)
@@ -614,6 +617,14 @@ export function Editor({ id }: { id: string }) {
                 />
               </>
             )}
+            {toy.status === 'published' ? (
+              <PicksEditor
+                toy={toy}
+                ownToys={shelf}
+                guides={guides}
+                onSaved={(t) => setToy((prev) => (prev ? { ...prev, ...t } : t))}
+              />
+            ) : null}
           </View>
         )}
       </ScrollView>

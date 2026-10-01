@@ -4,7 +4,7 @@ export * from './nav-model'
 // lines above export nothing at runtime there. Named re-exports do.
 export { gradeOf, GRADES } from './toy-grade'
 export type { Grade, GradeKey } from './toy-grade'
-export { autoPicks, PICK_KIND_LABEL } from './toy-picks'
+export { autoPicks, initialPicks, MAX_PICKS, pickOptions, PICK_KIND_LABEL, samePick } from './toy-picks'
 export type { PicksMode, ToyPick, ToyPickInput } from './toy-picks'
 import type { PicksMode, ToyPick } from './toy-picks'
 export { contributorBadges } from './contributor-badges'

@@ -791,6 +791,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["mobile", "web", "api"],
     needs: "Decided 2026-09-30: the holder chooses the mode and can change it later: hand-picked (up to 3, like guide recommendations in 048) or automatic (e.g. their most recently published).",
+    shipped: true,
   },
   'customization-metrics': {
     shipped: true,

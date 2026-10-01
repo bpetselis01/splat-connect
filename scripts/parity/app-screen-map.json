@@ -202,8 +202,8 @@
    {
     "type": "missing-section",
     "match": "also worth a look",
-    "why": "pending",
-    "pending": "toy-holder-picks"
+    "why": "intended",
+    "reason": "Built (toy-holder-picks); the seed's swap-toy holder has nothing else listed and no picks, so the section rightly draws nothing."
    },
    {
     "type": "font",
