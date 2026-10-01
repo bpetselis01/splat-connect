@@ -96,5 +96,21 @@ describe('RequestPrintForm', () => {
     expect(screen.queryByRole('checkbox', { name: /Sam/ })).toBeNull()
     expect(screen.getByText('Pick up to three printers')).toBeTruthy()
   })
+
+  // Tests: 097 — a listed printer the bed check hides is not "nobody has listed"
+  it('says no printer matches when the only one is too small', () => {
+    const small = { ...printer('s', 'Sam'), bed_x: 100, bed_y: 100, bed_z: 100 } as PrinterWithOwner
+    render(
+      <RequestPrintForm
+        tutorialId="t1"
+        tutorialTitle="Switch mount"
+        parts={[{ id: 'f1', filename: 'tray.stl', print_minutes: null, filament_grams: null, material: 'PETG', size_x_mm: 300, size_y_mm: 50, size_z_mm: 20 }]}
+        printers={[small]}
+        header={<h1>Request a print</h1>}
+      />
+    )
+    expect(screen.getByText('No printer matches.')).toBeTruthy()
+    expect(screen.queryByText('Nobody has listed a printer yet.')).toBeNull()
+  })
 })
 

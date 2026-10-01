@@ -95,3 +95,16 @@ it('hides a printer whose bed cannot hold the guide’s parts', async () => {
   expect(await screen.findByText('Maker B')).toBeTruthy()
   expect(screen.queryByText('Maker A')).toBeNull()
 })
+
+it('says no printer matches, not nobody listed, when the only printer is too small', async () => {
+  mockGet.mockImplementation((path: string) =>
+    Promise.resolve(
+      path === '/api/printers'
+        ? [printer('a', { bed_x: 100, bed_y: 100, bed_z: 100 })]
+        : { ...GUIDE, stl_files: [{ ...GUIDE.stl_files[0], size_x_mm: 200, size_y_mm: 100, size_z_mm: 50 }] }
+    )
+  )
+  render(<FindPrinterScreen guideId="g1" />)
+  expect(await screen.findByText('No printer matches')).toBeTruthy()
+  expect(screen.queryByText('Nobody has listed a printer yet')).toBeNull()
+})

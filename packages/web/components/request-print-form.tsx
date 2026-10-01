@@ -278,7 +278,7 @@ export function RequestPrintForm({
           </div>
           {shown.length === 0 ? (
             <p className="rounded-[var(--radius-inset)] bg-sunken p-[18px] text-center text-sm text-muted">
-              Nobody has listed a printer yet.
+              {printers.length ? 'No printer matches.' : 'Nobody has listed a printer yet.'}
             </p>
           ) : (
             <div role="group" aria-label="Printers" className="flex flex-col gap-2.5">

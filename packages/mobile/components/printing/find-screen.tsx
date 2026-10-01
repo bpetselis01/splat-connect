@@ -88,16 +88,19 @@ export function FindPrinterScreen({ guideId }: { guideId?: string }) {
   // Your own machines, and your organisations', are not somewhere you send a
   // job — the API refuses it, so they are not offered.
   const ledOrgIds = new Set(caps?.ledOrgs.map((o) => o.id) ?? [])
-  // 097: a printer whose bed cannot hold the guide's parts is not offered. No
-  // chip — the board's rule — and nothing is hidden unless every part is sized.
   const theirs = printers.filter(
-    (p) =>
-      p.owner_id !== caps?.profile.id &&
-      !(p.owner_org_id && ledOrgIds.has(p.owner_org_id)) &&
-      bedFits(p, guide?.stl_files ?? [])
+    (p) => p.owner_id !== caps?.profile.id && !(p.owner_org_id && ledOrgIds.has(p.owner_org_id))
   )
   const material = (guide && partMaterials(guide.stl_files)[0]) || 'PETG'
-  const shown = theirs.filter((p) => (!openOnly || isOpen(p)) && (!hasMaterial || p.materials.includes(material)))
+  // 097: a printer whose bed cannot hold the guide's parts is not offered. No
+  // chip — the board's rule — and nothing is hidden unless every part is sized.
+  // It filters `shown`, not `theirs`, so the empty state still knows printers exist.
+  const shown = theirs.filter(
+    (p) =>
+      (!openOnly || isOpen(p)) &&
+      (!hasMaterial || p.materials.includes(material)) &&
+      bedFits(p, guide?.stl_files ?? [])
+  )
   const canPick = !!guide && guide.stl_files.length > 0
 
   return (
