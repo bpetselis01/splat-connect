@@ -526,7 +526,18 @@ select * from (values
   -- added_by readable, an anonymous author is one PostgREST call away.
   ('110 toy_idea_constraints has RLS on, and anon cannot read added_by',
    (select relrowsecurity from pg_class where oid = 'public.toy_idea_constraints'::regclass)
-   and not has_column_privilege('anon', 'public.toy_idea_constraints', 'added_by', 'select'))
+   and not has_column_privilege('anon', 'public.toy_idea_constraints', 'added_by', 'select')),
+
+  -- 111. Without RLS every maker reads every other maker's questions; with
+  -- Supabase's default grants anon reads them too.
+  ('111 build_request_questions has RLS on, and anon has no grant',
+   (select relrowsecurity from pg_class where oid = 'public.build_request_questions'::regclass)
+   and not has_table_privilege('anon', 'public.build_request_questions', 'select')),
+
+  ('111 notifications_type_check permits build_question',
+   (select count(*) = 1 from pg_constraint
+      where conname = 'notifications_type_check'
+        and pg_get_constraintdef(oid) like '%build_question%'))
 ) as t(guard, ok)
 where not ok;
 EOSQL

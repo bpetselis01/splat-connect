@@ -13,6 +13,7 @@ import {
   ArrowCounterClockwise as Undo,
   BookOpen,
   Buildings as Building,
+  ChatCircleDots,
   Check,
   FileText,
   Handshake,
@@ -50,6 +51,7 @@ const ICON: Record<NotificationType, [Glyph, string]> = {
   idea_graduated: [FileText, 'var(--tviolet)'],
   build_shot_posted: [Box, 'var(--tcoral)'],
   build_approved: [Check, 'var(--tok)'],
+  build_question: [ChatCircleDots, 'var(--tmint)'],
   print_started: [Box, 'var(--tcoral)'],
   print_ready: [Check, 'var(--tok)'],
   org_event_published: [Building, 'var(--b100)'],
@@ -59,6 +61,8 @@ const ICON: Record<NotificationType, [Glyph, string]> = {
 }
 
 function linkFor(n: Notification, isAdmin: boolean): string {
+  // 111: a question before a claim opens Ask first, for the maker and the family alike.
+  if (n.type === 'build_question' && n.toy_transaction_id) return `/dashboard/exchanges/build/${n.toy_transaction_id}/ask`
   // Builds and print jobs have their own detail screens; the exchange thread
   // is only for toys.
   if (n.toy_transaction_id && (n.type === 'build_shot_posted' || n.type === 'build_approved')) {

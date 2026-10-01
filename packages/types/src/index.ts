@@ -14,7 +14,7 @@ export type { ToolGetBy, PrintSettings } from './guides'
 export { OUTCOME_STEPS, outcomeStates, PARTICIPANT_ROLE_LABEL } from './challenges'
 export type { OutcomeState } from './challenges'
 export { BUILD_URGENCIES } from './builds'
-export type { BuildUrgency } from './builds'
+export type { BuildUrgency, BuildQuestion, BuildQuestionThread, BuildQuestions } from './builds'
 import type { ToolGetBy, PrintSettings } from './guides'
 export { buildCalendar } from './ics'
 export type { CalendarEvent } from './ics'
@@ -1665,6 +1665,7 @@ export type NotificationType =
   | 'tutorial_noted'
   | 'build_shot_posted'
   | 'build_approved'
+  | 'build_question'
   | 'print_started'
   | 'print_ready'
   | 'org_event_published'
@@ -1721,6 +1722,7 @@ const NOTIFICATION_BUCKET = {
   toy_message: 'exchanges',
   build_shot_posted: 'exchanges',
   build_approved: 'exchanges',
+  build_question: 'exchanges',
   print_started: 'exchanges',
   print_ready: 'exchanges',
   idea_approved: 'challenges',
@@ -1789,6 +1791,8 @@ export const COPY: Record<NotificationType, (n: Notification) => string> = {
   idea_graduated: () => 'A challenge you were part of is being written up as a guide, and you are credited on it',
   build_shot_posted: (n) => `${n.actor_name} posted a photo of ${n.toy_name} working`,
   build_approved: (n) => `${n.actor_name} approved the working shot for ${n.toy_name}`,
+  // 111: either way round — a maker asking, or the family answering — before a claim.
+  build_question: (n) => `${n.actor_name} wrote about ${n.toy_name} before anyone claimed it`,
   print_started: (n) => `${n.actor_name} started printing ${n.toy_name}`,
   print_ready: (n) => `${n.actor_name} finished printing ${n.toy_name}`,
   // 077. For the two publish types the event or story title rides in

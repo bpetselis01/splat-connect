@@ -633,6 +633,7 @@ export const PENDING = {
     needs: "A search input on the review list (rows already name the contributor) [ui]",
   },
   'makers-ask-first': {
+    shipped: true,
     title: "Ask first",
     blurb: "Asking the family a question before you claim a build isn't built yet.",
     kind: "build",

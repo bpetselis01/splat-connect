@@ -7,13 +7,7 @@
  * whole shape of this feature and the reason 064 exists: the board is a
  * different way IN to the same record, not a second kind of record.
  *
- * ponytail: the artboard draws a second button, "Ask first", for the maker who
- * wants to check something before committing. It is NOT here, because it needs
- * a thread on a request that has no second party — toy_transaction_messages is
- * keyed to a transaction whose two sides are the whole basis of who may read
- * it, and an unclaimed request has one. Two buttons that both claim would be
- * worse than one honest one: a maker who pressed "Ask first" would find they
- * had committed. Add it when messages can belong to an unowned transaction.
+ * Ask first opens a private thread with the family (111) without claiming.
  *
  * Live and Handed over read GET /builds-board as their tab is picked; a
  * handed-over row says only the guide, the maker and when (F19).
@@ -43,7 +37,6 @@ import { buildRowMeta } from '@splat-connect/types'
 import { browserApiClient } from '@/lib/browser-api-client'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { formatRelativeTime } from '@/lib/relative-time'
-import { PendingButton } from '@/components/pending-button'
 
 export type OpenBuild = {
   id: string
@@ -312,7 +305,9 @@ export function MakersWantedBoard({ builds }: { builds: OpenBuild[] }) {
                       </Link>
                     )}
                     {!onBoard && !b.mine && (
-                      <PendingButton pending="makers-ask-first" label="Ask first" className="btn btn-quiet min-h-11 px-[18px] text-sm" />
+                      <Link href={`/dashboard/exchanges/build/${b.id}/ask`} className="btn btn-quiet min-h-11 px-[18px] text-sm">
+                        Ask first
+                      </Link>
                     )}
                     {!onBoard && !b.mine && (
                       <button

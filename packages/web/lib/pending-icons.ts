@@ -2,11 +2,10 @@
 // gets the hourglass the board uses; the registry stays icon-free because the
 // phone uses Ionicons.
 import type { Icon } from '@phosphor-icons/react'
-import { Hourglass, MapTrifold, ChatCircleDots, Heart, Flag } from '@phosphor-icons/react/dist/ssr'
+import { Hourglass, MapTrifold, Heart, Flag } from '@phosphor-icons/react/dist/ssr'
 
 const ICONS: Record<string, Icon> = {
   'impact-map': MapTrifold,
-  'makers-ask-first': ChatCircleDots,
   'thank-people': Heart,
   'report-problem-mobile': Flag,
 }

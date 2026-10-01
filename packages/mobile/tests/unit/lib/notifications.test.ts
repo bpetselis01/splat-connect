@@ -49,6 +49,10 @@ describe('COPY', () => {
 })
 
 describe('linkFor', () => {
+  it('opens Ask first for a question about an unclaimed build', () => {
+    expect(linkFor(notification({ type: 'build_question', toy_transaction_id: 'b1' }))).toBe('/exchanges/build/ask/b1')
+  })
+
   it('opens the published guide for a followed challenge', () => {
     expect(linkFor(notification({ type: 'challenge_guide_published', tutorial_id: 't9' }))).toBe('/guides/t9')
   })

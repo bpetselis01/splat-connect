@@ -149,6 +149,12 @@ export default async function BuildDetailPage({ params }: { params: Promise<{ id
         )}
       </div>
 
+      {tx.status === 'requested' && !tx.owner_id && !tx.owner_org_id && tx.requester_id === caps.profile.id && (
+        <Link href={`/dashboard/exchanges/build/${id}/ask`} className="btn btn-quiet mt-4">
+          Asking first
+        </Link>
+      )}
+
       <div className="my-[22px]">
         <StageRailCard stages={stages} facts={facts} />
       </div>

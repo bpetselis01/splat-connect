@@ -261,6 +261,10 @@ export function BuildThreadScreen({ id }: { id: string }) {
             </View>
           </Card>
 
+          {c.isFamily && tx.status === 'requested' && !tx.owner_id && !tx.owner_org_id ? (
+            <Button label="Asking first" variant="secondary" onPress={() => router.push(`/exchanges/build/ask/${id}`)} />
+          ) : null}
+
           <Card style={styles.rail} accessibilityLabel="Build progress" accessible>
             {rail.map((step, i) => (
               <View key={step.label} style={styles.railStep}>

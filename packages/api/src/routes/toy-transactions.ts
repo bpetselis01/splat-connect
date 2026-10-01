@@ -2,7 +2,7 @@ import { chunk } from '../chunk.js'
 import { Hono, type Context } from 'hono'
 import { randomInt, randomUUID } from 'node:crypto'
 import { needsAction, isOwnerSide, answerBy, printRequestExpired, shortDate, fitNotesProblem, partsTotalCents } from '@splat-connect/types'
-import type { PrintJobFile, PrintSettings } from '@splat-connect/types'
+import type { PrintJobFile, PrintSettings, BuildQuestion, BuildQuestions } from '@splat-connect/types'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import { ledOrgIds, atCapacityToyIds } from '../toy-access.js'
@@ -1551,6 +1551,20 @@ toyTransactions.post('/:id/claim', async (c) => {
     admin.from('tutorials').select('title').eq('id', tx.tutorial_id as string).maybeSingle(),
   ])
 
+  // What this maker asked first stays with the build (makers-ask-first): their
+  // thread is copied in with its own times, so it reads ahead of the claim.
+  const { data: asked } = await admin
+    .from('build_request_questions')
+    .select('sender_id, body, created_at')
+    .eq('transaction_id', tx.id)
+    .eq('maker_id', userId)
+    .order('created_at', { ascending: true })
+  if (asked?.length) {
+    await admin.from('toy_transaction_messages').insert(
+      asked.map((q) => ({ transaction_id: tx.id, sender_id: q.sender_id, kind: 'user', body: q.body, created_at: q.created_at }))
+    )
+  }
+
   await admin.from('toy_transaction_messages').insert({
     transaction_id: tx.id,
     sender_id: userId,
@@ -1567,6 +1581,111 @@ toyTransactions.post('/:id/claim', async (c) => {
   })
 
   return c.json(sanitizeCodes(claimed, userId, []))
+})
+
+/** The build row the two question routes decide by, read past RLS. */
+async function loadBuild(admin: ReturnType<typeof createAdminClient>, id: string) {
+  const { data, error } = await admin
+    .from('toy_transactions')
+    .select('id, type, status, requester_id, owner_id, owner_org_id, tutorial_id, toy_id, requester_suburb')
+    .eq('id', id)
+    .maybeSingle()
+  if (error && error.code !== INVALID_TEXT_REPRESENTATION) return { error }
+  if (!data || data.type !== 'build') return { missing: true as const }
+  return { tx: data, open: data.status === 'requested' && !data.owner_id && !data.owner_org_id }
+}
+
+/**
+ * GET /api/toy-transactions/:id/questions — Ask first (makers-ask-first).
+ * RLS (111) picks the rows: every thread for the family, a maker's own for a
+ * maker. Somebody with no thread on a build that is no longer open learns
+ * nothing about it.
+ */
+toyTransactions.get('/:id/questions', async (c) => {
+  const userId = c.get('userId')
+  const admin = createAdminClient()
+  const loaded = await loadBuild(admin, c.req.param('id'))
+  if ('error' in loaded) return c.json({ error: loaded.error!.message }, 500)
+  if ('missing' in loaded) return c.json({ error: 'Not found' }, 404)
+  const { tx, open } = loaded
+  const family = tx.requester_id === userId
+
+  const { data: rows, error } = await createUserClient(c.get('token'))
+    .from('build_request_questions')
+    .select('id, maker_id, sender_id, body, created_at')
+    .eq('transaction_id', tx.id)
+    .order('created_at', { ascending: true })
+  if (error) return c.json({ error: error.message }, 500)
+  if (!family && !open && !(rows ?? []).length) return c.json({ error: 'Not found' }, 404)
+
+  const makerIds = [...new Set((rows ?? []).map((r) => r.maker_id as string))]
+  const names = new Map(await Promise.all(makerIds.map(async (m) => [m, await profileName(admin, m, 'A maker')] as const)))
+  const body: BuildQuestions = {
+    transaction_id: tx.id,
+    tutorial_title: await subjectName(admin, tx as { type: string; toy_id: string | null; tutorial_id: string | null }),
+    requester_suburb: tx.requester_suburb,
+    open,
+    family,
+    threads: makerIds.map((m) => ({
+      maker_id: m,
+      maker_name: names.get(m)!,
+      messages: (rows ?? []).filter((r) => r.maker_id === m).map(({ maker_id: _m, ...q }) => q as BuildQuestion),
+    })),
+  }
+  return c.json(body)
+})
+
+/**
+ * POST /api/toy-transactions/:id/questions — body: { body, maker_id? }.
+ * A maker always writes into their own thread (any maker_id they send is
+ * ignored); the family names the thread, and only a maker who asked has one.
+ * The insert runs as the caller, so 111's policy is the last word.
+ */
+toyTransactions.post('/:id/questions', async (c) => {
+  const parsed = await c.req.json().catch(() => null)
+  const text = typeof parsed?.body === 'string' ? parsed.body.trim() : ''
+  if (text.length < 1 || text.length > 1000) return c.json({ error: 'Write a question of up to 1000 characters.' }, 400)
+
+  const userId = c.get('userId')
+  const admin = createAdminClient()
+  const loaded = await loadBuild(admin, c.req.param('id'))
+  if ('error' in loaded) return c.json({ error: loaded.error!.message }, 500)
+  if ('missing' in loaded) return c.json({ error: 'Not found' }, 404)
+  const { tx, open } = loaded
+  if (!open) return c.json({ error: 'Somebody has already claimed this one.' }, 409)
+
+  const family = tx.requester_id === userId
+  let makerId = userId
+  if (family) {
+    makerId = typeof parsed?.maker_id === 'string' ? parsed.maker_id : ''
+    const { data: asked } = await admin
+      .from('build_request_questions')
+      .select('id')
+      .eq('transaction_id', tx.id)
+      .eq('maker_id', makerId)
+      .eq('sender_id', makerId)
+      .limit(1)
+      .maybeSingle()
+    if (!asked) return c.json({ error: 'That maker has not asked about this request.' }, 404)
+  }
+
+  const { data, error } = await createUserClient(c.get('token'))
+    .from('build_request_questions')
+    .insert({ transaction_id: tx.id, maker_id: makerId, sender_id: userId, body: text })
+    .select('id, sender_id, body, created_at')
+    .single()
+  if (error?.code === RLS_VIOLATION) return c.json({ error: 'You cannot ask about this request.' }, 403)
+  if (error) return c.json({ error: error.message }, 500)
+
+  await admin.from('notifications').insert({
+    recipient_id: family ? makerId : tx.requester_id,
+    type: 'build_question',
+    toy_transaction_id: tx.id,
+    toy_name: await subjectName(admin, tx as { type: string; toy_id: string | null; tutorial_id: string | null }),
+    // The family is "Family in Newtown" to a maker until a claim, as on the card.
+    actor_name: family ? `Family in ${tx.requester_suburb ?? 'your area'}` : await profileName(admin, userId, 'A maker'),
+  })
+  return c.json(data, 201)
 })
 
 /**

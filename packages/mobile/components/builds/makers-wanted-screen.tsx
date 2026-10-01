@@ -7,12 +7,8 @@
  * a build thread with this maker on the other end. The board is a different
  * way IN to the same record, not a second kind of record.
  *
- * Live and Done read GET /builds-board as their tab is picked.
- *
- * What the board draws and this does not, for web's reason:
- * - "Ask first". Messages belong to a transaction's two parties and an
- *   unclaimed request has one; a second button that also claimed would be
- *   worse than one honest one.
+ * Live and Done read GET /builds-board as their tab is picked. Ask first opens
+ * a private thread with the family (111) without claiming.
  *
  * Distance is measured from the maker's profile postcode to the family's (099);
  * without one, the chips ask for it.
@@ -36,7 +32,6 @@ import { EmptyState } from '../ui/EmptyState'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
 import { ErrorRow } from '../ui/ErrorRow'
 import { apiMessage, buildRowMeta } from '@splat-connect/types'
-import { PendingButton } from '../ui/pending'
 
 /** GET /api/toy-transactions/open-builds, one row. No requester name — by design. */
 export type OpenBuild = {
@@ -274,6 +269,7 @@ export function MakersWantedScreen() {
                 kind={onBoard ? tab : 'open'}
                 busy={busy === b.id}
                 onClaim={() => claim(b.id)}
+                onAsk={() => router.push(`/exchanges/build/ask/${b.id}`)}
                 onTrack={() => router.push(`/exchanges/build/${b.id}`)}
               />
             ))}
@@ -322,12 +318,14 @@ function BuildCard({
   kind,
   busy,
   onClaim,
+  onAsk,
   onTrack,
 }: {
   b: OpenBuild & Partial<Pick<BoardBuild, 'maker_name' | 'party' | 'updated_at'>>
   kind: 'open' | 'live' | 'done'
   busy: boolean
   onClaim: () => void
+  onAsk: () => void
   onTrack: () => void
 }) {
   const diff = b.tutorial?.difficulty ?? null
@@ -406,7 +404,7 @@ function BuildCard({
           <Button label="Track" variant="secondary" onPress={onTrack} style={styles.footButton} />
         ) : (
           <>
-            <PendingButton pending="makers-ask-first" label="Ask first" variant="ghost" style={styles.footButton} />
+            <Button label="Ask first" variant="ghost" onPress={onAsk} style={styles.footButton} />
             <Button
               label={busy ? 'Claiming…' : "I'll build this"}
               disabled={busy}

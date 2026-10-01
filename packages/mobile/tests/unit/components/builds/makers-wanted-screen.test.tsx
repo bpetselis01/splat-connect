@@ -104,3 +104,10 @@ it('offers the thread on a live build of your own', async () => {
   fireEvent.press(screen.getByText('Thread'))
   expect(mockPush).toHaveBeenCalledWith('/exchanges/build/l1')
 })
+
+it('opens Ask first for an open request', async () => {
+  mockGet.mockResolvedValue([row()])
+  render(<MakersWantedScreen />)
+  fireEvent.press(await screen.findByRole('button', { name: 'Ask first' }))
+  expect(mockPush).toHaveBeenCalledWith('/exchanges/build/ask/b1')
+})

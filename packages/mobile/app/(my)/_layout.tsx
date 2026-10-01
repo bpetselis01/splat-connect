@@ -40,6 +40,7 @@ export default function MyLayout() {
       <Stack.Screen name="exchanges/index" options={{ title: 'My exchanges' }} />
       <Stack.Screen name="exchanges/[id]" options={{ title: 'Exchange' }} />
       <Stack.Screen name="exchanges/build/[id]" options={{ title: 'Build' }} />
+      <Stack.Screen name="exchanges/build/ask/[id]" options={{ title: 'Ask first' }} />
       <Stack.Screen name="challenges/index" options={{ title: 'Design challenges' }} />
       <Stack.Screen name="saved/index" options={{ title: 'Saved' }} />
       {/* One route, three titles would need the param at layout level; the
