@@ -17,9 +17,9 @@ test("the contributor page lists that contributor's guides and opens one", async
 
   await expect(page.getByText(author)).toBeVisible()
   await expect(page.getByText('Published guides')).toBeVisible()
-  await expect(page.getByText(title)).toBeVisible()
+  await expect(page.getByRole('button', { name: title })).toBeVisible()
 
-  await page.getByText(title).click()
+  await page.getByRole('button', { name: title }).click()
   await expect(page).toHaveURL(new RegExp(`/guides/${id}$`))
 })
 

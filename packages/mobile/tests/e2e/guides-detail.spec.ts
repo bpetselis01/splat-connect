@@ -19,7 +19,7 @@ test('tapping a tutorial navigates to its detail screen', async ({ page }) => {
   // "Easy" left on the page is the difficulty filter chip on the library
   // screen behind, which is hidden — so the old assertion could not pass.
   await expect(page.getByText('Easy', { exact: true }).last()).toBeVisible()
-  await expect(page.getByText('E2E part × 2')).toBeVisible()
+  await expect(page.getByText('E2E part ×2')).toBeVisible()
   await expect(page.getByText('E2E tool')).toBeVisible()
 })
 
@@ -71,9 +71,9 @@ test('optional parts and tools are badged on the detail screen', async ({ page }
 
   // Mobile marks optional items inline in the row label — there is no separate
   // badge here, unlike the web detail page.
-  await expect(page.getByText('E2E optional part × 1 (optional)')).toBeVisible()
+  await expect(page.getByText('E2E optional part ×1 (optional)')).toBeVisible()
   await expect(page.getByText('E2E optional tool (optional)')).toBeVisible()
-  await expect(page.getByText('E2E part × 2', { exact: true })).toBeVisible()
+  await expect(page.getByText('E2E part ×2', { exact: true })).toBeVisible()
 })
 
 test('the preview screen explains when a tutorial has no PDF', async ({ page }) => {
@@ -99,8 +99,9 @@ test('the byline names the primary contributor and opens their showcase', async 
   })
 
   await page.goto(`/guides/${id}`)
-  await expect(page.getByText(author)).toBeVisible()
-  await page.getByText(author).click()
+  // By role: the community-notes prompt names the author too.
+  await expect(page.getByRole('button', { name: author })).toBeVisible()
+  await page.getByRole('button', { name: author }).click()
 
   await expect(page).toHaveURL(new RegExp(`/guides/contributor/${contributor.id}$`))
 })
