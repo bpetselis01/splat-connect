@@ -4,6 +4,9 @@ export * from './nav-model'
 // lines above export nothing at runtime there. Named re-exports do.
 export { gradeOf, GRADES } from './toy-grade'
 export type { Grade, GradeKey } from './toy-grade'
+export { autoPicks, PICK_KIND_LABEL } from './toy-picks'
+export type { PicksMode, ToyPick, ToyPickInput } from './toy-picks'
+import type { PicksMode, ToyPick } from './toy-picks'
 export { contributorBadges } from './contributor-badges'
 export type { ContributorBadge, ContributorBadgeInput } from './contributor-badges'
 export { TOOL_GET_BY_LABEL, partsTotalCents, checkedOn, realignCaptions, formatPrintMinutes, printSettingRows, printSettingsLine } from './guides'
@@ -182,6 +185,10 @@ export interface Toy {
   retired_at?: string | null
   /** Why, in the leader's words: "Broken 12 Aug". ≤ 80. */
   retired_note?: string | null
+  /** "Also worth a look" (102): automatic, or the holder's own picks. */
+  picks_mode?: PicksMode
+  /** The holder's picks, in order. Only on the holder's own reads (GET /api/toys, /inventory). */
+  toy_picks?: { position: number; entity_type: 'toy' | 'tutorial'; entity_id: string }[]
   created_at: string
   updated_at: string
   /** PostgREST computed fields (073), the owner's "How it is doing" tiles.
@@ -211,6 +218,8 @@ export type ToyDetail = ToyWithOwner & {
    *  suburb (059) or a person's pickup suburb. Null when they gave none. */
   holder_suburb: string | null
   holder_state: string | null
+  /** "Also worth a look", resolved: automatic or hand-picked, public ones only. */
+  picks?: ToyPick[]
 }
 
 /** The board's facts grid, in its order, skipping the ones not filled in. */

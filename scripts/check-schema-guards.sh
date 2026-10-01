@@ -460,7 +460,17 @@ select * from (values
   -- table-level grant back, any key could read every owner's postcode.
   ('099 printers.postcode is not selectable by anon/authenticated',
    (select not has_column_privilege('anon', 'public.printers', 'postcode', 'select')
-       and not has_column_privilege('authenticated', 'public.printers', 'postcode', 'select')))
+       and not has_column_privilege('authenticated', 'public.printers', 'postcode', 'select'))),
+
+  -- 102. A toy's "Also worth a look" is its holder's to write. With RLS off,
+  -- anyone could point a stranger's toy page at anything.
+  ('102 toy_picks has RLS enabled and a holder-gated write policy',
+   (select coalesce(bool_and(relrowsecurity), false) from pg_class
+      where relname = 'toy_picks' and relnamespace = 'public'::regnamespace)
+   and (select count(*) > 0 from pg_policies
+      where tablename = 'toy_picks'
+        and cmd = 'ALL'
+        and coalesce(qual, with_check) like '%is_org_leader%'))
 ) as t(guard, ok)
 where not ok;
 EOSQL

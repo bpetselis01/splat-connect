@@ -1035,10 +1035,14 @@ toyTransactions.post('/:id/confirm', async (c) => {
   // stuck 'completed' with a toy that never moved and a guard that can never
   // let it back in.
   async function transferToy(toyId: string, to: { owner_id: string | null; owner_org_id: string | null }) {
-    return admin
+    const moved = await admin
       .from('toys')
-      .update({ ...to, status: 'draft', paused_at: null, updated_at: now })
+      .update({ ...to, status: 'draft', paused_at: null, picks_mode: 'auto', updated_at: now })
       .eq('id', toyId)
+    if (moved.error) return moved
+    // The old holder's hand-picked "Also worth a look" points at their shelf,
+    // not the new one's (102).
+    return admin.from('toy_picks').delete().eq('toy_id', toyId)
   }
 
   // An organisation gives ONE OF its units, so its row cannot move — it is the

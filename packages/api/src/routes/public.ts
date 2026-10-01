@@ -11,7 +11,7 @@ import { atCapacityToyIds } from '../toy-access.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import { notePhotoUrl } from './tutorial-notes.js'
 import { readNear, byDistance, pickupPostcodes, type Near } from '../distance.js'
-import { buildCalendar, contributorBadges, readMinutes } from '@splat-connect/types'
+import { autoPicks, buildCalendar, contributorBadges, gradeOf, readMinutes } from '@splat-connect/types'
 import type {
   ImpactSummary,
   ImpactEntity,
@@ -21,6 +21,7 @@ import type {
   OrgPublicProfile,
   PrinterStats,
   CataloguePart,
+  ToyPick,
 } from '@splat-connect/types'
 
 const publicRoutes = new Hono()
@@ -187,6 +188,66 @@ async function publicNear(c: Context): Promise<Near | string> {
   return data.user ? near : { near: null, within: null }
 }
 
+type ListedToy = {
+  id: string
+  name: string
+  cover_photo_url: string | null
+  condition: number
+  created_at: string
+  owner_id: string | null
+  owner_org_id: string | null
+}
+const LISTED_TOY = 'id, name, cover_photo_url, condition, created_at, owner_id, owner_org_id'
+
+/**
+ * "Also worth a look" (102). Automatic: up to three of the holder's other
+ * listed toys, newest first, skipping any already spoken for (`hidden`, the
+ * same set the library hides). Hand-picked: the holder's choices in their
+ * order. Through the anon client, so RLS drops anything not public — a draft
+ * or retired toy, a guide not approved — behind the explicit filters, and a
+ * pick that went private shows nothing.
+ */
+async function holderPicks(
+  sb: ReturnType<typeof createAnonClient>,
+  toy: { id: string; owner_id: string | null; owner_org_id: string | null; picks_mode?: string | null },
+  hidden: Set<string>
+): Promise<ToyPick[]> {
+  const toyPick = (t: ListedToy): ToyPick => ({
+    kind: 'toy',
+    id: t.id,
+    title: t.name,
+    photo_url: t.cover_photo_url,
+    meta: gradeOf(t.condition).label,
+  })
+  if (toy.picks_mode !== 'picked') {
+    const { data } = await sb
+      .from('toys')
+      .select(LISTED_TOY)
+      .eq('status', 'published')
+      .is('retired_at', null)
+      .eq(toy.owner_org_id ? 'owner_org_id' : 'owner_id', (toy.owner_org_id ?? toy.owner_id) as string)
+    const listed = ((data ?? []) as ListedToy[]).filter((t) => !hidden.has(t.id))
+    return autoPicks(toy, listed).map(toyPick)
+  }
+  const { data: rows } = await sb.from('toy_picks').select('entity_type, entity_id').eq('toy_id', toy.id).order('position')
+  const picks = (rows ?? []) as { entity_type: 'toy' | 'tutorial'; entity_id: string }[]
+  const ids = (type: 'toy' | 'tutorial') => picks.filter((p) => p.entity_type === type).map((p) => p.entity_id)
+  const [toys, guides] = await Promise.all([
+    ids('toy').length
+      ? sb.from('toys').select(LISTED_TOY).in('id', ids('toy')).eq('status', 'published').is('retired_at', null)
+      : null,
+    ids('tutorial').length
+      ? sb.from('tutorials').select('id, title, kind, toy_photo_url').in('id', ids('tutorial')).eq('status', 'approved')
+      : null,
+  ])
+  const found = new Map<string, ToyPick>()
+  for (const t of (toys?.data ?? []) as ListedToy[]) found.set(`toy:${t.id}`, toyPick(t))
+  for (const g of (guides?.data ?? []) as { id: string; title: string; kind: 'toy_adaptation' | 'assistive_tech'; toy_photo_url: string | null }[]) {
+    found.set(`tutorial:${g.id}`, { kind: g.kind, id: g.id, title: g.title, photo_url: g.toy_photo_url, meta: null })
+  }
+  return picks.map((p) => found.get(`${p.entity_type}:${p.entity_id}`)).filter((p): p is ToyPick => !!p)
+}
+
 publicRoutes.get('/toys', async (c) => {
   const near = await publicNear(c)
   if (typeof near === 'string') return c.json({ error: near }, 400)
@@ -238,7 +299,7 @@ publicRoutes.get('/toys/:id', async (c) => {
   // has no anon policy, so the admin client counts, and returns only a count.
   const giver = data.owner_org_id ? 'owner_org_id' : 'owner_id'
   const admin = createAdminClient()
-  const [guide, given, place] = await Promise.all([
+  const [guide, given, place, picks] = await Promise.all([
     data.tutorial_id
       ? supabase
           .from('tutorials')
@@ -260,6 +321,7 @@ publicRoutes.get('/toys/:id', async (c) => {
     data.owner_org_id
       ? supabase.from('organizations').select('suburb, state').eq('id', data.owner_org_id).maybeSingle()
       : admin.from('profiles').select('suburb:pickup_suburb, state:pickup_state').eq('id', data.owner_id).maybeSingle(),
+    holderPicks(supabase, data, hidden),
   ])
   const where = place.data as { suburb: string | null; state: string | null } | null
   return c.json({
@@ -268,6 +330,7 @@ publicRoutes.get('/toys/:id', async (c) => {
     holder_given: given.count ?? 0,
     holder_suburb: where?.suburb ?? null,
     holder_state: where?.state ?? null,
+    picks,
   })
 })
 

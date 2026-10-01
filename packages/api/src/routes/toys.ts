@@ -8,6 +8,7 @@
  * - PATCH /api/toys/:id           → update one
  * - PATCH /api/toys/:id/publish   → publish, once a photo (and one tagged as
  *                                   showing the switch, if switch_adapted) exists
+ * - PUT   /api/toys/:id/picks     → replace the hand-picked "Also worth a look"
  * - DELETE /api/toys/:id          → remove one with no handovers on record (409
  *                                   otherwise: 026's cascade would erase them)
  *
@@ -29,7 +30,7 @@ import { ledOrgIds, ownedByCaller } from '../toy-access.js'
 import { removeDroppedPhotos } from '../photo-storage.js'
 import { chunk } from '../chunk.js'
 import type { AuthVariables } from '../middleware/auth.js'
-import type { OfferType } from '@splat-connect/types'
+import type { OfferType, ToyPickInput } from '@splat-connect/types'
 
 const toys = new Hono<{ Variables: AuthVariables }>()
 
@@ -51,6 +52,7 @@ const EDITABLE = [
   'volume',
   'tutorial_id',
   'paused_at',
+  'picks_mode',
 ] as const
 
 const FACT_TEXT = { batteries: 60, switch_fitting: 60, volume: 40 } as const
@@ -188,7 +190,7 @@ toys.get('/', async (c) => {
   // Named here and nowhere else: only the owner is told how a toy is doing.
   const { data, error } = await supabase
     .from('toys')
-    .select('*, save_count, request_count')
+    .select('*, save_count, request_count, toy_picks(position, entity_type, entity_id)')
     .eq('owner_id', c.get('userId'))
     .order('created_at', { ascending: false })
   if (error) return c.json({ error: error.message }, 500)
@@ -205,7 +207,7 @@ toys.get('/inventory', async (c) => {
   if (orgIds.length === 0) return c.json([])
   const { data, error } = await supabase
     .from('toys')
-    .select('*, organizations(name)')
+    .select('*, organizations(name), toy_picks(position, entity_type, entity_id)')
     .in('owner_org_id', orgIds)
     .order('created_at', { ascending: false })
   if (error) return c.json({ error: error.message }, 500)
@@ -255,6 +257,9 @@ toys.patch('/:id', async (c) => {
   const body = await c.req.json()
   if (badTimestamp(body, 'paused_at')) {
     return c.json({ error: 'Pausing needs a date, or nothing to take requests again.' }, 400)
+  }
+  if ('picks_mode' in body && body.picks_mode !== 'auto' && body.picks_mode !== 'picked') {
+    return c.json({ error: 'Show picks automatically or hand-picked.' }, 400)
   }
   const supabase = createUserClient(c.get('token'))
   const orgIds = await ledOrgIds(supabase, c.get('userId'))
@@ -359,6 +364,70 @@ toys.patch('/:id/publish', async (c) => {
   if (error) return c.json({ error: error.message }, 500)
   if (!data) return c.json({ error: 'Not found' }, 404)
   return c.json(data)
+})
+
+/**
+ * PUT /api/toys/:id/picks — the holder's hand-picked "Also worth a look",
+ * replaced whole, in the order sent. Up to three, each one of the holder's own
+ * listed (not retired) toys or a published guide; 102's position and type checks back this.
+ */
+toys.put('/:id/picks', async (c) => {
+  const body = await c.req.json().catch(() => null)
+  const picks = (body as { picks?: unknown } | null)?.picks
+  if (!Array.isArray(picks) || picks.length > 3) return c.json({ error: 'Pick up to three.' }, 400)
+  const valid = picks.every(
+    (p): p is ToyPickInput =>
+      !!p && typeof p === 'object' && (p.entity_type === 'toy' || p.entity_type === 'tutorial') && typeof p.entity_id === 'string'
+  )
+  if (!valid) return c.json({ error: 'Each pick is one of your toys or a guide.' }, 400)
+  const list = picks as ToyPickInput[]
+  if (new Set(list.map((p) => `${p.entity_type}:${p.entity_id}`)).size !== list.length) {
+    return c.json({ error: 'Pick each one once.' }, 400)
+  }
+
+  const supabase = createUserClient(c.get('token'))
+  const orgIds = await ledOrgIds(supabase, c.get('userId'))
+  const { data: toy, error } = await supabase
+    .from('toys')
+    .select('id, owner_id, owner_org_id')
+    .eq('id', c.req.param('id'))
+    .or(ownedByCaller(c.get('userId'), orgIds))
+    .maybeSingle()
+  if (error) {
+    if (error.code === INVALID_TEXT_REPRESENTATION) return c.json({ error: 'Not found' }, 404)
+    return c.json({ error: error.message }, 500)
+  }
+  if (!toy) return c.json({ error: 'Not found' }, 404)
+
+  const toyIds = list.filter((p) => p.entity_type === 'toy').map((p) => p.entity_id)
+  if (toyIds.includes(toy.id)) return c.json({ error: 'A toy cannot point at itself.' }, 400)
+  if (toyIds.length) {
+    // A malformed id errors here and returns no rows: the same 400.
+    const { data: own } = await supabase
+      .from('toys')
+      .select('id')
+      .in('id', toyIds)
+      .eq(toy.owner_org_id ? 'owner_org_id' : 'owner_id', toy.owner_org_id ?? toy.owner_id)
+      .eq('status', 'published')
+      .is('retired_at', null)
+    if ((own ?? []).length !== toyIds.length) return c.json({ error: 'Pick from your own listed toys.' }, 400)
+  }
+  const guideIds = list.filter((p) => p.entity_type === 'tutorial').map((p) => p.entity_id)
+  if (guideIds.length) {
+    const { data: approved } = await supabase.from('tutorials').select('id').in('id', guideIds).eq('status', 'approved')
+    if ((approved ?? []).length !== guideIds.length) {
+      return c.json({ error: 'Pick guides that are published in the library.' }, 400)
+    }
+  }
+
+  const { error: clearError } = await supabase.from('toy_picks').delete().eq('toy_id', toy.id)
+  if (clearError) return c.json({ error: clearError.message }, 500)
+  const rows = list.map((p, i) => ({ toy_id: toy.id, position: i + 1, entity_type: p.entity_type, entity_id: p.entity_id }))
+  if (rows.length) {
+    const { error: insertError } = await supabase.from('toy_picks').insert(rows)
+    if (insertError) return c.json({ error: insertError.message }, 500)
+  }
+  return c.json({ picks: list.map((p, i) => ({ position: i + 1, ...p })) })
 })
 
 toys.delete('/:id', async (c) => {
