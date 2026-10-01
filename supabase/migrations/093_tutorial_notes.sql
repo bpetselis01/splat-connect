@@ -16,9 +16,16 @@
 --                  through the delete.
 --   pinned_by      set null when that contributor leaves; the API names them
 --                  "Deleted member".
+--   photo_url      only an object /api/upload/note-photo wrote for this guide:
+--                  <project>/storage/v1/object/public/toy-photos/<id>/notes/
+--                  <uuid>.<ext>. A member can insert through PostgREST with
+--                  their own JWT, so the API's check is not enough on its own.
+--   created_at     stamped by a trigger, so a direct insert cannot backdate a
+--                  note to sit above the guide's real discussion.
 --
 -- DOWN:
 --   drop table if exists public.tutorial_notes;
+--   drop function if exists public.tutorial_notes_stamp();
 --   (and restore 077's notifications_type_check)
 
 create table public.tutorial_notes (
@@ -32,8 +39,25 @@ create table public.tutorial_notes (
   photo_caption text check (photo_caption is null or length(photo_caption) <= 60),
   pinned_at timestamptz,
   pinned_by uuid references public.profiles (id) on delete set null,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  constraint tutorial_notes_photo_url_check check (
+    photo_url is null
+    or photo_url ~ ('^https?://[^/?#]+/storage/v1/object/public/toy-photos/' || tutorial_id::text
+                    || '/notes/[0-9a-f-]+\.(jpg|png|webp|avif|heic|heif)$')
+  )
 );
+
+create function public.tutorial_notes_stamp()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  new.created_at := now();
+  return new;
+end $$;
+create trigger tutorial_notes_stamp before insert on public.tutorial_notes
+  for each row execute function public.tutorial_notes_stamp();
 create index tutorial_notes_tutorial_idx on public.tutorial_notes (tutorial_id, created_at);
 create index tutorial_notes_author_idx on public.tutorial_notes (author_id);
 

@@ -123,33 +123,38 @@ export function CommunityNotes({ tutorialId, guideTitle, authorName, steps, note
       <Text style={styles.eyebrow}>{`Discussion · ${open.length}`}</Text>
       {open.map(noteRow)}
 
-      <View style={styles.form}>
-        <Text style={styles.formTitle}>Add a note</Text>
-        <View accessibilityLabel="Which step is it about?" style={styles.chips}>
-          {steps.map((s) => (
-            <Chip key={s.id} label={`Step ${s.position}`} active={at === s.position} onPress={() => setAt(s.position)} />
-          ))}
-          <Chip label="Missing step" active={at === null} onPress={() => setAt(null)} />
+      {viewerId === null ? (
+        // POST /api/tutorials/:id/notes sits behind authMiddleware.
+        <Text style={styles.meta}>Sign in to add a note.</Text>
+      ) : (
+        <View style={styles.form}>
+          <Text style={styles.formTitle}>Add a note</Text>
+          <View accessibilityLabel="Which step is it about?" style={styles.chips}>
+            {steps.map((s) => (
+              <Chip key={s.id} label={`Step ${s.position}`} active={at === s.position} onPress={() => setAt(s.position)} />
+            ))}
+            <Chip label="Missing step" active={at === null} onPress={() => setAt(null)} />
+          </View>
+          {at === null ? (
+            <Text style={styles.meta}>{`Not part of any step above. If pinned, it is added to the end as step ${steps.length + 1}.`}</Text>
+          ) : null}
+          <TextField
+            accessibilityLabel="Your note"
+            placeholder="What was missing, or what you did differently…"
+            multiline
+            maxLength={1000}
+            value={body}
+            onChangeText={setBody}
+          />
+          {photo ? (
+            <TextField accessibilityLabel="Photo caption" placeholder="Caption (optional)" maxLength={60} value={caption} onChangeText={setCaption} />
+          ) : (
+            <Button label="Add a photo" variant="ghost" onPress={() => void addPhoto()} />
+          )}
+          <ErrorRow message={error} />
+          <Button label="Post" variant="primary" disabled={at === undefined || !body.trim()} loading={busy} onPress={() => void post()} />
         </View>
-        {at === null ? (
-          <Text style={styles.meta}>{`Not part of any step above. If pinned, it is added to the end as step ${steps.length + 1}.`}</Text>
-        ) : null}
-        <TextField
-          accessibilityLabel="Your note"
-          placeholder="What was missing, or what you did differently…"
-          multiline
-          maxLength={1000}
-          value={body}
-          onChangeText={setBody}
-        />
-        {photo ? (
-          <TextField accessibilityLabel="Photo caption" placeholder="Caption (optional)" maxLength={60} value={caption} onChangeText={setCaption} />
-        ) : (
-          <Button label="Add a photo" variant="ghost" onPress={() => void addPhoto()} />
-        )}
-        <ErrorRow message={error} />
-        <Button label="Post" variant="primary" disabled={at === undefined || !body.trim()} loading={busy} onPress={() => void post()} />
-      </View>
+      )}
     </Section>
   )
 }

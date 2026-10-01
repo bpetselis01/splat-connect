@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
 import { createProject } from '../../helpers/orgs.js'
+import { createUserClient } from '../../../src/supabase/client.js'
 
 const GHOST = '00000000-0000-4000-8000-00000000dead'
 let author: TestUser
@@ -26,6 +27,8 @@ beforeAll(async () => {
   draft = await createProject({ authorId: author.id, status: 'draft', title: 'Notes Draft Fixture' })
 })
 afterAll(async () => {
+  const { data: photos } = await adminClient().storage.from('toy-photos').list(`${guide}/notes`)
+  if (photos?.length) await adminClient().storage.from('toy-photos').remove(photos.map((f) => `${guide}/notes/${f.name}`))
   await adminClient().from('tutorials').delete().in('id', [guide, draft])
   for (const u of [author, parent]) await deleteTestUser(u.id)
 })
@@ -75,5 +78,40 @@ describe('093 tutorial_notes', () => {
     expect((await adminClient().rpc('delete_account', { uid: leaving.id, keep_credit: false })).error).toBeNull()
     const { data } = await adminClient().from('tutorial_notes').select('author_id').eq('id', id).single()
     expect(data!.author_id).toBe(GHOST)
+  })
+})
+
+describe('093 review fixes', () => {
+  const upload = (tutorialId: string, file: File) => {
+    const fd = new FormData()
+    fd.append('file', file)
+    fd.append('tutorialId', tutorialId)
+    return app.request('/api/upload/note-photo', { method: 'POST', headers: { Authorization: `Bearer ${parent.token}` }, body: fd })
+  }
+
+  it('refuses a photo URL that only mentions the guide’s folder', async () => {
+    const crafted = `https://elsewhere.test/a.jpg?/storage/v1/object/public/toy-photos/${guide}/notes/x.jpg`
+    expect((await send('POST', `/api/tutorials/${guide}/notes`, parent.token, { step_position: null, body: 'x', photo_url: crafted })).status).toBe(400)
+  })
+
+  it('refuses an outside photo, and stamps created_at, on a direct insert', async () => {
+    const db = createUserClient(parent.token).from('tutorial_notes')
+    const outside = await db.insert({ tutorial_id: guide, author_id: parent.id, body: 'x', photo_url: 'https://elsewhere.test/a.jpg' })
+    expect(outside.error?.code).toBe('23514')
+    const { data, error } = await db.insert({ tutorial_id: guide, author_id: parent.id, body: 'Backdated', created_at: '2000-01-01T00:00:00Z' }).select('id, created_at').single()
+    expect(error).toBeNull()
+    expect(new Date(data!.created_at).getFullYear()).toBeGreaterThan(2000)
+    await adminClient().from('tutorial_notes').delete().eq('id', data!.id)
+  })
+
+  it('stores a note photo under the published guide’s notes folder, named by its type', async () => {
+    const png = new File([new Uint8Array([0x89, 0x50, 0x4e, 0x47])], '../../evil.svg', { type: 'image/png' })
+    expect((await upload(draft, png)).status).toBe(404)
+    const res = await upload(guide, png)
+    expect(res.status).toBe(200)
+    const { url } = (await res.json()) as { url: string }
+    expect(url).toMatch(new RegExp(`/storage/v1/object/public/toy-photos/${guide}/notes/[0-9a-f-]+\\.png$`))
+    const posted = await send('POST', `/api/tutorials/${guide}/notes`, parent.token, { step_position: 1, body: 'With a photo.', photo_url: url })
+    expect(posted.status).toBe(201)
   })
 })

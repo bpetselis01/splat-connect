@@ -239,7 +239,9 @@ upload.post('/note-photo', async (c) => {
   const admin = createAdminClient()
   const { data: guide } = await admin.from('tutorials').select('status').eq('id', id).maybeSingle()
   if (guide?.status !== 'approved') return c.json({ error: 'Not found' }, 404)
-  const ext = file.name.split('.').pop() ?? 'jpg'
+  // The service role writes anywhere, so nothing in the path comes from the
+  // client's filename: the extension is the checked MIME type's.
+  const ext = file.type === 'image/jpeg' ? 'jpg' : file.type.slice('image/'.length)
   const { data, error } = await admin.storage.from('toy-photos').upload(`${id}/notes/${crypto.randomUUID()}.${ext}`, file, { upsert: false })
   if (error) return c.json({ error: error.message }, 500)
   return c.json({ url: admin.storage.from('toy-photos').getPublicUrl(data.path).data.publicUrl })

@@ -13,8 +13,25 @@ type Ctx = Context<{ Variables: AuthVariables }>
 
 const GHOST = '00000000-0000-4000-8000-00000000dead'
 const NOTE_COLUMNS = 'id, tutorial_id, step_position, author_id, body, photo_url, photo_caption, pinned_at, pinned_by, created_at'
-// A note's photo must be one /api/upload/note-photo stored for this guide.
-const ownNotePhoto = (url: string, id: string) => url.includes(`/object/public/toy-photos/${id}/notes/`)
+// A note's photo must be one /api/upload/note-photo stored for this guide:
+// this project's storage, this guide's notes folder, nothing after the name.
+// 093's tutorial_notes_photo_url_check backs it for a direct insert.
+function ownNotePhoto(url: string, id: string): boolean {
+  let u: URL
+  try {
+    u = new URL(url)
+  } catch {
+    return false
+  }
+  const folder = `/storage/v1/object/public/toy-photos/${id}/notes/`
+  return (
+    u.origin === new URL(process.env.SUPABASE_URL!).origin &&
+    !u.search &&
+    !u.hash &&
+    u.pathname.startsWith(folder) &&
+    /^[0-9a-f-]+\.(jpg|png|webp|avif|heic|heif)$/.test(u.pathname.slice(folder.length))
+  )
+}
 
 export function noteError(b: Record<string, unknown>, id: string): string | null {
   const body = typeof b.body === 'string' ? b.body.trim() : ''

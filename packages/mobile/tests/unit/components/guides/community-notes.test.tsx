@@ -47,3 +47,10 @@ it('offers Pin to a contributor and Delete on your own note', async () => {
   fireEvent.press(screen.getByRole('button', { name: 'Delete' }))
   await waitFor(() => expect(mockDelete).toHaveBeenCalledWith('/api/tutorials/g/notes/mine'))
 })
+
+it('asks a signed-out reader to sign in instead of showing the form', () => {
+  render(<CommunityNotes {...props} viewerId={null} notes={[note({})] as never} />)
+  expect(screen.getByText('Sign in to add a note.')).toBeTruthy()
+  expect(screen.queryByRole('button', { name: 'Post' })).toBeNull()
+  expect(screen.queryByLabelText('Your note')).toBeNull()
+})
