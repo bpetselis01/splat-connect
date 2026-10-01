@@ -70,3 +70,15 @@ it('adds a safety note and saves the list', () => {
   fireEvent.changeText(screen.getByLabelText('Safety note 1 title'), 'Battery door must be screwed shut')
   expect(mockDraft.replaceSafetyNotes).toHaveBeenLastCalledWith([{ title: 'Battery door must be screwed shut', detail: null }])
 })
+
+// Opened cold, the editor must not seed from a draft that has not arrived.
+it('shows the saved notes when the draft loads after the screen opens', () => {
+  ;(mockDraft as { tutorial: unknown }).tutorial = null
+  mockDraft.loading = true
+  const { rerender } = render(<SafetySection />)
+  expect(screen.queryByLabelText('Safety note 1 title')).toBeNull()
+  mockDraft.loading = false
+  mockDraft.tutorial = { id: 't1', safety_declared_at: null, status: 'draft', kind: 'toy_adaptation', difficulty: 'easy', title: 'T', tutorial_pdf_url: null, photo_urls: [], toy_photo_url: null, parts: [], tools: [], stl_files: [], safety_notes: [{ id: 'n', tutorial_id: 't1', position: 1, title: 'Battery door must be screwed shut', detail: null }] }
+  rerender(<SafetySection />)
+  expect(screen.getByDisplayValue('Battery door must be screwed shut')).toBeTruthy()
+})

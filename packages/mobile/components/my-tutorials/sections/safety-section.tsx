@@ -12,10 +12,16 @@ import { theme } from '../../../lib/theme'
 import { Screen } from '../../ui/Screen'
 import { ErrorRow } from '../../ui/ErrorRow'
 import { SectionFooter } from '../section-footer'
+import { DraftGate } from './draft-gate'
 import { Button } from '../../ui/Button'
 import { TextField } from '../../ui/TextField'
 
+// The editor mounts once the draft has arrived (see DraftGate).
 export function SafetySection() {
+  return <DraftGate>{() => <SafetyEditor />}</DraftGate>
+}
+
+function SafetyEditor() {
   const { tutorial, save, saveError, replaceSafetyNotes } = useDraft()
   const [notes, setNotes] = useState<SafetyNoteRow[]>(() =>
     (tutorial?.safety_notes ?? []).map((n) => ({ title: n.title, detail: n.detail }))
