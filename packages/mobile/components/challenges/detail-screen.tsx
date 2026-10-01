@@ -17,6 +17,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   View,
   Text,
+  Image,
   ScrollView,
   StyleSheet,
   KeyboardAvoidingView,
@@ -431,9 +432,19 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
         {tab === 'brief' ? (
           <Card style={styles.panel}>
             <TabHead id="brief" />
-            {/* PENDING(challenge-brief-photo): a hero photo and a "What a solution has to do" box. */}
-            <Text style={styles.summary}>{challenge.summary}</Text>
+            {challenge.photo_url ? (
+              <Image
+                testID="challenge-photo"
+                source={{ uri: challenge.photo_url }}
+                style={styles.hero}
+                accessibilityIgnoresInvertColors
+              />
+            ) : null}
             {challenge.description ? <Field label="The problem" value={challenge.description} /> : null}
+            <View>
+              <Text style={styles.blockTitle}>What a solution has to do</Text>
+              <Text style={styles.summary}>{challenge.summary}</Text>
+            </View>
           </Card>
         ) : null}
 
@@ -673,6 +684,7 @@ const styles = StyleSheet.create({
   eventText: { flex: 1, paddingBottom: theme.spacing(3) },
   eventTitle: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.ink },
   eventDate: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted },
+  hero: { height: 160, borderRadius: 16, width: '100%' },
   summary: {
     fontFamily: theme.fonts.semiBold,
     fontSize: theme.type.label,

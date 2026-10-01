@@ -54,4 +54,19 @@ describe('ChallengeDetailPage', () => {
     expect(screen.getByText('11')).toBeInTheDocument()
     expect(screen.getByText('saves')).toBeInTheDocument()
   })
+
+  it('leads the brief with the photo and says what a solution has to do', async () => {
+    serve(brief({ photo_url: 'http://localhost:54321/storage/v1/object/public/toy-photos/ideas/a1/p.png' }))
+    await renderPage('brief')
+    expect(document.querySelector('img')?.getAttribute('src')).toContain('/toy-photos/ideas/a1/p.png')
+    expect(screen.getByText('Three to five seconds.')).toBeInTheDocument()
+    const box = screen.getByRole('heading', { name: 'What a solution has to do' })
+    expect(box.nextElementSibling?.textContent).toBe('One switch.')
+  })
+
+  it('drops a photo next/image could not render', async () => {
+    serve(brief({ photo_url: 'https://evil.example/p.png' }))
+    await renderPage('brief')
+    expect(document.querySelector('img')).toBeNull()
+  })
 })

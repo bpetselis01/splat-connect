@@ -22,6 +22,7 @@
  * - packages/api/src/routes/toy-ideas.ts: join / messages / participants
  * - components/challenge-thread.tsx: the client half — join button + live thread
  */
+import Image from 'next/image'
 import Link from 'next/link'
 import type { Route } from 'next'
 import { notFound } from 'next/navigation'
@@ -47,6 +48,7 @@ import { getCapabilities } from '@/lib/capabilities'
 import { ChallengeThread } from '@/components/challenge-thread'
 import type { ToyIdeaDetail, ContactPref } from '@splat-connect/types'
 import { daysSince } from '@/lib/relative-time'
+import { safePhotoSrc } from '@/lib/photo-src'
 import { initials, OUTCOME_STEPS, outcomeStates } from '@splat-connect/types'
 
 const CONTACT_PREF_LABELS: Record<ContactPref, string> = {
@@ -82,6 +84,7 @@ export default async function ChallengeDetailPage({
   if (!res.ok) notFound()
 
   const challenge = (await res.json()) as ToyIdeaDetail
+  const photo = safePhotoSrc(challenge.photo_url)
   const caps = await getCapabilities()
   const saved = await getSavedIds()
 
@@ -303,12 +306,19 @@ export default async function ChallengeDetailPage({
 
           {tab === 'brief' && (
             <div className="flex flex-col gap-5">
-              <p className="max-w-[62ch] text-[17px] leading-[1.6] text-muted [text-wrap:pretty]">
-                {challenge.summary}
-              </p>
+              {photo && (
+                <div className="relative aspect-[16/9] overflow-hidden rounded-[18px] border border-line shadow-[var(--e1)]">
+                  <Image src={photo} alt="" fill className="object-cover" />
+                </div>
+              )}
+              {challenge.description && (
+                <p className="max-w-[62ch] text-[17px] leading-[1.6] text-muted [text-wrap:pretty]">
+                  {challenge.description}
+                </p>
+              )}
               {(
                 [
-                  ['What it needs to do', challenge.description],
+                  ['What a solution has to do', challenge.summary],
                   ['Intended use', challenge.intended_use],
                   ['Who it’s for', challenge.primary_user],
                 ] as const

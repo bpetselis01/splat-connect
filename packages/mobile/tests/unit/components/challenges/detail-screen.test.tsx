@@ -459,4 +459,21 @@ describe('ChallengeDetailScreen', () => {
     expect(screen.getByText('You')).toBeTruthy()
     expect(screen.getByText(`Maker · joined ${shortDate('2026-09-02T03:00:00Z')}`)).toBeTruthy()
   })
+
+  it('leads the brief with the photo, then the problem, then what a solution has to do', async () => {
+    mockGet.mockResolvedValue(detail({ photo_url: 'https://example.com/hero.png' }))
+    render(<ChallengeDetailScreen id="c1" />)
+    fireEvent.press(await screen.findByRole('tab', { name: 'Brief' }))
+    expect(screen.getByTestId('challenge-photo').props.source).toEqual({ uri: 'https://example.com/hero.png' })
+    expect(screen.getByText('The problem')).toBeTruthy()
+    expect(screen.getByText('She swipes rather than presses, so a button never latches.')).toBeTruthy()
+    expect(screen.getByText('What a solution has to do')).toBeTruthy()
+    expect(screen.getByText('Every switch we have needs more force than she can manage.')).toBeTruthy()
+  })
+
+  it('shows no photo when the idea has none', async () => {
+    render(<ChallengeDetailScreen id="c1" />)
+    fireEvent.press(await screen.findByRole('tab', { name: 'Brief' }))
+    expect(screen.queryByTestId('challenge-photo')).toBeNull()
+  })
 })

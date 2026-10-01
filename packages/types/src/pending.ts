@@ -401,6 +401,7 @@ export const PENDING = {
     shipped: true,
   },
   'challenge-brief-photo': {
+    shipped: true,
     title: "Brief photo",
     blurb: "A photo and a \"what it has to do\" box on challenge briefs are coming.",
     kind: "build",
