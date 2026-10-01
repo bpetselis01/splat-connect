@@ -68,6 +68,7 @@ describe('SubmitIdeaScreen', () => {
         kind: 'challenge',
         contact_prefs: ['co_design'],
         photo_path: null,
+        anonymous: false,
       })
     )
   })
@@ -129,6 +130,7 @@ describe('SubmitIdeaScreen', () => {
         kind: 'challenge',
         contact_prefs: [],
         photo_path: null,
+        anonymous: false,
       })
     )
   })
@@ -203,5 +205,13 @@ describe('SubmitIdeaScreen', () => {
     expect(mockGet).toHaveBeenCalledWith('/api/ideas/mine/c1')
     fireEvent.press(screen.getByRole('button', { name: 'Submit idea' }))
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/ideas', expect.objectContaining({ title: 'Old title', photo_path: 'ideas/viewer1/p.png' })))
+  })
+
+  it('posts anonymously when asked to', async () => {
+    render(<SubmitIdeaScreen />)
+    fillEverything()
+    fireEvent.press(screen.getByRole('checkbox', { name: 'Post anonymously' }))
+    fireEvent.press(screen.getByRole('button', { name: 'Submit idea' }))
+    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/ideas', expect.objectContaining({ anonymous: true })))
   })
 })

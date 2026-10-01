@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import ChallengeDetailPage from '@/app/get-involved/design-challenges/[id]/page'
 import { getCapabilities } from '@/lib/capabilities'
+import { apiClient } from '@/lib/api-client'
 
 vi.mock('@/lib/capabilities', () => ({ getCapabilities: vi.fn(async () => null) }))
 vi.mock('@/lib/saves', () => ({ getSavedIds: async () => null }))
@@ -68,5 +69,15 @@ describe('ChallengeDetailPage', () => {
     serve(brief({ photo_url: 'https://evil.example/p.png' }))
     await renderPage('brief')
     expect(document.querySelector('img')).toBeNull()
+  })
+
+  it('shows an anonymous challenge as anonymous, and lets its author see it is theirs', async () => {
+    vi.mocked(getCapabilities).mockResolvedValue({ profile: { id: 'a1', name: 'Priya' } } as never)
+    vi.mocked(apiClient.get).mockResolvedValue({ id: 'c1' })
+    serve(brief({ author_id: null, author_name: null, anonymous: true }))
+    await renderPage()
+    expect(screen.getByText(/submitted anonymously/)).toBeInTheDocument()
+    expect(screen.getByText('You have joined')).toBeInTheDocument()
+    expect(apiClient.get).toHaveBeenCalledWith('/api/ideas/mine/c1')
   })
 })

@@ -98,4 +98,13 @@ describe('IdeaForm', () => {
       )
     )
   })
+
+  it('posts anonymously when the box is ticked', async () => {
+    render(<IdeaForm />)
+    fireEvent.change(screen.getByLabelText(/^title$/i), { target: { value: 'T' } })
+    fireEvent.change(screen.getByLabelText(/^summary$/i), { target: { value: 'S' } })
+    fireEvent.click(screen.getByLabelText('Post this anonymously. Your name will not appear on the challenge.'))
+    fireEvent.click(screen.getByRole('button', { name: /submit for review/i }))
+    await waitFor(() => expect(browserApiClient.post).toHaveBeenCalledWith('/api/ideas', expect.objectContaining({ anonymous: true })))
+  })
 })

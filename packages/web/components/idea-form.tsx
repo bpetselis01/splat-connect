@@ -72,6 +72,7 @@ export function IdeaForm({ initial }: { initial?: ToyIdea } = {}) {
   const [photo, setPhoto] = useState<{ path: string; url: string } | null>(
     initial?.photo_path && initial.photo_url ? { path: initial.photo_path, url: initial.photo_url } : null
   )
+  const [anonymous, setAnonymous] = useState(initial?.anonymous ?? false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -109,6 +110,7 @@ export function IdeaForm({ initial }: { initial?: ToyIdea } = {}) {
         kind: fields.kind,
         contact_prefs: fields.contact_prefs,
         photo_path: photo?.path ?? null,
+        anonymous,
       })
       router.push('/dashboard/challenges')
     } catch (err) {
@@ -250,6 +252,11 @@ export function IdeaForm({ initial }: { initial?: ToyIdea } = {}) {
           ))}
         </div>
       </fieldset>
+
+      <label className="flex items-start gap-3 text-sm text-ink">
+        <input type="checkbox" className="field-check mt-0.5" checked={anonymous} onChange={(e) => setAnonymous(e.target.checked)} />
+        Post this anonymously. Your name will not appear on the challenge.
+      </label>
 
       {error && (
         <p role="alert" className="alert alert-danger">

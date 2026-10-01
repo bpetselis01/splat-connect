@@ -494,7 +494,22 @@ select * from (values
    (select count(*) = 1 from pg_policies
       where schemaname = 'public' and tablename = 'toy_ideas' and cmd = 'DELETE'
         and qual like '%auth.uid()%' and qual like '%pending%')
-   and has_table_privilege('authenticated', 'public.toy_ideas', 'delete'))
+   and has_table_privilege('authenticated', 'public.toy_ideas', 'delete')),
+  -- 108. With author_id readable, "anonymous" is a name one PostgREST call away
+  -- (ruling 2: for signed-in readers too). The five policies that read it must
+  -- go through is_idea_author, or the thread breaks with "permission denied".
+  ('108 nobody but admins reads toy_ideas.author_id; policies use is_idea_author',
+   (select not has_column_privilege('anon', 'public.toy_ideas', 'author_id', 'select')
+      and not has_column_privilege('authenticated', 'public.toy_ideas', 'author_id', 'select')
+      and has_column_privilege('anon', 'public.toy_ideas', 'anonymous', 'select')
+      and has_column_privilege('authenticated', 'public.toy_ideas', 'anonymous', 'select'))
+   and (select prosecdef from pg_proc where oid = 'public.is_idea_author(uuid)'::regprocedure)
+   and (select count(*) = 5 from pg_policies
+      where schemaname = 'public' and tablename in ('toy_idea_participants', 'toy_idea_messages', 'toy_idea_reports')
+        and coalesce(qual, '') || coalesce(with_check, '') like '%is_idea_author%')
+   and not exists (select 1 from pg_policies
+      where schemaname = 'public' and tablename <> 'toy_ideas'
+        and coalesce(qual, '') || coalesce(with_check, '') like '%i.author_id%'))
 ) as t(guard, ok)
 where not ok;
 EOSQL

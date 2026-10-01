@@ -21,8 +21,11 @@ function defaultAdminFrom(table: string) {
 // Replaces the per-user Supabase client with one controlled fake so these tests
 // exercise validation and status codes only. RLS itself is covered by the
 // integration tests in tests/integration/toy-ideas/.
+// 108: loadIdea reads author_id through the admin client (authenticated can
+// no longer read it). Both clients' toy_ideas reads answer from mockFrom, so a
+// test describes the idea once.
 vi.mock('../../../src/supabase/client.js', () => ({
-  createAdminClient: () => ({ from: mockAdminFrom }),
+  createAdminClient: () => ({ from: (t: string) => (t === 'toy_ideas' ? mockFrom(t) : mockAdminFrom(t)) }),
   createUserClient: () => ({ from: mockFrom }),
 }))
 
@@ -698,7 +701,7 @@ describe('GET /ideas/joined', () => {
     // whole-branch review: a participant is never entitled to review_note,
     // which the author's own private rejection reasoning.
     expect(select).toHaveBeenCalledWith(
-      'toy_ideas!inner(id, author_id, title, summary, description, intended_use, primary_user, contact_prefs, status, tutorial_id, kind, answer_message_id, answered_at, photo_path, created_at, updated_at)'
+      'toy_ideas!inner(id, title, summary, description, intended_use, primary_user, contact_prefs, status, tutorial_id, kind, answer_message_id, answered_at, photo_path, created_at, updated_at)'
     )
     expect(select.mock.calls[0][0]).not.toContain('review_note')
     expect(eq).toHaveBeenCalledWith('profile_id', 'user-1')

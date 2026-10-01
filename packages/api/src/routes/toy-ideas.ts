@@ -14,6 +14,11 @@ type Client = ReturnType<typeof createUserClient>
 
 const IDEA_KINDS: ToyIdeaKind[] = ['challenge', 'question']
 
+// 108: every column authenticated may still read — all but author_id. A
+// user-client read of '*' is refused outright since that revoke.
+const READABLE =
+  'id, title, summary, description, intended_use, primary_user, contact_prefs, status, review_note, tutorial_id, kind, answer_message_id, answered_at, photo_path, anonymous, created_at, updated_at'
+
 const REQUIRED_FIELDS = ['title', 'summary'] as const
 // 103: "Why it matters" is optional; intended use and primary user are only
 // ever sent by an old client. Absent, null or blank all store as null.
@@ -75,6 +80,11 @@ function readIdeaBody(body: unknown, userId: string): Record<string, unknown> | 
   }
   out.photo_path = photo
 
+  // 108: true or false, nothing else — a typo must not publish a name.
+  const anonymous = source.anonymous ?? false
+  if (typeof anonymous !== 'boolean') return 'Post anonymously must be on or off.'
+  out.anonymous = anonymous
+
   return out
 }
 
@@ -83,19 +93,22 @@ toyIdeas.post('/', async (c) => {
   if (typeof fields === 'string') return c.json({ error: fields }, 400)
   if (!fields) return c.json({ error: 'A title and a summary are required.' }, 400)
 
-  // author_id comes from the verified token, never the body.
+  // author_id comes from the verified token, never the body. 108 lets the
+  // caller write it but not read it back, so the response adds it.
+  const author_id = c.get('userId')
   const { data, error } = await createUserClient(c.get('token'))
     .from('toy_ideas')
-    .insert({ ...fields, author_id: c.get('userId'), status: 'pending' })
-    .select('*')
+    .insert({ ...fields, author_id, status: 'pending' })
+    .select(READABLE)
     .single()
 
   if (error) return c.json({ error: error.message }, 500)
-  return c.json(withPhotoUrl(data), 201)
+  return c.json(withPhotoUrl({ ...data, author_id }), 201)
 })
 
+// Admin client filtered on the token's user, like /mine/:id below (108).
 toyIdeas.get('/mine', async (c) => {
-  const { data, error } = await createUserClient(c.get('token'))
+  const { data, error } = await createAdminClient()
     .from('toy_ideas')
     .select('*')
     .eq('author_id', c.get('userId'))
@@ -145,7 +158,9 @@ toyIdeas.get('/joined', async (c) => {
     // so unlike GET /api/admin/ideas or the author's own /mine, there is no
     // reader here who is ever entitled to this column.
     .select(
-      'toy_ideas!inner(id, author_id, title, summary, description, intended_use, primary_user, contact_prefs, status, tutorial_id, kind, answer_message_id, answered_at, photo_path, created_at, updated_at)'
+      // No author_id (108): a participant is never the author, and an
+      // anonymous author stays anonymous to the makers who joined.
+      'toy_ideas!inner(id, title, summary, description, intended_use, primary_user, contact_prefs, status, tutorial_id, kind, answer_message_id, answered_at, photo_path, created_at, updated_at)'
     )
     .eq('profile_id', c.get('userId'))
     // A removed row must not keep showing the caller a challenge they were
@@ -181,8 +196,18 @@ export async function systemMessage(ideaId: string, actorId: string, body: strin
   if (error) console.error('system message failed', { ideaId, error: error.message })
 }
 
+/**
+ * The idea as the caller may see it (RLS on the user client decides), plus
+ * its author_id from the admin client — 108 took that column away from
+ * every signed-in reader, and join/leave/report need it to notify and check.
+ */
 async function loadIdea(client: Client, id: string) {
-  return client.from('toy_ideas').select('author_id, title, status').eq('id', id).single()
+  const { data, error } = await client.from('toy_ideas').select('id').eq('id', id).single()
+  if (error || !data) return { data: null, error }
+  const { data: idea, error: authorError } = await createAdminClient()
+    .from('toy_ideas').select('author_id').eq('id', id).single()
+  if (authorError || !idea) return { data: null, error: authorError }
+  return { data: { author_id: idea.author_id as string }, error: null }
 }
 
 const actorName = (userId: string) => profileName(createAdminClient(), userId, 'Someone')
@@ -306,10 +331,12 @@ toyIdeas.post('/:id/answer', async (c) => {
     return c.json({ error: 'message_id must be a reply id or null' }, 400)
   }
 
-  const { data: idea } = await createUserClient(c.get('token'))
-    .from('toy_ideas').select('author_id, kind, status').eq('id', id).maybeSingle()
+  const client = createUserClient(c.get('token'))
+  const { data: idea } = await client.from('toy_ideas').select('kind, status').eq('id', id).maybeSingle()
   if (!idea) return c.json({ error: 'Question not found' }, 404)
-  if (idea.author_id !== c.get('userId')) {
+  // 108: the caller cannot read author_id, only ask whether it is them.
+  const { data: asker } = await client.rpc('is_idea_author', { idea: id })
+  if (asker !== true) {
     return c.json({ error: 'Only the person who asked can mark the answer' }, 403)
   }
   if (idea.kind !== 'question') return c.json({ error: 'Only a question has an answer' }, 409)
@@ -323,7 +350,7 @@ toyIdeas.post('/:id/answer', async (c) => {
       .eq('id', messageId)
       .eq('idea_id', id)
       .eq('kind', 'user')
-      .neq('sender_id', idea.author_id)
+      .neq('sender_id', c.get('userId'))
       .maybeSingle()
     if (!reply) return c.json({ error: 'That reply is not on this question' }, 404)
   }

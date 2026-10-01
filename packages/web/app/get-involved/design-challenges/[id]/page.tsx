@@ -45,6 +45,7 @@ import { SaveButton } from '@/components/save-button'
 import { STAGE } from '@/components/stage'
 import { getSavedIds } from '@/lib/saves'
 import { getCapabilities } from '@/lib/capabilities'
+import { apiClient } from '@/lib/api-client'
 import { ChallengeThread } from '@/components/challenge-thread'
 import type { ToyIdeaDetail, ContactPref } from '@splat-connect/types'
 import { daysSince } from '@/lib/relative-time'
@@ -103,9 +104,18 @@ export default async function ChallengeDetailPage({
   const tabs = question ? TABS.filter((t) => t.id !== 'outcome') : TABS
   const answers = challenge.answer_count ?? 0
   const viewerId = caps?.profile.id ?? null
+  // 108: an anonymous brief carries no author_id; the author still owns it.
+  const own =
+    viewerId !== null && challenge.author_id === null
+      ? await apiClient.get(`/api/ideas/mine/${challenge.id}`).then(
+          () => true,
+          () => false
+        )
+      : false
+  const authorId = challenge.author_id ?? (own ? viewerId : null)
   const joined =
     viewerId !== null &&
-    (viewerId === challenge.author_id || challenge.participants.some((p) => p.profile_id === viewerId))
+    (viewerId === authorId || challenge.participants.some((p) => p.profile_id === viewerId))
   const makers = challenge.participants.filter((p) => !p.removed_at)
   const daysOpen = daysSince(challenge.created_at)
   const firstJoin = makers.map((p) => p.joined_at).sort()[0]
@@ -389,8 +399,9 @@ export default async function ChallengeDetailPage({
               ideaId={challenge.id}
               status={challenge.status as 'challenge' | 'graduated'}
               viewerId={viewerId}
-              authorId={challenge.author_id}
-              authorName={challenge.author_name}
+              // An empty id matches no sender — the point, for all but the author.
+              authorId={authorId ?? ''}
+              authorName={challenge.author_name ?? (own ? caps?.profile.name ?? null : null)}
               participants={challenge.participants}
               question={question}
               answerMessageId={challenge.answer_message_id ?? null}

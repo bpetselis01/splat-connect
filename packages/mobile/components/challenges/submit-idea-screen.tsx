@@ -7,6 +7,7 @@
 import { useEffect, useState } from 'react'
 import { View, Text, Image, Pressable, ScrollView, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native'
 import { useRouter } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
 import { apiMessage, CONTACT_PREFS, type ContactPref, type ToyIdea, type ToyIdeaKind } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { pickAndUploadPhoto, type UploadResult } from '../../lib/upload'
@@ -19,7 +20,6 @@ import { Button } from '../ui/Button'
 import { TextField } from '../ui/TextField'
 import { EmptyState } from '../ui/EmptyState'
 import { ErrorRow } from '../ui/ErrorRow'
-import { PendingRow } from '../ui/pending'
 
 // Web's idea-form.tsx tiles, same words (078).
 const KINDS: { kind: ToyIdeaKind; label: string }[] = [
@@ -68,6 +68,7 @@ export function SubmitIdeaScreen({ from }: { from?: string } = {}) {
   const [kind, setKind] = useState<ToyIdeaKind>('challenge')
   // 106: the upload's path is what the idea takes; its url is the preview.
   const [photo, setPhoto] = useState<UploadResult | null>(null)
+  const [anonymous, setAnonymous] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [sent, setSent] = useState(false)
@@ -83,6 +84,7 @@ export function SubmitIdeaScreen({ from }: { from?: string } = {}) {
         setKind(idea.kind ?? 'challenge')
         setPrefs(idea.contact_prefs)
         setPhoto(idea.photo_path && idea.photo_url ? { path: idea.photo_path, url: idea.photo_url } : null)
+        setAnonymous(idea.anonymous ?? false)
       })
       .catch(() => {})
   }, [from])
@@ -120,6 +122,7 @@ export function SubmitIdeaScreen({ from }: { from?: string } = {}) {
         kind,
         contact_prefs: prefs,
         photo_path: photo?.path ?? null,
+        anonymous,
       })
       setSent(true)
     } catch (err) {
@@ -232,7 +235,16 @@ export function SubmitIdeaScreen({ from }: { from?: string } = {}) {
                   <Text style={styles.scopeHint}>Tap to add a photo</Text>
                 )}
               </Pressable>
-              <PendingRow pending="idea-anonymous" label="Post anonymously" icon="eye-off-outline" />
+              <Pressable
+                onPress={() => setAnonymous((v) => !v)}
+                accessibilityRole="checkbox"
+                accessibilityLabel="Post anonymously"
+                accessibilityState={{ checked: anonymous }}
+                style={styles.checkRow}
+              >
+                <Ionicons name={anonymous ? 'checkbox' : 'square-outline'} size={22} color={theme.colors.ink} />
+                <Text style={styles.checkText}>Post anonymously</Text>
+              </Pressable>
 
               <ErrorRow message={error} />
 
@@ -308,6 +320,8 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing(2),
   },
   photo: { width: '100%', height: '100%' },
+  checkRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2), minHeight: 44 },
+  checkText: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.text },
   submit: { alignSelf: 'flex-start', marginTop: theme.spacing(3), paddingHorizontal: theme.spacing(6) },
   sentButton: { marginTop: theme.spacing(5), paddingHorizontal: theme.spacing(6) },
 })

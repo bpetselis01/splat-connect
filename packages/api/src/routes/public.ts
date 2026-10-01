@@ -1113,7 +1113,8 @@ async function challengeCounts(ideas: { id: string; author_id: string }[]) {
  */
 async function writingUp(
   admin: ReturnType<typeof createAdminClient>,
-  idea: { status: string; tutorial_id: string | null }
+  idea: { status: string; tutorial_id: string | null; author_id: string },
+  hideAuthor: boolean
 ): Promise<{ profile_id: string; name: string; started_at: string } | null> {
   if (idea.status !== 'graduated' || !idea.tutorial_id) return null
   const [{ data: primary }, { data: guide }] = await Promise.all([
@@ -1122,6 +1123,8 @@ async function writingUp(
   ])
   if (!primary || !guide) return null
   const id = primary.profile_id as string
+  // An anonymous author is not named here either (108).
+  if (hideAuthor && id === idea.author_id) return null
   return { profile_id: id, name: await profileName(admin, id, 'A maker'), started_at: guide.created_at as string }
 }
 
@@ -1135,7 +1138,7 @@ publicRoutes.get('/challenges/:id', async (c) => {
   const { data: idea, error } = await admin
     .from('toy_ideas')
     .select(
-      'id, author_id, title, summary, description, intended_use, primary_user, contact_prefs, status, tutorial_id, kind, answer_message_id, answered_at, photo_path, created_at, updated_at, save_count, profiles!toy_ideas_author_id_fkey(name)'
+      'id, author_id, title, summary, description, intended_use, primary_user, contact_prefs, status, tutorial_id, kind, answer_message_id, answered_at, photo_path, created_at, updated_at, save_count, anonymous, profiles!toy_ideas_author_id_fkey(name)'
     )
     .eq('id', c.req.param('id'))
     .in('status', ['challenge', 'graduated'])
@@ -1162,17 +1165,21 @@ publicRoutes.get('/challenges/:id', async (c) => {
 
   const { profiles, ...rest } = idea as Record<string, any>
   const counts = await challengeCounts([idea])
+  const hidden = rest.anonymous === true
   // Messages are deliberately absent: the brief recruits, the conversation is private.
   return c.json({
     ...withPhotoUrl(rest),
     ...counts.get(idea.id),
-    author_name: profiles?.name ?? null,
+    // 108: no name and no id for an anonymous author — the id is a name one
+    // call away. The author recognises their own through /api/ideas/mine/:id.
+    author_id: hidden ? null : rest.author_id,
+    author_name: hidden ? null : profiles?.name ?? null,
     participants: (participants ?? []).map((p: any) => ({
       idea_id: p.idea_id, profile_id: p.profile_id, joined_at: p.joined_at,
       name: p.profiles?.name ?? null,
       role: p.profiles?.role ?? 'contributor',
     })),
-    writing_up: await writingUp(admin, idea as { status: string; tutorial_id: string | null }),
+    writing_up: await writingUp(admin, idea as { status: string; tutorial_id: string | null; author_id: string }, hidden),
   })
 })
 

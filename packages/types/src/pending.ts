@@ -425,6 +425,7 @@ export const PENDING = {
     needs: "Author's pending/rejected view, withdraw, resubmit [ui,api]",
   },
   'idea-anonymous': {
+    shipped: true,
     title: "Post anonymously",
     blurb: "Posting an idea without your name is coming.",
     kind: "build",

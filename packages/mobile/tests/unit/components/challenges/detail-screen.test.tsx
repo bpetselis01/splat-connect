@@ -537,4 +537,45 @@ describe('ChallengeDetailScreen', () => {
       expect(await screen.findByText('An admin is reading it')).toBeTruthy()
     })
   })
+
+  it('reads an anonymous challenge as anonymous, and still knows its own author', async () => {
+    mockUseCapabilities.mockReturnValue(viewer('author1'))
+    mockGet.mockImplementation((path: string) =>
+      path === '/api/ideas/mine/c1'
+        ? Promise.resolve(detail())
+        : path === '/api/ideas/c1/messages'
+          ? Promise.resolve([])
+          : Promise.resolve(detail({ author_id: null, author_name: null, anonymous: true }))
+    )
+    render(<ChallengeDetailScreen id="c1" />)
+    expect(await screen.findByText(/· anonymous$/)).toBeTruthy()
+    expect(await screen.findByText('This is your challenge.')).toBeTruthy()
+  })
+
+  it('never offers an anonymous asker their own message as the answer (F14)', async () => {
+    mockUseCapabilities.mockReturnValue(viewer('author1'))
+    mockGet.mockImplementation((path: string) =>
+      path === '/api/ideas/mine/c1'
+        ? Promise.resolve(detail({ kind: 'question' }))
+        : path === '/api/ideas/c1/messages'
+          ? Promise.resolve([
+              message({ id: 'm1', sender_id: 'author1', body: 'Mine.' }),
+              message({ id: 'm2', sender_id: 'p1', body: 'Try a lever.' }),
+            ])
+          : Promise.resolve(detail({ kind: 'question', author_id: null, author_name: null, anonymous: true, participants: [{ profile_id: 'p1', name: 'Sam' }] }))
+    )
+    render(<ChallengeDetailScreen id="c1" />)
+    await openThread()
+    expect(await screen.findByLabelText('You said: Mine.')).toBeTruthy()
+    await screen.findByLabelText('Sam said: Try a lever.')
+    expect(screen.getAllByRole('button', { name: 'Mark as the answer' })).toHaveLength(1)
+  })
+
+  it('does not poll the thread of the author’s pending idea', async () => {
+    mockUseCapabilities.mockReturnValue(viewer('author1'))
+    mockGet.mockResolvedValue(detail({ status: 'pending' }))
+    render(<ChallengeDetailScreen id="c1" />)
+    expect(await screen.findByText('An admin is reading it')).toBeTruthy()
+    expect(mockGet).not.toHaveBeenCalledWith('/api/ideas/c1/messages')
+  })
 })

@@ -156,7 +156,25 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
     }
   }, [id, reloadKey, viewerId, viewerName, capsLoading])
 
-  const isAuthor = viewerId !== null && (challenge?.author_id === viewerId || mine)
+  // An anonymous challenge comes back with no author_id (108). Its author
+  // still owns it here — the thread, the controls — through their own list.
+  useEffect(() => {
+    if (!viewerId || !challenge || challenge.author_id !== null) return
+    let ignore = false
+    apiClient
+      .get(`/api/ideas/mine/${id}`)
+      .then(() => {
+        if (!ignore) setMine(true)
+      })
+      .catch(() => {})
+    return () => {
+      ignore = true
+    }
+  }, [viewerId, challenge, id])
+
+  // The public author, or the viewer for their own anonymous idea (F14).
+  const authorId = challenge?.author_id ?? (mine ? viewerId : null)
+  const isAuthor = viewerId !== null && authorId === viewerId
   const joined = viewerId !== null && !!challenge?.participants.some((p) => p.profile_id === viewerId)
   const open = challenge?.status === 'challenge'
   // A question (078): answered in its thread, and the asker marks the reply
@@ -167,7 +185,9 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
   // (RLS, see the route's own comment), so "no messages" and "not allowed"
   // look identical on the wire — the gate has to be decided here, from the
   // brief, or a stranger sees an empty conversation instead of the invitation.
-  const canRead = joined || isAuthor === true
+  // Only a public idea has a thread; a pending or rejected one hides the tab,
+  // so nothing polls it either (Task 9's carry).
+  const canRead = (joined || isAuthor) && (open || challenge?.status === 'graduated')
 
   const loadMessages = useCallback(async () => {
     const at = generation.current
@@ -303,7 +323,7 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
   }
 
   const nameFor = (senderId: string) => {
-    if (senderId === challenge.author_id) return challenge.author_name ?? 'Someone'
+    if (senderId === authorId) return challenge.author_name ?? (authorId === viewerId ? viewerName : null) ?? 'Someone'
     // Someone who has left keeps their messages but loses their participant
     // row, so there is genuinely no name left to show for them.
     return challenge.participants.find((p) => p.profile_id === senderId)?.name ?? 'Someone'
@@ -612,7 +632,7 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
                 }
                 // Only the asker marks, and never their own message — the
                 // API refuses both; this just does not offer them.
-                if (isAuthor && m.kind === 'user' && m.sender_id !== challenge.author_id) {
+                if (isAuthor && m.kind === 'user' && m.sender_id !== authorId) {
                   return (
                     <View key={m.id}>
                       {bubble}

@@ -965,6 +965,8 @@ export interface ToyIdea {
    *  this; render photo_url, which every read builds from it. */
   photo_path?: string | null
   photo_url?: string | null
+  /** 108: no name on the public brief. */
+  anonymous?: boolean
   created_at: string
   updated_at: string
 }
@@ -1025,7 +1027,9 @@ export const CHALLENGE_FILTERS: { id: string; label: string; keep: (c: PublicCha
   { id: 'graduated', label: 'Graduated', keep: (c) => c.status === 'graduated' },
 ]
 
-export interface ToyIdeaDetail extends ToyIdea, Partial<ChallengeCounts> {
+export interface ToyIdeaDetail extends Omit<ToyIdea, 'author_id'>, Partial<ChallengeCounts> {
+  /** Null on an anonymous challenge (108). */
+  author_id: string | null
   author_name: string | null
   participants: ToyIdeaParticipant[]
   /** 105: how many accounts saved it. */
