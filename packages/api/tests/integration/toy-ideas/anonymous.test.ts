@@ -140,10 +140,14 @@ describe('108 the thread still works without author_id (is_idea_author)', () => 
           clearTimeout(timer)
           resolve('Live')
         })
-        .subscribe(async (status) => {
-          if (status !== 'SUBSCRIBED') return
+        // Not on SUBSCRIBED: on a cold realtime (after `supabase db reset`) the
+        // temporary replication slot is created after SUBSCRIBED, so an insert
+        // sent then is never streamed. The postgres_changes ack comes later.
+        .on('system', {}, async (p: { extension?: string; status?: string }) => {
+          if (p.extension !== 'postgres_changes' || p.status !== 'ok') return
           await adminClient().from('toy_idea_messages').insert({ idea_id: ideaId, sender_id: author.id, kind: 'system', body: 'Live' })
         })
+        .subscribe()
       void channel
     })
     try {
