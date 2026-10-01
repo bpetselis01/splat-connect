@@ -671,21 +671,7 @@
   "boardRoute": "(my)/toys/[id]",
   "route": "/toys/[id]",
   "idFrom": "toy_detail",
-  "role": "parent",
-  "explained": [
-   {
-    "type": "missing-section",
-    "match": "board lists cards",
-    "why": "pending",
-    "pending": "my-toy-inline-requests"
-   },
-   {
-    "type": "missing-section",
-    "match": "board has cards",
-    "why": "pending",
-    "pending": "my-toy-inline-requests"
-   }
-  ]
+  "role": "parent"
  },
  {
   "id": "exchanges",

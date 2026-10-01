@@ -753,3 +753,17 @@ describe('handover code actions', () => {
     expect(screen.getByLabelText('6 5 4 3 2 1')).toBeTruthy()
   })
 })
+
+describe('opened to accept', () => {
+  it("lands an owner on the pickup form, seeded from their profile", async () => {
+    mockUseCapabilities.mockReturnValue(
+      caps({}, { pickup_line1: '1 Home St', pickup_suburb: 'Newtown', pickup_state: 'NSW', pickup_postcode: '2042' })
+    )
+    mockGet.mockImplementation((p: string) =>
+      p === '/api/toy-transactions/tx1' ? Promise.resolve(detail({})) : Promise.resolve({ lines: [], settlement: null })
+    )
+    render(<ExchangeThreadScreen id="tx1" startAccept />)
+    expect(await screen.findByText('Where should they collect it?')).toBeTruthy()
+    expect(screen.getByLabelText('Suburb').props.value).toBe('Newtown')
+  })
+})

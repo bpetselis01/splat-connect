@@ -158,7 +158,6 @@ export function Editor({ id }: { id: string }) {
     status: statuses[step],
   }))
 
-  // PENDING(my-toy-inline-requests): list each request inline (who, their note, Accept) instead of a count.
   // Owner-side requests still open on this toy — the same isOwnerSide check
   // list-screen.tsx's waitingCounts uses, so a leader's org toy counts too.
   const offersWaiting = caps

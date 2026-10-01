@@ -17,6 +17,7 @@ import { useCapabilities } from '../../lib/capabilities'
 import { loadOwnedToy, toySummaryLead } from '../../lib/my-toy'
 import { theme } from '../../lib/theme'
 import { Screen } from '../ui/Screen'
+import { Button } from '../ui/Button'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { ErrorRow } from '../ui/ErrorRow'
@@ -28,6 +29,7 @@ export function ToySummaryScreen({ id }: { id: string }) {
   const [toy, setToy] = useState<Toy | null>(null)
   const [requests, setRequests] = useState<ToyTransactionSummary[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading')
 
   useFocusEffect(
@@ -87,11 +89,51 @@ export function ToySummaryScreen({ id }: { id: string }) {
     }
   }
 
+  /** The family's own note, never a system line or a reply. */
+  const noteOf = (t: ToyTransactionSummary) =>
+    t.last_message?.kind === 'user' && t.last_message.sender_id === t.requester_id ? t.last_message.body : null
+
+  async function accept(t: ToyTransactionSummary) {
+    // A person picks where to meet as they accept: the exchange's own form.
+    if (!t.owner_org_id) {
+      router.push(`/exchanges/${t.id}?accept=1`)
+      return
+    }
+    // An organisation's pickup point is fixed; accept reads it from the org.
+    setBusy(true)
+    setError(null)
+    try {
+      await apiClient.post(`/api/toy-transactions/${t.id}/accept`, {})
+      setRequests((rs) => rs.map((r) => (r.id === t.id ? { ...r, status: 'accepted' } : r)))
+    } catch (err) {
+      setError(apiMessage(err, 'Could not accept that request. Please try again.'))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <Screen>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <ListIntro lead={toySummaryLead(toy, open.length)} />
         <View style={styles.rows}>
+          {open.map((t) => (
+            <ListRow
+              key={t.id}
+              title={t.requester_name ?? t.other_party_name}
+              meta={noteOf(t)}
+              onPress={() => router.push(`/exchanges/${t.id}`)}
+              trailing={
+                <Button
+                  label="Accept"
+                  variant="secondary"
+                  disabled={busy || t.blocked_by_rival_accept}
+                  onPress={() => void accept(t)}
+                  style={styles.accept}
+                />
+              }
+            />
+          ))}
           <ListRow title="Edit listing" meta="Photos, condition, notes" onPress={() => router.push(`/toys/${toy.id}/edit`)} />
           {toy.status === 'published' ? (
             <ListRow
@@ -110,4 +152,5 @@ export function ToySummaryScreen({ id }: { id: string }) {
 const styles = StyleSheet.create({
   content: { paddingBottom: theme.spacing(6) },
   rows: { gap: theme.spacing(3) },
+  accept: { paddingHorizontal: theme.spacing(4), minHeight: 40 },
 })

@@ -58,6 +58,16 @@ const PICKUP_FIELDS = [
 
 type PickupDraft = Record<(typeof PICKUP_FIELDS)[number]['key'], string>
 
+/** The owner's saved pickup address as the form's starting point. Every field stays editable. */
+function pickupFrom(p?: Partial<Record<keyof PickupDraft, string | null>>): PickupDraft {
+  return {
+    pickup_line1: p?.pickup_line1 ?? '',
+    pickup_suburb: p?.pickup_suburb ?? '',
+    pickup_state: p?.pickup_state ?? '',
+    pickup_postcode: p?.pickup_postcode ?? '',
+  }
+}
+
 const STAGES = ['Requested', 'Accepted', 'Handover', 'Closed'] as const
 export type StageState = 'done' | 'current' | 'todo'
 
@@ -120,7 +130,7 @@ export function costSummary(lines: CostLine[], viewerId: string): { youPay: numb
   }
 }
 
-export function ExchangeThreadScreen({ id }: { id: string }) {
+export function ExchangeThreadScreen({ id, startAccept = false }: { id: string; startAccept?: boolean }) {
   const router = useRouter()
   const { caps } = useCapabilities()
   const [tx, setTx] = useState<ToyTransactionDetail | null>(null)
@@ -193,6 +203,16 @@ export function ExchangeThreadScreen({ id }: { id: string }) {
 
   const viewerId = caps?.profile.id ?? ''
   const ledOrgIds = caps?.ledOrgs.map((o) => o.id) ?? []
+
+  // Opened from a toy's summary to accept (?accept=1): go straight to the
+  // pickup form, once, if this is still the owner's personal request to answer.
+  const acceptOpened = useRef(false)
+  useEffect(() => {
+    if (!startAccept || acceptOpened.current || !tx || !caps) return
+    if (tx.status !== 'requested' || tx.owner_org_id || !isOwnerSide(tx, viewerId, ledOrgIds)) return
+    acceptOpened.current = true
+    setPickup(pickupFrom(caps.profile))
+  }, [startAccept, tx, caps, viewerId, ledOrgIds])
 
   /**
    * Actions answer with the fresh transaction row, so the response IS the
@@ -526,12 +546,7 @@ export function ExchangeThreadScreen({ id }: { id: string }) {
                             : // Seeded from the owner's saved profile address, the same
                               // default web's dialog offers. Every field stays editable —
                               // a pickup is not always at home.
-                              setPickup({
-                                pickup_line1: caps?.profile.pickup_line1 ?? '',
-                                pickup_suburb: caps?.profile.pickup_suburb ?? '',
-                                pickup_state: caps?.profile.pickup_state ?? '',
-                                pickup_postcode: caps?.profile.pickup_postcode ?? '',
-                              })
+                              setPickup(pickupFrom(caps?.profile))
                         }
                       />
                       {/* Declining stays live while blocked: turning down a request

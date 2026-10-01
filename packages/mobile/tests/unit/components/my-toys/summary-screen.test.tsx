@@ -103,4 +103,36 @@ describe('ToySummaryScreen', () => {
     expect(await screen.findByText('Mark unavailable')).toBeTruthy()
     expect(mockPatch).toHaveBeenLastCalledWith('/api/toys/t1', { paused_at: null })
   })
+
+  it("lists each open request with the family's note, and Accept", async () => {
+    serve({ txs: [request()] })
+    render(<ToySummaryScreen id="t1" />)
+    expect(await screen.findByText('Eastwood Special School')).toBeTruthy()
+    expect(screen.getByText('For a class of four who share one switch')).toBeTruthy()
+    // A personal toy needs a pickup address: the exchange's own form, seeded.
+    fireEvent.press(screen.getByText('Accept'))
+    expect(mockPush).toHaveBeenCalledWith('/exchanges/tx1?accept=1')
+  })
+
+  it("accepts an organisation's request on the spot", async () => {
+    mockUseCapabilities.mockReturnValue(caps([{ id: 'org1', name: 'Northside' }]))
+    serve({
+      mine: [],
+      inventory: [toy({ owner_id: null, owner_org_id: 'org1' })],
+      txs: [request({ owner_id: null, owner_org_id: 'org1' })],
+    })
+    mockPost.mockResolvedValue({})
+    render(<ToySummaryScreen id="t1" />)
+    fireEvent.press(await screen.findByText('Accept'))
+    expect(mockPost).toHaveBeenCalledWith('/api/toy-transactions/tx1/accept', {})
+    await screen.findByText('Light-up drum — listed 4 June, good condition, switch-adapted.')
+    expect(screen.queryByText('Eastwood Special School')).toBeNull()
+  })
+
+  it('shows no note when the newest message is not the family’s', async () => {
+    serve({ txs: [request({ last_message: { body: 'Requested this toy for donation.', sender_id: 'fam1', kind: 'system', created_at: '' } })] })
+    render(<ToySummaryScreen id="t1" />)
+    await screen.findByText('Eastwood Special School')
+    expect(screen.queryByText('Requested this toy for donation.')).toBeNull()
+  })
 })

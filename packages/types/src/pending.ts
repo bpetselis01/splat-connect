@@ -528,6 +528,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["mobile"],
     needs: "Requests listed inline with Accept on Toy detail (mine) [ui]",
+    shipped: true,
   },
   'my-challenges-meta': {
     title: "Challenge details",
