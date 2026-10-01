@@ -26,7 +26,7 @@ import {
 } from '@phosphor-icons/react/dist/ssr'
 import { requireCapabilities } from '@/lib/require-capabilities'
 import { apiClient } from '@/lib/api-client'
-import { initials, isOwnerSide, pickupAddress } from '@splat-connect/types'
+import { initials, isOwnerSide, pickupAddress, printRequestExpired } from '@splat-connect/types'
 import type {
   PickupAddress,
   ToyTransactionDetail,
@@ -111,20 +111,22 @@ export default async function PrintJobPage({ params }: { params: Promise<{ id: s
     tx.status !== 'withdrawn'
 
   const stages = printStages(tx)
+  const expired = printRequestExpired(tx)
   const facts = printStageFacts(tx, viewerIsPrinter)
 
   const partCount = tx.print_files.reduce((n, file) => n + file.quantity, 0)
   // Where this job stands with the one printer it went to — the board's
   // "Printers asked" card, which a job with a single machine has one row of.
-  const printerAnswer =
-    tx.status === 'requested'
+  const printerAnswer = expired
+    ? { label: 'Expired', tint: 'var(--surface2)', Icon: XCircle }
+    : tx.status === 'requested'
       ? { label: 'Waiting', tint: 'var(--tamber)', Icon: HourglassMedium }
       : tx.status === 'rejected'
         ? { label: 'Declined', tint: 'var(--surface2)', Icon: XCircle }
         : tx.status === 'withdrawn'
           ? { label: 'Withdrawn', tint: 'var(--surface2)', Icon: XCircle }
           : { label: 'Said yes', tint: 'var(--tok)', Icon: CheckCircle }
-  const waitingOnGroup = tx.status === 'requested' && (tx.print_group_size ?? 1) > 1
+  const waitingOnGroup = tx.status === 'requested' && !expired && (tx.print_group_size ?? 1) > 1
   const deliveryLabel =
     tx.print_delivery === 'post' ? 'Posted' : tx.print_delivery === 'collect' ? 'Collect' : null
 
@@ -135,7 +137,7 @@ export default async function PrintJobPage({ params }: { params: Promise<{ id: s
       <div className="flex flex-wrap items-start justify-between gap-5">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge status={tx.status} />
+            <Badge status={expired ? 'expired' : tx.status} />
             {/* The way to the guide: the board draws it as a pill beside the
                 status, so the header button is free for the way back. */}
             {tx.tutorial_id && tx.tutorial_title && (

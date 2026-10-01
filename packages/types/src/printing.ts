@@ -26,3 +26,21 @@ export function costRange(estimates: Array<number | null>): [number, number] | n
   const known = estimates.filter((e): e is number => e !== null)
   return known.length && known.length === estimates.length ? [Math.min(...known), Math.max(...known)] : null
 }
+
+/** Days a printer has to answer a print request (the board's "7 days from today"). */
+export const PRINT_ANSWER_DAYS = 7
+
+/** When a request sent at `createdAt` stops waiting for an answer, as an ISO instant. */
+export const answerBy = (createdAt: string): string =>
+  new Date(Date.parse(createdAt) + PRINT_ANSWER_DAYS * 86_400_000).toISOString()
+
+/**
+ * A request nobody answered in time. Computed on read — no scheduled job flips
+ * a status, and `status` keeps its members (058) — so every reader asks this.
+ */
+export function printRequestExpired(
+  tx: { status: string; created_at?: string | null },
+  now: number = Date.now()
+): boolean {
+  return tx.status === 'requested' && !!tx.created_at && now > Date.parse(answerBy(tx.created_at))
+}

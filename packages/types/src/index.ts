@@ -21,6 +21,10 @@ export type {
 export { isApiError, apiErrorDetail, apiMessage, makeApiClient } from './api-core'
 export type { ApiError } from './api-core'
 export { dateBadge, shortDate, monthHeading, monthKey, longDate, formatTimeRange, isPast } from './dates'
+import { printRequestExpired } from './printing'
+// Named, not only the `export *` below: the API runs under tsx, which loads
+// this package as CommonJS, and Node cannot see names behind `export *` there.
+export { printCostCents, costRange, PRINT_ANSWER_DAYS, answerBy, printRequestExpired } from './printing'
 export { getMissingToyFields, computeToyStepStatuses } from './toy-steps'
 export type { ToyStepId } from './toy-steps'
 
@@ -649,7 +653,7 @@ export function needsAction(
     | 'work_approved_at'
     | 'printing_started_at'
     | 'ready_at'
-  > & { blocked_by_rival_accept?: boolean },
+  > & { blocked_by_rival_accept?: boolean; created_at?: string },
   viewerId: string,
   // The orgs the viewer leads. Without it an org request waiting on a leader
   // never reaches the badge, and they are told nothing is waiting on them while
@@ -659,7 +663,11 @@ export function needsAction(
 ): boolean {
   const isOwner = isOwnerSide(tx, viewerId, ledOrgIds)
 
-  if (tx.status === 'requested') return isOwner && !tx.blocked_by_rival_accept
+  // An expired print request waits on nobody (printing.ts): it reads Expired
+  // to both sides, and accept refuses it.
+  if (tx.status === 'requested') {
+    return isOwner && !tx.blocked_by_rival_accept && !(tx.type === 'print' && printRequestExpired(tx))
+  }
 
   if (tx.status === 'accepted') {
     /*

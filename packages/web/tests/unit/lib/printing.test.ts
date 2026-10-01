@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { printCostCents, costRange } from '@splat-connect/types'
+import { printCostCents, costRange, answerBy, needsAction, printRequestExpired } from '@splat-connect/types'
 
 describe('printCostCents', () => {
   it('sums grams × quantity × rate', () => {
@@ -28,5 +28,27 @@ describe('costRange', () => {
   })
   it('is null when none has one', () => {
     expect(costRange([null, null])).toBeNull()
+  })
+})
+
+const ago = (days: number) => new Date(Date.now() - days * 864e5).toISOString()
+
+describe('answer by', () => {
+  it('is seven days after the request', () => {
+    expect(answerBy('2026-10-01T00:00:00.000Z')).toBe('2026-10-08T00:00:00.000Z')
+  })
+  it('expires only a request still waiting, only after the seven days', () => {
+    expect(printRequestExpired({ status: 'requested', created_at: ago(6) })).toBe(false)
+    expect(printRequestExpired({ status: 'requested', created_at: ago(8) })).toBe(true)
+    expect(printRequestExpired({ status: 'accepted', created_at: ago(30) })).toBe(false)
+    expect(printRequestExpired({ status: 'requested' })).toBe(false)
+  })
+  it('stops an expired print request counting as waiting on the printer', () => {
+    const tx = {
+      status: 'requested', type: 'print', owner_id: 'p', owner_org_id: null, owner_confirmed_at: null,
+      requester_confirmed_at: null, working_photo_url: null, work_approved_at: null, printing_started_at: null, ready_at: null,
+    } as const
+    expect(needsAction({ ...tx, created_at: ago(1) }, 'p')).toBe(true)
+    expect(needsAction({ ...tx, created_at: ago(8) }, 'p')).toBe(false)
   })
 })

@@ -23,7 +23,7 @@ import { apiClient } from '../../lib/api-client'
 import { supabase } from '../../lib/supabase'
 import { useCapabilities } from '../../lib/capabilities'
 import { theme } from '../../lib/theme'
-import { askedLabel, jobState, JOB_LABEL, JOB_TONE, RAIL, railIndex, type JobState } from '../../lib/printing'
+import { answerByLabel, askedLabel, jobState, JOB_LABEL, JOB_TONE, RAIL, railIndex, type JobState } from '../../lib/printing'
 import { markReady, startPrint, withdrawRequest } from './actions'
 import { Screen } from '../ui/Screen'
 import { Card } from '../ui/Card'
@@ -216,7 +216,7 @@ export function PrintJobScreen({ id }: { id: string }) {
             onMessage={openThread}
           />
 
-          {!isPrinter && state !== 'declined' && state !== 'withdrawn' ? (
+          {!isPrinter && state !== 'declined' && state !== 'withdrawn' && state !== 'expired' ? (
             <Card style={styles.block}>
               <Text style={styles.eyebrow}>What this print costs you</Text>
               <Text style={styles.body}>
@@ -338,14 +338,15 @@ function StateCard({
         <Text style={styles.body}>
           Check the parts fit the bed and the material is loaded. Declining needs a reason — the family sees it.
         </Text>
+        <Text style={styles.meta}>Answer by — {answerByLabel(tx.created_at)}</Text>
         <Button label="Answer in Print for others" onPress={onAnswer} />
       </Card>
     ) : (
       <Card style={[styles.block, styles.honey, styles.rowCard]}>
         <Ionicons name="flash" size={22} color={theme.colors.honey} />
         <Text style={[styles.body, styles.flex, styles.ink]}>
-          <Text style={styles.strong}>{askedLabel(tx.print_group_size ?? 1)}</Text> The first to accept takes it; you
-          will get a notification.
+          <Text style={styles.strong}>{askedLabel(tx.print_group_size ?? 1)}</Text> The first to accept takes it. They have
+          until {answerByLabel(tx.created_at)} to answer. You can add a printer or withdraw at any time.
         </Text>
       </Card>
     )
@@ -438,6 +439,15 @@ function StateCard({
         <PendingButton pending="print-fit-feedback" label="Did it fit?" />
         <PendingButton pending="thank-people" label="Say thanks to the printer" variant="ghost" />
         <PendingButton pending="report-problem-mobile" label="Report a problem" variant="ghost" />
+      </Card>
+    )
+  }
+
+  if (state === 'expired') {
+    return (
+      <Card style={[styles.block, styles.sunken]}>
+        <Text style={styles.strong}>Expired</Text>
+        <Text style={styles.body}>This request expired on {answerByLabel(tx.created_at)}; ask again.</Text>
       </Card>
     )
   }

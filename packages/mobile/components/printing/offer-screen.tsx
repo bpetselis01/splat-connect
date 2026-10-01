@@ -128,9 +128,10 @@ export function PrintForOthersScreen({ orgId }: { orgId?: string } = {}) {
     )
   }
 
-  const waiting = jobs.filter((t) => t.status === 'requested')
+  // Expired requests leave Requests for Done: accept refuses them (printing.ts).
+  const waiting = jobs.filter((t) => t.status === 'requested' && jobState(t) !== 'expired')
   const onTheBed = jobs.filter((t) => t.status === 'accepted')
-  const done = jobs.filter((t) => t.status !== 'requested' && t.status !== 'accepted')
+  const done = jobs.filter((t) => !waiting.includes(t) && t.status !== 'accepted')
   const byId = new Map(printers.map((p) => [p.id, p]))
   const savedAddress = pickupAddress(caps.profile)
 

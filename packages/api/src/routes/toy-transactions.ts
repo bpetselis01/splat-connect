@@ -1,7 +1,7 @@
 import { chunk } from '../chunk.js'
 import { Hono, type Context } from 'hono'
 import { randomInt, randomUUID } from 'node:crypto'
-import { needsAction, isOwnerSide } from '@splat-connect/types'
+import { needsAction, isOwnerSide, answerBy, printRequestExpired, shortDate } from '@splat-connect/types'
 import type { PrintJobFile, PrintSettings } from '@splat-connect/types'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
@@ -364,7 +364,7 @@ toyTransactions.get('/action-count', async (c) => {
       // stage alternates sides before the handover (057): without them the
       // badge tells the maker to confirm a handover the family has not
       // approved yet.
-      'id, toy_id, status, type, owner_id, owner_org_id, owner_confirmed_at, requester_confirmed_at, working_photo_url, work_approved_at, printing_started_at, ready_at'
+      'id, toy_id, status, type, owner_id, owner_org_id, owner_confirmed_at, requester_confirmed_at, working_photo_url, work_approved_at, printing_started_at, ready_at, created_at'
     )
     .in('status', ['requested', 'accepted'])
   if (error) return c.json({ error: error.message }, 500)
@@ -684,6 +684,9 @@ toyTransactions.post('/:id/accept', async (c) => {
     return c.json({ error: 'Only the owner may accept' }, 403)
   }
   if (tx.status !== 'requested') return c.json({ error: 'This request is no longer open' }, 409)
+  if (tx.type === 'print' && printRequestExpired({ status: tx.status, created_at: tx.created_at })) {
+    return c.json({ error: `This request expired on ${shortDate(answerBy(tx.created_at))}; ask again.` }, 409)
+  }
 
   // An organisation's pickup point is fixed, so the body is ignored entirely
   // and accept_toy_transaction() reads the org's own columns. The rule is

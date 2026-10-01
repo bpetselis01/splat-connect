@@ -95,3 +95,10 @@ it('gives the reason a printer declined', async () => {
   expect(await screen.findByText('Tom B. could not take it')).toBeTruthy()
   expect(screen.getByText('No PETG on hand — another printer may be able to.')).toBeTruthy()
 })
+
+it('tells the family when the printer has to answer by, and says Expired after it', async () => {
+  serve(job({ created_at: new Date(Date.now() - 8 * 864e5).toISOString() }))
+  render(<PrintJobScreen id="j1" />)
+  expect(await screen.findByText(/^This request expired on .+; ask again\.$/)).toBeTruthy()
+  expect(screen.getAllByText('Expired').length).toBeGreaterThan(0)
+})

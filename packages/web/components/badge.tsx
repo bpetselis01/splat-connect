@@ -62,6 +62,8 @@ export const STATUS_TONE = {
   accepted: BRAND,
   completed: OK,
   withdrawn: DRAFT,
+  // a print request nobody answered in seven days — computed, never stored
+  expired: DRAFT,
   // idea → challenge
   challenge: BRAND,
   graduated: OK,

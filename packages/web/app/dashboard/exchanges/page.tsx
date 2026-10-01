@@ -18,7 +18,7 @@ import { exchangeStages } from '@/lib/exchange-stages'
 import { buildStages } from '@/lib/build-stages'
 import { BoundaryLink } from '@/components/boundary-link'
 import { MarkNotificationsRead } from '@/components/mark-notifications-read'
-import { needsAction, actionLabel, isOwnerSide, subjectName } from '@splat-connect/types'
+import { needsAction, actionLabel, isOwnerSide, printRequestExpired, subjectName } from '@splat-connect/types'
 import type { ToyTransactionSummary, ToyTransactionStatus } from '@splat-connect/types'
 
 function TransactionRow({
@@ -36,6 +36,7 @@ function TransactionRow({
    * them apart — which of the two they are answering as changes who the toy
    * belongs to — so the organisation gets the board's own "On behalf of" line.
    */
+  const expired = tx.type === 'print' && printRequestExpired(tx)
   const kind = tx.type === 'donation' ? 'Donation' : tx.type === 'build' ? 'Build' : 'Exchange'
   const isBuild = tx.type === 'build'
   // A build lives on its own route: same layout, build vocabulary (057).
@@ -72,7 +73,7 @@ function TransactionRow({
         title={subjectName(tx)}
         meta={meta}
         sub={tx.acting_for_org_name ? `On behalf of ${tx.acting_for_org_name}` : undefined}
-        pill={<Badge status={tx.status} />}
+        pill={<Badge status={expired ? 'expired' : tx.status} />}
         // Derived from this row's own status and confirmations. A build has a
         // vocabulary of its own — five steps, one of them the working shot —
         // so it gets its own derivation rather than exchange words over build
@@ -138,8 +139,9 @@ export default async function ExchangesPage() {
    * and an acceptance nobody has confirmed. Everything else is settled.
    */
   const ACTIVE: ToyTransactionStatus[] = ['requested', 'accepted']
-  const active = transactions.filter((tx) => ACTIVE.includes(tx.status))
-  const history = transactions.filter((tx) => !ACTIVE.includes(tx.status))
+  // An expired print request can no longer change (printing.ts), so it is history.
+  const active = transactions.filter((tx) => ACTIVE.includes(tx.status) && !(tx.type === 'print' && printRequestExpired(tx)))
+  const history = transactions.filter((tx) => !active.includes(tx))
   const waiting = active.filter((tx) => needsAction(tx, viewerId, ledOrgIds)).length
 
   return (

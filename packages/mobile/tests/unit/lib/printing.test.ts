@@ -120,3 +120,11 @@ it('sums the parts the guide gave figures for, and leaves out what it did not', 
   ).toBe('about 3 h 10 · ~42 g PETG')
   expect(partsMeta([{ print_minutes: null, filament_grams: null, material: null }])).toBe('')
 })
+
+describe('expiry', () => {
+  const ago = (days: number) => new Date(Date.now() - days * 864e5).toISOString()
+  it('calls an unanswered request expired after seven days', () => {
+    expect(jobState({ status: 'requested', printing_started_at: null, ready_at: null, created_at: ago(8) })).toBe('expired')
+    expect(jobState({ status: 'requested', printing_started_at: null, ready_at: null, created_at: ago(2) })).toBe('asked')
+  })
+})

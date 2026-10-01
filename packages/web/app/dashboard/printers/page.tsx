@@ -22,7 +22,7 @@ import { IncomingPrintCard } from '@/components/incoming-print-card'
 import { SplatMascot } from '@/components/splat-mascot'
 import { ProfileTabs } from '@/components/profile-tabs'
 import { printStages } from '@/lib/print-stages'
-import { collapsePrintGroups, needsAction, pickupAddress, subjectName } from '@splat-connect/types'
+import { collapsePrintGroups, needsAction, pickupAddress, printRequestExpired, subjectName } from '@splat-connect/types'
 import type {
   PrinterWithOwner,
   ToyTransactionSummary,
@@ -61,7 +61,7 @@ function JobRow({
         tint="var(--tviolet)"
         title={subjectName(tx)}
         meta={`for ${tx.other_party_name}`}
-        pill={<Badge status={tx.status} />}
+        pill={<Badge status={printRequestExpired(tx) ? 'expired' : tx.status} />}
         stages={printStages(tx)}
         note={
           // The code is the printer's half of the handover, and only exists to
@@ -149,10 +149,15 @@ export async function PrintOfferScreen({
   )
   // One card per request: an organisation asked on two of its machines (074)
   // answers once, choosing the bench on accept.
-  const waitingRows = collapsePrintGroups(jobs.filter((tx) => tx.status === 'requested'))
+  // Expired requests leave Requests for Done: accept refuses them (printing.ts).
+  const waitingRows = collapsePrintGroups(
+    jobs.filter((tx) => tx.status === 'requested' && !printRequestExpired(tx))
+  )
   const waiting = waitingRows
   const onTheBed = jobs.filter((tx) => tx.status === 'accepted')
-  const done = jobs.filter((tx) => !['requested', 'accepted'].includes(tx.status))
+  const done = jobs.filter(
+    (tx) => !['requested', 'accepted'].includes(tx.status) || printRequestExpired(tx)
+  )
 
   const defaultAddress = pickupAddress(caps.profile)
 

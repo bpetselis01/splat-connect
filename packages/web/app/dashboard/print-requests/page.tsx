@@ -31,6 +31,7 @@ import {
   needsAction,
   actionLabel,
   isOwnerSide,
+  printRequestExpired,
   subjectName,
   collapsePrintGroups,
 } from '@splat-connect/types'
@@ -60,7 +61,7 @@ export default async function MyPrintRequestsPage() {
   // ones, newest first within each.
   const ACTIVE: ToyTransactionStatus[] = ['requested', 'accepted']
   const rank = (tx: Request) =>
-    needsAction(tx, viewerId, ledOrgIds) ? 0 : ACTIVE.includes(tx.status) ? 1 : 2
+    needsAction(tx, viewerId, ledOrgIds) ? 0 : ACTIVE.includes(tx.status) && !printRequestExpired(tx) ? 1 : 2
   const sorted = [...mine].sort(
     (a, b) => rank(a) - rank(b) || b.created_at.localeCompare(a.created_at)
   )
@@ -80,7 +81,7 @@ export default async function MyPrintRequestsPage() {
             day: 'numeric',
             month: 'short',
           })}`}
-          pill={<Badge status={tx.status} />}
+          pill={<Badge status={printRequestExpired(tx) ? 'expired' : tx.status} />}
           stages={printStages(tx)}
           note={
             tx.last_message

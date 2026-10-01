@@ -109,3 +109,16 @@ it("scoped to an organisation, shows only that organisation's machines and jobs"
   await waitFor(() => expect(mockGet).toHaveBeenCalledWith('/api/printers/mine'))
   expect(screen.queryByText('Also asked 1 other. Settings from the guide: PETG.')).toBeNull()
 })
+
+it('leaves an expired request off the Requests tab', async () => {
+  mockGet.mockImplementation((path: string) =>
+    Promise.resolve(
+      path === '/api/printers/mine'
+        ? // The job's own machine, or it is filtered out as not mine and the test proves nothing.
+          [machine('Ender PLA', { materials: ['PLA'] })]
+        : [{ ...REQUEST, created_at: new Date(Date.now() - 8 * 864e5).toISOString() }]
+    )
+  )
+  render(<PrintForOthersScreen />)
+  expect(await screen.findByText('Nothing waiting')).toBeTruthy()
+})

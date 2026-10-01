@@ -17,6 +17,7 @@ import { useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Camera, CheckCircle, Cube, HourglassMedium, Printer as PrinterIcon } from '@phosphor-icons/react/dist/ssr'
 import type { ToyTransactionDetail } from '@splat-connect/types'
+import { answerBy, printRequestExpired, shortDate } from '@splat-connect/types'
 import { browserApiClient } from '@/lib/browser-api-client'
 
 export function PrintNextStep({
@@ -61,6 +62,16 @@ export function PrintNextStep({
 
   const card = (() => {
     if (tx.status === 'requested') {
+      const until = shortDate(answerBy(tx.created_at))
+      if (printRequestExpired(tx)) {
+        return {
+          tone: 'bg-sunken',
+          Icon: HourglassMedium,
+          kicker: 'Expired',
+          title: 'Expired',
+          body: `This request expired on ${until}; ask again.`,
+        }
+      }
       return viewerIsPrinter
         ? {
             tone: 'bg-honey-soft',
@@ -73,8 +84,8 @@ export function PrintNextStep({
             tone: 'bg-mint-soft',
             Icon: HourglassMedium,
             kicker: 'Next step',
-            title: 'Waiting on the printer',
-            body: 'They will take it on or decline with a reason. Nothing to do yet.',
+            title: 'Waiting on the printers',
+            body: `They have until ${until} to answer. You can add a printer or withdraw at any time.`,
           }
     }
 

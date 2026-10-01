@@ -10,7 +10,7 @@
  * dimensions) it is left out rather than faked.
  */
 import type { PrinterWithOwner, PrintJobFile, ToyTransaction } from '@splat-connect/types'
-import { MAX_PRINTERS_PER_REQUEST, plural, printStep } from '@splat-connect/types'
+import { MAX_PRINTERS_PER_REQUEST, answerBy, plural, printRequestExpired, printStep } from '@splat-connect/types'
 
 /** Taking jobs and has a free slot. Either alone closes the machine (058). */
 export const isOpen = (p: Pick<PrinterWithOwner, 'accepting' | 'open_jobs' | 'capacity'>) =>
@@ -53,11 +53,12 @@ export const RAIL = ['Requested', 'Accepted', 'Printing', 'Ready', 'Collected'] 
  * already reads the timestamps; this adds the two ways a job ends early, which
  * the rail does not have a dot for.
  */
-export type JobState = 'asked' | 'accepted' | 'printing' | 'ready' | 'collected' | 'declined' | 'withdrawn'
+export type JobState = 'asked' | 'accepted' | 'printing' | 'ready' | 'collected' | 'declined' | 'withdrawn' | 'expired'
 
 export function jobState(
-  tx: Pick<ToyTransaction, 'status' | 'printing_started_at' | 'ready_at'>
+  tx: Pick<ToyTransaction, 'status' | 'printing_started_at' | 'ready_at'> & { created_at?: string }
 ): JobState {
+  if (printRequestExpired(tx)) return 'expired'
   if (tx.status === 'rejected') return 'declined'
   if (tx.status === 'withdrawn') return 'withdrawn'
   const step = printStep(tx)
@@ -78,6 +79,7 @@ export const JOB_LABEL: Record<JobState, string> = {
   collected: 'Collected',
   declined: 'Declined',
   withdrawn: 'Withdrawn',
+  expired: 'Expired',
 }
 
 /** Badge status keys, so the pill tints match every other status pill. */
@@ -89,10 +91,16 @@ export const JOB_TONE: Record<JobState, string> = {
   collected: 'completed',
   declined: 'rejected',
   withdrawn: 'withdrawn',
+  expired: 'withdrawn',
 }
 
-/** Open jobs sort first — the live one is the one somebody opened the list for. */
-export const isLive = (tx: Pick<ToyTransaction, 'status'>) => tx.status === 'requested' || tx.status === 'accepted'
+/** Open jobs sort first — the live one is the one somebody opened the list for. An expired request is not open. */
+export const isLive = (tx: Pick<ToyTransaction, 'status'> & { created_at?: string }) =>
+  (tx.status === 'requested' || tx.status === 'accepted') && !printRequestExpired(tx)
+
+/** "8 Oct" — the day an unanswered request expires, in the job page's date form. */
+export const answerByLabel = (createdAt: string) =>
+  new Date(answerBy(createdAt)).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })
 
 /** "3 h 10", "55 min", "2 h" — the board's form. */
 export function formatMinutes(minutes: number): string {

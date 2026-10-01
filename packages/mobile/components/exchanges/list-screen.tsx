@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { View, Text, FlatList, RefreshControl, StyleSheet } from 'react-native'
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router'
 import type { ToyTransactionSummary, ToyTransactionStatus } from '@splat-connect/types'
-import { needsAction, actionLabel, subjectName } from '@splat-connect/types'
+import { needsAction, actionLabel, printRequestExpired, subjectName } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { useCapabilities } from '../../lib/capabilities'
@@ -59,7 +59,7 @@ function TransactionRow({
       title={`${subject}${tx.offered_toy_name ? ` ⇄ ${tx.offered_toy_name}` : ''}`}
       meta={meta}
       metaLines={3}
-      pill={<Badge status={tx.status} />}
+      pill={tx.type === 'print' && printRequestExpired(tx) ? <Badge status="withdrawn" label="Expired" /> : <Badge status={tx.status} />}
     />
   )
 }
@@ -126,8 +126,9 @@ export function ExchangesListScreen() {
     ? transactions.find((t) => t.toy_id === filterToyId)?.toy_name
     : undefined
   const filtered = filterToyId ? transactions.filter((t) => t.toy_id === filterToyId) : transactions
-  const active = filtered.filter((t) => ACTIVE.includes(t.status))
-  const history = filtered.filter((t) => !ACTIVE.includes(t.status))
+  // An expired print request can no longer change (printing.ts), so it is history.
+  const active = filtered.filter((t) => ACTIVE.includes(t.status) && !(t.type === 'print' && printRequestExpired(t)))
+  const history = filtered.filter((t) => !active.includes(t))
 
   const goToThread = (tx: ToyTransactionSummary) => router.push(threadHref(tx))
   // undefined clears a param under React Navigation's setParams (which expo

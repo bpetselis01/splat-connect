@@ -26,7 +26,7 @@ import {
   XCircle,
 } from '@phosphor-icons/react/dist/ssr'
 import { safePhotoSrc } from '@/lib/photo-src'
-import { isOwnerSide } from '@splat-connect/types'
+import { isOwnerSide, printRequestExpired } from '@splat-connect/types'
 import type { PickupAddress, ToyTransactionDetail } from '@splat-connect/types'
 import { AcceptPickupDialog } from '@/components/accept-pickup-dialog'
 import { ExchangeChat } from '@/components/exchange-chat'
@@ -203,7 +203,8 @@ export function ToyTransactionThread({
         </div>
         )}
 
-        {tx.status === 'requested' && isOwner && (
+        {/* An expired print request is not answerable: accept refuses it (printing.ts). */}
+        {tx.status === 'requested' && isOwner && !(tx.type === 'print' && printRequestExpired(tx)) && (
           <div className={board ? 'xthread-card flex flex-col gap-3 p-5' : 'card flex flex-col gap-3 p-4'}>
             <h2 className="text-base font-bold text-ink">
               {isBuild
