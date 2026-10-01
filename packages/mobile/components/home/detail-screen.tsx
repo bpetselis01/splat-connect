@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { View, Text, ScrollView, StyleSheet, Image } from 'react-native'
+import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import type { Tutorial, Part, Tool, StlFile, Recommendation, TutorialStep } from '@splat-connect/types'
@@ -11,6 +11,7 @@ import { useMyChildren } from '../../lib/my-children'
 import { theme } from '../../lib/theme'
 import { Provenance, type ProvenanceContributor, type ProvenanceOrg } from '../guides/provenance'
 import { PicksRow } from '../guides/picks-row'
+import { GuideSteps } from '../guides/guide-steps'
 import { Badge } from '../ui/Badge'
 import { SaveButton } from '../ui/SaveButton'
 import { PhotoCarousel } from '../ui/PhotoCarousel'
@@ -226,30 +227,27 @@ export function DetailScreen({ id }: { id: string }) {
       </View>
 
       {steps.length > 0 ? (
-        <Section title="Steps" hint="One action at a time. The PDF has the same guide to print.">
-          <PendingButton pending="guide-step-tracking" label="Track my progress" variant="ghost" />
-          {steps.map((st) => (
-            <View key={st.id} testID={`guide-step-${st.position}`} style={styles.step}>
-              <View style={styles.stepNum}>
-                <Text style={styles.stepNumText}>{st.position}</Text>
-              </View>
-              <View style={styles.stepText}>
-                {st.title ? <Text style={styles.stepTitle}>{st.title}</Text> : null}
-                <Text style={styles.stepBody}>{st.body}</Text>
-                {st.photo_url ? (
-                  <Image
-                    source={{ uri: st.photo_url }}
-                    style={styles.stepPhoto}
-                    accessibilityLabel={st.title ? `Step ${st.position}: ${st.title}` : `Step ${st.position}`}
-                  />
-                ) : null}
-              </View>
+        <GuideSteps
+          tutorialId={tutorial.id}
+          steps={steps}
+          completion={(total) => (
+            <View style={styles.doneCard}>
+              <Text style={styles.doneTitle}>{`All ${total} steps done`}</Text>
+              <Text style={styles.doneBody}>Log it and this build shows up in My SPLAT.</Text>
+              <PendingButton pending="guide-build-done" label="Mark this build done" />
+              {thanks && !thanks.own && !thanks.thanked ? (
+                <Button
+                  label={`Say thanks to ${primary?.profiles.name ?? 'the author'}`}
+                  variant="secondary"
+                  loading={thanking}
+                  onPress={() => void sayThanks()}
+                />
+              ) : null}
             </View>
-          ))}
-          <PendingButton pending="guide-build-done" label="Mark this build done" />
-          <PendingButton pending="guide-community-notes" label="Add a note" variant="ghost" />
-        </Section>
+          )}
+        />
       ) : null}
+      {steps.length > 0 ? <PendingButton pending="guide-community-notes" label="Add a note" variant="ghost" /> : null}
 
       {rest ? (
         <Section title="About this guide">
@@ -438,26 +436,9 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing(3),
   },
   fitText: { flex: 1, fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.ink },
-  step: { flexDirection: 'row', gap: theme.spacing(3), paddingVertical: theme.spacing(2) },
-  stepNum: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: theme.colors.accentLight,
-  },
-  stepNumText: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.ink },
-  stepText: { flex: 1, gap: theme.spacing(1) },
-  stepTitle: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.ink },
-  stepBody: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.text, lineHeight: 21 },
-  stepPhoto: {
-    width: '100%',
-    aspectRatio: 4 / 3,
-    borderRadius: theme.radii.field,
-    marginTop: theme.spacing(1),
-    backgroundColor: theme.colors.surfaceSunken,
-  },
+  doneCard: { marginTop: theme.spacing(3), padding: theme.spacing(4), gap: theme.spacing(2), borderRadius: theme.radii.panel, backgroundColor: theme.colors.mintSoft, alignItems: 'center' },
+  doneTitle: { fontFamily: theme.fonts.display, fontSize: 20, color: theme.colors.ink },
+  doneBody: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.ink, textAlign: 'center' },
   listRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3) },
   listItem: {
     flex: 1,

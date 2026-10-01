@@ -8,6 +8,10 @@ import { apiClient } from '../../../../lib/api-client'
 // are what pull in more Icon instances than this file had before Task 3.
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
 
+jest.mock('../../../../lib/supabase-storage', () => ({
+  resolveAuthStorage: () => ({ getItem: jest.fn().mockResolvedValue(null), setItem: jest.fn().mockResolvedValue(undefined), removeItem: jest.fn() }),
+}))
+
 jest.mock('../../../../lib/api-client', () => ({ apiClient: { get: jest.fn() } }))
 
 const mockPush = jest.fn()

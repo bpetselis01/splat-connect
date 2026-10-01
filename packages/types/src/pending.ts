@@ -194,6 +194,7 @@ export const PENDING = {
     needs: "\"Loading guides…\" caption on the skeleton [ui]",
   },
   'guide-step-tracking': {
+    shipped: true,
     title: "Step tracking",
     blurb: "Ticking off steps as you build is coming. Follow the steps below for now.",
     kind: "build",
