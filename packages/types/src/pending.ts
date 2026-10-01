@@ -397,6 +397,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["mobile"],
     needs: "Separate Thread tab and tab count badges [ui]",
+    shipped: true,
   },
   'challenge-brief-photo': {
     title: "Brief photo",

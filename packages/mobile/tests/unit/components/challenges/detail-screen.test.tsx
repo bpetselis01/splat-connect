@@ -94,9 +94,9 @@ const joinedDetail = (over: object = {}) =>
   detail({ participants: [{ profile_id: 'viewer1', name: 'Viewer' }], ...over })
 
 
-/** The conversation lives under the Makers tab. */
-async function openMakers() {
-  fireEvent.press(await screen.findByRole('tab', { name: 'Makers' }))
+/** The conversation has its own tab (MB #challenge_detail). */
+async function openThread() {
+  fireEvent.press(await screen.findByRole('tab', { name: 'Thread' }))
 }
 
 beforeEach(() => {
@@ -252,6 +252,28 @@ describe('ChallengeDetailScreen', () => {
     expect(await screen.findByText("Couldn't load this challenge.")).toBeTruthy()
   })
 
+  it('puts the thread in its own tab and counts makers and posts on the tabs', async () => {
+    mockGet.mockResolvedValue(
+      detail({ participants: [{ profile_id: 'p1', name: 'Sam', joined_at: '2026-08-14T03:00:00Z' }], maker_count: 1, answer_count: 4 })
+    )
+    render(<ChallengeDetailScreen id="c1" />)
+    const thread = await screen.findByRole('tab', { name: 'Thread' })
+    expect(thread.props.accessibilityValue).toEqual({ text: '4' })
+    expect(screen.getByRole('tab', { name: 'Makers' }).props.accessibilityValue).toEqual({ text: '1' })
+    fireEvent.press(thread)
+    expect(screen.getByText('Where the work happens. Makers can post.')).toBeTruthy()
+    fireEvent.press(screen.getByRole('tab', { name: 'Makers' }))
+    expect(screen.getByText('Everyone working on this.')).toBeTruthy()
+  })
+
+  it('draws no Makers or Thread tab on an idea that is not public yet', async () => {
+    mockGet.mockResolvedValue(detail({ status: 'pending' }))
+    render(<ChallengeDetailScreen id="c1" />)
+    expect(await screen.findByRole('tab', { name: 'Brief' })).toBeTruthy()
+    expect(screen.queryByRole('tab', { name: 'Makers' })).toBeNull()
+    expect(screen.queryByRole('tab', { name: 'Thread' })).toBeNull()
+  })
+
   describe('the thread', () => {
     it('never asks for messages a non-participant may not read', async () => {
       respond(detail())
@@ -268,7 +290,7 @@ describe('ChallengeDetailScreen', () => {
         message({ id: 'm3', kind: 'system', sender_id: 'viewer1', body: 'Viewer joined this challenge' }),
       ])
       render(<ChallengeDetailScreen id="c1" />)
-      await openMakers()
+      await openThread()
 
       expect(await screen.findByLabelText('Priya said: Has anyone tried a lever?')).toBeTruthy()
       expect(screen.getByLabelText('You said: Printing one tonight.')).toBeTruthy()
@@ -280,7 +302,7 @@ describe('ChallengeDetailScreen', () => {
       mockUseCapabilities.mockReturnValue(viewer('author1'))
       respond(detail(), [message({ sender_id: 'author1', body: 'Thanks for looking.' })])
       render(<ChallengeDetailScreen id="c1" />)
-      await openMakers()
+      await openThread()
 
       expect(await screen.findByLabelText('You said: Thanks for looking.')).toBeTruthy()
     })
@@ -289,7 +311,7 @@ describe('ChallengeDetailScreen', () => {
       respond(joinedDetail(), [])
       mockPost.mockResolvedValue(message({ id: 'm9', sender_id: 'viewer1', body: 'On it.' }))
       render(<ChallengeDetailScreen id="c1" />)
-      await openMakers()
+      await openThread()
 
       const composer = await screen.findByLabelText('Message this challenge')
       fireEvent.changeText(composer, '  On it.  ')
@@ -304,7 +326,7 @@ describe('ChallengeDetailScreen', () => {
     it('refuses to send an empty message', async () => {
       respond(joinedDetail(), [])
       render(<ChallengeDetailScreen id="c1" />)
-      await openMakers()
+      await openThread()
 
       const send = await screen.findByRole('button', { name: 'Send' })
       fireEvent.changeText(screen.getByLabelText('Message this challenge'), '   ')
@@ -317,7 +339,7 @@ describe('ChallengeDetailScreen', () => {
       respond(joinedDetail(), [])
       mockPost.mockRejectedValue(new Error('offline'))
       render(<ChallengeDetailScreen id="c1" />)
-      await openMakers()
+      await openThread()
 
       fireEvent.changeText(await screen.findByLabelText('Message this challenge'), 'Kept')
       fireEvent.press(screen.getByRole('button', { name: 'Send' }))
@@ -355,7 +377,7 @@ describe('ChallengeDetailScreen', () => {
     it('attributes a message from someone who has since left to nobody in particular', async () => {
       respond(joinedDetail(), [message({ sender_id: 'gone1', body: 'I tried a proximity switch.' })])
       render(<ChallengeDetailScreen id="c1" />)
-      await openMakers()
+      await openThread()
 
       // Their participant row is gone, so the brief carries no name for them —
       // the message stays, unattributed, rather than being dropped.
@@ -380,7 +402,7 @@ describe('ChallengeDetailScreen', () => {
         return Promise.resolve({})
       })
       render(<ChallengeDetailScreen id="c1" />)
-      await openMakers()
+      await openThread()
 
       // One reply is someone else's; the asker's own "Thanks" is not offered.
       const mark = await screen.findAllByRole('button', { name: 'Mark as the answer' })
@@ -395,7 +417,7 @@ describe('ChallengeDetailScreen', () => {
     it('shows the mark but no control to someone else', async () => {
       respond(joinedDetail({ kind: 'question', answer_message_id: 'r1' }), [reply])
       render(<ChallengeDetailScreen id="c1" />)
-      await openMakers()
+      await openThread()
       expect(await screen.findByText('The answer · marked by the asker')).toBeTruthy()
       expect(screen.queryByRole('button', { name: 'Mark as the answer' })).toBeNull()
       expect(screen.queryByRole('button', { name: 'Unmark' })).toBeNull()

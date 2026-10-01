@@ -55,14 +55,14 @@ const CONTACT_PREF_LABELS: Record<ContactPref, string> = {
   user_testing: 'User testing',
 }
 
-type Tab = 'status' | 'brief' | 'constraints' | 'makers'
-// The conversation lives under Makers: it is the makers' thread.
-// title and hint: the board's heading and muted line over each tab.
+type Tab = 'status' | 'brief' | 'constraints' | 'makers' | 'thread'
+// title and hint: the board's heading and muted line over each tab (MB CDT).
 const TABS: { id: Tab; label: string; icon: keyof typeof Ionicons.glyphMap; title: string; hint: string }[] = [
   { id: 'status', label: 'Status', icon: 'pulse-outline', title: 'Status', hint: 'Where this idea is, and what happens next.' },
   { id: 'brief', label: 'Brief', icon: 'document-text-outline', title: 'The brief', hint: 'What is being asked for, and why nothing off the shelf does it.' },
   { id: 'constraints', label: 'Constraints', icon: 'alert-circle-outline', title: 'Constraints', hint: 'What makes this harder than it looks.' },
-  { id: 'makers', label: 'Makers', icon: 'people-outline', title: 'Makers', hint: 'Everyone working on this. Makers can post.' },
+  { id: 'makers', label: 'Makers', icon: 'people-outline', title: 'Makers', hint: 'Everyone working on this.' },
+  { id: 'thread', label: 'Thread', icon: 'chatbubbles-outline', title: 'Thread', hint: 'Where the work happens. Makers can post.' },
 ]
 
 function Field({ label, value }: { label: string; value: string }) {
@@ -268,6 +268,11 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
   const stats = challengeStats(challenge, new Date())
   const history = challengeHistory(challenge)
   const makers = challenge.maker_count ?? challenge.participants.length
+  // The board draws Makers and Thread only once the idea is public (MB cdOpen:
+  // challenge or graduated). The count badges are the board's too.
+  const listed = challenge.status === 'challenge' || challenge.status === 'graduated'
+  const tabs = TABS.filter((t) => listed || (t.id !== 'makers' && t.id !== 'thread'))
+  const badge: Partial<Record<Tab, number>> = { makers, thread: challenge.answer_count ?? 0 }
   // PENDING(challenge-writeup-stage): on the board "graduated" means being written up, with who and a follow link.
   // PENDING(challenge-saves-stat): a public Saves tile among the stats.
   const headline =
@@ -291,7 +296,7 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
         ref={logRef}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
-        onContentSizeChange={() => canRead && tab === 'makers' && logRef.current?.scrollToEnd({ animated: false })}
+        onContentSizeChange={() => canRead && tab === 'thread' && logRef.current?.scrollToEnd({ animated: false })}
       >
         <View style={styles.statusLine}>
           <Badge status={pill.status} label={pill.label} />
@@ -353,29 +358,29 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
           style={styles.tabsScroll}
           contentContainerStyle={styles.tabs}
         >
-          {TABS.map((t) => (
-            <Pressable
-              key={t.id}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: tab === t.id }}
-              onPress={() => setTab(t.id)}
-              style={[styles.tab, tab === t.id && styles.tabOn]}
-            >
-              <Ionicons name={t.icon} size={15} color={theme.colors.ink} />
-              <Text style={styles.tabText}>{t.label}</Text>
-            </Pressable>
-          ))}
-          {/* PENDING(challenge-thread-tab): a Thread tab of its own, and count badges on the tabs. */}
+          {tabs.map((t) => {
+            const n = badge[t.id] ?? 0
+            return (
+              <Pressable
+                key={t.id}
+                accessibilityRole="tab"
+                accessibilityLabel={t.label}
+                accessibilityValue={n > 0 ? { text: String(n) } : undefined}
+                accessibilityState={{ selected: tab === t.id }}
+                onPress={() => setTab(t.id)}
+                style={[styles.tab, tab === t.id && styles.tabOn]}
+              >
+                <Ionicons name={t.icon} size={15} color={theme.colors.ink} />
+                <Text style={styles.tabText}>{t.label}</Text>
+                {n > 0 ? <Text style={styles.tabBadge}>{n}</Text> : null}
+              </Pressable>
+            )
+          })}
           {/* PENDING(challenge-outcome-tab): Outcome — approved, makers working, written up, guide published. */}
-          {([
-            ['challenge-thread-tab', 'Thread', 'chatbubbles-outline'],
-            ['challenge-outcome-tab', 'Outcome', 'flag-outline'],
-          ] as const).map(([pid, label, icon]) => (
-            <Pressable key={pid} accessibilityRole="tab" onPress={() => router.push(pendingHref(pid))} style={styles.tab}>
-              <Ionicons name={icon} size={15} color={theme.colors.ink} />
-              <Text style={styles.tabText}>{label}</Text>
-            </Pressable>
-          ))}
+          <Pressable accessibilityRole="tab" onPress={() => router.push(pendingHref('challenge-outcome-tab'))} style={styles.tab}>
+            <Ionicons name="flag-outline" size={15} color={theme.colors.ink} />
+            <Text style={styles.tabText}>Outcome</Text>
+          </Pressable>
         </ScrollView>
 
         {tab === 'status' ? (
@@ -464,7 +469,13 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
           </Card>
         ) : null}
 
-        {tab === 'makers' && canRead ? (
+        {tab === 'thread' ? (
+          <Card style={styles.panel}>
+            <TabHead id="thread" />
+          </Card>
+        ) : null}
+
+        {tab === 'thread' && canRead ? (
           <View accessibilityRole="list" accessibilityLabel="Conversation" style={styles.log}>
             {messages.length === 0 ? (
               <Text style={styles.quiet}>No messages yet. Say what you are trying.</Text>
@@ -519,7 +530,7 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
         ) : null}
       </ScrollView>
 
-      {canRead && tab === 'makers' ? (
+      {canRead && tab === 'thread' ? (
         <View style={styles.footer}>
           <View style={styles.composer}>
             {/* TextField owns its own outer wrapper, so the flex that makes the
@@ -580,6 +591,18 @@ const styles = StyleSheet.create({
     borderRadius: theme.radii.pill,
   },
   tabOn: { backgroundColor: theme.colors.surface, ...theme.shadow(1) },
+  tabBadge: {
+    minWidth: 18,
+    paddingHorizontal: 5,
+    borderRadius: theme.radii.pill,
+    overflow: 'hidden',
+    textAlign: 'center',
+    fontFamily: theme.fonts.black,
+    fontSize: 11,
+    lineHeight: 18,
+    color: theme.colors.ink,
+    backgroundColor: theme.colors.accentLight,
+  },
   tabText: { fontFamily: theme.fonts.black, fontSize: 12.5, color: theme.colors.ink },
   panel: { gap: theme.spacing(3), padding: theme.spacing(4) },
   panelTitle: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.ink },
