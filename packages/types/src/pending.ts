@@ -222,6 +222,7 @@ export const PENDING = {
     needs: "Layer/infill/material/time per guide; shown on detail, request, incoming jobs [ui,api,db]",
   },
   'guide-ask-a-maker': {
+    shipped: true,
     title: "Ask a maker nearby",
     blurb: "Asking a maker from a guide is coming. Use Makers wanted in Explore for now.",
     kind: "build",

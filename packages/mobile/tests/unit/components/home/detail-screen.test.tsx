@@ -131,6 +131,13 @@ describe('DetailScreen', () => {
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/printing', params: { guide: '1' } })
   })
 
+  it('asks a maker nearby with this guide already picked', async () => {
+    render(<DetailScreen id="1" />)
+    fireEvent.press(await screen.findByRole('button', { name: "Can't build it? Ask a maker nearby" }))
+    expect(mockPush).toHaveBeenCalledWith({ pathname: '/explore/makers-wanted/new', params: { guide: '1' } })
+    expect(screen.getByText('A maker nearby gives the time and the skill; you cover the parts. You agree a pickup in My exchanges.')).toBeTruthy()
+  })
+
   it('offers no print for a guide with nothing to print', async () => {
     render(<DetailScreen id="1" />)
     await screen.findByText('Build a Robot Arm')

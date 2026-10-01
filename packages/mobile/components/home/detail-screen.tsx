@@ -20,7 +20,7 @@ import { Skeleton } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
 import { ReportProblem } from '../reports/report-problem'
-import { PendingButton, PendingRow } from '../ui/pending'
+import { PendingButton } from '../ui/pending'
 
 const SWITCH_TARGET_LABEL = { large: 'Big button', small: 'Small button' } as const
 const HERO_HEIGHT = 240
@@ -312,7 +312,21 @@ export function DetailScreen({ id }: { id: string }) {
         </AnimatedPressable>
       ) : null}
 
-      <PendingRow pending="guide-ask-a-maker" label="Can't build it? Ask a maker nearby" icon="hand-left-outline" />
+      <AnimatedPressable
+        onPress={() => router.push({ pathname: '/explore/makers-wanted/new', params: { guide: tutorial.id } })}
+        accessibilityRole="button"
+        accessibilityLabel="Can't build it? Ask a maker nearby"
+        pressScale={0.985}
+        style={styles.printCard}
+      >
+        <View style={styles.printHeader}>
+          <Text style={styles.printTitle}>Can&apos;t build it? Ask a maker nearby</Text>
+          <Ionicons name="chevron-forward" size={16} color={theme.colors.primary} />
+        </View>
+        <Text style={styles.printHint}>
+          A maker nearby gives the time and the skill; you cover the parts. You agree a pickup in My exchanges.
+        </Text>
+      </AnimatedPressable>
 
       {tutorial.tutorial_recommendations.length > 0 ? (
         <PicksRow
