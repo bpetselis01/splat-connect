@@ -18,7 +18,7 @@
  * number that cannot match.
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { View, Text, ScrollView, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native'
+import { View, Text, Image, ScrollView, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import type {
@@ -321,10 +321,18 @@ export function ExchangeThreadScreen({ id }: { id: string }) {
           }}
         >
           <Card style={styles.headerCard}>
-            {/* PENDING(exchange-toy-photo): the toy's photo here — the detail has no photo field. */}
-            <View style={styles.toyTile}>
-              <Ionicons name="cube-outline" size={22} color={theme.colors.muted} />
-            </View>
+            {tx.toy_cover_photo_url ? (
+              <Image
+                testID="exchange-toy-photo"
+                source={{ uri: tx.toy_cover_photo_url }}
+                style={styles.toyTile}
+                accessibilityIgnoresInvertColors
+              />
+            ) : (
+              <View style={styles.toyTile}>
+                <Ionicons name="cube-outline" size={22} color={theme.colors.muted} />
+              </View>
+            )}
             <View style={styles.headerText}>
               <Text style={styles.swapLine}>{swapLine}</Text>
               <Text style={styles.headerMeta}>

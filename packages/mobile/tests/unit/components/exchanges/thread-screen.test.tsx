@@ -697,3 +697,26 @@ describe('ExchangeThreadScreen — the cost panel', () => {
     expect(screen.queryByText('What the handover costs you')).toBeNull()
   })
 })
+
+describe('header photo', () => {
+  beforeEach(() => mockUseCapabilities.mockReturnValue(caps({})))
+
+  it("shows the toy's photo in the Toy slot", async () => {
+    mockGet.mockImplementation((p: string) =>
+      p === '/api/toy-transactions/tx1'
+        ? Promise.resolve(detail({ toy_cover_photo_url: 'https://example.com/cover.jpg' }))
+        : Promise.resolve({ lines: [], settlement: null })
+    )
+    render(<ExchangeThreadScreen id="tx1" />)
+    expect((await screen.findByTestId('exchange-toy-photo')).props.source).toEqual({ uri: 'https://example.com/cover.jpg' })
+  })
+
+  it('falls back to the cube tile without one', async () => {
+    mockGet.mockImplementation((p: string) =>
+      p === '/api/toy-transactions/tx1' ? Promise.resolve(detail({ toy_cover_photo_url: null })) : Promise.resolve({ lines: [], settlement: null })
+    )
+    render(<ExchangeThreadScreen id="tx1" />)
+    await screen.findByText('Bubble machine → Jamie collects')
+    expect(screen.queryByTestId('exchange-toy-photo')).toBeNull()
+  })
+})

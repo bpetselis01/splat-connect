@@ -462,6 +462,7 @@ export const PENDING = {
     needs: "Copy and New code on the handover card [ui,api]",
   },
   'exchange-toy-photo': {
+    shipped: true,
     title: "Toy photo",
     blurb: "The toy’s photo in the exchange header is coming.",
     kind: "build",

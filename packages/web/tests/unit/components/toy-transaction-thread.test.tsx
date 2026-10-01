@@ -42,6 +42,7 @@ function tx(overrides: Partial<ToyTransactionDetail> = {}): ToyTransactionDetail
     created_at: '2026-08-01T00:00:00Z',
     updated_at: '2026-08-01T00:00:00Z',
     toy_name: 'Fire truck',
+    toy_cover_photo_url: null,
     tutorial_title: null,
     printer: null,
     print_files: [],

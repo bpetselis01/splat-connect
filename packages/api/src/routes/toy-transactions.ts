@@ -411,7 +411,7 @@ toyTransactions.get('/:id', async (c) => {
   const { data, error } = await supabase
     .from('toy_transactions')
     .select(
-      '*, toy:toys!toy_transactions_toy_id_fkey(name, status), offered:toys!toy_transactions_offered_toy_id_fkey(name, status), owner:profiles!toy_transactions_owner_id_fkey(name), requester:profiles!toy_transactions_requester_id_fkey(name), org:organizations!toy_transactions_owner_org_id_fkey(name), tutorial:tutorials(title, layer_height_mm, infill_percent, material, print_minutes), printer:printers(id, name, suburb, state, materials), print_job_files(quantity, stl_files(id, filename, print_minutes, filament_grams, material))'
+      '*, toy:toys!toy_transactions_toy_id_fkey(name, status, cover_photo_url), offered:toys!toy_transactions_offered_toy_id_fkey(name, status), owner:profiles!toy_transactions_owner_id_fkey(name), requester:profiles!toy_transactions_requester_id_fkey(name), org:organizations!toy_transactions_owner_org_id_fkey(name), tutorial:tutorials(title, layer_height_mm, infill_percent, material, print_minutes), printer:printers(id, name, suburb, state, materials), print_job_files(quantity, stl_files(id, filename, print_minutes, filament_grams, material))'
     )
     .eq('id', c.req.param('id'))
     .maybeSingle()
@@ -430,7 +430,7 @@ toyTransactions.get('/:id', async (c) => {
 
   const userId = c.get('userId')
   const row = data as unknown as Record<string, any> & {
-    toy: { name: string; status: 'draft' | 'published' } | null
+    toy: { name: string; status: 'draft' | 'published'; cover_photo_url: string | null } | null
     offered: { name: string; status: 'draft' | 'published' } | null
     owner: { name: string } | null
     requester: { name: string } | null
@@ -479,6 +479,9 @@ toyTransactions.get('/:id', async (c) => {
     ...sanitizeCodes(row, userId, ledOrgs),
     print_group_size: printGroupSize,
     toy_name: row.toy?.name ?? '',
+    // 025's "parties can view each other's toy" policy outlives the handoff,
+    // so the giver still sees what they gave.
+    toy_cover_photo_url: row.toy?.cover_photo_url ?? null,
     tutorial_title: row.tutorial?.title ?? null,
     tutorial_print_settings: row.tutorial
         ? { layer_height_mm: row.tutorial.layer_height_mm, infill_percent: row.tutorial.infill_percent, material: row.tutorial.material, print_minutes: row.tutorial.print_minutes }

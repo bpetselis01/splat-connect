@@ -851,6 +851,8 @@ export type ReceivedToy = { id: string; name: string; status: Toy['status'] }
 
 export interface ToyTransactionDetail extends ToyTransaction {
   toy_name: string
+  /** The toy's cover (053), for the thread's header. Null on a build or a toy with none. */
+  toy_cover_photo_url: string | null
   /** The guide being built, on a build (057). Null on a donation or exchange. */
   tutorial_title: string | null
   /** The machine a print job is on, and where it is. Null on every other kind. */
