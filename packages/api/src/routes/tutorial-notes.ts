@@ -12,33 +12,22 @@ const notes = new Hono<{ Variables: AuthVariables }>()
 type Ctx = Context<{ Variables: AuthVariables }>
 
 const GHOST = '00000000-0000-4000-8000-00000000dead'
-const NOTE_COLUMNS = 'id, tutorial_id, step_position, author_id, body, photo_url, photo_caption, pinned_at, pinned_by, created_at'
-// A note's photo must be one /api/upload/note-photo stored for this guide:
-// this project's storage, this guide's notes folder, nothing after the name.
-// 093's tutorial_notes_photo_url_check backs it for a direct insert.
-function ownNotePhoto(url: string, id: string): boolean {
-  let u: URL
-  try {
-    u = new URL(url)
-  } catch {
-    return false
-  }
-  const folder = `/storage/v1/object/public/toy-photos/${id}/notes/`
-  return (
-    u.origin === new URL(process.env.SUPABASE_URL!).origin &&
-    !u.search &&
-    !u.hash &&
-    u.pathname.startsWith(folder) &&
-    /^[0-9a-f-]+\.(jpg|png|webp|avif|heic|heif)$/.test(u.pathname.slice(folder.length))
-  )
-}
+const NOTE_COLUMNS = 'id, tutorial_id, step_position, author_id, body, photo_path, photo_caption, pinned_at, pinned_by, created_at'
+// A note's photo is the toy-photos path /api/upload/note-photo wrote for this
+// guide — the same rule as 093's tutorial_notes_photo_path_check.
+const ownNotePhoto = (path: string, id: string) =>
+  path.startsWith(`${id}/notes/`) && /^[0-9a-f-]{36}\.(jpg|png|webp|avif|heic|heif)$/.test(path.slice(`${id}/notes/`.length))
+
+/** Clients render a URL; the column holds a path (093). */
+export const notePhotoUrl = (path: string | null) =>
+  path ? `${process.env.SUPABASE_URL}/storage/v1/object/public/toy-photos/${path}` : null
 
 export function noteError(b: Record<string, unknown>, id: string): string | null {
   const body = typeof b.body === 'string' ? b.body.trim() : ''
   if (!body || body.length > 1000) return 'Say what you found, in 1000 characters or fewer.'
   const at = b.step_position
   if (at != null && !(Number.isInteger(at) && (at as number) >= 1 && (at as number) <= 60)) return 'Pick a step, or Missing step.'
-  if (b.photo_url != null && (typeof b.photo_url !== 'string' || !ownNotePhoto(b.photo_url, id))) return 'That photo was not uploaded to this guide.'
+  if (b.photo_path != null && (typeof b.photo_path !== 'string' || !ownNotePhoto(b.photo_path, id))) return 'That photo was not uploaded to this guide.'
   if (b.photo_caption != null && (typeof b.photo_caption !== 'string' || b.photo_caption.trim().length > 60)) return 'The photo caption is over 60 characters.'
   return null
 }
@@ -78,7 +67,7 @@ notes.post('/:id/notes', async (c) => {
       author_id: c.get('userId'),
       step_position: (b.step_position as number | null) ?? null,
       body: (b.body as string).trim(),
-      photo_url: (b.photo_url as string | null) ?? null,
+      photo_path: (b.photo_path as string | null) ?? null,
       photo_caption: (b.photo_caption as string | null)?.trim() || null,
     })
     .select(NOTE_COLUMNS)
@@ -87,7 +76,7 @@ notes.post('/:id/notes', async (c) => {
   if (error && ['42501', '22P02'].includes(error.code)) return c.json({ error: 'Not found' }, 404)
   if (error) return c.json({ error: error.message }, 500)
   await notifyContributors(id, c.get('userId'))
-  return c.json(data, 201)
+  return c.json({ ...data, photo_url: notePhotoUrl(data.photo_path) }, 201)
 })
 
 notes.delete('/:id/notes/:noteId', async (c) => {

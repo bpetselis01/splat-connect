@@ -9,6 +9,7 @@ import { chunk } from '../chunk.js'
 import { createAnonClient, createAdminClient } from '../supabase/client.js'
 import { atCapacityToyIds } from '../toy-access.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
+import { notePhotoUrl } from './tutorial-notes.js'
 import { buildCalendar, contributorBadges, readMinutes } from '@splat-connect/types'
 import type {
   ImpactSummary,
@@ -147,7 +148,7 @@ publicRoutes.get('/tutorials/:id', async (c) => {
 publicRoutes.get('/tutorials/:id/notes', async (c) => {
   const { data, error } = await createAnonClient()
     .from('tutorial_notes')
-    .select('id, step_position, author_id, body, photo_url, photo_caption, pinned_at, pinned_by, created_at')
+    .select('id, step_position, author_id, body, photo_path, photo_caption, pinned_at, pinned_by, created_at')
     .eq('tutorial_id', c.req.param('id'))
     .order('created_at', { ascending: true })
   if (error?.code === INVALID_TEXT_REPRESENTATION) return c.json({ error: 'Not found' }, 404)
@@ -158,8 +159,9 @@ publicRoutes.get('/tutorials/:id/notes', async (c) => {
     : { data: [] as { id: string; name: string }[] }
   const name = new Map((people ?? []).map((p) => [p.id, p.name as string]))
   return c.json(
-    data.map((n) => ({
+    data.map(({ photo_path, ...n }) => ({
       ...n,
+      photo_url: notePhotoUrl(photo_path),
       author_name: name.get(n.author_id) || 'A member',
       pinned_by_name: n.pinned_at ? (n.pinned_by && name.get(n.pinned_by)) || 'Deleted member' : null,
     }))

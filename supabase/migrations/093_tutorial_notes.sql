@@ -16,10 +16,12 @@
 --                  through the delete.
 --   pinned_by      set null when that contributor leaves; the API names them
 --                  "Deleted member".
---   photo_url      only an object /api/upload/note-photo wrote for this guide:
---                  <project>/storage/v1/object/public/toy-photos/<id>/notes/
---                  <uuid>.<ext>. A member can insert through PostgREST with
---                  their own JWT, so the API's check is not enough on its own.
+--   photo_path     a toy-photos storage PATH, never a URL (the file-column
+--                  convention, as 049's): <tutorial_id>/notes/<uuid>.<ext>, the
+--                  only shape /api/upload/note-photo writes. The API builds the
+--                  public URL on read. A member can insert through PostgREST
+--                  with their own JWT, so the CHECK is what holds: a URL, or
+--                  another guide's folder, cannot be stored at all.
 --   created_at     stamped by a trigger, so a direct insert cannot backdate a
 --                  note to sit above the guide's real discussion.
 --
@@ -35,15 +37,14 @@ create table public.tutorial_notes (
   author_id uuid not null default '00000000-0000-4000-8000-00000000dead'
     references public.profiles (id) on delete set default,
   body text not null check (length(btrim(body)) between 1 and 1000),
-  photo_url text,
+  photo_path text,
   photo_caption text check (photo_caption is null or length(photo_caption) <= 60),
   pinned_at timestamptz,
   pinned_by uuid references public.profiles (id) on delete set null,
   created_at timestamptz not null default now(),
-  constraint tutorial_notes_photo_url_check check (
-    photo_url is null
-    or photo_url ~ ('^https?://[^/?#]+/storage/v1/object/public/toy-photos/' || tutorial_id::text
-                    || '/notes/[0-9a-f-]+\.(jpg|png|webp|avif|heic|heif)$')
+  constraint tutorial_notes_photo_path_check check (
+    photo_path is null
+    or photo_path ~ ('^' || tutorial_id::text || '/notes/[0-9a-f-]{36}\.(jpg|png|webp|avif|heic|heif)$')
   )
 );
 

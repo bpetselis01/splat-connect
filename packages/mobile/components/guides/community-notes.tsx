@@ -50,8 +50,8 @@ export function CommunityNotes({ tutorialId, guideTitle, authorName, steps, note
     const asset = result.canceled ? null : result.assets?.[0]
     if (!asset) return
     try {
-      const { url } = await uploadFile('/api/upload/note-photo', tutorialId, { uri: asset.uri, name: asset.fileName ?? 'photo.jpg', mimeType: asset.mimeType ?? 'image/jpeg' })
-      setPhoto(url)
+      const { path } = await uploadFile('/api/upload/note-photo', tutorialId, { uri: asset.uri, name: asset.fileName ?? 'photo.jpg', mimeType: asset.mimeType ?? 'image/jpeg' })
+      setPhoto(path ?? null)
     } catch {
       setError('Could not upload the photo. Please try again.')
     }
@@ -61,7 +61,7 @@ export function CommunityNotes({ tutorialId, guideTitle, authorName, steps, note
     setBusy(true)
     setError(null)
     try {
-      await apiClient.post(`/api/tutorials/${tutorialId}/notes`, { step_position: at ?? null, body: body.trim(), photo_url: photo, photo_caption: caption.trim() || null })
+      await apiClient.post(`/api/tutorials/${tutorialId}/notes`, { step_position: at ?? null, body: body.trim(), photo_path: photo, photo_caption: caption.trim() || null })
       setBody('')
       setPhoto(null)
       setCaption('')

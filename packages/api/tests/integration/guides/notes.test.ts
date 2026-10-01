@@ -55,7 +55,7 @@ describe('093 tutorial_notes', () => {
   it('validates, and refuses a guide that is not published', async () => {
     expect((await send('POST', `/api/tutorials/${guide}/notes`, parent.token, { step_position: null, body: '   ' })).status).toBe(400)
     expect((await send('POST', `/api/tutorials/${guide}/notes`, parent.token, { step_position: 0, body: 'x' })).status).toBe(400)
-    expect((await send('POST', `/api/tutorials/${guide}/notes`, parent.token, { step_position: null, body: 'x', photo_url: 'https://elsewhere.test/a.jpg' })).status).toBe(400)
+    expect((await send('POST', `/api/tutorials/${guide}/notes`, parent.token, { step_position: null, body: 'x', photo_path: 'https://elsewhere.test/a.jpg' })).status).toBe(400)
     expect((await send('POST', `/api/tutorials/${draft}/notes`, parent.token, { step_position: null, body: 'x' })).status).toBe(404)
   })
 
@@ -89,29 +89,40 @@ describe('093 review fixes', () => {
     return app.request('/api/upload/note-photo', { method: 'POST', headers: { Authorization: `Bearer ${parent.token}` }, body: fd })
   }
 
-  it('refuses a photo URL that only mentions the guide’s folder', async () => {
-    const crafted = `https://elsewhere.test/a.jpg?/storage/v1/object/public/toy-photos/${guide}/notes/x.jpg`
-    expect((await send('POST', `/api/tutorials/${guide}/notes`, parent.token, { step_position: null, body: 'x', photo_url: crafted })).status).toBe(400)
+  const leaf = `${crypto.randomUUID()}.jpg`
+  const outsiders = () => [
+    `https://evil.example/storage/v1/object/public/toy-photos/${guide}/notes/${leaf}`,
+    `${draft}/notes/${leaf}`,
+  ]
+
+  it('refuses an absolute URL or another guide’s folder as a note photo', async () => {
+    for (const photo_path of outsiders())
+      expect((await send('POST', `/api/tutorials/${guide}/notes`, parent.token, { step_position: null, body: 'x', photo_path })).status).toBe(400)
   })
 
-  it('refuses an outside photo, and stamps created_at, on a direct insert', async () => {
+  it('refuses the same on a direct insert, and stamps created_at', async () => {
     const db = createUserClient(parent.token).from('tutorial_notes')
-    const outside = await db.insert({ tutorial_id: guide, author_id: parent.id, body: 'x', photo_url: 'https://elsewhere.test/a.jpg' })
-    expect(outside.error?.code).toBe('23514')
+    for (const photo_path of outsiders())
+      expect((await db.insert({ tutorial_id: guide, author_id: parent.id, body: 'x', photo_path })).error?.code).toBe('23514')
     const { data, error } = await db.insert({ tutorial_id: guide, author_id: parent.id, body: 'Backdated', created_at: '2000-01-01T00:00:00Z' }).select('id, created_at').single()
     expect(error).toBeNull()
     expect(new Date(data!.created_at).getFullYear()).toBeGreaterThan(2000)
     await adminClient().from('tutorial_notes').delete().eq('id', data!.id)
   })
 
-  it('stores a note photo under the published guide’s notes folder, named by its type', async () => {
+  it('stores a note photo under the published guide’s notes folder, and reads it back as a working URL', async () => {
     const png = new File([new Uint8Array([0x89, 0x50, 0x4e, 0x47])], '../../evil.svg', { type: 'image/png' })
     expect((await upload(draft, png)).status).toBe(404)
     const res = await upload(guide, png)
     expect(res.status).toBe(200)
-    const { url } = (await res.json()) as { url: string }
-    expect(url).toMatch(new RegExp(`/storage/v1/object/public/toy-photos/${guide}/notes/[0-9a-f-]+\\.png$`))
-    const posted = await send('POST', `/api/tutorials/${guide}/notes`, parent.token, { step_position: 1, body: 'With a photo.', photo_url: url })
+    const { path } = (await res.json()) as { path: string }
+    expect(path).toMatch(new RegExp(`^${guide}/notes/[0-9a-f-]{36}\\.png$`))
+    const posted = await send('POST', `/api/tutorials/${guide}/notes`, parent.token, { step_position: 1, body: 'With a photo.', photo_path: path })
     expect(posted.status).toBe(201)
+    const id = ((await posted.json()) as { id: string }).id
+    const notes = (await (await app.request(`/api/public/tutorials/${guide}/notes`)).json()) as { id: string; photo_url: string | null }[]
+    const url = notes.find((n) => n.id === id)!.photo_url!
+    expect(url).toBe(`${process.env.SUPABASE_URL}/storage/v1/object/public/toy-photos/${path}`)
+    expect((await fetch(url)).status).toBe(200)
   })
 })

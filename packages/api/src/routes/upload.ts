@@ -226,7 +226,7 @@ upload.post('/toy-photo', photoRoute('toy-photos-library', 'toyId', 'toys', chec
  * A photo on a community note (093). Anyone signed in may note a published
  * guide, and toy-photos' storage policy (032) admits only its contributors,
  * so the object is written with the service role after the guide is checked
- * to be published — under <id>/notes/, which the notes route requires.
+ * to be published — under <id>/notes/, the only path 093's CHECK admits.
  * ponytail: deleting a note leaves its photo; sweep <id>/notes/ against
  * tutorial_notes if storage ever matters.
  */
@@ -244,7 +244,8 @@ upload.post('/note-photo', async (c) => {
   const ext = file.type === 'image/jpeg' ? 'jpg' : file.type.slice('image/'.length)
   const { data, error } = await admin.storage.from('toy-photos').upload(`${id}/notes/${crypto.randomUUID()}.${ext}`, file, { upsert: false })
   if (error) return c.json({ error: error.message }, 500)
-  return c.json({ url: admin.storage.from('toy-photos').getPublicUrl(data.path).data.publicUrl })
+  // The path is what POST /notes takes (093 stores paths); the url is for the preview.
+  return c.json({ path: data.path, url: admin.storage.from('toy-photos').getPublicUrl(data.path).data.publicUrl })
 })
 
 export default upload

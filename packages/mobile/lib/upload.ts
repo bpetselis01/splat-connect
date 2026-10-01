@@ -28,6 +28,8 @@ export type UploadPath =
 export interface UploadResult {
   url: string
   filename?: string
+  /** 093: note-photo's storage path, which POST /notes takes. */
+  path?: string
 }
 
 /**

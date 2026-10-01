@@ -27,7 +27,7 @@ it('lists revisions and discussion, and posts a note against a step', async () =
   fireEvent.press(screen.getByText('Step 1'))
   fireEvent.changeText(screen.getByLabelText('Your note'), 'Glue the jack too.')
   fireEvent.press(screen.getByRole('button', { name: 'Post' }))
-  await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/tutorials/g/notes', { step_position: 1, body: 'Glue the jack too.', photo_url: null, photo_caption: null }))
+  await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/tutorials/g/notes', { step_position: 1, body: 'Glue the jack too.', photo_path: null, photo_caption: null }))
   expect(reload).toHaveBeenCalled()
 })
 
