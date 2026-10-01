@@ -50,9 +50,6 @@ function StlEditor() {
     setSavingId(f.id)
     try {
       const updated = await apiClient.patch<StlFile>(`/api/tutorials/${id}/stl-files/${f.id}`, {
-        print_minutes: f.print_minutes ?? null,
-        filament_grams: f.filament_grams ?? null,
-        material: f.material ?? null,
         size_x_mm: mm(s.x),
         size_y_mm: mm(s.y),
         size_z_mm: mm(s.z),

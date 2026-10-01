@@ -191,8 +191,9 @@ it('carries part sizes through the replace-set, and saves them per file', async 
   fireEvent.changeText(screen.getByLabelText('Width (mm) for old.stl'), '45')
   fireEvent.press(screen.getByText('Save sizes'))
   await waitFor(() =>
+    // Only the sizes: the PATCH writes what it is sent, and this button edits sizes.
     expect(apiClient.patch).toHaveBeenCalledWith('/api/tutorials/t1/stl-files/s1', {
-      print_minutes: 60, filament_grams: 10, material: 'PETG', size_x_mm: 45, size_y_mm: 30, size_z_mm: 20,
+      size_x_mm: 45, size_y_mm: 30, size_z_mm: 20,
     })
   )
 
