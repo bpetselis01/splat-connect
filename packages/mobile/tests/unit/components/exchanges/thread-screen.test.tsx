@@ -7,7 +7,6 @@
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import {
   ExchangeThreadScreen,
-  costSummary,
   stageRail,
   waitingOn,
 } from '../../../../components/exchanges/thread-screen'
@@ -664,22 +663,6 @@ describe('waitingOn', () => {
   })
 })
 
-describe('costSummary', () => {
-  const line = (over: object) => ({
-    id: 'c',
-    description: 'Postage',
-    amount_cents: 1060,
-    claiming: true,
-    payer_id: 'viewer1',
-    payee_id: 'owner1',
-    ...over,
-  })
-  it('counts only claimed lines, by which side the viewer is on', () => {
-    const lines = [line({}), line({ id: 'd', claiming: false, amount_cents: 500 }), line({ id: 'e', payer_id: 'owner1', payee_id: 'viewer1', amount_cents: 200 })]
-    expect(costSummary(lines, 'viewer1')).toEqual({ youPay: 1060, youGet: 200 })
-  })
-})
-
 describe('ExchangeThreadScreen — the cost panel', () => {
   it('shows what the viewer pays back when there are cost lines', async () => {
     mockGet.mockImplementation((p: string) =>
@@ -693,6 +676,12 @@ describe('ExchangeThreadScreen — the cost panel', () => {
     expect(await screen.findByText('You pay back')).toBeTruthy()
     expect(screen.getByText('Bank transfer')).toBeTruthy()
     expect(screen.getByText('Postage')).toBeTruthy()
+  })
+
+  it('fetches no costs on a print thread', async () => {
+    mockGet.mockImplementation((p: string) => Promise.resolve(p === '/api/toy-transactions/tx1' ? detail({ type: 'print' }) : { lines: [], settlement: null }))
+    await open()
+    expect(mockGet).not.toHaveBeenCalledWith('/api/exchange-costs/tx1')
   })
 
   it('draws no cost card without lines', async () => {

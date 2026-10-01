@@ -23,13 +23,11 @@ import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import * as Clipboard from 'expo-clipboard'
 import type {
-  ExchangeCost,
-  ExchangeSettlement,
   ToyTransaction,
   ToyTransactionDetail,
   ToyTransactionMessage,
 } from '@splat-connect/types'
-import { isOwnerSide, needsAction, actionLabel, formatCents, apiMessage, printRequestExpired } from '@splat-connect/types'
+import { isOwnerSide, needsAction, actionLabel, apiMessage, printRequestExpired } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { useCapabilities } from '../../lib/capabilities'
@@ -45,6 +43,7 @@ import { MessageBubble } from '../ui/MessageBubble'
 import { ErrorRow } from '../ui/ErrorRow'
 import { PendingButton } from '../ui/pending'
 import { FlashLine, useFlash } from '../ui/Flash'
+import { CostPanel } from './cost-panel'
 
 const POLL_MS = 10_000
 const LOAD_ERROR = "Couldn't load this exchange."
@@ -114,22 +113,6 @@ export function waitingOn(
   return null
 }
 
-type CostLine = Pick<ExchangeCost, 'id' | 'description' | 'amount_cents' | 'claiming' | 'payer_id' | 'payee_id'>
-type CostPanel = {
-  lines: CostLine[]
-  settlement: Pick<ExchangeSettlement, 'method'> | null
-}
-
-/** What the viewer pays back, or is paid back. Only claimed lines count (055). */
-export function costSummary(lines: CostLine[], viewerId: string): { youPay: number; youGet: number } {
-  const claimed = lines.filter((l) => l.claiming)
-  const sum = (ls: CostLine[]) => ls.reduce((n, l) => n + l.amount_cents, 0)
-  return {
-    youPay: sum(claimed.filter((l) => l.payer_id === viewerId)),
-    youGet: sum(claimed.filter((l) => l.payee_id === viewerId)),
-  }
-}
-
 export function ExchangeThreadScreen({ id, startAccept = false }: { id: string; startAccept?: boolean }) {
   const router = useRouter()
   const { caps } = useCapabilities()
@@ -146,25 +129,6 @@ export function ExchangeThreadScreen({ id, startAccept = false }: { id: string; 
   // accepted or confirmed answers with the row as it was BEFORE their action,
   // and applying it reverts the footer under them until the next tick.
   const generation = useRef(0)
-  const [costs, setCosts] = useState<CostPanel | null>(null)
-  const txType = tx?.type
-
-  // The cost panel (055/056). Once per screen, not per poll: lines change on
-  // the dashboard, not mid-handover. RLS returns empty arrays to a stranger.
-  useEffect(() => {
-    if (txType !== 'donation' && txType !== 'exchange') return
-    let ignore = false
-    apiClient
-      .get<CostPanel>(`/api/exchange-costs/${id}`)
-      .then((c) => {
-        if (!ignore) setCosts(c)
-      })
-      .catch((err) => console.error('[ExchangeThreadScreen] cost fetch failed:', err))
-    return () => {
-      ignore = true
-    }
-  }, [id, txType])
-
   const load = useCallback(async () => {
     const at = generation.current
     try {
@@ -313,10 +277,6 @@ export function ExchangeThreadScreen({ id, startAccept = false }: { id: string; 
   // across a nested closure.
   const receivedToy = tx.status === 'completed' && tx.received_toy?.status === 'draft' ? tx.received_toy : null
 
-  const costLines = costs?.lines ?? []
-  const { youPay, youGet } = costSummary(costLines, viewerId)
-  const method = costs?.settlement?.method ?? null
-
   return (
     // `padding` shrinks Screen's flex:1 child by the keyboard's height on
     // iOS, which pushes the footer's composer up above it. Android's own
@@ -367,28 +327,9 @@ export function ExchangeThreadScreen({ id, startAccept = false }: { id: string; 
             {printRequestExpired(tx) ? <Badge status="withdrawn" label="Expired" /> : <Badge status={tx.status} />}
           </Card>
 
-          {costLines.length > 0 ? (
-            <Card style={styles.block}>
-              <Text style={styles.eyebrow}>What the handover costs you</Text>
-              {costLines.map((l) => (
-                <View key={l.id} style={styles.costLine}>
-                  <Text style={styles.costDesc}>{l.description}</Text>
-                  <Text style={styles.costAmount}>{formatCents(l.claiming ? l.amount_cents : 0)}</Text>
-                </View>
-              ))}
-              {youPay > 0 || youGet > 0 ? (
-                <View style={[styles.payBack, youPay > 0 ? styles.payBackYou : styles.payBackThem]}>
-                  <Text style={styles.payBackLabel}>{youPay > 0 ? 'You pay back' : 'They pay you back'}</Text>
-                  <Text style={styles.payBackAmount}>{formatCents(youPay > 0 ? youPay : youGet)}</Text>
-                </View>
-              ) : null}
-              {method ? (
-                <View style={styles.methodRow}>
-                  <Ionicons name="business-outline" size={15} color={theme.colors.muted} />
-                  <Text style={styles.blockBody}>{method}</Text>
-                </View>
-              ) : null}
-            </Card>
+          {/* Builds have their own panel; a print has no costs. */}
+          {tx.type === 'donation' || tx.type === 'exchange' ? (
+            <CostPanel transactionId={id} viewerId={viewerId} mode="read" title="What the handover costs you" />
           ) : null}
 
           <Card style={styles.railCard}>
@@ -738,47 +679,6 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     textTransform: 'uppercase',
     color: theme.colors.ink,
-  },
-  costLine: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: theme.spacing(3),
-  },
-  costDesc: {
-    flex: 1,
-    fontFamily: theme.fonts.regular,
-    fontSize: theme.type.label,
-    color: theme.colors.text,
-  },
-  costAmount: {
-    fontFamily: theme.fonts.numeral,
-    fontSize: theme.type.label,
-    color: theme.colors.text,
-  },
-  payBack: {
-    alignSelf: 'flex-start',
-    borderRadius: theme.radii.panel,
-    padding: theme.spacing(3),
-    gap: 2,
-  },
-  payBackYou: { backgroundColor: theme.colors.honeySoft },
-  payBackThem: { backgroundColor: theme.colors.mintSoft },
-  payBackLabel: {
-    fontFamily: theme.fonts.black,
-    fontSize: 11,
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-    color: theme.colors.ink,
-  },
-  payBackAmount: {
-    fontFamily: theme.fonts.numeral,
-    fontSize: theme.type.title,
-    color: theme.colors.ink,
-  },
-  methodRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing(2),
   },
   railCard: { padding: theme.spacing(3), borderRadius: theme.radii.panel },
   rail: { flexDirection: 'row' },

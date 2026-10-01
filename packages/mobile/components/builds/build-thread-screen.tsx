@@ -12,8 +12,6 @@
  * Not drawn from the board, on purpose:
  * - "As the family / As the maker". A prototype switch; the viewer's side is
  *   read off the row.
- * - The cost panel. Mobile has no exchange-costs screen yet on any thread; the
- *   parts conversation happens in the messages until it does.
  * - "Report a problem". Mobile has no report flow to send it to.
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -47,6 +45,7 @@ import { MessageBubble } from '../ui/MessageBubble'
 import { ErrorRow } from '../ui/ErrorRow'
 import { apiMessage } from '@splat-connect/types'
 import { PendingButton } from '../ui/pending'
+import { CostPanel } from '../exchanges/cost-panel'
 
 const POLL_MS = 10_000
 const LOAD_ERROR = "Couldn't load this build."
@@ -433,7 +432,20 @@ export function BuildThreadScreen({ id }: { id: string }) {
               />
             ))}
           </View>
-          {/* PENDING(build-thread-cost-panel): the maker lists parts, the family sees them — exchange-costs exists. */}
+          {/* Once a maker has the build: before that there is nobody to owe. */}
+          {(tx.status === 'accepted' || tx.status === 'completed') && (c.isMaker || c.isFamily) ? (
+            <CostPanel
+              transactionId={id}
+              viewerId={viewerId}
+              mode={c.isMaker ? 'edit' : 'settle'}
+              title={c.isMaker ? 'Parts you bought for this build' : 'What this build costs you'}
+              hint={
+                c.isMaker
+                  ? 'The family covers parts, never your time. Itemise what you bought and mark each line.'
+                  : `${tx.owner_name} gives the time and the tools free — these are the parts they bought.`
+              }
+            />
+          ) : null}
           <PendingButton pending="report-problem-mobile" label="Report a problem" variant="ghost" />
         </ScrollView>
 

@@ -448,6 +448,7 @@ export const PENDING = {
     needs: "Build time and cost on Makers wanted rows [ui,api]",
   },
   'build-thread-cost-panel': {
+    shipped: true,
     title: "Parts cost",
     blurb: "Listing parts costs in a build thread is coming.",
     kind: "build",
