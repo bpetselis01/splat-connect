@@ -4,9 +4,25 @@
  * the OTHER to type (confirm handler), so the counterparty's code must never
  * change here and never come back in the response.
  */
-import { describe, it, expect, beforeAll, afterAll } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
+
+// Runs once, between the handler's read of the handover and its UPDATE, to
+// stand in for the other side confirming in that gap.
+const between = vi.hoisted(() => ({ run: null as null | (() => Promise<void>) }))
+vi.mock('../../../src/toy-access.js', async (importOriginal) => {
+  const real = await importOriginal<typeof import('../../../src/toy-access.js')>()
+  return {
+    ...real,
+    ledOrgIds: async (...a: Parameters<typeof real.ledOrgIds>) => {
+      const run = between.run
+      between.run = null
+      if (run) await run()
+      return real.ledOrgIds(...a)
+    },
+  }
+})
 
 let owner: TestUser
 let requester: TestUser
@@ -81,6 +97,15 @@ describe('POST /api/toy-transactions/:id/new-code', () => {
   it('is refused once the other side has already typed your code in', async () => {
     // The owner confirms with the requester's code, so the requester's code is spent.
     const id = await tx({ owner_confirmed_at: new Date().toISOString() })
+    expect((await newCode(requester, id)).status).toBe(409)
+    expect((await codes(id)).requester_code).toBe('222222')
+  })
+
+  it('is refused when the other side types your code in while the new one is being made', async () => {
+    const id = await tx()
+    between.run = async () => {
+      await adminClient().from('toy_transactions').update({ owner_confirmed_at: new Date().toISOString() }).eq('id', id)
+    }
     expect((await newCode(requester, id)).status).toBe(409)
     expect((await codes(id)).requester_code).toBe('222222')
   })

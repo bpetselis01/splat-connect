@@ -1219,6 +1219,8 @@ toyTransactions.post('/:id/new-code', async (c) => {
     .update({ [field]: generateCode(), updated_at: new Date().toISOString() })
     .eq('id', tx.id)
     .eq('status', 'accepted')
+    // The other side may have typed the old code in since the read above.
+    .is(isOwner ? 'requester_confirmed_at' : 'owner_confirmed_at', null)
     .select()
     .maybeSingle()
   if (error) return c.json({ error: error.message }, 500)
