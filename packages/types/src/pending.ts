@@ -316,6 +316,13 @@ export const PENDING = {
     platforms: ["mobile"],
     needs: "\"Ask them to print\" from an org profile preselects that org",
   },
+  'web-printer-directory-stats': {
+    title: "Printer track record",
+    blurb: "Each printer's jobs done and usual turnaround here is coming. The phone shows it now.",
+    kind: "build",
+    platforms: ["web"],
+    needs: "The web printer directory shows each printer's track record like the phone's find card",
+  },
   'message-printer': {
     title: "Message the printer",
     blurb: "Messaging the printer from here is coming. Use the job thread for now.",

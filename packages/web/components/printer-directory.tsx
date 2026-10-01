@@ -315,6 +315,7 @@ function PrinterCard({ printer: p, tint }: { printer: PrinterWithOwner; tint: st
           <avail.Icon weight="fill" aria-hidden="true" />
           {avail.label}
         </span>
+        {/* PENDING(web-printer-directory-stats): the phone's find card shows each printer's track record (statsLine); this card does not yet. */}
         {p.materials.length > 0 && (
           <span className="printer-card__pill bg-sunken">
             <Cube aria-hidden="true" />
