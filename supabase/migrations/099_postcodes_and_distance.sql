@@ -1,7 +1,7 @@
 -- 099 — Near you: distance in whole kilometres between postcodes.
 --
 -- Decided 2026-09-30: postcode centre points (ABS data, CC BY) with a SQL
--- distance in rounded km; postcode on printers and build requests; sort and
+-- distance in rounded km; postcode on printers; sort and
 -- filter in the four list APIs. No address or point is stored about anyone —
 -- a postcode is already on every pickup address, and the points are the ABS's
 -- public centres of whole postal areas.
@@ -14,22 +14,21 @@
 --                              on /about. Loaded by the INSERT at the end of
 --                              this file: hosted Supabase cannot COPY a file.
 --   printers.postcode          the machine's postcode, beside its suburb.
---   toy_transactions.requester_postcode
---                              a build request's, copied from the family's
---                              profile when they ask (POST /build). The board
---                              shows makers the km, never the postcode.
 --   postcode_km(a, b)          haversine between the two centres, whole km;
 --                              null when either is not in the table.
 --   postcode_kms(origin, [])   the same for a list, in one call.
 --
--- Toys and organisations use the existing pickup_postcode of their owner or
--- organisation (025/033); a viewer uses their profile's.
+-- Toys, organisations and build requests use the existing pickup_postcode of
+-- their owner, organisation or requesting family (025/033), read by the API
+-- through the admin client; a viewer uses their profile's. A build request
+-- does not copy it: 064 lets any member select an open build row, so a
+-- postcode column on toy_transactions would hand every family's to every
+-- member.
 --
 -- DOWN:
 --   drop function if exists public.postcode_kms(text, text[]);
 --   drop function if exists public.postcode_km(text, text);
 --   grant select on public.printers to anon, authenticated;
---   alter table public.toy_transactions drop column if exists requester_postcode;
 --   alter table public.printers drop column if exists postcode;
 --   drop table if exists public.postcode_centroids;
 
@@ -62,9 +61,6 @@ grant select (
   id, owner_id, owner_org_id, name, materials, bed_x, bed_y, bed_z, suburb, state,
   accepting, capacity, notes, created_at, updated_at, filament_cents_per_g, rate_note
 ) on public.printers to anon, authenticated;
-
-alter table public.toy_transactions
-  add column requester_postcode text check (requester_postcode is null or requester_postcode ~ '^\d{4}$');
 
 create function public.postcode_km(a text, b text)
 returns int

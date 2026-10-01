@@ -10,7 +10,7 @@ import { createAnonClient, createAdminClient } from '../supabase/client.js'
 import { atCapacityToyIds } from '../toy-access.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import { notePhotoUrl } from './tutorial-notes.js'
-import { readNear, byDistance, type Near } from '../distance.js'
+import { readNear, byDistance, pickupPostcodes, type Near } from '../distance.js'
 import { buildCalendar, contributorBadges, readMinutes } from '@splat-connect/types'
 import type {
   ImpactSummary,
@@ -170,22 +170,6 @@ publicRoutes.get('/tutorials/:id/notes', async (c) => {
     }))
   )
 })
-
-/**
- * pickup_postcode of these profiles and organisations, by id (099). Admin
- * client: neither column is public, and only a km built from it leaves here.
- */
-async function pickupPostcodes(people: string[], orgs: string[]): Promise<Map<string, string | null>> {
-  const admin = createAdminClient()
-  const reads = [
-    ...chunk([...new Set(people)]).map((ids) => admin.from('profiles').select('id, pickup_postcode').in('id', ids)),
-    ...chunk([...new Set(orgs)]).map((ids) => admin.from('organizations').select('id, pickup_postcode').in('id', ids)),
-  ]
-  const results = await Promise.all(reads)
-  return new Map(
-    results.flatMap((r) => (r.data ?? []) as Array<{ id: string; pickup_postcode: string | null }>).map((x) => [x.id, x.pickup_postcode])
-  )
-}
 
 /**
  * `near` and `within` for a public list (099), or the 400's sentence. Honoured

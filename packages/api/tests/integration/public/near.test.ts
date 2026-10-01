@@ -6,6 +6,7 @@
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
+import { createUserClient } from '../../../src/supabase/client.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
 import { createOrg } from '../../helpers/orgs.js'
 
@@ -155,24 +156,31 @@ describe('the public lists', () => {
 })
 
 describe('Makers wanted', () => {
-  it('copies the family’s postcode onto the request, and shows the maker only the km', async () => {
+  it('measures from the family’s profile postcode, and shows the maker only the km', async () => {
     const res = await app.request('/api/toy-transactions/build', {
       method: 'POST',
       headers: { Authorization: `Bearer ${family.token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ tutorial_id: tutorialId, build_brief: 'Please.', requester_suburb: 'Newtown', travel_km: 10 }),
     })
     expect(res.status).toBe(201)
-    buildId = ((await res.json()) as { id: string }).id
-    const rows = (await (await app.request('/api/toy-transactions/open-builds?near=2000', authed(viewer))).json()) as Array<Record<string, unknown>>
-    const row = rows.find((r) => r.tutorial_id === tutorialId)!
+    const created = await res.json()
+    buildId = (created as { id: string }).id
+    expect(JSON.stringify(created)).not.toContain('2042')
+    const body = await (await app.request('/api/toy-transactions/open-builds?near=2000', authed(viewer))).text()
+    const row = (JSON.parse(body) as Array<Record<string, unknown>>).find((r) => r.tutorial_id === tutorialId)!
     expect(row.km).toBeLessThanOrEqual(6)
-    expect(row).not.toHaveProperty('requester_postcode')
+    expect(body).not.toContain('2042')
   })
-  it('keeps the postcode out of the request itself, for anyone but the family', async () => {
-    const seen = (await (await app.request(`/api/toy-transactions/${buildId}`, authed(viewer))).json()) as Record<string, unknown>
-    expect(seen.id).toBe(buildId)
-    expect(seen.requester_postcode).toBeNull()
-    const theirs = (await (await app.request(`/api/toy-transactions/${buildId}`, authed(family))).json()) as Record<string, unknown>
-    expect(theirs.requester_postcode).toBe('2042')
+  it('keeps the postcode out of every toy-transactions answer, the family’s own included', async () => {
+    for (const u of [viewer, family]) {
+      const one = await (await app.request(`/api/toy-transactions/${buildId}`, authed(u))).text()
+      expect(JSON.parse(one).id).toBe(buildId)
+      expect(one).not.toContain('2042')
+      expect(await (await app.request('/api/toy-transactions', authed(u))).text()).not.toContain('2042')
+    }
+  })
+  it('stores no postcode on the request: a member selecting one is refused', async () => {
+    const { error } = await createUserClient(viewer.token).from('toy_transactions').select('requester_postcode').eq('id', buildId)
+    expect(error?.code).toBe('42703') // undefined_column
   })
 })

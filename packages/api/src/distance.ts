@@ -8,6 +8,7 @@
  * is dropped only when `within` asks for a radius.
  */
 import { createAdminClient } from './supabase/client.js'
+import { chunk } from './chunk.js'
 
 export type Near = { near: string | null; within: number | null }
 
@@ -42,4 +43,20 @@ export async function byDistance<T extends object>(
     .map((r) => ({ ...r, km: km.get(postcodeOf(r) ?? '') ?? null }))
     .filter((r) => within === null || (r.km !== null && r.km <= within))
     .sort((a, b) => (a.km ?? unknown) - (b.km ?? unknown))
+}
+
+/**
+ * pickup_postcode of these profiles and organisations, by id (099). Admin
+ * client: neither column is public, and only a km built from it leaves here.
+ */
+export async function pickupPostcodes(people: string[], orgs: string[]): Promise<Map<string, string | null>> {
+  const admin = createAdminClient()
+  const reads = [
+    ...chunk([...new Set(people)]).map((ids) => admin.from('profiles').select('id, pickup_postcode').in('id', ids)),
+    ...chunk([...new Set(orgs)]).map((ids) => admin.from('organizations').select('id, pickup_postcode').in('id', ids)),
+  ]
+  const results = await Promise.all(reads)
+  return new Map(
+    results.flatMap((r) => (r.data ?? []) as Array<{ id: string; pickup_postcode: string | null }>).map((x) => [x.id, x.pickup_postcode])
+  )
 }

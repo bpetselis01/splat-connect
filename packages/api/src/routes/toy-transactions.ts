@@ -7,7 +7,7 @@ import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import { ledOrgIds, atCapacityToyIds } from '../toy-access.js'
 import { profileName } from '../profile-name.js'
-import { readNear, byDistance } from '../distance.js'
+import { readNear, byDistance, pickupPostcodes } from '../distance.js'
 import type { AuthVariables } from '../middleware/auth.js'
 
 const toyTransactions = new Hono<{ Variables: AuthVariables }>()
@@ -21,10 +21,6 @@ function generateCode(): string {
 // Each party proves the handoff happened by reciting the OTHER party's code
 // back to them in person, so a party's own response must never carry the
 // counterparty's code — otherwise the control is self-servable.
-//
-// 099. A build request's postcode is the family's: a maker is told the km
-// (GET /open-builds), and every response here passes through this, so it is
-// the one place that keeps it from anyone but them.
 function sanitizeCodes<T extends Record<string, any>>(
   row: T,
   userId: string,
@@ -35,9 +31,6 @@ function sanitizeCodes<T extends Record<string, any>>(
     ...row,
     owner_code: isOwner ? row.owner_code : null,
     requester_code: isOwner ? null : row.requester_code,
-    ...('requester_postcode' in row
-      ? { requester_postcode: row.requester_id === userId ? row.requester_postcode : null }
-      : {}),
   }
 }
 
@@ -156,7 +149,7 @@ toyTransactions.get('/open-builds', async (c) => {
   const { data, error } = await supabase
     .from('toy_transactions')
     .select(
-      'id, tutorial_id, build_brief, travel_km, urgency, child_label, requester_suburb, requester_postcode, family_has_toy, requester_id, created_at'
+      'id, tutorial_id, build_brief, travel_km, urgency, child_label, requester_suburb, family_has_toy, requester_id, created_at'
     )
     .eq('type', 'build')
     .eq('status', 'requested')
@@ -179,12 +172,18 @@ toyTransactions.get('/open-builds', async (c) => {
   const guide = new Map((guides ?? []).map((g) => [g.id as string, g]))
 
   const userId = c.get('userId')
-  // Nearest first with `near` (099). The postcode decides the km and is then
-  // dropped: the card says "Family in Newtown", and that stays the whole of it.
-  const ranked = await byDistance(rows, (r) => r.requester_postcode as string | null, near)
+  // Nearest first with `near` (099), from each family's profile postcode, read
+  // here through the admin client and never stored on the request: 064 lets
+  // any member select an open build row, so a column there would be public.
+  // Only the km leaves; the card says "Family in Newtown", and that stays the
+  // whole of it.
+  const postcodes = near.near
+    ? await pickupPostcodes(rows.map((r) => r.requester_id as string), [])
+    : new Map<string, string | null>()
+  const ranked = await byDistance(rows, (r) => postcodes.get(r.requester_id as string), near)
   return c.json(
     ranked.map((r) => {
-      const { requester_id, requester_postcode: _postcode, ...rest } = r as Record<string, unknown>
+      const { requester_id, ...rest } = r as Record<string, unknown>
       return {
         ...rest,
         tutorial: guide.get(r.tutorial_id as string) ?? null,
@@ -1305,11 +1304,6 @@ toyTransactions.post('/build', async (c) => {
   if (existingError) return c.json({ error: existingError.message }, 500)
   if (existing) return c.json({ error: 'You already have an open build request with them for this guide' }, 409)
 
-  // 099. The family's postcode, from their profile, so the board can tell a
-  // maker how far away they are. Never returned to a maker — only the km is.
-  const { data: me } = await admin.from('profiles').select('pickup_postcode').eq('id', userId).maybeSingle()
-  const requesterPostcode = /^\d{4}$/.test(me?.pickup_postcode ?? '') ? (me!.pickup_postcode as string) : null
-
   const { data: tx, error: insertError } = await admin
     .from('toy_transactions')
     .insert({
@@ -1322,7 +1316,6 @@ toyTransactions.post('/build', async (c) => {
       requester_id: userId,
       owner_id: ownerId,
       owner_org_id: ownerOrgId,
-      requester_postcode: requesterPostcode,
       ...board,
     })
     .select()

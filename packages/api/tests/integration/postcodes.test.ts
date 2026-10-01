@@ -23,8 +23,8 @@ describe('099 postcodes and distance', () => {
     expect(byPostcode['2042']).toBeLessThanOrEqual(6)
     expect(byPostcode['0000']).toBeNull()
   })
-  it('has the two postcode columns', async () => {
+  it('has the printer postcode column, and none on toy_transactions', async () => {
     expect((await adminClient().from('printers').select('postcode').limit(1)).error).toBeNull()
-    expect((await adminClient().from('toy_transactions').select('requester_postcode').limit(1)).error).toBeNull()
+    expect((await adminClient().from('toy_transactions').select('requester_postcode').limit(1)).error).not.toBeNull()
   })
 })
