@@ -533,7 +533,7 @@ describe('Editor', () => {
     it('says why when the toy has handovers on record', async () => {
       mockGetRouting([toy({})])
       mockDelete.mockRejectedValue(
-        new Error('API DELETE /api/toys/toy1 failed with status 409: This toy has handovers on record, so it stays on the shelf as retired.')
+        new Error("API DELETE /api/toys/toy1 failed with status 409: This toy has handovers on record, so it can't be deleted.")
       )
       const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons) => {
         buttons?.find((b) => b.text === 'Delete')?.onPress?.()
@@ -545,7 +545,7 @@ describe('Editor', () => {
       await waitFor(() =>
         expect(alertSpy).toHaveBeenCalledWith(
           'Could not delete this toy',
-          'This toy has handovers on record, so it stays on the shelf as retired.'
+          "This toy has handovers on record, so it can't be deleted."
         )
       )
       expect(mockDismissTo).not.toHaveBeenCalled()

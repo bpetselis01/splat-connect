@@ -165,7 +165,7 @@ describe('InventoryScreen', () => {
       stock({ id: 'toy1', name: 'Spinning top', quantity: 1, retired_at: '2026-08-12T00:00:00Z', retired_note: null, has_history: false }),
     ])
     mockDelete.mockRejectedValue(
-      new Error('API DELETE /api/toys/toy1 failed with status 409: This toy has handovers on record, so it stays on the shelf as retired.')
+      new Error("API DELETE /api/toys/toy1 failed with status 409: This toy has handovers on record, so it can't be deleted.")
     )
     const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation((_t, _m, buttons) => {
       buttons?.find((b) => b.text === 'Remove')?.onPress?.()
@@ -175,7 +175,7 @@ describe('InventoryScreen', () => {
     await waitFor(() =>
       expect(alertSpy).toHaveBeenCalledWith(
         'Could not remove Spinning top',
-        'This toy has handovers on record, so it stays on the shelf as retired.'
+        "This toy has handovers on record, so it can't be deleted."
       )
     )
     expect(screen.getByText('Spinning top')).toBeTruthy()

@@ -446,9 +446,9 @@ toys.delete('/:id', async (c) => {
   }
   if (!held) return c.json({ error: 'Not found' }, 404)
   // 026's on delete cascade would take the toy's handovers with it, and
-  // "Delivered all time" with them. A toy with history stays, retired.
+  // "Delivered all time" with them. A toy with history stays.
   if ((await idsWithHistory([held.id])).size > 0) {
-    return c.json({ error: 'This toy has handovers on record, so it stays on the shelf as retired.' }, 409)
+    return c.json({ error: "This toy has handovers on record, so it can't be deleted." }, 409)
   }
   const { data, error } = await supabase
     .from('toys')

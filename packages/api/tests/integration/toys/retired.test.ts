@@ -14,7 +14,7 @@ let orgId: string
 let toyId: string
 let personToy: string
 
-const HISTORY = 'This toy has handovers on record, so it stays on the shelf as retired.'
+const HISTORY = "This toy has handovers on record, so it can't be deleted."
 
 const call = (u: TestUser, path: string, method: string, body?: unknown) =>
   app.request(path, {
