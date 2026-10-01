@@ -112,6 +112,8 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
   const [actionError, setActionError] = useState<string | null>(null)
   const [messages, setMessages] = useState<ToyIdeaMessage[]>([])
   const [draft, setDraft] = useState('')
+  const [constraintLabel, setConstraintLabel] = useState('')
+  const [constraintNote, setConstraintNote] = useState('')
   const logRef = useRef<ScrollView>(null)
   // Bumped by every write. A poll already in flight when a message was posted
   // answers with the thread as it was BEFORE it, and applying that would drop
@@ -279,6 +281,23 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
     }
   }
 
+  async function addConstraint() {
+    const label = constraintLabel.trim()
+    if (!label) return
+    setBusy(true)
+    setActionError(null)
+    try {
+      await apiClient.post(`/api/ideas/${id}/constraints`, { label, note: constraintNote.trim() || null })
+      setConstraintLabel('')
+      setConstraintNote('')
+      setReloadKey((k) => k + 1)
+    } catch {
+      setActionError('Could not add that constraint. Please try again.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function withdraw() {
     setBusy(true)
     setActionError(null)
@@ -346,7 +365,7 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
   // challenge or graduated). The count badges are the board's too.
   const listed = challenge.status === 'challenge' || challenge.status === 'graduated'
   const tabs = TABS.filter((t) => (listed || (t.id !== 'makers' && t.id !== 'thread')) && !(question && t.id === 'outcome'))
-  const badge: Partial<Record<Tab, number>> = { makers, thread: challenge.answer_count ?? 0 }
+  const badge: Partial<Record<Tab, number>> = { makers, thread: challenge.answer_count ?? 0, constraints: challenge.constraints?.length ?? 0 }
   const headline =
     challenge.status === 'pending'
       ? { title: 'An admin is reading it', body: 'Nothing is public yet. Most ideas are answered inside a week — approved, it opens as a challenge; if not, you get a reason.' }
@@ -546,9 +565,29 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
         {tab === 'constraints' ? (
           <Card style={styles.panel}>
             <TabHead id="constraints" />
-            {/* PENDING(challenge-constraints): named constraints (label + note) in place of these two fields. */}
-            {challenge.intended_use ? <Field label="Intended use" value={challenge.intended_use} /> : null}
-            {challenge.primary_user ? <Field label="Who it's for" value={challenge.primary_user} /> : null}
+            {challenge.constraints?.length ? (
+              <View accessibilityRole="list" style={styles.makerList}>
+                {challenge.constraints.map((k) => (
+                  <View key={k.id} style={styles.makerRow}>
+                    <Text style={styles.makerName}>{k.label}</Text>
+                    {k.note ? <Text style={styles.eventDate}>{k.note}</Text> : null}
+                  </View>
+                ))}
+              </View>
+            ) : (
+              // Ideas from before 110 carry these two instead (103 kept them).
+              <>
+                {challenge.intended_use ? <Field label="Intended use" value={challenge.intended_use} /> : null}
+                {challenge.primary_user ? <Field label="Who it's for" value={challenge.primary_user} /> : null}
+              </>
+            )}
+            {listed && (isAuthor || joined) ? (
+              <View style={styles.addConstraint}>
+                <TextField accessibilityLabel="Constraint" placeholder="Constraint" maxLength={80} value={constraintLabel} onChangeText={setConstraintLabel} />
+                <TextField accessibilityLabel="Note (optional)" placeholder="Note (optional)" maxLength={300} multiline value={constraintNote} onChangeText={setConstraintNote} />
+                <Button label="Add a constraint" variant="secondary" disabled={busy || !constraintLabel.trim()} onPress={() => void addConstraint()} />
+              </View>
+            ) : null}
           </Card>
         ) : null}
 
@@ -811,6 +850,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing(2),
   },
   makerList: { gap: theme.spacing(2) },
+  addConstraint: { gap: theme.spacing(1) },
   makerRow: { padding: theme.spacing(3), borderRadius: theme.radii.field, backgroundColor: theme.colors.surfaceSunken, gap: 2 },
   makerName: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.ink },
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2) },

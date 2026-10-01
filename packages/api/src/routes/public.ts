@@ -1163,6 +1163,14 @@ publicRoutes.get('/challenges/:id', async (c) => {
     .is('removed_at', null)
   if (participantsError) return c.json({ error: participantsError.message }, 500)
 
+  // 110. Never added_by: on an anonymous challenge that is the author's id.
+  const { data: constraints, error: constraintsError } = await admin
+    .from('toy_idea_constraints')
+    .select('id, label, note')
+    .eq('idea_id', idea.id)
+    .order('created_at', { ascending: true })
+  if (constraintsError) return c.json({ error: constraintsError.message }, 500)
+
   const { profiles, ...rest } = idea as Record<string, any>
   const counts = await challengeCounts([idea])
   const hidden = rest.anonymous === true
@@ -1179,6 +1187,7 @@ publicRoutes.get('/challenges/:id', async (c) => {
       name: p.profiles?.name ?? null,
       role: p.profiles?.role ?? 'contributor',
     })),
+    constraints: constraints ?? [],
     writing_up: await writingUp(admin, idea as { status: string; tutorial_id: string | null; author_id: string }, hidden),
   })
 })

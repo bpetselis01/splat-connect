@@ -313,6 +313,34 @@ toyIdeas.post('/:id/messages', async (c) => {
 })
 
 /**
+ * Add a named constraint (110). The insert policy is the permission check —
+ * the idea's author or a maker on it who was not removed — so a refusal is a
+ * 42501. An unknown idea fails that policy before its FK, so it is a 403 too.
+ * Limits checked here and by the table.
+ */
+toyIdeas.post('/:id/constraints', async (c) => {
+  const parsed = await c.req.json().catch(() => null)
+  const label = typeof parsed?.label === 'string' ? parsed.label.trim() : ''
+  const note = typeof parsed?.note === 'string' ? parsed.note.trim() : ''
+  if (label.length < 1 || label.length > 80) {
+    return c.json({ error: 'A constraint needs a name of up to 80 characters.' }, 400)
+  }
+  if (note.length > 300) return c.json({ error: 'Keep the note to 300 characters.' }, 400)
+
+  const { data, error } = await createUserClient(c.get('token'))
+    .from('toy_idea_constraints')
+    .insert({ idea_id: c.req.param('id'), label, note: note || null, added_by: c.get('userId') })
+    .select('id, label, note')
+    .single()
+  if (error?.code === RLS_VIOLATION) {
+    return c.json({ error: 'Only the author or a maker on this challenge can add a constraint.' }, 403)
+  }
+  if (error?.code === INVALID_TEXT_REPRESENTATION) return c.json({ error: 'Not found' }, 404)
+  if (error) return c.json({ error: error.message }, 500)
+  return c.json(data, 201)
+})
+
+/**
  * The author of a question marks one reply as its answer, or clears it with
  * `{ message_id: null }`. Body: { message_id: string | null }.
  *

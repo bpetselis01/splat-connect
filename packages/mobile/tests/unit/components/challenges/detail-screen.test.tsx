@@ -588,4 +588,35 @@ describe('ChallengeDetailScreen', () => {
     expect(await screen.findByText('An admin is reading it')).toBeTruthy()
     expect(mockGet).not.toHaveBeenCalledWith('/api/ideas/c1/messages')
   })
+
+  it('lists named constraints with a count, and lets a maker who joined add one', async () => {
+    const k1 = { id: 'k1', label: 'Fluid and electronics share one enclosure', note: 'Anything you add sits above the waterline, or is sealed.' }
+    let brief: object = joinedDetail({ constraints: [k1] })
+    mockGet.mockImplementation((path: string) =>
+      path === '/api/public/challenges/c1' ? Promise.resolve(brief) : Promise.resolve([])
+    )
+    mockPost.mockImplementation(() => {
+      brief = { ...brief, constraints: [k1, { id: 'k2', label: 'It has to survive a fall', note: null }] }
+      return Promise.resolve({})
+    })
+    render(<ChallengeDetailScreen id="c1" />)
+    const tab = await screen.findByRole('tab', { name: 'Constraints' })
+    expect(tab.props.accessibilityValue).toEqual({ text: '1' })
+    fireEvent.press(tab)
+    expect(screen.getByText('Anything you add sits above the waterline, or is sealed.')).toBeTruthy()
+    expect(screen.queryByText('Turning on a bubble machine during therapy.')).toBeNull()
+    fireEvent.changeText(screen.getByLabelText('Constraint'), 'It has to survive a fall')
+    fireEvent.press(screen.getByRole('button', { name: 'Add a constraint' }))
+    await waitFor(() =>
+      expect(mockPost).toHaveBeenCalledWith('/api/ideas/c1/constraints', { label: 'It has to survive a fall', note: null })
+    )
+    expect(await screen.findByText('It has to survive a fall')).toBeTruthy()
+  })
+
+  it('falls back to intended use and who it is for when there are no constraints, and offers no form to a stranger', async () => {
+    render(<ChallengeDetailScreen id="c1" />)
+    fireEvent.press(await screen.findByRole('tab', { name: 'Constraints' }))
+    expect(screen.getByText('Turning on a bubble machine during therapy.')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Add a constraint' })).toBeNull()
+  })
 })

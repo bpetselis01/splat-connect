@@ -504,8 +504,8 @@ select * from (values
       and has_column_privilege('anon', 'public.toy_ideas', 'anonymous', 'select')
       and has_column_privilege('authenticated', 'public.toy_ideas', 'anonymous', 'select'))
    and (select prosecdef from pg_proc where oid = 'public.is_idea_author(uuid)'::regprocedure)
-   and (select count(*) = 5 from pg_policies
-      where schemaname = 'public' and tablename in ('toy_idea_participants', 'toy_idea_messages', 'toy_idea_reports')
+   and (select count(*) = 7 from pg_policies
+      where schemaname = 'public' and tablename in ('toy_idea_participants', 'toy_idea_messages', 'toy_idea_reports', 'toy_idea_constraints')
         and coalesce(qual, '') || coalesce(with_check, '') like '%is_idea_author%')
    and not exists (select 1 from pg_policies
       where schemaname = 'public' and tablename <> 'toy_ideas'
@@ -520,7 +520,13 @@ select * from (values
   -- 109. Without the trigger, "You will be told" is a promise nobody keeps.
   ('109 tutorials_challenge_guide_published trigger exists',
    (select count(*) = 1 from pg_trigger
-      where tgname = 'tutorials_challenge_guide_published' and tgrelid = 'public.tutorials'::regclass))
+      where tgname = 'tutorials_challenge_guide_published' and tgrelid = 'public.tutorials'::regclass)),
+
+  -- 110. Without RLS anyone could add constraints to any challenge; with
+  -- added_by readable, an anonymous author is one PostgREST call away.
+  ('110 toy_idea_constraints has RLS on, and anon cannot read added_by',
+   (select relrowsecurity from pg_class where oid = 'public.toy_idea_constraints'::regclass)
+   and not has_column_privilege('anon', 'public.toy_idea_constraints', 'added_by', 'select'))
 ) as t(guard, ok)
 where not ok;
 EOSQL

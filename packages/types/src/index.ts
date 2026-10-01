@@ -1027,6 +1027,13 @@ export const CHALLENGE_FILTERS: { id: string; label: string; keep: (c: PublicCha
   { id: 'graduated', label: 'Graduated', keep: (c) => c.status === 'graduated' },
 ]
 
+/** A named constraint on a challenge (110). Who added it is never public. */
+export interface IdeaConstraint {
+  id: string
+  label: string
+  note: string | null
+}
+
 export interface ToyIdeaDetail extends Omit<ToyIdea, 'author_id'>, Partial<ChallengeCounts> {
   /** Null on an anonymous challenge (108). */
   author_id: string | null
@@ -1036,6 +1043,8 @@ export interface ToyIdeaDetail extends Omit<ToyIdea, 'author_id'>, Partial<Chall
   save_count?: number
   /** The graduated guide's primary contributor and when the draft began. */
   writing_up?: { profile_id: string; name: string; started_at: string } | null
+  /** 110: oldest first; never who added one. */
+  constraints?: IdeaConstraint[]
   /** Absent for viewers who may not read the thread. */
   messages?: ToyIdeaMessage[]
 }

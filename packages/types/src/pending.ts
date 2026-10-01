@@ -722,6 +722,7 @@ export const PENDING = {
     needs: "Decided 2026-09-30: one weight box, with credit prefilled at 75% and editable, on web and mobile. The ledger stores the credit entered, not a yield.",
   },
   'challenge-constraints': {
+    shipped: true,
     title: "Constraints",
     blurb: "Named constraints on each challenge are coming.",
     kind: "build",
