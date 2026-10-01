@@ -17,6 +17,7 @@ type Subject = Pick<
   | 'work_approved_at'
   | 'printing_started_at'
   | 'ready_at'
+  | 'created_at'
 > & { blocked_by_rival_accept?: boolean }
 
 function tx(overrides: Partial<Subject> = {}): Subject {
@@ -31,6 +32,7 @@ function tx(overrides: Partial<Subject> = {}): Subject {
     work_approved_at: null,
     printing_started_at: null,
     ready_at: null,
+    created_at: new Date().toISOString(),
     ...overrides,
   }
 }

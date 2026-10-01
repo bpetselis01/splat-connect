@@ -204,7 +204,7 @@ export function ToyTransactionThread({
         )}
 
         {/* An expired print request is not answerable: accept refuses it (printing.ts). */}
-        {tx.status === 'requested' && isOwner && !(tx.type === 'print' && printRequestExpired(tx)) && (
+        {tx.status === 'requested' && isOwner && !printRequestExpired(tx) && (
           <div className={board ? 'xthread-card flex flex-col gap-3 p-5' : 'card flex flex-col gap-3 p-4'}>
             <h2 className="text-base font-bold text-ink">
               {isBuild

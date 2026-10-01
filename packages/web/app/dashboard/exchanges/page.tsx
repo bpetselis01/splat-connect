@@ -36,7 +36,7 @@ function TransactionRow({
    * them apart — which of the two they are answering as changes who the toy
    * belongs to — so the organisation gets the board's own "On behalf of" line.
    */
-  const expired = tx.type === 'print' && printRequestExpired(tx)
+  const expired = printRequestExpired(tx)
   const kind = tx.type === 'donation' ? 'Donation' : tx.type === 'build' ? 'Build' : 'Exchange'
   const isBuild = tx.type === 'build'
   // A build lives on its own route: same layout, build vocabulary (057).
@@ -140,7 +140,7 @@ export default async function ExchangesPage() {
    */
   const ACTIVE: ToyTransactionStatus[] = ['requested', 'accepted']
   // An expired print request can no longer change (printing.ts), so it is history.
-  const active = transactions.filter((tx) => ACTIVE.includes(tx.status) && !(tx.type === 'print' && printRequestExpired(tx)))
+  const active = transactions.filter((tx) => ACTIVE.includes(tx.status) && !printRequestExpired(tx))
   const history = transactions.filter((tx) => !active.includes(tx))
   const waiting = active.filter((tx) => needsAction(tx, viewerId, ledOrgIds)).length
 

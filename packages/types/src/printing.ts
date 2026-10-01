@@ -35,12 +35,15 @@ export const answerBy = (createdAt: string): string =>
   new Date(Date.parse(createdAt) + PRINT_ANSWER_DAYS * 86_400_000).toISOString()
 
 /**
- * A request nobody answered in time. Computed on read — no scheduled job flips
- * a status, and `status` keeps its members (058) — so every reader asks this.
+ * A print request nobody answered in time. Computed on read — no scheduled job
+ * flips a status, and `status` keeps its members (058) — so every reader asks
+ * this. It owns the type check: lists mix prints with donations and builds.
  */
 export function printRequestExpired(
-  tx: { status: string; created_at?: string | null },
+  tx: { status: string; type: string; created_at: string | null },
   now: number = Date.now()
 ): boolean {
-  return tx.status === 'requested' && !!tx.created_at && now > Date.parse(answerBy(tx.created_at))
+  return (
+    tx.type === 'print' && tx.status === 'requested' && !!tx.created_at && now > Date.parse(answerBy(tx.created_at))
+  )
 }

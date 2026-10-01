@@ -653,7 +653,7 @@ export function needsAction(
     | 'work_approved_at'
     | 'printing_started_at'
     | 'ready_at'
-  > & { blocked_by_rival_accept?: boolean; created_at?: string },
+  > & { blocked_by_rival_accept?: boolean; created_at: string },
   viewerId: string,
   // The orgs the viewer leads. Without it an org request waiting on a leader
   // never reaches the badge, and they are told nothing is waiting on them while
@@ -666,7 +666,7 @@ export function needsAction(
   // An expired print request waits on nobody (printing.ts): it reads Expired
   // to both sides, and accept refuses it.
   if (tx.status === 'requested') {
-    return isOwner && !tx.blocked_by_rival_accept && !(tx.type === 'print' && printRequestExpired(tx))
+    return isOwner && !tx.blocked_by_rival_accept && !printRequestExpired(tx)
   }
 
   if (tx.status === 'accepted') {

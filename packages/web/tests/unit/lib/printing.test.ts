@@ -38,10 +38,13 @@ describe('answer by', () => {
     expect(answerBy('2026-10-01T00:00:00.000Z')).toBe('2026-10-08T00:00:00.000Z')
   })
   it('expires only a request still waiting, only after the seven days', () => {
-    expect(printRequestExpired({ status: 'requested', created_at: ago(6) })).toBe(false)
-    expect(printRequestExpired({ status: 'requested', created_at: ago(8) })).toBe(true)
-    expect(printRequestExpired({ status: 'accepted', created_at: ago(30) })).toBe(false)
-    expect(printRequestExpired({ status: 'requested' })).toBe(false)
+    expect(printRequestExpired({ status: 'requested', type: 'print', created_at: ago(6) })).toBe(false)
+    expect(printRequestExpired({ status: 'requested', type: 'print', created_at: ago(8) })).toBe(true)
+    expect(printRequestExpired({ status: 'accepted', type: 'print', created_at: ago(30) })).toBe(false)
+    expect(printRequestExpired({ status: 'requested', type: 'print', created_at: null })).toBe(false)
+  })
+  it('never expires a request that is not a print — lists mix them', () => {
+    expect(printRequestExpired({ status: 'requested', type: 'donation', created_at: ago(8) })).toBe(false)
   })
   it('stops an expired print request counting as waiting on the printer', () => {
     const tx = {

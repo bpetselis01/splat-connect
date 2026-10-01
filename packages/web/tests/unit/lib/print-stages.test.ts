@@ -6,7 +6,7 @@ import { printStages, printStageFacts } from '@/lib/print-stages'
 const ago = (days: number) => new Date(Date.now() - days * 864e5).toISOString()
 const tx = (over: Partial<ToyTransactionDetail>) =>
   ({
-    status: 'requested', owner_confirmed_at: null, requester_confirmed_at: null, printing_started_at: null, ready_at: null,
+    status: 'requested', type: 'print', owner_confirmed_at: null, requester_confirmed_at: null, printing_started_at: null, ready_at: null,
     decline_reason: null, created_at: ago(1), updated_at: ago(1), print_files: [], tutorial_title: 'Mount', printer: null,
     ...over,
   }) as ToyTransactionDetail

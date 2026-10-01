@@ -684,7 +684,7 @@ toyTransactions.post('/:id/accept', async (c) => {
     return c.json({ error: 'Only the owner may accept' }, 403)
   }
   if (tx.status !== 'requested') return c.json({ error: 'This request is no longer open' }, 409)
-  if (tx.type === 'print' && printRequestExpired({ status: tx.status, created_at: tx.created_at })) {
+  if (printRequestExpired({ status: tx.status, type: tx.type, created_at: tx.created_at })) {
     return c.json({ error: `This request expired on ${shortDate(answerBy(tx.created_at))}; ask again.` }, 409)
   }
 

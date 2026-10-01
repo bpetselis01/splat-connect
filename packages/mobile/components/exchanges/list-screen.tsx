@@ -59,7 +59,7 @@ function TransactionRow({
       title={`${subject}${tx.offered_toy_name ? ` ⇄ ${tx.offered_toy_name}` : ''}`}
       meta={meta}
       metaLines={3}
-      pill={tx.type === 'print' && printRequestExpired(tx) ? <Badge status="withdrawn" label="Expired" /> : <Badge status={tx.status} />}
+      pill={printRequestExpired(tx) ? <Badge status="withdrawn" label="Expired" /> : <Badge status={tx.status} />}
     />
   )
 }
@@ -127,7 +127,7 @@ export function ExchangesListScreen() {
     : undefined
   const filtered = filterToyId ? transactions.filter((t) => t.toy_id === filterToyId) : transactions
   // An expired print request can no longer change (printing.ts), so it is history.
-  const active = filtered.filter((t) => ACTIVE.includes(t.status) && !(t.type === 'print' && printRequestExpired(t)))
+  const active = filtered.filter((t) => ACTIVE.includes(t.status) && !printRequestExpired(t))
   const history = filtered.filter((t) => !active.includes(t))
 
   const goToThread = (tx: ToyTransactionSummary) => router.push(threadHref(tx))

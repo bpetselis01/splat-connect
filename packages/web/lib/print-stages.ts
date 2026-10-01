@@ -20,6 +20,7 @@ import { answerBy, printRequestExpired, shortDate } from '@splat-connect/types'
 type Row = Pick<
   ToyTransaction,
   | 'status'
+  | 'type'
   | 'owner_confirmed_at'
   | 'requester_confirmed_at'
   | 'printing_started_at'

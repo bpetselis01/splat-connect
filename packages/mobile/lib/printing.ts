@@ -56,7 +56,7 @@ export const RAIL = ['Requested', 'Accepted', 'Printing', 'Ready', 'Collected'] 
 export type JobState = 'asked' | 'accepted' | 'printing' | 'ready' | 'collected' | 'declined' | 'withdrawn' | 'expired'
 
 export function jobState(
-  tx: Pick<ToyTransaction, 'status' | 'printing_started_at' | 'ready_at'> & { created_at?: string }
+  tx: Pick<ToyTransaction, 'status' | 'type' | 'printing_started_at' | 'ready_at' | 'created_at'>
 ): JobState {
   if (printRequestExpired(tx)) return 'expired'
   if (tx.status === 'rejected') return 'declined'
@@ -95,7 +95,7 @@ export const JOB_TONE: Record<JobState, string> = {
 }
 
 /** Open jobs sort first — the live one is the one somebody opened the list for. An expired request is not open. */
-export const isLive = (tx: Pick<ToyTransaction, 'status'> & { created_at?: string }) =>
+export const isLive = (tx: Pick<ToyTransaction, 'status' | 'type' | 'created_at'>) =>
   (tx.status === 'requested' || tx.status === 'accepted') && !printRequestExpired(tx)
 
 /** "8 Oct" — the day an unanswered request expires, in the job page's date form. */
