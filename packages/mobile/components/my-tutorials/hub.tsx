@@ -11,6 +11,7 @@ import { useCallback, useState, type ComponentProps } from 'react'
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
+import type { TutorialOrg } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { confirmDestructive } from '../../lib/confirm'
 import { useDraft } from '../../lib/use-tutorial-draft'
@@ -42,8 +43,8 @@ const SECTION_ICON: Record<SectionId, ComponentProps<typeof Ionicons>['name']> =
 }
 
 /** What the More row says about backing: who said yes, who is still deciding. */
-function backingSummary(t: { tutorial_orgs?: { status: string; organizations?: { name: string } | null }[] }): string {
-  const rows = t.tutorial_orgs ?? []
+function backingSummary(rows: TutorialOrg[] | null): string {
+  if (!rows) return ''
   const backing = rows.filter((b) => b.status === 'accepted').map((b) => b.organizations?.name ?? 'An organisation')
   const deciding = rows.filter((b) => b.status === 'pending').length
   if (backing.length) return `Backed by ${backing.join(', ')}${deciding ? ` · ${deciding} still deciding` : ''}`
@@ -75,6 +76,17 @@ export function TutorialHub({ id, justCreated, fromPdf }: { id: string; justCrea
   // to check every section, which is exactly the trip that would clear the other.
   const [pdfNoteDismissed, setPdfNoteDismissed] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  // GET /:id does not embed backing (organization names need the admin client),
+  // so the More row reads /orgs, again on every focus to catch a change made in Backing.
+  const [backing, setBacking] = useState<TutorialOrg[] | null>(null)
+  useFocusEffect(
+    useCallback(() => {
+      apiClient
+        .get<TutorialOrg[]>(`/api/tutorials/${id}/orgs`)
+        .then(setBacking)
+        .catch(() => setBacking(null))
+    }, [id])
+  )
 
   // The note is for the moment of arrival, not for the whole session. It keys
   // off a route param, and a route param outlives every trip into a section and
@@ -290,12 +302,12 @@ export function TutorialHub({ id, justCreated, fromPdf }: { id: string; justCrea
         <ListSection style={styles.moreHeading}>More</ListSection>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`Backing. ${backingSummary(tutorial)}`}
+          accessibilityLabel={`Backing. ${backingSummary(backing)}`}
           onPress={() => router.push(`/tutorials/${id}/backing`)}
           style={styles.moreRow}
         >
           <Text style={styles.moreLabel}>Backing</Text>
-          <Text style={styles.moreValue}>{backingSummary(tutorial)}</Text>
+          <Text style={styles.moreValue}>{backingSummary(backing)}</Text>
         </Pressable>
         <View style={styles.moreRow}>
           <Text style={styles.moreLabel}>Collaborators</Text>

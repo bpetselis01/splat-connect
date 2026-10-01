@@ -53,3 +53,13 @@ it('is read-only once the guide is approved', async () => {
   expect(screen.queryByRole('button', { name: /Withdraw|Ask / })).toBeNull()
   mockDraft.tutorial = { id: 't1', status: 'draft', reviewed_for_org_id: null }
 })
+
+it('shows an error and retries, rather than offering Ask over an unseen list', async () => {
+  mockGet.mockRejectedValueOnce(new Error('offline')).mockImplementation((p: string) => Promise.resolve(p === '/api/organizations' ? orgs : []))
+  render(<BackingSection />)
+  expect(await screen.findByText(/Could not load backing/)).toBeTruthy()
+  expect(screen.queryByRole('button', { name: /^Ask / })).toBeNull()
+  expect(screen.queryByText(/No organisation is backing/)).toBeNull()
+  fireEvent.press(screen.getByRole('button', { name: 'Try again' }))
+  expect(await screen.findByText(/No organisation is backing/)).toBeTruthy()
+})

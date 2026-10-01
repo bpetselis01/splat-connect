@@ -33,9 +33,11 @@ const mockDraft = {
 jest.mock('../../../../lib/use-tutorial-draft', () => ({ useDraft: () => mockDraft }))
 
 const mockDelete = jest.fn()
+// Pending by default: only the tests that read /orgs should see it answer.
+const mockGet = jest.fn((..._a: unknown[]) => new Promise(() => {}))
 jest.mock('../../../../lib/api-client', () => ({
   apiClient: {
-    get: jest.fn(),
+    get: (...a: unknown[]) => mockGet(...a),
     post: jest.fn(),
     patch: jest.fn(),
     delete: (...a: unknown[]) => mockDelete(...a),
@@ -193,12 +195,14 @@ it('asks a PDF-started draft to be checked, and says which steps were not saved'
 
 // The spec's "More" section: read-only facts, below the checklist. Not in the
 // menu, which holds actions.
-it('lists what is edited elsewhere, and opens Backing', () => {
+it('lists what is edited elsewhere, and opens Backing', async () => {
   mockDraft.tutorial = tutorial({
     tutorial_contributors: [{ profiles: { name: 'Ada' } }],
     tutorial_recommendations: [{ id: 'r1' }],
   })
+  mockGet.mockResolvedValueOnce([])
   render(<TutorialHub id="t1" />)
+  expect(await screen.findByText('None yet - optional')).toBeTruthy()
   fireEvent.press(screen.getByRole('button', { name: /^Backing/ }))
   expect(mockPush).toHaveBeenCalledWith('/tutorials/t1/backing')
   expect(screen.getByText('Collaborators')).toBeTruthy()
@@ -229,4 +233,15 @@ it('previews the guide as a reader from beside Submit', () => {
   render(<TutorialHub id="t1" />)
   fireEvent.press(screen.getByTestId('hub-preview'))
   expect(mockPush).toHaveBeenCalledWith({ pathname: '/guides/[id]', params: { id: 't1' } })
+})
+
+it('summarises who is backing from /orgs, not from the guide row', async () => {
+  mockGet.mockResolvedValueOnce([
+    { id: 'b1', org_id: 'o1', status: 'accepted', organizations: { id: 'o1', name: 'Northside Therapy' } },
+    { id: 'b2', org_id: 'o2', status: 'pending', organizations: { id: 'o2', name: 'Riverside Makers' } },
+  ])
+  mockDraft.tutorial = tutorial()
+  render(<TutorialHub id="t1" />)
+  expect(await screen.findByText('Backed by Northside Therapy · 1 still deciding')).toBeTruthy()
+  expect(mockGet).toHaveBeenCalledWith('/api/tutorials/t1/orgs')
 })

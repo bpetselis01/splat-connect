@@ -25,16 +25,35 @@ export function BackingSection() {
   const [backing, setBacking] = useState<TutorialOrg[] | null>(null)
   const [orgs, setOrgs] = useState<Organization[]>([])
   const [busy, setBusy] = useState(false)
+  const [loadFailed, setLoadFailed] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const id = tutorial?.id
 
   const load = useCallback(() => {
     if (!id) return
-    apiClient.get<TutorialOrg[]>(`/api/tutorials/${id}/orgs`).then(setBacking).catch(() => setBacking([]))
-    apiClient.get<Organization[]>('/api/organizations').then(setOrgs).catch(() => setOrgs([]))
+    setLoadFailed(false)
+    Promise.all([
+      apiClient.get<TutorialOrg[]>(`/api/tutorials/${id}/orgs`),
+      apiClient.get<Organization[]>('/api/organizations'),
+    ])
+      .then(([b, o]) => {
+        setBacking(b)
+        setOrgs(o)
+      })
+      .catch(() => setLoadFailed(true))
   }, [id])
   useEffect(load, [load])
 
+  // A failed load must not read as "nobody is backing this": that would offer
+  // Ask buttons over a list we could not see.
+  if (loadFailed) {
+    return (
+      <Screen>
+        <ErrorRow message="Could not load backing. Check your connection and try again." />
+        <Button label="Try again" variant="secondary" onPress={load} />
+      </Screen>
+    )
+  }
   if (!tutorial || !backing) return <Screen />
 
   const readOnly = tutorial.status === 'approved'
