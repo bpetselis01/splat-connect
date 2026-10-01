@@ -133,3 +133,49 @@ describe('Remove keeps delivery history', () => {
     expect((await call(family, `/api/toys/${id}`, 'DELETE')).status).toBe(404)
   })
 })
+
+describe('Retiring around open requests and past handovers', () => {
+  const OPEN = 'This toy has open requests. Answer them first, then retire it.'
+
+  it('refuses to retire a toy with an open request on it', async () => {
+    const id = await createOrgToy({ orgId })
+    await handover({ toy_id: id, status: 'accepted' })
+    const res = await call(leader, `/api/toys/${id}`, 'PATCH', { retired_at: new Date().toISOString() })
+    expect(res.status).toBe(409)
+    expect(((await res.json()) as { error: string }).error).toBe(OPEN)
+  })
+
+  it('refuses to retire a toy offered in an open exchange', async () => {
+    const id = await createOrgToy({ orgId })
+    const wanted = await createOrgToy({ orgId, offerType: 'exchange' })
+    await handover({ toy_id: wanted, offered_toy_id: id, type: 'exchange' })
+    const res = await call(leader, `/api/toys/${id}`, 'PATCH', { retired_at: new Date().toISOString() })
+    expect(res.status).toBe(409)
+  })
+
+  it('keeps a retired toy named in the past handover thread of the family it went to', async () => {
+    const id = await createOrgToy({ orgId, name: 'Retired drum' })
+    await handover({ toy_id: id, status: 'completed' })
+    expect((await call(leader, `/api/toys/${id}`, 'PATCH', { retired_at: new Date().toISOString() })).status).toBe(200)
+    // 033's "Transaction parties can view each other's toy" policy, OR'd with 101's.
+    const txs = (await (await call(family, '/api/toy-transactions', 'GET')).json()) as Array<{ toy_id: string; toy_name: string }>
+    expect(txs.find((t) => t.toy_id === id)?.toy_name).toBe('Retired drum')
+  })
+})
+
+describe('A big shelf', () => {
+  it('reads has_history across more toys than one URL holds', async () => {
+    const rows = Array.from({ length: 260 }, (_, i) => ({
+      name: `Bulk ${i}`, condition: 8, owner_id: null, owner_org_id: orgId, quantity: 1, offer_type: 'donation',
+      photo_urls: ['https://example.com/b.jpg'], status: 'draft',
+    }))
+    const { data, error } = await adminClient().from('toys').insert(rows).select('id')
+    if (error) throw new Error(error.message)
+    const last = data![data!.length - 1].id as string
+    await handover({ toy_id: last })
+    const res = await call(leader, '/api/toys/inventory', 'GET')
+    expect(res.status).toBe(200)
+    const shelf = (await res.json()) as Array<{ id: string; has_history: boolean }>
+    expect(shelf.find((t) => t.id === last)?.has_history).toBe(true)
+  })
+})

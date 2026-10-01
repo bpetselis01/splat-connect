@@ -27,6 +27,7 @@ import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import { pickEditable } from './pick-editable.js'
 import { ledOrgIds, ownedByCaller } from '../toy-access.js'
 import { removeDroppedPhotos } from '../photo-storage.js'
+import { chunk } from '../chunk.js'
 import type { AuthVariables } from '../middleware/auth.js'
 import type { OfferType } from '@splat-connect/types'
 
@@ -126,19 +127,29 @@ const ORG_EDITABLE = [...EDITABLE, 'quantity', 'retired_at', 'retired_note'] as 
  * Toy ids among `ids` that any toy_transactions row names, as the toy or as
  * the offered one. Admin client: the caller may not be a party to every
  * handover (a person's toy that changed hands carries its giver's rows).
+ * Each id goes in the URL twice, so chunks of 50 stay under chunk.ts's limit.
  */
-// ponytail: one query, ids inlined in the URL — fine for a shelf of hundreds;
-// past PostgREST's 1000-row cap a toy may read has_history false, and DELETE
-// still refuses it, so the miss is a Remove button that answers 409.
 async function idsWithHistory(ids: string[]): Promise<Set<string>> {
-  if (ids.length === 0) return new Set()
-  const list = ids.join(',')
-  const { data, error } = await createAdminClient()
-    .from('toy_transactions')
-    .select('toy_id, offered_toy_id')
-    .or(`toy_id.in.(${list}),offered_toy_id.in.(${list})`)
-  if (error) throw new Error(error.message)
-  return new Set((data ?? []).flatMap((t) => [t.toy_id, t.offered_toy_id]).filter((id): id is string => !!id && ids.includes(id)))
+  const wanted = new Set(ids)
+  const admin = createAdminClient()
+  const pages = await Promise.all(
+    chunk(ids, 50).map((part) => {
+      const list = part.join(',')
+      return admin
+        .from('toy_transactions')
+        .select('toy_id, offered_toy_id')
+        .or(`toy_id.in.(${list}),offered_toy_id.in.(${list})`)
+    })
+  )
+  const found = new Set<string>()
+  for (const { data, error } of pages) {
+    if (error) throw new Error(error.message)
+    for (const t of data ?? []) {
+      if (t.toy_id && wanted.has(t.toy_id)) found.add(t.toy_id)
+      if (t.offered_toy_id && wanted.has(t.offered_toy_id)) found.add(t.offered_toy_id)
+    }
+  }
+  return found
 }
 
 function editableFrom(body: Record<string, unknown>, isOrgToy = false) {
@@ -276,6 +287,18 @@ toys.patch('/:id', async (c) => {
         return c.json({ error: 'Keep the reason to 80 characters.' }, 400)
       }
       body.retired_note = body.retired_note.trim() || null
+    }
+    // A family waiting on this toy would be left with a request nobody can
+    // fill. Admin client: the count covers every party's open rows.
+    if (typeof body.retired_at === 'string') {
+      const id = c.req.param('id')
+      const { count, error: openError } = await createAdminClient()
+        .from('toy_transactions')
+        .select('id', { count: 'exact', head: true })
+        .in('status', ['requested', 'accepted'])
+        .or(`toy_id.eq.${id},offered_toy_id.eq.${id}`)
+      if (openError) return c.json({ error: openError.message }, 500)
+      if (count) return c.json({ error: 'This toy has open requests. Answer them first, then retire it.' }, 409)
     }
   }
 

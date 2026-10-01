@@ -11,10 +11,14 @@
 -- The public read is the select policy, so every public surface (library,
 -- detail, org profile, impact counts, auto picks) drops a retired toy at once.
 -- The holder's own arms (owner_id, is_org_leader) still see it.
+-- So do the parties to any handover that names it: 033's "Transaction parties
+-- can view each other's toy" is its own select policy, OR'd with this one, so
+-- a past exchange thread keeps the toy's name and photo.
 --
 -- Remove (DELETE /api/toys/:id) refuses a toy any toy_transactions row names:
 -- 026's on delete cascade would take its handovers with it. That is an API
--- rule, not a schema one — no object here.
+-- rule, not a schema one — no object here. Retiring a toy with an open
+-- request (requested/accepted) is refused by PATCH the same way.
 --
 -- DOWN:
 --   drop policy "Anyone can read published toys, or their own draft" on public.toys;

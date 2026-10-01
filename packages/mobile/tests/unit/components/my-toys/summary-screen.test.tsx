@@ -150,6 +150,18 @@ describe('ToySummaryScreen', () => {
     expect(screen.queryByText('Take requests again')).toBeNull()
   })
 
+  it('says why when the toy still has open requests', async () => {
+    mockUseCapabilities.mockReturnValue(caps([{ id: 'org1', name: 'Northside' }]))
+    serve({ mine: [], inventory: [toy({ owner_id: null, owner_org_id: 'org1' })] })
+    mockPatch.mockRejectedValue(
+      new Error('API PATCH /api/toys/t1 failed with status 409: This toy has open requests. Answer them first, then retire it.')
+    )
+    render(<ToySummaryScreen id="t1" />)
+    fireEvent.press(await screen.findByText('Retire'))
+    expect(await screen.findByText('This toy has open requests. Answer them first, then retire it.')).toBeTruthy()
+    expect(screen.queryByText('Retired')).toBeNull()
+  })
+
   it('offers no Retire on a personal toy', async () => {
     serve()
     render(<ToySummaryScreen id="t1" />)
