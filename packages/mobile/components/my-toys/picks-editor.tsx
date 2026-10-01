@@ -44,10 +44,12 @@ export function PicksEditor({
   }
 
   const setMode = (next: PicksMode) =>
-    run(
-      async () => onSaved(await apiClient.patch<Toy>(`/api/toys/${toy.id}`, { picks_mode: next })),
-      'Could not save that. Please try again.'
-    )
+    busy || next === mode
+      ? undefined
+      : run(
+          async () => onSaved(await apiClient.patch<Toy>(`/api/toys/${toy.id}`, { picks_mode: next })),
+          'Could not save that. Please try again.'
+        )
 
   const save = () =>
     run(async () => {

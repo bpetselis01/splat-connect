@@ -53,3 +53,17 @@ it('switches the mode', async () => {
   await waitFor(() => expect(mockPatch).toHaveBeenCalledWith('/api/toys/t1', { picks_mode: 'picked' }))
   expect(onSaved).toHaveBeenCalledWith(expect.objectContaining({ picks_mode: 'picked' }))
 })
+
+it('sends nothing when the mode tapped is the mode already set', () => {
+  render(<PicksEditor toy={toy({ picks_mode: 'auto' })} ownToys={[]} guides={[]} onSaved={jest.fn()} />)
+  fireEvent.press(screen.getByText('Automatic'))
+  expect(mockPatch).not.toHaveBeenCalled()
+})
+
+it('sends one mode change while one is in flight', () => {
+  mockPatch.mockReturnValue(new Promise(() => {}))
+  render(<PicksEditor toy={toy({ picks_mode: 'auto' })} ownToys={[]} guides={[]} onSaved={jest.fn()} />)
+  fireEvent.press(screen.getByText('Hand-picked'))
+  fireEvent.press(screen.getByText('Hand-picked'))
+  expect(mockPatch).toHaveBeenCalledTimes(1)
+})

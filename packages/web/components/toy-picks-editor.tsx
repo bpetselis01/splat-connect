@@ -29,27 +29,37 @@ export function ToyPicksEditor({
   onSaved: (toy: Toy) => void
 }) {
   const [picks, setPicks] = useState<ToyPickInput[]>(() => initialPicks(toy))
+  const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const mode: PicksMode = toy.picks_mode ?? 'auto'
 
-  async function setMode(next: PicksMode) {
+  // One request at a time: a second PUT racing the first clashes on
+  // (toy_id, position) and reports a failure for picks that did save.
+  async function run(action: () => Promise<void>, fallback: string) {
+    setBusy(true)
     setError(null)
     try {
-      onSaved(await browserApiClient.patch<Toy>(`/api/toys/${toy.id}`, { picks_mode: next }))
+      await action()
     } catch {
-      setError('Could not save that. Please try again.')
+      setError(fallback)
+    } finally {
+      setBusy(false)
     }
   }
 
-  async function save() {
-    setError(null)
-    try {
+  const setMode = (next: PicksMode) =>
+    next === mode
+      ? undefined
+      : run(
+          async () => onSaved(await browserApiClient.patch<Toy>(`/api/toys/${toy.id}`, { picks_mode: next })),
+          'Could not save that. Please try again.'
+        )
+
+  const save = () =>
+    run(async () => {
       await browserApiClient.put(`/api/toys/${toy.id}/picks`, { picks })
       onSaved({ ...toy, toy_picks: picks.map((p, i) => ({ position: i + 1, ...p })) })
-    } catch {
-      setError('Could not save your picks. Please try again.')
-    }
-  }
+    }, 'Could not save your picks. Please try again.')
 
   return (
     <div>
@@ -61,6 +71,7 @@ export function ToyPicksEditor({
             type="button"
             role="radio"
             aria-checked={mode === m}
+            disabled={busy}
             onClick={() => setMode(m)}
             className="kind-card px-4 py-2.5 font-bold"
           >
@@ -84,7 +95,7 @@ export function ToyPicksEditor({
               </label>
             )
           })}
-          <button type="button" onClick={save} className="btn btn-primary self-start">
+          <button type="button" disabled={busy} onClick={save} className="btn btn-primary self-start">
             Save picks
           </button>
         </div>

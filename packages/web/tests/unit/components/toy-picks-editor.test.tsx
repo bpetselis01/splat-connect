@@ -13,7 +13,10 @@ const toy = (over: Partial<Toy> = {}): Toy => ({
 })
 
 describe('ToyPicksEditor', () => {
-  beforeEach(() => vi.mocked(browserApiClient.put).mockReset())
+  beforeEach(() => {
+    vi.mocked(browserApiClient.put).mockReset()
+    vi.mocked(browserApiClient.patch).mockReset()
+  })
 
   it('saves the hand-picked toys and guides in the order chosen', async () => {
     vi.mocked(browserApiClient.put).mockResolvedValue({ picks: [] })
@@ -54,5 +57,25 @@ describe('ToyPicksEditor', () => {
     fireEvent.click(screen.getByRole('radio', { name: 'Automatic' }))
     await vi.waitFor(() => expect(onSaved).toHaveBeenCalledWith(expect.objectContaining({ picks_mode: 'auto' })))
     expect(browserApiClient.patch).toHaveBeenCalledWith('/api/toys/t1', { picks_mode: 'auto' })
+  })
+
+  it('holds Save picks and the mode radios while a save is in flight', async () => {
+    let finish: (v: unknown) => void = () => {}
+    vi.mocked(browserApiClient.put).mockReturnValue(new Promise((r) => (finish = r)))
+    render(<ToyPicksEditor toy={toy({ picks_mode: 'picked', toy_picks: [] })} ownToys={[]} guides={[]} onSaved={vi.fn()} />)
+    const save = screen.getByRole('button', { name: 'Save picks' })
+    fireEvent.click(save)
+    fireEvent.click(save)
+    expect(browserApiClient.put).toHaveBeenCalledTimes(1)
+    expect(save).toHaveProperty('disabled', true)
+    expect(screen.getByRole('radio', { name: 'Automatic' })).toHaveProperty('disabled', true)
+    finish({ picks: [] })
+    await vi.waitFor(() => expect(save).toHaveProperty('disabled', false))
+  })
+
+  it('sends nothing when the mode tapped is the mode already set', () => {
+    render(<ToyPicksEditor toy={toy({ picks_mode: 'picked' })} ownToys={[]} guides={[]} onSaved={vi.fn()} />)
+    fireEvent.click(screen.getByRole('radio', { name: 'Hand-picked' }))
+    expect(browserApiClient.patch).not.toHaveBeenCalled()
   })
 })
