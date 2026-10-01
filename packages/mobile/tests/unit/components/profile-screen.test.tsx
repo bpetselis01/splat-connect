@@ -123,6 +123,14 @@ describe('ProfileScreen', () => {
       await waitFor(() => expect(mockPatch).toHaveBeenCalledWith('/api/contributors/me', { pickup_postcode: '2042' }))
     })
 
+    it('refuses a postcode that is not four digits, inline', async () => {
+      mockUseAuth.mockReturnValue(auth({}))
+      render(<ProfileScreen />)
+      fireEvent(await screen.findByLabelText('Postcode'), 'endEditing', { nativeEvent: { text: '12' } })
+      expect(await screen.findByText('A postcode is four digits.')).toBeTruthy()
+      expect(mockPatch).not.toHaveBeenCalled()
+    })
+
     it('does not save an unchanged or empty name', async () => {
       mockUseAuth.mockReturnValue(auth({}))
       render(<ProfileScreen />)

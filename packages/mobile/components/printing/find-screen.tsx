@@ -17,6 +17,7 @@ import type { PrinterWithOwner, StlFile, Tutorial } from '@splat-connect/types'
 import { bedFits, initials, MAX_PRINTERS_PER_REQUEST, plural, statsLine } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { useCapabilities } from '../../lib/capabilities'
+import { nearParam } from '../../lib/near'
 import { theme } from '../../lib/theme'
 import {
   availability,
@@ -41,7 +42,7 @@ const TINTS = [theme.colors.mintSoft, theme.colors.accentLight, theme.colors.hon
 
 export function FindPrinterScreen({ guideId }: { guideId?: string }) {
   const router = useRouter()
-  const { caps } = useCapabilities()
+  const { caps, loading: capsLoading } = useCapabilities()
   const [printers, setPrinters] = useState<PrinterWithOwner[] | null>(null)
   const [guide, setGuide] = useState<Guide | null>(null)
   const [error, setError] = useState(false)
@@ -50,11 +51,11 @@ export function FindPrinterScreen({ guideId }: { guideId?: string }) {
   const [hasMaterial, setHasMaterial] = useState(false)
   const [verifiedOnly, setVerifiedOnly] = useState(false)
   const [within10, setWithin10] = useState(false)
-  const postcode = caps?.profile.pickup_postcode ?? null
+  const postcode = nearParam(caps?.profile.pickup_postcode)
 
   useEffect(() => {
     Promise.all([
-      apiClient.get<PrinterWithOwner[]>(postcode ? `/api/printers?near=${postcode}` : '/api/printers'),
+      apiClient.get<PrinterWithOwner[]>(postcode ? `/api/printers?near=${encodeURIComponent(postcode)}` : '/api/printers'),
       guideId ? apiClient.get<Guide>(`/api/public/tutorials/${guideId}`) : Promise.resolve(null),
     ])
       .then(([p, g]) => {
@@ -142,7 +143,7 @@ export function FindPrinterScreen({ guideId }: { guideId?: string }) {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
           <Chip label="Open now" icon="flash-outline" active={openOnly} onPress={() => setOpenOnly((v) => !v)} />
           <Chip label={`Has ${material}`} icon="cube-outline" active={hasMaterial} onPress={() => setHasMaterial((v) => !v)} />
-          {postcode ? (
+          {capsLoading ? null : postcode ? (
             <Chip label="Within 10 km" icon="location-outline" active={within10} onPress={() => setWithin10((v) => !v)} />
           ) : (
             <Chip label="Add your postcode" icon="location-outline" active={false} onPress={() => router.push('/account')} />

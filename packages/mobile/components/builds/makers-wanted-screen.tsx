@@ -24,6 +24,7 @@ import { Ionicons } from '@expo/vector-icons'
 import type { Difficulty } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { useCapabilities } from '../../lib/capabilities'
+import { nearParam } from '../../lib/near'
 import { theme } from '../../lib/theme'
 import { relativeTime } from '../../lib/notifications'
 import { Screen } from '../ui/Screen'
@@ -64,7 +65,8 @@ const DIFF_LABEL: Record<Difficulty, string> = { easy: 'Easy', medium: 'Medium',
 
 export function MakersWantedScreen() {
   const router = useRouter()
-  const postcode = useCapabilities().caps?.profile.pickup_postcode ?? null
+  const { caps, loading: capsLoading } = useCapabilities()
+  const postcode = nearParam(caps?.profile.pickup_postcode)
   const params = useLocalSearchParams<{ tab?: string }>()
   const [tab, setTab] = useState<Tab>(params.tab === 'mine' ? 'mine' : 'open')
   const [range, setRange] = useState<number>(0)
@@ -79,7 +81,7 @@ export function MakersWantedScreen() {
     try {
       setBuilds(
         await apiClient.get<OpenBuild[]>(
-          postcode ? `/api/toy-transactions/open-builds?near=${postcode}` : '/api/toy-transactions/open-builds'
+          postcode ? `/api/toy-transactions/open-builds?near=${encodeURIComponent(postcode)}` : '/api/toy-transactions/open-builds'
         )
       )
       setLoadFailed(false)
@@ -188,7 +190,7 @@ export function MakersWantedScreen() {
           <Chip label="Done" active={false} onPress={() => router.push(pendingHref('makers-live-done-tabs'))} />
         </View>
         {/* PENDING(locations-and-distance) */}
-        {postcode ? (
+        {capsLoading ? null : postcode ? (
           <View style={styles.ranges}>
             {/* The board's one word, so the chips fit on one row. */}
             <Text style={styles.rangeLabel}>Within</Text>

@@ -141,3 +141,12 @@ it('measures from the profile postcode and keeps what is within 10 km', async ()
   expect(screen.queryByText('Maker B')).toBeNull()
   expect(screen.getByText('Maker A')).toBeTruthy()
 })
+
+it('sends no near for a postcode that is not four digits, and asks again', async () => {
+  mockGet.mockClear()
+  mockCaps.profile.pickup_postcode = '12'
+  render(<FindPrinterScreen guideId="g1" />)
+  expect(await screen.findByText('Add your postcode')).toBeTruthy()
+  expect(mockGet).toHaveBeenCalledWith('/api/printers')
+  expect(mockGet).not.toHaveBeenCalledWith(expect.stringContaining('near='))
+})

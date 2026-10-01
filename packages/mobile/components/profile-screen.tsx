@@ -3,7 +3,7 @@ import { useState, useEffect, type ComponentProps } from 'react'
 import { View, Text, ScrollView, StyleSheet, Linking } from 'react-native'
 import { useRouter } from 'expo-router'
 import type { UserAgreement } from '@splat-connect/types'
-import { initials } from '@splat-connect/types'
+import { apiMessage, initials } from '@splat-connect/types'
 import { useAuth } from '../lib/auth-context'
 import { apiClient } from '../lib/api-client'
 import { theme } from '../lib/theme'
@@ -41,6 +41,7 @@ export function ProfileScreen() {
   const { session, profile, signOut } = useAuth()
   // The display name is the one profile field editable here. Committed on end
   // of editing rather than per keystroke — a name is typed once, not streamed.
+  const [postcodeError, setPostcodeError] = useState<string | null>(null)
   const [nameState, setNameState] = useState<'idle' | 'saving' | 'saved' | 'failed'>('idle')
   const [terms, setTerms] = useState<UserAgreement | null>(null)
 
@@ -77,10 +78,16 @@ export function ProfileScreen() {
   async function savePostcode(raw: string) {
     const postcode = raw.trim()
     if (postcode === (profile?.pickup_postcode ?? '')) return
+    if (postcode && !/^\d{4}$/.test(postcode)) {
+      setPostcodeError('A postcode is four digits.')
+      return
+    }
+    setPostcodeError(null)
     try {
       await apiClient.patch('/api/contributors/me', { pickup_postcode: postcode || null })
     } catch (err) {
       console.error('[ProfileScreen] postcode save failed:', err)
+      setPostcodeError(apiMessage(err, 'Could not save your postcode. Please try again.'))
     }
   }
 
@@ -137,6 +144,7 @@ export function ProfileScreen() {
                 defaultValue={profile?.pickup_postcode ?? ''}
                 onEndEditing={(e) => void savePostcode(e.nativeEvent.text)}
               />
+              {postcodeError ? <Text accessibilityLiveRegion="polite" style={styles.nameStatus}>{postcodeError}</Text> : null}
               <Text style={styles.frozenHint}>Your email can&apos;t be changed here.</Text>
               {/* HIG: say how this account signs in, so an Apple user knows
                   why there is no password to change. */}

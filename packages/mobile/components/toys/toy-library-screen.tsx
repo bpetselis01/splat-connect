@@ -28,6 +28,7 @@ import { Segmented } from '../ui/Segmented'
 import { TabHero } from '../ui/TabHero'
 import { RowCard, MetaItem } from '../ui/RowCard'
 import { useCapabilities } from '../../lib/capabilities'
+import { nearParam } from '../../lib/near'
 
 type IconName = React.ComponentProps<typeof Ionicons>['name']
 
@@ -68,7 +69,7 @@ const TINTS = [
 export function ToyLibraryScreen() {
   const router = useRouter()
   const saves = useSaves()
-  const { caps } = useCapabilities()
+  const { caps, loading: capsLoading } = useCapabilities()
   const [toys, setToys] = useState<Array<ToyWithOwner & { km?: number | null }>>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -78,7 +79,7 @@ export function ToyLibraryScreen() {
   const [availableOnly, setAvailableOnly] = useState(false)
   const [newest, setNewest] = useState(false)
   const [nearest, setNearest] = useState(false)
-  const postcode = caps?.profile.pickup_postcode ?? null
+  const postcode = nearParam(caps?.profile.pickup_postcode)
   // Bumping this re-runs the fetch — the retry button's and pull-to-refresh's
   // shared handle.
   const [reloadKey, setReloadKey] = useState(0)
@@ -102,7 +103,7 @@ export function ToyLibraryScreen() {
     setError(null)
     apiClient
       .get<Array<ToyWithOwner & { km?: number | null }>>(
-        nearest && postcode ? `/api/public/toys?near=${postcode}` : '/api/public/toys'
+        nearest && postcode ? `/api/public/toys?near=${encodeURIComponent(postcode)}` : '/api/public/toys'
       )
       .then((data) => {
         if (!ignore) setToys(data)
@@ -201,7 +202,7 @@ export function ToyLibraryScreen() {
                 onPress={() => setSwitchAdaptedOnly((v) => !v)}
               />
               <Chip variant="filter" icon="time-outline" label="Newest" active={newest} onPress={() => setNewest((v) => !v)} />
-              {postcode ? (
+              {capsLoading ? null : postcode ? (
                 <Chip variant="filter" icon="navigate-outline" label="Nearest first" active={nearest} onPress={() => setNearest((v) => !v)} />
               ) : (
                 <Chip variant="filter" icon="navigate-outline" label="Add your postcode" active={false} onPress={() => router.push('/account')} />

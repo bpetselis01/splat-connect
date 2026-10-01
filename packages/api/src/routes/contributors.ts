@@ -52,6 +52,15 @@ contributors.patch('/me', async (c) => {
   // 400 with words rather than a 500. The featured guide has to be one the
   // caller is credited on AND approved: a draft or somebody else's guide on a
   // public profile would be a leak of the one and a lie about the other.
+  // 099. Distance is measured from this; anything but four digits would 400 every list that asks.
+  if (
+    'pickup_postcode' in patch &&
+    patch.pickup_postcode !== null &&
+    patch.pickup_postcode !== '' &&
+    !(typeof patch.pickup_postcode === 'string' && /^\d{4}$/.test(patch.pickup_postcode))
+  ) {
+    return c.json({ error: 'A postcode is four digits.' }, 400)
+  }
   if (typeof patch.bio === 'string' && patch.bio.length > 600) {
     return c.json({ error: 'bio must be 600 characters or fewer' }, 400)
   }
