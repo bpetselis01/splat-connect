@@ -423,4 +423,20 @@ describe('ChallengeDetailScreen', () => {
       expect(screen.queryByRole('button', { name: 'Unmark' })).toBeNull()
     })
   })
+
+  it('follows a graduated challenge to the write-up on the Outcome tab', async () => {
+    mockGet.mockResolvedValue(detail({ status: 'graduated', tutorial_id: 'tut7' }))
+    render(<ChallengeDetailScreen id="c1" />)
+    fireEvent.press(await screen.findByRole('tab', { name: 'Outcome' }))
+    expect(screen.getByText('What happens when somebody solves it.')).toBeTruthy()
+    expect(screen.getByText('Guide published')).toBeTruthy()
+    expect(screen.getByText('People join and the thread records what has been tried.')).toBeTruthy()
+  })
+
+  it('draws no Outcome for a question, which never becomes a guide', async () => {
+    mockGet.mockResolvedValue(detail({ kind: 'question' }))
+    render(<ChallengeDetailScreen id="c1" />)
+    expect(await screen.findByRole('tab', { name: 'Brief' })).toBeTruthy()
+    expect(screen.queryByRole('tab', { name: 'Outcome' })).toBeNull()
+  })
 })

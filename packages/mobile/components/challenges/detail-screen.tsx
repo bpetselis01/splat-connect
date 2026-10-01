@@ -26,6 +26,7 @@ import {
 import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { challengeHistory, challengePill, challengeStats, shortDate } from './challenge-status'
+import { OUTCOME_STEPS, outcomeStates } from '@splat-connect/types'
 import type { ToyIdeaDetail, ToyIdeaMessage, ContactPref } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { confirmDestructive } from '../../lib/confirm'
@@ -42,7 +43,6 @@ import { SaveButton } from '../ui/SaveButton'
 import { TextField } from '../ui/TextField'
 import { MessageBubble } from '../ui/MessageBubble'
 import { Pill } from '../list/list-kit'
-import { pendingHref } from '../ui/pending'
 
 // Same cadence as the exchange thread. Web runs this conversation on a
 // realtime subscription; mobile polls, the Phase-3 ruling repeated.
@@ -55,7 +55,7 @@ const CONTACT_PREF_LABELS: Record<ContactPref, string> = {
   user_testing: 'User testing',
 }
 
-type Tab = 'status' | 'brief' | 'constraints' | 'makers' | 'thread'
+type Tab = 'status' | 'brief' | 'constraints' | 'makers' | 'thread' | 'outcome'
 // title and hint: the board's heading and muted line over each tab (MB CDT).
 const TABS: { id: Tab; label: string; icon: keyof typeof Ionicons.glyphMap; title: string; hint: string }[] = [
   { id: 'status', label: 'Status', icon: 'pulse-outline', title: 'Status', hint: 'Where this idea is, and what happens next.' },
@@ -63,7 +63,16 @@ const TABS: { id: Tab; label: string; icon: keyof typeof Ionicons.glyphMap; titl
   { id: 'constraints', label: 'Constraints', icon: 'alert-circle-outline', title: 'Constraints', hint: 'What makes this harder than it looks.' },
   { id: 'makers', label: 'Makers', icon: 'people-outline', title: 'Makers', hint: 'Everyone working on this.' },
   { id: 'thread', label: 'Thread', icon: 'chatbubbles-outline', title: 'Thread', hint: 'Where the work happens. Makers can post.' },
+  { id: 'outcome', label: 'Outcome', icon: 'flag-outline', title: 'Outcome', hint: 'What happens when somebody solves it.' },
 ]
+
+// The board's CDSTEP: a tick, a dot, a dash.
+const STEP_ICON = { done: 'checkmark', now: 'ellipse', todo: 'remove' } as const
+const STEP_TONE = {
+  done: { backgroundColor: theme.colors.primaryDark },
+  now: { backgroundColor: theme.colors.honeySoft },
+  todo: { backgroundColor: theme.colors.surfaceSunken },
+} as const
 
 function Field({ label, value }: { label: string; value: string }) {
   return (
@@ -271,7 +280,7 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
   // The board draws Makers and Thread only once the idea is public (MB cdOpen:
   // challenge or graduated). The count badges are the board's too.
   const listed = challenge.status === 'challenge' || challenge.status === 'graduated'
-  const tabs = TABS.filter((t) => listed || (t.id !== 'makers' && t.id !== 'thread'))
+  const tabs = TABS.filter((t) => (listed || (t.id !== 'makers' && t.id !== 'thread')) && !(question && t.id === 'outcome'))
   const badge: Partial<Record<Tab, number>> = { makers, thread: challenge.answer_count ?? 0 }
   // PENDING(challenge-writeup-stage): on the board "graduated" means being written up, with who and a follow link.
   // PENDING(challenge-saves-stat): a public Saves tile among the stats.
@@ -376,11 +385,6 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
               </Pressable>
             )
           })}
-          {/* PENDING(challenge-outcome-tab): Outcome — approved, makers working, written up, guide published. */}
-          <Pressable accessibilityRole="tab" onPress={() => router.push(pendingHref('challenge-outcome-tab'))} style={styles.tab}>
-            <Ionicons name="flag-outline" size={15} color={theme.colors.ink} />
-            <Text style={styles.tabText}>Outcome</Text>
-          </Pressable>
         </ScrollView>
 
         {tab === 'status' ? (
@@ -472,6 +476,28 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
         {tab === 'thread' ? (
           <Card style={styles.panel}>
             <TabHead id="thread" />
+          </Card>
+        ) : null}
+
+        {tab === 'outcome' ? (
+          <Card style={styles.panel}>
+            <TabHead id="outcome" />
+            <View accessibilityRole="list">
+              {OUTCOME_STEPS.map((s, i) => {
+                const state = outcomeStates(challenge.status)[i]
+                return (
+                  <View key={s.label} style={styles.event}>
+                    <View style={[styles.stepDot, STEP_TONE[state]]}>
+                      <Ionicons name={STEP_ICON[state]} size={13} color={state === 'done' ? theme.colors.surface : theme.colors.ink} />
+                    </View>
+                    <View style={styles.eventText}>
+                      <Text style={[styles.eventTitle, state === 'todo' && styles.stepTodo]}>{s.label}</Text>
+                      <Text style={styles.eventDate}>{s.note.mobile}</Text>
+                    </View>
+                  </View>
+                )
+              })}
+            </View>
           </Card>
         ) : null}
 
@@ -629,6 +655,8 @@ const styles = StyleSheet.create({
   statN: { fontFamily: theme.fonts.display, fontSize: theme.type.heading, color: theme.colors.ink },
   statLabel: { fontFamily: theme.fonts.bold, fontSize: 11, color: theme.colors.muted },
   event: { flexDirection: 'row', gap: theme.spacing(3) },
+  stepDot: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
+  stepTodo: { color: theme.colors.muted },
   eventRail: { alignItems: 'center', width: 16 },
   eventDot: { width: 12, height: 12, borderRadius: 6, marginTop: 4, backgroundColor: theme.colors.accentLight },
   eventLine: { width: 2, flex: 1, backgroundColor: theme.colors.border },

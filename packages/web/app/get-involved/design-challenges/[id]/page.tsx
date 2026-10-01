@@ -47,7 +47,7 @@ import { getCapabilities } from '@/lib/capabilities'
 import { ChallengeThread } from '@/components/challenge-thread'
 import type { ToyIdeaDetail, ContactPref } from '@splat-connect/types'
 import { daysSince } from '@/lib/relative-time'
-import { initials } from '@splat-connect/types'
+import { initials, OUTCOME_STEPS, outcomeStates } from '@splat-connect/types'
 
 const CONTACT_PREF_LABELS: Record<ContactPref, string> = {
   clarification: 'Clarification',
@@ -63,13 +63,6 @@ const TABS = [
   { id: 'outcome', label: 'Outcome', icon: FlagCheckered, hint: 'What happens when somebody solves it.' },
 ] as const
 type TabId = (typeof TABS)[number]['id']
-
-const OUTCOME_STEPS = [
-  ['Idea approved', 'An admin reads it and opens it as a challenge.'],
-  ['Makers working', 'People join and the thread becomes the record of what has been tried.'],
-  ['Written up as a guide', 'A maker turns the solution into a draft guide. The challenge reads Waiting until it is approved.'],
-  ['Guide published', 'The draft goes through the same review as any other guide before a family sees it.'],
-] as const
 
 const TINTS = ['var(--tcoral)', 'var(--tmint)', 'var(--tamber)', 'var(--tviolet)', 'var(--b100)']
 
@@ -124,7 +117,6 @@ export default async function ChallengeDetailPage({
   if (answered && challenge.answered_at) {
     history.push({ icon: CheckCircle, t: 'The asker marked an answer', d: date(challenge.answered_at) })
   }
-  const outcomeAt = graduated ? 2 : 1
   const tab: TabId = tabs.some((t) => t.id === rawTab) ? (rawTab as TabId) : 'status'
   const current = tabs.find((t) => t.id === tab)!
 
@@ -394,8 +386,8 @@ export default async function ChallengeDetailPage({
           {tab === 'outcome' && (
             <div className="flex flex-col gap-4">
               <ol className="flex list-none flex-col gap-3 p-0">
-                {OUTCOME_STEPS.map(([label, note], i) => {
-                  const state = i < outcomeAt ? 'done' : i === outcomeAt ? 'now' : 'todo'
+                {OUTCOME_STEPS.map(({ label, note }, i) => {
+                  const state = outcomeStates(challenge.status)[i]
                   const Icon = state === 'done' ? Check : DotOutline
                   return (
                     <li key={label} className="flex items-start gap-3.5">
@@ -416,7 +408,7 @@ export default async function ChallengeDetailPage({
                         <span className={`block text-[15px] font-extrabold ${state === 'todo' ? 'text-muted' : 'text-ink'}`}>
                           {label}
                         </span>
-                        <span className="mt-0.5 block text-sm leading-[1.5] text-muted">{note}</span>
+                        <span className="mt-0.5 block text-sm leading-[1.5] text-muted">{note.web}</span>
                       </span>
                     </li>
                   )

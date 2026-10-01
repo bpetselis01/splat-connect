@@ -390,6 +390,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["mobile"],
     needs: "Outcome tab, four steps [ui]",
+    shipped: true,
   },
   'challenge-thread-tab': {
     title: "Thread",
