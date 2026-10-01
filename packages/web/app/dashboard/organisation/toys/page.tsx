@@ -27,6 +27,8 @@ import type { Toy, ToyTransactionSummary } from '@splat-connect/types'
 
 type OrgToy = Toy & { organizations: { name: string } | null }
 
+// PENDING(web-inventory-retired): the Retired pill and reason, and Remove on a
+// retired toy with no handovers (has_history), as mobile's inventory-screen has.
 export default async function OrgInventoryPage() {
   const caps = await getCapabilities()
   // The rail hides this row for a non-leader, but the rail is an affordance —

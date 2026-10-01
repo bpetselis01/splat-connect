@@ -822,6 +822,13 @@ export const PENDING = {
     platforms: ["mobile", "api"],
     needs: "Decided 2026-09-30: no lending (toys are given, exchanged, built or printed only), so no Out or Needs clean. Add Retired (retired_at) for broken or worn-out org toys.",
   },
+  'web-inventory-retired': {
+    title: "Retired toys on the web shelf",
+    blurb: "Retired toys on the web shelf are coming.",
+    kind: "build",
+    platforms: ["web"],
+    needs: "The web organisation shelf shows no Retired pill or Remove yet. Mobile has both (inventory-states): the pill and reason on a retired toy, and Remove only when no handover names it (has_history).",
+  },
   'guide-works-with': {
     shipped: true,
     title: "Works with",
