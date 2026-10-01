@@ -171,3 +171,18 @@ describe('EditDetailsSection on leaving the step', () => {
     expect(await leave()).toBe(false)
   })
 })
+
+describe('EditDetailsSection works with', () => {
+  it('saves Works with, the starting toy and the no-build note', async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined)
+    render(<EditDetailsSection tutorial={tutorial} onSave={onSave} />)
+    fireEvent.change(screen.getByLabelText('Works with'), { target: { value: 'Any 3.5mm switch' } })
+    fireEvent.change(screen.getByLabelText('Toy'), { target: { value: 'Plush barking dog' } })
+    fireEvent.change(screen.getByLabelText(/Made by/), { target: { value: 'ZURU' } })
+    fireEvent.change(screen.getByLabelText(/rather not build it/), { target: { value: 'Ask Northside' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save details' }))
+    await waitFor(() =>
+      expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ works_with: 'Any 3.5mm switch', toy_name: 'Plush barking dog', toy_brand: 'ZURU', no_build_note: 'Ask Northside' }))
+    )
+  })
+})

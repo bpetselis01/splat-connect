@@ -765,6 +765,7 @@ export const PENDING = {
     needs: "Decided 2026-09-30: no lending (toys are given, exchanged, built or printed only), so no Out or Needs clean. Add Retired (retired_at) for broken or worn-out org toys.",
   },
   'guide-works-with': {
+    shipped: true,
     title: "Works with",
     blurb: "Which toy a guide starts from and the switches it works with are coming.",
     kind: "build",

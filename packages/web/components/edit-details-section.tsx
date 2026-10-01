@@ -27,7 +27,7 @@ export function EditDetailsSection({
   onSave,
 }: {
   tutorial: Tutorial
-  onSave: (patch: { title: string; description: string | null; difficulty: Difficulty; build_minutes: number | null; age_min: number | null; age_max: number | null; kind: TutorialKind; maturity: TutorialMaturity; switch_target: SwitchTarget | null; switch_force: PressForce | null; switch_hold: Hold | null; safety_declared?: true; layer_height_mm?: number | null; infill_percent?: number | null; material?: string | null; print_minutes?: number | null; updated_at: string }) => Promise<void>
+  onSave: (patch: { title: string; description: string | null; difficulty: Difficulty; build_minutes: number | null; age_min: number | null; age_max: number | null; kind: TutorialKind; maturity: TutorialMaturity; switch_target: SwitchTarget | null; switch_force: PressForce | null; switch_hold: Hold | null; safety_declared?: true; toy_name: string | null; toy_brand: string | null; works_with: string | null; no_build_note: string | null; layer_height_mm?: number | null; infill_percent?: number | null; material?: string | null; print_minutes?: number | null; updated_at: string }) => Promise<void>
 }) {
   const router = useRouter()
   const showToast = useToast()
@@ -62,6 +62,10 @@ export function EditDetailsSection({
         // Once declared, always declared — the timestamp on the row is the
         // record; the checkbox only exists until then.
         ...(formData.get('safety_declared') === 'on' ? { safety_declared: true as const } : {}),
+        toy_name: ((formData.get('toy_name') as string) ?? '').trim() || null,
+        toy_brand: ((formData.get('toy_brand') as string) ?? '').trim() || null,
+        works_with: ((formData.get('works_with') as string) ?? '').trim() || null,
+        no_build_note: ((formData.get('no_build_note') as string) ?? '').trim() || null,
         ...(tutorial.kind === 'assistive_tech'
           ? {
               layer_height_mm: formData.get('layer_height_mm') === '' ? null : Number(formData.get('layer_height_mm')),
@@ -120,6 +124,29 @@ export function EditDetailsSection({
       <div>
         <label htmlFor="edit-description" className="field-label">Description</label>
         <textarea id="edit-description" name="description" defaultValue={tutorial.description ?? ''} rows={4} className="field" />
+      </div>
+      <fieldset>
+        <legend className="field-label">The toy you start with</legend>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <div>
+            <label htmlFor="edit-toy-name" className="text-sm">Toy</label>
+            <input id="edit-toy-name" name="toy_name" maxLength={80} defaultValue={tutorial.toy_name ?? ''} className="field" />
+          </div>
+          <div>
+            <label htmlFor="edit-toy-brand" className="text-sm">Made by (optional)</label>
+            <input id="edit-toy-brand" name="toy_brand" maxLength={80} defaultValue={tutorial.toy_brand ?? ''} placeholder="e.g. ZURU" className="field" />
+          </div>
+        </div>
+      </fieldset>
+      <div>
+        <label htmlFor="edit-works-with" className="field-label">Works with</label>
+        <input id="edit-works-with" name="works_with" maxLength={300} defaultValue={tutorial.works_with ?? ''} placeholder="Any 3.5mm switch — Jelly Bean, Big Red, or a printed lever switch." className="field" />
+        <p className="mt-1 text-xs leading-relaxed text-muted">The switches this build accepts. Shown as its own card in the guide sidebar — a parent checks it before they start.</p>
+      </div>
+      <div>
+        <label htmlFor="edit-no-build" className="field-label">If someone would rather not build it (optional)</label>
+        <input id="edit-no-build" name="no_build_note" maxLength={300} defaultValue={tutorial.no_build_note ?? ''} placeholder="e.g. Organisation 2 keeps printed mounts on the shelf if you would rather not print one." className="field" />
+        <p className="mt-1 text-xs leading-relaxed text-muted">Sits next to &ldquo;Get help with this build&rdquo; in the sidebar, before the link to the toy library. Leave blank and we just show the link.</p>
       </div>
       <div>
         <label htmlFor="edit-difficulty" className="field-label">Difficulty</label>

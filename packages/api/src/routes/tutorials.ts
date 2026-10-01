@@ -164,7 +164,7 @@ tutorials.post('/', async (c) => {
 /** Only these may be set through the generic edit endpoint. Unknown keys are
  *  dropped silently; the protected ones return 403 so a caller learns rather than
  *  wonders. */
-const EDITABLE = ['title', 'description', 'difficulty', 'kind', 'maturity', 'build_minutes', 'age_min', 'age_max', 'switch_target', 'switch_force', 'switch_hold', 'tutorial_pdf_url', 'photo_urls', 'photo_captions', 'prices_checked_on', 'layer_height_mm', 'infill_percent', 'material', 'print_minutes', 'status'] as const
+const EDITABLE = ['title', 'description', 'difficulty', 'kind', 'maturity', 'build_minutes', 'age_min', 'age_max', 'switch_target', 'switch_force', 'switch_hold', 'tutorial_pdf_url', 'photo_urls', 'photo_captions', 'prices_checked_on', 'layer_height_mm', 'infill_percent', 'material', 'print_minutes', 'toy_name', 'toy_brand', 'works_with', 'no_build_note', 'status'] as const
 const PROTECTED = ['reviewed_by', 'reviewed_for_org_id', 'reviewed_at', 'rejection_note']
 
 async function hasAcceptedContributorTerms(token: string, userId: string) {
@@ -196,6 +196,15 @@ export function fieldError(body: Record<string, unknown>): string | null {
   if (has('infill_percent') && !(Number.isInteger(body.infill_percent) && num('infill_percent') >= 0 && num('infill_percent') <= 100)) return 'Infill must be a whole percent from 0 to 100'
   if (has('material') && !(typeof body.material === 'string' && body.material.trim().length <= 40)) return 'Material is over 40 characters'
   if (has('print_minutes') && !(Number.isInteger(body.print_minutes) && num('print_minutes') >= 1 && num('print_minutes') <= 6000)) return 'Print time must be 1 to 6000 minutes'
+  const LONG: [string, number, string][] = [
+    ['toy_name', 80, 'The toy’s name'],
+    ['toy_brand', 80, 'The toy’s maker'],
+    ['works_with', 300, 'Works with'],
+    ['no_build_note', 300, 'The note for people who would rather not build'],
+  ]
+  for (const [k, max, label] of LONG) {
+    if (has(k) && !(typeof body[k] === 'string' && (body[k] as string).trim().length <= max)) return `${label} is over ${max} characters`
+  }
   return null
 }
 

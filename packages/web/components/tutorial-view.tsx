@@ -55,6 +55,7 @@ import {
   Lifebuoy,
   Printer,
   SealCheck,
+  ShoppingBag,
   ShieldCheck,
   Wrench,
 } from '@phosphor-icons/react/dist/ssr'
@@ -487,8 +488,6 @@ export function TutorialView({
         * The rail. The board puts the decision here and the evidence on the
         * left: how much it takes, the one filled action, and — because this is
         * the page somebody opens when they are stuck — a way to ask a person.
-        * PENDING(guide-works-with): the board's "The toy you start with" and
-        * "Works with" cards; guides store neither.
         */}
       <aside className="flex flex-col gap-4 lg:sticky lg:top-24">
         <div className="flex flex-col gap-3.5 rounded-card border border-line bg-surface p-[22px] shadow-[var(--shadow-e3),var(--shadow-hi)]">
@@ -551,12 +550,31 @@ export function TutorialView({
             Get help with this build
           </Link>
           <p className="m-0 text-[13px] leading-[1.5]">
-            Or skip the build — somebody nearby may have already made one.{' '}
+            {tutorial.no_build_note ?? 'Or skip the build — somebody nearby may have already made one.'}{' '}
             <Link href="/toy-library" className="font-extrabold text-ink underline">
               Toy library →
             </Link>
           </p>
         </div>
+        {tutorial.toy_name && (
+          <div className="flex items-center gap-3 rounded-card border border-line bg-surface p-[18px] text-ink">
+            <ShoppingBag size={28} weight="duotone" className="flex-none" aria-hidden="true" />
+            <div>
+              <p className="m-0 text-xs font-extrabold uppercase tracking-[.08em] text-muted">The toy you start with</p>
+              <p className="m-0 font-extrabold leading-[1.3]">{tutorial.toy_name}</p>
+              {tutorial.toy_brand && <p className="m-0 text-sm text-muted">by {tutorial.toy_brand}</p>}
+            </div>
+          </div>
+        )}
+        {tutorial.works_with && (
+          <div className="flex items-start gap-3 rounded-card border border-line bg-mint-soft p-[18px] text-ink">
+            <HandTap size={28} weight="duotone" className="flex-none" aria-hidden="true" />
+            <div>
+              <p className="m-0 font-extrabold">Works with</p>
+              <p className="m-0 text-sm leading-[1.5]">{tutorial.works_with}</p>
+            </div>
+          </div>
+        )}
       </aside>
     </div>
   )

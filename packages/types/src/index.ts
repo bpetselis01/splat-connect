@@ -1830,6 +1830,12 @@ export interface Tutorial {
   prices_checked_on?: string | null
   /** 087. Parallel to photo_urls; null = no caption. */
   photo_captions?: (string | null)[]
+  /** 089. The toy the guide starts from, what it works with, and a note for
+   *  someone who would rather not build it. All optional. */
+  toy_name?: string | null
+  toy_brand?: string | null
+  works_with?: string | null
+  no_build_note?: string | null
   /** 088. The guide's print settings, as the author sliced it. */
   layer_height_mm?: number | null
   infill_percent?: number | null

@@ -95,3 +95,22 @@ test('the parts tab totals the prices once every part has one', async ({ page })
   await expect(page.getByRole('cell', { name: '$12.50' }).last()).toBeVisible()
   await expect(page.getByText('Prices last checked 2 Aug 2026')).toBeVisible()
 })
+
+test('the rail names the starting toy, what it works with and the no-build note', async ({ page }) => {
+  const contributor = await createContributor()
+  const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Works With'), status: 'approved' })
+  await adminClient().from('tutorials').update({
+    toy_name: 'Plush barking dog',
+    toy_brand: 'ZURU',
+    works_with: 'Any 3.5mm switch',
+    no_build_note: 'Two adapted copies are in the library right now.',
+  }).eq('id', id)
+
+  await page.goto(`/tutorials/${id}`)
+  await expect(page.getByText('The toy you start with')).toBeVisible()
+  await expect(page.getByText('Plush barking dog')).toBeVisible()
+  await expect(page.getByText('by ZURU')).toBeVisible()
+  await expect(page.getByText('Works with', { exact: true })).toBeVisible()
+  await expect(page.getByText('Any 3.5mm switch')).toBeVisible()
+  await expect(page.getByText('Two adapted copies are in the library right now.')).toBeVisible()
+})
