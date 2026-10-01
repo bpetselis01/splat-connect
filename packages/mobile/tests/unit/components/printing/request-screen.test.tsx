@@ -46,3 +46,49 @@ it('sends a quantity per part', async () => {
     )
   )
 })
+
+it('names the estimate in the agree line, and falls back without a rate', async () => {
+  mockGet.mockImplementation((path: string) =>
+    Promise.resolve(
+      path === '/api/printers'
+        ? [{ ...PRINTER, filament_cents_per_g: 10 }, { id: 'p2', owner_name: 'Ann', org_name: null, filament_cents_per_g: 20 }]
+        : GUIDE
+    )
+  )
+  render(<RequestPrintScreen guideId="g1" printerIds={['p1', 'p2']} />)
+  // 14 g at 10c and 20c a gram.
+  expect(
+    await screen.findByText(
+      'I understand I cover the filament — about $1.40–$2.80 at the printer’s declared rate — and that I settle it with them, not through SPLAT.'
+    )
+  ).toBeTruthy()
+})
+
+it('keeps today’s line when no printer declared a rate', async () => {
+  render(<RequestPrintScreen guideId="g1" printerIds={['p1']} />)
+  expect(
+    await screen.findByText('I understand I cover the filament, and that I settle it with the printer, not through SPLAT.')
+  ).toBeTruthy()
+})
+
+it('names the one declared rate when another printer is free', async () => {
+  mockGet.mockImplementation((path: string) =>
+    Promise.resolve(
+      path === '/api/printers'
+        ? [{ ...PRINTER, filament_cents_per_g: 10 }, { id: 'p2', owner_name: 'Ann', org_name: null, filament_cents_per_g: null }]
+        : GUIDE
+    )
+  )
+  render(<RequestPrintScreen guideId="g1" printerIds={['p1', 'p2']} />)
+  expect(await screen.findByText(/about \$1\.40 at the printer’s declared rate/)).toBeTruthy()
+})
+
+it('multiplies by quantity', async () => {
+  mockGet.mockImplementation((path: string) =>
+    Promise.resolve(path === '/api/printers' ? [{ ...PRINTER, filament_cents_per_g: 10 }] : GUIDE)
+  )
+  render(<RequestPrintScreen guideId="g1" printerIds={['p1']} />)
+  fireEvent.press(await screen.findByLabelText('More mount.stl'))
+  // (10 g × 2 + 4 g) × 10c
+  expect(await screen.findByText(/about \$2\.40 at/)).toBeTruthy()
+})

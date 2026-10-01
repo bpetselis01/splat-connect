@@ -305,6 +305,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["mobile"],
     needs: "Estimated cost in the Request a print agree line [ui]",
+    shipped: true,
   },
   'print-part-quantity': {
     title: "How many of each part",

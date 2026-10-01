@@ -15,7 +15,7 @@ import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import type { PrintDelivery, PrinterWithOwner, StlFile, Tutorial } from '@splat-connect/types'
-import { apiMessage, PRINT_COLOURS, printSettingsLine } from '@splat-connect/types'
+import { apiMessage, costRange, formatCents, PRINT_COLOURS, printCostCents, printSettingsLine } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { formatMinutes, partsMeta } from '../../lib/printing'
@@ -97,6 +97,13 @@ export function RequestPrintScreen({ guideId, printerIds }: { guideId: string; p
   const bump = (id: string, by: number) =>
     setQty((cur) => ({ ...cur, [id]: Math.min(20, Math.max(1, (cur[id] ?? 1) + by)) }))
   const ticked = guide.stl_files.filter((f) => parts.includes(f.id)).map((f) => ({ ...f, quantity: qtyOf(f.id) }))
+  // The board's agree line names the figure when a picked printer's rate and
+  // every part's grams are known; a range when the printers differ.
+  const range = costRange(printers.map((p) => printCostCents(ticked, p.filament_cents_per_g)))
+  const about = range && (range[0] === range[1] ? formatCents(range[0]) : `${formatCents(range[0])}–${formatCents(range[1])}`)
+  const agreeLine = about
+    ? `I understand I cover the filament — about ${about} at the printer’s declared rate — and that I settle it with them, not through SPLAT.`
+    : 'I understand I cover the filament, and that I settle it with the printer, not through SPLAT.'
   const valid = ticked.length > 0 && printerIds.length > 0 && agree
 
   async function send() {
@@ -245,10 +252,10 @@ export function RequestPrintScreen({ guideId, printerIds }: { guideId: string; p
         </View>
 
         <PendingRow pending="recycling-credit-spending" label="Use my recycling credit" icon="leaf-outline" />
-        {/* PENDING(print-cost-estimate): "about $X at the printer's declared rate" in the line below. */}
         <Pressable
           accessibilityRole="checkbox"
           accessibilityState={{ checked: agree }}
+          accessibilityLabel={agreeLine}
           onPress={() => setAgree((v) => !v)}
           style={[styles.part, agree && styles.agreeOn]}
         >
@@ -257,9 +264,7 @@ export function RequestPrintScreen({ guideId, printerIds }: { guideId: string; p
             size={24}
             color={agree ? theme.colors.success : theme.colors.muted}
           />
-          <Text style={[styles.partName, styles.flex]}>
-            I understand I cover the filament, and that I settle it with the printer, not through SPLAT.
-          </Text>
+          <Text style={[styles.partName, styles.flex]}>{agreeLine}</Text>
         </Pressable>
       </ScrollView>
 

@@ -2238,3 +2238,4 @@ export function fitLine(
 }
 
 export * from './pending'
+export * from './printing'
