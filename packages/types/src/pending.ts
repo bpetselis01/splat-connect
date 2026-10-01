@@ -232,6 +232,7 @@ export const PENDING = {
     needs: "\"Can't build it? Ask a maker nearby\" card [ui]",
   },
   'guide-photo-captions': {
+    shipped: true,
     title: "Photo captions",
     blurb: "Captions and a thumbnail strip for guide photos are coming.",
     kind: "build",

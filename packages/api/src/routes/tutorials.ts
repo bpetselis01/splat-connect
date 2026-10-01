@@ -10,6 +10,7 @@ import { nameFormerContributors } from '../former-contributor.js'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { pickEditable } from './pick-editable.js'
 import { notifyTutorialSubmitted } from '../review-notifications.js'
+import { realignCaptions } from '@splat-connect/types'
 import { removeDroppedPhotos } from '../photo-storage.js'
 import type { AuthVariables } from '../middleware/auth.js'
 
@@ -164,7 +165,7 @@ tutorials.post('/', async (c) => {
 /** Only these may be set through the generic edit endpoint. Unknown keys are
  *  dropped silently; the protected ones return 403 so a caller learns rather than
  *  wonders. */
-const EDITABLE = ['title', 'description', 'difficulty', 'kind', 'maturity', 'build_minutes', 'age_min', 'age_max', 'switch_target', 'switch_force', 'switch_hold', 'tutorial_pdf_url', 'photo_urls', 'prices_checked_on', 'status'] as const
+const EDITABLE = ['title', 'description', 'difficulty', 'kind', 'maturity', 'build_minutes', 'age_min', 'age_max', 'switch_target', 'switch_force', 'switch_hold', 'tutorial_pdf_url', 'photo_urls', 'photo_captions', 'prices_checked_on', 'status'] as const
 const PROTECTED = ['reviewed_by', 'reviewed_for_org_id', 'reviewed_at', 'rejection_note']
 
 async function hasAcceptedContributorTerms(token: string, userId: string) {
@@ -185,6 +186,11 @@ export function fieldError(body: Record<string, unknown>): string | null {
   const has = (k: string) => k in body && body[k] !== null
   if (has('prices_checked_on') && !(typeof body.prices_checked_on === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.prices_checked_on) && !Number.isNaN(Date.parse(body.prices_checked_on)))) {
     return 'Prices checked must be a date'
+  }
+  if ('photo_captions' in body) {
+    const caps = body.photo_captions
+    if (!Array.isArray(caps) || caps.some((c) => c !== null && typeof c !== 'string')) return 'Captions must be a list'
+    if (caps.some((c) => typeof c === 'string' && c.trim().length > 60)) return 'A photo caption is over 60 characters'
   }
   return null
 }
@@ -234,17 +240,19 @@ tutorials.patch('/:id', async (c) => {
   // pending is one event; a later save that happens to resend status 'pending'
   // (the editor sends the whole form) is not, and notifying on it would have
   // meant a leader's badge climbing every time an author fixed a typo.
-  // Read before the write, and only when photos are part of this save: the
-  // sweep below needs to know which URLs the row held a moment ago.
-  const photosBefore = Array.isArray(body.photo_urls)
-    ? (
-        await supabase
-          .from('tutorials')
-          .select('photo_urls')
-          .eq('id', c.req.param('id'))
-          .maybeSingle()
-      ).data?.photo_urls
-    : null
+  // Read before the write whenever photos or captions are part of this save:
+  // the sweep below needs the old URLs, and captions follow their photo (087).
+  const before =
+    Array.isArray(body.photo_urls) || 'photo_captions' in body
+      ? (
+          await supabase
+            .from('tutorials')
+            .select('photo_urls, photo_captions')
+            .eq('id', c.req.param('id'))
+            .maybeSingle()
+        ).data
+      : null
+  const photosBefore = Array.isArray(body.photo_urls) ? (before?.photo_urls ?? null) : null
 
   // A guide that has a photo keeps one — same transition rule as toys.ts, and
   // the same reason it is not a check constraint: a draft starts with none.
@@ -253,6 +261,16 @@ tutorials.patch('/:id', async (c) => {
       { error: 'Every guide needs at least one photo. Add another before removing this one.' },
       400
     )
+  }
+
+  if (Array.isArray(body.photo_urls) && !('photo_captions' in body)) {
+    update.photo_captions = realignCaptions(before?.photo_urls ?? [], before?.photo_captions ?? [], body.photo_urls as string[])
+  }
+  if ('photo_captions' in body) {
+    const photos = (Array.isArray(body.photo_urls) ? body.photo_urls : before?.photo_urls) ?? []
+    const caps = (body.photo_captions as (string | null)[]).map((c) => c?.trim() || null)
+    if (caps.length > photos.length) return c.json({ error: 'There are more captions than photos.' }, 400)
+    update.photo_captions = caps
   }
 
   const submitting = body.status === 'pending'

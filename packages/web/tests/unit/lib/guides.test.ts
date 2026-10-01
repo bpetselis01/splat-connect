@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { checkedOn, partsTotalCents } from '@splat-connect/types'
+import { checkedOn, partsTotalCents, realignCaptions } from '@splat-connect/types'
 
 describe('partsTotalCents', () => {
   it('sums the required parts once every one has a price', () => {
@@ -21,5 +21,17 @@ describe('partsTotalCents', () => {
 describe('checkedOn', () => {
   it('writes the date the board way, without shifting a day', () => {
     expect(checkedOn('2026-08-02')).toBe('2 Aug 2026')
+  })
+})
+
+describe('realignCaptions', () => {
+  it('moves each caption with its photo', () => {
+    expect(realignCaptions(['a', 'b', 'c'], ['A', null, 'C'], ['c', 'a', 'b'])).toEqual(['C', 'A'])
+  })
+  it('drops a removed photo’s caption and gives a new photo none', () => {
+    expect(realignCaptions(['a', 'b'], ['A', 'B'], ['b', 'n'])).toEqual(['B'])
+  })
+  it('never returns more captions than photos', () => {
+    expect(realignCaptions(['a'], ['A', 'stray'], [])).toEqual([])
   })
 })

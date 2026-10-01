@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { View, Text, ScrollView, StyleSheet } from 'react-native'
+import { View, Text, ScrollView, Pressable, Image, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import type { Tutorial, Part, Tool, StlFile, Recommendation, TutorialStep } from '@splat-connect/types'
@@ -52,6 +52,7 @@ export function DetailScreen({ id }: { id: string }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
   const [photo, setPhoto] = useState(0)
+  const [pick, setPick] = useState<number | undefined>(undefined)
   // Thanks (066): once per person, never on your own guide. Unknown until the
   // GET lands, and a failed GET hides the button rather than guessing.
   const [thanks, setThanks] = useState<{ thanked: boolean; own: boolean } | null>(null)
@@ -129,6 +130,7 @@ export function DetailScreen({ id }: { id: string }) {
   // children. Anything else — no tags, no answers, a mismatch — says nothing.
   const fit = fitLine(tutorial, children)
   const total = partsTotalCents(tutorial.parts)
+  const captionAt = (i: number) => tutorial.photo_captions?.[i] || tutorial.title
   const steps = tutorial.steps ?? []
   const { lead, rest } = splitLead(tutorial.description ?? '')
 
@@ -138,21 +140,37 @@ export function DetailScreen({ id }: { id: string }) {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {/* Bleeds to the screen's edges and up under the header, as the board's hero does. */}
       <View style={styles.hero}>
-        {/* PENDING(guide-photo-captions): captions per photo and a thumbnail strip — photo_urls holds no labels. */}
         <PhotoCarousel
           urls={tutorial.photo_urls}
           height={HERO_HEIGHT}
           emptyIcon="color-wand-outline"
           onIndexChange={setPhoto}
+          index={pick}
         />
         {tutorial.photo_urls.length > 0 ? (
           <View style={styles.heroCount} pointerEvents="none">
             <Text style={styles.heroCountText} numberOfLines={1}>
-              {`${Math.min(photo, tutorial.photo_urls.length - 1) + 1}/${tutorial.photo_urls.length} · ${tutorial.title}`}
+              {`${Math.min(photo, tutorial.photo_urls.length - 1) + 1}/${tutorial.photo_urls.length} · ${captionAt(Math.min(photo, tutorial.photo_urls.length - 1))}`}
             </Text>
           </View>
         ) : null}
       </View>
+      {tutorial.photo_urls.length > 1 ? (
+        <View accessibilityRole="tablist" accessibilityLabel="Photos" style={styles.strip}>
+          {tutorial.photo_urls.map((url, i) => (
+            <Pressable
+              key={url}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: i === photo }}
+              accessibilityLabel={`Show photo ${i + 1}: ${captionAt(i)}`}
+              onPress={() => setPick(i)}
+              style={[styles.thumb, i === photo && styles.thumbOn]}
+            >
+              <Image source={{ uri: url }} style={styles.thumbImage} />
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
 
       {/*
         Plain, visible badges rather than library-screen's a11y-hidden wrapper:
@@ -419,6 +437,10 @@ const styles = StyleSheet.create({
   doneCard: { marginTop: theme.spacing(3), padding: theme.spacing(4), gap: theme.spacing(2), borderRadius: theme.radii.panel, backgroundColor: theme.colors.mintSoft, alignItems: 'center' },
   doneTitle: { fontFamily: theme.fonts.display, fontSize: 20, color: theme.colors.ink },
   doneBody: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.ink, textAlign: 'center' },
+  strip: { flexDirection: 'row', gap: theme.spacing(2), marginBottom: theme.spacing(2) },
+  thumb: { width: 52, height: 52, borderRadius: theme.radii.field, overflow: 'hidden', borderWidth: 2, borderColor: 'transparent' },
+  thumbOn: { borderColor: theme.colors.primaryDark },
+  thumbImage: { width: '100%', height: '100%' },
   cost: { fontFamily: theme.fonts.numeral, fontSize: theme.type.caption, color: theme.colors.ink },
   totalRow: { flexDirection: 'row', justifyContent: 'space-between', padding: theme.spacing(3), borderRadius: theme.radii.field, backgroundColor: theme.colors.accentLight, marginTop: theme.spacing(2) },
   totalLabel: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.ink },

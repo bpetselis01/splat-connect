@@ -23,3 +23,18 @@ export function partsTotalCents(parts: readonly { is_optional: boolean; price_ce
 export function checkedOn(date: string): string {
   return new Intl.DateTimeFormat('en-AU', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${date}T00:00:00Z`))
 }
+
+/**
+ * Captions after the photos moved: each follows its URL, a new photo has
+ * none, trailing nulls are trimmed so the list never outgrows the photos.
+ */
+export function realignCaptions(
+  beforeUrls: readonly string[],
+  beforeCaptions: readonly (string | null)[],
+  afterUrls: readonly string[]
+): (string | null)[] {
+  const byUrl = new Map(beforeUrls.map((url, i) => [url, beforeCaptions[i] ?? null]))
+  const out = afterUrls.map((url) => byUrl.get(url) ?? null)
+  while (out.length && out[out.length - 1] == null) out.pop()
+  return out
+}

@@ -130,6 +130,14 @@ describe('DetailScreen', () => {
     expect(screen.getByText('Prices checked 2 Aug 2026')).toBeTruthy()
   })
 
+  it('captions the photo in view and offers a thumbnail strip', async () => {
+    mockEndpoints({ detail: Promise.resolve({ ...DETAIL, photo_urls: ['https://x.test/a.jpg', 'https://x.test/b.jpg'], photo_captions: ['The finished drum'] }) })
+    render(<DetailScreen id="1" />)
+    expect(await screen.findByText('1/2 · The finished drum')).toBeTruthy()
+    expect(screen.getByLabelText('Show photo 1: The finished drum')).toBeTruthy()
+    expect(screen.getByLabelText('Show photo 2: Build a Robot Arm')).toBeTruthy()
+  })
+
   it('opens Find a printer for this guide when it has printable parts', async () => {
     mockEndpoints({
       detail: Promise.resolve({

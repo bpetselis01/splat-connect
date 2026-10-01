@@ -4,7 +4,7 @@ export * from './nav-model'
 // lines above export nothing at runtime there. Named re-exports do.
 export { contributorBadges } from './contributor-badges'
 export type { ContributorBadge, ContributorBadgeInput } from './contributor-badges'
-export { TOOL_GET_BY_LABEL, partsTotalCents, checkedOn } from './guides'
+export { TOOL_GET_BY_LABEL, partsTotalCents, checkedOn, realignCaptions } from './guides'
 export type { ToolGetBy } from './guides'
 import type { ToolGetBy } from './guides'
 export { buildCalendar } from './ics'
@@ -1826,6 +1826,8 @@ export interface Tutorial {
   photo_urls: string[]
   /** 086. When the author last checked the part prices. */
   prices_checked_on?: string | null
+  /** 087. Parallel to photo_urls; null = no caption. */
+  photo_captions?: (string | null)[]
   /** Generated from photo_urls[1] by the database (053). Read-only — a write
    *  naming this column is rejected, so set photo_urls instead. */
   toy_photo_url: string | null

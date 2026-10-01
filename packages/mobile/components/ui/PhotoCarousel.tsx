@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { View, Text, Image, StyleSheet, useWindowDimensions, type ViewStyle } from 'react-native'
+import { useEffect, useRef, useState } from 'react'
+import { View, Text, Image, StyleSheet, useWindowDimensions, type ScrollView, type ViewStyle } from 'react-native'
 import Animated, {
   useAnimatedScrollHandler,
   useAnimatedStyle,
@@ -34,6 +34,7 @@ export function PhotoCarousel({
   height = 220,
   emptyIcon = 'cube-outline',
   onIndexChange,
+  index,
 }: {
   urls: string[]
   /** Which photo shows the accessibility switch, flagged as it comes past. */
@@ -42,6 +43,8 @@ export function PhotoCarousel({
   emptyIcon?: keyof typeof Ionicons.glyphMap
   /** The photo now in view, once per change — for a "2/5" beside the carousel. */
   onIndexChange?: (index: number) => void
+  /** Scroll to this photo — the thumbnail strip's tap. */
+  index?: number
 }) {
   const { width: screenWidth } = useWindowDimensions()
   // Measured rather than assumed: this sits inside padded screens as well as
@@ -49,6 +52,10 @@ export function PhotoCarousel({
   // a fraction of a photo every time.
   const [width, setWidth] = useState(screenWidth)
   const x = useSharedValue(0)
+  const scroller = useRef<ScrollView>(null)
+  useEffect(() => {
+    if (index != null) scroller.current?.scrollTo({ x: index * width, animated: true })
+  }, [index, width])
   const page = useSharedValue(0)
 
   // From the scroll handler rather than onMomentumScrollEnd, which
@@ -76,6 +83,7 @@ export function PhotoCarousel({
   return (
     <View onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
       <Animated.ScrollView
+        ref={scroller as never}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}

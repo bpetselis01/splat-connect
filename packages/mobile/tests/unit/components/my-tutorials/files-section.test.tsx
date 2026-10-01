@@ -91,7 +91,22 @@ it('uploads a chosen photo and appends it to the guide immediately', async () =>
   fireEvent.press(screen.getByText('Choose from library'))
 
   await waitFor(() =>
-    expect(mockDraft.saveNow).toHaveBeenCalledWith({ photo_urls: ['photos/a.jpg'] })
+    expect(mockDraft.saveNow).toHaveBeenCalledWith({ photo_urls: ['photos/a.jpg'], photo_captions: [] })
+  )
+})
+
+it('captions a photo, and the caption follows it to the cover', async () => {
+  mockDraft.tutorial = { ...mockDraft.tutorial, photo_urls: ['a', 'b'], photo_captions: [null, 'The jack'] }
+  mockDraft.save.mockImplementation((f: Record<string, unknown>) => {
+    mockDraft.tutorial = { ...mockDraft.tutorial, ...f }
+  })
+  const view = render(<FilesSection />)
+  fireEvent.changeText(screen.getByLabelText('Caption for photo 1'), 'The drum')
+  expect(mockDraft.save).toHaveBeenLastCalledWith({ photo_captions: ['The drum', 'The jack'] })
+  view.rerender(<FilesSection />)
+  fireEvent.press(screen.getByLabelText('Make photo 2 the cover'))
+  await waitFor(() =>
+    expect(mockDraft.saveNow).toHaveBeenLastCalledWith({ photo_urls: ['b', 'a'], photo_captions: ['The jack', 'The drum'] })
   )
 })
 
