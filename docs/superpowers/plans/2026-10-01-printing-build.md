@@ -10,6 +10,10 @@
 
 **Spec:** `docs/superpowers/specs/2026-10-01-printing-build-design.md` (inherits "Rules every slice keeps" from `docs/superpowers/specs/2026-10-01-guides-build-design.md`).
 
+## Controller rulings (override the tasks below where they differ)
+
+1. **Member-supplied files are storage paths pinned to their owner's folder** (the lesson from guides Task 20, commits 159d6a63..e731e983). `printer_test_prints` names its column `photo_path` (not `photo_url`) with `CHECK (photo_path ~ ('^' || printer_id::text || '/[0-9a-f-]{36}\.(jpg|png|webp|avif|heic|heif)$'))`; the upload route builds the path from the printer id, a random uuid and the extension of the whitelisted MIME type (never the client filename); reads sign it server-side. Test: a direct insert with another printer's folder or an absolute URL fails the CHECK.
+
 ## Global Constraints
 
 - **One migration per slice, numbered from 094** (batch 1 owns 085–093): 094 print fit, 095 printer stats, 096 customization notes, 097 part sizes, 098 test prints, 099 postcodes and distance. Each has a `-- DOWN:` block like 068/074. Each migration's test selects its new objects through the admin client, so a repaired-not-run migration fails loudly; a security-relevant object also gets a row in `scripts/check-schema-guards.sh`.
