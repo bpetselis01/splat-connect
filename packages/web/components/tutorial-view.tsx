@@ -70,7 +70,7 @@ import {
   type TutorialOrg,
 } from '@splat-connect/types'
 import { agoInWords } from '@/lib/relative-time'
-import { checkedOn, formatCents, initials, longDate, partsTotalCents } from '@splat-connect/types'
+import { checkedOn, formatCents, initials, longDate, partsTotalCents, printSettingRows } from '@splat-connect/types'
 
 type Viewable = TutorialWithDetails & {
   tutorial_orgs?: TutorialOrg[]
@@ -276,6 +276,16 @@ export function TutorialView({
 
   const files = (
     <div className="flex flex-col gap-4">
+      {printSettingRows(tutorial).length > 0 && (
+        <dl className="m-0 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {printSettingRows(tutorial).map((r) => (
+            <div key={r.k} className="rounded-[var(--radius-field)] bg-sunken p-2.5">
+              <dt className="text-xs font-bold text-muted">{r.k}</dt>
+              <dd className="m-0 font-mono text-sm font-extrabold text-ink">{r.v}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {tutorial.stl_files.map((f) => (
           <div key={f.id} className="guide-row guide-row--file">

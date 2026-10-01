@@ -3,7 +3,7 @@ import { View, Text, ScrollView, Pressable, Image, StyleSheet } from 'react-nati
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import type { Tutorial, Part, Tool, StlFile, Recommendation, TutorialStep } from '@splat-connect/types'
-import { KIND_LABEL, MATURITY_LABEL, checkedOn, fitLine, formatCents, partsTotalCents } from '@splat-connect/types'
+import { KIND_LABEL, MATURITY_LABEL, checkedOn, fitLine, formatCents, partsTotalCents, printSettingRows } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { supabase } from '../../lib/supabase'
 import { useSaves } from '../../lib/saves'
@@ -287,7 +287,18 @@ export function DetailScreen({ id }: { id: string }) {
       {/* The way into printing. Keyed on the guide having STL files rather than
           on its kind: a print request's parts ARE those files, so a guide
           without any has nothing to ask for, whatever kind it is. */}
-      {/* PENDING(print-settings): a Files & print settings section — layer height, infill, material, print time. */}
+      {printSettingRows(tutorial).length ? (
+        <Section title="Files & print settings">
+          <View style={styles.settings}>
+            {printSettingRows(tutorial).map((r) => (
+              <View key={r.k} style={styles.setting}>
+                <Text style={styles.settingKey}>{r.k}</Text>
+                <Text style={styles.settingValue}>{r.v}</Text>
+              </View>
+            ))}
+          </View>
+        </Section>
+      ) : null}
       {tutorial.stl_files.length > 0 ? (
         <AnimatedPressable
           onPress={() => router.push({ pathname: '/printing', params: { guide: tutorial.id } })}
@@ -336,6 +347,10 @@ export function DetailScreen({ id }: { id: string }) {
 }
 
 const styles = StyleSheet.create({
+  settings: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2) },
+  setting: { width: '48%', padding: theme.spacing(2), borderRadius: theme.radii.field, backgroundColor: theme.colors.surfaceSunken },
+  settingKey: { fontFamily: theme.fonts.bold, fontSize: 12, color: theme.colors.muted },
+  settingValue: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.ink },
   container: { flex: 1, backgroundColor: theme.colors.background },
   content: { paddingHorizontal: theme.spacing(4), paddingBottom: theme.spacing(10) },
   hero: { marginHorizontal: -theme.spacing(4), marginBottom: theme.spacing(2) },

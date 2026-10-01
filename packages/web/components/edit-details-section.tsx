@@ -27,7 +27,7 @@ export function EditDetailsSection({
   onSave,
 }: {
   tutorial: Tutorial
-  onSave: (patch: { title: string; description: string | null; difficulty: Difficulty; build_minutes: number | null; age_min: number | null; age_max: number | null; kind: TutorialKind; maturity: TutorialMaturity; switch_target: SwitchTarget | null; switch_force: PressForce | null; switch_hold: Hold | null; safety_declared?: true; updated_at: string }) => Promise<void>
+  onSave: (patch: { title: string; description: string | null; difficulty: Difficulty; build_minutes: number | null; age_min: number | null; age_max: number | null; kind: TutorialKind; maturity: TutorialMaturity; switch_target: SwitchTarget | null; switch_force: PressForce | null; switch_hold: Hold | null; safety_declared?: true; layer_height_mm?: number | null; infill_percent?: number | null; material?: string | null; print_minutes?: number | null; updated_at: string }) => Promise<void>
 }) {
   const router = useRouter()
   const showToast = useToast()
@@ -62,6 +62,14 @@ export function EditDetailsSection({
         // Once declared, always declared — the timestamp on the row is the
         // record; the checkbox only exists until then.
         ...(formData.get('safety_declared') === 'on' ? { safety_declared: true as const } : {}),
+        ...(tutorial.kind === 'assistive_tech'
+          ? {
+              layer_height_mm: formData.get('layer_height_mm') === '' ? null : Number(formData.get('layer_height_mm')),
+              infill_percent: formData.get('infill_percent') === '' ? null : Number(formData.get('infill_percent')),
+              material: ((formData.get('material') as string) ?? '').trim() || null,
+              print_minutes: formData.get('print_minutes') === '' ? null : Number(formData.get('print_minutes')),
+            }
+          : {}),
         updated_at: tutorial.updated_at,
       })
       setDirty(false)
@@ -220,6 +228,18 @@ export function EditDetailsSection({
           A parent whose child can manage all of these sees &ldquo;Suits &lt;their child&gt;&rdquo;.
         </p>
       </fieldset>
+      {tutorial.kind === 'assistive_tech' && (
+        <fieldset>
+          <legend className="field-label">Print settings</legend>
+          <div className="grid grid-cols-2 gap-2">
+            <label className="text-sm">Layer height (mm)<input name="layer_height_mm" type="number" step="0.01" min={0.05} max={1} defaultValue={tutorial.layer_height_mm ?? ''} className="field" /></label>
+            <label className="text-sm">Infill (%)<input name="infill_percent" type="number" min={0} max={100} defaultValue={tutorial.infill_percent ?? ''} className="field" /></label>
+            <label className="text-sm">Material<input name="material" maxLength={40} defaultValue={tutorial.material ?? ''} placeholder="PETG" className="field" /></label>
+            <label className="text-sm">Print time (minutes)<input name="print_minutes" type="number" min={1} max={6000} defaultValue={tutorial.print_minutes ?? ''} className="field" /></label>
+          </div>
+          <p className="mt-1 text-xs leading-relaxed text-muted">What you sliced it at. A printer copies these; they never set their own.</p>
+        </fieldset>
+      )}
       <fieldset>
         <legend className="field-label">Safety declaration</legend>
         {tutorial.safety_declared_at ? (

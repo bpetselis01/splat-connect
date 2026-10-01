@@ -130,6 +130,14 @@ describe('DetailScreen', () => {
     expect(screen.getByText('Prices checked 2 Aug 2026')).toBeTruthy()
   })
 
+  it('shows the print settings when the guide has any', async () => {
+    mockEndpoints({ detail: Promise.resolve({ ...DETAIL, layer_height_mm: 0.2, infill_percent: 25, material: 'PETG', print_minutes: null }) })
+    render(<DetailScreen id="1" />)
+    expect(await screen.findByText('Files & print settings')).toBeTruthy()
+    expect(screen.getByText('0.2 mm')).toBeTruthy()
+    expect(screen.queryByText('Print time')).toBeNull()
+  })
+
   it('captions the photo in view and offers a thumbnail strip', async () => {
     mockEndpoints({ detail: Promise.resolve({ ...DETAIL, photo_urls: ['https://x.test/a.jpg', 'https://x.test/b.jpg'], photo_captions: ['The finished drum'] }) })
     render(<DetailScreen id="1" />)

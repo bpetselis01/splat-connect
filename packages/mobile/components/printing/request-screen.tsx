@@ -15,7 +15,7 @@ import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import type { PrintDelivery, PrinterWithOwner, StlFile, Tutorial } from '@splat-connect/types'
-import { apiMessage, PRINT_COLOURS } from '@splat-connect/types'
+import { apiMessage, PRINT_COLOURS, printSettingsLine } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { formatMinutes, partsMeta } from '../../lib/printing'
@@ -212,12 +212,11 @@ export function RequestPrintScreen({ guideId, printerIds }: { guideId: string; p
           style={styles.note}
         />
 
-        {/* PENDING(print-settings): name the actual settings here ("0.2 mm · 25 % · PETG"). */}
         <View style={styles.info}>
           <Ionicons name="information-circle" size={18} color={theme.colors.ink} />
           <Text style={[styles.meta, styles.flex, styles.infoText]}>
-            The printer gives the time and the machine; you cover the filament. Settings come from the guide,
-            so the printer cannot change them by mistake.
+            The printer gives the time and the machine; you cover the filament. Settings come from the guide
+            {printSettingsLine(guide) ? ` (${printSettingsLine(guide)})` : ''}, so the printer cannot change them by mistake.
           </Text>
         </View>
 

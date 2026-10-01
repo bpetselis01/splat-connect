@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { TutorialView } from '@/components/tutorial-view'
 import type { TutorialWithDetails, Recommendation } from '@splat-connect/types'
 
@@ -170,5 +170,21 @@ describe('TutorialView tabs', () => {
     render(<TutorialView tutorial={tutorial({ parts })} signedIn={false} />)
     expect(screen.queryByRole('tablist')).toBeNull()
     expect(screen.getByText('Switch')).toBeVisible()
+  })
+})
+
+describe('print settings', () => {
+  it('lists the guide’s print settings on the Files tab', () => {
+    // A second section, or the tab strip is not drawn.
+    const parts = [{ id: 'p1', tutorial_id: 't1', name: 'Switch', quantity: 1, is_optional: false, buy_links: [] }]
+    render(
+      <TutorialView
+        signedIn
+        tutorial={tutorial({ kind: 'assistive_tech', parts, stl_files: stl, layer_height_mm: 0.2, infill_percent: 25, material: 'PETG', print_minutes: 190 })}
+      />
+    )
+    fireEvent.click(screen.getByRole('tab', { name: 'Files & print settings' }))
+    expect(screen.getByText('Layer height')).toBeInTheDocument()
+    expect(screen.getByText('3 h 10')).toBeInTheDocument()
   })
 })

@@ -56,7 +56,6 @@ tutorials.get('/mine', async (c) => {
   return c.json(data)
 })
 
-// PENDING(print-settings): layer height, infill, material and print time per guide need columns.
 tutorials.get('/:id', async (c) => {
   const supabase = createUserClient(c.get('token'))
   const { data, error } = await supabase
@@ -165,7 +164,7 @@ tutorials.post('/', async (c) => {
 /** Only these may be set through the generic edit endpoint. Unknown keys are
  *  dropped silently; the protected ones return 403 so a caller learns rather than
  *  wonders. */
-const EDITABLE = ['title', 'description', 'difficulty', 'kind', 'maturity', 'build_minutes', 'age_min', 'age_max', 'switch_target', 'switch_force', 'switch_hold', 'tutorial_pdf_url', 'photo_urls', 'photo_captions', 'prices_checked_on', 'status'] as const
+const EDITABLE = ['title', 'description', 'difficulty', 'kind', 'maturity', 'build_minutes', 'age_min', 'age_max', 'switch_target', 'switch_force', 'switch_hold', 'tutorial_pdf_url', 'photo_urls', 'photo_captions', 'prices_checked_on', 'layer_height_mm', 'infill_percent', 'material', 'print_minutes', 'status'] as const
 const PROTECTED = ['reviewed_by', 'reviewed_for_org_id', 'reviewed_at', 'rejection_note']
 
 async function hasAcceptedContributorTerms(token: string, userId: string) {
@@ -192,6 +191,11 @@ export function fieldError(body: Record<string, unknown>): string | null {
     if (!Array.isArray(caps) || caps.some((c) => c !== null && typeof c !== 'string')) return 'Captions must be a list'
     if (caps.some((c) => typeof c === 'string' && c.trim().length > 60)) return 'A photo caption is over 60 characters'
   }
+  const num = (k: string) => body[k] as number
+  if (has('layer_height_mm') && !(typeof body.layer_height_mm === 'number' && num('layer_height_mm') >= 0.05 && num('layer_height_mm') <= 1)) return 'Layer height must be between 0.05 and 1 mm'
+  if (has('infill_percent') && !(Number.isInteger(body.infill_percent) && num('infill_percent') >= 0 && num('infill_percent') <= 100)) return 'Infill must be a whole percent from 0 to 100'
+  if (has('material') && !(typeof body.material === 'string' && body.material.trim().length <= 40)) return 'Material is over 40 characters'
+  if (has('print_minutes') && !(Number.isInteger(body.print_minutes) && num('print_minutes') >= 1 && num('print_minutes') <= 6000)) return 'Print time must be 1 to 6000 minutes'
   return null
 }
 

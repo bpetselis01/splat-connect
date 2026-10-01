@@ -14,6 +14,7 @@ import { useDraft } from '../../../lib/use-tutorial-draft'
 import { theme } from '../../../lib/theme'
 import { Screen } from '../../ui/Screen'
 import { Button } from '../../ui/Button'
+import { TextField } from '../../ui/TextField'
 import { ErrorRow } from '../../ui/ErrorRow'
 import { SectionFooter } from '../section-footer'
 import { PickerNote } from './picker-note'
@@ -25,7 +26,7 @@ export function StlSection() {
 }
 
 function StlEditor() {
-  const { tutorial, saveError } = useDraft()
+  const { tutorial, save, saveError } = useDraft()
   const [uploading, setUploading] = useState(false)
   const [localError, setLocalError] = useState<string | null>(null)
   const [files, setFiles] = useState<StlFile[]>(() => tutorial?.stl_files ?? [])
@@ -99,6 +100,30 @@ function StlEditor() {
           loading={uploading}
         />
         <PickerNote noun="STL" />
+        <Text style={styles.label}>Print settings</Text>
+        {([
+          ['layer_height_mm', 'Layer height (mm)', 'decimal-pad'],
+          ['infill_percent', 'Infill (%)', 'number-pad'],
+          ['print_minutes', 'Print time (minutes)', 'number-pad'],
+        ] as const).map(([field, label, keyboardType]) => (
+          // defaultValue, not value: a controlled number field would eat the "." in "0.2".
+          <TextField
+            key={field}
+            label={label}
+            accessibilityLabel={label}
+            keyboardType={keyboardType}
+            defaultValue={tutorial[field] == null ? '' : String(tutorial[field])}
+            onChangeText={(text) => save({ [field]: text.trim() === '' ? null : Number(text) })}
+          />
+        ))}
+        <TextField
+          label="Material"
+          accessibilityLabel="Material"
+          placeholder="PETG"
+          maxLength={40}
+          defaultValue={tutorial.material ?? ''}
+          onChangeText={(text) => save({ material: text.trim() ? text : null })}
+        />
         <ErrorRow message={localError ?? saveError} />
       </ScrollView>
       <SectionFooter section="stl" />
@@ -119,6 +144,13 @@ const styles = StyleSheet.create({
     fontFamily: theme.fonts.regular,
     fontSize: theme.type.label,
     color: theme.colors.text,
+  },
+  label: {
+    fontFamily: theme.fonts.bold,
+    fontSize: theme.type.label,
+    color: theme.colors.text,
+    marginTop: theme.spacing(4),
+    marginBottom: theme.spacing(2),
   },
   empty: {
     fontFamily: theme.fonts.regular,

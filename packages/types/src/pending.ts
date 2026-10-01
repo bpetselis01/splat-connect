@@ -217,6 +217,7 @@ export const PENDING = {
     needs: "\"I have it\" checklist, \"X of Y yours\", Buy/Borrow/Substitute, Learn link [ui]",
   },
   'print-settings': {
+    shipped: true,
     title: "Print settings",
     blurb: "Layer height, infill, material and print time per guide are coming.",
     kind: "build",

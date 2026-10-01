@@ -41,7 +41,7 @@ import { TextField } from '../ui/TextField'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { ErrorRow } from '../ui/ErrorRow'
-import { apiMessage, pickupAddress, plural } from '@splat-connect/types'
+import { apiMessage, pickupAddress, plural, printSettingsLine } from '@splat-connect/types'
 
 type Tab = 'requests' | 'jobs' | 'printers'
 
@@ -354,7 +354,9 @@ function IncomingCard({
           <Text style={styles.meta}>
             {[plural(files.reduce((n, f) => n + f.quantity, 0), 'part'), partsMeta(files)].filter(Boolean).join(' · ')}
           </Text>
-          {/* PENDING(print-settings): the guide's settings here ("0.2 mm · 25 %"). */}
+          {tx.tutorial_print_settings && printSettingsLine(tx.tutorial_print_settings) ? (
+            <Text style={styles.meta}>{printSettingsLine(tx.tutorial_print_settings)}</Text>
+          ) : null}
           <Text style={styles.meta}>
             From {tx.requester_suburb ? `a family in ${tx.requester_suburb}` : 'a family'} ·{' '}
             {tx.print_delivery === 'post' ? 'wants it posted' : 'will collect'}

@@ -138,7 +138,7 @@ export default async function EditTutorialPage({
     revalidatePath('/dashboard')
   }
 
-  async function saveDetails(patch: { title: string; description: string | null; difficulty: Difficulty; build_minutes: number | null; age_min: number | null; age_max: number | null; kind: TutorialKind; maturity: TutorialMaturity; switch_target: 'large' | 'small' | null; switch_force: PressForce | null; switch_hold: Hold | null; safety_declared?: true; updated_at: string }) {
+  async function saveDetails(patch: { title: string; description: string | null; difficulty: Difficulty; build_minutes: number | null; age_min: number | null; age_max: number | null; kind: TutorialKind; maturity: TutorialMaturity; switch_target: 'large' | 'small' | null; switch_force: PressForce | null; switch_hold: Hold | null; safety_declared?: true; layer_height_mm?: number | null; infill_percent?: number | null; material?: string | null; print_minutes?: number | null; updated_at: string }) {
     'use server'
     const body: Record<string, unknown> = { ...patch }
     if (tutorial.status === 'approved' || tutorial.status === 'rejected') {

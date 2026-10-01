@@ -4,9 +4,9 @@ export * from './nav-model'
 // lines above export nothing at runtime there. Named re-exports do.
 export { contributorBadges } from './contributor-badges'
 export type { ContributorBadge, ContributorBadgeInput } from './contributor-badges'
-export { TOOL_GET_BY_LABEL, partsTotalCents, checkedOn, realignCaptions } from './guides'
-export type { ToolGetBy } from './guides'
-import type { ToolGetBy } from './guides'
+export { TOOL_GET_BY_LABEL, partsTotalCents, checkedOn, realignCaptions, formatPrintMinutes, printSettingRows, printSettingsLine } from './guides'
+export type { ToolGetBy, PrintSettings } from './guides'
+import type { ToolGetBy, PrintSettings } from './guides'
 export { buildCalendar } from './ics'
 export type { CalendarEvent } from './ics'
 import type { ContributorBadge } from './contributor-badges'
@@ -573,6 +573,8 @@ export interface ToyTransactionSummary extends ToyTransaction {
   print_group_size?: number | null
   /** The guide being built, on a build (057). Null on a donation or exchange. */
   tutorial_title: string | null
+  /** 088. The guide's settings, for a print job. */
+  tutorial_print_settings?: PrintSettings | null
   /** Null when the toy has none. Readable by both parties for good: 025's
    *  "Transaction parties can view each other's toy" policy outlives the
    *  handoff, which is what lets a giver still see what they gave. */
@@ -1828,6 +1830,11 @@ export interface Tutorial {
   prices_checked_on?: string | null
   /** 087. Parallel to photo_urls; null = no caption. */
   photo_captions?: (string | null)[]
+  /** 088. The guide's print settings, as the author sliced it. */
+  layer_height_mm?: number | null
+  infill_percent?: number | null
+  material?: string | null
+  print_minutes?: number | null
   /** Generated from photo_urls[1] by the database (053). Read-only — a write
    *  naming this column is rejected, so set photo_urls instead. */
   toy_photo_url: string | null

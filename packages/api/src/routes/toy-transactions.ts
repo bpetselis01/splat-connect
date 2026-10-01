@@ -2,7 +2,7 @@ import { chunk } from '../chunk.js'
 import { Hono, type Context } from 'hono'
 import { randomInt, randomUUID } from 'node:crypto'
 import { needsAction, isOwnerSide } from '@splat-connect/types'
-import type { PrintJobFile } from '@splat-connect/types'
+import type { PrintJobFile, PrintSettings } from '@splat-connect/types'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import { ledOrgIds, atCapacityToyIds } from '../toy-access.js'
@@ -264,7 +264,7 @@ toyTransactions.get('/', async (c) => {
   const { data, error } = await supabase
     .from('toy_transactions')
     .select(
-      '*, toy:toys!toy_transactions_toy_id_fkey(name, cover_photo_url), offered:toys!toy_transactions_offered_toy_id_fkey(name, cover_photo_url), owner:profiles!toy_transactions_owner_id_fkey(name), requester:profiles!toy_transactions_requester_id_fkey(name), org:organizations!toy_transactions_owner_org_id_fkey(name), tutorial:tutorials(title), print_job_files(quantity, stl_files(id, filename, print_minutes, filament_grams, material))'
+      '*, toy:toys!toy_transactions_toy_id_fkey(name, cover_photo_url), offered:toys!toy_transactions_offered_toy_id_fkey(name, cover_photo_url), owner:profiles!toy_transactions_owner_id_fkey(name), requester:profiles!toy_transactions_requester_id_fkey(name), org:organizations!toy_transactions_owner_org_id_fkey(name), tutorial:tutorials(title, layer_height_mm, infill_percent, material, print_minutes), print_job_files(quantity, stl_files(id, filename, print_minutes, filament_grams, material))'
     )
     .order('updated_at', { ascending: false })
   if (error) return c.json({ error: error.message }, 500)
@@ -281,7 +281,7 @@ toyTransactions.get('/', async (c) => {
       owner_id: string | null
       owner_org_id: string | null
       toy: { name: string; cover_photo_url: string | null } | null
-      tutorial: { title: string } | null
+      tutorial: ({ title: string } & PrintSettings) | null
       offered: { name: string; cover_photo_url: string | null } | null
       owner: { name: string } | null
       requester: { name: string } | null
@@ -322,6 +322,9 @@ toyTransactions.get('/', async (c) => {
       ...sanitizeCodes(r, userId, ledOrgs),
       toy_name: r.toy?.name ?? '',
       tutorial_title: r.tutorial?.title ?? null,
+      tutorial_print_settings: r.tutorial
+        ? { layer_height_mm: r.tutorial.layer_height_mm, infill_percent: r.tutorial.infill_percent, material: r.tutorial.material, print_minutes: r.tutorial.print_minutes }
+        : null,
       // Both embeds survive a completed handoff for either party: 025's
       // "Transaction parties can view each other's toy" policy has no end date,
       // which is what lets a giver still see the toy they handed over.
@@ -396,7 +399,7 @@ toyTransactions.get('/:id', async (c) => {
   const { data, error } = await supabase
     .from('toy_transactions')
     .select(
-      '*, toy:toys!toy_transactions_toy_id_fkey(name, status), offered:toys!toy_transactions_offered_toy_id_fkey(name, status), owner:profiles!toy_transactions_owner_id_fkey(name), requester:profiles!toy_transactions_requester_id_fkey(name), org:organizations!toy_transactions_owner_org_id_fkey(name), tutorial:tutorials(title), printer:printers(id, name, suburb, state, materials), print_job_files(quantity, stl_files(id, filename, print_minutes, filament_grams, material))'
+      '*, toy:toys!toy_transactions_toy_id_fkey(name, status), offered:toys!toy_transactions_offered_toy_id_fkey(name, status), owner:profiles!toy_transactions_owner_id_fkey(name), requester:profiles!toy_transactions_requester_id_fkey(name), org:organizations!toy_transactions_owner_org_id_fkey(name), tutorial:tutorials(title, layer_height_mm, infill_percent, material, print_minutes), printer:printers(id, name, suburb, state, materials), print_job_files(quantity, stl_files(id, filename, print_minutes, filament_grams, material))'
     )
     .eq('id', c.req.param('id'))
     .maybeSingle()
@@ -420,7 +423,7 @@ toyTransactions.get('/:id', async (c) => {
     owner: { name: string } | null
     requester: { name: string } | null
     org: { name: string } | null
-    tutorial: { title: string } | null
+    tutorial: ({ title: string } & PrintSettings) | null
     printer: { id: string; name: string; suburb: string | null; state: string | null; materials: string[] } | null
     print_job_files: PrintJobFileRow[] | null
   }
@@ -465,6 +468,9 @@ toyTransactions.get('/:id', async (c) => {
     print_group_size: printGroupSize,
     toy_name: row.toy?.name ?? '',
     tutorial_title: row.tutorial?.title ?? null,
+    tutorial_print_settings: row.tutorial
+        ? { layer_height_mm: row.tutorial.layer_height_mm, infill_percent: row.tutorial.infill_percent, material: row.tutorial.material, print_minutes: row.tutorial.print_minutes }
+        : null,
     printer: row.printer ?? null,
     print_files: flattenPrintFiles(row.print_job_files),
     offered_toy_name: row.offered?.name ?? null,
