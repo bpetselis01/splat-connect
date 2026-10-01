@@ -72,13 +72,18 @@ export function CostPanel({
       .then((c) => {
         if (!ignore) setCosts(c)
       })
-      .catch((err) => console.error('[CostPanel] cost fetch failed:', err))
+      // Lines are money claims: "Nothing listed" after a failed read would
+      // invite the maker to claim the same parts twice.
+      .catch(() => {
+        if (!ignore) setError('Could not load the costs. Check your connection and try again.')
+      })
     return () => {
       ignore = true
     }
   }, [transactionId])
 
   const lines = costs?.lines ?? []
+  const loaded = costs !== null
   if (mode === 'read' && lines.length === 0) return null
 
   const setLines = (fn: (ls: CostLine[]) => CostLine[]) =>
@@ -145,7 +150,7 @@ export function CostPanel({
     <Card style={styles.block}>
       <Text style={styles.eyebrow}>{title}</Text>
       {hint ? <Text style={styles.body}>{hint}</Text> : null}
-      {mode === 'edit' && lines.length === 0 ? (
+      {loaded && mode === 'edit' && lines.length === 0 ? (
         <Text style={styles.body}>Nothing listed — add a line for anything you paid for, even if you plan to cover it.</Text>
       ) : null}
 
@@ -171,7 +176,7 @@ export function CostPanel({
         </View>
       ))}
 
-      {mode === 'edit' ? (
+      {!loaded ? null : mode === 'edit' ? (
         <Total label={youGet > 0 ? 'Asking back' : 'Nothing asked back'} cents={youGet} owed={false} />
       ) : mode === 'settle' ? (
         <Total label={youPay > 0 ? 'You pay back' : 'Nothing to pay'} cents={youPay} owed={youPay > 0} />
@@ -186,7 +191,7 @@ export function CostPanel({
         </View>
       ) : null}
 
-      {mode === 'edit' ? (
+      {loaded && mode === 'edit' ? (
         <View style={styles.form}>
           <TextField
             label="What the money went on"

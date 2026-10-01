@@ -28,6 +28,15 @@ const maker = (title = 'Parts you bought for this build') => (
 beforeEach(() => jest.clearAllMocks())
 
 describe('the maker', () => {
+  it('says the costs did not load, rather than that nothing is listed', async () => {
+    mockGet.mockRejectedValue(new Error('network'))
+    render(maker())
+    expect(await screen.findByText('Could not load the costs. Check your connection and try again.')).toBeTruthy()
+    expect(screen.queryByText(/Nothing listed/)).toBeNull()
+    expect(screen.queryByText('Nothing asked back')).toBeNull()
+    expect(screen.queryByText('Add a line')).toBeNull()
+  })
+
   it('adds a line the family is asked to pay back', async () => {
     serve([])
     mockPost.mockResolvedValue(line())
