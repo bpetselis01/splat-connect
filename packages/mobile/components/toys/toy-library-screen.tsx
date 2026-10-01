@@ -28,7 +28,7 @@ import { Segmented } from '../ui/Segmented'
 import { TabHero } from '../ui/TabHero'
 import { RowCard, MetaItem } from '../ui/RowCard'
 import { useCapabilities } from '../../lib/capabilities'
-import { PendingButton, pendingHref } from '../ui/pending'
+import { pendingHref } from '../ui/pending'
 
 type IconName = React.ComponentProps<typeof Ionicons>['name']
 
@@ -86,6 +86,13 @@ export function ToyLibraryScreen() {
   const onRefresh = () => {
     setRefreshing(true)
     setReloadKey((k) => k + 1)
+  }
+
+  const clearFilters = () => {
+    setSearch('')
+    setCondition(null)
+    setSwitchAdaptedOnly(false)
+    setAvailableOnly(false)
   }
 
   useEffect(() => {
@@ -239,7 +246,7 @@ export function ToyLibraryScreen() {
                   : 'Try removing a filter — new toys are added as they are shared.'
               }
             >
-              {filtered ? <PendingButton pending="clear-filters-empty" label="Clear filters" style={styles.retry} /> : null}
+              {filtered ? <Button label="Clear filters" variant="secondary" onPress={clearFilters} style={styles.retry} /> : null}
             </EmptyState>
           )
         }

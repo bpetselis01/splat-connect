@@ -209,4 +209,14 @@ describe('ToyLibraryScreen', () => {
     render(<ToyLibraryScreen />)
     await waitFor(() => expect(screen.getByText('2 toys')).toBeTruthy())
   })
+
+  it('clears every filter from the empty state in one tap', async () => {
+    mockGet.mockResolvedValue([toy({ id: 't1', name: 'Bubble machine' })])
+    render(<ToyLibraryScreen />)
+    await screen.findByText('Bubble machine')
+    fireEvent.changeText(screen.getByPlaceholderText('Search by toy name'), 'zzz')
+    fireEvent.press(screen.getByText('Clear filters'))
+    expect(screen.getByText('Bubble machine')).toBeTruthy()
+    expect(mockPush).not.toHaveBeenCalledWith(expect.objectContaining({ pathname: '/not-built' }))
+  })
 })

@@ -206,6 +206,16 @@ describe('LibraryScreen', () => {
     render(<LibraryScreen />)
     expect(await screen.findByText('Loading guides…')).toBeTruthy()
   })
+
+  it('clears every filter from the empty state in one tap', async () => {
+    render(<LibraryScreen />)
+    await screen.findByText('Build a Robot Arm')
+    fireEvent.changeText(screen.getByPlaceholderText('Search by toy name'), 'zzz')
+    expect(screen.queryByText('Build a Robot Arm')).toBeNull()
+    fireEvent.press(screen.getByText('Clear filters'))
+    expect(screen.getByText('Build a Robot Arm')).toBeTruthy()
+    expect(screen.getByText('Advanced Gearbox')).toBeTruthy()
+  })
 })
 
 // 080: the board's "Suits Ollie" — a chip that narrows the list to the guides

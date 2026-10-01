@@ -170,6 +170,7 @@ export const PENDING = {
     needs: "/impact/map deliveries map (board's own Not built yet) [ui,api]",
   },
   'clear-filters-empty': {
+    shipped: true,
     title: "Clear filters",
     blurb: "Clearing every filter in one tap is coming. Untick them one at a time for now.",
     kind: "build",

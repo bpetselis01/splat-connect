@@ -27,7 +27,6 @@ import { CornerMenu } from '../ui/CornerMenu'
 import { Segmented } from '../ui/Segmented'
 import { TabHero } from '../ui/TabHero'
 import { RowCard, MetaItem } from '../ui/RowCard'
-import { PendingButton } from '../ui/pending'
 
 type IconName = React.ComponentProps<typeof Ionicons>['name']
 
@@ -115,6 +114,15 @@ export function LibraryScreen() {
   const onRefresh = () => {
     setRefreshing(true)
     setReloadKey((k) => k + 1)
+  }
+
+  const clearFilters = () => {
+    setSearch('')
+    setDifficulty(null)
+    setKind('all')
+    setQuick(false)
+    setPrintable(false)
+    setSuitsOnly(false)
   }
 
   useEffect(() => {
@@ -339,7 +347,9 @@ export function LibraryScreen() {
                   : 'Try removing a filter — new guides are added as contributors share them.'
               }
             >
-              {filtered ? <PendingButton pending="clear-filters-empty" label="Clear filters" style={styles.retry} /> : null}
+              {filtered || suitsOnly ? (
+                <Button label="Clear filters" variant="secondary" onPress={clearFilters} style={styles.retry} />
+              ) : null}
             </EmptyState>
           )
         }
