@@ -1134,7 +1134,7 @@ publicRoutes.get('/challenges/:id', async (c) => {
   const { data: idea, error } = await admin
     .from('toy_ideas')
     .select(
-      'id, author_id, title, summary, description, intended_use, primary_user, contact_prefs, status, tutorial_id, kind, answer_message_id, answered_at, created_at, updated_at, profiles!toy_ideas_author_id_fkey(name)'
+      'id, author_id, title, summary, description, intended_use, primary_user, contact_prefs, status, tutorial_id, kind, answer_message_id, answered_at, created_at, updated_at, save_count, profiles!toy_ideas_author_id_fkey(name)'
     )
     .eq('id', c.req.param('id'))
     .in('status', ['challenge', 'graduated'])

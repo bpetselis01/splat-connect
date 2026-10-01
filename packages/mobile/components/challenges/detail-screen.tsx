@@ -283,7 +283,6 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
   const tabs = TABS.filter((t) => (listed || (t.id !== 'makers' && t.id !== 'thread')) && !(question && t.id === 'outcome'))
   const badge: Partial<Record<Tab, number>> = { makers, thread: challenge.answer_count ?? 0 }
   // PENDING(challenge-writeup-stage): on the board "graduated" means being written up, with who and a follow link.
-  // PENDING(challenge-saves-stat): a public Saves tile among the stats.
   const headline =
     challenge.status === 'graduated'
       ? { title: 'Solved — it became a guide', body: 'The write-up went through review and is in Guides now.' }

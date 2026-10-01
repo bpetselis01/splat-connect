@@ -352,9 +352,10 @@ select * from (values
   -- 073. The 046 shape: packages/api/src/routes/toys.ts selects both by name,
   -- so a ledger that reads as applied with the functions absent makes every
   -- owner's My Toys a 500. They must also be DEFINER — as invoker, RLS hides
-  -- every row from the counter and the function reads as 0 for everyone.
+  -- every row from the counter and the function reads as 0 for everyone. 3 since
+  -- 105: save_count(toys), save_count(toy_ideas) and request_count(toys).
   ('073 save_count() and request_count() exist and are security definer',
-   (select count(*) = 2 from pg_proc
+   (select count(*) = 3 from pg_proc
       where pronamespace = 'public'::regnamespace
         and proname in ('save_count', 'request_count')
         and prosecdef)),
@@ -470,7 +471,13 @@ select * from (values
    and (select count(*) > 0 from pg_policies
       where tablename = 'toy_picks'
         and cmd = 'ALL'
-        and coalesce(qual, with_check) like '%is_org_leader%'))
+        and coalesce(qual, with_check) like '%is_org_leader%')),
+
+  -- 105. Without definer it counts only the caller's own save (044's RLS): always 0 or 1.
+  ('105 save_count(toy_ideas) is security definer',
+   (select count(*) = 1 from pg_proc p
+      where p.proname = 'save_count' and p.pronamespace = 'public'::regnamespace
+        and p.prosecdef and pg_get_function_identity_arguments(p.oid) = 'i toy_ideas'))
 ) as t(guard, ok)
 where not ok;
 EOSQL

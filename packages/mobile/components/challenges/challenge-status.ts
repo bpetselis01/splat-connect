@@ -27,8 +27,7 @@ export function challengeCounts(c: Pick<PublicChallenge, 'kind' | 'maker_count' 
 const DAY = 86_400_000
 
 /**
- * The stat tiles. Saves are left out: the API keeps no public save count, and a
- * tile that always says 0 would be a claim. "Days open" only while it is open.
+ * The stat tiles (MB cdStats): makers, posts, saves, and days open while it is open.
  */
 export function challengeStats(c: ToyIdeaDetail, now: Date): { n: number; label: string }[] {
   const question = c.kind === 'question'
@@ -38,6 +37,7 @@ export function challengeStats(c: ToyIdeaDetail, now: Date): { n: number; label:
       ? tile(c.maker_count ?? c.participants.length, 'person in', 'people in')
       : tile(c.maker_count ?? c.participants.length, 'maker', 'makers'),
     question ? tile(c.answer_count ?? 0, 'answer', 'answers') : tile(c.answer_count ?? 0, 'post', 'posts'),
+    tile(c.save_count ?? 0, 'save', 'saves'),
   ]
   if (c.status === 'challenge' && !(question && c.answered_at)) {
     const days = Math.max(0, Math.floor((now.getTime() - new Date(c.created_at).getTime()) / DAY))

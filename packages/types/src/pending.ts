@@ -732,6 +732,7 @@ export const PENDING = {
     needs: "Decided 2026-09-30: fix the mobile copy now (\"{maker} is writing this up\", the draft still goes through review). Follow the write-up saves the challenge and notifies savers when the guide is approved.",
   },
   'challenge-saves-stat': {
+    shipped: true,
     title: "Saves",
     blurb: "How many people saved a challenge is coming.",
     kind: "build",

@@ -1024,6 +1024,8 @@ export const CHALLENGE_FILTERS: { id: string; label: string; keep: (c: PublicCha
 export interface ToyIdeaDetail extends ToyIdea, Partial<ChallengeCounts> {
   author_name: string | null
   participants: ToyIdeaParticipant[]
+  /** 105: how many accounts saved it. */
+  save_count?: number
   /** The graduated guide's primary contributor and when the draft began. */
   writing_up?: { profile_id: string; name: string; started_at: string } | null
   /** Absent for viewers who may not read the thread. */

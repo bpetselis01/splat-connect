@@ -50,18 +50,20 @@ describe('challengeCounts', () => {
 
 describe('challengeStats', () => {
   const now = new Date('2026-08-25T12:00:00Z')
-  it('gives makers, posts and days open, and no saves tile', () => {
-    expect(challengeStats(brief({ maker_count: 3, answer_count: 4 }), now)).toEqual([
+  it('gives makers, posts, saves and days open', () => {
+    expect(challengeStats(brief({ maker_count: 3, answer_count: 4, save_count: 11 }), now)).toEqual([
       { n: 3, label: 'makers' },
       { n: 4, label: 'posts' },
+      { n: 11, label: 'saves' },
       { n: 23, label: 'days open' },
     ])
   })
   it('stops counting days once it is solved or answered', () => {
-    expect(challengeStats(brief({ status: 'graduated' }), now)).toHaveLength(2)
-    expect(challengeStats(brief({ kind: 'question', answered_at: '2026-08-10T00:00:00Z' }), now)).toEqual([
+    expect(challengeStats(brief({ status: 'graduated' }), now)).toHaveLength(3)
+    expect(challengeStats(brief({ kind: 'question', answered_at: '2026-08-10T00:00:00Z', save_count: 1 }), now)).toEqual([
       { n: 0, label: 'people in' },
       { n: 0, label: 'answers' },
+      { n: 1, label: 'save' },
     ])
   })
 })

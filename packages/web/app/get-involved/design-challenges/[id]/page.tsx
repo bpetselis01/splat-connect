@@ -250,13 +250,17 @@ export default async function ChallengeDetailPage({
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2.5">
-                {[
-                  question
-                    ? [answers, answers === 1 ? 'answer' : 'answers']
-                    : [makers.length, makers.length === 1 ? 'maker' : 'makers'],
-                  [daysOpen, daysOpen === 1 ? 'day open' : 'days open'],
-                ].map(([n, label]) => (
+              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+                {(
+                  [
+                    question
+                      ? [answers, answers === 1 ? 'answer' : 'answers']
+                      : [makers.length, makers.length === 1 ? 'maker' : 'makers'],
+                    ...(question ? [] : [[answers, answers === 1 ? 'post' : 'posts']]),
+                    [challenge.save_count ?? 0, challenge.save_count === 1 ? 'save' : 'saves'],
+                    [daysOpen, daysOpen === 1 ? 'day open' : 'days open'],
+                  ] as [number, string][]
+                ).map(([n, label]) => (
                   <div key={label} className="rounded-[18px] border border-line bg-[var(--canvas)] px-3.5 py-4 text-center">
                     <p className="font-display text-[26px] font-extrabold tabular-nums">{n}</p>
                     <p className="mt-0.5 text-[13px] font-bold text-muted">{label}</p>
