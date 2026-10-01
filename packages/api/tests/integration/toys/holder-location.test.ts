@@ -55,6 +55,13 @@ const read = async (id: string) => {
   return (await res.json()) as { holder_suburb: string | null; holder_state: string | null }
 }
 
+// Ids and timestamps carry digit runs of their own ("…-2042…", ".230017"); drop
+// them so a postcode check can only match a postcode.
+const withoutIdsOrTimes = (text: string) =>
+  text
+    .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/g, '')
+    .replace(/\d{4}-\d{2}-\d{2}T[\d:.]+(?:Z|[+-]\d{2}:\d{2})?/g, '')
+
 describe('holder location on a public toy', () => {
   it("gives a person's suburb and state, never their street or postcode", async () => {
     const res = await app.request(`/api/public/toys/${personToy}`)
@@ -63,7 +70,7 @@ describe('holder location on a public toy', () => {
     expect(body.holder_suburb).toBe('Newtown')
     expect(body.holder_state).toBe('NSW')
     expect(text).not.toContain('12 Secret St')
-    expect(text).not.toContain('2042')
+    expect(withoutIdsOrTimes(text)).not.toContain('2042')
   })
 
   it("gives an organisation's public suburb, never its pickup address", async () => {
@@ -71,7 +78,7 @@ describe('holder location on a public toy', () => {
     const text = await res.text()
     expect(JSON.parse(text)).toMatchObject({ holder_suburb: 'Newcastle', holder_state: 'NSW' })
     expect(text).not.toContain('5 Private Rd')
-    expect(text).not.toContain('2300')
+    expect(withoutIdsOrTimes(text)).not.toContain('2300')
   })
 
   it('says nothing when the holder has not given a suburb', async () => {
