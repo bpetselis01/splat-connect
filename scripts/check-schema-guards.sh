@@ -449,7 +449,12 @@ select * from (values
   -- for everyone; printers.ts selects it by name, so absent every list 500s.
   ('098 verified(printers) is definer',
    (select count(*) = 1 from pg_proc p
-      where p.pronamespace = 'public'::regnamespace and p.prosecdef and p.proname = 'verified'))
+      where p.pronamespace = 'public'::regnamespace and p.prosecdef and p.proname = 'verified')),
+
+  -- 099. Distance is computed from these points; with RLS off, any key could
+  -- move a postcode and reorder every "near you" list.
+  ('099 postcode_centroids has RLS on',
+   (select relrowsecurity from pg_class where oid = 'public.postcode_centroids'::regclass))
 ) as t(guard, ok)
 where not ok;
 EOSQL
