@@ -198,6 +198,12 @@ type ListedToy = {
   owner_org_id: string | null
 }
 const LISTED_TOY = 'id, name, cover_photo_url, condition, created_at, owner_id, owner_org_id'
+/**
+ * A delivered toy on a public profile: what ShelfToyCard draws and no more.
+ * Read through the admin client (the toy may now be retired or a draft), so
+ * naming columns is what keeps a leader's retired_note off the public page.
+ */
+const DELIVERED_TOY = `${LISTED_TOY}, offer_type`
 
 /**
  * "Also worth a look" (102). Automatic: up to three of the holder's other
@@ -703,7 +709,7 @@ publicRoutes.get('/contributors/:id', async (c) => {
   let toysDelivered: unknown[] = []
   if (deliveredToyIds.length > 0) {
     const results = await Promise.all(
-      chunk(deliveredToyIds).map((ids) => admin.from('toys').select('*').in('id', ids))
+      chunk(deliveredToyIds).map((ids) => admin.from('toys').select(DELIVERED_TOY).in('id', ids))
     )
     const data = results.flatMap((r) => r.data ?? [])
     const error = results.find((r) => r.error)?.error
@@ -883,7 +889,7 @@ publicRoutes.get('/organizations/:id', async (c) => {
   let toysDelivered: unknown[] = []
   if (deliveredToyIds.length > 0) {
     const results = await Promise.all(
-      chunk(deliveredToyIds).map((ids) => admin.from('toys').select('*').in('id', ids))
+      chunk(deliveredToyIds).map((ids) => admin.from('toys').select(DELIVERED_TOY).in('id', ids))
     )
     const data = results.flatMap((r) => r.data ?? [])
     const error = results.find((r) => r.error)?.error

@@ -179,3 +179,37 @@ describe('A big shelf', () => {
     expect(shelf.find((t) => t.id === last)?.has_history).toBe(true)
   })
 })
+
+describe('Public profiles never carry the retire note', () => {
+  const NOTE = 'Gone to the Nguyen family, broken'
+
+  it("keeps a delivered, retired toy's note off the organisation and contributor pages", async () => {
+    const id = await createOrgToy({ orgId, name: 'Delivered bell' })
+    await handover({ toy_id: id, status: 'completed' })
+    // The contributor page reads deliveries by owner_id; the same toy stands in.
+    await handover({ toy_id: id, status: 'completed', owner_org_id: null, owner_id: family.id })
+    await adminClient().from('profiles').update({ public_showcase: true }).eq('id', family.id)
+    const { error } = await adminClient()
+      .from('toys')
+      .update({ retired_at: new Date().toISOString(), retired_note: NOTE })
+      .eq('id', id)
+    if (error) throw new Error(error.message)
+
+    const org = await app.request(`/api/public/organizations/${orgId}`)
+    expect(org.status).toBe(200)
+    const orgText = await org.text()
+    expect(orgText).toContain('Delivered bell')
+    expect(orgText).not.toContain(NOTE)
+
+    const delivered = (JSON.parse(orgText) as { toysDelivered: Array<Record<string, unknown>> }).toysDelivered
+    expect(delivered.every((t) => !('retired_note' in t) && !('retired_at' in t))).toBe(true)
+
+    const person = await app.request(`/api/public/contributors/${family.id}`)
+    expect(person.status).toBe(200)
+    const personText = await person.text()
+    expect(personText).toContain('Delivered bell')
+    expect(personText).not.toContain(NOTE)
+    const given = (JSON.parse(personText) as { toysDelivered: Array<Record<string, unknown>> }).toysDelivered
+    expect(given.every((t) => !('retired_note' in t) && !('retired_at' in t))).toBe(true)
+  })
+})
