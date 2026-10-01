@@ -176,12 +176,6 @@
   "role": "parent",
   "explained": [
    {
-    "type": "missing-section",
-    "match": "nearest first",
-    "why": "pending",
-    "pending": "locations-and-distance"
-   },
-   {
     "type": "picture",
     "match": "search field",
     "why": "intended",

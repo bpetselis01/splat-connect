@@ -14,6 +14,12 @@ import { TEAM_MEMBERS } from '@/app/about/team/page'
 vi.mock('@/lib/capabilities', () => ({ getCapabilities: async () => null }))
 
 describe('About', () => {
+  it('credits the ABS for the postcode centres', () => {
+    render(<AboutPage />)
+    expect(screen.getByRole('link', { name: 'CC BY 4.0' })).toHaveAttribute('href', 'https://creativecommons.org/licenses/by/4.0/')
+    expect(screen.getByText(/Australian Bureau of Statistics/)).toBeInTheDocument()
+  })
+
   it('explains what SPLAT is and what it promises', () => {
     render(<AboutPage />)
     expect(screen.getByRole('heading', { level: 1, name: /^about$/i })).toBeInTheDocument()

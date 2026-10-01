@@ -18,6 +18,7 @@ export default async function AddPrinterPage() {
         ledOrgs={caps.ledOrgs.map((org) => ({ id: org.id, name: org.name }))}
         defaultSuburb={caps.profile.pickup_suburb ?? ''}
         defaultState={caps.profile.pickup_state ?? ''}
+        defaultPostcode={caps.profile.pickup_postcode ?? ''}
       />
     </div>
   )

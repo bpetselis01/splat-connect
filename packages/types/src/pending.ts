@@ -642,6 +642,7 @@ export const PENDING = {
     needs: "Decided 2026-09-30: one profile_thanks table mirroring org thanks (077): note, show_note, optional transaction; notification; only the count is public. Covers printer, exchange, build and profile.",
   },
   'locations-and-distance': {
+    shipped: true,
     title: "Near you",
     blurb: "Sorting and filtering by distance is coming.",
     kind: "build",

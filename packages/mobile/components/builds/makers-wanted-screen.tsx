@@ -189,7 +189,6 @@ export function MakersWantedScreen() {
           <Chip label="Live" active={false} onPress={() => router.push(pendingHref('makers-live-done-tabs'))} />
           <Chip label="Done" active={false} onPress={() => router.push(pendingHref('makers-live-done-tabs'))} />
         </View>
-        {/* PENDING(locations-and-distance) */}
         {capsLoading ? null : postcode ? (
           <View style={styles.ranges}>
             {/* The board's one word, so the chips fit on one row. */}

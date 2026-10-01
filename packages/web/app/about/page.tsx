@@ -96,6 +96,16 @@ export default function AboutPage() {
           </Link>
         ))}
       </div>
+
+      {/* 099. Distance uses ABS postal-area centres; CC BY 4.0 asks for this line. */}
+      <p className="mt-[46px] max-w-prose text-[13px] leading-[1.5] text-muted">
+        Distances use postcode centre points derived from the Australian Bureau of Statistics’ Postal Areas (ASGS
+        Edition 3, 2021), © Commonwealth of Australia, licensed under{' '}
+        <a href="https://creativecommons.org/licenses/by/4.0/" className="underline">
+          CC BY 4.0
+        </a>
+        .
+      </p>
     </div>
   )
 }

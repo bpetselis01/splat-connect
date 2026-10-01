@@ -63,4 +63,26 @@ describe('PrinterDirectory', () => {
     expect(screen.getByText('Library One')).toBeInTheDocument()
     expect(screen.queryByText('Sam Printer')).not.toBeInTheDocument()
   })
+
+  it('filters by the distance from you', () => {
+    render(
+      <PrinterDirectory
+        printers={[{ ...base, id: 'n', owner_name: 'Near Nell', km: 3 }, { ...base, id: 'f', owner_name: 'Far Fred', km: 30 }]}
+        gate={null}
+        hasPostcode
+      />
+    )
+    expect(screen.getByText(/3 km/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Within 5 km' }))
+    expect(screen.queryByText('Far Fred')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Within 25 km' }))
+    expect(screen.queryByText('Far Fred')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Anywhere' }))
+    expect(screen.getByText('Far Fred')).toBeInTheDocument()
+  })
+
+  it('asks for a postcode when the profile has none', () => {
+    render(<PrinterDirectory printers={printers} gate={null} />)
+    expect(screen.getByRole('link', { name: 'Add your postcode' })).toHaveAttribute('href', '/dashboard/profile')
+  })
 })

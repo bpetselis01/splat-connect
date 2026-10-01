@@ -44,8 +44,13 @@ const SKELETON_TINTS = ['var(--tmint)', 'var(--tviolet)', 'var(--tamber)']
 export default async function PrintingPage() {
   const caps = await getCapabilities()
 
+  // 099. Distance needs a viewer postcode the API will accept (4 digits).
+  const postcode = caps?.profile.pickup_postcode?.trim() ?? ''
+  const near = /^\d{4}$/.test(postcode) ? postcode : null
   const printers = caps
-    ? await apiClient.get<PrinterWithOwner[]>('/api/printers').catch(() => [] as PrinterWithOwner[])
+    ? await apiClient
+        .get<PrinterWithOwner[]>(near ? `/api/printers?near=${encodeURIComponent(near)}` : '/api/printers')
+        .catch(() => [] as PrinterWithOwner[])
     : []
 
   // The viewer's own machines are not somewhere they can send a job — the same
@@ -116,6 +121,7 @@ export default async function PrintingPage() {
         </div>
 
         <PrinterDirectory
+          hasPostcode={!!near}
           printers={caps ? theirs : null}
           gate={
             <div className="printing-gate">

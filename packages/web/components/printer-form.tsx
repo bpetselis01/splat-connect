@@ -42,11 +42,13 @@ export function PrinterForm({
   ledOrgs,
   defaultSuburb = '',
   defaultState = '',
+  defaultPostcode = '',
 }: {
   ledOrgs: Pick<Organization, 'id' | 'name'>[]
   /** The viewer's profile pickup suburb and state, as a starting point. */
   defaultSuburb?: string
   defaultState?: string
+  defaultPostcode?: string
 }) {
   const router = useRouter()
   const [materials, setMaterials] = useState<string[]>(['PLA'])
@@ -83,6 +85,7 @@ export function PrinterForm({
           bed_z: Number(form.get('bed_z')),
           suburb: String(form.get('suburb') ?? '').trim(),
           state: String(form.get('state') ?? '').trim(),
+          postcode: String(form.get('postcode') ?? '').trim(),
           capacity,
           accepting,
           notes: String(form.get('notes') ?? '').trim(),
@@ -256,7 +259,7 @@ export function PrinterForm({
             job on.
           </p>
         </div>
-        <div className="grid gap-3.5 sm:grid-cols-[2fr_1fr]">
+        <div className="grid gap-3.5 sm:grid-cols-[2fr_1fr_1fr]">
           <label className={LABEL}>
             Suburb
             <input name="suburb" className={INPUT} maxLength={60} defaultValue={defaultSuburb} />
@@ -264,6 +267,10 @@ export function PrinterForm({
           <label className={LABEL}>
             State
             <input name="state" className={INPUT} maxLength={10} defaultValue={defaultState} />
+          </label>
+          <label className={LABEL}>
+            Postcode
+            <input name="postcode" className={INPUT} inputMode="numeric" maxLength={4} defaultValue={defaultPostcode} />
           </label>
         </div>
         <label className={LABEL}>
