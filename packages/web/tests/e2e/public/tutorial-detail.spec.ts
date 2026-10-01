@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { createContributor, createTutorial, uniqueTitle } from '../helpers'
+import { adminClient, createContributor, createTutorial, uniqueTitle } from '../helpers'
 
 test('the detail page renders a tutorial in full', async ({ page }) => {
   const contributor = await createContributor()
@@ -81,4 +81,17 @@ test('a tutorial with no STL files omits the 3D-print section', async ({ page })
 
   await expect(page.getByRole('tab', { name: 'Files & print settings' })).toHaveCount(0)
   await expect(page.getByRole('link', { name: 'Sign in to download' })).toBeVisible()
+})
+
+test('the parts tab totals the prices once every part has one', async ({ page }) => {
+  const contributor = await createContributor()
+  const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Prices'), status: 'approved' })
+  const admin = adminClient()
+  await admin.from('parts').update({ price_cents: 1250 }).eq('tutorial_id', id)
+  await admin.from('tutorials').update({ prices_checked_on: '2026-08-02' }).eq('id', id)
+
+  await page.goto(`/tutorials/${id}`)
+  await expect(page.getByRole('cell', { name: 'Total' })).toBeVisible()
+  await expect(page.getByRole('cell', { name: '$12.50' }).last()).toBeVisible()
+  await expect(page.getByText('Prices last checked 2 Aug 2026')).toBeVisible()
 })

@@ -165,7 +165,7 @@ it('posts the replace-set for parts and drops rows with no name', async () => {
   })
 
   expect(mockPost).toHaveBeenCalledWith('/api/tutorials/t1/parts', {
-    parts: [{ name: 'Switch', quantity: 2, is_optional: false, buy_links: [] }],
+    parts: [{ name: 'Switch', quantity: 2, is_optional: false, buy_links: [], price_cents: null }],
   })
   expect(draft.tutorial?.parts).toHaveLength(1)
 })

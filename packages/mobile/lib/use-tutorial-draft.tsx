@@ -28,6 +28,8 @@ export interface ItemRow {
   quantity?: number
   is_optional: boolean
   buy_links: BuyLink[]
+  /** Parts only (086). The line at its quantity, in cents. */
+  price_cents?: number | null
   /** Tools only (085). Carried through postItems, or a save erases them. */
   note?: string | null
   get_by?: ToolGetBy | null
@@ -141,6 +143,7 @@ function useTutorialDraft(id: string): TutorialDraft {
           quantity: r.quantity ?? 1,
           is_optional: r.is_optional,
           buy_links: links(r),
+          price_cents: r.price_cents ?? null,
         })),
       })
       setTutorial((prev) => (prev ? { ...prev, parts: saved } : prev))

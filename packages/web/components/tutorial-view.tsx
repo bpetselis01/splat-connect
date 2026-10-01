@@ -70,7 +70,7 @@ import {
   type TutorialOrg,
 } from '@splat-connect/types'
 import { agoInWords } from '@/lib/relative-time'
-import { initials, longDate } from '@splat-connect/types'
+import { checkedOn, formatCents, initials, longDate, partsTotalCents } from '@splat-connect/types'
 
 type Viewable = TutorialWithDetails & {
   tutorial_orgs?: TutorialOrg[]
@@ -152,18 +152,19 @@ export function TutorialView({
 
   const diff = DIFFICULTY[tutorial.difficulty]
   const steps = tutorial.steps ?? []
+  const total = partsTotalCents(tutorial.parts)
 
   /*
-   * The three figures at the top of the rail. The board's are time / parts
-   * cost / steps; this schema has the time but no part prices and no steps
-   * (they live in the PDF), so the other two count what the page lists
-   * instead of inventing a total a parent would plan an evening around.
+   * The three figures at the top of the rail: time / parts cost / steps. The
+   * cost shows only once every required part has a price (partsTotalCents);
+   * until then it counts the parts instead of a total a parent would plan an
+   * evening around and find wrong.
    */
   const stats: Array<[string, string | number]> = [
     ...(tutorial.build_minutes != null
       ? ([['time', formatBuildTime(tutorial.build_minutes)]] as Array<[string, string]>)
       : []),
-    ['parts', tutorial.parts.length],
+    total != null ? ['cost', formatCents(total)] : ['parts', tutorial.parts.length],
     steps.length > 0 ? ['steps', steps.length] : ['tools', tutorial.tools.length],
   ]
 
@@ -192,6 +193,7 @@ export function TutorialView({
               <tr>
                 <th>Part</th>
                 <th>Qty</th>
+                <th>Approx.</th>
                 <th>Where to buy</th>
               </tr>
             </thead>
@@ -203,14 +205,29 @@ export function TutorialView({
                     {p.is_optional && <span className="pill-tag ml-2 text-muted">Optional</span>}
                   </td>
                   <td className="font-mono text-sm">{p.quantity}</td>
+                  <td className="font-mono text-sm">{p.price_cents != null ? formatCents(p.price_cents) : '—'}</td>
                   <td>
                     <BuyLinks item={p.name} links={p.buy_links} />
                   </td>
                 </tr>
               ))}
             </tbody>
+            {total != null && (
+              <tfoot>
+                <tr>
+                  <td colSpan={2} className="font-extrabold">Total</td>
+                  <td className="font-mono text-sm font-extrabold">{formatCents(total)}</td>
+                  <td />
+                </tr>
+              </tfoot>
+            )}
           </table>
         </div>
+      )}
+      {tutorial.prices_checked_on && total != null && (
+        <p className="m-0 -mt-4 text-[13px] text-muted">
+          Prices last checked {checkedOn(tutorial.prices_checked_on)} · Prices change. Treat these as a guide, not a quote — and look online for better before you buy.
+        </p>
       )}
       {tutorial.tools.length > 0 && (
         <div className="flex flex-col gap-3.5">

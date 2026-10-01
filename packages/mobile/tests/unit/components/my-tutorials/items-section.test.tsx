@@ -62,7 +62,7 @@ it('saves a renamed row through the replace-set', () => {
   render(<ItemsSection noun="parts" />)
   fireEvent.changeText(screen.getByLabelText('Part 1 name'), 'Micro switch')
   expect(mockDraft.replaceItems).toHaveBeenCalledWith('parts', [
-    { name: 'Micro switch', quantity: 2, is_optional: false, buy_links: [] },
+    { name: 'Micro switch', quantity: 2, is_optional: false, buy_links: [], price_cents: null },
   ])
 })
 
@@ -73,7 +73,7 @@ it('adds and removes rows', () => {
 
   fireEvent.press(screen.getByTestId('item-remove-0'))
   expect(mockDraft.replaceItems).toHaveBeenLastCalledWith('parts', [
-    { name: '', quantity: 1, is_optional: false, buy_links: [] },
+    { name: '', quantity: 1, is_optional: false, buy_links: [], price_cents: null },
   ])
 })
 
@@ -81,7 +81,7 @@ it('steps a part quantity but never below one', () => {
   render(<ItemsSection noun="parts" />)
   fireEvent.press(screen.getByTestId('item-qty-up-0'))
   expect(mockDraft.replaceItems).toHaveBeenLastCalledWith('parts', [
-    { name: 'Switch', quantity: 3, is_optional: false, buy_links: [] },
+    { name: 'Switch', quantity: 3, is_optional: false, buy_links: [], price_cents: null },
   ])
 
   fireEvent.press(screen.getByTestId('item-qty-down-0'))
@@ -95,7 +95,7 @@ it('toggles optional', () => {
   render(<ItemsSection noun="parts" />)
   fireEvent.press(screen.getByTestId('item-optional-0'))
   expect(mockDraft.replaceItems).toHaveBeenLastCalledWith('parts', [
-    { name: 'Switch', quantity: 2, is_optional: true, buy_links: [] },
+    { name: 'Switch', quantity: 2, is_optional: true, buy_links: [], price_cents: null },
   ])
 })
 
@@ -152,4 +152,15 @@ it('keeps a tool’s note through a rename and sets how to get it', () => {
   expect(mockDraft.replaceItems).toHaveBeenLastCalledWith('tools', [expect.objectContaining({ name: 'Soldering iron', note: 'Borrow one' })])
   fireEvent.press(screen.getByText('Borrow'))
   expect(mockDraft.replaceItems).toHaveBeenLastCalledWith('tools', [expect.objectContaining({ get_by: 'borrow' })])
+})
+
+it('takes a part’s price in dollars and keeps it through a rename', () => {
+  mockDraft.tutorial = { ...mockDraft.tutorial, parts: [{ id: 'p1', name: 'Switch', quantity: 2, is_optional: false, buy_links: [], price_cents: 600 }] }
+  render(<ItemsSection noun="parts" />)
+  fireEvent.changeText(screen.getByLabelText('Part 1 name'), 'Big switch')
+  expect(mockDraft.replaceItems).toHaveBeenLastCalledWith('parts', [expect.objectContaining({ name: 'Big switch', price_cents: 600 })])
+  fireEvent.changeText(screen.getByLabelText('Part 1 price'), '7.')
+  fireEvent.changeText(screen.getByLabelText('Part 1 price'), '7.25')
+  expect(mockDraft.replaceItems).toHaveBeenLastCalledWith('parts', [expect.objectContaining({ price_cents: 725 })])
+  expect(screen.getByDisplayValue('7.25')).toBeTruthy()
 })

@@ -56,7 +56,6 @@ tutorials.get('/mine', async (c) => {
 })
 
 // PENDING(print-settings): layer height, infill, material and print time per guide need columns.
-// PENDING(part-prices): a price per part, for the detail's totals and a build's cost.
 tutorials.get('/:id', async (c) => {
   const supabase = createUserClient(c.get('token'))
   const { data, error } = await supabase
@@ -165,7 +164,7 @@ tutorials.post('/', async (c) => {
 /** Only these may be set through the generic edit endpoint. Unknown keys are
  *  dropped silently; the protected ones return 403 so a caller learns rather than
  *  wonders. */
-const EDITABLE = ['title', 'description', 'difficulty', 'kind', 'maturity', 'build_minutes', 'age_min', 'age_max', 'switch_target', 'switch_force', 'switch_hold', 'tutorial_pdf_url', 'photo_urls', 'status'] as const
+const EDITABLE = ['title', 'description', 'difficulty', 'kind', 'maturity', 'build_minutes', 'age_min', 'age_max', 'switch_target', 'switch_force', 'switch_hold', 'tutorial_pdf_url', 'photo_urls', 'prices_checked_on', 'status'] as const
 const PROTECTED = ['reviewed_by', 'reviewed_for_org_id', 'reviewed_at', 'rejection_note']
 
 async function hasAcceptedContributorTerms(token: string, userId: string) {
@@ -176,6 +175,18 @@ async function hasAcceptedContributorTerms(token: string, userId: string) {
     .eq('agreement_type', 'contributor_terms')
     .limit(1)
   return (data ?? []).length > 0
+}
+
+/**
+ * The limits on the newer guide fields, as sentences (the CHECKs in 086+
+ * repeat them). Only fields present in the body are checked.
+ */
+export function fieldError(body: Record<string, unknown>): string | null {
+  const has = (k: string) => k in body && body[k] !== null
+  if (has('prices_checked_on') && !(typeof body.prices_checked_on === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.prices_checked_on) && !Number.isNaN(Date.parse(body.prices_checked_on)))) {
+    return 'Prices checked must be a date'
+  }
+  return null
 }
 
 tutorials.patch('/:id', async (c) => {
@@ -207,6 +218,9 @@ tutorials.patch('/:id', async (c) => {
   if (typeof body.updated_at !== 'string') {
     return c.json({ error: 'updated_at is required' }, 400)
   }
+
+  const invalid = fieldError(body)
+  if (invalid) return c.json({ error: invalid }, 400)
 
   const update = pickEditable(body, EDITABLE)
   // Not in EDITABLE because the client never chooses the timestamp: it affirms

@@ -76,7 +76,7 @@ describe('DetailScreen', () => {
     render(<DetailScreen id="1" />)
     expect(await screen.findByText('Build a Robot Arm')).toBeTruthy()
     expect(apiClient.get).toHaveBeenCalledWith('/api/public/tutorials/1')
-    expect(screen.getByText('Servo Motor × 2')).toBeTruthy()
+    expect(screen.getByText('Servo Motor ×2')).toBeTruthy()
     expect(screen.getByText('Screwdriver')).toBeTruthy()
   })
 
@@ -118,6 +118,16 @@ describe('DetailScreen', () => {
       pathname: '/guides/[id]/preview',
       params: { id: '1', pdfUrl: '' },
     })
+  })
+
+  it('prices each part and totals them once all are priced', async () => {
+    mockEndpoints({
+      detail: Promise.resolve({ ...DETAIL, prices_checked_on: '2026-08-02', parts: [{ ...DETAIL.parts[0], price_cents: 1250 }] }),
+    })
+    render(<DetailScreen id="1" />)
+    expect(await screen.findByText('Total')).toBeTruthy()
+    expect(screen.getAllByText('$12.50')).toHaveLength(2)
+    expect(screen.getByText('Prices checked 2 Aug 2026')).toBeTruthy()
   })
 
   it('opens Find a printer for this guide when it has printable parts', async () => {

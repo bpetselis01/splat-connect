@@ -3,7 +3,7 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import type { Tutorial, Part, Tool, StlFile, Recommendation, TutorialStep } from '@splat-connect/types'
-import { KIND_LABEL, MATURITY_LABEL, fitLine } from '@splat-connect/types'
+import { KIND_LABEL, MATURITY_LABEL, checkedOn, fitLine, formatCents, partsTotalCents } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { supabase } from '../../lib/supabase'
 import { useSaves } from '../../lib/saves'
@@ -42,22 +42,6 @@ type TutorialDetail = Tutorial & {
   tutorial_orgs: ProvenanceOrg[]
   tutorial_recommendations: Recommendation[]
   steps?: TutorialStep[]
-}
-
-/**
- * One line of the parts or tools list.
- *
- * `label` is deliberately a single Text node: the suite matches the whole
- * string ("Micro switch × 2"), which splitting the quantity into its own
- * element would break.
- */
-function ListRow({ icon, label }: { icon: keyof typeof Ionicons.glyphMap; label: string }) {
-  return (
-    <View style={styles.listRow}>
-      <Ionicons name={icon} size={17} color={theme.colors.primary} />
-      <Text style={styles.listItem}>{label}</Text>
-    </View>
-  )
 }
 
 export function DetailScreen({ id }: { id: string }) {
@@ -144,6 +128,7 @@ export function DetailScreen({ id }: { id: string }) {
   // The board's fit callout: only when the guide suits one of the parent's
   // children. Anything else — no tags, no answers, a mismatch — says nothing.
   const fit = fitLine(tutorial, children)
+  const total = partsTotalCents(tutorial.parts)
   const steps = tutorial.steps ?? []
   const { lead, rest } = splitLead(tutorial.description ?? '')
 
@@ -256,19 +241,27 @@ export function DetailScreen({ id }: { id: string }) {
         </Section>
       ) : null}
 
-      {/* PENDING(part-prices): a cost per line and a Total under the parts. */}
       <Section title="Parts" hint="What you'll need to buy or salvage.">
         {tutorial.parts.length ? (
           tutorial.parts.map((item) => (
-            <ListRow
-              key={item.id}
-              icon="cube-outline"
-              label={`${item.name} × ${item.quantity}${item.is_optional ? ' (optional)' : ''}`}
-            />
+            <View key={item.id} style={styles.listRow}>
+              <Ionicons name="cube-outline" size={17} color={theme.colors.primary} />
+              <Text style={styles.listItem}>{`${item.name} ×${item.quantity}${item.is_optional ? ' (optional)' : ''}`}</Text>
+              {item.price_cents != null ? <Text style={styles.cost}>{formatCents(item.price_cents)}</Text> : null}
+            </View>
           ))
         ) : (
           <Text style={styles.listItem}>No parts listed.</Text>
         )}
+        {total != null ? (
+          <>
+            <View style={styles.totalRow}>
+              <Text style={styles.totalLabel}>Total</Text>
+              <Text style={styles.cost}>{formatCents(total)}</Text>
+            </View>
+            {tutorial.prices_checked_on ? <Text style={styles.checked}>{`Prices checked ${checkedOn(tutorial.prices_checked_on)}`}</Text> : null}
+          </>
+        ) : null}
       </Section>
 
       <GuideTools tutorialId={tutorial.id} tools={tutorial.tools} />
@@ -426,6 +419,10 @@ const styles = StyleSheet.create({
   doneCard: { marginTop: theme.spacing(3), padding: theme.spacing(4), gap: theme.spacing(2), borderRadius: theme.radii.panel, backgroundColor: theme.colors.mintSoft, alignItems: 'center' },
   doneTitle: { fontFamily: theme.fonts.display, fontSize: 20, color: theme.colors.ink },
   doneBody: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.ink, textAlign: 'center' },
+  cost: { fontFamily: theme.fonts.numeral, fontSize: theme.type.caption, color: theme.colors.ink },
+  totalRow: { flexDirection: 'row', justifyContent: 'space-between', padding: theme.spacing(3), borderRadius: theme.radii.field, backgroundColor: theme.colors.accentLight, marginTop: theme.spacing(2) },
+  totalLabel: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.ink },
+  checked: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted, marginTop: theme.spacing(1) },
   listRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3) },
   listItem: {
     flex: 1,

@@ -23,7 +23,15 @@ export function reviewRows(t: TutorialWithDetails): ReviewRow[] {
       meta: !steps.length ? 'No steps yet' : bare ? `${count(steps.length, 'step')}, ${bare} without a photo` : `${count(steps.length, 'step')}, all photographed`,
       ok: steps.length > 0 && bare === 0,
     },
-    { title: 'Parts', meta: t.parts.length ? count(t.parts.length, 'part') : 'No parts listed', ok: t.parts.length > 0 },
+    {
+      title: 'Parts',
+      meta: !t.parts.length
+        ? 'No parts listed'
+        : t.parts.every((p) => p.price_cents != null)
+          ? `${count(t.parts.length, 'part')} with prices`
+          : `${count(t.parts.length, 'part')}, ${t.parts.filter((p) => p.price_cents == null).length} without a price`,
+      ok: t.parts.length > 0,
+    },
     {
       title: 'Tools',
       meta: !t.tools.length ? 'No tools listed' : optionalTools === t.tools.length ? count(t.tools.length, 'optional tool') : count(t.tools.length, 'tool'),

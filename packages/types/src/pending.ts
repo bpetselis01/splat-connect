@@ -592,6 +592,7 @@ export const PENDING = {
     needs: "Decided 2026-09-30: yes, web and mobile. A private tutorial_builds table with a SECURITY DEFINER count; feeds My SPLAT, the author's builds-logged stat and the 100-builds badge.",
   },
   'part-prices': {
+    shipped: true,
     title: "Part prices",
     blurb: "Prices for each part and a total are coming.",
     kind: "build",

@@ -88,7 +88,7 @@ describe('ReviewDetailScreen', () => {
     expect(screen.getByText('By Sam')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Open the tutorial PDF' })).toBeTruthy()
     expect(screen.getByText('6 sections, 4 complete.')).toBeTruthy()
-    expect(screen.getByText('2 parts')).toBeTruthy()
+    expect(screen.getByText('2 parts, 2 without a price')).toBeTruthy()
     expect(mockGet).toHaveBeenCalledWith('/api/tutorials/t1')
   })
 

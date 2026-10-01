@@ -114,6 +114,7 @@ describe('sectionSummary', () => {
   it('describes what is there once a section is complete', () => {
     expect(sectionSummary('details', base())).toBe('Toy adaptation - Easy')
     expect(sectionSummary('parts', base())).toBe('1 part')
+    expect(sectionSummary('parts', base({ parts: [{ is_optional: false, price_cents: 5800 }] as never }))).toBe('1 part, $58.00 total')
     expect(
       sectionSummary('tools', base({ tools: [{ name: 'a' }, { name: 'b' }] as never }))
     ).toBe('2 tools')

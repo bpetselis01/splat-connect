@@ -7,6 +7,7 @@ import { EditFilesSection } from '@/components/edit-files-section'
 import { AddStlForm } from '@/components/add-stl-form'
 import { StlSettingsForm, type StlSettings } from '@/components/stl-settings-form'
 import { EditItemsSection, type ItemInput } from '@/components/edit-items-section'
+import { PricesCheckedField } from '@/components/prices-checked-field'
 import { EditBackingSection } from '@/components/edit-backing-section'
 import { EditDetailsSection } from '@/components/edit-details-section'
 import { EditStepsSection, type StepInput } from '@/components/edit-steps-section'
@@ -193,6 +194,12 @@ export default async function EditTutorialPage({
     revalidatePath(`/tutorials/${id}/edit`)
   }
 
+  async function savePricesChecked(date: string | null) {
+    'use server'
+    await patchTutorialFiles(id, { prices_checked_on: date })
+    revalidatePath(`/tutorials/${id}/edit`)
+  }
+
   async function saveSteps(steps: StepInput[]) {
     'use server'
     await apiClient.put(`/api/tutorials/${id}/steps`, { steps })
@@ -291,7 +298,7 @@ export default async function EditTutorialPage({
       id: 'parts',
       label: 'Parts',
       icon: <Nut size={19} weight="duotone" aria-hidden="true" />,
-      hint: 'Everything a family has to buy, and where to buy it.',
+      hint: 'Everything a family has to buy, with a rough price.',
       status: stepStatuses.parts,
       content: (
         <div className="panel pt-5">
@@ -303,6 +310,7 @@ export default async function EditTutorialPage({
             initialItems={parts}
             onSave={saveParts}
           />
+          <PricesCheckedField value={tutorial.prices_checked_on ?? null} onSave={savePricesChecked} />
         </div>
       ),
     },

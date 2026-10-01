@@ -5,7 +5,7 @@ import { PanelActions, useSaveOnLeave } from '@/components/panel-actions'
 // noun="part" withQuantity or noun="tool"; `withQuantity` is the only
 // structural difference between them.
 import { useRef, useState } from 'react'
-import { TOOL_GET_BY_LABEL, type BuyLink, type ToolGetBy } from '@splat-connect/types'
+import { TOOL_GET_BY_LABEL, dollarsToCents, formatCents, type BuyLink, type ToolGetBy } from '@splat-connect/types'
 import { BuyLinksInput } from '@/components/buy-links-input'
 import { useToast } from '@/components/toast'
 import { SaveStatusLine } from '@/components/save-status-line'
@@ -16,6 +16,7 @@ export type EditableItem = {
   is_optional: boolean
   buy_links: BuyLink[]
   quantity?: number
+  price_cents?: number | null
   note?: string | null
   get_by?: ToolGetBy | null
 }
@@ -25,6 +26,7 @@ export type ItemInput = {
   is_optional: boolean
   buy_links: BuyLink[]
   quantity?: number
+  price_cents?: number | null
   note?: string | null
   get_by?: ToolGetBy | null
 }
@@ -103,7 +105,7 @@ export function EditItemsSection({ noun, withQuantity, withNotes, initialItems, 
       name: item.name,
       is_optional: item.is_optional,
       buy_links: item.buy_links,
-      ...(withQuantity ? { quantity: item.quantity ?? 1 } : {}),
+      ...(withQuantity ? { quantity: item.quantity ?? 1, price_cents: item.price_cents ?? null } : {}),
       // Carried through, never rebuilt: the list is replaced whole on save.
       ...(withNotes ? { note: item.note ?? null, get_by: item.get_by ?? null } : {}),
     }
@@ -184,7 +186,7 @@ export function EditItemsSection({ noun, withQuantity, withNotes, initialItems, 
       name,
       is_optional: data.get('is_optional') === 'on',
       buy_links: rawLinks ? JSON.parse(rawLinks) : [],
-      ...(withQuantity ? { quantity: Number(data.get('quantity') ?? 1) } : {}),
+      ...(withQuantity ? { quantity: Number(data.get('quantity') ?? 1), price_cents: dollarsToCents((data.get('price') as string) ?? '') } : {}),
       ...(withNotes ? { note: ((data.get('note') as string) ?? '').trim() || null, get_by: ((data.get('get_by') as ToolGetBy) || null) } : {}),
     }
   }
@@ -287,6 +289,7 @@ export function EditItemsSection({ noun, withQuantity, withNotes, initialItems, 
               {withQuantity && <span className="bom-qty numeral">{i.quantity}</span>}
               <span className="bom-name">
                 <span className="truncate">{i.name}</span>
+                {withQuantity && i.price_cents != null && <span className="numeral text-sm text-muted">{formatCents(i.price_cents)}</span>}
                 {i.is_optional && (
                   <span className="badge bg-sunken text-brand-deep">Optional</span>
                 )}
@@ -314,6 +317,16 @@ export function EditItemsSection({ noun, withQuantity, withNotes, initialItems, 
                       }
                       className={inputCls}
                       placeholder="Quantity"
+                    />
+                  )}
+                  {withQuantity && (
+                    <input
+                      aria-label="Price"
+                      inputMode="decimal"
+                      defaultValue={draft.price_cents == null ? '' : (draft.price_cents / 100).toFixed(2)}
+                      onChange={(e) => setDraft((d) => (d ? { ...d, price_cents: dollarsToCents(e.target.value) } : d))}
+                      className={inputCls}
+                      placeholder="Price for the line, e.g. 6.50"
                     />
                   )}
                   <label className="flex cursor-pointer select-none items-center gap-2 text-sm">
@@ -427,6 +440,9 @@ export function EditItemsSection({ noun, withQuantity, withNotes, initialItems, 
                 placeholder="Quantity"
                 className={inputCls}
               />
+            )}
+            {withQuantity && (
+              <input name="price" aria-label={`New ${noun} price`} inputMode="decimal" placeholder="Price for the line, e.g. 6.50" className={inputCls} />
             )}
             <label className="flex cursor-pointer select-none items-center gap-2 text-sm">
               <input type="checkbox" name="is_optional" className="field-check" />

@@ -159,4 +159,18 @@ describe('EditItemsSection (parts)', () => {
       expect(screen.getByText('Failed to save, please try again')).toBeInTheDocument()
     )
   })
+
+  it('saves a line price in cents and keeps it through a rename', async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined)
+    render(
+      <EditItemsSection noun="part" withQuantity initialItems={[{ id: 'p1', name: 'Relay', quantity: 1, is_optional: false, buy_links: [], price_cents: 600 }]} onSave={onSave} />
+    )
+    fireEvent.click(screen.getByText('Edit'))
+    fireEvent.change(screen.getByDisplayValue('Relay'), { target: { value: 'Relay module' } })
+    fireEvent.change(screen.getByLabelText('Price'), { target: { value: '6.50' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await waitFor(() =>
+      expect(onSave).toHaveBeenCalledWith([{ name: 'Relay module', quantity: 1, is_optional: false, buy_links: [], price_cents: 650 }])
+    )
+  })
 })

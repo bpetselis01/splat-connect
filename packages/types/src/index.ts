@@ -4,7 +4,7 @@ export * from './nav-model'
 // lines above export nothing at runtime there. Named re-exports do.
 export { contributorBadges } from './contributor-badges'
 export type { ContributorBadge, ContributorBadgeInput } from './contributor-badges'
-export { TOOL_GET_BY_LABEL } from './guides'
+export { TOOL_GET_BY_LABEL, partsTotalCents, checkedOn } from './guides'
 export type { ToolGetBy } from './guides'
 import type { ToolGetBy } from './guides'
 export { buildCalendar } from './ics'
@@ -1824,6 +1824,8 @@ export interface Tutorial {
   has_stl?: boolean
   /** Up to MAX_PHOTOS, in display order. The first is the cover. */
   photo_urls: string[]
+  /** 086. When the author last checked the part prices. */
+  prices_checked_on?: string | null
   /** Generated from photo_urls[1] by the database (053). Read-only — a write
    *  naming this column is rejected, so set photo_urls instead. */
   toy_photo_url: string | null
@@ -1861,6 +1863,8 @@ export interface Part {
   quantity: number
   is_optional: boolean
   buy_links: BuyLink[]
+  /** 086. The line at its quantity, in cents; null = not priced. */
+  price_cents?: number | null
 }
 
 export interface Tool {

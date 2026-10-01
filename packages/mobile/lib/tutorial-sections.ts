@@ -8,7 +8,7 @@
 // other rule is the same eight lines in the same order — a change there is the
 // reminder to bring this copy along.
 import type { Difficulty, TutorialKind, TutorialWithDetails } from '@splat-connect/types'
-import { KIND_LABEL } from '@splat-connect/types'
+import { KIND_LABEL, formatCents, partsTotalCents } from '@splat-connect/types'
 
 // 'steps' (080) is optional: no gap ever names it, so it never blocks submit
 // and Next never lands on it — a contributor opens it from the hub.
@@ -119,8 +119,10 @@ export function sectionSummary(section: SectionId, t: TutorialWithDetails): stri
     }
     case 'safety':
       return t.safety_declared_at ? 'Declared' : 'Not declared yet'
-    case 'parts':
-      return t.parts.length ? count(t.parts.length, 'part') : 'None yet - at least one'
+    case 'parts': {
+      const total = partsTotalCents(t.parts)
+      return t.parts.length ? `${count(t.parts.length, 'part')}${total != null ? `, ${formatCents(total)} total` : ''}` : 'None yet - at least one'
+    }
     case 'tools':
       return t.tools.length ? count(t.tools.length, 'tool') : 'None yet - at least one'
     case 'files': {

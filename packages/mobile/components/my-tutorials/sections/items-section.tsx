@@ -11,22 +11,21 @@
 import { useState } from 'react'
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { TOOL_GET_BY_LABEL, type ToolGetBy } from '@splat-connect/types'
+import { TOOL_GET_BY_LABEL, dollarsToCents, type ToolGetBy } from '@splat-connect/types'
 import { useDraft, type ItemRow } from '../../../lib/use-tutorial-draft'
 import { theme } from '../../../lib/theme'
 import { Screen } from '../../ui/Screen'
 import { TextField } from '../../ui/TextField'
 import { Button } from '../../ui/Button'
 import { Chip } from '../../ui/Chip'
+import { DateTimeField } from '../../ui/DateTimeField'
 import { ErrorRow } from '../../ui/ErrorRow'
 import { SectionFooter } from '../section-footer'
 import { DraftGate } from './draft-gate'
 
 const NOUN_LABEL = { parts: 'Part', tools: 'Tool' } as const
 
-// PENDING(part-prices): a price or note per part, and a total on the hub.
-// The board's lead for parts, less what waits on part-prices ("with a rough price").
-const LEAD = { parts: 'Everything a family has to buy.', tools: 'What they need on the bench, and what can be borrowed.' }
+const LEAD = { parts: 'Everything a family has to buy, with a rough price.', tools: 'What they need on the bench, and what can be borrowed.' }
 
 // The editor mounts once the draft has arrived (see DraftGate).
 export function ItemsSection({ noun }: { noun: 'parts' | 'tools' }) {
@@ -34,18 +33,24 @@ export function ItemsSection({ noun }: { noun: 'parts' | 'tools' }) {
 }
 
 function ItemsEditor({ noun }: { noun: 'parts' | 'tools' }) {
-  const { tutorial, replaceItems, saveError } = useDraft()
+  const { tutorial, replaceItems, save, saveError } = useDraft()
   const withQuantity = noun === 'parts'
   const withNotes = noun === 'tools'
   const singular = NOUN_LABEL[noun]
 
   const [linksOpen, setLinksOpen] = useState<number | null>(null)
+  // What was typed in each price field: '7.' is not yet an amount, so the text
+  // is kept per row while price_cents holds the last amount that parsed.
+  const [priceText, setPriceText] = useState<Record<number, string>>({})
+  // Same for the prices-checked date: a half-typed date must not reach the API.
+  const [checkedText, setCheckedText] = useState<string | null>(null)
   const [rows, setRows] = useState<ItemRow[]>(() =>
     ((tutorial?.[noun] ?? []) as ItemRow[]).map((r) => ({
       name: r.name,
       quantity: withQuantity ? (r.quantity ?? 1) : undefined,
       is_optional: r.is_optional,
       buy_links: r.buy_links ?? [],
+      ...(withQuantity ? { price_cents: r.price_cents ?? null } : {}),
       ...(withNotes ? { note: r.note ?? null, get_by: r.get_by ?? null } : {}),
     }))
   )
@@ -127,13 +132,28 @@ function ItemsEditor({ noun }: { noun: 'parts' | 'tools' }) {
                 testID={`item-remove-${i}`}
                 accessibilityRole="button"
                 accessibilityLabel={`Remove ${singular.toLowerCase()} ${i + 1}`}
-                onPress={() => commit(rows.filter((_, n) => n !== i))}
+                onPress={() => {
+                  setPriceText({})
+                  commit(rows.filter((_, n) => n !== i))
+                }}
                 style={styles.remove}
                 hitSlop={8}
               >
                 <Ionicons name="close" size={18} color={theme.colors.danger} />
               </Pressable>
             </View>
+            {withQuantity ? (
+              <TextField
+                accessibilityLabel={`Part ${i + 1} price`}
+                placeholder="$6 — the line at its quantity"
+                keyboardType="decimal-pad"
+                value={priceText[i] ?? (row.price_cents == null ? '' : (row.price_cents / 100).toFixed(2))}
+                onChangeText={(text) => {
+                  setPriceText((p) => ({ ...p, [i]: text }))
+                  update(i, { price_cents: text.trim() ? dollarsToCents(text) : null })
+                }}
+              />
+            ) : null}
             {noun === 'tools' ? (
               <>
                 <TextField
@@ -203,11 +223,24 @@ function ItemsEditor({ noun }: { noun: 'parts' | 'tools' }) {
                 quantity: withQuantity ? 1 : undefined,
                 is_optional: false,
                 buy_links: [],
+                ...(withQuantity ? { price_cents: null } : {}),
                 ...(withNotes ? { note: null, get_by: null } : {}),
               },
             ])
           }
         />
+        {withQuantity ? (
+          <DateTimeField
+            label="Prices checked"
+            mode="date"
+            placeholder="Choose a date"
+            value={checkedText ?? tutorial.prices_checked_on ?? ''}
+            onChange={(v) => {
+              setCheckedText(v)
+              if (!v || /^\d{4}-\d{2}-\d{2}$/.test(v)) save({ prices_checked_on: v || null })
+            }}
+          />
+        ) : null}
         <ErrorRow message={saveError} />
       </ScrollView>
       <SectionFooter section={noun} />
