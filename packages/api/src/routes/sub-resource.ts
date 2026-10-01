@@ -32,8 +32,8 @@ export function subResourceRoutes<Item>(opts: {
     const rows = items.map((item, i) => opts.mapRow(item, tutorialId, i))
 
     const { data, error } = await supabase.from(opts.table).insert(rows).select()
-    // 23514: a CHECK refused a value the validator let through — the caller's, not ours.
-    if (error) return c.json({ error: error.message }, error.code === '23514' ? 400 : 500)
+    // 23514: a CHECK refused a value. 42501: RLS refused — not this guide's contributor.
+    if (error) return c.json({ error: error.message }, error.code === '23514' ? 400 : error.code === '42501' ? 403 : 500)
     return c.json(data, 201)
   })
 

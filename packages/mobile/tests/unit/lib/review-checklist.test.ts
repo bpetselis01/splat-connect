@@ -34,3 +34,8 @@ it('says when every part has a price', () => {
   const priced = { ...base, parts: [{ is_optional: false, price_cents: 600 }, { is_optional: false, price_cents: 0 }] }
   expect(reviewRows(priced as never).find((r) => r.title === 'Parts')).toEqual({ title: 'Parts', meta: '2 parts with prices', ok: true })
 })
+
+it('counts the author’s safety notes', () => {
+  const noted = { ...base, safety_notes: [{ title: 'a' }, { title: 'b' }] }
+  expect(reviewRows(noted as never).find((r) => r.title === 'Safety notes')).toEqual({ title: 'Safety notes', meta: '2 notes · checklist affirmed', ok: true })
+})

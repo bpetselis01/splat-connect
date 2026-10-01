@@ -37,7 +37,14 @@ export function reviewRows(t: TutorialWithDetails): ReviewRow[] {
       meta: !t.tools.length ? 'No tools listed' : optionalTools === t.tools.length ? count(t.tools.length, 'optional tool') : count(t.tools.length, 'tool'),
       ok: t.tools.length > 0,
     },
-    { title: 'Safety notes', meta: t.safety_declared_at ? 'Checklist affirmed' : 'Checklist not affirmed', ok: Boolean(t.safety_declared_at) },
+    {
+      title: 'Safety notes',
+      meta: [t.safety_notes?.length ? count(t.safety_notes.length, 'note') : null, t.safety_declared_at ? 'checklist affirmed' : 'checklist not affirmed']
+        .filter(Boolean)
+        .join(' · ')
+        .replace(/^c/, 'C'),
+      ok: Boolean(t.safety_declared_at),
+    },
     {
       title: 'Files',
       meta: [pdf ? 'PDF' : 'No PDF yet', stl ? count(stl, 'STL file') : needsStl ? 'no STL yet' : 'none needed to print'].join(' · '),

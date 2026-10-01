@@ -113,8 +113,8 @@ describe('GET /:id', () => {
   it('returns single tutorial', async () => {
     mockUserClient.from.mockReturnValue({
       // order() sorts the recommendations embed, then the steps embed (080),
-      // by position.
-      select: () => ({ eq: () => ({ order: () => ({ order: () => ({ single: () => ({ data: { id: '1', title: 'T1' }, error: null }) }) }) }) }),
+      // by position, then the safety notes (090).
+      select: () => ({ eq: () => ({ order: () => ({ order: () => ({ order: () => ({ single: () => ({ data: { id: '1', title: 'T1' }, error: null }) }) }) }) }) }),
     })
     const res = await makeApp().request('/1')
     expect(res.status).toBe(200)
@@ -126,7 +126,7 @@ describe('GET /:id', () => {
   //        of crashing with a null data error when the component tries to render
   it('returns 404 when tutorial not found', async () => {
     mockUserClient.from.mockReturnValue({
-      select: () => ({ eq: () => ({ order: () => ({ order: () => ({ single: () => ({ data: null, error: { message: 'not found' } }) }) }) }) }),
+      select: () => ({ eq: () => ({ order: () => ({ order: () => ({ order: () => ({ single: () => ({ data: null, error: { message: 'not found' } }) }) }) }) }) }),
     })
     const res = await makeApp().request('/nonexistent')
     expect(res.status).toBe(404)
@@ -142,7 +142,7 @@ describe('GET /:id', () => {
   //        crash on exactly the case the "Not yet approved" badge exists for.
   it('fills in a recommendation target the caller cannot read', async () => {
     mockUserClient.from.mockReturnValue({
-      select: () => ({ eq: () => ({ order: () => ({ order: () => ({ single: () => ({
+      select: () => ({ eq: () => ({ order: () => ({ order: () => ({ order: () => ({ single: () => ({
         data: {
           id: '1',
           title: 'T1',
@@ -152,7 +152,7 @@ describe('GET /:id', () => {
           ],
         },
         error: null,
-      }) }) }) }) }),
+      }) }) }) }) }) }),
     })
     const inMock = vi.fn(() => ({ data: [{ id: 'hidden', title: 'Hidden', kind: 'toy_adaptation', difficulty: 'easy', toy_photo_url: null, status: 'pending' }], error: null }))
     mockAdminClient.from.mockReturnValue({ select: () => ({ in: inMock }) })

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { View, Text, ScrollView, Pressable, Image, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import type { Tutorial, Part, Tool, StlFile, Recommendation, TutorialStep } from '@splat-connect/types'
+import type { Tutorial, Part, Tool, StlFile, Recommendation, TutorialStep, TutorialSafetyNote } from '@splat-connect/types'
 import { KIND_LABEL, MATURITY_LABEL, checkedOn, fitLine, formatCents, partsTotalCents, printSettingRows } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { supabase } from '../../lib/supabase'
@@ -42,6 +42,7 @@ type TutorialDetail = Tutorial & {
   tutorial_orgs: ProvenanceOrg[]
   tutorial_recommendations: Recommendation[]
   steps?: TutorialStep[]
+  safety_notes?: TutorialSafetyNote[]
 }
 
 export function DetailScreen({ id }: { id: string }) {
@@ -284,6 +285,17 @@ export function DetailScreen({ id }: { id: string }) {
 
       <GuideTools tutorialId={tutorial.id} tools={tutorial.tools} />
 
+      {tutorial.safety_notes?.length ? (
+        <Section title="Safety notes">
+          {tutorial.safety_notes.map((n) => (
+            <View key={n.id} style={styles.safetyNote}>
+              <Text style={styles.safetyTitle}>{n.title}</Text>
+              {n.detail ? <Text style={styles.description}>{n.detail}</Text> : null}
+            </View>
+          ))}
+        </Section>
+      ) : null}
+
       {/* The way into printing. Keyed on the guide having STL files rather than
           on its kind: a print request's parts ARE those files, so a guide
           without any has nothing to ask for, whatever kind it is. */}
@@ -347,6 +359,8 @@ export function DetailScreen({ id }: { id: string }) {
 }
 
 const styles = StyleSheet.create({
+  safetyNote: { paddingVertical: theme.spacing(2), gap: theme.spacing(1) },
+  safetyTitle: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.ink },
   settings: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2) },
   setting: { width: '48%', padding: theme.spacing(2), borderRadius: theme.radii.field, backgroundColor: theme.colors.surfaceSunken },
   settingKey: { fontFamily: theme.fonts.bold, fontSize: 12, color: theme.colors.muted },

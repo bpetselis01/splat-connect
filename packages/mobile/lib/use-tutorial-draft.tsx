@@ -13,7 +13,7 @@
 // 250ms: writes queue on one promise chain so a second save always sees the
 // updated_at the first established, rather than racing it into a 400.
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
-import type { BuyLink, Part, Tool, ToolGetBy, TutorialStep, TutorialWithDetails } from '@splat-connect/types'
+import type { BuyLink, Part, Tool, ToolGetBy, TutorialSafetyNote, TutorialStep, TutorialWithDetails } from '@splat-connect/types'
 import { apiClient } from './api-client'
 
 // GET /api/tutorials/:id embeds this join (reviewer/reviewed_for name); it is
@@ -42,6 +42,12 @@ export interface StepRow {
   photo_url: string | null
 }
 
+/** One editable safety note (090). Blank-titled rows are never sent. */
+export interface SafetyNoteRow {
+  title: string
+  detail: string | null
+}
+
 export type DraftSaveState = 'idle' | 'saving' | 'saved' | 'error'
 
 const SAVE_ERROR = 'Could not save. Your changes are still here - try again.'
@@ -63,6 +69,8 @@ export interface TutorialDraft {
   replaceItems: (noun: 'parts' | 'tools', rows: ItemRow[]) => void
   /** Debounced PUT of the whole step list, in order. */
   replaceSteps: (rows: StepRow[]) => void
+  /** Debounced replace-set POST of the author's safety notes. */
+  replaceSafetyNotes: (rows: SafetyNoteRow[]) => void
   /** Send anything pending now — called when a section screen is left. */
   flush: () => Promise<void>
   reload: () => void
@@ -79,6 +87,7 @@ function useTutorialDraft(id: string): TutorialDraft {
   const pendingFields = useRef<Record<string, unknown>>({})
   const pendingItems = useRef<Partial<Record<'parts' | 'tools', ItemRow[]>>>({})
   const pendingSteps = useRef<StepRow[] | null>(null)
+  const pendingSafety = useRef<SafetyNoteRow[] | null>(null)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const savedTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const writes = useRef<Promise<unknown>>(Promise.resolve())
@@ -163,6 +172,12 @@ function useTutorialDraft(id: string): TutorialDraft {
     setTutorial((prev) => (prev ? { ...prev, steps: saved } : prev))
   }
 
+  async function postSafetyNotes(rows: SafetyNoteRow[]) {
+    const safety_notes = rows.filter((r) => r.title.trim()).map((r) => ({ title: r.title, detail: r.detail }))
+    const saved = await apiClient.post<TutorialSafetyNote[]>(`/api/tutorials/${id}/safety-notes`, { safety_notes })
+    setTutorial((prev) => (prev ? { ...prev, safety_notes: saved } : prev))
+  }
+
   /** Drain whatever is queued, on the one write chain. */
   function drain(): Promise<void> {
     const fields = pendingFields.current
@@ -171,9 +186,11 @@ function useTutorialDraft(id: string): TutorialDraft {
     pendingItems.current = {}
     const steps = pendingSteps.current
     pendingSteps.current = null
+    const safety = pendingSafety.current
+    pendingSafety.current = null
     const hasFields = Object.keys(fields).length > 0
     const nouns = Object.keys(items) as ('parts' | 'tools')[]
-    if (!hasFields && nouns.length === 0 && !steps) return writes.current as Promise<void>
+    if (!hasFields && nouns.length === 0 && !steps && !safety) return writes.current as Promise<void>
 
     writes.current = writes.current
       .then(async () => {
@@ -182,6 +199,7 @@ function useTutorialDraft(id: string): TutorialDraft {
         if (hasFields) await patchNow(fields)
         for (const noun of nouns) await postItems(noun, items[noun] as ItemRow[])
         if (steps) await putSteps(steps)
+        if (safety) await postSafetyNotes(safety)
         setSaveState('saved')
         // "Saved" is news, and news goes stale. One provider serves the hub and
         // all six sections, so a chip left reading Saved followed the
@@ -225,6 +243,11 @@ function useTutorialDraft(id: string): TutorialDraft {
     schedule()
   }
 
+  function replaceSafetyNotes(rows: SafetyNoteRow[]) {
+    pendingSafety.current = rows
+    schedule()
+  }
+
   async function saveNow(fields: Record<string, unknown>) {
     pendingFields.current = { ...pendingFields.current, ...fields }
     if (timer.current) clearTimeout(timer.current)
@@ -253,6 +276,7 @@ function useTutorialDraft(id: string): TutorialDraft {
     saveNow,
     replaceItems,
     replaceSteps,
+    replaceSafetyNotes,
     flush,
     reload: () => setReloadKey((k) => k + 1),
   }

@@ -10,6 +10,7 @@ import { EditItemsSection, type ItemInput } from '@/components/edit-items-sectio
 import { PricesCheckedField } from '@/components/prices-checked-field'
 import { EditBackingSection } from '@/components/edit-backing-section'
 import { EditDetailsSection } from '@/components/edit-details-section'
+import { EditSafetyNotesSection } from '@/components/edit-safety-notes-section'
 import { EditStepsSection, type StepInput } from '@/components/edit-steps-section'
 import { EditCollaboratorsSection } from '@/components/edit-collaborators-section'
 import { EditRecommendationsSection } from '@/components/edit-recommendations-section'
@@ -206,6 +207,12 @@ export default async function EditTutorialPage({
     revalidatePath(`/tutorials/${id}/edit`)
   }
 
+  async function saveSafetyNotes(notes: { title: string; detail: string | null }[]) {
+    'use server'
+    await apiClient.post(`/api/tutorials/${id}/safety-notes`, { safety_notes: notes })
+    revalidatePath(`/tutorials/${id}/edit`)
+  }
+
   async function saveTools(newTools: ItemInput[]) {
     'use server'
     await apiClient.post(`/api/tutorials/${id}/tools`, { tools: newTools })
@@ -261,6 +268,7 @@ export default async function EditTutorialPage({
       content: (
         <div className="panel pt-5">
           <EditDetailsSection tutorial={tutorial!} onSave={saveDetails} />
+          <EditSafetyNotesSection notes={(tutorial!.safety_notes ?? []).map((n) => ({ title: n.title, detail: n.detail }))} onSave={saveSafetyNotes} />
         </div>
       ),
     },

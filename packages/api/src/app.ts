@@ -11,6 +11,7 @@ import pdfImport from './routes/pdf-import.js'
 import upload from './routes/upload.js'
 import parts from './routes/parts.js'
 import tools from './routes/tools.js'
+import safetyNotes from './routes/safety-notes.js'
 import stlFiles from './routes/stl-files.js'
 import recommendations from './routes/recommendations.js'
 import admin from './routes/admin.js'
@@ -60,6 +61,7 @@ app.route('/api/tutorials', tutorials)
 app.route('/api/upload', upload)
 app.route('/api/tutorials', parts)
 app.route('/api/tutorials', tools)
+app.route('/api/tutorials', safetyNotes)
 app.route('/api/tutorials', stlFiles)
 app.route('/api/tutorials', recommendations)
 app.route('/api/tutorials', tutorialOrgs)

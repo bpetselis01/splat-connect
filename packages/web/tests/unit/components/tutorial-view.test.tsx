@@ -188,3 +188,19 @@ describe('print settings', () => {
     expect(screen.getByText('3 h 10')).toBeInTheDocument()
   })
 })
+
+describe('safety notes', () => {
+  it('lists the author’s safety notes under the checklist', () => {
+    // A second section, or the tab strip is not drawn.
+    const parts = [{ id: 'p1', tutorial_id: 't1', name: 'Switch', quantity: 1, is_optional: false, buy_links: [] }]
+    render(
+      <TutorialView
+        signedIn
+        tutorial={tutorial({ parts, safety_declared_at: '2026-09-01T00:00:00Z', safety_notes: [{ id: 'n', tutorial_id: 't1', position: 1, title: 'Battery door must be screwed shut', detail: 'Add the screw.' }] })}
+      />
+    )
+    fireEvent.click(screen.getByRole('tab', { name: 'Safety' }))
+    expect(screen.getByText('Battery door must be screwed shut')).toBeInTheDocument()
+    expect(screen.getByText('Add the screw.')).toBeInTheDocument()
+  })
+})

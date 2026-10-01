@@ -321,15 +321,30 @@ export function TutorialView({
     </div>
   )
 
+  const safetyNotes = tutorial.safety_notes ?? []
   const safety = (
-    <ul className="m-0 flex list-none flex-col gap-3 rounded-[var(--radius-inset)] border border-line bg-surface p-5 shadow-e2">
-      {SAFETY_CHECKLIST.map((s) => (
-        <li key={s} className="flex items-start gap-3 font-semibold text-ink">
-          <CheckCircle size={24} weight="fill" className="flex-none text-success" aria-hidden="true" />
-          {s}
-        </li>
-      ))}
-    </ul>
+    <>
+      {tutorial.safety_declared_at && (
+        <ul className="m-0 flex list-none flex-col gap-3 rounded-[var(--radius-inset)] border border-line bg-surface p-5 shadow-e2">
+          {SAFETY_CHECKLIST.map((s) => (
+            <li key={s} className="flex items-start gap-3 font-semibold text-ink">
+              <CheckCircle size={24} weight="fill" className="flex-none text-success" aria-hidden="true" />
+              {s}
+            </li>
+          ))}
+        </ul>
+      )}
+      {safetyNotes.length > 0 && (
+        <ul className="m-0 mt-4 flex list-none flex-col gap-3 p-0">
+          {safetyNotes.map((n) => (
+            <li key={n.id} className="rounded-[var(--radius-inset)] border border-line bg-surface p-4">
+              <p className="m-0 font-extrabold text-ink">{n.title}</p>
+              {n.detail && <p className="m-0 mt-1 text-sm leading-[1.55] text-ink">{n.detail}</p>}
+            </li>
+          ))}
+        </ul>
+      )}
+    </>
   )
 
   const stepList = (
@@ -368,7 +383,7 @@ export function TutorialView({
       ? [{ key: 'parts', label: 'Parts & tools', content: partsAndTools }]
       : []),
     ...(showFiles ? [{ key: 'files', label: 'Files & print settings', content: files }] : []),
-    ...(tutorial.safety_declared_at ? [{ key: 'safety', label: 'Safety', content: safety }] : []),
+    ...(tutorial.safety_declared_at || safetyNotes.length > 0 ? [{ key: 'safety', label: 'Safety', content: safety }] : []),
   ]
 
   const recs = tutorial.tutorial_recommendations ?? []

@@ -245,4 +245,11 @@ describe('DetailScreen thanks', () => {
     await waitFor(() => expect(apiClient.get).toHaveBeenCalledWith('/api/tutorials/1/thanks'))
     expect(screen.queryByRole('button', { name: 'Thanks' })).toBeNull()
   })
+
+  it('lists the author’s safety notes', async () => {
+    mockEndpoints({ detail: Promise.resolve({ ...DETAIL, safety_notes: [{ id: 'n', tutorial_id: '1', position: 1, title: 'Battery door must be screwed shut', detail: 'Add the screw.' }] }) })
+    render(<DetailScreen id="1" />)
+    expect(await screen.findByText('Safety notes')).toBeTruthy()
+    expect(screen.getByText('Battery door must be screwed shut')).toBeTruthy()
+  })
 })

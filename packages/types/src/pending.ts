@@ -721,6 +721,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["mobile", "api"],
     needs: "Decided 2026-09-30: a list of safety notes (title + detail) per guide, as a sub-resource like tools; editor section plus rendering on web and mobile guide detail.",
+    shipped: true,
   },
   'toy-pause-unavailable': {
     title: "Mark unavailable",

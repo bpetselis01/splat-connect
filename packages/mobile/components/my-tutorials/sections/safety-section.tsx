@@ -3,19 +3,28 @@
 // Its own screen rather than a block at the bottom of Details, because it is
 // its own gate: a guide cannot be submitted without it, and a checklist buried
 // under three chip rows was one nobody read.
-import { Text, ScrollView, Pressable, StyleSheet } from 'react-native'
+import { useState } from 'react'
+import { Text, ScrollView, Pressable, StyleSheet, View } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { SAFETY_CHECKLIST } from '@splat-connect/types'
-import { useDraft } from '../../../lib/use-tutorial-draft'
+import { useDraft, type SafetyNoteRow } from '../../../lib/use-tutorial-draft'
 import { theme } from '../../../lib/theme'
 import { Screen } from '../../ui/Screen'
 import { ErrorRow } from '../../ui/ErrorRow'
 import { SectionFooter } from '../section-footer'
-import { PendingButton } from '../../ui/pending'
+import { Button } from '../../ui/Button'
+import { TextField } from '../../ui/TextField'
 
 export function SafetySection() {
-  const { tutorial, save, saveError } = useDraft()
+  const { tutorial, save, saveError, replaceSafetyNotes } = useDraft()
+  const [notes, setNotes] = useState<SafetyNoteRow[]>(() =>
+    (tutorial?.safety_notes ?? []).map((n) => ({ title: n.title, detail: n.detail }))
+  )
   if (!tutorial) return null
+  const commit = (next: SafetyNoteRow[]) => {
+    setNotes(next)
+    replaceSafetyNotes(next)
+  }
 
   const declared = tutorial.safety_declared_at
 
@@ -53,7 +62,30 @@ export function SafetySection() {
           </Pressable>
         )}
 
-        <PendingButton pending="editor-safety-notes" label="Add a safety note" variant="ghost" />
+        <Text style={styles.label}>Your safety notes</Text>
+        {notes.map((n, i) => (
+          <View key={i} style={styles.note}>
+            <TextField
+              accessibilityLabel={`Safety note ${i + 1} title`}
+              placeholder="Battery door must be screwed shut"
+              maxLength={80}
+              value={n.title}
+              onChangeText={(title) => commit(notes.map((x, k) => (k === i ? { ...x, title } : x)))}
+            />
+            <TextField
+              accessibilityLabel={`Safety note ${i + 1} detail`}
+              placeholder="The base clips by default. Add the screw."
+              maxLength={500}
+              multiline
+              value={n.detail ?? ''}
+              onChangeText={(detail) => commit(notes.map((x, k) => (k === i ? { ...x, detail: detail || null } : x)))}
+            />
+            <Button label="Remove" variant="ghost" onPress={() => commit(notes.filter((_, k) => k !== i))} />
+          </View>
+        ))}
+        {notes.length < 20 ? (
+          <Button label="+ Add a safety note" variant="ghost" onPress={() => commit([...notes, { title: '', detail: null }])} />
+        ) : null}
         <ErrorRow message={saveError} />
       </ScrollView>
       <SectionFooter section="safety" />
@@ -89,6 +121,14 @@ const styles = StyleSheet.create({
     gap: theme.spacing(2),
     marginTop: theme.spacing(4),
   },
+  label: {
+    fontFamily: theme.fonts.bold,
+    fontSize: theme.type.label,
+    color: theme.colors.ink,
+    marginTop: theme.spacing(5),
+    marginBottom: theme.spacing(2),
+  },
+  note: { marginBottom: theme.spacing(3) },
   tickText: {
     flex: 1,
     fontFamily: theme.fonts.regular,

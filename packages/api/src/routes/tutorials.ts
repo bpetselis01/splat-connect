@@ -75,7 +75,7 @@ tutorials.get('/:id', async (c) => {
     // badges the ones a parent cannot see yet, and this route is the only one
     // that tells it which those are. The public route strips them instead.
     .select(
-      '*, parts(*), tools(*), stl_files(*), steps:tutorial_steps(*), tutorial_contributors(*, profiles(id, name, role, created_at)), \
+      '*, parts(*), tools(*), stl_files(*), steps:tutorial_steps(*), safety_notes:tutorial_safety_notes(*), tutorial_contributors(*, profiles(id, name, role, created_at)), \
 tutorial_collaborator_invites(*, profiles:invited_profile_id(id, name, role, created_at)), \
 tutorial_recommendations!tutorial_id(position, recommended_id, tutorials!recommended_id(id, title, kind, difficulty, toy_photo_url, status, maturity)), \
 reviewer:reviewed_by(name), reviewed_for:reviewed_for_org_id(name)'
@@ -83,6 +83,7 @@ reviewer:reviewed_by(name), reviewed_for:reviewed_for_org_id(name)'
     .eq('id', c.req.param('id'))
     .order('position', { referencedTable: 'tutorial_recommendations', ascending: true })
     .order('position', { referencedTable: 'steps', ascending: true })
+    .order('position', { referencedTable: 'safety_notes', ascending: true })
     .single()
   if (error) return c.json({ error: error.message }, 404)
 

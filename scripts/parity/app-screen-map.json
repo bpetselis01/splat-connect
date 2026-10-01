@@ -597,15 +597,7 @@
   "boardRoute": "tutorials/[id]/safety",
   "route": "/tutorials/[id]/safety",
   "idFrom": "editor",
-  "role": "contributor",
-  "explained": [
-   {
-    "type": "missing-section",
-    "match": "no inputs on live",
-    "why": "pending",
-    "pending": "editor-safety-notes"
-   }
-  ]
+  "role": "contributor"
  },
  {
   "id": "ed_stl",

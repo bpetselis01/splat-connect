@@ -93,7 +93,7 @@ publicRoutes.get('/tutorials/:id', async (c) => {
     // points at tutorials twice, and PostgREST refuses an ambiguous embed
     // outright rather than guessing. See the same select in tutorials.ts.
     .select(
-      '*, thanks_count, parts(*), tools(*), stl_files(*), steps:tutorial_steps(*), tutorial_contributors(profile_id, role, former_names, former_count, profiles(name)), ' +
+      '*, thanks_count, parts(*), tools(*), stl_files(*), steps:tutorial_steps(*), safety_notes:tutorial_safety_notes(*), tutorial_contributors(profile_id, role, former_names, former_count, profiles(name)), ' +
         'tutorial_orgs(status, organizations(id, name)), ' +
         'tutorial_recommendations!tutorial_id(position, tutorials!recommended_id(id, title, kind, difficulty, toy_photo_url, status, maturity)), ' +
         'reviewer:reviewed_by(name), reviewed_for:reviewed_for_org_id(name)'
@@ -102,6 +102,7 @@ publicRoutes.get('/tutorials/:id', async (c) => {
     .eq('status', 'approved')
     .order('position', { referencedTable: 'tutorial_recommendations', ascending: true })
     .order('position', { referencedTable: 'steps', ascending: true })
+    .order('position', { referencedTable: 'safety_notes', ascending: true })
     .single()
   if (error) return c.json({ error: error.message }, 404)
   // Filter the embed here rather than in the select: PostgREST cannot constrain an

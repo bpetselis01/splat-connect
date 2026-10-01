@@ -1945,6 +1945,8 @@ export interface TutorialWithDetails extends Tutorial {
   /** 080. Both detail routes embed them, ordered by position. Optional so the
    *  fixtures that predate steps need not name them. */
   steps?: TutorialStep[]
+  /** 090. Both detail routes embed them, ordered by position. */
+  safety_notes?: TutorialSafetyNote[]
 }
 
 // UploadDraft lived here: the in-progress state of the six-step upload wizard,
@@ -2127,6 +2129,15 @@ export type SaveSlug = keyof typeof SAVE_SLUGS
 
 /** GET /api/saves/ids — every saved id the caller has, grouped by slug. */
 export type SavedIds = Record<SaveSlug, string[]>
+
+/** 090. One of the author's own safety notes, beside SAFETY_CHECKLIST. */
+export interface TutorialSafetyNote {
+  id: string
+  tutorial_id: string
+  position: number
+  title: string
+  detail: string | null
+}
 
 /** 080. One numbered step of a guide, alongside the PDF. */
 export interface TutorialStep {

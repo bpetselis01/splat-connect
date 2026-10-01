@@ -18,6 +18,7 @@ const mockDraft = {
   save: jest.fn(),
   saveNow: jest.fn(),
   replaceItems: jest.fn(),
+  replaceSafetyNotes: jest.fn(),
   flush: jest.fn().mockResolvedValue(undefined),
   reload: jest.fn(),
 }
@@ -61,4 +62,11 @@ it('shows the declaration once made and offers no way to unmake it', () => {
   render(<SafetySection />)
   expect(screen.getByText(/Declared on/)).toBeTruthy()
   expect(screen.queryByTestId('safety-declare')).toBeNull()
+})
+
+it('adds a safety note and saves the list', () => {
+  render(<SafetySection />)
+  fireEvent.press(screen.getByText('+ Add a safety note'))
+  fireEvent.changeText(screen.getByLabelText('Safety note 1 title'), 'Battery door must be screwed shut')
+  expect(mockDraft.replaceSafetyNotes).toHaveBeenLastCalledWith([{ title: 'Battery door must be screwed shut', detail: null }])
 })
