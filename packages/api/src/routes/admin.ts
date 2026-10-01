@@ -894,11 +894,12 @@ admin.get('/test-prints', async (c) => {
   const machine = new Map((machines ?? []).map((m) => [m.id as string, m]))
   const personIds = (machines ?? []).map((m) => m.owner_id).filter((id): id is string => !!id)
   const orgIds = (machines ?? []).map((m) => m.owner_org_id).filter((id): id is string => !!id)
-  const [{ data: people }, { data: orgs }, { data: signed }] = await Promise.all([
+  const [{ data: people }, { data: orgs }, { data: signed, error: signError }] = await Promise.all([
     personIds.length ? supabase.from('profiles').select('id, name').in('id', personIds) : Promise.resolve({ data: [] }),
     orgIds.length ? supabase.from('organizations').select('id, name').in('id', orgIds) : Promise.resolve({ data: [] }),
     supabase.storage.from('printer-test-prints').createSignedUrls(rows.map((r) => r.photo_path as string), 600),
   ])
+  if (signError) console.error('[admin/test-prints] signing photos failed:', signError.message)
   const nameOf = new Map(
     [...(people ?? []), ...(orgs ?? [])].map((x) => [(x as { id: string }).id, (x as { name: string }).name])
   )
@@ -936,11 +937,18 @@ admin.patch('/test-prints/:id', async (c) => {
     .from('printer_test_prints')
     .update({ verdict: body.verdict, note: note || null, reviewed_by: c.get('userId'), reviewed_at: new Date().toISOString() })
     .eq('id', c.req.param('id'))
+    // Decided once: verified() reads the latest reviewed_at, so re-deciding an
+    // old print would override a newer verdict. Atomic, not read-then-write.
+    .is('verdict', null)
     .select('id, verdict, note')
     .maybeSingle()
   if (error && error.code !== INVALID_TEXT_REPRESENTATION) return c.json({ error: error.message }, 500)
-  if (!data) return c.json({ error: 'No such test print' }, 404)
-  return c.json(data)
+  if (data) return c.json(data)
+  const { data: exists } = error
+    ? { data: null }
+    : await createAdminClient().from('printer_test_prints').select('id').eq('id', c.req.param('id')).maybeSingle()
+  if (exists) return c.json({ error: 'This test print has already been decided.' }, 409)
+  return c.json({ error: 'No such test print' }, 404)
 })
 
 /**

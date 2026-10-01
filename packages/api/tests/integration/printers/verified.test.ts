@@ -125,6 +125,24 @@ describe('098 verified printers', () => {
     expect((await patch(staff, { verdict: 'pass', note: 'Clean layers.' })).status).toBe(200)
   })
 
+  it('refuses to re-decide a decided test print, so an old verdict cannot override a newer one', async () => {
+    const { data } = await adminClient().from('printer_test_prints').select('id').eq('printer_id', printerId).single()
+    const res = await app.request(`/api/admin/test-prints/${data!.id}`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${staff.token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ verdict: 'fail' }),
+    })
+    expect(res.status).toBe(409)
+    const { data: after } = await adminClient().from('printer_test_prints').select('verdict, note').eq('id', data!.id).single()
+    expect(after).toEqual({ verdict: 'pass', note: 'Clean layers.' })
+    const missing = await app.request(`/api/admin/test-prints/${crypto.randomUUID()}`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${staff.token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ verdict: 'pass' }),
+    })
+    expect(missing.status).toBe(404)
+  })
+
   it(`is verified only once ${VERIFIED_MIN_JOBS} jobs are completed too`, async () => {
     await completeJobs(VERIFIED_MIN_JOBS - 1)
     expect(await verified()).toBe(false)
