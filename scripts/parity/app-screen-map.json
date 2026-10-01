@@ -601,7 +601,15 @@
   "boardRoute": "tutorials/[id]/safety",
   "route": "/tutorials/[id]/safety",
   "idFrom": "editor",
-  "role": "contributor"
+  "role": "contributor",
+  "explained": [
+   {
+    "type": "colour",
+    "match": "input background",
+    "why": "intended",
+    "reason": "The board fills a field with canvas only inside its white section card; the app's fields sit on the page and take the surface."
+   }
+  ]
  },
  {
   "id": "ed_stl",
