@@ -88,3 +88,28 @@ describe('IncomingPrintCard, grouped requests', () => {
     expect(await screen.findByText('Another printer has already taken this job.')).toBeTruthy()
   })
 })
+
+// Tests: the family's customization answers (096) reach the printer under the
+//        note, and a job without them draws no empty lines.
+describe('IncomingPrintCard, customization answers', () => {
+  it('lists the answers under the note', () => {
+    render(
+      <IncomingPrintCard
+        tx={{ ...tx, print_note: 'Blue please', print_fit_notes: { reach: '20–40 cm', tray: '15 mm' } }}
+        defaultAddress={null}
+      />
+    )
+    expect(screen.getByText('Reach from seated: 20–40 cm')).toBeTruthy()
+    expect(screen.getByText('Tray thickness: 15 mm')).toBeTruthy()
+  })
+
+  it('shows the answers even without a note', () => {
+    render(<IncomingPrintCard tx={{ ...tx, print_fit_notes: { mount: 'None' } }} defaultAddress={null} />)
+    expect(screen.getByText('Mount needed: None')).toBeTruthy()
+  })
+
+  it('draws none when there are no answers', () => {
+    render(<IncomingPrintCard tx={{ ...tx, print_note: 'Blue please', print_fit_notes: null }} defaultAddress={null} />)
+    expect(screen.queryByText(/Reach from seated|Mount needed/)).toBeNull()
+  })
+})

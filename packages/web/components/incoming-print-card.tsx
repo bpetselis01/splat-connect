@@ -35,7 +35,7 @@ import {
 } from '@phosphor-icons/react/dist/ssr'
 import type { PickupAddress, PrinterWithOwner, ToyTransactionSummary } from '@splat-connect/types'
 import { browserApiClient } from '@/lib/browser-api-client'
-import { apiErrorDetail, isApiError } from '@splat-connect/types'
+import { apiErrorDetail, fitNotesLines, isApiError } from '@splat-connect/types'
 import { othersAskedLabel, rankMachines } from '@/lib/print-groups'
 import { AcceptPickupDialog } from '@/components/accept-pickup-dialog'
 import { filamentLabel, printFilesLine, printTimeLabel } from '@/lib/print-settings'
@@ -76,6 +76,7 @@ export function IncomingPrintCard({
   const [benchId, setBenchId] = useState(ranked[0]?.printer.id ?? null)
   const bench = ranked.find((m) => m.printer.id === benchId) ?? null
   const others = othersAskedLabel(tx.print_group_size)
+  const fitLines = fitNotesLines(tx.print_fit_notes)
 
   function run(path: string, body: object) {
     setError(null)
@@ -162,7 +163,7 @@ export function IncomingPrintCard({
         </p>
       )}
 
-      {(tx.print_note || tx.requester_suburb) && (
+      {(tx.print_note || tx.requester_suburb || fitLines.length > 0) && (
         <div className="flex items-start gap-3.5 rounded-[18px] bg-[var(--b100)] px-4 py-3.5 text-[var(--tink)]">
           <ChatCircleText
             size={26}
@@ -178,6 +179,13 @@ export function IncomingPrintCard({
             </p>
             {tx.print_note && (
               <p className="mt-1 text-sm leading-normal">&ldquo;{tx.print_note}&rdquo;</p>
+            )}
+            {fitLines.length > 0 && (
+              <ul className="mt-1 list-none text-sm leading-normal">
+                {fitLines.map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
+              </ul>
             )}
           </div>
         </div>

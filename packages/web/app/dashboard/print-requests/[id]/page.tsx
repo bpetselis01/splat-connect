@@ -26,7 +26,7 @@ import {
 } from '@phosphor-icons/react/dist/ssr'
 import { requireCapabilities } from '@/lib/require-capabilities'
 import { apiClient } from '@/lib/api-client'
-import { initials, isOwnerSide, pickupAddress, printRequestExpired } from '@splat-connect/types'
+import { fitNotesLines, initials, isOwnerSide, pickupAddress, printRequestExpired } from '@splat-connect/types'
 import type {
   PickupAddress,
   ToyTransactionDetail,
@@ -115,6 +115,7 @@ export default async function PrintJobPage({ params }: { params: Promise<{ id: s
   const stages = printStages(tx)
   const facts = printStageFacts(tx, viewerIsPrinter)
 
+  const fitLines = fitNotesLines(tx.print_fit_notes)
   const partCount = tx.print_files.reduce((n, file) => n + file.quantity, 0)
   // Where this job stands with the one printer it went to — the board's
   // "Printers asked" card, which a job with a single machine has one row of.
@@ -322,6 +323,13 @@ export default async function PrintJobPage({ params }: { params: Promise<{ id: s
                   <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-ink">
                     {tx.print_note}
                   </p>
+                )}
+                {fitLines.length > 0 && (
+                  <ul className="mt-2 flex list-none flex-col gap-1 text-sm text-ink">
+                    {fitLines.map((line) => (
+                      <li key={line}>{line}</li>
+                    ))}
+                  </ul>
                 )}
               </Disclosure>
             </div>
