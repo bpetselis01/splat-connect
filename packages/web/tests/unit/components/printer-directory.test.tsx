@@ -85,4 +85,15 @@ describe('PrinterDirectory', () => {
     render(<PrinterDirectory printers={printers} gate={null} />)
     expect(screen.getByRole('link', { name: 'Add your postcode' })).toHaveAttribute('href', '/dashboard/profile')
   })
+
+  it('offers no distance to a guest', () => {
+    render(<PrinterDirectory printers={null} gate={null} />)
+    expect(screen.queryByText('Distance from you')).toBeNull()
+    expect(screen.queryByRole('link', { name: 'Add your postcode' })).toBeNull()
+  })
+
+  it('shows no km for a printer with no distance', () => {
+    render(<PrinterDirectory printers={[{ ...base, km: null }]} gate={null} hasPostcode />)
+    expect(screen.queryByText(/· \d+ km/)).toBeNull()
+  })
 })

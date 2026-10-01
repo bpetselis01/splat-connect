@@ -123,7 +123,9 @@ export function PrinterDirectory({
   }
 
   const shown = (printers ?? []).filter((p) => matches(p, filters))
-  const chips = FACETS.flatMap((facet) =>
+  // Distance is for signed-in viewers: a guest gets no km from the API.
+  const facets = FACETS.filter((f) => f.key !== 'dist' || printers)
+  const chips = facets.flatMap((facet) =>
     facet.opts
       .filter(([v]) => filters[facet.key] === v)
       .map(([v, label]) => ({ label, clear: () => toggle(facet.key, v) }))
@@ -133,7 +135,7 @@ export function PrinterDirectory({
     <div className="browse-layout">
       <BrowseFilters onClear={() => setFilters({})}>
 
-        {FACETS.map((facet) => (
+        {facets.map((facet) => (
           <fieldset key={facet.key}>
             <legend>
               <facet.icon
@@ -152,17 +154,17 @@ export function PrinterDirectory({
                 </Link>
               ) : (
                 facet.opts.map(([value, label, Icon]) => (
-                <button
-                  key={value}
-                  type="button"
-                  aria-pressed={filters[facet.key] === value}
-                  onClick={() => toggle(facet.key, value)}
-                  className="chip gap-1.5"
-                >
-                  <Icon size={14} weight="bold" className="text-brand-dark" aria-hidden="true" />
-                  {label}
-                </button>
-              ))
+                  <button
+                    key={value}
+                    type="button"
+                    aria-pressed={filters[facet.key] === value}
+                    onClick={() => toggle(facet.key, value)}
+                    className="chip gap-1.5"
+                  >
+                    <Icon size={14} weight="bold" className="text-brand-dark" aria-hidden="true" />
+                    {label}
+                  </button>
+                ))
               )}
             </div>
           </fieldset>
