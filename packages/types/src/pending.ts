@@ -309,6 +309,13 @@ export const PENDING = {
     platforms: ["web"],
     needs: "The web print request asks the four customization questions the phone asks",
   },
+  'org-print-preselect': {
+    title: "Ask this organisation to print",
+    blurb: "Asking this organisation straight from its profile is coming. Choose it from the printers for now.",
+    kind: "build",
+    platforms: ["mobile"],
+    needs: "\"Ask them to print\" from an org profile preselects that org",
+  },
   'message-printer': {
     title: "Message the printer",
     blurb: "Messaging the printer from here is coming. Use the job thread for now.",

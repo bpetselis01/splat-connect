@@ -203,6 +203,7 @@ export function OrgProfileScreen({ id }: { id: string }) {
               ))}
               {payments.length > 0 ? <Fact k="Paid back by" v={payments.join(' · ')} /> : null}
               {org.rate_note ? <Text style={styles.quote}>“{org.rate_note}”</Text> : null}
+              {/* PENDING(org-print-preselect): opens the request with no printer chosen; it should preselect this org. */}
               <Button label="Ask them to print" variant="secondary" onPress={() => router.push('/printing')} />
             </View>
           ) : null}
