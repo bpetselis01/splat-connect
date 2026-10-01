@@ -8,7 +8,8 @@
  * - PATCH /api/toys/:id           → update one
  * - PATCH /api/toys/:id/publish   → publish, once a photo (and one tagged as
  *                                   showing the switch, if switch_adapted) exists
- * - DELETE /api/toys/:id          → remove one
+ * - DELETE /api/toys/:id          → remove one with no handovers on record (409
+ *                                   otherwise: 026's cascade would erase them)
  *
  * There is deliberately no GET /:id — nothing in the UI needs a single-row
  * fetch outside the collection.
@@ -21,7 +22,7 @@
  * mapped to 404 rather than 500 for the same reason.
  */
 import { Hono } from 'hono'
-import { createUserClient } from '../supabase/client.js'
+import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import { pickEditable } from './pick-editable.js'
 import { ledOrgIds, ownedByCaller } from '../toy-access.js'
@@ -117,8 +118,28 @@ async function checkFacts(
 // organisation's stock, and 033's toys_person_single_unit constraint would
 // reject a person setting it anyway — this keeps the rejection at the trust
 // boundary rather than at the database, and keeps the individual path unable to
-// reach a column the confirm branch assumes is 1.
-const ORG_EDITABLE = [...EDITABLE, 'quantity'] as const
+// reach a column the confirm branch assumes is 1. retired_at/retired_note
+// likewise: 101 allows them on org toys only.
+const ORG_EDITABLE = [...EDITABLE, 'quantity', 'retired_at', 'retired_note'] as const
+
+/**
+ * Toy ids among `ids` that any toy_transactions row names, as the toy or as
+ * the offered one. Admin client: the caller may not be a party to every
+ * handover (a person's toy that changed hands carries its giver's rows).
+ */
+// ponytail: one query, ids inlined in the URL — fine for a shelf of hundreds;
+// past PostgREST's 1000-row cap a toy may read has_history false, and DELETE
+// still refuses it, so the miss is a Remove button that answers 409.
+async function idsWithHistory(ids: string[]): Promise<Set<string>> {
+  if (ids.length === 0) return new Set()
+  const list = ids.join(',')
+  const { data, error } = await createAdminClient()
+    .from('toy_transactions')
+    .select('toy_id, offered_toy_id')
+    .or(`toy_id.in.(${list}),offered_toy_id.in.(${list})`)
+  if (error) throw new Error(error.message)
+  return new Set((data ?? []).flatMap((t) => [t.toy_id, t.offered_toy_id]).filter((id): id is string => !!id && ids.includes(id)))
+}
 
 function editableFrom(body: Record<string, unknown>, isOrgToy = false) {
   const fields = isOrgToy ? ORG_EDITABLE : EDITABLE
@@ -177,7 +198,9 @@ toys.get('/inventory', async (c) => {
     .in('owner_org_id', orgIds)
     .order('created_at', { ascending: false })
   if (error) return c.json({ error: error.message }, 500)
-  return c.json(data)
+  // has_history: Remove is offered only on a toy no handover names.
+  const history = await idsWithHistory(data.map((t) => t.id))
+  return c.json(data.map((t) => ({ ...t, has_history: history.has(t.id) })))
 })
 
 toys.post('/', async (c) => {
@@ -246,6 +269,15 @@ toys.patch('/:id', async (c) => {
   if (isOrgToy && body.quantity !== undefined && readQuantity(body.quantity) === null) {
     return c.json({ error: 'Quantity must be a whole number, 1 or more' }, 400)
   }
+  if (isOrgToy) {
+    if (badTimestamp(body, 'retired_at')) return c.json({ error: 'Retiring needs a date, or nothing to bring it back.' }, 400)
+    if ('retired_note' in body && body.retired_note !== null) {
+      if (typeof body.retired_note !== 'string' || body.retired_note.trim().length > 80) {
+        return c.json({ error: 'Keep the reason to 80 characters.' }, 400)
+      }
+      body.retired_note = body.retired_note.trim() || null
+    }
+  }
 
   // A toy that has a photo keeps one. Not a check constraint, because a draft
   // legitimately starts empty and would be unsaveable at creation — the rule is
@@ -309,6 +341,23 @@ toys.patch('/:id/publish', async (c) => {
 toys.delete('/:id', async (c) => {
   const supabase = createUserClient(c.get('token'))
   const orgIds = await ledOrgIds(supabase, c.get('userId'))
+  // Holder first, so an outsider gets the same 404 whether or not it has history.
+  const { data: held, error: readError } = await supabase
+    .from('toys')
+    .select('id')
+    .eq('id', c.req.param('id'))
+    .or(ownedByCaller(c.get('userId'), orgIds))
+    .maybeSingle()
+  if (readError) {
+    if (readError.code === INVALID_TEXT_REPRESENTATION) return c.json({ error: 'Not found' }, 404)
+    return c.json({ error: readError.message }, 500)
+  }
+  if (!held) return c.json({ error: 'Not found' }, 404)
+  // 026's on delete cascade would take the toy's handovers with it, and
+  // "Delivered all time" with them. A toy with history stays, retired.
+  if ((await idsWithHistory([held.id])).size > 0) {
+    return c.json({ error: 'This toy has handovers on record, so it stays on the shelf as retired.' }, 409)
+  }
   const { data, error } = await supabase
     .from('toys')
     .delete()

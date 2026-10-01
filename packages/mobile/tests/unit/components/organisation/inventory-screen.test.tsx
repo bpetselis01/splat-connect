@@ -1,11 +1,15 @@
 // packages/mobile/tests/unit/components/organisation/inventory-screen.test.tsx
-import { render, screen, fireEvent } from '@testing-library/react-native'
+import { Alert } from 'react-native'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { InventoryScreen } from '../../../../components/organisation/inventory-screen'
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
 
 const mockGet = jest.fn()
-jest.mock('../../../../lib/api-client', () => ({ apiClient: { get: (...a: unknown[]) => mockGet(...a) } }))
+const mockDelete = jest.fn()
+jest.mock('../../../../lib/api-client', () => ({
+  apiClient: { get: (...a: unknown[]) => mockGet(...a), delete: (...a: unknown[]) => mockDelete(...a) },
+}))
 
 const mockPush = jest.fn()
 jest.mock('expo-router', () => {
@@ -56,6 +60,8 @@ beforeEach(() => {
   mockUseCapabilities.mockReturnValue(leader([{ id: 'org1', name: 'Riverside Therapy' }]))
   mockGet.mockResolvedValue([])
 })
+
+afterEach(() => jest.restoreAllMocks())
 
 describe('InventoryScreen', () => {
   it('lists the stock with quantity and status', async () => {
@@ -118,5 +124,60 @@ describe('InventoryScreen', () => {
 
     expect(await screen.findByText('This screen belongs to organisation leaders.')).toBeTruthy()
     expect(mockGet).not.toHaveBeenCalled()
+  })
+
+  it('shows a retired toy with its reason, and removes it from the shelf', async () => {
+    mockGet.mockResolvedValue([
+      stock({ id: 'toy1', name: 'Spinning top', quantity: 1, retired_at: '2026-08-12T00:00:00Z', retired_note: 'Broken 12 Aug', has_history: false }),
+    ])
+    mockDelete.mockResolvedValue({ id: 'toy1' })
+    jest.spyOn(Alert, 'alert').mockImplementation((_t, _m, buttons) => {
+      buttons?.find((b) => b.text === 'Remove')?.onPress?.()
+    })
+    render(<InventoryScreen />)
+    expect(await screen.findByText('Retired')).toBeTruthy()
+    expect(screen.getByText('Broken 12 Aug')).toBeTruthy()
+    fireEvent.press(screen.getByText('Remove'))
+    await waitFor(() => expect(mockDelete).toHaveBeenCalledWith('/api/toys/toy1'))
+    expect(await screen.findByText('Spinning top removed from the shelf')).toBeTruthy()
+    expect(screen.queryByText('Broken 12 Aug')).toBeNull()
+  })
+
+  it('keeps a retired toy with handovers on record: the pill and reason, no Remove', async () => {
+    mockGet.mockResolvedValue([
+      stock({ id: 'toy1', name: 'Spinning top', quantity: 1, retired_at: '2026-08-12T00:00:00Z', retired_note: 'Broken 12 Aug', has_history: true }),
+    ])
+    render(<InventoryScreen />)
+    expect(await screen.findByText('Retired')).toBeTruthy()
+    expect(screen.getByText('Broken 12 Aug')).toBeTruthy()
+    expect(screen.queryByText('Remove')).toBeNull()
+  })
+
+  it('offers no Remove on a toy still on offer', async () => {
+    mockGet.mockResolvedValue([stock({ id: 'toy1', name: 'Bear', has_history: false })])
+    render(<InventoryScreen />)
+    await screen.findByText('Bear')
+    expect(screen.queryByText('Remove')).toBeNull()
+  })
+
+  it("says why when the API refuses to remove a toy with history", async () => {
+    mockGet.mockResolvedValue([
+      stock({ id: 'toy1', name: 'Spinning top', quantity: 1, retired_at: '2026-08-12T00:00:00Z', retired_note: null, has_history: false }),
+    ])
+    mockDelete.mockRejectedValue(
+      new Error('API DELETE /api/toys/toy1 failed with status 409: This toy has handovers on record, so it stays on the shelf as retired.')
+    )
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation((_t, _m, buttons) => {
+      buttons?.find((b) => b.text === 'Remove')?.onPress?.()
+    })
+    render(<InventoryScreen />)
+    fireEvent.press(await screen.findByText('Remove'))
+    await waitFor(() =>
+      expect(alertSpy).toHaveBeenCalledWith(
+        'Could not remove Spinning top',
+        'This toy has handovers on record, so it stays on the shelf as retired.'
+      )
+    )
+    expect(screen.getByText('Spinning top')).toBeTruthy()
   })
 })

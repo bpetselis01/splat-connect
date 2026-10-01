@@ -144,4 +144,10 @@ describe('ToyEditor', () => {
     expect(await screen.findByRole('button', { name: 'Take requests again' })).toBeInTheDocument()
     expect(browserApiClient.patch).toHaveBeenCalledWith('/api/toys/t1', { paused_at: expect.any(String) })
   })
+
+  it('offers no pause control on a retired toy', () => {
+    render(<ToyEditor toy={toy({ status: 'published', owner_id: null, owner_org_id: 'org1', retired_at: '2026-08-12T00:00:00Z' })} />)
+    expect(screen.queryByRole('button', { name: 'Mark unavailable' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Take requests again' })).toBeNull()
+  })
 })

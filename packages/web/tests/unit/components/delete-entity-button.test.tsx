@@ -115,6 +115,20 @@ describe('DeleteEntityButton', () => {
     expect(screen.getByLabelText(/to confirm/i)).toHaveValue('confirm_delete_Child_1')
   })
 
+  it("shows the API's reason when it refuses the delete", async () => {
+    vi.mocked(browserApiClient.delete).mockRejectedValue(
+      new Error('API DELETE /api/toys/t1 failed with status 409: This toy has handovers on record, so it stays on the shelf as retired.')
+    )
+    openDialog('toy', '/api/toys/t1', '/dashboard/toys')
+    fireEvent.change(screen.getByLabelText(/to confirm/i), { target: { value: 'confirm_delete_toy' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'This toy has handovers on record, so it stays on the shelf as retired.'
+    )
+    expect(push).not.toHaveBeenCalled()
+  })
+
   it('deletes a toy via its own endpoint and label', async () => {
     vi.mocked(browserApiClient.delete).mockResolvedValue(null)
     openDialog('toy', '/api/toys/t1', '/dashboard/toys')

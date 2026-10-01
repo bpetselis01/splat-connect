@@ -178,6 +178,10 @@ export interface Toy {
   tutorial_id?: string | null
   /** Marked unavailable (100): listed and readable, but no new requests. */
   paused_at?: string | null
+  /** Retired (101): an org toy off the library, still on the leader's shelf. */
+  retired_at?: string | null
+  /** Why, in the leader's words: "Broken 12 Aug". ≤ 80. */
+  retired_note?: string | null
   created_at: string
   updated_at: string
   /** PostgREST computed fields (073), the owner's "How it is doing" tiles.

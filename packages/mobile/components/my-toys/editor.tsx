@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import * as ImagePicker from 'expo-image-picker'
 import type { OfferType, Toy, ToyTransactionSummary } from '@splat-connect/types'
-import { computeToyStepStatuses, getMissingToyFields, isOwnerSide, MAX_PHOTOS, type ToyStepId } from '@splat-connect/types'
+import { apiMessage, computeToyStepStatuses, getMissingToyFields, isOwnerSide, MAX_PHOTOS, type ToyStepId } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { loadOwnedToy } from '../../lib/my-toy'
 import { confirmDestructive, notify } from '../../lib/confirm'
@@ -365,7 +365,7 @@ export function Editor({ id }: { id: string }) {
         router.dismissTo(shelfHref)
       } catch (err) {
         console.error('[Editor] delete failed:', err)
-        notify('Could not delete this toy', 'Please try again.')
+        notify('Could not delete this toy', apiMessage(err, 'Please try again.'))
       }
     })
   }

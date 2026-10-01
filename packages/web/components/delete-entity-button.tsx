@@ -19,6 +19,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Route } from 'next'
+import { apiMessage } from '@splat-connect/types'
 import { browserApiClient } from '@/lib/browser-api-client'
 import { isBackdropClick } from '@/lib/backdrop-click'
 
@@ -63,10 +64,11 @@ export function DeleteEntityButton({
       await browserApiClient.delete(endpoint)
       router.push(redirectTo)
       router.refresh()
-    } catch {
+    } catch (err) {
       // The dialog stays open with the phrase intact: a dropped request is not
-      // a reason to make the user type it out again.
-      setError(`Could not delete this ${label}. Please try again.`)
+      // a reason to make the user type it out again. A refusal (a toy with
+      // handovers on record, 409) says why in the API's own words.
+      setError(apiMessage(err, `Could not delete this ${label}. Please try again.`))
       setBusy(false)
     }
   }

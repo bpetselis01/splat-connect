@@ -815,6 +815,7 @@ export const PENDING = {
     needs: "Decided 2026-09-30: add the Play (enjoys) step, display only, not used for matching. Add Measurements as an optional step, kept on the child profile. Future: contributors publish parametric CAD models that adapt to these dimensions.",
   },
   'inventory-states': {
+    shipped: true,
     title: "Retired toys",
     blurb: "Marking a toy retired is coming.",
     kind: "build",

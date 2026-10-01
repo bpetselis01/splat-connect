@@ -227,7 +227,8 @@ export function ToyEditor({
 
       <div className="flex flex-wrap gap-2.5 border-t border-line pt-[18px]">
         {primary}
-        {live && (
+        {/* A retired toy takes no requests either way: no pause to toggle. */}
+        {live && !toy.retired_at && (
           <SubmitButton
             label={toy.paused_at ? 'Take requests again' : 'Mark unavailable'}
             busyLabel="Saving…"

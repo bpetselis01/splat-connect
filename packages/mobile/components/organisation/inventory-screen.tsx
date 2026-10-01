@@ -11,34 +11,47 @@
 import { useCallback, useEffect, useState } from 'react'
 import { View, ScrollView, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
-import { gradeOf, type ToyWithOwner } from '@splat-connect/types'
+import { apiMessage, gradeOf, type ToyWithOwner } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
+import { confirmDestructive, notify } from '../../lib/confirm'
 import { theme } from '../../lib/theme'
 import { useCapabilities } from '../../lib/capabilities'
 import { Screen } from '../ui/Screen'
 import { Button } from '../ui/Button'
 import { EmptyState } from '../ui/EmptyState'
 import { SkeletonRow } from '../ui/Skeleton'
+import { FlashLine, useFlash } from '../ui/Flash'
 import { ListIntro, ListRow, ListSection, Pill, RowThumb } from '../list/list-kit'
 
-function StockRow({ toy, onPress }: { toy: ToyWithOwner; onPress: () => void }) {
-  // The board's shelf words: nothing left is Out, a published listing is
-  // Available, anything else is still the leader's draft.
-  const pill =
-    toy.quantity === 0 ? (
-      <Pill label="Out" bg={theme.colors.honeySoft} icon="arrow-redo-outline" />
-    ) : toy.status === 'published' ? (
-      <Pill label="Available" bg={theme.colors.mintSoft} icon="checkmark-circle-outline" />
-    ) : (
-      <Pill label="Draft" bg={theme.colors.surfaceSunken} fg={theme.colors.muted} icon="eye-off-outline" />
-    )
+/** An inventory row: has_history is true when any handover names the toy,
+ *  which is what keeps it from being removed. */
+type ShelfToy = ToyWithOwner & { has_history?: boolean }
+
+function StockRow({ toy, onPress, onRemove }: { toy: ShelfToy; onPress: () => void; onRemove: () => void }) {
+  // The board's shelf words: retired first, then nothing left is Out, a
+  // published listing is Available, anything else is still the leader's draft.
+  const pill = toy.retired_at ? (
+    <Pill label="Retired" bg={theme.colors.surfaceSunken} fg={theme.colors.muted} icon="archive-outline" />
+  ) : toy.quantity === 0 ? (
+    <Pill label="Out" bg={theme.colors.honeySoft} icon="arrow-redo-outline" />
+  ) : toy.status === 'published' ? (
+    <Pill label="Available" bg={theme.colors.mintSoft} icon="checkmark-circle-outline" />
+  ) : (
+    <Pill label="Draft" bg={theme.colors.surfaceSunken} fg={theme.colors.muted} icon="eye-off-outline" />
+  )
   return (
     <View style={styles.rowPress}>
       <ListRow
         title={toy.name}
-        meta={`${toy.quantity} in stock · ${gradeOf(toy.condition).label}${toy.switch_adapted ? ' · Switch-adapted' : ''}`}
+        meta={
+          toy.retired_at
+            ? toy.retired_note ?? gradeOf(toy.condition).label
+            : `${toy.quantity} in stock · ${gradeOf(toy.condition).label}${toy.switch_adapted ? ' · Switch-adapted' : ''}`
+        }
         thumb={<RowThumb photo={toy.cover_photo_url} />}
         pill={pill}
+        // A toy a handover names stays: removing it would erase the handover.
+        trailing={toy.retired_at && !toy.has_history ? <Button label="Remove" variant="danger" onPress={onRemove} /> : undefined}
         onPress={onPress}
         accessibilityHint={`${toy.quantity} in stock. Opens the toy.`}
         titleLines={1}
@@ -47,13 +60,12 @@ function StockRow({ toy, onPress }: { toy: ToyWithOwner; onPress: () => void }) 
   )
 }
 
-// PENDING(inventory-states): "Needs clean" and "Retired" states, who holds an
-// Out toy, and "N on shelf, N out, N need cleaning" as the lead.
 export function InventoryScreen() {
   const router = useRouter()
   const { caps, loading: capsLoading } = useCapabilities()
   const ledOrgs = caps?.ledOrgs ?? []
-  const [toys, setToys] = useState<ToyWithOwner[]>([])
+  const [toys, setToys] = useState<ShelfToy[]>([])
+  const [flash, setFlash] = useFlash()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
   const [reloadKey, setReloadKey] = useState(0)
@@ -69,7 +81,7 @@ export function InventoryScreen() {
     setLoading(true)
     setError(false)
     apiClient
-      .get<ToyWithOwner[]>('/api/toys/inventory')
+      .get<ShelfToy[]>('/api/toys/inventory')
       .then((data) => {
         if (!ignore) setToys(data)
       })
@@ -123,8 +135,19 @@ export function InventoryScreen() {
           .filter((g) => g.toys.length > 0)
       : [{ name: null as string | null, toys }]
 
-  const units = toys.reduce((n, t) => n + t.quantity, 0)
+  // The lead counts only what is on offer.
+  const units = toys.filter((t) => !t.retired_at).reduce((n, t) => n + t.quantity, 0)
   const openToy = (id: string) => router.push(`/toys/${id}`)
+  const remove = (toy: ShelfToy) =>
+    confirmDestructive(`Remove ${toy.name}?`, 'This cannot be undone.', 'Remove', async () => {
+      try {
+        await apiClient.delete(`/api/toys/${toy.id}`)
+        setToys((ts) => ts.filter((t) => t.id !== toy.id))
+        setFlash(`${toy.name} removed from the shelf`)
+      } catch (err) {
+        notify(`Could not remove ${toy.name}`, apiMessage(err, 'Please try again.'))
+      }
+    })
 
   return (
     <Screen>
@@ -138,6 +161,7 @@ export function InventoryScreen() {
           cta="+ Add to inventory"
           onCta={() => router.push(`/toys/new?org=${ledOrgs[0]?.id ?? ''}`)}
         />
+        <FlashLine message={flash} />
 
         {loading ? (
           <View>
@@ -159,7 +183,7 @@ export function InventoryScreen() {
             <View key={group.name ?? 'all'} style={styles.group}>
               {group.name ? <ListSection>{group.name}</ListSection> : null}
               {group.toys.map((toy) => (
-                <StockRow key={toy.id} toy={toy} onPress={() => openToy(toy.id)} />
+                <StockRow key={toy.id} toy={toy} onPress={() => openToy(toy.id)} onRemove={() => remove(toy)} />
               ))}
             </View>
           ))

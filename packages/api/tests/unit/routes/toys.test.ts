@@ -20,7 +20,16 @@ vi.mock('../../../src/supabase/client.js', () => ({
         ? { select: () => ({ eq: () => Promise.resolve({ data: ledOrgs, error: null }) }) }
         : mockUserFrom(table),
   }),
+  // DELETE's handover count (toy_transactions): none on record.
+  createAdminClient: () => ({
+    from: () => ({ select: () => ({ or: () => Promise.resolve({ data: [], error: null }) }) }),
+  }),
 }))
+
+/** DELETE reads the row as its holder before deleting it. */
+const heldRow = () => ({
+  select: () => ({ eq: () => ({ or: () => ({ maybeSingle: () => Promise.resolve({ data: { id: 't1' }, error: null }) }) }) }),
+})
 
 const { default: toys } = await import('../../../src/routes/toys.js')
 
@@ -363,6 +372,7 @@ describe('PATCH /:id/publish', () => {
 describe('DELETE /:id', () => {
   it('returns 500 on a database error', async () => {
     mockUserFrom.mockReturnValue({
+      ...heldRow(),
       delete: () => ({
         eq: () => ({
           or: () => ({
@@ -379,6 +389,7 @@ describe('DELETE /:id', () => {
 
   it('deletes and returns the deleted row', async () => {
     mockUserFrom.mockReturnValue({
+      ...heldRow(),
       delete: () => ({
         eq: () => ({
           or: () => ({

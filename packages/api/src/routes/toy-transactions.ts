@@ -510,14 +510,15 @@ toyTransactions.post('/', async (c) => {
 
   const { data: toy, error: toyError } = await admin
     .from('toys')
-    .select('id, owner_id, owner_org_id, quantity, offer_type, status, paused_at')
+    .select('id, owner_id, owner_org_id, quantity, offer_type, status, paused_at, retired_at')
     .eq('id', body.toy_id)
     .maybeSingle()
   if (toyError) {
     if (toyError.code === INVALID_TEXT_REPRESENTATION) return c.json({ error: 'Not found' }, 404)
     return c.json({ error: toyError.message }, 500)
   }
-  if (!toy || toy.status !== 'published') return c.json({ error: 'Not found' }, 404)
+  // Retired (101) reads as gone, like a draft: this admin read skips RLS.
+  if (!toy || toy.status !== 'published' || toy.retired_at) return c.json({ error: 'Not found' }, 404)
   if (toy.owner_id === userId) return c.json({ error: 'You cannot request your own toy' }, 400)
   // A leader asking their own organisation for stock would be approving their
   // own request — the org side of "you cannot request your own toy".

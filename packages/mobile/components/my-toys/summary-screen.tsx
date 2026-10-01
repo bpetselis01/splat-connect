@@ -8,7 +8,7 @@
  * the lead reads.
  */
 import { useCallback, useState } from 'react'
-import { ScrollView, StyleSheet, View } from 'react-native'
+import { ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
 import type { Toy, ToyTransactionSummary } from '@splat-connect/types'
 import { apiMessage, isOwnerSide } from '@splat-connect/types'
@@ -21,7 +21,8 @@ import { Button } from '../ui/Button'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { ErrorRow } from '../ui/ErrorRow'
-import { ListIntro, ListRow } from '../list/list-kit'
+import { TextField } from '../ui/TextField'
+import { ListIntro, ListRow, Pill } from '../list/list-kit'
 
 export function ToySummaryScreen({ id }: { id: string }) {
   const router = useRouter()
@@ -30,6 +31,7 @@ export function ToySummaryScreen({ id }: { id: string }) {
   const [requests, setRequests] = useState<ToyTransactionSummary[]>([])
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [retireNote, setRetireNote] = useState('')
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading')
 
   useFocusEffect(
@@ -112,6 +114,22 @@ export function ToySummaryScreen({ id }: { id: string }) {
     }
   }
 
+  async function retire() {
+    setBusy(true)
+    setError(null)
+    try {
+      const updated = await apiClient.patch<Toy>(`/api/toys/${id}`, {
+        retired_at: new Date().toISOString(),
+        retired_note: retireNote.trim() || null,
+      })
+      setToy((cur) => (cur ? { ...cur, ...updated } : updated))
+    } catch (err) {
+      setError(apiMessage(err, 'Could not retire this toy. Please try again.'))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <Screen>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
@@ -135,7 +153,8 @@ export function ToySummaryScreen({ id }: { id: string }) {
             />
           ))}
           <ListRow title="Edit listing" meta="Photos, condition, notes" onPress={() => router.push(`/toys/${toy.id}/edit`)} />
-          {toy.status === 'published' ? (
+          {/* A retired toy takes no requests either way: no pause to toggle. */}
+          {toy.status === 'published' && !toy.retired_at ? (
             <ListRow
               title={toy.paused_at ? 'Take requests again' : 'Mark unavailable'}
               meta={toy.paused_at ? null : 'Keeps it listed but hides the request button'}
@@ -144,6 +163,26 @@ export function ToySummaryScreen({ id }: { id: string }) {
           ) : null}
           <ErrorRow message={error} />
         </View>
+        {toy.owner_org_id ? (
+          toy.retired_at ? (
+            <View style={styles.retired}>
+              <Pill label="Retired" bg={theme.colors.surfaceSunken} fg={theme.colors.muted} icon="archive-outline" />
+              {toy.retired_note ? <Text style={styles.note}>{toy.retired_note}</Text> : null}
+            </View>
+          ) : (
+            <View style={styles.retired}>
+              <TextField
+                label="Why it is retired"
+                accessibilityLabel="Why it is retired"
+                placeholder="Broken 12 Aug"
+                maxLength={80}
+                value={retireNote}
+                onChangeText={setRetireNote}
+              />
+              <Button label="Retire" variant="secondary" disabled={busy} onPress={() => void retire()} />
+            </View>
+          )
+        ) : null}
       </ScrollView>
     </Screen>
   )
@@ -153,4 +192,6 @@ const styles = StyleSheet.create({
   content: { paddingBottom: theme.spacing(6) },
   rows: { gap: theme.spacing(3) },
   accept: { paddingHorizontal: theme.spacing(4), minHeight: 40 },
+  retired: { marginTop: theme.spacing(5), gap: theme.spacing(2) },
+  note: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.muted },
 })

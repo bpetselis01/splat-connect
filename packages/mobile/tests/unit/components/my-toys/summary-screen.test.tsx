@@ -135,4 +135,26 @@ describe('ToySummaryScreen', () => {
     await screen.findByText('Eastwood Special School')
     expect(screen.queryByText('Requested this toy for donation.')).toBeNull()
   })
+
+  it("retires an organisation's toy with a reason", async () => {
+    mockUseCapabilities.mockReturnValue(caps([{ id: 'org1', name: 'Northside' }]))
+    serve({ mine: [], inventory: [toy({ owner_id: null, owner_org_id: 'org1' })] })
+    mockPatch.mockResolvedValue(toy({ owner_id: null, owner_org_id: 'org1', retired_at: '2026-08-12T00:00:00Z', retired_note: 'Broken 12 Aug' }))
+    render(<ToySummaryScreen id="t1" />)
+    fireEvent.changeText(await screen.findByLabelText('Why it is retired'), 'Broken 12 Aug')
+    fireEvent.press(screen.getByText('Retire'))
+    expect(await screen.findByText('Retired')).toBeTruthy()
+    expect(mockPatch).toHaveBeenCalledWith('/api/toys/t1', { retired_at: expect.any(String), retired_note: 'Broken 12 Aug' })
+    // Retired is final for the request flow: no pause toggle to offer.
+    expect(screen.queryByText('Mark unavailable')).toBeNull()
+    expect(screen.queryByText('Take requests again')).toBeNull()
+  })
+
+  it('offers no Retire on a personal toy', async () => {
+    serve()
+    render(<ToySummaryScreen id="t1" />)
+    await screen.findByText('Edit listing')
+    expect(screen.queryByText('Retire')).toBeNull()
+  })
 })
+
