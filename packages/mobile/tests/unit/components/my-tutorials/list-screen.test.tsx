@@ -32,6 +32,16 @@ describe('MyTutorialsListScreen', () => {
     jest.clearAllMocks()
   })
 
+  it('shows a published guide’s views and who backs it', async () => {
+    mockGet.mockResolvedValue([
+      tutorial({ id: 'l', title: 'Light-up drum', status: 'approved', view_count: 2100, tutorial_orgs: [{ id: 'b', status: 'accepted', org_id: 'o', requested_at: '', organizations: { id: 'o', name: 'Northside Therapy' } }] }),
+      tutorial({ id: 'r', title: 'Remote car', status: 'approved', view_count: 890, tutorial_orgs: [] }),
+    ])
+    render(<MyTutorialsListScreen />)
+    expect(await screen.findByText('2.1k views · Northside Therapy')).toBeTruthy()
+    expect(screen.getByText('890 views')).toBeTruthy()
+  })
+
   it('lists the caller\'s tutorials with their status, and pushes to the editor on tap', async () => {
     mockGet.mockResolvedValue([tutorial({ id: 't1', title: 'Bubble machine switch', status: 'draft' })])
     render(<MyTutorialsListScreen />)

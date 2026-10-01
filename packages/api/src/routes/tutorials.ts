@@ -49,7 +49,7 @@ tutorials.get('/mine', async (c) => {
     .from('tutorials')
     // Ids only: the My tutorials row counts sections the way the editor hub does
     // (getMissingFields reads lengths), and nothing on the row needs more.
-    .select(`${LIST_SELECT}, parts(id), tools(id), stl_files(id), steps:tutorial_steps(id)`)
+    .select(`${LIST_SELECT}, view_count, parts(id), tools(id), stl_files(id), steps:tutorial_steps(id)`)
     .eq('tutorial_contributors.profile_id', c.get('userId'))
     .order('created_at', { ascending: false })
   if (error) return c.json({ error: error.message }, 500)

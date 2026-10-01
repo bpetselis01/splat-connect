@@ -18,6 +18,11 @@ type MineRow = Tutorial & { tutorial_orgs?: TutorialOrg[] }
 
 const stageOf = (t: Tutorial) => TUTORIAL_STAGE[t.status]
 
+/** "890", "2.1k" — the board's view counts. */
+export function formatViews(n: number): string {
+  return n < 1000 ? String(n) : `${Math.round(n / 100) / 10}k`
+}
+
 /** The board's row meta: a draft's progress, who is holding a submitted guide, else what it is and who backs it. */
 export function tutorialMeta(t: MineRow): string {
   const orgs = t.tutorial_orgs ?? []
@@ -30,6 +35,7 @@ export function tutorialMeta(t: MineRow): string {
     return `With ${deciding.organizations.name} since ${shortDate(deciding.requested_at)}`
   }
   const backer = orgs.find((o) => o.status === 'accepted')?.organizations?.name
+  if (t.status === 'approved') return [`${formatViews(t.view_count ?? 0)} views`, backer].filter(Boolean).join(' · ')
   return [`${KIND_LABEL[t.kind]} · ${t.difficulty}`, backer].filter(Boolean).join(' · ')
 }
 
@@ -38,7 +44,6 @@ function TutorialRow({ item, onPress }: { item: MineRow; onPress: () => void }) 
     <View style={styles.rowWrap}>
       <ListRow
         title={item.title}
-        // PENDING(my-tutorials-views): a view count — no views column.
         meta={tutorialMeta(item)}
         thumb={<RowThumb photo={item.toy_photo_url} glyph="color-wand-outline" />}
         // "Draft" rather than "Hidden" for a guide, as web does: the editor

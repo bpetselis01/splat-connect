@@ -1825,6 +1825,8 @@ export interface Tutorial {
   thanks_count?: number
   /** 091. Present only when a select names it. */
   builds_count?: number
+  /** 092. Present only on /api/tutorials/mine. */
+  view_count?: number
   has_stl?: boolean
   /** Up to MAX_PHOTOS, in display order. The first is the cover. */
   photo_urls: string[]

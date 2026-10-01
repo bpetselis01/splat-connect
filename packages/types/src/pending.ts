@@ -715,6 +715,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["mobile", "api"],
     needs: "Decided 2026-09-30: count every view in a separate tutorial_view_counts table, bumped by a SECURITY DEFINER function from the public guide read (a column on tutorials would 409 the editor).",
+    shipped: true,
   },
   'editor-safety-notes': {
     title: "Safety notes",

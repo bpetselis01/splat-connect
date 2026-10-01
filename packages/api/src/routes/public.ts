@@ -105,6 +105,14 @@ publicRoutes.get('/tutorials/:id', async (c) => {
     .order('position', { referencedTable: 'safety_notes', ascending: true })
     .single()
   if (error) return c.json({ error: error.message }, 404)
+  // 092. Counted, never awaited into a failure: a view that cannot be counted
+  // is not a reason to refuse the guide.
+  try {
+    const { error: viewError } = await createAdminClient().rpc('bump_tutorial_view', { p_tutorial_id: c.req.param('id') })
+    if (viewError) console.error('[public guide] view not counted:', viewError.message)
+  } catch (err) {
+    console.error('[public guide] view not counted:', err)
+  }
   // Filter the embed here rather than in the select: PostgREST cannot constrain an
   // embedded relation's rows from the parent query, and an organisation's mark must
   // never appear on a request it did not accept. This route uses the admin client,

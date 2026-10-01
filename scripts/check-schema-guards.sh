@@ -411,7 +411,14 @@ select * from (values
 
   -- 091. Who built which guide says which accounts have a disabled child.
   ('091 tutorial_builds has RLS on',
-   (select relrowsecurity from pg_class where oid = 'public.tutorial_builds'::regclass))
+   (select relrowsecurity from pg_class where oid = 'public.tutorial_builds'::regclass)),
+
+  -- 092. Callable by a client, anyone could inflate any guide's views.
+  ('092 bump_tutorial_view() is service-role only',
+   (select count(*) = 1 from pg_proc p
+      where p.proname = 'bump_tutorial_view' and p.pronamespace = 'public'::regnamespace
+        and not has_function_privilege('authenticated', p.oid, 'execute')
+        and not has_function_privilege('anon', p.oid, 'execute')))
 ) as t(guard, ok)
 where not ok;
 EOSQL
