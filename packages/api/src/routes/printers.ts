@@ -495,6 +495,7 @@ printers.patch('/:id', async (c) => {
  * rest anyway, as a 500 with a Postgres message in it, and "close it instead"
  * is the answer in both cases.
  */
+// PENDING(test-print-photo-cleanup): the row's test prints cascade away, but their photos stay in storage.
 printers.delete('/:id', async (c) => {
   const supabase = createUserClient(c.get('token'))
   const id = c.req.param('id')

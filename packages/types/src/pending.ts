@@ -323,6 +323,13 @@ export const PENDING = {
     platforms: ["web"],
     needs: "The web printer directory shows each printer's track record like the phone's find card",
   },
+  'test-print-photo-cleanup': {
+    title: "Removing test-print photos",
+    blurb: "Removing a printer's test-print photos when the printer is deleted is coming.",
+    kind: "build",
+    platforms: ["api"],
+    needs: "Deleting a printer removes its test-print photos from storage",
+  },
   'message-printer': {
     title: "Message the printer",
     blurb: "Messaging the printer from here is coming. Use the job thread for now.",
