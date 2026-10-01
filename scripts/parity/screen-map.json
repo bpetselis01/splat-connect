@@ -363,7 +363,15 @@
   "group": "Impact",
   "boardRoute": "/contributors/[id]",
   "route": "/contributors/[id]",
-  "sampleFrom": "/get-involved/contributors"
+  "sampleFrom": "/get-involved/contributors",
+  "explained": [
+   {
+    "type": "extra-section",
+    "match": "builds logged",
+    "why": "intended",
+    "reason": "The board predates build logging (091); the count of builds sits above the thanks line once a family has marked one done."
+   }
+  ]
  },
  {
   "id": "impact_events",
