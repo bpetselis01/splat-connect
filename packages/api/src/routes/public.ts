@@ -237,7 +237,8 @@ publicRoutes.get('/toys/:id', async (c) => {
   // The holder's "N toys given" is completed handovers they gave; that table
   // has no anon policy, so the admin client counts, and returns only a count.
   const giver = data.owner_org_id ? 'owner_org_id' : 'owner_id'
-  const [guide, given] = await Promise.all([
+  const admin = createAdminClient()
+  const [guide, given, place] = await Promise.all([
     data.tutorial_id
       ? supabase
           .from('tutorials')
@@ -246,14 +247,28 @@ publicRoutes.get('/toys/:id', async (c) => {
           .eq('status', 'approved')
           .maybeSingle()
       : Promise.resolve({ data: null }),
-    createAdminClient()
+    admin
       .from('toy_transactions')
       .select('id', { count: 'exact', head: true })
       .eq(giver, data.owner_org_id ?? data.owner_id)
       .eq('status', 'completed')
       .not('toy_id', 'is', null),
+    // Where the toy is, to the suburb and never closer. An organisation's
+    // public suburb is anon-readable (059's grant); a person's lives on their
+    // pickup columns, which no anon grant reaches, so the admin client reads
+    // exactly those two and nothing beside them.
+    data.owner_org_id
+      ? supabase.from('organizations').select('suburb, state').eq('id', data.owner_org_id).maybeSingle()
+      : admin.from('profiles').select('suburb:pickup_suburb, state:pickup_state').eq('id', data.owner_id).maybeSingle(),
   ])
-  return c.json({ ...data, guide: guide.data ?? null, holder_given: given.count ?? 0 })
+  const where = place.data as { suburb: string | null; state: string | null } | null
+  return c.json({
+    ...data,
+    guide: guide.data ?? null,
+    holder_given: given.count ?? 0,
+    holder_suburb: where?.suburb ?? null,
+    holder_state: where?.state ?? null,
+  })
 })
 
 /**

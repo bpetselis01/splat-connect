@@ -201,6 +201,10 @@ export type ToyWithOwner = Toy & {
 export type ToyDetail = ToyWithOwner & {
   guide: { id: string; title: string } | null
   holder_given: number
+  /** The holder's suburb and state, never closer: an organisation's public
+   *  suburb (059) or a person's pickup suburb. Null when they gave none. */
+  holder_suburb: string | null
+  holder_state: string | null
 }
 
 /** The board's facts grid, in its order, skipping the ones not filled in. */

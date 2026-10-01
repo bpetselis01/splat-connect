@@ -303,4 +303,26 @@ describe('ToyDetailScreen', () => {
     fireEvent.press(screen.getByLabelText('Save'))
     expect(mockToggle).toHaveBeenCalledWith('toys', 'toy1')
   })
+
+  it("puts the holder's suburb beside their name", async () => {
+    mockEndpoints({ detail: Promise.resolve(toy({ holder_suburb: 'Newcastle', holder_state: 'NSW' })) })
+    render(<ToyDetailScreen id="toy1" />)
+    expect(await screen.findByText('Held by Jamie · Newcastle, NSW')).toBeTruthy()
+  })
+
+  it('says only the name when there is no suburb', async () => {
+    mockEndpoints({ detail: Promise.resolve(toy({ holder_suburb: null, holder_state: null })) })
+    render(<ToyDetailScreen id="toy1" />)
+    expect(await screen.findByText('Held by Jamie')).toBeTruthy()
+  })
+
+  it("puts an organisation's suburb after the stock", async () => {
+    mockEndpoints({
+      detail: Promise.resolve(
+        toy({ owner_id: null, owner_org_id: 'org1', quantity: 4, profiles: null, organizations: { name: 'TAD Australia' }, holder_suburb: 'Newcastle', holder_state: 'NSW' })
+      ),
+    })
+    render(<ToyDetailScreen id="toy1" />)
+    expect(await screen.findByText('· Newcastle, NSW')).toBeTruthy()
+  })
 })

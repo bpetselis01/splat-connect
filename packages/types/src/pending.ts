@@ -360,6 +360,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["mobile", "api"],
     needs: "Suburb/state in Toy detail subtitle [ui,api]",
+    shipped: true,
   },
   'toy-condition-words': {
     title: "Condition in words",

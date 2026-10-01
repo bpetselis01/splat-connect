@@ -108,6 +108,8 @@ export function ToyDetailScreen({ id }: { id: string }) {
 
   const orgName = toy.organizations?.name ?? null
   const personName = toy.profiles?.name ?? null
+  // "Newcastle, NSW" — the board's subtitle. Nothing at all without a suburb.
+  const place = toy.holder_suburb ? [toy.holder_suburb, toy.holder_state].filter(Boolean).join(', ') : null
   const canAsk = !!caps && !isOwner
   // The save sits beside "Ask to collect it" when there is one, as on the
   // board; otherwise it stays by the title.
@@ -157,11 +159,11 @@ export function ToyDetailScreen({ id }: { id: string }) {
             </Text>
           </Text>
           <Text style={styles.holderQty}>{`· ${toy.quantity} available`}</Text>
+          {place ? <Text style={styles.holderQty}>{`· ${place}`}</Text> : null}
         </View>
       ) : personName ? (
-        <Text style={styles.holder}>{`Held by ${personName}`}</Text>
+        <Text style={styles.holder}>{`Held by ${personName}${place ? ` · ${place}` : ''}`}</Text>
       ) : null}
-      {/* PENDING(toy-holder-location): the holder's suburb and state under the title. */}
 
       <View style={styles.pillRow}>
         {toy.offer_type ? <Pill variant="large" icon="gift-outline" label={OFFER_LABEL[toy.offer_type]} bg={theme.colors.tone.mint.bg} fg={theme.colors.tone.mint.fg} /> : null}
