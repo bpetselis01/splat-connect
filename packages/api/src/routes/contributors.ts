@@ -53,6 +53,7 @@ contributors.patch('/me', async (c) => {
   // caller is credited on AND approved: a draft or somebody else's guide on a
   // public profile would be a leak of the one and a lie about the other.
   // 099. Distance is measured from this; anything but four digits would 400 every list that asks.
+  if (typeof patch.pickup_postcode === 'string') patch.pickup_postcode = patch.pickup_postcode.trim()
   if (
     'pickup_postcode' in patch &&
     patch.pickup_postcode !== null &&

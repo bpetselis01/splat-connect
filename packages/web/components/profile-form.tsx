@@ -148,7 +148,7 @@ export function ProfileForm({
           </div>
           <div>
             <label htmlFor="pickup-postcode" className="field-label">Postcode</label>
-            <input id="pickup-postcode" className={FIELD} value={pickupPostcode} onChange={(e) => setPickupPostcode(e.target.value)} />
+            <input id="pickup-postcode" className={FIELD} inputMode="numeric" maxLength={4} pattern="\d{4}" value={pickupPostcode} onChange={(e) => setPickupPostcode(e.target.value)} />
           </div>
         </div>
       </div>
