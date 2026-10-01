@@ -104,14 +104,15 @@ export default async function PrintJobPage({ params }: { params: Promise<{ id: s
     costs = null
   }
 
+  const expired = printRequestExpired(tx)
   const canEditCosts =
     tx.owner_id !== null &&
     (tx.owner_id === caps.profile.id || tx.requester_id === caps.profile.id) &&
     tx.status !== 'rejected' &&
-    tx.status !== 'withdrawn'
+    tx.status !== 'withdrawn' &&
+    !expired
 
   const stages = printStages(tx)
-  const expired = printRequestExpired(tx)
   const facts = printStageFacts(tx, viewerIsPrinter)
 
   const partCount = tx.print_files.reduce((n, file) => n + file.quantity, 0)
