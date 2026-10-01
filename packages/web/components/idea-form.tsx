@@ -57,6 +57,8 @@ const EMPTY_FIELDS: Fields = {
 export function IdeaForm() {
   const router = useRouter()
   const [fields, setFields] = useState<Fields>(EMPTY_FIELDS)
+  // 106: the upload's path is what the idea takes; its url is the preview.
+  const [photo, setPhoto] = useState<{ path: string; url: string } | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -93,6 +95,7 @@ export function IdeaForm() {
         description: fields.description.trim() || null,
         kind: fields.kind,
         contact_prefs: fields.contact_prefs,
+        photo_path: photo?.path ?? null,
       })
       router.push('/dashboard/challenges')
     } catch (err) {
@@ -180,6 +183,37 @@ export function IdeaForm() {
           onChange={(e) => set('description', e.target.value)}
           className="field"
         />
+      </div>
+
+      {/* The board's words (WB submit-an-idea). */}
+      <div>
+        <span className="field-label">Photos (optional)</span>
+        <label className="grid min-h-[150px] cursor-pointer place-items-center overflow-hidden rounded-[18px] border border-dashed border-line text-sm font-bold text-muted has-[:focus-visible]:outline has-[:focus-visible]:outline-[3px] has-[:focus-visible]:outline-[var(--focus)]">
+          {photo ? (
+            // eslint-disable-next-line @next/next/no-img-element -- a just-uploaded preview, not a page image
+            <img src={photo.url} alt="Your photo" className="h-[150px] w-full object-cover" />
+          ) : (
+            'Drop a photo of the toy'
+          )}
+          <input
+            type="file"
+            accept="image/*"
+            aria-label="Drop a photo of the toy"
+            className="sr-only"
+            onChange={async (e) => {
+              const file = e.target.files?.[0]
+              if (!file) return
+              const fd = new FormData()
+              fd.append('file', file)
+              setError(null)
+              try {
+                setPhoto(await browserApiClient.postFormData<{ path: string; url: string }>('/api/upload/idea-photo', fd))
+              } catch {
+                setError('Could not upload the photo. Please try again.')
+              }
+            }}
+          />
+        </label>
       </div>
 
       <fieldset>

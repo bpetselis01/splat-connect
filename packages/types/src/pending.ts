@@ -435,6 +435,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["mobile", "api"],
     needs: "Photo on Submit an idea [ui,api,db]",
+    shipped: true,
   },
   'makers-live-done-tabs': {
     title: "Live and Done",

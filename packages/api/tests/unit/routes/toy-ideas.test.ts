@@ -692,13 +692,13 @@ describe('GET /ideas/joined', () => {
     const res = await makeApp().request('/joined')
 
     expect(res.status).toBe(200)
-    expect(await res.json()).toEqual([idea])
+    expect(await res.json()).toEqual([{ ...idea, photo_url: null }])
     expect(mockFrom).toHaveBeenCalledWith('toy_idea_participants')
     // Explicit columns, not toy_ideas!inner(*) — IMPORTANT 3 of the
     // whole-branch review: a participant is never entitled to review_note,
     // which the author's own private rejection reasoning.
     expect(select).toHaveBeenCalledWith(
-      'toy_ideas!inner(id, author_id, title, summary, description, intended_use, primary_user, contact_prefs, status, tutorial_id, kind, answer_message_id, answered_at, created_at, updated_at)'
+      'toy_ideas!inner(id, author_id, title, summary, description, intended_use, primary_user, contact_prefs, status, tutorial_id, kind, answer_message_id, answered_at, photo_path, created_at, updated_at)'
     )
     expect(select.mock.calls[0][0]).not.toContain('review_note')
     expect(eq).toHaveBeenCalledWith('profile_id', 'user-1')

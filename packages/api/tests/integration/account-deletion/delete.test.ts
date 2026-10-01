@@ -154,3 +154,25 @@ describe('two co-authors leaving one guide', () => {
     await admin.from('tutorials').delete().eq('id', guide)
   })
 })
+
+// 106: an idea's photo path names its author's folder. Deletion repoints the
+// idea to the placeholder, so the folder check must still let the row through.
+describe('a member with an idea photo leaving', () => {
+  it('deletes the account and keeps the idea, photo and all, under the placeholder', async () => {
+    const author = await createTestUser()
+    const admin = adminClient()
+    const photo = `ideas/${author.id}/${crypto.randomUUID()}.jpg`
+    const { data: idea, error } = await admin
+      .from('toy_ideas')
+      .insert({ author_id: author.id, title: 'Photo idea', summary: 'S', status: 'challenge', photo_path: photo })
+      .select('id')
+      .single()
+    expect(error).toBeNull()
+
+    expect((await app.request('/api/me', del(author.token, { confirm: 'DELETE' }))).status).toBe(200)
+
+    const { data } = await admin.from('toy_ideas').select('author_id, photo_path').eq('id', idea!.id).single()
+    expect(data).toEqual({ author_id: GHOST, photo_path: photo })
+    await admin.from('toy_ideas').delete().eq('id', idea!.id)
+  })
+})

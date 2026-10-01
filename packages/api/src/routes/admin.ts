@@ -8,7 +8,7 @@ import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { deleteAccount } from '../account-deletion.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import { ORG_COLUMNS } from './organizations.js'
-import { systemMessage } from './toy-ideas.js'
+import { systemMessage, withPhotoUrl } from './toy-ideas.js'
 import type { AuthVariables } from '../middleware/auth.js'
 import type { TutorialStatus } from '@splat-connect/types'
 
@@ -260,12 +260,12 @@ admin.get('/ideas', async (c) => {
     // future private column from leaking here by default the way it did on
     // the public detail endpoint.
     .select(
-      'id, author_id, title, summary, description, intended_use, primary_user, contact_prefs, status, review_note, tutorial_id, kind, answer_message_id, answered_at, created_at, updated_at, profiles!toy_ideas_author_id_fkey(name)'
+      'id, author_id, title, summary, description, intended_use, primary_user, contact_prefs, status, review_note, tutorial_id, kind, answer_message_id, answered_at, photo_path, created_at, updated_at, profiles!toy_ideas_author_id_fkey(name)'
     )
     .order('created_at', { ascending: false })
 
   if (error) return c.json({ error: error.message }, 500)
-  return c.json(data ?? [])
+  return c.json((data ?? []).map(withPhotoUrl))
 })
 
 // Only the review transition lives here. Graduation is its own endpoint because

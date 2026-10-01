@@ -10,6 +10,9 @@ jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
 // exchanges/thread-screen.test.tsx.
 jest.mock('../../../../lib/auth-context', () => ({ useAuth: jest.fn() }))
 
+const mockPick = jest.fn()
+jest.mock('../../../../lib/upload', () => ({ pickAndUploadPhoto: (...a: unknown[]) => mockPick(...a) }))
+
 const mockPost = jest.fn()
 jest.mock('../../../../lib/api-client', () => ({
   apiClient: { post: (...a: unknown[]) => mockPost(...a) },
@@ -63,6 +66,7 @@ describe('SubmitIdeaScreen', () => {
         description: 'She swipes rather than presses.',
         kind: 'challenge',
         contact_prefs: ['co_design'],
+        photo_path: null,
       })
     )
   })
@@ -123,8 +127,32 @@ describe('SubmitIdeaScreen', () => {
         description: null,
         kind: 'challenge',
         contact_prefs: [],
+        photo_path: null,
       })
     )
+  })
+
+  // 106: uploaded before the idea exists; the idea carries the path.
+  it('adds a photo, shows it, and sends its path with the idea', async () => {
+    mockPick.mockResolvedValue({ path: 'ideas/viewer1/a.jpg', url: 'https://x/toy-photos/ideas/viewer1/a.jpg' })
+    render(<SubmitIdeaScreen />)
+    fillEverything()
+    fireEvent.press(screen.getByRole('button', { name: 'Tap to add a photo' }))
+    await waitFor(() => expect(mockPick).toHaveBeenCalledWith('/api/upload/idea-photo', '', null))
+    expect(await screen.findByLabelText('Your photo')).toBeTruthy()
+    fireEvent.press(screen.getByRole('button', { name: 'Submit idea' }))
+    await waitFor(() =>
+      expect(mockPost).toHaveBeenCalledWith('/api/ideas', expect.objectContaining({ photo_path: 'ideas/viewer1/a.jpg' }))
+    )
+  })
+
+  it('says why a photo could not be added, and keeps the form', async () => {
+    mockPick.mockRejectedValue(new Error('Could not upload the photo. Please try again.'))
+    render(<SubmitIdeaScreen />)
+    fillEverything()
+    fireEvent.press(screen.getByRole('button', { name: 'Tap to add a photo' }))
+    expect(await screen.findByText('Could not upload the photo. Please try again.')).toBeTruthy()
+    expect(screen.getByLabelText('Idea name').props.value).toBe('A switch a toddler can hit')
   })
 
   it('lands on your ideas once it is sent', async () => {

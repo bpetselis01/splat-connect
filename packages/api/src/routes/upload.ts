@@ -248,4 +248,28 @@ upload.post('/note-photo', async (c) => {
   return c.json({ path: data.path, url: admin.storage.from('toy-photos').getPublicUrl(data.path).data.publicUrl })
 })
 
+/**
+ * The photo on Submit an idea (106). Chosen before the idea exists, so it is
+ * filed under its author, ideas/<author>/<uuid>.<ext>, and the service role
+ * writes it: toy-photos' storage policy (032) admits only a tutorial's
+ * contributors. POST /api/ideas and 106's CHECK take a path from the caller's
+ * own folder only.
+ * ponytail: a never-sent idea leaves its photo; sweep ideas/ against
+ * toy_ideas.photo_path if storage ever matters.
+ */
+upload.post('/idea-photo', async (c) => {
+  const file = (await c.req.formData()).get('file') as File | null
+  if (!file) return c.json({ error: 'file is required' }, 400)
+  if (!PHOTO_MIME.includes(file.type)) return c.json({ error: 'Photos need to be a JPEG, PNG, WebP, AVIF or HEIC image.' }, 400)
+  if (file.size > PHOTO_MAX_BYTES) return c.json({ error: 'Photos need to be under 10 MB.' }, 400)
+  const admin = createAdminClient()
+  // Nothing in the path comes from the client's filename (note-photo's rule).
+  const ext = file.type === 'image/jpeg' ? 'jpg' : file.type.slice('image/'.length)
+  const { data, error } = await admin.storage
+    .from('toy-photos')
+    .upload(`ideas/${c.get('userId')}/${crypto.randomUUID()}.${ext}`, file, { upsert: false })
+  if (error) return c.json({ error: error.message }, 500)
+  return c.json({ path: data.path, url: admin.storage.from('toy-photos').getPublicUrl(data.path).data.publicUrl })
+})
+
 export default upload

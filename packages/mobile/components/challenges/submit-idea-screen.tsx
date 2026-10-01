@@ -5,10 +5,11 @@
 //
 // Title comes from the native header (app/(tabs)/explore/_layout.tsx).
 import { useState } from 'react'
-import { View, Text, ScrollView, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native'
+import { View, Text, Image, Pressable, ScrollView, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native'
 import { useRouter } from 'expo-router'
 import { apiMessage, CONTACT_PREFS, type ContactPref, type ToyIdea, type ToyIdeaKind } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
+import { pickAndUploadPhoto, type UploadResult } from '../../lib/upload'
 import { theme } from '../../lib/theme'
 import { useCapabilities } from '../../lib/capabilities'
 import { Screen } from '../ui/Screen'
@@ -18,7 +19,7 @@ import { Button } from '../ui/Button'
 import { TextField } from '../ui/TextField'
 import { EmptyState } from '../ui/EmptyState'
 import { ErrorRow } from '../ui/ErrorRow'
-import { PendingButton, PendingRow } from '../ui/pending'
+import { PendingRow } from '../ui/pending'
 
 // Web's idea-form.tsx tiles, same words (078).
 const KINDS: { kind: ToyIdeaKind; label: string }[] = [
@@ -65,12 +66,24 @@ export function SubmitIdeaScreen() {
   const [draft, setDraft] = useState<Draft>(EMPTY)
   const [prefs, setPrefs] = useState<ContactPref[]>([])
   const [kind, setKind] = useState<ToyIdeaKind>('challenge')
+  // 106: the upload's path is what the idea takes; its url is the preview.
+  const [photo, setPhoto] = useState<UploadResult | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [sent, setSent] = useState(false)
 
   function togglePref(pref: ContactPref) {
     setPrefs((cur) => (cur.includes(pref) ? cur.filter((p) => p !== pref) : [...cur, pref]))
+  }
+
+  async function addPhoto() {
+    setError(null)
+    try {
+      const uploaded = await pickAndUploadPhoto('/api/upload/idea-photo', '', null)
+      if (uploaded) setPhoto(uploaded)
+    } catch (err) {
+      setError((err as Error).message)
+    }
   }
 
   async function submit() {
@@ -91,6 +104,7 @@ export function SubmitIdeaScreen() {
         description: draft.description.trim() || null,
         kind,
         contact_prefs: prefs,
+        photo_path: photo?.path ?? null,
       })
       setSent(true)
     } catch (err) {
@@ -184,7 +198,25 @@ export function SubmitIdeaScreen() {
                 ))}
               </View>
 
-              <PendingButton pending="idea-photo" label="Add a photo" variant="ghost" />
+              {/* The board's words (MB #challenge_new). */}
+              <Text style={styles.legend}>Photo</Text>
+              <Pressable
+                onPress={() => void addPhoto()}
+                accessibilityRole="button"
+                accessibilityLabel="Tap to add a photo"
+                style={styles.photoSlot}
+              >
+                {photo ? (
+                  <Image
+                    source={{ uri: photo.url }}
+                    style={styles.photo}
+                    accessibilityLabel="Your photo"
+                    accessibilityIgnoresInvertColors
+                  />
+                ) : (
+                  <Text style={styles.scopeHint}>Tap to add a photo</Text>
+                )}
+              </Pressable>
               <PendingRow pending="idea-anonymous" label="Post anonymously" icon="eye-off-outline" />
 
               <ErrorRow message={error} />
@@ -249,6 +281,18 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing(2),
   },
   prefRow: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2), marginBottom: theme.spacing(2) },
+  photoSlot: {
+    height: 130,
+    borderRadius: theme.radii.field,
+    borderWidth: theme.border.hairline,
+    borderStyle: 'dashed',
+    borderColor: theme.colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    marginBottom: theme.spacing(2),
+  },
+  photo: { width: '100%', height: '100%' },
   submit: { alignSelf: 'flex-start', marginTop: theme.spacing(3), paddingHorizontal: theme.spacing(6) },
   sentButton: { marginTop: theme.spacing(5), paddingHorizontal: theme.spacing(6) },
 })

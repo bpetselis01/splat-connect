@@ -961,6 +961,10 @@ export interface ToyIdea {
   /** The reply the author marked as the answer, and when (078). */
   answer_message_id?: string | null
   answered_at?: string | null
+  /** 106: one photo, a toy-photos path in the author's ideas/ folder. Post
+   *  this; render photo_url, which every read builds from it. */
+  photo_path?: string | null
+  photo_url?: string | null
   created_at: string
   updated_at: string
 }

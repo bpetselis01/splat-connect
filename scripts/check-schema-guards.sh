@@ -477,7 +477,18 @@ select * from (values
   ('105 save_count(toy_ideas) is security definer',
    (select count(*) = 1 from pg_proc p
       where p.proname = 'save_count' and p.pronamespace = 'public'::regnamespace
-        and p.prosecdef and pg_get_function_identity_arguments(p.oid) = 'i toy_ideas'))
+        and p.prosecdef and pg_get_function_identity_arguments(p.oid) = 'i toy_ideas')),
+
+  -- 106. Without the folder check any member could point an idea at a URL or
+  -- at someone else's upload; without the placeholder arm, deleting an account
+  -- whose idea has a photo fails. Anon reads the photo of a public challenge.
+  ('106 toy_ideas_photo_path_check pins the author folder, and anon reads photo_path',
+   (select count(*) = 1 from pg_constraint
+      where conname = 'toy_ideas_photo_path_check'
+        and pg_get_constraintdef(oid) like '%author_id%'
+        and pg_get_constraintdef(oid) like '%00000000-0000-4000-8000-00000000dead%')
+   and has_column_privilege('anon', 'public.toy_ideas', 'photo_path', 'select')
+   and not has_column_privilege('anon', 'public.toy_ideas', 'review_note', 'select'))
 ) as t(guard, ok)
 where not ok;
 EOSQL

@@ -10,7 +10,8 @@ import { profileName } from '../profile-name.js'
 import { createAnonClient, createAdminClient } from '../supabase/client.js'
 import { atCapacityToyIds } from '../toy-access.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
-import { notePhotoUrl } from './tutorial-notes.js'
+import { toyPhotoUrl } from '../photo-storage.js'
+import { withPhotoUrl } from './toy-ideas.js'
 import { readNear, byDistance, pickupPostcodes, type Near } from '../distance.js'
 import { autoPicks, buildCalendar, contributorBadges, gradeOf, readMinutes } from '@splat-connect/types'
 import type {
@@ -166,7 +167,7 @@ publicRoutes.get('/tutorials/:id/notes', async (c) => {
   return c.json(
     data.map(({ photo_path, ...n }) => ({
       ...n,
-      photo_url: notePhotoUrl(photo_path),
+      photo_url: toyPhotoUrl(photo_path),
       author_name: name.get(n.author_id) || 'A member',
       pinned_by_name: n.pinned_at ? (n.pinned_by && name.get(n.pinned_by)) || 'Deleted member' : null,
     }))
@@ -1063,7 +1064,7 @@ publicRoutes.get('/challenges', async (c) => {
   const admin = createAdminClient()
   const { data, error } = await admin
     .from('toy_ideas')
-    .select('id, author_id, title, summary, contact_prefs, status, kind, answered_at, created_at')
+    .select('id, author_id, title, summary, contact_prefs, status, kind, answered_at, photo_path, created_at')
     .in('status', ['challenge', 'graduated'])
     .order('created_at', { ascending: false })
 
@@ -1071,7 +1072,7 @@ publicRoutes.get('/challenges', async (c) => {
   const ideas = data ?? []
   const counts = await challengeCounts(ideas)
   // author_id was read to count answers only; the card has no use for it.
-  return c.json(ideas.map(({ author_id: _author, ...idea }) => ({ ...idea, ...counts.get(idea.id)! })))
+  return c.json(ideas.map(({ author_id: _author, ...idea }) => ({ ...withPhotoUrl(idea), ...counts.get(idea.id)! })))
 })
 
 /**
@@ -1134,7 +1135,7 @@ publicRoutes.get('/challenges/:id', async (c) => {
   const { data: idea, error } = await admin
     .from('toy_ideas')
     .select(
-      'id, author_id, title, summary, description, intended_use, primary_user, contact_prefs, status, tutorial_id, kind, answer_message_id, answered_at, created_at, updated_at, save_count, profiles!toy_ideas_author_id_fkey(name)'
+      'id, author_id, title, summary, description, intended_use, primary_user, contact_prefs, status, tutorial_id, kind, answer_message_id, answered_at, photo_path, created_at, updated_at, save_count, profiles!toy_ideas_author_id_fkey(name)'
     )
     .eq('id', c.req.param('id'))
     .in('status', ['challenge', 'graduated'])
@@ -1163,7 +1164,7 @@ publicRoutes.get('/challenges/:id', async (c) => {
   const counts = await challengeCounts([idea])
   // Messages are deliberately absent: the brief recruits, the conversation is private.
   return c.json({
-    ...rest,
+    ...withPhotoUrl(rest),
     ...counts.get(idea.id),
     author_name: profiles?.name ?? null,
     participants: (participants ?? []).map((p: any) => ({

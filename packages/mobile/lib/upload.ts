@@ -13,6 +13,8 @@ export type UploadPath =
   | '/api/upload/step-photo'
   // 093: a community note's photo, on anyone's published guide.
   | '/api/upload/note-photo'
+  // 106: Submit an idea's photo, filed under the caller; sent with idField null.
+  | '/api/upload/idea-photo'
   | '/api/upload/pdf'
   | '/api/upload/stl'
   | '/api/upload/toy-photo'

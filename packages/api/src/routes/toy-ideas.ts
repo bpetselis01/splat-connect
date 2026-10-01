@@ -3,6 +3,7 @@ import { CONTACT_PREFS, type ContactPref, type ToyIdeaKind } from '@splat-connec
 import { createUserClient, createAdminClient } from '../supabase/client.js'
 import type { AuthVariables } from '../middleware/auth.js'
 import { profileName } from '../profile-name.js'
+import { toyPhotoUrl } from '../photo-storage.js'
 
 const toyIdeas = new Hono<{ Variables: AuthVariables }>()
 
@@ -17,11 +18,24 @@ const REQUIRED_FIELDS = ['title', 'summary'] as const
 // ever sent by an old client. Absent, null or blank all store as null.
 const OPTIONAL_FIELDS = ['description', 'intended_use', 'primary_user'] as const
 
+/** 106: every read sends the URL a client renders beside the stored path. */
+export const withPhotoUrl = <T extends { photo_path?: string | null }>(row: T) => ({
+  ...row,
+  photo_url: toyPhotoUrl(row.photo_path),
+})
+
+// A photo /upload/idea-photo wrote for this author: toy_ideas_photo_path_check's rule.
+const ownIdeaPhoto = (path: string, userId: string) =>
+  path.startsWith(`ideas/${userId}/`) &&
+  /^[0-9a-f-]{36}\.(jpg|png|webp|avif|heic|heif)$/.test(path.slice(`ideas/${userId}/`.length))
+
 /**
  * A title and a summary are required and must survive trimming — the two
  * things an admin cannot judge an idea without. Everything else is optional.
+ * Returns the fields, null for a missing title or summary or a malformed
+ * field, or a sentence to send back as the 400.
  */
-function readIdeaBody(body: unknown): Record<string, unknown> | null {
+function readIdeaBody(body: unknown, userId: string): Record<string, unknown> | string | null {
   if (body === null || typeof body !== 'object' || Array.isArray(body)) return null
   const source = body as Record<string, unknown>
   const out: Record<string, unknown> = {}
@@ -53,11 +67,19 @@ function readIdeaBody(body: unknown): Record<string, unknown> | null {
   if (!IDEA_KINDS.includes(kind as ToyIdeaKind)) return null
   out.kind = kind
 
+  // 106: one optional photo, and only one this author uploaded.
+  const photo = source.photo_path ?? null
+  if (photo !== null && (typeof photo !== 'string' || !ownIdeaPhoto(photo, userId))) {
+    return 'That photo was not uploaded from this account.'
+  }
+  out.photo_path = photo
+
   return out
 }
 
 toyIdeas.post('/', async (c) => {
-  const fields = readIdeaBody(await c.req.json().catch(() => null))
+  const fields = readIdeaBody(await c.req.json().catch(() => null), c.get('userId'))
+  if (typeof fields === 'string') return c.json({ error: fields }, 400)
   if (!fields) return c.json({ error: 'A title and a summary are required.' }, 400)
 
   // author_id comes from the verified token, never the body.
@@ -68,7 +90,7 @@ toyIdeas.post('/', async (c) => {
     .single()
 
   if (error) return c.json({ error: error.message }, 500)
-  return c.json(data, 201)
+  return c.json(withPhotoUrl(data), 201)
 })
 
 toyIdeas.get('/mine', async (c) => {
@@ -79,7 +101,7 @@ toyIdeas.get('/mine', async (c) => {
     .order('created_at', { ascending: false })
 
   if (error) return c.json({ error: error.message }, 500)
-  return c.json(data ?? [])
+  return c.json((data ?? []).map(withPhotoUrl))
 })
 
 /**
@@ -104,7 +126,7 @@ toyIdeas.get('/joined', async (c) => {
     // so unlike GET /api/admin/ideas or the author's own /mine, there is no
     // reader here who is ever entitled to this column.
     .select(
-      'toy_ideas!inner(id, author_id, title, summary, description, intended_use, primary_user, contact_prefs, status, tutorial_id, kind, answer_message_id, answered_at, created_at, updated_at)'
+      'toy_ideas!inner(id, author_id, title, summary, description, intended_use, primary_user, contact_prefs, status, tutorial_id, kind, answer_message_id, answered_at, photo_path, created_at, updated_at)'
     )
     .eq('profile_id', c.get('userId'))
     // A removed row must not keep showing the caller a challenge they were
@@ -115,7 +137,7 @@ toyIdeas.get('/joined', async (c) => {
     .order('created_at', { foreignTable: 'toy_ideas', ascending: false })
 
   if (error) return c.json({ error: error.message }, 500)
-  return c.json((data ?? []).map((row: any) => row.toy_ideas))
+  return c.json((data ?? []).map((row: any) => withPhotoUrl(row.toy_ideas)))
 })
 
 /**

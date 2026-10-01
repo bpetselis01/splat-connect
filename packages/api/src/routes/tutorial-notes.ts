@@ -7,6 +7,7 @@
 import { Hono, type Context } from 'hono'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
 import type { AuthVariables } from '../middleware/auth.js'
+import { toyPhotoUrl } from '../photo-storage.js'
 
 const notes = new Hono<{ Variables: AuthVariables }>()
 type Ctx = Context<{ Variables: AuthVariables }>
@@ -18,9 +19,6 @@ const NOTE_COLUMNS = 'id, tutorial_id, step_position, author_id, body, photo_pat
 const ownNotePhoto = (path: string, id: string) =>
   path.startsWith(`${id}/notes/`) && /^[0-9a-f-]{36}\.(jpg|png|webp|avif|heic|heif)$/.test(path.slice(`${id}/notes/`.length))
 
-/** Clients render a URL; the column holds a path (093). */
-export const notePhotoUrl = (path: string | null) =>
-  path ? `${process.env.SUPABASE_URL}/storage/v1/object/public/toy-photos/${path}` : null
 
 export function noteError(b: Record<string, unknown>, id: string): string | null {
   const body = typeof b.body === 'string' ? b.body.trim() : ''
@@ -76,7 +74,7 @@ notes.post('/:id/notes', async (c) => {
   if (error && ['42501', '22P02'].includes(error.code)) return c.json({ error: 'Not found' }, 404)
   if (error) return c.json({ error: error.message }, 500)
   await notifyContributors(id, c.get('userId'))
-  return c.json({ ...data, photo_url: notePhotoUrl(data.photo_path) }, 201)
+  return c.json({ ...data, photo_url: toyPhotoUrl(data.photo_path) }, 201)
 })
 
 notes.delete('/:id/notes/:noteId', async (c) => {
