@@ -1052,8 +1052,9 @@ publicRoutes.get('/printable-parts', async (c) => {
     .select('id, filename, material, filament_grams, print_minutes, tutorial_id, tutorials!inner(id, title, status)')
     .eq('tutorials.status', 'approved')
     .order('filename')
+    .order('id')
   if (error) return c.json({ error: error.message }, 500)
-  // ponytail: searches and pages after reading every approved STL row; move into SQL when the catalogue reaches thousands.
+  // ponytail: searches and pages in memory over one unranged read, which PostgREST caps at max_rows (1000; supabase/config.toml sets none), so past 1000 approved STLs search misses parts and total/pages are wrong. Upgrade: page with .range() + count, search with ilike.
   const rows = ((data ?? []) as unknown as CataloguePart[]).filter(
     (p) => !q || p.filename.toLowerCase().includes(q) || p.tutorials.title.toLowerCase().includes(q)
   )
