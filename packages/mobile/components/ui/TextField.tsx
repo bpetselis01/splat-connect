@@ -38,6 +38,8 @@ export function TextField({
   style,
   ...input
 }: TextInputProps & {
+  /** React 19 passes a ref as a prop; it reaches the TextInput via `...input`. */
+  ref?: React.Ref<TextInput>
   label?: string
   hint?: string
   /** Renders inside the focus ring, ahead of the input. */

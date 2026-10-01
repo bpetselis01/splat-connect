@@ -14,7 +14,7 @@
  * printer's side" row is a prototype shortcut, not a feature.
  */
 import { useCallback, useRef, useState } from 'react'
-import { View, Text, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Image, Pressable } from 'react-native'
+import { View, Text, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Image, Pressable, type TextInput } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import type { Printer, ToyTransaction, ToyTransactionDetail, ToyTransactionMessage } from '@splat-connect/types'
@@ -64,6 +64,15 @@ export function PrintJobScreen({ id }: { id: string }) {
   // Bumped by every write, so a poll that left before it cannot land after it
   // and put the old state back under somebody's thumb (thread-screen.tsx).
   const generation = useRef(0)
+  const scrollRef = useRef<ScrollView>(null)
+  const inputRef = useRef<TextInput>(null)
+
+  // The board's Message button. The thread is already on this page, so it
+  // goes there rather than opening anything new.
+  function openThread() {
+    scrollRef.current?.scrollToEnd?.({ animated: true })
+    inputRef.current?.focus()
+  }
 
   const load = useCallback(async () => {
     const at = generation.current
@@ -156,7 +165,7 @@ export function PrintJobScreen({ id }: { id: string }) {
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Screen>
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        <ScrollView ref={scrollRef} showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
           <View style={styles.head}>
             <View style={styles.glyph}>
               <Ionicons name="cube-outline" size={24} color={theme.colors.ink} />
@@ -204,6 +213,7 @@ export function PrintJobScreen({ id }: { id: string }) {
               if (await run(() => apiClient.post<ToyTransaction>(`/api/toy-transactions/${id}/confirm`, { code }))) setCode('')
             }}
             onAnswer={() => router.push('/print-for-others')}
+            onMessage={openThread}
           />
 
           {!isPrinter && state !== 'declined' && state !== 'withdrawn' ? (
@@ -246,6 +256,7 @@ export function PrintJobScreen({ id }: { id: string }) {
             <View style={styles.composer}>
               <View style={styles.flex}>
                 <TextField
+                  ref={inputRef}
                   accessibilityLabel={`Message ${other}`}
                   placeholder="Message"
                   value={draft}
@@ -302,6 +313,7 @@ function StateCard({
   onReady,
   onConfirm,
   onAnswer,
+  onMessage,
 }: {
   tx: ToyTransactionDetail
   state: JobState
@@ -315,6 +327,7 @@ function StateCard({
   onReady: () => void
   onConfirm: () => void
   onAnswer: () => void
+  onMessage: () => void
 }) {
   const machine = tx.printer ? `On ${tx.printer.name}` : null
 
@@ -345,7 +358,7 @@ function StateCard({
         <Text style={styles.strong}>{isPrinter ? tx.requester_name : tx.owner_name}</Text>
         {machine ? <Text style={styles.meta}>{machine}</Text> : null}
         {/* PENDING(printer-stats): the printer's jobs and median days on this card. */}
-        {!isPrinter ? <PendingButton pending="message-printer" label="Message" variant="ghost" /> : null}
+        {!isPrinter ? <Button label="Message" variant="ghost" onPress={onMessage} /> : null}
         <Text style={styles.body}>
           {isPrinter
             ? printing

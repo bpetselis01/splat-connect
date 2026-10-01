@@ -297,6 +297,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["mobile"],
     needs: "Message button on the print job's printer card [ui]",
+    shipped: true,
   },
   'print-cost-estimate': {
     title: "Cost estimate",
