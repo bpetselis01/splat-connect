@@ -15,9 +15,9 @@
  * (parts, preferences, printer, pickup) and a sticky summary with the send
  * button on the right. The summary's time and filament tiles sum the STL rows'
  * own settings (068) over the ticked parts. The first printer to accept takes
- * the job and the API withdraws the rest. The board's per-part quantity and
- * deadline have no field on the request yet, so they are not drawn — a stepper
- * that sends nothing would be a promise the job page breaks. Web's board has
+ * the job and the API withdraws the rest. Each part carries a quantity
+ * (058's `print_job_files.quantity`); the board's deadline has no field yet, so
+ * it is not drawn. Web's board has
  * no collect-or-post choice ("You collect it"), so `delivery` is not sent.
  *
  * A full or closed machine is shown and disabled rather than hidden. A list
@@ -88,6 +88,8 @@ export function RequestPrintForm({
 }) {
   const router = useRouter()
   const [picked, setPicked] = useState<string[]>(parts.map((p) => p.id))
+  const [qty, setQty] = useState<Record<string, number>>({})
+  const qtyOf = (id: string) => qty[id] ?? 1
   const [printerIds, setPrinterIds] = useState<string[]>(() => {
     const first = printers.find((p) => printerAvailability(p) === null)
     return first ? [first.id] : []
@@ -100,7 +102,7 @@ export function RequestPrintForm({
 
   const valid = picked.length > 0 && printerIds.length > 0 && agree
   const full = printerIds.length >= MAX_PRINTERS_PER_REQUEST
-  const ticked = parts.filter((p) => picked.includes(p.id))
+  const ticked = parts.filter((p) => picked.includes(p.id)).map((p) => ({ ...p, quantity: qtyOf(p.id) }))
 
   function toggle(id: string) {
     setPicked((prev) => (prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]))
@@ -115,7 +117,7 @@ export function RequestPrintForm({
         const tx = await browserApiClient.post<{ id: string }>('/api/toy-transactions/print', {
           tutorial_id: tutorialId,
           printer_ids: printerIds,
-          stl_file_ids: picked,
+          files: ticked.map((p) => ({ stl_file_id: p.id, quantity: p.quantity })),
           colour,
           note: note.trim(),
         })
@@ -178,6 +180,29 @@ export function RequestPrintForm({
                   </span>
                   <span className="min-w-0 flex-1 font-mono text-sm font-bold text-ink [overflow-wrap:anywhere]">
                     {part.filename}
+                  </span>
+                  <span role="group" aria-label="Quantity" className="inline-flex items-center gap-0.5 rounded-full border border-line bg-surface p-[3px]">
+                    <button
+                      type="button"
+                      aria-label={`Fewer ${part.filename}`}
+                      disabled={!on || qtyOf(part.id) <= 1}
+                      onClick={() => setQty((q) => ({ ...q, [part.id]: Math.max(1, qtyOf(part.id) - 1) }))}
+                      className="h-9 w-9 rounded-full text-lg text-ink"
+                    >
+                      −
+                    </button>
+                    <output aria-live="polite" className="min-w-8 text-center font-mono text-sm font-bold">
+                      ×{qtyOf(part.id)}
+                    </output>
+                    <button
+                      type="button"
+                      aria-label={`More ${part.filename}`}
+                      disabled={!on || qtyOf(part.id) >= 20}
+                      onClick={() => setQty((q) => ({ ...q, [part.id]: Math.min(20, qtyOf(part.id) + 1) }))}
+                      className="h-9 w-9 rounded-full text-lg text-ink"
+                    >
+                      +
+                    </button>
                   </span>
                 </li>
               )

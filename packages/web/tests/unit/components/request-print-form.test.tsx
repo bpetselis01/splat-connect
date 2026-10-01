@@ -38,10 +38,29 @@ describe('RequestPrintForm', () => {
       expect(post).toHaveBeenCalledWith('/api/toy-transactions/print', {
         tutorial_id: 't1',
         printer_ids: ['a', 'b', 'c'],
-        stl_file_ids: ['f1'],
+        files: [{ stl_file_id: 'f1', quantity: 1 }],
         colour: 'Black',
         note: '',
       })
+    )
+  })
+
+  it('sends a quantity per part', async () => {
+    const post = vi.mocked(browserApiClient.post).mockResolvedValue({ id: 'tx-2' })
+    render(
+      <RequestPrintForm
+        tutorialId="t1"
+        tutorialTitle="Switch mount"
+        parts={[{ id: 'f1', filename: 'mount.stl', print_minutes: null, filament_grams: null, material: 'PETG' }]}
+        printers={[printer('a', 'Ann')]}
+        header={<h1>Request a print</h1>}
+      />
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'More mount.stl' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: /I understand/ }))
+    fireEvent.click(screen.getByRole('button', { name: /Send request/ }))
+    await waitFor(() =>
+      expect(post).toHaveBeenCalledWith('/api/toy-transactions/print', expect.objectContaining({ files: [{ stl_file_id: 'f1', quantity: 2 }] }))
     )
   })
 })

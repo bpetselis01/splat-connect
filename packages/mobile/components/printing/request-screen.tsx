@@ -52,6 +52,7 @@ export function RequestPrintScreen({ guideId, printerIds }: { guideId: string; p
   const [printers, setPrinters] = useState<PrinterWithOwner[]>([])
   const [loadFailed, setLoadFailed] = useState(false)
   const [parts, setParts] = useState<string[]>([])
+  const [qty, setQty] = useState<Record<string, number>>({})
   const [colour, setColour] = useState<string>(PRINT_COLOURS[0])
   const [delivery, setDelivery] = useState<PrintDelivery>('collect')
   const [note, setNote] = useState('')
@@ -92,7 +93,10 @@ export function RequestPrintScreen({ guideId, printerIds }: { guideId: string; p
     )
   }
 
-  const ticked = guide.stl_files.filter((f) => parts.includes(f.id))
+  const qtyOf = (id: string) => qty[id] ?? 1
+  const bump = (id: string, by: number) =>
+    setQty((cur) => ({ ...cur, [id]: Math.min(20, Math.max(1, (cur[id] ?? 1) + by)) }))
+  const ticked = guide.stl_files.filter((f) => parts.includes(f.id)).map((f) => ({ ...f, quantity: qtyOf(f.id) }))
   const valid = ticked.length > 0 && printerIds.length > 0 && agree
 
   async function send() {
@@ -102,7 +106,7 @@ export function RequestPrintScreen({ guideId, printerIds }: { guideId: string; p
       const created = await apiClient.post<{ id: string }>('/api/toy-transactions/print', {
         printer_ids: printerIds,
         tutorial_id: guideId,
-        stl_file_ids: parts,
+        files: ticked.map((f) => ({ stl_file_id: f.id, quantity: f.quantity })),
         note: note.trim() || undefined,
         colour,
         delivery,
@@ -134,13 +138,13 @@ export function RequestPrintScreen({ guideId, printerIds }: { guideId: string; p
           {guide.stl_files.map((f) => {
             const on = parts.includes(f.id)
             return (
+              <View key={f.id} style={[styles.part, on && styles.partOn]}>
               <Pressable
-                key={f.id}
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: on }}
                 accessibilityLabel={`Include ${f.filename}`}
                 onPress={() => setParts((cur) => (on ? cur.filter((id) => id !== f.id) : [...cur, f.id]))}
-                style={[styles.part, on && styles.partOn]}
+                style={styles.partTick}
               >
                 <Ionicons
                   name={on ? 'checkbox' : 'square-outline'}
@@ -154,9 +158,29 @@ export function RequestPrintScreen({ guideId, printerIds }: { guideId: string; p
                       'Settings from the guide'}
                   </Text>
                 </View>
-                {/* PENDING(print-part-quantity): a quantity per part — fixed at one today. */}
-                <Text style={styles.meta}>×1</Text>
               </Pressable>
+                <View accessibilityRole="adjustable" style={styles.stepper}>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`Fewer ${f.filename}`}
+                    disabled={!on || qtyOf(f.id) <= 1}
+                    onPress={() => bump(f.id, -1)}
+                    hitSlop={8}
+                  >
+                    <Ionicons name="remove-circle-outline" size={24} color={theme.colors.primaryDark} />
+                  </Pressable>
+                  <Text style={styles.meta}>×{qtyOf(f.id)}</Text>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`More ${f.filename}`}
+                    disabled={!on || qtyOf(f.id) >= 20}
+                    onPress={() => bump(f.id, 1)}
+                    hitSlop={8}
+                  >
+                    <Ionicons name="add-circle-outline" size={24} color={theme.colors.primaryDark} />
+                  </Pressable>
+                </View>
+              </View>
             )
           })}
           <Text style={styles.meta}>
@@ -296,6 +320,8 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
     backgroundColor: theme.colors.surface,
   },
+  partTick: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3) },
+  stepper: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2) },
   partName: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.text },
   meta: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted, lineHeight: 19 },
   note: { minHeight: 80, textAlignVertical: 'top' },

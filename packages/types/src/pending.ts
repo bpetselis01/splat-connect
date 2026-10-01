@@ -312,6 +312,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["mobile", "api"],
     needs: "Quantity per part on a print request [ui,db]",
+    shipped: true,
   },
   'toy-holder-location': {
     title: "Where the toy is",

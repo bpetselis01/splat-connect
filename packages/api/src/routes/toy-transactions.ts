@@ -1556,10 +1556,26 @@ toyTransactions.post('/print', async (c) => {
     return c.json({ error: 'Choose collect or post.' }, 400)
   }
 
-  const fileIds = Array.isArray(body.stl_file_ids) ? body.stl_file_ids : []
-  if (fileIds.length === 0 || !fileIds.every((id: unknown) => typeof id === 'string')) {
+  // `files` carries a quantity per part (058's print_job_files.quantity,
+  // 1–20). `stl_file_ids` is the form every client sent before, and still
+  // means one of each.
+  const wanted: Array<{ id: unknown; quantity: unknown }> = Array.isArray(body.files)
+    ? body.files.map((f: { stl_file_id?: unknown; quantity?: unknown } | null) => ({
+        id: f?.stl_file_id,
+        quantity: f?.quantity ?? 1,
+      }))
+    : (Array.isArray(body.stl_file_ids) ? body.stl_file_ids : []).map((id: unknown) => ({ id, quantity: 1 }))
+  if (wanted.length === 0 || !wanted.every((f) => typeof f.id === 'string')) {
     return c.json({ error: 'Tick at least one part to print.' }, 400)
   }
+  if (!wanted.every((f) => Number.isInteger(f.quantity) && (f.quantity as number) >= 1 && (f.quantity as number) <= 20)) {
+    return c.json({ error: 'Ask for between 1 and 20 of each part.' }, 400)
+  }
+  const quantityOf = new Map(wanted.map((f) => [f.id as string, f.quantity as number]))
+  // print_job_files' primary key is (transaction, file): a part named twice
+  // would be a 500 from the insert, so it is a sentence here.
+  if (quantityOf.size !== wanted.length) return c.json({ error: 'Name each part once.' }, 400)
+  const fileIds = [...quantityOf.keys()]
 
   // Up to three printers (074). `printer_id` is the single-printer form every
   // client sent before, and still means a group of one.
@@ -1669,7 +1685,7 @@ toyTransactions.post('/print', async (c) => {
     created.push(tx)
     const { error: linkError } = await admin
       .from('print_job_files')
-      .insert(rows.map((f) => ({ transaction_id: tx.id, stl_file_id: f.id })))
+      .insert(rows.map((f) => ({ transaction_id: tx.id, stl_file_id: f.id, quantity: quantityOf.get(f.id) ?? 1 })))
     // The files ARE the request. A job with none is a job nobody can fill, so
     // the whole request is rolled back rather than left half-sent.
     if (linkError) {
@@ -1679,7 +1695,8 @@ toyTransactions.post('/print', async (c) => {
   }
 
   const requesterName = await profileName(admin, userId, 'A contributor')
-  const parts = `${rows.length} part${rows.length === 1 ? '' : 's'}`
+  const count = rows.reduce((n, f) => n + (quantityOf.get(f.id) ?? 1), 0)
+  const parts = `${count} part${count === 1 ? '' : 's'}`
   for (const tx of created) {
     await admin.from('toy_transaction_messages').insert({
       transaction_id: tx.id,
