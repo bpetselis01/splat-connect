@@ -271,7 +271,6 @@ export function DetailScreen({ id }: { id: string }) {
         )}
       </Section>
 
-      {/* PENDING(tool-notes): why each tool, and Buy once / Borrow / Substitute. */}
       <GuideTools tutorialId={tutorial.id} tools={tutorial.tools} />
 
       {/* The way into printing. Keyed on the guide having STL files rather than

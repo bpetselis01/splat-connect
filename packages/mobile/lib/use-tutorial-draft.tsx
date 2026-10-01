@@ -13,7 +13,7 @@
 // 250ms: writes queue on one promise chain so a second save always sees the
 // updated_at the first established, rather than racing it into a 400.
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
-import type { BuyLink, Part, Tool, TutorialStep, TutorialWithDetails } from '@splat-connect/types'
+import type { BuyLink, Part, Tool, ToolGetBy, TutorialStep, TutorialWithDetails } from '@splat-connect/types'
 import { apiClient } from './api-client'
 
 // GET /api/tutorials/:id embeds this join (reviewer/reviewed_for name); it is
@@ -28,6 +28,9 @@ export interface ItemRow {
   quantity?: number
   is_optional: boolean
   buy_links: BuyLink[]
+  /** Tools only (085). Carried through postItems, or a save erases them. */
+  note?: string | null
+  get_by?: ToolGetBy | null
 }
 
 /** One editable step (080). Blank-bodied rows are never sent, like blank names. */
@@ -143,7 +146,7 @@ function useTutorialDraft(id: string): TutorialDraft {
       setTutorial((prev) => (prev ? { ...prev, parts: saved } : prev))
     } else {
       const saved = await apiClient.post<Tool[]>(`/api/tutorials/${id}/tools`, {
-        tools: clean.map((r) => ({ name: r.name, is_optional: r.is_optional, buy_links: links(r) })),
+        tools: clean.map((r) => ({ name: r.name, is_optional: r.is_optional, buy_links: links(r), note: r.note ?? null, get_by: r.get_by ?? null })),
       })
       setTutorial((prev) => (prev ? { ...prev, tools: saved } : prev))
     }

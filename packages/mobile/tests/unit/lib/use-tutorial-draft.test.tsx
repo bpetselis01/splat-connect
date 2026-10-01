@@ -181,7 +181,23 @@ it('posts tools without a quantity', async () => {
   })
 
   expect(mockPost).toHaveBeenCalledWith('/api/tutorials/t1/tools', {
-    tools: [{ name: 'Screwdriver', is_optional: true, buy_links: [] }],
+    tools: [{ name: 'Screwdriver', is_optional: true, buy_links: [], note: null, get_by: null }],
+  })
+})
+
+// Review Focus 1: the list is replaced whole, so a save must carry what web wrote.
+it('posts a tool’s note and get-by so a save does not erase them', async () => {
+  mount()
+  await waitFor(() => expect(draft.tutorial).toBeTruthy())
+  mockPost.mockResolvedValue([])
+
+  await act(async () => {
+    draft.replaceItems('tools', [{ name: 'Iron', is_optional: false, buy_links: [], note: 'Borrow one', get_by: 'borrow' }])
+    jest.advanceTimersByTime(250)
+  })
+
+  expect(mockPost).toHaveBeenCalledWith('/api/tutorials/t1/tools', {
+    tools: [{ name: 'Iron', is_optional: false, buy_links: [], note: 'Borrow one', get_by: 'borrow' }],
   })
 })
 

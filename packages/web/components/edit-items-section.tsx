@@ -5,7 +5,7 @@ import { PanelActions, useSaveOnLeave } from '@/components/panel-actions'
 // noun="part" withQuantity or noun="tool"; `withQuantity` is the only
 // structural difference between them.
 import { useRef, useState } from 'react'
-import type { BuyLink } from '@splat-connect/types'
+import { TOOL_GET_BY_LABEL, type BuyLink, type ToolGetBy } from '@splat-connect/types'
 import { BuyLinksInput } from '@/components/buy-links-input'
 import { useToast } from '@/components/toast'
 import { SaveStatusLine } from '@/components/save-status-line'
@@ -16,6 +16,8 @@ export type EditableItem = {
   is_optional: boolean
   buy_links: BuyLink[]
   quantity?: number
+  note?: string | null
+  get_by?: ToolGetBy | null
 }
 
 export type ItemInput = {
@@ -23,16 +25,19 @@ export type ItemInput = {
   is_optional: boolean
   buy_links: BuyLink[]
   quantity?: number
+  note?: string | null
+  get_by?: ToolGetBy | null
 }
 
 interface EditItemsSectionProps {
   noun: string // 'part' | 'tool' — drives every label and error message
   withQuantity?: boolean
+  withNotes?: boolean
   initialItems: EditableItem[]
   onSave: (items: ItemInput[]) => Promise<void>
 }
 
-export function EditItemsSection({ noun, withQuantity, initialItems, onSave }: EditItemsSectionProps) {
+export function EditItemsSection({ noun, withQuantity, withNotes, initialItems, onSave }: EditItemsSectionProps) {
   const showToast = useToast()
   const [items, setItems] = useState<EditableItem[]>(initialItems)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -99,6 +104,8 @@ export function EditItemsSection({ noun, withQuantity, initialItems, onSave }: E
       is_optional: item.is_optional,
       buy_links: item.buy_links,
       ...(withQuantity ? { quantity: item.quantity ?? 1 } : {}),
+      // Carried through, never rebuilt: the list is replaced whole on save.
+      ...(withNotes ? { note: item.note ?? null, get_by: item.get_by ?? null } : {}),
     }
   }
 
@@ -178,6 +185,7 @@ export function EditItemsSection({ noun, withQuantity, initialItems, onSave }: E
       is_optional: data.get('is_optional') === 'on',
       buy_links: rawLinks ? JSON.parse(rawLinks) : [],
       ...(withQuantity ? { quantity: Number(data.get('quantity') ?? 1) } : {}),
+      ...(withNotes ? { note: ((data.get('note') as string) ?? '').trim() || null, get_by: ((data.get('get_by') as ToolGetBy) || null) } : {}),
     }
   }
 
@@ -319,6 +327,29 @@ export function EditItemsSection({ noun, withQuantity, initialItems, onSave }: E
                     />
                     Optional (not required)
                   </label>
+                  {withNotes && (
+                    <>
+                      <input
+                        value={draft.note ?? ''}
+                        onChange={(e) => setDraft((d) => (d ? { ...d, note: e.target.value } : d))}
+                        maxLength={200}
+                        className={inputCls}
+                        placeholder="Why it is needed, e.g. Borrow from a library or makerspace"
+                        aria-label="Note"
+                      />
+                      <select
+                        value={draft.get_by ?? ''}
+                        onChange={(e) => setDraft((d) => (d ? { ...d, get_by: (e.target.value as ToolGetBy) || null } : d))}
+                        className={inputCls}
+                        aria-label="How to get it"
+                      >
+                        <option value="">How to get it</option>
+                        {(Object.keys(TOOL_GET_BY_LABEL) as ToolGetBy[]).map((k) => (
+                          <option key={k} value={k}>{TOOL_GET_BY_LABEL[k]}</option>
+                        ))}
+                      </select>
+                    </>
+                  )}
                   <div>
                     <p className="mb-1 text-xs font-bold text-muted">Buy links</p>
                     <BuyLinksInput
@@ -401,6 +432,23 @@ export function EditItemsSection({ noun, withQuantity, initialItems, onSave }: E
               <input type="checkbox" name="is_optional" className="field-check" />
               Optional (not required)
             </label>
+            {withNotes && (
+              <>
+                <input
+                  name="note"
+                  maxLength={200}
+                  className={inputCls}
+                  placeholder="Why it is needed, e.g. Borrow from a library or makerspace"
+                  aria-label="Note"
+                />
+                <select name="get_by" defaultValue="" className={inputCls} aria-label="How to get it">
+                  <option value="">How to get it</option>
+                  {(Object.keys(TOOL_GET_BY_LABEL) as ToolGetBy[]).map((k) => (
+                    <option key={k} value={k}>{TOOL_GET_BY_LABEL[k]}</option>
+                  ))}
+                </select>
+              </>
+            )}
             <div>
               <p className="mb-1 text-xs font-bold text-muted">Buy links</p>
               <BuyLinksInput key={addKey} />

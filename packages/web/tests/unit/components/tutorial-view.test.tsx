@@ -133,6 +133,17 @@ describe('TutorialView', () => {
     render(<TutorialView tutorial={tutorial({ parts })} signedIn={false} />)
     expect(screen.getByRole('link', { name: 'Buy Switch from Jaycar' })).toHaveAttribute('href', 'https://shop.test/switch')
   })
+
+  it('shows each tool’s note and how to get it', () => {
+    render(
+      <TutorialView
+        signedIn
+        tutorial={tutorial({ tools: [{ id: 'x', tutorial_id: 't1', name: 'Hot glue gun', is_optional: false, buy_links: [], note: 'Anchoring the jack', get_by: 'borrow' }] })}
+      />
+    )
+    expect(screen.getByText('Anchoring the jack')).toBeInTheDocument()
+    expect(screen.getByText('Borrow')).toBeInTheDocument()
+  })
 })
 
 describe('TutorialView tabs', () => {

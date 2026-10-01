@@ -11,11 +11,13 @@
 import { useState } from 'react'
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
+import { TOOL_GET_BY_LABEL, type ToolGetBy } from '@splat-connect/types'
 import { useDraft, type ItemRow } from '../../../lib/use-tutorial-draft'
 import { theme } from '../../../lib/theme'
 import { Screen } from '../../ui/Screen'
 import { TextField } from '../../ui/TextField'
 import { Button } from '../../ui/Button'
+import { Chip } from '../../ui/Chip'
 import { ErrorRow } from '../../ui/ErrorRow'
 import { SectionFooter } from '../section-footer'
 import { DraftGate } from './draft-gate'
@@ -23,10 +25,8 @@ import { DraftGate } from './draft-gate'
 const NOUN_LABEL = { parts: 'Part', tools: 'Tool' } as const
 
 // PENDING(part-prices): a price or note per part, and a total on the hub.
-// PENDING(tool-notes): a note per tool ("Borrow from a library").
-// The board's leads, less what waits on part-prices ("with a rough price")
-// and tool-notes ("and what can be borrowed").
-const LEAD = { parts: 'Everything a family has to buy.', tools: 'What they need on the bench.' }
+// The board's lead for parts, less what waits on part-prices ("with a rough price").
+const LEAD = { parts: 'Everything a family has to buy.', tools: 'What they need on the bench, and what can be borrowed.' }
 
 // The editor mounts once the draft has arrived (see DraftGate).
 export function ItemsSection({ noun }: { noun: 'parts' | 'tools' }) {
@@ -36,6 +36,7 @@ export function ItemsSection({ noun }: { noun: 'parts' | 'tools' }) {
 function ItemsEditor({ noun }: { noun: 'parts' | 'tools' }) {
   const { tutorial, replaceItems, saveError } = useDraft()
   const withQuantity = noun === 'parts'
+  const withNotes = noun === 'tools'
   const singular = NOUN_LABEL[noun]
 
   const [linksOpen, setLinksOpen] = useState<number | null>(null)
@@ -45,6 +46,7 @@ function ItemsEditor({ noun }: { noun: 'parts' | 'tools' }) {
       quantity: withQuantity ? (r.quantity ?? 1) : undefined,
       is_optional: r.is_optional,
       buy_links: r.buy_links ?? [],
+      ...(withNotes ? { note: r.note ?? null, get_by: r.get_by ?? null } : {}),
     }))
   )
 
@@ -132,6 +134,22 @@ function ItemsEditor({ noun }: { noun: 'parts' | 'tools' }) {
                 <Ionicons name="close" size={18} color={theme.colors.danger} />
               </Pressable>
             </View>
+            {noun === 'tools' ? (
+              <>
+                <TextField
+                  accessibilityLabel={`Tool ${i + 1} note`}
+                  placeholder="Borrow from a library or makerspace"
+                  maxLength={200}
+                  value={row.note ?? ''}
+                  onChangeText={(text) => update(i, { note: text || null })}
+                />
+                <View style={styles.controls}>
+                  {(Object.keys(TOOL_GET_BY_LABEL) as ToolGetBy[]).map((k) => (
+                    <Chip key={k} label={TOOL_GET_BY_LABEL[k]} active={row.get_by === k} onPress={() => update(i, { get_by: row.get_by === k ? null : k })} />
+                  ))}
+                </View>
+              </>
+            ) : null}
             {noun === 'parts' && linksOpen === i ? (
               <View style={styles.links}>
                 {row.buy_links.map((link, n) => (
@@ -185,6 +203,7 @@ function ItemsEditor({ noun }: { noun: 'parts' | 'tools' }) {
                 quantity: withQuantity ? 1 : undefined,
                 is_optional: false,
                 buy_links: [],
+                ...(withNotes ? { note: null, get_by: null } : {}),
               },
             ])
           }

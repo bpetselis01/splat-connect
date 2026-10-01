@@ -107,7 +107,7 @@ it('gives tools no quantity stepper', () => {
   expect(screen.queryByTestId('item-qty-up-0')).toBeNull()
   fireEvent.changeText(screen.getByLabelText('Tool 1 name'), 'Screwdriver')
   expect(mockDraft.replaceItems).toHaveBeenLastCalledWith('tools', [
-    { name: 'Screwdriver', quantity: undefined, is_optional: false, buy_links: [] },
+    { name: 'Screwdriver', quantity: undefined, is_optional: false, buy_links: [], note: null, get_by: null },
   ])
 })
 
@@ -143,4 +143,13 @@ it('edits a part\u2019s buy links on the phone', () => {
   expect(mockDraft.replaceItems).toHaveBeenLastCalledWith('parts', [
     expect.objectContaining({ name: 'Switch', buy_links: [{ label: 'Jaycar', url: 'https://jaycar.com.au/x' }] }),
   ])
+})
+
+it('keeps a tool’s note through a rename and sets how to get it', () => {
+  mockDraft.tutorial = { ...mockDraft.tutorial, tools: [{ id: 't', name: 'Iron', is_optional: false, buy_links: [], note: 'Borrow one', get_by: null }] }
+  render(<ItemsSection noun="tools" />)
+  fireEvent.changeText(screen.getByLabelText('Tool 1 name'), 'Soldering iron')
+  expect(mockDraft.replaceItems).toHaveBeenLastCalledWith('tools', [expect.objectContaining({ name: 'Soldering iron', note: 'Borrow one' })])
+  fireEvent.press(screen.getByText('Borrow'))
+  expect(mockDraft.replaceItems).toHaveBeenLastCalledWith('tools', [expect.objectContaining({ get_by: 'borrow' })])
 })

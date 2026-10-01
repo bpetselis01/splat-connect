@@ -599,6 +599,7 @@ export const PENDING = {
     needs: "Decided 2026-09-30: a price per part plus a prices-checked date (optional cost basis); the total shows only when every required part has a price.",
   },
   'tool-notes': {
+    shipped: true,
     title: "Tool notes",
     blurb: "Notes on each tool — buy, borrow or substitute — are coming.",
     kind: "build",

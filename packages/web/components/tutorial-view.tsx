@@ -62,6 +62,7 @@ import {
   KIND_LABEL,
   MATURITY_LABEL,
   SAFETY_CHECKLIST,
+  TOOL_GET_BY_LABEL,
   formatAgeRange,
   formatBuildTime,
   type BuyLink,
@@ -238,6 +239,12 @@ export function TutorialView({
                     {t.name}
                     {t.is_optional && <span className="pill-tag ml-2 text-muted">Optional</span>}
                   </span>
+                  {(t.note || t.get_by) && (
+                    <span className="flex flex-wrap items-center gap-2 text-sm text-muted">
+                      {t.note && <span>{t.note}</span>}
+                      {t.get_by && <span className="pill-tag">{TOOL_GET_BY_LABEL[t.get_by]}</span>}
+                    </span>
+                  )}
                   <span className="text-xs">
                     <BuyLinks item={t.name} links={t.buy_links} />
                   </span>

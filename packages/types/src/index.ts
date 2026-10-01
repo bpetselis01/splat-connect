@@ -4,6 +4,9 @@ export * from './nav-model'
 // lines above export nothing at runtime there. Named re-exports do.
 export { contributorBadges } from './contributor-badges'
 export type { ContributorBadge, ContributorBadgeInput } from './contributor-badges'
+export { TOOL_GET_BY_LABEL } from './guides'
+export type { ToolGetBy } from './guides'
+import type { ToolGetBy } from './guides'
 export { buildCalendar } from './ics'
 export type { CalendarEvent } from './ics'
 import type { ContributorBadge } from './contributor-badges'
@@ -1866,6 +1869,10 @@ export interface Tool {
   name: string
   is_optional: boolean
   buy_links: BuyLink[]
+  /** 085. Why it is on the list, and how to get one. Optional so fixtures
+   *  that predate them need not name them. */
+  note?: string | null
+  get_by?: ToolGetBy | null
 }
 
 /** What the printers directory lists (058) and an STL row may name (068). */

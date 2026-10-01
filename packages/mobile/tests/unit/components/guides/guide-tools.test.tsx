@@ -24,3 +24,9 @@ it('ticks the tools you already have and links to Learn', async () => {
   fireEvent.press(screen.getByRole('button', { name: /Tools and materials on Learn/ }))
   expect(mockPush).toHaveBeenCalledWith('/explore/learn/tools-and-materials')
 })
+
+it('says why each tool and how to get it', async () => {
+  render(<GuideTools tutorialId="g" tools={[{ ...tools[1], note: 'Anchoring the jack', get_by: 'borrow' }]} />)
+  expect(await screen.findByText('Anchoring the jack')).toBeTruthy()
+  expect(screen.getByText('Borrow')).toBeTruthy()
+})

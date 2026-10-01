@@ -5,7 +5,7 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import type { Tool } from '@splat-connect/types'
+import { TOOL_GET_BY_LABEL, type Tool } from '@splat-connect/types'
 import { ticksKey, useDeviceTicks } from '../../lib/guide-progress'
 import { theme } from '../../lib/theme'
 import { Section } from '../ui/Section'
@@ -48,7 +48,9 @@ export function GuideTools({ tutorialId, tools }: { tutorialId: string; tools: T
               </Pressable>
               <View style={styles.rowText}>
                 <Text style={[styles.name, owned && styles.owned]}>{`${t.name}${t.is_optional ? ' (optional)' : ''}`}</Text>
+                {t.note ? <Text style={styles.why}>{t.note}</Text> : null}
               </View>
+              {t.get_by ? <Text style={styles.tag}>{TOOL_GET_BY_LABEL[t.get_by]}</Text> : null}
             </View>
           )
         })
@@ -70,5 +72,7 @@ const styles = StyleSheet.create({
   tickOn: { backgroundColor: theme.colors.success, borderColor: theme.colors.success },
   rowText: { flex: 1, gap: 2 },
   name: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.text },
+  why: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted },
+  tag: { fontFamily: theme.fonts.bold, fontSize: 12, color: theme.colors.ink, backgroundColor: theme.colors.surfaceSunken, borderRadius: theme.radii.pill, paddingHorizontal: theme.spacing(2), paddingVertical: 2, overflow: 'hidden' },
   owned: { textDecorationLine: 'line-through', color: theme.colors.muted },
 })

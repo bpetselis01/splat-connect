@@ -199,7 +199,7 @@ export default async function EditTutorialPage({
     revalidatePath(`/tutorials/${id}/edit`)
   }
 
-  async function saveTools(newTools: { name: string; is_optional: boolean; buy_links: BuyLink[] }[]) {
+  async function saveTools(newTools: ItemInput[]) {
     'use server'
     await apiClient.post(`/api/tutorials/${id}/tools`, { tools: newTools })
     revalidatePath(`/tutorials/${id}/edit`)
@@ -314,7 +314,7 @@ export default async function EditTutorialPage({
       status: stepStatuses.tools,
       content: (
         <div className="panel pt-5">
-          <EditItemsSection noun="tool" initialItems={tools} onSave={saveTools} />
+          <EditItemsSection noun="tool" withNotes initialItems={tools} onSave={saveTools} />
         </div>
       ),
     },
