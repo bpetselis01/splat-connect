@@ -2125,8 +2125,8 @@ export interface OrgThread {
  * What a save can point at.
  *
  * All five exist from day one so switching organisations and printable parts on
- * later is a code change rather than a migration. Only the three in SAVE_SLUGS
- * are live — see that constant.
+ * later is a code change rather than a migration. Every member is live — see
+ * SAVE_SLUGS.
  */
 export type SaveEntityType =
   | 'tutorial'
@@ -2155,6 +2155,9 @@ export const SAVE_SLUGS = {
   // no migration. The artboard draws a Saved organisations screen and the save
   // control already sits on the public organisation page.
   organisations: 'organisation',
+  // Switched on 2026-10-01 with the parts catalogue (/printing/parts). The
+  // entity is an stl_files row; only an approved guide's parts are returned.
+  parts: 'printable_part',
 } as const satisfies Record<string, SaveEntityType>
 
 export type SaveSlug = keyof typeof SAVE_SLUGS

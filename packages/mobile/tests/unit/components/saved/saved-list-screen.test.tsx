@@ -20,7 +20,7 @@ const mockToggle = jest.fn()
 const mockIsSaved = jest.fn(() => true)
 jest.mock('../../../../lib/saves', () => ({
   useSaves: () => ({
-    savedIds: { tutorials: [], toys: [], challenges: [] },
+    savedIds: { tutorials: [], toys: [], challenges: [], organisations: [], parts: [] },
     isSaved: (...a: unknown[]) => mockIsSaved(...(a as [])),
     toggle: mockToggle,
   }),
@@ -59,6 +59,14 @@ describe('SavedListScreen', () => {
 
     fireEvent.press(await screen.findByRole('button', { name: 'A softer switch' }))
     expect(mockPush).toHaveBeenCalledWith('/explore/challenges/c1')
+  })
+
+  it('lists saved parts and opens their guide', async () => {
+    mockGet.mockResolvedValue([{ id: 'f1', filename: 'cradle-65mm.stl', tutorial_id: 'g1', tutorials: { id: 'g1', title: 'Switch mount' } }])
+    render(<SavedListScreen slug="parts" />)
+    fireEvent.press(await screen.findByText('cradle-65mm.stl'))
+    expect(mockPush).toHaveBeenCalledWith('/guides/g1')
+    expect(screen.getByText('Switch mount')).toBeTruthy()
   })
 
   it('unsaves in place through the bookmark', async () => {

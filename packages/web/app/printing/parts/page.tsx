@@ -13,6 +13,8 @@ import type { CataloguePage } from '@splat-connect/types'
 import { apiClient } from '@/lib/api-client'
 import { formatPrintMinutes } from '@/lib/print-settings'
 import { Pager } from '@/components/pager'
+import { getSavedIds } from '@/lib/saves'
+import { SaveButton } from '@/components/save-button'
 
 export const metadata = { title: 'Printable parts — SPLAT Connect' }
 
@@ -31,9 +33,10 @@ export default async function PrintingPartsPage({
 }) {
   const { q = '', page } = await searchParams
   const query = new URLSearchParams({ ...(q ? { q } : {}), ...(page ? { page } : {}) }).toString()
-  const list = await apiClient
-    .get<CataloguePage>(`/api/public/printable-parts${query ? `?${query}` : ''}`)
-    .catch(() => EMPTY)
+  const [list, saved] = await Promise.all([
+    apiClient.get<CataloguePage>(`/api/public/printable-parts${query ? `?${query}` : ''}`).catch(() => EMPTY),
+    getSavedIds(),
+  ])
 
   return (
     <div className="mx-auto flex max-w-[980px] flex-col gap-6">
@@ -72,7 +75,7 @@ export default async function PrintingPartsPage({
       ) : (
         <ul className="flex list-none flex-col gap-2.5 p-0">
           {list.items.map((p) => (
-            <li key={p.id} className="print-part">
+            <li key={p.id} className="print-part save-host relative">
               <span
                 aria-hidden="true"
                 className="grid h-11 w-11 flex-none place-items-center rounded-field bg-violet-soft text-[var(--tink)]"
@@ -94,6 +97,7 @@ export default async function PrintingPartsPage({
                     .join(' · ')}
                 </span>
               </span>
+              <SaveButton slug="parts" id={p.id} saved={saved?.parts.includes(p.id) ?? false} signedIn={saved !== null} />
             </li>
           ))}
         </ul>

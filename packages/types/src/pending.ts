@@ -160,6 +160,7 @@ export const PENDING = {
     title: "Saved printable parts",
     blurb: "Saving printable parts is coming with the parts catalogue.",
     kind: "build",
+    shipped: true,
     platforms: ["web", "mobile"],
     needs: "Saved printable parts list and tile [ui,api]",
   },

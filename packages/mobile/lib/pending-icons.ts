@@ -16,7 +16,6 @@ const ICONS: Record<string, Icon> = {
   'guide-build-done': 'checkmark-done-outline',
   'makers-ask-first': 'chatbubble-ellipses-outline',
   'locations-and-distance': 'navigate-outline',
-  'saved-parts': 'cube-outline',
 }
 
 export const pendingIcon = (id: string): Icon => ICONS[id] ?? 'construct-outline'

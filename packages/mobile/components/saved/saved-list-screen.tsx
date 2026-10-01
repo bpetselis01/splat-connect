@@ -28,6 +28,9 @@ type SavedEntity = {
   summary?: string | null
   description?: string | null
   condition?: number
+  filename?: string
+  tutorial_id?: string
+  tutorials?: { title: string } | null
 }
 
 const KIND: Record<
@@ -36,7 +39,7 @@ const KIND: Record<
     noun: string
     lead: string
     icon: React.ComponentProps<typeof Ionicons>['name']
-    route: (id: string) => string
+    route: (item: SavedEntity) => string
     browseLabel: string
     browse: string
   }
@@ -45,7 +48,7 @@ const KIND: Record<
     noun: 'guides',
     lead: 'Guides you kept to build later.',
     icon: 'book-outline',
-    route: (id) => `/guides/${id}`,
+    route: (item) => `/guides/${item.id}`,
     browseLabel: 'Browse the guides',
     browse: '/guides',
   },
@@ -53,7 +56,7 @@ const KIND: Record<
     noun: 'toys',
     lead: 'Toys you are considering asking for.',
     icon: 'cube-outline',
-    route: (id) => `/toy-library/${id}`,
+    route: (item) => `/toy-library/${item.id}`,
     browseLabel: 'Browse the toy library',
     browse: '/toy-library',
   },
@@ -61,7 +64,7 @@ const KIND: Record<
     noun: 'challenges',
     lead: 'Challenges to come back to.',
     icon: 'bulb-outline',
-    route: (id) => `/explore/challenges/${id}`,
+    route: (item) => `/explore/challenges/${item.id}`,
     browseLabel: 'Browse design challenges',
     browse: '/explore/challenges',
   },
@@ -69,9 +72,18 @@ const KIND: Record<
     noun: 'organisations',
     lead: 'Organisations you want to find again.',
     icon: 'business-outline',
-    route: (id) => `/toy-library/organisation/${id}`,
+    route: (item) => `/toy-library/organisation/${item.id}`,
     browseLabel: 'Browse organisations',
     browse: '/toy-library/organisations',
+  },
+  parts: {
+    noun: 'parts',
+    lead: 'Printable parts you want to make or ask someone to print for you.',
+    icon: 'cube-outline',
+    // The phone has no catalogue: a part opens the guide it belongs to.
+    route: (item) => `/guides/${item.tutorial_id}`,
+    browseLabel: 'Browse the guides',
+    browse: '/guides',
   },
 }
 
@@ -170,15 +182,15 @@ export function SavedListScreen({ slug }: { slug: SaveSlug }) {
           <ListIntro lead={kind.lead} />
           {items.map((item) => {
             // tutorials/challenges carry title; toys and organisations carry name.
-            const label = item.title ?? item.name ?? ''
+            const label = item.title ?? item.name ?? item.filename ?? ''
             // PENDING(saved-list-meta): "difficulty · time · author" and a thumbnail — the API returns no author name.
-            const line = item.summary ?? item.description ?? null
+            const line = item.summary ?? item.description ?? item.tutorials?.title ?? null
             return (
               // The bookmark is a sibling of the pressable, never a child —
               // the same rule as every other saveable row.
               <View key={item.id} style={styles.saveHost}>
                 <ListRow
-                  onPress={() => router.push(kind.route(item.id))}
+                  onPress={() => router.push(kind.route(item))}
                   accessibilityLabel={label}
                   thumb={<RowThumb glyph={kind.icon} />}
                   title={label}

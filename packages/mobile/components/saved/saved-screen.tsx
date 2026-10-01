@@ -17,16 +17,16 @@ import { Button } from '../ui/Button'
 import { EmptyState } from '../ui/EmptyState'
 import { SkeletonRow } from '../ui/Skeleton'
 import { ListIntro, ListRow, RowThumb } from '../list/list-kit'
-import { PendingRow } from '../ui/pending'
 
 const TILES: { slug: SaveSlug; label: string; noun: [string, string]; icon: React.ComponentProps<typeof Ionicons>['name'] }[] = [
   { slug: 'tutorials', label: 'Guides', noun: ['guide', 'guides'], icon: 'book-outline' },
   { slug: 'toys', label: 'Toys', noun: ['toy', 'toys'], icon: 'cube-outline' },
   { slug: 'challenges', label: 'Challenges', noun: ['challenge', 'challenges'], icon: 'bulb-outline' },
   { slug: 'organisations', label: 'Organisations', noun: ['organisation', 'organisations'], icon: 'business-outline' },
+  { slug: 'parts', label: 'Printable parts', noun: ['part', 'parts'], icon: 'cube-outline' },
 ]
 
-const NONE: SavedIds = { tutorials: [], toys: [], challenges: [], organisations: [] }
+const NONE: SavedIds = { tutorials: [], toys: [], challenges: [], organisations: [], parts: [] }
 
 export function SavedScreen() {
   const router = useRouter()
@@ -102,7 +102,6 @@ export function SavedScreen() {
               </View>
             )
           })}
-          <PendingRow pending="saved-parts" label="Printable parts" icon="cube-outline" />
         </View>
       )}
     </Screen>

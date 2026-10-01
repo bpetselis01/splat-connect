@@ -41,9 +41,8 @@ type EntityQuery = {
  *
  * The selects are copied from routes/public.ts on purpose: a saved list returns
  * the same shape the public list does, so TutorialCard and ToyLibraryCard
- * render it with no changes at all. 'printable_part' is in the enum and
- * deliberately absent here, so its route 404s until someone adds a line —
- * placeholder-ness lives in one place rather than five conditionals.
+ * render it with no changes at all. Every enum member has a line here now;
+ * a new member 404s until it gets one.
  */
 const SOURCE = {
   tutorials: {
@@ -70,6 +69,13 @@ const SOURCE = {
     // the save came from.
     select: 'id, name, description, status, suburb, state',
     filter: (q: EntityQuery) => q.eq('status', 'active'),
+  },
+  parts: {
+    table: 'stl_files',
+    // The catalogue's shape (GET /public/printable-parts). The inner join is
+    // what drops a part whose guide went back to draft.
+    select: 'id, filename, material, filament_grams, print_minutes, tutorial_id, tutorials!inner(id, title, status)',
+    filter: (q: EntityQuery) => q.eq('tutorials.status', 'approved'),
   },
 } satisfies Record<SaveSlug, { table: string; select: string; filter: (q: EntityQuery) => EntityQuery }>
 

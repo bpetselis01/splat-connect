@@ -715,15 +715,7 @@
   "group": "push",
   "boardRoute": "(my)/saved",
   "route": "/saved",
-  "role": "parent",
-  "explained": [
-   {
-    "type": "picture",
-    "match": "Printable parts",
-    "why": "pending",
-    "pending": "saved-parts"
-   }
-  ]
+  "role": "parent"
  },
  {
   "id": "saved_slug",

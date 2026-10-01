@@ -22,7 +22,7 @@ vi.mock('@/lib/capabilities', () => ({
 }))
 // lib/saves imports api-client, which is server-only under vitest.
 vi.mock('@/lib/saves', () => ({
-  getSavedIds: async () => ({ tutorials: ['a', 'b'], toys: [], challenges: ['c'], organisations: [] }),
+  getSavedIds: async () => ({ tutorials: ['a', 'b'], toys: [], challenges: ['c'], organisations: [], parts: [] }),
 }))
 
 // Real redirect() throws rather than returning; the page's signed-out branch
@@ -57,6 +57,7 @@ describe('SavedHub', () => {
 
   it('leads each type to its own list', async () => {
     render(await SavedHub())
+    expect(screen.getByText('Printable parts')).toBeInTheDocument()
     for (const [name, slug] of [
       [/Tutorials/, 'tutorials'],
       [/^\d*\s*Toys/, 'toys'],
@@ -73,9 +74,9 @@ describe('SavedHub', () => {
     expect(screen.getByRole('link', { name: /Design challenges/ })).toHaveTextContent('1')
   })
 
-  it('renders four cards and no soon placeholders', async () => {
+  it('renders five cards and no soon placeholders', async () => {
     const { container } = render(await SavedHub())
-    expect(container.querySelectorAll('a.card')).toHaveLength(4)
+    expect(container.querySelectorAll('a.card')).toHaveLength(5)
     expect(screen.queryByText('SOON')).not.toBeInTheDocument()
   })
 })
