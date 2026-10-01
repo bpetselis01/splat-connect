@@ -130,15 +130,27 @@ export default async function AdminIdeaPage({ params }: { params: Promise<{ id: 
         <h1 className="title-hub mt-3">{idea.title}</h1>
         <p className="mt-3 max-w-[58ch] text-lg text-muted">{idea.summary}</p>
 
-        <h2 className="mt-7 mb-2 font-display text-[22px] font-extrabold text-ink">Why it matters</h2>
-        <p className="max-w-[62ch] text-ink">{idea.description}</p>
+        {idea.description && (
+          <>
+            <h2 className="mt-7 mb-2 font-display text-[22px] font-extrabold text-ink">Why it matters</h2>
+            <p className="max-w-[62ch] text-ink">{idea.description}</p>
+          </>
+        )}
 
         <h2 className="mt-7 mb-3 font-display text-[22px] font-extrabold text-ink">Details given</h2>
         <dl className="grid max-w-[520px] grid-cols-[auto_1fr] gap-x-5 gap-y-2.5 text-[15px]">
-          <dt className="font-semibold text-muted">Intended use</dt>
-          <dd className="font-extrabold text-ink">{idea.intended_use}</dd>
-          <dt className="font-semibold text-muted">Who it&apos;s for</dt>
-          <dd className="font-extrabold text-ink">{idea.primary_user}</dd>
+          {idea.intended_use && (
+            <>
+              <dt className="font-semibold text-muted">Intended use</dt>
+              <dd className="font-extrabold text-ink">{idea.intended_use}</dd>
+            </>
+          )}
+          {idea.primary_user && (
+            <>
+              <dt className="font-semibold text-muted">Who it&apos;s for</dt>
+              <dd className="font-extrabold text-ink">{idea.primary_user}</dd>
+            </>
+          )}
           {idea.contact_prefs.length > 0 && (
             <>
               <dt className="font-semibold text-muted">Happy to be contacted for</dt>

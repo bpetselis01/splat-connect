@@ -425,7 +425,7 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
             <TabHead id="brief" />
             {/* PENDING(challenge-brief-photo): a hero photo and a "What a solution has to do" box. */}
             <Text style={styles.summary}>{challenge.summary}</Text>
-            <Field label="The problem" value={challenge.description} />
+            {challenge.description ? <Field label="The problem" value={challenge.description} /> : null}
           </Card>
         ) : null}
 
@@ -433,8 +433,8 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
           <Card style={styles.panel}>
             <TabHead id="constraints" />
             {/* PENDING(challenge-constraints): named constraints (label + note) in place of these two fields. */}
-            <Field label="Intended use" value={challenge.intended_use} />
-            <Field label="Who it's for" value={challenge.primary_user} />
+            {challenge.intended_use ? <Field label="Intended use" value={challenge.intended_use} /> : null}
+            {challenge.primary_user ? <Field label="Who it's for" value={challenge.primary_user} /> : null}
           </Card>
         ) : null}
 

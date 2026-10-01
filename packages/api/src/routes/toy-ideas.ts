@@ -12,24 +12,33 @@ type Client = ReturnType<typeof createUserClient>
 
 const IDEA_KINDS: ToyIdeaKind[] = ['challenge', 'question']
 
-const NARRATIVE_FIELDS = [
-  'title', 'summary', 'description', 'intended_use', 'primary_user',
-] as const
+const REQUIRED_FIELDS = ['title', 'summary'] as const
+// 103: "Why it matters" is optional; intended use and primary user are only
+// ever sent by an old client. Absent, null or blank all store as null.
+const OPTIONAL_FIELDS = ['description', 'intended_use', 'primary_user'] as const
 
 /**
- * Every narrative field is required and must survive trimming. A half-filled
- * idea reaches a reviewer with nothing to judge, so this rejects rather than
- * storing blanks — the same reasoning as readPickupAddress in toy-transactions.
+ * A title and a summary are required and must survive trimming — the two
+ * things an admin cannot judge an idea without. Everything else is optional.
  */
 function readIdeaBody(body: unknown): Record<string, unknown> | null {
   if (body === null || typeof body !== 'object' || Array.isArray(body)) return null
   const source = body as Record<string, unknown>
   const out: Record<string, unknown> = {}
 
-  for (const field of NARRATIVE_FIELDS) {
+  for (const field of REQUIRED_FIELDS) {
     const value = source[field]
     if (typeof value !== 'string' || !value.trim()) return null
     out[field] = value.trim()
+  }
+  for (const field of OPTIONAL_FIELDS) {
+    const value = source[field]
+    if (value === undefined || value === null) {
+      out[field] = null
+      continue
+    }
+    if (typeof value !== 'string') return null
+    out[field] = value.trim() || null
   }
 
   const prefs = source.contact_prefs ?? []
@@ -49,7 +58,7 @@ function readIdeaBody(body: unknown): Record<string, unknown> | null {
 
 toyIdeas.post('/', async (c) => {
   const fields = readIdeaBody(await c.req.json().catch(() => null))
-  if (!fields) return c.json({ error: 'All fields are required' }, 400)
+  if (!fields) return c.json({ error: 'A title and a summary are required.' }, 400)
 
   // author_id comes from the verified token, never the body.
   const { data, error } = await createUserClient(c.get('token'))

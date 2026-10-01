@@ -68,14 +68,29 @@ describe('POST /ideas', () => {
   // How:   posts VALID minus one field at a time; checks 400
   // Chain: a half-filled idea reaches an admin with nothing to judge → reviewers
   //        reject blindly and authors never learn why
-  it.each(['title', 'summary', 'description', 'intended_use', 'primary_user'])(
-    'rejects a missing %s',
-    async (field) => {
-      const body: Record<string, unknown> = { ...VALID }
-      delete body[field]
-      expect((await post(body)).status).toBe(400)
-    }
-  )
+  it.each(['title', 'summary'])('rejects a missing %s', async (field) => {
+    const body: Record<string, unknown> = { ...VALID }
+    delete body[field]
+    expect((await post(body)).status).toBe(400)
+  })
+
+  // Tests: the three narrative fields after the summary are optional (103)
+  // How:   posts title + summary only; checks the insert carries nulls
+  // Chain: a required "Why it matters" kept families from sending half an idea
+  //        an admin could still judge
+  it('stores the optional fields as null when they are left out', async () => {
+    const single = vi.fn().mockResolvedValue({ data: { id: 'idea-1' }, error: null })
+    const insert = vi.fn().mockReturnValue({ select: () => ({ single }) })
+    mockFrom.mockReturnValue({ insert })
+    expect((await post({ title: 'T', summary: 'S' })).status).toBe(201)
+    expect(insert).toHaveBeenCalledWith(
+      expect.objectContaining({ description: null, intended_use: null, primary_user: null })
+    )
+  })
+
+  it('rejects an optional field that is not text', async () => {
+    expect((await post({ ...VALID, description: 42 })).status).toBe(400)
+  })
 
   // Tests: blank-but-present strings are rejected the same as missing ones
   // How:   posts a whitespace-only title

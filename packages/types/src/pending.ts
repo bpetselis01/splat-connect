@@ -741,6 +741,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["mobile", "api"],
     needs: "Decided 2026-09-30: only title and summary are required; Why it matters maps to description and is optional. Relax the NOT NULLs, the API and both forms.",
+    shipped: true,
   },
   'build-request-options': {
     title: "Request options",

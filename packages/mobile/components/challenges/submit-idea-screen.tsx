@@ -1,7 +1,7 @@
 // packages/mobile/components/challenges/submit-idea-screen.tsx
 // Mobile's half of web's app/get-involved/submit-an-idea/page.tsx +
-// components/idea-form.tsx: the same six fields, the same labels, the same
-// required-ness, posting to the same POST /api/ideas.
+// components/idea-form.tsx: the board's fields: a title and a summary are
+// required, why it matters is optional, posting to the same POST /api/ideas.
 //
 // Title comes from the native header (app/(tabs)/explore/_layout.tsx).
 import { useState } from 'react'
@@ -46,26 +46,18 @@ const SCOPE_EXCLUSIONS = [
   'Nothing beyond what a volunteer can build with their own tools.',
 ]
 
-// label is the accessibility name the tests and a screen reader both use;
-// multiline mirrors web's textarea-vs-input split field for field.
+// label is the accessibility name the tests and a screen reader both use.
 const FIELDS = [
-  { key: 'title', label: 'Idea name', multiline: false },
-  { key: 'summary', label: 'Summarise it in one sentence', multiline: false },
-  { key: 'description', label: 'Full description', multiline: true },
-  { key: 'intended_use', label: 'Intended use', multiline: true },
-  { key: 'primary_user', label: 'Primary user', multiline: true },
+  { key: 'title', label: 'Idea name', multiline: false, placeholder: undefined },
+  { key: 'summary', label: 'Summarise it in one sentence', multiline: false, placeholder: undefined },
+  // The board's label and placeholder (MB #challenge_new). Optional (103).
+  { key: 'description', label: 'Why it matters', multiline: true, placeholder: 'Who would use it, and what they cannot do today.' },
 ] as const
 
 type FieldKey = (typeof FIELDS)[number]['key']
 type Draft = Record<FieldKey, string>
 
-const EMPTY: Draft = {
-  title: '',
-  summary: '',
-  description: '',
-  intended_use: '',
-  primary_user: '',
-}
+const EMPTY: Draft = { title: '', summary: '', description: '' }
 
 export function SubmitIdeaScreen() {
   const router = useRouter()
@@ -82,22 +74,24 @@ export function SubmitIdeaScreen() {
   }
 
   async function submit() {
-    // Mirrors readIdeaBody in packages/api/src/routes/toy-ideas.ts: every
-    // narrative field is required and whitespace-only is rejected. The server
-    // enforces this regardless — this only saves a round trip on an empty form.
-    const trimmed = Object.fromEntries(
-      FIELDS.map((f) => [f.key, draft[f.key].trim()])
-    ) as Draft
-    // PENDING(idea-required-fields): the board requires only title and summary.
-    if (Object.values(trimmed).some((v) => !v)) {
-      setError('All fields are required')
+    // Mirrors readIdeaBody: a title and a summary, trimmed, are required.
+    const title = draft.title.trim()
+    const summary = draft.summary.trim()
+    if (!title || !summary) {
+      setError('A title and a summary are required.')
       return
     }
 
     setBusy(true)
     setError(null)
     try {
-      await apiClient.post<ToyIdea>('/api/ideas', { ...trimmed, kind, contact_prefs: prefs })
+      await apiClient.post<ToyIdea>('/api/ideas', {
+        title,
+        summary,
+        description: draft.description.trim() || null,
+        kind,
+        contact_prefs: prefs,
+      })
       setSent(true)
     } catch (err) {
       // The draft stays: a 400 for a field the server would not take must not
@@ -173,6 +167,7 @@ export function SubmitIdeaScreen() {
                   value={draft[field.key]}
                   onChangeText={(text) => setDraft((cur) => ({ ...cur, [field.key]: text }))}
                   multiline={field.multiline}
+                  placeholder={field.placeholder}
                   style={field.multiline ? styles.multiline : undefined}
                 />
               ))}

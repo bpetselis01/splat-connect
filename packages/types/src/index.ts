@@ -942,9 +942,11 @@ export interface ToyIdea {
   author_id: string
   title: string
   summary: string
-  description: string
-  intended_use: string
-  primary_user: string
+  /** "Why it matters" (103: optional). */
+  description: string | null
+  /** 103: no longer asked; kept on the ideas that have one. */
+  intended_use: string | null
+  primary_user: string | null
   contact_prefs: ContactPref[]
   status: ToyIdeaStatus
   review_note: string | null

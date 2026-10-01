@@ -310,11 +310,15 @@ export default async function ChallengeDetailPage({
               <p className="max-w-[62ch] text-[17px] leading-[1.6] text-muted [text-wrap:pretty]">
                 {challenge.summary}
               </p>
-              {[
-                ['What it needs to do', challenge.description],
-                ['Intended use', challenge.intended_use],
-                ['Who it’s for', challenge.primary_user],
-              ].map(([h, body]) => (
+              {(
+                [
+                  ['What it needs to do', challenge.description],
+                  ['Intended use', challenge.intended_use],
+                  ['Who it’s for', challenge.primary_user],
+                ] as const
+              )
+                .filter(([, body]) => body)
+                .map(([h, body]) => (
                 <div key={h}>
                   <h3 className="mb-2 font-display text-lg font-extrabold">{h}</h3>
                   <p className="max-w-[64ch] leading-[1.6] text-ink [text-wrap:pretty]">{body}</p>

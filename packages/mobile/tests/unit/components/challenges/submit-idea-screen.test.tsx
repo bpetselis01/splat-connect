@@ -35,13 +35,11 @@ const signedIn = {
 }
 const signedOut = { caps: null, loading: false, refresh: jest.fn() }
 
-/** Fills every narrative field web's IdeaForm marks required. */
+/** The board's form: a title and a summary are all it requires. */
 function fillEverything() {
   fireEvent.changeText(screen.getByLabelText('Idea name'), 'A switch a toddler can hit')
   fireEvent.changeText(screen.getByLabelText('Summarise it in one sentence'), 'Too much force needed.')
-  fireEvent.changeText(screen.getByLabelText('Full description'), 'She swipes rather than presses.')
-  fireEvent.changeText(screen.getByLabelText('Intended use'), 'A bubble machine in therapy.')
-  fireEvent.changeText(screen.getByLabelText('Primary user'), 'A three-year-old with low tone.')
+  fireEvent.changeText(screen.getByLabelText('Why it matters'), 'She swipes rather than presses.')
 }
 
 beforeEach(() => {
@@ -63,8 +61,6 @@ describe('SubmitIdeaScreen', () => {
         title: 'A switch a toddler can hit',
         summary: 'Too much force needed.',
         description: 'She swipes rather than presses.',
-        intended_use: 'A bubble machine in therapy.',
-        primary_user: 'A three-year-old with low tone.',
         kind: 'challenge',
         contact_prefs: ['co_design'],
       })
@@ -105,11 +101,30 @@ describe('SubmitIdeaScreen', () => {
   it('refuses a whitespace-only field rather than spending the round trip', async () => {
     render(<SubmitIdeaScreen />)
     fillEverything()
-    fireEvent.changeText(screen.getByLabelText('Intended use'), '   ')
+    fireEvent.changeText(screen.getByLabelText('Summarise it in one sentence'), '   ')
     fireEvent.press(screen.getByRole('button', { name: 'Submit idea' }))
 
-    expect(await screen.findByText('All fields are required')).toBeTruthy()
+    expect(await screen.findByText('A title and a summary are required.')).toBeTruthy()
     expect(mockPost).not.toHaveBeenCalled()
+  })
+
+  it('sends an idea with only a title and a summary, and never asks for intended use or primary user', async () => {
+    render(<SubmitIdeaScreen />)
+    expect(screen.queryByLabelText('Intended use')).toBeNull()
+    expect(screen.queryByLabelText('Primary user')).toBeNull()
+    expect(screen.getByPlaceholderText('Who would use it, and what they cannot do today.')).toBeTruthy()
+    fireEvent.changeText(screen.getByLabelText('Idea name'), 'Bubbles')
+    fireEvent.changeText(screen.getByLabelText('Summarise it in one sentence'), 'One switch.')
+    fireEvent.press(screen.getByRole('button', { name: 'Submit idea' }))
+    await waitFor(() =>
+      expect(mockPost).toHaveBeenCalledWith('/api/ideas', {
+        title: 'Bubbles',
+        summary: 'One switch.',
+        description: null,
+        kind: 'challenge',
+        contact_prefs: [],
+      })
+    )
   })
 
   it('lands on your ideas once it is sent', async () => {

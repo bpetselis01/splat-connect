@@ -43,8 +43,6 @@ type Fields = {
   title: string
   summary: string
   description: string
-  intended_use: string
-  primary_user: string
   contact_prefs: ContactPref[]
 }
 
@@ -53,8 +51,6 @@ const EMPTY_FIELDS: Fields = {
   title: '',
   summary: '',
   description: '',
-  intended_use: '',
-  primary_user: '',
   contact_prefs: [],
 }
 
@@ -80,20 +76,11 @@ export function IdeaForm() {
   async function submit(e: FormEvent) {
     e.preventDefault()
 
-    // Mirrors readIdeaBody in packages/api/src/routes/toy-ideas.ts: every
-    // narrative field is required and whitespace-only is rejected. The
-    // server enforces this regardless — this just saves a round trip for the
-    // ordinary case of an empty textarea, per the brief: never rely on the
-    // client check alone.
-    const trimmed = {
-      title: fields.title.trim(),
-      summary: fields.summary.trim(),
-      description: fields.description.trim(),
-      intended_use: fields.intended_use.trim(),
-      primary_user: fields.primary_user.trim(),
-    }
-    if (Object.values(trimmed).some((v) => !v)) {
-      setError('All fields are required')
+    // Mirrors readIdeaBody: a title and a summary are required (103).
+    const title = fields.title.trim()
+    const summary = fields.summary.trim()
+    if (!title || !summary) {
+      setError('A title and a summary are required.')
       return
     }
 
@@ -101,7 +88,9 @@ export function IdeaForm() {
     setError(null)
     try {
       await browserApiClient.post<ToyIdea>('/api/ideas', {
-        ...trimmed,
+        title,
+        summary,
+        description: fields.description.trim() || null,
         kind: fields.kind,
         contact_prefs: fields.contact_prefs,
       })
@@ -181,42 +170,14 @@ export function IdeaForm() {
 
       <div>
         <label htmlFor="idea-description" className="field-label">
-          Full description
+          Why it matters
         </label>
         <textarea
           id="idea-description"
-          required
           rows={4}
+          placeholder="Who would use it, and what they cannot do today."
           value={fields.description}
           onChange={(e) => set('description', e.target.value)}
-          className="field"
-        />
-      </div>
-
-      <div>
-        <label htmlFor="idea-intended-use" className="field-label">
-          Intended use
-        </label>
-        <textarea
-          id="idea-intended-use"
-          required
-          rows={3}
-          value={fields.intended_use}
-          onChange={(e) => set('intended_use', e.target.value)}
-          className="field"
-        />
-      </div>
-
-      <div>
-        <label htmlFor="idea-primary-user" className="field-label">
-          Primary user
-        </label>
-        <textarea
-          id="idea-primary-user"
-          required
-          rows={3}
-          value={fields.primary_user}
-          onChange={(e) => set('primary_user', e.target.value)}
           className="field"
         />
       </div>

@@ -7,11 +7,13 @@ vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }))
 vi.mock('@/lib/browser-api-client', () => ({ browserApiClient: { post: vi.fn() } }))
 
 describe('IdeaForm', () => {
-  it('asks for every field the reviewer needs', () => {
+  it('asks for a title, a summary and why it matters — and nothing the board dropped', () => {
     render(<IdeaForm />)
-    for (const label of [/^title$/i, /^summary$/i, /full description/i, /intended use/i, /primary user/i]) {
+    for (const label of [/^title$/i, /^summary$/i, /why it matters/i]) {
       expect(screen.getByLabelText(label)).toBeInTheDocument()
     }
+    expect(screen.queryByLabelText(/intended use/i)).toBeNull()
+    expect(screen.queryByLabelText(/primary user/i)).toBeNull()
   })
 
   it('offers the three ways to stay involved', () => {
@@ -28,9 +30,6 @@ describe('IdeaForm', () => {
     for (const [label, value] of [
       [/your question/i, 'Glue?'],
       [/^summary$/i, 'S'],
-      [/full description/i, 'D'],
-      [/intended use/i, 'U'],
-      [/primary user/i, 'P'],
     ] as const) {
       fireEvent.change(screen.getByLabelText(label), { target: { value } })
     }
