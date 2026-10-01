@@ -113,7 +113,21 @@ describe('PATCH /:id/stl-files/:fileId', () => {
       body: JSON.stringify({ print_minutes: '190', filament_grams: 41, material: 'WOOD' }),
     })
     expect(res.status).toBe(200)
-    expect(mockUpdateStl).toHaveBeenCalledWith({ print_minutes: null, filament_grams: 41, material: null })
+    expect(mockUpdateStl).toHaveBeenCalledWith({
+      print_minutes: null, filament_grams: 41, material: null, size_x_mm: null, size_y_mm: null, size_z_mm: null,
+    })
+  })
+
+  // Tests: a part size outside 1–2000 mm is refused with a sentence before the database sees it
+  it('refuses a size outside 1 to 2000 mm', async () => {
+    const res = await makeApp().request('/tutorial-1/stl-files/f1', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ size_x_mm: 0 }),
+    })
+    expect(res.status).toBe(400)
+    expect(await res.json()).toEqual({ error: 'Part sizes are whole millimetres, 1 to 2000.' })
+    expect(mockUpdateStl).not.toHaveBeenCalled()
   })
 
   // Tests: a value past the column check reads as a 400, not a 500

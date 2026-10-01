@@ -111,3 +111,22 @@ export function fitNotesLines(notes?: PrintFitNotes | null): string[] {
   if (!notes) return []
   return PRINT_FIT_QUESTIONS.filter((q) => notes[q.key]).map((q) => `${q.label}: ${notes[q.key]}`)
 }
+
+type Sized = { size_x_mm?: number | null; size_y_mm?: number | null; size_z_mm?: number | null }
+
+/**
+ * Whether every part sits on this bed: x/y either way round, z upright (a part
+ * is printed the way its author sliced it). True unless every part has all
+ * three sizes (097) — the printer still checks before they accept.
+ */
+export function bedFits(bed: { bed_x: number; bed_y: number; bed_z: number }, parts: Sized[]): boolean {
+  if (parts.length === 0 || parts.some((p) => p.size_x_mm == null || p.size_y_mm == null || p.size_z_mm == null)) {
+    return true
+  }
+  return parts.every(
+    (p) =>
+      p.size_z_mm! <= bed.bed_z &&
+      ((p.size_x_mm! <= bed.bed_x && p.size_y_mm! <= bed.bed_y) ||
+        (p.size_x_mm! <= bed.bed_y && p.size_y_mm! <= bed.bed_x))
+  )
+}

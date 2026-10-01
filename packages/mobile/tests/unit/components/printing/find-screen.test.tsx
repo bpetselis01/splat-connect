@@ -82,3 +82,16 @@ it('shows a printer’s jobs and turnaround under its name', async () => {
   render(<FindPrinterScreen guideId="g1" />)
   expect(await screen.findByText(/21 jobs · ~3 days/)).toBeTruthy()
 })
+
+it('hides a printer whose bed cannot hold the guide’s parts', async () => {
+  mockGet.mockImplementation((path: string) =>
+    Promise.resolve(
+      path === '/api/printers'
+        ? [printer('a', { bed_x: 180, bed_y: 180, bed_z: 180 }), printer('b', { bed_x: 256, bed_y: 256, bed_z: 256 })]
+        : { ...GUIDE, stl_files: [{ ...GUIDE.stl_files[0], size_x_mm: 200, size_y_mm: 100, size_z_mm: 50 }] }
+    )
+  )
+  render(<FindPrinterScreen guideId="g1" />)
+  expect(await screen.findByText('Maker B')).toBeTruthy()
+  expect(screen.queryByText('Maker A')).toBeNull()
+})

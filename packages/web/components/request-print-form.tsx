@@ -48,7 +48,7 @@ import { printTimeLabel, filamentLabel } from '@/lib/print-settings'
 
 export type PrintablePart = Pick<
   StlFile,
-  'id' | 'filename' | 'print_minutes' | 'filament_grams' | 'material'
+  'id' | 'filename' | 'print_minutes' | 'filament_grams' | 'material' | 'size_x_mm' | 'size_y_mm' | 'size_z_mm'
 >
 
 const TINTS = ['var(--tmint)', 'var(--b100)', 'var(--tamber)', 'var(--tviolet)', 'var(--tcoral)']

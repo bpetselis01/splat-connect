@@ -7,6 +7,7 @@ import { useState } from 'react'
 import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import * as DocumentPicker from 'expo-document-picker'
+import { apiMessage } from '@splat-connect/types'
 import type { StlFile } from '@splat-connect/types'
 import { apiClient } from '../../../lib/api-client'
 import { uploadFile } from '../../../lib/upload'
@@ -30,10 +31,35 @@ function StlEditor() {
   const [uploading, setUploading] = useState(false)
   const [localError, setLocalError] = useState<string | null>(null)
   const [files, setFiles] = useState<StlFile[]>(() => tutorial?.stl_files ?? [])
+  const [sizes, setSizes] = useState<Record<string, { x: string; y: string; z: string }>>({})
 
   if (!tutorial) return null
 
   const id = tutorial.id
+
+  const sizeOf = (f: StlFile) =>
+    sizes[f.id] ?? { x: String(f.size_x_mm ?? ''), y: String(f.size_y_mm ?? ''), z: String(f.size_z_mm ?? '') }
+  const mm = (v: string) => (v.trim() === '' ? null : Number(v))
+
+  // One PATCH per file with every setting it has: the route writes what it is
+  // sent, and the replace-set POST is refused once a job names the file.
+  async function saveSizes(f: StlFile) {
+    const s = sizeOf(f)
+    setLocalError(null)
+    try {
+      const updated = await apiClient.patch<StlFile>(`/api/tutorials/${id}/stl-files/${f.id}`, {
+        print_minutes: f.print_minutes ?? null,
+        filament_grams: f.filament_grams ?? null,
+        material: f.material ?? null,
+        size_x_mm: mm(s.x),
+        size_y_mm: mm(s.y),
+        size_z_mm: mm(s.z),
+      })
+      setFiles((cur) => cur.map((x) => (x.id === f.id ? { ...x, ...updated } : x)))
+    } catch (err) {
+      setLocalError(apiMessage(err, 'Could not save the sizes. Please try again.'))
+    }
+  }
 
   async function pickStl() {
     setLocalError(null)
@@ -65,6 +91,9 @@ function StlEditor() {
           print_minutes: f.print_minutes,
           filament_grams: f.filament_grams,
           material: f.material,
+          size_x_mm: f.size_x_mm,
+          size_y_mm: f.size_y_mm,
+          size_z_mm: f.size_z_mm,
         })),
         { filename: filename ?? asset.name, file_url: url },
       ]
@@ -85,9 +114,31 @@ function StlEditor() {
       <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
         {files.length ? (
           files.map((f) => (
-            <View key={f.id} style={styles.row}>
-              <Ionicons name="cube-outline" size={18} color={theme.colors.primary} />
-              <Text style={styles.filename}>{f.filename}</Text>
+            <View key={f.id} style={styles.fileBlock}>
+              <View style={styles.row}>
+                <Ionicons name="cube-outline" size={18} color={theme.colors.primary} />
+                <Text style={styles.filename}>{f.filename}</Text>
+              </View>
+              <View style={styles.sizes}>
+                {(
+                  [
+                    ['x', 'Width (mm)'],
+                    ['y', 'Depth (mm)'],
+                    ['z', 'Height (mm)'],
+                  ] as const
+                ).map(([axis, label]) => (
+                  <View key={axis} style={styles.size}>
+                    <TextField
+                      label={label}
+                      accessibilityLabel={`${label} for ${f.filename}`}
+                      inputMode="numeric"
+                      value={sizeOf(f)[axis]}
+                      onChangeText={(v) => setSizes((cur) => ({ ...cur, [f.id]: { ...sizeOf(f), [axis]: v } }))}
+                    />
+                  </View>
+                ))}
+              </View>
+              <Button label="Save sizes" variant="secondary" onPress={() => void saveSizes(f)} />
             </View>
           ))
         ) : (
@@ -133,6 +184,9 @@ function StlEditor() {
 
 const styles = StyleSheet.create({
   body: { flex: 1 },
+  fileBlock: { marginBottom: theme.spacing(4), gap: theme.spacing(2) },
+  sizes: { flexDirection: 'row', gap: theme.spacing(2) },
+  size: { flex: 1 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

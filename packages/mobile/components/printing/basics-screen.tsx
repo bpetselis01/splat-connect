@@ -30,8 +30,6 @@ const SECTIONS = [
   },
 ]
 
-// PENDING(bed-fit-filter): the board's Bed size copy says the list only shows
-// printers whose bed fits; that needs part dimensions stored per guide.
 export function PrintingBasicsScreen() {
   const router = useRouter()
   return (

@@ -15,6 +15,7 @@ import { getCapabilities } from '@/lib/capabilities'
 import { apiClient } from '@/lib/api-client'
 import { BackLink } from '@/components/back-link'
 import { RequestPrintForm, type PrintablePart } from '@/components/request-print-form'
+import { bedFits } from '@splat-connect/types'
 import type { PrinterWithOwner } from '@splat-connect/types'
 
 export const metadata = { title: 'Request a print — SPLAT Connect' }
@@ -48,6 +49,8 @@ export default async function RequestAPrintPage({
       .catch(() => null)
   }
 
+  const parts = tutorial?.stl_files ?? []
+
   const header = (
     <header>
       <p className="eyebrow text-muted">3D Printing</p>
@@ -75,8 +78,10 @@ export default async function RequestAPrintPage({
         <RequestPrintForm
           tutorialId={tutorial.id}
           tutorialTitle={tutorial.title}
-          parts={tutorial.stl_files ?? []}
-          printers={theirs}
+          parts={parts}
+          // 097: a printer whose bed cannot hold the parts is not offered, with no
+          // chip; nothing is hidden unless every part is sized.
+          printers={theirs.filter((p) => bedFits(p, parts))}
           header={header}
           requesterSuburb={
             [caps.profile.pickup_suburb, caps.profile.pickup_state].filter(Boolean).join(' ') ||

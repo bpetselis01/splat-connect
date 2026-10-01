@@ -18,7 +18,7 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import type { PrinterWithOwner, StlFile, Tutorial } from '@splat-connect/types'
-import { initials, MAX_PRINTERS_PER_REQUEST, plural, statsLine } from '@splat-connect/types'
+import { bedFits, initials, MAX_PRINTERS_PER_REQUEST, plural, statsLine } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { useCapabilities } from '../../lib/capabilities'
 import { theme } from '../../lib/theme'
@@ -88,8 +88,13 @@ export function FindPrinterScreen({ guideId }: { guideId?: string }) {
   // Your own machines, and your organisations', are not somewhere you send a
   // job — the API refuses it, so they are not offered.
   const ledOrgIds = new Set(caps?.ledOrgs.map((o) => o.id) ?? [])
+  // 097: a printer whose bed cannot hold the guide's parts is not offered. No
+  // chip — the board's rule — and nothing is hidden unless every part is sized.
   const theirs = printers.filter(
-    (p) => p.owner_id !== caps?.profile.id && !(p.owner_org_id && ledOrgIds.has(p.owner_org_id))
+    (p) =>
+      p.owner_id !== caps?.profile.id &&
+      !(p.owner_org_id && ledOrgIds.has(p.owner_org_id)) &&
+      bedFits(p, guide?.stl_files ?? [])
   )
   const material = (guide && partMaterials(guide.stl_files)[0]) || 'PETG'
   const shown = theirs.filter((p) => (!openOnly || isOpen(p)) && (!hasMaterial || p.materials.includes(material)))

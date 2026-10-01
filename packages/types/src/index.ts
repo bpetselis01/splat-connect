@@ -25,7 +25,7 @@ import { printRequestExpired } from './printing'
 import type { PrinterStats, PrintFitNotes } from './printing'
 // Named, not only the `export *` below: the API runs under tsx, which loads
 // this package as CommonJS, and Node cannot see names behind `export *` there.
-export { printCostCents, costRange, PRINT_ANSWER_DAYS, answerBy, printRequestExpired, PRINT_FIT_QUESTIONS, fitNotesProblem, fitNotesLines } from './printing'
+export { printCostCents, costRange, PRINT_ANSWER_DAYS, answerBy, printRequestExpired, PRINT_FIT_QUESTIONS, fitNotesProblem, fitNotesLines, bedFits } from './printing'
 export { getMissingToyFields, computeToyStepStatuses } from './toy-steps'
 export type { ToyStepId } from './toy-steps'
 
@@ -1934,6 +1934,10 @@ export interface StlFile {
   print_minutes?: number | null
   filament_grams?: number | null
   material?: StlMaterial | null
+  /** 097. The part's bounding box in mm, as sliced. Optional, like the settings. */
+  size_x_mm?: number | null
+  size_y_mm?: number | null
+  size_z_mm?: number | null
 }
 
 /** One part on a print job: the STL row with how many copies were asked for. */

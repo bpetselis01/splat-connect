@@ -654,6 +654,7 @@ export const PENDING = {
     needs: "Decided 2026-09-30: earned, not granted. The printer uploads a photo of the SPLAT test print, an admin marks it pass or fail, and 3 completed jobs (one constant) follow. Future: automatic photo check, e.g. a vision LLM with a rubric and a reference card in frame, admin as fallback.",
   },
   'bed-fit-filter': {
+    shipped: true,
     title: "Fits your parts",
     blurb: "Filtering printers by whether your parts fit is coming.",
     kind: "build",

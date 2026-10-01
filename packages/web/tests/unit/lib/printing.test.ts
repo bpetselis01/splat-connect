@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { bedFits } from '@splat-connect/types'
 import {
   printCostCents,
   costRange,
@@ -105,5 +106,22 @@ describe('customization', () => {
   it('reads back to the printer in the board’s order', () => {
     expect(fitNotesLines({ tray: '15 mm', reach: 'Under 20 cm' })).toEqual(['Reach from seated: Under 20 cm', 'Tray thickness: 15 mm'])
     expect(fitNotesLines(null)).toEqual([])
+  })
+})
+
+describe('bedFits', () => {
+  const bed = { bed_x: 220, bed_y: 180, bed_z: 250 }
+  it('fits a part either way round on x/y', () => {
+    expect(bedFits(bed, [{ size_x_mm: 170, size_y_mm: 210, size_z_mm: 40 }])).toBe(true)
+  })
+  it('does not tip a part over to fit z', () => {
+    expect(bedFits(bed, [{ size_x_mm: 100, size_y_mm: 100, size_z_mm: 260 }])).toBe(false)
+  })
+  it('is decided by the largest part', () => {
+    expect(bedFits(bed, [{ size_x_mm: 10, size_y_mm: 10, size_z_mm: 10 }, { size_x_mm: 230, size_y_mm: 190, size_z_mm: 10 }])).toBe(false)
+  })
+  it('hides nothing unless every part has its sizes', () => {
+    expect(bedFits(bed, [{ size_x_mm: 900, size_y_mm: 900, size_z_mm: 900 }, { size_x_mm: null, size_y_mm: 5, size_z_mm: 5 }])).toBe(true)
+    expect(bedFits(bed, [])).toBe(true)
   })
 })

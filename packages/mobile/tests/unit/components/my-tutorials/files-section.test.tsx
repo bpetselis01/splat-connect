@@ -1,6 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { FilesSection } from '../../../../components/my-tutorials/sections/files-section'
 import { StlSection } from '../../../../components/my-tutorials/sections/stl-section'
+import { apiClient } from '../../../../lib/api-client'
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
 jest.mock('../../../../lib/auth-context', () => ({ useAuth: jest.fn() }))
@@ -176,6 +177,33 @@ it('appends an uploaded STL to the replace-set', async () => {
     expect(mockPost).toHaveBeenCalledWith('/api/tutorials/t1/stl-files', {
       stl_files: [
         { filename: 'old.stl', file_url: 'stl/old.stl' },
+        { filename: 'n.stl', file_url: 'stl/n.stl' },
+      ],
+    })
+  )
+})
+
+it('carries part sizes through the replace-set, and saves them per file', async () => {
+  const sized = { id: 's1', filename: 'old.stl', file_url: 'stl/old.stl', print_minutes: 60, filament_grams: 10, material: 'PETG', size_x_mm: 40, size_y_mm: 30, size_z_mm: 20 }
+  mockDraft.tutorial = { ...mockDraft.tutorial, stl_files: [sized] }
+  ;(apiClient.patch as jest.Mock).mockResolvedValue({ ...sized, size_x_mm: 45 })
+  render(<StlSection />)
+  fireEvent.changeText(screen.getByLabelText('Width (mm) for old.stl'), '45')
+  fireEvent.press(screen.getByText('Save sizes'))
+  await waitFor(() =>
+    expect(apiClient.patch).toHaveBeenCalledWith('/api/tutorials/t1/stl-files/s1', {
+      print_minutes: 60, filament_grams: 10, material: 'PETG', size_x_mm: 45, size_y_mm: 30, size_z_mm: 20,
+    })
+  )
+
+  mockGetDocument.mockResolvedValue({ canceled: false, assets: [{ uri: 'file://n.stl', name: 'n.stl' }] })
+  mockUploadFile.mockResolvedValue({ url: 'stl/n.stl', filename: 'n.stl' })
+  mockPost.mockResolvedValue([])
+  fireEvent.press(screen.getByText('Choose STL from Files'))
+  await waitFor(() =>
+    expect(mockPost).toHaveBeenCalledWith('/api/tutorials/t1/stl-files', {
+      stl_files: [
+        { filename: 'old.stl', file_url: 'stl/old.stl', print_minutes: 60, filament_grams: 10, material: 'PETG', size_x_mm: 45, size_y_mm: 30, size_z_mm: 20 },
         { filename: 'n.stl', file_url: 'stl/n.stl' },
       ],
     })
