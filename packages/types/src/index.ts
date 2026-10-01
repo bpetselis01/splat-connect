@@ -176,6 +176,8 @@ export interface Toy {
   volume?: string | null
   /** "Built from Guide C" (075). SET NULL if the guide goes. */
   tutorial_id?: string | null
+  /** Marked unavailable (100): listed and readable, but no new requests. */
+  paused_at?: string | null
   created_at: string
   updated_at: string
   /** PostgREST computed fields (073), the owner's "How it is doing" tiles.

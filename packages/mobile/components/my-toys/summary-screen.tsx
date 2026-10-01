@@ -11,7 +11,7 @@ import { useCallback, useState } from 'react'
 import { ScrollView, StyleSheet, View } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
 import type { Toy, ToyTransactionSummary } from '@splat-connect/types'
-import { isOwnerSide } from '@splat-connect/types'
+import { apiMessage, isOwnerSide } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { useCapabilities } from '../../lib/capabilities'
 import { loadOwnedToy, toySummaryLead } from '../../lib/my-toy'
@@ -19,7 +19,7 @@ import { theme } from '../../lib/theme'
 import { Screen } from '../ui/Screen'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
-import { PendingRow } from '../ui/pending'
+import { ErrorRow } from '../ui/ErrorRow'
 import { ListIntro, ListRow } from '../list/list-kit'
 
 export function ToySummaryScreen({ id }: { id: string }) {
@@ -27,6 +27,7 @@ export function ToySummaryScreen({ id }: { id: string }) {
   const { caps } = useCapabilities()
   const [toy, setToy] = useState<Toy | null>(null)
   const [requests, setRequests] = useState<ToyTransactionSummary[]>([])
+  const [error, setError] = useState<string | null>(null)
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading')
 
   useFocusEffect(
@@ -76,13 +77,30 @@ export function ToySummaryScreen({ id }: { id: string }) {
     (t) => t.toy_id === toy.id && t.status === 'requested' && !!caps && isOwnerSide(t, caps.profile.id, ledOrgIds)
   )
 
+  async function togglePaused() {
+    setError(null)
+    try {
+      const updated = await apiClient.patch<Toy>(`/api/toys/${id}`, { paused_at: toy?.paused_at ? null : new Date().toISOString() })
+      setToy((cur) => (cur ? { ...cur, ...updated } : updated))
+    } catch (err) {
+      setError(apiMessage(err, 'Could not save that. Please try again.'))
+    }
+  }
+
   return (
     <Screen>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <ListIntro lead={toySummaryLead(toy, open.length)} />
         <View style={styles.rows}>
           <ListRow title="Edit listing" meta="Photos, condition, notes" onPress={() => router.push(`/toys/${toy.id}/edit`)} />
-          <PendingRow pending="toy-pause-unavailable" label="Mark unavailable" icon="pause-circle-outline" />
+          {toy.status === 'published' ? (
+            <ListRow
+              title={toy.paused_at ? 'Take requests again' : 'Mark unavailable'}
+              meta={toy.paused_at ? null : 'Keeps it listed but hides the request button'}
+              onPress={togglePaused}
+            />
+          ) : null}
+          <ErrorRow message={error} />
         </View>
       </ScrollView>
     </Screen>

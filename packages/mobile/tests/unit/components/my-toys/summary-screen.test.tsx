@@ -90,4 +90,17 @@ describe('ToySummaryScreen', () => {
     render(<ToySummaryScreen id="t1" />)
     expect(await screen.findByText("Couldn't load this toy.")).toBeTruthy()
   })
+
+  it('pauses and resumes requests from the summary', async () => {
+    serve()
+    mockPatch.mockResolvedValueOnce(toy({ paused_at: '2026-09-30T00:00:00Z' })).mockResolvedValueOnce(toy({ paused_at: null }))
+    render(<ToySummaryScreen id="t1" />)
+    expect(await screen.findByText('Keeps it listed but hides the request button')).toBeTruthy()
+    fireEvent.press(screen.getByText('Mark unavailable'))
+    expect(await screen.findByText('Take requests again')).toBeTruthy()
+    expect(mockPatch).toHaveBeenCalledWith('/api/toys/t1', { paused_at: expect.any(String) })
+    fireEvent.press(screen.getByText('Take requests again'))
+    expect(await screen.findByText('Mark unavailable')).toBeTruthy()
+    expect(mockPatch).toHaveBeenLastCalledWith('/api/toys/t1', { paused_at: null })
+  })
 })

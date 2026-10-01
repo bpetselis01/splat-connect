@@ -136,4 +136,12 @@ describe('ToyEditor', () => {
     render(<ToyEditor toy={toy()} />)
     expect(screen.getByRole('button', { name: /delete toy/i })).toBeInTheDocument()
   })
+
+  it('pauses a live toy and offers to take requests again', async () => {
+    vi.mocked(browserApiClient.patch).mockResolvedValue(toy({ status: 'published', paused_at: '2026-09-30T00:00:00Z' }))
+    render(<ToyEditor toy={toy({ status: 'published' })} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Mark unavailable' }))
+    expect(await screen.findByRole('button', { name: 'Take requests again' })).toBeInTheDocument()
+    expect(browserApiClient.patch).toHaveBeenCalledWith('/api/toys/t1', { paused_at: expect.any(String) })
+  })
 })

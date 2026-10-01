@@ -48,9 +48,20 @@ const EDITABLE = [
   'switch_fitting',
   'volume',
   'tutorial_id',
+  'paused_at',
 ] as const
 
 const FACT_TEXT = { batteries: 60, switch_fitting: 60, volume: 40 } as const
+
+/**
+ * A timestamp the holder sets (100's paused_at, 101's retired_at): an ISO
+ * date, or null to clear it. Anything else would reach Postgres as a cast
+ * error and come back a 500.
+ */
+function badTimestamp(body: Record<string, unknown>, key: string): boolean {
+  if (!(key in body) || body[key] === null) return false
+  return typeof body[key] !== 'string' || Number.isNaN(Date.parse(body[key] as string))
+}
 
 /**
  * 075's facts, checked and normalised at the trust boundary so a bad value is a
@@ -208,6 +219,9 @@ toys.post('/', async (c) => {
 
 toys.patch('/:id', async (c) => {
   const body = await c.req.json()
+  if (badTimestamp(body, 'paused_at')) {
+    return c.json({ error: 'Pausing needs a date, or nothing to take requests again.' }, 400)
+  }
   const supabase = createUserClient(c.get('token'))
   const orgIds = await ledOrgIds(supabase, c.get('userId'))
 

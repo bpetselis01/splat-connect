@@ -325,4 +325,11 @@ describe('ToyDetailScreen', () => {
     render(<ToyDetailScreen id="toy1" />)
     expect(await screen.findByText('· Newcastle, NSW')).toBeTruthy()
   })
+
+  it('hides the request button on a paused toy and says why', async () => {
+    mockEndpoints({ detail: Promise.resolve(toy({ paused_at: '2026-09-30T00:00:00Z' })) })
+    render(<ToyDetailScreen id="toy1" />)
+    expect(await screen.findByText('Not taking requests right now')).toBeTruthy()
+    expect(screen.queryByText('Ask to collect it')).toBeNull()
+  })
 })

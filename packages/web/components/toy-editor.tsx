@@ -92,6 +92,15 @@ export function ToyEditor({
     setToy(await browserApiClient.patch<Toy>(`/api/toys/${toy.id}/publish`, {}))
   }
 
+  // Throws on failure, like publish(): SubmitButton shows the error.
+  async function togglePaused() {
+    setToy(
+      await browserApiClient.patch<Toy>(`/api/toys/${toy.id}`, {
+        paused_at: toy.paused_at ? null : new Date().toISOString(),
+      })
+    )
+  }
+
   const statuses = computeToyStepStatuses(toy)
   const missing = getMissingToyFields(toy)
   const live = toy.status === 'published'
@@ -218,6 +227,14 @@ export function ToyEditor({
 
       <div className="flex flex-wrap gap-2.5 border-t border-line pt-[18px]">
         {primary}
+        {live && (
+          <SubmitButton
+            label={toy.paused_at ? 'Take requests again' : 'Mark unavailable'}
+            busyLabel="Saving…"
+            errorMessage="Could not save that. Please try again."
+            onSubmit={togglePaused}
+          />
+        )}
         <DeleteEntityButton
           endpoint={`/api/toys/${toy.id}`}
           redirectTo={'/dashboard/toys' as Route<string>}

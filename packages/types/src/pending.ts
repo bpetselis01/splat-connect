@@ -782,6 +782,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["mobile", "api"],
     needs: "Decided 2026-09-30: toys.paused_at. The toy stays listed, the request button hides and the API refuses new requests; one tap resumes.",
+    shipped: true,
   },
   'toy-holder-picks': {
     title: "Also worth a look",

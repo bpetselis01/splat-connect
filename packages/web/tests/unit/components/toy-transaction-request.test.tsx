@@ -113,3 +113,11 @@ describe('ToyTransactionRequest', () => {
     expect(screen.getByText(/not currently offered/i)).toBeInTheDocument()
   })
 })
+
+describe('a paused toy', () => {
+  it('says it is not taking requests and offers no way to ask', () => {
+    render(<ToyTransactionRequest toy={toy({ paused_at: '2026-09-30T00:00:00Z' })} viewerId="viewer-1" myToys={[]} />)
+    expect(screen.getByText('Not taking requests right now')).toBeInTheDocument()
+    expect(screen.queryByRole('link')).toBeNull()
+  })
+})

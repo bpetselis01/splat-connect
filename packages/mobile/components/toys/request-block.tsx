@@ -69,6 +69,8 @@ export function RequestBlock({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  if (toy.paused_at) return <Text style={styles.muted}>Not taking requests right now</Text>
+
   if (!toy.offer_type) {
     return <Text style={styles.muted}>Not currently offered for donation or exchange.</Text>
   }

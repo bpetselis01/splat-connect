@@ -510,7 +510,7 @@ toyTransactions.post('/', async (c) => {
 
   const { data: toy, error: toyError } = await admin
     .from('toys')
-    .select('id, owner_id, owner_org_id, quantity, offer_type, status')
+    .select('id, owner_id, owner_org_id, quantity, offer_type, status, paused_at')
     .eq('id', body.toy_id)
     .maybeSingle()
   if (toyError) {
@@ -524,6 +524,11 @@ toyTransactions.post('/', async (c) => {
   if (toy.owner_org_id && (await ledOrgIds(admin, userId)).includes(toy.owner_org_id)) {
     return c.json({ error: "You cannot request your own organisation's toy" }, 400)
   }
+
+  // Marked unavailable (100): still listed and readable, but no new asks.
+  // A 409 rather than the capacity check's 404 — the toy is plainly there,
+  // the holder has said not now.
+  if (toy.paused_at) return c.json({ error: 'This toy is not taking requests right now' }, 409)
 
   // Every unit already spoken for. A toy mid-handoff stays 'published', so
   // the status check above doesn't catch it. Hide it the same
@@ -1015,6 +1020,8 @@ toyTransactions.post('/:id/confirm', async (c) => {
   // home. (archived_at, 025's earlier answer to the same problem, is gone —
   // migration 050.)
   //
+  // And un-paused (100): a pause is the old holder's choice, not the toy's.
+  //
   // The giver needs no update: My Toys filters on owner_id, so their list
   // clears itself.
   //
@@ -1029,7 +1036,7 @@ toyTransactions.post('/:id/confirm', async (c) => {
   async function transferToy(toyId: string, to: { owner_id: string | null; owner_org_id: string | null }) {
     return admin
       .from('toys')
-      .update({ ...to, status: 'draft', updated_at: now })
+      .update({ ...to, status: 'draft', paused_at: null, updated_at: now })
       .eq('id', toyId)
   }
 
